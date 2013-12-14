@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_gvk_byy_3k">
+  <title>Java API</title>
+  <body>
+    <p>此部分是相关Java的API文档。</p>
+    <p><xref href="..\..\..\..\java\html\index.html" format="html">Java API</xref></p>
+  </body>
+</topic>

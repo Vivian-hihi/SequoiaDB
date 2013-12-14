@@ -1,0 +1,16 @@
+fil = new Array();
+fil["0"]="java/html/index.html@@@SequoiaDB: Main Page@@@null";
+fil["1"]= "topics/java.html@@@Java 驱动@@@本节介绍Java的相关驱动信息。 Java 驱动 Java 开发环境搭建 Java 开发基础 SQL to sequoiadb shell to Java Java API...";
+fil["2"]= "topics/javaclient.html@@@java客户端@@@java客户端接口 在Eclipse中添加jar包：sequoiadb.jar。 java客户端接口提功能 java客户端接口主要提供了数据库的连接，数据的增删改查，索引的创建删除，以及集合与集合空间的创建删除等操作。 类实例 SequoiaDB数据库中的数据存放分为三个级别：  1)数据库 2)集合空间 3...";
+fil["3"]= "topics/javaclient_en.html@@@Java Client@@@Java Client Interface Add jar package in Eclipse: sequoiadb.jar。 Functions by Java Client Interface Java client interface provide manipulations including database connection, data inserting, deleting...";
+fil["4"]= "topics/javadriver.html@@@java驱动入门@@@此页面是一个有关Sequoiadb java驱动程序的简短概述。有关java API的更多信息，请查阅 更多参考java API 。 使用java驱动非常简单。首选，从官网上，下载Java驱动jar包： sequoiadb.jar ，然后，将其导入工程，即可使用相关API。 下面的程序实例，可以在安装目录下smaples目录下面的com.sequoiadb.examples...";
+fil["5"]= "topics/javadriver_en.html@@@java Driver Introduction@@@This page is a brief introduction to java driver of Sequoiadb. Please refer to .java API for more. It is easy to use java driver. Firstly, download Java driver jar package  sequoiadb.jar . Then...";
+fil["6"]= "topics/java_api.html@@@Java API@@@此部分是相关Java的API文档。 java API...";
+fil["7"]= "topics/java_api_en.html@@@JAVA API@@@This part is related to java API document. java API...";
+fil["8"]= "topics/java_en.html@@@Java Driver@@@This section introduce java driver. Java Client Java Driver Introduction SQL to sequoiadb shell to java java API...";
+fil["9"]= "topics/java_environment.html@@@Java 开发环境搭建@@@获取驱动开发包 从 http://www.sequoiadb.com 下载对应操作系统版本的SequoiaDB驱动开发包；解压驱动开发包，从 driver/java/ 目录中获取sdbdriver.jar文件。 配置Eclipse开发环境 将SequoiaDB驱动开发包中的sdbdriver.jar文件拷贝到工程文件目录下（建议将其放置在其他所有依赖库目录，如lib...";
+fil["10"]= "topics/jbase_operations.html@@@Java 开发基础@@@这里介绍如何使用Java驱动接口编写使用SequoiaDB数据库的程序。为了简单起见，下面的示例不全部是完整的代码，只起示例性作用。可到安装目录 /client/samples/java 下获取相应的完整的代码。 更多查看Java API 数据操作 连接数据库：Connecting 如下是一个连接数据库，并列出所有集合信息的一个例子： import com.sequoiadb.base...";
+fil["11"]= "topics/joverview.html@@@Java 驱动@@@概述 SequoiaDB Java驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。 集群操作包括管理分区组和数据节点的各种操作，譬如启动、停止分区组，启动、停止数据节点，获取主从数据节点，集合分片等。 Jav...";
+fil["12"]= "topics/jsql.html@@@SQL to sequoiadb shell to Java@@@Sequoiadb的查询用json（bson）对象表示，下表以例子的形式显示了sql语句、sequoiadb shell语句和sequoiadb java驱动程序语法之间的对照。 SQL sequoiadb shell java Driver insert into students(a,b) values(1,-1) db.foo.bar.insert({a:1,b:-1}) bar...";
+fil["13"]= "topics/sql.html@@@SQL to sequoiadb shell to java@@@Sequoiadb的查询用json(bson)对象表示，下表以例子的形式显示了sql语句、sequoiadb shell语句和sequoiadb java驱动程序语法之间的对照。 SQL sequoiadb shell java Driver insert into students(a,b) values(1,-1) db.foo.bar.insert({a:1,b:-1}) bar...";
+fil["14"]= "topics/sql_en.html@@@SQL to sequoiadb shell to java@@@The query in Sequoiadb is in the format of json(bson). The following table shows examples comparing sql statements, sequoiadb shell statements and sequoiadb java driver application statements. SQL...";

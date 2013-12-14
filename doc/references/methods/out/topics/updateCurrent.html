@@ -1,0 +1,121 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="cursor.updateCurrent()"/>
+<meta name="description" content="cursor.updateCurrent(&lt;rule&gt;) 按指定的索引遍历结果集。 参数描述 参数名 参数类型 描述 是否必填 rule json对象 更新规则。记录按rule的内容更新。 是 格式 cursor.updateCurrent()的方法定义包含rule参数，它是一个json对象。 格式如下： {&#34;字段名1&#34;:{ &#34;更新符1&#34; :&#34;值1&#34;,&#34;字段名2&#34;:{&#34;更新2&#34;:&#34;值2&#34;},.. ..."/>
+<meta name="DC.Relation" scheme="URI" content="next.html"/>
+<meta name="DC.Relation" scheme="URI" content="size.html"/>
+<meta name="DC.Relation" scheme="URI" content="find.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="references_methods_updateCurrent"/>
+<link rel="stylesheet" type="text/css" href="../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../assets/webhelp_topic.css"/>
+<title>cursor.updateCurrent()</title>
+<script type="text/javascript" src="../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="references_methods_updateCurrent"><a name="references_methods_updateCurrent"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span></div></td><td width="50%"/></tr></tbody></table>
+
+  <h1 class="title topictitle1">cursor.updateCurrent()</h1>
+
+  <div class="body">
+    <div class="section"><h2 class="title sectiontitle">cursor.updateCurrent(&lt;rule&gt;)</h2>
+      <p class="p">按指定的索引遍历结果集。</p>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
+      <a name="references_methods_updateCurrent__references_method_hint_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_methods_updateCurrent__references_method_hint_table" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d21751e26" class="stentry">参数名</th>
+
+          <th valign="bottom" align="left" id="d21751e29" class="stentry">参数类型</th>
+
+          <th valign="bottom" align="left" id="d21751e32" class="stentry">描述</th>
+
+          <th valign="bottom" align="left" id="d21751e35" class="stentry">是否必填</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d21751e26" class="stentry">rule</td>
+
+          <td valign="top" headers="d21751e29" class="stentry">json对象      </td>
+
+          <td valign="top" headers="d21751e32" class="stentry">更新规则。记录按rule的内容更新。 </td>
+
+          <td valign="top" headers="d21751e35" class="stentry">是</td>
+
+        </tr>
+</table>
+
+      
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">格式</h2>
+      
+      <p class="p"> cursor.updateCurrent()的方法定义包含rule参数，它是一个json对象。</p>
+
+      <p class="p">格式如下： </p>
+
+      <div class="p">
+        <pre class="pre codeblock">{"字段名1":{<a class="xref" href="../../console/topics/console.html">"更新符1"</a>:"值1","字段名2":{"更新2":"值2"},...}</pre>
+
+      </div>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">示例</h2>
+      <ul class="ul">
+        <li class="li">
+          <p class="p">选择集合bar下所有age字段值大于10的记录。对返回游标指向的当前记录更新age字段的值。</p>
+
+          <div class="p"><pre class="pre codeblock">db.foo.bar.find({age:{<a class="xref" href="../../console/topics/gt.html">$gt</a>:10}}).updateCurrent({<a class="xref" href="../../console/topics/inc.html">$inc</a>:{age:5}})</pre>
+</div>
+
+        </li>
+
+      </ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
+<div><a class="navheader_parent_path" href="next.html" title="cursor.next()">cursor.next()</a></div>
+<div><a class="navheader_parent_path" href="size.html" title="cursor.size()">cursor.size()</a></div>
+<div><a class="navheader_parent_path" href="find.html" title="db.collectionspace.collection.find()">db.collectionspace.collection.find()</a></div>
+</div>
+</div>
+<div class="navfooter"><script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.3
+          
+    </div>
+</body>
+</html>

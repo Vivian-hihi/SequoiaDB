@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_yyl_fly_wj">
+  <title>Installing Linux version on SequoiaDB Server</title>
+  <body>
+    <section>
+      <title>Preparation before installation</title>
+      <ul>
+        <li>Ensure that the system support the requirement of installation, content and disk</li>
+        <li>Log in on the role of root to install SequoiaDB database service </li>
+        <li>Check the mapping between SequoiaDB package and OS</li>
+        <li>If you choose to install through GUI mode, please make sure that X server service is
+          running</li>
+        <li>Check whether the server has set hostname, and it can generate network connection with
+          other servers (For example, ssh hostname)</li>
+      </ul>
+    </section>
+    <note>SequoiaDB installation wizard doesn't support non-English characters.</note>
+    <section>
+      <title>Installation steps</title>
+      <p><b>Explaination</b></p>
+      <p>&nbsp;&nbsp;(1)Here we take sequoiadb-1.0.0-linux-x86_64-installer.run as the sample
+        installation package.</p>
+      <p>&nbsp;&nbsp;(2)The steps are introduced through command lines. In GUI installation, users
+        can install server program accoding to image wizard prompts.</p>
+      <p>&nbsp;&nbsp;If there are more than one server, users should repeatedly install server
+        program on them one by one according to the following steps.</p>
+      <ul>
+        <li>Refer <xref href="../../system_require/topics/software_en.dita">System configuration
+            requirement </xref> to configure Host Name and change the system kernel params</li>
+        <li>Run installation program<p>
+            <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text</codeblock>
+          </p></li>
+        <li>The system prompt you to choose wizard language <p>
+          <codeblock>Language Selection 
+Please select the installation language
+[1] English - English       
+[2] Simplified Chinese - 简体中文         
+Please choose an option [1] :2 </codeblock>
+          </p></li>
+        <li>Input 1 to choose English, then the system prompt you to input installation catalog
+            <p><codeblock>----------------------------------------------------------------------------
+Created with an evaluation version of BitRock InstallBuilder
+
+Welcome to the SequoiaDB Server Setup Wizard.
+
+----------------------------------------------------------------------------
+Please specify the directory where SequoiaDB Server will be installed.
+
+Installation Directory [/opt/sequoiadb]:</codeblock>
+          </p></li>
+        <li>After inputting the installation path(installed in <i>/opt/sequoiadb</i> in default)
+          .Then you are prompted to enter a user name which used to run <i>sequoiadb service</i><p>
+            <codeblock>Confiture user information
+Please insert the desired username and password
+User Name [sdbadmin]:</codeblock>
+          </p></li>
+        <li>Pressing <i>enter</i> after inputting the user name(creating <i>sdbadmin</i> user in
+          default).Then system prompts you to enter password and confirmed password
+        <p><codeblock>Password [********] :
+Re-enter [********] :</codeblock></p></li>
+        <li><p>After inputing password twice (The default password is sdbadmin), the system will
+            prompt you to set service
+            port</p><codeblock>----------------------------------------------------------------------------
+SDBCM Port
+
+SequoiaDB Cluster Manager port
+
+Port [50010]:
+
+----------------------------------------------------------------------------</codeblock><note>Service ports of
+            all servers should be the same.</note></li>
+        <li> Input port (The default port is 50010). Then affirm to install the
+            program<p><codeblock>----------------------------------------------------------------------------
+Setup is now ready to begin installing SequoiaDB Server on your computer.
+
+Do you want to continue? [Y/n]:</codeblock> </p></li>
+        <li><p>Input "Y" and press return key.  Then the system begin to install. After about 1
+        minute, installation is finiched</p><p><codeblock>Installing SequoiaDB Server to your computer,please wait for a moment.
+Installing 
+0% ______________ 50% ______________100%
+#########################################
+----------------------------------------------------------------------------
+SequoiaDB Server Program has been installed to your computer.</codeblock></p></li>
+      </ul>
+    </section>
+  </body>
+</topic>

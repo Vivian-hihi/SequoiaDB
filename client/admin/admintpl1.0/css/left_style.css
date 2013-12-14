@@ -1,0 +1,63 @@
+body{background:#ececec;color:#666; font-family:"宋体","Tahoma","arial"; font-size:12px; margin:0 auto;}
+ul,h1,h2,h3,h4,h5,h6,p,li{margin:0;padding:0;list-style:none;}
+form{margin:0;padding:0;}
+img{border:0;}
+a{text-decoration:none; color:#3e4145;}
+a:hover{color:#0072E3;}
+h3.protitle{font-size:14px;color:#003a75;line-height:150%;}
+.clear{ clear:both; height:0; line-height:0; font-size:0;}
+.line{height:7px;line-height:0;font-size:0;display:block;}
+.pd5{padding:5px;}
+.mgt20{margin-top:20px;}
+.lh{line-height:150%;}
+.red{color:red;}
+.hr1{height:1px;border-top:1px solid #d3d7d4;}
+.hr2{height:1px;border-top:3px solid #9D9D9D; width:100px; float:left; }
+
+ /* left.topbutton */
+.left_topbutton{color:#444444;font-weight:none;background:#E0E0E0;font-family:"微软雅黑","宋体","Tahoma","arial";font-size:12px; border:1px solid #9D9D9D;height:21px;border-bottom:none;float:left;margin-left:4px;padding:5px 5px 0px 5px;}
+.left_topbutton:hover{color:#444444;background:#ececec;font-size:12px;border:1px solid #999;border-bottom:none;float:left;margin-left:4px;padding:5px 5px 0px 5px;}
+.ltbcurrent{color:#000;font-weight:none;font-family:"微软雅黑","宋体","Tahoma","arial";background:#ececec;font-size:12px;border:1px solid #999;border-bottom:1px solid #ececec;height:21px;float:left;margin-left:4px;padding:5px 5px 0px 5px;}
+.ltbcurrent:hover{color:#000;}
+
+/* admin.left */
+.aleft{width:160px; border:0px solid #999;  margin:10px 0px 0px 0px;padding:10px 10px 10px 10px;float:left;}
+
+/* left.list */
+.emenu_nav{
+	width:170px;
+	float:left;
+	text-align:left;
+	background:#E0E0E0;
+	margin:10px auto;
+	}
+.par{text-decoration:none;padding-left:10px;line-height:20px;margin-left:0px;}
+.pson{border-left:0px #999 dashed;padding-left:10px;}	
+.pcurrent{background:#ccc;padding-left:10px;}
+.level1{
+	display:block;
+    color:#fff;
+	text-decoration:none;
+	border:0px #000 solid;
+	background:#ececec;
+	margin-bottom:0px;
+    padding-left:10px;
+    }
+.level1:hover{
+	display:block;
+    color:#000;
+	text-decoration:none;
+	border:0px #000 solid;
+	background:#FCFCFC;
+	margin-bottom:0px;
+    padding-left:10px;
+    }
+
+/* left_topbutton_div */
+.left_topbutton_div{height:27px; border-bottom:1px solid #bbb; margin:30px auto 10px auto;padding-left:0px; width:170px;  text-align:left;float:left;"}	
+
+/* topbutton */
+.topbutton_div{border-bottom:2px solid #dedede; margin:10px auto;padding-left:40px; width:600px;  text-align:left;float:left;}
+
+/* none */
+.none {display:none;}

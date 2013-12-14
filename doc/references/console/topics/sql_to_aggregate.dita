@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_wnq_qkz_pl">
+  <title>SQL to Aggregate 映射表</title>
+  <body>
+    <p>下表主要是描述SQL关键字与SequoiaDB聚集操作符的对照表。</p>
+    <simpletable>
+      <sthead>
+        <stentry>SQL关键字</stentry>
+        <stentry>SequoiaDB聚集操作符</stentry>
+      </sthead>
+      <strow>
+        <stentry>where</stentry>
+        <stentry>$match </stentry>
+      </strow>
+      <strow>
+        <stentry>group by</stentry>
+        <stentry>$group</stentry>
+      </strow>
+      <strow>
+        <stentry>having</stentry>
+        <stentry>$match</stentry>
+      </strow>
+      <strow>
+        <stentry>select</stentry>
+        <stentry>$project</stentry>
+      </strow>
+      <strow>
+        <stentry>order by</stentry>
+        <stentry>$sort</stentry>
+      </strow>
+      <strow>
+        <stentry>top</stentry>
+        <stentry>$limit</stentry>
+      </strow>
+      <strow>
+        <stentry>offset</stentry>
+        <stentry>$skip</stentry>
+      </strow>
+      <strow/>
+    </simpletable>
+    <p>下表主要描述标准SQL语句与SequoiaDB聚集语句之间的对照。</p>
+    <simpletable>
+      <sthead>
+        <stentry>SQL语句</stentry>
+        <stentry>SequoiaDB聚集语句</stentry>
+        <stentry>描述</stentry>
+      </sthead>
+      <strow>
+        <stentry>select product_id as p_id,price<p> from table </p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$project:{p_id:"$product_id",</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;price:1,</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;date:0}})</p>
+        </stentry>
+        <stentry>返回所有记录的product_id和price字段，其中product_id重命名为p_id，对记录中的date字段不返回。</stentry>
+      </strow>
+      <strow>
+        <stentry>select sum(price) as total <p> from table </p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:null,</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}})</p>
+        </stentry>
+        <stentry>对table中的字段price值求和，并重命名为total。</stentry>
+      </strow>
+      <strow>
+        <stentry>select product_id,sum(price) as total<p>from table group by
+          product_id</p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:"$product_id",</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;product_id:{$first:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}})</p>
+        </stentry>
+        <stentry>
+          对表table中的记录按product_id字段分组；
+          <p>求每个分组中字段price值的累加和，并重命名为total。</p>
+        </stentry>
+      </strow>
+      <strow>
+        <stentry>select product_id,sum(price) as total<p>from table group by product_id </p><p>order
+            by total</p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:"$product_id",</p>
+          <p>&nbsp;&nbsp;&nbsp;product_id:{$first:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}},</p>
+          <p>&nbsp;{$sort:{total:1}})</p>
+        </stentry>
+        <stentry>
+          对表table中的记录按product_id字段分组；
+          <p>求每个分组中字段price值的累加和，并重命名为total；</p>
+          <p>对结果集按字段名total的值升序排序。</p>
+        </stentry>
+      </strow>
+      <strow>
+        <stentry>
+          select product_type_id,product_id,
+          <p>sum(price) as total from table </p>
+          <p>group by product_type_id,product_id</p>
+        </stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:{product_type_id:"$product_type_id",product_id:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;product_id:{$first:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}})</p>
+        </stentry>
+        <stentry>
+          对表table中的记录按首先按product_type_id字段分组，再按product_id字段分组；
+          <p>求每个分组中字段price值的累加和，并重命名为total；</p>
+        </stentry>
+      </strow>
+      <strow>
+        <stentry>select product_id,sum(price) as total<p>from table group by product_id
+            </p><p>having total>1000</p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:"$product_id",</p>
+          <p>&nbsp;&nbsp;&nbsp;product_id:{$first:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}},</p>
+          <p>&nbsp;{$match:{total:{$gt:1000}}})</p>
+        </stentry>
+        <stentry>
+          对表table中的记录按product_id字段分组；
+          <p>求每个分组中字段price值的累加和，并重命名为total；</p>
+          <p>只返回满足条件total字段值大于1000的分组。</p>
+        </stentry>
+      </strow>
+      <strow>
+        <stentry>select product_id,sum(price) as total<p>from table where
+            product_type_id=1001</p><p>group by product_id </p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$match:{product_type_id:1001}},</p>
+          <p>&nbsp;{$group:{_id:"$product_id",</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;product_id:{$first:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}})</p>
+        </stentry>
+        <stentry>选择符合条件product_type_id=1001的记录；<p>对选出的记录按product_id进行分组；</p><p>对每个分组中的price字段值就和，并重命名为total。</p></stentry>
+      </strow>
+      <strow>
+        <stentry>select product_id,sum(price) as total<p>from table where product_type_id=1001 group
+            by product_id </p><p>having total>1000</p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$match:{product_type_id:1001}},</p>
+          <p>&nbsp;{$group:{_id:"$product_id",</p>
+          <p>&nbsp;&nbsp;&nbsp;product_id:{$first:"$product_id"},</p>
+          <p>&nbsp;&nbsp;&nbsp;total:{$sum:"$price"}}},</p>
+          <p>&nbsp;{$match:{total:{$gt:1000}}})</p>
+        </stentry>
+        <stentry>
+          选择符合条件product_type_id=1001的记录；
+          <p>对选出的记录按product_id进行分组；</p>
+          <p>对每个分组中的price字段值就和，并重命名为total。</p>
+          <p>只返回满足条件total字段值大于1000的分组。</p>
+        </stentry>
+      </strow>
+      <strow>
+        <stentry>select top 10 * from table </stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:null}},</p>
+          <p>&nbsp;{$limit:10})</p>
+        </stentry>
+        <stentry>返回结果集中的前十条记录</stentry>
+      </strow>
+      <strow>
+        <stentry>select * from table offset 50 rows <p>fetch next 10</p></stentry>
+        <stentry>
+          db.cs.table.aggregate(
+          <p>&nbsp;{$group:{_id:null}},</p>
+          <p>&nbsp;{$skip:50},</p>
+          <p>&nbsp;{$limit:10})</p>
+        </stentry>
+        <stentry>跳过结果集中前50条记录之后，返回接下来的10条记录。</stentry>
+      </strow>
+      <strow/>
+    </simpletable>
+  </body>
+</topic>

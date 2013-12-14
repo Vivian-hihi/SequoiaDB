@@ -1,0 +1,171 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="C++ Driver"/>
+<meta name="description" content="C++ client-driven provide interfaces of database operations and cluster operations.Database operations include database connection、create or drop users、data CRUD、create or drop indexes and ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../../developement/application/CPP/topics/cpp_en.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_kmr_n2s_wj_en"/>
+<link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
+<title>C++ Driver</title>
+<script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_kmr_n2s_wj_en"><a name="topic_kmr_n2s_wj_en"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../../../developement/application/CPP/topics/cpp_en.html" title="C++ Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C++ Driver</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application_en.html" title="SequoiaDB Application Development">SequoiaDB Application Development</a> / <a class="navheader_parent_path" href="../../../../developement/application/CPP/topics/cpp_en.html" title="C++ Driver">C++ Driver</a></td></tr></tbody></table>
+
+  <h1 class="title topictitle1">C++ Driver</h1>
+
+  <div class="body">
+    <p class="p">C++ client-driven provide interfaces of database operations and cluster operations.Database
+      operations include database connection、create or drop users、data CRUD、create or drop indexes
+      and collectionspace and collections、get or reset snapshots,etc.cluster operations contain all
+      kinds of managing replicaset and data node,such as starting or stopping replicasets、starting
+      or stopping data nodes、getting master nodes、slave nodes or collection shardings,etc.</p>
+
+    <p class="p"><a class="xref" href="../../../../cpp/html/index.html">For more please refer to online C++ API</a>。</p>
+
+    <div class="section"><h2 class="title sectiontitle">C++ Class Instances</h2>C++ Client-Driven has two class instances.One is used
+      to operate database,the other is used to operate cluster.<ul class="ul">
+        <li class="li">Database operation instance <p class="p">There are 3 degrees of data in
+            SequoiaDB:</p>
+<p class="p"> 1) Database</p>
+<p class="p"> 2) Collection space</p>
+<p class="p"> 3) Collection</p>
+<p class="p"> So in
+            client, there are 3 Handles representing connection,collectionspace and collection. The
+            other Handle represents cursor: </p>
+<table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
+              <td valign="top" class="stentry">Sdb </td>
+
+              <td valign="top" class="stentry"> Database class </td>
+
+              <td valign="top" class="stentry"> it represents a stand-alone database connection  </td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" class="stentry">sdbCollectionSpace </td>
+
+              <td valign="top" class="stentry"> CollectionSpace class </td>
+
+              <td valign="top" class="stentry"> it represents a stand-alone collection space </td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" class="stentry">sdbCollection</td>
+
+              <td valign="top" class="stentry">Collection class</td>
+
+              <td valign="top" class="stentry"> it represents a stand-alone collection  </td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" class="stentry">sdbCursor</td>
+
+              <td valign="top" class="stentry"> Cursor class</td>
+
+              <td valign="top" class="stentry"> it represents a result set of a query </td>
+
+            </tr>
+</table>
+<p class="p"> C++ client-driven application operate with different instances.For
+            example,reading data will use Cursor instance,then creating collectionspace uses
+            database connection instance. </p>
+</li>
+
+        <li class="li"> Cluster Operation Instance <p class="p">There are two degrees of cluster operation in
+            SequoiaDB:</p>
+<p class="p">  1) ReplicaSets</p>
+<p class="p">  2) Data Node</p>
+<div class="note note"><span class="notetitle">Note:</span> 
+            <p class="p">ReplicaSets contain three tpyes:Coord ReplicaSets,Catalog ReplicaSet,Data ReplicaSet.
+            </p>
+
+          </div>
+<p class="p"> ReplicaSet instances and Data Node instances can be represented by the
+            following two types of classes. </p>
+<div class="p">
+            <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
+                <td valign="top" class="stentry"> sdbReplicaSet </td>
+
+                <td valign="top" class="stentry"> ReplicaSet class</td>
+
+                <td valign="top" class="stentry"> It represents a stand-alone ReplicaSet </td>
+
+              </tr>
+<tr class="strow">
+                <td valign="top" class="stentry"> sdbReplicaNode </td>
+
+                <td valign="top" class="stentry"> data node clsaa </td>
+
+                <td valign="top" class="stentry"> It represents a stand-alone Data Node  </td>
+
+              </tr>
+</table>
+
+          </div>
+ Cluster-related operations need to use ReplicaSet instance and Data Node instance.
+            <p class="p">The sdbReplicaSet instants is to manage replicasets,including starting and stopping
+            replicasets,getting the status,name-information and number-information of nodes in the
+            replicaset. </p>
+<p class="p">The sdbReplicaNode instants is to manage Data Nodes,including
+            starting and stopping the specified data node,getting the specified data node instants
+            and maste-slave data node instants and address-information of data node. </p>
+</li>
+
+      </ul>
+</div>
+
+    <div class="section"><h2 class="title sectiontitle">Error Information</h2> Every function has a returned-value.If a function is
+      successfully invoked,then return SDB_OK,else return error information.If the returned-value is
+      less than 0,it is database error,if greater than 0,is system error.For the database errors,you
+      can find the error code in the file of <em class="ph i">ossErr.h</em>.For the system errors,error code can be
+      finded in the file of <em class="ph i">/usr/include/errno.h</em>.It can also use <em class="ph i">getErr()</em> method to
+      get error information in Sequoiadb shell.
+        <pre class="pre codeblock">(nofile):0 uncaught exception: -34
+&gt; getErr(-34)
+collection space not exist</pre>
+<p class="p">In
+        the client-driven application,you can find the error information in the file <em class="ph i">ossErr.h</em>
+        by the function returned-value<em class="ph i"> rc</em>.SDB_OK stands for operating successfully.
+      </p>
+<pre class="pre codeblock">INT32 rc = SDB_OK ;
+rc = sdbDisconnect( connection ) ;</pre>
+</div>
+
+  </div>
+
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../../developement/application/CPP/topics/cpp_en.html" title="C++ Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C++ Driver</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+          
+    </div>
+</body>
+</html>

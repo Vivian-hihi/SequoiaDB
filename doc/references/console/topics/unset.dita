@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_console_unset">
+  <title >$unset</title>
+  <body>
+    <section><title>语法</title>
+      <p>{$unset:{&lt;字段名1>:"",&lt;字段名2>:"",...}}</p>
+    </section>
+    <section><title>描述</title>
+      <p>$unset操作是删除集合中指定的字段名。如果记录中没有指定的字段名，跳过。</p>
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>删除集合bar下记录的name字段和age字段，如果记录中没有字段name或age，跳过，不做任何处理。</p>
+          <p><codeblock>db.foo.bar.update({$unset:{name:"",age:""}})</codeblock></p>
+        </li>
+        <li>
+          <p>$unset删除数组对象中的元素。如有一条记录：{arr:[1,2,3],name:"Tom"}。使用$unset删除第二个元素操作如下：</p>
+          <p><codeblock>db.foo.bar.update({$unset:{"arr.2":""}})</codeblock></p>
+          <p>此操作后，记录更新为{arr:[1,null,3],name:"Tom"}</p>
+        </li>
+        <li>
+          <p>$unset删除嵌套对象中的字段。如有一条记录：{content:{ID:1,type:"system",position:"manager"},name:"Tom"}，content是一个嵌套对象，它有ID、type、position三个字段。使用$unset删除type字段操作如下：</p>
+          <p><codeblock>db.foo.bar.update({$unset:{"content.type":""}})</codeblock></p>
+          <p>此操作后，记录更新为{content:{ID:1,position:"manager"},name:"Tom"}</p>
+        </li>
+      </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="gset.dita" format="dita" type="topic"></link>
+    <link href="gaddtoset.dita" format="dita" type="topic"></link>
+    <link href="../../methods/topics/dbupdate.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_qh4_p4y_wj">
+  <title>Configuration and startup of standalone mode</title>
+  <body>
+    <p><b>Explanation:</b>
+    </p>
+    <p>&nbsp;&nbsp;(1) This section will take the easiest deployment as an example to introduce
+      configuration and startup steps.</p>
+    <p>&nbsp;&nbsp;(2) The following manipulation supposes that SequoiaDB is installed under the
+      catalog "/opt/sequoiadb".</p><p>&nbsp;&nbsp;(3) All of  "sdb" service processes run as "sdbadmin", please ensure all of the
+      database files have the "sdbadmin" read and write permissions.</p>
+    <ul>
+      <li>switch to "sdbadmin"<codeblock>su sdbadmin </codeblock></li>
+      <li>Enter installation catalog (The following content supposes that the default installation
+        path is "/opt/sequoiadb")<p>
+          <codeblock>cd/opt/sequoiadb</codeblock>
+        </p></li>
+      <li>Create a catalog to store configuration
+          file<p><codeblock>mkdir –p /opt/sequoiadb/conf/local/50000</codeblock> (Here 50000 is the
+          port of database service)</p></li>
+      <li><p>Copy the sample configuraiton of standalone mode</p> <p>
+          <codeblock>cp /opt/sequoiadb/conf/samples/sdb.conf.standalone /opt/sequoiadb/conf/local/50000/sdb.conf</codeblock>
+        </p></li>
+      <li>Open the configuration file<p>
+          <codeblock>vi /opt/sequoiadb/conf/local/50000/sdb.conf</codeblock>
+        </p></li>
+      <li>Alter nessesary configuration parameters <p>
+          <codeblock># database path         </codeblock>
+        </p><p><codeblock>dbpath=/opt/sequoiadb/database/standalone</codeblock>The path of database.
+          It is configurated according to requirement, and ensure that the path exists (Please do
+          not manually create it! ) </p></li>
+      <li><p>Type in ":wq" to save and exit.</p> </li>
+      <li>Create the path to store data
+          file<p><codeblock>mkdir –p /opt/sequoiadb/database/standalone </codeblock>This path is the
+          same as that in previous step</p></li>
+      <li><p>Start database process</p> <p>
+          <codeblock>/opt/sequoiadb/bin/sdbstart –c /opt/sequoiadb/conf/local/50000</codeblock>
+        </p></li>
+      <li>Finish configuration and startup of database</li>
+    </ul>
+  </body>
+</topic>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
+<topic id="sequoiadb_introduction">
+  <title>SequoiaDB Database Description</title>
+  <body>
+    <p>SequoiaDB database is a kind of new corporation distributed non-relation database. It helps
+      corporation to reduce IT cost, and provides a steady, dependable, efficient and flexible
+      underlying platform.</p>
+    <section>
+      <title>Advantage</title>
+      <ul id="sequoiadb_introduction_advantages">
+        <li>Through non-structure storage and distributed processing, SequoiaDB provides near-linear
+          scalability without caring about underlying storage limit.</li>
+        <li>SequoiaDB provides high-useability accurate to sharding level, prevents the system from
+          going down caused by problems of server, machine room or human false, and keeps data
+          availibale on line in 24x7 hours.</li>
+        <li>SequoiaDB provides complete corporation functionalities and enables users to
+          conveniently manage high-concurrent tasks and big data analysis programs.</li>
+        <li>Hasing strengthened non-relation data module, SequoiaDB helps corporations to rapidly
+          develop and deploy applications in order to achieve the high-flexiblity of
+          applications.</li>
+        <li>SequoiaDB guarantees data eventual consistency, which eradicates data loss. </li>
+        <li>In SequoiaDB, on-line applications and big data analysis programs share the same
+          background database at the same time. In SequoiaDB, data analysis programs and on-line
+          application in the same system are invisible to each other because of read/write
+          splitting.</li>
+      </ul>
+    </section>
+  </body>
+</topic>

@@ -1,0 +1,29 @@
+BEAM_VERSION=2.2.0
+BEAM_ROOT=/home/florian/beam/2.1
+BEAM_BUILD_ROOT=/home/florian/beam/2.1
+BEAM_DIRECTORY_WRITE_INNOCENTS=
+BEAM_DIRECTORY_WRITE_ERRORS=
+
+-- ERROR1     /*uninitialized*/     >>>ERROR1_foo_60c7889b2b608
+"example.c", line 12: uninitialized `c'
+ONE POSSIBLE PATH LEADING TO THE ERROR:
+ "example.c", line 6: allocating `c'
+ "example.c", line 9: the if-condition is false
+ "example.c", line 12: getting the value of `c'
+
+ VALUES AT THE END OF THE PATH:
+  p != 0
+
+
+
+-- ERROR2     /*operating on NULL*/     >>>ERROR2_foo_af57809a2b615
+"example.c", line 13: invalid operation involving NULL pointer
+ONE POSSIBLE PATH LEADING TO THE ERROR:
+ "example.c", line 9: the if-condition is true (used as evidence that error is possible)
+ "example.c", line 12: the if-condition is true
+ "example.c", line 13: invalid operation `[]' involving NULL pointer `p'
+
+ VALUES AT THE END OF THE PATH:
+  c = 1
+  p = 0
+  a <= 0

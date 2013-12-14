@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="database_import_en">
+  <title>Data Migration — Import</title>
+  <body>
+    <section>
+      <title>sdbimprt</title>
+      <p>sdbimprt  is a  import tool in SequoiaDB database, it can achieve from a JSON format or a
+        CSV format data stored file import into SequoiaDB database.</p>
+      <p>The record of JSON format must meet the json definition:Left and right curly braces ({})as
+        a record delimiter; and the string data type must be contained in doublequotation marks; and
+        escape character is defined as the backslash(\).</p>
+      <p>CSV is called for short Comma-Separated Value, each record is separate by 0x0D in
+        default, and fields separated by commas. Users can specify the delimiter between fields, as
+        well as the records. Delimiters defined(only support ASCII characters):</p>
+      <p>
+        <simpletable>
+          <sthead>
+            <stentry>usage</stentry>
+            <stentry>default</stentry>
+            <stentry>be equipped</stentry>
+          </sthead>
+          <strow>
+            <stentry>string delimiter</stentry>
+            <stentry> "</stentry>
+            <stentry>yes </stentry>
+          </strow>
+          <strow>
+            <stentry>character delimiter</stentry>
+            <stentry> ,</stentry>
+            <stentry>yes</stentry>
+          </strow>
+          <strow>
+            <stentry>record delimiter</stentry>
+            <stentry> '\n'(0X0D) </stentry>
+            <stentry>yes</stentry>
+          </strow>
+        </simpletable>
+      </p>
+    </section>
+    <section>
+      <title>Options</title>
+      <simpletable>
+        <sthead>
+          <stentry>Param</stentry>
+          <stentry>Description</stentry>
+        </sthead>
+        <strow>
+          <stentry>--help</stentry>
+          <stentry>return the basic help and usage information.</stentry>
+        </strow>
+        <strow>
+          <stentry>--hostname,-h                </stentry>
+          <stentry>import data from SequoiaDB of the specified hostname.In default,the
+              <b>sdbexprt</b> try to connect to local hostname.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --svcname,-s
+          </stentry>
+          <stentry>specify port.In default,the <b>sdbimprt</b> try to connect to the host which port
+            number is 50000.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --type
+          </stentry>
+          <stentry>specify the format of import data.It can be CSV or JSON.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --file
+          </stentry>
+          <stentry>specify the name of file want to import.</stentry>
+        </strow>
+        <strow>
+          <stentry>--delchar,-a</stentry>
+          <stentry>specify the character delimiter." " " is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --delfield,-e
+          </stentry>
+          <stentry>specify the field delimiter. "," is default,"csv" format effective. </stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --delrecord,-r
+          </stentry>
+          <stentry>specify the record delimiter."\n" is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --csname,-c
+          </stentry>
+          <stentry>specify the collectionspace name of exported data.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --clname,-l
+          </stentry>
+          <stentry>specify the collection name of exported data.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --fields
+          </stentry>
+          <stentry>Specify import data field names."csv" format effective. </stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --headerline
+          </stentry>
+          <stentry>Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --sparse
+          </stentry>
+          <stentry>Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --extra
+          </stentry>
+          <stentry>Specify the import data, automatically add value."false" is default,"csv" format effective.</stentry>
+        </strow>        
+      </simpletable>
+    </section>
+    <section>
+      <title>Usage</title>
+      <p>In the following sample,sdbimprt will import data into local database which port is
+        50000,and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import type
+        is csv,import file is<i> test.csv</i>.</p>
+      <codeblock>sdbimprt –h localhost –s 50000 -–type csv –-file test.csv -c foo -l bar</codeblock>
+    </section>
+    <section>
+      <title>sdbload</title>
+      <p>sdbload is a batch import tool in SequoiaDB database, it can achieve from a JSON format
+        data stored file import into Sequoiadb database. </p>
+      <p>The record of JSON format must meet the json definition:Left and right curly braces ({})as
+        a record delimiter; and the string data type must be contained in doublequotation marks;and
+        escape character is defined as the backslash(\).。</p>
+    </section>
+    <section>
+      <title>Options</title>
+      <simpletable>
+        <sthead>
+          <stentry>Params</stentry>
+          <stentry>Description</stentry>
+        </sthead>
+        <strow>
+          <stentry>--help</stentry>
+          <stentry>return the basic help and usage information</stentry>
+        </strow>
+        <strow>
+          <stentry>--hostname,-h</stentry>
+          <stentry>import data from SequoiaDB of the specified hostname.In default,the
+            <b>sdbload</b> try to connect to local hostname.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --svcname,-s
+          </stentry>
+          <stentry>specify port.In default,the <b>sdbload</b> try to connect to the host which port
+            number is 50000.</stentry>
+        </strow>
+        <strow>
+          <stentry>--delchar,-a</stentry>
+          <stentry>specify the character delimiter." " " is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --delfield,-e
+          </stentry>
+          <stentry>specify the field delimiter. "," is default,"csv" format effective. </stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --delrecord,-r
+          </stentry>
+          <stentry>specify the record delimiter."\n" is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --csname,-c
+          </stentry>
+          <stentry>specify the collectionspace name of exported data.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --clname,-l
+          </stentry>
+          <stentry>specify the collection name of exported data.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --file
+          </stentry>
+          <stentry>specify the imported file name. </stentry>
+        </strow>        
+        <strow>
+          <stentry>
+            --model
+          </stentry>
+          <stentry>specify the data capture mode, the default "io","io" or "hdfs" pattern can be.</stentry>
+        </strow>
+        <strow>
+          <stentry>--libpath</stentry>
+          <stentry>Specified load library path, hafs mode is active.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --sourcehost
+          </stentry>
+          <stentry>Specifies the data source to connect the server's host name, hafs mode is active.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --sourceport
+          </stentry>
+          <stentry>Specifies the data source to connect the service side of the port, hdfs mode is active.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --sourceuser
+          </stentry>
+          <stentry>specify the collection data source server user name, hdfs mode is active.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --type 
+          </stentry>
+          <stentry>specify the import data file type, default "csv", "json" or "csv" type can be.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --fields 
+          </stentry>
+          <stentry>specify the import data filed names."csv" formats.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --headerline
+          </stentry>
+          <stentry>Specifies whether the first row of imported data as field names."false" is default,"csv" format effective. </stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --sparse
+          </stentry>
+          <stentry>Specify the import data, automatically add the field name."ture" is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --extra
+          </stentry>
+          <stentry>Specify the import data, automatically add value."false" is default,"csv" format effective.</stentry>
+        </strow>   
+      </simpletable>
+    </section>
+    <section>
+      <title>Usage</title>
+      <p> In the following sample,sdbload will import data into local database which port is
+        50000,and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import file
+          is<i> test.json</i> with asynchronous loading.</p>
+      <codeblock>sdbload –h localhost -s 50000 –-file test.json –c foo –l bar –type json</codeblock>
+    </section>
+  </body>
+</topic>

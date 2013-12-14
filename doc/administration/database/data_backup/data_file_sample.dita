@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_4kp_kv2_gl">
+  <title>例程</title>
+  <body>
+    <ol>
+      <li><p>在编目节点中找到相应节点的物理机与服务名</p></li>
+      <li>打开该节点的配置文件，找到其数据库路径（dbpath）与索引路径（indexpath）。默认情况下索引路径与数据库路径相同 <p>
+          <codeblock>$ cat /opt/sequoiadb/conf/local/51000/sdb.conf
+svcname=51000
+dbpath=/tmpfs/data1
+diaglevel=5
+transactionon=true
+role=data
+catalogaddr=vmsvr1-rhel-x64:60003</codeblock>
+        </p></li>
+      <li>连接到协调节点，并停止数据节点
+        <codeblock>$ ~/sequoiadb/bin/sdb
+>db=new Sdb('192.168.20.35',50000)
+192.168.20.35:50000
+>rg=db.getRG('foo')
+foo
+>node=rg.getNode('vmsvr1-rhel-x64:51000')
+vmsvr1-rhel-x64:51000
+>node.stop()</codeblock></li>
+      <li>归档数据库路径与索引路径中的文件
+        <codeblock>$ tar -zcvf vmsvr1-rhel-x64.50000.2013_08_21.tar.gz /tmpfs/data1/*.dat /tmpfs/data1/*.idx
+/tmpfs/data1/foo.dat
+/tmpfs/data1/one.dat
+/tmpfs/data1/SYSTEMP.dat
+/tmpfs/data1/foo.idx
+/tmpfs/data1/one.idx
+/tmpfs/data1/SYSTEMP.idx</codeblock></li>
+      <li>重新启动节点
+        <codeblock>$ ~/sequoiadb/bin/sdb 
+>db=new Sdb('192.168.20.35',50000)
+192.168.20.35:50000
+>rg=db.getRG('foo')
+foo
+>node=rg.getNode('vmsvr1-rhel-x64:51000')
+vmsvr1-rhel-x64:51000
+>node.start()</codeblock></li>
+    </ol>
+    <p>对于协调节点可以使用同样方式备份。</p>
+    <note>用户必须在归档数据与索引文件前，确保该节点被完全停止，否则备份文件可能出现损坏。</note>
+  </body>
+</topic>

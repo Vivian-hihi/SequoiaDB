@@ -1,0 +1,20 @@
+//List of files which are indexed.
+fl = new Array();
+fl["0"]= "configuration_start/topics/cluster.html";
+fl["1"]= "configuration_start/topics/configuration_start.html";
+fl["2"]= "configuration_start/topics/stanalone.html";
+fl["3"]= "deploy/topics/available.html";
+fl["4"]= "deploy/topics/easiest.html";
+fl["5"]= "deploy/topics/overview.html";
+fl["6"]= "deploy/topics/performance.html";
+fl["7"]= "server_installation/topics/linux.html";
+fl["8"]= "server_installation/topics/server_installation.html";
+fl["9"]= "system_require/topics/hardware.html";
+fl["10"]= "system_require/topics/os.html";
+fl["11"]= "system_require/topics/software.html";
+fl["12"]= "system_require/topics/system_require.html";
+fl["13"]= "topics/install_media.html";
+fl["14"]= "topics/install_overview.html";
+fl["15"]= "topics/start_web.html";
+fl["16"]= "uninstall/topics/uninstall.html";
+var doStem = false

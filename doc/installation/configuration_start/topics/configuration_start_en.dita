@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_1hg_44y_wj">
+  <title>System configuration and startup</title>
+  <body>
+    <p>Catalog:</p>
+    <p>
+      <xref href="stanalone_en.dita">Configuration and startup of standalone mode</xref></p>
+    <p>
+      <xref href="cluster_en.dita">Configuration and startup of cluster  mode</xref></p>
+  </body>
+</topic>

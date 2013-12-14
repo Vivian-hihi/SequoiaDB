@@ -1,0 +1,131 @@
+<!--@param ${test.environment} : the control the test Environment -->
+<!--@param ${WORKSPACE}: The path where the deploy directory -->
+<!--@param ${ci.script.file.path} : the ci-script file path -->
+<!--@param ${deploy.conffile.wildcard}: deploy config file wildcard. just for debug -->
+<!--@param ${is.test}: the flag for whether execute test, if set false, then just deploy. just for debug -->
+<!--@param ${BUILD_NUMBER} : what number is it build -->
+<project name="deploy-test-all" default="copy-test-log">
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+
+	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
+		<classpath>
+			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/" includes="*.jar" />
+			<pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
+			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" />
+		</classpath>
+	</taskdef>
+	<hostinfo prefix="host" />
+	<property name="deploy.config.path" value="${ci.script.file.path}/deploy-config" />
+	<property file="${ci.script.file.path}/ci.test.properties" />
+	<property name="release.path" value="${WORKSPACE}/release" />
+	<property file="${release.path}/build.version" />
+	<property name="is.test" value="true" />
+
+	<target name="tar" depends="" >
+		<echo message="tar the test file in deploy-test-all.xml" />
+		<tar destfile="${WORKSPACE}/${deploy.tar.file.name}" basedir="${WORKSPACE}" includes="deploy/**/*" compression="gzip" />
+	</target>
+	
+	<target name="clean" depends="tar">
+		<delete dir="${WORKSPACE}/reports" />
+		<mkdir dir="${WORKSPACE}/reports" />
+		<delete dir="${WORKSPACE}/${host.NAME}-copy-log" />
+		<mkdir dir="${WORKSPACE}/${host.NAME}-copy-log" />
+	</target>
+
+	<target name="deploy-test-all" depends="clean">
+		<echo message="Begin deploy and test all ...deploy.config.path= ${deploy.config.path}" />
+
+		<property name="deploy.conffile.wildcard" value="*" />
+
+		<foreach target="deploy-one-case-and-test" param="deploy.case.fullname">
+			<path>
+				<fileset dir="${deploy.config.path}" includes="${test.environment}-${deploy.conffile.wildcard}.xml" />
+			</path>
+
+			<param name="deploy.file.fullname" value="${WORKSPACE}/${deploy.tar.file.name}" />
+		</foreach>
+	</target>
+
+	<target name="clean-deploy-evn-before-test" depends="">
+		<echo message="Begin to clean test env..." />
+
+		<parallel>
+			<ant antfile="deploy-software-in-host.xml" dir="." target="uninstall-software" inheritAll="false">
+				<property name="deploy.host.name" value="${test.machine.no1.basic}" />
+				<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." target="uninstall-software" inheritAll="false">
+				<property name="deploy.host.name" value="${test.machine.no2.basic}" />
+				<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			</ant>
+			<ant antfile="deploy-software-in-host.xml" dir="." target="uninstall-software" inheritAll="false">
+				<property name="deploy.host.name" value="${test.machine.no3.basic}" />
+			</ant>
+		</parallel>
+	</target>
+
+	<target name="deploy-one-case-and-test" depends="clean-deploy-evn-before-test">
+
+
+		<echo message="Begin to deploy one case and test.... deploy file=${deploy.case.fullname},deploy.file.fullname=${deploy.file.fullname}" />
+
+		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="deploy" inheritAll="true">
+			<property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-tasks" />
+			<property name="install.path" value="${install.path}" />
+			<property name="install.package.fullname" value="${release.path}/${BUILD.INSTALL.FILENAME}" />
+			<property name="deploy.file.fullname" value="${deploy.file.fullname}" />
+			<property name="deploy.path" value="${WORKSPACE}/deploy" />
+			<property name="USE.MONGODB" value="${USE.MONGODB}" />
+		</ant>
+
+		<if>
+			<equals arg1="${is.test}" arg2="true" />
+			<then>
+				
+				<!--mkdir dir="${WORKSPACE}/${host.NAME}-copy-log/${deploy.case.fullname}" /-->
+				<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="test" inheritAll="true">
+					<property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-tasks" />
+					<property name="install.path" value="${install.path}" />
+					<property name="deploy.path" value="${WORKSPACE}/deploy" />
+					<property name="test.reports.path" value="${WORKSPACE}/reports" />
+					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
+					<property name="WORKSPACE" value="${WORKSPACE}" />
+				</ant>
+			</then>
+		</if>
+
+		<echo message="Deploy ${deploy.case.fullname} complete. " />
+
+	</target>
+	<target name="copy-test-log" depends="deploy-test-all" >
+		<echo message="tarPaht is : ${WORKSPACE}/${host.NAME}-copy-log" />
+		<echo message="saveHostName is ${target.deploy_tar_gz.ip}" />
+		<echo message="fileHostName is ${host.NAME}" />
+		<!--sdbCopyAndTar saveHostName="${target.deploy_tar_gz.ip}" fileHostName="${host.NAME}" tarPath="${WORKSPACE}/${host.NAME}-copy-log" savePath="${copy.log.path}" buildNum="${BUILD_NUMBER}"/-->
+		<!--move -->
+		
+		<echo message="tar basedir=${WORKSPACE}/${host.NAME}-copy-log   destfile=${WORKSPACE}/${host.NAME}-copy-log.${BUILD_NUMBER}" />
+		<tar basedir="${WORKSPACE}" destfile="${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz" compression="gzip" includes="${host.NAME}-copy-log/**" />
+		<property environment="env" />
+		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz TODIRECTORY ${copy.log.path} TOMACHINE ${target.deploy_tar_gz.ip}" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz TODIRECTORY ${copy.log.path} TOMACHINE ${target.deploy_tar_gz.ip}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+		
+		<echo message="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND find ${copy.log.path} -atime +3 -exec rm {} \; WORKDIR ${copy.log.path} WAIT 30m" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND find ${copy.log.path} -atime +3 -exec rm {} \; WORKDIR ${copy.log.path} WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+		
+	</target>
+
+</project>

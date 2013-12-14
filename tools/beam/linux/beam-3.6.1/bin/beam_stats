@@ -1,0 +1,225 @@
+#!/usr/bin/env perl
+#
+# Licensed Materials - Property of IBM - RESTRICTED MATERIALS OF IBM
+#
+# IBM Confidential - OCO Source Materials
+#
+# Copyright (C) 2002-2010 IBM Corporation. All rights reserved.
+#
+# US Government Users Restricted Rights - Use, duplication or disclosure
+# restricted by GSA ADP Schedule Contract with IBM Corp
+#
+# The source code for this program is not published or otherwise divested
+# of its trade secrets, irrespective of what has been deposited within
+# the U.S. Copyright Office.
+#
+#
+#    AUTHOR:
+#
+#        Daniel Brand
+#
+#    DESCRIPTION:
+#
+#        This script takes 1 parameter -- a file of BEAM statistics.
+#        It then prints statistics of how many functions were analyzed 
+#        in what way. Statistics are written to stdout.
+#        
+
+use Getopt::Long;
+
+$prog_name    = "beam_stats";
+$prog_version = "1.1";
+$prog_author  = "Daniel Brand";
+
+$usage=<<EOF;
+USAGE
+
+  $prog_name
+
+    [--version]               print version number and exit
+
+    infile                    input .stats file
+
+EOF
+
+#
+# Check command line 
+#
+GetOptions("by-file", "by-type", "uniq", "stat", "version") || die $usage;
+
+if($opt_version) {
+  print STDOUT "$prog_name $prog_version\n";
+  exit(0);
+}
+
+$num_arg = $#ARGV + 1;
+
+if ($num_arg == 0) {
+  die $usage;
+}
+
+my $stats_file = $ARGV[0];   # the input parameter
+
+my $line_count      = 0;        # sum of number of lines for all functions
+my $file_count      = 0;	# number of files processed
+my $func_count      = 0;	# number of functions processed
+
+my $parsed_func     = 0;        # number of functions parsed
+my $parsed_lines    = 0;        # number of lines in functions parsed
+
+my $syntactic_func  = 0;	# number of functions analyzed syntactically
+my $syntactic_lines = 0;	# number of lines in functions analyzed syntactically
+
+my $semantic_func   = 0;	# number of functions analyzed semantically
+my $semantic_lines  = 0;	# number of lines in functions analyzed semantically
+
+my $total_time      = 0;        # sum of times for all files
+my $highest_mem     = 0;        # highest memory usage over all file
+my %semantic_time;              # time for each proc
+
+my %file_processed_freq;        # number of times each file is processed
+my $file_processed_multiply;    # an example of the file processed more than once
+
+
+open (INFILE, $stats_file) or die "File ", $stats_file,  " does not exist.\n";
+
+while (<INFILE>) {              # for each line of the file of statistics
+  
+  # Consider lines of the form
+  # FUNC=unsigned int csFlc(OsTCB *pTCBIn)#PARSED=1#FUNC_LINES=43#SYNTACTIC_TIME=0#SEMANTIC_TIME=1
+  
+  # Negative SEMANTIC_TIME means that was not analyzed semantically
+  if (/FUNC=(.*)#PARSED=(\d)#FUNC_LINES=(\d*)#SYNTACTIC_TIME=(\d*)#SEMANTIC_TIME=(-.*)/) {
+      $func_count++;
+      $line_count += $3;
+      if ($2 eq "1") {          # was parsed sucessfully
+        $parsed_func++;
+        $parsed_lines += $3;
+        if ($4 > 0) {
+          $syntactic_func++;
+          $syntactic_lines += $3;
+        }
+      }
+    }
+  else
+    {# Positive SEMANTIC_TIME means that was analyzed semantically
+    if (/FUNC=(.*)#PARSED=(\d)#FUNC_LINES=(\d*)#SYNTACTIC_TIME=(\d*)#SEMANTIC_TIME=(\d*)/) {
+        $func_count++;
+        $line_count += $3;
+        if ($2 eq "1") {          # was parsed sucessfully
+          $parsed_func++;
+          $parsed_lines += $3;
+          if ($4 > 0) {
+            $syntactic_func++;
+            $syntactic_lines += $3;
+          }
+          if ($5 > 0) {# semantic time of 0 means never run
+            $semantic_func++;
+            $semantic_lines += $3;
+            $semantic_time{$1} = $5;
+           }
+        }
+      }
+  else
+    {# No time means that user does not want time
+    if (/FUNC=(.*)#PARSED=(\d)#FUNC_LINES=(\d*)/) {
+        $func_count++;
+        $line_count += $3;
+        if ($2 eq "1") {          # was parsed sucessfully
+          $parsed_func++;
+          $parsed_lines += $3;
+          $syntactic_func++;
+          $syntactic_lines += $3;
+          $semantic_func++;
+          $semantic_lines += $3;
+        }
+      }
+  }
+  }
+  
+  # Consider lines of the form
+  # FILE=csFlcNvBlock.c#NUM_FUNC=14#NUM_PARSED_FUNC=14#FILE_LINES=2676#FILE_TIME=1#FILE_MEM=1234
+  
+  if (/FILE=(.*)#NUM_FUNC=(\d*)#NUM_PARSED_FUNC=(\d*)#FILE_LINES=(\d*)#FILE_TIME=(\d*)#FILE_MEM=(\d*)/) {
+      $file_count++;
+      
+      $file_processed_freq{$1}++;
+      if ($file_processed_freq{$1} > 1) {
+        $file_processed_multiply = $1;
+      }
+      
+      $total_time += $5;
+      if ($highest_mem < $6) {
+        $highest_mem = $6;
+      }
+    }
+    else
+    {
+    if (/FILE=(.*)#NUM_FUNC=(\d*)#NUM_PARSED_FUNC=(\d*)#FILE_LINES=(\d*)/) {
+       $file_count++;
+      }
+    }
+  }
+close INFILE;
+
+
+# Calculate Function Coverage -- percentage of functions parsed.
+
+my $parse_coverage = 100;       # parsed_func / all functions encountered in all files
+my $syntactic_coverage = 100;   # remains 100 because every function wanted undergoes syntactic checking
+my $semantic_coverage = 100;    # semantic_func / syntactic_func (i.e. analyzed / wanted to analyze)
+if ($func_count > 0) {
+  $parse_coverage    = 100 * $parsed_func   / $func_count;
+}
+if ($syntactic_func > 0) {
+  $semantic_coverage = 100 * $semantic_func / $syntactic_func
+}
+
+# Calculate Line Coverage -- percentage of lines parsed.
+
+my $line_parse_coverage = 100;       # parsed_lines / all lines encountered in all files
+my $line_syntactic_coverage = 100;   # remains 100 because every line wanted undergoes syntactic checking
+my $line_semantic_coverage = 100;    # semantic_lines / syntactic_lines (i.e. analyzed / wanted to analyze)
+if ($line_count > 0) {
+  $line_parse_coverage    = 100 * $parsed_lines   / $line_count;
+}
+if ($syntactic_lines > 0) {
+  $line_semantic_coverage = 100 * $semantic_lines / $syntactic_lines;
+}
+
+
+# We assume that syntactic analysis never misses a function.
+printf "-------------- begin Summary ---------------------------\n";
+printf "                  File Count: %10d\n",        $file_count;
+printf "              Function Count: %10d\n",        $func_count;
+printf "               Lines of Code: %10d\n",        $line_count;
+printf "           Level of Analysis: %10s %10s %10s\n",    "Parse",                     "Syntactic",         "Semantic";
+
+printf "        Code Lines Submitted: %10d %10d %10d\n",    $line_count,                 $syntactic_lines,    $syntactic_lines;
+printf "         Code Lines Analyzed: %10d %10d %10d\n",    $parsed_lines,               $syntactic_lines,    $semantic_lines;
+printf "           Code Lines Missed: %10d %10d %10d\n",    $line_count - $parsed_lines, $0,                  $syntactic_lines - $semantic_lines;
+printf "         Code Lines Coverage: %10d%%%10d%%%10d%%\n",$line_parse_coverage,        $line_syntactic_coverage, $line_semantic_coverage;
+
+printf "         Functions Submitted: %10d %10d %10d\n",    $func_count,                 $syntactic_func,     $syntactic_func;
+printf "          Functions Analyzed: %10d %10d %10d\n",    $parsed_func,                $syntactic_func,     $semantic_func;
+printf "            Functions Missed: %10d %10d %10d\n",    $func_count - $parsed_func,  0,                   $syntactic_func - $semantic_func;
+printf "           Function Coverage: %10d%%%10d%%%10d%%\n",$parse_coverage,             $syntactic_coverage, $semantic_coverage;
+
+printf "                 Max. Memory: %10d MB\n",           $highest_mem/1000000;
+printf "                  Total Time: %10d sec",            $total_time;
+if ($total_time > 60) {
+  printf " (about";
+  
+  my $hours = $total_time/3600;
+  if ($hours >= 1) {printf " %d hour", $hours;}
+  if ($hours >= 2) {printf "s";}
+  
+  my $remaining_minutes = ($total_time % 3600)/60;
+  printf " %d min)", $remaining_minutes;
+}
+print "\n";
+
+print "\nPlease see https://w3.eda.ibm.com/beam/beam_stats.html for more\n";
+print "info on how to interpret the results.\n";
+
+print "-------------- end Summary ---------------------------\n";

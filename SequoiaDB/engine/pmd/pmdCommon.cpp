@@ -1,0 +1,89 @@
+/*******************************************************************************
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = pmdMain.cpp
+
+   Descriptive Name = Process MoDel Main
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains main function for SequoiaDB,
+   and all other process-initialization code.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "pmdCommon.hpp"
+#include "ossUtil.hpp"
+#include "ossIO.hpp"
+#include "pmdOptionsMgr.hpp"
+#include "pdTrace.hpp"
+#include "pmdTrace.hpp"
+
+namespace engine
+{
+   //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBLDFULLPATH, "pmdBuildFullPath" )
+   INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
+                           UINT32 fullSize, CHAR *full )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_PMDBLDFULLPATH ) ;
+      if ( ossStrlen( path ) + ossStrlen( name )
+           + 2 > fullSize )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossMemset( full, 0, fullSize );
+      ossStrcpy( full, path ) ;
+      if ( '\0' != path[0] &&
+           0 != ossStrcmp(&path[ossStrlen(path)-1],OSS_FILE_SEP) )
+      {
+         ossStrncat( full, OSS_FILE_SEP, 1 ) ;
+      }
+      ossStrncat( full, name, ossStrlen( name ) ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB_PMDBLDFULLPATH, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   SDB_ROLE pmdGetRoleEnum( const CHAR *role )
+   {
+      if ( NULL == role )
+         return SDB_ROLE_STANDALONE;
+      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_DATA ) )
+         return SDB_ROLE_DATA;
+      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_CATALOG ) )
+         return SDB_ROLE_CATALOG;
+      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_AUTH ) )
+         return SDB_ROLE_AUTH;
+      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_COORD ) )
+         return SDB_ROLE_COORD;
+      else
+         return SDB_ROLE_STANDALONE;
+   }
+
+}
+

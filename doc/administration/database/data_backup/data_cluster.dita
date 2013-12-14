@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_1tl_2r2_gl">
+  <title>集群模式</title>
+  <body>
+    <section>
+      <title>数据节点与编目节点</title>
+      <p>集群模式下，用户可以选择停止所有数据复制组后，将每一个复制组中的原主节点的数据库目录与索引目录中的所有文件归档。每个复制组中的主节点可以在编目信息的SYSCAT.SYSNODES集合中找到，为PrimaryNode字段。</p>
+      <p>如果用户希望在不中断服务的情况下备份，可以选择停止每个复制组中的一个备节点，并将该节点中的数据库目录与索引目录中的所有文件归档。备份完成后重新启动该节点，该节点会自动与组内其它节点同步。</p>
+      <p>在指定配置文件的情况下，数据库目录与索引目录为该节点对应的配置文件中的dbpath与indexpath所指定的目录。默认情况下indexpath与dbpath相同。</p>
+    </section>
+    <section>
+      <title>协调节点</title>
+      <p>由于协调节点不包含任何用户数据，因此不需要进行数据备份。</p>
+    </section>
+    <p><xref href="data_file_sample.dita">更多信息</xref></p>
+  </body>
+</topic>

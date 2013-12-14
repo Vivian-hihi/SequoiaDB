@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="developement_console_knack">
+  <title>使用shell的窍门</title>
+  <body>
+    <p>sequoiadb shell本身内置了帮助文档，通过help命令可以查看。
+      <codeblock>> help
+function () {
+    println("   var db = new Sdb('localhost', 50000)   connect to database");
+    println("   db.help()                              help on db methods");
+    println("   db.cs.help()                           help on collection space                                                                                                                      cs");
+    println("   db.cs.cl                               access collection cl on c                                                                                                                     ollection space cs");
+    println("   db.cs.cl.help()                        help on collection cl");
+    println("   db.cs.cl.find()                        list all records");
+    println("   db.cs.cl.find({a:1})                   list records where a=1");
+    println("   print(x), println(x)                   print out x");
+    println("   getErr(ret)                        print error description for r                                                                                                                     eturn code");
+    println("   quit                                   exit");
+    }</codeblock></p>
+    <ul>
+      <li>Database Help <p>查看数据库级别帮助使用命令：</p><codeblock>db.help()</codeblock></li>
+      <li>CollectionSpace
+          Help<p>查看集合空间下的方法帮助使用命令：<codeblock>db.&lt;collectionspace>.help()</codeblock></p></li>
+      <li>Collection Help<p>
+          查看集合下的方法帮助使用命令：<codeblock>db.&lt;collectionspace>.&lt;collection>.help()</codeblock></p></li>
+      <li>Cursor Help<p>在shell命令中，当使用<xref href="../../../references/methods/topics/find.dita"
+            >find()</xref>方法执行数据库读操作时，可是使用各种游标方法和javascript方法来处理find()方法返回的结果集。</p><p>查看游标处理方法帮助使用命令：<codeblock>db.&lt;collectionspace>.&lt;collection>.find().help()</codeblock></p></li>
+    <li>Methods Help
+        <p>此外还有一个了解函数功能的技巧，就是在输入的时候不要输入括号，这样就会显示该函数的javascript源代码。如：</p><codeblock>> db.foo.bar.find
+function (query, select) {
+    return new SdbQuery(this, query, select);
+    }</codeblock></li>
+    </ul>
+    
+    
+    
+    <p>查看shell提供的所有自动生成的javascript函数API文档，可访问http://</p>
+  </body>
+</topic>

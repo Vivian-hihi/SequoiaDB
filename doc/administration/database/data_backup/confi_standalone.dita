@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_slw_gq2_gl">
+  <title>独立模式</title>
+  <body>
+    <p>配置文件存在于用户指定目录下的sdb.conf目录。如果用户不指定则不存在。</p>
+    <p>备份独立模式的配置文件，只需要归档指定目录下的sdb.conf文件。</p>
+  </body>
+</topic>

@@ -1,0 +1,545 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<base target="contentwin"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<link href="assets/jquery.treeview.css" type="text/css" rel="stylesheet"/><link href="assets/webhelp_toc.css" type="text/css" rel="stylesheet"/><link href="assets/jquery.treeview.addon.css" type="text/css" rel="stylesheet"/><title>SequoiaDB Information Center</title>
+<script type="text/javascript" src="assets/jquery-1.3.2.js"><!----></script><script type="text/javascript" src="assets/jquery-ui-1.8.2.custom.min.js"><!----></script><script type="text/javascript" src="assets/jquery.treeview.js"><!----></script><script type="text/javascript" src="search/htmlFileList.js"><!----></script><script type="text/javascript" src="search/htmlFileInfoList.js"><!----></script><script type="text/javascript" src="search/nwSearchFnt.js"><!----></script><script type="text/javascript" src="search/stemmers/en_stemmer.js"><!----></script><script type="text/javascript" src="search/index-1.js"><!----></script><script type="text/javascript" src="search/index-2.js"><!----></script><script type="text/javascript" src="search/index-3.js"><!----></script><script src="assets/localization/en-us.js" type="text/javascript"><!----></script><script src="assets/webhelp.js" type="text/javascript"><!----></script><script src="assets/browserDetect.js" type="text/javascript"><!----></script></head>
+<body onload="javascript:hideDiv('searchDiv','displayContentDiv');"><h1>SequoiaDB Information Center</h1>
+<div id="contentAndSearchDiv"><div id="divContent" style="display:inline"><!----></div>
+            |
+            <div id="divSearch" style="display:inline"><!----></div></div><div id="searchDiv"><form name="searchForm" action="javascript:void(0)" onsubmit="Verifie('searchForm');">Keywords: <!----><input type="text" id="textToSearch" name="textToSearch" class="textToSearch" size="30"/><!----><input type="button" value="Search" name="searchButton" class="searchButton" onclick="Verifie('searchForm');"/></form><div id="searchResults"><!----></div></div><div id="displayContentDiv"><div id="tab_nav_tree_placeholder"><div id="tab_nav_tree" class="visible_tab">
+<ul id="tree">
+<li id="d11e5"><a href="introduction/topics/introduction_en.html">SequoiaDB Database Description</a>
+<ul>
+<li id="d11e12"><a href="introduction/topics/features_en.html">Features</a></li>
+<li id="d11e19"><a href="introduction/topics/datamodel_en.html">Data Model</a></li>
+<li id="d11e26"><a href="introduction/topics/infrastructure_en.html">Infrastructure</a></li>
+</ul>
+</li>
+<li id="d11e34"><a href="administration/concepts/topics/concepts_en.html">Database Concept</a>
+<ul>
+<li id="d11e41"><a href="administration/concepts/database/topics/database_en.html">Database</a>
+<ul>
+<li id="d11e48"><a href="administration/concepts/database/topics/document_en.html">Document</a>
+<ul>
+<li id="d11e55"><a href="administration/concepts/database/topics/array_en.html">Array</a></li>
+<li id="d11e62"><a href="administration/concepts/database/topics/objectid_en.html">Object ID</a></li>
+<li id="d11e69"><a href="administration/concepts/database/topics/date_en.html">Date</a></li>
+<li id="d11e76"><a href="administration/concepts/database/topics/timestamp_en.html">Timeline</a></li>
+<li id="d11e83"><a href="administration/concepts/database/topics/bindata_en.html">Bindata</a></li>
+<li id="d11e90"><a href="administration/concepts/database/topics/regex_en.html">Regex</a></li>
+</ul>
+</li>
+<li id="d11e97"><a href="administration/concepts/database/topics/collection_en.html">Collection</a></li>
+<li id="d11e104"><a href="administration/concepts/database/topics/collectionspace_en.html">Collection Space</a></li>
+<li id="d11e111"><a href="administration/concepts/database/topics/databaseserver_en.html">Database server</a></li>
+<li id="d11e118"><a href="administration/concepts/database/topics/index_en.html">Index</a></li>
+<li id="d11e125"><a href="administration/concepts/database/topics/aggregate_en.html">aggregate</a></li>
+<li id="d11e132"><a href="administration/concepts/database/topics/transaction_en.html">Transaction</a></li>
+<li id="d11e139"><a href="administration/concepts/database/topics/consistency_en.html">Eventually Consistent</a></li>
+<li id="d11e146"><a href="administration/concepts/database/topics/read_write_en.html">Read/Write Splitting</a></li>
+</ul>
+</li>
+<li id="d11e153"><a href="administration/concepts/cluster/topics/cluster_en.html">Cluster</a>
+<ul>
+<li id="d11e160"><a href="administration/concepts/cluster/topics/mode_en.html">Mode</a></li>
+<li id="d11e167"><a href="administration/concepts/cluster/topics/node_en.html">Node</a>
+<ul>
+<li id="d11e174"><a href="administration/concepts/cluster/topics/catalog_node_en.html">Catalog Node</a>
+<ul>
+<li id="d11e181"><a href="administration/concepts/cluster/topics/SYSCOLLECTIONS_en.html">SYSCOLLECTIONS Collection</a></li>
+<li id="d11e188"><a href="administration/concepts/cluster/topics/SYSCOLLECTIONSPACES_en.html">SYSCOLLECTIONSPACES Collection</a></li>
+<li id="d11e195"><a href="administration/concepts/cluster/topics/SYSNODES_en.html">SYSNODES Collection</a></li>
+<li id="d11e202"><a href="administration/concepts/cluster/topics/SYSTASKS_en.html">SYSTASKS Collection</a></li>
+<li id="d11e209"><a href="administration/concepts/cluster/topics/SYSUSRS_en.html">SYSUSRS Collection</a></li>
+<li id="d11e216"><a href="administration/concepts/cluster/topics/STOREPROCEDURES_en.html">STOREPROCEDURES Collection</a></li>
+</ul>
+</li>
+<li id="d11e223"><a href="administration/concepts/cluster/topics/coord_node_en.html">Coord Node</a></li>
+<li id="d11e230"><a href="administration/concepts/cluster/topics/data_node_en.html">Data Node</a></li>
+</ul>
+</li>
+<li id="d11e237"><a href="administration/concepts/cluster/topics/replset_en.html">Repleset</a>
+<ul>
+<li id="d11e244"><a href="administration/concepts/cluster/topics/vote_en.html">Vote</a></li>
+<li id="d11e251"><a href="administration/concepts/cluster/topics/replicate_en.html">Replicate</a></li>
+<li id="d11e258"><a href="administration/concepts/cluster/topics/sync_en.html">Full Sync</a></li>
+</ul>
+</li>
+<li id="d11e265"><a href="administration/concepts/cluster/topics/sharding_en.html">Sharding</a>
+<ul>
+<li id="d11e272"><a href="administration/concepts/cluster/topics/shardingkey_en.html">Sharding Key</a></li>
+<li id="d11e279"><a href="administration/concepts/cluster/topics/sharded_collection_en.html">Sharded collection</a></li>
+<li id="d11e286"><a href="administration/concepts/cluster/topics/sharding_index_en.html">Sharding Index</a></li>
+<li id="d11e293"><a href="administration/concepts/cluster/topics/task_en.html">Background Task</a></li>
+<li id="d11e300"><a href="administration/concepts/cluster/topics/split_en.html">Split</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e308"><a href="installation/topics/install_overview_en.html">Install Overview</a>
+<ul>
+<li id="d11e315"><a href="installation/deploy/topics/overview_en.html">Overview on Database Deployment</a>
+<ul>
+<li id="d11e322"><a href="installation/deploy/topics/easiest_en.html">Easiest deployment</a></li>
+<li id="d11e329"><a href="installation/deploy/topics/available_en.html">High-availability Deployment</a></li>
+<li id="d11e336"><a href="installation/deploy/topics/performance_en.html">High-performance Deployment</a></li>
+</ul>
+</li>
+<li id="d11e343"><a href="installation/system_require/topics/system_require_en.html">System Requirement of SequoiaDB Installation</a>
+<ul>
+<li id="d11e350"><a href="installation/system_require/topics/hardware_en.html">Hardware Requirement</a></li>
+<li id="d11e357"><a href="installation/system_require/topics/os_en.html">Supported Operating System</a></li>
+<li id="d11e364"><a href="installation/system_require/topics/software_en.html">Software Requirement</a></li>
+</ul>
+</li>
+<li id="d11e371"><a href="installation/topics/install_media_en.html">Install media</a></li>
+<li id="d11e378"><a href="installation/server_installation/topics/server_installation_en.html">Installation of SequoiaDB Server</a>
+<ul>
+<li id="d11e385"><a href="installation/server_installation/topics/linux_en.html">Installing Linux version on SequoiaDB Server</a></li>
+</ul>
+</li>
+<li id="d11e392"><a href="installation/topics/startweb_en.html">Start SequoiaDB web service</a></li>
+<li id="d11e399"><a href="installation/configuration_start/topics/configuration_start_en.html">System configuration and startup</a>
+<ul>
+<li id="d11e406"><a href="installation/configuration_start/topics/stanalone_en.html">Configuration and startup of standalone mode</a></li>
+<li id="d11e413"><a href="installation/configuration_start/topics/cluster_en.html">Configuration and startup of cluster mode</a></li>
+</ul>
+</li>
+<li id="d11e420"><a href="installation/uninstall/topics/uninstall_en.html">Uninstall</a></li>
+</ul>
+</li>
+<li id="d11e428"><a href="administration/topics/administration_en.html">DataBase Administration</a>
+<ul>
+<li id="d11e435"><a href="administration/database/topics/database_en.html">DataBase Management</a>
+<ul>
+<li id="d11e442"><a href="administration/database/topics/runtime_configuration_en.html">Database Runtime Configuration</a></li>
+<li id="d11e449"><a href="administration/database/topics/monitoring_en.html">Monitoring</a>
+<ul>
+<li id="d11e456"><a href="administration/database/topics/snapshot/snapshot_en.html">Snapshot</a>
+<ul>
+<li id="d11e463"><a href="administration/database/topics/snapshot/contexts_en.html">Context Snapshot</a></li>
+<li id="d11e470"><a href="administration/database/topics/snapshot/contexts_current_en.html">Current Contexts Snapshot</a></li>
+<li id="d11e477"><a href="administration/database/topics/snapshot/sessions_en.html">Session Snapshot</a></li>
+<li id="d11e484"><a href="administration/database/topics/snapshot/sessions_current_en.html">Current Session Snapshot</a></li>
+<li id="d11e491"><a href="administration/database/topics/snapshot/collections_en.html">Collection Snapshot</a></li>
+<li id="d11e498"><a href="administration/database/topics/snapshot/collectionspaces_en.html">Collection Space Snapshot</a></li>
+<li id="d11e505"><a href="administration/database/topics/snapshot/database_en.html">Database Snapshot</a></li>
+<li id="d11e512"><a href="administration/database/topics/snapshot/system_en.html">Operating System Snapshot</a></li>
+<li id="d11e519"><a href="administration/database/topics/snapshot/catalog_en.html">Catalog Snapshot</a></li>
+</ul>
+</li>
+<li id="d11e526"><a href="administration/database/topics/list/list_en.html">List</a>
+<ul>
+<li id="d11e533"><a href="administration/database/topics/list/list_contexts_en.html">Context List</a></li>
+<li id="d11e540"><a href="administration/database/topics/list/list_contexts_current_en.html">Current Contexts List</a></li>
+<li id="d11e547"><a href="administration/database/topics/list/list_sessions_en.html">Session List</a></li>
+<li id="d11e554"><a href="administration/database/topics/list/list_sessions_current_en.html">Current Session List</a></li>
+<li id="d11e561"><a href="administration/database/topics/list/list_collections_en.html">Collections List</a></li>
+<li id="d11e568"><a href="administration/database/topics/list/list_collectionspace_en.html">Collection Space List</a></li>
+<li id="d11e575"><a href="administration/database/topics/list/list_storageunits_en.html"> Storage Units List</a></li>
+<li id="d11e582"><a href="administration/database/topics/list/list_groups_en.html"> Replset list</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e589"><a href="administration/database/topics/EDU_en.html">Engine Dispatchable Unit</a></li>
+<li id="d11e596"><a href="administration/database/topics/log_en.html">Log</a>
+<ul>
+<li id="d11e603"><a href="administration/database/topics/synlog_en.html">Sync-Log</a></li>
+</ul>
+</li>
+<li id="d11e610"><a href="administration/database/topics/backup_recovery_en.html">Backup And Recovery</a>
+<ul>
+<li id="d11e617"><a href="administration/database/data_backup/data_backup_en.html">Data Backup</a>
+<ul>
+<li id="d11e624"><a href="administration/database/data_backup/confi_backup_en.html">Backup Configuration Files</a>
+<ul>
+<li id="d11e631"><a href="administration/database/data_backup/confi_standalone_en.html">Standalone Mode</a></li>
+<li id="d11e638"><a href="administration/database/data_backup/confi_cluster_en.html">Cluster Mode</a></li>
+<li id="d11e645"><a href="administration/database/data_backup/confi_sample_en.html">Sample</a></li>
+</ul>
+</li>
+<li id="d11e652"><a href="administration/database/data_backup/data_file_backup_en.html">Data Files Backup</a>
+<ul>
+<li id="d11e659"><a href="administration/database/data_backup/data_standalone_en.html">Standalone Mode</a></li>
+<li id="d11e666"><a href="administration/database/data_backup/data_cluster_en.html">Cluster Mode</a></li>
+<li id="d11e673"><a href="administration/database/data_backup/data_file_sample_en.html">Sample</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e680"><a href="administration/database/data_recovery/data_recovery_en.html">Data Recovery</a>
+<ul>
+<li id="d11e687"><a href="administration/database/data_recovery/standalone_en.html">Standalone Mode</a></li>
+<li id="d11e694"><a href="administration/database/data_recovery/cluster_en.html">Cluster Mode</a></li>
+<li id="d11e701"><a href="administration/database/data_recovery/sample_en.html">Sample</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e708"><a href="administration/database/database_tool/topics/database_tool_en.html">DataBase Tool</a>
+<ul>
+<li id="d11e715"><a href="administration/database/database_tool/topics/import_en.html">Data Migration — Import</a></li>
+<li id="d11e722"><a href="administration/database/database_tool/topics/export_en.html">Data Migration — Export</a></li>
+<li id="d11e729"><a href="administration/database/database_tool/topics/sdbinspt_en.html">Database detecting tool — sdbinspt</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e736"><a href="administration/cluster_management/topics/cluster_management_en.html">Cluster Management</a>
+<ul>
+<li id="d11e743"><a href="administration/cluster_management/topics/create_host_en.html">Add master to cluster</a></li>
+<li id="d11e750"><a href="administration/cluster_management/topics/cata_management/topics/cata_management_en.html">Catalog Shardings Management</a>
+<ul>
+<li id="d11e757"><a href="administration/cluster_management/topics/cata_management/topics/cata_group_en.html">Create New Catalog Sharding</a></li>
+<li id="d11e764"><a href="administration/cluster_management/topics/cata_management/topics/cata_node_en.html">Create New Node In Catalog Sharding</a></li>
+</ul>
+</li>
+<li id="d11e771"><a href="administration/cluster_management/topics/data_management/topics/data_management_en.html">Data Sharding Management</a>
+<ul>
+<li id="d11e778"><a href="administration/cluster_management/topics/data_management/topics/data_group_en.html">Create New Data Sharding</a></li>
+<li id="d11e785"><a href="administration/cluster_management/topics/data_management/topics/data_node_en.html">Create New Nodes In Data Sharding</a></li>
+</ul>
+</li>
+<li id="d11e792"><a href="administration/cluster_management/topics/create_coordnode_en.html">Create coord node</a></li>
+<li id="d11e799"><a href="administration/cluster_management/topics/sample_en.html">Sample</a></li>
+</ul>
+</li>
+<li id="d11e806"><a href="administration/operation_maintain/topics/operation_maintain_en.html">Operation and Maintain</a>
+<ul>
+<li id="d11e813"><a href="administration/operation_maintain/topics/cluster_start_stop_en.html">Start and stop the cluster</a>
+<ul>
+<li id="d11e820"><a href="administration/operation_maintain/topics/cluster_start_en.html">Cluster start</a></li>
+<li id="d11e827"><a href="administration/operation_maintain/topics/cluster_stop_en.html">Cluster stop</a></li>
+</ul>
+</li>
+<li id="d11e834"><a href="administration/operation_maintain/topics/data_backup_en.html">Data backup</a></li>
+<li id="d11e841"><a href="administration/operation_maintain/topics/search_en.html">View backup information</a></li>
+<li id="d11e848"><a href="administration/operation_maintain/topics/data_recovery_en.html">Data Recovery</a></li>
+<li id="d11e855"><a href="administration/operation_maintain/topics/fault_recovery_en.html">Recovery</a>
+<ul>
+<li id="d11e862"><a href="administration/operation_maintain/topics/catalog_en.html">Coord node</a></li>
+<li id="d11e869"><a href="administration/operation_maintain/topics/datanode_en.html">Data node</a></li>
+<li id="d11e876"><a href="administration/operation_maintain/topics/coord_en.html">Catalog node</a></li>
+</ul>
+</li>
+<li id="d11e883"><a href="administration/operation_maintain/topics/monitor_en.html">Monitor</a>
+<ul>
+<li id="d11e890"><a href="administration/operation_maintain/topics/monitor_node_en.html">Monitoring node status</a></li>
+<li id="d11e897"><a href="administration/operation_maintain/topics/monitor_cluster_en.html">Monitoring Cluster</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e904"><a href="administration/security/topics/security_en.html">System Security</a></li>
+</ul>
+</li>
+<li id="d11e912"><a href="hadoop_integration/hadooproot_en.html">Hadoop Integration</a>
+<ul>
+<li id="d11e919"><a href="hadoop_integration/topics/hadoop_en.html">SequoiaDB with Hadoop deployment</a></li>
+<li id="d11e926"><a href="hadoop_integration/topics/map_reduce_en.html">With Map/Reduce integration</a></li>
+<li id="d11e933"><a href="hadoop_integration/hive_integration/hiveinter_en.html">Integration with Hive</a>
+<ul>
+<li id="d11e940"><a href="hadoop_integration/hive_integration/topics/Sequoiadbhive_en.html">SequoiaDB list of the supported versions Hive</a></li>
+<li id="d11e947"><a href="hadoop_integration/hive_integration/topics/configmethod_en.html">Configuration method</a></li>
+<li id="d11e954"><a href="hadoop_integration/hive_integration/use/use_en.html">Use</a>
+<ul>
+<li id="d11e961"><a href="hadoop_integration/hive_integration/use/create_en.html">Create a table based SequoiaDB</a></li>
+<li id="d11e968"><a href="hadoop_integration/hive_integration/use/insert_en.html">Importing data form HDFS files to SequoiaDB table</a></li>
+<li id="d11e975"><a href="hadoop_integration/hive_integration/use/inquiry_en.html">Query Data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e982"><a href="hadoop_integration/pig/pig_en.html">Integration with Pig</a></li>
+</ul>
+</li>
+<li id="d11e991"><a href="developement/topics/developement_en.html">Development Instruction</a>
+<ul>
+<li id="d11e998"><a href="developement/console/topics/console_en.html">SequoiaDB shell</a>
+<ul>
+<li id="d11e1005"><a href="developement/console/topics/shell_en.html">SequoiaDB Shell Introduction </a></li>
+<li id="d11e1012"><a href="developement/console/topics/knack_en.html">Tips when using shell</a></li>
+</ul>
+</li>
+<li id="d11e1019"><a href="developement/basics/topics/shell_en.html">Basic Manipulation in Shell</a>
+<ul>
+<li id="d11e1026"><a href="developement/basics/topics/create_en.html">Create</a></li>
+<li id="d11e1033"><a href="developement/basics/topics/read_en.html">Read</a></li>
+<li id="d11e1040"><a href="developement/basics/topics/update_en.html">Update</a></li>
+<li id="d11e1047"><a href="developement/basics/topics/delete_en.html">Delete</a></li>
+</ul>
+</li>
+<li id="d11e1054"><a href="developement/application/topics/application_en.html">SequoiaDB Application Development</a>
+<ul>
+<li id="d11e1061"><a href="developement/application/C/topics/c_en.html">C Driver</a>
+<ul>
+<li id="d11e1068"><a href="developement/application/C/topics/c_client_en.html">C Driver</a></li>
+<li id="d11e1075"><a href="developement/application/C/topics/cbuilt_en.html">C Environment to Build</a></li>
+<li id="d11e1082"><a href="developement/application/C/topics/c_driver_en.html">C Development Foundation</a></li>
+<li id="d11e1089"><a href="developement/application/C/topics/csql_en.html">SQL to sequoiadb shell to C</a></li>
+<li id="d11e1096"><a href="developement/application/C/topics/C_api_en.html">C API</a></li>
+</ul>
+</li>
+<li id="d11e1103"><a href="developement/application/CPP/topics/cpp_en.html">C++ Driver</a>
+<ul>
+<li id="d11e1110"><a href="developement/application/CPP/topics/cpp_client_en.html">C++ Driver</a></li>
+<li id="d11e1117"><a href="developement/application/CPP/topics/cpp_built_en.html">C++ Environment to Build</a></li>
+<li id="d11e1124"><a href="developement/application/CPP/topics/cpp_driver_en.html">C++ Development Foundation</a></li>
+<li id="d11e1131"><a href="developement/application/CPP/topics/cpp_sql_en.html">SQL to sequoiadb shell to C++</a></li>
+<li id="d11e1138"><a href="developement/application/CPP/topics/cpp_api_en.html">C++ API</a></li>
+</ul>
+</li>
+<li id="d11e1145"><a href="developement/application/java/topics/java_en.html">Java Driver</a>
+<ul>
+<li id="d11e1152"><a href="developement/application/java/topics/joverview_en.html">Java Driver</a></li>
+<li id="d11e1159"><a href="developement/application/java/topics/java_environment_en.html">Java Environment to Build</a></li>
+<li id="d11e1166"><a href="developement/application/java/topics/jbase_operations_en.html">Java Development Foundation</a></li>
+<li id="d11e1173"><a href="developement/application/java/topics/jsql_en.html">SQL to sequoiadb shell to Java</a></li>
+<li id="d11e1180"><a href="developement/application/java/topics/java_api_en.html">Java API</a></li>
+</ul>
+</li>
+<li id="d11e1187"><a href="developement/application/PHP/topics/php_en.html">PHP Driver</a>
+<ul>
+<li id="d11e1194"><a href="developement/application/PHP/topics/php_start_en.html">PHP Dirver</a></li>
+<li id="d11e1201"><a href="developement/application/PHP/topics/phpenvironment_en.html">PHP Environment to Build</a></li>
+<li id="d11e1208"><a href="developement/application/PHP/topics/pbase_operations_en.html">PHP Development Foundation</a></li>
+<li id="d11e1215"><a href="developement/application/PHP/topics/phpsql_en.html">SQL to sequoiadb shell to PHP</a></li>
+<li id="d11e1222"><a href="developement/application/PHP/topics/php_api_en.html">PHP API</a></li>
+</ul>
+</li>
+<li id="d11e1229"><a href="developement/application/CS/topics/cs_en.html">C# Driver</a>
+<ul>
+<li id="d11e1236"><a href="developement/application/CS/topics/csdriver_en.html">C# Driver</a></li>
+<li id="d11e1243"><a href="developement/application/CS/topics/csbuild_en.html">C# Environment to Build</a></li>
+<li id="d11e1250"><a href="developement/application/CS/topics/csdb_en.html">C# Development Foundation</a></li>
+<li id="d11e1257"><a href="developement/application/CS/topics/ssql_en.html">SQL to sequoiadb shell to C#</a></li>
+<li id="d11e1264"><a href="developement/application/CS/topics/cs_api_en.html">C# API</a></li>
+</ul>
+</li>
+<li id="d11e1271"><a href="developement/application/C/topics/bson_en.html">BSON Interface to C</a></li>
+<li id="d11e1278"><a href="developement/application/CPP/topics/cpp_bson_en.html">BSON Interface to C++</a></li>
+<li id="d11e1285"><a href="developement/application/topics/bson_api_en.html">C BSON API</a></li>
+<li id="d11e1292"><a href="developement/application/topics/cppbson_api_en.html">C++ BSON API</a></li>
+</ul>
+</li>
+<li id="d11e1299"><a href="developement/sdbcm/topics/sdbcm_en.html">SequoiaDB Cluster Manager</a></li>
+</ul>
+</li>
+<li id="d11e1307"><a href="references/topics/references_en.html">Reference</a>
+<ul>
+<li id="d11e1314"><a href="references/methods/topics/methodlist_en.html">Sequoiadb javascript Method List</a>
+<ul>
+<li id="d11e1321"><a href="references/methods/topics/getCS_en.html">db.getCS()</a></li>
+<li id="d11e1328"><a href="references/methods/topics/getRG_en.html">db.getRG()</a></li>
+<li id="d11e1335"><a href="references/methods/topics/createCS_en.html">db.createCS()</a></li>
+<li id="d11e1342"><a href="references/methods/topics/createRG_en.html">db.createRG()</a></li>
+<li id="d11e1349"><a href="references/methods/topics/removeRG_en.html">db.removeRG()</a></li>
+<li id="d11e1356"><a href="references/methods/topics/createcatarg_en.html">db.createCataRG()</a></li>
+<li id="d11e1363"><a href="references/methods/topics/dropCS_en.html">db.dropCS()</a></li>
+<li id="d11e1370"><a href="references/methods/topics/dblist_en.html">db.list()</a></li>
+<li id="d11e1377"><a href="references/methods/topics/listCollectionSpaces_en.html">db.listCollectionSpaces()</a></li>
+<li id="d11e1384"><a href="references/methods/topics/listCollections_en.html">db.listCollections()</a></li>
+<li id="d11e1392"><a href="references/methods/topics/listReplicaGroups_en.html">db.listReplicaGroups()</a></li>
+<li id="d11e1399"><a href="references/methods/topics/resetSnapshot_en.html">db.resetSnapshot()</a></li>
+<li id="d11e1406"><a href="references/methods/topics/dbsnapshot_en.html">db.snapshot()</a></li>
+<li id="d11e1413"><a href="references/methods/topics/startRG_en.html">db.startRG()</a></li>
+<li id="d11e1420"><a href="references/methods/topics/createUsr_en.html">db.createUsr()</a></li>
+<li id="d11e1427"><a href="references/methods/topics/dropUsr_en.html">db.dropUsr()</a></li>
+<li id="d11e1434"><a href="references/methods/topics/transBegin_en.html">db.transBegin()</a></li>
+<li id="d11e1441"><a href="references/methods/topics/transCommit_en.html">db.transCommit()</a></li>
+<li id="d11e1448"><a href="references/methods/topics/transRollback_en.html">db.transRollback()</a></li>
+<li id="d11e1455"><a href="references/methods/topics/createProcedures_en.html"> db.createProcedures() </a></li>
+<li id="d11e1462"><a href="references/methods/topics/removeProcedures_en.html">db.removeProcedures()</a></li>
+<li id="d11e1470"><a href="references/methods/topics/listProcedures_en.html">db.listProcedures()</a></li>
+<li id="d11e1477"><a href="references/methods/topics/eval_en.html">db.eval()</a></li>
+<li id="d11e1484"><a href="references/methods/topics/createCL_en.html">db.collectionspace.createCL()</a></li>
+<li id="d11e1491"><a href="references/methods/topics/dropCL_en.html">db.collectionspace.dropCL()</a></li>
+<li id="d11e1498"><a href="references/methods/topics/getCL_en.html">db.collectionspace.getCL()</a></li>
+<li id="d11e1505"><a href="references/methods/topics/dbinsert_en.html">db.collectionspace.collection.insert()</a></li>
+<li id="d11e1512"><a href="references/methods/topics/dbcount_en.html">db.collectionspace.collection.count()</a></li>
+<li id="d11e1519"><a href="references/methods/topics/find_en.html">db.collectionspace.collection.find()</a></li>
+<li id="d11e1526"><a href="references/methods/topics/dbaggregate_en.html">db.collectionspace.collection.aggregate()</a></li>
+<li id="d11e1533"><a href="references/methods/topics/remove_en.html">db.collectionspace.collection.remove()</a></li>
+<li id="d11e1540"><a href="references/methods/topics/createIndex_en.html">db.collectionspace.collection.createIndex()</a></li>
+<li id="d11e1548"><a href="references/methods/topics/dropIndex_en.html">db.collectionspace.collection.dropIndex()</a></li>
+<li id="d11e1555"><a href="references/methods/topics/getIndex_en.html">db.collectionspace.collection.getIndex()</a></li>
+<li id="d11e1562"><a href="references/methods/topics/listIndexes_en.html">db.collectionspace.collection.listIndexes()</a></li>
+<li id="d11e1569"><a href="references/methods/topics/dbupdate_en.html">db.collectionspace.collection.update()</a></li>
+<li id="d11e1576"><a href="references/methods/topics/upsert_en.html">db.collectionspace.collection.upsert()</a></li>
+<li id="d11e1583"><a href="references/methods/topics/dbsplit_en.html">db.collectionspace.collection.split()</a></li>
+<li id="d11e1590"><a href="references/methods/topics/rgstart_en.html">rg.start()</a></li>
+<li id="d11e1597"><a href="references/methods/topics/createNode_en.html">rg.createNode()</a></li>
+<li id="d11e1604"><a href="references/methods/topics/removeNode_en.html">rg.removeNode()</a></li>
+<li id="d11e1611"><a href="references/methods/topics/getDetail_en.html">rg.getDetail()</a></li>
+<li id="d11e1618"><a href="references/methods/topics/getMaster_en.html">rg.getMaster()</a></li>
+<li id="d11e1626"><a href="references/methods/topics/getSlave_en.html">rg.getSlave()</a></li>
+<li id="d11e1633"><a href="references/methods/topics/getNode_en.html">rg.getNode()</a></li>
+<li id="d11e1640"><a href="references/methods/topics/rgstop_en.html">rg.stop()</a></li>
+<li id="d11e1647"><a href="references/methods/topics/nodestart_en.html">node.start()</a></li>
+<li id="d11e1654"><a href="references/methods/topics/nodeconnect_en.html">node.connect()</a></li>
+<li id="d11e1661"><a href="references/methods/topics/getHostName_en.html">node.getHostName()</a></li>
+<li id="d11e1668"><a href="references/methods/topics/getServiceName_en.html">node.getServiceName()</a></li>
+<li id="d11e1675"><a href="references/methods/topics/getNodeDetail_en.html">node.getNodeDetail()</a></li>
+<li id="d11e1682"><a href="references/methods/topics/nodestop_en.html">node.stop()</a></li>
+<li id="d11e1689"><a href="references/methods/topics/csort_en.html">cursor.sort()</a></li>
+<li id="d11e1696"><a href="references/methods/topics/hint_en.html">cursor.hint()</a></li>
+<li id="d11e1704"><a href="references/methods/topics/climit_en.html">cursor.limit()</a></li>
+<li id="d11e1711"><a href="references/methods/topics/cskip_en.html">cursor.skip()</a></li>
+<li id="d11e1718"><a href="references/methods/topics/ccurrent_en.html">cursor.current()</a></li>
+<li id="d11e1725"><a href="references/methods/topics/next_en.html">cursor.next()</a></li>
+<li id="d11e1732"><a href="references/methods/topics/csize_en.html">cursor.size()</a></li>
+<li id="d11e1739"><a href="references/methods/topics/toArray_en.html">cursor.toArray()</a></li>
+</ul>
+</li>
+<li id="d11e1746"><a href="references/console/topics/console_en.html">Operator</a>
+<ul>
+<li id="d11e1753"><a href="references/console/topics/select_en.html">Match Operator</a>
+<ul>
+<li id="d11e1760"><a href="references/console/topics/gt_en.html">$gt</a></li>
+<li id="d11e1767"><a href="references/console/topics/gte_en.html">$gte</a></li>
+<li id="d11e1774"><a href="references/console/topics/plt_en.html">$lt</a></li>
+<li id="d11e1781"><a href="references/console/topics/lte_en.html">$lte</a></li>
+<li id="d11e1788"><a href="references/console/topics/pne_en.html">$ne</a></li>
+<li id="d11e1795"><a href="references/console/topics/pet_en.html">$et</a></li>
+<li id="d11e1802"><a href="references/console/topics/mod_en.html">$mod</a></li>
+<li id="d11e1809"><a href="references/console/topics/pin_en.html">$in</a></li>
+<li id="d11e1816"><a href="references/console/topics/nin_en.html">$nin</a></li>
+<li id="d11e1823"><a href="references/console/topics/pall_en.html">$all</a></li>
+<li id="d11e1831"><a href="references/console/topics/and_en.html">$and</a></li>
+<li id="d11e1838"><a href="references/console/topics/not_en.html">$not</a></li>
+<li id="d11e1845"><a href="references/console/topics/por_en.html">$or</a></li>
+<li id="d11e1852"><a href="references/console/topics/type_en.html">$type</a></li>
+<li id="d11e1859"><a href="references/console/topics/exists_en.html">$exists</a></li>
+<li id="d11e1866"><a href="references/console/topics/elemMatch_en.html">$elemMatch</a></li>
+<li id="d11e1873"><a href="references/console/topics/special_en.html">$+Identifier</a></li>
+<li id="d11e1880"><a href="references/console/topics/psize_en.html">$size</a></li>
+<li id="d11e1887"><a href="references/console/topics/pregex_en.html">$regex</a></li>
+</ul>
+</li>
+<li id="d11e1894"><a href="references/console/topics/update_en.html">Update Operator</a>
+<ul>
+<li id="d11e1901"><a href="references/console/topics/inc_en.html">$inc</a></li>
+<li id="d11e1908"><a href="references/console/topics/gset_en.html">$set</a></li>
+<li id="d11e1915"><a href="references/console/topics/unset_en.html">$unset</a></li>
+<li id="d11e1922"><a href="references/console/topics/gaddtoset_en.html">$addtoset</a></li>
+<li id="d11e1929"><a href="references/console/topics/pop_en.html">$pop</a></li>
+<li id="d11e1936"><a href="references/console/topics/gpull_en.html">$pull</a></li>
+<li id="d11e1943"><a href="references/console/topics/gpull_all_en.html">$pull_all</a></li>
+<li id="d11e1950"><a href="references/console/topics/gpush_en.html">$push</a></li>
+<li id="d11e1957"><a href="references/console/topics/gpush_all_en.html">$push_all</a></li>
+</ul>
+</li>
+<li id="d11e1964"><a href="references/console/topics/aggregate_en.html">Aggregate Operator</a>
+<ul>
+<li id="d11e1971"><a href="references/console/topics/project_en.html">$project</a></li>
+<li id="d11e1978"><a href="references/console/topics/match_en.html">$match</a></li>
+<li id="d11e1985"><a href="references/console/topics/jgroup_en.html">$group</a>
+<ul>
+<li id="d11e1992"><a href="references/console/topics/j$addToSet_en.html">$addtoset</a></li>
+<li id="d11e1999"><a href="references/console/topics/jfirst_en.html">$first</a></li>
+<li id="d11e2006"><a href="references/console/topics/jlast_en.html">$last</a></li>
+<li id="d11e2013"><a href="references/console/topics/jmax_en.html">$max</a></li>
+<li id="d11e2020"><a href="references/console/topics/jmin_en.html">$min</a></li>
+<li id="d11e2027"><a href="references/console/topics/javg_en.html">$avg</a></li>
+<li id="d11e2034"><a href="references/console/topics/jsum_en.html">$sum</a></li>
+<li id="d11e2041"><a href="references/console/topics/j$push_en.html">$push</a></li>
+</ul>
+</li>
+<li id="d11e2048"><a href="references/console/topics/jlimit_en.html">$limit</a></li>
+<li id="d11e2055"><a href="references/console/topics/jsort_en.html">$sort</a></li>
+<li id="d11e2062"><a href="references/console/topics/jskip_en.html">$skip</a></li>
+<li id="d11e2069"><a href="references/console/topics/sql_to_aggregate_en.html">Mapping Table fromSQL to Aggregate</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li id="d11e2076"><a href="references/sql_grammar/topics/sql_grammar_list_en.html">SQL Grammar</a>
+<ul>
+<li id="d11e2083"><a href="references/sql_grammar/topics/create_cs_en.html">sql create collectionspace</a></li>
+<li id="d11e2090"><a href="references/sql_grammar/topics/drop_cs_en.html">sql drop collectionspace</a></li>
+<li id="d11e2097"><a href="references/sql_grammar/topics/create_cl_en.html">sql create collection</a></li>
+<li id="d11e2104"><a href="references/sql_grammar/topics/drop_cl_en.html">sql drop collection</a></li>
+<li id="d11e2111"><a href="references/sql_grammar/topics/create_index_en.html">sql create index</a></li>
+<li id="d11e2118"><a href="references/sql_grammar/topics/drop_index_en.html">sql drop index</a></li>
+<li id="d11e2125"><a href="references/sql_grammar/topics/list_cs_en.html">sql list collectionspaces</a></li>
+<li id="d11e2132"><a href="references/sql_grammar/topics/list_cl_en.html">sql list collections</a></li>
+<li id="d11e2139"><a href="references/sql_grammar/topics/sqinsert_en.html">sql insert into</a></li>
+<li id="d11e2146"><a href="references/sql_grammar/topics/sqselect_en.html">sql select </a></li>
+<li id="d11e2154"><a href="references/sql_grammar/topics/squpdate_en.html">sql update</a></li>
+<li id="d11e2161"><a href="references/sql_grammar/topics/sqdelete_en.html">sql delete</a></li>
+<li id="d11e2168"><a href="references/sql_grammar/topics/group_by_en.html">sql group by</a></li>
+<li id="d11e2175"><a href="references/sql_grammar/topics/order_by_en.html">sql order by</a></li>
+<li id="d11e2182"><a href="references/sql_grammar/topics/sqlimit_en.html">sql limit</a></li>
+<li id="d11e2189"><a href="references/sql_grammar/topics/offset_en.html">sql offset</a></li>
+<li id="d11e2196"><a href="references/sql_grammar/topics/as_en.html">sql as</a></li>
+<li id="d11e2203"><a href="references/sql_grammar/topics/sqjoin_en.html">sql inner join</a></li>
+<li id="d11e2210"><a href="references/sql_grammar/topics/left_join_en.html">sql left outer join</a></li>
+<li id="d11e2217"><a href="references/sql_grammar/topics/right_join_en.html">sql right outer join</a></li>
+<li id="d11e2224"><a href="references/sql_grammar/topics/sqsum_en.html">sql sum()</a></li>
+<li id="d11e2232"><a href="references/sql_grammar/topics/sqcount_en.html">sql count()</a></li>
+<li id="d11e2239"><a href="references/sql_grammar/topics/sqavg_en.html">sql avg()</a></li>
+<li id="d11e2246"><a href="references/sql_grammar/topics/sqmax_en.html">sql max()</a></li>
+<li id="d11e2253"><a href="references/sql_grammar/topics/sqmin_en.html">sql min()</a></li>
+<li id="d11e2260"><a href="references/sql_grammar/topics/sqfirst_en.html">sql first()</a></li>
+<li id="d11e2267"><a href="references/sql_grammar/topics/sqlast_en.html">sql last()</a></li>
+<li id="d11e2274"><a href="references/sql_grammar/topics/sqpush_en.html">sql push()</a></li>
+<li id="d11e2281"><a href="references/sql_grammar/topics/sqaddtoset_en.html">sql addtoset()</a></li>
+<li id="d11e2288"><a href="references/sql_grammar/topics/buildobj_en.html">sql buildobj()</a></li>
+<li id="d11e2295"><a href="references/sql_grammar/topics/mergearrayset_en.html">sql mergearrayset()</a></li>
+</ul>
+</li>
+<li id="d11e2302"><a href="references/sqlmapping/topics/sqlmapping_en.html"> Mapping Table from SQL to SequoiaDB</a></li>
+<li id="d11e2309"><a href="references/limits/topics/limits_en.html">Limits</a></li>
+<li id="d11e2316"><a href="references/exceptionmapping/topics/exceptionmapping_en.html">Error Code List</a></li>
+</ul>
+</li>
+</ul>
+</div></div></div><div class="footer"/><script type="text/javascript"><!-- 
+  	$(function() {
+  			$("#tree").treeview({
+  				collapsed: true,
+  				animated: "fast",
+  				control:"#sidetreecontrol",
+  				persist: "location"
+  		});
+  	});
+    function select(){
+      selectLink(this.parentNode.id);
+    }  	     
+    
+function getHTMLPage2Expand(url){
+      var page = url.substr(1);
+      currentPage = page;
+      page = parent.location.search.substr(1).split("&");
+      for (x in page) {
+        var q;
+        q = page[x].split("=");;
+        if(q[0] == 'q'){
+         currentPage = q[1];
+        }
+      }
+      return currentPage;
+   }
+   
+    var aElements = document.getElementById(tree).getElementsByTagName("a");
+    var i;
+    var pathPrefix = parent.location.pathname;
+    var expandPage = getHTMLPage2Expand(parent.contentwin.location.pathname);
+    expandPage = expandPage.replace(pathPrefix, "");
+    for (i = 0; i< aElements.length; i++){
+      aElements[i].onclick = select;
+    }
+    if(parent.location.search != ''){ 
+      setTimeout('expandToTopic(window.location.href, expandPage)',200);
+    }
+//--></script></body>
+</html>

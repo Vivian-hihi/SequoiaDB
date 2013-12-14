@@ -1,0 +1,4130 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = rtnContext.cpp
+
+   Descriptive Name = Runtime Context
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Runtime component. This file contains Runtime Context helper
+   functions.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "pmd.hpp"
+#include "pmdCB.hpp"
+#include "rtnContext.hpp"
+#include "rtnIXScanner.hpp"
+#include "optAccessPlan.hpp"
+#include "coordCB.hpp"
+#include "pdTrace.hpp"
+#include "rtnTrace.hpp"
+#include "dmsScanner.hpp"
+#include "dmsStorageUnit.hpp"
+#include "msgMessage.hpp"
+#include "rtnCoordCommon.hpp"
+#include "spdSession.hpp"
+#include "rtn.hpp"
+#include "rtnContextSort.hpp"
+
+using namespace bson;
+namespace engine
+{
+
+   /*
+      Functions
+   */
+   const CHAR* getContextTypeDesp( RTN_CONTEXT_TYPE type )
+   {
+      switch ( type )
+      {
+         case RTN_CONTEXT_DATA :
+            return "DATA" ;
+         case RTN_CONTEXT_DUMP :
+            return "DUMP" ;
+         case RTN_CONTEXT_COORD :
+            return "COORD" ;
+         case RTN_CONTEXT_QGM :
+            return "QGM" ;
+         case RTN_CONTEXT_TEMP :
+            return "TEMP" ;
+         case RTN_CONTEXT_SP :
+            return "SP" ;
+         case RTN_CONTEXT_PARADATA :
+            return "PARADATA" ;
+         case RTN_CONTEXT_MAINCL :
+            return "MAINCL" ;
+         case RTN_CONTEXT_SORT :
+            return "SORT" ;
+         case RTN_CONTEXT_QGMSORT :
+            return "QGMSORT" ;
+         default :
+            break ;
+      }
+      return "UNKNOW" ;
+   }
+
+   #define RTN_CONTEXT_GETNUM_ONCE              (100)
+
+   /*
+      _rtnObjBuff implement
+   */
+   _rtnObjBuff::_rtnObjBuff ( const _rtnObjBuff &right )
+   {
+      this->operator=( right ) ;
+   }
+
+   _rtnObjBuff::~_rtnObjBuff ()
+   {
+      _pBuff = NULL ;
+      _buffSize = 0 ;
+      _recordNum = 0 ;
+      _curOffset = 0 ;
+   }
+
+   _rtnObjBuff& _rtnObjBuff::operator=( const _rtnObjBuff &right )
+   {
+      _pBuff = right._pBuff ;
+      _buffSize = right._buffSize ;
+      _recordNum = right._recordNum ;
+      _curOffset = right._curOffset ;
+
+      return *this ;
+   }
+
+   /*
+      _rtnContextBuf implement
+   */
+   _rtnContextBuf::_rtnContextBuf ()
+   :_rtnObjBuff( NULL, 0, 0 )
+   {
+      _pBuffCounter  = NULL ;
+      _pBuffLock     = NULL ;
+      _released      = TRUE ;
+      _context       = NULL ;
+   }
+
+   _rtnContextBuf::_rtnContextBuf( const _rtnContextBuf &right )
+   :_rtnObjBuff( right )
+   {
+      _pBuffCounter = right._pBuffCounter ;
+      _pBuffLock    = right._pBuffLock ;
+      _released     = right._released ;
+      _context      = right._context ;
+
+      if ( !_released )
+      {
+         ++(*_pBuffCounter) ;
+      }
+   }
+
+   _rtnContextBuf::~_rtnContextBuf()
+   {
+      release () ;
+   }
+
+   _rtnContextBuf& _rtnContextBuf::operator=( const _rtnContextBuf &right )
+   {
+      // release cur
+      release () ;
+
+      _rtnObjBuff::operator=( right ) ;
+
+      _pBuffCounter = right._pBuffCounter ;
+      _pBuffLock = right._pBuffLock ;
+      _released = right._released ;
+      _context  = right._context ;
+
+      // increase counter
+      if ( !_released && NULL != _pBuffCounter)
+      {
+         ++(*_pBuffCounter) ;
+      }
+
+      return *this ;
+   }
+
+   void _rtnContextBuf::release()
+   {
+      if ( !_released )
+      {
+         SDB_ASSERT( *_pBuffCounter >= 0, "Counter must >= 0" ) ;
+         --(*_pBuffCounter) ;
+         if ( 0 == *_pBuffCounter  )
+         {
+            _pBuffLock->release_r() ;
+         }
+         if ( *_pBuffCounter < 0 )
+         {
+            SDB_OSS_DEL _context ;
+         }
+
+         _pBuff = NULL ;
+         _buffSize = 0 ;
+         _recordNum = 0 ;
+         _curOffset = 0 ;
+         _pBuffCounter  = NULL ;
+         _pBuffLock     = NULL ;
+         _released      = TRUE ;
+         _context       = NULL ;
+      }
+   }
+
+   void _rtnContextBuf::_reference( INT32 * pCounter, ossRWMutex *pMutex )
+   {
+      _pBuffCounter = pCounter ;
+      _pBuffLock = pMutex ;
+
+      ++(*_pBuffCounter) ;
+      _released  = FALSE ;
+   }
+
+   /*
+      _rtnContextBase implement
+   */
+   _rtnContextBase::_rtnContextBase( INT64 contextID, UINT64 eduID )
+   :_waitPrefetchNum( 0 )
+   {
+      _contextID           = contextID ;
+      _eduID               = eduID ;
+
+      _pResultBuffer       = NULL ;
+      _resultBufferSize    = 0 ;
+      _bufferCurrentOffset = 0 ;
+      _bufferEndOffset     = 0 ;
+      _bufferNumRecords    = 0 ;
+      _totalRecords        = 0 ;
+
+      _hitEnd              = TRUE ;
+      _isOpened            = FALSE ;
+
+      _reference           = 0 ;
+
+      _matcher             = NULL ;
+      _ownedMatcher        = FALSE ;
+
+      _prefetchID          = 0 ;
+      _isInPrefetch        = FALSE ;
+      _prefetchRet         = SDB_OK ;
+      _pPrefWatcher        = NULL ;
+   }
+
+   _rtnContextBase::~_rtnContextBase()
+   {
+      _prefetchLock.lock_w() ;
+      _prefetchLock.release_w() ;
+
+      if ( _pResultBuffer )
+      {
+         SDB_OSS_FREE( _pResultBuffer ) ;
+         _pResultBuffer = NULL ;
+      }
+      if ( _matcher && _ownedMatcher )
+      {
+         SDB_OSS_DEL _matcher ;
+         _matcher = NULL ;
+         _ownedMatcher = FALSE ;
+      }
+      _pPrefWatcher = NULL ;
+
+      SDB_ASSERT( 0 == _waitPrefetchNum.peek(), "Has wait prefetch jobs" )
+      SDB_ASSERT( FALSE == _isInPrefetch, "Has prefetch job run" )
+   }
+
+   string _rtnContextBase::toString()
+   {
+      stringstream ss ;
+
+      ss << "BufferSize:" << _resultBufferSize ;
+
+      if ( _totalRecords > 0 )
+      {
+         ss << ",TotalRecordNum:" << _totalRecords ;
+      }
+      if ( _bufferNumRecords > 0 )
+      {
+         ss << ",BufferRecordNum:" << _bufferNumRecords ;
+      }
+      if ( _matcher && !_matcher->getMatchPattern().isEmpty() )
+      {
+         ss << ",Matcher:" << _matcher->getMatchPattern().toString() ;
+      }
+
+      _toString( ss ) ;
+
+      return ss.str() ;
+   }
+
+   void _rtnContextBase::_release ()
+   {
+      _close() ;
+      _dataLock.lock_r() ;
+
+      // has some context buf used
+      if ( _reference > 0 )
+      {
+         --_reference ;
+         if ( 0 == _reference )
+         {
+            _dataLock.release_r() ;
+         }
+      }
+      else
+      {
+         _dataLock.release_r() ;
+         SDB_OSS_DEL this ;
+      }
+   }
+
+   INT32 _rtnContextBase::newMatcher ()
+   {
+      if ( _matcher && _ownedMatcher )
+      {
+         SDB_OSS_DEL _matcher ;
+         _matcher = NULL ;
+         _ownedMatcher = FALSE ;
+      }
+
+      _matcher = SDB_OSS_NEW mthMatcher() ;
+      if ( !_matcher )
+      {
+         return SDB_OOM ;
+      }
+
+      _ownedMatcher = TRUE ;
+      return SDB_OK ;
+   }
+
+   INT32 _rtnContextBase::_reallocBuffer( SINT32 requiredSize )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *originalPointer = _pResultBuffer ;
+      SINT32 originalSize   = _resultBufferSize ;
+
+      if ( 0 == originalSize )
+      {
+         _resultBufferSize = RTN_DFT_BUFFERSIZE ;
+      }
+
+      // make sure we get enough memory in result buffer
+      while ( requiredSize > _resultBufferSize )
+      {
+         // make sure we haven't hit max
+         if ( _resultBufferSize >= RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            PD_LOG ( PDERROR, "Result buffer is greater than %d bytes",
+                     RTN_RESULTBUFFER_SIZE_MAX ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         // double buffer size until hitting RTN_RESULTBUFFER_SIZE_MAX
+         _resultBufferSize = _resultBufferSize << 1 ;
+         if (_resultBufferSize > RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            _resultBufferSize = RTN_RESULTBUFFER_SIZE_MAX ;
+         }
+      }
+
+      // reallocate memory
+      _pResultBuffer = (CHAR*)SDB_OSS_REALLOC(  _pResultBuffer,
+                                                _resultBufferSize ) ;
+      // if reallocation fail, we exit
+      if ( !_pResultBuffer )
+      {
+         PD_LOG ( PDERROR, "Unable to allocate buffer for %d bytes",
+                  _resultBufferSize ) ;
+         _pResultBuffer = originalPointer ;
+         _resultBufferSize = originalSize ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnContextBase::append( const BSONObj &result )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_isOpened )
+      {
+         _isOpened = TRUE ;
+      }
+
+      _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
+      if ( _bufferEndOffset + result.objsize () > _resultBufferSize )
+      {
+         rc = _reallocBuffer ( _bufferEndOffset + result.objsize() ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
+                     "%d", rc ) ;
+            goto error ;
+         }
+      }
+      ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), result.objdata(),
+                  result.objsize() ) ;
+      ++_totalRecords ; // total num
+      ++_bufferNumRecords ; // cur buff num
+      _bufferEndOffset += result.objsize() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextBase::appendObjs( const CHAR * pObjBuff, INT32 len,
+                                      INT32 num )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !_isOpened )
+      {
+         _isOpened = TRUE ;
+      }
+      _bufferEndOffset = ossAlign4( (UINT32)_bufferEndOffset ) ;
+      if ( _bufferEndOffset + len > _resultBufferSize )
+      {
+         rc = _reallocBuffer ( _bufferEndOffset + len ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to reallocate buffer for context, rc: "
+                     "%d", rc ) ;
+            goto error ;
+         }
+      }
+
+      ossMemcpy ( &(_pResultBuffer[_bufferEndOffset]), pObjBuff, len ) ;
+      _totalRecords += num ; // total num
+      _bufferNumRecords += num ; // cur buff num
+      _bufferEndOffset += len ;
+
+   done:
+      return rc ; 
+   error:
+      goto done ;
+   }
+
+   void _rtnContextBase::_onDataEmpty ()
+   {
+      if ( _canPrefetch() && 0 != _prefetchID )
+      {
+         SDB_BPSCB *bpsCB = pmdGetKRCB()->getBPSCB() ;
+         if ( bpsCB->isPrefetchEnabled() )
+         {
+            _prefetchLock.lock_r() ;
+            if ( SDB_OK == bpsCB->sendPrefechReq( bpsDataPref( _prefetchID,
+                                                               this ) ) )
+            {
+               _waitPrefetchNum.inc() ;
+            }
+            else
+            {
+               _prefetchLock.release_r() ;
+            }
+         }
+      }
+   }
+
+   INT32 _rtnContextBase::prefetch( pmdEDUCB * cb, UINT32 prefetchID )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN againTry = FALSE ;
+      UINT32 timeout = 0 ;
+
+      while ( timeout < OSS_ONE_SEC )
+      {
+         if ( prefetchID != _prefetchID )
+         {
+            goto done ;
+         }
+         rc = _dataLock.lock_w( 100 ) ;
+         if ( SDB_OK == rc )
+         {
+            locked = TRUE ;
+            _isInPrefetch = TRUE ;
+            if ( _pPrefWatcher )
+            {
+               _pPrefWatcher->ntyBegin() ;
+            }
+            break ;
+         }
+         else if ( rc && SDB_TIMEOUT != rc )
+         {
+            goto error ;
+         }
+         timeout += 100 ;
+      }
+
+      if ( FALSE == locked )
+      {
+         goto error ;
+      }
+
+      if ( prefetchID != _prefetchID )
+      {
+         goto done ;
+      }
+
+      if ( !isOpened() || eof() || !isEmpty() )
+      {
+         goto done ;
+      }
+
+      rc = _prepareData( cb ) ;
+      _prefetchRet = rc ;
+      if ( rc && SDB_DMS_EOC != rc )
+      {
+         PD_LOG( PDWARNING, "Prepare data failed, rc: %d", rc ) ;
+      }
+
+      if ( SDB_OK == rc && isEmpty() && isOpened() && !eof() &&
+           SDB_OK == pmdGetKRCB()->getBPSCB()->sendPrefechReq(
+                     bpsDataPref( ++_prefetchID, this ), TRUE ) )
+      {
+         _waitPrefetchNum.inc() ;
+         againTry = TRUE ;
+      }
+
+   done:
+      // inc idle
+      pmdGetKRCB()->getBPSCB()->_idlePrefAgentNum.inc() ;
+      if ( locked )
+      {
+         _isInPrefetch = FALSE ;
+         if ( _pPrefWatcher )
+         {
+            _pPrefWatcher->ntyEnd() ;
+         }
+         _dataLock.release_w() ;
+      }
+      _waitPrefetchNum.dec() ;
+      if ( FALSE == againTry )
+      {
+         _prefetchLock.release_r() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextBase::getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                                   INT64 &startPos, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+
+      // release buff obj
+      buffObj.release() ;
+
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
+      else if ( eof() && isEmpty() )
+      {
+         rc = SDB_DMS_EOC ;
+         _isOpened = FALSE ;
+         goto error ;
+      }
+
+      // need to get data lock
+      while ( TRUE )
+      {
+         rc = _dataLock.lock_r( OSS_ONE_SEC ) ;
+         if ( SDB_OK == rc )
+         {
+            locked = TRUE ;
+            break ;
+         }
+         else if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+      }
+
+      if ( 0 != _prefetchID )
+      {
+         ++_prefetchID ;
+      }
+      // check prefetch has error
+      if ( _prefetchRet && SDB_DMS_EOC != _prefetchRet )
+      {
+         rc = _prefetchRet ;
+         PD_LOG( PDWARNING, "Occur error in prefetch, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      // need to get more datas
+      if ( isEmpty() && !eof() )
+      {
+         rc = _prepareData( cb ) ;
+         if ( rc && SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Prepare data failed, rc: %d", rc ) ;
+            goto error ;
+         }
+      }
+
+      // if not empty, get current data
+      if ( !isEmpty() )
+      {
+         _bufferCurrentOffset = ossAlign4( (UINT32)_bufferCurrentOffset ) ;
+         buffObj._pBuff = &_pResultBuffer[ _bufferCurrentOffset ] ;
+         startPos = _totalRecords - _bufferNumRecords ;
+
+         // return cur all
+         if ( maxNumToReturn < 0 )
+         {
+            buffObj._buffSize = _bufferEndOffset - _bufferCurrentOffset ;
+            buffObj._recordNum = _bufferNumRecords ;
+            // clean info
+            _bufferCurrentOffset = _bufferEndOffset ;
+            _bufferNumRecords = 0 ;
+         }
+         else
+         {
+            INT32 prevCurOffset = _bufferCurrentOffset ;
+            while ( _bufferCurrentOffset < _bufferEndOffset &&
+                    maxNumToReturn > 0 )
+            {
+               try
+               {
+                  BSONObj obj( &_pResultBuffer[_bufferCurrentOffset] ) ;
+                  _bufferCurrentOffset += ossAlign4( (UINT32)obj.objsize() ) ;
+               }
+               catch ( std::exception &e )
+               {
+                  PD_LOG( PDERROR, "Can't convert into BSON object: %s",
+                          e.what() ) ;
+                  rc = SDB_SYS ;
+                  goto error ;
+               }
+
+               ++buffObj._recordNum ;
+               --_bufferNumRecords ;
+               --maxNumToReturn ;
+            } // end while
+
+            if ( _bufferCurrentOffset > _bufferEndOffset )
+            {
+               _bufferCurrentOffset = _bufferEndOffset ;
+               SDB_ASSERT( 0 == _bufferNumRecords, "buffer num records must "
+                           " be zero" ) ;
+            }
+            buffObj._buffSize = _bufferCurrentOffset - prevCurOffset ;
+         }
+
+         buffObj._reference( &_reference, &_dataLock ) ;
+         buffObj._context = this ;
+         locked = FALSE ;
+         rc = SDB_OK ;
+
+         // if get all data
+         if ( isEmpty() )
+         {
+            _bufferCurrentOffset = 0 ;
+            _bufferEndOffset     = 0 ;
+
+            _onDataEmpty() ;
+         }
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         _isOpened = FALSE ;
+      }
+
+   done:
+      if ( locked )
+      {
+         _dataLock.release_r() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _rtnContextData implement
+   */
+   _rtnContextData::_rtnContextData( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _dmsCB            = NULL ;
+      _su               = NULL ;
+      _mbContext        = NULL ;
+      _plan             = NULL ;
+      _scanType         = UNKNOWNSCAN ;
+      _numToReturn      = -1 ;
+      _numToSkip        = 0 ;
+
+      _extentID         = DMS_INVALID_EXTENT ;
+      _lastExtLID       = DMS_INVALID_EXTENT ;
+      _segmentScan      = FALSE ;
+      _indexBlockScan   = FALSE ;
+      _scanner          = NULL ;
+      _direction        = 0 ;
+   }
+
+   _rtnContextData::~_rtnContextData ()
+   {
+      if ( _scanner )
+      {
+         SDB_OSS_DEL _scanner ;
+         _scanner = NULL ;
+      }
+      // first release plan
+      if ( _plan && -1 != contextID() )
+      {
+         _plan->release() ;
+      }
+      // second release mb context
+      if ( _mbContext && _su )
+      {
+         _su->data()->releaseMBContext( _mbContext ) ;
+      }
+      // last unlock su
+      if ( _dmsCB && _su && -1 != contextID() )
+      {
+         _dmsCB->suUnlock ( _su->CSID() ) ;
+      }
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextData::getType() const
+   {
+      return RTN_CONTEXT_DATA ;
+   }
+
+   void _rtnContextData::_toString( stringstream & ss )
+   {
+      if ( _su && _plan )
+      {
+         ss << ",Collection:" << _su->CSName() << "." << _plan->getName() ;
+      }
+      ss << ",ScanType:" << ( ( TBSCAN == _scanType ) ? "TBSCAN" : "IXSCAN" ) ;
+      if ( _numToReturn > 0 )
+      {
+         ss << ",NumToReturn:" << _numToReturn ;
+      }
+      if ( _numToSkip > 0 )
+      {
+         ss << ",NumToSkip:" << _numToSkip ;
+      }
+   }
+
+   INT32 _rtnContextData::_openIXScan( dmsStorageUnit *su,
+                                       dmsMBContext *mbContext,
+                                       optAccessPlan *plan,
+                                       pmdEDUCB *cb,
+                                       const BSONObj *blockObj,
+                                       INT32 direction )
+   {
+      INT32 rc = SDB_OK ;
+      rtnPredicateList *predList = NULL ;
+
+      // for index scan, we maintain context by runtime instead of by DMS
+      ixmIndexCB indexCB ( plan->getIndexCBExtent(), su->index(), NULL ) ;
+      if ( !indexCB.isInitialized() )
+      {
+         PD_LOG ( PDERROR, "unable to get proper index control block" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      if ( indexCB.getLogicalID() != plan->getIndexLID() )
+      {
+         PD_LOG( PDERROR, "Index[extent id: %d] logical id[%d] is not "
+                 "expected[%d]", plan->getIndexCBExtent(),
+                 indexCB.getLogicalID(), plan->getIndexLID() ) ;
+         rc = SDB_IXM_NOTEXIST ;
+         goto error ;
+      }
+      // get the predicate list
+      predList = plan->getPredList() ;
+      SDB_ASSERT ( predList, "predList can't be NULL" )
+
+      // create scanner
+      if ( _scanner )
+      {
+         SDB_OSS_DEL _scanner ;
+      }
+      // _scanner should be deleted in context destructor
+      _scanner = SDB_OSS_NEW rtnIXScanner ( &indexCB, predList,
+                                            su, cb ) ;
+      if ( !_scanner )
+      {
+         PD_LOG ( PDERROR, "Unable to allocate memory for scanner" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      _scanner->setMonCtxCB ( &_monCtxCB ) ;
+
+      // index block scan
+      if ( blockObj )
+      {
+         SDB_ASSERT( direction == 1 || direction == -1,
+                     "direction must be 1 or -1" )
+
+         _direction = direction ;
+         rc = _parseIndexBlocks( *blockObj, _indexBlocks, _indexRIDs ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse index blocks failed, rc: %d", rc ) ;
+         _indexBlockScan = TRUE ;
+
+         if ( _indexBlocks.size() < 2 )
+         {
+            _hitEnd = TRUE ;
+         }
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_openTBScan( dmsStorageUnit *su,
+                                       dmsMBContext *mbContext, 
+                                       optAccessPlan *plan, 
+                                       pmdEDUCB * cb,
+                                       const BSONObj *blockObj )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( blockObj )
+      {
+         rc = _parseSegments( *blockObj, _segments ) ;
+         PD_RC_CHECK( rc, PDERROR, "Parse segments[%s] failed, rc: %d",
+                      blockObj->toString().c_str(), rc ) ;
+
+         _segmentScan = TRUE ;
+         _extentID = _segments.size() > 0 ? *_segments.begin() :
+                     DMS_INVALID_EXTENT ;
+      }
+      else
+      {
+         _extentID = mbContext->mb()->_firstExtentID ;
+      }
+
+      if ( DMS_INVALID_EXTENT == _extentID )
+      {
+         _hitEnd = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::open( dmsStorageUnit *su, dmsMBContext *mbContext,
+                                optAccessPlan *plan, pmdEDUCB *cb,
+                                const BSONObj &selector, INT64 numToReturn,
+                                INT64 numToSkip,
+                                const BSONObj *blockObj,
+                                INT32 direction )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( su && mbContext && plan, "Invalid param" ) ;
+
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+
+      rc = mbContext->mbLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+
+      if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
+                                           DMS_ACCESS_TYPE_QUERY ) )
+      {
+         PD_LOG ( PDERROR, "Incompatible collection mode: %d",
+                  mbContext->mb()->_flag ) ;
+         rc = SDB_DMS_INCOMPATIBLE_MODE ;
+         goto error ;
+      }
+
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+
+      if ( TBSCAN == plan->getScanType() )
+      {
+         rc = _openTBScan( su, mbContext, plan, cb, blockObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to open tbscan, rc: %d", rc ) ;
+      }
+      else if ( IXSCAN == plan->getScanType() )
+      {
+         rc = _openIXScan( su, mbContext, plan, cb, blockObj, direction ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to open ixscan, rc: %d", rc ) ;
+      }
+      else
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "Unknow scan type: %d", plan->getScanType() ) ;
+         goto error ;
+      }
+
+      // once context is opened, let's construct matcher and selector
+      if ( !selector.isEmpty() )
+      {
+         try
+         {
+            rc = _selector.loadPattern ( selector ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Invalid pattern is detected for select: %s: %s",
+                     selector.toString().c_str(), e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for select: "
+                      "%s, rc: %d", selector.toString().c_str(), rc ) ;
+      }
+      _matcher = &( plan->getMatcher() ) ;
+
+      _dmsCB = pmdGetKRCB()->getDMSCB() ;
+      _su = su ;
+      _mbContext = mbContext ;
+      _plan = plan ;
+      _scanType = plan->getScanType() ;
+      _numToReturn = numToReturn ;
+      _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+   done:
+      mbContext->mbUnlock() ;
+      return rc ;
+   error:
+      _isOpened = FALSE ;
+      _hitEnd = TRUE ;
+      goto done ;
+   }
+
+   INT32 _rtnContextData::openTraversal( dmsStorageUnit *su,
+                                         dmsMBContext *mbContext,
+                                         optAccessPlan *plan,
+                                         rtnIXScanner *scanner,
+                                         pmdEDUCB *cb,
+                                         const BSONObj &selector,
+                                         INT64 numToReturn,
+                                         INT64 numToSkip )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( su && mbContext && plan && scanner, "Invalid param" ) ;
+
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+      if ( IXSCAN != plan->getScanType() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDERROR, "Open traversal must IXSCAN" ) ;
+         goto error ;
+      }
+
+      rc = mbContext->mbLock( SHARED ) ;
+      PD_RC_CHECK( rc, PDERROR, "dms mb context lock failed, rc: %d", rc ) ;
+
+      if ( !dmsAccessAndFlagCompatiblity ( mbContext->mb()->_flag,
+                                           DMS_ACCESS_TYPE_QUERY ) )
+      {
+         PD_LOG ( PDERROR, "Incompatible collection mode: %d",
+                  mbContext->mb()->_flag ) ;
+         rc = SDB_DMS_INCOMPATIBLE_MODE ;
+         goto error ;
+      }
+
+      if ( _scanner )
+      {
+         SDB_OSS_DEL _scanner ;
+      }
+      _scanner = scanner ;
+
+      // once context is opened, let's construct matcher and selector
+      if ( !selector.isEmpty() )
+      {
+         try
+         {
+            rc = _selector.loadPattern ( selector ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Invalid pattern is detected for select: %s: %s",
+                     selector.toString().c_str(), e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for select: "
+                      "%s, rc: %d", selector.toString().c_str(), rc ) ;
+      }
+      _matcher = &( plan->getMatcher() ) ;
+
+      _dmsCB = pmdGetKRCB()->getDMSCB() ;
+      _su = su ;
+      _mbContext = mbContext ;
+      _plan = plan ;
+      _scanType = plan->getScanType() ;
+      _numToReturn = numToReturn ;
+      _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+   done:
+      mbContext->mbUnlock() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_prepareData( pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( TBSCAN == _scanType )
+      {
+         rc = _prepareByTBScan( cb ) ;
+      }
+      else if ( IXSCAN == _scanType )
+      {
+         rc = _prepareByIXScan( cb ) ;
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _rtnContextData::_prepareByTBScan( pmdEDUCB * cb )
+   {
+      INT32 rc                = SDB_OK ;
+      mthMatcher *matcher     = NULL ;
+      mthSelector *selector   = NULL ;
+      monAppCB * pMonAppCB    = cb ? cb->getMonAppCB() : NULL ;
+      BOOLEAN hasLocked       = _mbContext->isMBLock() ;
+
+      if ( _matcher && _matcher->isInitialized() && !_matcher->isMatchesAll() )
+      {
+         matcher = _matcher ;
+      }
+      if ( _selector.isInitialized() )
+      {
+         selector = &_selector ;
+      }
+
+      dmsRecordID recordID ;
+      ossValuePtr recordDataPtr = 0 ;
+
+      if ( DMS_INVALID_EXTENT == _extentID )
+      {
+         SDB_ASSERT( FALSE, "extentID can't be INVALID" ) ;
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      while ( isEmpty() )
+      {
+         // prefetch
+         if ( eduID() != cb->getID() && !isOpened() )
+         {
+            rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+            goto error ;
+         }
+
+         dmsExtScanner extScanner( _su->data(), _mbContext, matcher, _extentID,
+                                   DMS_ACCESS_TYPE_FETCH, _numToReturn,
+                                   _numToSkip ) ;
+
+         while ( SDB_OK == ( rc = extScanner.advance( recordID,
+                                                      recordDataPtr,
+                                                      cb ) ) )
+         {
+            try
+            {
+               BSONObj selObj ;
+               BSONObj obj( (const CHAR*)recordDataPtr ) ;
+               if ( selector )
+               {
+                  rc = selector->select( obj, selObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
+                               "src obj: %s, rc: %d", obj.toString().c_str(),
+                               rc ) ;
+               }
+               else
+               {
+                  selObj = obj ;
+               }
+               rc = append( selObj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                            selObj.toString().c_str(), rc ) ;
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            // increase counter
+            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+            // decrease numToReturn
+            if ( _numToReturn > 0 )
+            {
+               --_numToReturn ;
+            }
+         } // end while
+
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Extent scanner failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         _numToReturn = extScanner.getMaxRecords() ;
+         _numToSkip   = extScanner.getSkipNum() ;
+
+         if ( 0 == _numToReturn )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+
+         if ( _segmentScan )
+         {
+            if ( DMS_INVALID_EXTENT == extScanner.nextExtentID() ||
+                 _su->data()->extent2Segment( *_segments.begin() ) !=
+                 _su->data()->extent2Segment( extScanner.nextExtentID() ) )
+            {
+               _segments.erase( _segments.begin() ) ;
+               if ( _segments.size() > 0 )
+               {
+                  _extentID = *_segments.begin() ;
+               }
+               else
+               {
+                  _extentID = DMS_INVALID_EXTENT ;
+               }
+            }
+            else
+            {
+               _extentID = extScanner.nextExtentID() ;
+            }
+         }
+         else
+         {
+            _extentID = extScanner.nextExtentID() ;
+         }
+         _lastExtLID = extScanner.curExtent()->_logicID ;
+         if ( DMS_INVALID_EXTENT == _extentID )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+         if ( !hasLocked )
+         {
+            _mbContext->pause() ;
+         }
+
+      } // end while
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done:
+      if ( !hasLocked )
+      {
+         _mbContext->pause() ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_prepareByIXScan( pmdEDUCB *cb )
+   {
+      INT32 rc                   = SDB_OK ;
+      rtnIXScanner *scanner      = _scanner ;
+      mthMatcher *matcher        = NULL ;
+      mthSelector *selector      = NULL ;
+      monAppCB * pMonAppCB       = cb ? cb->getMonAppCB() : NULL ;
+      BOOLEAN hasLocked          = _mbContext->isMBLock() ;
+
+      dmsRecordID rid ;
+      BSONObj dataRecord ;
+
+      if ( _matcher && _matcher->isInitialized() && !_matcher->isMatchesAll() )
+      {
+         matcher = _matcher ;
+      }
+      if ( _selector.isInitialized() )
+      {
+         selector = &_selector ;
+      }
+
+      dmsRecordID recordID ;
+      ossValuePtr recordDataPtr = 0 ;
+
+      // loop until we read something in the buffer
+      while ( isEmpty() )
+      {
+         // prefetch
+         if ( eduID() != cb->getID() && !isOpened() )
+         {
+            rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+            goto error ;
+         }
+
+         dmsIXSecScanner secScanner( _su->data(), _mbContext, matcher, scanner,
+                                     DMS_ACCESS_TYPE_FETCH, _numToReturn,
+                                     _numToSkip ) ;
+         if ( _indexBlockScan )
+         {
+            secScanner.enableIndexBlockScan( _indexBlocks[0],
+                                             _indexBlocks[1],
+                                             _indexRIDs[0],
+                                             _indexRIDs[1],
+                                             _direction ) ;
+         }
+
+         while ( SDB_OK == ( rc = secScanner.advance( recordID, recordDataPtr,
+                                                      cb ) ) )
+         {
+            try
+            {
+               BSONObj selObj ;
+               BSONObj obj( (const CHAR*)recordDataPtr ) ;
+               if ( selector )
+               {
+                  rc = selector->select( obj, selObj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Failed to build select record,"
+                               "src obj: %s, rc: %d", obj.toString().c_str(),
+                               rc ) ;
+               }
+               else
+               {
+                  selObj = obj ;
+               }
+               rc = append( selObj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                            selObj.toString().c_str(), rc ) ;
+
+               // make sure we still have room to read another
+               // record_max_sz (i.e. 16MB). if we have less than 16MB
+               // to 256MB, we can't safely assume the next record we
+               // read will not overflow the buffer, so let's just break
+               // before reading the next record
+               if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
+                    RTN_RESULTBUFFER_SIZE_MAX )
+               {
+                  secScanner.stop () ;
+                  // let's break if there's no room for another max record
+                  break ;
+               }
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            // increase counter
+            DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+         }
+
+         if ( rc && SDB_DMS_EOC != rc )
+         {
+            PD_LOG( PDERROR, "Extent scanner failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         _numToReturn = secScanner.getMaxRecords() ;
+         _numToSkip   = secScanner.getSkipNum() ;
+
+         if ( 0 == _numToReturn )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+
+         if ( secScanner.eof() )
+         {
+            if ( _indexBlockScan )
+            {
+               _indexBlocks.erase( _indexBlocks.begin() ) ;
+               _indexBlocks.erase( _indexBlocks.begin() ) ;
+               _indexRIDs.erase( _indexRIDs.begin() ) ;
+               _indexRIDs.erase( _indexRIDs.begin() ) ;
+               if ( _indexBlocks.size() < 2 )
+               {
+                  _hitEnd = TRUE ;
+                  break ;
+               }
+            }
+            else
+            {
+               _hitEnd = TRUE ;
+               break ;
+            }
+         }
+
+         if ( !hasLocked )
+         {
+            _mbContext->pause() ;
+         }
+      } // end while
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done :
+      if ( !hasLocked )
+      {
+         _mbContext->pause() ;
+      }
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_parseSegments( const BSONObj &obj,
+                                          vector< dmsExtentID > &segments )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      segments.clear() ;
+
+      BSONObjIterator it ( obj ) ;
+      while ( it.more() )
+      {
+         ele = it.next() ;
+         if ( NumberInt != ele.type() )
+         {
+            PD_LOG( PDWARNING, "Datablocks[%s] value type[%d] is not NumberInt",
+                    obj.toString().c_str(), ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         segments.push_back( ele.numberInt() ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_parseRID( const BSONElement & ele,
+                                     dmsRecordID & rid )
+   {
+      INT32 rc = SDB_OK ;
+      rid.reset() ;
+
+      if ( ele.eoo() )
+      {
+         goto done ;
+      }
+      else if ( Array != ele.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG( PDWARNING, "Field[%s] type is not Array",
+                 ele.toString().c_str() ) ;
+         goto error ;
+      }
+      else
+      {
+         UINT32 count = 0 ;
+         BSONElement ridEle ;
+         BSONObjIterator it( ele.embeddedObject() ) ;
+         while ( it.more() )
+         {
+            ridEle = it.next() ;
+            if ( NumberInt != ridEle.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG( PDERROR, "RID type is not NumberInt in field[%s]",
+                       ele.toString().c_str() ) ;
+               goto error ;
+            }
+            if ( 0 == count )
+            {
+               rid._extent = ridEle.numberInt() ;
+            }
+            else if ( 1 == count )
+            {
+               rid._offset = ridEle.numberInt() ;
+            }
+
+            ++count ;
+         }
+
+         if ( 2 != count )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "RID array size[%d] if not 2", count ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextData::_parseIndexBlocks( const BSONObj &obj,
+                                             vector< BSONObj > &indexBlocks,
+                                             vector< dmsRecordID > &indexRIDs )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement ele ;
+      BSONObj indexObj ;
+      BSONObj startKey, endKey ;
+      dmsRecordID startRID, endRID ;
+
+      indexBlocks.clear() ;
+      indexRIDs.clear() ;
+
+      BSONObjIterator it ( obj ) ;
+      while ( it.more() )
+      {
+         ele = it.next() ;
+         if ( Object != ele.type() )
+         {
+            PD_LOG( PDWARNING, "Indexblocks[%s] value type[%d] is not Object",
+                    obj.toString().c_str(), ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         indexObj = ele.embeddedObject() ;
+         // StartKey
+         rc = rtnGetObjElement( indexObj, FIELD_NAME_STARTKEY, startKey ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s] from obj[%s], "
+                      "rc: %d", FIELD_NAME_STARTKEY,
+                      indexObj.toString().c_str(), rc ) ;
+         // EndKey
+         rc = rtnGetObjElement( indexObj, FIELD_NAME_ENDKEY, endKey ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s] from obj[%s], "
+                      "rc: %d", FIELD_NAME_ENDKEY,
+                      indexObj.toString().c_str(), rc ) ;
+         // StartRID
+         rc = _parseRID( indexObj.getField( FIELD_NAME_STARTRID ), startRID ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to parse %s, rc: %d",
+                      FIELD_NAME_STARTRID, rc ) ;
+
+         // EndRID
+         rc = _parseRID( indexObj.getField( FIELD_NAME_ENDRID ), endRID ) ;
+         PD_RC_CHECK( rc, PDWARNING, "Failed to parse %s, rc: %d",
+                      FIELD_NAME_ENDRID, rc ) ;
+
+         indexBlocks.push_back( rtnNullKeyNameObj( startKey ).getOwned() ) ;
+         indexBlocks.push_back( rtnNullKeyNameObj( endKey ).getOwned() ) ;
+
+         indexRIDs.push_back( startRID ) ;
+         indexRIDs.push_back( endRID ) ;
+      }
+
+      if ( indexBlocks.size() != indexRIDs.size() )
+      {
+         rc = SDB_SYS ;
+         PD_LOG( PDERROR, "block array size is not the same with rid array" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _rtnContextParaData implement
+   */
+   _rtnContextParaData::_rtnContextParaData( INT64 contextID, UINT64 eduID )
+   :_rtnContextData( contextID, eduID )
+   {
+      _isParalled = FALSE ;
+      _curIndex   = 0 ;
+      _step       = 1 ;
+   }
+
+   _rtnContextParaData::~_rtnContextParaData()
+   {
+      vector< rtnContextData* >::iterator it = _vecContext.begin() ;
+      while ( it != _vecContext.end() )
+      {
+         (*it)->_close () ;
+         ++it ;
+      }
+      it = _vecContext.begin() ;
+      while ( it != _vecContext.end() )
+      {
+         (*it)->_release () ;
+         ++it ;
+      }
+      _vecContext.clear () ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextParaData::getType () const
+   {
+      return RTN_CONTEXT_PARADATA ;
+   }
+
+   INT32 _rtnContextParaData::open( dmsStorageUnit *su, dmsMBContext *mbContext,
+                                    optAccessPlan *plan, pmdEDUCB *cb,
+                                    const BSONObj &selector, INT64 numToReturn,
+                                    INT64 numToSkip, const BSONObj *blockObj,
+                                    INT32 direction )
+   {
+      INT32 rc = SDB_OK ;
+      _step = pmdGetKRCB()->getOptionCB()->maxSubQuery() ;
+      if ( 0 == _step )
+      {
+         _step = 1 ;
+      }
+
+      rc = _rtnContextData::open( su, mbContext, plan, cb, selector,
+                                  numToReturn, numToSkip, blockObj,
+                                  direction ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      if ( eof() )
+      {
+         goto done ;
+      }
+
+      if ( TBSCAN == _scanType && FALSE == _segmentScan )
+      {
+         rc = _su->getSegExtents( NULL, _segments, mbContext ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get segment extent, rc: %d",
+                      rc ) ;
+         if ( _segments.size() <= 1 )
+         {
+            _segments.clear() ;
+            goto done ;
+         }
+         _segmentScan = TRUE ;
+      }
+      else if ( IXSCAN == _scanType && FALSE == _indexBlockScan )
+      {
+         rc = rtnGetIndexSeps( plan, su, mbContext, cb, _indexBlocks,
+                               _indexRIDs ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to get index seperations, rc: %d",
+                      rc ) ;
+         if ( _indexBlocks.size() <= 2 )
+         {
+            _indexBlocks.clear() ;
+            _indexRIDs.clear() ;
+            goto done ;
+         }
+         _indexBlockScan = TRUE ;
+         _direction = 1 ;
+      }
+
+      if ( ( _segmentScan && _segments.size() <= 1 ) ||
+           ( _indexBlockScan && _indexBlocks.size() <= 2 ) )
+      {
+         goto done ;
+      }
+
+      _isParalled = TRUE ;
+      mbContext->mbUnlock() ;
+
+      if ( numToReturn > 0 && numToSkip > 0 )
+      {
+         numToReturn += numToSkip ;
+      }
+
+      while ( NULL != ( blockObj = _nextBlockObj() ) )
+      {
+         rc = _openSubContext( blockObj, selector, cb, numToReturn ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+
+      _checkAndPrefetch () ;
+
+   done:
+      mbContext->mbUnlock() ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnContextParaData::_removeSubContext( rtnContextData *pContext )
+   {
+      vector< rtnContextData* >::iterator it = _vecContext.begin() ;
+      while ( it != _vecContext.end() )
+      {
+         if ( *it == pContext )
+         {
+            pContext->_release() ;
+            _vecContext.erase( it ) ;
+            break ;
+         }
+         ++it ;
+      }
+   }
+
+   INT32 _rtnContextParaData::_openSubContext( const BSONObj *blockObj,
+                                               const BSONObj &selector,
+                                               _pmdEDUCB *cb,
+                                               INT64 numToReturn )
+   {
+      INT32 rc = SDB_OK ;
+
+      dmsMBContext *mbContext = NULL ;
+      rtnContextData *dataContext = NULL ;
+
+      rc = _su->data()->getMBContext( &mbContext, _plan->getName(), -1 ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
+
+      // create a new context
+      dataContext = SDB_OSS_NEW rtnContextData( -1, eduID() ) ;
+      if ( !dataContext )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Alloc sub context outof memory" ) ;
+         goto error ;
+      }
+      _vecContext.push_back( dataContext ) ;
+
+      rc = dataContext->open( _su, mbContext, _plan, cb, selector,
+                              numToReturn, 0, blockObj, _direction ) ;
+      PD_RC_CHECK( rc, PDERROR, "Open sub context failed, blockObj: %s, "
+                   "rc: %d", blockObj->toString().c_str(), rc ) ;
+
+      mbContext = NULL ;
+
+      dataContext->enablePrefetch ( &_prefWather ) ;
+      // sample timetamp
+      if ( cb->getMonConfigCB()->timestampON )
+      {
+         dataContext->getMonCB()->recordStartTimestamp() ;
+      }
+      dataContext->getSelector().setStringOutput(
+         getSelector().getStringOutput() ) ;
+
+   done :
+      return rc ;
+   error :
+      if ( mbContext )
+      {
+         _su->data()->releaseMBContext( mbContext ) ;
+      }
+      goto done ;
+   }
+
+   INT32 _rtnContextParaData::_checkAndPrefetch ()
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextData *pContext = NULL ;
+      vector< rtnContextData* >::iterator it = _vecContext.begin() ;
+      while ( it != _vecContext.end() )
+      {
+         pContext = *it ;
+         if ( pContext->eof() && pContext->isEmpty() )
+         {
+            pContext->_release() ;
+            it = _vecContext.erase( it ) ;
+            continue ;
+         }
+         else if ( !pContext->isEmpty() ||
+                   pContext->_getWaitPrefetchNum() > 0 )
+         {
+            ++it ;
+            continue ;
+         }
+         pContext->_onDataEmpty() ;
+         ++it ;
+      }
+
+      if ( _vecContext.size() == 0 )
+      {
+         rc = SDB_DMS_EOC ;
+         _hitEnd = TRUE ;
+      }
+
+      return rc ;
+   }
+
+   const BSONObj* _rtnContextParaData::_nextBlockObj ()
+   {
+      BSONArrayBuilder builder ;
+      UINT32 curIndex = _curIndex ;
+
+      if ( _curIndex >= _step ||
+           ( TBSCAN == _scanType && _curIndex >= _segments.size() ) ||
+           ( IXSCAN == _scanType && _curIndex + 1 >= _indexBlocks.size() ) )
+      {
+         return NULL ;
+      }
+      ++_curIndex ;
+
+      if ( TBSCAN == _scanType )
+      {
+         while ( curIndex < _segments.size() )
+         {
+            builder.append( _segments[curIndex] ) ;
+            curIndex += _step ;
+         }
+      }
+      else if ( IXSCAN == _scanType )
+      {
+         while ( curIndex + 1 < _indexBlocks.size() )
+         {
+            builder.append( BSON( FIELD_NAME_STARTKEY <<
+                                  _indexBlocks[curIndex] <<
+                                  FIELD_NAME_ENDKEY <<
+                                  _indexBlocks[curIndex+1] <<
+                                  FIELD_NAME_STARTRID <<
+                                  BSON_ARRAY( _indexRIDs[curIndex]._extent <<
+                                              _indexRIDs[curIndex]._offset ) <<
+                                  FIELD_NAME_ENDRID <<
+                                  BSON_ARRAY( _indexRIDs[curIndex+1]._extent <<
+                                              _indexRIDs[curIndex+1]._offset )
+                                 )
+                            ) ;
+            curIndex += _step ;
+         }
+      }
+      else
+      {
+         return NULL ;
+      }
+
+      _blockObj = builder.arr() ;
+      return &_blockObj ;
+   }
+
+   INT32 _rtnContextParaData::_getSubCtxWithData( rtnContextData **ppContext,
+                                                  _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 index = 0 ;
+
+      do
+      {
+         index = 0 ;
+         _prefWather.reset() ;
+
+         while ( index < _vecContext.size() )
+         {
+            rc = _vecContext[index]->prefetchResult () ;
+            if ( rc && SDB_DMS_EOC != rc )
+            {
+               goto error ;
+            }
+            rc = SDB_OK ;
+
+            if ( !_vecContext[index]->isEmpty() &&
+                 !_vecContext[index]->_isInPrefetching () )
+            {
+               *ppContext = _vecContext[index] ;
+               goto done ;
+            }
+            ++index ;
+         }
+      } while ( _prefWather.waitDone( OSS_ONE_SEC * 5 ) > 0 ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextParaData::_getSubContextData( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContextData *pContext = NULL ;
+      INT64 startPos = 0 ;
+      INT64 maxReturnNum = -1 ;
+
+      while ( isEmpty() && 0 != _numToReturn )
+      {
+         pContext = NULL ;
+         if ( cb->isInterrupted() )
+         {
+            rc = SDB_APP_INTERRUPT ;
+            goto error ;
+         }
+
+         if ( _numToSkip <= 0 )
+         {
+            rc = _getSubCtxWithData( &pContext, cb ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+         }
+
+         if ( !pContext && _vecContext.size() > 0 )
+         {
+            pContext = _vecContext[0] ;
+         }
+
+         // get data
+         if ( pContext )
+         {
+            rtnContextBuf buffObj ;
+            if ( _numToSkip > 0 )
+            {
+               maxReturnNum = _numToSkip ;
+            }
+            else if ( _numToReturn > 0 &&
+                      _numToReturn < pContext->numRecords() )
+            {
+               maxReturnNum = _numToReturn ;
+            }
+            else
+            {
+               maxReturnNum = -1 ;
+            }
+
+            // get data
+            rc = pContext->getMore( maxReturnNum, buffObj, startPos, cb ) ;
+            if ( rc )
+            {
+               _removeSubContext( pContext ) ;
+               if ( SDB_DMS_EOC != rc )
+               {
+                  PD_LOG( PDERROR, "Failed to get more from sub context, "
+                          "rc: %d", rc ) ;
+                  goto error ;
+               }
+               continue ;
+            }
+
+            if ( _numToSkip > 0 )
+            {
+               _numToSkip -= buffObj.recordNum() ;
+               continue ;
+            }
+            // append data
+            rc = appendObjs( buffObj.data(), buffObj.size(),
+                             buffObj.recordNum() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to add objs, rc: %d", rc ) ;
+            if ( _numToReturn > 0 )
+            {
+               _numToReturn -= buffObj.recordNum() ;
+            }
+         } // end if ( pContext )
+
+         if ( SDB_OK != _checkAndPrefetch() )
+         {
+            break ;
+         }
+      } // while ( isEmpty() && 0 != _numToReturn )
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextParaData::_prepareData( pmdEDUCB * cb )
+   {
+      if ( !_isParalled )
+      {
+         return _rtnContextData::_prepareData( cb ) ;
+      }
+      else
+      {
+         return _getSubContextData( cb ) ;
+      }
+   }
+
+   /*
+      _rtnContextTemp implement
+   */
+   _rtnContextTemp::_rtnContextTemp( INT64 contextID, UINT64 eduID )
+   :_rtnContextData( contextID, eduID )
+   {
+   }
+
+   _rtnContextTemp::~_rtnContextTemp ()
+   {
+      // release temp collection
+      if ( _dmsCB && _mbContext )
+      {
+         _dmsCB->getTempCB()->release( _mbContext ) ;
+      }
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextTemp::getType () const
+   {
+      return RTN_CONTEXT_TEMP ;
+   }
+
+   /*
+      _rtnContextQGM implement
+   */
+   _rtnContextQGM::_rtnContextQGM( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _accPlan    = NULL ;
+   }
+
+   _rtnContextQGM::~_rtnContextQGM ()
+   {
+      if ( NULL != _accPlan )
+      {
+         SAFE_OSS_DELETE( _accPlan ) ;
+         _accPlan = NULL ;
+      }
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextQGM::getType () const
+   {
+      return RTN_CONTEXT_QGM ;
+   }
+
+   INT32 _rtnContextQGM::open( qgmPlanContainer *accPlan )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+      if ( NULL == accPlan )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      _accPlan = accPlan ;
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextQGM::_prepareData( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      INT32 index = 0 ;
+      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+
+      for ( ; index < RTN_CONTEXT_GETNUM_ONCE ; ++index )
+      {
+         try
+         {
+            rc = _accPlan->fetch( obj ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Qgm fetch failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         rc = append( obj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                      obj.toString().c_str(), rc ) ;
+
+         // increase counter
+         DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+
+         // make sure we still have room to read another
+         // record_max_sz (i.e. 16MB). if we have less than 16MB
+         // to 256MB, we can't safely assume the next record we
+         // read will not overflow the buffer, so let's just break
+         // before reading the next record
+         if ( buffEndOffset() + DMS_RECORD_MAX_SZ > RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            // let's break if there's no room for another max record
+            break ;
+         }
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   /*
+      _rtnContextDump implement
+   */
+   _rtnContextDump::_rtnContextDump( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _numToReturn = -1 ;
+      _numToSkip   = 0 ;
+   }
+
+   _rtnContextDump::~_rtnContextDump()
+   {
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextDump::getType () const
+   {
+      return RTN_CONTEXT_DUMP ;
+   }
+
+   INT32 _rtnContextDump::open ( const BSONObj &selector,
+                                 const BSONObj &matcher,
+                                 INT64 numToReturn,
+                                 INT64 numToSkip )
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+
+      if ( !selector.isEmpty() )
+      {
+         try
+         {
+            rc = _selector.loadPattern ( selector ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Failed loading pattern for selector: %s: %s",
+                     selector.toString().c_str(), e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed loading selector: %s, rc = %d",
+                     selector.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+      if ( !matcher.isEmpty() )
+      {
+         try
+         {
+            rc = newMatcher() ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to create new matcher, rc: %d", rc ) ;
+               goto error ;
+            }
+            rc = _matcher->loadPattern ( matcher ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Failed loading pattern for matcher: %s: %s",
+                     matcher.toString().c_str(), e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed loading matcher: %s, rc = %d",
+                     matcher.toString().c_str(), rc ) ;
+            goto error ;
+         }
+      }
+
+      _numToReturn = numToReturn ;
+      _numToSkip   = numToSkip > 0 ? numToSkip : 0 ;
+
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextDump::monAppend( const BSONObj & result )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj tempObj ;
+      BOOLEAN isMatch = TRUE ;
+
+      if ( 0 == _numToReturn )
+      {
+         goto done ;
+      }
+
+      try
+      {
+         // let's see if it's what we want
+         if ( _matcher && _matcher->isInitialized() )
+         {
+            rc = _matcher->matches ( result, isMatch ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to match record, rc: %d", rc ) ;
+         }
+         // if it matches
+         if ( isMatch )
+         {
+            if ( _numToSkip > 0 )
+            {
+               --_numToSkip ;
+               goto done ;
+            }
+
+            // if we don't want all fields, let's select the interested fields
+            if ( _selector.isInitialized() )
+            {
+               rc = _selector.select ( result, tempObj ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to build select record, "
+                            "rc: %d", rc ) ;
+            }
+            else
+            {
+               tempObj = result ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Failed to match or select from object: %s",
+                  e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( isMatch )
+      {
+         rc = append ( tempObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to append to context, rc = %d",
+                      rc ) ;
+
+         if ( _numToReturn > 0 )
+         {
+            --_numToReturn ;
+         }
+      }
+
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 _rtnContextDump::_prepareData( pmdEDUCB * cb )
+   {
+      _hitEnd = TRUE ;
+      return SDB_DMS_EOC ;
+   }
+
+   /*
+      _rtnContextCoord implement
+   */
+   _rtnContextCoord::_rtnContextCoord( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _numToReturn      = -1 ;
+      _numToSkip        = 0 ;
+      _netAgent         = NULL ;
+   }
+
+   _rtnContextCoord::~_rtnContextCoord ()
+   {
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
+      pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+
+      killSubContexts( cb ) ;
+   }
+
+   void _rtnContextCoord::killSubContexts( pmdEDUCB * cb )
+   {
+      UINT32 tid = 0 ;
+      coordSubContext *pSubContext  = NULL ;
+
+      if ( cb )
+      {
+         tid = cb->getTID() ;
+
+         // get all pre-read reply
+         if ( _prepareNodeMap.size() > 0 )
+         {
+            _getPrepareNodesData( cb, TRUE ) ;
+         }
+         _prepareNodeMap.clear() ;
+      }
+
+      // push all subContext to prepare map
+      SUB_CONTEXT_MAP::iterator itSub = _subContextMap.begin() ;
+      while ( _subContextMap.end() != itSub )
+      {
+         pSubContext = itSub->second ;
+         _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                    pSubContext->getRouteID().value,
+                                    pSubContext ) ) ;
+         ++itSub ;
+      }
+      _subContextMap.clear() ;
+
+      EMPTY_CONTEXT_MAP::iterator it = _emptyContextMap.begin() ;
+      while ( it != _emptyContextMap.end() )
+      {
+         _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                    it->first,
+                                    it->second ) ) ;
+         ++it ;
+      }
+      _emptyContextMap.clear() ;
+
+      // kill sub context
+      if ( cb )
+      {
+         MsgOpKillContexts killMsg ;
+         MsgRouteID routeID ;
+         killMsg.header.messageLength = sizeof ( MsgOpKillContexts ) ;
+         killMsg.header.opCode = MSG_BS_KILL_CONTEXT_REQ ;
+         killMsg.header.TID = tid ;
+         killMsg.header.routeID.value = 0;
+         killMsg.ZERO = 0;
+         killMsg.numContexts = 1 ;
+
+         it = _prepareContextMap.begin() ;
+         while ( it != _prepareContextMap.end() )
+         {
+            pSubContext = it->second ;
+            routeID = pSubContext->getRouteID() ;
+            killMsg.contextIDs[0] = pSubContext->getContextID() ;
+
+            rtnCoordSendRequestToNode( (void*)&killMsg, routeID, _netAgent,
+                                       cb, _prepareNodeMap ) ;
+
+            ++it ;
+         }
+
+         if ( _prepareContextMap.size() > 0 )
+         {
+            REPLY_QUE replyQue ;
+            rtnCoordGetReply( cb, _prepareNodeMap, replyQue,
+                              MSG_BS_KILL_CONTEXT_RES ) ;
+            while ( !replyQue.empty() )
+            {
+               SDB_OSS_FREE( replyQue.front() ) ;
+               replyQue.pop() ;
+            }
+         }
+      }
+
+      // release all context
+      it = _prepareContextMap.begin() ;
+      while ( it != _prepareContextMap.end() )
+      {
+         pSubContext = it->second ;
+         SDB_OSS_DEL pSubContext ;
+         ++it ;
+      }
+      _prepareContextMap.clear() ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextCoord::getType () const
+   {
+      return RTN_CONTEXT_COORD ;
+   }
+
+   INT32 _rtnContextCoord::open( const BSONObj & orderBy, INT64 numToReturn,
+                                 INT64 numToSkip )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *krcb = pmdGetKRCB() ;
+
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+
+      _netAgent = krcb->getCoordCB()->getRouteAgent() ;
+      if ( NULL == _netAgent )
+      {
+         PD_LOG( PDERROR, "Net agent is null" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _orderBy = orderBy.getOwned() ;
+      _numToReturn = numToReturn ;
+      _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::reopen ()
+   {
+      if ( _isOpened )
+      {
+         return SDB_DMS_CONTEXT_IS_OPEN ;
+      }
+      if ( !eof() || !isEmpty() )
+      {
+         return SDB_SYS ;
+      }
+
+      _isOpened = TRUE ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _rtnContextCoord::_send2EmptyNodes( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpGetMore msgReq ;
+      MsgRouteID routeID ;
+      EMPTY_CONTEXT_MAP::iterator emptyIter ;
+
+      msgFillGetMoreMsg( msgReq, cb->getTID(), -1, -1, 0 ) ;
+
+      emptyIter = _emptyContextMap.begin() ;
+      while( emptyIter != _emptyContextMap.end() )
+      {
+         routeID.value = emptyIter->first ;
+         msgReq.contextID = emptyIter->second->getContextID() ;
+         rc = rtnCoordSendRequestToNode( (void *)(&msgReq), routeID, _netAgent,
+                                         cb, _prepareNodeMap ) ;
+         if ( rc != SDB_OK )
+         {
+            PD_LOG ( PDERROR, "Failed to send getmore request to "
+                     "node( groupID=%u, nodeID=%u, serviceID=%u, "
+                     "contextID=%lld, rc=%d )",
+                     routeID.columns.groupID,
+                     routeID.columns.nodeID,
+                     routeID.columns.serviceID,
+                     msgReq.contextID, rc ) ;
+            break ;
+         }
+         _prepareContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                    emptyIter->first, emptyIter->second ) ) ;
+         _emptyContextMap.erase( emptyIter++ ) ;
+      }
+
+      return rc;
+   }
+
+   INT32 _rtnContextCoord::_getPrepareNodesData( pmdEDUCB * cb,
+                                                 BOOLEAN waitAll )
+   {
+      INT32 rc = SDB_OK ;
+      REPLY_QUE replyQue ;
+
+      if ( _prepareNodeMap.empty() )
+      {
+         goto done ;
+      }
+      else
+      {
+         CHAR *pData = NULL ;
+         MsgOpReply *pReply = NULL ;
+
+         rc = rtnCoordGetReply( cb, _prepareNodeMap, replyQue,
+                                MSG_BS_GETMORE_RES, waitAll ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to get reply, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         while ( !replyQue.empty() )
+         {
+            pData = replyQue.front() ;
+            pReply = ( MsgOpReply* )pData ;
+
+            if ( pReply->header.messageLength < (INT32)sizeof( MsgOpReply ) )
+            {
+               _delPrepareContext( pReply->header.routeID ) ;
+               rc = SDB_INVALIDARG ;
+               PD_LOG ( PDERROR, "Get data failed, received invalid message "
+                        "from node(groupID=%u, nodeID=%u, serviceID=%u, "
+                        "messageLength=%d)",
+                        pReply->header.routeID.columns.groupID,
+                        pReply->header.routeID.columns.nodeID,
+                        pReply->header.routeID.columns.serviceID,
+                        pReply->header.messageLength ) ;
+               break ;
+            }
+            else if ( SDB_OK != pReply->flags )
+            {
+               _delPrepareContext( pReply->header.routeID ) ;
+
+               if ( SDB_DMS_EOC != pReply->flags )
+               {
+                  PD_LOG ( PDERROR, "Get data failed, failed to get data "
+                           "from node (groupID=%u, nodeID=%u, serviceID=%u, "
+                           "flag=%d)", pReply->header.routeID.columns.groupID,
+                           pReply->header.routeID.columns.nodeID,
+                           pReply->header.routeID.columns.serviceID,
+                           pReply->flags ) ;
+                  rc = pReply->flags ;
+                  break ;
+               }
+               else
+               {
+                  // release data
+                  SDB_OSS_FREE( pData ) ;
+               }
+            }
+            else
+            {
+               rc = _appendSubData( pData ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to append the data, rc: %d", rc ) ;
+                  break ;
+               }
+            }
+
+            replyQue.pop() ;
+         } // end while
+
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      while ( !replyQue.empty() )
+      {
+         SDB_OSS_FREE( replyQue.front() ) ;
+         replyQue.pop() ;
+      }
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_prepareData( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      while ( TRUE )
+      {
+         rc = _getSubData() ;
+         if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+         {
+            goto done ;
+         }
+         else if ( SDB_RTN_COORD_CACHE_EMPTY != rc )
+         {
+            PD_LOG( PDERROR, "Failed to get sub data, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         if ( _emptyContextMap.size() == 0 &&
+              _prepareContextMap.size() == 0 )
+         {
+            rc = SDB_SYS ;
+            PD_LOG( PDERROR, "Empty context map can't be empty" ) ;
+            goto error ;
+         }
+
+         rc = _send2EmptyNodes( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Send request to empty nodes failed, rc: %d",
+                      rc ) ;
+
+         rc = _getPrepareNodesData( cb, requireOrder() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Get data from prepare nodes failed, rc: %d",
+                      rc ) ;
+      }
+
+   done:
+      // pre-read
+      if ( SDB_OK == rc && _numToReturn != 0 )
+      {
+         _send2EmptyNodes( cb ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_appendSubData( CHAR * pData )
+   {
+      INT32 rc = SDB_OK ;
+      MsgOpReply *pReply = (MsgOpReply *)pData ;
+      EMPTY_CONTEXT_MAP::iterator iter ;
+      coordSubContext *pSubContext = NULL ;
+
+      if ( (UINT32)pReply->header.opCode != MSG_BS_GETMORE_RES ||
+           (UINT32)pReply->header.messageLength < sizeof( MsgOpReply ) )
+      {
+         rc = SDB_UNKNOWN_MESSAGE ;
+         PD_LOG ( PDERROR, "Failed to append the data, invalid data"
+                  "(opCode=%d, messageLength=%d)", pReply->header.opCode,
+                  pReply->header.messageLength ) ;
+         goto error ;
+      }
+
+      iter = _prepareContextMap.find( pReply->header.routeID.value ) ;
+      if ( _prepareContextMap.end() == iter )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG ( PDERROR, "Failed to append the data, no match context"
+                  "(groupID=%u, nodeID=%u, serviceID=%u)",
+                  pReply->header.routeID.columns.groupID,
+                  pReply->header.routeID.columns.nodeID,
+                  pReply->header.routeID.columns.serviceID ) ;
+         goto error ;
+      }
+
+      pSubContext = iter->second ;
+      SDB_ASSERT( pSubContext != NULL, "subContext can't be NULL" )
+
+      if ( pSubContext->getContextID() != pReply->contextID )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG ( PDERROR, "Failed to append the data, no match context"
+                  "(expectContextID=%lld, contextID=%lld)",
+                  pSubContext->getContextID(), pReply->contextID ) ;
+         goto error ;
+      }
+
+      // after appendData success, the data-pointer is manage by subContext.
+      // if the data-pointer will be delete by others, the clearData should be
+      // called first.
+      pSubContext->appendData( pReply ) ;
+
+      if ( !requireOrder() )
+      {
+         _prepareContextMap.erase( iter ) ;
+         _subContextMap.insert( SUB_CONTEXT_MAP::value_type( _emptyKey,
+                                pSubContext ) ) ;
+      }
+      else
+      {
+         coordOrderKey orderKey ;
+         rc = pSubContext->getOrderKey( orderKey ) ;
+         if ( rc != SDB_OK )
+         {
+            pSubContext->clearData() ;
+            PD_LOG ( PDERROR, "Failed to get orderKey failed, rc: %d", rc ) ;
+            goto error ;
+         }
+         _prepareContextMap.erase( iter ) ;
+         _subContextMap.insert( SUB_CONTEXT_MAP::value_type( orderKey,
+                                pSubContext ) ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::addSubContext( MsgRouteID & routeID,
+                                          SINT64 contextID )
+   {
+      INT32 rc = SDB_OK ;
+      EMPTY_CONTEXT_MAP::iterator iter ;
+      coordSubContext *pSubContext = NULL ;
+
+      SDB_ASSERT ( -1 != contextID, "context id can't be -1" )
+
+      if ( !_isOpened || NULL == _netAgent )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE ;
+         goto error ;
+      }
+
+      iter = _emptyContextMap.find( routeID.value ) ;
+      if ( iter != _emptyContextMap.end() )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG( PDERROR, "Repeat to add sub-context (groupID=%u, nodeID=%u, "
+                 "serviceID=%u, oldContextID=%lld, newContextID=%lld)",
+                 routeID.columns.groupID, routeID.columns.nodeID,
+                 routeID.columns.serviceID, iter->second->getContextID(),
+                 contextID ) ;
+         goto error ;
+      }
+
+      pSubContext = SDB_OSS_NEW coordSubContext( routeID, contextID ) ;
+      if ( NULL == pSubContext )
+      {
+         rc = SDB_OOM;
+         PD_LOG ( PDERROR, "Failed to alloc memory" ) ;
+         goto error ;
+      }
+
+      pSubContext->setOrderBy( _orderBy ) ;
+
+      _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type( routeID.value,
+                               pSubContext ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnContextCoord::addSubDone( pmdEDUCB * cb )
+   {
+      _send2EmptyNodes( cb ) ;
+   }
+
+   INT32 _rtnContextCoord::_getSubData()
+   {
+      INT32 rc = SDB_OK ;
+
+      if ( !requireOrder() )
+      {
+         rc = _getSubDataNormal() ;
+      }
+      else
+      {
+         rc = _getSubDataByOrder() ;
+      }
+
+      return rc ;
+   }
+
+   INT32 _rtnContextCoord::_getSubDataNormal ()
+   {
+      INT32 rc                      = SDB_OK ;
+      SUB_CONTEXT_MAP::iterator iter ;
+      coordSubContext *pSubContext  = NULL ;
+      SINT32 recordNum              = 0 ;
+      CHAR *pData                   = NULL ;
+
+      while ( isEmpty() )
+      {
+         if ( 0 == _numToReturn )
+         {
+            _hitEnd = TRUE ;
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+         if ( _subContextMap.size() == 0 )
+         {
+            if ( _emptyContextMap.size() + _prepareContextMap.size() == 0 )
+            {
+               _hitEnd = TRUE ;
+               rc = SDB_DMS_EOC ;
+            }
+            else
+            {
+               rc = SDB_RTN_COORD_CACHE_EMPTY ;
+            }
+            goto error ;
+         }
+
+         iter = _subContextMap.begin() ;
+         pSubContext = iter->second ;
+         recordNum = pSubContext->getRecordNum() ;
+
+         // skip the records
+         if ( _numToSkip > 0 )
+         {
+            if ( _numToSkip >= recordNum )
+            {
+               rc = pSubContext->popAll() ;
+               if ( rc != SDB_OK )
+               {
+                  PD_LOG ( PDERROR, "Failed to skip the data(rc=%d)", rc ) ;
+                  goto error ;
+               }
+               _subContextMap.erase ( iter ) ;
+               _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                        pSubContext->getRouteID().value,
+                                        pSubContext ) ) ;
+               _numToSkip -= recordNum ;
+               continue ;
+            }
+            else
+            {
+               rc = pSubContext->popN( _numToSkip ) ;
+               if ( rc != SDB_OK )
+               {
+                  PD_LOG ( PDERROR, "Failed to skip the data(rc=%d)", rc ) ;
+                  goto error ;
+               }
+               _numToSkip = 0 ;
+            }
+         }
+
+         recordNum = pSubContext->getRecordNum() ;
+
+         if ( ( _numToReturn < 0 || recordNum <= _numToReturn ) &&
+              ( buffEndOffset() + pSubContext->getRemainLen() <=
+                RTN_RESULTBUFFER_SIZE_MAX ) )
+         {
+            rc = appendObjs( pSubContext->front(),
+                             (INT32)pSubContext->getRemainLen(), recordNum ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to append objs, rc: %d", rc ) ;
+
+            rc = pSubContext->popAll() ;
+            PD_RC_CHECK( rc, PDERROR, "Pop sub context all objs failed, rc: %d",
+                         rc ) ;
+
+            if ( _numToReturn > 0 )
+            {
+               _numToReturn -= recordNum ;
+            }
+         }
+         else
+         {
+            while ( 0 != _numToReturn && recordNum > 0 )
+            {
+               pData = pSubContext->front() ;
+               if ( NULL == pData )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG ( PDERROR, "Failed to get the data, rc: %d", rc ) ;
+                  goto error ;
+               }
+
+               try
+               {
+                  BSONObj boRecord( pData ) ;
+                  rc = append( boRecord ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                               boRecord.toString().c_str(), rc ) ;
+               }
+               catch ( std::exception &e )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
+                  goto error ;
+               }
+
+               rc = pSubContext->pop() ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to pop data, rc: %d", rc ) ;
+
+               --recordNum ;
+               if ( _numToReturn > 0 )
+               {
+                  --_numToReturn ;
+               }
+
+               // make sure we still have room to read another
+               // record_max_sz (i.e. 16MB). if we have less than 16MB
+               // to 256MB, we can't safely assume the next record we
+               // read will not overflow the buffer, so let's just break
+               // before reading the next record
+               if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
+                    RTN_RESULTBUFFER_SIZE_MAX )
+               {
+                  // let's break if there's no room for another max record
+                  break ;
+               }
+            }
+         }
+
+         if ( pSubContext->getRecordNum() <= 0 )
+         {
+            _subContextMap.erase ( iter ) ;
+            _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                     pSubContext->getRouteID().value,
+                                     pSubContext ) ) ;
+         }
+      } // end while
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_RTN_COORD_CACHE_EMPTY ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextCoord::_getSubDataByOrder ()
+   {
+      INT32 rc = SDB_OK ;
+      SUB_CONTEXT_MAP::iterator iterFirst ;
+      coordSubContext *pSubContext = NULL ;
+      CHAR *pData = NULL ;
+
+      while ( isEmpty() )
+      {
+         // must sub context all have data
+         if ( _emptyContextMap.size() + _prepareContextMap.size() > 0 )
+         {
+            rc = SDB_RTN_COORD_CACHE_EMPTY ;
+            goto error ;
+         }
+         else if ( _subContextMap.size() == 0 )
+         {
+            _hitEnd = TRUE ;
+            rc = SDB_DMS_EOC ;
+            goto error ;
+         }
+         if ( eof() )
+         {
+            break ;
+         }
+
+         for ( INT32 index = 0 ; index < RTN_CONTEXT_GETNUM_ONCE ; ++index )
+         {
+            if ( 0 == _numToReturn )
+            {
+               _hitEnd = TRUE ;
+               break ;
+            }
+
+            iterFirst = _subContextMap.begin() ;
+            pSubContext = iterFirst->second ;
+            pData = pSubContext->front() ;
+            if ( NULL == pData )
+            {
+               rc = SDB_SYS ;
+               PD_LOG( PDERROR, "Failed to get the data, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            if ( _numToSkip > 0 )
+            {
+               --_numToSkip ;
+            }
+            else
+            {
+               try
+               {
+                  BSONObj obj( pData ) ;
+                  rc = append( obj ) ;
+                  PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                               obj.toString().c_str(), rc ) ;
+               }
+               catch ( std::exception &e )
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+                  goto error ;
+               }
+
+               if ( _numToReturn > 0 )
+               {
+                  --_numToReturn ;
+               }
+            }
+
+            rc = pSubContext->pop() ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get the data(rc=%d)", rc ) ;
+
+            if ( pSubContext->getRecordNum() <= 0 )
+            {
+               _subContextMap.erase ( iterFirst ) ;
+               _emptyContextMap.insert( EMPTY_CONTEXT_MAP::value_type(
+                                        pSubContext->getRouteID().value,
+                                        pSubContext ) ) ;
+               break ;
+            }
+            else
+            {
+               coordOrderKey orderKey ;
+               rc = pSubContext->getOrderKey( orderKey ) ;
+               PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
+
+               _subContextMap.erase ( iterFirst ) ;
+               _subContextMap.insert( SUB_CONTEXT_MAP::value_type( orderKey,
+                                      pSubContext ) ) ;
+            }
+
+            // make sure we still have room to read another
+            // record_max_sz (i.e. 16MB). if we have less than 16MB
+            // to 256MB, we can't safely assume the next record we
+            // read will not overflow the buffer, so let's just break
+            // before reading the next record
+            if ( buffEndOffset() + DMS_RECORD_MAX_SZ >
+                 RTN_RESULTBUFFER_SIZE_MAX )
+            {
+               // let's break if there's no room for another max record
+               break ;
+            }
+         }
+      }
+
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE ;
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_RTN_COORD_CACHE_EMPTY ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _rtnContextCoord::_delPrepareContext( const MsgRouteID & routeID )
+   {
+      EMPTY_CONTEXT_MAP::iterator iter =
+         _prepareContextMap.find( routeID.value ) ;
+
+      if ( iter != _prepareContextMap.end() )
+      {
+         coordSubContext *pSubContext = iter->second ;
+
+         if ( pSubContext != NULL )
+         {
+            SDB_OSS_DEL pSubContext ;
+         }
+         _prepareContextMap.erase ( iter ) ;
+      }
+   }
+
+   /*
+      _coordSubContext implement
+   */
+   _coordSubContext::_coordSubContext ()
+   {
+      _routeID.value = 0 ;
+      _contextID = -1 ;
+      _pData = NULL ;
+      _curOffset = 0 ;
+      _recordNum = 0 ;
+      _isOrderKeyChange = FALSE ;
+   }
+
+   _coordSubContext::_coordSubContext ( const _coordSubContext &srcContext )
+   {
+   }
+
+   _coordSubContext::_coordSubContext ( MsgRouteID routeID, SINT64 contextID )
+   : _routeID( routeID ), _contextID( contextID )
+   {
+      _pData = NULL ;
+      _curOffset = 0 ;
+      _recordNum = 0 ;
+      _isOrderKeyChange = FALSE ;
+   }
+
+   _coordSubContext::~_coordSubContext ()
+   {
+      if ( NULL != _pData )
+      {
+         SDB_OSS_FREE ( _pData ) ;
+         _pData = NULL;
+      }
+   }
+
+   UINT32 _coordSubContext::getRemainLen()
+   {
+      if ( _pData->header.messageLength > _curOffset )
+      {
+         return _pData->header.messageLength - _curOffset ;
+      }
+      return 0 ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_APPENDDATA, "coordSubContext::appendData" )
+   void _coordSubContext::appendData( MsgOpReply * pReply )
+   {
+      PD_TRACE_ENTRY ( SDB_COSUBCON_APPENDDATA ) ;
+      SDB_ASSERT( pReply != NULL, "pReply can't be NULL" )
+
+      if ( _pData != NULL )
+      {
+         SDB_ASSERT ( _recordNum <= 0, "the buffer must be empty" )
+         SDB_OSS_FREE( _pData ) ;
+      }
+      _routeID = pReply->header.routeID ;
+      _pData = pReply ;
+      _recordNum = pReply->numReturned ;
+      _curOffset = ossAlign4( (UINT32)sizeof( MsgOpReply ) ) ;
+      _isOrderKeyChange = TRUE ;
+      PD_TRACE_EXIT ( SDB_COSUBCON_APPENDDATA ) ;
+   }
+
+   void _coordSubContext::clearData()
+   {
+      _pData = NULL; //don't delete it, the fun-caller will delete it
+      _curOffset = 0;
+      _recordNum = 0;
+      _isOrderKeyChange = TRUE;
+   }
+
+   SINT64 _coordSubContext::getContextID()
+   {
+      return _contextID ;
+   }
+
+   MsgRouteID _coordSubContext::getRouteID()
+   {
+      return _routeID;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_FRONT, "coordSubContext::front" )
+   CHAR* _coordSubContext::front ()
+   {
+      PD_TRACE_ENTRY ( SDB_COSUBCON_FRONT ) ;
+      if ( _recordNum > 0 && _pData->header.messageLength > _curOffset )
+      {
+         PD_TRACE_EXIT ( SDB_COSUBCON_FRONT ) ;
+         return ( (CHAR *)_pData + _curOffset ) ;
+      }
+      else
+      {
+         PD_TRACE_EXIT ( SDB_COSUBCON_FRONT ) ;
+         return NULL ;
+      }
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_POP, "coordSubContext::pop" )
+   INT32 _coordSubContext::pop()
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_COSUBCON_POP ) ;
+      do
+      {
+         if ( _curOffset >= _pData->header.messageLength )
+         {
+            SDB_ASSERT( FALSE, "data-buffer is empty!" );
+            rc = SDB_RTN_COORD_CACHE_EMPTY ;
+            PD_LOG ( PDWARNING, "Failed to pop the data, reach the end of the "
+                     "buffer" ) ;
+            break;
+         }
+         try
+         {
+            BSONObj boRecord( (CHAR *)_pData + _curOffset ) ;
+            _curOffset += boRecord.objsize() ;
+            _curOffset = ossAlign4( (UINT32)_curOffset ) ;
+            _isOrderKeyChange = TRUE ;
+            --_recordNum ;
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG ( PDERROR, "Failed to pop the data, occur unexpected "
+                     "error(%s)", e.what() ) ;
+         }
+      }while ( FALSE ) ;
+
+      PD_TRACE_EXITRC ( SDB_COSUBCON_POP, rc ) ;
+      return rc;
+   }
+
+   INT32 _coordSubContext::popN( SINT32 num )
+   {
+      INT32 rc = SDB_OK ;
+      while ( num > 0 )
+      {
+         rc = pop() ;
+         if ( rc != SDB_OK )
+         {
+            break ;
+         }
+         --num ;
+      }
+      return rc;
+   }
+
+   INT32 _coordSubContext::popAll()
+   {
+      _recordNum = 0 ;
+      _curOffset = _pData->header.messageLength ;
+      _isOrderKeyChange = TRUE ;
+      return SDB_OK ;
+   }
+
+   SINT32 _coordSubContext::getRecordNum()
+   {
+      return _recordNum ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_GETORDERKEY, "coordSubContext::getOrderKey" )
+   INT32 _coordSubContext::getOrderKey( coordOrderKey &orderKey )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_COSUBCON_GETORDERKEY ) ;
+      do
+      {
+         if ( !_isOrderKeyChange )
+         {
+            break ;
+         }
+         if ( _recordNum <= 0 )
+         {
+            _orderKey.clear() ;
+            break ;
+         }
+         try
+         {
+            BSONObj boRecord( (CHAR *)_pData + _curOffset ) ;
+            rc = _orderKey.generateKey( boRecord ) ;
+            if ( rc != SDB_OK )
+            {
+               PD_LOG ( PDERROR, "Failed to get order-key(rc=%d)", rc ) ;
+               break ;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG ( PDERROR, "Failed to get order-key, occur unexpected "
+                     "error:%s", e.what() ) ;
+            break ;
+         }
+      }while ( FALSE ) ;
+
+      if ( SDB_OK == rc )
+      {
+         orderKey = _orderKey ;
+      }
+
+      PD_TRACE_EXITRC ( SDB_COSUBCON_GETORDERKEY, rc ) ;
+      return rc;
+   }
+
+   void _coordSubContext::setOrderBy( const BSONObj &orderBy )
+   {
+      _orderBy = orderBy ;
+      _orderKey.setOrderBy( orderBy ) ;
+   }
+
+   /*
+      _coordOrderKey implement
+   */
+   _coordOrderKey::_coordOrderKey ( const _coordOrderKey &orderKey )
+   {
+      _orderBy = orderKey._orderBy ;
+      _keyList = orderKey._keyList ;
+      _keyEleList = orderKey._keyEleList ;
+      _tmpObjList = orderKey._tmpObjList ;
+   }
+
+   _coordOrderKey::_coordOrderKey ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDERKEY_OPELT, "coordOrderKey::operator<" )
+   BOOLEAN _coordOrderKey::operator<( const _coordOrderKey &rhs ) const
+   {
+      PD_TRACE_ENTRY ( SDB_COORDERKEY_OPELT ) ;
+      BOOLEAN result = FALSE ;
+      try
+      {
+         BSONObjIterator iterOrder( _orderBy ) ;
+         UINT32 lSize = _keyList.size();
+         UINT32 rSize = rhs._keyList.size();
+         UINT32 i = 0;
+         INT32 cmpRs = 0;
+         while ( iterOrder.more() )
+         {
+            BSONElement beOrder = iterOrder.next() ;
+            if ( i >= lSize )
+            {
+               if ( i >= rSize )
+               {
+                  cmpRs = 0;
+               }
+               else
+               {
+                  cmpRs = beOrder.number() > 0 ? -1 : 1 ;
+               }
+               break ;
+            }
+            if ( i >= rSize )
+            {
+               cmpRs = beOrder.number() > 0 ? 1 : -1;
+               break;
+            }
+            BSONElement beLeft = _keyList[i] ;
+            BSONElement beRight = rhs._keyList[i] ;
+            cmpRs = beLeft.woCompare( beRight, false );
+            if ( 0 == cmpRs )
+            {
+               ++i;
+               continue;
+               if ( beLeft.type() == Array && i < _keyEleList.size()
+                  && i < rhs._keyEleList.size() )
+               {
+                  cmpRs = _keyEleList[i].woCompare( rhs._keyEleList[i], false );
+               }
+            }
+            if ( beOrder.number() < 0 )
+            {
+               cmpRs = cmpRs * -1;
+            }
+            break;
+         }
+         if ( 0 == cmpRs )
+         {
+            i = 0;
+            BSONObjIterator iterOrder2( _orderBy ) ;
+            while ( i < _keyEleList.size()
+                  && !(_keyEleList[i].eoo())
+                  && iterOrder2.more() )
+            {
+               BSONElement beOrder2 = iterOrder2.next();
+               cmpRs = _keyEleList[i].woCompare( rhs._keyEleList[i], false );
+               if ( 0 == cmpRs )
+               {
+                  ++i;
+                  continue;
+               }
+               if ( beOrder2.number() < 0 )
+               {
+                  cmpRs = cmpRs * -1;
+               }
+               break;
+            }
+         }
+         if ( cmpRs < 0 )
+         {
+            result = TRUE;
+         }
+         else
+         {
+            result = FALSE;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "compare failed, occured unexpected error:%s",
+                  e.what() );
+      }
+      PD_TRACE1 ( SDB_COORDERKEY_OPELT, PD_PACK_INT(result) );
+      PD_TRACE_EXIT ( SDB_COORDERKEY_OPELT ) ;
+      return result;
+   }
+
+   void _coordOrderKey::clear()
+   {
+      _keyList.clear();
+      _keyEleList.clear();
+      _tmpObjList.clear();
+   }
+
+   void _coordOrderKey::setOrderBy( const BSONObj &orderBy )
+   {
+      _orderBy = orderBy;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDERKEY_GENKEY, "coordOrderKey::generateKey" )
+   INT32 _coordOrderKey::generateKey( const BSONObj &record )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_COORDERKEY_GENKEY ) ;
+      _keyList.clear();
+      _keyEleList.clear();
+      _tmpObjList.clear();
+
+      try
+      {
+         BSONObjIterator iterOrderBy( _orderBy ) ;
+         BSONElement beEmpty;
+         while ( iterOrderBy.more() )
+         {
+            BSONElement beOrderField = iterOrderBy.next() ;
+            BSONElement beKeyField =
+               record.getField( beOrderField.fieldName() ) ;
+            if ( beKeyField.eoo() )
+            {
+               _keyList.push_back( beEmpty );
+               _keyEleList.push_back( beEmpty );
+            }
+            else
+            {
+               BSONObj boArrKey;
+               if ( beKeyField.type() == Array )
+               {
+                  boArrKey = beKeyField.embeddedObject();
+               }
+               INT32 fieldNum = boArrKey.nFields();
+               if ( 0 == fieldNum )
+               {
+                  _keyList.push_back( beKeyField );
+                  _keyEleList.push_back( beEmpty );
+               }
+               else if ( 1 == fieldNum)
+               {
+                  _keyList.push_back( beKeyField );
+                  _keyEleList.push_back( beKeyField );
+               }
+               else
+               {
+                  BSONElement beSelectKey;
+                  BSONObjIterator iter( boArrKey );
+                  beSelectKey = iter.next();
+                  if ( beOrderField.number() > 0 )
+                  {
+                     while( iter.more() )
+                     {
+                        BSONElement beCurKey = iter.next();
+                        if ( beCurKey.woCompare( beSelectKey, false )
+                           < 0 )
+                        {
+                           beSelectKey = beCurKey;
+                        }
+                     }
+                  }
+                  else
+                  {
+                     while( iter.more() )
+                     {
+                        BSONElement beCurKey = iter.next();
+                        if ( beCurKey.woCompare( beSelectKey, false )
+                           > 0 )
+                        {
+                           beSelectKey = beCurKey;
+                        }
+                     }
+                  }
+                  BSONObjBuilder bobKeyTmp;
+                  BSONArrayBuilder babArrKeyVal;
+                  babArrKeyVal.append( beSelectKey );
+                  bobKeyTmp.append( "", babArrKeyVal.arr() );
+                  BSONObj boKeyTmp = bobKeyTmp.obj();
+                  _tmpObjList.push_back( boKeyTmp );
+                  BSONElement beNewKeyField = boKeyTmp.firstElement();
+                  _keyList.push_back( beNewKeyField );
+                  _keyEleList.push_back( beKeyField );
+                  
+               }
+            }
+         }
+
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG ( PDERROR, "failed to generate the key, occured exception: %s",
+                  e.what() );
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB_COORDERKEY_GENKEY, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _rtnContextSP::_rtnContextSP( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID ),
+    _sp(NULL)
+   {
+
+   }
+
+   _rtnContextSP::~_rtnContextSP()
+   {
+      SAFE_OSS_DELETE( _sp ) ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextSP::getType() const
+   {
+      return RTN_CONTEXT_SP ;
+   }
+
+   INT32 _rtnContextSP::open( _spdSession *sp )
+   {
+      INT32 rc = SDB_OK ;
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+      if ( NULL == sp )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      _sp = sp ;
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32  _rtnContextSP::_prepareData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+
+      for ( INT32 i = 0; i < RTN_CONTEXT_GETNUM_ONCE; i++ )
+      {
+         rc = _sp->next( obj ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to fetch spdSession:%d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            rc = append( obj ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                      obj.toString().c_str(), rc ) ;
+         }
+
+         DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+
+         if ( buffEndOffset() + DMS_RECORD_MAX_SZ > RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            break ;
+         }
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _rtnSubCLBuf::_rtnSubCLBuf()
+   {
+      _isOrderKeyChange = TRUE;
+      _remainNum = 0;
+   }
+
+   _rtnSubCLBuf::_rtnSubCLBuf( BSONObj &orderBy )
+   {
+      _orderKey.setOrderBy( orderBy );
+      _isOrderKeyChange = TRUE;
+      _remainNum = 0;
+   }
+
+   _rtnSubCLBuf::~_rtnSubCLBuf()
+   {
+   }
+
+   const CHAR* _rtnSubCLBuf::front()
+   {
+      return _buffer.front();
+   }
+
+   INT32 _rtnSubCLBuf::pop()
+   {
+      BSONObj obj;
+      _isOrderKeyChange = TRUE;
+      _remainNum--;
+      return _buffer.nextObj( obj );
+   }
+
+   INT32 _rtnSubCLBuf::popN( SINT32 num )
+   {
+      INT32 rc = SDB_OK;
+      _isOrderKeyChange = TRUE;
+      if ( num >= recordNum() )
+      {
+         rc = popAll();
+         goto done;
+      }
+      while ( num > 0 )
+      {
+         rc = pop();
+         if ( rc )
+         {
+            goto error;
+         }
+         --num;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+   INT32 _rtnSubCLBuf::popAll()
+   {
+      _isOrderKeyChange = TRUE;
+      _buffer.release();
+      _remainNum = 0;
+      return SDB_OK;
+   }
+
+   INT32 _rtnSubCLBuf::recordNum()
+   {
+      return _remainNum;
+   }
+
+   INT32 _rtnSubCLBuf::getOrderKey( coordOrderKey &orderKey )
+   {
+      INT32 rc = SDB_OK;
+      if ( _isOrderKeyChange )
+      {
+         if ( recordNum() <= 0 )
+         {
+            _orderKey.clear();
+         }
+         else
+         {
+            try
+            {
+               BSONObj boRecord( front() );
+               rc = _orderKey.generateKey( boRecord );
+               PD_RC_CHECK( rc, PDERROR,
+                           "failed to get order-key(rc=%d)",
+                           rc );
+            }
+            catch ( std::exception &e )
+            {
+               PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                           "occur unexpected error:%s",
+                           e.what() );
+            }
+         }
+      }
+      orderKey = _orderKey;
+      _isOrderKeyChange = FALSE;
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   rtnContextBuf _rtnSubCLBuf::buffer()
+   {
+      return _buffer;
+   }
+
+   void _rtnSubCLBuf::setBuffer( rtnContextBuf &buffer )
+   {
+      _buffer = buffer;
+      _isOrderKeyChange = TRUE;
+      _remainNum = buffer.recordNum();
+   }
+
+   _rtnContextMainCL::_rtnContextMainCL( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+   }
+   _rtnContextMainCL::~_rtnContextMainCL()
+   {
+      pmdKRCB *pKrcb = pmdGetKRCB();
+      SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+      pmdEDUCB *cb = pKrcb->getEDUMgr()->getEDUByID( eduID() );
+      SubCLBufList::iterator iterLst
+                        = _subCLBufList.begin();
+      while( iterLst != _subCLBufList.end() )
+      {
+         pRtncb->contextDelete( iterLst->first, cb );
+         ++iterLst;
+      }
+      _subCLBufList.clear();
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextMainCL::getType () const
+   {
+      return RTN_CONTEXT_MAINCL;
+   }
+
+   INT32 _rtnContextMainCL::open( const bson::BSONObj & orderBy,
+                                 INT64 numToReturn,
+                                 INT64 numToSkip )
+   {
+      _orderBy = orderBy.getOwned();
+      _numToReturn = numToReturn;
+      _numToSkip = numToSkip;
+      _isOpened = TRUE;
+      if ( 0 == _numToReturn )
+      {
+         _hitEnd = TRUE;
+      }
+      else
+      {
+         _hitEnd = FALSE;
+      }
+      return SDB_OK;
+   }
+
+   INT32 _rtnContextMainCL::addSubContext( SINT64 contextID )
+   {
+      rtnSubCLBuf emptyCTXBuf( _orderBy );
+      _subCLBufList[ contextID ] = emptyCTXBuf;
+      return SDB_OK;
+   }
+
+   BOOLEAN _rtnContextMainCL::requireOrder () const
+   {
+      if ( _orderBy.isEmpty() || _subCLBufList.size() <= 1 )
+      {
+         return FALSE;
+      }
+      return TRUE;
+   }
+
+   INT32 _rtnContextMainCL::getMore( INT32 maxNumToReturn,
+                                    rtnContextBuf &buffObj,
+                                    INT64 &startPos,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      BOOLEAN hasData = FALSE;
+      pmdKRCB *pKrcb = pmdGetKRCB();
+      SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+
+      // OrderBy: get data one by one and caused copy
+      if ( !isEmpty() || requireOrder() )
+      {
+         rc = this->_rtnContextBase::getMore( maxNumToReturn,
+                                          buffObj, startPos,
+                                          cb );
+         goto done;
+      }
+
+      // buffer is empty and not need order,
+      // directly get data from sub-context
+      while( !hasData )
+      {
+         // skip the records
+         while ( _numToSkip > 0 )
+         {
+            SubCLBufList::iterator iterSubCTXSkip
+                              = _subCLBufList.begin();
+            if ( _subCLBufList.end() == iterSubCTXSkip
+               || iterSubCTXSkip->second.recordNum() <= 0 )
+            {
+               break;
+            }
+            if ( _numToSkip >= iterSubCTXSkip->second.recordNum() )
+            {
+               _numToSkip -= iterSubCTXSkip->second.recordNum();
+               iterSubCTXSkip->second.popAll();
+            }
+            else
+            {
+               iterSubCTXSkip->second.popN( _numToSkip );
+               _numToSkip = 0;
+            }
+         }
+
+         SubCLBufList::iterator iterSubCTX
+                              = _subCLBufList.begin();
+         if ( _subCLBufList.end() == iterSubCTX )
+         {
+            rc = SDB_DMS_EOC;
+            break;
+         }
+
+         if ( iterSubCTX->second.recordNum() <= 0 )
+         {
+            rc = _prepareSubCTXData( iterSubCTX,
+                                    cb, maxNumToReturn );
+            if ( rc != SDB_OK )
+            {
+               pRtncb->contextDelete( iterSubCTX->first, cb );
+               _subCLBufList.erase( iterSubCTX );
+               if ( SDB_DMS_EOC != rc )
+               {
+                  goto error;
+               }
+            }
+            continue;
+         }
+         buffObj = iterSubCTX->second.buffer();
+         iterSubCTX->second.popAll();
+         hasData = TRUE;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextMainCL::_prepareSubCTXData( SubCLBufList::iterator iterSubCTX,
+                                                _pmdEDUCB * cb,
+                                                INT32 maxNumToReturn )
+   {
+      INT32 rc = SDB_OK;
+      INT64 startPos;
+      _SDB_RTNCB *pRtnCB = pmdGetKRCB()->getRTNCB();
+      rtnContext *pContext = NULL;
+      rtnContextBuf contextBuf;
+      SDB_ASSERT( _subCLBufList.end() != iterSubCTX, "invalid iterator!" );
+      if ( iterSubCTX->second.recordNum() > 0 )
+      {
+         goto done;
+      }
+      pContext = pRtnCB->contextFind( iterSubCTX->first );
+      PD_CHECK( pContext, SDB_RTN_CONTEXT_NOTEXIST, error, PDERROR,
+               "Context %lld does not exist", iterSubCTX->first );
+      rc = pContext->getMore( maxNumToReturn,
+                              contextBuf,
+                              startPos, cb );
+      if ( rc )
+      {
+         if ( rc != SDB_DMS_EOC )
+         {
+            PD_LOG( PDERROR, "getmore failed(rc=%d)", rc );
+         }
+         goto error;
+      }
+      iterSubCTX->second.setBuffer( contextBuf );
+
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextMainCL::_prepareData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      SDB_ASSERT( requireOrder(), "here should be order!" );
+      rc = _prepareDataByOrder( cb );
+      return rc;
+   }
+
+   INT32 _rtnContextMainCL::_prepareDataByOrder( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      pmdKRCB *pKrcb = pmdGetKRCB();
+      SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
+      while ( TRUE )
+      {
+         SubCLBufList::iterator iterSubCTXFirst
+                              = _subCLBufList.begin();
+         if ( _subCLBufList.end() == iterSubCTXFirst )
+         {
+            if ( isEmpty() )
+            {
+               rc = SDB_DMS_EOC;
+            }
+            break;
+         }
+         if ( iterSubCTXFirst->second.recordNum() <= 0 )
+         {
+            if ( !isEmpty() )
+            {
+               goto done;
+            }
+            rc = _prepareSubCTXData( iterSubCTXFirst, cb, -1 );
+            if ( rc )
+            {
+               pRtncb->contextDelete( iterSubCTXFirst->first, cb );
+               _subCLBufList.erase( iterSubCTXFirst );
+               if ( rc != SDB_DMS_EOC )
+               {
+                  goto error;
+               }
+               continue;
+            }
+         }
+         SubCLBufList::iterator iterSubCTXCur = iterSubCTXFirst;
+         ++iterSubCTXCur;
+         coordOrderKey firstOrderKey;
+         coordOrderKey curOrderKey;
+         rc = iterSubCTXFirst->second.getOrderKey( firstOrderKey );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to generate order-key(rc=%d)", rc );
+         while( iterSubCTXCur != _subCLBufList.end() )
+         {
+            if ( iterSubCTXCur->second.recordNum() <= 0 )
+            {
+               if ( !isEmpty() )
+               {
+                  goto done;
+               }
+               rc = _prepareSubCTXData( iterSubCTXCur, cb, -1 );
+               if ( rc )
+               {
+                  pRtncb->contextDelete( iterSubCTXCur->first, cb );
+                  _subCLBufList.erase( iterSubCTXCur++ );
+                  if ( rc != SDB_DMS_EOC )
+                  {
+                     goto error;
+                  }
+                  continue;
+               }
+            }
+            rc = iterSubCTXCur->second.getOrderKey( curOrderKey );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to generate order-key(rc=%d)", rc );
+            if ( curOrderKey < firstOrderKey )
+            {
+               iterSubCTXFirst = iterSubCTXCur;
+               firstOrderKey = curOrderKey;
+            }
+            ++iterSubCTXCur;
+         }
+
+         if ( _numToSkip <= 0 )
+         {
+            try
+            {
+               BSONObj obj( iterSubCTXFirst->second.front() );
+               rc = append( obj );
+               PD_RC_CHECK( rc, PDERROR,
+                           "failed to append data(rc=%d)", rc );
+            }
+            catch ( std::exception &e )
+            {
+               PD_LOG( PDERROR, "occur unexpected error:%s", e.what() );
+               goto error;
+            }
+         }
+         rc = iterSubCTXFirst->second.pop();
+         if ( rc )
+         {
+            goto error;
+         }
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   _rtnContextSort::_rtnContextSort( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID ),
+    _skip( 0 ),
+    _limit( -1 )
+   {
+
+   }
+
+   _rtnContextSort::~_rtnContextSort()
+   {
+
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextSort::getType() const
+   {
+      return RTN_CONTEXT_SORT ;
+   }
+
+   INT32 _rtnContextSort::open( const BSONObj &orderby,
+                                rtnContext *context,
+                                pmdEDUCB *cb,
+                                SINT64 numToSkip,
+                                SINT64 numToReturn )
+   {
+      SDB_ASSERT( !orderby.isEmpty(), "impossible" )
+      SDB_ASSERT( NULL != cb, "possible" )
+      SDB_ASSERT( NULL != context, "impossible" )
+      INT32 rc = SDB_OK ;
+      UINT64 sortBufSz = pmdGetKRCB()->getSortBufSize() ;
+
+      rc = _sorting.init( sortBufSz, orderby, context, contextID(), cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to init sort:%d", rc ) ;
+         goto error ;
+      }
+
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+      _skip = numToSkip ;
+      _limit = numToReturn ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextSort::_prepareData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+
+      BSONObj obj ;
+      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+
+      if ( 0 == _limit )
+      {
+         _hitEnd = TRUE ;
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      for ( INT32 i = 0; i < RTN_CONTEXT_GETNUM_ONCE; i++ )
+      {
+         rc = _sorting.fetch( obj, cb ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to fetch from sorting:%d", rc ) ;
+            goto error ;
+         }
+         else if ( 0 < _skip )
+         {
+            --_skip ;
+            continue ;
+         }
+         else if ( 0 == _limit )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+         else
+         {
+            rc = append( obj ) ;
+            PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                      obj.toString().c_str(), rc ) ;
+
+            if ( 0 < _limit )
+            {
+               --_limit ;
+            }
+         }
+
+         DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+
+         if ( buffEndOffset() + DMS_RECORD_MAX_SZ > RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            break ;
+         }
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   _rtnContextQgmSort::_rtnContextQgmSort( INT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID ),
+    _qp(NULL)
+   {
+
+   }
+
+   _rtnContextQgmSort::~_rtnContextQgmSort()
+   {
+     /// qgmPlan should be released by plan tree.
+      _qp = NULL ;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextQgmSort::getType () const
+   {
+      return RTN_CONTEXT_QGMSORT ;
+   }
+
+   INT32 _rtnContextQgmSort::open( _qgmPlan *qp )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != qp, "impossible" )
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+
+      _qp = qp ;
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextQgmSort::_prepareData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != _qp, "impossible" )
+      qgmFetchOut next ;
+      INT32 index = 0 ;
+      monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
+      for ( ; index < RTN_CONTEXT_GETNUM_ONCE ; ++index )
+      {
+         try
+         {
+            rc = _qp->fetchNext( next ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         if ( SDB_DMS_EOC == rc )
+         {
+            _hitEnd = TRUE ;
+            break ;
+         }
+         else if ( rc )
+         {
+            PD_LOG( PDERROR, "Qgm fetch failed, rc: %d", rc ) ;
+            goto error ;
+         }
+
+         rc = append( next.obj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Append obj[%s] failed, rc: %d",
+                      next.obj.toString().c_str(), rc ) ;
+         DMS_MON_OP_COUNT_INC( pMonAppCB, MON_SELECT, 1 ) ;
+         if ( buffEndOffset() + DMS_RECORD_MAX_SZ > RTN_RESULTBUFFER_SIZE_MAX )
+         {
+            break ;
+         }
+      }
+
+      if ( !isEmpty() )
+      {
+         rc = SDB_OK ;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+}
+

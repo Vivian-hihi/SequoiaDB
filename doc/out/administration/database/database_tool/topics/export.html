@@ -1,0 +1,157 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="数据迁移 — 导出"/>
+<meta name="description" content="sdbexprt sdbexprt是一个实用的工具。它可以从SequoiaDB数据库导出一个JSON格式或者CSV格式的数据存储文件。 选项 参数 描述 --help 返回基本帮助和用法文本。 --hostname,-h 从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。 --svcname,-s ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../../administration/database/database_tool/topics/database_tool.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_jvq_px5_hk"/>
+<link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
+<title>数据迁移 — 导出</title>
+<script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_jvq_px5_hk"><a name="topic_jvq_px5_hk"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../../../administration/database/database_tool/topics/database_tool.html" title="数据库工具"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">数据库工具</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/database.html" title="数据库管理">数据库管理</a> / <a class="navheader_parent_path" href="../../../../administration/database/database_tool/topics/database_tool.html" title="数据库工具">数据库工具</a></td></tr></tbody></table>
+
+  <h1 class="title topictitle1">数据迁移 — 导出</h1>
+
+  <div class="body">
+    <div class="section"><h2 class="title sectiontitle">sdbexprt</h2>
+      
+      <p class="p">sdbexprt是一个实用的工具。它可以从SequoiaDB数据库导出一个JSON格式或者CSV格式的数据存储文件。</p>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">选项</h2>
+      
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d14280e28" class="stentry">参数</th>
+
+          <th valign="bottom" align="left" id="d14280e31" class="stentry">描述</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--help</td>
+
+          <td valign="top" headers="d14280e31" class="stentry">返回基本帮助和用法文本。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--hostname,-h</td>
+
+          <td valign="top" headers="d14280e31" class="stentry">从指定主机名的SequoiaDB中导出数据。默认情况下sdbexprt尝试连接到本地主机。
+          </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--svcname,-s
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定的端口号。默认情况下sdbexprt尝试连接到端口号50000的主机。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--type
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定的导出数据格式。默认csv，数据格式可以是csv或json。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--file
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定要导出的文件名。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--delchar,-a
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定字符分隔符。默认是"，csv格式有效。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--delfield,-e
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定字段分隔符。默认是','，csv格式有效。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--delrecord,-r
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定记录分隔符。默认是'\n'。 </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--fields
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv格式有效。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--csname,-c
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定导出数据的集合空间名。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14280e28" class="stentry">--clname,-l
+          </td>
+
+          <td valign="top" headers="d14280e31" class="stentry">指定导出数的集合名。</td>
+
+        </tr>
+</table>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">用法</h2>
+      
+      <p class="p">在下面的例子，sdbexprt从本地数据库端口50000中导出集合空间foo的集合bar的数据，导出类型是csv，导出文件为contact，导出字段是field1和field2。</p>
+
+      <pre class="pre codeblock">sdbexprt -h localhost -s 50000 --type csv --file contace --fields field1,field2 -c foo -l bar</pre>
+
+    </div>
+
+  </div>
+
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../../administration/database/database_tool/topics/database_tool.html" title="数据库工具"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">数据库工具</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+          
+    </div>
+</body>
+</html>

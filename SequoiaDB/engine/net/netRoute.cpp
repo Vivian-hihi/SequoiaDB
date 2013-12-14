@@ -1,0 +1,242 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = netRoute.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-motionatted
+   versions of PD component. This file contains declare of PD functions.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "netRoute.hpp"
+#include "ossUtil.hpp"
+#include "clsUtil.hpp"
+#include "pdTrace.hpp"
+#include "netTrace.hpp"
+namespace engine
+{
+   _netRoute::~_netRoute()
+   {
+      clear() ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE, "_netRoute::route" )
+   INT32 _netRoute::route( const _MsgRouteID &id,
+                           CHAR *host,
+                           CHAR *service )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__NETRT_ROUTE );
+      _MsgRouteID tmp = id ;
+      tmp.columns.serviceID = 0 ;
+      _mtx.get_shared() ;
+      map<UINT64, _netRouteNode>::const_iterator itr =
+                                  _route.find( tmp.value ) ;
+      if ( _route.end() == itr )
+      {
+         rc = SDB_NET_ROUTE_NOT_FOUND ;
+         goto error ;
+      }
+      else if ( ((itr->second._service)[id.columns.serviceID]).empty() )
+      {
+         rc = SDB_NET_ROUTE_NOT_FOUND ;
+         goto error ;
+      }
+      else
+      {
+         /// set des len with local value.
+         clsStrcpy( itr->second._host, host, sizeof( itr->second._host ) ) ;
+         clsStrcpy( ((itr->second._service)[id.columns.serviceID]).c_str(),
+                    service, OSS_MAX_SERVICENAME + 1 ) ;
+      }
+   done:
+      _mtx.release_shared() ;
+      PD_TRACE_EXITRC ( SDB__NETRT_ROUTE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_ROUTE2, "_netRoute::route" )
+   INT32 _netRoute::route( const _MsgRouteID &id,
+                           _netRouteNode &node )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__NETRT_ROUTE2 );
+      _MsgRouteID tmp = id ;
+      tmp.columns.serviceID = 0 ;
+      _mtx.get_shared() ;
+      map<UINT64, _netRouteNode>::const_iterator itr =
+                                  _route.find( tmp.value ) ;
+      if ( _route.end() == itr )
+      {
+         rc = SDB_NET_ROUTE_NOT_FOUND ;
+         goto error ;
+      }
+      else
+      {
+         node = itr->second ;
+      }
+
+   done:
+      _mtx.release_shared() ;
+      PD_TRACE_EXITRC ( SDB__NETRT_ROUTE2, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE, "_netRoute::update" )
+   INT32 _netRoute::update( const _MsgRouteID &id,
+                            const CHAR *host,
+                            const CHAR *service,
+                            BOOLEAN *newAdd )
+   {
+      SDB_ASSERT( NULL != host, "host should not be NULL" )
+      SDB_ASSERT( NULL != service, "host should not be NULL" )
+      SDB_ASSERT( id.columns.serviceID < MSG_ROUTE_SERVICE_TYPE_MAX,
+                  "service ID should < MSG_ROUTE_SERVICE_TYPE_MAX " )
+      INT32 rc = SDB_NET_UPDATE_EXISTING_NODE ;
+      PD_TRACE_ENTRY ( SDB__NETRT_UPDATE );
+      _MsgRouteID tmp = id ;
+      tmp.columns.serviceID = 0 ;
+      _mtx.get() ;
+      _netRouteNode &node = _route[tmp.value] ;
+
+      if ( newAdd )
+      {
+         if ( MSG_INVALID_ROUTEID == node._id.value &&
+              0 == node._host[0] )
+         {
+            *newAdd = TRUE ;
+         }
+         else
+         {
+            *newAdd = FALSE ;
+         }
+      }
+
+      if ( node._id.value != tmp.value )
+      {
+         node._id.value = tmp.value ;
+      }
+      if ( 0 != ossStrcmp( host, node._host ) )
+      {
+         clsStrcpy( host, node._host, sizeof( node._host ) ) ;
+         rc = SDB_OK ;
+      }
+      if ( 0 !=
+           ossStrcmp( service,
+                      ((node._service)[id.columns.serviceID]).c_str() ) )
+      {
+         (node._service)[id.columns.serviceID] =
+                                string( service ) ;
+         rc = SDB_OK ;
+         }
+      _mtx.release() ;
+
+      PD_TRACE_EXITRC ( SDB__NETRT_UPDATE, rc ) ;
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE2, "_netRoute::update" )
+   INT32 _netRoute::update ( const _MsgRouteID &oldID,
+                             const _MsgRouteID &newID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__NETRT_UPDATE2 );
+      map<UINT64, _netRouteNode>::iterator it ;
+      _MsgRouteID oldTmp = oldID ;
+      oldTmp.columns.serviceID = 0 ;
+      _MsgRouteID newTmp = newID ;
+      newTmp.columns.serviceID = 0 ;
+      _mtx.get() ;
+      it = _route.find ( oldTmp.value ) ;
+      if ( _route.end() == it )
+      {
+         PD_LOG ( PDERROR, "Cannot find route id during update: %lld",
+                  oldTmp.value ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( oldTmp.value != newTmp.value )
+      {
+         it->second._id.value = newTmp.value ;
+         _route[newTmp.value] = it->second ;
+         _route.erase ( oldTmp.value ) ;
+      }
+   done :
+      _mtx.release () ;
+      PD_TRACE_EXITRC ( SDB__NETRT_UPDATE2, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_UPDATE3, "_netRoute::update" )
+   INT32 _netRoute::update( const _MsgRouteID &id,
+                            const _netRouteNode &node )
+   {
+      INT32 rc = SDB_NET_UPDATE_EXISTING_NODE ;
+      PD_TRACE_ENTRY ( SDB__NETRT_UPDATE3 );
+      _MsgRouteID tmp = id ;
+      tmp.columns.serviceID = 0 ;
+      _mtx.get() ;
+      _netRouteNode &update = _route[tmp.value] ;
+      if ( update._id.value != tmp.value )
+      {
+         update._id.value = tmp.value ;
+      }
+      if ( 0 != ossStrcmp( node._host, update._host ) )
+      {
+         clsStrcpy( node._host, update._host, sizeof( update._host ) ) ;
+         rc = SDB_OK ;
+      }
+      for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
+      {
+         if ( (update._service)[i] != (node._service)[i] )
+         {
+            (update._service)[i] = (node._service)[i];
+            rc = SDB_OK ;
+         }
+      }
+      _mtx.release() ;
+      PD_TRACE_EXITRC ( SDB__NETRT_UPDATE3, rc );
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRT_CLEAR, "_netRoute::clear" )
+   void _netRoute::clear()
+   {
+      PD_TRACE_ENTRY ( SDB__NETRT_CLEAR );
+      _mtx.get() ;
+      _route.clear() ;
+      _mtx.release() ;
+      PD_TRACE_EXIT ( SDB__NETRT_CLEAR );
+   }
+}

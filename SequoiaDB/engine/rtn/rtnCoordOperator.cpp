@@ -1,0 +1,400 @@
+
+#include <stdlib.h>
+#include "rtnCoordOperator.hpp"
+#include "ossErr.h"
+#include "rtnCoord.hpp"
+#include "rtnCoordInsert.hpp"
+#include "rtnCoordQuery.hpp"
+#include "rtnCoordDelete.hpp"
+#include "rtnCoordUpdate.hpp"
+#include "../bson/bson.h"
+#include "pmd.hpp"
+#include "pmdCB.hpp"
+#include "msgMessage.hpp"
+#include "msgCatalog.hpp"
+#include "rtnCoordCommon.hpp"
+#include "rtnCoordInterrupt.hpp"
+#include "coordSession.hpp"
+#include "rtnCoordAuth.hpp"
+#include "rtnCoordAuthCrt.hpp"
+#include "rtnCoordAuthDel.hpp"
+#include "rtn.hpp"
+#include "pdTrace.hpp"
+#include "rtnTrace.hpp"
+#include "rtnCoordTransaction.hpp"
+#include "rtnCoordSql.hpp"
+#include "rtnCoordAggregate.hpp"
+#include "coordDef.hpp"
+
+using namespace bson;
+
+namespace engine
+{
+   RTN_COORD_OP_BEGIN
+   RTN_COORD_OP_ADD( MSG_BS_INSERT_REQ, rtnCoordInsert )
+   RTN_COORD_OP_ADD( MSG_BS_QUERY_REQ, rtnCoordQuery )
+   RTN_COORD_OP_ADD( MSG_BS_DELETE_REQ, rtnCoordDelete )
+   RTN_COORD_OP_ADD( MSG_BS_UPDATE_REQ, rtnCoordUpdate )
+   RTN_COORD_OP_ADD( MSG_BS_GETMORE_REQ, rtnCoordGetmore )
+   RTN_COORD_OP_ADD( MSG_BS_AGGREGATE_REQ, rtnCoordAggregate )
+   RTN_COORD_OP_ADD( MSG_BS_INTERRUPTE, rtnCoordInterrupt )
+   RTN_COORD_OP_ADD( MSG_BS_KILL_CONTEXT_REQ, rtnCoordKillContext )
+   RTN_COORD_OP_ADD( MSG_AUTH_VERIFY_REQ, rtnCoordAuth )
+   RTN_COORD_OP_ADD( MSG_AUTH_CRTUSR_REQ, rtnCoordAuthCrt )
+   RTN_COORD_OP_ADD( MSG_AUTH_DELUSR_REQ, rtnCoordAuthDel )
+   RTN_COORD_OP_ADD( MSG_BS_TRANS_BEGIN_REQ, rtnCoordTransBegin )
+   RTN_COORD_OP_ADD( MSG_BS_TRANS_COMMIT_REQ, rtnCoordTransCommit )
+   RTN_COORD_OP_ADD( MSG_BS_TRANS_ROLLBACK_REQ, rtnCoordTransRollback )
+   RTN_COORD_OP_ADD( OP_SQL, rtnCoordSql)
+   RTN_COORD_OP_ADD( MSG_NULL, rtnCoordOperatorDefault )
+   RTN_COORD_OP_END
+
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOOPDEFAULT_EXECUTE, "rtnCoordOperatorDefault::execute" )
+   INT32 rtnCoordOperatorDefault::execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                           CHAR **ppResultBuffer, pmdEDUCB *cb,
+                           MsgOpReply &replyHeader,
+                           BSONObj **ppErrorObj )
+   {
+      PD_TRACE_ENTRY ( SDB_RTNCOOPDEFAULT_EXECUTE ) ;
+      MsgHeader *pHeader = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof(MsgOpReply);
+      replyHeader.header.opCode        = MAKE_REPLY_TYPE(pHeader->opCode);
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_COORD_UNKNOWN_OP_REQ;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+      PD_TRACE_EXIT ( SDB_RTNCOOPDEFAULT_EXECUTE ) ;
+      return SDB_OK;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOKILLCONTEXT_EXECUTE, "rtnCoordKillContext::execute" )
+   INT32 rtnCoordKillContext::execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                                       CHAR **ppResultBuffer, pmdEDUCB *cb,
+                                       MsgOpReply &replyHeader,
+                                       BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_RTNCOKILLCONTEXT_EXECUTE ) ;
+      pmdKRCB *pKrcb                   = pmdGetKRCB();
+      SDB_RTNCB *rtnCB                 = pKrcb->getRTNCB () ;
+
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_KILL_CONTEXT_RES;
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      INT32 contextCount     = 0;
+      INT64 *contextList     = NULL ;
+
+      rc = msgExtractKillContexts ( pReceiveBuffer, &contextCount,
+                                    &contextList ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "failed to parse killcontext request ");
+         goto error ;
+      }
+      rc = rtnKillContexts ( contextCount, contextList, cb, rtnCB ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to kill contexts, rc = %d", rc ) ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNCOKILLCONTEXT_EXECUTE, rc ) ;
+      return rc;
+   error :
+      goto done ;
+   }
+
+   INT32 rtnCoordTransOperator::buildTransSession( CoordGroupList &groupLst,
+                                       netMultiRouteAgent *pRouteAgent,
+                                       pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      DpsTransNodeMap *pTransNodeLst = NULL;
+      DpsTransNodeMap::iterator iterTrans;
+      CoordGroupList newTransGroupLst;
+      CoordGroupList::iterator iterGroup;
+      MsgOpTransBegin msgReq;
+      REQUESTID_MAP sendNodes;
+      REPLY_QUE replyQue;
+      BOOLEAN hasRetry = FALSE;
+      BOOLEAN isNeedRetry = FALSE;
+      CoordGroupInfoPtr groupInfoTmp;
+
+      if ( !cb->isTransaction() )
+      {
+         goto done;
+      }
+
+      msgReq.header.messageLength = sizeof( MsgOpTransBegin );
+      msgReq.header.opCode = MSG_BS_TRANS_BEGIN_REQ;
+      msgReq.header.routeID.value = 0;
+      msgReq.header.TID = cb->getTID();
+
+      pTransNodeLst = cb->getTransNodeLst();
+      iterGroup = groupLst.begin();
+      while ( iterGroup != groupLst.end() )
+      {
+         iterTrans = pTransNodeLst->find( iterGroup->first );
+         if ( pTransNodeLst->end() == iterTrans )
+         {
+            newTransGroupLst[iterGroup->first] = iterGroup->second;
+         }
+         ++iterGroup;
+      }
+
+      // TODO:process the primary-change
+   retry:
+      isNeedRetry = FALSE;
+      rc = rtnCoordSendRequestToNodeGroups( (CHAR *)(&msgReq), newTransGroupLst,
+                                 TRUE, pRouteAgent, cb, sendNodes );
+      if ( rc )
+      {
+         rtnCoordClearRequest( cb, sendNodes );
+      }
+      PD_CHECK( SDB_OK == rc, rc, errorrollback, PDERROR,
+               "failed to build transaction session, "
+               "send the request failed(rc=%d)", rc );
+      rc = rtnCoordGetReply( cb, sendNodes,
+                  replyQue, MSG_BS_TRANS_BEGIN_RSP );
+      PD_CHECK( SDB_OK == rc, rc, errorrollback, PDERROR,
+               "failed to build transaction session, "
+               "get reply failed(rc=%d)", rc );
+      while ( !replyQue.empty() )
+      {
+         MsgOpReply *pReply = NULL;
+         pReply = (MsgOpReply *)(replyQue.front());
+         replyQue.pop();
+         INT32 rcTmp = pReply->flags;
+         if ( SDB_OK == rcTmp )
+         {
+            newTransGroupLst.erase( pReply->header.routeID.columns.groupID );
+            cb->addTransNode( pReply->header.routeID );
+         }
+         else if ( SDB_CLS_NOT_PRIMARY == rcTmp
+                  && !hasRetry )
+         {
+            rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
+                                  TRUE, groupInfoTmp );
+            if ( SDB_OK == rcTmp )
+            {
+               isNeedRetry = TRUE;
+            }
+         }
+         if ( rcTmp )
+         {
+            rc = rc ? rc : rcTmp;
+            PD_LOG ( PDERROR,
+                     "failed to build transaction session on data node"
+                     "(groupID=%u, nodeID=%u, rc=%d)",
+                     pReply->header.routeID.columns.groupID,
+                     pReply->header.routeID.columns.nodeID,
+                     rcTmp );
+         }
+
+         SDB_OSS_FREE( pReply );
+      }
+      PD_CHECK( SDB_OK == rc, rc, errorrollback, PDERROR,
+               "build transaction session failed(rc=%d)",
+               rc );
+      if ( isNeedRetry )
+      {
+         hasRetry = TRUE;
+         goto retry;
+      }
+   done:
+      return rc;
+   errorrollback:
+      releaseTransSession( newTransGroupLst, pRouteAgent, cb );
+      goto done;
+   }
+
+   INT32 rtnCoordTransOperator::releaseTransSession( CoordGroupList & groupLst,
+                                                   netMultiRouteAgent * pRouteAgent,
+                                                   pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK;
+      CoordGroupInfoPtr groupInfo;
+      CoordGroupList::iterator iter = groupLst.begin();
+      MsgOpTransRollback msgReq;
+      REQUESTID_MAP sendNodes;
+      REPLY_QUE replyQue;
+      msgReq.header.messageLength = sizeof( MsgOpTransRollback );
+      msgReq.header.opCode = MSG_BS_TRANS_ROLLBACK_REQ;
+      msgReq.header.routeID.value = 0;
+      msgReq.header.TID = cb->getTID();
+      while ( iter != groupLst.end() )
+      {
+         rc = rtnCoordGetGroupInfo( cb, iter->first, FALSE, groupInfo );
+         if ( rc != SDB_OK )
+         {
+            ++iter;
+            PD_LOG ( PDERROR,
+                     "failed to release transaction session, "
+                     "get groupInfo failed(groupID=%u, rc=%d)",
+                     iter->first, rc );
+            continue;
+         }
+         rc = rtnCoordSendRequestToPrimary( (CHAR *)(&msgReq), groupInfo, sendNodes,
+                                    pRouteAgent, MSG_ROUTE_SHARD_SERVCIE,cb );
+         if ( rc != SDB_OK )
+         {
+            ++iter;
+            PD_LOG ( PDWARNING,
+                     "failed to send release transaction session "
+                     "request to the group(groupID=%u, rc=%d)."
+                     "the primary node will perform release transaction "
+                     "session automatically" );
+            continue;
+         }
+         ++iter;
+      }
+
+      rc = rtnCoordGetReply( cb, sendNodes, replyQue, MSG_BS_TRANS_ROLLBACK_RSP );
+      PD_RC_CHECK( rc, PDWARNING,
+                  "failed to get reply(rc=%d)", rc );
+      while( !replyQue.empty() )
+      {
+         MsgOpReply *pReply = NULL;
+         pReply = (MsgOpReply *)(replyQue.front());
+         replyQue.pop();
+         if ( pReply->flags )
+         {
+            PD_LOG ( PDWARNING,
+                     "failed to release transaction session on data node"
+                     "(groupID=%u, nodeID=%u, rc=%d)",
+                     pReply->header.routeID.columns.groupID,
+                     pReply->header.routeID.columns.nodeID,
+                     pReply->flags );
+         }
+         SDB_OSS_FREE( pReply );
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+   INT32 rtnCoordTransOperator::modifyOpOnMainCL( CoordCataInfoPtr &cataInfo,
+                                             const CoordSubCLlist &subCLList,
+                                             MsgHeader *pSrcMsg,
+                                             netMultiRouteAgent *pRouteAgent,
+                                             pmdEDUCB *cb,
+                                             std::set<INT32> &ignoreRCList,
+                                             CoordGroupList &sendGroupList,
+                                             INT64 *modifyNum )
+   {
+      INT32 rc = SDB_OK;
+      INT32 rcTmp = SDB_OK;
+      CoordGroupSubCLMap groupSubCLMap;
+      CoordGroupSubCLMap::iterator iterGroup;
+      CHAR *pBuffer = NULL;
+      INT32 bufferSize = 0;
+      REPLY_QUE replyQue;
+      REQUESTID_MAP sendNodes;
+
+      rc = rtnCoordGetSubCLsByGroups( subCLList, sendGroupList, cb,
+                                    groupSubCLMap );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to get sub-collection info(rc=%d)",
+                  rc );
+
+      // build transaction session
+      if ( cb->isTransaction() )
+      {
+         CoordGroupList groupLst;
+         CoordGroupSubCLMap::iterator iterMap = groupSubCLMap.begin();
+         while( iterMap != groupSubCLMap.end() )
+         {
+            groupLst[ iterMap->first ] = iterMap->first;
+            ++iterMap;
+         }
+         rc = buildTransSession( groupLst, pRouteAgent, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to build transaction session(rc=%d)",
+                     rc );
+      }
+
+      iterGroup = groupSubCLMap.begin();
+      while( iterGroup != groupSubCLMap.end() )
+      {
+         CoordGroupInfoPtr groupInfo;
+         rc = buildOpMsg( cataInfo, iterGroup->second,
+                        (CHAR *)pSrcMsg, pBuffer, bufferSize );
+         PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
+                  "failed to build query message(rc=%d)", rc );
+         rc = rtnCoordGetGroupInfo( cb, iterGroup->first, FALSE, groupInfo );
+         PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
+                  "failed to get group info(groupId=%u, rc=%d)",
+                  iterGroup->first, rc );
+         rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo, sendNodes,
+                                       pRouteAgent, MSG_ROUTE_SHARD_SERVCIE, cb );
+         PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
+                  "failed to send request(rc=%d)", rc );
+         ++iterGroup;
+      }
+
+   RECV_MSG:
+      rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue,
+                              MAKE_REPLY_TYPE( pSrcMsg->opCode ) );
+      if ( SDB_OK != rcTmp )
+      {
+         PD_LOG( PDWARNING, "failed to get reply(rcTmp=%d)", rcTmp );
+         if ( SDB_APP_INTERRUPT == rcTmp || SDB_OK == rc )
+         {
+            // if it is interrupt, go to error
+            // the session will be released while process interrupt
+            rc = rcTmp;
+         }
+      }
+      while( !replyQue.empty() )
+      {
+         MsgOpReply *pReply = NULL;
+         pReply = (MsgOpReply *)(replyQue.front());
+         replyQue.pop();
+         rcTmp = pReply->flags;
+         UINT32 groupID = pReply->header.routeID.columns.groupID;
+         if ( rcTmp != SDB_OK
+            && ignoreRCList.find( rcTmp ) == ignoreRCList.end() )
+         {
+            if ( SDB_OK == rc )
+            {
+               rc = rcTmp;
+            }
+         }
+         else
+         {
+            if ( modifyNum && pReply->contextID > 0 )
+            {
+               *modifyNum += pReply->contextID;
+            }
+            sendGroupList[ groupID ] = groupID;
+            groupSubCLMap.erase( groupID );
+         }
+         if ( NULL != pReply )
+         {
+            SDB_OSS_FREE( pReply );
+            pReply = NULL;
+         }
+      }
+   done:
+      if ( pBuffer != NULL )
+      {
+         SDB_OSS_FREE( pBuffer );
+         pBuffer = NULL;
+      }
+      return rc;
+   error:
+      goto done;
+   }
+}

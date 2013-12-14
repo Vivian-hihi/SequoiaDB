@@ -1,0 +1,236 @@
+/*******************************************************************************
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = clsVoteStatus.cpp
+
+   Descriptive Name =
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          11/28/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "clsVoteStatus.hpp"
+#include "pmd.hpp"
+#include "pmdCB.hpp"
+#include "dpsLogWrapper.hpp"
+#include "pd.hpp"
+#include "pdTrace.hpp"
+#include "clsTrace.hpp"
+
+namespace engine
+{
+   _clsVoteStatus::_clsVoteStatus( _clsGroupInfo *info,
+                                   _netRouteAgent *agent,
+                                   INT32 id ):
+                                   _groupInfo( info ),
+                                   _agent( agent ),
+                                   _logger( NULL ),
+                                   _id( id )
+   {
+      SDB_ASSERT( CLS_INVALID_VOTE_ID != _id,
+                  "id should not be invalid" )
+   }
+
+   _clsVoteStatus::~_clsVoteStatus()
+   {
+
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__LAU, "_clsVoteStatus::_launch" )
+   INT32 _clsVoteStatus::_launch( const CLS_ELECTION_ROUND &round )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU ) ;
+      if ( SDB_START_NORMAL != pmdGetKRCB()->getStartType() )
+      {
+         PD_LOG ( PDWARNING, "Start type isn't normal, can't initial voting" ) ;
+         rc = SDB_CLS_VOTE_FAILED ;
+         goto error ;
+      }
+      else if ( 0 != _groupInfo->primary.value )
+      {
+         PD_LOG ( PDDEBUG, "Primary already exist, can't initial voting" ) ;
+         rc = SDB_CLS_VOTE_FAILED ;
+         goto error ;
+      }
+      else if ( !CLS_IS_MAJORITY( _groupInfo->aliveSize() ,
+                                  _groupInfo->groupSize() ) )
+      {
+         PD_LOG ( PDDEBUG, "Alive nodes is not major, can't initial voting, "
+                  "alive size = %d, group size = %d",
+                  _groupInfo->aliveSize() , _groupInfo->groupSize() ) ;
+         rc = SDB_CLS_VOTE_FAILED ;
+         goto error ;
+      }
+      else if ( !pmdGetKRCB()->getReplCB()->getBucket()->isEmpty() )
+      {
+         PD_LOG( PDDEBUG, "Repl log is not empty, can't initial voting, "
+                 "repl bucket size: %d",
+                 pmdGetKRCB()->getReplCB()->getBucket()->size() ) ;
+         rc = SDB_CLS_VOTE_FAILED ;
+         goto error ;
+      }
+
+      if ( NULL == _logger )
+      {
+         _logger = pmdGetKRCB()->getDPSCB() ;
+         SDB_ASSERT( NULL != _logger, "logger should not be NULL" )
+      }
+      {
+      DPS_LSN lsn = _logger->getCurrentLsn() ;
+      _MsgClsElectionBallot msg ;
+      msg.weights = lsn ;
+      msg.identity = _groupInfo->local ;
+      msg.round = round ;
+      map<UINT64, _clsSharingStatus *>::iterator itr=
+                                    _groupInfo->alives.begin() ;
+      for ( ; itr != _groupInfo->alives.end(); itr++ )
+      {
+         if ( 0 > lsn.compare(itr->second->beat.endLsn ) )
+         {
+            PD_LOG ( PDDEBUG, "DSP lsn is not max, can't initial voting" ) ;
+            rc = SDB_CLS_VOTE_FAILED ;
+            goto error ;
+         }
+      }
+      _broadcastAlives( &msg ) ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSVTSTUS__LAU, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__LAU1, "_clsVoteStatus::_launch" )
+   INT32 _clsVoteStatus::_launch( const DPS_LSN &lsn,
+                                  const _MsgRouteID &id,
+                                  const CLS_ELECTION_ROUND &round )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU1 ) ;
+      _MsgClsElectionRes msg ;
+      msg.identity = _groupInfo->local ;
+      msg.round = round ;
+      /// unknown member
+      if ( _groupInfo->info.end() == _groupInfo->info.find( id.value ) )
+      {
+         PD_LOG( PDWARNING, "unknown member [group:%d] [node:%d]",
+                         id.columns.groupID, id.columns.nodeID ) ;
+         goto error ;
+      }
+      /// primary is exist. refuse
+      if ( MSG_INVALID_ROUTEID !=_groupInfo->primary.value )
+      {
+         PD_LOG( PDDEBUG, "vote:the primary still exist [group:%d] [node:%d]",
+                           _groupInfo->primary.columns.groupID,
+                           _groupInfo->primary.columns.nodeID ) ;
+         goto accepterr ;
+      }
+      /// majority members' status are unknown.do not response
+      if ( !CLS_IS_MAJORITY( _groupInfo->aliveSize() ,
+                            _groupInfo->groupSize() ) )
+      {
+         PD_LOG( PDDEBUG, "vote: sharing break whih majority" ) ;
+         goto error ;
+      }
+      if ( NULL == _logger )
+      {
+         _logger = pmdGetKRCB()->getDPSCB() ;
+         SDB_ASSERT( NULL != _logger, "logger should not be NULL" )
+      }
+      {
+         map<UINT64, _clsSharingStatus *>::iterator itr =
+                                    _groupInfo->alives.begin() ;
+         for ( ; itr != _groupInfo->alives.end(); itr++ )
+         {
+            /// find anyone's lsn > request's lsn. refuse.
+            if ( 0 > lsn.compare( itr->second->beat.endLsn ) )
+            {
+               goto accepterr ;
+            }
+         }
+      }
+      if ( SDB_START_NORMAL == pmdGetKRCB()->getStartType() )
+      {
+         DPS_LSN local = _logger->getCurrentLsn() ;
+         INT32 cRc = local.compare( lsn ) ;
+         /// local < lsn. accept
+         if ( 0 > cRc )
+         {
+            goto accept ;
+         }
+         /// local > lsn. refuse
+         else if ( 0 < cRc )
+         {
+            goto accepterr ;
+         }
+         /// the same, judge id.
+         else
+         {
+            if ( id.value < _groupInfo->local.value )
+            {
+               goto accepterr ;
+            }
+            else
+            {
+               goto accept ;
+            }
+         }
+      }
+   accept:
+      PD_LOG( PDDEBUG, "vote accept [node:%d] [lsn:%lld,%d] [round:%d]",
+                        id.columns.nodeID, lsn.offset, lsn.version, round ) ;
+      msg.header.res = SDB_OK ;
+      _agent->syncSend( id, &msg ) ;
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSVTSTUS__LAU1, rc ) ;
+      return rc ;
+   error:
+      /// reuse err code
+      rc = SDB_CLS_VOTE_FAILED ;
+      goto done ;
+   accepterr:
+      PD_LOG( PDDEBUG, "vote refuse [node:%d] [lsn:%lld,%d] [round:%d]",
+                       id.columns.nodeID, lsn.offset, lsn.version, round ) ;
+      msg.header.res = SDB_CLS_VOTE_FAILED ;
+      _agent->syncSend( id, &msg ) ;
+      goto error ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__BCALIVES, "_clsVoteStatus::_broadcastAlives" )
+   void _clsVoteStatus::_broadcastAlives( void *msg )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSVTSTUS__BCALIVES ) ;
+      map<UINT64, _clsSharingStatus *>::iterator itr=
+                                    _groupInfo->alives.begin() ;
+      for ( ; itr != _groupInfo->alives.end(); itr++ )
+      {
+         _agent->syncSend( itr->second->beat.identity,
+                           msg ) ;
+      }
+      PD_TRACE_EXIT ( SDB__CLSVTSTUS__BCALIVES ) ;
+   }
+
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="administration_concepts_sharding">
+  <title>Sharding</title>
+  <body>
+    <p>In SequoiaDB cluster environment, users always put data in different logical node and
+      physical node in order to acheive pallarel computing.</p>
+    <p>Since data in all the nodes in a sharding are the same absolutely, every sharding group is
+      named as "Shard".</p>
+    <p>Every shard shares nothing.</p>
+    <p>The way that SequoiaDB uses data segment determines the sharding to insert data. The field
+      that determine the sharding is named "sharding key". Sharding is based on the definition of
+      collection. Every collection key contains one or more fields.</p>
+    <image href="../images/sharding_concept.jpg"/>
+    <p>In this chart, 3 square areas represent 3 data nodes. The ellipse represents coord node.
+      Every data node defines the range of data in it . For example, node 1 stores data between 0
+      and 10 including 0.</p>
+    <p>When users insert a record of data, coord node firstly finds out the sharding which the
+      sharding key of the data belongs to. If there is no sharding key, it's defined in the type of
+      Undefined. (Data in Undefined type can also be compared to that in common data types.)</p>
+    <p>After the sharding is found, coord node will send the request that it receives to it.</p>
+  </body>
+</topic>

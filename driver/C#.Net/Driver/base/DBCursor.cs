@@ -1,0 +1,181 @@
+﻿using System;
+using System.Collections.Generic;
+using SequoiaDB.Bson;
+
+/** \namespace SequoiaDB
+ *  \brief SequoiaDB Driver for C#.Net
+ *  \author Hetiu Lin
+ */
+namespace SequoiaDB
+{
+    /** \class DBCursor
+     *  \brief Database collection cursor
+     */
+    public class DBCursor
+    {
+        private ulong reqId = 0;
+        private long contextId = -1;
+        private BsonDocument hint = null;
+        private SDBMessage sdbMessage = null;
+        private DBCollection dbc = null;
+        private IConnection connection = null;
+        private List<BsonDocument> list = null;
+        private int index = -1;
+        private bool hasMore = false;
+        private bool isBigEndian = false;
+
+        internal DBCursor(SDBMessage rtnSDBMessage, DBCollection dbc)
+        {
+            this.dbc = dbc;
+            connection = dbc.CollSpace.SequoiaDB.Connection;
+            hint = new BsonDocument();
+            hint.Add("", SequoiadbConstants.CLIENT_RECORD_ID_INDEX);
+            sdbMessage = new SDBMessage();
+            reqId = rtnSDBMessage.RequestID;
+            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
+            sdbMessage.ContextIDList = rtnSDBMessage.ContextIDList;
+            contextId = sdbMessage.ContextIDList[0];
+            sdbMessage.ReturnRowsCount2 = -1;    // return data count
+            hasMore = true;
+            isBigEndian = dbc.isBigEndian;
+        }
+
+        internal DBCursor(SDBMessage rtnSDBMessage, Sequoiadb sdb )
+        {
+            this.connection = sdb.Connection;
+            hint = new BsonDocument();
+            hint.Add("", SequoiadbConstants.CLIENT_RECORD_ID_INDEX);
+            sdbMessage = new SDBMessage();
+            reqId = rtnSDBMessage.RequestID;
+            sdbMessage.NodeID = SequoiadbConstants.ZERO_NODEID;
+            sdbMessage.ContextIDList = rtnSDBMessage.ContextIDList;
+            contextId = sdbMessage.ContextIDList[0];
+            sdbMessage.ReturnRowsCount2 = -1;    // return data count
+            hasMore = true;
+            isBigEndian = sdb.isBigEndian;
+        }
+
+        ~DBCursor()
+        {
+            if (connection != null && contextId != -1)
+                KillCursor();
+        }
+
+        /** \fn BsonDocument Next()
+         *  \brief Get the next Bson of this cursor
+         *  \return BsonDocument or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonDocument Next()
+        {
+            if (index == -1 && hasMore)
+                ReadNextBuffer();
+            if ( list == null )
+                return null;
+            if (index < list.Count - 1)
+                return list[++index];
+            else
+            {
+                index = -1;
+                return Next();
+            }
+        }
+
+        /** \fn BsonDocument Current()
+         *  \brief Get the current Bson of this cursor
+         *  \return BsonDocument or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public BsonDocument Current()
+        {
+            if ( index == -1 )
+                return Next();
+            else
+                return list[index];
+        }
+
+        /* \fn void UpdateCurrent(BsonDocument modifier)
+        *  \brief Update the current Bson of this cursor
+        *  \param modifier The updating rule
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+
+        /*
+        public void UpdateCurrent(BsonDocument modifier)
+        {
+            if (modifier == null)
+                throw new BaseException("SDB_INVALIDARG");
+            if (dbc == null)
+                throw new BaseException("SDB_CLT_OBJ_NOT_EXIST");
+            BsonDocument current;
+            if (( current = Current()) != null )
+            {
+                BsonDocument matcher = new BsonDocument();
+                matcher.Add(SequoiadbConstants.OID, current[SequoiadbConstants.OID].AsObjectId);
+                dbc.Update(matcher, modifier, hint);
+                BsonDocument dummy = new BsonDocument();
+                list[index] = dbc.Query(matcher, dummy, dummy, dummy).Next();
+            }
+        }
+        */
+
+        /* \fn void DeleteCurrent()
+        *  \brief Delete the current Bson of this cursor
+        *  \exception SequoiaDB.BaseException
+        *  \exception System.Exception
+        */
+        /*
+        public void DeleteCurrent()
+        {
+            if ( Current() != null )
+                dbc.Delete( list[index] );
+            list.RemoveAt(index);
+            if (index >= list.Count)
+                index = -1;
+        }
+        */
+
+        private void ReadNextBuffer()
+        {
+            if (connection == null || contextId == -1)
+                throw new BaseException("SDB_NOT_CONNECTED");
+
+            sdbMessage.RequestID = reqId;
+            byte[] request = SDBMessageHelper.BuildGetMoreRequest(sdbMessage, isBigEndian);
+            connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+            
+            int flags = rtnSDBMessage.Flags;
+            if (flags == SequoiadbConstants.SDB_DMS_EOC || contextId != rtnSDBMessage.ContextIDList[0])
+            {
+                hasMore = false;
+                index = -1 ;
+                dbc = null ;
+                list = null;
+            }
+            else if ( flags != 0 )
+                throw new BaseException(flags);
+            else
+            {
+                reqId = rtnSDBMessage.RequestID;
+                list = rtnSDBMessage.ObjectList;
+            }
+        }
+
+        private void KillCursor()
+        {
+            if (connection == null || contextId == -1)
+            {
+                return;
+            }
+            long[] contestIds = new long[1] { contextId };
+            byte[] request = SDBMessageHelper.BuildKillCursorMsg(contestIds, isBigEndian);
+            connection.SendMessage(request);
+            connection = null;
+            contextId = -1;
+        }
+    }
+}

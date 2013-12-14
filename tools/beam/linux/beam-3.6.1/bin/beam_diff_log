@@ -1,0 +1,249 @@
+#!/usr/bin/env perl
+#
+# Licensed Materials - Property of IBM - RESTRICTED MATERIALS OF IBM
+#
+# IBM Confidential - OCO Source Materials
+#
+# Copyright (C) 2007-2010 IBM Corporation. All rights reserved.
+#
+# US Government Users Restricted Rights - Use, duplication or disclosure
+# restricted by GSA ADP Schedule Contract with IBM Corp
+#
+# The source code for this program is not published or otherwise divested
+# of its trade secrets, irrespective of what has been deposited within
+# the U.S. Copyright Office.
+#
+#
+#    AUTHOR:
+#
+#        Florian Krohm
+#
+#    DESCRIPTION:
+#
+#        This script compares two BEAM complaint files. 
+#        
+#    MODIFICATIONS:
+#
+#        Date      UserID   Remark (newest to oldest)
+#        --------  -------  ---------------------------------------------------
+#        01/02/07  florian  Created
+
+use Getopt::Long;
+use strict;
+
+my $prog_name    = "beam_diff_log";
+my $prog_version = "1.1";
+my $prog_author  = "Florian Krohm";
+my $brief;
+
+my $usage=<<EOF;
+USAGE
+
+  $prog_name
+
+    [--version]        print version number and exit
+
+    [--old]            list complaints that are only in OLDFILE
+
+    [--new]            list complaints that are only in NEWFILE
+
+    [--common]         list complaints that are common to both files
+
+    oldfile            older logfile
+
+    newfile            newer logfile
+
+
+    You need to provide one (and only one) of --old --new --common.
+EOF
+
+&main;
+
+sub main {
+
+  my $version  = 0;
+  my $old_only = 0;
+  my $new_only = 0;
+  my $common   = 0;
+  my ($old_file, $new_file, $old_prologue, $new_prologue);
+  my %old;
+  my %new;
+
+  GetOptions( "version"   => \$version,
+              "old"       => \$old_only,
+              "new"       => \$new_only,
+              "common"    => \$common,
+              "brief"     => \$brief
+            ) || die $usage;
+
+  if($version) {
+    print STDOUT "$prog_name $prog_version\n";
+    exit(0);
+  }
+
+  if ($old_only + $new_only + $common != 1) {
+    die $usage;
+  }
+
+  my $num_arg = $#ARGV + 1;
+
+  if ($num_arg != 2) {
+    die $usage;
+  }
+
+  $old_file = $ARGV[0];
+  $new_file = $ARGV[1];
+
+  ($old_prologue, %old) = read_file($old_file);
+  ($new_prologue, %new) = read_file($new_file);
+
+  if ($old_only) {
+    print "$old_prologue\n" if (! $brief);
+    foreach my $key (sort keys %old) {
+      if (! $new{$key}) {
+#	  print "KEY=$key\n";
+        write_complaint($old{$key});
+      }
+    }
+  }
+
+  if ($new_only) {
+    print "$new_prologue\n" if (! $brief);
+    foreach my $key (sort keys %new) {
+      if (! $old{$key}) {
+        write_complaint($new{$key});
+      }
+    }
+  }
+
+  if ($common) {
+    print "$new_prologue\n" if (! $brief);
+    foreach my $key (sort keys %new) {
+      if ($old{$key}) {
+        write_complaint($new{$key});
+      }
+    }
+  }
+
+  exit(0);
+}
+
+#
+# Write out the complaint with space separated fields. The file is last.
+# This is because it might contain a space.
+#
+sub write_complaint ($)
+{
+  my ($entry) = @_;
+
+  if ($brief) {
+    print $entry->{'inno'} . " " . $entry->{'kind'} . " " . 
+          $entry->{'line'} . " " . $entry->{'file'} . "\n";
+  } else {
+    print $entry->{'complaint'};
+  }
+}
+
+#
+# Finish a complaint. Remove all new lines from the end of the complaint.
+# Then add exactly 3 newline characters. That way complaints in the output
+# will have equal spacing.
+#
+sub finish_complaint ($)
+{
+  my ($complaint) = @_;
+
+  $complaint =~ s/\n+$//;
+  $complaint .= "\n\n\n";
+
+  return $complaint;
+}
+
+
+#=========================================================================
+sub read_file ($)
+{
+  my ($input_file) = @_;
+  my ($kind, $inno, $file, $lno, $line, $complaint, $prologue);
+  my %msgs;
+
+  open(IN, "$input_file") || print_fatal("Cannot open `$input_file': $!\n");
+  
+  my $digits = '0123456789';
+
+#
+# Parse the BEAM prologue. There is a blank line following the
+# prologue which we can safely ignore.
+#
+  $prologue = "";
+  while($line = <IN>) {
+    if($line =~ /^BEAM/) { 
+      $prologue .= $line;
+    } else {
+      last;
+    }
+  }
+
+  $prologue =~ s/\n+$//;
+  $prologue .= "\n";
+
+  $complaint = "";
+  while ($line = <IN>) {
+    $line =~ s/\r$//;    # remove carriage return
+
+    if ($line =~ /^-- (\w+).* (>>>.*)/) {
+      # A complaint with innocence code. Complaints without innocence codes
+      # are ignored as they can only occur in regression mode.
+      # If there was a previous complaint finish it up.
+      if ($complaint ne "") {
+#	  print "INNO = $inno COMPLAINT=$complaint\n";
+        # There was a previous complaint. Remove all \n from the end. Add
+	$msgs{$inno}->{'complaint'} = finish_complaint($complaint);
+        $complaint = "";
+      }
+      # Process the new complaint
+      $kind = $1;
+      $inno = $2;
+      $complaint .= $line;
+
+      # Read the next line to get file and line number.
+      $line = <IN>;
+      $complaint .= $line;
+      # Should always succeed
+      if ($line =~ /^"(.+)", line ([$digits]+): +(.*?)$/) { 
+        $file = $1;
+        $lno  = $2;
+        $msgs{$inno}->{'kind'} = $kind;
+        $msgs{$inno}->{'inno'} = $inno;
+        $msgs{$inno}->{'file'} = $file;
+        $msgs{$inno}->{'line'} = $lno;
+      }
+    } else {
+      if ($complaint ne "") {   
+        $complaint .= $line;
+      }
+    }
+  }
+  # If there was a complaint pending finish it up.
+  if ($complaint ne "") {
+    # There was a pending complaint.
+    $msgs{$inno}->{'complaint'} = finish_complaint($complaint);
+  }
+  
+  close(IN) || print_fatal("Can't read '$input_file': $!\n");
+
+  return ($prologue, %msgs);
+}
+
+
+#=========================================================================
+
+#
+# Print message and exit unsuccessfully.
+#
+sub print_fatal ($) {
+  my($str) = @_;
+
+  print STDERR "$prog_name: (S) $str";
+  exit(1);
+}

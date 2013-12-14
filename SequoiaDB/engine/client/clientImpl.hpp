@@ -1,0 +1,905 @@
+/*    Copyright 2012 SequoiaDB Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+#ifndef CLIENTIMPL_HPP__
+#define CLIENTIMPL_HPP__
+#include "core.hpp"
+#include "client.hpp"
+#include "ossSocket.hpp"
+#include <set>
+#if defined CLIENT_THREAD_SAFE
+#include "ossLatch.hpp"
+#endif
+using namespace bson ;
+namespace sdbclient
+{
+#define CLIENT_COLLECTION_NAMESZ 127
+#define CLIENT_CS_NAMESZ         127
+#define CLIENT_RG_NAMESZ         127
+   class _sdbColletionSpaceImpl ;
+   class _sdbCollectionImpl ;
+   class _sdbReplicaGroupImpl ;
+   class _sdbReplicaNodeImpl ;
+   class _sdbImpl ;
+
+   class _sdbCursorImpl : public _sdbCursor
+   {
+   private :
+      BSONObj _hintObj ;
+      _sdbCollectionImpl *_collection ;
+      _sdbCursorImpl ( const _sdbCursorImpl& other ) ;
+      _sdbCursorImpl& operator=( const _sdbCursorImpl& ) ;
+      SINT64 _contextID ;
+      _sdbImpl *_connection ;
+      CHAR *_pSendBuffer ;
+      INT32 _sendBufferSize ;
+      CHAR *_pReceiveBuffer ;
+      INT32 _receiveBufferSize ;
+      BSONObj *_modifiedCurrent ;
+      BOOLEAN _isDeleteCurrent ;
+
+      INT64 _totalRead ;
+      INT32 _offset ;
+      void _setConnection ( _sdb *connection ) ;
+      void _killCursor () ;
+      INT32 _readNextBuffer () ;
+      void _setCollection ( _sdbCollectionImpl *collection ) ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
+
+      friend class _sdbCollectionImpl ;
+      friend class _sdbReplicaNodeImpl ;
+      friend class _sdbImpl ;
+   public :
+      _sdbCursorImpl () ;
+      ~_sdbCursorImpl () ;
+      INT32 next          ( BSONObj &obj ) ;
+      INT32 current       ( BSONObj &obj ) ;
+      //INT32 updateCurrent ( BSONObj &rule ) ;
+      //INT32 delCurrent    () ;
+   } ;
+   typedef class _sdbCursorImpl sdbCursorImpl ;
+
+   class _sdbCollectionImpl : public _sdbCollection
+   {
+   private :
+      _sdbCollectionImpl ( const _sdbCollectionImpl& other ) ;
+      _sdbCollectionImpl& operator=( const _sdbCollectionImpl& ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch            _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      CHAR                    *_pSendBuffer ;
+      INT32                    _sendBufferSize ;
+      CHAR                    *_pReceiveBuffer ;
+      INT32                    _receiveBufferSize ;
+      CHAR                    *_pAppendOIDBuffer ;
+      INT32                    _appendOIDBufferSize ;
+      std::set<ossValuePtr> _cursors ;
+      CHAR _collectionSpaceName [ CLIENT_CS_NAMESZ+1 ] ;
+      CHAR _collectionName      [ CLIENT_COLLECTION_NAMESZ+1 ] ;
+      CHAR _collectionFullName  [ CLIENT_COLLECTION_NAMESZ +
+                                  CLIENT_CS_NAMESZ +
+                                  1 ] ;
+      INT32 _setName ( const CHAR *pCollectionFullName ) ;
+      void _setConnection ( _sdb *connection ) ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
+      void _regCursor ( _sdbCursorImpl *cursor )
+      {
+         lock () ;
+         _cursors.insert ( (ossValuePtr)cursor ) ;
+         unlock () ;
+      }
+      void _unregCursor ( _sdbCursorImpl * cursor )
+      {
+         lock () ;
+         _cursors.erase ( (ossValuePtr)cursor ) ;
+         unlock () ;
+      }
+      //void _renameAttempt ( const CHAR *pOldName, const CHAR *pNewName ) ;
+
+      INT32 _update ( const BSONObj &rule,
+                      const BSONObj &condition,
+                      const BSONObj &hint,
+                      INT32 flag ) ;
+      INT32 _appendOID ( const BSONObj &input,
+                         BSONObj &output ) ;
+#if defined CLIENT_THREAD_SAFE
+      void lock ()
+      {
+         _mutex.get () ;
+      }
+      void unlock ()
+      {
+         _mutex.release () ;
+      }
+#else
+      void lock ()
+      {
+      }
+      void unlock ()
+      {
+      }
+#endif
+      friend class _sdbCollectionSpaceImpl ;
+      friend class _sdbImpl ;
+      friend class _sdbCursorImpl ;
+   public :
+      _sdbCollectionImpl () ;
+      _sdbCollectionImpl ( CHAR *pCollectionFullName ) ;
+      _sdbCollectionImpl ( CHAR *pCollectionSpaceName,
+                           CHAR *pCollectionName ) ;
+      ~_sdbCollectionImpl () ;
+      // get the total number of records for a given condition, if the condition
+      // is NULL then match all records in the collection
+      INT32 getCount ( SINT64 &count,
+                       const BSONObj &condition ) ;
+      // insert a bson object into current collection
+      // given:
+      // object ( required )
+      INT32 bulkInsert ( SINT32 flags,
+                         vector<BSONObj> &obj
+                       ) ;
+      INT32 insert ( const BSONObj &obj, BSONElement *id ) ;
+      // update bson object from current collection
+      // given:
+      // update rule ( required )
+      // update condition ( optional )
+      // hint ( optional )
+      INT32 update ( const BSONObj &rule,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject
+                   ) ;
+
+      // update bson object from current collection, if no record has been
+      // updated, it will insert a new record that modified from an empty bson
+      // object
+      // given:
+      // update rule ( required )
+      // update condition ( optional )
+      // hint ( optional )
+      INT32 upsert ( const BSONObj &rule,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject
+                   ) ;
+      // delete bson objects from current collection
+      // given:
+      // delete condition ( optional )
+      // hint ( optional )
+      INT32 del    ( const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject
+                   ) ;
+
+      // query objects from current collection
+      // given:
+      // query condition ( optional )
+      // query selected def ( optional )
+      // query orderby ( optional )
+      // hint ( optional )
+      // output: sdbCursor ( required )
+      INT32 query  ( _sdbCursor **cursor,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &selected = _sdbStaticObject,
+                     const BSONObj &orderBy = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject,
+                     INT64 numToSkip = 0,
+                     INT64 numToReturn = -1
+                   ) ;
+
+      INT32 query  ( sdbCursor &cursor,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &selected = _sdbStaticObject,
+                     const BSONObj &orderBy = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject,
+                     INT64 numToSkip = 0,
+                     INT64 numToReturn = -1
+                   )
+      {
+         return query ( &cursor.pCursor,
+                        condition, selected, orderBy, hint,
+                        numToSkip, numToReturn ) ;
+      }
+      //INT32 rename ( const CHAR *pNewName ) ;
+      // create an index for the current collection
+      // given:
+      // index definition ( required )
+      // index name ( required )
+      // uniqueness ( required )
+      INT32 createIndex ( const BSONObj &indexDef, const CHAR *pName,
+                          BOOLEAN isUnique, BOOLEAN isEnforced ) ;
+      INT32 getIndexes ( _sdbCursor **cursor,
+                         const CHAR *pName ) ;
+      INT32 getIndexes ( sdbCursor &cursor,
+                         const CHAR *pName )
+      {
+         return getIndexes ( &cursor.pCursor, pName ) ;
+      }
+      INT32 dropIndex ( const CHAR *pName ) ;
+      INT32 create () ;
+      INT32 drop () ;
+      const CHAR *getCollectionName ()
+      {
+         return &_collectionName[0] ;
+      }
+      const CHAR *getCSName ()
+      {
+         return &_collectionSpaceName[0] ;
+      }
+      const CHAR *getFullName ()
+      {
+         return &_collectionFullName[0] ;
+      }
+      INT32 split ( const CHAR *sourceGroupName,
+                    const CHAR *destGroupName,
+                    const BSONObj &splitCondition,
+                    const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
+      INT32 split ( const CHAR *sourceGroupName,
+                    const CHAR *destGroupName,
+                    FLOAT64 percent ) ;
+      INT32 splitAsync ( SINT64 &taskID,
+               const CHAR *sourceGroupName,
+                    const CHAR *destGroupName,
+                    const bson::BSONObj &splitCondition,
+                    const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
+      INT32 splitAsync ( const CHAR *sourceGroupName,
+                    const CHAR *destGroupName,
+                    FLOAT64 percent,
+                    SINT64 &taskID ) ;
+      // aggregate
+      INT32 aggregate ( _sdbCursor **cursor,
+                     std::vector<bson::BSONObj> &obj
+                   ) ;
+      INT32 aggregate ( sdbCursor &cursor,
+                     std::vector<bson::BSONObj> &obj
+                   )
+      {
+         return aggregate ( &cursor.pCursor, obj ) ;
+      }
+      INT32 getQueryMeta  ( _sdbCursor **cursor,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &orderBy = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject,
+                     INT64 numToSkip = 0,
+                     INT64 numToReturn = -1
+                   ) ;
+      INT32 getQueryMeta  ( sdbCursor &cursor,
+                     const BSONObj &condition = _sdbStaticObject,
+                     const BSONObj &orderBy = _sdbStaticObject,
+                     const BSONObj &hint = _sdbStaticObject,
+                     INT64 numToSkip = 0,
+                     INT64 numToReturn = -1
+                   )
+      {
+         return getQueryMeta ( &cursor.pCursor,
+                        condition, orderBy, hint,
+                        numToSkip, numToReturn ) ;
+      }
+
+      INT32 attachCollection ( const CHAR *subClFullName,
+                                      const bson::BSONObj &options) ;
+      INT32 detachCollection ( const CHAR *subClFullName) ;
+
+      //INT32 alter ( const BSONObj &options ) ;
+} ;
+   typedef class _sdbCollectionImpl sdbCollectionImpl ;
+
+#define SDB_REPLICA_NODE_INVALID_NODEID -1
+   class _sdbReplicaNodeImpl : public _sdbReplicaNode
+   {
+   private :
+      _sdbReplicaNodeImpl ( const _sdbReplicaNodeImpl& other ) ;
+      _sdbReplicaNodeImpl& operator=( const _sdbReplicaNodeImpl& ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      CHAR                     _hostName [ OSS_MAX_HOSTNAME + 1 ] ;
+      CHAR                     _serviceName [ OSS_MAX_SERVICENAME + 1 ] ;
+      CHAR                     _nodeName [ OSS_MAX_HOSTNAME +
+                                           OSS_MAX_SERVICENAME + 2 ] ;
+      INT32                    _groupID ;
+      INT32                    _nodeID ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
+      INT32 _stopStart ( BOOLEAN start ) ;
+      friend class _sdbReplicaGroupImpl ;
+      friend class _sdbImpl ;
+   public :
+      _sdbReplicaNodeImpl () ;
+      ~_sdbReplicaNodeImpl () ;
+      // directly connect to the current node
+      INT32 connect ( _sdb **dbConn ) ;
+      INT32 connect ( sdb &dbConn )
+      {
+         return connect ( &dbConn.pSDB ) ;
+      }
+
+      // get status of the current node
+      sdbNodeStatus getStatus () ;
+
+      // get the hostname
+      const CHAR *getHostName ()
+      {
+         return _hostName ;
+      }
+
+      // get the service name
+      const CHAR *getServiceName ()
+      {
+         return _serviceName ;
+      }
+
+      // get the node id
+      const CHAR *getNodeName ()
+      {
+         return _nodeName ;
+      }
+
+      // stop the node
+      INT32 stop () { return _stopStart ( FALSE ) ; }
+
+      // start the node
+      INT32 start () { return _stopStart ( TRUE ) ; }
+
+      // modify config for the current node
+/*      INT32 modifyConfig ( std::map<std::string,std::string> &config ) ;*/
+   } ;
+   typedef class _sdbReplicaNodeImpl sdbReplicaNodeImpl ;
+
+   class _sdbReplicaGroupImpl : public _sdbReplicaGroup
+   {
+   private :
+      _sdbReplicaGroupImpl ( const _sdbReplicaGroupImpl& other ) ;
+      _sdbReplicaGroupImpl& operator=( const _sdbReplicaGroupImpl& ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      BOOLEAN                 _isCatalog ;
+      INT32                   _replicaGroupID ;
+      CHAR                    _replicaGroupName [ CLIENT_RG_NAMESZ+1 ] ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
+      INT32 _stopStart ( BOOLEAN start ) ;
+      INT32 _extractNode ( _sdbReplicaNode **node,
+                           const CHAR *primaryData ) ;
+      friend class _sdbImpl ;
+   public :
+      _sdbReplicaGroupImpl () ;
+      ~_sdbReplicaGroupImpl () ;
+
+      // get number of logical nodes in replica set that matches status
+      INT32 getNodeNum ( sdbNodeStatus status, INT32 *num ) ;
+
+      // list all nodes in the replica set
+      INT32 getDetail ( BSONObj &result ) ;
+
+      INT32 getMaster ( _sdbReplicaNode **node ) ;
+      INT32 getMaster ( sdbReplicaNode &node )
+      {
+         return getMaster ( &node.pReplicaNode ) ;
+      }
+
+      INT32 getSlave ( _sdbReplicaNode **node ) ;
+      INT32 getSlave ( sdbReplicaNode &node )
+      {
+         return getSlave ( &node.pReplicaNode ) ;
+      }
+
+      INT32 getNode ( const CHAR *pNodeName,
+                      _sdbReplicaNode **node ) ;
+      INT32 getNode ( const CHAR *pNodeName,
+                      sdbReplicaNode &node )
+      {
+         return getNode ( pNodeName, &node.pReplicaNode ) ;
+      }
+
+      INT32 getNode ( const CHAR *pHostName,
+                      const CHAR *pServiceName,
+                      _sdbReplicaNode **node ) ;
+      INT32 getNode ( const CHAR *pHostName,
+                      const CHAR *pServiceName,
+                      sdbReplicaNode &node )
+      {
+         return getNode ( pHostName, pServiceName, &node.pReplicaNode ) ;
+      }
+      // create a new node in replica set
+      INT32 createNode ( const CHAR *pHostName,
+                         const CHAR *pServiceName,
+                         const CHAR *pDatabasePath,
+                         std::map<std::string,std::string> &config ) ;
+
+      // remove the specified node in replica set
+      INT32 removeNode ( const CHAR *pHostName,
+                         const CHAR *pServiceName,
+                         const BSONObj &configure = _sdbStaticObject ) ;
+
+      // activate the group
+      INT32 start () ;
+
+      // stop the entire group
+      INT32 stop () ;
+
+      // get replica set name
+      const CHAR *getName ()
+      {
+         return _replicaGroupName ;
+      }
+
+      // whether the current replicagroup is catalog group
+      BOOLEAN isCatalog ()
+      {
+         return _isCatalog ;
+      }
+   } ;
+   typedef class _sdbReplicaGroupImpl sdbReplicaGroupImpl ;
+   class _sdbCollectionSpaceImpl : public _sdbCollectionSpace
+   {
+   private :
+      _sdbCollectionSpaceImpl ( const _sdbCollectionSpaceImpl& other ) ;
+      _sdbCollectionSpaceImpl& operator=( const _sdbCollectionSpaceImpl& ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      CHAR                    *_pSendBuffer ;
+      INT32                    _sendBufferSize ;
+      CHAR                    *_pReceiveBuffer ;
+      INT32                    _receiveBufferSize ;
+      CHAR _collectionSpaceName [ CLIENT_CS_NAMESZ+1 ] ;
+      void _setConnection ( _sdb *connection ) ;
+      INT32 _setName ( const CHAR *pCollectionSpaceName ) ;
+      void _dropConnection()
+      {
+         _connection = NULL ;
+      }
+
+      friend class _sdbImpl ;
+   public :
+      _sdbCollectionSpaceImpl () ;
+      _sdbCollectionSpaceImpl ( CHAR *pCollectionSpaceName ) ;
+      ~_sdbCollectionSpaceImpl () ;
+      // get a collection object
+      INT32 getCollection ( const CHAR *pCollectionName,
+                            _sdbCollection **collection ) ;
+      INT32 getCollection ( const CHAR *pCollectionName,
+                            sdbCollection &collection )
+      {
+         return getCollection ( pCollectionName,
+                                &collection.pCollection ) ;
+      }
+      // create a new collection object
+      INT32 createCollection ( const CHAR *pCollection,
+                               _sdbCollection **collection ) ;
+      INT32 createCollection ( const CHAR *pCollection,
+                               sdbCollection &collection )
+      {
+         return createCollection ( pCollection,
+                                   &collection.pCollection ) ;
+      }
+      // create a new shareded collection object
+      INT32 createCollection ( const CHAR *pCollection,
+                               const BSONObj &options,
+                               _sdbCollection **collection ) ;
+      INT32 createCollection ( const CHAR *pCollection,
+                               const BSONObj &options,
+                               sdbCollection &collection )
+      {
+         return createCollection ( pCollection,
+                                   options,
+                                   &collection.pCollection ) ;
+      }
+      // drop an existing collection
+      INT32 dropCollection ( const CHAR *pCollection ) ;
+      // create a collection space with current collection space name
+      INT32 create () ;
+      // drop a collection space with current collection space name
+      INT32 drop () ;
+
+      const CHAR *getCSName ()
+      {
+         return &_collectionSpaceName[0] ;
+      }
+   } ;
+   typedef class _sdbCollectionSpaceImpl sdbCollectionSpaceImpl ;
+
+   class _sdbImpl : public _sdb
+   {
+   private :
+      _sdbImpl ( const _sdbImpl& other ) ;
+      _sdbImpl& operator=( const _sdbImpl& ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch            _mutex ;
+#endif
+      ossSocket               *_sock ;
+      CHAR                     _hostName [ OSS_MAX_HOSTNAME + 1 ] ;
+      UINT16                   _port ;
+      CHAR                    *_pSendBuffer ;
+      INT32                    _sendBufferSize ;
+      CHAR                    *_pReceiveBuffer ;
+      INT32                    _receiveBufferSize ;
+      BOOLEAN                  _endianConvert ;
+      std::set<ossValuePtr> _cursors ;
+      std::set<ossValuePtr> _collections ;
+      std::set<ossValuePtr> _collectionspaces ;
+      std::set<ossValuePtr> _replicanodes ;
+      std::set<ossValuePtr> _replicagroups ;
+      void _disconnect () ;
+      INT32 _send ( CHAR *pBuffer ) ;
+      INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
+      INT32 _recvExtract ( CHAR **ppBuffer, INT32 *size, SINT64 &contextID,
+                           BOOLEAN &result ) ;
+      INT32 _reallocBuffer ( CHAR **ppBuffer, INT32 *size, INT32 newSize ) ;
+      INT32 _runCommand ( const CHAR *pString, BOOLEAN &result,
+                          const BSONObj *arg1 = NULL, const BSONObj *arg2 = NULL,
+                          const BSONObj *arg3 = NULL, const BSONObj *arg4 = NULL ) ;
+      INT32 _requestSysInfo () ;
+      void _regCursor ( _sdbCursorImpl *cursor )
+      {
+         lock () ;
+         _cursors.insert ( (ossValuePtr)cursor ) ;
+         unlock () ;
+      }
+      void _regCollection ( _sdbCollectionImpl *collection )
+      {
+         lock () ;
+         _collections.insert ( (ossValuePtr)collection ) ;
+         unlock () ;
+      }
+      void _regCollectionSpace ( _sdbCollectionSpaceImpl *collectionspace )
+      {
+         lock () ;
+         _collectionspaces.insert ( (ossValuePtr)collectionspace ) ;
+         unlock () ;
+      }
+      void _regReplicaNode ( _sdbReplicaNodeImpl *replicanode )
+      {
+         lock () ;
+         _replicanodes.insert ( (ossValuePtr)replicanode ) ;
+         unlock () ;
+      }
+      void _regReplicaGroup ( _sdbReplicaGroupImpl *replicagroup )
+      {
+         lock () ;
+         _replicagroups.insert ( (ossValuePtr)replicagroup ) ;
+         unlock () ;
+      }
+      void _unregCursor ( _sdbCursorImpl * cursor )
+      {
+         lock () ;
+         _cursors.erase ( (ossValuePtr)cursor ) ;
+         unlock () ;
+      }
+      // this function changes collection names for all collections
+      // and cursors objects, usually this function should be called by
+      // _sdbCollectionImpl::rename
+      /*void _changeCollectionName ( const CHAR *pCollectionSpaceName,
+                                   const CHAR *pCollectionOldName,
+                                   const CHAR *pCollectionNewName )
+      {
+         std::set<ossValuePtr>::iterator it ;
+         INT32 newNameLen = ossStrlen ( pCollectionNewName ) ;
+         if ( newNameLen > CLIENT_COLLECTION_NAMESZ )
+            return ;
+         // rename collection name for all child collection objects
+         for ( it = _collections.begin(); it != _collections.end(); ++it )
+         {
+            _sdbCollectionImpl *collection = (_sdbCollectionImpl*)(*it) ;
+            collection->_renameAttempt ( pCollectionOldName,
+                                         pCollectionNewName ) ;
+         }
+      }*/
+      void _unregCollection ( _sdbCollectionImpl *collection )
+      {
+         lock () ;
+         _collections.erase ( (ossValuePtr)collection ) ;
+         unlock () ;
+      }
+      void _unregCollectionSpace ( _sdbCollectionSpaceImpl *collectionspace )
+      {
+         lock () ;
+         _collectionspaces.erase ( (ossValuePtr)collectionspace ) ;
+         unlock () ;
+      }
+      void _unregReplicaNode ( _sdbReplicaNodeImpl *replicanode )
+      {
+         lock () ;
+         _replicanodes.erase ( (ossValuePtr)replicanode ) ;
+         unlock () ;
+      }
+      void _unregReplicaGroup ( _sdbReplicaGroupImpl *replicagroup )
+      {
+         lock () ;
+         _replicagroups.erase ( (ossValuePtr)replicagroup ) ;
+         unlock () ;
+      }
+
+      INT32 _connect( const CHAR *pHostName,
+                      UINT16 port ) ;
+
+      friend class _sdbCollectionSpaceImpl ;
+      friend class _sdbCollectionImpl ;
+      friend class _sdbCursorImpl ;
+      friend class _sdbReplicaNodeImpl ;
+      friend class _sdbReplicaGroupImpl ;
+   public :
+      _sdbImpl () ;
+      ~_sdbImpl () ;
+      INT32 connect ( const CHAR *pHostName,
+                      UINT16 port ) ;
+      INT32 connect ( const CHAR *pHostName,
+                      UINT16 port,
+                      const CHAR *pUsrName,
+                      const CHAR *pPasswd ) ;
+      INT32 connect ( const CHAR *pHostName,
+                      const CHAR *pServiceName ) ;
+      INT32 connect ( const CHAR *pHostName,
+                      const CHAR *pServiceName,
+                      const CHAR *pUsrName,
+                      const CHAR *pPasswd ) ;
+      void disconnect () ;
+      BOOLEAN isConnected ()
+      { return NULL != _sock ; }
+
+      INT32 createUsr( const CHAR *pUsrName,
+                       const CHAR *pPasswd ) ;
+
+      INT32 removeUsr( const CHAR *pUsrName,
+                       const CHAR *pPasswd ) ;
+
+      INT32 getSnapshot ( _sdbCursor **cursor,
+                          INT32 snapType,
+                          const BSONObj &condition = _sdbStaticObject,
+                          const BSONObj &selector = _sdbStaticObject,
+                          const BSONObj &orderBy = _sdbStaticObject
+                         ) ;
+
+      INT32 getSnapshot ( sdbCursor &cursor,
+                          INT32 snapType,
+                          const BSONObj &condition = _sdbStaticObject,
+                          const BSONObj &selector = _sdbStaticObject,
+                          const BSONObj &orderBy = _sdbStaticObject
+                         )
+      {
+         return getSnapshot ( &cursor.pCursor,
+                              snapType,
+                              condition,
+                              selector,
+                              orderBy ) ;
+      }
+
+      INT32 getList ( _sdbCursor **cursor,
+                      INT32 snapType,
+                      const BSONObj &condition = _sdbStaticObject,
+                      const BSONObj &selector = _sdbStaticObject,
+                      const BSONObj &orderBy = _sdbStaticObject
+                    ) ;
+
+      INT32 getList ( sdbCursor &cursor,
+                      INT32 snapType,
+                      const BSONObj &condition = _sdbStaticObject,
+                      const BSONObj &selector = _sdbStaticObject,
+                      const BSONObj &orderBy = _sdbStaticObject
+                    )
+      {
+         return getList ( &cursor.pCursor, snapType, condition,
+                          selector, orderBy ) ;
+      }
+
+      INT32 resetSnapshot ( const BSONObj &condition = _sdbStaticObject ) ;
+
+      #if defined CLIENT_THREAD_SAFE
+      void lock ()
+      {
+         _mutex.get () ;
+      }
+      void unlock ()
+      {
+         _mutex.release () ;
+      }
+      #else
+      void lock ()
+      {
+      }
+      void unlock ()
+      {
+      }
+      #endif
+      INT32 getCollection ( const CHAR *pCollectionFullName,
+                            _sdbCollection **collection ) ;
+
+      INT32 getCollection ( const CHAR *pCollectionFullName,
+                            sdbCollection &collection )
+      {
+         return getCollection ( pCollectionFullName, &collection.pCollection ) ;
+      }
+
+      INT32 getCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                 _sdbCollectionSpace **cs ) ;
+
+      INT32 getCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                 sdbCollectionSpace &cs )
+      {
+         return getCollectionSpace ( pCollectionSpaceName,
+                                     &cs.pCollectionSpace ) ;
+      }
+
+      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                    INT32 iPageSize,
+                                    _sdbCollectionSpace **cs ) ;
+
+      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                    INT32 iPageSize,
+                                    sdbCollectionSpace &cs )
+      {
+         return createCollectionSpace ( pCollectionSpaceName, iPageSize,
+                                        &cs.pCollectionSpace ) ;
+      }
+
+      INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName ) ;
+
+      INT32 listCollectionSpaces ( _sdbCursor **result ) ;
+
+      INT32 listCollectionSpaces ( sdbCursor &result )
+      {
+         return listCollectionSpaces ( &result.pCursor ) ;
+      }
+
+      INT32 listCollections ( _sdbCursor **result ) ;
+
+      INT32 listCollections ( sdbCursor &result )
+      {
+         return listCollections ( &result.pCursor ) ;
+      }
+
+      INT32 listReplicaGroups ( _sdbCursor **result ) ;
+
+      INT32 listReplicaGroups ( sdbCursor &result )
+      {
+         return listReplicaGroups ( &result.pCursor ) ;
+      }
+
+      INT32 getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result ) ;
+
+      INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
+      {
+         return getReplicaGroup ( pName, &result.pReplicaGroup ) ;
+      }
+
+      INT32 getReplicaGroup ( INT32 id, _sdbReplicaGroup **result ) ;
+
+      INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
+      {
+         return getReplicaGroup ( id, &result.pReplicaGroup ) ;
+      }
+
+      INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **rg ) ;
+
+      INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &rg )
+      {
+         return createReplicaGroup ( pName, &rg.pReplicaGroup ) ;
+      }
+
+      INT32 removeReplicaGroup ( const CHAR *pRGName ) ;
+
+      INT32 createReplicaCataGroup (  const CHAR *pHostName,
+                                      const CHAR *pServiceName,
+                                      const CHAR *pDatabasePath,
+                                      const BSONObj &configure ) ;
+
+      INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **rg ) ;
+
+      // sql
+      INT32 execUpdate( const CHAR *sql ) ;
+      INT32 exec( const CHAR *sql, sdbCursor &result )
+      {
+         return exec( sql, &result.pCursor ) ;
+      }
+      INT32 exec( const CHAR *sql, _sdbCursor **result ) ;
+
+      // transation
+      INT32 transactionBegin() ;
+      INT32 transactionCommit() ;
+      INT32 transactionRollback() ;
+
+      // flush config file
+      INT32 flushConfigure( const bson::BSONObj &options ) ;
+
+      // stored procedure
+      INT32 crtJSProcedure ( const CHAR *code ) ;
+      INT32 rmProcedures( const CHAR *spName ) ;
+      INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition ) ;
+      INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition )
+      {
+         return listProcedures ( &cursor.pCursor, condition ) ;
+      }
+      INT32 evalJS( _sdbCursor **cursor,
+                             const CHAR *code,
+                             SDB_SPD_RES_TYPE *type,
+                             const bson::BSONObj &errmsg ) ;
+      INT32 evalJS( sdbCursor &cursor,
+                             const CHAR *code,
+                             SDB_SPD_RES_TYPE *type,
+                             const bson::BSONObj &errmsg )
+      {
+         return evalJS( &cursor.pCursor, code, type, errmsg ) ;
+      }
+
+      // bakeup
+      INT32 backupOffline ( const bson::BSONObj &options) ;
+      INT32 listBackup ( _sdbCursor **cursor,
+                              const bson::BSONObj &options,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &selector = _sdbStaticObject,
+                              const bson::BSONObj &orderBy = _sdbStaticObject) ;
+      INT32 listBackup ( sdbCursor &cursor,
+                              const bson::BSONObj &options,
+                              const bson::BSONObj &condition = _sdbStaticObject,
+                              const bson::BSONObj &selector = _sdbStaticObject,
+                              const bson::BSONObj &orderBy = _sdbStaticObject)
+      {
+         return listBackup ( &cursor.pCursor, options, condition, selector, orderBy ) ;
+      }
+      INT32 removeBackup ( const bson::BSONObj &options ) ;
+
+      // task
+      INT32 listTasks ( _sdbCursor **cursor,
+                        const bson::BSONObj &condition = _sdbStaticObject,
+                        const bson::BSONObj &selector = _sdbStaticObject,
+                        const bson::BSONObj &orderBy = _sdbStaticObject,
+                        const bson::BSONObj &hint = _sdbStaticObject) ;
+      INT32 listTasks ( sdbCursor &cursor,
+                        const bson::BSONObj &condition = _sdbStaticObject,
+                        const bson::BSONObj &selector = _sdbStaticObject,
+                        const bson::BSONObj &orderBy = _sdbStaticObject,
+                        const bson::BSONObj &hint = _sdbStaticObject)
+      {
+         return listTasks ( &cursor.pCursor, condition,
+                             selector, orderBy, hint ) ;
+      }
+      INT32 waitTasks ( const SINT64 *taskIDs,
+                        SINT32 num ) ;
+      INT32 cancelTask ( SINT64 taskID,
+                         BOOLEAN isAsync ) ;
+
+
+/*      INT32 modifyConfig ( INT32 nodeID,
+                           std::map<std::string,std::string> &config ) ;
+
+      INT32 getConfig ( INT32 nodeID,
+                        std::map<std::string,std::string> &config ) ;
+
+      INT32 modifyConfig ( std::map<std::string,std::string> &config )
+      {
+         return modifyConfig ( CURRENT_NODEID, config ) ;
+      }
+
+      INT32 getConfig ( std::map<std::string,std::string> &config )
+      {
+         return getConfig ( CURRENT_NODEID, config ) ;
+      }*/
+   } ;
+   typedef class _sdbImpl sdbImpl ;
+}
+
+#endif

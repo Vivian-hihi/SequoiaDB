@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="cluter_management_en">
+  <title>Cluster Management</title>
+  <body>
+    <p>This section describe some management conceptions and operations about cluster,including
+      create/delete of catalog/data sharding and increasing of coord node.</p>
+    <p>By understanding these concepts and methodss of operation,to better achieve expand or adjust
+      the cluster.</p>
+    <p><b>catalog：</b></p>
+    <p><xref href="create_host_en.dita">create master in cluster</xref></p>
+    <p><xref href="cata_management/topics/cata_management_en.dita">catalog sharding management</xref></p>
+    <p><xref href="data_management/topics/data_management_en.dita">data sharding management</xref></p>
+    <p><xref href="create_coordnode_en.dita">coord sharding management</xref></p>
+    <p><xref href="sample_en.dita">sample</xref></p>
+  </body>
+</topic>

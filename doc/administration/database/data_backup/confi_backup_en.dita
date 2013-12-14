@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_hdy_gr2_gl_en">
+  <title>Backup Configuration Files</title>
+  <body>
+    <p>There have configurable information for each nodes in configurable files,the configurable
+      files in the directory of <i>&lt;installed directory of SequoiaDB>/conf/local/&lt;service
+        name></i>by default.</p>
+    <p><xref href="confi_standalone_en.dita">Standalone Mode</xref></p>
+    <p><xref href="confi_cluster_en.dita">Cluster Mode</xref></p>
+    <p><xref href="confi_sample_en.dita">Sample</xref></p>
+  </body>
+</topic>

@@ -1,0 +1,29 @@
+BEAM_VERSION=3.4.2
+BEAM_ROOT=/home/foo
+BEAM_BUILD_ROOT=/home/foo
+BEAM_DIRECTORY_WRITE_INNOCENTS=
+BEAM_DIRECTORY_WRITE_ERRORS=
+
+-- ERROR1     /*uninitialized*/     >>>ERROR1_foo_60c7889b2b608
+"example2.c", line 16: uninitialized `c'
+ONE POSSIBLE PATH LEADING TO THE ERROR:
+ "example2.c", line 10: allocating `c'
+ "example2.c", line 13: the if-condition is false
+ "example2.c", line 16: getting the value of `c'
+
+ VALUES AT THE END OF THE PATH:
+  p != 0
+
+
+
+-- ERROR2     /*operating on NULL*/     >>>ERROR2_foo_af57809a2b615
+"example2.c", line 17: invalid operation involving NULL pointer
+ONE POSSIBLE PATH LEADING TO THE ERROR:
+ "example2.c", line 13: the if-condition is true (used as evidence that error is possible)
+ "example2.c", line 16: the if-condition is true
+ "example2.c", line 17: invalid operation `[]' involving NULL pointer `p'
+
+ VALUES AT THE END OF THE PATH:
+  c = 1
+  p = 0
+  a <= 0

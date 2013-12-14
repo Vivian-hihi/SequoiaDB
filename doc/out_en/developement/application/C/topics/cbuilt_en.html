@@ -1,0 +1,159 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="C Environment to Build"/>
+<meta name="description" content="First,press here to load C client-driven . C Client development interface is in the directory &#34;sequoiadb/client/C&#34;(corresponding windows &#34;sequoiadb\client\C&#34;),including following files: ./include: ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../../developement/application/C/topics/c_en.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="topic_ncz_12t_zj_en"/>
+<link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
+<title>C Environment to Build</title>
+<script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="topic_ncz_12t_zj_en"><a name="topic_ncz_12t_zj_en"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../../../developement/application/C/topics/c_en.html" title="C Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C Driver</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/application_en.html" title="SequoiaDB Application Development">SequoiaDB Application Development</a> / <a class="navheader_parent_path" href="../../../../developement/application/C/topics/c_en.html" title="C Driver">C Driver</a></td></tr></tbody></table>
+
+  <h1 class="title topictitle1">C Environment to Build</h1>
+
+  <div class="body">
+    <p class="p">First,press here to load <u class="ph u">C client-driven</u>.</p>
+
+    <div class="p">C Client development interface is in the directory "sequoiadb/client/C"(corresponding windows
+      "sequoiadb\client\C"),including following files:
+      <pre class="pre codeblock">./include:
+     base64.h
+     bson/
+     client.h
+     core.h
+     jstobs.h
+     ossErr.h
+     ossFeat.h
+     ossTypes.h
+     
+     ./include/bson:
+     bcon.h
+     bson.h
+     encoding.h
+     
+     ./lib:
+     in Linux
+     libsdbcpp.so
+     in Windous
+     sdbc.dll
+     sdbc.exp
+     sdbc.lib</pre>
+Illustrating:in
+      the above files,".h" and ".hpp" are head files,".so" are dynamic runtime files in Linux,".dll"
+      and ".lib" are dynamic runtime files in Windows.</div>
+
+    <div class="section"><h2 class="title sectiontitle">Compiling and linking in Linux</h2>
+      
+      <p class="p">Please add the "include" directory to head directory when compiling programs,and add the
+        "lib" directory to link diretory when linking,at the same time,add the "lib" directory to
+        the environment variables "LD_LIBRARY_PATH".The following shows how to compile a C program
+        in Linux:</p>
+
+      <pre class="pre codeblock">cc testClient.c -o testClientC -I/<em class="ph i">path</em>/C/include -L /<em class="ph i">path</em>/C/lib -lsdbc</pre>
+
+      <p class="p">"-o" assign the output file,"-I" specify the head path,"-L" specify the runtime library
+        path,"-l" assign the runtime library name.</p>
+
+      <p class="p">When running the programs,users can specify the path of  <em class="ph i">LD_LIBRARY_PATH</em> as the path
+        which contain <em class="ph i">libsdbc.so</em> dynamic library.If the path is specified
+        uncorrectly,run-time errors message will appear like this:</p>
+
+      <pre class="pre codeblock">[sequoiadb@vmsvr1-rhel-x64 test]$ export | grep LD_LIBRARY_PATH
+[sequoiadb@vmsvr1-rhel-x64 test]$ ldd testClientC
+        linux-vdso.so.1 =&gt;  (0x00007fff099ff000)
+        libsdbc.so =&gt; not found
+        libc.so.6 =&gt; /lib64/libc.so.6 (0x00000033c1200000)
+        /lib64/ld-linux-x86-64.so.2 (0x00000033c0a00000)
+[sequoiadb@vmsvr1-rhel-x64 test]$ ./testClientC
+./testClientC: error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory</pre>
+
+      <p class="p">Using the command "ldd" can list the dynamic libraries which the executable program
+        needed.In the above example,program  "testClientC" need four dynamic libraries,including
+        linux-vdso,libsdbc,libc and ld-linux-x86-64.Except the "libsdbc" library,the other two linux
+        library are system library,"libc" is run-time library for C program.</p>
+
+      <p class="p">As in the above example is not defined "LD_LIBRARY_PATH",so the program can't find
+        "libsdbc" library,as shown above in italics tag:"libsdbc.so =&gt; not found".so set
+        "LD_LIBRARY_PATH"：</p>
+
+      <pre class="pre codeblock">$ export LD_LIBRARY_PATH=/home/sequoiadb/sequoiadb/client/C/lib
+$ ldd testClientC
+        linux-vdso.so.1 =&gt;  (0x00007fffe45c1000)
+        libsdbc.so =&gt; /home/sequoiadb/sequoiadb/client/C/lib/libsdbc.so (0x00007f00ff0b9000)
+        libc.so.6 =&gt; /lib64/libc.so.6 (0x00000033c1200000)
+        libm.so.6 =&gt; /lib64/libm.so.6 (0x00000033c1e00000)
+        libdl.so.2 =&gt; /lib64/libdl.so.2 (0x00000033c0e00000)
+        libpthread.so.0 =&gt; /lib64/libpthread.so.0 (0x00000033c1600000)
+        libcrypto.so.10 =&gt; /usr/lib64/libcrypto.so.10 (0x00000033c7e00000)
+        /lib64/ld-linux-x86-64.so.2 (0x00000033c0a00000)
+        libz.so.1 =&gt; /lib64/libz.so.1 (0x00000033c1a00000)
+$ ls /home/sequoiadb/sequoiadb/client/C/lib
+libsdbc.so
+[sequoiadb@vmsvr1-rhel-x64 test]$ ./testClientC
+        name : 2         tom
+        address : 3
+                city : 2         Toronto
+                provice : 2      Ontario</pre>
+
+      <p class="p">When referring to the libsdbc library,you can run the program successfully.</p>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">Compiling and linking in Windows</h2>
+      
+      <p class="p">Please add the "include" directory to head directory when compiling programs,and add the
+        "lib" directory to link diretory when linking，before running,copy the file "sdbc.dll" in the
+        "lib" directory to the directory which generated the file ".exe".The following shows how to
+        compile a C program: in Windows:</p>
+
+      <pre class="pre codeblock">cl /Fo testClient.obj /c testClient.c /I <em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\include /wd4047
+link /OUT:testClient.exe /LIBPATH:<em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\lib sdbc.lib testClient.obj 
+copy <em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\C\lib\sdbc.dll .</pre>
+
+      <p class="p">"/Fo" represents creating-object file,"/c" means compiling but not link,"/I" expresses
+        searching needed file in the specified directory,"/OUT" specifies the output file,"/LIBPATH"
+        specified the environment-library path.</p>
+
+    </div>
+
+  </div>
+
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../../developement/application/C/topics/c_en.html" title="C Driver"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">C Driver</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+          
+    </div>
+</body>
+</html>

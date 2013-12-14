@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_method_getDetail">
+  <title>rg.getDetail()</title>
+  <body>
+    <section><title>rg.getDetail()</title>返回分片组的信息。</section>
+    <section><title>示例</title>
+     <ul>
+       <li>
+         <p><codeblock>> rg.getDetail()
+{
+  "Group": [
+    {
+      "dbpath": "/opt/sequoiadb/data/60000",
+      "HostName": "vmsvr2-suse-x64",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "60000"
+        },
+        {
+          "Type": 1,
+          "Name": "60001"
+        },
+        {
+          "Type": 2,
+          "Name": "60002"
+        },
+        {
+          "Type": 3,
+          "Name": "60003"
+        }
+      ],
+      "NodeID": 1000
+    },
+    {
+      "dbpath": "/opt/sequoiadb/data/60010",
+      "HostName": "vmsvr2-suse-x64",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "60010"
+        },
+        {
+          "Type": 1,
+          "Name": "60011"
+        },
+        {
+          "Type": 2,
+          "Name": "60012"
+        },
+        {
+          "Type": 3,
+          "Name": "60013"
+        }
+      ],
+      "NodeID": 1001
+    }
+  ],
+  "GroupID": 1001,
+  "GroupName": "group",
+  "PrimaryNode": 1001,
+  "Role": 0,
+  "Status": 1,
+  "Version": 3,
+  "_id": {
+    "$oid": "517b2fc33d7e6f820fc0eb57"
+  }
+}</codeblock></p>
+       </li>
+     </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="removeRG.dita"></link>
+    <link href="getMaster.dita"></link>
+  </related-links>
+</topic>

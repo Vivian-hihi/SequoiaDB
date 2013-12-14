@@ -1,0 +1,191 @@
+import os
+import buildscripts.utils as utils
+
+Import("toolEnv")
+
+bsonFiles = [
+      "bson/bsonobj.cpp",
+      "bson/oid.cpp",
+      "bson/base64.cpp",
+      "bson/nonce.cpp",
+      "bson/md5.c",
+      "util/utilBsongen.cpp"
+      ]
+
+migFiles = [
+      "mig/migExport.cpp",
+      "mig/migImport.cpp"
+      ]
+
+migLoadFiles = [
+      "mig/migImportLoad.cpp"
+      ]
+
+sdbExportMain = [
+      "pmd/sdbexprt.cpp"
+      ]
+
+sdbImportMain = [
+      "pmd/sdbimprt.cpp"
+      ]
+
+sdbImportLoad = [
+      "pmd/sdbimprtLoad.cpp"
+      ]
+
+sdbLoadMain = [
+      "pmd/sdbLoad.cpp"
+      ]
+
+msgFiles = [
+      "msg/msgMessage.cpp",
+      "msg/msgReplicator.cpp",
+      "msg/msgCatalog.cpp",
+      "msg/msgAuth.cpp"
+      ]
+
+ossFiles = [
+      "oss/ossErr.cpp",
+      "oss/oss.cpp",
+      "oss/ossUtil.cpp",
+      "oss/ossPrimitiveFileOp.cpp",
+      "oss/ossStackDump.cpp",
+      "oss/ossEDU.cpp",
+      "oss/ossSocket.cpp",
+      "oss/ossIO.cpp",
+      "oss/ossVer.cpp",
+      "oss/ossMem.cpp",
+      "oss/ossProc.cpp",
+      "oss/ossNPipe.cpp",
+      "oss/ossLatch.cpp",
+      "oss/ossDynamicLoad.cpp",
+      "oss/ossHdfs.cpp"
+      ]
+
+pdFiles = [
+      "pd/pd.cpp",
+      "pd/pdTrace.cpp",
+      "pd/pdComponents.cpp",
+      "pd/pdFunctionList.cpp"
+      ]
+
+pmdFiles = [
+      "pmd/pmdCommon.cpp"
+      ]
+
+utilFiles = [
+      "util/fromjson.cpp",
+      "util/json2rawbson.c",
+      "client/bson/numbers.c",
+      "client/bson/bson.c",
+      "client/bson/encoding.c",
+      "client/base64c.c",
+      "client/cJSON.c",
+      "client/jstobs.c",
+      "util/utilParseJSONs.cpp",
+      "util/utilParseCSV.cpp",
+      "util/utilParseData.cpp",
+      "util/utilAccessDataLocalIO.cpp",
+      "util/utilAccessDataHdfs.cpp",
+      "util/text.cpp"
+      ]
+
+clientFiles = [
+      "client/client.c",
+      "client/common.c",
+      "client/network.c"
+      ]
+
+sdbStartMain = [
+      "pmd/sdbstart.cpp"
+      ]
+
+sdbStopMain = [
+      "pmd/sdbstop.cpp"
+      ]
+
+sdbListMain = [
+      "pmd/sdblist.cpp"
+      ]
+
+sdbcmMain = [
+      "pmd/cm/sdbcm.cpp"
+      ]
+
+sdbcmartMain = [
+      "pmd/cm/sdbcmart.cpp"
+      ]
+sdbcmtopMain = [
+      "pmd/cm/sdbcmtop.cpp"
+      ]
+
+#BSON
+toolEnv.StaticLibrary('bson', bsonFiles)
+#Client Driver
+toolEnv.StaticLibrary('client', clientFiles)
+#Operating System Services
+toolEnv.StaticLibrary('oss', ossFiles)
+#Problem Determination
+toolEnv.StaticLibrary('pd', pdFiles)
+#Process Model
+toolEnv.StaticLibrary('pmd', pmdFiles)
+#Utilities
+toolEnv.StaticLibrary('util', utilFiles)
+#mig
+toolEnv.StaticLibrary('mig', migFiles)
+#msg
+toolEnv.StaticLibrary('msg', msgFiles)
+#mig2load
+toolEnv.StaticLibrary('msgload', migLoadFiles)
+
+#Export Executable
+sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
+         LIBDEPS=["mig","oss","pd","util","client"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbimprt = toolEnv.Program("sdbimprt", sdbImportMain,
+         LIBDEPS=["mig","oss","pd","util","client"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbload = toolEnv.Program("sdbload", sdbImportLoad,
+         LIBDEPS=["msgload","oss","pd","util","client"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
+         LIBDEPS=["oss","pd","util","client"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbstart = toolEnv.Program("sdbstart", sdbStartMain,
+         LIBDEPS=["pd","oss","pmd"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbstop = toolEnv.Program("sdbstop", sdbStopMain,
+         LIBDEPS=["pd","oss"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdblist = toolEnv.Program("sdblist", sdbListMain,
+         LIBDEPS=["pd","oss"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
+         LIBDEPS=["pd","oss","msg","bson"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbcmart = toolEnv.Program("sdbcmart", sdbcmartMain,
+         LIBDEPS=["pd","oss"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbcmtop = toolEnv.Program("sdbcmtop", sdbcmtopMain,
+         LIBDEPS=["pd","oss"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+toolEnv.Install( '#/bin', sdbexprt )
+toolEnv.Install( '#/bin', sdbimprt )
+toolEnv.Install( '#/bin', sdbload )
+toolEnv.Install( '#/bin', sdbload2 )
+toolEnv.Install( '#/bin', sdbstart )
+toolEnv.Install( '#/bin', sdbstop )
+toolEnv.Install( '#/bin', sdblist )
+toolEnv.Install( '#/bin', sdbcm )
+toolEnv.Install( '#/bin', sdbcmart )
+toolEnv.Install( '#/bin', sdbcmtop )

@@ -1,0 +1,127 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = ossProc.hpp
+
+   Descriptive Name = Operating System Services Process Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of OSS component. This file contains declares for process op.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          12/24/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef OSSPROC_HPP__
+#define OSSPROC_HPP__
+
+#include <sys/types.h>
+#include "core.hpp"
+#include "oss.hpp"
+#include "ossNPipe.hpp"
+
+#if defined (_LINUX)
+#define PROC_SELF_EXE "/proc/self/exe"
+#endif
+#define OSS_EXECV_CAST char*const*
+// define ossExec execute flags
+#define OSS_EXEC_INHERIT_HANDLES    1 // inherit fd/handles in new process
+#define OSS_EXEC_SSAVE              2 // sync process, return result
+
+// define term code
+#define OSS_EXIT_NORMAL 0
+#define OSS_EXIT_ERROR  1
+#define OSS_EXIT_TRAP   2
+#define OSS_EXIT_KILL   3
+class _ossResultCode : public SDBObject
+{
+public :
+   UINT32 termcode ;
+   UINT32 exitcode ;
+} ;
+typedef class _ossResultCode ossResultCode ;
+
+/**
+   \brief Exec a new program.
+
+   This call allows a process to request start up as a child process.
+   The program can run as a normal process or as a daemon
+
+   \param program [in]
+      Null terminated name of the file that contains
+      the program to be executed.
+
+   \param arguments [in]
+      A set of argument strings passed to the new process.
+      These strings represent "command parameters" for the program.
+      \li Strings are delimited by null characters.
+      \li Two adjacent null characters mark the end of the set.
+      \li By convention, the first string is the name of the program.
+      \li If arguments are NULL, the program is called with no parameters.
+
+   \param environment [in]
+      A set of environment strings passed to the new process.
+      These strings convey configuration parameters and represent the
+      combination of the current value of all "set symbols" or "environment
+      variables" for the current program.
+      \li Strings are delimited by null characters.
+      \li Two adjacent null characters mark the end of the set.
+      \li If enviornment is NULL, the child process is given the environment
+          of the current process.
+
+   \param flag [in]
+      An indicator that shows how the requested program is to execute:
+      \li OSS_EXEC_INHERIT_HANDLES - child process inherit parent's handles
+          [UNIX/NT]
+      \li OSS_EXEC_SSAVE - synchronously as a normal child process [UNIX/NT]
+
+   \param pid [out]
+      A reference to DWORD[NT] or pid_t[UNIX] of the newly created process
+
+   \param result [out]
+      The exit status of a synchronously executed child process (only
+      applicable with OSS_EXEC_SSAVE flag option).
+
+*/
+INT32 ossExec ( const CHAR * program,
+                const CHAR * arguments,
+                const CHAR * environment,
+                INT32 flag,
+                OSSPID &pid,
+                ossResultCode &result,
+                OSSNPIPE * const npHandleStdin,
+                OSSNPIPE * const npHandleStdout ) ;
+
+BOOLEAN ossIsProcessRunning ( OSSPID pid ) ;
+// get excutable file's working directory
+INT32 ossGetEWD ( CHAR *pBuffer, INT32 maxlen ) ;
+
+INT32 ossTerminateProcess( const OSSPID &pid, BOOLEAN force = FALSE ) ;
+
+#if defined (_WINDOWS)
+INT32 ossWaitInterrupt ( HANDLE handle, DWORD timeout ) ;
+#elif defined (_LINUX)
+INT32 ossWaitChild ( OSSPID pid, ossResultCode &result ) ;
+void ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 ) ;
+void ossRenameProcess (  const CHAR *pNewName ) ;
+#endif
+#endif

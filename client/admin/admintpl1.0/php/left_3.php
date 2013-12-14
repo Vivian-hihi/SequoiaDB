@@ -1,0 +1,124 @@
+<?php
+if (!session_id()) session_start();
+include_once ( "php_lib.php" ) ;
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width" />
+    
+    
+<title>广州巨杉软件有限公司_SequoiaDB</title>
+
+<meta name="description" content="公司介绍"/>
+<link rel="canonical" href="" />
+<meta name="robots" content="noodp,noydir"/>
+<meta property='og:locale' content='en_US'/>
+<meta property='og:title' content='标题'/>
+<meta property='og:description' content='公司介绍'/>
+<meta property='og:url' content='www.sequoiadb.com'/>
+<meta property='og:site_name' content='公司名字'/>
+<meta property='og:type' content='article'/>
+
+<link rel='stylesheet' href='../css/left_style.css' type='text/css'/>
+
+</head>
+<body>
+<div class="aleft">
+<!-- abody.left -->
+<div style="cursor:pointer;" onclick="javascript:window.parent.location.reload();">
+<img src="../images/orange_logo.png" width="160px">
+</div>
+<div class="clear"></div>
+<!-- left.topbutton -->
+<div class="left_topbutton_div">
+	<a href="left_1.php">
+		<div class="left_topbutton">
+			逻辑
+		</div>
+	</a>
+	<a href="left_2.php">
+		<div class="left_topbutton">
+			物理
+		</div>
+	</a>
+	<a href="left_3.php">
+		<div class="ltbcurrent">
+			集合空间
+		</div>
+	</a>
+</div>
+<div class="clear"></div>
+<!-- /left.topbutton -->
+<div class="menu_search">
+    <img src="../images/search.png" width="16px"> <input id="search" type="text" name="s" value="" onchange="hiddenli();" size="16"/>
+	<script type="text/javascript">
+	function hiddenli ()
+	{
+		var titlestr = document.getElementById("search").value ;
+		var liList = document.getElementById("list").childNodes;
+		for(var i = 0; i < liList.length; i ++)
+		{
+			if( liList[i].innerHTML != undefined )//&& liList[i].innerHTML == titlestr )
+			{
+				var temp_2 = liList[i].innerHTML.lastIndexOf ( '</a>' ) ;
+				var temp_1 = liList[i].innerHTML.lastIndexOf ( '>', temp_2 ) ;
+				var temp = liList[i].innerHTML.substring ( temp_1 + 1, temp_2 ) ;
+				//alert ( temp ) ;
+				if ( titlestr == "" )
+				{
+					liList[i].style.display = "block" ;
+				}
+				else if ( temp.indexOf ( titlestr ) < 0 )
+				{
+					liList[i].style.display = "none" ;
+				}
+				else if ( temp.indexOf ( titlestr ) >= 0 )
+				{
+					liList[i].style.display = "block" ;
+				}
+			}
+		}
+	}
+    </script>
+</div>
+<div class="clear"></div>
+<!-- tree menu -->
+        <div class="emenu_nav">
+            <ul id="list">
+                <?php
+				if ( empty($_SESSION['address']) )
+				{
+					echo '<script type="text/javascript" language="javascript">window.parent.location.href="../login.php"; </script>' ;
+					exit() ;
+				}
+				$db = new SequoiaDB() ;
+				$db->connect ( $_SESSION['address'], $_SESSION['user'], $_SESSION['password'] ) ;
+				$arr = $db->getError () ;
+				if ( $arr['errno'] )
+				{
+					echo '<script type="text/javascript" language="javascript">window.parent.location.href="../login.php"; </script>' ;
+					exit() ;
+				}
+				$cursor = $db->listCSs () ;
+				$arr = $db->getError () ;
+				if ( $arr['errno'] == 0 )
+				{
+					while ( $arr = $cursor->getNext() )
+					{
+				?>
+				<li class="level1">
+					<img src="../images/cs.png" width="15px"><a href="right_data.php?order=selectcs&csname=<?php echo $arr['Name'];?>" target="right" class="par"><?php echo $arr['Name'];?></a>
+				</li>
+                <?php
+					}
+				}
+				?>
+            </ul>
+        </div>
+<!-- /treemenu -->
+</div>
+<!-- /abody.left -->
+</body>
+</html>

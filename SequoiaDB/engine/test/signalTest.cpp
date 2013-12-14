@@ -1,0 +1,102 @@
+#include "core.hpp"
+#include "ossPrimitiveFileOp.hpp"
+#include "ossSignal.hpp"
+#include "ossStackDump.hpp"
+#include "ossUtil.hpp"
+#include <stdio.h>
+#if defined (_LINUX)
+void dummyCore()
+{
+  int x = 5 ;
+  OSS_INSTRUCTION_PTR ppAddress[100] ;
+  char funcName[256] ;
+  UINT32_64 offset = 0 ;
+
+  ossWalkStack( 0, ppAddress, 20 ) ;
+  for ( int i = 0 ; i < 20 ; i++ )
+  {
+      ossGetSymbolNameFromAddress( ppAddress[i],
+                                   funcName,
+                                   sizeof( funcName ),
+                                   &offset ) ;
+      printf("[%3d] 0x%016x  %s  + 0x%x\n",
+             i, (UINT32_64)ppAddress[i], funcName, offset ) ;
+  }
+getchar();
+
+  memcpy( NULL, "CRASH", 5 ) ;
+}
+
+
+void dummyf5()
+{
+  dummyCore() ;
+}
+
+int dummyf4()
+{
+   int y=1 ;
+   dummyf5() ;
+   return  y ;
+}
+
+void dummyf3()
+{
+   dummyf4() ;
+}
+
+void dummyf2()
+{
+   dummyf3() ;
+}
+
+void dummyf1()
+{
+   dummyf2() ;
+}
+
+inline void baz()
+{
+  dummyf1() ;
+}
+
+inline void bar()
+{
+  baz() ;
+}
+
+void foo( )
+{
+  bar() ;
+}
+
+void myHdl( OSS_HANDPARMS )
+{
+   ossPrimitiveFileOp trapFile ;
+
+   trapFile.Open( "/home/taoewang/repos/trap.txt" ) ;
+   ossDumpStackTrace( OSS_HANDARGS, &trapFile ) ;
+   trapFile.Close() ;
+
+   ossRestoreSystemSignal( signum, false, "/home/taoewang/repos" ) ;
+   return ;
+}
+#endif
+int main()
+{
+   int rc = 0 ;
+#if defined (_LINUX)
+   struct sigaction newact ;
+
+   sigemptyset (&newact.sa_mask) ;
+   newact.sa_sigaction = ( OSS_SIGFUNCPTR ) myHdl ;
+   newact.sa_flags |= SA_SIGINFO ;
+   newact.sa_flags |= SA_ONSTACK ; ;
+
+   sigaction (SIGSEGV, &newact, NULL) ;
+
+   foo() ;
+#endif
+   return rc ;
+
+}

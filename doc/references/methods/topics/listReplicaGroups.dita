@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_method_listReplicaGroups">
+  <title>db.listReplicaGroups()</title>
+  <body>
+    <section><title>db.listReplicaGroups()</title>
+      <p>枚举分片组。</p>
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li>返回所有分片组信息，命令如下：
+          <codeblock>> db.listReplicaGroups()
+返回：{
+  "Group": [
+    {
+      "dbpath": "/opt/sequoiadb/data/60000",
+      "HostName": "vmsvr2-suse-x64",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "60000"
+        },
+        {
+          "Type": 1,
+          "Name": "60001"
+        },
+        {
+          "Type": 2,
+          "Name": "60002"
+        },
+        {
+          "Type": 3,
+          "Name": "60003"
+        }
+      ],
+      "NodeID": 1000
+    },
+    {
+      "dbpath": "/opt/sequoiadb/data/60010",
+      "HostName": "vmsvr2-suse-x64",
+      "Service": [
+        {
+          "Type": 0,
+          "Name": "60010"
+        },
+        {
+          "Type": 1,
+          "Name": "60011"
+        },
+        {
+          "Type": 2,
+          "Name": "60012"
+        },
+        {
+          "Type": 3,
+          "Name": "60013"
+        }
+      ],
+      "NodeID": 1001
+    }
+  ],
+  "GroupID": 1001,
+  "GroupName": "group",
+  "PrimaryNode": 1001,
+  "Role": 0,
+  "Status": 1,
+  "Version": 5,
+  "_id": {
+    "$oid": "517b2fc33d7e6f820fc0eb57"
+  }
+  }</codeblock>
+          这个分片组有有两个节点：60000和60010，其中60010为主节点。<xref href="../../../administration/database/topics/list/list_groups.dita">分区组详细信息请点击这里</xref></li>
+      </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="listCollections.dita" format="dita" type="topic"></link>
+    <link href="dbsnapshot.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_vkg_kx2_gl">
+  <title>数据恢复</title>
+  <body>
+    <p>数据恢复操作是用户在之前所进行的数据备份文件，将节点状态恢复到某一时刻点。 </p>
+    <p>在进行恢复操作时，应避免使用任何元数据更改的操作，例如创建集合、删除集合、数据切分、增减数据节点等操作。 </p>
+    <p>如果在数据备份后对元数据进行了更改，数据恢复有可能造成数据不一致或数据损坏。用户需要手工验证数据恢复后的完整性。 </p>
+    <p><xref href="standalone.dita">独立模式</xref></p>
+    <p><xref href="cluster.dita">集群模式</xref></p>
+    <p><xref href="sample.dita">例程</xref></p>
+  </body>
+</topic>

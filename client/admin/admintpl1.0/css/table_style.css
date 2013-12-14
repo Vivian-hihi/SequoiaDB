@@ -1,0 +1,40 @@
+.table_tb{
+	 width:1000px;
+	 margin:20px 0 0 20px;
+	 padding:10px;
+	 border:1px solid #999;
+	 font-size: 12px;
+	}
+
+.clear {clear: both;}				
+.align-left {float: left;}			
+.align-right {float: right;}
+
+
+				
+/*************** Pagination ***************/
+
+#main-content .pagination {
+                text-align: right;
+                padding: 20px 0 5px 0;
+                font-family: Verdana, Arial, Helvetica, sans-serif;
+                font-size: 12px;
+                }
+.pagination a {
+                margin: 0 5px 0 0;
+                padding: 3px 6px;
+                }
+
+.pagination a.number {
+				border: 1px solid #ddd;
+                }
+
+.pagination a.current {
+                background: #009dff url('../images/bg-button-blue.gif') top left repeat-x !important;
+                border-color: #009dff !important;
+                color: #fff !important;
+                }
+				
+.pagination a.current:hover {
+				text-decoration: underline;
+                }

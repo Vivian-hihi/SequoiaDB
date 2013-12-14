@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_p1r_lpv_xl">
+  <title>SequoiaDB支持的Hive版本列表</title>
+  <body>   
+    <ul id="sequoiadb_hadoop">
+      <li>Hive 0.11.0</li>
+      <li>Hive 0.10.0</li>
+    </ul>
+  </body>
+</topic>

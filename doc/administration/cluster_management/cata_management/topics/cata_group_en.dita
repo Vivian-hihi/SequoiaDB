@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_jwh_ncx_tk_en">
+  <title>Create New Catalog Shardings</title>
+  <body>
+    <note>If creating new nodes relate to create new master,please refer to the section <xref
+        href="create_host_en.dita"><i>Add master to cluster</i></xref>  to complete the
+      configuration of  host name and params about master.</note>
+    <p>There is only one catalog sharding in the database cluster.So create new catalog sharding
+      have already completed in the time of installed and there is no need execute creating new
+      sharding operation after installing.Please refer to the section <xref
+        href="../../../../../installation/configuration_start/topics/cluster_en.dita"
+          ><i>Configuration and startup of cluster mode</i></xref>。实例见安装指南集群模式的配置与启动一节。 操作方法: </p>
+    <codeblock>>db.createCataRG(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</codeblock>
+    <p>该命令用于创建编目分区组，同时创建并启动一个编目节点，其中:</p>
+    <p><b>host </b> ：指定编目节点的主机名；</p>
+    <p><b>service </b>：制定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置</p>
+    <p>为30000，请确保30000/30001/30002/30003 端口都未被占用；</p>
+    <p><b>dbpath</b> ：数据文件路径，用于存放编目数据文件，请确保数据管理员(安装时创建，默认为sdbadmin)用</p>
+    <p>户有写权限；</p>
+    <p><b>config </b>： 该参数为可选参数，用于配置更多细节参数，格式必须为 json格式，参数参见<xref
+      href="../../../database/topics/runtime_configuration.dita"><i>数据库配置</i></xref> 一</p>
+    <p>节；如需要配置日志大小参数 {logfilesz:64}。</p>
+  </body>
+</topic>

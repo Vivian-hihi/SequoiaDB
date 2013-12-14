@@ -1,0 +1,424 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = qgmPlAggregation.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains declare for QGM operators
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/09/2013  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "qgmPlAggregation.hpp"
+#include "pmd.hpp"
+#include "pmdCB.hpp"
+#include "qgmUtil.hpp"
+#include "rtnSQLFirst.hpp"
+#include <sstream>
+
+namespace engine
+{
+   _qgmPlAggregation::_qgmPlAggregation( const qgmAggrSelectorVec &selector,
+                                         const qgmOPFieldVec &groupby,
+                                         const qgmField &alias,
+                                         _qgmPtrTable *table )
+   :_qgmPlan( QGM_PLAN_TYPE_AGGR, alias ),
+    _eoc( FALSE ), _pushCount( 0 ), _isAggr( FALSE )
+   {
+      INT32 rc = SDB_OK ;
+      SQL_CB *sqlCB = pmdGetKRCB()->getSqlCB() ;
+      qgmAggrSelectorVec::const_iterator itr = selector.begin() ;
+      for ( ; itr != selector.end(); itr++ )
+      {
+         if ( SQL_GRAMMAR::WILDCARD == itr->value.type )
+         {
+            break ;
+         }
+
+         if ( SQL_GRAMMAR::FUNC == itr->value.type )
+         {
+            _rtnSQLFunc *func = NULL ;
+            rc = sqlCB->getFunc(itr->value.value.toString().c_str(),
+                                itr->param.size(),
+                                func ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDDEBUG, "invalid func: [name:%s] [paramNum:%d]",
+                       itr->value.value.toString().c_str(),
+                       itr->param.size() ) ;
+               goto done ;
+            }
+            else
+            {
+               SDB_ASSERT( NULL != func, "impossible" )
+               rc = func->init( itr->value.alias, itr->param ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto done ;
+               }
+               _func.push_back( func ) ;
+               if ( !_isAggr && func->isAggr() )
+               {
+                  _isAggr = TRUE;
+               }
+            }
+         }
+         else
+         {
+            _rtnSQLFunc *func = NULL ;
+            _qgmOpField first ;
+
+            rc = sqlCB->getFunc( SQL_FUNC_NAME_FIRST, 1, func ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "can not find func:%d",
+                       SQL_FUNC_NAME_FIRST ) ;
+               goto done ;
+            }
+
+            {
+            SDB_ASSERT( NULL != func, "impossible")
+            vector<qgmOpField> param ;
+            param.push_back( itr->value ) ;
+            rc = func->init( itr->value.alias.empty()?
+                             itr->value.value.attr() :
+                             itr->value.alias,
+                             param ) ;
+            if ( SDB_OK != rc )
+            {
+               goto done ;
+            }
+
+            _func.push_back( func ) ;
+            }
+         }
+      }
+
+      rc = _groupby.load( groupby ) ;
+
+      if ( !_isAggr && !_groupby.empty() )
+      {
+         _isAggr = TRUE;
+      }
+
+
+      _initialized = TRUE ;
+   done:
+      return ;
+   }
+
+   _qgmPlAggregation::~_qgmPlAggregation()
+   {
+      vector<_rtnSQLFunc *>::iterator itr = _func.begin() ;
+      for ( ; itr != _func.end(); itr++ )
+      {
+         SAFE_OSS_DELETE( *itr ) ;
+      }
+      _func.clear() ;
+   }
+
+   string _qgmPlAggregation::toString() const
+   {
+      stringstream ss ;
+      ss << "Type:" << qgmPlanType(_type) << '\n' ;
+      ss << "Alias:" << _alias.toString() << '\n' ;
+      if ( !_func.empty() )
+      {
+         ss << "Func:[" ;
+         for ( vector<_rtnSQLFunc *>::const_iterator itr = _func.begin() ;
+               itr != _func.end();
+               itr++ )
+         {
+            ss << (*itr)->toString() << "," ;
+         }
+         ss.seekp((INT32)ss.tellp()-1 ) ;
+         ss << "]\n" ;
+      }
+
+      if ( !_groupby.empty() )
+      {
+         ss << "Groupby:" << _groupby.selector().toString() << '\n';
+      }
+
+      return ss.str() ;
+   }
+
+   INT32 _qgmPlAggregation::_execute( _pmdEDUCB *eduCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      _pushCount = 0 ;
+      _eoc = FALSE ;
+      _groupbyKey = BSONObj() ;
+
+      SDB_ASSERT( 1 == _input.size(), "impossible" )
+      rc = input( 0 )->execute( eduCB ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _qgmPlAggregation::_fetchNext( qgmFetchOut &next )
+   {
+      INT32 rc = SDB_OK ;
+      qgmFetchOut subFetch ;
+      BSONObj currentGroupBy ;
+
+      if ( _eoc )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      do
+      {
+         rc = input( 0 )->fetchNext( subFetch ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            _eoc = TRUE ;
+
+            if ( 0 == _pushCount )
+            {
+               goto error ;
+            }
+
+            rc = _result( next ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            else
+            {
+               break ;
+            }
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to fatch next:%d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            if ( !_groupby.empty() )
+            {
+               rc = _groupby.select( subFetch, currentGroupBy ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+
+               if ( _groupbyKey.isEmpty())
+               {
+                  _groupbyKey = currentGroupBy ;
+                  rc = _push( subFetch ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+                  else
+                  {
+                     continue ;
+                  }
+               }
+               else if ( 0 != _groupbyKey.woCompare( currentGroupBy ) )
+               {
+                  _groupbyKey = currentGroupBy ;
+                  rc = _result( next ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+                  else
+                  {
+                     /// do nothing.
+                  }
+
+                  rc = _push( subFetch ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+                  else
+                  {
+                     break ;
+                  }
+               }
+               else
+               {
+                  rc = _push( subFetch ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+                  else
+                  {
+                     continue ;
+                  }
+               }
+            }
+            else
+            {
+               rc = _push( subFetch ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+               else
+               {
+                  if ( _isAggr )
+                  {
+                     continue ;
+                  }
+                  rc = _result( next ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     goto error ;
+                  }
+                  else
+                  {
+                     break ;
+                  }
+               }
+            }
+         }
+      } while ( TRUE ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _qgmPlAggregation::_select( const qgmFetchOut &next,
+                                     const vector<qgmOpField> &fields,
+                                     RTN_FUNC_PARAMS &param )
+   {
+      INT32 rc = SDB_OK ;
+
+      vector<qgmOpField>::const_iterator itr = fields.begin() ;
+      for ( ; itr != fields.end(); itr++ )
+      {
+         if ( !itr->empty() )
+         {
+            BSONElement ele ;
+            next.element( itr->value, ele ) ;
+
+            if ( ele.eoo() )
+            {
+               PD_LOG( PDDEBUG, "element[%s] not found in fetch",
+                       itr->toString().c_str() ) ;
+            }
+            param.push_back( ele ) ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _qgmPlAggregation::_push( const qgmFetchOut &next )
+   {
+      INT32 rc = SDB_OK ;
+      RTN_FUNC_PARAMS param ;
+      if ( !_func.empty() )
+      {
+         vector<_rtnSQLFunc *>::iterator itr = _func.begin() ;
+         for ( ; itr != _func.end(); itr++ )
+         {
+            const vector<qgmOpField> &fields = (*itr)->param() ;
+            rc = _select( next, fields, param ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            else
+            {
+               rc = (*itr)->push( param ) ;
+               param.clear() ;
+               if ( SDB_OK != rc )
+              {
+                  goto error ;
+              }
+            }
+         }
+     }
+     else if ( 0 == _pushCount )
+     {
+        _preObj = next.mergedObj() ;
+     }
+
+     ++_pushCount ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _qgmPlAggregation::_result( qgmFetchOut &result )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !_func.empty() )
+      {
+         BSONObjBuilder builder ;
+         vector<_rtnSQLFunc *>::iterator itr = _func.begin() ;
+         for ( ; itr != _func.end(); itr++ )
+         {
+            rc = (*itr)->result( builder ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+
+         result.obj = builder.obj() ;
+      }
+      else
+      {
+         result.obj = _preObj ;
+      }
+
+      if ( !_merge && !_alias.empty() )
+      {
+         result.alias = _alias ;
+      }
+
+      // clear push count
+      _pushCount = 0 ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+}

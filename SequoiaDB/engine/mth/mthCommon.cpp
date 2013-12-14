@@ -1,0 +1,136 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = mthCommon.cpp
+
+   Descriptive Name = Method Common
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Method component. This file contains common functions for mth
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          08/12/2013  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "core.hpp"
+#include "mthCommon.hpp"
+#include "pd.hpp"
+#include "pdTrace.hpp"
+#include "mthTrace.hpp"
+
+namespace engine
+{
+   // the function try to append newStr to ppStr.
+   // if the buffer is not large enough the function is responsible to allocate
+   // a larger one. If failed to allocate larger buffer, this function must
+   // maintain the validity of original pointer
+   INT32 mthAppendString ( CHAR **ppStr, INT32 &bufLen,
+                           INT32 strLen, const CHAR *newStr,
+                           INT32 newStrLen )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT ( ppStr && newStr, "str or newStr can't be NULL" )
+      // if user doesn't know the string length, pass 0
+      if ( !*ppStr )
+      {
+         strLen = 0 ;
+      }
+      else if ( 0 >= strLen )
+      {
+         strLen = ossStrlen ( *ppStr ) ;
+      }
+      // if user doesn't know the new string len, pass 0
+      if ( 0 >= newStrLen )
+      {
+         newStrLen = ossStrlen ( newStr ) ;
+      }
+      // make sure the string len and new string len is less than buffer
+      if ( strLen + newStrLen >= bufLen )
+      {
+         // we need to allocate more memory if exceed buffer
+         CHAR *pOldStr = *ppStr ;
+         INT32 newSize = ossRoundUpToMultipleX ( strLen + newStrLen,
+                                                 SDB_PAGE_SIZE ) ;
+         if ( newSize < 0 )
+         {
+            PD_LOG ( PDERROR, "new buffer overflow" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         *ppStr = (CHAR*)SDB_OSS_REALLOC ( *ppStr, sizeof(CHAR)*(newSize) ) ;
+         if ( !*ppStr )
+         {
+            PD_LOG ( PDERROR, "Failed to allocate %d bytes buffer", newSize ) ;
+            rc = SDB_OOM ;
+            *ppStr = pOldStr ;
+            goto error ;
+         }
+         bufLen = newSize ;
+      }
+      // now new buffer is allocated or we already have enough memory, let's do
+      // copy
+      if ( *ppStr && newStr )
+      {
+         ossMemcpy ( &(*ppStr)[strLen], newStr, newStrLen ) ;
+         (*ppStr)[strLen+newStrLen] = '\0' ;
+      }
+   done :
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDOUBLEBUFFERSIZE, "mthDoubleBufferSize" )
+   INT32 mthDoubleBufferSize ( CHAR **ppStr, INT32 &bufLen )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__MTHDOUBLEBUFFERSIZE ) ;
+      SDB_ASSERT ( ppStr, "ppStr can't be NULL" )
+      CHAR *pOldStr = *ppStr ;
+      INT32 newSize = ossRoundUpToMultipleX ( 2*bufLen,
+                                              SDB_PAGE_SIZE ) ;
+      if ( newSize < 0 )
+      {
+         PD_LOG ( PDERROR, "new buffer overflow" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( 0 == newSize )
+      {
+         newSize = SDB_PAGE_SIZE ;
+      }
+      *ppStr = (CHAR*)SDB_OSS_REALLOC ( *ppStr, sizeof(CHAR)*(newSize) ) ;
+      if ( !*ppStr )
+      {
+         PD_LOG ( PDERROR, "Failed to allocate %d bytes buffer", newSize ) ;
+         rc = SDB_OOM ;
+         *ppStr = pOldStr ;
+         goto error ;
+      }
+      bufLen = newSize ;
+   done :
+      PD_TRACE_EXITRC ( SDB__MTHDOUBLEBUFFERSIZE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+}

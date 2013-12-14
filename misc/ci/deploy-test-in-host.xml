@@ -1,0 +1,71 @@
+<!--@param ${deploy.file.fullname} : The test deploy tar full file name -->
+<!--@param ${deploy.host.name} :  The host name for deploy test scripts and install software-->
+
+
+<project name="deploy-test-in-host" default="deploy-test-in-host">
+	<property file="ci.test.properties" />
+	<property name="is.standalone.mode" value="false" />
+	<property name="catalog.addrs" value="" />
+	<property name="is.coord.master" value="true" />
+
+	<target name="clean-deploy-test-in-host" depends="">
+		<property environment="env" />
+		<echo message="Begin to clean deploy env...with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH},deploy.host.name=${deploy.host.name}" />
+
+		<echo message="exec ${STAF.PATH}/bin/staf ${deploy.host.name} FS DELETE ENTRY ${test.machine.deploy.path} RECURSE CONFIRM" />
+		<exec command="${STAF.PATH}/bin/staf ${deploy.host.name} FS DELETE ENTRY ${test.machine.deploy.path} RECURSE CONFIRM" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="exec ${STAF.PATH}/bin/staf ${deploy.host.name} FS CREATE DIRECTORY ${test.machine.deploy.path}" />
+		<exec command="${STAF.PATH}/bin/staf ${deploy.host.name} FS CREATE DIRECTORY ${test.machine.deploy.path}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="Clean deploy env compeleted." />
+
+	</target>
+
+	<target name="deploy-test-in-host" depends="clean-deploy-test-in-host">
+		<echo message="Begin to deploy test..." />
+
+		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${deploy.file.fullname} TODIRECTORY ${test.machine.deploy.path} TOMACHINE ${deploy.host.name}" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${deploy.file.fullname} TODIRECTORY ${test.machine.deploy.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+
+		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/install-test-in-host.xml TODIRECTORY ${test.machine.deploy.path} TOMACHINE ${deploy.host.name}" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/install-test-in-host.xml TODIRECTORY ${test.machine.deploy.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.deploy.path}/install-test-in-host.log -f ${test.machine.deploy.path}/install-test-in-host.xml -Dtest.basedir=${test.machine.deploy.path} -Ddeploy.tar.file.name=${deploy.tar.file.name} WAIT 30m" />
+		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.deploy.path}/install-test-in-host.log -f ${test.machine.deploy.path}/install-test-in-host.xml -Dtest.basedir=${test.machine.deploy.path} -Ddeploy.tar.file.name=${deploy.tar.file.name} WAIT 30m" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.deploy.path}/install-test-in-host.log TEXT" />
+		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.deploy.path}/install-test-in-host.log TEXT" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="Sequoiadb install compeleted." />
+
+		<echo message="Deploy softeware compeleted." />
+	</target>
+
+</project>
+

@@ -1,0 +1,2130 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = clsShardSession.cpp
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          07/12/2012  Xu Jianhui  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "clsShardSession.hpp"
+#include "pmd.hpp"
+#include "clsMgr.hpp"
+#include "rtn.hpp"
+#include "msgMessage.hpp"
+#include "pdTrace.hpp"
+#include "clsTrace.hpp"
+
+using namespace bson ;
+
+namespace engine
+{
+
+#define SHD_SESSION_TIMEOUT         (60)
+
+   BEGIN_OBJ_MSG_MAP( _clsShdSession, _clsSession )
+      ON_MSG ( MSG_BS_UPDATE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_INSERT_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_DELETE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_QUERY_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_GETMORE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_KILL_CONTEXT_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_MSG_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_INTERRUPTE, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_BEGIN_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_COMMIT_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_ROLLBACK_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRYLOCK_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_RELEASELOCK_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_COMMITPRE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_UPDATE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_DELETE_REQ, _onOPMsg )
+      ON_MSG ( MSG_BS_TRANS_INSERT_REQ, _onOPMsg )
+      ON_MSG ( MSG_COOR_CHECK_ROUTEID_REQ, _onOPMsg )
+#if defined (_DEBUG)
+      ON_MSG ( MSG_AUTH_VERIFY_REQ, _onOPMsg )
+      ON_MSG ( MSG_AUTH_CRTUSR_REQ, _onOPMsg )
+      ON_MSG ( MSG_AUTH_DELUSR_REQ, _onOPMsg )
+#endif
+   END_OBJ_MSG_MAP()
+
+   // The error object number objects
+   extern BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSDSESS__CLSSHDSESS, "_clsShdSession::_clsShdSession" )
+   _clsShdSession::_clsShdSession ( UINT64 sessionID )
+      :_clsSession ( sessionID )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSDSESS__CLSSHDSESS ) ;
+      _pCollectionName = NULL ;
+      pmdKRCB *pKRCB = pmdGetKRCB () ;
+      _pReplSet  = pKRCB->getClsCB ()->getReplCB () ;
+      _pShdMgr   = pKRCB->getClsCB ()->getShardCB () ;
+      _pCatAgent = pKRCB->getClsCB ()->getCatAgent () ;
+      _pDmsCB    = pKRCB->getDMSCB () ;
+      _pDpsCB    = pKRCB->getDPSCB () ;
+      _pRtnCB    = pKRCB->getRTNCB () ;
+      _pNetAgent = pKRCB->getClsCB()->getShardRouteAgent () ;
+      _WLockedCS = DMS_INVALID_SUID;
+      PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
+   }
+
+   _clsShdSession::~_clsShdSession ()
+   {
+      _pReplSet  = NULL ;
+      _pShdMgr   = NULL ;
+      _pCatAgent = NULL ;
+      _pDmsCB    = NULL ;
+      _pRtnCB    = NULL ;
+      _pDpsCB    = NULL ;
+      _pNetAgent = NULL ;
+      _pCollectionName = NULL ;
+   }
+
+   INT32 _clsShdSession::type () const
+   {
+      return CLS_SHARD ;
+   }
+
+   EDU_TYPES _clsShdSession::eduType () const
+   {
+      return EDU_TYPE_SHARDAGENT ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS_ONRV, "_clsShdSession::onRecieve" )
+   void _clsShdSession::onRecieve ( const NET_HANDLE netHandle,
+                                    MsgHeader * msg )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS_ONRV ) ;
+      ossGetCurrentTime( _lastRecvTime ) ;
+      PD_TRACE_EXIT ( SDB__CLSSHDSESS_ONRV ) ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS_TMOUT, "_clsShdSession::timeout" )
+   BOOLEAN _clsShdSession::timeout ( UINT32 interval )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS_TMOUT ) ;
+      BOOLEAN ret = FALSE ;
+      ossTimestamp curTime ;
+      ossGetCurrentTime ( curTime ) ;
+
+      if ( curTime.time - _lastRecvTime.time > SHD_SESSION_TIMEOUT &&
+           _pEDUCB->contextNum() == 0 &&
+           ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID ||
+           !(pmdGetKRCB()->getReplCB()->primaryIsMe())))
+      {
+         // will be release
+         ret = TRUE ;
+         goto done ;
+      }
+   done :
+      PD_TRACE_EXIT ( SDB__CLSSHDSESS_TMOUT ) ;
+      return ret ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONDETACH, "_clsShdSession::_onDetach" )
+   void _clsShdSession::_onDetach ()
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONDETACH ) ;
+      if ( _pEDUCB )
+      {
+         INT64 contextID = -1 ;
+         while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
+         {
+            _pRtnCB->contextDelete ( contextID, NULL ) ;
+         }
+         if ( DMS_INVALID_SUID != _WLockedCS && _pDmsCB != NULL )
+         {
+            SDB_ASSERT( FALSE, "found unreleased lock!" );
+            _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
+            PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
+            _WLockedCS = DMS_INVALID_SUID;
+         }
+      }
+
+      _clsSession::_onDetach () ;
+      PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONDETACH ) ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__DFMSGFUNC, "_clsShdSession::_defaultMsgFunc" )
+   INT32 _clsShdSession::_defaultMsgFunc ( NET_HANDLE handle, MsgHeader * msg )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__DFMSGFUNC ) ;
+      rc = _onOPMsg( handle, msg ) ;
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__DFMSGFUNC, rc ) ;
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CK, "_clsShdSession::_check" )
+   INT32 _clsShdSession::_check ( INT16 &w )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__CK ) ;
+
+      if ( w < 0 )
+      {
+         PD_LOG( PDWARNING, "we get a w<0 here." ) ;
+         w = 1 ;
+      }
+      // if w is 1, not get groupSize
+      else if ( w > 1 )
+      {
+         INT16 nodes = (INT16)_pReplSet->groupSize() ;
+         if ( w > nodes )
+         {
+            w = nodes ;
+         }
+      }
+      /// if 0 == w, according to w in cata.
+      else
+      {
+         /// do nothing.
+      }
+
+      // not primary
+      if ( !_pReplSet->primaryIsMe () )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+      }
+      // node is not enough
+      else if ( w > 1 && (INT16)(_pReplSet->ailves()) < w )
+      {
+         rc = SDB_CLS_NODE_NOT_ENOUGH ;
+      }
+      else if ( pmdGetKRCB()->getTransCB()->isDoRollback() )
+      {
+         rc = SDB_DPS_TRANS_DOING_ROLLBACK ;
+      }
+
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CK, rc ) ;
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKCATA, "_clsShdSession::_checkCata" )
+   INT32 _clsShdSession::_checkCata ( INT32 version, const CHAR * name,
+                                      INT16 &w, BOOLEAN &isMainCL )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__CKCATA ) ;
+      INT32 curVer = -1 ;
+      INT16 curW = 0 ;
+      UINT32 groupCount = 0 ;
+      _clsCatalogSet *set = NULL ;
+
+      _pCatAgent->lock_r () ;
+      set = _pCatAgent->collectionSet( name ) ;
+      if ( set )
+      {
+         curW = set->getW() ;
+         curVer = set->getVersion() ;
+         groupCount = set->groupCount() ;
+         isMainCL = set->isMainCL();
+      }
+      _pCatAgent->release_r () ;
+
+      //not update catalog info or version is old, need to update catalog
+      if ( curVer < 0 || curVer < version )
+      {
+         rc = curVer < 0 ? SDB_CLS_NO_CATALOG_INFO : SDB_CLS_DATA_NODE_CAT_VER_OLD ;
+      }
+      else if ( curVer > version
+               || ( 0 == groupCount && !isMainCL ) )
+      {
+         if ( 0 == groupCount )
+         {
+            _pCatAgent->lock_w() ;
+            _pCatAgent->clear( name ) ;
+            _pCatAgent->release_w() ;
+         }
+
+         PD_LOG ( PDINFO, "Collecton[%s]: self verions:%d, coord version:%d, "
+                  "groupCount:%d", name, curVer, version, groupCount ) ;
+         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+      }
+      else if ( 0 == w )
+      {
+         if ( curW > 1 )
+         {
+            INT16 nodes = (INT16)_pReplSet->groupSize() ;
+            if ( curW > nodes )
+            {
+               curW = nodes ;
+            }
+         }
+
+         if ( curW > 1 && _pReplSet->ailves() < (UINT32)curW )
+         {
+            rc = SDB_CLS_NODE_NOT_ENOUGH ;
+         }
+         else
+         {
+            w = curW ;
+         }
+      }
+      else
+      {
+         /// do noting.
+      }
+
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CKCATA, rc ) ;
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__REPLY, "_clsShdSession::_reply" )
+   INT32 _clsShdSession::_reply ( MsgOpReply * header, const CHAR * buff, UINT32 size )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__REPLY ) ;
+
+      if ( (UINT32)(header->header.messageLength) != sizeof (MsgOpReply) + size )
+      {
+         PD_LOG ( PDERROR, "Session[%s] reply message length error[%u != %u]",
+                  sessionName() ,header->header.messageLength,
+                  sizeof ( MsgOpReply ) + size ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      //Send message
+      if ( size > 0 )
+      {
+         rc = _pNetAgent->syncSend ( _netHandle, (MsgHeader *)header, 
+                                    (void*)buff, size ) ;
+      }
+      else
+      {
+         rc = _pNetAgent->syncSend ( _netHandle, (void *)header ) ;
+      }
+
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Session[%s] send reply message failed[rc:%d]",
+            sessionName(), rc ) ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__REPLY, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   //message fuctions
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONOPMSG, "_clsShdSession::_onOPMsg" )
+   INT32 _clsShdSession::_onOPMsg ( NET_HANDLE handle, MsgHeader * msg )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONOPMSG ) ;
+      BOOLEAN loop = TRUE ;
+      INT32 loopTime = 0 ;
+      INT32 rc = SDB_OK ;
+      BSONObj *errorObj = NULL ;
+
+      INT32 flags = 0 ;
+      SINT64 contextID = -1 ;
+      INT32 statFrom = 0 ;
+      INT32 numReturn = 0 ;
+      const CHAR  *pReponseBuff = NULL ;
+      INT32  buffLen = 0 ;
+      rtnContextBuf buffObj ;
+      _pCollectionName = NULL ;
+      BOOLEAN isNeedRollback = FALSE;
+
+      //if the node is full sync, can't service
+      if ( _pReplSet->isFullSync() )
+      {
+         rc = SDB_CLS_FULL_SYNC ;
+         loop = FALSE ;
+      }
+
+      while ( loop )
+      {
+         switch ( msg->opCode )
+         {
+            case MSG_BS_UPDATE_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onUpdateReqMsg ( handle, msg, contextID ) ;
+               break ;
+            case MSG_BS_INSERT_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onInsertReqMsg ( handle, msg ) ;
+               break ;
+            case MSG_BS_DELETE_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onDeleteReqMsg ( handle, msg, contextID ) ;
+               break ;
+            case MSG_BS_QUERY_REQ :
+               rc = _onQueryReqMsg ( handle, msg, contextID ) ;
+               break ;
+            case MSG_BS_GETMORE_REQ :
+               rc = _onGetMoreReqMsg ( msg, buffObj, statFrom, contextID ) ;
+               if ( SDB_OK == rc )
+               {
+                  pReponseBuff = buffObj.data() ;
+                  buffLen = buffObj.size() ;
+                  numReturn = buffObj.recordNum() ;
+               }
+               break ;
+            case MSG_BS_TRANS_UPDATE_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onTransUpdateReqMsg ( handle, msg, contextID ) ;
+               break ;
+            case MSG_BS_TRANS_INSERT_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onTransInsertReqMsg ( handle, msg ) ;
+               break ;
+            case MSG_BS_TRANS_DELETE_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onTransDeleteReqMsg ( handle, msg, contextID ) ;
+               break ;
+            case MSG_BS_KILL_CONTEXT_REQ :
+               rc = _onKillContextsReqMsg ( handle, msg ) ;
+               break ;
+            case MSG_BS_MSG_REQ :
+               rc = _onMsgReq ( handle, msg ) ;
+               break ;
+            case MSG_BS_INTERRUPTE :
+               rc = _onInterruptMsg( handle, msg ) ;
+               break ;
+#if defined (_DEBUG)
+            // for authentication message through sharding port, we simply
+            // return OK
+            case MSG_AUTH_VERIFY_REQ :
+            case MSG_AUTH_CRTUSR_REQ :
+            case MSG_AUTH_DELUSR_REQ :
+               rc = SDB_OK ;
+               break ;
+#endif
+            case MSG_BS_TRANS_BEGIN_REQ :
+               rc = _onTransBeginMsg();
+               break;
+
+            case MSG_BS_TRANS_COMMIT_REQ :
+               isNeedRollback = TRUE ;
+               rc = _onTransCommitMsg();
+               break;
+
+            case MSG_BS_TRANS_ROLLBACK_REQ:
+               rc = _onTransRollbackMsg();
+               break;
+
+            case MSG_BS_TRYLOCK_REQ:
+               rc = _onTryLockMsg( msg );
+               break;
+
+            case MSG_BS_RELEASELOCK_REQ:
+               rc = _onReleaseLockMsg( msg );
+               break;
+
+            case MSG_BS_TRANS_COMMITPRE_REQ:
+               rc = _onTransCommitPreMsg( msg );
+               break;
+
+            case MSG_COOR_CHECK_ROUTEID_REQ:
+               rc = _onCheckRouteIDReqMsg( msg );
+               break;
+
+            default :
+               rc = SDB_CLS_UNKNOW_MSG ;
+               break ;
+         }
+
+         //Need to update catalog info
+         if ( ( SDB_CLS_NO_CATALOG_INFO == rc ||
+                SDB_CLS_DATA_NODE_CAT_VER_OLD == rc ) && loopTime < 1 )
+         {
+            loopTime++ ;
+            PD_LOG ( PDWARNING, "Catalog is empty or older[rc:%d] in session[%s]",
+                     rc, sessionName() ) ;
+            rc = _pShdMgr->syncUpdateCatalog( _pCollectionName, OSS_ONE_SEC ) ;
+            if ( SDB_OK == rc )
+            {
+               continue ;
+            }
+         }
+         //catalog has the collection, so need to create, no compression
+         else if ( (SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc)
+                   && _pCollectionName && _pReplSet->primaryIsMe() )
+         {
+            INT32 tmpRC = SDB_OK ;
+            if ( SDB_DMS_CS_NOTEXIST == rc )
+            {
+               tmpRC = _createCSByCatalog( _pCollectionName ) ;
+            }
+            else if ( SDB_DMS_NOTEXIST == rc )
+            {
+               tmpRC = _createCLByCatalog( _pCollectionName ) ;
+            }
+
+            if ( SDB_OK == tmpRC )
+            {
+               PD_LOG ( PDEVENT, "Session[%s]: Create CS/CL[%s] by catalog",
+                        sessionName(), _pCollectionName ) ;
+               continue ;
+            }
+         }
+
+         if ( SDB_CLS_DATA_NODE_CAT_VER_OLD == rc )
+         {
+            rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+         }
+
+         loop = FALSE ;
+      }
+
+      if ( MSG_BS_INTERRUPTE == msg->opCode )
+      {
+         //not to reply
+         goto done ;
+      }
+
+      if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
+      {
+         PD_LOG ( PDERROR, "Session[%s] OP[type:%u] return code error[rc:%d]",
+                  sessionName(), msg->opCode, rc ) ;
+         rc = SDB_SYS ;
+      }
+
+      //Build reply message
+      _replyHeader.header.opCode = MAKE_REPLY_TYPE( msg->opCode ) ;
+      _replyHeader.header.messageLength = sizeof ( MsgOpReply ) ;
+      _replyHeader.header.requestID = msg->requestID ;
+      _replyHeader.header.TID = msg->TID ;
+      _replyHeader.header.routeID.value = 0 ;
+
+      if ( SDB_OK != rc )
+      {
+         numReturn = 1 ;
+         flags = rc ;
+
+         if ( isNeedRollback && _pReplSet->primaryIsMe ())
+         {
+            INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
+            if ( rcTmp )
+            {
+               PD_LOG ( PDERROR,
+                        "failed to rollback(rc=%d)",
+                        rcTmp );
+            }
+         }
+
+         if ( _pEDUCB->getInfo( EDU_INFO_ERROR ) )
+         {
+            errorObj = SDB_OSS_NEW BSONObj ;
+         }
+
+         if ( errorObj )
+         {
+            BSONObjBuilder bb ;
+            bb.append ( OP_ERRNOFIELD, rc ) ;
+            bb.append ( OP_ERRDESP_FIELD, getErrDesp ( rc ) ) ;
+            bb.append ( OP_ERR_DETAIL, _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
+            *errorObj = bb.obj() ;
+
+            buffLen = errorObj->objsize () ;
+            pReponseBuff = errorObj->objdata () ;
+         }
+         else
+         {
+            buffLen = _retObj[SDB_MAX_ERROR+rc].objsize () ;
+            pReponseBuff = _retObj[SDB_MAX_ERROR+rc].objdata () ;
+         }
+
+         if ( rc != SDB_DMS_EOC )
+         {
+            PD_LOG ( PDERROR, "Session[%s] process OP[type:%u] failed[rc:%d]",
+                     sessionName(), msg->opCode, rc ) ;
+         }
+      }
+
+      _replyHeader.header.messageLength += buffLen ;
+      _replyHeader.flags = flags ;
+      _replyHeader.contextID = contextID ;
+      _replyHeader.numReturned = numReturn ;
+      _replyHeader.startFrom = statFrom ;
+
+      rc = _reply ( &_replyHeader, pReponseBuff, buffLen ) ;
+
+   done:
+      if ( errorObj )
+      {
+         SDB_OSS_DEL errorObj ;
+         errorObj = NULL ;
+      }
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONOPMSG, rc ) ;
+      return rc ;
+   }
+
+   INT32 _clsShdSession::_createCSByCatalog( const CHAR * clFullName )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR csName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = { 0 } ;
+      INT32 index = 0 ;
+      while ( clFullName[ index ] && index < DMS_COLLECTION_SPACE_NAME_SZ )
+      {
+         if ( '.' == clFullName[ index ] )
+         {
+            break ;
+         }
+         csName[ index ] = clFullName[ index ] ;
+         ++index ;
+      }
+
+      UINT32 pageSize = DMS_PAGE_SIZE_DFT ;
+      rc = _pShdMgr->rGetCSPageSize( csName, pageSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Get collection space[%s] page size from catalog "
+                 "failed, rc: %d, use default pagesize", csName, rc ) ;
+      }
+      rc = rtnCreateCollectionSpaceCommand( csName, _pEDUCB, _pDmsCB, _pDpsCB,
+                                            pageSize, FALSE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Create collection space[%s] by catalog failed, rc:"
+                 " %d", csName, rc ) ;
+      }
+      return rc ;
+   }
+
+   INT32 _clsShdSession::_createCLByCatalog( const CHAR * clFullName )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj shardingKey ;
+      UINT32 attribute = 0 ;
+      BOOLEAN isMainCL = FALSE;
+
+      // get sharding key
+      _pCatAgent->lock_r() ;
+      clsCatalogSet *set = _pCatAgent->collectionSet( clFullName ) ;
+      if ( NULL == set )
+      {
+         _pCatAgent->release_r() ;
+         rc = SDB_DMS_NOTEXIST ;
+         PD_LOG( PDERROR, "can not find collection:%s", clFullName ) ;
+         goto error ;
+      }
+
+      if ( set->isSharding() && set->ensureShardingIndex() )
+      {
+         shardingKey = set->getShardingKey().getOwned() ;
+      }
+
+      attribute = set->getAttribute() ;
+      isMainCL = set->isMainCL();
+      _pCatAgent->release_r() ;
+
+      if ( isMainCL )
+      {
+         BSONObj boMatcher;
+         BSONObj boNewMatcher;
+         std::set< std::string > subCLList;
+         std::set< std::string >::iterator iter;
+         rc = _getSubCLList( boMatcher, clFullName, boNewMatcher, subCLList );
+         PD_RC_CHECK( rc, PDERROR, "failed to get sub collection(rc=%d)", rc );
+         iter = subCLList.begin();
+         while ( iter != subCLList.end() )
+         {
+            BSONObj subShardingKey;
+            UINT32 subAttribute = 0 ;
+            _pCatAgent->lock_r() ;
+            clsCatalogSet *subSet = _pCatAgent->collectionSet( iter->c_str() );
+            if ( NULL == subSet )
+            {
+               _pCatAgent->release_r();
+               PD_RC_CHECK( SDB_DMS_NOTEXIST, PDERROR,
+                           "can not find sub-collection:%s", iter->c_str() );
+            }
+            if ( subSet->isSharding() && subSet->ensureShardingIndex() )
+            {
+               subShardingKey = subSet->getShardingKey().getOwned() ;
+            }
+            subAttribute = subSet->getAttribute() ;
+            _pCatAgent->release_r();
+            rc = rtnCreateCollectionCommand( iter->c_str(), subShardingKey, subAttribute,
+                                             _pEDUCB, _pDmsCB, _pDpsCB, 0, FALSE );
+            if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
+            {
+               PD_RC_CHECK( rc, PDERROR,
+                           "create sub-collection(%s) failed(rc=%d)",
+                           iter->c_str(), rc );
+            }
+            rc = SDB_OK;
+            ++iter;
+         }
+      }
+      else
+      {
+         rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
+                                          _pEDUCB, _pDmsCB, _pDpsCB, 0, FALSE ) ;
+      }
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDWARNING, "Create collection[%s] by catalog failed, rc: %d",
+                 clFullName, rc ) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONUPREQMSG, "_clsShdSession::_onUpdateReqMsg" )
+   INT32 _clsShdSession::_onUpdateReqMsg( NET_HANDLE handle, MsgHeader * msg,
+                                          INT64 &updateNum )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONUPREQMSG ) ;
+      PD_LOG ( PDDEBUG, "session[%s] _onUpdateReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      MsgOpUpdate *pUpdate = (MsgOpUpdate*)msg ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pSelectorBuffer = NULL ;
+      CHAR *pUpdatorBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+      BOOLEAN isMainCL = FALSE ;
+      INT16 w = pUpdate->w ;
+
+      rc = _check ( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
+                             &pSelectorBuffer, &pUpdatorBuffer, &pHintBuffer );
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Extract update message failed[rc:%d] in session[%s]", 
+            rc, sessionName() ) ;
+         goto error ;
+      }
+      _pCollectionName = pCollectionName ;
+
+      //check version
+      rc = _checkCata ( pUpdate->version, pCollectionName, w, isMainCL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj selector( pSelectorBuffer );
+         BSONObj updator( pUpdatorBuffer );
+         BSONObj hint( pHintBuffer );
+
+         PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\nhint: %s",
+            sessionName(), selector.toString().c_str(), updator.toString().c_str(),
+            hint.toString().c_str() ) ;
+         if ( isMainCL )
+         {
+            rc = _updateToMainCL( pCollectionName, selector, updator, hint,
+                                 flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
+                                 ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
+                                 &updateNum : NULL );
+         }
+         else
+         {
+            rc = rtnUpdate( pCollectionName, selector, updator, hint, 
+                         flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
+                         ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
+                         &updateNum : NULL ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to create selector and updator for update: %s",
+            sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONUPREQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONINSTREQMSG, "_clsShdSession::_onInsertReqMsg" )
+   INT32 _clsShdSession::_onInsertReqMsg ( NET_HANDLE handle, MsgHeader * msg )
+   {
+      PD_LOG ( PDDEBUG, "session[%s] _onInsertReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONINSTREQMSG ) ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pInsertorBuffer = NULL ;
+      INT32 recordNum = 0 ;
+      BOOLEAN isMainCL = FALSE;
+      MsgOpInsert *pInsert = (MsgOpInsert*)msg ;
+      INT16 w = pInsert->w ;
+      rc = _check ( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = msgExtractInsert ((CHAR*)msg,  &flags, &pCollectionName,
+         &pInsertorBuffer, recordNum ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s] extract insert msg failed[rc:%d]",
+            sessionName(), rc ) ;
+         goto error ;
+      }
+      _pCollectionName = pCollectionName ;
+
+      //check catalog
+      rc = _checkCata ( pInsert->version, pCollectionName, w, isMainCL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj insertor ( pInsertorBuffer ) ;
+
+         PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
+            sessionName(), insertor.toString().c_str(), pCollectionName ) ;
+
+         if ( isMainCL )
+         {
+            rc = _InsertToMainCL( insertor, recordNum, flags, w );
+         }
+         else
+         {
+
+            rc = rtnInsert ( pCollectionName, insertor, recordNum, flags, 
+                           _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to create insertor for insert: %s",
+            sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONINSTREQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONDELREQMSG, "_clsShdSession::_onDeleteReqMsg" )
+   INT32 _clsShdSession::_onDeleteReqMsg ( NET_HANDLE handle, MsgHeader * msg,
+                                           INT64 &delNum )
+   {
+      PD_LOG ( PDDEBUG, "session[%s] _onDeleteReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONDELREQMSG ) ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pDeletorBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+      MsgOpDelete * pDelete = (MsgOpDelete*)msg ;
+      INT16 w = pDelete->w ;
+      BOOLEAN isMainCL = FALSE ;
+
+      rc = _check ( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName, 
+         &pDeletorBuffer, &pHintBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s] extract delete msg failed[rc:%d]",
+            sessionName(), rc ) ;
+         goto error ;
+      }
+      _pCollectionName = pCollectionName ;
+
+      //check cata
+      rc = _checkCata ( pDelete->version, pCollectionName, w, isMainCL ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj deletor ( pDeletorBuffer ) ;
+         BSONObj hint ( pHintBuffer ) ;
+
+         PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
+            sessionName(), deletor.toString().c_str(), 
+            hint.toString().c_str() ) ;
+
+         if ( isMainCL )
+         {
+            rc = _deleteToMainCL( pCollectionName, deletor, hint, flags,
+                                 _pEDUCB, _pDmsCB, _pDpsCB, w,
+                                 ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
+                                 &delNum : NULL );
+         }
+         else
+         {
+
+            rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB, 
+                         _pDmsCB, _pDpsCB, w,
+                         ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
+                         &delNum : NULL ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to create deletor for DELETE: %s",
+            sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONDELREQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONQYREQMSG, "_clsShdSession::_onQueryReqMsg" )
+   INT32 _clsShdSession::_onQueryReqMsg ( NET_HANDLE handle, MsgHeader * msg,
+                                          INT64 &contextID )
+   {
+      PD_LOG ( PDDEBUG, "session[%s] _onQueryReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONQYREQMSG ) ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pQueryBuff = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderByBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+      INT64 numToSkip = -1 ;
+      INT64 numToReturn = -1 ;
+      MsgOpQuery *pQuery = (MsgOpQuery*)msg ;
+      INT16 w = pQuery->w ;
+      _rtnCommand *pCommand = NULL ;
+      dmsStorageUnitID suID = DMS_INVALID_CS;
+      dmsStorageUnit *su = NULL;
+      const CHAR *pCollectionShortName = NULL;
+      UINT16 collectionID = DMS_INVALID_MBID;
+      UINT32 logicCSID = ~0;
+      BOOLEAN isMainCL = FALSE;
+
+      rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
+         &numToSkip, &numToReturn, &pQueryBuff, &pFieldSelector,
+         &pOrderByBuffer, &pHintBuffer ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s] extract query msg failed[rc:%d]",
+            sessionName(), rc ) ;
+         goto error ;
+      }
+
+      if ( !rtnIsCommand ( pCollectionName ) )
+      {
+         _pCollectionName = pCollectionName ;
+         //check cata
+         w = 1 ;
+         rc = _checkCata ( pQuery->version, pCollectionName, w, isMainCL ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         try
+         {
+            BSONObj matcher ( pQueryBuff ) ;
+            BSONObj selector ( pFieldSelector ) ;
+            BSONObj orderBy ( pOrderByBuffer ) ;
+            BSONObj hint ( pHintBuffer ) ;
+
+            PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: %s\norderBy: %s\nhint:%s",
+               sessionName(), matcher.toString().c_str(), selector.toString().c_str(),
+               orderBy.toString().c_str(), hint.toString().c_str() ) ;
+
+            if ( !isMainCL )
+            {
+               rc = rtnQuery( pCollectionName, selector, matcher, orderBy, hint,
+                  flags, _pEDUCB, numToSkip, numToReturn, _pDmsCB, _pRtnCB,
+                  contextID, NULL, TRUE ) ;
+            }
+            else
+            {
+               rc = _queryToMainCL( pCollectionName, selector, matcher, orderBy, hint,
+                                    flags, _pEDUCB, numToSkip, numToReturn, _pDmsCB,
+                                    _pRtnCB, contextID );
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Session[%s] Failed to create matcher and selector for QUERY: %s",
+               sessionName(), e.what () ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = rtnParserCommand( pCollectionName, &pCommand ) ;
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Parse command[%s] failed[rc:%d]",
+               pCollectionName, rc ) ;
+            goto error ;
+         }
+
+         rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
+                              pQueryBuff, pFieldSelector, pOrderByBuffer,
+                              pHintBuffer ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         pCommand->setFromCluster();
+         _pCollectionName = pCommand->collectionFullName () ;
+
+         if ( pCommand->writable () )
+         {
+            rc = _check ( w ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+
+         //check cata
+         if ( pCommand->collectionFullName() &&
+              SDB_OK != ( rc = _checkCata( pQuery->version,
+                          pCommand->collectionFullName(),
+                          w, isMainCL ) ) )
+         {
+            goto error ;
+         }
+
+         PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
+
+         /// sometimes we can not get catainfo from command
+         /// request. here if w < 1, we set it with 1.
+         if ( w < 1 )
+         {
+            w = 1 ;
+         }
+
+         // drop collection or drop collection-space must get suID and collectionID,
+         // then release lock at the end
+         if ( CMD_DROP_COLLECTION == pCommand->type() )
+         {
+            rc = rtnResolveCollectionNameAndLock( pCommand->collectionFullName(),
+                                                _pDmsCB, &su, &pCollectionShortName,
+                                                suID );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to resolve collection name(collection:%s, rc=%d)",
+                        pCommand->collectionFullName(), rc );
+            rc = su->data()->findCollection( pCollectionShortName,
+                                             collectionID );
+            logicCSID = su->LogicalCSID() ;
+            _pDmsCB->suUnlock( suID );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to find collection(collection:%s, rc=%d)",
+                        pCommand->collectionFullName(), rc );
+         }
+         else if ( CMD_DROP_COLLECTIONSPACE == pCommand->type () )
+         {
+            // not need lock,
+            // has been locked before.
+            _rtnDropCollectionspace *pDropCSCommand =
+                           ( _rtnDropCollectionspace *)pCommand ;
+            su = _pDmsCB->nameToSU( pDropCSCommand->spaceName() );
+            PD_CHECK( su != NULL, SDB_DMS_CS_NOTEXIST,
+               error, PDERROR, "failed to find collection space, space(%s) is not exist",
+               pDropCSCommand->spaceName() );
+            logicCSID = su->LogicalCSID();
+            suID = su->CSID();
+            if ( suID == _WLockedCS && DMS_INVALID_SUID != suID )
+            {
+               pDropCSCommand->locked();
+            }
+            else
+            {
+               if ( DMS_INVALID_SUID != _WLockedCS )
+               {
+                  SDB_ASSERT( FALSE, "found unreleased lock!" );
+                  _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
+                  pDropCSCommand->releaseLock();
+                  PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
+                  _WLockedCS = DMS_INVALID_SUID;
+               }
+            }
+         }
+
+         if ( isMainCL )
+         {
+            rc = _runOnMainCL( pCollectionName, pCommand, flags, numToSkip, numToReturn,
+                              pQueryBuff, pFieldSelector, pOrderByBuffer,
+                              pHintBuffer, w, contextID );
+         }
+         else
+         {
+
+            //run command
+            rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_SHARD,
+                                _pEDUCB, _pDmsCB, _pRtnCB,
+                                _pDpsCB, w, &contextID ) ;
+         }
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         //drop collection[space] should to remove catalog
+         if ( CMD_DROP_COLLECTION == pCommand->type() ||
+              CMD_RENAME_COLLECTION == pCommand->type() )
+         {
+            _pCatAgent->lock_w () ;
+            _pCatAgent->clear ( pCommand->collectionFullName() ) ;
+            _pCatAgent->release_w () ;
+
+            pmdGetKRCB()->getClsCB()->invalidateCata(
+               pCommand->collectionFullName() ) ;
+         }
+         else if ( CMD_DROP_COLLECTIONSPACE == pCommand->type () )
+         {
+            _rtnDropCollectionspace *pDropCSCommand =
+                           ( _rtnDropCollectionspace *)pCommand ;
+            _pCatAgent->lock_w () ;
+            _pCatAgent->clearBySpaceName ( pDropCSCommand->spaceName() ) ;
+            _pCatAgent->release_w () ;
+
+            pmdGetKRCB()->getClsCB()->invalidateCata(
+               pDropCSCommand->spaceName() ) ;
+         }
+      }
+
+   done:
+      if ( pCommand )
+      {
+         if ( CMD_DROP_COLLECTION == pCommand->type() ||
+              CMD_RENAME_COLLECTION == pCommand->type() )
+         {
+            pmdGetKRCB()->getTransCB()->transLockRelease( _pEDUCB, logicCSID, collectionID );
+         }
+         else if ( CMD_DROP_COLLECTIONSPACE == pCommand->type () )
+         {
+            _rtnDropCollectionspace *pDropCSCommand =
+                           ( _rtnDropCollectionspace *)pCommand ;
+            if ( pDropCSCommand->isLocked() && _WLockedCS != DMS_INVALID_SUID )
+            {
+               _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
+               pDropCSCommand->releaseLock();
+               PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
+            }
+            _WLockedCS = DMS_INVALID_SUID;
+            pmdGetKRCB()->getTransCB()->transLockRelease( _pEDUCB, logicCSID );
+         }
+         rtnReleaseCommand( &pCommand ) ;
+      }
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONQYREQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONGETMOREREQMSG, "_clsShdSession::_onGetMoreReqMsg" )
+   INT32 _clsShdSession::_onGetMoreReqMsg( MsgHeader * msg,
+                                           rtnContextBuf &buffObj,
+                                           INT32 & startingPos,
+                                           INT64 &contextID )
+   {
+      PD_LOG ( PDDEBUG, "session[%s] _onGetMoreReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONGETMOREREQMSG ) ;
+      INT32 numToRead = 0 ;
+      INT64 startPos64 = 0 ;
+
+      rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s] extract GETMORE msg failed[rc:%d]",
+                  sessionName(), rc ) ;
+         goto error ;
+      }
+
+      PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
+               numToRead ) ;
+
+      rc = rtnGetMore ( contextID, numToRead, buffObj, startPos64,
+                        _pEDUCB, _pRtnCB ) ;
+
+      startingPos = ( INT32 )startPos64 ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONGETMOREREQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONKILLCTXREQMSG, "_clsShdSession::_onKillContextsReqMsg" )
+   INT32 _clsShdSession::_onKillContextsReqMsg ( NET_HANDLE handle,
+                                                 MsgHeader * msg )
+   {
+      PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONKILLCTXREQMSG ) ;
+      INT32 contextNum = 0 ;
+      INT64 *pContextIDs = NULL ;
+
+      rc = msgExtractKillContexts ( (CHAR*)msg, &contextNum, &pContextIDs ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Session[%s] extract KILLCONTEXT msg failed[rc:%d]",
+                  sessionName(), rc ) ;
+         goto error ;
+      }
+
+      if ( contextNum > 0 )
+      {
+         PD_LOG ( PDDEBUG, "KillContext: contextNum:%d\ncontextID: %lld",
+                  contextNum, pContextIDs[0] ) ;
+      }
+
+      rc = rtnKillContexts ( contextNum, pContextIDs, _pEDUCB, _pRtnCB ) ;
+
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONKILLCTXREQMSG, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _clsShdSession::_onMsgReq ( NET_HANDLE handle, MsgHeader * msg )
+   {
+      MsgOpMsg *pOpMsg = (MsgOpMsg*)msg ;
+      return rtnMsg( &pOpMsg->msg[0] ) ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONINRPTMSG, "_clsShdSession::_onInterruptMsg" )
+   INT32 _clsShdSession::_onInterruptMsg ( NET_HANDLE handle, MsgHeader * msg )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSHDSESS__ONINRPTMSG ) ;
+      //delete all contextID
+      if ( _pEDUCB )
+      {
+         INT64 contextID = -1 ;
+         while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
+         {
+            _pRtnCB->contextDelete ( contextID, NULL ) ;
+         }
+
+         if ( _pReplSet->primaryIsMe ())
+         {
+            INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
+            if ( rcTmp )
+            {
+               PD_LOG ( PDERROR,
+                        "failed to rollback(rc=%d)",
+                        rcTmp );
+            }
+         }
+      }
+
+      PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONINRPTMSG ) ;
+      return SDB_OK ;
+   }
+   INT32 _clsShdSession::_onTransBeginMsg ()
+   {
+      if ( !(_pReplSet->primaryIsMe ()) )
+      {
+         return SDB_CLS_NOT_PRIMARY;
+      }
+      return rtnTransBegin( _pEDUCB ) ;
+   }
+
+   INT32 _clsShdSession::_onTransCommitMsg ()
+   {
+      if ( !(_pReplSet->primaryIsMe ()) )
+      {
+         return SDB_CLS_NOT_PRIMARY;
+      }
+      return rtnTransCommit( _pEDUCB, _pDpsCB );
+   }
+
+   INT32 _clsShdSession::_onTransRollbackMsg ()
+   {
+      if ( !(_pReplSet->primaryIsMe ()) )
+      {
+         return SDB_CLS_NOT_PRIMARY;
+      }
+      return rtnTransRollback( _pEDUCB, _pDpsCB );
+   }
+
+   INT32 _clsShdSession::_onTryLockMsg( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK;
+      MsgOpTransTryLock *pReqMsg = (MsgOpTransTryLock *)msg;
+      CHAR *pCollectionName = pReqMsg->name;
+      CHAR *pDot = NULL;
+      CHAR *pDot1 = NULL;
+      INT16 w = 1;
+      BOOLEAN isMainCL = FALSE;
+      INT32 rcTmp = SDB_OK;
+
+      rc = _check ( w ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      pDot = (CHAR *)ossStrchr( pCollectionName, '.' );
+      pDot1 = (CHAR *)ossStrrchr( pCollectionName, '.' );
+      PD_CHECK( (pDot == pDot1 && pCollectionName != pDot), SDB_INVALIDARG,
+               error, PDERROR, "invalid format for collection name:%s, "
+               "expected format:<collectionspace>[.<collectionname>]",
+               pCollectionName );
+      _pCollectionName = pCollectionName;
+
+      // lock collection, check catalog-info at first
+      if ( pDot )
+      {
+         rc = _checkCata( pReqMsg->version, pCollectionName, w, isMainCL );
+         if ( rc )
+         {
+            goto error;
+         }
+         if ( !isMainCL )
+         {
+            rc = rtnTransTryLockCL( pCollectionName, pReqMsg->lockType,
+                                    _pEDUCB, _pDmsCB, _pDpsCB );
+         }
+         else
+         {
+            BSONObj emptyObj;
+            BSONObj tmpObj;
+            std::set< std::string > strSubCLList;
+            std::set< std::string > strLockedSubCLList;
+            std::set< std::string >::iterator iterSubCL;
+            rc = _getSubCLList( emptyObj, pCollectionName, tmpObj,
+                              strSubCLList );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to get sub-collection(rc=%d)", rc );
+            iterSubCL = strSubCLList.begin();
+            while( iterSubCL != strSubCLList.end() )
+            {
+               rc = rtnTransTryLockCL( (*iterSubCL).c_str(), pReqMsg->lockType,
+                                       _pEDUCB, _pDmsCB, _pDpsCB );
+               if ( rc )
+               {
+                  PD_LOG( PDERROR, "lock sub-collection(%s) failed",
+                        (*iterSubCL).c_str() );
+                  break;
+               }
+               strLockedSubCLList.insert( *iterSubCL );
+               ++iterSubCL;
+            }
+            if ( rc )
+            {
+               std::set< std::string >::iterator iterLockCL
+                                       =  strLockedSubCLList.begin();
+               while( iterLockCL != strLockedSubCLList.end() )
+               {
+                  rtnTransReleaseLock( (*iterSubCL).c_str(),
+                                       _pEDUCB, _pDmsCB, _pDpsCB );
+                  ++iterLockCL;
+               }
+               goto error;
+            }
+         }
+      }
+      else
+      {
+         SDB_ASSERT( DMS_INVALID_SUID == _WLockedCS,
+                     "found unreleased lock!" );
+         if ( _WLockedCS != DMS_INVALID_SUID )
+         {
+            _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
+            PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
+            _WLockedCS = DMS_INVALID_SUID;
+         }
+         dmsStorageUnit *pSu = NULL;
+         dmsStorageUnitID suID;
+         rc = rtnTransTryLockCS( pCollectionName, pReqMsg->lockType,
+                                 _pEDUCB, _pDmsCB, _pDpsCB );
+         PD_RC_CHECK( rc, PDERROR,
+                     "get transaction-lock of CS(%s) failed(rc=%d)",
+                     pCollectionName, rc );
+         rc = rtnCollectionSpaceLock( pCollectionName, _pDmsCB, FALSE,
+                                    &pSu, suID, EXCLUSIVE, 0 );
+         PD_CHECK( SDB_OK == rc, rc, error_releaseCS, PDERROR,
+                  "get w-latch of CS(%s) failed(rc=%d)",
+                  pCollectionName, rc );
+         _WLockedCS = suID;
+         PD_LOG( PDDEBUG, "got space-wlock(suID:%d)", _WLockedCS );
+      }
+   done:
+      return rc;
+   error_releaseCS:
+      rcTmp = rtnTransReleaseLock( pCollectionName, _pEDUCB, _pDmsCB,
+                                       _pDpsCB );
+      PD_LOG( PDERROR,
+            "failed to release lock(name:%s, rc=%d)",
+            pCollectionName, rcTmp );
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_onReleaseLockMsg( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK;
+      MsgOpTransReleaseLock *pReqMsg = (MsgOpTransReleaseLock *)msg;
+      CHAR *pCollectionName = pReqMsg->name;
+      CHAR *pDot = NULL;
+      CHAR *pDot1 = NULL;
+      BOOLEAN isMainCL = FALSE;
+      std::set< std::string > strSubCLList;
+      pDot = (CHAR *)ossStrchr( pCollectionName, '.' );
+      pDot1 = (CHAR *)ossStrrchr( pCollectionName, '.' );
+      PD_CHECK( (pDot == pDot1 && pCollectionName != pDot), SDB_INVALIDARG,
+               error, PDERROR, "invalid format for collection name:%s, "
+               "expected format:<collectionspace>[.<collectionname>]",
+               pCollectionName );
+      if ( pDot )
+      {
+         _clsCatalogSet *pCataSet = NULL;
+         _pCatAgent->lock_r();
+         pCataSet = _pCatAgent->collectionSet( pCollectionName );
+         if ( NULL == pCataSet )
+         {
+            _pCatAgent->release_r();
+            PD_RC_CHECK( SDB_DMS_NOTEXIST, PDERROR,
+                        "can not fine collection:%s", pCollectionName );
+         }
+         isMainCL = pCataSet->isMainCL();
+         _pCatAgent->release_r();
+      }
+      if ( isMainCL )
+      {
+         BSONObj boMatch;
+         BSONObj boNewMatch;
+         std::set< std::string >::iterator iterSubCL;
+         rc = _getSubCLList( boMatch, pCollectionName, boNewMatch, strSubCLList );
+         PD_RC_CHECK( rc, PDERROR,
+                     "get sub-collection of main collection(%s) failed(rc=%d)",
+                     pCollectionName, rc );
+         iterSubCL = strSubCLList.begin();
+         while( iterSubCL != strSubCLList.end() )
+         {
+            INT32 rcTmp = rtnTransReleaseLock( (*iterSubCL).c_str(),
+                                             _pEDUCB, _pDmsCB, _pDpsCB );
+            if ( rcTmp != SDB_OK && SDB_OK == rc )
+            {
+               rc = rcTmp;
+            }
+            ++iterSubCL;
+         }
+      }
+      else
+      {
+         if ( _WLockedCS != DMS_INVALID_SUID )
+         {
+            _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
+            PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
+            _WLockedCS = DMS_INVALID_SUID;
+         }
+         else
+         {
+            PD_LOG( PDWARNING, "have not got the space-wlock!" );
+         }
+         rc = rtnTransReleaseLock( pReqMsg->name, _pEDUCB, _pDmsCB, _pDpsCB );
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_onTransCommitPreMsg( MsgHeader *msg )
+   {
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         return SDB_DPS_TRANS_NO_TRANS;
+      }
+      return SDB_OK;
+   }
+
+   INT32 _clsShdSession::_onTransUpdateReqMsg ( NET_HANDLE handle,
+                                                MsgHeader *msg,
+                                                INT64 &updateNum )
+   {
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         return SDB_DPS_TRANS_NO_TRANS;
+      }
+      return _onUpdateReqMsg( handle, msg, updateNum );
+   }
+
+   INT32 _clsShdSession::_onTransInsertReqMsg ( NET_HANDLE handle,
+                                                MsgHeader *msg )
+   {
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         return SDB_DPS_TRANS_NO_TRANS;
+      }
+      return _onInsertReqMsg( handle, msg );
+   }
+
+   INT32 _clsShdSession::_onTransDeleteReqMsg ( NET_HANDLE handle,
+                                                MsgHeader *msg,
+                                                INT64 &delNum )
+   {
+      if ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID )
+      {
+         return SDB_DPS_TRANS_NO_TRANS;
+      }
+      return _onDeleteReqMsg( handle, msg, delNum );
+   }
+
+   INT32 _clsShdSession::_onCheckRouteIDReqMsg ( MsgHeader *msg )
+   {
+      INT32 rc = SDB_OK;
+      MsgCoordCheckRouteID *pMsgReq = (MsgCoordCheckRouteID *)msg;
+      MsgRouteID localRouteID = _pNetAgent->localID();
+      if ( pMsgReq->dstRouteID.columns.nodeID != localRouteID.columns.nodeID
+         || pMsgReq->dstRouteID.columns.groupID != localRouteID.columns.groupID
+         || pMsgReq->dstRouteID.columns.serviceID != localRouteID.columns.serviceID )
+      {
+         rc = SDB_INVALID_ROUTEID;
+         PD_LOG ( PDERROR, "routeID is different from the local"
+                  "RemoteRouteID(groupID=%u, nodeID=%u, serviceID=%u)"
+                  "LocalRouteID(groupID=%u, nodeID=%u, serviceID=%u)",
+                  pMsgReq->dstRouteID.columns.groupID,
+                  pMsgReq->dstRouteID.columns.nodeID,
+                  pMsgReq->dstRouteID.columns.serviceID,
+                  localRouteID.columns.groupID,
+                  localRouteID.columns.nodeID,
+                  localRouteID.columns.serviceID );
+      }
+      return rc;
+   }
+
+   INT32 _clsShdSession::_InsertToMainCL( BSONObj &objs, INT32 objNum,
+                                          INT32 flags, INT16 w )
+   {
+      INT32 rc = SDB_OK;
+      ossValuePtr pCurPos = 0;
+      INT32 totalObjsNum = 0;
+      try
+      {
+         PD_CHECK( !objs.isEmpty(), SDB_INVALIDARG, error, PDERROR,
+                  "Insert record can't be empty" );
+         pCurPos = (ossValuePtr)objs.objdata();
+         while ( totalObjsNum < objNum )
+         {
+            BSONObj subObjsInfo( (const CHAR *)pCurPos );
+            INT32 subObjsNum = 0;
+            UINT32 subObjsSize = 0;
+            const CHAR *pSubCLName = NULL;
+            BSONElement beSubObjsNum;
+            BSONElement beSubObjsSize;
+            BSONElement beSubCLName;
+            BSONObj insertor;
+            beSubObjsNum = subObjsInfo.getField( FIELD_NAME_SUBOBJSNUM );
+            PD_CHECK( beSubObjsNum.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                     "Failed to get the field(%s)", FIELD_NAME_SUBOBJSNUM );
+            subObjsNum = beSubObjsNum.numberInt();
+
+            beSubObjsSize = subObjsInfo.getField( FIELD_NAME_SUBOBJSSIZE );
+            PD_CHECK( beSubObjsSize.isNumber(), SDB_INVALIDARG, error, PDERROR,
+                     "Failed to get the field(%s)", FIELD_NAME_SUBOBJSSIZE );
+            subObjsSize = beSubObjsSize.numberInt();
+
+            beSubCLName = subObjsInfo.getField( FIELD_NAME_SUBCLNAME );
+            PD_CHECK( beSubCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
+                     "Failed to get the field(%s)", FIELD_NAME_SUBCLNAME );
+            pSubCLName = beSubCLName.valuestr();
+
+            pCurPos += ossAlignX( (ossValuePtr)subObjsInfo.objsize(), 4 );
+            ++totalObjsNum;
+            insertor = BSONObj( (CHAR *)pCurPos );
+            rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags, 
+                           _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+            PD_RC_CHECK( rc, PDERROR, "failed to insert to sub-collection(%s)(rc=%d)",
+                        pSubCLName, rc );
+            pCurPos += subObjsSize;
+            totalObjsNum += subObjsNum;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_INVALIDARG;
+         goto error ;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_checkSubCLCata( const std::map<std::string, INT32> subCLInfoList,
+                                          INT16 w )
+   {
+      INT32 rc = SDB_OK;
+      std::map<std::string, INT32>::const_iterator iterCL
+                  = subCLInfoList.begin();
+      while( iterCL != subCLInfoList.end() )
+      {
+         BOOLEAN isMainCL;
+         rc = _checkCata( iterCL->second, iterCL->first.c_str(), w, isMainCL );
+         PD_RC_CHECK( rc, PDERROR,
+                     "the catalog of sub-collection(%s) is invalid(rc=%d)",
+                     iterCL->first.c_str(), rc );
+         ++iterCL;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_queryToMainCL( const CHAR *pCollectionName,
+                                       const BSONObj &selector,
+                                       const BSONObj &matcher,
+                                       const BSONObj &orderBy,
+                                       const BSONObj &hint,
+                                       SINT32 flags,
+                                       pmdEDUCB *cb,
+                                       SINT64 numToSkip,
+                                       SINT64 numToReturn,
+                                       SDB_DMSCB *dmsCB,
+                                       SDB_RTNCB *rtnCB,
+                                       SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK;
+      std::set< std::string > strSubCLList;
+      BSONObj boNewMatcher;
+      rtnContextMainCL *pContextMainCL = NULL;
+
+      SDB_ASSERT( pCollectionName, "collection name can't be NULL!" );
+      SDB_ASSERT( cb, "educb can't be NULL!" );
+      SDB_ASSERT( dmsCB, "dmsCB can't be NULL!");
+      SDB_ASSERT( rtnCB, "rtnCB can't be NULL!" );
+
+      rc = _getSubCLList( matcher, pCollectionName,
+                        boNewMatcher, strSubCLList );
+      if ( rc != SDB_OK )
+      {
+         goto error;
+      }
+
+      rc = rtnCB->contextNew( RTN_CONTEXT_MAINCL,
+                              (rtnContext **)&pContextMainCL,
+                              contextID, cb );
+      PD_RC_CHECK( rc, PDERROR,
+                  "Failed to create new main-collection context(rc=%d)",
+                  rc );
+
+      rc = pContextMainCL->open( orderBy, numToReturn, numToSkip );
+      PD_RC_CHECK( rc, PDERROR,
+                  "Open main-collection context failed(rc=%d)",
+                  rc );
+
+      {
+      std::set< std::string >::iterator iterSubCLSet
+                                       = strSubCLList.begin();
+      while( iterSubCLSet != strSubCLList.end() )
+      {
+         SINT64 subContextID = -1;
+         rc = rtnQuery( (*iterSubCLSet).c_str(), selector, boNewMatcher,
+                        orderBy, hint, flags, cb, 0, numToReturn, dmsCB,
+                        rtnCB, subContextID );
+         PD_RC_CHECK( rc, PDERROR,
+                     "query sub-collection(%s) failed!(rc=%d)",
+                     iterSubCLSet->c_str(), rc );
+         pContextMainCL->addSubContext( subContextID );
+         ++iterSubCLSet;
+      }
+      }
+
+   done:
+      return rc;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb );
+         contextID = -1;
+      }
+      goto done;
+   }
+
+   INT32 _clsShdSession::_getSubCLList( const BSONObj &matcher,
+                                       const CHAR *pCollectionName,
+                                       BSONObj &boNewMatcher,
+                                       std::set< std::string > &strSubCLList )
+   {
+      INT32 rc = SDB_OK;
+
+      try
+      {
+         BSONObjBuilder bobNewMatcher;
+         BSONObjIterator iter( matcher );
+         while( iter.more() )
+         {
+            BSONElement beTmp = iter.next();
+            if ( beTmp.type() == Array
+               && 0 == ossStrcmp(beTmp.fieldName(), CAT_SUBCL_NAME ) )
+            {
+               BSONObj boSubCLList = beTmp.embeddedObject();
+               BSONObjIterator iterSubCL( boSubCLList );
+               while( iterSubCL.more() )
+               {
+                  BSONElement beSubCL = iterSubCL.next();
+                  std::string strSubCLName = beSubCL.str();
+                  if ( !strSubCLName.empty() )
+                  {
+                     strSubCLList.insert( strSubCLName );
+                  }
+               }
+            }
+            else
+            {
+               bobNewMatcher.append( beTmp );
+            }
+         }
+         boNewMatcher = bobNewMatcher.obj();
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                     "occur unexpected error:%s",
+                     e.what() );
+      }
+      if ( strSubCLList.empty() )
+      {
+         _clsCatalogSet *pCataSet = NULL;
+         _pCatAgent->lock_r () ;
+         pCataSet = _pCatAgent->collectionSet( pCollectionName );
+         if ( NULL == pCataSet )
+         {
+            _pCatAgent->release_r () ;
+            rc = SDB_DMS_NOTEXIST;
+            PD_LOG( PDERROR, "can not find collection:%s", pCollectionName );
+            goto error;
+         }
+         pCataSet->getSubCLList( strSubCLList );
+         _pCatAgent->release_r () ;
+      }
+      {
+         std::set< std::string >::iterator iter = strSubCLList.begin();
+         while( iter != strSubCLList.end() )
+         {
+            _clsCatalogSet *pSubSet = NULL;
+            pSubSet = _pCatAgent->collectionSet( iter->c_str() );
+            if ( NULL == pSubSet || 0 == pSubSet->groupCount() )
+            {
+               strSubCLList.erase( iter++ );
+               continue;
+            }
+            ++iter;
+         }
+      }
+
+      PD_CHECK( !strSubCLList.empty(), SDB_INVALID_MAIN_CL, error, PDERROR,
+               "main-collection has no sub-collection!" );
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_updateToMainCL( const CHAR *pCollectionName,
+                                          const BSONObj &selector,
+                                          const BSONObj &updator,
+                                          const BSONObj &hint,
+                                          SINT32 flags,
+                                          pmdEDUCB *cb,
+                                          SDB_DMSCB *pDmsCB,
+                                          SDB_DPSCB *pDpsCB,
+                                          INT16 w,
+                                          INT64 *pUpdateNum )
+   {
+      INT32 rc = SDB_OK;
+      BSONObj boNewSelector;
+      std::set< std::string > strSubCLList;
+      INT64 updateNum = 0;
+      rc = _getSubCLList( selector, pCollectionName,
+                        boNewSelector, strSubCLList );
+      if ( rc != SDB_OK )
+      {
+         goto error;
+      }
+      {
+      std::set< std::string >::iterator iterSubCLSet
+                                       = strSubCLList.begin();
+      while( iterSubCLSet != strSubCLList.end() )
+      {
+         INT64 numTmp = 0;
+         rc = rtnUpdate( (*iterSubCLSet).c_str(), boNewSelector, updator,
+                        hint, flags, cb, pDmsCB, pDpsCB, w, &numTmp );
+         PD_RC_CHECK( rc, PDERROR,
+                     "update on sub-collection(%s) failed(rc=%d)",
+                     (*iterSubCLSet).c_str(), rc );
+         updateNum += numTmp;
+         ++iterSubCLSet;
+      }
+      }
+   done:
+      if ( pUpdateNum )
+      {
+         *pUpdateNum = updateNum;
+      }
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_deleteToMainCL ( const CHAR *pCollectionName, const BSONObj &deletor,
+                                          const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
+                                          SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
+                                          INT64 *pDelNum )
+   {
+      INT32 rc = SDB_OK;
+      BSONObj boNewDeletor;
+      std::set< std::string > strSubCLList;
+      INT64 delNum = 0;
+      rc = _getSubCLList( deletor, pCollectionName,
+                        boNewDeletor, strSubCLList );
+      if ( rc != SDB_OK )
+      {
+         goto error;
+      }
+      {
+      std::set< std::string >::iterator iterSubCLSet
+                                       = strSubCLList.begin();
+      while( iterSubCLSet != strSubCLList.end() )
+      {
+         INT64 numTmp = 0;
+         rc = rtnDelete( (*iterSubCLSet).c_str(), boNewDeletor, hint,
+                        flags, cb, dmsCB, dpsCB, w, &numTmp );
+         PD_RC_CHECK( rc, PDERROR,
+                     "delete on sub-collection(%s) failed(rc=%d)",
+                     (*iterSubCLSet).c_str(), rc );
+         delNum += numTmp;
+         ++iterSubCLSet;
+      }
+      }
+   done:
+      if ( pDelNum )
+      {
+         *pDelNum = delNum;
+      }
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_runOnMainCL( const CHAR *pCommandName,
+                                       _rtnCommand *pCommand,
+                                       INT32 flags,
+                                       INT64 numToSkip,
+                                       INT64 numToReturn,
+                                       const CHAR *pQuery,
+                                       const CHAR *pField,
+                                       const CHAR *pOrderBy,
+                                       const CHAR *pHint,
+                                       INT16 w,
+                                       SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK;
+      SDB_ASSERT( pCommandName && pCommand, "pCommand can't be null!" );
+      switch( pCommand->type() )
+      {
+      case CMD_GET_COUNT:
+      case CMD_GET_INDEXES:
+         rc = _getOnMainCL( pCommandName, pCommand->collectionFullName(),
+                           flags, numToSkip, numToReturn, pQuery, pField,
+                           pOrderBy, pHint, w, contextID );
+         break;
+
+      case CMD_CREATE_INDEX:
+         rc = _createIndexOnMainCL( pCommandName, pCommand->collectionFullName(),
+                                    pQuery, w, contextID );
+         break;
+
+      case CMD_DROP_INDEX:
+         rc = _dropIndexOnMainCL( pCommandName, pCommand->collectionFullName(),
+                                 pQuery, w, contextID );
+         break;
+
+      case CMD_LINK_COLLECTION:
+      case CMD_UNLINK_COLLECTION:
+         rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_SHARD,
+                                _pEDUCB, _pDmsCB, _pRtnCB,
+                                _pDpsCB, w, &contextID ) ;
+         break;
+
+      default:
+         rc = SDB_MAIN_CL_OP_ERR;
+         break;
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to run command on main-collection(rc=%d)",
+                  rc );
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_getOnMainCL( const CHAR *pCommand,
+                                       const CHAR *pCollection,
+                                       INT32 flags,
+                                       INT64 numToSkip,
+                                       INT64 numToReturn,
+                                       const CHAR *pQuery,
+                                       const CHAR *pField,
+                                       const CHAR *pOrderBy,
+                                       const CHAR *pHint,
+                                       INT16 w,
+                                       SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK;
+      std::set< std::string > strSubCLList;
+      BSONObj boNewMatcher;
+      rtnContextMainCL *pContextMainCL = NULL;
+      BSONObj boMatcher;
+      BSONObj boEmpty;
+      BSONObj boHint;
+      _rtnCommand *pCommandTmp = NULL;
+      INT64 subNumToReturn = -1;
+      SDB_ASSERT( pCommand, "pCommand can't be null!" );
+      SDB_ASSERT( pCollection,
+                  "collection name can't be null!"  );
+      if ( numToSkip > 0 && numToReturn > 0 )
+      {
+         subNumToReturn = numToReturn + numToSkip;
+      }
+      else
+      {
+         subNumToReturn = numToReturn;
+      }
+      try
+      {
+         boMatcher = BSONObj( pQuery );
+         BSONObj boHintTmp = BSONObj( pHint );
+         BSONObjBuilder bobHint;
+         BSONObjIterator iter( boHintTmp );
+         while( iter.more() )
+         {
+            BSONElement beTmp = iter.next();
+            if ( 0 != ossStrcmp( beTmp.fieldName(), FIELD_NAME_COLLECTION ))
+            {
+               bobHint.append( beTmp );
+            }
+         }
+         boHint = bobHint.obj();
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to create matcher: %s",
+            sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
+                        strSubCLList );
+      PD_RC_CHECK( rc, PDERROR, "failed to get sub-collection list(rc=%d)", rc );
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_MAINCL, (rtnContext **)&pContextMainCL,
+                              contextID, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to create new main-collection context(rc=%d)",
+                  rc );
+      rc = pContextMainCL->open( boEmpty, numToReturn, numToSkip );
+      PD_RC_CHECK( rc, PDERROR, "open main-collection context failed(rc=%d)", rc );
+      {
+      std::set< std::string >::iterator iterSubCLSet
+                                             = strSubCLList.begin();
+      while( iterSubCLSet != strSubCLList.end() )
+      {
+         SINT64 subContextID = -1;
+         BSONObj boSubHint;
+         try
+         {
+            BSONObjBuilder bobSubHint;
+            bobSubHint.appendElements( boHint );
+            bobSubHint.append( FIELD_NAME_COLLECTION, *iterSubCLSet );
+            boSubHint = bobSubHint.obj();
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Session[%s] Failed to create hint: %s",
+               sessionName(), e.what () ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         rc = rtnParserCommand( pCommand, &pCommandTmp );
+         PD_RC_CHECK( rc, PDERROR,
+                     "parse command[%s] failed[rc=%d]",
+                     pCommand, rc );
+         rc = rtnInitCommand( pCommandTmp, flags, 0, subNumToReturn,
+                              boNewMatcher.objdata(), pField, pOrderBy,
+                              boSubHint.objdata() );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to init command(rc=%d)", rc );
+
+         rc = rtnRunCommand( pCommandTmp, CMD_SPACE_SERVICE_SHARD, _pEDUCB,
+                           _pDmsCB, _pRtnCB, _pDpsCB, w, &subContextID );
+
+         PD_RC_CHECK( rc, PDERROR,
+                     "run on sub-collection(%s) failed(rc=%d)",
+                     iterSubCLSet->c_str(), rc );
+         pContextMainCL->addSubContext( subContextID );
+         if ( pCommandTmp )
+         {
+            rtnReleaseCommand( &pCommandTmp );
+            pCommandTmp = NULL;
+         }
+         ++iterSubCLSet;
+      }
+      }
+   done:
+      if ( pCommandTmp )
+      {
+         rtnReleaseCommand( &pCommandTmp );
+      }
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_createIndexOnMainCL( const CHAR *pCommand,
+                                       const CHAR *pCollection,
+                                       const CHAR *pQuery,
+                                       INT16 w,
+                                       SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK;
+      BSONObj boMatcher;
+      BSONObj boNewMatcher;
+      BSONObj boIndex;
+      set< std::string > strSubCLList;
+      set< std::string >::iterator iter;
+      try
+      {
+         boMatcher = BSONObj( pQuery );
+         rc = rtnGetObjElement( boMatcher, FIELD_NAME_INDEX,
+                              boIndex );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to get object index(rc=%d)", rc );
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                     "occur unexpected error(%s)",
+                     e.what() );
+      }
+      rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
+                        strSubCLList );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to get sub-collection list(rc=%d)", rc );
+      iter = strSubCLList.begin();
+      while( iter != strSubCLList.end() )
+      {
+         rc = rtnCreateIndexCommand( iter->c_str(), boIndex, _pEDUCB,
+                                    _pDmsCB, _pDpsCB );
+         PD_CHECK( SDB_OK == rc || SDB_IXM_REDEF == rc, rc, error, PDERROR,
+                     "create index for sub-collection(%s) failed(rc=%d)",
+                     iter->c_str(), rc );
+         rc = SDB_OK;
+         ++iter;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_dropIndexOnMainCL( const CHAR *pCommand,
+                                             const CHAR *pCollection,
+                                             const CHAR *pQuery,
+                                             INT16 w,
+                                             SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK;
+      BSONObj boMatcher;
+      BSONObj boNewMatcher;
+      BSONObj boIndex;
+      set< std::string > strSubCLList;
+      set< std::string >::iterator iter;
+      BSONElement ele;
+      try
+      {
+         boMatcher = BSONObj( pQuery );
+         rc = rtnGetObjElement( boMatcher, FIELD_NAME_INDEX,
+                              boIndex );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to get object index(rc=%d)", rc );
+         ele = boIndex.firstElement();
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
+                     "occur unexpected error(%s)",
+                     e.what() );
+      }
+      rc = _getSubCLList( boMatcher, pCollection, boNewMatcher,
+                        strSubCLList );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to get sub-collection list(rc=%d)", rc );
+      iter = strSubCLList.begin();
+      while( iter != strSubCLList.end() )
+      {
+         rc = rtnDropIndexCommand( iter->c_str(), ele, _pEDUCB,
+                                    _pDmsCB, _pDpsCB );
+         PD_CHECK( SDB_OK == rc || SDB_IXM_NOTEXIST == rc, rc, error, PDERROR,
+                     "drop index for sub-collection(%s) failed(rc=%d)",
+                     iter->c_str(), rc );
+         rc = SDB_OK;
+         ++iter;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+}
+

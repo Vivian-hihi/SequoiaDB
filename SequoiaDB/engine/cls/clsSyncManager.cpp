@@ -1,0 +1,609 @@
+/*******************************************************************************
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = clsSyncManager.hpp
+
+   Descriptive Name =
+
+   When/how to use:
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "clsSyncManager.hpp"
+#include "pmdEDU.hpp"
+#include "dpsLogWrapper.hpp"
+#include "netRouteAgent.hpp"
+#include "clsBase.hpp"
+#include <map>
+#include "pdTrace.hpp"
+#include "clsTrace.hpp"
+
+using namespace std ;
+
+namespace engine
+{
+   const UINT32 CLS_REPLSE_WRITE_ONE = 1 ;
+   const UINT32 CLS_SYNC_REQ_INTERVAL = 2000 ;
+   const UINT32 CLS_CONSULT_INTERVAL = 5000 ;
+   const UINT32 CLS_SYNC_SET_NUM = CLS_REPLSET_MAX_NODE_SIZE - 1;
+   const UINT32 CLS_IS_CONSULTING = 0 ;
+   const UINT32 CLS_IS_SYNCING = 1 ;
+
+   #define CLS_W_2_SUB( num ) ( num - 2 )
+   #define CLS_SUB_2_W( sub ) ( sub + 2 )
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CLSSYNCMAG, "_clsSyncManager::_clsSyncManager" )
+   _clsSyncManager::_clsSyncManager( _netRouteAgent *agent,
+                                     _clsGroupInfo *info ):
+                                     _agent( agent ),
+                                     _info( info ),
+                                     _validSync( 0 ),
+                                     _timeout( 0 )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CLSSYNCMAG ) ;
+      _syncSrc.value = MSG_INVALID_ROUTEID ;
+
+      for ( UINT32 i = 0 ; i < CLS_REPLSET_MAX_NODE_SIZE - 1 ; i++ )
+      {
+         _checkList[i] = DPS_INVALID_LSN_OFFSET ;
+      }
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CLSSYNCMAG ) ;
+   }
+
+   _clsSyncManager::~_clsSyncManager()
+   {
+
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_UPNFYLIST, "_clsSyncManager::updateNotifyList" )
+   INT32 _clsSyncManager::updateNotifyList()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_UPNFYLIST ) ;
+
+      /// info's changing is handled in one thread.
+      /// no need to require lock.
+      map<UINT64, _clsSharingStatus> &group = _info->info ;
+      UINT32 removed = 0 ;
+      _clsSyncStatus status[CLS_REPLSET_MAX_NODE_SIZE - 1] ;
+      UINT32 valid = 0 ;
+
+      /// find removed nodes
+      for ( UINT32 i = 0; i < _validSync ; i++ )
+      {
+         if ( group.end() ==
+              group.find( _notifyList[i].id.value ) )
+         {
+            ++removed ;
+         }
+         else
+         {
+            status[valid].offset.init( _notifyList[i].offset.peek() ) ;
+            status[valid].id.value = _notifyList[i].id.value ;
+            ++valid ;
+         }
+      }
+
+      /// clear synclist
+      if ( 0 != removed )
+      {
+         cut( _info->groupSize() - removed ) ;
+      }
+
+      UINT32 merge = valid ;
+      map<UINT64, _clsSharingStatus>::const_iterator itr =
+                                        group.begin() ;
+      /// add new nodes
+      for ( ; itr != group.end(); itr++ )
+      {
+         BOOLEAN has = FALSE ;
+         for ( UINT32 j = 0; j < valid; j++ )
+         {
+            if ( itr->first == status[j].id.value )
+            {
+               has = TRUE ;
+               break ;
+            }
+         }
+         if ( !has )
+         {
+            status[merge].offset.init( 0 ) ;
+            status[merge].id.value = itr->first ;
+            ++merge ;
+         }
+      }
+
+      ossMemcpy( _notifyList, status, merge * sizeof( _clsSyncStatus ) ) ;
+      _validSync = merge ;
+
+      PD_TRACE_EXITRC ( SDB__CLSSYNCMAG_UPNFYLIST, rc ) ;
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_SYNC, "_clsSyncManager::sync" )
+   INT32 _clsSyncManager::sync( _clsSyncSession &session,
+                                const UINT32 &w )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_SYNC ) ;
+      SDB_ASSERT( w <= CLS_REPLSET_MAX_NODE_SIZE &&
+                  CLS_REPLSE_WRITE_ONE <= w,
+                 "1 <= sync num <= CLS_REPLSET_MAX_NODE_SIZE" )
+      SDB_ASSERT( NULL != session.eduCB, "educb should not be NULL" )
+      SDB_ASSERT( DPS_INVALID_LSN_OFFSET != session.endLsn,
+                  "end lsn should not be valid" )
+      INT32 rc = SDB_OK ;
+      UINT32 sub = 0;
+      BOOLEAN needWait = TRUE ;
+      /// if w = 1, return
+      if ( w == CLS_REPLSE_WRITE_ONE )
+      {
+         goto done ;
+      }
+
+      /// cast sync to synclist sub
+      sub = CLS_W_2_SUB( w ) ;
+      _mtxs[sub].get() ;
+      if ( DPS_INVALID_LSN_OFFSET != _checkList[sub] &&
+           session.endLsn < _checkList[sub] )
+      {
+         needWait = FALSE ;
+      }
+      else
+      {
+         rc = _syncList[sub].push( session ) ;
+      }
+      _mtxs[sub].release() ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      else if ( needWait )
+      {
+         rc = _wait( session.eduCB, sub ) ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSYNCMAG_SYNC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_COMPLETE, "_clsSyncManager::complete" )
+   void _clsSyncManager::complete( const MsgRouteID &id,
+                                   const DPS_LSN &lsn,
+                                   UINT32 TID )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_COMPLETE ) ;
+      if ( lsn.invalid() || MSG_INVALID_ROUTEID == id.value )
+      {
+         PD_LOG( PDDEBUG, "sync: invalid complete."
+                 "[nodeid:%d] [lsn:%d, %lld]",
+                 id.columns.nodeID, lsn.version, lsn.offset ) ;
+         goto done ;
+      }
+      {
+      _info->mtx.lock_r() ;
+      _MsgRouteID primary = _info->primary ;
+      _info->mtx.release_r() ;
+      if ( primary.value == _info->local.value &&
+           MSG_INVALID_ROUTEID != primary.value )
+      {
+         _complete( id, lsn.offset ) ;
+      }
+      else if ( MSG_INVALID_ROUTEID != primary.value )
+      {
+         _MsgReplVirSyncReq msg ;
+         msg.next = lsn ;
+         msg.from = id ;
+         msg.header.TID = TID ;
+         _agent->syncSend( primary, &msg ) ;
+      }
+      else
+      {
+         /// do noting
+      }
+      }
+   done:
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG_COMPLETE ) ;
+      return ;
+   }
+
+   void _clsSyncManager::handleTimeout( const UINT32 &interval )
+   {
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_NOTIFY, "_clsSyncManager::notify" )
+   void _clsSyncManager::notify( const DPS_LSN_OFFSET &offset )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_NOTIFY ) ;
+      SDB_ASSERT( DPS_INVALID_LSN_OFFSET != offset,
+                  "offset should not be invalid" )
+      _MsgSyncNotify msg ;
+      msg.header.TID = CLS_TID_REPL_SYC ;
+      for ( UINT32 i = 0; i < _validSync; i++ )
+      {
+         if ( 0 == _notifyList[i].id.value )
+         {
+            SDB_ASSERT( FALSE, "impossible" )
+         }
+         /// compare the offset of lsn.
+         /// the node which request the latest lsn
+         /// will be nofitied.
+         else if ( offset == _notifyList[i].offset.peek() )
+         {
+            msg.header.routeID = _notifyList[i].id ;
+            _agent->syncSend( _notifyList[i].id, &msg ) ;
+         }
+         else
+         {
+            /// do nothing
+         }
+      }
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG_NOTIFY ) ;
+      return ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETSYNCSRC, "_clsSyncManager::getSyncSrc" )
+   MsgRouteID _clsSyncManager::getSyncSrc( const set<UINT64> &blacklist )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_GETSYNCSRC ) ;
+      MsgRouteID res ;
+      res.value = MSG_INVALID_ROUTEID ;
+
+      _info->mtx.lock_r() ;
+      map<UINT64, _clsSharingStatus *>::iterator itr =
+                      _info->alives.find( _info->primary.value ) ;
+      /// if primary is peer, choose primary.
+      /// primary is not be affected by the blacklist.
+      if ( _info->alives.end() != itr &&
+           CLS_SYNC_STATUS_PEER ==
+           itr->second->beat.syncStatus )
+      {
+         res.value = itr->first ;
+         goto done ;
+      }
+      else
+      {
+         MsgRouteID ids[CLS_SYNC_SET_NUM] ;
+         UINT32 validNum = 0 ;
+         /// primary is not peer or has no primary, choose a peer node.
+         itr = _info->alives.begin() ;
+         for ( ; itr != _info->alives.end(); itr++ )
+         {
+            if ( CLS_SYNC_STATUS_PEER == itr->second->beat.syncStatus &&
+                 0 == blacklist.count( itr->first ) )
+            {
+               ids[validNum++].value = itr->first ;
+            }
+         }
+         if ( 0 == validNum )
+         {
+            /// can not find peer, choose a rc peer but not the priamry.
+            itr = _info->alives.begin() ;
+            for ( ; itr != _info->alives.end(); itr++ )
+            {
+               if ( CLS_SYNC_STATUS_RC == itr->second->beat.syncStatus &&
+                    itr->first != _info->primary.value &&
+                    0 == blacklist.count( itr->first ))
+               {
+                  ids[validNum++].value = itr->first ;
+               }
+            }
+            if ( 0 != validNum )
+            {
+               res.value = ids[ossRand() % validNum].value ;
+            }
+            else
+            {
+               /// call the primary for helping.
+               /// possibly has no primary.
+               res.value = _info->primary.value ;
+            }
+         }
+         else
+         {
+            res.value = ids[ossRand() % validNum].value ;
+         }
+      }
+   done:
+      _info->mtx.release_r() ;
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG_GETSYNCSRC ) ;
+      return res ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETFULLSRC, "_clsSyncManager::getFullSrc" )
+   MsgRouteID _clsSyncManager::getFullSrc( const set<UINT64> &blacklist )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_GETFULLSRC ) ;
+      MsgRouteID id ;
+      id.value = MSG_INVALID_ROUTEID ;
+      _info->mtx.lock_r() ;
+      MsgRouteID ids[CLS_REPLSET_MAX_NODE_SIZE -1 ] ;
+      map<UINT64, _clsSharingStatus *>::iterator itr =
+                           _info->alives.begin() ;
+      UINT16 sub = 0 ;
+      for ( ; itr != _info->alives.end(); itr++ )
+      {
+         if ( itr->first == _info->primary.value )
+         {
+            continue ;
+         }
+         else if ( 0 != blacklist.count( itr->first ) )
+         {
+            continue ;
+         }
+         else
+         {
+            ids[sub++].value = itr->first ;
+         }
+      }
+
+      if ( 0 != sub )
+      {
+        id = ids[ossRand() % sub] ;
+      }
+      else
+      {
+         /// possibly has no primary.
+         id = _info->primary ;
+      }
+
+      _info->mtx.release_r() ;
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG_GETFULLSRC ) ;
+      return id ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_CUT, "_clsSyncManager::cut" )
+   void _clsSyncManager::cut( UINT32 alives )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_CUT ) ;
+      SDB_ASSERT( alives <= _validSync, "impossible" )
+      if ( _validSync < alives )
+      {
+         PD_LOG( PDWARNING, "sync: alives is bigger than valid sync."
+                 "[alives:%d][valid:%d]", alives, _validSync ) ;
+         goto done ;
+      }
+      {
+
+      _clsSyncSession session ;
+      for ( SINT32 i = (SINT32)_validSync - 1;
+            i > (SINT32)alives - 1;
+            i-- )
+      {
+         _mtxs[i].get() ;
+         while ( SDB_OK == _syncList[i].pop( session ) )
+         {
+            session.eduCB->getEvent().signal ( SDB_CLS_NODE_NOT_ENOUGH ) ;
+         }
+         _mtxs[i].release() ;
+      }
+      }
+   done:
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG_CUT ) ;
+      return ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__COMPLETE, "_clsSyncManager::_complete" )
+   void _clsSyncManager::_complete( const MsgRouteID &id,
+                                    const DPS_LSN_OFFSET &offset )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__COMPLETE ) ;
+      DPS_LSN lsn ;
+      lsn.offset = offset ;
+      /// update notify list
+      for ( UINT32 i = 0; i < _validSync; i++ )
+      {
+         if ( _notifyList[i].id.value == id.value )
+         {
+            if ( lsn.compareOffset( _notifyList[i].offset.peek() ) <= 0 )
+            {
+               goto done ;
+            }
+
+            lsn.offset = _notifyList[i].offset.swap( offset ) ;
+            break ;
+         }
+      }
+
+      {
+      /// wake up agent thread which is waiting
+      CLS_WAKE_PLAN plan ;
+      _createWakePlan( lsn.offset, plan ) ;
+      _wake( plan ) ;
+      }
+   done:
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG__COMPLETE ) ;
+      return ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__WAKE, "_clsSyncManager::_wake" )
+   void _clsSyncManager::_wake( CLS_WAKE_PLAN &plan )
+   {
+      /// eg: we got a plan : { 0, 5, 10 }
+      /// begin from w = 2 sync list. we pop all nodes which
+      /// lsn is lower than 10. then we erase 10 from plan.
+      /// next, in the list which w = 3, we pop all nodes which
+      /// lsn is lower than 5. then erase 5 from plan.
+      /// at last, in the list which w = 4. we pop all nodes
+      /// which lsn is lower than 0. pop 0 from plan.
+      /// plan is empty. the waking is done.
+
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__WAKE ) ;
+      SDB_ASSERT( plan.size() <= CLS_REPLSET_MAX_NODE_SIZE - 1,
+                  "plan size should <= CLS_REPLSET_MAX_NODE_SIZE - 1" ) ;
+
+      _clsSyncSession session ;
+      /// begin from w = 2.
+      UINT32 sub = 0 ;
+      while ( !plan.empty() )
+      {
+         /// get max elemenet
+         CLS_WAKE_PLAN::iterator itr = --plan.end();
+         DPS_LSN lsn ;
+         lsn.offset = *itr ;
+         _mtxs[sub].get() ;
+         _checkList[sub] = lsn.offset ;
+         while ( SDB_OK == _syncList[sub].root( session ) )
+         {
+            if ( 0 < lsn.compareOffset( session.endLsn ) )
+            {
+               session.eduCB->getEvent().signal ( SDB_OK ) ;
+               _syncList[sub].pop( session ) ;
+            }
+            else
+            {
+               break ;
+            }
+         }
+         _mtxs[sub].release() ;
+
+         plan.erase( itr ) ;
+         ++sub ;
+      }
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG__WAKE ) ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CTWAKEPLAN, "_clsSyncManager::_createWakePlan" )
+   void _clsSyncManager::_createWakePlan( const DPS_LSN_OFFSET &oOffset,
+                                          CLS_WAKE_PLAN &plan )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CTWAKEPLAN ) ;
+      for ( UINT32 i = 0; i < _validSync; i++ )
+      {
+         if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset.peek() )
+         {
+            /// DPS_INVALID_LSN_OFFSET is 0xFFFFFFFFFFFFFFFFll.
+            /// we use 0 to instead it. there will be no actual
+            /// impact.
+            plan.insert( 0 ) ;
+         }
+         else
+         {
+            plan.insert( _notifyList[i].offset.peek() ) ;
+         }
+      }
+
+      SDB_ASSERT( plan.size() == _validSync, "impossible")
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CTWAKEPLAN ) ;
+      return ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__WAIT, "_clsSyncManager::_wait" )
+   INT32 _clsSyncManager::_wait( _pmdEDUCB *&cb,
+                                UINT32 sub )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__WAIT ) ;
+      PD_LOG( PDDEBUG, "sync: wait [w:%d]", CLS_SUB_2_W( sub ) ) ;
+      pmdEDUEvent ev ;
+      while ( !cb->isInterrupted() )
+      {
+         /// wait for responses from other nodes.
+         if ( SDB_OK != cb->getEvent().wait ( OSS_ONE_SEC, &rc ) )
+         {
+            continue ;
+         }
+         else
+         {
+            goto done ;
+         }
+      }
+
+      /// interrupted, clear info.
+      {
+      _clsSyncMinHeap &heap = _syncList[sub] ;
+      UINT32 i = 0 ;
+      _mtxs[sub].get() ;
+      while ( i < heap.dataSize() )
+      {
+         if ( cb == heap[i].eduCB )
+         {
+            PD_LOG ( PDDEBUG, "Session[ID:%lld, LSN:%lld] interrupt,remove from"
+                     "heap[sub:%d, index:%d]", heap[i].eduCB->getID(),
+                     heap[i].endLsn, sub, i ) ;
+            heap.erase( i ) ;
+            break ;
+         }
+         ++i ;
+      }
+      _mtxs[sub].release() ;
+      rc = SDB_APP_INTERRUPT ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSSYNCMAG__WAIT, rc ) ;
+      return rc ;
+   }
+
+/// the following code has not been completed.
+/// but we do not delete it for future use if nessesary.
+/*
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CRSYNCLIST, "_clsSyncManager::_clearSyncList" )
+   void _clsSyncManager::_clearSyncList( const UINT32 &removed,
+                                         _clsSyncStatus *left )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CRSYNCLIST ) ;
+      SDB_ASSERT( removed <= _validSync,
+                  "removed size should less than valid size." ) ;
+
+      UINT32 mergeTo = _validSync - removed - 1 ;
+      /// loop every removed synclist
+      for ( UINT32 i = 0; i < removed; i++ )
+      {
+         UINT32 removedSub = _validSync - i - 1 ;
+
+         _mtxs[removedSub].get() ;
+         _mtxs[mergeTo].get() ;
+         _clsSyncSession session ;
+
+         while ( SDB_OK == _syncList[removedSub].pop( session ) )
+         {
+            UINT32 complete = 1 ;
+            /// compute w's completion
+            for ( UINT32 j = 0; j < _validSync - 1; j++ )
+            {
+               if ( session.endLsn < left[j].offset.peek() )
+               {
+                  ++complete ;
+               }
+            }
+            if ( CLS_SUB_2_W( mergeTo ) <= complete )
+            {
+               session.eduCB->getEvent().signal ( SDB_OK ) ;
+            }
+            /// push the session which is not completed
+            /// into the newlist.
+            else
+            {
+               _syncList[mergeTo].push( session ) ;
+            }
+         }
+         _mtxs[removedSub].release() ;
+         _mtxs[mergeTo].release() ;
+      }
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CRSYNCLIST ) ;
+   }
+
+*/
+}

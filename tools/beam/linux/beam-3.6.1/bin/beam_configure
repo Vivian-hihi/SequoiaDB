@@ -1,0 +1,5386 @@
+#!/usr/bin/env perl
+#
+# Licensed Materials - Property of IBM - RESTRICTED MATERIALS OF IBM
+#
+# IBM Confidential - OCO Source Materials
+#
+# Copyright (C) 2005-2010 IBM Corporation. All rights reserved.
+#
+# US Government Users Restricted Rights - Use, duplication or disclosure
+# restricted by GSA ADP Schedule Contract with IBM Corp
+#
+# The source code for this program is not published or otherwise divested
+# of its trade secrets, irrespective of what has been deposited within
+# the U.S. Copyright Office.
+#
+#
+#    AUTHOR:
+#
+#        Francis Wallingford
+#
+#    DESCRIPTION:
+#
+#        Configure BEAM to emulate a compiler.
+# 
+#        See www/compiler_configuration.html and
+#        www/beam_configure.html for help and information.
+#
+###############################################################################
+
+# IF YOU CHANGE THIS, YOU SHOULD REGENERATE tcl/beam_default_*_config.tcl
+# FOR THE USERS.
+
+#################### Modules ####################
+
+# Require perl 5.004
+use 5.004;
+
+use strict;
+
+# AFS Hack. Compressed.
+BEGIN {
+  require Cwd;
+  if ( $^O !~ /msys/i && $^O !~ /mswin32/i ) {
+    my $alias = sub { my ( $old, $new ) = @_;
+                      local *oldproc = $old;
+                      if ( defined &oldproc ) {
+                        local $SIG{'__WARN__'} = sub { };
+                        *oldproc = $new;
+                      } };
+    $alias->(*Cwd::getcwd,       \&Cwd::cwd);
+    $alias->(*Cwd::fastcwd,      \&Cwd::cwd);
+    $alias->(*Cwd::fastgetcwd,   \&Cwd::cwd);
+    $alias->(*Cwd::abs_path,     \&Cwd::fast_abs_path);
+    $alias->(*Cwd::realpath,     \&Cwd::fast_abs_path);
+    $alias->(*Cwd::realpath,     \&Cwd::fast_abs_path); # Suppress warning
+    $alias->(*Cwd::fast_realpath,\&Cwd::fast_abs_path);
+    $alias->(*Cwd::fast_realpath,\&Cwd::fast_abs_path); # Suppress warning
+  }
+  import Cwd qw(getcwd);
+};
+# End AFS Hack.
+
+use FindBin qw($RealBin);
+use lib "$RealBin/../pm";
+
+use Getopt::Long;
+use Symbol qw(gensym);  # For anonymous file handles
+use File::Path; # mkpath()
+
+use BEAM::FileNames qw(:all);
+use BEAM::Temporary qw(tmp_file_in tmp_dir);
+use BEAM::Commands  qw(cmd_capture);
+
+# Try to find the signal number for SIGINT. On old perls,
+# default to '2'.
+
+my $sigint = 2;
+
+eval {
+  use POSIX qw(SIGINT);
+  $sigint = SIGINT;
+};
+
+# Enable warnings portably
+BEGIN { $^W = 1; }
+
+# Enable auto-flush to keep stdout and stderr in sync as
+# much as possible (-v -v -v gets pretty verbose)
+$| = 1;
+
+#################### Globals ####################
+
+# History:
+#  4.0: Fully qualified variable names:  April 2008
+#  3.0: Windows support:                 April 2007
+#  2.0: Java Support:                    May   2006
+#  1.1: C and C++ Support:               June  2005
+#
+# Update the version when you change the script.
+my $version = '4.0';
+
+my @default_c_headers = qw(limits.h math.h float.h stddef.h stdio.h string.h);
+my @default_cpp_headers = qw(bits/c++config.h cstddef string vector algorithm new.h);
+
+my $verbose = 0;
+
+my $invocation;
+
+my $original_dir = getcwd();
+
+my $global_temp_dir = tmp_dir();
+
+# These are filled in at the end of the file
+my $template_c_cpp_config_file = "";
+my $template_java_config_file = "";
+
+# This is the regexp for an identifier. This should be:
+#
+#   [A-Za-z_][A-Za-z0-9_]*
+#
+# or even
+#
+#   [[:alpha:]_][[:alnum]_]*
+#
+# but Perl 5.004 doesn't support the latter, and the former matches
+# crap like "\" and "}" on EBCDIC systems!!!
+#
+my $up_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+my $low_letters = lc( $up_letters );
+my $identifier_re = "[${up_letters}${low_letters}_]\\w*";
+
+# When searching for macros, ignore these.
+# Some of these aren't macros, but they
+# are easy to filter out this way. They
+# are identifiers that look like macros.
+#
+# The reason some of these are filtered
+# out and not simply left for testing is
+# that '#ifdef ifdef', etc,  is invalid and
+# the preprocessor will fail. Others are
+# simply defined by EDG and so they don't
+# need to be found here.
+#
+# The hash values aren't important; this
+# is simply a lookup table with exists().
+my %macros_to_ignore = (
+  "define"         => 1,
+  "defined"        => 1,
+  "ifdef"          => 1,
+  "ifndef"         => 1,
+  "if"             => 1,
+  "elif"           => 1,
+  "else"           => 1,
+  "endif"          => 1,
+  "and"            => 1,
+  "and_eq"         => 1,
+  "or"             => 1,
+  "or_eq"          => 1,
+  "not"            => 1,
+  "not_eq"         => 1,
+  "xor"            => 1,
+  "xor_eq"         => 1,
+  "bitor"          => 1,
+  "bitand"         => 1,
+  "compl"          => 1,
+  "__FUNCTION__"   => 1,
+  "__func__"       => 1,
+  
+  # Skip these because they are EDG builtins
+  "__DATE__"         => 1,
+  "__FILE__"         => 1,
+  "__LINE__"         => 1,
+  "__TIME__"         => 1,
+  "__STDC__"         => 1,
+  "__STDC_VERSION__" => 1,
+  "__STDC_HOSTED__"  => 1,
+  "__cplusplus"      => 1,
+  
+  # Skip these on AIX because they switch to builtins that we
+  # don't model in EDG. Things compile fine without them, as
+  # far as our limited testing has shown.
+  "__STR__"    => 1,
+  "__XLC121__" => 1,
+  "__XLC13__"  => 1,
+  
+  # Skip these on AIX - they should come from /etc/vac.cfg
+  "_AIX"   => 1,
+  "_AIX32" => 1,
+  "_AIX41" => 1,
+  "_AIX43" => 1,
+  "_AIX50" => 1,
+  "_AIX51" => 1,
+  "_IBMR2" => 1,
+  "_POWER" => 1,
+);
+
+# This is a list of macros to try in addition to the identifiers
+# that we can find in user header files. Most of these are here
+# because xlc/vac doesn't have a nice -dM switch to figure them
+# out, and the system headers don't test for them, so there's
+# no good way to detect them besides listing them and testing them.
+
+my @macros_to_try = qw(
+  __32BIT__
+  __370__
+  __64BIT__
+  __ALIGN
+  __ANSI__
+  __BOOL__
+  _ARCH_COM
+  __C99_CPLUSCMT
+  _CHAR_UNSIGNED
+  __CHAR_UNSIGNED__
+  __CODESET__
+  __COMPILER_VER__
+  _CPPRTTI
+  __DBCS__
+  __FENCE
+  __GNUC__
+  __GNUC_MINOR__
+  __GNUC_PATCHLEVEL__
+  __HHW_370__
+  __HHW_BIG_ENDIAN__
+  __HHW_INTEL__
+  __HHW_RS6000__
+  __HOS_AIX__
+  __HOS_MVS__
+  __HOS_WIN__
+  _ILP32
+  __IBMC__
+  __IBMCPP__
+  __LIBREL__
+  __LOCALE__
+  _LONG_LONG
+  __LONGDOUBLE80
+  _M_I386
+  _M_IX86
+  _M_IX86_FP
+  __MATH__
+  __SIZE_TYPE__
+  _STDCALL_SUPPORTED
+  __TARGET_LIB__
+  __THW_370__
+  __THW_BIG_ENDIAN__
+  __THW_INTEL__
+  __THW_RS6000__
+  __TOS_AIX__
+  __TOS_MVS__
+  __TOS_WIN__
+  __TUNE__
+  _WCHAR_T
+  _WIN32
+  __WINDOWS__
+  __xlc__
+  __xlC__
+  __XLC121__
+  __XLC13__
+  __XPLINK_CALLBACK__
+);
+
+my @predefined_function_names = qw(
+  __func__
+  __FUNCTION__
+  __PRETTY_FUNCTION__
+  __FUNCDNAME__
+  __FUNCSIG__
+);
+
+# List of keywords that should be tested for IBM's xlc and vac compilers
+my @decl_keywords = qw(
+  __cdecl
+  __export
+  __far16
+  __far32
+  __fastcall
+  __import
+  __inline
+  __optlink
+  __packed
+  __pascal
+  __seg16
+  __stdcall
+  __system
+  __unaligned
+  _Builtin
+  _Cdecl
+  _Export
+  _Far16
+  _Far32
+  _Fastcall
+  _Import
+  _Inline
+  _Optlink
+  _Packed
+  _Pascal
+  _Seg16
+  _Stdcall
+  _System
+  _Unaligned
+);
+
+# List of keywords that should be tested for IBM's USS compilers
+my @zosvac_keywords = qw(
+  __ptr32
+  __ptr64
+  __attribute__(x)
+  __const__
+  __extension__
+  __inline__
+  __label__
+  __restrict__
+  __restrict
+  __signed__
+  __volatile__
+  _Packed
+);
+
+# __FILE__ and __LINE__ are ommitted as they are dynamic
+my %standard_predefined_macros = (
+  "c" =>   [
+	    "__DATE__",
+	    "__TIME__",
+	    "__STDC__",
+	    "__STDC_VERSION__",
+	    "__STDC_HOSTED__"
+           ],
+  "cpp" => [
+	    "__DATE__",
+	    "__TIME__",
+	    "__STDC__",
+	    "__STDC_VERSION__",
+	    "__STDC_HOSTED__",
+	    "__cplusplus"
+           ]
+);
+
+#################### Routines ####################
+
+sub usage
+{
+  my ( $str ) = @_;
+
+  print STDERR <<"USAGE" ;
+
+  beam_configure version $version
+  
+  Usage:
+    
+    beam_configure [ options ] compiler [ -- <compiler flags> ]
+    
+  Description:
+    
+    beam_configure will examine your compiler and
+    produce a configuration file that will help
+    BEAM emulate its features and options. The
+    resulting configuration file may need some
+    manual editing, depending on how much information
+    beam_configure can automatically detect.
+    
+    The options are shown below. For detailed
+    help, please see:
+    
+      install_dir/www/beam_configure.html
+      install_dir/www/compiler_configuration.html
+    
+  Example:
+    
+    \$ beam_configure --cpp g++
+    
+  Output file name:
+    
+    If a template file is being written ("--template"),
+    the file name defaults to "template_*lang*_config.tcl",
+    where "*lang*" is the language given on the command line.
+    
+    Otherwise, the default file name is "compiler_*lang*_config.tcl".
+    
+    To specify a different file name, see the "--output" option.
+
+
+  Required Options:
+    
+    <compiler>               The compiler must be given on the command line
+                             unless "--template" is being used. The compiler
+                             will be searched for in the \$PATH. You may also
+                             specify an absolute path name.
+
+
+  One of the following language options is required:
+    
+    --c                      Treat the compiler as a C compiler, or generate
+                             a C template file (if given with "--template").
+    
+    --cpp                    Treat the compiler as a C++ compiler, or generate
+                             a C++ template file (if given with "--template").
+    
+    --java                   Treat the compiler as a Java compiler, or generate
+                             a Java template file (if given with "--template").
+
+
+  C and C++ options:
+
+    --headers <hdr1,hdr2...> Additional, non-standard header files to look for.
+                             This may require additional "-I" options to
+                             be passed to the native compiler. If the header file is
+                             found the corresponding directory will be added to the
+                             search path for system headers.
+                             The flag can be specified any number of times.
+  
+    --macros <m1,m2...>      Additional macros to try during the predefined macro
+                             detection. Any macro in this comma-separated list
+                             that is defined by your compiler proper will be
+                             included in the configuration file, with its value.
+      
+    --preproc_flag=<flag>    This is the flag that needs to be used for
+                             preprocessing. Defaults to "-E".
+                             Don't forget the "=". To set the flag
+                             to nothing, use --preproc_flag=" ".
+      
+    --macro_flag=<flag>      If your compiler has a command line option that
+                             makes it write out its predefined macros you should
+                             specify that option here. For GCC that would be
+                             "-E -dM", which is also the default setting.
+                             Don't forget the <code>"="</code>.
+
+    --compile_flag=<flag>    This is the flag that will make the compiler
+                             compile the file, returning error if the
+                             compilation was unsuccessful. It defaults to
+                             "-c". Don't forget the "=". To set the flag
+                             to nothing, use --compile_flag=" ". It is
+                             also assumed that the return code of the
+                             compiler can be used to determine if
+                             compilation was successful or not.
+
+    --bin_flag=<flag>        This is the flag that will make the compiler
+                             compile the file, producing an executable.
+
+                             The beam_configure script needs to specify
+                             the resulting executable file name when using
+                             this flag. To do so, beam_configure will replace
+                             the string "%s" with the executable file name
+                             that should be written.
+  
+                             The default is "-o %s", which results in two
+                             options to be passed to the compiler: "-o" and
+                             the executable file name to write.
+
+                             Another example would be if your compiler only
+                             needed one flag, but the file name was part of
+                             it. Something like the following would work
+                             for you.
+
+                               --bin_flag="/o:%s"
+
+                             When specifying this option, don't forget the "=".
+                             To set the flag to nothing, use --bin_flag=" ".
+                             It is also assumed that the return code of the
+                             compiler can be used to determine if compilation
+                             was successful or not.
+
+
+  Java Options:
+  
+     --javabin <file>        Override the Java executable to use when running
+                             compiled class files. By default, the "java" binary
+                             is found by looking in the same directory where the
+                             given compiler is located.
+
+
+  Additional Options:
+
+    -t | --template          Skip detection and write a template configuration
+                             file. See the note above about output file names.
+  
+    -o | --output <file>     Write the configuration to this file instead of the
+                             default location. See the note above about output
+                             file names.
+      
+    -f | --force             Overwrite the output file if it exists. By default,
+                             beam_configure won't overwrite existing files.
+
+    -k | --keeptemp          Keep temporary files around. Useful for
+                             troubleshooting problems.
+    
+    -v | --verbose           Verbose output about what is being run, etc.
+                             If specified more than once, even more
+                             information will be displayed. This can be
+                             specified up to 3 times.
+  
+    --                       Anything after this option will be passed
+                             directly to the compiler during every invocation.
+
+    --version                Show beam_configure's version and exit.
+
+    --help                   Show this information screen.
+
+
+USAGE
+
+  if ( $str ) {
+    print STDERR "\nError: $str\n";
+  }
+  
+  exit( 1 );
+}
+
+sub verbose
+{
+  my ( $level, $msg ) = @_;
+  
+  print STDERR "$msg\n" if ( $verbose >= $level );
+}
+
+# Main is called from the end of the script
+sub main
+{
+  my $c = 0;
+  my $cpp = 0;
+  my $java = 0;
+  
+  my ( $template, $output, $force, @headers,
+       @try_macros, $javabin, $xtesting,
+       $xcvtesting, $help );
+  
+  # Options with defaults
+  my $preproc_flag = '-E';
+  my $macro_flag   = '-E -dM';
+  my $compile_flag = '-c';
+  my $bin_flag     = '-o %s';
+  
+  usage() unless @ARGV; # At least one option or compiler is required
+  
+  # Save off our invocation
+  $invocation = join( ' ', map { "'$_'" } ( fn_path_to_ext( $0 ), @ARGV ) );
+  
+  # Note: --x*testing flags are undocumented testing-only flags.
+
+  # Don't auto-abbreviate. We do it manually to avoid collisions.
+  Getopt::Long::config( 'no_auto_abbrev' );
+  
+  GetOptions( "c"              => \$c,
+              "cpp"            => \$cpp,
+              "java"           => \$java,
+              "template|t"     => \$template,
+              "output|o=s"     => \$output,
+              "force|f"        => \$force,
+              "headers=s@"     => \@headers,
+              "macros=s@"      => \@try_macros,
+              "preproc_flag=s" => \$preproc_flag,
+              "macro_flag=s"   => \$macro_flag,
+              "compile_flag=s" => \$compile_flag,
+              "bin_flag=s"     => \$bin_flag,
+              "javabin=s"      => \$javabin,
+              "keeptemp|k"     => sub { $BEAM::Temporary::do_cleanup = 0; },
+              "xtesting"       => \$xtesting,
+              "xcvtesting"     => \$xcvtesting,
+              "verbose|v"      => sub { $verbose++ },
+              "version"        => sub {
+                                    print "beam_configure $version\n";
+                                    exit 1;
+                                  },
+              "help"           => \$help ) or usage();
+  
+  # Check the options
+  
+  usage() if $help;
+
+  # Run tests if requested
+  
+  if ( $xcvtesting ) {
+    my $rc = cv_run_tests();
+    exit $rc;
+  }
+  
+  # Detect some errors early
+  
+  if ( $c + $cpp + $java == 0 ) {
+    usage( "A language option is required" );
+  }
+  
+  if ( $c + $cpp + $java > 1 ) {
+    usage( "Only one language option is allowed" );
+  }
+  
+  # Set up $lang for convenience
+
+  my $lang;
+  
+  if ( $c ) {
+    $lang = "c";
+  } elsif ( $cpp ) {
+    $lang = "cpp";
+  } elsif ( $java ) {
+    $lang = "java";
+  } else {
+    die "Internal Error: unknown language $lang\n";
+  }
+    
+  # The template option should be processed early, because it skips almost
+  # everything and doesn't require extra options
+
+  if ( $template ) {
+    $output = get_output_file_name( $output, $lang, $force, "template" );
+
+    write_template_config_file( $lang, $output );
+
+    exit( 0 );
+  }
+
+  # Since the template option wasn't given,
+  # set up the compiler and start testing it out
+  
+  usage("You must specify a compiler") if $#ARGV == -1;
+
+  # Locate the command. This is because we chdir(),
+  # and want to be able to find ./bin/cc later.
+  
+  $ARGV[0] = find_exe( $ARGV[0] );
+
+  # Set up as much about the compiler as we know
+  
+  my $compiler;
+
+  $compiler->{'cmd'} = [ @ARGV ];
+  $compiler->{'compiler_path'} = $ARGV[0];
+  
+  if ( $c || $cpp ) {
+    # Consolidate the comma-separated list options
+    # This turns ( 'a.h,b.h', 'c.h', 'd.h,e.h' ) into
+    # ( 'a.h', 'b.h', 'c.h', 'd.h', 'e.h' ) for example
+  
+    @headers    = split( /,/, join( ',', @headers ) ) if $#headers != -1;
+    @try_macros =  split( /,/, join( ',', @try_macros ) ) if $#try_macros != -1;
+  
+    push @macros_to_try, @try_macros;
+
+    # These options are set as arrays in case they contain
+    # multiple flags: '-E -dM' => ( '-E', '-dM' )
+  
+    $compiler->{'preproc_flag'} = [ split /\s+/, $preproc_flag ];
+    $compiler->{'macro_flag'}   = [ split /\s+/, $macro_flag ];
+    $compiler->{'compile_flag'} = [ split /\s+/, $compile_flag ];
+    $compiler->{'bin_flag'}     = [ split /\s+/, $bin_flag ];
+  } else {
+    # For Java, there is no compile flag.
+    $compiler->{'compile_flag'} = [];
+    
+    # Java requires a "java" binary in addition to the compiler.
+    # Look for one near the Java compiler.
+    if ( ! $javabin ) {
+      $javabin = $compiler->{'compiler_path'};
+      $javabin = fn_dirname( $javabin );
+      $javabin .= "/java";
+
+      if ( $^O =~ /mswin32/i ) {
+        my $found = find_prog_with_pathext( $javabin );
+        
+        if ( defined $found ) {
+          $javabin = $found;
+        }
+      }
+      
+      if ( ! -x $javabin ) {
+        print STDERR "\n";
+        print STDERR "Error: Java requires a Java executable, and\n";
+        print STDERR "       '$javabin' doesn't exist or isn't\n";
+        print STDERR "       executable. Please use the '--javabin' option.\n";
+        exit( 1 );
+      }
+    }
+    
+    $compiler->{'java_cmd'} = [ $javabin ];
+  }
+
+  # Full-pathify $output if it was given so that once
+  # we change directories, the file name is still right
+  
+  if ( defined $output ) {
+    $output = fn_full_pathify( $output );
+  }
+  
+  # Generate the file name early to detect whether -force is needed.
+
+  $output = get_output_file_name( $output, $lang, $force, "compiler" );
+
+  # Change directories to keep temp files in one place that may
+  # be generated
+  
+  change_to_temp_dir();
+  
+  # In testing mode, kill a few informational things that end up in the
+  # output. This is because they have absoute paths and for testing,
+  # we want deterministic results.
+
+  if ( $xtesting ) {
+    $invocation = 'testing mode';
+    $compiler->{'testing_mode'} = 1;
+  }
+  
+  # Check if the compiler works for the intended configurations.
+  # This will also help detect a usable file extension.
+
+  if ( $c ) {
+    print "Testing compiler for C support...\n";
+    
+    $compiler->{'lang'} = 'c' if $xtesting;
+    $compiler->{'ext'} = 'c' if $xtesting;
+    
+    if ( $xtesting || test_c_compiler( $compiler ) ) {
+      print "Detecting C compiler features (this may take some time)...\n";
+      @headers = ( @default_c_headers, @headers );
+      configure_c_cpp_compiler( $compiler, \@headers, $output );
+    } else {
+      print STDERR "\n";
+      print STDERR "Error: C compiler doesn't seem to work.\n";
+      print STDERR "       Re-run with different options or '--verbose'.\n";
+      exit( 2 );
+    }
+  }
+  
+  if ( $cpp ) {
+    print "Testing compiler for C++ support...\n";
+    
+    $compiler->{'lang'} = 'cpp' if $xtesting;
+    $compiler->{'ext'} = 'cpp' if $xtesting;
+    
+    if ( $xtesting || test_cpp_compiler( $compiler ) ) {
+      print "Detecting C++ compiler features (this may take some time)...\n";
+      @headers = ( @default_cpp_headers, @default_c_headers, @headers );
+      configure_c_cpp_compiler( $compiler, \@headers, $output );
+    } else {
+      print STDERR "\n";
+      print STDERR "Error: C++ compiler doesn't seem to work.\n";
+      print STDERR "       Re-run with different options or '--verbose'.\n";
+      exit( 2 );
+    }
+  }
+  
+  if ( $java ) {
+    print "Testing compiler for Java support...\n";
+    
+    $compiler->{'lang'} = 'java' if $xtesting;
+    $compiler->{'ext'} = 'java' if $xtesting;
+    
+    if ( $xtesting || test_java_compiler( $compiler ) ) {
+      print "Detecting Java compiler features...\n";
+      configure_java_compiler( $compiler, $output );
+    } else {
+      print STDERR "\n";
+      print STDERR "Error: Java compiler doesn't seem to work.\n";
+      print STDERR "       Re-run with different options or '--verbose'.\n";
+      exit( 2 );
+    }
+  }
+  
+  exit( 0 );
+}
+
+####################
+# Primary routines
+
+sub configure_c_cpp_compiler
+{
+  my ( $compiler, $headers, $file ) = @_;
+  
+  # Try to find header locations
+  
+  my @dirs = find_headers( $compiler, @$headers );
+  
+  # Try to find target features and compiler type/version
+  
+  my $features = find_options( $compiler );
+
+  # Try to find predefined macros
+  
+  my $macros = find_macros( $compiler, @dirs );
+
+  # Write the config file
+  
+  write_c_cpp_config_file( $file, \@dirs, $features, $macros );
+}
+
+sub configure_java_compiler
+{
+  my( $compiler, $file ) = @_;
+  
+  # Try to find system properties
+  
+  my $properties = find_java_properties( $compiler );
+  
+  # Write the config file
+  
+  write_java_config_file( $file, $properties );
+}
+
+sub test_c_compiler
+{
+  my ( $compiler ) = @_;
+  
+  $compiler->{'lang'} = 'c';
+  $compiler->{'ext'}  = 'c';
+
+  my $preproc_source = test_preproc_c_source();
+  my $preproc_re     = q/int\s+x\s+=\s+42/;
+  my $good_source    = test_compiler_c_source();
+  my $bad_source     = test_compiler_bad_source();
+
+  my $rc = test_c_cpp_compiler( $compiler, $preproc_source, $preproc_re,
+                                $good_source, $bad_source );
+
+  return $rc;
+}
+
+sub test_cpp_compiler
+{
+  my ( $compiler ) = @_;
+  
+  $compiler->{'lang'} = 'cpp';
+  
+  my $preproc_source = test_preproc_cpp_source();
+  my $preproc_re     = q/int\s+x\s+=\s+42/;
+  my $good_source    = test_compiler_cpp_source();
+  my $bad_source     = test_compiler_bad_source();
+  
+  foreach my $ext ( qw(cpp cxx CC C) ) {
+    $compiler->{'ext'} = $ext;
+    
+    my $rc = test_c_cpp_compiler( $compiler, $preproc_source, $preproc_re,
+                                  $good_source, $bad_source );
+
+    if ( $rc ) {
+      return 1;
+    }
+  }
+  
+  return 0;  
+}
+
+sub test_java_compiler
+{
+  my( $compiler ) = @_;
+
+  $compiler->{'lang'} = 'java';
+  $compiler->{'ext'} = 'java';
+
+  # See if the compiler is executable and useful.
+
+  my $compile_ok = 0;
+  
+  my $good_source = test_compiler_java_source();
+  my $bad_source  = test_compiler_bad_source();
+  
+  verbose 1, "Testing java compiler...";
+  
+  my ( $rc, $output, $error ) = compile_source( $compiler, $good_source );
+
+  if ( $rc == 0 ) {
+    # Make sure bad source gets a bad rc
+    
+    verbose 2, "* This next command should fail...";
+    
+    ( $rc, $output, $error ) = compile_source( $compiler, $bad_source );
+    
+    if ( $rc != 0 ) {
+      # Good
+      $compile_ok = 1;
+      verbose 1, "- Compiler seems to work";
+    } else {
+      my $cmd = compile_command( $compiler );
+      
+      show_warning( "compiler", $cmd, $compiler->{'ext'}, $output, $error,
+                    "It did not fail when given bad code." );
+    }
+  } else {
+    my $cmd = compile_command( $compiler );
+    show_warning( "compiler", $cmd, $compiler->{'ext'}, $output, $error,
+                  "It failed to run (rc = $rc)." );
+  }
+
+  return $compile_ok;
+}
+
+sub show_warning
+{
+  my ( $thing, $cmd, $ext, $output, $error, $msg ) = @_;
+ 
+  # Prints out a lengthy message about why the
+  # $thing failed
+
+  if ( $verbose >= 1 ) {
+    print STDERR "\n";
+    print STDERR "Warning: The $thing doesn't seem to work.\n";
+    print STDERR "         $msg\n" if defined $msg;
+    print STDERR "\n";
+    print STDERR "Command: $cmd <file>.$ext\n";
+    print STDERR "\n";
+    print STDERR "====== Standard Output: ======\n";
+    print STDERR "$output\n";
+    print STDERR "====== Standard Error: ======\n";
+    print STDERR "$error\n";
+    print STDERR "====== End of Output ======\n";
+    print STDERR "\n";      
+    print STDERR "Warning: Some options may not be detectable without the $thing.\n";
+    print STDERR "         Continuing anyway...\n";
+  }
+}
+
+sub test_c_cpp_compiler
+{
+  my ( $compiler, $preproc_source, $preproc_re, 
+       $good_compile_source, $bad_compile_source ) = @_;
+  
+  # See if the compiler is executable and useful. If it
+  # doesn't support the preprocessor flag or the compile
+  # flag, it is completely useless to us.
+  
+  my ( $preproc_ok, $compile_ok ) = ( 0, 0 );
+  
+  # It supports the preprocessor flag if it returns 0,
+  # and it produces macro-expanded output
+
+  verbose 1, "Testing preprocessor...";
+  
+  my ( $rc, $output, $error ) = 
+    preprocess_source( $compiler, $preproc_source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /$preproc_re/ ) {
+      $preproc_ok = 1;
+      verbose 1, "- Preprocessor seems to work";
+    } else {
+      my $cmd = preprocess_command( $compiler );
+      show_warning( "pre-processor", $cmd, $compiler->{'ext'}, $output, $error,
+                    "It did not expand macros to produce the expected output." );
+    }
+  } else {
+    my $cmd = preprocess_command( $compiler );
+    show_warning( "pre-processor", $cmd, $compiler->{'ext'}, $output, $error, 
+                  "It failed to run (rc = $rc)." );
+  }
+
+  # It supports the compile flag if it returns 0 on valid C/C++
+  # code and non-zero on invalid C/C++ code.
+  
+  verbose 1, "Testing C/C++ compiler...";
+  
+  ( $rc, $output, $error ) =
+    compile_source( $compiler, $good_compile_source );
+  
+  if ( $rc == 0 ) {
+    # Make sure bad source gets a bad rc
+    verbose 2, "* This next command should fail...";
+    
+    ( $rc, $output, $error ) =
+      compile_source( $compiler, $bad_compile_source );
+    
+    if ( $rc != 0 ) {
+      $compile_ok = 1;
+      verbose 1, "- Compiler seems to work";
+    } else {
+      my $cmd = compile_command( $compiler );
+      show_warning( "compiler", $cmd, $compiler->{'ext'}, $output, $error,
+                    "It did not fail when given bad code." );
+    }
+  } else {
+      my $cmd = compile_command( $compiler );
+      show_warning( "compiler", $cmd, $compiler->{'ext'}, $output, $error,
+                    "It failed to run (rc = $rc)." );
+  }
+
+  # Hopefully one of those things worked... if not, I don't think we can do
+  # anything with this compiler
+  
+  if ( ! $preproc_ok && ! $compile_ok ) {
+    verbose 1, "- All compiler tests failed... bad compiler/lang/ext set";
+    return 0;
+  }
+  
+  # Test for other features
+  
+  verbose 1, "Testing misc compiler features...";
+  
+  # Does the compiler support the constant expression trick?
+  # - The trick is described in compiler_sizeof below, but basically,
+  #   if the compiler supports this trick, it will accept this:
+  #
+  #     int global_array[ (1 == 1) ? 1 : -1 ];
+  #
+  #   but reject this:
+  #
+  #     int global_array[ (2 == 1) ? 1 : -1 ];
+
+  $compiler->{'constant_expression_trick'} = 'no';
+  
+  my $const_expr = const_expr_source();
+  my $const_expr_fail = const_expr_fail_source();
+    
+  # The first should succeed and the second should fail
+  ( $rc ) = compile_source( $compiler, $const_expr );
+  
+  if ( $rc == 0 ) {
+    verbose 2, "* This next command should fail...";
+    ( $rc ) = compile_source( $compiler, $const_expr_fail );
+    
+    if ( $rc != 0 ) {
+      verbose 1, "- Compiler supports the constant expression trick";
+      $compiler->{'constant_expression_trick'} = 'yes';
+    } else {
+      verbose 1, "- Compiler doesn't support the constant expression trick";
+      verbose 1, "  (accepts bad code)";
+    }
+  }
+  
+  return 1;
+}
+
+####################
+
+sub find_java_properties
+{
+  my ( $compiler ) = @_;
+  
+  verbose 1, "Determining Java properties...";
+
+  my $properties = {};
+
+  # Save off the full path to the compiler and the testing mode
+  
+  $properties->{'compiler_path'} = $compiler->{'compiler_path'};
+  $properties->{'testing_mode'}  = $compiler->{'testing_mode'};
+  
+  # Find Java run-time properties.
+  #
+  # This list of hashes is what is looked for in the source.
+  #
+  # This list:
+  # - Is used to generate the source file that prints out the values
+  # - Is used to grep through the output looking for the values
+  # - Is used to decide if required entries are not given so a message
+  #   can be shown
+  # - Is used to decide what type the value is
+  #   - path is colon- or semi-colon-separated, and will be set in $properties as a list
+  #   - string is verbatim and will be set in $properties as-is
+  # - Is used to decide what key of $properties to set with what value
+  
+  my $to_find = [
+    {
+      name => "java.endorsed.dirs",
+      type => "path",
+      key  => "system_endorsed_dirs",
+    },
+    {
+      name => "sun.boot.class.path",
+      type => "path",
+      key  => "system_boot_classpath",
+      required => 1,
+    },
+    {
+      name => "java.ext.dirs",
+      type => "path",
+      key  => "system_ext_dirs",
+      required => 1,
+    },
+    {
+      name => "java.specification.version",
+      type => "string",
+      key  => "language_source_level",
+      required => 1,
+    },
+    {
+      name => "file.encoding",
+      type => "string",
+      key  => "language_encoding",
+    }
+  ];
+  
+  # Get some source that prints out the properties we need
+
+  my @props = map { $_->{'name'} } @$to_find;
+  
+  my $source = java_property_source( "PropertyPrinter", @props );
+  
+  # Compile the source and run it
+  
+  my ( $rc, $output, $error ) =
+    compile_source_and_run_java( $compiler, "PropertyPrinter", $source );
+  
+  if ( $rc == 0 ) {
+    # Find each item from above in the output and set it in properties
+    foreach my $item ( @$to_find ) {
+      my $name     = $item->{'name'};
+      my $type     = $item->{'type'};
+      my $key      = $item->{'key'};
+      my $required = $item->{'required'};
+      
+      if ( $output =~ /$name: beam_property (.*?) beam_end/ ) {
+        my $value = $1;
+        verbose 2, "$name is $value ($type)";
+
+        if ( $type eq "path" ) {
+          $value = [ split /$fn_javasep_re/, $value ];
+        }
+
+        $properties->{$key} = $value;
+      } elsif( $required ) {
+        print STDERR "\n";
+        print STDERR "Warning: The Java Runtime Property '$name' was not\n";
+        print STDERR "         found. You may need to add it to your configuration\n";
+        print STDERR "         file manually (as '$key').\n";
+      }
+    }
+  }
+  
+  return $properties;
+}
+
+sub find_headers
+{
+  my ( $compiler, @headers ) = @_;
+  
+  my @dirs;
+  
+  # Try to preprocess a simple file that includes the target
+  # header(s), and find the '#line "/path/to/include" that
+  # the preprocessor produces
+  
+  # For each header file we are interested in, generate
+  # a source file that includes it, and try to preprocess it.
+  # Use the extension passed in.
+  
+  verbose 1, "Searching for header locations...";
+  
+HEADER:
+  foreach my $header ( @headers ) {
+
+    verbose 2, "- Looking for '$header'";
+    
+    my $source = include_headers( $header );
+    
+    my ( $rc, $output ) = preprocess_source( $compiler, $source );
+    
+    if ( $rc == 0 ) {
+      my @lines = split '\n', $output;
+      
+      foreach my $line ( @lines ) {
+        if ( $line =~ m|^\s*#.*?\"(.*?)[\\/]\Q$header\E\"| ) {
+          my $dir = fn_path_to_int( $1 );
+          
+          verbose 2, "- Found '$header' in '$dir'";
+          
+          push @dirs, fn_full_pathify( $dir );
+          next HEADER;
+        }
+      }
+    }
+  }
+
+  @dirs = make_unique( @dirs );
+  
+  my $num = scalar( @dirs );
+  
+  verbose 1, "- Found $num unique header location(s)";
+  
+  if ( $num == 0 ) {
+    print STDERR "\n";
+    print STDERR "Warning: No header locations were found. You will need\n";
+    print STDERR "         to add them to the config file manually.\n";
+    if ($^O eq "os390") {
+      my $var;
+      if ($compiler->{lang} eq "c") {
+        $var = "_C89_ELINES";
+      } else {
+        $var = "_CXX_ELINES";
+      }
+      print STDERR "         Try one of the following:\n";
+      print STDERR "         (1) Define environment variable $var=1 and rerun.\n";
+      print STDERR "         (2) Rerun beam_configure, adding --preproc_flag=-qpponly=lines\n";
+      print STDERR "             to its command line\n";
+    }
+  }
+  
+  return @dirs;
+}
+  
+####################
+
+sub find_options
+{
+  my ( $compiler ) = @_;
+
+  # This hash ref will be passed around and filled in by the
+  # utility routines
+  
+  my $features = {};
+  
+  verbose 1, "Checking for runtime environment configuration...";
+
+  # There are a few ways to find the features we are interested in.
+  #
+  # Creating a native binary is more accurate, and can find things
+  # that simple preprocessing may not find (endianness on some
+  # machines that don't have friendly headers)
+  #
+  # Second, if that is not an option, we can resort to trying to
+  # compile some things (for long long, long double, and
+  # enum bitfield support), and we can preprocess for others
+  # (limits.h can give us signed chars and sizes of types, and
+  # float.h can give us floating point characteristics, and...)
+  
+  # We are interested in many features:
+  #
+  # - The compiler (if it is one we support, we can map the flags
+  #   automatically)
+  
+  check_known_compiler( $compiler, $features );
+  
+  # - Stuff describing the target environment (from EDG's targ_def.h):
+  #   - Big or little endian (320)
+  
+  check_endianness( $compiler, $features );
+  
+  #   - Char bit (329) plus target_host_string_char_bit (340)
+  #   - Signed or unsigned chars (352)
+  
+  check_char_traits( $compiler, $features );
+  
+  #   - Sizes of built-in types
+  #     - short, int, long, long long (396)
+  #     - float, double, long double (1343)
+  #     - pointer (1198)
+  
+  check_sizes( $compiler, $features );
+  
+  #   - Alignments of built-in types
+  #     - short, int, long, long long (396)
+  #     - float, double, long double (1343)
+  #     - pointer (1198)
+  
+  check_alignments( $compiler, $features );
+
+  #   - Special types
+  #     - wchar_t size and kind (1134)
+  #     - size_t max and kind (1296)
+  #     - char16_t size and kind
+  #     - char32_t size and kind
+  #     - ptrdiff_t min, max, and kind
+  
+  check_special_types( $compiler, $features );
+  
+  #   - Floating point characteristics
+  #     - Min and max exp, mantissa, etc (1455)
+  
+  check_float_traits( $compiler, $features );
+  
+  #   - Misc stuff
+  #     - plain int bitfield is signed or unsigned (977)
+  #     - enum bitfield can be signed (1014)
+  #     - enum types can be smaller than int (1902)
+  #     - scope of for loop decls (lang_feat.h)
+  #     - friend injection (lang_feat.h)
+  #     - literal strings are const (lang_feat.h)
+  #     - etc...
+
+  check_misc_features( $compiler, $features );
+
+  # Also, we add the compiler language
+  # because it will be needed in the configuration file
+  
+  $features->{'lang'} = $compiler->{'lang'};
+
+  # And the full path to the compiler and the testing mode
+  
+  $features->{'compiler_path'} = $compiler->{'compiler_path'};
+  $features->{'testing_mode'}  = $compiler->{'testing_mode'};
+  
+  if ( exists $features->{'xlc'} || exists $features->{'vac'} ) {
+    # For xlc and vac C code, alloca is a builtin
+    # So is __assert1 and __assert2
+    if ( $features->{'lang'} eq 'c' ) {
+      $features->{'language_needs_builtin_alloca'} = 1;
+      $features->{'language_needs_builtin_assert1'} = 1;
+      $features->{'language_needs_builtin_assert2'} = 1;
+    }
+    # FIXME: For xlc and vac C++ code, for now, we use gpp_dependent_name_lookup
+    #        because I can't get names to be found like xlc does it without this
+    if ( $features->{'lang'} eq 'cpp' ) {
+      $features->{'target_gpp_dependent_name_lookup'} = 1;
+    }
+  }
+
+  # Done
+  
+  my $num = scalar( keys %$features );
+  verbose 1, "- Found $num runtime configuration option(s)";
+
+  if ( $num == 0 ) {
+    
+    print STDERR "\n";
+    print STDERR "Warning: No target options were found.\n";
+    print STDERR "         You will need to add them to the config file manually.\n";
+  
+  } elsif ( $num < 15 ) {
+    
+    # 15 options includes all sizes and alignments. We should
+    # have found at least that many to be considered successful
+    
+    print STDERR "\n";
+    print STDERR "Warning: Very few ($num) target options were found.\n";
+    print STDERR "         You will need to add them to the config file manually.\n";
+  }
+  
+  return $features;
+}
+
+# Runtime utilities
+
+sub check_known_compiler
+{
+  my ( $compiler, $features ) = @_;
+  
+  # See if this is a compiler we support automatically
+  # Try to detect common predefined macros for gcc, vac, etc
+
+  verbose 2, "Checking for known compiler";
+  
+  my @to_expand = qw(
+    __GNUC__
+    __GNUC_MINOR__
+    __GNUC_PATCHLEVEL__
+    __xlC__
+    _MSC_VER
+    __ICC
+    __INTEL_COMPILER
+    __IBMC__
+    __IBMCPP__
+    __WINDOWS__
+    __MVS__
+  );
+
+  my $macros = expand_macros( $compiler, \@to_expand );
+  
+  if ( exists $macros->{'__GNUC__'} ) {
+    # EDG wants the version of gcc in a special format
+    my $level = c_value( $macros->{'__GNUC__'} ) * 10000 +
+                c_value( $macros->{'__GNUC_MINOR__'} ) * 100 +
+                c_value( $macros->{'__GNUC_PATCHLEVEL__'} );
+    
+    $features->{'gnu_mode'} = $level;
+    
+    if ( exists $macros->{'__ICC'} && exists $macros->{'__INTEL_COMPILER'} ) {
+      $features->{'icc'} = c_value( $macros->{'__ICC'} );
+      verbose 2, "- Compiler is Intel ICC $features->{icc}";
+    } else {
+      $features->{'gcc'} = $level;
+      verbose 2, "- Compiler is gcc $level";
+    }
+  }
+  
+  # xlc and vac set __xlC__ to 0xVVRR (like 0x0403).
+  # If the number is 0x0500 or higher, it's VAC, otherwise,
+  # it is XLC (older).
+  
+  if ( exists $macros->{'__xlC__'} ) {
+    my $version = c_value( $macros->{'__xlC__'} );
+    
+    if ( $version >= 0x0500 ) {
+      $features->{'vac'} = $version;
+      verbose 2, "- Compiler is vac $features->{vac}";
+    } else {
+      $features->{'xlc'} = $version;
+      verbose 2, "- Compiler is xlc $features->{xlc}";
+    }      
+  }
+  
+  # Microsoft's cl.exe sets _MSC_VER to a version like 1400
+  
+  if ( exists $macros->{'_MSC_VER'} ) {
+    my $version = c_value( $macros->{'_MSC_VER'} );
+    $features->{'msvc'} = $version;
+    verbose 2, "- Compiler is msvc $features->{msvc}";
+  }
+  
+  # IBM's VisualAge for Windows sets __IBMC__ or __IBMCPP__
+  # to a version like "360".
+  
+  if ( exists $macros->{'__WINDOWS__'} ) {
+    my $version;
+    if ( exists $macros->{'__IBMC__'} ) {
+      $version = c_value( $macros->{'__IBMC__'} );
+    } elsif ( exists $macros->{'__IBMCPP__'} ) {
+      $version = c_value( $macros->{'__IBMCPP__'} );
+    }
+    
+    if ( defined $version ) {
+      $features->{'vacwin'} = $version;
+      verbose 2, "- Compiler is vacwin $version";
+    }
+  }
+
+  # IBM's compilers for USS
+  
+  if ( exists $macros->{'__MVS__'} ) {
+    my $version;
+    if ( exists $macros->{'__IBMC__'} ) {
+      $version = c_value( $macros->{'__IBMC__'} );
+    } elsif ( exists $macros->{'__IBMCPP__'} ) {
+      $version = c_value( $macros->{'__IBMCPP__'} );
+    }
+    
+    if ( defined $version ) {
+      $features->{'zosvac'} = $version;
+      verbose 2, "- Compiler is zosvac $version";
+    }
+  }
+}
+
+sub check_endianness
+{
+  my ( $compiler, $features ) = @_;
+  
+  # There is no standard header that provides endian information.
+  #
+  # If we can compile a binary, it is easy - compile and run
+  # something that will test and display the endianness.
+  #
+  # If we can't compile a binary, then
+  # - On linux, we can try endian.h and
+  #   __BYTE_ORDER, __BIG_ENDIAN, and __LITTLE_ENDIAN
+  # - On AIX, we can try sys/machine.h and 
+  #   BYTE_ORDER and BIG_ENDIAN and LITTLE_ENDIAN
+  # - We can try to detect the processor via macros:
+  #   - If the system defines __i386__ we are little endian
+  #   - If the system defines __s390__ or __s390x__ we are big endian
+  #   - If the system defines _POWER or __powerpc__ we are big endian
+  #
+  # Otherwise, we can't tell. The default for the config is big endian, which
+  # should catch most things
+  
+  verbose 2, "Checking endianness with a native binary";
+  
+  my $source = endian_test_source();
+
+  my ( $rc, $output )
+    = compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /target_little_endian=(\d+)/ ) {
+      $features->{'target_little_endian'} = $1;
+      verbose 2, "- Endianness is $1";
+      return;
+    } else {
+      verbose 2, "- Unknown endianness (unexpected output)";
+    }
+  }
+
+  # Running the binary didn't work - try to figure it out from endian.h
+  
+  verbose 2, "Checking endianness with endian.h and __BYTE_ORDER";
+  
+  my @to_expand = qw(
+    __BYTE_ORDER
+    __BIG_ENDIAN
+    __LITTLE_ENDIAN
+  );
+  
+  my @to_include = qw( endian.h );
+  
+  my $macros = expand_macros( $compiler, \@to_expand, \@to_include );
+  
+  if ( exists $macros->{'__BYTE_ORDER'} ) {
+    my $border = c_value( $macros->{'__BYTE_ORDER'} );
+    my $bendian = 0;
+    my $lendian = 0;
+    
+    if ( exists $macros->{'__LITTLE_ENDIAN'} ) {
+      $lendian = c_value( $macros->{'__LITTLE_ENDIAN'} );
+    }
+    
+    if ( exists $macros->{'__BIG_ENDIAN'} ) {
+      $bendian = c_value( $macros->{'__BIG_ENDIAN'} );
+    }
+    
+    if ( $border == $lendian ) {
+      $features->{'target_little_endian'} = 1;
+      verbose 2, "- Little endian";
+      return;
+    } elsif ( $border == $bendian ) {
+      $features->{'target_little_endian'} = 0;
+      verbose 2, "- Big endian";
+      return;
+    }
+  } else {
+    verbose 2, "- Can't determine endianness from endian.h (unexpected output)";
+  }
+
+  # No endian.h luck... try to figure it out from sys/machine.h
+  
+  verbose 2, "Checking endianness with sys/machine.h and BYTE_ORDER";
+  
+  @to_expand = qw(
+    BYTE_ORDER
+    BIG_ENDIAN
+    LITTLE_ENDIAN
+  );
+  
+  @to_include = qw( sys/machine.h );
+  
+  $macros = expand_macros( $compiler, \@to_expand, \@to_include );
+  
+  if ( exists $macros->{'BYTE_ORDER'} ) {
+    my $border = c_value( $macros->{'BYTE_ORDER'} );
+    my $bendian = 0;
+    my $lendian = 0;
+    
+    if ( exists $macros->{'LITTLE_ENDIAN'} ) {
+      $lendian = c_value( $macros->{'LITTLE_ENDIAN'} );
+    }
+    
+    if ( exists $macros->{'BIG_ENDIAN'} ) {
+      $bendian = c_value( $macros->{'BIG_ENDIAN'} );
+    }
+    
+    if ( $border == $lendian ) {
+      $features->{'target_little_endian'} = 1;
+      verbose 2, "- Little endian";
+      return;
+    } elsif ( $border == $bendian ) {
+      $features->{'target_little_endian'} = 0;
+      verbose 2, "- Big endian";
+      return;
+    }
+  } else {
+    verbose 2, "- Can't determine endianness from sys/machine.h";
+    verbose 2, "  (unexpected output)";
+  }
+
+  # No luck... try to find out what the processor is and get the
+  # endianness from that.
+
+  verbose 2, "Checking endianness with processor macros";
+
+  # Map macros to endianness. If the macro is defined to non-zero
+  # value, the little endian feature will be set to the integer here.
+  my %proc_macros = (
+    "__i386__"    => 0,
+    "__s390__"    => 1,
+    "__s390x__"   => 1,
+    "_POWER"      => 1,
+    "__powerpc__" => 1,
+  );
+  
+  @to_expand = keys( %proc_macros );
+  
+  $macros = expand_macros( $compiler, \@to_expand );
+  
+  foreach my $key ( %proc_macros ) {
+    if ( exists $macros->{$key} ) {
+      if ( c_value( $macros->{$key} ) != 0 ) {
+        $features->{'target_little_endian'} = $proc_macros{$key};
+        verbose 2, "- Little endian set to $proc_macros{$key}";
+        return;
+      }
+    }
+  }
+  
+  # Unknown endianness - print a warning
+    
+  print STDERR "\n";
+  print STDERR "Warning: The endianness of the target platform could not be determined.\n";
+  print STDERR "         You should set 'target_little_endian' in the config file manually.\n";
+}
+
+sub check_char_traits
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Try to figure out char_bit and signed chars with
+  # macros from limits.h
+  
+  verbose 2, "Checking char traits";
+  
+  my @to_expand = qw( CHAR_BIT CHAR_MIN CHAR_MAX );
+  
+  my @to_include = qw( limits.h );
+  
+  my $macros = expand_macros( $compiler, \@to_expand, \@to_include );
+  
+  if ( exists $macros->{'CHAR_BIT'} ) {
+    $features->{'target_char_bit'} = c_value( $macros->{'CHAR_BIT'} );
+    verbose 2, "- Char bit = $features->{target_char_bit}";
+  }
+
+  if ( exists $macros->{'CHAR_MIN'} ) {
+    if ( c_value( $macros->{'CHAR_MIN'} ) == 0 ) {
+      $features->{'target_plain_char_is_unsigned'} = 1;
+    } else {
+      $features->{'target_plain_char_is_unsigned'} = 0;
+    }
+  } else {
+    # If we can't figure it out via the macro, try the constant expression trick
+    # and try native binaries
+    verbose 2, "- Trying to determine signed chars via various methods";
+    
+    my $source1 = signed_chars_source();
+    my $source2 = unsigned_chars_source();
+    my $source3 = char_min_source();
+    
+    my ( $rc1 ) = compile_source( $compiler, $source1 );
+    my ( $rc2 ) = compile_source( $compiler, $source2 );
+    
+    my ( $rc3, $output )
+      = compile_source_and_run( $compiler, $source3 );
+    
+    if ( $rc1 == 0 ) {
+      $features->{'target_plain_char_is_unsigned'} = 0;
+    } elsif ( $rc2 == 0 ) {
+      $features->{'target_plain_char_is_unsigned'} = 1;
+    } elsif ( $rc3 == 0 && $output =~ /target_plain_char_is_unsigned=(\d+)/ ) {
+      $features->{'target_plain_char_is_unsigned'} = $1;
+    }
+  }
+  
+  if ( exists $features->{'target_plain_char_is_unsigned'} ) {
+    verbose 2, "- Chars are unsigned = $features->{target_plain_char_is_unsigned}";
+  }
+}
+
+sub check_sizes
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Try to find the sizes of the builtin types
+  #
+  # - Note: I don't try to find the expansion of
+  #   USHRT_MAX and friends to determine sizes because
+  #   it is hard to evaluate things like "32768UL * 2UL - 1UL"
+  #   in perl accurately...
+
+  my %builtin_types = (
+    target_sizeof_short       => 'short',
+    target_sizeof_int         => 'int',
+    target_sizeof_long        => 'long',
+    target_sizeof_long_long   => 'long long',
+    target_sizeof_float       => 'float',
+    target_sizeof_double      => 'double',
+    target_sizeof_long_double => 'long double',
+    target_sizeof_pointer     => 'char *'
+  );
+    
+  foreach my $targ ( keys %builtin_types ) {
+    my $type  = $builtin_types{$targ};
+
+    my $size = compiler_sizeof( $compiler, $type );
+    
+    if ( defined $size ) {
+      $features->{$targ} = $size;
+    }
+  }
+}
+
+sub check_alignments
+{
+  my ( $compiler, $features ) = @_;
+
+  # Check the alignments of the built-in types
+  
+  my %builtin_types = (
+    target_alignof_short       => "short",
+    target_alignof_int         => "int",
+    target_alignof_long        => "long",
+    target_alignof_long_long   => "long long",
+    target_alignof_float       => "float",
+    target_alignof_double      => "double",
+    target_alignof_long_double => "long double",
+    target_alignof_pointer     => "char *"
+  );
+  
+  foreach my $targ ( keys %builtin_types ) {
+    my $type = $builtin_types{$targ};
+    
+    my $alignment = compiler_alignof( $compiler, $type );
+    
+    if ( defined $alignment ) {
+      $features->{$targ} = $alignment;
+    }
+  }
+}
+
+sub check_float_traits
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Using float.h, figure out the sizes of some floating
+  # point characteristics that EDG needs (mantissa bits, etc)
+  
+  verbose 2, "Checking float traits";
+ 
+# Note: Don't set mant_dig, EDG is very particular that it
+# lines up with the size of the type, and gcc lines them
+# up differently than EDG requires. BEAM will set mant_dig
+# based on the size of the type.
+  my %set_table = (
+#    target_flt_mant_dig  => 'FLT_MANT_DIG',
+    target_flt_min_exp   => 'FLT_MIN_EXP',
+    target_flt_max_exp   => 'FLT_MAX_EXP',
+#    target_dbl_mant_dig  => 'DBL_MANT_DIG',
+    target_dbl_min_exp   => 'DBL_MIN_EXP',
+    target_dbl_max_exp   => 'DBL_MAX_EXP',
+#    target_ldbl_mant_dig => 'LDBL_MANT_DIG',
+    target_ldbl_min_exp  => 'LDBL_MIN_EXP',
+    target_ldbl_max_exp  => 'LDBL_MAX_EXP'
+  );
+
+  my @to_include = qw( float.h );
+  
+  my $macros = expand_macros( $compiler, [ values %set_table ], \@to_include );
+
+  # Test the macros and set the values
+
+  foreach my $targ ( keys %set_table ) {
+    my $m = $set_table{$targ};
+    
+    if ( exists $macros->{$m} ) {
+      verbose 2, "- Found float trait '$m' = '$macros->{$m}'";
+      $features->{$targ} = c_value( $macros->{$m} );
+    }
+  }
+}
+
+sub check_special_types
+{
+  my ( $compiler, $features ) = @_;
+
+  # Check the sizes and types and signedness of some
+  # special types
+
+  check_bool_is_keyword( $compiler, $features );
+  
+  check_wchar_t_is_keyword( $compiler, $features );
+  check_wchar_t_type( $compiler, $features );
+  
+  check_wint_t_type( $compiler, $features );
+  
+  check_size_t_type( $compiler, $features );
+  check_ptrdiff_t_type( $compiler, $features );
+
+  check_char16_t_type( $compiler, $features );
+  check_char32_t_type( $compiler, $features );
+
+  if ( exists $features->{'gcc'} ) {
+    check_builtin_va_list_base_type( $compiler, $features );
+  }
+}
+
+sub check_char16_t_type
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Try to get the type directly by pre-processing uchar.h (works for C).
+
+  my $source = include_headers( 'uchar.h' );
+  
+  my ( $rc, $output ) = preprocess_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /\btypedef\s+(.*?)\s+char16_t\s*;/ ) {
+      my $type = $1;
+      $type =~ s/\s+/ /g; # Compress whitespace
+      $features->{'target_char16_t_int_kind'} = $type;
+    }
+  }
+  
+  # Try to figure out the size of char16_t, in case we can't get
+  # the type directly. This will help us guess later, if we need
+  # to.
+
+  my $size = compiler_sizeof( $compiler, 'char16_t', [ 'uchar.h' ] );
+  
+  if ( defined $size ) {
+    $features->{'target_sizeof_char16_t'} = $size;
+  }
+}
+
+sub check_char32_t_type
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Try to get the type directly by pre-processing uchar.h (works for C).
+
+  my $source = include_headers( 'uchar.h' );
+  
+  my ( $rc, $output ) = preprocess_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /\btypedef\s+(.*?)\s+char32_t\s*;/ ) {
+      my $type = $1;
+      $type =~ s/\s+/ /g; # Compress whitespace
+      $features->{'target_char32_t_int_kind'} = $type;
+    }
+  }
+  
+  # Try to figure out the size of char16_t, in case we can't get
+  # the type directly. This will help us guess later, if we need
+  # to.
+
+  my $size = compiler_sizeof( $compiler, 'char32_t', [ 'uchar.h' ] );
+  
+  if ( defined $size ) {
+    $features->{'target_sizeof_char32_t'} = $size;
+  }
+}
+
+sub check_bool_is_keyword
+{
+  my( $compiler, $features ) = @_;
+  
+  # See if bool is a keyword in C++
+
+  if ( $compiler->{'lang'} eq 'cpp' ) {
+  
+    verbose 2, "Checking if bool is a keyword in C++";
+  
+    my $source = bool_keyword_source();
+  
+    my( $rc ) = compile_source( $compiler, $source );
+  
+    if ( $rc != 0 ) {
+      $features->{'language_bool_is_keyword'} = 0;
+      verbose 2, "- bool is not a keyword";
+    }  
+  }
+}
+
+sub check_wchar_t_is_keyword
+{
+  my( $compiler, $features ) = @_;
+  
+  # See if wchar_t is a keyword in C++
+
+  if ( $compiler->{'lang'} eq 'cpp' ) {
+  
+    verbose 2, "Checking if wchar_t is a keyword in C++";
+  
+    my $source = wchar_keyword_source();
+  
+    my( $rc ) = compile_source( $compiler, $source );
+  
+    if ( $rc != 0 ) {
+      $features->{'language_wchar_t_is_keyword'} = 0;
+      verbose 2, "- wchar_t is not a keyword";
+    }  
+  }
+}
+
+sub check_wchar_t_type
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Try to get the type directly, by either pre-processing
+  # stddef.h (works for C), or looking at __WCHAR_TYPE__
+  # (works for GCC). I could not come up with a good way
+  # to determine the underlying type for C++, even WITH
+  # native binaries. Nothing worked reliably...
+
+  my $source = include_headers( 'stddef.h' );
+  
+  my ( $rc, $output ) = preprocess_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /\btypedef\s+(.*?)\s+wchar_t\s*;/ ) {
+      my $type = $1;
+      $type =~ s/\s+/ /g; # Compress whitespace
+      $features->{'target_wchar_t_int_kind'} = $type;
+    }
+  }
+  
+  # gcc defines __WCHAR_TYPE__ to give us the type directly
+  
+  my $macros =
+    expand_macros( $compiler, [ '__WCHAR_TYPE__' ], [ 'stddef.h' ] );
+  
+  if ( exists $macros->{'__WCHAR_TYPE__'} ) {
+    $features->{'target_wchar_t_int_kind'} = $macros->{'__WCHAR_TYPE__'};
+  }
+  
+  
+  # Try to figure out the size of wchar_t, in case we can't get
+  # the type directly. This will help us guess later, if we need
+  # to.
+
+  my $size = compiler_sizeof( $compiler, 'wchar_t', [ 'stddef.h' ] );
+  
+  if ( defined $size ) {
+    $features->{'target_sizeof_wchar_t'} = $size;
+  }
+
+  # Try to get the sign too - if we need to guess the type, this
+  # will help guess signed or unsigned. We try to get the sign
+  # with a native binary and with a constant expression trick.
+  
+  $source = wchar_sign_source();
+  
+  ( $rc, $output )
+    = compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /target_wchar_t_is_unsigned=(\d+)/ ) {
+      $features->{'target_wchar_t_is_unsigned'} = $1;
+    }
+  }
+  
+  # constant expression trick
+  
+  my $source1 = signed_wchar_source();
+  my $source2 = unsigned_wchar_source();
+    
+  my ( $rc1 ) = compile_source( $compiler, $source1 );
+  my ( $rc2 ) = compile_source( $compiler, $source2 );
+    
+  if ( $rc1 == 0 ) {
+    $features->{'target_wchar_t_is_unsigned'} = 0;
+  } elsif ( $rc2 == 0 ) {
+    $features->{'target_wchar_t_is_unsigned'} = 1;
+  }
+}
+
+sub check_wint_t_type
+{
+  my ( $compiler, $features ) = @_;
+  
+  # Try to get the type directly, by either pre-processing
+  # stddef.h (works for C), or looking at __WINT_TYPE__
+  # (works for GCC). I could not come up with a good way
+  # to determine the underlying type for C++, even WITH
+  # native binaries. Nothing worked reliably...
+
+  my $source = include_headers( 'stddef.h' );
+  
+  my ( $rc, $output ) = preprocess_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /\btypedef\s+(.*?)\s+wint_t\s*;/ ) {
+      my $type = $1;
+      $type =~ s/\s+/ /g; # Compress whitespace
+      $features->{'target_wint_t_int_kind'} = $type;
+    }
+  }
+  
+  # gcc defines __WINT_TYPE__ to give us the type directly
+  
+  my $macros =
+    expand_macros( $compiler, [ '__WINT_TYPE__' ], [ 'stddef.h' ] );
+  
+  if ( exists $macros->{'__WINT_TYPE__'} ) {
+    $features->{'target_wint_t_int_kind'} = $macros->{'__WINT_TYPE__'};
+  }
+  
+  
+  # Try to figure out the size of wint_t, in case we can't get
+  # the type directly. This will help us guess later, if we need
+  # to.
+
+  my $size = compiler_sizeof( $compiler, 'wint_t', [ 'stddef.h' ] );
+  
+  if ( defined $size ) {
+    $features->{'target_sizeof_wint_t'} = $size;
+  }
+
+  # Try to get the sign too - if we need to guess the type, this
+  # will help guess signed or unsigned. We try to get the sign
+  # with a native binary and with a constant expression trick.
+  
+  $source = wint_sign_source();
+  
+  ( $rc, $output )
+    = compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /target_wint_t_is_unsigned=(\d+)/ ) {
+      $features->{'target_wint_t_is_unsigned'} = $1;
+    }
+  }
+  
+  # constant expression trick
+  
+  my $source1 = signed_wint_source();
+  my $source2 = unsigned_wint_source();
+    
+  my ( $rc1 ) = compile_source( $compiler, $source1 );
+  my ( $rc2 ) = compile_source( $compiler, $source2 );
+    
+  if ( $rc1 == 0 ) {
+    $features->{'target_wint_t_is_unsigned'} = 0;
+  } elsif ( $rc2 == 0 ) {
+    $features->{'target_wint_t_is_unsigned'} = 1;
+  }
+}
+
+sub check_size_t_type
+{
+  my ( $compiler, $features ) = @_;
+  
+  # gcc defines __SIZE_TYPE__ to give us the type directly.
+  # xlc also defines it, but they do it wrong.
+  # So, do this first, and let the typedef check that comes
+  # after win.
+
+  my $macros =
+    expand_macros( $compiler, [ '__SIZE_TYPE__' ], [ 'stddef.h' ] );
+  
+  if ( exists $macros->{'__SIZE_TYPE__'} ) {
+    $features->{'target_size_t_int_kind'} = $macros->{'__SIZE_TYPE__'};
+  }
+  
+  # Try to get the type by either pre-processing stddef.h
+  # and looking for the typedef for size_t.
+  
+  my $source = include_headers( 'stddef.h' );
+  
+  my ( $rc, $output ) = preprocess_source( $compiler, $source );
+
+  if ( $rc == 0 ) {
+    if ( $output =~ /\btypedef\s+(.*?)\s+size_t\s*;/ ) {
+      my $type = $1;
+      $type =~ s/\s+/ /g; # compress whitespace
+      $features->{'target_size_t_int_kind'} = $type;
+    }
+  }
+  
+  # Try to figure out the size of size_t, in case we can't get
+  # the type directly. This will help us guess later, if we need
+  # to.
+  
+  my $size = compiler_sizeof( $compiler, 'size_t', [ 'stddef.h' ] );
+  
+  if ( defined $size ) {
+    $features->{'target_sizeof_size_t'} = $size;
+  }
+}
+
+sub check_ptrdiff_t_type
+{
+  my ( $compiler, $features ) = @_;
+  
+  # gcc defines __PTRDIFF_TYPE__ to give us the type directly.
+  # So, do this first, and let the typedef check that comes
+  # after win.
+
+  my $macros =
+    expand_macros( $compiler, [ '__PTRDIFF_TYPE__' ], [ 'stddef.h' ] );
+  
+  if ( exists $macros->{'__PTRDIFF_TYPE__'} ) {
+    $features->{'target_ptrdiff_t_int_kind'} = $macros->{'__PTRDIFF_TYPE__'};
+  }
+  
+  # Try to get the type by either pre-processing stddef.h
+  # and looking for the typedef for ptrdiff_t.
+  
+  my $source = include_headers( 'stddef.h' );
+  
+  my ( $rc, $output ) = preprocess_source( $compiler, $source );
+
+  if ( $rc == 0 ) {
+    if ( $output =~ /\btypedef\s+(.*?)\s+ptrdiff_t\s*;/ ) {
+      my $type = $1;
+      $type =~ s/\s+/ /g; # compress whitespace
+      $features->{'target_ptrdiff_t_int_kind'} = $type;
+    }
+  }
+  
+  # Try to figure out the size of ptrdiff_t, in case we can't get
+  # the type directly. This will help us guess later, if we need
+  # to.
+  
+  my $size = compiler_sizeof( $compiler, 'ptrdiff_t', [ 'stddef.h' ] );
+  
+  if ( defined $size ) {
+    $features->{'target_sizeof_ptrdiff_t'} = $size;
+  }
+}
+
+sub check_builtin_va_list_base_type
+{
+  my ( $compiler, $features ) = @_;
+  my ( $source, $rc, $output, $errout, $type);
+
+  verbose 2, "Checking for base type of __builtin_va_list";
+
+  $source = builtin_va_list_base_type_source();
+  
+  ( $rc, $output, $errout ) = compile_source( $compiler, $source );
+
+  if ($rc != 0) {
+    if ($errout =~ /error: cannot convert [`']([^']*)'/) {
+      $type = $1;
+      $type =~ s/[ \*]+//;
+      $features->{'target_builtin_va_list_base_type'} = "$type";
+      return;
+    }
+  }
+
+# Could not figure it out. Assume it's OK and be silent about it. It wasn't
+# an issue with older GCC versions and only showed up recently. Issuing a 
+# warning here would only confuse people.
+}
+
+sub check_misc_features
+{
+  my ( $compiler, $features ) = @_;
+
+  my ( $rc, $output );
+  
+  # Check for misc features
+
+  verbose 2, "Checking for misc feature: plain int bitfields are unsigned";
+  
+  my $source = plain_int_bitfield_source();
+
+  ( $rc, $output ) =
+    compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /target_plain_int_bit_field_is_unsigned=(\d+)/ ) {
+      $features->{'target_plain_int_bit_field_is_unsigned'} = $1;
+    } else {
+      verbose 2, "- Unknown plain int bitfields (unexpected output)";
+    }
+  }
+  
+  ####################
+  
+  verbose 2, "Checking for misc feature: enums in bitfields";
+  
+  $source = enum_bitfield_source();
+
+  ( $rc, $output ) =
+    compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /target_enum_bit_fields_are_always_unsigned=(\d+)/ ) {
+      $features->{'target_enum_bit_fields_are_always_unsigned'} = $1;
+    } else {
+      verbose 2, "- Unknown enums in bitfields (unexpected output)";
+    }
+  }
+
+  ##########
+  
+  verbose 2, "Checking for misc feature: friend injection";
+
+  $source = friend_injection_source();
+  
+  ( $rc ) = compile_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    $features->{'language_friend_injection_enabled'} = 1;
+  }
+
+  ##########
+
+  verbose 2, "Checking for misc feature: old for scope";
+  
+  $source = old_for_scope_source();
+  
+  ( $rc ) = compile_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    $features->{'language_use_nonstandard_for_init_scope'} = 1;
+  }
+  
+  ##########
+  
+#  verbose 2, "Checking for misc feature: enums can be smaller than int";
+#  
+#  $source = small_enum_source();
+#  
+#  ( $rc, $output ) =
+#    compile_source_and_run( $compiler, $source );
+#  
+#  if ( $rc == 0 ) {
+#    if ( $output =~ /target_enum_types_can_be_smaller_than_int=(\d+)/ ) {
+#      $features->{'target_enum_types_can_be_smaller_than_int'} = $1;
+#    }
+#  }
+  
+  ####################
+  
+  verbose 2, "Checking if string literals are const";
+  
+  $source = const_string_source();
+  
+  ( $rc ) = compile_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    $features->{'language_string_literals_are_const'} = 0;
+  }
+  
+  ####################
+  
+  verbose 2, "Checking if string literals are readonly";
+  
+  $source = readonly_string_source();
+  
+  ( $rc, $output ) =
+    compile_source_and_run( $compiler, $source );
+  
+  if ( $rc != 0 || $output eq "1" ) {
+    $features->{'target_string_literals_are_readonly'} = 1;
+  } else {
+    $features->{'target_string_literals_are_readonly'} = 0;
+  }
+  
+  ####################
+  
+  verbose 2, "Checking if dollars are allowed in identifiers";
+  
+  $source = dollar_in_ids_source();
+ 
+  ( $rc ) = compile_source( $compiler, $source );
+  
+  if ( $rc != 0 ) {
+    $features->{'language_allow_dollar_in_id_chars'} = 0;
+  }
+
+  ####################
+  
+  if ( $compiler->{'lang'} eq 'c' ) {
+    verbose 2, "Checking if end-of-line comments are allowed in C code";
+    
+    $source = end_of_line_comments_source();
+    
+    ( $rc ) = compile_source( $compiler, $source );
+    
+    if ( $rc != 0 ) {
+      $features->{'language_end_of_line_comments_allowed'} = 0;
+    }
+  }
+ 
+  ####################
+  
+  verbose 2, "Checking if leading/trailing spaces are allowed in include directives";
+  
+  my $name = write_temp_file("int a;", "h");
+  $name = fn_path_to_ext( $name );
+  
+  $source = spaces_in_include_directive($name);
+
+  ( $rc ) = compile_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    $features->{'language_allow_spaces_in_include_directive'} = 1;
+  }
+
+  ####################
+  
+  verbose 2, "Checking if the restrict keyword is allowed by default";
+  
+  $source = restrict_keyword_source();
+  
+  ( $rc ) = compile_source( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    $features->{'language_restrict_keyword_enabled'} = 1;
+  }
+
+  ####################
+  
+  if ( $compiler->{'lang'} eq 'c' ) {
+    verbose 2, "Checking if anonymous unions are accepted";
+  
+    $source = anonymous_union_source();
+  
+    ( $rc ) = compile_source( $compiler, $source );
+  
+    if ( $rc != 0 ) {
+      $features->{'language_allow_nonstandard_anonymous_unions'} = 0;
+    }
+  }
+
+  ####################
+  
+  verbose 2, "Checking if trigraphs are recognized and converted";
+  
+  $source = trigraph_source();
+  
+  ( $rc, $output ) = preprocess_source( $compiler, $source );
+  
+  # If any of the two suspect character sequences has been changed we
+  # take that as "trigraphs are supported". This is to better support
+  # busted compilers like "cc" on USS which can handle trigraphs outside
+  # character strings only.
+  if ( $rc == 0 ) {
+    if ( $output =~ /\"\?\?\=\"/ && $output =~ /\?\?\!/ ) {
+      # Not supported
+      $features->{'language_trigraphs_allowed'} = 0;
+    } else {
+      # Supported - "??=" was converted to "#"
+      $features->{'language_trigraphs_allowed'} = 1;
+    }
+  }
+
+  ####################
+  
+  if ( exists $features->{'xlc'} ||
+       exists $features->{'vac'} ||
+       exists $features->{'vacwin'} ) {
+    foreach my $key ( @decl_keywords ) {
+      verbose 2, "Checking whether $key is accepted";
+  
+      $source = decl_keyword_source($key);
+  
+      ( $rc ) = compile_source( $compiler, $source );
+  
+      if ( $rc == 0 ) {
+        $features->{$key} = "1";
+      }
+    }
+  }
+
+  ####################
+  
+  verbose 2, "Checking for standard predefined macros";
+  my $defined_macros = {};
+  my $macro_list = $standard_predefined_macros{$compiler->{'lang'}};
+
+  expand_macros_preproc( $compiler, $defined_macros, $macro_list, [] );
+
+  my %actually_defined = %$defined_macros;
+  my $undefs = "";
+  foreach my $macro ( @$macro_list ) {
+    if ( ! exists $actually_defined{$macro} ) {
+      $undefs .= " $macro";
+    }
+  }
+  if ($undefs ne "") {
+    $features->{'undefined_standard_macros'} = $undefs;
+  }
+
+  ####################
+
+  foreach my $name ( @predefined_function_names ) {
+    verbose 2, "Checking whether compiler defines $name";
+  
+    $source = function_name_defined( $name );
+
+    ( $rc ) = compile_source( $compiler, $source );
+  
+    if ( $rc == 0 ) {
+      $source = function_name_is_string_literal( $name );
+      ( $rc ) = compile_source( $compiler, $source );
+      if ( $rc == 0 ) {
+        $features->{"function_name_is_string_literal($name)"} = "1";
+      } else {
+        $features->{"function_name_is_string_literal($name)"} = "0";
+      }
+    } else {
+        $features->{"function_name_is_string_literal($name)"} = "undef";
+    }
+  }
+}
+
+####################
+
+sub find_macros
+{
+  my ( $compiler, @dirs ) = @_;
+  
+  my $macros = {};
+  my $before;
+  my $num;
+
+  verbose 1, "Looking for predefined macros (this may take a while)...";
+  
+  # Search for macros in two ways
+
+  # - First, try the compiler support for spitting out
+  #   macro definitions
+  
+  verbose 2, "- Searching for macros with the compiler flags";
+  
+  $before = scalar( keys %$macros );
+  
+  compiler_macros( $compiler, $macros );
+  
+  $num = scalar( keys %$macros ) - $before;
+  
+  verbose 2, "- Found $num macro(s) with the compiler flags";
+  
+  # - Second, look in all header files in @dirs for identifiers
+  #   and expand them all
+
+  my $dirnum = scalar @dirs;
+  
+  verbose 2, "- Searching $dirnum directories for headers containing macros";
+  
+  $before = scalar( keys %$macros );
+  
+  header_macros( $compiler, $macros, @dirs );
+  
+  $num = scalar( keys %$macros ) - $before;
+  
+  verbose 2, "- Found $num macro(s) by searching header files";
+  
+  $num = scalar( keys %$macros );
+  verbose 1, "- Found $num predefined macro(s)";
+  
+  if ( $num == 0 ) {
+    print STDERR "\n";
+    print STDERR "Warning: No predefined macros were found. You will\n";
+    print STDERR "         need to add them to the configuration file manually.\n";
+  }
+
+  return $macros;
+}
+
+####################
+
+# Return a string for setting the var to the val in the
+# language's namespace.
+sub set_var
+{
+  my( $lang, $var, $val ) = @_;
+
+  return "set beam::compiler::${lang}::${var} $val\n";
+}
+
+# Return a string for setting the var to the val in the
+# language's namespace. The value is quoted. The width
+# is optional, and if given, will be the minimum space
+# taken up by the variable's name.
+sub set_qvar
+{
+  my( $lang, $var, $val, $width ) = @_;
+
+  $width = 0 unless defined $width;
+  
+  $var = sprintf("%-${width}s", $var);
+  
+  if ( $val =~ /\"/ ) {
+    $val = "{$val}";
+  } else {
+    $val = qq{"$val"};
+  }
+  
+  return set_var($lang, $var, $val);
+}
+
+sub write_template_config_file
+{
+  my ( $lang, $file ) = @_;
+
+  if ( $lang eq "c" || $lang eq "cpp" ) {
+    write_c_cpp_template_config_file( $lang, $file );
+  } elsif ( $lang eq "java" ) {
+    write_java_template_config_file( $file );
+  } else {
+    die "Internal Error: unknown language $lang\n";
+  }
+}
+
+sub write_c_cpp_template_config_file
+{
+  my ( $lang, $file ) = @_;
+  
+  # Write out a C or C++ template config file that can be filled in
+  # by the user.
+
+  my $template_config = {
+    TEMPL_NS                    => "beam::compiler::$lang",
+    TEMPL_VERSION               => $version,
+    TEMPL_COMPILER_PATH         => 'Template Configuration File',
+    TEMPL_CONFIGURE_INVOCATION  => 'Template Configuration File',
+    TEMPL_GENERATED             => q[],
+    TEMPL_CC                    => set_qvar($lang, "cc", "default"),
+    TEMPL_GNU_MODE              => q[],
+    TEMPL_MSVC_MODE             => q[],
+    TEMPL_LANGUAGE_MISC         => q[],
+    TEMPL_SYSTEM_INCLUDE_PATH   => q[],
+    TEMPL_TARG_FEATURES         => q[],
+    TEMPL_PREDEFINED_MACROS     => q[],
+    TEMPL_STANDARD_EXCEPTIONS   => q[],
+    TEMPL_EXTERN                => q[],
+    TEMPL_FUNCTION_NAME         => q[],
+  };
+
+  my $text = translate_template( $template_c_cpp_config_file,
+                                 $template_config );
+
+  write_file( $file, $text );
+  
+  printf( "Template %s configuration written to '%s'\n",
+          $lang eq 'c' ? 'C' : 'C++', $file );
+}
+
+sub write_java_template_config_file
+{
+  my ( $file ) = @_;
+  
+  # Write out a Java template config file that can be filled in
+  # by the user.
+  
+  my $template_config = {
+    TEMPL_VERSION               => $version,
+    TEMPL_COMPILER_PATH         => 'Template Configuration File',
+    TEMPL_CONFIGURE_INVOCATION  => 'Template Configuration File',
+    TEMPL_GENERATED             => q[],
+    TEMPL_CC                    => set_qvar("java", "cc", "default"),
+    TEMPL_LANGUAGE_SOURCE_LEVEL => set_var("java", "language_source_level", "1.4"),
+    TEMPL_LANGUAGE_ENCODING     => q[],
+    TEMPL_SYSTEM_ENDORSED_DIRS  => q[],
+    TEMPL_SYSTEM_BOOT_CLASSPATH => q[],
+    TEMPL_SYSTEM_EXT_DIRS       => q[],
+  };
+
+  my $text = translate_template( $template_java_config_file,
+                                 $template_config );
+  
+  write_file( $file, $text );
+  
+  print( "Template Java configuration written to '$file'\n" );
+}
+
+sub write_c_cpp_config_file
+{
+  my ( $file, $dirs, $features, $macros ) = @_;
+
+  # Set up the template configuration and translate the template.
+  # The, write the config file out.
+
+  my $template_config = {};
+  
+  my $lang = $features->{'lang'};
+  my $ns = "beam::compiler::${lang}";
+  
+  # Set up the version
+  
+  $template_config->{'TEMPL_VERSION'} = $version;
+  
+  # Set up the template namespace
+
+  $template_config->{'TEMPL_NS'} = $ns;
+
+  # Set up our invocation
+  
+  $template_config->{'TEMPL_CONFIGURE_INVOCATION'} = $invocation;
+  
+  # Set up the compiler's full path
+  
+  if ( $features->{'testing_mode'} ) {
+    $template_config->{'TEMPL_COMPILER_PATH'} = 'testing mode';
+  } else {
+    $template_config->{'TEMPL_COMPILER_PATH'} =
+      fn_path_to_ext( $features->{'compiler_path'} );
+  }
+  
+  # Indicate that this file was generated
+  $template_config->{'TEMPL_GENERATED'} = set_qvar($lang, "generated_by_beam_configure", $version);
+  
+  # Set up the compiler, if it is known
+  
+  my $cc = "default";
+  
+  foreach my $try ( qw(gcc xlc vac msvc vacwin icc zosvac) ) {
+    if ( exists $features->{$try} ) {
+      $cc = $try;
+      last;
+    }
+  }
+  
+  $template_config->{'TEMPL_CC'} = set_qvar($lang, "cc", $cc);
+  
+  # Set up the language mode - gnu?
+  
+  $template_config->{'TEMPL_GNU_MODE'} = '';
+  
+  if ( exists $features->{'gnu_mode'} ) {
+    
+    # Ensure a minimum of 30200
+    my $ver = $features->{'gnu_mode'};
+    
+    if ( $ver < 30200 ) {
+      print STDERR "\n";
+      print STDERR "Warning: GNU version '$ver' is smaller than the minimum\n";
+      print STDERR "         supported version of '30200'. '30200' will be used,\n";
+      print STDERR "         and may work with your compiler's headers, but\n";
+      print STDERR "         this configuration may cause problems.\n";
+      
+      $ver = 30200;
+    }
+    
+    $template_config->{'TEMPL_GNU_MODE'} = set_var($lang, "gnu_mode", $ver);
+  }
+  
+  # msvc?
+  
+  $template_config->{'TEMPL_MSVC_MODE'} = '';
+
+  if ( exists $features->{'msvc'} ) {
+    
+    # Ensure a minimum of 700
+    my $ver = $features->{'msvc'};
+    
+    if ( $ver < 700 ) {
+      print STDERR "\n";
+      print STDERR "Warning: MSVC version '$ver' is smaller than the minimum\n";
+      print STDERR "         supported version of '700'. '700' will be used,\n";
+      print STDERR "         and may work with your compiler's headers, but\n";
+      print STDERR "         this configuration may cause problems.\n";
+      
+      $ver = 700;
+    }
+    
+    $template_config->{'TEMPL_MSVC_MODE'} = set_var($lang, "msvc_mode", $ver);
+  }
+  
+  # VisualAge for Windows requires a msvc_mode of 1400
+  
+  if ( exists $features->{'vacwin'} ) {
+    $template_config->{'TEMPL_MSVC_MODE'} = set_var($lang, "msvc_mode", "1400");
+  }  
+
+  # Miscellaneous language features
+  
+  my $lang_feature_string = "";
+  
+  foreach my $feat ( sort keys %$features ) {
+    # Only look at language_* features for this section
+    next unless $feat =~ /^language_/;
+    
+    $lang_feature_string .= set_qvar($lang,
+                                     $feat,
+                                     $features->{$feat},
+                                     50);
+  }
+  
+  $template_config->{'TEMPL_LANGUAGE_MISC'} = $lang_feature_string;
+  
+  
+  # Set up the sys include path. Translate these to external paths.
+  
+  my $system_include_path_string = "";
+  
+  if ( exists $features->{'msvc'} || exists $features->{'vacwin'} ) {
+    # These rely solely on the environment variable INCLUDE for the system include path
+    $system_include_path_string = env_system_include_path($lang);
+  } else {
+    foreach my $dir ( @$dirs ) {
+      # xlC sometimes finds headers in /usr/include/sys, which is bad - skip that dir
+      if ( $dir ne "/usr/include/sys" ) {
+        $dir = fn_path_to_ext( $dir );
+        $system_include_path_string .=
+          "lappend ${ns}::system_include_path {$dir}\n";
+      }
+    }
+  }
+    
+  $template_config->{'TEMPL_SYSTEM_INCLUDE_PATH'} = $system_include_path_string;
+  
+  # Set up the features
+  
+  my $feature_string = "";
+  
+  foreach my $feat ( sort keys %$features ) {
+    # Only look at target_* features for this section
+    next unless $feat =~ /^target_/;
+
+    $feature_string .= set_qvar($lang,
+                                $feat,
+                                $features->{$feat},
+                                50);
+  }
+  
+  $template_config->{'TEMPL_TARG_FEATURES'} = $feature_string;
+  
+  # Set up the predefined macros
+  
+  my @predefined_macros;
+
+  # For MSVC, ignore __pragma - it's nasty and doesn't expand right. It's
+  # not a macro, so we can toss it.
+  
+  if ( exists $features->{'msvc'} ) {
+    delete $macros->{'__pragma'};
+  }
+  
+  foreach my $macro ( sort keys %$macros ) {    
+    push @predefined_macros, predefined_macro_text( $lang,
+                                                    $macro,
+                                                    $macros->{$macro} );
+  }
+
+  # For all GCC versions, treat __builtin_expect to just expand
+  # to its first argument. This is so BEAM knows that the value
+  # returned is the same as the value given.
+  
+  if ( exists $features->{'gcc'} ) {
+    push @predefined_macros, predefined_macro_text( $lang,
+                                                    '__builtin_expect(_x,_y)',
+                                                    '(_x)' );
+  }
+
+  # For vac or xlc, define __offsetof(type, member) because it is built-in
+  # to the compiler. Also define __vastart(arg), which is also built-in.
+  
+  if ( exists $features->{'xlc'} || exists $features->{'vac'} ) {
+    push @predefined_macros,
+      predefined_macro_text( $lang,
+                             '__offsetof(_t,_m)',
+                             '__INTADDR__(&(((_t *)0)->_m))' ),
+      predefined_macro_text( $lang,
+                             '__vastart(_a)',
+                             '((va_list)(&(_a)))' );
+  }
+  
+  # For zosvac, define __offsetof(type, member) because it is built-in
+  # to the compiler. Also define misc other macros to define away certain
+  # keywords which we're too lazy to test for explicitly.
+  
+  if ( exists $features->{'zosvac'} ) {
+    push @predefined_macros,
+      predefined_macro_text( $lang,
+                             '__offsetof(_t,_m)',
+                             '(__SIZE_TYPE__)&(((_t *)0)->_m)' );
+    foreach my $key ( @zosvac_keywords ) {
+      push @predefined_macros,
+        predefined_macro_text( $lang,
+                               $key,
+                               ' ' x length($key) );
+    }
+  }
+
+  # Add in any decl keywords that were discovered
+  
+  foreach my $key ( @decl_keywords ) {
+    if ( exists $features->{$key} ) {
+      push @predefined_macros,
+        predefined_macro_text( $lang,
+                               $key,
+                               ' ' x length($key) );
+    }
+  }
+  
+  # For vac 7 and higher, define __BUILD_RT__, which according to
+  # the v7 headers, removes constructs that we can't handle, like
+  # _ExternStaticBuiltin decl...
+  
+  if ( exists $features->{'vac'} && $features->{'vac'} >= 0x0700 ) {
+    push @predefined_macros, predefined_macro_text( $lang,
+                                                    '__BUILD_RT__',
+                                                    '1' );
+  }
+  
+  # Add all the macros to the template
+  
+  $template_config->{'TEMPL_PREDEFINED_MACROS'} =
+    join( '', @predefined_macros );
+
+  # Add standard exceptions
+  
+  $template_config->{'TEMPL_STANDARD_EXCEPTIONS'} = '';
+
+  if ( exists $features->{'undefined_standard_macros'} ) {
+    my $macros = $features->{'undefined_standard_macros'};
+    $template_config->{'TEMPL_STANDARD_EXCEPTIONS'} =
+      set_var($lang, "standard_predefined_macros", qq{"* - $macros"});
+  }
+
+  # Set up the extern for xlc and vac
+  
+  $template_config->{'TEMPL_EXTERN'} = "";
+  
+  if ( exists $features->{'vac'} ||
+       exists $features->{'xlc'} ||
+       exists $features->{'vacwin'} ) {
+    $template_config->{'TEMPL_EXTERN'} = set_qvar($lang, "extern(builtin)", "C");
+  }
+
+  # Set up the extern for zosvac
+  if ( exists $features->{'zosvac'} ) {
+    foreach my $name ( qw(builtin OS os PLI) ) {
+      $template_config->{'TEMPL_EXTERN'} .= set_qvar($lang, "extern($name)", "C");
+    }
+  }
+  
+  # Set up predefined function_names
+
+  $template_config->{'TEMPL_FUNCTION_NAME'} = "";
+  foreach my $name ( @predefined_function_names ) {
+    my $var = "function_name_is_string_literal($name)";
+    my $val = $features->{$var};
+
+    if ( "$val" ne "undef" ) {
+      $template_config->{'TEMPL_FUNCTION_NAME'} .= set_var($lang, $var, $val);
+    }
+  }
+
+  # Done - write the config file
+  
+  my $text = translate_template( $template_c_cpp_config_file,
+                                 $template_config );
+
+  write_file( $file, $text );
+  
+  print "Configuration written to '$file'\n";
+}
+
+sub write_java_config_file
+{
+  my ( $file, $properties ) = @_;
+
+  # Set up the template configuration and translate the template.
+  # Then, write the config file out.
+  
+  my $template_config = {};
+  
+  my $ns = "beam::compiler::java";
+  
+  my $value;
+  my @items;
+  
+  # Set up the version
+  
+  $template_config->{'TEMPL_VERSION'} = $version;
+  
+  # Set up our invocation
+  
+  $template_config->{'TEMPL_CONFIGURE_INVOCATION'} = $invocation;
+  
+  # Set up the compiler's full path
+  
+  $template_config->{'TEMPL_COMPILER_PATH'} =
+    fn_path_to_ext( $properties->{'compiler_path'} );
+
+  # Indicate that this file was generated
+  $template_config->{'TEMPL_GENERATED'} = set_qvar("java", "generated_by_beam_configure", $version);
+  
+  # Set up the compiler
+  
+  # FIXME: Detect IBM and Sun JVMs here?
+  
+  $template_config->{'TEMPL_CC'} = set_qvar("java", "cc", "javac");
+  
+  # Set up the language source level
+
+  $value = "";
+  
+  if ( exists $properties->{'language_source_level'} ) {
+    $value = set_qvar("java",
+                      "language_source_level",
+                      $properties->{'language_source_level'});
+  }
+
+  $template_config->{'TEMPL_LANGUAGE_SOURCE_LEVEL'} = $value;  
+
+  # Set up the language encoding
+
+  $value = "";
+  
+  if ( exists $properties->{'language_encoding'} ) {
+    $value = set_qvar("java",
+                      "language_encoding", 
+                      $properties->{'language_encoding'} );
+  }
+  
+  $template_config->{'TEMPL_LANGUAGE_ENCODING'} = $value;
+
+  # Set up the endorsed directories
+  # These are straight from Java, so they are external already.
+
+  @items = ();
+  
+  foreach my $dir ( @{ $properties->{'system_endorsed_dirs'} } ) {
+    push @items,
+      sprintf( "lappend ${ns}::system_endorsed_dirs {%s}\n", $dir );
+  }
+  
+  $template_config->{'TEMPL_SYSTEM_ENDORSED_DIRS'} = join '', @items;
+
+  # Set up the boot classpath
+  # This is straight from Java, so they are external already.  
+
+  @items = ();
+  
+  foreach my $path ( @{ $properties->{'system_boot_classpath'} } ) {
+    push @items, sprintf( "lappend ${ns}::system_boot_classpath {%s}\n", $path );
+  }
+  
+  $template_config->{'TEMPL_SYSTEM_BOOT_CLASSPATH'} =
+    join '', @items;
+  
+  # Set up the extension directories
+  # These are straight from Java, so they are external already.
+
+  @items = ();
+
+  foreach my $dir ( @{ $properties->{'system_ext_dirs'} } ) {
+    push @items, sprintf( "lappend ${ns}::system_ext_dirs {%s}\n", $dir );
+  }
+  
+  $template_config->{'TEMPL_SYSTEM_EXT_DIRS'} = join '', @items;
+  
+  # Done - write the config file
+  
+  my $text = translate_template( $template_java_config_file,
+                                 $template_config );
+
+  write_file( $file, $text );
+  
+  print "Configuration written to '$file'\n";
+}
+
+####################
+# Template translation
+
+sub translate_template
+{
+  my ( $template, $config ) = @_;
+
+  # Take each key in $config and replace that text in the template
+  # with the value in the config hash.
+  
+  foreach my $opt ( keys %$config ) {
+    my $val = $config->{$opt};
+    
+    $template =~ s/\Q$opt\E/$val/g;
+  }
+  
+  return $template;
+}
+    
+####################
+# Macro utilities
+
+sub predefined_macro_text
+{
+  my ( $lang, $macro, $value ) = @_;
+  
+  # Create the text for defining a macro in the config file
+  
+  my $varname = sprintf( "beam::compiler::${lang}::predefined_macro(%s)", $macro );
+  
+  my $text    = sprintf( "set %-55s {%s}\n", $varname, $value );
+  
+  return $text;
+}
+
+sub expand_macros
+{
+  my ( $compiler, $macro_list, $include_list ) = @_;
+  
+  # Try to expand the macros using both the preprocessor and
+  # native executables to be thorough. Return a hash that
+  # contains the macros that were expanded.
+
+  my $num = scalar( @$macro_list );
+  verbose 2, "Trying to expand $num macros any way we can";
+  
+  my $macros = {}; # This will be filled in
+  
+  expand_macros_preproc( $compiler, $macros, $macro_list, $include_list );
+  expand_macros_binary( $compiler, $macros, $macro_list, $include_list );
+
+  $num = scalar( keys %$macros );
+  verbose 2, "- Expanded $num macros";
+  
+  return $macros;
+}
+
+sub expand_macros_preproc
+{
+  my ( $compiler, $macros, $macro_list, $include_list ) = @_;
+
+  # Use the preprocessor to expand the macros
+
+  verbose 2, "Trying macro expansions with the preprocessor";
+
+  # Default to an empty list to ease logic
+  $macro_list = [] unless defined $macro_list;
+  
+  # Since there may be many identifiers to try, they should
+  # be done in chunks. This is because building up the source
+  # file in memory, then getting the output from the preprocessor,
+  # might amount to a couple of pretty large strings.
+  
+  my $num_macros = scalar( @$macro_list );
+  my $i = 0;
+  
+  while ( $i < $num_macros ) {
+    my $source = "";
+
+    $source .= include_headers( @$include_list );
+  
+    # Add one line for each macro. The string is so
+    # that portion isn't expanded and we can find it
+    # in the pre-processing output. The beam_end is
+    # so we can find multi-line macros.
+
+    # Walk up the part of the list between $i and $i + 2000,
+    # making sure not to go off the end
+    
+    my $next_i = $i + 2000;
+    
+    for ( ; $i < $num_macros && $i < $next_i; $i++ ) {
+      $source .= macro_preproc_expansion_source( $macro_list->[$i] );
+    }
+
+    my ( $rc, $output ) = preprocess_source( $compiler, $source );
+  
+    # Search the output for the expanded macros
+  
+    if ( $rc == 0 ) {
+      gather_macro_expansions( $output, $macros );
+    }
+  }
+}
+
+sub expand_macros_binary
+{
+  my ( $compiler, $macros, $macro_list, $include_list ) = @_;
+  
+  # Compile a binary to expand the macros
+
+  verbose 2, "Trying macro expansions with a native binary";
+  
+  # Since there may be many identifiers to try, they should
+  # be done in chunks. This is because building up the source
+  # file in memory, then getting the output from the preprocessor,
+  # might amount to a couple of pretty large strings.
+  
+  my $num_macros = scalar( @$macro_list );
+  my $i = 0;
+  
+  while ( $i < $num_macros ) {
+    my $source = "";
+  
+    $source .= include_headers( @$include_list );
+
+    # Add our magic expansion macros that use a double-expansion
+    # trick to get the stringified expansion of things
+    #
+    # The problem with the obvious:
+    #
+    #   #define str(x) #x
+    #   printf("#define foo %s\n", str(foo));
+    #
+    # is that it prints:
+    #
+    #   #define foo foo
+    #
+    # i.e. you get the stringification before expansion. This trick
+    # gets around that:
+    #
+    #   #define str1(x) #x
+    #   #define str(x) str1(x)
+    #   printf("#define foo %s\n", str(foo));
+    #
+    # This header also adds the first part of main()
+
+    $source .= macro_header_source();
+
+    # Walk up the part of the list between $i and $i + 2000,
+    # making sure not to go off the end. Add a line for
+    # each macro we want to test.
+    
+    my $next_i = $i + 2000;
+    
+    for ( ; $i < $num_macros && $i < $next_i; $i++ ) {
+      $source .= macro_test_source( $macro_list->[$i] );
+    }
+   
+    # End the main()
+    $source .= macro_footer_source();
+
+    # Compile the source and run the binary
+
+    my ( $rc, $output ) =
+      compile_source_and_run( $compiler, $source );
+  
+    if ( $rc == 0 ) {
+      gather_macro_expansions( $output, $macros );
+    }
+  }
+}
+
+sub gather_macro_expansions
+{
+  my ( $output, $macros ) = @_;
+  
+  # Search through the output for the format we use
+  # to delimit macro expansions and set them up 
+  # in the hash ref
+  
+  while ( $output =~ /\s*"beam_macro ($identifier_re)"(.*?)"beam_end"/ogs ) {
+    my $id = $1;
+    my $exp = $2;
+    
+    # Trim whitespace
+    $exp =~ s/^\s+//;
+    $exp =~ s/\s+$//;
+
+    # Make sure it expanded
+    if ( $id ne $exp ) {
+      # If it has already been expanded, make sure the expansions match
+      if ( exists $macros->{$id} ) {
+        if ( $macros->{$id} ne $exp ) {
+          print STDERR "\n";
+          print STDERR "Warning: Expansion of macro '$id' has changed...\n";
+	  print STDERR "         This is very odd...\n";
+        }
+      }
+      
+      # Save this expansion
+      $macros->{$id} = $exp;
+      
+      verbose 2, "- Macro '$id' expanded to '$exp'";
+    }
+  }
+}
+
+sub compiler_macros
+{
+  my ( $compiler, $macros ) = @_;
+  
+  # Run the compiler macro flags, and get the output.
+  # Search through the output for macro definitions.
+  
+  my ( $rc, $output ) = compile_get_macros( $compiler );
+  
+  if ( $rc == 0 ) {
+    # Search through output for macros, filtering out the ones
+    # we should be ignoring
+
+    # Look for '#define id value'
+    while ( $output =~ /^[ \t]*#[ \t]*define[ \t]+($identifier_re)[ \t]*([^\r\n]*)\r?$/gom ) {
+      if ( ! exists $macros_to_ignore{$1} ) {
+        $macros->{$1} = $2;
+        verbose 2, "- Compiler Macro '$1' expands to '$2'";
+      }
+    }
+  }
+}
+
+sub header_macros
+{
+  my ( $compiler, $macros, @dirs ) = @_;
+  
+  # Search for headers in each directory in @dirs. For each
+  # header found, search in the header for identifiers that
+  # could be macro names. Try to expand each of those, and
+  # place the ones that do expand into %$macros.
+  
+  my @headers = find_header_files( @dirs );
+  
+  my @to_expand_before = find_identifiers( @headers );
+
+  # Filter-out unwanted macros
+
+  my @to_expand;
+  
+  foreach my $m ( @to_expand_before ) {
+    if ( ! exists $macros_to_ignore{$m} ) {
+      push @to_expand, $m;
+    }
+  }
+  
+  # Add in additional macros
+  
+  push @to_expand, @macros_to_try;
+  
+  # Expand what's left...
+  
+  my $expanded_macros = expand_macros( $compiler, \@to_expand );
+  
+  # Copy the macros into $macros
+  
+  foreach my $m ( keys %$expanded_macros ) {
+    $macros->{$m} = $expanded_macros->{$m};
+  }
+}
+  
+####################
+# Sizeof and alignof utilities
+
+sub compiler_sizeof
+{
+  my ( $compiler, $type, $header_list ) = @_;
+  
+  # Try to determine the type's size in two ways:
+  #
+  # - If we can compile native binaries, we can simply
+  #   print out the size using sizeof()
+  #
+  # - If we can't compile native binaries, we can try
+  #   a trick with constant expressions:
+  #
+  #     int array[ (sizeof(type) == 4) ? 1 : -1 ];
+  #
+  #   Most compilers will succeed compiling that if
+  #   the size is 4, and fail otherwise, because the
+  #   array will be declared with a bound of -1. We
+  #   can try this with 2, 4, 8, 12, 16, 20, 24... slow,
+  #   but better than nothing.
+
+  verbose 2, "Determining sizeof($type) with a native binary";
+  
+  my $source = "";
+  
+  $source .= include_headers( @$header_list );
+  $source .= runtime_sizeof_source( $type );
+    
+  my ( $rc, $output ) =
+    compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /(\d+)/ ) {
+      verbose 2, "- Native binary says sizeof($type) == $1";
+      return $1;
+    } else {
+      verbose 2, "- Native binary sizeof failed (unexpected output)";
+    }
+  }
+  
+  # Try with slow magic... replace BEAM_SIZE in the template
+  # with some sizes and see if it ever compiles successfully.
+  # If it does, the size should be right.
+  #
+  # Note: If the compiler doesn't support this trick, I won't
+  # waste my time
+  
+  if ( defined $compiler->{'constant_expression_trick'} &&
+       $compiler->{'constant_expression_trick'} eq 'yes' ) {
+    # Give it a try
+  } else {
+    verbose 2, "- Size could not be determined for type";
+    verbose 2, "   (skipping constant expression trick)";
+    return undef;
+  }
+  
+  verbose 2, "Determining sizeof($type) with a constant expression trick";
+  
+  $source = "";
+  
+  $source .= include_headers( @$header_list );
+  $source .= template_sizeof_source( $type );
+    
+  foreach my $num ( qw(2 4 8 12 16 20 24) ) {
+    my $tmpsource = $source;
+    $tmpsource =~ s/\bBEAM_SIZE\b/$num/;
+    
+    ( $rc ) = compile_source( $compiler, $tmpsource );
+    
+    if ( $rc == 0 ) {
+      verbose 2, "- Constant expression magic worked for $num";
+      return $num;
+    } else {
+      verbose 2, "- Constant expression trick failed for $num";
+    }
+  }
+  
+  verbose 2, "- Size could not be determined for type '$type'";
+  return undef;
+}
+
+sub compiler_alignof
+{
+  my ( $compiler, $type ) = @_;
+  
+  # Try to determine the alignment in two ways:
+  #
+  # - If we can compile native binaries, we can simply
+  #   print out the alignment using a macro that tests
+  #   the offset in a structure
+  #
+  # - If we cacn't compile native binaries, we can simply
+  #   use a trick with constant expressions (see compiler_sizeof)
+  
+  verbose 2, "Determining alignof($type) with a native binary";
+  
+  my $source = "";
+  
+  $source .= runtime_alignof_source( $type );
+    
+  my ( $rc, $output ) =
+    compile_source_and_run( $compiler, $source );
+  
+  if ( $rc == 0 ) {
+    if ( $output =~ /(\d+)/ ) {
+      verbose 2, "- Native binary says alignof($type) == $1";
+      return $1;
+    } else {
+      verbose 2, "- Native binary alignof failed (unexpected output)";
+    }
+  }
+
+  # Try with slow magic... replace BEAM_ALIGN in the template
+  # with some sizes and see if it ever compiles successfully.
+  # If it does, the alignment should be right.
+  #
+  # Note: If the compiler doesn't support this trick, I won't
+  # waste my time
+  
+  if ( defined $compiler->{'constant_expression_trick'} &&
+       $compiler->{'constant_expression_trick'} eq 'yes' ) {
+    # Give it a try
+  } else {
+    verbose 2, "- Alignment could not be determined for type";
+    verbose 2, "   (skipping constant expression trick)";
+    return undef;
+  }
+  
+  verbose 2, "Determining alignof($type) with a constant expression trick";
+  
+  $source = "";
+  
+  $source .= template_alignof_source( $type );
+    
+  foreach my $num ( qw(2 4 8 12 16 20 24) ) {
+    my $tmpsource = $source;
+    $tmpsource =~ s/\bBEAM_ALIGN\b/$num/;
+    
+    ( $rc ) = compile_source( $compiler, $tmpsource );
+    
+    if ( $rc == 0 ) {
+      verbose 2, "- Constant expression magic worked for $num";
+      return $num;
+    } else {
+      verbose 2, "- Constant expression trick failed for $num";
+    }
+  }
+  
+  verbose 2, "- Alignment could not be determined for type '$type'";
+  return undef;
+}
+
+####################
+# Source utilities
+
+sub test_preproc_c_source
+{
+  my $source = <<'ETESTCPREPROC' ;
+
+#ifdef __cplusplus
+#error __cplusplus is defined, but should not be
+#endif
+  
+#define BEAM_TEST 42
+  int x = BEAM_TEST;
+
+ETESTCPREPROC
+    
+  return $source;
+}
+
+sub test_preproc_cpp_source
+{
+  my $source = <<'ETESTCPPPREPROC' ;
+
+#ifndef __cplusplus
+#error __cplusplus is not defined, but should be
+#endif
+  
+#define BEAM_TEST 42
+  int x = BEAM_TEST;
+
+ETESTCPPPREPROC
+    
+  return $source;
+}
+
+sub test_compiler_c_source
+{
+  my $source = <<'ETESTCSOURCE' ;
+ 
+#ifdef __cplusplus
+#error __cplusplus is defined, but should not be
+#endif
+  
+  int x;
+  
+ETESTCSOURCE
+    
+  return $source;
+}
+
+sub test_compiler_cpp_source
+{
+  my $source = <<'ETESTCPPSOURCE' ;
+ 
+#ifndef __cplusplus
+#error __cplusplus is not defined, but should be
+#endif
+  
+  class foo { 
+  public:
+    int x;
+  };
+  
+ETESTCPPSOURCE
+    
+  return $source;
+}
+
+sub test_compiler_java_source
+{
+  my $source = <<'ETESTJAVASOURCE' ;
+
+  class Foo {
+    public static void main(String [] args) throws Exception
+    {
+      if (args.length != 1) {
+        System.out.println("Usage: foobar");
+      }
+    }
+  }
+  
+ETESTJAVASOURCE
+    
+  return $source;
+}
+
+sub test_compiler_bad_source
+{
+  return q{x! bad code yx++ \\&&&};
+}
+
+sub java_property_source
+{
+  my ( $name, @properties ) = @_;
+ 
+  # Write out a Java source file that will print the value
+  # of each of @properties to stdout.
+  
+  my @prop_lines;
+  
+  foreach my $p ( @properties ) {
+    push @prop_lines, sprintf( "\"%s\",\n", $p );
+  }
+  
+  my $source = <<"EJAVAPROP" ;
+
+  class $name
+  {
+    public static void main(String [] args)
+    {
+      String [] keys = {
+        @prop_lines
+      };
+
+      for ( int i = 0; i < keys.length; i++ ) {
+        String key   = keys[i];
+        String value = System.getProperty(key);
+
+        if (value != null) {
+          System.out.println(key + ": beam_property " + value + " beam_end");
+        }
+      }
+    }
+  }
+  
+EJAVAPROP
+  
+  return $source;
+}
+
+sub include_headers
+{
+  my ( @headers ) = @_;
+  
+  # Return source statements that include each of the headers
+
+  my $source = "";
+  
+  foreach my $i ( @headers ) {
+    $source .= qq{#include <$i>\n};
+  }
+
+  return $source;
+}
+
+sub const_expr_source
+{
+  my $source = <<'ECONSTEXPR' ;
+
+int global_array[ (1 == 1) ? 1 : -1 ];
+  
+ECONSTEXPR
+    
+  return $source;
+}
+
+sub const_expr_fail_source
+{
+  my $source = <<'ECONSTEXPRFAIL' ;
+
+int global_array[ (2 == 1) ? 1 : -1 ];
+
+ECONSTEXPRFAIL
+
+  return $source;
+}
+
+sub macro_header_source
+{
+  # Note: We don't use stdio.h here because it might introduce
+  # extra macros that we aren't testing for. In some cases,
+  # when we test for predefined macros, we want a "clean" environment.
+  
+  my $source = <<'EMACROHEADER' ;
+
+#ifdef __cplusplus
+extern "C"
+#endif
+  int printf(const char *, ...);
+  
+
+#define str1(x) #x
+#define str(x)  str1(x)
+
+  int main() {
+
+EMACROHEADER
+
+  return $source;
+}
+  
+sub macro_test_source
+{
+  my ( $macro ) = @_;
+  
+  # This source should match macro_preproc_expansion_source and
+  # gather_macro_expansions's regexp
+  
+  my $source = <<"EMACROTEST" ;
+
+#ifdef $macro
+    printf("\\\"beam_macro $macro\\\" %s \\\"beam_end\\\"\\n", str($macro));
+#endif
+
+EMACROTEST
+
+  return $source;
+}
+
+sub macro_footer_source
+{
+  my $source = <<'EMACROFOOTER' ;
+
+    return 0;
+  }
+
+EMACROFOOTER
+
+  return $source;
+}
+
+sub macro_preproc_expansion_source
+{
+  my ( $macro ) = @_;
+  
+  # This source should match macro_test_source and
+  # gather_macro_expansions's regexp
+  
+  return qq{"beam_macro $macro" $macro "beam_end"\n};
+}
+
+sub signed_chars_source
+{
+  my $source = <<'ESIGNEDCHARS' ;
+ 
+  int global_array[ ((char)-1) < 0 ? 1 : -1 ];
+  
+ESIGNEDCHARS
+    
+  return $source;
+}
+
+sub unsigned_chars_source
+{
+  my $source = <<'EUNSIGNEDCHARS' ;
+ 
+  int global_array[ ((char)-1) > 0 ? 1 : -1 ];
+  
+EUNSIGNEDCHARS
+    
+  return $source;
+}
+
+sub char_min_source
+{
+  my $source = <<'ECHARMIN' ;
+
+#include <stdio.h>
+#include <limits.h>
+  
+  int main() {
+
+#ifdef CHAR_MIN
+    printf("target_plain_char_is_unsigned=%d\n", (CHAR_MIN < 0) ? 0 : 1);
+#else
+    printf("target_plain_char_is_unsigned=%d\n", (((char)-1) < 0) ? 0 : 1);
+#endif
+    
+    return 0;
+  }
+  
+ECHARMIN
+  
+  return $source;
+}
+
+sub endian_test_source
+{
+  my $source = <<'EENDIANTEST' ;
+ 
+#include <stdio.h>
+  
+  int main() {
+    int i;
+    char *c;
+    
+    i = 0x01020304;
+    c = (char*)&i;
+    
+    if ( *c == 0x01 ) {
+      printf("target_little_endian=0\n");
+    } else if ( *c == 0x04 ) {
+      printf("target_little_endian=1\n");
+    }
+    
+    return 0;
+  }
+  
+EENDIANTEST
+    
+  return $source;
+}
+
+sub runtime_sizeof_source
+{
+  my ( $type ) = @_;
+
+  my $source = <<"ERUNTIMESIZEOF" ;
+
+#include <stdio.h>
+
+  int main() {
+    printf("%lu\\n", sizeof($type));
+    return 0;
+  }
+
+ERUNTIMESIZEOF
+
+  return $source;
+}
+
+sub template_sizeof_source
+{
+  my ( $type ) = @_;
+
+  my $source = <<"ESIZEOFTEMPLATE" ;
+
+  int global_array[ (sizeof($type) == BEAM_SIZE) ? 1 : -1 ];
+
+ESIZEOFTEMPLATE
+
+  return $source;
+}
+
+sub runtime_alignof_source
+{
+  my ( $type ) = @_;
+  
+  my $source = <<"ERUNTIMEALIGNOF" ;
+  
+#include <stdio.h>
+
+  struct beam_align_test
+  {
+    char dummy;
+    $type mem;
+  };
+  
+  int main() {
+    printf("%lu\\n", (unsigned long)(&(((struct beam_align_test*)0x0)->mem)));
+    return 0;
+  }
+
+ERUNTIMEALIGNOF
+
+  return $source;
+}
+
+sub template_alignof_source
+{
+  my ( $type ) = @_;
+  
+  my $source = <<"EALIGNOFTEMPLATE" ;
+  
+  struct beam_align_test
+  {
+    char dummy;
+    $type mem;
+  };
+  
+  int global_array[ ((unsigned long)(&(((struct beam_align_test*)0x0)->mem)) == BEAM_ALIGN) ? 1 : -1 ];
+
+EALIGNOFTEMPLATE
+
+  return $source;
+}
+
+sub old_for_scope_source
+{
+  my $source = <<'EOLDFORSCOPE' ;
+  
+  int main() {
+    int j;
+    
+    for (int i = 0; i < 10; i++) {
+      j += i;
+    }
+    
+    return i;
+  }
+  
+EOLDFORSCOPE
+    
+  return $source;
+}
+
+sub wchar_sign_source
+{
+  my $source = <<'EWCHARSIGN' ;
+ 
+#include <stddef.h>
+#include <stdio.h>
+  
+  int main()
+  {
+    wchar_t x = (wchar_t)-1;
+    
+    if (x < 0) {
+      printf("target_wchar_t_is_unsigned=0\n");
+    } else {
+      printf("target_wchar_t_is_unsigned=1\n");
+    }
+    
+    return 0;
+  }
+  
+EWCHARSIGN
+    
+  return $source;
+}
+
+sub wint_sign_source
+{
+  my $source = <<'EWINTSIGN' ;
+ 
+#include <stddef.h>
+#include <stdio.h>
+  
+  int main()
+  {
+    wint_t x = (wint_t)-1;
+    
+    if (x < 0) {
+      printf("target_wint_t_is_unsigned=0\n");
+    } else {
+      printf("target_wint_t_is_unsigned=1\n");
+    }
+    
+    return 0;
+  }
+  
+EWINTSIGN
+    
+  return $source;
+}
+
+sub bool_keyword_source
+{
+  my $source = <<'EKEYWORDBOOL' ;
+bool foo;
+EKEYWORDBOOL
+    
+  return $source;
+}
+
+sub wchar_keyword_source
+{
+  my $source = <<'EKEYWORDWCHAR' ;
+wchar_t foo;
+EKEYWORDWCHAR
+    
+  return $source;
+}
+
+sub signed_wchar_source
+{
+  my $source = <<'ESIGNEDWCHAR' ;
+
+#include <stddef.h>
+  
+  int global_array[ ((wchar_t)-1) < 0 ? 1 : -1 ];
+  
+ESIGNEDWCHAR
+    
+  return $source;  
+}
+
+sub unsigned_wchar_source
+{
+  my $source = <<'EUNSIGNEDWCHAR' ;
+
+#include <stddef.h>
+  
+  int global_array[ ((wchar_t)-1) > 0 ? 1 : -1 ];
+  
+EUNSIGNEDWCHAR
+    
+  return $source;  
+}
+
+sub signed_wint_source
+{
+  my $source = <<'ESIGNEDWINT' ;
+
+#include <stddef.h>
+  
+  int global_array[ ((wint_t)-1) < 0 ? 1 : -1 ];
+  
+ESIGNEDWINT
+    
+  return $source;  
+}
+
+sub unsigned_wint_source
+{
+  my $source = <<'EUNSIGNEDWINT' ;
+
+#include <stddef.h>
+  
+  int global_array[ ((wint_t)-1) > 0 ? 1 : -1 ];
+  
+EUNSIGNEDWINT
+    
+  return $source;  
+}
+
+sub plain_int_bitfield_source
+{
+  my $source = <<'EPLAININTBITFIELD' ;
+
+#include <stdio.h>
+  
+  struct S { int member : 8; };
+  
+  int main() {
+    struct S str;
+    str.member = -1;
+    
+    if ( str.member < 0 ) {
+      printf("target_plain_int_bit_field_is_unsigned=0\n");
+    } else {
+      printf("target_plain_int_bit_field_is_unsigned=1\n");
+    }
+    
+    return 0;
+  }
+  
+EPLAININTBITFIELD
+    
+  return $source;
+}
+
+sub enum_bitfield_source
+{
+  my $source = <<'EENUMBITFIELD' ;
+  
+#include <stdio.h>
+  
+  enum E { NEG = -1, ZERO = 0, POS = 1 };
+  
+  struct S { char dummy; enum E member : 8; };
+  
+  int main() {
+    signed int si;
+    struct S str;
+    
+    str.member = NEG;
+    si = (signed int)str.member;
+    
+    if ( si < 0 ) {
+      printf("target_enum_bit_fields_are_always_unsigned=0\n");
+    } else {
+      printf("target_enum_bit_fields_are_always_unsigned=1\n");
+    }
+    
+    return 0;
+  }
+  
+EENUMBITFIELD
+  
+  return $source;
+}
+
+sub friend_injection_source
+{
+  my $source = <<'EFRIENDINJECT' ;
+ 
+  class A {
+    friend int global_func();
+  };
+  
+  int main() {
+    return global_func();
+  }
+  
+EFRIENDINJECT
+    
+  return $source;
+}
+
+sub small_enum_source
+{
+  my $source = <<'ESMALLENUM' ;
+  
+#include <stdio.h>
+  
+  enum E { SMALL = 0 };
+  
+  struct S { char dummy; enum E member; };
+  
+  int main() {
+    struct S str;
+    
+    if ( sizeof(str.member) < sizeof(int) ) {
+      printf("target_enum_types_can_be_smaller_than_int=1\n");
+    } else {
+      printf("target_enum_types_can_be_smaller_than_int=0\n");
+    }
+    
+    return 0;
+  }
+  
+ESMALLENUM
+  
+  return $source;
+}
+
+# In this testcase we try to modify a string literal by indexing
+# directly into the literal itself. This will get caught at compile time
+# if the compiler considers string literals to be const.
+sub const_string_source
+{
+  my $source = <<'ECONSTSTRING' ;
+  
+  int main() {
+    "abc"[1] = 'z';
+    return 0;
+  }
+  
+ECONSTSTRING
+    
+  return $source;
+}
+
+# Hardwire the windows case - segfaults on Windows pop up an annoying
+# window, which we don't want the user to have to deal with.
+# Note, that the compilability of "abc"[1] = 'x' makes no statement
+# about whether string literals can be modified at runtime.
+# So we really need to see the abnormal termination.
+sub readonly_string_source
+{
+  my $source = <<'EREADONLYSTRING' ;
+  
+  #include <stdio.h>
+
+  char *foo = "testing";
+  
+  int main() {
+#if defined(__WIN32__) || defined(_WIN32)
+    printf("1\n");  /* readonly */
+#else
+    /* This will usually segfault if string literals are in read only memory */
+    foo[2] = 'x';
+    /* Paranoia. */
+    if ( foo[2] == 'x' )
+      printf("0\n");  /* not readonly */
+    else 
+      printf("1\n");  /* readonly */
+    return 0;
+#endif
+  }
+  
+EREADONLYSTRING
+    
+  return $source;
+}
+
+sub dollar_in_ids_source
+{
+  my $source = <<'EDOLLARINID' ;
+  
+  int xyz$abc;
+  
+EDOLLARINID
+    
+  return $source;
+}
+
+sub end_of_line_comments_source
+{
+  my $source = <<'EEOLCOMMENTS' ;
+  
+  // This is a comment
+  int x;
+  
+EEOLCOMMENTS
+  
+  return $source;
+}
+
+sub spaces_in_include_directive
+{
+  my($name)  = @_;
+  my $source = <<"ESPACESININCLUDEDIRECTIVE" ;
+  
+#include " $name "
+  
+ESPACESININCLUDEDIRECTIVE
+    
+  return $source;
+}
+
+sub restrict_keyword_source
+{
+  my $source = <<'ERESTRICTKEYWORDSOURCE' ;
+
+  int foo(const char *restrict bar) {
+    if (bar) return 1;
+    return 0;
+  }
+  
+ERESTRICTKEYWORDSOURCE
+    
+  return $source;
+}
+
+sub anonymous_union_source
+{
+  my $source = <<'EANONYMOUSUNIONSOURCE' ;
+
+  struct abc {
+    int a;
+    union {
+      int b;
+    };
+    int c;
+  } var;
+
+  void voo()
+  {
+    var.b = 10;
+  }
+  
+EANONYMOUSUNIONSOURCE
+    
+  return $source;
+}
+
+sub trigraph_source
+{
+  my $source = <<'ETRIGRAPH' ;
+
+  "??="
+   ??!
+
+ETRIGRAPH
+    
+  return $source;
+}
+
+sub function_name_defined
+{
+  my ($name) = @_;
+  my $source = <<"EFUNCTIONNAMEDEFINED" ;
+
+  void foo()
+  {
+    const char *s = $name;
+  }
+EFUNCTIONNAMEDEFINED
+
+ return $source;
+}
+
+sub function_name_is_string_literal
+{
+  my ($name) = @_;
+  my $source = <<"EFUNCTIONNAMEISLITERALSTRING" ;
+
+  void foo()
+  {
+    const char *s = "Hello, "$name;
+  }
+EFUNCTIONNAMEISLITERALSTRING
+
+ return $source;
+}
+
+sub env_system_include_path
+{
+  my ($lang) = @_;
+  my $ns = "beam::compiler::${lang}";
+  my $str = <<"EENVSYSTEMINCLUDEPATH" ;
+
+if { [::info exists ::env(INCLUDE)] } {
+  set old_include_path {}
+  if { [::info exists ${ns}::system_include_path] } {
+    set old_include_path \$${ns}::system_include_path
+  }
+  set ${ns}::system_include_path [concat \$old_include_path \\
+                                   [split \$::env(INCLUDE) \$::beam::pathsep]]
+}
+
+EENVSYSTEMINCLUDEPATH
+
+  return $str;
+}
+
+sub decl_keyword_source
+{
+  my ( $key ) = @_;
+  my $source = <<"ECDECL" ;
+
+  int $key foo(int a);
+
+ECDECL
+    
+  return $source;
+}
+
+# Pass a value of type __builtin_va_list to a float *. That should cause
+# a parse error when compiled as C++.
+sub builtin_va_list_base_type_source
+{
+  my $source = <<"EBUILTINVALISTBASETYPE";
+
+  void bar(float *);
+  void foo(char *fmt, ...)
+  {
+    __builtin_va_list __args;
+    __builtin_va_start(__args, fmt);
+
+    bar(__args);
+
+    __builtin_va_end(__args);
+  }
+  
+EBUILTINVALISTBASETYPE
+    
+  return $source;
+}
+
+####################
+# Compiler Utilities
+
+sub c_value
+{
+  my ( $str ) = @_;
+  
+  # This tries to turn a C expression that should be a number
+  # into a Perl number (as opposed to a Perl string) by doing
+  # some things like stripping off the parenthesis (some
+  # compilers like to define things to be "(n)" instead of "n").
+  #
+  # This also detects "X - Y" and "X + Y" and does the evaluation,
+  # for defines like
+  #
+  #   #define CHAR_MIN (-127 - 1)
+  
+  # Detect simple arithmetic and evaluate the result.
+  # Simple arithmetic only contains:
+  #
+  #  - Numbers and hex digits
+  #  - Parenthesis, with no identifier in front of them (No functions)
+  #  - Decimal points
+  #  - Hex literal prefixes ("0x")
+  #  - Operations (*, /, +, -)
+  
+  if ( $str =~ m|^[0-9abcdefx\(\) .*/+-]+$|i &&
+       $str !~ m|$identifier_re\s*\(| ) {
+    # Evaluate the number.
+    my $num = do {
+      local $SIG{__DIE__} = sub {};
+      local $SIG{__WARN__} = sub {};
+      eval $str;
+    };
+
+    # If the eval succeeded, use the result.
+    return $num unless ( $@ );
+  }
+
+  # Nothing worked so far. Just return it as a string...
+  # and hope the caller knows what to do with it.
+
+  verbose 1, "Warning: Couldn't convert '$str' into a c_value";
+  
+  return $str;
+}
+
+sub cv_run_tests
+{
+  # Run some c_value tests and return 0 if successful.
+  # Return non-zero on failure.
+
+  my $tests = [
+    # String, Result
+    [ "", "" ],
+    [ "123", 123 ],
+    [ "(123)", 123 ],
+    [ "0123", 0123 ],
+    [ "0xcafebabe", 0xcafebabe ],
+    [ "1.23E-4", 1.23e-4 ],
+    [ "3.2e5 + 1.1e6", 3.2e5 + 1.1e6 ],
+    [ "(1 + 2) * 3", (1 + 2) * 3 ],
+    [ "(2 2 3)", "(2 2 3)" ],
+    [ "(2 + 3", "(2 + 3" ],
+    [ "3 * x(2)", "3 * x(2)" ]
+  ];
+  
+  my $rc = 0;
+  
+  foreach my $test ( @$tests ) {
+    my $str = $test->[0];
+    my $exp = $test->[1];
+    
+    my $act = c_value( $str );
+    
+    if ( $exp ne "$act" ) {
+      print STDERR "Error: c_value( $str ) test failed.\n";
+      print STDERR "  Expected '$exp', got '$act'\n";
+      $rc = 1;
+    }
+  }
+  
+  return $rc;
+}
+
+sub compile_get_macros
+{
+  my ( $compiler ) = @_;
+  
+  # Try to run the compiler and get the macro output
+
+  my @cmd = @{ $compiler->{'cmd'} };
+  push @cmd, @{ $compiler->{'macro_flag'} };
+  
+  my $ext = $compiler->{'ext'};
+  
+  my $srcnam = write_temp_file( '', $ext );
+  
+  push @cmd, fn_path_to_ext( $srcnam );
+  
+  return run_command( @cmd );
+}
+
+sub preprocess_command
+{
+  my ( $compiler ) = @_;
+  
+  my @cmd = @{ $compiler->{'cmd'} };
+  push @cmd, @{ $compiler->{'preproc_flag'} };
+
+  if ( wantarray ) {
+    return @cmd;
+  } else {
+    return join( " ", @cmd );
+  }
+}
+
+sub preprocess_source
+{
+  my ( $compiler, $source ) = @_;
+  
+  # Set up the options and preprocess the source text as a file.
+
+  my @cmd = preprocess_command( $compiler );
+  
+  my $ext = $compiler->{'ext'};
+  
+  return run_compiler_on_source( $source, $ext, @cmd );
+}
+
+sub compile_command
+{
+  my ( $compiler ) = @_;
+  
+  my @cmd = @{ $compiler->{'cmd'} };
+  push @cmd, @{ $compiler->{'compile_flag'} };
+  
+  if ( wantarray ) {
+    return @cmd;
+  } else {
+    return join( " ", @cmd );
+  }  
+}
+
+sub compile_source
+{
+  my ( $compiler, $source ) = @_;
+  
+  # Set up the options and compile the source text as a file
+  
+  my @cmd = compile_command( $compiler );
+  
+  my $ext = $compiler->{'ext'};
+  
+  return run_compiler_on_source( $source, $ext, @cmd );
+}
+
+sub compile_source_to_binary
+{
+  my ( $compiler, $source ) = @_;
+  
+  # Set up the options and compile the source to a native binary.
+  # Return a 4 item array of $rc, $output, $error, $binary_name.
+  
+  my $binnam = write_temp_file( '', 'bin' );
+  my $extbin = fn_path_to_ext( $binnam );
+  
+  my @cmd = @{ $compiler->{'cmd'} };
+
+  my @bin_flags = @{ $compiler->{'bin_flag'} };
+  
+  # All "%s" in @bin_flags is replaced with $extbin.
+  map { s|%s|$extbin| } @bin_flags;
+  
+  push @cmd, @bin_flags;
+  
+  my $ext = $compiler->{'ext'};
+  
+  my ( $rc, $output, $error ) =
+    run_compiler_on_source( $source, $ext, @cmd );
+
+  if ( $rc == 0 ) {
+    # Make sure it is executable, since we created the temp
+    # file with 0600 permissions initially...
+    chmod( 0700, $binnam );
+  }
+
+  return ( $rc, $output, $error, $binnam );
+}
+
+sub compile_source_and_run
+{
+  my ( $compiler, $source ) = @_;
+
+  # Compile the source to a native binary, run it, and return
+  # the rc and output. The rc may be of either the compiler
+  # or the command.
+  
+  my ( $rc, $output, $error, $binary )
+    = compile_source_to_binary( $compiler, $source );
+
+  if ( $rc != 0 ) {
+    verbose 2, "- Compiler failed creating a native binary";
+    return ( $rc, $output, $error );
+  }
+  
+  ( $rc, $output, $error ) = run_command( $binary );
+ 
+  if ( $rc != 0 ) {
+    verbose 2, "- Native binary failed";
+  }
+    
+  return ( $rc, $output, $error );
+}  
+
+sub compile_source_to_class
+{
+  my ( $compiler, $source ) = @_;
+  
+  # Set up the options and compile the source to a class file.
+  # Return a 4 item array of $rc, $output, $error, $classdir.
+  
+  my $dirname = $global_temp_dir;
+  
+  my @cmd = @{ $compiler->{'cmd'} };
+  push @cmd, '-d', fn_path_to_ext( $dirname );
+  
+  my $ext = $compiler->{'ext'};
+  
+  my ( $rc, $output, $error ) =
+    run_compiler_on_source( $source, $ext, @cmd );
+
+  return ( $rc, $output, $error, $dirname );
+}
+
+sub run_class_file
+{
+  my ( $compiler, $name, $classdir ) = @_;
+  
+  # Using $compiler to find the java runtime,
+  # run the class file named by $name in the
+  # $classdir directory.
+  #
+  # Returns $rc, $stdout, and $stderr.
+  
+  my @cmd = @{ $compiler->{'java_cmd'} };
+  push @cmd, '-classpath', fn_path_to_ext( $classdir );
+  push @cmd, $name;
+  
+  return run_command( @cmd );
+}
+
+sub compile_source_and_run_java
+{
+  my ( $compiler, $name, $source ) = @_;
+
+  # Compile the source to a class file (the source
+  # should have a "class $name" in it) run it with java,
+  # and return the rc and output. The rc may be of either
+  # the compiler or the command.
+  
+  my ( $rc, $output, $error, $classdir )
+    = compile_source_to_class( $compiler, $source );
+
+  if ( $rc != 0 ) {
+    verbose 2, "- Compiler failed creating class file";
+    return ( $rc, $output, $error );
+  }
+  
+  ( $rc, $output, $error ) =
+    run_class_file( $compiler, $name, $classdir );
+  
+  if ( $rc != 0 ) {
+    verbose 2, "- Executing class file failed";
+  }
+    
+  return ( $rc, $output, $error );
+}  
+
+sub run_compiler_on_source
+{
+  my ( $source, $ext, @cmd ) = @_;
+  
+  # Write out a temporary source file with the given extension,
+  # run the command over it, and return the results
+
+  my $srcnam = write_temp_file( $source, $ext );
+  
+  push @cmd, fn_path_to_ext( $srcnam );
+  
+  verbose 2, "Running the compiler on '$srcnam'";
+  
+  if ( $verbose > 2 ) {
+    print "* Source file contents of '$srcnam':\n";
+    print $source;
+    print "* End source file '$srcnam'\n";
+  }
+  
+  return run_command( @cmd );
+}
+
+####################
+# Misc utilities
+
+sub get_output_file_name
+{
+  my ( $output, $lang, $force, $def_name ) = @_;
+ 
+  my $file_name;
+  
+  # Figure out the output file name.
+    
+  if ( defined $output ) {
+    # If $output was given, use that.
+    $file_name = $output;
+  } else {
+    # Otherwise, generate a name from def_name.
+    die "Internal Error: \$def_name is undefined\n" unless defined $def_name;
+
+    $file_name = output_file_name( $def_name, $lang );
+  }
+  
+  # Ensure the file doesn't exist, or --force was given.
+  if ( -e $file_name && ! $force ) {
+    die "Error: Output file '$file_name' exists; use '--force' to overwrite\n";    
+  }
+
+  # All is well.
+
+  return $file_name;
+}
+
+sub output_file_name
+{
+  my ( $name, $lang ) = @_;
+  
+  # Build the output file name based on name and lang
+  
+  return "${original_dir}/${name}_${lang}_config.tcl";
+}
+
+sub find_exe
+{
+  my ( $prog ) = @_;
+
+  # Return an absolute path to $prog.
+  #
+  # Don't use full_pathify because we want all symlinks
+  # to be preserved. Some places rely on the compiler
+  # being invoked through a symlink, for example.
+
+  if ( fn_is_bare( $prog ) ) {
+    my $found = find_in_path( $prog );
+    
+    if ( defined $found ) {
+      $prog = $found;
+    }
+  } else {
+
+    if ( $^O =~ /mswin32/i ) {
+      # In Windows, the PATHEXT stuff applies to full paths
+      my $found = find_prog_with_pathext( $prog );
+      
+      if ( defined $found ) {
+        $prog = $found;
+      }
+    }
+    
+    # $prog is a relative or absolute path name. If relative,
+    # prepend the absolute path of ".".
+    
+    if ( ! fn_is_absolute( $prog ) ) {
+      $prog = fn_full_pathify(".") . "/" . $prog;
+    }
+  }
+  
+  return $prog;
+}
+
+sub find_in_path
+{
+  my( $prog ) = @_;
+  
+  # If $prog is a bare name, search for it on the $PATH.
+    
+  my @path = split( /$fn_pathsep_re/, $ENV{'PATH'} );
+    
+  if ( $^O =~ /mswin32/i ) {
+    # Windows implicitly searches "." first
+    unshift @path, ".";
+  }
+  
+  foreach my $dir ( @path ) {
+    if ( -f "$dir/$prog" ) {
+      return "$dir/$prog";
+    }
+      
+    if ( $^O =~ /mswin32/i ) {
+      # Windows can also find binaries by appending PATHEXT extensions
+      # on to the names it tries.
+      my $found = find_prog_with_pathext( "$dir/$prog" );
+        
+      if ( defined $found ) {
+        return $found;
+      }
+    }
+  }
+  
+  # Not found
+  return undef;
+}
+
+sub find_prog_with_pathext
+{
+  my ( $prog ) = @_;
+  
+  # This routine should only do things on Windows
+  return unless $^O =~ /mswin32/i;
+  
+  # Search for $prog, first as a bare name, and then once with each
+  # extension in the environment variable PATHEXT.
+  # 
+  # If PATHEXT is unset, the Windows 2000 and Windows XP defaults
+  # seem to be ".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WS". These were
+  # found by inspection.
+  
+  my @pathext;
+  
+  if ( exists $ENV{'PATHEXT'} && $ENV{'PATHEXT'} ne "" ) {
+    @pathext = split( /$fn_pathsep_re/, $ENV{'PATHEXT'} );
+  } else {
+    @pathext = split( /;/, ".COM;.EXE;.BAT;.CMD;.VBS;.JS;.WS" );
+  }
+  
+  # Push the empty string on the front so we test just plain $prog
+  # first.
+  
+  unshift @pathext, "";
+  
+  foreach my $ext ( @pathext ) {
+    if ( -f "$prog$ext" ) {
+      return "$prog$ext";
+    }
+  }
+
+  # Not found in this location with any known extension
+  return undef;
+}
+
+sub change_to_temp_dir
+{
+  chdir( $global_temp_dir )
+    or die "Error: Can't change directories to '$global_temp_dir': $!\n";
+  
+  verbose 1, "Changed directories to '$global_temp_dir'";
+}
+
+sub make_unique
+{
+  my ( @list ) = @_;
+  
+  # Remove duplicate entries from @list without
+  # changing the order
+  
+  my %hash;
+  my @result;
+  
+  foreach my $item ( @list ) {
+    if ( ! exists $hash{$item} ) {
+      $hash{$item} = 1;
+      push @result, $item;
+    }
+  }
+
+  return @result;
+}
+
+sub find_header_files
+{
+  my ( @dirs ) = @_;
+  
+  # Find all header files in the directories
+  # and return a listing of full paths to them
+  
+  my @headers;
+  my $dirfh = gensym();
+  
+  foreach my $dir ( @dirs ) {
+    verbose 2, "- Searching '$dir' for header files";
+    
+    if ( opendir( $dirfh, $dir ) ) {
+      # Read all files, prepend $dir as they pass, and test for -T
+      # all on one pipeline
+
+      push @headers, grep { -f && -T } map { "$dir/$_" } readdir( $dirfh );
+      
+      closedir( $dirfh );
+    }
+  }
+  
+  my $num = scalar @headers;
+  verbose 2, "- Found $num header file(s)";
+  
+  return @headers;
+}
+
+sub find_identifiers
+{
+  my ( @files ) = @_;
+  
+  # Search through each file for possible macro names, and return
+  # a list of them
+
+  verbose 2, "Searching headers for macro identifiers (this may take a while)";
+  
+  my %macros;
+  
+  my $fh = gensym();
+  
+  foreach my $file ( @files ) {
+    # Open the file and search for macro identifiers
+    if ( open( $fh, $file ) ) {
+            
+      my $line;
+      
+      while ( defined( $line = <$fh> ) ) {
+                    
+        # There could be many on each line...
+        # According to C99 6.2.4.1, this is close enough -
+        #  it won't catch universal identifiers though
+        while ( $line =~ /\b($identifier_re)\b/go ) {
+          $macros{$1} = 1;
+        }
+      }
+      
+      close( $fh );
+    }
+  }
+  
+  return keys %macros;
+}
+
+####################
+# Low level utilities
+
+sub run_command
+{
+  my ( @cmd ) = @_;
+
+  verbose 2, "+ @cmd";
+  
+  my ( $rc, $stdout, $stderr, $sig ) = cmd_capture( @cmd );
+  
+  # In verbose mode, print the rc and any error output if the rc failed
+
+  verbose 2, "+ rc = $rc";
+  verbose 2, "+ sig = $sig";
+  
+  if ( $verbose > 2 ) {
+    if ( $rc != 0 ) {
+      print "+ Command STDOUT:\n";
+      print $stdout;
+      print "+ Command STDERR:\n";
+      print $stderr;
+      print "+ End Command Output\n";
+    }
+  }
+  
+  return ( $rc, $stdout, $stderr, $sig );
+}
+
+sub read_file
+{
+  my ( $name ) = @_;
+    
+  if ( ! open( FILE, "<$name" ) ) {
+    die "Can't open $name: $!\n";
+  }
+    
+  local $/ = undef;
+  my $data = <FILE>;
+    
+  if ( ! close( FILE ) ) {
+    die "Can't close $name: $!\n";
+  }
+    
+  return $data;
+}
+
+sub make_dir_for_file
+{
+  my ( $file ) = @_;
+
+  # Ensure that the parent directory for $file
+  # exists, so that $file may be written.
+
+  my $dir = fn_full_pathify( $file );
+
+  $dir = fn_dirname( $dir );
+  
+  verbose 2, "Creating directory '$dir' to write '$file'";
+  
+  mkpath( $dir );
+}
+
+sub write_file
+{
+  my ( $file, $text ) = @_;
+
+  make_dir_for_file( $file );
+  
+  my $fh = gensym();
+  
+  if ( open( $fh, ">$file" ) ) {
+    print $fh $text;
+    close( $fh ) or die "Error: Can't write to '$file': $!\n";
+  } else {
+    die "Error: Can't write to '$file': $!\n";
+  }
+}
+
+sub write_temp_file
+{
+  my ( $text, $ext ) = @_;
+  
+  # Write the text to a temp file and return the file's
+  # name. Dies if there are problems.
+  
+  my ( $tmpfh, $tmpnam ) = get_temp_file( $ext );
+  
+  print $tmpfh $text;
+  
+  close( $tmpfh ) or die "Error: Can't write '$tmpnam': $!\n";
+ 
+  # All is good
+  return $tmpnam;
+}
+
+sub get_temp_file
+{
+  my $ext = shift;
+  
+  if ( ! -d $global_temp_dir ) {
+    die "Error: Internal Error: Temporary Directory doesn't exist! " .
+        "Notify Developer\n";
+  }
+  
+  return tmp_file_in( $global_temp_dir, $ext );
+}
+
+####################
+
+# This is the C and C++ template configuration file that is filled in.
+# IF YOU CHANGE THIS, YOU SHOULD REGENERATE tcl/beam_default_*_config.tcl
+# FOR THE USERS.
+
+# Note: These have been removed from the config because
+# EDG requires strict values here.
+#
+#        set target_flt_mant_dig 24
+#        set target_dbl_mant_dig 53
+#        set target_ldbl_mant_dig 64
+
+$template_c_cpp_config_file = <<'ETEMPLATECCPPCONFIG' ;
+############################################################
+# Invocation of beam_configure:
+#
+#   TEMPL_CONFIGURE_INVOCATION
+#
+# Location of compiler:
+#
+#   TEMPL_COMPILER_PATH
+#
+############################################################
+#
+# This is BEAM configuration file that describes a compiler
+# and a target machine. This was generated with beam_configure
+# version "TEMPL_VERSION".
+#
+# This information will help BEAM emulate this compiler's
+# features, macros, and header file locations, so that BEAM
+# can compile the same source code that the original compiler
+# could compile, and understand it with respect to the machine's
+# sizes and widths of types.
+#
+# The file format is Tcl, so basic Tcl knowledge may be beneficial
+# for anything more than the simplest of modifications.
+# 
+# A quick Tcl primer:
+# - Lines starting with "#" or ";#" are comments
+# - Things inside balanced curly braces are literal strings {one string literal}
+# - Things in square brackets that aren't in curly braces are function calls,
+#   and will be expanded inline automatically. This causes the most problems in
+#   double-quoted strings: "this is a function call: [some_func]"
+#
+# This file contains these sections:
+#
+# 1) Source language dialect
+# 2) Default include paths
+# 3) Target machine configuration
+# 4) Predefined macros
+# 5) Miscellaneous options
+#
+# Each section has variables that help configure BEAM. They should
+# each be commented well. For additional documentation, please
+# refer to the local documentation in the install point.
+#
+# Note that the order of the sections is not important,
+# and variables may be set in any order.
+#
+# All variables are prefixed with name that corresponds to
+# which language this configuration is for.
+#
+# For C compilers, the prefix is "beam::compiler::c"
+# For C++, it is "beam::compiler::cpp"
+#
+############################################################
+
+### This is the version of beam_configure that generated this
+### configuration file.
+  
+TEMPL_GENERATED
+
+### This tells BEAM which pre-canned settings to load.
+### BEAM comes with some function attributes and argument
+### mappers for gcc, xlc, and vac. If unsure, set this to
+### "default".
+
+TEMPL_CC
+  
+############################################################
+# Section 1: Source language dialect
+############################################################
+  
+### The language_dialect variable selects among the available
+### dialects of C and C++.
+###
+### By default, C files are set up as:
+###
+###    set beam::compiler::c::language_dialect c
+###    set beam::compiler::c::c99_mode         0
+###    set beam::compiler::c::strict_mode      0
+###    set beam::compiler::c::gnu_mode         0
+###    set beam::compiler::c::msvc_mode        0
+###
+### and C++ files are set up as:
+###
+###    set beam::compiler::cpp::language_dialect c++
+###    set beam::compiler::cpp::c99_mode         0
+###    set beam::compiler::cpp::strict_mode      0
+###    set beam::compiler::cpp::gnu_mode         0
+###    set beam::compiler::cpp::msvc_mode        0
+###
+### Note that the dialect must match the namespace.
+### Don't set up the C++ language in the C namespace or
+### things will probably fail.
+###
+### This defaults to be the same as the language being
+### compiled (based on the source file extension).
+### Normally, it should not be set.
+
+# set TEMPL_NS::language_dialect old_c ;# K&R
+# set TEMPL_NS::language_dialect c     ;# ANSI
+# set TEMPL_NS::language_dialect c++
+
+### In addition to simply using C or C++, different
+### modes are provided to enable or disable language
+### extensions. Some modes are incompatible with eachother
+### or with the language_dialect above, and will produce
+### errors.
+
+### C99 mode enables C99 extensions in C code. It is not
+### compatible with C++ code. This overrides old_c, and
+### instead forces regular C.
+
+# set TEMPL_NS::c99_mode 0
+# set TEMPL_NS::c99_mode 1
+
+### Strict mode disables all non-ANSI/ISO features. It
+### is compatible with C and C++ code, but not with old_c.
+  
+# set TEMPL_NS::strict_mode 0
+# set TEMPL_NS::strict_mode 1
+
+### GNU mode enables GNU C extensions in C code and
+### GNU C++ extensions in C++ code. This overrides
+### old_c, and instead forces regular C.
+###
+### The value should be a 5 digit number representing
+### the version of GCC to emulate. It is of this format:
+###
+###    major_version_num * 10000 +
+###    minor_version_num * 100   +
+###    patch_version_num
+###
+### so, GCC version "3.4.3" should be "30403".
+###
+### The minimum allowable value is "30200".
+
+# set TEMPL_NS::gnu_mode 30200
+
+TEMPL_GNU_MODE
+
+### MSVC mode enables Microsoft extensions in C code and
+### C++ code.
+###
+### The value should be a 3 or 4 digit number representing
+### the version of MSVC to emulate.
+###
+### The minimum allowable value is "700".
+
+# set TEMPL_NS::msvc_mode 700
+
+TEMPL_MSVC_MODE
+
+### Other miscellaneous language settings. The values shown
+### here are the defaults if they remain unset.
+
+# set TEMPL_NS::language_friend_injection_enabled           0
+# set TEMPL_NS::language_use_nonstandard_for_init_scope     0
+# set TEMPL_NS::language_string_literals_are_const          1
+# set TEMPL_NS::language_allow_dollar_in_id_chars           1
+# set TEMPL_NS::language_end_of_line_comments_allowed       1
+# set TEMPL_NS::language_allow_spaces_in_include_directive  0
+# set TEMPL_NS::language_restrict_keyword_enabled           0
+# set TEMPL_NS::language_allow_nonstandard_anonymous_unions 1
+# set TEMPL_NS::language_trigraphs_allowed                  1
+# set TEMPL_NS::language_wchar_t_is_keyword                 1
+# set TEMPL_NS::language_bool_is_keyword                    1
+
+TEMPL_LANGUAGE_MISC
+  
+############################################################
+# Section 2: Default include paths
+############################################################
+
+### The system_include_path variable is a list of directories
+### that will be searched in for system headers. Parser warnings
+### are suppressed in these directories. These will come
+### after any directories specified with -I on the command line.
+  
+# lappend TEMPL_NS::system_include_path {/usr/include}
+# lappend TEMPL_NS::system_include_path {/usr/vacpp/include}
+
+### Maybe your include paths are part of the environment
+  
+# if { [::info exists ::env(MY_INCLUDE_PATH)] } {
+#   set TEMPL_NS::system_include_path \
+#     [split $::env(MY_INCLUDE_PATH) $::beam::pathsep]
+# }
+  
+TEMPL_SYSTEM_INCLUDE_PATH
+  
+############################################################
+# Section 3: Target machine configuration
+############################################################
+
+### These variables control the target machine and
+### a few individual language options.
+###
+### Note: These examples do not cover all of the available
+### options. For a complete list, refer to the BEAM documentation.
+###
+### Examples appear below the auto-configured ones.
+  
+TEMPL_TARG_FEATURES
+  
+### Examples ###
+
+### The number of bits in a char
+
+# set TEMPL_NS::target_char_bit 8
+    
+### Default signedness options
+
+# set TEMPL_NS::target_plain_char_is_unsigned              0
+# set TEMPL_NS::target_plain_char_is_unsigned              1
+#
+# set TEMPL_NS::target_string_literals_are_readonly        0
+# set TEMPL_NS::target_string_literals_are_readonly        1
+#
+# set TEMPL_NS::target_plain_int_bit_field_is_unsigned     0
+# set TEMPL_NS::target_plain_int_bit_field_is_unsigned     1
+#
+# set TEMPL_NS::target_enum_bit_fields_are_always_unsigned 0
+# set TEMPL_NS::target_enum_bit_fields_are_always_unsigned 1
+
+### Endianness of target machine
+
+# set TEMPL_NS::target_little_endian 0    
+# set TEMPL_NS::target_little_endian 1
+
+### Sizes of basic types in multiples of char. Since
+### a char is defined to have size 1, it is not a
+### configuration option.
+
+# set TEMPL_NS::target_sizeof_short 2
+# set TEMPL_NS::target_sizeof_int 4
+# set TEMPL_NS::target_sizeof_long 4
+# set TEMPL_NS::target_sizeof_long_long 8    
+# set TEMPL_NS::target_sizeof_float 4
+# set TEMPL_NS::target_sizeof_double 8
+# set TEMPL_NS::target_sizeof_long_double 12
+# set TEMPL_NS::target_sizeof_pointer 4
+
+### Alignments of basic types in multiples of char. Since
+### a char is defined to have alignment 1, it is not a
+### configuration option.
+
+# set TEMPL_NS::target_alignof_short 2
+# set TEMPL_NS::target_alignof_int 4
+# set TEMPL_NS::target_alignof_long 4
+# set TEMPL_NS::target_alignof_long_long 4
+# set TEMPL_NS::target_alignof_float 4
+# set TEMPL_NS::target_alignof_double 4
+# set TEMPL_NS::target_alignof_long_double 4
+# set TEMPL_NS::target_alignof_pointer 4
+    
+### Special types
+
+# set TEMPL_NS::target_sizeof_size_t     4
+# set TEMPL_NS::target_size_t_int_kind   {unsigned int}
+#
+# set TEMPL_NS::target_sizeof_wchar_t      4
+# set TEMPL_NS::target_wchar_t_int_kind    {int}
+# set TEMPL_NS::target_wchar_t_is_unsigned 0
+#
+# set TEMPL_NS::target_sizeof_wint_t       4
+# set TEMPL_NS::target_wint_t_int_kind     {int}
+# set TEMPL_NS::target_wint_t_is_unsigned  0
+#
+# set TEMPL_NS::target_sizeof_char16_t      2
+# set TEMPL_NS::target_char16_t_int_kind    {unsigned short}
+#
+# set TEMPL_NS::target_sizeof_char32_t      4
+# set TEMPL_NS::target_char32_t_int_kind    {unsigned int}
+
+### Floating-point characteristics. The default
+### values for these variables depend on the sizes
+### set TEMPL_NS::for the types. The examples shown here
+### are appropriate if float is size 4, double is
+### size 8, and long double is size 12.
+###
+### Note that these values do not have to be exact
+### because BEAM currently has limited floating-point
+### support.
+
+# set TEMPL_NS::target_flt_max_exp 128
+# set TEMPL_NS::target_flt_min_exp -125
+# set TEMPL_NS::target_dbl_max_exp 1024
+# set TEMPL_NS::target_dbl_min_exp -1021
+# set TEMPL_NS::target_ldbl_max_exp 16384
+# set TEMPL_NS::target_ldbl_min_exp -16381
+
+### Other miscellaneous options. The values
+### shown here are the default values.
+
+# set TEMPL_NS::target_bit_field_container_size -1
+# set TEMPL_NS::target_zero_width_bit_field_alignment -1
+# set TEMPL_NS::target_zero_width_bit_field_affects_struct_alignment 0
+# set TEMPL_NS::target_unnamed_bit_field_affects_struct_alignment 0
+  
+############################################################
+# Section 4: Predefined macros
+############################################################
+
+### The predefined_macro variable is an associated array that
+### maps the name of a macro to the value. Be sure that the
+### value contains quotes inside the curly braces if the
+### expansion should also contain quotes.
+###
+### Curly braces are allowed in the expansion text as long
+### as they are properly balanced.
+###
+### There is no limit to the number of predefined macros that
+### you can define.
+
+# set TEMPL_NS::predefined_macro(identifier1)      {some_literal_value}
+# set TEMPL_NS::predefined_macro(identifier2)      {"some string value with quotes"}
+# set TEMPL_NS::predefined_macro(identifier3(x,y)) { do { code; } while((x) && (y)) }
+
+TEMPL_PREDEFINED_MACROS
+
+### You can also suppress the standard EDG predefined macros
+### like __STDC__ if you set this pattern. By default,
+### the pattern is "*", which allows all EDG predefined
+### macros to get defined. Setting this to something
+### like "* - __STDC__" would suppress the __STDC__
+### macro from being defined by default. This does
+### not affect any predefined macros set up in this
+### file; it only affects the basic EDG predefined macros.
+  
+# set TEMPL_NS::standard_predefined_macros "*"
+
+TEMPL_STANDARD_EXCEPTIONS
+  
+############################################################
+# Section 5: Miscellaneous options
+############################################################
+
+### The extern variable is an associated array that maps
+### unknown extern "string" values to known ones. For example,
+### to force BEAM to treat
+###
+###   extern "builtin" void func();
+###
+### as
+###
+###   extern "C" void func();
+###
+### you should set this option:
+###
+###   set TEMPL_NS::extern(builtin) "C"
+###
+### There is no limit to the number of strings that you can
+### map to the built-in strings of "C" or "C++".
+  
+TEMPL_EXTERN
+
+### Some compilers define macro-like symbols that are being replaced
+### with the name of the function they appear in. Below are the symbols
+### EDG recognizes. Set to 1, if the symbol is replaced with a character
+### string (as opposed to a variable). If in doubt define it as "1"
+### which is more flexible.
+###
+### set TEMPL_NS::function_name_is_string_literal(__PRETTY_FUNCTION__) 1
+### set TEMPL_NS::function_name_is_string_literal(__FUNCTION__) 1
+### set TEMPL_NS::function_name_is_string_literal(__FUNCDNAME__) 1
+### set TEMPL_NS::function_name_is_string_literal(__func__)     1
+
+TEMPL_FUNCTION_NAME
+
+ETEMPLATECCPPCONFIG
+# ^^ END OF THE TEMPLATE
+  
+####################
+
+# This is the Java template configuration file that is filled in.
+# IF YOU CHANGE THIS, YOU SHOULD REGENERATE tcl/beam_default_*_config.tcl
+# FOR THE USERS.
+
+$template_java_config_file = <<'ETEMPLATEJAVACONFIG' ;
+############################################################
+# Invocation of beam_configure:
+#
+#   TEMPL_CONFIGURE_INVOCATION
+#
+# Location of compiler:
+#
+#   TEMPL_COMPILER_PATH
+#
+############################################################
+#
+# This is BEAM configuration file that describes a Java
+# compilation environment. This was generated with beam_configure
+# version "TEMPL_VERSION".
+#
+# This information will help BEAM emulate this compiler's
+# Java language level, default classpath, and encoding
+# so that BEAM can compile the same source code that the
+# original compiler could compile.
+#
+# The file format is Tcl, so basic Tcl knowledge may be beneficial
+# for anything more than the simplest of modifications.
+# 
+# A quick Tcl primer:
+# - Lines starting with "#" or ";#" are comments
+# - Things inside balanced curly braces are literal strings {one string literal}
+# - Things in square brackets that aren't in curly braces are function calls,
+#   and will be expanded inline automatically. This causes the most problems in
+#   double-quoted strings: "this is a function call: [some_func]"
+#
+# This file contains these sections:
+#
+# 1) Source language dialect
+# 2) Default Endorsed Directories
+# 3) Default Boot Classpath
+# 4) Default Extension Directories
+# 5) Default Classpath
+#
+# Each section has variables that help configure BEAM. They should
+# each be commented well. For additional documentation, please
+# refer to the local documentation in the install point.
+#
+# Note that the order of the sections is not important,
+# and variables may be set in any order.
+#
+# All variables are prefixed with name that corresponds to
+# which language this configuration is for.
+#
+# For Java compilers, the prefix is "beam::compiler::java"
+#
+############################################################
+
+### This is the version of beam_configure that generated this
+### configuration file.
+  
+TEMPL_GENERATED
+
+### This tells BEAM which pre-canned settings to load.
+### BEAM comes with some function attributes and argument
+### mappers for Sun Javac and IBM Javac.
+###
+### If unsure, set to 'default'.
+
+# set beam::compiler::java::cc "sun_javac"
+# set beam::compiler::java::cc "ibm_javac"
+
+TEMPL_CC
+
+
+############################################################
+# Section 1: Source language dialect
+############################################################
+  
+### The language_source_level variable selects among the available
+### dialects of Java.
+
+# set beam::compiler::java::language_source_level "1.3"
+# set beam::compiler::java::language_source_level "1.4"
+# set beam::compiler::java::language_source_level "1.5"
+
+TEMPL_LANGUAGE_SOURCE_LEVEL
+
+
+### The encoding of the Java source files. This should be
+### the same as the "file.encoding" System property of
+### your Java Virtual Machine when run with no options.
+
+# set beam::compiler::java::language_encoding {ANSI_X3.4-1968}
+
+TEMPL_LANGUAGE_ENCODING
+
+  
+############################################################
+# Section 2: Default Endorsed Directories
+############################################################
+
+### The system_endorsed_dirs variable is a list of entries
+### that will be used for the initial endorsed path. The
+### endorsed path is a list of directories where Java
+### Endorsed Standards live. Any jar file or zip file
+### in these directories will be placed in the classpath
+### before the boot classpath entries.
+###
+### This should be the same as the "java.endorsed.dirs"
+### System property of your Java Virtual Machine when run
+### with no cross-compilation options.
+
+# lappend beam::compiler::java::system_endorsed_dirs {/path/to/jre/lib/endorsed}
+
+TEMPL_SYSTEM_ENDORSED_DIRS
+
+
+############################################################
+# Section 3: Default Boot Classpath
+############################################################
+
+### The system_boot_classpath variable is a list of entries
+### that will be used for the initial boot classpath. These
+### entries normally contain jar files that come with the
+### java compiler itself, and contain the basic Java classes
+### like java.lang.Object.
+###
+### This should be the same as the "sun.boot.class.path"
+### System property of your Java Virtual Machine when
+### run with no cross-compilation options.
+  
+# lappend beam::compiler::java::system_boot_classpath {/path/to/jre/lib/rt.jar}
+# lappend beam::compiler::java::system_boot_classpath {/path/to/jre/lib/i18n.jar}
+# lappend beam::compiler::java::system_boot_classpath {/path/to/jre/lib/jce.jar}
+
+TEMPL_SYSTEM_BOOT_CLASSPATH
+
+
+############################################################
+# Section 4: Default Extension Directories
+############################################################
+
+### The system_ext_dirs variable is a list of entries that will
+### be used for the initial extension path. The extension
+### path is a list of directories where Java Extensions live.
+### Any jar file or zip file in these directories will be placed
+### in the classpath before the user directories.
+###
+### This should be the same as the "java.ext.dirs" System
+### property of your Java Virtual Machine when run
+### with no cross-compilation options.
+
+# lappend beam::compiler::java::system_ext_dirs {/path/to/jre/lib/ext}
+
+TEMPL_SYSTEM_EXT_DIRS
+  
+
+############################################################
+# Section 5: Default Classpath
+############################################################
+
+### The system_classpath variable is a list of entries
+### that will be used as the default classpath if no
+### option is given on the command-line to override it.
+### As per the Java documentation, it should default to
+### the value of the environment variable $CLASSPATH.
+### If the system_classpath variable ends up empty
+### after BEAM has parsed all command-line arguments,
+### "." will be used as the system_classpath.
+
+if { [::info exists ::env(CLASSPATH)] } {
+  set beam::compiler::java::system_classpath [split $::env(CLASSPATH) $::beam::pathsep]
+}
+
+ETEMPLATEJAVACONFIG
+# ^^ END OF THE TEMPLATE
+
+####################
+
+# Call main as late as possible in the file to ensure
+# that all declarations have been processed.
+
+main();

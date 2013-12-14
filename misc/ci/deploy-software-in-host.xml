@@ -1,0 +1,103 @@
+<!--@param ${install.package.fullname}: The path where place software package.-->
+<!--@param ${deploy.host.name} :  The host name for deploy test scripts and install software-->
+<!--@param ${coord.service.port}:  coord's service port-->
+<!--@param ${is.standalone.mode}:  the flag whether start with standalone mode-->
+<!--@param ${is.coord.master}: flag this node is coord master or no-->
+<!--@param ${catalog.addrs}: The string include catalog addr and port-->
+
+<project name="install-software" default="install-software">
+	<property file="ci.test.properties" />
+	<property name="is.standalone.mode" value="false" />
+	<property name="catalog.addrs" value="" />
+	<property name="is.coord.master" value="true" />
+	
+	<target name="uninstall-software" depends="">
+		<property environment="env" />
+		<echo message="Begin to clean deploy env...with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH},deploy.host.name=${deploy.host.name}" />
+		
+		
+
+		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}  WAIT 30m" />
+		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml clean-install -Dtest.basedir=${test.machine.software.path}  WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" />
+		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="exec ${STAF.PATH}/bin/staf ${deploy.host.name} FS DELETE ENTRY ${test.machine.software.path} RECURSE CONFIRM" />
+		<exec command="${STAF.PATH}/bin/staf ${deploy.host.name} FS DELETE ENTRY ${test.machine.software.path} RECURSE CONFIRM" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="exec ${STAF.PATH}/bin/staf ${deploy.host.name} FS CREATE DIRECTORY ${test.machine.software.path}" />
+		<exec command="${STAF.PATH}/bin/staf ${deploy.host.name} FS CREATE DIRECTORY ${test.machine.software.path}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="Clean deploy env compeleted." />
+	</target>
+
+	<target name="install-software" depends="uninstall-software">
+		<echo message="Begin to deploy softeware and test..." />
+
+		<property environment="env" />
+
+		<echo message="Begin to install sequoiadb software..." />
+		
+		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/ci.test.properties TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/ci.test.properties TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/install-basic-in-host.xml TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${basedir}/install-basic-in-host.xml TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+		
+		<basename property="install.package.filename" file="${install.package.fullname}"/>
+		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs} WORKDIR ${test.machine.software.path} WAIT 30m" />
+		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} PROCESS START  SHELL COMMAND  ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs} WORKDIR ${test.machine.software.path} WAIT 30m" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" />
+		<exec command="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+
+		<echo message="Sequoiadb install compeleted." />
+
+
+
+	</target>
+
+</project>
+
+
+

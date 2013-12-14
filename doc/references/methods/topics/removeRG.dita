@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_method_removeRG">
+  <title>db.removeRG()</title>
+  <body>
+    <section><title>db.removeRG(&lt;name>)</title>
+      <p>删除数据库中指定的分片组。</p>
+    </section>
+    <section><title>参数描述</title>
+      <simpletable><!-- frame="all" relcolwidth="1.0* 1.08* 5.78* 1.1*"
+        id="references_method_createRG_table">-->
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>name</stentry>
+          <stentry>string</stentry>
+          <stentry>分片组名，同一个数据库对象中，分片组名唯一。</stentry>
+          <stentry>是</stentry>
+        </strow>
+      </simpletable>
+      
+    </section>
+    <section><title>格式</title>
+      <p> removeRG() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
+      <p><codeblock>(&lt;"分片组名">)</codeblock></p>
+      <note>
+        <ul><li>分片组名必须存在。</li></ul>
+      </note>
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li><p>删除名为“group”的分片组 </p>
+          <p><codeblock>db.removeRG("group")</codeblock></p></li>
+      </ul>     
+    </section>
+  </body>
+  <related-links>
+    <link href="getRG.dita" format="dita" type="topic"></link>
+    <link href="dblist.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

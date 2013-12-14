@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_qcm_qzy_3k">
+  <title>C API</title>
+  <body>
+    <p>This part is related to C API document.</p>
+    <p><xref href="..\..\..\..\c\html\index.html" format="html">C API</xref></p>
+  </body>
+</topic>

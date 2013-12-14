@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="application_java_driver">
+  <title>Java Development Foundation</title>
+  <body>
+    <p>This page is a brief introduction to java driver of Sequoiadb. Please refer to <xref
+      href="..\..\..\..\java\html\index.html" format="html">Java API</xref> for more.</p>
+    <p>It is easy to use java driver. Firstly, download Java driver jar package "sequoiadb.jar".
+      Then, import it to your project and use relative API.</p>
+    <p>The following program samples can be found in the catalog "com.sequoiadb.examples" in
+      "smaples".</p>
+    <section>
+      <title>Create connection</title>
+      <p>In order to connect to SequoiaDB, we need at least one database name. If there's no
+        database name, SequoiaDB will automatically generate one. Additionally, we should specify
+        the server address and port. Here are 3 ways of connecting database</p>
+         <codeblock> // the database server address, IP:PORT
+ String connString = "192.168.20.111:40000";
+ Sequoiadb sdb = null;
+ // connect to specifical db, may cause some baseException, e.g. Network error
+ try {
+ 	sdb = new Sequoiadb(connString, "username", "password");
+ // or
+ //	sdb = new Sequoiadb("username", "password");//Default connecting approach: local 50000 port
+ // or
+ //	sdb = new Sequoiadb("IP", port, "username", "password");
+ } catch (BaseException e) {
+ 	System.out.println("Failed to connect to database: " + connString + ", error description" + e.getErrorType());
+ 	e.printStackTrace();
+ 	System.exit(1);
+ }       </codeblock>
+      <ul>
+        <li>
+          <p>Get collection space</p>
+           <codeblock> // create collectionspace, if collectionspace exists get it
+ CollectionSpace cs = null;
+ if(sdb.isCollectionSpaceExist(Constants.CS_NAME))
+ 	cs = sdb.getCollectionSpace(Constants.CS_NAME);
+ else
+ 	cs = sdb.createCollectionSpace(Constants.CS_NAME);
+ // or sdb.createCollectionSpace(csName, pageSize), need to specify the pageSize
+</codeblock>
+        </li>
+        <li>
+          <p>Get collection</p>
+    <codeblock> // create collection, if collection exists get it
+ DBCollection cl = null;
+ if(cs.isCollectionExist(Constants.CL_NAME))
+  cl = cs.getCollection(Constants.CL_NAME);
+ else
+  cl = cs.createCollection(Constants.CL_NAME);
+ // or cs.createCollection(collectionName, options), create collection with some options</codeblock>
+        </li>
+
+      </ul>
+    </section>
+    <section>
+      <title>Insert record</title>
+      <p>Once collection object is gained, we can insert data into it or create a BSON Object to
+        insert it (String corresponding to BSON structure canbe directly inserted).</p>
+  <codeblock>  // inserted data
+  BSONObject insertor1 = Constants.createChineseRecord();
+  BSONObject insertor2 = Constants.createEnglishRecord();
+  List &lt;BSONObject> list = Constants.createNameList(200);
+  
+  // insert operation
+  try {
+  insert a Chinese record
+  // chinese record
+  cl.insert(insertor1);
+  
+   insert a English record
+  // english record
+  cl.insert(insertor2);
+  
+   insert more than one record
+  // bulk insert
+  cl.bulkInsert(list, DBCollection.FLG_INSERT_CONTONDUP);
+  
+  System.out.println("Successfully insert records");
+  } catch (BaseException e) {
+   System.out.println("Failed to insert chinese record, ErrorType = "+ e.getErrorType());
+  } catch (Exception e) {
+   e.printStackTrace();
+   sdb.disconnect();
+   System.exit(1);
+  }</codeblock>
+    </section>
+    <section>
+      <title>Index</title>
+        <codeblock>  // create index key, index on attribute 'Id' by ASC(1)/DESC(-1)
+  BSONObject key = new BasicBSONObject();
+  key.put("Id", 1);
+  boolean isUnique = true;
+  boolean enforced = true;
+  try {
+    Create an index
+    // you can refer to the API to know more about this method
+    cl.createIndex(Constants.INDEX_NAME, key, isUnique, enforced);
+    // or
+    // cl.createIndex(Constants.INDEX_NAME, "{'Id':1}", isUnique, enforced);
+  
+    Delete an index
+    // drop index
+    cl.dropIndex(Constants.INDEX_NAME);
+  } catch (BaseException e) {
+    e.printStackTrace();
+  }</codeblock>
+    </section>
+    <section><title>Query</title>
+      <p>In order to show inserted records, the function find() is used to return a cursor object so
+        that we can go through all results in the result set.</p>
+    <codeblock>  import com.sequoiadb.base.DBCursor;
+  try {
+  Get curretn index of Collection. If it is not null, it can be used in a query.
+  BSONObject index = null;
+  DBCursor indexCursor = cl.getIndex(Constants.INDEX_NAME);
+  if (indexCursor.hasNext())
+  index = indexCursor.getNext();
+  
+  We get a Cursor from the query. It is used to go through result set.
+  // result cursor
+  DBCursor dataCursor = null;   
+  
+  //Create corrresponding BSON Object. It is used to search for data, including condition (query), domain selection (selector), order rule (orderBy), application of index (index), 
+  //the amount of skipped records (0)，the amount of returned record (-1:return all data).
+  // query condition
+  BSONObject query = new BasicBSONObject();
+  BSONObject condition = new BasicBSONObject();
+  condition.put("$gte", 0);
+  condition.put("$lte", 9);
+  query.put("Id", condition);
+  // return fields
+  BSONObject selector = new BasicBSONObject();
+  selector.put("Id", null);
+  selector.put("Age", null);
+  // order by ASC(1)/DESC(-1)
+  BSONObject orderBy = new BasicBSONObject();
+  orderBy.put("Id", -1);
+  if (index == null)
+    dataCursor = cl.query(query, selector, orderBy, null, 0, -1);
+    // or
+    // dataCursor = cl.query("{'Id':{'$gte':0,'$lte':9}}", "{'Id':null,'Age':null}", "{'Id':-1}", null, 0, -1);
+  else
+    dataCursor = cl.query(query, selector, orderBy, index, 0, -1);
+    // or
+    // dataCursor = cl.query("{'Id':{'$gte':0,'$lte':9}}", "{'Id':null,'Age':null}", "{'Id':-1}", index, 0, -1);
+  
+  //Use Cursor, go through query result set
+  // operate data by cursor
+  while (dataCursor.hasNext()) {
+  System.out.println(dataCursor.getNext());
+  }
+  // get count by match condition
+  long count = cl.getCount(query);
+  System.out.println("Get count by condition: " + query+ ", count = " + count);
+  
+  // see more details about query function in API document
+    } catch (BaseException e) {
+       e.printStackTrace();
+    }</codeblock>
+    </section>
+    <section>
+      <title>Delete</title>
+       <codeblock>  Create corresponding BSON Object. It is used to specify deleting condition or the String corresponding to it.
+  // create the delete condition
+  BSONObject condition = new BasicBSONObject();
+  condition.put("Id", 0 );
+  try {
+   cl.delete(condition);
+   // if you want to delete all the data in current collection, you can use like: cl.delete(null)
+   // or
+   // cl.delete("{'Id':0}");
+  } catch(BaseException e) {
+   System.out.println("Failed to delete data, condition: " + condition);
+   e.printStackTrace();
+  }
+  System.out.println("Delete data successfully");</codeblock>
+    </section>
+    <section>
+      <title>Update</title>
+       <codeblock>  Create corresponding BSON Object. It is used to specify updating condition or the String corresponding to it.
+  // create match condition and modify rule
+  BSONObject matcher = new BasicBSONObject();
+  BSONObject modifier = new BasicBSONObject();
+  BSONObject m = new BasicBSONObject();
+  
+  matcher.put("Id", 20);
+  m.put("Age", 80);
+  modifier.put("$set", m);
+  
+  Update. If there is no matcher conditions, insert this record.
+  cl.upsert(matcher, modifier, null);
+  // query the updated data from db
+  DBCursor cursor = cl.query(matcher, null, null, null);
+  if(cursor.hasNext())
+   System.out.println(cursor.getNext());</codeblock>
+    </section>
+    <section>
+      <title>Disconnect </title>
+      <codeblock>   // do not forget to disconnect from db
+   sdb.disconnect();</codeblock>
+    </section>
+    <section>
+      <title>SQL Statement</title>
+   <codeblock>try {
+   String csFullName = Constants.SQL_CS_NAME + "." + Constants.SQL_CL_NAME;
+   String sql = "";
+   
+   Create CollectionSpace
+   // create collectionspace
+   sql = "create collectionspace " + Constants.SQL_CS_NAME;
+   sdb.exec(sql);
+   
+   Create Collection
+   // create table
+   sql = "create table " + csFullName;
+   sdb.execUpdate(sql);
+   // insert data into table
+   
+   Insert data
+   sql = "insert into " + csFullName + " (a,b,c)" + " values(1,\"John\",20)";
+   sdb.execUpdate(sql);
+   
+   Search for data
+   // select from table
+   sql = "select * from " + csFullName;
+   DBCursor cursor = sdb.exec(sql);
+   while(cursor.hasNext())
+     System.out.println(cursor.getNext());
+   } catch (BaseException e) {
+   e.printStackTrace();
+   }</codeblock>
+    </section>
+
+  </body>
+</topic>

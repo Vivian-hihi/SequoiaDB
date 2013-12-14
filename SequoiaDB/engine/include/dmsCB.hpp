@@ -1,0 +1,250 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = dmsCB.hpp
+
+   Descriptive Name = Data Management Service Control Block Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of data management component. This file contains code logic for
+   data management control block, which is the metatdata information for DMS
+   component.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef DMSCB_HPP_
+#define DMSCB_HPP_
+
+#include <map>
+#include <set>
+#include "core.hpp"
+#include "oss.hpp"
+#include "ossMem.hpp"
+#include "dms.hpp"
+#include "ossLatch.hpp"
+#include "monDMS.hpp"
+#include "dmsTempCB.hpp"
+#include "ossAtomic.hpp"
+#include "ossRWMutex.hpp"
+#include "dpsLogWrapper.hpp"
+#include "ossEvent.hpp"
+
+using namespace std ;
+
+namespace engine
+{
+   class _pmdEDUCB ;
+   class _dmsStorageUnit ;
+
+   // for each collection space, there is one CSCB associate with it
+   class _SDB_DMS_CSCB : public SDBObject
+   {
+   public:
+      //ossSpinSLatch _mutex ;
+      // maximum sequence id for the collection space
+      // currently 1 sequence per collection space
+      UINT32 _topSequence ;
+      CHAR   _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
+      _dmsStorageUnit *_su ;
+      _SDB_DMS_CSCB ( const CHAR *pName, UINT32 topSequence,
+                      _dmsStorageUnit *su )
+      {
+         ossStrncpy ( _name, pName, DMS_COLLECTION_SPACE_NAME_SZ ) ;
+         _name[DMS_COLLECTION_SPACE_NAME_SZ] = 0 ;
+         _topSequence = topSequence ;
+         _su = su ;
+      }
+      ~_SDB_DMS_CSCB () ;
+   } ;
+   typedef class _SDB_DMS_CSCB SDB_DMS_CSCB ;
+
+
+   #define DMS_MAX_CS_NUM 4096
+   #define DMS_INVALID_CS DMS_INVALID_SUID
+   #define DMS_STATE_NORMAL  0
+   #define DMS_STATE_BACKUP  1
+   #define DMS_STATE_REBUILD 2
+   #define DMS_CHANGESTATE_WAIT_LOOP 500
+
+   /*
+      _SDB_DMSCB define
+   */
+   class _SDB_DMSCB : public SDBObject
+   {
+   private :
+   #ifdef DMSCB_XLOCK
+   #undef DMSCB_XLOCK
+   #endif
+   #define DMSCB_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
+   #ifdef DMSCB_SLOCK
+   #undef DMSCB_SLOCK
+   #endif
+   #define DMSCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
+
+      ossSpinSLatch _mutex ;
+
+      struct cmp_cscb
+      {
+         bool operator() (const char *a, const char *b)
+         {
+            return std::strcmp(a,b)<0 ;
+         }
+      } ;
+      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb> _cscbNameMap ;
+      std::vector<SDB_DMS_CSCB*>          _cscbVec ;
+      std::vector<ossRWMutex*>            _latchVec ;
+      std::vector<dmsStorageUnitID>       _freeList ;
+
+      ossSpinXLatch           _stateMtx;
+      ossEvent                _backEvent ;
+      SINT64                  _writeCounter;
+      UINT8                   _dmsCBState;
+      UINT32                  _logicalSUID ;
+
+      dmsTempCB               _tempCB ;
+
+   private:
+      void  _logCSCBNameMap () ;
+      INT32 _CSCBNameInsert ( const CHAR *pName, UINT32 topSequence,
+                              _dmsStorageUnit *su,
+                              dmsStorageUnitID &suID ) ;
+      SDB_DMS_CSCB *_CSCBNameLookup ( const CHAR *pName ) ;
+      INT32 _CSCBNameLookupAndLock ( const CHAR *pName,
+                                     dmsStorageUnitID &suID,
+                                     SDB_DMS_CSCB **cscb,
+                                     OSS_LATCH_MODE lockType = SHARED,
+                                     INT32 millisec = -1 ) ;
+      void _CSCBRelease ( dmsStorageUnitID suID,
+                          OSS_LATCH_MODE lockType = SHARED ) ;
+      INT32 _CSCBNameRemove ( const CHAR *pName, _pmdEDUCB *cb,
+                              SDB_DPSCB *dpsCB, SDB_DMS_CSCB *&pCSCB,
+                              BOOLEAN &hasLocked ) ;
+      void _CSCBNameMapCleanup () ;
+
+   public:
+      _SDB_DMSCB() :
+      _writeCounter(0),
+      _dmsCBState(DMS_STATE_NORMAL),
+      _logicalSUID(0),
+      _tempCB(this)
+      {
+         for ( UINT32 i = 0 ; i<DMS_MAX_CS_NUM ; ++i )
+         {
+            _cscbVec.push_back ( NULL ) ;
+            // free in desctructor
+            _latchVec.push_back ( new(std::nothrow) ossRWMutex() ) ;
+            _freeList.push_back ( i ) ;
+         }
+
+         _backEvent.signal() ;
+      }
+
+      ~_SDB_DMSCB()
+      {
+         _CSCBNameMapCleanup () ;
+         for ( UINT32 i=0; i<DMS_MAX_CS_NUM; ++i )
+         {
+            SDB_OSS_DEL _latchVec[i] ;
+            _latchVec[i] = NULL ;
+         }
+      }
+
+      INT32 nameToSUAndLock ( const CHAR *pName, dmsStorageUnitID &suID,
+                              _dmsStorageUnit **su,
+                              OSS_LATCH_MODE lockType = SHARED,
+                              INT32 millisec = -1 ) ;
+      _dmsStorageUnit *nameToSU ( const CHAR *pName );
+
+      _dmsStorageUnit *suLock ( dmsStorageUnitID suID ) ;
+      void suUnlock ( dmsStorageUnitID suID,
+                      OSS_LATCH_MODE lockType = SHARED ) ;
+
+      INT32 addCollectionSpace ( const CHAR *pName, UINT32 topSequence,
+                                 _dmsStorageUnit *su, _pmdEDUCB *cb,
+                                 SDB_DPSCB *dpsCB ) ;
+      INT32 dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB, BOOLEAN &hasLocked ) ;
+
+      void dumpInfo ( std::set<monCollection> &collectionList,
+                      BOOLEAN sys = FALSE ) ;
+      void dumpInfo ( std::set<monCollectionSpace> &csList,
+                      BOOLEAN sys = FALSE ) ;
+      void dumpInfo ( std::set<monStorageUnit> &storageUnitList,
+                      BOOLEAN sys = FALSE ) ;
+
+      dmsTempCB *getTempCB () ;
+
+   public:
+      typedef std::vector<SDB_DMS_CSCB*>::iterator CSCB_ITERATOR;
+
+      inline CSCB_ITERATOR begin()
+      {
+         return _cscbVec.begin();
+      }
+
+      inline CSCB_ITERATOR end()
+      {
+         return _cscbVec.end();
+      }
+
+      INT32 writable( _pmdEDUCB * cb ) ;
+
+      inline void writeDown()
+      {
+         _stateMtx.get();
+         --_writeCounter;
+         SDB_ASSERT( 0 <= _writeCounter, "write counter should not < 0" )
+         _stateMtx.release();
+      }
+
+      INT32 registerBackup() ;
+
+      inline void backupDown()
+      {
+         _stateMtx.get() ;
+         _dmsCBState = DMS_STATE_NORMAL ;
+         _backEvent.signalAll() ;
+         _stateMtx.release() ;
+      }
+
+      INT32 registerRebuild() ;
+
+      inline void rebuildDown()
+      {
+         _stateMtx.get();
+         _dmsCBState = DMS_STATE_NORMAL;
+         _stateMtx.release();
+      }
+
+      inline UINT8 getCBState () const
+      {
+         return _dmsCBState ;
+      }
+
+   } ;
+   typedef class _SDB_DMSCB SDB_DMSCB ;
+}
+
+#endif //DMSCB_HPP_
+

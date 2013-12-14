@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="developement_application_C">
+  <title>C BSON简介</title>
+  <body>
+    <p>BSON是JSON的二进制表现形式，通过记录每个对象，元素，以及嵌套元素和数组的类型以及长度，能够高速有效地进行某个元素的查找。因此，在C和C++中使用BSON官方提供的BSON接口进行数据存储。<xref href="..\..\..\..\bson\html\index.html"
+        format="html">更多参考C BSON在线API</xref>。</p>
+    <p>与普通的JSON不同，BSON提供更多的数据类型，以满足C/C++语言多种多样的需求。SequoiaDB提供了包括8字节浮点数（DOUBLE），字符串，嵌套对象，嵌套数组，对象ID（数据库中每个集合中每条记录都有一个唯一ID），布尔值，日期，NULL，正则表达式，4字节整数（INT），时间戳，以及8字节整数等数据类型。这些类型的定义可以在bson.h中的bson_type找到。</p>
+    <p>在用户程序使用bson对象时，主要分为建立对象和读取对象两个操作。</p>
+    <section>
+    <title> 建立对象 </title><p>总的来说，一个BSON对象的创建主要分为三大步操作：</p><p> 1）创建对象（bson_create ; bson_init）</p>
+      <p> 2）使用对象</p><p> 3）清除对象（bson_dispose ; bson_destory）</p>
+      <ul>
+        <li><p>创建一个简单的bson对象{age:20}。<codeblock>bson obj;
+bson_init(&amp;obj);
+bson_appent_int(obj,"age",20);
+bson_finish(obj);
+bson_destory(obj);</codeblock></p></li>
+        <li>创建一个复杂的BSON对象
+          <codeblock>/* 创建一个包含{name:"tom",colors:["red","blue","green"], address: {city:"Toronto, province: "Ontario"}}的对象 */
+bson_iterator bi ;
+bson *newobj = bson_create () ;
+bson_append_string ( newobj, "name", "tom" ) ;
+bson_append_start_object ( newobj, "address" ) ;
+bson_append_string ( newobj, "city", "Toronto" ) ;
+bson_append_string ( newobj, "provice", "Ontario" ) ;
+bson_append_start_array(newobj,"colors");
+bson_appent_string(newobj,"0","red");
+bson_appent_string(newobj,"1","blue");
+bson_appent_string(newobj,"2","green");
+bson_append_finish_object ( newobj ) ;
+if( bson_finish ( newobj ) != BSON_OK )
+   printf("Error.") ;</codeblock></li>
+      </ul>
+    </section>
+    <section>
+      <title> 读取对象</title>
+      <p>读取BSON对象使用一个bson_iterator，对一个完整的例子，可以使用
+        bson_print_raw方法来读取。但是首先得初始化bson_iterator对象，然后使用bson_iterator_next遍历每一个元素。</p><p>例如：</p>
+      <codeblock>bson_iterator i[1] ;
+bson_type type ;
+const char * key;
+
+bson_iterator_init(i, newobj) ;
+
+type = bson_iterator_next (i);
+key = bson_iterator_key (i);
+
+printf( "Type: %d, Key: %s\n", type, key) ;</codeblock>
+      <p>对于每个bson_iterator，使用bson_iterator_type函数可以得到其类型，使用bson_iterator_string等函数可以得到其相对应类型的数值。</p>
+      <codeblock>printf( "Value: %s, bson_iterator_string(i)) ;</codeblock>
+      <ul>
+        <li>
+          <p>遍历每个连续的BSON对象元素，可以使用bson_find函数直接跳转得到元素的名称。如果该元素不存在于bson之内，则bson_find函数返回BSON_EOO。</p>
+          <p>例如想得到name元素名可以这样使用：</p>
+          <codeblock>bson_iterator i[1] ,sub[i] ;
+bson_type type ;
+
+bson_find ( i, newobj, "name" )</codeblock>
+        </li>
+        <li>
+            读取数组元素或嵌套对象，因为“address”是一个嵌套对象，需要特殊遍历。首先得到address值，再初始化一个新的BSON迭代器：<codeblock>type = bson_find(i,newobj,"address");
+bson_iterator_subiterator(i,sub);</codeblock><p>方法bson_iterator_subiterator初始化迭代器sub，并且指向子对象的开始位置，从这里开始可以遍历sub中的所有元素，直到子对象的结束位置。</p></li>
+      </ul>
+
+    </section>
+  </body>
+</topic>

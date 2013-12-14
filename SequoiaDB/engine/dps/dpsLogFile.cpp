@@ -1,0 +1,506 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = dpsLogFile.cpp
+
+   Descriptive Name = Data Protection Service Log File
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of data protection component. This file contains code logic for
+   DPS transaction log file basic operations
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          11/27/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "dpsLogFile.hpp"
+#include "dpsLogPage.hpp"
+#include "dpsLogFileMgr.hpp"
+#include "pd.hpp"
+#include "pmd.hpp"
+#include "pdTrace.hpp"
+#include "dpsTrace.hpp"
+
+namespace engine
+{
+   _dpsLogFile::_dpsLogFile()
+   {
+      _file = NULL ;
+      _fileSize = 0 ;
+      _idleSize = 0 ;
+   }
+
+   _dpsLogFile::~_dpsLogFile()
+   {
+      if ( NULL != _file )
+      {
+         close();
+         SDB_OSS_DEL _file;
+      }
+
+      _file = NULL;
+   }
+
+   DPS_LSN _dpsLogFile::getFirstLSN ( BOOLEAN mustExist )
+   {
+      if ( _logHeader._logID != DPS_INVALID_LOG_FILE_ID
+           && ( ( mustExist && _logHeader._firstLSN.offset % _fileSize <
+                  _fileSize - _idleSize ) || !mustExist ) )
+      {
+         return _logHeader._firstLSN ;
+      }
+      return DPS_LSN () ;
+   }
+
+   // initialize a log file, file size max 4GB
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_INIT, "_dpsLogFile::init" )
+   INT32 _dpsLogFile::init( const CHAR *path, UINT32 size )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_INIT );
+
+      SDB_ASSERT ( _fileSize <= DPS_MAX_LOG_FILE_SIZE,
+                   "log file size can't be greater than "
+                   "DPS_MAX_LOG_FILE_SIZE  bytes" )
+      SDB_ASSERT ( 0 == (_fileSize % DPS_DEFAULT_PAGE_SIZE),
+                   "Size must be multiple of DPS_DEFAULT_PAGE_SIZE bytes" )
+
+      _fileSize = size ;
+      _idleSize = _fileSize ;
+
+      // allocate OSS_FILE, free in destructor
+      _file = SDB_OSS_NEW _OSS_FILE();
+      if ( !_file )
+      {
+         rc = SDB_OOM;
+         PD_LOG ( PDERROR, "new _OSS_FILE failed!" );
+         goto error;
+      }
+
+      // if the file exist, restore
+      if ( SDB_START_CRASH != pmdGetKRCB()->getStartType()
+         && SDB_OK == ossAccess( path ) )
+      {
+         rc = ossOpen ( path, OSS_READWRITE|OSS_SHAREWRITE, OSS_RWXU, *_file ) ;
+         if ( rc == SDB_OK )
+         {
+            rc = _restore () ;
+            if ( rc == SDB_OK )
+            {
+               PD_LOG ( PDEVENT, "Restore dps log file[%s] succeed, "
+                        "firstLsn[%lld]", path, getFirstLSN().offset ) ;
+               goto done ;
+            }
+            else
+            {
+               close () ;
+               PD_LOG ( PDEVENT, "Restore dps log file[%s] failed[rc:%d]",
+                        path, rc ) ;
+               goto error ;
+            }
+         }
+      }
+
+      // delete the file, since we are using circular logging mode, we only
+      // delete the file during initialization
+      rc = ossDelete ( path );
+      if ( SDB_IO == rc )
+      {
+         PD_LOG ( PDERROR, "Failed to delete file at %s", path ) ;
+         goto error;
+      }
+
+      // open the file with "create only" and "read write" mode, for rx-r-----
+      // mode, use DirectIO for logging
+      rc = ossOpen( path, OSS_CREATEONLY |OSS_READWRITE | OSS_SHAREWRITE,
+                    OSS_RWXU, *_file );
+
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to open log file %s, rc = %d", path, rc ) ;
+         goto error;
+      }
+      // increase the file size to the given size plus log file header
+      rc = ossExtendFile( _file, (SINT64)_fileSize + DPS_LOG_HEAD_LEN );
+      if ( rc )
+      {
+         close() ;
+         PD_LOG ( PDERROR, "Failed to extend log file size to %d, rc = %d",
+                 size + DPS_LOG_HEAD_LEN, rc ) ;
+         goto error;
+      }
+
+      // TODO: initialize head
+      _initHead ( DPS_INVALID_LOG_FILE_ID ) ;
+      rc = _flushHeader () ;
+      if ( rc )
+      {
+         close () ;
+         PD_LOG ( PDERROR, "Failed to flush header, rc = %d", rc ) ;
+         goto error ;
+      }
+      // Currently let's just skip head
+      rc = ossSeek ( _file, DPS_LOG_HEAD_LEN, OSS_SEEK_SET ) ;
+      if ( rc )
+      {
+         close() ;
+         PD_LOG ( PDERROR, "Failed to seek to %d offset in log file, rc = %d",
+                 DPS_LOG_HEAD_LEN, rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE_INIT, rc );
+      return rc;
+   error:
+      if ( NULL != _file )
+      {
+         SDB_OSS_DEL _file;
+         _file = NULL;
+      }
+      goto done;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__RESTRORE, "_dpsLogFile::_restore" )
+   INT32 _dpsLogFile::_restore ()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE__RESTRORE );
+      INT64 fileSize = 0 ;
+      UINT64 offSet = 0 ;
+      UINT64 baseOffset = 0 ;
+      dpsLogRecordHeader lsnHeader ;
+
+      //Judge the length is right
+      rc = ossGetFileSize( _file, &fileSize ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+      if ( _fileSize != fileSize - sizeof(dpsLogHeader) )
+      {
+         PD_LOG ( PDERROR, "DPS file size[%d] is not the same with config[%d]",
+                  fileSize - sizeof(dpsLogHeader), _fileSize ) ;
+         rc = SDB_DPS_FILE_SIZE_NOT_SAME ;
+         goto error ;
+      }
+
+      //Init header
+      rc = _readHeader() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG ( PDERROR, "Fail to read dps file header[rc:%d]", rc ) ;
+         goto error ;
+      }
+
+      PD_LOG ( PDEVENT, "Header info[first lsn:%d.%lld, logID:%d]",
+         _logHeader._firstLSN.version, _logHeader._firstLSN.offset,
+         _logHeader._logID ) ;
+
+      //check header
+      if ( ossStrncmp(_logHeader._eyeCatcher, DPS_LOG_HEADER_EYECATCHER,
+                      DPS_LOG_HEADER_EYECATCHER_LEN) != 0 )
+      {
+         rc = SDB_DPS_FILE_NOT_RECOGNISE ;
+         goto error ;
+      }
+      if ( _logHeader._logID == DPS_INVALID_LOG_FILE_ID )
+      {
+         _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
+         _logHeader._firstLSN.offset = DPS_INVALID_LSN_OFFSET ;
+         goto done ;
+      }
+
+      offSet = _logHeader._firstLSN.offset % _fileSize ;
+      baseOffset = _logHeader._firstLSN.offset - offSet ;
+      //analysis the file
+      while ( offSet < _fileSize )
+      {
+         rc = read ( offSet + baseOffset , sizeof (dpsLogRecordHeader),
+                     (CHAR*)&lsnHeader ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to read lsn header[offset:%lld,rc:%d]",
+                     offSet, rc ) ;
+            goto error ;
+         }
+
+         if ( lsnHeader._lsn != offSet + baseOffset )
+         {
+            PD_LOG ( PDEVENT, "LSN is not the same[%lld!=%lld]",
+                     lsnHeader._lsn, offSet + baseOffset ) ;
+            break ;
+         }
+         else if ( offSet + lsnHeader._length > _fileSize )
+         {
+            PD_LOG ( PDEVENT, "LSN length[%d] is over the file size[offSet:%lld]",
+                     lsnHeader._length, offSet ) ;
+            break ;
+         }
+         else if ( lsnHeader._length < sizeof (dpsLogRecordHeader) )
+         {
+            PD_LOG ( PDEVENT, "LSN length[%d] less than min[%d], invalid LSN",
+                     lsnHeader._length, sizeof (dpsLogRecordHeader) ) ;
+            break ;
+         }
+
+         offSet += lsnHeader._length ;
+      }
+
+      if ( 0 == offSet )
+      {
+         _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
+         _logHeader._firstLSN.offset = DPS_INVALID_LSN_OFFSET ;
+         _logHeader._logID = DPS_INVALID_LOG_FILE_ID ;
+      }
+      else
+      {
+         _idleSize = _fileSize - offSet ;
+      }
+
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE__RESTRORE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_RESET, "_dpsLogFile::reset" )
+   INT32 _dpsLogFile::reset ( UINT32 logID, const DPS_LSN_OFFSET &offset,
+                              const DPS_LSN_VER &version )
+   {
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_RESET );
+      if ( DPS_INVALID_LOG_FILE_ID != logID )
+      {
+         SDB_ASSERT ( offset/_fileSize == logID , "logical log file id error" ) ;
+         _logHeader._firstLSN.offset= offset ;
+         _logHeader._firstLSN.version = version ;
+      }
+      else
+      {
+         _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
+         _logHeader._firstLSN.offset = DPS_INVALID_LSN_OFFSET ;
+      }
+      _logHeader._logID = logID ;
+      _idleSize = _fileSize ;
+      
+      INT32 rc = _flushHeader () ;
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE_RESET, rc );
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__FLUSHHD, "_dpsLogFile::_flushHeader" )
+   INT32 _dpsLogFile::_flushHeader ()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE__FLUSHHD );
+      SINT64 writtenLen = 0;
+      UINT32 written = 0 ;
+      CHAR *buff = (CHAR*)&_logHeader ;
+
+      while ( written < DPS_LOG_HEAD_LEN )
+      {
+         rc = ossSeekAndWrite( _file, written, &buff[written],
+                               DPS_LOG_HEAD_LEN - written, &writtenLen ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to write into file header, rc = %d", rc ) ;
+            goto error;
+         }
+         written += (UINT32)writtenLen ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE__FLUSHHD, rc );
+      return rc;
+   error:
+      goto done;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__RDHD, "_dpsLogFile::_readHeader" )
+   INT32 _dpsLogFile::_readHeader ()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE__RDHD );
+      SINT64 readLen = 0 ;
+      SINT64 read = 0 ;
+      CHAR *buff = (CHAR*)&_logHeader ;
+
+      while ( read < DPS_LOG_HEAD_LEN )
+      {
+         rc = ossSeekAndRead ( _file, read, &buff[read],
+                              DPS_LOG_HEAD_LEN-read, &readLen ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR,  "Failed to ossSeekAndRead, rc = %d", rc ) ;
+            goto error;
+         }
+         read += ( UINT32 )readLen;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE__RDHD, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // write data into log file
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_WRITE, "_dpsLogFile::write" )
+   INT32 _dpsLogFile::write( const CHAR *content, UINT32 len )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_WRITE );
+
+      SINT64 writtenLen = 0;
+      UINT32 written = 0 ;
+      SDB_ASSERT ( len <= _idleSize, "length is creater than idle size" )
+      while ( written < len )
+      {
+         // write data into the file
+         // _fileSize - _idleSize is the offset for the current position
+         rc = ossSeekAndWrite( _file,
+                               DPS_LOG_HEAD_LEN + _fileSize - _idleSize + written,
+                               &content[written],
+                               len - written,
+                               &writtenLen ) ;
+         if ( rc )
+         {
+            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                    "Failed to write into file, rc = %d", rc ) ;
+            goto error;
+         }
+         written += (UINT32)writtenLen ;
+         _idleSize -= (UINT32)writtenLen ;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE_WRITE, rc );
+      return rc;
+   error:
+      goto done;
+   }
+
+   // read data from a given offset
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_READ, "_dpsLogFile::read" )
+   INT32 _dpsLogFile::read ( const DPS_LSN_OFFSET &lOffset, UINT32 len, CHAR *buf )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_READ );
+      SINT64 readLen = 0;
+      UINT32 read = 0 ;
+      UINT32 offset = lOffset % _fileSize ;
+      // make sure we don't read out of range
+      SDB_ASSERT ( offset + len <= _fileSize,
+                   "Read out of range" )
+      // make sure the LSN is within the range
+      if ( lOffset < _logHeader._firstLSN.offset ||
+           lOffset > _logHeader._firstLSN.offset + _fileSize )
+      {
+         PD_LOG ( PDERROR, "Unable to find LSN %lld in the file", lOffset ) ;
+         rc = SDB_DPS_LOG_NOT_IN_FILE ;
+         goto error ;
+      }
+      while ( read < len )
+      {
+         // seeks to given offset and read
+         rc = ossSeekAndRead ( _file, offset + DPS_LOG_HEAD_LEN + read,
+                               &buf[read], len-read, &readLen ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to ossSeekAndRead, rc = %d", rc ) ;
+            goto error;
+         }
+         read += ( UINT32 )readLen;
+      }
+   done:
+      PD_TRACE_EXITRC ( SDB__DPSLOGFILE_READ, rc );
+      return rc;
+   error:
+      goto done;
+   }
+
+   // close the file
+   INT32 _dpsLogFile::close()
+   {
+      return ossClose( *_file );
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_DUMPHD, "_dpsLogFile::dumpHead" )
+   UINT32 _dpsLogFile::dumpHead ( CHAR *inBuf, UINT32 inSize,
+                                  CHAR *outBuf, UINT32 outSize, UINT32 options )
+   {
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_DUMPHD );
+      SDB_ASSERT ( inBuf, "inbuf can't be NULL" )
+      SDB_ASSERT ( outBuf, "outbuf can't be NULL" )
+      SDB_ASSERT ( DPS_LOG_HEAD_LEN == inSize, "insize must be DPS_LOG_HEAD_LEN" )
+      UINT32 len           = 0 ;
+      UINT32 hexDumpOption = 0 ;
+      if ( DPS_DMP_OPT_HEX & options )
+      {
+         hexDumpOption |= OSS_HEXDUMP_INCLUDE_ADDR ;
+         if ( !(DPS_DMP_OPT_HEX_WITH_ASCII & options ) )
+         {
+            hexDumpOption |= OSS_HEXDUMP_RAW_HEX_ONLY ;
+         }
+         ossHexDumpBuffer ( (void*)inBuf, inSize, outBuf, outSize, NULL,
+                            hexDumpOption ) ;
+         len = ossStrlen ( outBuf ) ;
+         outBuf [ len ] = '\n' ;
+         ++len ;
+      }
+      if ( DPS_DMP_OPT_FORMATTED & options )
+      {
+         dpsLogHeader *logHead = (dpsLogHeader*)inBuf ;
+         /* dump output looks like
+          *  Head    : SDBLOGHD
+          *  FirstLSN: 0x123456789
+          *  LogID   : 10
+          */
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              OSS_NEWLINE
+                              " Head   : %c%c%c%c%c%c%c%c"OSS_NEWLINE,
+                              logHead->_eyeCatcher[0],
+                              logHead->_eyeCatcher[1],
+                              logHead->_eyeCatcher[2],
+                              logHead->_eyeCatcher[3],
+                              logHead->_eyeCatcher[4],
+                              logHead->_eyeCatcher[5],
+                              logHead->_eyeCatcher[6],
+                              logHead->_eyeCatcher[7] ) ;
+         if ( ossMemcmp ( DPS_LOG_HEADER_EYECATCHER, logHead->_eyeCatcher,
+                          DPS_LOG_HEADER_EYECATCHER_LEN ) != 0 )
+         {
+            len += ossSnprintf ( outBuf + len, outSize - len,
+                                 "Error: Invalid Eye Catcher"OSS_NEWLINE ) ;
+            goto exit ;
+         }
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " FirstLSN: 0x%08lx"OSS_NEWLINE,
+                              logHead->_firstLSN.offset ) ;
+         len += ossSnprintf ( outBuf + len, outSize - len,
+                              " LogID  : %d"OSS_NEWLINE,
+                              logHead->_logID ) ;
+      }
+   exit :
+      PD_TRACE1 ( SDB__DPSLOGFILE_DUMPHD, PD_PACK_UINT(len) );
+      PD_TRACE_EXIT ( SDB__DPSLOGFILE_DUMPHD );
+      return len ;
+   }
+}

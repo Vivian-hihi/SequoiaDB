@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="developement_console_knack">
+  <title>Tips when using shell</title>
+  <body>
+    <p>Sequoiadb shell has built-in help documents. It can be read through the command of
+      help.<codeblock>> help
+function () {
+    println("   var db = new Sdb('localhost', 50000)   connect to database");
+    println("   db.help()                              help on db methods");
+    println("   db.cs.help()                           help on collection space                                                                                                                      cs");
+    println("   db.cs.cl                               access collection cl on c                                                                                                                     ollection space cs");
+    println("   db.cs.cl.help()                        help on collection cl");
+    println("   db.cs.cl.find()                        list all records");
+    println("   db.cs.cl.find({a:1})                   list records where a=1");
+    println("   print(x), println(x)                   print out x");
+    println("   getErr(ret)                        print error description for r                                                                                                                     eturn code");
+    println("   quit                                   exit");
+    }</codeblock></p>
+    <ul>
+      <li>Database Help <p>The command to check help document on database
+        level:</p><codeblock>db.help()</codeblock></li>
+      <li>CollectionSpace Help<p>The command to check help document of methods under collection
+          space:<codeblock>db.&lt;collectionspace>.help()</codeblock></p></li>
+      <li>Collection Help<p> The command to check help document of methods under collection
+          :<codeblock>db.&lt;collectionspace>.&lt;collection>.help()</codeblock></p></li>
+      <li>Cursor Help<p>In shell, when using <xref
+        href="../../../references/methods/topics/find_en.dita">find()</xref> to read data in
+          database, it uses all kinds of cursor methods and javascript method to cope with result
+          set returned by the method find().</p><p>The command to check help document of methods
+          manipulating
+          cursor:<codeblock>db.&lt;collectionspace>.&lt;collection>.find().help()</codeblock></p></li>
+    <li>Methods Help <p>Additionally, there is a skill to understand the function of functions. When
+                    you type in the function name without brakets, it will show the javascript
+                    source code of the function. For
+                example:</p><codeblock>> db.foo.bar.find
+function (query, select) {
+    return new SdbQuery(this, query, select);
+    }</codeblock></li>
+    </ul>
+    
+    
+    
+    <p>Please visit http:// to check all the automatically generated javascript function API
+      documents provide by shell. </p>
+  </body>
+</topic>

@@ -1,0 +1,229 @@
+/*******************************************************************************
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = clsFSDstSession.hpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Replication component. This file contains structure for
+   replication control block.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef CLSFSDSTSESSION_HPP_
+#define CLSFSDSTSESSION_HPP_
+
+#include "clsDef.hpp"
+#include "clsFSDef.hpp"
+#include "msgReplicator.hpp"
+#include "clsSession.hpp"
+#include "clsReplayer.hpp"
+#include "clsSrcSelector.hpp"
+#include <vector>
+#include "../bson/bsonobj.h"
+#include "clsTask.hpp"
+
+using namespace std ;
+using namespace bson ;
+
+namespace engine
+{
+   class _clsSyncManager ;
+   class _clsShardMgr ;
+
+   class _clsDataDstBaseSession : public _clsSession
+   {
+      DECLARE_OBJ_MSG_MAP()
+
+      public:
+         _clsDataDstBaseSession ( UINT64 sessionID, _netRouteAgent *agent ) ;
+         virtual ~_clsDataDstBaseSession () ;
+
+      public:
+         virtual BOOLEAN timeout ( UINT32 interval ) ;
+         virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
+         virtual void    onRecieve ( const NET_HANDLE netHandle,
+                                     MsgHeader * msg ) ;
+
+      protected:
+         virtual void   _begin () = 0 ;
+         virtual void   _end () = 0 ;
+
+         virtual BSONObj _keyObjB () = 0 ;
+         virtual BSONObj _keyObjE () = 0 ;
+         virtual INT32   _needData () const = 0 ;
+         virtual INT32   _dataSessionType () const = 0 ;
+         virtual BOOLEAN _onTimer () = 0 ;
+         virtual void    _endLog () = 0 ;
+         virtual INT32   _onNotify () = 0 ;
+
+      //message function
+      protected:
+         INT32 handleMetaRes( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleIndexRes( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleNotifyRes( NET_HANDLE handle, MsgHeader* header ) ;
+
+      protected:
+         void           _disconnect() ;
+         void           _meta () ;
+         void           _index() ;
+         void           _notify( CLS_FS_NOTIFY_TYPE type ) ;
+         BOOLEAN        _more( MsgClsFSNotifyRes *msg, CHAR *&itr,
+                               BOOLEAN isData = TRUE ) ;
+
+         INT32          _extractFullNames( const CHAR *names ) ;
+         INT32          _extractMeta( const CHAR *objdata, string &cs,
+                                      string &collection, UINT32 &pageSize,
+                                      UINT32 &attributes ) ;
+         INT32          _extractIndex( const CHAR *objdata, vector<BSONObj> &index,
+                                       BOOLEAN &noMore ) ;
+
+         UINT32         _addCollection ( const CHAR *pCollectionName ) ;
+         UINT32         _removeCollection ( const CHAR *pCollectionName ) ;
+         UINT32         _removeCS ( const CHAR *pCSName ) ;
+
+      protected:
+         vector<string>       _fullNames ;
+         _clsReplayer         _replayer ;
+         clsSrcSelector       _selector ;
+         _netRouteAgent       *_agent ;
+         SINT64               _packet ;
+         CLS_FS_STATUS        _status ;
+         UINT32               _current ;
+         UINT32               _timeout ;
+         BOOLEAN              _quit ;
+         UINT64               _requestID ;
+         DPS_LSN              _expectLSN ;
+         std::map<string, INT32> _mapEmptyCS ;
+
+   };
+
+   class _clsFSDstSession : public _clsDataDstBaseSession
+   {
+   DECLARE_OBJ_MSG_MAP()
+   public:
+      _clsFSDstSession( UINT64 sessionID,
+                        _netRouteAgent *agent ) ;
+      virtual ~_clsFSDstSession() ;
+      enum TRANS_SYNC_STEP
+      {
+         STEP_TS_BEGIN = 0,
+         STEP_TS_ING,
+         STEP_TS_END
+      };
+   public:
+      virtual INT32 type () const ;
+      virtual EDU_TYPES eduType () const ;
+
+   public:
+      INT32 handleBeginRes( NET_HANDLE handle, MsgHeader* header ) ;
+      INT32 handleEndRes( NET_HANDLE handle, MsgHeader* header ) ;
+      INT32 handleSyncTransRes( NET_HANDLE handle, MsgHeader* header ) ;
+
+   protected:
+      virtual void      _onDetach () ;
+   protected:
+      virtual void      _begin() ;
+      virtual void      _end() ;
+      virtual INT32     _needData () const ;
+      virtual BSONObj   _keyObjB () ;
+      virtual BSONObj   _keyObjE () ;
+      virtual INT32     _dataSessionType () const ;
+      virtual BOOLEAN   _onTimer () ;
+      virtual void      _endLog () ;
+      virtual INT32     _onNotify () { return SDB_OK ; }
+      virtual INT32     _pullTransLog ( DPS_LSN &begin ) ;
+
+   private:
+      TRANS_SYNC_STEP   _tsStep;
+
+   } ;
+
+   class _clsSplitDstSession : public _clsDataDstBaseSession
+   {
+      DECLARE_OBJ_MSG_MAP ()
+
+      public:
+         _clsSplitDstSession ( UINT64 sessionID, _netRouteAgent *agent,
+                               void *data ) ;
+         ~_clsSplitDstSession () ;
+
+      enum SESSION_STEP
+      {
+         STEP_NONE      = 0,
+         STEP_START ,         // start notify to catalog
+         STEP_META ,          // when cleanup notify to catalog and catalog
+                              // split the catalog and response, begin to
+                              // update catalog in local, and check it
+         STEP_END_NTY ,       // notify the peer node to update catalog and
+                              // check it
+         STEP_END_LOG,        // get the last log
+         STEP_FINISH,         // notify catalog get all data, will to clean
+         STEP_CLEANUP ,       // notify the peer node to clean up data
+         STEP_REMOVE,         // remove notify to catalog
+         STEP_END       
+      };
+
+      public:
+         virtual INT32 type () const ;
+         virtual EDU_TYPES eduType () const ;
+
+      //message fuction
+      protected:
+         INT32 handleNotifyRes ( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleBeginRes( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleEndRes( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleLEndRes ( NET_HANDLE handle, MsgHeader* header ) ;
+
+      protected:
+         virtual void      _begin () ;
+         virtual void      _end ()  ;
+         virtual INT32     _needData () const ;
+         virtual BSONObj   _keyObjB () ;
+         virtual BSONObj   _keyObjE () ;
+         virtual void      _onAttach () ;
+         virtual void      _onDetach () ;
+         virtual INT32     _dataSessionType () const ;
+         virtual BOOLEAN   _onTimer () ;
+         virtual void      _endLog () ;
+         virtual INT32     _onNotify () ;
+
+      private:
+         void              _taskNotify ( INT32 msgType ) ;
+         void              _lend () ;
+
+      protected:
+         _clsSplitTask           *_pTask ;
+         BSONObj                 _taskObj ;
+         _clsShardMgr            *_pShardMgr ;
+         INT32                   _step ;
+         INT32                   _needSyncData ;
+         BOOLEAN                 _regTask ;
+
+   };
+}
+
+#endif
+

@@ -1,0 +1,166 @@
+/******************************************************************************
+ *
+ * Name: update.c
+ * Description: This program demostrates how to connect to update data.
+ * Parameters:
+ *              HostName: The hostname for database server
+ *              ServiceName: The service name or port number for the database
+ *                           service
+ *              Username: The user name for database server
+ *              Password: The password  for user
+ * Auto Compile:
+ * Linux: ./buildApp.sh update
+ * Win: buildApp.bat update
+ * Manual Compile:
+ * Linux: cc update.c common.c -o query -I../../include -L../../lib -lsdbc
+ * Win:
+ *    cl /Foupdate.obj /c update.c /I..\..\include /wd4047
+ *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *    link /OUT:update.exe /LIBPATH:..\..\lib sdbc.lib update.obj common.obj
+ *    copy ..\..\lib\sdbc.dll .
+ * Run:
+ * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
+ *        <Username> <Username>
+ * Win: insert.exe <hostname> <servicename> <Username> <Username>
+ *
+ ******************************************************************************/
+#include <stdio.h>
+#include "common.h"
+
+#define COLLECTION_SPACE_NAME "foo"
+#define COLLECTION_NAME       "bar"
+
+INT32 main ( INT32 argc, CHAR **argv )
+{
+   // initialize local variables
+   CHAR *pHostName                   = NULL ;
+   CHAR *pServiceName                = NULL ;
+   CHAR *pUsr                        = NULL ;
+   CHAR *pPasswd                     = NULL ;
+   // define a connetion handle; use to connect to database
+   sdbConnectionHandle connection    = 0 ;
+   // define a collection space handle
+   sdbCSHandle collectionspace       = 0 ;
+   // define a collection handle
+   sdbCollectionHandle collection    = 0 ;
+   // define a cursor handle for query
+   sdbCursorHandle cursor            = 0 ;
+
+   // define local variables
+   // initialize them before use
+   bson obj ;
+   bson rule ;
+   INT32 rc = SDB_OK ;
+
+   // read argument
+   pHostName    = (CHAR*)argv[1] ;
+   pServiceName = (CHAR*)argv[2] ;
+   pUsr         = (CHAR*)argv[3] ;
+   pPasswd      = (CHAR*)argv[4] ;
+
+   // verify syntax
+   if ( 5 != argc )
+   {
+      displaySyntax ( (CHAR*)argv[0] ) ;
+      exit ( 0 ) ;
+   }
+
+   // connect to database
+   rc = sdbConnect ( pHostName, pServiceName, pUsr, pPasswd, &connection ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to connet to database, rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   // create collection space
+   rc = sdbCreateCollectionSpace ( connection, COLLECTION_SPACE_NAME,
+                                   SDB_PAGESIZE_4K, &collectionspace ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   // recommned to wait for a few seconds in cluster environment
+   waiting ( 1 ) ;
+
+   // create collection in a specified colletion space.
+   rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   // recommned to wait for a few seconds in cluster environment
+   waiting ( 1 ) ;
+
+   // insert records to the collection
+   bson_init( &obj ) ;
+   // insert a English record
+   createEnglishRecord ( &obj  ) ;
+   rc = sdbInsert ( collection, &obj ) ;
+   if ( rc )
+   {
+      printf ( "Failed to insert record, rc = %d" OSS_NEWLINE, rc ) ;
+   }
+   bson_destroy ( &obj ) ;
+
+   // query the records
+   // the result is in the cursor handle
+   rc = sdbQuery(collection, NULL, NULL,  NULL, NULL, 0, -1, &cursor ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to query, rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   // update the record
+   // let's set the rule and query condition first
+   // here,we make the condition to be NULL
+   // so all the records will be update
+   bson_init( &rule ) ;
+   bson_append_start_object ( &rule, "$set" ) ;
+   bson_append_int ( &rule, "age", 19 ) ;
+   bson_append_finish_object ( &rule ) ;
+   bson_finish ( &rule ) ;
+   printf("The update rule is:") ;
+   bson_print( &rule ) ;
+
+   rc = sdbUpdate( collection, &rule, NULL, NULL ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to update the record, rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   bson_destroy(&rule);
+   printf("Success to update!" OSS_NEWLINE ) ;
+   // drop the specified collection
+   rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to drop the specified collection,\
+              rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   // drop the specified collection space
+   rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
+   if( rc!=SDB_OK )
+   {
+      printf("Failed to drop the specified collection,\
+              rc = %d" OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+done:
+   // disconnect the connection
+   sdbDisconnect ( connection ) ;
+   // release the local variables
+   sdbReleaseCursor ( cursor ) ;
+   sdbReleaseCollection ( collection ) ;
+   sdbReleaseCS ( collectionspace ) ;
+   sdbReleaseConnection ( connection ) ;
+   return 0;
+error:
+   goto done ;
+}
+

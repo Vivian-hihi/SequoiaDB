@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_hky_qcx_tk_en">
+  <title>Catalog Shardings Management</title>
+  <body>
+    <p>This section introduce how add shardings or nodes in catalog
+      shardings</p>
+    <p><b>directoty:</b></p>
+    <p><xref href="cata_group_en.dita">create new catalog shardings</xref></p>
+    <p><xref href="cata_node_en.dita">create new node in catalog shardings</xref></p>
+  </body>
+</topic>

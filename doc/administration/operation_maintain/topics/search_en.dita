@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_rkw_wx4_fm">
+  <title>View backup information</title>
+  <body>
+    <p>View backup information manually through the client and see.</p>
+    <section>
+      <title>View backup information Parameter Description</title>
+      <simpletable>        
+        <sthead>
+          <stentry>Parameter</stentry>
+          <stentry>Description</stentry>
+        </sthead>
+        <strow>
+          <stentry>Name</stentry>
+          <stentry>Backup name, and then view the default directory for all backup information.</stentry>
+        </strow>        
+        <strow>
+          <stentry>Path</stentry>
+          <stentry>Check the backup path is specified, the default for the configuration parameter "bkuppath" in the path specified.</stentry>
+        </strow>
+        <strow>
+          <stentry>GroupName</stentry>
+          <stentry>Specifies a group of backup information, which defaults to view full system backup information, when you need to view multiple set of backup information can be 
+            specified as an array type, such as: ["datagroup1","datagroup2"]。</stentry>
+        </strow>              
+      </simpletable></section>
+    <section>
+      <title>View full system backup information</title>
+      <p>1. Connect to the coord node</p><codeblock>$ /opt/sequoiadb/bin/sdb
+>  var db = new Sdb("localhost",50000);</codeblock>
+      <p>2. Do view backup information command</p><codeblock>>db. listBackup()
+{
+  "Name": "test_bk",
+  "NodeName": "vmsvr2-suse-x64-1:30000",
+  "GroupName": "SYSCatalogGroup",
+  "EnsureInc": false,
+  "BeginLSNOffset": 0,
+  "EndLSNOffset": 18744,
+  "StartTime": "2013-11-13-16:06:31",
+  "HasError": false
+}
+{
+  "Name": "test_bk",
+  "NodeName": "vmsvr2-suse-x64-1:20000",
+  "GroupName": "db1",
+  "EnsureInc": false,
+  "BeginLSNOffset": 0,
+  "EndLSNOffset": 920424,
+  "StartTime": "2013-11-13-16:06:31",
+  "HasError": false
+}</codeblock>      
+    </section>
+    <section>
+      <title>View backup information specified name</title>
+      <p>1. Connect to the coord node</p><codeblock>$ /opt/sequoiadb/bin/sdb
+>  var db = new Sdb("localhost",50000);</codeblock>
+      <p>2. Do view backup information command</p><codeblock>>db. listBackup({Name:”backup1”})
+{
+  "Name": "backup1",
+  "NodeName": "vmsvr2-suse-x64-1:20000",
+  "GroupName": "group1",
+  "EnsureInc": false,
+  "BeginLSNOffset": 0,
+  "EndLSNOffset": 108744,
+  "StartTime": "2013-11-13-16:06:31",
+  "HasError": false
+}</codeblock>      
+    </section>
+    <section>
+      <title>Hand-view backup information</title>
+      <p>Hand-view backup information directly through the terminal login specified machine and into the appropriate backup directory, run "ls -l"</p>
+      <codeblock>use@vmsvr2-suse-x64-1:/opt/sequoiadb/database/40000/bakfile> ls -l
+total 37328
+-rw-r----- 1 sdbadmin sdbadmin  38157784 Nov 13 16:06 test_bk.1
+-rw-r----- 1 sdbadmin sdbadmin    65536 Nov 13 16:06 test_bk.bak</codeblock>
+    </section>
+  </body>
+</topic>

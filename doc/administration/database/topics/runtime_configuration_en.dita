@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="administration_database_runtime">
+  <title>Database Runtime Configuration</title>
+  <body>
+    <section>
+      <title>Parameter Instruction</title>
+      <simpletable><!-- id="runtime_table" frame="all" relcolwidth="1.43* 1.0* 1.18* 11.41*">-->
+        <sthead>
+          <stentry>Parameter Nmae</stentry>
+          <stentry>Acronym</stentry>
+          <stentry>Type</stentry>
+          <stentry>Description</stentry>
+        </sthead>
+        <strow>
+          <stentry>--help</stentry>
+          <stentry>-h</stentry>
+          <stentry>—</stentry>
+          <stentry>Print help information</stentry>
+        </strow>
+        <strow>
+          <stentry>--confpath </stentry>
+          <stentry>-c</stentry>
+          <stentry>str</stentry>
+          <stentry>1. Specified configuration file path (doesn't contain fiel name). The system will
+            find <i>sdb.conf </i>under confpath.<fig></fig>2. <i>sdb.conf</i> contains necessary
+              configuration items. The format of a configuration item is "parameter name=value" like
+              "svcname=50000" and "diaglevel=3".<fig></fig>3. If this parameter is not specified, system
+            will automatically search for sdb.conf in current path.<fig></fig>4. There may not be
+              sdb.conf.</stentry>
+        </strow>
+        <strow>
+          <stentry> --logpath </stentry>
+          <stentry>-l</stentry>
+          <stentry>str</stentry>
+          <stentry>1. Synchronous log file willbe generated when replication node does full sync.
+            This parameter is used to specified the path of  synchronous log file.<fig></fig>2. If is is not
+              specified, the default path is "Data file path/replicalog".</stentry>
+        </strow>
+        <strow>
+          <stentry>--diagpath </stentry>
+          <stentry>—</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies the catalog of diagnostic log. <fig></fig>2. If is is not specified, the
+              default path is "Data file path/diaglog".</stentry>
+        </strow>
+        <strow>
+          <stentry>--dbpath </stentry>
+          <stentry>-d</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies the path of data file.<fig></fig>2. If is is not specified, the default
+              path is current path.</stentry>
+        </strow>
+        <strow>
+          <stentry>--bkuppath </stentry>
+          <stentry>—</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies the catalog of backup file.<fig></fig>2. If is is not specified, the
+              default path is "Data file path/bakfile".</stentry>
+        </strow>
+        <strow>
+          <stentry>--maxpool</stentry>
+          <stentry>—</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies the amount of thread in thread pool.<fig></fig>2. If is is not specified,
+              the default value is 0.</stentry>
+        </strow>
+        <strow>
+          <stentry>--sycname</stentry>
+          <stentry>-p</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies local service port.<fig></fig>2. If is is not specified, the default value
+              is 50000.</stentry>
+        </strow>
+        <strow>
+          <stentry>--replname </stentry>
+          <stentry>-r</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies data synch port.<fig></fig>2. If is is not specified, the default value
+              is "svcname+1".</stentry>
+        </strow>
+        <strow>
+          <stentry>--shardname </stentry>
+          <stentry>-a</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies shard port.<fig></fig>2. If is is not specified, the default value is
+              "svcname+2".</stentry>
+        </strow>
+        <strow>
+          <stentry>--catalogname</stentry>
+          <stentry>-x</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies catalog port.<fig></fig>2. If is is not specified, the default value is
+              "svcname+3".</stentry>
+        </strow>
+        <strow>
+          <stentry>--httpname</stentry>
+          <stentry>-s</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies http port.<fig></fig>2. If is is not specified, the default value is
+              "svcname+4".</stentry>
+        </strow>
+        <strow>
+          <stentry>--diaglevel</stentry>
+          <stentry>-v</stentry>
+          <stentry>num</stentry>
+          <stentry>1. It specifies the print level of diagnostic log. Diagnostic log in sequoiaDB,
+            0-5 respectively represent: SEVERE, ERROR, EVENT,WARNING, INFO, DEBUG.<fig></fig>2. If is is not
+              specified, the default value is "WARNING".</stentry>
+        </strow>
+        <strow>
+          <stentry>--role</stentry>
+          <stentry>-o</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies serving role. In sequoiaDB, "data/coord/catalog/standalone"
+            represents "data node/coord node/catalog node/stand-alone machine".<fig></fig>2. If is is not
+              specified, the default value is "indepandent".</stentry>
+        </strow>
+        <strow>
+          <stentry>--catalogaddr</stentry>
+          <stentry>-t</stentry>
+          <stentry>str</stentry>
+          <stentry>1. It specifies the address of catalog node. The format is
+            "hostname1:catalogname1,hostname2:catalogname2,...".<fig></fig>2. It should specify
+              address of at least one catalog.</stentry>
+        </strow>
+        <strow>
+          <stentry>--logfilesz</stentry>
+          <stentry>-f</stentry>
+          <stentry>num</stentry>
+          <stentry>1. It specifies the size of sync log file. It is between 32(MB) and
+            2048(MB).<fig></fig>2. If is is not specified, the default value is 32 (MB).</stentry>
+        </strow>
+        <strow>
+          <stentry>--logfilenum</stentry>
+          <stentry>-n</stentry>
+          <stentry>num</stentry>
+          <stentry>1. It specifies the amount of synchronous log file.<fig></fig>2. If is is not specified,
+              the default value is 20.</stentry>
+        </strow>
+      </simpletable>
+      <note><p>SequoiaDB supports setting configuration with command line, configuration file, or both of them.
+          When both of them are used, parameters in command line will overwrite those in
+          configuration file.</p>
+        <p> The total size of synch log (logfilesz * logfilenum) determines the fault tolerance in
+          the process of sync. If log is bigger, the possiblity of full sync is lower.</p></note>
+    </section>
+  </body>
+</topic>

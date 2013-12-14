@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_4nq_1cs_zj_en">
+  <title>PHP Environment to Build</title>
+  <body>
+    <section>
+      <title>Windows</title>
+      <p>Firstly, install apache and PHP programs.</p>
+      <p>Assuming:</p>
+      <p>&nbsp;&nbsp;1.the apache installed path is :"C:\Apache"</p>
+      <p>&nbsp;&nbsp;2.the PHP installed path is:"C:\php"</p>
+      <p>Steps:</p>
+      <ul>
+        <li>Add the PHP path in the system environment variable,rename the file
+          "php.ini-recommended" in the root directory of PHP as "php.ini".</li> 
+        <li>Modify "php.ini"<codeblock>extension_dir = "C:\php\ext"</codeblock></li>
+        <li>Modify C:\Apache\conf\httpd.conf,add the following information at the end of file
+          <codeblock>LoadModule php5_module "C:\php\php5apache2_2.dll"
+AddType application/x-httpd-php .php</codeblock></li>
+        <li>Restart Apache Service</li>
+      </ul>
+    </section>
+    <section>
+      <title>Ubuntu Linux</title>
+      <ul>
+        <li>Install Apache<codeblock>sudo apt-get install apache2</codeblock></li>
+        <li>Install
+          PHP<codeblock>sudo apt-get install php5
+sudo apt-get install libapache2-mod-php5</codeblock></li>
+        <li>Modify /etc/apache2/apache2.conf ,add the following information at the end of file
+          <codeblock>AddType application/x-httpd-php .php</codeblock></li>
+        <li>Restart apache <codeblock>sudo /etc/init.d/apache2 restart</codeblock></li>
+        <li>Install php5-dev <codeblock>sudo apt-get install php5-dev</codeblock></li>
+      </ul>
+    </section>
+    <section>
+      <title>Centos Linux</title>
+      <ul>
+        <li>Install Apacha and PHP
+          <codeblock>yum -y install httpd php httpd-manual mod_perl php-gd php-xml php-mbstring php-ldap php-pear php-xmlrpc</codeblock></li>
+        <li>Configure startup service <codeblock>/sbin/chkconfig httpd on</codeblock></li>
+        <li>Modify configuration file<codeblock>vi /ect/httpd/conf/httpd.conf</codeblock><p>find >
+            #AddType application/x-tar .tgz  in this line add the following information > AddType
+            application/x-httpd-php .php </p></li>
+        <li>Start Apacha <codeblock>/etc/init.d/httpd start</codeblock>
+        </li>
+      </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="phpbuilt_en.dita"></link>
+  </related-links>
+</topic>

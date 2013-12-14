@@ -1,0 +1,23 @@
+var searchData=
+[
+  ['sequoiadb',['Sequoiadb',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#aaa23e49b75bce465c582a6b665e28ba0',1,'com.sequoiadb.base.Sequoiadb.Sequoiadb(String username, String password)'],['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#aeb60b8143a6373a23a083edb54996026',1,'com.sequoiadb.base.Sequoiadb.Sequoiadb(String connString, String username, String password)'],['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#aa502848382bfc45aaf29df48b86460e1',1,'com.sequoiadb.base.Sequoiadb.Sequoiadb(String addr, int port, String username, String password)']]],
+  ['setconnecttimeout',['setConnectTimeout',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#ad5c97aaac81c0f454522657d66c5c9d1',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['sethint',['setHint',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a22c478a842333c033320d9ca1a6d2b58',1,'com::sequoiadb::base::DBQuery']]],
+  ['setinitconnectionnum',['setInitConnectionNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#ac6a49ba7cc2d4523e66de386b0c6fb0d',1,'com::sequoiadb::base::SequoiadbOption']]],
+  ['setmatcher',['setMatcher',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad3444f47c4e7f4c3fd9f225bc68a8ce4',1,'com::sequoiadb::base::DBQuery']]],
+  ['setmaxautoconnectretrytime',['setMaxAutoConnectRetryTime',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a048f502aa81f7b2a381f293c11e04bbb',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['setmaxconnectionnum',['setMaxConnectionNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#affb84e6daaec7d303bcb5b923460f376',1,'com::sequoiadb::base::SequoiadbOption']]],
+  ['setmaxidenum',['setMaxIdeNum',['../classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html#acc0c727c9fec7c5e49b2e70bd2827528',1,'com::sequoiadb::base::SequoiadbOption']]],
+  ['setmodifier',['setModifier',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ac0128cd3b318413d46b2e9c6f02877b6',1,'com::sequoiadb::base::DBQuery']]],
+  ['setorderby',['setOrderBy',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#ad61da1c9e169ee1c9540a3f70131ed83',1,'com::sequoiadb::base::DBQuery']]],
+  ['setreturnrowscount',['setReturnRowsCount',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#aca4eb612267600a6f7a9c13cac7e0cf8',1,'com::sequoiadb::base::DBQuery']]],
+  ['setselector',['setSelector',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a9d6510d32410b4e4b20acec37d246010',1,'com::sequoiadb::base::DBQuery']]],
+  ['setserveraddress',['setServerAddress',['../classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html#a14e31cd5853d052c21d8deeb28fc483e',1,'com::sequoiadb::base::Sequoiadb']]],
+  ['setskiprowscount',['setSkipRowsCount',['../classcom_1_1sequoiadb_1_1base_1_1DBQuery.html#a942ab8690a6766d5bcbe1dd261bf27f0',1,'com::sequoiadb::base::DBQuery']]],
+  ['setsocketkeepalive',['setSocketKeepAlive',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#ab8e0983620c1deb08c581c56ca2e12a6',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['setsockettimeout',['setSocketTimeout',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a1a8c621195a70d967212b6f6b167e780',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['setusenagle',['setUseNagle',['../classcom_1_1sequoiadb_1_1net_1_1ConfigOptions.html#a7703c1f31f9ce3f9c5b2dee2b07253e7',1,'com::sequoiadb::net::ConfigOptions']]],
+  ['split',['split',['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a042296b994f0af577325be28a30213b9',1,'com.sequoiadb.base.DBCollection.split(String sourceGroupName, String destGroupName, BSONObject splitCondition, BSONObject splitEndCondition)'],['../classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a12a74f7f7dad01b0f7612c52bc961105',1,'com.sequoiadb.base.DBCollection.split(String sourceGroupName, String destGroupName, double percent)']]],
+  ['start',['start',['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a5cffb9ad5b6e995610af757959fc0916',1,'com.sequoiadb.base.ReplicaGroup.start()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#a1c36d86d0a402787f2783654209bb9a9',1,'com.sequoiadb.base.ReplicaNode.start()']]],
+  ['stop',['stop',['../classcom_1_1sequoiadb_1_1base_1_1ReplicaGroup.html#a06424148e6fd1390bfc1aa9666e60062',1,'com.sequoiadb.base.ReplicaGroup.stop()'],['../classcom_1_1sequoiadb_1_1base_1_1ReplicaNode.html#aef47a8e93211b62ca6645f805a87bb8d',1,'com.sequoiadb.base.ReplicaNode.stop()']]]
+];

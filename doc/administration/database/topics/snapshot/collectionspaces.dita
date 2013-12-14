@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="administration_database_monitoring_snapshot_collectionspaces">
+  <title>集合空间快照</title>
+  <body>
+    <section><title>描述</title>
+      <p>集合空间快照列出当前数据库节点中所有的集合空间，每个集合空间为一条记录。</p>
+    </section>
+    <section><title>标示</title>
+      <p>SDB_SNAP_COLLECTIONSPACES</p>
+    </section>
+    <section><title>适用节点</title>
+      <p>全部</p>
+    </section>
+    <section><title>字段信息</title>
+      <p>由于数据节点与编目节点保存的集合空间信息不同，集合空间快照在协调节点与其它节点所返回的结构有所不同：</p>
+    </section>
+    <section><title>非协调节点字段信息</title>
+      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_collectionspaces_data_table">-->
+        <sthead>
+          <stentry>字段名</stentry>
+          <stentry>类型</stentry>
+          <stentry>描述</stentry>
+        </sthead>
+        <strow>
+          <stentry>Name</stentry>
+          <stentry>字符串</stentry>
+          <stentry>集合空间名</stentry>
+        </strow>
+        <strow>
+          <stentry>Collection</stentry>
+          <stentry>字符串数组</stentry>
+          <stentry>集合空间中所包含的所有集合</stentry>
+        </strow>
+        <strow>
+          <stentry>PageSize</stentry>
+          <stentry>整数</stentry>
+          <stentry>集合空间数据页大小</stentry>
+        </strow>
+        <strow/>
+        <strow>
+          <stentry>GroupName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>集合空间所在的分区组名</stentry>
+        </strow>
+      </simpletable>
+    </section>
+    <section><title>协调节点字段信息</title>
+      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_collectionspaces_coord_table">-->
+        <sthead>
+          <stentry>字段名</stentry>
+          <stentry>类型</stentry>
+          <stentry>描述</stentry>
+        </sthead>
+        <strow>
+          <stentry>Name</stentry>
+          <stentry>字符串</stentry>
+          <stentry>集合空间名</stentry>
+        </strow>
+        <strow>
+          <stentry>Collection</stentry>
+          <stentry>字符串数组</stentry>
+          <stentry>集合空间中所包含的所有集合</stentry>
+        </strow>
+        <strow>
+          <stentry>PageSize</stentry>
+          <stentry>整数</stentry>
+          <stentry>集合空间数据页大小</stentry>
+        </strow>
+        <strow>
+          <stentry>Group.GroupID</stentry>
+          <stentry>整数数组</stentry>
+          <stentry>该集合空间所在的分区组ID列表</stentry>
+        </strow>
+        <strow>
+          <stentry>Group.GroupName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>该集合空间所在的分区组名列表</stentry>
+        </strow>
+      </simpletable>
+    </section>
+    <section><title>非协调节点示例</title>
+      <codeblock>> db.snapshot(SDB_SNAP_COLLECTIONSPACES)
+{
+  "Collection": [
+    {
+      "Name": "bar"
+    }
+  ],
+  "PageSize": 4096,
+  "Name": "foo",
+  "GroupName": "datagroup1"
+}</codeblock>
+    </section>
+    <section><title>协调节点示例</title>
+      <codeblock>>coord.snapshot(SDB_SNAP_COLLECTIONSPACES)
+{
+  "Collection": [
+    {
+      "Name": "bar"
+    }
+  ],
+  "Group": [
+    {
+      "GroupID": 1000,
+      "GroupName": "datagroup1"
+    }
+  ],
+  "Name": "foo",
+  "PageSize": 4096,
+  "_id": {
+    "$oid": "52451a6bf80be5d22b27489b"
+  }
+}</codeblock>
+    </section>
+  </body>
+</topic>

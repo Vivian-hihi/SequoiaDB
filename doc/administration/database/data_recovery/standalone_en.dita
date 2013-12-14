@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_xyr_5x2_gl_en">
+  <title>Standalone Mode</title>
+  <body>
+    <p>In standalone mode,users need to manually stop the database,and take the configuration files
+      and data files to replace the current files.</p>
+  </body>
+</topic>

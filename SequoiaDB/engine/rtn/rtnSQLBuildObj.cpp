@@ -1,0 +1,110 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = rtnSQLBuildObj.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains declare for QGM operators
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/16/2013  JHL  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "rtnSQLBuildObj.hpp"
+#include "ossMem.hpp"
+#include "ossTypes.h"
+#include "ossErr.h"
+
+using namespace bson;
+
+namespace engine
+{
+   rtnSQLBuildObj::rtnSQLBuildObj()
+   {
+      _hasData = FALSE;
+   }
+
+   rtnSQLBuildObj::~rtnSQLBuildObj()
+   {
+   }
+
+   INT32 rtnSQLBuildObj::result( bson::BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK;
+      PD_CHECK( !_alias.empty(), SDB_INVALIDARG, error, PDERROR,
+               "no aliases for function!" );
+      try
+      {
+         builder.append( _alias.toString(), _obj );
+         _hasData = FALSE;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "received unexpected error:%s", e.what() );
+         rc = SDB_SYS;
+         goto error;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 rtnSQLBuildObj::_push( const RTN_FUNC_PARAMS &param )
+   {
+      INT32 rc = SDB_OK;
+      SDB_ASSERT( param.size() == _param.size(), "invalid size!" );
+      try
+      {
+         BSONObjBuilder objBuilder;
+         if ( !_hasData )
+         {
+            UINT32 i = 0 ;
+            for ( i = 0; i < param.size(); i++ )
+            {
+               if ( !param[i].eoo() )
+               {
+                  objBuilder.appendAs( param[i], _param[i].alias.toString() );
+                  _hasData = TRUE;
+               }
+            }
+         }
+         if ( _hasData )
+         {
+            _obj = objBuilder.obj();
+         }
+         
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "received unexpected error:%s", e.what() );
+         rc = SDB_SYS;
+         goto error;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+}

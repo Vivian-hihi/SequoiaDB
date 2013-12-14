@@ -1,0 +1,16 @@
+fil = new Array();
+fil["0"]= "topics/catalog_node.html@@@编目节点@@@概念 编目节点为一种逻辑节点，其中保存了数据库的元数据信息，而不保存其他用户数据。 编目节点中包含3个集合空间： SYSCAT系统编目集合空间，包含4个系统集合： 集合名 描述 SYSCOLLECTIONS 保存了该集群中所有的用户集合信息 SYSCOLLECTIONSPACES 保存了该集群中所有的用户集合空间信息 SYSNODES 保存了该集群中所有的逻辑节点与复制组信息 SYSTASKS...";
+fil["1"]= "topics/cluster.html@@@集群@@@SequoiaDB集群是指通过并联多台数据库服务器，达到并行计算，以提升数据请求效率的方式。 使用SequoiaDB集群，用户可以得到： 高性能的数据访问 通过并行计算的方式，在多台数据库服务器上分布式执行任务，降低了单节点的资源消耗，提升整体吞吐量与数据访问性能。 24x7...";
+fil["2"]= "topics/coord_node.html@@@协调节点@@@概...";
+fil["3"]= "topics/data_node.html@@@数据节点@@@概...";
+fil["4"]= "topics/mode.html@@@运行模式@@@概念 运行模式指启动SequoiaDB服务时，该服务以独立模式启动还是以集群模式启动。 独立模式 独立模式是启动SequoiaDB的最精简模式，仅需要启动一个独立模式的 数据节点 ，即可进行数据服务。 在独立模式中，SequoiaDB...";
+fil["5"]= "topics/node.html@@@节点@@@概念 在SequoiaDB集群环境中，数据库节点分为物理节点与逻辑节点。 逻辑节点 逻辑节点即一个单独的数据库服务，代表一个最基本的数据库服务单元。 在Windows与Unix操作系统中，一个逻辑节点即一个sequoiadb...";
+fil["6"]= "topics/replicate.html@@@复制@@@概念 数据复制为分区组中节点之间的相互同步的机制。 在数据节点和编目节点中，任何数据增删改操作均会写入日志。SequoiaDB...";
+fil["7"]= "topics/replset.html@@@分区组@@@概念 分区组又被称为复制组，一个复制组内可以包含一个或多个数据节点（或编目节点），节点之间的数据使用异步日志复制机制，保持最终一致。 分区组中所有的节点之间使用复制服务端口（replname...";
+fil["8"]= "topics/sync.html@@@恢复同步@@@概...";
+fil["9"]= "topics/SYSCOLLECTIONS.html@@@SYSCOLLECTIONS集合@@@所属集合空间 SYSCAT 概念 SYSCOLLECTIONS集合中包含了该集群中所有的用户集合信息。每个用户集合保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 Name 字符串 集合的完整名，为<集合空间>.<集合名>形式 Version 整数 集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1 ShardingKey...";
+fil["10"]= "topics/SYSCOLLECTIONSPACES.html@@@SYSCOLLECTIONSPACES集合@@@所属集合空间 SYSCAT 概念 SYSCOLLECTIONSPACES集合中包含了该集群中所有的用户集合空间信息。每个用户集合空间保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 Name 字符串 集合空间名 Collection 数组 该集合空间中包含的所有的集合名，每个集合为一个JSON对象，包含“Name”字段与相应的集合名 Group 数组 该集合空间所在的分区组ID...";
+fil["11"]= "topics/SYSNODES.html@@@SYSNODES集合@@@所属集合空间 SYSCAT 概念 SYSNODES集合中包含了该集群中所有的节点与分区组信息。每个分区组保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 GroupName 字符串 分区组名 GroupID 整数 分区组ID，该ID在集群中唯一 PrimaryNode 整数 该分区组内主节点ID Role 整数 分区组角色，可以为： 0：数据节点 2：编目节点 Status...";
+fil["12"]= "topics/SYSTASKS.html@@@SYSTASKS集合@@@所属集合空间 SYSCAT 概念 SYSTASKS集合中包含了该集群中所有正在运行的后台任务信息。每个任务保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 JobType 整数 任务类型，分别代表： 0：数据切分 Status 整数 任务状态，分别代表： 0：准备 1：运行 2：暂停 3：结束 CollectionSpace 字符串 集合空间名 Collection...";
+fil["13"]= "topics/SYSUSRS.html@@@SYSUSRS集合@@@所属集合空间 SYSAUTH 概念 SYSUSRS集合中包含了该集群中所有注册用户的信息。每个用户保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 User 字符串 用户名 Password 字符串 对用户密码进行MD5...";
+fil["14"]= "topics/vote.html@@@选举@@@概...";

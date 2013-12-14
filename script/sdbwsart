@@ -1,0 +1,12 @@
+#!/bin/bash
+#This script for start web admin server
+if [ -f /etc/default/sequoiadb ] ; then
+    source /etc/default/sequoiadb
+else
+    INSTALL_DIR=/opt/sequoiadb
+fi
+
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${INSTALL_DIR}/tools/server/php/libxml2/lib/
+
+nohup ${INSTALL_DIR}/tools/server/php/bin/php-bin -c ${INSTALL_DIR}/tools/server/php/lib/php.ini -t ${INSTALL_DIR}/www $* &
+

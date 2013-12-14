@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "http://docs.oasis-open.org/dita/v1.1/OS/dtd/topic.dtd">
+<topic id="administration_concepts_database_objectid">
+  <title>对象ID</title>
+  <body>
+    <section><title>概念</title>
+      <p>对象ID为一个12字节的BSON数据类型，包括如下内容：</p>
+      <ul>
+        <li>4字节精确到秒的时间戳</li>
+        <li>3字节系统（物理机）标示</li>
+        <li>2字节进程ID</li>
+        <li>3字节由随机数起始的序列号</li>
+      </ul>
+      
+      <p><simpletable><!-- frame="all" relcolwidth="1.93* 1.26* 1.0* 1.53*"
+          id="simpletable_424e79fd-4ce6-48fd-9b4c-d55145b07866">-->
+          <sthead>
+            <stentry>4字节时间戳</stentry>
+            <stentry>3字节系统标示</stentry>
+            <stentry>2字节进程ID</stentry>
+            <stentry>3字节序列号</stentry>
+          </sthead>
+          <strow></strow>
+      </simpletable></p>
+      <p>该对象ID可以在集群环境中，对每台系统中的每个进程，每秒钟标示16777216个不同的数值，因此基本可以认为在集群环境中全局唯一。</p>
+      <p>在SequoiaDB中，每个集合中存放的文档必须拥有一个_id字段，并且该字段在集合中唯一。</p>
+    </section>
+    <section><title>格式</title>
+      <p>对象ID的表达形式如下：</p>
+      <codeblock>{ "$oid" : "&lt;24字节16进制字符串&gt;" }</codeblock>
+    </section>
+    <section><title>示例</title>
+      <p>对象ID的显示结果如下：</p>
+      <codeblock>{ "key" : { "$oid" : "5156c192f970aed30c020000" } }</codeblock>
+    </section>
+  </body>
+</topic>

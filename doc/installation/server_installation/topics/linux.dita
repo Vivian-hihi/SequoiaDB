@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_yyl_fly_wj">
+  <title>Linux版本的安装</title>
+  <body>
+    <section>
+      <title>安装前准备</title>
+      <ul>
+        <li>确保系统满足硬件和软件要求</li>
+        <li>使用root用户权限来安装SequoiaDB数据库服务</li>
+        <li>检查SequoiaDB产品软件包与OS系统配套</li>
+        <li>如果需要图形界面模式安装，请确保X Server服务正在运行</li>
+        <li>服务器配置了主机名，且与其他服务器之间可通过主机名建立网络连接（如ssh 主机名）</li>
+      </ul>
+    </section>
+    <note>SequoiaDB的安装向导需要的参数不接受非英文字符。</note>
+    <section><title>安装步骤</title><p><b>说明：</b></p><p>&nbsp;&nbsp;（1）产品包名字以
+    sequoiadb-1.0.0-linux-x86_64-installer.run为例；</p><p>&nbsp;&nbsp;（2）步骤以命令行方式进行介绍，图形界面按照图像向导提示完成。</p>
+      <note>如果有多台服务器，每台机器都需要重复如下步骤安装服务器程序。</note>
+      <ul>
+          <li><p>参照<xref href="../../system_require/topics/software.dita"
+          >系统配置需求</xref>配置好主机名以及修改系统内核参数</p></li>
+          <li>运行安装程序<p>
+            <codeblock>./sequoiadb-1.0.0-linux-x86_64-installer.run --mode text</codeblock>
+          </p></li>
+        <li>程序提示选择向导语言<p>
+            <codeblock>Language Selection 
+Please select the installation language
+[1] English - English       
+[2] Simplified Chinese - 简体中文         
+Please choose an option [1] :2 </codeblock>
+          </p></li>
+        <li>输入2，选择中文，此时系统提示输入安装目录
+          <codeblock>------------------------------------------------------------
+由BitRockInstallBuilder评估本所建立
+------------------------------------------------------------
+欢迎来到 SequoiaDB Server 安装程序
+------------------------------------------------------------ 
+请指定 SequoiaDBServer 将会被安装到的目录 
+安装目录 [/opt/sequoiadb]: </codeblock></li>
+        <li> 输入安装路径后按回车（默认安装在/opt/sequoiadb），此时系统提示输入用户名，该用户名用于运行sequoiadb服务<codeblock>------------------------------------------------------------
+数据库管理用户配置 
+配置用于启动SequoiaDB的用户名和密码 
+用户名[sdbadmin]:</codeblock></li>
+        <li>
+          <p>输入用户名后按回车（默认创建sdbadmin用户），此时系统提示输入该用户的密码和确认密码</p>
+          <codeblock>密码 [********] :
+确认密码 [********] :         </codeblock>
+        </li>
+        <li><p>输入两次密码后（默认密码为sdbadmin），此时系统提示输入配置服务端口</p>
+          <codeblock>---------------------------------------------------------------
+集群管理服务端口配置 
+配置SequoiaDB集群管理服务端口,集群管理用于远程启动添加和启停数据库节点 
+端口 [50010]: </codeblock>
+          <note>所有服务器的配置服务端口必须相同。</note></li>
+        <li> 输入端口（默认为50010），系统提示开始安装，需要用户确认
+          <codeblock>----------------------------------------------------------------
+设定现在已经准备将SequoiaDB Server安装到您的电脑 
+您确定要继续? [Y/N]: Y </codeblock></li>
+        <li><p>输入Y，按回车，系统启动安装，此时需要等待大约1分钟，系统安装完成</p><codeblock>正在安装 SequoiaDB Server 于您的电脑中，请稍候.
+安装中
+0% ______________ 50% ______________ 100%
+#########################################
+-----------------------------------------------------------------
+安装程序已经完成安装 SequoiaDB Server 于你的电脑中.</codeblock></li>
+      </ul></section>
+  </body>
+</topic>

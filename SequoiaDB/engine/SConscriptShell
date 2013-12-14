@@ -1,0 +1,87 @@
+# -*- mode: python; -*-
+
+import os
+import buildscripts.utils as utils
+
+Import("shellEnv")
+
+sptFiles = [
+      "spt/engine.cpp",
+      "spt/dbClasses.cpp",
+      "spt/sptConvertor.cpp"
+      ]
+
+ossFiles = [
+      "oss/oss.cpp",
+      "oss/ossErr.cpp",
+      "oss/ossUtil.cpp",
+      "oss/ossPrimitiveFileOp.cpp",
+      "oss/ossStackDump.cpp",
+      "oss/ossEDU.cpp",
+      "oss/ossProc.cpp",
+      "oss/ossNPipe.cpp",
+      "oss/ossPath.cpp",
+      "oss/ossVer.cpp",
+      "oss/ossMem.cpp"
+      ]
+
+shellMain = [
+      "pmd/sdb.cpp",
+      ]
+
+shellBpMain = [
+      "pmd/sdbbp.cpp",
+      ]
+
+pdFiles = [
+      "pd/pd.cpp",
+      "pd/pdTrace.cpp",
+      "pd/pdComponents.cpp",
+      "pd/pdFunctionList.cpp"
+      ]
+
+utilFiles = [
+      "util/fromjson.cpp",
+      "util/json2rawbson.c",
+      "util/linenoise.cpp",
+      "util/utilStr.cpp",
+      "util/utilLinenoiseWrapper.cpp",
+      "client/bson/numbers.c",
+      "client/bson/bson.c",
+      "client/bson/encoding.c",
+      "client/base64c.c",
+      "client/cJSON.c",
+      "client/jstobs.c"
+      ]
+
+clientCFiles = [
+      "client/client.c",
+      "client/common.c",
+      "client/network.c"
+      ]
+
+#Client Driver
+shellEnv.StaticLibrary('clientc', clientCFiles)
+#Operating System Services
+shellEnv.StaticLibrary('oss', ossFiles)
+#Problem Determination
+shellEnv.StaticLibrary('pd', pdFiles)
+#Scripting
+shellEnv.StaticLibrary('spt', sptFiles)
+#Utilities
+shellEnv.StaticLibrary('util', utilFiles)
+
+#Shell Executable
+sdb = shellEnv.Program("sdb", shellMain,
+      LIBDEPS=["spt","oss","pd","util","clientc"],
+      _LIBDEPS='$_LIBDEPS_OBJS' )
+
+shellEnv.Install( '#/bin', sdb )
+
+#Shell Backend  Executable
+sdbbp = shellEnv.Program("sdbbp", shellBpMain, 
+      LIBDEPS=["spt","oss","pd","util","clientc"],
+      _LIBDEPS='$_LIBDEPS_OBJS' )
+
+shellEnv.Install( '#/bin', sdbbp )
+

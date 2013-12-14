@@ -1,0 +1,343 @@
+#include "core.hpp"
+#include "pd.hpp"
+#include "clsCatalogPredicate.hpp"
+#include "clsCatalogAgent.hpp"
+#include "clsTrace.hpp"
+#include "pdTrace.hpp"
+
+using namespace bson;
+namespace engine
+{
+   clsCatalogPredicateTree::clsCatalogPredicateTree( BSONObj shardingKey )
+   : _shardingKey( shardingKey ),
+   _logicType( CLS_CATA_LOGIC_INVALID )
+   {
+   }
+
+   clsCatalogPredicateTree::~clsCatalogPredicateTree()
+   {
+      clear();
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDCHILD, "clsCatalogPredicateTree::addChild" )
+   void clsCatalogPredicateTree::addChild( clsCatalogPredicateTree * pChild )
+   {
+      PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDCHILD ) ;
+      SDB_ASSERT ( pChild, "pchild can't be null" )
+      pChild->adjustByShardingKey();
+
+      if ( FALSE == pChild->isUniverse() )
+      {
+         _children.push_back( pChild );
+         goto done;
+      }
+
+      // if the child is universe set and the logic type is "$or",
+      // then upgrade to universe set
+      if ( CLS_CATA_LOGIC_OR == _logicType )
+      {
+         upgradeToUniverse();
+      }
+      SDB_OSS_DEL( pChild );
+   done:
+      PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_ADDCHILD );
+      return;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_CLEAR, "clsCatalogPredicateTree::clear" )
+   void clsCatalogPredicateTree::clear()
+   {
+      PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_CLEAR ) ;
+      // clear the children
+      clsCatalogPredicateTree *pTmp;
+      while ( !_children.empty() )
+      {
+         pTmp = _children.back();
+         _children.pop_back();
+         SDB_OSS_DEL( pTmp );
+      }
+
+      // clear the predicateSet
+      _predicateSet.clear();
+
+      _logicType = CLS_CATA_LOGIC_INVALID;
+      PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_CLEAR );
+   }
+
+   void clsCatalogPredicateTree::upgradeToUniverse()
+   {
+      clear();
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, "clsCatalogPredicateTree::addPredicate" )
+   INT32 clsCatalogPredicateTree::addPredicate( const CHAR *pFieldName,
+                                             BSONElement beField )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE ) ;
+      rc = _predicateSet.addPredicate( pFieldName, beField, FALSE );
+      PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, rc ) ;
+      return rc;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY, "clsCatalogPredicateTree::adjustByShardingKey" )
+   void clsCatalogPredicateTree::adjustByShardingKey()
+   {
+      PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY ) ;
+      try
+      {
+         const CHAR *pFirstKeyName = _shardingKey.firstElementFieldName();
+         const map<string, rtnPredicate> &mapPredicate = _predicateSet.predicates();
+         if ( _logicType != CLS_CATA_LOGIC_AND || mapPredicate.size() == 0
+            || _children.size() != 0 )
+         {
+            goto done;
+         }
+         if ( 0 == pFirstKeyName[0] )
+         {
+            goto done;
+         }
+         if ( mapPredicate.find( pFirstKeyName ) != mapPredicate.end() )
+         {
+            goto done;
+         }
+         _predicateSet.clear();
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG(PDERROR,
+               "failed to adjust the obj "
+               "occured unexpected error:%s",
+               e.what() );
+      }
+   done:
+      PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY );
+      return ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ISUNIVERSE, "clsCatalogPredicateTree::isUniverse" )
+   BOOLEAN clsCatalogPredicateTree::isUniverse()
+   {
+      PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ISUNIVERSE ) ;
+      BOOLEAN result = TRUE;
+      if ( _children.size() != 0 )
+      {
+         result = FALSE;
+         goto done;
+      }
+      if ( _predicateSet.predicates().size() != 0 )
+      {
+         result = FALSE;
+         goto done;
+      }
+   done:
+      PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_ISUNIVERSE );
+      return result;
+   }
+
+   void clsCatalogPredicateTree::setLogicType( CLS_CATA_LOGIC_TYPE type )
+   {
+      _logicType = type;
+   }
+
+   CLS_CATA_LOGIC_TYPE clsCatalogPredicateTree::getLogicType()
+   {
+      return _logicType;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_MATCHES, "clsCatalogPredicateTree::matches" )
+   INT32 clsCatalogPredicateTree::matches( _clsCatalogItem * pCatalogItem,
+                                          BOOLEAN & result )
+   {
+      INT32 rc = SDB_OK;
+      BOOLEAN rsTmp = TRUE;
+      PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_MATCHES ) ;
+      const map<string, rtnPredicate> & predicates = _predicateSet.predicates();
+      if ( isUniverse() )
+      {
+         goto done;
+      }
+      if ( predicates.size() > 0 )
+      {
+         try
+         {
+            BSONObjIterator iterSK( _shardingKey );
+            BSONObjIterator iterLB( pCatalogItem->getLowBound() );
+            BSONObjIterator iterUB( pCatalogItem->getUpBound() );
+            while ( iterSK.more() )
+            {
+               BSONElement beShardingKey = iterSK.next();
+               SDB_ASSERT ( beShardingKey.isNumber(), "Invalid sharding-key!" )
+               map<string, rtnPredicate>::const_iterator iterMap
+                                       = predicates.find( beShardingKey.fieldName() );
+               if ( predicates.end() == iterMap )
+               {
+                  rsTmp = TRUE;
+                  goto check_children;
+               }
+
+               // the size of _startStopKeys must be "0" or "1":
+               // "0": it is means the matcher is empty set.
+               // "1": it is normal set include universe set.
+               if ( iterMap->second._startStopKeys.size() != 1 )
+               {
+                  rsTmp = FALSE;
+                  goto check_children;
+               }
+
+               rtnStartStopKey matcherBound = iterMap->second._startStopKeys[0];
+               BSONElement lowBound;
+               BSONElement upBound;
+               INT32 rsCmp = 0;
+
+               // lowBound <= upBound
+               if ( beShardingKey.numberInt() >= 0 )
+               {
+                  if ( iterLB.more() )
+                  {
+                     lowBound = iterLB.next();
+                     rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound );
+                     if ( rsCmp > 0 )
+                     {
+                        rsTmp = FALSE;
+                        goto check_children;
+                     }
+                     else if ( 0 == rsCmp )
+                     {
+                        if ( !matcherBound._stopKey._inclusive )
+                        {
+                           rsTmp = FALSE;
+                           goto check_children;
+                        }
+                        if ( !iterSK.more() )
+                        {
+                           rsTmp = TRUE;
+                           goto check_children;
+                        }
+                        if ( iterUB.more() )
+                        {
+                           upBound = iterUB.next();
+                        }
+                        continue;
+                     }
+                  }
+                  if ( iterUB.more() )
+                  {
+                     upBound = iterUB.next();
+                     rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound );
+                     if ( rsCmp < 0 )
+                     {
+                        rsTmp = FALSE;
+                        goto check_children;
+                     }
+                     else if ( 0 == rsCmp )
+                     {
+                        if ( !matcherBound._startKey._inclusive
+                              || !iterSK.more() )
+                        {
+                           rsTmp = FALSE;
+                           goto check_children;
+                        }
+                        continue;
+                     }
+                  }
+                  rsTmp = TRUE;
+                  goto check_children;
+               }
+               else // lowBound > upBound
+               {
+                  if ( iterLB.more() )
+                  {
+                     upBound = iterLB.next();
+                     rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound );
+                     if ( rsCmp < 0
+                        || ( 0 == rsCmp && !matcherBound._startKey._inclusive ))
+                     {
+                        rsTmp = FALSE;
+                        goto check_children;
+                     }
+                     else if ( 0 == rsCmp )
+                     {
+                        if ( !matcherBound._startKey._inclusive )
+                        {
+                           rsTmp = FALSE;
+                           goto check_children;
+                        }
+                        if ( !iterSK.more() )
+                        {
+                           rsTmp = TRUE;
+                           goto check_children;
+                        }
+                        if ( iterUB.more() )
+                        {
+                           lowBound = iterUB.next();
+                        }
+                        continue;
+                     }
+                  }
+                  if ( iterUB.more() )
+                  {
+                     lowBound = iterUB.next();
+                     rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound );
+                     if ( rsCmp > 0 )
+                     {
+                        rsTmp = FALSE;
+                        goto check_children;
+                     }
+                     else if ( 0 == rsCmp )
+                     {
+                        if ( !matcherBound._stopKey._inclusive
+                           || !iterSK.more() )
+                        {
+                           rsTmp = FALSE;
+                           goto check_children;
+                        }
+                        continue;
+                     }
+                  }
+                  rsTmp = TRUE;
+                  goto check_children;
+               }
+            }
+            if ( !iterSK.more() )
+            {
+               rsTmp = FALSE;
+            }
+         }
+         catch ( std::exception &e )
+         {
+            rc = SDB_INVALIDARG;
+            PD_LOG(PDERROR,
+                  "occured unexpected error:%s",
+                  e.what() );
+            goto error;
+         }
+      }
+
+   check_children:
+      if ( _children.size() > 0
+         && ( predicates.size() == 0 || TRUE == rsTmp
+         || CLS_CATA_LOGIC_OR == _logicType ))
+      {
+         UINT32 i = 0;
+         for ( ; i < _children.size(); i++ )
+         {
+            rc = _children[i]->matches( pCatalogItem, rsTmp );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to match the shardingKey(rc=%d)",
+                        rc );
+            if (( !rsTmp && CLS_CATA_LOGIC_AND == _logicType )
+               || ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ))
+            {
+               break;
+            }
+         }
+      }
+   done:
+      result = rsTmp;
+      PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_MATCHES, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+}

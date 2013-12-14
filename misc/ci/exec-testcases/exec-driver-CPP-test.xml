@@ -1,0 +1,83 @@
+<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${reports.path}: The path where test case direcotry.-->
+<!--@param ${test_name}: will not test name. -->
+<!--@param ${deploy.case.fullname}: The run in which env -->
+
+<project name="exec-driver-CPP-test" default="exec-test-over">
+	
+	
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+
+    <property name="test_name" value="*" /> 
+		
+    <property name="append" value=" --gtest_filter=${test_name}  --gtest_output=xml:${reports.path}/ " />
+    
+<target name="clean-env" depends="">
+	 <delete dir="${reports.path}" failonerror="false" />
+	 <mkdir dir="${reports.path}" />
+	 <!--unjar src="${WORKSPACE}/deploy/hlt/drivers_testcases/lib/java_test.jar" dest="${java_test.dir}" /-->
+
+</target>
+
+<target name="exec-driver-CPP-test" depends="clean-env">
+   
+   <echo message="..... begin to test the CPP driver test ...." />
+   
+   <echo message="exec chmod u+x * .... path is  ${testcase.path}/CPP/build " />
+   <chmod dir="${testcase.path}/CPP/build" perm="u+x" includes="*" />
+   
+   <foreach target="test-CPP-one-case" param="case-full-name">
+			<fileset dir="${testcase.path}/CPP/build">
+				 <include name="*" />
+				 <exclude name="rg"/>
+			</fileset>
+	 </foreach>
+   
+   
+   <echo message="...test driver CPP is over , report file is in ${reports.path} ..." />
+   
+</target>
+
+
+<target name="test-CPP-one-case" depends="">
+
+	 <echo message="exec ${case-full-name}  ${append} ...path is /opt/sequoiadb/lib ..." />
+   <echo message="env is LD_LIBRARY_PATH=/opt/sequoiadb/lib" />
+   <exec executable="${case-full-name}" dir="${testcase.path}/CPP/build" >
+      <arg line=" ${append} " />
+      <env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:/opt/sequoiadb/lib" />
+   </exec>
+      
+</target>
+
+<target name="exec-test-over" depends="exec-driver-CPP-test">
+
+  <basename property="deploy.name" file="${deploy.case.fullname}" suffix=".xml" />
+	<replaceregexp match="&lt;testsuite (.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+     <fileset dir="${reports.path}/" includes="*" />
+  </replaceregexp>
+
+  <replaceregexp match="&lt;/testsuites(.*)&gt;" replace="" flags="g" byline="true" encoding="utf-8">
+     <fileset dir="${reports.path}/" includes="*" />
+  </replaceregexp>
+  
+  <replaceregexp match='classname="' replace='classname="com.sequoiadb.testcases-driverCPP.${deploy.name}.' flags="g" byline="true" encoding="utf-8">
+     <fileset dir="${reports.path}/" includes="*" />
+  </replaceregexp>
+
+  <replace token="AllTests" value="com.sequoiadb.testcases-driverCPP.${deploy.name}">
+    <fileset dir="${reports.path}/"  includes="*" />
+  </replace>
+  
+  <replace token="testsuites" value="testsuite">
+    <fileset dir="${reports.path}/"  includes="*" />
+  </replace>
+
+</target>
+
+</project>

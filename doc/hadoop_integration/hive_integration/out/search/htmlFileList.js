@@ -1,0 +1,20 @@
+//List of files which are indexed.
+fl = new Array();
+fl["0"]= "export.html";
+fl["1"]= "hiveinter.html";
+fl["2"]= "hiveinter1.html";
+fl["3"]= "keydef.html";
+fl["4"]= "schemekeydef.html";
+fl["5"]= "topics/configmethod.html";
+fl["6"]= "topics/configmethod1.html";
+fl["7"]= "topics/Sequoiadbhive.html";
+fl["8"]= "topics/Sequoiadbhive1.html";
+fl["9"]= "use/create.html";
+fl["10"]= "use/create1.html";
+fl["11"]= "use/inquiry.html";
+fl["12"]= "use/inquiry1.html";
+fl["13"]= "use/insert.html";
+fl["14"]= "use/insert1.html";
+fl["15"]= "use/use.html";
+fl["16"]= "use/use1.html";
+var doStem = false

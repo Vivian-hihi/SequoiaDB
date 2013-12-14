@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_pyr_psg_2l">
+  <title>启动SequoiaDB web服务器</title>
+  <body>
+    <p>通过启动SequoiaDB后台的Web服务，也可以对数据库做各种操作，并且方便管理。</p>
+    <!--<section>
+      <title>Windows环境</title>
+      <p><b>步骤：</b></p>
+      <ul>
+        <li>运行cmd.exe</li>
+        <li>进入到sequoiadb的安装目录，例如 <codeblock>cd C:\sequoiadb\tools\server\php\bin</codeblock></li>
+        <li>执行php.exe文件，启动PHP服务<codeblock>php.exe -S &lt;server name:port&gt;</codeblock><b>server
+          name</b>&nbsp;：指定服务器IP地址，如 192.168.10.10 <p><b>port</b>&nbsp;：指定服务器端口号，如 8080 </p><p><b>doc
+            director</b>&nbsp;：服务器指向的跟目录，如 <cmdname>C:\sequoiadb\www</cmdname> 
+              </p><p>最后在浏览器中输入<b>http://192.168.10.10:8080</b> ，即可访问数据库管理页。</p></li>
+      </ul>
+    </section>
+    <section>
+     <title>Linux环境</title>
+     <p><b>步骤：</b></p>-->
+      <ul>
+        <li>进入/opt/sequoiadb/bin目录</li>
+        <li>执行命令：<codeblock>./sdbwsart -S &lt;server name:port></codeblock><p><b>server
+          name</b>&nbsp;：指定服务器IP地址，如 192.168.10.10</p><p><b>port</b>&nbsp;：指定服务器端口号，如 8080</p><!--<p><b>doc
+            director</b>&nbsp;：服务器指向的跟目录，如
+              /opt/sequoiadb/www/</p>--><p>最后在浏览器中输入<b>http://192.168.10.10:8080
+          </b>，即可访问数据库管理页。</p></li>
+      </ul>    
+  </body>
+</topic>

@@ -1,0 +1,808 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = rtnContext.hpp
+
+   Descriptive Name = RunTime Context Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Runtime component. This file contains structure for Runtime
+   Context.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef RTNCONTEXT_HPP_
+#define RTNCONTEXT_HPP_
+
+#include "core.hpp"
+#include "oss.hpp"
+#include "dms.hpp"
+#include "pd.hpp"
+#include "ossMem.hpp"
+#include "ossLatch.hpp"
+#include "ossRWMutex.hpp"
+#include "mthMatcher.hpp"
+#include "mthSelector.hpp"
+#include "monCB.hpp"
+#include "ixm.hpp"
+#include "optAccessPlan.hpp"
+#include "qgmPlanContainer.hpp"
+#include "msg.h"
+#include "ossAtomic.hpp"
+#include "../bson/bsonobj.h"
+
+#include <map>
+
+using namespace bson ;
+
+namespace engine
+{
+
+// default buffer size should be at least DMS_PAGE_SIZE64K
+#define RTN_DFT_BUFFERSIZE                DMS_PAGE_SIZE_MAX
+#define RTN_RESULTBUFFER_SIZE_MAX         DMS_SEGMENT_SZ
+
+   class _pmdEDUCB ;
+   class _dmsStorageUnit ;
+   class _rtnIXScanner ;
+   class _optAccessPlan ;
+   class _SDB_DMSCB ;
+   class _dmsMBContext ;
+   class _rtnContextBase ;
+   class netMultiRouteAgent ;
+   class _rtnContextBase ;
+
+   /*
+      _rtnObjBuff define
+   */
+   class _rtnObjBuff : public SDBObject
+   {
+      public:
+         _rtnObjBuff( const CHAR *pBuff, INT32 buffLen, INT32 recordNum )
+         {
+            _pBuff = pBuff ;
+            _buffSize = buffLen ;
+            _recordNum = recordNum ;
+            _curOffset = 0 ;
+         }
+
+         _rtnObjBuff( const _rtnObjBuff &right ) ;
+         virtual ~_rtnObjBuff() ;
+
+         _rtnObjBuff& operator=( const _rtnObjBuff &right ) ;
+
+         const CHAR* data () const { return _pBuff ; }
+         const CHAR* front() const { return _pBuff + _curOffset; }
+         INT32       size () const { return _buffSize ; }
+         INT32       recordNum () const { return _recordNum ; }
+         BOOLEAN     eof () const { return _curOffset >= _buffSize ; }
+         void        resetItr () { _curOffset = 0 ; }
+
+         inline   INT32  nextObj ( BSONObj &obj ) ;
+
+      protected:
+         const CHAR           *_pBuff ;
+         INT32                _buffSize ;
+         INT32                _recordNum ;
+         INT32                _curOffset ;
+   } ;
+   typedef _rtnObjBuff rtnObjBuff ;
+
+   /*
+      _rtnObjBuff inline functions
+   */
+   inline INT32 _rtnObjBuff::nextObj( BSONObj &obj )
+   {
+      if ( eof() )
+      {
+         return SDB_DMS_EOC ;
+      }
+      try
+      {
+         BSONObj objTemp( &_pBuff[_curOffset] ) ;
+         obj = objTemp ;
+         _curOffset += ossAlign4( (UINT32)obj.objsize() ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Failed to create bson object: %s", e.what() ) ;
+         return SDB_SYS ;
+      }
+      return SDB_OK ;
+   }
+
+   /*
+      _rtnContextBuf define
+   */
+   class _rtnContextBuf : public rtnObjBuff
+   {
+      friend class _rtnContextBase ;
+
+      private:
+         void  _reference( INT32 *pCounter, ossRWMutex *pMutex ) ;
+
+      public:
+         _rtnContextBuf () ;
+         _rtnContextBuf( const _rtnContextBuf &right ) ;
+         virtual ~_rtnContextBuf () ;
+         _rtnContextBuf& operator=( const _rtnContextBuf &right ) ;
+
+         void        release () ;
+
+      private:
+         INT32                *_pBuffCounter ;
+         ossRWMutex           *_pBuffLock ;
+         _rtnContextBase      *_context ;
+         BOOLEAN              _released ;
+
+   } ;
+   typedef _rtnContextBuf rtnContextBuf ;
+
+   /*
+      _rtnPrefWatcher define
+   */
+   class _rtnPrefWatcher : public SDBObject
+   {
+      public:
+         _rtnPrefWatcher () :_prefNum(0), _needWait(FALSE) {}
+         ~_rtnPrefWatcher () {}
+         void     reset ()
+         {
+            _needWait = _prefNum > 0 ? TRUE : FALSE ;
+            _prefEvent.reset() ;
+         }
+         void     ntyBegin ()
+         { 
+            ++_prefNum ;
+            _needWait = TRUE ;
+         }
+         void     ntyEnd ()
+         {
+            --_prefNum ;
+            _prefEvent.signalAll() ;
+         }
+         INT32    waitDone( INT64 millisec = -1 )
+         {
+            if ( !_needWait && _prefNum <= 0 )
+            {
+               return 0 ;
+            }
+            INT32 rc = _prefEvent.wait( millisec, NULL ) ;
+            if ( SDB_OK == rc )
+            {
+               return 1 ;
+            }
+            return rc ;
+         }
+
+      private:
+         UINT32         _prefNum ;
+         BOOLEAN        _needWait ;
+         ossEvent       _prefEvent ;
+   } ;
+   typedef _rtnPrefWatcher rtnPrefWatcher ;
+
+   /*
+      RTN_CONTEXT_TYPE define
+   */
+   enum RTN_CONTEXT_TYPE
+   {
+      RTN_CONTEXT_DATA     = 1,
+      RTN_CONTEXT_DUMP,
+      RTN_CONTEXT_COORD,
+      RTN_CONTEXT_QGM,
+      RTN_CONTEXT_TEMP,
+      RTN_CONTEXT_SP,
+      RTN_CONTEXT_PARADATA,
+      RTN_CONTEXT_MAINCL,
+      RTN_CONTEXT_SORT,
+      RTN_CONTEXT_QGMSORT,
+   } ;
+
+   const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
+
+   /*
+      _rtnContextBase define
+   */
+   class _rtnContextBase : public SDBObject
+   {
+      friend class _SDB_RTNCB ;
+      friend class _rtnContextParaData ;
+      public:
+         _rtnContextBase ( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextBase () ;
+         string   toString() ;
+
+         INT32    newMatcher () ;
+
+         INT64    contextID () const { return _contextID ; }
+         UINT64   eduID () const { return _eduID ; }
+
+         monContextCB*     getMonCB () { return &_monCtxCB ; }
+         ossRWMutex*       dataLock () { return &_dataLock ; }
+         _mthSelector&     getSelector () { return _selector ; }
+         _mthMatcher*      getMatcher () { return _matcher ; }
+
+         INT32    append( const BSONObj &result ) ;
+         INT32    appendObjs( const CHAR *pObjBuff, INT32 len, INT32 num ) ;
+
+         virtual INT32    getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                           INT64 &startPos, _pmdEDUCB *cb ) ;
+
+         inline BOOLEAN  isEmpty () const ;
+
+         INT64    numRecords () const { return _bufferNumRecords ; }
+         INT32    buffSize () const { return _resultBufferSize ; }
+         INT64    totalRecords () const { return _totalRecords ; }
+         inline INT32 freeSize () const ;
+         INT32    buffEndOffset () const { return _bufferEndOffset ; }
+
+         BOOLEAN  isOpened () const { return _isOpened ; }
+         BOOLEAN  eof () const { return _hitEnd ; }
+
+      // prefetch
+      public:
+         void     enablePrefetch ( rtnPrefWatcher *pWatcher = NULL )
+         { 
+            _prefetchID = 1 ;
+            _pPrefWatcher = pWatcher ;
+         }
+         void     disablePrefetch ()
+         { 
+            _prefetchID = 0 ;
+            _pPrefWatcher = NULL ;
+         }
+         INT32    prefetchResult() const { return _prefetchRet ; }
+         INT32    prefetch ( _pmdEDUCB *cb, UINT32 prefetchID ) ;
+
+      public:
+
+         virtual RTN_CONTEXT_TYPE getType () const = 0 ;
+
+      protected:
+         void              _onDataEmpty () ;
+         virtual INT32     _prepareData( _pmdEDUCB *cb ) = 0 ;
+         virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
+         virtual void      _toString( stringstream &ss ) {}
+
+      protected:
+         INT32    _reallocBuffer ( SINT32 requiredSize ) ;
+         void     _release () ;
+         inline void _empty () ;
+         inline void _close () { _isOpened = FALSE ; }
+         UINT32   _getWaitPrefetchNum () { return _waitPrefetchNum.peek() ; }
+         BOOLEAN  _isInPrefetching () const { return _isInPrefetch ; }
+
+      protected:
+         monContextCB            _monCtxCB ;
+         _mthSelector            _selector ;
+         _mthMatcher             *_matcher ;
+         BOOLEAN                 _ownedMatcher ;
+         // status
+         BOOLEAN                 _hitEnd ;
+         BOOLEAN                 _isOpened ;
+
+      private:
+         INT64                   _contextID ;
+         UINT64                  _eduID ;
+         // buffer
+         CHAR                   *_pResultBuffer ;
+         INT32                   _resultBufferSize ;
+         INT32                   _bufferCurrentOffset ;
+         INT32                   _bufferEndOffset ;
+         INT64                   _bufferNumRecords ;
+         // control param
+         INT64                   _totalRecords ;
+         // mutex
+         ossRWMutex              _dataLock ;
+         ossRWMutex              _prefetchLock ;
+         INT32                   _reference ;
+         UINT32                  _prefetchID ;
+         ossAtomic32             _waitPrefetchNum ;
+         BOOLEAN                 _isInPrefetch ;
+         INT32                   _prefetchRet ;
+         rtnPrefWatcher          *_pPrefWatcher ;
+
+   } ;
+   typedef _rtnContextBase rtnContextBase ;
+
+   /*
+      _rtnContextBase inline functions
+   */
+   inline BOOLEAN _rtnContextBase::isEmpty () const
+   {
+      return _bufferCurrentOffset >= _bufferEndOffset ;
+   }
+   inline void _rtnContextBase::_empty ()
+   {
+      _bufferCurrentOffset = 0 ;
+      _bufferEndOffset     = 0 ;
+      _totalRecords        = _totalRecords - _bufferNumRecords ;
+      _bufferNumRecords    = 0 ;
+   }
+   inline INT32 _rtnContextBase::freeSize () const
+   {
+      return _resultBufferSize - ossAlign4((UINT32)_bufferEndOffset) ;
+   }
+
+   /*
+      _rtnContextData define
+   */
+   class _rtnContextData : public _rtnContextBase
+   {
+      public:
+         _rtnContextData ( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextData () ;
+
+         _rtnIXScanner*    getIXScanner () { return _scanner ; }
+         optScanType       scanType () const { return _scanType ; }
+         _dmsMBContext*    getMBContext () { return _mbContext ; }
+         _dmsStorageUnit*  getSU () { return _su ; }
+         _optAccessPlan*   getPlan () { return _plan ; }
+
+         dmsExtentID       lastExtLID () const { return _lastExtLID ; }
+
+         virtual INT32 open( _dmsStorageUnit *su, _dmsMBContext *mbContext,
+                             _optAccessPlan *plan, _pmdEDUCB *cb,
+                             const BSONObj &selector, INT64 numToReturn = -1,
+                             INT64 numToSkip = 0,
+                             const BSONObj *blockObj = NULL,
+                             INT32 direction = 1 ) ;
+
+         INT32 openTraversal( _dmsStorageUnit *su, _dmsMBContext *mbContext,
+                              _optAccessPlan *plan, _rtnIXScanner *scanner,
+                              _pmdEDUCB *cb, const BSONObj &selector,
+                              INT64 numToReturn = -1, INT64 numToSkip = 0 ) ;
+
+      public:
+         virtual RTN_CONTEXT_TYPE getType () const ;
+
+      protected:
+         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+         virtual BOOLEAN   _canPrefetch () const { return TRUE ; }
+         virtual void      _toString( stringstream &ss ) ;
+
+      protected:
+
+         INT32    _prepareByTBScan( _pmdEDUCB *cb ) ;
+         INT32    _prepareByIXScan( _pmdEDUCB *cb ) ;
+
+         INT32    _parseSegments( const BSONObj &obj,
+                                  std::vector< dmsExtentID > &segments ) ;
+         INT32    _parseIndexBlocks( const BSONObj &obj,
+                                    std::vector< BSONObj > &indexBlocks,
+                                    std::vector< dmsRecordID > &indexRIDs ) ;
+         INT32    _parseRID( const BSONElement &ele, dmsRecordID &rid ) ;
+
+         INT32    _openTBScan ( _dmsStorageUnit *su, _dmsMBContext *mbContext,
+                                _optAccessPlan *plan, _pmdEDUCB *cb,
+                                const BSONObj *blockObj ) ;
+         INT32    _openIXScan ( _dmsStorageUnit *su, _dmsMBContext *mbContext,
+                                _optAccessPlan *plan, _pmdEDUCB *cb,
+                                const BSONObj *blockObj,
+                                INT32 direction ) ;
+
+      protected:
+         _SDB_DMSCB                 *_dmsCB ;
+         _dmsStorageUnit            *_su ;
+         _dmsMBContext              *_mbContext ;
+         _optAccessPlan             *_plan ;
+         optScanType                _scanType ;
+
+         // rest number of records to expect, -1 means select all
+         SINT64                     _numToReturn ;
+         // rest number of records need to skip
+         SINT64                     _numToSkip ;
+
+         // TBSCAN
+         dmsExtentID                _extentID ;
+         dmsExtentID                _lastExtLID ;
+         BOOLEAN                    _segmentScan ;
+         std::vector< dmsExtentID > _segments ;
+         // Index scan
+         _rtnIXScanner              *_scanner ;
+         std::vector< BSONObj >     _indexBlocks ;
+         std::vector< dmsRecordID > _indexRIDs ;
+         BOOLEAN                    _indexBlockScan ;
+         INT32                      _direction ;
+
+   } ;
+   typedef _rtnContextData rtnContextData ;
+
+   /*
+      _rtnContextParaData define
+   */
+   class _rtnContextParaData : public _rtnContextData
+   {
+      public:
+         _rtnContextParaData( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextParaData () ;
+
+         virtual INT32 open( _dmsStorageUnit *su, _dmsMBContext *mbContext,
+                             _optAccessPlan *plan, _pmdEDUCB *cb,
+                             const BSONObj &selector, INT64 numToReturn = -1,
+                             INT64 numToSkip = 0,
+                             const BSONObj *blockObj = NULL,
+                             INT32 direction = 1 ) ;
+
+      public:
+         virtual RTN_CONTEXT_TYPE getType () const ;
+
+      protected:
+         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+         virtual BOOLEAN   _canPrefetch () const { return FALSE ; }
+
+         const BSONObj* _nextBlockObj () ;
+         INT32          _checkAndPrefetch () ;
+         INT32          _getSubContextData( _pmdEDUCB *cb ) ;
+         INT32          _openSubContext( const BSONObj *blockObj,
+                                         const BSONObj &selector,
+                                         _pmdEDUCB *cb,
+                                         INT64 numToReturn ) ;
+         void           _removeSubContext( rtnContextData *pContext ) ;
+         INT32          _getSubCtxWithData ( rtnContextData **ppContext,
+                                             _pmdEDUCB *cb ) ;
+
+      protected:
+         std::vector< _rtnContextData* >           _vecContext ;
+         BOOLEAN                                   _isParalled ;
+         BSONObj                                   _blockObj ;
+         UINT32                                    _curIndex ;
+         UINT32                                    _step ;
+         rtnPrefWatcher                            _prefWather ;
+
+   } ;
+   typedef _rtnContextParaData rtnContextParaData ;
+
+   /*
+      _rtnContextTemp define
+   */
+   class _rtnContextTemp : public _rtnContextData
+   {
+      public:
+         _rtnContextTemp ( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextTemp ();
+
+      public:
+         virtual RTN_CONTEXT_TYPE getType () const ;
+
+   } ;
+   typedef _rtnContextTemp rtnContextTemp ;
+
+   /*
+      _rtnContextQGM define
+   */
+   class _rtnContextQGM : public _rtnContextBase
+   {
+      public:
+         _rtnContextQGM ( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextQGM () ;
+
+      public:
+
+         virtual RTN_CONTEXT_TYPE getType () const ;
+
+         INT32 open( _qgmPlanContainer *accPlan ) ;
+
+      protected:
+         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+
+      private:
+         _qgmPlanContainer          *_accPlan ;
+
+   } ;
+   typedef _rtnContextQGM rtnContextQGM ;
+
+   /*
+      _rtnContextDump define
+   */
+   class _rtnContextDump : public _rtnContextBase
+   {
+      public:
+         _rtnContextDump ( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextDump () ;
+
+         INT32 open ( const BSONObj &selector, const BSONObj &matcher,
+                      INT64 numToReturn = -1, INT64 numToSkip = 0 ) ;
+
+         INT32 monAppend( const BSONObj &result ) ;
+
+      public:
+
+         virtual RTN_CONTEXT_TYPE getType () const ;
+
+      protected:
+         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+
+      private:
+         // rest number of records to expect, -1 means select all
+         SINT64                     _numToReturn ;
+         // rest number of records need to skip
+         SINT64                     _numToSkip ;
+
+         BSONObj                    _orderby ;
+
+   } ;
+   typedef _rtnContextDump rtnContextDump ;
+
+   /*
+      _coordOrderKey define
+   */
+   class _coordOrderKey : public SDBObject
+   {
+      typedef std::vector< BSONElement >  OrderKeyList;
+      typedef std::vector< BSONElement >  OrderKeyEleList;
+      typedef std::vector< BSONObj >      OrderKeyObjList;
+      public:
+         _coordOrderKey( const _coordOrderKey &orderKey ) ;
+         _coordOrderKey() ;
+
+      public:
+         BOOLEAN operator<( const _coordOrderKey &rhs ) const ;
+         void clear() ;
+         void setOrderBy( const BSONObj &orderBy ) ;
+         INT32 generateKey( const BSONObj &record ) ;
+
+      private:
+         BSONObj              _orderBy ;
+         OrderKeyList         _keyList;
+         OrderKeyEleList      _keyEleList;
+         OrderKeyObjList      _tmpObjList;
+   } ;
+   typedef _coordOrderKey coordOrderKey ;
+
+   /*
+      coordSubContext define
+   */
+   class _coordSubContext : public SDBObject
+   {
+      public:
+         _coordSubContext () ;
+         _coordSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
+         ~_coordSubContext () ;
+
+      public:
+
+         void     appendData ( MsgOpReply *pReply ) ;
+         void     clearData () ;
+         SINT64   getContextID() ;
+         MsgRouteID getRouteID() ;
+         CHAR*    front () ;
+         INT32    pop() ;
+         INT32    popN( SINT32 num ) ;
+         INT32    popAll() ;
+         SINT32   getRecordNum() ;
+         UINT32   getRemainLen() ;
+         INT32    getOrderKey( coordOrderKey &orderKey ) ;
+         void     setOrderBy( const BSONObj &orderBy ) ;
+
+      private:
+         _coordSubContext ( const _coordSubContext &srcContext ) ;
+
+      private:
+         MsgRouteID           _routeID ;
+         SINT64               _contextID ;
+         INT32                _curOffset ;
+         MsgOpReply           *_pData ;
+         coordOrderKey        _orderKey ;
+         BSONObj              _orderBy ;
+         BOOLEAN              _isOrderKeyChange ;
+         SINT32               _recordNum ;
+
+   } ;
+   typedef _coordSubContext coordSubContext ;
+
+   typedef std::multimap< coordOrderKey, coordSubContext* > SUB_CONTEXT_MAP ;
+   typedef std::map< UINT64, coordSubContext* >             EMPTY_CONTEXT_MAP ;
+   typedef std::map<UINT64, MsgRouteID>                     PREPARE_NODES_MAP ;
+
+   /*
+      _rtnContextCoord define
+   */
+   class _rtnContextCoord : public _rtnContextBase
+   {
+      public:
+         _rtnContextCoord ( INT64 contextID, UINT64 eduID ) ;
+         virtual ~_rtnContextCoord () ;
+
+         INT32    addSubContext ( MsgRouteID &routeID, SINT64 contextID ) ;
+
+         void     addSubDone( _pmdEDUCB *cb ) ;
+
+         INT32    open( const BSONObj &orderBy, INT64 numToReturn = -1,
+                        INT64 numToSkip = 0 ) ;
+         INT32    reopen () ;
+
+         void     killSubContexts( _pmdEDUCB *cb ) ;
+
+      public:
+
+         virtual RTN_CONTEXT_TYPE getType () const ;
+
+         inline  BOOLEAN requireOrder () const ;
+
+      protected:
+         virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+
+      private:
+         INT32    _getSubData () ;
+         INT32    _getSubDataNormal () ;
+         INT32    _getSubDataByOrder () ;
+         INT32    _appendSubData ( CHAR *pData ) ;
+
+         void     _delPrepareContext( const MsgRouteID &routeID ) ;
+
+         INT32    _send2EmptyNodes( _pmdEDUCB *cb ) ;
+         INT32    _getPrepareNodesData( _pmdEDUCB *cb, BOOLEAN waitAll ) ;
+
+      private:
+         // rest number of records to expect, -1 means select all
+         SINT64                     _numToReturn ;
+         // rest number of records need to skip
+         SINT64                     _numToSkip ;
+
+         SUB_CONTEXT_MAP            _subContextMap ;
+         EMPTY_CONTEXT_MAP          _emptyContextMap ;
+         EMPTY_CONTEXT_MAP          _prepareContextMap ;
+         PREPARE_NODES_MAP          _prepareNodeMap ;
+
+         netMultiRouteAgent         *_netAgent ;
+
+         coordOrderKey              _emptyKey ;
+         BSONObj                    _orderBy ;
+
+   } ;
+   typedef _rtnContextCoord rtnContextCoord ;
+
+   /*
+      _rtnContextCoord inline functions
+   */
+   inline BOOLEAN _rtnContextCoord::requireOrder () const
+   {
+      if ( _orderBy.isEmpty() ||
+           _subContextMap.size() + _emptyContextMap.size() +
+           _prepareContextMap.size() <= 1 )
+      {
+         return FALSE ;
+      }
+      return TRUE ;
+   }
+
+   typedef class _rtnContextBase rtnContext ;
+
+   /*
+      _rtnContextSP inline functions
+   */
+   class _spdSession ;
+
+   class _rtnContextSP : public _rtnContextBase
+   {
+   public:
+      _rtnContextSP( INT64 contextID, UINT64 eduID ) ;
+      virtual ~_rtnContextSP() ;
+
+   public:
+      virtual RTN_CONTEXT_TYPE getType () const ;
+      INT32 open( _spdSession *sp ) ;
+
+   protected:
+      virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+
+   private:
+      _spdSession *_sp ;
+   } ;
+
+   typedef class _rtnContextSP rtnContextSP ;
+
+
+   /*
+      _rtnSubCLBuf
+   */
+   class _rtnSubCLBuf : public SDBObject
+   {
+   public:
+      _rtnSubCLBuf();
+      _rtnSubCLBuf( BSONObj &orderBy );
+      virtual ~_rtnSubCLBuf();
+      const CHAR *front();
+      INT32 pop();
+      INT32 popN( SINT32 num );
+      INT32 popAll();
+      INT32 recordNum();
+      INT32 getOrderKey( coordOrderKey &orderKey );
+      rtnContextBuf buffer();
+      void setBuffer( rtnContextBuf &buffer );
+
+   private:
+      coordOrderKey        _orderKey;
+      BOOLEAN              _isOrderKeyChange;
+      rtnContextBuf        _buffer;
+      INT32                _remainNum;
+   };
+   typedef class _rtnSubCLBuf rtnSubCLBuf;
+
+   /*
+      _rtnContextCoord define
+   */
+   class _rtnContextMainCL : public _rtnContextBase
+   {
+   typedef std::map< SINT64, _rtnSubCLBuf >    SubCLBufList;
+   public:
+      _rtnContextMainCL( SINT64 contextID, UINT64 eduID ) ;
+      ~_rtnContextMainCL();
+      virtual RTN_CONTEXT_TYPE getType () const;
+      INT32 open( const bson::BSONObj & orderBy,
+                  INT64 numToReturn,
+                  INT64 numToSkip );
+
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                              INT64 &startPos, _pmdEDUCB *cb );
+
+      INT32 addSubContext( SINT64 contextID );
+
+      BOOLEAN requireOrder () const;
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb );
+
+   private:
+      INT32 _prepareSubCTXData( SubCLBufList::iterator iterSubCTX,
+                              _pmdEDUCB * cb,
+                              INT32 maxNumToReturn = -1 );
+      INT32 _prepareDataByOrder( _pmdEDUCB *cb );
+
+   private:
+      INT64             _numToReturn;
+      INT64             _numToSkip;
+      BSONObj           _orderBy;
+      SubCLBufList      _subCLBufList;
+      SubCLBufList      _emptyBufList;
+   };
+   typedef class _rtnContextMainCL rtnContextMainCL;
+
+/// _rtnContextSort is in rtnContextSort.hpp
+
+   class _qgmPlan ;
+
+   class _rtnContextQgmSort : public _rtnContextBase
+   {
+   public:
+      _rtnContextQgmSort( INT64 contextID, UINT64 eduID ) ;
+      virtual ~_rtnContextQgmSort() ;
+
+   public:
+      virtual RTN_CONTEXT_TYPE getType () const ;
+      INT32 open( _qgmPlan *qp ) ;
+
+   protected:
+      virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
+
+   private:
+      _qgmPlan *_qp ;
+   } ;
+   typedef class _rtnContextQgmSort rtnContextQgmSort ;
+}
+
+#endif //RTNCONTEXT_HPP_
+

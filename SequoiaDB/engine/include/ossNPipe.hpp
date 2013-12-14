@@ -1,0 +1,171 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = ossNPipe.hpp
+
+   Descriptive Name = Operating System Services Named Pipe Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of OSS component. This file contains declares for NPIPE operations.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          12/25/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef OSSNPIPE_HPP__
+#define OSSNPIPE_HPP__
+#include "core.hpp"
+#include "oss.hpp"
+#if defined (_WINDOWS)
+#include <vector>
+#include <string>
+#endif
+/*
+ * Steps to create OSS named pipe
+ * Server
+ * 1) ossCreateNamedPipe                  -- return immediate
+ * 2) ossConnectNamedPipe                 -- linux return immediate, windows
+ *                                           will wait until client open pipe
+ * 3) ossReadNamedPipe / ossWriteNamedPipe
+ * 4) ossDisconnectNamedPipe
+ * 6) ossDeleteNamedPipe
+ * Client
+ * 1) ossOpenNamedPipe
+ * 2) ossWriteNamedPipe / ossReadNamedPipe
+ * 3) ossCloseNamedPipe
+ *
+ * Create     = ossCreateNamedPipe     -- server
+ * Connect    = ossConnectNamedPipe    -- server
+ * Open       = ossOpenNamedPipe       -- client
+ * Read       = ossReadNamedPipe       -- both
+ * Write      = ossWriteNamedPipe      -- both
+ * Disconnect = ossDisconnectNamedPipe -- server
+ * Close      = ossCloseNamedPipe      -- client
+ * Delete     = ossDeleteNamedPipe     -- server
+ *
+ */
+
+#define OSS_NPIPE_MAX_NAME_LEN            255
+class _OSSNPIPE : public SDBObject
+{
+public :
+#if defined (_WINDOWS)
+   HANDLE _handle ;
+   INT32 _overlappedFlag ;
+   OVERLAPPED _overlapped ;
+#elif defined (_LINUX)
+   INT32 _handle ;
+   INT32 _bufSize ;
+#endif
+   UINT32 _state ;
+   CHAR   _name [ OSS_NPIPE_MAX_NAME_LEN + 1 ] ;
+} ;
+typedef class _OSSNPIPE OSSNPIPE ;
+
+#if defined (_WINDOWS)
+#define OSS_NPIPE_PREFIX              "\\\\"
+#define OSS_NPIPE_LOCAL_PREFIX        OSS_NPIPE_PREFIX".\\pipe\\"
+#endif
+
+#define OSS_NPIPE_INBOUND            0x00000001
+#define OSS_NPIPE_OUTBOUND           0x00000002
+#define OSS_NPIPE_DUPLEX             (OSS_NPIPE_INBOUND|OSS_NPIPE_OUTBOUND)
+
+#define OSS_NPIPE_NONBLOCK           0x00000010
+#define OSS_NPIPE_BLOCK              0x00000000 // by default it's blocking pipe
+#define OSS_NPIPE_BLOCK_WITH_TIMEOUT 0x00000020
+
+#define OSS_NPIPE_INFINITE_TIMEOUT   -1
+
+#if defined (_WINDOWS)
+#define OSS_NPIPE_UNLIMITED_INSTANCES      PIPE_UNLIMITED_INSTANCES
+#define OSS_NPIPE_FIRST_PIPE_INSTANCE      FILE_FLAG_FIRST_PIPE_INSTANCE
+#define OSS_NPIPE_NOWAIT                   PIPE_NOWAIT
+#define OSS_NPIPE_OVERLAP_ENABLED          0x00000001
+// this bit is set by internal, indicating the pipe is waiting for IO
+#define OSS_NPIPE_OVERLAP_IOPENDING        0x00000002
+#elif defined (_LINUX)
+#define OSS_NPIPE_UNLIMITED_INSTANCES      0
+#endif
+INT32 ossCreateNamedPipe ( const CHAR *name,
+                           UINT32 inboundBufferSize,  // not valid on linux
+                           UINT32 outboundBufferSize, // not valid on linux
+                           // bitwise OR of
+                           // OSS_NPIPE_INBOUND
+                           // OSS_NPIPE_OUTBOUND
+                           // OSS_NPIPE_DUPLEX
+                           // OSS_NPIPE_NONBLOCK
+                           // OSS_NPIPE_BLOCK_WITH_TIMEOUT
+                           // OSS_NPIPE_BLOCK
+                           UINT32 action,
+                           UINT32 numInstances,       // ignore on linux
+                           // unit: second
+                           // can be OSS_NPIPE_INFINITE_TIMEOUT
+                           SINT32 defaultTimeout,
+                           OSSNPIPE &handle ) ;
+
+INT32 ossOpenNamedPipe ( const CHAR *name,
+                         UINT32 action,
+                         SINT32 openTimeout, // ignore on linux
+                         OSSNPIPE &handle ) ;
+
+INT32 ossConnectNamedPipe ( OSSNPIPE &handle,
+                            UINT32 action,
+                            // timeout is not used in linux
+                            SINT32 timeout = OSS_NPIPE_INFINITE_TIMEOUT ) ;
+
+INT32 ossReadNamedPipe ( OSSNPIPE &handle,
+                         CHAR *pBuffer,
+                         INT64 bufSize,
+                         INT64 *bufRead,
+                         SINT32 timeout = OSS_NPIPE_INFINITE_TIMEOUT ) ;
+
+INT32 ossWriteNamedPipe ( OSSNPIPE &handle,
+                          const CHAR *pBuffer,
+                          INT64 bufSize,
+                          INT64 *bufWrite ) ;
+
+INT32 ossDisconnectNamedPipe ( OSSNPIPE &handle ) ;
+
+INT32 ossCloseNamedPipe ( OSSNPIPE &handle ) ;
+
+INT32 ossDeleteNamedPipe ( OSSNPIPE &handle ) ;
+
+// intends to be used when one thread want to kill the whole program
+// and clean up.
+INT32 ossCleanNamedPipeByName ( const CHAR * pipeName ) ;
+
+// convert named pipe to C file descriptor
+INT32 ossNamedPipeToFd ( OSSNPIPE &handle , int * fd ) ;
+
+#if defined (_WINDOWS)
+// enumate all named pipes that EXACT matches pattern
+// if pattern is NULL, the call will enumerate all pipes in the system
+// For example if we are looking for name "sequoiadb_engine_50000",
+// then pattern will be "sequoiadb_engine_50000", any other pipe name
+// will not match it.
+// Users can check the size of "names" to verify whether the given pipe
+// name exists in the system
+INT32 ossEnumNamedPipes ( std::vector<std::string> &names,
+                          const CHAR *pattern = NULL ) ;
+#endif
+#endif

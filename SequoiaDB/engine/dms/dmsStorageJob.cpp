@@ -1,0 +1,95 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = dmsStorageJob.cpp
+
+   Descriptive Name = Data Management Service Header
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          11/10/2013  Xu Jianhui  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "dmsStorageJob.hpp"
+#include "dmsStorageBase.hpp"
+
+namespace engine
+{
+
+   /*
+      _dmsExtendSegmentJob implement
+   */
+
+   _dmsExtendSegmentJob::_dmsExtendSegmentJob( dmsStorageBase * pSUBase )
+   {
+      SDB_ASSERT( pSUBase, "Storage base unit can't be NULL" )
+      _pSUBase = pSUBase ;
+   }
+
+   _dmsExtendSegmentJob::~_dmsExtendSegmentJob()
+   {
+      _pSUBase = NULL ;
+   }
+
+   RTN_JOB_TYPE _dmsExtendSegmentJob::type() const
+   {
+      return RTN_JOB_EXTENDSEGMENT ;
+   }
+
+   const CHAR* _dmsExtendSegmentJob::name () const
+   {
+      return "Job[ExtendSegment]" ;
+   }
+
+   BOOLEAN _dmsExtendSegmentJob::muteXOn( const _rtnBaseJob * pOther )
+   {
+      return FALSE ;
+   }
+
+   INT32 _dmsExtendSegmentJob::doit ()
+   {
+      return _pSUBase->_preExtendSegment() ;
+   }
+
+   INT32 startExtendSegmentJob( EDUID * pEDUID, _dmsStorageBase * pSUBase )
+   {
+      INT32 rc                      = SDB_OK ;
+      dmsExtendSegmentJob * pJob    = NULL ;
+
+      pJob = SDB_OSS_NEW dmsExtendSegmentJob ( pSUBase ) ;
+      if ( !pJob )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Allocate failed" ) ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_NONE, pEDUID ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+}
+
+

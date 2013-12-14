@@ -1,0 +1,267 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = qgmMatcher.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains declare for QGM operators
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/09/2013  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "qgmMatcher.hpp"
+#include "pd.hpp"
+#include "qgmConditionNodeHelper.hpp"
+#include "pdTrace.hpp"
+#include "qgmTrace.hpp"
+#define PCRE_STATIC
+#include "../pcre/pcrecpp.h"
+
+namespace engine
+{
+   _qgmMatcher::_qgmMatcher( _qgmConditionNode *node )
+   :_condition( NULL ),
+    _ready( FALSE )
+   {
+      if ( NULL != node )
+      {
+         _condition = node ;
+         _ready = TRUE ;
+      }
+   }
+
+   _qgmMatcher::~_qgmMatcher()
+   {
+      _condition = NULL ;
+      _ready = FALSE ;
+   }
+
+   string _qgmMatcher::toString() const
+   {
+      qgmConditionNodeHelper tree( _condition ) ;
+      return tree.toJson() ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__QGMMATCHER_MATCH, "_qgmMatcher::match" )
+   INT32 _qgmMatcher::match( const qgmFetchOut &fetch, BOOLEAN &r )
+   {
+      PD_TRACE_ENTRY( SDB__QGMMATCHER_MATCH ) ;
+      INT32 rc = SDB_OK ;
+
+      if ( !ready() )
+      {
+         PD_LOG( PDERROR, "matcher is not ready yet" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = _match( _condition, fetch, r ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__QGMMATCHER_MATCH, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__QGMMATCHER__MATCH, "_qgmMatcher::_match" )
+   INT32 _qgmMatcher::_match( const _qgmConditionNode *node,
+                              const qgmFetchOut &fetch,
+                              BOOLEAN &r )
+   {
+      PD_TRACE_ENTRY( SDB__QGMMATCHER__MATCH ) ;
+      SDB_ASSERT( NULL != node, "impossible" )
+
+      INT32 rc = SDB_OK ;
+      BSONObj obj ;
+      BSONElement fromFetch ;
+      BSONElement fromCondition ;
+
+      try
+      {
+         if ( SQL_GRAMMAR::EG == node->type
+              || SQL_GRAMMAR::NE == node->type
+              || SQL_GRAMMAR::GT == node->type
+              || SQL_GRAMMAR::LT == node->type
+              || SQL_GRAMMAR::GTE == node->type
+              || SQL_GRAMMAR::LTE == node->type )
+         {
+            rc = fetch.element( node->left->value, fromFetch ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDDEBUG, "failed to get element from fetchout, rc=%d",
+                       rc ) ;
+            }
+
+            if ( fromFetch.eoo() )
+            {
+               r = FALSE ;
+               goto done ;
+            }
+
+            /// TODO: no need to create a new bsonobj everytime when it's type is not a
+            /// variable.
+            obj = _qgmConditionNodeHelper::toBson( node->right,
+                                             node->left->value.attr().begin(),
+                                             node->left->value.attr().size() ) ;
+            fromCondition = obj.firstElement() ;
+            if ( fromCondition.eoo() )
+            {
+               SDB_ASSERT( FALSE, "impossible" )
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            if ( SQL_GRAMMAR::EG == node->type )
+            {
+               r = (0 == fromCondition.woCompare( fromFetch, FALSE )) ?
+                   TRUE : FALSE ;
+            }
+            else if ( SQL_GRAMMAR::NE == node->type )
+            {
+               r = (0 == fromCondition.woCompare( fromFetch, FALSE )) ?
+                   FALSE : TRUE ;
+            }
+            else if ( SQL_GRAMMAR::LT == node->type )
+            {
+               r = (0 < fromCondition.woCompare( fromFetch, FALSE )) ?
+                   TRUE : FALSE ;
+            }
+            else if ( SQL_GRAMMAR::GT == node->type )
+            {
+               r = (0 > fromCondition.woCompare( fromFetch, FALSE  )) ?
+                   TRUE : FALSE ;
+            }
+            else if ( SQL_GRAMMAR::GTE == node->type )
+            {
+               INT32 wo = fromCondition.woCompare( fromFetch, FALSE ) ;
+               r = ( 0 > wo ) || ( 0 == wo )?
+                   TRUE : FALSE ;
+            }
+            else
+            {
+               INT32 wo = fromCondition.woCompare( fromFetch, FALSE ) ;
+               r = ( 0 < wo ) || ( 0 == wo )?
+                   TRUE : FALSE ;
+            }
+         }
+         else if ( SQL_GRAMMAR::LIKE == node->type )
+         {
+            rc = fetch.element( node->left->value, fromFetch ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDDEBUG, "failed to get element from fetchout, rc=%d",
+                       rc ) ;
+            }
+
+            if ( fromFetch.eoo() )
+            {
+               r = FALSE ;
+               goto done ;
+            }
+
+            if ( String != fromFetch.type() )
+            {
+               r = FALSE ;
+            }
+            else
+            {
+               pcrecpp::RE regexMatch( node->right->value.toString().c_str() ) ;
+               r = regexMatch.PartialMatch( fromFetch.valuestr() ) ;
+            }
+         }
+         else if ( SQL_GRAMMAR::INN == node->type )
+         {
+            SDB_ASSERT( NULL != node->right->var, "impossible" )
+            SDB_ASSERT( Array == node->right->var->type(), "impossible" )
+            rc = fetch.element( node->left->value, fromFetch ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDDEBUG, "failed to get element from fetchout, rc=%d",
+                       rc ) ;
+            }
+
+            if ( fromFetch.eoo() )
+            {
+               r = FALSE ;
+               goto done ;
+            }
+
+            r = FALSE ;
+
+            {
+            BSONObjIterator itr( node->right->var->embeddedObject()) ;
+            while ( itr.more() )
+            {
+               if ( 0 == itr.next().woCompare( fromFetch, FALSE ) )
+               {
+                  r = TRUE ;
+                  break ;
+               }
+            }
+            }
+         }
+         else
+         {
+            SDB_ASSERT( SQL_GRAMMAR::AND == node->type
+                        || SQL_GRAMMAR::OR == node->type,
+                        "impossible" )
+            BOOLEAN rleft = FALSE ;
+            BOOLEAN rright = FALSE ;
+            rc = _match( node->left, fetch, rleft ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            rc = _match( node->right, fetch, rright ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+
+            r = SQL_GRAMMAR::AND == node->type ?
+                rleft && rright : rleft || rright ;
+         }
+      }
+      catch ( std::exception & e)
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__QGMMATCHER__MATCH, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+}

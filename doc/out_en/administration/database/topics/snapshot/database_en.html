@@ -1,0 +1,475 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en-us" xml:lang="en-us">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="copyright" content="(C) Copyright 2005"/>
+<meta name="DC.rights.owner" content="(C) Copyright 2005"/>
+<meta name="DC.Type" content="topic"/>
+<meta name="DC.Title" content="Database Snapshot"/>
+<meta name="description" content="Description Database snapshot contains main status and performance monitoring parameter in current database node. It returns one record. Sign SDB_SNAP_DATABASE Proper nodes All Node Field Information ..."/>
+<meta name="DC.Relation" scheme="URI" content="../../../../administration/database/topics/snapshot/snapshot_en.html"/>
+<meta name="DC.Format" content="XHTML"/>
+<meta name="DC.Identifier" content="administration_database_monitoring_snapshot_database"/>
+<link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
+<link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
+<title>Database Snapshot</title>
+<script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
+    var prefix = "../../../../../index.html";
+    var ratingFile = "";
+    redirectToToc(window.location.search);
+    function highlightSearchTerm(){
+        if(parent.termsToHighlight != null){
+        // highlight each term in the content view  
+          for(i = 0 ; i < parent.termsToHighlight.length ; i++){        
+              $('*', window.parent.frames[1].document).highlight(parent.termsToHighlight[i]);
+          }
+        }
+    }
+//--></script></head>
+<body onload="highlightSearchTerm()" id="administration_database_monitoring_snapshot_database"><a name="administration_database_monitoring_snapshot_database"><!-- --></a>
+<table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
+  if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
+                    --></script></span><a class="link" href="../../../../administration/database/topics/snapshot/snapshot_en.html" title="Snapshot"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Snapshot</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../monitoring_en.html" title="Monitoring">Monitoring</a> / <a class="navheader_parent_path" href="../../../../administration/database/topics/snapshot/snapshot_en.html" title="Snapshot">Snapshot</a></td></tr></tbody></table>
+
+  <h1 class="title topictitle1">Database Snapshot</h1>
+
+  <div class="body">
+    <div class="section"><h2 class="title sectiontitle">Description</h2>
+      <p class="p">Database snapshot contains main status and performance monitoring parameter in current
+        database node. It returns one record.</p>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">Sign</h2>
+      <p class="p">SDB_SNAP_DATABASE</p>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">Proper nodes</h2>
+      
+      <p class="p">All Node</p>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">Field Information</h2>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d41669e43" class="stentry">Field Name</th>
+
+          <th valign="bottom" align="left" id="d41669e46" class="stentry">Type</th>
+
+          <th valign="bottom" align="left" id="d41669e49" class="stentry">Description</th>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">HostName</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">The host name of physical node of database node.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ServiceName</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Service name specified by svcname. HostName and service name are the sign of a
+            logical node.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">NodeName</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Node name, in the format of &lt;HostName&gt;:&lt;ServiceName&gt;</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">GroupName</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">The name of replset of the logical node. There is no this field under independent
+            mode.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">IsPrimary</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Bool</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">IsPrimary shows whether the node is a main node.There is no this field under
+            independent mode.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ServiceStatus</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Bool</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">ServiceStatus represents the status of whether it is availible to serve. For
+              example,<a class="xref" href="../../../concepts/cluster/topics/sync_en.html">Full Sync</a> will
+            make it <em class="ph i">false</em>.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">CurrentLSN.Offset</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Excursion of current LSN</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">CurrentLSN.Version</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Verssion number of the current LSN</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Version.Major</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Major version number of database</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Version.Minor</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Minor version number of database</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Version.Release</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Released version number of database</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">CurrentActiveSessions</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Current active session. It contains User EDU and system EDU.</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">CurrentIdleSessions</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Current inactive session. Generally, inactive session means that EDU is stored in
+            thread pool and waiting to run.  </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">CurrentSystemSessions</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Current system session. CurrentActiveSessions is the amount of current user EDUs.
+          </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">CurrentContexts</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Amount of current contexts</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ReceivedEvents</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of event requests received by current shard</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Role</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">The role of current node</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Disk.DatabasePath</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">The path of database</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Disk.LoadPercent</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">The percentage of memory in databse path in disk</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Disk.TotalSpace</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total space (byte) in the database path</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">Disk.FreeSpace</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Free space (byte) in the database path <strong class="ph b">Ipmortant：this field and above all
+              fields only display in data node and catalog node </strong></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalNumConnects</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of database connection requests</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalDataRead</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total data read requests</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalIndexRead</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total index read requests</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalDataWrite</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total data write requests</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalIndexWrite</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total index write requests</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalUpdate</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of updated records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalDelete</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of deleted records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalInsert</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of inserted records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ReplUpdate</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Amount of updated and replicated records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ReplDelete</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Amount of deleted and replicated records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ReplInsert</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Amount of inserted and replicated records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalSelect</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of selected records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalRead</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total amount of read records</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalReadTime</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total data read time (millisecond)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">TotalWriteTime</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Long integer</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Total data write time (millisecond)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ActivateTimestamp</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Timeline</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">The time of starting data node</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">UserCPU</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Float</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">User CPU (second)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">SysCPU</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Float</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">System CPU (second)</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ErrNodes.NodeName</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">String</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Exception node name（hostname+port）<strong class="ph b">Ipmortant：this field only display in  coord
+              node and existing exception node </strong></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d41669e43" class="stentry">ErrNodes.Flag</td>
+
+          <td valign="top" headers="d41669e46" class="stentry">Int</td>
+
+          <td valign="top" headers="d41669e49" class="stentry">Rrror code <strong class="ph b">this field only display in coord node and existing exception node
+            </strong></td>
+
+        </tr>
+</table>
+
+    </div>
+
+    <div class="section"><h2 class="title sectiontitle">Sample</h2>
+      <pre class="pre codeblock">&gt; db.snapshot(SDB_SNAP_DATABASE)
+{
+  "HostName": "vmsvr1-rhel-x64",
+  "ServiceName": "51000",
+  "GroupName": "foo",
+  "NodeName": "vmsvr1-rhel-x64:51000",
+  "IsPrimary": true,
+  "ServiceStatus": false,
+  "CurrentLSN": {
+    "Offset": 84,
+    "Version": 1
+  },
+  "Version": {
+    "Major": 0,
+    "Minor": 0,
+    "Release": 3598
+  },
+  "CurrentActiveSessions": 8,
+  "CurrentIdleSessions": 0,
+  "CurrentSystemSessions": 6,
+  "CurrentContexts": 1,
+  "ReceiveCount": 3,
+  "Role": "data",
+  "Disk": {
+    "DatabasePath": "/home/sequoiadb/sequoiadb/data1",
+    "LoadPercent": 84,
+    "TotalSpace": 37939249152,
+    "FreeSpace": 5734342656
+  },
+  "TotalNumConnects": 1,
+  "TotalDataRead": 0,
+  "TotalIndexRead": 0,
+  "TotalDataWrite": 0,
+  "TotalIndexWrite": 0,
+  "TotalUpdate": 0,
+  "TotalDelete": 0,
+  "TotalInsert": 0,
+  "ReplUpdate": 0,
+  "ReplDelete": 0,
+  "ReplInsert": 0,
+  "TotalSelect": 0,
+  "TotalRead": 0,
+  "TotalReadTime": 0,
+  "TotalWriteTime": 0,
+  "ActivateTimestamp": "2013-04-06-17.30.08.517367",
+  "UserCPU": "0.240000",
+  "SysCPU": "1.250000"
+}</pre>
+
+    </div>
+
+  </div>
+
+<div class="related-links"/>
+<div class="navfooter"><a class="link" href="../../../../administration/database/topics/snapshot/snapshot_en.html" title="Snapshot"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Snapshot</span></a>  <script type="text/javascript"><!--         
+    function expand(){
+        parent.tocwin.expandToTopic(window.location.href, this.getAttribute('href'));
+    }
+    var aArray = document.getElementsByTagName('a');
+    var i;
+    for (i = 0; i< aArray.length; i++){
+      aArray[i].onclick = expand;
+    }
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+          
+    </div>
+</body>
+</html>

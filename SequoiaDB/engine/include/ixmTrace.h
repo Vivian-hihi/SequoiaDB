@@ -1,0 +1,55 @@
+/* This list file is automatically generated,you shoud NOT modify this file anyway! */
+#ifndef ixmTRACE_H__
+#define ixmTRACE_H__
+// Component: ixm
+#define SDB__IXMINXCB1                                     0x2000000000568L
+#define SDB__IXMINXCB2                                     0x2000000000569L
+#define SDB__IXMINXCB_GETKEY                               0x200000000056aL
+#define SDB__IXMINXCB_TRUNC                                0x200000000056bL
+#define SDB__IXMKEYGEN_GETKEYS                             0x200000000056cL
+#define SDB__IXMKEYGEN__EXTNXT2DELE                        0x200000000056dL
+#define SDB__IXMKEYGEN__EXTNXTELE                          0x200000000056eL
+#define SDB__IXMKEYGEN__GETKEYSARRELTFIXED                 0x200000000056fL
+#define SDB__IXMKEYGEN__GETKEYS                            0x2000000000570L
+#define SDB__IXMINXKEYGEN__INIT                            0x2000000000571L
+#define SDB_IXMINXKEYGEN                                   0x2000000000572L
+#define SDB_IXMGEOHASH                                     0x2000000000573L
+#define SDB_IXMEXTRACTTUPLE                                0x2000000000574L
+#define SDB__IXMEXT1                                       0x2000000000575L
+#define SDB__IXMEXT2                                       0x2000000000576L
+#define SDB__IXMEXT3                                       0x2000000000577L
+#define SDB__IXMEXT4                                       0x2000000000578L
+#define SDB__IXMEXT_FIND                                   0x2000000000579L
+#define SDB__IXMEXT_ISONE                                  0x200000000057aL
+#define SDB__IXMEXT_INSERTHERE                             0x200000000057bL
+#define SDB__IXMEXT__BASICINS                              0x200000000057cL
+#define SDB__IXMEXT__SPLIT                                 0x200000000057dL
+#define SDB__IXMEXT__SPLITPOS                              0x200000000057eL
+#define SDB__IXMEXT__PSHBACK                               0x200000000057fL
+#define SDB__IXMEXT__VALIDATE                              0x2000000000580L
+#define SDB__IXMEXT__REORG                                 0x2000000000581L
+#define SDB__IXMEXT__INSERT                                0x2000000000582L
+#define SDB__IXMEXT_UNINDEX                                0x2000000000583L
+#define SDB__IXMEXT__DELKEYATPOS1                          0x2000000000584L
+#define SDB__IXMEXT__DELKEYATPOS2                          0x2000000000585L
+#define SDB__IXMEXT__MAYBLCWITHNGB                         0x2000000000586L
+#define SDB__IXMEXT__DELEXT                                0x2000000000587L
+#define SDB__IXMEXT__FNDCHLDEXT                            0x2000000000588L
+#define SDB__IXMEXT__DELITNKEY                             0x2000000000589L
+#define SDB__IXMEXT_ADVANCE                                0x200000000058aL
+#define SDB__IXMEXT__SETITNKEY                             0x200000000058bL
+#define SDB__IXMEXT__LOCATE                                0x200000000058cL
+#define SDB__IXMEXT_EXIST                                  0x200000000058dL
+#define SDB__IXMEXT_GETROOT                                0x200000000058eL
+#define SDB__IXMEXT_FNDSNG                                 0x200000000058fL
+#define SDB__IXMEXT_TRUNC                                  0x2000000000590L
+#define SDB_IXMEXT_COUNT                                   0x2000000000591L
+#define SDB_IXMEXT__KEYCMP                                 0x2000000000592L
+#define SDB__IXMEXT__KEYFIND                               0x2000000000593L
+#define SDB__IXMEXT_KEYLOCATE                              0x2000000000594L
+#define SDB__IXMEXT_KEYADVANCE                             0x2000000000595L
+#define SDB__IXMEXT_DMPINXEXT2LOG                          0x2000000000596L
+#define SDB__IXM2DINXCB_INIT                               0x2000000000597L
+#define SDB__IXM2DPNT__INIT1                               0x2000000000598L
+#define SDB__IXM2DPNT__INIT2                               0x2000000000599L
+#endif

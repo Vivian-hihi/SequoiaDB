@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="administration_database_monitoring_snapshot_database">
+  <title>数据库快照</title>
+  <body>
+    <section><title>描述</title>
+      <p>数据库快照列出当前数据库节点中主要的状态与性能监控参数，输出一条记录。</p>
+    </section>
+    <section><title>标示</title>
+      <p>SDB_SNAP_DATABASE</p>
+    </section>
+    <section><title>适用节点</title>
+      <p>所有节点</p>
+    </section>
+    <section><title>字段信息</title>
+      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.0*" id="administration_database_monitoring_snapshot_database_table">-->
+        <sthead>
+          <stentry>字段名</stentry>
+          <stentry>类型</stentry>
+          <stentry>描述</stentry>
+        </sthead>
+        <strow>
+          <stentry>HostName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>数据库节点所在物理节点的主机名</stentry>
+        </strow>
+        <strow>
+          <stentry>ServiceName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>svcname所指定的服务名，与HostName共同作为一个逻辑节点的标示</stentry>
+        </strow>
+        <strow>
+          <stentry>NodeName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>节点名，为&lt;HostName&gt;:&lt;ServiceName&gt;</stentry>
+        </strow>
+        <strow>
+          <stentry>GroupName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>该逻辑节点所属的分区组名，独立模式下该字段不存在</stentry>
+        </strow>
+        <strow>
+          <stentry>IsPrimary</stentry>
+          <stentry>布尔</stentry>
+          <stentry>该节点是否为主节点，独立模式下该字段不存在</stentry>
+        </strow>
+        <strow>
+          <stentry>ServiceStatus</stentry>
+          <stentry>布尔</stentry>
+          <stentry>是否为可提供服务状态。一些特殊状态，例如<xref href="../../../concepts/cluster/topics/sync.dita">全量同步</xref>会使该状态为false</stentry>
+        </strow>
+        <strow>
+          <stentry>CurrentLSN.Offset</stentry>
+          <stentry>长整数</stentry>
+          <stentry>当前LSN的偏移</stentry>
+        </strow>
+        <strow>
+          <stentry>CurrentLSN.Version</stentry>
+          <stentry>整数</stentry>
+          <stentry>当前LSN的版本号</stentry>
+        </strow>
+        <strow>
+          <stentry>Version.Major</stentry>
+          <stentry>整数</stentry>
+          <stentry>数据库主版本号</stentry>
+        </strow>
+        <strow>
+          <stentry>Version.Minor</stentry>
+          <stentry>整数</stentry>
+          <stentry>数据库子版本号</stentry>
+        </strow>
+        <strow>
+          <stentry>Version.Release</stentry>
+          <stentry>整数</stentry>
+          <stentry>数据库发行版本号</stentry>
+        </strow>
+        <strow>
+          <stentry>CurrentActiveSessions</stentry>
+          <stentry>整数</stentry>
+          <stentry>当前活动会话，该数量包括用户EDU与系统EDU</stentry>
+        </strow>
+        <strow>
+          <stentry>CurrentIdleSessions</stentry>
+          <stentry>整数</stentry>
+          <stentry>当前非活动会话，一般来说非活动会话意味着EDU存在线程池中等待分配</stentry>
+        </strow>
+        <strow>
+          <stentry>CurrentSystemSessions</stentry>
+          <stentry>整数</stentry>
+          <stentry>当前系统会话，为当前活动用户EDU数量</stentry>
+        </strow>
+        <strow>
+          <stentry>CurrentContexts</stentry>
+          <stentry>整数</stentry>
+          <stentry>当前上下文数量</stentry>
+        </strow>
+        <strow>
+          <stentry>ReceivedEvents</stentry>
+          <stentry>整数</stentry>
+          <stentry>当前分区接收到的事件请求总数</stentry>
+        </strow>
+        <strow>
+          <stentry>Role</stentry>
+          <stentry>字符串</stentry>
+          <stentry>当前节点角色</stentry>
+        </strow>
+        <strow>
+          <stentry>Disk.DatabasePath</stentry>
+          <stentry>字符串</stentry>
+          <stentry>数据库所在路径</stentry>
+        </strow>
+        <strow>
+          <stentry>Disk.LoadPercent</stentry>
+          <stentry>整数</stentry>
+          <stentry>数据库路径磁盘占用率百分比</stentry>
+        </strow>
+        <strow>
+          <stentry>Disk.TotalSpace</stentry>
+          <stentry>长整数</stentry>
+          <stentry>数据库路径总空间（字节）</stentry>
+        </strow>
+        <strow>
+          <stentry>Disk.FreeSpace</stentry>
+          <stentry>长整数</stentry>
+          <stentry>数据库路径空闲空间（字节）<b>重要：该字段以及以上所有字段仅在数据节点和编目节点显示，协调节点不显示</b></stentry>
+        </strow>
+        <strow>
+          <stentry>TotalNumConnects</stentry>
+          <stentry>整数</stentry>
+          <stentry>数据库连接请求数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataRead</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总数据读请求</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexRead</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总索引读请求</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDataWrite</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总数据写请求</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalIndexWrite</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总索引写请求</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalUpdate</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总更新记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalDelete</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总删除记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalInsert</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总插入记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplUpdate</stentry>
+          <stentry>长整数</stentry>
+          <stentry>复制更新记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplDelete</stentry>
+          <stentry>长整数</stentry>
+          <stentry>复制删除记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplInsert</stentry>
+          <stentry>长整数</stentry>
+          <stentry>复制插入记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalSelect</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总选择记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalRead</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总读取记录数量</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalReadTime</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总读取时间（毫秒）</stentry>
+        </strow>
+        <strow>
+          <stentry>TotalWriteTime</stentry>
+          <stentry>长整数</stentry>
+          <stentry>总写入时间（毫秒）</stentry>
+        </strow>
+        <strow>
+          <stentry>ActivateTimestamp</stentry>
+          <stentry>时间戳</stentry>
+          <stentry>数据库节点启动时间</stentry>
+        </strow>
+        <strow>
+          <stentry>UserCPU</stentry>
+          <stentry>浮点数</stentry>
+          <stentry>用户CPU（秒）</stentry>
+        </strow>
+        <strow>
+          <stentry>SysCPU</stentry>
+          <stentry>浮点数</stentry>
+          <stentry>系统CPU（秒）</stentry>
+        </strow>
+        <strow>
+          <stentry>ErrNodes.NodeName</stentry>
+          <stentry>字符串</stentry>
+          <stentry>返回异常节点名（主机名+端口）<b>重要：此字段仅在协调节点上显示，并且有异常节点时才显示</b></stentry>
+        </strow>
+        <strow>
+          <stentry>ErrNodes.Flag</stentry>
+          <stentry>整数</stentry>
+          <stentry>错误码 <b>重要：此字段仅在协调节点上显示，并且有异常节点时才显示</b></stentry>
+        </strow>
+      </simpletable>
+    </section>
+    <section><title>示例</title>
+      <codeblock>> db.snapshot(SDB_SNAP_DATABASE)
+{
+  "NodeName": "vmsvr2-suse-x64:51000",
+  "HostName": "vmsvr2-suse-x64",
+  "ServiceName": "51000",
+  "GroupName": "datagroup1",
+  "IsPrimary": false,
+  "ServiceStatus": true,
+  "CurrentLSN": {
+    "Offset": 208904,
+    "Version": 1
+  },
+  "NodeID": [
+    1000,
+    1000
+  ],
+  "Version": {
+    "Major": 1,
+    "Minor": 3,
+    "Release": 8132,
+    "Build": "2013-09-26-17.57.31"
+  },
+  "CurrentActiveSessions": 10,
+  "CurrentIdleSessions": 0,
+  "CurrentSystemSessions": 8,
+  "CurrentContexts": 1,
+  "ReceivedEvents": 37,
+  "Role": "data",
+  "Disk": {
+    "DatabasePath": "/opt/sequoiadb/database/data/51000",
+    "LoadPercent": 78,
+    "TotalSpace": 40704466944,
+    "FreeSpace": 8830676992
+  },
+  "TotalNumConnects": 1,
+  "TotalDataRead": 6337,
+  "TotalIndexRead": 45,
+  "TotalDataWrite": 2112,
+  "TotalIndexWrite": 4260,
+  "TotalUpdate": 0,
+  "TotalDelete": 16,
+  "TotalInsert": 2096,
+  "ReplUpdate": 0,
+  "ReplDelete": 16,
+  "ReplInsert": 2096,
+  "TotalSelect": 47,
+  "TotalRead": 6337,
+  "TotalReadTime": 0,
+  "TotalWriteTime": 0,
+  "ActivateTimestamp": "2013-09-27-13.28.34.501403",
+  "UserCPU": "77.380000",
+  "SysCPU": "49.870000"
+}</codeblock>
+    </section>
+  </body>
+</topic>

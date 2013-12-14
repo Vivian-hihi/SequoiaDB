@@ -1,0 +1,191 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = pmdWindowsListener.cpp
+
+   Descriptive Name = Process MoDel Windows Listener
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains entry point for local listener
+   that only avaliable on Windows.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#include "core.hpp"
+#if defined (_WINDOWS)
+#include <stdio.h>
+#include "pd.hpp"
+#include "pmd.hpp"
+#include "pmdEDUMgr.hpp"
+#include "ossUtil.hpp"
+#include "ossNPipe.hpp"
+#include "pdTrace.hpp"
+#include "pmdTrace.hpp"
+namespace engine
+{
+// 1 seconds timeout
+#define PMD_WL_NPIPE_TIMEOUT 1
+#define PMD_WL_NPIPE_NAME_PREFIX "sequoiadb_engine_"
+#define PMD_WL_NPIPE_BUFSZ 1024
+
+#define PMD_WL_NPIPE_MSG_SHUTDOWN "$shutdown"
+#define PMD_WL_NPIPE_MSG_PID      "$pid"
+   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDWINLSTNNPNTPNT, "pmdWindowsListenerEntryPoint" )
+   INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *pData )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_PMDWINLSTNNPNTPNT );
+      EDUID myEDUID = cb->getID () ;
+      pmdKRCB *krcb = pmdGetKRCB () ;
+      CHAR namedPipe [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
+      OSSNPIPE pipeHandle ;
+      BOOLEAN pipeCreated = FALSE ;
+      pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
+      CHAR tempBuffer [ PMD_WL_NPIPE_BUFSZ ] = {0} ;
+
+      INT32 dataSize = 0 ;
+      INT64 readSize = 0 ;
+      INT32 len = 0 ;
+      rc = eduMgr->activateEDU ( myEDUID ) ;
+      if ( rc )
+      {
+         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
+                 "Failed to activate EDU" ) ;
+         goto error ;
+      }
+      ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
+                    PMD_WL_NPIPE_NAME_PREFIX"%s",
+                    krcb->getServiceAddr() ) ;
+      PD_LOG ( PDINFO, "Attempt to create named pipe: %s",
+               namedPipe ) ;
+
+      // create a named pipe
+      rc = ossCreateNamedPipe ( namedPipe, PMD_WL_NPIPE_BUFSZ,
+                                PMD_WL_NPIPE_BUFSZ,
+                                OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK_WITH_TIMEOUT,
+                                OSS_NPIPE_UNLIMITED_INSTANCES,
+                                PMD_WL_NPIPE_TIMEOUT,
+                                pipeHandle ) ;
+      if ( rc )
+      {
+         // if we are not able to create named pipe, then we are not able
+         // to stop it using sdbstop.exe. So we should nicely shutdown
+         // database in order to prevent killing process later
+         PD_LOG ( PDSEVERE, "Failed to create named pipe: %s, rc = %d",
+                  namedPipe, rc ) ;
+         goto error ;
+      }
+
+      pipeCreated = TRUE ;
+
+      // just sit here do nothing at the moment
+      while ( !cb->isDisconnected() )
+      {
+         rc = ossConnectNamedPipe ( pipeHandle,
+                                    OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
+                                    PMD_WL_NPIPE_TIMEOUT ) ;
+         if ( rc )
+         {
+            // we just loop if nothing returns in PMD_WL_NPIPE_TIMEOUT
+            if ( SDB_TIMEOUT == rc )
+            {
+               continue ;
+            }
+            // if we are not able to connect named pipe, then we are not able
+            // to stop it using sdbstop.exe. So we should nicely shutdown
+            // database in order to prevent killing process later
+            PD_LOG ( PDSEVERE, "Failed to connect named pipe: %s, rc = %d",
+                     namedPipe, rc ) ;
+            goto error ;
+         }
+         readSize = 0 ;
+         while ( 0 == readSize && !cb->isDisconnected() )
+         {
+            // then let's read from pipe. For this version let's just read
+            rc = ossReadNamedPipe ( pipeHandle, tempBuffer, PMD_WL_NPIPE_BUFSZ,
+                                    &readSize, PMD_WL_NPIPE_TIMEOUT ) ;
+            if ( rc )
+            {
+               // if we simply timeout, maybe the sender is too slow. Let's continue
+               if ( SDB_TIMEOUT == rc )
+                  continue ;
+               // if we failed to read, let's dump error and break out the loop
+               PD_LOG ( PDERROR, "Failed to read packet, rc = %d", rc ) ;
+               readSize = 0 ;
+               rc = SDB_OK ;
+               break ;
+            }
+         }
+
+         if ( readSize > 0 )
+         {
+            PD_LOG ( PDEVENT, "Received message from windows listener: %s",
+                     tempBuffer ) ;
+            if ( ossStrncmp ( tempBuffer, PMD_WL_NPIPE_MSG_SHUTDOWN,
+                              sizeof(PMD_WL_NPIPE_MSG_SHUTDOWN) ) == 0 )
+            {
+               PD_LOG ( PDEVENT, "Shutdown message is received" ) ;
+               PMD_SHUTDOWN_DB( SDB_OK ) ;
+            }
+            else if ( ossStrncmp ( tempBuffer, PMD_WL_NPIPE_MSG_PID,
+                                   sizeof(PMD_WL_NPIPE_MSG_PID) ) == 0 )
+            {
+               INT64 writeSize = 0 ;
+               OSSPID currentProcessPID = ossGetCurrentProcessID () ;
+               rc = ossWriteNamedPipe ( pipeHandle, (CHAR*)&currentProcessPID,
+                                        sizeof(currentProcessPID),
+                                        &writeSize ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDWARNING, "Failed to write pid to named pipe, "
+                           "rc = %d", rc ) ;
+               }
+            }
+         }
+         ossDisconnectNamedPipe ( pipeHandle ) ;
+      }
+
+   done :
+      if ( pipeCreated )
+      {
+         ossDeleteNamedPipe ( pipeHandle ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_PMDWINLSTNNPNTPNT, rc );
+      return rc;
+   error :
+      switch ( rc )
+      {
+      case SDB_SYS :
+         PD_LOG ( PDSEVERE, "System error occured" ) ;
+         break ;
+      default :
+         PD_LOG ( PDSEVERE, "Internal error" ) ;
+
+      }
+      PD_LOG ( PDSEVERE, "Shutdown database" ) ;
+      PMD_SHUTDOWN_DB( rc ) ;
+      goto done ;
+   }
+}
+#endif

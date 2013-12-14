@@ -1,0 +1,31 @@
+/** \file spd.h
+    \brief store procedure
+*/
+
+#ifndef SPD_HPP_
+#define SPD_HPP_
+
+#include "core.h"
+
+SDB_EXTERN_C_START
+
+enum _SDB_SPD_RES_TYPE
+{
+   SDB_SPD_RES_TYPE_VOID = 0,
+   SDB_SPD_RES_TYPE_STR,
+   SDB_SPD_RES_TYPE_NUMBER,
+   SDB_SPD_RES_TYPE_OBJ,
+   SDB_SPD_RES_TYPE_BOOL,
+   SDB_SPD_RES_TYPE_RECORDSET,
+   SDB_SPD_RES_TYPE_CS,
+   SDB_SPD_RES_TYPE_CL,
+   SDB_SPD_RES_TYPE_RG,
+   SDB_SPD_RES_TYPE_RN,
+} ;
+
+typedef enum _SDB_SPD_RES_TYPE SDB_SPD_RES_TYPE ;
+
+SDB_EXTERN_C_END
+
+#endif
+

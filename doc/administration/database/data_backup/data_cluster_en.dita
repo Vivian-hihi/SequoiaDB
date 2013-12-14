@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_1tl_2r2_gl_en">
+  <title>Cluster Mode</title>
+  <body>
+    <section>
+      <title>Data nodes and Coord nodes</title>
+      <p>In cluster mode, users can stop all of the replicasets and archive all files in the
+        database and index directories for master node in each replicaset. The "PrimaryNode" field
+        in the collection "SYSCAT.SYSNODES" marks the master node.</p>
+      <p>If users want to backuping without interrupting service,you can stop a slave node for each
+        replicaset,and archive all files in the database and index directories for the node.At
+        last,restarting the node after backuping,and the node will automatically sync with other
+        nodes within the replicaset.</p>
+      <p>In the case of specifying configuration file,the database and index directories correspond
+        with the directories that "dbpath" and "indexpath" specified in configuration file for each
+        node.By default,the value of "indexpath" and "dbpath" are same.</p>
+    </section>
+    <section>
+      <title>Catalog nodes</title>
+      <p>As the catalog nodes does not contain any user data,so no backup.</p>
+    </section>
+    <p><xref href="data_file_sample_en.dita">for more information</xref></p>
+  </body>
+</topic>

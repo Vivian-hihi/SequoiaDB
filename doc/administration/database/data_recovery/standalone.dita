@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_xyr_5x2_gl">
+  <title>独立模式</title>
+  <body>
+    <p>独立模式下，用户需要手工停止数据库，并将归档的配置文件与数据文件替换当前的文件。</p>
+  </body>
+</topic>

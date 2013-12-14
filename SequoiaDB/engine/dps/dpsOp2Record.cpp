@@ -1,0 +1,1136 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = dpsOp2Record.cpp
+
+   Descriptive Name =
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of DPS component. This file contains implementation for log record.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          12/05/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "dpsOp2Record.hpp"
+#include "dpsLogRecordDef.hpp"
+#include "pdTrace.hpp"
+#include "dpsTrace.hpp"
+
+namespace engine
+{
+   /// warning: any value can not be value-passed.
+   static INT32 dpsPushTran( const DPS_TRANS_ID &transID,
+                             const DPS_LSN_OFFSET &preTransLsn,
+                             dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      if ( DPS_INVALID_TRANS_ID != transID )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_TRANSID,
+                           sizeof( transID ), (CHAR *)(&transID)) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      if ( DPS_INVALID_LSN_OFFSET != preTransLsn )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_PRETRANS,
+                           sizeof( preTransLsn ),
+                           (CHAR *)(&preTransLsn) ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_INSERT2RECORD, "dpsInsert2Record" )
+   INT32 dpsInsert2Record( const CHAR *fullName,
+                           const BSONObj &obj,
+                           const DPS_TRANS_ID &transID,
+                           const DPS_LSN_OFFSET &preTransLsn,
+                           dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_INSERT2RECORD ) ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_DATA_INSERT ;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_INSERT_OBJ, obj.objsize(), obj.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push obj to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = dpsPushTran( transID,
+                        preTransLsn,
+                        record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push trans to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_INSERT2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB_DPS_INSERT2RECORD, "dpsRecord2Insert")
+   INT32 dpsRecord2Insert( const CHAR *logRecord,
+                           const CHAR **fullName,
+                           BSONObj &obj )
+   {
+      PD_TRACE_ENTRY( SDB_DPS_INSERT2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load insert record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName, itrObj ;
+      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrObj = record.find( DPS_LOG_INSERT_OBJ ) ;
+      if ( !itrObj.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag obj in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+      obj = BSONObj( itrObj.value() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_DPS_INSERT2RECORD, rc) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_UPDATE2RECORD, "dpsUpdate2Record" )
+   INT32 dpsUpdate2Record( const CHAR *fullName,
+                           const BSONObj &oldMatch,
+                           const BSONObj &oldObj,
+                           const BSONObj &newMatch,
+                           const BSONObj &newObj,
+                           const DPS_TRANS_ID &transID,
+                           const DPS_LSN_OFFSET &preTransLsn,
+                           dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_UPDATE2RECORD ) ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_DATA_UPDATE ;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_UPDATE_OLDMATCH,
+                        oldMatch.objsize(),
+                        oldMatch.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oldmatch to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_UPDATE_OLDOBJ,
+                        oldObj.objsize(),
+                        oldObj.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oldobj to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_UPDATE_NEWMATCH,
+                        newMatch.objsize(),
+                        newMatch.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push newmatch to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_UPDATE_NEWOBJ,
+                        newObj.objsize(),
+                        newObj.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push newobj to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = dpsPushTran( transID,
+                        preTransLsn,
+                        record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push trans to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_UPDATE2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2UPDATE, "dpsRecord2Update" )
+   INT32 dpsRecord2Update( const CHAR *logRecord,
+                           const CHAR **fullName,
+                           BSONObj &oldMatch,
+                           BSONObj &oldObj,
+                           BSONObj &newMatch,
+                           BSONObj &newObj )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      INT32 rc = SDB_OK ;
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load update record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName, itrOldM,
+                             itrOldObj, itrNewM, itrNewObj ;
+      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrOldM = record.find( DPS_LOG_UPDATE_OLDMATCH ) ;
+      if ( !itrOldM.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oldmatch in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrOldObj = record.find( DPS_LOG_UPDATE_OLDOBJ ) ;
+      if ( !itrOldObj.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oldobj in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrNewM = record.find( DPS_LOG_UPDATE_NEWMATCH ) ;
+      if ( !itrNewM.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag newmatch in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrNewObj = record.find( DPS_LOG_UPDATE_NEWOBJ ) ;
+      if ( !itrNewObj.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag newobj in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+      oldMatch = BSONObj( itrOldM.value() ) ;
+      oldObj = BSONObj( itrOldObj.value() ) ;
+      newMatch = BSONObj( itrNewM.value() ) ;
+      newObj = BSONObj( itrNewObj.value() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2UPDATE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_DELETE2RECORD, "dpsDelete2Record" )
+   INT32 dpsDelete2Record( const CHAR *fullName,
+                           const BSONObj &oldObj,
+                           const DPS_TRANS_ID &transID,
+                           const DPS_LSN_OFFSET &preTransLsn,
+                           dpsLogRecord &record )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__DPS_DELETE2RECORD ) ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_DATA_DELETE ;
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_DELETE_OLDOBJ,
+                        oldObj.objsize(),
+                        oldObj.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oldobj to record:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = dpsPushTran( transID,
+                        preTransLsn,
+                        record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push trans to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_DELETE2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2DELETE, "dpsRecord2Delete" )
+   INT32 dpsRecord2Delete( const CHAR *logRecord,
+                           const CHAR **fullName,
+                           BSONObj &oldObj )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2DELETE ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName, itrObj ;
+      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrObj = record.find( DPS_LOG_DELETE_OLDOBJ ) ;
+      if ( !itrObj.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oldobj in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+      oldObj = BSONObj( itrObj.value() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2DELETE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSCRT2RECORD, "dpsCSCrt2Record" )
+   INT32 dpsCSCrt2Record( const CHAR *csName,
+                          const INT32 &pageSize,
+                          dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CSCRT2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != csName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CS_CRT ;
+
+      rc = record.push( DPS_LOG_CSCRT_CSNAME,
+                        ossStrlen( csName) + 1,
+                        csName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push csname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_CSCRT_PAGESIZE,
+                        sizeof( pageSize),
+                        (CHAR *)( &pageSize)) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push pagesize to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CSCRT2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CSCRT, "dpsRecord2CSCrt" )
+   INT32 dpsRecord2CSCrt( const CHAR *logRecord,
+                          const CHAR **csName,
+                          INT32 &pageSize )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2CSCRT ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrCsName, itrPageSize ;
+      itrCsName = record.find( DPS_LOG_CSCRT_CSNAME ) ;
+      if ( !itrCsName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag csname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrPageSize = record.find( DPS_LOG_CSCRT_PAGESIZE ) ;
+      if ( !itrPageSize.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag pagesize in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *csName = itrCsName.value() ;
+      pageSize = *((UINT32 *)itrPageSize.value()) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2CSCRT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CSDEL2RECORD, "dpsCSDel2Record" )
+   INT32 dpsCSDel2Record( const CHAR *csName,
+                          dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CSDEL2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != csName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CS_DELETE ;
+
+      rc = record.push( DPS_LOG_CSDEL_CSNAME,
+                        ossStrlen( csName) + 1,
+                        csName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push csname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CSDEL2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2CSDEL, "dpsRecord2CSDel" )
+   INT32 dpsRecord2CSDel( const CHAR *logRecord,
+                          const CHAR **csName )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2CSDEL ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrCsName =
+                           record.find( DPS_LOG_CSDEL_CSNAME ) ;
+      if ( !itrCsName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag csname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *csName = itrCsName.value() ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2CSDEL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLCRT2RECORD, "dpsCLCrt2Record" )
+   INT32 dpsCLCrt2Record( const CHAR *fullName,
+                          UINT32 attribute,
+                          dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CLCRT2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CL_CRT ;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      if ( 0 != attribute )
+      {
+         rc = record.push( DPS_LOG_CLCRT_ATTRIBUTE,
+                           sizeof( attribute ),
+                           (const CHAR *)(&attribute)) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to push attribute to record:%d",rc ) ;
+            goto error ;
+         }
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CLCRT2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2CLCRT, "dpsRecord2CLCrt" )
+   INT32 dpsRecord2CLCrt( const CHAR *logRecord,
+                          const CHAR **fullName,
+                          UINT32 &attribute )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2CLCRT ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      attribute = 0 ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName, itrAttri ;
+      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+
+      itrAttri = record.find( DPS_LOG_CLCRT_ATTRIBUTE ) ;
+      if ( itrAttri.valid() )
+      {
+         attribute = *((UINT32 *)itrAttri.value() ) ;
+      }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2CLCRT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_CLDEL2RECORD, "dpsCLDel2Record" )
+   INT32 dpsCLDel2Record( const CHAR *fullName,
+                          dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CLDEL2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CL_DELETE;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CLDEL2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CLDEL, "dpsRecord2CLDel" )
+   INT32 dpsRecord2CLDel( const CHAR *logRecord,
+                          const CHAR **fullName )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2CLDEL ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName =
+                           record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXCRT2RECORD, "dpsIXCrt2Record" )
+   INT32 dpsIXCrt2Record( const CHAR *fullName,
+                          const BSONObj &index,
+                          dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_IXCRT2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_IX_CRT ;
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_IXCRT_IX,
+                        index.objsize(),
+                        index.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push ix to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_IXCRT2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2IXCRT, "dpsRecord2IXCrt" )
+   INT32 dpsRecord2IXCrt( const CHAR *logRecord,
+                          const CHAR **fullName,
+                          BSONObj &index )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2IXCRT ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName, itrIndex ;
+      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrIndex = record.find( DPS_LOG_IXCRT_IX ) ;
+      if ( !itrIndex.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag ix in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+      index = BSONObj( itrIndex.value() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2IXCRT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_IXDEL2RECORD, "dpsIXDel2Record" )
+   INT32 dpsIXDel2Record( const CHAR *fullName,
+                          const BSONObj &index,
+                          dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_IXDEL2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_IX_DELETE ;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_IXDEL_IX,
+                        index.objsize(),
+                        index.objdata() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push ix to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_IXDEL2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__DPS_RECORD2IXDEL, "dpsRecord2IXDel" )
+   INT32 dpsRecord2IXDel( const CHAR *logRecord,
+                          const CHAR **fullName,
+                          BSONObj &index )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2IXDEL ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName, itrIndex ;
+      itrFullName = record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrIndex = record.find( DPS_LOG_IXCRT_IX ) ;
+      if ( !itrIndex.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag ix in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *fullName = itrFullName.value() ;
+      index = BSONObj( itrIndex.value() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2IXDEL, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_CLRENAME2RECORD, "dpsCLRename2Record" )
+   INT32 dpsCLRename2Record( const CHAR *csName,
+                             const CHAR *clOldName,
+                             const CHAR *clNewName,
+                             dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CLRENAME2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != csName &&
+                  NULL != clOldName &&
+                  NULL != clNewName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CL_RENAME ;
+
+      rc = record.push( DPS_LOG_CLRENAME_CSNAME,
+                        ossStrlen( csName) + 1,
+                        csName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push csname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_CLRENAME_CLOLDNAME,
+                        ossStrlen( clOldName) + 1,
+                        clOldName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push oldname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_CLRENAME_CLNEWNAME,
+                        ossStrlen(clNewName)+1,
+                        clNewName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push newname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CLRENAME2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2CLRENAME, "dpsRecord2CLRename" )
+   INT32 dpsRecord2CLRename( const CHAR *logRecord,
+                             const CHAR **csName,
+                             const CHAR **clOldName,
+                             const CHAR **clNewName )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2CLRENAME ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrCsName, itrOldName, itrNewName ;
+      itrCsName = record.find( DPS_LOG_CLRENAME_CSNAME ) ;
+      if ( !itrCsName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag cs name in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrOldName = record.find( DPS_LOG_CLRENAME_CLOLDNAME ) ;
+      if ( !itrOldName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag oldname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      itrNewName = record.find( DPS_LOG_CLRENAME_CLNEWNAME ) ;
+      if ( !itrNewName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag newname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *csName = itrCsName.value() ;
+      *clOldName = itrOldName.value() ;
+      *clNewName = itrNewName.value() ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_RECORD2CLRENAME, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_CLTRUNC2RECORD, "dpsCLTrunc2Record" )
+   INT32 dpsCLTrunc2Record( const CHAR *fullName,
+                            dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_CLTRUNC2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != fullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_CL_TRUNC ;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen(fullName) + 1, // '1 for '\0'
+                        fullName ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_CLTRUNC2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2TRANSCOMMIT, "dpsRecord2TransCommit" )
+   INT32 dpsRecord2TransCommit( const CHAR *logRecord,
+                                DPS_TRANS_ID &transID )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2TRANSCOMMIT ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrID = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
+      if ( !itrID.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag transid in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      transID = *((DPS_TRANS_ID *)itrID.value()) ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_TRANSCOMMIT2RECORD, "dpsTransCommit2Record" )
+   INT32 dpsTransCommit2Record( const DPS_TRANS_ID &transID,
+                                dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_TRANSCOMMIT2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_TS_COMMIT ;
+
+      rc = record.push( DPS_LOG_PUBLIC_TRANSID,
+                        sizeof( transID),
+                        (CHAR *)(&transID)) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push transid to record%d", rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_TRANSCOMMIT2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+
+   }
+
+/*
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_TRANSROLLBACK2RECORD, "dpsTransRollback2Record" )
+   INT32 dpsTransRollback2Record( const DPS_TRANS_ID &transID,
+                                  const DPS_LSN_OFFSET &preTransLsn,
+                                  dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_TRANSROLLBACK2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != csName && NULL != clName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_TS_ROLLBACK ;
+
+      rc = dpsPushTran( transID,
+                        preTransLsn,
+                        record ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push trans to record:%d",rc ) ;
+         goto error ;
+      }
+
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_TRANSROLLBACK2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+
+   }
+
+*/
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_INVALIDCATA2RECORD, "dpsInvalidCata2Record" )
+   INT32 dpsInvalidCata2Record( const CHAR * clFullName,
+                                dpsLogRecord &record )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_INVALIDCATA2RECORD ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != clFullName, "impossible" )
+      dpsLogRecordHeader &header = record.head() ;
+      header._type = LOG_TYPE_INVALIDATE_CATA ;
+
+      rc = record.push( DPS_LOG_PULIBC_FULLNAME,
+                        ossStrlen( clFullName ) + 1,
+                        clFullName ) ;
+
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to push fullname to record:%d",rc ) ;
+         goto error ;
+      }
+
+      header._length = record.alignedLen() ;
+   done:
+      PD_TRACE_EXITRC( SDB__DPS_INVALIDCATA2RECORD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__DPS_RECORD2INVALIDCATA, "dpsRecord2InvalidCata")
+   INT32 dpsRecord2InvalidCata( const CHAR *logRecord,
+                                const CHAR **clFullName )
+   {
+      PD_TRACE_ENTRY( SDB__DPS_RECORD2INVALIDCATA ) ;
+      INT32 rc = SDB_OK ;
+      SDB_ASSERT( NULL != logRecord, "impossible" )
+      dpsLogRecord record ;
+      rc = record.load( logRecord ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load delete record:%d",rc ) ;
+         goto error ;
+      }
+
+      {
+      dpsLogRecord::iterator itrFullName =
+                  record.find( DPS_LOG_PULIBC_FULLNAME ) ;
+      if ( !itrFullName.valid() )
+      {
+         PD_LOG( PDERROR, "failed to find tag fullname in record" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      *clFullName = itrFullName.value() ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+}
+

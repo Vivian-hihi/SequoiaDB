@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="developement_sdbcm">
+  <title>数据库集群控制器</title>
+  <body>
+    <section>
+      <title>sdbcm概述</title>
+      <p>数据库集群控制器（SequoiaDB Cluster Manager）是一个守护进程，在Windows中它是以服务的方式常驻系统后台。SequoiaDB的所有集群管理操作都必须有sdbcm的参与，目前每一台物理机器上只能启动一个sdbcm进程，负责执行远程的集群管理命令和监控本地的SequoiaDB数据库。sdbcm主要有两大功能：</p>
+      <ul>
+        <li>
+          <p>远程启动、关闭、创建和修改节点：通过SequoiaDB客户端或者驱动连接数据库时，可以执行启动、关闭、创建和修改节点的操作，该操作向指定节点物理机器上的sdbcm发送远程命令，并得到sdbcm的执行结果。</p>
+        </li>
+        <li>
+          <p>本地监控：对于通过sdbcm启动的节点，都会维护一张节点列表，其中保存了所有本地节点的服务名和启动信息，如启动时间、运行状态等。如果某个节点是非正常终止的，如进程被强制终止、引擎异常退出等，sdbcm会尝试重启该节点。</p>
+        </li>
+      </ul>
+    </section>
+    <section>
+      <title>sdbcm操作</title>
+      <ul>
+        <li>
+          <p>配置文件</p>
+          <p>在数据库安装目录的conf子目录下，有一个sdbcm.conf的配置文件，该文件给出了启动sdbcm时的配置信息，如下所示： </p>
+          <simpletable id="developement_sdbcm_table">
+            <sthead>
+              <stentry>参数</stentry>
+              <stentry>描述</stentry>
+              <stentry>示例</stentry>
+            </sthead>
+            <strow>
+              <stentry>defaultPort  </stentry>
+              <stentry>sdbcm的默认监听端口</stentry>
+              <stentry>defaultPort=50010</stentry>
+            </strow>
+            <strow>
+              <stentry>&lt;hostname>_Port   </stentry>
+              <stentry>物理主机hostname上sdbcm的监听端口。若在该配置文件中找不到对应主机的参数，sdbcm会以defaultPort启动；若defaultPort也不存在， 则sdbcm以默认端口50010启动。</stentry>
+              <stentry>&lt;hostname>_Port=50010  </stentry>
+            </strow>
+            <strow>
+              <stentry>RestartCount</stentry>
+              <stentry>重启次数，即定义sdbcm对节点的最大重启次数。该参数不存在时默认置为-1，即不断重启。</stentry>
+              <stentry>RestartCount=5</stentry>
+            </strow>
+            <strow>
+              <stentry>RestartInterval</stentry>
+              <stentry>重启间隔，即定义sdbcm的最大重启间隔，单位是分钟。该参数与RestartCount结合定义了重启间隔内sdbcm对节点的最大重启次数，超出时则不再重启。该参数不存在时默认置为0，即不考虑重启间隔。</stentry>
+              <stentry>RestartInterval=0</stentry>
+            </strow>
+          </simpletable>
+        </li>
+        <li>
+          <p>启动sdbcm</p>
+          <p>运行sdbcmart命令可以启动sdbcm。</p>
+        </li>
+        <li>
+          <p>关闭sdbcm</p>
+          <p>运行sdbcmtop命令可以关闭sdbcm。</p>
+        </li>
+      </ul>
+    </section>
+  </body>
+</topic>

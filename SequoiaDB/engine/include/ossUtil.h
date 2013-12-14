@@ -1,0 +1,134 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = ossUtil.h
+
+   Descriptive Name = Operating System Services Utility Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of OSS component. This file contains wrappers for utilities like
+   memcpy, strcmp, etc...
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef OSSUTIL_H_
+#define OSSUTIL_H_
+#include <time.h>
+#include <sys/types.h>
+#if defined (_LINUX)
+#include <sys/time.h>
+#include <strings.h>
+#endif
+#include "core.h"
+#include "oss.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#define OSS_TEN_MILLION 10000000
+#define OSS_ONE_MILLION 1000000
+#define OSS_ONE_SEC     (1000)
+
+#define OSS_EPSILON     (1e-6)
+
+#if defined (_LINUX)
+#define OSS_FD_SETSIZE 65534
+#endif
+
+SDB_EXTERN_C_START
+size_t ossSnprintf(CHAR* pBuffer, size_t iLength, const CHAR* pFormat, ...);
+CHAR *ossStrdup ( const CHAR *str ) ;
+INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
+#define ossStrncmp(x,y,z) strncmp(x,y,z)
+#define ossStrcmp(x,y) strcmp(x,y)
+#define ossStrcpy(x,y) strcpy(x,y)
+#if defined (_LINUX)
+#define ossStrncpy(x,y,z) strncpy(x,y,z)
+#define ossStrncat(x,y,z) strncat(x,y,z)
+#define ossStrtok(x,y,z) strtok_r(x,y,z)
+#define ossFdopen(x,y) fdopen(x,y)
+#define OSS_LL_PRINT_FORMAT   "%lld"
+#elif defined (_WINDOWS)
+#define ossStrncpy(x,y,z) strncpy(x,y,z)
+#define ossStrncat(x,y,z) strncat(x,y,z)
+#define ossStrtok(x,y,z) strtok_s(x,y,z)
+#define ossFdopen(x,y) _fdopen(x,y)
+#define OSS_LL_PRINT_FORMAT   "%I64d"
+#endif
+#define ossMemcpy(x,y,z) memcpy(x,y,z)
+#define ossMemmove(x,y,z) memmove(x,y,z)
+#define ossMemset(x,y,z) memset(x,y,z)
+#define ossMemcmp(x,y,z) memcmp(x,y,z)
+#define ossStrlen(x) strlen(x)
+#define ossStrstr(x,y) strstr(x,y)
+#define ossStrrchr(x,y) strrchr(x,y)
+#define ossStrchr(x,y) strchr(x,y)
+#define ossAtoi(x) atoi(x)
+
+#define ossItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}
+#define ossLltoa(x,y,z) if (y) { ossSnprintf(y, z, OSS_LL_PRINT_FORMAT, (INT64)(x) );}
+
+#if defined (_WINDOWS)
+#define ossAtoll(x) _atoi64(x)
+#elif defined (_LINUX)
+#define ossAtoll(x) atoll(x)
+#endif
+#if defined (_NOSCREENOUT)
+#define ossPrintf(x,...)
+#else
+#define ossPrintf(x,...) \
+      do {\
+         printf((x), ##__VA_ARGS__);\
+         fflush(stdout) ;\
+      } while (0)
+#endif
+// String compare without case
+BOOLEAN ossIsUTF8 ( CHAR *pzInfo ) ;
+INT32 ossStrncasecmp ( const CHAR *pString1, const CHAR *pString2,
+                       size_t iLength) ;
+CHAR *ossStrnchr(const CHAR *pString, UINT32 c, UINT32 n) ;
+size_t ossVsnprintf (CHAR * buf, size_t size, const CHAR * fmt, va_list ap);
+void ossStrToBoolean(const CHAR* pString, BOOLEAN* pBoolean);
+UINT32 ossHash ( const CHAR *data, INT32 len ) ;
+UINT32 ossHashFileName ( const CHAR *fileName ) ;
+#if defined (_WINDOWS)
+INT32 ossWC2ANSI ( LPCWSTR lpcszWCString,
+                   LPSTR   *lppszString,
+                   DWORD   *lpdwString ) ;
+
+INT32 ossANSI2WC ( LPCSTR lpcszString,
+                   LPWSTR *lppszWCString,
+                   DWORD  *lpdwWCString ) ;
+#elif defined (_LINUX)
+void ossCloseAllOpenFileHandles ( BOOLEAN closeSTD ) ;
+#endif
+#define OSS_BIT_SET(x,y)     ((x) |= (y))
+#define OSS_BIT_CLEAR(x,y)   ((x) &= ~(y))
+#define OSS_BIT_TEST(x,y)    ((x) & (y))
+#if defined (_LINUX)
+#define ossKill(x,y) kill((x),(y))
+#define ossPThreadKill(x,y) pthread_kill((x),(y))
+#define ossPThreadSelf() pthread_self()
+#endif
+SDB_EXTERN_C_END
+#endif  //OSSUTIL_H_

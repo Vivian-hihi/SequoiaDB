@@ -1,0 +1,136 @@
+/*******************************************************************************
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = clsCatalogCaller.cpp
+
+   Descriptive Name = clsCatalogCaller.hpp
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of Replication component. This file contains structure for
+   replication control block.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#include "clsCatalogCaller.hpp"
+#include "netRouteAgent.hpp"
+#include "ossMem.hpp"
+#include "pmd.hpp"
+#include "clsMgr.hpp"
+#include "pdTrace.hpp"
+#include "clsTrace.hpp"
+
+namespace engine
+{
+   const INT32 CLS_CALLER_NO_SEND = -1 ;
+   const INT32 CLS_CALLER_INTERVAL = 5000 ;
+   const INT32 CLS_CALLER_NORESPONSE = 15000 ;
+
+   _clsCatalogCaller::_clsCatalogCaller():
+                                         _cMgr( NULL )
+   {
+      _cMgr = pmdGetKRCB()->getClsCB() ;
+   }
+
+   _clsCatalogCaller::~_clsCatalogCaller()
+   {
+      _cMgr = NULL ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_CALL, "_clsCatalogCaller::call" )
+   INT32 _clsCatalogCaller::call( MsgHeader *header )
+   {
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSCATCLR_CALL );
+      _clsCataCallerMeta &meta = _meta[MAKE_REPLY_TYPE(header->opCode)] ;
+      if ( (SINT32)meta.bufLen < header->messageLength )
+      {
+         if ( NULL != meta.header )
+         {
+            SDB_OSS_FREE( meta.header ) ;
+            meta.bufLen = 0 ;
+         }
+         // memory is free in destructor
+         meta.header = ( MsgHeader *)SDB_OSS_MALLOC( header->messageLength ) ;
+         if ( NULL == meta.header )
+         {
+            PD_LOG ( PDERROR, "Failed to allocate memory for header" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         meta.bufLen = header->messageLength ;
+      }
+
+      ossMemcpy( meta.header, header, header->messageLength ) ;
+      PD_LOG( PDEVENT, "send msg[%d] to catalog node.",
+              meta.header->opCode ) ;
+      _cMgr->sendToCatlog( meta.header ) ;
+      meta.timeout = 0 ;
+   done:
+      PD_TRACE_EXITRC ( SDB__CLSCATCLR_CALL, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_REMOVE, "_clsCatalogCaller::remove" )
+   void _clsCatalogCaller::remove( _MsgInternalReplyHeader *header )
+   {
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
+      PD_TRACE_ENTRY ( SDB__CLSCATCLR_REMOVE );
+      callerMeta::iterator itr = _meta.find( header->header.opCode ) ;
+      if ( _meta.end() != itr && SDB_OK == header->res )
+      {
+         PD_LOG( PDEVENT, "response is ok, remove msg[%d]",
+                 header->header.opCode ) ;
+         itr->second.timeout = CLS_CALLER_NO_SEND ;
+      }
+   done:
+      PD_TRACE_EXIT ( SDB__CLSCATCLR_REMOVE );
+      return ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_HNDTMOUT, "_clsCatalogCaller::handleTimeout" )
+   void _clsCatalogCaller::handleTimeout( const UINT32 &millisec )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSCATCLR_HNDTMOUT );
+      callerMeta::iterator itr = _meta.begin() ;
+      for ( ; itr != _meta.end(); itr++ )
+      {
+         if ( CLS_CALLER_NO_SEND != itr->second.timeout )
+         {
+            itr->second.timeout += millisec ;
+            if ( CLS_CALLER_INTERVAL <= itr->second.timeout )
+            {
+               _cMgr->updateCatGroup ( TRUE ) ;
+               _cMgr->sendToCatlog( itr->second.header) ;
+               itr->second.timeout = 0 ;
+            }
+         }
+      }
+      PD_TRACE_EXIT ( SDB__CLSCATCLR_HNDTMOUT );
+      return ;
+   }
+
+}

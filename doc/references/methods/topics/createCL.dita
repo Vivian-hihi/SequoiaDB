@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="references_method_createCL">
+  <title>db.collectionspace.createCL()</title>
+  <body>
+    <section><title>db.collectionspace.createCL(&lt;name>,[options])</title>
+      <p>在指定集合空间下创建集合（Collection）。 集合是数据库中存放文档记录的逻辑对象。任何一条文档记录必须属于一个且仅一个集合。 </p>
+    </section>
+    <section><title>参数描述</title><p></p>
+      <simpletable 
+        id="references_method_createCL_table">
+        <sthead>
+          <stentry>参数名</stentry>
+          <stentry>参数类型</stentry>
+          <stentry>描述</stentry>
+          <stentry>是否必填</stentry>
+        </sthead>
+        <strow>
+          <stentry>name</stentry>
+          <stentry>string</stentry>
+          <stentry> 集合名，在同一个集合空间中，集合名必须唯一。</stentry>
+          <stentry>是</stentry>
+        </strow>
+        <strow>
+          <stentry>options</stentry>
+          <stentry>选项</stentry>
+          <stentry>在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。</stentry>
+          <stentry>否</stentry>
+        </strow>
+      </simpletable>
+      
+    </section>
+    <section><title>格式</title>
+      <p>createCL()方法的定义格式包含name和options两个参数。 name 的值为字符串类型，
+        必须有值。options是设置集合其他属性参数，目前通过options可设置集合的属性有：</p><p>
+      <simpletable>
+        <sthead>
+          <stentry>属性名</stentry>
+          <stentry>描述</stentry>
+          <stentry>格式</stentry>
+        </sthead>
+        <strow>
+          <stentry>ShardingKey</stentry>
+          <stentry>分区键。    </stentry>
+          <stentry>{ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]}}   </stentry>
+        </strow>
+        <strow>
+          <stentry>ShardingType</stentry>
+          <stentry>分区方式，默认为range分区。</stentry>
+          <stentry>{ShardingType:"hash"|"range"}</stentry>
+        </strow>
+        <strow>
+          <stentry>Partition</stentry>
+          <stentry>分片数，hash分区时填写，代表了hash分片的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </stentry>
+          <stentry>{Partition:&lt;分片数>]}</stentry>
+        </strow>
+        <strow>
+          <stentry>ReplSize</stentry>
+          <stentry>副本数，默认情况下，副本写入个数为1。</stentry>
+          <stentry>{ReplSize:&lt;int num>}</stentry>
+        </strow>
+        <strow>
+          <stentry>Compressed</stentry>
+          <stentry>数据压缩。</stentry>
+          <stentry>{Compressed:true|false}</stentry>
+        </strow>
+      </simpletable></p>
+      <p>创建集合的格式为：<codeblock>{"name":"&lt;集合名>",[options]} </codeblock></p>
+      <note>
+        <ul>
+          <li>ShardingKey是一个JSON对象，JSON对象中每一个字段对应分区键的字段，其值为1或者-1，代表正向或逆向排序。需要分区，必须指定ShardingKey。</li>
+          <li>ReplSize是一个json对象，它的值是int类型，设置写入数据节点的个数，默认为1，当ReplSize等于0时，副本写入个数会根据当前数据组中节点数变化而变化；手动指定副本写入个数时，不能超出当前组内节点个数。 </li>
+          <li>Compressed也是一个JSON对象，它的值为boolean类型，为“true”时，表示集合中的数据压缩存储，“false”时表示正常存储数据。</li>
+          <li>当options内设置了多个参数时，用逗号（,）隔开。</li>
+          <li>name 的值不能是空串、含点（.）或者美元符号（$），并且长度不能超过127B，否则操作失败。</li>
+        </ul> 
+      </note>
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li>
+          <p>在集合空间foo下创建集合bar，不指定分区键</p>
+          <codeblock>db.foo.createCL("bar")</codeblock>
+        </li>
+        <li>
+          <p>在集合空间foo下创建集合bar，指定字段age为分片键，升序排序</p>
+          <codeblock>db.foo.createCL("bar",{ShardingKey:{"age":1},ShardingType:"hash",Partition:1024,ReplSize:1,Compressed:true})</codeblock>
+        </li>
+      </ul>
+    </section>
+  </body>
+  <related-links>
+    <link href="resetSnapshot.dita" format="dita" type="topic"></link>
+    <link href="getCL.dita" format="dita" type="topic"></link>
+    <link href="../../../administration/concepts/database/topics/collection.dita" format="dita" type="topic"></link>
+    <link href="../../../administration/concepts/database/topics/collectionspace.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

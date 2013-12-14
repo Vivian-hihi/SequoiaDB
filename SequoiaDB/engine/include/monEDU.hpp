@@ -1,0 +1,155 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = monEDU.hpp
+
+   Descriptive Name = Monitor Engine Dispatchable Unit Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of monitoring component. This file contains structure for
+   EDU snapshot/list.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef MONEDU_HPP_
+#define MONEDU_HPP_
+#include <set>
+#include <string>
+#include "core.hpp"
+#include "oss.hpp"
+#include "monCB.hpp"
+namespace engine
+{
+
+#define MON_EDU_STATUS_SZ        (19)
+#define MON_EDU_TYPE_SZ          (19)
+#define MON_EDU_NAME_SZ          (63)
+
+   // simple structure for EDU monitor
+   // this is used for list command
+   class _monEDUSimple : public SDBObject
+   {
+   public :
+      UINT64   _eduID ;
+      UINT32   _tid ;
+      CHAR     _eduStatus[MON_EDU_STATUS_SZ+1] ;
+      CHAR     _eduType[MON_EDU_TYPE_SZ+1] ;
+      CHAR     _eduName[MON_EDU_NAME_SZ+1] ;
+      _monEDUSimple()
+      {
+         ossMemset ( _eduStatus, 0, sizeof(_eduStatus) ) ;
+         ossMemset ( _eduType, 0, sizeof(_eduType) ) ;
+         ossMemset ( _eduName, 0, sizeof(_eduName) ) ;
+         _eduID = 0 ;
+         _tid = 0 ;
+      }
+      inline BOOLEAN operator< (const _monEDUSimple &r) const
+      {
+         return _eduID < r._eduID ;
+      }
+   } ;
+   typedef class _monEDUSimple monEDUSimple ;
+
+   // full structure for EDU monitor
+   // this is used for snapshot command
+   class _monEDUFull : public SDBObject
+   {
+   public :
+      UINT64   _eduID ;
+      UINT32   _tid ;
+      UINT32   _queueSize ;
+      UINT64   _processEventCount ;
+      CHAR     _eduStatus[MON_EDU_STATUS_SZ+1] ;
+      CHAR     _eduType[MON_EDU_TYPE_SZ+1] ;
+      CHAR     _eduName[MON_EDU_NAME_SZ+1] ;
+      std::set<SINT64> _eduContextList ;
+      monAppCB _monApplCB ;
+   #if defined ( _WINDOWS )
+      HANDLE _threadHdl ;
+   #elif defined ( _LINUX )
+      OSSTID _threadHdl ;
+   #endif
+
+      _monEDUFull()
+      {
+         ossMemset ( _eduStatus, 0, sizeof(_eduStatus) ) ;
+         ossMemset ( _eduType, 0, sizeof(_eduType) ) ;
+         ossMemset ( _eduName, 0, sizeof(_eduName) ) ;
+         _eduID = 0 ;
+         _tid = 0 ;
+         _queueSize = 0 ;
+         _processEventCount = 0 ;
+      }
+      inline BOOLEAN operator< (const _monEDUFull &r) const
+      {
+         return _eduID < r._eduID ;
+      }
+      _monEDUFull &operator= ( const _monEDUFull &rhs )
+      {
+         _eduID          = rhs._eduID ;
+         _tid            = rhs._tid ;
+         _queueSize      = rhs._queueSize ;
+         _processEventCount = rhs._processEventCount ;
+         ossMemcpy( _eduStatus, rhs._eduStatus, sizeof( _eduStatus ) ) ;
+         ossMemcpy( _eduType, rhs._eduType, sizeof( _eduType ) ) ;
+         ossMemcpy( _eduName, rhs._eduName, sizeof(_eduName));
+         _eduContextList = rhs._eduContextList ;
+         _monApplCB      = rhs._monApplCB ;
+         _threadHdl      = rhs._threadHdl ;
+
+         return *this ;
+      }
+   } ;
+   typedef class _monEDUFull monEDUFull ;
+
+   class _monContextFull : public SDBObject
+   {
+   public :
+      SINT64       _contextID ;
+      std::string  _typeDesp ;
+      std::string  _info ;
+      monContextCB _monContext ;
+
+      _monContextFull ( SINT64 cid, monContextCB &monCtxCB )
+      {
+         _contextID = cid ;
+         _monContext = monCtxCB ;
+      }
+
+      BOOLEAN operator< (const _monContextFull &r) const
+      {
+         return _contextID < r._contextID ;
+      }
+
+      _monContextFull &operator= ( const _monContextFull &rhs )
+      {
+         _contextID  = rhs._contextID ;
+         _monContext = rhs._monContext ;
+         return *this ;
+      }
+   } ;
+   typedef class _monContextFull monContextFull ;
+}
+
+#endif

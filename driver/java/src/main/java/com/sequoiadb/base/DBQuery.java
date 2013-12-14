@@ -1,0 +1,174 @@
+/**
+ *      Copyright (C) 2012 SequoiaDB Inc.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+/**
+ * @package com.sequoiadb.base;
+ * @brief SequoiaDB Driver for Java
+ * @author Jacky Zhang
+ */
+package com.sequoiadb.base;
+
+import org.bson.BSONObject;
+
+/**
+ * @class DBQuery
+ * @brief Database operation rules
+ */
+public class DBQuery {
+	private BSONObject matcher;
+	private BSONObject selector;
+	private BSONObject orderBy;
+	private BSONObject hint;
+	private BSONObject modifier;
+	private Long skipRowsCount;
+	private Long returnRowsCount;
+
+	public DBQuery() {
+		matcher = null;
+		selector = null;
+		orderBy = null;
+		hint = null;
+		modifier = null;
+		skipRowsCount = 0L;
+		returnRowsCount = -1L;
+	}
+	
+	/**
+	 * @fn BSONObject getModifier()
+	 * @brief Get modified rule
+	 * @return The modified rule BSONObject
+	 */
+	public BSONObject getModifier() {
+		return modifier;
+	}
+
+	/**
+	 * @fn void setModifier(BSONObject modifier)
+	 * @brief Get modified rule
+	 * @param Modifier The modified rule BSONObject
+	 */
+	public void setModifier(BSONObject modifier) {
+		this.modifier = modifier;
+	}
+
+	/**
+	 * @fn BSONObject getSelector()
+	 * @brief Get selective rule
+	 * @return The selective rule BSONObject
+	 */
+	public BSONObject getSelector() {
+		return selector;
+	}
+
+	/**
+	 * @fn void setSelector(BSONObject selector)
+	 * @brief Set selective rule
+	 * @param Selector The selective rule BSONObject
+	 */
+	public void setSelector(BSONObject selector) {
+		this.selector = selector;
+	}
+
+	/**
+	 * @fn BSONObject getMatcher()
+	 * @brief Get matching rule
+	 * @return The matching rule BSONObject
+	 */
+	public BSONObject getMatcher() {
+		return matcher;
+	}
+
+	/**
+	 * @fn void setMatcher(BSONObject matcher)
+	 * @brief Set matching rule
+	 * @param Matcher The matching rule BSONObject
+	 */
+	public void setMatcher(BSONObject matcher) {
+		this.matcher = matcher;
+	}
+
+	/**
+	 * @fn BSONObject getOrderBy()
+	 * @brief Get ordered rule
+	 * @return The ordered rule BSONObject
+	 */
+	public BSONObject getOrderBy() {
+		return orderBy;
+	}
+
+	/**
+	 * @fn void setOrderBy(BSONObject orderBy)
+	 * @brief Set ordered rule
+	 * @param OrderBy The ordered rule BSONObject
+	 */
+	public void setOrderBy(BSONObject orderBy) {
+		this.orderBy = orderBy;
+	}
+
+	/**
+	 * @fn BSONObject getHint()
+	 * @brief Get sepecified access plan
+	 * @return The sepecified access plan BSONObject
+	 */
+	public BSONObject getHint() {
+		return hint;
+	}
+
+	/**
+	 * @fn void setHint(BSONObject hint)
+	 * @brief Set sepecified access plan
+	 * @param Hint The sepecified access plan BSONObject
+	 */
+	public void setHint(BSONObject hint) {
+		this.hint = hint;
+	}
+
+	/**
+	 * @fn Long getSkipRowsCount()
+	 * @brief Get the count of BSONObjects to skip
+	 * @return The count of BSONObjects to skip
+	 */
+	public Long getSkipRowsCount() {
+		return skipRowsCount;
+	}
+
+	/**
+	 * @fn void setSkipRowsCount(Long skipRowsCount)
+	 * @brief Set the count of BSONObjects to skip
+	 * @param SkipRowsCount The count of BSONObjects to skip
+	 */
+	public void setSkipRowsCount(Long skipRowsCount) {
+		this.skipRowsCount = skipRowsCount;
+	}
+
+	/**
+	 * @fn Long getReturnRowsCount()
+	 * @brief Get the count of BSONObjects to return
+	 * @return The count of BSONObjects to return
+	 */
+	public Long getReturnRowsCount() {
+		return returnRowsCount;
+	}
+
+	/**
+	 * @fn void setReturnRowsCount(Long returnRowsCount)
+	 * @brief Set the count of BSONObjects to return
+	 * @param ReturnRowsCount The count of BSONObjects to return
+	 */
+	public void setReturnRowsCount(Long returnRowsCount) {
+		this.returnRowsCount = returnRowsCount;
+	}
+
+}

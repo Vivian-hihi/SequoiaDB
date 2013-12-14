@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_slw_gq2_gl_en">
+  <title>Standalone Mode</title>
+  <body>
+    <p>The configuration file "sdb.conf" is existed in the direcroty of the users specified.if not
+      specified,not existed.</p>
+    <p>It is only needed to file the "sdb.conf" that specified to backup the configuration file at
+      the standalone mode.</p>
+  </body>
+</topic>

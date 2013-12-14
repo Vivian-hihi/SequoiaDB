@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_5td_hy2_gl">
+  <title>例程</title>
+  <body>
+    <ol>
+      <li>停止被恢复的复制组
+        <codeblock>$ /opt/sequoiadb/bin/sdb 
+>db=new Sdb('192.168.20.35',50000)
+192.168.20.35:50000
+>rg=db.getRG('foo')
+foo
+>rg.stop() </codeblock></li>
+      <li>恢复配置文件
+      <codeblock>$ cp vmsvr1-rhel-x64.51000.sdb.conf /opt/sequoiadb/conf/local/51000/sdb.conf</codeblock></li>
+      <li>恢复数据文件
+        <codeblock>$ tar -zxvf vmsvr1-rhel-x64.51000.2013_08_21.tar.gz
+/tmpfs/data1/foo.dat
+/tmpfs/data1/one.dat
+/tmpfs/data1/SYSTEMP.dat
+/tmpfs/data1/foo.idx
+/tmpfs/data1/one. idx
+/tmpfs/data1/SYSTEMP.idx   </codeblock></li>
+      <li>删除日志文件，日志文件存在于配置文件的logpath目录，默认情况下在 <i>&lt;数据库目录 >/replicalog</i>中
+        <codeblock>$ rm -rf /tmpfs/data1/replicalog</codeblock></li>
+      <li>启动复制组
+        <codeblock>$ /opt/sequoiadb/bin/sdb 
+>db=new Sdb('192.168.20.35',50000)
+192.168.20.35:50000
+>rg=db.getRG('foo')
+foo
+>rg.start()</codeblock></li>
+    </ol>
+    <note>仅恢复复制组内某一个数据节点会造成数据之间的不一致。</note>
+  </body>
+</topic>

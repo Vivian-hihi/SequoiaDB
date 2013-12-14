@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_hdy_gr2_gl">
+  <title>配置文件备份</title>
+  <body>
+    <p>配置文件包含每个节点的配置信息，默认情况下配置文件存在于<i>&lt;数据库安装目录>/conf/local/&lt;服务名></i>目录中。</p>
+  <p><xref href="confi_standalone.dita">独立模式</xref></p>
+    <p><xref href="confi_cluster.dita">集群模式</xref></p>
+    <p><xref href="confi_sample.dita">例程</xref></p>
+  </body>
+</topic>

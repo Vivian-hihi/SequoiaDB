@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_pyr_psg_2l_en">
+  <title>Start SequoiaDB web service</title>
+  <body>
+    <p>By starting the background Web service of SequoiaDB,can also do operetions to database,and
+      convenient for management.</p>
+    <!--<section>
+      <title>Windows environment</title>
+      <p><b>Steps:</b></p>
+      <ul>
+        <li>run the command "cmmd.exe"</li>
+        <li>enter to the installed directory of SequoiaDB, for example
+          <codeblock>cd C:\sequoiadb\tools\server\php\bin</codeblock></li>
+        <li>Execute the file
+            "php.exe"<codeblock>php.exe –S &lt;server name:port&gt; -t &lt;doc directory&gt;  </codeblock>
+          <p><b>server name</b>:specify the service IP address,such as "192.168.10.10"</p>
+          <p><b>port</b>:specify the service port,such as "8080"</p>
+          <p><b>doc director</b>:specify the root directory that the server pointed,such as
+            "/opt/sequoiadb/www/"</p>
+          <p>Finally enter "http://192.168.10.10:8080" in the browser,then you can access to the
+            database management page.</p><p>Finally
+            enter "<b>http://192.168.10.10:8080</b>" in the browser,then you can access to the
+            database management page.</p></li>
+      </ul>
+    </section>
+    <section>
+      <title>Linux environment</title>
+      <p><b>Steps：</b></p></section>-->
+      <ul>
+        <li>enter the directory:/opt/sequoiadb/bin</li>
+        <li>execute the following command:
+          <codeblock>./sdbwsart -S &lt;server name:port></codeblock></li>
+      </ul>
+      <p><b>server name</b>:specify the service IP address,such as "192.168.10.10"</p>
+      <p><b>port</b>:specify the service port,such as "8080"</p>
+      <!--<p><b>doc director</b>:specify the root directory that the server pointed,such as
+        "/opt/sequoiadb/www/"</p>-->
+      <p>Finally enter "http://192.168.10.10:8080" in the browser,then you can access to the
+        database management page.</p>
+    
+  </body>
+</topic>

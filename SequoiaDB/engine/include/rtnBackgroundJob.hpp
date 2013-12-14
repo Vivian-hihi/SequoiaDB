@@ -1,0 +1,183 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = rtnBackgroundJob.hpp
+
+   Descriptive Name = Data Management Service Header
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          03/06/2013  Xu Jianhui  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
+#ifndef RTN_BACKGROUND_JOB_HPP_
+#define RTN_BACKGROUND_JOB_HPP_
+
+#include "ossLatch.hpp"
+#include "dms.hpp"
+#include "pmdEDUMgr.hpp"
+#include "dpsLogWrapper.hpp"
+#include "dmsCB.hpp"
+#include <map>
+#include <string>
+
+#include "../bson/bsonobj.h"
+
+using namespace bson ;
+
+namespace engine
+{
+   class _rtnBaseJob ;
+
+   enum RTN_JOB_TYPE
+   {
+      RTN_JOB_CREATE_INDEX       = 1,
+      RTN_JOB_DROP_INDEX         = 2,
+      RTN_JOB_CLEANUP            = 3,
+      RTN_JOB_LOAD               = 4,
+      RTN_JOB_PREFETCH           = 5,
+      RTN_JOB_EXTENDSEGMENT      = 6,
+      RTN_JOB_RESTORE            = 7,
+      RTN_JOB_REPLSYNC           = 8
+   } ;
+
+   enum RTN_JOB_MUTEX_TYPE
+   {
+      RTN_JOB_MUTEX_NONE      = 0,     // not check mutex
+      RTN_JOB_MUTEX_RET       = 1,     // when mutex, return self
+      RTN_JOB_MUTEX_STOP_RET  = 2,     // when mutex, stop peer and return self
+      RTN_JOB_MUTEX_STOP_CONT = 3,     // when mutex, stop peer and continue self
+      RTN_JOB_MUTEX_REUSE     = 4      // when mutex, reuse peer
+   } ;
+
+   class _rtnJobMgr : public SDBObject
+   {
+      friend INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+
+      public:
+         _rtnJobMgr ( pmdEDUMgr * eduMgr ) ;
+         ~_rtnJobMgr () ;
+
+      public:
+         UINT32 jobsCount () ;
+         _rtnBaseJob* findJob ( EDUID eduID ) ;
+
+         INT32 startJob ( _rtnBaseJob *pJob,
+                          RTN_JOB_MUTEX_TYPE type = RTN_JOB_MUTEX_STOP_CONT ,
+                          EDUID *pEDUID = NULL ) ;
+
+      protected:
+         INT32 _stopJob ( EDUID eduID ) ;
+         INT32 _removeJob ( EDUID eduID ) ;
+
+      private:
+         std::map<EDUID, _rtnBaseJob*>        _mapJobs ;
+         ossSpinSLatch                        _latch ;
+         pmdEDUMgr                            *_eduMgr ;
+   } ;
+   typedef _rtnJobMgr rtnJobMgr ;
+
+   rtnJobMgr* rtnGetJobMgr () ;
+
+   class _rtnBaseJob : public SDBObject
+   {
+      friend INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+
+      protected:
+         INT32 attachIn ( pmdEDUCB *cb ) ;
+         INT32 attachOut () ;
+
+      public:
+         _rtnBaseJob () ;
+         virtual ~_rtnBaseJob () ;
+
+         INT32 waitAttach () ;
+         INT32 waitDetach () ;
+
+         pmdEDUCB* eduCB() ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const = 0 ;
+         virtual const CHAR* name () const = 0 ;
+         virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) = 0 ;
+         virtual INT32 doit () = 0 ;
+
+      private:
+         ossSpinXLatch        _latchIn ;
+         ossSpinXLatch        _latchOut ;
+      protected:
+         pmdEDUCB*            _pEDUCB ;
+
+   } ;
+   typedef _rtnBaseJob rtnBaseJob ;
+
+   class _rtnIndexJob : public _rtnBaseJob
+   {
+      public:
+         _rtnIndexJob ( RTN_JOB_TYPE type, const CHAR *pCLName,
+                        const BSONObj &indexObj, SDB_DPSCB *dpsCB ) ;
+
+         virtual ~_rtnIndexJob() ;
+
+         INT32 init () ;
+         const CHAR* getIndexName () const ;
+
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR* name () const ;
+         virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32 doit () ;
+
+      protected:
+         RTN_JOB_TYPE      _type ;
+         CHAR              _clFullName[DMS_COLLECTION_FULL_NAME_SZ + 1] ;
+         std::string       _indexName ;
+         std::string       _jobName ;
+         BSONObj           _indexObj ;
+         BSONElement       _indexEle ;
+         SDB_DPSCB         *_dpsCB ;
+         SDB_DMSCB         *_dmsCB ;
+
+   };
+   typedef _rtnIndexJob rtnIndexJob ;
+
+   class _rtnLoadJob : public _rtnBaseJob
+   {
+      protected:
+         std::string _jobName ;
+      public:
+         _rtnLoadJob()
+         {
+            _jobName = "Load" ;
+         }
+      public:
+         virtual RTN_JOB_TYPE type () const ;
+         virtual const CHAR* name () const ;
+         virtual BOOLEAN muteXOn ( const _rtnBaseJob *pOther ) ;
+         virtual INT32 doit () ;
+   };
+   typedef _rtnLoadJob rtnLoadJob ;
+
+}
+
+#endif //RTN_BACKGROUND_JOB_HPP_
+

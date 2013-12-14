@@ -1,0 +1,50 @@
+<!--@param ${testcase.path}: The path where test case direcotry.-->
+<!--@param ${reports.path}: The path where test case direcotry.-->
+<!--@param ${deploy.case.fullname}: The run in which env -->
+<!--@param ${php-bin.dir} : The php-bin's director-->
+<!--@param ${phpunit.phar.dir} : The phpunit.phpar's director-->
+
+<project name="exec-driver-php-test" default="exec-driver-php-test">
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+	
+<property name="php-bin.dir" value="/opt/sequoiadb/tools/server/php/bin" />
+<property name="phpunit.phar.dir" value="${testcase.path}/tools/phpunit.phar" />
+
+<target name="clean-env" depends="">
+	 <delete dir="${reports.path}" failonerror="false" />
+	 <mkdir dir="${reports.path}" />
+</target>
+<target name="exec-driver-php-test" depends="clean-env">
+	
+	<echo message="phpunit.phar.dir is ${phpunit.phar.dir}" />
+	<echo message="testcase dir is ${testcase.path}" />
+	<foreach target="test-php-folder" param="test.php.folder.dir" >
+		<path>
+			<dirset dir="${testcase.path}" includes="*" excludes="tools" />
+		</path>
+	</foreach>
+</target>
+
+<target name="test-php-folder" depends="" >
+	<basename property="test.php.folder.name" file="${test.php.folder.dir}" />
+	<echo message="test folder is ${test.php.folder.name}" />
+	<foreach target="test-one-case" param="one.php.fullname">
+		<fileset dir="${test.php.folder.dir}" includes="*.php"/>
+		<param name="test.php.folder.name" value="${test.php.folder.name}" />
+	</foreach>
+	
+</target>
+
+<target name="test-one-case" depends="">
+  <basename property="php.name" file="${one.php.fullname}" suffix=".php" />
+  <echo message="test one case is ${php.name}" />
+  <exec executable="${php-bin.dir}/php-bin" failonerror="true" dir="${php-bin.dir}">
+  	<arg line="${phpunit.phar.dir}   --log-junit ${reports.path}/${php.name}.xml ${one.php.fullname}"/>
+  </exec>
+</target>
+</project>
