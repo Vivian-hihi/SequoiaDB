@@ -1201,19 +1201,27 @@ namespace engine
 
       if ( STEP_TS_END == _tsStep )
       {
-         goto doend;
+         goto doend ;
       }
-      if ( !pmdGetKRCB()->getTransCB()->isTransOn() &&
-           DPS_INVALID_LSN_OFFSET != dpsCB->getCurrentLsn().offset )
+      else if ( STEP_TS_BEGIN == _tsStep )
       {
-         _tsStep = STEP_TS_END;
-         goto doend;
+         if ( !pmdGetKRCB()->getTransCB()->isTransOn() &&
+              DPS_INVALID_LSN_OFFSET != dpsCB->getCurrentLsn().offset )
+         {
+            _tsStep = STEP_TS_END;
+            goto doend ;
+         }
       }
-      rc = _pullTransLog( invalidLsn );
+      else
+      {
+         invalidLsn = lsn ;
+      }
+
+      rc = _pullTransLog( invalidLsn ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "failed to synchronise transaction log(rc=%d)",
                   rc );
-      _timeout = 0;
+      _timeout = 0 ;
       goto done;
 
    doend:
@@ -1324,7 +1332,8 @@ namespace engine
                   _selector.src().columns.nodeID,
                   _selector.src().columns.serviceID,
                   rc );
-      _timeout = 0;
+      _timeout = 0 ;
+
    done:
       return rc;
    error:
