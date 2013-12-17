@@ -151,7 +151,7 @@
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}]]&gt;&#10;
 					&lt;/failure&gt;&#10;" />
 					
-				<sdbHaveMaster waitTime="10" propertyName="havaMaster" groupName="1" />
+				<sdbHaveMaster waitTime="20" propertyName="havaMaster" groupName="1" />
 				<if>
 					<equals arg1="${haveMaster}" arg2="true" />
 					<then>
