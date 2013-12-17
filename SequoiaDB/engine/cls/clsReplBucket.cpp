@@ -258,11 +258,18 @@ namespace engine
       _memPool.final() ;
    }
 
-   void _clsBucket::reset ()
+   void _clsBucket::reset ( BOOLEAN setExpect )
    {
       _status = CLS_BUCKET_NORMAL ;
-      _expectLSN.offset = DPS_INVALID_LSN_OFFSET ;
-      _expectLSN.version = DPS_INVALID_LSN_VERSION ;
+      if ( setExpect )
+      {
+         _expectLSN = _pDPSCB->expectLsn() ;
+      }
+      else
+      {
+         _expectLSN.offset = DPS_INVALID_LSN_OFFSET ;
+         _expectLSN.version = DPS_INVALID_LSN_VERSION ;
+      }
       _memPool.clear() ;
    }
 

@@ -65,7 +65,7 @@ namespace engine
       _agent = pmdGetKRCB()->getClsCB()->getReplRouteAgent() ;
       _repl = pmdGetKRCB()->getClsCB()->getReplCB() ;
       _pReplBucket = _repl->getBucket() ;
-      _pReplBucket->reset() ;
+      _pReplBucket->reset( TRUE ) ;
 
       _requestID = 0 ;
       _syncFailedNum = 0 ;

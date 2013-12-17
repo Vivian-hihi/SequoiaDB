@@ -148,7 +148,7 @@ namespace engine
          CLS_BUCKET_STATUS getStatus() const { return _status ; }
 
          INT32       init () ;
-         void        reset() ;
+         void        reset( BOOLEAN setExpect = FALSE ) ;
          void        close() ;
          void        fini () ;
 
