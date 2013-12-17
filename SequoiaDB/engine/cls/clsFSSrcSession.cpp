@@ -1171,24 +1171,24 @@ namespace engine
          _agent->syncSend( handle, &msg ) ;
          goto done ;
       }
-
-      else if ( !_pRepl->primaryIsMe() &&
+      /*else if ( !_pRepl->primaryIsMe() &&
                 DPS_INVALID_LSN_OFFSET ==
                 dpscb->getCurrentLsn().offset )
       {
-         PD_LOG( PDWARNING, "not primary and have no data,"
-                            " can not be source node" ) ;
+         PD_LOG( PDWARNING, "not primary and nodata can not be source node" ) ;
          msg.header.res = SDB_CLS_NOTP_AND_NODATA ;
          _quit = TRUE ;
          _agent->syncSend( handle, &msg ) ;
          goto done ;
-      }
+      }*/
 
-
-      //if no primay, can't be the source node of the full sync(don't reply)
+      //if not primay, can't be the source node of the full sync(don't reply)
       if ( !_isReadyToSync() )
       {
-         PD_LOG( PDWARNING, "fs: not ready for fullsync, ignore msg." ) ;
+         PD_LOG( PDWARNING, "fs: not primary for fullsync, disconnect." ) ;
+         msg.header.res = SDB_CLS_NOT_PRIMARY ;
+         _quit = TRUE ;
+         _agent->syncSend( handle, &msg ) ;
          goto done ;
       }
 
@@ -1241,11 +1241,13 @@ namespace engine
       msg.header.header.TID = header->TID ;
       msg.header.header.routeID = header->routeID ;
       msg.header.header.requestID = header->requestID ;
+
       if ( SDB_OK == _agent->syncSend( handle, &msg ) )
       {
          PD_LOG( PDEVENT, "fs: end to full sync" ) ;
          _quit = TRUE ;
       }
+
    done:
       PD_TRACE_EXIT ( SDB__CLSFSSS_HNDEND );
       return SDB_OK ;
@@ -1297,6 +1299,7 @@ namespace engine
       {
          msgRsp.eof = CLS_FS_EOF;
       }
+
    done:
       if ( _mb.length() != 0  && SDB_OK == rc )
       {
@@ -1369,6 +1372,13 @@ namespace engine
          _disconnect () ;
          return TRUE ;
       }
+      else if ( !_isReadyToSync() )
+      {
+         PD_LOG ( PDWARNING, "session[%s]: self node is not primary, diconnect",
+                  sessionName() ) ;
+         _disconnect() ;
+         return TRUE ;
+      }
       return FALSE ;
    }
 
@@ -1384,8 +1394,9 @@ namespace engine
 
    BOOLEAN _clsFSSrcSession::_isReadyToSync()
    {
-      return MSG_INVALID_ROUTEID !=
-             pmdGetKRCB()->getClsCB()->getReplCB()->getPrimary().value ;
+      /*return MSG_INVALID_ROUTEID !=
+             pmdGetKRCB()->getClsCB()->getReplCB()->getPrimary().value ;*/
+      return pmdGetKRCB()->getClsCB()->isPrimary() ;
    }
 
    const CHAR* _clsFSSrcSession::_onObjFilter( const CHAR * inBuff,
