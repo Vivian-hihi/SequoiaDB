@@ -164,6 +164,6 @@
 		</if>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" />
- 
+
 	</target>
 </project>
