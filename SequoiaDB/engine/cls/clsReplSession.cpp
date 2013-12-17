@@ -318,10 +318,12 @@ namespace engine
                _selector.addToBlakList( _syncSrc ) ;
                _selector.clearSrc() ;
 
-               _sendSyncReq() ;
-               //_timeout = CLS_SYNC_INTERVAL ;
+               // can't call _sendSyncReq, because the primary maybe
+               // sharing-break, so this will run loop for other nodes fastly
+               _timeout = CLS_SYNC_INTERVAL ;
             }
-            else if ( _pReplBucket->maxReplSync() > 0 )
+
+            if ( _pReplBucket->maxReplSync() > 0 )
             {
                // if has complete some log replay,need to notify primary
                DPS_LSN completeLSN = _pReplBucket->completeLSN() ;
