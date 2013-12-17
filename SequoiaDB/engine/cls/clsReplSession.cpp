@@ -811,7 +811,7 @@ namespace engine
          msg.identity = _agent->localID() ;
          _agent->syncSend( _syncSrc, &msg ) ;
          PD_LOG( PDDEBUG, "sync: send sync req to [node: %d] [group:%d]"
-                 "lsn: [%llu][%u], complete lsn: [%llu][%u]",
+                 "lsn: [%llu][%u], complete lsn: [%lld][%u]",
                  _syncSrc.columns.nodeID, _syncSrc.columns.groupID,
                  msg.next.offset, msg.next.version, msg.completeNext.offset,
                  msg.completeNext.version ) ;
