@@ -38,51 +38,51 @@
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概念和术语</h2>
       <a name="references_sqlmapping__references_method_count_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__references_method_count_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115338e18" class="stentry">SQL</th>
+          <th valign="bottom" align="left" id="d115356e18" class="stentry">SQL</th>
 
-          <th valign="bottom" align="left" id="d115338e21" class="stentry">SequoiaDB</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">database</td>
-
-          <td valign="top" headers="d115338e21" class="stentry">database</td>
+          <th valign="bottom" align="left" id="d115356e21" class="stentry">SequoiaDB</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">table</td>
+          <td valign="top" headers="d115356e18" class="stentry">database</td>
 
-          <td valign="top" headers="d115338e21" class="stentry">collection</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">row</td>
-
-          <td valign="top" headers="d115338e21" class="stentry">document / BSON document</td>
+          <td valign="top" headers="d115356e21" class="stentry">database</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">column</td>
+          <td valign="top" headers="d115356e18" class="stentry">table</td>
 
-          <td valign="top" headers="d115338e21" class="stentry">field</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">index</td>
-
-          <td valign="top" headers="d115338e21" class="stentry">index</td>
+          <td valign="top" headers="d115356e21" class="stentry">collection</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">table joins</td>
+          <td valign="top" headers="d115356e18" class="stentry">row</td>
 
-          <td valign="top" headers="d115338e21" class="stentry">embedded documents</td>
+          <td valign="top" headers="d115356e21" class="stentry">document / BSON document</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e18" class="stentry">primary key （指定任何唯一的列作为主键）</td>
+          <td valign="top" headers="d115356e18" class="stentry">column</td>
 
-          <td valign="top" headers="d115338e21" class="stentry">primary key （在SequoiaDB中，primary key是自动创建到记录的_id字段名中）</td>
+          <td valign="top" headers="d115356e21" class="stentry">field</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115356e18" class="stentry">index</td>
+
+          <td valign="top" headers="d115356e21" class="stentry">index</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115356e18" class="stentry">table joins</td>
+
+          <td valign="top" headers="d115356e21" class="stentry">embedded documents</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115356e18" class="stentry">primary key （指定任何唯一的列作为主键）</td>
+
+          <td valign="top" headers="d115356e21" class="stentry">primary key （在SequoiaDB中，primary key是自动创建到记录的_id字段名中）</td>
 
         </tr>
 </table>
@@ -95,26 +95,26 @@
       <p class="p">下表列出了各种SQL语句表级别的操作和在SequoiaDB中对应的操作：</p>
 
       <a name="references_sqlmapping__sqlpping_ceate_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlpping_ceate_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115338e103" class="stentry">SQL 语句</th>
+          <th valign="bottom" align="left" id="d115356e103" class="stentry">SQL 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e106" class="stentry">SequoiaDB 语句</th>
+          <th valign="bottom" align="left" id="d115356e106" class="stentry">SequoiaDB 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e109" class="stentry">相关链接</th>
+          <th valign="bottom" align="left" id="d115356e109" class="stentry">相关链接</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e103" class="stentry">create table student (<p class="p">id not null,</p>
+          <td valign="top" headers="d115356e103" class="stentry">create table student (<p class="p">id not null,</p>
 <p class="p">stu_id varchar(50), age
               number</p>
 <p class="p">primary key(id) )</p>
 </td>
 
-          <td valign="top" headers="d115338e106" class="stentry">在第一次做插入操作时隐式创建集合，如果未指定_id字段，_id字段自动添加<p class="p">db.collectionspace.student({stu_id:"01",age:20})</p>
+          <td valign="top" headers="d115356e106" class="stentry">在第一次做插入操作时隐式创建集合，如果未指定_id字段，_id字段自动添加<p class="p">db.collectionspace.student({stu_id:"01",age:20})</p>
 <p class="p">当然你也可以明确的创建一个集合</p>
 <p class="p">db.collectionspace.createCL("student")</p>
 </td>
 
-          <td valign="top" headers="d115338e109" class="stentry">
+          <td valign="top" headers="d115356e109" class="stentry">
             <a class="xref" href="../../methods/topics/dbinsert.html">insert() ,</a>
               <a class="xref" href="../../methods/topics/createCL.html">createCL()</a>
             
@@ -122,46 +122,46 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e103" class="stentry">alter table student add name varchar(50)</td>
+          <td valign="top" headers="d115356e103" class="stentry">alter table student add name varchar(50)</td>
 
-          <td valign="top" headers="d115338e106" class="stentry">集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$set向文档记录添加不存在的字段。<p class="p">db.collectionspace.student.update({},{$set:{name:"Tom"}})</p>
+          <td valign="top" headers="d115356e106" class="stentry">集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$set向文档记录添加不存在的字段。<p class="p">db.collectionspace.student.update({},{$set:{name:"Tom"}})</p>
 </td>
 
-          <td valign="top" headers="d115338e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
+          <td valign="top" headers="d115356e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
               <a class="xref" href="../../console/topics/gset.html">$set</a>
             </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e103" class="stentry">alter table student drop column name                                 </td>
+          <td valign="top" headers="d115356e103" class="stentry">alter table student drop column name                                 </td>
 
-          <td valign="top" headers="d115338e106" class="stentry">集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$unset向文档记录删除存在的字段。<p class="p">db.collectionspace.student.update({},{$unset:{name:"Tom"}})</p>
+          <td valign="top" headers="d115356e106" class="stentry">集合不描述或强制执行文档的结构，即在集合上没有结构的改动操作，但是update()方法可以使用$unset向文档记录删除存在的字段。<p class="p">db.collectionspace.student.update({},{$unset:{name:"Tom"}})</p>
 </td>
 
-          <td valign="top" headers="d115338e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
+          <td valign="top" headers="d115356e109" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
                <a class="xref" href="../../console/topics/unset.html">$unset</a>
             </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e103" class="stentry">create index index_stu_id<p class="p">on student (stu_id)</p>
+          <td valign="top" headers="d115356e103" class="stentry">create index index_stu_id<p class="p">on student (stu_id)</p>
 </td>
 
-          <td valign="top" headers="d115338e106" class="stentry">db.collectionspace.student.createIndex<p class="p">("index_stu_id",{stu_id:-1})</p>
+          <td valign="top" headers="d115356e106" class="stentry">db.collectionspace.student.createIndex<p class="p">("index_stu_id",{stu_id:-1})</p>
 </td>
 
-          <td valign="top" headers="d115338e109" class="stentry">
+          <td valign="top" headers="d115356e109" class="stentry">
             <a class="xref" href="../../methods/topics/createIndex.html">createIndex() ,</a>
               <a class="xref" href="../../../administration/concepts/database/topics/index.html">index</a>
             </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e103" class="stentry">drop table student</td>
+          <td valign="top" headers="d115356e103" class="stentry">drop table student</td>
 
-          <td valign="top" headers="d115338e106" class="stentry">db.collectionspace.dropCL("student")</td>
+          <td valign="top" headers="d115356e106" class="stentry">db.collectionspace.dropCL("student")</td>
 
-          <td valign="top" headers="d115338e109" class="stentry"><a class="xref" href="../../methods/topics/dropCL.html">dropCL()</a></td>
+          <td valign="top" headers="d115356e109" class="stentry"><a class="xref" href="../../methods/topics/dropCL.html">dropCL()</a></td>
 
         </tr>
 </table>
@@ -174,19 +174,19 @@
       <p class="p">下表给出了各种SQL语句在表级上的插入操作和SequoiaDB上相应的操作：</p>
 
       <a name="references_sqlmapping__sqlmapping_insert_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlmapping_insert_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115338e240" class="stentry">SQL 语句</th>
+          <th valign="bottom" align="left" id="d115356e240" class="stentry">SQL 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e243" class="stentry">SequoiaDB 语句</th>
+          <th valign="bottom" align="left" id="d115356e243" class="stentry">SequoiaDB 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e246" class="stentry">相关链接</th>
+          <th valign="bottom" align="left" id="d115356e246" class="stentry">相关链接</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e240" class="stentry">insert into student(stu_id,age) values("01",20)</td>
+          <td valign="top" headers="d115356e240" class="stentry">insert into student(stu_id,age) values("01",20)</td>
 
-          <td valign="top" headers="d115338e243" class="stentry">db.collectionspace.student.insert({stu_id:"01",age:20})</td>
+          <td valign="top" headers="d115356e243" class="stentry">db.collectionspace.student.insert({stu_id:"01",age:20})</td>
 
-          <td valign="top" headers="d115338e246" class="stentry"><a class="xref" href="../../methods/topics/dbinsert.html">insert()</a></td>
+          <td valign="top" headers="d115356e246" class="stentry"><a class="xref" href="../../methods/topics/dbinsert.html">insert()</a></td>
 
         </tr>
 </table>
@@ -199,35 +199,35 @@
       <p class="p">下表给出了各种SQL语句在表级上的读操作和SequoiaDB上相应的操作：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115338e278" class="stentry">SQL 语句</th>
+          <th valign="bottom" align="left" id="d115356e278" class="stentry">SQL 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e281" class="stentry">SequoiaDB 语句</th>
+          <th valign="bottom" align="left" id="d115356e281" class="stentry">SequoiaDB 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e284" class="stentry">相关链接</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115338e278" class="stentry">select * from student</td>
-
-          <td valign="top" headers="d115338e281" class="stentry">db.collectionspace.student.find()</td>
-
-          <td valign="top" headers="d115338e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a></td>
+          <th valign="bottom" align="left" id="d115356e284" class="stentry">相关链接</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e278" class="stentry">select stu_id,age from student</td>
+          <td valign="top" headers="d115356e278" class="stentry">select * from student</td>
 
-          <td valign="top" headers="d115338e281" class="stentry">db.collectionspace.student.find({},{stu_id:"01",age:20})</td>
+          <td valign="top" headers="d115356e281" class="stentry">db.collectionspace.student.find()</td>
 
-          <td valign="top" headers="d115338e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a></td>
+          <td valign="top" headers="d115356e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e278" class="stentry">select * from student where age&gt;25</td>
+          <td valign="top" headers="d115356e278" class="stentry">select stu_id,age from student</td>
 
-          <td valign="top" headers="d115338e281" class="stentry">db.collectionspace.student.find({age:{$gt:25}})</td>
+          <td valign="top" headers="d115356e281" class="stentry">db.collectionspace.student.find({},{stu_id:"01",age:20})</td>
 
-          <td valign="top" headers="d115338e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a>
+          <td valign="top" headers="d115356e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115356e278" class="stentry">select * from student where age&gt;25</td>
+
+          <td valign="top" headers="d115356e281" class="stentry">db.collectionspace.student.find({age:{$gt:25}})</td>
+
+          <td valign="top" headers="d115356e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a>
             <p class="p">
               <a class="xref" href="../../console/topics/gt.html">$gt</a>
             </p>
@@ -235,27 +235,27 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e278" class="stentry">select age from student where age=25 and stu_id="01"</td>
+          <td valign="top" headers="d115356e278" class="stentry">select age from student where age=25 and stu_id="01"</td>
 
-          <td valign="top" headers="d115338e281" class="stentry">db.collectionspace.student.find({age:25,stu_id="01"},{age:25})</td>
+          <td valign="top" headers="d115356e281" class="stentry">db.collectionspace.student.find({age:25,stu_id="01"},{age:25})</td>
 
-          <td valign="top" headers="d115338e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a></td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d115338e278" class="stentry">select count(*) from student</td>
-
-          <td valign="top" headers="d115338e281" class="stentry">db.collectionspace.student.count()</td>
-
-          <td valign="top" headers="d115338e284" class="stentry"><a class="xref" href="../../methods/topics/dbcount.html">count()</a></td>
+          <td valign="top" headers="d115356e284" class="stentry"><a class="xref" href="../../methods/topics/find.html">find()</a></td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e278" class="stentry">select count(stu_id) from student</td>
+          <td valign="top" headers="d115356e278" class="stentry">select count(*) from student</td>
 
-          <td valign="top" headers="d115338e281" class="stentry">db.collectionspace.student.count({stu_id:{$exists:1}})</td>
+          <td valign="top" headers="d115356e281" class="stentry">db.collectionspace.student.count()</td>
 
-          <td valign="top" headers="d115338e284" class="stentry"><a class="xref" href="../../methods/topics/dbcount.html">count() ,</a>
+          <td valign="top" headers="d115356e284" class="stentry"><a class="xref" href="../../methods/topics/dbcount.html">count()</a></td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d115356e278" class="stentry">select count(stu_id) from student</td>
+
+          <td valign="top" headers="d115356e281" class="stentry">db.collectionspace.student.count({stu_id:{$exists:1}})</td>
+
+          <td valign="top" headers="d115356e284" class="stentry"><a class="xref" href="../../methods/topics/dbcount.html">count() ,</a>
               <a class="xref" href="../../console/topics/exists.html">$exists</a>
             </td>
 
@@ -270,29 +270,29 @@
       <p class="p">下表给出了各种SQL语句在表级上的更新操作和SequoiaDB上相应的操作：</p>
 
       <a name="references_sqlmapping__sqlmapping_update_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlmapping_update_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115338e399" class="stentry">SQL 语句</th>
+          <th valign="bottom" align="left" id="d115356e399" class="stentry">SQL 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e402" class="stentry">SequoiaDB 语句</th>
+          <th valign="bottom" align="left" id="d115356e402" class="stentry">SequoiaDB 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e405" class="stentry">相关链接</th>
+          <th valign="bottom" align="left" id="d115356e405" class="stentry">相关链接</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e399" class="stentry">update student set age=25 where stu_id="01"</td>
+          <td valign="top" headers="d115356e399" class="stentry">update student set age=25 where stu_id="01"</td>
 
-          <td valign="top" headers="d115338e402" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$set:{age:25}})</td>
+          <td valign="top" headers="d115356e402" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$set:{age:25}})</td>
 
-          <td valign="top" headers="d115338e405" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
+          <td valign="top" headers="d115356e405" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
             <a class="xref" href="../../console/topics/gset.html">$set</a>
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e399" class="stentry">update student set age=age+2 where stu_id="01"</td>
+          <td valign="top" headers="d115356e399" class="stentry">update student set age=age+2 where stu_id="01"</td>
 
-          <td valign="top" headers="d115338e402" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$inc:{age:2}})</td>
+          <td valign="top" headers="d115356e402" class="stentry">db.collectionspace.student.update({stu_id:"01"},{$inc:{age:2}})</td>
 
-          <td valign="top" headers="d115338e405" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
+          <td valign="top" headers="d115356e405" class="stentry"><a class="xref" href="../../methods/topics/dbupdate.html">update() ,</a>
             <a class="xref" href="../../console/topics/inc.html">$inc</a>
           </td>
 
@@ -307,28 +307,28 @@
       <p class="p">下表给出了各种SQL语句在表级上的删除记录操作和SequoiaDB上相应的操作：</p>
 
       <a name="references_sqlmapping__sqlmapping_delete_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_sqlmapping__sqlmapping_delete_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d115338e462" class="stentry">SQL 语句</th>
+          <th valign="bottom" align="left" id="d115356e462" class="stentry">SQL 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e465" class="stentry">SequoiaDB 语句</th>
+          <th valign="bottom" align="left" id="d115356e465" class="stentry">SequoiaDB 语句</th>
 
-          <th valign="bottom" align="left" id="d115338e468" class="stentry">相关链接</th>
+          <th valign="bottom" align="left" id="d115356e468" class="stentry">相关链接</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e462" class="stentry">delete from student where age=20</td>
+          <td valign="top" headers="d115356e462" class="stentry">delete from student where age=20</td>
 
-          <td valign="top" headers="d115338e465" class="stentry">db.collectionspace.student.remove({age:20})</td>
+          <td valign="top" headers="d115356e465" class="stentry">db.collectionspace.student.remove({age:20})</td>
 
-          <td valign="top" headers="d115338e468" class="stentry"><a class="xref" href="../../methods/topics/remove.html">remove()</a>
+          <td valign="top" headers="d115356e468" class="stentry"><a class="xref" href="../../methods/topics/remove.html">remove()</a>
           </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d115338e462" class="stentry">delete from student</td>
+          <td valign="top" headers="d115356e462" class="stentry">delete from student</td>
 
-          <td valign="top" headers="d115338e465" class="stentry">db.collectionspace.student.remove()</td>
+          <td valign="top" headers="d115356e465" class="stentry">db.collectionspace.student.remove()</td>
 
-          <td valign="top" headers="d115338e468" class="stentry"><a class="xref" href="../../methods/topics/remove.html">remove()</a>
+          <td valign="top" headers="d115356e468" class="stentry"><a class="xref" href="../../methods/topics/remove.html">remove()</a>
           </td>
 
         </tr>
