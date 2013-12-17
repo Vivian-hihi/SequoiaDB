@@ -4,6 +4,8 @@ package com.sequoiadb.ant.sdbtask;
 import org.apache.tools.ant.Task;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
+
+import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
@@ -82,12 +84,23 @@ public class SdbHaveMaster extends Task {
 					//System.out.println(nodePort);
 					String nodeHN = (String) nodeBson.get("HostName"); 
 //					System.out.println(nodeHN);
-					
+					if(nodeHN.equals("suse-test2"))
+						nodeHN="192.168.20.192";
+					if(nodeHN.equals("suse-test1"))
+						nodeHN="192.168.20.191";
+					if(nodeHN.equals("suse-test3"))
+						nodeHN="192.168.20.193";
 					Sequoiadb nodedb = new Sequoiadb(nodeHN, nodePort,"","");
-					String isMaster = nodedb.getSnapshot(6, "{\"HostName\":\""+nodeHN+"\",\"ServiceName\":\""+nodePort+"\"}",
-							"{\"IsPrimary\":null}",null).toString();
+					DBCursor cur = nodedb.getSnapshot(6, "{}",
+							"{\"IsPrimary\":null}",null); 
+					if(cur.hasNext()){
+						String isMaster = cur.getNext().get("IsPrimary").toString();
+						
+					
+					System.out.println(isMaster);
 					if( isMaster.equals( "true" ) )
 						return true ;
+					}
 				}catch( BaseException e ){}
 				
 			}
@@ -136,12 +149,15 @@ public class SdbHaveMaster extends Task {
 				}
 			else
 			{	
+				System.out.println("is primary");
 				this.getProject().setProperty( this.propertyName , "true" ) ;
 				break ;
 			}
 		}
-		if( ! (i < times) )
+		if( ! (i < times) ){
+			System.out.println("is not primary");
 			this.getProject().setProperty( this.propertyName , "false" ) ;
+		}
 	}
 
 }

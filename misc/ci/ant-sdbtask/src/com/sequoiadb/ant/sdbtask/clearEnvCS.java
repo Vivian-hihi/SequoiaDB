@@ -30,6 +30,7 @@ public class clearEnvCS extends Task {
 			log("one test fail , will drop the cs , cspre is "+this.csprefix);
 			while( cur.hasNext() ){
 				t_cs = cur.getNext().get("Name").toString();
+				System.out.println(t_cs);
 				if( t_cs.contains(this.csprefix) ){
 					log("will be droped cs's name is "+ t_cs);
 					sdb.dropCollectionSpace( t_cs );
