@@ -39,5 +39,5 @@
     <typedef name="sdbNodeServiceStatus" classname="com.sequoiadb.ant.sdbtask.SdbNodeServiceStatus" onerror="ignore" />
     <typedef name="sdbCheckNode" classname="com.sequoiadb.ant.sdbtask.SdbCheckNode" onerror="ignore" />
     <typedef name="sdbClearEnvCS" classname="com.sequoiadb.ant.sdbtask.clearEnvCS" onerror="ignore" />
-  
+    <typedef name="sdbWhile" classname="com.sequoiadb.ant.tools.Sdbwhile" onerror="ignore" />
 </antlib>
