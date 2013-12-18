@@ -50,7 +50,7 @@
 		
 		<mkdir dir="${release.path}" />
 		
-		<copy file="${ci.script.path}/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
+		<copy file="${ci.script.path}/ci-properies-files/ci.test.properties.${os.publish.name}" tofile="${ci.script.path}/ci.test.properties" />
 		<property file="${ci.script.path}/ci.test.properties" />
 
 		<echo message="Begin to copy the software package with STAF.PATH=${STAF.PATH},env.PATH=${env.PATH},deploy.host.name=${local.ADDR4}" />
