@@ -85,11 +85,18 @@ public class SdbHaveMaster extends Task {
 					String nodeHN = (String) nodeBson.get("HostName"); 
 //					System.out.println(nodeHN);
 					if(nodeHN.equals("suse-test2"))
-						nodeHN="192.168.20.192";
-					if(nodeHN.equals("suse-test1"))
 						nodeHN="192.168.20.191";
 					if(nodeHN.equals("suse-test3"))
+						nodeHN="192.168.20.192";
+					if(nodeHN.equals("suse-test4"))
 						nodeHN="192.168.20.193";
+					
+					if(nodeHN.equals("ubun-test2"))
+						nodeHN="192.168.20.201";
+					if(nodeHN.equals("suse-test3"))
+						nodeHN="192.168.20.202";
+					if(nodeHN.equals("suse-test4"))
+						nodeHN="192.168.20.203";
 					Sequoiadb nodedb = new Sequoiadb(nodeHN, nodePort,"","");
 					DBCursor cur = nodedb.getSnapshot(6, "{}",
 							"{\"IsPrimary\":null}",null); 
@@ -98,8 +105,10 @@ public class SdbHaveMaster extends Task {
 						
 					
 					System.out.println(isMaster);
-					if( isMaster.equals( "true" ) )
-						return true ;
+						if( isMaster.equals( "true" ) ){
+							System.out.println("true");
+							return true ;
+						}
 					}
 				}catch( BaseException e ){}
 				
