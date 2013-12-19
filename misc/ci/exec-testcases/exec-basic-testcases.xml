@@ -165,11 +165,21 @@
 					</then>
 				</if>
 					
-				<sdbHaveMaster waitTime="20" propertyName="haveMaster" groupName="1" />
+				<!--sdbHaveMaster waitTime="20" propertyName="haveMaster" groupName="1" />
 				<if>
 					<equals arg1="${haveMaster}" arg2="true" />
 					<then>
 						<echo message="CS_PRIX is ${CS_PRIX}" />
+						<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
+					</then>
+				</if-->
+				
+				<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost"/>
+				<echo message="${haveMaster}" />
+				<if>
+					<equals arg1="${haveMaster}" arg2="true"/>
+					<then>
+						<echo message="haveMaster is true"/>
 						<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
 					</then>
 				</if>
