@@ -7,15 +7,16 @@
 <!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
 <!--@param ${to.copy.test.log}: If it is true ,then copy the test log for everyone to down them , default is true-->
 <!--@param ${save.testLog.hostname} : If ${to.copy.test.log} is true ,then copy the tar.gz to ${save.testLog.hostname}-->
-<!--@param ${sace.testLog.dir}:If ${to.copy.test.log} is true, then copy the tar.gz to ${save.testLog.dir}-->
+<!--@param ${save.testLog.dir}:If ${to.copy.test.log} is true, then copy the tar.gz to ${save.testLog.dir}-->
+<!--@param ${report.suffix}:this is for long time test, default is NULL-->
 <project name="test-basic-testcases" default="test-basic-testcases">
-
+	
+	 <property name="report.suffix" value="" />
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
-		<delete dir="${testcase.path}/reports" />
+		<delete dir="${testcase.path}/reports${parallel.num}" />
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
-	
 	 <property name="STAF.PATH" value="/usr/local/staf" />
 	 <property name="to.copy.test.log" value="true"/>
 	 <property name="save.testLog.hostname" value="192.168.30.184" />
@@ -24,8 +25,10 @@
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
+			<!--
 			<pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
 			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" />
+			-->
 		</classpath>
 	</taskdef>
 
@@ -33,12 +36,13 @@
 
 	<target name="test-basic-testcases" depends="clean-test-reports">
 		<echo message="Begin test basic testcases..." />
-
+		<!--
 		<taskdef resource="net/sf/antcontrib/antlib.xml">
 			<classpath>
 				<pathelement location="/usr/share/java/ant-contrib.jar" />
 			</classpath>
 		</taskdef>
+		-->
 
 		<mkdir dir="${reports.path}" />
 		<tstamp />
@@ -131,8 +135,8 @@
     <!--set the property name="CS_PRIX" value="~~"-->
     <sdbprefix prefixName="CS_PRIX">
     	 <param name="${host.NAME}" value="${host.NAME}" />
-    	 <param name="${parallel.num}" value="${parallel.num}" />
     	 <param name="${test.case.name}" value="${test.case.name}" />
+    	 <param name="${parallel.num}" value="${parallel.num}" />
     </sdbprefix>
     
 		<!--property name="CS_PRIX" value="${host.NAME}${start_time}${test.case.name}" /-->
@@ -161,7 +165,8 @@
 				<if>
 					<equals arg1="${to.copy.test.log}" arg2="true" />
 					<then>
-						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${sace.testLog.dir}"/>
+						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
+						
 					</then>
 				</if>
 					
@@ -182,6 +187,9 @@
 						<echo message="haveMaster is true"/>
 						<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
 					</then>
+					<else>
+						<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
+					</else>
 				</if>
 				
 			</then>

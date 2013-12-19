@@ -9,6 +9,8 @@ deploy.tar.file.name=deploy.tar.gz
 test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb
 
+save.testLog.hostname=bl465-4
+save.testLog.dir=/opt/jetty/webapps/root
 copy_tar=/test_tar
 target.deploy_tar_gz.ip=bl465-4
 copy.log.path=/test_log

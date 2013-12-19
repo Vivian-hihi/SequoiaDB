@@ -48,7 +48,8 @@
 		</if>
     <echo message="javac srcdir=${source.dir} destdir=${target.dir} debug=true classpath=null fork=yes executable=${javac.base.dir}/java/${jdk.name}/bin/javac " />
 
-		<javac srcdir="${base.path}/src" destdir="${build.dir}" debug="true" classpath="" fork="yes" executable="${javac.base.dir}/java/${jdk.name}/bin/javac">
+		<javac srcdir="${base.path}/src" destdir="${build.dir}" 
+			debug="true" debuglevel="lines,vars,source" classpath="" fork="yes" executable="${javac.base.dir}/java/${jdk.name}/bin/javac">
 			<classpath>
 				<fileset dir="${base.path}/lib" includes="*.jar"/>
 				<pathelement location="${java.driver.jar}"/>

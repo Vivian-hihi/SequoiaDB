@@ -44,7 +44,7 @@ public class createPrefix extends Task{
       	 request += param.getValue() ; 	
       	    
       }
-      request += lineNum ; 
+      //request += lineNum ; 
       	 
       this.getProject().setProperty( this.prefixName  , request.replaceAll( "[-_]" , "") ) ; 
 

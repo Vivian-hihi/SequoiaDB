@@ -22,6 +22,8 @@ import com.ibm.staf.STAFResult;
  */
 public class SdbTest extends Task {
 	private String maxWaitTime = "30m";
+	
+	private boolean getLogBack = true;
 
 	private String hostName = "localhost";
 
@@ -34,6 +36,10 @@ public class SdbTest extends Task {
 	private String antFileName = Integer.toString( (int)(Math.random()*1000) ) ; 
 
 	private List<Parameter> params = new ArrayList<Parameter>();
+	
+	public void setGetLogBack(boolean value){
+		this.getLogBack = value;
+	}
 
 	public void setAntFileName( String value )
 	{
@@ -111,7 +117,7 @@ public class SdbTest extends Task {
 
 			request += " -Dtest.package.name=" + antFileName;
 			request += " -Dreports.path=" + this.remoteReportsPath;
-			request += " -Dparallel.num=" + lineNum;
+			//request += " -Dparallel.num=" + lineNum;
 			request += " -DhostName=" + hostName ;
 
 			for (Parameter param : params) {
@@ -128,13 +134,18 @@ public class SdbTest extends Task {
 			if (result.rc != STAFResult.Ok) {
 				throw new BuildException(STAFResultToString(result));
 			}
-
-			// Staf ${test.machine.no2} FS GET FILE scriptFileName + ".log" TEXT
-			request = "GET FILE " + scriptFileName + lineNum + ".log TEXT";
-			log("exec: staf " + hostName + " FS " + request);
-			result = handle.submit2(hostName, "FS", request);
-
-			log(result.result);
+			
+			if( this.getLogBack ){
+				// Staf ${test.machine.no2} FS GET FILE scriptFileName + ".log" TEXT
+				request = "GET FILE " + scriptFileName + lineNum + ".log TEXT";
+				log("exec: staf " + hostName + " FS " + request);
+				result = handle.submit2(hostName, "FS", request);
+				log(STAFResultToString(result));
+				if (result.rc != STAFResult.Ok) {
+					throw new BuildException(STAFResultToString(result));
+				}
+			}
+			//log(result.result);
 
 			// <echo message="${STAF.PATH}\bin\staf ${test.machine.no2} FS COPY
 			// DIRECTORY
