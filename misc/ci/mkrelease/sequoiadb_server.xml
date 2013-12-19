@@ -54,7 +54,7 @@
         <runProgram>
             <abortOnError>0</abortOnError>
             <program>useradd</program>
-            <programArguments>-d ${installdir} -g ${username}_group  -s /bin/bash ${username}</programArguments>
+            <programArguments> ${username} -d ${installdir} -g ${username}_group  -s /bin/bash </programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
@@ -216,15 +216,6 @@
             <abortOnError>0</abortOnError>
             <program>/etc/init.d/sdbcm</program>
             <programArguments>start</programArguments>
-            <ruleList>
-                <platformTest>
-                    <type>linux</type>
-                </platformTest>
-            </ruleList>
-        </runProgram>
-        <runProgram>
-            <program>sed</program>
-            <programArguments>-i "s@/opt/sequoiadb:/sbin/nologin@/opt/sequoiadb:/bin/bash@g" /etc/passwd</programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>

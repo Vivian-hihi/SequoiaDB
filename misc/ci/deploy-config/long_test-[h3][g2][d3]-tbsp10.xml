@@ -162,7 +162,7 @@
      <echo>end string is ${end_str}</echo>
      
      
-		<property name="math_test" value="1"/>
+		<property name="test_times" value="0"/>
 		<trycatch property="fail_str" reference="bar">
 	  <try>
       <sdbWhile isForever="true">
@@ -172,12 +172,15 @@
     		  </tstamp>
       		<echo>now time is ${nowT_str}</echo>
       		<if>
-      			<equals arg1="${nowT_str}" arg2="${end_str}" />
+      			<!--equals arg1="${nowT_str}" arg2="${end_str}" /-->
+      			<equals arg1="3" arg2="${test_times}" />
       			<then>
       				<echo>fail</echo>
       				<fail>time is ${nowT_str}</fail>
       			</then>
       			<else>
+      				<math result="test_times" datatype="int" operand1="${test_times}" operation="+" operand2="1"/>
+      				<echo message="now begin to test ${test_times}"/>
       				<echo>call the test target---test_target</echo>
       				<antcall target="test_target">
       				</antcall>
