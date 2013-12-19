@@ -52,8 +52,8 @@
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
 		</exec>
 		
-		<echo message="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND find ${copy_tar} -mtime +10 -delete; WORKDIR ${copy_tar} WAIT 30m" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND find ${copy_tar} -mtime +10 -delete; WORKDIR ${copy_tar} WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+		<echo message="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND /usr/bin/find ${copy_tar} -mtime +7 -delete; WORKDIR ${copy_tar} WAIT 30m" />
+		<exec command="${STAF.PATH}\bin\staf LOCAL PROCESS START  SHELL COMMAND /usr/bin/find ${copy_tar} -mtime +7 -delete; WORKDIR ${copy_tar} WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
 			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
 			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
