@@ -225,7 +225,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum1}" />
+				<param name="parallel.num" value="${lineNum1}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -236,7 +236,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum2}" />
+				<param name="parallel.num" value="${lineNum2}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -247,7 +247,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum3}" />
+				<param name="parallel.num" value="${lineNum3}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -258,7 +258,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum4}" />
+				<param name="parallel.num" value="${lineNum4}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -269,7 +269,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum5}" />
+				<param name="parallel.num" value="${lineNum5}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -280,7 +280,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum6}" />
+				<param name="parallel.num" value="${lineNum6}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -291,7 +291,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum7}" />
+				<param name="parallel.num" value="${lineNum7}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -302,7 +302,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum8}" />
+				<param name="parallel.num" value="${lineNum8}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -313,7 +313,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum9}" />
+				<param name="parallel.num" value="${lineNum9}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
@@ -324,7 +324,7 @@
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<parma name="parallel.num" value="${lineNum10}" />
+				<param name="parallel.num" value="${lineNum10}" />
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
