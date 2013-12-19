@@ -5,6 +5,9 @@
 <!--@param ${test.package.name}: The name of test package name,.-->
 <!--@param ${parallel.num}:  The parallel number when parallel in same host.-->
 <!--@param ${excludes.dir.patterns}: A comma- or space-sparated list of patterns of directories that must be excluded.-->
+<!--@param ${to.copy.test.log}: If it is true ,then copy the test log for everyone to down them , default is true-->
+<!--@param ${save.testLog.hostname} : If ${to.copy.test.log} is true ,then copy the tar.gz to ${save.testLog.hostname}-->
+<!--@param ${sace.testLog.dir}:If ${to.copy.test.log} is true, then copy the tar.gz to ${save.testLog.dir}-->
 <project name="test-basic-testcases" default="test-basic-testcases">
 
 	<target name="clean-test-reports" depends="">
@@ -14,6 +17,10 @@
 	</target>
 	
 	 <property name="STAF.PATH" value="/usr/local/staf" />
+	 <property name="to.copy.test.log" value="true"/>
+	 <property name="save.testLog.hostname" value="192.168.30.184" />
+	 <property name="save.testLog.dir" value="/opt/jetty/webapps/root" />
+	 
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${antTask.jar.path}" includes="*.jar" />
@@ -150,6 +157,13 @@
 			<then>
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}]]&gt;&#10;
 					&lt;/failure&gt;&#10;" />
+					
+				<if>
+					<equals arg1="${to.copy.test.log} arg2="true" />
+					<then>
+						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${/opt/jetty/webapps/root}"/>
+					</then>
+				</if>
 					
 				<sdbHaveMaster waitTime="20" propertyName="haveMaster" groupName="1" />
 				<if>
