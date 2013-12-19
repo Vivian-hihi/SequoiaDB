@@ -159,7 +159,7 @@
 					&lt;/failure&gt;&#10;" />
 					
 				<if>
-					<equals arg1="${to.copy.test.log} arg2="true" />
+					<equals arg1="${to.copy.test.log}" arg2="true" />
 					<then>
 						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${sace.testLog.dir}"/>
 					</then>
