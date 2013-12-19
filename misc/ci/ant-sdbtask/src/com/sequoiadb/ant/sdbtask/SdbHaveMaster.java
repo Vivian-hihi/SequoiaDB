@@ -104,7 +104,7 @@ public class SdbHaveMaster extends Task {
 						String isMaster = cur.getNext().get("IsPrimary").toString();
 						
 					
-					System.out.println(isMaster);
+					System.out.println("isMaster is \""+isMaster+"\"");
 						if( isMaster.equals( "true" ) ){
 							System.out.println("true");
 							return true ;
