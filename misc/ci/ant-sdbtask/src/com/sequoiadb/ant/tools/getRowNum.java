@@ -9,9 +9,10 @@ public class getRowNum  extends Task{
 	{
 		this.propertyName = value;
 	}
-	public void executed(){
+	public void execute(){
 		String lineNum = Integer.toString(this.getLocation()
 				.getLineNumber() );
+		System.out.println("line number is "+lineNum);
 		this.getProject().setProperty(this.propertyName, lineNum );
 	}
 
