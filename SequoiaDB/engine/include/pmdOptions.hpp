@@ -23,24 +23,24 @@
 #define PMD_COMMANDS_OPTIONS \
         ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
         ( PMD_OPTION_VERSION, "database version" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configure file path" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_LOGPATH, ",l"), boost::program_options::value<string>(), "log file path" ) \
-        ( PMD_OPTION_DIAGLOGPATH, boost::program_options::value<string>(), "diagnostic log file path" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_DBPATH, ",d"), boost::program_options::value<string>(), "database path" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_IDXPATH, ",i"), boost::program_options::value<string>(), "index path" ) \
-        ( PMD_OPTION_BKUPPATH, boost::program_options::value<string>(), "backup path" ) \
-        ( PMD_OPTION_MAXPOOL, boost::program_options::value<int>(), "max pooled agent,defalut:0" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<string>(), "local service name or port" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_REPLNAME, ",r"), boost::program_options::value<string>(), "replication service name or port" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_SHARDNAME, ",a"), boost::program_options::value<string>(), "sharding service name or port" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_CATANAME, ",x"), boost::program_options::value<string>(), "catalog service name or port" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_RESTNAME, ",s"), boost::program_options::value<string>(), "REST service name or port" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_DIAGLEVEL, ",v"), boost::program_options::value<int>(), "diag level,default:3,value range:[0-5]" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_ROLE, ",o"), boost::program_options::value<string>(), "role of the node (data/coord/catalog/standalone)" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_CATALOG_ADDR, ",t"), boost::program_options::value<string>(), "catalog addr (hostname1:servicename1,hostname2:servicename2,...)" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_LOGFILESZ, ",f"), boost::program_options::value<int>(), "log file size(MB),default:64,value range:[64,2048]" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_LOGFILENUM, ",n"), boost::program_options::value<int>(), "number of log files,default:20, value range:[1,60000]" ) \
-        ( PMD_COMMANDS_STRING (PMD_OPTION_TRANSACTIONON, ",e"), boost::program_options::value<string>(), "turn on transaction, default:FALSE" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_CONFPATH, ",c"), boost::program_options::value<str>(), "configure file path" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_LOGPATH, ",l"), boost::program_options::value<str>(), "log file path" ) \
+        ( PMD_OPTION_DIAGLOGPATH, boost::program_options::value<str>(), "diagnostic log file path" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_DBPATH, ",d"), boost::program_options::value<str>(), "database path" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_IDXPATH, ",i"), boost::program_options::value<str>(), "index path" ) \
+        ( PMD_OPTION_BKUPPATH, boost::program_options::value<str>(), "backup path" ) \
+        ( PMD_OPTION_MAXPOOL, boost::program_options::value<str>(), "max pooled agent,defalut:0" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_SVCNAME, ",p"), boost::program_options::value<str>(), "local service name or port" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_REPLNAME, ",r"), boost::program_options::value<str>(), "replication service name or port" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_SHARDNAME, ",a"), boost::program_options::value<str>(), "sharding service name or port" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_CATANAME, ",x"), boost::program_options::value<str>(), "catalog service name or port" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_RESTNAME, ",s"), boost::program_options::value<str>(), "REST service name or port" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_DIAGLEVEL, ",v"), boost::program_options::value<num>(), "diag level,default:3,value range:[0-5]" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_ROLE, ",o"), boost::program_options::value<str>(), "role of the node (data/coord/catalog/standalone)" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_CATALOG_ADDR, ",t"), boost::program_options::value<str>(), "catalog addr (hostname1:servicename1,hostname2:servicename2,...)" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_LOGFILESZ, ",f"), boost::program_options::value<num>(), "log file size(MB),default:64,value range:[64,2048]" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_LOGFILENUM, ",n"), boost::program_options::value<num>(), "number of log files,default:20, value range:[1,60000]" ) \
+        ( PMD_COMMANDS_STRING (PMD_OPTION_TRANSACTIONON, ",e"), boost::program_options::value<boolean>(), "turn on transaction, default:FALSE" ) \
         ( PMD_OPTION_NUMPRELOAD, boost::program_options::value<int>(), "number of pre-loaders,default:0,value range:[0,100]" ) \
         ( PMD_OPTION_MAX_PREF_POOL, boost::program_options::value<int>(), "maximum number of prefetchers, default:200, value range:[0,1000]" ) \
         ( PMD_OPTION_MAX_SUB_QUERY, boost::program_options::value<int>(), "maximum number of query's sub-query, default:10, min value is 0, max value can't more than param 'maxprefpool'" ) \
