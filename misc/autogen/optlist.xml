@@ -22,16 +22,21 @@
          <cn>帮助</cn>
       </description>
       <type>none</type>
+      <detail>
+         <en>Print help information</en>
+         <cn>打印帮助</cn>
+      </detail>
+      <typeofweb>--</typeofweb>
    </opt>
 
    <opt>
       <name>PMD_OPTION_VERSION</name>
       <long>version</long>
+      <type>none</type>
       <description>
          <en>database version</en>
          <cn>数据库版本</cn>
       </description>
-      <type>none</type>
    </opt>
 
    <opt>
@@ -42,6 +47,17 @@
          <en>configure file path</en>
          <cn>配置文件路径</cn>
       </description>
+      <detail>
+         <en>1. Specified configuration file path (doesn't contain fiel name). The system will find <i>sdb.conf </i>under confpath.<fig></fig>
+             2. <i>sdb.conf</i>contains necessary configuration items. The format of a configuration item is "parameter name=value" like "svcname=50000" and "diaglevel=3".<fig></fig>
+             3. If this parameter is not specified, system will automatically search for sdb.conf in current path.<fig></fig>
+             4. There may not be sdb.conf.</en>
+         <cn>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。<fig></fig>
+             2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=50000；diaglevel=3<fig></fig>
+             3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。<fig></fig>
+             4.sdb.conf可以不存在。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -52,6 +68,13 @@
          <en>log file path</en>
          <cn>日志文件路径</cn>
       </description>
+      <detail>
+         <en>1. Synchronous log file willbe generated when replication node does full sync. This parameter is used to specified the path of  synchronous log file.<fig></fig>
+             2. If it is not specified, the default path is "Data file path/replicalog".</en>
+         <cn>1.副本节点在进行数据同步时会生成同步日志。此参数用来指定同步日志的路径。<fig></fig>
+             2.如果不指定，则默认路径为：数据文件路径/replicalog</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -61,6 +84,13 @@
          <en>diagnostic log file path</en>
          <cn>诊断日志文件路径</cn>
       </description>
+      <detail>
+         <en>1. It specifies the catalog of diagnostic log. <fig></fig>
+             2. If it is not specified, the default path is "Data file path/diaglog".</en>
+         <cn>1.指定诊断日志存放目录。<fig></fig>
+             2.如果不指定，则默认为：数据文件路径/diaglog</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -75,6 +105,12 @@
       <coorddft>/opt/sequoiadb/database/coord</coorddft>
       <datadft>/opt/sequoiadb/database/data</datadft>
       <standdft>/opt/sequoiadb/database/standalone</standdft>
+      <detail>
+         <en>1. It specifies the path of data file.<fig></fig>
+             2. If it is not specified, the default path is current path.</en>
+         <cn>1.指定数据文件存放路径。<fig></fig>2.如果不指定，则默认为当前路径。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -85,6 +121,7 @@
          <en>index path</en>
          <cn>索引路径</cn>
       </description>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -94,17 +131,32 @@
          <en>backup path</en>
          <cn>备份路径</cn>
       </description>
+      <detail>
+          <en>1. It specifies the catalog of backup file.<fig></fig>
+              2. If it is not specified, the default path is "Data file path/bakfile".</en>
+          <cn>1.指定备份文件生成目录。<fig></fig>
+              2.如果不指定，则默认为：数据文件路径/bakfile</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
       <name>PMD_OPTION_MAXPOOL</name>
       <long>maxpool</long>
+      <typeofweb>str</typeofweb>
       <description>
          <en>max pooled agent,defalut:0</en>
          <cn>最大代理线程池,默认值为0</cn>
       </description>
       <type>int</type>
       <default>0</default>
+      <detail>
+         <en>1. It specifies the amount of thread in thread pool.<fig></fig>
+             2. If it is not specified, the default value is 0.</en>
+         <cn>1.指定线程池内线程数量。<fig></fig>
+             2.如果不指定，则默认为0。</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
    </opt>
 
    <opt>
@@ -119,6 +171,13 @@
       <coorddft>50000</coorddft>
       <datadft>51000</datadft>
       <standdft>50000</standdft>
+      <detail>
+         <en>1. It specifies local service port.<fig></fig>
+             2. If it is not specified, the default value are 50000 for coord, 60000 for catalog, 51000 for datanode.</en>
+         <cn>1.指定本地服务端口。<fig></fig>
+             2.如果不指定则默认为50000端口用于编目节点，60000用于协调节点，51000用于数据节点。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -133,6 +192,13 @@
       <coorddft>50001</coorddft>
       <datadft>51001</datadft>
       <standdft>50001</standdft>
+      <detail>
+         <en>1. It specifies data synch port.<fig></fig>
+             2. If it is not specified, the default value is "svcname+1".</en>
+         <cn>1.指定数据同步平面端口。<fig></fig>
+             2.如果不指定则默认为svcname+1。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -147,6 +213,13 @@
       <coorddft>50002</coorddft>
       <datadft>51002</datadft>
       <standdft>50002</standdft>
+      <detail>
+         <en>1. It specifies shard port.<fig></fig>
+             2. If it is not specified, the default value is "svcname+2".</en>
+         <cn>1.指定shard平面端口。<fig></fig>
+             2.如果不指定则默认为svcname+2。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -161,6 +234,13 @@
       <coorddft>50003</coorddft>
       <datadft>51003</datadft>
       <standdft>50003</standdft>
+      <detail>
+         <en>1. It specifies catalog port.<fig></fig>
+             2. If it is not specified, the default value is "svcname+3".</en>
+         <cn>1.指定catalog平面端口。<fig></fig>
+             2.如果不指定则默认为svcname+3。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -175,6 +255,13 @@
       <coorddft>50004</coorddft>
       <datadft>51004</datadft>
       <standdft>50004</standdft>
+      <detail>
+         <en>1. It specifies http port.<fig></fig>
+             2. If it is not specified, the default value is "svcname+4".</en>
+         <cn>1.指定http端口。<fig></fig>
+             2.如果不指定则默认为svcname+4。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -187,6 +274,12 @@
       </description>
       <type>int</type>
       <default>3</default>
+      <detail>
+         <en>1. It specifies the print level of diagnostic log. Diagnostic log in sequoiaDB, 0-5 respectively represent: SEVERE, ERROR, EVENT,WARNING, INFO, DEBUG.<fig></fig>
+             2. If it is not specified, the default value is "WARNING".</en>
+         <cn>1.指定诊断日志打印级别。SequoiaDB中诊断日志从0-5分别代表：SEVERE, ERROR, EVENT, WARNING, INFO, DEBUG。<fig></fig>             2.如果不指定，则默认为WARNING。</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
    </opt>
 
    <opt>
@@ -202,6 +295,13 @@
       <coorddft>coord</coorddft>
       <datadft>data</datadft>
       <standdft>standalone</standdft>
+      <detail>
+         <en>1. It specifies serving role. In sequoiaDB, "data/coord/catalog/standalone" represents "data node/coord node/catalog node/stand-alone machine".<fig></fig>
+             2. If it is not specified, the default value is "standalone".</en>
+         <cn>1.指定服务角色。SequoiaDB分别以data/coord/catalog/standalone代表：数据节点/协调节点/编目节点/单机。 <fig></fig>
+             2.如果不指定则默认为单机。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -215,6 +315,13 @@
       <catalogdft>localhost:60003</catalogdft>
       <!--coorddft>localhost:60003</coorddft-->
       <datadft>localhost:60003</datadft>
+      <detail>
+         <en>1. It specifies the address of catalog node. The format is "hostname1:catalogname1,hostname2:catalogname2,...".<fig></fig>
+             2. It should specify address of at least one catalog.</en>
+         <cn>1.指定编目节点的地址。配置形式为"hostname1:catalogname1,hostname2:catalogname2,..."。<fig></fig>
+             2.需要至少指定一个编目节点的地址。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -225,8 +332,15 @@
          <en>log file size(MB),default:64,value range:[64,2048]</en>
          <cn>日志文件尺寸(MB),默认值:64,取值范围:[64,2048]</cn>
       </description>
-      <default>64</default>
       <type>int</type>
+      <default>64</default>
+      <detail>
+         <en>1. It specifies the size of sync log file. It is between 64(MB) and 2048(MB).<fig></fig>
+             2. If it is not specified, the default value is 64 (MB).</en>
+         <cn>1.指定同步日志文件的大小。合法输入为64（MB）- 2048（MB）。<fig></fig>
+             2.如果不指定，则默认为64（MB）。</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
    </opt>
 
    <opt>
@@ -237,8 +351,15 @@
          <en>number of log files,default:20, value range:[1,60000]</en>
          <cn>日志文件数量,默认值:1,取值范围:[1,60000]</cn>
       </description>
-      <default>20</default>
       <type>int</type>
+      <default>20</default>
+      <detail>
+          <en>1. It specifies the amount of synchronous log file.<fig></fig>
+              2. If it is not specified, the default value is 20.</en>
+          <cn>1.指定同步日志文件的数量。<fig></fig>
+              2.如果不指定，则默认为20。</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
    </opt>
 
    <opt>
@@ -250,6 +371,12 @@
          <cn>是否打开事务功能,默认为:FALSE</cn>
       </description>
       <default>false</default>
+      <detail>
+         <en>1. It specifies whether transaction turns on or not.<fig></fig>
+             2. If it is not specifed, the default value is false.</en>
+         <cn>1.指定是否打开事务。<fig></fig>2.如果不指定，则默认为false。</cn>
+      </detail>
+      <typeofweb>boolean</typeofweb>
    </opt>
 
    <opt>

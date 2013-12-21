@@ -3,6 +3,7 @@
 #include "optgen.h"
 #include "tracegen.h"
 #include "buildgen.h"
+#include "dbConfForWeb.h"
 #include <iostream>
 using std::cout;
 using std::endl;
@@ -49,10 +50,13 @@ static void genDoc ()
    for ( int i = 0; i < LANG_MAX; ++i )
    {
       RCGen xml ( pLang[i] ) ;
+      OptGenForWeb optForWeb ( pLang[i] ) ;
       // generate document for english and chinese
       xml.genDoc() ;
       // generate web console for english and chinese
       xml.genWeb() ;
+      // generate database options for english and chinese
+      optForWeb.run () ;
    }
 }
 
@@ -66,6 +70,7 @@ static void genFileName ()
 {
    FileNameGen::genList() ;
 }
+
 int main (int argc, char** argv)
 {
    if ( ( 2 == argc && argv[1][0] == '?' ) ||
