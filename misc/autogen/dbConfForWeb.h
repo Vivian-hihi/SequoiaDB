@@ -8,8 +8,8 @@
 #include <boost/foreach.hpp>
 
 // xml source file
-//#define OPTXMLSRCFILE "optlist.xml"
-#define OPTXMLSRCFILE "newoptlist.xml"
+#define OPTXMLSRCFILE "optlist.xml"
+//#define OPTXMLSRCFILE "newoptlist.xml"
 
 // output file path
 #define DBCONFFORWEBPATH "../../doc/administration/database/topics/runtime_configuration"
