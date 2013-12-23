@@ -1160,7 +1160,9 @@ namespace engine
       }
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCREATECLCOMMAND, rc ) ;
       return rc ;
    error_rollback :
@@ -1215,7 +1217,9 @@ namespace engine
 
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCREATEINDEXCOMMAND, rc ) ;
       return rc ;
    error :
@@ -1227,7 +1231,8 @@ namespace engine
                                BSONElement &identifier,
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
-                               SDB_DPSCB *dpsCB )
+                               SDB_DPSCB *dpsCB,
+                               BOOLEAN sysCall )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
@@ -1256,12 +1261,12 @@ namespace engine
       if ( identifier.type() == jstOID )
       {
          identifier.Val(oid) ;
-         rc = su->dropIndex ( pCollectionShortName, oid, cb, dpsCB ) ;
+         rc = su->dropIndex ( pCollectionShortName, oid, cb, dpsCB, sysCall ) ;
       }
       else if ( identifier.type() == String )
       {
          rc = su->dropIndex ( pCollectionShortName, identifier.valuestr(),
-                              cb, dpsCB ) ;
+                              cb, dpsCB, sysCall ) ;
       }
       else
       {
@@ -1279,7 +1284,9 @@ namespace engine
       apm->invalidatePlans ( pCollectionShortName ) ;
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNDROPINDEXCOMMAND, rc ) ;
       return rc ;
    error :
@@ -1303,8 +1310,6 @@ namespace engine
       SINT64 contextID = -1 ;
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" )
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
-      CHAR databasePath [ OSS_MAX_PATHSIZE ] ;
-      ossMemset ( databasePath, 0, sizeof(databasePath)) ;
       // make sure the collectionspace length is not out of range
       UINT32 length = ossStrlen ( pCollectionSpace ) ;
       if ( length <= 0 || length > DMS_SU_NAME_SZ )
@@ -1397,7 +1402,9 @@ namespace engine
 
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNDROPCLCOMMAND, rc ) ;
       return rc ;
    error :
@@ -1422,7 +1429,9 @@ namespace engine
       }
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNTESTCSCOMMAND, rc ) ;
       return rc ;
    error :
@@ -1457,7 +1466,9 @@ namespace engine
       }
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNTESTCLCOMMAND, rc ) ;
       return rc ;
    error :

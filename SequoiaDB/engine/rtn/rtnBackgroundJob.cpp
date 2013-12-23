@@ -416,7 +416,7 @@ namespace engine
             break ;
          case RTN_JOB_DROP_INDEX :
             rc = rtnDropIndexCommand( _clFullName, _indexEle, eduCB(),
-                                      _dmsCB, _dpsCB ) ;
+                                      _dmsCB, _dpsCB, TRUE ) ;
             break ;
          default :
             PD_LOG ( PDERROR, "Index job not support this type[%d]", _type ) ;
