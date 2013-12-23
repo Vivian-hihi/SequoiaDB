@@ -304,7 +304,8 @@ namespace engine
                                BSONElement &identifier,
                                pmdEDUCB *cb,
                                SDB_DMSCB *dmsCB,
-                               SDB_DPSCB *dpsCB ) ;
+                               SDB_DPSCB *dpsCB,
+                               BOOLEAN sysCall = FALSE ) ;
 
    INT32 rtnGetCount ( const CHAR *pCollection,
                        const BSONObj &matcher,
