@@ -47,8 +47,8 @@
 #define XMLDTD             "<!DOCTYPE topic PUBLIC \"-//OASIS//DTD DITA Topic//EN\" \"topic.dtd\">"
 #define XMLCOMMENT         "id=\"runtime_table\" frame=\"all\" relcolwidth=\"1.43* 1.0*1.18*11.41*\""
 
-#define NOTEINFO1          "SequoiaDB支持命令方式行及配置文件方式。\
-当两种方式并存时，命令行参数将会覆盖配置文件中相同的配置项。"
+#define NOTEINFO1          "SequoiaDB支持命令行方式及配置文件方式。\
+当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。"
 #define NOTEINFO1_EN       "SequoiaDB supports setting configuration \
 with command line, configuration file, or both of them. When both of \
 them are used, parameters in command line will overwrite those in \
