@@ -117,7 +117,7 @@ public class SdbTest extends Task {
 
 			request += " -Dtest.package.name=" + antFileName;
 			request += " -Dreports.path=" + this.remoteReportsPath;
-			//request += " -Dparallel.num=" + lineNum;
+			request += " -Dparallel.num=" + lineNum;
 			request += " -DhostName=" + hostName ;
 
 			for (Parameter param : params) {

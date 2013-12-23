@@ -220,112 +220,112 @@
        <format property="now_time_str" pattern="M-d"  locale="en.GB"/>
     </tstamp>
 		<parallel>
-			<getRowNum propertyName="lineNum1" />
+			<!--getRowNum propertyName="lineNum1" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum1}" />
+				<!--param name="parallel.num" value="${lineNum1}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum2" />
+			<!--getRowNum propertyName="lineNum2" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum2}" />
+				<!--param name="parallel.num" value="${lineNum2}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum3" />
+			<!--getRowNum propertyName="lineNum3" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum3}" />
+				<!--param name="parallel.num" value="${lineNum3}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum4" />
+			<!--getRowNum propertyName="lineNum4" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum4}" />
+				<!--param name="parallel.num" value="${lineNum4}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum5" />
+			<!--getRowNum propertyName="lineNum5" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum5}" />
+				<!--param name="parallel.num" value="${lineNum5}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum6" />
+			<!--getRowNum propertyName="lineNum6" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum6}" />
+				<!--param name="parallel.num" value="${lineNum6}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum7" />
+			<!--getRowNum propertyName="lineNum7" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum7}" />
+				<!--param name="parallel.num" value="${lineNum7}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum8" />
+			<!--getRowNum propertyName="lineNum8" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum8}" />
+				<!--param name="parallel.num" value="${lineNum8}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum9" />
+			<!--getRowNum propertyName="lineNum9" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum9}" />
+				<!--param name="parallel.num" value="${lineNum9}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
-			<getRowNum propertyName="lineNum10" />
+			<!--getRowNum propertyName="lineNum10" /-->
 			<sdbtest getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="parallel.num" value="${lineNum10}" />
+				<!--param name="parallel.num" value="${lineNum10}" /-->
 				<param name="to.copy.test.log" value="false" />
 				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
