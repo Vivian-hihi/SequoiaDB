@@ -214,8 +214,7 @@ srcFiles = [ "ossUtil.c",
              "filenamegen.cpp",
              "optgen.cpp",
              "buildgen.cpp",
-             "tracegen.cpp",
-             "dbConfForWeb.cpp" ]
+             "tracegen.cpp"]
 autogen = env.Program( "autogen", srcFiles )
 cmd = "bin" + os.sep + "autogen "
 run = env.Command ( target = language, source = autogen, action = cmd + language )
