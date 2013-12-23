@@ -50,7 +50,7 @@ using namespace bson ;
 namespace engine
 {
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL1, "rtnDelete" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL1, "rtnDelete" )
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      INT64 *pDelNum )
@@ -77,7 +77,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL2, "rtnDelete" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDEL2, "rtnDelete" )
    INT32 rtnDelete ( const CHAR *pCollectionName, const BSONObj &deletor,
                      const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
                      SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
@@ -224,7 +224,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRAVERDEL, "rtnTraversalDelete" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRAVERDEL, "rtnTraversalDelete" )
    INT32 rtnTraversalDelete ( const CHAR *pCollectionName,
                               const BSONObj &key,
                               const CHAR *pIndexName,
