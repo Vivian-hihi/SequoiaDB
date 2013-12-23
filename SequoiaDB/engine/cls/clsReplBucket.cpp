@@ -62,7 +62,11 @@ namespace engine
       ( len + sizeof(UINT32) + sizeof(ossValuePtr) )
 
    #define CLS_REPLSYNC_ONCE_NUM             (5)
-   #define CLS_REPL_BUCKET_MAX_MEM_POOL      (5*1024*1024*1024)
+#if defined OSS_ARCH_64
+   #define CLS_REPL_BUCKET_MAX_MEM_POOL      (5*1024)          // MB
+#elif defined OSS_ARCH_32
+   #define CLS_REPL_BUCKET_MAX_MEM_POOL      (512)             // MB
+#endif
 
    /*
       _clsBucketUnit implement
@@ -312,6 +316,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *pNewData = NULL ;
       UINT32 newLen = 0 ;
+      static const UINT64 sMaxMemSize =
+         (UINT64)CLS_REPL_BUCKET_MAX_MEM_POOL << 20 ;
 
       if ( index >= _bucketSize )
       {
@@ -329,7 +335,7 @@ namespace engine
 
       if ( newMem )
       {
-         while ( _memPool.totalSize() > (UINT64)CLS_REPL_BUCKET_MAX_MEM_POOL )
+         while ( _memPool.totalSize() > sMaxMemSize )
          {
             if ( SDB_OK == _emptyEvent.wait( 10 ) )
             {
