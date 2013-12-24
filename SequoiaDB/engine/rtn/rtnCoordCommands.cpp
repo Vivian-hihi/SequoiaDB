@@ -5784,7 +5784,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *pKRCB                   = pmdGetKRCB () ;
-      SDB_RTNCB *pRtncb                = pKRCB->getRTNCB() ;
       CoordCB *pCoordcb                = pKRCB->getCoordCB () ;
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent () ;
       rtnCoordProcesserFactory *pFactory = pCoordcb->getProcesserFactory() ;
