@@ -639,7 +639,8 @@ namespace engine
          pSession = it->second ;
 
          // need to attach meta
-         if ( !pSession->getMeta() && NET_INVALID_HANDLE != handle )
+         if ( !pSession->getMeta() && pSession->canAttachMeta() &&
+              NET_INVALID_HANDLE != handle )
          {
             _attachSessionMeta( type, pSession, handle ) ;
          }
@@ -679,7 +680,8 @@ namespace engine
                pSession->sessionName(), startType ) ;
 
       // attach meta
-      if ( !pSession->getMeta() && NET_INVALID_HANDLE != handle )
+      if ( !pSession->getMeta() && pSession->canAttachMeta() &&
+           NET_INVALID_HANDLE != handle )
       {
          rc = _attachSessionMeta( type, pSession, handle ) ;
          if ( rc )

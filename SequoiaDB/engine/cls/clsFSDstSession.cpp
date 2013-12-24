@@ -1453,6 +1453,16 @@ namespace engine
       return EDU_TYPE_SHARDAGENT ;
    }
 
+   BOOLEAN _clsSplitDstSession::canAttachMeta () const
+   {
+      if ( ( _pTask && CLS_TASK_STATUS_FINISH == _pTask->status() ) ||
+           STEP_NONE != _step )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLDS_ONATH, "_clsSplitDstSession::_onAttach" )
    void _clsSplitDstSession::_onAttach ()
    {
