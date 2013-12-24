@@ -279,6 +279,7 @@ namespace engine
       public:
 
          virtual RTN_CONTEXT_TYPE getType () const = 0 ;
+         virtual _dmsStorageUnit*  getSU () = 0 ;
 
       protected:
          void              _onDataEmpty () ;
@@ -358,7 +359,6 @@ namespace engine
          _rtnIXScanner*    getIXScanner () { return _scanner ; }
          optScanType       scanType () const { return _scanType ; }
          _dmsMBContext*    getMBContext () { return _mbContext ; }
-         _dmsStorageUnit*  getSU () { return _su ; }
          _optAccessPlan*   getPlan () { return _plan ; }
 
          dmsExtentID       lastExtLID () const { return _lastExtLID ; }
@@ -377,6 +377,7 @@ namespace engine
 
       public:
          virtual RTN_CONTEXT_TYPE getType () const ;
+         virtual _dmsStorageUnit*  getSU () { return _su ; }
 
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
@@ -502,6 +503,7 @@ namespace engine
       public:
 
          virtual RTN_CONTEXT_TYPE getType () const ;
+         virtual _dmsStorageUnit*  getSU () { return NULL ; }
 
          INT32 open( _qgmPlanContainer *accPlan ) ;
 
@@ -531,6 +533,7 @@ namespace engine
       public:
 
          virtual RTN_CONTEXT_TYPE getType () const ;
+         virtual _dmsStorageUnit*  getSU () { return NULL ; }
 
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
@@ -639,6 +642,7 @@ namespace engine
       public:
 
          virtual RTN_CONTEXT_TYPE getType () const ;
+         virtual _dmsStorageUnit*  getSU () { return NULL ; }
 
          inline  BOOLEAN requireOrder () const ;
 
@@ -704,6 +708,7 @@ namespace engine
 
    public:
       virtual RTN_CONTEXT_TYPE getType () const ;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
       INT32 open( _spdSession *sp ) ;
 
    protected:
@@ -752,6 +757,8 @@ namespace engine
       _rtnContextMainCL( SINT64 contextID, UINT64 eduID ) ;
       ~_rtnContextMainCL();
       virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
+
       INT32 open( const bson::BSONObj & orderBy,
                   INT64 numToReturn,
                   INT64 numToSkip );
@@ -793,6 +800,8 @@ namespace engine
 
    public:
       virtual RTN_CONTEXT_TYPE getType () const ;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
+
       INT32 open( _qgmPlan *qp ) ;
 
    protected:
