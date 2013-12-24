@@ -173,8 +173,8 @@
     		  </tstamp>
       		<echo>now time is ${nowT_str}</echo>
       		<if>
-      			<!--equals arg1="${nowT_str}" arg2="${end_str}" /-->
-      			<equals arg1="3" arg2="${test_times}" />
+      			<equals arg1="${nowT_str}" arg2="${end_str}" />
+      			<!--equals arg1="3" arg2="${test_times}" /-->
       			<then>
       				<echo>fail</echo>
       				<echo>test_times is ${test_times}</echo>
