@@ -119,6 +119,7 @@ namespace engine
 
          virtual void clear() ;
          virtual const CHAR *sessionName () const ;
+         virtual BOOLEAN canAttachMeta() const { return TRUE ; }
 
          void* copyMsg ( const CHAR *msg, UINT32 length ) ;
          INT32 waitAttach () ;

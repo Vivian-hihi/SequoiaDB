@@ -189,6 +189,7 @@ namespace engine
       public:
          virtual INT32 type () const ;
          virtual EDU_TYPES eduType () const ;
+         virtual BOOLEAN canAttachMeta() const ;
 
       //message fuction
       protected:
