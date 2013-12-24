@@ -613,7 +613,7 @@ namespace engine
    {
       INT32 rc                     = SDB_OK ;
       BOOLEAN getContext           = FALSE ;
-      dmsExtent *pExtent           = NULL ;
+      //dmsExtent *pExtent           = NULL ;
       recordNum                    = 0 ;
 
       if ( NULL == context )
