@@ -1335,8 +1335,8 @@ namespace engine
 
             // get each context
             rtnContext *ctx = rtnCB->contextFind ( contextID ) ;
-            // if context doesn't exist or there's not data context
-            if ( !ctx || RTN_CONTEXT_DATA != ctx->getType() )
+            // if context doesn't exist or has not dmsStorageUnit
+            if ( !ctx || NULL == ctx->getSU() )
             {
                continue ;
             }
@@ -1344,7 +1344,7 @@ namespace engine
             // note since everyone must wait for lock before deleting su, since this
             // session is holding SU, that means no other sessions are allowed to remove
             // su and the moment, that means it's safe to directly call ctx->_su->CSName
-            if ( ossStrncmp ( ((rtnContextData*)ctx)->getSU()->CSName(),
+            if ( ossStrncmp ( ctx->getSU()->CSName(),
                               pCollectionSpace, DMS_SU_NAME_SZ ) == 0 )
             {
                // if the su is held by myself, i have to kill the context from global
@@ -1406,6 +1406,44 @@ namespace engine
          dmsCB->suUnlock ( suID ) ;
       }
       PD_TRACE_EXITRC ( SDB_RTNDROPCLCOMMAND, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRUNCCLCOMMAND, "rtnTruncCollectionCommand" )
+   INT32 rtnTruncCollectionCommand( const CHAR *pCollection, pmdEDUCB *cb,
+                                    SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNTRUNCCLCOMMAND ) ;
+      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      SDB_ASSERT ( pCollection, "collection can't be NULL" )
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      dmsStorageUnit *su = NULL ;
+      const CHAR *pCollectionShortName = NULL ;
+      rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
+                                             &pCollectionShortName, suID ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
+                  pCollection ) ;
+         goto error ;
+      }
+
+      rc = su->data()->truncateCollection( pCollectionShortName, cb, dpsCB ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to truncate collection %s", pCollection ) ;
+         goto error ;
+      }
+
+   done :
+      if ( DMS_INVALID_CS != suID )
+      {
+         dmsCB->suUnlock ( suID ) ;
+      }
+      PD_TRACE_EXITRC ( SDB_RTNTRUNCCLCOMMAND, rc ) ;
       return rc ;
    error :
       goto done ;
