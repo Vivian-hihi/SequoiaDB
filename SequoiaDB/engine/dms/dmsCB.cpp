@@ -408,7 +408,6 @@ namespace engine
          }
       }
 
-   done :
       if ( locked )
       {
          _stateMtx.release() ;
