@@ -293,6 +293,11 @@ namespace engine
                                     SDB_DMSCB *dmsCB,
                                     SDB_DPSCB *dpsCB ) ;
 
+   INT32 rtnTruncCollectionCommand( const CHAR *pCollection,
+                                    _pmdEDUCB *cb,
+                                    SDB_DMSCB *dmsCB,
+                                    SDB_DPSCB *dpsCB ) ;
+
    INT32 rtnDropCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                          _pmdEDUCB *cb,
                                          SDB_DMSCB *dmsCB,
