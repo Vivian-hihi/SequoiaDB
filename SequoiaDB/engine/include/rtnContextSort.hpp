@@ -49,6 +49,7 @@ namespace engine
 
    public:
       virtual RTN_CONTEXT_TYPE getType() const ;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
 
       INT32 open( const BSONObj &orderBy,
                   rtnContext *context,
