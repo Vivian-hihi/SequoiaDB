@@ -2738,7 +2738,7 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                       FIELD_NAME_PATH, rc ) ;
          rc = rtnGetStringElement( matcher, FIELD_NAME_NAME, &_backupName ) ;
-         if ( rc = SDB_FIELD_NOT_EXIST )
+         if ( SDB_FIELD_NOT_EXIST == rc )
          {
             rc = SDB_OK ;
          }
