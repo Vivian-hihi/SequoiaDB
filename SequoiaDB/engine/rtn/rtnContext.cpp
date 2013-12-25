@@ -1418,7 +1418,7 @@ namespace engine
          if ( 2 != count )
          {
             rc = SDB_INVALIDARG ;
-            PD_LOG( PDERROR, "RID array size[%d] if not 2", count ) ;
+            PD_LOG( PDERROR, "RID array size[%d] is not 2", count ) ;
             goto error ;
          }
       }
