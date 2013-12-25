@@ -46,7 +46,7 @@ namespace engine
 {
    const UINT32 NET_MSG_MAX_LEN = 1024 * 1024 * 512 ;
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_REMOTEADDR, "remoteAddr" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_REMOTEADDR, "remoteAddr" )
    static string remoteAddr( const tcp::socket &sock )
    {
       PD_TRACE_ENTRY ( SDB_REMOTEADDR );
@@ -64,7 +64,7 @@ namespace engine
       return addr ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_REMOTEPORT, "remotePort" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_REMOTEPORT, "remotePort" )
    static UINT32 remotePort( const tcp::socket &sock )
    {
       PD_TRACE_ENTRY ( SDB_REMOTEPORT );
@@ -104,7 +104,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SETOPT, "_netEventHandler::setOpt" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SETOPT, "_netEventHandler::setOpt" )
    void _netEventHandler::setOpt()
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SETOPT );
@@ -168,7 +168,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SYNCCONN, "_netEventHandler::syncConnect" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SYNCCONN, "_netEventHandler::syncConnect" )
    INT32 _netEventHandler::syncConnect( const CHAR *hostName,
                                         const CHAR *serviceName )
    {
@@ -275,12 +275,11 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_ASYNCRD, "_netEventHandler::asyncRead" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_ASYNCRD, "_netEventHandler::asyncRead" )
    void _netEventHandler::asyncRead()
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND_ASYNCRD );
-      if ( NET_EVENT_HANDLER_STATE_HEADER ==
-           _state )
+      if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
          async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
                      boost::bind(&_netEventHandler::_readCallback,
@@ -292,9 +291,8 @@ namespace engine
          UINT32 len = _header.messageLength ;
          if ( SDB_OK != _allocateBuf( len ) )
          {
-
             close() ;
-            _frame->handleClose( shared_from_this(), _id) ;
+            _frame->handleClose( shared_from_this(), _id ) ;
             _frame->_erase( handle() ) ;
             goto done ;
          }
@@ -302,17 +300,17 @@ namespace engine
          async_read( _sock, buffer((CHAR *)((ossValuePtr)_buf +
                                             sizeof(_MsgHeader)),
                                     len - sizeof(_MsgHeader)),
-                     boost::bind(&_netEventHandler::_readCallback,
-                                 shared_from_this(),
-                                 boost::asio::placeholders::error )) ;
+                     boost::bind( &_netEventHandler::_readCallback,
+                                  shared_from_this(),
+                                  boost::asio::placeholders::error ) ) ;
       }
 
    done:
-      PD_TRACE_EXIT ( SDB__NETEVNHND_ASYNCRD );
+      PD_TRACE_EXIT ( SDB__NETEVNHND_ASYNCRD ) ;
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SYNCSND, "_netEventHandler::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SYNCSND, "_netEventHandler::syncSend" )
    INT32 _netEventHandler::syncSend( const void *buf,
                                      UINT32 len )
    {
@@ -329,13 +327,13 @@ namespace engine
       }
       catch ( boost::system::system_error &e )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to send to node :%d, %d, %d, %s", _id.columns.groupID,
-              _id.columns.nodeID, _id.columns.serviceID,
-              e.what() ) ;
+         PD_LOG( PDERROR, "Failed to send to node :%d, %d, %d, %s",
+                 _id.columns.groupID, _id.columns.nodeID,
+                 _id.columns.serviceID, e.what() ) ;
          rc = SDB_NET_SEND_ERR ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__NETEVNHND_SYNCSND, rc );
       return rc ;
@@ -343,7 +341,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND__ALLOBUF, "_netEventHandler::_allocateBuf" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND__ALLOBUF, "_netEventHandler::_allocateBuf" )
    INT32 _netEventHandler::_allocateBuf( UINT32 len )
    {
       INT32 rc = SDB_OK ;
@@ -358,13 +356,13 @@ namespace engine
          _buf = (CHAR *)SDB_OSS_MALLOC( len ) ;
          if ( NULL == _buf )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "mem allocate failed" ) ;
+            PD_LOG( PDERROR, "mem allocate failed" ) ;
             rc = SDB_OOM ;
             goto error ;
          }
          _bufLen = len ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__NETEVNHND__ALLOBUF, rc );
       return rc ;
@@ -372,7 +370,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND__RDCALLBK, "_netEventHandler::_readCallback" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND__RDCALLBK, "_netEventHandler::_readCallback" )
    void _netEventHandler::_readCallback( const boost::system::error_code &
                                          error )
    {
@@ -382,17 +380,15 @@ namespace engine
          if ( error.value() == boost::system::errc::operation_canceled ||
               error.value() == boost::system::errc::no_such_file_or_directory )
          {
-            PD_LOG ( PDINFO,
-                     "connection aborted, node:%d, %d, %d", _id.columns.groupID,
-                     _id.columns.nodeID, _id.columns.serviceID) ;
+            PD_LOG ( PDINFO, "connection aborted, node:%d, %d, %d",
+                     _id.columns.groupID, _id.columns.nodeID,
+                     _id.columns.serviceID ) ;
          }
          else
          {
-            PD_LOG ( PDERROR,
-                     "Error received, node:%d, %d, %d, err=%d",
-                     _id.columns.groupID,
-                     _id.columns.nodeID, _id.columns.serviceID,
-                     error.value() ) ;
+            PD_LOG ( PDERROR, "Error received, node:%d, %d, %d, err=%d",
+                     _id.columns.groupID, _id.columns.nodeID,
+                     _id.columns.serviceID, error.value() ) ;
          }
          close( ) ;
          _frame->handleClose( shared_from_this(), _id ) ;
@@ -400,9 +396,7 @@ namespace engine
          goto done ;
       }
 
-      {
-      if ( NET_EVENT_HANDLER_STATE_HEADER ==
-           _state )
+      if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
          /// error header
          if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength
@@ -411,10 +405,9 @@ namespace engine
             close() ;
             _frame->handleClose( shared_from_this(), _id ) ;
             _frame->_erase( handle() ) ;
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Error header received, node:%d, %d, %d",
-                 _id.columns.groupID,
-                _id.columns.nodeID, _id.columns.serviceID ) ;
+            PD_LOG( PDERROR, "Error header received, node:%d, %d, %d",
+                    _id.columns.groupID, _id.columns.nodeID,
+                    _id.columns.serviceID ) ;
             goto done ;
          }
          else
@@ -438,8 +431,7 @@ namespace engine
             }
          }
          /// msg has only header
-         if ( sizeof(_MsgHeader) ==
-                   _header.messageLength )
+         if ( sizeof(_MsgHeader) == _header.messageLength )
          {
             if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ))
             {
@@ -463,7 +455,6 @@ namespace engine
          _frame->handleMsg( shared_from_this() ) ;
          _state = NET_EVENT_HANDLER_STATE_HEADER ;
          asyncRead() ;
-      }
       }
 
    done:
