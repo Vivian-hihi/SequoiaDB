@@ -384,6 +384,8 @@ namespace engine
                                          error )
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND__RDCALLBK ) ;
+      _isInAsync = TRUE ;
+
       if ( error )
       {
          if ( error.value() == boost::system::errc::operation_canceled ||
@@ -399,18 +401,13 @@ namespace engine
                      _id.columns.groupID, _id.columns.nodeID,
                      _id.columns.serviceID, error.value() ) ;
          }
-         close() ;
-         _frame->handleClose( shared_from_this(), _id ) ;
-         _frame->_erase( handle() ) ;
-         goto done ;
+
+         goto error_close ;
       }
 
-      _isInAsync = TRUE ;
-      if ( FALSE == _isConnected )
+      if ( !_isConnected )
       {
-         _frame->handleClose( shared_from_this(), _id ) ;
-         _frame->_erase( handle() ) ;
-         goto done ;
+         goto error_close ;
       }
 
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
@@ -419,15 +416,10 @@ namespace engine
          if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength
               || NET_MSG_MAX_LEN < (UINT32)_header.messageLength )
          {
-            // before call close, must set _isInAsync = FALSE
-            _isInAsync = FALSE ;
-            close() ;
-            _frame->handleClose( shared_from_this(), _id ) ;
-            _frame->_erase( handle() ) ;
             PD_LOG( PDERROR, "Error header received, node:%d, %d, %d",
                     _id.columns.groupID, _id.columns.nodeID,
                     _id.columns.serviceID ) ;
-            goto done ;
+            goto error_close ;
          }
          else
          {
@@ -454,12 +446,7 @@ namespace engine
          {
             if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ))
             {
-               // before call close, must set _isInAsync = FALSE
-               _isInAsync = FALSE ;
-               close() ;
-               _frame->handleClose( shared_from_this(), _id ) ;
-               _frame->_erase( handle() ) ;
-               goto done ;
+               goto error_close ;
             }
             ossMemcpy( _buf, &_header, sizeof( _MsgHeader ) ) ;
             _frame->handleMsg( shared_from_this() ) ;
@@ -480,8 +467,18 @@ namespace engine
 
    done:
       _isInAsync = FALSE ;
-      PD_TRACE_EXIT ( SDB__NETEVNHND__RDCALLBK );
+      PD_TRACE_EXIT ( SDB__NETEVNHND__RDCALLBK ) ;
       return ;
+   error_close:
+      if ( _isConnected )
+      {
+         _isInAsync = FALSE ;
+         close() ;
+      }
+      _frame->handleClose( shared_from_this(), _id ) ;
+      _frame->_erase( handle() ) ;
+      goto done ;
    }
 
 }
+
