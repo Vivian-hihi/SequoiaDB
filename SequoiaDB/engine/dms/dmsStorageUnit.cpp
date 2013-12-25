@@ -442,7 +442,7 @@ namespace engine
          ossValuePtr recordDataPtr = 0 ;
          numRecords = 0 ;
          dmsTBScanner tbScanner( _pDataSu, context, matcher,
-                                 DMS_ACCESS_TYPE_UPDATE, maxDelete ) ;
+                                 DMS_ACCESS_TYPE_DELETE, maxDelete ) ;
          while ( SDB_OK == ( rc = tbScanner.advance( recordID, recordDataPtr,
                                                      cb ) ) )
          {
