@@ -190,9 +190,13 @@
       					</not>
       					<then>
       						<property name="mk.dir.is" value="false" />
+      						<echo>test_times is not equals 1</echo>
+      						<echo>mk.dir.is equals ${mk.dir.is}</echo>
       					</then>
       					<else>
       						<property name="mk.dir.is" value="true" />
+      						<echo>test_times is equals 1</echo>
+      						<echo>mk.dir.is equals ${mk.dir.is}</echo>
       					</else>
       				</if>
       				<antcall target="test_target">
