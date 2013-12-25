@@ -404,8 +404,19 @@ namespace engine
          }
          case LOG_TYPE_CL_TRUNC :
          {
-            // TODO
-            rc = SDB_OK ;
+            const CHAR *clname = NULL ;
+            rc = dpsRecord2CLTrunc( (const CHAR *)recordHeader, &clname ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            rc = rtnTruncCollectionCommand( clname, eduCB, _dmsCB, _dpsCB ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "Failed to truncate collection[%s], rc: %d",
+                       clname, rc ) ;
+               goto error ;
+            }
             break ;
          }
          case LOG_TYPE_INVALIDATE_CATA :

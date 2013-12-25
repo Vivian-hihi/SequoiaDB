@@ -1469,7 +1469,7 @@ namespace engine
 
       // it is not need to lock that drop temp collection while startup
       // which cb is NULL
-      if ( cb )
+      if ( cb && dpscb )
       {
          rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
@@ -1550,11 +1550,35 @@ namespace engine
       BOOLEAN getContext = FALSE ;
       UINT32 newCLID     = DMS_INVALID_CLID ;
 
+      CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
+      dpsMergeInfo info ;
+      dpsLogRecord &record    = info.getMergeBlock().record() ;
+      UINT32 logRecSize       = 0;
+      dpsTransCB *pTransCB    = pmdGetKRCB()->getTransCB() ;
+      BOOLEAN isTransLocked   = FALSE ;
+
       SDB_ASSERT( pName, "Collection name cat't be NULL" ) ;
 
       rc = dmsCheckCLName ( pName, sysCollection ) ;
       PD_RC_CHECK( rc, PDERROR, "Invalid collection name %s, rc: %d",
                    pName, rc ) ;
+
+      // calc the reserve dps size
+      if ( dpscb )
+      {
+         rc = dpsCLTrunc2Record( _clFullName(pName, fullName, sizeof(fullName)),
+                                 record ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
+         logRecSize = record.alignedLen() ;
+         rc = pTransCB->reservedLogSpace( logRecSize ) ;
+         if( rc )
+         {
+            PD_LOG( PDERROR, "Failed to reserved log space(length=%u)",
+                    logRecSize ) ;
+            logRecSize = 0 ;
+            goto error ;
+         }
+      }
 
       // lock collection mb exclusive lock
       if ( NULL == context )
@@ -1580,6 +1604,15 @@ namespace engine
          goto error ;
       }
 
+      // trans lock
+      if ( cb && dpscb )
+      {
+         rc = pTransCB->transLockTryX( cb, _logicalCSID, context->mbID() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to lock the collection, rc: %d",
+                      rc ) ;
+         isTransLocked = TRUE ;
+      }
+
       // pause mb lock and change metadata
       context->pause() ;
       ossLatch( &_metadataLatch, EXCLUSIVE ) ;
@@ -1602,10 +1635,26 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Truncate collection[%s] data failed, rc: %d",
                    pName, rc ) ;
 
+      // write dps log
+      if ( dpscb )
+      {
+         rc = _logDPS( dpscb, info, cb, context, DMS_INVALID_EXTENT, TRUE ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to insert CLTrunc record to log, "
+                      "rc: %d", rc ) ;
+      }
+
    done:
+      if ( isTransLocked )
+      {
+         pTransCB->transLockRelease( cb, _logicalCSID, context->mbID() ) ;
+      }
       if ( context && getContext )
       {
          releaseMBContext( context ) ;
+      }
+      if ( 0 != logRecSize )
+      {
+         pTransCB->releaseLogSpace( logRecSize ) ;
       }
       return rc ;
    error:

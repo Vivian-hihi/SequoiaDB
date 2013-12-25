@@ -136,6 +136,9 @@ namespace engine
    INT32 dpsCLTrunc2Record( const CHAR *fullName,
                             dpsLogRecord &record ) ;
 
+   INT32 dpsRecord2CLTrunc( const CHAR *logRecord,
+                            const CHAR **fullName ) ;
+
    INT32 dpsTransCommit2Record( const DPS_TRANS_ID &transID,
                                 dpsLogRecord &record ) ;
 
