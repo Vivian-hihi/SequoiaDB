@@ -59,7 +59,8 @@ ossFiles = [
       "oss/ossNPipe.cpp",
       "oss/ossLatch.cpp",
       "oss/ossDynamicLoad.cpp",
-      "oss/ossHdfs.cpp"
+      "oss/ossHdfs.cpp",
+      "oss/ossShMem.cpp"
       ]
 
 pdFiles = [
@@ -70,7 +71,13 @@ pdFiles = [
       ]
 
 pmdFiles = [
-      "pmd/pmdCommon.cpp"
+      "pmd/pmdCommon.cpp",
+      "pmd/pmdDaemon.cpp",
+      "pmd/pmdWinService.cpp"
+      ]
+
+rtnFiles = [
+      "rtn/rtnCM.cpp"
       ]
 
 utilFiles = [
@@ -109,7 +116,11 @@ sdbListMain = [
       ]
 
 sdbcmMain = [
-      "pmd/cm/sdbcm.cpp"
+      "pmd/pmdCMMain.cpp"
+      ]
+
+sdbcmDMNMain = [
+      "pmd/pmdCMDMNMain.cpp"
       ]
 
 sdbcmartMain = [
@@ -129,6 +140,8 @@ toolEnv.StaticLibrary('oss', ossFiles)
 toolEnv.StaticLibrary('pd', pdFiles)
 #Process Model
 toolEnv.StaticLibrary('pmd', pmdFiles)
+#Runtime
+toolEnv.StaticLibrary('rtn', rtnFiles)
 #Utilities
 toolEnv.StaticLibrary('util', utilFiles)
 #mig
@@ -168,7 +181,11 @@ sdblist = toolEnv.Program("sdblist", sdbListMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson"],
+         LIBDEPS=["pd","oss","msg","bson","pmd","rtn"],
+         _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbcmdmn = toolEnv.Program("sdbcmdmn", sdbcmDMNMain,
+         LIBDEPS=["pd","oss","msg","bson","pmd","rtn"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmart = toolEnv.Program("sdbcmart", sdbcmartMain,
@@ -187,5 +204,6 @@ toolEnv.Install( '#/bin', sdbstart )
 toolEnv.Install( '#/bin', sdbstop )
 toolEnv.Install( '#/bin', sdblist )
 toolEnv.Install( '#/bin', sdbcm )
+toolEnv.Install( '#/bin', sdbcmdmn )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )

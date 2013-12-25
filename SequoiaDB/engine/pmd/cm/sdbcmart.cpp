@@ -68,11 +68,13 @@ namespace po = boost::program_options;
 #define SDBCM_NAME_BUF_LEN          255
 #define SDBCM_NAME_PATTERN1         "sdbcm("
 #define SDBCM_NAME_PATTERN2         ")"
+#define SDBCM_DMN_SVC_NAME          "sdbcmDMN"
 #endif
 
 #define SDBCM_LOG_PATH              ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "log" \
                                     OSS_FILE_SEP "sdbcm.log"
 #define SDBCM_NAME "sdbcm"
+#define SDBCM_DMN_PROC_NAME         "sdbcmdmn"
 
 // initialize options
 void init ( po::options_description &desc )
@@ -147,7 +149,7 @@ error :
 
 #if defined (_WINDOWS)
 #include <windows.h>
-#define SDBCM_SRV_NAME "sdbcm"
+#define SDBCMDMN_SRV_NAME "sdbcmdmn"
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_STARTSDBCM, "startSdbcm" )
 INT32 startSdbcm ( list<const CHAR*> &argv )
@@ -168,7 +170,7 @@ INT32 startSdbcm ( list<const CHAR*> &argv )
 
    // open a handle to the sdbcm service
    schSRV = OpenService ( schSCM,
-                          TEXT(SDBCM_SRV_NAME),
+                          TEXT(SDBCMDMN_SRV_NAME),
                           SERVICE_START | SERVICE_QUERY_STATUS ) ;
    if ( schSRV == NULL )
    {
@@ -302,7 +304,8 @@ INT32 verifyPID ( OSSPID inputpid )
             else if ( pid == inputpid && getpid() == ppid )
             {
                if ( NULL != fgets ( commandLine, PROC_PATH_LEN_MAX, fp1 ) &&
-                    ossStrstr ( commandLine, SDBCM_NAME_PATTERN1 ) )
+                    //ossStrstr ( commandLine, SDBCM_NAME_PATTERN1 ) )
+                    0 == ossStrcmp( commandLine, SDBCM_DMN_SVC_NAME ) )
                {
                   ossPrintf ( "Success: SequoiaDB Cluster manager is successfully "
                               "started (%d)"OSS_NEWLINE, pid ) ;
@@ -415,7 +418,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    ossMemset ( _pdDiagLogPath, 0, sizeof( _pdDiagLogPath ) ) ;
    ossStrncpy ( _pdDiagLogPath, progName, sizeof(progName) );
    ossStrncat ( _pdDiagLogPath, SDBCM_LOG_PATH, sizeof(SDBCM_LOG_PATH) ) ;
-   ossStrncat ( progName, SDBCM_NAME, sizeof(SDBCM_NAME) ) ;
+   ossStrncat ( progName, SDBCM_DMN_PROC_NAME, sizeof(SDBCM_DMN_PROC_NAME) ) ;
 
    argvs.push_back(progName);
    for ( INT32 i = 1; i < argc; ++i )

@@ -79,6 +79,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define SDBCM_NAME_PATTERN1         "sdbcm("
 #define SDBCM_NAME_PATTERN2         ")"
 #define SDBCM_NAME_PATTERN          SDBCM_NAME_PATTERN1 "%s" SDBCM_NAME_PATTERN2
+#define SDBCM_DMN_NAME              "sdbcmDMN"
 #endif
 // timeout for 30 seconds
 #define SDBCM_LOG_PATH              ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "log" \
@@ -250,7 +251,11 @@ INT32 stopSdbcm ( )
          }
          fclose ( fp ) ;
 
-         if ( NULL == ( p = ossStrstr ( commandLine, SDBCM_NAME_PATTERN1 ) ) )
+         if ( 0 != ossStrcmp( commandLine, SDBCM_DMN_NAME ) )
+         {
+            continue;
+         }
+         /*if ( NULL == ( p = ossStrstr ( commandLine, SDBCM_NAME_PATTERN1 ) ) )
          {
             // if it's not including what we need, let's continue
             continue ;
@@ -260,7 +265,7 @@ INT32 stopSdbcm ( )
          {
             // if it's not end with ), let's continue
             continue ;
-         }
+         }*/
 
          // get pid
          pid = atoi ( dp->d_name ) ;
@@ -286,7 +291,7 @@ error :
 }
 
 #elif defined (_WINDOWS)
-#define SDBCM_SRV_NAME "sdbcm"
+#define SDBCMDMN_SRV_NAME "sdbcmdmn"
 PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_WFSTRS, "WaitForServiceToReachState" )
 BOOL WaitForServiceToReachState(SC_HANDLE hService, DWORD dwDesiredState,
                                  SERVICE_STATUS* pss, DWORD dwMilliseconds) {
@@ -365,7 +370,7 @@ INT32 stopSdbcm ()
 
    // open a handle to the sdbcm service
    schSRV = OpenService ( schSCM,
-                          TEXT(SDBCM_SRV_NAME),
+                          TEXT(SDBCMDMN_SRV_NAME),
                           SERVICE_STOP ) ;
    if ( schSRV == NULL )
    {
