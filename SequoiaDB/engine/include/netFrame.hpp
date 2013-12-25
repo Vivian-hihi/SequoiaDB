@@ -148,17 +148,19 @@ namespace engine
 
          void _addRoute( NET_EH eh ) ;
       private:
-         io_service _ioservice ;
-         multimap<UINT64, NET_EH> _route ;
-         map<NET_HANDLE, NET_EH> _opposite ;
-         map<UINT32, NET_TH> _timers ;
-         _netMsgHandler *_handler ;
-         MsgRouteID _local ;
-         _ossSpinSLatch _mtx ;
-         boost::asio::ip::tcp::acceptor _acceptor ;
-         _ossAtomic32 _handle ;
-         UINT32 _timerID;
-   };
+         io_service                       _ioservice ;
+         multimap<UINT64, NET_EH>         _route ;
+         map<NET_HANDLE, NET_EH>          _opposite ;
+         map<UINT32, NET_TH>              _timers ;
+         _netMsgHandler                   *_handler ;
+         MsgRouteID                       _local ;
+         _ossSpinSLatch                   _mtx ;
+         boost::asio::ip::tcp::acceptor   _acceptor ;
+         _ossAtomic32                     _handle ;
+         UINT32                           _timerID;
+
+   } ;
+
 }
 
 #endif

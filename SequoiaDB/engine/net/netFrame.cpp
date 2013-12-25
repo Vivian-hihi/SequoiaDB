@@ -61,7 +61,7 @@ namespace engine
       _local.value = MSG_INVALID_ROUTEID ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_DECONS, "_netFrame::~_netFrame" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_DECONS, "_netFrame::~_netFrame" )
    _netFrame::~_netFrame()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_DECONS );
@@ -72,7 +72,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__NETFRAME_DECONS );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_RUN, "_netFrame::run" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_RUN, "_netFrame::run" )
    void _netFrame::run()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_RUN );
@@ -86,7 +86,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_STOP, "_netFrame::stop" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_STOP, "_netFrame::stop" )
    void _netFrame::stop()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_STOP );
@@ -117,7 +117,7 @@ namespace engine
       return ip ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_LISTEN, "_netFrame::listen" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_LISTEN, "_netFrame::listen" )
    INT32 _netFrame::listen( const CHAR *hostName,
                             const CHAR *serviceName )
    {
@@ -160,7 +160,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNNCCONN, "_netFrame::syncConnect" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNNCCONN, "_netFrame::syncConnect" )
    INT32 _netFrame::syncConnect( const CHAR *hostName,
                                  const CHAR *serviceName,
                                  const _MsgRouteID &id )
@@ -173,8 +173,7 @@ namespace engine
       _netEventHandler *ev = SDB_OSS_NEW _netEventHandler( this ) ;
       if ( NULL == ev )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to malloc mem" ) ;
+         PD_LOG ( PDERROR, "Failed to malloc mem" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -193,6 +192,7 @@ namespace engine
       _mtx.release() ;
       eh->asyncRead() ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNNCCONN, rc );
       return rc ;
@@ -200,7 +200,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND, "_netFrame::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND, "_netFrame::syncSend" )
    INT32 _netFrame::syncSend( const _MsgRouteID &id,
                               void *header )
    {
@@ -242,7 +242,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND2, "_netFrame::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND2, "_netFrame::syncSend" )
    INT32 _netFrame::syncSend( const NET_HANDLE &handle,
                               void *header )
    {
@@ -285,7 +285,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND3, "INT32 _netFrame::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND3, "INT32 _netFrame::syncSend" )
    INT32 _netFrame::syncSend( const NET_HANDLE &handle,
                               MsgHeader *header,
                               const void *body,
@@ -338,7 +338,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND4, "_netFrame::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSEND4, "_netFrame::syncSend" )
    INT32 _netFrame::syncSend( const  _MsgRouteID &id,
                               MsgHeader *header,
                               const void *body,
@@ -387,7 +387,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSENDV, "_netFrame::syncSendv" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_SYNCSENDV, "_netFrame::syncSendv" )
    INT32 _netFrame::syncSendv( const _MsgRouteID &id,
                                MsgHeader *header,
                                const netIOVec &iov )
@@ -465,7 +465,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE, "_netFrame::close" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE, "_netFrame::close" )
    void _netFrame::close( const _MsgRouteID &id )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE );
@@ -482,7 +482,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE2, "_netFrame::close" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_CLOSE2, "_netFrame::close" )
    void _netFrame::close()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_CLOSE2 );
@@ -499,7 +499,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__NETFRAME_CLOSE3, "_netFrame::close" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__NETFRAME_CLOSE3, "_netFrame::close" )
    void _netFrame::close( const NET_HANDLE &handle )
    {
       PD_TRACE_ENTRY( SDB__NETFRAME_CLOSE3 ) ;
@@ -522,7 +522,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_ADDTIMER, "_netFrame::addTimer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_ADDTIMER, "_netFrame::addTimer" )
    INT32 _netFrame::addTimer( UINT32 millsec, _netTimeoutHandler *handler,
                               UINT32 &timerid )
    {
@@ -555,7 +555,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_REMTIMER, "_netFrame::removeTimer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_REMTIMER, "_netFrame::removeTimer" )
    INT32 _netFrame::removeTimer( UINT32 id )
    {
       INT32 rc = SDB_OK ;
@@ -579,7 +579,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_HNDMSG, "_netFrame::handleMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME_HNDMSG, "_netFrame::handleMsg" )
    void _netFrame::handleMsg( NET_EH eh )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_HNDMSG );
@@ -601,7 +601,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ADDRT, "_netFrame::_addRoute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ADDRT, "_netFrame::_addRoute" )
    void _netFrame::_addRoute( NET_EH eh )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ADDRT );
@@ -612,7 +612,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ASYNCAPT, "_netFrame::_asyncAccept" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ASYNCAPT, "_netFrame::_asyncAccept" )
    void _netFrame::_asyncAccept()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ASYNCAPT );
@@ -626,7 +626,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__APTCALLBCK, "_netFrame::_acceptCallback" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__APTCALLBCK, "_netFrame::_acceptCallback" )
    void _netFrame::_acceptCallback( NET_EH eh,
                                     const boost::system::error_code &
                                     error )
@@ -634,8 +634,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__NETFRAME__APTCALLBCK );
       if ( error )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Error received when handling accept" ) ;
+         PD_LOG ( PDERROR, "Error received when handling accept" ) ;
          return ;
       }
 
@@ -649,7 +648,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ERASE, "_netFrame::_erase" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETFRAME__ERASE, "_netFrame::_erase" )
    void _netFrame::_erase( const NET_HANDLE &handle )
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME__ERASE );

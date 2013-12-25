@@ -91,7 +91,9 @@ namespace engine
                                       _frame(frame),
                                       _handle(_frame->allocateHandle())
    {
-      _id.value = MSG_INVALID_ROUTEID ;
+      _id.value      = MSG_INVALID_ROUTEID ;
+      _isConnected   = FALSE ;
+      _isInAsync     = FALSE ;
    }
 
 
@@ -108,6 +110,9 @@ namespace engine
    void _netEventHandler::setOpt()
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SETOPT );
+
+      _isConnected = TRUE ;
+
       try
       {
          _sock.set_option( tcp::no_delay(TRUE) ) ;
@@ -178,6 +183,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SYNCCONN );
 
+      if ( _isConnected )
+      {
+         close() ;
+      }
+
 /*
       try
       {
@@ -227,7 +237,6 @@ namespace engine
          goto error ;
       }
 */
-      _sock.close() ;
       UINT16 port = 0 ;
       rc = _ossSocket::getPort( serviceName, port ) ;
       if ( SDB_OK != rc )
@@ -266,7 +275,7 @@ namespace engine
          goto error ;
       }
       }
-      
+
       setOpt() ;
    done:
       PD_TRACE_EXITRC ( SDB__NETEVNHND_SYNCCONN, rc );
@@ -278,7 +287,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_ASYNCRD, "_netEventHandler::asyncRead" )
    void _netEventHandler::asyncRead()
    {
-      PD_TRACE_ENTRY ( SDB__NETEVNHND_ASYNCRD );
+      PD_TRACE_ENTRY ( SDB__NETEVNHND_ASYNCRD ) ;
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
          async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
@@ -374,7 +383,7 @@ namespace engine
    void _netEventHandler::_readCallback( const boost::system::error_code &
                                          error )
    {
-      PD_TRACE_ENTRY ( SDB__NETEVNHND__RDCALLBK );
+      PD_TRACE_ENTRY ( SDB__NETEVNHND__RDCALLBK ) ;
       if ( error )
       {
          if ( error.value() == boost::system::errc::operation_canceled ||
@@ -390,7 +399,15 @@ namespace engine
                      _id.columns.groupID, _id.columns.nodeID,
                      _id.columns.serviceID, error.value() ) ;
          }
-         close( ) ;
+         close() ;
+         _frame->handleClose( shared_from_this(), _id ) ;
+         _frame->_erase( handle() ) ;
+         goto done ;
+      }
+
+      _isInAsync = TRUE ;
+      if ( FALSE == _isConnected )
+      {
          _frame->handleClose( shared_from_this(), _id ) ;
          _frame->_erase( handle() ) ;
          goto done ;
@@ -402,6 +419,8 @@ namespace engine
          if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength
               || NET_MSG_MAX_LEN < (UINT32)_header.messageLength )
          {
+            // before call close, must set _isInAsync = FALSE
+            _isInAsync = FALSE ;
             close() ;
             _frame->handleClose( shared_from_this(), _id ) ;
             _frame->_erase( handle() ) ;
@@ -435,6 +454,8 @@ namespace engine
          {
             if ( SDB_OK != _allocateBuf( sizeof(_MsgHeader) ))
             {
+               // before call close, must set _isInAsync = FALSE
+               _isInAsync = FALSE ;
                close() ;
                _frame->handleClose( shared_from_this(), _id ) ;
                _frame->_erase( handle() ) ;
@@ -458,6 +479,7 @@ namespace engine
       }
 
    done:
+      _isInAsync = FALSE ;
       PD_TRACE_EXIT ( SDB__NETEVNHND__RDCALLBK );
       return ;
    }

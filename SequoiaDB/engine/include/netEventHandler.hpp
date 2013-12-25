@@ -42,6 +42,7 @@
 #include "oss.hpp"
 #include "netDef.hpp"
 #include "ossLatch.hpp"
+#include "ossEvent.hpp"
 
 using namespace boost::asio ;
 
@@ -96,6 +97,11 @@ namespace engine
          inline void close()
          {
             _mtx.get() ;
+            _isConnected = FALSE ;
+            while ( _isInAsync )
+            {
+               ossSleep( 50 ) ;
+            }
             _sock.close() ;
             _mtx.release() ;
          }
@@ -118,15 +124,18 @@ namespace engine
          INT32 _allocateBuf( UINT32 len ) ;
 
       private:
-         boost::asio::ip::tcp::socket _sock ;
-         _ossSpinXLatch _mtx ;
-         _MsgHeader _header ;
-         CHAR *_buf ;
-         UINT32 _bufLen ;
-         NET_EVENT_HANDLER_STATE _state ;
-         _MsgRouteID _id ;
-         _netFrame *_frame ;
-         NET_HANDLE _handle ;
+         boost::asio::ip::tcp::socket     _sock ;
+         _ossSpinXLatch                   _mtx ;
+         _MsgHeader                       _header ;
+         CHAR                             *_buf ;
+         UINT32                           _bufLen ;
+         NET_EVENT_HANDLER_STATE          _state ;
+         _MsgRouteID                      _id ;
+         _netFrame                        *_frame ;
+         NET_HANDLE                       _handle ;
+         BOOLEAN                          _isConnected ;
+         BOOLEAN                          _isInAsync ;
+
    };
 
    typedef boost::shared_ptr<_netEventHandler> NET_EH ;
