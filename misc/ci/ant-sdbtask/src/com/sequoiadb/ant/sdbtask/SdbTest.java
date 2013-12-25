@@ -24,6 +24,8 @@ public class SdbTest extends Task {
 	private String maxWaitTime = "30m";
 	
 	private boolean getLogBack = true;
+	
+	private boolean mkDirIs = true;
 
 	private String hostName = "localhost";
 
@@ -40,7 +42,9 @@ public class SdbTest extends Task {
 	public void setGetLogBack(boolean value){
 		this.getLogBack = value;
 	}
-
+	public void setMkDirIs( boolean value ){
+		this.mkDirIs = value ;
+	}
 	public void setAntFileName( String value )
 	{
 		this.antFileName = value ; 
@@ -94,16 +98,19 @@ public class SdbTest extends Task {
 			this.remoteReportsPath += hostName + "_" + Integer.toString( (int)(Math.random()*1000) ) + "_" + lineNum;
 			
 			this.masterReportsPath += File.separator + hostName + "_"+ this.antFileName + "_" + lineNum + File.separator;
+			File dir = null;
+			if( this.mkDirIs ){
+				dir = new File(masterReportsPath);
 			
-			File dir = new File(masterReportsPath);
-			if (!dir.mkdirs())
-			{
-				log("Failed to create dir:" + masterReportsPath);
-				throw new BuildException("Failed to create dir:" + masterReportsPath);
-			}
-			else
-			{
-				log("Success to create dir:" + masterReportsPath);
+				if (!dir.mkdirs())
+				{
+					log("Failed to create dir:" + masterReportsPath);
+					throw new BuildException("Failed to create dir:" + masterReportsPath);
+				}
+				else
+				{
+					log("Success to create dir:" + masterReportsPath);
+				}
 			}
 
 			// Staf PROCESS START SHELL COMMAND ant -l

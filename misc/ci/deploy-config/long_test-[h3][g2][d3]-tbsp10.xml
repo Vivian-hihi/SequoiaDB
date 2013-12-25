@@ -184,7 +184,19 @@
       				
       				<echo message="now begin to test ${test_times}"/>
       				<echo>call the test target---test_target</echo>
+      				<if>
+      					<not>
+      					<equals arg1="${test_times}" arg2="1" />
+      					</not>
+      					<then>
+      						<property name="mk.dir.is" value="false" />
+      					</then>
+      					<else>
+      						<property name="mk.dir.is" value="true" />
+      					</else>
+      				</if>
       				<antcall target="test_target">
+      					<param name="mk.dir.is" value ="${mk.dir.is}" />
       				</antcall>
       			</else>
       		</if>
@@ -221,7 +233,7 @@
     </tstamp>
 		<parallel>
 			<!--getRowNum propertyName="lineNum1" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -232,7 +244,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum2" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -243,7 +255,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum3" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -254,7 +266,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum4" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -265,7 +277,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum5" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -276,7 +288,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum6" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -287,7 +299,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum7" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no2.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -298,7 +310,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum8" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -309,7 +321,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum9" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
@@ -320,7 +332,7 @@
 				<param name="save.testLog.dir" value="${save.testLog.dir}" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum10" /-->
-			<sdbtest getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
+			<sdbtest mkDirIs="${mk.dir.is}" getLogBack="false"  host="${test.machine.no3.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="${testTimeOut}" antFileName="${antFileName}">
 				<param name="testcase.path" value="${test.machine.deploy.path}/deploy/hlt/js_testcases/" />
 				<param name="install.path" value="${install.path}" />
 				<param name="excludes.dir.patterns" value="vote" />
