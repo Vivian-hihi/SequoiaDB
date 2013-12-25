@@ -32,7 +32,7 @@ fi
 CFG_PATH="${INSTALL_DIR}/conf/sdbcm.conf"
 CFG_ITEM=`grep defaultPort ${CFG_PATH}`
 PORT=`echo ${CFG_ITEM} | awk -F '=' '{print $2}'`
-DAEMON_NAME="sdbcm($PORT)"
+DAEMON_NAME="sdbcmDMN"
 
 
 DAEMON_ARGS=""
