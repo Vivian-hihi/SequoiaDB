@@ -107,11 +107,13 @@ namespace engine
          return lsn;
       }
 
-      inline void incVersion()
+      inline DPS_LSN_VER incVersion()
       {
+         DPS_LSN_VER version = DPS_INVALID_LSN_VERSION ;
          _mtx.get();
-         ++_lsn.version ;
+         version = ++_lsn.version ;
          _mtx.release();
+         return version ;
       }
 
    public:

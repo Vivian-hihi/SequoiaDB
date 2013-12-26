@@ -174,7 +174,7 @@ namespace engine
          return _buf.expectLsn() ;
       }
 
-      inline void incVersion()
+      inline DPS_LSN_VER incVersion()
       {
          return _buf.incVersion() ;
       }
