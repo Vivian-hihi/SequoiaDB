@@ -50,7 +50,7 @@ namespace engine
    // won't check dmsCB->writable(). Thus we still able to perform
    // rtnReorgOffline while db is in REBUILD state
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREBUILDDB, "rtnRebuildDB" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREBUILDDB, "rtnRebuildDB" )
    INT32 rtnRebuildDB ( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;

@@ -50,7 +50,7 @@ namespace engine
 
    #define RTN_REORG_SUFFIX ".REORG"
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGOCB, "rtnReorgOfflineCopyBack" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGOCB, "rtnReorgOfflineCopyBack" )
    INT32 rtnReorgOfflineCopyBack ( dmsStorageUnit *su,
                                    dmsReorgUnit *ru,
                                    dmsMBContext *mbContext )
@@ -151,7 +151,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGRECOVER1, "rtnReorgRecover" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGRECOVER1, "rtnReorgRecover" )
    INT32 rtnReorgRecover ( const CHAR *pCollectionFullName,
                            const CHAR *pCollectionName,
                            dmsMBContext *mbContext,
@@ -342,7 +342,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGOFFLINE1, "rtnReorgOffline" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGOFFLINE1, "rtnReorgOffline" )
    INT32 rtnReorgOffline ( const CHAR *pCollectionFullName,
                            dmsStorageUnit *su,
                            dmsMBContext *mbContext,
@@ -581,7 +581,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGRECOVER2, "rtnReorgRecover" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGRECOVER2, "rtnReorgRecover" )
    INT32 rtnReorgRecover ( const CHAR *pCollectionName,
                            pmdEDUCB *cb,
                            SDB_DMSCB *dmsCB,
@@ -650,7 +650,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGOFFLINE2, "rtnReorgOffline" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNREORGOFFLINE2, "rtnReorgOffline" )
    INT32 rtnReorgOffline ( const CHAR *pCollectionName,
                            const BSONObj &hint,
                            pmdEDUCB *cb,
