@@ -193,7 +193,7 @@ namespace engine
    }
 
    // 1) file name must be <collectionspace>.<sequence>.<ext>
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNVERIFYCSFN, "rtnVerifyCollectionSpaceFileName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNVERIFYCSFN, "rtnVerifyCollectionSpaceFileName" )
    BOOLEAN rtnVerifyCollectionSpaceFileName ( const CHAR *pFileName,
                                               CHAR *pSUName,
                                               UINT32 bufferSize,
@@ -259,7 +259,7 @@ namespace engine
    }
 
    // load a single collection name from given path
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCS, "rtnLoadCollectionSpace" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCS, "rtnLoadCollectionSpace" )
    INT32 rtnLoadCollectionSpace ( const CHAR *pCSName,
                                   const CHAR *dataPath,
                                   const CHAR *indexPath,
@@ -381,7 +381,7 @@ namespace engine
    }
 
    // Load all collection spaces from database path
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCSS, "rtnLoadCollectionSpaces" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNLOADCSS, "rtnLoadCollectionSpaces" )
    INT32 rtnLoadCollectionSpaces ( const CHAR *dataPath,
                                    const CHAR *indexPath,
                                    SDB_DMSCB *dmsCB )
@@ -487,7 +487,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNFINDCL, "rtnFindCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNFINDCL, "rtnFindCollection" )
    INT32 rtnFindCollection ( const CHAR *pCollection,
                              SDB_DMSCB *dmsCB )
    {
@@ -518,7 +518,7 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCSLOCK, "rtnCollectionSpaceLock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCSLOCK, "rtnCollectionSpaceLock" )
    INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN loadFile,
@@ -575,7 +575,7 @@ namespace engine
       goto done ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESOLVECLNAL, "rtnResolveCollectionNameAndLock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRESOLVECLNAL, "rtnResolveCollectionNameAndLock" )
    INT32 rtnResolveCollectionNameAndLock ( const CHAR *pCollectionFullName,
                                            SDB_DMSCB *dmsCB,
                                            dmsStorageUnit **ppsu,
@@ -643,7 +643,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNKILLCONTEXTS, "rtnKillContexts" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNKILLCONTEXTS, "rtnKillContexts" )
    INT32 rtnKillContexts ( INT32 numContexts, INT64 *pContextIDs,
                            pmdEDUCB *cb, SDB_RTNCB *rtnCB )
    {
@@ -675,7 +675,7 @@ namespace engine
       return FALSE ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPARSERCOMMAND, "rtnParserCommand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPARSERCOMMAND, "rtnParserCommand" )
    INT32 rtnParserCommand ( const CHAR *name, _rtnCommand **ppCommand )
    {
       INT32 rc = SDB_INVALIDARG ;
@@ -693,7 +693,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRELEASECOMMAND, "rtnReleaseCommand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRELEASECOMMAND, "rtnReleaseCommand" )
    INT32 rtnReleaseCommand ( _rtnCommand **ppCommand )
    {
       PD_TRACE_ENTRY ( SDB_RTNRELEASECOMMAND );
@@ -707,7 +707,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINITCOMMAND, "rtnInitCommand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINITCOMMAND, "rtnInitCommand" )
    INT32 rtnInitCommand ( _rtnCommand *pCommand ,INT32 flags, INT64 numToSkip,
                           INT64 numToReturn, const CHAR *pMatcherBuff,
                           const CHAR *pSelectBuff, const CHAR *pOrderByBuff,
@@ -763,7 +763,7 @@ namespace engine
       return spaceNode ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRUNCOMMAND, "rtnRunCommand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNRUNCOMMAND, "rtnRunCommand" )
    INT32 rtnRunCommand ( _rtnCommand *pCommand, INT32 serviceType,
                          _pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                          SDB_RTNCB *rtnCB, SDB_DPSCB *dpsCB,
