@@ -876,6 +876,7 @@ namespace engine
                {
                   PD_LOG ( PDWARNING, "Session[%s] replay dps log record failed"
                            "[rc:%d]", sessionName(), rc ) ;
+                  goto error ;
                }
 
                if ( !_replayer.isDPSEnabled() )
