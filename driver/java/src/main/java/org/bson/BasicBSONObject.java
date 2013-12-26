@@ -733,9 +733,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 			for (PropertyDescriptor p : props) {
 				Class<?> type = p.getPropertyType();
 				Object propObj = p.getReadMethod().invoke(object);
-				if (propObj == null) {
-					continue;
-				} else if (BSON.IsBasicType(propObj)) {
+				if (BSON.IsBasicType(propObj)) {
 					result.put(p.getName(), propObj);
 				} else if (type.getName() == "java.lang.Class") {
 					continue;

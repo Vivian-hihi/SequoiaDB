@@ -355,7 +355,9 @@ public class BSON {
     
     
     public static boolean IsBasicType(Object obj) {
-		if (obj.getClass().isPrimitive())
+    	if (obj == null)
+    		return true;
+    	else if (obj.getClass().isPrimitive())
 			return true;
 		else if (obj instanceof Date)
 			return true;
