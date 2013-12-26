@@ -1496,7 +1496,6 @@ namespace engine
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable                 = FALSE ;
 
-
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
