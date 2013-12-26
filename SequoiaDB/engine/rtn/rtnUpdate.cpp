@@ -49,7 +49,7 @@ using namespace bson ;
 namespace engine
 {
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE1, "rtnUpdate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE1, "rtnUpdate" )
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, INT64 *pUpdateNum )
@@ -76,7 +76,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE2, "rtnUpdate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUPDATE2, "rtnUpdate" )
    INT32 rtnUpdate ( const CHAR *pCollectionName, const BSONObj &selector,
                      const BSONObj &updator, const BSONObj &hint, INT32 flags,
                      pmdEDUCB *cb, SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
