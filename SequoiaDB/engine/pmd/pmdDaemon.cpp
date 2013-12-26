@@ -52,8 +52,6 @@
 
 namespace engine
 {
-   BOOLEAN cPmdDMNSignalHandler::_isRunning = FALSE;
-   BOOLEAN cPmdDMNSignalHandler::_hasRegister = FALSE;
    iPmdDMNChildProc * cPmdDaemon::_process = NULL;
 
    _pmdDMNProcInfo::_pmdDMNProcInfo()
@@ -83,39 +81,6 @@ namespace engine
          return TRUE;
       }
       return FALSE;
-   }
-
-   cPmdDMNSignalHandler::cPmdDMNSignalHandler()
-   {
-#if defined (_LINUX)
-      INT32 rc = SDB_OK;
-      if ( !_hasRegister )
-      {
-         ossSigSet sigSet ;
-         sigSet.sigAdd( SIGHUP );
-         sigSet.sigAdd( SIGINT );
-         sigSet.sigAdd( SIGTERM );
-         sigSet.sigAdd( SIGPWR );
-         rc = ossRegisterSignalHandle( sigSet,
-                  (SIG_HANDLE)(&cPmdDMNSignalHandler::signalHandler) );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to register signals, rc = %d",
-                     rc );
-         _hasRegister = TRUE;
-      }
-      _isRunning = TRUE;
-   done:
-      return ;
-   error:
-      goto done;
-#elif defined (_WINDOWS)
-      _isRunning = TRUE;
-#endif
-   }
-
-   void cPmdDMNSignalHandler::signalHandler( INT32 sigNum )
-   {
-      _isRunning = FALSE;
    }
 
    iPmdDMNChildProc::iPmdDMNChildProc()
@@ -299,7 +264,7 @@ namespace engine
       ossSHMDetach( _shmMid, (CHAR **)(&_procInfo) );
    }
 
-   BOOLEAN iPmdDMNChildProc::isRunning()
+   BOOLEAN iPmdDMNChildProc::isChildRunning()
    {
       SDB_ASSERT( _procInfo,
                   "_procInfo can't be null, call active at first" );
@@ -443,7 +408,7 @@ namespace engine
       {
          INT32 tryTimes = 0;
          BOOLEAN isForce = FALSE;
-         while( isRunning() )
+         while( isChildRunning() )
          {
             if ( tryTimes++ >= PMDDMN_STOP_CHILD_MAX_TRY_TIMES )
             {
@@ -469,7 +434,7 @@ namespace engine
    void iPmdDMNChildProc::syncProcesserInfo()
    {
       _syncExit = FALSE;
-      while( _isRunning )
+      while( isRunning() )
       {
          INT32 rc = SDB_OK;
          rc = attachSHM();
@@ -538,7 +503,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to start processor-info-sync-thread(rc=%d)",
                   rc );
-      rc = dmnMain( argc, argv );
+      rc = svcMain( argc, argv );
       PD_RC_CHECK( rc, PDERROR,
                   "execute failed(rc=%d)", rc );
       while ( !_syncExit )
@@ -597,7 +562,7 @@ namespace engine
          rc = SDB_INVALIDARG;
          goto error;
       }
-      while( _isRunning )
+      while( isRunning() )
       {
          /*if ( retryTimes >= _maxRetryTimes )
          {
@@ -606,7 +571,7 @@ namespace engine
                         retryTimes );
          }*/
 
-         if ( !( _process->isRunning() ) )
+         if ( !( _process->isChildRunning() ) )
          {
             PD_LOG( PDEVENT,
                   "start the service process...(times:%d)",

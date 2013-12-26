@@ -76,7 +76,7 @@ namespace CLSMGR
    private:
       virtual const CHAR *getProgramName();
       const CHAR *getArguments();
-      virtual INT32 dmnMain( INT32 argc, CHAR **argv );
+      virtual INT32 svcMain( INT32 argc, CHAR **argv );
    };
 }
 

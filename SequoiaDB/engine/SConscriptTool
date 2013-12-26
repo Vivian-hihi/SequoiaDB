@@ -73,7 +73,8 @@ pdFiles = [
 pmdFiles = [
       "pmd/pmdCommon.cpp",
       "pmd/pmdDaemon.cpp",
-      "pmd/pmdWinService.cpp"
+      "pmd/pmdWinService.cpp",
+      "pmd/pmdProc.cpp"
       ]
 
 rtnFiles = [

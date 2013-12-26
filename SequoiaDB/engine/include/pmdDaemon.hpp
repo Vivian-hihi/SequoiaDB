@@ -39,6 +39,7 @@
 #include "ossTypes.h"
 #include "ossShMem.hpp"
 #include "oss.h"
+#include "pmdProc.hpp"
 
 namespace engine
 {
@@ -81,31 +82,19 @@ namespace engine
       void init();
    }pmdDMNProcInfo;
 
-   class cPmdDMNSignalHandler
-   {
-   public:
-      cPmdDMNSignalHandler();
-      virtual ~cPmdDMNSignalHandler(){};
-      static void signalHandler( INT32 sigNum );
-
-   protected:
-      static BOOLEAN       _isRunning;
-      static BOOLEAN       _hasRegister;
-   };
-
-   class iPmdDMNChildProc : public cPmdDMNSignalHandler
+   class iPmdDMNChildProc : public iPmdProc
    {
    private:
       virtual const CHAR *getProgramName() = 0;
       virtual const CHAR *getArguments(){ return NULL; }
-      virtual INT32 dmnMain( INT32 argc, CHAR **argv ) = 0;
+      virtual INT32 svcMain( INT32 argc, CHAR **argv ) = 0;
 
    public:
       iPmdDMNChildProc();
       virtual ~iPmdDMNChildProc();
       virtual INT32 init( ossSHMKey shmKey,
                         const CHAR *pDiagLogDir );
-      BOOLEAN isRunning();
+      BOOLEAN isChildRunning();
       INT32 DMNProcessCMD( pmdDMNSHMCmd cmd );
       INT32 ChildProcessCMD( pmdDMNSHMCmd cmd );
       INT32 start();    // call by daemon
@@ -125,7 +114,6 @@ namespace engine
       INT32 startSyncThr();
       void syncProcesserInfo();
       virtual const CHAR *getExecuteFile();
-      
 
    private:
       pmdDMNProcInfo       *_procInfo;
@@ -138,7 +126,7 @@ namespace engine
       OSSPID               _pid;
    };
 
-   class cPmdDaemon : public cPmdDMNSignalHandler
+   class cPmdDaemon : public iPmdProc
    {
    public:
       cPmdDaemon( const CHAR *pDMNSvcName );

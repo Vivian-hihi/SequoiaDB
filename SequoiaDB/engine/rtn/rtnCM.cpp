@@ -2090,7 +2090,7 @@ namespace CLSMGR
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCMSVC_DMNMAIN, "cCMService::dmnMain" )
-   INT32 cCMService::dmnMain( INT32 argc, CHAR **argv )
+   INT32 cCMService::svcMain( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCMSVC_DMNMAIN );
@@ -2130,7 +2130,7 @@ namespace CLSMGR
          ossRenameProcess ( sdbcmProcessName ) ;
       }
 #endif
-      while ( _isRunning )
+      while ( isRunning() )
       {
          pidMonitor () ;
          ossSleepsecs ( SLEEPTIME ) ;
