@@ -45,12 +45,12 @@ public class ConnectionTCPImpl implements IConnection {
 	final static private int DEF_BUFFER_LENGTH = 2 * 1024 * 1024;
 	private int REAL_BUFFER_LENGTH ;
 
-	@Override
+	//@Override
 	public void setEndianConvert(boolean endianConvert) {
 		this.endianConvert = endianConvert;
 	}
 
-	@Override
+	//@Override
 	public boolean isEndianConvert() {
 		return endianConvert;
 	}
@@ -134,7 +134,7 @@ public class ConnectionTCPImpl implements IConnection {
 	 * @see com.sequoiadb.net.IConnection#changeConfigOptions(com.sequoiadb.net.
 	 * ConfigOptions)
 	 */
-	@Override
+	//@Override
 	public void changeConfigOptions(ConfigOptions opts) throws BaseException {
 		logger.getInstance().debug(0, "enter changeConfigOptions\n");
 		this.options = opts;
@@ -148,7 +148,7 @@ public class ConnectionTCPImpl implements IConnection {
 	 * 
 	 * @see com.sequoiadb.net.IConnection#sendMessage(byte[], int)
 	 */
-	@Override
+	//@Override
 	public void sendMessage(byte[] msg) throws BaseException {
 		logger.getInstance().debug(0, "enter sendMessage\n");
 		try {
@@ -166,7 +166,7 @@ public class ConnectionTCPImpl implements IConnection {
 	 * 
 	 * @see com.sequoiadb.net.IConnection#receiveMessage()
 	 */
-	@Override
+	//@Override
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException {
 		logger.getInstance().debug(0, "enter receiveMessage\n");
 		try {
@@ -231,7 +231,7 @@ public class ConnectionTCPImpl implements IConnection {
 		}
 	}
 
-	@Override
+	//@Override
 	public byte[] receiveSysInfoMsg(int msgSize) throws BaseException {
 		logger.getInstance().debug(0, "enter receiveSysInfoMsg\n");
 		byte[] buf = new byte[msgSize];
@@ -272,12 +272,12 @@ public class ConnectionTCPImpl implements IConnection {
 	 * 
 	 * @see com.sequoiadb.net.IConnection#initialize()
 	 */
-	@Override
+	//@Override
 	public void initialize() throws BaseException {
 		connect();
 	}
 
-	@Override
+	//@Override
 	public void sendMessage(byte[] msg, int length) throws BaseException {
 	    logger.getInstance().debug(0, "enter sendMessage2\n");
         try {

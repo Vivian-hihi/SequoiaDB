@@ -31,7 +31,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class NewBSONDecoder implements BSONDecoder {
 
-    @Override
+    //@Override
     public BSONObject readObject(final byte [] pData) {
         _length = pData.length;
         final BasicBSONCallback c = new BasicBSONCallback();
@@ -39,7 +39,7 @@ public class NewBSONDecoder implements BSONDecoder {
         return (BSONObject)c.get();
    }
 
-    @Override
+    //@Override
     public BSONObject readObject(final InputStream pIn) throws IOException {
         // Slurp in the data and convert to a byte array.
         _length = Bits.readInt(pIn);
@@ -53,7 +53,7 @@ public class NewBSONDecoder implements BSONDecoder {
         return readObject(_data);
     }
 
-    @Override
+    //@Override
     public int decode(final byte [] pData, final BSONCallback pCallback) {
         _data = pData;
         _pos = 4;
@@ -62,7 +62,7 @@ public class NewBSONDecoder implements BSONDecoder {
         return _length;
     }
 
-    @Override
+    //@Override
     public int decode(final InputStream pIn, final BSONCallback pCallback) throws IOException {
         _length = Bits.readInt(pIn);
 

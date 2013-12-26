@@ -49,7 +49,7 @@ public class ClassMap<T>  {
     }
 
     private final class ComputeFunction implements Function<Class<?>, T> {
-        @Override
+        //@Override
         public T apply(Class<?> a) {
             for (Class<?> cls : getAncestry(a)) {
                 T result = map.get(cls);

@@ -969,7 +969,9 @@ public class SDBMessageHelper {
 
 	private static boolean extractSysInfoHeader(byte[] header) {
 		boolean endianConvert = false;
-		int eyeCatcher = Helper.byteToInt(Arrays.copyOfRange(header, 4, 8));
+                byte[] headsByte = new byte[4];
+                System.arraycopy(header, 4, headsByte, 0, 4);
+		int eyeCatcher = Helper.byteToInt(headsByte);
 		if (eyeCatcher == SequoiadbConstants.MSG_SYSTEM_INFO_EYECATCHER)
 			endianConvert = false;
 		else if (eyeCatcher == SequoiadbConstants.MSG_SYSTEM_INFO_EYECATCHER_REVERT)

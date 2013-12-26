@@ -79,7 +79,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
 	}
 
-	@Override
+	//@Override
 	public byte[] encode(BSONObject o) {
 		BasicOutputBuffer buf = new BasicOutputBuffer();
 		set(buf);
@@ -88,14 +88,14 @@ public class BasicBSONEncoder implements BSONEncoder {
 		return buf.toByteArray();
 	}
 
-	@Override
+	//@Override
 	public void set(OutputBuffer out) {
 		if (_buf != null) throw new IllegalStateException("in the middle of something");
 
 		_buf = out;
 	}
 
-	@Override
+	//@Override
 	public void done() {
 		_buf = null;
 	}
@@ -118,7 +118,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 	 *            the object to encode
 	 * @return the number of characters in the encoding
 	 */
-	@Override
+	//@Override
 	public int putObject(BSONObject o) {
 		return putObject(null, o);
 	}

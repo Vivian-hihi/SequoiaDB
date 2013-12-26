@@ -104,7 +104,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 * @param m
 	 *            map to convert
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked"})
 	public BasicBSONObject(Map m) {
 		super(m);
 	}
@@ -114,7 +114,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 * 
 	 * @return the DBObject
 	 */
-	@Override
+	//@Override
 	public Map toMap() {
 		return new LinkedHashMap<String, Object>(this);
 	}
@@ -126,7 +126,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 *            the field name to remove
 	 * @return the object removed
 	 */
-	@Override
+	//@Override
 	public Object removeField(String key) {
 		return remove(key);
 	}
@@ -138,7 +138,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 *            field name
 	 * @return if the field exists
 	 */
-	@Override
+	//@Override
 	public boolean containsField(String field) {
 		return super.containsKey(field);
 	}
@@ -146,7 +146,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	/**
 	 * @deprecated
 	 */
-	@Override
+	//@Override
 	@Deprecated
 	public boolean containsKey(String key) {
 		return containsField(key);
@@ -159,7 +159,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 *            field name
 	 * @return the value
 	 */
-	@Override
+	//@Override
 	public Object get(String key) {
 		return super.get(key);
 	}
@@ -376,12 +376,12 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 *            the field value
 	 * @return the <code>val</code> parameter
 	 */
-	@Override
+	//@Override
 	public Object put(String key, Object val) {
 		return super.put(key, val);
 	}
 
-	@Override
+	//@Override
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void putAll(Map m) {
 		for (Map.Entry entry : (Set<Map.Entry>) m.entrySet()) {
@@ -389,7 +389,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 		}
 	}
 
-	@Override
+	//@Override
 	public void putAll(BSONObject o) {
 		for (String k : o.keySet()) {
 			put(k, o.get(k));
@@ -416,12 +416,12 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 * 
 	 * @return JSON serialization
 	 */
-	@Override
+	//@Override
 	public String toString() {
 		return JSON.serialize(this);
 	}
 
-	@Override
+	//@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof BSONObject))
 			return false;
@@ -458,7 +458,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 		return true;
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({"rawtypes"})
 	public boolean BasicTypeWrite(Object object, Object field, Method method)
 			throws IllegalArgumentException, IllegalAccessException,
 			InvocationTargetException {
@@ -562,13 +562,13 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	 * @return the instance of the class
 	 * @throws Exception
 	 */
-	@Override
+	//@Override
 	public <T> T as(Class<T> type) throws Exception {
 		return as(type, null);
 	}
 
-	@SuppressWarnings({ "unchecked" }) 
-	@Override
+	@SuppressWarnings({"unchecked"}) 
+	//@Override
 	public <T> T as(Class<T> type, Type eleType) throws Exception {
 		boolean hasConsturctor = false;
 		T result = null;
@@ -648,7 +648,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 
 						Field f = type.getDeclaredField(p.getName());
 						if (f == null)
-							continue;
+                                                     continue;
 						Type _type = f.getGenericType();
 
 						Type fileType = null;
@@ -676,7 +676,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 	
 
 	
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({"rawtypes"})
 	public static BSONObject typeToBson(Object object)
 			throws IntrospectionException, IllegalArgumentException,
 			IllegalAccessException, InvocationTargetException {
