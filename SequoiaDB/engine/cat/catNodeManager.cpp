@@ -201,11 +201,13 @@ namespace engine
       msgReply.header.header.requestID = pRequest->header.requestID;
       msgReply.header.header.routeID.value= 0;
       msgReply.header.header.TID = pRequest->header.TID;
-      if ( !_pClsCB || !_pClsCB->isPrimary() || SDB_CAT_MODULE_ACTIVE != _status )
+
+      if ( !_pClsCB || !_pClsCB->isPrimary() ||
+           SDB_CAT_MODULE_ACTIVE != _status )
       {
-         rc = SDB_CLS_NOT_PRIMARY;
-         PD_LOG ( PDWARNING,
-                  "service deactive but received primary-change request" );
+         rc = SDB_CLS_NOT_PRIMARY ;
+         PD_LOG ( PDWARNING, "service deactive but received primary-change "
+                  "request" );
          goto done;
       }
 
@@ -215,45 +217,47 @@ namespace engine
          BSONObj boMatcher;
          if ( INVALID_GROUPID == groupID || INVALID_NODEID == nodeID )
          {
-            boMatcher = BSON( CAT_GROUPID_NAME << pRequest->oldPrimary.columns.groupID
-                                    << CAT_PRIMARY_NAME << pRequest->oldPrimary.columns.nodeID );
-            boUpdater = BSON( "$unset" << BSON( CAT_PRIMARY_NAME << nodeID ) );
+            boMatcher = BSON( CAT_GROUPID_NAME <<
+                              pRequest->oldPrimary.columns.groupID <<
+                              CAT_PRIMARY_NAME <<
+                              pRequest->oldPrimary.columns.nodeID ) ;
+            boUpdater = BSON( "$unset" << BSON( CAT_PRIMARY_NAME << nodeID ) ) ;
          }
          else
          {
-            boMatcher = BSON( CAT_GROUPID_NAME<<groupID );
-            BSONObj boComment = BSON( CAT_PRIMARY_NAME<<nodeID );
-            BSONObjBuilder bobUpdater;
-            bobUpdater.append( "$set", boComment );
-            boUpdater = bobUpdater.obj();
+            boMatcher = BSON( CAT_GROUPID_NAME << groupID ) ;
+            BSONObj boComment = BSON( CAT_PRIMARY_NAME << nodeID ) ;
+            BSONObjBuilder bobUpdater ;
+            bobUpdater.append( "$set", boComment ) ;
+            boUpdater = bobUpdater.obj() ;
          }
-         BSONObj hint;
+         BSONObj hint ;
          rc = rtnUpdate ( CAT_NODE_INFO_COLLECTION, boMatcher, boUpdater,
-                          hint, 0, _pEduCB, _pDmsCB, _pDpsCB, w );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to set primary-node(rc=%d)",
-                     rc );
+                          hint, 0, _pEduCB, _pDmsCB, _pDpsCB, w ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to set primary-node(rc=%d)",
+                      rc ) ;
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_SYS, SDB_SYS, error, PDERROR,
-                  "failed to set primary-node, received unexpected error:%s",
-                  e.what() );
+                   "Failed to set primary-node, received unexpected error:%s",
+                   e.what() ) ;
       }
+
    done:
-      msgReply.header.res = rc;
+      msgReply.header.res = rc ;
       PD_TRACE1 ( SDB_CATNODEMGR_PRIMARYCHANGE,
                   PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend(pEvent->handle, &msgReply );
+      rc = _pCatCB->netWork()->syncSend(pEvent->handle, &msgReply ) ;
       if ( rc )
       {
 	      PD_LOG( PDERROR, "failed to send response(primary-change)(rc=%d)",
                  rc ) ;
       }
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_PRIMARYCHANGE, rc ) ;
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GRPREQ, "catNodeManager::processGrpReq" )
