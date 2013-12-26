@@ -209,7 +209,7 @@ public class DBCollection {
 		try {
 			obj = BasicBSONObject.typeToBson(type);
 		} catch (Exception e) {
-			throw new BaseException(e.toString());
+			throw new BaseException(e.getStackTrace().toString());
 		}
 
 		Object id = obj.get(SequoiadbConstants.OID);
