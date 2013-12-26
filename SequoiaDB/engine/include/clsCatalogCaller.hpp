@@ -65,7 +65,7 @@ namespace engine
       {
          if ( NULL != header )
          {
-            SDB_OSS_FREE( header) ;
+            SDB_OSS_FREE( header ) ;
             header = NULL ;
          }
          bufLen = 0 ;
@@ -84,6 +84,7 @@ namespace engine
       INT32 call( MsgHeader *header ) ;
 
       void remove( _MsgInternalReplyHeader *header ) ;
+      void remove( INT32 opCode ) ;
 
       void handleTimeout( const UINT32 &millisec ) ;
 

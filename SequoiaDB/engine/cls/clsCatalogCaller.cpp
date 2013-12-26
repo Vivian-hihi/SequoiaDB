@@ -46,8 +46,8 @@ namespace engine
    const INT32 CLS_CALLER_INTERVAL = 5000 ;
    const INT32 CLS_CALLER_NORESPONSE = 15000 ;
 
-   _clsCatalogCaller::_clsCatalogCaller():
-                                         _cMgr( NULL )
+   _clsCatalogCaller::_clsCatalogCaller()
+   :_cMgr( NULL )
    {
       _cMgr = pmdGetKRCB()->getClsCB() ;
    }
@@ -57,7 +57,7 @@ namespace engine
       _cMgr = NULL ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_CALL, "_clsCatalogCaller::call" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_CALL, "_clsCatalogCaller::call" )
    INT32 _clsCatalogCaller::call( MsgHeader *header )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
@@ -87,6 +87,7 @@ namespace engine
               meta.header->opCode ) ;
       _cMgr->sendToCatlog( meta.header ) ;
       meta.timeout = 0 ;
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSCATCLR_CALL, rc );
       return rc ;
@@ -94,7 +95,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_REMOVE, "_clsCatalogCaller::remove" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_REMOVE, "_clsCatalogCaller::remove" )
    void _clsCatalogCaller::remove( _MsgInternalReplyHeader *header )
    {
       SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
@@ -106,12 +107,21 @@ namespace engine
                  header->header.opCode ) ;
          itr->second.timeout = CLS_CALLER_NO_SEND ;
       }
-   done:
+
       PD_TRACE_EXIT ( SDB__CLSCATCLR_REMOVE );
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_HNDTMOUT, "_clsCatalogCaller::handleTimeout" )
+   void _clsCatalogCaller::remove( INT32 opCode )
+   {
+      callerMeta::iterator itr = _meta.find( (UINT32)opCode ) ;
+      if ( _meta.end() != itr )
+      {
+         itr->second.timeout = CLS_CALLER_NO_SEND ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_HNDTMOUT, "_clsCatalogCaller::handleTimeout" )
    void _clsCatalogCaller::handleTimeout( const UINT32 &millisec )
    {
       PD_TRACE_ENTRY ( SDB__CLSCATCLR_HNDTMOUT );

@@ -59,7 +59,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSPMY_HDTMOUT, "_clsVSPrimary::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSPMY_HDTMOUT, "_clsVSPrimary::handleTimeout" )
    void _clsVSPrimary::handleTimeout( const UINT32 &millisec,
                                       INT32 &next )
    {
@@ -76,15 +76,6 @@ namespace engine
          else
          {
             next = CLS_ELECTION_STATUS_SILENCE ;
-            _info()->mtx.lock_w() ;
-            _info()->primary.value = MSG_INVALID_ROUTEID ;
-            _info()->mtx.release_w() ;
-            pmdGetKRCB()->getTransCB()->stopRollbackTask() ;
-            pmdGetKRCB()->getTransCB()->termAllTrans();
-
-            /// when we are not primary any more, we should clear
-            /// waiting list.
-            pmdGetKRCB()->getClsCB()->getReplCB()->syncMgr()->cut( 0 ) ;
          }
       }
       else
@@ -95,7 +86,30 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSPMY_ACTIVE, "_clsVSPrimary::active" )
+   void _clsVSPrimary::deactive ()
+   {
+      _MsgCatPrimaryChange msg ;
+ 
+      _info()->mtx.lock_w() ;
+      if ( _info()->local.value == _info()->primary.value )
+      {
+         _info()->primary.value = MSG_INVALID_ROUTEID ;
+      }
+      msg.newPrimary = _info()->primary ;
+      msg.oldPrimary = _info()->local ;
+      _info()->mtx.release_w() ;
+
+      pmdGetKRCB()->getTransCB()->stopRollbackTask() ;
+      pmdGetKRCB()->getTransCB()->termAllTrans();
+
+      /// when we are not primary any more, we should clear
+      /// waiting list.
+      pmdGetKRCB()->getClsCB()->getReplCB()->syncMgr()->cut( 0 ) ;
+
+      pmdGetKRCB()->getClsCB()->getReplCB()->callCatalog( (MsgHeader *)&msg ) ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSPMY_ACTIVE, "_clsVSPrimary::active" )
    void _clsVSPrimary::active( INT32 &next )
    {
       pmdKRCB *pKRCB = pmdGetKRCB() ;
@@ -120,14 +134,12 @@ namespace engine
       _info()->primary = _info()->local ;
       _info()->mtx.release_w() ;
       pmdGetKRCB()->getDPSCB()->incVersion() ;
-      pmdGetKRCB()->getClsCB()->getReplCB()->
-      callCatalog( (MsgHeader *)&msg ) ;
+      pmdGetKRCB()->getClsCB()->getReplCB()->callCatalog( (MsgHeader *)&msg ) ;
 
       PD_LOG ( PDEVENT, "Change to Primary" ) ;
 
       PD_TRACE_EXIT ( SDB__CLSVSPMY_ACTIVE ) ;
       return ;
    }
-
 
 }

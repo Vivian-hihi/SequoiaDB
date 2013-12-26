@@ -52,6 +52,7 @@ namespace engine
                                   INT32 &next ) ;
 
       virtual void active( INT32 &next ) ;
+      virtual void deactive () ;
 
       virtual const CHAR *name() const { return "Primary" ;}
 

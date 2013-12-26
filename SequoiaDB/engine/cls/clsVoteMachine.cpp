@@ -45,7 +45,7 @@ namespace engine
    #define CLS_VOTE_REGISGER_STATUS( status, rc ) \
            {\
               _clsVoteStatus *s = SDB_OSS_NEW status( _groupInfo,\
-                                                             _agent ) ;\
+                                                      _agent ) ;\
               if ( NULL == s ) \
               {\
                  clear() ;\
@@ -65,6 +65,7 @@ namespace engine
                      "valid: 0 <= status < status.size()" )\
               INT32 now = CLS_INVALID_VOTE_ID ;\
               INT32 nextStatus = next ;\
+              _clsVoteStatus *prevVS = _current ; \
               if ( NULL != _current )\
               {\
                  now = _current->id() ;\
@@ -72,11 +73,13 @@ namespace engine
               _current = _status.at( next ) ;\
               while ( now != nextStatus )\
               {\
+                 if ( prevVS ) { prevVS->deactive() ; } \
+                 prevVS = _current ; \
                  PD_LOG( PDINFO, "vote change to %s", _current->name() ) ;\
                  now = _current->id() ;\
                  _current->active( nextStatus ) ;\
-                 SDB_ASSERT( next < (INT32)_status.size() &&\
-                     0 <= next,\
+                 SDB_ASSERT( nextStatus < (INT32)_status.size() &&\
+                     0 <= nextStatus,\
                      "valid: 0 <= status < status.size()" )\
                  _current = _status.at( nextStatus ) ;\
               }\
@@ -96,7 +99,7 @@ namespace engine
       clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_INIT, "_clsVoteMachine::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_INIT, "_clsVoteMachine::init" )
    INT32 _clsVoteMachine::init()
    {
       INT32 rc = SDB_OK ;
@@ -115,7 +118,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_CLEAR, "_clsVoteMachine::clear" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_CLEAR, "_clsVoteMachine::clear" )
    void _clsVoteMachine::clear()
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_CLEAR ) ;
@@ -130,7 +133,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSVTMH_CLEAR ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_HDINPUT, "_clsVoteMachine::handleInput" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_HDINPUT, "_clsVoteMachine::handleInput" )
    INT32 _clsVoteMachine::handleInput( const MsgHeader *header )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_HDINPUT ) ;
@@ -159,7 +162,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_HDTMOUT, "_clsVoteMachine::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_HDTMOUT, "_clsVoteMachine::handleTimeout" )
    void _clsVoteMachine::handleTimeout( const UINT32 &millisec )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_HDTMOUT ) ;
@@ -178,7 +181,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_FORCE, "_clsVoteMachine::force" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTMH_FORCE, "_clsVoteMachine::force" )
    void _clsVoteMachine::force( const INT32 &id )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTMH_FORCE ) ;

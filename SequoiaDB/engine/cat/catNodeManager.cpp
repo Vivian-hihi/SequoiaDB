@@ -225,12 +225,22 @@ namespace engine
          }
          else
          {
-            boMatcher = BSON( CAT_GROUPID_NAME << groupID ) ;
+            if ( pRequest->header.routeID.columns.nodeID == nodeID )
+            {
+               boMatcher = BSON( CAT_GROUPID_NAME << groupID ) ;
+            }
+            else
+            {
+               boMatcher = BSON( CAT_GROUPID_NAME << groupID <<
+                                 CAT_PRIMARY_NAME <<
+                                 pRequest->header.routeID.columns.nodeID ) ;
+            }
             BSONObj boComment = BSON( CAT_PRIMARY_NAME << nodeID ) ;
             BSONObjBuilder bobUpdater ;
             bobUpdater.append( "$set", boComment ) ;
             boUpdater = bobUpdater.obj() ;
          }
+
          BSONObj hint ;
          rc = rtnUpdate ( CAT_NODE_INFO_COLLECTION, boMatcher, boUpdater,
                           hint, 0, _pEduCB, _pDmsCB, _pDpsCB, w ) ;
