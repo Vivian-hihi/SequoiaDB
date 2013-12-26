@@ -84,7 +84,7 @@ public class Helper {
                 byte[] firstPart = new byte[length];
                 System.arraycopy(inByteArray, 0, firstPart, 0, length);
                 byte[] seconPart = new byte[inByteArray.length - length];
-                System.arraycopy(inByteArray, length, seconPart, inByteArray.length - length);
+                System.arraycopy(inByteArray, length, seconPart, 0,inByteArray.length - length);
 
 		rtnList.add(firstPart);
 		rtnList.add(seconPart);
