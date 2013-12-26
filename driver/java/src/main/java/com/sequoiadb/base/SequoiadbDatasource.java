@@ -142,7 +142,7 @@ public class SequoiadbDatasource {
 	}
 
 	private synchronized Sequoiadb getSequoiadb() {
-		Sequoiadb sequoiadb = sequoiadbs.pop();
+		Sequoiadb sequoiadb = sequoiadbs.poll();
 		used_sequoiadbs.add(sequoiadb);
 		return sequoiadb;
 	}
