@@ -112,8 +112,8 @@ namespace engine
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
       if ( !matcher.isEmpty() )
@@ -132,8 +132,8 @@ namespace engine
             }
             else
             {
-               PD_LOG ( PDERROR,"Failed to query for count for collection %s",
-                        pCollection ) ;
+               PD_LOG ( PDERROR,"Failed to query for count for collection %s, "
+                        "rc: %d", pCollection, rc ) ;
                goto error ;
             }
          }
@@ -157,7 +157,7 @@ namespace engine
                   else
                   {
                      PD_LOG ( PDERROR, "Failed to fetch for count for "
-                              "collecion %s", pCollection ) ;
+                              "collecion %s, rc: %d", pCollection, rc ) ;
                      goto error ;
                   }
                }
@@ -176,7 +176,8 @@ namespace engine
          rc = su->countCollection ( pCollectionShortName, totalCount, cb ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to get count %s", pCollection ) ;
+            PD_LOG ( PDERROR, "Failed to get count %s, rc: %d",
+                     pCollection, rc ) ;
             goto error ;
          }
       }
@@ -186,8 +187,8 @@ namespace engine
       rc = context->append ( obj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to append context for collection %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to append context for collection %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
 
@@ -219,21 +220,23 @@ namespace engine
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
       rc = su->getIndexes ( pCollectionShortName, resultIndexes ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get indexes %s", pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to get indexes %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
 
       rc = monDumpIndexes ( resultIndexes, context ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to dump indexes %s", pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to dump indexes %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
 
@@ -675,7 +678,7 @@ namespace engine
                                contextID, cb ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create new context" ) ;
+         PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
       rc = context->open( selector, matcher,
@@ -754,7 +757,7 @@ namespace engine
                                contextID, cb ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create new context" ) ;
+         PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
       rc = context->open( selector, matcher,
@@ -845,7 +848,7 @@ namespace engine
                                contextID, cb ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create new context" ) ;
+         PD_LOG ( PDERROR, "Failed to create new context, rc: %d", rc ) ;
          goto error ;
       }
       rc = context->open( selector, matcher,
@@ -866,7 +869,8 @@ namespace engine
          rc = monDumpAllContexts ( rtnCB, context, FALSE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump contexts from rtnCB" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump contexts from rtnCB, rc: %d",
+                     rc ) ;
             goto error ;
          }
          break ;
@@ -874,7 +878,8 @@ namespace engine
          rc = monDumpContextsFromCB ( cb, context, rtnCB, FALSE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump contexts from eduCB" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump contexts from eduCB, rc: %d",
+                     rc ) ;
             goto error ;
          }
          break ;
@@ -882,7 +887,8 @@ namespace engine
          rc = monDumpAllSessions ( cb, context, FALSE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump session from eduCB" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump session from eduCB, rc: %d",
+                     rc ) ;
             goto error ;
          }
          break ;
@@ -890,7 +896,8 @@ namespace engine
          rc = monDumpSessionFromCB ( cb, context, FALSE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump session from eduCB" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump session from eduCB, rc: %d",
+                     rc ) ;
             goto error ;
          }
          break ;
@@ -898,7 +905,8 @@ namespace engine
          rc = monDumpAllCollections ( dmsCB, context, TRUE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB, "
+                     "rc: %d", rc ) ;
             goto error ;
          }
          break ;
@@ -906,7 +914,8 @@ namespace engine
          rc = monDumpAllCollectionSpaces ( dmsCB, context, TRUE ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB, "
+                     "rc: %d", rc ) ;
             goto error ;
          }
          break ;
@@ -914,7 +923,7 @@ namespace engine
          rc = monDumpMonDBCB ( context ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump database" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump database, rc: %d", rc ) ;
             goto error ;
          }
          break ;
@@ -922,7 +931,7 @@ namespace engine
          rc = monDumpMonSystem ( context ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Couldn't dump system" ) ;
+            PD_LOG ( PDERROR, "Couldn't dump system, rc: %d", rc ) ;
             goto error ;
          }
          break ;
@@ -968,14 +977,15 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
-      dmsStorageUnit *su = NULL ;
+      dmsStorageUnit *su   = NULL ;
+      BOOLEAN writable     = FALSE ;
 
       // make sure the collectionspace length is not out of range
       UINT32 length = ossStrlen ( pCollectionSpace ) ;
       if ( length <= 0 || length > DMS_SU_NAME_SZ )
       {
-         PD_LOG ( PDERROR, "Invalid length for collectionspace: %s",
-                  pCollectionSpace ) ;
+         PD_LOG ( PDERROR, "Invalid length for collectionspace: %s, rc: %d",
+                  pCollectionSpace, rc ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -987,6 +997,10 @@ namespace engine
                   rc ) ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
 
       // let's see if the CS already exist or not
       rc = dmsCB->nameToSUAndLock ( pCollectionSpace, suID, &su ) ;
@@ -1030,8 +1044,8 @@ namespace engine
                       TRUE ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create collection space %s at %s",
-                  pCollectionSpace, pmdGetKRCB()->getDBPath() ) ;
+         PD_LOG ( PDERROR, "Failed to create collection space %s at %s, rc: %d",
+                  pCollectionSpace, pmdGetKRCB()->getDBPath(), rc ) ;
          goto error ;
       }
 
@@ -1051,6 +1065,10 @@ namespace engine
       }
 
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -1097,6 +1115,8 @@ namespace engine
       dmsStorageUnit *su    = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
+      BOOLEAN writable      = FALSE ;
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
 
@@ -1123,15 +1143,21 @@ namespace engine
 
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       rc = su->data()->addCollection ( pCollectionShortName, NULL, attributes,
                                        cb, dpsCB, 0, sysCall ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to create collection %s", pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to create collection %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
       if ( !shardingKey.isEmpty() )
@@ -1144,10 +1170,8 @@ namespace engine
                                          cb, dmsCB, dpsCB, TRUE ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR,
-                        "Failed to create sharding key for collection %s, "
-                        "rc = %d",
-                        pCollection, rc ) ;
+               PD_LOG ( PDERROR, "Failed to create sharding key for "
+                        "collection %s, rc = %d", pCollection, rc ) ;
                goto error_rollback ;
             }
          }
@@ -1159,6 +1183,10 @@ namespace engine
          }
       }
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -1169,11 +1197,10 @@ namespace engine
       rcTmp = rtnDropCollectionCommand ( pCollection, cb, dmsCB, dpsCB ) ;
       if ( rcTmp )
       {
-         PD_LOG ( PDERROR,
-                  "Failed to rollback creating collection %s, rc = %d",
+         PD_LOG ( PDERROR, "Failed to rollback creating collection %s, rc = %d",
                   pCollection, rcTmp ) ;
-         goto error ;
       }
+      goto done ;
    error :
       goto done ;
    }
@@ -1190,18 +1217,25 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" )
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
-      dmsStorageUnit *su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
-      rtnAccessPlanManager *apm = NULL ;
+      dmsStorageUnit *su            = NULL ;
+      dmsStorageUnitID suID         = DMS_INVALID_CS ;
+      rtnAccessPlanManager *apm     = NULL ;
       const CHAR *pCollectionShortName = NULL ;
+      BOOLEAN writable              = FALSE ;
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       rc = su->createIndex ( pCollectionShortName, indexObj,
                              cb, dpsCB, isSys ) ;
       if ( rc )
@@ -1216,6 +1250,10 @@ namespace engine
       apm->invalidatePlans ( pCollectionShortName ) ;
 
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -1239,10 +1277,12 @@ namespace engine
       OID oid ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" )
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
-      rtnAccessPlanManager *apm = NULL ;
-      dmsStorageUnit *su = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      rtnAccessPlanManager *apm        = NULL ;
+      dmsStorageUnit *su               = NULL ;
+      dmsStorageUnitID suID            = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
+      BOOLEAN writable                 = FALSE ;
+
       if ( identifier.type() != jstOID && identifier.type() != String )
       {
          PD_LOG ( PDERROR, "Invalid index identifier type: %s",
@@ -1254,10 +1294,15 @@ namespace engine
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       if ( identifier.type() == jstOID )
       {
          identifier.Val(oid) ;
@@ -1276,13 +1321,18 @@ namespace engine
       }
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to drop index %s: %s",
-                  pCollection, identifier.toString().c_str() ) ;
+         PD_LOG ( PDERROR, "Failed to drop index %s: %s, rc: %d",
+                  pCollection, identifier.toString().c_str(), rc ) ;
          goto error ;
       }
       apm = su->getAPM() ;
       apm->invalidatePlans ( pCollectionShortName ) ;
+
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -1292,6 +1342,7 @@ namespace engine
    error :
       goto done ;
    }
+
    // currently drop collection space command just remove the collectionspace
    // from dmsCB, it does NOT remove the physical file and NOT unmap the mmap
    // In the later improvement we'll have to implement collectionspace lock so
@@ -1308,17 +1359,22 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNDROPCSCOMMAND ) ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
+      BOOLEAN writable = FALSE ;
       SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" )
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
       // make sure the collectionspace length is not out of range
       UINT32 length = ossStrlen ( pCollectionSpace ) ;
       if ( length <= 0 || length > DMS_SU_NAME_SZ )
       {
-         PD_LOG ( PDERROR, "Invalid length for collectionspace: %s",
-                  pCollectionSpace ) ;
+         PD_LOG ( PDERROR, "Invalid length for collectionspace: %s, rc: %d",
+                  pCollectionSpace, rc ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
 
       // let's find out whether the collection space is held by this
       // EDU. If so we have to get rid of those contexts
@@ -1354,7 +1410,7 @@ namespace engine
       }
 
       rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB,
-                                       hasLocked ) ;
+                                        hasLocked ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to drop collectionspace %s, rc: %d",
@@ -1363,6 +1419,10 @@ namespace engine
       }
 
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNDROPCSCOMMAND, rc ) ;
       return rc ;
    error :
@@ -1375,32 +1435,44 @@ namespace engine
                                     SDB_DMSCB *dmsCB,
                                     SDB_DPSCB *dpsCB )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc                            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPCLCOMMAND ) ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      dmsStorageUnitID suID               = DMS_INVALID_CS ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" )
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
-      dmsStorageUnit *su = NULL ;
-      rtnAccessPlanManager *apm = NULL ;
-      const CHAR *pCollectionShortName = NULL ;
+      dmsStorageUnit *su                  = NULL ;
+      rtnAccessPlanManager *apm           = NULL ;
+      const CHAR *pCollectionShortName    = NULL ;
+      BOOLEAN writable                    = FALSE ;
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
       rc = su->data()->dropCollection ( pCollectionShortName, cb, dpsCB ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to drop collection %s", pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to drop collection %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
       apm = su->getAPM() ;
       apm->invalidatePlans ( pCollectionShortName ) ;
 
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -1415,30 +1487,42 @@ namespace engine
    INT32 rtnTruncCollectionCommand( const CHAR *pCollection, pmdEDUCB *cb,
                                     SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTRUNCCLCOMMAND ) ;
-      dmsStorageUnitID suID = DMS_INVALID_CS ;
+      dmsStorageUnitID suID            = DMS_INVALID_CS ;
       SDB_ASSERT ( pCollection, "collection can't be NULL" )
       SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
-      dmsStorageUnit *su = NULL ;
+      dmsStorageUnit *su               = NULL ;
       const CHAR *pCollectionShortName = NULL ;
+      BOOLEAN writable                 = FALSE ;
+
+
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s",
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
 
       rc = su->data()->truncateCollection( pCollectionShortName, cb, dpsCB ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to truncate collection %s", pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to truncate collection %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
 
    done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
       if ( DMS_INVALID_CS != suID )
       {
          dmsCB->suUnlock ( suID ) ;
@@ -1492,14 +1576,15 @@ namespace engine
                                              &pCollectionShortName, suID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to resolve collection name %s", 
-                  pCollection ) ;
+         PD_LOG ( PDERROR, "Failed to resolve collection name %s, rc: %d", 
+                  pCollection, rc ) ;
          goto error ;
       }
       rc = su->data()->findCollection ( pCollectionShortName, cID ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Collection does not exist: %s", pCollection ) ;
+         PD_LOG ( PDERROR, "Collection does not exist: %s, rc: %d",
+                  pCollection, rc ) ;
          goto error ;
       }
    done :
