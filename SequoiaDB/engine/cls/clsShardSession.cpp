@@ -1016,33 +1016,6 @@ namespace engine
          pCommand->setFromCluster();
          _pCollectionName = pCommand->collectionFullName () ;
 
-         if ( pCommand->writable () )
-         {
-            rc = _check ( w ) ;
-            if ( SDB_OK != rc )
-            {
-               goto error ;
-            }
-         }
-
-         //check cata
-         if ( pCommand->collectionFullName() &&
-              SDB_OK != ( rc = _checkCata( pQuery->version,
-                          pCommand->collectionFullName(),
-                          w, isMainCL ) ) )
-         {
-            goto error ;
-         }
-
-         PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
-
-         /// sometimes we can not get catainfo from command
-         /// request. here if w < 1, we set it with 1.
-         if ( w < 1 )
-         {
-            w = 1 ;
-         }
-
          // drop collection or drop collection-space must get suID and collectionID,
          // then release lock at the end
          if ( CMD_DROP_COLLECTION == pCommand->type() )
@@ -1088,6 +1061,33 @@ namespace engine
                   _WLockedCS = DMS_INVALID_SUID;
                }
             }
+         }
+
+         if ( pCommand->writable () )
+         {
+            rc = _check ( w ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+         }
+
+         //check cata
+         if ( pCommand->collectionFullName() &&
+              SDB_OK != ( rc = _checkCata( pQuery->version,
+                          pCommand->collectionFullName(),
+                          w, isMainCL ) ) )
+         {
+            goto error ;
+         }
+
+         PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
+
+         /// sometimes we can not get catainfo from command
+         /// request. here if w < 1, we set it with 1.
+         if ( w < 1 )
+         {
+            w = 1 ;
          }
 
          if ( isMainCL )
