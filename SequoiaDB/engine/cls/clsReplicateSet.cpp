@@ -642,55 +642,52 @@ namespace engine
       }
       else if ( itr != _info.info.end() )
       {
-         //if ( itr->second.beat.isValidID( beat.beatID ) )
-         //{
-            itr->second.beat = beat ;
-            if ( CLS_GROUP_ROLE_PRIMARY == beat.role )
+         itr->second.beat = beat ;
+         if ( CLS_GROUP_ROLE_PRIMARY == beat.role )
+         {
+            if ( _vote.primaryIsMe() )
             {
-               if ( _vote.primaryIsMe() )
+               DPS_LSN lsn  = _logger->getCurrentLsn() ;
+               if ( 0 >= lsn.compare( beat.endLsn ) )
                {
-                  DPS_LSN lsn  = _logger->getCurrentLsn() ;
-                  if ( 0 >= lsn.compare( beat.endLsn ) )
-                  {
-                   //  notifyLosePrimary() ;
-                     _info.mtx.lock_w() ;
-                     _info.primary = beat.identity ;
-                     _info.mtx.release_w() ;
-                     _vote.force( CLS_ELECTION_STATUS_SILENCE ) ;
-                     PD_LOG( PDEVENT, "vote:remote lsn[%d:%lld]"
-                             " higher(or equal) than local lsn[%d:%lld],"
-                             " we change to secondary.",
-                             beat.endLsn.version, beat.endLsn.offset,
-                             lsn.version, lsn.offset ) ;
-                  }
-               }
-               else if ( _info.primary.value != beat.identity.value )
-               {
-                  PD_LOG( PDEVENT, "vote: the discovery of new primary[%d]",
-                                    beat.identity.columns.nodeID ) ;
-                  _cata.remove( MSG_CAT_PAIMARY_CHANGE_RES ) ;
-                  _vote.force( CLS_ELECTION_STATUS_SILENCE ) ;
+                //  notifyLosePrimary() ;
                   _info.mtx.lock_w() ;
                   _info.primary = beat.identity ;
                   _info.mtx.release_w() ;
+                  _vote.force( CLS_ELECTION_STATUS_SILENCE ) ;
+                  PD_LOG( PDEVENT, "vote:remote lsn[%d:%lld]"
+                          " higher(or equal) than local lsn[%d:%lld],"
+                          " we change to secondary.",
+                          beat.endLsn.version, beat.endLsn.offset,
+                          lsn.version, lsn.offset ) ;
                }
             }
-            else
+            else if ( _info.primary.value != beat.identity.value )
             {
-               if ( _info.primary.value == beat.identity.value )
-               {
-                  _cata.remove( MSG_CAT_PAIMARY_CHANGE_RES ) ;
-                  _info.mtx.lock_w() ;
-                  _info.primary.value = MSG_INVALID_ROUTEID ;
-                  _info.mtx.release_w() ;
-               }
+               PD_LOG( PDEVENT, "vote: the discovery of new primary[%d]",
+                                 beat.identity.columns.nodeID ) ;
+               _cata.remove( MSG_CAT_PAIMARY_CHANGE_RES ) ;
+               _vote.force( CLS_ELECTION_STATUS_SILENCE ) ;
+               _info.mtx.lock_w() ;
+               _info.primary = beat.identity ;
+               _info.mtx.release_w() ;
             }
-        // }
+         }
+         else
+         {
+            if ( _info.primary.value == beat.identity.value )
+            {
+               _cata.remove( MSG_CAT_PAIMARY_CHANGE_RES ) ;
+               _info.mtx.lock_w() ;
+               _info.primary.value = MSG_INVALID_ROUTEID ;
+               _info.mtx.release_w() ;
+            }
+         }
       }
       {
-      _MsgClsBeatRes res ;
-      res.identity = _info.local ;
-      _agent->syncSend( msg->header.routeID, &res ) ;
+         _MsgClsBeatRes res ;
+         res.identity = _info.local ;
+         _agent->syncSend( msg->header.routeID, &res ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__HNDSHRBEAT, rc );
