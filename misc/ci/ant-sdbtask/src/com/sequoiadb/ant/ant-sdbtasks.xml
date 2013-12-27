@@ -41,6 +41,7 @@
     <typedef name="sdbClearEnvCS" classname="com.sequoiadb.ant.sdbtask.clearEnvCS" onerror="ignore" />
     <typedef name="sdbWhile" classname="com.sequoiadb.ant.tools.Sdbwhile" onerror="ignore" />
 	<typedef name="getRowNum" classname="com.sequoiadb.ant.tools.getRowNum" onerror="ignore" />
+	<typedef name="sdbProperty" classname="com.sequoiadb.ant.tools.sdbProperty" onerror="ignore" />
 	
     <!-- typedef the tasks that work for ant less than 1.6 -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>

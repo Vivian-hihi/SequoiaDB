@@ -191,12 +191,12 @@
       					<equals arg1="${test_times}" arg2="1" />
       					</not>
       					<then>
-      						<property name="mk.dir.is" value="false" />
+      						<sdbProperty name="mk.dir.is" value="false" />
       						<echo>test_times is not equals 1</echo>
       						<echo>mk.dir.is equals ${mk.dir.is}</echo>
       					</then>
       					<else>
-      						<property name="mk.dir.is" value="true" />
+      						<sdbProperty name="mk.dir.is" value="true" />
       						<echo>test_times is equals 1</echo>
       						<echo>mk.dir.is equals ${mk.dir.is}</echo>
       					</else>

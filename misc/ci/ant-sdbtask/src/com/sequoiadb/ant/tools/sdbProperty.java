@@ -1,8 +1,12 @@
 package com.sequoiadb.ant.tools;
 
-public class sdbProperty {
+import org.apache.tools.ant.Task;
+
+public class sdbProperty extends Task{
 	private String proName ; 
 	private String proPort ; 
+	private String name;
+	private String value;
 	
 	public void setProName( String value )
 	{
@@ -20,6 +24,15 @@ public class sdbProperty {
 	public String getProPort()
 	{
 		return this.proPort ; 
+	}
+	public void setName( String value ){
+		this.name = value;
+	}
+	public void setValue( String value ){
+		this.value = value;
+	}
+	public void execute(){
+		getProject().setUserProperty(this.name, this.value);
 	}
 
 }
