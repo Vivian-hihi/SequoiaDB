@@ -470,9 +470,9 @@ namespace engine
       PD_TRACE_EXIT ( SDB__NETEVNHND__RDCALLBK ) ;
       return ;
    error_close:
+      _isInAsync = FALSE ;
       if ( _isConnected )
       {
-         _isInAsync = FALSE ;
          close() ;
       }
       _frame->handleClose( shared_from_this(), _id ) ;
