@@ -3,7 +3,7 @@
 <project name="build_java_driver" default="build_java_driver">
   <target name="clean_env" depends="">
     <delete dir="${basedir}/build" failonerror="false" />
-    <mkdir dir="${basedir}/build" failonerror="false" />
+    <mkdir dir="${basedir}/build"  />
     <copy file="${basedir}/src/main/resources/errors.properties" todir="${basedir}/build" />
   </target>
   <target name="build_java_driver" depends="clean_env">
