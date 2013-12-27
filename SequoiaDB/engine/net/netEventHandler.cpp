@@ -288,6 +288,12 @@ namespace engine
    void _netEventHandler::asyncRead()
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND_ASYNCRD ) ;
+      _isInAsync = TRUE ;
+      if ( !_isConnected )
+      {
+         goto done ;
+      }
+
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
          async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
@@ -315,6 +321,7 @@ namespace engine
       }
 
    done:
+      _isInAsync = FALSE ;
       PD_TRACE_EXIT ( SDB__NETEVNHND_ASYNCRD ) ;
       return ;
    }
@@ -384,7 +391,6 @@ namespace engine
                                          error )
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND__RDCALLBK ) ;
-      _isInAsync = TRUE ;
 
       if ( error )
       {
@@ -402,11 +408,6 @@ namespace engine
                      _id.columns.serviceID, error.value() ) ;
          }
 
-         goto error_close ;
-      }
-
-      if ( !_isConnected )
-      {
          goto error_close ;
       }
 
@@ -466,11 +467,9 @@ namespace engine
       }
 
    done:
-      _isInAsync = FALSE ;
       PD_TRACE_EXIT ( SDB__NETEVNHND__RDCALLBK ) ;
       return ;
    error_close:
-      _isInAsync = FALSE ;
       if ( _isConnected )
       {
          close() ;
