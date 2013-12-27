@@ -77,7 +77,7 @@ namespace engine
       _ioserviceList.push_back ( service ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DELIOSVC, "_pmdEDUMgr::deleteIOService" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DELIOSVC, "_pmdEDUMgr::deleteIOService" )
    void _pmdEDUMgr::deleteIOService( io_service * service )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_DELIOSVC );
@@ -103,7 +103,7 @@ namespace engine
       destroyAll () ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DUMPINFO, "_pmdEDUMgr::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DUMPINFO, "_pmdEDUMgr::dumpInfo" )
    void _pmdEDUMgr::dumpInfo ( std::set<monEDUSimple> &info )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_DUMPINFO );
@@ -126,7 +126,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_DUMPINFO );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DUMPINFO2, "_pmdEDUMgr::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DUMPINFO2, "_pmdEDUMgr::dumpInfo" )
    void _pmdEDUMgr::dumpInfo ( std::set<monEDUFull> &info )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_DUMPINFO2 );
@@ -149,7 +149,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUMGR_DUMPINFO2 );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DESTROYALL, "_pmdEDUMgr::destroyAll" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DESTROYALL, "_pmdEDUMgr::destroyAll" )
    INT32 _pmdEDUMgr::destroyAll ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_DESTROYALL );
@@ -194,7 +194,7 @@ namespace engine
    }
 
    // force a specific EDU
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_FORCEUSREDU, "_pmdEDUMgr::forceUserEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_FORCEUSREDU, "_pmdEDUMgr::forceUserEDU" )
    INT32 _pmdEDUMgr::forceUserEDU ( EDUID eduID )
    {
       INT32 rc = SDB_OK ;
@@ -234,7 +234,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__FORCEIOSVC, "_pmdEDUMgr::_forceIOService" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__FORCEIOSVC, "_pmdEDUMgr::_forceIOService" )
    INT32 _pmdEDUMgr::_forceIOService ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR__FORCEIOSVC );
@@ -255,7 +255,7 @@ namespace engine
    }
 
    // block all new request and attempt to terminate existing requests
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__FORCEEDUS, "_pmdEDUMgr::_forceEDUs" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__FORCEEDUS, "_pmdEDUMgr::_forceEDUs" )
    INT32 _pmdEDUMgr::_forceEDUs ( INT32 property )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR__FORCEEDUS );
@@ -288,7 +288,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__GETEDUCNT, "_pmdEDUMgr::_getEDUCount" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR__GETEDUCNT, "_pmdEDUMgr::_getEDUCount" )
    UINT32 _pmdEDUMgr::_getEDUCount ( INT32 property )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR__GETEDUCNT );
@@ -321,7 +321,7 @@ namespace engine
       return eduCount ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_PSTEDUPST, "_pmdEDUMgr::postEDUPost" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_PSTEDUPST, "_pmdEDUMgr::postEDUPost" )
    INT32 _pmdEDUMgr::postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
                                    BOOLEAN release , void *pData )
    {
@@ -355,7 +355,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDUPST, "_pmdEDUMgr::waitEDUPost" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDUPST, "_pmdEDUMgr::waitEDUPost" )
    INT32 _pmdEDUMgr::waitEDUPost ( EDUID eduID, pmdEDUEvent& event,
                                   INT64 millsecond = -1 )
    {
@@ -397,7 +397,7 @@ namespace engine
    // release control from a given EDU
    // EDUMgr should decide whether put the EDU to pool or destroy it
    // EDU Status must be in waiting or creating
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_RTNEDU, "_pmdEDUMgr::returnEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_RTNEDU, "_pmdEDUMgr::returnEDU" )
    INT32 _pmdEDUMgr::returnEDU ( EDUID eduID, BOOLEAN force, BOOLEAN* destroyed )
    {
       INT32 rc        = SDB_OK ;
@@ -472,7 +472,7 @@ namespace engine
    }
 
    // get an EDU from idle pool, if idle pool is empty, create new one
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_STARTEDU, "_pmdEDUMgr::startEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_STARTEDU, "_pmdEDUMgr::startEDU" )
    INT32 _pmdEDUMgr::startEDU ( EDU_TYPES type, void* arg, EDUID *eduid )
    {
       INT32     rc = SDB_OK ;
@@ -547,7 +547,7 @@ namespace engine
    }
 
    // whoever calling this function should NOT get latch
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_CRTNEWEDU, "_pmdEDUMgr::createNewEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_CRTNEWEDU, "_pmdEDUMgr::createNewEDU" )
    INT32 _pmdEDUMgr::createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid )
    {
       INT32 rc       = SDB_OK ;
@@ -645,7 +645,7 @@ namespace engine
    // in either SDB_EDU_WAITING or SDB_EDU_IDLE status
    // return: SDB_OK -- success
    //         SDB_EDU_INVAL_STATUS -- edu status is not destroy
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DSTEDU, "_pmdEDUMgr::destroyEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DSTEDU, "_pmdEDUMgr::destroyEDU" )
    INT32 _pmdEDUMgr::destroyEDU ( EDUID eduID )
    {
       INT32 rc        = SDB_OK ;
@@ -721,7 +721,7 @@ namespace engine
    }
 
    // change edu status from running to waiting
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDU, "_pmdEDUMgr::waitEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDU, "_pmdEDUMgr::waitEDU" )
    INT32 _pmdEDUMgr::waitEDU ( EDUID eduID )
    {
       INT32 rc        = SDB_OK ;
@@ -751,7 +751,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDU2, "_pmdEDUMgr::waitEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITEDU2, "_pmdEDUMgr::waitEDU" )
    INT32 _pmdEDUMgr::waitEDU( pmdEDUCB * cb )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_WAITEDU2 );
@@ -784,7 +784,7 @@ namespace engine
    // creating/waiting status edu can be deactivated (pooled)
    // deactivateEDU supposed only happened to AGENT EDUs
    // any EDUs other than AGENT will be destroyed and SDB_SYS will be returned
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DEATVEDU, "_pmdEDUMgr::deactivateEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_DEATVEDU, "_pmdEDUMgr::deactivateEDU" )
    INT32 _pmdEDUMgr::deactivateEDU ( EDUID eduID )
    {
       INT32 rc         = SDB_OK ;
@@ -840,7 +840,7 @@ namespace engine
    // make an idle EDU active (to RUNNING status)
    // runqueue: WAITING/CREATING status
    // idlequeue: IDLE status
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_ATVEDU, "_pmdEDUMgr::activateEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_ATVEDU, "_pmdEDUMgr::activateEDU" )
    INT32 _pmdEDUMgr::activateEDU ( EDUID eduID )
    {
       INT32   rc        = SDB_OK ;
@@ -899,7 +899,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_ATVEDU2, "_pmdEDUMgr::activateEDU" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_ATVEDU2, "_pmdEDUMgr::activateEDU" )
    INT32 _pmdEDUMgr::activateEDU( pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
@@ -980,7 +980,7 @@ namespace engine
       return it->second ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITUTIL, "_pmdEDUMgr::waitUntil" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITUTIL, "_pmdEDUMgr::waitUntil" )
    INT32 _pmdEDUMgr::waitUntil ( EDUID eduID, EDU_STATUS status,
                                  UINT32 waitPeriod, UINT32 waitRound )
    {
@@ -1021,7 +1021,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITUTIL2, "_pmdEDUMgr::waitUntil" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_WAITUTIL2, "_pmdEDUMgr::waitUntil" )
    INT32 _pmdEDUMgr::waitUntil( EDU_TYPES type, EDU_STATUS status,
                                 UINT32 waitPeriod, UINT32 waitRound )
    {
@@ -1057,7 +1057,7 @@ namespace engine
       goto done ;
    }
 #if defined (_LINUX)
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_GETEDUTRDID, "_pmdEDUMgr::getEDUThreadID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_GETEDUTRDID, "_pmdEDUMgr::getEDUThreadID" )
    void _pmdEDUMgr::getEDUThreadID ( std::set<pthread_t> &tidList )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUMGR_GETEDUTRDID );
