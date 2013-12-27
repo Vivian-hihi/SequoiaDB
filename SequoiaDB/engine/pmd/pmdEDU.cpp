@@ -56,7 +56,7 @@ namespace engine
    static std::map<EDU_TYPES, std::string> mapEDUName ;
    static std::map<EDU_TYPES,EDU_TYPES>    mapEDUTypeSys ;
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_REGEDUNAME, "registerEDUName" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_REGEDUNAME, "registerEDUName" )
    INT32 registerEDUName ( EDU_TYPES type, const CHAR * name, BOOLEAN system )
    {
       INT32 rc = SDB_OK ;
@@ -144,7 +144,7 @@ namespace engine
 #define ON_EDUTYPE_TO_ENTRY2(type, system, entry) \
    ON_EDUTYPE_TO_ENTRY1(type, system, entry, #type)
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_GETENTFUNCBYTYPE, "getEntryFuncByType" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_GETENTFUNCBYTYPE, "getEntryFuncByType" )
    pmdEntryPoint getEntryFuncByType ( EDU_TYPES type )
    {
       pmdEntryPoint rt = NULL ;
@@ -324,7 +324,7 @@ namespace engine
       _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DISCONNECT, "_pmdEDUCB::disconnect" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DISCONNECT, "_pmdEDUCB::disconnect" )
    void _pmdEDUCB::disconnect ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_DISCONNECT );
@@ -335,7 +335,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_DISCONNECT );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_FORCE, "_pmdEDUCB::force" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_FORCE, "_pmdEDUCB::force" )
    void _pmdEDUCB::force ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_FORCE );
@@ -345,7 +345,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_FORCE );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISINT, "_pmdEDUCB::isInterrupted" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISINT, "_pmdEDUCB::isInterrupted" )
    BOOLEAN _pmdEDUCB::isInterrupted ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISINT );
@@ -403,7 +403,7 @@ namespace engine
       _ctrlFlag &= ~EDU_CTRL_DISCONNECTED ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
    SINT64 _pmdEDUCB::contextPeek ()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_CONTXTPEEK );
@@ -467,7 +467,7 @@ namespace engine
       return _pClientSock ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO, "_pmdEDUCB::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO, "_pmdEDUCB::dumpInfo" )
    void _pmdEDUCB::dumpInfo ( monEDUSimple &simple )
    {
       PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO );
@@ -484,7 +484,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO2, "_pmdEDUCB::dumpInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO2, "_pmdEDUCB::dumpInfo" )
    void _pmdEDUCB::dumpInfo ( monEDUFull &full )
    {
       PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO2 );
@@ -524,7 +524,7 @@ namespace engine
       return buff ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_PRINTINFO, "_pmdEDUCB::printInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_PRINTINFO, "_pmdEDUCB::printInfo" )
    INT32 _pmdEDUCB::printInfo ( EDU_INFO_TYPE type, const CHAR * format, ... )
    {
       INT32 rc = SDB_OK ;
@@ -560,7 +560,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETINFO, "_pmdEDUCB::getInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETINFO, "_pmdEDUCB::getInfo" )
    const CHAR *_pmdEDUCB::getInfo ( EDU_INFO_TYPE type )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_GETINFO );
@@ -575,7 +575,7 @@ namespace engine
       return NULL ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_RESETINFO, "_pmdEDUCB::resetInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_RESETINFO, "_pmdEDUCB::resetInfo" )
    void _pmdEDUCB::resetInfo ( EDU_INFO_TYPE type )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_RESETINFO );
@@ -623,7 +623,7 @@ namespace engine
       return _curTransLSN;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
    dpsTransCBLockInfo *_pmdEDUCB::getTransLock( const dpsTransLockId &lockId )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_GETTRANSLOCK );
@@ -637,7 +637,7 @@ namespace engine
       return pLockInfo;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDLOCKINFO, "_pmdEDUCB::addLockInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDLOCKINFO, "_pmdEDUCB::addLockInfo" )
    void _pmdEDUCB::addLockInfo( const dpsTransLockId &lockId, DPS_TRANSLOCK_TYPE lockType )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ADDLOCKINFO );
@@ -650,7 +650,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_ADDLOCKINFO );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DELLOCKINFO, "_pmdEDUCB::delLockInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DELLOCKINFO, "_pmdEDUCB::delLockInfo" )
    void _pmdEDUCB::delLockInfo( const dpsTransLockId &lockId )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_DELLOCKINFO );
@@ -669,7 +669,7 @@ namespace engine
       return &_transLockLst;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CREATETRANSACTION, "_pmdEDUCB::createTransaction" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CREATETRANSACTION, "_pmdEDUCB::createTransaction" )
    INT32 _pmdEDUCB::createTransaction()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_CREATETRANSACTION );
@@ -687,7 +687,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DELTRANSACTION, "_pmdEDUCB::delTransaction" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_DELTRANSACTION, "_pmdEDUCB::delTransaction" )
    void _pmdEDUCB::delTransaction()
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_DELTRANSACTION );
@@ -704,7 +704,7 @@ namespace engine
       return _pTransNodeMap;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDTRANSNODE, "_pmdEDUCB::addTransNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ADDTRANSNODE, "_pmdEDUCB::addTransNode" )
    void _pmdEDUCB::addTransNode( MsgRouteID &routeID )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ADDTRANSNODE );
@@ -715,7 +715,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_ADDTRANSNODE );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSNODEROUTEID, "_pmdEDUCB::getTransNodeRouteID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSNODEROUTEID, "_pmdEDUCB::getTransNodeRouteID" )
    void _pmdEDUCB::getTransNodeRouteID( UINT32 groupID,
                                        MsgRouteID &routeID )
    {
@@ -733,7 +733,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__PMDEDUCB_GETTRANSNODEROUTEID );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISTRANSNODE, "_pmdEDUCB::isTransNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_ISTRANSNODE, "_pmdEDUCB::isTransNode" )
    BOOLEAN _pmdEDUCB::isTransNode( MsgRouteID &routeID )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_ISTRANSNODE );
@@ -780,7 +780,7 @@ namespace engine
       return _transRC ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCCOMPBUF, "_pmdEDUCB::reallocCompressionBuffer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCCOMPBUF, "_pmdEDUCB::reallocCompressionBuffer" )
    INT32 _pmdEDUCB::reallocCompressionBuffer ( INT32 requestedSize )
    {
       INT32 rc = SDB_OK ;
@@ -816,7 +816,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCUNCOMPBUF, "_pmdEDUCB::reallocUncompressionBuffer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCUNCOMPBUF, "_pmdEDUCB::reallocUncompressionBuffer" )
    INT32 _pmdEDUCB::reallocUncompressionBuffer ( INT32 requestedSize )
    {
       INT32 rc = SDB_OK ;
@@ -852,7 +852,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_COMPRESS, "_pmdEDUCB::compress" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_COMPRESS, "_pmdEDUCB::compress" )
    INT32 _pmdEDUCB::compress ( const CHAR *pInputData, INT32 inputSize,
                                CHAR **ppData, INT32 *pDataSize )
    {
@@ -881,7 +881,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_COMPRESS1, "_pmdEDUCB::compress" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_COMPRESS1, "_pmdEDUCB::compress" )
    INT32 _pmdEDUCB::compress ( const BSONObj &obj, const CHAR* pOIDPtr,
                                INT32 oidLen, CHAR **ppData, INT32 *pDataSize )
    {
@@ -935,7 +935,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_UNCOMPRESS, "_pmdEDUCB::uncompress" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_UNCOMPRESS, "_pmdEDUCB::uncompress" )
    INT32 _pmdEDUCB::uncompress ( const CHAR *pInputData, INT32 inputSize,
                                  CHAR **ppData, INT32 *pDataSize )
    {
@@ -989,7 +989,7 @@ namespace engine
    // main entry point for all EDUs
    // it will call individual main function for each EDU type
    // entry points are defined in getEntryFuncByType
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUENTPNT, "pmdEDUEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUENTPNT, "pmdEDUEntryPoint" )
    INT32 pmdEDUEntryPoint ( EDU_TYPES type, pmdEDUCB *cb, void *arg )
    {
       INT32       rc           = SDB_OK ;
@@ -1168,7 +1168,7 @@ namespace engine
 
    // for pmdRecv, we wait indefinitely until the agent is forced, because
    // client may not send us anything due to idle of user activities
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRECV, "pmdRecv" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRECV, "pmdRecv" )
    INT32 pmdRecv ( CHAR *pBuffer, INT32 recvSize,
                    ossSocket *sock, pmdEDUCB *cb )
    {
@@ -1200,7 +1200,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSEND, "pmdSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSEND, "pmdSend" )
    INT32 pmdSend ( const CHAR *pBuffer, INT32 sendSize,
                    ossSocket *sock, pmdEDUCB *cb )
    {
@@ -1231,7 +1231,7 @@ namespace engine
    }
 
 #if defined (_LINUX)
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUCODETRAPHNDL, "pmdEDUCodeTrapHandler" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUCODETRAPHNDL, "pmdEDUCodeTrapHandler" )
    void pmdEDUCodeTrapHandler( OSS_HANDPARMS )
    {
       INT32 rc = SDB_OK ;
