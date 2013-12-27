@@ -72,7 +72,7 @@ namespace engine
          INT32   _createCSByCatalog( const CHAR *clFullName ) ;
          INT32   _createCLByCatalog( const CHAR *clFullName ) ;
          INT32   _checkSubCLCata( const std::map<std::string, INT32> subCLInfoList,
-                                 INT16 w );
+                                  INT16 w );
 
       //message functions
       protected:
@@ -106,67 +106,68 @@ namespace engine
          INT32 _InsertToMainCL( BSONObj &objs, INT32 objNum, INT32 flags,
                               INT16 w = 1 );
          INT32 _queryToMainCL( const CHAR *pCollectionName,
-                                       const BSONObj &selector,
-                                       const BSONObj &matcher,
-                                       const BSONObj &orderBy,
-                                       const BSONObj &hint,
-                                       SINT32 flags,
-                                       pmdEDUCB *cb,
-                                       SINT64 numToSkip,
-                                       SINT64 numToReturn,
-                                       SDB_DMSCB *dmsCB,
-                                       SDB_RTNCB *rtnCB,
-                                       SINT64 &contextID );
+                               const BSONObj &selector,
+                               const BSONObj &matcher,
+                               const BSONObj &orderBy,
+                               const BSONObj &hint,
+                               SINT32 flags,
+                               pmdEDUCB *cb,
+                               SINT64 numToSkip,
+                               SINT64 numToReturn,
+                               SDB_DMSCB *dmsCB,
+                               SDB_RTNCB *rtnCB,
+                               SINT64 &contextID );
          INT32 _updateToMainCL( const CHAR *pCollectionName,
-                                          const BSONObj &selector,
-                                          const BSONObj &updator,
-                                          const BSONObj &hint,
-                                          SINT32 flags,
-                                          pmdEDUCB *cb,
-                                          SDB_DMSCB *pDmsCB,
-                                          SDB_DPSCB *pDpsCB,
-                                          INT16 w,
-                                          INT64 *pUpdateNum = NULL );
-         INT32 _deleteToMainCL ( const CHAR *pCollectionName, const BSONObj &deletor,
-                                          const BSONObj &hint, INT32 flags, pmdEDUCB *cb,
-                                          SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
-                                          INT64 *pDelNum = NULL );
-
+                                const BSONObj &selector,
+                                const BSONObj &updator,
+                                const BSONObj &hint,
+                                SINT32 flags,
+                                pmdEDUCB *cb,
+                                SDB_DMSCB *pDmsCB,
+                                SDB_DPSCB *pDpsCB,
+                                INT16 w,
+                                INT64 *pUpdateNum = NULL );
+         INT32 _deleteToMainCL ( const CHAR *pCollectionName,
+                                 const BSONObj &deletor,
+                                 const BSONObj &hint,
+                                 INT32 flags, pmdEDUCB *cb,
+                                 SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB, INT16 w,
+                                 INT64 *pDelNum = NULL );
          INT32 _runOnMainCL( const CHAR *pCommandName,
-                                       _rtnCommand *pCommand,
-                                       INT32 flags,
-                                       INT64 numToSkip,
-                                       INT64 numToReturn,
-                                       const CHAR *pQuery,
-                                       const CHAR *pField,
-                                       const CHAR *pOrderBy,
-                                       const CHAR *pHint,
-                                       INT16 w,
-                                       SINT64 &contextID );
+                             _rtnCommand *pCommand,
+                             INT32 flags,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             const CHAR *pQuery,
+                             const CHAR *pField,
+                             const CHAR *pOrderBy,
+                             const CHAR *pHint,
+                             INT16 w,
+                             SINT64 &contextID );
 
          INT32 _getOnMainCL( const CHAR *pCommand,
-                                       const CHAR *pCollection,
-                                       INT32 flags,
-                                       INT64 numToSkip,
-                                       INT64 numToReturn,
-                                       const CHAR *pQuery,
-                                       const CHAR *pField,
-                                       const CHAR *pOrderBy,
-                                       const CHAR *pHint,
-                                       INT16 w,
-                                       SINT64 &contextID );
+                             const CHAR *pCollection,
+                             INT32 flags,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             const CHAR *pQuery,
+                             const CHAR *pField,
+                             const CHAR *pOrderBy,
+                             const CHAR *pHint,
+                             INT16 w,
+                             SINT64 &contextID );
 
          INT32 _createIndexOnMainCL( const CHAR *pCommand,
-                                       const CHAR *pCollection,
-                                       const CHAR *pQuery,
-                                       INT16 w,
-                                       SINT64 &contextID );
+                                     const CHAR *pCollection,
+                                     const CHAR *pQuery,
+                                     INT16 w,
+                                     SINT64 &contextID );
 
          INT32 _dropIndexOnMainCL( const CHAR *pCommand,
-                                       const CHAR *pCollection,
-                                       const CHAR *pQuery,
-                                       INT16 w,
-                                       SINT64 &contextID );
+                                   const CHAR *pCollection,
+                                   const CHAR *pQuery,
+                                   INT16 w,
+                                   SINT64 &contextID );
 
          INT32 _getSubCLList( const BSONObj &matcher,
                               const CHAR *pCollectionName,
