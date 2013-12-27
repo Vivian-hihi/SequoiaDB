@@ -64,7 +64,7 @@ namespace engine
    // This function is executed once during main thread starts
    BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDHANDLESYSINFOREQUEST, "pmdHandleSysInfoRequest" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDHANDLESYSINFOREQUEST, "pmdHandleSysInfoRequest" )
    static INT32 pmdHandleSysInfoRequest ( CHAR *pReceiveBuffer,
                                           INT32 receiveBufferSize,
                                           ossSocket &sock,
@@ -104,7 +104,7 @@ namespace engine
     * This function interpret the incoming request and break the packet into
     * different variables, and call Runtime component to execute the request
     */
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCCOORDAGENTREQ, "pmdProcessCoordAgentRequest" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCCOORDAGENTREQ, "pmdProcessCoordAgentRequest" )
    static INT32 pmdProcessCoordAgentRequest( CHAR *pReceiveBuffer,
                                              SINT32 packetSize,
                                              rtnContextBuf &buffObj,
@@ -214,7 +214,7 @@ namespace engine
     * This function interpret the incoming request and break the packet into
     * different variables, and call Runtime component to execute the request
     */
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCAGENTREQ, "pmdProcessAgentRequest" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPROCAGENTREQ, "pmdProcessAgentRequest" )
    static INT32 pmdProcessAgentRequest ( CHAR *pReceiveBuffer, SINT32 packetSize,
                                          rtnContextBuf &buffObj,
                                          BOOLEAN *disconnect, pmdEDUCB *cb,
@@ -750,7 +750,7 @@ namespace engine
    // HTTP Agent is context-free, which means it doesn't maintain session
    // information, so each request will only deal with the current event, which
    // does not required to create sessions
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDHTTPAGENTENTPNT, "pmdHTTPAgentEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDHTTPAGENTENTPNT, "pmdHTTPAgentEntryPoint" )
    INT32 pmdHTTPAgentEntryPoint ( pmdEDUCB * cb, void * pData )
    {
       INT32 rc                 = SDB_OK ;
@@ -1052,7 +1052,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDREPAGENTENTPNT, "pmdReplAgentEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDREPAGENTENTPNT, "pmdReplAgentEntryPoint" )
    INT32 pmdReplAgentEntryPoint ( pmdEDUCB * cb, void * pData )
    {
       PD_TRACE_ENTRY ( SDB_PMDREPAGENTENTPNT );
@@ -1130,7 +1130,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSHAREAGENTENTPNT, "pmdShardAgentEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSHAREAGENTENTPNT, "pmdShardAgentEntryPoint" )
    INT32 pmdShardAgentEntryPoint ( pmdEDUCB * cb, void * pData )
    {
       PD_TRACE_ENTRY ( SDB_PMDSHAREAGENTENTPNT );
@@ -1210,7 +1210,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDAUTHENTICATE, "pmdAuthenticate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDAUTHENTICATE, "pmdAuthenticate" )
    static INT32 pmdAuthenticate( ossSocket &sock, CHAR *&pBuffer,
                                  pmdEDUCB *cb,
                                  INT32 &receiveBufferSize,
@@ -1436,7 +1436,7 @@ namespace engine
    }
 
    // Main function to handle new connection request
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDAGENTENTPNT, "pmdAgentEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDAGENTENTPNT, "pmdAgentEntryPoint" )
    INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
