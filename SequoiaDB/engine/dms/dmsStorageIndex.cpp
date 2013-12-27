@@ -231,9 +231,9 @@ namespace engine
             break ;
          }
          ixmIndexCB curIdxCB( context->mb()->_indexExtent[indexID], this,
-                           context );
+                              context ) ;
          if ( 0 == ossStrncmp ( index.getStringField( IXM_FIELD_NAME_NAME ),
-                    curIdxCB.getName(), IXM_INDEX_NAME_SIZE))
+                                curIdxCB.getName(), IXM_INDEX_NAME_SIZE) )
          {
             // this could be user error by typing same index name, so we log as
             // info
