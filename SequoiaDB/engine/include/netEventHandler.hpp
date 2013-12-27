@@ -96,12 +96,15 @@ namespace engine
          }
          inline void close()
          {
+            UINT32 timeout = 0 ;
             _mtx.get() ;
             _isConnected = FALSE ;
-            while ( _isInAsync )
+            while ( _isInAsync && timeout < 60000 )
             {
                ossSleep( 50 ) ;
+               timeout += 50 ;
             }
+            SDB_ASSERT( timeout < 60000, "socket is dead locked" ) ;
             _sock.close() ;
             _mtx.release() ;
          }
