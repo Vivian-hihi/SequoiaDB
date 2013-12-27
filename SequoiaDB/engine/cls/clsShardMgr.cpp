@@ -334,6 +334,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SND2CAT );
 
       ossScopedLock lock ( &_shardLatch, SHARED ) ;
+      INT32 tmpPrimary = _primary ;
 
       if ( !_pNetRtAgent || _vecCatlog.size() == 0 )
       {
@@ -341,16 +342,16 @@ namespace engine
          goto error ;
       }
 
-      if ( _primary >= 0 && _primary < (INT32)_vecCatlog.size () )
+      if ( tmpPrimary >= 0 && tmpPrimary < (INT32)_vecCatlog.size () )
       {
-         rc = _pNetRtAgent->syncSend ( _vecCatlog[_primary].nodeID,
-            (void*)msg ) ;
+         rc = _pNetRtAgent->syncSend ( _vecCatlog[tmpPrimary].nodeID,
+                                       (void*)msg ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDWARNING,
                      "Send message to primary catlog[%s:%s] failed[rc:%d]",
-                     _vecCatlog[_primary].host.c_str(),
-                     _vecCatlog[_primary].service.c_str(),
+                     _vecCatlog[tmpPrimary].host.c_str(),
+                     _vecCatlog[tmpPrimary].service.c_str(),
                      rc ) ;
             _primary = -1 ;
             //will send to all catalog node
