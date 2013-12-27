@@ -1,6 +1,7 @@
 <!-- @param ${WORKSPACE}: The path of workspace -->
 <!-- @param ${CPU.version}: The CPU name -->
 <!-- @param ${compile.debug}: The flag whether debug version -->
+<!-- @param ${choise.jdk5} : choise the jdk version , default is jdk6 , if you choise jdk5,enter true-->
 
 <project name="build-srccode" default="mk-release">
 	
@@ -61,10 +62,14 @@
 			<!--env key="PYTHONPATH" path="${env.PYTHONPATH}:${PYTHONPATH}" /-->
 		</exec>
 
-		<exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/java" failonerror="true">
+		<!--exec executable="scons" dir="${WORKSPACE}/sequoiadb/driver/java" failonerror="true">
 			<arg line="${compile.arg.line}" />
-		</exec>
+		</exec-->
 		
+		<ant antfile="${WORKSPACE}/sequoiadb/driver/java/build_driver.xml" >
+		   <property name="is.debug" value="${compile.debug}" />
+		   <property name="JDK.VERIONS.5" value="${choise.jdk5}" />
+		</ant>
 		<ant antfile="${WORKSPACE}/sequoiadb/driver/hadoop/hive/build.xml">
 			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb/"/>

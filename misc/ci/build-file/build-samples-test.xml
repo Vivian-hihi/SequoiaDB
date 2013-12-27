@@ -5,11 +5,11 @@
 
 <project name="build-samples-test" default="build-samples-test">
 
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<!--taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef-->
 	
 	<property name="antTask.jar.path" value="${WORKSPACE}/deploy/ant-sdbtasks" />
 	<property name="STAF.PATH" value="/usr/local/staf" />

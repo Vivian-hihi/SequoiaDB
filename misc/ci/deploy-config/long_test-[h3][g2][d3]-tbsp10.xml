@@ -163,11 +163,13 @@
      
      
 		<property name="test_times" value="0"/>
+		<property name="mk.dir.is" value="true" />
 		<trycatch property="fail_str" reference="bar">
 	  <try>
       <sdbWhile isForever="true">
       	<sequential>
       		<math result="test_times" datatype="int" operand1="${test_times}" operation="+" operand2="1"/>
+      		
       		<tstamp >
             <format property="nowT_str" pattern="M-d"  locale="en.GB"/>
     		  </tstamp>
