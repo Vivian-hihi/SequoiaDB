@@ -36,7 +36,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBGJOBENTPNT, "pmdBackgroundJobEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBGJOBENTPNT, "pmdBackgroundJobEntryPoint" )
    INT32 pmdBackgroundJobEntryPoint( pmdEDUCB *cb, void *pData )
    {
       SDB_ASSERT( NULL != pData, "impossible" )
