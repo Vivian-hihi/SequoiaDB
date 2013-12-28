@@ -192,6 +192,10 @@ namespace engine
       {
          waitEmpty() ;
       }
+      else
+      {
+         reset() ;
+      }
       _maxReplSync = maxReplSync ;
    }
 
