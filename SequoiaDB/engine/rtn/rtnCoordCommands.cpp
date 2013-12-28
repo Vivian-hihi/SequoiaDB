@@ -5069,6 +5069,9 @@ namespace engine
       const CHAR *strName              = NULL ;
       CHAR *splitReadyBuffer           = NULL ;
       INT32 splitReadyBufferSz         = 0 ;
+      CHAR *splitQueryBuffer           = NULL ;
+      INT32 splitQueryBufferSz         = 0 ;
+      MsgOpQuery *pSplitQuery          = NULL ;
       UINT64 taskID                    = 0 ;
       BOOLEAN async                    = FALSE ;
 
@@ -5274,8 +5277,8 @@ namespace engine
                                  CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
                                  0, 0, -1, &boSend, NULL,
                                  NULL, NULL ) ;
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to build query message, rc = %d", rc ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to build query message, rc: %d",
+                       rc ) ;
          pSplitReq                        = (MsgOpQuery *)splitReadyBuffer ;
          pSplitReq->header.routeID.value  = 0 ;
          pSplitReq->header.TID            = cb->getTID () ;
@@ -5287,6 +5290,19 @@ namespace engine
          PD_RC_CHECK ( rc, PDERROR, "Failed to execute split ready on catalog, "
                        "rc = %d", rc ) ;
          taskID = (UINT64)boRecv.getField( CAT_TASKID_NAME ).numberLong() ;
+
+         // construct split query req
+         boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;
+         rc = msgBuildQueryMsg( &splitQueryBuffer, &splitQueryBufferSz,
+                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT, 0,
+                                0, 0, -1, &boSend, NULL,
+                                NULL, NULL ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to build query message, rc: %d",
+                      rc ) ;
+         pSplitQuery                      = (MsgOpQuery *)splitQueryBuffer ;
+         pSplitQuery->header.routeID.value= 0 ;
+         pSplitQuery->header.TID          = cb->getTID () ;
+         pSplitQuery->version             = cataInfo->getVersion() ;
       }
       catch ( std::exception &e )
       {
@@ -5335,7 +5351,7 @@ namespace engine
          rtnCoordCommand *pCmd = pFactory->getCommandProcesser(
                                  COORD_CMD_WAITTASK ) ;
          SDB_ASSERT( pCmd, "wait task command not found" )
-         rc = pCmd->execute( splitReadyBuffer, splitReadyBufferSz,
+         rc = pCmd->execute( splitQueryBuffer, splitQueryBufferSz,
                              ppResultBuffer, cb, replyHeader, ppErrorObj ) ;
          if ( rc )
          {
@@ -5359,15 +5375,19 @@ namespace engine
       {
          SDB_OSS_FREE ( splitReadyBuffer ) ;
       }
+      if ( splitQueryBuffer )
+      {
+         SDB_OSS_FREE ( splitQueryBuffer ) ;
+      }
       replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSP_EXE, rc ) ;
       return rc ;
    cancel :
       // convert request to split cancel and use all other arguments
-      pSplitReq->header.opCode         = MSG_CAT_SPLIT_CANCEL_REQ ;
-      pSplitReq->version               = cataInfo->getVersion();
+      pSplitQuery->header.opCode       = MSG_CAT_SPLIT_CANCEL_REQ ;
+      pSplitQuery->version             = cataInfo->getVersion();
       {
-         INT32 rctmp = executeOnCataGroup ( (CHAR*)pSplitReq,
+         INT32 rctmp = executeOnCataGroup ( (CHAR*)pSplitQuery,
                                             pRouteAgent, cb ) ;
          if ( rctmp )
          {
