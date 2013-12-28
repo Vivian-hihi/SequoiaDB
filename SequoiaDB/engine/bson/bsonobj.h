@@ -94,7 +94,7 @@ namespace bson {
         /** Construct a BSONObj from data in the proper format.
         * owned = whether this object owns this buffer.
         */
-        explicit BSONObj(const char *msgdata, bool check=TRUE) {
+        explicit BSONObj(const char *msgdata, bool check=true) {
           //_holder = NULL ;
           init(msgdata, check);
         }
@@ -505,7 +505,7 @@ namespace bson {
 #pragma pack()
         /** initialize from existing buffer
          */
-        void init(const char *data, bool check=TRUE ) {
+        void init(const char *data, bool check=true ) {
             _objdata = data;
             if ( check && !isValid() )
                 _assertInvalid();
