@@ -68,6 +68,7 @@ namespace engine
    //full sync node timeout
    #define CLS_FS_NORES_TIMEOUT 10000
    #define CLS_DST_SESSION_NO_MSG_TIME          (300000)
+   #define CLS_SRC_SESSION_NO_MSG_TIME          (10000)
 
    enum CLS_SYNC_STATUS
    {

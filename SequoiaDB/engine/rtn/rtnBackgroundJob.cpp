@@ -63,7 +63,7 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNJOBMGR_FINDJOB, "_rtnJobMgr::findJob" )
-   _rtnBaseJob* _rtnJobMgr::findJob( EDUID eduID )
+   _rtnBaseJob* _rtnJobMgr::findJob( EDUID eduID, INT32 *pResult )
    {
       PD_TRACE_ENTRY ( SDB__RTNJOBMGR_FINDJOB ) ;
       ossScopedLock lock ( &_latch, SHARED ) ;
@@ -73,6 +73,15 @@ namespace engine
          PD_TRACE_EXIT ( SDB__RTNJOBMGR_FINDJOB ) ;
          return it->second ;
       }
+      std::map<EDUID, INT32>::iterator itRes = _mapResult.find( eduID ) ;
+      if ( itRes != _mapResult.end() )
+      {
+         if ( pResult )
+         {
+            *pResult = itRes->second ;
+         }
+         _mapResult.erase( itRes ) ;
+      }
       PD_TRACE_EXIT ( SDB__RTNJOBMGR_FINDJOB ) ;
       return NULL ;
    }
@@ -80,7 +89,8 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNJOBMGR_STARTJOB, "_rtnJobMgr::startJob" )
    INT32 _rtnJobMgr::startJob ( _rtnBaseJob * pJob,
                                 RTN_JOB_MUTEX_TYPE type ,
-                                EDUID * pEDUID )
+                                EDUID * pEDUID,
+                                BOOLEAN returnResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNJOBMGR_STARTJOB ) ;
@@ -113,6 +123,7 @@ namespace engine
                   if ( pEDUID )
                   {
                      *pEDUID = it->first ;
+                     _mapResult[newEDUID] = SDB_OK ;
                   }
                   SDB_OSS_DEL pJob ;
                   pJob = NULL ;
@@ -148,6 +159,7 @@ namespace engine
       pJob->waitAttach () ;
       // add to map
       _mapJobs[newEDUID] = pJob ;
+      _mapResult[newEDUID] = SDB_OK ;
 
       if ( pEDUID )
       {
@@ -168,11 +180,17 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__RTNJOBMGR__REMOVEJOB, "_rtnJobMgr::_removeJob" )
-   INT32 _rtnJobMgr::_removeJob ( EDUID eduID )
+   INT32 _rtnJobMgr::_removeJob ( EDUID eduID, INT32 result )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNJOBMGR__REMOVEJOB ) ;
       ossScopedLock lock ( &_latch, EXCLUSIVE ) ;
+      std::map<EDUID, INT32>::iterator itRes = _mapResult.find( eduID ) ;
+      if ( itRes != _mapResult.end() )
+      {
+         itRes->second = result ;
+      }
+
       std::map<EDUID, _rtnBaseJob*>::iterator it = _mapJobs.find ( eduID ) ;
       if ( it == _mapJobs.end() )
       {

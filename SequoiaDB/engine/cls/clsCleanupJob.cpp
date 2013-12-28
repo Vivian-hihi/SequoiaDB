@@ -194,6 +194,10 @@ namespace engine
                                            _dmsCB, _dpsCB ) ;
             PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d", name(),
                      _clFullName.c_str(), rc ) ;
+            if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
+            {
+               rc = SDB_OK ;
+            }
             pTaskMgr->releaseReg( SHARED ) ;
             goto done ;
          }
@@ -290,6 +294,10 @@ namespace engine
                                               _dpsCB ) ;
                PD_LOG ( PDEVENT, "Job[%s] drop the collection[%s], rc:%d",
                         name(), fullName, rc ) ;
+               if ( SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc )
+               {
+                  rc = SDB_OK ;
+               }
                pTaskMgr->releaseReg( SHARED ) ;
                goto done ;
             }
@@ -464,7 +472,8 @@ namespace engine
                           BOOLEAN hasShardingIndex,
                           BOOLEAN isHashSharding,
                           SDB_DPSCB *dpsCB,
-                          EDUID *pEDUID )
+                          EDUID *pEDUID,
+                          BOOLEAN returnResult )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_STRARTCLNJOB );
@@ -481,7 +490,8 @@ namespace engine
          rc = SDB_OOM ;
          goto error ;
       }
-      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_REUSE, pEDUID ) ;
+      rc = rtnGetJobMgr()->startJob( pJob, RTN_JOB_MUTEX_REUSE, pEDUID,
+                                     returnResult ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_STRARTCLNJOB, rc );

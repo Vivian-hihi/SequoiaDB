@@ -95,7 +95,8 @@ namespace engine
                            BOOLEAN hasShardingIndex,
                            BOOLEAN isHashSharding,
                            SDB_DPSCB *dpsCB,
-                           EDUID *pEDUID = NULL ) ;
+                           EDUID *pEDUID = NULL,
+                           BOOLEAN returnResult = FALSE ) ;
 
 }
 

@@ -71,7 +71,10 @@ namespace engine
 
          virtual void    onRecieve ( const NET_HANDLE netHandle,
                                      MsgHeader * msg ) ;
+         // called by net io thread
          virtual BOOLEAN timeout ( UINT32 interval ) ;
+         // called by self thread
+         virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
 
       public:
          virtual INT32 notifyLSN ( UINT32 suLID, UINT32 clLID,
@@ -79,10 +82,9 @@ namespace engine
                                    const DPS_LSN_OFFSET &offset ) = 0 ;
 
       protected:
-         virtual BOOLEAN   _isReadyToSync() = 0 ;
+         virtual BOOLEAN   _isReady () = 0 ;
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) = 0 ;
-         virtual BOOLEAN   _onTimer () = 0 ;
          virtual INT32     _onFSMeta ( const CHAR *clFullName ) = 0 ;
          virtual INT32     _scanType () const = 0 ;
 
@@ -180,10 +182,9 @@ namespace engine
       INT32 handleSyncTransReq( NET_HANDLE handle, MsgHeader* header ) ;
 
    protected:
-      virtual BOOLEAN _isReadyToSync() ;
+      virtual BOOLEAN _isReady() ;
       virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                          INT32 &outSize ) ;
-      virtual BOOLEAN _onTimer () ;
       virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
       virtual INT32   _scanType () const ;
 
@@ -209,12 +210,11 @@ namespace engine
          virtual EDU_TYPES eduType () const ;
 
       protected:
-         virtual BOOLEAN _isReadyToSync() ;
+         virtual BOOLEAN _isReady() ;
          virtual const CHAR* _onObjFilter ( const CHAR* inBuff, INT32 inSize,
                                             INT32 &outSize ) ;
          virtual INT32   _onFSMeta ( const CHAR *clFullName ) ;
          virtual INT32   _scanType () const ;
-         virtual BOOLEAN _onTimer () ;
 
       protected:
          INT32   _genKeyObj ( const BSONObj &obj, BSONObj &keyObj ) ;
@@ -238,7 +238,6 @@ namespace engine
          BSONObj                          _shardingKey ;
          _clsCatalogAgent                 *_pCatAgent ;
          EDUID                            _cleanupJobID ;
-         BOOLEAN                          _hasCleanData ;
 
          BOOLEAN                          _hasShardingIndex ;
          BOOLEAN                          _hashShard ;

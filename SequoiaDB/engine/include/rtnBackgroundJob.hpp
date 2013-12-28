@@ -79,18 +79,20 @@ namespace engine
 
       public:
          UINT32 jobsCount () ;
-         _rtnBaseJob* findJob ( EDUID eduID ) ;
+         _rtnBaseJob* findJob ( EDUID eduID, INT32 *pResult = NULL ) ;
 
          INT32 startJob ( _rtnBaseJob *pJob,
                           RTN_JOB_MUTEX_TYPE type = RTN_JOB_MUTEX_STOP_CONT ,
-                          EDUID *pEDUID = NULL ) ;
+                          EDUID *pEDUID = NULL,
+                          BOOLEAN returnResult = FALSE ) ;
 
       protected:
          INT32 _stopJob ( EDUID eduID ) ;
-         INT32 _removeJob ( EDUID eduID ) ;
+         INT32 _removeJob ( EDUID eduID, INT32 result = SDB_OK ) ;
 
       private:
          std::map<EDUID, _rtnBaseJob*>        _mapJobs ;
+         std::map<EDUID, INT32>               _mapResult ;
          ossSpinSLatch                        _latch ;
          pmdEDUMgr                            *_eduMgr ;
    } ;

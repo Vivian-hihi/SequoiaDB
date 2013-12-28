@@ -63,7 +63,9 @@ namespace engine
       virtual EDU_TYPES eduType () const ;
       virtual void    onRecieve ( const NET_HANDLE netHandle,
                                   MsgHeader * msg ) ;
+      // called by net io thread
       virtual BOOLEAN timeout ( UINT32 interval ) ;
+      // called by self thread
       virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
       virtual void   _onDetach () ;
 

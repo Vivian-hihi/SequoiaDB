@@ -75,7 +75,7 @@ namespace engine
          virtual BSONObj _keyObjE () = 0 ;
          virtual INT32   _needData () const = 0 ;
          virtual INT32   _dataSessionType () const = 0 ;
-         virtual BOOLEAN _onTimer () = 0 ;
+         virtual BOOLEAN _isReady () = 0 ;
          virtual void    _endLog () = 0 ;
          virtual INT32   _onNotify () = 0 ;
 
@@ -113,6 +113,7 @@ namespace engine
          CLS_FS_STATUS        _status ;
          UINT32               _current ;
          UINT32               _timeout ;
+         UINT32               _recvTimeout ;
          BOOLEAN              _quit ;
          UINT64               _requestID ;
          DPS_LSN              _expectLSN ;
@@ -145,16 +146,17 @@ namespace engine
    protected:
       virtual void      _onDetach () ;
    protected:
+      void              _pullTransLog ( DPS_LSN &begin ) ;
+   protected:
       virtual void      _begin() ;
       virtual void      _end() ;
       virtual INT32     _needData () const ;
       virtual BSONObj   _keyObjB () ;
       virtual BSONObj   _keyObjE () ;
       virtual INT32     _dataSessionType () const ;
-      virtual BOOLEAN   _onTimer () ;
+      virtual BOOLEAN   _isReady () ;
       virtual void      _endLog () ;
       virtual INT32     _onNotify () { return SDB_OK ; }
-      virtual INT32     _pullTransLog ( DPS_LSN &begin ) ;
 
    private:
       TRANS_SYNC_STEP   _tsStep;
@@ -207,7 +209,7 @@ namespace engine
          virtual void      _onAttach () ;
          virtual void      _onDetach () ;
          virtual INT32     _dataSessionType () const ;
-         virtual BOOLEAN   _onTimer () ;
+         virtual BOOLEAN   _isReady () ;
          virtual void      _endLog () ;
          virtual INT32     _onNotify () ;
 
