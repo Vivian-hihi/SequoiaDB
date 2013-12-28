@@ -89,7 +89,7 @@ namespace engine
    void _clsVSPrimary::deactive ()
    {
       _MsgCatPrimaryChange msg ;
- 
+
       _info()->mtx.lock_w() ;
       if ( _info()->local.value == _info()->primary.value )
       {

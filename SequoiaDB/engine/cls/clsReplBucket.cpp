@@ -251,7 +251,6 @@ namespace engine
       _emptyEvent.signal() ;
       _allEmptyEvent.signal() ;
       _status = CLS_BUCKET_NORMAL ;
-      _expectLSN = _pDPSCB->expectLsn() ;
 
    done:
       return rc ;
