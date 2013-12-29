@@ -132,6 +132,7 @@ namespace engine
          vector<_monIndex>                _indexs ;
          _netRouteAgent                   *_agent ;
          DPS_LSN                          _lsn ;
+         DPS_LSN_OFFSET                   _beginLSNOffset ;
          SINT64                           _contextID ;
          _rtnContextData                  *_context ;
          BOOLEAN                          _findEnd ;
