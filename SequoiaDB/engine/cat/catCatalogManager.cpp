@@ -1036,11 +1036,11 @@ namespace engine
       if ( clInfo._isMainCL )
       {
          PD_CHECK ( clInfo._isSharding,
-                  SDB_NO_SHARDINGKEY, error, PDERROR,
-                  "main-collection must have ShardingKey!" );
+                    SDB_NO_SHARDINGKEY, error, PDERROR,
+                    "main-collection must have ShardingKey!" );
          PD_CHECK ( !clInfo._isHash,
-                  SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
-                  "the sharding-type of main-collection must be range!" );
+                    SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
+                    "the sharding-type of main-collection must be range!" );
       }
 
       PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDERROR,
@@ -1335,8 +1335,7 @@ namespace engine
       }
 
       // assing a group id
-      if ( CAT_INVALID_GROUPID == groupID
-            && !clInfo._isMainCL )
+      if ( CAT_INVALID_GROUPID == groupID && !clInfo._isMainCL )
       {
          vector< INT32 > csGroupIDs ;
          rc = catGetCSGroups( boSpaceRecord, csGroupIDs ) ;
@@ -1728,9 +1727,9 @@ namespace engine
    }
 
    INT32 catCatalogueManager::processCmdLinkCollection( const CHAR *pQuery,
-                                                      CHAR **ppReplyBody,
-                                                      UINT32 &replyBodyLen,
-                                                      INT32 &returnNum )
+                                                        CHAR **ppReplyBody,
+                                                        UINT32 &replyBodyLen,
+                                                        INT32 &returnNum )
    {
       INT32 rc = SDB_OK;
       std::string strMainCLName;
@@ -1742,34 +1741,34 @@ namespace engine
       {
          BSONObj boQuery( pQuery );
          BSONElement beMainCLName = boQuery.getField( CAT_COLLECTION_NAME );
-         PD_CHECK( beMainCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to link the collection, get field(%s) failed!",
-                  CAT_COLLECTION_NAME );
+         PD_CHECK( beMainCLName.type() == String, SDB_INVALIDARG, error,
+                   PDERROR, "failed to link the collection, get field(%s) "
+                   "failed!", CAT_COLLECTION_NAME );
          strMainCLName = beMainCLName.str();
          PD_CHECK( !strMainCLName.empty(), SDB_INVALIDARG, error, PDERROR,
-                  "invalid field:%s", CAT_COLLECTION_NAME );
+                   "invalid field:%s", CAT_COLLECTION_NAME );
 
          {
          BSONElement beSubCLName = boQuery.getField( CAT_SUBCL_NAME );
          PD_CHECK( beSubCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to link the collection, get field(%s) failed!",
-                  CAT_SUBCL_NAME );
+                   "failed to link the collection, get field(%s) failed!",
+                   CAT_SUBCL_NAME );
          strSubCLName = beSubCLName.str();
          PD_CHECK( !strSubCLName.empty(), SDB_INVALIDARG, error, PDERROR,
-                  "invalid field:%s", CAT_SUBCL_NAME );
+                   "invalid field:%s", CAT_SUBCL_NAME );
          }
 
          {
          BSONElement beLowBound = boQuery.getField( CAT_LOWBOUND_NAME );
          PD_CHECK( beLowBound.type() == Object, SDB_INVALIDARG, error, PDERROR,
-                  "invalid field:%s", CAT_LOWBOUND_NAME );
+                   "invalid field:%s", CAT_LOWBOUND_NAME );
          boLowBound = beLowBound.embeddedObject();
          }
 
          {
          BSONElement beUpBound = boQuery.getField( CAT_UPBOUND_NAME );
          PD_CHECK( beUpBound.type() == Object, SDB_INVALIDARG, error, PDERROR,
-                  "invalid field:%s", CAT_UPBOUND_NAME );
+                   "invalid field:%s", CAT_UPBOUND_NAME );
          boUpBound = beUpBound.embeddedObject();
          }
 
@@ -1777,9 +1776,9 @@ namespace engine
                         boLowBound, boUpBound, _pEduCB, _pDmsCB,
                         _pDpsCB, _majoritySize(), groupList );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to link the sub-collection(%s) "
-                     "to main-collection(%s)(rc=%d)",
-                     strMainCLName.c_str(), strSubCLName.c_str(), rc );
+                      "failed to link the sub-collection(%s) "
+                      "to main-collection(%s)(rc=%d)",
+                      strMainCLName.c_str(), strSubCLName.c_str(), rc );
 
          {
          returnNum = 1;
@@ -1797,7 +1796,7 @@ namespace engine
          replyBodyLen = boGroup.objsize();
          *ppReplyBody = ( CHAR *)SDB_OSS_MALLOC( replyBodyLen );
          PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                  "malloc failed(size=%d)", replyBodyLen );
+                   "malloc failed(size=%d)", replyBodyLen );
          ossMemcpy( *ppReplyBody, boGroup.objdata(), replyBodyLen );
          }
       }
@@ -1814,9 +1813,9 @@ namespace engine
    }
 
    INT32 catCatalogueManager::processCmdUnlinkCollection( const CHAR *pQuery,
-                                                      CHAR **ppReplyBody,
-                                                      UINT32 &replyBodyLen,
-                                                      INT32 &returnNum )
+                                                          CHAR **ppReplyBody,
+                                                          UINT32 &replyBodyLen,
+                                                          INT32 &returnNum )
    {
       INT32 rc = SDB_OK;
       std::string strMainCLName;
@@ -1826,30 +1825,30 @@ namespace engine
       {
          BSONObj boQuery( pQuery );
          BSONElement beMainCLName = boQuery.getField( CAT_COLLECTION_NAME );
-         PD_CHECK( beMainCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to link the collection, get field(%s) failed!",
-                  CAT_COLLECTION_NAME );
+         PD_CHECK( beMainCLName.type() == String, SDB_INVALIDARG, error,
+                   PDERROR, "failed to link the collection, get field(%s) "
+                   "failed!", CAT_COLLECTION_NAME );
          strMainCLName = beMainCLName.str();
          PD_CHECK( !strMainCLName.empty(), SDB_INVALIDARG, error, PDERROR,
-                  "invalid field:%s", CAT_COLLECTION_NAME );
+                   "invalid field:%s", CAT_COLLECTION_NAME );
 
          {
          BSONElement beSubCLName = boQuery.getField( CAT_SUBCL_NAME );
          PD_CHECK( beSubCLName.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to link the collection, get field(%s) failed!",
-                  CAT_SUBCL_NAME );
+                   "failed to link the collection, get field(%s) failed!",
+                   CAT_SUBCL_NAME );
          strSubCLName = beSubCLName.str();
          PD_CHECK( !strSubCLName.empty(), SDB_INVALIDARG, error, PDERROR,
-                  "invalid field:%s", CAT_SUBCL_NAME );
+                   "invalid field:%s", CAT_SUBCL_NAME );
          }
 
          rc = catUnlinkCL( strMainCLName.c_str(), strSubCLName.c_str(),
                            _pEduCB, _pDmsCB, _pDpsCB, _majoritySize(),
                            groupList );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to unlink the sub-collection(%s) "
-                     "from main-collection(%s)(rc=%d)",
-                     strMainCLName.c_str(), strSubCLName.c_str(), rc );
+                      "failed to unlink the sub-collection(%s) "
+                      "from main-collection(%s)(rc=%d)",
+                      strMainCLName.c_str(), strSubCLName.c_str(), rc );
 
          {
          returnNum = 1;
@@ -1867,7 +1866,7 @@ namespace engine
          replyBodyLen = boGroup.objsize();
          *ppReplyBody = ( CHAR *)SDB_OSS_MALLOC( replyBodyLen );
          PD_CHECK( *ppReplyBody, SDB_OOM, error, PDERROR,
-                  "malloc failed(size=%d)", replyBodyLen );
+                   "malloc failed(size=%d)", replyBodyLen );
          ossMemcpy( *ppReplyBody, boGroup.objdata(), replyBodyLen );
          }
 
