@@ -875,8 +875,10 @@ namespace engine
                   if ( dpsCB->expectLsn().compareOffset( header->_lsn ) > 0 )
                   {
                      SDB_ASSERT( FALSE , "header lsn is less than expect" ) ;
-                     // skip
-                     continue ;
+                     PD_LOG( PDWARNING, "Session[%s]: expect lsn[%lld] more "
+                             "than header lsn[%lld]", dpsCB->expectLsn().offset,
+                             header->_lsn ) ;
+                     goto error ;
                   }
 
                   if ( 0 != dpsCB->expectLsn().compareOffset( header->_lsn )
