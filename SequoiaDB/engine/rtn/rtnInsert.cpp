@@ -43,6 +43,8 @@
 
 namespace engine
 {
+   #define RTN_INSERT_ONCE_NUM         (10)
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT1, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb )
@@ -79,7 +81,8 @@ namespace engine
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
-      BOOLEAN writable = FALSE;
+      UINT32 insertCount = 0 ;
+      BOOLEAN writable = FALSE ;
 
       ossValuePtr pDataPos = 0 ;
       rc = dmsCB->writable( cb ) ;
@@ -105,9 +108,20 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       pDataPos = (ossValuePtr)objs.objdata() ;
-      for ( INT32 i=0; i<objNum; i++ )
+      for ( INT32 i = 0 ; i < objNum ; ++i )
       {
+         if ( ++insertCount > RTN_INSERT_ONCE_NUM )
+         {
+            insertCount = 0 ;
+            if ( cb->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+               goto error ;
+            }
+         }
+
          try
          {
             BSONObj record ( (const CHAR*)pDataPos ) ;
@@ -133,18 +147,18 @@ namespace engine
          }
          catch ( std::exception &e )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to convert to BSON and insert to collection: %s",
-                    e.what() ) ;
+            PD_LOG ( PDERROR, "Failed to convert to BSON and insert to "
+                     "collection: %s", e.what() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-
       }
+
    done :
       if ( DMS_INVALID_CS != suID )
+      {
          dmsCB->suUnlock ( suID ) ;
-
+      }
       if ( writable )
       {
          dmsCB->writeDown();
@@ -163,4 +177,6 @@ namespace engine
    error :
       goto done ;
    }
+
 }
+
