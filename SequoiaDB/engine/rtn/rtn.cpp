@@ -631,8 +631,8 @@ namespace engine
                                     FALSE, ppsu, suID ) ;
       if ( rc )
       {
-         PD_LOG_MSG ( PDERROR, "Failed to lock collection space %s",
-                      strCollectionFullName ) ;
+         PD_LOG_MSG ( PDERROR, "Failed to lock collection space %s, rc: %d",
+                      strCollectionFullName, rc ) ;
          goto error ;
       }
 
