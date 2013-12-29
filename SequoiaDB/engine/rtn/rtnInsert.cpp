@@ -43,7 +43,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT1, "rtnInsert" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT1, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb )
    {
@@ -66,7 +66,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT2, "rtnInsert" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNINSERT2, "rtnInsert" )
    INT32 rtnInsert ( const CHAR *pCollectionName, BSONObj &objs, INT32 objNum,
                      INT32 flags, pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                      SDB_DPSCB *dpsCB, INT16 w )
