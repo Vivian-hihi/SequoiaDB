@@ -195,7 +195,7 @@ namespace engine
 
       //message fuction
       protected:
-         INT32 handleNotifyRes ( NET_HANDLE handle, MsgHeader* header ) ;
+         INT32 handleTaskNotifyRes ( NET_HANDLE handle, MsgHeader* header ) ;
          INT32 handleBeginRes( NET_HANDLE handle, MsgHeader* header ) ;
          INT32 handleEndRes( NET_HANDLE handle, MsgHeader* header ) ;
          INT32 handleLEndRes ( NET_HANDLE handle, MsgHeader* header ) ;
