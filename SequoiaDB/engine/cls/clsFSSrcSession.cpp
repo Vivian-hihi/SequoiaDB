@@ -83,6 +83,7 @@ namespace engine
       _timeCounter = 0 ;
       _curExtID = DMS_INVALID_EXTENT ;
       _curCollection = ~0 ;
+      _beginLSNOffset = 0 ;
 
       //init disconnect msg
       _disconnectMsg.messageLength = sizeof ( MsgHeader ) ;
@@ -1237,9 +1238,10 @@ namespace engine
 
       {
          _reset() ;
+         BSONObj obj ;
          _lsn = dpscb->expectLsn() ;
          msg.lsn = _lsn ;
-         BSONObj obj ;
+         _beginLSNOffset = _lsn.offset ;
 
          // release notify lsn que, and prevent create cs/cl, drop cs/cl,
          // rename cl, truncate cl and so on occur during construct full names
@@ -1394,7 +1396,7 @@ namespace engine
       UINT64 fullCLLID = ossPack32To64 ( suLID, clLID ) ;
       map<UINT64, UINT32>::iterator it ;
 
-      if ( !_init || _quit )
+      if ( !_init || _quit || offset < _beginLSNOffset )
       {
          goto done ;
       }
@@ -1506,7 +1508,7 @@ namespace engine
       BOOLEAN inEndMap = FALSE ;
 
       if ( !_init || _quit || PMD_INVALID_EDUID != _cleanupJobID ||
-           0 == _needData )
+           0 == _needData || offset < _beginLSNOffset )
       {
          goto done ;
       }
@@ -1777,6 +1779,7 @@ namespace engine
          _reset() ;
          _lsn = pmdGetKRCB()->getDPSCB()->expectLsn() ;
          msg.lsn = _lsn ;
+         _beginLSNOffset = _lsn.offset ;
 
          // release notify lsn que, and prevent create cs/cl, drop cs/cl,
          // rename cl, truncate cl and so on occur during construct full names
