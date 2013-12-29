@@ -872,8 +872,12 @@ namespace engine
 
                if ( !_replayer.isDPSEnabled() )
                {
-                  SDB_ASSERT( dpsCB->expectLsn().compareOffset(
-                              header->_lsn) <= 0, "impossible" )
+                  if ( dpsCB->expectLsn().compareOffset( header->_lsn ) > 0 )
+                  {
+                     SDB_ASSERT( FALSE , "header lsn is less than expect" ) ;
+                     // skip
+                     continue ;
+                  }
 
                   if ( 0 != dpsCB->expectLsn().compareOffset( header->_lsn )
                        && SDB_OK != dpsCB->move ( header->_lsn,
