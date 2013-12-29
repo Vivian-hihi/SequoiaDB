@@ -589,11 +589,19 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSMGR_STARTTSKCHK, "_clsMgr::startTaskCheck" )
    INT32 _clsMgr::startTaskCheck ( const BSONObj & match )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSMGR_STARTTSKCHK );
-      ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
-      _mapTaskQuery[++_taskID] = match.copy() ;
+      if ( !isPrimary() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+      }
+      else
+      {
+         ossScopedLock lock ( &_clsLatch, EXCLUSIVE ) ;
+         _mapTaskQuery[++_taskID] = match.copy() ;
+      }
       PD_TRACE_EXIT ( SDB__CLSMGR_STARTTSKCHK );
-      return SDB_OK ;
+      return rc ;
    }
 
    INT32 _clsMgr::stopTask( UINT64 taskID )
