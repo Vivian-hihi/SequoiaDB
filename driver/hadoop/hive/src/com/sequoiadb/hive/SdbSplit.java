@@ -133,8 +133,15 @@ public class SdbSplit extends FileSplit implements InputSplit {
 		}
 
 		LOG.info("Start Get data blocks");
-		String spaceName = ConfigurationUtil.getSpaceName(conf);
-		String colName = ConfigurationUtil.getCollectionName(conf);
+		String spaceName = null;
+		String colName = null;
+		if( ConfigurationUtil.getCsName(conf) == null && ConfigurationUtil.getClName(conf) == null ){
+			spaceName = ConfigurationUtil.getSpaceName(conf);
+			colName = ConfigurationUtil.getCollectionName(conf);
+		}else{
+			spaceName = ConfigurationUtil.getCsName(conf);
+			colName = ConfigurationUtil.getClName(conf);
+		}
 		
 		DBCollection collection = sdb.getCollectionSpace(spaceName)
 				.getCollection(colName);

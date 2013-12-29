@@ -28,10 +28,20 @@ public class SdbHiveOutputFormat implements OutputFormat<NullWritable, BytesWrit
 			throws IOException {
 
 		LOG.debug("Entry SdbHiveOutputFormat::getHiveRecordWriter");
-
+		
+		String spaceName = null;
+		String colName = null;
+		if( ConfigurationUtil.getCsName(jobConf) == null && ConfigurationUtil.getClName(jobConf) == null ){
+			spaceName = ConfigurationUtil.getSpaceName(jobConf);
+			colName = ConfigurationUtil.getCollectionName(jobConf);
+		}else{
+			spaceName = ConfigurationUtil.getCsName(jobConf);
+			colName = ConfigurationUtil.getClName(jobConf);
+		}
+		
 		return new SdbWriter(ConfigurationUtil.getDBAddr(jobConf),
-				ConfigurationUtil.getSpaceName(jobConf),
-				ConfigurationUtil.getCollectionName(jobConf), 
+				spaceName,
+				colName, 
 				ConfigurationUtil.getBulkRecourdNum(jobConf));
 
 	}

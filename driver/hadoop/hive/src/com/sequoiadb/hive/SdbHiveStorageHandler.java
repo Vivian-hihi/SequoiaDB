@@ -129,9 +129,18 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 			tbl.getDbName();
 
 			String dbAddr = tbl.getParameters().get(ConfigurationUtil.DB_ADDR);
-			String spaceName = tbl.getDbName();
-			String dbCollection = tbl.getTableName();
-
+			String dbCsName = tbl.getParameters().get(ConfigurationUtil.CS_NAME);
+			String dbClName = tbl.getParameters().get(ConfigurationUtil.CL_NAME);
+			
+			String spaceName = null;
+			String dbCollection = null;
+			if( dbCsName == null && dbClName == null ){
+				spaceName = tbl.getDbName();
+				dbCollection = tbl.getTableName();
+			}else{
+				spaceName = dbCsName;
+				dbCollection = dbClName;
+			}
 			SdbConnAddr[] sdbAddr = ConfigurationUtil.getAddrList(dbAddr);
 
 			Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),

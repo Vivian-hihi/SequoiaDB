@@ -17,7 +17,8 @@ public class ConfigurationUtil {
 	public static final String SPACE_NAME = "db";
 	public static final String COLLECTION_NAME = "name";
 	public static final String COLUMN_MAPPING = "columns";
-	
+	public static final String CS_NAME = "sdb.space";
+	public static final String CL_NAME = "sdb.collection";
 	public static final String DB_ADDR = "sdb.address";
 	public static final String BULK_RECOURD_NUM = "sdb.bulk.record.num";
 
@@ -29,8 +30,26 @@ public class ConfigurationUtil {
 		ALL_PROPERTIES.add(DB_ADDR);
 		ALL_PROPERTIES.add(COLUMN_MAPPING);
 		ALL_PROPERTIES.add(BULK_RECOURD_NUM);
+		ALL_PROPERTIES.add(CS_NAME);
+		ALL_PROPERTIES.add(CL_NAME);
 	}
-
+	public static String getCsName(Configuration conf){
+		String cs_name = conf.get(CS_NAME);
+		if( cs_name == null ){
+			return null;
+		}else{
+			return cs_name;
+		}
+	}
+	public static String getClName(Configuration conf){
+		String cl_name = conf.get(CL_NAME);
+		if( cl_name == null ){
+			return null;
+		}
+		else{
+			return cl_name;
+		}
+	}
 	public final static int getBulkRecourdNum(Configuration conf) {
 		String bulk_record_num = conf.get(BULK_RECOURD_NUM);
 		if (bulk_record_num == null) {

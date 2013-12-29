@@ -58,8 +58,17 @@ public class SdbHiveInputFormat extends
 					filterExprSerialized, jobConf);
 			
 		}
+		String spaceName = null;
+		String colName = null;
+		if( ConfigurationUtil.getCsName(jobConf) == null && ConfigurationUtil.getClName(jobConf) == null ){
+			spaceName = ConfigurationUtil.getSpaceName(jobConf);
+			colName = ConfigurationUtil.getCollectionName(jobConf);
+		}else{
+			spaceName = ConfigurationUtil.getCsName(jobConf);
+			colName = ConfigurationUtil.getClName(jobConf);
+		}
 		
-		return new SdbReader(getSpaceName(jobConf), getCollectionName(jobConf), inputSplit,	columns, readColIDs, filterExpr);
+		return new SdbReader(spaceName,colName, inputSplit,	columns, readColIDs, filterExpr);
 	}
 
 	@Override
