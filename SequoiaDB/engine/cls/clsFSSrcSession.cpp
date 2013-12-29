@@ -1906,7 +1906,10 @@ namespace engine
 
       _pCatAgent->lock_r() ;        //lock
       pSet = _pCatAgent->collectionSet( _curCollecitonName.c_str() ) ;
-      mainCLName = pSet->getMainCLName();
+      if ( pSet )
+      {
+         mainCLName = pSet->getMainCLName() ;
+      }
       if ( !pSet || !pSet->isKeyInGroup( _rangeKeyObj, groupID ) )
       {
          sendRsp = TRUE ;
