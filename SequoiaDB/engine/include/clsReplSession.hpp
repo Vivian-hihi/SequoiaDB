@@ -113,6 +113,7 @@ namespace engine
       MsgRouteID                    _syncSrc ;
       CLS_SESSION_STATUS            _status ;
       BOOLEAN                       _quit ;
+      BOOLEAN                       _isFirstToSync ;
       UINT32                        _timeout ;
       UINT64                        _requestID ;
       UINT32                        _syncFailedNum ;

@@ -154,6 +154,11 @@ namespace engine
       INT32 w = 1 ;
       BOOLEAN dropCollection = FALSE ;
 
+      if ( _dpsCB )
+      {
+         eduCB()->writingDB( TRUE ) ;
+      }
+
       while ( TRUE )
       {
          if ( eduCB()->isInterrupted() )
@@ -214,6 +219,7 @@ namespace engine
       }
 
    done:
+      eduCB()->writingDB( FALSE ) ;
       PD_TRACE_EXITRC ( SDB__CLSCLNJOB_DOIT, rc );
       return rc ;
    error:

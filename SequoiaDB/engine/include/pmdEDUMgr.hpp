@@ -57,8 +57,8 @@ namespace engine
 #define PMD_EDU_WAIT_PERIOD     (200)
 #define PMD_EDU_WAIT_ROUND      (600)
 
-#define EDU_SYSTEM         0x01
-#define EDU_USER           0x02
+#define EDU_SYSTEM         0x0001
+#define EDU_USER           0x0002
 #define EDU_ALL            ( EDU_SYSTEM | EDU_USER )
 
    /* class for Engine Dispatchable Unit */
@@ -190,11 +190,14 @@ namespace engine
 #endif
 
    private :
-      INT32 createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid ) ;
-      INT32 destroyAll () ;
-      INT32 _forceEDUs ( INT32 property = EDU_ALL ) ;
-      UINT32 _getEDUCount ( INT32 property = EDU_ALL ) ;
-      INT32 _forceIOService() ;
+      INT32    createNewEDU ( EDU_TYPES type, void* arg, EDUID *eduid ) ;
+      INT32    destroyAll () ;
+      INT32    _forceEDUs ( INT32 property = EDU_ALL ) ;
+      UINT32   _getEDUCount ( INT32 property = EDU_ALL ) ;
+      INT32    _forceIOService() ;
+
+      INT32    _interruptWritingEDUs() ;
+      UINT32   _getWritingEDUCount() ;
 
       void setDestroyed ( BOOLEAN b )
       {
@@ -284,8 +287,8 @@ namespace engine
        *   SDB_SYS (the given eduid can't be found)
        *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
        */
-      INT32 activateEDU ( EDUID eduID ) ;
-      INT32 activateEDU ( pmdEDUCB *cb ) ;
+      INT32    activateEDU ( EDUID eduID ) ;
+      INT32    activateEDU ( pmdEDUCB *cb ) ;
 
       /*
        * This function must be called against a thread that in running
@@ -299,8 +302,8 @@ namespace engine
        *   SDB_SYS (the given eduid can't be found)
        *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
        */
-      INT32 waitEDU ( EDUID eduID ) ;
-      INT32 waitEDU ( pmdEDUCB *cb ) ;
+      INT32    waitEDU ( EDUID eduID ) ;
+      INT32    waitEDU ( pmdEDUCB *cb ) ;
 
       /*
        * This function is called to get an EDU run the given function
@@ -318,7 +321,7 @@ namespace engine
        *   SDB_OOM (failed to allocate memory)
        *   SDB_INVALIDARG (the type is not valid )
        */
-      INT32 startEDU ( EDU_TYPES type, void* arg, EDUID *eduid ) ;
+      INT32    startEDU ( EDU_TYPES type, void* arg, EDUID *eduid ) ;
 
       /*
        * This function should post a message to EDU
@@ -336,8 +339,8 @@ namespace engine
        *   SDB_OK ( success )
        *   SDB_SYS ( given EDU ID can't be found )
        */
-      INT32 postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
-                          BOOLEAN release = FALSE, void *pData = NULL ) ;
+      INT32    postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
+                             BOOLEAN release = FALSE, void *pData = NULL ) ;
 
 
       /*
@@ -355,8 +358,8 @@ namespace engine
        *   SDB_SYS ( given EDU ID can't be found )
        *   SDB_TIMEOUT ( timeout )
        */
-      INT32 waitEDUPost ( EDUID eduID, pmdEDUEvent& event,
-                          INT64 millsecond ) ;
+      INT32    waitEDUPost ( EDUID eduID, pmdEDUEvent& event,
+                             INT64 millsecond ) ;
 
       /*
        * This function should return an waiting/creating EDU to pool
@@ -373,9 +376,12 @@ namespace engine
        *   SDB_SYS ( given EDU ID can't be found )
        *   SDB_EDU_INVAL_STATUS (EDU is found but not with expected status)
        */
-      INT32 returnEDU ( EDUID eduID, BOOLEAN force, BOOLEAN* destroyed ) ;
+      INT32    returnEDU ( EDUID eduID, BOOLEAN force, BOOLEAN* destroyed ) ;
 
-      INT32 forceUserEDU ( EDUID eduID ) ;
+      INT32    forceUserEDU ( EDUID eduID ) ;
+
+      INT32    interruptWritingEDUS() { return _interruptWritingEDUs() ; }
+      UINT32   getWritingEDUCount() { return _getWritingEDUCount() ; }
 
       pmdEDUCB *getEDU ( UINT32 tid ) ;
       pmdEDUCB *getEDU () ;

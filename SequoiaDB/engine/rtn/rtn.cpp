@@ -731,8 +731,8 @@ namespace engine
 
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "init command[%s] failed[rc=%d]", pCommand->name(),
-               rc ) ;
+            PD_LOG ( PDERROR, "init command[%s] failed[rc=%d]",
+                     pCommand->name(), rc ) ;
          }
       }
 
@@ -787,6 +787,7 @@ namespace engine
             rc = SDB_RTN_CMD_NO_SERVICE_AUTH ;
             goto error ;
          }
+         pCommand->setFromService( serviceType ) ;
 
          try
          {
@@ -795,7 +796,7 @@ namespace engine
          catch ( std::exception &e )
          {
             PD_LOG ( PDERROR, "run command[%s] exception[%s]", pCommand->name(),
-               e.what() ) ;
+                     e.what() ) ;
          }
 
          if ( SDB_OK != rc )
@@ -803,12 +804,12 @@ namespace engine
             if ( SDB_DMS_EOC == rc )
             {
                PD_LOG ( PDDEBUG, "run command[%s] failed[end of the context]",
-                  pCommand->name() ) ;
+                        pCommand->name() ) ;
             }
             else
             {
                PD_LOG ( PDERROR, "run command[%s] failed[rc=%d]", 
-                  pCommand->name(), rc ) ;
+                        pCommand->name(), rc ) ;
             }
          }
 
@@ -819,7 +820,8 @@ namespace engine
                && 0 != cb->getLsnCount ()
                && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
             {
-               rc = pmdGetKRCB()->getReplCB()->sync ( cb->getEndLsn (),  cb, w ) ;
+               rc = pmdGetKRCB()->getReplCB()->sync ( cb->getEndLsn (),
+                                                      cb, w ) ;
             }
             cb->resetLsn () ;
          }

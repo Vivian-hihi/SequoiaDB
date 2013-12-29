@@ -321,6 +321,47 @@ namespace engine
       return eduCount ;
    }
 
+   INT32 _pmdEDUMgr::_interruptWritingEDUs()
+   {
+      std::map<EDUID, pmdEDUCB*>::iterator it ;
+
+      /*******************CRITICAL SECTION ********************/
+      {
+         EDUMGR_XLOCK
+         // send terminate request to everyone
+         for ( it = _runQueue.begin () ; it != _runQueue.end () ; ++it )
+         {
+            if ( (*it).second->isWritingDB() )
+            {
+               ( *it ).second->interrupt() ;
+               PD_LOG ( PDDEBUG, "Interrupt edu[ID:%lld]", it->first ) ;
+            }
+         }
+      }
+      /******************END CRITICAL SECTION******************/
+      return SDB_OK ;
+   }
+
+   UINT32 _pmdEDUMgr::_getWritingEDUCount ()
+   {
+      UINT32 eduCount = 0 ;
+      std::map<EDUID, pmdEDUCB*>::iterator it ;
+
+      /*******************CRITICAL SECTION ********************/
+      {
+         EDUMGR_XLOCK
+         for ( it = _runQueue.begin () ; it != _runQueue.end () ; ++it )
+         {
+            if ( (*it).second->isWritingDB() )
+            {
+               ++eduCount ;
+            }
+         }
+      }
+      /******************END CRITICAL SECTION******************/
+      return eduCount ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUMGR_PSTEDUPST, "_pmdEDUMgr::postEDUPost" )
    INT32 _pmdEDUMgr::postEDUPost ( EDUID eduID, pmdEDUEventTypes type,
                                    BOOLEAN release , void *pData )
@@ -828,6 +869,7 @@ namespace engine
                       "Only agent, subagent and coordagent can be pooled" )
          _runQueue.erase ( eduID ) ;
          eduCB->setStatus ( PMD_EDU_IDLE ) ;
+         eduCB->writingDB ( FALSE ) ;
          _idleQueue [ eduID ] = eduCB ;
       }
    done :
@@ -1049,7 +1091,7 @@ namespace engine
       }
 
       rc = waitUntil( eduID, status, waitPeriod,
-                        waitRound == 0 ? 1 : waitRound ) ;
+                      waitRound == 0 ? 1 : waitRound ) ;
    done :
       PD_TRACE_EXITRC ( SDB__PMDEDUMGR_WAITUTIL2, rc );
       return rc ;

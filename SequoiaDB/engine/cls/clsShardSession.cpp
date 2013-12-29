@@ -573,6 +573,7 @@ namespace engine
       rc = _reply ( &_replyHeader, pReponseBuff, buffLen ) ;
 
    done:
+      eduCB()->writingDB( FALSE ) ;
       if ( errorObj )
       {
          SDB_OSS_DEL errorObj ;
@@ -730,6 +731,7 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
+      _pEDUCB->writingDB( TRUE ) ;
 
       //check version
       rc = _checkCata ( pUpdate->version, pCollectionName, w, isMainCL ) ;
@@ -750,16 +752,16 @@ namespace engine
          if ( isMainCL )
          {
             rc = _updateToMainCL( pCollectionName, selector, updator, hint,
-                                 flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
-                                 ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
-                                 &updateNum : NULL );
+                                  flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
+                                  ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
+                                  &updateNum : NULL );
          }
          else
          {
             rc = rtnUpdate( pCollectionName, selector, updator, hint, 
-                         flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
-                         ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
-                         &updateNum : NULL ) ;
+                            flags, _pEDUCB, _pDmsCB, _pDpsCB, w,
+                            ( pUpdate->flags & FLG_UPDATE_RETURNNUM ) ?
+                            &updateNum : NULL ) ;
          }
       }
       catch ( std::exception &e )
@@ -797,15 +799,16 @@ namespace engine
          goto error ;
       }
 
-      rc = msgExtractInsert ((CHAR*)msg,  &flags, &pCollectionName,
-         &pInsertorBuffer, recordNum ) ;
+      rc = msgExtractInsert ( (CHAR*)msg,  &flags, &pCollectionName,
+                              &pInsertorBuffer, recordNum ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Session[%s] extract insert msg failed[rc:%d]",
-            sessionName(), rc ) ;
+                  sessionName(), rc ) ;
          goto error ;
       }
       _pCollectionName = pCollectionName ;
+      _pEDUCB->writingDB( TRUE ) ;
 
       //check catalog
       rc = _checkCata ( pInsert->version, pCollectionName, w, isMainCL ) ;
@@ -819,7 +822,8 @@ namespace engine
          BSONObj insertor ( pInsertorBuffer ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
-            sessionName(), insertor.toString().c_str(), pCollectionName ) ;
+                  sessionName(), insertor.toString().c_str(),
+                  pCollectionName ) ;
 
          if ( isMainCL )
          {
@@ -829,7 +833,7 @@ namespace engine
          {
 
             rc = rtnInsert ( pCollectionName, insertor, recordNum, flags, 
-                           _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+                             _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
          }
       }
       catch ( std::exception &e )
@@ -870,7 +874,7 @@ namespace engine
       }
 
       rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName, 
-         &pDeletorBuffer, &pHintBuffer ) ;
+                              &pDeletorBuffer, &pHintBuffer ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Session[%s] extract delete msg failed[rc:%d]",
@@ -878,6 +882,7 @@ namespace engine
          goto error ;
       }
       _pCollectionName = pCollectionName ;
+      _pEDUCB->writingDB( TRUE ) ;
 
       //check cata
       rc = _checkCata ( pDelete->version, pCollectionName, w, isMainCL ) ;
@@ -892,23 +897,23 @@ namespace engine
          BSONObj hint ( pHintBuffer ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
-            sessionName(), deletor.toString().c_str(), 
-            hint.toString().c_str() ) ;
+                  sessionName(), deletor.toString().c_str(), 
+                  hint.toString().c_str() ) ;
 
          if ( isMainCL )
          {
             rc = _deleteToMainCL( pCollectionName, deletor, hint, flags,
-                                 _pEDUCB, _pDmsCB, _pDpsCB, w,
-                                 ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
-                                 &delNum : NULL );
+                                  _pEDUCB, _pDmsCB, _pDpsCB, w,
+                                  ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
+                                  &delNum : NULL );
          }
          else
          {
 
             rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB, 
-                         _pDmsCB, _pDpsCB, w,
-                         ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
-                         &delNum : NULL ) ;
+                            _pDmsCB, _pDpsCB, w,
+                            ( pDelete->flags & FLG_DELETE_RETURNNUM ) ?
+                            &delNum : NULL ) ;
          }
       }
       catch ( std::exception &e )
@@ -953,12 +958,12 @@ namespace engine
       BOOLEAN isMainCL = FALSE;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
-         &numToSkip, &numToReturn, &pQueryBuff, &pFieldSelector,
-         &pOrderByBuffer, &pHintBuffer ) ;
+                             &numToSkip, &numToReturn, &pQueryBuff,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Session[%s] extract query msg failed[rc:%d]",
-            sessionName(), rc ) ;
+                  sessionName(), rc ) ;
          goto error ;
       }
 
@@ -987,9 +992,9 @@ namespace engine
 
             if ( !isMainCL )
             {
-               rc = rtnQuery( pCollectionName, selector, matcher, orderBy, hint,
-                  flags, _pEDUCB, numToSkip, numToReturn, _pDmsCB, _pRtnCB,
-                  contextID, NULL, TRUE ) ;
+               rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
+                              hint, flags, _pEDUCB, numToSkip, numToReturn,
+                              _pDmsCB, _pRtnCB, contextID, NULL, TRUE ) ;
             }
             else
             {
@@ -1013,7 +1018,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Parse command[%s] failed[rc:%d]",
-               pCollectionName, rc ) ;
+                     pCollectionName, rc ) ;
             goto error ;
          }
 
@@ -1024,7 +1029,6 @@ namespace engine
          {
             goto error ;
          }
-         pCommand->setFromCluster();
          _pCollectionName = pCommand->collectionFullName () ;
 
          // drop collection or drop collection-space must get suID and
@@ -1081,6 +1085,7 @@ namespace engine
             {
                goto error ;
             }
+            _pEDUCB->writingDB( TRUE ) ;
          }
 
          //check cata
@@ -1595,11 +1600,11 @@ namespace engine
             ++totalObjsNum;
             insertor = BSONObj( (CHAR *)pCurPos );
             rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags, 
-                           _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+                             _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to insert to sub-collection(%s), "
                          "rc: %d", pSubCLName, rc ) ;
             pCurPos += subObjsSize;
-            totalObjsNum += subObjsNum;
+            totalObjsNum += subObjsNum ;
          }
       }
       catch( std::exception &e )

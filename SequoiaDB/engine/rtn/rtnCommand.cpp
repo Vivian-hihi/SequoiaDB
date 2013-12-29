@@ -51,11 +51,16 @@ namespace engine
 {
    _rtnCommand::_rtnCommand ()
    {
-      _isFromCluster = FALSE ;
+      _fromService = 0 ;
    }
 
    _rtnCommand::~_rtnCommand ()
    {
+   }
+
+   void _rtnCommand::setFromService( INT32 fromService )
+   {
+      _fromService = fromService ;
    }
 
    INT32 _rtnCommand::spaceNode()

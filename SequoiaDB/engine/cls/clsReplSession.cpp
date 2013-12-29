@@ -69,6 +69,7 @@ namespace engine
 
       _requestID = 0 ;
       _syncFailedNum = 0 ;
+      _isFirstToSync = TRUE ;
 
       _syncSrc.value = MSG_INVALID_ROUTEID ;
 
@@ -137,8 +138,17 @@ namespace engine
 
       if ( !_sync->isReadyToReplay() )
       {
+         _isFirstToSync = TRUE ;
          goto done ;
       }
+      else if ( _isFirstToSync &&
+                pmdGetKRCB()->getEDUMgr()->getWritingEDUCount() > 0 )
+      {
+         PD_LOG( PDWARNING, "Has some writing edus don't exist, can't to "
+                 "sync" ) ;
+         goto done ;
+      }
+      _isFirstToSync = FALSE ;
 
       //if the peer node is sharing-break, shoud change node
       if ( MSG_INVALID_ROUTEID != _syncSrc.value

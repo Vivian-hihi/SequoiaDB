@@ -169,6 +169,7 @@ namespace engine
       EDU_TYPES      _eduType ;
 
       INT32          _ctrlFlag ;
+      BOOLEAN        _writingDB ;
 
       // thread specific error message buffer, aka SQLCA
       CHAR           *_pErrorBuff ;
@@ -270,6 +271,9 @@ namespace engine
       BOOLEAN isForced () ;
       void resetInterrupt () ;
       void resetDisconnect () ;
+
+      void writingDB( BOOLEAN writing ) { _writingDB = writing ; }
+      BOOLEAN isWritingDB() const { return _writingDB ; }
 
       INT32 printInfo ( EDU_INFO_TYPE type, const CHAR *format, ... ) ;
       const CHAR *getInfo ( EDU_INFO_TYPE type ) ;
@@ -428,7 +432,8 @@ namespace engine
          // if millsec not 0, that means we want timeout
          // otherwise it's infinite wait
 
-         BOOLEAN waitMsg = FALSE ;
+         BOOLEAN waitMsg   = FALSE ;
+         _writingDB        = FALSE ;
          if ( PMD_EDU_IDLE != _status )
          {
             _status = PMD_EDU_WAITING ;

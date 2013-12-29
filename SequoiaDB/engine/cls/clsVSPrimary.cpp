@@ -99,6 +99,10 @@ namespace engine
       msg.oldPrimary = _info()->local ;
       _info()->mtx.release_w() ;
 
+      // interrupt writing edus
+      pmdGetKRCB()->getEDUMgr()->interruptWritingEDUS() ;
+
+      // stop rollback
       pmdGetKRCB()->getTransCB()->stopRollbackTask() ;
       pmdGetKRCB()->getTransCB()->termAllTrans();
 

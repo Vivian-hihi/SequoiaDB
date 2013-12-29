@@ -251,11 +251,13 @@ namespace engine
          _rtnCommand () ;
          virtual ~_rtnCommand () ;
 
+         void  setFromService( INT32 fromService ) ;
+         INT32 getFromService() const { return _fromService ; }
+
          virtual INT32 spaceNode () ;
          virtual INT32 spaceService () ;
 
       public:
-         void setFromCluster(){ _isFromCluster = TRUE; }
          virtual const CHAR * name () = 0 ;
          virtual RTN_COMMAND_TYPE type () = 0 ;
          virtual BOOLEAN      writable () ;
@@ -271,7 +273,8 @@ namespace engine
                               INT16 w = 1, INT64 *pContextID = NULL ) = 0 ;
 
       protected:
-         BOOLEAN  _isFromCluster;
+         INT32             _fromService ;
+
    };
 
    typedef _rtnCommand* (*CDM_NEW_FUNC)() ;
