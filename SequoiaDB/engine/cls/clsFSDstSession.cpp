@@ -1439,10 +1439,10 @@ namespace engine
    */
    BEGIN_OBJ_MSG_MAP( _clsSplitDstSession, _clsDataDstBaseSession )
       //ON_MSG
-      ON_MSG ( MSG_CAT_SPLIT_START_RSP, handleNotifyRes )
-      ON_MSG ( MSG_CAT_SPLIT_CHGMETA_RSP, handleNotifyRes )
-      ON_MSG ( MSG_CAT_SPLIT_CLEANUP_RSP, handleNotifyRes )
-      ON_MSG ( MSG_CAT_SPLIT_FINISH_RSP, handleNotifyRes )
+      ON_MSG ( MSG_CAT_SPLIT_START_RSP, handleTaskNotifyRes )
+      ON_MSG ( MSG_CAT_SPLIT_CHGMETA_RSP, handleTaskNotifyRes )
+      ON_MSG ( MSG_CAT_SPLIT_CLEANUP_RSP, handleTaskNotifyRes )
+      ON_MSG ( MSG_CAT_SPLIT_FINISH_RSP, handleTaskNotifyRes )
       ON_MSG ( MSG_CLS_FULL_SYNC_BEGIN_RES, handleBeginRes )
       ON_MSG ( MSG_CLS_FULL_SYNC_END_RES, handleEndRes )
       ON_MSG ( MSG_CLS_FULL_SYNC_LEND_RES, handleLEndRes )
@@ -1883,9 +1883,9 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLDS_HNDNTFRES, "_clsSplitDstSession::handleNotifyRes" )
-   INT32 _clsSplitDstSession::handleNotifyRes( NET_HANDLE handle,
-                                               MsgHeader * header )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLDS_HNDNTFRES, "_clsSplitDstSession::handleTaskNotifyRes" )
+   INT32 _clsSplitDstSession::handleTaskNotifyRes( NET_HANDLE handle,
+                                                   MsgHeader * header )
    {
       PD_TRACE_ENTRY ( SDB__CLSSPLDS_HNDNTFRES );
       MsgOpReply *msg = ( MsgOpReply* )header ;
