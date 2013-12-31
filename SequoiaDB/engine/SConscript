@@ -228,10 +228,6 @@ optFiles = [
       "opt/optQgmOptimizer.cpp"
       ]
 
-dpsDumpFiles = [
-      "tools/dpsDump.cpp"
-      ]
-
 monFiles = [
       "mon/monDump.cpp",
       "mon/monCB.cpp"
@@ -319,7 +315,8 @@ dpsFiles = [
       "dps/dpsTransLock.cpp",
       "dps/dpsTransLockDef.cpp",
       "dps/dpsTransLockBucket.cpp",
-      "dps/dpsOp2Record.cpp"
+      "dps/dpsOp2Record.cpp",
+      "dps/dpsDump.cpp"
       ]
 
 barFiles = [
@@ -490,9 +487,6 @@ snappyTestFiles = [
       ]
 restoreDBFiles = [
       "pmd/sdbrestore.cpp"
-      ]
-dumpMemCheckFiles = [
-      "tools/sdbCheckDumpMem.cpp"
       ]
 #replTestFiles = [
 #      "test/repl/replElectionTest.cpp"
@@ -746,15 +740,10 @@ if hasTestcase:
 
 # Tools
 if hasTool:
-   dumpMemCheck = env.Program("dumpMemCheck", dumpMemCheckFiles,
-          LIBDEPS=["qgm","bar","rest","cat","coord","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr", "spd"],
-          _LIBDEPS='$_LIBDEPS_OBJS' )
    restoreDB = env.Program("restoreDB", restoreDBFiles,
           LIBDEPS=["qgm","bar","rest","cat","coord","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr", "spd"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
-   dpsdump = env.Program("sdbpdlog", dpsDumpFiles,
-          LIBDEPS=["qgm","bar","rest","cat","coord","snappy","gtest","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr", "spd"],
-          _LIBDEPS='$_LIBDEPS_OBJS' )
+
    sdbInspect = env.Program("sdbinspt", sdbInspectMain,
          LIBDEPS=["qgm","bar","rest","cat","coord","gtest","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr","spd"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
@@ -791,7 +780,5 @@ if hasTestcase:
 #   env.Install( '#/tests', performance )
 # Install tools
 if hasTool:
-   env.Install( '#/tools', dumpMemCheck )
    env.Install( '#/bin', restoreDB )
-   env.Install( '#/tools', dpsdump )
    env.Install( '#/bin', sdbInspect )
