@@ -98,6 +98,11 @@ utilFiles = [
       "util/text.cpp"
       ]
 
+dpsFiles = [
+      "dps/dpsDump.cpp",
+      "dps/dpsLogRecord.cpp",
+      ]
+
 clientFiles = [
       "client/client.c",
       "client/common.c",
@@ -127,8 +132,17 @@ sdbcmDMNMain = [
 sdbcmartMain = [
       "pmd/cm/sdbcmart.cpp"
       ]
+
 sdbcmtopMain = [
       "pmd/cm/sdbcmtop.cpp"
+      ]
+
+sdbmemcheckFiles = [
+      "tools/sdbCheckDumpMem.cpp"
+      ]
+
+sdbdpsdumpFiles = [
+      "tools/sdbDpsDump.cpp"
       ]
 
 #BSON
@@ -151,6 +165,8 @@ toolEnv.StaticLibrary('mig', migFiles)
 toolEnv.StaticLibrary('msg', msgFiles)
 #mig2load
 toolEnv.StaticLibrary('msgload', migLoadFiles)
+#dps
+toolEnv.StaticLibrary('dps', dpsFiles)
 
 #Export Executable
 sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
@@ -197,6 +213,14 @@ sdbcmtop = toolEnv.Program("sdbcmtop", sdbcmtopMain,
          LIBDEPS=["pd","oss"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
+sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
+          LIBDEPS=["oss","pd"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
+
+sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
+          LIBDEPS=["oss","pd","bson","dps"],
+          _LIBDEPS='$_LIBDEPS_OBJS' )
+
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbimprt )
 toolEnv.Install( '#/bin', sdbload )
@@ -208,3 +232,5 @@ toolEnv.Install( '#/bin', sdbcm )
 toolEnv.Install( '#/bin', sdbcmdmn )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )
+toolEnv.Install( '#/tools', sdbmemcheck )
+toolEnv.Install( '#/tools', sdbdpsdump )
