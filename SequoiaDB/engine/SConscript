@@ -430,6 +430,10 @@ sdbInspectMain = [
       "pmd/sdbinspt.cpp"
       ]
 
+sdbrestoreFiles = [
+      "pmd/sdbrestore.cpp"
+      ]
+
 # Test Buckets
 cmTestFile = [
       "test/cmTest.cpp"
@@ -484,9 +488,6 @@ genRecordTestFiles = [
       ]
 snappyTestFiles = [
       "test/snappyTest.cpp"
-      ]
-restoreDBFiles = [
-      "pmd/sdbrestore.cpp"
       ]
 #replTestFiles = [
 #      "test/repl/replElectionTest.cpp"
@@ -740,7 +741,7 @@ if hasTestcase:
 
 # Tools
 if hasTool:
-   restoreDB = env.Program("restoreDB", restoreDBFiles,
+   sdbrestore = env.Program("sdbrestore", sdbrestoreFiles,
           LIBDEPS=["qgm","bar","rest","cat","coord","snappy","cls","pcre","oss","pd","pmd","mig","rtn","msg","ixm","dms","bps","bson","mth","opt","util","mon","dps","net", "sql","auth", "aggr", "spd"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
@@ -780,5 +781,5 @@ if hasTestcase:
 #   env.Install( '#/tests', performance )
 # Install tools
 if hasTool:
-   env.Install( '#/bin', restoreDB )
+   env.Install( '#/bin', sdbrestore )
    env.Install( '#/bin', sdbInspect )
