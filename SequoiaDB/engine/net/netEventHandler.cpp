@@ -288,14 +288,17 @@ namespace engine
    void _netEventHandler::asyncRead()
    {
       PD_TRACE_ENTRY ( SDB__NETEVNHND_ASYNCRD ) ;
-      _isInAsync = TRUE ;
-      if ( !_isConnected )
-      {
-         goto done ;
-      }
 
       if ( NET_EVENT_HANDLER_STATE_HEADER == _state )
       {
+         _isInAsync = TRUE ;
+         if ( !_isConnected )
+         {
+            PD_LOG( PDWARNING, "Connection[routeID: %u,%u,%u; Handel: %u] "
+                    "already closed", _id.columns.groupID, _id.columns.nodeID,
+                    _id.columns.serviceID, _handle ) ;
+            goto error ;
+         }
          async_read( _sock, buffer(&_header, sizeof(_MsgHeader)),
                      boost::bind(&_netEventHandler::_readCallback,
                                  shared_from_this(),
@@ -306,12 +309,18 @@ namespace engine
          UINT32 len = _header.messageLength ;
          if ( SDB_OK != _allocateBuf( len ) )
          {
-            close() ;
-            _frame->handleClose( shared_from_this(), _id ) ;
-            _frame->_erase( handle() ) ;
-            goto done ;
+            goto error ;
          }
          ossMemcpy( _buf, &_header, sizeof( _MsgHeader ) ) ;
+
+         _isInAsync = TRUE ;
+         if ( !_isConnected )
+         {
+            PD_LOG( PDWARNING, "Connection[routeID: %u,%u,%u; Handel: %u] "
+                    "already closed", _id.columns.groupID, _id.columns.nodeID,
+                    _id.columns.serviceID, _handle ) ;
+            goto error ;
+         }
          async_read( _sock, buffer((CHAR *)((ossValuePtr)_buf +
                                             sizeof(_MsgHeader)),
                                     len - sizeof(_MsgHeader)),
@@ -324,6 +333,15 @@ namespace engine
       _isInAsync = FALSE ;
       PD_TRACE_EXIT ( SDB__NETEVNHND_ASYNCRD ) ;
       return ;
+   error:
+      _isInAsync = FALSE ;
+      if ( _isConnected )
+      {
+         close() ;
+      }
+      _frame->handleClose( shared_from_this(), _id ) ;
+      _frame->_erase( handle() ) ;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SYNCSND, "_netEventHandler::syncSend" )
@@ -372,7 +390,7 @@ namespace engine
          _buf = (CHAR *)SDB_OSS_MALLOC( len ) ;
          if ( NULL == _buf )
          {
-            PD_LOG( PDERROR, "mem allocate failed" ) ;
+            PD_LOG( PDERROR, "mem allocate failed, len: %u", len ) ;
             rc = SDB_OOM ;
             goto error ;
          }
