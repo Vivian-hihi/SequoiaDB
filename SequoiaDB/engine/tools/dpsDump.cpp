@@ -35,6 +35,7 @@
 
 #include "dpsLogRecord.hpp"
 #include "dpsLogFile.hpp"
+#include "dpsDump.hpp"
 #include "ossIO.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
@@ -61,7 +62,7 @@ vector<SINT32> logID ;
 CHAR logFileName [128] ;
 
 // format log file for the given log ID
-PD_TRACE_DECLARE_FUNCTION ( SDB_FORMATLOG, "formatLog" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_FORMATLOG, "formatLog" )
 INT32 formatLog ( SINT32 logID )
 {
    INT32 rc = SDB_OK ;
@@ -127,8 +128,8 @@ INT32 formatLog ( SINT32 logID )
    rc = ossRead ( &file, pBuffer, fileSize, &fileRead ) ;
    if ( rc || fileRead != fileSize )
    {
-      printf ( "Failed to read from file, expect %lld bytes, \
-actual read %lld bytes, rc = %d\n", fileSize, fileRead, rc ) ;
+      printf ( "Failed to read from file, expect %lld bytes, "
+               "actual read %lld bytes, rc = %d\n", fileSize, fileRead, rc ) ;
       goto error ;
    }
    // start format log head
@@ -147,10 +148,10 @@ actual read %lld bytes, rc = %d\n", fileSize, fileRead, rc ) ;
       outputBufferSz = DPS_LOG_HEAD_LEN * LOG_BUFFER_FORMAT_MULTIPLIER ;
    }
 
-   dpsLogFile::dumpHead ( pCur, DPS_LOG_HEAD_LEN, pOutputBuffer,
-                          outputBufferSz,
-                          DPS_DMP_OPT_HEX|DPS_DMP_OPT_HEX_WITH_ASCII|
-                          DPS_DMP_OPT_FORMATTED ) ;
+   dpsDump::dumpLogFileHead( pCur, DPS_LOG_HEAD_LEN, pOutputBuffer,
+                             outputBufferSz,
+                             DPS_DMP_OPT_HEX|DPS_DMP_OPT_HEX_WITH_ASCII|
+                             DPS_DMP_OPT_FORMATTED ) ;
    printf ( "%s\n", pOutputBuffer ) ;
    logHeader = ( _dpsLogHeader*)pCur ;
    // calculate the first lsn in the file based on the beginOffset, note we
@@ -209,17 +210,16 @@ error :
    goto done ;
 }
 
-
 void printSyntax ( CHAR *name )
 {
-   printf ( "Syntax: %s <["ARG_FROM" <from> "ARG_TO" <to>]|\
-["ARG_LOG" <id>]>\n", name ) ;
+   printf ( "Syntax: %s <["ARG_FROM" <from> "ARG_TO" <to>]|"
+            "["ARG_LOG" <id>]>\n", name ) ;
 }
 
 #define ARG_EXPECT_UNKNOWN 0
 #define ARG_EXPECT_RANGE   1
 #define ARG_EXPECT_LOG     2
-PD_TRACE_DECLARE_FUNCTION ( SDB_PARSEARG, "parseArg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_PARSEARG, "parseArg" )
 INT32 parseArg ( int argc, char **argv )
 {
    INT32 rc = SDB_OK ;
@@ -308,8 +308,8 @@ INT32 parseArg ( int argc, char **argv )
    {
       if ( from < 0 || to < 0 )
       {
-         printf ( "Both "ARG_FROM" and "ARG_TO" have to be specified and \
-greater or equal to 0\n" ) ;
+         printf ( "Both "ARG_FROM" and "ARG_TO" have to be specified and "
+                  "greater or equal to 0\n" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -348,7 +348,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_DPSDUMP_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DPSDUMP_MAIN, "main" )
 int main ( int argc, char** argv )
 {
    INT32 rc = SDB_OK ;
@@ -371,3 +371,4 @@ int main ( int argc, char** argv )
    PD_TRACE_EXIT ( SDB_DPSDUMP_MAIN );
    return 0 ;
 }
+
