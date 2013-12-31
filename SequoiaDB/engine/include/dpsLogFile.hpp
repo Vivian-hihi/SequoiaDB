@@ -116,9 +116,6 @@ namespace engine
       // get first lsn
       DPS_LSN getFirstLSN ( BOOLEAN mustExist = TRUE ) ;
 
-      static UINT32 dumpHead ( CHAR *inBuf, UINT32 inSize,
-                               CHAR *outBuf, UINT32 outSize, UINT32 options ) ;
-
    private:
       void _initHead( UINT32 logID )
       {
