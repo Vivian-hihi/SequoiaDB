@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
@@ -52,11 +53,13 @@ class ByteArrayFiled {
 	}
 }
 
+//public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 	public static final Log LOG = LogFactory.getLog(SdbReader.class.getName());
 	private Sequoiadb sdb = null;
 	private DBCursor cursor = null;
 	private long pos = 0;
+	List<Integer> readColIDs;
 	private String[] columnsMap;
 	private int[] selectorColIDs;
 	private SdbSplit sdbSplit = null;
@@ -94,12 +97,16 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 
 	public SdbReader(String spaceName, String colName, InputSplit split,
 			String[] columns, List<Integer> readColIDs, ExprNodeDesc filterExpr) {
-
+		
+		
 		if (split == null || !(split instanceof SdbSplit)) {
 			throw new IllegalArgumentException(
 					"The split is not SdbSplit type.");
 		}
+		this.readColIDs = readColIDs;
 		this.columnsMap = columns;
+		
+		//LOG.info("columns is " + columns.toString());
 		this.sdbSplit = (SdbSplit) split;
 
 		LOG.debug("The split information:" + split.toString());
@@ -116,6 +123,7 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 		BSONObject query = null;
 		if (filterExpr != null) {
 			try {
+				
 				query = parserFilterExprToBSON(filterExpr, 0);
 				
 				
@@ -126,14 +134,16 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 		}
 		LOG.debug("query:" + query);
 		
+		
 		// BSONObject selector = null;
 		BasicBSONObject selector = new BasicBSONObject();
 		for (String column : parserReadColumns(columnsMap, readColIDs)) {
 			selector.put(column.toLowerCase(), 1);
 		}
 		LOG.debug("selector:" + selector);
-
+		
 		selectorColIDs = new int[selector.size()];
+		
 		int index = 0;
 		for (Entry<String, Object> entry : selector.entrySet()) {
 			for (int i = 0; i < this.columnsMap.length; i++) {
@@ -176,7 +186,9 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 				readColumns[i] = columnsMap[readColIDs.get(i)];
 			}
 		}
-
+		for(String f : readColumns){
+			LOG.info("readColumns is " + f);
+		}
 		return readColumns;
 	}
 
@@ -199,9 +211,10 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 			String funcName = funcDesc.getGenericUDF().getClass().getName();
 
 			LOG.debug(prexString + "funcName:" + funcName);
-
+			LOG.info(prexString + "funcName:" + funcName);
 			for (Entry<String, String> entry : COMP_BSON_TABLE.entrySet()) {
 				LOG.debug(entry.getKey());
+				LOG.info(entry.getKey());
 			}
 			if (COMP_BSON_TABLE.containsKey(funcName)) {
 
@@ -362,22 +375,33 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 		return sdbSplit.getLength() > 0 ? this.recordsLenth
 				/ (float) sdbSplit.getLength() * 64 * 1024 : 1.0f;
 	}
-
+	
+	
+	
 	@Override
 	public boolean next(LongWritable keyHolder, BytesWritable valueHolder)
 			throws IOException {
+		
+		
 		if (!cursor.hasNextRaw()) {
+			
 			return false;
 		}
 
 		final int TEXT_START_POS = 10;
 
 		byte[] record = cursor.getNextRaw();
+		String record_str = new String(record);
+		
+		
+		
 		recordsLenth += record.length;
 
 		// System.out.println("strOrgRecord:" + strOrgRecord);
-
+		
 		ByteArrayFiled[] byteArrayRef = new ByteArrayFiled[this.selectorColIDs.length];
+		
+		//LOG.info("byteArrayFiled is " + byteArrayRef.toString() );
 		int startPos = TEXT_START_POS;
 		int i = TEXT_START_POS;
 		int nFileNum = 0;
@@ -385,7 +409,8 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 			if (record[i] == '|') {
 				// System.out.println("build field: starPos" + startPos +
 				// ", endPos:" + i);
-
+//				LOG.info("enter for(record.length) if =='|'");
+//				LOG.info("enter one fields");
 				ByteArrayFiled ref = new ByteArrayFiled(record, startPos, i);
 				byteArrayRef[nFileNum++] = ref;
 				startPos = i + 1;
@@ -394,29 +419,46 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 			}
 		}
 		if (startPos < i) {
+			//LOG.info("enter if startPos < i");
+			//LOG.info("enter one fields");
 			ByteArrayFiled ref = new ByteArrayFiled(record, startPos, i);
-			byteArrayRef[nFileNum] = ref;
+			byteArrayRef[nFileNum++] = ref;
 			// System.out.println(ref.toString());
 		}
-
+		
+		
 		byte[] recordWithAllColumns = new byte[record.length - TEXT_START_POS];
 		int pos = 0;
+		
+		for(int str : selectorColIDs){
+			
+		}
+		
+		for(int ix = 0 ;ix < nFileNum ; ix++){
+			LOG.debug("byteArrayRef["+ix+"] is " + byteArrayRef[ix].toString());
+		}
 		for (i = 0; i < this.columnsMap.length; i++) {
+			
 			for (int j = 0; j < this.selectorColIDs.length; j++) {
-				// System.out.println("columns id:" + i + "selectorColIDs[" + j
-				// + "]:" + this.selectorColIDs[j]);
+				
 				if (this.selectorColIDs[j] == i) {
-					// System.out.println("copy files to array:" + pos);
 					pos += byteArrayRef[j].copyFiledtoArray(
 							recordWithAllColumns, pos);
+					
 					break;
 				}
 			}
-			recordWithAllColumns[pos++] = '|';
+			if(pos != recordWithAllColumns.length){
+				recordWithAllColumns[pos++] = '|';
+			}
+			
 		}
+		
+		String rcWAC = new String(recordWithAllColumns);
+		
 
 		valueHolder.set(recordWithAllColumns, 0, pos);
-
+		
 		return true;
 	}
 }

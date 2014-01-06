@@ -3,6 +3,8 @@ package com.sequoiadb.hive;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -19,7 +21,7 @@ import com.sequoiadb.base.CollectionSpace;
 import com.sequoiadb.base.Sequoiadb;
 
 public class SdbHiveStorageHandler implements HiveStorageHandler {
-
+	public static final Log LOG = LogFactory.getLog(SdbSerDe.class.getName());
 	private Configuration mConf = null;
 
 	@Override
@@ -102,22 +104,53 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 				boolean deleteData)
 				throws org.apache.hadoop.hive.metastore.api.MetaException {
 			boolean isExternal = MetaStoreUtils.isExternalTable(tbl);
-			if (deleteData && isExternal) {
-				// nothing to do...
-			} else if (deleteData && !isExternal) {
+			//LOG.info("isExternal is "+isExternal);
+			//LOG.info("deleteData is " + deleteData);
+//			if (deleteData && isExternal) {
+//				// nothing to do...
+//			} else if (deleteData && !isExternal) {
+//				String dbAddr = tbl.getParameters().get(
+//						ConfigurationUtil.DB_ADDR);
+//
+//				String spaceName = tbl.getDbName();
+//				String dbCollection = tbl.getTableName();
+//
+//				SdbConnAddr[] sdbAddr = ConfigurationUtil.getAddrList(dbAddr);
+//
+//				Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),
+//						sdbAddr[0].getPort(), null, null);
+//				CollectionSpace space = sdb.getCollectionSpace(spaceName);
+//				space.dropCollection(dbCollection);
+//				sdb.disconnect();
+//			}
+			if( deleteData && !isExternal ){
+				
 				String dbAddr = tbl.getParameters().get(
 						ConfigurationUtil.DB_ADDR);
+				String dbCsName = tbl.getParameters().get(ConfigurationUtil.CS_NAME);
+				String dbClName = tbl.getParameters().get(ConfigurationUtil.CL_NAME);
+				String spaceName = null;
+				String dbCollection = null;
 
-				String spaceName = tbl.getDbName();
-				String dbCollection = tbl.getTableName();
-
+//				String spaceName = tbl.getDbName();
+//				String dbCollection = tbl.getTableName();
+				if( dbCsName == null && dbClName == null ){
+					spaceName = tbl.getDbName();
+					dbCollection = tbl.getTableName();
+				}else{
+					spaceName = dbCsName;
+					dbCollection = dbClName;
+				}
+				LOG.debug("isExternal is "+isExternal+" and will be droped space's name is "+ spaceName);
 				SdbConnAddr[] sdbAddr = ConfigurationUtil.getAddrList(dbAddr);
 
 				Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),
 						sdbAddr[0].getPort(), null, null);
-				CollectionSpace space = sdb.getCollectionSpace(spaceName);
-				space.dropCollection(dbCollection);
+				sdb.dropCollectionSpace(spaceName);
+//				CollectionSpace space = sdb.getCollectionSpace(spaceName);
+//				space.dropCollection(dbCollection);
 				sdb.disconnect();
+				
 			}
 
 		}
@@ -126,14 +159,20 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 		public void preCreateTable(
 				org.apache.hadoop.hive.metastore.api.Table tbl)
 				throws org.apache.hadoop.hive.metastore.api.MetaException {
-			tbl.getDbName();
-
+			//tbl.getDbName();
+			boolean isExternal = MetaStoreUtils.isExternalTable(tbl);
 			String dbAddr = tbl.getParameters().get(ConfigurationUtil.DB_ADDR);
 			String dbCsName = tbl.getParameters().get(ConfigurationUtil.CS_NAME);
 			String dbClName = tbl.getParameters().get(ConfigurationUtil.CL_NAME);
 			
 			String spaceName = null;
 			String dbCollection = null;
+			SdbConnAddr[] sdbAddr = ConfigurationUtil.getAddrList(dbAddr);
+			
+			Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),
+					sdbAddr[0].getPort(), null, null);
+			
+			//if( ! isExternal ){
 			if( dbCsName == null && dbClName == null ){
 				spaceName = tbl.getDbName();
 				dbCollection = tbl.getTableName();
@@ -141,10 +180,7 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 				spaceName = dbCsName;
 				dbCollection = dbClName;
 			}
-			SdbConnAddr[] sdbAddr = ConfigurationUtil.getAddrList(dbAddr);
-
-			Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),
-					sdbAddr[0].getPort(), null, null);
+			
 
 			CollectionSpace space = null;
 			if (!sdb.isCollectionSpaceExist(spaceName)) {
@@ -156,6 +192,11 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 			if (!space.isCollectionExist(dbCollection)) {
 				space.createCollection(dbCollection);
 			}
+			//}//this is not external table 
+			//else{
+				//is external table , and we will not create cs and cl , just check space and collection is exist or not
+				
+			//}
 
 			sdb.disconnect();
 		}

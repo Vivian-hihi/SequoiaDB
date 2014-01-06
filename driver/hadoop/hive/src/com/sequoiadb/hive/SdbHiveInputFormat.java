@@ -2,6 +2,7 @@ package com.sequoiadb.hive;
 
 import static com.sequoiadb.hive.ConfigurationUtil.getCollectionName;
 import static com.sequoiadb.hive.ConfigurationUtil.getSpaceName;
+import com.sequoiadb.hive.SdbReader;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,11 +31,13 @@ public class SdbHiveInputFormat extends
 		List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
 
 		String columnString = jobConf.get(ConfigurationUtil.COLUMN_MAPPING);
+
 		if (StringUtils.isBlank(columnString)) {
 			throw new IOException("no column mapping found!");
 		}
 
 		String[] columns = ConfigurationUtil.getAllColumns(columnString);
+		
 		if (readColIDs.size() > columns.length) {
 			throw new IOException(
 					"read column count larger than that in column mapping string!");
@@ -68,7 +71,11 @@ public class SdbHiveInputFormat extends
 			colName = ConfigurationUtil.getClName(jobConf);
 		}
 		
+		//RecordReader<LongWritable, BytesWritable> sdbr = new SdbReader(spaceName,colName, inputSplit,	columns, readColIDs, filterExpr);
+		
+		
 		return new SdbReader(spaceName,colName, inputSplit,	columns, readColIDs, filterExpr);
+		
 	}
 
 	@Override
