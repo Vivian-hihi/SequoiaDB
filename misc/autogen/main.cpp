@@ -3,7 +3,7 @@
 #include "optgen.h"
 #include "tracegen.h"
 #include "buildgen.h"
-//#include "dbConfForWeb.h"
+#include "dbConfForWeb.h"
 #include <iostream>
 using std::cout;
 using std::endl;

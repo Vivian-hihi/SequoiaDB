@@ -5,61 +5,39 @@
 #include <iostream>
 #include <sstream>
 
-#define CN                 "cn"
-#define EN                 "en"
-
 // optlist.xml elements for web page
-#define OPTLISTTAG         "optlist"
-#define LONGTAG            "long"
-#define SHORTTAG           "short"
-#define TYPEOFWEBTAG       "typeofweb"
-#define HIDDENTAG          "hidden"
-#define DETAILTAG          "detail"
+#define OPTLISTTAG            "optlist"
+#define LONGTAG               "long"
+#define SHORTTAG              "short"
+#define TYPEOFWEBTAG          "typeofweb"
+#define HIDDENTAG             "hidden"
+#define DETAILTAG             "detail"
 
-#define TOPICTAG           "topic"
-#define TOPIC_ATTRTAG      "topic.<xmlattr>.id"
-#define TOPIC_ATTR         "administration_database_runtime"
-#define STEMTRYTAG         "stentry"
-#define XML_COMMENTTAG      "<xmlcomment>"
-#define STHEADTAG          "sthead"
-#define STROWTAG           "strow"
-#define TITLETAG           "title"
-#define BODYTAG            "body"
-#define SIMPLETABLETAG     "simpletable"
-#define SECTIONTAG         "section"
-#define NOTETAG            "note"
-#define PTAG               "p"
-
-#define DBCONF             "数据库配置"
-#define DBCONF_EN          "Database Runtime Configurtion"
-#define PARADESC           "参数说明"
-#define PARADESC_EN        "Parameter Instruction"
-#define PARANAME           "参数名"
-#define PARANAME_EN        "Parameter Name"
-#define ACRONYM            "缩写"
-#define ACRONYM_EN         "Acronym"
-#define TYPE               "类型"
-#define TYPE_EN            "Type"
-#define DESC               "说明"
-#define DESC_EN            "Description"
-
-#define XMLDECLARATION     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-#define XMLDTD             "<!DOCTYPE topic PUBLIC \"-//OASIS//DTD DITA Topic//EN\" \"topic.dtd\">"
-#define XMLCOMMENT         "id=\"runtime_table\" frame=\"all\" relcolwidth=\"1.43* 1.0*1.18*11.41*\""
-
-#define NOTEINFO1          "SequoiaDB支持命令行方式及配置文件方式。\
-当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。"
-#define NOTEINFO1_EN       "SequoiaDB supports setting configuration \
-with command line, configuration file, or both of them. When both of \
-them are used, parameters in command line will overwrite those in \
-configuration file."
-
-#define NOTEINFO2          "同步日志的总大小（logfilesz * logfilenum）\
-决定了在同步过程中的容错能力。日志越大则进行全量恢复的可能性越小。"
-#define NOTEINFO2_EN       "The total size of synch log (logfilesz * logfilenum)\
-determines the fault tolerance in the process of sync. \
-If log is bigger, the possiblity of full sync is lower."
-
+// optOtherInfoForWeb.xml elements for web page
+#define OPTOTHERINFOFORWEBTAG "optOtherInfoForWeb"
+#define TOPICTAG              "topic"
+#define TITLETAG              "title"
+#define BODYTAG               "body"
+#define SECTIONTAG            "section"
+#define SUBTITLETAG           "subtitle"
+#define STEMTRYTAG            "stentry"
+#define TOPIC_ATTRTAG         "topic.<xmlattr>.id"
+#define XML_COMMENTTAG        "<xmlcomment>"
+#define TOPIC_ATTR            "administration_database_runtime"
+#define SIMPLETABLETAG        "simpletable"
+#define STHEADTAG             "sthead"
+#define STROWTAG              "strow"
+#define STENTRY_NAMETAG       "stentry_name"
+#define STENTRY_ACRONYMTAG    "stentry_acronym"
+#define STENTRY_TYPETAG       "stentry_type"
+#define STENTRY_DESTTAG       "stentry_dest"
+#define NOTETAG               "note"
+#define NOTE_FIRSTTAG         "first"
+#define NOTE_SECONDTAG        "second"
+#define PTAG                  "p"
+#define XMLDECLARATION        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+#define XMLDTD                "<!DOCTYPE topic PUBLIC \"-//OASIS//DTD DITA Topic//EN\" \"topic.dtd\">"
+#define XMLCOMMENT            "id=\"runtime_table\" frame=\"all\" relcolwidth=\"1.43* 1.0*1.18*11.41*\""
 
 using namespace boost::property_tree;
 using std::cout;
@@ -71,19 +49,156 @@ using std::vector;
 using std::ofstream;
 using std::ostringstream;
 
+const CHAR *pLanguage[] = { "cn", "en" } ;
+
 OptGenForWeb::OptGenForWeb ( const char* lang ) : language( lang )
 {
     loadFromXML () ;
+    loadOtherInfoFromXML () ;
 }
+
 OptGenForWeb::~OptGenForWeb ()
 {
     vector<OptEle*>::iterator it ;
+    vector<OptOtherInfoEle*>::iterator ite ;
     for ( it = optlist.begin(); it != optlist.end(); it++ )
     {
         delete *it ;
     }
     optlist.clear() ;
+    for ( ite = optOtherInfo.begin(); ite != optOtherInfo.end(); ite++ )
+    {
+        delete *ite ;
+    }
+    optOtherInfo.clear() ;
 }
+
+void OptGenForWeb::loadOtherInfoFromXML ()
+{
+    ptree pt ;
+    try
+    {
+       read_xml ( OPTOTHERINFOFORWEBFILE, pt ) ;
+    }
+    catch ( std::exception &e )
+    {
+        cout << "Can not read xml file, not exist or wrong directory forOptGenForWeb: "
+             << e.what() << endl ;
+        exit ( 0 ) ;
+    }
+
+    OptOtherInfoEle *newele = new OptOtherInfoEle() ;
+    if ( !newele )
+    {
+        cout << "Failed to allocate memory for OptOtherInfoEle!" << endl ;
+        exit ( 0 ) ;
+    }
+
+    try
+    {
+        BOOST_FOREACH ( ptree::value_type &v, pt.get_child( OPTOTHERINFOFORWEBTAG ) )
+        {
+            if ( TITLETAG == v.first )
+            {
+                // get the title tag
+                try
+                {
+                    newele->titletag = v.second.get<string>(language) ;
+                }
+                catch ( std::exception &e )
+                {
+                    cout << "Wrong to get the title tag: " << e.what()
+                         << endl ;
+                    continue ;
+                }
+            }
+            else if ( SUBTITLETAG == v.first )
+            {
+                // subtile tag
+                try
+                {
+                    newele->subtitletag = v.second.get<string>(language) ;
+                }
+                catch ( std::exception &e )
+                {
+                    cout << "Wrong to get the subtitle tag: " << e.what()
+                         << endl ;
+                    continue ;
+                }
+            }
+            else if ( STHEADTAG == v.first )
+            {
+                // sthead tag
+                try
+                {
+                    BOOST_FOREACH( ptree::value_type &v1, v.second )
+                    {
+                        if ( STENTRY_NAMETAG == v1.first )
+                        {
+                            newele->stentry_nametag = v1.second
+                                           .get<string>(language) ;
+                        }
+                        else if ( STENTRY_ACRONYMTAG == v1.first )
+                        {
+                            newele->stentry_acronymtag = v1.second
+                                           .get<string>(language) ;
+                        }
+                        else if ( STENTRY_TYPETAG == v1.first )
+                        {
+                            newele->stentry_typetag = v1.second
+                                           .get<string>(language) ;
+                        }
+                        else if ( STENTRY_DESTTAG == v1.first )
+                        {
+                            newele->stentry_desttag = v1.second
+                                           .get<string>(language) ;
+                        }
+                    }
+                }
+                catch ( std::exception &e )
+                {
+                    cout << "Wrong to get the stentry tags: " << e.what()
+                         << endl ;
+                    continue ;
+                }
+            }
+            else if ( NOTETAG == v.first )
+            {
+                // note tag
+                try
+                {
+                    BOOST_FOREACH( ptree::value_type &v2, v.second )
+                    {
+                        if ( NOTE_FIRSTTAG == v2.first )
+                        {
+                            newele->firsttag = v2.second
+                                    .get<string>(language) ;
+                        }
+                        else if ( NOTE_SECONDTAG == v2.first )
+                        {
+                            newele->secondtag = v2.second
+                                    .get<string>(language) ;
+                        }
+                    }
+                }
+                catch ( std::exception &e )
+                {
+                    cout << "Wrong to get the note tags: " << e.what()
+                         << endl ;
+                    continue ;
+                }
+            }
+        }
+    }
+    catch ( std::exception& e )
+    {
+        cout << "XML format error, unknown node name \
+or description language,please check!" << endl ;
+        exit(0) ;
+    }
+    optOtherInfo.push_back ( newele ) ;
+}
+
 void OptGenForWeb::loadFromXML ()
 {
     ptree pt ;
@@ -93,7 +208,7 @@ void OptGenForWeb::loadFromXML ()
     }
     catch ( std::exception &e )
     {
-        cout << "Can not read xml file, not exist or wrong directory forOptGenForWeb: "
+        cout << "Can not read src xml file, not exist or wrong directory for OptGenForWeb: "
              << e.what() << endl ;
         exit ( 0 ) ;
     }
@@ -117,7 +232,7 @@ void OptGenForWeb::loadFromXML ()
             {
                 ishidden = FALSE ;
             }
-            // we don't need the notes which hidden tag is true
+            // we don't need the notes whose hidden tag is true
             if ( ishidden )
             {
                 continue ;
@@ -178,115 +293,87 @@ or description language,please check!"<<endl ;
         exit(0) ;
     }
 }
+
 string OptGenForWeb::genOptions ()
 {
-    ptree root_node ;
+    ptree pt ;
     ptree topic ;
-    ptree s_body ;
-    ptree s_s_section ;
-    ptree s_s_s_simpletable ;
-    ptree s_s_s_note ;
-    ptree s_s_s_s_sthead ;
-    ptree s_s_s_s_strow ;
+    ptree body ;
+    ptree section ;
+    ptree simpletable ;
+    ptree note ;
+    ptree sthead ;
+    ptree strow ;
+
     vector<OptEle*>::iterator it ;
-    ofstream fout ;
+    vector<OptOtherInfoEle*>::iterator ite ;
     ostringstream oss ;
 
-    // s_s_s_s_sthead and s_s_s_s_strow are int the 4th sub level
-    // build s_s_s_s_sthead
-    if ( 0 == strcmp( EN, language ) )
+    ite = optOtherInfo.begin() ;
+    if ( optOtherInfo.end() == ite )
     {
-        s_s_s_s_sthead.add ( STEMTRYTAG, PARANAME_EN ) ;
-        s_s_s_s_sthead.add ( STEMTRYTAG, ACRONYM_EN ) ;
-        s_s_s_s_sthead.add ( STEMTRYTAG, TYPE_EN ) ;
-        s_s_s_s_sthead.add ( STEMTRYTAG, DESC_EN ) ;
-    }
-    else if ( 0 == strcmp( CN, language ) )
-    {
-        s_s_s_s_sthead.add ( STEMTRYTAG, PARANAME ) ;
-        s_s_s_s_sthead.add ( STEMTRYTAG, ACRONYM ) ;
-        s_s_s_s_sthead.add ( STEMTRYTAG, TYPE ) ;
-        s_s_s_s_sthead.add ( STEMTRYTAG, DESC ) ;
-    }
-    else
-    {
-        cout << "Wrong language: " << language << endl ;
+        cout << "Nothing in 'optOtherInfo'." << endl ;
         exit ( 0 ) ;
     }
-    // s_s_s_note and s_s_s_simpletable are int the 3rd sub level
-    // build s_s_s_simpletabl
-    s_s_s_simpletable.add ( XML_COMMENTTAG, XMLCOMMENT ) ;
-    s_s_s_simpletable.add_child ( STHEADTAG, s_s_s_s_sthead ) ;
-    // build s_s_s_s_strow
+/****************************
+<topic>
+   <title></title>
+   <body>
+      <section>
+         <title></title>
+         <sampletable>
+            <sthread>
+            </sthread>
+            <strow>
+            </strow>
+               ...
+         </sampletable>
+         <note>
+         </note>
+      </section>
+   </body>
+</topic>
+******************************/
+    // build <sthead></sthead>
+    sthead.add ( STEMTRYTAG, (*ite)->stentry_nametag ) ;
+    sthead.add ( STEMTRYTAG, (*ite)->stentry_acronymtag ) ;
+    sthead.add ( STEMTRYTAG, (*ite)->stentry_typetag ) ;
+    sthead.add ( STEMTRYTAG, (*ite)->stentry_desttag ) ;
+    // build <simpletabl></simpletabl>
+    simpletable.add ( XML_COMMENTTAG, XMLCOMMENT ) ;
+    simpletable.add_child ( STHEADTAG, sthead ) ;
+    // build <strow></strow> and add them into <simpletable>
     for ( it = optlist.begin(); it != optlist.end(); it++ )
     {
-        s_s_s_s_strow.clear () ;
-        s_s_s_s_strow.add ( STEMTRYTAG, (*it)->longtag ) ;
-        s_s_s_s_strow.add ( STEMTRYTAG, (*it)->shorttag ) ;
-        s_s_s_s_strow.add ( STEMTRYTAG, (*it)->typeofwebtag ) ;
-        s_s_s_s_strow.add ( STEMTRYTAG, (*it)->detailtag ) ;
+        strow.clear () ;
+        strow.add ( STEMTRYTAG, (*it)->longtag ) ;
+        strow.add ( STEMTRYTAG, (*it)->shorttag ) ;
+        strow.add ( STEMTRYTAG, (*it)->typeofwebtag ) ;
+        strow.add ( STEMTRYTAG, (*it)->detailtag ) ;
         // add s_s_s_s_strow to s_s_s_simpletable
-        s_s_s_simpletable.add_child ( STROWTAG, s_s_s_s_strow ) ;
+        simpletable.add_child ( STROWTAG, strow ) ;
     }
-    // build s_s_s_note
-    if ( 0 == strcmp( EN, language ) )
-    {
-        s_s_s_note.add ( PTAG, NOTEINFO1_EN ) ;
-        s_s_s_note.add ( PTAG, NOTEINFO2_EN ) ;
-    }
-    else if ( 0 == strcmp( CN, language ) )
-    {
-        s_s_s_note.add ( PTAG, NOTEINFO1 ) ;
-        s_s_s_note.add ( PTAG, NOTEINFO2 ) ;
-    }
-    else
-    {
-        cout << "Wrong language: " << language << endl ;
-        exit ( 0 ) ;
-    }
-    // s_s_sectionthe is in the 2nd sub level
-    // build s_s_section
-    if ( 0 == strcmp( EN, language ) )
-    {
-        s_s_section.add ( TITLETAG, PARADESC_EN ) ;
-    }
-    else if ( 0 == strcmp( CN, language ) )
-    {
-        s_s_section.add ( TITLETAG, PARADESC ) ;
-    }
-    else
-    {
-        cout << "Wrong language: " << language << endl ;
-        exit ( 0 ) ;
-    }
-    s_s_section.add_child ( SIMPLETABLETAG, s_s_s_simpletable ) ;
-    s_s_section.add_child ( NOTETAG, s_s_s_note ) ;
-    // s_body is in the 1st sub level
-    // build the body node
-    s_body.add_child ( SECTIONTAG, s_s_section ) ;
-    // the top level, build the topic node
-    if ( 0 == strcmp( EN, language ) )
-    {
-        topic.add ( TITLETAG, DBCONF_EN ) ;
-    }
-    else if ( 0 == strcmp( CN, language ) )
-    {
-        topic.add ( TITLETAG, DBCONF ) ;
-    }
-    else
-    {
-        cout << "Wrong language: " << language << endl ;
-        exit ( 0 ) ;
-    }
-    topic.add_child ( BODYTAG, s_body ) ;
-    // add attribute, then finish building the root_nodea
-    root_node.add_child ( TOPICTAG, topic ) ;
-    root_node.add ( TOPIC_ATTRTAG, TOPIC_ATTR ) ;
+    // build <note></note>
+    note.add ( PTAG, (*ite)->firsttag ) ;
+    note.add ( PTAG, (*ite)->secondtag ) ;
+    // build <section></section>
+    section.add ( TITLETAG, (*ite)->subtitletag ) ;
+    section.add_child ( SIMPLETABLETAG, simpletable ) ;
+    section.add_child ( NOTETAG, note ) ;
+    // build <body></body>
+    body.add_child ( SECTIONTAG, section ) ;
+    // build <topic></topic>
+    topic.add ( TITLETAG, (*ite)->titletag ) ;
+    topic.add_child ( BODYTAG, body ) ;
+    // add attribute, and then finish building the property tree
+    pt.add_child ( TOPICTAG, topic ) ;
+    pt.add ( TOPIC_ATTRTAG, TOPIC_ATTR ) ;
     // write to stream
-    xml_writer_settings<char> settings('\t', 1) ;
-    write_xml ( oss, root_node, settings ) ;
+    xml_writer_settings<char> settings( '\t', 1 ) ;
+    write_xml ( oss, pt, settings ) ;
     return oss.str () ;
 }
+
 void OptGenForWeb::gendoc()
 {
     string str ;
@@ -294,12 +381,18 @@ void OptGenForWeb::gendoc()
     size_t found ;
     string fileName ;
 
-//    string fileName = string( OPTGENFORWEBPATH ) + string( languge )
-//                      + string( FILESUFFIX ) ;
-    if ( 0 == strcmp( EN, language ) )
+    if ( 0 == strcmp( pLanguage[0], language ) )
+    {
         fileName = string( DBCONFFORWEBPATH ) + string( "_en" ) + string( FILESUFFIX ) ;
-    else
+    }
+    else if ( 0 == strcmp( pLanguage[1], language ) )
+    {
         fileName = string( DBCONFFORWEBPATH ) + string( FILESUFFIX ) ;
+    }
+    else
+    {
+        cout << "The language is not support: " << language << endl ;
+    }
 
     str = genOptions() ;
     if ( "" == str.c_str() )
@@ -325,10 +418,11 @@ void OptGenForWeb::gendoc()
     }
     else
     {
-        cout << "Can not add DTD, "<<"\"found\" is: " << found << endl ;
+        cout << "Can not add DTD, " << "\"found\" is: " << found << endl ;
         exit ( 0 ) ;
     }
 }
+
 void OptGenForWeb::run ()
 {
    gendoc () ;

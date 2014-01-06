@@ -8,7 +8,8 @@
 #include <boost/foreach.hpp>
 
 // xml source file
-#define OPTXMLSRCFILE "optlist.xml"
+#define OPTXMLSRCFILE          "optlist.xml"
+#define OPTOTHERINFOFORWEBFILE "optOtherInfoForWeb.xml"
 
 // output file path
 #define DBCONFFORWEBPATH "../../doc/administration/database/topics/runtime_configuration"
@@ -16,7 +17,7 @@
 
 class OptEle
 {
-public :
+public:
     std::string longtag ;
     std::string shorttag ;
     std::string typeofwebtag ;
@@ -29,10 +30,28 @@ public :
        hiddentag = FALSE ;
     }
 } ;
+
+class OptOtherInfoEle
+{
+public:
+    std::string titletag ;
+    std::string subtitletag ;
+    // stentry tags
+    std::string stentry_nametag ;
+    std::string stentry_acronymtag ;
+    std::string stentry_typetag ;
+    std::string stentry_desttag ;
+    // note tags
+    std::string firsttag ;
+    std::string secondtag ;
+} ;
+
 class OptGenForWeb
 {
-    const char* language ;
+    const char *language ;
+    std::vector<OptOtherInfoEle*> optOtherInfo ;
     std::vector<OptEle*> optlist ;
+    void loadOtherInfoFromXML () ;
     void loadFromXML () ;
     std::string genOptions () ;
     void gendoc () ;
