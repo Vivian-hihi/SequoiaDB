@@ -876,8 +876,8 @@ namespace engine
                   {
                      SDB_ASSERT( FALSE , "header lsn is less than expect" ) ;
                      PD_LOG( PDWARNING, "Session[%s]: expect lsn[%lld] more "
-                             "than header lsn[%lld]", dpsCB->expectLsn().offset,
-                             header->_lsn ) ;
+                             "than header lsn[%lld]", sessionName(),
+                             dpsCB->expectLsn().offset, header->_lsn ) ;
                      goto error ;
                   }
 
