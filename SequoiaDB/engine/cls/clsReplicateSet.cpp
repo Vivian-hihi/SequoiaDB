@@ -96,6 +96,9 @@ namespace engine
                                    const DPS_LSN_OFFSET &offset )
    {
       PD_TRACE_ENTRY ( SDB__CLSREPPSET_NOTIFY );
+
+      _sync.notify( offset ) ;
+
       // the src session is not empty, should notify every one
       if ( _srcSessionNum > 0 )
       {
@@ -110,7 +113,6 @@ namespace engine
          _vecLatch.release_r () ;
       }
 
-      _sync.notify( offset ) ;
       PD_TRACE_EXIT ( SDB__CLSREPPSET_NOTIFY );
    }
 
