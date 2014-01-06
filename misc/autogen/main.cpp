@@ -50,13 +50,13 @@ static void genDoc ()
    for ( int i = 0; i < LANG_MAX; ++i )
    {
       RCGen xml ( pLang[i] ) ;
-//      OptGenForWeb optForWeb ( pLang[i] ) ;
+      OptGenForWeb optForWeb ( pLang[i] ) ;
       // generate document for english and chinese
       xml.genDoc() ;
       // generate web console for english and chinese
       xml.genWeb() ;
       // generate database options for english and chinese
-//      optForWeb.run () ;
+      optForWeb.run () ;
    }
 }
 

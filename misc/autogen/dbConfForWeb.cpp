@@ -49,7 +49,7 @@ using std::vector;
 using std::ofstream;
 using std::ostringstream;
 
-const CHAR *pLanguage[] = { "cn", "en" } ;
+const CHAR *pLanguage[] = { "en", "cn" } ;
 
 OptGenForWeb::OptGenForWeb ( const char* lang ) : language( lang )
 {
