@@ -482,6 +482,10 @@ namespace engine
          _emptyEvent.wait() ;
          _status = CLS_BUCKET_NORMAL ;
       }
+      else
+      {
+         _allEmptyEvent.wait() ;
+      }
 
       return rc ;
    }
