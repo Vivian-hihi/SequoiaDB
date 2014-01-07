@@ -86,7 +86,7 @@ namespace engine
    }
 
    // initialize log file manager
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_INIT, "_dpsLogFileMgr::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_INIT, "_dpsLogFileMgr::init" )
    INT32 _dpsLogFileMgr::init( const CHAR *path )
    {
       INT32 rc = SDB_OK ;
@@ -149,7 +149,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SB__DPSLGFILEMGR__ANLYS, "_dpsLogFileMgr::_analysis" )
+   // PD_TRACE_DECLARE_FUNCTION ( SB__DPSLGFILEMGR__ANLYS, "_dpsLogFileMgr::_analysis" )
    void _dpsLogFileMgr::_analysis ()
    {
       PD_TRACE_ENTRY ( SB__DPSLGFILEMGR__ANLYS );
@@ -239,7 +239,7 @@ namespace engine
    // period. Otherwise it will cause serious log corruption
    // Again, NEVER flush a partial fulled page into file unless it's during
    // database shutdown
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_FLUSH, "_dpsLogFileMgr::flush" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_FLUSH, "_dpsLogFileMgr::flush" )
    INT32 _dpsLogFileMgr::flush( _dpsMessageBlock *mb,
                                 const DPS_LSN &beginLsn,
                                 BOOLEAN shutdown )
@@ -283,14 +283,16 @@ shutdown" )
    }
 
    // retrieve lsn, find the log record and fill up mb
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_LOAD, "_dpsLogFileMgr::load" )
-   INT32 _dpsLogFileMgr::load(  const DPS_LSN &lsn, _dpsMessageBlock *mb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_LOAD, "_dpsLogFileMgr::load" )
+   INT32 _dpsLogFileMgr::load( const DPS_LSN &lsn, _dpsMessageBlock *mb,
+                               BOOLEAN onlyHeader )
    {
       INT32 rc      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSLGFILEMGR_LOAD );
       SDB_ASSERT ( mb, "mb can't be NULL" )
       UINT32 sub    = ( UINT32 )( lsn.offset / _logFileSz  % _files.size() ) ;
       dpsLogRecordHeader head ;
+      UINT32 len = 0 ;
       // read log head
       rc = LOG_FILE( sub )->read( lsn.offset, sizeof(dpsLogRecordHeader),
                                   (CHAR*)&head ) ;
@@ -312,14 +314,25 @@ shutdown" )
       // sanity check, make sure lsn size must be greater than header size
       if ( head._length < sizeof(dpsLogRecordHeader) )
       {
-         PD_LOG ( PDERROR, "LSN length is smaller than dps log head" ) ;
+         PD_LOG ( PDERROR, "LSN length[%u] is smaller than dps log head",
+                  head._length ) ;
          rc = SDB_DPS_CORRUPTED_LOG ;
          goto error ;
       }
-      // make sure we have enough space
-      if ( mb->idleSize() < head._length )
+
+      if ( onlyHeader )
       {
-         rc = mb->extend ( head._length - mb->idleSize() ) ;
+         len = sizeof( dpsLogRecordHeader ) ;
+      }
+      else
+      {
+         len = head._length ;
+      }
+
+      // make sure we have enough space
+      if ( mb->idleSize() < len )
+      {
+         rc = mb->extend ( len - mb->idleSize() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to extend mb, rc = %d", rc ) ;
@@ -330,6 +343,12 @@ shutdown" )
       ossMemcpy( mb->writePtr(), &head, sizeof(dpsLogRecordHeader ) ) ;
       // update write ptr
       mb->writePtr( mb->length() + sizeof( dpsLogRecordHeader ) ) ;
+      // if only header, don't read body
+      if ( onlyHeader )
+      {
+         goto done ;
+      }
+
       // read body
       rc = LOG_FILE( sub )->read ( lsn.offset + sizeof(dpsLogRecordHeader ),
                                    head._length - sizeof( dpsLogRecordHeader ),
@@ -346,14 +365,15 @@ shutdown" )
       // update write ptr
       mb->writePtr ( mb->length() + head._length -
                      sizeof( dpsLogRecordHeader ) ) ;
+
    done:
-      PD_TRACE_EXITRC ( SDB__DPSLGFILEMGR_LOAD, rc );
-      return rc;
+      PD_TRACE_EXITRC ( SDB__DPSLGFILEMGR_LOAD, rc ) ;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_MOVE, "_dpsLogFileMgr::move" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGFILEMGR_MOVE, "_dpsLogFileMgr::move" )
    INT32 _dpsLogFileMgr::move( const DPS_LSN_OFFSET &offset,
                                const DPS_LSN_VER &version )
    {

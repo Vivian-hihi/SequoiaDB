@@ -755,7 +755,8 @@ namespace engine
 
    // search lsn in memory
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__SEARCH, "_dpsReplicaLogMgr::_search" )
-   INT32 _dpsReplicaLogMgr::_search ( const DPS_LSN &lsn, _dpsMessageBlock *mb )
+   INT32 _dpsReplicaLogMgr::_search ( const DPS_LSN &lsn, _dpsMessageBlock *mb,
+                                      BOOLEAN onlyHeader )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__SEARCH );
@@ -828,7 +829,14 @@ namespace engine
       }
 
       // set head length to len
-      len = head._length ;
+      if ( onlyHeader )
+      {
+         len = sizeof( dpsLogRecordHeader ) ;
+      }
+      else
+      {
+         len = head._length ;
+      }
 
       if ( mb->idleSize() < len )
       {
@@ -839,8 +847,17 @@ namespace engine
             goto error ;
          }
       }
-      // then let's read the log
-      rc = _parse ( pageSub, offset, len, mb->writePtr() ) ;
+
+      if ( onlyHeader )
+      {
+         ossMemcpy( mb->writePtr(), (CHAR*)&head, len ) ;
+      }
+      else
+      {
+         // then let's read the log
+         rc = _parse ( pageSub, offset, len, mb->writePtr() ) ;
+      }
+
       (&_pages[pageSub])->unlock() ;
       pageLocked = FALSE ;
 
@@ -851,6 +868,7 @@ namespace engine
       }
       // update mb
       mb->writePtr ( len + mb->length () ) ;
+
    done :
       if ( mtxLocked )
       {
@@ -914,7 +932,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_SEARCH, "_dpsReplicaLogMgr::search" )
    INT32 _dpsReplicaLogMgr::search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
-                                    UINT8 type )
+                                    UINT8 type, BOOLEAN onlyHeader )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_SEARCH );
@@ -926,7 +944,7 @@ namespace engine
       // if we indicates searching for memory, let's do internal index seach
       // note we ALWAYS search for mem
       {
-         rc = _search( minLsn, mb );
+         rc = _search( minLsn, mb, onlyHeader );
          if ( rc )
          {
             // if we can't find it from memory
@@ -934,7 +952,7 @@ namespace engine
                  DPS_SEARCH_FILE & type )
             {
                // if we also want to find from file
-               rc = _logger.load( minLsn, mb );
+               rc = _logger.load( minLsn, mb, onlyHeader );
                if ( rc )
                {
                   // we can't find from both memory and file
