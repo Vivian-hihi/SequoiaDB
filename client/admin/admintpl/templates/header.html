@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>SequoiaDB监控</title>
+   <title>SequoiaDB监控</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="dist/css/bootstrap.min.css" rel="stylesheet" media="screen">
+   <link href="dist/css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<link href="css/dtree.css" rel="stylesheet" media="screen">
 	<link href="css/style.css" rel="stylesheet" media="screen">
-    <script src="js/jquery.js"></script>
-    <script src="dist/js/bootstrap.min.js"></script>
+   <script src="js/jquery.js"></script>
+   <script src="dist/js/bootstrap.min.js"></script>
 	<script src="js/dtree.js"></script>
 	<script src="js/ajax.js"></script>
 	<script src="js/tool.js"></script>
 	<script src="js/flotr2.js"></script>
 	<script src="js/public.js"></script>
 	{{if $headerlist eq "setup"}}
+   	<link href="css/setup.css" rel="stylesheet" media="screen">
+   	<script src="js/setup.js"></script>
 	{{elseif $headerlist eq "group"}}
 		<script src="js/group.js"></script>
+      <script src="js/monitor.js"></script>
 	{{elseif $headerlist eq "data"}}
 		<script src="js/data.js"></script>
-	{{elseif $headerlist eq "monitor"}}
-		<script src="js/monitor.js"></script>
 	{{/if}}
   </head>
   <body>
   	<div>
-		<div class="navbar-default" role="banner">
+		<div class="navbar-default" role="banner" style="border-bottom:#D2D2D2 solid 1px;">
 			<div class="navbar-header">
 				<button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
 					<span class="sr-only">Toggle navigation</span>
@@ -37,23 +38,25 @@
 			</div>
 			<nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
 				<ul class="nav navbar-nav">
-					<!--<li {{if $headerlist eq "setup"}}{{'class="active"'}}{{/if}}>
+					<li {{if $headerlist eq "setup"}}{{'class="active"'}}{{/if}}>
 						<a href="index.php?p=setup">部署</a>
-					</li>-->
+					</li>
 					<li {{if $headerlist eq "data"}}{{'class="active"'}}{{/if}}>
 						<a href="index.php?p=data">数据操作</a>
 					</li>
 					<li {{if $headerlist eq "group"}}{{'class="active"'}}{{/if}}>
 						<a href="index.php?p=group">集群管理</a>
 					</li>
-					<li {{if $headerlist eq "monitor"}}{{'class="active"'}}{{/if}}>
-						<a href="index.php?p=monitor">监控</a>
-					</li>
                     <li>
 						<a href="./doc/index.html" target="new">信息中心</a>
 					</li>
+               {{if $headerlist neq "setup"}}
 					<li>
 						<a href="#" onClick="showtool('toolbutton','tool');"><div id="toolbutton">隐藏工具栏</div></a>
+					</li>
+               {{/if}}
+               <li>
+						<a href="#">关于监控</a>
 					</li>
 				</ul>
 			</nav>
@@ -153,7 +156,7 @@
 						<div id="header_tips_2" style="display:none;" class="alert alert-danger"><strong>警告!</strong> 您的系统分辨率过低，最低支持的分辨率是1024*768，推荐您使用1280像素或以上的分辨率。</div>
 					</div>
 					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal" onClick='showconnectmanager()'>OK</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal" onClick='{{if $headerlist neq "setup"}}showconnectmanager(){{/if}}'>OK</button>
 					</div>
 				</div>
 			</div>

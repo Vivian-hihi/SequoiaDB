@@ -28,7 +28,7 @@ $db -> install ( "{ install : false }" ) ;
 $cursor = $db -> getList ( SDB_LIST_GROUPS ) ;
 if ( !empty ( $cursor ) )
 {
-	$group_list = '{"name":"数据库","child":{"name":"分区组","child":[' ;
+	$group_list = '{"name":"数据库","name1":"数据统计","name2":"性能监控","child":{"name":"分区组","child":[' ;
 	while ( $arr = $cursor -> getNext() )
 	{
 		if ( !$isfirst )

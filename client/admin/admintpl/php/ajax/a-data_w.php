@@ -180,6 +180,10 @@ else if ( $type == "split" )
 		$cl = $cs -> selectCollection ( $clname ) ;
 		if ( !empty( $cl ) )
 		{
+			if ( is_numeric( $condition ) )
+			{
+				$condition = (float)$condition ;
+			}
 			$arr = $cl -> split ( $sourcename, $destname, $condition, $endcondition ) ;
 			$rc = $arr["errno"] ;
 		}

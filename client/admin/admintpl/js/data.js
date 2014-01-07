@@ -19,6 +19,22 @@ var recordtree0 = new dTree( "recordtree0" ) ,
 	recordtree18 = new dTree( "recordtree18" ) ,
 	recordtree19 = new dTree( "recordtree19" ) ;
 
+$(document).ready(function()
+{
+	//$('#helplist').popover({placement:'auto',trigger:'hover',content:'这是列表，这里将会列出集合空间、集合。',container:'body'}) ;
+	//$('#helpcontext').popover({placement:'auto',trigger:'hover',content:'这是主显示区，可以展示集合空间、集合、记录等详细信息。',container:'body'}) ;
+	var heightnum = document.documentElement.clientHeight ;
+	document.getElementById("left_list").style.height = (heightnum-220) + "px" ;
+	document.getElementById("right_context").style.height = (heightnum - 280) + "px" ;
+	window.onresize = function ()
+	{
+		var heightnum = document.documentElement.clientHeight ;
+		document.getElementById("left_list").style.height = (heightnum-220) + "px" ;
+		document.getElementById("right_context").style.height = (heightnum - 280) + "px" ;
+	}
+	getleftlist( "pictree", "data" ) ;
+})
+
 function showhide_tb_data(num,style)
 {
 	var name = "tb-data-" + num ;

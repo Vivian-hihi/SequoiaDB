@@ -1,12 +1,16 @@
 function senddata ( group, hostname, servicename, isstart )
 {
+	document.getElementById("context").style.display = "block" ;
+	document.getElementById("context2").style.display = "none" ;
 	if ( group != "" )
 	{
+		document.getElementById("right_title").innerHTML = "分区组 " + group ;
 		document.getElementById("h-group").value = group ;
 		show_group_tool_1( isstart );
 	}
 	if ( hostname != "" && servicename != "" )
 	{
+		document.getElementById("right_title").innerHTML = "分区组 " + group + " - 节点 " + hostname + " : " + servicename ;
 		document.getElementById("h-node").value = hostname + ":" + servicename ;
 		show_group_tool_2( isstart );
 	}

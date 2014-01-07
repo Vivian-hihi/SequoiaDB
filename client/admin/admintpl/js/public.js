@@ -38,6 +38,7 @@ function showconnectmanager()
 
 function convert2post( str )
 {
+	/*
 	str = replaceAllEx( str, '%', '%25' ) ;
 	str = replaceAllEx( str, '&', '%26' ) ;
 	str = replaceAllEx( str, '+', '%2B' ) ;
@@ -45,7 +46,8 @@ function convert2post( str )
 	str = replaceAllEx( str, '/', '%2F' ) ;
 	str = replaceAllEx( str, '?', '%3F' ) ;
 	str = replaceAllEx( str, '#', '%23' ) ;
-	str = replaceAllEx( str, '=', '%3D' ) ;
+	str = replaceAllEx( str, '=', '%3D' ) ;*/
+	str = encodeURIComponent( str ) ;
 	return str ;
 }
 
@@ -156,10 +158,12 @@ function creategrouplefttree( d, json )
 		errobj = json['ErrNodes'] ;
 	}
 	d.add ( 0, -1, json['name'], "", "", "", "images/tree/database.png", "images/tree/database.png" ) ;
+	d.add ( 1, 0, json['name1'], 'changeChartModel2( "all", "", "", "" );', "", "", "images/tree/barchart.png", "images/tree/barchart.png" ) ;
+	d.add ( 2, 0, json['name2'], 'changeChartModel( "all", "", "", "" );', "", "", "images/tree/linechart.png", "images/tree/linechart.png" ) ;
 	json = json['child'] ;
-	d.add ( 1, 0, json['name'], "", "", "", "images/tree/file.png", "images/tree/file.png" ) ;
+	d.add ( 3, 0, json['name'], "", "", "", "images/tree/file.png", "images/tree/file.png" ) ;
 	json = json['child'] ;
-	var num1 = 2 ;
+	var num1 = 4 ;
 	var num2 = 0 ;
 	var num3 = 0 ;
 	for ( var key in json )
@@ -200,25 +204,46 @@ function creategrouplefttree( d, json )
 		}
 		if ( sumnodenum > 0 && errnodenum == 0 )
 		{
-			d.add ( num2, 1, temp["GroupName"], '', "", "", "images/tree/groupok.png", "images/tree/groupok.png" ) ;
+			d.add ( num2, 3, temp["GroupName"], '', "", "", "images/tree/groupok.png", "images/tree/groupok.png" ) ;
 			num1 = num1 + 1 ;
 			d.add ( num1, num2, "属性", 'senddata( "' + temp["GroupName"] + '", "", "", true )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
+			if ( temp["GroupName"] != 'SYSCatalogGroup' )
+			{
+				num1 = num1 + 1 ;
+				d.add ( num1, num2, '数据统计', 'changeChartModel2( "group", "' + temp["GroupName"] + '", "", "" );', "", "", "images/tree/barchart.png", "images/tree/barchart.png" ) ;
+				num1 = num1 + 1 ;
+				d.add ( num1, num2, '性能监控', 'changeChartModel( "group", "' + temp["GroupName"] + '", "", "" );', "", "", "images/tree/linechart.png", "images/tree/linechart.png" ) ;
+			}
 		}
 		else if ( sumnodenum > 0 && errnodenum / sumnodenum < 0.5 )
 		{
-			d.add ( num2, 1, temp["GroupName"], '', "", "", "images/tree/groupwarning.png", "images/tree/groupwarning.png" ) ;
+			d.add ( num2, 3, temp["GroupName"], '', "", "", "images/tree/groupwarning.png", "images/tree/groupwarning.png" ) ;
 			num1 = num1 + 1 ;
 			d.add ( num1, num2, "属性", 'senddata( "' + temp["GroupName"] + '", "", "", true )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
+			if ( temp["GroupName"] != 'SYSCatalogGroup' )
+			{
+				num1 = num1 + 1 ;
+				d.add ( num1, num2, '数据统计', 'changeChartModel2( "group", "' + temp["GroupName"] + '", "", "" );', "", "", "images/tree/barchart.png", "images/tree/barchart.png" ) ;
+				num1 = num1 + 1 ;
+				d.add ( num1, num2, '性能监控', 'changeChartModel( "group", "' + temp["GroupName"] + '", "", "" );', "", "", "images/tree/linechart.png", "images/tree/linechart.png" ) ;
+			}
 		}
 		else if ( sumnodenum > 0 && errnodenum / sumnodenum < 1 )
 		{
-			d.add ( num2, 1, temp["GroupName"], '', "", "", "images/tree/groupdanger.png", "images/tree/groupdanger.png" ) ;
+			d.add ( num2, 3, temp["GroupName"], '', "", "", "images/tree/groupdanger.png", "images/tree/groupdanger.png" ) ;
 			num1 = num1 + 1 ;
 			d.add ( num1, num2, "属性", 'senddata( "' + temp["GroupName"] + '", "", "", false )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
+			if ( temp["GroupName"] != 'SYSCatalogGroup' )
+			{
+				num1 = num1 + 1 ;
+				d.add ( num1, num2, '数据统计', 'changeChartModel2( "group", "' + temp["GroupName"] + '", "", "" );', "", "", "images/tree/barchart.png", "images/tree/barchart.png" ) ;
+				num1 = num1 + 1 ;
+				d.add ( num1, num2, '性能监控', 'changeChartModel( "group", "' + temp["GroupName"] + '", "", "" );', "", "", "images/tree/linechart.png", "images/tree/linechart.png" ) ;
+			}
 		}
 		else
 		{
-			d.add ( num2, 1, temp["GroupName"], '', "", "", "images/tree/grouperror.png", "images/tree/grouperror.png" ) ;
+			d.add ( num2, 3, temp["GroupName"], '', "", "", "images/tree/grouperror.png", "images/tree/grouperror.png" ) ;
 			num1 = num1 + 1 ;
 			d.add ( num1, num2, "属性", 'senddata( "' + temp["GroupName"] + '", "", "", false )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
 		}
@@ -241,6 +266,7 @@ function creategrouplefttree( d, json )
 					break ;
 				}
 			}
+			var num5 = num1 ;
 			if ( errobj != null )
 			{
 				var iserrornode = false ;
@@ -249,19 +275,39 @@ function creategrouplefttree( d, json )
 					var tempstr = temp3["HostName"]+":"+tempName ;
 					if ( tempstr == errobj[key2] )
 					{
-						d.add ( num1, num3, temp3["HostName"]+":"+tempName, 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", false )', "", "", "images/tree/nodeerror.png", "images/tree/nodeerror.png" ) ;
+						d.add ( num1, num3, temp3["HostName"]+":"+tempName, '', "", "", "images/tree/nodeerror.png", "images/tree/nodeerror.png" ) ;
+						num1 = num1 + 1 ;
+						d.add ( num1, num5, '属性', 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", true )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
 						iserrornode = true ;
 						break ;
 					}
 				}
 				if ( !iserrornode )
 				{
-					d.add ( num1, num3, temp3["HostName"]+":"+tempName, 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", true )', "", "", "images/tree/nodeok.png", "images/tree/nodeok.png" ) ;
+					d.add ( num1, num3, temp3["HostName"]+":"+tempName, '', "", "", "images/tree/nodeok.png", "images/tree/nodeok.png" ) ;
+					num1 = num1 + 1 ;
+					d.add ( num1, num5, '属性', 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", true )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
+					if ( temp["GroupName"] != 'SYSCatalogGroup' )
+					{
+						num1 = num1 + 1 ;
+						d.add ( num1, num5, '数据统计', 'changeChartModel2( "node", "", "' + temp3["HostName"] + '", "' + tempName + '" );', "", "", "images/tree/barchart.png", "images/tree/barchart.png" ) ;
+						num1 = num1 + 1 ;
+						d.add ( num1, num5, '性能监控', 'changeChartModel( "node", "", "' + temp3["HostName"] + '", "' + tempName + '" );', "", "", "images/tree/linechart.png", "images/tree/linechart.png" ) ;
+					}
 				}
 			}
 			else
 			{
-				d.add ( num1, num3, temp3["HostName"]+":"+tempName, 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", true )', "", "", "images/tree/nodeok.png", "images/tree/nodeok.png" ) ;
+				d.add ( num1, num3, temp3["HostName"]+":"+tempName, '', "", "", "images/tree/nodeok.png", "images/tree/nodeok.png" ) ;
+				num1 = num1 + 1 ;
+				d.add ( num1, num5, '属性', 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", true )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
+				if ( temp["GroupName"] != 'SYSCatalogGroup' )
+				{
+					num1 = num1 + 1 ;
+					d.add ( num1, num5, '数据统计', 'changeChartModel2( "node", "", "' + temp3["HostName"] + '", "' + tempName + '" );', "", "", "images/tree/barchart.png", "images/tree/barchart.png" ) ;
+					num1 = num1 + 1 ;
+					d.add ( num1, num5, '性能监控', 'changeChartModel( "node", "", "' + temp3["HostName"] + '", "' + tempName + '" );', "", "", "images/tree/linechart.png", "images/tree/linechart.png" ) ;
+				}
 			}
 		}
 		num1 = num1 + 1 ;
@@ -345,4 +391,18 @@ function getleftlist( obj, name )
 	}
 	str += 'document.getElementById("pictree").innerHTML = d ;' ;
 	ajax2send3 ( obj, "post", "index.php?p=" + name + "&m=ajax_l", "", true, str ) ;
+}
+
+function isArray(obj) {
+    return (typeof(obj) =='object'); 
+}
+
+//数字字符串自动补零
+function pad(num, n) {
+    var len = num.toString().length;
+    while(len < n) {
+        num = "0" + num;
+        len++;
+    }
+    return num;
 }

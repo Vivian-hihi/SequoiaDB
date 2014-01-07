@@ -25,6 +25,7 @@ $(document).ready(function()
 	var heightnum = document.documentElement.clientHeight ;
 	document.getElementById("left_list").style.height = (heightnum-220) + "px" ;
 	document.getElementById("right_context").style.height = (heightnum - 220) + "px" ;
+	getleftlist( "pictree", "group" ) ;
 })
 
 window.onresize = function ()
@@ -58,6 +59,8 @@ function changeChartOne( type )
 
 function changeChartModel ( t_model, t_groupname, t_hostname, t_svcname )
 {
+	document.getElementById("context").style.display = "none" ;
+	document.getElementById("context2").style.display = "block" ;
 	if ( intervalID != null )
 	{
 		clearInterval ( intervalID ) ;
@@ -140,6 +143,8 @@ function drowLinePic( obj, b )
 
 function changeChartModel2 ( t_model, t_groupname, t_hostname, t_svcname )
 {
+	document.getElementById("context").style.display = "none" ;
+	document.getElementById("context2").style.display = "block" ;
 	if ( intervalID != null )
 	{
 		clearInterval ( intervalID ) ;

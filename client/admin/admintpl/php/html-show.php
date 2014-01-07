@@ -29,6 +29,11 @@ if ( $model == "all" )
 		$smarty -> display ( 'tool.html', 3 ) ;
 	}
 
+	if ( file_exists ( './php/model/m-'.$mapping.'.php' ) )
+	{
+		require_once ( './php/model/m-'.$mapping.'.php' ) ;
+	}
+
 	if ( file_exists ( './templates/'.$mapping.'.html' ) )
 	{
 		$smarty -> display ( $mapping.'.html', 1 ) ;

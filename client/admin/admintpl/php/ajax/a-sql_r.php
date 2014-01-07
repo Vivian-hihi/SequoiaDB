@@ -16,7 +16,7 @@ if ( strtolower(substr ( $sql, 0, 6 )) == "select" )
 		$db -> install ( "{ install : false }" ) ;
 		while ( $arr = $cursor -> getNext() )
 		{
-		   $arr = str_replace( '\\', '\\\\', $arr ) ;
+			$arr = str_replace( '\\', '\\\\', $arr ) ;
 			$arr = str_replace( '"', '\"', $arr ) ;
 			array_push( $record_array, $arr ) ;
 		}
