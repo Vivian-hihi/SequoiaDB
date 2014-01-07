@@ -87,7 +87,7 @@ namespace engine
    }
 
    // initialize log manager
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_INIT, "_dpsReplicaLogMgr::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_INIT, "_dpsReplicaLogMgr::init" )
    INT32 _dpsReplicaLogMgr::init ( const CHAR *path, UINT32 pageNum )
    {
       INT32 rc = SDB_OK;
@@ -144,7 +144,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__RESTRORE, "_dpsReplicaLogMgr::_restore" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__RESTRORE, "_dpsReplicaLogMgr::_restore" )
    INT32 _dpsReplicaLogMgr::_restore ()
    {
       INT32 rc = SDB_OK ;
@@ -209,7 +209,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_PREPAGES, "_dpsReplicaLogMgr::preparePages" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_PREPAGES, "_dpsReplicaLogMgr::preparePages" )
    INT32 _dpsReplicaLogMgr::preparePages ( dpsMergeInfo &info )
    {
       INT32 rc = SDB_OK ;
@@ -224,8 +224,7 @@ namespace engine
       // all pages memory less than data size
       if ( _totalSize < head._length )
       {
-         PD_LOG ( PDERROR, "dps total memory size[%d]"
-                           " less than block size[%d]",
+         PD_LOG ( PDERROR, "dps total memory size[%d] less than block size[%d]",
                   _totalSize, head._length ) ;
          rc = SDB_SYS ;
          SDB_ASSERT ( 0, "system error" ) ;
@@ -340,7 +339,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_WRITEDATA, "_dpsReplicaLogMgr::writeData" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_WRITEDATA, "_dpsReplicaLogMgr::writeData" )
    void _dpsReplicaLogMgr::writeData ( dpsMergeInfo & info )
    {
       SDB_ASSERT ( info.getMergeBlock().pageMeta().valid(),
@@ -360,7 +359,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB__DPSRPCMGR_WRITEDATA );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_MERGE, "_dpsReplicaLogMgr::merge" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_MERGE, "_dpsReplicaLogMgr::merge" )
    INT32 _dpsReplicaLogMgr::merge( _dpsMergeBlock &block )
    {
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_MERGE );
@@ -414,8 +413,8 @@ namespace engine
          // if the log is replicated and hit this logic, something really
          // goes wrong, because the dummy record should already be inserted
          // in primary node
-         SDB_ASSERT ( !block.isRow(), "replicated log record should never \
-hit this part" )
+         SDB_ASSERT ( !block.isRow(), "replicated log record should never "
+                      "hit this part" )
          // we are going to insert a dummy log record
          UINT32 dummyLogSize = logFileSz - ( _lsn.offset % logFileSz ) ;
          SDB_ASSERT ( dummyLogSize >= sizeof ( dpsLogInfo ),
@@ -526,6 +525,7 @@ hit this part" )
       goto done;
    }
 */
+
    DPS_LSN _dpsReplicaLogMgr::getStartLsn ( BOOLEAN logBufOnly )
    {
       ossScopedLock lock( &_mtx ) ;
@@ -542,7 +542,7 @@ hit this part" )
       return lsn ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_GETLSNWIN, "_dpsReplicaLogMgr::getLsnWindow" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_GETLSNWIN, "_dpsReplicaLogMgr::getLsnWindow" )
    void _dpsReplicaLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
                                          DPS_LSN &memBeginLsn,
                                          DPS_LSN &endLsn )
@@ -560,7 +560,7 @@ hit this part" )
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_GETLSNWIN2, "_dpsReplicaLogMgr::getLsnWindow" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_GETLSNWIN2, "_dpsReplicaLogMgr::getLsnWindow" )
    void _dpsReplicaLogMgr::getLsnWindow( DPS_LSN &fileBeginLsn,
                                          DPS_LSN &memBeginLsn,
                                          DPS_LSN &endLsn,
@@ -580,7 +580,7 @@ hit this part" )
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__MVPAGES, "_dpsReplicaLogMgr::_movePages" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__MVPAGES, "_dpsReplicaLogMgr::_movePages" )
    INT32 _dpsReplicaLogMgr::_movePages ( const DPS_LSN_OFFSET & offset, 
                                          const DPS_LSN_VER & version )
    {
@@ -650,7 +650,7 @@ hit this part" )
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_MOVE, "_dpsReplicaLogMgr::move" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_MOVE, "_dpsReplicaLogMgr::move" )
    INT32 _dpsReplicaLogMgr::move( const DPS_LSN_OFFSET &offset,
                                   const DPS_LSN_VER &version )
    {
@@ -726,7 +726,7 @@ hit this part" )
    }
 
    // get the first LSN in buffer
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__GETSTARTLSN, "_dpsReplicaLogMgr::_getStartLsn" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__GETSTARTLSN, "_dpsReplicaLogMgr::_getStartLsn" )
    DPS_LSN _dpsReplicaLogMgr::_getStartLsn ()
    {
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__GETSTARTLSN );
@@ -754,7 +754,7 @@ hit this part" )
    }
 
    // search lsn in memory
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__SEARCH, "_dpsReplicaLogMgr::_search" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__SEARCH, "_dpsReplicaLogMgr::_search" )
    INT32 _dpsReplicaLogMgr::_search ( const DPS_LSN &lsn, _dpsMessageBlock *mb )
    {
       INT32 rc = SDB_OK ;
@@ -781,7 +781,7 @@ hit this part" )
       if ( beginLSN.invalid() )
       {
          PD_LOG( PDERROR, "begin lsn invalid [offset:%lld] [version:%d]",
-                           beginLSN.offset, beginLSN.version ) ;
+                 beginLSN.offset, beginLSN.version ) ;
          rc = SDB_DPS_LOG_NOT_IN_BUF ;
          goto error ;
       }
@@ -866,7 +866,7 @@ hit this part" )
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__PARSE, "_dpsReplicaLogMgr::_parse" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__PARSE, "_dpsReplicaLogMgr::_parse" )
    INT32 _dpsReplicaLogMgr::_parse( UINT32 sub, UINT32 offset,
                                     UINT32 len, CHAR *out )
    {
@@ -912,7 +912,7 @@ hit this part" )
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_SEARCH, "_dpsReplicaLogMgr::search" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_SEARCH, "_dpsReplicaLogMgr::search" )
    INT32 _dpsReplicaLogMgr::search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
                                     UINT8 type )
    {
@@ -938,22 +938,22 @@ hit this part" )
                if ( rc )
                {
                   // we can't find from both memory and file
-                  pdLog ( PDINFO, __FUNC__, __FILE__, __LINE__,
-                          "Failed to find [%lld, %d]from memory and file, rc = %d",
-                          minLsn.offset, minLsn.version, rc ) ;
+                  PD_LOG ( PDINFO, "Failed to find [%lld, %d]from memory and "
+                           "file, rc = %d", minLsn.offset, minLsn.version,
+                           rc ) ;
                   goto error ;
                }
             }
             // if we don't want to find from file
             else
             {
-               pdLog ( PDDEBUG, __FUNC__, __FILE__, __LINE__,
-                       "Failed to find [%lld, %d] from memory, rc = %d",
-                       minLsn.offset, minLsn.version, rc ) ;
+               PD_LOG ( PDDEBUG, "Failed to find [%lld, %d] from memory, "
+                        "rc = %d", minLsn.offset, minLsn.version, rc ) ;
                goto error ;
             }
          }
       }
+
    done:
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR_SEARCH, rc );
       return rc;
@@ -963,7 +963,7 @@ hit this part" )
 
    // allocate len bytes, returns nodes for which nodes contains data, and
    // offset for the starting point in the first page
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__ALLOCATE, "_dpsReplicaLogMgr::_allocate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__ALLOCATE, "_dpsReplicaLogMgr::_allocate" )
    void _dpsReplicaLogMgr::_allocate( UINT32 len,
                                       dpsPageMeta &allocated )
    {
@@ -972,20 +972,20 @@ hit this part" )
       UINT32 pageNum = 0;
 
       SDB_ASSERT( 0 != len, "can not allocate zero length" )
-      SDB_ASSERT ( _totalSize > len, "total memory size must grater than record size" )
+      SDB_ASSERT ( _totalSize > len,
+                  "total memory size must grater than record size" )
 
       // make sure there's enough space
       while ( _idleSize.peek() < needAlloc )
       {
-         PD_LOG ( PDWARNING, 
-                  "No space in log buffer for %d bytes, currently left %d bytes",
-                 needAlloc, _idleSize.peek() ) ;
-
+         PD_LOG ( PDWARNING, "No space in log buffer for %d bytes, currently "
+                  "left %d bytes", needAlloc, _idleSize.peek() ) ;
          _allocateEvent.wait ( OSS_ONE_SEC ) ;
       }
       // get the current working offset in the first page
       allocated.offset = WORK_PAGE->getLength();
       allocated.beginSub = _work ;
+
       do
       {
          pageNum++ ;
@@ -1048,7 +1048,7 @@ hit this part" )
       PD_TRACE_EXIT ( SDB__DPSRPCMGR__ALLOCATE );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__PSH2SNDQUEUE, "_dpsReplicaLogMgr::_push2SendQueue" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__PSH2SNDQUEUE, "_dpsReplicaLogMgr::_push2SendQueue" )
    void _dpsReplicaLogMgr::_push2SendQueue( const dpsPageMeta &allocated )
    {
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__PSH2SNDQUEUE );
@@ -1079,7 +1079,7 @@ hit this part" )
    }
 
    // copy logs into buffer
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__MRGLOGS, "_dpsReplicaLogMgr::_mergeLogs" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__MRGLOGS, "_dpsReplicaLogMgr::_mergeLogs" )
    void _dpsReplicaLogMgr::_mergeLogs( _dpsMergeBlock &block,
                                        const dpsPageMeta &meta )
    {
@@ -1147,7 +1147,7 @@ hit this part" )
 
    // copy data into buffer, return workSub = current working node, and offset
    // for the offset in the current working node
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__MRGPAGE, "_dpsReplicaLogMgr::_mergePage" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__MRGPAGE, "_dpsReplicaLogMgr::_mergePage" )
    void _dpsReplicaLogMgr::_mergePage( const CHAR *src,
                                        UINT32 len,
                                        UINT32 &workSub,
@@ -1182,7 +1182,7 @@ hit this part" )
    }
 
    // entry function to flush buffer to disk
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_RUN, "_dpsReplicaLogMgr::run" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_RUN, "_dpsReplicaLogMgr::run" )
    INT32 _dpsReplicaLogMgr::run( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -1220,7 +1220,7 @@ hit this part" )
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__FLUSHALL, "_dpsReplicaLogMgr::_flushAll" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR__FLUSHALL, "_dpsReplicaLogMgr::_flushAll" )
    INT32 _dpsReplicaLogMgr::_flushAll()
    {
       INT32 rc = SDB_OK ;
@@ -1238,20 +1238,19 @@ hit this part" )
             rc = _flushPage( page );
             if ( rc )
             {
-               pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                       "Failed to flush page, rc = %d", rc ) ;
+               PD_LOG ( PDERROR, "Failed to flush page, rc = %d", rc ) ;
                goto error ;
             }
             page = NULL;
          }
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR__FLUSHALL, rc );
       return rc ;
    error :
       goto done ;
    }
-
 
    // this function is called during database shutdown
    // this function flush all dirty pages AND the working copy to disk, so this
@@ -1283,6 +1282,7 @@ hit this part" )
             goto error ;
          }
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR_TEARDOWN, rc );
       return rc ;
@@ -1318,5 +1318,6 @@ hit this part" )
    error :
       goto done ;
    }
+
 }
 

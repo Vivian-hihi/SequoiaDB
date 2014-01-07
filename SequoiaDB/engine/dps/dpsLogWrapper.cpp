@@ -517,7 +517,7 @@ namespace engine
    }
 */
    // record a row
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_RECDROW, "_dpsLogWrapper::recordRow" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_RECDROW, "_dpsLogWrapper::recordRow" )
    INT32 _dpsLogWrapper::recordRow( const CHAR *row, UINT32 len )
    {
       INT32 rc = SDB_OK ;
@@ -557,7 +557,7 @@ namespace engine
       return _buf.isInRestore();
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_PREPARE, "prepare" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_PREPARE, "prepare" )
    INT32 _dpsLogWrapper::prepare( dpsMergeInfo &info )
    {
       PD_TRACE_ENTRY( SDB__DPSLGWRAPP_PREPARE ) ;
