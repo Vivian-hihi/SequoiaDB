@@ -168,8 +168,7 @@ namespace engine
             return _sync.sync( session, w ) ;
          }
 
-         void notify( UINT32 suLID, UINT32 clLID,
-                      dmsExtentID extLIDconst,
+         void notify( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
                       const DPS_LSN_OFFSET &offset ) ;
 
       public:
