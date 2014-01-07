@@ -92,7 +92,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPPSET_NOTIFY, "_clsReplicateSet::notify" )
    void _clsReplicateSet::notify ( UINT32 suLID, UINT32 clLID,
-                                   dmsExtentID extLIDconst,
+                                   dmsExtentID extLID,
                                    const DPS_LSN_OFFSET &offset )
    {
       PD_TRACE_ENTRY ( SDB__CLSREPPSET_NOTIFY );
@@ -106,8 +106,7 @@ namespace engine
          _vecLatch.lock_r () ;
          while ( index < _srcSessionNum )
          {
-            _vecSrcSessions[index]->notifyLSN ( suLID, clLID, extLIDconst,
-                                                offset ) ;
+            _vecSrcSessions[index]->notifyLSN ( suLID, clLID, extLID, offset ) ;
             ++index ;
          }
          _vecLatch.release_r () ;
