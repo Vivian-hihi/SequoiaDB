@@ -598,6 +598,7 @@ namespace engine
          if ( _deqLSN.size() > 0 )
          {
             _lsn.offset = _deqLSN.front() ;
+            _beginLSNOffset = _lsn.offset ;
             _deqLSN.pop_front() ;
          }
          else
@@ -804,6 +805,10 @@ namespace engine
             if ( _deqLSN.size() > 0 )
             {
                msg.lsn.offset = _deqLSN.front() ;
+            }
+            else
+            {
+               msg.lsn.offset = _beginLSNOffset ;
             }
             _LSNlatch.release() ;
             _agent->syncSend( handle, &msg ) ;
