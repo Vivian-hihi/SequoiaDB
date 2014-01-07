@@ -84,7 +84,14 @@ namespace engine
                            UINT8 type = DPS_SEARCH_MEM | DPS_SEARCH_FILE )
       {
          SDB_ASSERT ( _initialized, "shouldn't call search without init" )
-         return _buf.search( minLsn, mb, type );
+         return _buf.search( minLsn, mb, type, FALSE ) ;
+      }
+
+      inline INT32 searchHeader( const DPS_LSN &lsn, _dpsMessageBlock *mb,
+                                 UINT8 type = DPS_SEARCH_MEM | DPS_SEARCH_FILE )
+      {
+         SDB_ASSERT ( _initialized, "shouldn't call search without init" )
+         return _buf.search( lsn, mb, type, TRUE ) ;
       }
 
       inline INT32 run( _pmdEDUCB *cb )

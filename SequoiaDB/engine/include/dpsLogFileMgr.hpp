@@ -44,15 +44,16 @@ using namespace std;
 
 namespace engine
 {
-#define DPS_MAX_LOG_FILE_NUM 1000
-#define DPS_LOG_FILE_SIZE_UNIT (1024 * 1024)
-// max log file size 2GB
-#define DPS_MAX_LOG_FILE_SIZE ((UINT64)PMD_MAX_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
-// min log file size 32MB
-#define DPS_MIN_LOG_FILE_SIZE ((UINT64)PMD_MIN_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
-// default log file size
-#define DPS_DFT_LOG_FILE_SIZE ((UINT64)PMD_DFT_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
-#define DPS_DFT_LOG_FILE_NUM  PMD_DFT_LOG_FILE_NUM
+   #define DPS_MAX_LOG_FILE_NUM     1000
+   #define DPS_LOG_FILE_SIZE_UNIT   (1024 * 1024)
+   // max log file size 2GB
+   #define DPS_MAX_LOG_FILE_SIZE ((UINT64)PMD_MAX_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
+   // min log file size 32MB
+   #define DPS_MIN_LOG_FILE_SIZE ((UINT64)PMD_MIN_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
+   // default log file size
+   #define DPS_DFT_LOG_FILE_SIZE ((UINT64)PMD_DFT_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
+   #define DPS_DFT_LOG_FILE_NUM  PMD_DFT_LOG_FILE_NUM
+
    class _dpsLogPage;
    class _dpsMessageBlock;
    class _dpsReplicaLogMgr ;
@@ -67,15 +68,22 @@ namespace engine
       UINT32 _logFileSz ;
       UINT32 _logFileNum ;
       _dpsReplicaLogMgr *_replMgr ;
+
    public:
       _dpsLogFileMgr( class _dpsReplicaLogMgr *replMgr );
       ~_dpsLogFileMgr();
+
       INT32 init( const CHAR *path );
+
       INT32 flush( _dpsMessageBlock *mb,
                    const DPS_LSN &beginLsn,
                    BOOLEAN shutdown = FALSE );
-      INT32 load( const DPS_LSN &lsn, _dpsMessageBlock *mb );
+
+      INT32 load( const DPS_LSN &lsn, _dpsMessageBlock *mb,
+                  BOOLEAN onlyHeader = FALSE ) ;
+
       INT32 move( const DPS_LSN_OFFSET &offset, const DPS_LSN_VER &version ) ;
+
       void setLogFileSz ( UINT32 logFileSz )
       {
          UINT64 fileSize = DPS_LOG_FILE_SIZE_UNIT * (UINT64)logFileSz ;
@@ -85,7 +93,9 @@ namespace engine
             fileSize = DPS_MIN_LOG_FILE_SIZE ;
          _logFileSz = fileSize ;
       }
+
       DPS_LSN getStartLSN ( BOOLEAN mustExist = TRUE ) ;
+
       UINT32 getLogFileSz ()
       {
          return _logFileSz ;
@@ -102,6 +112,7 @@ namespace engine
       {
          return _files[_work] ;
       }
+
    protected:
       void _analysis () ;
       UINT32 _incFileID ( UINT32 fileID ) ;
