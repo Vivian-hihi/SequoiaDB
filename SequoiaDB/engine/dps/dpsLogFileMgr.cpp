@@ -251,8 +251,8 @@ namespace engine
       // by our design, the mb->length() should always be same as
       // DPS_DEFAULT_PAGE_SIZE, except during tearDown phase
       SDB_ASSERT ( shutdown || mb->length() == DPS_DEFAULT_PAGE_SIZE,
-                   "mb length must be DPS_DEFAULT_PAGE_SIZE unless it's \
-shutdown" )
+                   "mb length must be DPS_DEFAULT_PAGE_SIZE unless it's "
+                   "shutdown" )
       // since we always write every dps page, so we shouldn't write out of
       // bound, so we will hit idleSize = 0 when log file is filled up
       if ( WORK_FILE->getIdleSize() == 0 )
