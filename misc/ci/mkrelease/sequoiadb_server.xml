@@ -246,18 +246,18 @@
             <displayName>SequoiaDB Cluster Manager</displayName>
             <serviceName>sdbcm</serviceName>
         </deleteWindowsService>
-        <removeUnixService>
-            <name>sdbcm</name>
-        </removeUnixService>
         <runProgram>
-            <program>/etc/init.d/sdbcm</program>
-            <programArguments>stop</programArguments>
+            <program>service</program>
+            <programArguments>sdbcm stop</programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
             </ruleList>
         </runProgram>
+        <removeUnixService>
+            <name>sdbcm</name>
+        </removeUnixService>
         <runProgram>
             <program>${installdir}/bin/sdbstop</program>
             <programArguments></programArguments>
