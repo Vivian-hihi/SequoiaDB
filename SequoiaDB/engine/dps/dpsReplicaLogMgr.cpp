@@ -68,7 +68,7 @@ namespace engine
 
    _dpsReplicaLogMgr::_dpsReplicaLogMgr()
    :_logger(this), _pages(NULL), _idleSize(0), _totalSize(0),
-    _waterMark(0), _work(0), _pageNum(0)
+    _work(0), _pageNum(0)
    {
       _begin = 0 ;
       _rollFlag = FALSE ;

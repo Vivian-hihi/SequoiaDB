@@ -183,8 +183,7 @@ namespace engine
       //find work
       UINT32 tmpWork = _begin ;
       i = 0 ;
-      while ( _files[tmpWork]->getIdleSize() == 0
-         && i < _files.size() )
+      while ( _files[tmpWork]->getIdleSize() == 0 && i < _files.size() )
       {
          _work = tmpWork ;
          tmpWork = _incFileID ( tmpWork ) ;
@@ -216,6 +215,10 @@ namespace engine
       {
          _logicalWork = _files[_work]->header()._logID ;
       }
+
+      PD_LOG( PDEVENT, "Analysis dps logs[begin: %u, work: %u, "
+              "logicalWork: %u]", _begin, _work, _logicalWork ) ;
+
       PD_TRACE_EXIT ( SB__DPSLGFILEMGR__ANLYS );
    }
 
@@ -261,8 +264,10 @@ namespace engine
          _incLogicalFileID () ;
       }
 
-      if ( WORK_FILE->getIdleSize() == WORK_FILE->size()
-         || WORK_FILE->getIdleSize() == 0 )
+      // empty file or full file(roll over)
+      if ( WORK_FILE->getIdleSize() == 0 ||
+           ( WORK_FILE->getIdleSize() == WORK_FILE->size() &&
+             WORK_FILE->header()._logID == DPS_INVALID_LOG_FILE_ID ) )
       {
          WORK_FILE->reset( _logicalWork, beginLsn.offset, beginLsn.version ) ;
       }
@@ -393,12 +398,24 @@ namespace engine
 
       while ( i < _logFileNum )
       {
-         if ( _files[_work]->header()._logID != DPS_INVALID_LOG_FILE_ID
-            && ( _files[_work]->getFirstLSN().offset <= offset &&
-            offset <= _files[_work]->getFirstLSN().offset +
-            _files[_work]->getLength() ) )
+         if ( _files[_work]->header()._logID != DPS_INVALID_LOG_FILE_ID &&
+             ( _files[_work]->getFirstLSN().offset <= offset &&
+               offset <= _files[_work]->getFirstLSN().offset +
+               _files[_work]->getLength() ) )
          {
-            _files[_work]->idleSize ( _logFileSz - fileOffset ) ;
+            // at the end of file, need set idle to 0
+            if ( file != _work )
+            {
+               SDB_ASSERT( 0 == fileOffset, "File offset must be 0" ) ;
+               SDB_ASSERT( file == _incFileID( _work ), "File must work + 1" ) ;
+               SDB_ASSERT( 0 == _files[_work]->getIdleSize(),
+                           "Idle size must be 0" ) ;
+            }
+            // not end of file
+            else
+            {
+               _files[_work]->idleSize ( _logFileSz - fileOffset ) ;
+            }
             _logicalWork = _files[_work]->header()._logID ;
             break ;
          }

@@ -107,7 +107,8 @@ namespace engine
             if ( rc == SDB_OK )
             {
                PD_LOG ( PDEVENT, "Restore dps log file[%s] succeed, "
-                        "firstLsn[%lld]", path, getFirstLSN().offset ) ;
+                        "firstLsn[%lld], idle space: %u", path,
+                        getFirstLSN().offset, getIdleSize() ) ;
                goto done ;
             }
             else
@@ -266,7 +267,7 @@ namespace engine
          offSet += lsnHeader._length ;
       }
 
-      if ( 0 == offSet )
+      /*if ( 0 == offSet )
       {
          _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
          _logHeader._firstLSN.offset = DPS_INVALID_LSN_OFFSET ;
@@ -275,7 +276,8 @@ namespace engine
       else
       {
          _idleSize = _fileSize - offSet ;
-      }
+      }*/
+      _idleSize = _fileSize - offSet ;
 
    done:
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE__RESTRORE, rc );
@@ -302,7 +304,7 @@ namespace engine
       }
       _logHeader._logID = logID ;
       _idleSize = _fileSize ;
-      
+
       INT32 rc = _flushHeader () ;
       PD_TRACE_EXITRC ( SDB__DPSLOGFILE_RESET, rc );
       return rc ;
