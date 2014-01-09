@@ -376,6 +376,16 @@ namespace engine
          }
          else
          {
+            if ( _pReplBucket->maxReplSync() > 0 )
+            {
+               PD_LOG( PDEVENT, "Sync Session[%s]: Repl bucket info[ bucket "
+                       "lsn count: %d, all lsn count: %d, total agents: %d, "
+                       "idle agents: %d, complete lsn offset: %lld]",
+                       sessionName(), _pReplBucket->bucketSize(),
+                       _pReplBucket->size(), _pReplBucket->curAgentNum(),
+                       _pReplBucket->idleAgentNum(),
+                       _pReplBucket->completeLSN().offset ) ;
+            }
             _sendConsultReq() ;
          }
       }
