@@ -47,14 +47,11 @@ namespace engine
    const INT32 CLS_CALLER_NORESPONSE = 15000 ;
 
    _clsCatalogCaller::_clsCatalogCaller()
-   :_cMgr( NULL )
    {
-      _cMgr = pmdGetKRCB()->getClsCB() ;
    }
 
    _clsCatalogCaller::~_clsCatalogCaller()
    {
-      _cMgr = NULL ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCATCLR_CALL, "_clsCatalogCaller::call" )
@@ -85,7 +82,7 @@ namespace engine
       ossMemcpy( meta.header, header, header->messageLength ) ;
       PD_LOG( PDEVENT, "send msg[%d] to catalog node.",
               meta.header->opCode ) ;
-      _cMgr->sendToCatlog( meta.header ) ;
+      pmdGetKRCB()->getClsCB()->sendToCatlog( meta.header ) ;
       meta.timeout = 0 ;
 
    done:
@@ -133,8 +130,8 @@ namespace engine
             itr->second.timeout += millisec ;
             if ( CLS_CALLER_INTERVAL <= itr->second.timeout )
             {
-               _cMgr->updateCatGroup ( TRUE ) ;
-               _cMgr->sendToCatlog( itr->second.header) ;
+               pmdGetKRCB()->getClsCB()->updateCatGroup ( TRUE ) ;
+               pmdGetKRCB()->getClsCB()->sendToCatlog( itr->second.header) ;
                itr->second.timeout = 0 ;
             }
          }
