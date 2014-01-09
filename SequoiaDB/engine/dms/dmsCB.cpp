@@ -294,6 +294,7 @@ namespace engine
       if ( dpsCB )
       {
          DPS_LSN_OFFSET offset ;
+         info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT ) ;
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
          {
@@ -594,6 +595,7 @@ namespace engine
       {
          UINT32 suLID = su->LogicalCSID() ;
          DPS_LSN_OFFSET offset = 0 ;
+         info.setInfoEx( suLID, ~0, DMS_INVALID_EXTENT ) ;
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
          {

@@ -534,6 +534,7 @@ namespace engine
          /// write sync cata info log
          SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
          dpsMergeInfo info ;
+         info.setInfoEx( ~0, ~0, DMS_INVALID_EXTENT ) ;
          dpsLogRecord &record = info.getMergeBlock().record() ;
          rc = dpsInvalidCata2Record( name, record ) ;
          if ( SDB_OK != rc )

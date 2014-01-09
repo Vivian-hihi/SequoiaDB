@@ -448,6 +448,7 @@ namespace engine
                                    dmsExtentID extLID )
    {
       INT32 rc = SDB_OK ;
+      info.setInfoEx( _logicalCSID, clLID, extLID ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {
@@ -494,6 +495,7 @@ namespace engine
                                    BOOLEAN needUnLock )
    {
       INT32 rc = SDB_OK ;
+      info.setInfoEx( logicalID(), context->clLID(), extLID ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {

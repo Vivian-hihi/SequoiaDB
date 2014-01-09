@@ -77,6 +77,7 @@ namespace engine
          goto error ;
       }
 
+      info.setInfoEx( ~0, DMS_INVALID_CLID, DMS_INVALID_EXTENT ) ;
       rc = dpsCB->prepare( info );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to insert record into log(rc=%d)", rc );
@@ -87,17 +88,17 @@ namespace engine
          {
             offset = info.getDummyBlock().record().head()._lsn;
             cb->insertLsn( offset ) ;
-            pmdGetKRCB()->getReplCB()->notify( DMS_INVALID_SUID,
-                                             DMS_INVALID_CLID,
-                                             DMS_INVALID_EXTENT,
-                                             offset );
+            pmdGetKRCB()->getReplCB()->notify( ~0,
+                                               DMS_INVALID_CLID,
+                                               DMS_INVALID_EXTENT,
+                                               offset ) ;
          }
          offset = info.getMergeBlock().record().head()._lsn;
          cb->insertLsn( offset );
-         pmdGetKRCB()->getReplCB()->notify( DMS_INVALID_SUID,
-                                          DMS_INVALID_CLID,
-                                          DMS_INVALID_EXTENT,
-                                          offset );
+         pmdGetKRCB()->getReplCB()->notify( ~0,
+                                            DMS_INVALID_CLID,
+                                            DMS_INVALID_EXTENT,
+                                            offset );
       }
 
       pmdGetKRCB()->getTransCB()->delTransCB( curTransID );
