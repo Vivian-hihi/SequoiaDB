@@ -59,6 +59,13 @@ namespace engine
       dmsExtentID          _extLID ;
       DPS_LSN_OFFSET       _offset ;
 
+      _dpsLSNInfoEx ()
+      {
+         _csLID = ~0 ;
+         _clLID = ~0 ;
+         _extLID = -1 ;
+         _offset = 0 ;
+      }
       _dpsLSNInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID,
                      DPS_LSN_OFFSET offset )
       {
