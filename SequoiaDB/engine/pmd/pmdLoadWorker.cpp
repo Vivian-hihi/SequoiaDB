@@ -40,7 +40,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOADWORKER, "pmdLoadWorkerEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOADWORKER, "pmdLoadWorkerEntryPoint" )
    INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
