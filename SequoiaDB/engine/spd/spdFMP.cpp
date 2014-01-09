@@ -275,11 +275,14 @@ namespace engine
    INT32 _spdFMP::_extendReadBuf()
    {
       INT32 rc = SDB_OK ;
+      CHAR *pOrgBuff = _readBuf ;
       _readBuf = ( CHAR * )SDB_OSS_REALLOC( _readBuf,
-                                           _readBufSize + SPD_READ_PAGE ) ;
+                                            _readBufSize + SPD_READ_PAGE ) ;
       if ( NULL == _readBuf )
       {
-         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         PD_LOG( PDERROR, "failed to realloc %d bytes mem.",
+                 _readBufSize + SPD_READ_PAGE ) ;
+         _readBuf = pOrgBuff ;
          rc = SDB_OOM ;
          goto error ;
       }
