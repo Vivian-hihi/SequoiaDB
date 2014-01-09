@@ -78,7 +78,7 @@ namespace engine
       _lsn.version = 0 ;
       _restoreFlag = FALSE ;
 
-      _replSet = pmdGetKRCB()->getReplCB() ;
+      _replSet = NULL ;
    }
 
    _dpsReplicaLogMgr::~_dpsReplicaLogMgr()
@@ -99,6 +99,7 @@ namespace engine
       SDB_ASSERT ( path, "path can't be NULL" )
       SDB_ASSERT ( ossIsPowerOf2( pageNum ), "must be a power of 2" )
       // free in destructor
+      _replSet = pmdGetKRCB()->getReplCB() ;
       _pages = SDB_OSS_NEW _dpsLogPage[pageNum];
       if ( NULL == _pages )
       {
