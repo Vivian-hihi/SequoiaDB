@@ -152,6 +152,9 @@ namespace engine
       _status     = CLS_BUCKET_CLOSED ;
       _maxReplSync= 0 ;
       _maxSubmitOffset = 0 ;
+
+      _emptyEvent.signal() ;
+      _allEmptyEvent.signal() ;
    }
 
    _clsBucket::~_clsBucket ()
