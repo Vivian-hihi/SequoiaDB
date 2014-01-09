@@ -205,6 +205,8 @@ namespace engine
          _clsShardMgr                  *_pShdObj ;
          _clsReplicateSet              *_pReplObj ;
 
+         BOOLEAN                       _createdObjs ;
+
          ossRWMutex                    _subEduAttachLock ;
 
          UINT16                        _shardServiceID ;

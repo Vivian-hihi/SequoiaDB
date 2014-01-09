@@ -168,8 +168,16 @@ namespace engine
             return _sync.sync( session, w ) ;
          }
 
+         inline UINT32 getNtySessionNum ()
+         {
+            return _srcSessionNum ;
+         }
+
          void notify( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
                       const DPS_LSN_OFFSET &offset ) ;
+
+         void notify2Session( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
+                              const DPS_LSN_OFFSET &offset ) ;
 
       public:
          void  regSession ( _clsDataSrcBaseSession *pSession ) ;

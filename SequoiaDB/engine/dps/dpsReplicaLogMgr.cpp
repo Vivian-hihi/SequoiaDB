@@ -37,6 +37,8 @@
 #include "dpsLogDef.hpp"
 #include "dpsLogRecordDef.hpp"
 #include "pmdEDU.hpp"
+#include "pmd.hpp"
+#include "pmdCB.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 
@@ -75,6 +77,8 @@ namespace engine
       _lsn.offset = 0 ;
       _lsn.version = 0 ;
       _restoreFlag = FALSE ;
+
+      _replSet = pmdGetKRCB()->getReplCB() ;
    }
 
    _dpsReplicaLogMgr::~_dpsReplicaLogMgr()
@@ -289,6 +293,12 @@ namespace engine
          dummyhead._preLsn = _currentLsn.offset ;
          _currentLsn = _lsn ;
          _lsn.offset += dummyhead._length ;
+
+         if ( info._needNty && _replSet && _replSet->getNtySessionNum() > 0 )
+         {
+            _ntyQue.push( dpsLSNInfoEx( info._csLID, info._clLID, info._extLID,
+                                        dummyhead._lsn ) ) ;
+         }
       }
 
       // after we push dummy record, we have to check if the rest of space able
@@ -325,6 +335,13 @@ namespace engine
       // change global metadata
       _currentLsn = _lsn ;
       _lsn.offset += head._length ;
+
+      if ( info._needNty && _replSet && _replSet->getNtySessionNum() > 0 )
+      {
+         _ntyQue.push( dpsLSNInfoEx( info._csLID, info._clLID, info._extLID,
+                                     head._lsn ) ) ;
+      }
+      info._needNty = FALSE ;
 
    done:
       // unlock metadata

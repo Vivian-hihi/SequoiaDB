@@ -577,6 +577,9 @@ namespace engine
          // Then start log global writer thread
          eduMgr->startEDU ( EDU_TYPE_LOGGW, NULL, &agentEDU ) ;
          eduMgr->regSystemEDU ( EDU_TYPE_LOGGW, agentEDU ) ;
+         // Start log notify
+         eduMgr->startEDU( EDU_TYPE_LOGGNTY, NULL, &agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_LOGGNTY, agentEDU ) ;
       }
 
       if ( SDB_ROLE_STANDALONE == dbrole || SDB_ROLE_DATA == dbrole )

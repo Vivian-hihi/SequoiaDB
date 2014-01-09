@@ -69,6 +69,7 @@ namespace engine
       EDU_TYPE_HTTPLISTENER,
       EDU_TYPE_REPR,
       EDU_TYPE_LOGGW,
+      EDU_TYPE_LOGGNTY,
       EDU_TYPE_SHARDR,
       EDU_TYPE_CLUSTER,
       EDU_TYPE_CLUSTERSHARD,
@@ -512,6 +513,7 @@ namespace engine
    INT32 pmdHTTPListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdRepREntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoggWEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdLoggNtyEntryPoint( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdClusterEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdClusterShardEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdShardREntryPoint ( pmdEDUCB *cb, void *pData ) ;

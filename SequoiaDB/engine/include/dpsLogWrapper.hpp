@@ -62,6 +62,11 @@ namespace engine
       _dpsLogWrapper();
       ~_dpsLogWrapper();
    public:
+      inline _dpsReplicaLogMgr *getLogMgr ()
+      {
+         return &_buf ;
+      }
+
       inline void setLogLocal( BOOLEAN dpslocal )
       {
          _dpslocal = dpslocal ;

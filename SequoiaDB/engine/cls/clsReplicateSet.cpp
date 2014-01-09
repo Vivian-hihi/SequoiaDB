@@ -99,6 +99,15 @@ namespace engine
 
       _sync.notify( offset ) ;
 
+      PD_TRACE_EXIT ( SDB__CLSREPPSET_NOTIFY );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPPSET_NOTIFY2SESSION, "_clsReplicateSet::notify2Session" )
+   void _clsReplicateSet::notify2Session( UINT32 suLID, UINT32 clLID,
+                                          dmsExtentID extLID,
+                                          const DPS_LSN_OFFSET & offset )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSREPPSET_NOTIFY2SESSION );
       // the src session is not empty, should notify every one
       if ( _srcSessionNum > 0 )
       {
@@ -111,8 +120,7 @@ namespace engine
          }
          _vecLatch.release_r () ;
       }
-
-      PD_TRACE_EXIT ( SDB__CLSREPPSET_NOTIFY );
+      PD_TRACE_EXIT ( SDB__CLSREPPSET_NOTIFY2SESSION );
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_REGSN, "_clsReplicateSet::regSession" )

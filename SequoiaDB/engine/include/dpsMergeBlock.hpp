@@ -41,6 +41,7 @@
 #include "dpsLogDef.hpp"
 #include "dpsLogRecord.hpp"
 #include "dpsPageMeta.hpp"
+#include "dms.hpp"
 
 namespace engine
 {
@@ -48,6 +49,30 @@ namespace engine
    class _dpsReplicaLogMgr ;
    class _dpsMergeInfo ;
 
+   /*
+      _dpsLSNInfoEx define
+   */
+   struct _dpsLSNInfoEx
+   {
+      UINT32               _csLID ;
+      UINT32               _clLID ;
+      dmsExtentID          _extLID ;
+      DPS_LSN_OFFSET       _offset ;
+
+      _dpsLSNInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID,
+                     DPS_LSN_OFFSET offset )
+      {
+         _csLID      = csLID ;
+         _clLID      = clLID ;
+         _extLID     = extLID ;
+         _offset     = offset ;
+      }
+   } ;
+   typedef _dpsLSNInfoEx dpsLSNInfoEx ;
+
+   /*
+      _dpsMergeBlock define
+   */
    class _dpsMergeBlock : public SDBObject
    {
       friend class _dpsReplicaLogMgr ;
@@ -90,6 +115,9 @@ namespace engine
 
    typedef class _dpsMergeBlock dpsMergeBlock;
 
+   /*
+      _dpsMergeInfo define
+   */
    class _dpsMergeInfo : public SDBObject
    {
       friend class _dpsReplicaLogMgr ;
@@ -108,12 +136,25 @@ namespace engine
             _dummyBlock.clear() ;
             _hasDummy = FALSE ;
          }
+         void setInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID )
+         {
+            _csLID   = csLID ;
+            _clLID   = clLID ;
+            _extLID  = extLID ;
+            _needNty = TRUE ;
+         }
 
       private:
          dpsMergeBlock        _mergeBlock ;
          dpsMergeBlock        _dummyBlock ;
          dpsMergeBlock        &_refer ;
          BOOLEAN              _hasDummy ;
+
+         UINT32               _csLID ;
+         UINT32               _clLID ;
+         dmsExtentID          _extLID ;
+         BOOLEAN              _needNty ;
+
    } ;
 
    typedef class _dpsMergeInfo dpsMergeInfo ;

@@ -35,7 +35,6 @@
 #ifndef DPSREPLICALOGMGR_H_
 #define DPSREPLICALOGMGR_H_
 
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogPage.hpp"
@@ -43,7 +42,6 @@
 #include "ossLatch.hpp"
 #include "dpsMergeBlock.hpp"
 #include "ossAtomic.hpp"
-// #include "dpsLogIndex.hpp"
 #include "dpsLogFileMgr.hpp"
 #include "ossUtil.hpp"
 #include "ossEvent.hpp"
@@ -57,26 +55,31 @@ namespace engine
    const UINT8 DPS_SEARCH_FILE = 1 ;
 
    class _pmdEDUCB ;
+   class _clsReplicateSet ;
 
+   /*
+      _dpsReplicaLogMgr define
+   */
    class _dpsReplicaLogMgr : public SDBObject
    {
    private:
-      ossQueue<_dpsLogPage *> _queue;
-      //_dpsLogIndex _index;
-      _dpsLogFileMgr _logger;
-      _dpsLogPage *_pages;
-      _ossSpinXLatch _mtx;
-      _ossAtomic32 _idleSize;
-      DPS_LSN _lsn;
-      DPS_LSN _currentLsn;
-      UINT32 _totalSize;
-      UINT32 _waterMark;
-      UINT32 _work;
-      UINT32 _begin ;
-      BOOLEAN _rollFlag ;
-      UINT32 _pageNum;
-      BOOLEAN _restoreFlag ;
-      ossAutoEvent _allocateEvent ;
+      ossQueue<_dpsLogPage *>    _queue;
+      _dpsLogFileMgr             _logger;
+      _dpsLogPage                *_pages;
+      _ossSpinXLatch             _mtx;
+      _ossAtomic32               _idleSize;
+      DPS_LSN                    _lsn;
+      DPS_LSN                    _currentLsn;
+      UINT32                     _totalSize;
+      UINT32                     _work;
+      UINT32                     _begin ;
+      BOOLEAN                    _rollFlag ;
+      UINT32                     _pageNum;
+      BOOLEAN                    _restoreFlag ;
+      ossAutoEvent               _allocateEvent ;
+
+      _clsReplicateSet           *_replSet ;
+      ossQueue< dpsLSNInfoEx >   _ntyQue ;
 
    public:
       _dpsReplicaLogMgr();
@@ -114,6 +117,11 @@ namespace engine
          version = ++_lsn.version ;
          _mtx.release();
          return version ;
+      }
+
+      inline ossQueue< dpsLSNInfoEx >* getNtyQue ()
+      {
+         return &_ntyQue ;
       }
 
    public:
@@ -204,5 +212,5 @@ namespace engine
    typedef class _dpsReplicaLogMgr dpsReplicaLogMgr;
 }
 
+#endif //DPSREPLICALOGMGR_H_
 
-#endif

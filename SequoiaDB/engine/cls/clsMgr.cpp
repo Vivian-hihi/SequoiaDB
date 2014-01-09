@@ -84,6 +84,25 @@ namespace engine
       _replHandleCloseTimerID = CLS_INVALID_TIMERID ;
 
       _taskID = 0 ;
+      _createdObjs = FALSE ;
+
+      INT32 rc = SDB_OK ;
+      //Init handles
+      SAFE_NEW_GOTO_ERROR1 ( _pShdMsgHandler, _shdMsgHandler, this ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pReplMsgHandler, _replMsgHandler, this ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pShdTimerHandler, _clsShardTimerHandler, this ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pReplTimerHandler, _clsReplTimerHandler, this ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pReplNetRtAgent, _netRouteAgent,
+                             _pReplMsgHandler ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pShardNetRtAgent, _netRouteAgent,
+                             _pShdMsgHandler ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pShdObj, _clsShardMgr, _pShardNetRtAgent ) ;
+      SAFE_NEW_GOTO_ERROR1 ( _pReplObj, _clsReplicateSet, _pReplNetRtAgent ) ;
+
+      _createdObjs = TRUE ;
+
+   error:
+      _createdObjs = FALSE ;
    }
 
    _clsMgr::~_clsMgr ()
@@ -104,26 +123,20 @@ namespace engine
       //Param init (hostname and ServiceName...), This is complete in KRCB
       PD_TRACE_ENTRY ( SDB__CLSMGR_INIT );
       UINT32 index = 0 ;
+      INT32 rc = SDB_OK ;
 
-      INT32 rc = _memPool.initialize() ;
+      if ( !_createdObjs )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
 
+      rc = _memPool.initialize() ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to init memory pool" ) ;
          goto error ;
       }
-
-      //Init handles
-      SAFE_NEW_GOTO_ERROR1 ( _pShdMsgHandler, _shdMsgHandler, this ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pReplMsgHandler, _replMsgHandler, this ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pShdTimerHandler, _clsShardTimerHandler, this ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pReplTimerHandler, _clsReplTimerHandler, this ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pReplNetRtAgent, _netRouteAgent,
-                             _pReplMsgHandler ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pShardNetRtAgent, _netRouteAgent,
-                             _pShdMsgHandler ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pShdObj, _clsShardMgr, _pShardNetRtAgent ) ;
-      SAFE_NEW_GOTO_ERROR1 ( _pReplObj, _clsReplicateSet, _pReplNetRtAgent ) ;
 
       //set catalog to shdMgr
       for ( index = 0 ; index < _vecCatlog.size() ; ++index )
