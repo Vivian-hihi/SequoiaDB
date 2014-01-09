@@ -176,16 +176,18 @@ namespace engine
       INT32 _allocate( const UINT32 &size )
       {
          INT32 rc = SDB_OK ;
-         _heap = ( _clsSyncSession * )
-                 SDB_OSS_REALLOC( _heap,
-                        sizeof( _clsSyncSession ) * ( size + _spcSize ) );
+         _clsSyncSession *pOld = _heap ;
+         _heap = ( _clsSyncSession * ) SDB_OSS_REALLOC( _heap,
+            sizeof( _clsSyncSession ) * ( size + _spcSize ) ) ;
          if ( NULL == _heap )
          {
             rc = SDB_OOM ;
+            _heap = pOld ;
             PD_LOG( PDERROR, "allocate mem err." ) ;
             goto error ;
          }
          _spcSize += size ;
+
       done:
          return rc ;
       error:
