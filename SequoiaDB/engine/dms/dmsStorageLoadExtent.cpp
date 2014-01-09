@@ -62,24 +62,31 @@ namespace engine
                                          sizeof(dmsExtent) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__ALLOCEXTENT, "dmsStorageLoadOp::_allocateExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__ALLOCEXTENT, "dmsStorageLoadOp::_allocateExtent" )
    INT32 dmsStorageLoadOp::_allocateExtent ( INT32 requestSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGELOADEXT__ALLOCEXTENT );
       if ( requestSize < DMS_MIN_EXTENT_SZ(_pageSize) )
+      {
          requestSize = DMS_MIN_EXTENT_SZ(_pageSize) ;
+      }
       else if ( requestSize > DMS_MAX_EXTENT_SZ )
+      {
          requestSize = DMS_MAX_EXTENT_SZ ;
+      }
       else
+      {
          requestSize = ossRoundUpToMultipleX ( requestSize, _pageSize ) ;
+      }
+
       if ( !_pCurrentExtent )
       {
          _pCurrentExtent = (CHAR*)SDB_OSS_MALLOC ( requestSize ) ;
          if ( !_pCurrentExtent )
          {
-            PD_LOG ( PDERROR,
-            "Unable to allocate %d bytes memory", requestSize ) ;
+            PD_LOG ( PDERROR, "Unable to allocate %d bytes memory",
+                     requestSize ) ;
             rc = SDB_OOM ;
             goto error ;
          }
@@ -91,12 +98,23 @@ namespace engine
       {
          if ( requestSize > _currentExtentSize )
          {
-            SDB_OSS_REALLOC ( _pCurrentExtent, requestSize ) ;
+            CHAR *pOldPtr = _pCurrentExtent ;
+            _pCurrentExtent = (CHAR*)SDB_OSS_REALLOC ( _pCurrentExtent,
+                                                       requestSize ) ;
+            if ( !_pCurrentExtent )
+            {
+               PD_LOG ( PDERROR, "Unable to realloc %d bytes memory",
+                        requestSize ) ;
+               _pCurrentExtent = pOldPtr ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
             _currentExtentSize = requestSize ;
          }
          _initExtentHeader ( (dmsExtent*)_pCurrentExtent,
                              _currentExtentSize/_pageSize ) ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__DMSSTORAGELOADEXT__ALLOCEXTENT, rc );
       return rc ;
@@ -104,7 +122,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__IMPRTBLOCK, "dmsStorageLoadOp::pushToTempDataBlock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__IMPRTBLOCK, "dmsStorageLoadOp::pushToTempDataBlock" )
    INT32 dmsStorageLoadOp::pushToTempDataBlock ( dmsMBContext *mbContext,
                                                  BSONObj &record,
                                                  BOOLEAN isLast,
@@ -260,7 +278,7 @@ namespace engine
    }
 
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__LDDATA, "dmsStorageLoadOp::loadBuildPhase" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__LDDATA, "dmsStorageLoadOp::loadBuildPhase" )
    INT32 dmsStorageLoadOp::loadBuildPhase ( dmsMBContext *mbContext,
                                             pmdEDUCB *cb,
                                             BOOLEAN isAsynchr,
@@ -450,7 +468,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__ROLLEXTENT, "dmsStorageLoadOp::loadRollbackPhase" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSSTORAGELOADEXT__ROLLEXTENT, "dmsStorageLoadOp::loadRollbackPhase" )
    INT32 dmsStorageLoadOp::loadRollbackPhase( dmsMBContext *mbContext )
    {
       INT32 rc = SDB_OK ;
@@ -472,4 +490,6 @@ namespace engine
    error:
       goto done ;
    }
+
 }
+
