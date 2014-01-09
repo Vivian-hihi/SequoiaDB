@@ -5,17 +5,17 @@
 <!--@param ${is.test}: the flag for whether execute test, if set false, then just deploy. just for debug -->
 <!--@param ${BUILD_NUMBER} : what number is it build -->
 <project name="deploy-test-all" default="copy-test-log">
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<!--taskdef resource="net/sf/antcontrib/antlib.xml">
 		<classpath>
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
-	</taskdef>
+	</taskdef-->
 
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
 			<fileset dir="${WORKSPACE}/deploy/ant-sdbtasks/" includes="*.jar" />
-			<pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
-			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" />
+			<!--pathelement location="${STAF.PATH}/lib/JSTAF.jar" />
+			<pathelement location="${STAF.PATH}/samples/demo/STAFDemo.jar" /-->
 		</classpath>
 	</taskdef>
 	<hostinfo prefix="host" />
