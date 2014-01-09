@@ -7057,10 +7057,17 @@ namespace engine
             {
                newBufSize += RTNCOORD_ALLO_UNIT_SIZE;
             }
+            CHAR *pOrgBuff = pOutputBuffer ;
             pOutputBuffer = (CHAR *)SDB_OSS_REALLOC( pOutputBuffer,
-                                                   newBufSize );
-            PD_CHECK( pOutputBuffer!=NULL, SDB_OOM, error, PDERROR,
-                     "malloc failed(size=%d)", newBufSize );
+                                                     newBufSize ) ;
+            if ( !pOutputBuffer )
+            {
+               PD_LOG( PDERROR, "Failed to realloc %d bytes memory",
+                       newBufSize ) ;
+               pOutputBuffer = pOrgBuff ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
             bufferSize = newBufSize;
          }
          ossMemcpy( pOutputBuffer + bufEnd, obj.objdata(),
