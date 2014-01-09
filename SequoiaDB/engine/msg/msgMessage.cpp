@@ -43,7 +43,7 @@
 
 using namespace engine;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGCHKBUFF, "msgCheckBuffer" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGCHKBUFF, "msgCheckBuffer" )
 static INT32 msgCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                               INT32 packetLength )
 {
@@ -64,8 +64,8 @@ static INT32 msgCheckBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
       *ppBuffer = (CHAR*)SDB_OSS_REALLOC ( *ppBuffer, sizeof(CHAR)*(newSize)) ;
       if ( !*ppBuffer )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to allocate %d bytes send buffer", newSize ) ;
+         PD_LOG ( PDERROR, "Failed to allocate %d bytes send buffer",
+                  newSize ) ;
          rc = SDB_OOM ;
          // realloc does NOT free original memory if it fails, so we have to
          // assign pointer to original
@@ -81,7 +81,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDUPMSG, "msgBuildUpdateMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDUPMSG, "msgBuildUpdateMsg" )
 INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           const BSONObj *selector,
@@ -165,7 +165,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTUP, "msgExtractUpdate" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTUP, "msgExtractUpdate" )
 INT32 msgExtractUpdate ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppSelector, CHAR **ppUpdator, CHAR **ppHint )
 {
@@ -216,7 +216,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDINSERTMSG, "msgBuildInsertMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDINSERTMSG, "msgBuildInsertMsg" )
 INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           const BSONObj *insertor )
@@ -283,7 +283,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDINSERTMSG2, "msgBuildInsertMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDINSERTMSG2, "msgBuildInsertMsg" )
 INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           void *pFiller, std::vector< CHAR * > &ObjQueue,
@@ -374,7 +374,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGAPDINSERTMSG, "msgAppendInsertMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGAPDINSERTMSG, "msgAppendInsertMsg" )
 INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                            const BSONObj *insertor )
 {
@@ -424,7 +424,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTINSERT, "msgExtractInsert" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTINSERT, "msgExtractInsert" )
 INT32 msgExtractInsert ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppInsertor, INT32 &count )
 {
@@ -475,7 +475,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYMSG, "msgBuildQueryMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYMSG, "msgBuildQueryMsg" )
 INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           SINT64 numToSkip, SINT64 numToReturn,
@@ -573,7 +573,7 @@ error :
    goto done ;
 }
 
-//PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTQUERY, "msgExtractQuery" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTQUERY, "msgExtractQuery" )
 INT32 msgExtractQuery  ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          SINT64 *numToSkip, SINT64 *numToReturn,
                          CHAR **ppQuery, CHAR **ppFieldSelector,
@@ -694,7 +694,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDGETMOREMSG, "msgBuildGetMoreMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDGETMOREMSG, "msgBuildGetMoreMsg" )
 INT32 msgBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                            SINT32 numToReturn,
                            SINT64 contextID, UINT64 reqID )
@@ -738,7 +738,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTGETMORE, "msgExtractGetMore" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTGETMORE, "msgExtractGetMore" )
 INT32 msgExtractGetMore  ( CHAR *pBuffer,
                            SINT32 *numToReturn, SINT64 *contextID )
 {
@@ -753,7 +753,7 @@ INT32 msgExtractGetMore  ( CHAR *pBuffer,
    return SDB_OK ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGFILLGETMOREMSG, "msgFillGetMoreMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGFILLGETMOREMSG, "msgFillGetMoreMsg" )
 void msgFillGetMoreMsg ( MsgOpGetMore &getMoreMsg, const UINT32 tid,
                         const SINT64 contextID, const SINT32 numToReturn,
                         const UINT64 reqID )
@@ -769,7 +769,7 @@ void msgFillGetMoreMsg ( MsgOpGetMore &getMoreMsg, const UINT32 tid,
    PD_TRACE_EXIT ( SDB_MSGFILLGETMOREMSG );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDELMSG, "msgBuildDeleteMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDELMSG, "msgBuildDeleteMsg" )
 INT32 msgBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, SINT32 flag, UINT64 reqID,
                           const BSONObj *deletor,
@@ -848,7 +848,7 @@ error :
 
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTDEL, "msgExtractDelete" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTDEL, "msgExtractDelete" )
 INT32 msgExtractDelete ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppDeletor, CHAR **ppHint )
 {
@@ -899,7 +899,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDKILLCONTXMSG, "msgBuildKillContextsMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDKILLCONTXMSG, "msgBuildKillContextsMsg" )
 INT32 msgBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                UINT64 reqID,
                                SINT32 numContexts, SINT64 *pContextIDs )
@@ -947,7 +947,7 @@ error :
 
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTKILLCONTX, "msgExtractKillContexts" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTKILLCONTX, "msgExtractKillContexts" )
 INT32 msgExtractKillContexts ( CHAR *pBuffer,
                               SINT32 *numContexts, SINT64 **ppContextIDs )
 {
@@ -973,7 +973,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDMSGMSG, "msgBuildMsgMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDMSGMSG, "msgBuildMsgMsg" )
 INT32 msgBuildMsgMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                        UINT64 reqID, CHAR *pMsgStr )
 {
@@ -1017,7 +1017,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTMSG, "msgExtractMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTMSG, "msgExtractMsg" )
 INT32 msgExtractMsg ( CHAR *pBuffer, CHAR **ppMsgStr )
 {
    SDB_ASSERT ( pBuffer && ppMsgStr, "Invalid input" )
@@ -1039,7 +1039,7 @@ error :
 }
 // max 16MB delta increment
 #define MSG_MAX_DELTA_BUFFER_SZ 16777216
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSG, "msgBuildReplyMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSG, "msgBuildReplyMsg" )
 INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
                          SINT32 flag, SINT64 contextID, SINT32 startFrom,
                          SINT32 numReturned, UINT64 reqID,
@@ -1088,7 +1088,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSG2, "msgBuildReplyMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSG2, "msgBuildReplyMsg" )
 INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
                          SINT32 flag, SINT64 contextID, SINT32 startFrom,
                          SINT32 numReturned, UINT64 reqID,
@@ -1140,7 +1140,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREPLY, "msgExtractReply" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTREPLY, "msgExtractReply" )
 INT32 msgExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
                         SINT32 *startFrom, SINT32 *numReturned,
                         vector<BSONObj> &objList )
@@ -1173,7 +1173,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDISCONNMSG, "msgBuildDisconnectMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDISCONNMSG, "msgBuildDisconnectMsg" )
 INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                               UINT64 reqID )
 {
@@ -1210,7 +1210,7 @@ error :
 }
 
 // create reply header ONLY, note packet length is the header + data
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSGHD, "msgBuildReplyMsgHeader" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDREPLYMSGHD, "msgBuildReplyMsgHeader" )
 void msgBuildReplyMsgHeader ( MsgOpReply &replyHeader, SINT32 packetLength,
                               INT32 opCode, SINT32 flag, SINT64 contextID, 
                               SINT32 startFrom, SINT32 numReturned, 
@@ -1229,7 +1229,7 @@ void msgBuildReplyMsgHeader ( MsgOpReply &replyHeader, SINT32 packetLength,
    PD_TRACE_EXIT ( SDB_MSGBLDREPLYMSGHD );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDISCONNMSG2, "msgBuildDisconnectMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDISCONNMSG2, "msgBuildDisconnectMsg" )
 void msgBuildDisconnectMsg ( MsgOpDisconnect &disconnectHeader,
                              MsgRouteID &routeID, UINT64 reqID )
 {
@@ -1242,7 +1242,7 @@ void msgBuildDisconnectMsg ( MsgOpDisconnect &disconnectHeader,
    PD_TRACE_EXIT ( SDB_MSGBLDDISCONNMSG2 );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYCATREQMSG, "msgBuildQueryCatalogReqMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYCATREQMSG, "msgBuildQueryCatalogReqMsg" )
 INT32 msgBuildQueryCatalogReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
                               SINT32 flag, UINT64 reqID, SINT64 numToSkip,
                               SINT64 numToReturn, UINT32 TID,
@@ -1268,7 +1268,7 @@ INT32 msgBuildQueryCatalogReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
    return rc;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYSPCREQMSG, "msgBuildQuerySpaceReqMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDQRYSPCREQMSG, "msgBuildQuerySpaceReqMsg" )
 INT32 msgBuildQuerySpaceReqMsg ( CHAR **ppBuffer, INT32 *pBufferSize,
                               SINT32 flag, UINT64 reqID, SINT64 numToSkip,
                               SINT64 numToReturn, UINT32 TID,
@@ -1303,7 +1303,7 @@ INT32 msgExtractQueryCatalogMsg ( CHAR *pBuffer, INT32 *pFlag, SINT64 *pNumToSki
                            ppQuery, ppFieldSelector, ppOrderBy, ppHint );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_EXTRACTRC, "extractRC" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_EXTRACTRC, "extractRC" )
 INT32 extractRC ( BSONObj &obj )
 {
    INT32 rc = SDB_OK ;
@@ -1323,7 +1323,7 @@ error :
 }
 
 // cluster manager
-PD_TRACE_DECLARE_FUNCTION (SDB_MSGBLDCMREQ, "msgBuildCMRequest" )
+// PD_TRACE_DECLARE_FUNCTION (SDB_MSGBLDCMREQ, "msgBuildCMRequest" )
 INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize, SINT32 remoCode,
                           const BSONObj *arg1,
                           const BSONObj *arg2,
@@ -1396,7 +1396,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTCMREQ, "msgExtractCMRequest" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTCMREQ, "msgExtractCMRequest" )
 INT32 msgExtractCMRequest ( CHAR *pBuffer, SINT32 *remoCode,
                             CHAR **arg1, CHAR **arg2,
                             CHAR **arg3, CHAR **arg4 )
@@ -1471,7 +1471,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPINXMSG, "msgBuildDropIndexMsg" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBLDDROPINXMSG, "msgBuildDropIndexMsg" )
 INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, const CHAR *IndexName,
                           UINT64 reqID )
@@ -1578,7 +1578,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSQL, "msgExtractSql" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSQL, "msgExtractSql" )
 INT32 msgExtractSql( CHAR *pBuffer, CHAR **sql )
 {
    SDB_ASSERT( NULL != pBuffer, "invalid pBuffer" )
@@ -1721,7 +1721,7 @@ error:
    goto done;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSYSINFOREQUEST, "msgBuildSysInfoRequest" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSYSINFOREQUEST, "msgBuildSysInfoRequest" )
 INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize )
 {
    SDB_ASSERT( NULL != ppBuffer &&
@@ -1742,7 +1742,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSYSINFOREQUEST, "msgExtractSysInfoRequest" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSYSINFOREQUEST, "msgExtractSysInfoRequest" )
 INT32 msgExtractSysInfoRequest ( CHAR *pBuffer, BOOLEAN &endianConvert )
 {
    SDB_ASSERT ( NULL != pBuffer, "invalid pBuffer" )
@@ -1772,7 +1772,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSYSINFOREPLY, "msgBuildSysInfoReply" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGBUILDSYSINFOREPLY, "msgBuildSysInfoReply" )
 INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize )
 {
    SDB_ASSERT ( NULL != ppBuffer &&
@@ -1794,7 +1794,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSYSINFOREPLY, "msgExtractSysInfoReply" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSYSINFOREPLY, "msgExtractSysInfoReply" )
 INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
                                INT32 *osType )
 {
@@ -1831,7 +1831,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTAGGRREQ, "msgExtractAggrRequest" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTAGGRREQ, "msgExtractAggrRequest" )
 INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
                               CHAR **ppObjs, INT32 &count )
 {
