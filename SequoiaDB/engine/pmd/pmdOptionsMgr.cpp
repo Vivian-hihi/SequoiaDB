@@ -79,7 +79,7 @@ namespace engine
    #define PMD_DEFAULT_SORTBUF_SZ      (512)
    #define PMD_DEFAULT_HJ_SZ           (128)
    #define PMD_MIN_HJ_SZ               (64)
-   #define PMD_DEFAULT_MAX_REPLSYNC    (2)
+   #define PMD_DEFAULT_MAX_REPLSYNC    (10)
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
 
    /*
