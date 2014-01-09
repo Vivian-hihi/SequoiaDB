@@ -105,7 +105,7 @@ namespace engine
       _write = NULL;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSMSGBLK_EXTEND, "_dpsMessageBlock::extend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSMSGBLK_EXTEND, "_dpsMessageBlock::extend" )
    INT32 _dpsMessageBlock::extend( UINT32 len )
    {
       INT32 rc = SDB_OK ;
@@ -120,9 +120,8 @@ namespace engine
       CHAR *pNewAddr = ( CHAR * )SDB_OSS_REALLOC( _start, _size + len + 1 ) ;
       if ( !pNewAddr )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to reallocate memory for %d bytes",
-                 _size + len + 1 ) ;
+         PD_LOG ( PDERROR, "Failed to reallocate memory for %d bytes",
+                  _size + len + 1 ) ;
          rc = SDB_OOM ;
          goto error;
       }
