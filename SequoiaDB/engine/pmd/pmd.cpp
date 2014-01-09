@@ -105,12 +105,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SAFE_NEW_GOTO_ERROR( _clsCB, clsCB ) ;
       SAFE_NEW_GOTO_ERROR( _dpsTransCB, dpsTransCB ) ;
       SAFE_NEW_GOTO_ERROR( _dpscb, SDB_DPSCB ) ;
       SAFE_NEW_GOTO_ERROR( _dmscb, SDB_DMSCB ) ;
       SAFE_NEW_GOTO_ERROR( _rtncb, SDB_RTNCB ) ;
       SAFE_NEW_GOTO_ERROR( _bpscb, SDB_BPSCB ) ;
+      SAFE_NEW_GOTO_ERROR( _clsCB, clsCB ) ;
       SAFE_NEW_GOTO_ERROR( _catlogueCB, sdbCatalogueCB ) ;
       SAFE_NEW_GOTO_ERROR( _coordcb, CoordCB ) ;
       SAFE_NEW_GOTO_ERROR( _sql, SQL_CB ) ;
