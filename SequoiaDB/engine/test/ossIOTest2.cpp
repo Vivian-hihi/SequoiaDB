@@ -112,7 +112,7 @@ int main ( int argc, char **argv )
       
       ossClose( file );
       
-      rc == ossDelete ( fileName );
+      rc = ossDelete ( fileName );
       if ( rc )
       {
          printf("failed to delete file %s, rc = %d\n", fileName, rc);
@@ -204,7 +204,7 @@ int main ( int argc, char **argv )
       rc = ossGetFileSizeByName ( fileSZName, &fileSZ ) ;
       if ( !rc )
       {	
-         printf(" %s  size :  %ld bytes\n", fileSZName, fileSZ); 
+         printf(" %s  size :  %lld bytes\n", fileSZName, fileSZ); 
       }
       else
       {
