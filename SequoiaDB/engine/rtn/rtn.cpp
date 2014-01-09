@@ -175,13 +175,19 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNREALLOCBUFF );
       if ( newLength > *bufferSize )
       {
+         CHAR *pOrgBuff = *ppBuffer ;
          newLength = ossRoundUpToMultipleX ( newLength, alignmentSize ) ;
          PD_CHECK ( newLength >= 0, SDB_INVALIDARG, error, PDERROR,
                     "new buffer overflow" ) ;
          *ppBuffer = (CHAR*)SDB_OSS_REALLOC ( *ppBuffer,
                                               sizeof(CHAR)*(newLength) ) ;
-         PD_CHECK ( ppBuffer, SDB_OOM, error, PDERROR,
-                    "Failed to allocate %d bytes reply buffer", newLength ) ;
+         if ( !*ppBuffer )
+         {
+            PD_LOG( PDERROR, "Failed to realloc %d bytes memory", newLength ) ;
+            *ppBuffer = pOrgBuff ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
          *bufferSize = newLength ;
       }
 
