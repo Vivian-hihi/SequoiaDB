@@ -136,12 +136,14 @@ INT32 formatLog ( SINT32 logID )
    pCur = pBuffer ;
    if ( DPS_LOG_HEAD_LEN * LOG_BUFFER_FORMAT_MULTIPLIER > outputBufferSz )
    {
+      CHAR *pOrgBuff = pOutputBuffer ;
       pOutputBuffer = (CHAR*)SDB_OSS_REALLOC
             ( pOutputBuffer, DPS_LOG_HEAD_LEN * LOG_BUFFER_FORMAT_MULTIPLIER ) ;
       if ( !pOutputBuffer )
       {
          printf ( "Failed to allocate memory for %d bytes\n",
                   DPS_LOG_HEAD_LEN * LOG_BUFFER_FORMAT_MULTIPLIER ) ;
+         pOutputBuffer = pOrgBuff ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -177,6 +179,7 @@ INT32 formatLog ( SINT32 logID )
       if ( record.head()._length * LOG_BUFFER_FORMAT_MULTIPLIER >
            outputBufferSz )
       {
+         CHAR *pOrgBuff = pOutputBuffer ;
          pOutputBuffer = (CHAR*)SDB_OSS_REALLOC
                ( pOutputBuffer,
                  record.head()._length * LOG_BUFFER_FORMAT_MULTIPLIER ) ;
@@ -185,6 +188,7 @@ INT32 formatLog ( SINT32 logID )
             printf ( "Failed to allocate memory for %d bytes\n",
                      ( record.head()._length *
                        LOG_BUFFER_FORMAT_MULTIPLIER ) ) ;
+            pOutputBuffer = pOrgBuff ;
             rc = SDB_OOM ;
             goto error ;
          }
