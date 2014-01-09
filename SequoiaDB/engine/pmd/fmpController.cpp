@@ -413,10 +413,12 @@ INT32 _fmpController::_readMsg( BSONObj &msg )
    INT32 rc = SDB_OK ;
    if ( _inBufSize < sizeof(UINT32) )
    {
+      CHAR *pOldBuff = _inBuf ;
       _inBuf = (CHAR *)SDB_OSS_REALLOC(_inBuf, sizeof(SINT32)) ;
       if ( NULL == _inBuf )
       {
          PD_LOG( PDERROR, "failed to allocate mem" ) ;
+         _inBuf = pOldBuff ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -432,10 +434,12 @@ INT32 _fmpController::_readMsg( BSONObj &msg )
 
    if ( _inBufSize < *((UINT32 *)_inBuf) )
    {
+      CHAR *pOldBuff = _inBuf ;
       _inBuf = (CHAR *)SDB_OSS_REALLOC(_inBuf, *((SINT32 *)_inBuf)) ;
       if ( NULL == _inBuf )
       {
          PD_LOG( PDERROR, "failed to allocate mem" ) ;
+         _inBuf = pOldBuff ;
          rc = SDB_OOM ;
          goto error ;
       }
