@@ -182,7 +182,7 @@ namespace engine
       msg.header.header.routeID = req->header.routeID ;
       msg.header.header.requestID = req->header.requestID ;
       msg.packet = req->packet ;
-      msg.type = req->type ;
+      msg.type = _dataType ;
 
       if ( CLS_FS_NOTIFY_TYPE_DOC == _dataType )
       {
