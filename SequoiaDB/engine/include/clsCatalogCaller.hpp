@@ -45,7 +45,6 @@ using namespace std ;
 namespace engine
 {
    class _netRouteAgent ;
-   class _clsMgr ;
 
    struct _clsCataCallerMeta
    {
@@ -90,7 +89,7 @@ namespace engine
 
    private:
       callerMeta _meta ;
-      _clsMgr *_cMgr ;
+
    } ;
 
    typedef class _clsCatalogCaller clsCatalogCaller ;
