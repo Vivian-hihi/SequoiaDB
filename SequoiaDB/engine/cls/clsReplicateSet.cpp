@@ -77,10 +77,6 @@ namespace engine
                                     _active( FALSE ),
                                     _replStatus( CLS_BS_NORMAL )
    {
-      _logger = pmdGetKRCB()->getDPSCB() ;
-      _clsCB = pmdGetKRCB()->getClsCB() ;
-      SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
-
       _srcSessionNum = 0 ;
       _prevPrimary = FALSE ;
    }
@@ -164,6 +160,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSET_INIT );
+
+      _logger = pmdGetKRCB()->getDPSCB() ;
+      _clsCB = pmdGetKRCB()->getClsCB() ;
+      SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
 
       rc = _replBucket.init() ;
       PD_RC_CHECK( rc, PDERROR, "Init repl bucket failed, rc: %d", rc ) ;
