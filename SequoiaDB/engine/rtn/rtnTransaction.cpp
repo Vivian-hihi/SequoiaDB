@@ -11,7 +11,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSBEGIN, "rtnTransBegin" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSBEGIN, "rtnTransBegin" )
    INT32 rtnTransBegin( _pmdEDUCB * cb )
    {
       PD_TRACE_ENTRY ( SDB_RTNTRANSBEGIN ) ;
@@ -35,7 +35,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSCOMMIT, "rtnTransCommit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSCOMMIT, "rtnTransCommit" )
    INT32 rtnTransCommit( _pmdEDUCB * cb, SDB_DPSCB *dpsCB )
    {
       PD_TRACE_ENTRY ( SDB_RTNTRANSCOMMIT ) ;
@@ -111,7 +111,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSROLLBACK, "rtnTransRollback" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSROLLBACK, "rtnTransRollback" )
    INT32 rtnTransRollback( _pmdEDUCB * cb, SDB_DPSCB *dpsCB )
    {
       PD_TRACE_ENTRY ( SDB_RTNTRANSROLLBACK ) ;
