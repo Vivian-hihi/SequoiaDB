@@ -141,11 +141,13 @@ namespace engine
       INT32 _allocate( UINT32 size )
       {
          INT32 rc = SDB_OK ;
-         _root = ( T * )SDB_OSS_REALLOC
-                 ( _root, sizeof(T) * ( size + _spcSize ) ) ;
+         T *pOld = _root ;
+         _root = ( T * )SDB_OSS_REALLOC( _root,
+                                         sizeof(T) * ( size + _spcSize ) ) ;
          if ( NULL == _root )
          {
             PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            _root = pOld ;
             rc = SDB_OOM ;
             goto error ;
          }
