@@ -101,8 +101,11 @@ namespace engine
 
       _createdObjs = TRUE ;
 
+   done:
+      return ;
    error:
       _createdObjs = FALSE ;
+      goto done ;
    }
 
    _clsMgr::~_clsMgr ()
