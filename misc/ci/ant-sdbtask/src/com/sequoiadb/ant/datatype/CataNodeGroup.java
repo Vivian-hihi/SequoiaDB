@@ -46,9 +46,17 @@ public class CataNodeGroup extends NodeGroup {
 				//Map< String , String > map = new LinkedHashMap< String , String >() ;
 				//map.put("SharingBreak", "10000") ;
 				// create group
+				System.out.println("create Catalog master node , info is :");
+				System.out.println("nodeInfo.getHost() = "+ nodeInfo.getHost()+",\n"
+				+ "nodeInfo.getBasePort() = "+ nodeInfo.getBasePort()+",\n"
+				+ "nodeInfo.getDbpath() = " + nodeInfo.getDbpath()+",\n"
+				+ "nodeInfo.getConfigMap() = " +nodeInfo.getConfigMap());
+				
 				sdb.createReplicaCataGroup(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 						nodeInfo.getConfigMap() );
+				
+				
 				/*chen write , here seem have propore
 				ReplicaGroup cataRG = sdb.getReplicaGroup( CATALOG_GROUP_NAME ) ;
 				ReplicaNode cataNode = cataRG.createNode( nodeInfo.getHost() , 
