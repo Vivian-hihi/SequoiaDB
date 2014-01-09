@@ -290,11 +290,12 @@ INT32 _migParser::_reallocReadBuf ( UINT32 requiredSize )
    {
       UINT32 diff = _bufParsed () ;
       // if we need more memory, try to realloc
+      CHAR *pOld = _pReadBuffer ;
       _pReadBuffer = (CHAR*)SDB_OSS_REALLOC ( _pReadBuffer, requiredSize ) ;
       if ( !_pReadBuffer )
       {
          rc = SDB_OOM ;
-         _bufSize = 0 ;
+         _pReadBuffer = pOld ;
          goto error ;
       }
       _pCurPtr = _pReadBuffer + diff ;
@@ -324,11 +325,12 @@ INT32 _migParser::_reallocJsonBuf ( UINT32 requiredSize )
    {
       UINT32 diff = _jsonBufOccupied () ;
       // if we need more memory, try to realloc
+      CHAR *pOld = _pJsonBuffer ;
       _pJsonBuffer = (CHAR*)SDB_OSS_REALLOC ( _pJsonBuffer, requiredSize ) ;
       if ( !_pJsonBuffer )
       {
          rc = SDB_OOM ;
-         _jsonSize = 0 ;
+         _pJsonBuffer = pOld ;
          goto error ;
       }
       _pJsonCurPtr = _pJsonBuffer + diff ;

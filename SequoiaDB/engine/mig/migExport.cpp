@@ -70,7 +70,7 @@ _migExtractor::~_migExtractor()
 }
 
 // format hex string to delimiter
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__HEXSTR2DEL, "_migExtractor::_hexStrToDel" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__HEXSTR2DEL, "_migExtractor::_hexStrToDel" )
 BOOLEAN _migExtractor::_hexStrToDel ( const CHAR *pDelStr,
                                       CHAR &del )
 {
@@ -127,7 +127,7 @@ error :
 }
 
 // convert string to delimiter
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__STR2DEL, "_migExtractor::_strToDel" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__STR2DEL, "_migExtractor::_strToDel" )
 BOOLEAN _migExtractor::_strToDel ( const CHAR *pDelStr,
                                    CHAR &del )
 {
@@ -188,7 +188,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__REALLOCMEM, "_migExtractor::_reallocMem" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__REALLOCMEM, "_migExtractor::_reallocMem" )
 INT32 _migExtractor::_reallocMem ( UINT32 requiredSize )
 {
    INT32 rc = SDB_OK ;
@@ -204,17 +204,20 @@ INT32 _migExtractor::_reallocMem ( UINT32 requiredSize )
    if ( requiredSize > _bufSize )
    {
       ossValuePtr diff = _bufOccupied() ;
+      CHAR *pOld = _pExtractBuffer ;
       // if we need more memory, try to realloc
-      _pExtractBuffer = (CHAR*)SDB_OSS_REALLOC ( _pExtractBuffer, requiredSize ) ;
+      _pExtractBuffer = (CHAR*)SDB_OSS_REALLOC ( _pExtractBuffer,
+                                                 requiredSize ) ;
       if ( !_pExtractBuffer )
       {
          rc = SDB_OOM ;
-         _bufSize = 0 ;
+         _pExtractBuffer = pOld ;
          goto error ;
       }
       _pCurPtr = _pExtractBuffer + diff ;
       _bufSize = requiredSize ;
    }
+
 done :
    PD_TRACE_EXITRC ( SDB__MIGEXTR__REALLOCMEM, rc );
    return rc ;
@@ -222,7 +225,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__APPSTR, "_migExtractor::_appendStr" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__APPSTR, "_migExtractor::_appendStr" )
 INT32 _migExtractor::_appendStr ( const CHAR *pStr )
 {
    INT32 rc = SDB_OK ;
@@ -245,7 +248,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__FLHBUF, "_migExtractor::_flushBuf" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR__FLHBUF, "_migExtractor::_flushBuf" )
 INT32 _migExtractor::_flushBuf ()
 {
    INT32 rc = SDB_OK ;
@@ -273,7 +276,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR_RUN, "_migExtractor::run" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGEXTR_RUN, "_migExtractor::run" )
 INT32 _migExtractor::run ()
 {
    INT32 rc = SDB_OK ;
@@ -325,7 +328,7 @@ _migCSVExtractor::~_migCSVExtractor ()
    _fieldList.clear () ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGCSVEXTR_INIT, "_migCSVExtractor::init" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGCSVEXTR_INIT, "_migCSVExtractor::init" )
 INT32 _migCSVExtractor::init ( sdbCollectionHandle collection,
                                const CHAR *pOutputFile,
                                const CHAR *pDelChar,
@@ -483,7 +486,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGCSVEXTR__EXTRRCD, "_migCSVExtractor::_extractRecord" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGCSVEXTR__EXTRRCD, "_migCSVExtractor::_extractRecord" )
 INT32 _migCSVExtractor::_extractRecord ()
 {
    INT32 rc = SDB_OK ;
@@ -655,7 +658,7 @@ _migJSONExtractor::~_migJSONExtractor ()
    }
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONEXTR_INIT, "_migJSONExtractor::init" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONEXTR_INIT, "_migJSONExtractor::init" )
 INT32 _migJSONExtractor::init ( sdbCollectionHandle collection,
                                 const CHAR *pOutputFile,
                                 const CHAR *pDelRecord )
@@ -726,7 +729,7 @@ BOOLEAN _migJSONExtractor::_reallocateBuffer ( CHAR **pBuf, INT32 *bufSize )
    return TRUE ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONEXTR__EXTRRCD, "_migJSONExtractor::_extractRecord" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONEXTR__EXTRRCD, "_migJSONExtractor::_extractRecord" )
 INT32 _migJSONExtractor::_extractRecord ()
 {
    INT32 rc = SDB_OK ;
