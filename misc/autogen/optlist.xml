@@ -417,8 +417,8 @@
       <name>PMD_OPTION_MAX_REPL_SYNC</name>
       <long>maxreplsync</long>
       <description>
-         <en>maximum number of repl-sync, default:2, value range:[0, 200], 0:disable concurrent repl-sync</en>
-         <cn>日志同步最大并发数量，默认值:2,取值范围:[0,200], 0表示不启用日志并发同步</cn>
+         <en>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</en>
+         <cn>日志同步最大并发数量，默认值:10,取值范围:[0,200], 0表示不启用日志并发同步</cn>
       </description>
       <type>int</type>
       <default>2</default>
