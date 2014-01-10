@@ -310,7 +310,7 @@ namespace CLSMGR
          PD_LOG ( PDSEVERE, "Internal error" ) ;
       }
       PD_TRACE_EXITRC ( SDB_CMTCPLISTENER, rc ) ;
-      gSDBCMSTOP = TRUE ;
+      iPmdProc::stop();
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_STARTREMOTECMD, "startRemoteCommand" )
