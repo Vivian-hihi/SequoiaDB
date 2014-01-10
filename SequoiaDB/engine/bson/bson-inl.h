@@ -676,16 +676,16 @@ namespace bson {
             embeddedObject().toString(s, true, full);
             break;
         case Undefined:
-            s << "undefined";
+            s << "{\"$undefined\":1}";
             break;
         case jstNULL:
             s << "null";
             break;
         case MaxKey:
-            s << "MaxKey";
+            s << "{\"$maxKey\":1}";
             break;
         case MinKey:
-            s << "MinKey";
+            s << "{\"$minKey\":1}";
             break;
         case CodeWScope:
             s << "CodeWScope( "
