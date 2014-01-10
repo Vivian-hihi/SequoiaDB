@@ -273,7 +273,7 @@ function checkLocalEnv()
          path=${conf_array[${num}]}
          if [ -z "${path}" ]; then
             #如果路径空，那么采用默认路径
-            path="${host_array}/bin"
+            path="${host_array[1]}/bin"
          fi
          dbpath="${path}"
          #检查路径是否存在
