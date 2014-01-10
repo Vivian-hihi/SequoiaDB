@@ -774,16 +774,43 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDROPCL_DOIT ) ;
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
+      SDB_ASSERT( cb, "cb can't be null!");
+      SDB_ASSERT( rtnCB, "rtnCB can't be null!");
+      SDB_ASSERT( pContextID, "pContextID can't be null!");
+      *pContextID = -1;
+      if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
-         goto done ;
+         rtnContextDelCL *delContext = NULL;
+         rc = rtnCB->contextNew( RTN_CONTEXT_DELCL, (rtnContext **)&delContext,
+                              *pContextID, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to create context, drop collection failed(rc=%d)",
+                     rc );
+         rc = delContext->open( _collectionName, cb );
+         PD_RC_CHECK(rc, PDERROR,
+                     "failed to open context, drop collection failed(rc=%d)",
+                     rc );
       }
-      rc = rtnDropCollectionCommand ( _collectionName, cb, dmsCB, dpsCB ) ;
-      dmsCB->writeDown () ;
+      else
+      {
+         rc = dmsCB->writable ( cb ) ;
+         if ( rc )
+         {
+            goto done ;
+         }
+         rc = rtnDropCollectionCommand ( _collectionName, cb, dmsCB, dpsCB ) ;
+         dmsCB->writeDown () ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB__RTNDROPCL_DOIT, rc ) ;
       return rc ;
+   error:
+      if ( -1 != *pContextID )
+      {
+         rtnCB->contextDelete( *pContextID, cb );
+         *pContextID = -1;
+      }
+      goto done;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropCollectionspace)
@@ -791,7 +818,6 @@ namespace engine
    _rtnDropCollectionspace::_rtnDropCollectionspace ()
    :_spaceName ( NULL )
    {
-      _hasLocked = FALSE;
    }
 
    _rtnDropCollectionspace::~_rtnDropCollectionspace ()
@@ -837,17 +863,43 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNDROPCS_DOIT ) ;
-      rc = dmsCB->writable ( cb ) ;
-      if ( rc )
+      SDB_ASSERT( cb, "cb can't be null!");
+      SDB_ASSERT( rtnCB, "rtnCB can't be null!");
+      SDB_ASSERT( pContextID, "pContextID can't be null!");
+      *pContextID = -1;
+      if ( CMD_SPACE_SERVICE_SHARD == getFromService() )
       {
-         goto done ;
+         rtnContextDelCS *delContext = NULL;
+         rc = rtnCB->contextNew( RTN_CONTEXT_DELCS, (rtnContext **)&delContext,
+                              *pContextID, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to create context, drop cs failed(rc=%d)",
+                     rc );
+         rc = delContext->open( _spaceName, cb );
+         PD_RC_CHECK(rc, PDERROR,
+                     "failed to open context, drop cs failed(rc=%d)",
+                     rc );
       }
-      rc = rtnDropCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB,
-                                          _hasLocked ) ;
-      dmsCB->writeDown () ;
+      else
+      {
+         rc = dmsCB->writable ( cb ) ;
+         if ( rc )
+         {
+            goto done ;
+         }
+         rc = rtnDropCollectionSpaceCommand ( _spaceName, cb, dmsCB, dpsCB ) ;
+         dmsCB->writeDown () ;
+      }
    done :
       PD_TRACE_EXITRC ( SDB__RTNDROPCS_DOIT, rc ) ;
       return rc ;
+   error :
+      if ( -1 != *pContextID )
+      {
+         rtnCB->contextDelete( *pContextID, cb );
+         *pContextID = -1;
+      }
+      goto done;
    }
 
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropIndex)

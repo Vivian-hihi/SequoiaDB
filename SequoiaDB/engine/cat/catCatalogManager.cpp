@@ -366,7 +366,7 @@ namespace engine
       }
 
       rc = catRemoveCLEx( strName, _pEduCB, _pDmsCB, _pDpsCB,
-                          _majoritySize() ) ;
+                          _majoritySize(), TRUE ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to drop collection %s from catalog, "
                     "rc = %d", strName, rc ) ;
 

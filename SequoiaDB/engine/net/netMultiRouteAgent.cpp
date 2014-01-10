@@ -34,6 +34,7 @@ namespace engine
       CoordSession *pSession = NULL;
       if ( pEduCB )
       {
+         pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
          SDB_ASSERT( pSession, "pSession can't be NULL!" );
          pSession->addSubSessionWithoutCheck( id );
@@ -76,6 +77,7 @@ namespace engine
       CoordSession *pSession = NULL;
       if ( pEduCB )
       {
+         pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
          SDB_ASSERT( pSession, "pSession can't be NULL!" );
          rc = pSession->addSubSession( id );
@@ -128,6 +130,7 @@ namespace engine
       CoordSession *pSession = NULL;
       if ( pEduCB )
       {
+         pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
          SDB_ASSERT( pSession, "pSession can't be NULL!" );
          rc = pSession->addSubSession( id );

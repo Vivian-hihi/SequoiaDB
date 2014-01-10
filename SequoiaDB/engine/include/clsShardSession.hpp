@@ -169,6 +169,10 @@ namespace engine
                                    INT16 w,
                                    SINT64 &contextID );
 
+         INT32 _dropMainCL( const CHAR *pCollection,
+                           INT16 w,
+                           SINT64 &contextID );
+
          INT32 _getSubCLList( const BSONObj &matcher,
                               const CHAR *pCollectionName,
                               BSONObj &boNewMatcher,
@@ -187,7 +191,6 @@ namespace engine
          const CHAR             *_pCollectionName ;
 
          ossTimestamp           _lastRecvTime ;
-         dmsStorageUnitID       _WLockedCS ;
    };
 
 }

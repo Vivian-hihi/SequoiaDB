@@ -307,9 +307,8 @@ namespace engine
             }
             while ( TRUE )
             {
-               BOOLEAN hasLocked = FALSE;
                rc = rtnDropCollectionSpaceCommand( cs, eduCB, _dmsCB, _dpsCB,
-                                                   hasLocked, TRUE ) ;
+                                                   TRUE ) ;
                if ( SDB_LOCK_FAILED == rc )
                {
                   ossSleep ( 100 ) ;
@@ -580,10 +579,8 @@ namespace engine
             {
                goto error ;
             }
-            BOOLEAN hasLocked = FALSE;
             rc = rtnDropCollectionSpaceCommand( cs, eduCB, _dmsCB,
-                                                _dpsCB, hasLocked,
-                                                TRUE ) ;
+                                                _dpsCB, TRUE ) ;
             if ( SDB_DMS_CS_NOTEXIST == rc )
             {
                rc = SDB_OK ;

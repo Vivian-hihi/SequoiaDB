@@ -302,8 +302,25 @@ namespace engine
                                          _pmdEDUCB *cb,
                                          SDB_DMSCB *dmsCB,
                                          SDB_DPSCB *dpsCB,
-                                         BOOLEAN &hasLocked,
                                          BOOLEAN   sysCall = FALSE ) ;
+
+   INT32 rtnDropCollectionSpaceP1 ( const CHAR *pCollectionSpace,
+                                    _pmdEDUCB *cb,
+                                    SDB_DMSCB *dmsCB,
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN   sysCall = FALSE );
+
+   INT32 rtnDropCollectionSpaceP2 ( const CHAR *pCollectionSpace,
+                                    _pmdEDUCB *cb,
+                                    SDB_DMSCB *dmsCB,
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN   sysCall = FALSE );
+
+   INT32 rtnDropCollectionSpaceP1Cancel ( const CHAR *pCollectionSpace,
+                                    _pmdEDUCB *cb,
+                                    SDB_DMSCB *dmsCB,
+                                    SDB_DPSCB *dpsCB,
+                                    BOOLEAN   sysCall = FALSE );
 
    INT32 rtnDropIndexCommand ( const CHAR *pCollection,
                                BSONElement &identifier,

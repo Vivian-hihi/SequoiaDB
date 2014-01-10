@@ -112,6 +112,18 @@ namespace engine
                (*context) = SDB_OSS_NEW rtnContextQgmSort( _contextHWM,
                                                             pEDUCB->getID() ) ;
                break ;
+            case RTN_CONTEXT_DELCS :
+               (*context) = SDB_OSS_NEW rtnContextDelCS( _contextHWM,
+                                                            pEDUCB->getID() ) ;
+               break;
+            case RTN_CONTEXT_DELCL :
+               (*context) = SDB_OSS_NEW rtnContextDelCL( _contextHWM,
+                                                            pEDUCB->getID() ) ;
+               break;
+            case RTN_CONTEXT_DELMAINCL :
+               (*context) = SDB_OSS_NEW rtnContextDelMainCL( _contextHWM,
+                                                            pEDUCB->getID() ) ;
+               break;
             default :
                PD_LOG( PDERROR, "Unknow context type: %d", type ) ;
                return SDB_SYS ;

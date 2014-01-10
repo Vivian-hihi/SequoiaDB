@@ -113,6 +113,7 @@ namespace engine
       } ;
       std::map<const CHAR*, dmsStorageUnitID, cmp_cscb> _cscbNameMap ;
       std::vector<SDB_DMS_CSCB*>          _cscbVec ;
+      std::vector<SDB_DMS_CSCB*>          _delCscbVec ;
       std::vector<ossRWMutex*>            _latchVec ;
       std::vector<dmsStorageUnitID>       _freeList ;
 
@@ -129,7 +130,8 @@ namespace engine
       INT32 _CSCBNameInsert ( const CHAR *pName, UINT32 topSequence,
                               _dmsStorageUnit *su,
                               dmsStorageUnitID &suID ) ;
-      SDB_DMS_CSCB *_CSCBNameLookup ( const CHAR *pName ) ;
+      INT32 _CSCBNameLookup ( const CHAR *pName,
+                              SDB_DMS_CSCB **cscb ) ;
       INT32 _CSCBNameLookupAndLock ( const CHAR *pName,
                                      dmsStorageUnitID &suID,
                                      SDB_DMS_CSCB **cscb,
@@ -138,8 +140,17 @@ namespace engine
       void _CSCBRelease ( dmsStorageUnitID suID,
                           OSS_LATCH_MODE lockType = SHARED ) ;
       INT32 _CSCBNameRemove ( const CHAR *pName, _pmdEDUCB *cb,
-                              SDB_DPSCB *dpsCB, SDB_DMS_CSCB *&pCSCB,
-                              BOOLEAN &hasLocked ) ;
+                              SDB_DPSCB *dpsCB, SDB_DMS_CSCB *&pCSCB ) ;
+      INT32 _CSCBNameRemoveP1 ( const CHAR *pName,
+                              _pmdEDUCB *cb,
+                              SDB_DPSCB *dpsCB );
+      INT32 _CSCBNameRemoveP1Cancel ( const CHAR *pName,
+                                    _pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB );
+      INT32 _CSCBNameRemoveP2 ( const CHAR *pName,
+                              _pmdEDUCB *cb,
+                              SDB_DPSCB *dpsCB,
+                              SDB_DMS_CSCB *&pCSCB );
       void _CSCBNameMapCleanup () ;
 
    public:
@@ -152,6 +163,7 @@ namespace engine
          for ( UINT32 i = 0 ; i<DMS_MAX_CS_NUM ; ++i )
          {
             _cscbVec.push_back ( NULL ) ;
+            _delCscbVec.push_back ( NULL ) ;
             // free in desctructor
             _latchVec.push_back ( new(std::nothrow) ossRWMutex() ) ;
             _freeList.push_back ( i ) ;
@@ -174,7 +186,6 @@ namespace engine
                               _dmsStorageUnit **su,
                               OSS_LATCH_MODE lockType = SHARED,
                               INT32 millisec = -1 ) ;
-      _dmsStorageUnit *nameToSU ( const CHAR *pName );
 
       _dmsStorageUnit *suLock ( dmsStorageUnitID suID ) ;
       void suUnlock ( dmsStorageUnitID suID,
@@ -184,7 +195,7 @@ namespace engine
                                  _dmsStorageUnit *su, _pmdEDUCB *cb,
                                  SDB_DPSCB *dpsCB ) ;
       INT32 dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
-                                  SDB_DPSCB *dpsCB, BOOLEAN &hasLocked ) ;
+                                  SDB_DPSCB *dpsCB ) ;
 
       void dumpInfo ( std::set<monCollection> &collectionList,
                       BOOLEAN sys = FALSE ) ;
@@ -194,6 +205,15 @@ namespace engine
                       BOOLEAN sys = FALSE ) ;
 
       dmsTempCB *getTempCB () ;
+
+      INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB );
+
+      INT32 dropCollectionSpaceP1Cancel ( const CHAR *pName, _pmdEDUCB *cb,
+                                          SDB_DPSCB *dpsCB );
+
+      INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
+                                    SDB_DPSCB *dpsCB );
 
    public:
       typedef std::vector<SDB_DMS_CSCB*>::iterator CSCB_ITERATOR;

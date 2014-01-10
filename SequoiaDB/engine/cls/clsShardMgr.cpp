@@ -448,9 +448,8 @@ namespace engine
       while ( it != csList.end() )
       {
          const _monCollectionSpace &cs = *it ;
-         BOOLEAN hasLocked = FALSE;
          rc = rtnDropCollectionSpaceCommand ( cs._name, NULL, dmsCB, NULL,
-                                              hasLocked, TRUE ) ;
+                                              TRUE ) ;
          if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
          {
             PD_LOG ( PDERROR, "Clear collectionspace[%s] failed[rc:%d]",

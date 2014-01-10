@@ -27,13 +27,16 @@ namespace engine
                                               netMultiRouteAgent *pRouteAgent,
                                               pmdEDUCB *cb,
                                               rtnContextCoord *pContext,
-                                              BOOLEAN sendToPrimary )
+                                              BOOLEAN sendToPrimary,
+                                              std::set<INT32> *ignoreRCList )
    {
       INT32 rc = SDB_OK;
       INT32 rcTmp = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOQUERY_QUERYTODNGROUP ) ;
       BOOLEAN isNeedRetry = FALSE;
       BOOLEAN hasRetry = FALSE;
+      MsgHeader *pHead = (MsgHeader *)pBuffer;
+      SINT32 resCode = MAKE_REPLY_TYPE(pHead->opCode);
 
       do
       {
@@ -56,7 +59,7 @@ namespace engine
          }
 
          REPLY_QUE replyQue;
-         rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue, MSG_BS_QUERY_RES ) ;
+         rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue, resCode ) ;
          if ( rcTmp != SDB_OK )
          {
             // received interrupt
@@ -78,7 +81,9 @@ namespace engine
 
             if ( rcTmp != SDB_OK )
             {
-               if ( SDB_DMS_EOC == rcTmp )
+               if ( SDB_DMS_EOC == rcTmp
+                  || ( ignoreRCList != NULL
+                        && ignoreRCList->find( rcTmp ) != ignoreRCList->end() ) )
                {
                   sendGroupLst[ groupID ] = groupID;
                   groupLst.erase( groupID );
@@ -87,11 +92,23 @@ namespace engine
                else
                {
                   cb->getCoordSession()->removeLastNode( groupID );
-                  if ( SDB_CLS_FULL_SYNC == rcTmp && !hasRetry )
+                  if ( !hasRetry && ( SDB_CLS_FULL_SYNC == rcTmp
+                     || ( SDB_CLS_NOT_PRIMARY == rcTmp && sendToPrimary ) ) )
                   {
                      CoordGroupInfoPtr groupInfoTmp ;
                      rcTmp = rtnCoordGetGroupInfo( cb, groupID, TRUE,
                                                    groupInfoTmp );
+                     if ( rcTmp )
+                     {
+                        PD_LOG ( PDERROR,
+                                 "failed to update group info(groupID=%u, rc=%d)",
+                                 pReply->header.routeID.columns.groupID,
+                                 rcTmp );
+                        if ( SDB_OK == rc )
+                        {
+                           rc = rcTmp;
+                        }
+                     }
                      isNeedRetry = TRUE ;
                   }
                }

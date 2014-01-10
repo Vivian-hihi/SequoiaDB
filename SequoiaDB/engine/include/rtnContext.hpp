@@ -51,6 +51,7 @@
 #include "msg.h"
 #include "ossAtomic.hpp"
 #include "../bson/bsonobj.h"
+#include "dmsCB.hpp"
 
 #include <map>
 
@@ -218,6 +219,9 @@ namespace engine
       RTN_CONTEXT_MAINCL,
       RTN_CONTEXT_SORT,
       RTN_CONTEXT_QGMSORT,
+      RTN_CONTEXT_DELCS,
+      RTN_CONTEXT_DELCL,
+      RTN_CONTEXT_DELMAINCL
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
@@ -626,7 +630,8 @@ namespace engine
    class _rtnContextCoord : public _rtnContextBase
    {
       public:
-         _rtnContextCoord ( INT64 contextID, UINT64 eduID ) ;
+         _rtnContextCoord ( INT64 contextID, UINT64 eduID,
+                           BOOLEAN preRead = TRUE ) ;
          virtual ~_rtnContextCoord () ;
 
          INT32    addSubContext ( MsgRouteID &routeID, SINT64 contextID ) ;
@@ -675,6 +680,7 @@ namespace engine
 
          coordOrderKey              _emptyKey ;
          BSONObj                    _orderBy ;
+         BOOLEAN                    _preRead;
 
    } ;
    typedef _rtnContextCoord rtnContextCoord ;
@@ -748,7 +754,7 @@ namespace engine
    typedef class _rtnSubCLBuf rtnSubCLBuf;
 
    /*
-      _rtnContextCoord define
+      _rtnContextMainCL define
    */
    class _rtnContextMainCL : public _rtnContextBase
    {
@@ -811,6 +817,129 @@ namespace engine
       _qgmPlan *_qp ;
    } ;
    typedef class _rtnContextQgmSort rtnContextQgmSort ;
+
+   /*
+      _rtnContextDelCS define
+   */
+   class _clsCatalogAgent;
+   class dpsTransCB;
+   class _rtnContextDelCS : public _rtnContextBase
+   {
+      enum delCSPhase
+      {
+         DELCSPHASE_0 = 0,
+         DELCSPHASE_1,
+         DELCSPHASE_2
+      };
+   public:
+      _rtnContextDelCS( SINT64 contextID, UINT64 eduID ) ;
+      ~_rtnContextDelCS();
+      virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
+
+      INT32 open( const CHAR *pCollectionName,
+                  _pmdEDUCB *cb );
+
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                              INT64 &startPos, _pmdEDUCB *cb );
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+
+   private:
+      INT32 _tryLock( const CHAR *pCollectionName,
+                     _pmdEDUCB *cb );
+
+      INT32 _releaseLock( _pmdEDUCB *cb );
+
+      void _clean( _pmdEDUCB *cb );
+
+   private:
+      delCSPhase           _status;
+      SDB_DMSCB            *_pDmsCB;
+      SDB_DPSCB            *_pDpsCB;
+      dpsTransCB           *_pTransCB;
+      _clsCatalogAgent     *_pCatAgent;
+      CHAR                 _name[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ];
+      UINT32               _gotLogSize;
+      BOOLEAN              _gotDmsCBWrite;
+      UINT32               _logicCSID;
+   };
+   typedef class _rtnContextDelCS rtnContextDelCS;
+
+   /*
+      _rtnContextDelCL define
+   */
+   class _rtnContextDelCL : public _rtnContextBase
+   {
+   public:
+      _rtnContextDelCL( SINT64 contextID, UINT64 eduID );
+      ~_rtnContextDelCL();
+      virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
+
+      INT32 open( const CHAR *pCollectionName,
+                  _pmdEDUCB *cb );
+
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                              INT64 &startPos, _pmdEDUCB *cb );
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+
+   private:
+      INT32 _tryLock( const CHAR *pCollectionName,
+                     _pmdEDUCB *cb );
+
+      INT32 _releaseLock( _pmdEDUCB *cb );
+
+      void _clean( _pmdEDUCB *cb );
+
+   private:
+      SDB_DMSCB            *_pDmsCB;
+      SDB_DPSCB            *_pDpsCB;
+      _clsCatalogAgent     *_pCatAgent;
+      dpsTransCB           *_pTransCB;
+      CHAR                 _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
+      BOOLEAN              _gotDmsCBWrite;
+      UINT32               _logicCSID;
+      UINT16               _clID;
+   };
+   typedef class _rtnContextDelCL rtnContextDelCL;
+
+   /*
+      _rtnContextDelMainCL define
+   */
+   class _SDB_RTNCB;
+   class _rtnContextDelMainCL : public _rtnContextBase
+   {
+      typedef std::map< std::string, SINT64 > SUBCL_CONTEXT_LIST;
+   public:
+      _rtnContextDelMainCL( SINT64 contextID, UINT64 eduID );
+      ~_rtnContextDelMainCL();
+      virtual RTN_CONTEXT_TYPE getType () const;
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
+
+      INT32 open( const CHAR *pCollectionName,
+                  _pmdEDUCB *cb );
+
+      virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                              INT64 &startPos, _pmdEDUCB *cb );
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ){ return SDB_DMS_EOC; };
+
+   private:
+      void _clean( _pmdEDUCB *cb );
+
+   private:
+      _clsCatalogAgent           *_pCatAgent;
+      _SDB_RTNCB                 *_pRtncb;
+      CHAR                       _name[ DMS_COLLECTION_FULL_NAME_SZ + 1 ];
+      SUBCL_CONTEXT_LIST         _subContextList;
+      INT32                      _version;
+   };
+   typedef class _rtnContextDelMainCL rtnContextDelMainCL;
 }
 
 #endif //RTNCONTEXT_HPP_

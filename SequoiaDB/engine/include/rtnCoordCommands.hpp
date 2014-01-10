@@ -330,6 +330,10 @@ namespace engine
                         INT32 &bufUsed );
 
    private:
+      INT32 parseMatcher( bson::BSONObj &query,
+                        bson::BSONObj &nodesMatcher,
+                        bson::BSONObj &newMatcher );
+
       virtual INT32 generateAggrObjs( CHAR *pInputBuffer,
                                     CHAR *&pOutputBuffer,
                                     INT32 &objNum,
@@ -513,7 +517,81 @@ namespace engine
                       BSONObj **ppErrorObj );
    } ;
 
-   class rtnCoordCMDDropCollection : public rtnCoordCommand
+   class rtnCoordCMD2PhaseCommit : public rtnCoordCommand
+   {
+   public:
+      virtual INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                           CHAR **ppResultBuffer,
+                           pmdEDUCB *cb, MsgOpReply &replyHeader,
+                           BSONObj **ppErrorObj );
+   protected:
+      virtual void getIgnoreRCList( std::set<INT32> &ignoreRCList );
+
+      virtual INT32 getGroupList( CHAR *pReceiveBuffer, CoordGroupList &groupLst,
+                                 CoordGroupList &sendGroupLst,
+                                 pmdEDUCB * cb,
+                                 BOOLEAN isNeedRefresh ) = 0;
+
+   private:
+      virtual void fillReply( MsgHeader *pSrcMsg,
+                              INT32 rc, bson::BSONObj **ppErrorObj,
+                              MsgOpReply &replyHeader );
+
+      virtual INT32 doP1OnDataGroup( CHAR *pReceiveBuffer,
+                                    pmdEDUCB * cb,
+                                    SINT64 &contextID,
+                                    std::set<INT32> &ignoreRCList );
+
+      virtual INT32 doP2OnDataGroup( CHAR *pReceiveBuffer,
+                                    pmdEDUCB * cb,
+                                    SINT64 &contextID );
+
+      virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
+                                    pmdEDUCB * cb ) = 0;
+
+      virtual INT32 complete( CHAR *pReceiveBuffer,
+                              pmdEDUCB * cb );
+   };
+
+   class rtnCoordCMDDropCollection : public rtnCoordCMD2PhaseCommit
+   {
+   protected:
+      virtual INT32 getGroupList( CHAR *pReceiveBuffer,
+                                 CoordGroupList &groupLst,
+                                 CoordGroupList &sendGroupLst,
+                                 pmdEDUCB * cb,
+                                 BOOLEAN isNeedRefresh );
+
+      virtual void getIgnoreRCList( std::set<INT32> &ignoreRCList );
+
+   private:
+      virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
+                                    pmdEDUCB * cb );
+
+      virtual INT32 complete( CHAR *pReceiveBuffer,
+                              pmdEDUCB * cb );
+
+      INT32 getCLName( CHAR *pReceiveBuffer,
+                     std::string &strCLName );
+   };
+
+   class rtnCoordCMDDropCollectionSpace : public rtnCoordCMD2PhaseCommit
+   {
+   protected:
+      virtual INT32 getGroupList( CHAR *pReceiveBuffer,
+                                 CoordGroupList &groupLst,
+                                 CoordGroupList &sendGroupLst,
+                                 pmdEDUCB * cb,
+                                 BOOLEAN isNeedRefresh );
+
+      virtual void getIgnoreRCList( std::set<INT32> &ignoreRCList );
+
+   private:
+      virtual INT32 doOnCataGroup( CHAR *pReceiveBuffer,
+                                    pmdEDUCB * cb );
+   };
+
+   class rtnCoordCMDDropCollectionOld : public rtnCoordCommand
    {
    public:
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
@@ -522,7 +600,7 @@ namespace engine
                      BSONObj **ppErrorObj );
    };
 
-   class rtnCoordCMDDropCollectionSpace : public rtnCoordCommand
+   class rtnCoordCMDDropCollectionSpaceOld : public rtnCoordCommand
    {
    public:
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,

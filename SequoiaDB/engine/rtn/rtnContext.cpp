@@ -47,6 +47,7 @@
 #include "spdSession.hpp"
 #include "rtn.hpp"
 #include "rtnContextSort.hpp"
+#include "dpsOp2Record.hpp"
 
 using namespace bson;
 namespace engine
@@ -2219,12 +2220,14 @@ namespace engine
    /*
       _rtnContextCoord implement
    */
-   _rtnContextCoord::_rtnContextCoord( INT64 contextID, UINT64 eduID )
+   _rtnContextCoord::_rtnContextCoord( INT64 contextID, UINT64 eduID,
+                                       BOOLEAN preRead )
    :_rtnContextBase( contextID, eduID )
    {
       _numToReturn      = -1 ;
       _numToSkip        = 0 ;
       _netAgent         = NULL ;
+      _preRead          = preRead ;
    }
 
    _rtnContextCoord::~_rtnContextCoord ()
@@ -2546,7 +2549,8 @@ namespace engine
 
    done:
       // pre-read
-      if ( SDB_OK == rc && _numToReturn != 0 )
+      if ( SDB_OK == rc && _numToReturn != 0
+         && _preRead )
       {
          _send2EmptyNodes( cb ) ;
       }
@@ -4125,6 +4129,531 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   _rtnContextDelCS::_rtnContextDelCS( SINT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _status = DELCSPHASE_0;
+      _pDmsCB = pmdGetKRCB()->getDMSCB() ;
+      _pDpsCB = pmdGetKRCB()->getDPSCB() ;
+      _pCatAgent = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
+      _pTransCB = pmdGetKRCB()->getTransCB();
+      _gotDmsCBWrite = FALSE;
+      _gotLogSize = 0;
+      _logicCSID = DMS_INVALID_LOGICCSID;
+      ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ + 1 );
+   }
+
+   _rtnContextDelCS::~_rtnContextDelCS()
+   {
+      pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+      if ( DELCSPHASE_1 == _status )
+      {
+         INT32 rcTmp = SDB_OK;
+         rcTmp = rtnDropCollectionSpaceP1Cancel( _name, cb, _pDmsCB, _pDpsCB );
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "failed to cancel drop cs(name:%s, rc=%d)",
+               _name, rcTmp );
+         }
+         _status = DELCSPHASE_0;
+      }
+      _clean( cb );
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextDelCS::getType () const
+   {
+      return RTN_CONTEXT_DELCS;
+   }
+
+   INT32 _rtnContextDelCS::open( const CHAR *pCollectionName,
+                                 _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      dpsMergeInfo info ;
+      dpsLogRecord &record = info.getMergeBlock().record();
+
+      SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
+      PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
+               "pCollectionName is null!" );
+      rc = dmsCheckCSName( pCollectionName );
+      PD_RC_CHECK( rc, PDERROR,
+                  "invalid cs-name(name:%s)",
+                  pCollectionName );
+
+      if ( NULL != _pDpsCB )
+      {
+         // reserved log-size
+         UINT32 logRecSize = 0;
+         rc = dpsCSDel2Record( pCollectionName, record ) ;
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to build record:%d",rc ) ;
+         logRecSize = record.alignedLen() ;
+         rc = _pTransCB->reservedLogSpace( logRecSize );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to reserved log space(length=%u)",
+                     logRecSize );
+         _gotLogSize = logRecSize ;
+      }
+
+      rc = _pDmsCB->writable ( cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "Database is not writable, rc = %d", rc ) ;
+      _gotDmsCBWrite = TRUE;
+
+      rc = _tryLock( pCollectionName, cb );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to lock(rc=%d)", rc );
+
+      rc = rtnDropCollectionSpaceP1( _name, cb, _pDmsCB, _pDpsCB );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to drop cs in phase1(%d)", rc );
+      _status = DELCSPHASE_1;
+      _isOpened = TRUE;
+   done:
+      return rc;
+   error:
+      _clean( cb );
+      goto done;
+   }
+
+   INT32 _rtnContextDelCS::getMore( INT32 maxNumToReturn,
+                                    rtnContextBuf &buffObj,
+                                    INT64 &startPos, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         goto error ;
+      }
+      _pCatAgent->lock_w () ;
+      _pCatAgent->clearBySpaceName ( _name ) ;
+      _pCatAgent->release_w () ;
+      pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
+
+      PD_CHECK( pmdGetKRCB()->getClsCB()->isPrimary(),
+               SDB_CLS_NOT_PRIMARY, error, PDERROR,
+               "failed to drop cs before phase2(%d)", rc );
+
+      _status = DELCSPHASE_2;
+      rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, _pDpsCB );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to drop cs in phase2(%d)", rc );
+      _clean( cb );
+      _status = DELCSPHASE_0;
+      _isOpened = FALSE;
+      rc = SDB_DMS_EOC;
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextDelCS::_tryLock( const CHAR *pCollectionName,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( _pDpsCB )
+      {
+         dmsStorageUnitID suID = DMS_INVALID_CS;
+         UINT32 logicCSID = DMS_INVALID_LOGICCSID;
+         dmsStorageUnit *su = NULL;
+         _releaseLock( cb );
+         UINT32 length = ossStrlen ( pCollectionName );
+         PD_CHECK( (length > 0 && length <= DMS_SU_NAME_SZ), SDB_INVALIDARG,
+                  error, PDERROR, "invalid length of collectionspace name:%s",
+                  pCollectionName );
+
+         rc = _pDmsCB->nameToSUAndLock( pCollectionName, suID, &su );
+         PD_RC_CHECK(rc, PDERROR, "lock collection space(%s) failed(rc=%d)",
+                     pCollectionName, rc );
+         logicCSID = su->LogicalCSID();
+         _pDmsCB->suUnlock ( suID ) ;
+         rc = _pTransCB->transLockTryX( cb, logicCSID );
+         PD_RC_CHECK( rc, PDERROR,
+                     "get transaction-lock of CS(%s) failed(rc=%d)",
+                     pCollectionName, rc );
+         ossStrcpy( _name, pCollectionName );
+         _logicCSID = logicCSID;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextDelCS::_releaseLock( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( cb && _pDpsCB && ( _logicCSID != DMS_INVALID_LOGICCSID ))
+      {
+         _pTransCB->transLockRelease( cb, _logicCSID );
+         ossMemset( _name, 0, DMS_COLLECTION_SPACE_NAME_SZ );
+         _logicCSID = DMS_INVALID_LOGICCSID;
+      }
+      return rc;
+   }
+
+   void _rtnContextDelCS::_clean( _pmdEDUCB *cb )
+   {
+      INT32 rcTmp = SDB_OK;
+      rcTmp = _releaseLock( cb );
+      if ( rcTmp )
+      {
+         PD_LOG( PDERROR, "releas lock failed(rc:%d)",
+               rcTmp );
+      }
+      if ( _gotDmsCBWrite )
+      {
+         _pDmsCB->writeDown () ;
+         _gotDmsCBWrite = FALSE;
+      }
+      if ( _gotLogSize > 0 )
+      {
+         _pTransCB->releaseLogSpace( _gotLogSize );
+         _gotLogSize = 0;
+      }
+   }
+
+   _rtnContextDelCL::_rtnContextDelCL( SINT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _pDmsCB = pmdGetKRCB()->getDMSCB() ;
+      _pDpsCB = pmdGetKRCB()->getDPSCB() ;
+      _pCatAgent = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
+      _pTransCB = pmdGetKRCB()->getTransCB();
+      _gotDmsCBWrite = FALSE;
+      _logicCSID = DMS_INVALID_LOGICCSID;
+      _clID = DMS_INVALID_MBID;
+      ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
+   }
+
+   _rtnContextDelCL::~_rtnContextDelCL()
+   {
+      pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+      _clean( cb );
+   }
+
+   INT32 _rtnContextDelCL::_tryLock( const CHAR *pCollectionName,
+                                    _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+
+      // lock collection
+      if ( _pDpsCB )
+      {
+         dmsStorageUnit *su = NULL;
+         dmsStorageUnitID suID = DMS_INVALID_CS;
+         UINT32 logicCSID = DMS_INVALID_LOGICCSID;
+         UINT16 clID = DMS_INVALID_MBID;
+         const CHAR *pCollectionShortName = NULL;
+         _releaseLock( cb );
+
+         rc = rtnResolveCollectionNameAndLock ( pCollectionName, _pDmsCB, &su,
+                                             &pCollectionShortName, suID );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to resolve collection name(collection:%s, rc=%d)",
+                     pCollectionName, rc );
+         rc = su->data()->findCollection ( pCollectionShortName, clID ) ;
+         logicCSID = su->LogicalCSID();
+         _pDmsCB->suUnlock ( suID );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to find the collection(collection:%s, rc=%d)",
+                     pCollectionName, rc );
+         rc = _pTransCB->transLockTryX( cb, logicCSID, clID );
+         PD_RC_CHECK( rc, PDERROR,
+                        "get transaction-lock of collection(%s) failed(rc=%d)",
+                        pCollectionName, rc );
+         ossStrcpy( _name, pCollectionName );
+         _logicCSID = logicCSID;
+         _clID = clID;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextDelCL::_releaseLock( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( cb && _pDpsCB && ( _logicCSID != DMS_INVALID_LOGICCSID ) )
+      {
+         _pTransCB->transLockRelease( cb, _logicCSID, _clID );
+         ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
+         _logicCSID = DMS_INVALID_LOGICCSID;
+         _clID = DMS_INVALID_MBID;
+      }
+      return rc;
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextDelCL::getType () const
+   {
+      return RTN_CONTEXT_DELCL;
+   }
+
+   INT32 _rtnContextDelCL::open( const CHAR *pCollectionName,
+                                 _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
+      PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
+               "pCollectionName is null!" );
+      rc = dmsCheckFullCLName( pCollectionName );
+      PD_RC_CHECK( rc, PDERROR,
+                  "invalid cL-name(name:%s)",
+                  pCollectionName );
+
+      rc = _pDmsCB->writable ( cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "Database is not writable, rc = %d", rc ) ;
+      _gotDmsCBWrite = TRUE;
+
+      rc = _tryLock( pCollectionName, cb );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to lock(rc=%d)", rc );
+      _isOpened = TRUE;
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextDelCL::getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                                    INT64 &startPos, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         goto error ;
+      }
+      _pCatAgent->lock_w () ;
+      _pCatAgent->clear ( _name ) ;
+      _pCatAgent->release_w () ;
+      pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
+
+      PD_CHECK( pmdGetKRCB()->getClsCB()->isPrimary(),
+               SDB_CLS_NOT_PRIMARY, error, PDERROR,
+               "failed to drop cs before phase2(%d)", rc );
+
+      rc = rtnDropCollectionCommand( _name, cb, _pDmsCB, _pDpsCB );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to drop collection(name:%s, rc=%d)",
+                  _name, rc );
+      _clean( cb );
+      _isOpened = FALSE;
+      rc = SDB_DMS_EOC;
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   void _rtnContextDelCL::_clean( _pmdEDUCB *cb )
+   {
+      INT32 rcTmp = SDB_OK;
+      rcTmp = _releaseLock( cb );
+      if ( rcTmp )
+      {
+         PD_LOG( PDERROR, "release lock failed(rc:%d)",
+               rcTmp );
+      }
+      if ( _gotDmsCBWrite )
+      {
+         _pDmsCB->writeDown () ;
+         _gotDmsCBWrite = FALSE;
+      }
+   }
+
+   _rtnContextDelMainCL::_rtnContextDelMainCL( SINT64 contextID, UINT64 eduID )
+   :_rtnContextBase( contextID, eduID )
+   {
+      _pCatAgent = pmdGetKRCB()->getClsCB ()->getCatAgent () ;
+      _pRtncb = pmdGetKRCB()->getRTNCB();
+      _version = -1;
+      ossMemset( _name, 0, DMS_COLLECTION_FULL_NAME_SZ + 1 );
+   }
+
+   _rtnContextDelMainCL::~_rtnContextDelMainCL()
+   {
+      pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+      _clean( cb );
+   }
+
+   void _rtnContextDelMainCL::_clean( _pmdEDUCB *cb )
+   {
+      SUBCL_CONTEXT_LIST::iterator iter = _subContextList.begin();
+      while( iter != _subContextList.end() )
+      {
+         if ( iter->second != -1 )
+         {
+            _pRtncb->contextDelete( iter->second, cb );
+         }
+         _subContextList.erase( iter++ );
+      }
+   }
+
+   RTN_CONTEXT_TYPE _rtnContextDelMainCL::getType () const
+   {
+      return RTN_CONTEXT_DELMAINCL;
+   }
+
+   INT32 _rtnContextDelMainCL::open( const CHAR *pCollectionName,
+                                 _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      std::set< std::string > strSubCLList;
+      SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
+      PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
+               "pCollectionName is null!" );
+      rc = dmsCheckFullCLName( pCollectionName );
+      PD_RC_CHECK( rc, PDERROR,
+                  "invalid cL-name(name:%s)",
+                  pCollectionName );
+
+      {
+      _clsCatalogSet *pCataSet = NULL;
+      _pCatAgent->lock_r();
+      pCataSet = _pCatAgent->collectionSet( pCollectionName );
+      if ( NULL == pCataSet )
+      {
+         _pCatAgent->release_r();
+         rc = SDB_DMS_NOTEXIST;
+         PD_LOG( PDERROR, "can not find collection:%s", pCollectionName );
+         goto error;
+      }
+      _version = pCataSet->getVersion();
+      pCataSet->getSubCLList( strSubCLList );
+      _pCatAgent->release_r();
+      }
+
+      {
+         std::set< std::string >::iterator iter = strSubCLList.begin();
+         while( iter != strSubCLList.end() )
+         {
+            rtnContextDelCL *delContext = NULL;
+            SINT64 contextID;
+            rc = _pRtncb->contextNew( RTN_CONTEXT_DELCL, (rtnContext **)&delContext,
+                                    contextID, cb );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to create sub-context, drop cl failed(rc=%d)",
+                        rc );
+            _subContextList[ *iter ] = contextID;
+            rc = delContext->open( (*iter).c_str(), cb );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to open sub-context, drop cl failed(rc=%d)",
+                        rc );
+            ++iter;
+         }
+      }
+
+      ossStrcpy( _name, pCollectionName );
+      _isOpened = TRUE;
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _rtnContextDelMainCL::getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
+                                    INT64 &startPos, _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK;
+      INT32 curVer = -1;
+      std::set< std::string > strSubCLList;
+      if ( !isOpened() )
+      {
+         rc = SDB_DMS_CONTEXT_IS_CLOSE;
+         goto error ;
+      }
+
+      PD_CHECK( pmdGetKRCB()->getClsCB()->isPrimary(),
+               SDB_CLS_NOT_PRIMARY, error, PDERROR,
+               "failed to drop cs before phase2(%d)", rc );
+
+      {
+      _clsCatalogSet *pCataSet = NULL;
+      _pCatAgent->lock_r();
+      pCataSet = _pCatAgent->collectionSet( _name );
+      if ( NULL == pCataSet )
+      {
+         _pCatAgent->release_r();
+         rc = SDB_DMS_NOTEXIST;
+         PD_LOG( PDERROR, "can not find collection:%s", _name );
+         goto error;
+      }
+      pCataSet->getSubCLList( strSubCLList );
+      curVer = pCataSet->getVersion();
+      _pCatAgent->release_r();
+      }
+
+      {
+         SUBCL_CONTEXT_LIST::iterator iterCtx = _subContextList.begin();
+         std::set< std::string >::iterator iterCl;
+         while( iterCtx != _subContextList.end() )
+         {
+            if ( _version != curVer )
+            {
+               iterCl = strSubCLList.find( iterCtx->first );
+               if ( strSubCLList.end() == iterCl )
+               {
+                  PD_LOG( PDERROR,
+                        "the version is changed, "
+                        "sub-collection(%s) have not been delete",
+                        iterCtx->first.c_str() );
+                  ++iterCtx;
+                  continue;
+               }
+               else
+               {
+                  strSubCLList.erase( iterCl );
+               }
+            }
+            rtnContextBuf buffObj;
+            SINT64 startingPos = 0;
+            rc = rtnGetMore( iterCtx->second, -1, buffObj, startingPos, cb, _pRtncb );
+            PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc, rc, error,
+                     PDERROR, "failed to del sub-collection(rc=%d)", rc );
+            rc = SDB_OK;
+            _subContextList.erase( iterCtx++ );
+         }
+      }
+
+      _pCatAgent->lock_w () ;
+      _pCatAgent->clear ( _name ) ;
+      _pCatAgent->release_w () ;
+      pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
+
+      _isOpened = FALSE;
+      if ( _version != curVer
+         && ( !_subContextList.empty() || !strSubCLList.empty() ) )
+      {
+         std::set< std::string >::iterator iterClTmp;
+         iterClTmp = strSubCLList.begin();
+         while( iterClTmp != strSubCLList.end() )
+         {
+            PD_LOG( PDERROR,
+                  "the version is changed, "
+                  "sub-collection(%s) have not been delete",
+                  (*iterClTmp).c_str() );
+            ++iterClTmp;
+         }
+         rc = SDB_CLS_COORD_NODE_CAT_VER_OLD;
+      }
+      else
+      {
+         rc = SDB_DMS_EOC;
+      }
+   done:
+      return rc;
+   error:
+      goto done;
    }
 }
 

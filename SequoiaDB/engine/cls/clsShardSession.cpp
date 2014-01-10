@@ -85,7 +85,6 @@ namespace engine
       _pDpsCB    = pKRCB->getDPSCB () ;
       _pRtnCB    = pKRCB->getRTNCB () ;
       _pNetAgent = pKRCB->getClsCB()->getShardRouteAgent () ;
-      _WLockedCS = DMS_INVALID_SUID;
       PD_TRACE_EXIT ( SDB__CLSSDSESS__CLSSHDSESS ) ;
    }
 
@@ -152,13 +151,6 @@ namespace engine
          while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
          {
             _pRtnCB->contextDelete ( contextID, NULL ) ;
-         }
-         if ( DMS_INVALID_SUID != _WLockedCS && _pDmsCB != NULL )
-         {
-            SDB_ASSERT( FALSE, "found unreleased lock!" );
-            _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
-            PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
-            _WLockedCS = DMS_INVALID_SUID;
          }
       }
 
@@ -950,11 +942,6 @@ namespace engine
       MsgOpQuery *pQuery = (MsgOpQuery*)msg ;
       INT16 w = pQuery->w ;
       _rtnCommand *pCommand = NULL ;
-      dmsStorageUnitID suID = DMS_INVALID_CS;
-      dmsStorageUnit *su = NULL;
-      const CHAR *pCollectionShortName = NULL;
-      UINT16 collectionID = DMS_INVALID_MBID;
-      UINT32 logicCSID = ~0;
       BOOLEAN isMainCL = FALSE;
 
       rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
@@ -1031,53 +1018,6 @@ namespace engine
          }
          _pCollectionName = pCommand->collectionFullName () ;
 
-         // drop collection or drop collection-space must get suID and
-         // collectionID, then release lock at the end
-         if ( CMD_DROP_COLLECTION == pCommand->type() )
-         {
-            rc = rtnResolveCollectionNameAndLock( pCommand->collectionFullName(),
-                                                  _pDmsCB, &su,
-                                                  &pCollectionShortName,
-                                                  suID );
-            PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
-                         "(collection:%s, rc=%d)",
-                         pCommand->collectionFullName(), rc ) ;
-            rc = su->data()->findCollection( pCollectionShortName,
-                                             collectionID );
-            logicCSID = su->LogicalCSID() ;
-            _pDmsCB->suUnlock( suID );
-            PD_RC_CHECK( rc, PDERROR, "Failed to find collection(collection:%s,"
-                         "rc=%d)", pCommand->collectionFullName(), rc );
-         }
-         else if ( CMD_DROP_COLLECTIONSPACE == pCommand->type () )
-         {
-            // not need lock,
-            // has been locked before.
-            _rtnDropCollectionspace *pDropCSCommand =
-                           ( _rtnDropCollectionspace *)pCommand ;
-            su = _pDmsCB->nameToSU( pDropCSCommand->spaceName() );
-            PD_CHECK( su != NULL, SDB_DMS_CS_NOTEXIST, error, PDERROR,
-                      "Failed to find collection space, space(%s) is not exist",
-                      pDropCSCommand->spaceName() );
-            logicCSID = su->LogicalCSID();
-            suID = su->CSID();
-            if ( suID == _WLockedCS && DMS_INVALID_SUID != suID )
-            {
-               pDropCSCommand->locked();
-            }
-            else
-            {
-               if ( DMS_INVALID_SUID != _WLockedCS )
-               {
-                  SDB_ASSERT( FALSE, "found unreleased lock!" );
-                  _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
-                  pDropCSCommand->releaseLock();
-                  PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
-                  _WLockedCS = DMS_INVALID_SUID;
-               }
-            }
-         }
-
          if ( pCommand->writable () )
          {
             rc = _check ( w ) ;
@@ -1126,8 +1066,7 @@ namespace engine
          }
 
          //drop collection[space] should to remove catalog
-         if ( CMD_DROP_COLLECTION == pCommand->type() ||
-              CMD_RENAME_COLLECTION == pCommand->type() )
+         if ( CMD_RENAME_COLLECTION == pCommand->type() )
          {
             _pCatAgent->lock_w () ;
             _pCatAgent->clear ( pCommand->collectionFullName() ) ;
@@ -1152,25 +1091,6 @@ namespace engine
    done:
       if ( pCommand )
       {
-         if ( CMD_DROP_COLLECTION == pCommand->type() ||
-              CMD_RENAME_COLLECTION == pCommand->type() )
-         {
-            pmdGetKRCB()->getTransCB()->transLockRelease( _pEDUCB, logicCSID,
-                                                          collectionID );
-         }
-         else if ( CMD_DROP_COLLECTIONSPACE == pCommand->type () )
-         {
-            _rtnDropCollectionspace *pDropCSCommand =
-                           ( _rtnDropCollectionspace *)pCommand ;
-            if ( pDropCSCommand->isLocked() && _WLockedCS != DMS_INVALID_SUID )
-            {
-               _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
-               pDropCSCommand->releaseLock();
-               PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
-            }
-            _WLockedCS = DMS_INVALID_SUID;
-            pmdGetKRCB()->getTransCB()->transLockRelease( _pEDUCB, logicCSID );
-         }
          rtnReleaseCommand( &pCommand ) ;
       }
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONQYREQMSG, rc ) ;
@@ -1317,7 +1237,6 @@ namespace engine
       CHAR *pDot1 = NULL;
       INT16 w = 1;
       BOOLEAN isMainCL = FALSE;
-      INT32 rcTmp = SDB_OK;
 
       rc = _check ( w ) ;
       if ( SDB_OK != rc )
@@ -1387,36 +1306,14 @@ namespace engine
       }
       else
       {
-         SDB_ASSERT( DMS_INVALID_SUID == _WLockedCS,
-                     "found unreleased lock!" );
-         if ( _WLockedCS != DMS_INVALID_SUID )
-         {
-            _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
-            PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
-            _WLockedCS = DMS_INVALID_SUID;
-         }
-         dmsStorageUnit *pSu = NULL;
-         dmsStorageUnitID suID;
          rc = rtnTransTryLockCS( pCollectionName, pReqMsg->lockType,
                                  _pEDUCB, _pDmsCB, _pDpsCB );
          PD_RC_CHECK( rc, PDERROR,
                       "get transaction-lock of CS(%s) failed(rc=%d)",
                       pCollectionName, rc );
-         rc = rtnCollectionSpaceLock( pCollectionName, _pDmsCB, FALSE,
-                                    &pSu, suID, EXCLUSIVE, 0 );
-         PD_CHECK( SDB_OK == rc, rc, error_releaseCS, PDERROR,
-                   "get w-latch of CS(%s) failed(rc=%d)",
-                   pCollectionName, rc );
-         _WLockedCS = suID;
-         PD_LOG( PDDEBUG, "got space-wlock(suID:%d)", _WLockedCS );
       }
    done:
       return rc ;
-   error_releaseCS:
-      rcTmp = rtnTransReleaseLock( pCollectionName, _pEDUCB, _pDmsCB,
-                                   _pDpsCB );
-      PD_LOG( PDERROR, "Failed to release lock(name:%s, rc=%d)",
-              pCollectionName, rcTmp );
    error:
       goto done;
    }
@@ -1474,16 +1371,6 @@ namespace engine
       }
       else
       {
-         if ( _WLockedCS != DMS_INVALID_SUID )
-         {
-            _pDmsCB->suUnlock( _WLockedCS, EXCLUSIVE );
-            PD_LOG( PDDEBUG, "release space-wlock(suID:%d)", _WLockedCS );
-            _WLockedCS = DMS_INVALID_SUID;
-         }
-         else
-         {
-            PD_LOG( PDWARNING, "have not got the space-wlock!" );
-         }
          rc = rtnTransReleaseLock( pReqMsg->name, _pEDUCB, _pDmsCB, _pDpsCB );
       }
    done:
@@ -1767,6 +1654,7 @@ namespace engine
          _pCatAgent->release_r () ;
       }
       {
+         _pCatAgent->lock_r () ;
          std::set< std::string >::iterator iter = strSubCLList.begin();
          while( iter != strSubCLList.end() )
          {
@@ -1779,6 +1667,7 @@ namespace engine
             }
             ++iter;
          }
+         _pCatAgent->release_r () ;
       }
 
       PD_CHECK( !strSubCLList.empty(), SDB_INVALID_MAIN_CL, error, PDERROR,
@@ -1916,6 +1805,10 @@ namespace engine
          rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_SHARD,
                              _pEDUCB, _pDmsCB, _pRtnCB,
                              _pDpsCB, w, &contextID ) ;
+         break;
+
+      case CMD_DROP_COLLECTION:
+         rc = _dropMainCL( pCommand->collectionFullName(), w, contextID );
          break;
 
       default:
@@ -2145,6 +2038,29 @@ namespace engine
          rc = SDB_OK;
          ++iter;
       }
+   done:
+      return rc;
+   error:
+      goto done;
+   }
+
+   INT32 _clsShdSession::_dropMainCL(const CHAR *pCollection,
+                                    INT16 w,
+                                    SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK;
+      contextID = -1;
+      rtnContextDelMainCL *delContext = NULL;
+      rc = _pRtnCB->contextNew( RTN_CONTEXT_DELMAINCL,
+                              (rtnContext **)&delContext,
+                              contextID, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to create context, drop main-collection failed(rc=%d)",
+                  rc );
+      rc = delContext->open( pCollection, _pEDUCB );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to open context, drop main-collection failed(rc=%d)",
+                  rc );
    done:
       return rc;
    error:

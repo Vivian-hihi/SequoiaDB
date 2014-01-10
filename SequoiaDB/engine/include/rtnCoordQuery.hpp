@@ -20,7 +20,8 @@ namespace engine
                                  netMultiRouteAgent *pRouteAgent,
                                  pmdEDUCB *cb,
                                  rtnContextCoord *pContext,
-                                 BOOLEAN sendToPrimary = FALSE );
+                                 BOOLEAN sendToPrimary = FALSE,
+                                 std::set<INT32> *ignoreRCList = NULL );
    private:
       INT32 getNodeGroups( const CoordCataInfoPtr &cataInfo,
                            bson::BSONObj &queryObj,

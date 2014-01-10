@@ -81,9 +81,8 @@ namespace engine
          _dmsCB->suUnlock( suID ) ;
          suID = DMS_INVALID_CS ;
          _su = NULL ;
-         BOOLEAN hasLocked = FALSE;
          // remove the temp collection space
-         _dmsCB->dropCollectionSpace( SDB_DMSTEMP_NAME, NULL, NULL, hasLocked ) ;
+         _dmsCB->dropCollectionSpace( SDB_DMSTEMP_NAME, NULL, NULL ) ;
       }
       else if ( SDB_DMS_CS_NOTEXIST != rc )
       {

@@ -720,12 +720,8 @@ namespace engine
          virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
                               _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                               INT16 w = 1, INT64 *pContextID = NULL  ) ;
-         BOOLEAN isLocked() { return _hasLocked; }
-         void releaseLock() { _hasLocked = FALSE; }
-         void locked() { _hasLocked = TRUE; }
       protected:
          const CHAR           *_spaceName ;
-         BOOLEAN              _hasLocked;
    };
 
    class _rtnDropIndex : public _rtnCommand

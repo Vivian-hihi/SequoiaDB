@@ -509,10 +509,9 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::DROPCS == _commandType )
       {
-         BOOLEAN hasLocked = FALSE;
          rc = rtnDropCollectionSpaceCommand(
                                     _fullName.toString().c_str(),
-                                    eduCB, dmsCB, dpsCB, hasLocked ) ;
+                                    eduCB, dmsCB, dpsCB ) ;
       }
       else if ( SQL_GRAMMAR::CRTCL == _commandType )
       {
