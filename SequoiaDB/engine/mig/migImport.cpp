@@ -230,7 +230,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed )
       if ( rc == SDB_EOF )
       {
          bson_destroy ( &bsonObj ) ;
-         PD_LOG ( PDEVENT, "Import Successfully" ) ;
+         //PD_LOG ( PDEVENT, "Import Successfully" ) ;
          rc = SDB_OK ;
          break ;
       }
