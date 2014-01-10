@@ -104,6 +104,7 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 				boolean deleteData)
 				throws org.apache.hadoop.hive.metastore.api.MetaException {
 			boolean isExternal = MetaStoreUtils.isExternalTable(tbl);
+			
 			//LOG.info("isExternal is "+isExternal);
 			//LOG.info("deleteData is " + deleteData);
 //			if (deleteData && isExternal) {
@@ -146,9 +147,12 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 
 				Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),
 						sdbAddr[0].getPort(), null, null);
-				sdb.dropCollectionSpace(spaceName);
+				
+				if( sdb.isCollectionSpaceExist(spaceName) ){
+					sdb.dropCollectionSpace(spaceName);
 //				CollectionSpace space = sdb.getCollectionSpace(spaceName);
 //				space.dropCollection(dbCollection);
+				}
 				sdb.disconnect();
 				
 			}
