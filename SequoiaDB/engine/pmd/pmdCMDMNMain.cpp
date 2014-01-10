@@ -47,7 +47,10 @@ INT32 main( INT32 argc, CHAR** argv )
    rc = svc.init();
    PD_RC_CHECK( rc, PDERROR,
                "failed to init cm(rc=%d)", rc );
-   daemon.addChildrenProcess( &svc );
+   rc = daemon.addChildrenProcess( &svc );
+   PD_RC_CHECK( rc, PDERROR,
+               "failed to add childrenProcess(rc=%d)",
+               rc );
    rc = daemon.init();
    if ( rc != SDB_OK )
    {
