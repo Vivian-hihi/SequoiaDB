@@ -951,7 +951,49 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
          {
             CHAR num [ INT_NUM_SIZE ] = {0} ;
             get_char_num ( num, i, INT_NUM_SIZE ) ;
-            bson_append_oid( bs, num , &bot ) ;
+            bson_append_oid( bs, num, &bot ) ;
+         }
+         break ;
+      }
+      case cJSON_MinKey:
+      {
+         if ( isObj && cj->string )
+         {
+            bson_append_minkey( bs, cj->string ) ;
+         }
+         else
+         {
+            CHAR num [ INT_NUM_SIZE ] = {0} ;
+            get_char_num ( num, i, INT_NUM_SIZE ) ;
+            bson_append_minkey( bs, num ) ;
+         }
+         break ;
+      }
+      case cJSON_MaxKey:
+      {
+         if ( isObj && cj->string )
+         {
+            bson_append_maxkey( bs, cj->string ) ;
+         }
+         else
+         {
+            CHAR num [ INT_NUM_SIZE ] = {0} ;
+            get_char_num ( num, i, INT_NUM_SIZE ) ;
+            bson_append_maxkey( bs, num ) ;
+         }
+         break ;
+      }
+      case cJSON_Undefined:
+      {
+         if ( isObj && cj->string )
+         {
+            bson_append_undefined( bs, cj->string ) ;
+         }
+         else
+         {
+            CHAR num [ INT_NUM_SIZE ] = {0} ;
+            get_char_num ( num, i, INT_NUM_SIZE ) ;
+            bson_append_undefined( bs, num ) ;
          }
          break ;
       }

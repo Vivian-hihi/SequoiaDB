@@ -176,7 +176,15 @@ static const char *parse_number(cJSON *item,const char *num)
    }
    else if ( cJSON_INT64 == item->numType )
    {
-       n2=(long long)(sign*n2*pow(10.0,subscale*1.00));
+      if ( 0 != subscale )
+      {
+         n2=(long long)(sign*n2*pow(10.0,subscale*1.00));
+      }
+      else
+      {
+         // if subscale = 0, that means we don't need to translate into double, which may cause loose precision
+         n2=(((long long)sign)*n2) ;
+      }
    }
    else if ( cJSON_INT32 == item->numType )
    {
@@ -508,6 +516,11 @@ static const char *parse_value(cJSON *item,const char *value,int isKey,int isMon
       {
          return parse_dollar_command ( item, value, cJSON_MinKey ) ;
       }
+      //undefined
+      else if( !strncmp ( value_temp, "$undefined", 10 ) )
+      {
+         return parse_dollar_command ( item, value, cJSON_Undefined ) ;
+      }
    }
    if (*value=='[')
    {
@@ -805,6 +818,17 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
       value = skip ( value + 7 ) ;
       break ;
    }
+   case cJSON_Undefined:
+   {
+      /* not a dollar command! */
+      if ( strncmp ( value, "$undefined", 10 ) )
+      {
+         ep = value ;
+         return 0 ;
+      }
+      value = skip ( value + 10 ) ;
+      break ;
+   }
    }
    if ( *value == '\"' )
       value = skip ( value + 1 ) ;
@@ -821,7 +845,8 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    {
       if ( cj_type == cJSON_Date ||
            cj_type == cJSON_MinKey ||
-           cj_type == cJSON_MaxKey )
+           cj_type == cJSON_MaxKey ||
+           cj_type == cJSON_Undefined )
       {
          isNumber = 1 ;
       }
@@ -834,7 +859,8 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    else
    {
       if ( cj_type == cJSON_MinKey ||
-           cj_type == cJSON_MaxKey )
+           cj_type == cJSON_MaxKey ||
+           cj_type == cJSON_Undefined )
       {
          ep = value ;
          return 0 ;
@@ -1011,6 +1037,7 @@ static const char *parse_first_command(cJSON *item,const char *value,int cj_type
    }
    case cJSON_MaxKey:
    case cJSON_MinKey:
+   case cJSON_Undefined:
    {
       if ( *value != '1' )
       {
@@ -1035,6 +1062,7 @@ static const char *parse_second_command(cJSON *item,const char *value,int cj_typ
    case cJSON_Oid:
    case cJSON_MaxKey:
    case cJSON_MinKey:
+   case cJSON_Undefined:
       return value ;
    case cJSON_Regex:
    {

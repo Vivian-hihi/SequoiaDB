@@ -45,6 +45,7 @@ extern "C"
 #define cJSON_Binary 11
 #define cJSON_MinKey 12
 #define cJSON_MaxKey 13
+#define cJSON_Undefined 14
 
 #define cJSON_IsReference 256
 
