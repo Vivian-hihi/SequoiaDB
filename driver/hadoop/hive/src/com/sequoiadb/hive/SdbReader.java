@@ -28,12 +28,12 @@ import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.base.DBCursor;
 import com.sequoiadb.base.Sequoiadb;
 
-class ByteArrayFiled {
+class ByteArrayField {
 	private byte[] array = null;
 	private int startPos = 0;
 	private int endPos = 0;
 
-	public ByteArrayFiled(byte[] array, int startPos, int endPos) {
+	public ByteArrayField(byte[] array, int startPos, int endPos) {
 		this.array = array;
 		this.startPos = startPos;
 		this.endPos = endPos;
@@ -382,83 +382,80 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 	public boolean next(LongWritable keyHolder, BytesWritable valueHolder)
 			throws IOException {
 		
-		
+		// fetch record from cursor
 		if (!cursor.hasNextRaw()) {
 			
 			return false;
 		}
-
+		// text always start from byte 10 here
 		final int TEXT_START_POS = 10;
-
+		// get the byte array from result buffer, each fields are seaprated by bar
+		// what happen if there's bar in the text? we don't handle and let it break~~~
 		byte[] record = cursor.getNextRaw();
-		String record_str = new String(record);
-		
-		
-		
+		// record the length so that we can keep monitoring the progress
 		recordsLenth += record.length;
 
-		// System.out.println("strOrgRecord:" + strOrgRecord);
+		// let's build array of byte array to hold the start pointer and length
+		// for each field from record buffer
+		ByteArrayField[] byteArrayRef = new ByteArrayField[this.selectorColIDs.length];
 		
-		ByteArrayFiled[] byteArrayRef = new ByteArrayFiled[this.selectorColIDs.length];
-		
-		//LOG.info("byteArrayFiled is " + byteArrayRef.toString() );
+		// initialize start position and current position
 		int startPos = TEXT_START_POS;
 		int i = TEXT_START_POS;
+		// keep track of number of fields we want
+		// sanity check could be done by nFileNum
 		int nFileNum = 0;
+		// we are going to iterate the receive buffer and push the start pointer + length
+		// into ByteArrayField
 		for (; i < record.length - 1; i++) {
 			if (record[i] == '|') {
-				// System.out.println("build field: starPos" + startPos +
-				// ", endPos:" + i);
-//				LOG.info("enter for(record.length) if =='|'");
-//				LOG.info("enter one fields");
-				ByteArrayFiled ref = new ByteArrayFiled(record, startPos, i);
+				ByteArrayField ref = new ByteArrayField(record, startPos, i);
 				byteArrayRef[nFileNum++] = ref;
 				startPos = i + 1;
-
-				// System.out.println(ref.toString());
 			}
 		}
-		if (startPos < i) {
-			//LOG.info("enter if startPos < i");
-			//LOG.info("enter one fields");
-			ByteArrayFiled ref = new ByteArrayFiled(record, startPos, i);
+		// must be <=, otherwise for "abc|" will got error for NullPointer exception
+		// since the second NULL field was not allocated for new ByteArrayField
+		if (startPos <= i) {
+			ByteArrayField ref = new ByteArrayField(record, startPos, i);
 			byteArrayRef[nFileNum++] = ref;
-			// System.out.println(ref.toString());
 		}
-		
-		
-		byte[] recordWithAllColumns = new byte[record.length - TEXT_START_POS];
+		// need to add columnsMap.length since we need to create extra "|"
+		// it seems like there's always 2 columns extra in columnsMap for
+		// BLOCK__OFFSET__INSIDE__FILE
+		// INPUT__FILE__NAME
+		// just in case there's any other extra fields that we didn't realize, we always
+		// add another this.columnsMap.length bytes
+		byte[] recordWithAllColumns = new byte[record.length - TEXT_START_POS + 
+		                                       this.columnsMap.length];
+		// pos records the current position of the result buffer
 		int pos = 0;
-		
-		for(int str : selectorColIDs){
-			
-		}
-		
-		for(int ix = 0 ;ix < nFileNum ; ix++){
-			LOG.debug("byteArrayRef["+ix+"] is " + byteArrayRef[ix].toString());
-		}
+		// this function receives the definition of the table, and expect to return
+		// all columns by the right order
+		// so we need to iterate each column from columnsMap, and compare with the
+		// actual result that we received from sequoiadb, and copy each fields into
+		// bar separated format result buffer
 		for (i = 0; i < this.columnsMap.length; i++) {
-			
+			// for each columns in the DDL
 			for (int j = 0; j < this.selectorColIDs.length; j++) {
-				
+				// compare with the result fields from SDB
 				if (this.selectorColIDs[j] == i) {
+					// if match, let's add into result
 					pos += byteArrayRef[j].copyFiledtoArray(
 							recordWithAllColumns, pos);
-					
+					// break the loop once we find the field from result buffer
 					break;
 				}
 			}
-			if(pos != recordWithAllColumns.length){
+			// we need to append bar between each field
+			if(pos != recordWithAllColumns.length ){
 				recordWithAllColumns[pos++] = '|';
 			}
-			
 		}
-		
-		String rcWAC = new String(recordWithAllColumns);
-		
-
+		//String rcWAC = new String(recordWithAllColumns);
+		//LOG.info("byte returned to hive is " + rcWAC );
+		// set the valueHolder from the result buffer, starting from 0 until pos
 		valueHolder.set(recordWithAllColumns, 0, pos);
-		
 		return true;
 	}
 }
