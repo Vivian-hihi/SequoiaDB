@@ -51,7 +51,12 @@ public class CataNodeGroup extends NodeGroup {
 				+ "nodeInfo.getBasePort() = "+ nodeInfo.getBasePort()+",\n"
 				+ "nodeInfo.getDbpath() = " + nodeInfo.getDbpath()+",\n"
 				+ "nodeInfo.getConfigMap() = " +nodeInfo.getConfigMap());
-				
+				System.out.println("create CataRG , \n" +
+						"host :"+nodeInfo.getHost()+"\n" +
+						"port : " +nodeInfo.getBasePort() +"\n" +
+						"path : " + nodeInfo.getDbpath() + "\n" +
+						"configMap :"+nodeInfo.getConfigMap().toString()
+						);
 				sdb.createReplicaCataGroup(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 						nodeInfo.getConfigMap() );
@@ -113,6 +118,11 @@ public class CataNodeGroup extends NodeGroup {
 			node = group.getNode(nodeInfo.getHost(), nodeInfo.getBasePort());
 
 			if (node == null) {
+				System.out.println("host :"+nodeInfo.getHost()+"\n" +
+						"port : " +nodeInfo.getBasePort() +"\n" +
+						"path : " + nodeInfo.getDbpath() + "\n" +
+						"configMap :"+nodeInfo.getConfigMap().toString()
+						);
 				node = group.createNode(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 						nodeInfo.getConfigMap());

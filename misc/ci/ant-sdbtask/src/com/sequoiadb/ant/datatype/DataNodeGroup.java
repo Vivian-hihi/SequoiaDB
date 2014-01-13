@@ -22,6 +22,7 @@ public class DataNodeGroup extends NodeGroup {
 			ReplicaGroup group = sdb.getReplicaGroup(getName());
 
 			if (group == null) {
+				
 				group = sdb.createReplicaGroup(getName());
 			}
 
@@ -30,6 +31,12 @@ public class DataNodeGroup extends NodeGroup {
 						nodeInfo.getBasePort());
 
 				if (node == null) {
+					System.out.println("host :"+nodeInfo.getHost()+"\n" +
+							"port : " +nodeInfo.getBasePort() +"\n" +
+							"path : " + nodeInfo.getDbpath() + "\n" +
+							"configMap :"+nodeInfo.getConfigMap().toString()
+							);
+					
 					group.createNode(nodeInfo.getHost(),
 							nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 							nodeInfo.getConfigMap());
