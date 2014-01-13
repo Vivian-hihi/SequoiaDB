@@ -254,6 +254,12 @@ namespace CLSMGR
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CMTCPLISTENER );
       UINT32 retry = 0 ;
+      if ( port <= 0 )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG( PDERROR, "invalid port:%d", port );
+         goto error;
+      }
 
       while ( retry <= CM_TCPLISTENER_RETRY )
       {
