@@ -54,7 +54,7 @@ public class SdbFileAdd extends Task{
 		try {
 			InputStreamReader srcFile_r = new InputStreamReader( new FileInputStream(srcFile),"UTF-8");
 			reader = new BufferedReader(srcFile_r);
-			output = new  BufferedWriter( new OutputStreamWriter(new FileOutputStream( destFile ,true) )) ; 
+			output = new  BufferedWriter( new OutputStreamWriter(new FileOutputStream( destFile ,true) ,"UTF-8" )) ; 
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -75,5 +75,7 @@ public class SdbFileAdd extends Task{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		
 	}
 }
