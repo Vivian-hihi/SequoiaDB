@@ -112,8 +112,8 @@
     <exec executable="cat">
 			<arg line="${testcase.path}/libs/func.js ${test.case.fullname} > ${test.case.fullname}.${parallel.num}"/>
 		</exec>
-		<echo message="${js.functions.context}" file="${test.case.fullname}.${parallel.num}" encoding="UTF-8" />
-		<echo message="${js.context}" file="${test.case.fullname}.${parallel.num}" append="true" encoding="UTF-8" />
+		<!--echo message="${js.functions.context}" file="${test.case.fullname}.${parallel.num}" encoding="UTF-8" /-->
+		<!--echo message="${js.context}" file="${test.case.fullname}.${parallel.num}" append="true" encoding="UTF-8" /-->
 		<!-- end -->
 
 		<tstamp>
