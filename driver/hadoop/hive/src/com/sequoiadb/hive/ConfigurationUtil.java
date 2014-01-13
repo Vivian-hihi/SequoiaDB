@@ -14,9 +14,13 @@ import org.apache.hadoop.conf.Configuration;
 public class ConfigurationUtil {
 	public static final Log LOG = LogFactory.getLog(ConfigurationUtil.class.getName());
 	
+	//The parameter name of database name 
 	public static final String SPACE_NAME = "db";
+	//The parameter name of table name 
 	public static final String COLLECTION_NAME = "name";
 	public static final String COLUMN_MAPPING = "columns";
+	
+	//The space name which defined in table property.
 	public static final String CS_NAME = "sdb.space";
 	public static final String CL_NAME = "sdb.collection";
 	public static final String DB_ADDR = "sdb.address";
@@ -38,7 +42,7 @@ public class ConfigurationUtil {
 		if( cs_name == null ){
 			return null;
 		}else{
-			return cs_name;
+			return cs_name.toLowerCase();
 		}
 	}
 	public static String getClName(Configuration conf){
@@ -47,7 +51,7 @@ public class ConfigurationUtil {
 			return null;
 		}
 		else{
-			return cl_name;
+			return cl_name.toLowerCase();
 		}
 	}
 	public final static int getBulkRecourdNum(Configuration conf) {
@@ -61,12 +65,18 @@ public class ConfigurationUtil {
 
 	public final static String getSpaceName(Configuration conf) {
 		String fullTableName = conf.get(COLLECTION_NAME); 
-		return fullTableName.substring(0, fullTableName.indexOf(".") );
+		if (fullTableName == null) {
+			return null;
+		}
+		return fullTableName.substring(0, fullTableName.indexOf(".") ).toLowerCase();
 	}
 
 	public final static String getCollectionName(Configuration conf) {
 		String fullTableName = conf.get(COLLECTION_NAME); 
-		return fullTableName.substring(fullTableName.indexOf(".") + 1);
+		if (fullTableName == null) {
+			return null;
+		}
+		return fullTableName.substring(fullTableName.indexOf(".") + 1).toLowerCase();
 	}
 
 	public final static String getDBAddr(Configuration conf) {

@@ -105,25 +105,6 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 				throws org.apache.hadoop.hive.metastore.api.MetaException {
 			boolean isExternal = MetaStoreUtils.isExternalTable(tbl);
 			
-			//LOG.info("isExternal is "+isExternal);
-			//LOG.info("deleteData is " + deleteData);
-//			if (deleteData && isExternal) {
-//				// nothing to do...
-//			} else if (deleteData && !isExternal) {
-//				String dbAddr = tbl.getParameters().get(
-//						ConfigurationUtil.DB_ADDR);
-//
-//				String spaceName = tbl.getDbName();
-//				String dbCollection = tbl.getTableName();
-//
-//				SdbConnAddr[] sdbAddr = ConfigurationUtil.getAddrList(dbAddr);
-//
-//				Sequoiadb sdb = new Sequoiadb(sdbAddr[0].getHost(),
-//						sdbAddr[0].getPort(), null, null);
-//				CollectionSpace space = sdb.getCollectionSpace(spaceName);
-//				space.dropCollection(dbCollection);
-//				sdb.disconnect();
-//			}
 			if( deleteData && !isExternal ){
 				
 				String dbAddr = tbl.getParameters().get(
@@ -196,11 +177,6 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 			if (!space.isCollectionExist(dbCollection)) {
 				space.createCollection(dbCollection);
 			}
-			//}//this is not external table 
-			//else{
-				//is external table , and we will not create cs and cl , just check space and collection is exist or not
-				
-			//}
 
 			sdb.disconnect();
 		}
