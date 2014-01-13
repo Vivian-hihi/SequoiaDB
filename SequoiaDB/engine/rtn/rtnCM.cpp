@@ -58,6 +58,7 @@
 #include "../bson/bson.h"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "rtnTrace.hpp"
 #include "sdbcommon.hpp"
 
 
