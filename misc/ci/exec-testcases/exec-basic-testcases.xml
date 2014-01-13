@@ -116,7 +116,7 @@
 		<!--echo message="${js.functions.context}" file="${test.case.fullname}.${parallel.num}" encoding="UTF-8" /-->
 		<!--echo message="${js.context}" file="${test.case.fullname}.${parallel.num}" append="true" encoding="UTF-8" /-->
 		
-		
+		<!--
 		<exec executable="cat" >
 			<arg line="${testcase.path}/libs/func.js >> ${test.case.fullname}.${parallel.num}" />
 		</exec>
@@ -124,7 +124,10 @@
 		<exec executable="cat">
 		  <arg line="${test.case.fullname} >> ${test.case.fullname}.${parallel.num}" />
 		</exec>
+		-->
 		
+		<sdbFileAdd srcFile="${testcase.path}/libs/func.js  destFile="${test.case.fullname}.${parallel.num}" />
+		<sdbFileAdd srcFile="${test.case.fullname}" destFile="${test.case.fullname}.${parallel.num}" />		
 		<!-- end -->
 
 		<tstamp>
