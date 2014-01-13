@@ -654,6 +654,7 @@ namespace engine
          eduMgr->regSystemEDU ( EDU_TYPE_COORDNETWORK, agentEDU ) ;
          rc = eduMgr->waitUntil( agentEDU , PMD_EDU_RUNNING ) ;
          PD_RC_CHECK( rc, PDERROR, "Wait CoordNet active failed, rc: %d", rc ) ;
+         pmdGetStartup().ok( TRUE );
       }
 
       // Then start tcp lisening thread and other helper threads
