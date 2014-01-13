@@ -1771,11 +1771,10 @@ namespace CLSMGR
             goto error ;
          }
       }
-      PD_TRACE4 ( SDB_SDBCM_INITENV, PD_PACK_STRING(pmdConf), PD_PACK_STRING(_pdDiagLogPath),
+      PD_TRACE4 ( SDB_RTNCM_INITENV, PD_PACK_STRING(pmdConf), PD_PACK_STRING(_pdDiagLogPath),
                   PD_PACK_STRING(sdbstartExecName), PD_PACK_STRING(sdbstopExecName) );
 
    done:
-      //PD_TRACE_EXITRC ( SDB_RTNCM_INITENV, rc );
       return rc ;
    error:
       goto done ;   
@@ -2108,7 +2107,7 @@ namespace CLSMGR
          PD_LOG ( PDERROR, "Failed to initialize environment, rc = %d", rc ) ;
          goto error ;
       }
-      PD_TRACE1 ( SDB_CMMAIN, PD_PACK_USHORT(port) );
+      //PD_TRACE1 ( SDB_RTNCMSVC_DMNMAIN, PD_PACK_USHORT(port) );
       try
       {
          boost::thread listener ( cmTcpListener, port ) ;
