@@ -107,7 +107,7 @@
     <echo message="now test ${test.case.name}.js file" />
 	
 		
-		<sdbFileAdd srcFile="${testcase.path}/libs/func.js  destFile="${test.case.fullname}.${parallel.num}" />
+		<sdbFileAdd srcFile="${testcase.path}/libs/func.js"  destFile="${test.case.fullname}.${parallel.num}" />
 		<sdbFileAdd srcFile="${test.case.fullname}" destFile="${test.case.fullname}.${parallel.num}" />		
 		<!-- end -->
 
