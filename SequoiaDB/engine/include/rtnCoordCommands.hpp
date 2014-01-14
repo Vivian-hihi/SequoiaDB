@@ -901,7 +901,6 @@ namespace engine
    class rtnCoordCMDGetIndexes : public rtnCoordCMDStatisticsBase
    {
       typedef std::map< std::string, bson::BSONObj > CoordIndexMap;
-      typedef std::vector< bson::BSONObj > CoordIndexVec;
    private :
       virtual INT32 generateResult( rtnContext *pContext,
                                  netMultiRouteAgent *pRouteAgent,
