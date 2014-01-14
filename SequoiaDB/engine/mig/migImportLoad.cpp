@@ -51,12 +51,13 @@ _migParser::~_migParser()
 }
 
 PD_TRACE_DECLARE_FUNCTION ( SDB__MIGLOADPARSER_RUN, "_migParser::run" )
-INT32 _migParser::run ( INT32 &total, INT32 &succeed )
+INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__MIGLOADPARSER_RUN );
+   //PD_LOG ( PDERROR, "num %d", insertNum ) ;
    INT32 count = 0, succ = 0;
-   INT32 maxInsert = 100 ;
+   INT32 maxInsert = insertNum ;
    INT32 bsonObjNum = 0 ;
    bson **bsonObjArray = new(std::nothrow) bson* [maxInsert] ;
    if ( !bsonObjArray )
