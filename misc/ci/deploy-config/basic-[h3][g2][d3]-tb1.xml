@@ -42,6 +42,8 @@
 		  </ant>
 		</parallel>
 		
+		<sleep minutes="3" />
+		
 
 		<sdbdeploy host="${test.machine.no1.basic}" coordport="50000">
 			<catagroup name="cata1">
