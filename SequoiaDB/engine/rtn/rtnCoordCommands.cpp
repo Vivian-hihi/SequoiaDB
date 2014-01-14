@@ -6467,9 +6467,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDGETIXS_GENRT ) ;
       CoordIndexMap indexMap ;
-      CoordIndexVec indexVec ;
-      BSONObj boIndex ;
-      UINT32 i = 0 ;
       rtnContextBuf buffObj ;
       INT64 startPos = 0 ;
 
@@ -6493,8 +6490,7 @@ namespace engine
          try
          {
             BSONObj boTmp( buffObj.data() ) ;
-            boIndex = boTmp.copy() ;
-            BSONElement beIndexDef = boIndex.getField(
+            BSONElement beIndexDef = boTmp.getField(
                                        IXM_FIELD_NAME_INDEX_DEF );
             PD_CHECK ( beIndexDef.type() == Object, SDB_INVALIDARG, error,
                        PDERROR, "Get index failed, failed to get the field(%s)",
@@ -6510,12 +6506,39 @@ namespace engine
             CoordIndexMap::iterator iter = indexMap.find( strIndexName ) ;
             if ( indexMap.end() == iter )
             {
-               indexMap[ strIndexName ] = boIndex ;
-               indexVec.push_back( boIndex ) ;
+               indexMap[ strIndexName ] = boTmp.copy() ;
             }
             else
             {
-               if ( boIndex.woCompare( iter->second ) != 0 )
+               // check the index
+               BSONObjIterator newIter( boIndexDef );
+               BSONObj boOldDef;
+               BSONElement beOldDef =
+                  iter->second.getField( IXM_FIELD_NAME_INDEX_DEF );
+               PD_CHECK ( beOldDef.type() == Object, SDB_INVALIDARG, error,
+                       PDERROR, "Get index failed, failed to get the field(%s)",
+                       IXM_FIELD_NAME_INDEX_DEF ) ;
+               boOldDef = beOldDef.embeddedObject();
+               while( newIter.more() )
+               {
+                  BSONElement beTmp1 = newIter.next();
+                  if ( 0 == ossStrcmp( beTmp1.fieldName(), "_id") )
+                  {
+                     continue;
+                  }
+                  BSONElement beTmp2 = boOldDef.getField( beTmp1.fieldName() );
+                  if ( 0 != beTmp1.woCompare( beTmp2 ) )
+                  {
+                     PD_RC_CHECK( SDB_SYS, PDERROR,
+                                 "Corrupted index(name:%s, "
+                                 "define1:%s, define2:%s)",
+                                 strIndexName.c_str(),
+                                 beTmp1.toString().c_str(),
+                                 beTmp2.toString().c_str() );
+                  }
+               }
+
+               if ( boIndexDef.woCompare( iter->second ) != 0 )
                {
                   PD_LOG ( PDWARNING, "Corrupted index(%s)",
                            strIndexName.c_str() ) ;
@@ -6534,19 +6557,14 @@ namespace engine
          goto error;
       }
 
-      for ( ; i < indexVec.size(); i++ )
       {
-         try
+         CoordIndexMap::iterator iterMap = indexMap.begin();
+         while( iterMap != indexMap.end() )
          {
-            BSONObj boReply( indexVec[i] ) ;
-            rc = pContext->append( boReply ) ;
+            rc = pContext->append( iterMap->second );
             PD_RC_CHECK( rc, PDERROR, "Failed to get index, append the data "
                          "failed(rc=%d)", rc ) ;
-         }
-         catch ( std::exception &e )
-         {
-            PD_RC_CHECK( rc, PDERROR, "Failed to get index, occured unexpected"
-                         "error:%s", e.what() ) ;
+            ++iterMap;
          }
       }
 
