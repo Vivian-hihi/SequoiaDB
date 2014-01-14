@@ -75,6 +75,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define OPTION_SOURCEPORT  "sourceport"
 #define OPTION_SOURCEUSER  "sourceuser"
 #define OPTION_SOURCEPWD   "sourcepassword"
+#define OPTION_INSERTNUM   "insertnum"
 
 #define OPTION_FIELD             FIELD_NAME_FIELDS
 #define OPTION_HEADERLINE        FIELD_NAME_HEADERLINE
@@ -100,6 +101,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( COMMANDS_STRING(OPTION_DELRECORD,      ",r"), boost::program_options::value<string>(), "record delimiter ( default: '\\n' )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_COLLECTSPACE,   ",c"), boost::program_options::value<string>(), "collection space name" ) \
        ( COMMANDS_STRING(OPTION_COLLECTION,     ",l"), boost::program_options::value<string>(), "collection name" ) \
+       ( COMMANDS_STRING(OPTION_INSERTNUM,      ",n"), boost::program_options::value<string>(), "batch insert records number, default: 100" ) \
        ( OPTION_FILENAME,      boost::program_options::value<string>(), "database load file name" ) \
        ( OPTION_MODEL,         boost::program_options::value<string>(), "get data model, default: io ( io, hdfs )" ) \
        ( OPTION_LIBPATH,       boost::program_options::value<string>(), "load lib path ( hdfs model only )" ) \
@@ -146,6 +148,7 @@ BOOLEAN bMongoCompatible                  = FALSE ;
 BOOLEAN isHeaderline                      = FALSE ;
 BOOLEAN autoAddField                      = TRUE  ;
 BOOLEAN autoCompletion                    = FALSE ;
+INT32 lInsertNum = 100 ;
 
 CHAR gDelList[6] = { MIG_DEFAULT_DELCHAR, 0, MIG_DEFAULT_DELFIELD, 0,
                      MIG_DEFAULT_DELRECORD, 0 } ;
@@ -522,6 +525,17 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       ossStrncpy ( gSourcePort, vm[OPTION_SOURCEPORT].as<string>().c_str(),
                    OSS_MAX_SERVICENAME ) ;
    }
+
+   if ( vm.count ( OPTION_INSERTNUM ) )
+   {
+      lInsertNum = ossAtoi ( vm[OPTION_INSERTNUM].as<string>().c_str() ) ;
+      if ( lInsertNum <= 0 )
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "insert records number must be greater than 100" ) ;
+         goto error ;
+      }
+   }
 done :
    PD_TRACE_EXITRC ( SDB_SDBIMPLOAD_RESOLVEARG, rc );
    return rc ;
@@ -632,7 +646,7 @@ INT32 importCSV ()
       goto error ;
    }
    // run it
-   rc = parser->run ( total, succ ) ;
+   rc = parser->run ( total, succ, lInsertNum ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to execute parser, rc = %d", rc ) ;
@@ -677,7 +691,7 @@ INT32 importJson ()
       goto error ;
    }
    // run it
-   rc = parser->run ( total, succ ) ;
+   rc = parser->run ( total, succ, lInsertNum ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to execute parser, rc = %d", rc ) ;
