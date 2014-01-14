@@ -67,7 +67,7 @@ protected:
 public:
    _migParser () ;
    virtual ~_migParser () ;
-   virtual INT32 run ( INT32 &total, INT32 &succeed ) ;
+   virtual INT32 run ( INT32 &total, INT32 &succeed, INT32 insertNum ) ;
 } ;
 
 class _migCSVParser : public _migParser
