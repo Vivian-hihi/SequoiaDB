@@ -127,7 +127,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
       ++count ;
       ++succ ;
       ++bsonObjNum ;
-      if ( maxInsert == bsonObjNum )
+      if ( ( maxInsert - 1 ) == bsonObjNum )
       {
          rc = _importRecord ( bsonObjArray, bsonObjNum ) ;
          if ( rc )
