@@ -569,7 +569,7 @@ namespace engine
    // note this validate is validating whether an key def has fields other than
    // 1/-1, this check should NOT be directly used against an index key def,
    // because it may contains inregular key def like 2d index
-   BOOLEAN _ixmIndexKeyGen::validateKeyDef ( BSONObj &keyDef )
+   BOOLEAN _ixmIndexKeyGen::validateKeyDef ( const BSONObj &keyDef )
    {
       BSONObjIterator i ( keyDef ) ;
       INT32 count = 0 ;

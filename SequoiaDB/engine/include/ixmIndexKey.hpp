@@ -82,7 +82,7 @@ namespace engine
       BSONElement missingField() const ;
       IndexSuitability suitability( const BSONObj &query ,
                                     const BSONObj &order ) const ;
-      static BOOLEAN validateKeyDef ( BSONObj &keyDef ) ;
+      static BOOLEAN validateKeyDef ( const BSONObj &keyDef ) ;
    } ;
    typedef class _ixmIndexKeyGen ixmIndexKeyGen ;
 }
