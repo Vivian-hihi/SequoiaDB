@@ -88,7 +88,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
          bson_destroy ( tempObj ) ;
          if ( bsonObjNum >= 0 )
          {
-            rc = _importRecord ( bsonObjArray, bsonObjNum + 1 ) ;
+            rc = _importRecord ( bsonObjArray, bsonObjNum ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
