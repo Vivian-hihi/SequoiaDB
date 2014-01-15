@@ -5993,6 +5993,7 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
       bson_iterator_init ( &it, options ) ;
       while ( BSON_EOO != bson_iterator_next ( &it ) )
       {
+/*
          key = bson_iterator_key ( &it ) ;
          if ( ossStrcmp ( key, FIELD_NAME_GROUPNAME ) &&
               ossStrcmp ( key, FIELD_NAME_NAME ) &&
@@ -6004,10 +6005,21 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         bson_append_element ( &newObj, NULL, &it ) ;
+*/
+         rc = bson_append_element ( &newObj, NULL, &it ) ;
+         if ( rc )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
    }
-   bson_finish ( &newObj ) ;
+   rc = bson_finish ( &newObj ) ;
+   if ( rc )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
    rc = clientBuildQueryMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
                               CMD_ADMIN_PREFIX CMD_NAME_BACKUP_OFFLINE,
                               0, 0, 0, -1, &newObj,
