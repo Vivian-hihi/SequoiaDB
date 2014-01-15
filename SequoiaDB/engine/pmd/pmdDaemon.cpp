@@ -83,6 +83,54 @@ namespace engine
       return FALSE;
    }
 
+   INT32 _pmdDMNProcInfo::setDMNCMD( pmdDMNSHMCmd dmnCMD )
+   {
+      SDB_ASSERT( PMDDMN_SHM_CMD_INVALID
+               == ( dmnCMD & PMDDMN_SHM_CMD_CHL_MASK ),
+               "invalid daemon-command!" );
+      if ( PMDDMN_SHM_CMD_INVALID ==
+         ( cmd & PMDDMN_SHM_CMD_DMN_MASK ) )
+      {
+         cmd = cmd | ( dmnCMD & PMDDMN_SHM_CMD_DMN_MASK );
+         return SDB_OK;
+      }
+      return SDB_PERM;
+   }
+
+   INT32 _pmdDMNProcInfo::getDMNCMD()
+   {
+      INT32 dmnCMD = cmd & PMDDMN_SHM_CMD_DMN_MASK;
+      if ( PMDDMN_SHM_CMD_INVALID != dmnCMD )
+      {
+         cmd = cmd & PMDDMN_SHM_CMD_CHL_MASK;
+      }
+      return dmnCMD;
+   }
+
+   INT32 _pmdDMNProcInfo::setCHLCMD( pmdDMNSHMCmd chlCMD )
+   {
+      SDB_ASSERT( PMDDMN_SHM_CMD_INVALID
+               == ( chlCMD & PMDDMN_SHM_CMD_DMN_MASK ),
+               "invalid children-command!" );
+      if ( PMDDMN_SHM_CMD_INVALID ==
+         ( cmd & PMDDMN_SHM_CMD_CHL_MASK ) )
+      {
+         cmd = cmd | ( chlCMD & PMDDMN_SHM_CMD_CHL_MASK);
+         return SDB_OK;
+      }
+      return SDB_PERM;
+   }
+
+   INT32 _pmdDMNProcInfo::getCHLCMD()
+   {
+      INT32 chlCMD = cmd & PMDDMN_SHM_CMD_CHL_MASK;
+      if ( PMDDMN_SHM_CMD_INVALID != chlCMD )
+      {
+         cmd = cmd & PMDDMN_SHM_CMD_DMN_MASK;
+      }
+      return chlCMD;
+   }
+
    iPmdDMNChildProc::iPmdDMNChildProc()
    {
       // first run: wait for 1 cycle to check if the child is start
@@ -288,7 +336,7 @@ namespace engine
             {
                isRunning = TRUE;
             }
-            rc = DMNProcessCMD( procInfo.cmd );
+            rc = DMNProcessCMD( _procInfo->getDMNCMD() );
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR,
@@ -312,12 +360,17 @@ namespace engine
       return isRunning;
    }
 
-   INT32 iPmdDMNChildProc::DMNProcessCMD( pmdDMNSHMCmd cmd )
+   INT32 iPmdDMNChildProc::DMNProcessCMD( INT32 cmd )
    {
+      if ( PMDDMN_SHM_CMD_DMN_QUIT == cmd )
+      {
+         iPmdProc::stop();
+         PD_LOG( PDEVENT, "stop by children-process!" );
+      }
       return SDB_OK;
    }
 
-   INT32 iPmdDMNChildProc::ChildProcessCMD( pmdDMNSHMCmd cmd )
+   INT32 iPmdDMNChildProc::ChildProcessCMD( INT32 cmd )
    {
       return SDB_OK;
    }
@@ -434,9 +487,9 @@ namespace engine
    void iPmdDMNChildProc::syncProcesserInfo()
    {
       _syncExit = FALSE;
+      INT32 rc = SDB_OK;
       while( isRunning() )
       {
-         INT32 rc = SDB_OK;
          rc = attachSHM();
          if ( SDB_OK == rc )
          {
@@ -457,13 +510,20 @@ namespace engine
          }
          ossSleep( PMDDMN_INTERVAL_TIME );
       }
-      if ( NULL != _procInfo )
+      rc = attachSHM();
+      if ( SDB_OK == rc )
       {
-         _procInfo->pid = OSS_INVALID_PID;
-         if ( PMDDMN_SHM_STAT_DAEMON != _procInfo->stat )
+         if ( _procInfo->isInit() )
          {
-            _procInfo->stat = PMDDMN_SHM_STAT_DAEMON;
+            PD_LOG( PDEVENT, "stop service..." );
+            rc = _procInfo->setDMNCMD( PMDDMN_SHM_CMD_DMN_QUIT );
+            if ( SDB_OK !=rc )
+            {
+               PD_LOG( PDWARNING,
+                     "daemon process is not stop!" );
+            }
          }
+         detachSHM();
       }
       _syncExit = TRUE;
    }

@@ -66,20 +66,37 @@ namespace engine
 
    enum pmdDMNSHMCmd
    {
-      PMDDMN_SHM_CMD_INVALID = 0
+      PMDDMN_SHM_CMD_INVALID = 0,
+
+      // daemon command:
+      PMDDMN_SHM_CMD_DMN_BEGIN = 1,
+      PMDDMN_SHM_CMD_DMN_QUIT = 2,
+
+      PMDDMN_SHM_CMD_DMN_END = 255,
+
+      // children command:
+      PMDDMN_SHM_CMD_CHL_BEGIN = 0xff00,
+
+      PMDDMN_SHM_CMD_CHL_END = 0xffff
    };
    typedef struct _pmdDMNProcInfo
    {
+#define PMDDMN_SHM_CMD_DMN_MASK        0x00ff
+#define PMDDMN_SHM_CMD_CHL_MASK        0xff00
       CHAR           szTag[32];
       OSSPID         pid;
       pmdDMNSHMStat  stat;
-      pmdDMNSHMCmd   cmd;
+      INT32          cmd;
       INT32          exitCode;
       UINT32         sn;
    public:
       _pmdDMNProcInfo();
       BOOLEAN isInit();
       void init();
+      INT32 setDMNCMD( pmdDMNSHMCmd newCMD );
+      INT32 setCHLCMD( pmdDMNSHMCmd newCMD );
+      INT32 getDMNCMD();
+      INT32 getCHLCMD();
    }pmdDMNProcInfo;
 
    class iPmdDMNChildProc : public iPmdProc
@@ -95,8 +112,8 @@ namespace engine
       virtual INT32 init( ossSHMKey shmKey,
                         const CHAR *pDiagLogDir );
       BOOLEAN isChildRunning();
-      INT32 DMNProcessCMD( pmdDMNSHMCmd cmd );
-      INT32 ChildProcessCMD( pmdDMNSHMCmd cmd );
+      INT32 DMNProcessCMD( INT32 cmd );
+      INT32 ChildProcessCMD( INT32 cmd );
       INT32 start();    // call by daemon
       INT32 stop();     // call by daemon
       INT32 run( INT32 argc, CHAR **argv ); // call in main()
