@@ -86,9 +86,9 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
       if ( rc == SDB_EOF )
       {
          bson_destroy ( tempObj ) ;
-         if ( bsonObjNum > 0 )
+         if ( bsonObjNum >= 0 )
          {
-            rc = _importRecord ( bsonObjArray, bsonObjNum ) ;
+            rc = _importRecord ( bsonObjArray, bsonObjNum + 1 ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
@@ -126,9 +126,9 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
       ++count ;
       ++succ ;
       ++bsonObjNum ;
-      if ( ( maxInsert - 1 ) == bsonObjNum )
+      if ( maxInsert == bsonObjNum )
       {
-         rc = _importRecord ( bsonObjArray, bsonObjNum ) ;
+         rc = _importRecord ( bsonObjArray, maxInsert ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
