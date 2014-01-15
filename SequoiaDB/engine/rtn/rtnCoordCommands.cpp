@@ -575,9 +575,9 @@ namespace engine
 
          if ( SDB_OK == rc )
          {
-            if ( pReply->contextID != -1 )
+            if ( _useContext () )
             {
-               if ( _useContext () )
+               if ( pReply->contextID != -1 )
                {
                   rc = pContext->addSubContext( pReply->header.routeID,
                                                 pReply->contextID ) ;
@@ -587,12 +587,12 @@ namespace engine
                               rc ) ;
                   }
                }
-            }
-            else
-            {
-               rc = SDB_SYS ;
-               PD_LOG( PDERROR, "node return invalid contextID(%lld)",
-                       pReply->contextID ) ;
+               else
+               {
+                  rc = SDB_SYS ;
+                  PD_LOG( PDERROR, "node return invalid contextID(%lld)",
+                          pReply->contextID ) ;
+               }
             }
          }
          else if ( rc != SDB_OK )
