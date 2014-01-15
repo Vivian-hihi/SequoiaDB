@@ -1109,7 +1109,6 @@ namespace engine
          }
       }
 
-   done :
       PD_TRACE_EXIT ( SDB__DPSRPCMGR__PSH2SNDQUEUE );
       return ;
    }
