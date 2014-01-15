@@ -117,7 +117,7 @@ namespace engine
             ++localErr ;
       }
 
-      if ( header->_storageUnitSize - dataOffset / pageSize != pageNum )
+      if ( header->_storageUnitSize - dataOffset / pageSize != (UINT32)pageNum )
       {
          len += ossSnprintf ( outBuf + len, outSize - len,
                               "Error: Page number is not same with value that "
