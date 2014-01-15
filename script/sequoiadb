@@ -194,6 +194,13 @@ status_of_proc () {
 #
 do_start()
 {
+  # Set ulimit 
+  ulimit -Sc 0   #no coredump
+  ulimit -Sd unlimited #data seg size
+  ulimit -Sf unlimited #file size
+  ulimit -Sv unlimited #virtual memory
+  ulimit -Sn unlimited #open files
+
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
