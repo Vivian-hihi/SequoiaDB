@@ -43,6 +43,12 @@ using namespace bson ;
 
 namespace engine
 {
+   // the shard mgr update some info from catalog timeout
+   #define CLS_SHARD_TIMEOUT     (5*OSS_ONE_SEC)
+
+   /*
+      _catlogServerInfo define
+   */
    struct _catlogServerInfo : public SDBObject
    {
       NodeID      nodeID ;
@@ -51,6 +57,9 @@ namespace engine
    } ;
    typedef std::vector<_catlogServerInfo>             VECCATLOG ;
 
+   /*
+      _clsEventItem define
+   */
    class _clsEventItem : public SDBObject
    {
    public :
@@ -73,6 +82,9 @@ namespace engine
    } ;
    typedef class _clsEventItem clsEventItem ;
 
+   /*
+      _clsCSEventItem define
+   */
    class _clsCSEventItem : public SDBObject
    {
       public:
@@ -87,6 +99,9 @@ namespace engine
    } ;
    typedef _clsCSEventItem clsCSEventItem ;
 
+   /*
+      _clsShardMgr define
+   */
    class _clsShardMgr :  public _clsObjBase
    {
       typedef std::map<std::string, clsEventItem*>       MAP_CAT_EVENT ;
@@ -118,30 +133,31 @@ namespace engine
 
          INT32 getAndLockCataSet( const CHAR *name, clsCatalogSet **ppSet,
                                   BOOLEAN noWithUpdate = TRUE,
-                                  INT64 waitMillSec = OSS_ONE_SEC,
+                                  INT64 waitMillSec = CLS_SHARD_TIMEOUT,
                                   BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockCataSet( clsCatalogSet *catSet ) ;
 
          INT32 getAndLockGroupItem( UINT32 id, clsGroupItem **ppItem,
                                      BOOLEAN noWithUpdate = TRUE,
-                                     INT64 waitMillSec = OSS_ONE_SEC,
+                                     INT64 waitMillSec = CLS_SHARD_TIMEOUT,
                                      BOOLEAN *pUpdated = NULL ) ;
          INT32 unlockGroupItem( clsGroupItem *item ) ;
 
          INT32 rGetCSPageSize( const CHAR *csName, UINT32 &pageSize,
-                               INT64 waitMillSec = OSS_ONE_SEC ) ;
+                               INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
       public:
          INT32  sendToCatlog ( MsgHeader * msg ) ;
          INT32  syncSend( MsgHeader * msg, UINT32 groupID, BOOLEAN primary,
-                          MsgHeader **ppRecvMsg, INT64 millisec = OSS_ONE_SEC ) ;
+                          MsgHeader **ppRecvMsg,
+                          INT64 millisec = CLS_SHARD_TIMEOUT ) ;
          INT32  updatePrimary ( const NodeID & id , BOOLEAN primary ) ;
          INT32  updateCatGroup ( BOOLEAN unsetPrimary = TRUE ) ;
 
          INT32 syncUpdateCatalog ( const CHAR *pCollectionName,
-                                   INT64 millsec = OSS_ONE_SEC ) ;
+                                   INT64 millsec = CLS_SHARD_TIMEOUT ) ;
          INT32 syncUpdateGroupInfo ( UINT32 groupID,
-                                     INT64 millsec = OSS_ONE_SEC ) ;
+                                     INT64 millsec = CLS_SHARD_TIMEOUT ) ;
          NodeID nodeID () const ;
          INT32 clearAllData () ;
 
