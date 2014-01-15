@@ -34,11 +34,13 @@
 
 using namespace std ;
 
-#define LINENOISE_MAX_LINE 4096
+#define LINENOISE_MAX_LINE          (65535)
+#define LINENOISE_MAX_INPUT_LEN     (16781312)
+
 extern INT32 history_len ;
 string historyFile ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__RELSNODE, "_linenoiseCmdBuilder::_releaseNode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__RELSNODE, "_linenoiseCmdBuilder::_releaseNode" )
 void _linenoiseCmdBuilder::_releaseNode( _linenoiseCmd * node )
 {
    PD_TRACE_ENTRY ( SDB__LINENOISECMDBLD__RELSNODE );
@@ -80,7 +82,7 @@ UINT32 _linenoiseCmdBuilder::_near( const CHAR * str1, const CHAR * str2 )
    return same ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__LOADCMD, "_linenoiseCmdBuilder::loadCmd" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__LOADCMD, "_linenoiseCmdBuilder::loadCmd" )
 INT32 _linenoiseCmdBuilder::loadCmd( const CHAR *filename )
 {
    INT32 rc = SDB_OK ;
@@ -88,7 +90,7 @@ INT32 _linenoiseCmdBuilder::loadCmd( const CHAR *filename )
 
    ifstream fin ;
    fin.open( filename ) ;
-   CHAR buf[LINENOISE_MAX_LINE] ;
+   CHAR buf[LINENOISE_MAX_LINE+1] = {0} ;
    while( fin.getline(buf, LINENOISE_MAX_LINE) )
    {
       rc = addCmd( buf ) ;
@@ -101,7 +103,7 @@ INT32 _linenoiseCmdBuilder::loadCmd( const CHAR *filename )
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__ADDCMD, "_linenoiseCmdBuilder::addCmd" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__ADDCMD, "_linenoiseCmdBuilder::addCmd" )
 INT32 _linenoiseCmdBuilder::addCmd( const CHAR * cmd )
 {
    INT32 rc = SDB_OK ;
@@ -132,7 +134,7 @@ INT32 _linenoiseCmdBuilder::addCmd( const CHAR * cmd )
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__DELCMD, "_linenoiseCmdBuilder::delCmd" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__DELCMD, "_linenoiseCmdBuilder::delCmd" )
 INT32 _linenoiseCmdBuilder::delCmd( const CHAR * cmd )
 {
    INT32 rc = SDB_OK ;
@@ -194,7 +196,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__INSERT, "_linenoiseCmdBuilder::_insert" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__INSERT, "_linenoiseCmdBuilder::_insert" )
 INT32 _linenoiseCmdBuilder::_insert( _linenoiseCmd * node, const CHAR * cmd )
 {
    INT32 rc = SDB_OK ;
@@ -287,7 +289,7 @@ INT32 _linenoiseCmdBuilder::_insert( _linenoiseCmd * node, const CHAR * cmd )
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__GETCOMPLETIONS2, "_linenoiseCmdBuilder::getCompletions" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__GETCOMPLETIONS2, "_linenoiseCmdBuilder::getCompletions" )
 UINT32 _linenoiseCmdBuilder::getCompletions( const CHAR * cmd,
                                              CHAR *&fill,
                                              CHAR **&vec,
@@ -358,7 +360,7 @@ done :
    return cnt ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__PREFIND, "_linenoiseCmdBuilder::_prefixFind" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__PREFIND, "_linenoiseCmdBuilder::_prefixFind" )
 _linenoiseCmd* _linenoiseCmdBuilder::_prefixFind( const CHAR * cmd,
                                                   UINT32 & sameNum )
 {
@@ -415,7 +417,7 @@ _linenoiseCmd* _linenoiseCmdBuilder::_prefixFind( const CHAR * cmd,
    return NULL ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__GETCOMPLETIONS, "_linenoiseCmdBuilder::_getCompleteions" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__LINENOISECMDBLD__GETCOMPLETIONS, "_linenoiseCmdBuilder::_getCompleteions" )
 UINT32 _linenoiseCmdBuilder::_getCompleteions( _linenoiseCmd * node,
                                                const std::string &prefix,
                                                BOOLEAN getSub,
@@ -474,7 +476,7 @@ linenoiseCmdBuilder* getLinenoiseCmdBuilder()
    return &s_lnCmdBuilder ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_LINECOMPLETE, "lineComplete" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_LINECOMPLETE, "lineComplete" )
 void lineComplete( const char *buf, linenoiseCompletions *lc )
 {
    PD_TRACE_ENTRY ( SDB_LINECOMPLETE );
@@ -485,23 +487,24 @@ void lineComplete( const char *buf, linenoiseCompletions *lc )
    PD_TRACE_EXIT ( SDB_LINECOMPLETE );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CANCONTINUENXTLINE, "canContinueNextLine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CANCONTINUENXTLINE, "canContinueNextLine" )
 BOOLEAN canContinueNextLine ( const CHAR * str )
 {
    BOOLEAN  ret         = FALSE ;
+   UINT32 strlen        = 0 ;
    CHAR ch              = '\0' ;
-   BOOLEAN flag1        = FALSE ;
-   BOOLEAN flag2        = FALSE ;
-   const CHAR *pos      = NULL ;
+   BOOLEAN flag1        = FALSE ;   // for ""
+   BOOLEAN flag2        = FALSE ;   // for ''
 
    SDB_ASSERT ( str , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_CANCONTINUENXTLINE );
-int x =0, y=0, z=0;
+
    try
    {
       vector< CHAR > parens ;
       while ( ( ch = *str ) != '\0' )
       {
+         ++strlen ;
          // we won't check the "()\[]\{}" in '' or ""
          if ( ( ch == '\"' ) && flag2 == FALSE )
          {
@@ -547,12 +550,15 @@ int x =0, y=0, z=0;
             break ;
          }
       }
-      if ( flag1 == TRUE || flag2 == TRUE )
+
+      if ( strlen > LINENOISE_MAX_INPUT_LEN )
+      {
+         ret = FALSE ;
+      }
+      else if ( flag1 == TRUE || flag2 == TRUE || !parens.empty() )
       {
          ret = TRUE ;
-         goto done ;
       }
-      ret = parens.empty() ? FALSE : TRUE ;
    }
    catch ( bad_alloc & )
    {
@@ -566,7 +572,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_HISTORYCLEAR, "historyClear" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_HISTORYCLEAR, "historyClear" )
 BOOLEAN historyClear ( void )
 {
    BOOLEAN  ret   = FALSE ;
@@ -598,7 +604,7 @@ error :
 // Otherwise return true regardless of error occuring.
 // You should test whether *cmd is null or an empty string on this case.
 // And free *cmd if not null.
-PD_TRACE_DECLARE_FUNCTION ( SDB_GETNXTCMD, "getNextCommand" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GETNXTCMD, "getNextCommand" )
 BOOLEAN getNextCommand ( const CHAR *prompt, CHAR ** cmd,
                          BOOLEAN continueEnable )
 {
@@ -692,7 +698,7 @@ BOOLEAN getNextCommand ( const CHAR *prompt, CHAR ** cmd,
 }
 
 // initialize the history
-PD_TRACE_DECLARE_FUNCTION ( SDB_HISTORYINIT, "historyInit" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_HISTORYINIT, "historyInit" )
 BOOLEAN historyInit ( void )
 {
    BOOLEAN  ret   = FALSE ;
@@ -708,8 +714,9 @@ BOOLEAN historyInit ( void )
       goto error ;
    sstream << pPath << '/' << pName ;
    historyFile = sstream.str() ;
-cout << historyFile.c_str() << endl ;
+   cout << historyFile.c_str() << endl ;
    ret = TRUE ;
+
 done :
    PD_TRACE_EXITRC ( SDB_HISTORYINIT, ret );
    return ret ;
