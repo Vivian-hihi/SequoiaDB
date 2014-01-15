@@ -92,7 +92,6 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
-               continue ;
             }
             for ( INT32 i = 0; i < bsonObjNum; ++i )
             {
