@@ -490,31 +490,33 @@ BOOLEAN canContinueNextLine ( const CHAR * str )
 {
    BOOLEAN  ret         = FALSE ;
    CHAR ch              = '\0' ;
+   BOOLEAN flag1        = FALSE ;
+   BOOLEAN flag2        = FALSE ;
    const CHAR *pos      = NULL ;
 
    SDB_ASSERT ( str , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_CANCONTINUENXTLINE );
-
+int x =0, y=0, z=0;
    try
    {
       vector< CHAR > parens ;
       while ( ( ch = *str ) != '\0' )
       {
-         // we won't check "()\[]\{}" better '' or ""
-         if ( ( ch == '\"' ) || ( ch == '\'' ) )
+         // we won't check the "()\[]\{}" in '' or ""
+         if ( ( ch == '\"' ) && flag2 == FALSE )
          {
-            pos = ++str ;
-            while ( *pos != '\0' )
-            {
-               if ( ( *pos == '\"' ) || ( *pos == '\'' ) )
-               {
-                  str = pos ;
-               }
-               pos++ ;
-            }
-            ch = *str ;
+             flag1 = !flag1 ;
+         }
+         if ( ( ch == '\'' ) && flag1 == FALSE )
+         {
+             flag2 = !flag2 ;
          }
          str++ ;
+         if ( flag1 == TRUE || flag2 == TRUE )
+         {
+            continue ;
+         }
+
          switch ( ch )
          {
          case '{' :
@@ -544,6 +546,11 @@ BOOLEAN canContinueNextLine ( const CHAR * str )
                goto error ;
             break ;
          }
+      }
+      if ( flag1 == TRUE || flag2 == TRUE )
+      {
+         ret = TRUE ;
+         goto done ;
       }
       ret = parens.empty() ? FALSE : TRUE ;
    }
