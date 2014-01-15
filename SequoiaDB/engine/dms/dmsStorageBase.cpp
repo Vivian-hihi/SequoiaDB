@@ -73,11 +73,7 @@ namespace engine
    _dmsStorageBase::_dmsStorageBase( const CHAR *pSuFileName,
                                      dmsStorageInfo *pInfo )
    {
-      SDB_ASSERT( pSuFileName, "SU file name can't be NULL" )
-
-      // be sure the extend job has quit
-      ossLatch( &_segmentLatch, SHARED ) ;
-      ossUnlatch( &_segmentLatch, SHARED );
+      SDB_ASSERT( pSuFileName, "SU file name can't be NULL" ) ;
 
       _pStorageInfo = pInfo ;
       _dmsHeader  = NULL ;
@@ -103,11 +99,8 @@ namespace engine
 
    _dmsStorageBase::~_dmsStorageBase()
    {
-      // get segment lock for pre extent segment
-      _segmentLatch.get() ;
       closeStorage() ;
       _pStorageInfo = NULL ;
-      _segmentLatch.release () ;
    }
 
    const CHAR* _dmsStorageBase::getSuFileName () const
@@ -323,6 +316,10 @@ namespace engine
 
    void _dmsStorageBase::closeStorage ()
    {
+      // be sure the extend job has quit
+      ossLatch( &_segmentLatch, SHARED ) ;
+      ossUnlatch( &_segmentLatch, SHARED );
+
       if ( ossMmapFile::_opened )
       {
          _dmsHeader     = NULL ;
