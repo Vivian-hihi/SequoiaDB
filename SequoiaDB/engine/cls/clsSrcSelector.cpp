@@ -139,8 +139,7 @@ namespace engine
          INT32 rc = SDB_OK ;
 
          //update group info
-         rc = pmdGetKRCB()->getShardCB()->syncUpdateGroupInfo( groupID,
-                                                               OSS_ONE_SEC ) ;
+         rc = pmdGetKRCB()->getShardCB()->syncUpdateGroupInfo( groupID ) ;
          if ( SDB_OK != rc )
          {
             goto done ;

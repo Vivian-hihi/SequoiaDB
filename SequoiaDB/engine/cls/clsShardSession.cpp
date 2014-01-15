@@ -455,7 +455,7 @@ namespace engine
             loopTime++ ;
             PD_LOG ( PDWARNING, "Catalog is empty or older[rc:%d] in "
                      "session[%s]", rc, sessionName() ) ;
-            rc = _pShdMgr->syncUpdateCatalog( _pCollectionName, OSS_ONE_SEC ) ;
+            rc = _pShdMgr->syncUpdateCatalog( _pCollectionName ) ;
             if ( SDB_OK == rc )
             {
                continue ;

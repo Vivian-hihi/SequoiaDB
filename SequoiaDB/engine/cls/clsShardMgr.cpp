@@ -255,7 +255,7 @@ namespace engine
          }
          else
          {
-            syncUpdateGroupInfo( groupID, OSS_ONE_SEC ) ;
+            syncUpdateGroupInfo( groupID ) ;
          }
       }
 
