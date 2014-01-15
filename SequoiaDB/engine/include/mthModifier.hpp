@@ -153,39 +153,43 @@ namespace engine
 
       template<class Builder>
       INT32 _applyIncModifier ( Builder &bb, const BSONElement &in,
-                                ModifierElement &me ) ;
+                                ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applySetModifier ( Builder &bb, const BSONElement &in,
-                                ModifierElement &me ) ;
+                                ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyPushModifier ( Builder &bb, const BSONElement &in,
-                                 ModifierElement &me ) ;
+                                 ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyPushAllModifier ( Builder &bb, const BSONElement &in,
-                                    ModifierElement &me ) ;
+                                    ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyPullModifier ( Builder &bb, const BSONElement &in,
-                                 ModifierElement &me ) ;
+                                 ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyPopModifier ( Builder &bb, const BSONElement &in,
-                                ModifierElement &me ) ;
+                                ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyBitModifier ( Builder &bb, const BSONElement &in,
-                                ModifierElement &me ) ;
+                                ModifierElement &me, CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyBitModifier2 ( Builder &bb,
                                  const BSONElement &in,
-                                 ModifierElement &me ) ;
+                                 ModifierElement &me,
+                                 CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _applyAddtoSetModifier ( Builder &bb,
                                     const BSONElement &in,
-                                    ModifierElement &me ) ;
+                                    ModifierElement &me,
+                                    CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _appendBitModifier ( Builder &bb, INT32 in,
-                                 ModifierElement &me ) ;
+                                 ModifierElement &me,
+                                 CHAR **ppRoot ) ;
       template<class Builder>
       INT32 _appendBitModifier2 ( Builder &bb, INT32 in,
-                                  ModifierElement &me ) ;
+                                  ModifierElement &me,
+                                  CHAR **ppRoot ) ;
       // if the original object has the element we asked to modify, then e is
       // the
       // original element, b is the builder, me is the info that we want to
@@ -203,7 +207,7 @@ namespace engine
       // original
       // object, we need to append the original object in those cases
       template<class Builder>
-      INT32 _appendNew ( Builder& b, SINT32 *modifierIndex ) ;
+      INT32 _appendNew ( Builder& b, SINT32 *modifierIndex, CHAR **ppRoot ) ;
 
       // Builder could be BSONObjBuilder or BSONArrayBuilder
       // _appendNewFromMods appends the current builder with the new field
@@ -227,6 +231,9 @@ namespace engine
                            Builder &b,
                            BSONObjIteratorSorted &es,
                            SINT32 *modifierIndex ) ;
+
+      INT32 _copy2NewBsonObj ( const BSONObj &oldBson,
+                               BSONObj &newBson ) ;
    public :
       _mthModifier ()
       {
