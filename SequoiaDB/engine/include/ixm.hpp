@@ -469,13 +469,18 @@ namespace engine
                }
                if ( ele.isNumber() )
                {
-//                  if ( IXM_POSITIVE_KEY_TYPE != ele.Number() &&
-//                       IXM_REVERSE_KEY_TYPE != ele.Number() )
-//                  {
-//                     goto error ;
-//                  }
-                  type |= ele.Number() >= 0 ? IXM_EXTENT_TYPE_POSITIVE :
-                                             IXM_EXTENT_TYPE_REVERSE ;
+                  if ( IXM_POSITIVE_KEY_TYPE == ele.Number() )
+                  {
+                     type |= IXM_EXTENT_TYPE_POSITIVE ;
+                  }
+                  else if ( IXM_REVERSE_KEY_TYPE == ele.Number() )
+                  {
+                     type |= IXM_EXTENT_TYPE_REVERSE ;
+                  }
+                  else
+                  {
+                     goto error ;
+                  }
                   hasOther = TRUE ;
                }
                else if ( String == ele.type() &&
