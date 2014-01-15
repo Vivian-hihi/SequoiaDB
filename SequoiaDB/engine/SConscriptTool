@@ -201,7 +201,7 @@ sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
          LIBDEPS=["pd","oss","msg","bson","pmd","rtn"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
-sdbcmdmn = toolEnv.Program("sdbcmdmn", sdbcmDMNMain,
+sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,
          LIBDEPS=["pd","oss","msg","bson","pmd","rtn"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
@@ -229,7 +229,7 @@ toolEnv.Install( '#/bin', sdbstart )
 toolEnv.Install( '#/bin', sdbstop )
 toolEnv.Install( '#/bin', sdblist )
 toolEnv.Install( '#/bin', sdbcm )
-toolEnv.Install( '#/bin', sdbcmdmn )
+toolEnv.Install( '#/bin', sdbcmd )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )
 toolEnv.Install( '#/tools', sdbmemcheck )

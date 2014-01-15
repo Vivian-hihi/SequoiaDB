@@ -79,11 +79,11 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define SDBCM_NAME_PATTERN1         "sdbcm("
 #define SDBCM_NAME_PATTERN2         ")"
 #define SDBCM_NAME_PATTERN          SDBCM_NAME_PATTERN1 "%s" SDBCM_NAME_PATTERN2
-#define SDBCM_DMN_NAME              "sdbcmDMN"
+#define SDBCM_DMN_NAME              "sdbcmd"
 #endif
 // timeout for 30 seconds
 #define SDBCM_LOG_PATH              ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "log" \
-                                    OSS_FILE_SEP "sdbcm.log"
+                                    OSS_FILE_SEP "sdbcmd.log"
 #define TERMINATE_TIMEOUT 30
 #define SDBCM_NAME "sdbcm"
 
@@ -291,7 +291,7 @@ error :
 }
 
 #elif defined (_WINDOWS)
-#define SDBCMDMN_SRV_NAME "sdbcmdmn"
+#define SDBCMDMN_SRV_NAME "sdbcmd"
 PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_WFSTRS, "WaitForServiceToReachState" )
 BOOL WaitForServiceToReachState(SC_HANDLE hService, DWORD dwDesiredState,
                                  SERVICE_STATUS* pss, DWORD dwMilliseconds) {

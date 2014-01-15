@@ -43,7 +43,7 @@ INT32 main( INT32 argc, CHAR** argv )
 {
    INT32 rc = SDB_OK;
    cCMService svc;
-   cPmdDaemon daemon( "sdbcmDMN");
+   cPmdDaemon daemon( "sdbcmd");
    rc = svc.init();
    PD_RC_CHECK( rc, PDERROR,
                "failed to init cm(rc=%d)", rc );

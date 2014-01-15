@@ -68,13 +68,13 @@ namespace po = boost::program_options;
 #define SDBCM_NAME_BUF_LEN          255
 #define SDBCM_NAME_PATTERN1         "sdbcm("
 #define SDBCM_NAME_PATTERN2         ")"
-#define SDBCM_DMN_SVC_NAME          "sdbcmDMN"
+#define SDBCM_DMN_SVC_NAME          "sdbcmd"
 #endif
 
 #define SDBCM_LOG_PATH              ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "log" \
-                                    OSS_FILE_SEP "sdbcm.log"
+                                    OSS_FILE_SEP "sdbcmd.log"
 #define SDBCM_NAME "sdbcm"
-#define SDBCM_DMN_PROC_NAME         "sdbcmdmn"
+#define SDBCM_DMN_PROC_NAME         "sdbcmd"
 
 // initialize options
 void init ( po::options_description &desc )
@@ -149,7 +149,7 @@ error :
 
 #if defined (_WINDOWS)
 #include <windows.h>
-#define SDBCMDMN_SRV_NAME "sdbcmdmn"
+#define SDBCMDMN_SRV_NAME "sdbcmd"
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_STARTSDBCM, "startSdbcm" )
 INT32 startSdbcm ( list<const CHAR*> &argv )
