@@ -206,7 +206,7 @@ namespace engine
          rc = replayer.rollback( ( dpsLogRecordHeader *)mb.offset(0), cb );
          PD_RC_CHECK( rc, PDERROR,
                      "rollback failed(lsn=%llu,rc=%d)",
-                     *(( DPS_LSN_OFFSET *)itr.value()), rc );
+                     dpsLsn.offset, rc );
          }
       }
    done:
@@ -322,7 +322,7 @@ namespace engine
             {
                PD_LOG( PDERROR,
                      "rollback failed(lsn=%llu, rc=%d)",
-                     curLsnOffset, rc );
+                     dpsLsn.offset, rc );
                break;
             }
             iterMap->second = curLsnOffset;
