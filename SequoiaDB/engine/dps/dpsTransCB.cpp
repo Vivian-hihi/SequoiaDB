@@ -313,7 +313,7 @@ namespace engine
                pInterruptMsg->TID = 0;
                pInterruptMsg->routeID.value = 0;
                iterMap->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                                      TRUE, NULL ));
+                                                      TRUE, pInterruptMsg ));
             }
             _cbMap.erase( iterMap++ );
          }
