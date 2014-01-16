@@ -490,6 +490,7 @@ namespace engine
       void stopRollback();
       void setTransRC( INT32 rc );
       INT32 getTransRC();
+      void clearTransInfo();
 
       INT32 reallocCompressionBuffer ( INT32 requestedSize ) ;
       INT32 reallocUncompressionBuffer ( INT32 requestedSize ) ;

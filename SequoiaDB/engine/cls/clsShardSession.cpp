@@ -1196,6 +1196,7 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
             }
          }
+         _pEDUCB->clearTransInfo();
       }
 
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONINRPTMSG ) ;

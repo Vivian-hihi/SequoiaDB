@@ -440,6 +440,17 @@ namespace engine
       _Name[PMD_EDU_NAME_LENGTH] = 0 ;
    }
 
+   void _pmdEDUCB::clearTransInfo()
+   {
+      _curTransID = DPS_INVALID_TRANS_ID ;
+      _curTransLSN = DPS_INVALID_LSN_OFFSET ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
+      if ( pTransCB )
+      {
+         pTransCB->transLockReleaseAll( this );
+      }
+   }
+
    void _pmdEDUCB::clear()
    {
       pmdEDUEvent data;
@@ -452,13 +463,7 @@ namespace engine
       }
       _processEventCount = 0 ;
       _Name[0] = 0 ;
-      _curTransID = DPS_INVALID_TRANS_ID ;
-      _curTransLSN = DPS_INVALID_LSN_OFFSET ;
-      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
-      if ( pTransCB )
-      {
-         pTransCB->transLockReleaseAll( this );
-      }
+      clearTransInfo();
    }
 
    void _pmdEDUCB::setClientSock ( ossSocket *pSock )

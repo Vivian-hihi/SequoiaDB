@@ -304,8 +304,18 @@ namespace engine
          TRANS_CB_MAP::iterator iterMap = _cbMap.begin();
          while( iterMap != _cbMap.end() )
          {
-            iterMap->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_TERM, FALSE, NULL ));
-            ++iterMap;
+            MsgHeader *pInterruptMsg = NULL;
+            pInterruptMsg = (MsgHeader *)SDB_OSS_MALLOC( sizeof(MsgHeader) );
+            if ( NULL != pInterruptMsg )
+            {
+               pInterruptMsg->messageLength = sizeof( MsgHeader );
+               pInterruptMsg->opCode = MSG_BS_INTERRUPTE;
+               pInterruptMsg->TID = 0;
+               pInterruptMsg->routeID.value = 0;
+               iterMap->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
+                                                      TRUE, NULL ));
+            }
+            _cbMap.erase( iterMap++ );
          }
       }
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_TERMALLTRANS );
