@@ -226,7 +226,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPINCMDF, "_mthModifier::_applyIncModifier" )
    template<class Builder>
    INT32 _mthModifier::_applyIncModifier ( Builder &bb, const BSONElement &in,
-                                           ModifierElement &me, CHAR **ppRoot )
+                                           ModifierElement &me )
    {
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPINCMDF );
       BSONElement elt = me._toModify ;
@@ -236,21 +236,21 @@ namespace engine
       _compareFieldNames1 comp( _dollarList ) ;
       if ( NumberLong == a || NumberInt == a || NumberDouble == a )
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
 
          if ( NumberDouble == a || NumberDouble == b )
          {
             bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                         in.numberDouble()+elt.numberDouble()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                              in.numberDouble()+elt.numberDouble(), "$set" ) ;
          }
          else if ( NumberLong == a || NumberLong == b )
          {
             bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                         in.numberLong() + elt.numberLong()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                              in.numberLong() + elt.numberLong(), "$set" ) ;
          }
          else
@@ -262,14 +262,14 @@ namespace engine
                //32 bit overflow or underflow happened
                bb.append ( comp.getDollarValue( me._shortName,&dollarValue[0]),
                            in.numberLong() + elt.numberLong()) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                                 in.numberLong() + elt.numberLong(), "$set" ) ;
             }
             else
             {
                bb.append ( comp.getDollarValue( me._shortName,&dollarValue[0]),
                            result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                                 result, "$set" ) ;
             }
          }
@@ -286,7 +286,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPSETMDF, "_mthModifier::_applySetModifier" )
    template<class Builder>
    INT32 _mthModifier::_applySetModifier( Builder &bb, const BSONElement &in,
-                                          ModifierElement &me, CHAR **ppRoot )
+                                          ModifierElement &me )
    {
       // for SET, if the type is Object, we need to make sure we can store it
       // in BSON, if the object contains keyword $ref or $id, then it's not
@@ -307,13 +307,9 @@ namespace engine
          }
       }
       {
-         /*ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                              "$set" ) ;
-         ADD_CHG_ELEMENT ( _dstChgBuilder, me._toModify, "$set" ) ;*/
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
-                             "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me._toModify, (*ppRoot),
-                             "$set" ) ;
+         ADD_CHG_ELEMENT ( _dstChgBuilder, me._toModify, "$set" ) ;
          // get the element and shortname
          bb.appendAs ( me._toModify,
                        comp.getDollarValue( me._shortName, &dollarValue[0] ) ) ;
@@ -327,7 +323,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPSHMDF, "_mthModifier::_applyPushModifier" )
    template<class Builder>
    INT32 _mthModifier::_applyPushModifier ( Builder &bb, const BSONElement &in,
-                                            ModifierElement &me, CHAR **ppRoot )
+                                            ModifierElement &me )
    {
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPPSHMDF );
       INT32 rc= SDB_OK ;
@@ -352,9 +348,9 @@ namespace engine
          sub.appendAs ( me._toModify, sub.numStr(n) ) ;
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
                              "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
       }
 
@@ -367,8 +363,7 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_applyPushAllModifier ( Builder & bb,
                                                const BSONElement & in,
-                                               ModifierElement & me,
-                                               CHAR **ppRoot )
+                                               ModifierElement & me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPPSHALLMDF );
@@ -406,9 +401,9 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
                              "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
       }
 
@@ -420,7 +415,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPLLMDF, "_mthModifier::_applyPullModifier" )
    template<class Builder>
    INT32 _mthModifier::_applyPullModifier ( Builder &bb, const BSONElement &in,
-                                            ModifierElement &me, CHAR **ppRoot )
+                                            ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPPLLMDF );
@@ -467,9 +462,9 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
                              "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
       }
 
@@ -481,7 +476,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPOPMDF, "_mthModifier::_applyPopModifier" )
    template<class Builder>
    INT32 _mthModifier::_applyPopModifier ( Builder &bb, const BSONElement &in,
-                                           ModifierElement &me, CHAR **ppRoot )
+                                           ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPPOPMDF );
@@ -562,9 +557,9 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
                              "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
       }
 
@@ -576,7 +571,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF, "_mthModifier::_applyBitModifier" )
    template<class Builder>
    INT32 _mthModifier::_applyBitModifier ( Builder &bb, const BSONElement &in,
-                                           ModifierElement &me, CHAR **ppRoot )
+                                           ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPBITMDF );
@@ -599,7 +594,7 @@ namespace engine
                change = TRUE ;
                bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0]),
                            ( long long )result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                                (long long)result, "$set" ) ;
             }
          }
@@ -613,7 +608,7 @@ namespace engine
                change = TRUE ;
                bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0]),
                            (int)result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                                (int)result, "$set" ) ;
             }
          }
@@ -621,7 +616,7 @@ namespace engine
 
       if ( change )
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
       }
       else
@@ -637,8 +632,7 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_applyBitModifier2 ( Builder &bb,
                                             const BSONElement &in,
-                                            ModifierElement &me,
-                                            CHAR **ppRoot )
+                                            ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
       CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
@@ -694,17 +688,17 @@ namespace engine
          {
             bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                         y ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                              y, "$set" ) ;
          }
          else
          {
             bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                         x ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                              x, "$set" ) ;
          }
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                               "$set" ) ;
       }
    done :
@@ -716,8 +710,7 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_applyAddtoSetModifier ( Builder &bb,
                                                 const BSONElement &in,
-                                                ModifierElement &me,
-                                                CHAR **ppRoot )
+                                                ModifierElement & me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPADD2SETMDF );
@@ -768,9 +761,9 @@ namespace engine
          //add new element
          if ( orgNum != n )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
                                 "$set" ) ;
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, (*ppRoot),
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
                                  "$set" ) ;
          }
       }
@@ -811,8 +804,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF3, "_mthModifier::_appendBitModifier" )
    template<class Builder>
    INT32 _mthModifier::_appendBitModifier ( Builder &bb, INT32 in,
-                                            ModifierElement &me,
-                                            CHAR **ppRoot )
+                                            ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPBITMDF3 );
@@ -831,7 +823,7 @@ namespace engine
             change = TRUE ;
             bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                         result ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                              result, "$set" ) ;
          }
       }
@@ -844,14 +836,14 @@ namespace engine
             change = TRUE ;
             bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                         result ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                              result, "$set" ) ;
          }
       }
 
       if ( change )
       {
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, (*ppRoot) ) ;
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me._toModify.fieldName() ) ;
       }
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF3, rc );
       return rc ;
@@ -860,8 +852,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF22, "_mthModifier::_appendBitModifier2" )
    template<class Builder>
    INT32 _mthModifier::_appendBitModifier2 ( Builder &bb, INT32 in,
-                                             ModifierElement &me,
-                                             CHAR **ppRoot )
+                                             ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPBITMDF22 );
@@ -914,17 +905,17 @@ namespace engine
       {
          bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                      y ) ;
-         ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+         ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                           y, "$set" ) ;
       }
       else
       {
          bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
                      x ) ;
-         ADD_CHG_NUMBER ( _dstChgBuilder, (*ppRoot),
+         ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
                           x, "$set" ) ;
       }
-      ADD_CHG_UNSET_FIELD ( _srcChgBuilder, (*ppRoot) ) ;
+      ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me._toModify.fieldName() ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF22, rc );
@@ -1509,29 +1500,22 @@ namespace engine
    // object, we need to append the original object in those cases
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPNEW, "_mthModifier::_appendNew" )
    template<class Builder>
-   INT32 _mthModifier::_appendNew ( Builder& b, SINT32 *modifierIndex,
-                                    CHAR **ppRoot )
+   INT32 _mthModifier::_appendNew ( Builder& b, SINT32 *modifierIndex )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPNEW );
       ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
+      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE + 1 ] = {0} ;
       _compareFieldNames1 comp( _dollarList ) ;
-
-      UINT32 rootLen = ossStrlen ( *ppRoot ) ;
-      if ( rootLen > 0 )
-      {
-         (*ppRoot)[rootLen-1] = '\0' ;
-      }
 
       switch ( me->_modType )
       {
       case INC:
       case SET:
       {
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, (*ppRoot) ) ;
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify,
-                              (*ppRoot), "$set" ) ;
+                              me->_toModify.fieldName(), "$set" ) ;
          b.appendAs ( me->_toModify,
                       comp.getDollarValue( me->_shortName, &dollarValue[0] ) ) ;
          break ;
@@ -1555,9 +1539,9 @@ namespace engine
          bb.appendAs ( me->_toModify, bb.numStr(0) ) ;
          BSONObj newObj = bb.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me->_toModify.fieldName(),
                              "$set" ) ;
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, (*ppRoot) ) ;
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
          break ;
       }
       case PUSH_ALL:
@@ -1574,9 +1558,9 @@ namespace engine
          b.appendAs ( me->_toModify,
                       comp.getDollarValue( me->_shortName, &dollarValue[0] ) ) ;
 
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, (*ppRoot) ) ;
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify,
-                              (*ppRoot), "$set" ) ;
+                              me->_toModify.fieldName(), "$set" ) ;
          break ;
       }
       case ADDTOSET:
@@ -1609,9 +1593,9 @@ namespace engine
          //add new element
          if ( n != 0 )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, (*ppRoot),
+            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me->_toModify.fieldName(),
                                 "$set" ) ;
-            ADD_CHG_UNSET_FIELD ( _srcChgBuilder, (*ppRoot) ) ;
+            ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
          }
          break ;
       }
@@ -1619,10 +1603,10 @@ namespace engine
       case BITNOT:
       case BITAND:
       case BITOR:
-         rc = _appendBitModifier ( b, 0, *me, ppRoot ) ;
+         rc = _appendBitModifier ( b, 0, *me ) ;
          break ;
       case BIT:
-         rc = _appendBitModifier2 ( b, 0, *me, ppRoot ) ;
+         rc = _appendBitModifier2 ( b, 0, *me ) ;
          break ;
       default:
          PD_LOG_MSG ( PDERROR, "unknow modifier type[%d]", me->_modType ) ;
@@ -1660,7 +1644,6 @@ namespace engine
       ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
       INT32 rootLen = ossStrlen ( *ppRoot ) ;
       _compareFieldNames1 comp ( _dollarList ) ;
-
 
       // if the modified request does not exist in original one
       // first let's see if there's nested object in the request
@@ -1726,7 +1709,7 @@ namespace engine
             const BSONObj obj ;
             BSONObjIteratorSorted es(obj);
             // preallocate 128 bytes
-            CHAR tempBuffer [ MTH_TEMPSTRBUFLEN ] ;
+            CHAR tempBuffer [ MTH_TEMPSTRBUFLEN + 1 ] = {0} ;
             CHAR *pOldRoot = &tempBuffer[0] ;
 
             // if root len is greater than stack, we have to malloc, otherwise
@@ -1794,7 +1777,7 @@ namespace engine
          // call _appendNew to append modified element into the current builder
          try
          {
-            rc = _appendNew ( b, modifierIndex, ppRoot ) ;
+            rc = _appendNew ( b, modifierIndex ) ;
          }
          catch( std::exception &e )
          {
@@ -1832,38 +1815,31 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__MTHMDF__ALYCHG );
       ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
 
-      UINT32 rootLen = ossStrlen ( *ppRoot ) ;
-      if ( rootLen > 0 )
-      {
-         (*ppRoot)[rootLen-1] = '\0' ;
-      }
-
       // basically we need to take the original data from e, and use modifier
       // element me to make some change, and add into builder b
       switch ( me->_modType )
       {
       case INC:
          // for INC, we need to call _applyIncModifier
-         rc = _applyIncModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyIncModifier ( b, e, *me ) ;
          break ;
       case SET:
-         rc = _applySetModifier ( b, e, *me, ppRoot ) ;
+         rc = _applySetModifier ( b, e, *me ) ;
          break ;
       case UNSET:
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, me->_toModify.fieldName(),
                               "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, (*ppRoot),
-                              "$unset" ) ;
+         ADD_CHG_ELEMENT ( _dstChgBuilder, me->_toModify, "$unset" ) ;
 
          _applyUnsetModifier(b) ;
          break ;
       }
       case PUSH:
-         rc = _applyPushModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyPushModifier ( b, e, *me ) ;
          break ;
       case PUSH_ALL:
-         rc = _applyPushAllModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyPushAllModifier ( b, e, *me ) ;
          break ;
       // given an input, remove all matching items when they match any of the
       // input
@@ -1871,22 +1847,22 @@ namespace engine
       // given an input, remove all matching items when they match the whole
       // input
       case PULL_ALL:
-         rc = _applyPullModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyPullModifier ( b, e, *me ) ;
          break ;
       case POP:
-         rc = _applyPopModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyPopModifier ( b, e, *me ) ;
          break ;
       case BITNOT:
       case BITXOR:
       case BITAND:
       case BITOR:
-         rc = _applyBitModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyBitModifier ( b, e, *me ) ;
          break ;
       case BIT:
-         rc = _applyBitModifier2 ( b, e, *me, ppRoot ) ;
+         rc = _applyBitModifier2 ( b, e, *me ) ;
          break ;
       case ADDTOSET:
-         rc = _applyAddtoSetModifier ( b, e, *me, ppRoot ) ;
+         rc = _applyAddtoSetModifier ( b, e, *me ) ;
          break ;
       case RENAME:
       {
@@ -1894,12 +1870,12 @@ namespace engine
          rc = mthAppendString ( ppRoot, rootBufLen,
                                 rootLen, me->_toModify.valuestr(),
                                 0 ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, (*ppRoot),
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, me->_toModify.fieldName(),
                               "$set" ) ;
          ADD_CHG_UNSET_FIELD ( _srcChgBuilder,
                                string( (*ppRoot )) ) ;
          //for the new obj,should unset the old, and set the new
-         ADD_CHG_UNSET_FIELD ( _dstChgBuilder, (*ppRoot) ) ;
+         ADD_CHG_UNSET_FIELD ( _dstChgBuilder, me->_toModify.fieldName() ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, e,
                               string ((*ppRoot )),
                               "$set" ) ;
@@ -2380,12 +2356,6 @@ namespace engine
       {
          SDB_OSS_DEL _dstChgBuilder ;
          _dstChgBuilder = NULL ;
-      }
-      if ( srcChange && dstChange )
-      {
-         PD_LOG_MSG ( PDEVENT, "source bson, %s,\n dest bson, %s",
-                      srcChange->toString(false,false).c_str(),
-                      dstChange->toString(false,false).c_str() ) ;
       }
       PD_TRACE_EXITRC ( SDB__MTHMDF_MODIFY, rc );
       return rc ;
