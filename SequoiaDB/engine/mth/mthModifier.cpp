@@ -2189,7 +2189,7 @@ namespace engine
          default :
             //we should never reach this codepath
             PD_LOG ( PDERROR, "Reaching unexpected codepath, cmp( %s, %s, "
-                     "res: %d", _modifierElements[(*modifierIndex)
+                     "res: %d )", _modifierElements[(*modifierIndex)
                      ]._toModify.toString().c_str(),
                      *ppRoot, cmp ) ;
             rc = SDB_SYS ;
