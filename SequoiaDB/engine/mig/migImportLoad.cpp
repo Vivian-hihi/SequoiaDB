@@ -114,6 +114,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
       else if ( rc )
       {
          bson_destroy ( tempObj ) ;
+         count++ ;
          PD_LOG ( PDERROR, "Import Failed, rc = %d", rc ) ;
          goto error ;
       }
