@@ -196,6 +196,7 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
                             BOOLEAN isHeaderline,
                             BOOLEAN autoAddField,
                             BOOLEAN autoCompletion,
+                            BOOLEAN linePriority,
                             migImportAccess accessModel )
 {
    INT32 rc = SDB_OK ;
@@ -345,6 +346,7 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
    parserPara.blockNum = 32768 ;
    parserPara.readHeader = isHeaderline ;
    parserPara.headerBuffer = fields ;
+   parserPara.linePriority = linePriority ;
    _autoAddField = autoAddField ;
    _autoCompletion = autoCompletion ;
 
@@ -423,6 +425,7 @@ INT32 _migJSONParser::init ( sdbCollectionHandle collection,
                              const CHAR *sourceUser,
                              UINT16 port,
                              BOOLEAN bMongoCompatible,
+                             BOOLEAN linePriority,
                              migImportAccess accessModel )
 {
    INT32 rc = SDB_OK ;
@@ -457,6 +460,7 @@ INT32 _migJSONParser::init ( sdbCollectionHandle collection,
    parserPara.path = pPath ;
    parserPara.hostName = sourceHost ;
    parserPara.user = sourceUser ;
+   parserPara.linePriority = linePriority ;
    
 
    rc = _parser->initialize( &parserPara ) ;

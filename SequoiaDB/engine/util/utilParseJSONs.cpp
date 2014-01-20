@@ -58,6 +58,7 @@ INT32 _utilJSONParser::initialize ( _utilParserParamet *parserPara )
       goto error ;
    }
 
+   _linePriority = parserPara->linePriority ;
    _bufferSize  = parserPara->bufferSize ;
    _blockNum    = parserPara->blockNum ;
    _blockSize   = _bufferSize / _blockNum ;
@@ -301,6 +302,11 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
       }
       --_unreadSpace ;
       ++pCursor ;
+      if ( _linePriority &&
+           _delRecord[0] == *pCursor )
+      {
+         break ;
+      }
    }while ( level > 0 || isRecordFirst ) ;
    if ( line )
    {

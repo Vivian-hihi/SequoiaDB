@@ -90,6 +90,7 @@ public:
                 BOOLEAN isHeaderline,
                 BOOLEAN autoAddField,
                 BOOLEAN autoCompletion,
+                BOOLEAN linePriority,
                 migImportAccess accessModel ) ;
 } ;
 typedef class _migCSVParser migCSVParser ;
@@ -106,6 +107,7 @@ public:
                 const CHAR *sourceUser,
                 UINT16 port,
                 BOOLEAN bMongoCompatible,
+                BOOLEAN linePriority,
                 migImportAccess accessModel ) ;
 } ;
 typedef class _migJSONParser migJSONParser ;

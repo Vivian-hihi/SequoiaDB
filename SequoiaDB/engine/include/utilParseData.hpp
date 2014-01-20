@@ -78,6 +78,7 @@ struct _utilParserParamet : public SDBObject
    BOOLEAN                 readHeader ;
    BOOLEAN                 autoAddField ;
    BOOLEAN                 autoCompletion ;
+   BOOLEAN                 linePriority ;
    SDB_UTIL_ACCESS_MODEL   accessModel ;
    UINT16                  port ;
    const CHAR             *fileName ;
@@ -91,6 +92,7 @@ struct _utilParserParamet : public SDBObject
                           readHeader(FALSE),
                           autoAddField(TRUE),
                           autoCompletion(FALSE),
+                          linePriority(FALSE),
                           accessModel(UTIL_GET_IO),
                           port(0),
                           fileName(NULL),
@@ -113,6 +115,7 @@ protected:
    UINT32                  _blockNum     ;
    UINT32                  _blockSize    ;
    BOOLEAN                 _headerline   ;
+   BOOLEAN                 _linePriority ;
    SDB_UTIL_ACCESS_MODEL   _accessModel  ;
    CHAR                   *_buffer       ;
    utilAccessData         *_pAccessData  ;

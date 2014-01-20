@@ -64,6 +64,7 @@ INT32 _utilCSVParser::initialize ( _utilParserParamet *parserPara )
       goto error ;
    }
 
+   _linePriority = parserPara->linePriority ;
    _bufferSize   = parserPara->bufferSize ;
    _blockNum     = parserPara->blockNum ;
    _blockSize    = _bufferSize / _blockNum ;
@@ -272,7 +273,7 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
             isString = !isString ;
          }
          delCharNum = 0 ;
-         if ( !isString )
+         if ( !isString || _linePriority )
          {
             ++pCursor ;
             --_unreadSpace ;
