@@ -309,7 +309,6 @@ namespace engine
          PD_RC_CHECK( rc, PDWARNING,
                      "failed to insert on data-node, "
                      "get reply failed(rc=%d)", rc );
-         GroupObjsMap groupObjsMap;
          rc = processReply( replyQue, successGroupLst, cb );
          if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
          {
@@ -751,35 +750,25 @@ namespace engine
       {
          opCode = MSG_BS_INSERT_REQ;
       }
-      do
+      REQUESTID_MAP sendNodes;
+      REPLY_QUE replyQue;
+      rc = sendToGroups( groupMsgMap, pSrcMsg, pRouteAgent,
+                        cb, sendNodes );
+      if ( rc )
       {
-         hasRetry = isNeedRetry;
-         isNeedRetry = FALSE;
-         REQUESTID_MAP sendNodes;
-         REPLY_QUE replyQue;
-         rc = sendToGroups( groupMsgMap, pSrcMsg, pRouteAgent,
-                           cb, sendNodes );
-         if ( rc )
-         {
-            rtnCoordClearRequest( cb, sendNodes );
-         }
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to send the request(rc=%d)",
-                     rc );
-         rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                     MAKE_REPLY_TYPE( opCode ) );
-         PD_RC_CHECK( rc, PDWARNING,
-                     "failed to insert on data-node, "
-                     "get reply failed(rc=%d)", rc );
-         rc = processReply( replyQue, successGroupList, cb );
-         if ( SDB_CLS_NOT_PRIMARY == rc && !hasRetry )
-         {
-            isNeedRetry = TRUE;
-            rc = SDB_OK;
-         }
-         PD_RC_CHECK( rc, PDWARNING,
-                     "failed to process the reply(rc=%d)", rc );
-      }while ( isNeedRetry );
+         rtnCoordClearRequest( cb, sendNodes );
+      }
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to send the request(rc=%d)",
+                  rc );
+      rc = rtnCoordGetReply( cb, sendNodes, replyQue,
+                  MAKE_REPLY_TYPE( opCode ) );
+      PD_RC_CHECK( rc, PDWARNING,
+                  "failed to insert on data-node, "
+                  "get reply failed(rc=%d)", rc );
+      rc = processReply( replyQue, successGroupList, cb );
+      PD_RC_CHECK( rc, PDWARNING,
+                  "failed to process the reply(rc=%d)", rc );
    done:
       //PD_TRACE_EXITRC ( SDB_RTNCOINS_INSTOGROUPS, rc ) ;
       return rc;
