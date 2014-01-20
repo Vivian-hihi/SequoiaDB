@@ -913,7 +913,7 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
                else
                {
                   //is error csv
-                  rc = SDB_INVALIDARG ;
+                  rc = SDB_UTIL_PARSE_JSON_INVALID ;
                   goto error ;
                }
             }
@@ -934,7 +934,7 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
          else
          {
             //is error csv
-            rc = SDB_INVALIDARG ;
+            rc = SDB_UTIL_PARSE_JSON_INVALID ;
             goto error ;
          }
       }
@@ -999,7 +999,7 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
                   else
                   {
                      //is error csv
-                     rc = SDB_INVALIDARG ;
+                     rc = SDB_UTIL_PARSE_JSON_INVALID ;
                      goto error ;
                   }
                }
@@ -1020,7 +1020,7 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
             else
             {
                //is error csv
-               rc = SDB_INVALIDARG ;
+               rc = SDB_UTIL_PARSE_JSON_INVALID ;
                goto error ;
             }
          }
@@ -1035,7 +1035,7 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
    else
    {
       //is error csv
-      rc = SDB_INVALIDARG ;
+      rc = SDB_UTIL_PARSE_JSON_INVALID ;
       goto error ;
    }
 done:
