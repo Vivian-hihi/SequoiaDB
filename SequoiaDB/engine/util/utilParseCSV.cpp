@@ -532,7 +532,7 @@ INT32 _utilCSVParser::_findDelField()
    {
       if ( _readFreeSpace )
       {
-         UINT32 temp = pCursor - _leftField - 1 ;
+         UINT32 temp = pCursor - _leftField ;
          pNewCursor = _trimRight ( pCursor - 1, temp ) ;
          *( pNewCursor + 1 ) = 0 ;
       }
