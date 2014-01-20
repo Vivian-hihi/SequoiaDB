@@ -97,7 +97,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_HELP, "help" )\
        ( COMMANDS_STRING(OPTION_HOSTNAME,       ",h"), boost::program_options::value<string>(), "database host name ( default: localhost )" ) \
        ( COMMANDS_STRING(OPTION_SVCNAME,        ",s"), boost::program_options::value<string>(), "database service name ( default: 50000 " ) \
-       ( COMMANDS_STRING(OPTION_DELCHAR,        ",a"), boost::program_options::value<string>(), "string delimiter ( default: \" )( CSV type only )" ) \
+       ( COMMANDS_STRING(OPTION_DELCHAR,        ",a"), boost::program_options::value<string>(), "character delimiter ( default: \" )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_DELFIELD,       ",e"), boost::program_options::value<string>(), "field delimiter ( default: , )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_DELRECORD,      ",r"), boost::program_options::value<string>(), "record delimiter ( default: '\\n' )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_COLLECTSPACE,   ",c"), boost::program_options::value<string>(), "collection space name" ) \
@@ -114,7 +114,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_HEADERLINE,    boost::program_options::value<string>(), "first line in input file is a header, default: false ( CSV type only )" ) \
        ( OPTION_SPARSE,        boost::program_options::value<string>(), "auto add fields, default: true ( CSV type only )" ) \
        ( OPTION_EXTRA,         boost::program_options::value<string>(), "auto add value, default: false ( CSV type only )" ) \
-       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "set record delimiter priority highest, default: false" )
+       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" )
        //( OPTION_SOURCEPWD,     boost::program_options::value<string>(), "connect to source data server, password" ) \
 //       ( COMMANDS_STRING(OPTION_MONGO,          ",m"), boost::program_options::value<string>(), "Compatible with MongoDB data format, input [true, false]" )
 
@@ -150,7 +150,7 @@ BOOLEAN bMongoCompatible                  = FALSE ;
 BOOLEAN isHeaderline                      = FALSE ;
 BOOLEAN autoAddField                      = TRUE  ;
 BOOLEAN autoCompletion                    = FALSE ;
-BOOLEAN linePriority                      = FALSE ;
+BOOLEAN linePriority                      = TRUE ;
 INT32 lInsertNum = 100 ;
 
 CHAR gDelList[6] = { MIG_DEFAULT_DELCHAR, 0, MIG_DEFAULT_DELFIELD, 0,
