@@ -214,18 +214,11 @@ namespace engine
       {
          BSONObj insertObj( pInsertor );
          UINT32 groupID = 0;
-         ObjQueue objQueue;
          rc = cataInfo->getGroupByRecord( insertObj, groupID );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to get the group(rc=%d)",
                      rc );
-         GroupObjsMap::iterator iterMap = groupObjsMap.find( groupID );
-         if ( iterMap != groupObjsMap.end() )
-         {
-            objQueue = iterMap->second;
-         }
-         objQueue.push_back( pInsertor );
-         groupObjsMap[ groupID ] = objQueue;
+         groupObjsMap[ groupID ].push_back( pInsertor );
       }
       catch ( std::exception &e )
       {
