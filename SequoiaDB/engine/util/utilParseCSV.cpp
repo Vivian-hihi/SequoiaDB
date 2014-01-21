@@ -261,6 +261,10 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
          }
          _unreadSpace = blockSize ;
          ++_pBlock ;
+         if ( _unreadSpace == 0 )
+         {
+            continue ;
+         }
       }
       if ( _delChar[0] == *pCursor )
       {
