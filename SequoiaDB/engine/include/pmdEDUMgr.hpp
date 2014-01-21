@@ -195,6 +195,7 @@ namespace engine
       INT32    _forceEDUs ( INT32 property = EDU_ALL ) ;
       UINT32   _getEDUCount ( INT32 property = EDU_ALL ) ;
       INT32    _forceIOService() ;
+      UINT32   _getIOServiceCount() ;
 
       INT32    _interruptWritingEDUs() ;
       UINT32   _getWritingEDUCount() ;
