@@ -121,6 +121,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed, INT32 insertNum )
       if ( tempObj->dataSize <= 5 )
       {
          bson_destroy ( tempObj ) ;
+         count++ ;
          // empty bson
          continue ;
       }
