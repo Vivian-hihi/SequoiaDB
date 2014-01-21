@@ -157,7 +157,11 @@ namespace engine
       setQuiesced ( TRUE ) ;
 
       //stop all ioservice
-      _forceIOService () ;
+      while ( _getIOServiceCount() > 0 )
+      {
+         _forceIOService () ;
+         ossSleepmillis ( 200 ) ;
+      }
 
       //stop all user edus
       UINT32 timeCounter = 0 ;
@@ -252,6 +256,12 @@ namespace engine
       /******************END CRITICAL SECTION******************/
       PD_TRACE_EXIT ( SDB__PMDEDUMGR__FORCEIOSVC );
       return SDB_OK ;
+   }
+
+   UINT32 _pmdEDUMgr::_getIOServiceCount ()
+   {
+      EDUMGR_SLOCK
+      return (UINT32)_ioserviceList.size() ;
    }
 
    // block all new request and attempt to terminate existing requests
