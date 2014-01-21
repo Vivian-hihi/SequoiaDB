@@ -47,7 +47,7 @@ public class SdbDeploy extends Task {
 		}
 
 		for (NodeGroup group : NodeGroups) {
-			group.waitForStart(sdb, 180);
+			group.waitForStart(sdb, 240);
 		}
 
 	}
