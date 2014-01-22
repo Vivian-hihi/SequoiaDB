@@ -1089,7 +1089,7 @@ namespace engine
                      (*itori).toString().c_str(),
                      (*itnew).toString().c_str() ) ;
 #endif
-            INT32 result = (*itori).woCompare((*itnew), order, FALSE ) ;
+            INT32 result = (*itori).woCompare((*itnew), BSONObj(), FALSE ) ;
             if ( 0 == result )
             {
                // new and original are the same, we don't need to change
