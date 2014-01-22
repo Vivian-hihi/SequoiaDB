@@ -1,0 +1,120 @@
+#!/bin/ksh
+#Data collection script for general SequoiaDB perf and hang issues on LINUX
+#This script is only collecting data for LOCAL nodes
+#
+#*********************WARNING********************WARNING************************
+#  This script should be run only at the request of SequoiaDB support.
+#  It can cause significant performance degradation, especially on busy
+#  systems with a high number of active connections
+#*******************************************************************************
+#
+# run as sdbadmin user
+#   all data will be dumped to the current directory
+#   This script should NOT be run as a cron job.
+#
+# NOTE: elapsed time could be taken from few mintues to hours,
+#       in many cases the time will be within 5 minutes unless the system is
+#       under extremely heavy load or experiencing hangs for deadlatches,
+#       the script may hang.
+#
+# Data will be collected for the database provided as connection URL.
+# Snapshot and database configuration data will be collected by default.
+# Additional information will be collected only if the arguments are provided.
+
+if [ $# -eq 0 ] ; then
+   echo "Usage: sdbperfcol [-u <username> -p <password>] <port1> <port2> ..."
+   exit
+fi
+
+USERNAME=""
+PASSWORD=""
+
+# parse arguments
+for ARG in $*
+do
+   if [ $ARG -eq "-u" ]
+done
+
+echo ""
+echo "***************WARNING***************WARNING***************"
+echo "This script should be run only at the request of"
+echo "SequoiaDB support.  It can cause significant performance"
+echo "degradation, especially on busy systems with a high number"
+echo "of active connections"
+echo "***********************************************************"
+echo ""
+echo "You have 10 seconds to cancel this cript with Ctrl-C"
+sleep 10
+
+# create local directory
+# dir for operating system configurations
+mkdir OSCONFIG >> sdbperfcol.log 2>&1
+# dir for sequoiadb configurations
+mkdir SDBCONFIG >> sdbperfcol.log 2>&1
+# dir for operating system performance data
+mkdir OSSNAP >> sdbperfcol.log 2>&1
+# dir for sequoiadb performance data
+mkdir SDBSNAP >> sdbperfcol.log 2>&1
+# dir for operating system trace
+mkdir OSTRACE >> sdbperfcol.log 2>&1
+# dir for sequoiadb trace
+mkdir SDBTRACE >> sdbperfcol.log 2>&1
+
+# tar and compress the output directories and rename with current timestamp
+# remove the directories once the tar completed successfully
+# the file should be remain in the current directory
+tarfiles()
+{
+# tar the files
+tar -cvf sdbperfcol.out.tar OSCONFIG SDBCONFIG OSSNAP SDBSNAP \
+         OSTRACE SDBTRACE sdbperfcol.* >> sdbperfcol.log 2>&1
+# if the tar success, let's remove the directories
+if [ $? -eq 0 ] ; then
+   echo "removing directories... "
+   rm -Rf OSCONFIG SDBCONFIG OSSNAP SDBSNAP OSTRACE SDBTRACE
+fi
+# get the current timestamp
+datestamp=`date +"%m%d"`.`date +"%H%M"`
+# rename the file with current timestamp
+mv sdbperfcol.out.tar sdbperfcol.$datestamp.tar
+# zip the file
+gzip sdbperfcol.$datestamp.tar
+# echo informational messages
+echo "output files have been tarred and compressed into sdbperfcol.$datestamp.tar.gz" `date` | tee -a sdbperfcol.log
+echo ""
+echo "This file should be sent to SequoiaDB support for further analyze"
+echo "Thank you"
+echo ""
+}
+
+# if ctrl-c happened during the execution, it will trigger the script to
+# tar up files and exit
+trap "echo Please allow a few minutes for cleanup ; \
+      tarupfiles; exit" 1 2
+
+#ANNONCEMENT
+echo "If at any time during the execution of this script, the duration"
+echo "exceeds the maximum suggested time, issue Ctrl-C to cancel"
+echo "This script will then clean up, dump any active sdb trace,"
+echo "and tar up output files. Please allow 3-5 minutes for this task"
+echo ""
+echo ""
+sleep 5
+
+#OS CONFIG INFO
+echo "started OS CONFIG info" `date` | tee -a sdbperfcol.log
+echo "should complete in less than one minute"
+uname -a > OSCONFIG/machine.cfg 2>&1
+ipcs -l >> OSCONFIG/machine.cfg 2>&1
+ls -l /dev >> OSCONFIG/machine.cfg 2>&1
+rpm -qa > OSCONFIG/rpm_qa.txt 2>&1
+dmesg > OSCONFIG/dmesg.txt 2>&1
+echo "finished OS CONFIG info" `date` | tee -a sdbperfcol.log
+echo "" | tee -a sdbperfcol.log
+
+#SDB CONFIG INFO
+echo "starting basic SequoiaDB CONFIG info" `date` | tee -a sdbperfcol.log
+echo "should complete in less than one minute"
+# current dir should always be <install path>/bin, we need to collect
+# configuration files at <install path>/conf/local/<port>/sdb.conf
+cp ../
