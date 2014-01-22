@@ -2642,8 +2642,8 @@ namespace engine
       {
          // before moving on, let's first make sure the new object doesn't
          // violate any index unique rule
-         BSONObj oriObj = BSONObj ( (CHAR*)recordDataPtr ) ;
-         BSONObj newObj = BSONObj ( (CHAR*)ptr ) ;
+         BSONObj oriObj( (CHAR*)recordDataPtr ) ;
+         BSONObj newObj( (CHAR*)ptr ) ;
          rc = _pIdxSU->indexesUpdate( context, extLID, oriObj, newObj,
                                       recordID, cb, FALSE ) ;
          if ( rc )
@@ -2744,8 +2744,8 @@ namespace engine
    error :
       goto done ;
    error_rollbackindex :
-      BSONObj oriObj = BSONObj ( (CHAR*)realRecordPtr ) ;
-      BSONObj newObj = BSONObj ( (CHAR*)ptr ) ;
+      BSONObj oriObj( (CHAR*)recordDataPtr ) ;
+      BSONObj newObj( (CHAR*)ptr ) ;
       // rollback the change on index by switching obj and oriObj
       INT32 rc1 = _pIdxSU->indexesUpdate( context, extLID, newObj, oriObj,
                                           recordID, cb, TRUE ) ;
