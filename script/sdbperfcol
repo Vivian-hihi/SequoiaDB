@@ -1,4 +1,5 @@
-#!/bin/ksh
+#!/bin/bash
+
 #Data collection script for general SequoiaDB perf and hang issues on LINUX
 #This script is only collecting data for LOCAL nodes
 #
@@ -21,20 +22,87 @@
 # Snapshot and database configuration data will be collected by default.
 # Additional information will be collected only if the arguments are provided.
 
-if [ $# -eq 0 ] ; then
-   echo "Usage: sdbperfcol [-u <username> -p <password>] <port1> <port2> ..."
+CURDIR=`/bin/pwd`
+INSTALLDIR=`dirname $0`
+cd ${INSTALLDIR?}
+INSTALLDIR=`/bin/pwd`
+cd ${INSTALLDIR?}
+INSTALLDIR=`dirname ${INSTALLDIR?}`
+LOCALCONFIGDIR="${INSTALLDIR?}/conf/local"
+cd ${CURDIR?}
+
+# function to print usage
+function printUsage
+{
+   echo "Usage: sdbperfcol [-u <username> -p <password>] -s <port1>,<port2> ..."
    exit
-fi
+}
 
 USERNAME=""
 PASSWORD=""
+SERVICENAME=""
+#set -a DATABASELIST
+#set -i DBNUM
+DBNUM=0
 
 # parse arguments
-for ARG in $*
+while getopts ":u:p:s:h" option;
 do
-   if [ $ARG -eq "-u" ]
+   case $option in
+      u)
+         # collect username
+         USERNAME=$OPTARG
+         ;;
+      p)
+         # collect password
+         PASSWORD=$OPTARG
+         ;;
+      s)
+         # collect local service name
+         SERVICENAME=$OPTARG
+         ;;
+      h)
+         printUsage
+         exit
+         ;;
+      *)
+         printUsage
+         exit
+         ;;  
+   esac
 done
 
+# convert service name into list
+DBLISTSIZE=0
+DATABASELIST=$(echo $SERVICENAME | tr "," "\n")
+
+# perform sanity check for database service name and do count
+for x in $DATABASELIST
+do
+   # construct the sdb.conf path for the given node
+   FILENAME="${LOCALCONFIGDIR?}/$x/sdb.conf"
+   # verify the existance of file
+   if [ -f ${FILENAME?} ];
+   then
+      echo "Collect perf data for node ${x?}"
+   else
+      echo "Node ${x?} does not exist"
+      # exit if the file does not exist
+      exit
+   fi
+   # increase count for total database list
+   let DBLISTSIZE=DBLISTSIZE+1
+done
+
+# if there's no database service specified, let's give error and exit
+if [ ${DBLISTSIZE?} -eq 0 ]
+then
+   echo "At least one database port need to be provided."
+   printUsage
+   exit
+fi
+
+# print warning message
 echo ""
 echo "***************WARNING***************WARNING***************"
 echo "This script should be run only at the request of"
@@ -63,11 +131,11 @@ mkdir SDBTRACE >> sdbperfcol.log 2>&1
 # tar and compress the output directories and rename with current timestamp
 # remove the directories once the tar completed successfully
 # the file should be remain in the current directory
-tarfiles()
+function tarfiles
 {
 # tar the files
 tar -cvf sdbperfcol.out.tar OSCONFIG SDBCONFIG OSSNAP SDBSNAP \
-         OSTRACE SDBTRACE sdbperfcol.* >> sdbperfcol.log 2>&1
+         OSTRACE SDBTRACE sdbperfcol.* 2>&1
 # if the tar success, let's remove the directories
 if [ $? -eq 0 ] ; then
    echo "removing directories... "
@@ -90,7 +158,7 @@ echo ""
 # if ctrl-c happened during the execution, it will trigger the script to
 # tar up files and exit
 trap "echo Please allow a few minutes for cleanup ; \
-      tarupfiles; exit" 1 2
+      tarfiles; exit" 1 2
 
 #ANNONCEMENT
 echo "If at any time during the execution of this script, the duration"
@@ -117,4 +185,12 @@ echo "starting basic SequoiaDB CONFIG info" `date` | tee -a sdbperfcol.log
 echo "should complete in less than one minute"
 # current dir should always be <install path>/bin, we need to collect
 # configuration files at <install path>/conf/local/<port>/sdb.conf
-cp ../
+for x in $DATABASELIST
+do
+   # construct the sdb.conf path for the given node
+   FILENAME="${LOCALCONFIGDIR?}/$x/sdb.conf"
+   # verify the existance of file
+   cp ${FILENAME?} SDBCONFIG/sdb.conf.$x 2>&1
+done
+
+tarfiles
