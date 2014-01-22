@@ -45,8 +45,6 @@
 using namespace bson ;
 using namespace std ;
 
-#define MTH_DOLLAR_FIELD_SIZE 11
-
 namespace engine
 {
 
@@ -100,51 +98,49 @@ namespace engine
       } \
    } while ( 0 )
 
-   INT32 _checkFieldName( const char* pField )
+   /*
+      Tool functions
+   */
+   static INT32 _mthCheckFieldName( const CHAR *pField )
    {
       INT32 rc = SDB_OK ;
-      static INT32 maxLoops = 1024 * 1024;
-      INT32 num = 0 ;
-      UINT32 lstart = 0;
-      UINT32 lsize = strlen ( pField ) ;
-      CHAR *a = NULL ;
-      CHAR *lend = NULL ;
-      CHAR  lold = 0 ;
-      const CHAR *temp = NULL ;
+      const CHAR *pTmp = pField ;
+      const CHAR *pDot = NULL ;
+      INT32 number = 0 ;
 
-      for ( INT32 i = 0; i < maxLoops ; ++i )
+      while ( pTmp && *pTmp )
       {
-         if ( lstart >= lsize )
+         pDot = ossStrchr( pTmp, '.' ) ;
+
+         if ( '$' == *pTmp )
          {
-            goto done ;
-         }
-         // find the earliest '.' from current position
-         a = (CHAR *)ossStrchr ( &pField[lstart], '.' ) ;
-         // locate the ., or end of the string
-         lend = ( NULL == a ) ? ( (CHAR *)&pField[lsize] ) : a ;
-         // get the original left and right
-         lold = *lend ;
-         // set as end of string
-         *lend = '\0' ;
-         temp = &pField[lstart] ;
-         if ( temp && '$' == *temp )
-         {
-            rc = ossStrToInt ( temp + 1, &num ) ;
+            if ( pDot )
+            {
+               *(CHAR*)pDot = 0 ;
+            }
+            rc = ossStrToInt( pTmp + 1, &number ) ;
+            // Restore
+            if ( pDot )
+            {
+               *(CHAR*)pDot = '.' ;
+            }
             if ( rc )
             {
                goto error ;
             }
          }
-         // restore old value
-         *lend  = lold ;
-         lstart = UINT32(lend - pField) + 1;
+         pTmp = pDot ? pDot + 1 : NULL ;
       }
+
    done:
       return rc ;
    error:
       goto done ;
    }
 
+   /*
+      _mthModifier implement
+   */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__ADDMDF, "_mthModifier::_addModifier" )
    INT32 _mthModifier::_addModifier ( const BSONElement &ele, ModType type )
    {
@@ -205,14 +201,14 @@ namespace engine
       }
 
       {
-         rc = _checkFieldName ( ele.fieldName() ) ;
+         rc = _mthCheckFieldName ( ele.fieldName() ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Faild field name : %s", ele.fieldName() ) ;
             goto error ;
          }
-         ModifierElement me(ele, type) ;
-         _modifierElements.push_back(me) ;
+         ModifierElement me( ele, type ) ;
+         _modifierElements.push_back( me ) ;
       }
 
    done :
@@ -225,32 +221,29 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPINCMDF, "_mthModifier::_applyIncModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyIncModifier ( Builder &bb, const BSONElement &in,
+   INT32 _mthModifier::_applyIncModifier ( const CHAR *pRoot, Builder &bb,
+                                           const BSONElement &in,
                                            ModifierElement &me )
    {
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPINCMDF );
       BSONElement elt = me._toModify ;
       BSONType a = in.type() ;
       BSONType b = elt.type() ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
-      _compareFieldNames1 comp( _dollarList ) ;
+
       if ( NumberLong == a || NumberInt == a || NumberDouble == a )
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
 
          if ( NumberDouble == a || NumberDouble == b )
          {
-            bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                        in.numberDouble()+elt.numberDouble()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
+            bb.append ( in.fieldName(), in.numberDouble()+elt.numberDouble()) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
                              in.numberDouble()+elt.numberDouble(), "$set" ) ;
          }
          else if ( NumberLong == a || NumberLong == b )
          {
-            bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                        in.numberLong() + elt.numberLong()) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
+            bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
                              in.numberLong() + elt.numberLong(), "$set" ) ;
          }
          else
@@ -260,17 +253,14 @@ namespace engine
             if ( (result64<0 && result>0) || (result64>0 && result<0))
             {
                //32 bit overflow or underflow happened
-               bb.append ( comp.getDollarValue( me._shortName,&dollarValue[0]),
-                           in.numberLong() + elt.numberLong()) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
+               bb.append ( in.fieldName(), in.numberLong() + elt.numberLong()) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot,
                                 in.numberLong() + elt.numberLong(), "$set" ) ;
             }
             else
             {
-               bb.append ( comp.getDollarValue( me._shortName,&dollarValue[0]),
-                           result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                                result, "$set" ) ;
+               bb.append ( in.fieldName(), result ) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
             }
          }
       }
@@ -279,50 +269,49 @@ namespace engine
          //not change, add the old element
          bb.append ( in ) ;
       }
-      PD_TRACE_EXIT ( SDB__MTHMDF__APPINCMDF );
+      PD_TRACE_EXIT ( SDB__MTHMDF__APPINCMDF ) ;
       return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPSETMDF, "_mthModifier::_applySetModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applySetModifier( Builder &bb, const BSONElement &in,
+   INT32 _mthModifier::_applySetModifier( const CHAR *pRoot, Builder &bb,
+                                          const BSONElement &in,
                                           ModifierElement &me )
    {
       // for SET, if the type is Object, we need to make sure we can store it
       // in BSON, if the object contains keyword $ref or $id, then it's not
       // storable
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
-      _compareFieldNames1 comp( _dollarList ) ;
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__MTHMDF__APPSETMDF );
+      PD_TRACE_ENTRY ( SDB__MTHMDF__APPSETMDF ) ;
 
       if ( in.type() == Object )
       {
          if ( !in.embeddedObject().okForStorage() )
          {
             PD_LOG_MSG ( PDERROR, "embbed object can't be stored for %s",
-                         in.toString().c_str());
+                         in.toString().c_str() );
             rc = SDB_INVALIDARG ;
             goto done ;
          }
       }
+
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                             "$set" ) ;
-         ADD_CHG_ELEMENT ( _dstChgBuilder, me._toModify, "$set" ) ;
-         // get the element and shortname
-         bb.appendAs ( me._toModify,
-                       comp.getDollarValue( me._shortName, &dollarValue[0] ) ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me._toModify, pRoot, "$set" ) ;
+         // set new element
+         bb.appendAs ( me._toModify, in.fieldName() ) ;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB__MTHMDF__APPSETMDF, rc );
+      PD_TRACE_EXITRC ( SDB__MTHMDF__APPSETMDF, rc ) ;
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPSHMDF, "_mthModifier::_applyPushModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyPushModifier ( Builder &bb, const BSONElement &in,
+   INT32 _mthModifier::_applyPushModifier ( const CHAR *pRoot, Builder &bb,
+                                            const BSONElement &in,
                                             ModifierElement &me )
    {
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPPSHMDF );
@@ -335,9 +324,10 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto done ;
       }
+
       {
          // create bson builder for the array
-         BSONObjBuilder sub ( bb.subarrayStart ( me._shortName ) ) ;
+         BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          BSONObjIterator i ( in.embeddedObject() ) ;
          INT32 n = 0 ;
          while ( i.more() )
@@ -348,10 +338,8 @@ namespace engine
          sub.appendAs ( me._toModify, sub.numStr(n) ) ;
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
-                             "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
       }
 
    done :
@@ -361,7 +349,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPSHALLMDF, "_mthModifier::_applyPushAllModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyPushAllModifier ( Builder & bb,
+   INT32 _mthModifier::_applyPushAllModifier ( const CHAR *pRoot, Builder & bb,
                                                const BSONElement & in,
                                                ModifierElement & me )
    {
@@ -385,7 +373,7 @@ namespace engine
       }
       {
          // create bson builder for the array
-         BSONObjBuilder sub ( bb.subarrayStart ( me._shortName ) ) ;
+         BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          BSONObjIterator i ( in.embeddedObject()) ;
          INT32 n = 0 ;
          while ( i.more() )
@@ -401,10 +389,8 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
-                             "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
       }
 
    done :
@@ -414,7 +400,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPLLMDF, "_mthModifier::_applyPullModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyPullModifier ( Builder &bb, const BSONElement &in,
+   INT32 _mthModifier::_applyPullModifier ( const CHAR *pRoot, Builder &bb,
+                                            const BSONElement &in,
                                             ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
@@ -430,7 +417,7 @@ namespace engine
       {
          // need to create a builder regardless if pull success or not
          // even if all elements matches, we still need this empty array
-         BSONObjBuilder sub ( bb.subarrayStart ( me._shortName ) ) ;
+         BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          INT32 n = 0 ;
          // for each element in the original data
          BSONObjIterator i ( in.embeddedObject() ) ;
@@ -462,10 +449,8 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
-                             "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
       }
 
    done :
@@ -475,7 +460,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPPOPMDF, "_mthModifier::_applyPopModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyPopModifier ( Builder &bb, const BSONElement &in,
+   INT32 _mthModifier::_applyPopModifier ( const CHAR *pRoot, Builder &bb,
+                                           const BSONElement &in,
                                            ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
@@ -507,7 +493,7 @@ namespace engine
          goto done ;
       }
       {
-         BSONObjBuilder sub ( bb.subarrayStart ( me._shortName ) ) ;
+         BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          INT32 n = 0 ;
          // if specify < 0, which means pop the n'th element from front
          if ( me._toModify.number() < 0 )
@@ -557,10 +543,8 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
-                             "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
       }
 
    done :
@@ -570,7 +554,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF, "_mthModifier::_applyBitModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyBitModifier ( Builder &bb, const BSONElement &in,
+   INT32 _mthModifier::_applyBitModifier ( const CHAR *pRoot, Builder &bb,
+                                           const BSONElement &in,
                                            ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
@@ -579,8 +564,6 @@ namespace engine
       BSONType a = in.type() ;
       BSONType b = elt.type() ;
       BOOLEAN change = FALSE ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
-      _compareFieldNames1 comp( _dollarList ) ;
 
       if ( NumberLong == a || NumberInt == a )
       {
@@ -592,10 +575,9 @@ namespace engine
             if ( SDB_OK == rc )
             {
                change = TRUE ;
-               bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0]),
-                           ( long long )result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                               (long long)result, "$set" ) ;
+               bb.append ( in.fieldName(), ( long long )result ) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, (long long)result,
+                                "$set" ) ;
             }
          }
          else if ( NumberInt == a || NumberInt == b )
@@ -606,18 +588,15 @@ namespace engine
             if ( SDB_OK == rc )
             {
                change = TRUE ;
-               bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0]),
-                           (int)result ) ;
-               ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                               (int)result, "$set" ) ;
+               bb.append ( in.fieldName(), (int)result ) ;
+               ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, (int)result, "$set" ) ;
             }
          }
       }
 
       if ( change )
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
       }
       else
       {
@@ -630,13 +609,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF2, "_mthModifier::_applyBitModifier2" )
    template<class Builder>
-   INT32 _mthModifier::_applyBitModifier2 ( Builder &bb,
+   INT32 _mthModifier::_applyBitModifier2 ( const CHAR *pRoot, Builder &bb,
                                             const BSONElement &in,
                                             ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
-      _compareFieldNames1 comp( _dollarList ) ;
+
       //if org is not int or long, not change
       if ( NumberInt != in.type() && NumberLong != in.type() )
       {
@@ -654,8 +632,8 @@ namespace engine
             BSONElement e = it.next () ;
             if ( NumberInt != e.type () && NumberLong != e.type () )
             {
-               PD_LOG_MSG ( PDERROR, "bit object field elements must be int or long, %s",
-                            e.toString( TRUE ).c_str() ) ;
+               PD_LOG_MSG ( PDERROR, "bit object field elements must be int or "
+                            "long, %s", e.toString( TRUE ).c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto done ;
             }
@@ -686,20 +664,15 @@ namespace engine
 
          if ( ( INT64 ) x != y )
          {
-            bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                        y ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                             y, "$set" ) ;
+            bb.append ( in.fieldName(), y ) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, y, "$set" ) ;
          }
          else
          {
-            bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                        x ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                             x, "$set" ) ;
+            bb.append ( in.fieldName(), x ) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, x, "$set" ) ;
          }
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                              "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF2, rc );
@@ -708,12 +681,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPADD2SETMDF, "_mthModifier::_applyAddtoSetModifier" )
    template<class Builder>
-   INT32 _mthModifier::_applyAddtoSetModifier ( Builder &bb,
+   INT32 _mthModifier::_applyAddtoSetModifier ( const CHAR *pRoot, Builder &bb,
                                                 const BSONElement &in,
                                                 ModifierElement & me )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__MTHMDF__APPADD2SETMDF );
+      PD_TRACE_ENTRY ( SDB__MTHMDF__APPADD2SETMDF ) ;
       // add each element in array into existing array
       // don't want to add duplicates in addtoset
       // make sure original data is array
@@ -733,7 +706,7 @@ namespace engine
         goto done ;
       }
       {
-         BSONObjBuilder sub ( bb.subarrayStart ( me._shortName ) ) ;
+         BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          BSONObjIterator i ( in.embeddedObject() ) ;
          BSONObjIterator j ( me._toModify.embeddedObject() ) ;
          INT32 n = 0 ;
@@ -761,10 +734,8 @@ namespace engine
          //add new element
          if ( orgNum != n )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me._toModify.fieldName(),
-                                "$set" ) ;
-            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, me._toModify.fieldName(),
-                                 "$set" ) ;
+            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
          }
       }
    done :
@@ -803,7 +774,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF3, "_mthModifier::_appendBitModifier" )
    template<class Builder>
-   INT32 _mthModifier::_appendBitModifier ( Builder &bb, INT32 in,
+   INT32 _mthModifier::_appendBitModifier ( const CHAR *pRoot,
+                                            const CHAR *pShort,
+                                            Builder &bb, INT32 in,
                                             ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
@@ -811,8 +784,6 @@ namespace engine
       BSONElement elt = me._toModify ;
       BSONType b = elt.type () ;
       BOOLEAN change = FALSE ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
-      _compareFieldNames1 comp( _dollarList ) ;
 
       if ( NumberLong == b )
       {
@@ -821,10 +792,8 @@ namespace engine
          if ( SDB_OK == rc )
          {
             change = TRUE ;
-            bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                        result ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                             result, "$set" ) ;
+            bb.append ( pShort, result ) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
          }
       }
       else if ( NumberInt == b )
@@ -834,24 +803,25 @@ namespace engine
          if ( SDB_OK == rc )
          {
             change = TRUE ;
-            bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                        result ) ;
-            ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                             result, "$set" ) ;
+            bb.append ( pShort, result ) ;
+            ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
          }
       }
 
-      if ( change )
+      /*if ( change )
       {
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me._toModify.fieldName() ) ;
-      }
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
+      }*/
+
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF3, rc );
       return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPBITMDF22, "_mthModifier::_appendBitModifier2" )
    template<class Builder>
-   INT32 _mthModifier::_appendBitModifier2 ( Builder &bb, INT32 in,
+   INT32 _mthModifier::_appendBitModifier2 ( const CHAR *pRoot,
+                                             const CHAR *pShort,
+                                             Builder &bb, INT32 in,
                                              ModifierElement &me )
    {
       INT32 rc = SDB_OK ;
@@ -860,8 +830,6 @@ namespace engine
       BSONObjIterator it ( me._toModify.embeddedObject () ) ;
       INT32 x = in ;
       INT64 y = (INT64)in ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE ] ;
-      _compareFieldNames1 comp( _dollarList ) ;
 
       while ( it.more () )
       {
@@ -869,9 +837,8 @@ namespace engine
 
          if ( NumberInt != e.type() && NumberLong != e.type() )
          {
-            PD_LOG_MSG ( PDERROR,
-                         "bit object field elements must be int or long, %s",
-                         e.toString( TRUE ).c_str() ) ;
+            PD_LOG_MSG ( PDERROR, "bit object field elements must be int "
+                         "or long, %s", e.toString( TRUE ).c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto done ;
          }
@@ -903,19 +870,15 @@ namespace engine
 
       if ( (INT64)x != y )
       {
-         bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                     y ) ;
-         ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                          y, "$set" ) ;
+         bb.append ( pShort, y ) ;
+         ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, y, "$set" ) ;
       }
       else
       {
-         bb.append ( comp.getDollarValue( me._shortName, &dollarValue[0] ),
-                     x ) ;
-         ADD_CHG_NUMBER ( _dstChgBuilder, me._toModify.fieldName(),
-                          x, "$set" ) ;
+         bb.append ( pShort, x ) ;
+         ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, x, "$set" ) ;
       }
-      ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me._toModify.fieldName() ) ;
+      //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF22, rc );
@@ -1127,110 +1090,56 @@ namespace engine
       goto done ;
    }
 
-   CHAR *_compareFieldNames1::getDollarValue ( CHAR *s, CHAR *in )
+   /*
+      _compareFieldNames1 implement
+   */
+   const CHAR *_compareFieldNames1::getDollarValue ( const CHAR *s,
+                                                     BOOLEAN *pUnknowDollar )
    {
-      INT64 temp = 0 ;
-      INT32 dollarNum = 0 ;
-      INT32 num = -1 ;
-      CHAR *t = in ;
+      const CHAR *retStr = NULL ;
 
-      if ( *s && '$' == *s )
+      if ( pUnknowDollar )
       {
-         ossMemset ( t, 0, MTH_DOLLAR_FIELD_SIZE ) ;
-         ossStrToInt ( s + 1, &dollarNum ) ;
-         if ( _dollarList )
-         {
-            for ( vector<INT64>::iterator it = _dollarList->begin();
-                  it != _dollarList->end(); ++it )
-            {
-               temp = *it ;
-               if ( dollarNum == ((temp>>32)&0xFFFFFFFF) )
-               {
-                  num = (temp&0xFFFFFFFF) ;
-                  break ;
-               }
-            }
-         }
-         ossSnprintf ( t, MTH_DOLLAR_FIELD_SIZE, "%d", num ) ;
-         return t ;
+         *pUnknowDollar = FALSE ;
       }
-      else
-      {
-         return s ;
-      }
-   }
 
-   INT32 _compareFieldNames1::checkDollarValue( const char* pField )
-   {
-      INT32 rc = SDB_OK ;
-      static INT32 maxLoops = 1024 * 1024;
-      INT32 num = 0 ;
-      UINT32 lstart = 0;
-      UINT32 lsize = strlen ( pField ) ;
-      CHAR *a = NULL ;
-      CHAR *lend = NULL ;
-      CHAR  lold = 0 ;
-      const CHAR *temp = NULL ;
-      INT64 tempValue = 0 ;
-      for ( INT32 i = 0; i < maxLoops ; ++i )
+      if ( _dollarList && _dollarList->size() > 0 && *s && '$' == *s )
       {
-         if ( lstart >= lsize )
+         INT64 temp = 0 ;
+         INT32 dollarNum = 0 ;
+         INT32 num = -1 ;
+
+         if ( SDB_OK != ossStrToInt ( s + 1, &dollarNum ) )
          {
             goto done ;
          }
-         // find the earliest '.' from current position
-         a = (CHAR *)ossStrchr ( &pField[lstart], '.' ) ;
-         // locate the ., or end of the string
-         lend = ( NULL == a ) ? ( (CHAR *)&pField[lsize] ) : a ;
-         // get the original left and right
-         lold = *lend ;
-         // set as end of string
-         *lend = '\0' ;
-         temp = &pField[lstart] ;
-         if ( temp && '$' == *temp )
+
+         for ( vector<INT64>::iterator it = _dollarList->begin() ;
+               it != _dollarList->end() ; ++it )
          {
-            rc = ossStrToInt ( temp + 1, &num ) ;
-            if ( rc )
+            temp = *it ;
+            if ( dollarNum == ((temp>>32)&0xFFFFFFFF) )
             {
-               goto error ;
-            }
-            if ( _dollarList )
-            {
-               for ( vector<INT64>::iterator it = _dollarList->begin();
-                  it != _dollarList->end(); ++it )
-               {
-                  tempValue = *it ;
-                  if ( num == ((tempValue>>32)&0xFFFFFFFF) )
-                  {
-                     goto done ;
-                  }
-               }
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            else
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               num = (temp&0xFFFFFFFF) ;
+               ossMemset ( _dollarBuff, 0, sizeof(_dollarBuff) ) ;
+               ossSnprintf ( _dollarBuff, MTH_DOLLAR_FIELD_SIZE, "%d", num ) ;
+               retStr = &_dollarBuff[0] ;
+               goto done ;
             }
          }
-         // restore old value
-         *lend  = lold ;
-         lstart = UINT32(lend - pField) + 1;
+
+         if ( pUnknowDollar )
+         {
+            *pUnknowDollar = TRUE ;
+         }
       }
+
    done:
-      return rc ;
-   error:
-      goto done ;
+      return retStr ? retStr : s ;
    }
 
-   inline BOOLEAN _compareFieldNames1::_isNumber( CHAR c )
-   {
-      return c >= '0' && c <= '9';
-   }
-
-   inline INT32 _compareFieldNames1::_lexNumCmp ( const CHAR *s1,
-                                                  const CHAR *s2 )
+   INT32 _compareFieldNames1::_lexNumCmp ( const CHAR *s1,
+                                           const CHAR *s2 )
    {
       BOOLEAN p1 = FALSE ;
       BOOLEAN p2 = FALSE ;
@@ -1244,55 +1153,53 @@ namespace engine
       INT32   len2   = 0 ;
       INT32   result = 0 ;
 
-      CHAR t1[MTH_DOLLAR_FIELD_SIZE] ;
-      CHAR t2[MTH_DOLLAR_FIELD_SIZE] ;
+      CHAR t1[MTH_DOLLAR_FIELD_SIZE+1] = {0} ;
+      CHAR t2[MTH_DOLLAR_FIELD_SIZE+1] = {0} ;
 
-      if ( *s1 && '$' == *s1 )
+      if ( _dollarList && _dollarList->size() > 0 && *s1 && '$' == *s1 )
       {
          INT64 temp = 0 ;
          INT32 dollarNum = 0 ;
          INT32 num = -1 ;
-         ossMemset ( t1, 0, MTH_DOLLAR_FIELD_SIZE ) ;
-         ossStrToInt ( s1 + 1, &dollarNum ) ;
-         if ( _dollarList )
+
+         if ( SDB_OK == ossStrToInt ( s1 + 1, &dollarNum ) )
          {
-            for ( vector<INT64>::iterator it = _dollarList->begin();
-                  it != _dollarList->end(); ++it )
+            for ( vector<INT64>::iterator it = _dollarList->begin() ;
+                  it != _dollarList->end() ; ++it )
             {
                temp = *it ;
                if ( dollarNum == ((temp>>32)&0xFFFFFFFF) )
                {
                   num = (temp&0xFFFFFFFF) ;
+                  ossSnprintf ( t1, MTH_DOLLAR_FIELD_SIZE, "%d", num ) ;
+                  s1 = t1 ;
                   break ;
                }
             }
          }
-         ossSnprintf ( t1, MTH_DOLLAR_FIELD_SIZE, "%d", num ) ;
-         s1 = t1 ;
       }
 
-      if ( *s2 && '$' == *s2 )
+      if ( _dollarList && _dollarList->size() > 0 && *s2 && '$' == *s2 )
       {
          INT64 temp = 0 ;
          INT32 dollarNum = 0 ;
          INT32 num = -1 ;
-         ossMemset ( t2, 0, MTH_DOLLAR_FIELD_SIZE ) ;
-         ossStrToInt ( s2 + 1, &dollarNum ) ;
-         if ( _dollarList )
+
+         if ( SDB_OK == ossStrToInt ( s2 + 1, &dollarNum ) )
          {
-            for ( vector<INT64>::iterator it = _dollarList->begin();
-                  it != _dollarList->end(); ++it )
+            for ( vector<INT64>::iterator it = _dollarList->begin() ;
+                  it != _dollarList->end() ; ++it )
             {
                temp = *it ;
                if ( dollarNum == ((temp>>32)&0xFFFFFFFF) )
                {
                   num = (temp&0xFFFFFFFF) ;
+                  ossSnprintf ( t2, MTH_DOLLAR_FIELD_SIZE, "%d", num ) ;
+                  s2 = t2 ;
                   break ;
                }
             }
          }
-         ossSnprintf ( t2, MTH_DOLLAR_FIELD_SIZE, "%d", num ) ;
-         s2 = t2 ;
       }
 
       while( *s1 && *s2 )
@@ -1395,61 +1302,81 @@ namespace engine
    }
 
    FieldCompareResult _compareFieldNames1::compField ( const CHAR* l,
-                                                       const CHAR* r )
+                                                       const CHAR* r,
+                                                       UINT32 *pLeftPos,
+                                                       UINT32 *pRightPos )
    {
-      static INT32 maxLoops = 1024 * 1024;
-      UINT32 lstart = 0;
-      UINT32 rstart = 0;
+      const CHAR *pLTmp = l ;
+      const CHAR *pRTmp = r ;
+      const CHAR *pLDot = NULL ;
+      const CHAR *pRDot = NULL ;
+      INT32 result = 0 ;
 
-      UINT32 lsize = strlen ( l ) ;
-      UINT32 rsize = strlen ( r ) ;
-      for ( INT32 i = 0; i < maxLoops; i++ )
+      if ( pLeftPos )
       {
-         if ( lstart >= lsize )
-         {
-            if ( rstart >= rsize )
-            {
-               return SAME;
-            }
-            return RIGHT_SUBFIELD;
-         }
-         if ( rstart >= rsize )
-         {
-            return LEFT_SUBFIELD;
-         }
-
-         // find the earliest '.' from current position
-         CHAR *a = (CHAR *)ossStrchr ( &l[lstart], '.' ) ;
-         CHAR *b = (CHAR *)ossStrchr ( &r[rstart], '.' ) ;
-         // locate the ., or end of the string
-         CHAR *lend = ( NULL == a ) ? ( (CHAR *)&l[lsize] ) : a ;
-         CHAR *rend = ( NULL == b ) ? ( (CHAR *)&r[rsize] ) : b ;
-
-         // get the original left and right
-         CHAR lold = *lend ;
-         CHAR rold = *rend ;
-         // set as end of string
-         *lend     = '\0' ;
-         *rend     = '\0' ;
-         // do string compare
-         INT32 x = _lexNumCmp ( &l[lstart], &r[rstart] ) ;
-         // restore old value
-         *lend     = lold ;
-         *rend     = rold ;
-         if ( x < 0 )
-         {
-             return LEFT_BEFORE;
-         }
-         if ( x > 0 )
-         {
-             return RIGHT_BEFORE;
-         }
-
-         lstart = UINT32(lend - l) + 1;
-         rstart = UINT32(rend - r) + 1;
+         *pLeftPos = 0 ;
+      }
+      if ( pRightPos )
+      {
+         *pRightPos = 0 ;
       }
 
-      return SAME ;
+      while ( pLTmp && pRTmp && *pLTmp && *pRTmp )
+      {
+         pLDot = ossStrchr( pLTmp, '.' ) ;
+         pRDot = ossStrchr( pRTmp, '.' ) ;
+
+         if ( pLDot )
+         {
+            *(CHAR*)pLDot = 0 ;
+         }
+         if ( pRDot )
+         {
+            *(CHAR*)pRDot = 0 ;
+         }
+         result = _lexNumCmp( pLTmp, pRTmp ) ;
+         // Restore
+         if ( pLDot )
+         {
+            *(CHAR*)pLDot = '.' ;
+         }
+         if ( pRDot )
+         {
+            *(CHAR*)pRDot = '.' ;
+         }
+
+         if ( result < 0 )
+         {
+            return LEFT_BEFORE ;
+         }
+         else if ( result > 0 )
+         {
+            return RIGHT_BEFORE ;
+         }
+
+         // SAME
+         pLTmp = pLDot ? pLDot + 1 : NULL ;
+         pRTmp = pRDot ? pRDot + 1 : NULL ;
+
+         if ( pLeftPos )
+         {
+            *pLeftPos = pLTmp ? pLTmp - l : ossStrlen( l ) ;
+         }
+         if ( pRightPos )
+         {
+            *pRightPos = pRTmp ? pRTmp - r : ossStrlen( r ) ;
+         }
+      }
+
+      if ( !pLTmp || !*pLTmp )
+      {
+         if ( !pRTmp || !*pRTmp )
+         {
+            return SAME ;
+         }
+         return RIGHT_SUBFIELD ;
+      }
+      return LEFT_SUBFIELD ;
    }
 
    void _mthModifier::modifierSort()
@@ -1466,9 +1393,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_LDPTN );
       _modifierPattern = modifierPattern.copy() ;
-      BSONObjIterator i(_modifierPattern) ;
       INT32 eleNum = 0 ;
       _dollarList = dollarList ;
+      _fieldCompare.setDollarList( _dollarList ) ;
+
+      BSONObjIterator i( _modifierPattern ) ;
       while ( i.more() )
       {
          rc = _parseElement(i.next() ) ;
@@ -1482,6 +1411,7 @@ namespace engine
       }
       modifierSort() ;
       _initialized = TRUE ;
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF_LDPTN, rc );
       return rc ;
@@ -1500,24 +1430,21 @@ namespace engine
    // object, we need to append the original object in those cases
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__APPNEW, "_mthModifier::_appendNew" )
    template<class Builder>
-   INT32 _mthModifier::_appendNew ( Builder& b, SINT32 *modifierIndex )
+   INT32 _mthModifier::_appendNew ( const CHAR *pRoot, const CHAR *pShort,
+                                    Builder& b, SINT32 *modifierIndex )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPNEW );
       ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
-      CHAR dollarValue[ MTH_DOLLAR_FIELD_SIZE + 1 ] = {0} ;
-      _compareFieldNames1 comp( _dollarList ) ;
 
       switch ( me->_modType )
       {
       case INC:
       case SET:
       {
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify,
-                              me->_toModify.fieldName(), "$set" ) ;
-         b.appendAs ( me->_toModify,
-                      comp.getDollarValue( me->_shortName, &dollarValue[0] ) ) ;
+         //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot, "$set" ) ;
+         b.appendAs ( me->_toModify, pShort ) ;
          break ;
       }
       // this codepath should never been hit
@@ -1535,13 +1462,12 @@ namespace engine
       case PUSH:
       {
          // create bson builder for the array
-         BSONObjBuilder bb ( b.subarrayStart(me->_shortName)) ;
+         BSONObjBuilder bb ( b.subarrayStart( pShort ) ) ;
          bb.appendAs ( me->_toModify, bb.numStr(0) ) ;
          BSONObj newObj = bb.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me->_toModify.fieldName(),
-                             "$set" ) ;
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
+         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+         //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
          break ;
       }
       case PUSH_ALL:
@@ -1555,12 +1481,9 @@ namespace engine
             goto done ;
          }
 
-         b.appendAs ( me->_toModify,
-                      comp.getDollarValue( me->_shortName, &dollarValue[0] ) ) ;
-
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify,
-                              me->_toModify.fieldName(), "$set" ) ;
+         b.appendAs ( me->_toModify, pShort ) ;
+         //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot, "$set" ) ;
          break ;
       }
       case ADDTOSET:
@@ -1573,7 +1496,7 @@ namespace engine
            rc = SDB_INVALIDARG ;
            goto done ;
          }
-         BSONObjBuilder bb (b.subarrayStart(me->_shortName) ) ;
+         BSONObjBuilder bb (b.subarrayStart( pShort ) ) ;
          BSONObjIterator j ( me->_toModify.embeddedObject() ) ;
          INT32 n = 0 ;
          // make bsonelementset for everything we want to add
@@ -1593,9 +1516,8 @@ namespace engine
          //add new element
          if ( n != 0 )
          {
-            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, me->_toModify.fieldName(),
-                                "$set" ) ;
-            ADD_CHG_UNSET_FIELD ( _srcChgBuilder, me->_toModify.fieldName() ) ;
+            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+            //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
          }
          break ;
       }
@@ -1603,10 +1525,10 @@ namespace engine
       case BITNOT:
       case BITAND:
       case BITOR:
-         rc = _appendBitModifier ( b, 0, *me ) ;
+         rc = _appendBitModifier ( pRoot, pShort, b, 0, *me ) ;
          break ;
       case BIT:
-         rc = _appendBitModifier2 ( b, 0, *me ) ;
+         rc = _appendBitModifier2 ( pRoot, pShort, b, 0, *me ) ;
          break ;
       default:
          PD_LOG_MSG ( PDERROR, "unknow modifier type[%d]", me->_modType ) ;
@@ -1617,7 +1539,7 @@ namespace engine
       // here we actually consume modifier, then we add index
       if ( SDB_OK == rc )
       {
-         (*modifierIndex)++ ;
+         _incModifierIndex( modifierIndex ) ;
       }
 
    done :
@@ -1635,15 +1557,19 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_appendNewFromMods ( CHAR **ppRoot,
                                             INT32 &rootBufLen,
+                                            INT32 rootLen,
+                                            UINT32 modifierRootLen,
                                             Builder &b,
                                             set<string>& onedownseen,
-                                            SINT32 *modifierIndex )
+                                            SINT32 *modifierIndex,
+                                            BOOLEAN hasCreateNewRoot )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__MTHMDF__APPNEWFRMMODS );
+      PD_TRACE_ENTRY ( SDB__MTHMDF__APPNEWFRMMODS ) ;
       ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
-      INT32 rootLen = ossStrlen ( *ppRoot ) ;
-      _compareFieldNames1 comp ( _dollarList ) ;
+      BOOLEAN hasUnknowDollar = FALSE ;
+      const CHAR *pDollar = NULL ;
+      INT32 newRootLen = rootLen ;
 
       // if the modified request does not exist in original one
       // first let's see if there's nested object in the request
@@ -1654,20 +1580,10 @@ namespace engine
       // note fieldName is the FULL path "user.name.first.origin"
       // root is user.name.
       const CHAR *fieldName = me->_toModify.fieldName() ;
-
       // now temp is "first.origin"
-      const CHAR *temp = fieldName+rootLen ;
-
+      const CHAR *temp = fieldName + modifierRootLen ;
       // find the "." starting from root length
-      const CHAR *dot = ossStrchr ( temp,'.') ;
-
-      rc = comp.checkDollarValue ( me->_toModify.fieldName() ) ;
-      if ( rc )
-      {
-         rc = SDB_OK ;
-         (*modifierIndex)++ ;
-         goto done ;
-      }
+      const CHAR *dot = ossStrchr ( temp, '.' ) ;
 
       if ( UNSET == me->_modType ||
            PULL == me->_modType ||
@@ -1677,9 +1593,41 @@ namespace engine
       {
          // we don't continue for those types since they are not going to append
          // new records
-         (*modifierIndex)++ ;
+         _incModifierIndex( modifierIndex ) ;
          goto done ;
       }
+
+      if ( dot )
+      {
+         *(CHAR*)dot = 0 ;
+      }
+      pDollar = _fieldCompare.getDollarValue( temp, &hasUnknowDollar ) ;
+      temp = *ppRoot + newRootLen ;
+      rc = mthAppendString( ppRoot, rootBufLen, newRootLen, pDollar, -1,
+                            &newRootLen ) ;
+      // Restore
+      if ( dot )
+      {
+         *(CHAR*)dot = '.' ;
+      }
+
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to append string, rc: %d", rc ) ;
+         goto error ;
+      }
+      else if ( hasUnknowDollar )
+      {
+         _incModifierIndex( modifierIndex ) ;
+         goto done ;
+      }
+
+      if ( !hasCreateNewRoot )
+      {
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, *ppRoot ) ;
+         hasCreateNewRoot = TRUE ;
+      }
+
       // given example
       // user.name.first.origin
       // |         ^    #
@@ -1689,75 +1637,37 @@ namespace engine
       // if there is sub object
       if ( dot )
       {
-         // nr = "user.name.first."
-         // const string nr ( fieldName, 0, 1+(dot-fieldName)) ;
-         // nf = first
-         const string nf ( temp, 0, dot-temp ) ;
-
          // we already added, let's return SDB_OK, this may happen when user
          // provided two fields with same name, it's a duplicate and we should
          // ignore
-         if ( onedownseen.count(nf))
+         if ( onedownseen.count( temp ) )
+         {
+            _incModifierIndex( modifierIndex ) ;
             goto done ;
+         }
 
          // make sure we mark this one has been processed
-         onedownseen.insert(nf);
+         onedownseen.insert( temp ) ;
          {
             // create object builder for nf ("first" field)
-            BSONObjBuilder bb ( b.subobjStart(nf)) ;
+            BSONObjBuilder bb ( b.subobjStart( temp ) ) ;
             // create a es for empty object
             const BSONObj obj ;
-            BSONObjIteratorSorted es(obj);
-            // preallocate 128 bytes
-            CHAR tempBuffer [ MTH_TEMPSTRBUFLEN + 1 ] = {0} ;
-            CHAR *pOldRoot = &tempBuffer[0] ;
-
-            // if root len is greater than stack, we have to malloc, otherwise
-            // use preallocated memory
-            if ( rootLen >= MTH_TEMPSTRBUFLEN )
-               pOldRoot = ossStrdup ( *ppRoot ) ;
-            else
-               ossStrcpy ( pOldRoot, *ppRoot ) ;
-            if ( !pOldRoot )
-            {
-               PD_LOG ( PDERROR, "Failed to duplicate root string" ) ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-
-            // copy nr to root, first we set root to empty string, then "append"
-            // nr to it, that means we replace root with nr.
-            // note we already called ossStrdup to copy root to pOldRoot, so we
-            // should be safe here
-            (*ppRoot)[0] = '\0' ;
-            rc = mthAppendString ( ppRoot, rootBufLen,
-                                   0, fieldName,
-                                   1+(dot-fieldName) ) ;
-            // it may possible nr is larger than root so we need to realloc
-            // memory
+            BSONObjIteratorSorted es( obj ) ;
+            // append '.'
+            rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
+                                   &newRootLen ) ;
             if ( rc )
             {
-               // revert root to original value
-               // strcpy is safe here since the memory was for root
-               ossStrcpy ( *ppRoot, pOldRoot ) ;
-               if ( pOldRoot != &tempBuffer[0] )
-                  SDB_OSS_FREE ( pOldRoot ) ;
-               PD_LOG ( PDERROR, "Failed to append string, rc = %d", rc ) ;
+               PD_LOG ( PDERROR, "Failed to append string, rc: %d", rc ) ;
                goto error ;
             }
 
             // create an object for path "user.name.first."
             // bb is the new builder, es is iterator
             // modifierIndex is the index
-            rc = _buildNewObj ( ppRoot, rootBufLen,
-                                bb, es, modifierIndex ) ;
-            // strcpy is safe here because the memory should not be less than
-            // original
-            ossStrcpy ( *ppRoot, pOldRoot ) ;
-            if ( pOldRoot != &tempBuffer[0] )
-            {
-               SDB_OSS_FREE ( pOldRoot ) ;
-            }
+            rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
+                                bb, es, modifierIndex, hasCreateNewRoot ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to build new object for %s, rc: %d",
@@ -1777,7 +1687,7 @@ namespace engine
          // call _appendNew to append modified element into the current builder
          try
          {
-            rc = _appendNew ( b, modifierIndex ) ;
+            rc = _appendNew ( *ppRoot, temp, b, modifierIndex ) ;
          }
          catch( std::exception &e )
          {
@@ -1807,12 +1717,13 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_applyChange ( CHAR **ppRoot,
                                       INT32 &rootBufLen,
+                                      INT32 rootLen,
                                       BSONElement &e,
                                       Builder &b,
                                       SINT32 *modifierIndex )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__MTHMDF__ALYCHG );
+      PD_TRACE_ENTRY ( SDB__MTHMDF__ALYCHG ) ;
       ModifierElement *me = &_modifierElements[(*modifierIndex)] ;
 
       // basically we need to take the original data from e, and use modifier
@@ -1820,26 +1731,24 @@ namespace engine
       switch ( me->_modType )
       {
       case INC:
-         // for INC, we need to call _applyIncModifier
-         rc = _applyIncModifier ( b, e, *me ) ;
+         rc = _applyIncModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case SET:
-         rc = _applySetModifier ( b, e, *me ) ;
+         rc = _applySetModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case UNSET:
       {
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, me->_toModify.fieldName(),
-                              "$set" ) ;
-         ADD_CHG_ELEMENT ( _dstChgBuilder, me->_toModify, "$unset" ) ;
-
-         _applyUnsetModifier(b) ;
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, *ppRoot, "$set" ) ;
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, *ppRoot,
+                              "$unset" ) ;
+         _applyUnsetModifier( b ) ;
          break ;
       }
       case PUSH:
-         rc = _applyPushModifier ( b, e, *me ) ;
+         rc = _applyPushModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case PUSH_ALL:
-         rc = _applyPushAllModifier ( b, e, *me ) ;
+         rc = _applyPushAllModifier ( *ppRoot, b, e, *me ) ;
          break ;
       // given an input, remove all matching items when they match any of the
       // input
@@ -1847,39 +1756,37 @@ namespace engine
       // given an input, remove all matching items when they match the whole
       // input
       case PULL_ALL:
-         rc = _applyPullModifier ( b, e, *me ) ;
+         rc = _applyPullModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case POP:
-         rc = _applyPopModifier ( b, e, *me ) ;
+         rc = _applyPopModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case BITNOT:
       case BITXOR:
       case BITAND:
       case BITOR:
-         rc = _applyBitModifier ( b, e, *me ) ;
+         rc = _applyBitModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case BIT:
-         rc = _applyBitModifier2 ( b, e, *me ) ;
+         rc = _applyBitModifier2 ( *ppRoot, b, e, *me ) ;
          break ;
       case ADDTOSET:
-         rc = _applyAddtoSetModifier ( b, e, *me ) ;
+         rc = _applyAddtoSetModifier ( *ppRoot, b, e, *me ) ;
          break ;
       case RENAME:
       {
-         INT32 rootLen = ossStrlen ( *ppRoot ) ;
-         rc = mthAppendString ( ppRoot, rootBufLen,
-                                rootLen, me->_toModify.valuestr(),
-                                0 ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, me->_toModify.fieldName(),
-                              "$set" ) ;
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder,
-                               string( (*ppRoot )) ) ;
+         const CHAR *pDotR = ossStrrchr( *ppRoot, '.' ) ;
+         UINT32 pos = pDotR ? ( pDotR - *ppRoot + 1 ) : 0 ;
+         string newNameStr( *ppRoot, pos ) ;
+         newNameStr += me->_toModify.valuestr() ;
+
+         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, e, *ppRoot, "$set" ) ;
+         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, newNameStr ) ;
+
          //for the new obj,should unset the old, and set the new
-         ADD_CHG_UNSET_FIELD ( _dstChgBuilder, me->_toModify.fieldName() ) ;
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, e,
-                              string ((*ppRoot )),
-                              "$set" ) ;
-         (*ppRoot)[rootLen] = '\0' ;
+         ADD_CHG_UNSET_FIELD ( _dstChgBuilder, *ppRoot ) ;
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, e, newNameStr, "$set" ) ;
+
          b.appendAs ( e, me->_toModify.valuestr() ) ;
          break ;
       }
@@ -1890,8 +1797,9 @@ namespace engine
       }
       if ( SDB_OK == rc )
       {
-         (*modifierIndex)++ ;
+         _incModifierIndex( modifierIndex ) ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__ALYCHG, rc );
       return rc ;
@@ -1905,19 +1813,21 @@ namespace engine
    template<class Builder>
    INT32 _mthModifier::_buildNewObj ( CHAR **ppRoot,
                                       INT32 &rootBufLen,
+                                      INT32 rootLen,
                                       Builder &b,
                                       BSONObjIteratorSorted &es,
-                                      SINT32 *modifierIndex )
+                                      SINT32 *modifierIndex,
+                                      BOOLEAN hasCreateNewRoot )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__MTHMDF__BLDNEWOBJ );
-      _compareFieldNames1 compare ( _dollarList ) ;
+      PD_TRACE_ENTRY ( SDB__MTHMDF__BLDNEWOBJ ) ;
+
       // get the next element in the object
       BSONElement e = es.next() ;
       // previous element is set to empty
       BSONElement prevE ;
-      // current root length
-      UINT32 rootLen = ossStrlen ( *ppRoot ) ;
+      UINT32 compareLeftPos = 0 ;
+      INT32 newRootLen = rootLen ;
 
       // in the current scope, which subobject have we seen?
       set<string> onedownseen ;
@@ -1927,51 +1837,34 @@ namespace engine
       {
          // if we get two elements with same field name, we don't need to
          // continue checking, simply append it to the builder
-         /* TODO: should we really do that? */
          if ( _dupFieldName(prevE, e))
          {
-            b.append(e) ;
+            b.append( e ) ;
             prevE = e ;
             e = es.next() ;
             continue ;
          }
-         /*if ( *modifierIndex != 0 && ossStrcmp(
-            _modifierElements[*modifierIndex-1]._toModify.fieldName(),
-            _modifierElements[*modifierIndex]._toModify.fieldName() ) == 0 )*/
-         if ( *modifierIndex != 0 && SAME == compare.compField (
-              _modifierElements[*modifierIndex-1]._toModify.fieldName(),
-              _modifierElements[*modifierIndex]._toModify.fieldName() ) )
-         {
-            (*modifierIndex)++ ;
-            continue ;
-         }
-
          prevE = e ;
 
          // every time we build the current field, let's set root to original
          (*ppRoot)[rootLen] = '\0' ;
+         newRootLen = rootLen ;
 
          // construct the full path of the current field name
          // say current root is "user.employee.", and this object contains
          // "name, age" fields, then first loop we get user.employee.name
          // second round get user.employee.age
-         rc = mthAppendString ( ppRoot, rootBufLen,
-                                rootLen, e.fieldName(),
-                                0 ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc = %d", rc ) ;
+         rc = mthAppendString ( ppRoot, rootBufLen, newRootLen,
+                                e.fieldName(), -1, &newRootLen ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc: %d", rc ) ;
 
          // compare the full field name with requested update field
          /*FieldCompareResult cmp = compareDottedFieldNames (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
                *ppRoot ) ;*/
-         FieldCompareResult cmp = compare.compField (
+         FieldCompareResult cmp = _fieldCompare.compField (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
-               *ppRoot ) ;
-         // add "." at end
-         rc = mthAppendString ( ppRoot, rootBufLen,
-                                0, ".",
-                                1 ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc = %d", rc ) ;
+               *ppRoot, &compareLeftPos ) ;
 
          // compare the full path
          // we have few situations need to handle
@@ -2002,6 +1895,11 @@ namespace engine
          switch ( cmp )
          {
          case LEFT_SUBFIELD:
+            // add "." at end
+            rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
+                                   &newRootLen ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc: %d", rc ) ;
+
             // ex, modify request $set:{user.name,"taoewang"}
             // field: user
             // make sure the BSONElement is object or array
@@ -2010,19 +1908,18 @@ namespace engine
             // other type of element
             if ( e.type() != Object && e.type() != Array )
             {
-               PD_LOG ( PDERROR,
-                        "Invalid field type: %s", e.toString().c_str());
+               PD_LOG ( PDERROR, "Invalid field type: %s",
+                        e.toString().c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            // have we processed this field before?
-            // if we haven't processed it before, let's do it
-            // otherwise we may have a dup somewhere so let's ignore and report
-            // warning
-            if ( onedownseen.count(e.fieldName())==0 )
+            // have we processed this field before? if we haven't processed
+            // it before, let's do it, otherwise we may have a dup somewhere
+            // so let's ignore and report warning
+            if ( onedownseen.count( e.fieldName() ) == 0 )
             {
                // insert into list
-               onedownseen.insert(e.fieldName()) ;
+               onedownseen.insert( e.fieldName() ) ;
                // if we are dealing with object, then let's create a new object
                // builder starting from our current fieldName
                if ( e.type() == Object )
@@ -2038,8 +1935,9 @@ namespace engine
                   // bb is new object builder
                   // bis is the sorted iterator
                   // modifierIndex is the current modifier we are working on
-                  rc = _buildNewObj ( ppRoot, rootBufLen, bb, bis,
-                                      modifierIndex ) ;
+                  rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
+                                      bb, bis, modifierIndex,
+                                      hasCreateNewRoot ) ;
                   if ( rc )
                   {
                      PD_LOG ( PDERROR, "Failed to build object: %s, rc: %d",
@@ -2054,7 +1952,7 @@ namespace engine
                {
                   // if it's not object, then we must have array
                   // now let's create BSONArrayBuilder
-                  BSONArrayBuilder ba(b.subarrayStart(e.fieldName()));
+                  BSONArrayBuilder ba( b.subarrayStart( e.fieldName() ) ) ;
                   //BSONArrayIteratorSorted bis(BSONArray(e.embeddedObject()));
                   BSONObjIteratorSorted bis(e.embeddedObject());
                   // add fieldname into path and recursively call _buildNewObj
@@ -2063,17 +1961,17 @@ namespace engine
                   // ba is new array builder
                   // bis is the sorted iterator
                   // modifierIndex is the current modifier we are working on
-                  rc = _buildNewObj ( ppRoot, rootBufLen, ba, bis,
-                                      modifierIndex ) ;
+                  rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
+                                      ba, bis, modifierIndex,
+                                      hasCreateNewRoot ) ;
                   if ( rc )
                   {
-                     PD_LOG ( PDERROR,
-                              "Failed to build array: %s",
-                              e.toString().c_str());
+                     PD_LOG ( PDERROR, "Failed to build array: %s, rc: %d",
+                              e.toString().c_str(), rc ) ;
                      rc = SDB_INVALIDARG ;
                      goto error ;
                   }
-                  ba.done();
+                  ba.done() ;
                }
                // process to the next element
                e = es.next() ;
@@ -2085,6 +1983,7 @@ namespace engine
                PD_LOG ( PDWARNING, "dup detected for %s", e.fieldName() );
             }
             break ;
+
          case LEFT_BEFORE:
             // if the modified request does not exist in original one
             // first let's see if there's nested object in the request
@@ -2099,12 +1998,13 @@ namespace engine
 
             // first let's revert root to original
             (*ppRoot)[rootLen] = '\0' ;
-            rc = _appendNewFromMods ( ppRoot, rootBufLen,
-                                      b, onedownseen, modifierIndex) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to append for %s",
+            newRootLen = rootLen ;
+            rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
+                                      compareLeftPos, b, onedownseen,
+                                      modifierIndex, hasCreateNewRoot ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to append for %s, rc: %d",
                           _modifierElements[(*modifierIndex)
-                                           ]._toModify.toString().c_str());
+                          ]._toModify.toString().c_str(), rc ) ;
             // note we don't change e here because we just add the field
             // requested by modifier into new object, the original e shoudln't
             // be changed.
@@ -2112,6 +2012,7 @@ namespace engine
             // we also don't change modifierIndex here since it should be
             // changed by the actual consumer function, not in this loop
             break ;
+
          case SAME:
             // in this situation, the requested field is the one we are
             // processing, so that we don't need to change object metadata,
@@ -2120,30 +2021,30 @@ namespace engine
             // is the current modifier
             try
             {
-               rc = _applyChange ( ppRoot, rootBufLen, e, b, modifierIndex);
+               rc = _applyChange ( ppRoot, rootBufLen, newRootLen, e, b,
+                                   modifierIndex ) ;
             }
             catch( std::exception &e )
             {
-               PD_LOG ( PDERROR,
-                        "Failed to apply changes for %s: %s",
+               PD_LOG ( PDERROR, "Failed to apply changes for %s: %s",
                         _modifierElements[(*modifierIndex)
-                                         ]._toModify.toString().c_str(),
-                        e.what() );
+                        ]._toModify.toString().c_str(),
+                        e.what() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
             if ( rc )
             {
-               PD_LOG ( PDERROR,
-                        "Failed to apply change for %s",
+               PD_LOG ( PDERROR, "Failed to apply change for %s, rc: %d",
                         _modifierElements[(*modifierIndex)
-                                         ]._toModify.toString().c_str());
+                        ]._toModify.toString().c_str(), rc ) ;
                goto error ;
             }
             // since we have processed the original data, we increase element
             e=es.next();
             // again, don't change modifierIndex in loop
             break ;
+
          case RIGHT_BEFORE:
             // in this situation, the original field is alphabetically ahead of
             // requested field.
@@ -2161,6 +2062,7 @@ namespace engine
             // and increase element
             e=es.next() ;
             break ;
+
          case RIGHT_SUBFIELD:
          default :
             //we should never reach this codepath
@@ -2182,43 +2084,37 @@ namespace engine
          e=es.next() ;
       }
 
-      while ( (*modifierIndex)<(SINT32)_modifierElements.size() )
+      while ( (*modifierIndex) < (SINT32)_modifierElements.size() )
       {
          (*ppRoot)[rootLen] = '\0' ;
-         /*if ( *modifierIndex != 0 && ossStrcmp(
-            _modifierElements[*modifierIndex-1]._toModify.fieldName(),
-            _modifierElements[*modifierIndex]._toModify.fieldName() ) == 0 )*/
-         if ( *modifierIndex != 0 && SAME == compare.compField (
-              _modifierElements[*modifierIndex-1]._toModify.fieldName(),
-              _modifierElements[*modifierIndex]._toModify.fieldName() ) )
-         {
-            (*modifierIndex)++ ;
-            continue ;
-         }
+         newRootLen = rootLen ;
 
          // compare the full field name with requested update field
          /*FieldCompareResult cmp = compareDottedFieldNames (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
                *ppRoot ) ;*/
-         FieldCompareResult cmp = compare.compField (
+         FieldCompareResult cmp = _fieldCompare.compField (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
-               *ppRoot ) ;
+               *ppRoot, &compareLeftPos ) ;
          if ( LEFT_SUBFIELD == cmp )
          {
-            rc = _appendNewFromMods ( ppRoot, rootBufLen,
-                                      b, onedownseen, modifierIndex ) ;
+            rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
+                                      compareLeftPos, b, onedownseen,
+                                      modifierIndex, hasCreateNewRoot ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR,
-                        "Failed to append for %s",
+               PD_LOG ( PDERROR, "Failed to append for %s",
                         _modifierElements[(*modifierIndex)
                                          ]._toModify.toString().c_str());
                goto error ;
             }
          }
          else
+         {
             goto done ;
+         }
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__BLDNEWOBJ, rc );
       return rc ;
@@ -2238,10 +2134,13 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_MODIFY );
       SDB_ASSERT(_initialized, "The modifier has not been initialized, please "
-                 "call 'loadPattern' before using it" )
-      SDB_ASSERT(target.isEmpty(), "target should be empty")
+                 "call 'loadPattern' before using it" ) ;
+      SDB_ASSERT(target.isEmpty(), "target should be empty") ;
 
-      modifierSort() ;
+      if ( _dollarList && _dollarList->size() > 0 )
+      {
+         modifierSort() ;
+      }
 
       // create a builder with 10% extra space for buffer
       BSONObjBuilder builder ( (int)(source.objsize()*1.1));
@@ -2292,11 +2191,8 @@ namespace engine
       // going to apply
       // when this call returns SDB_OK, we should call builder.obj() to create
       // BSONObject from the builder.
-      rc = _buildNewObj ( &pBuffer,
-                          bufferSize,
-                          builder,
-                          es,
-                          &modifierIndex ) ;
+      rc = _buildNewObj ( &pBuffer, bufferSize, 0, builder, es,
+                          &modifierIndex, FALSE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to modify target, rc: %d", rc ) ;
@@ -2342,6 +2238,7 @@ namespace engine
       {
          *dstChange = _dstChgBuilder->obj () ;
       }
+
    done :
       if ( pBuffer )
       {
@@ -2362,4 +2259,6 @@ namespace engine
    error :
       goto done ;
    }
+
 }
+

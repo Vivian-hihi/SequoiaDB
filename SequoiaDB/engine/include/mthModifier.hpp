@@ -34,6 +34,7 @@
 *******************************************************************************/
 #ifndef MTHMODIFIER_HPP_
 #define MTHMODIFIER_HPP_
+
 #include "core.hpp"
 #include "oss.hpp"
 #include <vector>
@@ -42,11 +43,12 @@
 #include "../bson/bsonobj.h"
 using namespace bson ;
 
-#define MTH_OID_FIELD_NAME          "OID"
-#define MTH_MODIFIER_FIELD_NAME     "modifier"
 
 namespace engine
 {
+   /*
+      ModType define
+   */
    enum ModType
    {
       INC = 0,
@@ -67,6 +69,10 @@ namespace engine
 
       UNKNOW
    } ;
+
+   /*
+      _ModifierElement define
+   */
    class _ModifierElement : public SDBObject
    {
    public :
@@ -80,51 +86,86 @@ namespace engine
          _modType = type ;
          _shortName = (CHAR*)ossStrrchr( fn , '.' );
          if ( _shortName )
+         {
              _shortName++ ;
+         }
          else
+         {
              _shortName = (CHAR*)_toModify.fieldName() ;
+         }
       }
    } ;
    typedef _ModifierElement ModifierElement ;
 
+
+   #define MTH_DOLLAR_FIELD_SIZE          (10)
+   /*
+      _compareFieldNames1 define
+   */
    class _compareFieldNames1
    {
    private:
       vector<INT64> *_dollarList ;
+      CHAR           _dollarBuff[ MTH_DOLLAR_FIELD_SIZE + 1 ] ;
+
    private:
-      /*CHAR *_dollarNum2Field ( const CHAR *fieldName ) ;*/
-      inline BOOLEAN _isNumber( CHAR c ) ;
-      inline INT32 _lexNumCmp ( const CHAR *s1,
-                                const CHAR *s2 ) ;
+      inline BOOLEAN _isNumber( CHAR c )
+      {
+         return c >= '0' && c <= '9' ;
+      }
+
+      INT32 _lexNumCmp ( const CHAR *s1, const CHAR *s2 ) ;
+
    public:
-      _compareFieldNames1( vector<INT64> *dollarList = NULL ): _dollarList(NULL)
+      _compareFieldNames1( vector<INT64> *dollarList = NULL )
+      : _dollarList(NULL)
+      {
+         _dollarList = dollarList ;
+         ossMemset( _dollarBuff, 0, sizeof(_dollarBuff) ) ;
+      }
+
+      void setDollarList( vector<INT64> *dollarList )
       {
          _dollarList = dollarList ;
       }
-      CHAR *getDollarValue ( CHAR *s, CHAR *in ) ;
-      INT32 checkDollarValue( const char* pField ) ;
-      FieldCompareResult compField(const char* l, const char* r) ;
+
+      const CHAR *getDollarValue ( const CHAR *s,
+                                   BOOLEAN *pUnknowDollar = NULL ) ;
+
+      FieldCompareResult compField( const char* l, const char* r,
+                                    UINT32 *pLeftPos = NULL,
+                                    UINT32 *pRightPos = NULL ) ;
+
    } ;
 
+   /*
+      _compareFieldNames2 define
+   */
    class _compareFieldNames2
    {
    private:
       vector<INT64> *_dollarList ;
+
    public:
-      _compareFieldNames2( vector<INT64> *dollarList = NULL ): _dollarList(NULL)
+      _compareFieldNames2( vector<INT64> *dollarList = NULL )
+      : _dollarList(NULL)
       {
          _dollarList = dollarList ;
       }
+
       BOOLEAN operator () ( const ModifierElement &l,
                             const ModifierElement &r ) const
       {
          _compareFieldNames1 compare ( _dollarList ) ;
-         FieldCompareResult result = compare.compField( l._toModify.fieldName(),
-                                                     r._toModify.fieldName() ) ;
-         return ((result == RIGHT_SUBFIELD) || (result == LEFT_BEFORE)) ;
+         FieldCompareResult result = compare.compField(
+            l._toModify.fieldName(), r._toModify.fieldName() ) ;
+         return ( (result == RIGHT_SUBFIELD) || (result == LEFT_BEFORE) ) ;
       }
    } ;
 
+   /*
+      _mthModifier define
+   */
    class _mthModifier : public SDBObject
    {
    private :
@@ -134,10 +175,14 @@ namespace engine
       BSONObj _modifierPattern ;
       BOOLEAN _initialized ;
       vector<ModifierElement> _modifierElements ;
+
       vector<INT64> *_dollarList ;
+      _compareFieldNames1  _fieldCompare ;
+
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
       ModType _parseModType ( const CHAR *field ) ;
+      inline void _incModifierIndex( INT32 *modifierIndex ) ;
 
       template<class VType>
       INT32 _bitCalc ( ModType type, VType l, VType r, VType &out );
@@ -152,39 +197,48 @@ namespace engine
       void _applyUnsetModifier(BSONArrayBuilder &b) ;
 
       template<class Builder>
-      INT32 _applyIncModifier ( Builder &bb, const BSONElement &in,
+      INT32 _applyIncModifier ( const CHAR *pRoot, Builder &bb,
+                                const BSONElement &in,
                                 ModifierElement &me ) ;
       template<class Builder>
-      INT32 _applySetModifier ( Builder &bb, const BSONElement &in,
+      INT32 _applySetModifier ( const CHAR *pRoot, Builder &bb,
+                                const BSONElement &in,
                                 ModifierElement &me ) ;
       template<class Builder>
-      INT32 _applyPushModifier ( Builder &bb, const BSONElement &in,
-                                 ModifierElement &me ) ;
-      template<class Builder>
-      INT32 _applyPushAllModifier ( Builder &bb, const BSONElement &in,
-                                    ModifierElement &me ) ;
-      template<class Builder>
-      INT32 _applyPullModifier ( Builder &bb, const BSONElement &in,
-                                 ModifierElement &me ) ;
-      template<class Builder>
-      INT32 _applyPopModifier ( Builder &bb, const BSONElement &in,
-                                ModifierElement &me ) ;
-      template<class Builder>
-      INT32 _applyBitModifier ( Builder &bb, const BSONElement &in,
-                                ModifierElement &me ) ;
-      template<class Builder>
-      INT32 _applyBitModifier2 ( Builder &bb,
+      INT32 _applyPushModifier ( const CHAR *pRoot, Builder &bb,
                                  const BSONElement &in,
                                  ModifierElement &me ) ;
       template<class Builder>
-      INT32 _applyAddtoSetModifier ( Builder &bb,
+      INT32 _applyPushAllModifier ( const CHAR *pRoot, Builder &bb,
                                     const BSONElement &in,
                                     ModifierElement &me ) ;
       template<class Builder>
-      INT32 _appendBitModifier ( Builder &bb, INT32 in,
+      INT32 _applyPullModifier ( const CHAR *pRoot, Builder &bb,
+                                 const BSONElement &in,
                                  ModifierElement &me ) ;
       template<class Builder>
-      INT32 _appendBitModifier2 ( Builder &bb, INT32 in,
+      INT32 _applyPopModifier ( const CHAR *pRoot, Builder &bb,
+                                const BSONElement &in,
+                                ModifierElement &me ) ;
+      template<class Builder>
+      INT32 _applyBitModifier ( const CHAR *pRoot, Builder &bb,
+                                const BSONElement &in,
+                                ModifierElement &me ) ;
+      template<class Builder>
+      INT32 _applyBitModifier2 ( const CHAR *pRoot, Builder &bb,
+                                 const BSONElement &in,
+                                 ModifierElement &me ) ;
+      template<class Builder>
+      INT32 _applyAddtoSetModifier ( const CHAR *pRoot, Builder &bb,
+                                     const BSONElement &in,
+                                     ModifierElement &me ) ;
+      template<class Builder>
+      INT32 _appendBitModifier ( const CHAR *pRoot, const CHAR *pShort,
+                                 Builder &bb, INT32 in,
+                                 ModifierElement &me ) ;
+      template<class Builder>
+      INT32 _appendBitModifier2 ( const CHAR *pRoot, const CHAR *pShort,
+                                  Builder &bb, INT32 in,
                                   ModifierElement &me ) ;
       // if the original object has the element we asked to modify, then e is
       // the
@@ -195,6 +249,7 @@ namespace engine
       template<class Builder>
       INT32 _applyChange ( CHAR **ppRoot,
                            INT32 &rootBufLen,
+                           INT32 rootLen,
                            BSONElement &e,
                            Builder &b,
                            SINT32 *modifierIndex ) ;
@@ -203,7 +258,8 @@ namespace engine
       // original
       // object, we need to append the original object in those cases
       template<class Builder>
-      INT32 _appendNew ( Builder& b, SINT32 *modifierIndex ) ;
+      INT32 _appendNew ( const CHAR *pRoot, const CHAR *pShort,
+                         Builder& b, SINT32 *modifierIndex ) ;
 
       // Builder could be BSONObjBuilder or BSONArrayBuilder
       // _appendNewFromMods appends the current builder with the new field
@@ -214,9 +270,12 @@ namespace engine
       template<class Builder>
       INT32 _appendNewFromMods ( CHAR **ppRoot,
                                  INT32 &rootBufLen,
+                                 INT32 rootLen,
+                                 UINT32 modifierRootLen,
                                  Builder &b,
                                  set<string>& onedownseen,
-                                 SINT32 *modifierIndex ) ;
+                                 SINT32 *modifierIndex,
+                                 BOOLEAN hasCreateNewRoot ) ;
       // Builder could be BSONObjBuilder or BSONArrayBuilder
       // This function is recursively called to build new object
       // The prerequisit is that _modifierElement is sorted, which supposed to
@@ -224,9 +283,11 @@ namespace engine
       template<class Builder>
       INT32 _buildNewObj ( CHAR **ppRoot,
                            INT32 &rootBufLen,
+                           INT32 rootLen,
                            Builder &b,
                            BSONObjIteratorSorted &es,
-                           SINT32 *modifierIndex ) ;
+                           SINT32 *modifierIndex,
+                           BOOLEAN hasCreateNewRoot ) ;
    public :
       _mthModifier ()
       {
@@ -250,6 +311,23 @@ namespace engine
       inline BOOLEAN isInitialized () { return _initialized ; }
    } ;
    typedef _mthModifier mthModifier ;
+
+   inline void _mthModifier::_incModifierIndex( INT32 *modifierIndex )
+   {
+      ++(*modifierIndex) ;
+      while ( *modifierIndex < (INT32)_modifierElements.size() )
+      {
+         if ( SAME == _fieldCompare.compField (
+              _modifierElements[*modifierIndex-1]._toModify.fieldName(),
+              _modifierElements[*modifierIndex]._toModify.fieldName() ) )
+         {
+            ++(*modifierIndex) ;
+            continue ;
+         }
+         break ;
+      }
+   }
+
 }
 
-#endif
+#endif //MTHMODIFIER_HPP_
