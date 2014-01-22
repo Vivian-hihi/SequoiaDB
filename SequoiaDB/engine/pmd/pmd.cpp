@@ -80,8 +80,6 @@ namespace engine
 
       setBusinessOK( TRUE ) ;
       setExitCode( SDB_OK ) ;
-
-      gPDTraceCB = getTraceCB() ;
    }
 
    _SDB_KRCB::~_SDB_KRCB ()
@@ -118,7 +116,7 @@ namespace engine
       SAFE_NEW_GOTO_ERROR( _traceCB, pdTraceCB ) ;
       SAFE_NEW_GOTO_ERROR( _aggrCB, aggrBuilder ) ;
       SAFE_NEW_GOTO_ERROR( _fmpCB, spdFMPMgr ) ;
-
+      gPDTraceCB = getTraceCB() ;
    done:
       return rc ;
    error:
