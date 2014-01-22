@@ -143,7 +143,7 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
    INT32       rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILJSONPS__GETNEXTRECORD );
    UINT32      blockSize      = 0      ;
-   INT32       level          = 0      ;
+   UINT32       level          = 0      ;
    BOOLEAN     isESC          = FALSE  ;
    BOOLEAN     isString       = FALSE  ;
    BOOLEAN     isRecordFirst  = TRUE   ;
@@ -158,7 +158,7 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
       {
          if ( _pBlock >= _blockNum )
          {
-            INT32 recordLeftSize = 0 ;
+            UINT32 recordLeftSize = 0 ;
             blockSize = _blockSize ;
             _pBlock = 0 ;
             if ( ppBucket )
