@@ -240,7 +240,7 @@ namespace engine
                                                 sizeof( pmdDMNProcInfo ),
                                                 OSS_SHM_CREATE, _shmMid );
 #if defined (_LINUX)
-      PD_CHECK( _procInfo != NULL && _shmMid > 0, SDB_OOM, error, PDERROR,
+      PD_CHECK( _procInfo != NULL && _shmMid >= 0, SDB_OOM, error, PDERROR,
                "failed to allocate share-memory(key:%u)", shmKey );
 #elif defined (_WINDOWS)
       PD_CHECK( _procInfo != NULL && _shmMid != 0, SDB_OOM, error, PDERROR,
@@ -291,7 +291,7 @@ namespace engine
                                                 sizeof( pmdDMNProcInfo ),
                                                 _shmMid );
 #if defined (_LINUX)
-      PD_CHECK( _procInfo != NULL && _shmMid > 0, SDB_OOM, error, PDERROR,
+      PD_CHECK( _procInfo != NULL && _shmMid >= 0, SDB_OOM, error, PDERROR,
                "failed to get share-memory(key:%u)", shmKey );
 #elif defined (_WINDOWS)
       PD_CHECK( _procInfo != NULL && _shmMid != 0, SDB_OOM, error, PDERROR,
