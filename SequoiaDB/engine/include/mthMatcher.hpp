@@ -264,6 +264,7 @@ namespace engine
                            ) ;
       INT32 _matches ( const CHAR *fieldName,
                        const BSONElement &toMatch,
+                       const BSONObj &rootObj,
                        const BSONObj &obj,
                        BSONObj::MatchType op,
                        BOOLEAN isArray,
