@@ -167,7 +167,13 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
             }
             ossMemset ( _buffer, 0, _blockSize ) ;
             recordLeftSize = pCursor - _curBuffer ;
-            if ( recordLeftSize > 0 )
+            if ( recordLeftSize >= ( _blockNum * _blockSize ) )
+            {
+               recordLeftSize = 0 ;
+               PD_LOG ( PDWARNING, "Data size larger than the bucket size,\
+clear bucket data" ) ;
+            }
+            else if ( recordLeftSize > 0 )
             {
                ossMemmove ( _buffer, _curBuffer, recordLeftSize ) ;
             }
@@ -219,6 +225,10 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
          }
          _unreadSpace = blockSize ;
          ++_pBlock ;
+         if ( _unreadSpace == 0 )
+         {
+            continue ;
+         }
          if ( _lackLF )
          {
             while ( *pCursor != '{' )
