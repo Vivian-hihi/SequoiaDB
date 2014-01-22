@@ -199,7 +199,13 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
             }
             ossMemset ( _buffer, 0, _blockSize ) ;
             recordLeftSize = pCursor - _curBuffer ;
-            if ( recordLeftSize > 0 )
+            if ( recordLeftSize >= ( _blockNum * _blockSize ) )
+            {
+               recordLeftSize = 0 ;
+               PD_LOG ( PDWARNING, "Data size larger than the bucket size,\
+clear bucket data" ) ;
+            }
+            else if ( recordLeftSize > 0 )
             {
                ossMemmove ( _buffer, _curBuffer, recordLeftSize ) ;
             }
