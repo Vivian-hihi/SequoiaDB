@@ -45,7 +45,7 @@ namespace engine
    // maintain the validity of original pointer
    INT32 mthAppendString ( CHAR **ppStr, INT32 &bufLen,
                            INT32 strLen, const CHAR *newStr,
-                           INT32 newStrLen )
+                           INT32 newStrLen, INT32 *pMergedLen )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( ppStr && newStr, "str or newStr can't be NULL" )
@@ -54,12 +54,12 @@ namespace engine
       {
          strLen = 0 ;
       }
-      else if ( 0 >= strLen )
+      else if ( strLen <= 0 )
       {
          strLen = ossStrlen ( *ppStr ) ;
       }
       // if user doesn't know the new string len, pass 0
-      if ( 0 >= newStrLen )
+      if ( newStrLen <= 0 )
       {
          newStrLen = ossStrlen ( newStr ) ;
       }
@@ -72,7 +72,7 @@ namespace engine
                                                  SDB_PAGE_SIZE ) ;
          if ( newSize < 0 )
          {
-            PD_LOG ( PDERROR, "new buffer overflow" ) ;
+            PD_LOG ( PDERROR, "new buffer overflow, size: %d", newSize ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -92,14 +92,25 @@ namespace engine
       {
          ossMemcpy ( &(*ppStr)[strLen], newStr, newStrLen ) ;
          (*ppStr)[strLen+newStrLen] = '\0' ;
+
+         if ( pMergedLen )
+         {
+            *pMergedLen = strLen + newStrLen ;
+         }
       }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
    done :
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDOUBLEBUFFERSIZE, "mthDoubleBufferSize" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHDOUBLEBUFFERSIZE, "mthDoubleBufferSize" )
    INT32 mthDoubleBufferSize ( CHAR **ppStr, INT32 &bufLen )
    {
       INT32 rc = SDB_OK ;
@@ -127,10 +138,13 @@ namespace engine
          goto error ;
       }
       bufLen = newSize ;
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHDOUBLEBUFFERSIZE, rc ) ;
       return rc ;
    error :
       goto done ;
    }
+
 }
+
