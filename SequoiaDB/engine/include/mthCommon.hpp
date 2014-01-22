@@ -34,13 +34,18 @@
 #ifndef MTHCOMMON_HPP__
 #define MTHCOMMON_HPP__
 
+#include "core.hpp"
+
 namespace engine
 {
-#define MTH_TEMPSTRBUFLEN 128
+   #define MTH_TEMPSTRBUFLEN     (128)
+
    INT32 mthAppendString ( CHAR **ppStr, INT32 &bufLen,
                            INT32 strLen, const CHAR *newStr,
-                           INT32 newStrLen ) ;
+                           INT32 newStrLen, INT32 *pMergedLen = NULL ) ;
+
    INT32 mthDoubleBufferSize ( CHAR **ppStr, INT32 &bufLen ) ;
+
 }
 
-#endif
+#endif //MTHCOMMON_HPP__
