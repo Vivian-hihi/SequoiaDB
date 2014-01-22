@@ -1463,6 +1463,7 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMACH_MATCHES, "_mthMatcher::_matches" )
    INT32 _mthMatcher::_matches ( const CHAR *fieldName,
                                  const BSONElement &toMatch,
+                                 const BSONObj &rootObj,
                                  const BSONObj &obj,
                                  BSONObj::MatchType op,
                                  BOOLEAN isArray,
@@ -1500,13 +1501,15 @@ namespace engine
       }
       // otherwise we just copy the string to static buffer
       else
+      {
          ossStrncpy ( tempFieldName, fieldName, fieldNameLen ) ;
+      }
 
       // special case for Not Equal, we treat it as Equality and reverse the
       // result
       if ( op == BSONObj::NE )
       {
-         rc = _matches ( fieldName, toMatch, obj, BSONObj::Equality,
+         rc = _matches ( fieldName, toMatch, rootObj, obj, BSONObj::Equality,
                          FALSE, isFieldCom, bm, !isNot, result, dollarList ) ;
          if ( rc )
          {
@@ -1522,7 +1525,7 @@ namespace engine
       // same for Not In
       else if ( op == BSONObj::NIN )
       {
-         rc = _matches ( fieldName, toMatch, obj, BSONObj::opIN,
+         rc = _matches ( fieldName, toMatch, rootObj, obj, BSONObj::opIN,
                          FALSE, isFieldCom, bm, !isNot, result, dollarList ) ;
          if ( rc )
          {
@@ -1583,7 +1586,8 @@ namespace engine
                         if ( Object == z.type() )
                         {
                            BSONObj eo = z.embeddedObject () ;
-                           rc = _matches ( pChildFieldName + 1, toMatch, eo, op,
+                           rc = _matches ( pChildFieldName + 1, toMatch,
+                                           rootObj, eo, op,
                                            Array == z.type(), isFieldCom, bm,
                                            isNot, result, dollarList ) ;
                            if ( rc )
@@ -1662,7 +1666,7 @@ namespace engine
             {
                // xxx.xxx.xxx
                BSONObj eo = se.embeddedObject () ;
-               rc = _matches ( p+1, toMatch, eo, op,
+               rc = _matches ( p+1, toMatch, rootObj, eo, op,
                                Array == se.type(), isFieldCom,
                                bm, isNot, result, dollarList ) ;
                goto done ;
@@ -1717,7 +1721,7 @@ namespace engine
                // name into the object
                BSONObj eo = z.embeddedObject() ;
                INT32 cmp = 0 ;
-               rc = _matches ( fieldName, toMatch, eo, op,
+               rc = _matches ( fieldName, toMatch, rootObj, eo, op,
                                FALSE, isFieldCom, bm, isNot, cmp, dollarList ) ;
                if ( rc )
                {
@@ -1752,7 +1756,7 @@ namespace engine
       e = obj.getField(fieldName) ;
       if ( isFieldCom )
       {
-         f = obj.getField( toMatch.valuestr() ) ;
+         f = rootObj.getFieldDotted( toMatch.valuestr() ) ;
          if ( f.eoo() )
          {
             result = NMATCH ;
@@ -2004,7 +2008,7 @@ namespace engine
          {
             const MatchElement &me = *(lme->_me) ;
             const BSONElement &be = me._toMatch ;
-            rc = _matches ( be.fieldName(), be, obj,
+            rc = _matches ( be.fieldName(), be, obj, obj,
                             me._op, FALSE, lme->_isFieldCom,
                             me, isNot, r, dollarList ) ;
             if ( rc )
