@@ -178,7 +178,7 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILCSV__GETNEXTRECORD );
    BOOLEAN     isString       = FALSE ;
-   INT32       delCharNum     = 0 ;
+   UINT32       delCharNum     = 0 ;
    UINT32      blockSize      = _blockSize ;
    CHAR       *pCursor        = _curBuffer ;
    CHAR       *curBuffer      = NULL ;
@@ -190,7 +190,7 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
       {
          if ( _pBlock >= _blockNum )
          {
-            INT32 recordLeftSize = 0 ;
+            UINT32 recordLeftSize = 0 ;
             blockSize = _blockSize ;
             _pBlock = 0 ;
             if ( ppBucket )
