@@ -337,6 +337,12 @@ namespace engine
    done:
       return rc;
    error:
+      if ( SDB_CAT_NO_MATCH_CATALOG == rc )
+      {
+         rc = SDB_OK;
+         replyHeader.contextID = contextID;
+         goto done;
+      }
       replyHeader.flags = rc;
       if ( contextID >= 0 )
       {
