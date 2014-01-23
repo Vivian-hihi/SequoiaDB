@@ -1154,6 +1154,8 @@ SDB_EXPORT INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle,
 SDB_EXPORT INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle ) ;
 */
 
+SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle ) ;
+
 /** \fn INT32 sdbExec( sdbConnectionHandle cHandle,
                           const CHAR *sql,
                           sdbCursorHandle *result )

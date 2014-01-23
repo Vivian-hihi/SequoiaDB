@@ -5142,6 +5142,42 @@ error :
 }
 */
 
+SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle )
+{
+   INT32 rc = SDB_OK ;
+   BOOLEAN result = FALSE ;
+   SINT64 contextID = -1 ;
+   sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
+   if ( !cs || cs->_handleType != SDB_HANDLE_TYPE_CURSOR )
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+   rc = clientBuildKillContextsMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize, 0, 1,
+                                     &cs->_contextID, cs->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _send ( cs->_sock, (MsgHeader*)cs->_pSendBuffer, cs->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _recvExtract ( cs->_sock, (MsgHeader**)&cs->_pReceiveBuffer,
+                       &cs->_receiveBufferSize, &contextID,
+                       &result, cs->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   cs->_contextID = -1 ;
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 #define TRACE_FIELD_SEP ','
 static INT32 sdbTraceStrtok ( bson *obj, CHAR *pLine )
 {
