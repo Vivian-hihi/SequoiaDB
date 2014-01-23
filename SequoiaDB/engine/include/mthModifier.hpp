@@ -114,7 +114,9 @@ namespace engine
          return c >= '0' && c <= '9' ;
       }
 
-      INT32 _lexNumCmp ( const CHAR *s1, const CHAR *s2 ) ;
+      INT32 _lexNumCmp ( const CHAR *s1, const CHAR *s2,
+                         BOOLEAN *s1HasUnknowDollar = NULL,
+                         BOOLEAN *s2HasUnknowDollar = NULL ) ;
 
    public:
       _compareFieldNames1( vector<INT64> *dollarList = NULL )
@@ -134,7 +136,9 @@ namespace engine
 
       FieldCompareResult compField( const char* l, const char* r,
                                     UINT32 *pLeftPos = NULL,
-                                    UINT32 *pRightPos = NULL ) ;
+                                    UINT32 *pRightPos = NULL,
+                                    BOOLEAN *pLHasUnknowDollar = NULL,
+                                    BOOLEAN *pRHasUnknowDollar = NULL ) ;
 
    } ;
 

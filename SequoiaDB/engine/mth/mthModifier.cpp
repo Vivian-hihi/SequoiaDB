@@ -1157,7 +1157,9 @@ namespace engine
    }
 
    INT32 _compareFieldNames1::_lexNumCmp ( const CHAR *s1,
-                                           const CHAR *s2 )
+                                           const CHAR *s2,
+                                           BOOLEAN *s1HasUnknowDollar,
+                                           BOOLEAN *s2HasUnknowDollar )
    {
       BOOLEAN p1 = FALSE ;
       BOOLEAN p2 = FALSE ;
@@ -1173,6 +1175,15 @@ namespace engine
 
       CHAR t1[MTH_DOLLAR_FIELD_SIZE+1] = {0} ;
       CHAR t2[MTH_DOLLAR_FIELD_SIZE+1] = {0} ;
+
+      if ( s1HasUnknowDollar )
+      {
+         *s1HasUnknowDollar = FALSE ;
+      }
+      if ( s2HasUnknowDollar )
+      {
+         *s2HasUnknowDollar = FALSE ;
+      }
 
       if ( _dollarList && _dollarList->size() > 0 && *s1 && '$' == *s1 )
       {
@@ -1193,6 +1204,10 @@ namespace engine
                   s1 = t1 ;
                   break ;
                }
+            }
+            if ( s1HasUnknowDollar && s1 != t1 )
+            {
+               *s1HasUnknowDollar = TRUE ;
             }
          }
       }
@@ -1216,6 +1231,10 @@ namespace engine
                   s2 = t2 ;
                   break ;
                }
+            }
+            if ( s2HasUnknowDollar && s1 != t2 )
+            {
+               *s2HasUnknowDollar = TRUE ;
             }
          }
       }
@@ -1322,7 +1341,9 @@ namespace engine
    FieldCompareResult _compareFieldNames1::compField ( const CHAR* l,
                                                        const CHAR* r,
                                                        UINT32 *pLeftPos,
-                                                       UINT32 *pRightPos )
+                                                       UINT32 *pRightPos,
+                                                       BOOLEAN *pLHasUnknowDollar,
+                                                       BOOLEAN *pRHasUnknowDollar )
    {
       const CHAR *pLTmp = l ;
       const CHAR *pRTmp = r ;
@@ -1352,7 +1373,8 @@ namespace engine
          {
             *(CHAR*)pRDot = 0 ;
          }
-         result = _lexNumCmp( pLTmp, pRTmp ) ;
+         result = _lexNumCmp( pLTmp, pRTmp, pLHasUnknowDollar,
+                              pRHasUnknowDollar ) ;
          // Restore
          if ( pLDot )
          {
@@ -1844,6 +1866,7 @@ namespace engine
       BSONElement e = es.next() ;
       // previous element is set to empty
       BSONElement prevE ;
+      BOOLEAN hasUnknowDollar = FALSE ;
       UINT32 compareLeftPos = 0 ;
       INT32 newRootLen = rootLen ;
 
@@ -1882,7 +1905,13 @@ namespace engine
                *ppRoot ) ;*/
          FieldCompareResult cmp = _fieldCompare.compField (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
-               *ppRoot, &compareLeftPos ) ;
+               *ppRoot, &compareLeftPos, NULL, &hasUnknowDollar, NULL ) ;
+
+         if ( hasUnknowDollar )
+         {
+            _incModifierIndex( modifierIndex ) ;
+            continue ;
+         }
 
          // compare the full path
          // we have few situations need to handle
@@ -2113,7 +2142,13 @@ namespace engine
                *ppRoot ) ;*/
          FieldCompareResult cmp = _fieldCompare.compField (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
-               *ppRoot, &compareLeftPos ) ;
+               *ppRoot, &compareLeftPos, NULL, &hasUnknowDollar, NULL ) ;
+
+         if ( hasUnknowDollar )
+         {
+            _incModifierIndex( modifierIndex ) ;
+            continue ;
+         }
          if ( LEFT_SUBFIELD == cmp )
          {
             rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
