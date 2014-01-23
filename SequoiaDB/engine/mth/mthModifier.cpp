@@ -230,7 +230,9 @@ namespace engine
       BSONType a = in.type() ;
       BSONType b = elt.type() ;
 
-      if ( NumberLong == a || NumberInt == a || NumberDouble == a )
+      if ( ( NumberLong == a && 0 != elt.numberLong() ) ||
+           ( NumberInt == a && 0 != elt.numberInt() ) ||
+           ( NumberDouble == a && 0 != elt.numberDouble() ) )
       {
          ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
 
@@ -296,11 +298,17 @@ namespace engine
          }
       }
 
+      if ( 0 != in.woCompare( me, false ) )
       {
          ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me._toModify, pRoot, "$set" ) ;
          // set new element
          bb.appendAs ( me._toModify, in.fieldName() ) ;
+      }
+      // not change
+      else
+      {
+         bb.append ( in ) ;
       }
 
    done :
@@ -376,6 +384,7 @@ namespace engine
          BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          BSONObjIterator i ( in.embeddedObject()) ;
          INT32 n = 0 ;
+         INT32 pushNum = 0 ;
          while ( i.more() )
          {
             sub.append( i.next() ) ;
@@ -386,11 +395,15 @@ namespace engine
          while( i.more() )
          {
             sub.appendAs( i.next(), sub.numStr(n++) ) ;
+            ++pushNum ;
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         if ( 0 != pushNum )
+         {
+            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         }
       }
 
    done :
@@ -419,6 +432,7 @@ namespace engine
          // even if all elements matches, we still need this empty array
          BSONObjBuilder sub ( bb.subarrayStart ( in.fieldName() ) ) ;
          INT32 n = 0 ;
+         BOOLEAN changed = FALSE ;
          // for each element in the original data
          BSONObjIterator i ( in.embeddedObject() ) ;
          while ( i.more() )
@@ -438,6 +452,7 @@ namespace engine
                   if ( ele.woCompare(arrJ, FALSE) == 0 )
                   {
                      allowed = FALSE ;
+                     changed = TRUE ;
                      break ;
                   }
                }
@@ -449,8 +464,11 @@ namespace engine
          }
          BSONObj newObj = sub.done() ;
 
-         ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-         ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         if ( changed )
+         {
+            ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
+            ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
+         }
       }
 
    done :
@@ -1422,7 +1440,7 @@ namespace engine
    BOOLEAN _mthModifier::_dupFieldName ( const BSONElement &l,
                                          const BSONElement &r )
    {
-      return !l.eoo() && !r.eoo() && (r.rawdata() != r.rawdata()) &&
+      return !l.eoo() && !r.eoo() && (l.rawdata() != r.rawdata()) &&
         ossStrncmp(l.fieldName(),r.fieldName(),ossStrlen(r.fieldName()))==0 ;
    }
 
