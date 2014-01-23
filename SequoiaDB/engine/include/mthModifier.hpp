@@ -321,7 +321,7 @@ namespace engine
             continue ;
          }
          else if ( !mthCheckUnknowDollar(
-            _modifierElements[*modifierIndex-1]._toModify.fieldName(),
+            _modifierElements[*modifierIndex]._toModify.fieldName(),
             _dollarList ) )
          {
             ++(*modifierIndex) ;
