@@ -1121,7 +1121,7 @@ namespace engine
          *pUnknowDollar = FALSE ;
       }
 
-      if ( _dollarList && _dollarList->size() > 0 && *s && '$' == *s )
+      if ( _dollarList && *s && '$' == *s )
       {
          INT64 temp = 0 ;
          INT32 dollarNum = 0 ;
@@ -1185,7 +1185,7 @@ namespace engine
          *s2HasUnknowDollar = FALSE ;
       }
 
-      if ( _dollarList && _dollarList->size() > 0 && *s1 && '$' == *s1 )
+      if ( _dollarList && *s1 && '$' == *s1 )
       {
          INT64 temp = 0 ;
          INT32 dollarNum = 0 ;
@@ -1212,7 +1212,7 @@ namespace engine
          }
       }
 
-      if ( _dollarList && _dollarList->size() > 0 && *s2 && '$' == *s2 )
+      if ( _dollarList && *s2 && '$' == *s2 )
       {
          INT64 temp = 0 ;
          INT32 dollarNum = 0 ;
