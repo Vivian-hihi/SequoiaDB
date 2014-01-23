@@ -1982,12 +1982,19 @@ namespace engine
       iter = strSubCLList.begin();
       while( iter != strSubCLList.end() )
       {
-         rc = rtnCreateIndexCommand( iter->c_str(), boIndex, _pEDUCB,
+         INT32 rcTmp = SDB_OK;
+         rcTmp = rtnCreateIndexCommand( iter->c_str(), boIndex, _pEDUCB,
                                      _pDmsCB, _pDpsCB );
-         PD_CHECK( SDB_OK == rc || SDB_IXM_REDEF == rc, rc, error, PDERROR,
+         if ( SDB_OK != rcTmp && SDB_IXM_REDEF != rcTmp )
+         {
+            PD_LOG( PDERROR,
                    "create index for sub-collection(%s) failed(rc=%d)",
-                   iter->c_str(), rc );
-         rc = SDB_OK;
+                   iter->c_str(), rcTmp );
+            if ( SDB_OK == rc )
+            {
+               rc = rcTmp;
+            }
+         }
          ++iter;
       }
    done:
@@ -2009,6 +2016,7 @@ namespace engine
       set< std::string > strSubCLList;
       set< std::string >::iterator iter;
       BSONElement ele;
+      BOOLEAN isExist = FALSE;
       try
       {
          boMatcher = BSONObj( pQuery );
@@ -2031,13 +2039,28 @@ namespace engine
       iter = strSubCLList.begin();
       while( iter != strSubCLList.end() )
       {
-         rc = rtnDropIndexCommand( iter->c_str(), ele, _pEDUCB,
-                                   _pDmsCB, _pDpsCB );
-         PD_CHECK( SDB_OK == rc || SDB_IXM_NOTEXIST == rc, rc, error, PDERROR,
+         INT32 rcTmp = SDB_OK;
+         rcTmp = rtnDropIndexCommand( iter->c_str(), ele, _pEDUCB,
+                                    _pDmsCB, _pDpsCB );
+         if ( SDB_OK == rcTmp )
+         {
+            isExist = TRUE;
+         }
+         else
+         {
+            if ( SDB_OK == rc || SDB_IXM_NOTEXIST == rc )
+            {
+               rc = rcTmp;
+            }
+            PD_LOG( PDERROR,
                    "drop index for sub-collection(%s) failed(rc=%d)",
-                   iter->c_str(), rc );
-         rc = SDB_OK;
+                   iter->c_str(), rcTmp );
+         }
          ++iter;
+      }
+      if ( SDB_IXM_NOTEXIST == rc && isExist )
+      {
+         rc = SDB_OK;
       }
    done:
       return rc;
