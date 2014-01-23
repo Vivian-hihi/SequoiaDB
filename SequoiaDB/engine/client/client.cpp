@@ -925,6 +925,11 @@ namespace sdbclient
          rc = SDB_INVALIDARG ;
          goto exit ;
       }
+      if ( num <= 0 )
+      {
+         // in this case, prevent use '_pSendBuffer' to send anything to engine
+         goto exit ;
+      }
       for ( count = 0; count < num; ++count )
       {
          BSONObj temp ;

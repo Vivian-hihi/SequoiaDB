@@ -4343,6 +4343,16 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+   if ( num < 0)
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   else if ( num == 0 )
+   {
+      // in this case, prevent use the cs->_pSendBuffer to send thing to engine
+      goto done ;
+   }
    for ( count = 0; count < num; ++count )
    {
       if ( !obj[count] )
