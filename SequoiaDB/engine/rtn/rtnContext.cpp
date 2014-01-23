@@ -3547,10 +3547,17 @@ namespace engine
 
    INT32 _rtnSubCLBuf::pop()
    {
+      INT32 rc = SDB_OK;
       BSONObj obj;
       _isOrderKeyChange = TRUE;
       _remainNum--;
-      return _buffer.nextObj( obj );
+      rc = _buffer.nextObj( obj );
+      if ( _remainNum <= 0 )
+      {
+         rtnContextBuf emptyBuf;
+         _buffer = emptyBuf;
+      }
+      return rc;
    }
 
    INT32 _rtnSubCLBuf::popN( SINT32 num )
@@ -3579,8 +3586,9 @@ namespace engine
    INT32 _rtnSubCLBuf::popAll()
    {
       _isOrderKeyChange = TRUE;
-      _buffer.release();
       _remainNum = 0;
+      rtnContextBuf emptyBuf;
+      _buffer = emptyBuf;
       return SDB_OK;
    }
 
