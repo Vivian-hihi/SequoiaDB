@@ -46,6 +46,12 @@ namespace engine
 
    INT32 mthDoubleBufferSize ( CHAR **ppStr, INT32 &bufLen ) ;
 
+
+   INT32 mthCheckFieldName( const CHAR *pField, INT32 &dollarNum ) ;
+
+   BOOLEAN mthCheckUnknowDollar( const CHAR *pField,
+                                 std::vector<INT64> *dollarList ) ;
+
 }
 
 #endif //MTHCOMMON_HPP__

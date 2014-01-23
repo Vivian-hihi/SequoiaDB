@@ -78,21 +78,14 @@ namespace engine
    public :
       BSONElement _toModify ; // the element to modify
       ModType     _modType ;
-      CHAR       *_shortName ;
-      _ModifierElement ( const BSONElement &e, ModType type )
+      INT32       _dollarNum ;
+
+      _ModifierElement ( const BSONElement &e, ModType type,
+                         INT32 dollarNum = 0 )
       {
-         const CHAR *fn = e.fieldName() ;
          _toModify = e ;
          _modType = type ;
-         _shortName = (CHAR*)ossStrrchr( fn , '.' );
-         if ( _shortName )
-         {
-             _shortName++ ;
-         }
-         else
-         {
-             _shortName = (CHAR*)_toModify.fieldName() ;
-         }
+         _dollarNum = dollarNum ;
       }
    } ;
    typedef _ModifierElement ModifierElement ;
@@ -114,9 +107,7 @@ namespace engine
          return c >= '0' && c <= '9' ;
       }
 
-      INT32 _lexNumCmp ( const CHAR *s1, const CHAR *s2,
-                         BOOLEAN *s1HasUnknowDollar = NULL,
-                         BOOLEAN *s2HasUnknowDollar = NULL ) ;
+      INT32 _lexNumCmp ( const CHAR *s1, const CHAR *s2 ) ;
 
    public:
       _compareFieldNames1( vector<INT64> *dollarList = NULL )
@@ -136,9 +127,7 @@ namespace engine
 
       FieldCompareResult compField( const char* l, const char* r,
                                     UINT32 *pLeftPos = NULL,
-                                    UINT32 *pRightPos = NULL,
-                                    BOOLEAN *pLHasUnknowDollar = NULL,
-                                    BOOLEAN *pRHasUnknowDollar = NULL ) ;
+                                    UINT32 *pRightPos = NULL ) ;
 
    } ;
 
@@ -316,12 +305,28 @@ namespace engine
    } ;
    typedef _mthModifier mthModifier ;
 
+   /*
+      inline function
+   */
    inline void _mthModifier::_incModifierIndex( INT32 *modifierIndex )
    {
       ++(*modifierIndex) ;
       while ( *modifierIndex < (INT32)_modifierElements.size() )
       {
-         if ( SAME == _fieldCompare.compField (
+         if ( _dollarList->size() == 0 &&
+              _modifierElements[*modifierIndex]._dollarNum > 0 )
+         {
+            ++(*modifierIndex) ;
+            continue ;
+         }
+         else if ( !mthCheckUnknowDollar(
+            _modifierElements[*modifierIndex-1]._toModify.fieldName(),
+            _dollarList ) )
+         {
+            ++(*modifierIndex) ;
+            continue ;
+         }
+         else if ( *modifierIndex > 0 && SAME == _fieldCompare.compField (
               _modifierElements[*modifierIndex-1]._toModify.fieldName(),
               _modifierElements[*modifierIndex]._toModify.fieldName() ) )
          {

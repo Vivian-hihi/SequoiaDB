@@ -146,5 +146,100 @@ namespace engine
       goto done ;
    }
 
+   INT32 mthCheckFieldName( const CHAR *pField, INT32 &dollarNum )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pTmp = pField ;
+      const CHAR *pDot = NULL ;
+      INT32 number = 0 ;
+      dollarNum = 0 ;
+
+      while ( pTmp && *pTmp )
+      {
+         pDot = ossStrchr( pTmp, '.' ) ;
+
+         if ( '$' == *pTmp )
+         {
+            if ( pDot )
+            {
+               *(CHAR*)pDot = 0 ;
+            }
+            rc = ossStrToInt( pTmp + 1, &number ) ;
+            // Restore
+            if ( pDot )
+            {
+               *(CHAR*)pDot = '.' ;
+            }
+            if ( rc )
+            {
+               goto error ;
+            }
+            ++dollarNum ;
+         }
+         pTmp = pDot ? pDot + 1 : NULL ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   BOOLEAN mthCheckUnknowDollar( const CHAR *pField,
+                                 std::vector<INT64> *dollarList )
+   {
+      INT32 rc = SDB_OK ;
+      const CHAR *pTmp = pField ;
+      const CHAR *pDot = NULL ;
+      INT32 number = 0 ;
+      BOOLEAN hasUnknowDollar = FALSE ;
+
+      while ( pTmp && *pTmp )
+      {
+         pDot = ossStrchr( pTmp, '.' ) ;
+
+         if ( '$' == *pTmp )
+         {
+            if ( pDot )
+            {
+               *(CHAR*)pDot = 0 ;
+            }
+            rc = ossStrToInt( pTmp + 1, &number ) ;
+            // Restore
+            if ( pDot )
+            {
+               *(CHAR*)pDot = '.' ;
+            }
+            if ( rc )
+            {
+               goto error ;
+            }
+
+            if ( dollarList )
+            {
+               std::vector<INT64>::iterator it = dollarList->begin() ;
+               for ( ; it != dollarList->end() ; ++it )
+               {
+                  if ( number == (((*it)>>32)&0xFFFFFFFF) )
+                  {
+                     break ;
+                  }
+               }
+               if ( it == dollarList->end() )
+               {
+                  goto error ;
+               }
+            }
+         }
+         pTmp = pDot ? pDot + 1 : NULL ;
+      }
+
+   done:
+      return hasUnknowDollar ? FALSE : TRUE ;
+   error:
+      hasUnknowDollar = TRUE ;
+      goto done ;
+   }
+
 }
 

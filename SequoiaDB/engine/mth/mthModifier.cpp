@@ -99,53 +99,15 @@ namespace engine
    } while ( 0 )
 
    /*
-      Tool functions
-   */
-   static INT32 _mthCheckFieldName( const CHAR *pField )
-   {
-      INT32 rc = SDB_OK ;
-      const CHAR *pTmp = pField ;
-      const CHAR *pDot = NULL ;
-      INT32 number = 0 ;
-
-      while ( pTmp && *pTmp )
-      {
-         pDot = ossStrchr( pTmp, '.' ) ;
-
-         if ( '$' == *pTmp )
-         {
-            if ( pDot )
-            {
-               *(CHAR*)pDot = 0 ;
-            }
-            rc = ossStrToInt( pTmp + 1, &number ) ;
-            // Restore
-            if ( pDot )
-            {
-               *(CHAR*)pDot = '.' ;
-            }
-            if ( rc )
-            {
-               goto error ;
-            }
-         }
-         pTmp = pDot ? pDot + 1 : NULL ;
-      }
-
-   done:
-      return rc ;
-   error:
-      goto done ;
-   }
-
-   /*
       _mthModifier implement
    */
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF__ADDMDF, "_mthModifier::_addModifier" )
    INT32 _mthModifier::_addModifier ( const BSONElement &ele, ModType type )
    {
       INT32 rc = SDB_OK ;
+      INT32 dollarNum = 0 ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__ADDMDF );
+
       if ( RENAME == type && ( ele.type() != String ||
            ossStrchr ( ele.valuestr(), '.' ) != NULL ||
            ossStrncmp ( ele.valuestr(), "$", 1 ) == 0 ) )
@@ -201,13 +163,13 @@ namespace engine
       }
 
       {
-         rc = _mthCheckFieldName ( ele.fieldName() ) ;
+         rc = mthCheckFieldName ( ele.fieldName(), dollarNum ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Faild field name : %s", ele.fieldName() ) ;
             goto error ;
          }
-         ModifierElement me( ele, type ) ;
+         ModifierElement me( ele, type, dollarNum ) ;
          _modifierElements.push_back( me ) ;
       }
 
@@ -1157,9 +1119,7 @@ namespace engine
    }
 
    INT32 _compareFieldNames1::_lexNumCmp ( const CHAR *s1,
-                                           const CHAR *s2,
-                                           BOOLEAN *s1HasUnknowDollar,
-                                           BOOLEAN *s2HasUnknowDollar )
+                                           const CHAR *s2 )
    {
       BOOLEAN p1 = FALSE ;
       BOOLEAN p2 = FALSE ;
@@ -1175,15 +1135,6 @@ namespace engine
 
       CHAR t1[MTH_DOLLAR_FIELD_SIZE+1] = {0} ;
       CHAR t2[MTH_DOLLAR_FIELD_SIZE+1] = {0} ;
-
-      if ( s1HasUnknowDollar )
-      {
-         *s1HasUnknowDollar = FALSE ;
-      }
-      if ( s2HasUnknowDollar )
-      {
-         *s2HasUnknowDollar = FALSE ;
-      }
 
       if ( _dollarList && *s1 && '$' == *s1 )
       {
@@ -1204,10 +1155,6 @@ namespace engine
                   s1 = t1 ;
                   break ;
                }
-            }
-            if ( s1HasUnknowDollar && s1 != t1 )
-            {
-               *s1HasUnknowDollar = TRUE ;
             }
          }
       }
@@ -1231,10 +1178,6 @@ namespace engine
                   s2 = t2 ;
                   break ;
                }
-            }
-            if ( s2HasUnknowDollar && s1 != t2 )
-            {
-               *s2HasUnknowDollar = TRUE ;
             }
          }
       }
@@ -1341,9 +1284,7 @@ namespace engine
    FieldCompareResult _compareFieldNames1::compField ( const CHAR* l,
                                                        const CHAR* r,
                                                        UINT32 *pLeftPos,
-                                                       UINT32 *pRightPos,
-                                                       BOOLEAN *pLHasUnknowDollar,
-                                                       BOOLEAN *pRHasUnknowDollar )
+                                                       UINT32 *pRightPos )
    {
       const CHAR *pLTmp = l ;
       const CHAR *pRTmp = r ;
@@ -1373,8 +1314,7 @@ namespace engine
          {
             *(CHAR*)pRDot = 0 ;
          }
-         result = _lexNumCmp( pLTmp, pRTmp, pLHasUnknowDollar,
-                              pRHasUnknowDollar ) ;
+         result = _lexNumCmp( pLTmp, pRTmp ) ;
          // Restore
          if ( pLDot )
          {
@@ -1866,7 +1806,6 @@ namespace engine
       BSONElement e = es.next() ;
       // previous element is set to empty
       BSONElement prevE ;
-      BOOLEAN hasUnknowDollar = FALSE ;
       UINT32 compareLeftPos = 0 ;
       INT32 newRootLen = rootLen ;
 
@@ -1905,13 +1844,7 @@ namespace engine
                *ppRoot ) ;*/
          FieldCompareResult cmp = _fieldCompare.compField (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
-               *ppRoot, &compareLeftPos, NULL, &hasUnknowDollar, NULL ) ;
-
-         if ( hasUnknowDollar )
-         {
-            _incModifierIndex( modifierIndex ) ;
-            continue ;
-         }
+               *ppRoot, &compareLeftPos, NULL ) ;
 
          // compare the full path
          // we have few situations need to handle
@@ -2142,13 +2075,7 @@ namespace engine
                *ppRoot ) ;*/
          FieldCompareResult cmp = _fieldCompare.compField (
                _modifierElements[(*modifierIndex)]._toModify.fieldName(),
-               *ppRoot, &compareLeftPos, NULL, &hasUnknowDollar, NULL ) ;
-
-         if ( hasUnknowDollar )
-         {
-            _incModifierIndex( modifierIndex ) ;
-            continue ;
-         }
+               *ppRoot, &compareLeftPos, NULL ) ;
          if ( LEFT_SUBFIELD == cmp )
          {
             rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
@@ -2190,6 +2117,9 @@ namespace engine
                  "call 'loadPattern' before using it" ) ;
       SDB_ASSERT(target.isEmpty(), "target should be empty") ;
 
+      CHAR *pBuffer = NULL ;
+      INT32 bufferSize = 0 ;
+
       if ( _dollarList && _dollarList->size() > 0 )
       {
          modifierSort() ;
@@ -2205,16 +2135,18 @@ namespace engine
       // {$inc: {employee.salary, 100}, $set: {employee.status, "promoted"}},
       // then we have 2 modifier ($inc and $set), so modifierIndex start from 0
       // and should end at 1
-      SINT32 modifierIndex = 0 ;
 
-      CHAR *pBuffer = (CHAR*)SDB_OSS_MALLOC ( SDB_PAGE_SIZE ) ;
-      INT32 bufferSize = SDB_PAGE_SIZE ;
+      SINT32 modifierIndex = -1 ;
+      _incModifierIndex( &modifierIndex ) ;
+
+      pBuffer = (CHAR*)SDB_OSS_MALLOC ( SDB_PAGE_SIZE ) ;
       if ( !pBuffer )
       {
          PD_LOG ( PDERROR, "Failed to allocate buffer for select" ) ;
          rc = SDB_OOM ;
          goto error ;
       }
+      bufferSize = SDB_PAGE_SIZE ;
       pBuffer[0] = '\0' ;
 
       if ( srcChange )
