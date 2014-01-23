@@ -35,6 +35,7 @@
 #define MTHCOMMON_HPP__
 
 #include "core.hpp"
+#include <vector>
 
 namespace engine
 {
