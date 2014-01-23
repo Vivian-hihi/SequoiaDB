@@ -78,7 +78,7 @@
           <strow>
             <stentry><xref href="group_by.dita">group by</xref></stentry>
             <stentry>分组</stentry>
-            <stentry>db.exec("select dept_no，<xref href="sqcount.dita"><i>count</i></xref>(emp_no) as
+            <stentry>db.exec("select dept_no,<xref href="sqcount.dita"><i>count</i></xref>(emp_no) as
               员工总数 from foo.bar group by dept_no ")</stentry>
           </strow>
           <strow>
@@ -94,12 +94,12 @@
           <strow>
             <stentry><xref href="sqlimit.dita">limit</xref></stentry>
             <stentry>限制返回记录数</stentry>
-            <stentry>db.exec("select * from foo.bar limit(5)")</stentry>
+            <stentry>db.exec("select * from foo.bar limit 5")</stentry>
           </strow>
           <strow>
             <stentry><xref href="offset.dita">offset</xref></stentry>
             <stentry>跳过记录数</stentry>
-            <stentry>db.exec("select * from foo.bar offset(5)")</stentry>
+            <stentry>db.exec("select * from foo.bar offset 5")</stentry>
           </strow>
           <strow>
             <stentry><xref href="as.dita">as</xref></stentry>

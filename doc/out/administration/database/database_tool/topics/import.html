@@ -201,7 +201,7 @@
 
     <div class="section"><h2 class="title sectiontitle">sdbload</h2>
       
-      <p class="p">sdbload是一个SequoiaDB另一个数据库批量导入工具，它可以实现从JSON格式的数据存储文件快速导入到SequoiaDB数据库。</p>
+      <p class="p">sdbload是一个SequoiaDB数据库批量导入工具，它可以实现从JSON和CSV格式的数据存储文件快速导入到SequoiaDB数据库。</p>
 
       <p class="p">JSON格式的记录必须符合Json的定义，以左右花括号作为记录的分界符，并且字符串类型的数据必须包含在两个双引号之间，转义字符定义为反斜杠。</p>
 
@@ -266,6 +266,13 @@
           </td>
 
           <td valign="top" headers="d14737e261" class="stentry">指定导入数据的的集合名。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14737e258" class="stentry">--insertnum,-n
+          </td>
+
+          <td valign="top" headers="d14737e261" class="stentry">指定每一批导入的记录数。默认是100。</td>
 
         </tr>
 <tr class="strow">
@@ -343,6 +350,13 @@
           </td>
 
           <td valign="top" headers="d14737e261" class="stentry">指定导入数据时，自动添加值，默认false，csv格式有效。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d14737e258" class="stentry">--linepriority
+          </td>
+
+          <td valign="top" headers="d14737e261" class="stentry">当前分隔符默认的优先级为：记录分隔符，字符分隔符，字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符，记录分隔符，字段分隔符。</td>
 
         </tr>
 </table>

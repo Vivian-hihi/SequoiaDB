@@ -27,10 +27,10 @@
         <strow>
           <stentry>con</stentry>
           <stentry>json对象</stentry>
-          <stentry>选择条件，只返回符合con字段值的记录，为null时，返回所有。</stentry>
+          <stentry>选择条件，只返回con字段指定的节点或分区组的快照信息，为null时，返回整个集群的快照信息。</stentry>
           <stentry>否</stentry>
         </strow>
-        <strow>
+        <!--<strow>
           <stentry>sel</stentry>
           <stentry>json对象</stentry>
           <stentry>选择返回字段名。为null时，返回所有的字段名。</stentry>
@@ -41,14 +41,13 @@
           <stentry>json对象</stentry>
           <stentry>对返回的记录按选定的字段排序。1为升序；-1为降序。</stentry>
           <stentry>否</stentry>
-        </strow>
+        </strow>-->
       </simpletable>
       
     </section>
     <section><title>格式</title>
-      <p>snapshot()方法定义格式有listType、con、sel、sort四个字段，listType为枚举类型，其他全部为json对象，格式如下：</p>
-      <codeblock>{"snapType":"&lt;快照类型>",["con":"{"字段名1":{"操作符1":"值1"},"字段名2":{"操作符2":"值2"}...}"],
-["sel":"{"字段名1":"","字段名2":"",...}"],["sort":"{Order:-1|1}"]}</codeblock>
+      <p>snapshot()方法定义格式有listType、con两个字段，listType为枚举类型，con为json对象，格式如下：</p>
+      <codeblock>{"snapType":"&lt;快照类型>",["con":"{"字段名1":{"操作符1":"值1"},"字段名2":{"操作符2":"值2"}...}"]}</codeblock>
       <note>
         <ul>
           <li>snapType字段的值为0到7</li>
@@ -61,34 +60,98 @@
       <ul>
         <li>
           <p>指定snapType的值为0：<codeblock>db.snapshot(0)</codeblock></p>
-          <p> 返回上下文快照：</p>
+          <p> 返回整个集群的上下文快照：</p>
           <codeblock>{
-        "SessionID": 3,
-        "Contexts": [ 
-         {
-           "ContextID": 1, 
-           "DataRead": 0, 
-           "IndexRead": 0, 
-           "QueryTimeSpent": 0, 
-           "StartTimestamp": "2013-04-08-17.17.02.135620" 
-         }
-        ]
-      } 
-      </codeblock>
+  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "Contexts": [
+    {
+      "ContextID": 8,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.07.59.146399"
+    }
+  ]
+}
+{
+  "SessionID": "vmsvr1-cent-x64-1:52000:22",
+  "Contexts": [
+    {
+      "ContextID": 6,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.07.59.147576"
+    }
+  ]
+}
+{
+  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "Contexts": [
+    {
+      "ContextID": 7,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.07.59.148603"
+    }
+  ]
+}</codeblock>
         </li>
-        <li><p>
-            <codeblock>db.snapshot(0,{"Contexts.0.ContextID":{$gte:0}},{SessiomID:"","Contexts.0.StartTimestamp":""},{SessionID：1})</codeblock>
-          </p>
-          <p>返回符合条件Contexts.0.ContextID等于0记录（用“.”操作符引用数组记录），并且每条记录只返回SessiomID和Contexts.StartTimestamp这两个字段，记录按SessionID升序排序：</p>
-          <codeblock>{ 
-        "Contexts": [ 
-         {
-           "StartTimestamp": "2013-04-09-09.31.03.270965" 
-         } 
-        ],
-        "SessionID": 5 
-      } </codeblock></li>
-
+        <li><p>通过组名或组ID查询某个分区组的快照信息，如：</p>
+          <p><codeblock>db.snapshot(0,{GroupName:'data1'})</codeblock>返回组名为“data1”的分区组快照信息
+          <codeblock>db.snapshot(0,{GroupID:1000})</codeblock>返回组ID为“1000”的分区组快照信息</p>
+          <codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "Contexts": [
+    {
+      "ContextID": 11,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+    }
+  ]
+}
+{
+  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "Contexts": [
+    {
+      "ContextID": 10,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.865103"
+    }
+  ]
+}</codeblock></li>
+        <li><p>通过“组名+主机名+服务名”或“组ID+节点ID”查询某个节点的快照信息，如：</p>
+          <p><codeblock>db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</codeblock>
+            <codeblock>db.snapshot(0,{GroupID:1000,NodeID:1001})</codeblock></p>
+          <codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "Contexts": [
+    {
+      "ContextID": 11,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+    }
+  ]
+}</codeblock></li>
       </ul>
     </section>
   </body>

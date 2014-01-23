@@ -80,7 +80,7 @@
           <strow>
             <stentry><xref href="group_by_en.dita">group by</xref></stentry>
             <stentry>group</stentry>
-            <stentry>db.exec("select dept_no，<xref href="sqcount_en.dita"><i>count</i></xref>(emp_no) as
+            <stentry>db.exec("select dept_no,<xref href="sqcount_en.dita"><i>count</i></xref>(emp_no) as
               Number of employees from foo.bar group by dept_no ")</stentry>
           </strow>
           <strow>
@@ -96,12 +96,12 @@
           <strow>
             <stentry><xref href="sqlimit_en.dita">limit</xref></stentry>
             <stentry>limit the number of return records</stentry>
-            <stentry>db.exec("select * from foo.bar limit(5)")</stentry>
+            <stentry>db.exec("select * from foo.bar limit 5")</stentry>
           </strow>
           <strow>
             <stentry><xref href="offset_en.dita">offset</xref></stentry>
             <stentry>set the number of records skipped</stentry>
-            <stentry>db.exec("select * from foo.bar offset(5)")</stentry>
+            <stentry>db.exec("select * from foo.bar offset 5")</stentry>
           </strow>
           <strow>
             <stentry><xref href="as_en.dita">as</xref></stentry>
