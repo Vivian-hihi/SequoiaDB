@@ -298,7 +298,7 @@ namespace engine
          }
       }
 
-      if ( 0 != in.woCompare( me, false ) )
+      if ( 0 != in.woCompare( me._toModify, false ) )
       {
          ADD_CHG_ELEMENT_AS ( _srcChgBuilder, in, pRoot, "$set" ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me._toModify, pRoot, "$set" ) ;
