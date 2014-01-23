@@ -115,6 +115,7 @@ SdbQuery.prototype.help = function() {
    println("   current()");
    //println("   deleteCurrent()");
    println("   next()");
+   println("   close()");
    //println("   updateCurrent(<rule>)");
    println("find() methods:");
    println("   count() - # of records matching query, ignores skip, limit");

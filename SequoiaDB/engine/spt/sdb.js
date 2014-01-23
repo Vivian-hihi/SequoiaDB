@@ -242,6 +242,12 @@ SdbQuery.prototype.current = function() {
    this._exec();
    return this._cursor.current();
 }
+
+SdbQuery.prototype.close = function() {
+   this._exec();
+   return this._cursor.close();
+}
+
 /*
 SdbQuery.prototype.updateCurrent = function ( rule ) {
    this._exec();

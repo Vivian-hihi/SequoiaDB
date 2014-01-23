@@ -703,9 +703,40 @@ error :
    goto done ;
 }
 */
+
+PD_TRACE_DECLARE_FUNCTION ( SDB_CURSOR_CLOSE, "cursor_close" )
+static JSBool cursor_close ( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_CURSOR_CLOSE );
+   sdbCursorHandle * cursor   = NULL ;
+   JSBool            ret      = JS_TRUE ;
+   INT32             rc       = SDB_OK ;
+
+   cursor = (sdbCursorHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   if ( ! cursor )
+   {
+      JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+      goto error ;
+   }
+
+   rc = sdbCloseCursor( *cursor ) ;
+   REPORT_RC ( SDB_OK == rc, "SdbCursor.close()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done :
+   PD_TRACE_EXIT ( SDB_CURSOR_CLOSE );
+   return ret ;
+error :
+   ret = JS_FALSE ;
+   TRY_REPORT ( cx , "SdbCursor.close(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec cursor_functions[] = {
-   JS_FS ( "next" , cursor_next , 0 , 0 ) ,
-   JS_FS ( "current" , cursor_current , 0 , 0 ) ,
+   JS_FS ( "next", cursor_next, 0, 0 ),
+   JS_FS ( "current", cursor_current, 0, 0 ),
+   JS_FS ( "close", cursor_close, 0, 0 ),
 //   JS_FS ( "updateCurrent" , cursor_update_current , 1 , 0 ) ,
 //   JS_FS ( "deleteCurrent" , cursor_delete_current , 0 , 0 ) ,
    JS_FS_END
