@@ -148,7 +148,7 @@ namespace engine
    /*
       inline function
    */
-   inline void _mthSelector::_incModifierIndex( INT32 *selectorIndex )
+   inline void _mthSelector::_incSelectorIndex( INT32 *selectorIndex )
    {
       ++selectorIndex ;
    }

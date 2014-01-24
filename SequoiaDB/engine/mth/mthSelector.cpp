@@ -113,7 +113,7 @@ namespace engine
       b.appendAs ( me._toSelect, pFieldName ) ;
 
       // here we actually consume selector, then we add index
-      _incModifierIndex( selectorIndex ) ;
+      _incSelectorIndex( selectorIndex ) ;
 
       PD_TRACE_EXIT ( SDB__MTHSEL__APPNEW );
       return SDB_OK ;
@@ -444,7 +444,7 @@ namespace engine
             // e is the current element, b is the current builder, selectorIndex
             // is the current selector
             b.append( e ) ;
-            _incModifierIndex( selectorIndex ) ;
+            _incSelectorIndex( selectorIndex ) ;
             break ;
 
          case RIGHT_BEFORE:
