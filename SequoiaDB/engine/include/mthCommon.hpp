@@ -39,7 +39,6 @@
 
 namespace engine
 {
-   #define MTH_TEMPSTRBUFLEN     (128)
 
    INT32 mthAppendString ( CHAR **ppStr, INT32 &bufLen,
                            INT32 strLen, const CHAR *newStr,

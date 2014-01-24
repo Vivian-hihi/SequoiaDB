@@ -44,12 +44,12 @@ using namespace bson ;
 using namespace std ;
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__ADDSEL, "_mthSelector::_addSelector" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__ADDSEL, "_mthSelector::_addSelector" )
    INT32 _mthSelector::_addSelector ( const BSONElement &ele )
    {
       PD_TRACE_ENTRY ( SDB__MTHSEL__ADDSEL );
-      SelectorElement me(ele) ;
-      _selectorElements.push_back(me) ;
+      SelectorElement me( ele ) ;
+      _selectorElements.push_back( me ) ;
       PD_TRACE_EXIT ( SDB__MTHSEL__ADDSEL );
       return SDB_OK ;
    }
@@ -62,7 +62,7 @@ namespace engine
       return ((result == RIGHT_SUBFIELD) || (result == LEFT_BEFORE)) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL_LDPATTERN, "_mthSelector::loadPattern" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL_LDPATTERN, "_mthSelector::loadPattern" )
    INT32 _mthSelector::loadPattern ( const BSONObj &selectorPattern )
    {
       INT32 rc = SDB_OK ;
@@ -72,19 +72,21 @@ namespace engine
       INT32 eleNum = 0 ;
       while ( i.more() )
       {
-         rc = _addSelector(i.next() ) ;
+         rc = _addSelector( i.next() ) ;
          if ( rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to parse match pattern %d", eleNum ) ;
+            PD_LOG ( PDERROR, "Failed to parse match pattern[%s, pos: %d], "
+                     "rc: %d", selectorPattern.toString().c_str(), eleNum,
+                     rc ) ;
             goto error ;
          }
          eleNum ++ ;
       }
-      std::sort(_selectorElements.begin(), _selectorElements.end(),
-                _selectorElementsSort) ;
+      std::sort( _selectorElements.begin(), _selectorElements.end(),
+                 _selectorElementsSort ) ;
 
       _initialized = TRUE ;
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHSEL_LDPATTERN, rc );
       return rc ;
@@ -95,21 +97,24 @@ namespace engine
    BOOLEAN _mthSelector::_dupFieldName ( const BSONElement &l,
                                          const BSONElement &r )
    {
-      return !l.eoo() && !r.eoo() && (r.rawdata() != r.rawdata()) &&
+      return !l.eoo() && !r.eoo() && (l.rawdata() != r.rawdata()) &&
         ossStrncmp(l.fieldName(),r.fieldName(),ossStrlen(r.fieldName()))==0 ;
    }
 
    // when requested update want to change something that not exist in original
    // object, we need to append the original object in those cases
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__APPNEW, "_mthSelector::_appendNew" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__APPNEW, "_mthSelector::_appendNew" )
    template<class Builder>
-   INT32 _mthSelector::_appendNew ( Builder& b, SINT32 *selectorIndex )
+   INT32 _mthSelector::_appendNew ( const CHAR *pFieldName, Builder& b,
+                                    SINT32 *selectorIndex )
    {
       PD_TRACE_ENTRY ( SDB__MTHSEL__APPNEW );
       SelectorElement me = _selectorElements[(*selectorIndex)] ;
-      b.appendAs ( me._toSelect, me._shortName) ;
+      b.appendAs ( me._toSelect, pFieldName ) ;
+
       // here we actually consume selector, then we add index
-      (*selectorIndex)++ ;
+      _incModifierIndex( selectorIndex ) ;
+
       PD_TRACE_EXIT ( SDB__MTHSEL__APPNEW );
       return SDB_OK ;
    }
@@ -120,18 +125,19 @@ namespace engine
    // b is the builder, onedownseen represent the all subobjects have been
    // processed in the current object, and selectorIndex is the pointer for
    // current selector
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__APPNEWFRMMODS, "_mthSelector::_appendNewFromMods" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__APPNEWFRMMODS, "_mthSelector::_appendNewFromMods" )
    template<class Builder>
    INT32 _mthSelector::_appendNewFromMods ( CHAR **ppRoot,
                                             INT32 &rootBufLen,
+                                            INT32 rootLen,
                                             Builder &b,
-                                            set<string>& onedownseen,
                                             SINT32 *selectorIndex)
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHSEL__APPNEWFRMMODS );
       SelectorElement me = _selectorElements[(*selectorIndex)] ;
-      INT32 rootLen = ossStrlen ( *ppRoot ) ;
+      INT32 newRootLen = rootLen ;
+
       // if the selected request does not exist in original one
       // first let's see if there's nested object in the request
       // ex. current root is user.name
@@ -141,12 +147,28 @@ namespace engine
       // note fieldName is the FULL path "user.name.first.origin"
       // root is user.name.
       const CHAR *fieldName = me._toSelect.fieldName() ;
-
       // now temp is "first.origin"
-      const CHAR *temp = fieldName+rootLen ;
-
+      const CHAR *temp = fieldName + rootLen ;
       // find the "." starting from root length
       const CHAR *dot = ossStrchr ( temp,'.') ;
+
+      if ( dot )
+      {
+         *(CHAR*)dot = 0 ;
+      }
+      const CHAR *pCurField = *ppRoot + newRootLen ;
+      rc = mthAppendString( ppRoot, rootBufLen, newRootLen, temp, -1,
+                            &newRootLen ) ;
+      // Restore
+      if ( dot )
+      {
+         *(CHAR*)dot = '.' ;
+      }
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to append string, rc: %d", rc ) ;
+         goto error ;
+      }
 
       // given example
       // user.name.first.origin
@@ -157,78 +179,32 @@ namespace engine
       // if there is sub object
       if ( dot )
       {
-         // nr = "user.name.first."
-         //const string nr ( fieldName, 0, 1+(dot-fieldName)) ;
-         // nf = first
-         const string nf ( temp, 0, dot-temp ) ;
+         // create object builder for nf ("first" field)
+         BSONObjBuilder bb ( b.subobjStart( pCurField ) ) ;
+         // create a es for empty object
+         const BSONObj obj ;
+         BSONObjIteratorSorted es(obj);
 
-         // we already added, let's return SDB_OK, this may happen when user
-         // provided two fields with same name, it's a duplicate and we should
-         // ignore
-         //if ( onedownseen.count(nf))
-         //   goto done ;
-
-         // make sure we mark this one has been processed
-         //onedownseen.insert(nf);
+         // append '.'
+         rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
+                                &newRootLen ) ;
+         if ( rc )
          {
-            // create object builder for nf ("first" field)
-            BSONObjBuilder bb ( b.subobjStart(nf)) ;
-            // create a es for empty object
-            const BSONObj obj ;
-            BSONObjIteratorSorted es(obj);
-            // preallocate 128 bytes
-            CHAR tempBuffer [ MTH_TEMPSTRBUFLEN ] ;
-            CHAR *pOldRoot = &tempBuffer[0] ;
-            // if root len is greater than stack, we have to malloc, otherwise
-            // use preallocated memory
-            if ( rootLen >= MTH_TEMPSTRBUFLEN )
-               pOldRoot = ossStrdup ( *ppRoot ) ;
-            else
-               ossStrcpy ( pOldRoot, *ppRoot ) ;
-            if ( !pOldRoot )
-            {
-               PD_LOG ( PDERROR, "Failed to duplicate root string" ) ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            // copy nr to root, first we set root to empty string, then "append"
-            // nr to it, that means we replace root with nr.
-            // note we already called ossStrdup to copy root to pOldRoot, so we
-            // should be safe here
-            (*ppRoot)[0] = '\0' ;
-            rc = mthAppendString ( ppRoot, rootBufLen,
-                                   0, fieldName,
-                                   1+(dot-fieldName) ) ;
-            // it may possible nr is larger than root so we need to realloc
-            // memory
-            if ( rc )
-            {
-               // revert root to original value
-               // strcpy is safe here since the memory was for root
-               ossStrcpy ( *ppRoot, pOldRoot ) ;
-               if ( pOldRoot != &tempBuffer[0] )
-                  SDB_OSS_FREE ( pOldRoot ) ;
-               PD_LOG ( PDERROR, "Failed to append string, rc = %d", rc ) ;
-               goto error ;
-            }
+            PD_LOG ( PDERROR, "Failed to append string, rc: %d", rc ) ;
+            goto error ;
+         }
 
-            // create an object for path "user.name.first."
-            // bb is the new builder, es is iterator
-            // selectorIndex is the index
-            // note now root is nr.c_str() instead of original root
-            rc = _buildNewObj ( ppRoot, rootBufLen, bb, es, selectorIndex ) ;
-            // strcpy is safe here because the memory should not be less than
-            // original
-            ossStrcpy ( *ppRoot, pOldRoot ) ;
-            if ( pOldRoot != &tempBuffer[0] )
-               SDB_OSS_FREE ( pOldRoot ) ;
-            if ( rc )
-            {
-               pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                       "Failed to build new object for %s",
-                       me._toSelect.toString().c_str() ) ;
-               goto error ;
-            }
+         // create an object for path "user.name.first."
+         // bb is the new builder, es is iterator
+         // selectorIndex is the index
+         // note now root is nr.c_str() instead of original root
+         rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen, bb, es,
+                             selectorIndex ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to build new object for %s, rc: %d",
+                     me._toSelect.toString().c_str(), rc ) ;
+            goto error ;
          }
       }
       // if we can't find ".", then we are not embedded BSON, let's just
@@ -241,25 +217,23 @@ namespace engine
          // call _appendNew to append selected element into the current builder
          try
          {
-            rc = _appendNew ( b, selectorIndex ) ;
+            rc = _appendNew ( pCurField, b, selectorIndex ) ;
          }
          catch( std::exception &e )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to append for %s: %s",
-                    me._toSelect.toString().c_str(),
-                    e.what() );
+            PD_LOG ( PDERROR, "Failed to append for %s: %s",
+                     me._toSelect.toString().c_str(), e.what() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          if ( rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to append for %s",
-                    me._toSelect.toString().c_str());
+            PD_LOG ( PDERROR, "Failed to append for %s, rc: %d",
+                     me._toSelect.toString().c_str(), rc ) ;
             goto error ;
          }
       }
+
    done :
       PD_TRACE_EXITRC ( SDB__MTHSEL__APPNEWFRMMODS, rc );
       return rc ;
@@ -271,10 +245,11 @@ namespace engine
    // This function is recursively called to build new object
    // The prerequisit is that _selectorElement is sorted, which supposed to
    // happen at end of loadPattern
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__BLDNEWOBJ, "_mthSelector::_buildNewObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL__BLDNEWOBJ, "_mthSelector::_buildNewObj" )
    template<class Builder>
    INT32 _mthSelector::_buildNewObj ( CHAR **ppRoot,
                                       INT32 &rootBufLen,
+                                      INT32 rootLen,
                                       Builder &b,
                                       BSONObjIteratorSorted &es,
                                       SINT32 *selectorIndex )
@@ -285,23 +260,15 @@ namespace engine
       BSONElement e = es.next() ;
       // previous element is set to empty
       BSONElement prevE ;
-      // current root length
-      UINT32 rootLen = ossStrlen ( *ppRoot ) ;
-      // size of selector
-      INT32 selectorElementSize = (SINT32)_selectorElements.size() ;
-
-      // in the current scope, which subobject have we seen?
-      set<string> onedownseen ;
+      INT32 newRootLen = rootLen ;
 
       // loop until we hit end of original object, or end of selector list
-      while( !e.eoo() && (*selectorIndex) < selectorElementSize )
+      while( !e.eoo() && (*selectorIndex) < (SINT32)_selectorElements.size() )
       {
          // if we get two elements with same field name, we don't need to
-         // continue checking, simply append it to the builder
-         // for array type
-         if ( _dupFieldName(prevE, e))
+         // continue checking, simply ignore
+         if ( _dupFieldName( prevE, e ) )
          {
-            b.append(e) ;
             prevE = e ;
             e = es.next() ;
             continue ;
@@ -310,32 +277,20 @@ namespace engine
 
          // every time we build the current field, let's set root to original
          (*ppRoot)[rootLen] = '\0' ;
+         newRootLen = rootLen ;
 
          // construct the full path of the current field name
          // say current root is "user.employee.", and this object contains
          // "name, age" fields, then first loop we get user.employee.name
          // second round get user.employee.age
-         INT32 fieldNameLen = ossStrlen ( e.fieldName() ) ;
-         // fieldNameLen + 1 is for additional "." later
-         // since fieldName() is always endup with '\0', so +1 should be safe
-         rc = mthAppendString ( ppRoot, rootBufLen,
-                                rootLen, e.fieldName(),
-                                fieldNameLen + 1 ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc = %d", rc ) ;
+         rc = mthAppendString ( ppRoot, rootBufLen, newRootLen,
+                                e.fieldName(), -1, &newRootLen ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc: %d", rc ) ;
 
          // compare the full field name with requested update field
          FieldCompareResult cmp = compareDottedFieldNames (
                _selectorElements[(*selectorIndex)]._toSelect.fieldName(),
                *ppRoot ) ;
-         // append "." at the end
-         (*ppRoot)[rootLen+fieldNameLen] = '.' ;
-         (*ppRoot)[rootLen+fieldNameLen+1] = '\0' ;
-         /*
-         // add "." at end
-         rc = mthAppendString ( ppRoot, rootBufLen,
-                                0, ".",
-                                1 ) ;
-         PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc = %d", rc ) ;*/
 
          // compare the full path
          // we have few situations need to handle
@@ -374,83 +329,86 @@ namespace engine
             // subfield
             if ( e.type() != Object && e.type() != Array )
             {
-               PD_LOG ( PDDEBUG, "not object or array: %s", e.toString().c_str()) ;
-               e=es.next() ;
-               (*selectorIndex)++ ;
-               continue ;
-            }
-            // have we processed this field before?
-            // if we haven't processed it before, let's do it
-            // otherwise we may have a dup somewhere so let's ignore and report
-            // warning
-            //if ( onedownseen.count(e.fieldName())==0 )
-            {
-               // insert into list
-               //onedownseen.insert(e.fieldName()) ;
-               // if we are dealing with object, then let's create a new object
-               // builder starting from our current fieldName
-               if ( e.type() == Object )
+               PD_LOG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                        "not object or array: %s",
+                        e.toString().c_str() ) ;
+               if ( _ignoreTypeError )
                {
-                  BSONObjBuilder bb(b.subobjStart(e.fieldName()));
-                  // get the object for the current element, and create sorted
-                  // iterator on it
-                  BSONObjIteratorSorted bis(e.Obj());
-
-                  // add fieldname into path and recursively call _buildNewObj
-                  // to create embedded object
-                  // root is original root + current field + .
-                  // bb is new object builder
-                  // bis is the sorted iterator
-                  // selectorIndex is the current selector we are working on
-                  rc = _buildNewObj ( ppRoot, rootBufLen, bb, bis,
-                                      selectorIndex ) ;
-                  if ( rc )
-                  {
-                     PD_LOG ( PDERROR,
-                              "Failed to build object: %s",
-                              e.toString().c_str());
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
-                  }
-                  // call bb.done() to close the builder
-                  bb.done() ;
+                  e = es.next() ;
+                  prevE = e ; // ignore _dupFieldName check
+                  continue ;
                }
                else
                {
-                  // if it's not object, then we must have array
-                  // now let's create BSONArrayBuilder
-                  BSONArrayBuilder ba(b.subarrayStart(e.fieldName()));
-                  //BSONArrayIteratorSorted bis(BSONArray(e.embeddedObject()));
-                  BSONObjIteratorSorted bis(e.embeddedObject());
-                  // add fieldname into path and recursively call _buildNewObj
-                  // to create embedded object
-                  // root is original root + current field + .
-                  // ba is new array builder
-                  // bis is the sorted iterator
-                  // selectorIndex is the current selector we are working on
-                  rc = _buildNewObj ( ppRoot, rootBufLen, ba, bis,
-                                      selectorIndex ) ;
-                  if ( rc )
-                  {
-                     PD_LOG ( PDERROR,
-                              "Failed to build array: %s",
-                              e.toString().c_str());
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
-                  }
-                  ba.done();
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
                }
-               // process to the next element
-               e = es.next() ;
-               // note we shouldn't touch selectorIndex here, we should only
-               // change it at the place actually consuming it
             }
-            /*else
+
+            // add "." at end
+            rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
+                                   &newRootLen ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc: %d", rc ) ;
+
+            // insert into list
+            //onedownseen.insert(e.fieldName()) ;
+            // if we are dealing with object, then let's create a new object
+            // builder starting from our current fieldName
+            if ( e.type() == Object )
             {
-               PD_LOG ( PDWARNING,
-                        "dup detected for %s", e.fieldName());
-            }*/
-            break ;
+               BSONObjBuilder bb(b.subobjStart(e.fieldName()));
+               // get the object for the current element, and create sorted
+               // iterator on it
+               BSONObjIteratorSorted bis(e.Obj());
+
+               // add fieldname into path and recursively call _buildNewObj
+               // to create embedded object
+               // root is original root + current field + .
+               // bb is new object builder
+               // bis is the sorted iterator
+               // selectorIndex is the current selector we are working on
+               rc = _buildNewObj ( ppRoot, rootBufLen, bb, newRootLen, bis,
+                                   selectorIndex ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to build object: %s, rc: %d",
+                           e.toString().c_str(), rc ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               // call bb.done() to close the builder
+               bb.done() ;
+            }
+            else
+            {
+               // if it's not object, then we must have array
+               // now let's create BSONArrayBuilder
+               BSONArrayBuilder ba(b.subarrayStart(e.fieldName()));
+               //BSONArrayIteratorSorted bis(BSONArray(e.embeddedObject()));
+               BSONObjIteratorSorted bis(e.embeddedObject());
+               // add fieldname into path and recursively call _buildNewObj
+               // to create embedded object
+               // root is original root + current field + .
+               // ba is new array builder
+               // bis is the sorted iterator
+               // selectorIndex is the current selector we are working on
+               rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen, ba, bis,
+                                   selectorIndex ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to build array: %s, rc: %d",
+                           e.toString().c_str(), rc );
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               ba.done();
+            }
+            // process to the next element
+            e = es.next() ;
+            // note we shouldn't touch selectorIndex here, we should only
+            // change it at the place actually consuming it
+         break ;
+
          case LEFT_BEFORE:
             // if the selector request does not exist in original one
             // first let's see if there's nested object in the request
@@ -465,12 +423,12 @@ namespace engine
 
             // first let's revert root to original
             (*ppRoot)[rootLen] = '\0' ;
-            rc = _appendNewFromMods ( ppRoot, rootBufLen,
-                                      b, onedownseen, selectorIndex) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to append for %s",
+            newRootLen = rootLen ;
+            rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
+                                      b, selectorIndex) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to append for %s, rc: %d",
                           _selectorElements[(*selectorIndex)
-                                           ]._toSelect.toString().c_str());
+                          ]._toSelect.toString().c_str(), rc ) ;
             // note we don't change e here because we just add the field
             // requested by selector into new object, the original e shoudln't
             // be changed.
@@ -478,16 +436,17 @@ namespace engine
             // we also don't change selectorIndex here since it should be
             // changed by the actual consumer function, not in this loop
             break ;
+
          case SAME:
             // in this situation, the requested field is the one we are
             // processing, so that we don't need to change object metadata,
             // let's just apply the change
             // e is the current element, b is the current builder, selectorIndex
             // is the current selector
-            b.append(e) ;
-            e=es.next() ;
-            (*selectorIndex)++ ;
+            b.append( e ) ;
+            _incModifierIndex( selectorIndex ) ;
             break ;
+
          case RIGHT_BEFORE:
             // in this situation, the original field is alphabetically ahead of
             // requested field.
@@ -500,13 +459,16 @@ namespace engine
             // current processing e is mydata.test
             // in this case, we should skip this element since it's not part of
             // select list
-            e=es.next() ;
+            e = es.next() ;
             break ;
+
          case RIGHT_SUBFIELD:
          default :
             //we should never reach this codepath
-            PD_RC_CHECK ( SDB_SYS, PDERROR,
-                          "Reaching unexpected codepath" ) ;
+            PD_RC_CHECK ( SDB_SYS, PDERROR, "Reaching unexpected codepath, "
+                          "selector: %s, root: %s, rc: %d",
+                          _selectorElements[(*selectorIndex)
+                          ]._toSelect.toString().c_str(), *ppRoot, rc ) ;
          }
       }
       // we break out the loop either hitting end of original object, or end of
@@ -517,24 +479,26 @@ namespace engine
       while ( (*selectorIndex)<(SINT32)_selectorElements.size() )
       {
          (*ppRoot)[rootLen] = '\0' ;
+         newRootLen = rootLen ;
          FieldCompareResult cmp = compareDottedFieldNames (
                _selectorElements[(*selectorIndex)]._toSelect.fieldName(),
                *ppRoot ) ;
          if ( LEFT_SUBFIELD == cmp )
          {
-            rc = _appendNewFromMods ( ppRoot, rootBufLen,
-                                      b, onedownseen, selectorIndex ) ;
+            rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
+                                      b, selectorIndex ) ;
             if ( rc )
             {
-               pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                       "Failed to append for %s",
-                      _selectorElements[(*selectorIndex)
-                                        ]._toSelect.toString().c_str());
+               PD_LOG ( PDERROR, "Failed to append for %s, rc: %d",
+                        _selectorElements[(*selectorIndex)
+                        ]._toSelect.toString().c_str(), rc ) ;
                goto error ;
             }
          }
          else
+         {
             goto done ;
+         }
       }
 
    done :
@@ -543,12 +507,17 @@ namespace engine
    error :
       goto done ;
    }
+
+   // 4 bytes size, 1 byte type, 1 byte 0, 4 bytes string length
+   #define FIRST_ELEMENT_STARTING_POS     10
+   #define MAX_SELECTOR_BUFFER_THRESHOLD  67108864 // 64MB
+
    // given a source BSON object and empty target, the returned target will
    // contains selected fields
 
    // since we are dealing with tons of BSON object conversion, this part should
    // ALWAYS protected by try{} catch{}
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL_SELECT, "_mthSelector::select" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHSEL_SELECT, "_mthSelector::select" )
    INT32 _mthSelector::select ( const BSONObj &source, BSONObj &target )
    {
       INT32 rc = SDB_OK ;
@@ -584,8 +553,7 @@ namespace engine
       rc = _buildNewObj ( &pBuffer, bufferSize, builder, es, &selectorIndex ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to select target" ) ;
+         PD_LOG ( PDERROR, "Failed to select target, rc: %d", rc ) ;
          goto error ;
       }
       // if we ask for output in json format, let's just do obj()
@@ -601,9 +569,7 @@ namespace engine
          BSONObj tempObj = builder.obj () ;
          BOOLEAN result = FALSE ;
          INT32 stringLength = 0 ;
-// 4 bytes size, 1 byte type, 1 byte 0, 4 bytes string length
-#define FIRST_ELEMENT_STARTING_POS 10
-#define MAX_SELECTOR_BUFFER_THRESHOLD 67108864 // 64MB
+
          // in the first round, let's allocate memory
          if ( 0 == _stringOutputBufferSize )
          {
@@ -652,12 +618,17 @@ namespace engine
          // original buffer it owns
          target.init ( _stringOutputBuffer ) ;
       }
+
    done :
       if ( pBuffer )
+      {
          SDB_OSS_FREE ( pBuffer ) ;
+      }
       PD_TRACE_EXITRC ( SDB__MTHSEL_SELECT, rc );
       return rc ;
    error :
       goto done ;
    }
+
 }
+

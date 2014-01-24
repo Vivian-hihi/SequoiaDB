@@ -35,6 +35,7 @@
 *******************************************************************************/
 #ifndef MTHSELECTOR_HPP_
 #define MTHSELECTOR_HPP_
+
 #include "core.hpp"
 #include "oss.hpp"
 #include <vector>
@@ -42,25 +43,26 @@
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
 using namespace bson ;
+
 namespace engine
 {
+   /*
+      _SelectorElement define
+   */
    class _SelectorElement : public SDBObject
    {
    public :
       BSONElement _toSelect ; // the element to select
-      CHAR *_shortName ;
       _SelectorElement ( const BSONElement &e )
       {
-         const CHAR *fn = e.fieldName() ;
          _toSelect = e ;
-         _shortName = (CHAR*)ossStrrchr( fn , '.' );
-         if ( _shortName )
-             _shortName++ ;
-         else
-             _shortName = (CHAR*)_toSelect.fieldName() ;
       }
    } ;
    typedef _SelectorElement SelectorElement ;
+
+   /*
+      _mthSelector define
+   */
    class _mthSelector : public SDBObject
    {
    private :
@@ -69,16 +71,21 @@ namespace engine
       BOOLEAN _stringOutput ;
       CHAR   *_stringOutputBuffer ;
       INT32   _stringOutputBufferSize ;
+      BOOLEAN _ignoreTypeError ;
       vector<SelectorElement> _selectorElements ;
+
       INT32 _addSelector ( const BSONElement &ele ) ;
       BOOLEAN _dupFieldName ( const BSONElement &l,
                               const BSONElement &r ) ;
+
+      inline void _incSelectorIndex( INT32 *selectorIndex ) ;
 
       // when requested update want to change something that not exist in
       // original
       // object, we need to append the original object in those cases
       template<class Builder>
-      INT32 _appendNew ( Builder& b, SINT32 *selectorIndex ) ;
+      INT32 _appendNew ( const CHAR *pFieldName, Builder& b,
+                         SINT32 *selectorIndex ) ;
 
       // Builder could be BSONObjBuilder or BSONArrayBuilder
       // _appendNewFromMods appends the current builder with the new field
@@ -89,9 +96,9 @@ namespace engine
       template<class Builder>
       INT32 _appendNewFromMods ( CHAR **ppRoot,
                                  INT32 &rootBufLen,
+                                 INT32 rootLen,
                                  Builder &b,
-                                 set<string>& onedownseen,
-                                 SINT32 *selectorIndex) ;
+                                 SINT32 *selectorIndex ) ;
       // Builder could be BSONObjBuilder or BSONArrayBuilder
       // This function is recursively called to build new object
       // The prerequisit is that _selectorElement is sorted, which supposed to
@@ -99,6 +106,7 @@ namespace engine
       template<class Builder>
       INT32 _buildNewObj ( CHAR **ppRoot,
                            INT32 &rootBufLen,
+                           INT32 rootLen,
                            Builder &b,
                            BSONObjIteratorSorted &es,
                            SINT32 *selectorIndex ) ;
@@ -109,6 +117,7 @@ namespace engine
          _initialized = FALSE ;
          _stringOutputBuffer = NULL ;
          _stringOutputBufferSize = 0 ;
+         _ignoreTypeError = TRUE ;
       }
       ~_mthSelector()
       {
@@ -118,8 +127,11 @@ namespace engine
             SDB_OSS_FREE ( _stringOutputBuffer ) ;
          }
       }
+
       INT32 loadPattern ( const BSONObj &selectorPattern ) ;
+
       INT32 select ( const BSONObj &source, BSONObj &target ) ;
+
       inline void setStringOutput ( BOOLEAN strOut )
       {
          _stringOutput = strOut ;
@@ -129,8 +141,18 @@ namespace engine
          return _stringOutput ;
       }
       inline BOOLEAN isInitialized () { return _initialized ; }
+
    } ;
    typedef _mthSelector mthSelector ;
+
+   /*
+      inline function
+   */
+   inline void _mthSelector::_incModifierIndex( INT32 *selectorIndex )
+   {
+      ++selectorIndex ;
+   }
+
 }
 
-#endif
+#endif //MTHSELECTOR_HPP_
