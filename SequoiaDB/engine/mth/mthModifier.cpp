@@ -466,7 +466,7 @@ namespace engine
       // input number > 0 means remove from end
       if ( Array != in.type() )
       {
-         PD_LOG_MSG ( ( _ignoreTypeError : PDDEBUG : PDERROR ),
+         PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
                       "Original data type is not array: %s",
                       in.toString().c_str() ) ;
          if ( _ignoreTypeError )
