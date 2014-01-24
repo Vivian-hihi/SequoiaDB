@@ -79,6 +79,28 @@ public class stafTools extends Task{
 					throw new BuildException(STAFResultToString(result));
 				}
 			}
+			
+			///dost not test , I don't know is it work
+			if( workType.equals("delete")){
+				System.out.println("delete work");
+				request = "DELETE ENTRY " + fileName + " RECURSE CONFIRM ";
+				System.out.println("exec: staf " + workHost + " FS " + request );
+				result = handle.submit2(workHost, "FS", request);
+				if (result.rc != STAFResult.Ok) {
+					throw new BuildException(STAFResultToString(result));
+				}
+			}
+			///dost not test , I don't know is it work
+			if( workType.equals("get")){
+				System.out.println("get work");
+				request = "GET FILE " + fileName + " TEXT ";
+				System.out.println("exec: staf " + workHost + " FS " + request );
+				result = handle.submit2(workHost, "FS", request);
+				if (result.rc != STAFResult.Ok) {
+					throw new BuildException(STAFResultToString(result));
+				}
+			}
+			
 		} catch (STAFException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
