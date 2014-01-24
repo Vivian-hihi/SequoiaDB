@@ -192,7 +192,7 @@
 					type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; 
 					return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;
 					download the test log :&#10;
-					${URL.download.pre}/${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;
+					${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;
 					&lt;/failure&gt;&#10;" />
 					
 				
@@ -205,26 +205,29 @@
 						<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
 					</then>
 				</if-->
-				<try>
-					<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost"/>
-					<echo message="${haveMaster}" />
-					<if>
-						<equals arg1="${haveMaster}" arg2="true"/>
-						<then>
-							<echo message="haveMaster is true"/>
-							<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
-						</then>
-						<else>
-							<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
-						</else>
-					</if>
-				</try>
-				<catch>
+				<trycatch>
+					<try>
+						<sdbHaveMaster waitTime="10" propertyName="haveMaster" groupName="1" hostName="localhost"/>
+						<echo message="${haveMaster}" />
+						<if>
+							<equals arg1="${haveMaster}" arg2="true"/>
+							<then>
+								<echo message="haveMaster is true"/>
+								<sdbClearEnvCS hostName="localhost" port="50000" csprefix="${CS_PRIX}"/>
+							</then>
+							<else>
+								<echo message="test is failed , CS_PRIX is ${CS_PRIX} , but when drop the cs , there are no catalog master node" />
+							</else>
+						</if>
+					</try>
+					<catch>
+						<echo>fail to drop the fail test's cs</echo>
+					</catch>
+					<finally>
 					
-				</catch>
-				<finally>
-				
-				</finally>
+					</finally>
+				</trycatch>
+	 
 			</then>
 		</if>
 
