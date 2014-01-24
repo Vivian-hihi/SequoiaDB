@@ -2085,9 +2085,9 @@ namespace engine
                                       modifierIndex, hasCreateNewRoot ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to append for %s",
+               PD_LOG ( PDERROR, "Failed to append for %s, rc: %d",
                         _modifierElements[(*modifierIndex)
-                                         ]._toModify.toString().c_str());
+                                         ]._toModify.toString().c_str(), rc );
                goto error ;
             }
          }
