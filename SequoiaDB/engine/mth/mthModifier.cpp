@@ -243,22 +243,8 @@ namespace engine
                                           const BSONElement &in,
                                           ModifierElement &me )
    {
-      // for SET, if the type is Object, we need to make sure we can store it
-      // in BSON, if the object contains keyword $ref or $id, then it's not
-      // storable
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPSETMDF ) ;
-
-      if ( in.type() == Object )
-      {
-         if ( !in.embeddedObject().okForStorage() )
-         {
-            PD_LOG_MSG ( PDERROR, "embbed object can't be stored for %s",
-                         in.toString().c_str() );
-            rc = SDB_INVALIDARG ;
-            goto done ;
-         }
-      }
 
       if ( 0 != in.woCompare( me._toModify, false ) )
       {
@@ -289,9 +275,17 @@ namespace engine
       // make sure the original type is array
       if ( Array != in.type() )
       {
-         PD_LOG_MSG ( PDERROR, "Original data type is not array: %s",
-                      in.toString().c_str());
-         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                      "Original data type is not array: %s",
+                      in.toString().c_str() ) ;
+         if ( _ignoreTypeError )
+         {
+            bb.append( in ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
          goto done ;
       }
 
@@ -328,9 +322,17 @@ namespace engine
       // make sure the original type is array
       if ( in.type() != Array )
       {
-         PD_LOG_MSG ( PDERROR, "Original data type is not array: %s",
-                      in.toString().c_str());
-         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                      "Original data type is not array: %s",
+                      in.toString().c_str() ) ;
+         if ( _ignoreTypeError )
+         {
+            bb.append( in ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
          goto done ;
       }
       // make sure the new type is array too
@@ -384,9 +386,17 @@ namespace engine
       // make sure the original type is array
       if ( in.type() != Array )
       {
-         PD_LOG_MSG ( PDERROR, "Original data type is not array: %s",
-                      in.toString().c_str());
-         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                      "Original data type is not array: %s",
+                      in.toString().c_str() ) ;
+         if ( _ignoreTypeError )
+         {
+            bb.append( in ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
          goto done ;
       }
       {
@@ -456,9 +466,17 @@ namespace engine
       // input number > 0 means remove from end
       if ( Array != in.type() )
       {
-         PD_LOG_MSG ( PDERROR, "Original data type is not array: %s",
-                      in.toString().c_str());
-         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( ( _ignoreTypeError : PDDEBUG : PDERROR ),
+                      "Original data type is not array: %s",
+                      in.toString().c_str() ) ;
+         if ( _ignoreTypeError )
+         {
+            bb.append( in ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
          goto done ;
       }
 
@@ -676,9 +694,17 @@ namespace engine
       // make sure original data is array
       if ( Array != in.type() )
       {
-         PD_LOG_MSG ( PDERROR, "Original data type is not array: %s",
-                      in.toString().c_str() );
-         rc = SDB_INVALIDARG ;
+         PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                      "Original data type is not array: %s",
+                      in.toString().c_str() ) ;
+         if ( _ignoreTypeError )
+         {
+            bb.append( in ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
          goto done ;
       }
       // make sure added value is array
@@ -792,11 +818,6 @@ namespace engine
          }
       }
 
-      /*if ( change )
-      {
-         ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
-      }*/
-
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF3, rc );
       return rc ;
    }
@@ -862,7 +883,6 @@ namespace engine
          bb.append ( pShort, x ) ;
          ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, x, "$set" ) ;
       }
-      //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
 
    done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPBITMDF22, rc );
@@ -1372,13 +1392,15 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMDF_LDPTN, "_mthModifier::loadPattern" )
    INT32 _mthModifier::loadPattern ( const BSONObj &modifierPattern,
-                                     vector<INT64> *dollarList )
+                                     vector<INT64> *dollarList,
+                                     BOOLEAN ignoreTypeError )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMDF_LDPTN );
       _modifierPattern = modifierPattern.copy() ;
       INT32 eleNum = 0 ;
       _dollarList = dollarList ;
+      _ignoreTypeError = ignoreTypeError ;
       _fieldCompare.setDollarList( _dollarList ) ;
 
       BSONObjIterator i( _modifierPattern ) ;
@@ -1427,7 +1449,6 @@ namespace engine
       case INC:
       case SET:
       {
-         //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot, "$set" ) ;
          b.appendAs ( me->_toModify, pShort ) ;
          break ;
@@ -1452,7 +1473,6 @@ namespace engine
          BSONObj newObj = bb.done() ;
 
          ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-         //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
          break ;
       }
       case PUSH_ALL:
@@ -1467,7 +1487,6 @@ namespace engine
          }
 
          b.appendAs ( me->_toModify, pShort ) ;
-         //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
          ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot, "$set" ) ;
          break ;
       }
@@ -1502,7 +1521,6 @@ namespace engine
          if ( n != 0 )
          {
             ADD_CHG_ARRAY_OBJ ( _dstChgBuilder, newObj, pRoot, "$set" ) ;
-            //ADD_CHG_UNSET_FIELD ( _srcChgBuilder, pRoot ) ;
          }
          break ;
       }
@@ -1863,11 +1881,6 @@ namespace engine
          switch ( cmp )
          {
          case LEFT_SUBFIELD:
-            // add "." at end
-            rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
-                                   &newRootLen ) ;
-            PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc: %d", rc ) ;
-
             // ex, modify request $set:{user.name,"taoewang"}
             // field: user
             // make sure the BSONElement is object or array
@@ -1876,11 +1889,24 @@ namespace engine
             // other type of element
             if ( e.type() != Object && e.type() != Array )
             {
-               PD_LOG ( PDERROR, "Invalid field type: %s",
-                        e.toString().c_str() ) ;
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               PD_LOG_MSG ( ( _ignoreTypeError ? PDDEBUG : PDERROR ),
+                            "Invalid field type: %s", e.toString().c_str() ) ;
+               if ( _ignoreTypeError )
+               {
+                  _incModifierIndex() ;
+                  continue ;
+               }
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
             }
+
+            // add "." at end
+            rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
+                                   &newRootLen ) ;
+            PD_RC_CHECK ( rc, PDERROR, "Failed to append string, rc: %d", rc ) ;
 
             // if we are dealing with object, then let's create a new object
             // builder starting from our current fieldName

@@ -172,6 +172,7 @@ namespace engine
 
       vector<INT64> *_dollarList ;
       _compareFieldNames1  _fieldCompare ;
+      BOOLEAN        _ignoreTypeError ;
 
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
@@ -288,13 +289,15 @@ namespace engine
          _srcChgBuilder = NULL ;
          _dstChgBuilder = NULL ;
          _dollarList    = NULL ;
+         _ignoreTypeError = TRUE ;
       }
       ~_mthModifier()
       {
          _modifierElements.clear() ;
       }
       INT32 loadPattern ( const BSONObj &modifierPattern,
-                          vector<INT64> *dollarList = NULL ) ;
+                          vector<INT64> *dollarList = NULL,
+                          BOOLEAN ignoreTypeError = TRUE ) ;
       void modifierSort() ;
       INT32 modify ( const BSONObj &source, BSONObj &target,
                      BSONObj *srcID = NULL,
