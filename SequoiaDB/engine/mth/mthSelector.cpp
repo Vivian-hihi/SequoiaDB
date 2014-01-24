@@ -367,7 +367,7 @@ namespace engine
                // bb is new object builder
                // bis is the sorted iterator
                // selectorIndex is the current selector we are working on
-               rc = _buildNewObj ( ppRoot, rootBufLen, bb, newRootLen, bis,
+               rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen, bb, bis,
                                    selectorIndex ) ;
                if ( rc )
                {
@@ -550,7 +550,8 @@ namespace engine
       // going to apply
       // when this call returns SDB_OK, we should call builder.obj() to create
       // BSONObject from the builder.
-      rc = _buildNewObj ( &pBuffer, bufferSize, builder, es, &selectorIndex ) ;
+      rc = _buildNewObj ( &pBuffer, bufferSize, 0, builder, es,
+                          &selectorIndex ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to select target, rc: %d", rc ) ;
