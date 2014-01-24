@@ -277,10 +277,11 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_HIT_HIGH_WATERMARK          -239  /**< hit the high water mark */
 #define SDB_BAR_BACKUP_EXIST            -240  /**< backup already exist */
 #define SDB_BAR_BACKUP_NOTEXIST         -241  /**< backup not exist */
-#define SDB_DMS_TMP_DUPLICATE_ID        -242  /**< id (of file or block) is duplicate */
-#define SDB_HIT_HIGH_WATERMARK          -239  /**< hit the high water mark */
-#define SDB_BAR_BACKUP_EXIST            -240  /**< backup already exist */
-#define SDB_BAR_BACKUP_NOTEXIST         -241  /**< backup not exist */
 #define SDB_INVALID_SUB_CL              -242  /**< invalid sub-collection */
 #define SDB_TASK_HAS_CANCELED           -243  /**< task has canceled */
+#define SDB_INVALID_MAIN_CL_TYPE        -244  /**< the sharding-type of main-collection must be range */
+#define SDB_NO_SHARDINGKEY              -245  /**< there is no valid sharding-key field */
+#define SDB_MAIN_CL_OP_ERR              -246  /**< the operation not support on main-collection */
+#define SDB_IXM_REDEF                   -247  /**< redefine index */
+#define SDB_DMS_CS_DELETING             -248  /**< Deleting the CS */
 #endif /* OSSERR_HPP_ */

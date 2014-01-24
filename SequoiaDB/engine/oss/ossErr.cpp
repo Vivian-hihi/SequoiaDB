@@ -266,7 +266,12 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "backup already exist",
                    "backup not exist",
                    "invalid sub-collection",
-                   "task has canceled"
+                   "task has canceled",
+                   "the sharding-type of main-collection must be range",
+                   "there is no valid sharding-key field",
+                   "the operation not support on main-collection",
+                   "redefine index",
+                   "Deleting the CS"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";
