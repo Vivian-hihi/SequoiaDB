@@ -267,7 +267,6 @@ namespace engine
                                  INT32 rootLen,
                                  UINT32 modifierRootLen,
                                  Builder &b,
-                                 set<string>& onedownseen,
                                  SINT32 *modifierIndex,
                                  BOOLEAN hasCreateNewRoot ) ;
       // Builder could be BSONObjBuilder or BSONArrayBuilder
@@ -311,6 +310,7 @@ namespace engine
    */
    inline void _mthModifier::_incModifierIndex( INT32 *modifierIndex )
    {
+      INT32 tmpModifierIndex = *modifierIndex ;
       ++(*modifierIndex) ;
       while ( *modifierIndex < (INT32)_modifierElements.size() )
       {
@@ -327,12 +327,16 @@ namespace engine
             ++(*modifierIndex) ;
             continue ;
          }
-         else if ( *modifierIndex > 0 && SAME == _fieldCompare.compField (
-              _modifierElements[*modifierIndex-1]._toModify.fieldName(),
-              _modifierElements[*modifierIndex]._toModify.fieldName() ) )
+         else if ( tmpModifierIndex >= 0 )
          {
-            ++(*modifierIndex) ;
-            continue ;
+            FieldCompareResult cmp = _fieldCompare.compField (
+              _modifierElements[tmpModifierIndex]._toModify.fieldName(),
+              _modifierElements[*modifierIndex]._toModify.fieldName() ) ;
+            if ( SAME == cmp || RIGHT_SUBFIELD == cmp )
+            {
+               ++(*modifierIndex) ;
+               continue ;
+            }
          }
          break ;
       }

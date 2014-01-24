@@ -414,14 +414,18 @@ namespace engine
                   if ( ele.woCompare(arrJ, FALSE) == 0 )
                   {
                      allowed = FALSE ;
-                     changed = TRUE ;
                      break ;
                   }
                }
             }
+
             if ( allowed )
             {
                sub.appendAs ( ele, sub.numStr(n++) ) ;
+            }
+            else
+            {
+               changed = TRUE ;
             }
          }
          BSONObj newObj = sub.done() ;
@@ -1540,7 +1544,6 @@ namespace engine
                                             INT32 rootLen,
                                             UINT32 modifierRootLen,
                                             Builder &b,
-                                            set<string>& onedownseen,
                                             SINT32 *modifierIndex,
                                             BOOLEAN hasCreateNewRoot )
    {
@@ -1617,45 +1620,32 @@ namespace engine
       // if there is sub object
       if ( dot )
       {
-         // we already added, let's return SDB_OK, this may happen when user
-         // provided two fields with same name, it's a duplicate and we should
-         // ignore
-         if ( onedownseen.count( temp ) )
+         // create object builder for nf ("first" field)
+         BSONObjBuilder bb ( b.subobjStart( temp ) ) ;
+         // create a es for empty object
+         const BSONObj obj ;
+         BSONObjIteratorSorted es( obj ) ;
+         // append '.'
+         rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
+                                &newRootLen ) ;
+         if ( rc )
          {
-            _incModifierIndex( modifierIndex ) ;
-            goto done ;
+            PD_LOG ( PDERROR, "Failed to append string, rc: %d", rc ) ;
+            goto error ;
          }
 
-         // make sure we mark this one has been processed
-         onedownseen.insert( temp ) ;
+         // create an object for path "user.name.first."
+         // bb is the new builder, es is iterator
+         // modifierIndex is the index
+         rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
+                             bb, es, modifierIndex, hasCreateNewRoot ) ;
+         if ( rc )
          {
-            // create object builder for nf ("first" field)
-            BSONObjBuilder bb ( b.subobjStart( temp ) ) ;
-            // create a es for empty object
-            const BSONObj obj ;
-            BSONObjIteratorSorted es( obj ) ;
-            // append '.'
-            rc = mthAppendString ( ppRoot, rootBufLen, newRootLen, ".", 1,
-                                   &newRootLen ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to append string, rc: %d", rc ) ;
-               goto error ;
-            }
-
-            // create an object for path "user.name.first."
-            // bb is the new builder, es is iterator
-            // modifierIndex is the index
-            rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
-                                bb, es, modifierIndex, hasCreateNewRoot ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to build new object for %s, rc: %d",
-                        me->_toModify.toString().c_str(), rc ) ;
-               goto error ;
-            }
-            bb.done() ;
+            PD_LOG ( PDERROR, "Failed to build new object for %s, rc: %d",
+                     me->_toModify.toString().c_str(), rc ) ;
+            goto error ;
          }
+         bb.done() ;
       }
       // if we can't find ".", then we are not embedded BSON, let's just
       // create whatever object we asked
@@ -1809,9 +1799,6 @@ namespace engine
       UINT32 compareLeftPos = 0 ;
       INT32 newRootLen = rootLen ;
 
-      // in the current scope, which subobject have we seen?
-      set<string> onedownseen ;
-
       // loop until we hit end of original object, or end of modifier list
       while( !e.eoo() && (*modifierIndex)<(SINT32)_modifierElements.size() )
       {
@@ -1893,75 +1880,64 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            // have we processed this field before? if we haven't processed
-            // it before, let's do it, otherwise we may have a dup somewhere
-            // so let's ignore and report warning
-            if ( onedownseen.count( e.fieldName() ) == 0 )
-            {
-               // insert into list
-               onedownseen.insert( e.fieldName() ) ;
-               // if we are dealing with object, then let's create a new object
-               // builder starting from our current fieldName
-               if ( e.type() == Object )
-               {
-                  BSONObjBuilder bb(b.subobjStart(e.fieldName()));
-                  // get the object for the current element, and create sorted
-                  // iterator on it
-                  BSONObjIteratorSorted bis(e.Obj());
 
-                  // add fieldname into path and recursively call _buildNewObj
-                  // to create embedded object
-                  // root is original root + current field + .
-                  // bb is new object builder
-                  // bis is the sorted iterator
-                  // modifierIndex is the current modifier we are working on
-                  rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
-                                      bb, bis, modifierIndex,
-                                      hasCreateNewRoot ) ;
-                  if ( rc )
-                  {
-                     PD_LOG ( PDERROR, "Failed to build object: %s, rc: %d",
-                              e.toString().c_str(), rc ) ;
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
-                  }
-                  // call bb.done() to close the builder
-                  bb.done() ;
-               }
-               else
+            // if we are dealing with object, then let's create a new object
+            // builder starting from our current fieldName
+            if ( e.type() == Object )
+            {
+               BSONObjBuilder bb(b.subobjStart(e.fieldName()));
+               // get the object for the current element, and create sorted
+               // iterator on it
+               BSONObjIteratorSorted bis(e.Obj());
+
+               // add fieldname into path and recursively call _buildNewObj
+               // to create embedded object
+               // root is original root + current field + .
+               // bb is new object builder
+               // bis is the sorted iterator
+               // modifierIndex is the current modifier we are working on
+               rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
+                                   bb, bis, modifierIndex,
+                                   hasCreateNewRoot ) ;
+               if ( rc )
                {
-                  // if it's not object, then we must have array
-                  // now let's create BSONArrayBuilder
-                  BSONArrayBuilder ba( b.subarrayStart( e.fieldName() ) ) ;
-                  //BSONArrayIteratorSorted bis(BSONArray(e.embeddedObject()));
-                  BSONObjIteratorSorted bis(e.embeddedObject());
-                  // add fieldname into path and recursively call _buildNewObj
-                  // to create embedded object
-                  // root is original root + current field + .
-                  // ba is new array builder
-                  // bis is the sorted iterator
-                  // modifierIndex is the current modifier we are working on
-                  rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
-                                      ba, bis, modifierIndex,
-                                      hasCreateNewRoot ) ;
-                  if ( rc )
-                  {
-                     PD_LOG ( PDERROR, "Failed to build array: %s, rc: %d",
-                              e.toString().c_str(), rc ) ;
-                     rc = SDB_INVALIDARG ;
-                     goto error ;
-                  }
-                  ba.done() ;
+                  PD_LOG ( PDERROR, "Failed to build object: %s, rc: %d",
+                           e.toString().c_str(), rc ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
                }
-               // process to the next element
-               e = es.next() ;
-               // note we shouldn't touch modifierIndex here, we should only
-               // change it at the place actually consuming it
+               // call bb.done() to close the builder
+               bb.done() ;
             }
             else
             {
-               PD_LOG ( PDWARNING, "dup detected for %s", e.fieldName() );
+               // if it's not object, then we must have array
+               // now let's create BSONArrayBuilder
+               BSONArrayBuilder ba( b.subarrayStart( e.fieldName() ) ) ;
+               //BSONArrayIteratorSorted bis(BSONArray(e.embeddedObject()));
+               BSONObjIteratorSorted bis(e.embeddedObject());
+               // add fieldname into path and recursively call _buildNewObj
+               // to create embedded object
+               // root is original root + current field + .
+               // ba is new array builder
+               // bis is the sorted iterator
+               // modifierIndex is the current modifier we are working on
+               rc = _buildNewObj ( ppRoot, rootBufLen, newRootLen,
+                                   ba, bis, modifierIndex,
+                                   hasCreateNewRoot ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to build array: %s, rc: %d",
+                           e.toString().c_str(), rc ) ;
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               ba.done() ;
             }
+            // process to the next element
+            e = es.next() ;
+            // note we shouldn't touch modifierIndex here, we should only
+            // change it at the place actually consuming it
             break ;
 
          case LEFT_BEFORE:
@@ -1980,7 +1956,7 @@ namespace engine
             (*ppRoot)[rootLen] = '\0' ;
             newRootLen = rootLen ;
             rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
-                                      compareLeftPos, b, onedownseen,
+                                      compareLeftPos, b,
                                       modifierIndex, hasCreateNewRoot ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to append for %s, rc: %d",
                           _modifierElements[(*modifierIndex)
@@ -2079,7 +2055,7 @@ namespace engine
          if ( LEFT_SUBFIELD == cmp )
          {
             rc = _appendNewFromMods ( ppRoot, rootBufLen, newRootLen,
-                                      compareLeftPos, b, onedownseen,
+                                      compareLeftPos, b,
                                       modifierIndex, hasCreateNewRoot ) ;
             if ( rc )
             {
