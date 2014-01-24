@@ -511,7 +511,7 @@ namespace engine
    void _clsCatalogSet::_addSubClName( const std::string strClName )
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET_ADDSUBCLNAME ) ;
-      _subCLList.insert( strClName );
+      _subCLList.push_back( strClName );
       PD_TRACE_EXIT ( SDB__CLSCTSET_ADDSUBCLNAME ) ;
    }
 
@@ -1754,18 +1754,22 @@ namespace engine
    {
       return _isMainCL;
    }
-   INT32 _clsCatalogSet::getSubCLList( std::set<std::string> &subCLLst )
+   INT32 _clsCatalogSet::getSubCLList( std::vector<std::string> &subCLLst )
    {
       subCLLst = _subCLList;
       return SDB_OK;
    }
    BOOLEAN _clsCatalogSet::isContainSubCL( const std::string &subCLName )
    {
-      std::set<std::string>::iterator iterLst
-                           = _subCLList.find( subCLName );
-      if ( iterLst != _subCLList.end() )
+      std::vector<std::string>::iterator iterLst
+                           = _subCLList.begin();
+      while( iterLst != _subCLList.end() )
       {
-         return TRUE;
+         if ( 0 == subCLName.compare( *iterLst ) )
+         {
+            return TRUE;
+         }
+         ++iterLst;
       }
       return FALSE;
    }
@@ -1959,7 +1963,7 @@ namespace engine
    }
 
    INT32 _clsCatalogSet::findSubCLNames( const bson::BSONObj &matcher,
-                                       std::set< std::string > &subCLList )
+                                       std::vector< std::string > &subCLList )
    {
       INT32 rc = SDB_OK;
       BOOLEAN result = FALSE;
@@ -1972,7 +1976,7 @@ namespace engine
          iter = _mapItems.begin();
          while( iter != _mapItems.end() )
          {
-            subCLList.insert( iter->second->getSubClName() );
+            subCLList.push_back( iter->second->getSubClName() );
             ++iter;
          }
          goto done ;
@@ -1991,7 +1995,7 @@ namespace engine
                      rc );
          if ( result )
          {
-            subCLList.insert( iter->second->getSubClName() );
+            subCLList.push_back( iter->second->getSubClName() );
          }
          ++iter;
       }

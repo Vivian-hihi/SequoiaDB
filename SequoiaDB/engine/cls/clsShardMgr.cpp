@@ -545,7 +545,7 @@ namespace engine
       if ( SDB_OK == rc )
       {
          _clsCatalogSet *pClSet = NULL;
-         std::set< std::string > subCLLst;
+         std::vector< std::string > subCLLst;
          _pCatAgent->lock_r();
          pClSet = _pCatAgent->collectionSet( pCollectionName );
          if ( NULL == pClSet )
@@ -558,7 +558,8 @@ namespace engine
          _pCatAgent->release_r();
          {
          // update all sub-collection catalog info               
-         std::set< std::string >::iterator iterLst = subCLLst.begin();
+         std::vector< std::string >::iterator iterLst
+                                 = subCLLst.begin();
          while( SDB_OK == rc && iterLst != subCLLst.end() )
          {
             rc = syncUpdateCatalog( iterLst->c_str(), millsec );

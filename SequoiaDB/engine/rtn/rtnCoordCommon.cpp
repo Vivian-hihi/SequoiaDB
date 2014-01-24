@@ -694,11 +694,11 @@ namespace engine
       {
          if ( cataInfo->isMainCL() )
          {
-            std::set<std::string> subCLLst;
+            std::vector<std::string> subCLLst;
             rc = cataInfo->getSubCLList( subCLLst );
             if ( SDB_OK == rc )
             {
-               std::set<std::string>::iterator iterLst
+               std::vector<std::string>::iterator iterLst
                                  = subCLLst.begin();
                while ( SDB_OK == rc && iterLst != subCLLst.end() )
                {
@@ -1273,12 +1273,12 @@ namespace engine
       else
       {
          // main-collection
-         std::set< std::string > subCLLst;
+         std::vector< std::string > subCLLst;
          rc = cataInfo->getSubCLList( subCLLst );
          PD_RC_CHECK( rc, PDERROR,
                      "failed to get sub-collection list(rc=%d)",
                      rc );
-         std::set< std::string >::iterator iterCL
+         std::vector< std::string >::iterator iterCL
                            = subCLLst.begin();
          while( iterCL != subCLLst.end() )
          {
@@ -2115,7 +2115,7 @@ namespace engine
          iterGroup = groupList.begin();
          while( iterGroup != groupList.end() )
          {
-            groupSubCLMap[ iterGroup->first ].insert( (*iterCL) );
+            groupSubCLMap[ iterGroup->first ].push_back( (*iterCL) );
             ++iterGroup;
          }
          ++iterCL;

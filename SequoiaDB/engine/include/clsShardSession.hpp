@@ -103,6 +103,9 @@ namespace engine
          INT32 _onCheckRouteIDReqMsg ( MsgHeader *msg ) ;
 
       private:
+         INT32 _includeShardingOrder( const CHAR *pCollectionName,
+                                    const BSONObj &orderBy,
+                                    BOOLEAN &result );
          INT32 _InsertToMainCL( BSONObj &objs, INT32 objNum, INT32 flags,
                               INT16 w = 1 );
          INT32 _queryToMainCL( const CHAR *pCollectionName,
@@ -176,7 +179,7 @@ namespace engine
          INT32 _getSubCLList( const BSONObj &matcher,
                               const CHAR *pCollectionName,
                               BSONObj &boNewMatcher,
-                              std::set< std::string > &strSubCLList );
+                              std::vector< std::string > &strSubCLList );
 
       protected:
          _clsReplicateSet       *_pReplSet ;

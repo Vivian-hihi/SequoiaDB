@@ -767,7 +767,8 @@ namespace engine
 
       INT32 open( const bson::BSONObj & orderBy,
                   INT64 numToReturn,
-                  INT64 numToSkip );
+                  INT64 numToSkip,
+                  BOOLEAN includeShardingOrder = FALSE );
 
       virtual INT32 getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                               INT64 &startPos, _pmdEDUCB *cb );
@@ -791,6 +792,7 @@ namespace engine
       BSONObj           _orderBy;
       SubCLBufList      _subCLBufList;
       SubCLBufList      _emptyBufList;
+      BOOLEAN           _includeShardingOrder;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 

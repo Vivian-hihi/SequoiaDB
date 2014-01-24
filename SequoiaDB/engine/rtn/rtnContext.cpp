@@ -3670,12 +3670,14 @@ namespace engine
 
    INT32 _rtnContextMainCL::open( const bson::BSONObj & orderBy,
                                  INT64 numToReturn,
-                                 INT64 numToSkip )
+                                 INT64 numToSkip,
+                                 BOOLEAN includeShardingOrder )
    {
       _orderBy = orderBy.getOwned();
       _numToReturn = numToReturn;
       _numToSkip = numToSkip;
       _isOpened = TRUE;
+      _includeShardingOrder = includeShardingOrder;
       if ( 0 == _numToReturn )
       {
          _hitEnd = TRUE;
@@ -3714,7 +3716,8 @@ namespace engine
       SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
 
       // OrderBy: get data one by one and caused copy
-      if ( !isEmpty() || requireOrder() )
+      if ( !isEmpty()
+         || ( requireOrder() && !_includeShardingOrder ) )
       {
          rc = this->_rtnContextBase::getMore( maxNumToReturn,
                                           buffObj, startPos,
@@ -4516,7 +4519,7 @@ namespace engine
                                  _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                "pCollectionName is null!" );
@@ -4542,7 +4545,7 @@ namespace engine
       }
 
       {
-         std::set< std::string >::iterator iter = strSubCLList.begin();
+         std::vector< std::string >::iterator iter = strSubCLList.begin();
          while( iter != strSubCLList.end() )
          {
             rtnContextDelCL *delContext = NULL;
@@ -4574,7 +4577,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       INT32 curVer = -1;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       if ( !isOpened() )
       {
          rc = SDB_DMS_CONTEXT_IS_CLOSE;
@@ -4602,34 +4605,56 @@ namespace engine
       }
 
       {
-         SUBCL_CONTEXT_LIST::iterator iterCtx = _subContextList.begin();
-         std::set< std::string >::iterator iterCl;
-         while( iterCtx != _subContextList.end() )
+         if ( _version != curVer )
          {
-            if ( _version != curVer )
+            SUBCL_CONTEXT_LIST::iterator iterCtx;
+            std::vector< std::string >::iterator iterCl
+                                    = strSubCLList.begin();
+            while( iterCl != strSubCLList.end() )
             {
-               iterCl = strSubCLList.find( iterCtx->first );
-               if ( strSubCLList.end() == iterCl )
+               iterCtx = _subContextList.find( *iterCl );
+               if ( _subContextList.end() == iterCtx )
                {
                   PD_LOG( PDERROR,
                         "the version is changed, "
                         "sub-collection(%s) have not been delete",
-                        iterCtx->first.c_str() );
-                  ++iterCtx;
-                  continue;
+                        (*iterCl).c_str() );
                }
                else
                {
-                  strSubCLList.erase( iterCl );
+                  rtnContextBuf buffObj;
+                  SINT64 startingPos = 0;
+                  rc = rtnGetMore( iterCtx->second, -1, buffObj, startingPos, cb, _pRtncb );
+                  PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc, rc, error,
+                           PDERROR, "failed to del sub-collection(rc=%d)", rc );
+                  rc = SDB_OK;
+                  _subContextList.erase( iterCtx );
                }
+               ++iterCl;
             }
-            rtnContextBuf buffObj;
-            SINT64 startingPos = 0;
-            rc = rtnGetMore( iterCtx->second, -1, buffObj, startingPos, cb, _pRtncb );
-            PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc, rc, error,
-                     PDERROR, "failed to del sub-collection(rc=%d)", rc );
-            rc = SDB_OK;
-            _subContextList.erase( iterCtx++ );
+            iterCtx = _subContextList.begin();
+            while( iterCtx != _subContextList.end() )
+            {
+               PD_LOG( PDERROR,
+                     "the version is changed, "
+                     "sub-collection(%s) have not been delete",
+                     (iterCtx->first).c_str() );
+               ++iterCtx;
+            }
+         }
+         else
+         {
+            SUBCL_CONTEXT_LIST::iterator iterCtx = _subContextList.begin();
+            while( iterCtx != _subContextList.end() )
+            {
+               rtnContextBuf buffObj;
+               SINT64 startingPos = 0;
+               rc = rtnGetMore( iterCtx->second, -1, buffObj, startingPos, cb, _pRtncb );
+               PD_CHECK( SDB_DMS_EOC == rc || SDB_DMS_NOTEXIST == rc, rc, error,
+                        PDERROR, "failed to del sub-collection(rc=%d)", rc );
+               rc = SDB_OK;
+               _subContextList.erase( iterCtx++ );
+            }
          }
       }
 
@@ -4637,12 +4662,11 @@ namespace engine
       _pCatAgent->clear ( _name ) ;
       _pCatAgent->release_w () ;
       pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
-
       _isOpened = FALSE;
       if ( _version != curVer
          && ( !_subContextList.empty() || !strSubCLList.empty() ) )
       {
-         std::set< std::string >::iterator iterClTmp;
+         std::vector< std::string >::iterator iterClTmp;
          iterClTmp = strSubCLList.begin();
          while( iterClTmp != strSubCLList.end() )
          {

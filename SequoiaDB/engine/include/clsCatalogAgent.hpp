@@ -170,7 +170,7 @@ namespace engine
          INT32             findGroupIDS ( const BSONObj &matcher, VEC_GROUP_ID &vecGroup );
          INT32             findSubCLName ( const BSONObj &obj, std::string &subCLName );
          INT32             findSubCLNames( const bson::BSONObj &matcher,
-                                          std::set< std::string > &subCLList );
+                                          std::vector< std::string > &subCLList );
 
          INT32             getGroupLowBound( UINT32 groupID, BSONObj &lowBound ) const;
          INT32             getGroupUpBound( UINT32 groupID, BSONObj &upBound ) const;
@@ -199,7 +199,7 @@ namespace engine
          }
 
          BOOLEAN isMainCL();
-         INT32 getSubCLList( std::set<std::string> &subCLLst );
+         INT32 getSubCLList( std::vector<std::string> &subCLLst );
          BOOLEAN isContainSubCL( const std::string &subCLName );
          std::string getMainCLName();
          INT32 addSubCL ( const CHAR *subCLName, const BSONObj &lowBound,
@@ -258,7 +258,7 @@ namespace engine
 
          BOOLEAN           _saveName ;
          UINT32            _attribute ;
-         std::set<std::string> _subCLList ;
+         std::vector<std::string> _subCLList ;
          BOOLEAN           _isMainCL ;
          std::string       _mainCLName;
 

@@ -56,7 +56,7 @@ namespace engine
 
    typedef boost::shared_ptr<CoordGroupInfo>    CoordGroupInfoPtr;
    typedef std::map<UINT32, CoordGroupInfoPtr>  CoordGroupMap;
-   typedef std::set<std::string>                CoordSubCLlist;
+   typedef std::vector<std::string>             CoordSubCLlist;
    typedef std::map<UINT32, CoordSubCLlist>     CoordGroupSubCLMap;
 
    class _CoordCataInfo : public SDBObject

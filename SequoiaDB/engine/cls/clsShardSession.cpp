@@ -638,8 +638,8 @@ namespace engine
       {
          BSONObj boMatcher;
          BSONObj boNewMatcher;
-         std::set< std::string > subCLList;
-         std::set< std::string >::iterator iter;
+         std::vector< std::string > subCLList;
+         std::vector< std::string >::iterator iter;
          rc = _getSubCLList( boMatcher, clFullName, boNewMatcher, subCLList );
          PD_RC_CHECK( rc, PDERROR, "failed to get sub collection(rc=%d)", rc );
          iter = subCLList.begin();
@@ -1270,9 +1270,9 @@ namespace engine
          {
             BSONObj emptyObj;
             BSONObj tmpObj;
-            std::set< std::string > strSubCLList;
-            std::set< std::string > strLockedSubCLList;
-            std::set< std::string >::iterator iterSubCL;
+            std::vector< std::string > strSubCLList;
+            std::vector< std::string > strLockedSubCLList;
+            std::vector< std::string >::iterator iterSubCL;
             rc = _getSubCLList( emptyObj, pCollectionName, tmpObj,
                               strSubCLList );
             PD_RC_CHECK( rc, PDERROR,
@@ -1288,12 +1288,12 @@ namespace engine
                         (*iterSubCL).c_str() );
                   break;
                }
-               strLockedSubCLList.insert( *iterSubCL );
+               strLockedSubCLList.push_back( *iterSubCL );
                ++iterSubCL;
             }
             if ( rc )
             {
-               std::set< std::string >::iterator iterLockCL
+               std::vector< std::string >::iterator iterLockCL
                                        =  strLockedSubCLList.begin();
                while( iterLockCL != strLockedSubCLList.end() )
                {
@@ -1327,7 +1327,7 @@ namespace engine
       CHAR *pDot = NULL;
       CHAR *pDot1 = NULL;
       BOOLEAN isMainCL = FALSE;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       pDot = (CHAR *)ossStrchr( pCollectionName, '.' );
       pDot1 = (CHAR *)ossStrrchr( pCollectionName, '.' );
       PD_CHECK( (pDot == pDot1 && pCollectionName != pDot), SDB_INVALIDARG,
@@ -1352,7 +1352,7 @@ namespace engine
       {
          BSONObj boMatch;
          BSONObj boNewMatch;
-         std::set< std::string >::iterator iterSubCL;
+         std::vector< std::string >::iterator iterSubCL;
          rc = _getSubCLList( boMatch, pCollectionName, boNewMatch,
                              strSubCLList );
          PD_RC_CHECK( rc, PDERROR,
@@ -1527,6 +1527,68 @@ namespace engine
       goto done;
    }
 
+   INT32 _clsShdSession::_includeShardingOrder( const CHAR *pCollectionName,
+                                                const BSONObj &orderBy,
+                                                BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK;
+      BSONObj shardingKey;
+      _clsCatalogSet *pCataSet = NULL;
+      BOOLEAN catLocked = FALSE;
+      result = FALSE;
+      try
+      {
+         if ( orderBy.isEmpty() )
+         {
+            goto done;
+         }
+         _pCatAgent->lock_r () ;
+         catLocked = TRUE;
+         pCataSet = _pCatAgent->collectionSet( pCollectionName );
+         if ( NULL == pCataSet )
+         {
+            _pCatAgent->release_r () ;
+            catLocked = FALSE;
+            rc = SDB_DMS_NOTEXIST;
+            PD_LOG( PDERROR, "can not find collection:%s", pCollectionName );
+            goto error;
+         }
+         shardingKey = pCataSet->getShardingKey().copy();
+         _pCatAgent->release_r () ;
+         catLocked = FALSE;
+         if ( !shardingKey.isEmpty() )
+         {
+            result = TRUE;
+            BSONObjIterator iterOrder( orderBy );
+            BSONObjIterator iterSharding( shardingKey );
+            while( iterOrder.more() && iterSharding.more() )
+            {
+               BSONElement beOrder = iterOrder.next();
+               BSONElement beSharding = iterSharding.next();
+               if ( 0 != beOrder.woCompare( beSharding ) )
+               {
+                  result = FALSE;
+                  break;
+               }
+            }
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_RC_CHECK( SDB_SYS, PDERROR,
+                     "occur unexpected error:%s",
+                     e.what() );
+      }
+   done:
+      if ( catLocked )
+      {
+         _pCatAgent->release_r () ;
+      }
+      return rc;
+   error:
+      goto done;
+   }
+
    INT32 _clsShdSession::_queryToMainCL( const CHAR *pCollectionName,
                                          const BSONObj &selector,
                                          const BSONObj &matcher,
@@ -1541,14 +1603,20 @@ namespace engine
                                          SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       BSONObj boNewMatcher;
       rtnContextMainCL *pContextMainCL = NULL;
+      BOOLEAN includeShardingOrder = FALSE;
 
       SDB_ASSERT( pCollectionName, "collection name can't be NULL!" );
       SDB_ASSERT( cb, "educb can't be NULL!" );
       SDB_ASSERT( dmsCB, "dmsCB can't be NULL!");
       SDB_ASSERT( rtnCB, "rtnCB can't be NULL!" );
+      rc = _includeShardingOrder( pCollectionName, orderBy,
+                                 includeShardingOrder );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to check order-key(rc=%d)",
+                  rc );
 
       rc = _getSubCLList( matcher, pCollectionName,
                           boNewMatcher, strSubCLList );
@@ -1564,13 +1632,14 @@ namespace engine
                    "Failed to create new main-collection context(rc=%d)",
                    rc );
 
-      rc = pContextMainCL->open( orderBy, numToReturn, numToSkip );
+      rc = pContextMainCL->open( orderBy, numToReturn, numToSkip,
+                                 includeShardingOrder );
       PD_RC_CHECK( rc, PDERROR,
                    "Open main-collection context failed(rc=%d)",
                    rc );
 
       {
-      std::set< std::string >::iterator iterSubCLSet
+      std::vector< std::string >::iterator iterSubCLSet
                                        = strSubCLList.begin();
       while( iterSubCLSet != strSubCLList.end() )
       {
@@ -1600,7 +1669,7 @@ namespace engine
    INT32 _clsShdSession::_getSubCLList( const BSONObj &matcher,
                                         const CHAR *pCollectionName,
                                         BSONObj &boNewMatcher,
-                                        std::set< std::string > &strSubCLList )
+                                        std::vector< std::string > &strSubCLList )
    {
       INT32 rc = SDB_OK;
 
@@ -1622,7 +1691,7 @@ namespace engine
                   std::string strSubCLName = beSubCL.str();
                   if ( !strSubCLName.empty() )
                   {
-                     strSubCLList.insert( strSubCLName );
+                     strSubCLList.push_back( strSubCLName );
                   }
                }
             }
@@ -1641,7 +1710,9 @@ namespace engine
       }
       if ( strSubCLList.empty() )
       {
+         std::vector< std::string > strSubCLListTmp;
          _clsCatalogSet *pCataSet = NULL;
+         std::vector< std::string >::iterator iter;
          _pCatAgent->lock_r () ;
          pCataSet = _pCatAgent->collectionSet( pCollectionName );
          if ( NULL == pCataSet )
@@ -1651,21 +1722,18 @@ namespace engine
             PD_LOG( PDERROR, "can not find collection:%s", pCollectionName );
             goto error;
          }
-         pCataSet->getSubCLList( strSubCLList );
-         _pCatAgent->release_r () ;
-      }
-      {
-         _pCatAgent->lock_r () ;
-         std::set< std::string >::iterator iter = strSubCLList.begin();
-         while( iter != strSubCLList.end() )
+         pCataSet->getSubCLList( strSubCLListTmp );
+         iter = strSubCLListTmp.begin();
+         while( iter != strSubCLListTmp.end() )
          {
             _clsCatalogSet *pSubSet = NULL;
             pSubSet = _pCatAgent->collectionSet( iter->c_str() );
             if ( NULL == pSubSet || 0 == pSubSet->groupCount() )
             {
-               strSubCLList.erase( iter++ );
+               ++iter;
                continue;
             }
+            strSubCLList.push_back( *iter );
             ++iter;
          }
          _pCatAgent->release_r () ;
@@ -1692,7 +1760,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       BSONObj boNewSelector;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       INT64 updateNum = 0;
       rc = _getSubCLList( selector, pCollectionName,
                         boNewSelector, strSubCLList );
@@ -1701,7 +1769,7 @@ namespace engine
          goto error;
       }
       {
-      std::set< std::string >::iterator iterSubCLSet
+      std::vector< std::string >::iterator iterSubCLSet
                                        = strSubCLList.begin();
       while( iterSubCLSet != strSubCLList.end() )
       {
@@ -1734,7 +1802,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       BSONObj boNewDeletor;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       INT64 delNum = 0;
       rc = _getSubCLList( deletor, pCollectionName,
                         boNewDeletor, strSubCLList );
@@ -1743,7 +1811,7 @@ namespace engine
          goto error;
       }
       {
-      std::set< std::string >::iterator iterSubCLSet
+      std::vector< std::string >::iterator iterSubCLSet
                                        = strSubCLList.begin();
       while( iterSubCLSet != strSubCLList.end() )
       {
@@ -1838,7 +1906,7 @@ namespace engine
                                        SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
-      std::set< std::string > strSubCLList;
+      std::vector< std::string > strSubCLList;
       BSONObj boNewMatcher;
       rtnContextMainCL *pContextMainCL = NULL;
       BSONObj boMatcher;
@@ -1894,7 +1962,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "open main-collection context failed(rc=%d)",
                    rc );
       {
-      std::set< std::string >::iterator iterSubCLSet
+      std::vector< std::string >::iterator iterSubCLSet
                                              = strSubCLList.begin();
       while( iterSubCLSet != strSubCLList.end() )
       {
@@ -1959,8 +2027,8 @@ namespace engine
       BSONObj boMatcher;
       BSONObj boNewMatcher;
       BSONObj boIndex;
-      set< std::string > strSubCLList;
-      set< std::string >::iterator iter;
+      std::vector< std::string > strSubCLList;
+      std::vector< std::string >::iterator iter;
       try
       {
          boMatcher = BSONObj( pQuery );
@@ -2013,8 +2081,8 @@ namespace engine
       BSONObj boMatcher;
       BSONObj boNewMatcher;
       BSONObj boIndex;
-      set< std::string > strSubCLList;
-      set< std::string >::iterator iter;
+      std::vector< std::string > strSubCLList;
+      std::vector< std::string >::iterator iter;
       BSONElement ele;
       BOOLEAN isExist = FALSE;
       try

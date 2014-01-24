@@ -1154,8 +1154,8 @@ namespace engine
          // 5) delete sub-collection( if it is main-collection )
          else if ( cataInfo.isMainCL() )
          {
-            std::set< std::string > subCLLst;
-            std::set< std::string >::iterator iterLst;
+            std::vector< std::string > subCLLst;
+            std::vector< std::string >::iterator iterLst;
             rc = cataInfo.getSubCLList( subCLLst );
             PD_RC_CHECK( rc, PDERROR,
                         "failed to get sub-collection list(rc=%d)" );
