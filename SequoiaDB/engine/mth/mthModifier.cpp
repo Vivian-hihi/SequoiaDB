@@ -259,7 +259,6 @@ namespace engine
          bb.append ( in ) ;
       }
 
-   done :
       PD_TRACE_EXITRC ( SDB__MTHMDF__APPSETMDF, rc ) ;
       return rc ;
    }
@@ -1893,7 +1892,7 @@ namespace engine
                             "Invalid field type: %s", e.toString().c_str() ) ;
                if ( _ignoreTypeError )
                {
-                  _incModifierIndex() ;
+                  _incModifierIndex( modifierIndex ) ;
                   continue ;
                }
                else
