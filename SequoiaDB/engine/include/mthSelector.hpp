@@ -150,7 +150,7 @@ namespace engine
    */
    inline void _mthSelector::_incSelectorIndex( INT32 *selectorIndex )
    {
-      ++selectorIndex ;
+      ++(*selectorIndex) ;
    }
 
 }
