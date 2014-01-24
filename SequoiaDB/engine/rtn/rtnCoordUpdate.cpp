@@ -590,8 +590,8 @@ namespace engine
       {
          rc = SDB_INVALIDARG;
          PD_LOG ( PDERROR,
-                  "failed to check the record is include sharding-key,\
-                  occured unexpected error:%s",
+                  "failed to check the record is include sharding-key,"
+                  "occured unexpected error:%s",
                   e.what() );
          goto error;
       }
