@@ -495,7 +495,7 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       BOOLEAN isInclude;
-      CoordSubCLlist::iterator iterCL = subCLList.begin();
+      CoordSubCLlist::const_iterator iterCL = subCLList.begin();
       while( iterCL != subCLList.end() )
       {
          CoordCataInfoPtr subCataInfo;
@@ -608,7 +608,7 @@ namespace engine
                                                   pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
-      CoordSubCLlist::iterator iterCL = subCLList.begin();
+      CoordSubCLlist::const_iterator iterCL = subCLList.begin();
       BSONObj boCur = boUpdator;
       BSONObj boNew = boUpdator;
       while( iterCL != subCLList.end() )

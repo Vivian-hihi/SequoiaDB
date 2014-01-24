@@ -739,8 +739,6 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOINS_INSTOGROUPS ) ;
-      BOOLEAN isNeedRetry = FALSE;
-      BOOLEAN hasRetry = FALSE;
       SINT32 opCode;
       if ( cb->isTransaction() )
       {
