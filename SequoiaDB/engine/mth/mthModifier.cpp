@@ -1387,8 +1387,9 @@ namespace engine
          rc = _parseElement(i.next() ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to parse match pattern %d, rc: %d",
-                     eleNum, rc ) ;
+            PD_LOG ( PDERROR, "Failed to parse match pattern[%s, pos: %d], "
+                     "rc: %d", modifierPattern.toString().c_str(), eleNum,
+                     rc ) ;
             goto error ;
          }
          eleNum ++ ;
