@@ -21,8 +21,7 @@
 							<param name="excludes.dir.patterns" value="vote" />
 							<!--parma name="parallel.num" value="${lineNum1}" /-->
 							<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-							<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
-							<param name="save.testLog.dir" value="${save.testLog.dir}" />
+							<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 						</sdbtest>
 				    <echo message="...test js tests are over ..." />
 				    

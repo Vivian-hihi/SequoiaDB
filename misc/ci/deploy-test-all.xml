@@ -130,6 +130,13 @@
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
 		</exec>
 		
+		<echo message="${STAF.PATH}\bin\staf ${save.testLog.hostname} PROCESS START SHELL COMMAND /usr/bin/find ${save.testLog.dir} -mtime +2 -delete; WORKDIR ${save.testLog.dir} WAIT 30m" />
+		<exec command="${STAF.PATH}\bin\staf ${save.testLog.hostname} PROCESS START SHELL COMMAND /usr/bin/find ${save.testLog.dir} -mtime +2 -delete; WORKDIR ${save.testLog.dir} WAIT 30m" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
+			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
+			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
+			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
+		</exec>
+		
 	</target>
 
 </project>

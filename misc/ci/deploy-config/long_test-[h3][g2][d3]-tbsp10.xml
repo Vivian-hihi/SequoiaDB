@@ -188,6 +188,7 @@
       			<else>
       				
       				<echo message="now begin to test ${test_times}"/>
+      				<echo>end string is ${end_str}</echo>
       				<echo>call the test target---test_target</echo>
       				<if>
       					<not>

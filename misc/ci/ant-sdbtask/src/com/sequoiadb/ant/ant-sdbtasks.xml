@@ -43,6 +43,7 @@
 	<typedef name="getRowNum" classname="com.sequoiadb.ant.tools.getRowNum" onerror="ignore" />
 	<typedef name="sdbProperty" classname="com.sequoiadb.ant.tools.sdbProperty" onerror="ignore" />
 	<typedef name="sdbFileAdd" classname="com.sequoiadb.ant.tools.SdbFileAdd" onerror="ignore" />
+	<typedef name="stafTools" classname="com.sequoiadb.ant.tools.stafTools" onerror="ignore" />
 	
     <!-- typedef the tasks that work for ant less than 1.6 -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
