@@ -116,6 +116,8 @@
 		<echo message="tar basedir=${WORKSPACE}/${host.NAME}-copy-log   destfile=${WORKSPACE}/${host.NAME}-copy-log.${BUILD_NUMBER}" />
 		<tar basedir="${WORKSPACE}" destfile="${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz" compression="gzip" includes="${host.NAME}-copy-log/**" />
 		<property environment="env" />
+		
+		<!--
 		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz TODIRECTORY ${copy.log.path} TOMACHINE ${target.deploy_tar_gz.ip}" />
 		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz TODIRECTORY ${copy.log.path} TOMACHINE ${target.deploy_tar_gz.ip}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
 			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
@@ -136,7 +138,22 @@
 			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
 		</exec>
+		-->
 		
+		<stafTools workType="copy"
+			workDir="${copy.log.path}"
+			workHost="LOCAL"
+			saveDir="${copy.log.path}"
+			fileName="${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz"
+			toHost="${target.deploy_tar_gz.ip}" />
+		<stafTools workType="shell"
+			workHost="${target.deploy_tar_gz.ip}"
+			common="/usr/bin/find ${copy.log.path} -mtime +3 -delete;" 
+			workDir="${save.testLog.dir}" />
+		<stafTools workType="shell"
+			workHost="${save.testLog.hostname}"
+			common="/usr/bin/find ${save.testLog.dir} -mtime +1 -delete;"
+			workDir="${save.testLog.dir}" />
 	</target>
 
 </project>
