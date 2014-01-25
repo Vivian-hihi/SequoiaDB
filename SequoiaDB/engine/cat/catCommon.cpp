@@ -1057,7 +1057,7 @@ namespace engine
 
    INT32 catRemoveCLEx( const CHAR * clFullName, pmdEDUCB * cb,
                         SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB, INT16 w,
-                        BOOLEAN delSubCL )
+                        BOOLEAN delSubCL, INT32 version )
    {
       INT32 rc = SDB_OK ;
       CHAR szCLName[ DMS_COLLECTION_NAME_SZ + 1 ] = {0} ;
@@ -1076,6 +1076,10 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to parse catalog info(rc=%d)",
                   rc );
+      PD_CHECK( -1 == version || cataInfo.getVersion() == version,
+               SDB_CLS_COORD_NODE_CAT_VER_OLD, error, PDERROR,
+               "failed to dropCL, coord version old(curVer:%d, coordVer:%d)",
+               cataInfo.getVersion(), version );
       /*PD_CHECK( cataInfo.getMainCLName().empty(),
                SDB_ILL_RM_SUB_CL, error, PDERROR,
                "illegal remove sub-collection" );*/

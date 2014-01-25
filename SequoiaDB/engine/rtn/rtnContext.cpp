@@ -4520,6 +4520,8 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       std::vector< std::string > strSubCLList;
+      std::vector< std::string > strSubCLListTmp;
+      std::vector< std::string >::iterator iter;
       SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" );
       PD_CHECK( pCollectionName, SDB_INVALIDARG, error, PDERROR,
                "pCollectionName is null!" );
@@ -4540,12 +4542,25 @@ namespace engine
          goto error;
       }
       _version = pCataSet->getVersion();
-      pCataSet->getSubCLList( strSubCLList );
+      pCataSet->getSubCLList( strSubCLListTmp );
+      iter = strSubCLListTmp.begin();
+      while( iter != strSubCLListTmp.end() )
+      {
+         _clsCatalogSet *pSubSet = NULL;
+         pSubSet = _pCatAgent->collectionSet( iter->c_str() );
+         if ( NULL == pSubSet || 0 == pSubSet->groupCount() )
+         {
+            ++iter;
+            continue;
+         }
+         strSubCLList.push_back( *iter );
+         ++iter;
+      }
       _pCatAgent->release_r();
       }
 
       {
-         std::vector< std::string >::iterator iter = strSubCLList.begin();
+         iter = strSubCLList.begin();
          while( iter != strSubCLList.end() )
          {
             rtnContextDelCL *delContext = NULL;
@@ -4555,11 +4570,21 @@ namespace engine
             PD_RC_CHECK( rc, PDERROR,
                         "failed to create sub-context, drop cl failed(rc=%d)",
                         rc );
-            _subContextList[ *iter ] = contextID;
             rc = delContext->open( (*iter).c_str(), cb );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to open sub-context, drop cl failed(rc=%d)",
-                        rc );
+            if ( rc != SDB_OK )
+            {
+               _pRtncb->contextDelete( contextID, cb );
+               if ( SDB_DMS_NOTEXIST == rc )
+               {
+                  ++iter;
+                  continue;
+               }
+               PD_LOG( PDERROR,
+                     "failed to open sub-context, drop cl failed(rc=%d)",
+                     rc );
+               goto error;
+            }
+            _subContextList[ *iter ] = contextID;
             ++iter;
          }
       }

@@ -340,7 +340,8 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCOLLECTION, "catCatalogueManager::processCmdDropCollection" )
-   INT32 catCatalogueManager::processCmdDropCollection( const CHAR *pQuery )
+   INT32 catCatalogueManager::processCmdDropCollection( const CHAR *pQuery,
+                                                      INT32 version )
    {
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPCOLLECTION ) ;
@@ -366,7 +367,7 @@ namespace engine
       }
 
       rc = catRemoveCLEx( strName, _pEduCB, _pDmsCB, _pDpsCB,
-                          _majoritySize(), TRUE ) ;
+                          _majoritySize(), TRUE, version ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to drop collection %s from catalog, "
                     "rc = %d", strName, rc ) ;
 
@@ -1627,7 +1628,7 @@ namespace engine
                                            returnNum ) ;
             break ;
          case MSG_CAT_DROP_COLLECTION_REQ :
-            rc = processCmdDropCollection( pQuery ) ;
+            rc = processCmdDropCollection( pQuery, pQueryReq->version ) ;
             break ;
          case MSG_CAT_DROP_SPACE_REQ :
             rc = processCmdDropCollectionSpace( pQuery ) ;

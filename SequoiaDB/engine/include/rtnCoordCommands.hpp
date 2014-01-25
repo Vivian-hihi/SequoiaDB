@@ -540,7 +540,8 @@ namespace engine
       virtual INT32 doP1OnDataGroup( CHAR *pReceiveBuffer,
                                     pmdEDUCB * cb,
                                     SINT64 &contextID,
-                                    std::set<INT32> &ignoreRCList );
+                                    std::set<INT32> &ignoreRCList,
+                                    BOOLEAN isNeedRefresh );
 
       virtual INT32 doP2OnDataGroup( CHAR *pReceiveBuffer,
                                     pmdEDUCB * cb,

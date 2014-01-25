@@ -145,7 +145,7 @@ namespace engine
    /* Other Tools */
    INT32 catRemoveCLEx( const CHAR *clFullName,  pmdEDUCB *cb,
                         _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB, INT16 w,
-                        BOOLEAN delSubCL = FALSE ) ;
+                        BOOLEAN delSubCL = FALSE, INT32 version = -1 ) ;
    INT32 catRemoveCSEx( const CHAR *csName, pmdEDUCB *cb,
                         _SDB_DMSCB * dmsCB, _dpsLogWrapper * dpsCB, INT16 w ) ;
 

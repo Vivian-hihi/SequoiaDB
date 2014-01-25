@@ -2119,10 +2119,13 @@ namespace engine
       pmdKRCB *pKrcb = pmdGetKRCB();
       _SDB_RTNCB *pRtncb = pKrcb->getRTNCB();
       std::set<INT32> ignoreRCList;
+      BOOLEAN hasRetry = FALSE;
 
       getIgnoreRCList( ignoreRCList );
 
-      rc = doP1OnDataGroup( pReceiveBuffer, cb, contextID, ignoreRCList );
+   retry:
+      rc = doP1OnDataGroup( pReceiveBuffer, cb, contextID, ignoreRCList,
+                           hasRetry );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to execute phase1 on data group(rc=%d)",
                   rc );
@@ -2152,6 +2155,17 @@ namespace engine
       //PD_TRACE_EXITRC ( SDB_RTNCOCMD2PC_EXE, rc ) ;
       return rc;
    error:
+      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc
+         && !hasRetry )
+      {
+         if ( -1 != contextID )
+         {
+            pRtncb->contextDelete ( contextID, cb ) ;
+            contextID = -1;
+         }
+         hasRetry = TRUE;
+         goto retry;
+      }
       goto done;
    }
 
@@ -2185,7 +2199,8 @@ namespace engine
    INT32 rtnCoordCMD2PhaseCommit::doP1OnDataGroup(CHAR *pReceiveBuffer,
                                                 pmdEDUCB * cb,
                                                 SINT64 &contextID,
-                                                std::set<INT32> &ignoreRCList )
+                                                std::set<INT32> &ignoreRCList,
+                                                BOOLEAN isNeedRefresh )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOCMD2PC_DOP1 ) ;
@@ -2194,7 +2209,6 @@ namespace engine
       _SDB_RTNCB *pRtncb               = pKrcb->getRTNCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
       CoordGroupList sendGroupLst;
-      BOOLEAN isNeedRefresh = FALSE;
       BOOLEAN hasRefresh = FALSE;
       contextID = -1;
       BSONObj boEmpty;
@@ -2425,7 +2439,7 @@ namespace engine
 
       rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent, cb );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to drop the catalog of cs(rc=%d)",
+                  "failed to drop the catalog of cl(rc=%d)",
                   rc );
 
    done:

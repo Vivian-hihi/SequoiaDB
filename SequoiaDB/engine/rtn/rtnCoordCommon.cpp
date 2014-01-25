@@ -1283,16 +1283,24 @@ namespace engine
          while( iterCL != subCLLst.end() )
          {
             CoordCataInfoPtr subCataInfo;
+            CoordGroupList groupLstTmp;
+            CoordGroupList::iterator iterGrp;
             rc = rtnCoordGetLocalCata( (*iterCL).c_str(), subCataInfo );
             PD_RC_CHECK( rc, PDWARNING,
                         "failed to get sub-collection catalog-info(rc=%d)",
                         rc );
             rc = rtnCoordGetGroupsByCataInfo( subCataInfo,
                                              sendGroupLst,
-                                             groupLst );
+                                             groupLstTmp );
             PD_RC_CHECK( rc, PDERROR,
                         "failed to get sub-collection group-info(rc=%d)",
                         rc );
+            iterGrp = groupLstTmp.begin();
+            while ( iterGrp != groupLstTmp.end() )
+            {
+               groupLst[ iterGrp->first ] = iterGrp->second;
+               ++iterGrp;
+            }
             ++iterCL;
          }
       }

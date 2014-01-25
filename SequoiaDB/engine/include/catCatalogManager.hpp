@@ -106,7 +106,8 @@ namespace engine
                                       CHAR **ppReplyBody,
                                       UINT32 &replyBodyLen,
                                       INT32 &returnNum ) ;
-      INT32 processCmdDropCollection ( const CHAR *pQuery ) ;
+      INT32 processCmdDropCollection ( const CHAR *pQuery,
+                                       INT32 version = -1 ) ;
       INT32 processCmdDropCollectionSpace ( const CHAR *pQuery ) ;
 
       INT32 processQueryCatalogue ( void *pMsg );
