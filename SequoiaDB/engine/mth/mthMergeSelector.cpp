@@ -45,7 +45,7 @@ using namespace std ;
 *******************************************************************************/
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_FLDNMCHK, "fieldNameCheck" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_FLDNMCHK, "fieldNameCheck" )
    static INT32 fieldNameCheck ( const CHAR *pFieldName )
    {
       INT32 rc = SDB_OK ;
@@ -72,7 +72,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MRGSE_INIT, "_MergeSelectorElement::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MRGSE_INIT, "_MergeSelectorElement::init" )
    INT32 _MergeSelectorElement::init ( const CHAR *pSourceName,
                                        const CHAR *pTargetName,
                                        const CHAR *pOuterAlias,
@@ -137,7 +137,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL__ADDSEL, "_mthMergeSelector::_addSelector" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL__ADDSEL, "_mthMergeSelector::_addSelector" )
    INT32 _mthMergeSelector::_addSelector ( const BSONElement &ele )
    {
       INT32 rc = SDB_OK ;
@@ -171,7 +171,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL_LDPAN, "_mthMergeSelector::loadPattern" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL_LDPAN, "_mthMergeSelector::loadPattern" )
    INT32 _mthMergeSelector::loadPattern ( const BSONObj &selectorPattern,
                                           const CHAR *pOuterAlias,
                                           const CHAR *pInnerAlias )
@@ -201,9 +201,8 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL__BLDNEWOBJ, "_mthMergeSelector::_buildNewObj" )
-   INT32 _mthMergeSelector::_buildNewObj (
-                                           BSONObjBuilder &b,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL__BLDNEWOBJ, "_mthMergeSelector::_buildNewObj" )
+   INT32 _mthMergeSelector::_buildNewObj ( BSONObjBuilder &b,
                                            const BSONObj &obj,
                                            const CHAR *pSourceName,
                                            const CHAR *pTargetName )
@@ -224,14 +223,15 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL_SELECT, "_mthMergeSelector::select" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMRGSEL_SELECT, "_mthMergeSelector::select" )
    INT32 _mthMergeSelector::select ( const BSONObj &outer,
-                                const BSONObj &inner, BSONObj &target )
+                                     const BSONObj &inner,
+                                     BSONObj &target )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMRGSEL_SELECT );
-      SDB_ASSERT(_initialized, "The selector has not been initialized, please \
-call 'loadPattern' before using it" )
+      SDB_ASSERT(_initialized, "The selector has not been initialized, please "
+                 "call 'loadPattern' before using it" ) ;
 
       // create a builder with 10% extra space for buffer
       BSONObjBuilder builder ( (int)(target.objsize()*1.1));
