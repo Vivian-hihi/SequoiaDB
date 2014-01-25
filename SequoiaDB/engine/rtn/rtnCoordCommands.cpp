@@ -8250,7 +8250,6 @@ namespace engine
       MsgOpQuery *pLinkReq           = (MsgOpQuery *)pReceiveBuffer;
       pLinkReq->header.routeID.value = 0;
       pLinkReq->header.TID           = cb->getTID();
-      pLinkReq->header.opCode        = MSG_CAT_LINK_CL_REQ;
       CoordGroupList groupLst ;
       CoordGroupList sendGroupLst ;
 
@@ -8292,21 +8291,22 @@ namespace engine
          goto error ;
       }
 
+      rc = rtnCoordGetCataInfo( cb, strMainCLName.c_str(), TRUE, cataInfo );
+      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
+               "failed to get catalog info(rc=%d)", rc );
+      pLinkReq->version = cataInfo->getVersion();
+
       // send request to catalog
+      pLinkReq->header.opCode        = MSG_CAT_LINK_CL_REQ;
       rc = executeOnCataGroup ( (CHAR*)pLinkReq, pRouteAgent,
                                 cb, NULL, &groupLst ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "failed to execute on catalog(rc=%d)",
                   rc );
 
-      rc = rtnCoordGetCataInfo( cb, strMainCLName.c_str(), TRUE, cataInfo );
-      PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
-               "failed to get catalog info(rc=%d)", rc );
-
       //send request to data-node
       pLinkReq->header.opCode        = MSG_BS_QUERY_REQ;
       pLinkReq->header.routeID.value = 0;
-      pLinkReq->version = cataInfo->getVersion();
       rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
                               pRouteAgent, cb );
       PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
