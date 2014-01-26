@@ -313,11 +313,7 @@ namespace engine
          }
          else if ( OP_MSG == opCode )
          {
-            MsgOpMsg *msg = (MsgOpMsg *)header ;
-            // Since we already put '\0' at end of the packetSize+1 bytes, we
-            // should be safe to print the full &msg->msg[0] without worrying about
-            // out of range
-            rc = rtnMsg ( &msg->msg[0] ) ;
+            rc = rtnMsg ( (MsgOpMsg *)header ) ;
          }
          else if ( OP_UPDATE == opCode )
          {

@@ -1171,8 +1171,7 @@ namespace engine
 
    INT32 _clsShdSession::_onMsgReq ( NET_HANDLE handle, MsgHeader * msg )
    {
-      MsgOpMsg *pOpMsg = (MsgOpMsg*)msg ;
-      return rtnMsg( &pOpMsg->msg[0] ) ;
+      return rtnMsg( (MsgOpMsg*)msg ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__ONINRPTMSG, "_clsShdSession::_onInterruptMsg" )
