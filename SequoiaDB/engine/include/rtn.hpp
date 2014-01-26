@@ -119,7 +119,7 @@ namespace engine
                               SDB_DPSCB *dpsCB,
                               INT16 w = 1 ) ;
 
-   INT32 rtnMsg ( CHAR *pMsg ) ;
+   INT32 rtnMsg ( MsgOpMsg *pMsg ) ;
 
    // pCollectionName : requested collection name
    // selector        : fields want to select
