@@ -47,18 +47,11 @@
 					<property name="install.path" value="${install.path}" />
 					<property name="deploy.case.fullname" value="${deploy.case.fullname}" />
 					<property name="test.reports.path" value="${test.reports.path}" />
-					<!--property name="test.machine.no1.basic" value="${test.machine.no1.basic}" />
-					<property name="test.machine.no2.basic" value="${test.machine.no2.basic}" />
-					<property name="test.machine.no3.basic" value="${test.machine.no3.basic}" />
-					<property name="test.machine.no4.basic" value="${test.machine.no4.basic}" /-->
 					<property name="test-type" value="@{test-type}" />
 					<property name="antFileName" value="${antFileName}" />
 				</ant>
 			</sequential>
-			
 		</for>
-		
-		
 		<mkdir dir="${WORKSPACE}/${host.NAME}-copy-log/${antFileName}" />
 		<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${WORKSPACE}/${host.NAME}-copy-log/${antFileName}" />
 		

@@ -144,6 +144,17 @@
 
 		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}'&quot; -f ${test.case.fullname}.${parallel.num}" />
 		
+		<sdbProperty name="testBeginStr" value="beging to test ${test.case.fullname}.${parallel.num}" />
+		<sdbProperty name="testEndStr" value="over ${test.case.fullname}.${parallel.num} test" />
+		<!--
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
+		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testBeginStr}');db.close(); &quot;" />
+		</exec>
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
+		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testEndStr}');db.close(); &quot;" />
+		</exec>
+			
+		-->
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.argument}" />
@@ -193,6 +204,8 @@
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure 
 					type=&quot;junit.framework.AssertionFailedError&quot;&gt;&#10;&lt;![CDATA[command= ${sdb.fullname} ${sdb.cmd.argument}; 
 					return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;
+					testBeginStr=${testBeginStr} &#10;
+					testEndStr=${testEndStr} &#10;
 					download the test log :&#10;
 					${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;
 					&lt;/failure&gt;&#10;" />
@@ -217,8 +230,10 @@
 					
 					</finally>
 				</trycatch>
-	 
 			</then>
+			<else>
+			
+			</else>
 		</if>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" />
