@@ -413,8 +413,8 @@ namespace engine
          }
       }
 
-      PD_LOG( PDDEBUG, "release the lock(%s)",
-            lockId.toString().c_str() );
+      /*PD_LOG( PDDEBUG, "release the lock(%s)",
+            lockId.toString().c_str() );*/
    done:
       PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_RELEASE );
       return ;
@@ -1080,8 +1080,8 @@ namespace engine
                "failed to get the IX-lock(rc=%d)",
                rc );
 
-      PD_LOG( PDDEBUG, "get the IX-lock(%s)",
-            lockId.toString().c_str() );
+      /*PD_LOG( PDDEBUG, "get the IX-lock(%s)",
+            lockId.toString().c_str() );*/
    done:
       PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_TRYIX );
       return rc;
@@ -1146,8 +1146,8 @@ namespace engine
                 "failed to get the IS-lock(rc=%d)",
                 rc );
 
-      PD_LOG( PDDEBUG, "get the IS-lock(%s)",
-            lockId.toString().c_str() );
+      /*PD_LOG( PDDEBUG, "get the IS-lock(%s)",
+            lockId.toString().c_str() );*/
    done:
       PD_TRACE_EXIT ( SDB_DPSTRANSLOCK_TRYIS );
       return rc;
