@@ -8291,11 +8291,6 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnCoordGetCataInfo( cb, strMainCLName.c_str(), TRUE, cataInfo );
-      PD_CHECK( SDB_OK == rc, rc, error, PDERROR,
-               "failed to get catalog info(rc=%d)", rc );
-      pLinkReq->version = cataInfo->getVersion();
-
       // send request to catalog
       pLinkReq->header.opCode        = MSG_CAT_LINK_CL_REQ;
       rc = executeOnCataGroup ( (CHAR*)pLinkReq, pRouteAgent,
@@ -8303,6 +8298,11 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to execute on catalog(rc=%d)",
                   rc );
+
+      rc = rtnCoordGetCataInfo( cb, strMainCLName.c_str(), TRUE, cataInfo );
+      PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
+               "failed to get catalog info(rc=%d)", rc );
+      pLinkReq->version = cataInfo->getVersion();
 
       //send request to data-node
       pLinkReq->header.opCode        = MSG_BS_QUERY_REQ;
