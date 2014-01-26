@@ -659,6 +659,22 @@ typedef struct _MsgOpAggregate
    CHAR      name[1] ;    // name of the object
 }MsgOpAggregate;
 
+typedef enum _PREFER_REPLICA_TYPE
+{
+   PREFER_REPL_NODE_1 = 1,   // first node
+   PREFER_REPL_NODE_2,
+   PREFER_REPL_NODE_3,
+   PREFER_REPL_NODE_4,
+   PREFER_REPL_NODE_5,
+   PREFER_REPL_NODE_6,
+   PREFER_REPL_NODE_7,
+   PREFER_REPL_MASTER,        // master node
+   PREFER_REPL_SLAVE,         // any slave node
+   PREFER_REPL_ANYONE,        // any node( include master )
+
+   PREFER_REPL_TYPE_MAX
+}PREFER_REPLICA_TYPE;
+
 
 #pragma pack()
 
