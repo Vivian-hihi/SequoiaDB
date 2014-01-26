@@ -317,7 +317,7 @@ namespace engine
       ++(*modifierIndex) ;
       while ( *modifierIndex < (INT32)_modifierElements.size() )
       {
-         if ( _dollarList->size() == 0 &&
+         if ( _dollarList && _dollarList->size() == 0 &&
               _modifierElements[*modifierIndex]._dollarNum > 0 )
          {
             ++(*modifierIndex) ;
