@@ -1222,6 +1222,10 @@ namespace engine
          _agent->syncSend( src, &msg ) ;
          _timeout = 0 ;
       }
+
+      // disconnect all collection
+      _agent->disconnectAll() ;
+
       pmdGetKRCB()->getTransCB()->clearTransInfo();
       PD_TRACE_EXIT ( SDB__CLSFSDS__BEGIN );
       return ;
