@@ -45,12 +45,13 @@ namespace engine
    RTN_COORD_OP_ADD( MSG_BS_TRANS_BEGIN_REQ, rtnCoordTransBegin )
    RTN_COORD_OP_ADD( MSG_BS_TRANS_COMMIT_REQ, rtnCoordTransCommit )
    RTN_COORD_OP_ADD( MSG_BS_TRANS_ROLLBACK_REQ, rtnCoordTransRollback )
-   RTN_COORD_OP_ADD( OP_SQL, rtnCoordSql)
+   RTN_COORD_OP_ADD( OP_SQL, rtnCoordSql )
+   RTN_COORD_OP_ADD( MSG_BS_MSG_REQ, rtnCoordMsg )
    RTN_COORD_OP_ADD( MSG_NULL, rtnCoordOperatorDefault )
    RTN_COORD_OP_END
 
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOOPDEFAULT_EXECUTE, "rtnCoordOperatorDefault::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOOPDEFAULT_EXECUTE, "rtnCoordOperatorDefault::execute" )
    INT32 rtnCoordOperatorDefault::execute( CHAR *pReceiveBuffer, SINT32 packSize,
                            CHAR **ppResultBuffer, pmdEDUCB *cb,
                            MsgOpReply &replyHeader,
@@ -71,7 +72,7 @@ namespace engine
       return SDB_OK;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOKILLCONTEXT_EXECUTE, "rtnCoordKillContext::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOKILLCONTEXT_EXECUTE, "rtnCoordKillContext::execute" )
    INT32 rtnCoordKillContext::execute( CHAR *pReceiveBuffer, SINT32 packSize,
                                        CHAR **ppResultBuffer, pmdEDUCB *cb,
                                        MsgOpReply &replyHeader,
@@ -397,4 +398,91 @@ namespace engine
    error:
       goto done;
    }
+
+   /*
+      rtnCoordMsg implement
+   */
+   INT32 rtnCoordMsg::execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                               CHAR **ppResultBuffer, pmdEDUCB *cb,
+                               MsgOpReply &replyHeader, BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      pmdKRCB *pKrcb = pmdGetKRCB() ;
+      CoordCB *pCoordcb = pKrcb->getCoordCB() ;
+      netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent() ;
+
+      INT32 rcTmp = SDB_OK ;
+      REPLY_QUE replyQue ;
+
+      // fill default-reply
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.header.opCode        = MSG_BS_MSG_RES ;
+      replyHeader.header.requestID     = pHeader->requestID ;
+      replyHeader.header.routeID.value = 0 ;
+      replyHeader.header.TID           = pHeader->TID ;
+      replyHeader.contextID            = -1 ;
+      replyHeader.flags                = SDB_OK ;
+      replyHeader.numReturned          = 0 ;
+      replyHeader.startFrom            = 0 ;
+      // set tid
+      pHeader->TID = cb->getTID() ;
+
+      CoordGroupList groupLst ;
+
+      ROUTE_SET sendNodes ;
+      REQUESTID_MAP successNodes ;
+      ROUTE_RC_MAP failedNodes ;
+
+      // run msg
+      rtnMsg( (MsgOpMsg *)pReceiveBuffer ) ;
+
+      // list all groups
+      rc = rtnCoordGetAllGroupList( cb, groupLst, NULL, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d", rc ) ;
+
+      // get nodes
+      rc = rtnCoordGetGroupNodes( cb, BSONObj(), NODE_SEL_ALL,
+                                  groupLst, sendNodes ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
+      if ( sendNodes.size() == 0 )
+      {
+         PD_LOG( PDWARNING, "Not found any node" ) ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
+
+      // send msg
+      rtnCoordSendRequestToNodes( pReceiveBuffer, sendNodes, 
+                                  pRouteAgent, cb, successNodes,
+                                  failedNodes ) ;
+      rcTmp = rtnCoordGetReply( cb, successNodes, replyQue, MSG_BS_MSG_RES,
+                                TRUE, FALSE ) ;
+      if ( rcTmp != SDB_OK )
+      {
+         PD_LOG( PDERROR, "Failed to get the reply, rc", rcTmp ) ;
+      }
+
+      if ( failedNodes.size() != 0 )
+      {
+         rc = rcTmp ? rcTmp : failedNodes.begin()->second ;
+         goto error ;
+      }
+
+   done:
+      while ( !replyQue.empty() )
+      {
+         MsgOpReply *pReply = NULL ;
+         pReply = ( MsgOpReply *)( replyQue.front() ) ;
+         replyQue.pop() ;
+         SDB_OSS_FREE( pReply ) ;
+      }
+      return rc ;
+   error:
+      rtnCoordClearRequest( cb, successNodes ) ;
+      replyHeader.flags = rc ;
+      goto done ;
+   }
+
 }
+

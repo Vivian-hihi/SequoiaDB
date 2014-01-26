@@ -64,6 +64,17 @@ namespace engine
                               MsgOpReply &replHeader,
                               BSONObj **ppErrorObj ) ;
    } ;
+
+   class rtnCoordMsg : public rtnCoordOperator
+   {
+   public:
+      virtual INT32 execute ( CHAR *pReceiveBuffer, SINT32 packSize,
+                              CHAR **ppResultBuffer, pmdEDUCB *cb,
+                              MsgOpReply &replyHeader,
+                              BSONObj **ppErrorObj ) ;
+   } ;
+
 }
 
-#endif
+#endif //RTNCOORDOPERATOR_HPP__
+
