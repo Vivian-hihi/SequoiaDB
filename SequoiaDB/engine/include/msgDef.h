@@ -99,6 +99,7 @@
 #define FIELD_NAME_TOTALREAD                 "TotalRead"
 #define FIELD_NAME_TOTALREADTIME             "TotalReadTime"
 #define FIELD_NAME_TOTALWRITETIME            "TotalWriteTime"
+#define FIELD_NAME_TOTALMAPPED               "TotalMapped"
 #define FIELD_NAME_REPLINSERT                "ReplInsert"
 #define FIELD_NAME_REPLUPDATE                "ReplUpdate"
 #define FIELD_NAME_REPLDELETE                "ReplDelete"
@@ -344,6 +345,7 @@
 #define CMD_NAME_EVAL                        "eval"
 #define CMD_NAME_LINK_CL                     "link collection"
 #define CMD_NAME_UNLINK_CL                   "unlink collection"
+#define CMD_NAME_SETSESS_ATTR                "set session attribute"
 
 #if defined (_DEBUG)
 #define CMD_NAME_DEBUG_QUERY                 "debug query"

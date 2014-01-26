@@ -661,6 +661,7 @@ typedef struct _MsgOpAggregate
 
 typedef enum _PREFER_REPLICA_TYPE
 {
+   PREFER_REPL_TYPE_MIN = 0,
    PREFER_REPL_NODE_1 = 1,   // first node
    PREFER_REPL_NODE_2,
    PREFER_REPL_NODE_3,
