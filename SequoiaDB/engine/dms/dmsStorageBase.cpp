@@ -176,6 +176,11 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to open %s, rc=%d", _fullPathName, rc ) ;
          goto error ;
       }
+      if ( createNew )
+      {
+         PD_LOG( PDEVENT, "Create storage unit file[%s] succeed",
+                 _fullPathName.c_str() ) ;
+      }
 
       rc = ossMmapFile::size ( fileSize ) ;
       if ( rc )
