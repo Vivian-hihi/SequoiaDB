@@ -92,6 +92,11 @@ namespace engine
             _frame.close( handle ) ;
          }
 
+         inline void disconnectAll()
+         {
+            _frame.close() ;
+         }
+
          inline  io_service *ioservice()
          {
             return &( _frame.ioservice() ) ;
