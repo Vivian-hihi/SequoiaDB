@@ -344,13 +344,11 @@ namespace engine
       _pCollectionName = NULL ;
       BOOLEAN isNeedRollback = FALSE;
 
-      // check route id don't check full sync
-      if ( MSG_COOR_CHECK_ROUTEID_REQ == msg->opCode )
-      {
-         loop = FALSE ;
-      }
-      //if the node is full sync, can't service
-      else if ( _pReplSet->isFullSync() )
+      // if the node is full sync, can't service
+      if ( MSG_COOR_CHECK_ROUTEID_REQ != msg->opCode &&
+           MSG_BS_MSG_REQ != msg->opCode &&
+           MSG_BS_KILL_CONTEXT_REQ != msg->opCode &&
+           _pReplSet->isFullSync() )
       {
          rc = SDB_CLS_FULL_SYNC ;
          loop = FALSE ;
