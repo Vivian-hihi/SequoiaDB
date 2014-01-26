@@ -239,7 +239,7 @@
 #define FIELD_NAME_ERROR_NODES               "ErrNodes"
 #define FIELD_NAME_FUNC                      "func"
 #define FIELD_NAME_FUNCTYPE                  "funcType"
-#define FIELD_NAME_PREFER_REPLICA            "PreferReplica"
+#define FIELD_NAME_PREFERED_REPLICA          "PreferedReplica"
 #define VALUE_NAME_MASTER                    "Master"
 #define VALUE_NAME_SLAVE                     "Slave"
 #define VALUE_NAME_ANYONE                    "Anyone"
