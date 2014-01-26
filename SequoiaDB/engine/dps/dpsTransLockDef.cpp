@@ -62,7 +62,7 @@ namespace engine
    std::string dpsTransLockId::toString() const
    {
       CHAR szBuffer[100] = {0};
-      ossSnprintf( szBuffer, 50,
+      ossSnprintf( szBuffer, sizeof(szBuffer)-1,
                   "CSID:%u, CLID:%u, recordID:%d, recordOffset:%d",
                   _logicCSID, _collectionID, _recordExtentID, _recordOffset );
       std::string strInfo( szBuffer );
