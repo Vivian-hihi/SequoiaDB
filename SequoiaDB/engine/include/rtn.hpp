@@ -180,7 +180,8 @@ namespace engine
                                            pmdEDUCB *cb,
                                            SDB_DMSCB *dmsCB, SDB_DPSCB *dpsCB,
                                            INT32 pageSize = DMS_PAGE_SIZE_DFT,
-                                           BOOLEAN sysCall = FALSE ) ;
+                                           BOOLEAN sysCall = FALSE,
+                                           BOOLEAN delWhenExist = FALSE ) ;
 
    INT32 rtnCreateCollectionCommand ( const CHAR *pCollection,
                                       UINT32 attributes,

@@ -970,7 +970,8 @@ namespace engine
    INT32 rtnCreateCollectionSpaceCommand ( const CHAR *pCollectionSpace,
                                            pmdEDUCB *cb, SDB_DMSCB *dmsCB,
                                            SDB_DPSCB *dpsCB, INT32 pageSize,
-                                           BOOLEAN sysCall )
+                                           BOOLEAN sysCall,
+                                           BOOLEAN delWhenExist )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATECSCOMMAND ) ;
@@ -1041,7 +1042,7 @@ namespace engine
 
       rc = su->open ( pmdGetKRCB()->getDBPath(),
                       pmdGetKRCB()->getIndexPath(),
-                      TRUE ) ;
+                      TRUE, delWhenExist ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection space %s at %s, rc: %d",

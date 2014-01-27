@@ -69,7 +69,8 @@ namespace engine
          ~_dmsStorageUnit() ;
 
          INT32 open ( const CHAR *pDataPath, const CHAR *pIndexPath,
-                      BOOLEAN createNew = TRUE ) ;
+                      BOOLEAN createNew = TRUE,
+                      BOOLEAN delWhenExist = FALSE ) ;
          void  close () ;
          INT32 remove () ;
 

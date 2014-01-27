@@ -87,12 +87,12 @@ namespace engine
       else if ( SDB_DMS_CS_NOTEXIST != rc )
       {
          PD_LOG( PDERROR, "Lock temp collection space failed, rc: %d", rc ) ;
-         goto error ;
       }
 
       // create new systemp collection space
       rc = rtnCreateCollectionSpaceCommand ( SDB_DMSTEMP_NAME, NULL, _dmsCB,
-                                             NULL, DMS_PAGE_SIZE_MAX, TRUE ) ;
+                                             NULL, DMS_PAGE_SIZE_MAX, TRUE,
+                                             TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create temp collectionspace, rc: %d",

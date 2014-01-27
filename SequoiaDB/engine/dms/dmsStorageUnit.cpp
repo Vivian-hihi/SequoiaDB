@@ -95,7 +95,7 @@ namespace engine
    }
 
    INT32 _dmsStorageUnit::open( const CHAR *pDataPath, const CHAR *pIndexPath,
-                                BOOLEAN createNew )
+                                BOOLEAN createNew, BOOLEAN delWhenExist )
    {
       INT32 rc = SDB_OK ;
 
@@ -107,7 +107,7 @@ namespace engine
       }
 
       // open data
-      rc = _pDataSu->openStorage( pDataPath, createNew ) ;
+      rc = _pDataSu->openStorage( pDataPath, createNew, delWhenExist ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Open storage data su failed, rc: %d", rc ) ;
@@ -118,7 +118,7 @@ namespace engine
          goto error ;
       }
       // open index
-      rc = _pIndexSu->openStorage( pIndexPath, createNew ) ;
+      rc = _pIndexSu->openStorage( pIndexPath, createNew, delWhenExist ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Open storage index su failed, rc: %d", rc ) ;

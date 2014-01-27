@@ -322,7 +322,8 @@ namespace engine
             // if collection space was not exist, let's create one
             rc = rtnCreateCollectionSpaceCommand ( CAT_SYS_SPACE_NAME,
                                                    _pEDUCB, _pDmsCB, NULL,
-                                                   DMS_PAGE_SIZE_DFT, TRUE ) ;
+                                                   DMS_PAGE_SIZE_DFT, TRUE,
+                                                   TRUE ) ;
             PD_RC_CHECK ( rc, PDERROR,
                           "Failed to create %s collection space, rc = %d",
                           CAT_SYS_SPACE_NAME, rc ) ;
@@ -385,7 +386,8 @@ namespace engine
       {
          rc = rtnCreateCollectionSpaceCommand ( CAT_PROCEDURES_SPACE_NAME,
                                                 _pEDUCB, _pDmsCB, NULL,
-                                                DMS_PAGE_SIZE_DFT, TRUE ) ;
+                                                DMS_PAGE_SIZE_DFT, TRUE,
+                                                TRUE ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to crt procedures cs:%d",rc ) ;

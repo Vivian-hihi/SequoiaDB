@@ -691,7 +691,8 @@ namespace engine
          goto done ;
       }
       // create local cs and collection
-      rc = _replayer.replayCrtCS( cs.c_str(), pageSize, eduCB() ) ;
+      rc = _replayer.replayCrtCS( cs.c_str(), pageSize, eduCB(),
+                                  CLS_REPL == type() ? TRUE : FALSE ) ;
       rc = _replayer.replayCrtCollection( fullName, attributes, eduCB() ) ;
       if ( SDB_OK != rc && SDB_DMS_EXIST != rc )
       {
@@ -1160,7 +1161,7 @@ namespace engine
          while ( itCS != _mapEmptyCS.end() )
          {
             rc = _replayer.replayCrtCS( itCS->first.c_str(), itCS->second,
-                                        eduCB() ) ;
+                                        eduCB(), TRUE ) ;
             if ( SDB_OK != rc && SDB_DMS_CS_EXIST != rc )
             {
                PD_LOG( PDWARNING, "FS Session[%s]: create empty collection "

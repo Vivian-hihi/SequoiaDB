@@ -719,11 +719,12 @@ namespace engine
    }
 
    INT32 _clsReplayer::replayCrtCS( const CHAR *cs, INT32 pageSize,
-                                    _pmdEDUCB *eduCB )
+                                    _pmdEDUCB *eduCB, BOOLEAN delWhenExist )
    {
       SDB_ASSERT( NULL != cs, "cs should not be NULL" )
       return rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
-                                              _dpsCB, pageSize, TRUE ) ;
+                                              _dpsCB, pageSize, TRUE,
+                                              delWhenExist ) ;
    }
 
    INT32 _clsReplayer::replayCrtCollection( const CHAR *collection,

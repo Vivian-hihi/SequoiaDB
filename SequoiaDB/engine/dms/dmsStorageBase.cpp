@@ -117,7 +117,8 @@ namespace engine
       return "" ;
    }
 
-   INT32 _dmsStorageBase::openStorage( const CHAR *pPath, BOOLEAN createNew )
+   INT32 _dmsStorageBase::openStorage( const CHAR *pPath, BOOLEAN createNew,
+                                       BOOLEAN delWhenExist )
    {
       INT32 rc               = SDB_OK ;
       UINT64 fileSize        = 0 ;
@@ -136,6 +137,10 @@ namespace engine
       if ( createNew )
       {
          mode |= OSS_CREATEONLY ;
+         if ( delWhenExist )
+         {
+            mode |= OSS_REPLACE ;
+         }
       }
 
       // if we specify the path, let's copy it to full file path
@@ -178,8 +183,8 @@ namespace engine
       }
       if ( createNew )
       {
-         PD_LOG( PDEVENT, "Create storage unit file[%s] succeed",
-                 _fullPathName ) ;
+         PD_LOG( PDEVENT, "Create storage unit file[%s] succeed, mode: %x",
+                 _fullPathName, mode ) ;
       }
 
       rc = ossMmapFile::size ( fileSize ) ;

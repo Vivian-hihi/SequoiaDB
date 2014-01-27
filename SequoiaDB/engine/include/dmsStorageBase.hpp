@@ -207,7 +207,8 @@ namespace engine
          inline dmsExtentID extentID ( ossValuePtr extendAddr ) ;
 
       public:
-         INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE ) ;
+         INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE,
+                             BOOLEAN delWhenExist = FALSE ) ;
          void  closeStorage () ;
          INT32 removeStorage() ;
          BOOLEAN isOpened() const { return ossMmapFile::_opened ; }
