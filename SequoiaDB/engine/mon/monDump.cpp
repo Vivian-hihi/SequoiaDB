@@ -545,7 +545,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 seconds, microseconds ;
       CHAR   timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
-      CHAR   CPUTime[ MON_CPU_USAGE_STR_SIZE ] = { 0 } ;
 
       PD_TRACE_ENTRY ( SDB_MONSESSIONMONEDUFULL ) ;
       ob.append( FIELD_NAME_TOTALDATAREAD, (SINT64)full._monApplCB.totalDataRead ) ;
@@ -573,13 +572,13 @@ namespace engine
       ossTimestampToString( full._monApplCB._connectTimestamp, timestamp ) ;
       ob.append ( FIELD_NAME_CONNECTTIMESTAMP, timestamp ) ;
 
-      ossSnprintf( CPUTime, sizeof(CPUTime), "%u.%06u",
-                   userTime.seconds, userTime.microsec ) ;
-      ob.append( FIELD_NAME_USERCPU, CPUTime ) ;
+      double userCpu;
+      userCpu = userTime.seconds + (double)userTime.microsec / 1000000 ;
+      ob.append( FIELD_NAME_USERCPU, userCpu ) ;
 
-      ossSnprintf( CPUTime, sizeof(CPUTime), "%u.%06u",
-                    sysTime.seconds, sysTime.microsec ) ;
-      ob.append( FIELD_NAME_SYSCPU, CPUTime ) ;
+      double sysCpu;
+      sysCpu = sysTime.seconds + (double)sysTime.microsec / 1000000 ;
+      ob.append( FIELD_NAME_SYSCPU, sysCpu ) ;
 
       PD_TRACE_EXITRC ( SDB_MONSESSIONMONEDUFULL, rc ) ;
       return rc ;
