@@ -19,8 +19,8 @@ Sdb.prototype.help = function() {
    println("   getCS(<name>)");
    println("   getRG(<name>|<id>)");
    println("   createCS(<name>, [pageSize])");
-   println("   createRG(<name>)");
-   println("   removeRG(<name>)");
+   println("   createShard(<name>)");
+   println("   removeShard(<name>)");
    println("   createCataRG(<host>,<service>,<dbpath>,[config])");
    println("   dropCS(<name>)");
    println("   list(<listType>, [cond], [sel], [sort])");
@@ -29,7 +29,7 @@ Sdb.prototype.help = function() {
    println("   listReplicaGroups()");
    println("   resetSnapshot([cond])");
    println("   snapshot(<snapType>, [cond], [sel], [sort])");
-   println("   startRG(<name1>,[name2]...)");
+   println("   startShard(<name1>,[name2]...)");
    println("   createUsr(<name>, <password>)");
    println("   dropUsr(<name>, <password>)");
    println("   exec(<select sql>)");
@@ -53,7 +53,6 @@ Sdb.prototype.help = function() {
    println("   waitTasks(<id1>,[id2],...)");
    println("   cancelTask(<id>,[isAsync])");
    println("   setSessionAttr(<options>) - # eg:{\"PreferedReplica\":\"M\"/\"S\"/\"A\"/1-7}, prefer to choose master/slave/anyone/node1-node7");
-   println("   msg()");
    println("   close()");
 }
 
