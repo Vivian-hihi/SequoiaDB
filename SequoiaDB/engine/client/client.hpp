@@ -321,12 +321,12 @@ namespace sdbclient
       virtual INT32 attachCollection ( const CHAR *subClFullName,
                                       const bson::BSONObj &options) = 0 ;
       virtual INT32 detachCollection ( const CHAR *subClFullName) = 0 ;
-
+     
       //virtual INT32 alter ( const bson *options ) = 0 ;
    } ;
 
 /** \class sdbCollection
-    \brief Database operation interfaces of cursor.
+      \brief Database operation interfaces of cursor.
 
       Class sdbCollection is a handle class of virtual base class _sdbCollection.
 */
@@ -334,23 +334,23 @@ namespace sdbclient
    {
    private :
 /** \fn sdbCollection ( const sdbCollection& other ) ;
-    \brief Copy constructor
-    \param[in] A const object reference of class sdbCollection.
+      \brief Copy constructor
+      \param[in] A cosnt object reference of class sdbReplicaGroup.
 */
       sdbCollection ( const sdbCollection& other ) ;
 
 /** \fn sdbCollection& operator=( const sdbCollection& )
-    \brief Assignment constructor
-    \param[in] a const reference of class sdbCollection.
-    \retval A cosnt object reference of class sdbCollection.
+      \brief Assignment constructor
+      \param[in] a const reference of class sdbCollection.
+      \retval A cosnt object reference of class sdbCollection.
 */
       sdbCollection& operator=( const sdbCollection& ) ;
    public :
 /** \var pCollection
-    \breif A pointer of virtual base class _sdbCollection
+      \breif A pointer of virtual base class _sdbCollection
 
-    Class sdbCollection is a shell for _sdbCollection.We use pCollection to
-    call the methods in class _sdbCollection.
+      Class sdbCollection is a shell for _sdbCollection.We use pCollection to
+      call the methods in class _sdbCollection.
 */
       _sdbCollection *pCollection ;
 
