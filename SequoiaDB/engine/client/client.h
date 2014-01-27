@@ -1380,8 +1380,8 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
                              SINT32 num );
 
 /** \fn INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
-                                SINT64 taskID,
-                                BOOLEAN isAsync ) ;
+                              SINT64 taskID,
+                              BOOLEAN isAsync ) ;
     \brief Cancel the specified task.
     \param [in] cHandle The connection handle
     \param [in] taskID The task id
@@ -1391,8 +1391,23 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
-                                SINT64 taskID,
-                                BOOLEAN isAsync ) ;
+                                 SINT64 taskID,
+                                 BOOLEAN isAsync ) ;
 
+/** \fn INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
+                                  bson *options ) ;
+    \brief Set the attributes of the session.
+    \param [in] cHandle The connection handle
+    \param [in] options The configuration options for session.The "options"
+                contains 3 options as below. All the elements in options are optional. eg:
+
+        PreferedReplica         : 
+        SDB_SNAP_CONTEXTS_CURRENT : Get the current context's snapshot
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
+                                     bson *options ) ;
+SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle ) ;
 SDB_EXTERN_C_END
 #endif

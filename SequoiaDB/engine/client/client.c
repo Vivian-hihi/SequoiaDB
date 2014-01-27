@@ -6021,7 +6021,7 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
    INT32 rc                      = SDB_OK ;
    BOOLEAN result                = FALSE ;
    SINT64 contextID              = 0 ;
-   const CHAR *key               = NULL ;
+//   const CHAR *key               = NULL ;
    bson newObj ;
    bson_iterator it ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -6451,6 +6451,156 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
    }
 done :
    bson_destroy ( &newObj ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
+                                     bson *options )
+{
+   INT32 rc              = SDB_OK ;
+   BOOLEAN result        = FALSE ;
+   SINT64 contextID      = 0 ;
+   const CHAR *key       = NULL ;
+   INT32 value           = PREFER_REPL_TYPE_MAX ;
+   const CHAR *str_value = NULL ;
+   INT32 int_value       = 0 ;
+   bson newObj ;
+   bson_iterator it ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+   if ( !connection || connection->_handleType != SDB_HANDLE_TYPE_CONNECTION )
+   // check handle
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+   // check argument
+   if ( options == NULL )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   // build obj
+   bson_init ( &newObj ) ;
+   bson_iterator_init ( &it, options ) ;
+   while ( BSON_EOO != bson_iterator_next( &it ) )
+   {
+      // get key
+      key = bson_iterator_key( &it ) ;
+      // get value
+      if ( strcmp( FIELD_NAME_PREFERED_REPLICA, key ) == 0 )
+      {
+         switch ( bson_iterator_type( &it ) )
+         {
+            case BSON_STRING :
+               str_value = bson_iterator_string ( &it ) ;
+               if ( strcmp( "M", str_value ) == 0 ) // master
+                  value = PREFER_REPL_MASTER ;
+               else if ( strcmp( "S", str_value ) == 0 ) // slave
+                  value = PREFER_REPL_SLAVE ;
+               else if ( strcmp( "A", str_value ) == 0 ) // anyone
+                  value = PREFER_REPL_ANYONE ;
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               break ;
+            case BSON_INT :
+               int_value = bson_iterator_int ( &it ) ;
+               if ( 1 <= int_value && int_value <= 7 )
+                  value = int_value ;
+               else
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               break ;
+            default :
+               rc = SDB_INVALIDARG ;
+               goto error ;
+         }
+         // append element
+         rc = bson_append_int ( &newObj, key, value ) ;
+         if ( rc )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         break ;
+      }
+   }
+   rc = bson_finish ( &newObj ) ;
+   if ( rc )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = clientBuildQueryMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
+                              CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR,
+                              0, 0, 0, -1,
+                              &newObj, NULL, NULL, NULL,
+                              connection->_endianConvert) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _send ( connection->_sock, (MsgHeader*)connection->_pSendBuffer,
+                connection->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _recvExtract ( connection->_sock, (MsgHeader**)&connection->_pReceiveBuffer,
+                       &connection->_receiveBufferSize, &contextID, &result,
+                       connection->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle )
+{
+   INT32 rc              = SDB_OK ;
+   BOOLEAN result        = FALSE ;
+   SINT64 contextID      = 0 ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*) cHandle ;
+   if ( !connection || connection->_handleType != SDB_HANDLE_TYPE_CONNECTION )
+   // check handle
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+   rc = clientBuildQueryMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
+                              CMD_ADMIN_PREFIX ,
+//                              CMD_ADMIN_PREFIX MSG_BS_MSG_REQ,
+                              0, 0, 0, -1,
+                              NULL, NULL, NULL, NULL,
+                              connection->_endianConvert) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _send ( connection->_sock, (MsgHeader*)connection->_pSendBuffer,
+                connection->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _recvExtract ( connection->_sock, (MsgHeader**)&connection->_pReceiveBuffer,
+                       &connection->_receiveBufferSize, &contextID, &result,
+                       connection->_endianConvert ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+done :
    return rc ;
 error :
    goto done ;
