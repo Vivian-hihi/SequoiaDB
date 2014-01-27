@@ -93,6 +93,9 @@
 
 
 	<target name="test-one-case" depends="">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="db.RG.info" >
+		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.listReplicaGroups();db.close(); &quot;" />
+		</exec>
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
 		
 		<exec executable="sed">
@@ -168,9 +171,7 @@
 				
 				<trycatch>
 					<try>
-						<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="db.RG.info" >
-		  				<arg line=" -s &quot; db = new Sdb('localhost',50000);db.listReplicaGroups();db.close(); &quot;" />
-						</exec>
+
 				<if>
 					<equals arg1="${to.copy.test.log}" arg2="true" />
 					<then>
