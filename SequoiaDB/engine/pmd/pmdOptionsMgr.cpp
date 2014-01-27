@@ -81,6 +81,7 @@ namespace engine
    #define PMD_MIN_HJ_SZ               (64)
    #define PMD_DEFAULT_MAX_REPLSYNC    (10)
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
+   #define PMD_DFT_INDEX_SCAN_STEP     (30)
 
    /*
       _pmdCfgExchange implement
@@ -821,6 +822,7 @@ namespace engine
       _replBucketSize      = PMD_DFT_REPL_BUCKET_SIZE ;
       _memDebugEnabled     = FALSE ;
       _memDebugSize        = 0 ;
+      _indexScanStep       = PMD_DFT_INDEX_SCAN_STEP ;
       _dpslocal            = FALSE ;
       _traceOn             = FALSE ;
       _traceBufSz          = TRACE_DFT_BUFFER_SIZE ;
@@ -936,6 +938,10 @@ namespace engine
       // --memdebugsize
       rdxUInt( pEX, PMD_OPTION_MEMDEBUGSIZE, _memDebugSize, FALSE, TRUE, 0,
                TRUE ) ;
+      // --indexscanstep
+      rdxUInt( pEX, PMD_OPTION_INDEX_SCAN_STEP, _indexScanStep, FALSE, TRUE,
+               PMD_DFT_INDEX_SCAN_STEP, TRUE ) ;
+      rdvMinMax( pEX, _indexScanStep, 1, 10000, TRUE ) ;
       // --dpslocal
       rdxBooleanS( pEX, PMD_OPTION_DPSLOCAL, _dpslocal, FALSE, TRUE, FALSE,
                    TRUE ) ;

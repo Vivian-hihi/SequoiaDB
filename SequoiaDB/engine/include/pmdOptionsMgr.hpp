@@ -358,6 +358,7 @@ namespace engine
          inline BOOLEAN transactionOn () const { return _transactionOn ; }
          inline BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
          inline UINT32 memDebugSize () const { return _memDebugSize ; }
+         inline UINT32 indexScanStep () const { return _indexScanStep ; }
          inline UINT32 logBuffSize () const { return _logBuffSize ; }
 
       protected: // rdx members
@@ -383,6 +384,7 @@ namespace engine
          UINT32      _replBucketSize ;
          BOOLEAN     _memDebugEnabled ;
          UINT32      _memDebugSize ;
+         UINT32      _indexScanStep ;
          BOOLEAN     _dpslocal ;
          BOOLEAN     _traceOn ;
          UINT32      _traceBufSz ;

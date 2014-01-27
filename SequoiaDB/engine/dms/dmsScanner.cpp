@@ -613,8 +613,6 @@ namespace engine
       }
    }
 
-   #define DMS_IXSCANNER_ONCE_NUM         (100)
-
    INT32 _dmsIXSecScanner::_firstInit( pmdEDUCB * cb )
    {
       INT32 rc          = SDB_OK ;
@@ -656,7 +654,7 @@ namespace engine
       _cb   = cb ;
       // unset first run
       _firstRun = FALSE ;
-      _onceRestNum = DMS_IXSCANNER_ONCE_NUM ;
+      _onceRestNum = (INT64)pmdGetKRCB()->getOptionCB()->indexScanStep() ;
 
    done:
       return rc ;
