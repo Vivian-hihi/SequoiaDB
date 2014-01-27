@@ -5711,10 +5711,10 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SET_SESSION_ATTR, "sdb_msg" )
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MSG, "sdb_msg" )
 static JSBool sdb_msg ( JSContext *cx, uintN argc, jsval *vp )
 {
-   PD_TRACE_ENTRY ( SDB_SDB_SET_SESSION_ATTR );
+   PD_TRACE_ENTRY ( SDB_SDB_MSG );
    sdbConnectionHandle *connection  = NULL ;
    JSBool ret                       = JS_TRUE ;
    INT32 rc                         = SDB_OK ;
@@ -5727,7 +5727,7 @@ static JSBool sdb_msg ( JSContext *cx, uintN argc, jsval *vp )
 
    JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
 done :
-   PD_TRACE_EXIT ( SDB_SDB_SET_SESSION_ATTR );
+   PD_TRACE_EXIT ( SDB_SDB_MSG );
    return ret ;
 error :
    TRY_REPORT ( cx , "Sdb.msg(): false" ) ;
