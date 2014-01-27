@@ -2355,7 +2355,7 @@ namespace engine
    {
       _groupID = groupID ;
       _groupVersion = 0 ;
-      _primaryPos = 0;
+      _primaryPos = CLS_RG_NODE_POS_INVALID;
       _primaryNode.value = MSG_INVALID_ROUTEID ;
    }
 
@@ -2554,6 +2554,7 @@ namespace engine
    void _clsGroupItem::_clear ()
    {
       _vecNodes.clear () ;
+      _primaryPos = CLS_RG_NODE_POS_INVALID;
    }
 
    UINT32 _clsGroupItem::getPrimaryPos()
@@ -2564,6 +2565,7 @@ namespace engine
    void _clsGroupItem::cancelPrimary ()
    {
       _primaryNode.value = MSG_INVALID_ROUTEID ;
+      _primaryPos = CLS_RG_NODE_POS_INVALID ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPPRRIMARY, "_clsGroupItem::updatePrimary" )
@@ -2587,6 +2589,7 @@ namespace engine
       if ( !primary )
       {
          _primaryNode.value = MSG_INVALID_ROUTEID ;
+         _primaryPos = CLS_RG_NODE_POS_INVALID ;
          goto done ;
       }
 

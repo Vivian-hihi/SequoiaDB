@@ -676,6 +676,8 @@ typedef enum _PREFER_REPLICA_TYPE
    PREFER_REPL_TYPE_MAX
 }PREFER_REPLICA_TYPE;
 
+#define CLS_RG_NODE_POS_INVALID        0xffffffff
+
 
 #pragma pack()
 

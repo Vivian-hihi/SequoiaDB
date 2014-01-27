@@ -1630,6 +1630,13 @@ namespace engine
          case PREFER_REPL_MASTER:
             {
                posTmp = groupItem->getPrimaryPos();
+               // if there is no primary,
+               // then do not break and go on to
+               // get random node
+               if ( CLS_RG_NODE_POS_INVALID != posTmp )
+               {
+                  break;
+               }
             }
          case PREFER_REPL_ANYONE:
          case PREFER_REPL_SLAVE:
@@ -1868,7 +1875,7 @@ namespace engine
                   break;
                }
             }
-            rc = rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb ) ;
+            rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb ) ;
             ++i;
 
             if ( SDB_OK == rc )
