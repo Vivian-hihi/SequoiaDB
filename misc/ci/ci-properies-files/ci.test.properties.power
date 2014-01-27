@@ -8,7 +8,7 @@ deploy.tar.file.name=deploy.tar.gz
 test.machine.deploy.path=/tmp/sequoiadb_test
 test.machine.software.path=/tmp/sequoiadb
 
-save.testLog.hostname=bl465-4
+save.testLog.hostname=powersuse1
 save.testLog.dir=/opt/apache-tomcat-6.0.37/webapps/ROOT
 copy_tar=/test_tar
 target.deploy_tar_gz.ip=powersuse1
