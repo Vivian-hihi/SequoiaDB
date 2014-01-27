@@ -100,7 +100,7 @@
 #define SAFE_RELEASE_RN(x)                            \
    do {                                               \
       if ( (x) && *(x) != SDB_INVALID_HANDLE ) {      \
-         sdbReleaseReplicaNode ( *(x) ) ;             \
+         sdbReleaseNode ( *(x) ) ;                    \
          *(x) = SDB_INVALID_HANDLE ;                  \
       }                                               \
    } while ( 0 )
@@ -108,7 +108,7 @@
 #define SAFE_RELEASE_RG(x)                            \
    do {                                               \
       if ( (x) && *(x) != SDB_INVALID_HANDLE ) {      \
-         sdbReleaseReplicaGroup ( *(x) ) ;            \
+         sdbReleaseShard ( *(x) ) ;                   \
          *(x) = SDB_INVALID_HANDLE ;                  \
       }                                               \
    } while ( 0 )
@@ -2195,7 +2195,7 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_RN_DESTRUCTOR, "rn_destructor" )
 static void rn_destructor ( JSContext *cx, JSObject *obj )
 {
    PD_TRACE_ENTRY ( SDB_RN_DESTRUCTOR );
-   sdbReplicaNodeHandle *rn = (sdbReplicaNodeHandle *)
+   sdbNodeHandle *rn = (sdbNodeHandle *)
                               JS_GetPrivate ( cx, obj ) ;
    SAFE_RELEASE_RN ( rn ) ;
    SAFE_JS_FREE ( cx, rn ) ;
@@ -2217,12 +2217,12 @@ static JSClass rn_class = {
     JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
 } ;
 
-// SdbReplicaGroup
+// SdbShard
 PD_TRACE_DECLARE_FUNCTION ( SB_RG_DESTRUCTOR, "rg_destructor" )
 static void rg_destructor ( JSContext *cx, JSObject *obj )
 {
    PD_TRACE_ENTRY ( SB_RG_DESTRUCTOR );
-   sdbReplicaGroupHandle *rg = (sdbReplicaGroupHandle *)
+   sdbShardHandle *rg = (sdbShardHandle *)
                                JS_GetPrivate ( cx, obj ) ;
    SAFE_RELEASE_RG ( rg ) ;
    SAFE_JS_FREE ( cx, rg ) ;
@@ -2274,8 +2274,8 @@ static JSBool rg_get_master ( JSContext *cx, uintN argc, jsval *vp )
    JSString              * strServiceName    = NULL ;
    JSString              * strNodeName       = NULL ;
    INT32                   rc                = SDB_OK ;
-   sdbReplicaGroupHandle * rg                = NULL ;
-   sdbReplicaNodeHandle  * rn                = NULL ;
+   sdbShardHandle * rg                = NULL ;
+   sdbNodeHandle  * rn                = NULL ;
    JSObject *              objRN             = NULL ;
    const CHAR *            hostName          = NULL ;
    const CHAR *            serviceName       = NULL ;
@@ -2283,21 +2283,21 @@ static JSBool rg_get_master ( JSContext *cx, uintN argc, jsval *vp )
    INT32                   nodeID            = -1 ;
    jsval                   valNodeID         = JSVAL_VOID ;
 
-   rg = (sdbReplicaGroupHandle *)JS_GetPrivate ( cx,
+   rg = (sdbShardHandle *)JS_GetPrivate ( cx,
                                                  JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg, "SdbRG.getMaster(): no replica group handle" ) ;
 
    // replica node is freed in error: or in the destructor of SdbRN
-   rn = (sdbReplicaNodeHandle *)
-        JS_malloc ( cx, sizeof ( sdbReplicaNodeHandle ) ) ;
+   rn = (sdbNodeHandle *)
+        JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
 
    *rn = SDB_INVALID_HANDLE ;
 
-   rc = sdbGetReplicaNodeMaster ( *rg, rn ) ;
+   rc = sdbGetNodeMaster ( *rg, rn ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.getMaster()", rc ) ;
 
-   rc = sdbGetReplicaNodeAddr ( *rn, &hostName, &serviceName,
+   rc = sdbGetNodeAddr ( *rn, &hostName, &serviceName,
                                 &nodeName, &nodeID ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.getMaster()", rc ) ;
 
@@ -2358,8 +2358,8 @@ static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
    JSString              * strServiceName    = NULL ;
    JSString              * strNodeName       = NULL ;
    INT32                   rc                = SDB_OK ;
-   sdbReplicaGroupHandle * rg                = NULL ;
-   sdbReplicaNodeHandle  * rn                = NULL ;
+   sdbShardHandle * rg                       = NULL ;
+   sdbNodeHandle  * rn                       = NULL ;
    JSObject *              objRN             = NULL ;
    const CHAR *            hostName          = NULL ;
    const CHAR *            serviceName       = NULL ;
@@ -2367,21 +2367,21 @@ static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
    INT32                   nodeID            = -1 ;
    jsval                   valNodeID         = JSVAL_VOID ;
 
-   rg = (sdbReplicaGroupHandle *)JS_GetPrivate ( cx,
+   rg = (sdbShardHandle *)JS_GetPrivate ( cx,
                                                  JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg, "SdbRG.getSlave(): no replica group handle" ) ;
 
    // replica node is freed in error: or in the destructor of SdbRN
-   rn = (sdbReplicaNodeHandle *)
-        JS_malloc ( cx, sizeof ( sdbReplicaNodeHandle ) ) ;
+   rn = (sdbNodeHandle *)
+        JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
 
    *rn = SDB_INVALID_HANDLE ;
 
-   rc = sdbGetReplicaNodeSlave ( *rg, rn ) ;
+   rc = sdbGetNodeSlave ( *rg, rn ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.getSlave()", rc ) ;
 
-   rc = sdbGetReplicaNodeAddr ( *rn, &hostName, &serviceName,
+   rc = sdbGetNodeAddr ( *rn, &hostName, &serviceName,
                                 &nodeName, &nodeID ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.getSlave()", rc ) ;
 
@@ -2436,13 +2436,13 @@ static JSBool rg_start ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_RG_START );
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
-   sdbReplicaGroupHandle *rg               = NULL ;
+   sdbShardHandle *rg               = NULL ;
 
-   rg = (sdbReplicaGroupHandle *) JS_GetPrivate ( cx,
+   rg = (sdbShardHandle *) JS_GetPrivate ( cx,
          JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg, "SdbRG.start(): no replica group handle" ) ;
 
-   rc = sdbStartReplicaGroup ( *rg ) ;
+   rc = sdbStartShard ( *rg ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.start()", rc ) ;
 
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
@@ -2461,13 +2461,13 @@ static JSBool rg_stop ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_RG_STOP );
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
-   sdbReplicaGroupHandle *rg               = NULL ;
+   sdbShardHandle *rg               = NULL ;
 
-   rg = (sdbReplicaGroupHandle *) JS_GetPrivate ( cx,
+   rg = (sdbShardHandle *) JS_GetPrivate ( cx,
          JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg, "SdbRG.stop(): no replica group handle" ) ;
 
-   rc = sdbStopReplicaGroup ( *rg ) ;
+   rc = sdbStopShard ( *rg ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.stop()", rc ) ;
 
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
@@ -2484,7 +2484,7 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_RG_CRT_NODE, "rg_create_node" )
 static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RG_CRT_NODE );
-   sdbReplicaGroupHandle *rg                = NULL ;
+   sdbShardHandle *rg                = NULL ;
    JSObject *             objConfig         = NULL ;
    JSString *             strHost           = NULL ;
    JSString *             strPort           = NULL ;
@@ -2495,7 +2495,7 @@ static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
    bson *                 bsonConfig        = NULL ;
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
-   sdbReplicaNodeHandle  *rn                = NULL ;
+   sdbNodeHandle  *rn                = NULL ;
    const CHAR *           hostName          = NULL ;
    const CHAR *           serviceName       = NULL ;
    const CHAR *           nodeName          = NULL ;
@@ -2510,7 +2510,7 @@ static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
    JSObject *             objRN             = NULL ;
    jsval                  valNodeID         = JSVAL_VOID ;
 
-   rg  = (sdbReplicaGroupHandle *)
+   rg  = (sdbShardHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg , "SdbRG.createNode(): no replica group handle" ) ;
 
@@ -2537,20 +2537,20 @@ static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
    dbPath = (CHAR *) JS_EncodeString ( cx, strDBPath ) ;
    VERIFY ( dbPath ) ;
 
-   rc = sdbCreateReplicaNode ( *rg, host, port, dbPath, bsonConfig ) ;
+   rc = sdbCreateNode ( *rg, host, port, dbPath, bsonConfig ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.createNode()", rc ) ;
 
    // create replica node
-   rn = (sdbReplicaNodeHandle *)
-        JS_malloc ( cx, sizeof ( sdbReplicaNodeHandle ) ) ;
+   rn = (sdbNodeHandle *)
+        JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
 
    *rn = SDB_INVALID_HANDLE ;
 
-   rc = sdbGetReplicaNodeByHost ( *rg, host, port, rn ) ;
+   rc = sdbGetNodeByHost ( *rg, host, port, rn ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.createNode()", rc ) ;
 
-   rc = sdbGetReplicaNodeAddr ( *rn, &hostName, &serviceName,
+   rc = sdbGetNodeAddr ( *rn, &hostName, &serviceName,
                                 &nodeName, &nodeID ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.createNode()", rc ) ;
 
@@ -2608,7 +2608,7 @@ static JSBool rg_remove_node ( JSContext *cx, uintN argc, jsval *vp )
 
    INT32                  rc                = SDB_OK ;
    JSBool                 ret               = JS_TRUE ;
-   sdbReplicaGroupHandle *rg                = NULL ;
+   sdbShardHandle *rg                = NULL ;
    JSObject *             objConfig         = NULL ;
    JSString *             strHost           = NULL ;
    JSString *             strPort           = NULL ;
@@ -2616,7 +2616,7 @@ static JSBool rg_remove_node ( JSContext *cx, uintN argc, jsval *vp )
    CHAR *                 port              = NULL ;
    bson *                 bsonConfig        = NULL ;
 
-   rg  = (sdbReplicaGroupHandle *)
+   rg  = (sdbShardHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg , "SdbRG.removeNode(): no replica group handle" ) ;
 
@@ -2639,7 +2639,7 @@ static JSBool rg_remove_node ( JSContext *cx, uintN argc, jsval *vp )
    port = (CHAR *) JS_EncodeString ( cx , strPort ) ;
    VERIFY ( port ) ;
 
-   rc = sdbRemoveReplicaNode ( *rg, host, port, bsonConfig ) ;
+   rc = sdbRemoveNode ( *rg, host, port, bsonConfig ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRG.removeNode()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 
@@ -2657,14 +2657,14 @@ error:
 PD_TRACE_DECLARE_FUNCTION ( SDB_GET_NODE_AND_SETPROPERTY, "get_node_and_setproperty" )
 JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
                                  jsval *valRG,
-                                 sdbReplicaGroupHandle *rg,
+                                 sdbShardHandle *rg,
                                  const CHAR *pHostName,
                                  const CHAR *pServiceName )
 {
    PD_TRACE_ENTRY( SDB_GET_NODE_AND_SETPROPERTY ) ;
    JSBool ret = JS_TRUE ;
    INT32 rc = SDB_OK ;
-   sdbReplicaNodeHandle *rn = NULL ;
+   sdbNodeHandle *rn = NULL ;
    const CHAR *hostName = NULL ;
    const CHAR *serviceName = NULL ;
    const CHAR *nodeName = NULL ;
@@ -2679,15 +2679,15 @@ JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
    JSString *strServiceName = NULL ;
    JSString *strNodeName = NULL ;
 
-   rn = (sdbReplicaNodeHandle *)
-        JS_malloc ( cx, sizeof ( sdbReplicaNodeHandle ) ) ;
+   rn = (sdbNodeHandle *)
+        JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
    *rn = SDB_INVALID_HANDLE ;
 
-   rc = sdbGetReplicaNodeByHost ( *rg, pHostName, pServiceName, rn ) ;
+   rc = sdbGetNodeByHost ( *rg, pHostName, pServiceName, rn ) ;
    REPORT_RC ( SDB_OK == rc, "get_node_and_setproperty()", rc ) ;
 
-   rc = sdbGetReplicaNodeAddr ( *rn, &hostName, &serviceName,
+   rc = sdbGetNodeAddr ( *rn, &hostName, &serviceName,
                                 &nodeName, &nodeID ) ;
    REPORT_RC ( SDB_OK == rc, "get_node_and_setproperty()", rc ) ;
 
@@ -2752,7 +2752,7 @@ static JSBool rg_get_node ( JSContext *cx, uintN argc, jsval *vp )
    CHAR *                  pHostName         = NULL ;
    CHAR *                  pServiceName      = NULL ;
    CHAR *                  pNodeName         = NULL ;
-   sdbReplicaGroupHandle  *rg                = NULL ;
+   sdbShardHandle  *rg                = NULL ;
 
    ret = JS_ConvertArguments ( cx, argc, JS_ARGV ( cx, vp ), "S/S",
                                &strHostName, &strServiceName ) ;
@@ -2795,7 +2795,7 @@ static JSBool rg_get_node ( JSContext *cx, uintN argc, jsval *vp )
       VERIFY ( pServiceName ) ;
    }
 
-   rg = (sdbReplicaGroupHandle *)JS_GetPrivate ( cx,
+   rg = (sdbShardHandle *)JS_GetPrivate ( cx,
                                                  JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rg, "SdbRG.getNode(): no replica group handle" ) ;
    ret = get_node_and_setproperty( cx, vp, NULL, rg,
@@ -3179,7 +3179,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
    PD_TRACE_ENTRY ( SDB_ISSPECSNM );
    static CHAR *specialNames[] = { "listCollectionSpaces" ,
                                    "listCollections" ,
-                                   "listReplicaGroups",
+                                   "listShards",
                                    "getCS" ,
                                    "getRG" ,
                                    "getShard" ,
@@ -3450,7 +3450,7 @@ error :
    goto done ;
 }
 
-// SdbReplicaNode
+// SdbNode
 
 static JSBool rn_constructor ( JSContext *cx, uintN argc, jsval *vp )
 {
@@ -3471,7 +3471,7 @@ static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_RN_CONNECT );
    JSBool                   ret            = JS_TRUE ;
-   sdbReplicaNodeHandle    *rn             = NULL ;
+   sdbNodeHandle    *rn             = NULL ;
    sdbConnectionHandle     *connection     = NULL ;
    const CHAR              *host           = NULL ;
    const CHAR              *port           = NULL ;
@@ -3482,11 +3482,11 @@ static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
    JSString                *strHostName    = NULL ;
    JSString                *strServiceName = NULL ;
 
-   rn = (sdbReplicaNodeHandle *)JS_GetPrivate ( cx,
+   rn = (sdbNodeHandle *)JS_GetPrivate ( cx,
                                                 JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rn, "SdbRN.connect(): no replica node handle" ) ;
 
-   rc = sdbGetReplicaNodeAddr ( *rn, &host, &port, NULL, NULL ) ;
+   rc = sdbGetNodeAddr ( *rn, &host, &port, NULL, NULL ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRN.connect()", rc ) ;
 
    // connection will be freed in the destructor or in error
@@ -3531,13 +3531,13 @@ static JSBool rn_start ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_RN_START );
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
-   sdbReplicaNodeHandle  *rn               = NULL ;
+   sdbNodeHandle  *rn               = NULL ;
 
-   rn = (sdbReplicaNodeHandle *) JS_GetPrivate ( cx,
+   rn = (sdbNodeHandle *) JS_GetPrivate ( cx,
          JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rn, "SdbRN.start(): no replica node handle" ) ;
 
-   rc = sdbStartReplicaNode ( *rn ) ;
+   rc = sdbStartNode ( *rn ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRN.start()", rc ) ;
 
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
@@ -3556,13 +3556,13 @@ static JSBool rn_stop ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_RN_STOP );
    JSBool                 ret              = JS_TRUE ;
    INT32                  rc               = SDB_OK ;
-   sdbReplicaNodeHandle  *rn               = NULL ;
+   sdbNodeHandle  *rn               = NULL ;
 
-   rn = (sdbReplicaNodeHandle *) JS_GetPrivate ( cx,
+   rn = (sdbNodeHandle *) JS_GetPrivate ( cx,
          JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( rn, "SdbRN.stop(): no replica node handle" ) ;
 
-   rc = sdbStopReplicaNode ( *rn ) ;
+   rc = sdbStopNode ( *rn ) ;
    REPORT_RC ( SDB_OK == rc, "SdbRN.stop()", rc ) ;
 
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
@@ -3587,7 +3587,7 @@ static JSBool sdb_create_shard ( JSContext *cx, uintN argc, jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_SDB_CRT_SHARD );
    sdbConnectionHandle   *connection = NULL ;
-   sdbReplicaGroupHandle *rg         = NULL ;
+   sdbShardHandle *rg         = NULL ;
    JSString *             strRGName  = NULL ;
    CHAR *                 rgName     = NULL ;
    INT32                  rc         = SDB_OK ;
@@ -3596,8 +3596,8 @@ static JSBool sdb_create_shard ( JSContext *cx, uintN argc, jsval *vp )
    jsval                  valConn    = JSVAL_VOID ;
    jsval                  valName    = JSVAL_VOID ;
 
-   rg = (sdbReplicaGroupHandle *)JS_malloc ( cx,
-         sizeof ( sdbReplicaGroupHandle ) ) ;
+   rg = (sdbShardHandle *)JS_malloc ( cx,
+         sizeof ( sdbShardHandle ) ) ;
    VERIFY ( rg ) ;
    *rg = SDB_INVALID_HANDLE ;
 
@@ -3614,11 +3614,11 @@ static JSBool sdb_create_shard ( JSContext *cx, uintN argc, jsval *vp )
    VERIFY ( rgName ) ;
 
    // the handle contained by rg is released in done :
-   rc = sdbCreateReplicaGroup( *connection, rgName, rg ) ;
+   rc = sdbCreateShard( *connection, rgName, rg ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.createShard()", rc ) ;
 
    // get the replica group
-   rc = sdbGetReplicaGroup ( *connection, rgName, rg ) ;
+   rc = sdbGetShard ( *connection, rgName, rg ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.createShard()", rc ) ;
 
    objRG = JS_NewObject ( cx, &rg_class, 0 , 0 ) ;
@@ -3912,7 +3912,7 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
    jsval *argv = JS_ARGV( cx, vp ) ;
    JSString *jsFunc = NULL ;
    sdbConnectionHandle *connection  = NULL ;
-   sdbReplicaGroupHandle *rg = NULL ;
+   sdbShardHandle *rg = NULL ;
    CHAR *code = NULL ;
    bson *next = NULL ;
    bson *copy = NULL ;
@@ -4115,13 +4115,13 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
          }
          *point = '\0' ;
 
-         rg = (sdbReplicaGroupHandle *)JS_malloc ( cx,
-         sizeof ( sdbReplicaGroupHandle ) ) ;
+         rg = (sdbShardHandle *)JS_malloc ( cx,
+         sizeof ( sdbShardHandle ) ) ;
          VERIFY ( rg ) ;
          *rg = SDB_INVALID_HANDLE ;
 
-         rc = sdbGetReplicaGroup ( *connection, name, rg ) ;
-         REPORT_RC( rc == SDB_OK, "failed to get replicagroup", rc ) ;
+         rc = sdbGetShard ( *connection, name, rg ) ;
+         REPORT_RC( rc == SDB_OK, "failed to get replica group", rc ) ;
 
          {
          CHAR *point2 = ossStrchr( point + 1, ':') ;
@@ -4251,7 +4251,7 @@ static JSBool sdb_remove_shard ( JSContext *cx, uintN argc, jsval *vp )
    rgName = (CHAR*)JS_EncodeString ( cx, strRGName ) ;
    VERIFY ( rgName ) ;
 
-   rc = sdbRemoveReplicaGroup( *connection, rgName ) ;
+   rc = sdbRemoveShard( *connection, rgName ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.removeShard()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 done:
@@ -4308,7 +4308,7 @@ static JSBool sdb_create_cata_shard ( JSContext *cx, uintN argc, jsval *vp )
 
    // create the replica group
    // the handle contained by rg is released in done
-   rc = sdbCreateReplicaCataGroup ( *connection, host,
+   rc = sdbCreateCataShard ( *connection, host,
                               port, dbPath, bsonConfig ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.createCataShard()", rc ) ;
 
@@ -4400,7 +4400,7 @@ JSBool get_shard_and_setproperty( JSContext *cx, jsval *vp,
 {
    PD_TRACE_ENTRY( SDB_get_shard_and_setproperty ) ;
    INT32 rc = SDB_OK ;
-   sdbReplicaGroupHandle *rg = NULL ;
+   sdbShardHandle *rg = NULL ;
    JSBool ret = JS_TRUE ;
    CHAR *rgName = NULL ;
    jsval valName = JSVAL_VOID ;
@@ -4408,22 +4408,22 @@ JSBool get_shard_and_setproperty( JSContext *cx, jsval *vp,
    JSObject *objRG = NULL ;
    JSString *strRGName = NULL ;
 
-   rg = (sdbReplicaGroupHandle *)JS_malloc ( cx,
-         sizeof ( sdbReplicaGroupHandle ) ) ;
+   rg = (sdbShardHandle *)JS_malloc ( cx,
+         sizeof ( sdbShardHandle ) ) ;
    VERIFY ( rg ) ;
    *rg = SDB_INVALID_HANDLE ;
 
    if ( NULL != name )
    {
-      rc = sdbGetReplicaGroup ( conn, name, rg ) ;
+      rc = sdbGetShard ( conn, name, rg ) ;
       REPORT_RC ( SDB_OK == rc, "get_shard_and_setproperty()", rc ) ;
       rgName = (CHAR *)name ;
    }
    else
    {
-      rc = sdbGetReplicaGroup1 ( conn, id, rg ) ;
+      rc = sdbGetShard1 ( conn, id, rg ) ;
       REPORT_RC ( SDB_OK == rc, "get_shard_and_setproperty()", rc ) ;
-      rc = sdbGetReplicaGroupName ( *rg, &rgName ) ;
+      rc = sdbGetShardName ( *rg, &rgName ) ;
       REPORT_RC ( SDB_OK == rc, "get_shard_and_setproperty", rc ) ;
    }
 
@@ -4833,15 +4833,15 @@ static JSBool sdb_start_shard ( JSContext *cx , uintN argc , jsval *vp )
    CHAR *                  rgName     = NULL ;
    jsval *                 argv       = JS_ARGV ( cx, vp ) ;
    UINT32                  count      = 0 ;
-   sdbReplicaGroupHandle * rg         = NULL ;
+   sdbShardHandle * rg         = NULL ;
    sdbConnectionHandle *   connection = NULL ;
 
    connection = ( sdbConnectionHandle * )
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( connection, "Shard.startShard: no connection handle" ) ;
 
-   rg = ( sdbReplicaGroupHandle * ) JS_malloc ( cx,
-         sizeof ( sdbReplicaGroupHandle ) ) ;
+   rg = ( sdbShardHandle * ) JS_malloc ( cx,
+         sizeof ( sdbShardHandle ) ) ;
    VERIFY ( rg ) ;
    *rg = SDB_INVALID_HANDLE ;
 
@@ -4853,10 +4853,10 @@ static JSBool sdb_start_shard ( JSContext *cx , uintN argc , jsval *vp )
                JSVAL_TO_STRING ( argv[count] ) ) ;
          VERIFY ( rgName ) ;
 
-         rc = sdbGetReplicaGroup ( *connection, rgName, rg ) ;
+         rc = sdbGetShard ( *connection, rgName, rg ) ;
          REPORT_RC ( SDB_OK == rc, "Shard.startShard()", rc ) ;
 
-         rc = sdbStartReplicaGroup ( *rg ) ;
+         rc = sdbStartShard ( *rg ) ;
          REPORT_RC ( SDB_OK == rc, "Shard.startShard()", rc ) ;
 
          if ( rgName )
