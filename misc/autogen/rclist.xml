@@ -2002,5 +2002,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_DMS_REACHED_MAX_NODES</name>
+         <description>
+            <en>Reached the maximum number of nodes</en>
+            <cn>节点数量达到上限</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
