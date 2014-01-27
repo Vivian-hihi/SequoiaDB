@@ -158,5 +158,8 @@ INT32 clientValidateSql( const CHAR *sql, BOOLEAN isExec ) ;
 INT32 clientBuildFlushConfMsg( CHAR **ppBuffer, INT32 *bufferSize,
                                UINT64 reqID, BOOLEAN endianConvert) ;
 
+INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                          UINT64 reqID, BOOLEAN endianConvert ) ;
+
 SDB_EXTERN_C_END
 #endif

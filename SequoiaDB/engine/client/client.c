@@ -6577,12 +6577,8 @@ SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle )
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
-   rc = clientBuildQueryMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
-                              CMD_ADMIN_PREFIX ,
-//                              CMD_ADMIN_PREFIX MSG_BS_MSG_REQ,
-                              0, 0, 0, -1,
-                              NULL, NULL, NULL, NULL,
-                              connection->_endianConvert) ;
+   rc = clientBuildTestMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
+                              0, connection->_endianConvert) ;
    if ( rc )
    {
       goto error ;

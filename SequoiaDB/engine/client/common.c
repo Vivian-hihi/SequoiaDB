@@ -915,7 +915,6 @@ INT32 clientBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                         4 ) +
                         ossRoundUpToMultipleX( bson_size(deletor), 4 ) +
                         ossRoundUpToMultipleX( bson_size(hint), 4 ) ;
-                        
    if ( packetLength < 0 )
    {
       ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
@@ -1105,7 +1104,7 @@ INT32 clientExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
    ossEndianConvertIf ( pReply->numReturned, *numReturned, endianConvert ) ;
    if ( endianConvert )
    {
-   	  INT32 offset, count ;
+      INT32 offset, count ;
       clientEndianConvertHeader ( &pReply->header ) ;
       // convert variables endianess
       pReply->flags       = *flag ;
@@ -2136,6 +2135,40 @@ INT32 clientAppendAggrRequestCpp ( CHAR **ppBuffer, INT32 *bufferSize,
    return rc ;
 }
 
+INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
+                          UINT64 reqID, BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   MsgOpMsg *msgOpMsg = NULL ;
+   INT32 len = sizeof( MsgOpMsg ) +
+               ossRoundUpToMultipleX( 0, sizeof(ossValuePtr) ) ;
+   if ( len < 0 )
+   {
+      ossPrintf( "Packet size overflow"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = clientCheckBuffer( ppBuffer, bufferSize, len ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to check buffer, rc = %d"OSS_NEWLINE, rc );
+      goto error ;
+   }
+   msgOpMsg = (MsgOpMsg*)(*ppBuffer) ;
+   msgOpMsg->header.requestID     = reqID ;
+   msgOpMsg->header.opCode        = MSG_BS_MSG_REQ ;
+   msgOpMsg->header.messageLength = len ;
+   msgOpMsg->header.routeID.value = 0 ;
+   msgOpMsg->header.TID           = ossGetCurrentThreadID() ;
+   if( endianConvert )
+   {
+      clientEndianConvertHeader ( &msgOpMsg->header ) ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
 
 /*
 INT32 clientBuildAggrRequestCpp( CHAR **ppBuffer, INT32 *bufferSize,
@@ -2173,7 +2206,7 @@ INT32 clientBuildAggrRequestCpp( CHAR **ppBuffer, INT32 *bufferSize,
          bson_destroy ( &bi ) ;
          goto error;
       }
-	bson_destroy ( &bi ) ;
+      bson_destroy ( &bi ) ;
    }
    rc = clientCheckBuffer( ppBuffer, bufferSize, packetLength );
    if ( rc )
@@ -2229,7 +2262,6 @@ INT32 clientBuildAggrRequestCpp( CHAR **ppBuffer, INT32 *bufferSize,
 endian_convert_done:
          bson_destroy( &newObj );
          bson_destroy( &bi ) ;
- 		 	
          if ( FALSE == rc )
          {
             rc = SDB_INVALIDARG;
