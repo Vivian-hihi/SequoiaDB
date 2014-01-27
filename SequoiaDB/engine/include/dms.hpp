@@ -57,7 +57,7 @@ namespace engine
 #define DMS_PAGE_SIZE64K       65536LL
 #endif
 
-#define DMS_PAGE_SIZE_DFT      DMS_PAGE_SIZE4K
+#define DMS_PAGE_SIZE_DFT      DMS_PAGE_SIZE64K
 #define DMS_PAGE_SIZE_MAX      DMS_PAGE_SIZE64K
 
 // the maximum number of pages * size for the storage unit
