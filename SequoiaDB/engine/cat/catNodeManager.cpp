@@ -2034,6 +2034,19 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to get group[%s] info, rc: %d",
                       groupName, rc ) ;
 
+         {
+         BSONElement beGroupId = boGroupInfo.getField( FIELD_NAME_GROUPID );
+         PD_CHECK( beGroupId.type() == NumberInt, SDB_SYS, error, PDERROR,
+                  "failed to get the field(%s)", FIELD_NAME_GROUPID );
+         CoordGroupInfo groupInfo( beGroupId.numberInt() );
+         rc = groupInfo.fromBSONObj( boGroupInfo );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to parse group info(rc=%d)",
+                     rc );
+         PD_CHECK( groupInfo.getGroupSize() < CLS_REPLSET_MAX_NODE_SIZE,
+                  SDB_DMS_REACHED_MAX_NODES, error, PDERROR,
+                  "reached the maximum number of nodes!" );
+         }
          if ( 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) )
          {
             nodeID = _pCatCB->AllocCataNodeID() ;
