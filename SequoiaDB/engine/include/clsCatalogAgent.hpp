@@ -357,6 +357,8 @@ namespace engine
          MsgRouteID  primary ( MSG_ROUTE_SERVICE_TYPE type =
                                MSG_ROUTE_SHARD_SERVCIE ) const ;
 
+         UINT32 getPrimaryPos();
+
          INT32  updatePrimary ( const MsgRouteID& nodeID, BOOLEAN primary ) ;
 
          void   cancelPrimary () ;
@@ -370,6 +372,7 @@ namespace engine
          UINT32                        _groupVersion ;
          VEC_NODE_INFO                 _vecNodes ;
          MsgRouteID                    _primaryNode ;
+         UINT32                        _primaryPos;
 
    };
    typedef _clsGroupItem clsGroupItem ;

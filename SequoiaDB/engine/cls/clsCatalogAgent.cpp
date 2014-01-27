@@ -2355,6 +2355,7 @@ namespace engine
    {
       _groupID = groupID ;
       _groupVersion = 0 ;
+      _primaryPos = 0;
       _primaryNode.value = MSG_INVALID_ROUTEID ;
    }
 
@@ -2539,6 +2540,11 @@ namespace engine
       std::map <UINT64, _netRouteNode>::iterator it = nodes.begin () ;
       while ( it != nodes.end() )
       {
+         if ( _primaryNode.columns.nodeID
+            == it->second._id.columns.nodeID )
+         {
+            _primaryPos = _vecNodes.size();
+         }
          _vecNodes.push_back ( it->second ) ;
          ++it ;
       }
@@ -2548,6 +2554,11 @@ namespace engine
    void _clsGroupItem::_clear ()
    {
       _vecNodes.clear () ;
+   }
+
+   UINT32 _clsGroupItem::getPrimaryPos()
+   {
+      return _primaryPos;
    }
 
    void _clsGroupItem::cancelPrimary ()
@@ -2588,6 +2599,7 @@ namespace engine
             _primaryNode.columns.groupID = _groupID ;
             _primaryNode.columns.nodeID = nodeID.columns.nodeID ;
             _primaryNode.columns.serviceID = 0 ;
+            _primaryPos = index;
 
             goto done ;
          }

@@ -98,6 +98,7 @@ namespace engine
    RTN_COORD_CMD_ADD(COORD_CMD_UNLINK, rtnCoordCMDUnlinkCollection )
    RTN_COORD_CMD_ADD(COORD_CMD_LIST_TASK, rtnCoordCmdListTask )
    RTN_COORD_CMD_ADD(COORD_CMD_CANCEL_TASK, rtnCoordCmdCancelTask )
+   RTN_COORD_CMD_ADD(COORD_CMD_SET_SESS_ATTR, rtnCoordCMDSetSessionAttr )
    RTN_COORD_CMD_END
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_PROCCATREPLY, "rtnCoordCommand::processCatReply" )
@@ -8479,5 +8480,78 @@ namespace engine
       return rc;
    error :
       goto done ;
+   }
+
+   //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSETSESSATTR_EXE, "rtnCoordCMDSetSessionAttr::execute" )
+   INT32 rtnCoordCMDSetSessionAttr::execute( CHAR * pReceiveBuffer, SINT32 packSize,
+                                             CHAR * * ppResultBuffer, pmdEDUCB * cb,
+                                             MsgOpReply & replyHeader,
+                                             BSONObj * * ppErrorObj )
+   {
+      INT32 rc = SDB_OK;
+      //PD_TRACE_ENTRY ( SDB_RTNCOCMDSETSESSATTR_EXE ) ;
+      // fill default-reply(delete success)
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      INT32 flag                       = 0;
+      CHAR *pCMDName                   = NULL;
+      SINT64 numToSkip                 = 0;
+      SINT64 numToReturn               = 0;
+      CHAR *pQuery                     = NULL;
+      CHAR *pFieldSelector             = NULL;
+      CHAR *pOrderBy                   = NULL;
+      CHAR *pHint                      = NULL;
+
+      rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip, &numToReturn,
+                           &pQuery, &pFieldSelector, &pOrderBy, &pHint );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to parse unlink collection request(rc=%d)",
+                  rc );
+
+      try
+      {
+         CoordSession *pSession = NULL;
+         BSONObj boQuery;
+         BSONElement bePreferRepl;
+         INT32 sessReplType = PREFER_REPL_TYPE_MIN;
+
+         pSession = cb->getCoordSession();
+         PD_CHECK( pSession != NULL, SDB_SYS, error, PDERROR,
+                  "failed to get session!" );
+         boQuery = BSONObj( pQuery );
+         bePreferRepl = boQuery.getField( FIELD_NAME_PREFERED_REPLICA );
+         PD_CHECK( bePreferRepl.type() == NumberInt, SDB_INVALIDARG, error, PDERROR,
+                  "failed to set session attribute, failed to get the field(%s)",
+                  FIELD_NAME_PREFERED_REPLICA );
+         sessReplType = bePreferRepl.Int();
+         PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN && sessReplType < PREFER_REPL_TYPE_MAX,
+                  SDB_INVALIDARG, error, PDERROR,
+                  "failed to set prefer-replica-type, invalid value!(range:%d~%d)",
+                  PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX );
+         pSession->setPreferReplType( sessReplType );
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_INVALIDARG;
+         PD_LOG( PDERROR,
+               "failed to unlink collection, received unexpected error:%s",
+               e.what() );
+         goto error;
+      }
+   done:
+      //PD_TRACE_EXITRC ( SDB_RTNCOCMDSETSESSATTR_EXE, rc ) ;
+      return rc;
+   error:
+      replyHeader.flags = rc;
+      goto done;
    }
 }

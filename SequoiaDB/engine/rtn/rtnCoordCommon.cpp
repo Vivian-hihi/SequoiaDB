@@ -1598,6 +1598,58 @@ namespace engine
       return rc;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETNODEPOS, "rtnCoordGetNodePos" )
+   INT32 rtnCoordGetNodePos( pmdEDUCB *cb,
+                           const CoordGroupInfoPtr &groupInfo,
+                           UINT32 random,
+                           UINT32 &pos )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB_RTNCOGETNODEPOS ) ;
+      INT32 preferReplicaType = PREFER_REPL_ANYONE;
+      CoordSession *pSession = cb->getCoordSession();
+      UINT32 posTmp = 0;
+      clsGroupItem *groupItem = groupInfo->getGroupItem();
+      if ( NULL != pSession )
+      {
+         preferReplicaType = pSession->getPreferReplType();
+      }
+      switch( preferReplicaType )
+      {
+         case PREFER_REPL_NODE_1:
+         case PREFER_REPL_NODE_2:
+         case PREFER_REPL_NODE_3:
+         case PREFER_REPL_NODE_4:
+         case PREFER_REPL_NODE_5:
+         case PREFER_REPL_NODE_6:
+         case PREFER_REPL_NODE_7:
+            {
+               posTmp = preferReplicaType - 1;
+               break;
+            }
+         case PREFER_REPL_MASTER:
+            {
+               posTmp = groupItem->getPrimaryPos();
+            }
+         case PREFER_REPL_ANYONE:
+         case PREFER_REPL_SLAVE:
+         default:
+            {
+               posTmp = random;
+               break;
+            }
+      }
+      UINT32 nodeNum = groupInfo->getGroupSize();
+      PD_CHECK( nodeNum > 0, SDB_SYS, error, PDERROR,
+               "the group is empty!" );
+      pos = posTmp % nodeNum;
+   done:
+      PD_TRACE_EXITRC ( SDB_RTNCOGETNODEPOS, rc ) ;
+      return rc;
+   error:
+      goto done;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTOONE, "rtnCoordSendRequestToOne" )
    INT32 rtnCoordSendRequestToOne( CHAR *pBuffer,
                                  const CoordGroupInfoPtr &groupInfo,
@@ -1608,13 +1660,19 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       UINT64 reqID = 0;
+      INT32 preferReplicaType = PREFER_REPL_ANYONE;
       PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTOONE ) ;
       do
       {
+         /*******************************
+         // send to last node
+         ********************************/
          MsgHeader *pHeader = (MsgHeader *)pBuffer ;
-         CoordSession *pSession = cb->getCoordSession();
+         CoordSession *pSession = NULL;
+         pSession = cb->getCoordSession();
          if ( NULL != pSession )
          {
+            preferReplicaType = pSession->getPreferReplType();
             MsgRouteID routeID = pSession->getLastNode(groupInfo->getGroupID());
             if ( routeID.value != 0 )
             {
@@ -1631,6 +1689,9 @@ namespace engine
             }
          }
 
+         /*******************************
+         // send to new node
+         ********************************/
          clsGroupItem *groupItem = groupInfo->getGroupItem() ;
          UINT32 nodeNum = groupInfo->getGroupSize() ;
          if ( nodeNum <= 0 )
@@ -1643,34 +1704,66 @@ namespace engine
          MsgRouteID routeID ;
          routeID.value = MSG_INVALID_ROUTEID ;
 
-         UINT32 randNum = pHeader->TID % nodeNum ;
-         UINT32 i = randNum;
-
-         do
+         UINT32 beginPos;
+         rc = rtnCoordGetNodePos( cb, groupInfo, pHeader->TID, beginPos );
+         if ( rc )
          {
-            rc = groupItem->getNodeID( i, routeID, type ) ;
+            PD_LOG( PDERROR,
+                  "failed to send the request(rc=%d)",
+                  rc );
+            break;
+         }
 
-            if ( SDB_OK == rc )
+         UINT32 i = 0;
+         while ( i != nodeNum )
+         {
+            // all slave node have been sent
+            if ( i + 1 == nodeNum
+               && PREFER_REPL_ANYONE != preferReplicaType
+               && PREFER_REPL_MASTER != preferReplicaType )
             {
-               rc = pRouteAgent->syncSend( routeID, pBuffer, reqID, cb ) ;
+               routeID = groupItem->primary( type );
+               // there is not primary node,
+               // so the last node is not primary
+               if ( MSG_INVALID_ROUTEID != routeID.value )
+               {
+                  rc = groupItem->getNodeID( beginPos, routeID, type ) ;
+                  if ( rc != SDB_OK )
+                  {
+                     break;
+                  }
+               }
             }
+            else
+            {
+               if ( PREFER_REPL_ANYONE != preferReplicaType
+                  && PREFER_REPL_MASTER != preferReplicaType
+                  && beginPos == groupItem->getPrimaryPos() )
+               {
+                  beginPos = ( beginPos + 1 ) % nodeNum ;
+                  continue;
+               }
+               rc = groupItem->getNodeID( beginPos, routeID, type ) ;
+               if ( rc != SDB_OK )
+               {
+                  break;
+               }
+            }
+            rc = pRouteAgent->syncSend( routeID, pBuffer, reqID, cb ) ;
+            ++i;
 
             if ( SDB_OK == rc )
             {
                sendNodes[reqID] = routeID ;
 
-               if ( !pSession )
-               {
-                  pSession = cb->getCoordSession();
-               }
                if ( pSession )
                {
                   pSession->addLastNode( routeID );
                }
                break;
             }
-            i = ( i + 1 ) % nodeNum ;
-         }while ( i != randNum );
+            beginPos = ( beginPos + 1 ) % nodeNum ;
+         }
       }while ( FALSE );
       PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTOONE, rc ) ;
       return rc;
@@ -1687,13 +1780,18 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       UINT64 reqID = 0;
+      INT32 preferReplicaType = PREFER_REPL_ANYONE;
       PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTOONE2 ) ;
       do
       {
+         /*******************************
+         // send to last node
+         ********************************/
          MsgHeader *pHeader = (MsgHeader *)pBuffer ;
          CoordSession *pSession = cb->getCoordSession();
          if ( NULL != pSession )
          {
+            preferReplicaType = pSession->getPreferReplType();
             MsgRouteID routeID = pSession->getLastNode(groupInfo->getGroupID());
             if ( routeID.value != 0 )
             {
@@ -1703,9 +1801,16 @@ namespace engine
                   sendNodes[reqID] = routeID ;
                   break;
                }
+               else
+               {
+                  pSession->removeLastNode( groupInfo->getGroupID() );
+               }
             }
          }
 
+         /*******************************
+         // send to new node
+         ********************************/
          clsGroupItem *groupItem = groupInfo->getGroupItem() ;
          UINT32 nodeNum = groupInfo->getGroupSize() ;
          if ( nodeNum <= 0 )
@@ -1718,34 +1823,66 @@ namespace engine
          MsgRouteID routeID ;
          routeID.value = MSG_INVALID_ROUTEID ;
 
-         UINT32 randNum = pHeader->TID % nodeNum ;
-         UINT32 i = randNum;
-
-         do
+         UINT32 beginPos;
+         rc = rtnCoordGetNodePos( cb, groupInfo, pHeader->TID, beginPos );
+         if ( rc )
          {
-            rc = groupItem->getNodeID( i, routeID, type ) ;
+            PD_LOG( PDERROR,
+                  "failed to send the request(rc=%d)",
+                  rc );
+            break;
+         }
 
-            if ( SDB_OK == rc )
+         UINT32 i = 0;
+         while ( i != nodeNum )
+         {
+            // all slave node have been sent
+            if ( i + 1 == nodeNum
+               && PREFER_REPL_ANYONE != preferReplicaType
+               && PREFER_REPL_MASTER != preferReplicaType )
             {
-               rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb ) ;
+               routeID = groupItem->primary( type );
+               // there is not primary node,
+               // so the last node is not primary
+               if ( MSG_INVALID_ROUTEID != routeID.value )
+               {
+                  rc = groupItem->getNodeID( beginPos, routeID, type ) ;
+                  if ( rc != SDB_OK )
+                  {
+                     break;
+                  }
+               }
             }
+            else
+            {
+               if ( PREFER_REPL_ANYONE != preferReplicaType
+                  && PREFER_REPL_MASTER != preferReplicaType
+                  && beginPos == groupItem->getPrimaryPos() )
+               {
+                  beginPos = ( beginPos + 1 ) % nodeNum ;
+                  continue;
+               }
+               rc = groupItem->getNodeID( beginPos, routeID, type ) ;
+               if ( rc != SDB_OK )
+               {
+                  break;
+               }
+            }
+            rc = rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb ) ;
+            ++i;
 
             if ( SDB_OK == rc )
             {
                sendNodes[reqID] = routeID ;
 
-               if ( !pSession )
-               {
-                  pSession = cb->getCoordSession();
-               }
                if ( pSession )
                {
                   pSession->addLastNode( routeID );
                }
                break;
             }
-            i = ( i + 1 ) % nodeNum ;
-         }while ( i != randNum );
+            beginPos = ( beginPos + 1 ) % nodeNum ;
+         }
       }while ( FALSE );
       PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTOONE2, rc ) ;
       return rc;

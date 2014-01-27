@@ -70,6 +70,7 @@ namespace engine
    #define COORD_CMD_UNLINK                   CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL
    #define COORD_CMD_LIST_TASK                CMD_ADMIN_PREFIX CMD_NAME_LIST_TASK
    #define COORD_CMD_CANCEL_TASK              CMD_ADMIN_PREFIX CMD_NAME_CANCEL_TASK
+   #define COORD_CMD_SET_SESS_ATTR            CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR
 
 #if defined (_DEBUG)
    #define COORD_CMD_DEBUG_QUERY              CMD_ADMIN_PREFIX CMD_NAME_DEBUG_QUERY
@@ -1041,6 +1042,15 @@ namespace engine
    };
 
    class rtnCoordCMDUnlinkCollection : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
+   };
+
+   class rtnCoordCMDSetSessionAttr : public rtnCoordCommand
    {
    public:
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,

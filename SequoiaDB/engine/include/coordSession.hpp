@@ -47,6 +47,8 @@ namespace engine
       void     clearRequest();
       BOOLEAN  isValidResponse( const UINT64 reqID );
       BOOLEAN  isValidResponse( const MsgRouteID &routeID, const UINT64 reqID );
+      void     setPreferReplType( INT32 type );
+      INT32    getPreferReplType();
 
    private:
       CoordSession(){}
@@ -59,6 +61,7 @@ namespace engine
       COORD_LASTNODE_MAP         _lastNodeMap;
       ossSpinXLatch              _mutex ;
       REQUESTID_MAP              _requestMap;
+      INT32                      _preferReplType;
    } ;
 }
 

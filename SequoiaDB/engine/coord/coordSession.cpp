@@ -10,6 +10,21 @@ namespace engine
    CoordSession::CoordSession( pmdEDUCB *pEduCB )
    {
       _pEduCB = pEduCB;
+      _preferReplType = PREFER_REPL_ANYONE;
+   }
+
+   INT32 CoordSession::getPreferReplType()
+   {
+      return _preferReplType;
+   }
+
+   void CoordSession::setPreferReplType( INT32 type )
+   {
+      if ( PREFER_REPL_TYPE_MIN < type
+         && type < PREFER_REPL_TYPE_MAX )
+      {
+         _preferReplType = type;
+      }
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_COORDSN_DISCONN, "CoordSession::disConnect" )

@@ -238,6 +238,11 @@ namespace engine
                                 NODE_SEL_STY emptyFilterSel,
                                 CoordGroupList &groupList, ROUTE_SET &nodes ) ;
 
+   INT32 rtnCoordGetNodePos( pmdEDUCB *cb,
+                           const CoordGroupInfoPtr &groupInfo,
+                           UINT32 random,
+                           UINT32 &pos );
+
 }
 
 #endif //RTNCOORDCOMMON_HPP__
