@@ -1224,7 +1224,7 @@ namespace engine
       }
 
       // disconnect all collection
-      _agent->disconnectAll() ;
+      pmdGetKRCB()->getClsCB()->getShardRouteAgent()->disconnectAll() ;
 
       pmdGetKRCB()->getTransCB()->clearTransInfo();
       PD_TRACE_EXIT ( SDB__CLSFSDS__BEGIN );
