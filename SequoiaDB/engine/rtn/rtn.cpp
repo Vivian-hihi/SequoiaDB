@@ -277,7 +277,7 @@ namespace engine
       SDB_ASSERT ( indexPath, "index path can't be NULL" ) ;
 
       INT32 rc                                 = SDB_DMS_CS_NOTEXIST ;
-      //PD_TRACE_ENTRY ( SDB_RTNLOADCS );
+      PD_TRACE_ENTRY ( SDB_RTNLOADCS );
       CHAR csName[ DMS_SU_NAME_SZ + 1 ]        = {0} ;
       UINT32 sequence                          = 0 ;
       dmsStorageUnit *storageUnit              = NULL ;
@@ -376,7 +376,7 @@ namespace engine
       }
 
    done :
-      //PD_TRACE_EXITRC ( SDB_RTNLOADCS, rc );
+      PD_TRACE_EXITRC ( SDB_RTNLOADCS, rc );
       return rc ;
    error :
       if ( storageUnit )
@@ -393,7 +393,7 @@ namespace engine
                                    SDB_DMSCB *dmsCB )
    {
       INT32 rc                                 = SDB_OK ;
-      //PD_TRACE_ENTRY ( SDB_RTNLOADCSS );
+      PD_TRACE_ENTRY ( SDB_RTNLOADCSS );
       CHAR csName [ DMS_SU_FILENAME_SZ + 1 ]   = {0} ;
       UINT32 sequence                          = 0 ;
       dmsStorageUnit *storageUnit              = NULL ;
@@ -483,7 +483,7 @@ namespace engine
       }
 
    done :
-      //PD_TRACE_EXITRC ( SDB_RTNLOADCSS, rc );
+      PD_TRACE_EXITRC ( SDB_RTNLOADCSS, rc ) ;
       return rc ;
    error :
       if ( storageUnit )
@@ -534,7 +534,7 @@ namespace engine
                                   INT32 millisec )
    {
       INT32 rc = SDB_OK ;
-      //PD_TRACE_ENTRY ( SDB_RTNCSLOCK );
+      PD_TRACE_ENTRY ( SDB_RTNCSLOCK );
       SDB_ASSERT ( pCollectionSpaceName, "cs name can't be NULL" ) ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       SDB_ASSERT ( ppsu, "storage unit can't be NULL" ) ;
@@ -575,7 +575,7 @@ namespace engine
       }
 
    done :
-      //PD_TRACE_EXITRC ( SDB_RTNCSLOCK, rc );
+      PD_TRACE_EXITRC ( SDB_RTNCSLOCK, rc );
       return rc ;
    error :
       goto done ;
@@ -589,7 +589,7 @@ namespace engine
                                            dmsStorageUnitID &suID )
    {
       INT32 rc = SDB_OK ;
-      //PD_TRACE_ENTRY ( SDB_RTNRESOLVECLNAL );
+      PD_TRACE_ENTRY ( SDB_RTNRESOLVECLNAL );
       SDB_ASSERT ( pCollectionFullName, "collection name can't be NULL" )
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
       SDB_ASSERT ( ppsu, "storage unit can't be NULL" )
@@ -643,7 +643,7 @@ namespace engine
       }
 
    done :
-      //PD_TRACE_EXITRC ( SDB_RTNRESOLVECLNAL, rc );
+      PD_TRACE_EXITRC ( SDB_RTNRESOLVECLNAL, rc );
       return rc ;
    error :
       goto done ;
@@ -685,7 +685,7 @@ namespace engine
    INT32 rtnParserCommand ( const CHAR *name, _rtnCommand **ppCommand )
    {
       INT32 rc = SDB_INVALIDARG ;
-      //PD_TRACE_ENTRY ( SDB_RTNPARSERCOMMAND );
+      PD_TRACE_ENTRY ( SDB_RTNPARSERCOMMAND );
       if ( ppCommand && rtnIsCommand ( name ) )
       {
          *ppCommand = getRtnCmdBuilder()->create ( &name[1] ) ;
@@ -695,7 +695,7 @@ namespace engine
          }
       }
 
-      //PD_TRACE_EXITRC ( SDB_RTNPARSERCOMMAND, rc );
+      PD_TRACE_EXITRC ( SDB_RTNPARSERCOMMAND, rc );
       return rc ;
    }
 
@@ -720,7 +720,7 @@ namespace engine
                           const CHAR *pHintBuff )
    {
       INT32 rc = SDB_INVALIDARG ;
-      //PD_TRACE_ENTRY ( SDB_RTNINITCOMMAND );
+      PD_TRACE_ENTRY ( SDB_RTNINITCOMMAND );
       if ( pCommand )
       {
          try
@@ -742,7 +742,7 @@ namespace engine
          }
       }
 
-      //PD_TRACE_EXITRC ( SDB_RTNINITCOMMAND, rc );
+      PD_TRACE_EXITRC ( SDB_RTNINITCOMMAND, rc );
       return rc ;
    }
 
