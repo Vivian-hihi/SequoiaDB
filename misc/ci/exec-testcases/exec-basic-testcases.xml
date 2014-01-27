@@ -152,6 +152,8 @@
 		</exec>
 		
 		
+		
+		
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
 		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.argument}" />
@@ -163,8 +165,12 @@
 				<equals arg1="${ret.code}" arg2="0" />
 			</not>
 			<then>
+				
 				<trycatch>
 					<try>
+						<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="db.RG.info" >
+		  				<arg line=" -s &quot; db = new Sdb('localhost',50000);db.listReplicaGroups();db.close(); &quot;" />
+						</exec>
 				<if>
 					<equals arg1="${to.copy.test.log}" arg2="true" />
 					<then>
@@ -214,6 +220,8 @@
 					return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;
 					testBeginStr=${testBeginStr} &#10;
 					testEndStr=${testEndStr} &#10;
+					db.listReplicaGroups() : &#10;
+					${db.RG.info} &#10;&#10;
 					download the test log :&#10;
 					${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;
 					&lt;/failure&gt;&#10;" />
