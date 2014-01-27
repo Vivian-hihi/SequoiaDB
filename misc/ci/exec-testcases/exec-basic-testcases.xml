@@ -171,7 +171,17 @@
 				<if>
 					<equals arg1="${to.copy.test.log}" arg2="true" />
 					<then>
-						<property name="URL.download.pre" value="http://192.168.30.184:8080" />
+						<if>
+						   <equals arg1="${os.arch}" arg2="ppc64" />
+						   <then>
+						   	  <property name="URL.download.pre" value="http://192.168.30.150:8080" />
+						   </then>
+						   <else>
+					        <property name="URL.download.pre" value="http://192.168.30.184:8080" />
+					     </else>
+						</if>
+						
+						
 						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
 						
 						<tstamp>
@@ -197,8 +207,9 @@
 						<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
 						<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
 						<echo>rm -f ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}</echo>
-						<delete dir="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-						
+						<delete includeemptydirs="true">
+						   <fileset dir="${test.machine.deploy.path}" includes="${host.NAME}*/*" />
+						</delete>
 					</then>
 				</if>
 				<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;failure 
