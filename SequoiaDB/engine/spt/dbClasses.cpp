@@ -911,7 +911,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    JSObject *objCursor              = NULL ;
    INT32 rc                         = SDB_OK ;
    JSBool ret                       = JS_TRUE ;
-   jsval val                        = JSVAL_VOID ;
+//   jsval val                        = JSVAL_VOID ;
    jsval *argv                      = JS_ARGV ( cx, vp ) ;
 
    // get cl handle
@@ -3215,6 +3215,8 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "listTasks",
                                    "waitTasks",
                                    "cancelTask",
+                                   "setSessionAttr",
+                                   "msg",
                                    "help"
    };
    JSBool   in = JS_FALSE ;
@@ -5670,6 +5672,68 @@ error :
    goto done ;
 }
 
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SET_SESSION_ATTR, "sdb_set_session_attr" )
+static JSBool sdb_set_session_attr ( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_SDB_SET_SESSION_ATTR );
+   sdbConnectionHandle *connection  = NULL ;
+   JSBool ret                       = JS_TRUE ;
+   INT32 rc                         = SDB_OK ;
+   JSObject *objOpts                = NULL ;
+   bson *bsonOpts                   = NULL ;
+
+   connection = (sdbConnectionHandle *)
+                 JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.setSession(): no connection handle" ) ;
+   ret = JS_ConvertArguments ( cx, argc, JS_ARGV( cx, vp ),
+                               "o", &objOpts ) ;
+   REPORT ( ret, "sdb.setSession(): wrong arguments" ) ;
+/*
+   REPORT ( argc >= 1 ,
+            "Sdb.setSession(): need one argument" ) ;
+*/
+   // bsonOpts is freed in done:
+   if ( JS_FALSE == objToBson( cx, objOpts, &bsonOpts ) )
+   {
+      rc = SDB_INVALIDARG ;
+      REPORT_RC ( JS_FALSE, "Sdb.setSession()", rc ) ;
+   }
+   rc = sdbSetSessionAttr( *connection, bsonOpts ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.setSession()" , rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done :
+   SAFE_BSON_DISPOSE ( bsonOpts ) ;
+   PD_TRACE_EXIT ( SDB_SDB_SET_SESSION_ATTR );
+   return ret ;
+error :
+   TRY_REPORT ( cx , "Sdb.setSession(): false" ) ;
+   goto done ;
+}
+
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_SET_SESSION_ATTR, "sdb_msg" )
+static JSBool sdb_msg ( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_SDB_SET_SESSION_ATTR );
+   sdbConnectionHandle *connection  = NULL ;
+   JSBool ret                       = JS_TRUE ;
+   INT32 rc                         = SDB_OK ;
+
+   connection = (sdbConnectionHandle *)
+                 JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.msg(): no connection handle" ) ;
+   rc = _sdbMsg( *connection ) ;
+   REPORT_RC ( SDB_OK == rc , "Sdb.msg()" , rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+done :
+   PD_TRACE_EXIT ( SDB_SDB_SET_SESSION_ATTR );
+   return ret ;
+error :
+   TRY_REPORT ( cx , "Sdb.msg(): false" ) ;
+   ret = JS_FALSE ;
+   goto done ;
+}
 
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
@@ -5706,6 +5770,8 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "listTasks", sdb_list_tasks, 0, 0 ),
    JS_FS ( "waitTasks", sdb_wait_tasks, 1, 0 ),
    JS_FS ( "cancelTask", sdb_cancel_task, 1, 0 ),
+   JS_FS ( "setSessionAttr", sdb_set_session_attr, 1, 0 ),
+   JS_FS ( "msg", sdb_msg, 0, 0 ),
    JS_FS_END
 } ;
 

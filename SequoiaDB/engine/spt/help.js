@@ -52,6 +52,8 @@ Sdb.prototype.help = function() {
    println("   listTasks([cond],[sel],[orderBy],[hint])");
    println("   waitTasks(<id1>,[id2],...)");
    println("   cancelTask(<id>,[isAsync])");
+   println("   setSessionAttr(<options>) - # eg:{\"PreferedReplica\":\"M\"/\"S\"/\"A\"/1-7}, prefer to choose master/slave/anyone/node1-node7");
+   println("   msg()");
    println("   close()");
 }
 
