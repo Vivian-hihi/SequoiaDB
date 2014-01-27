@@ -2136,12 +2136,15 @@ INT32 clientAppendAggrRequestCpp ( CHAR **ppBuffer, INT32 *bufferSize,
 }
 
 INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
-                          UINT64 reqID, BOOLEAN endianConvert )
+                          const CHAR *msg, UINT64 reqID,
+                          BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
+   INT32 msgLen = 0 ;
    MsgOpMsg *msgOpMsg = NULL ;
+   msgLen = ossStrlen( msg ) + 1 ;
    INT32 len = sizeof( MsgOpMsg ) +
-               ossRoundUpToMultipleX( 0, sizeof(ossValuePtr) ) ;
+               ossRoundUpToMultipleX( msgLen, sizeof(ossValuePtr) ) ;
    if ( len < 0 )
    {
       ossPrintf( "Packet size overflow"OSS_NEWLINE ) ;
@@ -2155,11 +2158,13 @@ INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
       goto error ;
    }
    msgOpMsg = (MsgOpMsg*)(*ppBuffer) ;
+   // append the massage header
    msgOpMsg->header.requestID     = reqID ;
    msgOpMsg->header.opCode        = MSG_BS_MSG_REQ ;
    msgOpMsg->header.messageLength = len ;
    msgOpMsg->header.routeID.value = 0 ;
    msgOpMsg->header.TID           = ossGetCurrentThreadID() ;
+   ossMemcpy( msgOpMsg->msg, msg, msgLen ) ;
    if( endianConvert )
    {
       clientEndianConvertHeader ( &msgOpMsg->header ) ;

@@ -6565,7 +6565,7 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle )
+SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg )
 {
    INT32 rc              = SDB_OK ;
    BOOLEAN result        = FALSE ;
@@ -6577,8 +6577,14 @@ SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle )
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
+   // check argument
+   if ( !msg )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
    rc = clientBuildTestMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
-                              0, connection->_endianConvert) ;
+                              msg, 0, connection->_endianConvert) ;
    if ( rc )
    {
       goto error ;

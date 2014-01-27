@@ -1408,6 +1408,8 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson *options ) ;
-SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle ) ;
+
+SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg ) ;
+
 SDB_EXTERN_C_END
 #endif
