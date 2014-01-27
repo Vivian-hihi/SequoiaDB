@@ -17,7 +17,7 @@ var help = function() {
 Sdb.prototype.help = function() {
    println("DB methods:");
    println("   getCS(<name>)");
-   println("   getRG(<name>|<id>)");
+   println("   getShard(<name>|<id>)");
    println("   createCS(<name>, [pageSize])");
    println("   createShard(<name>)");
    println("   removeShard(<name>)");

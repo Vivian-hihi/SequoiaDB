@@ -406,11 +406,11 @@ JSBool get_cs_and_setproperty( JSContext *cx, jsval *vp,
                                sdbConnectionHandle *connection,
                                const CHAR *csName,
                                JSString *jsCsName ) ;
-JSBool get_rg_and_setproperty( JSContext *cx, jsval *vp,
+JSBool get_shard_and_setproperty( JSContext *cx, jsval *vp,
                                sdbConnectionHandle conn,
                                UINT32 id, const CHAR *name ) ;
 
-JSBool get_node_and_setproperty( JSContext *cx, jsval *vp, 
+JSBool get_node_and_setproperty( JSContext *cx, jsval *vp,
                                  jsval *valRG,
                                  const CHAR *pHostName,
                                  const CHAR *pServiceName ) ;
@@ -3182,6 +3182,7 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "listReplicaGroups",
                                    "getCS" ,
                                    "getRG" ,
+                                   "getShard" ,
                                    "createCS" ,
                                    "createRG",
                                    "createShard",
@@ -4100,7 +4101,7 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
       }
       else if ( FMP_RES_TYPE_RG == valueType )
       {
-         ret = get_rg_and_setproperty( cx, vp, *connection,
+         ret = get_shard_and_setproperty( cx, vp, *connection,
                                        0, name ) ;
          VERIFY( ret ) ;
       }
@@ -4228,10 +4229,10 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_RG, "rg_remove_rg" )
-static JSBool sdb_remove_rg ( JSContext *cx, uintN argc, jsval *vp )
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_SHARD, "rg_remove_shard" )
+static JSBool sdb_remove_shard ( JSContext *cx, uintN argc, jsval *vp )
 {
-   PD_TRACE_ENTRY ( SDB_SDB_RM_RG );
+   PD_TRACE_ENTRY ( SDB_SDB_RM_SHARD );
    INT32 rc = SDB_OK ;
    sdbConnectionHandle   *connection = NULL ;
    JSString *             strRGName  = NULL ;
@@ -4240,25 +4241,25 @@ static JSBool sdb_remove_rg ( JSContext *cx, uintN argc, jsval *vp )
 
    connection = (sdbConnectionHandle *)
    JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection, "Sdb.removeRG: no connection handle" ) ;
+   REPORT ( connection, "Sdb.removeShard: no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx, argc, JS_ARGV ( cx, vp ),
                                "S", &strRGName ) ;
-   REPORT ( ret, "Sdb.removeRG(): wrong arguments" ) ;
+   REPORT ( ret, "Sdb.removeShard(): wrong arguments" ) ;
 
    // rgName is free in done:
    rgName = (CHAR*)JS_EncodeString ( cx, strRGName ) ;
    VERIFY ( rgName ) ;
 
    rc = sdbRemoveReplicaGroup( *connection, rgName ) ;
-   REPORT_RC ( SDB_OK == rc, "SdbRG.removeRG()", rc ) ;
+   REPORT_RC ( SDB_OK == rc, "Sdb.removeShard()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 done:
    SAFE_JS_FREE ( cx, rgName ) ;
-   PD_TRACE_EXIT ( SDB_SDB_RM_RG );
+   PD_TRACE_EXIT ( SDB_SDB_RM_SHARD );
    return ret ;
 error:
-   TRY_REPORT ( cx, "Sdb.removeRG(): false" ) ;
+   TRY_REPORT ( cx, "Sdb.removeShard(): false" ) ;
    goto done ;
 }
 
@@ -4392,12 +4393,12 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION( SDB_GET_RG_AND_SETPROPERTY, "get_rg_and_setproperty" )
-JSBool get_rg_and_setproperty( JSContext *cx, jsval *vp,
+PD_TRACE_DECLARE_FUNCTION( SDB_get_shard_and_setproperty, "get_shard_and_setproperty" )
+JSBool get_shard_and_setproperty( JSContext *cx, jsval *vp,
                                sdbConnectionHandle conn,
                                UINT32 id, const CHAR *name )
 {
-   PD_TRACE_ENTRY( SDB_GET_RG_AND_SETPROPERTY ) ;
+   PD_TRACE_ENTRY( SDB_get_shard_and_setproperty ) ;
    INT32 rc = SDB_OK ;
    sdbReplicaGroupHandle *rg = NULL ;
    JSBool ret = JS_TRUE ;
@@ -4415,15 +4416,15 @@ JSBool get_rg_and_setproperty( JSContext *cx, jsval *vp,
    if ( NULL != name )
    {
       rc = sdbGetReplicaGroup ( conn, name, rg ) ;
-      REPORT_RC ( SDB_OK == rc, "get_rg_and_setproperty()", rc ) ;
+      REPORT_RC ( SDB_OK == rc, "get_shard_and_setproperty()", rc ) ;
       rgName = (CHAR *)name ;
    }
    else
    {
       rc = sdbGetReplicaGroup1 ( conn, id, rg ) ;
-      REPORT_RC ( SDB_OK == rc, "get_rg_and_setproperty()", rc ) ;
+      REPORT_RC ( SDB_OK == rc, "get_shard_and_setproperty()", rc ) ;
       rc = sdbGetReplicaGroupName ( *rg, &rgName ) ;
-      REPORT_RC ( SDB_OK == rc, "get_rg_and_setproperty", rc ) ;
+      REPORT_RC ( SDB_OK == rc, "get_shard_and_setproperty", rc ) ;
    }
 
    objRG = JS_NewObject ( cx, &rg_class, 0, 0 ) ;
@@ -4439,9 +4440,8 @@ JSBool get_rg_and_setproperty( JSContext *cx, jsval *vp,
    VERIFY ( strRGName ) ;
    valName = STRING_TO_JSVAL ( strRGName ) ;
    VERIFY ( JS_SetProperty ( cx, objRG, "_name", &valName ) ) ;
-   
 done:
-   PD_TRACE_EXIT( SDB_GET_RG_AND_SETPROPERTY ) ;
+   PD_TRACE_EXIT( SDB_get_shard_and_setproperty ) ;
    return ret ;
 error:
    SAFE_RELEASE_RG ( rg ) ;
@@ -4449,10 +4449,10 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_GET_RG, "sdb_get_rg" )
-static JSBool sdb_get_rg ( JSContext *cx , uintN argc , jsval *vp )
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_GET_SHARD, "sdb_get_shard" )
+static JSBool sdb_get_shard ( JSContext *cx , uintN argc , jsval *vp )
 {
-   PD_TRACE_ENTRY ( SDB_SDB_GET_RG );
+   PD_TRACE_ENTRY ( SDB_SDB_GET_SHARD );
    sdbConnectionHandle   *connection  = NULL ;
    jsval *                argv        = JS_ARGV ( cx , vp ) ;
    UINT32                 rgID        = 0 ;
@@ -4462,17 +4462,17 @@ static JSBool sdb_get_rg ( JSContext *cx , uintN argc , jsval *vp )
 
    connection = (sdbConnectionHandle *)
       JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection , "Sdb.getRG: no connection handle" ) ;
+   REPORT ( connection , "Sdb.getShard: no connection handle" ) ;
 
    if ( argc != 1 )
    {
-      REPORT ( FALSE, "Sdb.getRG(<name>|<id>): wrong arguments" ) ;
+      REPORT ( FALSE, "Sdb.getShard(<name>|<id>): wrong arguments" ) ;
    }
 
    if ( JSVAL_IS_INT ( argv[0] ) )
    {
       rgID = (UINT32)JSVAL_TO_INT ( argv[0] ) ;
-      ret = get_rg_and_setproperty( cx, vp, *connection,
+      ret = get_shard_and_setproperty( cx, vp, *connection,
                                     rgID, NULL ) ;
       VERIFY( ret ) ;
    }
@@ -4481,21 +4481,21 @@ static JSBool sdb_get_rg ( JSContext *cx , uintN argc , jsval *vp )
       rgName = (CHAR *) JS_EncodeString ( cx, JSVAL_TO_STRING ( argv[0] ) ) ;
       VERIFY ( rgName ) ;
       rgNameAlloc = TRUE ;
-      ret = get_rg_and_setproperty( cx, vp, *connection,
+      ret = get_shard_and_setproperty( cx, vp, *connection,
                                     0, rgName ) ;
       VERIFY( ret ) ;
    }
    else
    {
-      REPORT ( FALSE, "Sdb.getRG(<name>|<id>): wrong arguments" ) ;
+      REPORT ( FALSE, "Sdb.getShard(<name>|<id>): wrong arguments" ) ;
    }
 done :
    if ( rgNameAlloc )
       SAFE_JS_FREE ( cx, rgName ) ;
-   PD_TRACE_EXIT ( SDB_SDB_GET_RG );
+   PD_TRACE_EXIT ( SDB_SDB_GET_SHARD );
    return ret ;
 error :
-   TRY_REPORT ( cx, "Sdb.getRG(): false" ) ;
+   TRY_REPORT ( cx, "Sdb.getShard(): false" ) ;
    goto done ;
 }
 
@@ -4838,7 +4838,7 @@ static JSBool sdb_start_shard ( JSContext *cx , uintN argc , jsval *vp )
 
    connection = ( sdbConnectionHandle * )
          JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection, "Sdb.startShard: no connection handle" ) ;
+   REPORT ( connection, "Shard.startShard: no connection handle" ) ;
 
    rg = ( sdbReplicaGroupHandle * ) JS_malloc ( cx,
          sizeof ( sdbReplicaGroupHandle ) ) ;
@@ -4854,10 +4854,10 @@ static JSBool sdb_start_shard ( JSContext *cx , uintN argc , jsval *vp )
          VERIFY ( rgName ) ;
 
          rc = sdbGetReplicaGroup ( *connection, rgName, rg ) ;
-         REPORT_RC ( SDB_OK == rc, "Sdb.startShard()", rc ) ;
+         REPORT_RC ( SDB_OK == rc, "Shard.startShard()", rc ) ;
 
          rc = sdbStartReplicaGroup ( *rg ) ;
-         REPORT_RC ( SDB_OK == rc, "Sdb.startShard()", rc ) ;
+         REPORT_RC ( SDB_OK == rc, "Shard.startShard()", rc ) ;
 
          if ( rgName )
          {
@@ -4867,7 +4867,7 @@ static JSBool sdb_start_shard ( JSContext *cx , uintN argc , jsval *vp )
       }
       else
       {
-         REPORT ( FALSE, "Sdb.startShard(): wrong arguments" ) ;
+         REPORT ( FALSE, "Shard.startShard(): wrong arguments" ) ;
       }
    }
 
@@ -4881,7 +4881,7 @@ done:
 error:
    SAFE_RELEASE_RG ( rg ) ;
    SAFE_JS_FREE ( cx, rg ) ;
-   TRY_REPORT ( cx, "Sdb.startShard(): false" ) ;
+   TRY_REPORT ( cx, "Shard.startShard(): false" ) ;
    goto done ;
 }
 
@@ -5749,12 +5749,13 @@ error :
 
 static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "getCS" , sdb_get_cs , 1 , 0 ) ,
-   JS_FS ( "getRG" , sdb_get_rg , 1 , 0 ) ,
+   JS_FS ( "getRG" , sdb_get_shard , 1 , 0 ) ,
+   JS_FS ( "getShard" , sdb_get_shard , 1 , 0 ) ,
    JS_FS ( "createCS" , sdb_create_cs , 1 , 0 ) ,
    JS_FS ( "createRG", sdb_create_shard , 1, 0 ),
    JS_FS ( "createShard", sdb_create_shard , 1, 0 ),
-   JS_FS ( "removeRG", sdb_remove_rg , 1, 0 ),
-   JS_FS ( "removeShard", sdb_remove_rg , 1, 0 ),
+   JS_FS ( "removeRG", sdb_remove_shard , 1, 0 ),
+   JS_FS ( "removeShard", sdb_remove_shard , 1, 0 ),
    JS_FS ( "createCataRG", sdb_create_cata_shard , 1, 0 ),
    JS_FS ( "createCataShard", sdb_create_cata_shard , 1, 0 ),
    JS_FS ( "dropCS" , sdb_drop_cs , 1 , 0 ) ,
