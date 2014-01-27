@@ -48,7 +48,7 @@ static UINT32 _sdbRand ()
 
 //#define SDB_CLIENT_DFT_NETWORK_TIMEOUT 1000000
 #define SDB_CLIENT_DFT_NETWORK_TIMEOUT -1
-static INT32 _setRGName ( sdbReplicaGroupHandle handle,
+static INT32 _setRGName ( sdbShardHandle handle,
                           const CHAR *pRGName )
 {
    INT32 rc       = SDB_OK ;
@@ -1249,9 +1249,9 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
                                       const CHAR *pRGName,
-                                      sdbReplicaGroupHandle *handle )
+                                      sdbShardHandle *handle )
 {
    INT32 rc                 = SDB_OK ;
    INT32 nameLength         = 0 ;
@@ -1305,7 +1305,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
       r->_sock          = connection->_sock ;
       r->_endianConvert = connection->_endianConvert ;
-      rc = _setRGName ( (sdbReplicaGroupHandle)r, pRGName ) ;
+      rc = _setRGName ( (sdbShardHandle)r, pRGName ) ;
       if ( rc )
       {
          SDB_OSS_FREE ( r ) ;
@@ -1315,7 +1315,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
       {
          r->_isCatalog = TRUE ;
       }
-      *handle = (sdbReplicaGroupHandle)r ;
+      *handle = (sdbShardHandle)r ;
       found = TRUE ;
    }
    else if ( SDB_DMS_EOC != rc )
@@ -1339,9 +1339,9 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
                                        UINT32 id,
-                                       sdbReplicaGroupHandle *handle )
+                                       sdbShardHandle *handle )
 {
    INT32 rc                 = SDB_OK ;
    sdbCursorHandle   cursor = SDB_INVALID_HANDLE ;
@@ -1400,7 +1400,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
       r->_sock          = connection->_sock ;
       r->_endianConvert = connection->_endianConvert ;
-      rc = _setRGName ( (sdbReplicaGroupHandle)r, pRGName ) ;
+      rc = _setRGName ( (sdbShardHandle)r, pRGName ) ;
       if ( rc )
       {
          SDB_OSS_FREE ( r ) ;
@@ -1410,7 +1410,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
       {
          r->_isCatalog = TRUE ;
       }
-      *handle = (sdbReplicaGroupHandle)r ;
+      *handle = (sdbShardHandle)r ;
       found = TRUE ;
    }
    else if ( SDB_DMS_EOC != rc )
@@ -1434,7 +1434,7 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
+SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
                                           CHAR **ppRGName )
 {
    INT32 rc                 = SDB_OK ;
@@ -1455,7 +1455,7 @@ error :
    goto done ;
 }
 
-SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
+SDB_EXPORT BOOLEAN sdbIsShardCatalog ( sdbShardHandle cHandle )
 {
    sdbRGStruct *r = (sdbRGStruct*)cHandle ;
    if ( !r ||
@@ -1466,7 +1466,7 @@ SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
    return r->_isCatalog ;
 }
 
-SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbCreateCataShard ( sdbConnectionHandle cHandle,
                                         const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
@@ -1598,11 +1598,11 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbCreateReplicaNode ( sdbReplicaGroupHandle cHandle,
-                                        const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        const CHAR *pDatabasePath,
-                                        bson *configure )
+SDB_EXPORT INT32 sdbCreateNode ( sdbShardHandle cHandle,
+                                 const CHAR *pHostName,
+                                 const CHAR *pServiceName,
+                                 const CHAR *pDatabasePath,
+                                 bson *configure )
 {
    INT32 rc = SDB_OK ;
    bson configuration ;
@@ -1740,10 +1740,10 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbRemoveReplicaNode ( sdbReplicaGroupHandle cHandle,
-                                        const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        bson *configure )
+SDB_EXPORT INT32 sdbRemoveNode ( sdbShardHandle cHandle,
+                                 const CHAR *pHostName,
+                                 const CHAR *pServiceName,
+                                 bson *configure )
 {
    INT32 rc = SDB_OK ;
    bson removeInfo ;
@@ -1978,9 +1978,9 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
                                          const CHAR *pRGName,
-                                         sdbReplicaGroupHandle *handle )
+                                         sdbShardHandle *handle )
 {
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE ;
@@ -2035,13 +2035,13 @@ SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
    r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
    r->_sock          = connection->_sock ;
    r->_endianConvert = connection->_endianConvert ;
-   rc = _setRGName ( (sdbReplicaGroupHandle)r, pRGName ) ;
+   rc = _setRGName ( (sdbShardHandle)r, pRGName ) ;
    if ( rc )
    {
       SDB_OSS_FREE ( r ) ;
       goto error ;
    }
-   *handle = (sdbReplicaGroupHandle)r ;
+   *handle = (sdbShardHandle)r ;
 done :
    bson_destroy ( &newObj ) ;
    return rc ;
@@ -2049,7 +2049,7 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
                                          const CHAR *pRGName )
 {
    INT32 rc = SDB_OK ;
@@ -2107,7 +2107,7 @@ error:
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle )
+SDB_EXPORT INT32 sdbStartShard ( sdbShardHandle cHandle )
 {
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE ;
@@ -2149,7 +2149,7 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle )
+SDB_EXPORT INT32 sdbStopShard ( sdbShardHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN result = FALSE ;
@@ -2189,7 +2189,7 @@ error :
    goto done ;
 }
 
-static INT32 _sdbGetReplicaGroupDetail ( sdbReplicaGroupHandle cHandle,
+static INT32 _sdbGetShardDetail ( sdbShardHandle cHandle,
                                          bson *result )
 {
    INT32 rc               = SDB_OK ;
@@ -2236,10 +2236,10 @@ error :
    goto done ;
 }
 
-static INT32 _sdbReplicaGroupExtractNode ( SOCKET sock,
-                                           sdbReplicaNodeHandle *handle,
-                                           const CHAR *data,
-                                           BOOLEAN endianConvert )
+static INT32 _sdbShardExtractNode ( SOCKET sock,
+                                    sdbNodeHandle *handle,
+                                    const CHAR *data,
+                                    BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
    sdbRNStruct *r = NULL ;
@@ -2255,11 +2255,11 @@ static INT32 _sdbReplicaGroupExtractNode ( SOCKET sock,
    r->_sock = sock ;
    r->_endianConvert = endianConvert ;
    rc = clientReplicaGroupExtractNode ( data,
-                                        r->_hostName,
-                                        CLIENT_MAX_HOSTNAME,
-                                        r->_serviceName,
-                                        CLIENT_MAX_SERVICENAME,
-                                        &r->_nodeID ) ;
+                                 r->_hostName,
+                                 CLIENT_MAX_HOSTNAME,
+                                 r->_serviceName,
+                                 CLIENT_MAX_SERVICENAME,
+                                 &r->_nodeID ) ;
    if ( rc )
    {
       goto error ;
@@ -2269,15 +2269,15 @@ static INT32 _sdbReplicaGroupExtractNode ( SOCKET sock,
    ossStrncat ( r->_nodeName, r->_serviceName,
                 CLIENT_MAX_SERVICENAME ) ;
 
-   *handle = (sdbReplicaNodeHandle)r ;
+   *handle = (sdbNodeHandle)r ;
 done :
    return rc ;
 error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaNodeMaster ( sdbReplicaGroupHandle cHandle,
-                                           sdbReplicaNodeHandle *handle )
+SDB_EXPORT INT32 sdbGetNodeMaster ( sdbShardHandle cHandle,
+                                    sdbNodeHandle *handle )
 {
    INT32 rc                = SDB_OK ;
    bson_iterator it ;
@@ -2292,8 +2292,7 @@ SDB_EXPORT INT32 sdbGetReplicaNodeMaster ( sdbReplicaGroupHandle cHandle,
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
-
-   rc = _sdbGetReplicaGroupDetail ( cHandle, &result ) ;
+   rc = _sdbGetShardDetail ( cHandle, &result ) ;
    if ( rc )
    {
       goto error ;
@@ -2348,7 +2347,7 @@ SDB_EXPORT INT32 sdbGetReplicaNodeMaster ( sdbReplicaGroupHandle cHandle,
    }
    if ( primaryData )
    {
-      rc = _sdbReplicaGroupExtractNode ( r->_sock, handle, primaryData,
+      rc = _sdbShardExtractNode ( r->_sock, handle, primaryData,
                                          r->_endianConvert ) ;
       if ( rc )
       {
@@ -2369,8 +2368,8 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaNodeSlave ( sdbReplicaGroupHandle cHandle,
-                                          sdbReplicaNodeHandle *handle )
+SDB_EXPORT INT32 sdbGetNodeSlave ( sdbShardHandle cHandle,
+                                   sdbNodeHandle *handle )
 {
    INT32 rc                = SDB_OK ;
    bson_iterator it ;
@@ -2386,7 +2385,7 @@ SDB_EXPORT INT32 sdbGetReplicaNodeSlave ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 
-   rc = _sdbGetReplicaGroupDetail ( cHandle, &result ) ;
+   rc = _sdbGetShardDetail ( cHandle, &result ) ;
    if ( rc )
    {
       goto error ;
@@ -2472,7 +2471,7 @@ retry :
    }
    if ( primaryData )
    {
-      rc = _sdbReplicaGroupExtractNode ( r->_sock, handle, primaryData,
+      rc = _sdbShardExtractNode ( r->_sock, handle, primaryData,
                                          r->_endianConvert ) ;
       if ( rc )
       {
@@ -2492,9 +2491,9 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaNodeByName ( sdbReplicaGroupHandle cHandle,
-                                           const CHAR *pNodeName,
-                                           sdbReplicaNodeHandle *handle )
+SDB_EXPORT INT32 sdbGetNodeByName ( sdbShardHandle cHandle,
+                                    const CHAR *pNodeName,
+                                    sdbNodeHandle *handle )
 {
    INT32 rc = SDB_OK ;
    CHAR *pHostName = NULL ;
@@ -2525,7 +2524,7 @@ SDB_EXPORT INT32 sdbGetReplicaNodeByName ( sdbReplicaGroupHandle cHandle,
    }
    *pServiceName = '\0' ;
    pServiceName ++ ;
-   rc = sdbGetReplicaNodeByHost ( cHandle, pHostName, pServiceName, handle ) ;
+   rc = sdbGetNodeByHost ( cHandle, pHostName, pServiceName, handle ) ;
    if ( rc )
    {
       goto error ;
@@ -2540,10 +2539,10 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaNodeByHost ( sdbReplicaGroupHandle cHandle,
+SDB_EXPORT INT32 sdbGetNodeByHost ( sdbShardHandle cHandle,
                                            const CHAR *pHostName,
                                            const CHAR *pServiceName,
-                                           sdbReplicaNodeHandle *handle )
+                                           sdbNodeHandle *handle )
 {
    INT32 rc = SDB_OK ;
    const CHAR *hostName = NULL ;
@@ -2567,7 +2566,7 @@ SDB_EXPORT INT32 sdbGetReplicaNodeByHost ( sdbReplicaGroupHandle cHandle,
    }
    *handle = SDB_INVALID_HANDLE ;
 
-   rc = _sdbGetReplicaGroupDetail ( cHandle, &result ) ;
+   rc = _sdbGetShardDetail ( cHandle, &result ) ;
    if ( rc )
    {
       goto error ;
@@ -2587,14 +2586,14 @@ SDB_EXPORT INT32 sdbGetReplicaNodeByHost ( sdbReplicaGroupHandle cHandle,
       // loop for all elements in Group
       while ( bson_iterator_next ( &i ) )
       {
-         rc = _sdbReplicaGroupExtractNode ( r->_sock, handle,
+         rc = _sdbShardExtractNode ( r->_sock, handle,
                (CHAR*)bson_iterator_value ( &i ),
                r->_endianConvert ) ;
          if ( rc )
          {
             goto error ;
          }
-         rc = sdbGetReplicaNodeAddr ( *handle, &hostName,
+         rc = sdbGetNodeAddr ( *handle, &hostName,
                                       &serviceName, &nodeName,
                                       &nodeID ) ;
          if ( rc )
@@ -2606,7 +2605,7 @@ SDB_EXPORT INT32 sdbGetReplicaNodeByHost ( sdbReplicaGroupHandle cHandle,
          {
             break ;
          }
-         sdbReleaseReplicaNode ( *handle ) ;
+         sdbReleaseNode ( *handle ) ;
          *handle = SDB_INVALID_HANDLE ;
       }
    }
@@ -2622,12 +2621,12 @@ done :
 error :
    if ( handle && (*handle!=SDB_INVALID_HANDLE) )
    {
-      sdbReleaseReplicaNode ( *handle ) ;
+      sdbReleaseNode ( *handle ) ;
    }
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbGetReplicaNodeAddr ( sdbReplicaNodeHandle cHandle,
+SDB_EXPORT INT32 sdbGetNodeAddr ( sdbNodeHandle cHandle,
                                           const CHAR **ppHostName,
                                           const CHAR **ppServiceName,
                                           const CHAR **ppNodeName,
@@ -2662,7 +2661,7 @@ error :
    goto done ;
 }
 
-static INT32 _sdbStartStopReplicaNode ( sdbReplicaNodeHandle cHandle,
+static INT32 _sdbStartStopNode ( sdbNodeHandle cHandle,
                                         BOOLEAN start )
 {
    INT32 rc = SDB_OK ;
@@ -2712,14 +2711,14 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbStartReplicaNode ( sdbReplicaNodeHandle cHandle )
+SDB_EXPORT INT32 sdbStartNode ( sdbNodeHandle cHandle )
 {
-   return _sdbStartStopReplicaNode ( cHandle, TRUE ) ;
+   return _sdbStartStopNode ( cHandle, TRUE ) ;
 }
 
-SDB_EXPORT INT32 sdbStopReplicaNode ( sdbReplicaNodeHandle cHandle )
+SDB_EXPORT INT32 sdbStopNode ( sdbNodeHandle cHandle )
 {
-   return _sdbStartStopReplicaNode ( cHandle, FALSE ) ;
+   return _sdbStartStopNode ( cHandle, FALSE ) ;
 }
 
 SDB_EXPORT INT32 sdbListCollectionSpaces ( sdbConnectionHandle cHandle,
@@ -2736,7 +2735,7 @@ SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
                        handle ) ;
 }
 
-SDB_EXPORT INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbListShards ( sdbConnectionHandle cHandle,
                                         sdbCursorHandle *handle )
 {
    return sdbGetList ( cHandle, SDB_LIST_GROUPS, NULL, NULL, NULL,
@@ -5726,7 +5725,7 @@ SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle )
    SDB_OSS_FREE ( (sdbCSStruct*)cHandle ) ;
 }
 
-SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
+SDB_EXPORT void sdbReleaseShard ( sdbShardHandle cHandle )
 {
    sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
    if ( !rg || rg->_handleType != SDB_HANDLE_TYPE_REPLICAGROUP )
@@ -5744,7 +5743,7 @@ SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
    SDB_OSS_FREE ( (sdbRGStruct*)cHandle ) ;
 }
 
-SDB_EXPORT void sdbReleaseReplicaNode ( sdbReplicaNodeHandle cHandle )
+SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle )
 {
    sdbRNStruct *rn = (sdbRNStruct*)cHandle ;
    if ( !rn || rn->_handleType != SDB_HANDLE_TYPE_REPLICANODE )
