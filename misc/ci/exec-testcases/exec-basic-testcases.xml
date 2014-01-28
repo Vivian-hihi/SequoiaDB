@@ -94,7 +94,7 @@
 
 	<target name="test-one-case" depends="">
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="db.RG.info" >
-		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.listReplicaGroups();db.close(); &quot;" />
+		  <arg line=" -s &quot; db = new Sdb('localhost',50000);var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
 		
