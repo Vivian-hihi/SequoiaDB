@@ -89,14 +89,14 @@ INT32 execSQL ( sdb *connection, CHAR *sql, sdbCursor **query )
 }
 
 INT32 selectGroup ( sdb *connection,
-                    sdbReplicaGroup **group,
+                    sdbShard **group,
                     const CHAR *groupName )
 {
    INT32 rc = SDB_OK ;
-   rc = connection->getReplicaGroup ( groupName, **group ) ;
+   rc = connection->getShard ( groupName, **group ) ;
    if ( SDB_CLS_GRP_NOT_EXIST == rc )
    {
-      rc = connection->createReplicaGroup ( groupName, **group ) ;
+      rc = connection->createShard ( groupName, **group ) ;
    }
    return rc ;
 }
@@ -117,10 +117,10 @@ INT32 createCataGroup ( sdb *connection,
          return rc ;
       }
    }
-   rc = connection->createReplicaCataGroup ( pHostName,
-                                             pServiceName,
-                                             pDatabasePath,
-                                             configureBson ) ;
+   rc = connection->createCataShard ( pHostName,
+                                      pServiceName,
+                                      pDatabasePath,
+                                      configureBson ) ;
    return rc ;
 }
 
@@ -720,7 +720,7 @@ INT32 delCurrent ( sdbCursor *query )
 
 /*************** sdbReplicaGroup ******************************/
 
-INT32 getNodeNum ( sdbReplicaGroup *gr, INT32 nudeType, INT32 *nodeNum )
+INT32 getNodeNum ( sdbShard *gr, INT32 nudeType, INT32 *nodeNum )
 {
    INT32 rc = SDB_OK ;
    sdbNodeStatus status = (sdbNodeStatus)nudeType ;
@@ -728,7 +728,7 @@ INT32 getNodeNum ( sdbReplicaGroup *gr, INT32 nudeType, INT32 *nodeNum )
    return rc ;
 }
 
-INT32 getDetail ( sdbReplicaGroup *gr, CHAR **pBuf, INT32 *bufSize )
+INT32 getDetail ( sdbShard *gr, CHAR **pBuf, INT32 *bufSize )
 {
    INT32 rc = SDB_OK ;
    BSONObj obj ;
@@ -749,22 +749,22 @@ INT32 getDetail ( sdbReplicaGroup *gr, CHAR **pBuf, INT32 *bufSize )
    return rc ;
 }
 
-INT32 getMaster ( sdbReplicaGroup *gr, sdbReplicaNode **node )
+INT32 getMaster ( sdbShard *gr, sdbNode **node )
 {
    INT32 rc = SDB_OK ;
    rc = gr->getMaster ( **node ) ;
    return rc ;
 }
 
-INT32 getSlave ( sdbReplicaGroup *gr, sdbReplicaNode **node )
+INT32 getSlave ( sdbShard *gr, sdbNode **node )
 {
    INT32 rc = SDB_OK ;
    rc = gr->getSlave ( **node ) ;
    return rc ;
 }
 
-INT32 getNode ( sdbReplicaGroup *gr,
-                sdbReplicaNode **node,
+INT32 getNode ( sdbShard *gr,
+                sdbNode **node,
                 const CHAR *nodeName )
 {
    INT32 rc = SDB_OK ;
@@ -772,7 +772,7 @@ INT32 getNode ( sdbReplicaGroup *gr,
    return rc ;
 }
 
-INT32 createNode ( sdbReplicaGroup *gr,
+INT32 createNode ( sdbShard *gr,
                    const CHAR *pHostName,
                    const CHAR *pServiceName,
                    const CHAR *pDatabasePath,
@@ -795,27 +795,27 @@ INT32 activate ( sdbReplicaGroup *gr )
 }
 */
 
-INT32 groupStop ( sdbReplicaGroup *gr )
+INT32 groupStop ( sdbShard *gr )
 {
    INT32 rc = SDB_OK ;
    rc = gr->stop() ;
    return rc ;
 }
 
-INT32 groupStart ( sdbReplicaGroup *gr )
+INT32 groupStart ( sdbShard *gr )
 {
    INT32 rc = SDB_OK ;
    rc = gr->start() ;
    return rc ;
 }
 
-BOOLEAN isCatalog ( sdbReplicaGroup *gr )
+BOOLEAN isCatalog ( sdbShard *gr )
 {
    return gr->isCatalog() ;
 }
-/*************** sdbReplicaNode ******************************/
+/*************** sdbNode ******************************/
 
-INT32 nodeConnect ( sdbReplicaNode *node,
+INT32 nodeConnect ( sdbNode *node,
                     sdb **connection )
 {
    INT32 rc = SDB_OK ;
@@ -823,41 +823,41 @@ INT32 nodeConnect ( sdbReplicaNode *node,
    return rc ;
 }
 
-INT32 getStatus ( sdbReplicaNode *node )
+INT32 getStatus ( sdbNode *node )
 {
    INT32 status = node->getStatus() ;
    return status ;
 }
 
-const CHAR *getHostName ( sdbReplicaNode *node )
+const CHAR *getHostName ( sdbNode *node )
 {
    const CHAR *hostName = NULL ;
    hostName = node->getHostName () ;
    return hostName ;
 }
 
-const CHAR *getServiceName ( sdbReplicaNode *node )
+const CHAR *getServiceName ( sdbNode *node )
 {
    const CHAR *serviceName = NULL ;
    serviceName = node->getServiceName () ;
    return serviceName ;
 }
 
-const CHAR *getNodeName ( sdbReplicaNode *node )
+const CHAR *getNodeName ( sdbNode *node )
 {
    const CHAR *nodeName = NULL ;
    nodeName = node->getNodeName () ;
    return nodeName ;
 }
 
-INT32 nodeStop ( sdbReplicaNode *node )
+INT32 nodeStop ( sdbNode *node )
 {
    INT32 rc = SDB_OK ;
    rc = node->stop() ;
    return rc ;
 }
 
-INT32 nodeStart ( sdbReplicaNode *node )
+INT32 nodeStart ( sdbNode *node )
 {
    INT32 rc = SDB_OK ;
    rc = node->start() ;
