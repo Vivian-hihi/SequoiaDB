@@ -335,7 +335,7 @@ namespace sdbclient
    private :
 /** \fn sdbCollection ( const sdbCollection& other ) ;
       \brief Copy constructor
-      \param[in] A cosnt object reference of class sdbReplicaGroup.
+      \param[in] A cosnt object reference of class sdbShard.
 */
       sdbCollection ( const sdbCollection& other ) ;
 
@@ -397,7 +397,7 @@ namespace sdbclient
     \param [in] splitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
-             we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, 
+             we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
              the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
              they are in [30,max).
     \retval SDB_OK Operation Success
@@ -955,14 +955,14 @@ namespace sdbclient
 */
    typedef enum sdbNodeStatus sdbNodeStatus ;
 
-   class DLLEXPORT _sdbReplicaNode
+   class DLLEXPORT _sdbNode
    {
    private :
-      _sdbReplicaNode ( const _sdbReplicaNode& other ) ;
-      _sdbReplicaNode& operator=( const _sdbReplicaNode& ) ;
+      _sdbNode ( const _sdbNode& other ) ;
+      _sdbNode& operator=( const _sdbNode& ) ;
    public :
-      _sdbReplicaNode () {}
-      virtual ~_sdbReplicaNode () {}
+      _sdbNode () {}
+      virtual ~_sdbNode () {}
       // connect to the current node
       virtual INT32 connect ( _sdb **dbConn ) = 0 ;
       virtual INT32 connect ( sdb &dbConn ) = 0 ;
@@ -990,50 +990,50 @@ namespace sdbclient
                                    &config ) = 0 ; */
    } ;
 
-/** \class sdbReplicaNode
-    \brief Database operation interfaces of replica node
+/** \class sdbNode
+    \brief Database operation interfaces of node
 
-    Class sdbReplicaNode is a handle class of virtual base class _sdbReplicaNode.
+    Class sdbNode is a handle class of virtual base class _sdbNode.
 */
-   class DLLEXPORT sdbReplicaNode
+   class DLLEXPORT sdbNode
    {
    private :
-/** \fn sdbReplicaNode ( const sdbReplicaNode& other )
+/** \fn sdbNode ( const sdbNode& other )
     \brief Copy Constructor
-    \param[in] A cosnt object reference  of class sdbReplicaGroup.
+    \param[in] A cosnt object reference  of class sdbShard.
 */
-      sdbReplicaNode ( const sdbReplicaNode& other ) ;
+      sdbNode ( const sdbNode& other ) ;
 
-/** \fn sdbReplicaNode& operator=( const sdbReplicaNode& )
+/** \fn sdbNode& operator=( const sdbNode& )
     \brief Assignment constructor
-    \param[in] A cosnt reference  of class sdbReplicaNode.
-    \retval A object cosnt reference  of class sdbReplicaNode.
+    \param[in] A cosnt reference  of class sdbNode.
+    \retval A object cosnt reference  of class sdbNode.
 */
-      sdbReplicaNode& operator=( const sdbReplicaNode& ) ;
+      sdbNode& operator=( const sdbNode& ) ;
    public :
-/** \var pReplicaNode
-    \breif A pointer of virtual base class _sdbReplicaNode
+/** \var pNode
+    \breif A pointer of virtual base class _sdbNode
 
-    Class sdbReplicaNode is a shell for _sdbReplicaNode.We use pReplicaNode to
-    call the methods in class _sdbReplicaNode.
+    Class sdbNode is a shell for _sdbNode.We use pNode to
+    call the methods in class _sdbNode.
 */
-      _sdbReplicaNode *pReplicaNode ;
+      _sdbNode *pNode ;
 
-/** \fn sdbReplicaNode ()
+/** \fn sdbNode ()
     \brief Default constructor.
 */
-      sdbReplicaNode ()
+      sdbNode ()
       {
-         pReplicaNode = NULL ;
+         pNode = NULL ;
       }
 
-/** \fn ~sdbReplicaNode ()
+/** \fn ~sdbNode ()
     \brief Destructor.
 */
-      ~sdbReplicaNode ()
+      ~sdbNode ()
       {
-         if ( pReplicaNode )
-            delete pReplicaNode ;
+         if ( pNode )
+            delete pNode ;
       }
 /* \fn connect ( _sdb **dbConn )
     \brief Connect to the current node.
@@ -1043,9 +1043,9 @@ namespace sdbclient
 */
       INT32 connect ( _sdb **dbConn )
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return SDB_NOT_CONNECTED ;
-         return pReplicaNode->connect ( dbConn ) ;
+         return pNode->connect ( dbConn ) ;
       }
 
 /** \fn connect ( sdb &dbConn )
@@ -1056,9 +1056,9 @@ namespace sdbclient
 */
       INT32 connect ( sdb &dbConn )
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return SDB_NOT_CONNECTED ;
-         return pReplicaNode->connect ( dbConn ) ;
+         return pNode->connect ( dbConn ) ;
       }
 
 /** \fn sdbNodeStatus getStatus ()
@@ -1067,9 +1067,9 @@ namespace sdbclient
 */
       sdbNodeStatus getStatus ()
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return SDB_NODE_UNKNOWN ;
-         return pReplicaNode->getStatus () ;
+         return pNode->getStatus () ;
       }
 
 /** \fn const CHAR *getHostName ()
@@ -1078,9 +1078,9 @@ namespace sdbclient
 */
       const CHAR *getHostName ()
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return NULL ;
-         return pReplicaNode->getHostName () ;
+         return pNode->getHostName () ;
       }
 
 /** \fn CHAR *getServiceName ()
@@ -1089,9 +1089,9 @@ namespace sdbclient
 */
       const CHAR *getServiceName ()
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return NULL ;
-         return pReplicaNode->getServiceName () ;
+         return pNode->getServiceName () ;
       }
 
 /** \fn const CHAR *getNodeName ()
@@ -1100,9 +1100,9 @@ namespace sdbclient
 */
       const CHAR *getNodeName ()
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return NULL ;
-         return pReplicaNode->getNodeName () ;
+         return pNode->getNodeName () ;
       }
 
 /** \fn INT32  stop ()
@@ -1112,9 +1112,9 @@ namespace sdbclient
 */
       INT32  stop ()
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return SDB_NOT_CONNECTED ;
-         return pReplicaNode->stop () ;
+         return pNode->stop () ;
       }
 
 /** \fn INT32 start ()
@@ -1124,60 +1124,60 @@ namespace sdbclient
 */
       INT32 start ()
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return SDB_NOT_CONNECTED ;
-         return pReplicaNode->start () ;
+         return pNode->start () ;
       }
 /*      INT32 modifyConfig ( std::map<std::string,std::string> &config )
       {
-         if ( !pReplicaNode )
+         if ( !pNode )
             return NULL ;
-         return pReplicaNode->modifyConfig ( config ) ;
+         return pNode->modifyConfig ( config ) ;
       }*/
    } ;
 
-   class DLLEXPORT _sdbReplicaGroup
+   class DLLEXPORT _sdbShard
    {
    private :
-      _sdbReplicaGroup ( const _sdbReplicaGroup& other ) ;
-      _sdbReplicaGroup& operator=( const _sdbReplicaGroup& ) ;
+      _sdbShard ( const _sdbShard& other ) ;
+      _sdbShard& operator=( const _sdbShard& ) ;
    public :
-      _sdbReplicaGroup () {}
-      virtual ~_sdbReplicaGroup () {}
-      // get number of logical nodes in replica set that matches status
+      _sdbShard () {}
+      virtual ~_sdbShard () {}
+      // get number of logical nodes
       virtual INT32 getNodeNum ( sdbNodeStatus status, INT32 *num ) = 0 ;
 
       // get detailed information for the set
       virtual INT32 getDetail ( bson::BSONObj &result ) = 0 ;
 
       // get the master node
-      virtual INT32 getMaster ( _sdbReplicaNode **node ) = 0 ;
-      virtual INT32 getMaster ( sdbReplicaNode &node ) = 0 ;
+      virtual INT32 getMaster ( _sdbNode **node ) = 0 ;
+      virtual INT32 getMaster ( sdbNode &node ) = 0 ;
 
       // get one of the slave node
-      virtual INT32 getSlave ( _sdbReplicaNode **node ) = 0 ;
-      virtual INT32 getSlave ( sdbReplicaNode &node ) = 0 ;
+      virtual INT32 getSlave ( _sdbNode **node ) = 0 ;
+      virtual INT32 getSlave ( sdbNode &node ) = 0 ;
 
       // get a given node by name
       virtual INT32 getNode ( const CHAR *pNodeName,
-                              _sdbReplicaNode **node ) = 0 ;
+                              _sdbNode **node ) = 0 ;
       virtual INT32 getNode ( const CHAR *pNodeName,
-                              sdbReplicaNode &node ) = 0 ;
+                              sdbNode &node ) = 0 ;
 
       // get a given node by host/service name
       virtual INT32 getNode ( const CHAR *pHostName,
                               const CHAR *pServiceName,
-                              _sdbReplicaNode **node ) = 0 ;
+                              _sdbNode **node ) = 0 ;
       virtual INT32 getNode ( const CHAR *pHostName,
                               const CHAR *pServiceName,
-                              sdbReplicaNode &node ) = 0 ;
+                              sdbNode &node ) = 0 ;
 
-      // create a new node in replica set
+      // create a new node in current shard
       virtual INT32 createNode ( const CHAR *pHostName,
                                  const CHAR *pServiceName,
                                  const CHAR *pDatabasePath,
                                  std::map<std::string,std::string> &config )= 0;
-      // remove the specified node in replica set
+      // remove the specified node in current shard
       virtual INT32 removeNode ( const CHAR *pHostName,
                                  const CHAR *pServiceName,
                                  const bson::BSONObj &configure = _sdbStaticObject ) = 0 ;
@@ -1187,61 +1187,61 @@ namespace sdbclient
       // start the group
       virtual INT32 start () = 0 ;
 
-      // get replica set name
+      // get the shard name
       virtual const CHAR *getName () = 0 ;
 
-      // whether the current replicagroup is catalog group
+      // whether the current shard is catalog shard or not
       virtual BOOLEAN isCatalog () = 0 ;
    } ;
 
-/** \class sdbReplicaGroup
-    \brief Database operation interfaces of replica group.
+/** \class sdbShard
+    \brief Database operation interfaces of shard.
 
-    Class sdbReplicaGroup is a handle class of virtual base class _sdbReplicaGroup.
+    Class sdbShard is a handle class of virtual base class _sdbShard.
 */
-   class DLLEXPORT sdbReplicaGroup
+   class DLLEXPORT sdbShard
    {
    private :
-/** \fn sdbReplicaGroup ( const sdbReplicaGroup& other )
+/** \fn sdbShard ( const sdbShard& other )
     \brief Copy constructor
-    \param[in] A cosnt object reference of class sdbReplicaGroup.
+    \param[in] A cosnt object reference of class sdbShard.
 */
-      sdbReplicaGroup ( const sdbReplicaGroup& other ) ;
+      sdbShard ( const sdbShard& other ) ;
 
-/** \fn sdbReplicaGroup& operator=( const sdbReplicaGroup& ) ;
+/** \fn sdbShard& operator=( const sdbShard& ) ;
    \brief Assignment constructor
-   \param[in] A cosnt reference object of class sdbReplicaGroup.
-   \retval A cosnt reference object of class sdbReplicaGroup.
+   \param[in] A cosnt reference object of class sdbShard.
+   \retval A cosnt reference object of class sdbShard.
 */
-      sdbReplicaGroup& operator=( const sdbReplicaGroup& ) ;
+      sdbShard& operator=( const sdbShard& ) ;
    public :
-/** \var pReplicaGroup
-      \breif A pointer of virtual base class _sdbReplicaGroup
+/** \var pShard
+      \breif A pointer of virtual base class _sdbShard
 
-      Class sdbReplicaGroup is a shell for _sdbReplicaGroup.We use pCursor to
-      call the methods in class _sdbReplicaGroup.
+      Class sdbShard is a shell for _sdbShard.We use pCursor to
+      call the methods in class _sdbShard.
 */
-      _sdbReplicaGroup *pReplicaGroup ;
+      _sdbShard *pShard ;
 
-/** \fn sdbReplicaGroup ()
+/** \fn sdbShard ()
     \brief Default constructor
 */
-      sdbReplicaGroup ()
+      sdbShard ()
       {
-         pReplicaGroup = NULL ;
+         pShard = NULL ;
       }
 
-/** \fn ~sdbReplicaGroup ()
+/** \fn ~sdbShard ()
     \brief Destructor
 */
-      ~sdbReplicaGroup ()
+      ~sdbShard ()
       {
-         if ( pReplicaGroup )
-            delete pReplicaGroup ;
+         if ( pShard )
+            delete pShard ;
       }
 
 /** \fn INT32 getNodeNum ( sdbNodeStatus status, INT32 *num )
-    \brief Get the count of node with given status in current replica group.
+    \brief Get the count of node with given status in current shard.
     \param [in] status The specified status as below
 
         SDB_NODE_ALL
@@ -1254,114 +1254,114 @@ namespace sdbclient
 */
       INT32 getNodeNum ( sdbNodeStatus status, INT32 *num )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getNodeNum ( status, num ) ;
+         return pShard->getNodeNum ( status, num ) ;
       }
 
 /** \fn INT32 getDetail ( bson::BSONObj &result )
-    \brief Get the detail of the replica group.
+    \brief Get the detail of the shard.
     \param [out] result Return the all the info of current group.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 getDetail ( bson::BSONObj &result )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getDetail ( result ) ;
+         return pShard->getDetail ( result ) ;
       }
 
-/* \fn INT32 getMaster ( _sdbReplicaNode **node )
-    \brief Get the master node of the current replica group.
+/* \fn INT32 getMaster ( _sdbNode **node )
+    \brief Get the master node of the current shard.
     \param [out] node The master node.If not exit,return null.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getMaster ( _sdbReplicaNode **node )
+      INT32 getMaster ( _sdbNode **node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getMaster ( node ) ;
+         return pShard->getMaster ( node ) ;
       }
 
-/** \fn INT32 getMaster ( sdbReplicaNode &node )
-    \brief Get the master node of the current replica group.
+/** \fn INT32 getMaster ( sdbNode &node )
+    \brief Get the master node of the current shard.
     \param [out] node The master node.If not exit,return null.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getMaster ( sdbReplicaNode &node )
+      INT32 getMaster ( sdbNode &node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getMaster ( node ) ;
+         return pShard->getMaster ( node ) ;
       }
 
-/* \fn INT32 getSlave ( _sdbReplicaNode **node )
-    \brief Get one of slave node of the current replica group,
+/* \fn INT32 getSlave ( _sdbNode **node )
+    \brief Get one of slave node of the current shard,
            if no slave exists then get master.
     \param [out] node The slave node.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getSlave ( _sdbReplicaNode **node )
+      INT32 getSlave ( _sdbNode **node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getSlave ( node ) ;
+         return pShard->getSlave ( node ) ;
       }
 
-/** \fn  INT32 getSlave ( sdbReplicaNode &node )
-    \brief Get one of slave node of the current replica group,
+/** \fn  INT32 getSlave ( sdbNode &node )
+    \brief Get one of slave node of the current shard,
            if no slave exists then get master
     \param [out] node The slave node.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getSlave ( sdbReplicaNode &node )
+      INT32 getSlave ( sdbNode &node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getSlave ( node ) ;
+         return pShard->getSlave ( node ) ;
       }
 
 /* \fn INT32 getNode ( const CHAR *pNodeName,
-                      _sdbReplicaNode **node )
-    \brief Get specified node from current replica group.
+                      _sdbNode **node )
+    \brief Get specified node from current shard.
     \param [in] pHostName The host name of the node.
     \param [out] node  The specified node .
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 getNode ( const CHAR *pNodeName,
-                      _sdbReplicaNode **node )
+                      _sdbNode **node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getNode ( pNodeName, node ) ;
+         return pShard->getNode ( pNodeName, node ) ;
       }
 
 /** \fn INT32 getNode ( const CHAR *pNodeName,
-                      sdbReplicaNode &node )
-    \brief Get specified node from current replica group.
+                      sdbNode &node )
+    \brief Get specified node from current shard.
     \param [in] pHostName The host name of the node.
     \param [out] node  The specified node.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 getNode ( const CHAR *pNodeName,
-                      sdbReplicaNode &node )
+                      sdbNode &node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getNode ( pNodeName, node ) ;
+         return pShard->getNode ( pNodeName, node ) ;
       }
 
 /* \fn INT32 getNode ( const CHAR *pHostName,
                       const CHAR *pServiceName,
-                      _sdbReplicaNode **node )
-    \brief Get specified node from current replica group.
+                      _sdbNode **node )
+    \brief Get specified node from current shard.
     \param [in] pHostName The host name of the node.
     \param [in] pServiceName The service name of the node.
     \param [out] node The specified node.
@@ -1370,17 +1370,17 @@ namespace sdbclient
 */
       INT32 getNode ( const CHAR *pHostName,
                       const CHAR *pServiceName,
-                      _sdbReplicaNode **node )
+                      _sdbNode **node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getNode ( pHostName, pServiceName, node ) ;
+         return pShard->getNode ( pHostName, pServiceName, node ) ;
       }
 
 /** \fn INT32 getNode ( const CHAR *pHostName,
                       const CHAR *pServiceName,
-                      sdbReplicaNode &node )
-    \brief Get specified node from current replica group.
+                      sdbNode &node )
+    \brief Get specified node from current shard.
     \param [in] pHostName The host name of the node.
     \param [in] pServiceName The service name of the node.
     \param [out] node The specified node.
@@ -1389,22 +1389,22 @@ namespace sdbclient
 */
       INT32 getNode ( const CHAR *pHostName,
                       const CHAR *pServiceName,
-                      sdbReplicaNode &node )
+                      sdbNode &node )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->getNode ( pHostName, pServiceName, node ) ;
+         return pShard->getNode ( pHostName, pServiceName, node ) ;
       }
 
 /** \fn INT32 createNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
                          const CHAR *pDatabasePath,
                          std::map<std::string,std::string> &config )
-    \brief Create replica node in a given replica group
-    \param [in] pHostName The hostname for the replica node
-    \param [in] pServiceName The servicename for the replica node
-    \param [in] pDatabasePath The database path for the replica node
-    \param [in] configure The configurations for the replica node
+    \brief Create node in a given shard
+    \param [in] pHostName The hostname for the node
+    \param [in] pServiceName The servicename for the node
+    \param [in] pDatabasePath The database path for the node
+    \param [in] configure The configurations for the node
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1413,18 +1413,18 @@ namespace sdbclient
                          const CHAR *pDatabasePath,
                          std::map<std::string,std::string> &config )
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->createNode ( pHostName, pServiceName,
+         return pShard->createNode ( pHostName, pServiceName,
                                             pDatabasePath, config ) ;
       }
 /** \fn INT32 removeNode ( const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const BSONObj &configure = _sdbStaticObject  )
-    \brief remove replica node in a given replica group
-    \param [in] pHostName The hostname for the replica node
-    \param [in] pServiceName The servicename for the replica node
-    \param [in] configure The configurations for the replica node
+    \brief remove node in a given shard
+    \param [in] pHostName The hostname for the node
+    \param [in] pServiceName The servicename for the node
+    \param [in] configure The configurations for the node
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1432,44 +1432,44 @@ namespace sdbclient
                                           const CHAR *pServiceName,
                                           const bson::BSONObj &configure = _sdbStaticObject )
          {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->removeNode ( pHostName, pServiceName,
+         return pShard->removeNode ( pHostName, pServiceName,
                                            configure ) ;
    }
 /** \fn INT32 stop ()
-    \brief Stop current replica group
+    \brief Stop current shard
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 stop ()
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->stop () ;
+         return pShard->stop () ;
       }
 
 /** \fn INT32 INT32 start ()
-    \brief Start up current replica group.
+    \brief Start up current shard.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 start ()
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return SDB_NOT_CONNECTED ;
-         return pReplicaGroup->start () ;
+         return pShard->start () ;
       }
 /** \fn BOOLEAN isCatalog ()
-    \brief Test whether current replica group is catalog.
-    \retval TRUE The replica group is catalog
-    \retval FALSE The replica group is not catalog
+    \brief Test whether current shard is catalog.
+    \retval TRUE The shard is catalog
+    \retval FALSE The shard is not catalog
 */
       BOOLEAN isCatalog ()
       {
-         if ( !pReplicaGroup )
+         if ( !pShard )
             return FALSE ;
-         return pReplicaGroup->isCatalog() ;
+         return pShard->isCatalog() ;
       }
    } ;
 
@@ -1823,38 +1823,38 @@ namespace sdbclient
 
       virtual INT32 listCollections ( sdbCursor &result ) = 0 ;
 
-      // list all replicagroups in a given database
-      virtual INT32 listReplicaGroups ( _sdbCursor **result ) = 0 ;
+      // list all the shards in the given database
+      virtual INT32 listShards ( _sdbCursor **result ) = 0 ;
 
-      virtual INT32 listReplicaGroups ( sdbCursor &result ) = 0 ;
+      virtual INT32 listShards ( sdbCursor &result ) = 0 ;
 
-      virtual INT32 getReplicaGroup ( const CHAR *pName,
-                                      _sdbReplicaGroup **result ) = 0 ;
+      virtual INT32 getShard ( const CHAR *pName,
+                                      _sdbShard **result ) = 0 ;
 
-      virtual INT32 getReplicaGroup ( const CHAR *pName,
-                                      sdbReplicaGroup &result ) = 0 ;
+      virtual INT32 getShard ( const CHAR *pName,
+                                      sdbShard &result ) = 0 ;
 
-      virtual INT32 getReplicaGroup ( INT32 id,
-                                      _sdbReplicaGroup **result ) = 0 ;
+      virtual INT32 getShard ( INT32 id,
+                                      _sdbShard **result ) = 0 ;
 
-      virtual INT32 getReplicaGroup ( INT32 id,
-                                      sdbReplicaGroup &result ) = 0 ;
+      virtual INT32 getShard ( INT32 id,
+                                      sdbShard &result ) = 0 ;
 
-      virtual INT32 createReplicaGroup ( const CHAR *pName,
-                                         _sdbReplicaGroup **rg ) = 0 ;
+      virtual INT32 createShard ( const CHAR *pName,
+                                         _sdbShard **shard ) = 0 ;
 
-      virtual INT32 createReplicaGroup ( const CHAR *pName,
-                                         sdbReplicaGroup &rg ) = 0 ;
+      virtual INT32 createShard ( const CHAR *pName,
+                                         sdbShard &shard ) = 0 ;
 
-   virtual INT32 removeReplicaGroup ( const CHAR *pRGName ) = 0 ;
+   virtual INT32 removeShard ( const CHAR *pName ) = 0 ;
 
-      virtual INT32 createReplicaCataGroup (  const CHAR *pHostName,
+      virtual INT32 createCataShard (  const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
                                         const bson::BSONObj &configure ) =0 ;
 
-      virtual INT32 activateReplicaGroup ( const CHAR *pName,
-                                           _sdbReplicaGroup **rg ) = 0 ;
+      virtual INT32 activateShard ( const CHAR *pName,
+                                           _sdbShard **shard ) = 0 ;
 
       virtual INT32 execUpdate( const CHAR *sql ) = 0 ;
 
@@ -2478,166 +2478,166 @@ namespace sdbclient
          return pSDB->listCollections ( result ) ;
       }
 
-/* \fn INT32 listReplicaGroups ( _sdbCursor **result )
-    \brief List all replica groups of current database.
+/* \fn INT32 listShards ( _sdbCursor **result )
+    \brief List all shards of current database.
     \param [out] result The return cursor handle of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 listReplicaGroups ( _sdbCursor **result )
+      INT32 listShards ( _sdbCursor **result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->listReplicaGroups ( result ) ;
+         return pSDB->listShards ( result ) ;
       }
 
 
-/** \fn INT32 listReplicaGroups ( sdbCursor &result )
-    \brief List all replica groups of current database.
+/** \fn INT32 listShards ( sdbCursor &result )
+    \brief List all shards of current database.
     \param [out] result The return cursor object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 listReplicaGroups ( sdbCursor &result )
+      INT32 listShards ( sdbCursor &result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->listReplicaGroups ( result ) ;
+         return pSDB->listShards ( result ) ;
       }
 
-/* \fn INT32 getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result )
-    \brief Get the specified replica group.
-    \param [in] pName The name of replica group.
-    \param [out] result The return replica group handle of query.
+/* \fn INT32 getShard ( const CHAR *pName, _sdbShard **result )
+    \brief Get the specified shard.
+    \param [in] pName The name of shard.
+    \param [out] result The return shard handle of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result )
+      INT32 getShard ( const CHAR *pName, _sdbShard **result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->getReplicaGroup ( pName, result ) ;
+         return pSDB->getShard ( pName, result ) ;
       }
 
 
-/** \fn INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
-    \brief Get the specified replica group.
-    \param [in] pName The name of replica group.
-    \param [out] result The return replica group object of query.
+/** \fn INT32 getShard ( const CHAR *pName, sdbShard &result )
+    \brief Get the specified shard.
+    \param [in] pName The name of shard.
+    \param [out] result The return shard object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
+      INT32 getShard ( const CHAR *pName, sdbShard &result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->getReplicaGroup ( pName, result ) ;
+         return pSDB->getShard ( pName, result ) ;
       }
 
-/* \fn INT32 getReplicaGroup ( INT32 id, _sdbReplicaGroup **result )
-    \brief Get the specified replica group.
-    \param [in] id The id of replica group.
-    \param [out] result The return replica group object of query.
+/* \fn INT32 getShard ( INT32 id, _sdbShard **result )
+    \brief Get the specified shard.
+    \param [in] id The id of shard.
+    \param [out] result The return shard object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getReplicaGroup ( INT32 id, _sdbReplicaGroup **result )
+      INT32 getShard ( INT32 id, _sdbShard **result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->getReplicaGroup ( id, result ) ;
+         return pSDB->getShard ( id, result ) ;
       }
 
-/** \fn INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
-    \brief Get the specified replica group.
-    \param [in] id The id of replica group.
-    \param [out] result The return replica group object of query.
+/** \fn INT32 getShard ( INT32 id, sdbShard &result )
+    \brief Get the specified shard.
+    \param [in] id The id of shard.
+    \param [out] result The return shard object of query.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
+      INT32 getShard ( INT32 id, sdbShard &result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->getReplicaGroup ( id, result ) ;
+         return pSDB->getShard ( id, result ) ;
       }
 
-/* \fn INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **rg )
-    \brief Create the specified replica group.
-    \param [in] pName The name of replication group.
-    \param [out] rg The return replica group handle.
+/* \fn INT32 createShard ( const CHAR *pName, _sdbShard **shard )
+    \brief Create the specified shard.
+    \param [in] pName The name of the shard.
+    \param [out] shard The return shard handle.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **rg )
+      INT32 createShard ( const CHAR *pName, _sdbShard **shard )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->createReplicaGroup ( pName, rg ) ;
+         return pSDB->createShard ( pName, shard ) ;
       }
 
-/** \fn INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &rg )
-    \brief Create the specified replica group.
-    \param [in] pName The name of replication group.
-    \param [out] rg The return replica group object.
+/** \fn INT32 createShard ( const CHAR *pName, sdbShard &shard )
+    \brief Create the specified shard.
+    \param [in] pName The name of the shard.
+    \param [out] shard The return shard object.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &rg )
+      INT32 createShard ( const CHAR *pName, sdbShard &shard )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->createReplicaGroup ( pName, rg ) ;
+         return pSDB->createShard ( pName, shard ) ;
       }
 
-/** \fn INT32 removeReplicaGroup ( const CHAR *pRGName )
-    \brief Remove the specified replica group
-    \param [in] pRGName The name of replication group
+/** \fn INT32 removeShard ( const CHAR *pName )
+    \brief Remove the specified shard
+    \param [in] pName The name of the shard
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 removeReplicaGroup ( const CHAR *pRGName )
+      INT32 removeShard ( const CHAR *pName )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->removeReplicaGroup ( pRGName ) ;
+         return pSDB->removeShard ( pName ) ;
       }
 
-/** \fn INT32 createReplicaCataGroup (  const CHAR *pHostName,
+/** \fn INT32 createCataShard (  const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
                                         const bson::BSONObj &configure )
-    \brief Create a catalog replica group
-    \param [in] pHostName The hostname for the catalog replica group
-    \param [in] pServiceName The servicename for the catalog replica group
-    \param [in] pDatabasePath The path for the catalog replica group
-    \param [in] configure The configurations for the catalog replica group
+    \brief Create a catalog shard
+    \param [in] pHostName The hostname for the catalog shard
+    \param [in] pServiceName The servicename for the catalog shard
+    \param [in] pDatabasePath The path for the catalog shard
+    \param [in] configure The configurations for the catalog shard
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 createReplicaCataGroup (  const CHAR *pHostName,
-                                      const CHAR *pServiceName,
-                                      const CHAR *pDatabasePath,
-                                      const bson::BSONObj &configure )
+      INT32 createCataShard (  const CHAR *pHostName,
+                               const CHAR *pServiceName,
+                               const CHAR *pDatabasePath,
+                               const bson::BSONObj &configure )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->createReplicaCataGroup ( pHostName, pServiceName,
-                                               pDatabasePath, configure ) ;
+         return pSDB->createCataShard ( pHostName, pServiceName,
+                                        pDatabasePath, configure ) ;
       }
 
-/** \fn INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **rg )
-    \brief Activate the specified replica group
-    \param [in] pName The name of the replica group.
-    \param [out] rg The return replica group handle.
+/** \fn INT32 activateShard ( const CHAR *pName, _sdbShard **shard )
+    \brief Activate the specified shard
+    \param [in] pName The name of the shard.
+    \param [out] shard The return shard handle.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **rg )
+      INT32 activateShard ( const CHAR *pName, _sdbShard **shard )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->activateReplicaGroup ( pName, rg ) ;
+         return pSDB->activateShard ( pName, shard ) ;
       }
 
 /** \fn INT32 execUpdate( const CHAR *sql )

@@ -2216,25 +2216,25 @@ namespace sdbclient
       goto done ;
    } */
 
-   _sdbReplicaNodeImpl::_sdbReplicaNodeImpl () :
+   _sdbNodeImpl::_sdbNodeImpl () :
    _connection ( NULL )
    {
       ossMemset ( _hostName, 0, sizeof(_hostName) ) ;
       ossMemset ( _serviceName, 0, sizeof(_serviceName) ) ;
       ossMemset ( _nodeName, 0, sizeof(_nodeName) ) ;
-      _nodeID = SDB_REPLICA_NODE_INVALID_NODEID ;
+      _nodeID = SDB_NODE_INVALID_NODEID ;
    }
 
-   _sdbReplicaNodeImpl::~_sdbReplicaNodeImpl ()
+   _sdbNodeImpl::~_sdbNodeImpl ()
    {
       if ( _connection )
       {
-         _connection->_unregReplicaNode ( this ) ;
+         _connection->_unregNode ( this ) ;
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTINRN, "_sdbReplicaNodeImpl::connect" )
-   INT32 _sdbReplicaNodeImpl::connect ( _sdb **dbConn )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTINRN, "_sdbNodeImpl::connect" )
+   INT32 _sdbNodeImpl::connect ( _sdb **dbConn )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTINRN ) ;
       INT32 rc = SDB_OK ;
@@ -2266,8 +2266,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSTATUS, "_sdbReplicaNodeImpl::getStatus" )
-   sdbNodeStatus _sdbReplicaNodeImpl::getStatus ( )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSTATUS, "_sdbNodeImpl::getStatus" )
+   sdbNodeStatus _sdbNodeImpl::getStatus ( )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETSTATUS ) ;
       sdbNodeStatus sns     = SDB_NODE_UNKNOWN ;
@@ -2322,8 +2322,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__STOPSTART, "_sdbReplicaNodeImpl::_stopStart" )
-   INT32 _sdbReplicaNodeImpl::_stopStart ( BOOLEAN start )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__STOPSTART, "_sdbNodeImpl::_stopStart" )
+   INT32 _sdbNodeImpl::_stopStart ( BOOLEAN start )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__STOPSTART ) ;
       INT32 rc = SDB_OK ;
@@ -2353,11 +2353,11 @@ namespace sdbclient
       goto done ;
    }
 
-/*   INT32 _sdbReplicaNodeImpl::modifyConfig ( std::map<std::string,std::string>
+/*   INT32 _sdbNodeImpl::modifyConfig ( std::map<std::string,std::string>
                                              &config )
    {
       INT32 rc = SDB_OK ;
-      if ( !_connection || _nodeID == SDB_REPLICA_NODE_INVALID_NODEID )
+      if ( !_connection || _nodeID == SDB_NODE_INVALID_NODEID )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -2373,24 +2373,24 @@ namespace sdbclient
       goto done ;
    } */
 
-   _sdbReplicaGroupImpl::_sdbReplicaGroupImpl () :
+   _sdbShardImpl::_sdbShardImpl () :
    _connection ( NULL )
    {
-      ossMemset ( _replicaGroupName, 0, sizeof(_replicaGroupName) ) ;
+      ossMemset ( _shardName, 0, sizeof(_shardName) ) ;
       _isCatalog = FALSE ;
-      _replicaGroupID = 0 ;
+      _shardID = 0 ;
    }
 
-   _sdbReplicaGroupImpl::~_sdbReplicaGroupImpl ()
+   _sdbShardImpl::~_sdbShardImpl ()
    {
       if ( _connection )
       {
-         _connection->_unregReplicaGroup ( this ) ;
+         _connection->_unregShard ( this ) ;
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODENUM, "_sdbReplicaGroupImpl::getNodeNum" )
-   INT32 _sdbReplicaGroupImpl::getNodeNum ( sdbNodeStatus status, INT32 *num )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODENUM, "_sdbShardImpl::getNodeNum" )
+   INT32 _sdbShardImpl::getNodeNum ( sdbNodeStatus status, INT32 *num )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETNODENUM ) ;
       INT32 rc = SDB_OK ;
@@ -2428,8 +2428,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATENODE, "_sdbReplicaGroupImpl::createNode" )
-   INT32 _sdbReplicaGroupImpl::createNode ( const CHAR *pHostName,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATENODE, "_sdbShardImpl::createNode" )
+   INT32 _sdbShardImpl::createNode ( const CHAR *pHostName,
                                             const CHAR *pServiceName,
                                             const CHAR *pDatabasePath,
                                             map<string,string> &config )
@@ -2441,14 +2441,14 @@ namespace sdbclient
       BOOLEAN result ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ) ;
       map<string,string>::iterator it ;
-      if ( !_connection || ossStrlen ( _replicaGroupName ) == 0 ||
+      if ( !_connection || ossStrlen ( _shardName ) == 0 ||
            !pHostName || !pServiceName || !pDatabasePath )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       // GroupName is required
-      ob.append ( CAT_GROUPNAME_NAME, _replicaGroupName ) ;
+      ob.append ( CAT_GROUPNAME_NAME, _shardName ) ;
       config.erase ( CAT_GROUPNAME_NAME ) ;
 
       // HostName is required
@@ -2485,8 +2485,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVENODE, "_sdbReplicaGroupImpl::removeNode" )
-   INT32 _sdbReplicaGroupImpl::removeNode ( const CHAR *pHostName,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVENODE, "_sdbShardImpl::removeNode" )
+   INT32 _sdbShardImpl::removeNode ( const CHAR *pHostName,
                                                    const CHAR *pServiceName,
                                                    const BSONObj &configure )
    {
@@ -2494,7 +2494,7 @@ namespace sdbclient
       INT32 rc = SDB_OK ;
       BSONObj removeInfo ;
       BSONObjBuilder ob ;
-      CHAR *pRemoveReplicaNode = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ;
+      CHAR *pRemoveNode = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ;
       BOOLEAN result = FALSE ;
       if ( !pHostName || !pServiceName )
       {
@@ -2503,7 +2503,7 @@ namespace sdbclient
       }
 
       // GroupName is required
-      ob.append ( CAT_GROUPNAME_NAME, _replicaGroupName ) ;
+      ob.append ( CAT_GROUPNAME_NAME, _shardName ) ;
       // HostName is required
       ob.append ( FIELD_NAME_HOST, pHostName ) ;
 
@@ -2529,7 +2529,7 @@ namespace sdbclient
       } // if ( configure )
       removeInfo = ob.obj () ;
 
-      rc = _connection->_runCommand ( pRemoveReplicaNode, result, &removeInfo ) ;
+      rc = _connection->_runCommand ( pRemoveNode, result, &removeInfo ) ;
       if ( rc )
       {
          goto error ;
@@ -2542,8 +2542,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDETAIL, "_sdbReplicaGroupImpl::getDetail" )
-   INT32 _sdbReplicaGroupImpl::getDetail ( BSONObj &result )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDETAIL, "_sdbShardImpl::getDetail" )
+   INT32 _sdbShardImpl::getDetail ( BSONObj &result )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETDETAIL ) ;
       INT32 rc = SDB_OK ;
@@ -2554,7 +2554,7 @@ namespace sdbclient
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      newObj = BSON ( CAT_GROUPNAME_NAME << _replicaGroupName ) ;
+      newObj = BSON ( CAT_GROUPNAME_NAME << _shardName ) ;
       rc = _connection->getList ( &cursor.pCursor, SDB_LIST_GROUPS, newObj ) ;
       if ( rc )
       {
@@ -2572,29 +2572,29 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__EXTRACTNODE, "_sdbReplicaGroupImpl::_extractNode" )
-   INT32 _sdbReplicaGroupImpl::_extractNode ( _sdbReplicaNode **node,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__EXTRACTNODE, "_sdbShardImpl::_extractNode" )
+   INT32 _sdbShardImpl::_extractNode ( _sdbNode **node,
                                             const CHAR *primaryData )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT__EXTRACTNODE ) ;
       INT32 rc = SDB_OK ;
-      _sdbReplicaNodeImpl *pNode = NULL ;
+      _sdbNodeImpl *pNode = NULL ;
       if ( !_connection || !node || !primaryData )
       {
          rc = SDB_INVALIDARG ;
          goto error1 ;
       }
       // create new node object
-      pNode = new ( std::nothrow) _sdbReplicaNodeImpl () ;
+      pNode = new ( std::nothrow) _sdbNodeImpl () ;
       if ( !pNode )
       {
          rc = SDB_OOM ;
          goto error ;
       }
-      pNode->_groupID = _replicaGroupID ;
+      pNode->_groupID = _shardID ;
       // setup connection
       pNode->_connection = this->_connection ;
-      _connection->_regReplicaNode ( pNode ) ;
+      _connection->_regNode ( pNode ) ;
 
       rc = clientReplicaGroupExtractNode ( primaryData,
                                            pNode->_hostName,
@@ -2624,8 +2624,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETMASETER, "_sdbReplicaGroupImpl::getMaster" )
-   INT32 _sdbReplicaGroupImpl::getMaster ( _sdbReplicaNode **node )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETMASETER, "_sdbShardImpl::getMaster" )
+   INT32 _sdbShardImpl::getMaster ( _sdbNode **node )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETMASETER ) ;
       INT32 rc = SDB_OK ;
@@ -2704,7 +2704,7 @@ namespace sdbclient
          rc = SDB_CLS_NODE_NOT_EXIST ;
          goto error ;
       }
-      // Build sdbReplicaNode based on hostname and service name
+      // Build sdbNode based on hostname and service name
    done :
       PD_TRACE_EXITRC ( SDB_CLIENT_GETMASETER, rc );
       return rc ;
@@ -2713,8 +2713,8 @@ namespace sdbclient
    }
 
    // attempt to get slave, if no slave exist, return primary
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSLAVE, "_sdbReplicaGroupImpl::getSlave" )
-   INT32 _sdbReplicaGroupImpl::getSlave ( _sdbReplicaNode **node )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSLAVE, "_sdbShardImpl::getSlave" )
+   INT32 _sdbShardImpl::getSlave ( _sdbNode **node )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETSLAVE ) ;
       INT32 rc = SDB_OK ;
@@ -2783,7 +2783,7 @@ namespace sdbclient
             } // if ( BSON_OBJECT == bson_iterator ( &i )
          }
       }
-      // Build sdbReplicaNode based on hostname and service name
+      // Build sdbNode based on hostname and service name
       if ( slaveElements.size() != 0 )
       {
          INT32 slaveID = _sdbRand() % slaveElements.size() ;
@@ -2815,10 +2815,10 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODE1, "_sdbReplicaGroupImpl::getNode" )
-   INT32 _sdbReplicaGroupImpl::getNode ( const CHAR *pHostName,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODE1, "_sdbShardImpl::getNode" )
+   INT32 _sdbShardImpl::getNode ( const CHAR *pHostName,
                                          const CHAR *pServiceName,
-                                         _sdbReplicaNode **node )
+                                         _sdbNode **node )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETNODE1 ) ;
       INT32 rc = SDB_OK ;
@@ -2861,9 +2861,9 @@ namespace sdbclient
                   goto error ;
                }
                // if we get a match
-               if ( ossStrcmp ( ((_sdbReplicaNodeImpl*)(*node))->_hostName,
+               if ( ossStrcmp ( ((_sdbNodeImpl*)(*node))->_hostName,
                                 pHostName ) == 0 &&
-                    ossStrcmp ( ((_sdbReplicaNodeImpl*)(*node))->_serviceName,
+                    ossStrcmp ( ((_sdbNodeImpl*)(*node))->_serviceName,
                                 pServiceName ) == 0 )
                   break ;
                // if no match, let's clear
@@ -2890,9 +2890,9 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODE2, "_sdbReplicaGroupImpl::getNode" )
-   INT32 _sdbReplicaGroupImpl::getNode ( const CHAR *pNodeName,
-                                         _sdbReplicaNode **node )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETNODE2, "_sdbShardImpl::getNode" )
+   INT32 _sdbShardImpl::getNode ( const CHAR *pNodeName,
+                                  _sdbNode **node )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_GETNODE2 ) ;
       INT32 rc = SDB_OK ;
@@ -2935,8 +2935,8 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_STARTRS, "_sdbReplicaGroupImpl::start" )
-   INT32 _sdbReplicaGroupImpl::start ()
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_STARTRS, "_sdbShardImpl::start" )
+   INT32 _sdbShardImpl::start ()
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_STARTRS ) ;
       INT32 rc = SDB_OK ;
@@ -2948,7 +2948,7 @@ namespace sdbclient
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      groupName = BSON ( CAT_GROUPNAME_NAME << _replicaGroupName ) ;
+      groupName = BSON ( CAT_GROUPNAME_NAME << _shardName ) ;
       rc = _connection->_runCommand ( command.c_str(), result, &groupName ) ;
       if ( rc )
       {
@@ -2961,19 +2961,19 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_STOPRS, "_sdbReplicaGroupImpl::stop" )
-   INT32 _sdbReplicaGroupImpl::stop ()
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_STOPRS, "_sdbShardImpl::stop" )
+   INT32 _sdbShardImpl::stop ()
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_STOPRS ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       BSONObj configuration ;
-      if ( !_connection || ossStrlen ( _replicaGroupName ) == 0 )
+      if ( !_connection || ossStrlen ( _shardName ) == 0 )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      configuration = BSON ( CAT_GROUPNAME_NAME << _replicaGroupName ) ;
+      configuration = BSON ( CAT_GROUPNAME_NAME << _shardName ) ;
       rc = _connection->_runCommand ( CMD_ADMIN_PREFIX CMD_NAME_SHUTDOWN_GROUP,
                                       result,
                                       &configuration );
@@ -3294,13 +3294,13 @@ namespace sdbclient
       {
          ((_sdbCollectionSpaceImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _replicanodes.begin(); it != _replicanodes.end(); ++it )
+      for ( it = _nodes.begin(); it != _nodes.end(); ++it )
       {
-         ((_sdbReplicaNodeImpl*)(*it))->_dropConnection () ;
+         ((_sdbNodeImpl*)(*it))->_dropConnection () ;
       }
-      for ( it = _replicagroups.begin(); it != _replicagroups.end(); ++it )
+      for ( it = _shards.begin(); it != _shards.end(); ++it )
       {
-         ((_sdbReplicaGroupImpl*)(*it))->_dropConnection () ;
+         ((_sdbShardImpl*)(*it))->_dropConnection () ;
       }
       if ( _sock )
          _disconnect () ;
@@ -4212,15 +4212,15 @@ namespace sdbclient
       return getList ( result, SDB_LIST_COLLECTIONS ) ;
    }
 
-   INT32 _sdbImpl::listReplicaGroups ( _sdbCursor **result )
+   INT32 _sdbImpl::listShards ( _sdbCursor **result )
    {
       return getList ( result, SDB_LIST_GROUPS ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETREPLICAGROUPWITHNAME, "_sdbImpl::getReplicaGroup" )
-   INT32 _sdbImpl::getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_getShardWITHNAME, "_sdbImpl::getShard" )
+   INT32 _sdbImpl::getShard ( const CHAR *pName, _sdbShard **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETREPLICAGROUPWITHNAME ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_getShardWITHNAME ) ;
       INT32 rc = SDB_OK ;
       sdbCursor resultCursor ;
       BOOLEAN found = FALSE ;
@@ -4241,8 +4241,8 @@ namespace sdbclient
       }
       if ( SDB_OK == ( rc = resultCursor.next ( record ) ) )
       {
-         _sdbReplicaGroupImpl *replset =
-                     new(std::nothrow) _sdbReplicaGroupImpl () ;
+         _sdbShardImpl *replset =
+                     new(std::nothrow) _sdbShardImpl () ;
          if ( !replset )
          {
             rc = SDB_OOM ;
@@ -4251,11 +4251,11 @@ namespace sdbclient
          ele = record.getField ( CAT_GROUPID_NAME ) ;
          if ( ele.type() == NumberInt )
          {
-            replset->_replicaGroupID = ele.numberInt() ;
+            replset->_shardID = ele.numberInt() ;
          }
          replset->_connection = this ;
-         _regReplicaGroup ( replset ) ;
-         ossStrncpy ( replset->_replicaGroupName, pName, CLIENT_RG_NAMESZ ) ;
+         _regShard ( replset ) ;
+         ossStrncpy ( replset->_shardName, pName, CLIENT_SHARD_NAMESZ ) ;
          if ( ossStrcmp ( pName, CAT_CATALOG_GROUPNAME ) == 0 )
          {
             replset->_isCatalog = TRUE ;
@@ -4273,16 +4273,16 @@ namespace sdbclient
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETREPLICAGROUPWITHNAME, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_getShardWITHNAME, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETREPLICAGROUPWITHID, "_sdbImpl::getReplicaGroup" )
-   INT32 _sdbImpl::getReplicaGroup ( SINT32 id, _sdbReplicaGroup **result )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_getShardWITHID, "_sdbImpl::getShard" )
+   INT32 _sdbImpl::getShard ( SINT32 id, _sdbShard **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_GETREPLICAGROUPWITHID ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_getShardWITHID ) ;
       INT32 rc = SDB_OK ;
       sdbCursor resultCursor ;
       BOOLEAN found = FALSE ;
@@ -4307,18 +4307,18 @@ namespace sdbclient
          if ( ele.type() == String )
          {
             const CHAR *pGroupName = ele.valuestr() ;
-            _sdbReplicaGroupImpl *replset =
-                  new(std::nothrow) _sdbReplicaGroupImpl () ;
+            _sdbShardImpl *replset =
+                  new(std::nothrow) _sdbShardImpl () ;
             if ( !replset )
             {
                rc = SDB_OOM ;
                goto error ;
             }
             replset->_connection = this ;
-            _regReplicaGroup ( replset ) ;
-            ossStrncpy ( replset->_replicaGroupName, pGroupName,
-                         CLIENT_RG_NAMESZ ) ;
-            replset->_replicaGroupID = id ;
+            _regShard ( replset ) ;
+            ossStrncpy ( replset->_shardName, pGroupName,
+                         CLIENT_SHARD_NAMESZ ) ;
+            replset->_shardID = id ;
             if ( ossStrcmp ( pGroupName, CAT_CATALOG_GROUPNAME ) == 0 )
             {
                replset->_isCatalog = TRUE ;
@@ -4337,24 +4337,24 @@ namespace sdbclient
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_GETREPLICAGROUPWITHID, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_getShardWITHID, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEREPLICAGROUP, "_sdbImpl::createReplicaGroup" )
-   INT32 _sdbImpl::createReplicaGroup ( const CHAR *pName,
-                                        _sdbReplicaGroup **rg )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_createShard, "_sdbImpl::createShard" )
+   INT32 _sdbImpl::createShard ( const CHAR *pName,
+                                        _sdbShard **rg )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEREPLICAGROUP ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_createShard ) ;
       INT32 rc = SDB_OK ;
       BSONObj groupName ;
       BOOLEAN result = FALSE ;
-      _sdbReplicaGroupImpl *replset = NULL ;
+      _sdbShardImpl *replset = NULL ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ) ;
 
-      if ( ossStrlen ( pName ) > CLIENT_RG_NAMESZ || !rg )
+      if ( ossStrlen ( pName ) > CLIENT_SHARD_NAMESZ || !rg )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -4365,32 +4365,32 @@ namespace sdbclient
       {
          goto error ;
       }
-      replset = new(std::nothrow) _sdbReplicaGroupImpl () ;
+      replset = new(std::nothrow) _sdbShardImpl () ;
       if ( !replset )
       {
          rc = SDB_OOM ;
          goto error ;
       }
       replset->_connection = this ;
-      _regReplicaGroup ( replset ) ;
-      ossStrncpy ( replset->_replicaGroupName, pName,
-                   CLIENT_RG_NAMESZ ) ;
+      _regShard ( replset ) ;
+      ossStrncpy ( replset->_shardName, pName,
+                   CLIENT_SHARD_NAMESZ ) ;
       if ( ossStrcmp ( pName, CAT_CATALOG_GROUPNAME ) == 0 )
       {
          replset->_isCatalog = TRUE ;
       }
       *rg = replset ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEREPLICAGROUP, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_createShard, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVEREPLICAGROUP, "_sdbImpl::removeReplicaGroup" )
-   INT32 _sdbImpl::removeReplicaGroup ( const CHAR *pRGName )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_removeShard, "_sdbImpl::removeShard" )
+   INT32 _sdbImpl::removeShard ( const CHAR *pRGName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVEREPLICAGROUP ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_removeShard ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       INT32 nameLength = 0 ;
@@ -4404,7 +4404,7 @@ namespace sdbclient
          goto error ;
       }
       nameLength = ossStrlen( pRGName ) ;
-      if ( 0 == nameLength || CLIENT_RG_NAMESZ < nameLength )
+      if ( 0 == nameLength || CLIENT_SHARD_NAMESZ < nameLength )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -4417,24 +4417,24 @@ namespace sdbclient
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVEREPLICAGROUP, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_removeShard, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEREPLICACATAGROUP, "_sdbImpl::createReplicaCataGroup" )
-   INT32 _sdbImpl::createReplicaCataGroup (  const CHAR *pHostName,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_createCataShard, "_sdbImpl::createCataShard" )
+   INT32 _sdbImpl::createCataShard (  const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
                                         const BSONObj &configure )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEREPLICACATAGROUP ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_createCataShard ) ;
       INT32 rc = SDB_OK ;
       BSONObj configuration ;
       BSONObjBuilder ob ;
       BOOLEAN result = FALSE ;
-      const CHAR *pCreateReplicaCataRG = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
+      const CHAR *pCreateCataShard = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
 
       if ( !pHostName || !pServiceName || !pDatabasePath )
       {
@@ -4470,31 +4470,31 @@ namespace sdbclient
       } // if ( configure )
       configuration = ob.obj () ;
 
-      rc = _runCommand ( pCreateReplicaCataRG, result, &configuration ) ;
+      rc = _runCommand ( pCreateCataShard, result, &configuration ) ;
       if ( rc )
       {
          goto error ;
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEREPLICACATAGROUP, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_createCataShard, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ACTIVATERG, "_sdbImpl::activateReplicaGroup" )
-   INT32 _sdbImpl::activateReplicaGroup ( const CHAR *pName,
-                                        _sdbReplicaGroup **rg )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ACTIVATERG, "_sdbImpl::activateShard" )
+   INT32 _sdbImpl::activateShard ( const CHAR *pName,
+                                   _sdbShard **rg )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_ACTIVATERG ) ;
       INT32 rc = SDB_OK ;
       BSONObj groupName ;
       BOOLEAN result = FALSE ;
-      _sdbReplicaGroupImpl *replset = NULL ;
+      _sdbShardImpl *replset = NULL ;
       string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ) ;
 
-      if ( ossStrlen ( pName ) > CLIENT_RG_NAMESZ || !rg )
+      if ( ossStrlen ( pName ) > CLIENT_SHARD_NAMESZ || !rg )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
@@ -4505,16 +4505,16 @@ namespace sdbclient
       {
          goto error ;
       }
-      replset = new(std::nothrow) _sdbReplicaGroupImpl () ;
+      replset = new(std::nothrow) _sdbShardImpl () ;
       if ( !replset )
       {
          rc = SDB_OOM ;
          goto error ;
       }
       replset->_connection = this ;
-      _regReplicaGroup ( replset ) ;
-      ossStrncpy ( replset->_replicaGroupName, pName,
-                   CLIENT_RG_NAMESZ ) ;
+      _regShard ( replset ) ;
+      ossStrncpy ( replset->_shardName, pName,
+                   CLIENT_SHARD_NAMESZ ) ;
       if ( ossStrcmp ( pName, CAT_CATALOG_GROUPNAME ) == 0 )
       {
          replset->_isCatalog = TRUE ;
