@@ -1533,6 +1533,7 @@ namespace engine
       _clsCatalogSet *pCataSet = NULL;
       BOOLEAN catLocked = FALSE;
       result = FALSE;
+      BOOLEAN isRange = FALSE;
       try
       {
          if ( orderBy.isEmpty() )
@@ -1550,9 +1551,14 @@ namespace engine
             PD_LOG( PDERROR, "can not find collection:%s", pCollectionName );
             goto error;
          }
+         isRange = pCataSet->isRangeSharding();
          shardingKey = pCataSet->getShardingKey().copy();
          _pCatAgent->release_r () ;
          catLocked = FALSE;
+         if ( !isRange )
+         {
+            goto done;
+         }
          if ( !shardingKey.isEmpty() )
          {
             result = TRUE;
