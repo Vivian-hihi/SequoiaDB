@@ -188,9 +188,11 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
         SDB_SNAP_CONTEXTS_CURRENT : Get the current context's snapshot
         SDB_SNAP_SESSIONS         : Get all sessions' snapshot
         SDB_SNAP_SESSIONS_CURRENT : Get the current session's snapshot
-        SDB_SNAP_DATABASE         : Get database snapshot
-        SDB_SNAP_SYSTEM           : Get system snapshot
-        SDB_SNAP_CATA           : Get catalog snapshot
+        SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
+        SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
+        SDB_SNAP_DATABASE         : Get database's snapshot
+        SDB_SNAP_SYSTEM           : Get system's snapshot
+        SDB_SNAP_CATA           : Get catalog's snapshot
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
@@ -307,6 +309,7 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
         SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
         SDB_LIST_STORAGEUNITS     : Get storage units list
         SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
+        SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
