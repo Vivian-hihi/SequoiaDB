@@ -35,7 +35,7 @@ SDB_EXTERN_C_START
 #define SDB_LIST_COLLECTIONS      4
 #define SDB_LIST_COLLECTIONSPACES 5
 #define SDB_LIST_STORAGEUNITS     6
-#define SDB_LIST_GROUPS           7
+#define SDB_LIST_SHARDS           7
 #define SDB_LIST_STOREPROCEDURES  8
 
 #define SDB_INVALID_HANDLE       ((ossValuePtr) -1)
@@ -308,7 +308,7 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
         SDB_LIST_COLLECTIONS      : Get all collections list
         SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
         SDB_LIST_STORAGEUNITS     : Get storage units list
-        SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
+        SDB_LIST_SHARDS           : Get shard list ( only applicable in sharding env )
         SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -818,90 +818,90 @@ SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
                                 CHAR **ppCSName ) ;
 
 /** \fn INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
-                                      const CHAR *pSourceGroup,
-                                      const CHAR *pTargetGroup,
+                                      const CHAR *pSourceShard,
+                                      const CHAR *pTargetShard,
                                       const bson *pSplitCondition,
                                       const bson *pSplitEndCondition )
-    \brief Split the specified collection from source group to target by range
+    \brief Split the specified collection from source shard to target by range
     \param [in] cHandle The collection handle
-    \param [in] pSourceGroup The source group name
-    \param [in] pTargetGroup The target group name
+    \param [in] pSourceShard The source shard name
+    \param [in] pTargetShard The target shard name
     \param [in] pSplitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
-              the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
+              the target shard will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
               they are in [30,max).
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
-                                      const CHAR *pSourceGroup,
-                                      const CHAR *pTargetGroup,
+                                      const CHAR *pSourceShard,
+                                      const CHAR *pTargetShard,
                                       const bson *pSplitCondition,
                                       const bson *pSplitEndCondition ) ;
 
 /** \fn INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
-                                const CHAR *pSourceGroup,
-                                const CHAR *pTargetGroup,
+                                const CHAR *pSourceShard,
+                                const CHAR *pTargetShard,
                                 const bson *pSplitCondition,
                                 const bson *pSplitEndCondition,
                                 SINT64 *taskID )
-    \brief Split the specified collection from source group to target by range
+    \brief Split the specified collection from source shard to target by range
     \param [in] cHandle The collection handle
-    \param [in] pSourceGroup The source group name
-    \param [in] pTargetGroup The target group name
+    \param [in] pSourceShard The source shard name
+    \param [in] pTargetShard The target shard name
     \param [in] pSplitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
-              the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
+              the target shard will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
               they are in [30,max).
     \param [out] taskID The id of current task
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
-                                   const CHAR *pSourceGroup,
-                                   const CHAR *pTargetGroup,
+                                   const CHAR *pSourceShard,
+                                   const CHAR *pTargetShard,
                                    const bson *pSplitCondition,
                                    const bson *pSplitEndCondition,
                                    SINT64 *taskID ) ;
 
 /** \fn INT32 sdbSplitCollectionByPercent ( sdbCollectionHandle cHandle,
-                                            const CHAR *pSourceGroup,
-                                            const CHAR *pTargetGroup,
+                                            const CHAR *pSourceShard,
+                                            const CHAR *pTargetShard,
                                             FLOAT64 percent )
-    \brief Split the specified collection from source group to target by percent
+    \brief Split the specified collection from source shard to target by percent
     \param [in] cHandle The collection handle
-    \param [in] pSourceGroup The source group name
-    \param [in] pTargetGroup The target group name
+    \param [in] pSourceShard The source shard name
+    \param [in] pTargetShard The target shard name
     \param [in] percent The split percent, Range:(0.0, 100.0]
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCollectionByPercent ( sdbCollectionHandle cHandle,
-                                               const CHAR *pSourceGroup,
-                                               const CHAR *pTargetGroup,
+                                               const CHAR *pSourceShard,
+                                               const CHAR *pTargetShard,
                                                FLOAT64 percent ) ;
 
 /** \fn INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
-                                         const CHAR *pSourceGroup,
-                                         const CHAR *pTargetGroup,
+                                         const CHAR *pSourceShard,
+                                         const CHAR *pTargetShard,
                                          FLOAT64 percent,
                                          SINT64 *taskID )
-    \brief Split the specified collection from source group to target by percent
+    \brief Split the specified collection from source shard to target by percent
     \param [in] cHandle The collection handle
-    \param [in] pSourceGroup The source group name
-    \param [in] pTargetGroup The target group name
+    \param [in] pSourceShard The source shard name
+    \param [in] pTargetShard The target shard name
     \param [in] percent The split percent, Range:(0.0, 100.0]
     \param [out] taskID The id of current task
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
-                                            const CHAR *pSourceGroup,
-                                            const CHAR *pTargetGroup,
+                                            const CHAR *pSourceShard,
+                                            const CHAR *pTargetShard,
                                             FLOAT64 percent,
                                             SINT64 *taskID ) ;
 
@@ -1287,11 +1287,11 @@ SDB_EXPORT INT32 sdbDetachCollection ( sdbCollectionHandle cHandle,
 
 /** \fn INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
                                  bson *options)
-    \brief Backup the whole database or specifed group.
+    \brief Backup the whole database or specifed shard.
     \param [in] cHandle The connection handle
-    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["groupName1", "groupName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
 
-        GroupName   : The groups which to be backuped
+        GroupName   : The shards which to be backuped
         Path        : The backup path, if not assign, use the backup path assigned in configuration file
         Name        : The name for the backup
         Description : The description for the backup
@@ -1311,9 +1311,9 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
                               sdbCursorHandle *handle );
     \brief List the backups.
     \param [in] cHandle The connection handle
-    \param [in] options Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["groupName1", "groupName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+    \param [in] options Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
 
-        GroupName   : Assign the backups of specifed groups to be list
+        GroupName   : Assign the backups of specifed shards to be list
         Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be list
     \param [in] condition The matching rule, return all the documents if null
@@ -1334,9 +1334,9 @@ SDB_EXPORT INT32 sdbListBackup ( sdbConnectionHandle cHandle,
                                 bson *options) ;
     \brief Remove the backups.
     \param [in] cHandle The connection handle
-    \param [in] options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["groupName1", "groupName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+    \param [in] options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
 
-        GroupName   : Assign the backups of specifed groups to be remove
+        GroupName   : Assign the backups of specifed shards to be remove
         Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be remove
     \retval SDB_OK Operation Success

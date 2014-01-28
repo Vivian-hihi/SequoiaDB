@@ -1025,7 +1025,7 @@ static INT32 _sdbGetList ( SOCKET _sock, CHAR **_pSendBuffer,
    case SDB_LIST_STORAGEUNITS :
       p = CMD_ADMIN_PREFIX CMD_NAME_LIST_STORAGEUNITS ;
       break ;
-   case SDB_LIST_GROUPS :
+   case SDB_LIST_SHARDS :
       p = CMD_ADMIN_PREFIX CMD_NAME_LIST_GROUPS ;
       break ;
    case SDB_LIST_STOREPROCEDURES :
@@ -1287,7 +1287,7 @@ SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
       goto error ;
    }
    bson_finish ( &newObj ) ;
-   rc = sdbGetList ( cHandle, SDB_LIST_GROUPS, &newObj, NULL, NULL,
+   rc = sdbGetList ( cHandle, SDB_LIST_SHARDS, &newObj, NULL, NULL,
                      &cursor ) ;
    if ( rc )
    {
@@ -1374,7 +1374,7 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
       goto error ;
    }
    bson_finish ( &newObj ) ;
-   rc = sdbGetList ( cHandle, SDB_LIST_GROUPS, &newObj, NULL, NULL,
+   rc = sdbGetList ( cHandle, SDB_LIST_SHARDS, &newObj, NULL, NULL,
                      &cursor ) ;
    if ( rc )
    {
@@ -1475,7 +1475,7 @@ SDB_EXPORT INT32 sdbCreateCataShard ( sdbConnectionHandle cHandle,
    INT32 rc = SDB_OK ;
    bson configuration ;
    BOOLEAN result = FALSE ;
-   CHAR *pCreateReplicaCataRG = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
+   CHAR *pCataShard = CMD_ADMIN_PREFIX CMD_NAME_CREATE_CATA_GROUP ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
    bson_init ( &configuration ) ;
 
@@ -1585,7 +1585,7 @@ SDB_EXPORT INT32 sdbCreateCataShard ( sdbConnectionHandle cHandle,
                       &connection->_pReceiveBuffer,
                       &connection->_receiveBufferSize,
                       connection->_endianConvert,
-                      pCreateReplicaCataRG, &result, &configuration,
+                      pCataShard, &result, &configuration,
                       NULL, NULL, NULL ) ;
    if ( rc )
    {
@@ -1607,7 +1607,7 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbShardHandle cHandle,
    INT32 rc = SDB_OK ;
    bson configuration ;
    BOOLEAN result = FALSE ;
-   CHAR *pCreateReplicaNode = CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ;
+   CHAR *pCreateNode = CMD_ADMIN_PREFIX CMD_NAME_CREATE_NODE ;
    sdbRGStruct *r = (sdbRGStruct*)cHandle ;
    bson_init ( &configuration ) ;
 
@@ -1727,7 +1727,7 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbShardHandle cHandle,
                       &r->_pReceiveBuffer,
                       &r->_receiveBufferSize,
                       r->_endianConvert,
-                      pCreateReplicaNode, &result, &configuration,
+                      pCreateNode, &result, &configuration,
                       NULL, NULL, NULL ) ;
    if ( rc )
    {
@@ -1747,7 +1747,7 @@ SDB_EXPORT INT32 sdbRemoveNode ( sdbShardHandle cHandle,
 {
    INT32 rc = SDB_OK ;
    bson removeInfo ;
-   CHAR *pRemoveReplicaNode = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ;
+   CHAR *pRemoveNode = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_NODE ;
    sdbRGStruct *r = (sdbRGStruct*)cHandle ;
    BOOLEAN result = FALSE ;
    bson_init( &removeInfo ) ;
@@ -1826,7 +1826,7 @@ SDB_EXPORT INT32 sdbRemoveNode ( sdbShardHandle cHandle,
                       &r->_pReceiveBuffer,
                       &r->_receiveBufferSize,
                       r->_endianConvert,
-                      pRemoveReplicaNode, &result, &removeInfo,
+                      pRemoveNode, &result, &removeInfo,
                       NULL, NULL, NULL ) ;
    if ( rc )
    {
@@ -1986,7 +1986,7 @@ SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
    BOOLEAN result   = FALSE ;
    INT32 nameLength = 0 ;
    bson newObj ;
-   CHAR *pCreateReplicaGroup = CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ;
+   CHAR *pCreateShard = CMD_ADMIN_PREFIX CMD_NAME_CREATE_GROUP ;
    CHAR *pName               = FIELD_NAME_GROUPNAME ;
    sdbRGStruct *r            = NULL ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -2019,7 +2019,7 @@ SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
                       &connection->_pReceiveBuffer,
                       &connection->_receiveBufferSize,
                       connection->_endianConvert,
-                      pCreateReplicaGroup, &result, &newObj,
+                      pCreateShard, &result, &newObj,
                       NULL, NULL, NULL ) ;
    if ( rc )
    {
@@ -2112,7 +2112,7 @@ SDB_EXPORT INT32 sdbStartShard ( sdbShardHandle cHandle )
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE ;
    bson newObj ;
-   CHAR *pActivateReplicaGroup = CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ;
+   CHAR *pActivateShard = CMD_ADMIN_PREFIX CMD_NAME_ACTIVE_GROUP ;
    CHAR *pName                 = FIELD_NAME_GROUPNAME ;
    sdbRGStruct *r              = (sdbRGStruct*)cHandle ;
    bson_init ( &newObj ) ;
@@ -2136,7 +2136,7 @@ SDB_EXPORT INT32 sdbStartShard ( sdbShardHandle cHandle )
                       &r->_pReceiveBuffer,
                       &r->_receiveBufferSize,
                       r->_endianConvert,
-                      pActivateReplicaGroup, &result, &newObj,
+                      pActivateShard, &result, &newObj,
                       NULL, NULL, NULL ) ;
    if ( rc )
    {
@@ -2214,7 +2214,7 @@ static INT32 _sdbGetShardDetail ( sdbShardHandle cHandle,
    rc = _sdbGetList ( r->_sock, &r->_pSendBuffer, &r->_sendBufferSize,
                       &r->_pReceiveBuffer, &r->_receiveBufferSize,
                       r->_endianConvert,
-                      SDB_LIST_GROUPS, &newObj, NULL, NULL, &cursor ) ;
+                      SDB_LIST_SHARDS, &newObj, NULL, NULL, &cursor ) ;
    if ( rc )
    {
       goto error ;
@@ -2738,7 +2738,7 @@ SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbListShards ( sdbConnectionHandle cHandle,
                                         sdbCursorHandle *handle )
 {
-   return sdbGetList ( cHandle, SDB_LIST_GROUPS, NULL, NULL, NULL,
+   return sdbGetList ( cHandle, SDB_LIST_SHARDS, NULL, NULL, NULL,
                        handle ) ;
 }
 

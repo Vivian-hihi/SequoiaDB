@@ -67,7 +67,7 @@
 #define SDB_LIST_COLLECTIONS      4
 #define SDB_LIST_COLLECTIONSPACES 5
 #define SDB_LIST_STORAGEUNITS     6
-#define SDB_LIST_GROUPS           7
+#define SDB_LIST_SHARDS           7
 #define SDB_LIST_STOREPROCEDURES  8
 
 #define FLG_INSERT_CONTONDUP  0x00000001
@@ -282,20 +282,20 @@ namespace sdbclient
       virtual const CHAR *getCollectionName () = 0 ;
       virtual const CHAR *getCSName () = 0 ;
       virtual const CHAR *getFullName () = 0 ;
-      virtual INT32 split ( const CHAR *sourceGroupName,
-                            const CHAR *destGroupName,
+      virtual INT32 split ( const CHAR *sourceShardName,
+                            const CHAR *destShardName,
                             const bson::BSONObj &splitConditon,
                             const bson::BSONObj &splitEndCondition = _sdbStaticObject) = 0 ;
-      virtual INT32 split ( const CHAR *sourceGroupName,
-                            const CHAR *destGroupName,
+      virtual INT32 split ( const CHAR *sourceShardName,
+                            const CHAR *destShardName,
                             FLOAT64 percent ) = 0 ;
       virtual INT32 splitAsync ( SINT64 &taskID,
-                            const CHAR *sourceGroupName,
-                            const CHAR *destGroupName,
+                            const CHAR *sourceShardName,
+                            const CHAR *destShardName,
                             const bson::BSONObj &splitCondition,
                             const bson::BSONObj &splitEndCondition = _sdbStaticObject) = 0 ;
-      virtual INT32 splitAsync ( const CHAR *sourceGroupName,
-                            const CHAR *destGroupName,
+      virtual INT32 splitAsync ( const CHAR *sourceShardName,
+                            const CHAR *destShardName,
                             FLOAT64 percent,
                             SINT64 &taskID ) = 0 ;
       virtual  INT32 aggregate ( _sdbCursor **cursor,
@@ -387,111 +387,111 @@ namespace sdbclient
          return pCollection->getCount ( count, condition ) ;
       }
 
-/** \fn INT32 split ( const CHAR *sourceGroupName,
-                      const CHAR *destGroupName,
+/** \fn INT32 split ( const CHAR *sourceShardName,
+                      const CHAR *destShardName,
                       const bson::BSONObj &splitCondition,
                       const bson::BSONObj &splitEndCondition)
-    \brief Split the specified collection from source group to target group by range.
-    \param [in] sourceGroupName The source group name
-    \param [in] destGroupName The target group name
+    \brief Split the specified collection from source shard to target shard by range.
+    \param [in] sourceShardName The source shard name
+    \param [in] destShardName The target shard name
     \param [in] splitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
              we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
-             the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
+             the target shard will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
              they are in [30,max).
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 split ( const CHAR *sourceGroupName,
-                    const CHAR *destGroupName,
+      INT32 split ( const CHAR *sourceShardName,
+                    const CHAR *destShardName,
                     const bson::BSONObj &splitCondition,
                     const bson::BSONObj &splitEndCondition = _sdbStaticObject)
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->split ( sourceGroupName,
-                                     destGroupName,
+         return pCollection->split ( sourceShardName,
+                                     destShardName,
                                      splitCondition,
                                      splitEndCondition) ;
       }
 
-/** \fn INT32 split ( const CHAR *sourceGroupName,
-                      const CHAR *destGroupName,
+/** \fn INT32 split ( const CHAR *sourceShardName,
+                      const CHAR *destShardName,
                       FLOAT64 percent )
-    \brief Split the specified collection from source group to target by percent.
-    \param [in] sourceGroupName The source group name
-    \param [in] destGroupName The target group name
+    \brief Split the specified collection from source shard to target by percent.
+    \param [in] sourceShardName The source shard name
+    \param [in] destShardName The target shard name
     \param [in] percent The split percent, Range:(0,100]
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 split ( const CHAR *sourceGroupName,
-                    const CHAR *destGroupName,
+      INT32 split ( const CHAR *sourceShardName,
+                    const CHAR *destShardName,
                     FLOAT64 percent )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->split ( sourceGroupName,
-                                     destGroupName,
+         return pCollection->split ( sourceShardName,
+                                     destShardName,
                                      percent ) ;
       }
 
 /** \fn INT32 splitAsync ( SINT64 &taskID,
-                                   const CHAR *sourceGroupName,
-                                   const CHAR *destGroupName,
+                                   const CHAR *sourceShardName,
+                                   const CHAR *destShardName,
                                    const bson::BSONObj &splitCondition,
                                    const bson::BSONObj &splitEndCondition )
-    \brief Split the specified collection from source group to target by range
+    \brief Split the specified collection from source shard to target by range
     \param [out] taskID The id of current split task
-    \param [in] sourceGroupName The source group name
-    \param [in] destGroupName The target group name
+    \param [in] sourceShardName The source shard name
+    \param [in] destShardName The target shard name
     \param [in] splitCondition The split condition
     \param [in] splitEndCondition The split end condition or null
               eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
               we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split,
-              the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
+              the target shard will get the records whose age's hash value are in [30,60). If splitEndCondition is null,
               they are in [30,max).
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
       INT32 splitAsync ( SINT64 &taskID,
-                                   const CHAR *sourceGroupName,
-                                   const CHAR *destGroupName,
+                                   const CHAR *sourceShardName,
+                                   const CHAR *destShardName,
                                    const bson::BSONObj &splitCondition,
                                    const bson::BSONObj &splitEndCondition = _sdbStaticObject )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
          return pCollection->splitAsync ( taskID,
-                                     sourceGroupName,
-                                     destGroupName,
+                                     sourceShardName,
+                                     destShardName,
                                      splitCondition,
                                      splitEndCondition ) ;
       }
 
 
-/** \fn INT32 INT32 splitAsync ( const CHAR *pSourceGroup,
-                                 const CHAR *pTargetGroup,
+/** \fn INT32 INT32 splitAsync ( const CHAR *pSourceShard,
+                                 const CHAR *pTargetShard,
                                  FLOAT64 percent,
                                  SINT64 &taskID )
-    \brief Split the specified collection from source group to target by percent
-    \param [in] sourceGroupName The source group name
-    \param [in] destGroupName The target group name
+    \brief Split the specified collection from source shard to target by percent
+    \param [in] sourceShardName The source shard name
+    \param [in] destShardName The target shard name
     \param [in] percent The split percent, Range:(0.0, 100.0]
     \param [out] taskID The id of current split task
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 splitAsync ( const CHAR *sourceGroupName,
-                                    const CHAR *destGroupName,
+      INT32 splitAsync ( const CHAR *sourceShardName,
+                                    const CHAR *destShardName,
                                     FLOAT64 percent,
                                     SINT64 &taskID )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->splitAsync ( sourceGroupName,
-                                     destGroupName,
+         return pCollection->splitAsync ( sourceShardName,
+                                     destShardName,
                                      percent,
                                      taskID ) ;
       }
@@ -1181,10 +1181,10 @@ namespace sdbclient
       virtual INT32 removeNode ( const CHAR *pHostName,
                                  const CHAR *pServiceName,
                                  const bson::BSONObj &configure = _sdbStaticObject ) = 0 ;
-      // stop the group
+      // stop the shard
       virtual INT32 stop () = 0 ;
 
-      // start the group
+      // start the shard
       virtual INT32 start () = 0 ;
 
       // get the shard name
@@ -1261,7 +1261,7 @@ namespace sdbclient
 
 /** \fn INT32 getDetail ( bson::BSONObj &result )
     \brief Get the detail of the shard.
-    \param [out] result Return the all the info of current group.
+    \param [out] result Return the all the info of current shard.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -2215,7 +2215,7 @@ namespace sdbclient
         SDB_LIST_COLLECTIONS      : Get all collections list
         SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
         SDB_LIST_STORAGEUNITS     : Get storage units list
-        SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
+        SDB_LIST_SHARDS           : Get shard list ( only applicable in sharding env )
         SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
    \param [in] condition The matching rule, match all the documents if null.
    \param [in] select The selective rule, return the whole document if null.
@@ -2257,7 +2257,7 @@ namespace sdbclient
         SDB_LIST_COLLECTIONS      : Get all collections list
         SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
         SDB_LIST_STORAGEUNITS     : Get storage units list
-        SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
+        SDB_LIST_SHARDS           : Get shard list ( only applicable in sharding env )
    \param [in] condition The matching rule, match all the documents if null.
    \param [in] select The selective rule, return the whole document if null.
    \param [in] orderBy The ordered rule, never sort if null.
@@ -2822,10 +2822,10 @@ namespace sdbclient
      }
 
 /** \fn INT32 backupOffline ( const bson::BSONObj &options)
-    \brief Backup the whole database or specifed group.
-    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["groupName1", "groupName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+    \brief Backup the whole database or specifed shard.
+    \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
 
-        GroupName   : The groups which to be backuped
+        GroupName   : The shards which to be backuped
         Path        : The backup path, if not assign, use the backup path assigned in configuration file
         Name        : The name for the backup
         Description : The description for the backup
@@ -2858,9 +2858,9 @@ namespace sdbclient
                               const bson::BSONObj &selector = _sdbStaticObject,
                               const bson::BSONObj &orderBy = _sdbStaticObject);
     \brief List the backups.
-    \param [in] options Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["groupName1", "groupName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+    \param [in] options Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
 
-        GroupName   : Assign the backups of specifed groups to be list
+        GroupName   : Assign the backups of specifed shards to be list
         Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be list
     \param [in] select The selective rule, return the whole document if null
@@ -2882,9 +2882,9 @@ namespace sdbclient
 
 /** \fn INT32 removeBackup ( const bson::BSONObj &options);
     \brief Remove the backups.
-    \param [in] options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["groupName1", "groupName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+    \param [in] options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
 
-        GroupName   : Assign the backups of specifed groups to be remove
+        GroupName   : Assign the backups of specifed shards to be remove
         Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
         Name        : Assign the backups with specifed name to be remove
     \retval SDB_OK Operation Success

@@ -245,20 +245,20 @@ namespace sdbclient
       {
          return &_collectionFullName[0] ;
       }
-      INT32 split ( const CHAR *sourceGroupName,
-                    const CHAR *destGroupName,
+      INT32 split ( const CHAR *sourceShardName,
+                    const CHAR *destShardName,
                     const BSONObj &splitCondition,
                     const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
-      INT32 split ( const CHAR *sourceGroupName,
-                    const CHAR *destGroupName,
+      INT32 split ( const CHAR *sourceShardName,
+                    const CHAR *destShardName,
                     FLOAT64 percent ) ;
       INT32 splitAsync ( SINT64 &taskID,
-               const CHAR *sourceGroupName,
-                    const CHAR *destGroupName,
+               const CHAR *sourceShardName,
+                    const CHAR *destShardName,
                     const bson::BSONObj &splitCondition,
                     const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
-      INT32 splitAsync ( const CHAR *sourceGroupName,
-                    const CHAR *destGroupName,
+      INT32 splitAsync ( const CHAR *sourceShardName,
+                    const CHAR *destShardName,
                     FLOAT64 percent,
                     SINT64 &taskID ) ;
       // aggregate
@@ -313,7 +313,7 @@ namespace sdbclient
       CHAR                     _serviceName [ OSS_MAX_SERVICENAME + 1 ] ;
       CHAR                     _nodeName [ OSS_MAX_HOSTNAME +
                                            OSS_MAX_SERVICENAME + 2 ] ;
-      INT32                    _groupID ;
+      INT32                    _shardID ;
       INT32                    _nodeID ;
       void _dropConnection()
       {
@@ -434,10 +434,10 @@ namespace sdbclient
                          const CHAR *pServiceName,
                          const BSONObj &configure = _sdbStaticObject ) ;
 
-      // activate the group
+      // activate the shard
       INT32 start () ;
 
-      // stop the entire group
+      // stop the entire shard
       INT32 stop () ;
 
       // get shard name
@@ -446,7 +446,7 @@ namespace sdbclient
          return _shardName ;
       }
 
-      // whether the current shard is catalog group or not
+      // whether the current shard is catalog shard or not
       BOOLEAN isCatalog ()
       {
          return _isCatalog ;
