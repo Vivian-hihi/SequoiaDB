@@ -184,7 +184,9 @@
 					        <property name="URL.download.pre" value="http://192.168.30.184:8080" />
 					     </else>
 						</if>
-						
+						<exec executable="${sdb.fullname}" dir="" timeout="300000" >
+		  				<arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testEndStr}');db.close(); &quot;" />
+						</exec>
 						
 						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
 						
@@ -252,9 +254,7 @@
 			
 			</else>
 		</if>
-		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
-		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testEndStr}');db.close(); &quot;" />
-		</exec>
+		
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;/testcase&gt;&#10;" />
   
 	</target>
