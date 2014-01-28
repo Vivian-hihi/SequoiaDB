@@ -52,7 +52,7 @@ INT32 listCollectionSpaces ( sdb *connection, sdbCursor **query ) ;
 INT32 listCollections ( sdb *connection, sdbCursor **query ) ;
 
 INT32 selectGroup ( sdb *connection,
-                    sdbReplicaGroup **group,
+                    sdbShard **group,
                     const CHAR *groupName ) ;
 
 INT32 createCataGroup ( sdb *connection,
@@ -153,19 +153,19 @@ INT32 delCurrent ( sdbCursor *query ) ;
 
 /*************** sdbReplicaGroup ******************************/
 
-INT32 getNodeNum ( sdbReplicaGroup *gr, INT32 nudeType, INT32 *nodeNum ) ;
+INT32 getNodeNum ( sdbShard *gr, INT32 nudeType, INT32 *nodeNum ) ;
 
-INT32 getDetail ( sdbReplicaGroup *gr, CHAR **pBuf, INT32 *bufSize ) ;
+INT32 getDetail ( sdbShard *gr, CHAR **pBuf, INT32 *bufSize ) ;
 
-INT32 getMaster ( sdbReplicaGroup *gr, sdbReplicaNode **node ) ;
+INT32 getMaster ( sdbShard *gr, sdbNode **node ) ;
 
-INT32 getSlave ( sdbReplicaGroup *gr, sdbReplicaNode **node ) ;
+INT32 getSlave ( sdbShard *gr, sdbNode **node ) ;
 
-INT32 getNode ( sdbReplicaGroup *gr,
-                sdbReplicaNode **node,
+INT32 getNode ( sdbShard *gr,
+                sdbNode **node,
                 const CHAR *nodeName ) ;
 
-INT32 createNode ( sdbReplicaGroup *gr,
+INT32 createNode ( sdbShard *gr,
                    const CHAR *pHostName,
                    const CHAR *pServiceName,
                    const CHAR *pDatabasePath,
@@ -173,27 +173,27 @@ INT32 createNode ( sdbReplicaGroup *gr,
 
 //INT32 activate ( sdbReplicaGroup *gr );
 
-INT32 groupStop ( sdbReplicaGroup *gr ) ;
+INT32 groupStop ( sdbShard *gr ) ;
 
-INT32 groupStart ( sdbReplicaGroup *gr ) ;
+INT32 groupStart ( sdbShard *gr ) ;
 
-BOOLEAN isCatalog ( sdbReplicaGroup *gr ) ;
+BOOLEAN isCatalog ( sdbShard *gr ) ;
 
 /**************** *******************/
 
-INT32 nodeConnect ( sdbReplicaNode *node,
+INT32 nodeConnect ( sdbNode *node,
                     sdb **connection ) ;
 
-INT32 getStatus ( sdbReplicaNode *node ) ;
+INT32 getStatus ( sdbNode *node ) ;
 
-const CHAR *getHostName ( sdbReplicaNode *node ) ;
+const CHAR *getHostName ( sdbNode *node ) ;
 
-const CHAR *getServiceName ( sdbReplicaNode *node ) ;
+const CHAR *getServiceName ( sdbNode *node ) ;
 
-const CHAR *getNodeName ( sdbReplicaNode *node ) ;
+const CHAR *getNodeName ( sdbNode *node ) ;
 
-INT32 nodeStop ( sdbReplicaNode *node ) ;
+INT32 nodeStop ( sdbNode *node ) ;
 
-INT32 nodeStart ( sdbReplicaNode *node ) ;
+INT32 nodeStart ( sdbNode *node ) ;
 
 #endif
