@@ -490,17 +490,17 @@ zend_register_internal_class( &sequoiaReplicaNode TSRMLS_CC ) ;
                                ZEND_STRL("INT64"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
 
-   //sdbReplicaGroup
+   //sdbShard
    zend_declare_property_null( pSequoiadbReplicaGroup,
-                               ZEND_STRL("_sdbReplicaGroup"),
+                               ZEND_STRL("_sdbShard"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
    zend_declare_property_null( pSequoiadbReplicaGroup,
                                ZEND_STRL("_connection"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
 
-   //sdbReplicaNode
+   //sdbNode
    zend_declare_property_null( pSequoiadbReplicaNode,
-                               ZEND_STRL("_sdbReplicaNode"),
+                               ZEND_STRL("_sdbNode"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
    zend_declare_property_null( pSequoiadbReplicaNode,
                                ZEND_STRL("_connection"),
@@ -1004,7 +1004,7 @@ PHP_METHOD ( SequoiaDB, selectGroup )
    CHAR *grName           = NULL ;
    INT32 grName_len       = 0    ;
    sdb *connection        = NULL ;
-   sdbReplicaGroup *gr    = NULL ;
+   sdbShard *gr    = NULL ;
    zval* gr_obj           = NULL ;
    CHAR *pError           = NULL ;
 
@@ -1027,7 +1027,7 @@ PHP_METHOD ( SequoiaDB, selectGroup )
    MAKE_STD_ZVAL ( gr_obj ) ;
    object_init_ex ( gr_obj, pSequoiadbReplicaGroup ) ;
    // create cs object
-   CREATECLASS ( gr_obj, "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   CREATECLASS ( gr_obj, "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2466,7 +2466,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getNodeNum )
 {
    INT32 rc = SDB_OK ;
    CHAR *error = NULL ;
-   sdbReplicaGroup *gr = NULL ;
+   sdbShard *gr = NULL ;
    INT32 nodeNum = 0 ;
    zval *pNodeType = NULL ;
    INT32 nodeType = 0 ;
@@ -2495,7 +2495,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getNodeNum )
          RETURN_LONG ( -1 ) ;
       }
    }
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2520,9 +2520,9 @@ PHP_METHOD ( sequoiaReplicaGroup, getDetail )
    INT32 rc = SDB_OK ;
    CHAR *out = NULL ;
    INT32 outSize = 0 ;
-   sdbReplicaGroup *gr = NULL ;
+   sdbShard *gr = NULL ;
    CHAR *pBuf = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2548,10 +2548,10 @@ PHP_METHOD ( sequoiaReplicaGroup, getDetail )
 PHP_METHOD ( sequoiaReplicaGroup, getMaster )
 {
    INT32 rc = SDB_OK ;
-   sdbReplicaGroup *gr   = NULL ;
-   sdbReplicaNode  *node = NULL ;
+   sdbShard *gr   = NULL ;
+   sdbNode  *node = NULL ;
    zval* node_obj        = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2561,7 +2561,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getMaster )
    MAKE_STD_ZVAL ( node_obj ) ;
    object_init_ex ( node_obj, pSequoiadbReplicaNode ) ;
    // create cs object
-   CREATECLASS ( node_obj, "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   CREATECLASS ( node_obj, "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2577,17 +2577,17 @@ PHP_METHOD ( sequoiaReplicaGroup, getMaster )
    MAKE_STD_ZVAL ( sdbobj ) ;
    GETZVAL ( getThis(), "_connection", sdbobj ) ;
    SETZVAL ( node_obj, "_connection", sdbobj ) ;
-   //SETCLASSFROMZVAL ( node_obj, "_sdbReplicaNode", sdbReplicaNode, &node ) ;
+   //SETCLASSFROMZVAL ( node_obj, "_sdbNode", sdbNode, &node ) ;
    RETURN_ZVAL( node_obj, 1, 0 ) ;
 }
 
 PHP_METHOD ( sequoiaReplicaGroup, getSlave )
 {
    INT32 rc = SDB_OK ;
-   sdbReplicaGroup *gr   = NULL ;
-   sdbReplicaNode  *node = NULL ;
+   sdbShard *gr   = NULL ;
+   sdbNode  *node = NULL ;
    zval* node_obj        = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2597,7 +2597,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getSlave )
    MAKE_STD_ZVAL ( node_obj ) ;
    object_init_ex ( node_obj, pSequoiadbReplicaNode ) ;
    // create cs object
-   CREATECLASS ( node_obj, "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   CREATECLASS ( node_obj, "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2622,8 +2622,8 @@ PHP_METHOD ( sequoiaReplicaGroup, getNode )
    INT32 rc = SDB_OK ;
    CHAR *nodeName        = NULL ;
    INT32 nodeName_len    = 0    ;
-   sdbReplicaGroup *gr   = NULL ;
-   sdbReplicaNode  *node = NULL ;
+   sdbShard *gr   = NULL ;
+   sdbNode  *node = NULL ;
    zval* node_obj        = NULL ;
 
    if ( zend_parse_parameters ( ZEND_NUM_ARGS () TSRMLS_CC,
@@ -2634,7 +2634,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getNode )
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
       RETURN_NULL() ;
    }
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2644,7 +2644,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getNode )
    MAKE_STD_ZVAL ( node_obj ) ;
    object_init_ex ( node_obj, pSequoiadbReplicaNode ) ;
    // create cs object
-   CREATECLASS ( node_obj, "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   CREATECLASS ( node_obj, "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2674,7 +2674,7 @@ PHP_METHOD ( sequoiaReplicaGroup, createNode )
    CHAR *databasePath       = NULL ;
    INT32 databasePath_len   = 0    ;
    zval *pConfig            = NULL ;
-   sdbReplicaGroup *gr      = NULL ;
+   sdbShard *gr             = NULL ;
    CHAR *error              = NULL ;
    std::map<std::string,std::string> config ;
 
@@ -2693,7 +2693,7 @@ PHP_METHOD ( sequoiaReplicaGroup, createNode )
       PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
       RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
    }
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2737,9 +2737,9 @@ PHP_METHOD ( sequoiaReplicaGroup, activate )
 PHP_METHOD ( sequoiaReplicaGroup, start )
 {
    INT32 rc = SDB_OK ;
-   CHAR *error           = NULL ;
-   sdbReplicaGroup *gr   = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   CHAR *error  = NULL ;
+   sdbShard *gr = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2756,8 +2756,8 @@ PHP_METHOD ( sequoiaReplicaGroup, stop )
 {
    INT32 rc = SDB_OK ;
    CHAR *error           = NULL ;
-   sdbReplicaGroup *gr   = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   sdbShard *gr   = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2772,9 +2772,9 @@ PHP_METHOD ( sequoiaReplicaGroup, stop )
 
 PHP_METHOD ( sequoiaReplicaGroup, isCatalog )
 {
-   CHAR *error           = NULL ;
-   sdbReplicaGroup *gr   = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   CHAR *error    = NULL ;
+   sdbShard *gr   = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2792,10 +2792,10 @@ PHP_METHOD ( sequoiaReplicaNode, connect )
    INT32 rc = SDB_OK ;
    CHAR *error          = NULL ;
    sdb *connection      = NULL ;
-   sdbReplicaNode *node = NULL ;
+   sdbNode *node = NULL ;
    zval* sdb_obj        = NULL ;
 
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2824,9 +2824,9 @@ PHP_METHOD ( sequoiaReplicaNode, getStatus )
 {
    INT32 num = 0 ;
    CHAR *error          = NULL ;
-   sdbReplicaNode *node = NULL ;
+   sdbNode *node = NULL ;
 
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       RETURN_LONG ( -1 ) ;
@@ -2838,8 +2838,8 @@ PHP_METHOD ( sequoiaReplicaNode, getStatus )
 PHP_METHOD ( sequoiaReplicaNode, getHostName )
 {
    const CHAR *name = NULL ;
-   sdbReplicaNode *node = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   sdbNode *node = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2852,8 +2852,8 @@ PHP_METHOD ( sequoiaReplicaNode, getHostName )
 PHP_METHOD ( sequoiaReplicaNode, getServiceName )
 {
    const CHAR *name = NULL ;
-   sdbReplicaNode *node = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   sdbNode *node = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2866,8 +2866,8 @@ PHP_METHOD ( sequoiaReplicaNode, getServiceName )
 PHP_METHOD ( sequoiaReplicaNode, getNodeName )
 {
    const CHAR *name = NULL ;
-   sdbReplicaNode *node = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   sdbNode *node = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2881,8 +2881,8 @@ PHP_METHOD ( sequoiaReplicaNode, start )
 {
    INT32 rc = SDB_OK ;
    CHAR *error           = NULL ;
-   sdbReplicaNode *node = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   sdbNode *node = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2899,8 +2899,8 @@ PHP_METHOD ( sequoiaReplicaNode, stop )
 {
    INT32 rc = SDB_OK ;
    CHAR *error           = NULL ;
-   sdbReplicaNode *node = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaNode", sdbReplicaNode, node ) ;
+   sdbNode *node = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbNode", sdbNode, node ) ;
    if ( !node )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
