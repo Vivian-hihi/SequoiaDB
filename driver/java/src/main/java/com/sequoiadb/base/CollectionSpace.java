@@ -35,7 +35,7 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class CollectionSpace
- * @brief Database operation interfaces of collection space
+ * @brief Database operation interfaces of collection space.
  */
 public class CollectionSpace {
 	private String name;

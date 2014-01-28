@@ -15,7 +15,7 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class DBCursor
- * @brief the cursor when query sth from DB
+ * @brief Database operation interfaces of cursor.
  */
 public class DBCursor {
 	private long reqId;

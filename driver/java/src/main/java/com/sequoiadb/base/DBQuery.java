@@ -24,7 +24,7 @@ import org.bson.BSONObject;
 
 /**
  * @class DBQuery
- * @brief Database operation rules
+ * @brief Database operation rules.
  */
 public class DBQuery {
 	private BSONObject matcher;

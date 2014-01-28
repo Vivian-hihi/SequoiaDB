@@ -37,7 +37,7 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class DBCollection
- * @brief Database operation interfaces of collection
+ * @brief Database operation interfaces of collection.
  */
 public class DBCollection {
 	private String name;

@@ -18,7 +18,7 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class Shard
- * @brief the replica group in DB
+ * @brief Database operation interfaces of shard.
  */
 public class Shard {
 	private String name;
@@ -29,8 +29,8 @@ public class Shard {
 	Shard(Sequoiadb sdb, int id) {
 		this.sequoiadb = sdb;
 		this.id = id;
-		BSONObject group = sdb.getDetailById(id);
-		this.name = group.get(SequoiadbConstants.FIELD_NAME_GROUPNAME)
+		BSONObject shard = sdb.getDetailById(id);
+		this.name = shard.get(SequoiadbConstants.FIELD_NAME_GROUPNAME)
 				.toString();
 		this.isCatalog = name.startsWith("catalog");
 	}
@@ -56,18 +56,18 @@ public class Shard {
 	Shard(Sequoiadb sdb, String name) {
 		this.sequoiadb = sdb;
 		this.name = name;
-		BSONObject group = sdb.getDetailByName(name);
+		BSONObject shard = sdb.getDetailByName(name);
 		this.isCatalog = (name == Sequoiadb.CATALOG_GROUP_NAME);
-		this.id = Integer.parseInt(group.get(
+		this.id = Integer.parseInt(shard.get(
 				SequoiadbConstants.FIELD_NAME_GROUPID).toString());
 	}
 
 	/**
-	 * @fn String getGroupName()
+	 * @fn String getShardName()
 	 * @brief Get current Shard's name
 	 * @return the current Shard's name
 	 */
-	public String getGroupName() {
+	public String getShardName() {
 		return name;
 	}
 
@@ -80,9 +80,9 @@ public class Shard {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public int getNodeNum(Node.NodeStatus status) {
-		BSONObject group = sequoiadb.getDetailById(id);
+		BSONObject shard = sequoiadb.getDetailById(id);
 		try {
-			Object obj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
+			Object obj = shard.get(SequoiadbConstants.FIELD_NAME_GROUP);
 			if (obj == null)
 				return 0;
 			BasicBSONList list = (BasicBSONList) obj;
@@ -96,8 +96,8 @@ public class Shard {
 
 	/**
 	 * @fn BSONObject getDetail()
-	 * @brief Get detail info of current replicaGoup
-	 * @return the detail info
+	 * @brief Get detail info of current shard.
+	 * @return The detail infomation.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public BSONObject getDetail() throws BaseException {
@@ -111,17 +111,17 @@ public class Shard {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Node getMaster() {
-		BSONObject group = sequoiadb.getDetailById(id);
+		BSONObject shard = sequoiadb.getDetailById(id);
 		BSONObject primaryData = null;
 		Object nodeId = null;
-		Object primaryNodeObj = group
+		Object primaryNodeObj = shard
 				.get(SequoiadbConstants.FIELD_NAME_PRIMARY);
 		if (primaryNodeObj == null)
 			throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
-		Object groupInfoObj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
-		if (groupInfoObj == null)
+		Object shardInfoObj = shard.get(SequoiadbConstants.FIELD_NAME_GROUP);
+		if (shardInfoObj == null)
 			return null;
-		BasicBSONList nodeInfos = (BasicBSONList) groupInfoObj;
+		BasicBSONList nodeInfos = (BasicBSONList) shardInfoObj;
 		for (Object nodeInfoObj : nodeInfos) {
 			BSONObject nodeInfo = (BSONObject) nodeInfoObj;
 			nodeId = nodeInfo.get(SequoiadbConstants.FIELD_NAME_NODEID);
@@ -145,24 +145,24 @@ public class Shard {
 
 	/**
 	 * @fn Node getSlave()
-	 * @brief Get the random slave Node of current Shard
-	 * @return the slave Node
+	 * @brief Get the random slave node of current Shard
+	 * @return the slave node
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Node getSlave() throws BaseException {
-		BSONObject group = sequoiadb.getDetailById(id);
-		if (group == null)
+		BSONObject shard = sequoiadb.getDetailById(id);
+		if (shard == null)
 			return null;
 		List<BSONObject> slaves = new ArrayList<BSONObject>();
 		BSONObject primaryData = null;
-		Object primaryNodeObj = group
+		Object primaryNodeObj = shard
 				.get(SequoiadbConstants.FIELD_NAME_PRIMARY);
 		if (primaryNodeObj == null)
 			throw new BaseException("SDB_CLS_NODE_NOT_EXIST");
-		Object groupInfoObj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
-		if (groupInfoObj == null)
+		Object shardInfoObj = shard.get(SequoiadbConstants.FIELD_NAME_GROUP);
+		if (shardInfoObj == null)
 			return null;
-		BasicBSONList nodeInfos = (BasicBSONList) groupInfoObj;
+		BasicBSONList nodeInfos = (BasicBSONList) shardInfoObj;
 		for (Object nodeInfoObj : nodeInfos) {
 			BSONObject nodeInfo = (BSONObject) nodeInfoObj;
 			Object nodeId = nodeInfo.get(SequoiadbConstants.FIELD_NAME_NODEID);
@@ -196,26 +196,26 @@ public class Shard {
 	}
 
 	/**
-	 * @fn Node getNode(String NodeName)
-	 * @brief Get Node by Node name (IP:PORT)
-	 * @param NodeName
-	 * 			The name of the replica node
-	 * @return the Node
+	 * @fn Node getNode(String nodeName)
+	 * @brief Get node by node name (IP:PORT).
+	 * @param nodeName
+	 * 			The name of the node
+	 * @return the node object. 
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Node getNode(String NodeName) {
-		String[] temp = NodeName.split(":");
+	public Node getNode(String nodeName) {
+		String[] temp = nodeName.split(":");
 		if (temp.length != 2) {
-			throw new BaseException("SDB_INVALIDARG", NodeName);
+			throw new BaseException("SDB_INVALIDARG", nodeName);
 		}
-		BSONObject group = sequoiadb.getDetailById(id);
-		if (group == null)
+		BSONObject shard = sequoiadb.getDetailById(id);
+		if (shard == null)
 			return null;
 		try {
 			Object nodeId = null;
 			Object hostName = null;
 			int port = -1;
-			Object list = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
+			Object list = shard.get(SequoiadbConstants.FIELD_NAME_GROUP);
 			if (list == null)
 				return null;
 			BasicBSONList nodeInfos = (BasicBSONList) list;
@@ -239,25 +239,25 @@ public class Shard {
 				}
 			}
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS", NodeName);
+			throw new BaseException("SDB_SYS", nodeName);
 		}
 		return null;
 	}
 
 	/**
 	 * @fn Node getNode(String hostName, int port)
-	 * @brief Get Node by hostName and port
+	 * @brief Get node by hostName and port
 	 * @param hostName
 	 * 			host name
 	 * @param port
 	 * 			port
-	 * @return the Node
+	 * @return the node object.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Node getNode(String hostName, int port) {
-		BSONObject group = sequoiadb.getDetailById(id);
+		BSONObject shard = sequoiadb.getDetailById(id);
 		try {
-			Object list = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
+			Object list = shard.get(SequoiadbConstants.FIELD_NAME_GROUP);
 			if (list == null)
 				return null;
 			BasicBSONList nodeInfos = (BasicBSONList) (list);
@@ -296,7 +296,7 @@ public class Shard {
 	/**
 	 * @fn Node createNode(String hostName, int port, String dbPath,
 			Map<String, String> configure)
-	 * @brief Create Node with some args
+	 * @brief Create node
 	 * @param hostName
 	 * 			host name
 	 * @param port
@@ -305,7 +305,7 @@ public class Shard {
 	 * 			the path for node
 	 * @param configure
 	 * 			configuration for this operation
-	 * @return the created Node
+	 * @return the created node
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Node createNode(String hostName, int port, String dbPath,
@@ -374,10 +374,10 @@ public class Shard {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void start() {
-		BSONObject groupName = new BasicBSONObject();
-		groupName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
+		BSONObject shardName = new BasicBSONObject();
+		shardName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
 		SDBMessage rtn = adminCommand(SequoiadbConstants.ACTIVE_CMD,
-				SequoiadbConstants.GROUP, groupName);
+				SequoiadbConstants.GROUP, shardName);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
 			throw new BaseException(flags, this.name);
@@ -390,10 +390,10 @@ public class Shard {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void stop() {
-		BSONObject groupName = new BasicBSONObject();
-		groupName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
+		BSONObject shardName = new BasicBSONObject();
+		shardName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
 		SDBMessage rtn = adminCommand(SequoiadbConstants.SHUTDOWN_CMD,
-				SequoiadbConstants.GROUP, groupName);
+				SequoiadbConstants.GROUP, shardName);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
 			throw new BaseException(flags, this.name);
