@@ -2141,10 +2141,11 @@ INT32 clientBuildTestMsg( CHAR **ppBuffer, INT32 *bufferSize,
 {
    INT32 rc = SDB_OK ;
    INT32 msgLen = 0 ;
+   INT32 len = 0 ;
    MsgOpMsg *msgOpMsg = NULL ;
    msgLen = ossStrlen( msg ) + 1 ;
-   INT32 len = sizeof( MsgOpMsg ) +
-               ossRoundUpToMultipleX( msgLen, sizeof(ossValuePtr) ) ;
+   len = sizeof( MsgOpMsg ) +
+      ossRoundUpToMultipleX( msgLen, sizeof(ossValuePtr) ) ;
    if ( len < 0 )
    {
       ossPrintf( "Packet size overflow"OSS_NEWLINE ) ;
