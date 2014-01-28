@@ -1114,7 +1114,7 @@ namespace engine
 
                rc = _sendCatalogReq ( pEventInfo->name.c_str(), 
                                       msg->requestID,
-                                      &(pEventInfo->sendNums) ) ) ;
+                                      &(pEventInfo->sendNums) ) ;
                if ( rc )
                {
                   PD_LOG( PERROR, "Resend catalog req to catalog failed, "
