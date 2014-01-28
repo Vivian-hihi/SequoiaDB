@@ -47,6 +47,7 @@ namespace engine
                                     MsgHeader *pSrcMsg,
                                     netMultiRouteAgent *pRouteAgent,
                                     pmdEDUCB *cb,
+                                    BOOLEAN isNeedRefresh,
                                     std::set<INT32> &ignoreRCList,
                                     CoordGroupList &sendGroupLst,
                                     INT64 *modifyNum = NULL );

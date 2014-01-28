@@ -195,7 +195,7 @@ namespace engine
                         "failed to get match sub-collection(rc=%d)",
                         rc );
             rc = modifyOpOnMainCL( cataInfo, subCLList, (MsgHeader *)pReceiveBuffer,
-                                 pRouteAgent, cb, emptyRCList, sendGroupLst );
+                                 pRouteAgent, cb, isNeedRefresh, emptyRCList, sendGroupLst );
          }
          else
          {

@@ -124,8 +124,8 @@ namespace engine
             }
             rc = modifyOpOnMainCL( cataInfo, subCLList,
                                  (MsgHeader *)pMsgReq,
-                                 pRouteAgent, cb, emptyRCList,
-                                 sendGroupLst,
+                                 pRouteAgent, cb, isNeedRefresh,
+                                 emptyRCList, sendGroupLst,
                                  ((flag & FLG_UPDATE_RETURNNUM)
                                  | (flag & FLG_UPDATE_UPSERT)) ?
                                  &numTmp : NULL );

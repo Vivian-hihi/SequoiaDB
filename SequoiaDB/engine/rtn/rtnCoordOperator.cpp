@@ -291,6 +291,7 @@ namespace engine
                                              MsgHeader *pSrcMsg,
                                              netMultiRouteAgent *pRouteAgent,
                                              pmdEDUCB *cb,
+                                             BOOLEAN isNeedRefresh,
                                              std::set<INT32> &ignoreRCList,
                                              CoordGroupList &sendGroupList,
                                              INT64 *modifyNum )
@@ -334,7 +335,7 @@ namespace engine
                         (CHAR *)pSrcMsg, pBuffer, bufferSize );
          PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
                   "failed to build query message(rc=%d)", rc );
-         rc = rtnCoordGetGroupInfo( cb, iterGroup->first, FALSE, groupInfo );
+         rc = rtnCoordGetGroupInfo( cb, iterGroup->first, isNeedRefresh, groupInfo );
          PD_CHECK( SDB_OK == rc, rc, RECV_MSG, PDERROR,
                   "failed to get group info(groupId=%u, rc=%d)",
                   iterGroup->first, rc );
