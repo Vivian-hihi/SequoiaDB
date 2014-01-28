@@ -64,20 +64,20 @@ namespace engine
    {
    public :
       BOOLEAN        send ;
-      BOOLEAN        reSend ;
       UINT32         waitNum ;
       ossEvent       event ;
       UINT64         requestID ;
       std::string    name ;
       UINT32         groupID ;
+      INT32          sendNums ;
 
       _clsEventItem ()
       {
          send = FALSE ;
-         reSend = FALSE ;
          waitNum = 0 ;
          requestID = 0 ;
          groupID = 0 ;
+         sendNums = 0 ;
       }
    } ;
    typedef class _clsEventItem clsEventItem ;
@@ -91,10 +91,12 @@ namespace engine
          std::string    csName ;
          ossEvent       event ;
          UINT32         pageSize ;
+         INT32          sendNums ;
 
          _clsCSEventItem()
          {
             pageSize = 0 ;
+            sendNums = 0 ;
          }
    } ;
    typedef _clsCSEventItem clsCSEventItem ;
@@ -147,7 +149,7 @@ namespace engine
                                INT64 waitMillSec = CLS_SHARD_TIMEOUT ) ;
 
       public:
-         INT32  sendToCatlog ( MsgHeader * msg ) ;
+         INT32  sendToCatlog ( MsgHeader * msg, INT32 *pSendNum = NULL ) ;
          INT32  syncSend( MsgHeader * msg, UINT32 groupID, BOOLEAN primary,
                           MsgHeader **ppRecvMsg,
                           INT64 millisec = CLS_SHARD_TIMEOUT ) ;
@@ -164,12 +166,15 @@ namespace engine
       protected:
 
          INT32 _sendCataQueryReq( INT32 queryType, const BSONObj &query,
-                                  UINT64 requestID ) ;
+                                  UINT64 requestID, INT32 *pSendNum = NULL ) ;
 
          INT32 _sendCatalogReq ( const CHAR *pCollectionName,
-                                 UINT64 requestID = 0 ) ;
-         INT32 _sendGroupReq ( UINT32 groupID, UINT64 requestID = 0 ) ;
-         INT32 _sendCSInfoReq ( const CHAR *pCSName, UINT64 requestID = 0 ) ;
+                                 UINT64 requestID = 0,
+                                 INT32 *pSendNum = NULL ) ;
+         INT32 _sendGroupReq ( UINT32 groupID, UINT64 requestID = 0,
+                               INT32 *pSendNum = NULL ) ;
+         INT32 _sendCSInfoReq ( const CHAR *pCSName, UINT64 requestID = 0,
+                                INT32 *pSendNum = NULL ) ;
 
          clsEventItem *_findCatSyncEvent ( const CHAR *pCollectionName,
                                            BOOLEAN bCreate = FALSE ) ;

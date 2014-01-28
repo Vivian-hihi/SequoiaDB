@@ -328,13 +328,18 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SND2CAT, "_clsShardMgr::sendToCatlog" )
-   INT32 _clsShardMgr::sendToCatlog ( MsgHeader * msg )
+   INT32 _clsShardMgr::sendToCatlog ( MsgHeader * msg, INT32 *pSendNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SND2CAT );
 
       ossScopedLock lock ( &_shardLatch, SHARED ) ;
       INT32 tmpPrimary = _primary ;
+
+      if ( pSendNum )
+      {
+         *pSendNum = 0 ;
+      }
 
       if ( !_pNetRtAgent || _vecCatlog.size() == 0 )
       {
@@ -358,6 +363,10 @@ namespace engine
          }
          else
          {
+            if ( pSendNum )
+            {
+               *pSendNum = 1 ;
+            }
             goto done ;
          }
       }
@@ -371,10 +380,14 @@ namespace engine
          while ( index < _vecCatlog.size () )
          {
             rc1 = _pNetRtAgent->syncSend ( _vecCatlog[index].nodeID,
-               (void*)msg ) ;
+                                           (void*)msg ) ;
             if ( rc1 == SDB_OK )
             {
                rc = rc1 ;
+               if ( pSendNum )
+               {
+                  ++(*pSendNum) ;
+               }
             }
             else
             {
@@ -492,7 +505,7 @@ namespace engine
       //First judge the request is send or not
       if ( FALSE == pEventInfo->send )
       {
-         rc = _sendCatalogReq ( pCollectionName ) ;
+         rc = _sendCatalogReq ( pCollectionName, &(pEventInfo->sendNums) ) ;
          if ( SDB_OK == rc )
          {
             pEventInfo->send = TRUE ;
@@ -530,7 +543,6 @@ namespace engine
 
          if ( 0 == pEventInfo->waitNum )
          {
-            pEventInfo->reSend = FALSE ;
             pEventInfo->event.reset () ;
 
             //release the event info
@@ -596,7 +608,7 @@ namespace engine
       //First judge the request is send or not
       if ( FALSE == pEventInfo->send )
       {
-         rc = _sendGroupReq( groupID ) ;
+         rc = _sendGroupReq( groupID, &(pEventInfo->sendNums) ) ;
          if ( SDB_OK == rc )
          {
             pEventInfo->send = TRUE ;
@@ -634,7 +646,6 @@ namespace engine
 
          if ( 0 == pEventInfo->waitNum )
          {
-            pEventInfo->reSend = FALSE ;
             pEventInfo->event.reset () ;
 
             //release the event info
@@ -697,7 +708,8 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDGPREQ, "_clsShardMgr::_sendGroupReq" )
-   INT32 _clsShardMgr::_sendGroupReq ( UINT32 groupID, UINT64 requestID )
+   INT32 _clsShardMgr::_sendGroupReq ( UINT32 groupID, UINT64 requestID,
+                                       INT32 *pSendNum )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__SNDGPREQ );
       _MsgCatGroupReq msg ;
@@ -710,7 +722,7 @@ namespace engine
       msg.header.requestID = requestID ;
       msg.id.columns.groupID = groupID ;
 
-      INT32 rc = sendToCatlog( (MsgHeader *)&msg ) ;
+      INT32 rc = sendToCatlog( (MsgHeader *)&msg, pSendNum ) ;
 
       PD_LOG ( PDDEBUG, "send group req[id: %d, requestID: %lld, rc: %d]",
                groupID, _requestID, rc ) ;
@@ -720,7 +732,8 @@ namespace engine
 
    INT32 _clsShardMgr::_sendCataQueryReq( INT32 queryType,
                                           const BSONObj & query,
-                                          UINT64 requestID )
+                                          UINT64 requestID,
+                                          INT32 *pSendNum )
    {
       INT32 rc = SDB_OK ;
       CHAR *pBuffer = NULL ;
@@ -744,7 +757,7 @@ namespace engine
       msg->TID = 0 ;
       msg->routeID.value = 0 ;
       //send message
-      rc = sendToCatlog ( msg ) ;
+      rc = sendToCatlog ( msg, pSendNum ) ;
 
    done:
       if ( pBuffer )
@@ -759,7 +772,8 @@ namespace engine
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDCATREQ, "_clsShardMgr::_sendCatalogReq" )
    INT32 _clsShardMgr::_sendCatalogReq ( const CHAR *pCollectionName,
-                                         UINT64 requestID )
+                                         UINT64 requestID,
+                                         INT32 *pSendNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__SNDCATREQ );
@@ -782,7 +796,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _sendCataQueryReq( MSG_CAT_QUERY_CATALOG_REQ, query, requestID ) ;
+      rc = _sendCataQueryReq( MSG_CAT_QUERY_CATALOG_REQ, query, requestID,
+                              pSendNum ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDDEBUG, "send catelog req[name: %s, requestID: %lld, "
@@ -797,7 +812,8 @@ namespace engine
       goto done ;
    }
 
-   INT32 _clsShardMgr::_sendCSInfoReq(const CHAR * pCSName, UINT64 requestID )
+   INT32 _clsShardMgr::_sendCSInfoReq( const CHAR * pCSName, UINT64 requestID,
+                                       INT32 *pSendNum )
    {
       INT32 rc = SDB_OK ;
       BSONObj query ;
@@ -819,7 +835,8 @@ namespace engine
          goto error ;
       }
 
-      rc = _sendCataQueryReq( MSG_CAT_QUERY_SPACEINFO_REQ, query, requestID ) ;
+      rc = _sendCataQueryReq( MSG_CAT_QUERY_SPACEINFO_REQ, query, requestID,
+                              pSendNum ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDDEBUG, "send collection space req[name: %s, requestID: "
@@ -966,15 +983,24 @@ namespace engine
             }
             else if ( SDB_CLS_NOT_PRIMARY == res->header.res )
             {
-               updateCatGroup( TRUE ) ;
-               if ( TRUE == pEventInfo->reSend )
+               --(pEventInfo->sendNums) ;
+               if ( pEventInfo->sendNums > 0 )
                {
-                  ossSleep ( 200 ) ;
+                  //ignore
+                  rc = SDB_OK ;
                }
-               if ( SDB_OK == _sendGroupReq( pEventInfo->groupID,
-                                             msg->requestID ) )
+               else
                {
-                  pEventInfo->reSend = TRUE ;
+                  updateCatGroup( TRUE ) ;
+                  rc == _sendGroupReq( pEventInfo->groupID,
+                                       msg->requestID,
+                                       &(pEventInfo->sendNums) ) ;
+                  if ( rc )
+                  {
+                     PD_LOG( PDERROR, "Resend group req to catalog failed, "
+                             "rc: %d", rc ) ;
+                     pEventInfo->event.signalAll( rc ) ;
+                  }
                }
             }
             else
@@ -1076,15 +1102,25 @@ namespace engine
             //not primary node, should update catalog group info, and send again
             else if ( SDB_CLS_NOT_PRIMARY == res->flags )
             {
-               updateCatGroup ( TRUE ) ;
-               if ( TRUE == pEventInfo->reSend )
+               --(pEventInfo->sendNums) ;
+               if ( pEventInfo->sendNums > 0 )
                {
-                  ossSleep ( 200 ) ;
+                  // ignore
+                  rc = SDB_OK ;
+                  goto done ;
                }
-               if ( SDB_OK == _sendCatalogReq ( pEventInfo->name.c_str(), 
-                                                msg->requestID ) )
+
+               updateCatGroup ( TRUE ) ;
+
+               rc = _sendCatalogReq ( pEventInfo->name.c_str(), 
+                                      msg->requestID,
+                                      &(pEventInfo->sendNums) ) ) ;
+               if ( rc )
                {
-                  pEventInfo->reSend = TRUE ;
+                  PD_LOG( PERROR, "Resend catalog req to catalog failed, "
+                          "rc: %d", rc ) ;
+                  pEventInfo->event.signalAll ( rc ) ;
+                  goto error ;
                }
             }
             //update catalog failed
@@ -1392,7 +1428,7 @@ namespace engine
       _catLatch.release() ;
 
       // send request
-      rc = _sendCSInfoReq( csName, requestID ) ;
+      rc = _sendCSInfoReq( csName, requestID, &(item->sendNums) ) ;
       if ( rc )
       {
          goto error ;
@@ -1459,20 +1495,32 @@ namespace engine
          //not primary node, should send again
          if ( SDB_CLS_NOT_PRIMARY == res->flags )
          {
-            updateCatGroup ( TRUE ) ;
-            ossSleep ( 200 ) ;
-            if ( 0 == csItem->pageSize &&
-                 SDB_OK == _sendCSInfoReq( csItem->csName.c_str(),
-                                           it->first ) )
+            --(csItem->sendNums) ;
+            if ( csItem->sendNums > 0 )
             {
+               // ignore
                rc = SDB_OK ;
                goto done ;
             }
-         }
+            updateCatGroup ( TRUE ) ;
 
-         PD_LOG ( PDERROR, "Query collection space[%s] info failed, rc: %d",
-                  csItem->csName.c_str(), rc ) ;
-         goto error ;
+            rc = _sendCSInfoReq( csItem->csName.c_str(),
+                                 it->first,
+                                 &(csItem->sendNums) ) ;
+            if ( SDB_OK == rc )
+            {
+               goto done ;
+            }
+            PD_LOG( PDERROR, "Resend csinfo req to catalog failed, rc: %d",
+                    rc ) ;
+            goto error ;
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Query collection space[%s] info failed, rc: %d",
+                     csItem->csName.c_str(), rc ) ;
+            goto error ;
+         }
       }
       else
       {
