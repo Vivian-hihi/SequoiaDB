@@ -505,7 +505,7 @@ namespace engine
       //First judge the request is send or not
       if ( FALSE == pEventInfo->send )
       {
-         rc = _sendCatalogReq ( pCollectionName, &(pEventInfo->sendNums) ) ;
+         rc = _sendCatalogReq ( pCollectionName, 0, &(pEventInfo->sendNums) ) ;
          if ( SDB_OK == rc )
          {
             pEventInfo->send = TRUE ;
@@ -608,7 +608,7 @@ namespace engine
       //First judge the request is send or not
       if ( FALSE == pEventInfo->send )
       {
-         rc = _sendGroupReq( groupID, &(pEventInfo->sendNums) ) ;
+         rc = _sendGroupReq( groupID, 0, &(pEventInfo->sendNums) ) ;
          if ( SDB_OK == rc )
          {
             pEventInfo->send = TRUE ;
@@ -992,9 +992,9 @@ namespace engine
                else
                {
                   updateCatGroup( TRUE ) ;
-                  rc == _sendGroupReq( pEventInfo->groupID,
-                                       msg->requestID,
-                                       &(pEventInfo->sendNums) ) ;
+                  rc = _sendGroupReq( pEventInfo->groupID,
+                                      msg->requestID,
+                                      &(pEventInfo->sendNums) ) ;
                   if ( rc )
                   {
                      PD_LOG( PDERROR, "Resend group req to catalog failed, "
@@ -1117,7 +1117,7 @@ namespace engine
                                       &(pEventInfo->sendNums) ) ;
                if ( rc )
                {
-                  PD_LOG( PERROR, "Resend catalog req to catalog failed, "
+                  PD_LOG( PDERROR, "Resend catalog req to catalog failed, "
                           "rc: %d", rc ) ;
                   pEventInfo->event.signalAll ( rc ) ;
                   goto error ;
