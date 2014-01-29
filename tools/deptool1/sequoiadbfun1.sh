@@ -184,6 +184,7 @@ function sshNodeStart()
 #参数2 主机列表的元素名
 function sshInstallon()
 {
+   
    ssh root@${1} "cd /tmp; ./sequoiadbinstall.sh 1 ${2}"
    if [ $? -ne 0 ]; then
       return 1
@@ -233,6 +234,14 @@ function sshOneGroupStart()
    fi
 }
 
+#提升远程文件的权限
+#参数1 地址
+#参数2 文件名
+function changeFilePower()
+{
+   ssh root@${1} "chmod +x ${2}"
+}
+
 #复制文件到其他主机上的/tmp目录
 #参数1 文件名 例如 "/opt/sequoiadb/sequoiadb.run"
 #参数2 地址   例如 "ubuntu-test-01"
@@ -260,6 +269,7 @@ function distribution()
          echo_r "Error" $FUNCNAME $LINENO "Copy ${INSTALL_NAME} file to ${target}:/tmp failed"
          return 1
       fi
+      changeFilePower "${target}" "/tmp/${INSTALL_NAME}"
       echo_r "Event" $FUNCNAME $LINENO "Copy ${INSTALL_NAME} file to ${target}:/tmp successfully"
    done
    return 0
@@ -310,36 +320,43 @@ function checkEnv()
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbconfig.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbconfig.sh"
          copyFile2OtherHost "${PWD}/sequoiadbfun1.sh" ${target}
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbfun1.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbfun1.sh"
          copyFile2OtherHost "${PWD}/sequoiadbfun2.sh" ${target}
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbfun2.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbfun2.sh"
          copyFile2OtherHost "${PWD}/sequoiadbcheck.sh" ${target}
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbcheck.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbcheck.sh"
          copyFile2OtherHost "${PWD}/sequoiadbinstall.sh" ${target}
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbinstall.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbinstall.sh"
          copyFile2OtherHost "${PWD}/sequoiadbuninstall.sh" ${target}
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbinstall.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbuninstall.sh"
          copyFile2OtherHost "${PWD}/sequoiadbgroupstart.sh" ${target}
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "Copy the sequoiadbinstall.sh file to the ${target} failure"
             return 1
          fi
+         changeFilePower "${target}" "/tmp/sequoiadbgroupstart.sh"
          #远程控制其他主机进行环境检查
          sshCheckEnv ${target} ${array_name} ${INSTALL_SDB_SIZE}
          if [ $? -ne 0 ]; then
