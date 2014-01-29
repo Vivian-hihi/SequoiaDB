@@ -37,7 +37,7 @@ public class CataNodeGroup extends NodeGroup {
 
 		if (group == null) {
 			// group is not exist
-			Node nodeInfo = getNodeList().get(0);
+			ShardNode nodeInfo = getNodeList().get(0);
 			getNodeList().remove(0);
 
 			try {

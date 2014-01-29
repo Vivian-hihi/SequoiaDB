@@ -17,7 +17,7 @@ public abstract class HostName extends NodeGroup{
 		Shard group = sdb.getShard(getName());
 		
 		
-		for (Node nodeInfo : getNodeList()) {
+		for (ShardNode nodeInfo : getNodeList()) {
 			hostName.add(group.getNode(nodeInfo.getHost()).toString());
 		}
 

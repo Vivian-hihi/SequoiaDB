@@ -26,8 +26,8 @@ public class DataNodeGroup extends NodeGroup {
 				group = sdb.createShard(getName());
 			}
 
-			for (Node nodeInfo : getNodeList()) {
-				Node node = group.getNode(nodeInfo.getHost(),
+			for (ShardNode nodeInfo : getNodeList()) {
+				ShardNode node = group.getNode(nodeInfo.getHost(),
 						nodeInfo.getBasePort());
 
 				if (node == null) {
