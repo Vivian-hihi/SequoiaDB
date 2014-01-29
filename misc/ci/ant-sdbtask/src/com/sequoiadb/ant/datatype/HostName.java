@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.apache.tools.ant.BuildException;
 
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.ReplicaNode;
+import com.sequoiadb.base.Shard;
+import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 
 public abstract class HostName extends NodeGroup{
@@ -14,7 +14,7 @@ public abstract class HostName extends NodeGroup{
 	private List<Node> nodes = new ArrayList<Node>();
 	public void start(Sequoiadb sdb) throws BuildException {
 	try {
-		ReplicaGroup group = sdb.getReplicaGroup(getName());
+		Shard group = sdb.getShard(getName());
 		
 		
 		for (Node nodeInfo : getNodeList()) {

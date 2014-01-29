@@ -5,8 +5,8 @@ package com.sequoiadb.ant.datatype;
 
 import org.apache.tools.ant.BuildException;
 
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.ReplicaNode;
+import com.sequoiadb.base.Shard;
+import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
@@ -19,15 +19,15 @@ public class DataNodeGroup extends NodeGroup {
 	@Override
 	public void start(Sequoiadb sdb) throws BuildException {
 		try {
-			ReplicaGroup group = sdb.getReplicaGroup(getName());
+			Shard group = sdb.getShard(getName());
 
 			if (group == null) {
 				
-				group = sdb.createReplicaGroup(getName());
+				group = sdb.createShard(getName());
 			}
 
 			for (Node nodeInfo : getNodeList()) {
-				ReplicaNode node = group.getNode(nodeInfo.getHost(),
+				Node node = group.getNode(nodeInfo.getHost(),
 						nodeInfo.getBasePort());
 
 				if (node == null) {
@@ -59,13 +59,13 @@ public class DataNodeGroup extends NodeGroup {
 
 	public void waitForStart(Sequoiadb sdb, long timeout) throws BuildException {
 
-		ReplicaGroup group = sdb.getReplicaGroup(getName());
+		Shard group = sdb.getShard(getName());
 
 		// Wait for group select master, max wait time is 120sec;
 		int i = 0;
 		while (true) {
 			try {
-				ReplicaNode masterNode = group.getMaster();
+				Node masterNode = group.getMaster();
 				if (masterNode != null) {
 					break;
 				}

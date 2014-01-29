@@ -11,8 +11,8 @@ import java.util.Map;
 import org.apache.tools.ant.BuildException;
 import org.bson.BSONObject;
 
-import com.sequoiadb.base.ReplicaGroup;
-import com.sequoiadb.base.ReplicaNode;
+import com.sequoiadb.base.Shard ;
+import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
@@ -27,10 +27,10 @@ public class CataNodeGroup extends NodeGroup {
 	@Override
 	public void start(Sequoiadb sdb) throws BuildException {
 
-		ReplicaGroup group = null;
+		Shard group = null;
 		try {
 			setName(CATALOG_GROUP_NAME);
-			group = sdb.getReplicaGroup(getName());
+			group = sdb.getShard(getName());
 		} catch (BaseException e) {
 			group = null;
 		}
@@ -57,14 +57,14 @@ public class CataNodeGroup extends NodeGroup {
 						"path : " + nodeInfo.getDbpath() + "\n" +
 						"configMap :"+nodeInfo.getConfigMap().toString()
 						);
-				sdb.createReplicaCataGroup(nodeInfo.getHost(),
+				sdb.createCataShard(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 						nodeInfo.getConfigMap() );
 				
 				
 				/*chen write , here seem have propore
-				ReplicaGroup cataRG = sdb.getReplicaGroup( CATALOG_GROUP_NAME ) ;
-				ReplicaNode cataNode = cataRG.createNode( nodeInfo.getHost() , 
+				Shard cataRG = sdb.getShard( CATALOG_GROUP_NAME ) ;
+				Node cataNode = cataRG.createNode( nodeInfo.getHost() , 
 														nodeInfo.getBasePort() , 
 														nodeInfo.getDbpath() , 
 														nodeInfo.getConfigMap() ) ;
@@ -84,13 +84,13 @@ public class CataNodeGroup extends NodeGroup {
 	@Override
 	public void waitForStart(Sequoiadb sdb, long timeout) throws BuildException {
 
-		ReplicaGroup group = null;
+		Shard group = null;
 
 		// Wait for cata select group.
 		int i = 0;
 		while (true) {
 			try {
-				group = sdb.getReplicaGroup(getName());
+				group = sdb.getShard(getName());
 				if (group != null) {
 					break;
 				}
@@ -110,7 +110,7 @@ public class CataNodeGroup extends NodeGroup {
 			}
 		}
 
-		ReplicaNode node = null;
+		Node node = null;
 		
 		//List<ReplicaNode> replNodes = new LinkedList<ReplicaNode>();
 		
