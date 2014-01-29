@@ -114,7 +114,7 @@ public class CataNodeGroup extends NodeGroup {
 		
 		//List<ReplicaNode> replNodes = new LinkedList<ReplicaNode>();
 		
-		for (Node nodeInfo : getNodeList()) {
+		for (ShardNode nodeInfo : getNodeList()) {
 			node = group.getNode(nodeInfo.getHost(), nodeInfo.getBasePort());
 
 			if (node == null) {

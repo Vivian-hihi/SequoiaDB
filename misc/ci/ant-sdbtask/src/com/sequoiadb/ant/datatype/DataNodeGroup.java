@@ -27,7 +27,7 @@ public class DataNodeGroup extends NodeGroup {
 			}
 
 			for (ShardNode nodeInfo : getNodeList()) {
-				ShardNode node = group.getNode(nodeInfo.getHost(),
+				Node node = group.getNode(nodeInfo.getHost(),
 						nodeInfo.getBasePort());
 
 				if (node == null) {
