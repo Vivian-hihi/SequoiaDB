@@ -45,7 +45,7 @@ public class SdbHaveMaster extends Task {
 		this.waitTime = value ; 
 	}
 	
-	private boolean checkMaster( ReplicaGroup RG , Sequoiadb sdb )
+	private boolean checkMaster( Shard RG , Sequoiadb sdb )
 	{
 		
 			
@@ -122,16 +122,16 @@ public class SdbHaveMaster extends Task {
 	public void execute ()
 	{
 		Sequoiadb sdb = new Sequoiadb( this.hostName , Integer.parseInt( this.port ) , "" ,"") ;
-		ReplicaGroup RG = null ;
+		Shard RG = null ;
 		int i = 0 ;
 		int times = Integer.parseInt( this.waitTime ) ;
 		for(; i < times ; ++i )
 		{
 			try{
 				if( ! this.groupName.equals("1") )
-					RG = sdb.getReplicaGroup( this.groupName ) ;
+					RG = sdb.getShard( this.groupName ) ;
 				else
-					RG = sdb.getReplicaGroup(1) ;
+					RG = sdb.getShard(1) ;
 				if( RG != null )
 					break;
 			}catch( BaseException e ){ 

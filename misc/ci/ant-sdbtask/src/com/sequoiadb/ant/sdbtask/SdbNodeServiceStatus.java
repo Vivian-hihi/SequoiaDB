@@ -3,7 +3,7 @@ package com.sequoiadb.ant.sdbtask;
 import org.apache.tools.ant.Task;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
-import com.sequoiadb.base.ReplicaGroup;
+import com.sequoiadb.base.Shard;
 import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.exception.BaseException;
 
@@ -35,7 +35,7 @@ public class SdbNodeServiceStatus extends Task {
 		this.waitTime = value ; 
 	}
 	
-	private boolean checkNodeServiceStatus( ReplicaGroup RG , Sequoiadb sdb )
+	private boolean checkNodeServiceStatus( Shard RG , Sequoiadb sdb )
 	{
 			//GroupID  ;
 			String groupID = RG.getDetail().get( "GroupID" ).toString() ;
@@ -74,11 +74,11 @@ public class SdbNodeServiceStatus extends Task {
 	public void execute ()
 	{
 		Sequoiadb sdb = new Sequoiadb( this.hostName , Integer.parseInt( this.port ) , "" ,"") ;
-		ReplicaGroup RG = null ;
+		Shard RG = null ;
 		if( ! this.groupName.equals("1") )
-			RG = sdb.getReplicaGroup( this.groupName ) ;
+			RG = sdb.getShard( this.groupName ) ;
 		else
-			RG = sdb.getReplicaGroup(1) ;
+			RG = sdb.getShard(1) ;
 		
 		int times = Integer.parseInt( this.waitTime ) ;
 		int i = 0 ;
