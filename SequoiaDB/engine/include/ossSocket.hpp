@@ -33,6 +33,9 @@
 *******************************************************************************/
 #ifndef OSSNETWORK_HPP_
 #define OSSNETWORK_HPP_
+//#undef __FD_SETSIZE
+//#define __FD_SETSIZE 65534
+
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"

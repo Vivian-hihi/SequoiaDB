@@ -15,7 +15,6 @@
 #ifndef OSSTYPES_H_
 #define OSSTYPES_H_
 
-#include <sys/types.h>
 #include "ossFeat.h"
 
 #if defined (_WINDOWS)

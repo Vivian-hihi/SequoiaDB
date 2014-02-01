@@ -70,24 +70,24 @@
 #define SDB_RN_CONNECT                                     0x800000000001beL
 #define SDB_RN_START                                       0x800000000001bfL
 #define SDB_RN_STOP                                        0x800000000001c0L
-#define SDB_SDB_CRT_RG                                     0x800000000001c1L
+#define SDB_SDB_CRT_SHARD                                  0x800000000001c1L
 #define SDB_SDB_CRT_PROCEDURES                             0x800000000001c2L
 #define SDB_SDB_RM_PROCEDURES                              0x800000000001c3L
 #define SDB_SDB_LIST_PROCEDURES                            0x800000000001c4L
 #define SDB_SDB_EVAL                                       0x800000000001c5L
 #define SDB_SDB_FLUSH_CONF                                 0x800000000001c6L
-#define SDB_SDB_RM_RG                                      0x800000000001c7L
-#define SDB_SDB_CRT_CATRG                                  0x800000000001c8L
+#define SDB_SDB_RM_SHARD                                   0x800000000001c7L
+#define SDB_SDB_CRT_CATA_SHARD                             0x800000000001c8L
 #define SDB_SDB_CRT_CS                                     0x800000000001c9L
-#define SDB_GET_RG_AND_SETPROPERTY                         0x800000000001caL
-#define SDB_SDB_GET_RG                                     0x800000000001cbL
+#define SDB_get_shard_and_setproperty                      0x800000000001caL
+#define SDB_SDB_GET_SHARD                                  0x800000000001cbL
 #define GET_CS_AND_SETPROPERTY                             0x800000000001ccL
 #define SDB_GET_CS                                         0x800000000001cdL
 #define SDB_SDB_DROP_CS                                    0x800000000001ceL
 #define SDB_SDB_SNAPSHOT                                   0x800000000001cfL
 #define SDB_SDB_RESET_SNAP                                 0x800000000001d0L
 #define SDB_SDB_LIST                                       0x800000000001d1L
-#define SDB_SDB_START_RG                                   0x800000000001d2L
+#define SDB_SDB_START_SHARD                                0x800000000001d2L
 #define SDB_SDB_CRT_USER                                   0x800000000001d3L
 #define SDB_SDB_DROP_USER                                  0x800000000001d4L
 #define SDB_SDB_EXEC                                       0x800000000001d5L
@@ -105,4 +105,6 @@
 #define SDB_SDB_LIST_TASKS                                 0x800000000001e1L
 #define SDB_SDB_WAIT_TASKS                                 0x800000000001e2L
 #define SDB_SDB_CANCEL_TASK                                0x800000000001e3L
+#define SDB_SDB_SET_SESSION_ATTR                           0x800000000001e4L
+#define SDB_SDB_MSG                                        0x800000000001e5L
 #endif

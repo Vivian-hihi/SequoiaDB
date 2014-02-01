@@ -271,7 +271,8 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "there is no valid sharding-key field",
                    "the operation not support on main-collection",
                    "redefine index",
-                   "Deleting the CS"
+                   "Deleting the CS",
+                   "Reached the maximum number of nodes"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

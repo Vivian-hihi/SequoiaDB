@@ -284,4 +284,5 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_MAIN_CL_OP_ERR              -246  /**< the operation not support on main-collection */
 #define SDB_IXM_REDEF                   -247  /**< redefine index */
 #define SDB_DMS_CS_DELETING             -248  /**< Deleting the CS */
+#define SDB_DMS_REACHED_MAX_NODES       -249  /**< Reached the maximum number of nodes */
 #endif /* OSSERR_HPP_ */

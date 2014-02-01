@@ -73,11 +73,24 @@
 #define OSS_OSTYPE                     OSS_OSTYPE_PPCLIN64
 #endif
 
+
 #if defined _LINUX
    #include <errno.h>
    #define OSS_HAS_KERNEL_THREAD_ID
    #define __FUNC__ __func__
    #define SDB_EXPORT
+   // max fd size is 65534 on linux
+   #define OSS_FD_SETSIZE 65534
+   // this header must be included BEFORE __FD_SETSIZE declaration
+   #include <bits/types.h>
+   // __FD_SETSIZE is only for Linux and HPUX
+   #undef __FD_SETSIZE
+   #define __FD_SETSIZE OSS_FD_SETSIZE
+   // FD_SETSIZE is for all other unix
+   #undef FD_SETSIZE
+   #define FD_SETSIZE OSS_FD_SETSIZE
+   // sys/types.h must be included AFTER __FD_SETSIZE declaration
+   #include <sys/types.h>
 #elif defined _WINDOWS
    #ifdef SDB_STATIC_BUILD
       #define SDB_EXPORT
@@ -86,7 +99,10 @@
    #else
       #define SDB_EXPORT __declspec(dllimport)
    #endif
+   // we can't change fd_setsize for windows
+   #define OSS_FD_SETSIZE FD_SETSIZE
+   #include <sys/types.h>
 #endif
 
-#endif /* OSSFEAT_HPP_ */
+#endif /* OSSFEAT_H_ */
 
