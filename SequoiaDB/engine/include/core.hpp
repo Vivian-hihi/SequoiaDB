@@ -19,3 +19,4 @@
 #include "ossTypes.hpp"
 
 #endif /* CORE_HPP_ */
+
