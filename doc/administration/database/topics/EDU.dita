@@ -26,8 +26,8 @@
         </strow>
         <strow>
           <stentry>ShardAgent</stentry>
-          <stentry>分区代理</stentry>
-          <stentry>分区代理线程负责由shardname服务传入的请求，一般来说该请求由协调节点传入数据节点</stentry>
+          <stentry>分片代理</stentry>
+          <stentry>分片代理线程负责由shardname服务传入的请求，一般来说该请求由协调节点传入数据节点</stentry>
         </strow>
         <strow>
           <stentry>CoordAgent</stentry>
@@ -78,8 +78,8 @@
         </strow>
         <strow>
           <stentry>ShardReader</stentry>
-          <stentry>分区监听</stentry>
-          <stentry>分区监听线程负责由shardname服务传入的请求，并启动ShardAgent代理线程</stentry>
+          <stentry>分片监听</stentry>
+          <stentry>分片监听线程负责由shardname服务传入的请求，并启动ShardAgent代理线程</stentry>
         </strow>
         <strow>
           <stentry>LogWriter</stentry>
@@ -119,7 +119,7 @@
         <strow>
           <stentry>CoordNetwork</stentry>
           <stentry>协调网络监听</stentry>
-          <stentry>协调网络监听线程用于监听分区的请求</stentry>
+          <stentry>协调网络监听线程用于监听分片的请求</stentry>
         </strow>
       </simpletable>
     </section>

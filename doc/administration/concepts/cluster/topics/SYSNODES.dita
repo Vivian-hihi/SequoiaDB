@@ -7,7 +7,7 @@
       <p>SYSCAT</p>
     </section>
     <section><title>概念</title>
-      <p>SYSNODES集合中包含了该集群中所有的节点与分区组信息。每个分区组保存为一个文档。</p>
+      <p>SYSNODES集合中包含了该集群中所有的节点与分片组信息。每个分片组保存为一个文档。</p>
       <p>每个文档包含以下字段：</p>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
         id="administration_concepts_cluster_node_catalog_sysnodes_table1">-->
@@ -19,22 +19,22 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>分区组名。</stentry>
+          <stentry>分片组名。</stentry>
         </strow>
         <strow>
           <stentry>GroupID</stentry>
           <stentry>整数</stentry>
-          <stentry>分区组ID，该ID在集群中唯一。</stentry>
+          <stentry>分片组ID，该ID在集群中唯一。</stentry>
         </strow>
         <strow>
           <stentry>PrimaryNode</stentry>
           <stentry>整数</stentry>
-          <stentry>该分区组内主节点ID。</stentry>
+          <stentry>该分片组内主节点ID。</stentry>
         </strow>
         <strow>
           <stentry>Role</stentry>
           <stentry>整数</stentry>
-          <stentry>分区组角色，可以为：
+          <stentry>分片组角色，可以为：
             <ul>
               <li>0：数据节点</li>
               <li>2：编目节点</li>
@@ -46,24 +46,24 @@
           <stentry>整数</stentry>
           <stentry>
             <ul>
-              <li>1：已激活分区组</li>
-              <li>0：未激活分区组</li>
-              <li>不存在：未激活分区组</li>
+              <li>1：已激活分片组</li>
+              <li>0：未激活分片组</li>
+              <li>不存在：未激活分片组</li>
             </ul>
           </stentry>
         </strow>
         <strow>
           <stentry>Version</stentry>
           <stentry>整数</stentry>
-          <stentry>版本号，由1起始，任何对该分区组的操作均会对其+1。</stentry>
+          <stentry>版本号，由1起始，任何对该分片组的操作均会对其+1。</stentry>
         </strow>
         <strow>
           <stentry>Group</stentry>
           <stentry>数组</stentry>
-          <stentry>分区组中节点信息，见下表：</stentry>
+          <stentry>分片组中节点信息，见下表：</stentry>
         </strow>
       </simpletable>
-      <p>分区组中如果存在一个以上节点，则每个节点作为一个对象存放在Group字段数组中，每个对象的信息如下：</p>
+      <p>分片组中如果存在一个以上节点，则每个节点作为一个对象存放在Group字段数组中，每个对象的信息如下：</p>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.0* 2.26*"
         id="administration_concepts_cluster_node_catalog_sysnodes_table2">-->
         <sthead>
@@ -93,21 +93,21 @@
             <ul>
               <li>0：直连服务，对应数据库参数svcname</li>
               <li>1：复制服务，对应数据库参数replname</li>
-              <li>2：分区服务，对应数据库参数shardname</li>
+              <li>2：分片服务，对应数据库参数shardname</li>
               <li>3：编目服务，对应数据库参数catalogname</li>
             </ul>
           </stentry>
         </strow>
       </simpletable>
       <note>
-        <p>编目分区组名固定为“SYSCatalogGroup”，分区组ID固定为1。</p>
-        <p>数据分区组ID由1000起始。</p>
+        <p>编目分片组名固定为“SYSCatalogGroup”，分片组ID固定为1。</p>
+        <p>数据分片组ID由1000起始。</p>
         <p>数据节点ID由1000起始。</p>
       </note>
     </section>
     <section>
       <title>示例</title>
-      <p>一个典型的包含单节点的编目分区组为：</p>
+      <p>一个典型的包含单节点的编目分片组为：</p>
       <codeblock>{ "Group" : [ 
               { "NodeID" : 2, 
                 "HostName" : "vmsvr1-rhel-x64", 
@@ -123,7 +123,7 @@
               "PrimaryNode" : 2, 
               "Role" : 2, 
               "Version" : 1 } }</codeblock>
-      <p>一个典型的包含单节点的数据分区组为：</p>
+      <p>一个典型的包含单节点的数据分片组为：</p>
       <codeblock>{ "Group" : [ 
               { "dbpath" : "/home/sequoiadb/sequoiadb/data3", 
                 "HostName" : "vmsvr1-rhel-x64", 

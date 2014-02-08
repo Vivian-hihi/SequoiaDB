@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_rgstart">
-  <title>rg.start()</title>
+  <title>shard.start()</title>
   <body>
-    <section><title>rg.start()</title>
-      <p>启动分片组。分片组启动之后才能创建节点及其他操作。也可以使用方法<xref href="startRG.dita">db.startRG(&lt;name>)</xref>db.startRG(&lt;name>)启动指定的节点。</p>
+    <section><title>shard.start()</title>
+      <p>启动分片组。分片组启动之后才能创建节点及其他操作。也可以使用方法<xref href="startRG.dita">db.startShard(&lt;name>)</xref>db.startShard(&lt;name>)启动指定的节点。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li><p>启动分片组命令：</p>
-          <p><codeblock>rg.start() //等价于db.startRG("rg")</codeblock></p></li>
+          <p><codeblock>shard.start() //等价于db.startShard("shard")</codeblock></p></li>
       </ul>
       
     </section>

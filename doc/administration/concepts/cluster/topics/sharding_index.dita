@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="administration_concepts_sharding_index">
-  <title>分区索引</title>
+  <title>分片索引</title>
   <body>
     <section><title>概念</title>
-      <p>每一个分区集合都会默认创建一个名叫“$shard”的索引，该索引叫做分区索引。</p>
-      <p>非分区集合不存在分区索引。</p>
-      <p>分区索引存在于分区集合所在的每一个分区组中，其字段定义顺序和排列与分区键相同。</p>
+      <p>每一个分片集合都会默认创建一个名叫“$shard”的索引，该索引叫做分片索引。</p>
+      <p>非分片集合不存在分片索引。</p>
+      <p>分片索引存在于分片集合所在的每一个分片组中，其字段定义顺序和排列与分片键相同。</p>
       <note>
-        <p>任何用户定义的唯一索引必须包含分区索引中所有的字段，其字段顺序无关。</p>
-        <p>在分区集合中，_id字段仅保证分区内该字段唯一，无法保证全局唯一。</p>
+        <p>任何用户定义的唯一索引必须包含分片索引中所有的字段，其字段顺序无关。</p>
+        <p>在分片集合中，_id字段仅保证分片内该字段唯一，无法保证全局唯一。</p>
       </note>
     </section>
     <section>
       <title>示例</title>
-      <p>一个典型的分区索引如下：</p>
+      <p>一个典型的分片索引如下：</p>
       <codeblock>  { 
         "IndexDef" : { 
            "name" : "$shard", 

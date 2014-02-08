@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_listReplicaGroups">
-  <title>db.listReplicaGroups()</title>
+  <title>db.listShards()</title>
   <body>
-    <section><title>db.listReplicaGroups()</title>
+    <section><title>db.listShards()</title>
       <p>枚举分片组。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li>返回所有分片组信息，命令如下：
-          <codeblock>> db.listReplicaGroups()
+          <codeblock>> db.listShards()
 返回：{
   "Group": [
     {
@@ -69,7 +69,7 @@
     "$oid": "517b2fc33d7e6f820fc0eb57"
   }
   }</codeblock>
-          这个分片组有有两个节点：60000和60010，其中60010为主节点。<xref href="../../../administration/database/topics/list/list_groups.dita">分区组详细信息请点击这里</xref></li>
+          这个分片组有有两个节点：60000和60010，其中60010为主节点。<xref href="../../../administration/database/topics/list/list_groups.dita">分片组详细信息请点击这里</xref></li>
       </ul>
     </section>
   </body>

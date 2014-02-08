@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="例程"/>
-<meta name="description" content="停止被恢复的复制组 $ /opt/sequoiadb/bin/sdb &gt;db=new Sdb('192.168.20.35',50000) 192.168.20.35:50000 &gt;rg=db.getRG('foo') foo &gt;rg.stop() 恢复配置文件 $ cp vmsvr1-rhel-x64.51000.sdb.conf ..."/>
+<meta name="description" content="停止被恢复的复制组 $ /opt/sequoiadb/bin/sdb &gt;db=new Sdb('192.168.20.35',50000) 192.168.20.35:50000 &gt;shard=db.getShard('foo') foo &gt;shard.stop() 恢复配置文件 $ cp vmsvr1-rhel-x64.51000.sdb.conf ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/database/data_recovery/data_recovery.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_5td_hy2_gl"/>
@@ -41,9 +41,9 @@
         <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb 
 &gt;db=new Sdb('192.168.20.35',50000)
 192.168.20.35:50000
-&gt;rg=db.getRG('foo')
+&gt;shard=db.getShard('foo')
 foo
-&gt;rg.stop() </pre>
+&gt;shard.stop() </pre>
 </li>
 
       <li class="li">恢复配置文件
@@ -68,9 +68,9 @@ foo
         <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb 
 &gt;db=new Sdb('192.168.20.35',50000)
 192.168.20.35:50000
-&gt;rg=db.getRG('foo')
+&gt;shard=db.getShard('foo')
 foo
-&gt;rg.start()</pre>
+&gt;shard.start()</pre>
 </li>
 
     </ol>

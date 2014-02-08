@@ -38,7 +38,7 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>该逻辑节点所属的分区组名，独立模式下该字段不存在</stentry>
+          <stentry>该逻辑节点所属的分片组名，独立模式下该字段不存在</stentry>
         </strow>
         <strow>
           <stentry>IsPrimary</stentry>

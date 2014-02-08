@@ -61,22 +61,22 @@
         <strow>
           <stentry>SourceName</stentry>
           <stentry>字符串</stentry>
-          <stentry>源分区组名</stentry>
+          <stentry>源分片组名</stentry>
         </strow>
         <strow>
           <stentry>TargetName</stentry>
           <stentry>字符串</stentry>
-          <stentry>目标分区组名</stentry>
+          <stentry>目标分片组名</stentry>
         </strow>
         <strow>
           <stentry>SourceID</stentry>
           <stentry>整数</stentry>
-          <stentry>源分区组ID</stentry>
+          <stentry>源分片组ID</stentry>
         </strow>
         <strow>
           <stentry>TargetID</stentry>
           <stentry>整数</stentry>
-          <stentry>目标分区组ID</stentry>
+          <stentry>目标分片组ID</stentry>
         </strow>
         <strow>
           <stentry>SplitValue</stentry>

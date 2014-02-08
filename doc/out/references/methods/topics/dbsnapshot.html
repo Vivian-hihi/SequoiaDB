@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.snapshot()"/>
-<meta name="description" content="db.snapshot(&lt;snapType&gt;,[con],[sel],[sort]) 枚举快照，快照是一种得到当前系统状态的命令。 查看更多有关快照信息 参数描述 参数名 参数类型 描述 是否必填 snapType 枚举 快照类型 ，快照类型的值为0到7。 是 con json对象 选择条件，只返回con字段指定的节点或分区组的快照信息，为null时，返回整个集群的快照信息。 否 格式 ..."/>
+<meta name="description" content="db.snapshot(&lt;snapType&gt;,[con],[sel],[sort]) 枚举快照，快照是一种得到当前系统状态的命令。 查看更多有关快照信息 参数描述 参数名 参数类型 描述 是否必填 snapType 枚举 快照类型 ，快照类型的值为0到7。 是 con json对象 选择条件，只返回con字段指定的节点或分片组的快照信息，为null时，返回整个集群的快照信息。 否 格式 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="listReplicaGroups.html"/>
 <meta name="DC.Relation" scheme="URI" content="resetSnapshot.html"/>
@@ -72,7 +72,7 @@
 
           <td valign="top" headers="d90131e33" class="stentry">json对象</td>
 
-          <td valign="top" headers="d90131e36" class="stentry">选择条件，只返回con字段指定的节点或分区组的快照信息，为null时，返回整个集群的快照信息。</td>
+          <td valign="top" headers="d90131e36" class="stentry">选择条件，只返回con字段指定的节点或分片组的快照信息，为null时，返回整个集群的快照信息。</td>
 
           <td valign="top" headers="d90131e39" class="stentry">否</td>
 
@@ -154,12 +154,12 @@
 
         </li>
 
-        <li class="li"><p class="p">通过组名或组ID查询某个分区组的快照信息，如：</p>
+        <li class="li"><p class="p">通过组名或组ID查询某个分片组的快照信息，如：</p>
 
           <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1'})</pre>
-返回组名为“data1”的分区组快照信息
-          <pre class="pre codeblock">db.snapshot(0,{GroupID:1000})</pre>
-返回组ID为“1000”的分区组快照信息</div>
+返回组名为“data1”的分片组快照信息
+            <pre class="pre codeblock">db.snapshot(0,{GroupID:1000})</pre>
+返回组ID为“1000”的分片组快照信息</div>
 
           <pre class="pre codeblock">{
   "SessionID": "vmsvr1-cent-x64-1:51000:22",
@@ -221,7 +221,7 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="listReplicaGroups.html" title="db.listReplicaGroups()">db.listReplicaGroups()</a></div>
+<div><a class="navheader_parent_path" href="listReplicaGroups.html" title="db.listShards()">db.listShards()</a></div>
 <div><a class="navheader_parent_path" href="resetSnapshot.html" title="db.resetSnapshot()">db.resetSnapshot()</a></div>
 <div><a class="navheader_parent_path" href="../../../administration/database/topics/EDU.html" title="引擎调度单元">引擎调度单元</a></div>
 <div><a class="navheader_parent_path" href="../../console/topics/console.html" title="操作符">操作符</a></div>

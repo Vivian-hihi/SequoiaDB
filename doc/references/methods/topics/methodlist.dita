@@ -38,19 +38,19 @@
         </strow>
           
         <strow>
-          <stentry><xref href="createRG.dita">db.createRG()</xref></stentry>
+          <stentry><xref href="createRG.dita">db.createShard()</xref></stentry>
           <stentry>创建一个分片组</stentry>
-          <stentry>db.createRG("group")</stentry>
+          <stentry>db.createShard("shard")</stentry>
         </strow>
           <strow>
-            <stentry><xref href="removeRG.dita">db.removeRG()</xref></stentry>
+            <stentry><xref href="removeRG.dita">db.removeShard()</xref></stentry>
             <stentry>删除一个分片组</stentry>
-            <stentry>db.removeRG("group")</stentry>
+            <stentry>db.removeShard("shard")</stentry>
           </strow>
         <strow>
-          <stentry><xref href="getRG.dita">db.getRG()</xref></stentry>
+          <stentry><xref href="getRG.dita">db.getShard()</xref></stentry>
           <stentry>获得一个分片组的引用</stentry>
-          <stentry>db.getRG("group")</stentry>
+          <stentry>db.getShard("shard")</stentry>
         </strow>
           
         <strow>
@@ -70,9 +70,9 @@
         </strow>
           
         <strow>
-          <stentry><xref href="listReplicaGroups.dita">db.listReplicaGroups()</xref></stentry>
+          <stentry><xref href="listReplicaGroups.dita">db.listShards()</xref></stentry>
           <stentry>枚举分片组</stentry>
-          <stentry>db.listReplicaGroups()</stentry>
+          <stentry>db.listShards()</stentry>
         </strow>
           
         <strow>
@@ -87,9 +87,9 @@
         </strow>
           
         <strow>
-          <stentry><xref href="startRG.dita">db.startRG()</xref></stentry>
+          <stentry><xref href="startRG.dita">db.startShard()</xref></stentry>
           <stentry>启动分片组</stentry>
-          <stentry>db.startRG("groupName")</stentry>
+          <stentry>db.startShard("shardName")</stentry>
         </strow>
           <strow>
             <stentry><xref href="createUsr.dita">db.createUsr()</xref></stentry>
@@ -239,7 +239,7 @@
         <strow>
           <stentry><xref href="dbsplit.dita">db.collectionspace.collection.split()</xref></stentry>
           <stentry>集合分片</stentry>
-          <stentry>db.foo.bar.split("group1","group2",{age:20})</stentry>
+          <stentry>db.foo.bar.split("shard1","shard2",{age:20})</stentry>
         </strow>
         
       </simpletable>
@@ -254,42 +254,42 @@
           <stentry>示例</stentry>
         </sthead>
         <strow>
-          <stentry><xref href="rgstart.dita">rg.start()</xref></stentry>
+          <stentry><xref href="rgstart.dita">shard.start()</xref></stentry>
           <stentry>启动分片组</stentry>
           <stentry>rg.start()             </stentry>
         </strow>
         <strow>
-          <stentry><xref href="getDetail.dita">rg.getDetail()</xref></stentry>
+          <stentry><xref href="getDetail.dita">shard.getDetail()</xref></stentry>
           <stentry>查看分片组信息</stentry>
           <stentry>rg.getDetail()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="createNode.dita">rg.createNode()</xref></stentry>
+          <stentry><xref href="createNode.dita">shard.createNode()</xref></stentry>
           <stentry>创建节点</stentry>
           <stentry>rg.createNode(&lt;host>,&lt;service>,&lt;dbpath>[,&lt;config>])</stentry>
         </strow>
         <strow>
-          <stentry><xref href="removeNode.dita">rg.removeNode()</xref></stentry>
+          <stentry><xref href="removeNode.dita">shard.removeNode()</xref></stentry>
           <stentry>删除节点</stentry>
           <stentry>rg.removeNode(&lt;host>,&lt;service>[,&lt;config>])</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getMaster.dita">rg.getMaster()</xref></stentry>
+          <stentry><xref href="getMaster.dita">shard.getMaster()</xref></stentry>
           <stentry>查看主节点信息</stentry>
           <stentry>rg.getMaster()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getSlave.dita">rg.getSlave()</xref></stentry>
+          <stentry><xref href="getSlave.dita">shard.getSlave()</xref></stentry>
           <stentry>查看从节点信息</stentry>
           <stentry>rg.getSlave()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getNode.dita">rg.getNode()</xref></stentry>
+          <stentry><xref href="getNode.dita">shard.getNode()</xref></stentry>
           <stentry>查看所有节点信息     </stentry>
           <stentry>rg.getNode()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="rgstop.dita">rg.stop()</xref></stentry>
+          <stentry><xref href="rgstop.dita">shard.stop()</xref></stentry>
           <stentry>停止分片组</stentry>
           <stentry>rg.stop()</stentry>
         </strow>

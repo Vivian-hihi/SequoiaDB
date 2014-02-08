@@ -72,7 +72,7 @@
 
           <td valign="top" headers="d83030e30" class="stentry">选项</td>
 
-          <td valign="top" headers="d83030e33" class="stentry">在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。</td>
+          <td valign="top" headers="d83030e33" class="stentry">在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分片键、是否以压缩的形式插入数据等。</td>
 
           <td valign="top" headers="d83030e36" class="stentry">否</td>
 
@@ -97,7 +97,7 @@
 <tr class="strow">
           <td valign="top" headers="d83030e84" class="stentry">ShardingKey</td>
 
-          <td valign="top" headers="d83030e87" class="stentry">分区键。    </td>
+          <td valign="top" headers="d83030e87" class="stentry">分片键。    </td>
 
           <td valign="top" headers="d83030e90" class="stentry">{ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt; [,&lt;字段2&gt;:&lt;1|-1&gt;, ...]}}   </td>
 
@@ -105,7 +105,7 @@
 <tr class="strow">
           <td valign="top" headers="d83030e84" class="stentry">ShardingType</td>
 
-          <td valign="top" headers="d83030e87" class="stentry">分区方式，默认为range分区。</td>
+          <td valign="top" headers="d83030e87" class="stentry">分片方式，默认为range分片。</td>
 
           <td valign="top" headers="d83030e90" class="stentry">{ShardingType:"hash"|"range"}</td>
 
@@ -113,7 +113,7 @@
 <tr class="strow">
           <td valign="top" headers="d83030e84" class="stentry">Partition</td>
 
-          <td valign="top" headers="d83030e87" class="stentry">分片数，hash分区时填写，代表了hash分片的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </td>
+          <td valign="top" headers="d83030e87" class="stentry">分片数，hash分片时填写，代表了hash分片的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </td>
 
           <td valign="top" headers="d83030e90" class="stentry">{Partition:&lt;分片数&gt;]}</td>
 
@@ -142,7 +142,7 @@
 
       <div class="note note"><span class="notetitle">Note:</span> 
         <ul class="ul">
-          <li class="li">ShardingKey是一个JSON对象，JSON对象中每一个字段对应分区键的字段，其值为1或者-1，代表正向或逆向排序。需要分区，必须指定ShardingKey。</li>
+          <li class="li">ShardingKey是一个JSON对象，JSON对象中每一个字段对应分片键的字段，其值为1或者-1，代表正向或逆向排序。需要分片，必须指定ShardingKey。</li>
 
           <li class="li">ReplSize是一个json对象，它的值是int类型，设置写入数据节点的个数，默认为1，当ReplSize等于0时，副本写入个数会根据当前数据组中节点数变化而变化；手动指定副本写入个数时，不能超出当前组内节点个数。 </li>
 
@@ -161,7 +161,7 @@
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">在集合空间foo下创建集合bar，不指定分区键</p>
+          <p class="p">在集合空间foo下创建集合bar，不指定分片键</p>
 
           <pre class="pre codeblock">db.foo.createCL("bar")</pre>
 

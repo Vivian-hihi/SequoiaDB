@@ -24,7 +24,7 @@
         <strow>
           <stentry>options</stentry>
           <stentry>选项</stentry>
-          <stentry>在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。</stentry>
+          <stentry>在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分片键、是否以压缩的形式插入数据等。</stentry>
           <stentry>否</stentry>
         </strow>
       </simpletable>
@@ -41,17 +41,17 @@
         </sthead>
         <strow>
           <stentry>ShardingKey</stentry>
-          <stentry>分区键。    </stentry>
+          <stentry>分片键。    </stentry>
           <stentry>{ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]}}   </stentry>
         </strow>
         <strow>
           <stentry>ShardingType</stentry>
-          <stentry>分区方式，默认为range分区。</stentry>
+          <stentry>分片方式，默认为range分片。</stentry>
           <stentry>{ShardingType:"hash"|"range"}</stentry>
         </strow>
         <strow>
           <stentry>Partition</stentry>
-          <stentry>分片数，hash分区时填写，代表了hash分片的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </stentry>
+          <stentry>分片数，hash分片时填写，代表了hash分片的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </stentry>
           <stentry>{Partition:&lt;分片数>]}</stentry>
         </strow>
         <strow>
@@ -68,7 +68,7 @@
       <p>创建集合的格式为：<codeblock>{"name":"&lt;集合名>",[options]} </codeblock></p>
       <note>
         <ul>
-          <li>ShardingKey是一个JSON对象，JSON对象中每一个字段对应分区键的字段，其值为1或者-1，代表正向或逆向排序。需要分区，必须指定ShardingKey。</li>
+          <li>ShardingKey是一个JSON对象，JSON对象中每一个字段对应分片键的字段，其值为1或者-1，代表正向或逆向排序。需要分片，必须指定ShardingKey。</li>
           <li>ReplSize是一个json对象，它的值是int类型，设置写入数据节点的个数，默认为1，当ReplSize等于0时，副本写入个数会根据当前数据组中节点数变化而变化；手动指定副本写入个数时，不能超出当前组内节点个数。 </li>
           <li>Compressed也是一个JSON对象，它的值为boolean类型，为“true”时，表示集合中的数据压缩存储，“false”时表示正常存储数据。</li>
           <li>当options内设置了多个参数时，用逗号（,）隔开。</li>
@@ -79,7 +79,7 @@
     <section><title>示例</title>
       <ul>
         <li>
-          <p>在集合空间foo下创建集合bar，不指定分区键</p>
+          <p>在集合空间foo下创建集合bar，不指定分片键</p>
           <codeblock>db.foo.createCL("bar")</codeblock>
         </li>
         <li>

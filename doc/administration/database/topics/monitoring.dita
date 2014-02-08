@@ -126,9 +126,9 @@
         </strow>
         <strow>
           <stentry><xref href="list/list_groups.dita">SDB_LIST_GROUPS</xref></stentry>
-          <stentry>分区组</stentry>
+          <stentry>分片组</stentry>
           <stentry>协调</stentry>
-          <stentry>分区组列表列出当前集群中的所有分区信息</stentry>
+          <stentry>分片组列表列出当前集群中的所有分区信息</stentry>
         </strow>
       </simpletable>
     </section>

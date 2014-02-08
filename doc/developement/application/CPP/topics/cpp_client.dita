@@ -6,7 +6,7 @@
     <section>
       <title>概述</title>
     
-    <p>C++客户端驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。集群操作包括管理分区组和数据节点的各种操作，譬如启动、停止分区组，启动、停止数据节点，获取主从数据节点，集合分片等。</p>
+      <p>C++客户端驱动提供了数据库操作和集群操作的接口。数据库操作包括数据库的连接，用户的创建删除，数据的增删改查，索引的创建删除，快照的获取与重置，以及集合与集合空间的创建删除操作等操作。集群操作包括管理分片组和数据节点的各种操作，譬如启动、停止分片组，启动、停止数据节点，获取主从数据节点，集合分片等。</p>
       <p><xref href="..\..\..\..\cpp\html\index.html" format="html">更多参考C++在线API</xref>。</p></section>
     <section><title>C++类实例</title><p>C++客户端驱动的有两种类实例。一种用于数据库操作，另一种用于集群操作。</p><ul>
         <li>数据库操作实例 <p>SequoiaDB数据库中的数据存放分为三个级别：</p><p>&nbsp;&nbsp;1）数据库</p><p> &nbsp;&nbsp;2）集合空间</p><p> &nbsp;&nbsp;3）集合 </p>
@@ -40,24 +40,24 @@
               </ul>
             </p>
           </note></li>
-        <li>集群操作实例<p>SequoiaDB数据库中的集群操作分为两个级别：</p><p>&nbsp;&nbsp;1）分区组 </p><p>&nbsp;&nbsp;2）数据节点 </p><note>
-            <p>分区组包三种类型：协调分区组、编目分区组、数据分区组。</p>
-          </note><p>分区组实例和数据节点实例可以用以下两种类的实例表示。</p><p>
+      <li>集群操作实例<p>SequoiaDB数据库中的集群操作分为两个级别：</p><p>&nbsp;&nbsp;1）分片组 </p><p>&nbsp;&nbsp;2）数据节点 </p><note>
+        <p>分片组包三种类型：协调分片组、编目分片组、数据分片组。</p>
+      </note><p>分片组实例和数据节点实例可以用以下两种类的实例表示。</p><p>
             <simpletable>
               <strow>
-                <stentry>  sdbReplicaSet  </stentry>
-                <stentry> 分区组类</stentry>
-                <stentry>  分区组实例代表一个单独的分区组  </stentry>
+                <stentry>  sdbShard  </stentry>
+                <stentry> 分片组类</stentry>
+                <stentry>  分片组实例代表一个单独的分片组  </stentry>
               </strow>
               <strow>
-                <stentry>  sdbReplicaNode  </stentry>
+                <stentry>  sdbNode  </stentry>
                 <stentry> 数据节点类 </stentry>
                 <stentry>  数据节点实例代表一个单独的数据节点  </stentry>
               </strow>
             </simpletable>
-          </p><p>与集群相关的操作需要使用分区组及数据节点实例。</p>
-          <p>sdbReplicaSet的实例用于管理分区组。其操作包括启动、停止分区组，获取分区组中节点的状态、名称信息、数目信息。</p>
-          <p>sdbReplicaNode的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p></li>
+      </p><p>与集群相关的操作需要使用分片组及数据节点实例。</p>
+        <p>sdbShard的实例用于管理分片组。其操作包括启动、停止分片组，获取分片组中节点的状态、名称信息、数目信息。</p>
+          <p>sdbShardNode的实例用于管理数据节点。其操作包括启动、停止指定的数据节点，获取指定数据节点实例，获取主从数据节点实例，获取数据节点地址信息。</p></li>
       </ul></section>
     <section>
       <title>错误信息</title>

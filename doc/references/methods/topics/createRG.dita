@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_createRG">
-  <title>db.createRG()</title>
+  <title>db.createShard()</title>
   <body>
-    <section><title>db.createRG(&lt;groupname>)</title>
-      <p>新建一个分片组。创建后系统自动为分片组分配一个GroupId。</p>
+    <section><title>db.createShard(&lt;shardname>)</title>
+      <p>新建一个分片组。创建后系统自动为分片组分配一个ShardId。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.08* 5.78* 1.1*"
@@ -25,7 +25,7 @@
       
     </section>
     <section><title>格式</title>
-      <p> createRG() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
+      <p> createShard() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
       <p><codeblock>(&lt;"分片组名">)</codeblock></p>
       <note>
         <ul><li>分片组名不能是空串、含点（.）或者美元符号（$），并且长度不能超过127B。</li></ul>
@@ -33,9 +33,8 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>新建名为“group”的分片组
-        </p>
-          <p><codeblock>db.createRG(“group”)</codeblock></p></li>
+        <li><p>新建名为“shard”的分片组 </p>
+          <p><codeblock>db.createShard(“shard”)</codeblock></p></li>
       </ul>     
     </section>
   </body>

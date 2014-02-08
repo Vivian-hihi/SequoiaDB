@@ -147,27 +147,27 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="createRG.html">db.createRG()</a></td>
+          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="createRG.html">db.createShard()</a></td>
 
           <td valign="top" headers="d97962e52" class="stentry">创建一个分片组</td>
 
-          <td valign="top" headers="d97962e55" class="stentry">db.createRG("group")</td>
+          <td valign="top" headers="d97962e55" class="stentry">db.createShard("shard")</td>
 
         </tr>
 <tr class="strow">
-            <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="removeRG.html">db.removeRG()</a></td>
+            <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="removeRG.html">db.removeShard()</a></td>
 
             <td valign="top" headers="d97962e52" class="stentry">删除一个分片组</td>
 
-            <td valign="top" headers="d97962e55" class="stentry">db.removeRG("group")</td>
+            <td valign="top" headers="d97962e55" class="stentry">db.removeShard("shard")</td>
 
           </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="getRG.html">db.getRG()</a></td>
+          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="getRG.html">db.getShard()</a></td>
 
           <td valign="top" headers="d97962e52" class="stentry">获得一个分片组的引用</td>
 
-          <td valign="top" headers="d97962e55" class="stentry">db.getRG("group")</td>
+          <td valign="top" headers="d97962e55" class="stentry">db.getShard("shard")</td>
 
         </tr>
 <tr class="strow">
@@ -195,11 +195,11 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="listReplicaGroups.html">db.listReplicaGroups()</a></td>
+          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="listReplicaGroups.html">db.listShards()</a></td>
 
           <td valign="top" headers="d97962e52" class="stentry">枚举分片组</td>
 
-          <td valign="top" headers="d97962e55" class="stentry">db.listReplicaGroups()</td>
+          <td valign="top" headers="d97962e55" class="stentry">db.listShards()</td>
 
         </tr>
 <tr class="strow">
@@ -219,11 +219,11 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="startRG.html">db.startRG()</a></td>
+          <td valign="top" headers="d97962e49" class="stentry"><a class="xref" href="startRG.html">db.startShard()</a></td>
 
           <td valign="top" headers="d97962e52" class="stentry">启动分片组</td>
 
-          <td valign="top" headers="d97962e55" class="stentry">db.startRG("groupName")</td>
+          <td valign="top" headers="d97962e55" class="stentry">db.startShard("shardName")</td>
 
         </tr>
 <tr class="strow">
@@ -443,7 +443,7 @@
 
           <td valign="top" headers="d97962e446" class="stentry">集合分片</td>
 
-          <td valign="top" headers="d97962e449" class="stentry">db.foo.bar.split("group1","group2",{age:20})</td>
+          <td valign="top" headers="d97962e449" class="stentry">db.foo.bar.split("shard1","shard2",{age:20})</td>
 
         </tr>
 </table>
@@ -461,7 +461,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="rgstart.html">rg.start()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="rgstart.html">shard.start()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">启动分片组</td>
 
@@ -469,7 +469,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getDetail.html">rg.getDetail()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getDetail.html">shard.getDetail()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">查看分片组信息</td>
 
@@ -477,7 +477,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="createNode.html">rg.createNode()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="createNode.html">shard.createNode()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">创建节点</td>
 
@@ -485,7 +485,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="removeNode.html">rg.removeNode()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="removeNode.html">shard.removeNode()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">删除节点</td>
 
@@ -493,7 +493,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getMaster.html">rg.getMaster()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getMaster.html">shard.getMaster()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">查看主节点信息</td>
 
@@ -501,7 +501,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getSlave.html">rg.getSlave()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getSlave.html">shard.getSlave()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">查看从节点信息</td>
 
@@ -509,7 +509,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getNode.html">rg.getNode()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="getNode.html">shard.getNode()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">查看所有节点信息     </td>
 
@@ -517,7 +517,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="rgstop.html">rg.stop()</a></td>
+          <td valign="top" headers="d97962e633" class="stentry"><a class="xref" href="rgstop.html">shard.stop()</a></td>
 
           <td valign="top" headers="d97962e636" class="stentry">停止分片组</td>
 

@@ -193,39 +193,39 @@ bson_destroy(&amp;rule);</pre>
      <div class="section"><h2 class="title sectiontitle">集群操作</h2>
         
         <ul class="ul">
-           <li class="li">分区组操作 <div class="p">分区组操作包括创建分区组（sdbCreateReplicaSet）、得到分区组句柄（sdbGetReplicaSet）、启动分区组（sdbStartReplicaSet）、停止分区组（sdbStopReplicaSet）等。以下为分区组操作示例性的例子。真正的应用应包括错误检测等。
-                  <pre class="pre codeblock">// 定义一个分区组句柄
-sdbReplicaSetHandle rg   = 0 ;
+           <li class="li">分片组操作 <div class="p">分片组操作包括创建分片组（sdbCreateShard）、得到分片组句柄（sdbGetShard）、启动分片组（sdbStartShard）、停止分片组（sdbStopShard）等。以下为分片组操作示例性的例子。真正的应用应包括错误检测等。
+                  <pre class="pre codeblock">// 定义一个分片组句柄
+sdbShardHandle shard   = 0 ;
 …
-// 先建立一个编目分区组
-sdbCreateReplicaCataSet ( connection, HOST_NAME, SERVICE_NAME,
+// 先建立一个编目分片组
+sdbCreateCataShard ( connection, HOST_NAME, SERVICE_NAME,
                                CATALOG_SET_PATH , NULL ) ;
-// 睡眠5秒等待编目分区组启动并且选举好主从节点
+// 睡眠5秒等待编目分片组启动并且选举好主从节点
 sleep( 5 ) ;
-// 创建数据分区组
-sdbCreateReplicaSet ( connection, REPLICA_SET_NAME, &amp;rg ) ;
+// 创建数据分片组
+sdbCreateShard ( connection, SHARD_NAME, &amp;shard ) ;
  
 // 创建数据节点
-sdbCreateReplicaNode ( rg, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
-// 启动分区组
-sdbStartReplicaSet( rg ) ;</pre>
+sdbCreateNode ( shard, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
+// 启动分片组
+sdbStartShard( shard ) ;</pre>
 </div>
 </li>
 
            <li class="li">数据节点操作
-                  <div class="p">数据节点操作包括创建数据节点（sdbCreateReplicaNode）、得到主数据节点（sdbGetReplicaNodeMaster）、得到从数据节点（sdbGetReplicaNodeSlave）、启动数据节点（sdbStartReplicaNode）、停止数据节点（sdbStopReplicaNode）等。
+                  <div class="p">数据节点操作包括创建数据节点（sdbCreateNode）、得到主数据节点（sdbGetNodeMaster）、得到从数据节点（sdbGetNodeSlave）、启动数据节点（sdbStartNode）、停止数据节点（sdbStopNode）等。
                   以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。
                   <pre class="pre codeblock">// 定义一个数据节点句柄
-sdbReplicaNodeHandle masternode   = 0 ;
-sdbReplicaNodeHandle slavenode    = 0 ;
+sdbNodeHandle masternode   = 0 ;
+sdbNodeHandle slavenode    = 0 ;
 …
-// 等待数据分区组启动并选举出主节点
+// 等待数据分片组启动并选举出主节点
 sleep( 10 ) ;
 
 // 获取主数据节点
-sdbGetReplicaNodeMaster ( rg, &amp;masternode ) ;
+sdbGetNodeMaster ( shard, &amp;masternode ) ;
 //获取从数据节点
-sdbGetReplicaNodeSlave ( rg, &amp;slavenode ) ;         </pre>
+sdbGetNodeSlave ( shard, &amp;slavenode ) ;         </pre>
 </div>
 
             </li>

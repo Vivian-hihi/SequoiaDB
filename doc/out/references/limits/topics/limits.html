@@ -213,7 +213,7 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d81352e277" class="stentry">每分区组最大节点数量</td>
+          <td valign="top" headers="d81352e277" class="stentry">每分片组最大节点数量</td>
 
           <td valign="top" headers="d81352e280" class="stentry">7</td>
 
@@ -233,14 +233,14 @@
 <tr class="strow">
           <td valign="top" headers="d81352e277" class="stentry">主节点选举条件</td>
 
-          <td valign="top" headers="d81352e280" class="stentry">分区组内至少存在超过半数节点参与选举</td>
+          <td valign="top" headers="d81352e280" class="stentry">分片组内至少存在超过半数节点参与选举</td>
 
         </tr>
 </table>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">分区</h2>
+    <div class="section"><h2 class="title sectiontitle">分片</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
           <th valign="bottom" align="left" id="d81352e330" class="stentry">描述</th>
 
@@ -254,21 +254,21 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d81352e330" class="stentry">分区键</td>
+          <td valign="top" headers="d81352e330" class="stentry">分片键</td>
 
-          <td valign="top" headers="d81352e333" class="stentry">分区键数值在数据插入后不可修改</td>
+          <td valign="top" headers="d81352e333" class="stentry">分片键数值在数据插入后不可修改</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d81352e330" class="stentry">_id</td>
 
-          <td valign="top" headers="d81352e333" class="stentry">分区集合中_id仅保证分区组内唯一，不保证全局唯一</td>
+          <td valign="top" headers="d81352e333" class="stentry">分片集合中_id仅保证分片组内唯一，不保证全局唯一</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d81352e330" class="stentry">唯一索引</td>
 
-          <td valign="top" headers="d81352e333" class="stentry">必须包含分区键中所有字段</td>
+          <td valign="top" headers="d81352e333" class="stentry">必须包含分片键中所有字段</td>
 
         </tr>
 </table>

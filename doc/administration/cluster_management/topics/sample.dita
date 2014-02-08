@@ -4,7 +4,7 @@
   <title>案例</title>
   <body>
     <section>
-      <title>案例一：新增主机，在当前数据分区中新增一个数据副本节点</title>
+      <title>案例一：新增主机，在当前数据分片中新增一个数据副本节点</title>
       <ul>
         <li>当前环境： <p/><simpletable>
             <sthead>
@@ -18,12 +18,12 @@
               </stentry>
             </strow>
             <strow>
-              <stentry>编目分区组 </stentry>
-              <stentry>分区组包含一个编目节点，服务端口为30000</stentry>
+              <stentry>编目分片组 </stentry>
+              <stentry>分片组包含一个编目节点，服务端口为30000</stentry>
             </strow>
             <strow>
-              <stentry>数据分区组</stentry>
-              <stentry>一个数据分区组，组名为datagroup1，其中包含一个数据节点：<fig></fig>
+              <stentry>数据分片组</stentry>
+              <stentry>一个数据分片组，组名为datashard，其中包含一个数据节点：<fig></fig>
                 数据节点一：服务主机名为vmsvr1-suse-x64，端口为51000
               </stentry>
             </strow>
@@ -46,13 +46,13 @@
               </stentry>
             </strow>
             <strow>
-              <stentry>编目分区组 </stentry>
-              <stentry>分区组包含一个编目节点，服务端口为30000</stentry>
+              <stentry>编目分片组 </stentry>
+              <stentry>分片组包含一个编目节点，服务端口为30000</stentry>
             </strow>
             <strow>
-              <stentry>数据分区组</stentry>
+              <stentry>数据分片组</stentry>
               <stentry>
-                一个数据分区组，组名为datagroup1，其中包含两个数据节点：<fig></fig>
+                一个数据分片组，组名为datashard，其中包含两个数据节点：<fig></fig>
                 数据节点一：服务主机名为vmsvr1-suse-x64，端口为51000<fig></fig>
                 数据节点二：服务主机名为vmsvr2-suse-x64，端口为51000
               </stentry>
@@ -88,12 +88,12 @@ ulimit -Su 32000      //线程个数限制</codeblock>
         <li>步骤三：在新增主机上安装SequoiaDB软件 <p>参考<xref
               href="../../../installation/server_installation/topics/linux.dita"
               >SequoiaDB服务器安装</xref>一节进行软件安装。</p></li>
-        <li>步骤四：在当前分区中新增数据节点 <p>1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb shell命令行：</p><codeblock>/opt/sequoiadb/bin/sdb</codeblock><p>2.在Sequoiadb
-            shell命令行中，执行如下命令在当前数据分区组新增一副本节点：</p><codeblock>> var db = new Sdb("localhost",50000)
-> var datarg = db.getRG("datagroup1")
->node=rg.createNode("vmsvr2-suse-x64",51000,"/opt/sequoiadb /database/data/51000")
+        <li>步骤四：在当前分片中新增数据节点 <p>1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb shell命令行：</p><codeblock>/opt/sequoiadb/bin/sdb</codeblock><p>2.在Sequoiadb
+          shell命令行中，执行如下命令在当前数据分片组新增一副本节点：</p><codeblock>> var db = new Sdb("localhost",50000)
+> var datashard = db.getShard("datagroup1")
+>node=shard.createNode("vmsvr2-suse-x64",51000,"/opt/sequoiadb /database/data/51000")
 > node.start()      </codeblock><p>3.在Sequoiadb
-            Shell命令行中，执行如下命令检查分区组配置情况，可以看到数据组新增了一个数据节点：</p><codeblock>>db.listReplicaGroups();
+  Shell命令行中，执行如下命令检查分片组配置情况，可以看到数据组新增了一个数据节点：</p><codeblock>>db.listShards();
 …
 {
   "Group": [

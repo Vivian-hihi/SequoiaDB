@@ -10,10 +10,10 @@
         <li>连接到协调节点
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
-        <li>得到分区组
-        <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
+        <li>得到分片组
+        <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
         <li>得到数据节点
-        <codeblock>> datanode = datagroup.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
+        <codeblock>> datanode = datashard.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
         <li>停止节点
         <codeblock>> datanode.stop() ;</codeblock></li>
       </ol>
@@ -25,10 +25,10 @@
         <li>连接到协调节点
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
-        <li>得到分区组
-          <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
+        <li>得到分片组
+          <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
         <li>停止数据组
-          <codeblock>> datagroup.stop() ;</codeblock></li>
+          <codeblock>> datashard.stop() ;</codeblock></li>
       </ol>
     </section>
     <section>

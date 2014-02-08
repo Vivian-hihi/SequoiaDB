@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_removeRG">
-  <title>db.removeRG()</title>
+  <title>db.removeShard()</title>
   <body>
-    <section><title>db.removeRG(&lt;name>)</title>
+    <section><title>db.removeShard(&lt;name>)</title>
       <p>删除数据库中指定的分片组。</p>
     </section>
     <section><title>参数描述</title>
@@ -25,7 +25,7 @@
       
     </section>
     <section><title>格式</title>
-      <p> removeRG() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
+      <p> removeShard() 方法的定义格式只有name字段，name的值是字符串型，必填。</p>
       <p><codeblock>(&lt;"分片组名">)</codeblock></p>
       <note>
         <ul><li>分片组名必须存在。</li></ul>
@@ -33,8 +33,8 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>删除名为“group”的分片组 </p>
-          <p><codeblock>db.removeRG("group")</codeblock></p></li>
+        <li><p>删除名为“shard”的分片组 </p>
+          <p><codeblock>db.removeShard("Shard")</codeblock></p></li>
       </ul>     
     </section>
   </body>

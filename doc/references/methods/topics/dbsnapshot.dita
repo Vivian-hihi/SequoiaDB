@@ -27,7 +27,7 @@
         <strow>
           <stentry>con</stentry>
           <stentry>json对象</stentry>
-          <stentry>选择条件，只返回con字段指定的节点或分区组的快照信息，为null时，返回整个集群的快照信息。</stentry>
+          <stentry>选择条件，只返回con字段指定的节点或分片组的快照信息，为null时，返回整个集群的快照信息。</stentry>
           <stentry>否</stentry>
         </strow>
         <!--<strow>
@@ -104,9 +104,9 @@
   ]
 }</codeblock>
         </li>
-        <li><p>通过组名或组ID查询某个分区组的快照信息，如：</p>
-          <p><codeblock>db.snapshot(0,{GroupName:'data1'})</codeblock>返回组名为“data1”的分区组快照信息
-          <codeblock>db.snapshot(0,{GroupID:1000})</codeblock>返回组ID为“1000”的分区组快照信息</p>
+        <li><p>通过组名或组ID查询某个分片组的快照信息，如：</p>
+          <p><codeblock>db.snapshot(0,{GroupName:'data1'})</codeblock>返回组名为“data1”的分片组快照信息
+            <codeblock>db.snapshot(0,{GroupID:1000})</codeblock>返回组ID为“1000”的分片组快照信息</p>
           <codeblock>{
   "SessionID": "vmsvr1-cent-x64-1:51000:22",
   "Contexts": [

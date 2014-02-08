@@ -7,8 +7,8 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="分区组"/>
-<meta name="description" content="概念 分区组又被称为复制组，一个复制组内可以包含一个或多个数据节点（或编目节点），节点之间的数据使用异步日志复制机制，保持最终一致。 分区组中所有的节点之间使用复制服务端口（replname参数）进行通讯，定期相互发送心跳信息以相互验证状态。 分区组结构如下图： 每个分区组内的节点有两种状态： 主节点 主节点可作读写操作。所有写入的数据会同步写入日志文件，日志文件中的日志信息会异步写入从节点。 ..."/>
+<meta name="DC.Title" content="分片组"/>
+<meta name="description" content="概念 分片组又被称为复制组，一个复制组内可以包含一个或多个数据节点（或编目节点），节点之间的数据使用异步日志复制机制，保持最终一致。 分片组中所有的节点之间使用复制服务端口（replname参数）进行通讯，定期相互发送心跳信息以相互验证状态。 分片组结构如下图： 每个分片组内的节点有两种状态： 主节点 主节点可作读写操作。所有写入的数据会同步写入日志文件，日志文件中的日志信息会异步写入从节点。 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/cluster.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/vote.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/replicate.html"/>
@@ -17,7 +17,7 @@
 <meta name="DC.Identifier" content="administration_concepts_cluster_replset"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
-<title>分区组</title>
+<title>分片组</title>
 <script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -36,18 +36,18 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../../administration/concepts/cluster/topics/cluster.html" title="集群"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">集群</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/concepts.html" title="数据库概念">数据库概念</a> / <a class="navheader_parent_path" href="../../../../administration/concepts/cluster/topics/cluster.html" title="集群">集群</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">分区组</h1>
+  <h1 class="title topictitle1">分片组</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">概念</h2>
-      <p class="p">分区组又被称为复制组，一个复制组内可以包含一个或多个数据节点（或编目节点），节点之间的数据使用异步日志复制机制，保持最终一致。</p>
+      <p class="p">分片组又被称为复制组，一个复制组内可以包含一个或多个数据节点（或编目节点），节点之间的数据使用异步日志复制机制，保持最终一致。</p>
 
-      <p class="p">分区组中所有的节点之间使用复制服务端口（replname参数）进行通讯，定期相互发送心跳信息以相互验证状态。</p>
+      <p class="p">分片组中所有的节点之间使用复制服务端口（replname参数）进行通讯，定期相互发送心跳信息以相互验证状态。</p>
 
-      <p class="p">分区组结构如下图：</p>
+      <p class="p">分片组结构如下图：</p>
 
       <img class="image" src="../../../../introduction/images/sequoiadb_infrastructure_shard1.jpg"/>
-      <p class="p">每个分区组内的节点有两种状态：</p>
+      <p class="p">每个分片组内的节点有两种状态：</p>
 
       <dl class="dl">
         
@@ -64,7 +64,7 @@
         
       </dl>
 
-      <p class="p">分区组通过数据复制，读写分离与选举机制实现高可用。</p>
+      <p class="p">分片组通过数据复制，读写分离与选举机制实现高可用。</p>
 
     </div>
 

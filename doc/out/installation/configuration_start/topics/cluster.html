@@ -105,7 +105,7 @@
 
         <p class="p">3.创建一个编目节点组</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;db.createCataRG("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</pre>
+          <pre class="pre codeblock">&gt;db.createCataShard("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</pre>
 
         </div>
 <p class="p">其中 </p>
@@ -116,15 +116,15 @@
 </div>
 <p class="p">4.等待5秒，开始添加另外两个编目节点</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;var catarg = db.getRG("SYSCatalogGroup");      </pre>
+          <pre class="pre codeblock">&gt;var catashard = db.getshard("SYSCatalogGroup");      </pre>
 
         </div>
 <div class="p">
-          <pre class="pre codeblock">&gt;var node1 = catarg.createNode("sdbserver2", 30000,"/opt/sequoiadb/database/cata/30000") </pre>
+          <pre class="pre codeblock">&gt;var node1 = catashard.createNode("sdbserver2", 30000,"/opt/sequoiadb/database/cata/30000") </pre>
 
         </div>
 <div class="p">
-          <pre class="pre codeblock">&gt;var node2 = catarg.createNode("sdbserver3", 30000,"/opt/sequoiadb/database/cata/30000")</pre>
+          <pre class="pre codeblock">&gt;var node2 = catashard.createNode("sdbserver3", 30000,"/opt/sequoiadb/database/cata/30000")</pre>
 
         </div>
 <div class="p">5.启动编目节点组 <pre class="pre codeblock">&gt;node1.start()
@@ -140,20 +140,23 @@
 </li>
 
       <li class="li">步骤四：通过命令配置和启动数据节点 <p class="p">1.创建数据节点组</p>
-<div class="p"><pre class="pre codeblock">&gt;var datarg = db.createRG("datagroup1")</pre>
+<div class="p"><pre class="pre codeblock">&gt;var datashard = db.createShard("datagshard")</pre>
 </div>
-<p class="p">2.添加数据节点</p>
-<div class="p"><pre class="pre codeblock">&gt;datarg.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   </pre>
+
+        <p class="p">2.添加数据节点</p>
+<div class="p"><pre class="pre codeblock">&gt;datashard.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   </pre>
 </div>
-<div class="p"><pre class="pre codeblock">&gt;datarg.createNode("sdbserver2", 51000, "/opt/sequoiadb/database/data/51000")</pre>
+
+        <div class="p"><pre class="pre codeblock">&gt;datashard.createNode("sdbserver2", 51000, "/opt/sequoiadb/database/data/51000")</pre>
 </div>
-<div class="p"><pre class="pre codeblock">&gt;datarg.createNode("sdbserver3", 51000, "/opt/sequoiadb/database/data/51000")</pre>
+
+        <div class="p"><pre class="pre codeblock">&gt;datashard.createNode("sdbserver3", 51000, "/opt/sequoiadb/database/data/51000")</pre>
 
       </div>
 <div class="note note"><span class="notetitle">Note:</span> <p class="p">创建节点的第一个参数必须为“主机名”，而不能是主机的IP。</p>
 </div>
 <p class="p">3.启动数据节点组</p>
-<div class="p"><pre class="pre codeblock">&gt;datarg.start()</pre>
+<div class="p"><pre class="pre codeblock">&gt;datashard.start()</pre>
 
       </div>
 <p class="p">4.退出SequoiaDB shell控制台</p>

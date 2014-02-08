@@ -7,8 +7,8 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="数据分区"/>
-<meta name="description" content="在SequoiaDB集群环境中，用户往往将数据存放在不同的逻辑节点与物理节点中，以达到并行计算的目的。 由于每一个存放数据的分区组中所有节点包含的数据完全相同，每个分区组被称作一个“分区”（Shard）。 每个分区之间的数据互不影响，呈无共享状态。其判定分区所依据的字段被称作“分区键”。分区键基于集合定义，每个分区键可以包含一个或多个字段。 ..."/>
+<meta name="DC.Title" content="数据分片"/>
+<meta name="description" content="在SequoiaDB集群环境中，用户往往将数据存放在不同的逻辑节点与物理节点中，以达到并行计算的目的。 由于每一个存放数据的分片组中所有节点包含的数据完全相同，每个分片组被称作一个“分片”（Shard）。 每个分片之间的数据互不影响，呈无共享状态。其判定分片所依据的字段被称作“分片键”。分片键基于集合定义，每个分片键可以包含一个或多个字段。 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/cluster.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/shardingkey.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/sharded_collection.html"/>
@@ -19,7 +19,7 @@
 <meta name="DC.Identifier" content="administration_concepts_sharding"/>
 <link rel="stylesheet" type="text/css" href="../../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../../assets/webhelp_topic.css"/>
-<title>数据分区</title>
+<title>数据分片</title>
 <script type="text/javascript" src="../../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../../index.html";
     var ratingFile = "";
@@ -38,23 +38,23 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../../administration/concepts/cluster/topics/cluster.html" title="集群"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">集群</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/concepts.html" title="数据库概念">数据库概念</a> / <a class="navheader_parent_path" href="../../../../administration/concepts/cluster/topics/cluster.html" title="集群">集群</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">数据分区</h1>
+  <h1 class="title topictitle1">数据分片</h1>
 
   <div class="body">
     <p class="p">在SequoiaDB集群环境中，用户往往将数据存放在不同的逻辑节点与物理节点中，以达到并行计算的目的。</p>
 
-    <p class="p">由于每一个存放数据的分区组中所有节点包含的数据完全相同，每个分区组被称作一个“分区”（Shard）。</p>
+    <p class="p">由于每一个存放数据的分片组中所有节点包含的数据完全相同，每个分片组被称作一个“分片”（Shard）。</p>
 
-    <p class="p">每个分区之间的数据互不影响，呈无共享状态。其判定分区所依据的字段被称作“分区键”。分区键基于集合定义，每个分区键可以包含一个或多个字段。</p>
+    <p class="p">每个分片之间的数据互不影响，呈无共享状态。其判定分片所依据的字段被称作“分片键”。分片键基于集合定义，每个分片键可以包含一个或多个字段。</p>
 
-    <p class="p">在SequoiaDB中，shard分为两种方式：Hash方式和Range方式。Range方式下依据记录中分区键的范围选择所要插入的分区。Hash方式下根据记录中分区键生成的hash值选择所要插入的分区。</p>
+    <p class="p">在SequoiaDB中，shard分为两种方式：Hash方式和Range方式。Range方式下依据记录中分片键的范围选择所要插入的分片。Hash方式下根据记录中分片键生成的hash值选择所要插入的分片。</p>
 
     <img class="image" src="../images/sharding_concept.jpg"/>
-    <p class="p">在所示图中，为一个Range方式分区，方形区域为三个数据节点，椭圆形为协调节点。每个数据节点各自定义了所包含数据的范围。例如对于节点1包含了大于等于0切小于10的数据。</p>
+    <p class="p">在所示图中，为一个Range方式分片，方形区域为三个数据节点，椭圆形为协调节点。每个数据节点各自定义了所包含数据的范围。例如对于节点1包含了大于等于0切小于10的数据。</p>
 
-    <p class="p">当用户插入一条数据时，协调节点首先判定该数据的分区键应当坐落于哪个分区。如果分区键不存在则定义为Undefined类型（Undefined类型也可以与普通数据类型进行对比）。</p>
+    <p class="p">当用户插入一条数据时，协调节点首先判定该数据的分片键应当坐落于哪个分片。如果分片键不存在则定义为Undefined类型（Undefined类型也可以与普通数据类型进行对比）。</p>
 
-    <p class="p">当查询到该数据所在的分区后，协调节点会将请求直接下发给指定的分区。</p>
+    <p class="p">当查询到该数据所在的分片后，协调节点会将请求直接下发给指定的分片。</p>
 
   </div>
 

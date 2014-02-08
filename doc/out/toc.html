@@ -64,18 +64,18 @@
 <li id="d11e230"><a href="administration/concepts/cluster/topics/data_node.html">数据节点</a></li>
 </ul>
 </li>
-<li id="d11e237"><a href="administration/concepts/cluster/topics/replset.html">分区组</a>
+<li id="d11e237"><a href="administration/concepts/cluster/topics/replset.html">分片组</a>
 <ul>
 <li id="d11e244"><a href="administration/concepts/cluster/topics/vote.html">选举</a></li>
 <li id="d11e251"><a href="administration/concepts/cluster/topics/replicate.html">复制</a></li>
 <li id="d11e258"><a href="administration/concepts/cluster/topics/sync.html">全量同步</a></li>
 </ul>
 </li>
-<li id="d11e265"><a href="administration/concepts/cluster/topics/sharding.html">数据分区</a>
+<li id="d11e265"><a href="administration/concepts/cluster/topics/sharding.html">数据分片</a>
 <ul>
-<li id="d11e272"><a href="administration/concepts/cluster/topics/shardingkey.html">分区键</a></li>
-<li id="d11e279"><a href="administration/concepts/cluster/topics/sharded_collection.html">分区集合</a></li>
-<li id="d11e286"><a href="administration/concepts/cluster/topics/sharding_index.html">分区索引</a></li>
+<li id="d11e272"><a href="administration/concepts/cluster/topics/shardingkey.html">分片键</a></li>
+<li id="d11e279"><a href="administration/concepts/cluster/topics/sharded_collection.html">分片集合</a></li>
+<li id="d11e286"><a href="administration/concepts/cluster/topics/sharding_index.html">分片索引</a></li>
 <li id="d11e293"><a href="administration/concepts/cluster/topics/task.html">后台任务</a></li>
 <li id="d11e300"><a href="administration/concepts/cluster/topics/split.html">数据切分</a></li>
 </ul>
@@ -145,7 +145,7 @@
 <li id="d11e561"><a href="administration/database/topics/list/list_collections.html">集合列表</a></li>
 <li id="d11e568"><a href="administration/database/topics/list/list_collectionspace.html">集合空间列表</a></li>
 <li id="d11e575"><a href="administration/database/topics/list/list_storageunits.html"> 存储单元列表</a></li>
-<li id="d11e582"><a href="administration/database/topics/list/list_groups.html"> 分区组列表</a></li>
+<li id="d11e582"><a href="administration/database/topics/list/list_groups.html"> 分片组列表</a></li>
 </ul>
 </li>
 </ul>
@@ -197,16 +197,16 @@
 <li id="d11e736"><a href="administration/cluster_management/topics/cluster_management.html">集群管理</a>
 <ul>
 <li id="d11e743"><a href="administration/cluster_management/topics/create_host.html">集群中新增主机</a></li>
-<li id="d11e750"><a href="administration/cluster_management/topics/cata_management/topics/cata_management.html">编目分区组管理</a>
+<li id="d11e750"><a href="administration/cluster_management/topics/cata_management/topics/cata_management.html">编目分片组管理</a>
 <ul>
-<li id="d11e757"><a href="administration/cluster_management/topics/cata_management/topics/cata_group.html">新建编目分区组</a></li>
-<li id="d11e764"><a href="administration/cluster_management/topics/cata_management/topics/cata_node.html">编目分区组中新增节点</a></li>
+<li id="d11e757"><a href="administration/cluster_management/topics/cata_management/topics/cata_group.html">新建编目分片组</a></li>
+<li id="d11e764"><a href="administration/cluster_management/topics/cata_management/topics/cata_node.html">编目分片组中新增节点</a></li>
 </ul>
 </li>
-<li id="d11e771"><a href="administration/cluster_management/topics/data_management/topics/data_management.html">数据分区组管理</a>
+<li id="d11e771"><a href="administration/cluster_management/topics/data_management/topics/data_management.html">数据分片组管理</a>
 <ul>
-<li id="d11e778"><a href="administration/cluster_management/topics/data_management/topics/data_group.html">新增数据分区组</a></li>
-<li id="d11e785"><a href="administration/cluster_management/topics/data_management/topics/data_node.html">分区组中新增节点</a></li>
+<li id="d11e778"><a href="administration/cluster_management/topics/data_management/topics/data_group.html">新增数据分片组</a></li>
+<li id="d11e785"><a href="administration/cluster_management/topics/data_management/topics/data_node.html">分片组中新增节点</a></li>
 </ul>
 </li>
 <li id="d11e792"><a href="administration/cluster_management/topics/create_coordnode.html">新增协调节点</a></li>
@@ -339,19 +339,19 @@
 <li id="d11e1314"><a href="references/methods/topics/methodlist.html">SequoiaDB javascript方法</a>
 <ul>
 <li id="d11e1321"><a href="references/methods/topics/getCS.html">db.getCS()</a></li>
-<li id="d11e1328"><a href="references/methods/topics/getRG.html">db.getRG()</a></li>
+<li id="d11e1328"><a href="references/methods/topics/getRG.html">db.getShard()</a></li>
 <li id="d11e1335"><a href="references/methods/topics/createCS.html">db.createCS()</a></li>
-<li id="d11e1342"><a href="references/methods/topics/createRG.html">db.createRG()</a></li>
-<li id="d11e1349"><a href="references/methods/topics/removeRG.html">db.removeRG()</a></li>
-<li id="d11e1356"><a href="references/methods/topics/createcatarg.html">db.createCataRG()</a></li>
+<li id="d11e1342"><a href="references/methods/topics/createRG.html">db.createShard()</a></li>
+<li id="d11e1349"><a href="references/methods/topics/removeRG.html">db.removeShard()</a></li>
+<li id="d11e1356"><a href="references/methods/topics/createcatarg.html">db.createCataShard()</a></li>
 <li id="d11e1363"><a href="references/methods/topics/dropCS.html">db.dropCS()</a></li>
 <li id="d11e1370"><a href="references/methods/topics/dblist.html">db.list()</a></li>
 <li id="d11e1377"><a href="references/methods/topics/listCollectionSpaces.html">db.listCollectionSpaces()</a></li>
 <li id="d11e1384"><a href="references/methods/topics/listCollections.html">db.listCollections()</a></li>
-<li id="d11e1392"><a href="references/methods/topics/listReplicaGroups.html">db.listReplicaGroups()</a></li>
+<li id="d11e1392"><a href="references/methods/topics/listReplicaGroups.html">db.listShards()</a></li>
 <li id="d11e1399"><a href="references/methods/topics/resetSnapshot.html">db.resetSnapshot()</a></li>
 <li id="d11e1406"><a href="references/methods/topics/dbsnapshot.html">db.snapshot()</a></li>
-<li id="d11e1413"><a href="references/methods/topics/startRG.html">db.startRG()</a></li>
+<li id="d11e1413"><a href="references/methods/topics/startRG.html">db.startShard()</a></li>
 <li id="d11e1420"><a href="references/methods/topics/createUsr.html">db.createUsr()</a></li>
 <li id="d11e1427"><a href="references/methods/topics/dropUsr.html">db.dropUsr()</a></li>
 <li id="d11e1434"><a href="references/methods/topics/transBegin.html">db.transBegin()</a></li>
@@ -376,14 +376,14 @@
 <li id="d11e1569"><a href="references/methods/topics/dbupdate.html">db.collectionspace.collection.update()</a></li>
 <li id="d11e1576"><a href="references/methods/topics/upsert.html">db.collectionspace.collection.upsert()</a></li>
 <li id="d11e1583"><a href="references/methods/topics/dbsplit.html">db.collectionspace.collection.split()</a></li>
-<li id="d11e1590"><a href="references/methods/topics/rgstart.html">rg.start()</a></li>
-<li id="d11e1597"><a href="references/methods/topics/createNode.html">rg.createNode()</a></li>
-<li id="d11e1604"><a href="references/methods/topics/removeNode.html">rg.removeNode()</a></li>
-<li id="d11e1611"><a href="references/methods/topics/getDetail.html">rg.getDetail()</a></li>
-<li id="d11e1618"><a href="references/methods/topics/getMaster.html">rg.getMaster()</a></li>
-<li id="d11e1626"><a href="references/methods/topics/getSlave.html">rg.getSlave()</a></li>
-<li id="d11e1633"><a href="references/methods/topics/getNode.html">rg.getNode()</a></li>
-<li id="d11e1640"><a href="references/methods/topics/rgstop.html">rg.stop()</a></li>
+<li id="d11e1590"><a href="references/methods/topics/rgstart.html">shard.start()</a></li>
+<li id="d11e1597"><a href="references/methods/topics/createNode.html">shard.createNode()</a></li>
+<li id="d11e1604"><a href="references/methods/topics/removeNode.html">shard.removeNode()</a></li>
+<li id="d11e1611"><a href="references/methods/topics/getDetail.html">shard.getDetail()</a></li>
+<li id="d11e1618"><a href="references/methods/topics/getMaster.html">shard.getMaster()</a></li>
+<li id="d11e1626"><a href="references/methods/topics/getSlave.html">shard.getSlave()</a></li>
+<li id="d11e1633"><a href="references/methods/topics/getNode.html">shard.getNode()</a></li>
+<li id="d11e1640"><a href="references/methods/topics/rgstop.html">shard.stop()</a></li>
 <li id="d11e1647"><a href="references/methods/topics/nodestart.html">node.start()</a></li>
 <li id="d11e1654"><a href="references/methods/topics/nodeconnect.html">node.connect()</a></li>
 <li id="d11e1661"><a href="references/methods/topics/getHostName.html">node.getHostName()</a></li>

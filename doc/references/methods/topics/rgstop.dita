@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_rgstop">
-  <title>rg.stop()</title>
+  <title>shard.stop()</title>
   <body>
-    <section><title>rg.stop()</title>
+    <section><title>shard.stop()</title>
       <p>停止分片组。停止之后就不能创建节点等相关操作。</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li><p>停止分片组</p>
-          <p><codeblock>rg.stop()</codeblock></p></li>
+          <p><codeblock>shard.stop()</codeblock></p></li>
       </ul>
     </section>
   </body>
