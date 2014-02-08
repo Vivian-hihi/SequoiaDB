@@ -95,6 +95,8 @@
 #undef UNICODE
 #endif
 
+#include "core.hpp"
+
 #ifndef _WIN32
 #include <termios.h>
 #include <unistd.h>
