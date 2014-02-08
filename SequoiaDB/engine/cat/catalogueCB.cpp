@@ -1,5 +1,4 @@
 
-#include <stdlib.h>
 #include "catalogueCB.hpp"
 #include "msgCatalog.hpp"
 #include "ossUtil.hpp"
@@ -8,7 +7,7 @@
 #include "catTrace.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
-
+#include <stdlib.h>
 
 namespace engine
 {
