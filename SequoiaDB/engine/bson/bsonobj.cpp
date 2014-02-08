@@ -16,6 +16,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+#if defined (SDB_ENGINE) || defined (SDB_CLIENT)
+#include "core.hpp"
+#endif
 #include <stdlib.h>
 #include "oid.h"
 #include "bsonobj.h"
