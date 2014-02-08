@@ -33,10 +33,11 @@
 *******************************************************************************/
 #ifndef PD_HPP_
 #define PD_HPP_
-#include <string>
-#include <stdlib.h>
+
 #include "core.h"
 #include "oss.h"
+#include <string>
+#include <stdlib.h>
 
 #ifdef _DEBUG
 #define SDB_ASSERT(cond,str)     {if(!(cond)) {pdassert(str,__FUNC__,__FILE__,__LINE__);}}
