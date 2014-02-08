@@ -35,8 +35,6 @@
 #ifndef PMDEDU_HPP__
 #define PMDEDU_HPP__
 
-#include <boost/thread.hpp>
-#include <set>
 #include "ossLatch.hpp"
 #include "ossQueue.hpp"
 #include "ossUtil.hpp"
@@ -55,7 +53,8 @@
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
 #include "pdTrace.hpp"
-
+#include <boost/thread.hpp>
+#include <set>
 using namespace bson ;
 
 namespace engine

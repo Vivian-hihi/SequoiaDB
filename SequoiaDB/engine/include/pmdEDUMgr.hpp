@@ -36,9 +36,6 @@
 #ifndef PMDEDUMGR_HPP__
 #define PMDEDUMGR_HPP__
 
-#include <map>
-#include <set>
-#include <string>
 #include "core.hpp"
 #include "oss.hpp"
 #include "pmdEDU.hpp"
@@ -47,6 +44,9 @@
 #include "ossUtil.hpp"
 #include "ossSocket.hpp"
 #include <boost/asio.hpp>
+#include <map>
+#include <set>
+#include <string>
 
 using namespace boost ;
 using namespace boost::asio ;

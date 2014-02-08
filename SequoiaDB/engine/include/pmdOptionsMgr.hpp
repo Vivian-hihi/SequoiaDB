@@ -33,14 +33,6 @@
 #ifndef PMDOPTIONSMGR_HPP_
 #define PMDOPTIONSMGR_HPP_
 
-#include <string>
-#include <iostream>
-
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
-
-#include "../bson/bson.h"
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
@@ -48,6 +40,11 @@
 #include "pmdOptions.hpp"
 #include "msgDef.hpp"
 
+#include <string>
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include "../bson/bson.h"
 using namespace std;
 namespace po = boost::program_options;
 
