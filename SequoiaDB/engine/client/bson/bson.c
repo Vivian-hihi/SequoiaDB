@@ -27,14 +27,13 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
+#include "ossFeat.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
 
-#include "ossFeat.h"
 #include "bson.h"
 #include "encoding.h"
 
