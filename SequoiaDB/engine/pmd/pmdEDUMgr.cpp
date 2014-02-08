@@ -51,6 +51,7 @@
  * D d   -   d   d   -  <--- Creating / Waiting / Idle can be destroyed
  * ^ To
  */
+#include "core.hpp"
 #include "pd.hpp"
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
