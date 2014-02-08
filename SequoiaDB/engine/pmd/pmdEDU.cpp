@@ -33,6 +33,7 @@
    Last Changed =
 
 *******************************************************************************/
+#include "core.hpp"
 #include <stdio.h>
 #include <boost/thread/thread.hpp>
 #include "pd.hpp"
