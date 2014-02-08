@@ -31,6 +31,7 @@
    Last Changed =
 
 *******************************************************************************/
+#include "ossTypes.h"
 #include <time.h>
 #include "oss.h"
 
