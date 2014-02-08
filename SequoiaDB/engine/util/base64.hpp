@@ -16,12 +16,14 @@
  */
 
 #pragma once
+
+#include "pd.hpp"
 #include <boost/scoped_array.hpp>
 #include <sstream>
 #include <string>
 #include <string.h>
-#include "pd.hpp" 
 using namespace std;
+
 namespace engine {
     namespace base64 {
 
