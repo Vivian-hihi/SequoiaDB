@@ -42,7 +42,6 @@ BOOLEAN rawbson2json ( const CHAR *bsonObj,
                       CHAR *pOutputBuffer,
                       INT32 bufferLen )
 {
-   INT32 rc = 0 ;
    bson obj ;
    bson_init ( &obj ) ;
    bson_init_finished_data ( &obj, (char*)bsonObj ) ;
@@ -54,7 +53,6 @@ BOOLEAN rawbson2csv ( const CHAR *bsonObj,
                       CHAR *pOutputBuffer,
                       INT32 bufferLen )
 {
-   INT32 rc = 0 ;
    bson obj ;
    bson_init ( &obj ) ;
    bson_init_finished_data ( &obj, (char*)bsonObj ) ;
