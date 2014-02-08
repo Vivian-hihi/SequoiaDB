@@ -1,5 +1,4 @@
 
-#include <stdlib.h>
 #include "rtnCoordOperator.hpp"
 #include "ossErr.h"
 #include "rtnCoord.hpp"
@@ -25,6 +24,7 @@
 #include "rtnCoordSql.hpp"
 #include "rtnCoordAggregate.hpp"
 #include "coordDef.hpp"
+#include <stdlib.h>
 
 using namespace bson;
 
