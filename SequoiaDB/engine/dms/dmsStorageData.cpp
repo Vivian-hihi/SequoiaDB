@@ -1369,8 +1369,8 @@ namespace engine
       if ( FALSE == noIDIndex )
       {
          rc = _pIdxSU->createIndex( context, s_idKeyObj, cb, NULL, TRUE ) ;
-         PD_RC_CHECK( rc, PDERROR, "Create $id index failed in collection, rc: "
-                      "%d", pName, rc ) ;
+         PD_RC_CHECK( rc, PDERROR, "Create $id index failed in collection[%s], "
+                      "rc: %d", pName, rc ) ;
       }
 
    done:
