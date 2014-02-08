@@ -1,11 +1,12 @@
+
+#include "core.hpp"
+#include "replCongressman.hpp"
 #include <stdio.h>
 #include <string>
 #include <iostream>
 #include <vector>
 
 #include <gtest/gtest.h>
-
-#include "replCongressman.hpp"
 
 using namespace std;
 using namespace engine;

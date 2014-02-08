@@ -1,13 +1,4 @@
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <boost/foreach.hpp>
-#include <boost/tokenizer.hpp>
-#include "boost/date_time/posix_time/posix_time.hpp"
 #include "ossSocket.hpp"
 #include "msgMessage.hpp"
 #include "msgCatalog.hpp"
@@ -18,6 +9,16 @@
 #include "ossEDU.hpp"
 #include "utilLinenoiseWrapper.hpp"
 #include "clsCatalogAgent.hpp"
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 using namespace bson ;
 using namespace std ;

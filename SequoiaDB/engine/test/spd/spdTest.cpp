@@ -1,6 +1,7 @@
-#include <gtest/gtest.h>
+
 #include "spdFMPMgr.hpp"
 #include "spdFMP.hpp"
+#include <gtest/gtest.h>
 
 using namespace engine ;
 

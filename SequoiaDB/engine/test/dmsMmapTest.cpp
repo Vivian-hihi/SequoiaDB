@@ -1,6 +1,4 @@
-#include "boost/thread.hpp"
-#include <stdio.h>
-#include <vector>
+
 #include "core.hpp"
 #include "ossIO.hpp"
 #include "ossMmap.hpp"
@@ -22,6 +20,10 @@
 #include "boost/thread.hpp"
 #include "rtnIXScanner.hpp"
 #include "rtnAPM.hpp"
+#include "boost/thread.hpp"
+#include <stdio.h>
+#include <vector>
+
 #define DFT_FILENAME "testMmap.dat"
 #define DFT_SEGSIZE  1024*1024
 #define DFT_NUMSEG   50

@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <string>
-#include <iostream>
 
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
-#include <gtest/gtest.h>
 #include "sqlUtil.hpp"
 #include "sqlParser.hpp"
 #include "sqlBsonBuilder.hpp"
@@ -17,6 +11,14 @@
 #include "sqlSet.hpp"
 #include "sqlValue.hpp"
 #include "../util/fromjson.hpp"
+
+#include <stdio.h>
+#include <string>
+#include <iostream>
+
+#include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
+#include <gtest/gtest.h>
 using namespace engine;
 using namespace std;
 

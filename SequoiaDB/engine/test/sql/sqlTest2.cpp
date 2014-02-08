@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <string>
-#include <iostream>
-
-#include <gtest/gtest.h>
 
 #define BOOST_SPIRIT_DEBUG
 #include "sqlGrammar.hpp"
@@ -17,6 +12,12 @@
 #include "qgmPlanContainer.hpp"
 
 #include "pmd.hpp"
+
+#include <stdio.h>
+#include <string>
+#include <iostream>
+
+#include <gtest/gtest.h>
 
 using namespace engine;
 using namespace std;

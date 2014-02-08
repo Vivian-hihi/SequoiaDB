@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <string>
-#include <iostream>
-#include <vector>
-#include <boost/thread.hpp>
-#include <gtest/gtest.h>
 
 #include "clsSyncMinHeap.hpp"
 #include "clsSyncManager.hpp"
@@ -12,6 +6,13 @@
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #include "ossAtomic.hpp"
+
+#include <stdio.h>
+#include <string>
+#include <iostream>
+#include <vector>
+#include <boost/thread.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace engine;

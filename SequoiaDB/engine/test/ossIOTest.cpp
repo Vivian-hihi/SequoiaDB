@@ -1,6 +1,4 @@
-#include "boost/thread.hpp"
-#include <stdio.h>
-#include <vector>
+
 #include "core.hpp"
 #include "ossIO.hpp"
 #include "ossMmap.hpp"
@@ -9,6 +7,9 @@
 #include "dmsStorageUnit.hpp"
 #include "dmsExtent.hpp"
 #include "dmsRecord.hpp"
+#include "boost/thread.hpp"
+#include <stdio.h>
+#include <vector>
 
 #define DFT_FILENAME "testMmap.dat"
 #define DFT_SEGSIZE  1024*1024

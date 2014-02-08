@@ -1,3 +1,5 @@
+
+#include "core.hpp"
 #include "../bson/bson.h"
 #include "../client/client.hpp"
 

@@ -1,6 +1,6 @@
-#include <iostream>
-#include "utilBsongen.hpp"
 
+#include "utilBsongen.hpp"
+#include <iostream>
 using namespace std;
 
 int main()

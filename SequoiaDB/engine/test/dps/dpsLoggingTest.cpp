@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <string>
-#include <iostream>
-
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
-#include <gtest/gtest.h>
 
 #include "core.hpp"
 #include "dpsLogWrapper.hpp"
@@ -14,6 +7,15 @@
 #include "ossUtil.hpp"
 #include "dpsOp2Record.hpp"
 #include "dpsLogRecordDef.hpp"
+
+#include <stdio.h>
+#include <string>
+#include <iostream>
+
+#include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
+#include <gtest/gtest.h>
+
 using namespace engine;
 using namespace std;
 

@@ -1,4 +1,3 @@
-#include <gtest/gtest.h>
 
 #include "pmdEDU.hpp"
 #include "ossTypes.h"
@@ -6,6 +5,8 @@
 #include "pmdEDUMgr.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace engine;
 
