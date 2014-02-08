@@ -32,8 +32,8 @@
    Last Changed =
 
 *******************************************************************************/
-#include <algorithm>
 #include "core.hpp"
+#include <algorithm>
 #include "pd.hpp"
 #include "mthSelector.hpp"
 #include "pdTrace.hpp"
