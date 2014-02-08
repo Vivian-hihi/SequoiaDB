@@ -32,14 +32,14 @@
    Last Changed =
 
 *******************************************************************************/
-#include <sstream>
-#include "../bson/util/builder.h"
+
 #include "rtnPredicate.hpp"
 #include "mthMatcher.hpp"
 #include "ixm.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
-
+#include <sstream>
+#include "../bson/util/builder.h"
 namespace bson
 {
    extern BSONObj staticNull ;
