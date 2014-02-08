@@ -32,13 +32,14 @@
    Last Changed =
 
 *******************************************************************************/
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
+
 #include "pmdWinService.hpp"
 #include "ossErr.h"
 #include "pd.hpp"
 #include "ossUtil.h"
 
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 
 #if defined (_WINDOWS)
 
