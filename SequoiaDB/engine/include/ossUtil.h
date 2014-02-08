@@ -34,13 +34,13 @@
 *******************************************************************************/
 #ifndef OSSUTIL_H_
 #define OSSUTIL_H_
+#include "core.h"
 #include <time.h>
 #include <sys/types.h>
 #if defined (_LINUX)
 #include <sys/time.h>
 #include <strings.h>
 #endif
-#include "core.h"
 #include "oss.h"
 #include <string.h>
 #include <stdlib.h>
