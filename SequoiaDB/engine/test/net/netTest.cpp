@@ -1,4 +1,6 @@
 
+#include "ossTypes.hpp"
+#include <gtest/gtest.h>
 #include "ossUtil.hpp"
 #include "netRouteAgent.hpp"
 #include "netMsgHandler.hpp"
@@ -9,7 +11,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/thread.hpp>
-#include <gtest/gtest.h>
+
 using namespace std;
 using namespace engine;
 

@@ -1,4 +1,7 @@
 
+#include "ossTypes.hpp"
+#include <gtest/gtest.h>
+
 #include "core.hpp"
 #include "dpsLogWrapper.hpp"
 #include "dpsReplicaLogMgr.hpp"
@@ -14,7 +17,6 @@
 
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
-#include <gtest/gtest.h>
 
 using namespace engine;
 using namespace std;

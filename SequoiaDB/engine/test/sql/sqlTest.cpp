@@ -1,4 +1,6 @@
 
+#include "ossTypes.hpp"
+#include <gtest/gtest.h>
 #include "sqlUtil.hpp"
 #include "sqlParser.hpp"
 #include "sqlBsonBuilder.hpp"
@@ -18,7 +20,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
-#include <gtest/gtest.h>
+
 using namespace engine;
 using namespace std;
 

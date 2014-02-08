@@ -1,4 +1,6 @@
 
+#include "ossTypes.hpp"
+#include <gtest/gtest.h>
 #include "core.hpp"
 #include "replCongressman.hpp"
 #include <stdio.h>
@@ -6,7 +8,6 @@
 #include <iostream>
 #include <vector>
 
-#include <gtest/gtest.h>
 
 using namespace std;
 using namespace engine;

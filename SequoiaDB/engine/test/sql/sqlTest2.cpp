@@ -1,4 +1,6 @@
 
+#include "ossTypes.hpp"
+#include <gtest/gtest.h>
 #define BOOST_SPIRIT_DEBUG
 #include "sqlGrammar.hpp"
 #include "sqlUtil.hpp"
@@ -17,7 +19,6 @@
 #include <string>
 #include <iostream>
 
-#include <gtest/gtest.h>
 
 using namespace engine;
 using namespace std;
