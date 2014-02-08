@@ -1,3 +1,5 @@
+
+#include "ossTypes.hpp"
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 
