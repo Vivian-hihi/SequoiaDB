@@ -33,8 +33,6 @@
 
 *******************************************************************************/
 
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
 #include "pmdDaemon.hpp"
 #include "ossErr.h"
 #include "pd.hpp"
@@ -44,6 +42,9 @@
 #include "ossProc.hpp"
 #include "pmd.hpp"
 #include "pmdWinService.hpp"
+
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 
 #if defined (_LINUX)
 #include <sys/types.h>
