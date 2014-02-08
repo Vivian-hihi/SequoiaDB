@@ -33,12 +33,6 @@
 
 *******************************************************************************/
 
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-
 #include "dmsInspect.hpp"
 #include "dmsDump.hpp"
 #include "ossUtil.hpp"
@@ -48,6 +42,12 @@
 #include "pmdTrace.hpp"
 #include "pmdEDU.hpp"
 #include "ixmExtent.hpp"
+
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 using namespace std ;
 using namespace engine ;
