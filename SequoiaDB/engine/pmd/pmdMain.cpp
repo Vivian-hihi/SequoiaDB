@@ -322,7 +322,6 @@ namespace engine
 
    INT32 pmdSysExistance()
    {
-      INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
 
       if ( krcb->getClsCB() && krcb->getReplCB() )
@@ -333,10 +332,7 @@ namespace engine
          krcb->getReplCB()->getBucket()->waitEmpty() ;
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
 #if defined (_LINUX)
