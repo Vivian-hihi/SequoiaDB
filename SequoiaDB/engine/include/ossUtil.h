@@ -51,10 +51,6 @@
 
 #define OSS_EPSILON     (1e-6)
 
-#if defined (_LINUX)
-#define OSS_FD_SETSIZE 65534
-#endif
-
 SDB_EXTERN_C_START
 size_t ossSnprintf(CHAR* pBuffer, size_t iLength, const CHAR* pFormat, ...);
 CHAR *ossStrdup ( const CHAR *str ) ;
