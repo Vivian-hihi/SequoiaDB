@@ -31,8 +31,6 @@
 
 *******************************************************************************/
 
-#include <boost/bind.hpp>
-
 #include "core.hpp"
 #include "netEventHandler.hpp"
 #include "netFrame.hpp"
@@ -40,6 +38,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
+#include <boost/bind.hpp>
 
 using namespace boost::asio::ip ;
 namespace engine
