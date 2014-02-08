@@ -30,9 +30,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <vector>
-
-#include <boost/algorithm/string.hpp>
 
 #include "pmdOptionsMgr.hpp"
 #include "pd.hpp"
@@ -50,6 +47,9 @@
 
 #include "rtn.hpp"
 #include "rtnSortDef.hpp"
+
+#include <vector>
+#include <boost/algorithm/string.hpp>
 
 using namespace bson ;
 
