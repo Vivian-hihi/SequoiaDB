@@ -32,16 +32,7 @@
    Last Changed =
 
 *******************************************************************************/
-#include <stdlib.h>
-#include <time.h>
-#include <map>
-#include <vector>
-#include <queue>
-#include <string>
-#include <sstream>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
-#include "../bson/bson.h"
+
 #include "rtnCM.hpp"
 #include "core.h"
 #include "ossSocket.hpp"
@@ -61,6 +52,16 @@
 #include "rtnTrace.hpp"
 #include "sdbcommon.hpp"
 
+#include <stdlib.h>
+#include <time.h>
+#include <map>
+#include <vector>
+#include <queue>
+#include <string>
+#include <sstream>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include "../bson/bson.h"
 
 using namespace engine;
 using namespace std;
