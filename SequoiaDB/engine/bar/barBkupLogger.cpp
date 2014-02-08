@@ -30,12 +30,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <iostream>
-#include <boost/lexical_cast.hpp>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
 
 #include "barBkupLogger.hpp"
 #include "pd.hpp"
@@ -49,6 +43,12 @@
 #include "pdTrace.hpp"
 #include "barTrace.hpp"
 
+#include <iostream>
+#include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace po = boost::program_options ;
 namespace fs = boost::filesystem ;
