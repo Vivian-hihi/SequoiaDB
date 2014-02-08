@@ -1,3 +1,5 @@
+
+#include "core.hpp"
 #include "jsapi.h"
 #include "../client/jstobs.h"
 #include "../client/bson/bson.h"
