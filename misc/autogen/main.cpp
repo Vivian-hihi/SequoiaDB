@@ -1,3 +1,4 @@
+#include "core.hpp"
 #include "rcgen.h"
 #include "filenamegen.h"
 #include "optgen.h"

@@ -17,6 +17,6 @@ class FileNameGen
 public :
    static void genList ();
 private :
-   static void _genList ( const CHAR *pPath, std::ofstream &fout ) ;
+   static void _genList ( const char *pPath, std::ofstream &fout ) ;
 } ;
 #endif
