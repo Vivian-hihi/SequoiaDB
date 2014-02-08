@@ -32,13 +32,13 @@
    Last Changed =
 
 *******************************************************************************/
+#include "core.hpp"
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/tss.hpp>
-#include "core.hpp"
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pd.hpp"
