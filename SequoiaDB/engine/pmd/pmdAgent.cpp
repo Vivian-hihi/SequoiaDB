@@ -31,6 +31,7 @@
    Last Changed =
 
 *******************************************************************************/
+#include "core.hpp"
 #include <stdio.h>
 #include "pd.hpp"
 #include "pmdEDUMgr.hpp"
