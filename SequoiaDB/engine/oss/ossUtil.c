@@ -32,6 +32,7 @@
    Last Changed =
 
 *******************************************************************************/
+#include "ossTypes.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
