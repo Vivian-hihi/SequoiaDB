@@ -23,7 +23,7 @@ var SDB_LIST_SESSIONS_CURRENT    = 3 ;
 var SDB_LIST_COLLECTIONS         = 4 ;
 var SDB_LIST_COLLECTIONSPACES    = 5 ;
 var SDB_LIST_STORAGEUNITS        = 6 ;
-var SDB_LIST_GROUPS              = 7 ;
+var SDB_LIST_SHARDS              = 7 ;
 
 var SDB_INSERT_CONTONDUP         = 1 ;
 var SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one document
@@ -302,37 +302,37 @@ SdbQuery.prototype.toString = function() {
 }
 // end SdbQuery
 
-// SdbRN
-SdbRN.prototype.toString = function() {
+// SdbNode
+SdbNode.prototype.toString = function() {
    return this._hostname + ":" +
           this._servicename ;
 }
 
-SdbRN.prototype.getHostName = function() {
+SdbNode.prototype.getHostName = function() {
    return this._hostname ;
 }
 
-SdbRN.prototype.getServiceName = function() {
+SdbNode.prototype.getServiceName = function() {
    return this._servicename ;
 }
 
-SdbRN.prototype.getNodeDetail = function() {
+SdbNode.prototype.getNodeDetail = function() {
    return this._nodeid + ":" + this._hostname + ":" +
           this._servicename + "(" +
           this._rg.toString() + ")" ;
 }
-// end SdbRN
+// end SdbNode
 
-// SdbRG
-SdbRG.prototype.toString = function() {
+// SdbShard
+SdbShard.prototype.toString = function() {
    return this._name;
 }
 
-SdbRG.prototype.getDetail = function() {
-   return this._conn.list( SDB_LIST_GROUPS,
+SdbShard.prototype.getDetail = function() {
+   return this._conn.list( SDB_LIST_SHARDS,
                            {GroupName: this._name } ) ;
 }
-// end SdbRG
+// end SdbShard
 
 // SdbCS
 SdbCS.prototype.toString = function() {
@@ -358,7 +358,11 @@ Sdb.prototype.listCollections = function() {
 }
 
 Sdb.prototype.listReplicaGroups = function() {
-   return this.list( SDB_LIST_GROUPS ) ;
+   return this.list( SDB_LIST_SHARDS ) ;
+}
+
+Sdb.prototype.listShards = function() {
+   return this.list( SDB_LIST_SHARDS ) ;
 }
 
 Sdb.prototype._resolveCS = function(csName) {

@@ -21,12 +21,12 @@ Sdb.prototype.help = function() {
    println("   createCS(<name>, [pageSize])");
    println("   createShard(<name>)");
    println("   removeShard(<name>)");
-   println("   createCataRG(<host>,<service>,<dbpath>,[config])");
+   println("   createCataShard(<host>,<service>,<dbpath>,[config])");
    println("   dropCS(<name>)");
    println("   list(<listType>, [cond], [sel], [sort])");
    println("   listCollectionSpaces()");
    println("   listCollections()");
-   println("   listReplicaGroups()");
+   println("   listShards()");
    println("   resetSnapshot([cond])");
    println("   snapshot(<snapType>, [cond], [sel], [sort])");
    println("   startShard(<name1>,[name2]...)");
@@ -56,8 +56,8 @@ Sdb.prototype.help = function() {
    println("   close()");
 }
 
-SdbRN.prototype.help = function() {
-   println("Replica Node methods:");
+SdbNode.prototype.help = function() {
+   println("Node methods:");
    println("   connect()");
    println("   start()");
    println("   stop()");
@@ -66,8 +66,8 @@ SdbRN.prototype.help = function() {
    println("   getNodeDetail()");
 }
 
-SdbRG.prototype.help = function() {
-   println("Replica Group methods:");
+SdbShard.prototype.help = function() {
+   println("Shard methods:");
    println("   getMaster()");
    println("   getSlave()");
    println("   getNode(<nodename>|<hostname>,<servicename>)");
@@ -98,10 +98,10 @@ SdbCollection.prototype.help = function() {
    //println("   rename(<newName>)");
    println("   update(<rule>, [cond], [hint])");
    println("   upsert(<rule>, [cond], [hint])");
-   println("   split(<source group>,<target group>,<percent(0~100)|<condition>, [endcondition])");
-   println("   splitAsync(<source group>,<target group>,<percent(0~100)|<condition>, [endcondition])");
+   println("   split(<source shard>,<target shard>,<percent(0~100)|<condition>, [endcondition])");
+   println("   splitAsync(<source shard>,<target shard>,<percent(0~100)|<condition>, [endcondition])");
    //println("   alter(<options>)");
-   println("   aggregate(< project | match | limit | skip | group | sort >...)");
+   println("   aggregate(< project | match | limit | skip | shard | sort >...)");
    println("   attachCL(<subCLFullName>, <options>)");
    println("   detachCL(<subCLFullName>)");
 }
