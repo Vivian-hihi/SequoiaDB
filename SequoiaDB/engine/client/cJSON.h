@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+#include "core.h"
 #include <stdlib.h>
 
 /* cJSON Types: */
