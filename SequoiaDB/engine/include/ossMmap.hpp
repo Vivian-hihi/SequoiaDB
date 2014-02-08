@@ -34,12 +34,12 @@
 #ifndef OSSMMAP_HPP_
 #define OSSMMAP_HPP_
 
-#include <vector>
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
 #include "ossLatch.hpp"
 #include "ossUtil.hpp"
+#include <vector>
 
 using namespace std ;
 

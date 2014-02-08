@@ -34,12 +34,12 @@
 #ifndef OSS_H_
 #define OSS_H_
 
+#include "core.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "core.h"
 
 #if defined (_LINUX)
 #include <errno.h>

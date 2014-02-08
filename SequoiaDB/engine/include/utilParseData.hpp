@@ -34,13 +34,13 @@
 #ifndef UTIL_PARSE_DATA_HPP_
 #define UTIL_PARSE_DATA_HPP_
 
-#include <vector>
-#include <boost/thread.hpp>
-#include <boost/thread/shared_mutex.hpp>
-
 #include "core.hpp"
 #include "ossLatch.hpp"
 #include "utilAccessData.hpp"
+
+#include <vector>
+#include <boost/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 //32MB buffer size must be multiple of 33554432
 #define UTIL_DATA_BUFFER_SIZE 33554432

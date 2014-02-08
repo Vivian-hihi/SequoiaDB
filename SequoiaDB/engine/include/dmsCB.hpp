@@ -36,8 +36,6 @@
 #ifndef DMSCB_HPP_
 #define DMSCB_HPP_
 
-#include <map>
-#include <set>
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossMem.hpp"
@@ -49,6 +47,8 @@
 #include "ossRWMutex.hpp"
 #include "dpsLogWrapper.hpp"
 #include "ossEvent.hpp"
+#include <map>
+#include <set>
 
 using namespace std ;
 

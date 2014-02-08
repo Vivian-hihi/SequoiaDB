@@ -1,9 +1,10 @@
 
 #ifndef RTNCOORDCOMMON_HPP__
 #define RTNCOORDCOMMON_HPP__
-#include "../bson/bson.h"
+
 #include "coordCB.hpp"
 #include "rtnContext.hpp"
+#include "../bson/bson.h"
 
 using namespace bson ;
 

@@ -1,9 +1,9 @@
 #ifndef DPSTRANSLOCKDEF_HPP_
 #define DPSTRANSLOCKDEF_HPP_
 
+#include "ossTypes.h"
 #include <map>
 #include <string>
-#include "ossTypes.h"
 #include "dms.hpp"
 #include "ossAtomic.hpp"
 #include "msg.h"

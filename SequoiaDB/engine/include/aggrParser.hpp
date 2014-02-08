@@ -34,11 +34,11 @@
 #ifndef AGGRPARSER_HPP__
 #define AGGRPARSER_HPP__
 
-#include "../bson/bsonobj.h"
 #include "qgmPtrTable.hpp"
 #include "qgmOptiTree.hpp"
 #include "qgmParamTable.hpp"
 #include "qgmOptiAggregation.hpp"
+#include "../bson/bsonobj.h"
 
 namespace engine
 {

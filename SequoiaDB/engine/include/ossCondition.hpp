@@ -36,6 +36,7 @@
 #ifndef OSSCONDITION_H_
 #define OSSCONDITION_H_
 
+#include "ossTypes.hpp"
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 

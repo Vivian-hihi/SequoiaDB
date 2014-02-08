@@ -34,13 +34,13 @@
 #ifndef AGGRBUILDER_HPP__
 #define AGGRBUILDER_HPP__
 
-#include <map>
 #include "aggrParser.hpp"
 #include "pmdEDU.hpp"
 #include "qgmPtrTable.hpp"
 #include "qgmOptiTree.hpp"
 #include "qgmParamTable.hpp"
 #include "qgmPlanContainer.hpp"
+#include <map>
 
 namespace engine
 {

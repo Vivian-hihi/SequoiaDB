@@ -1,8 +1,8 @@
 #ifndef DPSTRANSLOCKUNIT_HPP_
 #define DPSTRANSLOCKUNIT_HPP_
 
-#include <map>
 #include "pmdEDU.hpp"
+#include <map>
 
 namespace engine
 {

@@ -35,11 +35,11 @@
 #ifndef DPSLOGFILEMGR_H_
 #define DPSLOGFILEMGR_H_
 
-#include <vector>
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogFile.hpp"
 #include "pmdOptionsMgr.hpp"
+#include <vector>
 using namespace std;
 
 namespace engine

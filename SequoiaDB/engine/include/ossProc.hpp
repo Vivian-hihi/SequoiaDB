@@ -34,10 +34,10 @@
 #ifndef OSSPROC_HPP__
 #define OSSPROC_HPP__
 
-#include <sys/types.h>
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossNPipe.hpp"
+#include <sys/types.h>
 
 #if defined (_LINUX)
 #define PROC_SELF_EXE "/proc/self/exe"

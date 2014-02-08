@@ -33,10 +33,10 @@
 #ifndef CLSVOTEMACHINE_HPP_
 #define CLSVOTEMACHINE_HPP_
 
-#include <vector>
 #include "core.hpp"
 #include "oss.hpp"
 #include "clsVoteStatus.hpp"
+#include <vector>
 
 using namespace std ;
 

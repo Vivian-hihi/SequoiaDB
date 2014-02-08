@@ -35,15 +35,14 @@
 #ifndef NETEVENTHANDLER_HPP_
 #define NETEVENTHANDLER_HPP_
 
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/asio.hpp>
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "netDef.hpp"
 #include "ossLatch.hpp"
 #include "ossEvent.hpp"
 
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/asio.hpp>
 using namespace boost::asio ;
 
 namespace engine

@@ -35,8 +35,8 @@
 #ifndef SPT_HPP__
 #define SPT_HPP__
 
-#include "jsapi.h"
 #include "core.hpp"
+#include "jsapi.h"
 #include "oss.hpp"
 
 namespace engine

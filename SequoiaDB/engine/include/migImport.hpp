@@ -34,9 +34,6 @@
 #ifndef MIGIMPORT_HPP__
 #define MIGIMPORT_HPP__
 
-#include <string>
-#include <vector>
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
@@ -44,6 +41,8 @@
 #include "../client/jstobs.h"
 #include "../client/bson/bson.h"
 #include "utilParseData.hpp"
+#include <string>
+#include <vector>
 using namespace std ;
 
 #define MIG_MAX_READ_BUFFER 256*1024*1024

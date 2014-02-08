@@ -35,10 +35,6 @@
 #ifndef NETFRAME_HPP_
 #define NETFRAME_HPP_
 
-#include <map>
-#include <boost/shared_ptr.hpp>
-#include <boost/asio.hpp>
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "netDef.hpp"
@@ -46,6 +42,10 @@
 #include "netEventHandler.hpp"
 #include "netTimer.hpp"
 #include "ossAtomic.hpp"
+
+#include <map>
+#include <boost/shared_ptr.hpp>
+#include <boost/asio.hpp>
 
 using namespace std ;
 namespace engine

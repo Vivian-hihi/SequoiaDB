@@ -35,14 +35,12 @@
 #ifndef DPSLOGWRAPPER_H_
 #define DPSLOGWRAPPER_H_
 
-#include <vector>
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsReplicaLogMgr.hpp"
 #include "../bson/bsonelement.h"
 #include "../bson/bsonobj.h"
-
+#include <vector>
 using namespace bson;
 
 namespace engine

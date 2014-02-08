@@ -34,13 +34,14 @@
 *******************************************************************************/
 #ifndef RTNPREDICATE_HPP__
 #define RTNPREDICATE_HPP__
+
+#include "core.hpp"
+#include "oss.hpp"
+#include "../bson/bson.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
-#include "core.hpp"
-#include "oss.hpp"
-#include "../bson/bson.h"
 using namespace bson ;
 using namespace std ;
 namespace engine

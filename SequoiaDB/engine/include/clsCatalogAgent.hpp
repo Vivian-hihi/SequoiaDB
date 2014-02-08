@@ -30,10 +30,10 @@
 #ifndef CLS_CATALOG_AGENT_HPP_
 #define CLS_CATALOG_AGENT_HPP_
 
+#include "core.hpp"
 #include <string>
 #include <map>
 #include <vector>
-#include "core.hpp"
 #include "oss.hpp"
 #include "clsBase.hpp"
 #include "ossRWMutex.hpp"

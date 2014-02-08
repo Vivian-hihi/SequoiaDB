@@ -35,11 +35,11 @@
 #ifndef NETROUTE_HPP_
 #define NETROUTE_HPP_
 
-#include <map>
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossLatch.hpp"
 #include "netDef.hpp"
+#include <map>
 
 using namespace std ;
 

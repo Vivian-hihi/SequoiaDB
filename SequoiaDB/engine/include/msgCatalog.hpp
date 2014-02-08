@@ -3,10 +3,10 @@
 
 #pragma warning( disable: 4200 )
 
+#include "core.hpp"
 #include <map>
 #include <string>
 #include "../bson/bsonelement.h"
-#include "core.hpp"
 #include "oss.hpp"
 #include "msg.hpp"
 #include "netDef.hpp"

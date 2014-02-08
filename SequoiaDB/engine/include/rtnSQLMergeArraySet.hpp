@@ -34,10 +34,10 @@
 #ifndef RTNSQLMERGEARRAYSET_HPP__
 #define RTNSQLMERGEARRAYSET_HPP__
 
+#include "rtnSQLFunc.hpp"
+#include "../bson/bsonobj.h"
 #include <set>
 #include <string>
-#include "../bson/bsonobj.h"
-#include "rtnSQLFunc.hpp"
 
 namespace engine
 {

@@ -35,11 +35,11 @@
 *******************************************************************************/
 #ifndef OSSQUEUE_HPP__
 #define OSSQUEUE_HPP__
+#include "core.hpp"
+#include "oss.hpp"
 #include <queue>
 #include <boost/thread.hpp>
 #include <boost/thread/thread_time.hpp>
-#include "core.hpp"
-#include "oss.hpp"
 template<typename Data>
 class ossQueue : public SDBObject
 {

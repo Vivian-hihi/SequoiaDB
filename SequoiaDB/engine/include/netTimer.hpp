@@ -34,12 +34,11 @@
 
 #ifndef NETTIMER_HPP_
 #define NETTIMER_HPP_
-
+#include "core.hpp"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
-#include "core.hpp"
 #include "oss.hpp"
 #include "netDef.hpp"
 

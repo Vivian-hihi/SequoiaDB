@@ -1,10 +1,10 @@
 #ifndef DPSTRANSLOCK_HPP_
 #define DPSTRANSLOCK_HPP_
 
-#include <vector>
 #include "dms.hpp"
 #include "ossLatch.hpp"
 #include "dpsTransLockDef.hpp"
+#include <vector>
 
 namespace engine
 {

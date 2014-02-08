@@ -35,8 +35,6 @@
 #ifndef CLSREPLICATESET_HPP_
 #define CLSREPLICATESET_HPP_
 
-#include <vector>
-
 #include "netRouteAgent.hpp"
 #include "msgReplicator.hpp"
 #include "msgCatalog.hpp"
@@ -47,6 +45,7 @@
 #include "clsSyncManager.hpp"
 #include "dms.hpp"
 #include "clsReplBucket.hpp"
+#include <vector>
 
 using namespace std ;
 

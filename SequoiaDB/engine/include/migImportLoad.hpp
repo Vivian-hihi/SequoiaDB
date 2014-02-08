@@ -34,8 +34,8 @@
 #ifndef MIGIMPORTLOAD_HPP__
 #define MIGIMPORTLOAD_HPP__
 
-#include "utilParseData.hpp"
 #include "core.hpp"
+#include "utilParseData.hpp"
 #include "../client/client.h"
 #include "../client/jstobs.h"
 #include "../client/bson/bson.h"

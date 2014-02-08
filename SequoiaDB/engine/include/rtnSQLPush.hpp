@@ -34,8 +34,8 @@
 #ifndef RTNSQLPUSH_HPP__
 #define RTNSQLPUSH_HPP__
 
-#include "../bson/bsonobj.h"
 #include "rtnSQLFunc.hpp"
+#include "../bson/bsonobj.h"
 
 namespace engine
 {

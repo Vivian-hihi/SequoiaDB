@@ -34,10 +34,10 @@
 #ifndef RTNSQLADDTOSET_HPP__
 #define RTNSQLADDTOSET_HPP__
 
+#include "rtnSQLFunc.hpp"
+#include "../bson/bsonobj.h"
 #include <set>
 #include <string>
-#include "../bson/bsonobj.h"
-#include "rtnSQLFunc.hpp"
 
 namespace engine
 {

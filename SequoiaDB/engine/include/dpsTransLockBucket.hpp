@@ -1,9 +1,9 @@
 #ifndef DPSTRANSLOCKBUCKET_HPP_
 #define DPSTRANSLOCKBUCKET_HPP_
 
-#include <map>
 #include "dpsTransLockDef.hpp"
 #include "ossLatch.hpp"
+#include <map>
 
 namespace engine
 {

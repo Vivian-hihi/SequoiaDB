@@ -35,8 +35,6 @@
 #ifndef RTNCB_HPP_
 #define RTNCB_HPP_
 
-#include <map>
-#include <set>
 #include "core.hpp"
 #include "oss.hpp"
 #include "rtnContext.hpp"
@@ -45,6 +43,8 @@
 #include "monEDU.hpp"
 #include "dmsCB.hpp"
 #include "pmdEDU.hpp"
+#include <map>
+#include <set>
 
 namespace engine
 {
