@@ -32,11 +32,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <string>
-#include <iostream>
-
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 
 #include "core.hpp"
 #include "migImportLoad.hpp"
@@ -50,6 +45,12 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "msgDef.h"
+
+#include <string>
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+
 #if defined (_LINUX)
 #include <execinfo.h>
 #endif
