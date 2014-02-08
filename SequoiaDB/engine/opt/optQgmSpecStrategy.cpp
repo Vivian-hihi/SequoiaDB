@@ -773,7 +773,7 @@ namespace engine
       }
       else
       {
-         qgmOPFieldPtrVec aliases ;
+         /*qgmOPFieldPtrVec aliases ;
          qgmOptiAggregation *aggrNode = (qgmOptiAggregation*)curNode ;
 
          if ( filterUnit->getFieldAlias( aliases ) > 0 )
@@ -782,7 +782,7 @@ namespace engine
 
          if ( subNode->validSelfAlias() )
          {
-         }
+         }*/
       }
 
    done:
