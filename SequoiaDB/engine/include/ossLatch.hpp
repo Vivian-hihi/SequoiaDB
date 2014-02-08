@@ -34,10 +34,10 @@
 #ifndef OSS_SPINLOCK_HPP_
 #define OSS_SPINLOCK_HPP_
 
+#include "core.hpp"
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 // include core.hpp first to get _WINDOWS macro defines
-#include "core.hpp"
 #include "oss.hpp"
 #include "pd.hpp"
 #if defined (_WINDOWS)
