@@ -792,7 +792,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__MTHMDF__APPBITMDF3 );
       BSONElement elt = me._toModify ;
       BSONType b = elt.type () ;
-      BOOLEAN change = FALSE ;
 
       if ( NumberLong == b )
       {
@@ -800,7 +799,6 @@ namespace engine
          rc = _bitCalc ( me._modType, (INT64)in, elt.numberLong(), result ) ;
          if ( SDB_OK == rc )
          {
-            change = TRUE ;
             bb.append ( pShort, result ) ;
             ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
          }
@@ -811,7 +809,6 @@ namespace engine
          rc = _bitCalc ( me._modType, in, elt.numberInt(), result ) ;
          if ( SDB_OK == rc )
          {
-            change = TRUE ;
             bb.append ( pShort, result ) ;
             ADD_CHG_NUMBER ( _dstChgBuilder, pRoot, result, "$set" ) ;
          }
