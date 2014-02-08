@@ -32,10 +32,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <iostream>
-#include <string>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
 
 #include "pmd.hpp"
 #include "pmdSignalHandler.hpp"
@@ -50,6 +46,11 @@
 #include "pmdStartup.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+
+#include <iostream>
+#include <string>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
 using namespace std;
 using namespace bson;

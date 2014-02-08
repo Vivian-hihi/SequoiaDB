@@ -30,11 +30,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <string>
-#include <iostream>
-
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 
 #include "core.hpp"
 #include "../client/bson/bson.h"
@@ -47,6 +42,11 @@
 #include "msgDef.h"
 #include "openssl/md5.h"
 #include "ossIO.hpp"
+
+#include <string>
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
 
 using namespace std ;
 namespace po = boost::program_options ;

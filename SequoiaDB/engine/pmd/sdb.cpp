@@ -1,10 +1,4 @@
 #include "spt.hpp"
-#include <vector>
-#include <string>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string/erase.hpp>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 #include "sdbOptionMgr.hpp"
 #include "ossUtil.h"
 #include "ossProc.hpp"
@@ -20,7 +14,12 @@
 #include "ossVer.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-
+#include <vector>
+#include <string>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
 using std::ostream ;
 using std::vector ;
 using std::string ;

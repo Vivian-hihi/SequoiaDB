@@ -32,11 +32,6 @@
    Last Changed =
 
 *******************************************************************************/
-#include <string>
-#include <iostream>
-
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 
 #include "core.hpp"
 #include "ossUtil.hpp"
@@ -51,6 +46,11 @@
 #include "sdbcommon.hpp"
 #include "pmdCommon.hpp"
 #include "pmdOptions.h"
+
+#include <string>
+#include <iostream>
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
 
 #if defined (_LINUX)
 #include <dirent.h>
