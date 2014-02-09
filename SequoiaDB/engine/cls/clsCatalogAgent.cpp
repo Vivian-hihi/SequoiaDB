@@ -2352,6 +2352,7 @@ namespace engine
    note: _clsGroupItem implement
    */
    _clsGroupItem::_clsGroupItem ( UINT32 groupID )
+   :_errTime(0)
    {
       _groupID = groupID ;
       _groupVersion = 0 ;
@@ -2521,6 +2522,11 @@ namespace engine
       {
       clsNoteItem& item = _vecNodes[pos] ;
       status = item._status;
+      if ( status != NET_NODE_STAT_NORMAL
+         && _errTime.inc() >= SDB_CLS_NODE_INFO_EXPIRED_TIME )
+      {
+         rc = SDB_CLS_NODE_INFO_EXPIRED;
+      }
       }
    done:
       PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDINFO3 ) ;
