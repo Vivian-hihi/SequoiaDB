@@ -529,6 +529,7 @@ namespace engine
 
    INT32 _barBkupBaseLogger::init( const CHAR *path,
                                    const CHAR *backupName,
+                                   INT32 maxDataFileSize,
                                    const CHAR *prefix,
                                    UINT32 opType,
                                    BOOLEAN rewrite,
@@ -550,7 +551,7 @@ namespace engine
       // 1. init meta header
       _metaHeader._type                = _getBackupType() ;
       _metaHeader._opType              = opType ;
-      _metaHeader._maxDataFileSize     = (UINT64)BAR_MAX_DATAFILE_SIZE << 30 ;
+      _metaHeader._maxDataFileSize     = (UINT64)maxDataFileSize << 20 ;
       ossStrncpy( _metaHeader._groupName, krcb->getGroupName(),
                   BAR_BACKUP_GROUPNAME_LEN - 1 ) ;
       ossStrncpy( _metaHeader._hostName, _pClsCB->getHostName(),

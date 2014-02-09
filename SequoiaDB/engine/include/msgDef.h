@@ -214,6 +214,7 @@
 #define FIELD_NAME_ISSUBDIR                  "IsSubDir"
 #define FIELD_NAME_ENABLE_DATEDIR            "EnableDateDir"
 #define FIELD_NAME_PREFIX                    "Prefix"
+#define FIELD_NAME_MAX_DATAFILE_SIZE         "MaxDataFileSize"
 
 #define FIELD_NAME_INSERT                    "Insert"
 #define FIELD_NAME_UPDATE                    "Update"

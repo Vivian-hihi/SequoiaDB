@@ -98,10 +98,13 @@ namespace engine
       Backup max data file size define
    */
 #if defined OSS_ARCH_64
-   #define BAR_MAX_DATAFILE_SIZE                      (100)    // GB
+   #define BAR_DFT_DATAFILE_SIZE                      (102400)    // MB
+   #define BAR_MAX_DATAFILE_SIZE                      (8388608)   // MB
 #elif defined OSS_ARCH_32
-   #define BAR_MAX_DATAFILE_SIZE                      (2)      // GB
+   #define BAR_DFT_DATAFILE_SIZE                      (2048)      // MB
+   #define BAR_MAX_DATAFILE_SIZE                      (2048)      // MB
 #endif
+   #define BAR_MIN_DATAFILE_SIZE                      (32)        // MB
 
    /*
       _barBackupHeader define
@@ -150,7 +153,7 @@ namespace engine
          _beginLSNOffset   = DPS_INVALID_LSN_OFFSET ;
          _endLSNOffset     = DPS_INVALID_LSN_OFFSET ;
          _transLSNOffset   = DPS_INVALID_LSN_OFFSET ;
-         _maxDataFileSize  = (UINT64)BAR_MAX_DATAFILE_SIZE << 30 ;
+         _maxDataFileSize  = (UINT64)BAR_DFT_DATAFILE_SIZE << 20 ;
          _dataFileNum      = 0 ;
          _lastDataSequence = 0 ;
          _lastExtentID     = 0 ;
@@ -406,6 +409,7 @@ namespace engine
 
          INT32    init( const CHAR *path,
                         const CHAR *backupName,
+                        INT32 maxDataFileSize,
                         const CHAR *prefix = NULL,
                         UINT32 opType = BAR_BACKUP_OP_TYPE_FULL,
                         BOOLEAN rewrite = TRUE,

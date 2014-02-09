@@ -68,6 +68,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNBACKUP ) ;
       pmdKRCB *krcb = pmdGetKRCB () ;
       string bkpath ;
+      INT32 maxDataFileSize = 0 ;
 
       barBKOfflineLogger logger ;
 
@@ -83,6 +84,15 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_ISSUBDIR, rc ) ;
+
+      rc = rtnGetIntElement( option, FIELD_NAME_MAX_DATAFILE_SIZE,
+                             maxDataFileSize ) ;
+      if ( SDB_FIELD_NOT_EXIST == rc )
+      {
+         rc = SDB_OK ;
+      }
+      PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
+                   FIELD_NAME_MAX_DATAFILE_SIZE, rc ) ;
 
       rc = rtnGetBooleanElement( option, FIELD_NAME_ENABLE_DATEDIR,
                                  enableDateDir ) ;
@@ -100,6 +110,12 @@ namespace engine
       }
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    FIELD_NAME_PREFIX, rc ) ;
+
+      if ( maxDataFileSize < BAR_MIN_DATAFILE_SIZE ||
+           maxDataFileSize > BAR_MAX_DATAFILE_SIZE )
+      {
+         maxDataFileSize = BAR_DFT_DATAFILE_SIZE ;
+      }
 
       // make path
       if ( isSubDir && path )
@@ -120,7 +136,7 @@ namespace engine
          bkpath = rtnFullPathName( bkpath, _rtnMakeDateDirName() ) ;
       }
 
-      rc = logger.init( bkpath.c_str(), backupName, prefix,
+      rc = logger.init( bkpath.c_str(), backupName, maxDataFileSize, prefix,
                         ensureInc ? BAR_BACKUP_OP_TYPE_INC :
                         BAR_BACKUP_OP_TYPE_FULL, rewrite, desp ) ;
       PD_RC_CHECK( rc, PDERROR, "Init off line backup logger failed, rc: %d",
