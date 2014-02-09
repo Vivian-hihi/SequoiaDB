@@ -87,9 +87,8 @@
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
       <li>Get partition group
-        <codeblock>> datagroup = db.getRG ( "datagroup1" ) ;</codeblock></li>
-      <li>Stop partition group
-        <codeblock>> datagroup.stop()</codeblock></li>
+        <codeblock>> datashard = db.getShard ( "datashard1" ) ;</codeblock></li>
+      <li>Stop partition group <codeblock>> datashard.stop()</codeblock></li>
       <li>Login via terminal nodes corresponding data partition group, perform data recovery.
         <codeblock>sdbadmin@vmsvr2-suse-x64-1:/opt/sequoiadb> bin/sdbrestore -p  database/40000/bakfile -n test_bk
 Begin to clean dps logs...

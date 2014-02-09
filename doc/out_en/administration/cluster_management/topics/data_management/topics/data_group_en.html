@@ -45,9 +45,9 @@
 
     <p class="p">operation methods: </p>
 
-    <pre class="pre codeblock">&gt;var datarg = db.createRG("datagroup1")
-&gt;datarg.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   
-&gt;datarg.start()</pre>
+    <pre class="pre codeblock">&gt;var datashard = db.createShard("datashard1")
+&gt;datashard.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   
+&gt;datashard.start()</pre>
 
     <p class="p">The first command is used to create data sharding,and what different from catalog sharding is
       that this operation will not create any data node.The param is the name of data sharding. </p>

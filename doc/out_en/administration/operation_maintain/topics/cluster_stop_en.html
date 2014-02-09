@@ -47,11 +47,11 @@
 </li>
 
         <li class="li">Get partition group
-          <pre class="pre codeblock">&gt; datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard1&gt;" ) ;</pre>
 </li>
 
         <li class="li">Get the data node
-          <pre class="pre codeblock">&gt; datanode = datagroup.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datanode = datashard.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
 </li>
 
         <li class="li">Stop node
@@ -73,11 +73,10 @@
 </li>
 
         <li class="li">Get partition group
-          <pre class="pre codeblock">&gt; datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard1&gt;" ) ;</pre>
 </li>
 
-        <li class="li">Stop data group
-          <pre class="pre codeblock">&gt; datagroup.stop() ;</pre>
+        <li class="li">Stop data group <pre class="pre codeblock">&gt; datashard.stop() ;</pre>
 </li>
 
       </ol>

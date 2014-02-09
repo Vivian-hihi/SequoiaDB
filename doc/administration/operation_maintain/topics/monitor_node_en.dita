@@ -10,7 +10,7 @@
 > var db = new Sdb("localhost", 50000) ;
 </codeblock></li>
       <li>Get partition group
-        <codeblock>datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
+        <codeblock>datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
       <li>Get the data node
         <codeblock>> datanode = datagroup.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
       <li>To obtain a snapshot of the node
@@ -23,7 +23,7 @@
       <codeblock>[sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ cat monitor_insert.sh
 #!/bin/bash
 ~/sequoiadb/bin/sdb "db=new Sdb('localhost', 50000)" > /dev/null
-~/sequoiadb/bin/sdb "db.getRG('foo').getNode('vmsvr1-rhel-x64',51000).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
+~/sequoiadb/bin/sdb "db.getShard('foo').getNode('vmsvr1-rhel-x64',51000).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
 ~/sequoiadb/bin/sdb "quit"
 [sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ ./monitor_insert.sh
   "TotalInsert": 0,</codeblock></p>

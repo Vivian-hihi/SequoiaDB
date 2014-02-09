@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_s11_c21_hm">
-  <title>rg.removeNode()</title>
+  <title>shard.removeNode()</title>
   <body>
-    <section><title>rg.removeNode(&lt;host>,&lt;service>,[config])</title>
+    <section><title>shard.removeNode(&lt;host>,&lt;service>,[config])</title>
       <p>Delete slice group specified node.</p>
     </section>
     <section><title>Parameter Description</title>
@@ -36,11 +36,14 @@
       
     </section>
     <section><title>Format</title>
-      <p>Definition Format rg.removeNode() method has three parameters: host, service, config, as shown above, the following format: <codeblock>("&lt;hostname>","&lt;port number>"[,{&lt;configParam>:value,...}])</codeblock></p>
+      <p>Definition Format shard.removeNode() method has three parameters: host, service, config, as
+        shown above, the following format:
+        <codeblock>("&lt;hostname>","&lt;port number>"[,{&lt;configParam>:value,...}])</codeblock></p>
     </section>
     <section><title>Example</title>
       <ul>
-        <li>Delete node command follows slice group rg <codeblock>rg.removeNode("vmsvr2-suse-x64",60000)</codeblock></li>
+        <li>Delete node command follows slice group shard
+          <codeblock>shard.removeNode("vmsvr2-suse-x64",60000)</codeblock></li>
       </ul>
       <p><note>
         <p>Delete the specified node must exist, otherwise abnormal.</p>

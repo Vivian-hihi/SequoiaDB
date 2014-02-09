@@ -7,8 +7,8 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.getRG()"/>
-<meta name="description" content="db.getRG(parameters) Return the quotation of a replset. Parameter Description Parameter Name Parameter Type Description Not null name string Replset name. Replset names are unique to each other in a ..."/>
+<meta name="DC.Title" content="db.getShard()"/>
+<meta name="description" content="db.getShard(parameters) Return the quotation of a replset. Parameter Description Parameter Name Parameter Type Description Not null name string Replset name. Replset names are unique to each other in ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="createRG_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="removeRG_en.html"/>
@@ -16,7 +16,7 @@
 <meta name="DC.Identifier" content="references_method_createRG"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.getRG()</title>
+<title>db.getShard()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -35,44 +35,44 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript Method List</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references_en.html" title="Reference">Reference</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List">Sequoiadb javascript Method List</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.getRG()</h1>
+  <h1 class="title topictitle1">db.getShard()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.getRG(parameters)</h2>
+    <div class="section"><h2 class="title sectiontitle">db.getShard(parameters)</h2>
       <p class="p">Return the quotation of a replset.</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       <a name="references_method_createRG__references_method_getRG_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_createRG__references_method_getRG_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d137936e26" class="stentry" width="11.173184357541901%">Parameter Name</th>
+          <th valign="bottom" align="left" id="d137735e26" class="stentry" width="11.173184357541901%">Parameter Name</th>
 
-          <th valign="bottom" align="left" id="d137936e29" class="stentry" width="12.402234636871512%">Parameter Type</th>
+          <th valign="bottom" align="left" id="d137735e29" class="stentry" width="12.402234636871512%">Parameter Type</th>
 
-          <th valign="bottom" align="left" id="d137936e32" class="stentry" width="59.32960893854749%">Description</th>
+          <th valign="bottom" align="left" id="d137735e32" class="stentry" width="59.32960893854749%">Description</th>
 
-          <th valign="bottom" align="left" id="d137936e35" class="stentry" width="17.09497206703911%">Not null</th>
+          <th valign="bottom" align="left" id="d137735e35" class="stentry" width="17.09497206703911%">Not null</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137936e26" class="stentry">name</td>
+          <td valign="top" headers="d137735e26" class="stentry">name</td>
 
-          <td valign="top" headers="d137936e29" class="stentry">string</td>
+          <td valign="top" headers="d137735e29" class="stentry">string</td>
 
-          <td valign="top" headers="d137936e32" class="stentry">Replset name. Replset names are unique to each other in a database
+          <td valign="top" headers="d137735e32" class="stentry">Replset name. Replset names are unique to each other in a database
             object.</td>
 
-          <td valign="top" headers="d137936e35" class="stentry">Either "name"or "id" is not null</td>
+          <td valign="top" headers="d137735e35" class="stentry">Either "name"or "id" is not null</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137936e26" class="stentry">id</td>
+          <td valign="top" headers="d137735e26" class="stentry">id</td>
 
-          <td valign="top" headers="d137936e29" class="stentry">int</td>
+          <td valign="top" headers="d137735e29" class="stentry">int</td>
 
-          <td valign="top" headers="d137936e32" class="stentry">Replset id. The system will automatically generate a replset id.</td>
+          <td valign="top" headers="d137735e32" class="stentry">Replset id. The system will automatically generate a replset id.</td>
 
-          <td valign="top" headers="d137936e35" class="stentry">Either "name"or "id" is not null</td>
+          <td valign="top" headers="d137735e35" class="stentry">Either "name"or "id" is not null</td>
 
         </tr>
 </table>
@@ -81,9 +81,9 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">Format</h2>
-      <p class="p">The method "getRG()" contains "name" or "id". The type of "name" is string. The type of
+      <p class="p">The method "getShard()" contains "name" or "id". The type of "name" is string. The type of
         "id" is "int". It the replset specified by "name" or "id" doesn't exist, operation exception
-        will occur.  </p>
+        will occur. </p>
 
       <div class="p"><pre class="pre codeblock">("&lt;Replset name&gt;"|&lt;id&gt;)</pre>
 </div>
@@ -99,16 +99,16 @@
 
     <div class="section"><h2 class="title sectiontitle">Sample</h2>
       <ul class="ul">
-        <li class="li"><p class="p">Specify the value of "name", the returnthe quotation of replset "group".</p>
+        <li class="li"><p class="p">Specify the value of "name", the returnthe quotation of replset "shard".</p>
 
-         <div class="p"><pre class="pre codeblock">db.getRG("group")</pre>
+         <div class="p"><pre class="pre codeblock">db.getShard("shard")</pre>
 </div>
 </li>
 
         <li class="li">
-          <p class="p">Specify the value of "id", the returnthe quotation of replset "group".</p>
+          <p class="p">Specify the value of "id", the returnthe quotation of replset "shard".</p>
 
-          <div class="p"><pre class="pre codeblock">db.getRG("1000")</pre>
+          <div class="p"><pre class="pre codeblock">db.getShard("1000")</pre>
 </div>
 
         </li>
@@ -121,8 +121,8 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="createRG_en.html" title="db.createRG()">db.createRG()</a></div>
-<div><a class="navheader_parent_path" href="removeRG_en.html" title="db.removeRG()">db.removeRG()</a></div>
+<div><a class="navheader_parent_path" href="createRG_en.html" title="db.createShard()">db.createShard()</a></div>
+<div><a class="navheader_parent_path" href="removeRG_en.html" title="db.removeShard()">db.removeShard()</a></div>
 </div>
 </div>
 <div class="navfooter"><a class="link" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript Method List</span></a>  <script type="text/javascript"><!--         

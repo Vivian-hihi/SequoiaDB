@@ -85,11 +85,11 @@ if($arr['errno'] !=0 )
       <title>Cluster operation</title>
       <ul>
         <li>Select Group
-          <codeblock>//Select the name of "group" of the group, if you do not exist, it is automatically created
-//Return SequoiaGroup object
-$group = $db -> selectGroup("group");
+          <codeblock>//Select the name of "shard" of the group, if you do not exist, it is automatically created
+//Return SequoiaShard object
+$shard = $db -> selectShard("shard");
 //Test results, if successful, returns an object, failed to return NULL
-if( empty($group) )
+if( empty($shard) )
 { 
   exit();
 }</codeblock>
@@ -97,7 +97,7 @@ if( empty($group) )
         <li>Boot partition group
           <codeblock>//boot partition group for the first time will automatically activate
 //Return operation information
-$arr = $group -> start() ;
+$arr = $shard -> start() ;
 //Check the restlts
 If ( $arr['errno'] != 0 )
 {
@@ -106,7 +106,7 @@ If ( $arr['errno'] != 0 )
         <li>Select the node
           <codeblock>//Get the name, of "node" node
 //Return SequoiaNode object
-$node = $group -> getNode( 'node') ;
+$node = $shard -> getNode( 'node') ;
 //Check whether the object is empty
 If ( empty( $node ) )
 {

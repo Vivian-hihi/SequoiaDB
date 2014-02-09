@@ -10,9 +10,9 @@
       <ul>
         <li>Return information of a node named
           "node".<codeblock>> node.getNodeDetail()
-Return：1000:vmsvr2-suse-x64:60000(group)
+Return：1000:vmsvr2-suse-x64:60000(shard)
 Here "1000" is node ID（NodeID）；"vmsvr2-suse-x64" is hostname（HostName）；
-"60000" is service name（ServiceName），"(group)" is the replset name of the node.</codeblock></li>
+"60000" is service name（ServiceName），"(shard)" is the replset name of the node.</codeblock></li>
       </ul>
     </section>
   </body>

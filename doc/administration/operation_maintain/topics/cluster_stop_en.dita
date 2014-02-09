@@ -11,9 +11,9 @@
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
         <li>Get partition group
-          <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
+          <codeblock>> datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
         <li>Get the data node
-          <codeblock>> datanode = datagroup.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
+          <codeblock>> datanode = datashard.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
         <li>Stop node
           <codeblock>> datanode.stop() ;</codeblock></li>
       </ol>
@@ -26,9 +26,8 @@
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
         <li>Get partition group
-          <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
-        <li>Stop data group
-          <codeblock>> datagroup.stop() ;</codeblock></li>
+          <codeblock>> datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
+        <li>Stop data group <codeblock>> datashard.stop() ;</codeblock></li>
       </ol>
     </section>
     <section>

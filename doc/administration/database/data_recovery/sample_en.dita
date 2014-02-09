@@ -8,9 +8,9 @@
         restored<codeblock>$ /opt/sequoiadb/bin/sdb 
 >db=new Sdb('192.168.20.35',50000)
 192.168.20.35:50000
->rg=db.getRG('foo')
+>shard=db.getShard('foo')
 foo
->rg.stop() </codeblock></li>
+>shard.stop() </codeblock></li>
       <li>Recover configuration file
         <codeblock>$ cp vmsvr1-rhel-x64.51000.sdb.conf /opt/sequoiadb/conf/local/51000/sdb.conf</codeblock></li>
       <li>Recover data files
@@ -28,9 +28,9 @@ foo
         <codeblock>$ /opt/sequoiadb/bin/sdb 
 >db=new Sdb('192.168.20.35',50000)
 192.168.20.35:50000
->rg=db.getRG('foo')
+>shard=db.getShard('foo')
 foo
->rg.start()</codeblock></li>
+>shard.start()</codeblock></li>
     </ol>
     <note>It will result in data inconsistency among data nodes within replicaset if only recover
       one node.</note>

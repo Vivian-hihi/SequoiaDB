@@ -44,8 +44,8 @@
 
     <p class="p">operation methods: </p>
 
-    <pre class="pre codeblock">&gt;var catarg = db.getRG("SYSCatalogGroup");
-&gt;var node1 = catarg.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+    <pre class="pre codeblock">&gt;var catashard = db.getShard("SYSCatalog");
+&gt;var node1 = catashard.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
 &gt;node1.start()</pre>
 
     <p class="p">The first command is used to get catalog sharding,"SYSCatalogGroup" is the name of catalog

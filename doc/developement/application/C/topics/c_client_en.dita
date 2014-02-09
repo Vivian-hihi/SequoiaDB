@@ -59,22 +59,22 @@
           </note><p>ReplicaSet instances and Data Node instances can be represented by the following
             two types of Handles.<simpletable>
               <strow>
-                <stentry> sdbReplicaSetHandle </stentry>
+                <stentry> sdbShardHandle </stentry>
                 <stentry>ReplicaSet Handle </stentry>
                 <stentry> It represents a stand-alone ReplicaSet </stentry>
               </strow>
               <strow>
-                <stentry> sdbReplicaNodeHandle </stentry>
+                <stentry> sdbNodeHandle </stentry>
                 <stentry>Data Node Handle </stentry>
                 <stentry> It represents a stand-alone Data Node</stentry>
               </strow>
             </simpletable></p><p>Cluster-related operations need to use ReplicaSet Handle and Data
-            Node Handle.</p><p>The sdbReplicaSetHandle instants is to manage replicasets,including
+            Node Handle.</p><p>The sdbShardHandle instants is to manage replicasets,including
             starting and stopping replicasets,getting the status,name-information and
-            number-information of nodes in the replicaset. </p><p>The sdbReplicaNodeHandle instants
-            is to manage Data Nodes,including starting and stopping the specified data node,getting
-            the specified data node instants and maste-slave data node instants and
-            address-information of data node. </p></li>
+            number-information of nodes in the replicaset. </p><p>The sdbNodeHandle instants is to
+            manage Data Nodes,including starting and stopping the specified data node,getting the
+            specified data node instants and maste-slave data node instants and address-information
+            of data node. </p></li>
       </ul>
     </section>
     <section>

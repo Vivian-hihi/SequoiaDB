@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Monitoring node status"/>
-<meta name="description" content="Users can use the snapshot monitor the status of each node. Connect to the coord node $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 50000) ; Get partition group datagroup = db.getRG ( ..."/>
+<meta name="description" content="Users can use the snapshot monitor the status of each node. Connect to the coord node $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 50000) ; Get partition group datashard = db.getShard ( ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/monitor_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_qhj_lmp_fm"/>
@@ -46,7 +46,7 @@
 </li>
 
       <li class="li">Get partition group
-        <pre class="pre codeblock">datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+        <pre class="pre codeblock">datashard = db.getShard ( "&lt;datashard1&gt;" ) ;</pre>
 </li>
 
       <li class="li">Get the data node
@@ -76,7 +76,7 @@
       <pre class="pre codeblock">[sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ cat monitor_insert.sh
 #!/bin/bash
 ~/sequoiadb/bin/sdb "db=new Sdb('localhost', 50000)" &gt; /dev/null
-~/sequoiadb/bin/sdb "db.getRG('foo').getNode('vmsvr1-rhel-x64',51000).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
+~/sequoiadb/bin/sdb "db.getShard('foo').getNode('vmsvr1-rhel-x64',51000).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
 ~/sequoiadb/bin/sdb "quit"
 [sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ ./monitor_insert.sh
   "TotalInsert": 0,</pre>

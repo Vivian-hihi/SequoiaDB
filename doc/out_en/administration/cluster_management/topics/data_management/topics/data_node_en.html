@@ -45,11 +45,11 @@
 
     <p class="p">operation methods: </p>
 
-    <pre class="pre codeblock">&gt;var datarg = db.getRG(&lt;groupname&gt;);
-&gt;var node1 = datarg.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+    <pre class="pre codeblock">&gt;var datashard = db.getShard(&lt;shardname&gt;);
+&gt;var node1 = datashard.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
 &gt;node1.start();</pre>
 
-    <p class="p">The first command is used to get the data sharding,the param of <em class="ph i">groupname </em> is the name
+    <p class="p">The first command is used to get the data sharding,the param of <em class="ph i">shardname </em> is the name
       of data sharding.</p>
 
     <p class="p">The second command is used to create a new data node ,for the params,please refer to <a class="xref" href="../../cata_management/topics/cata_node_en.html">create new node in catalog

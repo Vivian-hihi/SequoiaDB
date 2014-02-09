@@ -151,7 +151,24 @@
       "StartTimestamp": "2013-12-28-16.13.57.864245"
     }
   ]
-}</codeblock></li>
+  }</codeblock></li>
+        <li><p>通过“主机名+服务名”查询某个节点的快照信息，如：</p>
+          <p><codeblock>db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</codeblock>
+            </p>
+          <!--<codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "Contexts": [
+    {
+      "ContextID": 11,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+    }
+  ]
+  }</codeblock>--></li> 
       </ul>
     </section>
   </body>

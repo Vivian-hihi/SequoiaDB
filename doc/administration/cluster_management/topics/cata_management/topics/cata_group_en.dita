@@ -11,7 +11,7 @@
       sharding operation after installing.Please refer to the section <xref
         href="../../../../../installation/configuration_start/topics/cluster_en.dita">Configuration
         and startup of cluster mode</xref>. operation methods: </p>
-    <codeblock>>db.createCataRG(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</codeblock>
+    <codeblock>>db.createCataShard(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</codeblock>
     <p>This command is to create a new catalog sharding,at the same time create and start a catalog
       node,amongs:</p>
     <p><b>host </b> ：specify the host name of catalog node.</p>

@@ -76,51 +76,51 @@
             file gives the conf information of starting sdbcm, as follows:</p>
 
           <a name="developement_sdbcm_en__developement_sdbcm_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="developement_sdbcm_en__developement_sdbcm_table" border="1" class="simpletable"><tr class="sthead">
-              <th valign="bottom" align="left" id="d71805e56" class="stentry">param </th>
+              <th valign="bottom" align="left" id="d71674e56" class="stentry">param </th>
 
-              <th valign="bottom" align="left" id="d71805e59" class="stentry">desciption</th>
+              <th valign="bottom" align="left" id="d71674e59" class="stentry">desciption</th>
 
-              <th valign="bottom" align="left" id="d71805e62" class="stentry">example</th>
-
-            </tr>
-<tr class="strow">
-              <td valign="top" headers="d71805e56" class="stentry">defaultPort  </td>
-
-              <td valign="top" headers="d71805e59" class="stentry">the default monitoring port of sdbcm </td>
-
-              <td valign="top" headers="d71805e62" class="stentry">defaultPort=50010</td>
+              <th valign="bottom" align="left" id="d71674e62" class="stentry">example</th>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d71805e56" class="stentry">&lt;hostname&gt;_Port   </td>
+              <td valign="top" headers="d71674e56" class="stentry">defaultPort  </td>
 
-              <td valign="top" headers="d71805e59" class="stentry">monitoring port of sdbcm in physical host.if it can't find the corresponding
+              <td valign="top" headers="d71674e59" class="stentry">the default monitoring port of sdbcm </td>
+
+              <td valign="top" headers="d71674e62" class="stentry">defaultPort=50010</td>
+
+            </tr>
+<tr class="strow">
+              <td valign="top" headers="d71674e56" class="stentry">&lt;hostname&gt;_Port   </td>
+
+              <td valign="top" headers="d71674e59" class="stentry">monitoring port of sdbcm in physical host.if it can't find the corresponding
                 param of host in the conf file,sdbcm will start with  defaultPort; if defaultPort is
                 also not exist ,then sdbcm will start the default port 50010</td>
 
-              <td valign="top" headers="d71805e62" class="stentry">&lt;hostname&gt;_Port=50010  </td>
+              <td valign="top" headers="d71674e62" class="stentry">&lt;hostname&gt;_Port=50010  </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d71805e56" class="stentry">RestartCount</td>
+              <td valign="top" headers="d71674e56" class="stentry">RestartCount</td>
 
-              <td valign="top" headers="d71805e59" class="stentry">number of restarts. That is define the max number of restarting  nodes for
+              <td valign="top" headers="d71674e59" class="stentry">number of restarts. That is define the max number of restarting  nodes for
                 sdbcm. If the param doesn't exist,then default set to -1,that is constantly
                 restart.</td>
 
-              <td valign="top" headers="d71805e62" class="stentry">RestartCount=5</td>
+              <td valign="top" headers="d71674e62" class="stentry">RestartCount=5</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d71805e56" class="stentry">RestartInterval</td>
+              <td valign="top" headers="d71674e56" class="stentry">RestartInterval</td>
 
-              <td valign="top" headers="d71805e59" class="stentry">restart interval, that is difine the max restart interval of sdbcm,the unit
+              <td valign="top" headers="d71674e59" class="stentry">restart interval, that is difine the max restart interval of sdbcm,the unit
                 is minutes. This param combine with RestartCount define the max number of restarting
                 nodes for sdbcm in the restart interval, when beyond,no longer restart.  If the
                 param doesn't exist,then default set to 0, that is doesn'tconsider the restart
                 interval .</td>
 
-              <td valign="top" headers="d71805e62" class="stentry">RestartInterval=0</td>
+              <td valign="top" headers="d71674e62" class="stentry">RestartInterval=0</td>
 
             </tr>
 </table>

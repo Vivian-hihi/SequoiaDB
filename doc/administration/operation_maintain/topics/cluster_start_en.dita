@@ -16,9 +16,10 @@
         <li>Connect to the coord node
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
-        <li>Get partition group <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
+        <li>Get partition group
+          <codeblock>> datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
         <li>Get the data node
-          <codeblock>> datanode = datagroup.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
+          <codeblock>> datanode = datashard.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
         <li>Start Node
           <codeblock>> datanode.start() ;</codeblock></li>
       </ol>
@@ -31,9 +32,9 @@
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;
 </codeblock></li>
-        <li>Get partition group <codeblock>> datagroup = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
-        <li>Start data set
-          <codeblock>> datagroup.start();</codeblock></li>
+        <li>Get partition group
+          <codeblock>> datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
+        <li>Start data set <codeblock>> datashard.start();</codeblock></li>
       </ol>
     </section>
   </body>

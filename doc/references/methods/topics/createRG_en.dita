@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_createRG">
-  <title>db.createRG()</title>
+  <title>db.createShard()</title>
   <body>
-    <section><title>db.createRG(&lt;groupname>)</title>
+    <section><title>db.createShard(&lt;shardname>)</title>
       <p>Create a replset. When creating a replset, the system will automatically generate a
-        "GroupID" for a replset.</p>
+        "ShardID" for a replset.</p>
     </section>
     <section><title>Parameter Description </title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.08* 5.78* 1.1*"
@@ -17,7 +17,7 @@
           <stentry>Not null</stentry>
         </sthead>
         <strow>
-          <stentry>groupname</stentry>
+          <stentry>name</stentry>
           <stentry>string</stentry>
           <stentry>Replset name. All replset names are unique to each other in a database
             object.</stentry>
@@ -27,7 +27,7 @@
       
     </section>
     <section><title>Format</title>
-      <p> The method "createRG()" contains the parameter "groupname", which is in the type od
+      <p> The method "createShard()" contains the parameter "shardname", which is in the type od
         string. It should not be null. </p>
       <p><codeblock>(&lt;"Replset name">)</codeblock></p>
       <note>
@@ -37,8 +37,8 @@
     </section>
     <section><title>Sample</title>
       <ul>
-        <li><p>Create a replset named "group". </p>
-          <p><codeblock>db.createRG(“group”)</codeblock></p></li>
+        <li><p>Create a replset named "shard". </p>
+          <p><codeblock>db.createShard("shard")</codeblock></p></li>
       </ul>     
     </section>
   </body>

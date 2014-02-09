@@ -55,11 +55,12 @@
 &gt; var db = new Sdb("localhost", 50000) ;</pre>
 </li>
 
-        <li class="li">Get partition group <pre class="pre codeblock">&gt; datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+        <li class="li">Get partition group
+          <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard1&gt;" ) ;</pre>
 </li>
 
         <li class="li">Get the data node
-          <pre class="pre codeblock">&gt; datanode = datagroup.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datanode = datashard.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
 </li>
 
         <li class="li">Start Node
@@ -81,11 +82,11 @@
 </pre>
 </li>
 
-        <li class="li">Get partition group <pre class="pre codeblock">&gt; datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+        <li class="li">Get partition group
+          <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard1&gt;" ) ;</pre>
 </li>
 
-        <li class="li">Start data set
-          <pre class="pre codeblock">&gt; datagroup.start();</pre>
+        <li class="li">Start data set <pre class="pre codeblock">&gt; datashard.start();</pre>
 </li>
 
       </ol>

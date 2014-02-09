@@ -46,22 +46,22 @@
             following two types of classes. </p><p>
             <simpletable>
               <strow>
-                <stentry> sdbReplicaSet </stentry>
+                <stentry> sdbShard </stentry>
                 <stentry> ReplicaSet class</stentry>
                 <stentry> It represents a stand-alone ReplicaSet </stentry>
               </strow>
               <strow>
-                <stentry> sdbReplicaNode </stentry>
+                <stentry> sdbShardNode </stentry>
                 <stentry> data node clsaa </stentry>
-                <stentry> It represents a stand-alone Data Node  </stentry>
+                <stentry> It represents a stand-alone Data Node </stentry>
               </strow>
             </simpletable>
           </p> Cluster-related operations need to use ReplicaSet instance and Data Node instance.
-            <p>The sdbReplicaSet instants is to manage replicasets,including starting and stopping
+            <p>The sdbShard instants is to manage replicasets,including starting and stopping
             replicasets,getting the status,name-information and number-information of nodes in the
-            replicaset. </p><p>The sdbReplicaNode instants is to manage Data Nodes,including
-            starting and stopping the specified data node,getting the specified data node instants
-            and maste-slave data node instants and address-information of data node. </p></li>
+            replicaset. </p><p>The sdbShardNode instants is to manage Data Nodes,including starting
+            and stopping the specified data node,getting the specified data node instants and
+            maste-slave data node instants and address-information of data node. </p></li>
       </ul></section>
     <section><title>Error Information</title> Every function has a returned-value.If a function is
       successfully invoked,then return SDB_OK,else return error information.If the returned-value is

@@ -82,34 +82,39 @@
             table space is required database instance.</p>
 </li>
 
-        <li class="li">Examples of cluster operation <p class="p">SequoiaDB cluster operations are divided into two levels: 1) partition group  2) data nodes </p>
+        <li class="li">Examples of cluster operation <p class="p">SequoiaDB cluster operations are divided into two
+            levels: 1) partition group 2) data nodes </p>
 <div class="note note"><span class="notetitle">Note:</span> 
-          <p class="p">Partition group package of three types: Coordination partition group, cataloging partition group, the data partition group.</p>
+            <p class="p">Partition group package of three types: Coordination partition group, cataloging
+              partition group, the data partition group.</p>
 
-        </div>
-<p class="p">Partition group instance and instance data node instances can be expressed in two classes.</p>
+          </div>
+<p class="p">Partition group instance and instance data node instances can be expressed in
+            two classes.</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-            <td valign="top" class="stentry">SequoiaGroup</td>
+              <td valign="top" class="stentry">SequoiaShard</td>
 
-            <td valign="top" class="stentry">partition group class</td>
+              <td valign="top" class="stentry">partition group class</td>
 
-            <td valign="top" class="stentry">Partition group instance represents a separate partition group </td>
+              <td valign="top" class="stentry">Partition group instance represents a separate partition group </td>
 
-          </tr>
+            </tr>
 <tr class="strow">
-            <td valign="top" class="stentry">SequoiaNode</td>
+              <td valign="top" class="stentry">SequoiaNode</td>
 
-            <td valign="top" class="stentry">Data node class</td>
+              <td valign="top" class="stentry">Data node class</td>
 
-            <td valign="top" class="stentry">data node instance represents a single data node </td>
+              <td valign="top" class="stentry">data node instance represents a single data node </td>
 
-          </tr>
+            </tr>
 </table>
-<p class="p">And requires the use of cluster-related operations and data partition group node instance.</p>
-<p class="p">Ecamples SequoiaGroup for management partition 
-          group. Its operations include start, stop partition groups, access to state partition group node name information, the number of messages. Examples SequoiaNode 
-          for managing node. Its operations include start, stop spectfied node for the specified node instance, to obtain a master-slave node instance, access to data 
-          node address information.</p>
+<p class="p">And requires the use of cluster-related operations and data partition
+            group node instance.</p>
+<p class="p">Ecamples SequoiaShard for management partition group. Its
+            operations include start, stop partition groups, access to state partition group node
+            name information, the number of messages. Examples SequoiaNode for managing node. Its
+            operations include start, stop spectfied node for the specified node instance, to obtain
+            a master-slave node instance, access to data node address information.</p>
 </li>
 
       </ul>

@@ -57,9 +57,9 @@ catalogaddr=vmsvr1-rhel-x64:60003</pre>
         <pre class="pre codeblock">$ ~/sequoiadb/bin/sdb
 &gt;db=new Sdb('192.168.20.35',50000)
 192.168.20.35:50000
-&gt;rg=db.getRG('foo')
+&gt;shard=db.getShard('foo')
 foo
-&gt;node=rg.getNode('vmsvr1-rhel-x64:51000')
+&gt;node=shard.getNode('vmsvr1-rhel-x64:51000')
 vmsvr1-rhel-x64:51000
 &gt;node.stop()</pre>
 </li>
@@ -78,9 +78,9 @@ vmsvr1-rhel-x64:51000
         node<pre class="pre codeblock">$ ~/sequoiadb/bin/sdb 
 &gt;db=new Sdb('192.168.20.35',50000)
 192.168.20.35:50000
-&gt;rg=db.getRG('foo')
+&gt;shard=db.getShard('foo')
 foo
-&gt;node=rg.getNode('vmsvr1-rhel-x64:51000')
+&gt;node=shard.getNode('vmsvr1-rhel-x64:51000')
 vmsvr1-rhel-x64:51000
 &gt;node.start()</pre>
 </li>

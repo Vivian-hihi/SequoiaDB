@@ -41,16 +41,20 @@
           <stentry>Get the quotation of a collection space  </stentry>
           <stentry>db.getCS("foo")</stentry>
         </strow>
-          
         <strow>
-          <stentry><xref href="createRG_en.dita">db.createRG()</xref></stentry>
+          <stentry><xref href="createRG_en.dita">db.createShard()</xref></stentry>
           <stentry>Create a replset</stentry>
-          <stentry>db.createRG("group")</stentry>
+          <stentry>db.createShard("shard")</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getRG_en.dita">db.getRG()</xref></stentry>
+            <stentry><xref href="removeRG_en.dita">db.removeShard()</xref></stentry>
+            <stentry>Remove a replset</stentry>
+            <stentry>db.removeShard("shard")</stentry>
+        </strow>
+        <strow>
+          <stentry><xref href="getRG_en.dita">db.getShard()</xref></stentry>
           <stentry>Get the quotation of a replset</stentry>
-          <stentry>db.getRG("group")</stentry>
+          <stentry>db.getShard("shard")</stentry>
         </strow>
           
         <strow>
@@ -70,9 +74,9 @@
         </strow>
           
         <strow>
-          <stentry><xref href="listReplicaGroups_en.dita">db.listReplicaGroups()</xref></stentry>
+          <stentry><xref href="listReplicaGroups_en.dita">db.listShards()</xref></stentry>
           <stentry>Enumerate replsets</stentry>
-          <stentry>db.listReplicaGroups()</stentry>
+          <stentry>db.listShards()</stentry>
         </strow>
           
         <strow>
@@ -87,9 +91,9 @@
         </strow>
           
         <strow>
-          <stentry><xref href="startRG_en.dita">db.startRG()</xref></stentry>
+          <stentry><xref href="startRG_en.dita">db.startShard()</xref></stentry>
           <stentry>Start a replset</stentry>
-          <stentry>db.startRG("groupName")</stentry>
+          <stentry>db.startShard("ShardName")</stentry>
         </strow>
           <strow>
             <stentry><xref href="createUsr_en.dita">db.createUsr()</xref></stentry>
@@ -243,7 +247,7 @@
         <strow>
           <stentry><xref href="dbsplit_en.dita">db.collectionspace.collection.split()</xref></stentry>
           <stentry>Split a collection</stentry>
-          <stentry>db.foo.bar.split("group1","group2",{age:20})</stentry>
+          <stentry>db.foo.bar.split("shard1","shard2",{age:20})</stentry>
         </strow>
         
       </simpletable>

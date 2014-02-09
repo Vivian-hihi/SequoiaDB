@@ -41,15 +41,15 @@
         </p><p>2.Connect to coord node </p><p>Input in shell:
           <codeblock>> var db = new Sdb("localhost",50000)</codeblock> Here "50000" is the service
           port of coord node. </p><p>3.Create a catalog node group</p><p>
-          <codeblock>>db.createCataRG("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</codeblock>
+          <codeblock>>db.createCataShard("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</codeblock>
         </p><p>Here "sdbserver1" is the hostname of the 1st server.</p><p>Here "30000" is the
           service port of catalog node. </p><p>" /opt/sequoiadb/database/cata/30000" is the path of
           data file of catalog node.</p><p>4.Wait for 5 second, and add 2 more catalog nodes</p><p>
-          <codeblock>>var catarg = db.getRG("SYSCatalogGroup");      </codeblock>
+          <codeblock>>var catashard = db.getShard("SYSCatalogGroup");      </codeblock>
         </p><p>
-          <codeblock>>var node1 = catarg.createNode("sdbserver2", 30000,"/opt/sequoiadb/database/cata/30000") </codeblock>
+          <codeblock>>var node1 = catashard.createNode("sdbserver2", 30000,"/opt/sequoiadb/database/cata/30000") </codeblock>
         </p><p>
-          <codeblock>>var node2 = catarg.createNode("sdbserver3", 30000,"/opt/sequoiadb/database/cata/30000")</codeblock>
+          <codeblock>>var node2 = catashard.createNode("sdbserver3", 30000,"/opt/sequoiadb/database/cata/30000")</codeblock>
         </p><p>5.Start catalog node group <codeblock>>node1.start()
 >node2.start()</codeblock></p><p>
           <note>
@@ -58,18 +58,18 @@
           </note>
         </p></li>
       <li>Step 4: Configurate and start data nodes with statements<p>1.Create data node group</p><p>
-          <codeblock>>var datarg = db.createRG("datagroup1")</codeblock>
+          <codeblock>>var datashard = db.createShard("datashard1")</codeblock>
         </p><p>2.Add data node</p><p>
-          <codeblock>>datarg.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   </codeblock>
+          <codeblock>>datashard.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   </codeblock>
         </p><p>
-          <codeblock>>datarg.createNode("sdbserver2", 51000,"/opt/sequoiadb/database/data/51000")</codeblock>
+          <codeblock>>datashard.createNode("sdbserver2", 51000,"/opt/sequoiadb/database/data/51000")</codeblock>
         </p><p>
-          <codeblock>>datarg.createNode("sdbserver3", 51000, "/opt/sequoiadb/database/data/51000")</codeblock>
+          <codeblock>>datashard.createNode("sdbserver3", 51000, "/opt/sequoiadb/database/data/51000")</codeblock>
         </p><note>
           <p>When creating a node, the first parameter should be "hostname", rather than IP of the
             host.</p>
         </note><p>3.Start data node group</p><p>
-          <codeblock>>datarg.start()</codeblock>
+          <codeblock>>datashard.start()</codeblock>
         </p><p>4.Exit SequoiaDB shell console</p><p>
           <codeblock>>quit</codeblock>
         </p></li>

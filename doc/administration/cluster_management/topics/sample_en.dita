@@ -24,10 +24,8 @@
             </strow>
             <strow>
               <stentry>data sharding group</stentry>
-              <stentry>
-                one data sharding group,group name is datagroup1,contain one data node:<fig></fig>
-                data node one:service host name is vmsvr1-suse-x64,port is 51000
-              </stentry>
+              <stentry> one data sharding group,group name is datashard1,contain one data
+                node:<fig/> data node one:service host name is vmsvr1-suse-x64,port is 51000 </stentry>
             </strow>
             <strow>
               <stentry>coord node</stentry>
@@ -53,7 +51,10 @@
             </strow>
             <strow>
               <stentry>data sharding group</stentry>
-              <stentry>one data sharding group,group name is datagroup1,contain two data nodes:<fig></fig>data node one:service host name is vmsvr1-suse-x64,port is 51000<fig></fig>data node two:service host name is vmsvr2-suse-x64,port is 51000</stentry>
+              <stentry>one data sharding group,group name is datashard1,contain two data
+                nodes:<fig/>data node one:service host name is vmsvr1-suse-x64,port is
+                51000<fig/>data node two:service host name is vmsvr2-suse-x64,port is
+                51000</stentry>
             </strow>
             <strow>
               <stentry>coord node</stentry>
@@ -101,13 +102,13 @@ ulimit –Su 32000      //the number of threads limit</codeblock>
             </i>command line,execute the following command to add a copy data node to current data
             sharding
             group:</p><codeblock>> var db = new Sdb("localhost",50000)
-> var datarg = db.getRG("datagroup1")
+> var datashard = db.getShard("datashard")
 >node=rg.createNode("vmsvr2-suse-x64",51000,"/opt/sequoiadb /database/data/51000")
 > node.start()      </codeblock><p>3.
             In the <i>SequoiaDB shell </i>command line,execute the following command to check the
             configuration information of the sharding group,you can see a new data node have added
             to the data
-          group:</p><codeblock>>db.listReplicaGroups();
+          group:</p><codeblock>>db.listShards();
 …
 {
   "Group": [

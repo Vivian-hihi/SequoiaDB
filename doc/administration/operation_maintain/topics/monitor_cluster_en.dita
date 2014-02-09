@@ -8,7 +8,7 @@
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 50000) ;</codeblock></li>
       <li>Get cluster status
-        <codeblock>> db.listReplicaGroups()
+        <codeblock>> db.listShards()
 {
   "Group": [
     {

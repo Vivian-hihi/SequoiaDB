@@ -203,43 +203,47 @@ bson_destroy( &amp;obj ) ;</pre>
       
       <ul class="ul">
         <li class="li"> ReplicaSet Operations <p class="p">ReplicaSet Operations contains creating
-            ReplicaSets(sdbCreateReplicaSet)、getting ReplicaSet handles(sdbGetReplicaSet)、starting
-            ReplicaSet(sdbStartReplicaSet) and stopping ReplicaSet(sdbStopReplicaSet).The following
-            shows the ReplicaSet Operations,and real application should include error detecting
-            ,etc.
+            ReplicaSets(sdbCreateShard)、getting ReplicaSet handles(sdbGetShard)、starting
+            ReplicaSet(sdbStartShard) and stopping ReplicaSet(sdbStopShard). The following shows the
+            ReplicaSet Operations, and real application should include error detecting, etc.
           </p>
 <pre class="pre codeblock">   // define a ReplicaSet Instance
-   sdbReplicaSet rg  ;
+   sdbShard shard  ;
    // define a null map object,it means that no more configuration information when create data nodes
    map&lt;string,string&gt; config ;
    …
    // create a catalog ReplicaSet at first
-   connection.createReplicaCataSet ( HOST_NAME, SERVICE_NAME,
-                          CATALOG_SET_PATH , NULL ) ;
+   connection.createCataShard ( HOST_NAME, SERVICE_NAME,
+                          CATALOG_SHARD_PATH , NULL ) ;
    // sleep 5s to wait starting catalog ReplicaSet and electing master and slave.
    sleep( 5 ) ;
    // create data ReplicaSet
-   connection.createReplicaSet ( REPLICA_SET_NAME, rg ) ;
+   connection.createShard ( REPLICA_SHARD_NAME, shard ) ;
  
    // create data nodes
-   rg.createNode ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config ) ;
+   shard.createNode ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config ) ;
    …
    // start ReplicaSet
-   rg.start () ;</pre>
+   shard.start () ;</pre>
 </li>
 
-        <li class="li">Data Node Operations  <p class="p">Data Node Operations contains create data node(sdbCreateReplicaNode)、get master data node(sdbGetReplicaNodeMaster)、get slave data node(sdbGetReplicaNodeSlave)、start data node (sdbStartReplicaNode)and stop data node(sdbStopReplicaNode),etc.The following shows the Data Node Operations,and real application should include error detecting ,etc. </p>
+        <li class="li">Data Node Operations <p class="p">Data Node Operations contains create data
+            node(sdbShardcreateNode)、get master data node(sdbShardgetMaster)、get slave data
+            node(sdbShardGetSlave)、start data node (sdbNodeStop) and stop data
+            node(sdbNodeStop),etc. The following shows the Data Node Operations, and real
+            application should include error detecting, etc.
+          </p>
 <pre class="pre codeblock">   // define a data node instance
-   sdbReplicaNode masternode ;
-   sdbReplicaNode slavenode ;
+   sdbNode masternode ;
+   sdbNode slavenode ;
    …
    // sleep 15s to wait starting data ReplicaSet and electing master and slave
    sleep( 15 ) ;
 
    // get master data node
-   rg.getMaster( masternode ) ;
+   shard.getMaster( masternode ) ;
    //get slave data node
-   rg.getSlave( slavenode ) ;</pre>
+   shard.getSlave( slavenode ) ;</pre>
 </li>
 
       </ul>

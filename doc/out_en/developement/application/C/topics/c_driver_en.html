@@ -186,44 +186,44 @@ dbInsert ( collection, &amp;obj ) ;</pre>
         
         <ul class="ul">
            <li class="li">ReplicaSet Operations <div class="p">ReplicaSet Operations contains creating
-                  ReplicaSets(sdbCreateReplicaSet)、getting ReplicaSet
-                  handles(sdbGetReplicaSet)、starting ReplicaSet(sdbStartReplicaSet) and stopping
-                  ReplicaSet(sdbStopReplicaSet).The following shows the ReplicaSet Operations,and
-                  real application should include error detecting ,etc.
+                  ReplicaSets(sdbCreateShard)、getting ReplicaSet handles(sdbGetShard)、starting
+                  ReplicaSet(sdbStartShard) and stopping ReplicaSet(sdbStopShard). The following
+                  shows the ReplicaSet Operations, and real application should include error
+                  detecting ,etc.
                   <pre class="pre codeblock">// define a ReplicaSet Handle
-   sdbReplicaSetHandle rg   = 0 ;
+   sdbShardHandle shard   = 0 ;
    …
 // create a catalog ReplicaSet at first
-   sdbCreateReplicaCataSet ( connection, HOST_NAME, SERVICE_NAME,
+   sdbCreateCataShard ( connection, HOST_NAME, SERVICE_NAME,
                                CATALOG_SET_PATH , NULL ) ;
 // sleep 5s to wait starting catalog ReplicaSet and electing master and slave.
    sleep( 5 ) ;
 // create data ReplicaSet
-   sdbCreateReplicaSet ( connection, REPLICA_SET_NAME, &amp;rg ) ;
+   sdbCreateShard ( connection, SHARD_NAME, &amp;shard ) ;
  
 // create data nodes
-   sdbCreateReplicaNode ( rg, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
+   sdbCreateNode ( shard, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
 // start ReplicaSet
-   sdbStartReplicaSet( rg ) ;</pre>
+   sdbStartShard( shard ) ;</pre>
 </div>
 </li>
 
-           <li class="li">Data Node Operations <div class="p">Data Node Operations  contains create data
-                  node(sdbCreateReplicaNode)、get master data node(sdbGetReplicaNodeMaster)、get slave
-                  data node(sdbGetReplicaNodeSlave)、start data node (sdbStartReplicaNode)and stop
-                  data node(sdbStopReplicaNode),etc.The following shows the Data Node Operations,and
-                  real application should include error detecting ,etc.
+           <li class="li">Data Node Operations <div class="p">Data Node Operations contains create data
+                  node(sdbCreateNode)、get master data node(sdbGetNodeMaster)、get slave data
+                  node(sdbGetNodeSlave)、start data node (sdbStartNode) and stop data
+                  node(sdbStopNode), etc. The following shows the Data Node Operations, and real
+                  application should include error detecting, etc.
                   <pre class="pre codeblock">   // define a data node handle 
-   sdbReplicaNodeHandle masternode   = 0 ;
-   sdbReplicaNodeHandle slavenode    = 0 ;
+   sdbNodeHandle masternode   = 0 ;
+   sdbNodeHandle slavenode    = 0 ;
    …
    // sleep 10s to wait starting data ReplicaSet and electing master and slave
    sleep( 10 ) ;
 
    //get master data node
-   sdbGetReplicaNodeMaster ( rg, &amp;masternode ) ;
+   sdbGetNodeMaster ( shard, &amp;masternode ) ;
    //get slave data node
-   sdbGetReplicaNodeSlave ( rg, &amp;slavenode ) ;         </pre>
+   sdbGetNodeSlave ( shard, &amp;slavenode ) ;         </pre>
 </div>
 
             </li>

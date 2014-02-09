@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_getSlave">
-  <title>rg.getSlave()</title>
+  <title>shard.getSlave()</title>
   <body>
-    <section><title>rg.getSlave()</title>
+    <section><title>shard.getSlave()</title>
       <p>Return the slave nodes in replset.</p>
     </section>
     <section><title>Sample</title>
       <ul>
         <li><p>Return slave nodes in replset:</p>
-          <codeblock>> rg.getSlave()
+          <codeblock>> shard.getSlave()
 Return: vmsvr2-suse-x64:70010</codeblock></li>
       </ul>
     </section>

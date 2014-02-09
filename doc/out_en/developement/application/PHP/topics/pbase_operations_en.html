@@ -134,11 +134,11 @@ if($arr['errno'] !=0 )
       
       <ul class="ul">
         <li class="li">Select Group
-          <pre class="pre codeblock">//Select the name of "group" of the group, if you do not exist, it is automatically created
-//Return SequoiaGroup object
-$group = $db -&gt; selectGroup("group");
+          <pre class="pre codeblock">//Select the name of "shard" of the group, if you do not exist, it is automatically created
+//Return SequoiaShard object
+$shard = $db -&gt; selectShard("shard");
 //Test results, if successful, returns an object, failed to return NULL
-if( empty($group) )
+if( empty($shard) )
 { 
   exit();
 }</pre>
@@ -148,7 +148,7 @@ if( empty($group) )
         <li class="li">Boot partition group
           <pre class="pre codeblock">//boot partition group for the first time will automatically activate
 //Return operation information
-$arr = $group -&gt; start() ;
+$arr = $shard -&gt; start() ;
 //Check the restlts
 If ( $arr['errno'] != 0 )
 {
@@ -159,7 +159,7 @@ If ( $arr['errno'] != 0 )
         <li class="li">Select the node
           <pre class="pre codeblock">//Get the name, of "node" node
 //Return SequoiaNode object
-$node = $group -&gt; getNode( 'node') ;
+$node = $shard -&gt; getNode( 'node') ;
 //Check whether the object is empty
 If ( empty( $node ) )
 {

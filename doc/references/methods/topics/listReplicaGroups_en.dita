@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_listReplicaGroups">
-  <title>db.listReplicaGroups()</title>
+  <title>db.listShards()</title>
   <body>
-    <section><title>db.listReplicaGroups()</title>
+    <section><title>db.listShards()</title>
       <p>List all replsets:</p>
     </section>
     <section><title>Sample</title>
       <ul>
         <li>Return information of all replsets:
-          <codeblock>> db.listReplicaGroups()
+          <codeblock>> db.listShards()
 Return：{
   "Group": [
     {
@@ -70,8 +70,8 @@ Return：{
   }
   }</codeblock>
           This replset has 2 nodes: 60000 and 60010. Node 60010 is the master node.<xref
-            href="../../../administration/database/topics/list/list_groups_en.dita">Click here to know
-            more about details of replset</xref></li>
+            href="../../../administration/database/topics/list/list_groups_en.dita">Click here to
+            know more about details of replset</xref></li>
       </ul>
     </section>
   </body>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.split()"/>
-<meta name="description" content="db.collectionspace.collection.split(&lt;source group&gt;,&lt;target group&gt;,&lt;condition&gt;|&lt;percent(0~100)&gt;) At least two sharding groups environment,the data records will be cut into different sharding group ..."/>
+<meta name="description" content="db.collectionspace.collection.split(&lt;source shard&gt;,&lt;target shard&gt;,&lt;condition&gt;|&lt;percent(0~100)&gt;) At least two sharding groups environment,the data records will be cut into different sharding group ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/cluster/topics/split_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/concepts/cluster/topics/sharding_en.html"/>
@@ -39,8 +39,8 @@
   <h1 class="title topictitle1">db.collectionspace.collection.split()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.split(&lt;source group&gt;,&lt;target
-      group&gt;,&lt;condition&gt;|&lt;percent(0~100)&gt;)</h2>
+    <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.split(&lt;source shard&gt;,&lt;target
+        shard&gt;,&lt;condition&gt;|&lt;percent(0~100)&gt;)</h2>
       <p class="p">At least two sharding groups environment,the data records will be cut into different
         sharding group according to the specified conditions.</p>
 
@@ -48,53 +48,53 @@
 
     <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d130004e26" class="stentry">Parameter Name</th>
+          <th valign="bottom" align="left" id="d129803e26" class="stentry">Parameter Name</th>
 
-          <th valign="bottom" align="left" id="d130004e29" class="stentry">Parameter Type</th>
+          <th valign="bottom" align="left" id="d129803e29" class="stentry">Parameter Type</th>
 
-          <th valign="bottom" align="left" id="d130004e32" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d129803e32" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d130004e35" class="stentry">Not null</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d130004e26" class="stentry">source group</td>
-
-          <td valign="top" headers="d130004e29" class="stentry">string</td>
-
-          <td valign="top" headers="d130004e32" class="stentry">The source sharding group.</td>
-
-          <td valign="top" headers="d130004e35" class="stentry">yes</td>
+          <th valign="bottom" align="left" id="d129803e35" class="stentry">Not null</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d130004e26" class="stentry">target group</td>
+          <td valign="top" headers="d129803e26" class="stentry">source shard</td>
 
-          <td valign="top" headers="d130004e29" class="stentry">string</td>
+          <td valign="top" headers="d129803e29" class="stentry">string</td>
 
-          <td valign="top" headers="d130004e32" class="stentry">The target sharding group.</td>
+          <td valign="top" headers="d129803e32" class="stentry">The source sharding group.</td>
 
-          <td valign="top" headers="d130004e35" class="stentry">yes</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d130004e26" class="stentry">condition</td>
-
-          <td valign="top" headers="d130004e29" class="stentry">json object</td>
-
-          <td valign="top" headers="d130004e32" class="stentry">Range split condition</td>
-
-          <td valign="top" headers="d130004e35" class="stentry">condition or percent</td>
+          <td valign="top" headers="d129803e35" class="stentry">yes</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d130004e26" class="stentry">percent(0~100)</td>
+          <td valign="top" headers="d129803e26" class="stentry">target shard</td>
 
-          <td valign="top" headers="d130004e29" class="stentry">duble</td>
+          <td valign="top" headers="d129803e29" class="stentry">string</td>
 
-          <td valign="top" headers="d130004e32" class="stentry">percent split condition</td>
+          <td valign="top" headers="d129803e32" class="stentry">The target sharding group.</td>
 
-          <td valign="top" headers="d130004e35" class="stentry">condition or percent</td>
+          <td valign="top" headers="d129803e35" class="stentry">yes</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d129803e26" class="stentry">condition</td>
+
+          <td valign="top" headers="d129803e29" class="stentry">json object</td>
+
+          <td valign="top" headers="d129803e32" class="stentry">Range split condition</td>
+
+          <td valign="top" headers="d129803e35" class="stentry">condition or percent</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d129803e26" class="stentry">percent(0~100)</td>
+
+          <td valign="top" headers="d129803e29" class="stentry">duble</td>
+
+          <td valign="top" headers="d129803e32" class="stentry">percent split condition</td>
+
+          <td valign="top" headers="d129803e35" class="stentry">condition or percent</td>
 
         </tr>
 </table>
@@ -103,22 +103,22 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">Format</h2>
-      <p class="p">Data spliting is divided into range-spliting and percent-spliting,"source group" and
-        "target group"are common params,and are string type;the param "condition" is filled when
+      <p class="p">Data spliting is divided into range-spliting and percent-spliting,"source shard" and
+        "target shard"are common params,and are string type;the param "condition" is filled when
         range spliting,it is a object of json structure;param "percent" is filled when
         percent-spliting,it is a int type.</p>
 
       <ul class="ul">
-        <li class="li"> range-spliting<div class="p">Range Sharding use exact conditions when range-spliting,while Hash
-            Sharding use "Partition"(number of slices) conditions.The starting condition is a
-            required field and the ending condition is a optional condition when spliting,if the
-            ending condition doesn't fill,then it default as the max range of data that "source
-            group"
-            contains.<pre class="pre codeblock">("&lt;source group&gt;","&lt;target group&gt;"，&lt;condition&gt;) </pre>
+        <li class="li"> range-spliting<div class="p">Range Sharding use exact conditions when range-spliting, while Hash
+            Sharding use "Partition"(number of slices) conditions. The starting condition is a
+            required field and the ending condition is a optional condition when spliting, if the
+            ending condition doesn't fill, then it default as the max range of data that "source
+            shard"
+            contains.<pre class="pre codeblock">("&lt;source shard&gt;","&lt;target shard&gt;"，&lt;condition&gt;) </pre>
 </div>
 </li>
 
-        <li class="li">percent-spliting<pre class="pre codeblock">db.foo.bar.split("&lt;source group&gt;","&lt;target group&gt;"，&lt;percent&gt;) </pre>
+        <li class="li">percent-spliting<pre class="pre codeblock">db.foo.bar.split("&lt;source shard&gt;","&lt;target shard&gt;"，&lt;percent&gt;) </pre>
 </li>
 
       </ul>
@@ -128,14 +128,14 @@
     <div class="section"><h2 class="title sectiontitle">Sample</h2>
       <ul class="ul">
         <li class="li">Range-spliting of Hash Sharding
-          <pre class="pre codeblock">db.foo.bar.split("group1", "group2",{Partition:10},{Partition:20}) </pre>
+          <pre class="pre codeblock">db.foo.bar.split("shard1", "shard2",{Partition:10},{Partition:20}) </pre>
 </li>
 
         <li class="li">Range-spliting of Range
-          Sharding<pre class="pre codeblock">db.foo.bar.split("group1", "group2",{$and:[{a:{$lt:10}},{b:{$lt:20}}]})</pre>
+          Sharding<pre class="pre codeblock">db.foo.bar.split("shard1", "shard2",{$and:[{a:{$lt:10}},{b:{$lt:20}}]})</pre>
 </li>
 
-        <li class="li">Percent-spliting<pre class="pre codeblock">db.foo.bar.split("group1", "group2", 50) </pre>
+        <li class="li">Percent-spliting<pre class="pre codeblock">db.foo.bar.split("shard1", "shard2", 50) </pre>
 </li>
 
       </ul>

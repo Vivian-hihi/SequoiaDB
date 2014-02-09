@@ -54,11 +54,11 @@
 &gt; var db = new Sdb("localhost", 50000) ;</pre>
 </li>
 
-        <li class="li">得到分区组 <pre class="pre codeblock">&gt; datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+        <li class="li">得到分片组 <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
 </li>
 
         <li class="li">得到数据节点
-          <pre class="pre codeblock">&gt; datanode = datagroup.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datanode = datashard.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
 </li>
 
         <li class="li">启动节点
@@ -80,11 +80,11 @@
 </pre>
 </li>
 
-        <li class="li">得到分区组 <pre class="pre codeblock">&gt; datagroup = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
+        <li class="li">得到分片组 <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
 </li>
 
         <li class="li">启动数据组
-        <pre class="pre codeblock">&gt; datagroup.start();</pre>
+        <pre class="pre codeblock">&gt; datashard.start();</pre>
 </li>
 
       </ol>

@@ -7,15 +7,15 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.getRG()"/>
-<meta name="description" content="db.getRG(&lt;name&gt;|&lt;id&gt;) 返回分片组的引用。 参数描述 参数名 参数类型 描述 是否必填 name string 分片组名。同一个数据库对象中，分片组名唯一。 name和id任选 id int 分片组id。创建分组时系统自动分配。 name和id任选 格式 getRG()方法定于格式包含name或id字段，name为字符串型，id为int型。 ..."/>
+<meta name="DC.Title" content="db.getShard()"/>
+<meta name="description" content="db.getShard(&lt;name&gt;|&lt;id&gt;) 返回分片组的引用。 参数描述 参数名 参数类型 描述 是否必填 name string 分片组名。同一个数据库对象中，分片组名唯一。 name和id任选 id int 分片组id。创建分组时系统自动分配。 name和id任选 格式 getShard()方法定于格式包含name或id字段，name为字符串型，id为int型。 ..."/>
 <meta name="DC.Relation" scheme="URI" content="createRG.html"/>
 <meta name="DC.Relation" scheme="URI" content="removeRG.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="references_method_createRG"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.getRG()</title>
+<title>db.getShard()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -34,43 +34,43 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span></div></td><td width="50%"/></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.getRG()</h1>
+  <h1 class="title topictitle1">db.getShard()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.getRG(&lt;name&gt;|&lt;id&gt;)</h2>
+    <div class="section"><h2 class="title sectiontitle">db.getShard(&lt;name&gt;|&lt;id&gt;)</h2>
       <p class="p">返回分片组的引用。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d137557e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d137356e26" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d137557e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d137356e29" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d137557e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d137356e32" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d137557e35" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d137557e26" class="stentry">name</td>
-
-          <td valign="top" headers="d137557e29" class="stentry">string</td>
-
-          <td valign="top" headers="d137557e32" class="stentry">分片组名。同一个数据库对象中，分片组名唯一。</td>
-
-          <td valign="top" headers="d137557e35" class="stentry">name和id任选</td>
+          <th valign="bottom" align="left" id="d137356e35" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d137557e26" class="stentry">id</td>
+          <td valign="top" headers="d137356e26" class="stentry">name</td>
 
-          <td valign="top" headers="d137557e29" class="stentry">int</td>
+          <td valign="top" headers="d137356e29" class="stentry">string</td>
 
-          <td valign="top" headers="d137557e32" class="stentry">分片组id。创建分组时系统自动分配。</td>
+          <td valign="top" headers="d137356e32" class="stentry">分片组名。同一个数据库对象中，分片组名唯一。</td>
 
-          <td valign="top" headers="d137557e35" class="stentry">name和id任选</td>
+          <td valign="top" headers="d137356e35" class="stentry">name和id任选</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d137356e26" class="stentry">id</td>
+
+          <td valign="top" headers="d137356e29" class="stentry">int</td>
+
+          <td valign="top" headers="d137356e32" class="stentry">分片组id。创建分组时系统自动分配。</td>
+
+          <td valign="top" headers="d137356e35" class="stentry">name和id任选</td>
 
         </tr>
 </table>
@@ -79,7 +79,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">getRG()方法定于格式包含name或id字段，name为字符串型，id为int型。 指定的分组名或id值要在数据库对象中存在，否则出现操作异常。 </p>
+      <p class="p">getShard()方法定于格式包含name或id字段，name为字符串型，id为int型。 指定的分组名或id值要在数据库对象中存在，否则出现操作异常。 </p>
 
       <div class="p"><pre class="pre codeblock">("&lt;分片组名&gt;"|&lt;id&gt;)</pre>
 </div>
@@ -94,16 +94,16 @@
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">指定name值，返回分片组group的引用</p>
+        <li class="li"><p class="p">指定name值，返回分片组shard的引用</p>
 
-         <div class="p"><pre class="pre codeblock">db.getRG("group")</pre>
+         <div class="p"><pre class="pre codeblock">db.getShard("shard")</pre>
 </div>
 </li>
 
         <li class="li">
-          <p class="p">指定id值，返回分片组group的引用</p>
+          <p class="p">指定id值，返回分片组shard的引用</p>
 
-          <div class="p"><pre class="pre codeblock">db.getRG(1000)</pre>
+          <div class="p"><pre class="pre codeblock">db.getShard(1000)</pre>
 </div>
 
         </li>
@@ -116,8 +116,8 @@
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="createRG.html" title="db.createRG()">db.createRG()</a></div>
-<div><a class="navheader_parent_path" href="removeRG.html" title="db.removeRG()">db.removeRG()</a></div>
+<div><a class="navheader_parent_path" href="createRG.html" title="db.createShard()">db.createShard()</a></div>
+<div><a class="navheader_parent_path" href="removeRG.html" title="db.removeShard()">db.removeShard()</a></div>
 </div>
 </div>
 <div class="navfooter"><script type="text/javascript"><!--         

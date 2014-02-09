@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_getNode">
-  <title>rg.getNode()</title>
+  <title>shard.getNode()</title>
   <body>
-    <section><title>rg.getNode(&lt;nodename>|&lt;hostname>,&lt;servicename>)</title>
+    <section><title>shard.getNode(&lt;nodename>|&lt;hostname>,&lt;servicename>)</title>
       <p>Return information of specified node.</p>
     </section>
     <section><title>Parameter Description</title>
@@ -36,14 +36,14 @@
       
     </section>
     <section><title>Format</title>
-      <p>The method "rg.getNode()" has 2 parameter. The first one is node name or hostname. The
+      <p>The method "shard.getNode()" has 2 parameter. The first one is node name or hostname. The
         secend one is server name. The types of the 2 parameters are both string. And they should
         not be null.<codeblock>("&lt;Node name>|&lt;hostname>","&lt;server name>")</codeblock></p>
     </section>
     <section><title>Sample</title>
       <ul>
         <li>Return node according to specified hostname and server
-          name<codeblock>> rg.getNode("vmsvr2-suse-x64","70000")
+          name<codeblock>> shard.getNode("vmsvr2-suse-x64","70000")
 Return: vmsvr2-suse-x64:70000</codeblock></li>
       </ul>
     </section>

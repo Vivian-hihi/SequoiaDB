@@ -174,16 +174,17 @@ ulimit -Su 32000      //线程个数限制</pre>
         <li class="li">步骤三：在新增主机上安装SequoiaDB软件 <p class="p">参考<a class="xref" href="../../../installation/server_installation/topics/linux.html">SequoiaDB服务器安装</a>一节进行软件安装。</p>
 </li>
 
-        <li class="li">步骤四：在当前分片中新增数据节点 <p class="p">1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb shell命令行：</p>
+        <li class="li">步骤四：在当前分片中新增数据节点 <p class="p">1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb
+            shell命令行：</p>
 <pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 <p class="p">2.在Sequoiadb
-          shell命令行中，执行如下命令在当前数据分片组新增一副本节点：</p>
+            shell命令行中，执行如下命令在当前数据分片组新增一副本节点：</p>
 <pre class="pre codeblock">&gt; var db = new Sdb("localhost",50000)
-&gt; var datashard = db.getShard("datagroup1")
+&gt; var datashard = db.getShard("datashard1")
 &gt;node=shard.createNode("vmsvr2-suse-x64",51000,"/opt/sequoiadb /database/data/51000")
 &gt; node.start()      </pre>
 <p class="p">3.在Sequoiadb
-  Shell命令行中，执行如下命令检查分片组配置情况，可以看到数据组新增了一个数据节点：</p>
+            Shell命令行中，执行如下命令检查分片组配置情况，可以看到数据组新增了一个数据节点：</p>
 <pre class="pre codeblock">&gt;db.listShards();
 …
 {
@@ -262,7 +263,7 @@ ulimit -Su 32000      //线程个数限制</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.5
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
           
     </div>
 </body>

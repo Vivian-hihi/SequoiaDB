@@ -65,11 +65,9 @@
 <tr class="strow">
               <td valign="top" headers="d1445e24" class="stentry">data sharding group</td>
 
-              <td valign="top" headers="d1445e27" class="stentry">
-                one data sharding group,group name is datagroup1,contain one data node:<div class="fig fignone"/>
-
-                data node one:service host name is vmsvr1-suse-x64,port is 51000
-              </td>
+              <td valign="top" headers="d1445e27" class="stentry"> one data sharding group,group name is datashard1,contain one data
+                node:<div class="fig fignone"/>
+ data node one:service host name is vmsvr1-suse-x64,port is 51000 </td>
 
             </tr>
 <tr class="strow">
@@ -110,9 +108,12 @@
 <tr class="strow">
               <td valign="top" headers="d1445e80" class="stentry">data sharding group</td>
 
-              <td valign="top" headers="d1445e83" class="stentry">one data sharding group,group name is datagroup1,contain two data nodes:<div class="fig fignone"/>
-data node one:service host name is vmsvr1-suse-x64,port is 51000<div class="fig fignone"/>
-data node two:service host name is vmsvr2-suse-x64,port is 51000</td>
+              <td valign="top" headers="d1445e83" class="stentry">one data sharding group,group name is datashard1,contain two data
+                nodes:<div class="fig fignone"/>
+data node one:service host name is vmsvr1-suse-x64,port is
+                51000<div class="fig fignone"/>
+data node two:service host name is vmsvr2-suse-x64,port is
+                51000</td>
 
             </tr>
 <tr class="strow">
@@ -192,7 +193,7 @@ ulimit –Su 32000      //the number of threads limit</pre>
             sharding
             group:</p>
 <pre class="pre codeblock">&gt; var db = new Sdb("localhost",50000)
-&gt; var datarg = db.getRG("datagroup1")
+&gt; var datashard = db.getShard("datashard")
 &gt;node=rg.createNode("vmsvr2-suse-x64",51000,"/opt/sequoiadb /database/data/51000")
 &gt; node.start()      </pre>
 <p class="p">3.
@@ -200,7 +201,7 @@ ulimit –Su 32000      //the number of threads limit</pre>
             configuration information of the sharding group,you can see a new data node have added
             to the data
           group:</p>
-<pre class="pre codeblock">&gt;db.listReplicaGroups();
+<pre class="pre codeblock">&gt;db.listShards();
 …
 {
   "Group": [

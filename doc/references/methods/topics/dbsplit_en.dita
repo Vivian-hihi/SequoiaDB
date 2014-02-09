@@ -3,8 +3,8 @@
 <topic id="references_method_split">
   <title>db.collectionspace.collection.split()</title>
   <body>
-    <section><title>db.collectionspace.collection.split(&lt;source group>,&lt;target
-      group>,&lt;condition>|&lt;percent(0~100)>)</title>
+    <section><title>db.collectionspace.collection.split(&lt;source shard>,&lt;target
+        shard>,&lt;condition>|&lt;percent(0~100)>)</title>
       <p>At least two sharding groups environment,the data records will be cut into different
         sharding group according to the specified conditions.</p>
     </section>
@@ -18,13 +18,13 @@
           <stentry>Not null</stentry>
         </sthead>
         <strow>
-          <stentry>source group</stentry>
+          <stentry>source shard</stentry>
           <stentry>string</stentry>
           <stentry>The source sharding group.</stentry>
           <stentry>yes</stentry>
         </strow>
         <strow>
-          <stentry>target group</stentry>
+          <stentry>target shard</stentry>
           <stentry>string</stentry>
           <stentry>The target sharding group.</stentry>
           <stentry>yes</stentry>
@@ -45,27 +45,27 @@
       
     </section>
     <section><title>Format</title>
-      <p>Data spliting is divided into range-spliting and percent-spliting,"source group" and
-        "target group"are common params,and are string type;the param "condition" is filled when
+      <p>Data spliting is divided into range-spliting and percent-spliting,"source shard" and
+        "target shard"are common params,and are string type;the param "condition" is filled when
         range spliting,it is a object of json structure;param "percent" is filled when
         percent-spliting,it is a int type.</p>
       <ul>
-        <li> range-spliting<p>Range Sharding use exact conditions when range-spliting,while Hash
-            Sharding use "Partition"(number of slices) conditions.The starting condition is a
-            required field and the ending condition is a optional condition when spliting,if the
-            ending condition doesn't fill,then it default as the max range of data that "source
-            group"
-            contains.<codeblock>("&lt;source group>","&lt;target group>"，&lt;condition>) </codeblock></p></li>
-        <li>percent-spliting<codeblock>db.foo.bar.split("&lt;source group>","&lt;target group>"，&lt;percent>) </codeblock></li>
+        <li> range-spliting<p>Range Sharding use exact conditions when range-spliting, while Hash
+            Sharding use "Partition"(number of slices) conditions. The starting condition is a
+            required field and the ending condition is a optional condition when spliting, if the
+            ending condition doesn't fill, then it default as the max range of data that "source
+            shard"
+            contains.<codeblock>("&lt;source shard>","&lt;target shard>"，&lt;condition>) </codeblock></p></li>
+        <li>percent-spliting<codeblock>db.foo.bar.split("&lt;source shard>","&lt;target shard>"，&lt;percent>) </codeblock></li>
       </ul>
     </section>
     <section><title>Sample</title>
       <ul>
         <li>Range-spliting of Hash Sharding
-          <codeblock>db.foo.bar.split("group1", "group2",{Partition:10},{Partition:20}) </codeblock></li>
+          <codeblock>db.foo.bar.split("shard1", "shard2",{Partition:10},{Partition:20}) </codeblock></li>
         <li>Range-spliting of Range
-          Sharding<codeblock>db.foo.bar.split("group1", "group2",{$and:[{a:{$lt:10}},{b:{$lt:20}}]})</codeblock></li>
-        <li>Percent-spliting<codeblock>db.foo.bar.split("group1", "group2", 50) </codeblock></li>
+          Sharding<codeblock>db.foo.bar.split("shard1", "shard2",{$and:[{a:{$lt:10}},{b:{$lt:20}}]})</codeblock></li>
+        <li>Percent-spliting<codeblock>db.foo.bar.split("shard1", "shard2", 50) </codeblock></li>
       </ul>
     </section>
   </body>

@@ -159,7 +159,25 @@
       "StartTimestamp": "2013-12-28-16.13.57.864245"
     }
   ]
-}</codeblock></li></ul>
+  }</codeblock></li>
+        <li><p>By "host name + service name" check snapshot information of a node, such as:</p>
+          <p><codeblock>db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</codeblock>
+            </p>
+          <!--<codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "Contexts": [
+    {
+      "ContextID": 11,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+    }
+  ]
+  }</codeblock>--></li> 
+      </ul>
     </section>
   </body>
   <related-links>

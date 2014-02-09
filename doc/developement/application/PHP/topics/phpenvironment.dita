@@ -6,7 +6,7 @@
     <section>
       <title>获取驱动开发包</title>
       <p>从<xref href="http://www.sequoiadb.com" format="html" scope="external"
-        >http://www.sequoiadb.com</xref>下载对应操作系统版本的SequoiaDB驱动开发包；解压驱动开发包，从driver/lib/phpliblibsdbphp-x.x.x.so（x.x.x为版本号，请根据PHP版本选择）文件。</p>
+        >http://www.sequoiadb.com</xref>下载对应操作系统版本的SequoiaDB驱动开发包；解压驱动开发包，从driver/lib/phpliblibsdbphp-x.x.x.so（x.x.x为版本号，请根据PHP版本选择，前两位需相同版本，第三位版本要小于或等于PHP的版本）文件。</p>
     </section>
     <section>
       <title>配置开发环境</title>
