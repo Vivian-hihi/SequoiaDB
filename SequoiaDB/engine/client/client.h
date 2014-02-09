@@ -46,32 +46,53 @@ typedef ossValuePtr sdbCursorHandle       ;
 typedef ossValuePtr sdbShardHandle ;
 typedef ossValuePtr sdbNodeHandle  ;
 
-
-#define SDB_LIST_GROUPS           SDB_LIST_SHARDS
+/** sdbReplicaGroupHandle will be deprecated in version 2.x, use sdbShardHandle instead of it. */
 typedef sdbShardHandle            sdbReplicaGroupHandle ;
+/** sdbReplicaNodeHandle will be deprecated in version 2.x, use sdbNodeHandle instead of it. */
 typedef sdbNodeHandle             sdbReplicaNodeHandle ;
-
+/** SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it. */
+#define SDB_LIST_GROUPS           SDB_LIST_SHARDS
+/** sdbGetReplicaGroup will be deprecated in version 2.x, use sdbGetShard instead of it. */
 #define sdbGetReplicaGroup        sdbGetShard
+/** sdbGetReplicaGroup1 will be deprecated in version 2.x, use sdbGetShard1 instead of it. */
 #define sdbGetReplicaGroup1       sdbGetShard1
+/** sdbGetReplicaGroupName will be deprecated in version 2.x, use sdbGetShardName instead of it. */
 #define sdbGetReplicaGroupName    sdbGetShardName
+/** sdbIsReplicaGroupCatalog will be deprecated in version 2.x, use sdbIsShardCatalog instead of it. */
 #define sdbIsReplicaGroupCatalog  sdbIsShardCatalog
+/** sdbCreateReplicaCataGroup will be deprecated in version 2.x, use sdbCreateCataShard instead of it. */
 #define sdbCreateReplicaCataGroup sdbCreateCataShard
+/** sdbCreateReplicaGroup will be deprecated in version 2.x, use sdbCreateShard instead of it. */
 #define sdbCreateReplicaGroup     sdbCreateShard
+/** sdbRemoveReplicaGroup will be deprecated in version 2.x, use sdbRemoveShard instead of it. */
 #define sdbRemoveReplicaGroup     sdbRemoveShard
+/** sdbStartReplicaGroup will be deprecated in version 2.x, use sdbStartShard instead of it. */
 #define sdbStartReplicaGroup      sdbStartShard
+/** sdbStopReplicaGroup will be deprecated in version 2.x, use sdbStopShard instead of it. */
 #define sdbStopReplicaGroup       sdbStopShard
+/** sdbListReplicaGroups will be deprecated in version 2.x, use sdbListShards instead of it. */
 #define sdbListReplicaGroups      sdbListShards
+/** sdbReleaseReplicaGroup will be deprecated in version 2.x, use sdbReleaseShard instead of it. */
 #define sdbReleaseReplicaGroup    sdbReleaseShard
-
+/** sdbCreateReplicaNode will be deprecated in version 2.x, use sdbCreateNode instead of it. */
 #define sdbCreateReplicaNode      sdbCreateNode
+/** sdbRemoveReplicaNode will be deprecated in version 2.x, use sdbRemoveNode instead of it. */
 #define sdbRemoveReplicaNode      sdbRemoveNode
+/** sdbGetReplicaNodeMaster will be deprecated in version 2.x, use sdbGetNodeMaster instead of it. */
 #define sdbGetReplicaNodeMaster   sdbGetNodeMaster
+/** sdbGetReplicaNodeSlave will be deprecated in version 2.x, use sdbGetNodeSlave instead of it. */
 #define sdbGetReplicaNodeSlave    sdbGetNodeSlave
+/** sdbGetReplicaNodeByName will be deprecated in version 2.x, use sdbGetNodeByName instead of it. */
 #define sdbGetReplicaNodeByName   sdbGetNodeByName
+/** sdbGetReplicaNodeByHost will be deprecated in version 2.x, use sdbGetNodeByHost instead of it. */
 #define sdbGetReplicaNodeByHost   sdbGetNodeByHost
+/** sdbGetReplicaNodeSddr will be deprecated in version 2.x, use sdbGetNodeAddr instead of it. */
 #define sdbGetReplicaNodeSddr     sdbGetNodeAddr
+/** sdbStartReplicaNode will be deprecated in version 2.x, use sdbStartNode instead of it. */
 #define sdbStartReplicaNode       sdbStartNode
+/** sdbStopReplicaNode will be deprecated in version 2.x, use sdbStopNode instead of it. */
 #define sdbStopReplicaNode        sdbStopNode
+/** sdbReleaseReplicaNode will be deprecated in version 2.x, use sdbReleaseNode instead of it. */
 #define sdbReleaseReplicaNode     sdbReleaseNode
 
 /** \fn INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,

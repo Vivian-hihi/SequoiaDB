@@ -72,15 +72,24 @@
 
 #define FLG_INSERT_CONTONDUP  0x00000001
 
+/** SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it. */
 #define SDB_LIST_GROUPS        SDB_LIST_SHARDS
+/** class name 'sdbReplicaGroup' will be deprecated in version 2.x, use 'sdbShard' instead of it. */
 #define sdbReplicaGroup        sdbShard
+/** class name 'sdbReplicaNode' will be deprecated in version 2.x, use 'sdbNode' instead of it. */
 #define sdbReplicaNode         sdbNode
+/** sdb::listReplicaGroups will be deprecated in version 2.x, use sdb::listShards instead of it. */
 #define listReplicaGroups      listShards
+/** sdb::getReplicaGroup will be deprecated in version 2.x, use sdb::getShard instead of it. */
 #define getReplicaGroup        getShard
+/** sdb::createReplicaGroup will be deprecated in version 2.x, use sdb::createShard instead of it. */
 #define createReplicaGroup     createShard
+/** sdb::removeReplicaGroup will be deprecated in version 2.x, use sdb::removeShard instead of it. */
 #define removeReplicaGroup     removeShard
+/** sdb::createReplicaCataGroup will be deprecated in version 2.x, use sdb::createCataShard instead of it. */
 #define createReplicaCataGroup createCataShard
-#define activateReplicaGroup   activeShard
+/** sdb::activateReplicaGroup will be deprecated in version 2.x, use sdb::activateShard instead of it. */
+#define activateReplicaGroup   activateShard
 
 /** \namespace sdbclient
     \brief SequoiaDB Driver for C++
