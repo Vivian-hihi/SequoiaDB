@@ -2018,5 +2018,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CLS_NODE_INFO_EXPIRED</name>
+         <description>
+            <en>the node info is expired</en>
+            <cn>节点信息过期</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
