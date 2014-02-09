@@ -373,7 +373,7 @@ namespace engine
                                       BOOLEAN check = TRUE,
                                       UINT64 secretValue = 0 ) ;
 
-         string      _replacePrefix( const CHAR *prefix ) ;
+         string      _replaceWildcard( const CHAR *source ) ;
 
       protected:
          barBackupHeader               _metaHeader ;

@@ -105,41 +105,41 @@ namespace engine
       _pClsCB        = NULL ;
    }
 
-   string _barBaseLogger::_replacePrefix( const CHAR * prefix )
+   string _barBaseLogger::_replaceWildcard( const CHAR * source )
    {
-      if ( NULL == prefix )
+      if ( NULL == source )
       {
          return "" ;
       }
       pmdKRCB *krcb = pmdGetKRCB() ;
-      string newPrefix ;
+      string destStr ;
       UINT32 index = 0 ;
       BOOLEAN isFormat = FALSE ;
 
-      while ( prefix[index] )
+      while ( source[index] )
       {
          if ( isFormat )
          {
             isFormat = FALSE ;
 
-            if ( 'G' == prefix[index] || 'g' == prefix[index] )
+            if ( 'G' == source[index] || 'g' == source[index] )
             {
-               newPrefix += krcb->getGroupName() ;
+               destStr += krcb->getGroupName() ;
             }
-            else if ( 'H' == prefix[index] || 'h' == prefix[index] )
+            else if ( 'H' == source[index] || 'h' == source[index] )
             {
-               newPrefix += _pClsCB->getHostName() ;
+               destStr += _pClsCB->getHostName() ;
             }
-            else if ( 'S' == prefix[index] || 's' == prefix[index] )
+            else if ( 'S' == source[index] || 's' == source[index] )
             {
-               newPrefix += krcb->getServiceAddr() ;
+               destStr += krcb->getServiceAddr() ;
             }
             else
             {
-               newPrefix += prefix[index] ;
+               destStr += source[index] ;
             }
          }
-         else if ( '%' == prefix[index] )
+         else if ( '%' == source[index] )
          {
             isFormat = TRUE ;
             ++index ;
@@ -147,11 +147,11 @@ namespace engine
          }
          else
          {
-            newPrefix += prefix[index] ;
+            destStr += source[index] ;
          }
          ++index ;
       }
-      return newPrefix ;
+      return destStr ;
    }
 
    string _barBaseLogger::getIncFileName( UINT32 sequence )
@@ -288,11 +288,11 @@ namespace engine
       {
          _backupName = backupName ;
       }
-      _path          = path ;
+      _path          = _replaceWildcard ( path ) ;
 
       if ( prefix )
       {
-         string tmpName = _replacePrefix( prefix ) ;
+         string tmpName = _replaceWildcard( prefix ) ;
          tmpName += "_" ;
          tmpName += _backupName ;
          _backupName = tmpName ;
