@@ -92,7 +92,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn IConnection getConnection()
-	 * @brief Get the current connection to remote server
+	 * @brief Get the current connection to remote server.
 	 * @return IConnection
 	 */
 	public IConnection getConnection() {
@@ -101,7 +101,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn ServerAddress getServerAddress()
-	 * @brief Get the address of remote server
+	 * @brief Get the address of remote server.
 	 * @return ServerAddress
 	 */
 	public ServerAddress getServerAddress() {
@@ -110,7 +110,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void setServerAddress(ServerAddress serverAddress)
-	 * @brief Set the address of remote server
+	 * @brief Set the address of remote server.
 	 * @param serverAddress
 	 *            the serverAddress object of remote server
 	 */
@@ -120,7 +120,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn Sequoiadb(String username, String password)
-	 * @brief Default Constructor Server address "127.0.0.1 : 50000"
+	 * @brief Default Constructor Server address "127.0.0.1 : 50000".
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb(String username, String password) throws BaseException {
@@ -133,7 +133,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn Sequoiadb(String connString, String username, String password)
-	 * @brief Constructor
+	 * @brief Constructor.
 	 * @param connString
 	 *            Remote server address "IP : Port" or "IP"(port is 50000)
 	 * @exception com.sequoiadb.exception.BaseException
@@ -153,7 +153,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn Sequoiadb(String addr, int port, String username, String password)
-	 * @brief Constructor
+	 * @brief Constructor.
 	 * @param addr
 	 *            IP address
 	 * @param port
@@ -194,7 +194,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void createUser(String username, String password)
-	 * @brief Add an user in current database
+	 * @brief Add an user in current database.
 	 * @param username
 	 *            The connection user name
 	 * @param password
@@ -218,7 +218,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void removeUser(String username, String password)
-	 * @brief Remove the spacified user from current database
+	 * @brief Remove the spacified user from current database.
 	 * @param username
 	 *            The connection user name
 	 * @param password
@@ -239,7 +239,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void disconnect()
-	 * @brief Disconnect the remote server
+	 * @brief Disconnect the remote server.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
@@ -250,7 +250,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void changeConnectionOptions(ConfigOptions opts)
-	 * @brief Change the connection options
+	 * @brief Change the connection options.
 	 * @param opts
 	 *            The connection options
 	 * @exception com.sequoiadb.exception.BaseException
@@ -263,7 +263,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void createCollectionSpace(String collectionSpaceName)
-	 * @brief Create the named collection space with default SDB_PAGESIZE_4K
+	 * @brief Create the named collection space with default SDB_PAGESIZE_4K.
 	 * @param csName
 	 *            The collection space name
 	 * @exception com.sequoiadb.exception.BaseException
@@ -275,7 +275,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void createCollectionSpace(String collectionSpaceName, int pageSize)
-	 * @brief Create the named collection space
+	 * @brief Create the named collection space.
 	 * @param csName
 	 *            The collection space name
 	 * @param pageSize
@@ -302,7 +302,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void dropCollectionSpace(String collectionSpaceName)
-	 * @brief Remove the named collection space
+	 * @brief Remove the named collection space.
 	 * @param csName
 	 *            The collection space name
 	 * @exception com.sequoiadb.exception.BaseException
@@ -325,7 +325,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn CollectionSpace getCollectionSpace(String csName)
-	 * @brief Get the named collection space
+	 * @brief Get the named collection space.
 	 * @param csName
 	 *            The collection space name
 	 * @return The CollecionSpace handle
@@ -342,7 +342,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn boolean isCollectionSpaceExist(String csName)
-	 * @brief Verify the existence of collection space
+	 * @brief Verify the existence of collection space.
 	 * @param csName
 	 *            The collecion space name
 	 * @return True if existed or False if not existed
@@ -367,7 +367,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn DBCursor listCollectionSpaces()
-	 * @brief Get all the collecionspaces
+	 * @brief Get all the collecionspaces.
 	 * @return cursor of all collecionspace names
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
@@ -531,7 +531,7 @@ public class Sequoiadb {
 	 * @brief Get shard by name.
 	 * @param shardName
 	 *            shard name
-	 * @return A Shard object or null for not exit.
+	 * @return A shard object or null for not exit.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Shard getShard(String shardName)

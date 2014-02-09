@@ -11,7 +11,9 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class Node
- * @brief Database operation interfaces of node.
+ * @brief Database operation interfaces of node.This class takes the place of class "replicaNode".
+ * @note We use concept "node" instead of "replica node",
+ *       and change the class name "ReplicaNode" to "Node".
  */
 public class Node {
 	private String hostName;

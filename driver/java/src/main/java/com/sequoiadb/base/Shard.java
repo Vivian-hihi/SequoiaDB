@@ -18,7 +18,9 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class Shard
- * @brief Database operation interfaces of shard.
+ * @brief Database operation interfaces of shard.This class takes the place of class "replicaGroup".
+ * @note We use concept "shard" instead of "replica group",
+ *       and change the class name "ReplicaGroup" to "Shard".
  */
 public class Shard {
 	private String name;
@@ -34,7 +36,16 @@ public class Shard {
 				.toString();
 		this.isCatalog = name.startsWith("catalog");
 	}
-
+	
+	Shard(Sequoiadb sdb, String name) {
+		this.sequoiadb = sdb;
+		this.name = name;
+		BSONObject shard = sdb.getDetailByName(name);
+		this.isCatalog = (name == Sequoiadb.CATALOG_GROUP_NAME);
+		this.id = Integer.parseInt(shard.get(
+				SequoiadbConstants.FIELD_NAME_GROUPID).toString());
+	}
+	
 	/**
 	 * @fn Sequoiadb getSequoiadb()
 	 * @brief Get current Shard's Sequoiadb
@@ -51,15 +62,6 @@ public class Shard {
 	 */
 	public int getId() {
 		return id;
-	}
-
-	Shard(Sequoiadb sdb, String name) {
-		this.sequoiadb = sdb;
-		this.name = name;
-		BSONObject shard = sdb.getDetailByName(name);
-		this.isCatalog = (name == Sequoiadb.CATALOG_GROUP_NAME);
-		this.id = Integer.parseInt(shard.get(
-				SequoiadbConstants.FIELD_NAME_GROUPID).toString());
 	}
 
 	/**
@@ -336,7 +338,7 @@ public class Shard {
 	/**
 	 * @fn void removeNode(String hostName, int port,
 	                       BSONObject configure)
-	 * @brief Remove node
+	 * @brief Remove node.
 	 * @param hostName
 	 * 			host name
 	 * @param port
@@ -370,10 +372,10 @@ public class Shard {
 
 	/**
 	 * @fn void start()
-	 * @brief Start current Shard in db
+	 * @brief Start current shard in database.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void start() {
+	public void start() throws BaseException{
 		BSONObject shardName = new BasicBSONObject();
 		shardName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
 		SDBMessage rtn = adminCommand(SequoiadbConstants.ACTIVE_CMD,
@@ -386,10 +388,10 @@ public class Shard {
 	
 	/**
 	 * @fn void stop()
-	 * @brief Stop current Shard in db
+	 * @brief Stop current shard in database.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void stop() {
+	public void stop() throws BaseException{
 		BSONObject shardName = new BasicBSONObject();
 		shardName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
 		SDBMessage rtn = adminCommand(SequoiadbConstants.SHUTDOWN_CMD,
@@ -402,11 +404,10 @@ public class Shard {
 	
 	/**
 	 * @fn boolean isCatalog()
-	 * @brief Judge whether current Shard is catalog or not
-	 * @return true is while false is not
-	 * @exception com.sequoiadb.exception.BaseException
+	 * @brief Judge whether current shard is catalog or not.
+	 * @return true or false
 	 */
-	public boolean isCatalog() {
+	public boolean isCatalog(){
 		return isCatalog;
 	}
 
