@@ -92,24 +92,35 @@ namespace engine
                else
                {
                   cb->getCoordSession()->removeLastNode( groupID );
-                  if ( !hasRetry && ( SDB_CLS_FULL_SYNC == rcTmp
-                     || ( SDB_CLS_NOT_PRIMARY == rcTmp && sendToPrimary ) ) )
+                  if ( SDB_CLS_FULL_SYNC == rcTmp )
                   {
-                     CoordGroupInfoPtr groupInfoTmp ;
-                     rcTmp = rtnCoordGetGroupInfo( cb, groupID, TRUE,
-                                                   groupInfoTmp );
-                     if ( rcTmp )
+                     rtnCoordUpdateNodeStatByRC( pReply->header.routeID,
+                                                rcTmp );
+                  }
+                  if ( !hasRetry )
+                  {
+                     if ( SDB_CLS_FULL_SYNC == rcTmp )
                      {
-                        PD_LOG ( PDERROR,
-                                 "failed to update group info(groupID=%u, rc=%d)",
-                                 pReply->header.routeID.columns.groupID,
-                                 rcTmp );
-                        if ( SDB_OK == rc )
-                        {
-                           rc = rcTmp;
-                        }
+                        isNeedRetry = TRUE;
                      }
-                     isNeedRetry = TRUE ;
+                     else if ( SDB_CLS_NOT_PRIMARY == rcTmp && sendToPrimary )
+                     {
+                        CoordGroupInfoPtr groupInfoTmp ;
+                        rcTmp = rtnCoordGetGroupInfo( cb, groupID, TRUE,
+                                                      groupInfoTmp );
+                        if ( rcTmp )
+                        {
+                           PD_LOG ( PDERROR,
+                                    "failed to update group info(groupID=%u, rc=%d)",
+                                    pReply->header.routeID.columns.groupID,
+                                    rcTmp );
+                           if ( SDB_OK == rc )
+                           {
+                              rc = rcTmp;
+                           }
+                        }
+                        isNeedRetry = TRUE ;
+                     }
                   }
                }
             }
@@ -465,8 +476,27 @@ namespace engine
                {
                   CoordGroupInfoPtr groupInfoTmp;
                   cb->getCoordSession()->removeLastNode( groupID );
-                  rcTmp = rtnCoordGetGroupInfo( cb, groupID, TRUE,
-                                                groupInfoTmp );
+                  if ( SDB_CLS_FULL_SYNC == rcTmp )
+                  {
+                     rtnCoordUpdateNodeStatByRC( pReply->header.routeID,
+                                                rcTmp );
+                  }
+                  else
+                  {
+                     rcTmp = rtnCoordGetGroupInfo( cb, groupID, TRUE,
+                                                   groupInfoTmp );
+                     if ( rcTmp )
+                     {
+                        PD_LOG ( PDERROR,
+                                 "failed to update group info(groupID=%u, rc=%d)",
+                                 pReply->header.routeID.columns.groupID,
+                                 rcTmp );
+                        if ( SDB_OK == rc )
+                        {
+                           rc = rcTmp;
+                        }
+                     }
+                  }
                }
             }
             else

@@ -134,14 +134,14 @@ namespace engine
                                pmdEDUCB *cb );
 
    INT32 rtnCoordSendRequestToOne( CHAR *pBuffer,
-                           const CoordGroupInfoPtr &groupInfo,
+                           CoordGroupInfoPtr &groupInfo,
                            REQUESTID_MAP &sendNodes,
                            netMultiRouteAgent *pRouteAgent,
                            MSG_ROUTE_SERVICE_TYPE type,
                            pmdEDUCB *cb ) ;
 
    INT32 rtnCoordSendRequestToOne( MsgHeader *pBuffer,
-                           const CoordGroupInfoPtr &groupInfo,
+                           CoordGroupInfoPtr &groupInfo,
                            REQUESTID_MAP &sendNodes,
                            netMultiRouteAgent *pRouteAgent,
                            const netIOVec &iov,
@@ -243,6 +243,9 @@ namespace engine
                            const CoordGroupInfoPtr &groupInfo,
                            UINT32 random,
                            UINT32 &pos );
+
+   void rtnCoordUpdateNodeStatByRC( MsgRouteID &routeID,
+                                    INT32 retCode );
 
 }
 

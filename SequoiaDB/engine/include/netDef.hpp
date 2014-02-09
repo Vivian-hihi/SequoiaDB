@@ -52,20 +52,37 @@ namespace engine
    typedef UINT32 NET_NODE_ID ;
    typedef UINT16 NET_SERVICE_ID ;
 
+   typedef enum _NET_NODE_STATUS
+   {
+      NET_NODE_STAT_NORMAL = 0,
+      NET_NODE_STAT_FULLSYNC,
+      NET_NODE_STAT_OFFLINE,
+
+      NET_NODE_STAT_UNKNOWN
+   }NET_NODE_STATUS;
+
 
    class _netRouteNode : public SDBObject
    {
    public :
+      SINT32 _status;   // make sure the addr of _status is aligned 4 bytes,
+                        // so the assignment of _status is atomic
       CHAR _host[OSS_MAX_HOSTNAME+1] ;
       std::string _service[MSG_ROUTE_SERVICE_TYPE_MAX] ;
       MsgRouteID _id ;
       _netRouteNode()
+      :_status( NET_NODE_STAT_NORMAL )
       {
+         SDB_ASSERT( (UINT64)&_status % 4 == 0,
+                     "the addr of _status must be aligned 4 bytes!" );
          _id.value = MSG_INVALID_ROUTEID ;
          _host[0] = 0 ;
       }
       _netRouteNode( const _netRouteNode &node )
+      :_status( NET_NODE_STAT_NORMAL )
       {
+         SDB_ASSERT( (UINT64)&_status % 4 == 0,
+                     "the addr of _status must be aligned 4 bytes!" );
          _id = node._id ;
          ossMemcpy( _host, node._host, OSS_MAX_HOSTNAME+1 ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
@@ -77,12 +94,18 @@ namespace engine
       const _netRouteNode &operator=(const _netRouteNode &node )
       {
          _id = node._id ;
+         _status = node._status ;
          ossMemcpy( _host, node._host, OSS_MAX_HOSTNAME+1 ) ;
          for ( UINT32 i = 0; i < MSG_ROUTE_SERVICE_TYPE_MAX; i++ )
          {
             _service[i] = node._service[i];
          }
          return *this ;
+      }
+
+      void updateStatus( NET_NODE_STATUS status )
+      {
+         _status = status;
       }
    } ;
 

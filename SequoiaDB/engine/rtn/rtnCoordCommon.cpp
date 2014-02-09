@@ -1659,18 +1659,22 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTOONE, "rtnCoordSendRequestToOne" )
    INT32 rtnCoordSendRequestToOne( CHAR *pBuffer,
-                                 const CoordGroupInfoPtr &groupInfo,
+                                 CoordGroupInfoPtr &groupInfo,
                                  REQUESTID_MAP &sendNodes,
                                  netMultiRouteAgent *pRouteAgent,
                                  MSG_ROUTE_SERVICE_TYPE type,
                                  pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
+      BOOLEAN hasRetry = FALSE;
+      BOOLEAN isNeedRetry = FALSE;
       UINT64 reqID = 0;
       INT32 preferReplicaType = PREFER_REPL_ANYONE;
       PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTOONE ) ;
       do
       {
+         hasRetry = isNeedRetry;
+         isNeedRetry = FALSE;
          /*******************************
          // send to last node
          ********************************/
@@ -1732,13 +1736,17 @@ namespace engine
                routeID = groupItem->primary( type );
                // there is not primary node,
                // so the last node is not primary
-               if ( MSG_INVALID_ROUTEID != routeID.value )
+               if ( MSG_INVALID_ROUTEID == routeID.value )
                {
                   rc = groupItem->getNodeID( beginPos, routeID, type ) ;
                   if ( rc != SDB_OK )
                   {
                      break;
                   }
+               }
+               else
+               {
+                  beginPos = groupItem->getPrimaryPos();
                }
             }
             else
@@ -1756,7 +1764,16 @@ namespace engine
                   break;
                }
             }
-            rc = pRouteAgent->syncSend( routeID, pBuffer, reqID, cb ) ;
+            SINT32 status = NET_NODE_STAT_NORMAL ;
+            if ( SDB_OK == groupItem->getNodeInfo( beginPos, status )
+               && NET_NODE_STAT_NORMAL == status )
+            {
+               rc = pRouteAgent->syncSend( routeID, pBuffer, reqID, cb ) ;
+            }
+            else
+            {
+               rc = SDB_CLS_NODE_BSFAULT ;
+            }
             ++i;
 
             if ( SDB_OK == rc )
@@ -1771,14 +1788,23 @@ namespace engine
             }
             beginPos = ( beginPos + 1 ) % nodeNum ;
          }
-      }while ( FALSE );
+         if ( rc != SDB_OK && !hasRetry )
+         {
+            rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
+                                       TRUE, groupInfo );
+            if ( SDB_OK == rc )
+            {
+               isNeedRetry = TRUE;
+            }
+         }
+      }while ( isNeedRetry );
       PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTOONE, rc ) ;
       return rc;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTOONE2, "rtnCoordSendRequestToOne" )
    INT32 rtnCoordSendRequestToOne( MsgHeader *pBuffer,
-                                 const CoordGroupInfoPtr &groupInfo,
+                                 CoordGroupInfoPtr &groupInfo,
                                  REQUESTID_MAP &sendNodes,
                                  netMultiRouteAgent *pRouteAgent,
                                  const netIOVec &iov,
@@ -1786,11 +1812,15 @@ namespace engine
                                  pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
+      BOOLEAN hasRetry = FALSE;
+      BOOLEAN isNeedRetry = FALSE;
       UINT64 reqID = 0;
       INT32 preferReplicaType = PREFER_REPL_ANYONE;
       PD_TRACE_ENTRY ( SDB_RTNCOSENDREQUESTTOONE2 ) ;
       do
       {
+         hasRetry = isNeedRetry;
+         isNeedRetry = FALSE;
          /*******************************
          // send to last node
          ********************************/
@@ -1851,13 +1881,17 @@ namespace engine
                routeID = groupItem->primary( type );
                // there is not primary node,
                // so the last node is not primary
-               if ( MSG_INVALID_ROUTEID != routeID.value )
+               if ( MSG_INVALID_ROUTEID == routeID.value )
                {
                   rc = groupItem->getNodeID( beginPos, routeID, type ) ;
                   if ( rc != SDB_OK )
                   {
                      break;
                   }
+               }
+               else
+               {
+                  beginPos = groupItem->getPrimaryPos();
                }
             }
             else
@@ -1875,7 +1909,16 @@ namespace engine
                   break;
                }
             }
-            rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb ) ;
+            SINT32 status = NET_NODE_STAT_NORMAL ;
+            if ( SDB_OK == groupItem->getNodeInfo( beginPos, status )
+               && NET_NODE_STAT_NORMAL == status )
+            {
+               rc = pRouteAgent->syncSend( routeID, pBuffer, iov, reqID, cb ) ;
+            }
+            else
+            {
+               rc = SDB_CLS_NODE_BSFAULT ;
+            }
             ++i;
 
             if ( SDB_OK == rc )
@@ -1890,7 +1933,16 @@ namespace engine
             }
             beginPos = ( beginPos + 1 ) % nodeNum ;
          }
-      }while ( FALSE );
+         if ( rc != SDB_OK && !hasRetry )
+         {
+            rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
+                                       TRUE, groupInfo );
+            if ( SDB_OK == rc )
+            {
+               isNeedRetry = TRUE;
+            }
+         }
+      }while ( isNeedRetry );
       PD_TRACE_EXITRC ( SDB_RTNCOSENDREQUESTTOONE2, rc ) ;
       return rc;
    }
@@ -2570,6 +2622,50 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPNODESTATBYRC, "rtnCoordUpdateNodeStatByRC" )
+   void rtnCoordUpdateNodeStatByRC( MsgRouteID &routeID,
+                                    INT32 retCode )
+   {
+      INT32 rc = SDB_OK;
+      //PD_TRACE_ENTRY ( SDB_RTNCOUPNODESTATBYRC ) ;
+      CoordGroupInfoPtr groupInfo;
+      clsGroupItem *groupItem;
+      NET_NODE_STATUS status = NET_NODE_STAT_NORMAL;
+      if ( MSG_INVALID_ROUTEID == routeID.value )
+      {
+         goto done;
+      }
+      switch ( retCode )
+      {
+         case SDB_CLS_FULL_SYNC:
+            {
+               status = NET_NODE_STAT_FULLSYNC ;
+               break ;
+            }
+         case SDB_NETWORK:
+            {
+               status = NET_NODE_STAT_OFFLINE ;
+               break ;
+            }
+         default:
+            {
+               status = NET_NODE_STAT_NORMAL ;
+            }
+      }
+      rc = rtnCoordGetLocalGroupInfo( routeID.columns.groupID,
+                                    groupInfo );
+      if ( SDB_OK != rc )
+      {
+         goto done;
+      }
+      groupItem = groupInfo->getGroupItem();
+      groupItem->updateNodeStat( routeID.columns.nodeID,
+                                 status );
+   done:
+      //PD_TRACE_EXIT ( SDB_RTNCOUPNODESTATBYRC ) ;
+      return ;
    }
 
 }

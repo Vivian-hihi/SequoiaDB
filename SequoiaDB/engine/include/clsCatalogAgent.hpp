@@ -354,6 +354,8 @@ namespace engine
          INT32 getNodeInfo ( const MsgRouteID& id,
                              std::string& hostName, std::string& serviceName ) ;
 
+         INT32 getNodeInfo ( UINT32 pos, SINT32 &status );
+
          MsgRouteID  primary ( MSG_ROUTE_SERVICE_TYPE type =
                                MSG_ROUTE_SHARD_SERVCIE ) const ;
 
@@ -362,6 +364,8 @@ namespace engine
          INT32  updatePrimary ( const MsgRouteID& nodeID, BOOLEAN primary ) ;
 
          void   cancelPrimary () ;
+
+         void updateNodeStat( UINT16 nodeID, NET_NODE_STATUS status );
 
       protected:
          void   _clear () ;

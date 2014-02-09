@@ -2410,18 +2410,26 @@ namespace engine
       return &_vecNodes ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDID2, "_clsGroupItem::getNodeID" )
    INT32 _clsGroupItem::getNodeID ( UINT32 pos, MsgRouteID& id,
                                     MSG_ROUTE_SERVICE_TYPE type )
    {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__CLSGPIM_GETNDID2 ) ;
       id.value = MSG_INVALID_ROUTEID ;
       if ( pos >= _vecNodes.size() )
       {
-         return SDB_INVALIDARG ;
+         rc = SDB_INVALIDARG ;
+         goto done;
       }
+      {
       clsNoteItem& item = _vecNodes[pos] ;
       id = item._id ;
       id.columns.serviceID = (UINT16)type ;
-      return SDB_OK ;
+      }
+   done:
+      PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDID2 ) ;
+      return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDID, "_clsGroupItem::getNodeID" )
@@ -2430,6 +2438,7 @@ namespace engine
                                     MsgRouteID& id,
                                     MSG_ROUTE_SERVICE_TYPE type )
    {
+      INT32 rc = SDB_CLS_NODE_NOT_EXIST ;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_GETNDID ) ;
       id.value = MSG_INVALID_ROUTEID ;
 
@@ -2442,12 +2451,14 @@ namespace engine
          {
             id = node._id ;
             id.columns.serviceID = type ;
-            return SDB_OK ;
+            rc = SDB_OK ;
+            goto done;
          }
          ++it ;
       }
+   done:
       PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDID ) ;
-      return SDB_CLS_NODE_NOT_EXIST ;
+      return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO1, "_clsGroupItem::getNodeInfo" )
@@ -2455,36 +2466,65 @@ namespace engine
                                       string & hostName, string & serviceName,
                                       MSG_ROUTE_SERVICE_TYPE type )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_GETNDINFO1 ) ;
       id.value = MSG_INVALID_ROUTEID ;
       if ( pos >= _vecNodes.size() )
       {
-         return SDB_INVALIDARG ;
+         rc = SDB_INVALIDARG ;
+         goto done;
       }
+      {
       clsNoteItem& item = _vecNodes[pos] ;
       id = item._id ;
       id.columns.serviceID = (UINT16)type ;
       hostName = item._host ;
       serviceName = item._service[(UINT16)type] ;
+      }
+   done:
       PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDINFO1 ) ;
-      return SDB_OK ;
+      return rc ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO2, "_clsGroupItem::getNodeInfo" )
    INT32 _clsGroupItem::getNodeInfo ( const MsgRouteID& id, string& hostName,
                                       string& serviceName )
    {
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_GETNDINFO2 ) ;
       INT32 pos = nodePos ( (UINT32)id.columns.nodeID ) ;
       if ( pos < 0 )
       {
-         return pos ;
+         rc = pos ;
+         goto done ;
       }
+      {
       clsNoteItem& item = _vecNodes[pos] ;
       hostName = item._host ;
       serviceName = item._service[id.columns.serviceID] ;
+      }
+   done:
       PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDINFO2 ) ;
-      return SDB_OK ;
+      return rc ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_GETNDINFO3, "_clsGroupItem::getNodeInfo" )
+   INT32 _clsGroupItem::getNodeInfo ( UINT32 pos, SINT32 &status )
+   {
+      INT32 rc = SDB_OK;
+      PD_TRACE_ENTRY ( SDB__CLSGPIM_GETNDINFO3 ) ;
+      if ( pos >= _vecNodes.size() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto done;
+      }
+      {
+      clsNoteItem& item = _vecNodes[pos] ;
+      status = item._status;
+      }
+   done:
+      PD_TRACE_EXIT ( SDB__CLSGPIM_GETNDINFO3 ) ;
+      return rc;
    }
 
    INT32 _clsGroupItem::nodePos ( UINT32 nodeID )
@@ -2617,6 +2657,26 @@ namespace engine
    done :
       PD_TRACE_EXIT ( SDB__CLSGPIM_UPPRRIMARY ) ;
       return SDB_SYS ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSGPIM_UPNODESTAT, "_clsGroupItem::updateNodeStat" )
+   void _clsGroupItem::updateNodeStat( UINT16 nodeID,
+                                       NET_NODE_STATUS status )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSGPIM_UPNODESTAT ) ;
+      VEC_NODE_INFO_IT it = _vecNodes.begin() ;
+      while ( it != _vecNodes.end() )
+      {
+         if ( it->_id.columns.nodeID == nodeID )
+         {
+            it->_status = status;
+            break;
+         }
+         ++it ;
+      }
+   done :
+      PD_TRACE_EXIT ( SDB__CLSGPIM_UPNODESTAT ) ;
+      return ;
    }
 
    /*

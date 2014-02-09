@@ -118,14 +118,14 @@ namespace engine
                                        pmdEDUCB *cb );
 
       friend INT32 rtnCoordSendRequestToOne( CHAR *pBuffer,
-                                 const CoordGroupInfoPtr &groupInfo,
+                                 CoordGroupInfoPtr &groupInfo,
                                  REQUESTID_MAP &sendNodes,
                                  netMultiRouteAgent *pRouteAgent,
                                  MSG_ROUTE_SERVICE_TYPE type,
                                  pmdEDUCB *cb );
 
       friend INT32 rtnCoordSendRequestToOne( MsgHeader *pBuffer,
-                                 const CoordGroupInfoPtr &groupInfo,
+                                 CoordGroupInfoPtr &groupInfo,
                                  REQUESTID_MAP &sendNodes,
                                  netMultiRouteAgent *pRouteAgent,
                                  const netIOVec &iov,
