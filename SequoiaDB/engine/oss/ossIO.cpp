@@ -79,7 +79,7 @@ namespace fs = boost::filesystem ;
  * SDB_FE (file already exist)
  * SDB_IO (generic IO error)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPEN, "ossOpen" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSOPEN, "ossOpen" )
 INT32 ossOpen(const CHAR   *pFileName ,
               UINT32       iMode ,
               UINT32       iPermission ,
@@ -383,7 +383,7 @@ error :
  * SDB_OK (success)
  * SDB_IO (generic IO error)
  */
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLOSE, "ossClose" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCLOSE, "ossClose" )
 INT32 ossClose(OSSFILE &pFile)
 {
    INT32  rc        = SDB_OK ;
@@ -435,7 +435,7 @@ error :
  * SDB_PERM
  * SDB_IO
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSMKDIR, "ossMkdir" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSMKDIR, "ossMkdir" )
 INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
 {
    INT32   rc  = SDB_OK ;
@@ -497,7 +497,7 @@ error :
  * SDB_PERM (permission denied)
  * SDB_FNE (dir not exist)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDELETE, "ossDelete" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDELETE, "ossDelete" )
 INT32 ossDelete ( const CHAR *pPathName )
 {
    INT32 rc = SDB_OK ;
@@ -563,7 +563,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSACCESS, "ossAccess" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSACCESS, "ossAccess" )
 INT32 ossAccess ( const CHAR * pPathName, int flags )
 {
    INT32 rc = SDB_OK ;
@@ -624,7 +624,7 @@ INT32 ossAccess ( const CHAR * pPathName, int flags )
  *       SDB_INTERRUPT (interrupt received)
  *       SDB_UNKNOWN(other unknown error)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSREAD, "ossRead" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSREAD, "ossRead" )
 INT32 ossRead( OSSFILE* pFile,
                CHAR*    pBufferRead,
                SINT64   iLenToRead,
@@ -746,7 +746,7 @@ error :
  *      SDB_IO (IO error)
  *      SDB_INTERRUPT (interrupt received)
  **/
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWRITE, "ossWrite" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWRITE, "ossWrite" )
 INT32 ossWrite( OSSFILE  *pFile,
                 const CHAR     *pBufferWrite,
                 SINT64   iLenToWrite,
@@ -862,7 +862,7 @@ error :
  *    SDB_INVALIDSIZE (seek location is not valid)
  *    SDB_INVALIDARGS (bad arguments)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEK, "ossSeek" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEK, "ossSeek" )
 INT32 ossSeek ( OSSFILE  *pFile,
                 INT64    offset,
                 OSS_SEEK whence )
@@ -945,7 +945,7 @@ error :
  *    SDB_IO (IO error)
  *    SDB_INTERRUPT (interrupt received)
  **/
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEKANDREAD, "ossSeekAndRead" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEKANDREAD, "ossSeekAndRead" )
 INT32 ossSeekAndRead( OSSFILE   *pFile,
                       INT64     offset,
                       CHAR      *pBufferRead,
@@ -1090,7 +1090,7 @@ error :
  *       SDB_IO (IO error)
  *       SDB_INTERRUPT (interrupt received)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEKANDWRITE, "ossSeekAndWrite" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSEEKANDWRITE, "ossSeekAndWrite" )
 INT32 ossSeekAndWrite ( OSSFILE    *pFile,
                         INT64       offset,
                         const CHAR *pBufferWrite,
@@ -1223,7 +1223,7 @@ error :
  * SDB_IO (IO error)
  * SDB_INVALIDARG (invalid file descriptor)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSFSYNC, "ossFsync" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSFSYNC, "ossFsync" )
 INT32 ossFsync( OSSFILE* pFile )
 {
    INT32   rc  = SDB_OK ;
@@ -1286,7 +1286,7 @@ error :
  *      SDB_PERM (permission error)
  *      SDB_INVALIDARG (invalid path)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETPATHTYPE, "ossGetPathType" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETPATHTYPE, "ossGetPathType" )
 INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
 {
    INT32 rc  = SDB_OK ;
@@ -1421,7 +1421,7 @@ error :
  *      SDB_PERM (permission error)
  *      SDB_INVALIDARG (invalid path)
  */
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFSBYNM, "ossGetFileSizeByName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFSBYNM, "ossGetFileSizeByName" )
 INT32 ossGetFileSizeByName ( const CHAR* pFileName, INT64 *pFileSize )
 {
    INT32    rc  = SDB_OK ;
@@ -1531,7 +1531,7 @@ error :
  *      SDB_INVALIDARG (invalid input arguments)
  *      SDB_INVALID_FILE_TYPE (invalid input arguments)
  */
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFILESIZE, "ossGetFileSize" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFILESIZE, "ossGetFileSize" )
 INT32 ossGetFileSize ( OSSFILE *pFile, INT64 *pfsize )
 {
    INT32    rc  = SDB_OK ;
@@ -1606,7 +1606,7 @@ error :
 // truncate a file to fileLen bytes
 // note this function is NOT threadsafe, the caller must hold exclusive latch
 // before truncating a file
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTRUNCATEFILE, "ossTruncateFile" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTRUNCATEFILE, "ossTruncateFile" )
 INT32 ossTruncateFile ( OSSFILE *pFile, const INT64 fileLen )
 {
    INT32 rc = SDB_OK ;
@@ -1665,7 +1665,7 @@ error :
  *      SDB_INVALIDARG (invalid input arguments)
  *      SDB_INVALID_FILE_TYPE (invalid input arguments)
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXTFILE, "ossExtendFile" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXTFILE, "ossExtendFile" )
 INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
 {
    // declare variables at top
@@ -1742,7 +1742,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETREALPATH, "ossGetRealPath" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETREALPATH, "ossGetRealPath" )
 CHAR  *ossGetRealPath( const CHAR  *pPath,
                        CHAR        *resolvedPath,
                        UINT32       length )
@@ -1816,7 +1816,7 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
  *      true or false
  *
  */
- PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFSTYPE, "ossGetFSType" )
+ // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETFSTYPE, "ossGetFSType" )
 INT32 ossGetFSType ( const CHAR  *pFileName, OSS_FS_TYPE  *ossFSType )
 {
    INT32   rc  = SDB_OK ;
@@ -1980,7 +1980,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRENMPATH, "ossRenamePath" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRENMPATH, "ossRenamePath" )
 INT32 ossRenamePath ( const CHAR *pOldPath, const CHAR *pNewPath )
 {
    INT32 rc = SDB_OK ;
@@ -2031,7 +2031,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSLOCKFILE, "ossLockFile" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSLOCKFILE, "ossLockFile" )
 INT32 ossLockFile ( OSSFILE *pFile, OSS_FILE_LOCK lockType )
 {
    INT32 rc = SDB_OK ;
