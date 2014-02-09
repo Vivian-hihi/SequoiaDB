@@ -728,8 +728,8 @@ SDB_EXPORT INT32 sdbListShards ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbFlushConfigure(sdbConnectionHandle cHandle,
                                    bson *options ) ;
 
-/** \fn INT32 sdbCrtProcedure(sdbConnectionHandle cHandle,
- *                            const CHAR *code )
+/** \fn INT32 sdbCrtJSProcedure(sdbConnectionHandle cHandle,
+ *                              const CHAR *code )
  *  \brief create a store procedures.
  *  \param [in] cHandle The collection space space handle
  *  \param [in] code The code of store procedures
@@ -752,8 +752,9 @@ SDB_EXPORT INT32 sdbRmProcedures(sdbConnectionHandle cHandle,
 
 
 /** \fn INT32 sdbListJSProcedures(sdbConnectionHandle cHandle,
+ *                                bson *condition,
  *                                sdbCursorHandle *handle )
- *  \brief list store procedures.
+ *  \brief List store procedures.
  *  \param [in] cHandle The collection space space handle
  *  \param [in] condition The condition of list
  *  \param [out] handle The cursor handle
@@ -765,9 +766,11 @@ SDB_EXPORT INT32 sdbListProcedures( sdbConnectionHandle cHandle,
                                     sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbEvalJS(sdbConnectionHandle cHandle,
- *                    bson *param,
- *                    bson *res )
- * \brief eval a func.
+ *                      const CHAR *code,
+ *                      SDB_SPD_RES_TYPE *type,
+ *                      sdbCursorHandle *handle,
+ *                      bson *errmsg )
+ * \brief Eval a func.
  * \      type is declared in spd.h. see SDB_FMP_RES_TYPE.
  * \param [in] cHandle The collection space space handle
  * \param [in] code The code to eval
@@ -1206,6 +1209,13 @@ SDB_EXPORT INT32 sdbUpdateCurrent ( sdbCursorHandle cHandle,
 SDB_EXPORT INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle ) ;
 */
 
+/** \fn INT32 sdbCloseCursor( sdbCursorHandle cHandle )
+    \brief Close the cursor's connection to database, we can't use this handle to get
+                 data anymore.
+    \param [in] cHandle The cursor handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
 SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle ) ;
 
 /** \fn INT32 sdbExec( sdbConnectionHandle cHandle,
