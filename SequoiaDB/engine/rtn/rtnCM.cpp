@@ -161,7 +161,7 @@ namespace CLSMGR
    void pidMonitor () ;
    INT32 initEnv( UINT16 &port ) ;
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_RDCFGFILE, "readConfigureFile" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_RDCFGFILE, "readConfigureFile" )
    INT32 readConfigureFile( const CHAR *conf,
                             po::options_description &desc,
                             po::variables_map &vm )
@@ -202,7 +202,7 @@ namespace CLSMGR
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WTCFGFILE, "writeConfigureFile" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WTCFGFILE, "writeConfigureFile" )
    INT32 writeConfigureFile ( OSSFILE *pFile, const CHAR *pBufferWrite,
                               SINT64 iLenToWrite )
    {
@@ -225,7 +225,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_BLDFULLPATH, "buildFullPath" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_BLDFULLPATH, "buildFullPath" )
    INT32 buildFullPath ( const CHAR *path, const CHAR *name,
                          UINT32 fullSize, CHAR *full )
    {
@@ -250,7 +250,7 @@ namespace CLSMGR
    }
 
    // tcp listener to handle new connection request
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CMTCPLISTENER, "cmTcpListener" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMTCPLISTENER, "cmTcpListener" )
    void cmTcpListener ( INT32 port )
    {
       INT32 rc = SDB_OK ;
@@ -321,7 +321,7 @@ namespace CLSMGR
       iPmdProc::stop();
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_STARTREMOTECMD, "startRemoteCommand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTREMOTECMD, "startRemoteCommand" )
    INT32 startRemoteCommand ( SOCKET s )
    {
       INT32 rc = SDB_OK ;
@@ -345,7 +345,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RECVREMOTECMD, "recvRemoteCommand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RECVREMOTECMD, "recvRemoteCommand" )
    void recvRemoteCommand ( SOCKET s )
    {
       INT32 rc      = SDB_OK ;
@@ -439,7 +439,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_BLDARGS, "buildArguments" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_BLDARGS, "buildArguments" )
    INT32 buildArguments ( CHAR **pArgumentBuffer, list<const CHAR*> &argv )
    {
       SDB_ASSERT ( pArgumentBuffer, "Invalid input" ) ;
@@ -483,7 +483,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART, "sdbStart" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART, "sdbStart" )
    INT32 sdbStart ( const CHAR *arg )
    {
       INT32 rc = SDB_OK ;
@@ -559,7 +559,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART2, "sdbStart2" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART2, "sdbStart2" )
    INT32 sdbStart2 ( const string svcname, INT32 type )
    {
       INT32 rc = SDB_OK ;
@@ -776,7 +776,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_STARTNODE, "startNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_STARTNODE, "startNode" )
    INT32 startNode ( const CHAR *confpath, OSSPID *pid )
    {
       SDB_ASSERT ( confpath && pid, "NULL pointer exception" ) ;
@@ -853,7 +853,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP, "sdbStop" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP, "sdbStop" )
    INT32 sdbStop ( const CHAR *arg )
    {
       INT32 rc = SDB_OK ;
@@ -947,7 +947,7 @@ namespace CLSMGR
    }
 
 #define W_OK   2
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBADD, "sdbAdd" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBADD, "sdbAdd" )
    INT32 sdbAdd ( const CHAR *arg1, const CHAR *arg2 )
    {
       INT32 rc = SDB_OK ;
@@ -1215,7 +1215,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBRM, "sdbRm" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBRM, "sdbRm" )
    INT32 sdbRm ( const CHAR *arg1 )
    {
       INT32 rc = SDB_OK ;
@@ -1371,7 +1371,7 @@ namespace CLSMGR
    }
 
 #define SDBCM_RESERVED ".RESERVED"
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBMODIFY, "sdbModify" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBMODIFY, "sdbModify" )
    INT32 sdbModify ( const CHAR *arg1, const CHAR *arg2, const CHAR *arg3 )
    {
       INT32 rc = SDB_OK ;
@@ -1466,7 +1466,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SENDRETCODE, "sendRetCode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SENDRETCODE, "sendRetCode" )
    INT32 sendRetCode ( SINT32 retCode, ossSocket *sock )
    {
       INT32 rc = SDB_OK ;
@@ -1499,7 +1499,7 @@ namespace CLSMGR
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CMRECV, "cmRecv" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMRECV, "cmRecv" )
    INT32 cmRecv ( CHAR *pBuffer, INT32 recvSize,
                   ossSocket *sock )
    {
@@ -1523,7 +1523,7 @@ namespace CLSMGR
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CMSEND, "cmSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMSEND, "cmSend" )
    INT32 cmSend ( const CHAR *pBuffer, INT32 sendSize,
                       ossSocket *sock )
    {
@@ -1547,7 +1547,7 @@ namespace CLSMGR
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PIDMONITOR, "pidMonitor" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PIDMONITOR, "pidMonitor" )
    void pidMonitor ()
    {
       INT32 rc = SDB_OK ;
@@ -1669,7 +1669,7 @@ namespace CLSMGR
       PD_TRACE_EXITRC ( SDB_PIDMONITOR, rc );
    }
    
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCM_INITENV, "initEnv" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCM_INITENV, "initEnv" )
    INT32 initEnv( UINT16 &port )
    {
       SDB_ASSERT( port, "Invalid input" ) ;
@@ -1783,7 +1783,7 @@ namespace CLSMGR
 
 
 #if defined (_WINDOWS)
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WINGETPROCESSINFOBYSVCNAME, "getProcessInfoBySvcname" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WINGETPROCESSINFOBYSVCNAME, "getProcessInfoBySvcname" )
    INT32 getProcessInfoBySvcname( const string &svcName,
                               struct Process &processInfo )
    {
@@ -1848,7 +1848,7 @@ namespace CLSMGR
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WINGETSVCLSTFROMCFG, "getSvcLstFromCfg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WINGETSVCLSTFROMCFG, "getSvcLstFromCfg" )
    INT32 getSvcLstFromCfg( vector< string > &svcnameLst )
    {
       INT32 rc = SDB_OK;
@@ -1904,7 +1904,7 @@ namespace CLSMGR
    }
 
 #elif defined (_LINUX)
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_LINUXGETPROCESSINFOBYSVCNAME, "getProcessInfoBySvcname" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_LINUXGETPROCESSINFOBYSVCNAME, "getProcessInfoBySvcname" )
    INT32 getProcessInfoBySvcname( const string &svcName,
                               struct Process &processInfo )
    {
@@ -1962,7 +1962,7 @@ namespace CLSMGR
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_LINUXGETSVCLSTFROMCFG, "getSvcLstFromCfg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_LINUXGETSVCLSTFROMCFG, "getSvcLstFromCfg" )
    INT32 getSvcLstFromCfg( vector< string > &svcnameLst )
    {
       INT32 rc = SDB_OK;
@@ -2026,7 +2026,7 @@ namespace CLSMGR
 
 #endif
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_STARTALLNODES, "startAllNodes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_STARTALLNODES, "startAllNodes" )
    INT32 startAllNodes()
    {
       INT32 rc = SDB_OK;
@@ -2096,7 +2096,7 @@ namespace CLSMGR
       return SDBCM_EXE_FILE_NAME;
    }
 
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCMSVC_DMNMAIN, "cCMService::dmnMain" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCMSVC_DMNMAIN, "cCMService::dmnMain" )
    INT32 cCMService::svcMain( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK;
