@@ -2010,5 +2010,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CLS_NODE_BSFAULT</name>
+         <description>
+            <en>the node is business-failures</en>
+            <cn>节点处于业务故障状态</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
