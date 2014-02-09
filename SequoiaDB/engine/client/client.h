@@ -46,6 +46,34 @@ typedef ossValuePtr sdbCursorHandle       ;
 typedef ossValuePtr sdbShardHandle ;
 typedef ossValuePtr sdbNodeHandle  ;
 
+
+#define SDB_LIST_GROUPS           SDB_LIST_SHARDS
+typedef sdbShardHandle            sdbReplicaGroupHandle ;
+typedef sdbNodeHandle             sdbReplicaNodeHandle ;
+
+#define sdbGetReplicaGroup        sdbGetShard
+#define sdbGetReplicaGroup1       sdbGetShard1
+#define sdbGetReplicaGroupName    sdbGetShardName
+#define sdbIsReplicaGroupCatalog  sdbIsShardCatalog
+#define sdbCreateReplicaCataGroup sdbCreateCataShard
+#define sdbCreateReplicaGroup     sdbCreateShard
+#define sdbRemoveReplicaGroup     sdbRemoveShard
+#define sdbStartReplicaGroup      sdbStartShard
+#define sdbStopReplicaGroup       sdbStopShard
+#define sdbListReplicaGroups      sdbListShards
+#define sdbReleaseReplicaGroup    sdbReleaseShard
+
+#define sdbCreateReplicaNode      sdbCreateNode
+#define sdbRemoveReplicaNode      sdbRemoveNode
+#define sdbGetReplicaNodeMaster   sdbGetNodeMaster
+#define sdbGetReplicaNodeSlave    sdbGetNodeSlave
+#define sdbGetReplicaNodeByName   sdbGetNodeByName
+#define sdbGetReplicaNodeByHost   sdbGetNodeByHost
+#define sdbGetReplicaNodeSddr     sdbGetNodeAddr
+#define sdbStartReplicaNode       sdbStartNode
+#define sdbStopReplicaNode        sdbStopNode
+#define sdbReleaseReplicaNode     sdbReleaseNode
+
 /** \fn INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                            const CHAR *pUsrName, const CHAR *pPasswd ,
                            sdbConnectionHandle *handle ) ;

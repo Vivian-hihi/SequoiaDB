@@ -72,6 +72,16 @@
 
 #define FLG_INSERT_CONTONDUP  0x00000001
 
+#define SDB_LIST_GROUPS        SDB_LIST_SHARDS
+#define sdbReplicaGroup        sdbShard
+#define sdbReplicaNode         sdbNode
+#define listReplicaGroups      listShards
+#define getReplicaGroup        getShard
+#define createReplicaGroup     createShard
+#define removeReplicaGroup     removeShard
+#define createReplicaCataGroup createCataShard
+#define activateReplicaGroup   activeShard
+
 /** \namespace sdbclient
     \brief SequoiaDB Driver for C++
 */
@@ -321,7 +331,7 @@ namespace sdbclient
       virtual INT32 attachCollection ( const CHAR *subClFullName,
                                       const bson::BSONObj &options) = 0 ;
       virtual INT32 detachCollection ( const CHAR *subClFullName) = 0 ;
-     
+
       //virtual INT32 alter ( const bson *options ) = 0 ;
    } ;
 
@@ -335,14 +345,14 @@ namespace sdbclient
    private :
 /** \fn sdbCollection ( const sdbCollection& other ) ;
       \brief Copy constructor
-      \param[in] A cosnt object reference of class sdbShard.
+      \param[in] A const object reference of class sdbCollection.
 */
       sdbCollection ( const sdbCollection& other ) ;
 
 /** \fn sdbCollection& operator=( const sdbCollection& )
       \brief Assignment constructor
       \param[in] a const reference of class sdbCollection.
-      \retval A cosnt object reference of class sdbCollection.
+      \retval A const object reference of class sdbCollection.
 */
       sdbCollection& operator=( const sdbCollection& ) ;
    public :
@@ -897,7 +907,7 @@ namespace sdbclient
     INT32 getQueryMeta ( sdbCursor &cursor,
                          const bson::BSONObj &condition,
                          const bson::BSONObj &orderBy,
-                         const bson::BSONObj &hint,                                         
+                         const bson::BSONObj &hint,
                          INT64 numToSkip,
                          INT64 numToReturn )
     {
@@ -1000,14 +1010,14 @@ namespace sdbclient
    private :
 /** \fn sdbNode ( const sdbNode& other )
     \brief Copy Constructor
-    \param[in] A cosnt object reference  of class sdbShard.
+    \param[in] A const object reference  of class sdbNode.
 */
       sdbNode ( const sdbNode& other ) ;
 
 /** \fn sdbNode& operator=( const sdbNode& )
     \brief Assignment constructor
-    \param[in] A cosnt reference  of class sdbNode.
-    \retval A object cosnt reference  of class sdbNode.
+    \param[in] A const reference  of class sdbNode.
+    \retval A object const reference  of class sdbNode.
 */
       sdbNode& operator=( const sdbNode& ) ;
    public :
@@ -1204,14 +1214,14 @@ namespace sdbclient
    private :
 /** \fn sdbShard ( const sdbShard& other )
     \brief Copy constructor
-    \param[in] A cosnt object reference of class sdbShard.
+    \param[in] A const object reference of class sdbShard.
 */
       sdbShard ( const sdbShard& other ) ;
 
 /** \fn sdbShard& operator=( const sdbShard& ) ;
    \brief Assignment constructor
-   \param[in] A cosnt reference object of class sdbShard.
-   \retval A cosnt reference object of class sdbShard.
+   \param[in] A const reference object of class sdbShard.
+   \retval A const reference object of class sdbShard.
 */
       sdbShard& operator=( const sdbShard& ) ;
    public :
@@ -1522,14 +1532,14 @@ namespace sdbclient
    private :
 /** \fn sdbCollectionSpace ( const sdbCollectionSpace& other )
     \brief Copy constructor.
-    \param[in] A cosnt object reference of class sdbCollectionSpace .
+    \param[in] A const object reference of class sdbCollectionSpace .
 */
       sdbCollectionSpace ( const sdbCollectionSpace& other ) ;
 
 /** \fn sdbCollectionSpace& operator=( const sdbCollectionSpace& )
     \brief Assignment constructor.
-    \param[in] A cosnt object reference of class sdb.
-    \retval A cosnt object reference  of class sdb.
+    \param[in] A const object reference of class sdb.
+    \retval A const object reference  of class sdb.
 */
       sdbCollectionSpace& operator=( const sdbCollectionSpace& ) ;
    public :
@@ -1946,13 +1956,13 @@ namespace sdbclient
    private:
 /** \fn sdb ( const sdb& other )
     \brief Copy constructor.
-    \param[in] A cosnt reference of class sdb.
+    \param[in] A const reference of class sdb.
 */
       sdb ( const sdb& other ) ;
 /** \fn sdb& operator=( const sdb& )
     \brief Assignment constructor.
-    \param[in] A cosnt object reference of class sdb.
-    \retval A cosnt object reference of class sdb.
+    \param[in] A const object reference of class sdb.
+    \retval A const object reference of class sdb.
 */
       sdb& operator=( const sdb& ) ;
    public :
