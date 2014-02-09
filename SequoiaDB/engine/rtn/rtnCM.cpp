@@ -1028,7 +1028,7 @@ namespace CLSMGR
          // if we can not find the file, then create one
          else if ( SDB_FNE == rc )
          {
-            rc = ossMkdir ( dbpath, 0 ) ;
+            rc = ossMkdir ( dbpath, OSS_CREATE|OSS_READWRITE ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to create config file in path: %s",
@@ -1042,8 +1042,7 @@ namespace CLSMGR
             goto error ;
          }
 
-         rc = buildFullPath( pmdConf, svcname,
-                                OSS_MAX_PATHSIZE + 1, path );
+         rc = buildFullPath( pmdConf, svcname, OSS_MAX_PATHSIZE + 1, path ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "configure file path is too long!" ) ;
@@ -1061,7 +1060,7 @@ namespace CLSMGR
          // if we can not find the file, then create one
          else if ( SDB_FNE == rc )
          {
-            rc = ossMkdir ( path, 0 ) ;
+            rc = ossMkdir ( path, OSS_CREATE|OSS_READWRITE ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to create config file in path: %s",
@@ -1089,8 +1088,7 @@ namespace CLSMGR
          goto error;
       }
 
-      rc = buildFullPath( path, PMD_DFT_CONF,
-                                OSS_MAX_PATHSIZE + 1, conf );
+      rc = buildFullPath( path, PMD_DFT_CONF, OSS_MAX_PATHSIZE + 1, conf );
       if ( rc )
       {
          PD_LOG ( PDERROR, "configure file path is too long!" ) ;
@@ -1115,26 +1113,28 @@ namespace CLSMGR
             while ( j.more () )
             {
                BSONElement e = j.next() ;
-               
+
                const CHAR *pKey = e.fieldName () ;
-               ss<<pKey<<"=" ;
-               if ( !ossStrcmp ( pKey, PMD_OPTION_DBPATH ) )
-                  ss<<dbpath;
+               ss << pKey << "=" ;
+               if ( 0 == ossStrcmp ( pKey, PMD_OPTION_DBPATH ) )
+               {
+                  ss << dbpath ;
+               }
                else
                {
                   switch ( e.type() )
                   {
                   case NumberDouble :
-                     ss<<e.numberDouble () ;
+                     ss << e.numberDouble () ;
                      break ;
                   case NumberInt :
-                     ss<<e.numberLong () ;
+                     ss << e.numberLong () ;
                      break ;
                   case NumberLong :
-                     ss<<e.numberInt () ;
+                     ss << e.numberInt () ;
                      break ;
                   case String :
-                     ss<<e.valuestrsafe () ;
+                     ss << e.valuestrsafe () ;
                      break ;
                   default :
                      // bad type
@@ -1143,9 +1143,10 @@ namespace CLSMGR
                      goto conferror ;
                   }
                }
-               ss<<endl ;
+               ss << endl ;
             }
-            rc = writeConfigureFile ( &file, ss.str().c_str(), ss.str().size() ) ;
+            rc = writeConfigureFile ( &file, ss.str().c_str(),
+                                      ss.str().size() ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Can not create file: %s", conf ) ;
@@ -1166,9 +1167,10 @@ namespace CLSMGR
       {
          BSONObj bsonArg ( arg2 ) ;
          if ( bsonArg.isEmpty() )
+         {
             goto done ;
-         rc = buildFullPath( path, PMD_DFT_CAT,
-                                OSS_MAX_PATHSIZE + 1, cata );
+         }
+         rc = buildFullPath( path, PMD_DFT_CAT, OSS_MAX_PATHSIZE + 1, cata ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "catalog file path is too long!" ) ;
@@ -1185,8 +1187,9 @@ namespace CLSMGR
          else
          {
             stringstream ss ;
-            ss<<bsonArg<<endl;
-            rc = writeConfigureFile ( &file, ss.str().c_str(), ss.str().size() ) ;
+            ss << bsonArg << endl ;
+            rc = writeConfigureFile ( &file, ss.str().c_str(),
+                                      ss.str().size() ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Can not create file: %s", conf ) ;
@@ -1203,6 +1206,7 @@ namespace CLSMGR
       }
       PD_LOG ( PDEVENT, "Successfully add node: %s", svcname) ;
       ossClose ( file ) ;
+
    done:
       PD_TRACE_EXITRC ( SDB_SDBADD, rc );
       return rc ;
