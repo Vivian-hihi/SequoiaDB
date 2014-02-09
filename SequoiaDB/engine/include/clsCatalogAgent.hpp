@@ -46,6 +46,7 @@ using namespace bson ;
 
 namespace engine
 {
+   #define SDB_CLS_NODE_INFO_EXPIRED_TIME       100000
    class _clsShardMgr ;
    class _clsCatalogAgent ;
    class _clsCatalogSet ;
@@ -377,6 +378,7 @@ namespace engine
          VEC_NODE_INFO                 _vecNodes ;
          MsgRouteID                    _primaryNode ;
          UINT32                        _primaryPos;
+         ossAtomic32                   _errTime;
 
    };
    typedef _clsGroupItem clsGroupItem ;
