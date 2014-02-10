@@ -88,20 +88,20 @@ INT32 execSQL ( sdb *connection, CHAR *sql, sdbCursor **query )
    return rc ;
 }
 
-INT32 selectGroup ( sdb *connection,
-                    sdbShard **group,
-                    const CHAR *groupName )
+INT32 selectShard ( sdb *connection,
+                    sdbShard **shard,
+                    const CHAR *shardName )
 {
    INT32 rc = SDB_OK ;
-   rc = connection->getShard ( groupName, **group ) ;
+   rc = connection->getShard ( shardName, **shard ) ;
    if ( SDB_CLS_GRP_NOT_EXIST == rc )
    {
-      rc = connection->createShard ( groupName, **group ) ;
+      rc = connection->createShard ( shardName, **shard ) ;
    }
    return rc ;
 }
 
-INT32 createCataGroup ( sdb *connection,
+INT32 createCataShard ( sdb *connection,
                         const CHAR *pHostName,
                         const CHAR *pServiceName,
                         const CHAR *pDatabasePath,
@@ -132,15 +132,15 @@ INT32 dropCollectionSpace ( sdb *connection,
    return rc ;
 }
 /*
-INT32 activateGroup ( sdb *connection,
-                      const CHAR *groupName )
+INT32 activateShard ( sdb *connection,
+                      const CHAR *shardName )
 {
    INT32 rc = SDB_OK ;
-   sdbReplicaGroup group ;
-   rc = connection->getReplicaGroup ( groupName, group ) ;
+   sdbReplicaShard shard ;
+   rc = connection->getReplicaShard ( shardName, shard ) ;
    if ( !rc )
    {
-      rc = connection->activateReplicaGroup ( groupName, group ) ;
+      rc = connection->activateReplicaShard ( shardName, shard ) ;
    }
    return rc ;
 }*/
@@ -503,8 +503,8 @@ INT32 aggregate ( sdbCollection *collection, sdbCursor **query ,
 }
 
 INT32 splitData ( sdbCollection *collection,
-                  CHAR *sourceGroupName,
-                  CHAR *destGroupName,
+                  CHAR *sourceShardName,
+                  CHAR *destShardName,
                   CHAR *splitQueryCond,
                   CHAR *splitEndCond )
 {
@@ -526,8 +526,8 @@ INT32 splitData ( sdbCollection *collection,
          return rc ;
    }
 
-   rc = collection->split ( sourceGroupName,
-                            destGroupName,
+   rc = collection->split ( sourceShardName,
+                            destShardName,
                             condition_bson,
                             endCondition_bson ) ;
 
@@ -535,16 +535,16 @@ INT32 splitData ( sdbCollection *collection,
 }
 
 INT32 splitData2 ( sdbCollection *collection,
-                   CHAR *sourceGroupName,
-                   CHAR *destGroupName,
+                   CHAR *sourceShardName,
+                   CHAR *destShardName,
                    FLOAT64 percent )
 {
    INT32 rc = SDB_OK ;
    BSONObj condition_bson ;
    BSONObj endCondition_bson ;
 
-   rc = collection->split ( sourceGroupName,
-                            destGroupName,
+   rc = collection->split ( sourceShardName,
+                            destShardName,
                             percent ) ;
 
    return rc ;
@@ -718,7 +718,7 @@ INT32 delCurrent ( sdbCursor *query )
    return rc ;
 }*/
 
-/*************** sdbReplicaGroup ******************************/
+/*************** sdbReplicaShard ******************************/
 
 INT32 getNodeNum ( sdbShard *gr, INT32 nudeType, INT32 *nodeNum )
 {
@@ -787,7 +787,7 @@ INT32 createNode ( sdbShard *gr,
 }
 
 /*
-INT32 activate ( sdbReplicaGroup *gr )
+INT32 activate ( sdbReplicaShard *gr )
 {
    INT32 rc = SDB_OK ;
    rc = gr->activate() ;
@@ -795,14 +795,14 @@ INT32 activate ( sdbReplicaGroup *gr )
 }
 */
 
-INT32 groupStop ( sdbShard *gr )
+INT32 shardStop ( sdbShard *gr )
 {
    INT32 rc = SDB_OK ;
    rc = gr->stop() ;
    return rc ;
 }
 
-INT32 groupStart ( sdbShard *gr )
+INT32 shardStart ( sdbShard *gr )
 {
    INT32 rc = SDB_OK ;
    rc = gr->start() ;

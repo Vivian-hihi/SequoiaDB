@@ -214,7 +214,7 @@ static zend_class_entry *pSequoiadbData ;
 static zend_class_entry *pSequoiadbTimeStamp ;
 static zend_class_entry *pSequoiadbRegex ;
 static zend_class_entry *pSequoiadbInt64 ;
-static zend_class_entry *pSequoiadbReplicaGroup ;
+static zend_class_entry *pSequoiadbReplicaShard ;
 static zend_class_entry *pSequoiadbReplicaNode ;
 
 const zend_function_entry sequoiadb_sdb_functions[] = {
@@ -230,10 +230,10 @@ const zend_function_entry sequoiadb_sdb_functions[] = {
    PHP_ME ( SequoiaDB, selectCS        , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, listCSs         , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, listCollections , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaDB, selectGroup     , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDB, selectShard     , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, execSQL         , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, execUpdateSQL   , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( SequoiaDB, createCataGroup , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( SequoiaDB, createCataShard , NULL, ZEND_ACC_PUBLIC )
    PHP_ME ( SequoiaDB, dropCollectionSpace , NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
@@ -310,17 +310,17 @@ const zend_function_entry sequoia_int64_functions[] = {
    PHP_FE_END
 };
 
-const zend_function_entry sequoia_replicaGroup_functions[] = {
-   PHP_ME ( sequoiaReplicaGroup, getNodeNum , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, getDetail  , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, getMaster  , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, getSlave   , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, getNode    , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, createNode , NULL, ZEND_ACC_PUBLIC )
- //  PHP_ME ( sequoiaReplicaGroup, activate   , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, start      , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, stop       , NULL, ZEND_ACC_PUBLIC )
-   PHP_ME ( sequoiaReplicaGroup, isCatalog  , NULL, ZEND_ACC_PUBLIC )
+const zend_function_entry sequoia_replicaShard_functions[] = {
+   PHP_ME ( sequoiaReplicaShard, getNodeNum , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, getDetail  , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, getMaster  , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, getSlave   , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, getNode    , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, createNode , NULL, ZEND_ACC_PUBLIC )
+ //  PHP_ME ( sequoiaReplicaShard, activate   , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, start      , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, stop       , NULL, ZEND_ACC_PUBLIC )
+   PHP_ME ( sequoiaReplicaShard, isCatalog  , NULL, ZEND_ACC_PUBLIC )
    PHP_FE_END
 };
 
@@ -368,7 +368,7 @@ PHP_MINIT_FUNCTION(sequoiadb)
    zend_class_entry sequoiadbTimeStamp ;
    zend_class_entry sequoiaRegex ;
    zend_class_entry sequoiaINT64 ;
-   zend_class_entry sequoiaReplicaGroup ;
+   zend_class_entry sequoiaReplicaShard ;
    zend_class_entry sequoiaReplicaNode ;
 
    INIT_CLASS_ENTRY ( sequoiadbSdb, "SequoiaDB", sequoiadb_sdb_functions ) ;
@@ -387,8 +387,8 @@ PHP_MINIT_FUNCTION(sequoiadb)
                       "SequoiaRegex", sequoia_regex_functions  ) ;
    INIT_CLASS_ENTRY ( sequoiaINT64,
                       "SequoiaINT64", sequoia_int64_functions  ) ;
-   INIT_CLASS_ENTRY ( sequoiaReplicaGroup,
-                      "sequoiaReplicaGroup", sequoia_replicaGroup_functions  ) ;
+   INIT_CLASS_ENTRY ( sequoiaReplicaShard,
+                      "sequoiaReplicaShard", sequoia_replicaShard_functions  ) ;
    INIT_CLASS_ENTRY ( sequoiaReplicaNode,
                       "sequoiaReplicaNode", sequoia_replicaNode_functions  ) ;
 
@@ -410,8 +410,8 @@ zend_register_internal_class( &sequoiadbTimeStamp TSRMLS_CC ) ;
 zend_register_internal_class( &sequoiaRegex TSRMLS_CC ) ;
    pSequoiadbInt64           =
 zend_register_internal_class( &sequoiaINT64 TSRMLS_CC ) ;
-   pSequoiadbReplicaGroup    =
-zend_register_internal_class( &sequoiaReplicaGroup TSRMLS_CC ) ;
+   pSequoiadbReplicaShard    =
+zend_register_internal_class( &sequoiaReplicaShard TSRMLS_CC ) ;
    pSequoiadbReplicaNode     =
 zend_register_internal_class( &sequoiaReplicaNode TSRMLS_CC ) ;
 
@@ -491,10 +491,10 @@ zend_register_internal_class( &sequoiaReplicaNode TSRMLS_CC ) ;
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
 
    //sdbShard
-   zend_declare_property_null( pSequoiadbReplicaGroup,
+   zend_declare_property_null( pSequoiadbReplicaShard,
                                ZEND_STRL("_sdbShard"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
-   zend_declare_property_null( pSequoiadbReplicaGroup,
+   zend_declare_property_null( pSequoiadbReplicaShard,
                                ZEND_STRL("_connection"),
                                ZEND_ACC_PUBLIC TSRMLS_CC ) ;
 
@@ -998,7 +998,7 @@ PHP_METHOD ( SequoiaDB, selectCS )
    RETURN_ZVAL( cs_obj, 1, 0 ) ;
 }
 
-PHP_METHOD ( SequoiaDB, selectGroup )
+PHP_METHOD ( SequoiaDB, selectShard )
 {
    INT32 rc = SDB_OK ;
    CHAR *grName           = NULL ;
@@ -1025,7 +1025,7 @@ PHP_METHOD ( SequoiaDB, selectGroup )
    }
    // init and create a new SequoiaCS class
    MAKE_STD_ZVAL ( gr_obj ) ;
-   object_init_ex ( gr_obj, pSequoiadbReplicaGroup ) ;
+   object_init_ex ( gr_obj, pSequoiadbReplicaShard ) ;
    // create cs object
    CREATECLASS ( gr_obj, "_sdbShard", sdbShard, gr ) ;
    if ( !gr )
@@ -1033,14 +1033,14 @@ PHP_METHOD ( SequoiaDB, selectGroup )
       SETERROR2 ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
       RETURN_NULL() ;
    }
-   rc = selectGroup ( connection, &gr, grName ) ;
+   rc = selectShard ( connection, &gr, grName ) ;
    SETERROR2 ( getThis(), rc ) ;
    if ( rc )
    {
       RETURN_NULL() ;
    }
    SETZVAL ( gr_obj, "_connection", getThis() ) ;
-   //SETCLASSFROMZVAL ( gr_obj, "_sdbReplicaGroup", sdbReplicaGroup, &gr ) ;
+   //SETCLASSFROMZVAL ( gr_obj, "_sdbReplicaShard", sdbReplicaShard, &gr ) ;
    RETURN_ZVAL( gr_obj, 1, 0 ) ;
 }
 
@@ -1189,7 +1189,7 @@ PHP_METHOD ( SequoiaDB, listCollections )
    RETURN_ZVAL( cursor_obj, 1, 0 ) ;
 }
 
-PHP_METHOD ( SequoiaDB, createCataGroup )
+PHP_METHOD ( SequoiaDB, createCataShard )
 {
    INT32 rc = SDB_OK ;
    sdb *connection  = NULL ;
@@ -1233,7 +1233,7 @@ PHP_METHOD ( SequoiaDB, createCataGroup )
       RETURN_ARRAY_STRING2 ( getThis(), error, 0 ) ;
    }
 
-   rc = createCataGroup ( connection,
+   rc = createCataShard ( connection,
                           hostName,
                           serviceName,
                           databasePath,
@@ -2460,9 +2460,9 @@ PHP_METHOD ( SequoiaINT64, __toString )
    }
    RETURN_EMPTY_STRING () ;
 }
-/////////////////// group ///////////////////////////
+/////////////////// shard ///////////////////////////
 
-PHP_METHOD ( sequoiaReplicaGroup, getNodeNum )
+PHP_METHOD ( sequoiaReplicaShard, getNodeNum )
 {
    INT32 rc = SDB_OK ;
    CHAR *error = NULL ;
@@ -2515,7 +2515,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getNodeNum )
    }
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, getDetail )
+PHP_METHOD ( sequoiaReplicaShard, getDetail )
 {
    INT32 rc = SDB_OK ;
    CHAR *out = NULL ;
@@ -2545,7 +2545,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getDetail )
    RETURN_ARRAY_STRING ( getThis(), pBuf, 0 ) ;
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, getMaster )
+PHP_METHOD ( sequoiaReplicaShard, getMaster )
 {
    INT32 rc = SDB_OK ;
    sdbShard *gr   = NULL ;
@@ -2581,7 +2581,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getMaster )
    RETURN_ZVAL( node_obj, 1, 0 ) ;
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, getSlave )
+PHP_METHOD ( sequoiaReplicaShard, getSlave )
 {
    INT32 rc = SDB_OK ;
    sdbShard *gr   = NULL ;
@@ -2617,7 +2617,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getSlave )
    RETURN_ZVAL( node_obj, 1, 0 ) ;
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, getNode )
+PHP_METHOD ( sequoiaReplicaShard, getNode )
 {
    INT32 rc = SDB_OK ;
    CHAR *nodeName        = NULL ;
@@ -2664,7 +2664,7 @@ PHP_METHOD ( sequoiaReplicaGroup, getNode )
    RETURN_ZVAL( node_obj, 1, 0 ) ;
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, createNode )
+PHP_METHOD ( sequoiaReplicaShard, createNode )
 {
    INT32 rc = SDB_OK ;
    CHAR *hostName           = NULL ;
@@ -2716,12 +2716,12 @@ PHP_METHOD ( sequoiaReplicaGroup, createNode )
    RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;                
 }
 /*
-PHP_METHOD ( sequoiaReplicaGroup, activate )
+PHP_METHOD ( sequoiaReplicaShard, activate )
 {
    INT32 rc = SDB_OK ;
    CHAR *error           = NULL ;
-   sdbReplicaGroup *gr   = NULL ;
-   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaGroup", sdbReplicaGroup, gr ) ;
+   sdbReplicaShard *gr   = NULL ;
+   GETCLASSFROMZVAL ( getThis(), "_sdbReplicaShard", sdbReplicaShard, gr ) ;
    if ( !gr )
    {
       SETERROR ( getThis(), SDB_PHP_DRIVER_INTERNAL_ERROR ) ;
@@ -2734,7 +2734,7 @@ PHP_METHOD ( sequoiaReplicaGroup, activate )
    RETURN_ARRAY_STRING ( getThis(), error, 0 ) ; 
 }
 */
-PHP_METHOD ( sequoiaReplicaGroup, start )
+PHP_METHOD ( sequoiaReplicaShard, start )
 {
    INT32 rc = SDB_OK ;
    CHAR *error  = NULL ;
@@ -2746,13 +2746,13 @@ PHP_METHOD ( sequoiaReplicaGroup, start )
       PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
       RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
    }
-   rc = groupStart ( gr ) ;
+   rc = shardStart ( gr ) ;
    SETERROR ( getThis(), rc ) ;
    PRINTFERROR ( rc, error ) ;
    RETURN_ARRAY_STRING ( getThis(), error, 0 ) ; 
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, stop )
+PHP_METHOD ( sequoiaReplicaShard, stop )
 {
    INT32 rc = SDB_OK ;
    CHAR *error           = NULL ;
@@ -2764,13 +2764,13 @@ PHP_METHOD ( sequoiaReplicaGroup, stop )
       PRINTFERROR ( SDB_PHP_DRIVER_INTERNAL_ERROR, error ) ;
       RETURN_ARRAY_STRING ( getThis(), error, 0 ) ;
    }
-   rc = groupStop ( gr ) ;
+   rc = shardStop ( gr ) ;
    SETERROR ( getThis(), rc ) ;
    PRINTFERROR ( rc, error ) ;
    RETURN_ARRAY_STRING ( getThis(), error, 0 ) ; 
 }
 
-PHP_METHOD ( sequoiaReplicaGroup, isCatalog )
+PHP_METHOD ( sequoiaReplicaShard, isCatalog )
 {
    CHAR *error    = NULL ;
    sdbShard *gr   = NULL ;

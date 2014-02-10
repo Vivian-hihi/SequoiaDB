@@ -51,11 +51,11 @@ INT32 listCollectionSpaces ( sdb *connection, sdbCursor **query ) ;
 
 INT32 listCollections ( sdb *connection, sdbCursor **query ) ;
 
-INT32 selectGroup ( sdb *connection,
-                    sdbShard **group,
-                    const CHAR *groupName ) ;
+INT32 selectShard ( sdb *connection,
+                    sdbShard **shard,
+                    const CHAR *shardName ) ;
 
-INT32 createCataGroup ( sdb *connection,
+INT32 createCataShard ( sdb *connection,
                         const CHAR *pHostName,
                         const CHAR *pServiceName,
                         const CHAR *pDatabasePath,
@@ -64,8 +64,8 @@ INT32 dropCollectionSpace ( sdb *connection,
                             const CHAR *pCsName ) ;
 
 /*
-INT32 activateGroup ( sdb *connection,
-                      const CHAR *groupName ) ;
+INT32 activateShard ( sdb *connection,
+                      const CHAR *shardName ) ;
 */
 /************ sequoiadb_CS *********************/
 
@@ -103,14 +103,14 @@ INT32 aggregate ( sdbCollection *collection, sdbCursor **query ,
                   std::vector<CHAR *> &json ) ;
 
 INT32 splitData ( sdbCollection *collection,
-                  CHAR *sourceGroupName,
-                  CHAR *destGroupName,
+                  CHAR *sourceShardName,
+                  CHAR *destShardName,
                   CHAR *splitQueryCond,
                   CHAR *splitEndCond ) ;
 
 INT32 splitData2 ( sdbCollection *collection,
-                  CHAR *sourceGroupName,
-                  CHAR *destGroupName,
+                  CHAR *sourceShardName,
+                  CHAR *destShardName,
                   FLOAT64 percent ) ;
 
 INT32 collectionRename ( sdbCollection *collection, CHAR *pName ) ;
@@ -151,7 +151,7 @@ INT32 updateCurrent ( sdbCursor *query, const CHAR *rule ) ;
 INT32 delCurrent ( sdbCursor *query ) ;
 
 
-/*************** sdbReplicaGroup ******************************/
+/*************** sdbReplicaShard ******************************/
 
 INT32 getNodeNum ( sdbShard *gr, INT32 nudeType, INT32 *nodeNum ) ;
 
@@ -171,11 +171,11 @@ INT32 createNode ( sdbShard *gr,
                    const CHAR *pDatabasePath,
                    std::map<std::string,std::string> &config ) ;
 
-//INT32 activate ( sdbReplicaGroup *gr );
+//INT32 activate ( sdbReplicaShard *gr );
 
-INT32 groupStop ( sdbShard *gr ) ;
+INT32 shardStop ( sdbShard *gr ) ;
 
-INT32 groupStart ( sdbShard *gr ) ;
+INT32 shardStart ( sdbShard *gr ) ;
 
 BOOLEAN isCatalog ( sdbShard *gr ) ;
 
