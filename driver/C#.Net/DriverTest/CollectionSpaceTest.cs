@@ -72,9 +72,9 @@ namespace DriverTest
             CollectionSpace cs = null;
             Sequoiadb sdb = new Sequoiadb(config.conf.Coord.Address);
             sdb.Connect(config.conf.UserName, config.conf.Password);
-
-            cs = sdb.GetCollecitonSpace(csName);
-            if (cs == null)
+            if(sdb.IsCollectionSpaceExist(csName))
+                cs = sdb.GetCollecitonSpace(csName);
+            else
                 cs = sdb.CreateCollectionSpace(csName);
             if (!cs.IsCollectionExist(clName))
                 cs.CreateCollection(clName);

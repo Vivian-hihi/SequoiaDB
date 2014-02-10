@@ -299,6 +299,7 @@ namespace SequoiaDB
          *  \brief Get the named collection space
          *  \param csName The collection space name
          *  \return The CollecionSpace handle
+         *  \note If collection space not exit, throw BaseException
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */

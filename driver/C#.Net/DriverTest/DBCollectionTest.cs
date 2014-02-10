@@ -45,13 +45,20 @@ namespace DriverTest
         [TestInitialize()]
         public void MyTestInitialize()
         {
-            sdb = new Sequoiadb(config.conf.Coord.Address);
-            sdb.Connect(config.conf.UserName, config.conf.Password);
-            cs = sdb.GetCollecitonSpace(csName);
-            if (cs != null)
-                sdb.DropCollectionSpace(csName);
-            cs = sdb.CreateCollectionSpace(csName);
-            coll = cs.CreateCollection(cName);
+            try
+            {
+                sdb = new Sequoiadb(config.conf.Coord.Address);
+                sdb.Connect(config.conf.UserName, config.conf.Password);
+                if (sdb.IsCollectionSpaceExist(csName))
+                    sdb.DropCollectionSpace(csName);
+                cs = sdb.CreateCollectionSpace(csName);
+                coll = cs.CreateCollection(cName);
+            }
+            catch (BaseException e)
+            {
+                Console.WriteLine("Failed to Initialize in DBCollectionTest, ErrorType = {0}", e.ErrorType);
+                Environment.Exit(0);
+            }
         }
 
         [TestCleanup()]
@@ -338,7 +345,7 @@ namespace DriverTest
         }
 */
 
-
+/*
         [TestMethod()]
         public void SplitTest()
         {
@@ -485,7 +492,7 @@ namespace DriverTest
             sdb.RemoveReplicaGroup(nRGName);
             sdb2.Disconnect();
         }
- 
+ */
         [TestMethod()]
         public void AggregateTest()
         {
