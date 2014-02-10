@@ -160,7 +160,7 @@ namespace engine
             pNewMsg = NULL;
          }
 
-         if ( rc != SDB_OK && rc != SDB_APP_INTERRUPT && !hasRefresh )
+         if ( !hasRefresh && rtnCoordWriteRetryRC( rc ) )
          {
             isNeedRefresh = TRUE;
          }

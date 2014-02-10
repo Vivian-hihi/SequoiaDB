@@ -2668,5 +2668,19 @@ namespace engine
       return ;
    }
 
+   BOOLEAN rtnCoordWriteRetryRC( INT32 retCode )
+   {
+      if ( SDB_CLS_NOT_PRIMARY == retCode
+         || SDB_CLS_COORD_NODE_CAT_VER_OLD == retCode
+         || SDB_CLS_NODE_NOT_ENOUGH == retCode
+         || SDB_CLS_NO_CATALOG_INFO == retCode
+         || SDB_NETWORK == retCode
+         || SDB_NET_CANNOT_CONNECT == retCode )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
+   }
+
 }
 

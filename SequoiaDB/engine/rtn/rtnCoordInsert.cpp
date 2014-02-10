@@ -96,8 +96,8 @@ namespace engine
          }
          if ( SDB_OK != rc )
          {
-            if ( rc != SDB_APP_INTERRUPT
-               && !isNeedRefreshCata )
+            if ( !isNeedRefreshCata
+               && rtnCoordWriteRetryRC( rc ) )
             {
                isNeedRefreshCata = TRUE;
                continue;

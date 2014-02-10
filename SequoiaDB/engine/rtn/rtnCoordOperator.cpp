@@ -183,8 +183,8 @@ namespace engine
             newTransGroupLst.erase( pReply->header.routeID.columns.groupID );
             cb->addTransNode( pReply->header.routeID );
          }
-         else if ( SDB_CLS_NOT_PRIMARY == rcTmp
-                  && !hasRetry )
+         else if ( !hasRetry
+                  && rtnCoordWriteRetryRC( rc ) )
          {
             rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
                                   TRUE, groupInfoTmp );
