@@ -742,6 +742,16 @@ INT32 ossSocket::connect ()
       rc = SDB_NETWORK ;
       goto error ;
    }
+   // if the local addr is the same with remote addr
+   if ( _sockAddress.sin_port == _peerAddress.sin_port &&
+        _sockAddress.sin_addr.s_addr == _peerAddress.sin_addr.s_addr )
+   {
+      PD_LOG( PDERROR, "Local addr is the same with remote addr, "
+              "local port: %u, remote port: %u", getLocalPort(),
+              getPeerPort() ) ;
+      rc = SDB_NETWORK ;
+      goto error ;
+   }
 
 done :
    PD_TRACE_EXITRC ( SDB_OSSSK_CONNECT, rc );
