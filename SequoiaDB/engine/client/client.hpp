@@ -119,8 +119,6 @@ namespace sdbclient
 
 /** \class  sdbCursor
       \brief Database operation interfaces of cursor.
-
-      Class sdbCursor is a handle class of virtual base class _sdbCursor.
 */
    class DLLEXPORT sdbCursor
    {
@@ -346,8 +344,6 @@ namespace sdbclient
 
 /** \class sdbCollection
       \brief Database operation interfaces of cursor.
-
-      Class sdbCollection is a handle class of virtual base class _sdbCollection.
 */
    class DLLEXPORT sdbCollection
    {
@@ -1010,9 +1006,10 @@ namespace sdbclient
    } ;
 
 /** \class sdbNode
-    \brief Database operation interfaces of node
-
-    Class sdbNode is a handle class of virtual base class _sdbNode.
+    \brief Database operation interfaces of node.This class takes the place of class "replicaNode".
+    \note We use concept "node" instead of "replica node",
+            and change the class name "ReplicaNode" to "Node".
+            class "ReplicaNode" will be deprecated in version 2.x.
 */
    class DLLEXPORT sdbNode
    {
@@ -1214,9 +1211,10 @@ namespace sdbclient
    } ;
 
 /** \class sdbShard
-    \brief Database operation interfaces of shard.
-
-    Class sdbShard is a handle class of virtual base class _sdbShard.
+    \brief Database operation interfaces of shard.This class takes the place of class "replicaGroup".
+    \note We use concept "shard" instead of "replica group",
+            and change the class name "ReplicaGroup" to "Shard".
+            class "ReplicaGroup" will be deprecated in version 2.x.
 */
    class DLLEXPORT sdbShard
    {
@@ -1533,8 +1531,6 @@ namespace sdbclient
    } ;
 /** \class sdbCollectionSpace
     \brief Database operation interfaces of collection space
-
-    Class sdbCollectionSpace is a handle class of virtual base class _sdbCollectionSpace.
 */
    class DLLEXPORT sdbCollectionSpace
    {
@@ -1957,8 +1953,6 @@ namespace sdbclient
    typedef class _sdb _sdb ;
 /** \class sdb
     \brief Database operation interfaces of admin.
-
-    Class sdb is a handle class of virtual base class _sdb.
 */
    class DLLEXPORT sdb
    {
