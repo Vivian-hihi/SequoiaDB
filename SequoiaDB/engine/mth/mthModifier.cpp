@@ -1445,8 +1445,28 @@ namespace engine
       case INC:
       case SET:
       {
-         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot, "$set" ) ;
-         b.appendAs ( me->_toModify, pShort ) ;
+         BOOLEAN changed = TRUE ;
+         try
+         {
+            b.appendAs ( me->_toModify, pShort ) ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG ( ( _ignoreTypeError ? PDINFO : PDERROR ),
+                     "Failed to append for %s: %s",
+                     me->_toModify.toString().c_str(), e.what() ) ;
+            if ( !_ignoreTypeError )
+            {
+               rc = SDB_INVALIDARG ;
+               goto done ;
+            }
+            changed = FALSE ;
+         }
+         if ( changed )
+         {
+            ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot,
+                                 "$set" ) ;
+         }
          break ;
       }
       // this codepath should never been hit
