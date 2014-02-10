@@ -1445,7 +1445,6 @@ namespace engine
       case INC:
       case SET:
       {
-         BOOLEAN changed = TRUE ;
          try
          {
             b.appendAs ( me->_toModify, pShort ) ;
@@ -1460,13 +1459,8 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto done ;
             }
-            changed = FALSE ;
          }
-         if ( changed )
-         {
-            ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot,
-                                 "$set" ) ;
-         }
+         ADD_CHG_ELEMENT_AS ( _dstChgBuilder, me->_toModify, pRoot, "$set" ) ;
          break ;
       }
       // this codepath should never been hit
