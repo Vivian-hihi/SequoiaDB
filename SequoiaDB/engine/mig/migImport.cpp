@@ -418,6 +418,7 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
                             BOOLEAN isHeaderline,
                             BOOLEAN autoAddField,
                             BOOLEAN autoCompletion,
+                            BOOLEAN linePriority,
                             const CHAR *pDelChar,
                             const CHAR *pDelField,
                             const CHAR *pDelRecord )
@@ -559,6 +560,7 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
    parserPara.blockNum = 32768 ;
    parserPara.readHeader = isHeaderline ;
    parserPara.headerBuffer = fields ;
+   parserPara.linePriority = linePriority ;
    _autoAddField = autoAddField ;
    _autoCompletion = autoCompletion ;
 
@@ -949,6 +951,7 @@ error :
 PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONPS_INIT, "_migJSONParser::init" )
 INT32 _migJSONParser::init ( sdbCollectionHandle collection,
                              const CHAR *pInputFile,
+                             BOOLEAN linePriority,
                              BOOLEAN bMongoCompatible )
 {
    INT32 rc = SDB_OK ;
@@ -982,6 +985,7 @@ INT32 _migJSONParser::init ( sdbCollectionHandle collection,
    parserPara.bufferSize = 33554432 ;
    parserPara.blockNum = 32768 ;
    parserPara.readHeader = FALSE ;
+   parserPara.linePriority = linePriority ;
 
    rc = _parser->initialize( &parserPara ) ;
    if ( rc )
