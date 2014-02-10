@@ -2523,7 +2523,7 @@ namespace engine
       clsNoteItem& item = _vecNodes[pos] ;
       status = item._status;
       if ( status != NET_NODE_STAT_NORMAL
-         && _errTime.inc() >= SDB_CLS_NODE_INFO_EXPIRED_TIME )
+         && _errTime.inc() % SDB_CLS_NODE_INFO_EXPIRED_TIME == 0 )
       {
          rc = SDB_CLS_NODE_INFO_EXPIRED;
       }
