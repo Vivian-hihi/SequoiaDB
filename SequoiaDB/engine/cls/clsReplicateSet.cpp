@@ -65,6 +65,12 @@ namespace engine
               goto error ;\
            }
 
+#if defined (_WINDOWS)
+   #define CLS_CONNREFUSED    WSAECONNREFUSED
+#else
+   #define CLS_CONNREFUSED    ECONNREFUSED
+#endif //_WINDOWS
+
    _clsReplicateSet::_clsReplicateSet( _netRouteAgent *agent ):
                                     _agent( agent ),
                                     _vote( &_info, _agent),
@@ -549,7 +555,15 @@ namespace engine
          if ( SDB_OK != _agent->syncSend( itr->second.beat.identity, &msg ) &&
               _info.alives.find( itr->first ) == _info.alives.end() )
          {
-            itr->second.timeout = CLS_SHARING_BRK_TIME + 120 * OSS_ONE_SEC - 1 ;
+            itr->second.timeout = CLS_SHARING_BRK_TIME - 1 ;
+            if ( SOCKET_GETLASTERROR == CLS_CONNREFUSED )
+            {
+               itr->second.timeout += ( 1800 * OSS_ONE_SEC ) ;
+            }
+            else
+            {
+               itr->second.timeout += 120 * OSS_ONE_SEC ;
+            }
          }
       }
       }
