@@ -92,7 +92,7 @@ struct _utilParserParamet : public SDBObject
                           readHeader(FALSE),
                           autoAddField(TRUE),
                           autoCompletion(FALSE),
-                          linePriority(FALSE),
+                          linePriority(TRUE),
                           accessModel(UTIL_GET_IO),
                           port(0),
                           fileName(NULL),
