@@ -5,10 +5,12 @@
   <body>
     <p>此部分是相关C的API文档。</p>
     <p><xref href="..\..\..\..\c\html\index.html" format="html">C API</xref></p>
-    <p>历史更新情况：</p>
-    <p>Version1.6</p>
+    <section>
+      <title>历史更新情况：</title>
+      <p><b>Version1.6</b></p>
     <p>1、使用sdbShardHandle和sdbNodeHandle来分别取代原来的sdbReplicaGroupHandle和sdbReplicaNodeHandle。sdbReplicaGroupHandle和sdbReplicaNodeHandle将在version2.x中被弃用。</p>
     <p>2、使用概念“shard”和“node”分别取代原来的“replica group”和“replica node”。与“replica group”和“replica node”相关的API接口的名字从version1.6开始都分别改为了与“shard”和“node”相关的。原接口将保留，直到version2.x会被弃用。</p>
     <p>详情请查看相关API。</p>
+    </section>
   </body>
 </topic>
