@@ -564,6 +564,9 @@ namespace engine
             {
                itr->second.timeout += 120 * OSS_ONE_SEC ;
             }
+            PD_LOG( PDEVENT, "Reset node[%d] sharing-beat time to %u(sec)",
+                    itr->second.beat.identity.columns.nodeID,
+                    itr->second.timeout / OSS_ONE_SEC ) ;
          }
       }
       }
