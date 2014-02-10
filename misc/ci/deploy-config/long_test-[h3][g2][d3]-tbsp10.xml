@@ -48,17 +48,17 @@
 				<node host="${test.machine.no1.data}" baseport="30000" dbpath="${install.path}/sequoiadb/database/cata/30000">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="30000" dbpath="${install.path}/sequoiadb/database/cata/30000">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="30000" dbpath="${install.path}/sequoiadb/database/cata/30000">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</catagroup>
 		</sdbdeploy>
@@ -68,17 +68,17 @@
 				<node host="${test.machine.no1.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</datagroup>
 
@@ -86,16 +86,16 @@
 				<node host="${test.machine.no3.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no1.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 					<confitem name="transactionon" value="true" />
 				</node>
 			</datagroup>
@@ -157,7 +157,9 @@
           <math result="eMonth" datatype="int" operand1="${bMonth}" operation="+" operand2="1"/>
        </else>
      </if>
-     <math result="eDay" datatype="int" operand1="31" operation="-" operand2="${bDay}"/>
+     <!--math result="eDay" datatype="int" operand1="31" operation="-" operand2="${bDay}"/-->
+     <property name="eDay" value="28" />
+     <echo message="begin month is ${bMonth} , begin day is ${bDay}"/>
      <echo>end month is ${eMonth} , end day is ${eDay}</echo>
      <property name="begin_str" value="${bMonth}-${bDay}"/>
      <property name="end_str" value="${eMonth}-${eDay}"/>

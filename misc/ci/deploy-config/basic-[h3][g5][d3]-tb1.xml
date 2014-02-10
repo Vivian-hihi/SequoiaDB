@@ -48,17 +48,17 @@
 				<node host="${test.machine.no1.data}" baseport="30000" dbpath="${install.path}/sequoiadb/database/cata/30000">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="30000" dbpath="${install.path}/sequoiadb/database/cata/30000">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="30000" dbpath="${install.path}/sequoiadb/database/cata/30000">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</catagroup>
 		</sdbdeploy>
@@ -68,17 +68,17 @@
 				<node host="${test.machine.no1.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no3.data}" baseport="21100" dbpath="${install.path}/sequoiadb/database/data/21100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</datagroup>
 
@@ -86,17 +86,17 @@
 				<node host="${test.machine.no3.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no1.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="22100" dbpath="${install.path}/sequoiadb/database/data/22100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</datagroup>
 			
@@ -104,17 +104,17 @@
 				<node host="${test.machine.no3.data}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no1.data}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="23100" dbpath="${install.path}/sequoiadb/database/data/23100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</datagroup>
 			
@@ -122,17 +122,17 @@
 				<node host="${test.machine.no3.data}" baseport="24100" dbpath="${install.path}/sequoiadb/database/data/24100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no1.data}" baseport="24100" dbpath="${install.path}/sequoiadb/database/data/24100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="24100" dbpath="${install.path}/sequoiadb/database/data/24100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</datagroup>
 			
@@ -140,17 +140,17 @@
 				<node host="${test.machine.no3.data}" baseport="25100" dbpath="${install.path}/sequoiadb/database/data/25100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no1.data}" baseport="25100" dbpath="${install.path}/sequoiadb/database/data/25100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 				<node host="${test.machine.no2.data}" baseport="25100" dbpath="${install.path}/sequoiadb/database/data/25100">
 					<confitem name="diaglevel" value="5" />
 					<confitem name="transactionon" value="true" />
-					<confitem name="sharingbreak" value="10000" />
+					<confitem name="sharingbreak" value="20000" />
 				</node>
 			</datagroup>
 		</sdbdeploy>
