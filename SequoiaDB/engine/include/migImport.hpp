@@ -124,6 +124,7 @@ public:
                 BOOLEAN isHeaderline,
                 BOOLEAN autoAddField,
                 BOOLEAN autoCompletion,
+                BOOLEAN linePriority,
                 const CHAR *pDelChar,
                 const CHAR *pDelField,
                 const CHAR *pDelRecord ) ;
@@ -137,6 +138,7 @@ protected :
 public:
    INT32 init ( sdbCollectionHandle collection,
                 const CHAR *pInputFile,
+                BOOLEAN linePriority,
                 BOOLEAN bMongoCompatible ) ;
 } ;
 typedef class _migJSONParser migJSONParser ;
