@@ -538,9 +538,19 @@ namespace engine
                                         _info.info.begin() ;
       for ( ; itr != _info.info.end(); itr++ )
       {
+         if ( itr->second.timeout >= CLS_SHARING_BRK_TIME &&
+              itr->second.timeout >= _beatTime )
+         {
+            itr->second.timeout -= _beatTime ;
+            continue ;
+         }
          msg.beat.syncStatus = clsSyncWindow( itr->second.beat.endLsn,
                                               fBegin, mBegin, end ) ;
-         _agent->syncSend( itr->second.beat.identity, &msg ) ;
+         if ( SDB_OK != _agent->syncSend( itr->second.beat.identity, &msg ) &&
+              _info.alives.find( itr->first ) == _info.alives.end() )
+         {
+            itr->second.timeout = CLS_SHARING_BRK_TIME + 120 * OSS_ONE_SEC ;
+         }
       }
       }
    done:
@@ -694,6 +704,7 @@ namespace engine
          }
       }
       {
+         _alive( beat.identity ) ;
          _MsgClsBeatRes res ;
          res.identity = _info.local ;
          _agent->syncSend( msg->header.routeID, &res ) ;
