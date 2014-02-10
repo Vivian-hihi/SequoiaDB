@@ -108,7 +108,8 @@ public:
                 UINT16 port,
                 BOOLEAN bMongoCompatible,
                 BOOLEAN linePriority,
-                migImportAccess accessModel ) ;
+                migImportAccess accessModel,
+                const CHAR *pDelRecord ) ;
 } ;
 typedef class _migJSONParser migJSONParser ;
 

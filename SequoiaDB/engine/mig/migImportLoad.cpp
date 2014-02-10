@@ -216,9 +216,9 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
       {
          delChar = pDelChar[0] ;
       }
-      if ( delCharSize > 1 &&
-           pDelChar[0] == '0' &&
-           pDelChar[1] == 'x' )
+      else if ( delCharSize > 1 &&
+                pDelChar[0] == '0' &&
+                pDelChar[1] == 'x' )
       {
          delChar = 0 ;
          if ( delCharSize > 4 )
@@ -244,6 +244,12 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
             }
          }
       }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "delchar must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
+         goto error ;
+      }
    }
 
    if ( pDelField )
@@ -253,9 +259,9 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
       {
          delField = pDelField[0] ;
       }
-      if ( delFieldSize > 1 &&
-           pDelField[0] == '0' &&
-           pDelField[1] == 'x' )
+      else if ( delFieldSize > 1 &&
+                pDelField[0] == '0' &&
+                pDelField[1] == 'x' )
       {
          delField = 0 ;
          if ( delFieldSize > 4 )
@@ -281,6 +287,12 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
             }
          }
       }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "delfield must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
+         goto error ;
+      }
    }
 
    if ( pDelRecord )
@@ -290,9 +302,9 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
       {
          delRecord = pDelRecord[0] ;
       }
-      if ( delRecordSize > 1 &&
-           pDelRecord[0] == '0' &&
-           pDelRecord[1] == 'x' )
+      else if ( delRecordSize > 1 &&
+                pDelRecord[0] == '0' &&
+                pDelRecord[1] == 'x' )
       {
          delRecord = 0 ;
          if ( delRecordSize > 4 )
@@ -317,6 +329,12 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
                delRecord += c - 'A' + 10 ;
             }
          }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "delrecord must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
+         goto error ;
       }
    }
 
@@ -427,13 +445,61 @@ INT32 _migJSONParser::init ( sdbCollectionHandle collection,
                              UINT16 port,
                              BOOLEAN bMongoCompatible,
                              BOOLEAN linePriority,
-                             migImportAccess accessModel )
+                             migImportAccess accessModel,
+                             const CHAR *pDelRecord )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__MIGLOADJSONPS_INIT );
    SDB_ASSERT ( collection, "collection can't be NULL" )
    SDB_ASSERT ( pInputFile, "input file can't be NULL" )
+   CHAR delChar = '"' ;
+   CHAR delField = ',' ;
+   CHAR delRecord = '\n' ;
    _utilParserParamet parserPara ;
+
+   if ( pDelRecord )
+   {
+      INT32 delRecordSize = ossStrlen ( pDelRecord ) ;
+      if ( delRecordSize == 1 )
+      {
+         delRecord = pDelRecord[0] ;
+      }
+      else if ( delRecordSize > 1 &&
+                pDelRecord[0] == '0' &&
+                pDelRecord[1] == 'x' )
+      {
+         delRecord = 0 ;
+         if ( delRecordSize > 4 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         for ( INT32 i = 3; i <= delRecordSize; ++i )
+         {
+            delRecord *= 16 ;
+            CHAR c = pDelRecord[i-1] ;
+            if ( c >= '0' && c <= '9' )
+            {
+               delRecord += c - '0' ;
+            }
+            else if ( c >= 'a' && c <= 'f' )
+            {
+               delRecord += c - 'a' + 10 ;
+            }
+            else if ( c >= 'A' && c <= 'F' )
+            {
+               delRecord += c - 'A' + 10 ;
+            }
+         }
+      }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "delrecord must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
+         goto error ;
+      }
+   }
+
    _parser = SDB_OSS_NEW _utilJSONParser() ;
    if ( !_parser )
    {
@@ -441,6 +507,11 @@ INT32 _migJSONParser::init ( sdbCollectionHandle collection,
       PD_LOG ( PDERROR, "memory error" ) ;
       goto error ;
    }
+
+   _parser->setDel ( delChar,
+                     delField,
+                     delRecord ) ;
+
    _collection = collection ;
 
    if ( MIG_IMPORT_GET_IO == accessModel )

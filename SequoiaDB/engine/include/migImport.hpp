@@ -139,7 +139,8 @@ public:
    INT32 init ( sdbCollectionHandle collection,
                 const CHAR *pInputFile,
                 BOOLEAN linePriority,
-                BOOLEAN bMongoCompatible ) ;
+                BOOLEAN bMongoCompatible,
+                const CHAR *pDelRecord ) ;
 } ;
 typedef class _migJSONParser migJSONParser ;
 

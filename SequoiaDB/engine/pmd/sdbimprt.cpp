@@ -651,7 +651,8 @@ INT32 importJson ()
    }
    // initialize
    rc = parser->init ( gCollection, gpInputFileName,
-                       linePriority, bMongoCompatible ) ;
+                       linePriority, bMongoCompatible,
+                       strDelRecord.length()?strDelRecord.c_str():NULL ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to initialize parser, rc = %d", rc ) ;

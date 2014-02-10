@@ -696,7 +696,8 @@ INT32 importJson ()
                        (UINT16)ossAtoi(gSourcePort),
                        bMongoCompatible,
                        linePriority,
-                       accessModel ) ;
+                       accessModel,
+                       strDelRecord.length()?strDelRecord.c_str():NULL ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to initialize parser, rc = %d", rc ) ;
