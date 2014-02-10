@@ -10,30 +10,25 @@ import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.util.SDBMessageHelper;
 
 /**
- * @class Node
- * @brief Database operation interfaces of node.This class takes the place of class "replicaNode".
+ * @class ReplicaNode
+ * @brief Database operation interfaces of replica node.This class will be deprecated in version 2.x.
+ *        Use class Node instead of it.
  * @note We use concept "node" instead of "replica node",
  *       and change the class name "ReplicaNode" to "Node".
+ * @deprecated 
+ * @see Node
  */
-public class Node {
+public class ReplicaNode {
 	private String hostName;
 	private int port;
 	private String nodeName;
 	private int id;
-	private Shard shard;
+	private ReplicaGroup group;
 	private Sequoiadb sdb;
 	private NodeStatus status;
 
-	Node(String hostName, int port, int nodeId, Shard shard) {
-		this.shard = shard;
-		this.hostName = hostName;
-		this.port = port;
-		this.nodeName = hostName + SequoiadbConstants.NODE_NAME_SEP + port;
-		this.id = nodeId;
-	}
-	
 	/*!
-	 * enum Node::NodeStatus
+	 * enum ReplicaNode::NodeStatus
 	 */
 	public static enum NodeStatus {
 		SDB_NODE_ALL(1), SDB_NODE_ACTIVE(2), SDB_NODE_INACTIVE(3), SDB_NODE_UNKNOWN(4);
@@ -44,6 +39,7 @@ public class Node {
 		public int getKey() {
 			return key;
 		}
+		
 		public static NodeStatus getByKey(int key) {
 			NodeStatus nodeStatus = NodeStatus.SDB_NODE_ALL;
 			for (NodeStatus status : NodeStatus.values()) {
@@ -54,29 +50,38 @@ public class Node {
 			}
 			return nodeStatus;
 		}
+		
 	}
 
 	/**
 	 * @fn int getNodeId()
-	 * @brief Get current node's id.
-	 * @return Current node's id.
+	 * @brief get current replicaNode's id
+	 * @return current replicaNode's id
 	 */
 	public int getNodeId() {
 		return id;
 	}
 
 	/**
-	 * @fn Shard getShard()
-	 * @brief Get current node's parent Shard.
-	 * @return Current node's parent Shard.
+	 * @fn ReplicaGroup getGroup()
+	 * @brief get current replicaNode's parent replicaGroup
+	 * @return current replicaNode's parent replicaGroup
 	 */
-	public Shard getShard() {
-		return shard;
+	public ReplicaGroup getGroup() {
+		return group;
+	}
+
+	ReplicaNode(String hostName, int port, int nodeId, ReplicaGroup group) {
+		this.group = group;
+		this.hostName = hostName;
+		this.port = port;
+		this.nodeName = hostName + SequoiadbConstants.NODE_NAME_SEP + port;
+		this.id = nodeId;
 	}
 
 	/**
 	 * @fn void disconnect()
-	 * @brief Disconnect from current node.
+	 * @brief disconnect from current replicaNode
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
@@ -85,24 +90,24 @@ public class Node {
 
 	/**
 	 * @fn Sequoiadb connect ()
-	 * @brief Connect to current node with the same username and password.
-	 * @return The Sequoiadb object of current node.
+	 * @brief Connect to current replicaNode with the same username and password
+	 * @return the Sequoiadb of current replicaNode
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb connect() {
-		sdb = new Sequoiadb(hostName, port, shard.getSequoiadb().getUserName(),
-				shard.getSequoiadb().getPassword());
+		sdb = new Sequoiadb(hostName, port, group.getSequoiadb().getUserName(),
+				group.getSequoiadb().getPassword());
 		return sdb;
 	}
 
 	/**
 	 * @fn Sequoiadb connect(String username, String password)
-	 * @brief Connect to current node with username and password.
+	 * @brief Connect to current replicaNode with username and password
 	 * @param username
-	 * 			user name
+	 * 			String
 	 * @param password
-	 * 			pass word
-	 * @return The Sequoiadb object of current node.
+	 * 			String
+	 * @return the Sequoiadb of current replicaNode
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb connect(String username, String password) {
@@ -112,8 +117,8 @@ public class Node {
 
 	/**
 	 * @fn Sequoiadb getSdb()
-	 * @brief Get the Sequoiadb of current node.
-	 * @return The Sequoiadb object of current node.
+	 * @brief Get the Sequoiadb of current replicaNode
+	 * @return the Sequoiadb of current replicaNode
 	 */
 	public Sequoiadb getSdb() {
 		return sdb;
@@ -121,8 +126,8 @@ public class Node {
 
 	/**
 	 * @fn String getHostName()
-	 * @brief Get the hostname of current node.
-	 * @return Hostname of current node.
+	 * @brief Get the hostname of current replicaNode
+	 * @return hostname of current replicaNode
 	 */
 	public String getHostName() {
 		return hostName;
@@ -130,8 +135,8 @@ public class Node {
 
 	/**
 	 * @fn int getPort()
-	 * @brief Get the port of current node.
-	 * @return The port of current node.
+	 * @brief Get the port of current replicaNode
+	 * @return port of current replicaNode
 	 */
 	public int getPort() {
 		return port;
@@ -139,8 +144,8 @@ public class Node {
 
 	/**
 	 * @fn String getNodeName()
-	 * @brief Get the name of current node.
-	 * @return The name of current node.
+	 * @brief Get the name of current replicaNode
+	 * @return name of current replicaNode
 	 */
 	public String getNodeName() {
 		return nodeName;
@@ -148,13 +153,13 @@ public class Node {
 
 	/**
 	 * @fn NodeStatus getStatus()
-	 * @brief Get the status of current node.
-	 * @return The status of current node.
+	 * @brief Get the status of current replicaNode
+	 * @return the status of current replicaNode
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public NodeStatus getStatus() {
 		BSONObject obj = new BasicBSONObject();
-		obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, shard.getId());
+		obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, group.getId());
 		obj.put(SequoiadbConstants.FIELD_NAME_NODEID, id);
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.SNAP_CMD + " "
@@ -176,7 +181,7 @@ public class Node {
 
 	/**
 	 * @fn void start()
-	 * @brief Start current node in database.
+	 * @brief Start current replicaNode in db
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void start() {
@@ -185,7 +190,7 @@ public class Node {
 
 	/**
 	 * @fn void stop()
-	 * @brief Stop current node in database.
+	 * @brief Stop current replicaNode in db
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void stop() {
@@ -229,12 +234,12 @@ public class Node {
 		sdbMessage.setOrderBy(dummyObj);
 		sdbMessage.setHint(dummyObj);
 
-		boolean endianConver = this.shard.getSequoiadb().endianConvert;
+		boolean endianConver = this.group.getSequoiadb().endianConvert;
 		byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
 				endianConver);
-		this.shard.getSequoiadb().getConnection().sendMessage(request);
+		this.group.getSequoiadb().getConnection().sendMessage(request);
 
-		ByteBuffer byteBuffer = this.shard.getSequoiadb().getConnection().receiveMessage(endianConver);
+		ByteBuffer byteBuffer = this.group.getSequoiadb().getConnection().receiveMessage(endianConver);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 
 		return rtnSDBMessage;

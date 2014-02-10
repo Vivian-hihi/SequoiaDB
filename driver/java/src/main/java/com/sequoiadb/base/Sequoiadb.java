@@ -70,6 +70,8 @@ public class Sequoiadb {
 	public final static int SDB_LIST_COLLECTIONS = 4;
 	public final static int SDB_LIST_COLLECTIONSPACES = 5;
 	public final static int SDB_LIST_STORAGEUNITS = 6;
+	/**SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it.*/
+	public final static int SDB_LIST_GROUPS = 7;
 	public final static int SDB_LIST_SHARDS = 7;
 	public final static int SDB_LIST_STOREPROCEDURES = 8;
 
@@ -406,8 +408,8 @@ public class Sequoiadb {
 
 	/**
 	 * @fn ArrayList<String> getShardNames()
-	 * @brief Get all the collecion space names
-	 * @return A list of all collecion space names
+	 * @brief Get all the shards' names.
+	 * @return A list of all the shards' names.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public ArrayList<String> getShardNames() throws BaseException {
@@ -510,8 +512,8 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn List<String> getShardsInfo()
-	 * @brief Get the infomations of the shard.
-	 * @return A list of informations of the shard.
+	 * @brief Get the infomations of the shards.
+	 * @return A list of informations of the shards.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public ArrayList<String> getShardsInfo() throws BaseException {
@@ -724,27 +726,27 @@ public class Sequoiadb {
 	/**
 	 * @fn DBCursor getSnapshot(int snapType, String matcher, String selector,
 	 *     String orderBy)
-	 * @brief Get snapshot in the database
-	 * @param snapType
-     *<dl>
-     *<dt>Sequoiadb.SDB_SNAP_CONTEXTS   : Get all contexts' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT        : Get the current context's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_SESSIONS        : Get all sessions' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT        : Get the current session's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     *<dt>Sequoiadb.SDB_LIST_SHARDS        : Get shard list ( only applicable in sharding env )
-     *<dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
-     *</dl>
+	 * @brief Get snapshot of the database.
+     * @param snapType The snapshot types are as below:
+     * <dl>
+     * <dt>Sequoiadb.SDB_SNAP_CONTEXTS   : Get all contexts' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT        : Get the current context's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_SESSIONS        : Get all sessions' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT        : Get the current session's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
+     * <dt>Sequoiadb.SDB_LIST_SHARDS        : Get shard list ( only applicable in sharding env )
+     * <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
+     * </dl>
 	 * @param matcher
-	 *            String
+	 *            The matching rule, match all the documents if null
 	 * @param selector
-	 *            String
+	 *            The selective rule, return the whole document if null
 	 * @param orderBy
-	 *            String
+	 *            The ordered rule, never sort if null
 	 * @return The DBCursor of snapshot.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
@@ -1086,6 +1088,198 @@ public class Sequoiadb {
 		}
 	}
 	
+	/**
+	 * @fn boolean isEndianConvert()
+	 * @brief Judge the endian of the physical computer
+	 * @return Big-Endian for true while Little-Endian for false
+	 */
+	public boolean isEndianConvert() {
+		return endianConvert;
+	}
+	
+	/**
+	 * @fn DBCursor listReplicaGroups()
+	 * @brief List all the replica group.
+	 * @return cursor of all collecionspace names
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use listShards instead of it.
+	 * @see listShards
+	 */
+	public DBCursor listReplicaGroups() throws BaseException {
+		try{
+			return listShards();
+		}catch(BaseException e){
+			throw e;
+		}
+	}
+	
+	/**
+	 * @fn ArrayList<String> getReplicaGroupNames()
+	 * @brief Get all the replica groups' name.
+	 * @return A list of all the replica groups' names.
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use getShardNames instead of it.
+	 * @see getShardNames
+	 */
+	public ArrayList<String> getReplicaGroupNames() throws BaseException {
+		try{
+			return getShardNames();
+		}catch(BaseException e){
+			throw e;
+		}
+	}
+	
+	/**
+	 * @fn List<String> getReplicaGroupsInfo()
+	 * @brief Get the infomations of the replica groups.
+	 * @return A list of informations of the replica groups.
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use getShardsInfo instead of it.
+	 * @see getShardsInfo   
+	 */
+	public ArrayList<String> getReplicaGroupsInfo() throws BaseException {
+		try{
+			return getShardsInfo();
+		}catch(BaseException e){
+			throw e;
+		}
+	}
+	
+	/**
+	 * @fn ReplicaGroup getReplicaGroup(String rgName)
+	 * @brief Get replica group by name.
+	 * @param rgName
+	 *            replica group's name
+	 * @return A replica group object or null for not exit.
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use getShard instead of it.
+	 * @see getShard  
+	 */
+	public ReplicaGroup getReplicaGroup(String rgName)
+			throws BaseException {
+		BSONObject rg = getDetailByName(rgName);
+		if (rg == null)
+			return null;
+		return new ReplicaGroup(this, rgName);
+	}
+
+	/**
+	 * @fn ReplicaGroup getReplicaGroup(int rgId)
+	 * @brief Get shard by id.
+	 * @param rgId
+	 *            replica group id
+	 * @return A replica group object or null for not exit.
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use getShard instead of it.
+	 * @see getShard
+	 */
+	public ReplicaGroup getReplicaGroup(int rgId) throws BaseException{
+		BSONObject rg = getDetailById(rgId);
+		if (rg == null)
+			return null;
+		return new ReplicaGroup(this, rgId);
+	}
+
+	/**
+	 * @fn ReplicaGroup createReplicaGroup(String rgName)
+	 * @brief Create shard by name.
+	 * @param rgName
+	 *            replica group's name
+	 * @return A replica group object.
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use createShard instead of it.
+	 * @see createShard
+	 */
+	public ReplicaGroup createReplicaGroup(String rgName)
+			throws BaseException {
+		BSONObject rg = new BasicBSONObject();
+		rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CREATE_GROUP,
+				0, 0, -1, -1, rg, null, null, null);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, rgName);
+		}
+		return getReplicaGroup(rgName);
+	}
+
+	/**
+	 * @fn void removeReplicaGroup(String rgName)
+	 * @brief Remove replica group by name.
+	 * @param rgName
+	 *            replica group's name
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use removeShard instead of it.
+	 * @see removeShard
+	 */
+	public void removeReplicaGroup(String rgName)
+			throws BaseException {
+		BSONObject rg = new BasicBSONObject();
+		rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_REMOVE_GROUP,
+				0, 0, -1, -1, rg, null, null, null);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, rgName);
+		}
+	}
+
+	/**
+	 * @fn void activateReplicaGroup(String rgName)
+	 * @brief Active shard by name.
+	 * @param rgName
+	 *            replica group name
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use activateShard instead of it.
+	 * @see activateShard
+	 */
+	public void activateReplicaGroup(String rgName)
+			throws BaseException {
+		BSONObject rg = new BasicBSONObject();
+		rg.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, rgName);
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_ACTIVE_GROUP,
+				0, 0, -1, -1, rg, null, null, null);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, rgName);
+		}
+	}
+
+	/**
+	 * @fn void createReplicaCataGroup(String hostName, int port, String dbPath,
+	 *     BSONObject configuration)
+	 * @brief Create the replica Catalog group with the given options.
+	 * @param hostName
+	 *            The host name
+	 * @param port
+	 *            The port
+	 * @param dbpath
+	 *            The database path
+	 * @param configure
+	 *            The configure options
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated This function will be deprecated in version 2.x, 
+	 *             use createCataShard instead of it.
+	 * @see createCataShard
+	 */
+	public void createReplicaCataGroup(String hostName, int port,
+			String dbPath, Map<String, String> configure) {
+		try{
+			createCataShard(hostName, port, dbPath, configure);
+		}catch(BaseException e){
+			throw e;
+		}
+	}
+	
+	
 	
 	DBCursor getList(int listType, int flag, long reqID, long skipNum,
 			long returnNum, BSONObject query, BSONObject selector,
@@ -1270,12 +1464,4 @@ public class Sequoiadb {
 		return endianConvert;
 	}
 
-	/**
-	 * @fn boolean isEndianConvert()
-	 * @brief Judge the endian of the physical computer
-	 * @return Big-Endian for true while Little-Endian for false
-	 */
-	public boolean isEndianConvert() {
-		return endianConvert;
-	}
 }
