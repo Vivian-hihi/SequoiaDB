@@ -31,7 +31,9 @@
         public const int SDB_LIST_COLLECTIONS      = 4;
         public const int SDB_LIST_COLLECTIONSPACES = 5;
         public const int SDB_LIST_STORAGEUNITS     = 6;
+        /**SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it.*/
         public const int SDB_LIST_GROUPS           = 7;
+        public const int SDB_LIST_SHARDS           = 7;
 
         public enum NodeStatus
         {

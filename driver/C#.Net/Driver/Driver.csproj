@@ -12,6 +12,7 @@
     <AssemblyName>SequoiaDB</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,12 +45,14 @@
     <Compile Include="base\DBCollection.cs" />
     <Compile Include="base\DBCursor.cs" />
     <Compile Include="base\DBQuery.cs" />
+    <Compile Include="base\Node.cs" />
     <Compile Include="base\ReplicaNode.cs" />
     <Compile Include="base\ReplicaGroup.cs" />
     <Compile Include="base\SDBConst.cs" />
     <Compile Include="base\SDBMessage.cs" />
     <Compile Include="base\Sequoiadb.cs" />
     <Compile Include="base\SequoiadbConstants.cs" />
+    <Compile Include="base\Shard.cs" />
     <Compile Include="exception\BaseException.cs" />
     <Compile Include="exception\Errors.cs" />
     <Compile Include="exception\SDBError.cs" />

@@ -8,33 +8,30 @@ using System.Collections.Generic;
  */
 namespace SequoiaDB
 {
-    /** \class ReplicaGroup
-     *  \brief Database operation interfaces of replica group.This class will be deprecated in version 2.x.
-     *         Use class Shard instead of it.
+    /** \class Shard
+     *  \brief Database operation interfaces of shard.This class takes the place of class "replicaGroup".
      *  \note We use concept "shard" instead of "replica group",
      *        and change the class name "ReplicaGroup" to "Shard".
-     *  \deprecated 
-     *  \see Shard
      */
-    public class ReplicaGroup
-	{
-        private int groupID = -1;
-        private string groupName = null;
+    public class Shard
+    {
+        private int shardID = -1;
+        private string shardName = null;
         private bool isCatalog = false;
         internal bool isBigEndian = false;
         private Sequoiadb sdb = null;
 
-        internal ReplicaGroup(Sequoiadb sdb, string groupName, int groupID)
+        internal Shard(Sequoiadb sdb, string shardName, int shardID)
         {
             this.sdb = sdb;
-            this.groupName = groupName;
-            this.groupID = groupID;
-            isCatalog = groupName.Equals(SequoiadbConstants.CATALOG_GROUP);
+            this.shardName = shardName;
+            this.shardID = shardID;
+            isCatalog = shardName.Equals(SequoiadbConstants.CATALOG_GROUP);
             isBigEndian = sdb.isBigEndian;
         }
 
         /** \property SequoiaDB
-         *  \brief Return the sequoiadb handle of current group 
+         *  \brief Return the sequoiadb handle of current shard 
          *  \return The Sequoiadb object
          */
         public Sequoiadb SequoiaDB
@@ -42,27 +39,27 @@ namespace SequoiaDB
             get { return sdb; }
         }
 
-        /** \property GroupName
-         *  \brief Return the name of current group
-         *  \return The group name
+        /** \property ShardName
+         *  \brief Return the name of current shard
+         *  \return The shard name
          */
-        public string GroupName
+        public string ShardName
         {
-            get { return groupName; }
+            get { return shardName; }
         }
 
-        /** \property GroupID
-         *  \brief Return the group ID of current group
-         *  \return The group ID
+        /** \property ShardID
+         *  \brief Return the shard ID of current shard
+         *  \return The shard ID
          */
-        public int GroupID
+        public int ShardID
         {
-            get { return groupID; }
+            get { return shardID; }
         }
 
         /** \property IsCatalog
-         *  \brief Verify the role of current group
-         *  \return True if is catalog group or False if not
+         *  \brief Verify the role of current shard
+         *  \return True if is catalog shard or False if not
          */
         public bool IsCatalog
         {
@@ -105,7 +102,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public int GetNodeNum( SDBConst.NodeStatus status)
+        public int GetNodeNum(SDBConst.NodeStatus status)
         {
             try
             {
@@ -117,7 +114,7 @@ namespace SequoiaDB
                     total = nodes.Count;
                     //foreach (BsonDocument node in nodes)
                     //{
-                    //    ReplicaNode rnode = ExtractNode(node);
+                    //    Node rnode = ExtractNode(node);
                     //    SDBConst.NodeStatus sta = rnode.GetStatus();
                     //    if (SDBConst.NodeStatus.SDB_NODE_ALL == status || rnode.GetStatus() == status)
                     //        ++total;
@@ -136,7 +133,7 @@ namespace SequoiaDB
         }
 
         /** \fn BsonDocument GetDetail()
-         *  \brief Get the detail information of current group
+         *  \brief Get the detail information of current shard
          *  \return The detail information in BsonDocument object
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -145,8 +142,8 @@ namespace SequoiaDB
         {
             BsonDocument matcher = new BsonDocument();
             BsonDocument dummyobj = new BsonDocument();
-            matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
-            matcher.Add(SequoiadbConstants.FIELD_GROUPID, groupID);
+            matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
+            matcher.Add(SequoiadbConstants.FIELD_GROUPID, shardID);
             DBCursor cursor = sdb.GetList(SDBConst.SDB_LIST_SHARDS, matcher, dummyobj, dummyobj);
             if (cursor != null)
             {
@@ -160,27 +157,27 @@ namespace SequoiaDB
                 throw new BaseException("SDB_SYS");
         }
 
-        /** \fn ReplicaNode CreateNode(string hostName, int port, string dbpath,
+        /** \fn Node CreateNode(string hostName, int port, string dbpath,
                                Dictionary<string, string> map)
-         *  \brief Create the replica node
+         *  \brief Create the node
          *  \param hostName The host name of node
          *  \param port The port of node
          *  \param dbpath The database path of node
          *  \param map The other configure information of node
-         *  \return The ReplicaNode object
+         *  \return The Node object
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode CreateNode(string hostName, int port, string dbpath,
+        public Node CreateNode(string hostName, int port, string dbpath,
                                Dictionary<string, string> map)
         {
             if (hostName == null || port < 0 || port < 0 || port > 65535 ||
-                dbpath == null )
-            throw new BaseException("SDB_INVALIDARG");
+                dbpath == null)
+                throw new BaseException("SDB_INVALIDARG");
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
                              + SequoiadbConstants.NODE;
             BsonDocument configuration = new BsonDocument();
-            configuration.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            configuration.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
             map.Remove(SequoiadbConstants.FIELD_GROUPNAME);
             configuration.Add(SequoiadbConstants.FIELD_HOSTNAME, hostName);
             map.Remove(SequoiadbConstants.FIELD_HOSTNAME);
@@ -202,10 +199,10 @@ namespace SequoiaDB
 
         /** \fn void RemoveNode(string hostName, int port,
                        BsonDocument configure)
-         *  \brief Remove the specified replica node
+         *  \brief Remove the specified node
          *  \param hostName The host name of node
          *  \param port The port of node
-         *  \param configure The configurations for the replica node
+         *  \param configure The configurations for the node
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
@@ -217,10 +214,10 @@ namespace SequoiaDB
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.REMOVE_CMD + " "
                  + SequoiadbConstants.NODE;
             BsonDocument config = new BsonDocument();
-            config.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            config.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
             config.Add(SequoiadbConstants.FIELD_HOSTNAME, hostName);
             config.Add(SequoiadbConstants.SVCNAME, Convert.ToString(port));
-            if ( configure != null )
+            if (configure != null)
             {
                 foreach (string key in configure.Names)
                 {
@@ -240,13 +237,13 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn ReplicaNode GetMaster()
-         *  \brief Get the master ReplicaNode of current group
-         *  \return The fitted ReplicaNode or null
+        /** \fn Node GetMaster()
+         *  \brief Get the master Node of current shard
+         *  \return The fitted Node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetMaster()
+        public Node GetMaster()
         {
             int primaryNode = -1;
             try
@@ -259,7 +256,7 @@ namespace SequoiaDB
                     throw new BaseException("SDB_SYS");
                 BsonArray nodes = detail[SequoiadbConstants.FIELD_GROUP].AsBsonArray;
                 foreach (BsonDocument node in nodes)
-                { 
+                {
                     if (!node[SequoiadbConstants.FIELD_NODEID].IsInt32)
                         throw new BaseException("SDB_SYS");
                     int nodeID = node[SequoiadbConstants.FIELD_NODEID].AsInt32;
@@ -280,13 +277,13 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn ReplicaNode GetSlave()
-         *  \brief Get the slave ReplicaNode of current group
-         *  \return The fitted ReplicaNode or null
+        /** \fn Node GetSlave()
+         *  \brief Get the slave Node of current shard
+         *  \return The fitted Node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetSlave()
+        public Node GetSlave()
         {
             int primaryID = -1;
             List<BsonDocument> nodeList = new List<BsonDocument>();
@@ -329,14 +326,14 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn ReplicaNode GetNode(string nodeName)
-         *  \brief Get the ReplicaNode by node name
+        /** \fn Node GetNode(string nodeName)
+         *  \brief Get the Node by node name
          *  \param nodeName The node name
-         *  \return The fitted ReplicaNode or null
+         *  \return The fitted Node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetNode(string nodeName)
+        public Node GetNode(string nodeName)
         {
             try
             {
@@ -353,15 +350,15 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn ReplicaNode GetNode(string hostName, int port)
-         *  \brief Get the ReplicaNode by host name and port
+        /** \fn Node GetNode(string hostName, int port)
+         *  \brief Get the Node by host name and port
          *  \param hostName The host name
          *  \param port The port
-         *  \return The fitted ReplicaNode or null
+         *  \return The fitted Node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetNode(string hostName, int port)
+        public Node GetNode(string hostName, int port)
         {
             try
             {
@@ -376,7 +373,7 @@ namespace SequoiaDB
                     string hostname = node[SequoiadbConstants.FIELD_HOSTNAME].AsString;
                     if (hostname.Equals(hostName))
                     {
-                        ReplicaNode rn = ExtractNode(node);
+                        Node rn = ExtractNode(node);
                         if (rn.Port == port)
                             return rn;
                     }
@@ -413,7 +410,7 @@ namespace SequoiaDB
             return rtnSDBMessage;
         }
 
-        private ReplicaNode ExtractNode(BsonDocument node)
+        private Node ExtractNode(BsonDocument node)
         {
             try
             {
@@ -436,12 +433,12 @@ namespace SequoiaDB
                         if (!svc[SequoiadbConstants.FIELD_NAME].IsString)
                             throw new BaseException("SDB_SYS");
                         string svcname = svc[SequoiadbConstants.FIELD_NAME].AsString;
-                        return new ReplicaNode(this, hostName, int.Parse(svcname), nodeID);
+                        return new Node(this, hostName, int.Parse(svcname), nodeID);
                     }
                 }
                 return null;
             }
-            catch(KeyNotFoundException)
+            catch (KeyNotFoundException)
             {
                 throw new BaseException("SDB_SYS");
             }
@@ -458,8 +455,8 @@ namespace SequoiaDB
                                    SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SHUTDOWN_CMD + " "
                                     + SequoiadbConstants.GROUP;
             BsonDocument configuration = new BsonDocument();
-            configuration.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
-            configuration.Add(SequoiadbConstants.FIELD_GROUPID, groupID);
+            configuration.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
+            configuration.Add(SequoiadbConstants.FIELD_GROUPID, shardID);
             BsonDocument dummyObj = new BsonDocument();
             SDBMessage rtn = AdminCommand(command, configuration, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;

@@ -411,31 +411,31 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn DBCursor ListReplicaGroups()
-         *  \brief Get all the groups
-         *  \return A cursor of all the groups
+        /** \fn DBCursor ListShards()
+         *  \brief Get all the shards
+         *  \return A cursor of all the shards
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public DBCursor ListReplicaGroups()
+        public DBCursor ListShards()
         {
             BsonDocument dummyObj = new BsonDocument();
-            return GetList(SDBConst.SDB_LIST_GROUPS, dummyObj, dummyObj, dummyObj);
+            return GetList(SDBConst.SDB_LIST_SHARDS, dummyObj, dummyObj, dummyObj);
         }
 
-        /** \fn ReplicaGroup GetReplicaGroup(string groupName)
-         *  \brief Get the ReplicaGroup by name
-         *  \param groupName The group name
-         *  \return The fitted ReplicaGroup or null
+        /** \fn Shard GetShard(string shardName)
+         *  \brief Get the Shard by name
+         *  \param shardName The shard name
+         *  \return The fitted Shard or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaGroup GetReplicaGroup(string groupName)
+        public Shard GetShard(string shardName)
         {
             BsonDocument matcher = new BsonDocument();
             BsonDocument dummyobj = new BsonDocument();
-            matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
-            DBCursor cursor = GetList(SDBConst.SDB_LIST_GROUPS, matcher, dummyobj, dummyobj);
+            matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
+            DBCursor cursor = GetList(SDBConst.SDB_LIST_SHARDS, matcher, dummyobj, dummyobj);
             if (cursor != null)
             {
                 BsonDocument detail = cursor.Next();
@@ -445,8 +445,8 @@ namespace SequoiaDB
                     {
                         if (!detail[SequoiadbConstants.FIELD_GROUPID].IsInt32)
                             throw new BaseException("SDB_SYS");
-                        int groupID = detail[SequoiadbConstants.FIELD_GROUPID].AsInt32;
-                        return new ReplicaGroup(this, groupName, groupID);
+                        int shardID = detail[SequoiadbConstants.FIELD_GROUPID].AsInt32;
+                        return new Shard(this, shardName, shardID);
                     }
                     catch (KeyNotFoundException)
                     {
@@ -460,19 +460,19 @@ namespace SequoiaDB
                 throw new BaseException("SDB_SYS");
         }
 
-        /** \fn ReplicaGroup GetReplicaGroup(int groupID)
-         *  \brief Get the ReplicaGroup by ID
-         *  \param groupID The group ID
-         *  \return The fitted ReplicaGroup or null
+        /** \fn Shard GetShard(int shardID)
+         *  \brief Get the Shard by ID
+         *  \param shardID The shard ID
+         *  \return The fitted Shard or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaGroup GetReplicaGroup(int groupID)
+        public Shard GetShard(int shardID)
         {
             BsonDocument matcher = new BsonDocument();
             BsonDocument dummyobj = new BsonDocument();
-            matcher.Add(SequoiadbConstants.FIELD_GROUPID, groupID);
-            DBCursor cursor = GetList(SDBConst.SDB_LIST_GROUPS, matcher, dummyobj, dummyobj);
+            matcher.Add(SequoiadbConstants.FIELD_GROUPID, shardID);
+            DBCursor cursor = GetList(SDBConst.SDB_LIST_SHARDS, matcher, dummyobj, dummyobj);
             if (cursor != null)
             {
                 BsonDocument detail = cursor.Next();
@@ -482,7 +482,7 @@ namespace SequoiaDB
                         if (!detail[SequoiadbConstants.FIELD_GROUPNAME].IsString)
                             throw new BaseException("SDB_SYS");
                         string groupName = detail[SequoiadbConstants.FIELD_GROUPNAME].AsString;
-                        return new ReplicaGroup(this, groupName, groupID);
+                        return new Shard(this, groupName, shardID);
                     }
                     catch (KeyNotFoundException)
                     {
@@ -495,21 +495,21 @@ namespace SequoiaDB
                 throw new BaseException("SDB_SYS");
         }
 
-        /** \fn ReplicaGroup CreateReplicaGroup(string groupName)
-         *  \brief Create the ReplicaGroup with given name
-         *  \param groupName The group name
+        /** \fn Shard CreateShard(string shardName)
+         *  \brief Create the Shard with given name
+         *  \param shardName The group name
          *  \return The ReplicaGroup has been created succefully
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaGroup CreateReplicaGroup(string groupName)
+        public Shard CreateShard(string shardName)
         {
-            if (groupName == null)
+            if (shardName == null)
                 throw new BaseException("SDB_INVALIDARG");
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
                              + SequoiadbConstants.GROUP;
             BsonDocument condition = new BsonDocument();
-            condition.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            condition.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
             BsonDocument dummyObj = new BsonDocument();
 
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
@@ -517,24 +517,24 @@ namespace SequoiaDB
             if (flags != 0)
                 throw new BaseException(flags);
             else
-                return GetReplicaGroup(groupName);
+                return GetShard(shardName);
         }
 
-        /** \fn ReplicaGroup RemoveReplicaGroup(string groupName)
-         *  \brief Remove the ReplicaGroup with given name
-         *  \param groupName The group name
+        /** \fn Shard RemoveShard(string shardName)
+         *  \brief Remove the Shard with given name
+         *  \param shardName The shard name
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
-         *  \note We can't remove a replica group which has data
+         *  \note We can't remove a shard which has data
          */
-        public void RemoveReplicaGroup(string groupName)
+        public void RemoveShard(string shardName)
         {
-            if (groupName == null)
+            if (shardName == null)
                 throw new BaseException("SDB_INVALIDARG");
             string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.REMOVE_CMD + " "
                              + SequoiadbConstants.GROUP;
             BsonDocument condition = new BsonDocument();
-            condition.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            condition.Add(SequoiadbConstants.FIELD_GROUPNAME, shardName);
             BsonDocument dummyObj = new BsonDocument();
 
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
@@ -542,9 +542,9 @@ namespace SequoiaDB
             if (flags != 0)
                 throw new BaseException(flags);
         }
-        /** \fn void CreateReplicaCataGroup(string hostName, int port, string dbpath,
+        /** \fn void CreateCataShard(string hostName, int port, string dbpath,
                                             BsonDocument configure) 
-         *  \brief Create the Replica Catalog Group with given options
+         *  \brief Create the Catalog Shard with given options
          *  \param hostName The host name
          *  \param port The port
          *  \param dbpath The database path
@@ -552,8 +552,8 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public void CreateReplicaCataGroup(string hostName, int port, string dbpath,
-                                            BsonDocument configure)
+        public void CreateCataShard(string hostName, int port, string dbpath,
+                                    BsonDocument configure)
         {
             if (hostName == null || port == 0 || dbpath == null)
                 throw new BaseException("SDB_INVALIDARG");
@@ -585,19 +585,19 @@ namespace SequoiaDB
                 throw new BaseException(flags);    
         }
 
-        /** \fn ReplicaGroup ActivateReplicaGroup(string groupName)
+        /** \fn Shard ActivateShard(string shardName)
          *  \brief Activate the ReplicaGroup with given name
-         *  \param groupName The group name
-         *  \return The ReplicaGroup has been activated if succeed or null if fail
+         *  \param shardName The shard name
+         *  \return The Shard has been activated if succeed or null if fail
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaGroup ActivateReplicaGroup(string groupName)
+        public Shard ActivateShard(string shardName)
         {
-            ReplicaGroup group = GetReplicaGroup(groupName);
-            bool result = group.Start();
+            Shard shard = GetShard(shardName);
+            bool result = shard.Start();
             if (result)
-                return group;
+                return shard;
             else
                 return null;
         }
@@ -702,7 +702,7 @@ namespace SequoiaDB
          *      SDB_LIST_COLLECTIONS
          *      SDB_LIST_COLLECTIONSPACES
          *      SDB_LIST_STORAGEUNITS
-         *      SDB_LIST_GROUPS
+         *      SDB_LIST_SHARDS
          *  \return A DBCursor of all the fitted objects or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
@@ -725,7 +725,7 @@ namespace SequoiaDB
          *      SDB_LIST_COLLECTIONS
          *      SDB_LIST_COLLECTIONSPACES
          *      SDB_LIST_STORAGEUNITS
-         *      SDB_LIST_GROUPS
+         *      SDB_LIST_SHARDS
          *  \param matcher The matching condition or null
          *  \param selector The selective rule or null
          *  \param orderBy The ordered rule or null
@@ -767,7 +767,7 @@ namespace SequoiaDB
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " + 
                            SequoiadbConstants.STOREUNITS;
                     break;
-                case SDBConst.SDB_LIST_GROUPS:
+                case SDBConst.SDB_LIST_SHARDS:
                     command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_CMD + " " + 
                            SequoiadbConstants.GROUPS;
                     break;
@@ -816,6 +816,182 @@ namespace SequoiaDB
             if (flags != 0)
                 throw new BaseException(flags);
         }
+
+
+
+        /** \fn DBCursor ListReplicaGroups()
+         *  \brief Get all the groups
+         *  \return A cursor of all the groups
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use ListShards instead of it.
+         *  \see ListShards
+         */
+        public DBCursor ListReplicaGroups()
+        {
+            return ListShards();
+        }
+
+        /** \fn ReplicaGroup GetReplicaGroup(string groupName)
+         *  \brief Get the ReplicaGroup by name
+         *  \param groupName The group name
+         *  \return The fitted ReplicaGroup or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use GetShard instead of it.
+         *  \see GetShard
+         */
+        public ReplicaGroup GetReplicaGroup(string groupName)
+        {
+            BsonDocument matcher = new BsonDocument();
+            BsonDocument dummyobj = new BsonDocument();
+            matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            DBCursor cursor = GetList(SDBConst.SDB_LIST_SHARDS, matcher, dummyobj, dummyobj);
+            if (cursor != null)
+            {
+                BsonDocument detail = cursor.Next();
+                if (detail != null)
+                {
+                    try
+                    {
+                        if (!detail[SequoiadbConstants.FIELD_GROUPID].IsInt32)
+                            throw new BaseException("SDB_SYS");
+                        int groupID = detail[SequoiadbConstants.FIELD_GROUPID].AsInt32;
+                        return new ReplicaGroup(this, groupName, groupID);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        throw new BaseException("SDB_SYS");
+                    }
+                }
+                else
+                    return null;
+            }
+            else
+                throw new BaseException("SDB_SYS");
+        }
+
+        /** \fn ReplicaGroup GetReplicaGroup(int groupID)
+         *  \brief Get the ReplicaGroup by ID
+         *  \param groupID The group ID
+         *  \return The fitted ReplicaGroup or null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use GetShard instead of it.
+         *  \see GetShard
+         */
+        public ReplicaGroup GetReplicaGroup(int groupID)
+        {
+            BsonDocument matcher = new BsonDocument();
+            BsonDocument dummyobj = new BsonDocument();
+            matcher.Add(SequoiadbConstants.FIELD_GROUPID, groupID);
+            DBCursor cursor = GetList(SDBConst.SDB_LIST_SHARDS, matcher, dummyobj, dummyobj);
+            if (cursor != null)
+            {
+                BsonDocument detail = cursor.Next();
+                if (detail != null)
+                    try
+                    {
+                        if (!detail[SequoiadbConstants.FIELD_GROUPNAME].IsString)
+                            throw new BaseException("SDB_SYS");
+                        string groupName = detail[SequoiadbConstants.FIELD_GROUPNAME].AsString;
+                        return new ReplicaGroup(this, groupName, groupID);
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        throw new BaseException("SDB_SYS");
+                    }
+                else
+                    return null;
+            }
+            else
+                throw new BaseException("SDB_SYS");
+        }
+
+        /** \fn ReplicaGroup CreateReplicaGroup(string groupName)
+         *  \brief Create the ReplicaGroup with given name
+         *  \param groupName The group name
+         *  \return The ReplicaGroup has been created succefully
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use CreateShard instead of it.
+         *  \see CreateShard
+         */
+        public ReplicaGroup CreateReplicaGroup(string groupName)
+        {
+            if (groupName == null)
+                throw new BaseException("SDB_INVALIDARG");
+            string command = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CREATE_CMD + " "
+                             + SequoiadbConstants.GROUP;
+            BsonDocument condition = new BsonDocument();
+            condition.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
+            BsonDocument dummyObj = new BsonDocument();
+
+            SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+            else
+                return GetReplicaGroup(groupName);
+        }
+
+        /** \fn ReplicaGroup RemoveReplicaGroup(string groupName)
+         *  \brief Remove the ReplicaGroup with given name
+         *  \param groupName The group name
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \note We can't remove a replica group which has data
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use RemoveShard instead of it.
+         *  \see RemoveShard
+         */
+        public void RemoveReplicaGroup(string groupName)
+        {
+            RemoveShard(groupName);
+        }
+        /** \fn void CreateReplicaCataGroup(string hostName, int port, string dbpath,
+                                            BsonDocument configure) 
+         *  \brief Create the Replica Catalog Group with given options
+         *  \param hostName The host name
+         *  \param port The port
+         *  \param dbpath The database path
+         *  \param configure The configure options
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use CreateCataShard instead of it.
+         *  \see CreateCataShard
+         */
+        public void CreateReplicaCataGroup(string hostName, int port, string dbpath,
+                                            BsonDocument configure)
+        {
+            CreateCataShard(hostName, port, dbpath, configure);
+        }
+
+        /** \fn ReplicaGroup ActivateReplicaGroup(string groupName)
+         *  \brief Activate the ReplicaGroup with given name
+         *  \param groupName The group name
+         *  \return The ReplicaGroup has been activated if succeed or null if fail
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         *  \deprecated This function will be deprecated in version 2.x, 
+	     *              use ActivateShard instead of it.
+         *  \see ActivateShard
+         */
+        public ReplicaGroup ActivateReplicaGroup(string groupName)
+        {
+            ReplicaGroup group = GetReplicaGroup(groupName);
+            bool result = group.Start();
+            if (result)
+                return group;
+            else
+                return null;
+        }
+
 
         private SDBMessage CreateCS(string csName, int pageSize)
         {
