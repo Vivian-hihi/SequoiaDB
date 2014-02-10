@@ -549,7 +549,7 @@ namespace engine
          if ( SDB_OK != _agent->syncSend( itr->second.beat.identity, &msg ) &&
               _info.alives.find( itr->first ) == _info.alives.end() )
          {
-            itr->second.timeout = CLS_SHARING_BRK_TIME + 120 * OSS_ONE_SEC ;
+            itr->second.timeout = CLS_SHARING_BRK_TIME + 120 * OSS_ONE_SEC - 1 ;
          }
       }
       }
