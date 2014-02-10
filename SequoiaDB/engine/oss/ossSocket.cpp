@@ -57,7 +57,7 @@ void ossSocketBindListenMutexRelease()
    bindListenLatch.release() ;
 }
 // Create a listening socket
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK, "_ossSocket::_ossSocket" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK, "_ossSocket::_ossSocket" )
 _ossSocket::_ossSocket ( UINT32 port, INT32 timeoutMilli )
 {
    PD_TRACE_ENTRY ( SDB__OSSSK__OSSSK );
@@ -80,8 +80,7 @@ _ossSocket::_ossSocket ( UINT32 port, INT32 timeoutMilli )
          // the return value for this function
          // A call to the WSAGetLastError function is not needed and should not
          // be used.
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to startup socket, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to startup socket, rc = %d", rc ) ;
       }
       else
          socketInitialized = TRUE ;
@@ -95,7 +94,7 @@ _ossSocket::_ossSocket ( UINT32 port, INT32 timeoutMilli )
 }
 
 // Create a connecting socket
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK2, "_ossSocket::_ossSocket" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK2, "_ossSocket::_ossSocket" )
 _ossSocket::_ossSocket ( const CHAR *pHostname, UINT32 port,
                          INT32 timeoutMilli )
 {
@@ -120,8 +119,7 @@ _ossSocket::_ossSocket ( const CHAR *pHostname, UINT32 port,
          // the return value for this function
          // A call to the WSAGetLastError function is not needed and should not
          // be used.
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to startup socket, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to startup socket, rc = %d", rc ) ;
       }
       else
          socketInitialized = TRUE ;
@@ -153,7 +151,7 @@ _ossSocket::_ossSocket ( const CHAR *pHostname, UINT32 port,
    PD_TRACE_EXIT ( SDB__OSSSK__OSSSK2 );
 }
 // Create from a existing socket
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK3, "_ossSocket::_ossSocket" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK3, "_ossSocket::_ossSocket" )
 _ossSocket::_ossSocket ( SOCKET *sock, INT32 timeoutMilli )
 {
    SDB_ASSERT ( sock, "Input sock is NULL" ) ;
@@ -180,8 +178,7 @@ _ossSocket::_ossSocket ( SOCKET *sock, INT32 timeoutMilli )
          // the return value for this function
          // A call to the WSAGetLastError function is not needed and should not
          // be used.
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to startup socket, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to startup socket, rc = %d", rc ) ;
       }
       else
          socketInitialized = TRUE ;
@@ -190,8 +187,7 @@ _ossSocket::_ossSocket ( SOCKET *sock, INT32 timeoutMilli )
    rc = getsockname ( _fd, (sockaddr*)&_sockAddress, &_addressLen ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to getsockname from socket %d", _fd ) ;
+      PD_LOG ( PDERROR, "Failed to getsockname from socket %d", _fd ) ;
       _init = FALSE ;
    }
    else
@@ -200,15 +196,14 @@ _ossSocket::_ossSocket ( SOCKET *sock, INT32 timeoutMilli )
       rc = getpeername ( _fd, (sockaddr*)&_peerAddress, &_peerAddressLen ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to getpeername from socket %d", _fd ) ;
+         PD_LOG ( PDERROR, "Failed to getpeername from socket %d", _fd ) ;
       }
    }
    setTimeout ( _timeout ) ;
    PD_TRACE_EXIT ( SDB__OSSSK__OSSSK3 );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_INITTSK, "ossSocket::initSocket" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_INITTSK, "ossSocket::initSocket" )
 INT32 ossSocket::initSocket ()
 {
    INT32 rc = SDB_OK ;
@@ -223,9 +218,8 @@ INT32 ossSocket::initSocket ()
    _fd = socket ( AF_INET, SOCK_STREAM, IPPROTO_TCP ) ;
    if ( -1 == _fd )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to initialize socket, error = %d",
-              SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDERROR, "Failed to initialize socket, error = %d",
+               SOCKET_GETLASTERROR ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -239,7 +233,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SETSKLI, "ossSocket::setSocketLi" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SETSKLI, "ossSocket::setSocketLi" )
 INT32 ossSocket::setSocketLi ( INT32 lOnOff, INT32 linger )
 {
    INT32 rc = SDB_OK ;
@@ -255,7 +249,7 @@ INT32 ossSocket::setSocketLi ( INT32 lOnOff, INT32 linger )
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_BIND_LSTN, "ossSocket::bind_listen" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_BIND_LSTN, "ossSocket::bind_listen" )
 INT32 ossSocket::bind_listen ()
 {
    INT32 rc = SDB_OK ;
@@ -270,22 +264,20 @@ INT32 ossSocket::bind_listen ()
                      sizeof (INT32) );
    if ( rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt SO_REUSEADDR, rc = %d",
-              SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt SO_REUSEADDR, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
    rc = setSocketLi( 1, 30 ) ;
    if ( rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt SO_LINGER, rc = %d",
-              SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt SO_LINGER, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
    rc = ::bind ( _fd, (struct sockaddr *)&_sockAddress, _addressLen ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to bind socket, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDERROR, "Failed to bind socket, rc = %d",
+               SOCKET_GETLASTERROR ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -293,8 +285,8 @@ INT32 ossSocket::bind_listen ()
    rc = listen ( _fd, SOMAXCONN ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to listen socket, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDERROR, "Failed to listen socket, rc = %d",
+               SOCKET_GETLASTERROR ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -306,7 +298,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SEND, "ossSocket::send" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SEND, "ossSocket::send" )
 INT32 ossSocket::send ( const CHAR *pMsg, INT32 len,
                         INT32 &sentLen,
                         INT32 timeout, INT32 flags )
@@ -354,9 +346,7 @@ INT32 ossSocket::send ( const CHAR *pMsg, INT32 len,
          {
             continue ;
          }
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to select from socket, rc = %d",
-                 rc);
+         PD_LOG ( PDERROR, "Failed to select from socket, rc = %d", rc) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -392,8 +382,7 @@ INT32 ossSocket::send ( const CHAR *pMsg, INT32 len,
             rc = SDB_TIMEOUT ;
             goto error ;
          }
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to send, rc = %d", SOCKET_GETLASTERROR ) ;
+         PD_LOG ( PDERROR, "Failed to send, rc = %d", SOCKET_GETLASTERROR ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -409,7 +398,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_ISCONN, "ossSocket::isConnected" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_ISCONN, "ossSocket::isConnected" )
 BOOLEAN ossSocket::isConnected ()
 {
    INT32 rc = SDB_OK ;
@@ -482,9 +471,7 @@ INT32 ossSocket::recv ( CHAR *pMsg, INT32 len,
          {
             continue ;
          }
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to select from socket, rc = %d",
-                 rc);
+         PD_LOG ( PDERROR, "Failed to select from socket, rc = %d", rc) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -519,8 +506,7 @@ INT32 ossSocket::recv ( CHAR *pMsg, INT32 len,
       }
       else if ( rc == 0 )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Peer unexpected shutdown" ) ;
+         PD_LOG ( PDERROR, "Peer unexpected shutdown" ) ;
          rc = SDB_NETWORK_CLOSE ;
          goto error ;
       }
@@ -551,8 +537,7 @@ INT32 ossSocket::recv ( CHAR *pMsg, INT32 len,
             continue ;
          }
          // something bad when get here
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Recv() Failed: rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Recv() Failed: rc = %d", rc ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -610,9 +595,7 @@ INT32 ossSocket::recvNF ( CHAR *pMsg, INT32 &len,
          {
             continue ;
          }
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to select from socket, rc = %d",
-                 rc);
+         PD_LOG ( PDERROR, "Failed to select from socket, rc = %d", rc ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -638,8 +621,7 @@ INT32 ossSocket::recvNF ( CHAR *pMsg, INT32 &len,
    }
    else if ( rc == 0 )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Peer unexpected shutdown" ) ;
+      PD_LOG ( PDERROR, "Peer unexpected shutdown" ) ;
       rc = SDB_NETWORK_CLOSE ;
       goto error ;
    }
@@ -655,8 +637,7 @@ INT32 ossSocket::recvNF ( CHAR *pMsg, INT32 &len,
 #endif
       {
          // if we timeout, it's partial message and we should restart
-         pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-                 "Recv() timeout: rc = %d", rc ) ;
+         PD_LOG ( PDWARNING, "Recv() timeout: rc = %d", rc ) ;
          rc = SDB_TIMEOUT ;
          goto error ;
       }
@@ -672,8 +653,7 @@ INT32 ossSocket::recvNF ( CHAR *pMsg, INT32 &len,
          retries ++ ;
       }
       // something bad when get here
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Recv() Failed: rc = %d", rc ) ;
+      PD_LOG ( PDERROR, "Recv() Failed: rc = %d", rc ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -685,7 +665,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_CONNECT, "ossSocket::connect" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_CONNECT, "ossSocket::connect" )
 INT32 ossSocket::connect ()
 {
    INT32 rc = SDB_OK ;
@@ -712,15 +692,13 @@ INT32 ossSocket::connect ()
          rc = _complete() ;
          if ( SDB_OK != rc )
          {
-            pdLog( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to complete connect, rc = %d", rc ) ;
+            PD_LOG( PDERROR, "Failed to complete connect, rc = %d", rc ) ;
             goto error ;
          }
       }
       else
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to connect, rc = %d", SOCKET_GETLASTERROR ) ;
+         PD_LOG ( PDERROR, "Failed to connect, rc = %d", SOCKET_GETLASTERROR ) ;
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -742,8 +720,7 @@ INT32 ossSocket::connect ()
    rc = ::connect ( _fd, (struct sockaddr *) &_sockAddress, _addressLen ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to connect, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDERROR, "Failed to connect, rc = %d", SOCKET_GETLASTERROR ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -774,7 +751,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_CLOSE, "ossSocket::close" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_CLOSE, "ossSocket::close" )
 void ossSocket::close ()
 {
    PD_TRACE_ENTRY ( SDB_OSSSK_CLOSE );
@@ -836,8 +813,8 @@ INT32 ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
          {
             continue ;
          }
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to select from socket, rc = %d", SOCKET_GETLASTERROR);
+         PD_LOG ( PDERROR, "Failed to select from socket, rc = %d",
+                  SOCKET_GETLASTERROR);
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -857,8 +834,8 @@ INT32 ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
    if ( -1 == *sock )
 #endif
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to accept socket, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDERROR, "Failed to accept socket, rc = %d",
+               SOCKET_GETLASTERROR ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -869,7 +846,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_DISNAG, "ossSocket::disableNagle" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_DISNAG, "ossSocket::disableNagle" )
 INT32 ossSocket::disableNagle ()
 {
    INT32 rc = SDB_OK ;
@@ -880,16 +857,16 @@ INT32 ossSocket::disableNagle ()
                      sizeof ( INT32 ) ) ;
    if ( rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
 
    rc = setsockopt ( _fd, SOL_SOCKET, SO_KEEPALIVE, (CHAR *) &temp,
                      sizeof ( INT32 ) ) ;
    if ( rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
    PD_TRACE_EXITRC ( SDB_OSSSK_DISNAG, rc );
    return rc ;
@@ -901,7 +878,7 @@ UINT32 ossSocket::_getPort ( sockaddr_in *addr )
    return ntohs ( addr->sin_port ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK__GETADDR, "ossSocket::_getAddress" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK__GETADDR, "ossSocket::_getAddress" )
 INT32 ossSocket::_getAddress ( sockaddr_in *addr, CHAR *pAddress, UINT32 length )
 {
    INT32 rc = SDB_OK ;
@@ -912,8 +889,8 @@ INT32 ossSocket::_getAddress ( sockaddr_in *addr, CHAR *pAddress, UINT32 length 
                        NULL, 0, NI_NUMERICHOST ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to getnameinfo, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDERROR, "Failed to getnameinfo, rc = %d",
+               SOCKET_GETLASTERROR ) ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -944,7 +921,7 @@ INT32 ossSocket::getPeerAddress ( CHAR * pAddress, UINT32 length )
    return _getAddress ( &_peerAddress, pAddress, length ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SETTMOUT, "ossSocket::setTimeout" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SETTMOUT, "ossSocket::setTimeout" )
 INT32 ossSocket::setTimeout ( INT32 milliSeconds )
 {
    INT32 rc = SDB_OK ;
@@ -962,39 +939,39 @@ INT32 ossSocket::setTimeout ( INT32 milliSeconds )
                      sizeof ( INT32 ) ) ;
    if ( SOCKET_ERROR == rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
 
    rc = setsockopt ( _fd, SOL_SOCKET, SO_SNDTIMEO, ( char* ) &tv.tv_sec,
                      sizeof ( INT32 ) ) ;
    if ( SOCKET_ERROR == rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
 #else
    rc = setsockopt ( _fd, SOL_SOCKET, SO_RCVTIMEO, ( char* ) &tv,
                      sizeof ( tv ) ) ;
    if ( rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
 
    rc = setsockopt ( _fd, SOL_SOCKET, SO_SNDTIMEO, ( char* ) &tv,
                      sizeof ( tv ) ) ;
    if ( rc )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-              "Failed to setsockopt, rc = %d", SOCKET_GETLASTERROR ) ;
+      PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
+               SOCKET_GETLASTERROR ) ;
    }
 #endif
    PD_TRACE_EXITRC ( SDB_OSSSK_SETTMOUT, rc );
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK_GETHNM, "_ossSocket::getHostName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK_GETHNM, "_ossSocket::getHostName" )
 INT32 _ossSocket::getHostName ( CHAR *pName, INT32 nameLen )
 {
    INT32 rc = SDB_OK ;
@@ -1007,8 +984,7 @@ INT32 _ossSocket::getHostName ( CHAR *pName, INT32 nameLen )
       rc = WSAStartup ( MAKEWORD ( 2,2 ), &data ) ;
       if ( INVALID_SOCKET == rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to startup socket, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to startup socket, rc = %d", rc ) ;
          rc = SDB_NETWORK ;
          goto done ;
       }
@@ -1024,7 +1000,7 @@ done :
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK_GETPORT, "_ossSocket::getPort" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK_GETPORT, "_ossSocket::getPort" )
 INT32 _ossSocket::getPort ( const CHAR *pServiceName, UINT16 &port )
 {
    INT32 rc = SDB_OK ;
@@ -1037,8 +1013,7 @@ INT32 _ossSocket::getPort ( const CHAR *pServiceName, UINT16 &port )
       rc = WSAStartup ( MAKEWORD ( 2,2 ), &data ) ;
       if ( INVALID_SOCKET == rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to startup socket, rc = %d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to startup socket, rc = %d", rc ) ;
          rc = SDB_NETWORK ;
          goto done ;
       }
@@ -1061,7 +1036,7 @@ done :
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__COMPLETE, "_ossSocket::_complete" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__COMPLETE, "_ossSocket::_complete" )
 INT32 _ossSocket::_complete()
 {
    INT32 rc = SDB_OK ;
@@ -1077,7 +1052,7 @@ INT32 _ossSocket::_complete()
    FD_SET( _fd, &wfd ) ;
    if ( -1 == ::select( _fd + 1, NULL, &wfd, NULL, &tv ) )
    {
-      PD_LOG( PDERROR, "select(2) error: %s", strerror(errno) ) ;
+      PD_LOG( PDERROR, "select(2) error: %d(%s)", errno, strerror(errno) ) ;
       rc = SDB_SYS ;
       goto error ;
    }
@@ -1101,7 +1076,7 @@ INT32 _ossSocket::_complete()
    if ( SDB_OK != err )
    {
       errno = err ;
-      PD_LOG( PDERROR, "failed to connect to remote:%d", err ) ;
+      PD_LOG( PDERROR, "failed to connect to remote: %d", err ) ;
       rc = SDB_NET_CANNOT_CONNECT ;
       goto error ;
    }
@@ -1113,3 +1088,4 @@ error:
    close() ;
    goto done ;
 }
+
