@@ -555,18 +555,21 @@ namespace engine
          if ( SDB_OK != _agent->syncSend( itr->second.beat.identity, &msg ) &&
               _info.alives.find( itr->first ) == _info.alives.end() )
          {
+            UINT32 resetTimeout = 0 ;
             itr->second.timeout = CLS_SHARING_BRK_TIME - 1 ;
             if ( SOCKET_GETLASTERROR == CLS_CONNREFUSED )
             {
-               itr->second.timeout += ( 1800 * OSS_ONE_SEC ) ;
+               resetTimeout = 1800 * OSS_ONE_SEC ;
             }
             else
             {
-               itr->second.timeout += 120 * OSS_ONE_SEC ;
+               resetTimeout = 120 * OSS_ONE_SEC ;
             }
+            itr->second.timeout += resetTimeout ;
+
             PD_LOG( PDEVENT, "Reset node[%d] sharing-beat time to %u(sec)",
                     itr->second.beat.identity.columns.nodeID,
-                    itr->second.timeout / OSS_ONE_SEC ) ;
+                    resetTimeout / OSS_ONE_SEC ) ;
          }
       }
       }
