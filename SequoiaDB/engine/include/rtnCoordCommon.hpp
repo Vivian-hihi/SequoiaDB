@@ -247,6 +247,8 @@ namespace engine
    void rtnCoordUpdateNodeStatByRC( MsgRouteID &routeID,
                                     INT32 retCode );
 
+   BOOLEAN rtnCoordWriteRetryRC( INT32 retCode );
+
 }
 
 #endif //RTNCOORDCOMMON_HPP__
