@@ -71,6 +71,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define OPTION_FILENAME    "file"
 #define OPTION_EXTRA       "extra"
 #define OPTION_SPARSE      "sparse"
+#define OPTION_LINEPRIORITY "linepriority"
 
 #define OPTION_FIELD             FIELD_NAME_FIELDS
 #define OPTION_HEADERLINE        FIELD_NAME_HEADERLINE
@@ -103,7 +104,8 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_FIELD,         boost::program_options::value<string>(), "comma separated list of field names e.g. --fields name,age ( csv only )" ) \
        ( OPTION_HEADERLINE,    boost::program_options::value<string>(), "first line in input file is a header, default: false ( csv only )" ) \
        ( OPTION_SPARSE,        boost::program_options::value<string>(), "auto add fields, default: true ( csv only )" ) \
-       ( OPTION_EXTRA,         boost::program_options::value<string>(), "auto add value, default: false ( csv only )" )
+       ( OPTION_EXTRA,         boost::program_options::value<string>(), "auto add value, default: false ( csv only )" ) \
+       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" )
 
 //       ( COMMANDS_STRING(OPTION_MONGO,          ",m"), boost::program_options::value<string>(), "Compatible with MongoDB data format, input [true, false]" )
 enum SDBIMPORT_TYPE
@@ -135,6 +137,7 @@ BOOLEAN bMongoCompatible                  = FALSE ;
 BOOLEAN isHeaderline                      = FALSE ;
 BOOLEAN autoAddField                      = TRUE  ;
 BOOLEAN autoCompletion                    = FALSE ;
+BOOLEAN linePriority                      = TRUE ;
 
 CHAR gDelList[6] = { MIG_DEFAULT_DELCHAR, 0, MIG_DEFAULT_DELFIELD, 0,
                      MIG_DEFAULT_DELRECORD, 0 } ;
@@ -503,6 +506,13 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       strCLName = vm[OPTION_COLLECTION].as<string>() ;
    }
+
+   if ( vm.count ( OPTION_LINEPRIORITY ) )
+   {
+      ossStrToBoolean ( vm[OPTION_LINEPRIORITY].as<string>().c_str(),
+                        &linePriority ) ;
+   }
+
 done :
    PD_TRACE_EXITRC ( SDB_SDBIMP_RESOLVEARG, rc );
    return rc ;
@@ -599,6 +609,7 @@ INT32 importCSV ()
    rc = parser->init ( gCollection, gpInputFileName,
                        strField, isHeaderline,
                        autoAddField, autoCompletion,
+                       linePriority,
                        strDelChar.length()?strDelChar.c_str():NULL,
                        strDelField.length()?strDelField.c_str():NULL,
                        strDelRecord.length()?strDelRecord.c_str():NULL ) ;
@@ -639,7 +650,8 @@ INT32 importJson ()
       goto error ;
    }
    // initialize
-   rc = parser->init ( gCollection, gpInputFileName, bMongoCompatible ) ;
+   rc = parser->init ( gCollection, gpInputFileName,
+                       linePriority, bMongoCompatible ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to initialize parser, rc = %d", rc ) ;
