@@ -754,6 +754,9 @@ namespace engine
          _info.mtx.lock_w() ;
          _info.alives.insert( make_pair( itr->first, &status ) ) ;
          _info.mtx.release_w() ;
+
+         PD_LOG( PDEVENT, "vote: [node:%d] aliving from break",
+                 status.beat.identity.columns.nodeID ) ;
       }
       itr->second.timeout = 0 ;
    done:
