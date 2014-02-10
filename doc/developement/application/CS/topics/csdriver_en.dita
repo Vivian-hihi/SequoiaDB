@@ -62,29 +62,34 @@
                     <p>c# driver needs to use a different instance to operate. For example, the operation requires a cursor to read the data instances, and 
                     create a table space is required database instance.</p>
                 </li>
-                <li>Wxamples of cluster operation
-                    <lines>SequoiaDB database cluseer operations are divided into two levels:
+                <li>Wxamples of cluster operation <lines>SequoiaDB database cluseer operations are divided into two levels:
   1) partition group
   2) Data Node</lines>
-                    <note>partition group contains three types: Coordination partition group, cataloging partition group, the data partition group.</note>
-                    <p>Partition group instance and instance data node instances can be expressed in two classes.</p>
+                    <note>partition group contains three types: Coordination partition group,
+                        cataloging partition group, the data partition group.</note>
+                    <p>Partition group instance and instance data node instances can be expressed in
+                        two classes.</p>
                     <simpletable>
                         <strow>
-                            <stentry>ReplicaGroup</stentry>
+                            <stentry>Shard</stentry>
                             <stentry>Partition group class</stentry>
-                            <stentry>Partition group instance represents a separate partition group</stentry>
+                            <stentry>Partition group instance represents a separate partition
+                                group</stentry>
                         </strow>
                         <strow>
-                            <stentry>ReplicaNode</stentry>
+                            <stentry>Node</stentry>
                             <stentry>Data node class</stentry>
                             <stentry>Data node instance represents a single data node</stentry>
-                        </strow>                               
+                        </strow>
                     </simpletable>
-                    <p>Undoubtedly related to the cluster operation requires the use of partition groups and data node instance.</p>
-                    <p>Examples ReplicaGroup for management partition group. Its operations include start, stop partition groups, access to state partition group 
-                    node name information, the number of messages.</p>
-                    <p>Examples ReplicaNode for managing node. Its operations include start, stop specified node for the specified node instance, to obtain a 
-                        master-slave node instance, access to data node address information.</p></li>
+                    <p>Undoubtedly related to the cluster operation requires the use of partition
+                        groups and data node instance.</p>
+                    <p>Examples Shard for management partition group. Its operations include start,
+                        stop partition groups, access to state partition group node name
+                        information, the number of messages.</p>
+                    <p>Examples Node for managing node. Its operations include start, stop specified
+                        node for the specified node instance, to obtain a master-slave node
+                        instance, access to data node address information.</p></li>
             </ul>
         </section>      
         <section>

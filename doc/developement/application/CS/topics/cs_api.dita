@@ -5,5 +5,9 @@
   <body>
     <p>此部分是相关C#的API文档。</p>
     <p><xref href="..\..\..\..\cs\html\index.html" format="html">C# API</xref></p>
+    <p>历史更新情况：</p>
+    <p>Version1.6</p>
+     <p>1、添加类Shard和类Node来分别取代原来的类ReplicaGroup和类ReplicaNode。类ReplicaGroup和类ReplicaNode以及与它们相关的方法将在version2.x中被弃用。</p>
+    <p>详情请查看相关API。</p>
   </body>
 </topic>
