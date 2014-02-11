@@ -160,6 +160,8 @@ namespace CLSMGR
    INT32 cmSend ( const CHAR *pBuffer, INT32 sendSize, ossSocket *sock ) ;
    void pidMonitor () ;
    INT32 initEnv( UINT16 &port ) ;
+   INT32 getProcessInfoBySvcname( const string &svcName,
+                                 struct Process &processInfo );
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_RDCFGFILE, "readConfigureFile" )
    INT32 readConfigureFile( const CHAR *conf,
@@ -575,6 +577,7 @@ namespace CLSMGR
       confpath += OSS_FILE_SEP + svcname ;
       PD_TRACE1 ( SDB_SDBSTART2, PD_PACK_STRING(confpath.c_str()) );
       string conf = confpath + OSS_FILE_SEP PMD_DFT_CONF ;
+      BOOLEAN isLocked = FALSE ;
       rc = readConfigureFile ( conf.c_str(), desc, vm ) ;
       if ( rc )
       {
@@ -588,26 +591,28 @@ namespace CLSMGR
          time_t now;
          time ( &now ) ;
          ossLatch ( &listLocker ) ;
+         isLocked = TRUE ;
          if ( svcList.count(svcname) == 0 )
          { // the first starting of this service name by client
             Process proc;
+            proc.pid = OSS_INVALID_TID ;
             OSS_BIT_CLR_SET ( proc.status, BIT_STARTING ) ;
             proc.startTime.push ( now ) ;
             svcList[svcname] = proc ;
             ossUnlatch ( &listLocker ) ;
+            isLocked = FALSE ;
             rc = startNode ( confpath.c_str(), &pid ) ;
+            ossLatch ( &listLocker ) ;
+            isLocked = TRUE ;
             if ( SDB_OK == rc )
             { // started successfully
-               ossLatch ( &listLocker ) ;
                svcList[svcname].pid = pid ;
                OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
-               ossUnlatch ( &listLocker ) ;
             }
             else
             {
-               ossLatch ( &listLocker ) ;
-               svcList.erase ( svcname ) ;
-               ossUnlatch ( &listLocker ) ;
+               svcList[svcname].pid = OSS_INVALID_TID ;
+               svcList[svcname].status = 0 ;
                PD_LOG ( PDERROR, "Failed to start sequoiadb, svcname = %s",
                         svcname.c_str() ) ;
                goto error ;
@@ -618,7 +623,6 @@ namespace CLSMGR
             Process &proc = svcList[svcname] ;
             if ( OSS_BIT_TEST ( proc.status, BIT_STARTING ) )
             { // service is starting, locked by other sdbStart2() thread
-               ossUnlatch ( &listLocker ) ;
                rc = SDBCM_SVC_STARTING ;
                PD_LOG ( PDEVENT, "sequoiadb is starting, svcname = %s",
                         svcname.c_str() ) ;
@@ -632,22 +636,22 @@ namespace CLSMGR
                   OSS_BIT_SET ( proc.status, BIT_STARTING ) ;
                   proc.startTime.push ( now ) ;
                   ossUnlatch ( &listLocker ) ;
+                  isLocked = FALSE ;
                   rc = startNode ( confpath.c_str(), &pid ) ;
+                  ossLatch ( &listLocker ) ;
+                  isLocked = TRUE ;
                   if ( SDB_OK == rc )
                   {
-                     ossLatch ( &listLocker ) ;
                      svcList[svcname].pid = pid ;
                      OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
-                     ossUnlatch ( &listLocker ) ;
                      PD_LOG ( PDEVENT, "Successfully to restart SequoiaDB node, \
    svcname = %s", svcname.c_str() ) ;
                   }
                   else
                   { // restart failed
-                     ossLatch ( &listLocker ) ;
                      // restore status to "RUNNING", detected the failure by pidMonitor() later
-                     OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
-                     ossUnlatch ( &listLocker ) ;
+                     svcList[svcname].pid = OSS_INVALID_TID ;
+                     svcList[svcname].status = 0 ;
                      PD_LOG ( PDERROR, "Failed to restart sequoiadb, svcname = %s",
                               svcname.c_str() ) ;
                      goto error ;
@@ -655,18 +659,17 @@ namespace CLSMGR
                } // if ( TYPE_MONITOR == type )
                else
                {
-                  ossUnlatch ( &listLocker ) ;
                   rc = SDBCM_SVC_RESTARTING ;
                   PD_LOG ( PDEVENT, "sequoiadb is restarting, svcname = %s",
                            svcname.c_str() ) ;
                   goto error ;
                }
             }
-            else if ( OSS_BIT_TEST ( proc.status, BIT_RUNNING ) )
+            else
             {
-               if ( ossIsProcessRunning ( proc.pid ) )
+               if ( OSS_INVALID_TID != proc.pid
+                  && ossIsProcessRunning ( proc.pid ) )
                { // process is running
-                  ossUnlatch ( &listLocker ) ;
                   rc = SDBCM_SVC_STARTED ;
                   PD_LOG ( PDEVENT, "sequoiadb is started, svcname = %s, pid = %d",
                            svcname.c_str(), proc.pid ) ;
@@ -679,7 +682,6 @@ namespace CLSMGR
                   if ( NULL == dbpath )
                   { // "dbpath" in config file has not value
                      proc.startTime.push ( now ) ;
-                     ossUnlatch ( &listLocker ) ;
                      PD_LOG ( PDERROR, "dbpath is empty in configure file: %s",
                               confpath.c_str() ) ;
                      rc = SDB_INVALIDPATH ;
@@ -690,7 +692,6 @@ namespace CLSMGR
                   if ( rc )
                   {
                      proc.startTime.push ( now ) ;
-                     ossUnlatch ( &listLocker ) ;
                      PD_LOG ( PDERROR, "Invalid arguments: %s",
                               confpath.c_str() ) ;
                      goto error ;
@@ -703,20 +704,20 @@ namespace CLSMGR
                      OSS_BIT_SET ( proc.status, BIT_STARTING ) ;
                      proc.startTime.push ( now ) ;
                      ossUnlatch ( &listLocker ) ;
+                     isLocked = FALSE ;
                      rc = startNode ( confpath.c_str(), &pid ) ;
+                     ossLatch ( &listLocker ) ;
+                     isLocked = TRUE ;
                      if ( SDB_OK == rc )
                      {
-                        ossLatch ( &listLocker ) ;
                         svcList[svcname].pid = pid ;
                         OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
-                        ossUnlatch ( &listLocker ) ;
                      }
                      else
                      { // restart failed
-                        ossLatch ( &listLocker ) ;
                         // restore status to "RUNNING", detected the failure by pidMonitor() later
-                        OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
-                        ossUnlatch ( &listLocker ) ;
+                        svcList[svcname].pid = OSS_INVALID_TID ;
+                        svcList[svcname].status = 0 ;
                         PD_LOG ( PDERROR, "Failed to restart sequoiadb, svcname = %s",
                                  svcname.c_str() ) ;
                         goto error ;
@@ -726,10 +727,12 @@ namespace CLSMGR
                   { // engine stopped normally, but pidMonitor not yet detect, start again by client
                      OSS_BIT_SET ( proc.status, BIT_STARTING ) ;
                      ossUnlatch ( &listLocker ) ;
+                     isLocked = FALSE ;
                      rc = startNode ( confpath.c_str(), &pid ) ;
+                     ossLatch ( &listLocker ) ;
+                     isLocked = TRUE ;
                      if ( SDB_OK == rc )
                      {
-                        ossLatch ( &listLocker ) ;
                         Process &proc2 = svcList[svcname] ;
                         proc2.pid = pid ;
                         // reset starting time
@@ -737,13 +740,11 @@ namespace CLSMGR
                         swap ( proc2.startTime, empty ) ;
                         proc2.startTime.push ( now ) ;
                         OSS_BIT_CLR_SET ( proc2.status, BIT_RUNNING ) ;
-                        ossUnlatch ( &listLocker ) ;
                      }
                      else
                      { // start failed, erase it
-                        ossLatch ( &listLocker ) ;
-                        svcList.erase ( svcname ) ;
-                        ossUnlatch ( &listLocker ) ;
+                        svcList[svcname].pid = OSS_INVALID_TID ;
+                        svcList[svcname].status = 0 ;
                         PD_LOG ( PDERROR, "Sequoiadb has been stopped, Failed to \
    start sequoiadb, svcname = %s", svcname.c_str() ) ;
                         goto error ;
@@ -752,7 +753,6 @@ namespace CLSMGR
                   else
                   { // permission error or system error, we can't continue
                      proc.startTime.push ( now ) ;
-                     ossUnlatch ( &listLocker ) ;
                      PD_LOG ( PDERROR, "Error: rc = %d, svcname = %s",
                               rc, svcname.c_str() ) ;
                      goto error ;
@@ -770,6 +770,10 @@ namespace CLSMGR
       }
 
    done:
+      if ( isLocked )
+      {
+         ossUnlatch ( &listLocker ) ;
+      }
       PD_TRACE_EXITRC ( SDB_SDBSTART2, rc );
       return rc ;
    error:
@@ -1552,6 +1556,159 @@ namespace CLSMGR
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PIDMONITOR, "pidMonitor" )
+   void pidMonitor()
+   {
+      INT32 rc = SDB_OK ;
+      // PD_TRACE_ENTRY ( SDB_PIDMONITOR );
+      ossLatch ( &listLocker ) ;
+      map<string, struct Process>::iterator it = svcList.begin();
+      while ( it != svcList.end() )
+      {
+         // PD_TRACE1 ( SDB_PIDMONITOR, PD_PACK_STRING(svcname.c_str()) );
+         const string &svcname = it->first ;
+         struct Process &proc = it->second ;
+         if ( OSS_BIT_TEST ( proc.status, BIT_STARTING )
+              || OSS_BIT_TEST ( proc.status, BIT_RESTARTING ) )
+         {
+            // if status starting or restarting or running, do nothing
+            ++it ;
+            continue ;
+         }
+
+         if ( OSS_INVALID_TID != proc.pid
+            && ossIsProcessRunning ( proc.pid ) )
+         {
+            // the process is running then clean the startTime info
+            queue<time_t> startTime ;
+            proc.startTime = startTime ;
+            OSS_BIT_CLR_SET ( proc.status, BIT_RUNNING ) ;
+            ++it ;
+            continue ;
+         }
+
+         // the process is start by others
+         rc = getProcessInfoBySvcname( svcname, proc ) ;
+         if ( SDB_OK == rc )
+         {
+            queue<time_t> startTime ;
+            proc.startTime = startTime ;
+            PD_LOG( PDEVENT,
+                  "node(svcname=%s) has been started, save the process info",
+                  svcname.c_str() );
+            ++it ;
+            continue ;
+         }
+
+         // the process is not running
+         proc.pid = OSS_INVALID_TID ;
+         proc.status = 0 ;
+         if ( 0 == resCount
+            || ( resCount > 0 && proc.startTime.size() > (UINT32)resCount ) )
+         {
+            // the process has been start many times and all failed.
+            ++it ;
+            continue ;
+         }
+
+         // check if meet the restart-interval
+         if ( resInterval > 0
+            && proc.startTime.size() > 0 )
+         {
+            time_t now;
+            time ( &now ) ;
+            if ( ( now - proc.startTime.back() ) / 60 < resInterval )
+            {
+               // does not meet the interval 
+               ++it ;
+               continue ;
+            }
+         }
+
+         // clear some time-info
+         if ( proc.startTime.size() > 0 )
+         {
+            UINT32 keepCount = 1 ;
+            if ( resCount >= 0 )
+            {
+               keepCount = resCount + 1 ;
+            }
+            while ( proc.startTime.size() > keepCount )
+            {
+               proc.startTime.pop();
+            }
+         }
+
+         // check if abnormal exit
+         po::options_description desc ( "Command options" ) ;
+         po::variables_map vm ;
+         PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
+            PMD_COMMANDS_OPTIONS
+         PMD_ADD_PARAM_OPTIONS_END
+         string conf = pmdConf ;
+         conf += OSS_FILE_SEP + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
+         rc = readConfigureFile ( conf.c_str(), desc, vm ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Can not read configure file: %s",
+                     conf.c_str() ) ;
+            ++it ;
+            continue ;
+         }
+         if ( vm.count( PMD_OPTION_DBPATH ) == 0 )
+         {
+            PD_LOG ( PDERROR, "Can not get dbpath in configure file: %s",
+                     conf.c_str() ) ;
+            ++it ;
+            continue ;
+         }
+         const CHAR *dbpath = vm[PMD_OPTION_DBPATH].as<string>().c_str() ;
+         CHAR startupFile[OSS_MAX_PATHSIZE + 1];
+         if ( NULL == dbpath )
+         {
+            PD_LOG ( PDERROR, "Can not read dbpath from configure file: %s",
+                     conf.c_str() ) ;
+            ++it ;
+            continue ;
+         }
+         rc = buildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
+                          OSS_MAX_PATHSIZE + 1, startupFile );
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
+            ++it ;
+            continue ;
+         }
+         rc = ossAccess ( startupFile ) ;
+         if ( SDB_OK == rc )
+         {
+            // the process was quit unexpectedly
+            OSS_BIT_CLR_SET ( proc.status, BIT_RESTARTING ) ;
+            try
+            {
+               boost::thread sdbstart ( sdbStart2, svcname, TYPE_MONITOR ) ;
+               sdbstart.detach() ;
+            }
+            catch ( boost::exception& )
+            {
+               PD_LOG ( PDERROR, "Unknown thread exception" ) ;
+               // restore status to "RUNNING", detected the failure later
+               OSS_BIT_CLR_SET ( proc.status, BIT_RUNNING ) ;
+            }
+         }
+         else if ( SDB_FNE != rc )
+         {
+            PD_LOG ( PDERROR, "Permission error or system error: rc = %d", rc ) ;
+         }
+
+         ++it;
+      }// end of "while ( it != svcList.end() )"
+
+      ossUnlatch ( &listLocker ) ;
+      // PD_TRACE_EXIT ( SDB_PIDMONITOR );
+      return ;
+   }
+
+/*   // PD_TRACE_DECLARE_FUNCTION ( SDB_PIDMONITOR, "pidMonitor" )
    void pidMonitor ()
    {
       INT32 rc = SDB_OK ;
@@ -1671,7 +1828,7 @@ namespace CLSMGR
       }// while ( it != svcList.end())
       ossUnlatch ( &listLocker ) ;
       PD_TRACE_EXITRC ( SDB_PIDMONITOR, rc );
-   }
+   }*/
    
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCM_INITENV, "initEnv" )
    INT32 initEnv( UINT16 &port )
@@ -2038,26 +2195,32 @@ namespace CLSMGR
       UINT32 i = 0;
       vector< string > svcnameLst;
       //vector< boost::thread * > thrdLst;
-      struct Process processInfo;
       rc = getSvcLstFromCfg( svcnameLst );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get node list(rc=%d)",
                   rc );
       for( ; i < svcnameLst.size(); i++ )
       {
-         rc = getProcessInfoBySvcname( svcnameLst[i], processInfo );
+         struct Process processInfo;
+         processInfo.pid = OSS_INVALID_TID ;
+         processInfo.status = 0 ;
+         rc = getProcessInfoBySvcname( svcnameLst[i], processInfo ) ;
+         svcList[svcnameLst[i]] = processInfo ;
          if ( rc )
          {
             if ( SDBCM_NODE_NOTEXISTED == rc )
             {
                rc = SDB_OK;
-               PD_LOG( PDEVENT,
-                     "start the node(svcname=%s)",
-                     svcnameLst[i].c_str() );
-               /*boost::thread *pthrd = new boost::thread( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
-               thrdLst.push_back( pthrd );*/
-               boost::thread thrd( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
-               thrd.detach();
+               if ( autoStart )
+               {
+                  PD_LOG( PDEVENT,
+                        "start the node(svcname=%s)",
+                        svcnameLst[i].c_str() );
+                  /*boost::thread *pthrd = new boost::thread( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
+                  thrdLst.push_back( pthrd );*/
+                  boost::thread thrd( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
+                  thrd.detach();
+               }
             }
             else
             {
@@ -2068,7 +2231,6 @@ namespace CLSMGR
          }
          else
          {
-            svcList[svcnameLst[i]] = processInfo;
             PD_LOG( PDEVENT,
                   "node(svcname=%s) has already started, do nothing!",
                   svcnameLst[i].c_str() );
@@ -2124,13 +2286,11 @@ namespace CLSMGR
          PD_LOG ( PDERROR, "Failed to new cmTcpListener thread" ) ;
          goto error ;
       }
-      if ( autoStart )
-      {
-         rc = startAllNodes();
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to start nodes(rc=%d)",
-                     rc );
-      }
+
+      rc = startAllNodes();
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to start nodes(rc=%d)",
+                  rc );
 #if defined (_LINUX)
       {
          // once cmTcpListener is successfully started, we can rename the process
