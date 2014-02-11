@@ -11,7 +11,6 @@ namespace DriverTest
     {
         private TestContext testContextInstance;
         private static Config config = null;
-        private static Sequoiadb sdb0 = null;
         private static Sequoiadb sdb = null;
         private ReplicaGroup group = null;
         private ReplicaNode node = null;
@@ -40,27 +39,30 @@ namespace DriverTest
         {
             if ( config == null )
                 config = new Config();
-            sdb0 = new Sequoiadb(config.conf.Coord.Address);
-            sdb0.Connect(config.conf.UserName, config.conf.Password);
+            sdb = new Sequoiadb(config.conf.Coord.Address);
+            sdb.Connect(config.conf.UserName, config.conf.Password);
         }
         //使用 SequoiadbCleamUp 在运行完类中的所有测试后再运行代码
         [ClassCleanup()]
         public static void SequoiadbCleamUp()
         {
-            sdb0.Disconnect();
+            sdb.Disconnect();
         }
         //使用 TestInitialize 在运行每个测试前先运行代码
         [TestInitialize()]
         public void MyTestInitialize()
         {
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                Console.WriteLine("removeRG is for cluster environment only.");
+                return;
+            }
             // argument
             groupName = config.conf.Groups[0].GroupName;
             hostName = config.conf.Groups[0].Nodes[0].HostName;
             port = config.conf.Groups[0].Nodes[0].Port;
             dbpath = config.conf.Groups[0].Nodes[0].DBPath;
-            // connect
-            sdb = new Sequoiadb(config.conf.Coord.Address);
-            sdb.Connect(config.conf.UserName, config.conf.Password);
             // drop the exist group
             group = sdb.GetReplicaGroup(groupName);
             if (group != null)
@@ -108,6 +110,12 @@ namespace DriverTest
         [TestCleanup()]
         public void MyTestCleanup()
         {
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                Console.WriteLine("removeRG is for cluster environment only.");
+                return;
+            }
             group = sdb.GetReplicaGroup(groupName);
             if (group != null)
             {
@@ -147,14 +155,15 @@ namespace DriverTest
         #endregion
 
         [TestMethod()]
-        public void Test()
-        {
-            Console.WriteLine("test");
-        }
-
-        [TestMethod()]
+        [Ignore]
         public void RGTest()
         {
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                Console.WriteLine("removeRG is for cluster environment only.");
+                return;
+            }
             group = sdb.GetReplicaGroup(groupName);
             if (group == null)
                 group = sdb.CreateReplicaGroup(groupName);
@@ -192,8 +201,15 @@ namespace DriverTest
         }
 
         [TestMethod()]
+        [Ignore]
         public void removeRG()
         {
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                Console.WriteLine("removeRG is for cluster environment only.");
+                return;
+            }
             // get rg
             group = sdb.GetReplicaGroup(groupName);
             if (group == null)

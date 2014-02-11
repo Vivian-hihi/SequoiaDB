@@ -53,7 +53,7 @@ namespace DriverTest
         [TestCleanup()]
         public void MyTestCleanup()
         {
-            //sdb.DropCollectionSpace(csName);
+            sdb.DropCollectionSpace(csName);
             sdb.Disconnect();
         }
         #endregion
@@ -63,6 +63,12 @@ namespace DriverTest
         {
             Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
             System.Console.WriteLine(config.conf.Coord.Address.ToString());
+            // check whether it is in the cluster environment or not
+            if (!Constants.isClusterEnv(sdb))
+            {
+                System.Console.WriteLine("ConnectWithAuth is for cluster environment only.");
+                return;
+            }
             sdb.CreateUser("testusr", "testpwd");
             sdb2.Connect("testusr", "testpwd");
             Assert.IsNotNull(sdb.Connection);
@@ -162,7 +168,7 @@ namespace DriverTest
         [TestMethod()]
         public void GetSnapshotTest()
         {
-            Sequoiadb sdb2 = new Sequoiadb(config.conf.Data.Address);
+            Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
             sdb2.Connect();
             BsonDocument dummy = new BsonDocument();
             DBCursor cursor = sdb2.GetSnapshot(SDBConst.SDB_SNAP_CONTEXTS, dummy, dummy, dummy);
@@ -223,16 +229,20 @@ namespace DriverTest
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
-            cursor = sdb.GetList(SDBConst.SDB_LIST_GROUPS, dummy, dummy, dummy);
-            Assert.IsNotNull(cursor);
-            bson = cursor.Next();
-            Assert.IsNotNull(bson);
-
-            sdb.Disconnect();
-
-            sdb = new Sequoiadb(config.conf.Data.Address);
-            sdb.Connect(config.conf.UserName, config.conf.Password);
-
+            // check whether it is in the cluster environment or not
+            if (Constants.isClusterEnv(sdb))
+            {
+                cursor = sdb.GetList(SDBConst.SDB_LIST_GROUPS, dummy, dummy, dummy);
+                Assert.IsNotNull(cursor);
+                bson = cursor.Next();
+                Assert.IsNotNull(bson);
+            }
+            if (Constants.isClusterEnv(sdb))
+            {
+                sdb.Disconnect();
+                sdb = new Sequoiadb(config.conf.Data.Address);
+                sdb.Connect(config.conf.UserName, config.conf.Password);
+            }
             cursor = sdb.GetList(SDBConst.SDB_LIST_CONTEXTS, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
@@ -253,6 +263,12 @@ namespace DriverTest
             bson = cursor.Next();
             Assert.IsNotNull(bson);
 
+            if (Constants.isClusterEnv(sdb))
+            {
+                sdb.Disconnect();
+                sdb = new Sequoiadb(config.conf.Catalog.Address);
+                sdb.Connect(config.conf.UserName, config.conf.Password);
+            }
             cursor = sdb.GetList(SDBConst.SDB_LIST_STORAGEUNITS, dummy, dummy, dummy);
             Assert.IsNotNull(cursor);
             bson = cursor.Next();
