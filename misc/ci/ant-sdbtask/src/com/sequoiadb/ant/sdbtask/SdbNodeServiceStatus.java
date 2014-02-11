@@ -3,8 +3,8 @@ package com.sequoiadb.ant.sdbtask;
 import org.apache.tools.ant.Task;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
-import com.sequoiadb.base.Shard;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.Shard;
 import com.sequoiadb.exception.BaseException;
 
 public class SdbNodeServiceStatus extends Task {

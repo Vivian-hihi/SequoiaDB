@@ -11,9 +11,9 @@ import java.util.Map;
 import org.apache.tools.ant.BuildException;
 import org.bson.BSONObject;
 
-import com.sequoiadb.base.Shard ;
-import com.sequoiadb.base.Node;
+
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.Shard;
 import com.sequoiadb.exception.BaseException;
 
 /**
@@ -37,7 +37,7 @@ public class CataNodeGroup extends NodeGroup {
 
 		if (group == null) {
 			// group is not exist
-			ShardNode nodeInfo = getNodeList().get(0);
+			Node nodeInfo = getNodeList().get(0);
 			getNodeList().remove(0);
 
 			try {
@@ -57,14 +57,15 @@ public class CataNodeGroup extends NodeGroup {
 						"path : " + nodeInfo.getDbpath() + "\n" +
 						"configMap :"+nodeInfo.getConfigMap().toString()
 						);
+				
 				sdb.createCataShard(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 						nodeInfo.getConfigMap() );
 				
 				
 				/*chen write , here seem have propore
-				Shard cataRG = sdb.getShard( CATALOG_GROUP_NAME ) ;
-				Node cataNode = cataRG.createNode( nodeInfo.getHost() , 
+				ReplicaGroup cataRG = sdb.getReplicaGroup( CATALOG_GROUP_NAME ) ;
+				ReplicaNode cataNode = cataRG.createNode( nodeInfo.getHost() , 
 														nodeInfo.getBasePort() , 
 														nodeInfo.getDbpath() , 
 														nodeInfo.getConfigMap() ) ;
@@ -110,11 +111,11 @@ public class CataNodeGroup extends NodeGroup {
 			}
 		}
 
-		Node node = null;
+		com.sequoiadb.base.Node node = null;
 		
 		//List<ReplicaNode> replNodes = new LinkedList<ReplicaNode>();
 		
-		for (ShardNode nodeInfo : getNodeList()) {
+		for (Node nodeInfo : getNodeList()) {
 			node = group.getNode(nodeInfo.getHost(), nodeInfo.getBasePort());
 
 			if (node == null) {

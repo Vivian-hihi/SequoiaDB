@@ -219,7 +219,7 @@
 						workDir="${test.machine.deploy.path}" 
 						saveDir="${save.testLog.dir}"
 						  />
-						<sdbProperty name="delete.diaglogFile" value="for d in `find ${install.path}/sequoiadb/database -name diaglog`; do echo rm -f ${d}/* ; rm -f ${d}/* ; done" />
+						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
 						<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
 						<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
 						<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
@@ -239,7 +239,7 @@
 					return code=${ret.code}; time=${current.time}; error message=${error.output} &#10; screen=&#10; ${screen.output}&#10;&#10;
 					testBeginStr=${testBeginStr} &#10;
 					testEndStr=${testEndStr} &#10;
-					db.listReplicaGroups() : &#10;
+					db.listShards() : &#10;
 					${db.RG.info} &#10;&#10;
 					download the test log :&#10;
 					${URL.download.pre}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz]]&gt;&#10;

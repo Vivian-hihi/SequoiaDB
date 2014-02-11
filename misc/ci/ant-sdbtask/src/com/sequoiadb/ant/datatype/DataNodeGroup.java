@@ -5,9 +5,9 @@ package com.sequoiadb.ant.datatype;
 
 import org.apache.tools.ant.BuildException;
 
-import com.sequoiadb.base.Shard;
-import com.sequoiadb.base.Node;
+
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.Shard;
 import com.sequoiadb.exception.BaseException;
 
 /**
@@ -26,8 +26,8 @@ public class DataNodeGroup extends NodeGroup {
 				group = sdb.createShard(getName());
 			}
 
-			for (ShardNode nodeInfo : getNodeList()) {
-				Node node = group.getNode(nodeInfo.getHost(),
+			for (Node nodeInfo : getNodeList()) {
+				com.sequoiadb.base.Node node = group.getNode(nodeInfo.getHost(),
 						nodeInfo.getBasePort());
 
 				if (node == null) {
@@ -65,7 +65,7 @@ public class DataNodeGroup extends NodeGroup {
 		int i = 0;
 		while (true) {
 			try {
-				Node masterNode = group.getMaster();
+				com.sequoiadb.base.Node masterNode = group.getMaster();
 				if (masterNode != null) {
 					break;
 				}

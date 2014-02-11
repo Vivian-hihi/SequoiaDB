@@ -5,9 +5,8 @@ import java.util.List;
 
 import org.apache.tools.ant.BuildException;
 
-import com.sequoiadb.base.Shard;
-import com.sequoiadb.base.Node;
 import com.sequoiadb.base.Sequoiadb;
+import com.sequoiadb.base.Shard;
 
 public abstract class HostName extends NodeGroup{
 	private List<String> hostName = new ArrayList<String>();
@@ -17,7 +16,7 @@ public abstract class HostName extends NodeGroup{
 		Shard group = sdb.getShard(getName());
 		
 		
-		for (ShardNode nodeInfo : getNodeList()) {
+		for (Node nodeInfo : getNodeList()) {
 			hostName.add(group.getNode(nodeInfo.getHost()).toString());
 		}
 
