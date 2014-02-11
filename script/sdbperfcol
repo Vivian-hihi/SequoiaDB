@@ -285,6 +285,8 @@ do
       # each database collect 5 snapshots
       for i in 1 2 3 4 5
       do
+         echo "[$i]Shards: " `date` >> SDBSNAPS/list_shards.$x 2>&1
+         ${BINDIR?}/sdb "db.listShards()" >> SDBSNAPS/list_shards.$x 2>&1
          echo "[$i]Context Snapshot: " `date` >> SDBSNAPS/snapshot_context.$x 2>&1
          ${BINDIR?}/sdb "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/snapshot_context.$x 2>&1
          echo "[$i]Session Snapshot: " `date` >> SDBSNAPS/snapshot_session.$x 2>&1
