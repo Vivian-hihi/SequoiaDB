@@ -21,13 +21,19 @@
 # Data will be collected for the database provided as connection URL.
 # Snapshot and database configuration data will be collected by default.
 # Additional information will be collected only if the arguments are provided.
-
 CURDIR=`/bin/pwd`
-INSTALLDIR=`dirname $0`
-cd ${INSTALLDIR?}
-INSTALLDIR=`/bin/pwd`
-cd ${INSTALLDIR?}
-INSTALLDIR=`dirname ${INSTALLDIR?}`
+if [ -f /etc/default/sequoiadb ]
+then
+   . /etc/default/sequoiadb
+   INSTALLDIR=$INSTALL_DIR
+else
+   INSTALLDIR=`dirname $0`
+   cd ${INSTALLDIR?}
+   INSTALLDIR=`/bin/pwd`
+   cd ${INSTALLDIR?}
+   INSTALLDIR=`dirname ${INSTALLDIR?}`
+fi
+
 LOCALCONFIGDIR="${INSTALLDIR?}/conf/local"
 BINDIR="${INSTALLDIR?}/bin"
 cd ${CURDIR?}
