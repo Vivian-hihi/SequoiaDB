@@ -98,7 +98,7 @@
 		</exec>
 		<if>
 			<not>
-			<equels arg1="${ret.code.forShards}" arg2="0" />
+			<equals arg1="${ret.code.forShards}" arg2="0" />
 			</not>
 			<then>
 				<SdbProperty name="db.RG.info" value="this env is standalong"/>
