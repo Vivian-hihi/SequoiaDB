@@ -31,7 +31,7 @@
    Last Changed =
 
 *******************************************************************************/
-
+#include "core.hpp"
 #include <vector>
 #include "clsUtil.hpp"
 #include "pmd.hpp"

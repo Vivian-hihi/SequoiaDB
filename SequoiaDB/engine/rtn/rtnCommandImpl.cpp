@@ -32,6 +32,7 @@
    Last Changed =
 
 *******************************************************************************/
+#include "core.hpp"
 #include <set>
 #include "rtn.hpp"
 #include "pmd.hpp"

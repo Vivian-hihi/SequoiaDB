@@ -32,6 +32,7 @@
    Last Changed =
 
 *******************************************************************************/
+#include "core.hpp"
 #include <set>
 #include <map>
 #include "pmd.hpp"

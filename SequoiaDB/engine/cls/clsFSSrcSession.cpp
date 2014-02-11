@@ -31,7 +31,7 @@
    Last Changed =
 
 *******************************************************************************/
-
+#include "core.hpp"
 #include "clsFSSrcSession.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
