@@ -16,6 +16,7 @@ namespace SequoiaDB
      *  \deprecated 
      *  \see Shard
      */
+    [Obsolete("Class ReplicaGroup will be deprecated in version 2.x; use class Shard instead.")]
     public class ReplicaGroup
 	{
         private int groupID = -1;
@@ -23,7 +24,7 @@ namespace SequoiaDB
         private bool isCatalog = false;
         internal bool isBigEndian = false;
         private Sequoiadb sdb = null;
-
+        [Obsolete("Class ReplicaGroup will be deprecated in version 2.x; use class Shard instead.")]
         internal ReplicaGroup(Sequoiadb sdb, string groupName, int groupID)
         {
             this.sdb = sdb;

@@ -287,7 +287,7 @@ namespace DriverTest
                 string str1 = config.conf.Groups[2].Nodes[0].HostName.ToString();
                 string str2 = config.conf.Groups[2].Nodes[0].Port.ToString();
                 string str3 = config.conf.Groups[2].Nodes[0].DBPath.ToString();
-                sdb.CreateReplicaCataGroup(config.conf.Groups[2].Nodes[0].HostName,
+                sdb.CreateCataShard(config.conf.Groups[2].Nodes[0].HostName,
                                             config.conf.Groups[2].Nodes[0].Port,
                                             config.conf.Groups[2].Nodes[0].DBPath,
                                             null);

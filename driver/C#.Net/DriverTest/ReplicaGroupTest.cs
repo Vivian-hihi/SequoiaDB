@@ -12,8 +12,8 @@ namespace DriverTest
         private TestContext testContextInstance;
         private static Config config = null;
         private static Sequoiadb sdb = null;
-        private ReplicaGroup group = null;
-        private ReplicaNode node = null;
+        private Shard group = null;
+        private SequoiaDB.Node node = null;
 
         private string groupName = null;
         private string hostName = null;
@@ -64,14 +64,14 @@ namespace DriverTest
             port = config.conf.Groups[0].Nodes[0].Port;
             dbpath = config.conf.Groups[0].Nodes[0].DBPath;
             // drop the exist group
-            group = sdb.GetReplicaGroup(groupName);
+            group = sdb.GetShard(groupName);
             if (group != null)
             {
                 // drop all the cs in current group, and then remove this group
                 int nodeNum = group.GetNodeNum(SDBConst.NodeStatus.SDB_NODE_ALL);
                 if (nodeNum > 0)
                 {
-                    ReplicaNode nd = group.GetMaster();
+                    SequoiaDB.Node nd = group.GetMaster();
                     Sequoiadb db = new Sequoiadb(nd.HostName, nd.Port);
                     Assert.IsTrue(nd.Start());
                     db.Connect(config.conf.UserName, config.conf.Password);
@@ -88,7 +88,7 @@ namespace DriverTest
                 }
                 try
                 {
-                    sdb.RemoveReplicaGroup(group.GroupName);
+                    sdb.RemoveShard(group.ShardName);
                 }
                 catch (BaseException e)
                 {
@@ -97,8 +97,8 @@ namespace DriverTest
                 }
             }
             // create a new group
-            group = sdb.CreateReplicaGroup(groupName);
-            Assert.IsTrue(groupName.Equals(group.GroupName));
+            group = sdb.CreateShard(groupName);
+            Assert.IsTrue(groupName.Equals(group.ShardName));
             // create a node
             Dictionary<string, string> map = new Dictionary<string, string>();
             map.Add("diaglevel", config.conf.Groups[0].Nodes[0].DiagLevel);
@@ -116,14 +116,14 @@ namespace DriverTest
                 Console.WriteLine("removeRG is for cluster environment only.");
                 return;
             }
-            group = sdb.GetReplicaGroup(groupName);
+            group = sdb.GetShard(groupName);
             if (group != null)
             {
                 // drop all the cs in current group, and then remove this group
                 int nodeNum = group.GetNodeNum(SDBConst.NodeStatus.SDB_NODE_ALL);
                 if (nodeNum > 0)
                 {
-                    ReplicaNode nd = group.GetMaster();
+                    SequoiaDB.Node nd = group.GetMaster();
                     Sequoiadb db = new Sequoiadb(nd.HostName, nd.Port);
                     Assert.IsTrue(nd.Start());
                     db.Connect(config.conf.UserName, config.conf.Password);
@@ -142,7 +142,7 @@ namespace DriverTest
                 // remove group
                 try
                 {
-                    sdb.RemoveReplicaGroup(group.GroupName);
+                    sdb.RemoveShard(group.ShardName);
                 }
                 catch (BaseException e)
                 {
@@ -164,12 +164,12 @@ namespace DriverTest
                 Console.WriteLine("removeRG is for cluster environment only.");
                 return;
             }
-            group = sdb.GetReplicaGroup(groupName);
+            group = sdb.GetShard(groupName);
             if (group == null)
-                group = sdb.CreateReplicaGroup(groupName);
-            ReplicaGroup group1 = sdb.GetReplicaGroup(group.GroupID);
-            Assert.AreEqual(group.GroupName, group1.GroupName);
-            ReplicaGroup group2 = sdb.GetReplicaGroup(1);
+                group = sdb.CreateShard(groupName);
+            Shard group1 = sdb.GetShard(group.ShardID);
+            Assert.AreEqual(group.ShardName, group1.ShardName);
+            Shard group2 = sdb.GetShard(1);
             Assert.IsNotNull(group2);
             node = group.GetNode(hostName, port);
             if (node == null)
@@ -185,9 +185,9 @@ namespace DriverTest
             BsonDocument detail = group.GetDetail();
             string gn = detail["GroupName"].AsString;
             Assert.IsTrue(groupName.Equals(gn));
-            ReplicaNode master = group.GetMaster();
+            SequoiaDB.Node master = group.GetMaster();
             Assert.IsNotNull(master);
-            ReplicaNode slave = group.GetSlave();
+            SequoiaDB.Node slave = group.GetSlave();
             Assert.IsNotNull(slave);
             Assert.IsTrue(node.Stop());
             Assert.IsTrue(node.Start());
@@ -211,9 +211,9 @@ namespace DriverTest
                 return;
             }
             // get rg
-            group = sdb.GetReplicaGroup(groupName);
+            group = sdb.GetShard(groupName);
             if (group == null)
-                group = sdb.CreateReplicaGroup(groupName);
+                group = sdb.CreateShard(groupName);
             Assert.IsNotNull(group);
             // create node1
             string hostName1 = config.conf.Groups[1].Nodes[1].HostName;
@@ -221,7 +221,7 @@ namespace DriverTest
             string dbPath1 = config.conf.Groups[1].Nodes[1].DBPath;
             Dictionary<string, string> map1 = new Dictionary<string, string>();
             map1.Add("diaglevel", config.conf.Groups[1].Nodes[1].DiagLevel);
-            ReplicaNode node1 = group.CreateNode(hostName1, port1, dbPath1, map1);
+            SequoiaDB.Node node1 = group.CreateNode(hostName1, port1, dbPath1, map1);
             Assert.IsNotNull(node1);
             // start node1
             Assert.IsTrue(node1.Start());

@@ -818,7 +818,6 @@ namespace SequoiaDB
         }
 
 
-
         /** \fn DBCursor ListReplicaGroups()
          *  \brief Get all the groups
          *  \return A cursor of all the groups
@@ -828,6 +827,7 @@ namespace SequoiaDB
 	     *              use ListShards instead of it.
          *  \see ListShards
          */
+        [Obsolete("ListReplicaGroups will be deprecated in version 2.x; use ListReplicaShards instead.")]
         public DBCursor ListReplicaGroups()
         {
             return ListShards();
@@ -843,6 +843,7 @@ namespace SequoiaDB
 	     *              use GetShard instead of it.
          *  \see GetShard
          */
+        [Obsolete("GetReplicaGroup will be deprecated in version 2.x; use GetShard instead.")]
         public ReplicaGroup GetReplicaGroup(string groupName)
         {
             BsonDocument matcher = new BsonDocument();
@@ -883,6 +884,7 @@ namespace SequoiaDB
 	     *              use GetShard instead of it.
          *  \see GetShard
          */
+        [Obsolete("GetReplicaGroup will be deprecated in version 2.x; use GetShard instead.")]
         public ReplicaGroup GetReplicaGroup(int groupID)
         {
             BsonDocument matcher = new BsonDocument();
@@ -921,6 +923,7 @@ namespace SequoiaDB
 	     *              use CreateShard instead of it.
          *  \see CreateShard
          */
+        [Obsolete("CreateReplicaGroup will be deprecated in version 2.x; use CreateShard instead.")]
         public ReplicaGroup CreateReplicaGroup(string groupName)
         {
             if (groupName == null)
@@ -949,6 +952,7 @@ namespace SequoiaDB
 	     *              use RemoveShard instead of it.
          *  \see RemoveShard
          */
+        [Obsolete("RemoveReplicaGroup will be deprecated in version 2.x; use RemoveShard instead.")]
         public void RemoveReplicaGroup(string groupName)
         {
             RemoveShard(groupName);
@@ -966,6 +970,7 @@ namespace SequoiaDB
 	     *              use CreateCataShard instead of it.
          *  \see CreateCataShard
          */
+        [Obsolete("CreateReplicaCataGroup will be deprecated in version 2.x; use CreateCataShard instead.")]
         public void CreateReplicaCataGroup(string hostName, int port, string dbpath,
                                             BsonDocument configure)
         {
@@ -982,6 +987,7 @@ namespace SequoiaDB
 	     *              use ActivateShard instead of it.
          *  \see ActivateShard
          */
+        [Obsolete("ActivateReplicaGroup will be deprecated in version 2.x; use ActivateShard instead.")]
         public ReplicaGroup ActivateReplicaGroup(string groupName)
         {
             ReplicaGroup group = GetReplicaGroup(groupName);

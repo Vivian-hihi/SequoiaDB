@@ -17,6 +17,7 @@ namespace SequoiaDB
      *  \deprecated 
      *  \see Node
      */
+    [Obsolete("Class ReplicaNode will be deprecated in version 2.x; use class Node instead.")]
     public class ReplicaNode
 	{
         private int nodeID = -1;
@@ -25,7 +26,7 @@ namespace SequoiaDB
         private int port;
         internal bool isBigEndian = false;
         private ReplicaGroup group;
-
+        [Obsolete("Class ReplicaNode will be deprecated in version 2.x; use class Node instead.")]
         internal ReplicaNode(ReplicaGroup group, string hostName, int port, int nodeID)
         {
             this.group = group;
