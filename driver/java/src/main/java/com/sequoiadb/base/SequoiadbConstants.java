@@ -38,7 +38,7 @@ public class SequoiadbConstants {
 	public static final String CREATE_CMD = "create";
 	public static final String REMOVE_CMD = "remove";
 	public static final String DROP_CMD = "drop";
-	public static final String SNAP_CMD = "snapshot ";
+	public static final String SNAP_CMD = "snapshot";
 	public static final String TEST_CMD = "test";
 	public static final String ACTIVE_CMD = "active";
 	public static final String SHUTDOWN_CMD = "shutdown";

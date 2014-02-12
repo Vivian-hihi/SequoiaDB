@@ -48,8 +48,8 @@ public class Shard {
 	
 	/**
 	 * @fn Sequoiadb getSequoiadb()
-	 * @brief Get current Shard's Sequoiadb
-	 * @return the current Shard's Sequoiadb
+	 * @brief Get current Shard's Sequoiadb object.
+	 * @return the current Shard's Sequoiadb object
 	 */
 	public Sequoiadb getSequoiadb() {
 		return sequoiadb;
@@ -98,8 +98,8 @@ public class Shard {
 
 	/**
 	 * @fn BSONObject getDetail()
-	 * @brief Get detail info of current shard.
-	 * @return The detail infomation.
+	 * @brief Get detail information of current shard.
+	 * @return the detail information of the current shard or null if no information
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public BSONObject getDetail() throws BaseException {
@@ -108,11 +108,13 @@ public class Shard {
 
 	/**
 	 * @fn Node getMaster()
-	 * @brief Get the master Node of current Shard
-	 * @return the master Node
+	 * @brief Get the master node of current Shard.  
+	 * @details If no master node, throw BaseException "SDB_CLS_NODE_NOT_EXIST",
+	 *          if one of the nodes has no "NodeID", throw BaseException "SDB_SYS".
+	 * @return the master Node or null for
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Node getMaster() {
+	public Node getMaster() throws BaseException{
 		BSONObject shard = sequoiadb.getDetailById(id);
 		BSONObject primaryData = null;
 		Object nodeId = null;
@@ -202,7 +204,7 @@ public class Shard {
 	 * @brief Get node by node name (IP:PORT).
 	 * @param nodeName
 	 * 			The name of the node
-	 * @return the node object. 
+	 * @return the node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Node getNode(String nodeName) {
@@ -306,7 +308,8 @@ public class Shard {
 	 * @param dbPath
 	 * 			the path for node
 	 * @param configure
-	 * 			configuration for this operation
+	 * 			the configuration options for creating node, reference to
+	 *                 Database Runtime Configuration page for more detail
 	 * @return the created node
 	 * @exception com.sequoiadb.exception.BaseException
 	 */

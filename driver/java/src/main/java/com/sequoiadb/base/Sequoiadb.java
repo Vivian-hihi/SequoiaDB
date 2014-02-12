@@ -329,8 +329,9 @@ public class Sequoiadb {
 	 * @fn CollectionSpace getCollectionSpace(String csName)
 	 * @brief Get the named collection space.
 	 * @param csName
-	 *            The collection space name
-	 * @return The CollecionSpace handle
+	 *            The collection space name.
+	 * @return The CollecionSpace handle.
+	 * @note If the collection space not exit, throw BaseException "SDB_DMS_CS_NOTEXIST".
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public CollectionSpace getCollectionSpace(String csName)

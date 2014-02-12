@@ -161,8 +161,7 @@ public class ReplicaNode {
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, group.getId());
 		obj.put(SequoiadbConstants.FIELD_NAME_NODEID, id);
-		String commandString = SequoiadbConstants.ADMIN_PROMPT
-				+ SequoiadbConstants.SNAP_CMD + " "
+		String commandString = SequoiadbConstants.SNAP_CMD + " "
 				+ SequoiadbConstants.DATABASE;
 		SDBMessage rtn = adminCommand(commandString, obj);
 		int flags = rtn.getFlags();

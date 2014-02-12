@@ -22,7 +22,7 @@ public class DBCursor {
 	private SDBMessage sdbMessage;
 	private DBCollection dbc;
 	private IConnection connection;
-	private BSONObject current;
+	private BSONObject current = null;
 	private List<BSONObject> list;
 
 	private byte[] currentRaw;
@@ -82,7 +82,7 @@ public class DBCursor {
 	/**
 	 * @fn boolean hasNext()
 	 * @brief Judge whether next data exists
-	 * @return whether next data exists
+	 * @return true for next data exists while false for not
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public boolean hasNext() throws BaseException {
@@ -104,9 +104,9 @@ public class DBCursor {
 	}
 
 	/**
-	 * @fn boolean hasNext()
-	 * @brief judge whether next data exists
-	 * @return whether next data exists
+	 * @fn boolean hasNextRaw()
+	 * @brief Judge whether next raw data exists.
+	 * @return true for next raw data exists while false for not
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public boolean hasNextRaw() throws BaseException {
@@ -129,13 +129,16 @@ public class DBCursor {
 
 	/**
 	 * @fn BSONObject getNext()
-	 * @brief Get next data
-	 * @return next data
+	 * @brief Get next data.
+	 * @return the next date or null if the cursor is empty
+	 *         or the cursor is closed
 	 * @exception com.sequoiadb.exception.BaseException
+	 * @note calling this function after the cursor have been closed 
+	 *       will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
 	 */
 	public BSONObject getNext() throws BaseException {
 		if (connection == null)
-			return null;
+			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
 		if (times == 0)
 			hasNext();
 		if (hasNext) {
@@ -146,16 +149,19 @@ public class DBCursor {
 		}
 		return null;
 	}
-
+	
 	/**
-	 * @fn BSONObject getNext()
-	 * @brief get next data
-	 * @return next data
+	 * @fn byte[] getNextRaw()
+	 * @brief Get raw date of next record.
+	 * @return a byte array of raw date of next record or null
+	 *         if the cursor is empty
 	 * @exception com.sequoiadb.exception.BaseException
+	 * @note calling this function after the cursor have been closed 
+	 *       will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
 	 */
 	public byte[] getNextRaw() throws BaseException {
 		if (connection == null)
-			return null;
+			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
 		if (times == 0)
 			hasNextRaw();
 		if (hasNext) {
@@ -166,7 +172,25 @@ public class DBCursor {
 		}
 		return null;
 	}
-
+	
+	/**
+	 * @fn BSONObject getCurrent()
+	 * @brief Get current data.
+	 * @return the current date or null if the cursor is empty
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @note calling this function after the cursor have been closed 
+	 *       will throw BaseException "SDB_RTN_CONTEXT_NOTEXIST"
+	 */
+	public BSONObject getCurrent() throws BaseException{
+		if (connection == null)
+			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+		// in case the first time we get date
+        if ( index == -1 )
+            return getNext();
+        else
+            return list.get(index);
+	}
+	
 	/**
 	 * @fn void updateCurrent(BSONObject modifier, BSONObject hint)
 	 * @brief update current data
@@ -205,17 +229,8 @@ public class DBCursor {
 	*/
 
 	/**
-	 * @fn BSONObject getCurrent()
-	 * @brief Get current data
-	 * @return the current data
-	 */
-	public BSONObject getCurrent() {
-		return current;
-	}
-
-	/**
 	 * @fn void close()
-	 * @brief Close DBCursor
+	 * @brief Close the cursor.
 	 */
 	public void close() {
 		killCursor();
@@ -252,16 +267,16 @@ public class DBCursor {
 		}
 
 		int flags = rtnSDBMessage.getFlags();
-		if (flags == SequoiadbConstants.SDB_DMS_EOC
+		if (flags == SequoiadbConstants.SDB_DMS_EOC // in case end of collection or wrong contextId
 				|| contextId != rtnSDBMessage.getContextIDList().get(0)) {
 			hasNext = false;
 			index = -1;
 			current = null;
 			list = null;
 			listRaw = null;
-		} else if (flags != 0) {
+		} else if (flags != 0) { // in case one of the other errors happen 
 			throw new BaseException(flags);
-		} else {
+		} else { // in case nornal, get the data
 			reqId = rtnSDBMessage.getRequestID();
 			if (decode) {
 				list = rtnSDBMessage.getObjectList();
