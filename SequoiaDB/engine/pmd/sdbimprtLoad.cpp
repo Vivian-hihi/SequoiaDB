@@ -97,7 +97,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define COMMANDS_OPTIONS \
        ( OPTION_HELP, "help" )\
        ( COMMANDS_STRING(OPTION_HOSTNAME,       ",h"), boost::program_options::value<string>(), "database host name ( default: localhost )" ) \
-       ( COMMANDS_STRING(OPTION_SVCNAME,        ",s"), boost::program_options::value<string>(), "database service name ( default: 50000 " ) \
+       ( COMMANDS_STRING(OPTION_SVCNAME,        ",s"), boost::program_options::value<string>(), "database service name ( default: 11810 " ) \
        ( COMMANDS_STRING(OPTION_DELCHAR,        ",a"), boost::program_options::value<string>(), "character delimiter ( default: \" )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_DELFIELD,       ",e"), boost::program_options::value<string>(), "field delimiter ( default: , )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_DELRECORD,      ",r"), boost::program_options::value<string>(), "record delimiter ( default: '\\n' )( CSV type only )" ) \
@@ -349,7 +349,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       ossStrncpy ( gpHostName, DEFAULT_HOSTNAME, OSS_MAX_HOSTNAME ) ;
    }
 
-   // service name is optional, default is OSS_DFT_SVCPORT, which is 50000
+   // service name is optional, default is OSS_DFT_SVCPORT, which is 11810
    if ( vm.count ( OPTION_SVCNAME ) )
    {
       ossStrncpy ( gpServiceName, vm[OPTION_SVCNAME].as<string>().c_str(),

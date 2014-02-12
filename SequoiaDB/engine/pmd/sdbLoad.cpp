@@ -83,7 +83,7 @@ extern CHAR _pdDiagLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
 #define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
    ( OPTION_HELP, "help" ) \
-   ( COMMANDS_STRING ( OPTION_SVCNAME,             ",s"),      boost::program_options::value<string>(), "database service name, default: 50000" ) \
+   ( COMMANDS_STRING ( OPTION_SVCNAME,             ",s"),      boost::program_options::value<string>(), "database service name, default: 11810" ) \
    ( COMMANDS_STRING ( OPTION_USER,                ",u"),      boost::program_options::value<string>(), "database user" ) \
    ( COMMANDS_STRING ( OPTION_PASSWORD,            ",w"),      boost::program_options::value<string>(), "database password" ) \
    ( COMMANDS_STRING ( OPTION_COLLECTSPACE,        ",c"),      boost::program_options::value<string>(), "database collection space name" ) \
@@ -210,7 +210,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    lDelCFR[2] = '\n' ;
    lDelCFR[3] = 0 ;
    ossMemset ( lServiceName, 0, OSS_MAX_SERVICENAME + 1 ) ;
-   // service name is optional, default is OSS_DFT_SVCPORT, which is 50000
+   // service name is optional, default is OSS_DFT_SVCPORT, which is 11810
    if ( vm.count ( OPTION_SVCNAME ) )
    {
       ossStrncpy ( lServiceName, vm[OPTION_SVCNAME].as<string>().c_str(),

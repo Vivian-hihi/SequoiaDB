@@ -352,7 +352,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       ossStrncpy ( gpHostName, DEFAULT_HOSTNAME, OSS_MAX_HOSTNAME ) ;
    }
 
-   // service name is optional, default is OSS_DFT_SVCPORT, which is 50000
+   // service name is optional, default is OSS_DFT_SVCPORT, which is 11810
    if ( vm.count ( OPTION_SVCNAME ) )
    {
       ossStrncpy ( gpServiceName, vm[OPTION_SVCNAME].as<string>().c_str(),
