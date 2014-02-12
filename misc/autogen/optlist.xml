@@ -49,11 +49,11 @@
       </description>
       <detail>
          <en>1. Specified configuration file path (doesn't contain fiel name). The system will find <i>sdb.conf </i>under confpath.<fig></fig>
-             2. <i>sdb.conf</i>contains necessary configuration items. The format of a configuration item is "parameter name=value" like "svcname=50000" and "diaglevel=3".<fig></fig>
+             2. <i>sdb.conf</i>contains necessary configuration items. The format of a configuration item is "parameter name=value" like "svcname=11810" and "diaglevel=3".<fig></fig>
              3. If this parameter is not specified, system will automatically search for sdb.conf in current path.<fig></fig>
              4. There may not be sdb.conf.</en>
          <cn>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。<fig></fig>
-             2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=50000；diaglevel=3<fig></fig>
+             2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=11810；diaglevel=3<fig></fig>
              3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。<fig></fig>
              4.sdb.conf可以不存在。</cn>
       </detail>
@@ -167,15 +167,15 @@
          <en>local service name or port</en>
          <cn>本地服务名或端口</cn>
       </description>
-      <catalogdft>60000</catalogdft>
-      <coorddft>50000</coorddft>
-      <datadft>51000</datadft>
-      <standdft>50000</standdft>
+      <catalogdft>11800</catalogdft>
+      <coorddft>11810</coorddft>
+      <datadft>11820</datadft>
+      <standdft>11810</standdft>
       <detail>
          <en>1. It specifies local service port.<fig></fig>
-             2. If it is not specified, the default value are 50000 for coord, 60000 for catalog, 51000 for datanode.</en>
+             2. If it is not specified, the default value are 11810 for coord, 11800 for catalog, 11820 for datanode.</en>
          <cn>1.指定本地服务端口。<fig></fig>
-             2.如果不指定则默认为50000端口用于编目节点，60000用于协调节点，51000用于数据节点。</cn>
+             2.如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</cn>
       </detail>
       <typeofweb>str</typeofweb>
    </opt>
@@ -188,10 +188,10 @@
          <en>replication service name or port</en>
          <cn>复制通讯服务名或端口</cn>
       </description>
-      <catalogdft>60001</catalogdft>
-      <coorddft>50001</coorddft>
-      <datadft>51001</datadft>
-      <standdft>50001</standdft>
+      <catalogdft>11801</catalogdft>
+      <coorddft>11811</coorddft>
+      <datadft>11821</datadft>
+      <standdft>11811</standdft>
       <detail>
          <en>1. It specifies data synch port.<fig></fig>
              2. If it is not specified, the default value is "svcname+1".</en>
@@ -209,10 +209,10 @@
          <en>sharding service name or port</en>
          <cn>分片通讯服务名或端口</cn>
       </description>
-      <catalogdft>60002</catalogdft>
-      <coorddft>50002</coorddft>
-      <datadft>51002</datadft>
-      <standdft>50002</standdft>
+      <catalogdft>11802</catalogdft>
+      <coorddft>11812</coorddft>
+      <datadft>11822</datadft>
+      <standdft>11812</standdft>
       <detail>
          <en>1. It specifies shard port.<fig></fig>
              2. If it is not specified, the default value is "svcname+2".</en>
@@ -230,10 +230,10 @@
          <en>catalog service name or port</en>
          <cn>编目通讯服务名或端口</cn>
       </description>
-      <catalogdft>60003</catalogdft>
-      <coorddft>50003</coorddft>
-      <datadft>51003</datadft>
-      <standdft>50003</standdft>
+      <catalogdft>11803</catalogdft>
+      <coorddft>11813</coorddft>
+      <datadft>11823</datadft>
+      <standdft>11813</standdft>
       <detail>
          <en>1. It specifies catalog port.<fig></fig>
              2. If it is not specified, the default value is "svcname+3".</en>
@@ -251,10 +251,10 @@
          <en>REST service name or port</en>
          <cn>REST服务名或端口</cn>
       </description>
-      <catalogdft>60004</catalogdft>
-      <coorddft>50004</coorddft>
-      <datadft>51004</datadft>
-      <standdft>50004</standdft>
+      <catalogdft>11804</catalogdft>
+      <coorddft>11814</coorddft>
+      <datadft>11824</datadft>
+      <standdft>11814</standdft>
       <detail>
          <en>1. It specifies http port.<fig></fig>
              2. If it is not specified, the default value is "svcname+4".</en>
@@ -313,9 +313,9 @@
          <en>catalog addr (hostname1:servicename1,hostname2:servicename2,...)</en>
          <cn>协调节点地址(hostname1:servicename1,hostname2:servicename2,...)</cn>
       </description>
-      <catalogdft>localhost:60003</catalogdft>
-      <!--coorddft>localhost:60003</coorddft-->
-      <datadft>localhost:60003</datadft>
+      <catalogdft>localhost:11803</catalogdft>
+      <!--coorddft>localhost:11803</coorddft-->
+      <datadft>localhost:11803</datadft>
       <detail>
          <en>1. It specifies the address of catalog node. The format is "hostname1:catalogname1,hostname2:catalogname2,...".<fig></fig>
              2. It should specify address of at least one catalog.</en>
@@ -349,8 +349,8 @@
       <long>logfilenum</long>
       <short>n</short>
       <description>
-         <en>number of log files,default:20, value range:[1,60000]</en>
-         <cn>日志文件数量,默认值:1,取值范围:[1,60000]</cn>
+         <en>number of log files,default:20, value range:[1,11800]</en>
+         <cn>日志文件数量,默认值:1,取值范围:[1,11800]</cn>
       </description>
       <type>int</type>
       <default>20</default>
