@@ -397,7 +397,7 @@ namespace engine
          _mtxs[i].get() ;
          while ( SDB_OK == _syncList[i].pop( session ) )
          {
-            session.eduCB->getEvent().signal ( SDB_CLS_NODE_NOT_ENOUGH ) ;
+            session.eduCB->getEvent().signal ( SDB_CLS_WAIT_SYNC_FAILED ) ;
          }
          _mtxs[i].release() ;
       }
