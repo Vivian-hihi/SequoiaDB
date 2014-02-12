@@ -1909,7 +1909,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMACH__TVSMACH );
-      INT32 r = 0 ;
+      // r must be set to 1 here, because when there's no element in $and array,
+      // r will be returned as default value
+      INT32 r = 1 ;
       INT32 tempR = 0 ;
       BOOLEAN isMatchErr = FALSE ;
       LogicMatchElement *temp = NULL ;
