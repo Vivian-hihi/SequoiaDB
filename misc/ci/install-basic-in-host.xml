@@ -127,10 +127,7 @@
 						<mkdir dir="${db.path}/database/data/log" />
 						<mkdir dir="${db.path}/database/data/bkup" /-->
 
-				<mkdir dir="${db.path}/database/coord" />
-				<mkdir dir="${db.path}/database/coord/diag" />
-				<mkdir dir="${db.path}/database/coord/log" />
-				<mkdir dir="${db.path}/database/coord/bkup" />
+				
 
 				<!--mkdir dir="${db.path}/conf/local/${cata.service.port}" /-->
 				<!--mkdir dir="${db.path}/conf/local/${data.service.port}" /-->

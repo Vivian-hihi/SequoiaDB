@@ -15,7 +15,7 @@ copy_tar=/test_tar
 target.deploy_tar_gz.ip=bl465-4
 copy.log.path=/test_log
 
-coord.service.port=50000
+coord.service.port=11810
 jenkins.master.ip=suse-test1.control
 test.machine.no1.basic=suse-test2.control
 test.machine.no2.basic=suse-test3.control
