@@ -4,7 +4,7 @@
   <Password></Password>
 
   <Coord>
-    <Address>192.168.30.165:50000</Address>
+    <Address>192.168.30.165:11810</Address>
   </Coord>
 
   <Catalog>
@@ -83,7 +83,7 @@
   <Password></Password>
 
   <Coord>
-    <Address>192.168.20.40:50000</Address>
+    <Address>192.168.20.40:11810</Address>
   </Coord>
 
   <Catalog>
