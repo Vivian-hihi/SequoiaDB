@@ -10,7 +10,7 @@
       <ul>
         <li><p>返回分片组的从节点</p>
           <codeblock>> shard.getSlave()
-返回：vmsvr2-suse-x64:70010</codeblock></li>
+返回：vmsvr2-suse-x64:11800</codeblock></li>
       </ul>
     </section>
   </body>

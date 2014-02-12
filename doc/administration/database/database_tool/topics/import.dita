@@ -52,7 +52,7 @@
         <strow>
           <stentry>--svcname,-s
           </stentry>
-          <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号50000的主机。</stentry>
+          <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
           <stentry>--type
@@ -112,8 +112,8 @@
     </section>
     <section>
       <title>用法</title>
-      <p>在下面的例子，sdbimprt将数据导入到本地数据库端口50000中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
-      <codeblock>sdbimprt -h localhost -s 50000 --type csv --file test.csv -c foo -l bar</codeblock>
+      <p>在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
+      <codeblock>sdbimprt -h localhost -s 11810 --type csv --file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
       <title>sdbload</title>
@@ -138,7 +138,7 @@
         <strow>
           <stentry>--svcname,-s
           </stentry>
-          <stentry>指定的端口号。默认情况下sdbload尝试连接到端口号50000的主机。</stentry>
+          <stentry>指定的端口号。默认情况下sdbload尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
           <stentry>--delchar,-a
@@ -233,8 +233,8 @@
     </section>
     <section>
       <title>用法</title>
-      <p> 在下面的例子，sdbload将数据导入到端口50000中对应集合空间foo和集合bar，导入文件为test.json。 </p>
-      <codeblock>sdbload –h localhost -s 50000 --file test.json -c foo -l bar –type json</codeblock>
+      <p> 在下面的例子，sdbload将数据导入到端口11810中对应集合空间foo和集合bar，导入文件为test.json。 </p>
+      <codeblock>sdbload –h localhost -s 11810 --file test.json -c foo -l bar –type json</codeblock>
     </section>
   </body>
 </topic>

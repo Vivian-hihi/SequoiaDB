@@ -36,12 +36,13 @@ hello,SequoiaDB
     </section>
     <section>
       <title>SequoiaDB客户端</title>
-      <p>启动shell可以运行任意javascript程序，但是shell的真正威力在于它是一个独立的SequoiaDB客户端。开启的时候，可以使用db=new Sdb（"localhost",50000）命令连接到本地sequoiaDB服务器的数据库，并将这个数据库连接赋值给全局变量db。这个变量是通过shell访问SequoiaDB的主要入口点。</p>
+      <p>启动shell可以运行任意javascript程序，但是shell的真正威力在于它是一个独立的SequoiaDB客户端。开启的时候，可以使用db=new
+        Sdb（"localhost",11810）命令连接到本地sequoiaDB服务器的数据库，并将这个数据库连接赋值给全局变量db。这个变量是通过shell访问SequoiaDB的主要入口点。</p>
       <p>shell还有一些非javascript语法的扩展，例如：
         <codeblock>>db
-localhost:50000
+localhost:11810
 >db.createCS("foo")//创建集合空间
-localhost:50000.foo</codeblock></p>
+localhost:11810.foo</codeblock></p>
       <p>可以通过db变量来访问其中的集合空间，如db.foo返回当前数据库的foo集合空间。再通过集合空间来访问其中的集合，如db.foo.bar，返回返回当前数据库
         foo集合空间的集合bar。既然可以再shell中访问集合，那么基本上就可以执行几乎所有的数据库操作了。</p>
     </section>

@@ -39,7 +39,7 @@
     <p class="p">启动hive shell命令行窗口，执行如下命令创建数据表；</p>
 
     <pre class="pre codeblock">hive&gt; create external table sdb_tab(id INT, name STRING, value DOUBLE) stored by 
-"com.sequoiadb.hive.SdbHiveStorageHandler" tblproperties("sdb.address" = "localhost:50000");
+"com.sequoiadb.hive.SdbHiveStorageHandler" tblproperties("sdb.address" = "localhost:11810");
 
 OK
 Time taken: 0.386 seconds</pre>

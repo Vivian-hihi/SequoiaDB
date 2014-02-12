@@ -4,9 +4,9 @@
   <title>使用shell的窍门</title>
   <body>
     <p>sequoiadb shell本身内置了帮助文档，通过help命令可以查看。
-      <codeblock>> help
+            <codeblock>> help
 function () {
-    println("   var db = new Sdb('localhost', 50000)   connect to database");
+    println("   var db = new Sdb('localhost', 11810)   connect to database");
     println("   db.help()                              help on db methods");
     println("   db.cs.help()                           help on collection space                                                                                                                      cs");
     println("   db.cs.cl                               access collection cl on c                                                                                                                     ollection space cs");

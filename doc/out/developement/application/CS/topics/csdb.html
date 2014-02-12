@@ -55,8 +55,8 @@
     <div class="section">      
       <ul class="ul">
         <li class="li">连接数据库和身份验证
-          <p class="p">若数据库没有创建用户，则可以匿名连接到数据库：</p>
-<pre class="pre codeblock">string addr = "127.0.0.1:50000";
+                        <p class="p">若数据库没有创建用户，则可以匿名连接到数据库：</p>
+<pre class="pre codeblock">string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {
@@ -72,7 +72,7 @@ catch (System.Exception e)
     Console.WriteLine(e.StackTrace);
 }</pre>
 <p class="p">否则，连接的时候必须指定用户名和密码：</p>
-<pre class="pre codeblock">string addr = "127.0.0.1:50000";
+<pre class="pre codeblock">string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {

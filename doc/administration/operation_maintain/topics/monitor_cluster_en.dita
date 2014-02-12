@@ -6,7 +6,7 @@
     <ol>
       <li>Connect to the coord node
         <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
+> var db = new Sdb("localhost", 11810) ;</codeblock></li>
       <li>Get cluster status
         <codeblock>> db.listShards()
 {
@@ -17,7 +17,7 @@
       "Service": [
         {
           "Type": 0,
-          "Name": "60000"
+          "Name": "11800"
         },</codeblock></li>
     </ol>
   </body>

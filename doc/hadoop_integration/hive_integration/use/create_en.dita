@@ -5,7 +5,7 @@
   <body>
     <p>Start hive shell command line window, execute the following command to create the data table.</p>
     <codeblock>hive> create external table sdb_tab(id INT, name STRING, value DOUBLE) stored by 
-"com.sequoiadb.hive.SdbHiveStorageHandler" tblproperties("sdb.address" = "localhost:50000";)
+"com.sequoiadb.hive.SdbHiveStorageHandler" tblproperties("sdb.address" = "localhost:11810";)
 
 OK
 Time taken: 0.386 seconds</codeblock>

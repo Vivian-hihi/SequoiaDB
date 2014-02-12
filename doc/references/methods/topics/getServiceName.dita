@@ -9,7 +9,7 @@
     <section><title>示例</title>
       <ul>
         <li>返回节点名为node的服务器名 <codeblock>> node.getServiceName()
-返回：60000</codeblock></li>
+返回：11800</codeblock></li>
       </ul>
     </section>
   </body>

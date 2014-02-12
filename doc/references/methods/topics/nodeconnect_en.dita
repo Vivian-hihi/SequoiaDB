@@ -13,7 +13,7 @@
         <li>
           <p>Connect the database to a node named "node".</p>
           <codeblock>> node.connect()
-Return：vmsvr2-suse-x64:60000</codeblock>
+Return：vmsvr2-suse-x64:11800</codeblock>
         </li>
       </ul>
     </section>

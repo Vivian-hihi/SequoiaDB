@@ -24,8 +24,9 @@
         <strow>
           <stentry>service</stentry>
           <stentry>int</stentry>
-          <stentry>Service port specified catalog node, make sure that the port number, and the subsequent continuation of the three port numbers unoccupied, if 
-            set to 30000, make sure 30000/30001/30002/30003 ports are not occupied.</stentry>
+          <stentry>Service port specified catalog node, make sure that the port number, and the
+            subsequent continuation of the three port numbers unoccupied, if set to 11800, make sure
+            11800/11801/11802/11803 ports are not occupied.</stentry>
           <stentry>Yes</stentry>
         </strow>
         <strow>
@@ -59,8 +60,9 @@
     <section><title>Example</title>
       <ul>
         <li>
-          <p>Named: Create a catalog node group on sdbserver1 host, service port: 30000, data files path: /opt/sequoiadb/database/cata/30000</p>
-          <codeblock>db.createCataShard("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</codeblock>
+          <p>Named: Create a catalog node group on sdbserver1 host, service port: 11800, data files
+            path: /opt/sequoiadb/database/cata/11800</p>
+          <codeblock>db.createCataShard("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
         </li>        
       </ul>
     </section>

@@ -23,10 +23,9 @@
 					<stentry>--confpath</stentry>
 					<stentry>-c</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。
-             2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=50000；diaglevel=3
-             3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。
-             4.sdb.conf可以不存在。</stentry>
+					<stentry>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。 2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如
+						svcname=11810；diaglevel=3 3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。
+						4.sdb.conf可以不存在。</stentry>
 				</strow>
 				<strow>
 					<stentry>--logpath</stentry>
@@ -66,8 +65,7 @@
 					<stentry>--svcname</stentry>
 					<stentry>-p</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定本地服务端口。
-             2.如果不指定则默认为50000端口用于编目节点，60000用于协调节点，51000用于数据节点。</stentry>
+					<stentry>1.指定本地服务端口。 2.如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</stentry>
 				</strow>
 				<strow>
 					<stentry>--replname</stentry>

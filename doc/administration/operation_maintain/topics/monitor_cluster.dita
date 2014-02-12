@@ -6,7 +6,7 @@
     <ol>
       <li>连接到协调节点
         <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
+> var db = new Sdb("localhost", 11810) ;</codeblock></li>
       <li>得到集群状态
         <codeblock>> db.listShards()
 {
@@ -17,7 +17,7 @@
       "Service": [
         {
           "Type": 0,
-          "Name": "60000"
+          "Name": "11800"
         },</codeblock></li>
     </ol>
   </body>

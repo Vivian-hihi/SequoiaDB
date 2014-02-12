@@ -6,8 +6,8 @@
     <p>用户可以使用snapshot监控每个节点的状态。</p>
     <ol>
       <li>连接到协调节点
-      <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;
+        <codeblock>$ /opt/sequoiadb/bin/sdb
+> var db = new Sdb("localhost", 11810) ;
 </codeblock></li>
       <li>得到分片组
       <codeblock>datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
@@ -22,8 +22,8 @@
     <p>用户可以使用shell脚本监控，例如：
       <codeblock>[sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ cat monitor_insert.sh
 #!/bin/bash
-~/sequoiadb/bin/sdb "db=new Sdb('localhost', 50000)" > /dev/null
-~/sequoiadb/bin/sdb "db.getShard('foo').getNode('vmsvr1-rhel-x64',51000).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
+~/sequoiadb/bin/sdb "db=new Sdb('localhost', 11810)" > /dev/null
+~/sequoiadb/bin/sdb "db.getShard('foo').getNode('vmsvr1-rhel-x64',11820).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
 ~/sequoiadb/bin/sdb "quit"
 [sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ ./monitor_insert.sh
   "TotalInsert": 0,</codeblock></p>

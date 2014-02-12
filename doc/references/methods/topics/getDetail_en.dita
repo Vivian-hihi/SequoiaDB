@@ -11,47 +11,47 @@
 {
   "Group": [
     {
-      "dbpath": "/opt/sequoiadb/data/60000",
+      "dbpath": "/opt/sequoiadb/data/11800",
       "HostName": "vmsvr2-suse-x64",
       "Service": [
         {
           "Type": 0,
-          "Name": "60000"
+          "Name": "11800"
         },
         {
           "Type": 1,
-          "Name": "60001"
+          "Name": "11801"
         },
         {
           "Type": 2,
-          "Name": "60002"
+          "Name": "11802"
         },
         {
           "Type": 3,
-          "Name": "60003"
+          "Name": "11803"
         }
       ],
       "NodeID": 1000
     },
     {
-      "dbpath": "/opt/sequoiadb/data/60010",
+      "dbpath": "/opt/sequoiadb/data/11850",
       "HostName": "vmsvr2-suse-x64",
       "Service": [
         {
           "Type": 0,
-          "Name": "60010"
+          "Name": "11850"
         },
         {
           "Type": 1,
-          "Name": "60011"
+          "Name": "11851"
         },
         {
           "Type": 2,
-          "Name": "60012"
+          "Name": "11852"
         },
         {
           "Type": 3,
-          "Name": "60013"
+          "Name": "11853"
         }
       ],
       "NodeID": 1001

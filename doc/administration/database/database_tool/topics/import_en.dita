@@ -59,7 +59,7 @@
             --svcname,-s
           </stentry>
           <stentry>specify port.In default,the <b>sdbimprt</b> try to connect to the host which port
-            number is 50000.</stentry>
+            number is 11810.</stentry>
         </strow>
         <strow>
           <stentry>
@@ -129,10 +129,10 @@
     </section>
     <section>
       <title>Usage</title>
-      <p>In the following sample,sdbimprt will import data into local database which port is
-        50000,and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import type
-        is csv,import file is<i> test.csv</i>.</p>
-      <codeblock>sdbimprt –h localhost –s 50000 -–type csv –-file test.csv -c foo -l bar</codeblock>
+      <p>In the following sample,sdbimprt will import data into local database which port is 11810,
+        and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import type is
+        csv,import file is<i> test.csv</i>.</p>
+      <codeblock>sdbimprt –h localhost –s 11810 -–type csv –-file test.csv -c foo -l bar</codeblock>
     </section>
     <section>
       <title>sdbload</title>
@@ -163,7 +163,7 @@
             --svcname,-s
           </stentry>
           <stentry>specify port.In default,the <b>sdbload</b> try to connect to the host which port
-            number is 50000.</stentry>
+            number is 11810.</stentry>
         </strow>
         <strow>
           <stentry>--delchar,-a</stentry>
@@ -261,10 +261,10 @@
     </section>
     <section>
       <title>Usage</title>
-      <p> In the following sample,sdbload will import data into local database which port is
-        50000,and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import file
-          is<i> test.json</i> with asynchronous loading.</p>
-      <codeblock>sdbload –h localhost -s 50000 –-file test.json –c foo –l bar –type json</codeblock>
+      <p> In the following sample,sdbload will import data into local database which port is 11810,
+        and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and import file is<i>
+          test.json</i> with asynchronous loading.</p>
+      <codeblock>sdbload –h localhost -s 11810 –-file test.json –c foo –l bar –type json</codeblock>
     </section>
   </body>
 </topic>

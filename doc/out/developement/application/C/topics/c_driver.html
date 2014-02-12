@@ -44,7 +44,7 @@
         
        <ul class="ul">
             <li class="li">数据库连接（Connecting）
-               <p class="p">编写完整客户端文件connect.c演示连接到数据库。文件必须包含“client.h”头文件。</p>
+                  <p class="p">编写完整客户端文件connect.c演示连接到数据库。文件必须包含“client.h”头文件。</p>
 <pre class="pre codeblock">#include &lt;stdio.h&gt;  
 #include "client.h"
 
@@ -93,17 +93,17 @@ INT32 main ( INT32 argc, CHAR **argv )
 }</pre>
 <p class="p">在linux下，可以如下编译及链接动态链接库文件libsdbc.so。</p>
 <pre class="pre codeblock">$gcc -o connect connect.c -I /<em class="ph i">&lt;PATH&gt;</em>/sdbdriver/include -lsdbc -L /<em class="ph i">&lt;PATH&gt;</em>/sdbdriver/lib
-$ ./connect localhost 50000 "" ""
+$ ./connect localhost 11810 "" ""
 connect success!</pre>
 <p class="p">在Windows下，如下编译及连接动态链接库文件sdbc.lib和sdbc.dll:</p>
 <pre class="pre codeblock">&gt; cl /Fo connect.obj /c connect.c /I &lt;PATH&gt; \sdbdriver\include /wd4047
 &gt; link /OUT:connect.exe /LIBPATH:&lt;PATH&gt;\sdbdriver\lib sdbc.lib testClient.obj 
 &gt; copy &lt;PATH&gt;\sdbdriver\lib\sdbc.dll .
 执行结果如下：
-&gt; connect.exe localhost 50000 "" ""
+&gt; connect.exe localhost 11810 "" ""
 &gt; connect success!</pre>
 <div class="note note"><span class="notetitle">Note:</span> 
-                  <p class="p">本例程连接到本地数据库的50000端口，使用的是空的用户名很密码。用户需要根据自己的实际情况配置参数。但如果数据库已经创建用户，可以使用已经创建的用户及密码连接到数据库。</p>
+                  <p class="p">本例程连接到本地数据库的11810端口，使用的是空的用户名很密码。用户需要根据自己的实际情况配置参数。但如果数据库已经创建用户，可以使用已经创建的用户及密码连接到数据库。</p>
 
                </div>
 </li>

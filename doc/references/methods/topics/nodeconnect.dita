@@ -11,7 +11,7 @@
         <li>
           <p>将数据库连接到节点名为node上</p>
           <codeblock>> node.connect()
-返回：vmsvr2-suse-x64:60000</codeblock>
+返回：vmsvr2-suse-x64:11800</codeblock>
         </li>
       </ul>
     </section>

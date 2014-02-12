@@ -43,7 +43,7 @@
     <section><title>Example</title>
       <ul>
         <li>Delete node command follows slice group shard
-          <codeblock>shard.removeNode("vmsvr2-suse-x64",60000)</codeblock></li>
+          <codeblock>shard.removeNode("vmsvr2-suse-x64",11800)</codeblock></li>
       </ul>
       <p><note>
         <p>Delete the specified node must exist, otherwise abnormal.</p>

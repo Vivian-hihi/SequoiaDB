@@ -23,10 +23,12 @@
 					<stentry>--confpath</stentry>
 					<stentry>-c</stentry>
 					<stentry>str</stentry>
-					<stentry>1. Specified configuration file path (doesn&apos;t contain fiel name). The system will find under confpath.
-             2. contains necessary configuration items. The format of a configuration item is &quot;parameter name=value&quot; like &quot;svcname=50000&quot; and &quot;diaglevel=3&quot;.
-             3. If this parameter is not specified, system will automatically search for sdb.conf in current path.
-             4. There may not be sdb.conf.</stentry>
+					<stentry>1. Specified configuration file path (doesn&apos;t contain fiel name). The system will
+						find under confpath. 2. contains necessary configuration items. The format
+						of a configuration item is &quot;parameter name=value&quot; like
+						&quot;svcname=11810&quot; and &quot;diaglevel=3&quot;. 3. If this parameter
+						is not specified, system will automatically search for sdb.conf in current
+						path. 4. There may not be sdb.conf.</stentry>
 				</strow>
 				<strow>
 					<stentry>--logpath</stentry>
@@ -67,8 +69,8 @@
 					<stentry>--svcname</stentry>
 					<stentry>-p</stentry>
 					<stentry>str</stentry>
-					<stentry>1. It specifies local service port.
-             2. If it is not specified, the default value are 50000 for coord, 60000 for catalog, 51000 for datanode.</stentry>
+					<stentry>1. It specifies local service port. 2. If it is not specified, the default value are
+						11810 for coord, 11800 for catalog, 11820 for datanode.</stentry>
 				</strow>
 				<strow>
 					<stentry>--replname</stentry>

@@ -99,7 +99,8 @@
     <div class="p">SequoiaDB是一种面向文档型的非关系型数据库，使用<a class="xref" href="../../../introduction/topics/datamodel.html">JSON</a>数据模型。 <ul class="ul">
         <li class="li">如果需要匹配嵌套对象中的元素，可以使用“.”（ASCII码0x2E）将所有的父元素名与子元素名连接。例如下列对象：
           <pre class="pre codeblock">{ name:"tom",address:{ street:{ street1:"1024 Wall Street",street2:"University Drive"},zipcode: 100000 } }</pre>
-如果需要匹配所有存在address元素中的street元素里面的street1元素，则可以使用：
+
+          如果需要匹配所有存在address元素中的street元素里面的street1元素，则可以使用：
           <pre class="pre codeblock">{ "address.street.street1":{ <a class="xref" href="../../console/topics/exists.html">$exists</a> : 1 } }</pre>
 </li>
 

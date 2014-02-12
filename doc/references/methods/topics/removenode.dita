@@ -40,7 +40,7 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>在分片组shard中删除节点命令如下<codeblock>shard.removeNode("vmsvr2-suse-x64",60000)</codeblock></li>
+        <li>在分片组shard中删除节点命令如下<codeblock>shard.removeNode("vmsvr2-suse-x64",11800)</codeblock></li>
       </ul>
       <p><note>
         <p>指定删除的节点必须存在，否则出现异常。</p>

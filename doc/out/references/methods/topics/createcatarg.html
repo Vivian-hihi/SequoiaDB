@@ -68,7 +68,7 @@
 
           <td valign="top" headers="d86496e30" class="stentry">int</td>
 
-          <td valign="top" headers="d86496e33" class="stentry">指定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为30000，请确保30000/30001/30002/30003端口都未被占用。</td>
+          <td valign="top" headers="d86496e33" class="stentry">指定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为11800，请确保11800/11801/11802/11803端口都未被占用。</td>
 
           <td valign="top" headers="d86496e36" class="stentry">是</td>
 
@@ -117,9 +117,9 @@
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
         <li class="li">
-          <p class="p">在名为：sdbserver1的主机上创建一个编目节点组，服务端口为：30000，数据文件存放路径为：/opt/sequoiadb/database/cata/30000</p>
+          <p class="p">在名为：sdbserver1的主机上创建一个编目节点组，服务端口为：11800，数据文件存放路径为：/opt/sequoiadb/database/cata/11800</p>
 
-          <pre class="pre codeblock">db.createCataShard("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</pre>
+          <pre class="pre codeblock">db.createCataShard("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
 
         </li>
         

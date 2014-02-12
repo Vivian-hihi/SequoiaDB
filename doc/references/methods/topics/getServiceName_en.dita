@@ -10,7 +10,7 @@
       <ul>
         <li>Return the server name of a node called "node".
           <codeblock>> node.getServiceName()
-Return：60000</codeblock></li>
+Return：11800</codeblock></li>
       </ul>
     </section>
   </body>

@@ -16,7 +16,7 @@
     <section>      
       <ul>
         <li>连接数据库和身份验证
-          <p>若数据库没有创建用户，则可以匿名连接到数据库：</p><codeblock>string addr = "127.0.0.1:50000";
+                        <p>若数据库没有创建用户，则可以匿名连接到数据库：</p><codeblock>string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {
@@ -30,7 +30,7 @@ catch (BaseException e)
 catch (System.Exception e)
 {
     Console.WriteLine(e.StackTrace);
-}</codeblock><p>否则，连接的时候必须指定用户名和密码：</p><codeblock>string addr = "127.0.0.1:50000";
+}</codeblock><p>否则，连接的时候必须指定用户名和密码：</p><codeblock>string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {

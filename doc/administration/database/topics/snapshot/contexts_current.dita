@@ -58,7 +58,7 @@
     <section><title>示例</title>
       <codeblock>> db.snapshot(SDB_SNAP_CONTEXTS_CURRENT)
 {
-  "SessionID": vmsvr2-suse-x64:51000:28,
+  "SessionID": vmsvr2-suse-x64:11820:28,
   "Contexts": [
     {
       "ContextID": 13,

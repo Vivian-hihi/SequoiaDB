@@ -16,8 +16,9 @@
     </section>      
     <section>      
       <ul>
-        <li>Connect to the database and authentication
-          <p>If the database does not create a user, you can anonymously connect to the database:</p><codeblock>string addr = "127.0.0.1:50000";
+        <li>Connect to the database and authentication <p>If the database does not create a user,
+                        you can anonymously connect to the
+                        database:</p><codeblock>string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {
@@ -31,7 +32,9 @@ catch (BaseException e)
 catch (System.Exception e)
 {
     Console.WriteLine(e.StackTrace);
-}</codeblock><p>Otherwise, when the connection must specify a user name and password:</p><codeblock>string addr = "127.0.0.1:50000";
+}</codeblock><p>Otherwise,
+                        when the connection must specify a user name and
+                        password:</p><codeblock>string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {
@@ -45,8 +48,10 @@ catch (BaseException e)
 catch (System.Exception e)
 {
     Console.WriteLine(e.StackTrace);
-    }</codeblock><p>Here are the exception information try and catch blocks, all operations following will throw the same exception information, it is no longer 
-    relevant given the try and catch blocks.</p></li>
+    }</codeblock><p>Here
+                        are the exception information try and catch blocks, all operations following
+                        will throw the same exception information, it is no longer relevant given
+                        the try and catch blocks.</p></li>
         <li>Disconnect from the database
           <codeblock>// do not forget to disconnect from sdb
 sdb.Disconnect();</codeblock>

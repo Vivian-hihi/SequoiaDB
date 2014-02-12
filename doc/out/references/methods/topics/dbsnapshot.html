@@ -110,7 +110,7 @@
           <p class="p"> 返回整个集群的上下文快照：</p>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 8,
@@ -124,7 +124,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:52000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11830:22",
   "Contexts": [
     {
       "ContextID": 6,
@@ -138,7 +138,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
   "Contexts": [
     {
       "ContextID": 7,
@@ -162,7 +162,7 @@
 返回组ID为“1000”的分片组快照信息</div>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 11,
@@ -176,7 +176,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
   "Contexts": [
     {
       "ContextID": 10,
@@ -193,13 +193,13 @@
 
         <li class="li"><p class="p">通过“组名+主机名+服务名”或“组ID+节点ID”查询某个节点的快照信息，如：</p>
 
-          <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</pre>
+          <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
             <pre class="pre codeblock">db.snapshot(0,{GroupID:1000,NodeID:1001})</pre>
 </div>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 11,
@@ -216,7 +216,7 @@
 
         <li class="li"><p class="p">通过“主机名+服务名”查询某个节点的快照信息，如：</p>
 
-          <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</pre>
+          <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
             </div>
 

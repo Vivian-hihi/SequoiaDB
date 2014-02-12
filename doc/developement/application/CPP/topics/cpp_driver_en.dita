@@ -10,8 +10,8 @@
     <section>
       <title>Database operations</title>
       <ul>
-        <li>Connecting Database <p>"connect.cpp" shows how  to connect database.The file must
-            contain the head file "client.hpp" and use namespace
+        <li>Connecting Database <p>"connect.cpp" shows how to connect database.The file must contain
+            the head file "client.hpp" and use namespace
             "sdbclient".</p><codeblock>#include &lt;stdio.h>
 #include &lt;iostream>
 #include "client.hpp"
@@ -68,18 +68,18 @@ void displaySyntax ( CHAR *pCommand )
             Linux,you can compile and link the dynamic library "libsdbc.so" like this:
             </p><codeblock>$ gcc -o connect connect.cpp -I <i>&lt;PATH&gt;</i>/sequoiadb/client/CPP/include -lsdbcpp -L <i>&lt;PATH&gt;</i>/sequoiadb/client/CPP/lib
 Execution results:
-$ ./connect localhost 50000 "" ""
+$ ./connect localhost 11810 "" ""
 connect success!</codeblock><p>In
             Windows,compiling and linking the dynamic library "sdbcpp.lib" and "sdbcpp.dll" like
             this:</p><codeblock>> cl /Fo connect.obj /c connect.cpp /I <i>&lt;PATH&gt;</i>\sequoiadb\client\CPP\include /wd4047
 > link /OUT:connect.exe /LIBPATH:<i>&lt;PATH&gt;</i>\sequoiadb\client\CPP \lib sdbcpp.lib connect.obj 
 > copy <i>&lt;PATH&gt;</i>\sequoiadb\client\CPP\lib\sdbcpp.dll .
 Execution results:
-> connect.exe localhost 50000 "" ""
+> connect.exe localhost 11810 "" ""
 > connect success!</codeblock><note>
-            <p>This sample connects to the port "50000" of local database,usename and password are
-              null,users can configure params according to needs.For example,when the user have
-              created usename and password,you must use the correct usename and password to connect
+            <p>This sample connects to the port "11810" of local database, usename and password are
+              null, users can configure params according to needs. For example, when the user have
+              created usename and password, you must use the correct usename and password to connect
               the database.</p>
           </note></li>
         <li>Inserting

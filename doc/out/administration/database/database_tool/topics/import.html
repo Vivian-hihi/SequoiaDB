@@ -108,7 +108,7 @@
           <td valign="top" headers="d14737e88" class="stentry">--svcname,-s
           </td>
 
-          <td valign="top" headers="d14737e91" class="stentry">指定的端口号。默认情况下sdbexprt尝试连接到端口号50000的主机。</td>
+          <td valign="top" headers="d14737e91" class="stentry">指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</td>
 
         </tr>
 <tr class="strow">
@@ -193,9 +193,9 @@
 
     <div class="section"><h2 class="title sectiontitle">用法</h2>
       
-      <p class="p">在下面的例子，sdbimprt将数据导入到本地数据库端口50000中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
+      <p class="p">在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
 
-      <pre class="pre codeblock">sdbimprt -h localhost -s 50000 --type csv --file test.csv -c foo -l bar</pre>
+      <pre class="pre codeblock">sdbimprt -h localhost -s 11810 --type csv --file test.csv -c foo -l bar</pre>
 
     </div>
 
@@ -231,7 +231,7 @@
           <td valign="top" headers="d14737e258" class="stentry">--svcname,-s
           </td>
 
-          <td valign="top" headers="d14737e261" class="stentry">指定的端口号。默认情况下sdbload尝试连接到端口号50000的主机。</td>
+          <td valign="top" headers="d14737e261" class="stentry">指定的端口号。默认情况下sdbload尝试连接到端口号11810的主机。</td>
 
         </tr>
 <tr class="strow">
@@ -365,9 +365,9 @@
 
     <div class="section"><h2 class="title sectiontitle">用法</h2>
       
-      <p class="p"> 在下面的例子，sdbload将数据导入到端口50000中对应集合空间foo和集合bar，导入文件为test.json。 </p>
+      <p class="p"> 在下面的例子，sdbload将数据导入到端口11810中对应集合空间foo和集合bar，导入文件为test.json。 </p>
 
-      <pre class="pre codeblock">sdbload –h localhost -s 50000 --file test.json -c foo -l bar –type json</pre>
+      <pre class="pre codeblock">sdbload –h localhost -s 11810 --file test.json -c foo -l bar –type json</pre>
 
     </div>
 

@@ -10,7 +10,7 @@
       <ul>
         <li><p>Return the master node of a replset.</p>
           <codeblock>> shard.getMaster()
-Return：vmsvr2-suse-x64:60010</codeblock></li>
+Return：vmsvr2-suse-x64:11850</codeblock></li>
       </ul>
     </section>
   </body>

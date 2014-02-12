@@ -12,7 +12,7 @@
           <codeblock>//创建SequoiaDB对象
 $db = new Sequoiadb();
 //连接数据库
-$array = $db -> connect("localhost:50000");
+$array = $db -> connect("localhost:11810");
 //检验连接结果，返回的默认是php数组类型，数据是array(0){"errno"=>0}
 //如果errno为0，那么连接成功
 if($array['errno'] !=0 )

@@ -10,7 +10,7 @@
       <ul>
         <li><p>返回分片组的主节点</p>
           <codeblock>> shard.getMaster()
-返回：vmsvr2-suse-x64:60010</codeblock></li>
+返回：vmsvr2-suse-x64:11850</codeblock></li>
       </ul>
     </section>
   </body>

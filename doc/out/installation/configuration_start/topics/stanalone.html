@@ -53,18 +53,19 @@
 </div>
 </li>
 
-      <li class="li">创建配置文件存放目录 <pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/50000</pre>
- （其中50000为数据库服务端口名）</li>
+      <li class="li">创建配置文件存放目录 <pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810</pre>
+
+        （其中11810为数据库服务端口名，为避免出现端口冲突等问题，切勿将数据库端口配置在随机端口范围以内。如：多数linux默认随机端口范围为32768～61000，可将数据库端口配置在32767以下。）</li>
 
       <li class="li"><p class="p">拷贝独立模式的样例配置</p>
  <div class="p">
-          <pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.standalone /opt/sequoiadb/conf/local/50000/sdb.conf</pre>
+          <pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.standalone /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
 
         </div>
 </li>
 
       <li class="li">打开配置 
-        <div class="p"><pre class="pre codeblock">vi /opt/sequoiadb/conf/local/50000/sdb.conf</pre>
+        <div class="p"><pre class="pre codeblock">vi /opt/sequoiadb/conf/local/11810/sdb.conf</pre>
 </div>
 </li>
 
@@ -85,7 +86,7 @@
 
       <li class="li"><p class="p">启动数据库进程</p>
 
-        <pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/50000/</pre>
+        <pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
 </li>
 
       <li class="li">数据库配置启动完成</li>

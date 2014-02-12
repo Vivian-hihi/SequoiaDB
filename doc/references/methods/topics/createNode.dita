@@ -49,7 +49,7 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>在分片组shard中创建一个端口号为60000的节点，指定日志文件大小为64MB<codeblock>shard.createNode("vmsvr2-suse-x64",60000,"/opt/sequoiadb/data/60000",{logfilesz:64})</codeblock></li>
+        <li>在分片组shard中创建一个端口号为11800的节点，指定日志文件大小为64MB<codeblock>shard.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock></li>
       </ul>
       <p><note>
         <p>在一个分片组中能创建多个节点，但是连个节点的端口号必须相差5以上。因为系统为每个节点后台控制了5个通信接口。</p>

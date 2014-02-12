@@ -242,51 +242,56 @@
     <section><title>Sample</title>
       <codeblock>> db.snapshot(SDB_SNAP_DATABASE)
 {
-  "HostName": "vmsvr1-rhel-x64",
-  "ServiceName": "51000",
-  "GroupName": "foo",
-  "NodeName": "vmsvr1-rhel-x64:51000",
-  "IsPrimary": true,
-  "ServiceStatus": false,
+  "NodeName": "vmsvr2-suse-x64:11820",
+  "HostName": "vmsvr2-suse-x64",
+  "ServiceName": "11820",
+  "GroupName": "datagroup1",
+  "IsPrimary": false,
+  "ServiceStatus": true,
   "CurrentLSN": {
-    "Offset": 84,
+    "Offset": 208904,
     "Version": 1
   },
+  "NodeID": [
+    1000,
+    1000
+  ],
   "Version": {
-    "Major": 0,
-    "Minor": 0,
-    "Release": 3598
+    "Major": 1,
+    "Minor": 3,
+    "Release": 8132,
+    "Build": "2013-09-26-17.57.31"
   },
-  "CurrentActiveSessions": 8,
+  "CurrentActiveSessions": 10,
   "CurrentIdleSessions": 0,
-  "CurrentSystemSessions": 6,
+  "CurrentSystemSessions": 8,
   "CurrentContexts": 1,
-  "ReceiveCount": 3,
+  "ReceivedEvents": 37,
   "Role": "data",
   "Disk": {
-    "DatabasePath": "/home/sequoiadb/sequoiadb/data1",
-    "LoadPercent": 84,
-    "TotalSpace": 37939249152,
-    "FreeSpace": 5734342656
+    "DatabasePath": "/opt/sequoiadb/database/data/11820",
+    "LoadPercent": 78,
+    "TotalSpace": 40704466944,
+    "FreeSpace": 8830676992
   },
   "TotalNumConnects": 1,
-  "TotalDataRead": 0,
-  "TotalIndexRead": 0,
-  "TotalDataWrite": 0,
-  "TotalIndexWrite": 0,
+  "TotalDataRead": 6337,
+  "TotalIndexRead": 45,
+  "TotalDataWrite": 2112,
+  "TotalIndexWrite": 4260,
   "TotalUpdate": 0,
-  "TotalDelete": 0,
-  "TotalInsert": 0,
+  "TotalDelete": 16,
+  "TotalInsert": 2096,
   "ReplUpdate": 0,
-  "ReplDelete": 0,
-  "ReplInsert": 0,
-  "TotalSelect": 0,
-  "TotalRead": 0,
+  "ReplDelete": 16,
+  "ReplInsert": 2096,
+  "TotalSelect": 47,
+  "TotalRead": 6337,
   "TotalReadTime": 0,
   "TotalWriteTime": 0,
-  "ActivateTimestamp": "2013-04-06-17.30.08.517367",
-  "UserCPU": "0.240000",
-  "SysCPU": "1.250000"
+  "ActivateTimestamp": "2013-09-27-13.28.34.501403",
+  "UserCPU": "77.380000",
+  "SysCPU": "49.870000"
 }</codeblock>
     </section>
   </body>

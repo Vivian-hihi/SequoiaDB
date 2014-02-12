@@ -11,7 +11,8 @@
     <codeblock>>db.createCataShard(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</codeblock>
     <p>该命令用于创建编目分片组，同时创建并启动一个编目节点，其中：</p>
     <p><b>host </b> ：指定编目节点的主机名；</p>
-    <p><b>service </b>：指定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为30000，请确保30000/30001/30002/30003端口都未被占用；</p>
+    <p><b>service
+      </b>：指定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为11800，请确保11800/11801/11802/11803端口都未被占用；</p>
     <p><b>dbpath</b> ：数据文件路径，用于存放编目数据文件，请确保数据管理员（安装时创建，默认为sdbadmin）用户有写权限；</p>
     <p><b>config </b>： 该参数为可选参数，用于配置更多细节参数，格式必须为json格式，参数参见<xref
         href="../../../../database/topics/runtime_configuration.dita">数据库配置</xref> 一节；如需要配置日志大小参数｛logfilesz:64｝。</p>

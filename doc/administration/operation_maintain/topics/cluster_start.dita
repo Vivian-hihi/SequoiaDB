@@ -15,7 +15,7 @@
       <ol>
         <li>连接到协调节点
           <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
+> var db = new Sdb("localhost", 11810) ;</codeblock></li>
         <li>得到分片组 <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
         <li>得到数据节点
           <codeblock>> datanode = datashard.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
@@ -28,8 +28,8 @@
       <p>当集群中某个数据组被停止后，用户可以在sdb命令行使用如下步骤启动数据组。该操作会启动数据组中全部数据节点。</p>
       <ol>
         <li>连接到协调节点
-        <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;
+          <codeblock>$ /opt/sequoiadb/bin/sdb
+> var db = new Sdb("localhost", 11810) ;
 </codeblock></li>
         <li>得到分片组 <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
         <li>启动数据组

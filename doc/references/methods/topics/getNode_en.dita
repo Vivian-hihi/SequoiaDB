@@ -43,8 +43,8 @@
     <section><title>Sample</title>
       <ul>
         <li>Return node according to specified hostname and server
-          name<codeblock>> shard.getNode("vmsvr2-suse-x64","70000")
-Return: vmsvr2-suse-x64:70000</codeblock></li>
+          name<codeblock>> shard.getNode("vmsvr2-suse-x64","11800")
+Return: vmsvr2-suse-x64:11800</codeblock></li>
       </ul>
     </section>
   </body>

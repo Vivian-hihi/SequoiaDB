@@ -43,7 +43,7 @@
     <p class="p">操作方法：</p>
 
     <pre class="pre codeblock">&gt;var datashard = db.createShard("datashard")
-&gt;datashard.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   
+&gt;datashard.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
 &gt;datashard.start()</pre>
 
     <p class="p">第一条命令用于创建数据分片组，与编目分片组不同的是，该操作不会创建任何数据节点，其中参数为数据组名； </p>
@@ -54,7 +54,8 @@
 
     <p class="p"><strong class="ph b">host </strong>： 指定数据节点的主机名； </p>
 
-    <p class="p"><strong class="ph b">service</strong> ：指定数据节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为51000，请确保51000/51001/51002/51003端口都未被占用； </p>
+    <p class="p"><strong class="ph b">service</strong>
+      ：指定数据节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为11820，请确保11820/11821/11822/11823端口都未被占用； </p>
 
     <p class="p"><strong class="ph b">dbpath</strong> ：数据文件路径，用于存放数据节点的数据文件，请确保数据管理员（安装时创建，默认为sdbadmin）用户有写权限； </p>
 

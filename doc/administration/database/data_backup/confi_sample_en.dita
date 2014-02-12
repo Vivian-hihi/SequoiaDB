@@ -8,8 +8,8 @@
       "/opt/sequoiadb/bin/sdb " to enter SequoiaDB Shell .</p>
     <ol>
       <li>Connect to coord node
-        <codeblock>db=new Sdb('192.168.20.35', 60000)"
-192.168.20.35:60000</codeblock></li>
+        <codeblock>db=new Sdb('192.168.20.35', 11800)"
+192.168.20.35:11800</codeblock></li>
       <li>Query the collection "SYSCAT.SYSNODES" to get the information of configuration files
         <codeblock>db.SYSCAT.SYSNODES.find()
 {
@@ -20,19 +20,19 @@
       "Service": [
         {
           "Type": 0,
-          <b>"Name": "60000"</b>
+          <b>"Name": "11800"</b>
         },
         {
           "Type": 1,
-          "Name": "60001"
+          "Name": "11801"
         },
         {
           "Type": 2,
-          "Name": "60002"
+          "Name": "11802"
         },
         {
           "Type": 3,
-          "Name": "60003"
+          "Name": "11803"
         }
       ],
       "NodeID": 1
@@ -56,15 +56,15 @@
       "Service": [
         {
           "Type": 0,
-         <b> "Name": "51000"</b>
+         <b> "Name": "11820"</b>
         },
         {
           "Type": 1,
-          "Name": "51001"
+          "Name": "11821"
         },
         {
           "Type": 2,
-          "Name": "51002"
+          "Name": "11822"
         }
       ],
       "NodeID": 1000
@@ -88,15 +88,15 @@
       "Service": [
         {
           "Type": 0,
-         <b> "Name": "53000"</b>
+         <b> "Name": "11830"</b>
         },
         {
           "Type": 1,
-          "Name": "53001"
+          "Name": "11831"
         },
         {
           "Type": 2,
-          "Name": "53002"
+          "Name": "11832"
         }
       ],
       "NodeID": 1001
@@ -119,7 +119,7 @@
       name is the value of "<b>name</b>" field in the "<b>Service</b>" field.You can locate the
       configuration files'path of the specified server.The following sample shows the unique data
       node configuration file of the replicaset "foo".</p>
-    <codeblock>[vmsvr1-rhel-x64]$ ls /opt/sequoiadb/conf/local/51000
+    <codeblock>[vmsvr1-rhel-x64]$ ls /opt/sequoiadb/conf/local/11820
 sdb.conf</codeblock>
   </body>
 </topic>

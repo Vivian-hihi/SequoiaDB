@@ -26,7 +26,7 @@
         <strow>
           <stentry>--svcname,-s
           </stentry>
-          <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号50000的主机。</stentry>
+          <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
           <stentry>--type
@@ -72,8 +72,8 @@
     </section>
     <section>
       <title>用法</title>
-      <p>在下面的例子，sdbexprt从本地数据库端口50000中导出集合空间foo的集合bar的数据，导出类型是csv，导出文件为contact，导出字段是field1和field2。</p>
-      <codeblock>sdbexprt -h localhost -s 50000 --type csv --file contace --fields field1,field2 -c foo -l bar</codeblock>
+      <p>在下面的例子，sdbexprt从本地数据库端口11810中导出集合空间foo的集合bar的数据，导出类型是csv，导出文件为contact，导出字段是field1和field2。</p>
+      <codeblock>sdbexprt -h localhost -s 11810 --type csv --file contace --fields field1,field2 -c foo -l bar</codeblock>
     </section>
   </body>
 </topic>

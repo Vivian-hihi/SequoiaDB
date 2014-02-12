@@ -62,9 +62,9 @@ error:
    }</codeblock><p>In
                   Linux we can compile and link to dynamically linked librarie file called
                   "libsdbc.so" as follow:</p><codeblock>$gcc -o connect connect.c -I /<i>path_to</i>/C/include -lsdbc -L/<i>path-to</i>/client/C/lib
-$ ./connect localhost 50000 "" ""
+$ ./connect localhost 11810 "" ""
 connect success!</codeblock><note>
-                  <p>This sample link to the port of 50000 of local database. It log in with null
+                  <p>This sample link to the port of 11810 of local database. It log in with null
                      user name and null password. Users need to configurate parameters according to
                      their own situation. But if database has created a user, it can connect to
                      database with it and its password.</p>

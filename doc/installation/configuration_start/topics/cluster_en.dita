@@ -19,12 +19,12 @@
       <li>Step 2: start one coord node <p>1.switch to
           "sdbadmin"<codeblock>su sdbadmin </codeblock></p><p>2.On any database server (the
           following steps are manipulated on this server), create the coord node configuration
-          catalog</p><p><codeblock>mkdir -p /opt/sequoiadb/conf/local/50000</codeblock> Here
-          "50000" is the service port of coord node. It can be set according to requirement.
-          </p><p>3.Copy sample configuration file of coord node</p><p>
-          <codeblock>cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/50000/sdb.conf</codeblock>
+          catalog</p><p><codeblock>mkdir -p /opt/sequoiadb/conf/local/11810</codeblock> Here "11810"
+          is the service port of coord node. It can be set according to requirement. </p><p>3.Copy
+          sample configuration file of coord node</p><p>
+          <codeblock>cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</codeblock>
         </p><p>4.Alter configuration file</p><p>
-          <codeblock>vi /opt/sequoiadb/conf/local/50000/sdb.conf</codeblock>
+          <codeblock>vi /opt/sequoiadb/conf/local/11810/sdb.conf</codeblock>
         </p><p>Alter content </p><p>
           <codeblock># database path           </codeblock>
         </p><p><codeblock>dbpath=/opt/sequoiadb/database/coord      </codeblock>This is the path of
@@ -33,23 +33,23 @@
           exit</p><p>6.Create path that stores data
           file</p><p><codeblock>mkdir -p /opt/sequoiadb/database/coord </codeblock>The path is the
           path in previous step </p><p>7.Start coord node process</p><p>
-          <codeblock>/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/50000/</codeblock>
+          <codeblock>/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</codeblock>
         </p></li>
       <li>Step 3: Configurate and start catalog nodes with statements<p>1.Start SequoiaDB Shell
           console on the physical machine of coord node</p><p>
           <codeblock>/opt/sequoiadb/bin/sdb</codeblock>
         </p><p>2.Connect to coord node </p><p>Input in shell:
-          <codeblock>> var db = new Sdb("localhost",50000)</codeblock> Here "50000" is the service
+          <codeblock>> var db = new Sdb("localhost",11810)</codeblock> Here "11810" is the service
           port of coord node. </p><p>3.Create a catalog node group</p><p>
-          <codeblock>>db.createCataShard("sdbserver1", 30000, "/opt/sequoiadb/database/cata/30000")</codeblock>
-        </p><p>Here "sdbserver1" is the hostname of the 1st server.</p><p>Here "30000" is the
-          service port of catalog node. </p><p>" /opt/sequoiadb/database/cata/30000" is the path of
+          <codeblock>>db.createCataShard("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
+        </p><p>Here "sdbserver1" is the hostname of the 1st server.</p><p>Here "11800" is the
+          service port of catalog node. (The port is configured not to conflict with a random port, other ports in the following configuration also requires attention. </p><p>" /opt/sequoiadb/database/cata/11800" is the path of
           data file of catalog node.</p><p>4.Wait for 5 second, and add 2 more catalog nodes</p><p>
           <codeblock>>var catashard = db.getShard("SYSCatalogGroup");      </codeblock>
         </p><p>
-          <codeblock>>var node1 = catashard.createNode("sdbserver2", 30000,"/opt/sequoiadb/database/cata/30000") </codeblock>
+          <codeblock>>var node1 = catashard.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800") </codeblock>
         </p><p>
-          <codeblock>>var node2 = catashard.createNode("sdbserver3", 30000,"/opt/sequoiadb/database/cata/30000")</codeblock>
+          <codeblock>>var node2 = catashard.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</codeblock>
         </p><p>5.Start catalog node group <codeblock>>node1.start()
 >node2.start()</codeblock></p><p>
           <note>
@@ -60,11 +60,11 @@
       <li>Step 4: Configurate and start data nodes with statements<p>1.Create data node group</p><p>
           <codeblock>>var datashard = db.createShard("datashard1")</codeblock>
         </p><p>2.Add data node</p><p>
-          <codeblock>>datashard.createNode("sdbserver1", 51000, "/opt/sequoiadb/database/data/51000")   </codeblock>
+          <codeblock>>datashard.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   </codeblock>
         </p><p>
-          <codeblock>>datashard.createNode("sdbserver2", 51000,"/opt/sequoiadb/database/data/51000")</codeblock>
+          <codeblock>>datashard.createNode("sdbserver2", 11820,"/opt/sequoiadb/database/data/11820")</codeblock>
         </p><p>
-          <codeblock>>datashard.createNode("sdbserver3", 51000, "/opt/sequoiadb/database/data/51000")</codeblock>
+          <codeblock>>datashard.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</codeblock>
         </p><note>
           <p>When creating a node, the first parameter should be "hostname", rather than IP of the
             host.</p>
@@ -74,9 +74,9 @@
           <codeblock>>quit</codeblock>
         </p></li>
       <li>Step 5: Start coord node on other 2 servers <p>1.Create configuration catalog of coord
-          node</p><codeblock>mkdir -p /opt/sequoiadb/conf/local/50000      Here "50000" is the service port of coord node. It can be set according to requirement. </codeblock>
-        <p>2.Copy sample configuration file of coord node</p><codeblock>cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/50000/sdb.conf</codeblock>
-        <p>3.Alter configuration file</p><codeblock>vi /opt/sequoiadb/conf/local/50000/sdb.conf
+          node</p><codeblock>mkdir -p /opt/sequoiadb/conf/local/11810      Here "11810" is the service port of coord node. It can be set according to requirement. </codeblock>
+        <p>2.Copy sample configuration file of coord node</p><codeblock>cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</codeblock>
+        <p>3.Alter configuration file</p><codeblock>vi /opt/sequoiadb/conf/local/11810/sdb.conf
 Alter content
 # database path
 dbpath=/opt/sequoiadb/database/coord  This is the path of database. It can be changed according ot requirement. 
@@ -87,10 +87,10 @@ the following line
 #catalogaddr=
 modify to
 # catalog addr (hostname1:servicename1,hostname2:servicename2,...)
-catalogaddr=sdbserver1:30003,sdbserver2:30003,sdbserver3:30003  This id the address and port of Catalog service.</codeblock>
+catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803  This id the address and port of Catalog service.</codeblock>
         <p>4.Type in ":wq" to save and exit</p><p>5.Create path of data file</p><codeblock>mkdir -p /opt/sequoiadb/database/coord  This path is the one in previous step.</codeblock>
         <p>6.Start coord node
-          process</p><codeblock>/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/50000/</codeblock><p>End</p>
+          process</p><codeblock>/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</codeblock><p>End</p>
       </li>
     </ul>
   </body>

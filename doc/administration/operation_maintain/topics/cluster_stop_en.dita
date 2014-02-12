@@ -9,7 +9,7 @@
       <ol>
         <li>Connect to the coord node
           <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
+> var db = new Sdb("localhost", 11810) ;</codeblock></li>
         <li>Get partition group
           <codeblock>> datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
         <li>Get the data node
@@ -24,7 +24,7 @@
       <ol>
         <li>Connect to the coord node
           <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
+> var db = new Sdb("localhost", 11810) ;</codeblock></li>
         <li>Get partition group
           <codeblock>> datashard = db.getShard ( "&lt;datashard1>" ) ;</codeblock></li>
         <li>Stop data group <codeblock>> datashard.stop() ;</codeblock></li>

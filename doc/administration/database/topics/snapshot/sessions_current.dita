@@ -144,7 +144,7 @@
     <section><title>示例</title>
       <codeblock>> db.snapshot(SDB_SNAP_SESSIONS_CURRENT)
 {
-  "SessionID": "vmsvr2-suse-x64:51000:28",
+  "SessionID": "vmsvr2-suse-x64:11820:28",
   "TID": 9430,
   "Status": "Running",
   "Type": "Agent",

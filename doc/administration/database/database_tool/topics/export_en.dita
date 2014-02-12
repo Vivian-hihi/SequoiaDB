@@ -29,7 +29,7 @@
             --svcname,-s
           </stentry>
           <stentry>specify port.In default,the <b>sdbexprt</b> try to connect to the host which port
-            number is 50000.</stentry>
+            number is 11810.</stentry>
         </strow>
         <strow>
           <stentry>
@@ -84,10 +84,10 @@
     <section>
       <title>Usage</title>
       <p>In the following sample,sdbexport will export data from the local database which port is
-        50000,and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and export type
+        11810, and collectionspace name is <i>foo</i>,collection name is<i> bar</i>,and export type
         is csv,export file name is<i> contact</i>,export field are <i>field1</i> and
         <i>field2</i>.</p>
-      <codeblock>sdbexprt -h localhost –s 50000 –-type csv –-file contace --fields field1,field2 –c foo –l bar</codeblock>
+      <codeblock>sdbexprt -h localhost –s 11810 –-type csv –-file contace --fields field1,field2 –c foo –l bar</codeblock>
     </section>
   </body>
 </topic>

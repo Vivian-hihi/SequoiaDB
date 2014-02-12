@@ -6,15 +6,15 @@
     <ol>
       <li>Stop the replicaset that to be
         restored<codeblock>$ /opt/sequoiadb/bin/sdb 
->db=new Sdb('192.168.20.35',50000)
-192.168.20.35:50000
+>db=new Sdb('192.168.20.35',11810)
+192.168.20.35:11810
 >shard=db.getShard('foo')
 foo
 >shard.stop() </codeblock></li>
       <li>Recover configuration file
-        <codeblock>$ cp vmsvr1-rhel-x64.51000.sdb.conf /opt/sequoiadb/conf/local/51000/sdb.conf</codeblock></li>
+        <codeblock>$ cp vmsvr1-rhel-x64.11820.sdb.conf /opt/sequoiadb/conf/local/11820/sdb.conf</codeblock></li>
       <li>Recover data files
-        <codeblock>$ tar -zxvf vmsvr1-rhel-x64.51000.2013_08_21.tar.gz
+        <codeblock>$ tar -zxvf vmsvr1-rhel-x64.11820.2013_08_21.tar.gz
 /tmpfs/data1/foo.dat
 /tmpfs/data1/one.dat
 /tmpfs/data1/SYSTEMP.dat
@@ -26,8 +26,8 @@ foo
         <codeblock>$ rm -rf /tmpfs/data1/replicalog</codeblock></li>
       <li>Start replicaset
         <codeblock>$ /opt/sequoiadb/bin/sdb 
->db=new Sdb('192.168.20.35',50000)
-192.168.20.35:50000
+>db=new Sdb('192.168.20.35',11810)
+192.168.20.35:11810
 >shard=db.getShard('foo')
 foo
 >shard.start()</codeblock></li>

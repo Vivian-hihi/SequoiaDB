@@ -83,25 +83,25 @@
     <ol>
       <li>连接到协调节点
         <codeblock>$ /opt/sequoiadb/bin/sdb
-> var db = new Sdb("localhost", 50000) ;</codeblock></li>
+> var db = new Sdb("localhost", 11810) ;</codeblock></li>
       <li>得到分片组
       <codeblock>> datashard = db.getShard ( "datashard" ) ;</codeblock></li>
       <li>停止分片组
       <codeblock>> datashard.stop()</codeblock></li>
       <li>通过终端登入相应分片组的数据节点，执行数据恢复。
-      <codeblock>sdbadmin@vmsvr2-suse-x64-1:/opt/sequoiadb> bin/sdbrestore -p  database/40000/bakfile -n test_bk
+        <codeblock>sdbadmin@vmsvr2-suse-x64-1:/opt/sequoiadb> bin/sdbrestore -p  database/11820/bakfile -n test_bk
 Begin to clean dps logs...
 Begin to clean dms storages...
 Begin to init dps logs...
 Begin to restore...
-Begin to restore data file: 40000/bakfile/test_bk.1 ...
+Begin to restore data file: 11820/bakfile/test_bk.1 ...
 Begin to restore su: test.1.data ...
 Begin to restore su: test.1.idx ...
 Begin to restore dps logs...
 *****************************************************
 Restore succeed!
 *****************************************************</codeblock></li>
-      <li>到数据节点目录检查文件是否恢复。<codeblock>sdbadmin @vmsvr2-suse-x64-1:/ opt/sequoiadb /database/40000> ls -l
+      <li>到数据节点目录检查文件是否恢复。<codeblock>sdbadmin @vmsvr2-suse-x64-1:/ opt/sequoiadb /database/11820> ls -l
 total 299156
 drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 16:06 bakfile
 drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 15:48 diaglog

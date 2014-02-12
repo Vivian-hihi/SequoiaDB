@@ -10,7 +10,7 @@
       <ul>
         <li><p>Return slave nodes in replset:</p>
           <codeblock>> shard.getSlave()
-Return: vmsvr2-suse-x64:70010</codeblock></li>
+Return: vmsvr2-suse-x64:11800</codeblock></li>
       </ul>
     </section>
   </body>

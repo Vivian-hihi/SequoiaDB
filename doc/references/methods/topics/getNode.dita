@@ -40,8 +40,8 @@
     </section>
     <section><title>示例</title>
       <ul>
-        <li>返回指定主机名和服务器名的节点<codeblock>> shard.getNode("vmsvr2-suse-x64","70000")
-返回：vmsvr2-suse-x64:70000</codeblock></li>
+        <li>返回指定主机名和服务器名的节点<codeblock>> shard.getNode("vmsvr2-suse-x64","11800")
+返回：vmsvr2-suse-x64:11800</codeblock></li>
       </ul>
     </section>
   </body>

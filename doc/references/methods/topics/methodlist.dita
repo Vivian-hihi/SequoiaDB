@@ -6,7 +6,8 @@
     <p>SequoiaDB是一种面向文档型的非关系型数据库，使用<xref href="../../../introduction/topics/datamodel.dita"
         >JSON</xref>数据模型。 <ul>
         <li>如果需要匹配嵌套对象中的元素，可以使用“.”（ASCII码0x2E）将所有的父元素名与子元素名连接。例如下列对象：
-          <codeblock>{ name:"tom",address:{ street:{ street1:"1024 Wall Street",street2:"University Drive"},zipcode: 100000 } }</codeblock>如果需要匹配所有存在address元素中的street元素里面的street1元素，则可以使用：
+          <codeblock>{ name:"tom",address:{ street:{ street1:"1024 Wall Street",street2:"University Drive"},zipcode: 100000 } }</codeblock>
+          如果需要匹配所有存在address元素中的street元素里面的street1元素，则可以使用：
           <codeblock>{ "address.street.street1":{ <xref href="../../console/topics/exists.dita">$exists</xref> : 1 } }</codeblock></li>
         <li>如果对象中存在数组，对数组中每一个元素的引用使用“0”， “1”， “2”……等标记第一个，第二个，第三个……元素。例如包含数组的对象：
           <codeblock>{ name: "tom", phone: [ "13175824", 1528345] }</codeblock> 可以使用下列匹配条件进行数组中元素匹配：

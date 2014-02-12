@@ -62,15 +62,16 @@ void displaySyntax ( CHAR *pCommand )
 }</codeblock><p>在linux下，可以如下编译及链接动态链接库文件libsdbc.so:
             </p><codeblock>$g++ -o connect connect.cpp -I &lt;PATH&gt;/sdbdriver/include -lsdbcpp -L &lt;PATH&gt;/sdbdriver/lib  
 执行结果如下：
-$ ./connect localhost 50000 "" ""
+$ ./connect localhost 11810 "" ""
 Connect success!</codeblock><p>在Windows下，如下编译及连接动态链接库文件sdbcpp.lib和sdbcpp.dll:</p><codeblock>> cl /Fo connect.obj /c connect.cpp /I &lt;PATH&gt;\sdbdriver\include /wd4047  
 > link /OUT:connect.exe /LIBPATH:&lt;PATH&gt;\sdbdriver\lib sdbcpp.lib connect.obj  
 > copy &lt;PATH>\sdbdriver\lib\sdbcpp.dll .
 执行结果如下：
-> connect.exe localhost 50000 "" ""
+> connect.exe localhost 11810 "" ""
 > Connect success!</codeblock><note>
-            <p>本例程连接到本地数据库的50000端口，使用的是空的用户名很密码。用户需要根据自己的实际情况配置参数。譬如，connect.exe localhost 50000 “sequoiadb” “sequoiadb”。当数据库已经创建用户时，应该使用正确的用户及密码连接到数据库，否则连接失败。 </p>
-</note></li>
+            <p>本例程连接到本地数据库的11810端口，使用的是空的用户名很密码。用户需要根据自己的实际情况配置参数。譬如，connect.exe localhost 11810
+              “sequoiadb” “sequoiadb”。当数据库已经创建用户时，应该使用正确的用户及密码连接到数据库，否则连接失败。 </p>
+          </note></li>
       <li>创建集合空间和集合
             <codeblock>// 首先，定义集合空间、集合对象。
 sdbCollectionSpace collectionspace ;

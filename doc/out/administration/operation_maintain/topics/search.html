@@ -72,13 +72,13 @@
       
       <p class="p">1.连接到协调节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt;  var db = new Sdb("localhost",50000);</pre>
+&gt;  var db = new Sdb("localhost",11810);</pre>
 
       <p class="p">2.执行查看备份信息命令</p>
 <pre class="pre codeblock">&gt;db. listBackup()
 {
   "Name": "test_bk",
-  "NodeName": "vmsvr2-suse-x64-1:30000",
+  "NodeName": "vmsvr2-suse-x64-1:11800",
   "GroupName": "SYSCatalogGroup",
   "EnsureInc": false,
   "BeginLSNOffset": 0,
@@ -88,7 +88,7 @@
 }
 {
   "Name": "test_bk",
-  "NodeName": "vmsvr2-suse-x64-1:20000",
+  "NodeName": "vmsvr2-suse-x64-1:11820",
   "GroupName": "db1",
   "EnsureInc": false,
   "BeginLSNOffset": 0,
@@ -103,13 +103,13 @@
       
       <p class="p">1.连接到协调节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt;  var db = new Sdb("localhost",50000);</pre>
+&gt;  var db = new Sdb("localhost",11810);</pre>
 
       <p class="p">2.执行查看备份信息命令</p>
 <pre class="pre codeblock">&gt;db. listBackup({Name:”backup1”})
 {
   "Name": "backup1",
-  "NodeName": "vmsvr2-suse-x64-1:20000",
+  "NodeName": "vmsvr2-suse-x64-1:11820",
   "GroupName": "group1",
   "EnsureInc": false,
   "BeginLSNOffset": 0,
@@ -124,7 +124,7 @@
       
       <p class="p">手工查看备份信息直接通过终端登入指定机器，并进入到相应的备份目录中，执行"ls -l"</p>
 
-      <pre class="pre codeblock">use@vmsvr2-suse-x64-1:/opt/sequoiadb/database/40000/bakfile&gt; ls -l
+      <pre class="pre codeblock">use@vmsvr2-suse-x64-1:/opt/sequoiadb/database/11820/bakfile&gt; ls -l
 total 37328
 -rw-r----- 1 sdbadmin sdbadmin  38157784 Nov 13 16:06 test_bk.1
 -rw-r----- 1 sdbadmin sdbadmin    65536 Nov 13 16:06 test_bk.bak</pre>

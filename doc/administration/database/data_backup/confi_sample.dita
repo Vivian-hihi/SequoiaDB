@@ -7,8 +7,8 @@
       "进入SequoiaDB的Shell后台。</p>
     <ol>
       <li>连接至编目节点
-        <codeblock>db=new Sdb('192.168.20.35', 60000)"
-192.168.20.35:60000</codeblock></li>
+        <codeblock>db=new Sdb('192.168.20.35', 11800)"
+192.168.20.35:11800</codeblock></li>
       <li>查询SYSCAT.SYSNODES集合得到集群配置信息
         <codeblock>db.SYSCAT.SYSNODES.find()
 {
@@ -19,19 +19,19 @@
       "Service": [
         {
           "Type": 0,
-          <b>"Name": "60000"</b>
+          <b>"Name": "11800"</b>
         },
         {
           "Type": 1,
-          "Name": "60001"
+          "Name": "11801"
         },
         {
           "Type": 2,
-          "Name": "60002"
+          "Name": "11802"
         },
         {
           "Type": 3,
-          "Name": "60003"
+          "Name": "11803"
         }
       ],
       "NodeID": 1
@@ -55,15 +55,15 @@
       "Service": [
         {
           "Type": 0,
-         <b> "Name": "51000"</b>
+         <b> "Name": "11820"</b>
         },
         {
           "Type": 1,
-          "Name": "51001"
+          "Name": "11821"
         },
         {
           "Type": 2,
-          "Name": "51002"
+          "Name": "11822"
         }
       ],
       "NodeID": 1000
@@ -87,15 +87,15 @@
       "Service": [
         {
           "Type": 0,
-         <b> "Name": "53000"</b>
+         <b> "Name": "11830"</b>
         },
         {
           "Type": 1,
-          "Name": "53001"
+          "Name": "11831"
         },
         {
           "Type": 2,
-          "Name": "53002"
+          "Name": "11832"
         }
       ],
       "NodeID": 1001
@@ -115,7 +115,7 @@
     <p>以上输出显示了3个复制组，每个复制组中包括一个节点。其中SYSCatalogGroup组为编目组，而foo与foo1为数据组。 </p>
     <p>每个节点所在的物理机名称为<b>HostName</b>字段。服务名为<b>Service</b>字段中包含<b>Type:0</b>字段对象中的<b>Name</b>。 </p>
     <p>通过服务器名与服务名，可以定位到指定服务器中的配置文件路径，下例为复制组foo的唯一数据节点的配置文件。 </p>
-    <codeblock>[vmsvr1-rhel-x64]$ ls /opt/sequoiadb/conf/local/51000
+    <codeblock>[vmsvr1-rhel-x64]$ ls /opt/sequoiadb/conf/local/11820
 sdb.conf</codeblock>
   </body>
 </topic>

@@ -43,8 +43,8 @@
     </section>
     <section><title>Sample</title>
       <ul>
-        <li>Create a node in port 60000 in replset
-          "shard".<codeblock>shard.createNode("vmsvr2-suse-x64",60000,"/opt/sequoiadb/data/60000")</codeblock></li>
+        <li>Create a node in port 11800 in replset
+          "shard".<codeblock>shard.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800")</codeblock></li>
       </ul>
       <p><note>
         <p>In a replset, more than one replset can be created. But the margin between  two ports of

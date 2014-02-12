@@ -15,11 +15,11 @@
     <p>This command is to create a new catalog sharding,at the same time create and start a catalog
       node,amongs:</p>
     <p><b>host </b> ：specify the host name of catalog node.</p>
-    <p><b>service </b>：specify the service port of catalog node,please ensure this port and the next
-      three ports  are unoccupied;for example, if set port 30000,then ensure 30000/30001/30002/30003
-      are unoccupied.</p>
-    <p><b>dbpath</b> ：data file path,be used to store catalog data files,please ensure that the data
-      administrator user has write access.(created when installed,dafault <i>sdbadmin</i>).</p>
+    <p><b>service </b>：specify the service port of catalog node, please ensure this port and the
+      next three ports are unoccupied; for example, if set port 11800, then ensure
+      11800/11801/11802/11803 are unoccupied.</p>
+    <p><b>dbpath</b> ：data file path,be used to store catalog data files, please ensure that the
+      data administrator user has write access.(created when installed,dafault <i>sdbadmin</i>).</p>
     <p><b>config </b>： optional param,be used to configure more detail params.the form is json.param
       list refer to the section <xref
         href="../../../../database/topics/runtime_configuration_en.dita">database
