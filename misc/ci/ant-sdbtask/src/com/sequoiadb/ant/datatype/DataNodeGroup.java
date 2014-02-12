@@ -26,7 +26,7 @@ public class DataNodeGroup extends NodeGroup {
 				group = sdb.createShard(getName());
 			}
 
-			for (Node nodeInfo : getNodeList()) {
+			for (com.sequoiadb.ant.datatype.Node nodeInfo : getNodeList()) {
 				com.sequoiadb.base.Node node = group.getNode(nodeInfo.getHost(),
 						nodeInfo.getBasePort());
 

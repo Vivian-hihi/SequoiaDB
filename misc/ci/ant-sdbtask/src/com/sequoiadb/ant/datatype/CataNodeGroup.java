@@ -37,7 +37,7 @@ public class CataNodeGroup extends NodeGroup {
 
 		if (group == null) {
 			// group is not exist
-			Node nodeInfo = getNodeList().get(0);
+			com.sequoiadb.ant.datatype.Node nodeInfo = getNodeList().get(0);
 			getNodeList().remove(0);
 
 			try {
@@ -115,7 +115,7 @@ public class CataNodeGroup extends NodeGroup {
 		
 		//List<ReplicaNode> replNodes = new LinkedList<ReplicaNode>();
 		
-		for (Node nodeInfo : getNodeList()) {
+		for (com.sequoiadb.ant.datatype.Node nodeInfo : getNodeList()) {
 			node = group.getNode(nodeInfo.getHost(), nodeInfo.getBasePort());
 
 			if (node == null) {
