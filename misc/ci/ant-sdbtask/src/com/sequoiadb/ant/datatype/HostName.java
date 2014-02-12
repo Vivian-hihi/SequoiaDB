@@ -10,7 +10,7 @@ import com.sequoiadb.base.Shard;
 
 public abstract class HostName extends NodeGroup{
 	private List<String> hostName = new ArrayList<String>();
-	private List<com.sequoiadb.ant.datatype.Node> nodes = new ArrayList<Node>();
+	private List<com.sequoiadb.ant.datatype.Node> nodes = new ArrayList<com.sequoiadb.ant.datatype.Node>();
 	public void start(Sequoiadb sdb) throws BuildException {
 	try {
 		Shard group = sdb.getShard(getName());

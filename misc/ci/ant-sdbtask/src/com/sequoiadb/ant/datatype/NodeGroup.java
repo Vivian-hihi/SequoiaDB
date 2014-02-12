@@ -15,7 +15,7 @@ import com.sequoiadb.base.Sequoiadb;
 public abstract class NodeGroup {
 	private String name;
 
-	private List<ShardNode> nodes = new ArrayList<ShardNode>();
+	private List<com.sequoiadb.ant.datatype.Node> nodes = new ArrayList<com.sequoiadb.ant.datatype.Node>();
 	
 	public abstract void start(Sequoiadb sdb) throws BuildException;
 	
@@ -32,15 +32,15 @@ public abstract class NodeGroup {
 		return name;
 	}
 	
-	public ShardNode createNode()
+	public com.sequoiadb.ant.datatype.Node createNode()
 	{
-		ShardNode node = new ShardNode();
+		com.sequoiadb.ant.datatype.Node node = new Node();
 		nodes.add(node);
 		
 		return node;
 	}
 	
-	public List<ShardNode> getNodeList()
+	public List<com.sequoiadb.ant.datatype.Node> getNodeList()
 	{
 		return nodes;
 	}
