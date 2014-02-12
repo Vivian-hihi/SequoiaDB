@@ -2026,5 +2026,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CLS_WAIT_SYNC_FAILED</name>
+         <description>
+            <en>wait secondary nodes sync the operation failed</en>
+            <cn>等待备节点同步该操作失败</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
