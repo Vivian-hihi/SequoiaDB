@@ -10,7 +10,7 @@ import java.util.Map;
 
 //import org.apache.tools.ant.types.*;
 
-public class ShardNode {
+public class Node {
 	private String host;
 	private String baseport;
 	//private String catalogaddr;
