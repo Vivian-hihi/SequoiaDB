@@ -149,7 +149,6 @@
          <cn>最大代理线程池,默认值为0</cn>
       </description>
       <type>int</type>
-      <default>0</default>
       <detail>
          <en>1. It specifies the amount of thread in thread pool.<fig></fig>
              2. If it is not specified, the default value is 0.</en>
@@ -185,8 +184,8 @@
       <long>replname</long>
       <short>r</short>
       <description>
-         <en>replication service name or port</en>
-         <cn>复制通讯服务名或端口</cn>
+         <en>replication service name or port, default: 'svcname'+1</en>
+         <cn>复制通讯服务名或端口,默认:'svcname'+1</cn>
       </description>
       <catalogdft>11801</catalogdft>
       <coorddft>11811</coorddft>
@@ -206,8 +205,8 @@
       <long>shardname</long>
       <short>a</short>
       <description>
-         <en>sharding service name or port</en>
-         <cn>分片通讯服务名或端口</cn>
+         <en>sharding service name or port, default: 'svcname'+2</en>
+         <cn>分片通讯服务名或端口,默认:'svcname'+2</cn>
       </description>
       <catalogdft>11802</catalogdft>
       <coorddft>11812</coorddft>
@@ -227,8 +226,8 @@
       <long>catalogname</long>
       <short>x</short>
       <description>
-         <en>catalog service name or port</en>
-         <cn>编目通讯服务名或端口</cn>
+         <en>catalog service name or port, default: 'svcname'+3</en>
+         <cn>编目通讯服务名或端口, 默认:'svcname'+3</cn>
       </description>
       <catalogdft>11803</catalogdft>
       <coorddft>11813</coorddft>
@@ -248,8 +247,8 @@
       <long>httpname</long>
       <short>s</short>
       <description>
-         <en>REST service name or port</en>
-         <cn>REST服务名或端口</cn>
+         <en>REST service name or port, default: 'svcname'+4</en>
+         <cn>REST服务名或端口, 默认:'svcname'+4</cn>
       </description>
       <catalogdft>11804</catalogdft>
       <coorddft>11814</coorddft>
@@ -311,7 +310,7 @@
       <short>t</short>
       <description>
          <en>catalog addr (hostname1:servicename1,hostname2:servicename2,...)</en>
-         <cn>协调节点地址(hostname1:servicename1,hostname2:servicename2,...)</cn>
+         <cn>编目节点地址(hostname1:servicename1,hostname2:servicename2,...)</cn>
       </description>
       <catalogdft>localhost:11803</catalogdft>
       <!--coorddft>localhost:11803</coorddft-->
@@ -388,7 +387,6 @@
          <cn>页面预加载代理数量,默认值:0,取值范围:[0,100]</cn>
       </description>
       <type>int</type>
-      <default>0</default>
    </opt>
 
    <opt>
@@ -399,7 +397,6 @@
          <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
       </description>
       <type>int</type>
-      <default>200</default>
    </opt>
 
    <opt>
@@ -410,7 +407,6 @@
          <cn>查询任务的最大分解子查询数量,默认值:10,最小值为0,最大值不能超过参数maxprefpool的值</cn>
       </description>
       <type>int</type>
-      <default>10</default>
    </opt>
 
    <opt>
@@ -421,7 +417,6 @@
          <cn>日志同步最大并发数量，默认值:10,取值范围:[0,200], 0表示不启用日志并发同步</cn>
       </description>
       <type>int</type>
-      <default>2</default>
    </opt>
 
    <opt>
@@ -432,7 +427,6 @@
          <cn>复制日志内存页面数,默认值:1024,取值范围:[512,1024000],但日志总内存大小不能超过日志总文件大小;每个页面大小为64KB</cn>
       </description>
       <type>int</type>
-      <default>1024</default>
    </opt>
 
    <opt>
@@ -440,10 +434,9 @@
       <long>replbucketsize</long>
       <description>
          <en>repl bucket size, must be the power of 2, default is 32, value range:[1,4096]</en>
-         <cn>日志并发同步桶大小,必须为2的幂,默认值为256,取值范围:[1,4096]</cn>
+         <cn>日志并发同步桶大小,必须为2的幂,默认值为32,取值范围:[1,4096]</cn>
       </description>
       <type>int</type>
-      <default>32</default>
       <hidden>true</hidden>
    </opt>
 
@@ -454,7 +447,6 @@
          <en>enable memory debug, default:FALSE</en>
          <cn>打开内存调试,默认为FALSE</cn>
       </description>
-      <default>false</default>
       <hidden>true</hidden>
    </opt>
 
@@ -465,7 +457,6 @@
          <en>memory debug segment size,default:0, if not zero, the value range:[256,4194304]</en>
          <cn>内存调试段大小,默认为0,当为不0时,取值范围:[256,4194304]</cn>
       </description>
-      <default>4000</default>
       <type>int</type>
       <hidden>true</hidden>
    </opt>
@@ -477,7 +468,6 @@
          <en>catalog node list(json)</en>
          <cn>编目节点列表(json)</cn>
       </description>
-      <default></default>
       <hidden>true</hidden>
    </opt>
 
@@ -488,7 +478,6 @@
          <en>log the operation from lcoal port, default:FALSE</en>
          <cn>是否记录来自本地端口的操作,默认为FALSE</cn>
       </description>
-      <default></default>
       <hidden>true</hidden>
    </opt>
 
@@ -499,7 +488,6 @@
          <en>turn on trace when starting, default:FALSE</en>
          <cn>是否启动时开启跟踪,默认为FALSE</cn>
       </description>
-      <default>false</default>
       <hidden>true</hidden>
    </opt>
 
@@ -538,22 +526,20 @@
       <name>PMD_OPTION_SORTBUF_SIZE</name>
       <long>sortbuf</long>
       <description>
-         <en>size of the sorting buf(MB)</en>
-         <cn>排序缓存大小(MB)</cn>
+         <en>size of the sorting buf(MB), default:512, min value:128</en>
+         <cn>排序缓存大小(MB),默认值512,最小值128</cn>
       </description>
       <type>int</type>
-      <default>512</default>
    </opt>
 
    <opt>
       <name>PMD_OPTION_HJ_BUFSZ</name>
       <long>hjbuf</long>
       <description>
-         <en>size of the hash join buf(MB)</en>
-         <cn>哈希连接缓存大小(MB)</cn>
+         <en>size of the hash join buf(MB), default:128, min value:64</en>
+         <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
       </description>
       <type>int</type>
-      <default>128</default>
    </opt>
 
    <opt>
@@ -564,7 +550,6 @@
          <cn>索引扫描步长,默认值为30,取值范围:[1,10000]</cn>
       </description>
 	  <type>int</type>
-      <default></default>
       <hidden>true</hidden>
    </opt>
 
