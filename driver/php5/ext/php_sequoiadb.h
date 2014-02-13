@@ -68,12 +68,12 @@ PHP_METHOD ( SequoiaDB, execSQL ) ;
 PHP_METHOD ( SequoiaDB, execUpdateSQL ) ;
 PHP_METHOD ( SequoiaDB, getSnapshot ) ;
 PHP_METHOD ( SequoiaDB, getList ) ;
-PHP_METHOD ( SequoiaDB, selectShard ) ;
+PHP_METHOD ( SequoiaDB, selectGroup ) ;
 PHP_METHOD ( SequoiaDB, resetSnapshot ) ;
 PHP_METHOD ( SequoiaDB, selectCS ) ;
 PHP_METHOD ( SequoiaDB, listCSs ) ;
 PHP_METHOD ( SequoiaDB, listCollections ) ;
-PHP_METHOD ( SequoiaDB, createCataShard ) ;
+PHP_METHOD ( SequoiaDB, createCataGroup ) ;
 PHP_METHOD ( SequoiaDB, dropCollectionSpace ) ;
 
 PHP_METHOD ( SequoiaCS, __construct ) ;
@@ -122,17 +122,17 @@ PHP_METHOD ( SequoiaRegex, __toString ) ;
 PHP_METHOD ( SequoiaINT64, __construct ) ;
 PHP_METHOD ( SequoiaINT64, __toString ) ;
 
-/* ********* shard ************ */
+/* ********* group ************ */
 
-PHP_METHOD ( sequoiaReplicaShard, getNodeNum ) ;
-PHP_METHOD ( sequoiaReplicaShard, getDetail ) ;
-PHP_METHOD ( sequoiaReplicaShard, getMaster ) ;
-PHP_METHOD ( sequoiaReplicaShard, getSlave ) ;
-PHP_METHOD ( sequoiaReplicaShard, getNode ) ;
-PHP_METHOD ( sequoiaReplicaShard, createNode ) ;
-PHP_METHOD ( sequoiaReplicaShard, start ) ;
-PHP_METHOD ( sequoiaReplicaShard, stop ) ;
-PHP_METHOD ( sequoiaReplicaShard, isCatalog ) ;
+PHP_METHOD ( sequoiaReplicaGroup, getNodeNum ) ;
+PHP_METHOD ( sequoiaReplicaGroup, getDetail ) ;
+PHP_METHOD ( sequoiaReplicaGroup, getMaster ) ;
+PHP_METHOD ( sequoiaReplicaGroup, getSlave ) ;
+PHP_METHOD ( sequoiaReplicaGroup, getNode ) ;
+PHP_METHOD ( sequoiaReplicaGroup, createNode ) ;
+PHP_METHOD ( sequoiaReplicaGroup, start ) ;
+PHP_METHOD ( sequoiaReplicaGroup, stop ) ;
+PHP_METHOD ( sequoiaReplicaGroup, isCatalog ) ;
 
 
 /* ************* node ***************** */
