@@ -40,6 +40,42 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_DBPATH</name>
+      <long>dbpath</long>
+      <short>d</short>
+      <description>
+         <en>database path</en>
+         <cn>数据库路径</cn>
+      </description>
+      <catalogdft>/opt/sequoiadb/database/cata</catalogdft>
+      <coorddft>/opt/sequoiadb/database/coord</coorddft>
+      <datadft>/opt/sequoiadb/database/data</datadft>
+      <standdft>/opt/sequoiadb/database/standalone</standdft>
+      <detail>
+         <en>1. It specifies the path of data file.<fig></fig>
+             2. If it is not specified, the default path is current path.</en>
+         <cn>1.指定数据文件存放路径。<fig></fig>2.如果不指定，则默认为当前路径。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_IDXPATH</name>
+      <long>indexpath</long>
+      <short>i</short>
+      <description>
+         <en>index path</en>
+         <cn>索引路径</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the path of index file<fig></fig>
+             2. If it is not specified, the default path is the same with 'dbpath'.</en>
+         <cn>1.指定索引文件存放路径。<fig></fig>2.如果不指定，则默认与'dbpath'相同。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_CONFPATH</name>
       <long>confpath</long>
       <short>c</short>
@@ -90,37 +126,6 @@
          <cn>1.指定诊断日志存放目录。<fig></fig>
              2.如果不指定，则默认为：数据文件路径/diaglog</cn>
       </detail>
-      <typeofweb>str</typeofweb>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_DBPATH</name>
-      <long>dbpath</long>
-      <short>d</short>
-      <description>
-         <en>database path</en>
-         <cn>数据库路径</cn>
-      </description>
-      <catalogdft>/opt/sequoiadb/database/cata</catalogdft>
-      <coorddft>/opt/sequoiadb/database/coord</coorddft>
-      <datadft>/opt/sequoiadb/database/data</datadft>
-      <standdft>/opt/sequoiadb/database/standalone</standdft>
-      <detail>
-         <en>1. It specifies the path of data file.<fig></fig>
-             2. If it is not specified, the default path is current path.</en>
-         <cn>1.指定数据文件存放路径。<fig></fig>2.如果不指定，则默认为当前路径。</cn>
-      </detail>
-      <typeofweb>str</typeofweb>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_IDXPATH</name>
-      <long>indexpath</long>
-      <short>i</short>
-      <description>
-         <en>index path</en>
-         <cn>索引路径</cn>
-      </description>
       <typeofweb>str</typeofweb>
    </opt>
 
@@ -430,6 +435,35 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_DMS_TMPBLKPATH</name>
+      <long>tmppath</long>
+      <description>
+         <en>path of the tmp file</en>
+         <cn>临时文件路径</cn>
+      </description>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_SORTBUF_SIZE</name>
+      <long>sortbuf</long>
+      <description>
+         <en>size of the sorting buf(MB), default:512, min value:128</en>
+         <cn>排序缓存大小(MB),默认值512,最小值128</cn>
+      </description>
+      <type>int</type>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_HJ_BUFSZ</name>
+      <long>hjbuf</long>
+      <description>
+         <en>size of the hash join buf(MB), default:128, min value:64</en>
+         <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
+      </description>
+      <type>int</type>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_REPL_BUCKET_SIZE</name>
       <long>replbucketsize</long>
       <description>
@@ -511,35 +545,6 @@
       </description>
       <type>int</type>
       <hidden>true</hidden>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_DMS_TMPBLKPATH</name>
-      <long>tmppath</long>
-      <description>
-         <en>path of the tmp file</en>
-         <cn>临时文件路径</cn>
-      </description>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_SORTBUF_SIZE</name>
-      <long>sortbuf</long>
-      <description>
-         <en>size of the sorting buf(MB), default:512, min value:128</en>
-         <cn>排序缓存大小(MB),默认值512,最小值128</cn>
-      </description>
-      <type>int</type>
-   </opt>
-
-   <opt>
-      <name>PMD_OPTION_HJ_BUFSZ</name>
-      <long>hjbuf</long>
-      <description>
-         <en>size of the hash join buf(MB), default:128, min value:64</en>
-         <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
-      </description>
-      <type>int</type>
    </opt>
 
    <opt>
