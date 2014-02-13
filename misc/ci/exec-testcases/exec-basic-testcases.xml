@@ -101,7 +101,7 @@
 			<equals arg1="${ret.code.forShards}" arg2="0" />
 			</not>
 			<then>
-				<sdbProperty name="db.RG.info" value="this env is standalong"/>
+				<sdbProperty name="db.RG.info" value="this env is standalong , host is ${test.machine.no2.basic}"/>
 			</then>
 		</if>
 		
@@ -172,7 +172,7 @@
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
 
-		<echo message="the result = ${ret.code} after exec ant testcase." />
+		<echo message="the result = ${ret.code} after exec ${test.case.fullname}.${parallel.num} testcase." />
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
 			<arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testEndStr}');db.close(); &quot;" />
 		</exec>
@@ -206,9 +206,20 @@
 						</tstamp>
 						<echo>mkdir ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}</echo>
 						<mkdir dir="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-						<sdbCopyAndTar fileHostName="${test.machine.no1.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-						<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
-						<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
+						<if>
+							<not>
+							<equals arg1="${ret.code.forShards}" arg2="0" />
+							</not>
+							<then>
+								<!--statealong mode-->
+								<sdbCopyAndTar fileHostName="LOCAL" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
+							</then>
+							<else>
+								<sdbCopyAndTar fileHostName="${test.machine.no1.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
+								<sdbCopyAndTar fileHostName="${test.machine.no2.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
+								<sdbCopyAndTar fileHostName="${test.machine.no3.basic}" saveHostName="${host.NAME}" diaglogPath="${install.path}/sequoiadb/database" savePath="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" />
+							</else>
+						</if>
 						<tar basedir="${test.machine.deploy.path}" 
 						destfile="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz" 
 						compression="gzip" includes="${host.NAME}-${parallel.num}-${current.time.log}/**" />
@@ -220,9 +231,20 @@
 						saveDir="${save.testLog.dir}"
 						  />
 						<sdbProperty name="delete.diaglogFile" value="dir=$(find /opt/sequoiadb/database -name diaglog); for d in $dir ; do echo rm -f $d/* ; rm -f $d/* ; done" />
-						<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
-						<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
-						<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+						<if>
+							<not>
+							<equals arg1="${ret.code.forShards}" arg2="0" />
+							</not>
+							<then>
+								<!--statealong mode-->
+								<stafTools workType="shell" workHost="LOCAL" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+							</then>
+							<else>
+								<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+								<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+								<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+							</else>
+						</if>
 						<echo>rm -f ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}</echo>
 						<delete file="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}.tar.gz" failonerror="false" />
 						<delete dir="${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}" failonerror="false"/>
