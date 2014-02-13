@@ -978,7 +978,7 @@ namespace engine
       // --hjBufSz
       rdxUInt( pEX, PMD_OPTION_HJ_BUFSZ, _hjBufSz,
                FALSE, TRUE, PMD_DEFAULT_HJ_SZ, TRUE ) ;
-      rdvMinMax( pEX, _sortBufSz, PMD_MIN_HJ_SZ,
+      rdvMinMax( pEX, _hjBufSz, PMD_MIN_HJ_SZ,
                  -1, TRUE ) ;
 
       // end map
