@@ -1,5 +1,6 @@
 var help = function() {
-   println("   var db = new Sdb('localhost', 11810)   connect to database");
+   println("   var db = new Sdb()                     connect to datebase use default host 'localhost' and default port 11810");
+   println("   var db = new Sdb('localhost', 11810)   connect to database use specified host and port");
    println("   db.help()                              help on db methods");
    println("   db.cs.help()                           help on collection space cs");
    println("   db.cs.cl                               access collection cl on collection space cs");

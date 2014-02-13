@@ -10,6 +10,8 @@
 #include "sptTrace.hpp"
 #include "sptConvertor.hpp"
 #include "fmpDef.hpp"
+#include "oss.h"
+#include "ossSocket.hpp"
 #include "string"
 #include "climits"
 
@@ -142,6 +144,8 @@
    (JSVAL_IS_NULL(x) || JSVAL_IS_VOID(x) || ! JSVAL_IS_PRIMITIVE(x))
 
 #define NODE_NAME_SPLIT ':'
+#define SDB_DEF_COORD_NAME "localhost"
+#define SDB_DEF_COORD_PORT OSS_DFT_SVCPORT
 
 #if defined (SDB_SHELL)
 extern INT32 gShellReturnCode ;
@@ -3323,19 +3327,41 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
    jsval                val         = JSVAL_VOID ;
-
+// fmp use localhost and coord's port in current version
 #if defined (SDB_FMP)
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "/SS" , &strName , &strPwd ) ;
 #else
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "S/SSS" , &strHost , &strPort ,
+                               "/SSSS" , &strHost , &strPort ,
                                &strName , &strPwd ) ;
 #endif
    REPORT ( ret , "new Sdb(): wrong arguments" ) ;
 
 #if !defined (SDB_FMP)
-   if( ! strPort )
+   // if not offer host and port, use "localhost" and coord port
+   if ( !strHost )
+   {
+      INT32 hostNameLen = 0 ;
+      INT32 portNameLen = 0 ;
+      CHAR portBuffer[OSS_MAX_SERVICENAME + 1] = {0};
+      // host
+      hostNameLen = ossStrlen(SDB_DEF_COORD_NAME) ;
+      host = ( CHAR* ) JS_malloc ( cx, hostNameLen + 1 ) ;
+      VERIFY ( host ) ;
+      ossStrncpy ( host, SDB_DEF_COORD_NAME, hostNameLen ) ;
+      host[hostNameLen] = '\0' ;
+      // port
+      portNameLen = sprintf( portBuffer, "%d", SDB_DEF_COORD_PORT ) ;
+      VERIFY ( portNameLen != 0 ) ;
+      port = ( CHAR* ) JS_malloc ( cx, portNameLen + 1 ) ;
+      VERIFY ( port ) ;
+      ossStrncpy ( port, portBuffer, portNameLen ) ;
+      port[portNameLen] = '\0' ;
+   }
+   // in the case, the input argument looks like "localhost:11810"
+   // we need to split host and port
+   else if( ! strPort )
    {
       INT32 portNameLen = 0 ;
       const CHAR *pNodename = NULL ;
@@ -3361,6 +3387,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       ossStrncpy ( port, pSplit+1, portNameLen );
       port[portNameLen] = '\0' ;
    }
+   // in the case, we get host and port input by user
    else
    {
       // host will be freed in done:
@@ -3387,7 +3414,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    connection = (sdbConnectionHandle *)
       JS_malloc ( cx , sizeof ( sdbConnectionHandle ) ) ;
    VERIFY ( connection ) ;
-
+   // in this case, both user name and password are input by use
    if ( strName && strPwd )
    {
       // name will be freed in done:
@@ -3403,10 +3430,12 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       rc = sdbConnect ( host , port , name , pwd , connection ) ;
       REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
    }
+   // in this case, only one of them input by user, it is wrong
    else if ( strName && ! strPwd )
    {
       REPORT ( JS_FALSE , "you should input your password to connect engine!" ) ;
    }
+   // in this case, none if them was input, we use default values
    else
    {
       // handle contained by connection will be released in error: or
@@ -3414,22 +3443,28 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       rc = sdbConnect ( host , port , "", "", connection ) ;
       REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
    }
-
+   // new a js sdb object
    obj = JS_NewObject ( cx , &sdb_class , 0 , 0 ) ;
    VERIFY ( obj ) ;
-
+   // set the newly build js sdb object as a return value,
+   // so we can hold this object in the sdb client like this:
+   // var sdb = new Sdb("localhost", 11810)
    JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( obj ) ) ;
-
+   // set the connection as one of the newly build js sdb object
+   // so this object holds a handle of sdb, and can use it communicate
+   // with datebase
    ret = JS_SetPrivate ( cx , obj , connection ) ;
    VERIFY ( ret ) ;
-
-   if( !strPort )
+   // we need to set host and port as properties of the newly build
+   // js object, make sure both strPort and strHost is available
+   if( !strHost || !strPort )
    {
       strPort = JS_NewStringCopyN( cx, port,
                                    ossStrlen(port) ) ;
       strHost = JS_NewStringCopyN( cx, host,
                                    ossStrlen(host) ) ;
    }
+   // set host and port as properties of the newly build js object
    val = STRING_TO_JSVAL ( strHost ) ;
    VERIFY ( JS_SetProperty ( cx , obj , "_host" , &val ) ) ;
    val = STRING_TO_JSVAL ( strPort ) ;
