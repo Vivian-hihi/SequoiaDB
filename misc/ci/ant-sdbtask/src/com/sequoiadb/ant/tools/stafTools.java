@@ -15,8 +15,12 @@ public class stafTools extends Task{
 	String common=null;
 	String fileName=null;
 	String saveDir=null;
+	boolean failonerror = true;
 	public void setWorkHost( String value ){
 		workHost = value;
+	}
+	public void setFailonerror( boolean value ){
+		this.failonerror = value;
 	}
 	public void setWorkType( String value ){
 		workType = value;
@@ -63,8 +67,10 @@ public class stafTools extends Task{
 				
 				System.out.println("exec: staf " + workHost+ " FS " + request);
 				result = handle.submit2( workHost , "FS", request);
-				if (result.rc != STAFResult.Ok) {
-					throw new BuildException(STAFResultToString(result));
+				if( failonerror ){
+					if (result.rc != STAFResult.Ok) {
+						throw new BuildException(STAFResultToString(result));
+					}
 				}
 				
 				
@@ -75,8 +81,10 @@ public class stafTools extends Task{
 				request = "START SHELL COMMAND " + common + " WAIT 30m WORKDIR "+workDir ; 
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
-				if (result.rc != STAFResult.Ok) {
-					throw new BuildException(STAFResultToString(result));
+				if( failonerror){
+					if (result.rc != STAFResult.Ok) {
+						throw new BuildException(STAFResultToString(result));
+					}
 				}
 			}
 			
@@ -86,8 +94,10 @@ public class stafTools extends Task{
 				request = "DELETE ENTRY " + fileName + " RECURSE CONFIRM ";
 				System.out.println("exec: staf " + workHost + " FS " + request );
 				result = handle.submit2(workHost, "FS", request);
-				if (result.rc != STAFResult.Ok) {
-					throw new BuildException(STAFResultToString(result));
+				if( failonerror ){
+					if (result.rc != STAFResult.Ok) {
+						throw new BuildException(STAFResultToString(result));
+					}
 				}
 			}
 			///dost not test , I don't know is it work
@@ -96,8 +106,10 @@ public class stafTools extends Task{
 				request = "GET FILE " + fileName + " TEXT ";
 				System.out.println("exec: staf " + workHost + " FS " + request );
 				result = handle.submit2(workHost, "FS", request);
-				if (result.rc != STAFResult.Ok) {
-					throw new BuildException(STAFResultToString(result));
+				if( failonerror ){
+					if (result.rc != STAFResult.Ok) {
+						throw new BuildException(STAFResultToString(result));
+					}
 				}
 			}
 			

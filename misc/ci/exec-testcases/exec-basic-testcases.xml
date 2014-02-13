@@ -237,12 +237,12 @@
 							</not>
 							<then>
 								<!--statealong mode-->
-								<stafTools workType="shell" workHost="LOCAL" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+								<stafTools workType="shell" workHost="LOCAL" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
 							</then>
 							<else>
-								<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
-								<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
-								<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" />
+								<stafTools workType="shell" workHost="${test.machine.no1.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
+								<stafTools workType="shell" workHost="${test.machine.no2.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
+								<stafTools workType="shell" workHost="${test.machine.no3.basic}" workDir="${install.path}/sequoiadb/database" common="${delete.diaglogFile}" failonerror="false" />
 							</else>
 						</if>
 						<echo>rm -f ${test.machine.deploy.path}/${host.NAME}-${parallel.num}-${current.time.log}</echo>
