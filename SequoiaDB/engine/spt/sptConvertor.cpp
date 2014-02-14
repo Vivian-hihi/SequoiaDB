@@ -46,7 +46,7 @@
 #define SPT_SPEOBJ_REGEX "$regex"
 #define SPT_SPEOBJ_OPTION "$options"
 #define SPT_SPEOBJ_BINARY "$binary"
-#define SPT_SPEOBJ_TYPE "$TYPE"
+#define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
 
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
