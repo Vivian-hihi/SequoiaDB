@@ -2371,25 +2371,26 @@ error :
 INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displayType, Position &actualPosition )
 {
    INT32 rc = SDB_OK;
-   if( displayType == DISPLAYTYPE_STATICTEXT_HELP_Header || displayType == DISPLAYTYPE_STATICTEXT_MAIN \
-      || displayType == DISPLAYTYPE_STATICTEXT_LICENSE)
+   if( displayType == DISPLAYTYPE_STATICTEXT_HELP_Header || displayType == DISPLAYTYPE_STATICTEXT_MAIN ||
+       displayType == DISPLAYTYPE_STATICTEXT_LICENSE)
    {
-      INT32 pairNumber = displayContent.staticTextOutPut.colour.foreGroundColor + displayContent.staticTextOutPut.colour.backGroundColor*8;
+      INT32 pairNumber = displayContent.staticTextOutPut.colour.foreGroundColor +
+                         displayContent.staticTextOutPut.colour.backGroundColor * 8 ;
       attron( COLOR_PAIR( pairNumber ) ) ;
-      //standout();
       mvprintw( actualPosition.referUpperLeft_Y, actualPosition.referUpperLeft_X, displayContent.staticTextOutPut.outputText ) ;
-      //standend();
       attroff( COLOR_PAIR( pairNumber ) ) ;
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_HELP)
    {
-      if( displayContent.dynamicHelp.tableRow> actualPosition.length_Y )
+      if( displayContent.dynamicHelp.tableRow > actualPosition.length_Y )
       {
 
-         snprintf( errStrBuf, errStrLength,"%s", errStr );
-         snprintf( errStr, errStrLength, "%s refreshDisplayContent failed,displayContent.dynamicHelp.tableRow> actualPosition.length_Y\n", errStrBuf );
+         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         snprintf( errStr, errStrLength, 
+                    "%s refreshDisplayContent failed,displayContent.dynamicHelp.tableRow> actualPosition.length_Y\n",
+                    errStrBuf ) ;
 
-         goto error;
+         goto error ;
       }
       INT32 start_row = actualPosition.referUpperLeft_Y;
       INT32 start_col = actualPosition.referUpperLeft_X;
@@ -2569,204 +2570,219 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_SNAPSHOT )
    {
-      BSONObj bsonobj;
-      FieldStruct* Fixed = NULL;
-      FieldStruct* Mobile = NULL;
-      INT32 FixedLength = 0;
-      INT32 MobileLength = 0;
-      Fixed = displayContent.dySnapshotOutPut.fixedField;
-      Mobile = displayContent.dySnapshotOutPut.mobileField;
-      FixedLength = displayContent.dySnapshotOutPut.actualFixedFieldLength;
-      MobileLength = displayContent.dySnapshotOutPut.actualMobileFieldLength;
+      BSONObj bsonobj ;
+      FieldStruct* Fixed = NULL ;
+      FieldStruct* Mobile = NULL ;
+      INT32 FixedLength = 0 ;
+      INT32 MobileLength = 0 ;
+      Fixed = displayContent.dySnapshotOutPut.fixedField ;
+      Mobile = displayContent.dySnapshotOutPut.mobileField ;
+      FixedLength = displayContent.dySnapshotOutPut.actualFixedFieldLength ;
+      MobileLength = displayContent.dySnapshotOutPut.actualMobileFieldLength ;
       
-      INT32 start_row = actualPosition.referUpperLeft_Y;
-      INT32 start_col = actualPosition.referUpperLeft_X;
-      string AUTOSETTYPE = "";
-      string STYLE = "";
-      INT32 ROW = 0;
-      INT32 COL = 0;
-      string fieldName = "";
-      Colours fieldColour;
-      fieldColour.backGroundColor = 6;
-      fieldColour.foreGroundColor = 0;
-      string displayMode = DISPLAYMODECHOOSER[root.input.displayModeChooser];
-      INT32 tableCellLength = displayContent.dySnapshotOutPut.tableCellLength;
-      string baseField = displayContent.dySnapshotOutPut.baseField;
+      INT32 start_row = actualPosition.referUpperLeft_Y ;
+      INT32 start_col = actualPosition.referUpperLeft_X ;
+      string AUTOSETTYPE = NULLSTRING ;
+      string STYLE = NULLSTRING ;
+      INT32 ROW = 0 ;
+      INT32 COL = 0 ;
+      string fieldName = NULLSTRING ;
+      Colours fieldColour ;
+      fieldColour.backGroundColor = 6 ;
+      fieldColour.foreGroundColor = 0 ;
+      string displayMode = DISPLAYMODECHOOSER[root.input.displayModeChooser] ;
+      INT32 tableCellLength = displayContent.dySnapshotOutPut.tableCellLength ;
+      string baseField = displayContent.dySnapshotOutPut.baseField ;
       if( GLOBAL == root.input.snapshotModeChooser )
       {
-         AUTOSETTYPE = displayContent.dySnapshotOutPut.globalAutoSetType;
-         STYLE = displayContent.dySnapshotOutPut.globalStyle;
+         AUTOSETTYPE = displayContent.dySnapshotOutPut.globalAutoSetType ;
+         STYLE = displayContent.dySnapshotOutPut.globalStyle ;
          if( TABLE == STYLE )
          {
-            ROW = displayContent.dySnapshotOutPut.globalRow;
-            COL = displayContent.dySnapshotOutPut.globalCol;
+            ROW = displayContent.dySnapshotOutPut.globalRow ;
+            COL = displayContent.dySnapshotOutPut.globalCol ;
          }
          else
          {
-            ROW = 0;
-            COL = 0;
+            ROW = 0 ;
+            COL = 0 ;
          }
          
       }
       else if( GROUP == root.input.snapshotModeChooser )
       {
-         AUTOSETTYPE = displayContent.dySnapshotOutPut.groupAutoSetType;
-         STYLE = displayContent.dySnapshotOutPut.groupStyle;
+         AUTOSETTYPE = displayContent.dySnapshotOutPut.groupAutoSetType ;
+         STYLE = displayContent.dySnapshotOutPut.groupStyle ;
          if( TABLE == STYLE )
          {
-            ROW = displayContent.dySnapshotOutPut.groupRow;
-            COL = displayContent.dySnapshotOutPut.groupCol;
+            ROW = displayContent.dySnapshotOutPut.groupRow ;
+            COL = displayContent.dySnapshotOutPut.groupCol ;
          }
          else
          {
-            ROW = 0;
-            COL = 0;
+            ROW = 0 ;
+            COL = 0 ;
          }
       }
       else if( NODE == root.input.snapshotModeChooser )
       {
-         AUTOSETTYPE = displayContent.dySnapshotOutPut.nodeAutoSetType;
-         STYLE = displayContent.dySnapshotOutPut.nodeStyle;
+         AUTOSETTYPE = displayContent.dySnapshotOutPut.nodeAutoSetType ;
+         STYLE = displayContent.dySnapshotOutPut.nodeStyle ;
          if( TABLE == STYLE )
          {
-            ROW = displayContent.dySnapshotOutPut.nodeRow;
-            COL = displayContent.dySnapshotOutPut.nodeCol;
+            ROW = displayContent.dySnapshotOutPut.nodeRow ;
+            COL = displayContent.dySnapshotOutPut.nodeCol ;
          }
          else
          {
-            ROW = 0;
-            COL = 0;
+            ROW = 0 ;
+            COL = 0 ;
          }
       }
       else
       {
 
-         snprintf( errStrBuf, errStrLength,"%s", errStr );
-         snprintf( errStr, errStrLength, "%s refreshDisplayContent failed, wrong snapshotModeChooser == %s\n", errStrBuf, root.input.snapshotModeChooser.c_str() );
+         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         snprintf( errStr, errStrLength,
+                  "%s refreshDisplayContent failed, wrong snapshotModeChooser == %s\n",
+                  errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
   
-         goto error;    
+         goto error ;    
       }
       if( TABLE == STYLE)
       {
-         rc = fixedOutputLocation( actualPosition.referUpperLeft_Y, actualPosition.referUpperLeft_X, start_row, start_col, actualPosition.length_Y - ROW * 2, 0, displayType, AUTOSETTYPE );
-         if( SDB_OK != rc )
+         rc = fixedOutputLocation( actualPosition.referUpperLeft_Y, actualPosition.referUpperLeft_X,
+                                   start_row, start_col, actualPosition.length_Y - ROW * 2, 0,
+                                   displayType, AUTOSETTYPE ) ;
+         if( rc )
          {
-            goto error;
+            goto error ;
          }
-         INT32 end_fixed_mobile = 0; //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
-         INT32 start_fixed_mobile = 0; //use it to sign the start position of fixedFieldStruct or mobileFieldStruct
+         INT32 end_fixed_mobile = 0 ; //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
+         INT32 start_fixed_mobile = 0 ; //use it to sign the start position of fixedFieldStruct or mobileFieldStruct
          for( INT32 rowNumber = 0; rowNumber < ROW; ++rowNumber )
          {
-            start_row += rowNumber;
+            start_row += rowNumber ;
             if( start_row - actualPosition.referUpperLeft_Y >= actualPosition.length_Y )
             {
-               break;
+               break ;
             }
-            rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X, start_row, start_col, 0, actualPosition.length_X -COL * tableCellLength, displayType, AUTOSETTYPE );
-            if( SDB_OK != rc )
+            rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X,
+                                      start_row, start_col, 0, actualPosition.length_X -COL * tableCellLength,
+                                      displayType, AUTOSETTYPE ) ;
+            if( rc )
             {
-               goto error;
+               goto error ;
             }
-            INT32 tableCol = 0;
-            start_fixed_mobile = end_fixed_mobile;
+            INT32 tableCol = 0 ;
+            start_fixed_mobile = end_fixed_mobile ;
             // print the title on the screen
             while( 1 )
             {
                if( start_col + tableCellLength - actualPosition.referUpperLeft_X > actualPosition.length_X )
-                  break;
+                  break ;
                if( end_fixed_mobile >= FixedLength)
-                  break;
+                  break ;
                if( tableCol >= COL )
-                  break;
-               rc = getFieldStructNameAndColour( Fixed[end_fixed_mobile], displayMode, fieldName, fieldColour);
-               if( SDB_OK != rc )
+                  break ;
+               rc = getFieldStructNameAndColour( Fixed[end_fixed_mobile], displayMode, fieldName, fieldColour) ;
+               if( rc )
                {
-                  goto error;
+                  goto error ;
                }
-               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor*8;
+               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
                attron( COLOR_PAIR( pairNumber ) ) ;
-               rc = MVPRINTW_TOP( fieldName, tableCellLength, Fixed[end_fixed_mobile].alignment, start_row, start_col );
-               if( SDB_OK != rc )
+               rc = MVPRINTW_TOP( fieldName, tableCellLength, Fixed[end_fixed_mobile].alignment, start_row, start_col ) ;
+               if( rc )
                {
-                  goto error;
+                  goto error ;
                }
                attroff( COLOR_PAIR( pairNumber ) ) ;  
-               start_col += tableCellLength;
-               ++end_fixed_mobile;
-               ++tableCol;
+               start_col += tableCellLength ;
+               ++start_col ; // add separate pace
+               ++end_fixed_mobile ;
+               ++tableCol ;
             }
             
             while( 1 )
             {
                if( start_col + tableCellLength - actualPosition.referUpperLeft_X > actualPosition.length_X )
-                  break;
-               if( end_fixed_mobile - FixedLength >= MobileLength)
-                  break;
+                  break ;
+               if( end_fixed_mobile - FixedLength >= MobileLength )
+                  break ;
                if( tableCol>= COL )
-                  break;
-               rc = getFieldStructNameAndColour( Mobile[end_fixed_mobile - FixedLength], displayMode, fieldName, fieldColour);
-               if( SDB_OK != rc )
+                  break ;
+               rc = getFieldStructNameAndColour( Mobile[end_fixed_mobile - FixedLength],
+                                                 displayMode, fieldName, fieldColour ) ;
+               if( rc )
                {
-                  goto error;
+                  goto error ;
                }
-               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor*8;
+               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
                attron( COLOR_PAIR( pairNumber ) ) ;
-               rc = MVPRINTW_TOP( fieldName, tableCellLength, Mobile[end_fixed_mobile - FixedLength].alignment, start_row, start_col );
-               if( SDB_OK != rc )
+               rc = MVPRINTW_TOP( fieldName, tableCellLength,
+                                  Mobile[end_fixed_mobile - FixedLength].alignment, start_row, start_col ) ;
+               if( rc )
                {
-                  goto error;
+                  goto error ;
                }
                attroff( COLOR_PAIR( pairNumber ) ) ;  
-               start_col += tableCellLength;
-               ++end_fixed_mobile;
-               ++tableCol;
+               start_col += tableCellLength ;
+               ++start_col ; // add separate pace
+               ++end_fixed_mobile ;
+               ++tableCol ;
             }
 
             //print the content on the screen
-            start_row += 1; // 
+            start_row += 1 ; // 
             if( start_row - actualPosition.referUpperLeft_Y >= actualPosition.length_Y )
             {
-               goto done;
+               goto done ;
             }
-            rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X, start_row, start_col, 0, actualPosition.length_X -COL * tableCellLength, displayType, AUTOSETTYPE );
-            if( SDB_OK != rc )
+            rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X, 
+                                      start_row, start_col, 0, actualPosition.length_X -COL * tableCellLength,
+                                      displayType, AUTOSETTYPE ) ;
+            if( rc )
             {
-               goto error;
+               goto error ;
             }
-            INT32 pos_snapshot = 0;
-               for( pos_snapshot = 0; pos_snapshot < root.input.cur_Snapshot.size(); ++pos_snapshot )
+            INT32 pos_snapshot = 0 ;
+            for( pos_snapshot = 0; pos_snapshot < root.input.cur_Snapshot.size(); ++pos_snapshot )
             {      
                INT32 start_up = start_fixed_mobile;
                bsonobj = root.input.cur_Snapshot[pos_snapshot];
                while( 1 )
                {
                   if( start_col + tableCellLength - actualPosition.referUpperLeft_X > actualPosition.length_X )
-                     break;
+                     break ;
                   if( start_up >= FixedLength )
-                     break;
+                     break ;
                   if( start_up >= end_fixed_mobile)
-                     break;
-                  rc = getFieldStructNameAndColour( Fixed[start_up], displayMode, fieldName, fieldColour);
+                     break ;
+                  rc = getFieldStructNameAndColour( Fixed[start_up], displayMode, fieldName, fieldColour) ;
                   if( SDB_OK != rc )
                   {
                      goto error;
                   }
-                  INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor*8;
-                  string result = "";
-                  rc = getResultFromBSONobj( bsonobj, Fixed[start_up].sourceField, displayMode, result, Fixed[start_up].canSwitch, baseField, Fixed[start_up].warningValue, pairNumber);
+                  INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
+                  string result = NULLSTRING;
+                  rc = getResultFromBSONobj( bsonobj, Fixed[start_up].sourceField,
+                                             displayMode, result, Fixed[start_up].canSwitch,
+                                             baseField, Fixed[start_up].warningValue, pairNumber) ;
                   attron( COLOR_PAIR( pairNumber ) ) ;
                   if( SDB_OK != rc )
                   {
                      goto error;
                   }
-                  rc = MVPRINTW_TOP( result, tableCellLength, Fixed[start_up].alignment, start_row, start_col );
+                  rc = MVPRINTW_TOP( result, tableCellLength, Fixed[start_up].alignment, start_row, start_col ) ;
                   if( SDB_OK != rc )
                   {
                      goto error;
                   }
                   attroff( COLOR_PAIR( pairNumber ) ) ;  
-                  start_col += tableCellLength;
-                  ++start_up;
+                  start_col += tableCellLength ;
+                  ++start_col ; // add separate pace
+                  ++start_up ;
                }
                while( 1 )
                {
@@ -2794,6 +2810,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
                   }
                   attroff( COLOR_PAIR( pairNumber ) ) ;  
                   start_col += tableCellLength;
+                  ++start_col ; // add separate pace
                   ++start_up;
                }
                start_row += 1; 
@@ -2861,6 +2878,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
             }
             attroff( COLOR_PAIR( pairNumber ) ) ;  
             start_col += Fixed[fLength].contentLength;
+            ++start_col ; // add separate pace
          }
          
          if( root.input.fieldPosition >= MobileLength )
@@ -2885,6 +2903,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
             }
             attroff( COLOR_PAIR( pairNumber ) ) ;  
             start_col += Mobile[mLength].contentLength;
+            ++start_col ; // add separate pace
          }
 
          //print the content on the screen
@@ -2899,7 +2918,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
             goto error;
          }
          INT32 pos_snapshot = 0;
-            for( pos_snapshot = 0; pos_snapshot < root.input.cur_Snapshot.size(); ++pos_snapshot )
+         for( pos_snapshot = 0; pos_snapshot < root.input.cur_Snapshot.size(); ++pos_snapshot )
          {      
             bsonobj = root.input.cur_Snapshot[pos_snapshot];
             for( INT32 fLength = 0; fLength < FixedLength; ++fLength )
@@ -2911,51 +2930,59 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
                {
                   goto error;
                }
-               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor*8;
-               string result = "";
+               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
+               string result = NULLSTRING;
                rc = getResultFromBSONobj( bsonobj, Fixed[fLength].sourceField, displayMode, result, Fixed[fLength].canSwitch, baseField, Fixed[fLength].warningValue, pairNumber );
                attron( COLOR_PAIR( pairNumber ) ) ;
                if( SDB_OK != rc )
                {
-                  goto error;
+                  goto error ;
                }
-               rc = MVPRINTW_TOP( result, Fixed[fLength].contentLength, Fixed[fLength].alignment, start_row, start_col );
-               if( SDB_OK != rc )
+               rc = MVPRINTW_TOP( result, Fixed[fLength].contentLength,
+                                  Fixed[fLength].alignment, start_row, start_col ) ;
+               if( rc )
                {
                   goto error;
                }
                attroff( COLOR_PAIR( pairNumber ) ) ;  
-               start_col += Fixed[fLength].contentLength;
+               start_col += Fixed[fLength].contentLength ;
+               ++start_col ; // add separate pace
             }
             
             if( root.input.fieldPosition >= MobileLength )
             {
-               root.input.fieldPosition = MobileLength - 1;
+               root.input.fieldPosition = MobileLength - 1 ;
             }
             for( INT32 mLength = root.input.fieldPosition; mLength < MobileLength; ++mLength )
             {
-               if( start_col + Mobile[mLength].contentLength - actualPosition.referUpperLeft_X > actualPosition.length_X )
+               if( start_col + Mobile[mLength].contentLength - actualPosition.referUpperLeft_X >
+                   actualPosition.length_X )
                   break;
-               rc = getFieldStructNameAndColour( Mobile[mLength], displayMode, fieldName, fieldColour);
-               if( SDB_OK != rc )
+               rc = getFieldStructNameAndColour( Mobile[mLength], displayMode,
+                                                 fieldName, fieldColour) ;
+               if( rc )
                {
-                  goto error;
+                  goto error ;
                }
-               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor*8;
-               string result = "";
-               rc = getResultFromBSONobj( bsonobj, Mobile[mLength].sourceField, displayMode, result, Mobile[mLength].canSwitch, baseField, Mobile[mLength].warningValue, pairNumber );
+               INT32 pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
+               string result =  NULLSTRING ;
+               rc = getResultFromBSONobj( bsonobj, Mobile[mLength].sourceField,
+                                          displayMode, result, Mobile[mLength].canSwitch, baseField,
+                                          Mobile[mLength].warningValue, pairNumber ) ;
                attron( COLOR_PAIR( pairNumber ) ) ;
                if( SDB_OK != rc )
                {
                   goto error;
                }
-               rc = MVPRINTW_TOP( result, Mobile[mLength].contentLength, Mobile[mLength].alignment, start_row, start_col );
-               if( SDB_OK != rc )
+               rc = MVPRINTW_TOP( result, Mobile[mLength].contentLength,
+                                  Mobile[mLength].alignment, start_row, start_col ) ;
+               if( rc )
                {
-                  goto error;
+                  goto error ;
                }
                attroff( COLOR_PAIR( pairNumber ) ) ;  
-               start_col += Mobile[mLength].contentLength;
+               start_col += Mobile[mLength].contentLength ;
+               ++start_col ; // add separate pace
             }
             start_row += 1; 
             rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X, start_row, start_col, 0, actualPosition.length_X -expressionLengthSum , displayType, AUTOSETTYPE);
@@ -2965,7 +2992,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
             }
             if( start_row - actualPosition.referUpperLeft_Y >= actualPosition.length_Y )
             {
-               break;
+               break ;
             }
          }   
       }
@@ -2976,15 +3003,12 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent, string displ
    }
    else
    {
-      goto error;
+      goto error ;
    }
 done :
    return rc ;
 error :
-   if( SDB_OK == rc )
-   {
-      rc = SDB_ERROR;
-   }
+   rc = SDB_ERROR ;
    goto done ;
 }
    
