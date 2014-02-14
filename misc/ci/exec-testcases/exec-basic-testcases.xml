@@ -104,8 +104,15 @@
 				<sdbProperty name="db.RG.info" value="this env is standalong , host is ${test.machine.no2.basic}"/>
 			</then>
 		</if>
-		
-		
+		<if>
+     	<equals arg1="${os.arch}" arg2="ppc64" />
+   		<then>
+   	  	<property name="URL.download.pre" value="http://192.168.30.150:8080" />
+   		</then>
+   		<else>
+    	  <property name="URL.download.pre" value="http://192.168.30.184:8080" />
+   		</else>
+   </if>
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
 		
 		<exec executable="sed">
@@ -188,17 +195,6 @@
 				 <if>
 					<equals arg1="${to.copy.test.log}" arg2="true" />
 					<then>
-						<if>
-						   <equals arg1="${os.arch}" arg2="ppc64" />
-						   <then>
-						   	  <property name="URL.download.pre" value="http://192.168.30.150:8080" />
-						   </then>
-						   <else>
-					        <property name="URL.download.pre" value="http://192.168.30.184:8080" />
-					     </else>
-						</if>
-
-						
 						<echo message="to.copy.test.log is true , then copy all test log to ${save.testLog.hostname}:${save.testLog.dir}"/>
 						
 						<tstamp>
