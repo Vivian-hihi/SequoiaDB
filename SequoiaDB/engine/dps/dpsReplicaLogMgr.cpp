@@ -46,13 +46,7 @@ namespace engine
 {
    #define WORK_PAGE ( &( _pages[_work] ) )
 
-   #define INCREASE_WORK( a ) {a = (++a) & DPS_SUB_BIT;}
-
-   #define FIRST_PAGE( a ) ( a.at( 0 ) )
-
-   #define LAST_PAGE( a ) ( ( a.at( a.size() -1 ) ))
-
-   #define PAGE( n ) (&( _pages [ (n)&DPS_SUB_BIT ] ))
+   #define PAGE( n ) (&( _pages [ ( DPS_SUB_BIT ? (n)&DPS_SUB_BIT : (n)%_pageNum ) ] ))
 
    #define SHARED_LOCK_NODES( meta )\
             {for ( UINT32 i = 0;\
@@ -96,10 +90,10 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_INIT );
-      SDB_ASSERT ( path, "path can't be NULL" )
-      SDB_ASSERT ( ossIsPowerOf2( pageNum ), "must be a power of 2" )
-      // free in destructor
+      SDB_ASSERT ( path, "path can't be NULL" ) ;
+
       _replSet = pmdGetKRCB()->getReplCB() ;
+      // free in destructor
       _pages = SDB_OSS_NEW _dpsLogPage[pageNum];
       if ( NULL == _pages )
       {
@@ -114,8 +108,11 @@ namespace engine
       }
       _totalSize = DPS_DEFAULT_PAGE_SIZE * pageNum;
       _idleSize.init( _totalSize );
-      _pageNum = pageNum;
-      DPS_SUB_BIT = ~pageNum ;
+      _pageNum = pageNum ;
+      if ( ossIsPowerOf2( pageNum ) )
+      {
+         DPS_SUB_BIT = ~pageNum ;
+      }
 
       // initialize log files
       rc = _logger.init( path );
@@ -937,7 +934,7 @@ namespace engine
 
          if ( 0 == ( DPS_DEFAULT_PAGE_SIZE - localOffset ) )
          {
-            ++localSub ;
+            localSub = _incPageID( localSub ) ;
             localOffset = 0 ;
          }
       }
