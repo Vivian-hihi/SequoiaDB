@@ -4388,7 +4388,7 @@ namespace sdbclient
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_removeShard, "_sdbImpl::removeShard" )
-   INT32 _sdbImpl::removeShard ( const CHAR *pRGName )
+   INT32 _sdbImpl::removeShard ( const CHAR *pShardName )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_removeShard ) ;
       INT32 rc = SDB_OK ;
@@ -4398,18 +4398,18 @@ namespace sdbclient
       BSONObj newObj ;
       CHAR *pCommand = CMD_ADMIN_PREFIX CMD_NAME_REMOVE_GROUP ;
       CHAR *pName = FIELD_NAME_GROUPNAME ;
-      if ( !pRGName )
+      if ( !pShardName )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      nameLength = ossStrlen( pRGName ) ;
+      nameLength = ossStrlen( pShardName ) ;
       if ( 0 == nameLength || CLIENT_SHARD_NAMESZ < nameLength )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      ob.append ( pName, pRGName ) ;
+      ob.append ( pName, pShardName ) ;
       newObj = ob.obj() ;
       rc = _runCommand ( pCommand, result, &newObj ) ;
       if ( rc )

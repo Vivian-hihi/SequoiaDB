@@ -402,17 +402,17 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
                                          sdbCSHandle *handle ) ;
 
 /** \fn INT32 sdbGetShard ( sdbConnectionHandle cHandle,
-                                      const CHAR *pRGName,
+                                      const CHAR *pShardName,
                                       sdbShardHandle *handle )
     \brief Get the specified shard
     \param [in] cHandle The database connection handle
-    \param [in] pRGName The name of shard
+    \param [in] pShardName The name of shard
     \param [out] handle The shard handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
-                                      const CHAR *pRGName,
+                                      const CHAR *pShardName,
                                       sdbShardHandle *handle ) ;
 
 /** \fn INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
@@ -430,15 +430,15 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
                                        sdbShardHandle *handle ) ;
 
 /** \fn INT32 sdbGetShardName ( sdbShardHandle cHandle,
-                                       CHAR **ppRGName )
+                                       CHAR **ppShardName )
     \brief Get the specified shard name
     \param [in] cHandle The shard handle
-    \param [out] ppRGName The shard name
+    \param [out] ppShardName The shard name
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
-                                          CHAR **ppRGName ) ;
+                                          CHAR **ppShardName ) ;
 
 /** \fn BOOLEAN sdbIsShardCatalog ( sdbShardHandle cHandle )
     \brief Test whether the specified shard is catalog
@@ -484,28 +484,28 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
                                           const CHAR *pCollectionSpaceName ) ;
 
 /** \fn INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
-                                         const CHAR *pRGName,
+                                         const CHAR *pShardName,
                                          sdbShardHandle *handle )
     \brief Create the specified shard
     \param [in] cHandle The database connection handle
-    \param [in] pRGName The name of the shard
+    \param [in] pShardName The name of the shard
     \param [out] handle The shard handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
-                                         const CHAR *pRGName,
+                                         const CHAR *pShardName,
                                          sdbShardHandle *handle ) ;
 /** \fn INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
-                                        const CHAR *pRGName )
+                                        const CHAR *pShardName )
     \brief Remove the specified shard
     \param [in] cHandle The database connection handle
-    \param [in] pRGName The name of the shard
+    \param [in] pShardName The name of the shard
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
-                                         const CHAR *pRGName ) ;
+                                         const CHAR *pShardName ) ;
 
 /** \fn INT32 sdbStartShard ( sdbShardHandle cHandle )
     \brief Start and activate the specified shard

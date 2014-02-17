@@ -49,12 +49,12 @@ static UINT32 _sdbRand ()
 //#define SDB_CLIENT_DFT_NETWORK_TIMEOUT 1000000
 #define SDB_CLIENT_DFT_NETWORK_TIMEOUT -1
 static INT32 _setRGName ( sdbShardHandle handle,
-                          const CHAR *pRGName )
+                          const CHAR *pShardName )
 {
    INT32 rc       = SDB_OK ;
    INT32 len      = 0 ;
    sdbRGStruct *r = (sdbRGStruct*)handle ;
-   if ( !r || !pRGName )
+   if ( !r || !pShardName )
    {
       rc = SDB_SYS ;
       goto error ;
@@ -64,14 +64,14 @@ static INT32 _setRGName ( sdbShardHandle handle,
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
-   if ( ( len = ossStrlen ( pRGName ) ) > CLIENT_RG_NAMESZ )
+   if ( ( len = ossStrlen ( pShardName ) ) > CLIENT_RG_NAMESZ )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    ossMemset ( r->_replicaGroupName, 0, sizeof(r->_replicaGroupName) ) ;
-   ossMemcpy ( r->_replicaGroupName, pRGName, len ) ;
-   r->_isCatalog = ( ossStrcmp ( pRGName, CAT_CATALOG_GROUPNAME ) == 0 ) ;
+   ossMemcpy ( r->_replicaGroupName, pShardName, len ) ;
+   r->_isCatalog = ( ossStrcmp ( pShardName, CAT_CATALOG_GROUPNAME ) == 0 ) ;
 done :
    return rc ;
 error :
@@ -1250,7 +1250,7 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
-                                      const CHAR *pRGName,
+                                      const CHAR *pShardName,
                                       sdbShardHandle *handle )
 {
    INT32 rc                 = SDB_OK ;
@@ -1272,15 +1272,15 @@ SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
       goto error ;
    }
 
-   if ( !pRGName || !handle ||
-        (nameLength = ossStrlen ( pRGName ) ) >
+   if ( !pShardName || !handle ||
+        (nameLength = ossStrlen ( pShardName ) ) >
         CLIENT_RG_NAMESZ )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   rc = bson_append_string ( &newObj, pName, pRGName ) ;
+   rc = bson_append_string ( &newObj, pName, pShardName ) ;
    if ( rc )
    {
       rc = SDB_SYS ;
@@ -1305,13 +1305,13 @@ SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
       r->_sock          = connection->_sock ;
       r->_endianConvert = connection->_endianConvert ;
-      rc = _setRGName ( (sdbShardHandle)r, pRGName ) ;
+      rc = _setRGName ( (sdbShardHandle)r, pShardName ) ;
       if ( rc )
       {
          SDB_OSS_FREE ( r ) ;
          goto error ;
       }
-      if ( ossStrcmp ( pRGName, CATALOG_GROUPNAME ) == 0 )
+      if ( ossStrcmp ( pShardName, CATALOG_GROUPNAME ) == 0 )
       {
          r->_isCatalog = TRUE ;
       }
@@ -1383,7 +1383,7 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
    if ( SDB_OK == ( rc = sdbNext ( cursor, &result ) ) )
    {
       bson_iterator it ;
-      const CHAR *pRGName = NULL ;
+      const CHAR *pShardName = NULL ;
       r = (sdbRGStruct*) SDB_OSS_MALLOC ( sizeof( sdbRGStruct ) ) ;
       if ( !r )
       {
@@ -1395,18 +1395,18 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
          rc = SDB_SYS ;
          goto error ;
       }
-      pRGName = bson_iterator_string ( &it ) ;
+      pShardName = bson_iterator_string ( &it ) ;
       ossMemset ( r, 0, sizeof( sdbRGStruct ) ) ;
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
       r->_sock          = connection->_sock ;
       r->_endianConvert = connection->_endianConvert ;
-      rc = _setRGName ( (sdbShardHandle)r, pRGName ) ;
+      rc = _setRGName ( (sdbShardHandle)r, pShardName ) ;
       if ( rc )
       {
          SDB_OSS_FREE ( r ) ;
          goto error ;
       }
-      if ( ossStrcmp ( pRGName, CATALOG_GROUPNAME ) == 0 )
+      if ( ossStrcmp ( pShardName, CATALOG_GROUPNAME ) == 0 )
       {
          r->_isCatalog = TRUE ;
       }
@@ -1435,7 +1435,7 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
-                                          CHAR **ppRGName )
+                                          CHAR **ppShardName )
 {
    INT32 rc                 = SDB_OK ;
    sdbRGStruct *r           = (sdbRGStruct*)cHandle ;
@@ -1445,9 +1445,9 @@ SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
       rc = SDB_CLT_INVALID_HANDLE ;
       goto error ;
    }
-   if ( ppRGName )
+   if ( ppShardName )
    {
-      *ppRGName = r->_replicaGroupName ;
+      *ppShardName = r->_replicaGroupName ;
    }
 done :
    return rc ;
@@ -1979,7 +1979,7 @@ error :
 }
 
 SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
-                                         const CHAR *pRGName,
+                                         const CHAR *pShardName,
                                          sdbShardHandle *handle )
 {
    INT32 rc         = SDB_OK ;
@@ -1999,14 +1999,14 @@ SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
       goto error ;
    }
 
-   if ( !pRGName || !handle ||
-        (nameLength = ossStrlen ( pRGName ) ) >
+   if ( !pShardName || !handle ||
+        (nameLength = ossStrlen ( pShardName ) ) >
         CLIENT_RG_NAMESZ )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = bson_append_string ( &newObj, pName, pRGName ) ;
+   rc = bson_append_string ( &newObj, pName, pShardName ) ;
    if ( rc )
    {
       rc = SDB_SYS ;
@@ -2035,7 +2035,7 @@ SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
    r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
    r->_sock          = connection->_sock ;
    r->_endianConvert = connection->_endianConvert ;
-   rc = _setRGName ( (sdbShardHandle)r, pRGName ) ;
+   rc = _setRGName ( (sdbShardHandle)r, pShardName ) ;
    if ( rc )
    {
       SDB_OSS_FREE ( r ) ;
@@ -2050,7 +2050,7 @@ error :
 }
 
 SDB_EXPORT INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
-                                         const CHAR *pRGName )
+                                         const CHAR *pShardName )
 {
    INT32 rc = SDB_OK ;
    BOOLEAN result   = FALSE ;
@@ -2068,20 +2068,20 @@ SDB_EXPORT INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
       goto error ;
    }
 
-   if ( !pRGName )
+   if ( !pShardName )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   nameLength = ossStrlen( pRGName ) ;
+   nameLength = ossStrlen( pShardName ) ;
    if ( 0 == nameLength || CLIENT_RG_NAMESZ < nameLength )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
 
-   rc = bson_append_string ( &newObj, pName, pRGName ) ;
+   rc = bson_append_string ( &newObj, pName, pShardName ) ;
       if ( rc )
    {
       rc = SDB_SYS ;
