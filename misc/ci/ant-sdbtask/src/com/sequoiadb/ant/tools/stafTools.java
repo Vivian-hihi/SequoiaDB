@@ -15,6 +15,7 @@ public class stafTools extends Task{
 	String common=null;
 	String fileName=null;
 	String saveDir=null;
+	String waitTime="30m";
 	boolean failonerror = true;
 	public void setWorkHost( String value ){
 		workHost = value;
@@ -36,6 +37,9 @@ public class stafTools extends Task{
 	}
 	public void setFileName( String value ){
 		fileName = value;
+	}
+	public void setWaitTime(String value ){
+		this.waitTime = value;
 	}
 	public void setSaveDir( String value ){
 		saveDir=value;
@@ -78,7 +82,7 @@ public class stafTools extends Task{
 			if( workType.equals("shell"))
 			{
 				System.out.println("shell work");
-				request = "START SHELL COMMAND " + common + " WAIT 30m WORKDIR "+workDir ; 
+				request = "START SHELL COMMAND " + common + " WAIT "+waitTime+" WORKDIR "+workDir ; 
 				System.out.println("exec: staf " + workHost+ " PROCESS " + request);
 				result = handle.submit2( workHost , "PROCESS", request);
 				if( failonerror){
