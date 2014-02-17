@@ -84,7 +84,7 @@ namespace engine
       try
       {
          const BSONElement &ele = *(param.begin()) ;
-         if ( ele.eoo() )
+         if ( ele.eoo() || ele.isNull() )
          {
             goto done ;
          }
