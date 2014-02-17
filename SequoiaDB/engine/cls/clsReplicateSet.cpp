@@ -71,7 +71,7 @@ namespace engine
    #define CLS_CONNREFUSED    ECONNREFUSED
 #endif //_WINDOWS
 
-   #define CLS_SYNCCTRL_BASE_TIME         (25)
+   #define CLS_SYNCCTRL_BASE_TIME         (50)
 
    _clsReplicateSet::_clsReplicateSet( _netRouteAgent *agent ):
                                     _agent( agent ),
