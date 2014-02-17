@@ -808,6 +808,10 @@ namespace sdbclient
                                const BSONObj &configure ) ;
 
       INT32 activateShard ( const CHAR *pName, _sdbShard **shard ) ;
+      INT32 activateShard ( const CHAR *pName, sdbShard &shard )
+      {
+         return activateShard( pName, &shard.pShard ) ;
+      }
 
       // sql
       INT32 execUpdate( const CHAR *sql ) ;
@@ -834,13 +838,13 @@ namespace sdbclient
          return listProcedures ( &cursor.pCursor, condition ) ;
       }
       INT32 evalJS( _sdbCursor **cursor,
-                             const CHAR *code,
-                             SDB_SPD_RES_TYPE *type,
-                             const bson::BSONObj &errmsg ) ;
+                    const CHAR *code,
+                    SDB_SPD_RES_TYPE *type,
+                    const bson::BSONObj &errmsg ) ;
       INT32 evalJS( sdbCursor &cursor,
-                             const CHAR *code,
-                             SDB_SPD_RES_TYPE *type,
-                             const bson::BSONObj &errmsg )
+                    const CHAR *code,
+                    SDB_SPD_RES_TYPE *type,
+                    const bson::BSONObj &errmsg )
       {
          return evalJS( &cursor.pCursor, code, type, errmsg ) ;
       }
@@ -848,15 +852,15 @@ namespace sdbclient
       // bakeup
       INT32 backupOffline ( const bson::BSONObj &options) ;
       INT32 listBackup ( _sdbCursor **cursor,
-                              const bson::BSONObj &options,
-                              const bson::BSONObj &condition = _sdbStaticObject,
-                              const bson::BSONObj &selector = _sdbStaticObject,
-                              const bson::BSONObj &orderBy = _sdbStaticObject) ;
+                         const bson::BSONObj &options,
+                         const bson::BSONObj &condition = _sdbStaticObject,
+                         const bson::BSONObj &selector = _sdbStaticObject,
+                         const bson::BSONObj &orderBy = _sdbStaticObject) ;
       INT32 listBackup ( sdbCursor &cursor,
-                              const bson::BSONObj &options,
-                              const bson::BSONObj &condition = _sdbStaticObject,
-                              const bson::BSONObj &selector = _sdbStaticObject,
-                              const bson::BSONObj &orderBy = _sdbStaticObject)
+                         const bson::BSONObj &options,
+                         const bson::BSONObj &condition = _sdbStaticObject,
+                         const bson::BSONObj &selector = _sdbStaticObject,
+                         const bson::BSONObj &orderBy = _sdbStaticObject)
       {
          return listBackup ( &cursor.pCursor, options, condition, selector, orderBy ) ;
       }

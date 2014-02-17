@@ -1844,32 +1844,34 @@ namespace sdbclient
       virtual INT32 listShards ( sdbCursor &result ) = 0 ;
 
       virtual INT32 getShard ( const CHAR *pName,
-                                      _sdbShard **result ) = 0 ;
+                               _sdbShard **result ) = 0 ;
 
       virtual INT32 getShard ( const CHAR *pName,
-                                      sdbShard &result ) = 0 ;
+                               sdbShard &result ) = 0 ;
 
       virtual INT32 getShard ( INT32 id,
-                                      _sdbShard **result ) = 0 ;
+                                _sdbShard **result ) = 0 ;
 
       virtual INT32 getShard ( INT32 id,
-                                      sdbShard &result ) = 0 ;
+                               sdbShard &result ) = 0 ;
 
       virtual INT32 createShard ( const CHAR *pName,
-                                         _sdbShard **shard ) = 0 ;
+                                  _sdbShard **shard ) = 0 ;
 
       virtual INT32 createShard ( const CHAR *pName,
-                                         sdbShard &shard ) = 0 ;
+                                  sdbShard &shard ) = 0 ;
 
-   virtual INT32 removeShard ( const CHAR *pName ) = 0 ;
+      virtual INT32 removeShard ( const CHAR *pName ) = 0 ;
 
       virtual INT32 createCataShard (  const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        const CHAR *pDatabasePath,
-                                        const bson::BSONObj &configure ) =0 ;
+                                       const CHAR *pServiceName,
+                                       const CHAR *pDatabasePath,
+                                       const bson::BSONObj &configure ) =0 ;
 
       virtual INT32 activateShard ( const CHAR *pName,
-                                           _sdbShard **shard ) = 0 ;
+                                    _sdbShard **shard ) = 0 ;
+      virtual INT32 activateShard ( const CHAR *pName,
+                                    sdbShard &shard ) = 0 ;
 
       virtual INT32 execUpdate( const CHAR *sql ) = 0 ;
 
@@ -2644,7 +2646,7 @@ namespace sdbclient
                                         pDatabasePath, configure ) ;
       }
 
-/** \fn INT32 activateShard ( const CHAR *pName, _sdbShard **shard )
+/* \fn INT32 activateShard ( const CHAR *pName, _sdbShard **shard )
     \brief Activate the specified shard
     \param [in] pName The name of the shard.
     \param [out] shard The return shard handle.
@@ -2652,6 +2654,20 @@ namespace sdbclient
     \retval Others Operation Fail
 */
       INT32 activateShard ( const CHAR *pName, _sdbShard **shard )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->activateShard ( pName, shard ) ;
+      }
+
+/* \fn INT32 activateShard ( const CHAR *pName, sdbShard &shard )
+    \brief Activate the specified shard
+    \param [in] pName The name of the shard.
+    \param [out] shard The return shard object.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 activateShard ( const CHAR *pName, sdbShard &shard )
       {
          if ( !pSDB )
             return SDB_SYS ;

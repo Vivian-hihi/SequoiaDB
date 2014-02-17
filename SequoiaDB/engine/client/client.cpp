@@ -4217,10 +4217,10 @@ namespace sdbclient
       return getList ( result, SDB_LIST_SHARDS ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_getShardWITHNAME, "_sdbImpl::getShard" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSHARDWITHNAME, "_sdbImpl::getShard" )
    INT32 _sdbImpl::getShard ( const CHAR *pName, _sdbShard **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_getShardWITHNAME ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETSHARDWITHNAME ) ;
       INT32 rc = SDB_OK ;
       sdbCursor resultCursor ;
       BOOLEAN found = FALSE ;
@@ -4273,16 +4273,16 @@ namespace sdbclient
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_getShardWITHNAME, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETSHARDWITHNAME, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_getShardWITHID, "_sdbImpl::getShard" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETSHARDWITHID, "_sdbImpl::getShard" )
    INT32 _sdbImpl::getShard ( SINT32 id, _sdbShard **result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_getShardWITHID ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETSHARDWITHID ) ;
       INT32 rc = SDB_OK ;
       sdbCursor resultCursor ;
       BOOLEAN found = FALSE ;
@@ -4337,17 +4337,17 @@ namespace sdbclient
          goto error ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_getShardWITHID, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETSHARDWITHID, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_createShard, "_sdbImpl::createShard" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATESHARD, "_sdbImpl::createShard" )
    INT32 _sdbImpl::createShard ( const CHAR *pName,
                                         _sdbShard **rg )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_createShard ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATESHARD ) ;
       INT32 rc = SDB_OK ;
       BSONObj shardName ;
       BOOLEAN result = FALSE ;
@@ -4381,16 +4381,16 @@ namespace sdbclient
       }
       *rg = replset ;
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_createShard, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_CREATESHARD, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_removeShard, "_sdbImpl::removeShard" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_REMOVESHAED, "_sdbImpl::removeShard" )
    INT32 _sdbImpl::removeShard ( const CHAR *pShardName )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_removeShard ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_REMOVESHAED ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN result = FALSE ;
       INT32 nameLength = 0 ;
@@ -4417,19 +4417,19 @@ namespace sdbclient
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC ( SDB_CLIENT_removeShard, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_REMOVESHAED, rc );
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_createCataShard, "_sdbImpl::createCataShard" )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECATASHARD, "_sdbImpl::createCataShard" )
    INT32 _sdbImpl::createCataShard (  const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
                                         const BSONObj &configure )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_createCataShard ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECATASHARD ) ;
       INT32 rc = SDB_OK ;
       BSONObj configuration ;
       BSONObjBuilder ob ;
@@ -4477,7 +4477,7 @@ namespace sdbclient
       }
 
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_createCataShard, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_CREATECATASHARD, rc );
       return rc ;
    error :
       goto done ;
