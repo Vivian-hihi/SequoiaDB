@@ -27,7 +27,7 @@ import com.sequoiadb.exception.BaseException;
  */
 public class ServerAddress {
 	private final static String DEFAULT_HOST = "127.0.0.1";
-	private final static int DEFAULT_PORT = 50000;
+	private final static int DEFAULT_PORT = 11810;
 	private InetSocketAddress hostAddress;
 	private String host;
 	private int port;
