@@ -464,6 +464,20 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_SYNC_STRATEGY</name>
+      <long>syncstrategy</long>
+      <description>
+         <en>The control strategy of data sync in ReplGroup, value enumeration: none,keepnormal,keepall, default:none.</en>
+         <cn>副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为none。</cn>
+      </description>
+      <detail>
+         <en>The control strategy of data sync in repl group, value enumeration: none,keepnormal,keepall, default:none.</en>
+         <cn>副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为none。</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_REPL_BUCKET_SIZE</name>
       <long>replbucketsize</long>
       <description>
