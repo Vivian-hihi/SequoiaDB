@@ -250,6 +250,9 @@ namespace engine
             PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
             goto error ;
          }
+         rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize );
          PD_RC_CHECK( rc, PDERROR,
@@ -829,6 +832,9 @@ namespace engine
             PD_LOG( PDERROR, "failed to build record:%d",rc ) ;
             goto error ;
          }
+         rc = dpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize );
          PD_RC_CHECK( rc, PDERROR,

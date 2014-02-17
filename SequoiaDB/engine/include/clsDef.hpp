@@ -35,8 +35,6 @@
 #ifndef CLSDEF_HPP_
 #define CLSDEF_HPP_
 
-#include <map>
-
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogDef.hpp"
@@ -45,8 +43,9 @@
 #include "ossMem.hpp"
 #include "msg.h"
 #include "pmdEDU.hpp"
-#include "ossAtomic.hpp"
 #include "ossRWMutex.hpp"
+
+#include <map>
 
 using namespace std ;
 
@@ -219,15 +218,46 @@ namespace engine
       }
    } ;
 
+
+   #define CLS_SAME_SYNC_LSN_MAX_TIMES    (20)
+
    class _clsSyncStatus : public SDBObject
    {
    public :
-      _ossAtomic64 offset ;
-      _MsgRouteID id ;
+      DPS_LSN_OFFSET    offset ;
+      _MsgRouteID       id ;
+      BOOLEAN           valid ;
+      UINT32            sameReqTimes ;
 
       _clsSyncStatus():offset(0)
       {
-         id.value = 0 ;
+         id.value       = 0 ;
+         valid          = TRUE ;
+         sameReqTimes   = 0 ;
+      }
+
+      _clsSyncStatus& operator=( const _clsSyncStatus &right )
+      {
+         offset         = right.offset ;
+         id.value       = right.id.value ;
+         valid          = right.valid ;
+         sameReqTimes   = right.sameReqTimes ;
+
+         return *this ;
+      }
+
+      BOOLEAN isValid() const
+      {
+         // 1. already full sync
+         // 2. sharing-break
+         // 3. same sync req more than 20 times
+         if ( DPS_INVALID_LSN_OFFSET == offset ||
+              !valid ||
+              sameReqTimes > CLS_SAME_SYNC_LSN_MAX_TIMES )
+         {
+            return FALSE ;
+         }
+         return TRUE ;
       }
    } ;
 

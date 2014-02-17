@@ -61,6 +61,14 @@ namespace engine
    #define CLS_BASE_HANDLE_ID          (70000)
 
 
+   enum CLS_SYNC_STRATEGY
+   {
+      CLS_SYNC_NONE        = 0,
+      CLS_SYNC_KEEPNORMAL  = 1,
+      CLS_SYNC_KEEPALL     = 2
+   } ;
+   #define CLS_SYNC_DTF_STRATEGY    CLS_SYNC_NONE
+
    typedef MsgRouteID   NodeID ;
    #define INVALID_NODE_ID       (MSG_INVALID_ROUTEID)
 

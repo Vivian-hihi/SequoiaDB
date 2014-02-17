@@ -47,6 +47,7 @@
 
 #include "rtn.hpp"
 #include "rtnSortDef.hpp"
+#include "clsUtil.hpp"
 
 #include <vector>
 #include <boost/algorithm/string.hpp>
@@ -808,6 +809,7 @@ namespace engine
       ossMemset( _shardServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _restServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _krcbRole, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
+      ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
 
@@ -819,6 +821,7 @@ namespace engine
       _maxPrefPool         = PMD_MAX_PREF_POOL ;
       _maxSubQuery         = PMD_MAX_SUB_QUERY ;
       _maxReplSync         = PMD_DEFAULT_MAX_REPLSYNC ;
+      _syncStrategy        = CLS_SYNC_NONE ;
       _replBucketSize      = PMD_DFT_REPL_BUCKET_SIZE ;
       _memDebugEnabled     = FALSE ;
       _memDebugSize        = 0 ;
@@ -932,6 +935,9 @@ namespace engine
       rdxUInt( pEX, PMD_OPTION_REPL_BUCKET_SIZE, _replBucketSize, FALSE, FALSE,
                PMD_DFT_REPL_BUCKET_SIZE, TRUE ) ;
       rdvMinMax( pEX, _replBucketSize, 1, 4096, TRUE ) ;
+      // --syncstrategy
+      rdxString( pEX, PMD_OPTION_SYNC_STRATEGY, _syncStrategyStr,
+                 sizeof( _syncStrategyStr ), FALSE, TRUE, "", FALSE ) ;
       // --memdebug
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE, TRUE,
                    FALSE, TRUE ) ;
@@ -967,17 +973,17 @@ namespace engine
 
       // --dmsTmpBlkPath
       rdxPath( pEX, PMD_OPTION_DMS_TMPBLKPATH, _dmsTmpBlkPath,
-               sizeof(_dmsTmpBlkPath), FALSE, FALSE, "", TRUE ) ;
+               sizeof(_dmsTmpBlkPath), FALSE, FALSE, "" ) ;
 
       // --sortBufSz
       rdxUInt( pEX, PMD_OPTION_SORTBUF_SIZE, _sortBufSz,
-               FALSE, TRUE, PMD_DEFAULT_SORTBUF_SZ, TRUE ) ;
+               FALSE, TRUE, PMD_DEFAULT_SORTBUF_SZ ) ;
       rdvMinMax( pEX, _sortBufSz, PMD_MIN_SORTBUF_SZ,
                  -1, TRUE ) ;
 
       // --hjBufSz
       rdxUInt( pEX, PMD_OPTION_HJ_BUFSZ, _hjBufSz,
-               FALSE, TRUE, PMD_DEFAULT_HJ_SZ, TRUE ) ;
+               FALSE, TRUE, PMD_DEFAULT_HJ_SZ ) ;
       rdvMinMax( pEX, _hjBufSz, PMD_MIN_HJ_SZ,
                  -1, TRUE ) ;
 
@@ -1025,6 +1031,15 @@ namespace engine
       {
          _replBucketSize = PMD_DFT_REPL_BUCKET_SIZE ;
       }
+
+      // syncstrategy check
+      if ( SDB_OK != clsString2Strategy( _syncStrategyStr, _syncStrategy ) )
+      {
+         std::cerr << PMD_OPTION_SYNC_STRATEGY << " value error, use default"
+                   << endl ;
+         _syncStrategy = CLS_SYNC_DTF_STRATEGY ;
+      }
+      _syncStrategyStr[0] = 0 ;
 
       if ( 0 == ossStrlen( _replServiceName ) )
       {
@@ -1232,6 +1247,9 @@ namespace engine
       string catAddr = ss.str() ;
       ossStrncpy( _catAddrLine, catAddr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
+
+      clsStrategy2String( _syncStrategy, _syncStrategyStr,
+                          sizeof( _syncStrategyStr ) ) ;
 
       return SDB_OK ;
    }
@@ -1650,6 +1668,7 @@ namespace engine
       if ( krcb->getReplCB() )
       {
          krcb->getReplCB()->getBucket()->enforceMaxReplSync( _maxReplSync ) ;
+         krcb->getReplCB()->syncMgr()->enforceSyncStrategy( _syncStrategy ) ;
       }
 
    done:

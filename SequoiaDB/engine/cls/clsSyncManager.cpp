@@ -50,10 +50,10 @@ namespace engine
    const UINT32 CLS_IS_CONSULTING = 0 ;
    const UINT32 CLS_IS_SYNCING = 1 ;
 
-   #define CLS_W_2_SUB( num ) ( num - 2 )
-   #define CLS_SUB_2_W( sub ) ( sub + 2 )
+   #define CLS_W_2_SUB( num ) ( (num) - 2 )
+   #define CLS_SUB_2_W( sub ) ( (sub) + 2 )
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CLSSYNCMAG, "_clsSyncManager::_clsSyncManager" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CLSSYNCMAG, "_clsSyncManager::_clsSyncManager" )
    _clsSyncManager::_clsSyncManager( _netRouteAgent *agent,
                                      _clsGroupInfo *info ):
                                      _agent( agent ),
@@ -68,6 +68,8 @@ namespace engine
       {
          _checkList[i] = DPS_INVALID_LSN_OFFSET ;
       }
+      _syncStrategy = CLS_SYNC_DTF_STRATEGY ;
+
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CLSSYNCMAG ) ;
    }
 
@@ -76,8 +78,72 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_UPNFYLIST, "_clsSyncManager::updateNotifyList" )
-   INT32 _clsSyncManager::updateNotifyList()
+   void _clsSyncManager::updateNodeStatus( const MsgRouteID & id,
+                                           BOOLEAN valid )
+   {
+      for ( UINT32 i = 0 ; i < _validSync ; ++i )
+      {
+         // find
+         if ( _notifyList[i].id.value == id.value )
+         {
+            _notifyList[i].valid = valid ;
+            break ;
+         }
+      }
+   }
+
+   void _clsSyncManager::notifyFullSync( const MsgRouteID & id )
+   {
+      for ( UINT32 i = 0 ; i < _validSync ; ++i )
+      {
+         // find
+         if ( _notifyList[i].id.value == id.value )
+         {
+            _notifyList[i].offset = DPS_INVALID_LSN_OFFSET ;
+            break ;
+         }
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETARBITLSN, "_clsSyncManager::getSyncCtrlArbitLSN" )
+   DPS_LSN_OFFSET _clsSyncManager::getSyncCtrlArbitLSN()
+   {
+      DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
+
+      PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_GETARBITLSN ) ;
+
+      if ( 0 == _validSync || CLS_SYNC_NONE == _syncStrategy )
+      {
+         goto done ;
+      }
+      else
+      {
+         for ( UINT32 i = 0 ; i < _validSync ; ++i )
+         {
+            if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset )
+            {
+               continue ;
+            }
+            if ( CLS_SYNC_KEEPNORMAL == _syncStrategy &&
+                 FALSE == _notifyList[i].isValid() )
+            {
+               continue ;
+            }
+            if ( DPS_INVALID_LSN_OFFSET == offset ||
+                 _notifyList[i].offset < offset )
+            {
+               offset = _notifyList[i].offset ;
+            }
+         }
+      }
+
+   done:
+      PD_TRACE_EXIT ( SDB__CLSSYNCMAG_GETARBITLSN ) ;
+      return offset ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_UPNFYLIST, "_clsSyncManager::updateNotifyList" )
+   INT32 _clsSyncManager::updateNotifyList( BOOLEAN newNodeValid )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_UPNFYLIST ) ;
@@ -86,21 +152,31 @@ namespace engine
       /// no need to require lock.
       map<UINT64, _clsSharingStatus> &group = _info->info ;
       UINT32 removed = 0 ;
+      UINT32 prevAlives = 0 ;
+      UINT32 aliveRemoved = 0 ;
       _clsSyncStatus status[CLS_REPLSET_MAX_NODE_SIZE - 1] ;
       UINT32 valid = 0 ;
 
       /// find removed nodes
       for ( UINT32 i = 0; i < _validSync ; i++ )
       {
+         if ( _notifyList[i].valid )
+         {
+            ++prevAlives ;
+         }
+
          if ( group.end() ==
               group.find( _notifyList[i].id.value ) )
          {
+            if ( _notifyList[i].valid )
+            {
+               ++aliveRemoved ;
+            }
             ++removed ;
          }
          else
          {
-            status[valid].offset.init( _notifyList[i].offset.peek() ) ;
-            status[valid].id.value = _notifyList[i].id.value ;
+            status[valid] = _notifyList[i] ;
             ++valid ;
          }
       }
@@ -108,7 +184,8 @@ namespace engine
       /// clear synclist
       if ( 0 != removed )
       {
-         cut( _info->groupSize() - removed ) ;
+         _clearSyncList( removed, aliveRemoved, prevAlives,
+                         _validSync, _notifyList ) ;
       }
 
       UINT32 merge = valid ;
@@ -128,8 +205,9 @@ namespace engine
          }
          if ( !has )
          {
-            status[merge].offset.init( 0 ) ;
+            status[merge].offset = 0 ;
             status[merge].id.value = itr->first ;
+            status[merge].valid = newNodeValid ;
             ++merge ;
          }
       }
@@ -141,7 +219,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_SYNC, "_clsSyncManager::sync" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_SYNC, "_clsSyncManager::sync" )
    INT32 _clsSyncManager::sync( _clsSyncSession &session,
                                 const UINT32 &w )
    {
@@ -189,7 +267,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_COMPLETE, "_clsSyncManager::complete" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_COMPLETE, "_clsSyncManager::complete" )
    void _clsSyncManager::complete( const MsgRouteID &id,
                                    const DPS_LSN &lsn,
                                    UINT32 TID )
@@ -233,7 +311,7 @@ namespace engine
    {
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_NOTIFY, "_clsSyncManager::notify" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_NOTIFY, "_clsSyncManager::notify" )
    void _clsSyncManager::notify( const DPS_LSN_OFFSET &offset )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_NOTIFY ) ;
@@ -250,7 +328,7 @@ namespace engine
          /// compare the offset of lsn.
          /// the node which request the latest lsn
          /// will be nofitied.
-         else if ( offset == _notifyList[i].offset.peek() )
+         else if ( offset == _notifyList[i].offset )
          {
             msg.header.routeID = _notifyList[i].id ;
             _agent->syncSend( _notifyList[i].id, &msg ) ;
@@ -264,7 +342,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETSYNCSRC, "_clsSyncManager::getSyncSrc" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETSYNCSRC, "_clsSyncManager::getSyncSrc" )
    MsgRouteID _clsSyncManager::getSyncSrc( const set<UINT64> &blacklist )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_GETSYNCSRC ) ;
@@ -332,7 +410,7 @@ namespace engine
       return res ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETFULLSRC, "_clsSyncManager::getFullSrc" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_GETFULLSRC, "_clsSyncManager::getFullSrc" )
    MsgRouteID _clsSyncManager::getFullSrc( const set<UINT64> &blacklist )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_GETFULLSRC ) ;
@@ -376,7 +454,7 @@ namespace engine
       return id ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_CUT, "_clsSyncManager::cut" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG_CUT, "_clsSyncManager::cut" )
    void _clsSyncManager::cut( UINT32 alives )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_CUT ) ;
@@ -407,7 +485,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__COMPLETE, "_clsSyncManager::_complete" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__COMPLETE, "_clsSyncManager::_complete" )
    void _clsSyncManager::_complete( const MsgRouteID &id,
                                     const DPS_LSN_OFFSET &offset )
    {
@@ -415,16 +493,25 @@ namespace engine
       DPS_LSN lsn ;
       lsn.offset = offset ;
       /// update notify list
-      for ( UINT32 i = 0; i < _validSync; i++ )
+      for ( UINT32 i = 0; i < _validSync ; i++ )
       {
          if ( _notifyList[i].id.value == id.value )
          {
-            if ( lsn.compareOffset( _notifyList[i].offset.peek() ) <= 0 )
+            INT32 result = lsn.compareOffset( _notifyList[i].offset ) ;
+            if ( 0 == result )
+            {
+               ++_notifyList[i].sameReqTimes ;
+            }
+            else
+            {
+               _notifyList[i].sameReqTimes = 0 ;
+            }
+
+            if ( result <= 0 )
             {
                goto done ;
             }
-
-            lsn.offset = _notifyList[i].offset.swap( offset ) ;
+            _notifyList[i].offset = offset ;
             break ;
          }
       }
@@ -440,7 +527,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__WAKE, "_clsSyncManager::_wake" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__WAKE, "_clsSyncManager::_wake" )
    void _clsSyncManager::_wake( CLS_WAKE_PLAN &plan )
    {
       /// eg: we got a plan : { 0, 5, 10 }
@@ -487,14 +574,14 @@ namespace engine
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__WAKE ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CTWAKEPLAN, "_clsSyncManager::_createWakePlan" )
-   void _clsSyncManager::_createWakePlan( const DPS_LSN_OFFSET &oOffset,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CTWAKEPLAN, "_clsSyncManager::_createWakePlan" )
+   void _clsSyncManager::_createWakePlan( const DPS_LSN_OFFSET &offset,
                                           CLS_WAKE_PLAN &plan )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CTWAKEPLAN ) ;
       for ( UINT32 i = 0; i < _validSync; i++ )
       {
-         if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset.peek() )
+         if ( DPS_INVALID_LSN_OFFSET == _notifyList[i].offset )
          {
             /// DPS_INVALID_LSN_OFFSET is 0xFFFFFFFFFFFFFFFFll.
             /// we use 0 to instead it. there will be no actual
@@ -503,7 +590,7 @@ namespace engine
          }
          else
          {
-            plan.insert( _notifyList[i].offset.peek() ) ;
+            plan.insert( _notifyList[i].offset ) ;
          }
       }
 
@@ -512,9 +599,8 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__WAIT, "_clsSyncManager::_wait" )
-   INT32 _clsSyncManager::_wait( _pmdEDUCB *&cb,
-                                UINT32 sub )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__WAIT, "_clsSyncManager::_wait" )
+   INT32 _clsSyncManager::_wait( _pmdEDUCB *&cb, UINT32 sub )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__WAIT ) ;
@@ -558,54 +644,64 @@ namespace engine
       return rc ;
    }
 
-/// the following code has not been completed.
-/// but we do not delete it for future use if nessesary.
-/*
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CRSYNCLIST, "_clsSyncManager::_clearSyncList" )
-   void _clsSyncManager::_clearSyncList( const UINT32 &removed,
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSYNCMAG__CRSYNCLIST, "_clsSyncManager::_clearSyncList" )
+   void _clsSyncManager::_clearSyncList( UINT32 removed, UINT32 removedAlives,
+                                         UINT32 preAlives, UINT32 preSyncNum,                           
                                          _clsSyncStatus *left )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG__CRSYNCLIST ) ;
-      SDB_ASSERT( removed <= _validSync,
-                  "removed size should less than valid size." ) ;
 
-      UINT32 mergeTo = _validSync - removed - 1 ;
+      UINT32 okW = preSyncNum - removed ; // except self
+      UINT32 endRemovedSub = preAlives - removedAlives ;
+
       /// loop every removed synclist
-      for ( UINT32 i = 0; i < removed; i++ )
+      UINT32 removedSub = preSyncNum - 1 ;
+      for ( ; removedSub >= endRemovedSub ; --removedSub )
       {
-         UINT32 removedSub = _validSync - i - 1 ;
-
          _mtxs[removedSub].get() ;
-         _mtxs[mergeTo].get() ;
+         if ( endRemovedSub > 0 )
+         {
+            _mtxs[endRemovedSub-1].get() ;
+         }
          _clsSyncSession session ;
 
          while ( SDB_OK == _syncList[removedSub].pop( session ) )
          {
-            UINT32 complete = 1 ;
+            UINT32 complete = 0 ;
             /// compute w's completion
-            for ( UINT32 j = 0; j < _validSync - 1; j++ )
+            for ( UINT32 j = 0; j < preSyncNum - 1 ; ++j )
             {
-               if ( session.endLsn < left[j].offset.peek() )
+               if ( session.endLsn < left[j].offset )
                {
                   ++complete ;
                }
             }
-            if ( CLS_SUB_2_W( mergeTo ) <= complete )
+            if ( okW <= complete )
             {
                session.eduCB->getEvent().signal ( SDB_OK ) ;
+            }
+            else if ( 0 == endRemovedSub || preSyncNum != preAlives )
+            {
+               session.eduCB->getEvent().signal ( SDB_CLS_WAIT_SYNC_FAILED ) ;
             }
             /// push the session which is not completed
             /// into the newlist.
             else
             {
-               _syncList[mergeTo].push( session ) ;
+               _syncList[endRemovedSub-1].push( session ) ;
             }
          }
          _mtxs[removedSub].release() ;
-         _mtxs[mergeTo].release() ;
+         if ( endRemovedSub > 0 )
+         {
+            _mtxs[endRemovedSub-1].release() ;
+         }
+         else
+         {
+            break ;
+         }
       }
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CRSYNCLIST ) ;
    }
 
-*/
 }

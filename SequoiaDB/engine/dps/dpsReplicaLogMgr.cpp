@@ -1351,5 +1351,15 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dpsReplicaLogMgr::checkSyncControl( UINT32 reqLen, _pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      if ( _replSet )
+      {
+         rc = _replSet->checkSyncControl( reqLen, cb ) ;
+      }
+      return rc ;
+   }
+
 }
 

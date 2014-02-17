@@ -60,11 +60,19 @@ namespace engine
 
       ~_clsSyncManager() ;
 
+      void enforceSyncStrategy( INT32 syncStrategy )
+      {
+         _syncStrategy = syncStrategy ;
+      }
+
    public:
       INT32 sync( _clsSyncSession &session,
                   const UINT32 &w ) ;
 
-      INT32 updateNotifyList() ;
+      void  updateNodeStatus( const MsgRouteID &id, BOOLEAN valid ) ;
+      void  notifyFullSync( const MsgRouteID &id ) ;
+
+      INT32 updateNotifyList( BOOLEAN newNodeValid ) ;
 
       void complete( const MsgRouteID &id,
                      const DPS_LSN &lsn,
@@ -93,11 +101,12 @@ namespace engine
 
       void cut( UINT32 alives ) ;
 
-   private:
-      INT32 _wait( _pmdEDUCB *&cb,
-                  UINT32 sub ) ;
+      DPS_LSN_OFFSET getSyncCtrlArbitLSN() ;
 
-      void _createWakePlan( const DPS_LSN_OFFSET &oOffset,
+   private:
+      INT32 _wait( _pmdEDUCB *&cb, UINT32 sub ) ;
+
+      void _createWakePlan( const DPS_LSN_OFFSET &offset,
                             CLS_WAKE_PLAN &plan ) ;
 
       void _wake( CLS_WAKE_PLAN &plan ) ;
@@ -106,8 +115,9 @@ namespace engine
                       const DPS_LSN_OFFSET &offset ) ;
 
 
-//      void _clearSyncList( const UINT32 &num,
-//                           _clsSyncStatus *left ) ;
+      void _clearSyncList( UINT32 removed, UINT32 removedAlives,
+                           UINT32 preAlives, UINT32 preSyncNum,                           
+                           _clsSyncStatus *left ) ;
 
       INT32 _findStartPoint( const DPS_LSN &remote, DPS_LSN &lsn ) ;
 
@@ -126,6 +136,8 @@ namespace engine
       /// valid _notifyList size
       UINT32 _validSync ;
       UINT32 _timeout ;
+
+      INT32  _syncStrategy ;
    } ;
 }
 

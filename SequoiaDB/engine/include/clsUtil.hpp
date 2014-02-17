@@ -39,6 +39,7 @@
 
 #include "clsDef.hpp"
 #include "netDef.hpp"
+#include "clsBase.hpp"
 
 using namespace std ;
 
@@ -54,6 +55,9 @@ namespace engine
    void clsJoin2Full( const CHAR *cs, const CHAR *collection,
                       CHAR *full ) ;
 
+   INT32 clsString2Strategy( const CHAR *str, INT32 &sty ) ;
+
+   INT32 clsStrategy2String( INT32 sty, CHAR *str, UINT32 len ) ;
 
 }
 

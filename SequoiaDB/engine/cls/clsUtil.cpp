@@ -112,5 +112,64 @@ namespace engine
       return ;
    }
 
+   #define CLS_SYNC_NONE_STR           "None"
+   #define CLS_SYNC_KEEPNORMAL_STR     "KeepNormal"
+   #define CLS_SYNC_KEEPALL_STR        "KeepAll"
+
+   INT32 clsString2Strategy( const CHAR * str, INT32 &sty )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !str || !*str )
+      {
+         sty = CLS_SYNC_DTF_STRATEGY ;
+      }
+      else
+      {
+         INT32 len = ossStrlen( str ) ;
+         if ( 0 == ossStrncasecmp( str, CLS_SYNC_NONE_STR, len ) &&
+              len == ossStrlen( CLS_SYNC_NONE_STR ) )
+         {
+            sty = CLS_SYNC_NONE ;
+         }
+         else if ( 0 == ossStrncasecmp( str, CLS_SYNC_KEEPNORMAL_STR, len ) &&
+                   len == ossStrlen( CLS_SYNC_KEEPNORMAL_STR ) )
+         {
+            sty = CLS_SYNC_KEEPNORMAL ;
+         }
+         else if ( 0 == ossStrncasecmp( str, CLS_SYNC_KEEPALL_STR, len ) &&
+                   len == ossStrlen( CLS_SYNC_KEEPALL_STR ) )
+         {
+            sty = CLS_SYNC_KEEPALL ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+         }
+      }
+      return rc ;
+   }
+
+   INT32 clsStrategy2String( INT32 sty, CHAR * str, UINT32 len )
+   {
+      INT32 rc = SDB_OK ;
+
+      switch ( sty )
+      {
+         case CLS_SYNC_NONE :
+            ossStrncpy( str, CLS_SYNC_NONE_STR, len - 1 ) ;
+            break ;
+         case CLS_SYNC_KEEPNORMAL :
+            ossStrncpy( str, CLS_SYNC_KEEPNORMAL_STR, len -1 ) ;
+            break ;
+         case CLS_SYNC_KEEPALL :
+            ossStrncpy( str, CLS_SYNC_KEEPALL_STR, len -1 ) ;
+            break ;
+         default :
+            str[0] = 0 ;
+            rc = SDB_INVALIDARG ;
+      }
+      str[ len -1 ] = 0 ;
+      return rc ;
+   }
 
 }

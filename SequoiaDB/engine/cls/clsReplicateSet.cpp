@@ -71,6 +71,8 @@ namespace engine
    #define CLS_CONNREFUSED    ECONNREFUSED
 #endif //_WINDOWS
 
+   #define CLS_SYNCCTRL_BASE_TIME         (25)
+
    _clsReplicateSet::_clsReplicateSet( _netRouteAgent *agent ):
                                     _agent( agent ),
                                     _vote( &_info, _agent),
@@ -85,6 +87,10 @@ namespace engine
    {
       _srcSessionNum = 0 ;
       _prevPrimary = FALSE ;
+
+      _totalLogSize = 0 ;
+      memset( _sizethreshold, 0, sizeof( _sizethreshold ) ) ;
+      memset( _timeThreshold, 0, sizeof( _timeThreshold ) ) ;
    }
 
    _clsReplicateSet::~_clsReplicateSet()
@@ -173,6 +179,21 @@ namespace engine
 
       rc = _replBucket.init() ;
       PD_RC_CHECK( rc, PDERROR, "Init repl bucket failed, rc: %d", rc ) ;
+
+      _totalLogSize = (UINT64)_logger->getLogFileSz() *
+                      (UINT64)_logger->getLogFileNum() ;
+      // init sync control param
+      {
+         UINT32 rate = 2 ;
+         UINT32 timeBase = CLS_SYNCCTRL_BASE_TIME ;
+
+         for ( UINT32 idx = 0 ; idx < CLS_SYNCCTRL_THRESHOLD_SIZE ; ++idx )
+         {
+            rate = 2 << idx ;
+            _sizethreshold[ idx ] = _totalLogSize * ( rate - 1 ) / rate ;
+            _timeThreshold[ idx ] = timeBase << idx ;
+         }
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET_INIT, rc );
@@ -297,7 +318,7 @@ namespace engine
       } // for ( ; itr2 != _info.info.end(); itr2++ )
       }
 
-      _sync.updateNotifyList() ;
+      _sync.updateNotifyList( TRUE ) ;
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__SETGPSET, rc );
       return rc ;
@@ -637,6 +658,9 @@ namespace engine
             PD_LOG( PDERROR, "vote: [node:%d] alive break",
                         itr->second->beat.identity.columns.nodeID ) ;
             itr->second->beat.beatID = 0 ;
+
+            _sync.updateNodeStatus( itr->second->beat.identity, FALSE ) ;
+
             _info.alives.erase( itr++ ) ;
          }
          else
@@ -761,12 +785,105 @@ namespace engine
          _info.alives.insert( make_pair( itr->first, &status ) ) ;
          _info.mtx.release_w() ;
 
+         _sync.updateNodeStatus( status.beat.identity, TRUE ) ;
+
          PD_LOG( PDEVENT, "vote: [node:%d] aliving from break",
                  status.beat.identity.columns.nodeID ) ;
       }
       itr->second.timeout = 0 ;
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__ALIVE, rc );
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   UINT32 _clsReplicateSet::_getThresholdTime( UINT64 diffSize )
+   {
+      UINT32 i = 0 ;
+      UINT32 threshTime = 0 ;
+
+      for ( ; i < CLS_SYNCCTRL_THRESHOLD_SIZE ; ++i )
+      {
+         if ( diffSize < _sizethreshold[ i ] )
+         {
+            break ;
+         }
+      }
+      if ( i > 0 )
+      {
+         threshTime = _timeThreshold[ i - 1 ] ;
+      }
+      return threshTime ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET__CHECKSYNCCTRL, "_clsReplicateSet::checkSyncControl" )
+   INT32 _clsReplicateSet::checkSyncControl( UINT32 reqLen, pmdEDUCB *cb )
+   {
+      PD_TRACE_ENTRY ( SDB__CLSREPSET__CHECKSYNCCTRL );
+      INT32 rc = SDB_OK ;
+
+      UINT32 threshTime = 0 ;
+      UINT32 waitTime = 0 ;
+      DPS_LSN_OFFSET offset = _sync.getSyncCtrlArbitLSN() ;
+
+      if ( DPS_INVALID_LSN_OFFSET == offset )
+      {
+         goto done ;
+      }
+      else
+      {
+         DPS_LSN expectLSN ;
+
+         while ( SDB_OK == rc )
+         {
+            offset = _sync.getSyncCtrlArbitLSN() ;
+            expectLSN = _logger->expectLsn() ;
+
+            // when log file number == 1
+            if ( offset >= expectLSN.offset )
+            {
+               goto done ;
+            }
+
+            threshTime = _getThresholdTime( expectLSN.offset - offset ) ;
+            if ( 0 == threshTime )
+            {
+               goto done ;
+            }
+
+            expectLSN.offset += reqLen ;
+            if ( ( expectLSN.offset > offset + _logger->getLogFileSz() &&
+                   _logger->calcFileID( expectLSN.offset ) ==
+                   _logger->calcFileID( offset ) ) ||
+                 ( waitTime < threshTime ) )
+            {
+               ossSleep( CLS_SYNCCTRL_BASE_TIME ) ;
+               waitTime += CLS_SYNCCTRL_BASE_TIME ;
+            }
+            else
+            {
+               break ;
+            }
+
+            if ( cb->isInterrupted() )
+            {
+               rc = SDB_APP_INTERRUPT ;
+            }
+            else if ( !_vote.primaryIsMe() )
+            {
+               rc = SDB_CLS_NOT_PRIMARY ;
+            }
+         }
+      }
+
+   done:
+      if ( waitTime > 0 )
+      {
+         PD_LOG( PDINFO, "Wait %u millisecs in sync-control, rc: %d",
+                 waitTime, rc ) ;
+      }
+      PD_TRACE_EXITRC ( SDB__CLSREPSET__CHECKSYNCCTRL, rc );
       return rc ;
    error:
       goto done ;

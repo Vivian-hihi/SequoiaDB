@@ -151,6 +151,8 @@ namespace engine
       INT32 tearDown();
       INT32 flushAll() ;
 
+      INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb ) ;
+
       /// any other interfaces should not be called
       /// when this interface is beging called.
       INT32 move( const DPS_LSN_OFFSET &offset,
@@ -176,6 +178,11 @@ namespace engine
       BOOLEAN isInRestore ()
       {
          return _restoreFlag;
+      }
+
+      UINT32 calcFileID ( DPS_LSN_OFFSET offset )
+      {
+         return ( offset / getLogFileSz () ) % getLogFileNum () ;
       }
 
    private:

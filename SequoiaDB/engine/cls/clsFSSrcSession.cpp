@@ -1268,6 +1268,8 @@ namespace engine
          {
             _init = TRUE ;
             _quit = FALSE ;
+
+            _pRepl->syncMgr()->notifyFullSync( header->routeID ) ;
          }
       }
 

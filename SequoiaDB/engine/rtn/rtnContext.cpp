@@ -4201,6 +4201,10 @@ namespace engine
          rc = dpsCSDel2Record( pCollectionName, record ) ;
          PD_RC_CHECK( rc, PDERROR,
                      "failed to build record:%d",rc ) ;
+
+         rc = _pDpsCB->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = _pTransCB->reservedLogSpace( logRecSize );
          PD_RC_CHECK( rc, PDERROR,

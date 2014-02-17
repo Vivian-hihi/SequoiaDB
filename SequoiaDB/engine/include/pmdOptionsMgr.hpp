@@ -351,6 +351,7 @@ namespace engine
          inline UINT32 maxPrefPool () const { return _maxPrefPool ; }
          inline UINT32 maxSubQuery () const { return _maxSubQuery ; }
          inline UINT32 maxReplSync () const { return _maxReplSync ; }
+         inline INT32  syncStrategy () const { return _syncStrategy ; }
          inline UINT32 replBucketSize () const { return _replBucketSize ; }
          inline BOOLEAN transactionOn () const { return _transactionOn ; }
          inline BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
@@ -372,6 +373,7 @@ namespace engine
          CHAR        _restServiceName[ OSS_MAX_SERVICENAME + 1 ] ;
          UINT16      _krcbDiagLvl ;
          CHAR        _krcbRole[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
+         CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          UINT32      _logFileSz ;
          UINT32      _logFileNum ;
          UINT32      _numPreLoaders ;
@@ -379,6 +381,7 @@ namespace engine
          UINT32      _maxSubQuery ;
          UINT32      _maxReplSync ;
          UINT32      _replBucketSize ;
+         INT32       _syncStrategy ;
          BOOLEAN     _memDebugEnabled ;
          UINT32      _memDebugSize ;
          UINT32      _indexScanStep ;
@@ -405,5 +408,5 @@ namespace engine
 
 }
 
-#endif
+#endif //PMDOPTIONSMGR_HPP_
 

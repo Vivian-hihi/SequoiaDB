@@ -56,6 +56,8 @@ namespace engine
    class _clsDataSrcBaseSession ;
    class _pmdEDUCB ;
 
+   #define CLS_SYNCCTRL_THRESHOLD_SIZE          (10)
+
    class _clsReplicateSet : public _clsObjBase
    {
       DECLARE_OBJ_MSG_MAP()
@@ -178,6 +180,8 @@ namespace engine
          void notify2Session( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
                               const DPS_LSN_OFFSET &offset ) ;
 
+         INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb ) ;
+
       public:
          void  regSession ( _clsDataSrcBaseSession *pSession ) ;
          void  unregSession ( _clsDataSrcBaseSession *pSession ) ;
@@ -219,6 +223,8 @@ namespace engine
 
          void _checkPrimary () ;
 
+         UINT32 _getThresholdTime( UINT64 diffSize ) ;
+
       private:
          _netRouteAgent          *_agent ;
          _clsGroupInfo           _info ;
@@ -238,6 +244,11 @@ namespace engine
          UINT32                  _srcSessionNum ;
          ossRWMutex              _vecLatch ;
          std::vector<_clsDataSrcBaseSession*> _vecSrcSessions ;
+
+         // sync control param
+         UINT64                  _totalLogSize ;
+         UINT64                  _sizethreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
+         UINT32                  _timeThreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
 
    } ;
 

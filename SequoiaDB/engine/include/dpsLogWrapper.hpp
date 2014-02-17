@@ -194,6 +194,12 @@ namespace engine
       {
          return _buf.move( offset, version ) ;
       }
+
+      inline INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb )
+      {
+         return _buf.checkSyncControl( reqLen, cb ) ;
+      }
+
    public:
       void  writeData ( dpsMergeInfo &info ) ;
 
@@ -284,6 +290,10 @@ namespace engine
       UINT32 getLogFileNum ()
       {
          return _buf.getLogFileNum () ;
+      }
+      UINT32 calcFileID ( DPS_LSN_OFFSET offset )
+      {
+         return _buf.calcFileID( offset ) ;
       }
       BOOLEAN isInRestore();
    };

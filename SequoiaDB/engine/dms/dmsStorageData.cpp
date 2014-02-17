@@ -1248,6 +1248,10 @@ namespace engine
          rc = dpsCLCrt2Record( _clFullName(pName, fullName, sizeof(fullName)),
                                attributes, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
+
+         rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize ) ;
          if( rc )
@@ -1434,6 +1438,10 @@ namespace engine
          rc = dpsCLDel2Record( _clFullName(pName, fullName, sizeof(fullName)),
                                record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
+
+         rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize ) ;
          if( rc )
@@ -1571,6 +1579,10 @@ namespace engine
          rc = dpsCLTrunc2Record( _clFullName(pName, fullName, sizeof(fullName)),
                                  record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
+
+         rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize ) ;
          if( rc )
@@ -1720,6 +1732,10 @@ namespace engine
       {
          rc = dpsCLRename2Record( getSuName(), oldName, newName, record ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build log record, rc: %d", rc ) ;
+
+         rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d", rc ) ;
+
          logRecSize = record.alignedLen() ;
          rc = pTransCB->reservedLogSpace( logRecSize );
          if( rc )
@@ -1901,6 +1917,16 @@ namespace engine
          rc = dpsInsert2Record( fullName, record, transID,
                                 preTransLsn, logRecord ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
+
+         logRecSize = ossAlign4( logRecord.alignedLen() + oidLen ) ;
+
+         rc = dpscb->checkSyncControl( logRecSize, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            logRecSize = 0 ;
+            PD_LOG( PDERROR, "Check sync control failed, rc: %d", rc ) ;
+            goto error ;
+         }
 
          logRecSize = ossAlign4( logRecord.alignedLen() + oidLen ) ;
          rc = pTransCB->reservedLogSpace( logRecSize ) ;
@@ -2256,6 +2282,11 @@ namespace engine
                   PD_LOG( PDERROR, "Failed to build record: %d",rc ) ;
                   goto error ;
                }
+
+               rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+               PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
+                            rc ) ;
+
                logRecSize = record.alignedLen() ;
                rc = pTransCB->reservedLogSpace( logRecSize ) ;
                if ( rc )
@@ -2508,6 +2539,11 @@ namespace engine
                PD_LOG( PDERROR, "failed to build record:%d", rc ) ;
                goto error ;
             }
+
+            rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
+                         rc ) ;
+
             logRecSize = record.alignedLen() ;
             rc = pTransCB->reservedLogSpace( logRecSize );
             if ( rc )

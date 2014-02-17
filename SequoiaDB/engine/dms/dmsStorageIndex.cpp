@@ -284,6 +284,11 @@ namespace engine
                                    sizeof(fullName) ) ;
             rc = dpsIXCrt2Record( fullName, indexDef, record ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record:%d", rc ) ;
+
+            rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
+                         rc ) ;
+
             logRecSize = record.alignedLen() ;
             rc = pTransCB->reservedLogSpace( logRecSize );
             if ( rc )
@@ -586,6 +591,11 @@ namespace engine
                                    sizeof(fullName) ) ;
             rc = dpsIXDel2Record( fullName, indexDef, record ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
+
+            rc = dpscb->checkSyncControl( record.alignedLen(), cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Check sync control failed, rc: %d",
+                         rc ) ;
+
             logRecSize = record.alignedLen() ;
             rc = pTransCB->reservedLogSpace( logRecSize );
             if ( rc )
