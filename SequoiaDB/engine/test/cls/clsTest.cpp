@@ -133,7 +133,7 @@ TEST(clsTest, clsSyncManager_1)
    ++id.columns.nodeID ;
    info.info.insert( std::make_pair( id.value, status ) ) ;
    _clsSyncManager sync( &agent, &info ) ;
-   sync.updateNotifyList() ;
+   sync.updateNotifyList( TRUE ) ;
    ossAtomic32 complete( 0 ) ;
 
    _pmdEDUMgr mgr ;
@@ -176,7 +176,7 @@ TEST(clsTest, clsSyncManager_2)
    ++id.columns.nodeID ;
    info.info.insert( std::make_pair( id.value, status ) ) ;
    _clsSyncManager sync( &agent, &info ) ;
-   sync.updateNotifyList() ;
+   sync.updateNotifyList( TRUE ) ;
    ossAtomic32 complete( 0 ) ;
 
    _pmdEDUMgr mgr ;
@@ -241,7 +241,7 @@ TEST(clsTest, clsSyncManager_3)
    ++id.columns.nodeID ;
    info.info.insert( std::make_pair( id.value, status ) ) ;
    _clsSyncManager sync( &agent, &info ) ;
-   sync.updateNotifyList() ;
+   sync.updateNotifyList( TRUE ) ;
    ossAtomic32 complete( 0 ) ;
    _pmdEDUMgr mgr ;
    pmdEDUCB *eduCBs[num] ;
@@ -325,7 +325,7 @@ TEST(clsTest, clsSyncManager_4)
    ++id.columns.nodeID ;
    info.info.insert( std::make_pair( id.value, status ) ) ;
    _clsSyncManager sync( &agent, &info ) ;
-   sync.updateNotifyList() ;
+   sync.updateNotifyList( TRUE ) ;
    ossAtomic32 complete( 0 ) ;
 
    _pmdEDUMgr mgr ;
@@ -406,7 +406,7 @@ TEST(clsTest, clsSyncManager_5)
    ++id.columns.nodeID ;
    info.info.insert( std::make_pair( id.value, status ) ) ;
    _clsSyncManager sync( &agent, &info ) ;
-   sync.updateNotifyList() ;
+   sync.updateNotifyList( TRUE ) ;
    ossAtomic32 complete( 0 ) ;
 
    _pmdEDUMgr mgr ;
