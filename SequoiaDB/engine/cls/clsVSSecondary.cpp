@@ -109,7 +109,7 @@ namespace engine
       }
 
       if ( ( g_startShiftTime < 0 || g_startShiftTime <= _timeout() ) &&
-           CLS_VOTE_CS_TIME <= _timeout() ) )
+           CLS_VOTE_CS_TIME <= _timeout() )
       {
          g_startShiftTime = -1 ;
          next = CLS_ELECTION_STATUS_VOTE ;
