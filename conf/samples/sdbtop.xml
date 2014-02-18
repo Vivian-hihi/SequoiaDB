@@ -63,6 +63,26 @@
                <jumpType>JUMPTYPE_DESC</jumpType>
                <jumpName>Descending order</jumpName>
             </HotKey>
+            <HotKey>
+               <button>C</button>
+               <jumpType>JUMPTYPE_FILTER_CONDITION</jumpType>
+               <jumpName>filter condition</jumpName>
+            </HotKey>
+            <HotKey>
+               <button>Q</button>
+               <jumpType>JUMPTYPE_NO_FILTER_CONDITION</jumpType>
+               <jumpName>no filter condition</jumpName>
+            </HotKey>
+            <HotKey>
+               <button>N</button>
+               <jumpType>JUMPTYPE_FILTER_NUMBER</jumpType>
+               <jumpName>filter number</jumpName>
+            </HotKey>
+            <HotKey>
+               <button>W</button>
+               <jumpType>JUMPTYPE_NO_FILTER_NUMBER</jumpType>
+               <jumpName>no filter number</jumpName>
+            </HotKey>
          </KeySuite>
       </KeySuites>
       <Headers>
@@ -438,9 +458,9 @@
                      <rowNumber>1</rowNumber>
                      <ExpressionContent>
                         <expressionType>DYNAMIC_EXPRESSION</expressionType>
-                        <expressionLength>16</expressionLength>
+                        <expressionLength>60</expressionLength>
                         <expressionValue>
-                           <expression>EXPRESSION_QUIT_HELP</expression>
+                           <expression>EXPRESSION_REFRESH_QUIT_HELP</expression>
                         </expressionValue>
                         <alignment>RIGHT</alignment>
                         <colour>
@@ -560,7 +580,7 @@
                         <FieldStruct>
                            <absoluteName>TID</absoluteName>
                            <sourceField>TID</sourceField>
-                           <contentLength>10</contentLength>
+                           <contentLength>8</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
@@ -571,7 +591,7 @@
                         <FieldStruct>
                            <absoluteName>Type</absoluteName>
                            <sourceField>Type</sourceField>
-                           <contentLength>20</contentLength>
+                           <contentLength>18</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
@@ -593,7 +613,7 @@
                         <FieldStruct>
                            <absoluteName>QueueSize</absoluteName>
                            <sourceField>QueueSize</sourceField>
-                           <contentLength>12</contentLength>
+                           <contentLength>10</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
@@ -606,7 +626,7 @@
                            <absoluteName>ProcessEventCount</absoluteName>
                            <averageName>ProcessEventCount</averageName>
                            <sourceField>ProcessEventCount</sourceField>
-                           <contentLength>30</contentLength>
+                           <contentLength>18</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
@@ -617,7 +637,7 @@
                         <FieldStruct>
                            <absoluteName>Contexts</absoluteName>
                            <sourceField>Contexts</sourceField>
-                           <contentLength>30</contentLength>
+                           <contentLength>15</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
@@ -630,7 +650,7 @@
                            <absoluteName>TotalDataRead</absoluteName>
                            <averageName>TotalDataRead</averageName>
                            <sourceField>TotalDataRead</sourceField>
-                           <contentLength>20</contentLength>
+                           <contentLength>14</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
@@ -1089,7 +1109,7 @@
                   <zoomMode>ZOOM_MODE_ROW_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_HELP</displayType>
                   <displayContent>
-                     <tableRow>5</tableRow>
+                     <tableRow>8</tableRow>
                      <tableColumn>3</tableColumn>
                      <cellLength>30</cellLength>
                      <autoSetType>UPPER_LEFT</autoSetType>
