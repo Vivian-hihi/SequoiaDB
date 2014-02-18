@@ -572,4 +572,15 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_START_SHIFT_TIME</name>
+      <long>startshifttime</long>
+      <description>
+         <en>Nodes starting shift time(sec), default:300, value range:[0,7200]</en>
+         <cn>节点起动漂移时间(sec),默认值:300,取值范围:[0,7200]</cn>
+      </description>
+	  <type>int</type>
+      <hidden>true</hidden>
+   </opt>
+
 </optlist>
