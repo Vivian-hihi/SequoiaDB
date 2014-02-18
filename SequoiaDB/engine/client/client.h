@@ -1462,7 +1462,9 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
     \param [in] cHandle The connection handle
     \param [in] options The configuration options for session.The options are as below:
 
-        PreferedReplica : indicate which node to operate in current session. eg:{"PreferedReplica":"M"}
+        PreferedReplica : indicate which node to operate in current session.
+                          eg:{"PreferedReplica":"M"/"S"/"A"/1-7}, prefer to choose master/slave/anyone/node1-node7,
+                          default to be {"PreferedReplica":"A"}, means would like to choose anyone to be operated
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */

@@ -5327,6 +5327,126 @@ namespace sdbclient
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_SETSESSIONATTR, "_sdbImpl::setSessionAttr" )
+   INT32 _sdbImpl::setSessionAttr ( const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY( SDB_CLIENT_SETSESSIONATTR ) ;
+      INT32 rc         = SDB_OK ;
+      BOOLEAN result   = FALSE ;
+      BOOLEAN locked   = FALSE ;
+      SINT64 contextID = 0 ;
+      const CHAR *key  = NULL ;
+      const CHAR *str_value = NULL ;
+      INT32 int_value  = 0 ;
+      INT32 value      = PREFER_REPL_TYPE_MAX ;
+      BSONType type    = EOO ;
+      BSONElement ele ;
+      BSONObjBuilder bob ;
+      BSONObj newObj ;
+      string command =string( CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR ) ;
+      BSONObjIterator it ( options ) ;
+
+      if ( !it.more() )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      while ( it.more() )
+      {
+         ele = it.next() ;
+         key = ele.fieldName() ;
+         if ( strcmp( FIELD_NAME_PREFERED_REPLICA, key ) == 0 )
+         {
+            type = ele.type() ;
+            switch ( type )
+            {
+               case String :
+                  try
+                  {
+                     str_value = ele.String().c_str() ;
+                     if ( strcmp( "M", str_value ) == 0 ) // master
+                        value = PREFER_REPL_MASTER ;
+                     else if ( strcmp( "S", str_value ) == 0 ) // slave
+                        value = PREFER_REPL_SLAVE ;
+                     else if ( strcmp( "A", str_value ) == 0 ) //anyone
+                        value = PREFER_REPL_ANYONE ;
+                     else
+                     {
+                        rc = SDB_INVALIDARG ;
+                        goto error ;
+                     }
+                  }
+                  catch( std::exception &e )
+                  {
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+                  break ;
+               case NumberInt :
+                  try
+                  {
+                     int_value = ele.Int() ;
+                     if ( 1 <= int_value && int_value <= 7 )
+                        value = int_value ;
+                     else
+                     {
+                        rc = SDB_INVALIDARG ;
+                        goto error ;
+                     }
+                  }
+                  catch( std::exception &e )
+                  {
+                     rc = SDB_SYS ;
+                     goto error ;
+                  }
+                  break ;
+               default :
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               } // switch
+            // append element
+               bob.append( key, value ) ;
+         }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      } // while()
+      // build obj
+      newObj = bob.obj() ;
+      // build msg
+      rc = clientBuildQueryMsgCpp( &_pSendBuffer, &_sendBufferSize,
+                                   command.c_str(), 0, 0, 0, -1,
+                                   newObj.objdata(), NULL,
+                                   NULL, NULL, _endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      lock() ;
+      locked = TRUE ;
+      rc = _send( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                          contextID, result ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   done :
+      if ( locked )
+         unlock() ;
+      PD_TRACE_EXITRC( SDB_CLIENT_SETSESSIONATTR, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
 /*   INT32 _sdbImpl::modifyConfig ( INT32 nodeID,
                                   std::map<std::string,std::string> &config )
    {

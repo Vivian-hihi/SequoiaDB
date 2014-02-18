@@ -885,7 +885,9 @@ namespace sdbclient
                         SINT32 num ) ;
       INT32 cancelTask ( SINT64 taskID,
                          BOOLEAN isAsync ) ;
-
+      // set session attribute
+      INT32 setSessionAttr ( const bson::BSONObj &options =
+                                     _sdbStaticObject) ;
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;

@@ -1936,6 +1936,9 @@ namespace sdbclient
       virtual INT32 cancelTask ( SINT64 taskID,
                         BOOLEAN isAsync ) = 0 ;
 
+      virtual INT32 setSessionAttr ( const bson::BSONObj &options =
+                                     _sdbStaticObject) = 0 ;
+
 /*      virtual INT32 modifyConfig ( INT32 nodeID,
                        std::map<std::string,std::string> &config ) = 0 ;
 
@@ -3004,7 +3007,23 @@ namespace sdbclient
                                    isAsync ) ;
       }
 
+/** \fn INT32 setSessionAttr ( const bson::BSONObj &options ) ;
+    \brief Set the attributes of the session.
+    \param [in] cHandle The connection handle
+    \param [in] options The configuration options for session.The options are as below:
 
+        PreferedReplica : indicate which node to operate in current session.
+                          eg:{"PreferedReplica":"M"/"S"/"A"/1-7}, prefer to choose master/slave/anyone/node1-node7,
+                          default to be {"PreferedReplica":"A"}, means would like to choose anyone to be operated
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 setSessionAttr ( const bson::BSONObj &options = _sdbStaticObject )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->setSessionAttr ( options ) ;
+      }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config )
