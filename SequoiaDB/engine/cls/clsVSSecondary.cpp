@@ -108,8 +108,8 @@ namespace engine
          g_startShiftTime = -1 ; // recieve all node sharing-beat
       }
 
-      if ( g_startShiftTime <= _timeout() &&
-           CLS_VOTE_CS_TIME <= _timeout() )
+      if ( g_startShiftTime <= (INT32)_timeout() &&
+           CLS_VOTE_CS_TIME <= _timeout() ) )
       {
          g_startShiftTime = -1 ;
          next = CLS_ELECTION_STATUS_VOTE ;
