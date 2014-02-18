@@ -91,6 +91,7 @@ namespace engine
       _prevPrimary = FALSE ;
 
       _totalLogSize = 0 ;
+      _inSyncCtrl   = FALSE ;
       memset( _sizethreshold, 0, sizeof( _sizethreshold ) ) ;
       memset( _timeThreshold, 0, sizeof( _timeThreshold ) ) ;
    }
@@ -814,7 +815,7 @@ namespace engine
             break ;
          }
       }
-      if ( i > 0 )
+      if ( i > 1 || ( 1 == i && _inSyncCtrl ) )
       {
          threshTime = _timeThreshold[ i - 1 ] ;
       }
@@ -862,6 +863,11 @@ namespace engine
                    _logger->calcFileID( offset ) ) ||
                  ( waitTime < threshTime ) )
             {
+               if ( !_inSyncCtrl )
+               {
+                  _inSyncCtrl = TRUE ;
+                  PD_LOG( PDWARNING, "Begin sync control..." ) ;
+               }
                ossSleep( CLS_SYNCCTRL_BASE_TIME ) ;
                waitTime += CLS_SYNCCTRL_BASE_TIME ;
             }
@@ -882,10 +888,10 @@ namespace engine
       }
 
    done:
-      if ( waitTime > 0 )
+      if ( 0 == waitTime && _inSyncCtrl )
       {
-         PD_LOG( PDINFO, "Wait %u millisecs in sync-control, rc: %d",
-                 waitTime, rc ) ;
+         _inSyncCtrl = FALSE ;
+         PD_LOG( PDWARNING, "End sync control" ) ;
       }
       PD_TRACE_EXITRC ( SDB__CLSREPSET__CHECKSYNCCTRL, rc );
       return rc ;

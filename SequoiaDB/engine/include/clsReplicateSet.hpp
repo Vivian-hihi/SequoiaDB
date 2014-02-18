@@ -249,6 +249,7 @@ namespace engine
          UINT64                  _totalLogSize ;
          UINT64                  _sizethreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
          UINT32                  _timeThreshold[ CLS_SYNCCTRL_THRESHOLD_SIZE ] ;
+         BOOLEAN                 _inSyncCtrl ;
 
    } ;
 
