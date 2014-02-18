@@ -83,6 +83,8 @@ namespace engine
    #define PMD_DEFAULT_MAX_REPLSYNC    (10)
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
    #define PMD_DFT_INDEX_SCAN_STEP     (30)
+   #define PMD_DFT_START_SHIFT_TIME    (300)
+
 
    /*
       _pmdCfgExchange implement
@@ -831,6 +833,7 @@ namespace engine
       _traceBufSz          = TRACE_DFT_BUFFER_SIZE ;
       _transactionOn       = FALSE ;
       _sharingBreakTime    = PMD_OPTION_BRK_TIME_DEFAULT ;
+      _startShiftTime      = PMD_DFT_START_SHIFT_TIME ;
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
       _sortBufSz           = PMD_DEFAULT_SORTBUF_SZ ;
       _hjBufSz             = PMD_DEFAULT_HJ_SZ ;
@@ -967,6 +970,10 @@ namespace engine
                PMD_OPTION_BRK_TIME_DEFAULT, TRUE ) ;
       rdvMinMax( pEX, _sharingBreakTime, PMD_OPTION_BRK_TIME_DEFAULT,
                  300000, TRUE ) ;
+      // --startshifttime
+      rdxUInt( pEX, PMD_OPTION_START_SHIFT_TIME, _startShiftTime, FALSE, TRUE,
+               PMD_DFT_START_SHIFT_TIME, TRUE ) ;
+      rdvMinMax( pEX, _startShiftTime, 0, 7200, TRUE ) ;
       // --catalogaddr
       rdxString( pEX, PMD_OPTION_CATALOG_ADDR, _catAddrLine,
                  sizeof(_catAddrLine), FALSE, TRUE, "" ) ;
@@ -1664,6 +1671,10 @@ namespace engine
       krcb->getBPSCB()->setNumPreLoads( _numPreLoaders ) ;
       krcb->getBPSCB()->setMaxPrefPool( _maxPrefPool ) ;
       CLS_SHARING_BRK_TIME    = _sharingBreakTime ;
+      if ( g_startShiftTime >= 0 )
+      {
+         g_startShiftTime     = (INT32)_startShiftTime * OSS_ONE_SEC ;
+      }
 
       if ( krcb->getReplCB() )
       {

@@ -60,6 +60,9 @@ namespace engine
    const UINT32 CLS_NOT_PRIMARY = 1 ;
    const UINT32 CLS_SYNC_MAX_LEN = 1024 * 1024 * 5 ;
    extern UINT32 CLS_SHARING_BRK_TIME ;
+   extern INT32  g_startShiftTime ;
+
+
    #define CLS_TID(sessionid)          ((UINT32)(sessionid & 0xFFFFFFFF))
    #define CLS_NODEID(sessionid)       ((UINT32)(sessionid >> 32))
 
@@ -186,6 +189,21 @@ namespace engine
       UINT32 aliveSize ()
       {
          return alives.size() + 1 ;
+      }
+
+      BOOLEAN isAllNodeBeat()
+      {
+         map<UINT64, _clsSharingStatus>::iterator it = info.begin() ;
+         while ( it != info.end() )
+         {
+            _clsSharingStatus &status = it->second ;
+            if ( 0 == status.beat.beatID )
+            {
+               return FALSE ;
+            }
+            ++it ;
+         }
+         return TRUE ;
       }
    } ;
 

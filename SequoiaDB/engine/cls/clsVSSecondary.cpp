@@ -36,6 +36,9 @@
 
 namespace engine
 {
+
+   INT32 g_startShiftTime = 0 ;
+
    _clsVSSecondary::_clsVSSecondary( _clsGroupInfo *info,
                                      _netRouteAgent *agent ):
                                 _clsVoteStatus( info, agent,
@@ -49,7 +52,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_HDINPUT, "_clsVSSecondary::handleInput" ) 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_HDINPUT, "_clsVSSecondary::handleInput" ) 
    INT32 _clsVSSecondary::handleInput( const MsgHeader *header,
                                        INT32 &next )
    {
@@ -62,6 +65,8 @@ namespace engine
       }
       else if ( MSG_CLS_BALLOT == header->opCode )
       {
+         g_startShiftTime = -1 ; // some node begin vote
+
          const _MsgClsElectionBallot *msg = ( const _MsgClsElectionBallot * )
                                               header ;
          if ( CLS_ELECTION_ROUND_STAGE_ONE == msg->round )
@@ -91,14 +96,22 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_HDTMOUT, "_clsVSSecondary::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_HDTMOUT, "_clsVSSecondary::handleTimeout" )
    void _clsVSSecondary::handleTimeout( const UINT32 &millisec,
                                         INT32 &next )
    {
       PD_TRACE_ENTRY ( SDB__CLSVSSD_HDTMOUT ) ;
       _timeout() += millisec ;
-      if ( CLS_VOTE_CS_TIME <= _timeout() )
+
+      if ( g_startShiftTime > 0 && _info()->isAllNodeBeat() )
       {
+         g_startShiftTime = -1 ; // recieve all node sharing-beat
+      }
+
+      if ( g_startShiftTime <= _timeout() &&
+           CLS_VOTE_CS_TIME <= _timeout() )
+      {
+         g_startShiftTime = -1 ;
          next = CLS_ELECTION_STATUS_VOTE ;
       }
       else
@@ -109,7 +122,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_ACTIVE, "_clsVSSecondary::active" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSD_ACTIVE, "_clsVSSecondary::active" )
    void _clsVSSecondary::active( INT32 &next )
    {
       PD_TRACE_ENTRY ( SDB__CLSVSSD_ACTIVE ) ;
@@ -117,6 +130,7 @@ namespace engine
 
       if ( _info()->groupSize() == 1 )
       {
+         g_startShiftTime = -1 ;
          next = CLS_ELECTION_STATUS_VOTE ;
       }
       else

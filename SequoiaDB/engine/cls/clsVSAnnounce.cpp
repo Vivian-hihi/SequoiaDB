@@ -49,7 +49,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSANN_HDINPUT, "_clsVSAnnounce::handleInput" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSANN_HDINPUT, "_clsVSAnnounce::handleInput" )
    INT32 _clsVSAnnounce::handleInput( const MsgHeader *header,
                                       INT32 &next )
    {
@@ -97,7 +97,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSANN_HDTMOUT, "_clsVSAnnounce::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSANN_HDTMOUT, "_clsVSAnnounce::handleTimeout" )
    void _clsVSAnnounce::handleTimeout( const UINT32 &millisec,
                                        INT32 &next )
    {
@@ -122,7 +122,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSANN_ACTIVE, "_clsVSAnnounce::active" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSANN_ACTIVE, "_clsVSAnnounce::active" )
    void _clsVSAnnounce::active( INT32 &next )
    {
       PD_TRACE_ENTRY ( SDB__CLSVSANN_ACTIVE ) ;

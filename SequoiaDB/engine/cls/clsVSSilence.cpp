@@ -37,10 +37,10 @@
 
 namespace engine
 {
+
    _clsVSSilence::_clsVSSilence( _clsGroupInfo *info,
-                                   _netRouteAgent *agent ):
-                              _clsVoteStatus( info, agent,
-                                               CLS_ELECTION_STATUS_SILENCE )
+                                 _netRouteAgent *agent )
+   :_clsVoteStatus( info, agent, CLS_ELECTION_STATUS_SILENCE )
    {
 
    }
@@ -50,7 +50,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_HDINPUT, "_clsVSSilence::handleInput" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_HDINPUT, "_clsVSSilence::handleInput" )
    INT32 _clsVSSilence::handleInput( const MsgHeader *header,
                                      INT32 &next )
    {
@@ -61,7 +61,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_HDTMOUT, "_clsVSSilence::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_HDTMOUT, "_clsVSSilence::handleTimeout" )
    void _clsVSSilence::handleTimeout( const UINT32 &millisec,
                                       INT32 &next )
    {
@@ -80,7 +80,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_ACTIVE, "_clsVSSilence::active" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSSL_ACTIVE, "_clsVSSilence::active" )
    void _clsVSSilence::active( INT32 &next )
    {
       PD_TRACE_ENTRY ( SDB__CLSVSSL_ACTIVE ) ;

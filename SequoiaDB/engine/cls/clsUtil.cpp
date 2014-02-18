@@ -54,7 +54,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSSYNCWIN, "clsSyncWindow" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSSYNCWIN, "clsSyncWindow" )
    CLS_SYNC_STATUS clsSyncWindow( const DPS_LSN &remoteLsn,
                                   const DPS_LSN &fileBeginLsn,
                                   const DPS_LSN &memBeginLSn,
@@ -171,5 +171,6 @@ namespace engine
       str[ len -1 ] = 0 ;
       return rc ;
    }
+
 
 }

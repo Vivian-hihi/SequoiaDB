@@ -57,7 +57,9 @@ namespace engine
    END_OBJ_MSG_MAP ()
 
    const UINT32 CLS_REPL_SEC_TIME = 1000 ;
-   UINT32 CLS_SHARING_BRK_TIME = 0 ;  
+   UINT32 CLS_SHARING_BRK_TIME = 0 ;
+
+
    #define CLS_REPL_ACTIVE_CHECK( rc ) \
            if ( !_active ) \
            { \
@@ -708,6 +710,8 @@ namespace engine
          itr->second.beat = beat ;
          if ( CLS_GROUP_ROLE_PRIMARY == beat.role )
          {
+            g_startShiftTime = -1 ; // have primary node
+
             if ( _vote.primaryIsMe() )
             {
                DPS_LSN lsn  = _logger->getCurrentLsn() ;

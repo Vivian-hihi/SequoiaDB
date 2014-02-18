@@ -50,7 +50,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSVT_HDINPUT, "_clsVSVote::handleInput" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSVT_HDINPUT, "_clsVSVote::handleInput" )
    INT32 _clsVSVote::handleInput( const MsgHeader *header,
                                   INT32 &next )
    {
@@ -120,7 +120,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSVT_HDTMOUT, "_clsVSVote::handleTimeout" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSVT_HDTMOUT, "_clsVSVote::handleTimeout" )
    void _clsVSVote::handleTimeout( const UINT32 &millisec,
                                    INT32 &next )
    {
@@ -145,7 +145,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSVT_ACTIVE, "_clsVSVote::active" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSVT_ACTIVE, "_clsVSVote::active" )
    void _clsVSVote::active( INT32 &next )
    {
       PD_TRACE_ENTRY ( SDB__CLSVSVT_ACTIVE ) ;

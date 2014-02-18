@@ -390,6 +390,7 @@ namespace engine
          UINT32      _traceBufSz ;
          BOOLEAN     _transactionOn ;
          UINT32      _sharingBreakTime ;
+         UINT32      _startShiftTime ;
          UINT32      _logBuffSize ;
          CHAR        _catAddrLine[ OSS_MAX_PATHSIZE + 1 ] ;
          CHAR        _dmsTmpBlkPath[ OSS_MAX_PATHSIZE + 1 ] ;

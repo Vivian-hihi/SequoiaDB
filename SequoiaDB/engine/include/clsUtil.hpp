@@ -59,6 +59,7 @@ namespace engine
 
    INT32 clsStrategy2String( INT32 sty, CHAR *str, UINT32 len ) ;
 
+
 }
 
 #endif
