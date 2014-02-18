@@ -206,9 +206,18 @@ static INT32 strlen_a ( const CHAR *data )
    }
    while ( data && *data )
    {
-      if ( data[0] == '\'' ||
+      //the JSON standard does not need to be escaped single quotation marks
+      /*if ( data[0] == '\'' ||
            data[0] == '\"' ||
-           data[0] == '\\' )
+           data[0] == '\\' )*/
+      if ( data[0] == '\"' ||
+           data[0] == '\\' ||
+           data[0] == '/' ||
+           data[0] == '\b' ||
+           data[0] == '\f' ||
+           data[0] == '\n' ||
+           data[0] == '\r' ||
+           data[0] == '\t' )
       {
          ++len ;
       }
@@ -241,13 +250,14 @@ static void bsonConvertJsonRawConcat ( CHAR **pbuf, INT32 *left, const CHAR *dat
       {
          switch ( *data )
          {
-         case '\'':
+         //the JSON standard does not need to be escaped single quotation marks
+         /*case '\'':
          {
            pTempBuf[i] = '\\' ;
            ++i ;
            pTempBuf[i] = '\'' ;
            break ;
-         }
+         }*/
          case '\"':
          {
            pTempBuf[i] = '\\' ;
@@ -260,6 +270,48 @@ static void bsonConvertJsonRawConcat ( CHAR **pbuf, INT32 *left, const CHAR *dat
            pTempBuf[i] = '\\' ;
            ++i ;
            pTempBuf[i] = '\\' ;
+           break ;
+         }
+         case '/':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = '/' ;
+           break ;
+         }
+         case '\b':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'b' ;
+           break ;
+         }
+         case '\f':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'f' ;
+           break ;
+         }
+         case '\n':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'n' ;
+           break ;
+         }
+         case '\r':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 'r' ;
+           break ;
+         }
+         case '\t':
+         {
+           pTempBuf[i] = '\\' ;
+           ++i ;
+           pTempBuf[i] = 't' ;
            break ;
          }
          default :
