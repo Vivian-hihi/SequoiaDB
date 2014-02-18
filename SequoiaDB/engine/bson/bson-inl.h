@@ -716,11 +716,15 @@ namespace bson {
                {
                   switch( *tempData )
                   {
-                  case '\'':
+                  /*
+                    the JSON standard does not need to be
+                    escaped single quotation marks
+                  */
+                  /*case '\'':
                   {
                      s << "\\\'" ;
                      break ;
-                  }
+                  }*/
                   case '\"':
                   {
                      s << "\\\"" ;
@@ -729,6 +733,36 @@ namespace bson {
                   case '\\':
                   {
                      s << "\\\\" ;
+                     break ;
+                  }
+                  case '/':
+                  {
+                     s << "\\/" ;
+                     break ;
+                  }
+                  case '\b':
+                  {
+                     s << "\\b" ;
+                     break ;
+                  }
+                  case '\f':
+                  {
+                     s << "\\f" ;
+                     break ;
+                  }
+                  case '\n':
+                  {
+                     s << "\\n" ;
+                     break ;
+                  }
+                  case '\r':
+                  {
+                     s << "\\r" ;
+                     break ;
+                  }
+                  case '\t':
+                  {
+                     s << "\\t" ;
                      break ;
                   }
                   default:
