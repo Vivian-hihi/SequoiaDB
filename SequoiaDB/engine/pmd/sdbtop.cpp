@@ -147,7 +147,7 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 
 #define ANYVALUE 0
 
-//snapshotModeChooser // GLOBAL or GROUP or NODE 
+//snapshotModeChooser // GLOBAL or GROUP or NODE
 #define GLOBAL "GLOBAL"
 #define GROUP "GROUP"
 #define NODE "NODE"
@@ -164,7 +164,7 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 #define SDB_DMS_EOC -29
 
 
-//forcedToRefresh_Local 
+//forcedToRefresh_Local
 //forcedToRefresh_Global
 #define REFRESH 0
 #define NOTREFRESH 1
@@ -196,9 +196,9 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 #define BUTTON_F5 542058306331
 
 CHAR* HELP_Header = "[Help for SDBTOP]"; //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
-CHAR* LICENSE_Footer = 
+CHAR* LICENSE_Footer =
    "Licensed Materials - Property of SequoiaDB\nCopyright SequoiaDB Corp. 2013-2014 All Rights Reserved. "; //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
-CHAR* Hello_Body = 
+CHAR* Hello_Body =
 " ###### ######  ######  ####### ####### ######   For help type h or ...\n"
 "#       #     # #     #    #    #     # #     #  sdbtop -h: usage\n"
 "#       #     # #     #    #    #     # #     #\n"
@@ -256,10 +256,10 @@ struct FiledWarningValue
 {
    INT64 absoluteMaxLimitValue;
    INT64 absoluteMinLimitValue;
-   
+
    INT64 deltaMaxLimitValue;
    INT64 deltaMinLimitValue;
-   
+
    INT64 averageMaxLimitValue;
    INT64 averageMinLimitValue;
 };
@@ -378,7 +378,7 @@ struct BodyMap
 struct InputPanel
 {
    INT32 displayModeChooser ; // ABSOLUTE or DELTA or AVERAGE .......pos of  DISPLAYMODECHOOSER[]
-   string snapshotModeChooser; // GLOBAL or GROUP or NODE 
+   string snapshotModeChooser; // GLOBAL or GROUP or NODE
    string groupName ;
    string nodeName ;
    INT32 fieldPosition ;
@@ -650,7 +650,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
          display.dySnapshotOutPut.globalAutoSetType = pt_displayContent.get<string>( "globalAutoSetType" ) ;
          display.dySnapshotOutPut.groupAutoSetType = pt_displayContent.get<string>( "groupAutoSetType" ) ;
          display.dySnapshotOutPut.nodeAutoSetType = pt_displayContent.get<string>( "nodeAutoSetType" ) ;
-         
+
          display.dySnapshotOutPut.globalStyle = pt_displayContent.get<string>( "globalStyle" ) ;
          display.dySnapshotOutPut.groupStyle = pt_displayContent.get<string>( "groupStyle" ) ;
          display.dySnapshotOutPut.nodeStyle = pt_displayContent.get<string>( "nodeStyle" ) ;
@@ -660,7 +660,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
             display.dySnapshotOutPut.globalCol = pt_displayContent.get<INT32>( "globalCol" ) ;
             display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( "tableCellLength" ) ;
          }
-         
+
          if( TABLE == display.dySnapshotOutPut.groupStyle )
          {
             display.dySnapshotOutPut.groupRow = pt_displayContent.get<INT32>( "groupRow" ) ;
@@ -674,7 +674,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
             display.dySnapshotOutPut.nodeCol = pt_displayContent.get<INT32>( "nodeCol" ) ;
             display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( "tableCellLength" ) ;
          }
-         
+
          display.dySnapshotOutPut.baseField = pt_displayContent.get<string>( "baseField" ) ;
          display.dySnapshotOutPut.fieldLength = pt_displayContent.get<INT32>( "fieldLength" ) ;
          display.dySnapshotOutPut.fixedField = new FieldStruct[display.dySnapshotOutPut.fieldLength] ;
@@ -689,7 +689,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                    errStrBuf, e.what() ) ;
          goto error;
       }
-      
+
       INT32 actualFixedFieldNum = 0;
       INT32 actualMobileFieldNum = 0;
       for( BOOST_AUTO( child_displayContent, pt_displayContent.begin() ); child_displayContent != pt_displayContent.end(); ++child_displayContent )
@@ -704,7 +704,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                   {
                      break ;
                   }
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteName = child_pFixed->second.get<string>( "absoluteName" ) ;  
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteName = child_pFixed->second.get<string>( "absoluteName" ) ;
                   display.dySnapshotOutPut.fixedField[actualFixedFieldNum].sourceField = child_pFixed->second.get<string>( "sourceField" ) ;
                   display.dySnapshotOutPut.fixedField[actualFixedFieldNum].contentLength = child_pFixed->second.get<INT32>( "contentLength" ) ;
                   display.dySnapshotOutPut.fixedField[actualFixedFieldNum].alignment = child_pFixed->second.get<string>( "alignment" ) ;
@@ -734,10 +734,10 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                      display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageColour.foreGroundColor = child_pFixed->second.get<INT32>( "averageColour.foreGroundColor" ) ;
                      display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageColour.backGroundColor = child_pFixed->second.get<INT32>( "averageColour.backGroundColor" ) ;
                      try
-                     {                 
+                     {
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMaxLimitValue = child_pFixed->second.get<INT64>( "warningValue.deltaMaxLimitValue" ) ;
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMinLimitValue = child_pFixed->second.get<INT64>( "warningValue.deltaMinLimitValue" ) ;
-                           
+
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMaxLimitValue = child_pFixed->second.get<INT64>( "warningValue.averageMaxLimitValue" ) ;
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMinLimitValue = child_pFixed->second.get<INT64>( "warningValue.averageMinLimitValue" ) ;
                      }
@@ -745,7 +745,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                      {
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMaxLimitValue= 0 ;
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMinLimitValue= 0 ;
-                        
+
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMaxLimitValue= 0 ;
                         display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMinLimitValue= 0 ;
 
@@ -767,14 +767,14 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                      break ;
                   }
                   display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteName = child_pMobile->second.get<string>( "absoluteName" ) ;
-                     
+
                   display.dySnapshotOutPut.mobileField[actualMobileFieldNum].sourceField = child_pMobile->second.get<string>( "sourceField" ) ;
                   display.dySnapshotOutPut.mobileField[actualMobileFieldNum].contentLength = child_pMobile->second.get<INT32>( "contentLength" ) ;
                   display.dySnapshotOutPut.mobileField[actualMobileFieldNum].alignment = child_pMobile->second.get<string>( "alignment" ) ;
 
                   display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteColour.foreGroundColor = child_pMobile->second.get<INT32>( "absoluteColour.foreGroundColor" ) ;
                   display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteColour.backGroundColor = child_pMobile->second.get<INT32>( "absoluteColour.backGroundColor" ) ;
-                     
+
                   try
                   {
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.absoluteMaxLimitValue = child_pMobile->second.get<INT64>( "warningValue.absoluteMaxLimitValue" ) ;
@@ -791,26 +791,26 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                   {
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaName = child_pMobile->second.get<string>( "deltaName" ) ;
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageName = child_pMobile->second.get<string>( "averageName" ) ;
-                     
+
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaColour.foreGroundColor = child_pMobile->second.get<INT32>( "deltaColour.foreGroundColor" ) ;
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaColour.backGroundColor = child_pMobile->second.get<INT32>( "deltaColour.backGroundColor" ) ;
-                     
+
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageColour.foreGroundColor = child_pMobile->second.get<INT32>( "averageColour.foreGroundColor" ) ;
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageColour.backGroundColor = child_pMobile->second.get<INT32>( "averageColour.backGroundColor" ) ;
 
                      try
-                     {  
+                     {
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMaxLimitValue = child_pMobile->second.get<INT64>( "warningValue.deltaMaxLimitValue" ) ;
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMinLimitValue = child_pMobile->second.get<INT64>( "warningValue.deltaMinLimitValue" ) ;
-                           
+
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMaxLimitValue = child_pMobile->second.get<INT64>( "warningValue.averageMaxLimitValue" ) ;
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMinLimitValue = child_pMobile->second.get<INT64>( "warningValue.averageMinLimitValue" ) ;
                      }
                      catch( std::exception &e )
-                     {            
+                     {
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMaxLimitValue= 0 ;
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMinLimitValue= 0 ;
-                        
+
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMaxLimitValue= 0 ;
                         display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMinLimitValue= 0 ;
                      }
@@ -825,7 +825,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
    }
    else if( displayType == DISPLAYTYPE_NULL )
    {
-      
+
    }
    else
    {
@@ -972,13 +972,13 @@ INT32 Event::readConfiguration( string configPath )
             root.actualWindowMinRow = child_event->second.get<INT32>( "actualWindowMinRow" );
             root.actualWindowMinColumn = child_event->second.get<INT32>( "actualWindowMinColumn" ) ;
             root.input.refreshInterval = child_event->second.get<INT32>( "refreshInterval" ) ;
-            
+
             root.input.colourOfTheChange.foreGroundColor = child_event->second.get<INT32>( "colourOfTheChange.foreGroundColor" ) ;
             root.input.colourOfTheChange.backGroundColor = child_event->second.get<INT32>( "colourOfTheChange.backGroundColor" ) ;
-            
+
             root.input.colourOfTheMax.foreGroundColor = child_event->second.get<INT32>( "colourOfTheMax.foreGroundColor" ) ;
             root.input.colourOfTheMax.backGroundColor = child_event->second.get<INT32>( "colourOfTheMax.backGroundColor" ) ;
-            
+
             root.input.colourOfTheMin.foreGroundColor = child_event->second.get<INT32>( "colourOfTheMin.foreGroundColor" ) ;
             root.input.colourOfTheMin.backGroundColor = child_event->second.get<INT32>( "colourOfTheMin.backGroundColor" ) ;
          }
@@ -1151,7 +1151,7 @@ INT32 Event::readConfiguration( string configPath )
                      {
                         root.body[bodyLength].headerKey = child_bodys->second.get<INT32>( "headerKey" ) ;
                         root.body[bodyLength].footerKey = child_bodys->second.get<INT32>( "footerKey" ) ;
-                        root.body[bodyLength].labelName = child_bodys->second.get<string>( "labelName" ) ;          
+                        root.body[bodyLength].labelName = child_bodys->second.get<string>( "labelName" ) ;
                         root.body[bodyLength].bodyPanelType = child_bodys->second.get<string>( "bodyPanelType" ) ;
                         if( root.body[bodyLength].bodyPanelType == BODYTYPE_MAIN ||
                             root.body[bodyLength].bodyPanelType == BODYTYPE_NORMAL )
@@ -1237,12 +1237,12 @@ INT32 Event::readConfiguration( string configPath )
             }
          }
       }
-      else 
+      else
       {
          ++otherTree ;
       }
    }
-   
+
 done :
    return rc ;
 error :
@@ -1321,7 +1321,7 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel, HeadTailMap **hea
       {
          *footer = &root.footer[index_footer] ;
          break ;
-      }  
+      }
    }
    if( NULL == *header )
    {
@@ -1389,7 +1389,7 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
    {
       rc = SDB_ERROR ;
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength, "%s Minimum window size: %dx%d, found %dx%d\n", 
+      snprintf( errStr, errStrLength, "%s Minimum window size: %dx%d, found %dx%d\n",
                 errStrBuf, root.actualWindowMinRow, root.actualWindowMinColumn, row, col ) ;
       goto error ;
    }
@@ -1515,7 +1515,7 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
       actualPosition.referUpperLeft_X = referPosition.referUpperLeft_X ;
       actualPosition.referUpperLeft_Y = referPosition.referUpperLeft_Y ;
    }
-   else 
+   else
    {
       rc = SDB_ERROR ;
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -1530,7 +1530,7 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
       {
          actualPosition.length_Y = row - actualPosition.referUpperLeft_Y ;
       }
-      else 
+      else
       {
          rc = SDB_ERROR ;
          snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -1611,7 +1611,7 @@ INT32 Event::getTopKey_TOP( INT64 *keyBuffer, INT32 bufLength, INT64 &key )
    catch( std::exception &e )
    {
       snprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-      snprintf( errStr, errStrLength, 
+      snprintf( errStr, errStrLength,
                 "%s getTopKey_TOP failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
       goto error ;
@@ -1700,7 +1700,7 @@ INT32 Event::SNPRINTF_TOP( CHAR *pBuffer, INT32 &printfLength, const CHAR *pSrc 
 {
    INT32 rc = SDB_OK ;
    INT32 i = 0 ;
-   
+
    try
    {
       for( i = 0; i < printfLength && pSrc[i] != '\0'; ++i )
@@ -1755,7 +1755,7 @@ INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild, SNPRINTF_TOP faild\n", errStrBuf ) ;
-      goto error ; 
+      goto error ;
    }
    if( LEFT == alignment )
    {
@@ -1778,7 +1778,7 @@ INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP wrong alignment:%s\n", errStrBuf, alignment.c_str() ) ;
-      goto error ; 
+      goto error ;
    }
 done :
    free( printf_str ) ;
@@ -1828,7 +1828,7 @@ INT32 Event::getResultFromBSONobj( const BSONObj &bsonobj, const string &sourceF
    try
    {
       BSONElement element = bsonobj.getField( sourceField ) ;
-      
+
       BSONElement baseElement = bsonobj.getField( baseField ) ;
       BSONElement baseElement_last ;
       const string new_ = baseElement.toString( FALSE ) ;
@@ -1897,7 +1897,7 @@ INT32 Event::getResultFromBSONobj( const BSONObj &bsonobj, const string &sourceF
          {
             snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
             snprintf( errStr, errStrLength,
-                      "%s getResultFromBSONobj failed, displayMode = %s\n", 
+                      "%s getResultFromBSONobj failed, displayMode = %s\n",
                       errStrBuf, displayMode.c_str() ) ;
             goto error ;
          }
@@ -2010,11 +2010,11 @@ INT32 Event::getResultFromBSONobj( const BSONObj &bsonobj, const string &sourceF
    {
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
-                   "%s getResultFromBSONobj failed, e.what():%s ,sourceField = %s\n", 
+                   "%s getResultFromBSONobj failed, e.what():%s ,sourceField = %s\n",
                    errStrBuf, e.what(), sourceField.c_str() ) ;
       goto error ;
    }
-   
+
 done :
    free( resultBuf ) ;
    return rc ;
@@ -2080,7 +2080,7 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_SNAPSHOT_RESULTNUMBER == expression )
    {
-   
+
    }
    else
    {
@@ -2088,7 +2088,7 @@ INT32 Event::getExpression( string& expression, string& result )
       snprintf( errStr, errStrLength,
                 "%s getExpression failed, wrong expression:%s\n",
                 errStrBuf, expression.c_str() ) ;
-      goto error ; 
+      goto error ;
    }
 done :
    free( buf ) ;
@@ -2263,10 +2263,10 @@ INT32 Event::getCurSnapshot()
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,can't getSnapshot, rc = %d\n", errStrBuf, rc ) ;
-  
+
       goto error ;
    }
-   
+
    root.input.last_absoluteMap.clear() ;
    root.input.last_absoluteMap = root.input.cur_absoluteMap ;
    root.input.cur_absoluteMap.clear() ;
@@ -2278,12 +2278,12 @@ INT32 Event::getCurSnapshot()
    root.input.last_averageMap.clear() ;
    root.input.last_averageMap = root.input.cur_averageMap ;
    root.input.cur_averageMap.clear() ;
-   
+
    root.input.last_Snapshot.clear() ;
    root.input.last_Snapshot = root.input.cur_Snapshot ;
    root.input.cur_Snapshot.clear() ;
    filterNum = root.input.filterNumber ;
-   while( !( rc = cursor.next( bsonobj ) ) )   
+   while( !( rc = cursor.next( bsonobj ) ) )
    {
       if( 0 < filterNum )
       {
@@ -2291,15 +2291,15 @@ INT32 Event::getCurSnapshot()
          continue ;
       }
       root.input.cur_Snapshot.push_back( bsonobj ) ;
-   } 
-   if( SDB_DMS_EOC != rc && SDB_OK != rc )   
-   {      
+   }
+   if( SDB_DMS_EOC != rc && SDB_OK != rc )
+   {
 
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                 "%s refreshDisplayContent failed, snapShotCursor.next( bsonobj ) faild, rc = %d\n", errStrBuf, rc ) ;
 
-      goto error ;   
+      goto error ;
    }
    if( SDB_DMS_EOC == rc )
    {
@@ -2352,7 +2352,7 @@ INT32 Event::fixedOutputLocation( INT32 start_row, INT32 start_col,
    else if( autoSetType == LOWER_LEFT )
    {
       fixed_row = start_row + referRowLength ;
-      fixed_col = start_col ; 
+      fixed_col = start_col ;
    }
    else if( autoSetType == UPPER_MIDDLE )
    {
@@ -2470,12 +2470,12 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
 
    if( displayContent.dynamicHelp.tableRow > actualPosition.length_Y )
    {
-   
+
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength, 
+      snprintf( errStr, errStrLength,
                  "%s refreshDisplayContent failed,displayContent.dynamicHelp.tableRow> actualPosition.length_Y\n",
                  errStrBuf ) ;
-   
+
       goto error ;
    }
    rc = getActivatedKeySuite( &keySuite ) ;
@@ -2502,7 +2502,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          tableColumnLength += displayContent.dynamicHelp.cellLength ;
       }
       rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X,
-                                start_row, start_col, 
+                                start_row, start_col,
                                 0,actualPosition.length_X - tableColumnLength,
                                 displayType, displayContent.dynamicHelp.autoSetType) ;
       if( rc )
@@ -2538,7 +2538,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
                snprintf( printfstr, 7, "  %c -  ", keySuite->hotKey[hotKey_pos].button ) ;
             else if( BUTTON_H_LOWER == keySuite->hotKey[hotKey_pos].button )
                snprintf( printfstr, 7, "  %c -  ", keySuite->hotKey[hotKey_pos].button ) ;
-            else 
+            else
                snprintf( printfstr, 7, "NULL-  ", keySuite->hotKey[hotKey_pos].button ) ;
          }
          else
@@ -2554,7 +2554,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;
          start_col_copy += _str.length() + 1 ;
-   
+
          //printf content
          SDBTOP_MEMSET( printfstr, 0, displayContent.dynamicHelp.cellLength ) ;
          pairNumber = displayContent.dynamicHelp.contentColour.foreGroundColor +
@@ -2568,7 +2568,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
             goto error ;
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;
-   
+
          start_col += displayContent.dynamicHelp.cellLength ;
          ++hotKey_pos ;
       }
@@ -2617,12 +2617,12 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
                                 result ) ;
             if( rc )
             {
-   
+
                snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                snprintf( errStr, errStrLength,
                          "%s refreshDisplayContent failed, getExpression faild, expressionType == DYNAMIC_EXPRESSION\n",
                          errStrBuf ) ;
-   
+
                goto error ;
             }
          }
@@ -2635,7 +2635,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
          }
          expressionLengthSum += expressionLength ;
       }
-      
+
       rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X,
                                 start_row, start_col,
                                 0, actualPosition.length_X -expressionLengthSum ,
@@ -2699,7 +2699,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
    Mobile = displayContent.dySnapshotOutPut.mobileField ;
    FixedLength = displayContent.dySnapshotOutPut.actualFixedFieldLength ;
    MobileLength = displayContent.dySnapshotOutPut.actualMobileFieldLength ;
-   
+
    INT32 start_row = actualPosition.referUpperLeft_Y ;
    INT32 start_col = actualPosition.referUpperLeft_X ;
    string AUTOSETTYPE = NULLSTRING ;
@@ -2735,7 +2735,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          ROW = 0 ;
          COL = 0 ;
       }
-      
+
    }
    else if( GROUP == root.input.snapshotModeChooser )
    {
@@ -2769,13 +2769,13 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
    }
    else
    {
-   
+
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                "%s refreshDisplayContent failed, wrong snapshotModeChooser == %s\n",
                errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
-   
-      goto error ;    
+
+      goto error ;
    }
    if( TABLE == STYLE)
    {
@@ -2786,7 +2786,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       {
          goto error ;
       }
-      INT32 end_fixed_mobile = 0 ; //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
+      INT32 end_fixed_mobile = 0 ; //use it to sign the end position of fixedFieldStruct or mobileFieldStruct
       INT32 start_fixed_mobile = 0 ; //use it to sign the start position of fixedFieldStruct or mobileFieldStruct
       for( INT32 rowNumber = 0; rowNumber < ROW; ++rowNumber )
       {
@@ -2825,13 +2825,13 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             {
                goto error ;
             }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
+            attroff( COLOR_PAIR( pairNumber ) ) ;
             start_col += tableCellLength ;
             ++start_col ; // add separate pace
             ++end_fixed_mobile ;
             ++tableCol ;
          }
-         
+
          while( 1 )
          {
             if( start_col + tableCellLength - actualPosition.referUpperLeft_X > actualPosition.length_X )
@@ -2854,20 +2854,20 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             {
                goto error ;
             }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
+            attroff( COLOR_PAIR( pairNumber ) ) ;
             start_col += tableCellLength ;
             ++start_col ; // add separate pace
             ++end_fixed_mobile ;
             ++tableCol ;
          }
-   
+
          //print the content on the screen
-         start_row += 1 ; // 
+         start_row += 1 ; //
          if( start_row - actualPosition.referUpperLeft_Y >= actualPosition.length_Y )
          {
             goto done ;
          }
-         rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X, 
+         rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X,
                                    start_row, start_col, 0, actualPosition.length_X -COL * tableCellLength,
                                    displayType, AUTOSETTYPE ) ;
          if( rc )
@@ -2876,7 +2876,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          }
          INT32 pos_snapshot = 0 ;
          for( pos_snapshot = 0; pos_snapshot < root.input.cur_Snapshot.size(); ++pos_snapshot )
-         {      
+         {
             INT32 start_up = start_fixed_mobile;
             bsonobj = root.input.cur_Snapshot[pos_snapshot];
             while( 1 )
@@ -2907,7 +2907,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                {
                   goto error ;
                }
-               attroff( COLOR_PAIR( pairNumber ) ) ;  
+               attroff( COLOR_PAIR( pairNumber ) ) ;
                start_col += tableCellLength ;
                ++start_col ; // add separate pace
                ++start_up ;
@@ -2944,12 +2944,12 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                {
                   goto error ;
                }
-               attroff( COLOR_PAIR( pairNumber ) ) ;  
+               attroff( COLOR_PAIR( pairNumber ) ) ;
                start_col += tableCellLength;
                ++start_col ; // add separate pace
                ++start_up ;
             }
-            start_row += 1 ; 
+            start_row += 1 ;
             rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X,
                                       start_row, start_col,
                                       0, actualPosition.length_X -COL * tableCellLength,
@@ -2962,7 +2962,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             {
                break ;
             }
-         }   
+         }
          start_row -= rowNumber ;
       }
    }// if( TABLE == STYLE)
@@ -2982,7 +2982,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             break ;
          expressionLengthSum += Fixed[fLength].contentLength ;
       }
-      
+
       if( root.input.fieldPosition >= MobileLength )
       {
          root.input.fieldPosition = MobileLength - 1 ;
@@ -3037,11 +3037,11 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          {
             goto error;
          }
-         attroff( COLOR_PAIR( pairNumber ) ) ;  
+         attroff( COLOR_PAIR( pairNumber ) ) ;
          start_col += Fixed[fLength].contentLength ;
          ++start_col ; // add separate pace
       }
-      
+
       if( root.input.fieldPosition >= MobileLength )
       {
          root.input.fieldPosition = MobileLength - 1 ;
@@ -3065,13 +3065,13 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          {
             goto error ;
          }
-         attroff( COLOR_PAIR( pairNumber ) ) ;  
+         attroff( COLOR_PAIR( pairNumber ) ) ;
          start_col += Mobile[mLength].contentLength ;
          ++start_col ; // add separate pace
       }
-   
+
       //print the content on the screen
-      start_row += 1 ; // 
+      start_row += 1 ; //
       if( start_row - actualPosition.referUpperLeft_Y >= actualPosition.length_Y )
       {
          goto done ;
@@ -3132,11 +3132,11 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             {
                goto error;
             }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
+            attroff( COLOR_PAIR( pairNumber ) ) ;
             start_col += Fixed[fLength].contentLength ;
             ++start_col ; // add separate pace
          }
-         
+
          if( root.input.fieldPosition >= MobileLength )
          {
             root.input.fieldPosition = MobileLength - 1 ;
@@ -3168,11 +3168,11 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             {
                goto error ;
             }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
+            attroff( COLOR_PAIR( pairNumber ) ) ;
             start_col += Mobile[mLength].contentLength ;
             ++start_col ; // add separate pace
          }
-         start_row += 1 ; 
+         start_row += 1 ;
          rc = fixedOutputLocation( start_row, actualPosition.referUpperLeft_X,
                                    start_row, start_col,
                                    0, actualPosition.length_X -expressionLengthSum ,
@@ -3185,7 +3185,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          {
             break ;
          }
-      }   
+      }
    }
 done :
    free( serialNumber ) ;
@@ -3195,7 +3195,7 @@ error :
    goto done ;
 
 }
-   
+
 INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                                     string displayType,
                                     Position &actualPosition )
@@ -3239,7 +3239,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else if( displayType == DISPLAYTYPE_NULL )
    {
-      
+
    }
    else
    {
@@ -3251,7 +3251,7 @@ error :
    rc = SDB_ERROR ;
    goto done ;
 }
-   
+
 INT32 Event::refreshNodeWindow( NodeWindow &window )
 {
    INT32 rc = SDB_OK ;
@@ -3288,7 +3288,7 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
                 errStrBuf );
       goto error;
    }
-   
+
 done :
    return rc ;
 error :
@@ -3385,7 +3385,7 @@ INT32 Event::addFixedHotKey()
          root.keySuite[i].hotKey[keyLength].jumpType = JUMPTYPE_FIXED ;
          root.keySuite[i].hotKey[keyLength].jumpName = "last view" ;
          ++keyLength ;
-         
+
          root.keySuite[i].hotKey[keyLength].button = BUTTON_ESC;
          root.keySuite[i].hotKey[keyLength].jumpType = JUMPTYPE_FIXED ;
          root.keySuite[i].hotKey[keyLength].jumpName = "last view" ;
@@ -3601,7 +3601,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                snprintf( errStr, errStrLength,
                          "%s assignActivatedPanelByLabelName failed\n",
                          errStrBuf ) ;
-  
+
                goto error ;
             }
             root.input.displayModeChooser = 0 ;
@@ -3623,7 +3623,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             {
                if( BUTTON_LEFT == hotKey->button )//left
                {
-                  --root.input.fieldPosition ; 
+                  --root.input.fieldPosition ;
                   if( root.input.fieldPosition < 0 )
                   {
                      root.input.fieldPosition = 0 ;
@@ -3634,7 +3634,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                }
                else if( BUTTON_RIGHT == hotKey->button )//right
                {
-                  ++root.input.fieldPosition ; 
+                  ++root.input.fieldPosition ;
                   root.input.forcedToRefresh_Local = REFRESH ;
                   goto done ;
                }
@@ -3688,7 +3688,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                   snprintf( errStr, errStrLength,
                             "%s buttonManagement faild,getActivatedHeadTailMap failed\n",
                             errStrBuf ) ;
-        
+
                   goto error ;
                }
                clear() ;
@@ -3769,10 +3769,10 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             SDBTOP_MEMSET( inputBuf, 0, 128) ;
-            
+
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
-            
+
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
@@ -3797,10 +3797,10 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             SDBTOP_MEMSET( inputBuf, 0, 128 ) ;
-            
+
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
-            
+
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
@@ -3824,10 +3824,10 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             SDBTOP_MEMSET( inputBuf, 0, 128) ;
-            
+
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
-            
+
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
@@ -3851,10 +3851,10 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 );
             SDBTOP_MEMSET( inputBuf, 0, 128);
-            
+
             move( row - 1, 0 );
             clrtobot(); //clear screen from the position of cursor to the end of screen
-            
+
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
@@ -3878,10 +3878,10 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             SDBTOP_MEMSET( inputBuf, 0, 128 ) ;
-            
+
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
-            
+
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
@@ -3915,10 +3915,10 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             SDBTOP_MEMSET( inputBuf, 0, 128 ) ;
-            
+
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
-            
+
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
@@ -4045,7 +4045,7 @@ INT32 Event::runSDBTOP( const CHAR* pHostName, const CHAR* pServiceName, const C
          goto error ;
       }
       refresh() ;
-         
+
       timeout.tv_sec = root.input.refreshInterval ;
       timeout.tv_usec = 0 ;
       while( 1 )
@@ -4076,7 +4076,7 @@ INT32 Event::runSDBTOP( const CHAR* pHostName, const CHAR* pServiceName, const C
          }
          else if( rc > 0 )
          {
-            if ( FD_ISSET ( STDIN, &fds ) ) 
+            if ( FD_ISSET ( STDIN, &fds ) )
             {
                SDBTOP_MEMSET( buf, 0, bufLength) ;
                read( STDIN, buf, bufLength ) ;
@@ -4139,7 +4139,7 @@ error :
 INT32 main( INT32 argc, CHAR **argv)
 {
    fd_set fds ;
-   INT32 rc = 0 ; 
+   INT32 rc = 0 ;
    Event sdbtop ;
    INT32 maxfd ;
    maxfd = STDIN + 1 ;
@@ -4158,7 +4158,7 @@ INT32 main( INT32 argc, CHAR **argv)
    sdbtop.SDBTOP_MEMSET( errStrBuf, 0, errStrLength ) ;
    initscr() ;
    if( FALSE == has_colors() )
-   { 
+   {
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                 "%s You terminal does not support color\n", errStrBuf ) ;
@@ -4174,7 +4174,7 @@ INT32 main( INT32 argc, CHAR **argv)
    {
       goto error ;
    }
-   
+
    if( 1 == argc )
    {
       rc = sdbtop.runSDBTOP( ) ;
