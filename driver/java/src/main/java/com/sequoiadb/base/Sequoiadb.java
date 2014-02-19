@@ -35,6 +35,7 @@ import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.util.JSON;
 
+import com.sequoiadb.base.SequoiadbConstants.PreferReplicaType;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.net.ConnectionTCPImpl;
@@ -797,31 +798,31 @@ public class Sequoiadb {
 		String command = SequoiadbConstants.SNAP_CMD;
 		switch (snapType) {
 		case SDB_SNAP_CONTEXTS:
-			command += SequoiadbConstants.CONTEXTS;
+			command += " " + SequoiadbConstants.CONTEXTS;
 			break;
 		case SDB_SNAP_CONTEXTS_CURRENT:
-			command += SequoiadbConstants.CONTEXTS_CUR;
+			command += " " + SequoiadbConstants.CONTEXTS_CUR;
 			break;
 		case SDB_SNAP_SESSIONS:
-			command += SequoiadbConstants.SESSIONS;
+			command += " " + SequoiadbConstants.SESSIONS;
 			break;
 		case SDB_SNAP_SESSIONS_CURRENT:
-			command += SequoiadbConstants.SESSIONS_CUR;
+			command += " " + SequoiadbConstants.SESSIONS_CUR;
 			break;
 		case SDB_SNAP_COLLECTIONS:
-			command += SequoiadbConstants.COLLECTIONS;
+			command += " " + SequoiadbConstants.COLLECTIONS;
 			break;
 		case SDB_SNAP_COLLECTIONSPACES:
-			command += SequoiadbConstants.COLSPACES;
+			command += " " + SequoiadbConstants.COLSPACES;
 			break;
 		case SDB_SNAP_DATABASE:
-			command += SequoiadbConstants.DATABASE;
+			command += " " + SequoiadbConstants.DATABASE;
 			break;
 		case SDB_SNAP_SYSTEM:
-			command += SequoiadbConstants.SYSTEM;
+			command += " " + SequoiadbConstants.SYSTEM;
 			break;
 		case SDB_SNAP_CATALOG:
-			command += SequoiadbConstants.CATA;
+			command += " " + SequoiadbConstants.CATA;
 			break;
 		default:
 			throw new BaseException("SDB_INVALIDARG");
@@ -1087,6 +1088,85 @@ public class Sequoiadb {
 		if (flags != 0) {
 			throw new BaseException(flags);
 		}
+	}
+	
+	/**
+	 * @fn void setSessionAttr( BSONObject options )
+     * @brief Set the attributes of the current session.
+     * @param options  The configuration options for the current session.The options are as below:
+     * <ul>
+     * <li>PreferedReplica   : Indicate which node to be choosed for querying in current session.
+     *                        eg:{"PreferedReplica":"M"/"S"/"A"/1-7}, prefer to choose master/slave/anyone/node1-node7,
+     *                        default to be {"PreferedReplica":"A"}, means would like to choose anyone to query.
+     * </li>
+     * </ul>
+     * @note Option "PreferedReplica" is used to choose which node for querying in current session.When a new session is built,
+     *      it works with default attribute {"PreferedReplica":"A"}. And it will keep the preferred node for querying in current session
+     *      until the session is closed or the node is shut down. If a shard only has 3 data notes, and we offer a configuraion option
+     *      {"PreferedReplica":5}, it will choose node 2(mod(5, 3)). 
+     *      
+     * @code
+     *	Sequoiadb sdb = new Sequoiadb("ubuntu-dev1", 11810, "", ""); // when build object sdb, it means we start session 1
+     *  sdb.setSessionAttr(new BasicBSONObject("PreferedReplica", 3)); // choose node 3(assume it exist) for querying
+     *  CollectionSpace cs = sdb.getCollectionSpace("foo");
+     *  DBCollection cl = cs.getCollection("bar");
+     *  cl.query(); // it will choose node 3 to query data in session 1
+     *  
+     *  Sequoiadb sdb1 = new Sequoiadb("ubuntu-dev2", 11810, "", ""); // build another Sequoiadb object, and we start session 2
+     *  sdb1.setSessionAttr(new BasicBSONObject("PreferedReplica", "M")); // choose master node for querying in session 2
+     *  CollectionSpace cs1 = sdb.getCollectionSpace("foo");
+     *  DBCollection cl1 = cs1.getCollection("bar");
+     *  cl1.query(); // it will choose master node to query data in session 2
+     *  cl.query(); // it will choose node 3 to query data in session 1
+     *  
+     *  sdb.disconnect(); // close session 1
+     *  
+     *  Sequoiadb sdb = new Sequoiadb("ubuntu-dev1", 11810, "", ""); // start session 3
+     *  CollectionSpace cs = sdb.getCollectionSpace("foo");
+     *  DBCollection cl = cs.getCollection("bar");
+     *  cl.query(); // it will choose any node to query data in session 3. Assuming it choise node 4, when we qurey next time,
+     *              // unless node 4 was shut down, it would choose node 4 again.
+     *  cl.query(); // choose node 4 to query again
+     * @endcode
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public void setSessionAttr( BSONObject options ) throws BaseException {
+		// check argument
+		if ( null == options || 
+		     !options.containsField(SequoiadbConstants.FIELD_NAME_PREFERED_REPLICA) )
+			throw new BaseException( "SDB_INVALIDARG", options );
+		// build obj
+		BSONObject newObj = new BasicBSONObject();
+		Object value = options.get( SequoiadbConstants.FIELD_NAME_PREFERED_REPLICA );
+		int v = PreferReplicaType.PREFER_REPL_SLAVE.getCode();
+		if ( value instanceof Integer ) {
+			v = (Integer)value;
+			if ( v < 1 || v > 7 )
+				throw new BaseException( "SDB_INVALIDARG", options );
+		}else if ( value instanceof String ) {
+			if ( !value.equals("M") &&
+				 !value.equals("S") &&
+				 !value.equals("A") )
+				throw new BaseException( "SDB_INVALIDARG", options );
+			if ( value.equals("M") )
+				v = PreferReplicaType.PREFER_REPL_MASTER.getCode();
+			else if ( value.equals("S") )
+				v = PreferReplicaType.PREFER_REPL_SLAVE.getCode();
+			else
+				v = PreferReplicaType.PREFER_REPL_ANYONE.getCode();
+		}else {
+			throw new BaseException( "SDB_INVALIDARG", options );
+		}
+		newObj.put( SequoiadbConstants.FIELD_NAME_PREFERED_REPLICA, v );
+		// command
+		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_SETSESS_ATTR,
+				                       0, 0, 0, -1, newObj,
+				                       null, null, null);
+		int flags = rtn.getFlags();
+		if ( flags != 0 ) {
+			throw new BaseException( flags );
+		}
+		
 	}
 	
 	/**

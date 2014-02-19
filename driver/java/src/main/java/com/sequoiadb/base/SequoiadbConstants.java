@@ -95,6 +95,7 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_RM_PROCEDURES = "remove procedures";
 	public final static String CMD_NAME_ATTACH_CL = "link collection";
 	public final static String CMD_NAME_DETACH_CL = "unlink collection";
+	public final static String CMD_NAME_SETSESS_ATTR = "set session attribute";
 	
 	
 	
@@ -130,6 +131,7 @@ public class SequoiadbConstants {
 	public final static String FIELD_COLLECTION = "Collection";
 	public final static String FIELD_TOTAL = "Total";
 	public final static String FIELD_INDEX = "Index";
+	public final static String FIELD_NAME_PREFERED_REPLICA = "PreferedReplica";
 
 	public final static String IXM_NAME = "name";
 	public final static String IXM_KEY = "key";
@@ -186,6 +188,30 @@ public class SequoiadbConstants {
 				}
 			}
 			return rtnOper;
+		}
+	}
+	
+	public enum PreferReplicaType {
+		PREFER_REPL_TYPE_MIN(0),
+		PREFER_REPL_NODE_1(1),
+		PREFER_REPL_NODE_2(2),
+		PREFER_REPL_NODE_3(3),
+		PREFER_REPL_NODE_4(4),
+		PREFER_REPL_NODE_5(5),
+		PREFER_REPL_NODE_6(6),
+		PREFER_REPL_NODE_7(7),
+		PREFER_REPL_MASTER(8),
+		PREFER_REPL_SLAVE(9),
+		PREFER_REPL_ANYONE(10),
+		PREFER_REPL_TYPE_MAX(11);
+		
+		private int typeCode;
+		private PreferReplicaType(int typeCode) {
+			this.typeCode = typeCode;
+		}
+		
+		public int getCode() {
+			return typeCode;
 		}
 	}
 }
