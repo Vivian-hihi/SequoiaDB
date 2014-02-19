@@ -80,8 +80,7 @@ SdbCursor.prototype.toArray = function() {
       var json = bs.toJson () ;
       try
       {
-         var pa = JSON.parse(json) ;
-         var stf = JSON.stringify(JSON.parse(bs.toJson()), undefined, 2) ;
+         var stf = JSON.stringify(JSON.parse(json), undefined, 2) ;
          a.push ( stf ) ;
       }
       catch ( e )
