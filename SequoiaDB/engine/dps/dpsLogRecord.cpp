@@ -281,8 +281,8 @@ namespace engine
          }
          else
          {
-            ossHexDumpBuffer ( (void*)&_head,
-                               _head._length, outBuf, outSize, NULL,
+            ossHexDumpBuffer ( (void*)&_head, sizeof(_head),
+                               outBuf, outSize, NULL,
                                hexDumpOption ) ;
          }
          len = ossStrlen ( outBuf ) ;
