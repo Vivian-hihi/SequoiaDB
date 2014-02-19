@@ -39,6 +39,9 @@
 #include "ossMem.hpp"
 #include "pdTrace.hpp"
 #include "ixmTrace.hpp"
+
+using namespace bson ;
+
 namespace engine
 {
    BSONObj gUndefinedKeys [IXM_MAX_PREALLOCATED_UNDEFKEY] ;
@@ -72,7 +75,7 @@ namespace engine
       }
       // input: BSONObj obj
       // output: BSONObjSet &keys
-      PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "_ixmKeyGenerator::getKeys" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "_ixmKeyGenerator::getKeys" )
       INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys ) const
       {
          INT32 rc = SDB_OK ;
@@ -97,13 +100,16 @@ namespace engine
          }
          if ( rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to generate key from object: %s",
-                    obj.toString().c_str() ) ;
+            PD_LOG ( PDERROR, "Failed to generate key from object: %s",
+                     obj.toString().c_str() ) ;
             goto error ;
          }
+
          if ( keys.empty() )
+         {
             keys.insert ( _keygen->_undefinedKey ) ;
+         }
+
       done :
          PD_TRACE_EXITRC ( SDB__IXMKEYGEN_GETKEYS, rc );
          return rc ;
@@ -111,7 +117,7 @@ namespace engine
          goto done ;
       }
    protected:
-      PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__EXTNXT2DELE, "_ixmKeyGenerator::_extractNext2dElement" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__EXTNXT2DELE, "_ixmKeyGenerator::_extractNext2dElement" )
       INT32 _extractNext2dElement( const BSONObj &obj, const BSONObj &arr,
                                    const CHAR *&field,
                                    BOOLEAN &arrayNestedArray,
@@ -189,10 +195,10 @@ namespace engine
          goto done ;
       }
       
-      PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__EXTNXTELE, "_ixmKeyGenerator::_extractNextElement" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__EXTNXTELE, "_ixmKeyGenerator::_extractNextElement" )
       INT32 _extractNextElement ( const BSONObj &obj, const BSONObj &arr,
-                                 const CHAR *&field, BOOLEAN &arrayNestedArray,
-                                 BSONElement &nextEle ) const
+                                  const CHAR *&field, BOOLEAN &arrayNestedArray,
+                                  BSONElement &nextEle ) const
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN__EXTNXTELE );
@@ -252,7 +258,7 @@ namespace engine
       // arrIdxs contains the field indexes that contains array
       // this function will loop through those indxes and build fixed object
       // from them
-      PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYSARRELTFIXED, "_ixmKeyGenerator::_getKeysArrEltFixed" )
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYSARRELTFIXED, "_ixmKeyGenerator::_getKeysArrEltFixed" )
       INT32 _getKeysArrEltFixed ( vector<const CHAR*> &fieldNames,
                                   vector<BSONElement> &fixed,
                                   const BSONElement &arrEntry,
@@ -300,10 +306,35 @@ namespace engine
       error :
          goto done ;
       }
-      
-      PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "_ixmKeyGenerator::_getKeys" )
-      INT32 _getKeys ( vector <const CHAR *>fieldNames,
-                       vector <BSONElement> fixed,
+
+      BSONObj _produceObj( const vector <BSONElement> &fixed ) const
+      {
+         BSONObjBuilder builder ;
+         CHAR numStr[ 10 ] = {0} ;
+         UINT32 eleNum = fixed.size() ;
+         for ( UINT32 index = 0 ; index < eleNum ; ++index )
+         {
+            if ( GEN_OBJ_KEEP_FIELD_NAME == _keygen->_keyGenType )
+            {
+               builder.appendAs ( fixed[index],
+                                  _keygen->_fieldNames[index] ) ;
+            }
+            else if ( GEN_OBJ_ARRAY_FIELD_NAME == _keygen->_keyGenType )
+            {
+               ossSnprintf( numStr, sizeof(numStr)-1, "%d", index ) ;
+               builder.appendAs ( fixed[index], numStr ) ;
+            }
+            else
+            {
+               builder.appendAs ( fixed[index], "" ) ;
+            }
+         }
+         return builder.obj() ;
+      }
+
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "_ixmKeyGenerator::_getKeys" )
+      INT32 _getKeys ( vector <const CHAR *> fieldNames,
+                       vector <BSONElement>  fixed,
                        const BSONObj &obj,
                        BSONObjSet &keys,
                        UINT32 numNotFound = 0,
@@ -319,7 +350,9 @@ namespace engine
          {
             // skip empty fields
             if ( *fieldNames[i] == '\0' )
+            {
                continue ;
+            }
             BOOLEAN arrayNestedArray ;
             // extract element matching fieldName[i] from object or array
             BSONElement e ;
@@ -332,7 +365,7 @@ namespace engine
             else
             {
                rc = _extractNextElement ( obj, array, fieldNames[i],
-                                       arrayNestedArray, e ) ;
+                                          arrayNestedArray, e ) ;
             }
             PD_RC_CHECK ( rc, PDERROR,
                           "Failed to extract next element from obj: %s",
@@ -359,9 +392,8 @@ namespace engine
                // let's dump error
                else if ( e.rawdata() != arrElt.rawdata() )
                {
-                  pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                          "At most one array can be in the key: %s, %s",
-                          e.fieldName(), arrElt.fieldName() ) ;
+                  PD_LOG ( PDERROR, "At most one array can be in the key: "
+                           "%s, %s", e.fieldName(), arrElt.fieldName() ) ;
                   rc = SDB_IXM_MULTIPLE_ARRAY ;
                   goto error ;
                }
@@ -381,16 +413,12 @@ namespace engine
          if ( arrElt.eoo() )
          {
             // if we can't find any fields
-            if ( _keygen->_nFields == (INT32)numNotFound )
-               goto done ;
-            //BSONObjBuilder b ( _keygen->_sizeTracker ) ;
-            BSONObjBuilder b ;
-            for ( vector<BSONElement>::iterator i = fixed.begin();
-                  i!=fixed.end(); ++i )
+            if ( _keygen->_nFields == (INT32)numNotFound &&
+                 GEN_OBJ_NO_FIELD_NAME == _keygen->_keyGenType )
             {
-               b.appendAs ( *i, "" ) ;
+               goto done ;
             }
-            keys.insert ( b.obj() ) ;
+            keys.insert ( _produceObj( fixed ) ) ;
          }
          else if ( arrElt.embeddedObject().firstElement().eoo() )
          {
@@ -426,26 +454,29 @@ namespace engine
    } ;
    typedef class _ixmKeyGenerator ixmKeyGenerator ;
    // create key generator from index control block
-   _ixmIndexKeyGen::_ixmIndexKeyGen ( const _ixmIndexCB *indexCB )
+   _ixmIndexKeyGen::_ixmIndexKeyGen ( const _ixmIndexCB *indexCB,
+                                      IXM_KEYGEN_TYPE genType )
    {
       SDB_ASSERT ( indexCB, "details can't be NULL" )
-      // _infoObj["key"]
       _keyPattern = indexCB->keyPattern() ;
       // whole _infoObj
       _info = indexCB->_infoObj ;
       _type = indexCB->getIndexType() ;
+      _keyGenType = genType ;
       //_indexCB = indexCB ;
       _init() ;
    }
    // create key generator from key
-   _ixmIndexKeyGen::_ixmIndexKeyGen ( const BSONObj &keyDef )
+   _ixmIndexKeyGen::_ixmIndexKeyGen ( const BSONObj &keyDef,
+                                      IXM_KEYGEN_TYPE genType )
    {
       _keyPattern = keyDef.copy () ;
       _type = IXM_EXTENT_TYPE_NONE ;
+      _keyGenType = genType ;
       _init () ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__IXMINXKEYGEN__INIT, "_ixmIndexKeyGen::_init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMINXKEYGEN__INIT, "_ixmIndexKeyGen::_init" )
    void _ixmIndexKeyGen::_init()
    {
       PD_TRACE_ENTRY ( SDB__IXMINXKEYGEN__INIT );
@@ -523,7 +554,7 @@ namespace engine
        return HELPFUL;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB_IXMINXKEYGEN, "ixmIndexKeyGen::reset" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_IXMINXKEYGEN, "ixmIndexKeyGen::reset" )
    INT32 ixmIndexKeyGen::reset ( const BSONObj & info )
    {
       INT32 rc = SDB_OK ;
@@ -531,20 +562,18 @@ namespace engine
       _info = info ;
       try
       {
-         _keyPattern = _info["key"].embeddedObjectUserCheck() ;
+         _keyPattern = _info[IXM_KEY_FIELD].embeddedObjectUserCheck() ;
       }
       catch ( std::exception &e )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Unable to locate valid key in index: %s",
-                 e.what() ) ;
+         PD_LOG ( PDERROR, "Unable to locate valid key in index: %s",
+                  e.what() ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       if ( _keyPattern.objsize() == 0 )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Empty key" ) ;
+         PD_LOG ( PDERROR, "Empty key" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

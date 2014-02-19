@@ -34,18 +34,29 @@
 *******************************************************************************/
 #ifndef IXMINDEXKEY_HPP_
 #define IXMINDEXKEY_HPP_
+
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.h"
 #include "pd.hpp"
 #include <string>
 #include <vector>
+
 using namespace bson;
+
 namespace engine
 {
 #define IXM_MAX_PREALLOCATED_UNDEFKEY 10
    enum IndexSuitability { USELESS = 0 , HELPFUL = 1 , OPTIMAL = 2 };
    class _ixmIndexCB ;
+
+   enum IXM_KEYGEN_TYPE
+   {
+      GEN_OBJ_NO_FIELD_NAME         = 1,
+      GEN_OBJ_KEEP_FIELD_NAME       = 2,
+      GEN_OBJ_ARRAY_FIELD_NAME      = 3
+   } ;
+
    // Index KeyGen is the operator to extract keys from given object
    // It depends on its underlying ixmIndexDetails control block
    // ixmIndexKeyGen is local to each thread
@@ -60,19 +71,24 @@ namespace engine
       vector<BSONElement> _fixedElements ; // dummy element for KeyGenerator
       BSONObj _undefinedKey ;
 
-      INT32 _nFields ; // number of fields
+      INT32                _nFields ; // number of fields
       // index key pattern
-      BSONObj _keyPattern ;
-      BSONObj _info ;
-      UINT16 _type ;
+      BSONObj              _keyPattern ;
+      BSONObj              _info ;
+      UINT16               _type ;
+
+      IXM_KEYGEN_TYPE      _keyGenType ;
+
       //const _ixmIndexCB *_indexCB ;
       void _init() ;
       friend class _ixmKeyGenerator ;
    public:
       // create key generator from index control block
-      _ixmIndexKeyGen ( const _ixmIndexCB *indexCB ) ;
+      _ixmIndexKeyGen ( const _ixmIndexCB *indexCB,
+                        IXM_KEYGEN_TYPE genType = GEN_OBJ_NO_FIELD_NAME ) ;
       // create key generator from key def
-      _ixmIndexKeyGen ( const BSONObj &keyDef ) ;
+      _ixmIndexKeyGen ( const BSONObj &keyDef,
+                        IXM_KEYGEN_TYPE genType = GEN_OBJ_NO_FIELD_NAME ) ;
       // this function overwrite _keyPattern and _info with a new index info
       // object. This will make the ixmIndexKeyGen generate different key than
       // it supposed to
@@ -87,4 +103,5 @@ namespace engine
    typedef class _ixmIndexKeyGen ixmIndexKeyGen ;
 }
 
-#endif
+#endif //IXMINDEXKEY_HPP_
+
