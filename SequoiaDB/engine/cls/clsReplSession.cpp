@@ -449,6 +449,7 @@ namespace engine
       res.header.header.TID = msg->header.TID ;
       res.header.header.routeID = msg->header.routeID ;
       res.header.header.requestID = msg->header.requestID ;
+      time_t bTime = time(NULL) ;
 
       if ( msg->current.invalid() )
       {
@@ -491,7 +492,7 @@ namespace engine
          _mb.clear() ;
          DPS_LSN search = msg->current ;
          /// finally, try again.
-         if ( SDB_OK == _logger->search( search, &_mb ) )
+         if ( SDB_OK == _logger->searchHeader( search, &_mb ) )
          {
             if ( ((dpsLogRecordHeader *)(_mb.offset(0)))->_version ==
                   msg->current.version )
@@ -515,7 +516,7 @@ namespace engine
          do
          {
             _mb.clear() ;
-            if ( SDB_OK != _logger->search( search, &_mb ) )
+            if ( SDB_OK != _logger->searchHeader( search, &_mb ) )
             {
                break ;
             }
@@ -526,7 +527,9 @@ namespace engine
                                   _version ;
                search.offset = ((dpsLogRecordHeader *)(_mb.offset(0)))->_preLsn;
             }
-         }while ( 0 < returnTo.compareVersion( search.version - 1 ) ) ;
+         }while ( returnTo.compareOffset( msg->current.offset ) < 0 ||
+                  ( 0 < returnTo.compareVersion( search.version - 1 ) &&
+                    time( NULL ) - bTime <= CLS_REPL_MAX_TIME ) ) ;
 
          /// we do not know whether remote can rollback.
          /// but we'd better to send back.
@@ -604,8 +607,7 @@ namespace engine
             goto done ;
          }
          /// can not find rollback point, will find the consult lsn again
-         if ( SDB_OK != _logger->search( msg->returnTo, &_mb ) ||
-              curLsn.compare( msg->returnTo ) == 0 )
+         if ( SDB_OK != _logger->searchHeader( msg->returnTo, &_mb ) )
          {
             PD_LOG ( PDINFO, "Sync Session[%s]: Consult Lsn[%d,%lld], "
                      "curLsn[%d,%lld]", sessionName(), _consultLsn.version,
@@ -616,7 +618,7 @@ namespace engine
             do
             {
                _mb.clear() ;
-               if ( SDB_OK != _logger->search( search, &_mb ) )
+               if ( SDB_OK != _logger->searchHeader( search, &_mb ) )
                {
                   PD_LOG ( PDWARNING, "Sync Session[%s]: No find the lsn less "
                            "than(offset:%lld, version:%d)", sessionName(),
@@ -876,6 +878,8 @@ namespace engine
                  _pReplBucket->size() ) ;
          goto done ;
       }
+      // need to reset repl backet
+      _pReplBucket->reset() ;
 
       if ( _consultLsn.invalid () )
       {
