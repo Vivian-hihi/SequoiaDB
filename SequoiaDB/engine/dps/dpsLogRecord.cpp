@@ -125,7 +125,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_LOAD, "_dpsLogRecord::load" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_LOAD, "_dpsLogRecord::load" )
    INT32 _dpsLogRecord::load( const CHAR *pData )
    {
       PD_TRACE_ENTRY ( SDB__DPSLGRECD_LOAD );
@@ -198,7 +198,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_FIND, "_dpsLogRecord::find" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_FIND, "_dpsLogRecord::find" )
    _dpsLogRecord::iterator _dpsLogRecord::find( DPS_TAG tag ) const
    {
       PD_TRACE_ENTRY ( SDB__DPSLGRECD_FIND );
@@ -227,7 +227,7 @@ namespace engine
       return itr ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_PUSH, "_dpsLogRecord::push" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_PUSH, "_dpsLogRecord::push" )
    INT32 _dpsLogRecord::push( DPS_TAG tag, UINT32 len, const CHAR *value )
    {
       PD_TRACE_ENTRY( SDB__DPSLGRECD_PUSH ) ;
@@ -253,7 +253,7 @@ namespace engine
        goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_DUMP, "_dpsLogRecord::dump" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGRECD_DUMP, "_dpsLogRecord::dump" )
    UINT32 _dpsLogRecord::dump ( CHAR *outBuf,
                                 UINT32 outSize,
                                 UINT32 options ) const
