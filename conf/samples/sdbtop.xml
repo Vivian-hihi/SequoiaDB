@@ -115,7 +115,7 @@
          <HeadTailMap>
             <key>1</key>
             <value>
-               <numOfSubWindow>10</numOfSubWindow>
+               <numOfSubWindow>16</numOfSubWindow>
                <NodeWindow>
                   <actualWindowMinRow>24</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
@@ -183,13 +183,13 @@
                      <rowNumber>1</rowNumber>
                      <ExpressionContent>
                         <expressionType>DYNAMIC_EXPRESSION</expressionType>
-                        <expressionLength>20</expressionLength>
+                        <expressionLength>10</expressionLength>
                         <expressionValue>
-                           <expression>EXPRESSION_BODY_LABELNAME</expression>
+                           <expression>EXPRESSION_VERSION</expression>
                         </expressionValue>
                         <alignment>CENTER</alignment>
                         <colour>
-                           <foreGroundColor>6</foreGroundColor>
+                           <foreGroundColor>3</foreGroundColor>
                            <backGroundColor>0</backGroundColor>
                         </colour>
                         <rowLocation>1</rowLocation>
@@ -197,8 +197,51 @@
                   </displayContent>
                   <position>
                      <referUpperLeft_X>30</referUpperLeft_X>
-                     <referUpperLeft_Y>1</referUpperLeft_Y>
+                     <referUpperLeft_Y>0</referUpperLeft_Y>
                      <length_X>20</length_X>
+                     <length_Y>1</length_Y>
+                  </position>
+               </NodeWindow>
+               <NodeWindow>
+                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinColumn>80</actualWindowMinColumn>
+                  <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
+                  <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
+                  <displayContent>
+                     <autoSetType>UPPER_RIGHT</autoSetType>
+                     <expressionNumber>4</expressionNumber>
+                     <rowNumber>1</rowNumber>
+                     <ExpressionContent>
+                        <expressionType>STATIC_EXPRESSION</expressionType>
+                        <expressionLength>33</expressionLength>
+                        <expressionValue>
+                           <text>snapshotMode:</text>
+                        </expressionValue>
+                        <alignment>RIGHT</alignment>
+                        <colour>
+                           <foreGroundColor>7</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent>
+                     <ExpressionContent>
+                        <expressionType>DYNAMIC_EXPRESSION</expressionType>
+                        <expressionLength>7</expressionLength>
+                        <expressionValue>
+                           <expression>EXPRESSION_SNAPSHOTMODE</expression>
+                        </expressionValue>
+                        <alignment>LEFT</alignment>
+                        <colour>
+                           <foreGroundColor>6</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent> 
+                  </displayContent>
+                  <position>
+                     <referUpperLeft_X>50</referUpperLeft_X>
+                     <referUpperLeft_Y>0</referUpperLeft_Y>
+                     <length_X>30</length_X>
                      <length_Y>1</length_Y>
                   </position>
                </NodeWindow>
@@ -251,6 +294,36 @@
                   <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
                   <displayContent>
+                     <autoSetType>UPPER_MIDDLE</autoSetType>
+                     <expressionNumber>4</expressionNumber>
+                     <rowNumber>1</rowNumber>
+                     <ExpressionContent>
+                        <expressionType>DYNAMIC_EXPRESSION</expressionType>
+                        <expressionLength>20</expressionLength>
+                        <expressionValue>
+                           <expression>EXPRESSION_BODY_LABELNAME</expression>
+                        </expressionValue>
+                        <alignment>CENTER</alignment>
+                        <colour>
+                           <foreGroundColor>6</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent>
+                  </displayContent>
+                  <position>
+                     <referUpperLeft_X>30</referUpperLeft_X>
+                     <referUpperLeft_Y>1</referUpperLeft_Y>
+                     <length_X>20</length_X>
+                     <length_Y>1</length_Y>
+                  </position>
+               </NodeWindow>
+               <NodeWindow>
+                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinColumn>80</actualWindowMinColumn>
+                  <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
+                  <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
+                  <displayContent>
                      <autoSetType>UPPER_RIGHT</autoSetType>
                      <expressionNumber>4</expressionNumber>
                      <rowNumber>1</rowNumber>
@@ -258,7 +331,7 @@
                         <expressionType>STATIC_EXPRESSION</expressionType>
                         <expressionLength>33</expressionLength>
                         <expressionValue>
-                           <text>snapshotMode:</text>
+                           <text>snapshotModeInput:</text>
                         </expressionValue>
                         <alignment>RIGHT</alignment>
                         <colour>
@@ -271,7 +344,7 @@
                         <expressionType>DYNAMIC_EXPRESSION</expressionType>
                         <expressionLength>7</expressionLength>
                         <expressionValue>
-                           <expression>EXPRESSION_SNAPSHOTMODE</expression>
+                           <expression>EXPRESSION_SNAPSHOTMODE_INPUTNAME</expression>
                         </expressionValue>
                         <alignment>LEFT</alignment>
                         <colour>
@@ -285,36 +358,6 @@
                      <referUpperLeft_X>50</referUpperLeft_X>
                      <referUpperLeft_Y>1</referUpperLeft_Y>
                      <length_X>30</length_X>
-                     <length_Y>1</length_Y>
-                  </position>
-               </NodeWindow>
-               <NodeWindow>
-                  <actualWindowMinRow>24</actualWindowMinRow>
-                  <actualWindowMinColumn>80</actualWindowMinColumn>
-                  <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
-                  <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
-                  <displayContent>
-                     <autoSetType>UPPER_MIDDLE</autoSetType>
-                     <expressionNumber>4</expressionNumber>
-                     <rowNumber>1</rowNumber>
-                     <ExpressionContent>
-                        <expressionType>DYNAMIC_EXPRESSION</expressionType>
-                        <expressionLength>10</expressionLength>
-                        <expressionValue>
-                           <expression>EXPRESSION_VERSION</expression>
-                        </expressionValue>
-                        <alignment>CENTER</alignment>
-                        <colour>
-                           <foreGroundColor>3</foreGroundColor>
-                           <backGroundColor>0</backGroundColor>
-                        </colour>
-                        <rowLocation>1</rowLocation>
-                     </ExpressionContent>
-                  </displayContent>
-                  <position>
-                     <referUpperLeft_X>30</referUpperLeft_X>
-                     <referUpperLeft_Y>0</referUpperLeft_Y>
-                     <length_X>20</length_X>
                      <length_Y>1</length_Y>
                   </position>
                </NodeWindow>
@@ -364,6 +407,49 @@
                <NodeWindow>
                   <actualWindowMinRow>24</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
+                  <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
+                  <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
+                  <displayContent>
+                     <autoSetType>UPPER_RIGHT</autoSetType>
+                     <expressionNumber>4</expressionNumber>
+                     <rowNumber>1</rowNumber>
+                     <ExpressionContent>
+                        <expressionType>STATIC_EXPRESSION</expressionType>
+                        <expressionLength>33</expressionLength>
+                        <expressionValue>
+                           <text>filtering Number:</text>
+                        </expressionValue>
+                        <alignment>RIGHT</alignment>
+                        <colour>
+                           <foreGroundColor>7</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent>
+                     <ExpressionContent>
+                        <expressionType>DYNAMIC_EXPRESSION</expressionType>
+                        <expressionLength>7</expressionLength>
+                        <expressionValue>
+                           <expression>EXPRESSION_FILTER_NUMBER</expression>
+                        </expressionValue>
+                        <alignment>LEFT</alignment>
+                        <colour>
+                           <foreGroundColor>6</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent> 
+                  </displayContent>
+                  <position>
+                     <referUpperLeft_X>50</referUpperLeft_X>
+                     <referUpperLeft_Y>2</referUpperLeft_Y>
+                     <length_X>30</length_X>
+                     <length_Y>1</length_Y>
+                  </position>
+               </NodeWindow>
+               <NodeWindow>
+                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinColumn>80</actualWindowMinColumn>
                   <zoomMode>ZOOM_MODE_COL</zoomMode>
                   <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
                   <displayContent>
@@ -399,6 +485,75 @@
                   </displayContent>
                   <position>
                      <referUpperLeft_X>0</referUpperLeft_X>
+                     <referUpperLeft_Y>3</referUpperLeft_Y>
+                     <length_X>30</length_X>
+                     <length_Y>1</length_Y>
+                  </position>
+               </NodeWindow>
+               <NodeWindow>
+                  <actualWindowMinRow>24</actualWindowMinRow>
+                  <actualWindowMinColumn>80</actualWindowMinColumn>
+                  <zoomMode>ZOOM_MODE_COL_POS_X</zoomMode>
+                  <displayType>DISPLAYTYPE_DYNAMIC_EXPRESSION</displayType>
+                  <displayContent>
+                     <autoSetType>UPPER_RIGHT</autoSetType>
+                     <expressionNumber>4</expressionNumber>
+                     <rowNumber>1</rowNumber>
+                     <ExpressionContent>
+                        <expressionType>STATIC_EXPRESSION</expressionType>
+                        <expressionLength>33</expressionLength>
+                        <expressionValue>
+                           <text>sortingWay:</text>
+                        </expressionValue>
+                        <alignment>RIGHT</alignment>
+                        <colour>
+                           <foreGroundColor>7</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent>
+                     <ExpressionContent>
+                        <expressionType>DYNAMIC_EXPRESSION</expressionType>
+                        <expressionLength>7</expressionLength>
+                        <expressionValue>
+                           <expression>EXPRESSION_SORTINGWAY</expression>
+                        </expressionValue>
+                        <alignment>LEFT</alignment>
+                        <colour>
+                           <foreGroundColor>6</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent> 
+                     <ExpressionContent>
+                        <expressionType>STATIC_EXPRESSION</expressionType>
+                        <expressionLength>33</expressionLength>
+                        <expressionValue>
+                           <text>sortingField:</text>
+                        </expressionValue>
+                        <alignment>RIGHT</alignment>
+                        <colour>
+                           <foreGroundColor>7</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent>
+                     <ExpressionContent>
+                        <expressionType>DYNAMIC_EXPRESSION</expressionType>
+                        <expressionLength>7</expressionLength>
+                        <expressionValue>
+                           <expression>EXPRESSION_SORTINGFIELD</expression>
+                        </expressionValue>
+                        <alignment>LEFT</alignment>
+                        <colour>
+                           <foreGroundColor>6</foreGroundColor>
+                           <backGroundColor>0</backGroundColor>
+                        </colour>
+                        <rowLocation>1</rowLocation>
+                     </ExpressionContent> 
+                  </displayContent>
+                  <position>
+                     <referUpperLeft_X>50</referUpperLeft_X>
                      <referUpperLeft_Y>3</referUpperLeft_Y>
                      <length_X>30</length_X>
                      <length_Y>1</length_Y>
@@ -480,7 +635,7 @@
             </value>
          </HeadTailMap>
       </Headers>
-      <Bodys>
+      <Bodies>
          <bodyLength>10</bodyLength>
          <BodyMap>
             <headerKey>1</headerKey>
@@ -754,9 +909,9 @@
                      <baseField>SessionID</baseField>
                      <fixed>
                         <FieldStruct>
-                           <deltaName>deltaTotalNumConnects</deltaName>
+                           <deltaName>TotalNumConnects</deltaName>
                            <absoluteName>TotalNumConnects</absoluteName>
-                           <averageName>averageTotalNumConnects</averageName>
+                           <averageName>TotalNumConnects</averageName>
                            <sourceField>TotalNumConnects</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -777,9 +932,9 @@
                      </fixed>
                      <mobile>
                         <FieldStruct>
-                           <deltaName>deltaTotalDataRead</deltaName>
+                           <deltaName>TotalDataRead</deltaName>
                            <absoluteName>TotalDataRead</absoluteName>
-                           <averageName>averageTotalDataRead</averageName>
+                           <averageName>TotalDataRead</averageName>
                            <sourceField>TotalDataRead</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -798,9 +953,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalIndexRead</deltaName>
+                           <deltaName>TotalIndexRead</deltaName>
                            <absoluteName>TotalIndexRead</absoluteName>
-                           <averageName>averageTotalIndexRead</averageName>
+                           <averageName>TotalIndexRead</averageName>
                            <sourceField>TotalIndexRead</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -819,9 +974,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalDataWrite</deltaName>
+                           <deltaName>TotalDataWrite</deltaName>
                            <absoluteName>TotalDataWrite</absoluteName>
-                           <averageName>averageTotalDataWrite</averageName>
+                           <averageName>TotalDataWrite</averageName>
                            <sourceField>TotalDataWrite</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -840,9 +995,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalIndexWrite</deltaName>
+                           <deltaName>TotalIndexWrite</deltaName>
                            <absoluteName>TotalIndexWrite</absoluteName>
-                           <averageName>averageTotalIndexWrite</averageName>
+                           <averageName>TotalIndexWrite</averageName>
                            <sourceField>TotalIndexWrite</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -861,9 +1016,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalUpdate</deltaName>
+                           <deltaName>TotalUpdate</deltaName>
                            <absoluteName>TotalUpdate</absoluteName>
-                           <averageName>averageTotalUpdate</averageName>
+                           <averageName>TotalUpdate</averageName>
                            <sourceField>TotalUpdate</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -882,9 +1037,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalDelete</deltaName>
+                           <deltaName>TotalDelete</deltaName>
                            <absoluteName>TotalDelete</absoluteName>
-                           <averageName>averageTotalDelete</averageName>
+                           <averageName>TotalDelete</averageName>
                            <sourceField>TotalDelete</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -903,9 +1058,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalInsert</deltaName>
+                           <deltaName>TotalInsert</deltaName>
                            <absoluteName>TotalInsert</absoluteName>
-                           <averageName>averageTotalInsert</averageName>
+                           <averageName>TotalInsert</averageName>
                            <sourceField>TotalInsert</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -924,9 +1079,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaReplUpdate</deltaName>
+                           <deltaName>ReplUpdate</deltaName>
                            <absoluteName>ReplUpdate</absoluteName>
-                           <averageName>averageReplUpdate</averageName>
+                           <averageName>ReplUpdate</averageName>
                            <sourceField>ReplUpdate</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -945,9 +1100,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaReplDelete</deltaName>
+                           <deltaName>ReplDelete</deltaName>
                            <absoluteName>ReplDelete</absoluteName>
-                           <averageName>averageReplDelete</averageName>
+                           <averageName>ReplDelete</averageName>
                            <sourceField>ReplDelete</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -966,9 +1121,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaReplInsert</deltaName>
+                           <deltaName>ReplInsert</deltaName>
                            <absoluteName>ReplInsert</absoluteName>
-                           <averageName>averageReplInsert</averageName>
+                           <averageName>ReplInsert</averageName>
                            <sourceField>ReplInsert</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -987,9 +1142,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalSelect</deltaName>
+                           <deltaName>TotalSelect</deltaName>
                            <absoluteName>TotalSelect</absoluteName>
-                           <averageName>averageTotalSelect</averageName>
+                           <averageName>TotalSelect</averageName>
                            <sourceField>TotalSelect</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -1008,9 +1163,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalRead</deltaName>
+                           <deltaName>TotalRead</deltaName>
                            <absoluteName>TotalRead</absoluteName>
-                           <averageName>averageTotalRead</averageName>
+                           <averageName>TotalRead</averageName>
                            <sourceField>TotalRead</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -1029,9 +1184,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalReadTime</deltaName>
+                           <deltaName>TotalReadTime</deltaName>
                            <absoluteName>TotalReadTime</absoluteName>
-                           <averageName>averageTotalReadTime</averageName>
+                           <averageName>TotalReadTime</averageName>
                            <sourceField>TotalReadTime</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -1050,9 +1205,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>deltaTotalWriteTime</deltaName>
+                           <deltaName>TotalWriteTime</deltaName>
                            <absoluteName>TotalWriteTime</absoluteName>
-                           <averageName>averageTotalWriteTime</averageName>
+                           <averageName>TotalWriteTime</averageName>
                            <sourceField>TotalWriteTime</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>CENTER</alignment>
@@ -1135,7 +1290,7 @@
             <bodyPanelType>BODYTYPE_HELP_DYNAMIC</bodyPanelType>
             <hotKey>h</hotKey>
          </BodyMap>
-      </Bodys>
+      </Bodies>
       <Footers>
          <footerLength>2</footerLength>
          <HeadTailMap>
