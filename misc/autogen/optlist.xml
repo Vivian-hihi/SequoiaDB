@@ -586,10 +586,9 @@
    <opt>
       <name>PMD_OPTION_PREFRPL</name>
       <long>preferedreplica</long>
-      <short>g</short>
       <description>
-         <en>prefered replica</en>
-         <cn>读请求优先选择的副本节点</cn>
+         <en>Prefered replica when read request, default:A, value enum:M,S,A,1-7</en>
+         <cn>读请求优先选择的副本,默认值:A,取值列表:M,S,A,1-7</cn>
       </description>
       <typeofweb>str</typeofweb>
       <default>A</default>
