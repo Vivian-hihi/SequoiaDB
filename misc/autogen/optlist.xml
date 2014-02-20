@@ -583,4 +583,16 @@
       <hidden>true</hidden>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_PREFRPL</name>
+      <long>preferedreplica</long>
+      <short>g</short>
+      <description>
+         <en>prefered replica</en>
+         <cn>读请求优先选择的副本节点</cn>
+      </description>
+      <typeofweb>str</typeofweb>
+      <default>A</default>
+   </opt>
+
 </optlist>
