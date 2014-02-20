@@ -48,8 +48,10 @@ namespace engine
 
       if ( pContext )
       {
+         INT32 reference = pContext->_reference ;
          pContext->_release () ;
-         PD_LOG( PDDEBUG, "delete context(contextID=%lld)", contextID ) ;
+         PD_LOG( PDDEBUG, "delete context(contextID=%lld, reference: %d)",
+                 contextID, reference ) ;
       }
 
       PD_TRACE_EXIT ( SDB__SDB_RTNCB_CONTEXTDEL ) ;
@@ -139,7 +141,8 @@ namespace engine
          contextID = _contextHWM ;
          ++_contextHWM ;
       }
-      PD_LOG ( PDDEBUG, "Create new context(contextID=%lld)", contextID ) ;
+      PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d)",
+               contextID, type ) ;
       return SDB_OK ;
    }
 
