@@ -141,8 +141,8 @@ namespace engine
          contextID = _contextHWM ;
          ++_contextHWM ;
       }
-      PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d)",
-               contextID, type ) ;
+      PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s])",
+               contextID, type, getContextTypeDesp(type) ) ;
       return SDB_OK ;
    }
 
