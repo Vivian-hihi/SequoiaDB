@@ -10,7 +10,7 @@ namespace engine
    CoordSession::CoordSession( pmdEDUCB *pEduCB )
    {
       _pEduCB = pEduCB;
-      _preferReplType = PREFER_REPL_ANYONE;
+      _preferReplType = pmdGetKRCB()->getPreferReplica();
    }
 
    INT32 CoordSession::getPreferReplType()

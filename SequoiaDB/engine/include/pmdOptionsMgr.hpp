@@ -358,6 +358,7 @@ namespace engine
          inline UINT32 memDebugSize () const { return _memDebugSize ; }
          inline UINT32 indexScanStep () const { return _indexScanStep ; }
          inline UINT32 logBuffSize () const { return _logBuffSize ; }
+         inline UINT32 preferedReplica () const { return _preferReplica ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -396,6 +397,7 @@ namespace engine
          CHAR        _dmsTmpBlkPath[ OSS_MAX_PATHSIZE + 1 ] ;
          UINT32      _sortBufSz ;
          UINT32      _hjBufSz ;
+         UINT32      _preferReplica ;
 
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;

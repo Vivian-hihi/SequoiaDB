@@ -994,6 +994,57 @@ namespace engine
       rdvMinMax( pEX, _hjBufSz, PMD_MIN_HJ_SZ,
                  -1, TRUE ) ;
 
+      // --preferedreplica
+      CHAR preferedreplica[ OSS_MAX_PATHSIZE + 1 ] = {0};
+      rdxPath( pEX, PMD_OPTION_CONFPATH , preferedreplica, sizeof(preferedreplica),
+               FALSE, FALSE, "A" ) ;
+      switch( preferedreplica[0] )
+      {
+         case 'M':
+         case 'm':
+            _preferReplica = PREFER_REPL_MASTER ;
+            break ;
+
+         case 'S':
+         case 's':
+            _preferReplica = PREFER_REPL_SLAVE ;
+            break ;
+
+         case '1':
+            _preferReplica = PREFER_REPL_NODE_1 ;
+            break ;
+
+         case '2':
+            _preferReplica = PREFER_REPL_NODE_2 ;
+            break ;
+
+         case '3':
+            _preferReplica = PREFER_REPL_NODE_3 ;
+            break ;
+
+         case '4':
+            _preferReplica = PREFER_REPL_NODE_4 ;
+            break ;
+
+         case '5':
+            _preferReplica = PREFER_REPL_NODE_5 ;
+            break ;
+
+         case '6':
+            _preferReplica = PREFER_REPL_NODE_6 ;
+            break ;
+
+         case '7':
+            _preferReplica = PREFER_REPL_NODE_7 ;
+            break ;
+
+         case 'A':
+         case 'a':
+         default:
+            _preferReplica = PREFER_REPL_ANYONE ;
+            break ;
+      }
+
       // end map
 
       return getResult () ;
