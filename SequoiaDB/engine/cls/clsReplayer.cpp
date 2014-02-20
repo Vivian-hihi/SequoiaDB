@@ -132,7 +132,7 @@ namespace engine
          idEle = obj.getField( DMS_ID_KEY_NAME ) ;
          if ( !idEle.eoo() )
          {
-            bucketID = pBucket->calcIndex( idEle.valuestr(),
+            bucketID = pBucket->calcIndex( idEle.value(),
                                            idEle.valuesize() ) ;
          }
       }
