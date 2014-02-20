@@ -1053,6 +1053,7 @@ static JSBool collection_raw_find ( JSContext *cx , uintN argc , jsval *vp )
    // cursor is freed in error: or when rc = SDB_DMS_EOC
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
+   *cursor = SDB_INVALID_HANDLE ;
 
    objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
    VERIFY ( objCursor ) ;
@@ -1697,7 +1698,6 @@ static JSBool collection_get_indexes ( JSContext *cx , uintN argc , jsval *vp )
    // cursor is freed in error: or in the destructor of SdbCursor
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    // handle contained by cursor is released in error: or in the destructor of
@@ -1912,7 +1912,6 @@ static JSBool collection_aggr ( JSContext *cx , uintN argc , jsval *vp )
 
    cursor = (sdbCursorHandle *) JS_malloc ( cx, sizeof( sdbCursorHandle ) );
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    rc = sdbAggregate( *collection, bsonArray, argc, cursor );
@@ -2296,7 +2295,6 @@ static JSBool rg_get_master ( JSContext *cx, uintN argc, jsval *vp )
    rn = (sdbNodeHandle *)
         JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
-
    *rn = SDB_INVALID_HANDLE ;
 
    rc = sdbGetNodeMaster ( *rg, rn ) ;
@@ -2380,7 +2378,6 @@ static JSBool rg_get_slave ( JSContext *cx, uintN argc, jsval *vp )
    rn = (sdbNodeHandle *)
         JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
-
    *rn = SDB_INVALID_HANDLE ;
 
    rc = sdbGetNodeSlave ( *rg, rn ) ;
@@ -2549,7 +2546,6 @@ static JSBool rg_create_node ( JSContext *cx, uintN argc, jsval *vp )
    rn = (sdbNodeHandle *)
         JS_malloc ( cx, sizeof ( sdbNodeHandle ) ) ;
    VERIFY ( rn ) ;
-
    *rn = SDB_INVALID_HANDLE ;
 
    rc = sdbGetNodeByHost ( *rg, host, port, rn ) ;
@@ -2964,7 +2960,6 @@ static JSBool get_cl_and_setproperty( JSContext *cx, jsval *vp,
    collection = (sdbCollectionHandle *)
       JS_malloc ( cx , sizeof ( sdbCollectionHandle ) ) ;
    VERIFY ( collection ) ;
-
    *collection = SDB_INVALID_HANDLE ;
 
    rc = sdbGetCollection1 ( cs , clName , collection ) ;
@@ -3414,6 +3409,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    connection = (sdbConnectionHandle *)
       JS_malloc ( cx , sizeof ( sdbConnectionHandle ) ) ;
    VERIFY ( connection ) ;
+   *connection = SDB_INVALID_HANDLE ;
    // in this case, both user name and password are input by use
    if ( strName && strPwd )
    {
@@ -3529,6 +3525,7 @@ static JSBool rn_connect ( JSContext *cx, uintN argc, jsval *vp )
    connection = (sdbConnectionHandle *)
       JS_malloc ( cx, sizeof ( sdbConnectionHandle ) ) ;
    VERIFY ( connection ) ;
+   *connection = SDB_INVALID_HANDLE ;
 
    rc = sdbConnect ( host, port, "", "", connection ) ;
    REPORT_RC ( SDB_OK == rc, "SdbNode.connect()", rc ) ;
@@ -3978,7 +3975,6 @@ static JSBool sdb_eval( JSContext *cx, uintN argc, jsval *vp )
 
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
@@ -4711,7 +4707,6 @@ static JSBool sdb_snapshot ( JSContext *cx , uintN argc , jsval *vp )
    // cursor will also be freed when rc = SDB_DMS_EOC
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    rc = sdbGetSnapshot ( *connection , snapType , bsonCond , bsonSel ,
@@ -4827,7 +4822,6 @@ static JSBool sdb_list ( JSContext *cx , uintN argc , jsval *vp )
    // cursor will also be freed when rc = SDB_DMS_EOC
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    rc = sdbGetList ( *connection , listType , bsonCond , bsonSel ,
@@ -5051,6 +5045,7 @@ static JSBool sdb_exec ( JSContext *cx , uintN argc , jsval *vp )
    // cursor is freed in error: or when rc = SDB_DMS_EOC
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
+   *cursor = SDB_INVALID_HANDLE ;
 
    objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
    VERIFY ( objCursor ) ;
@@ -5453,7 +5448,6 @@ static JSBool sdb_list_backup ( JSContext *cx, uintN argc, jsval *vp )
    // cursor will also be freed when rc = SDB_DMS_EOC
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    rc = sdbListBackup( *connection, bsonOpt, bsonCond, bsonSel,
@@ -5581,7 +5575,6 @@ static JSBool sdb_list_tasks ( JSContext *cx, uintN argc, jsval *vp )
    // cursor will also be freed when rc = SDB_DMS_EOC
    cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
    VERIFY ( cursor ) ;
-
    *cursor = SDB_INVALID_HANDLE ;
 
    rc = sdbListTasks( *connection, bsonCond, bsonSel,
