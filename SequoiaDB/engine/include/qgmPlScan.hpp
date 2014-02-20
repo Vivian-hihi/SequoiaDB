@@ -105,7 +105,6 @@ namespace engine
       SDB_DMSCB *_dmsCB ;
       SDB_RTNCB *_rtnCB ;
 
-      rtnContextBuf _buffObj ;
       _qgmConditionNode *_conditionNode ;
    } ;
    typedef class _qgmPlScan qgmPlScan ;

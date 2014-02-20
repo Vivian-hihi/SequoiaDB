@@ -179,10 +179,11 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__EXECONDATA ) ;
       INT32 rc = SDB_OK ;
 
+      // close prefetch
       BSONObj selector = _selector.selector() ;
       rc = rtnQuery ( _collection.toString().c_str(), selector, _condition,
                       _orderby, _hint, 0, eduCB, _skip, _return,
-                      _dmsCB, _rtnCB, _contextID, NULL, TRUE ) ;
+                      _dmsCB, _rtnCB, _contextID, NULL, FALSE ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -307,9 +308,9 @@ namespace engine
                    "context id must be initialized" )
 
       INT64 startingPos = 0 ;
-      _buffObj.release() ;
+      rtnContextBuf buffObj ;
 
-      rc = rtnGetMore( _contextID, 1, _buffObj, startingPos, _eduCB, _rtnCB ) ;
+      rc = rtnGetMore( _contextID, 1, buffObj, startingPos, _eduCB, _rtnCB ) ;
       if ( rc )
       {
          if ( SDB_DMS_EOC != rc )
@@ -319,7 +320,7 @@ namespace engine
          }
          goto error ;
       }
-      result = _buffObj.data() ;
+      result = buffObj.data() ;
 
    done:
       PD_TRACE_EXITRC( SDB__QGMPLSCAN__FETCH, rc ) ;
