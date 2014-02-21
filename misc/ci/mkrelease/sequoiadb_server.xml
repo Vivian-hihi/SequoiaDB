@@ -413,8 +413,8 @@
             <title>${msg(Install.Paramers.port.title)}</title>
             <description>${msg(Install.Paramers.port.Description)}</description>
             <explanation>${msg(Install.Paramers.port.explanation)}</explanation>
-            <value>50010</value>
-            <default>50010</default>
+            <value>11790</value>
+            <default>11790</default>
             <allowEmptyValue>1</allowEmptyValue>
             <width>40</width>
         </stringParameter>
