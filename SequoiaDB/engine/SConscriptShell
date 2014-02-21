@@ -45,23 +45,9 @@ utilFiles = [
       "util/json2rawbson.c",
       "util/linenoise.cpp",
       "util/utilStr.cpp",
-      "util/utilLinenoiseWrapper.cpp",
-      "client/bson/numbers.c",
-      "client/bson/bson.c",
-      "client/bson/encoding.c",
-      "client/base64c.c",
-      "client/cJSON.c",
-      "client/jstobs.c"
+      "util/utilLinenoiseWrapper.cpp"
       ]
 
-clientCFiles = [
-      "client/client.c",
-      "client/common.c",
-      "client/network.c"
-      ]
-
-#Client Driver
-shellEnv.StaticLibrary('clientc', clientCFiles)
 #Operating System Services
 shellEnv.StaticLibrary('oss', ossFiles)
 #Problem Determination
@@ -73,14 +59,14 @@ shellEnv.StaticLibrary('util', utilFiles)
 
 #Shell Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc"],
+      LIBDEPS=["spt","oss","pd","util"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
 
 #Shell Backend  Executable
-sdbbp = shellEnv.Program("sdbbp", shellBpMain, 
-      LIBDEPS=["spt","oss","pd","util","clientc"],
+sdbbp = shellEnv.Program("sdbbp", shellBpMain,
+      LIBDEPS=["spt","oss","pd","util"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdbbp )

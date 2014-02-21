@@ -84,12 +84,6 @@ rtnFiles = [
 utilFiles = [
       "util/fromjson.cpp",
       "util/json2rawbson.c",
-      "client/bson/numbers.c",
-      "client/bson/bson.c",
-      "client/bson/encoding.c",
-      "client/base64c.c",
-      "client/cJSON.c",
-      "client/jstobs.c",
       "util/utilParseJSONs.cpp",
       "util/utilParseCSV.cpp",
       "util/utilParseData.cpp",
@@ -101,12 +95,6 @@ utilFiles = [
 dpsFiles = [
       "dps/dpsDump.cpp",
       "dps/dpsLogRecord.cpp",
-      ]
-
-clientFiles = [
-      "client/client.c",
-      "client/common.c",
-      "client/network.c"
       ]
 
 sdbStartMain = [
@@ -147,8 +135,6 @@ sdbdpsdumpFiles = [
 
 #BSON
 toolEnv.StaticLibrary('bson', bsonFiles)
-#Client Driver
-toolEnv.StaticLibrary('client', clientFiles)
 #Operating System Services
 toolEnv.StaticLibrary('oss', ossFiles)
 #Problem Determination
@@ -170,19 +156,19 @@ toolEnv.StaticLibrary('dps', dpsFiles)
 
 #Export Executable
 sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
-         LIBDEPS=["mig","oss","pd","util","client"],
+         LIBDEPS=["mig","oss","pd","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbimprt = toolEnv.Program("sdbimprt", sdbImportMain,
-         LIBDEPS=["mig","oss","pd","util","client"],
+         LIBDEPS=["mig","oss","pd","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload = toolEnv.Program("sdbload", sdbImportLoad,
-         LIBDEPS=["msgload","oss","pd","util","client"],
+         LIBDEPS=["msgload","oss","pd","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
-         LIBDEPS=["oss","pd","util","client"],
+         LIBDEPS=["oss","pd","util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbstart = toolEnv.Program("sdbstart", sdbStartMain,
