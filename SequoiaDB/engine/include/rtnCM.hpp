@@ -42,7 +42,7 @@ namespace CLSMGR
 {
 
 #define SDBCM_OPTION_PREFIX         "--"
-#define SDBCM_DFT_PORT              50010
+#define SDBCM_DFT_PORT              11790
 
 // sdbcm configure file
 #define SDBCM_CONF_PATH             ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "sdbcm.conf"
