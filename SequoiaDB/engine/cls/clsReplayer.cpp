@@ -809,11 +809,15 @@ namespace engine
          goto error ;
       }
 
-      rc = rtnGetJobMgr()->startJob( indexJob, RTN_JOB_MUTEX_STOP_RET, NULL ) ;
+      /*rc = rtnGetJobMgr()->startJob( indexJob, RTN_JOB_MUTEX_STOP_RET, NULL ) ;
       if ( SDB_RTN_MUTEX_JOB_EXIST == rc )
       {
          rc = SDB_OK ;
-      }
+      }*/
+      // if use RTN_JOB_MUTEX_STOP_RET, when create index have complete,
+      // drop index should not drop really, so it's error, need to use
+      // RTN_JOB_MUTEX_STOP_CONT
+      rc = rtnGetJobMgr()->startJob( indexJob, RTN_JOB_MUTEX_STOP_CONT, NULL ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB_STARTINXJOB, rc );
