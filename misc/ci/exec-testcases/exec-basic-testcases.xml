@@ -12,6 +12,7 @@
 	
 	 <property name="report.suffix" value="" />
 	 <property file="${ci.properties.path}" />
+	 <property name="COORD_SVC_NAME" value="50000" />
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
 		<delete dir="${testcase.path}/reports${parallel.num}" />
@@ -162,7 +163,7 @@
 		<!--propertyregex property="CS_PRIX_TMP" input="${host.NAME}${parallel.num}${test.case.name}" regexp="-" replace="" />
 		<propertyregex property="CS_PRIX" input="${CS_PRIX_TMP}" regexp="_" replace="" /-->
 
-		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}'&quot; -f ${test.case.fullname}.${parallel.num}" />
+		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ; &quot; -f ${test.case.fullname}.${parallel.num}" />
 		
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}.${parallel.num}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}.${parallel.num}" />
