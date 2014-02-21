@@ -42,10 +42,18 @@ namespace engine
    INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
                            UINT32 fullSize, CHAR *full );
 
-   SDB_ROLE pmdGetRoleEnum( const CHAR *role );
+   SDB_ROLE pmdGetRoleEnum( const CHAR *role ) ;
+
+   INT32 pmdPrefReplStr2Enum( const CHAR *prefReplStr ) ;
+
+   INT32 pmdPrefReplEnum2Str( INT32 enumPrefRepl,
+                              CHAR *prefReplStr,
+                              UINT32 len ) ;
+
+
 }
 
 
 
-#endif
+#endif //PMDCOMMON_HPP_
 

@@ -85,5 +85,53 @@ namespace engine
          return SDB_ROLE_STANDALONE;
    }
 
+   INT32 pmdPrefReplStr2Enum( const CHAR * prefReplStr )
+   {
+      INT32 enumPrefRepl = PREFER_REPL_ANYONE ;
+
+      if ( prefReplStr && *prefReplStr && !*(prefReplStr+1) )
+      {
+         CHAR ch = *prefReplStr ;
+         if ( ch >= '1' && ch <= '7' )
+         {
+            enumPrefRepl = (INT32)( ch - '0' ) ;
+         }
+         else if ( 'M' == ch || 'm' == ch )
+         {
+            enumPrefRepl = PREFER_REPL_MASTER ;
+         }
+         else if ( 'S' == ch || 's' == ch )
+         {
+            enumPrefRepl = PREFER_REPL_SLAVE ;
+         }
+      }
+      return enumPrefRepl ;
+   }
+
+   INT32 pmdPrefReplEnum2Str( INT32 enumPrefRepl, CHAR * prefReplStr,
+                              UINT32 len )
+   {
+      ossMemset( prefReplStr, 0, len ) ;
+
+      if ( enumPrefRepl >= PREFER_REPL_NODE_1 &&
+           enumPrefRepl <= PREFER_REPL_NODE_7 )
+      {
+         ossSnprintf( prefReplStr, len-1, "%d", enumPrefRepl ) ;
+      }
+      else if ( enumPrefRepl == PREFER_REPL_MASTER )
+      {
+         ossSnprintf( prefReplStr, len-1, "%s", "M" ) ;
+      }
+      else if ( enumPrefRepl == PREFER_REPL_SLAVE )
+      {
+         ossSnprintf( prefReplStr, len-1, "%s", "S" ) ;
+      }
+      else if ( enumPrefRepl == PREFER_REPL_ANYONE )
+      {
+         ossSnprintf( prefReplStr, len-1, "%s", "A" ) ;
+      }
+      return SDB_OK ;
+   }
+
 }
 

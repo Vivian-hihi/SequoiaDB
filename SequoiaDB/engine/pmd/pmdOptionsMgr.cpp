@@ -812,6 +812,7 @@ namespace engine
       ossMemset( _restServiceName, 0, OSS_MAX_SERVICENAME + 1) ;
       ossMemset( _krcbRole, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
       ossMemset( _syncStrategyStr, 0, PMD_MAX_ENUM_STR_LEN + 1) ;
+      ossMemset( _prefReplStr, 0, PMD_MAX_ENUM_STR_LEN + 1 ) ;
       ossMemset( _catAddrLine, 0, OSS_MAX_PATHSIZE + 1) ;
       ossMemset( _dmsTmpBlkPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
 
@@ -824,6 +825,7 @@ namespace engine
       _maxSubQuery         = PMD_MAX_SUB_QUERY ;
       _maxReplSync         = PMD_DEFAULT_MAX_REPLSYNC ;
       _syncStrategy        = CLS_SYNC_NONE ;
+      _preferReplica       = PREFER_REPL_ANYONE ;
       _replBucketSize      = PMD_DFT_REPL_BUCKET_SIZE ;
       _memDebugEnabled     = FALSE ;
       _memDebugSize        = 0 ;
@@ -941,6 +943,9 @@ namespace engine
       // --syncstrategy
       rdxString( pEX, PMD_OPTION_SYNC_STRATEGY, _syncStrategyStr,
                  sizeof( _syncStrategyStr ), FALSE, TRUE, "", FALSE ) ;
+      // --preferedreplica
+      rdxString( pEX, PMD_OPTION_PREFRPL, _prefReplStr, sizeof(_prefReplStr),
+                 FALSE, TRUE, "A" ) ;
       // --memdebug
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE, TRUE,
                    FALSE, TRUE ) ;
@@ -993,57 +998,6 @@ namespace engine
                FALSE, TRUE, PMD_DEFAULT_HJ_SZ ) ;
       rdvMinMax( pEX, _hjBufSz, PMD_MIN_HJ_SZ,
                  -1, TRUE ) ;
-
-      // --preferedreplica
-      CHAR preferedreplica[ OSS_MAX_PATHSIZE + 1 ] = {0};
-      rdxPath( pEX, PMD_OPTION_CONFPATH , preferedreplica, sizeof(preferedreplica),
-               FALSE, FALSE, "A" ) ;
-      switch( preferedreplica[0] )
-      {
-         case 'M':
-         case 'm':
-            _preferReplica = PREFER_REPL_MASTER ;
-            break ;
-
-         case 'S':
-         case 's':
-            _preferReplica = PREFER_REPL_SLAVE ;
-            break ;
-
-         case '1':
-            _preferReplica = PREFER_REPL_NODE_1 ;
-            break ;
-
-         case '2':
-            _preferReplica = PREFER_REPL_NODE_2 ;
-            break ;
-
-         case '3':
-            _preferReplica = PREFER_REPL_NODE_3 ;
-            break ;
-
-         case '4':
-            _preferReplica = PREFER_REPL_NODE_4 ;
-            break ;
-
-         case '5':
-            _preferReplica = PREFER_REPL_NODE_5 ;
-            break ;
-
-         case '6':
-            _preferReplica = PREFER_REPL_NODE_6 ;
-            break ;
-
-         case '7':
-            _preferReplica = PREFER_REPL_NODE_7 ;
-            break ;
-
-         case 'A':
-         case 'a':
-         default:
-            _preferReplica = PREFER_REPL_ANYONE ;
-            break ;
-      }
 
       // end map
 
@@ -1098,6 +1052,9 @@ namespace engine
          _syncStrategy = CLS_SYNC_DTF_STRATEGY ;
       }
       _syncStrategyStr[0] = 0 ;
+
+      // preferreplica check
+      _preferReplica = pmdPrefReplStr2Enum( _prefReplStr ) ;
 
       if ( 0 == ossStrlen( _replServiceName ) )
       {
@@ -1308,6 +1265,9 @@ namespace engine
 
       clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
+
+      pmdPrefReplEnum2Str( _preferReplica, _prefReplStr,
+                           sizeof(_prefReplStr) ) ;
 
       return SDB_OK ;
    }

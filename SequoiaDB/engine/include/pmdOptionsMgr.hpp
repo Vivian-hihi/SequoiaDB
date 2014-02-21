@@ -375,6 +375,7 @@ namespace engine
          UINT16      _krcbDiagLvl ;
          CHAR        _krcbRole[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          CHAR        _syncStrategyStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
+         CHAR        _prefReplStr[ PMD_MAX_ENUM_STR_LEN + 1 ] ;
          UINT32      _logFileSz ;
          UINT32      _logFileNum ;
          UINT32      _numPreLoaders ;

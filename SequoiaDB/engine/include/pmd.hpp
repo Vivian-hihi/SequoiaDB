@@ -377,11 +377,6 @@ namespace engine
          return _optioncb.hjBufSize() ;
       }
 
-      UINT32 getPreferReplica() const
-      {
-         return _optioncb.preferedReplica() ;
-      }
-
       const CHAR *getTmpPath() const
       {
          return _optioncb.dmsTmpPath() ;
