@@ -29,6 +29,8 @@ from buildscripts import utils
 from os.path import join, dirname, abspath
 import libdeps
 root_dir = dirname(File('SConstruct').rfile().abspath)
+client_dir = join(root_dir,'client')
+clientlib_dir = join(client_dir,'lib')
 db_dir = join(root_dir,'SequoiaDB')
 engine_dir = join(db_dir,'engine')
 boost_dir = join(root_dir, 'boost')
@@ -813,8 +815,7 @@ scriptingFiles = []
 
 #env.Append( CPPPATH=['$EXTRACPPPATH'],
 #            LIBPATH=['$EXTRALIBPATH'] )
-env.Append( CPPPATH=env["EXTRACPPPATH"],
-	    LIBPATH=env["EXTRALIBPATH"])
+env.Append( CPPPATH=env["EXTRACPPPATH"], LIBPATH=env["EXTRALIBPATH"])
 env['SEQUOIA_COMMON_FILES'] = commonFiles
 env['SEQUOIA_SERVER_ONLY_FILES' ] = serverOnlyFiles
 env['SEQUOIA_SCRIPTING_FILES'] = scriptingFiles
@@ -972,10 +973,16 @@ clientCEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 testEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_SHELL" ] )
+shellEnv.Append( LIBPATH=[clientlib_dir] )
+shellEnv.Append( LIBS=['sdbc'] )
 toolEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 toolEnv.Append( CPPDEFINES=[ "SDB_TOOL" ] )
+toolEnv.Append( LIBPATH=[clientlib_dir] )
+toolEnv.Append( LIBS=['sdbc','sdbcpp'] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_FMP" ] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
+fmpEnv.Append( LIBPATH=[clientlib_dir] )
+fmpEnv.Append( LIBS=['sdbc'] )
 
 def checkErrorCodes():
     import buildscripts.errorcodes as x
@@ -1111,7 +1118,8 @@ sys.path.append(join(root_dir, 'misc'))
 import jsToCpp
 jsToCpp.jsToCpp(engine_dir)
 
-if hasClient:
+# Always build client before tool/shell/fmp
+if hasClient or hasTool or hasShell or hasFmp:
    clientCppEnv.SConscript( 'SequoiaDB/SConscriptClientCpp', variant_dir=clientCppVariantDir, duplicate=False )
    clientCEnv.SConscript ( 'SequoiaDB/SConscriptClientC', variant_dir=clientCVariantDir, duplicate=False )
 
@@ -1120,6 +1128,7 @@ if hasShell:
 
 if hasTool:
    toolEnv.SConscript ( 'SequoiaDB/SConscriptTool', variant_dir=toolVariantDir, duplicate=False )
+
 if hasFmp:
    fmpEnv.SConscript ( 'SequoiaDB/SConscriptFmp', variant_dir=fmpVariantDir, duplicate=False )
 
