@@ -1,22 +1,32 @@
+#include "client.hpp"
 #include <sys/select.h>
 #include <termios.h>
 #include <string.h>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/typeof/typeof.hpp>
-#include "client.hpp"
 #include <ncurses.h>
 #include <time.h>
 #include <string>
 #include <vector>
-using namespace sdbclient ;
-using namespace bson ;
+
+#include <boost/program_options.hpp>
+#include <boost/program_options/parsers.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/typeof/typeof.hpp>
+
+
+
+using namespace sdbclient;
+using namespace bson;
 using namespace std;
 using namespace boost::property_tree;
+namespace po = boost::program_options;
 
 #define STDIN 0
 
 #define SDBTOP_VERSION "sdbtop 1.0"
+#define SDBTOP_DEFAULT_CONFPATH "sdbtop.xml"
+#define SDBTOP_DEFAULT_HOSTNAME "localhost"
+#define SDBTOP_DEFAULT_SERVICENAME "50000"
 
 #define NULLSTRING ""
 #define STRING_NULL "NULL"
@@ -162,11 +172,6 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 #define SDB_OK 0
 #define SDB_SDBTOP_DONE 1
 #define SDB_ERROR -1
-#define SDB_HEADER_NULL -2
-#define SDB_FOOTER_NULL -3
-#define SDB_HEADER_FOOTER_NULL -3
-#define SDB_DMS_EOC -29
-
 
 //forcedToRefresh_Local 
 //forcedToRefresh_Global
@@ -214,111 +219,142 @@ CHAR* Hello_Body =
 "Use these keys to navigate:\n";
 
 const INT32 errStrLength = 1024 ;
-CHAR *errStr;
-CHAR *errStrBuf;
-const INT32 fixedHotKeyLength = 20 ;
+CHAR *errStr = NULL ;
+CHAR *errStrBuf = NULL ;
+string confPath = SDBTOP_DEFAULT_CONFPATH ;
+string hostname  = SDBTOP_DEFAULT_HOSTNAME ;
+string serviceName = SDBTOP_DEFAULT_SERVICENAME ;
+string usrName = NULLSTRING ;
+string password = NULLSTRING ;
+INT32 headerLengthFromConf = 0 ;
+INT32 bodyLengthFromConf = 0 ;
+INT32 footerLengthFromConf = 0 ;
+INT32 keySuiteLengthFromConf = 0 ;
+
+#define BUFFERSIZE         256
+#define OPTION_HELP        "help"
+#define OPTION_CONFPATH      "confpath"
+#define OPTION_HOSTNAME      "hostname"
+#define OPTION_SERVICENAME      "servicename"
+#define OPTION_USRNAME      "usrname"
+#define OPTION_PASSWORD      "password"
+
+
+#define ADD_PARAM_OPTIONS_BEGIN( desc )\
+        desc.add_options()
+
+#define ADD_PARAM_OPTIONS_END ;
+
+#define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
+#define COMMANDS_OPTIONS \
+       ( COMMANDS_STRING(OPTION_HELP, ",h"), "help" )\
+       ( COMMANDS_STRING(OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configuration file path" ) \
+       ( COMMANDS_STRING(OPTION_HOSTNAME, ",i"), boost::program_options::value<string>(), "hostname" ) \
+       ( COMMANDS_STRING(OPTION_SERVICENAME, ",s"), boost::program_options::value<string>(), "servicename" ) \
+       ( COMMANDS_STRING(OPTION_USRNAME, ",u"), boost::program_options::value<string>(), "usrname" ) \
+       ( COMMANDS_STRING(OPTION_PASSWORD, ",p"), boost::program_options::value<string>(), "password" ) 
 
 struct Colours
 {
-   INT32 foreGroundColor;
-   INT32 backGroundColor;
+   INT32 foreGroundColor ;
+   INT32 backGroundColor ;
 };
 
 struct StaticTextOutPut
 {
-   CHAR* outputText;
-   string   autoSetType;
-   Colours colour;
+   CHAR *outputText ;
+   string   autoSetType ;
+   Colours colour ;
 };
 
 struct ExpValueStruct
 {
-   string text;
-   string expression;
+   string text ;
+   string expression ;
 };
 
 struct ExpressionContent
 {
-   string expressionType;
-   INT32 expressionLength;
-   ExpValueStruct expressionValue;
-   string alignment;
-   Colours colour;
-   INT32 rowLocation;
+   string expressionType ;
+   INT32 expressionLength ;
+   ExpValueStruct expressionValue ;
+   string alignment ;
+   Colours colour ;
+   INT32 rowLocation ;
 };
 
 struct DynamicExpressionOutPut
 {
-   ExpressionContent* content;
-   string autoSetType;
-   INT32 expressionNumber;
-   INT32 rowNumber;
+   ExpressionContent *content ;
+   string autoSetType ;
+   INT32 expressionNumber ;
+   INT32 rowNumber ;
 };
 
 struct FiledWarningValue
 {
-   INT64 absoluteMaxLimitValue;
-   INT64 absoluteMinLimitValue;
+   INT64 absoluteMaxLimitValue ;
+   INT64 absoluteMinLimitValue ;
    
-   INT64 deltaMaxLimitValue;
-   INT64 deltaMinLimitValue;
+   INT64 deltaMaxLimitValue ;
+   INT64 deltaMinLimitValue ;
    
-   INT64 averageMaxLimitValue;
-   INT64 averageMinLimitValue;
+   INT64 averageMaxLimitValue ;
+   INT64 averageMinLimitValue ;
 };
 
 struct FieldStruct
 {
-   string deltaName;
-   string absoluteName;
-   string averageName;
-   string sourceField;
-   INT32 contentLength;
-   string alignment;
-   Colours deltaColour;
-   Colours absoluteColour;
-   Colours averageColour;
-   BOOLEAN canSwitch;
-   FiledWarningValue warningValue;
+   string deltaName ;
+   string absoluteName ;
+   string averageName ;
+   string sourceField ;
+   INT32 contentLength ;
+   string alignment ;
+   Colours deltaColour ;
+   Colours absoluteColour ;
+   Colours averageColour ;
+   BOOLEAN canSwitch ;
+   FiledWarningValue warningValue ;
 };
 
 struct DynamicSnapshotOutPut
 {
-   FieldStruct* fixedField;
-   FieldStruct* mobileField;
-   INT32 actualFixedFieldLength;
-   INT32 actualMobileFieldLength;
-   INT32 fieldLength; // fieldLength should longer than actualFixedFieldLength + actualMobileFieldLength
-   string globalAutoSetType;
-   string groupAutoSetType;
-   string nodeAutoSetType;
-   string baseField;
-   INT32 tableCellLength;
-   string globalStyle;// TABLE OR LIST
-   string groupStyle;// TABLE OR LIST
-   string nodeStyle;// TABLE OR LIST
-   INT32 globalRow;
-   INT32 globalCol;
-   INT32 groupRow;
-   INT32 groupCol;
-   INT32 nodeRow;
-   INT32 nodeCol;
+   FieldStruct* fixedField ;
+   FieldStruct* mobileField ;
+   INT32 actualFixedFieldLength ;
+   INT32 actualMobileFieldLength ;
+   INT32 fieldLength ; // fieldLength should longer than actualFixedFieldLength + actualMobileFieldLength
+   string globalAutoSetType ;
+   string groupAutoSetType ;
+   string nodeAutoSetType ;
+   string baseField ;
+   INT32 tableCellLength ;
+   string globalStyle ;// TABLE OR LIST
+   string groupStyle ;// TABLE OR LIST
+   string nodeStyle ;// TABLE OR LIST
+   INT32 globalRow ;
+   INT32 globalCol ;
+   INT32 groupRow ;
+   INT32 groupCol ;
+   INT32 nodeRow ;
+   INT32 nodeCol ;
 };
 struct DynamicHelp
 {
-   INT32 tableRow;
-   INT32 tableColumn;
-   INT32 cellLength;
-   Colours prefixColour;
-   Colours contentColour;
-   string autoSetType;
+   INT32 tableRow ;
+   INT32 tableColumn ;
+   INT32 cellLength ;
+   Colours prefixColour ;
+   Colours contentColour ;
+   string autoSetType ;
 };
 struct DisplayContent
 {
-   StaticTextOutPut staticTextOutPut;
-   DynamicExpressionOutPut dyExOutPut;
-   DynamicSnapshotOutPut dySnapshotOutPut;
-   DynamicHelp dynamicHelp;
+   StaticTextOutPut staticTextOutPut ;
+   DynamicExpressionOutPut dyExOutPut ;
+   DynamicSnapshotOutPut dySnapshotOutPut ;
+   DynamicHelp dynamicHelp ;
 };
 
 struct Position
@@ -344,6 +380,7 @@ struct Panel
 {
    NodeWindow* subWindow ;
    INT32 numOfSubWindow ;
+   INT32 numOfSubWindowFromConf ; // need it to free memory
 };
 
 struct HotKey
@@ -355,9 +392,9 @@ struct HotKey
 
 struct KeySuite
 {
-   INT64 mark;
-   INT32 hotKeyLength;
-   HotKey* hotKey;
+   INT64 mark ;
+   INT32 hotKeyLength ;
+   HotKey *hotKey ;
 };
 
 struct HeadTailMap
@@ -398,10 +435,11 @@ struct InputPanel
    map<string, FLOAT64> cur_deltaMap ;
    map<string, FLOAT64> cur_averageMap ;
    struct timeval startTime ;
-   string hostName ;
+   string confPath ;
+   string hostname ;
    string serviceName ;
    string usrName ;
-   string passwd ;
+   string password ;
    INT32 refreshInterval ;
    BOOLEAN forcedToRefresh_Local ;
    BOOLEAN forcedToRefresh_Global ;
@@ -417,19 +455,19 @@ struct InputPanel
 
 struct RootWindow
 {
-   INT32 referWindowRow;
-   INT32 referWindowColumn;
-   INT32 actualWindowMinRow;
-   INT32 actualWindowMinColumn;
-   HeadTailMap* header;
-   INT32 headerLength;
-   BodyMap* body;
-   INT32 bodyLength;
-   HeadTailMap* footer;
-   INT32 footerLength;
-   InputPanel input;
-   KeySuite* keySuite;
-   INT32 keySuiteLength;
+   INT32 referWindowRow ;
+   INT32 referWindowColumn ;
+   INT32 actualWindowMinRow ;
+   INT32 actualWindowMinColumn ;
+   HeadTailMap *header ;
+   INT32 headerLength ;
+   BodyMap *body ;
+   INT32 bodyLength ;
+   HeadTailMap *footer ;
+   INT32 footerLength ;
+   InputPanel input ;
+   KeySuite *keySuite ;
+   INT32 keySuiteLength ;
 };
 
 class Event
@@ -441,7 +479,7 @@ public://consturct function
    Event() ;
    ~Event() ;
 public: // operation
-   INT32 readConfiguration( string configPath ) ;
+   INT32 readConfiguration( ) ;
    INT32 assignActivatedPanelByLabelName( BodyMap **activatedPanel, string labelName ) ;
    INT32 assignActivatedPanel( BodyMap **activatedPanel, string bodyPanelType ) ;
    INT32 getActivatedHeadTailMap(  BodyMap *activatedPanel, HeadTailMap **header, HeadTailMap **footer ) ;
@@ -450,7 +488,7 @@ public: // operation
                             const string zoomMode, const string occupyMode ) ;
    INT32 getActivatedKeySuite( KeySuite **keySuite ) ;
    INT32 getTopKey_TOP( INT64 *keyBuffer, INT32 bufLength, INT64 &key ) ;
-   INT32 SDBTOP_strTOnum( CHAR *str, INT32 &number ) ;
+   INT32 SDBTOP_strTOnum( const CHAR *str, INT32 &number ) ;
    INT32 SDBTOP_MEMSET( INT64 *pBuffer, INT64 c, INT32 setLength ) ;
    INT32 SDBTOP_MEMSET( CHAR *pBuffer, CHAR c, INT32 setLength ) ;
    INT32 SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const CHAR *PSrc ) ;
@@ -485,10 +523,29 @@ public: // operation
    INT32 addFixedHotKey() ;
    INT32 findSourceFieldByDisplayName( const string DisplayName ) ;
    INT32 buttonManagement( INT64 key ,BOOLEAN isFirstStart ) ;
-   INT32 runSDBTOP( const CHAR *pHostName = "localhost", const CHAR *pServiceName = "50000",
-                    const CHAR *pUsrName = "", const CHAR *pPasswd = "" ) ;
+   INT32 runSDBTOP( ) ;
 };
 
+
+static inline std::string &ltrim ( std::string &s )
+{
+   s.erase ( s.begin(), std::find_if ( s.begin(), s.end(),
+             std::not1 ( std::ptr_fun<int, int>(std::isspace)))) ;
+   return s ;
+}
+
+static inline std::string &rtrim ( std::string &s )
+{
+   s.erase ( std::find_if ( s.rbegin(), s.rend(),
+             std::not1 ( std::ptr_fun<int, int>(std::isspace))).base(),
+             s.end() ) ;
+   return s ;
+}
+
+static inline std::string &trim ( std::string &s )
+{
+   return ltrim ( rtrim ( s ) ) ;
+}
 
 INT32 readPosition( ptree pt_position, Position& position )
 {
@@ -854,6 +911,7 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
    try
    {
       value.numOfSubWindow = pt_value.get<INT32>( "numOfSubWindow" ) ;
+      value.numOfSubWindowFromConf = pt_value.get<INT32>( "numOfSubWindow" ) ;
       value.subWindow = new NodeWindow[value.numOfSubWindow] ;
       INT32 numOfSubWindow = 0 ;
       for( BOOST_AUTO( child_value, pt_value.begin() ); child_value != pt_value.end(); ++child_value )
@@ -937,8 +995,9 @@ Event::Event()
    root.input.fieldPosition = 0 ;
    root.input.groupName = NULLSTRING ;
    root.input.nodeName = NULLSTRING ;
-   root.input.hostName = NULLSTRING ;
-   root.input.serviceName = NULLSTRING ;
+   root.input.confPath = SDBTOP_DEFAULT_CONFPATH ;
+   root.input.hostname = SDBTOP_DEFAULT_HOSTNAME ;
+   root.input.serviceName = SDBTOP_DEFAULT_SERVICENAME ;
    root.input.refreshInterval = 0;
    root.input.isFirstGetSnapshot = TRUE ;
    root.input.isFirstGetAbsolute = TRUE ;
@@ -956,9 +1015,97 @@ Event::Event()
    root.input.colourOfTheMax.backGroundColor = COLOR_WHITE ;
    root.input.colourOfTheMin.foreGroundColor = COLOR_BLACK ;
    root.input.colourOfTheMin.backGroundColor = COLOR_WHITE ;
-
+   root.keySuiteLength = 0 ;
+   root.headerLength = 0 ;
+   root.bodyLength = 0 ;
+   root.footerLength = 0;
 }
-INT32 Event::readConfiguration( string configPath )
+
+Event::~Event()
+{
+   INT32 headerLength = root.headerLength ;
+   INT32 bodyLength = root.bodyLength ;
+   INT32 footerLength = root.footerLength ;
+   INT32 keySuiteLength = root.keySuiteLength;
+   INT32 numOfSubWindow = 0 ;
+
+   while( keySuiteLength ) // free the memory root.keySuite
+   {
+      delete []root.keySuite[keySuiteLength -1].hotKey ;
+      --keySuiteLength ;
+   }
+   if( root.keySuiteLength )
+      delete []root.keySuite ;
+
+   while( headerLength ) // free the memory root.header
+   {
+      numOfSubWindow = root.header[headerLength - 1].value.numOfSubWindow;
+      while( numOfSubWindow )
+      {
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            delete []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+         }
+         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            delete []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            delete []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+         }
+         --numOfSubWindow ;
+      }
+      delete []root.header[headerLength - 1].value.subWindow ;
+      --headerLength ;
+   }
+   if( root.headerLength )
+      delete []root.header;
+
+   while( bodyLength ) // free the memory root.body
+   {
+      numOfSubWindow = root.body[bodyLength - 1].value.numOfSubWindow ;
+      while( numOfSubWindow )
+      {
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            delete []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+         }
+         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            delete []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            delete []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+         }
+         --numOfSubWindow ;
+      }
+      delete []root.body[bodyLength - 1].value.subWindow ;
+      --bodyLength ;
+   }
+   if( root.bodyLength )
+      delete []root.body ;
+
+   while( footerLength ) // free the memory root.footer
+   {
+      numOfSubWindow = root.footer[footerLength - 1].value.numOfSubWindow ;
+      while( numOfSubWindow )
+      {
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            delete []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+         }
+         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            delete []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            delete []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+         }
+         --numOfSubWindow ;
+      }
+      delete []root.footer[footerLength - 1].value.subWindow ;
+      --footerLength ;
+   }
+   if( root.footerLength )
+      delete []root.footer ;
+}
+
+
+INT32 Event::readConfiguration( )
 {
    INT32 rc = SDB_OK ;
    INT32 otherTree = 0 ;
@@ -969,16 +1116,17 @@ INT32 Event::readConfiguration( string configPath )
    INT32 bodyLength = 0 ;
    INT32 footerLength = 0 ;
    ptree pt_Event ;
+   root.input.confPath = confPath ;
    try
    {
-      read_xml( configPath, pt_sdbtopXML ) ;
+      read_xml( root.input.confPath, pt_sdbtopXML ) ;
    }
    catch( std::exception &e )
    {
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,"%s readConfiguration failed,"
-                " check %s is existed ,e.what():%s\n",
-                errStrBuf, configPath.c_str(), e.what() ) ;
+                " check configuration file %s is exist, e.what():%s\n",
+                errStrBuf, root.input.confPath.c_str(), e.what() ) ;
       goto error ;
    }
    pt_Event = pt_sdbtopXML.get_child( "Event" ) ;
@@ -1018,6 +1166,7 @@ INT32 Event::readConfiguration( string configPath )
                try
                {
                   root.keySuiteLength = child_root->second.get<INT32>( "keySuiteLength" ) ;
+                  keySuiteLengthFromConf = child_root->second.get<INT32>( "keySuiteLength" ) ;
                   root.keySuite = new KeySuite[root.keySuiteLength] ;
                }
                catch( std::exception &e )
@@ -1044,7 +1193,7 @@ INT32 Event::readConfiguration( string configPath )
                      {
                         root.keySuite[keySuiteLength].mark = child_keysuites->second.get<INT64>( "mark" ) ;
                         root.keySuite[keySuiteLength].hotKeyLength = child_keysuites->second.get<INT32>( "hotKeyLength" ) ;
-                        root.keySuite[keySuiteLength].hotKey = new HotKey[root.keySuite[keySuiteLength].hotKeyLength + fixedHotKeyLength] ;
+                        root.keySuite[keySuiteLength].hotKey = new HotKey[root.keySuite[keySuiteLength].hotKeyLength ] ;
                      }
                      catch( std::exception &e)
                      {
@@ -1094,6 +1243,7 @@ INT32 Event::readConfiguration( string configPath )
                try
                {
                   root.headerLength = child_root->second.get<INT32>( "headerLength" ) ;
+                  headerLengthFromConf = child_root->second.get<INT32>( "headerLength" ) ;
                   root.header = new HeadTailMap[root.headerLength] ;
                }
                catch( std::exception &e )
@@ -1148,6 +1298,7 @@ INT32 Event::readConfiguration( string configPath )
                try
                {
                   root.bodyLength = child_root->second.get<INT32>( "bodyLength" ) ;
+                  bodyLengthFromConf = child_root->second.get<INT32>( "bodyLength" ) ;
                   root.body = new BodyMap[root.bodyLength] ;
                }
                catch( std::exception &e )
@@ -1217,6 +1368,7 @@ INT32 Event::readConfiguration( string configPath )
                try
                {
                   root.footerLength = child_root->second.get<INT32>( "footerLength" ) ;
+                  footerLengthFromConf = child_root->second.get<INT32>( "footerLength" ) ;
                   root.footer = new HeadTailMap[root.footerLength] ;
                }
                catch( std::exception &e )
@@ -1273,10 +1425,7 @@ error :
    }
    goto done ;
 }
-Event::~Event()
-{
-   
-}
+
 INT32 Event::assignActivatedPanel( BodyMap **activatedPanel, string bodyPanelType )
 {
    INT32 rc = SDB_OK ;
@@ -1651,7 +1800,7 @@ error :
    goto done ;
 }
 
-INT32 Event::SDBTOP_strTOnum( CHAR *str, INT32 &number )
+INT32 Event::SDBTOP_strTOnum( const CHAR *str, INT32 &number )
 {
    INT32 rc = SDB_OK ;
    INT32 pos = 0 ;
@@ -2088,7 +2237,7 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_HOSTNAME == expression )
    {
-      result = root.input.hostName ;
+      result = root.input.hostname ;
    }
    else if( EXPRESSION_SERVICENAME == expression )
    {
@@ -3643,6 +3792,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    CHAR inputBuf[128] ;
    INT32 filterNum = 0 ;
    string note = NULLSTRING ;
+   string displayName = NULLSTRING ; // use it when sorting
    HeadTailMap *header = NULL ;
    HeadTailMap *footer = NULL ;
    BodyMap* activatedPanel = NULL ;
@@ -3863,6 +4013,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             cbreak() ;
             noecho() ;
             root.input.groupName = inputBuf ;
+            trim( root.input.groupName ) ;
             root.input.snapshotModeChooser = GROUP ;
             root.input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
@@ -3890,6 +4041,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             cbreak() ;
             noecho() ;
             root.input.nodeName = inputBuf ;
+            trim( root.input.nodeName ) ;
             root.input.snapshotModeChooser = NODE ;
             root.input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
@@ -3917,7 +4069,9 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             cbreak() ;
             noecho() ;
             root.input.sortingWay = SORTINGWAY_ASC ;
-            findSourceFieldByDisplayName( inputBuf ) ;
+            displayName = inputBuf ;
+            trim( displayName ) ;
+            findSourceFieldByDisplayName( displayName ) ;
             root.input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
             goto done ;
@@ -3944,7 +4098,9 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             cbreak() ;
             noecho() ;
             root.input.sortingWay = SORTINGWAY_DESC ;
-            findSourceFieldByDisplayName( inputBuf ) ;
+            displayName = inputBuf ;
+            trim( displayName ) ;
+            findSourceFieldByDisplayName( displayName ) ;
             root.input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
             goto done ;
@@ -3971,6 +4127,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             cbreak() ;
             noecho() ;
             root.input.filterCondition = inputBuf ;
+            trim( root.input.filterCondition ) ;
             root.input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
             goto done ;
@@ -4007,7 +4164,9 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             getnstr( inputBuf, 128 ) ;
             cbreak() ;
             noecho() ;
-            rc = SDBTOP_strTOnum( inputBuf, filterNum ) ;
+            displayName = inputBuf ;
+            trim( displayName ) ;
+            rc = SDBTOP_strTOnum( displayName.c_str(), filterNum ) ;
             if( rc )
             {
               filterNum = 0 ;
@@ -4041,7 +4200,7 @@ error :
    goto done ;
 }
 
-INT32 Event::runSDBTOP( const CHAR* pHostName, const CHAR* pServiceName, const CHAR* pUsrName, const CHAR* pPasswd )
+INT32 Event::runSDBTOP( )
 {
    INT32 rc = SDB_OK ;
    INT64 key = 0 ;
@@ -4073,18 +4232,18 @@ INT32 Event::runSDBTOP( const CHAR* pHostName, const CHAR* pServiceName, const C
 
       goto error ;
    }
-   rc = coord.connect( pHostName, pServiceName, pUsrName, pPasswd ) ;
-   root.input.hostName = pHostName ;
-   root.input.serviceName = pServiceName ;
-   root.input.usrName = pUsrName ;
-   root.input.passwd = pPasswd ;
+   root.input.hostname = hostname ;
+   root.input.serviceName = serviceName ;
+   root.input.usrName = usrName ;
+   root.input.password = password ;
+   rc = coord.connect( root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str() ) ;
    if( rc )
    {
 
       snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       snprintf( errStr, errStrLength,
                 "%s can't connect to the coord: %s, %s, %s, %s, rc =%d\n",
-                errStrBuf, pHostName, pServiceName, pUsrName, pPasswd, rc ) ;
+                errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str(), rc ) ;
       goto error ;
    }
    root.input.displayModeChooser = 0 ;
@@ -4218,12 +4377,134 @@ error :
    goto done ;
 }
 
+
+void init ( po::options_description &desc )
+{
+   ADD_PARAM_OPTIONS_BEGIN ( desc )
+      COMMANDS_OPTIONS
+   ADD_PARAM_OPTIONS_END
+}
+
+void displayArg ( po::options_description &desc )
+{
+   std::cout << desc << std::endl ;
+}
+
+// resolve input argument
+INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
+{
+   INT32 rc = SDB_OK ;
+   CHAR actionString[BUFFERSIZE] = {0} ;
+   po::variables_map vm ;
+   try
+   {
+      po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
+      po::notify ( vm ) ;
+   }
+   catch ( po::unknown_option &e )
+   {
+      std::cerr <<  "Unknown argument: "
+                << e.get_option_name () << std::endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   catch ( po::invalid_option_value &e )
+   {
+      std::cerr <<  "Invalid argument: "
+                << e.get_option_name () << std::endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   catch( po::error &e )
+   {
+      std::cerr << e.what () << std::endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( vm.count ( OPTION_HELP ) )
+   {
+      displayArg ( desc ) ;
+      rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+
+   if( vm.count( OPTION_CONFPATH ) )
+   {
+      confPath = vm[OPTION_CONFPATH].as<string>();
+   }
+   else
+   {
+      confPath = SDBTOP_DEFAULT_CONFPATH ;
+   }
+
+   if( vm.count( OPTION_HOSTNAME ) )
+   {
+      hostname= vm[OPTION_HOSTNAME].as<string>();
+   }
+   else
+   {
+      std::cout << "hostname must be specified\n" << std::endl ;
+      displayArg ( desc ) ;
+      rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+   
+   if( vm.count( OPTION_SERVICENAME) )
+   {
+      serviceName = vm[OPTION_SERVICENAME].as<string>();
+   }
+   else
+   {
+      std::cout << "servicename must be specified\n" << std::endl ;
+      displayArg ( desc ) ;
+      rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+   
+   if( vm.count( OPTION_USRNAME) )
+   {
+      usrName = vm[OPTION_USRNAME].as<string>();
+   }
+   else
+   {
+      usrName = NULLSTRING ;
+   }
+   
+   if( vm.count( OPTION_PASSWORD) )
+   {
+      password= vm[OPTION_PASSWORD].as<string>();
+   }
+   else
+   {
+      password = NULLSTRING ;
+   }
+   
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+
 INT32 main( INT32 argc, CHAR **argv)
 {
    fd_set fds ;
    INT32 rc = 0 ; 
    Event sdbtop ;
    INT32 maxfd  = STDIN + 1 ;
+   po::options_description desc ( "Command options" ) ;
+   init ( desc ) ;
+   rc = resolveArgument ( desc, argc, argv ) ;
+   if ( rc )
+   {
+      if ( SDB_PMD_HELP_ONLY != rc )
+      {
+         std::cerr<< "Error: Invalid arguments\n" << std::endl ;
+         displayArg ( desc ) ;
+      }
+      goto done ;
+   }
    errStr = ( CHAR * )malloc( errStrLength * sizeof( CHAR ) ) ;
    if( !errStr )
    {
@@ -4249,31 +4530,13 @@ INT32 main( INT32 argc, CHAR **argv)
    keypad( stdscr, FALSE ) ;
    noecho() ;
    curs_set( 1 ) ;
-   rc = sdbtop.readConfiguration( "sdbtop.xml" ) ;
+   rc = sdbtop.readConfiguration( ) ;
    if( rc )
    {
       goto error ;
    }
    
-   if( 1 == argc )
-   {
-      rc = sdbtop.runSDBTOP( ) ;
-   }
-   else if( 3 == argc )
-   {
-      rc = sdbtop.runSDBTOP( argv[1], argv[2] ) ;
-   }
-   else if( 5 == argc )
-   {
-      rc = sdbtop.runSDBTOP( argv[1], argv[2], argv[3], argv[4] ) ;
-   }
-   else
-   {
-      snprintf( errStrBuf, errStrLength,"%s", errStr );
-      snprintf( errStr, errStrLength,
-                "%s wrong parameter:%s\n", errStrBuf, argv[0] ) ;
-      goto error ;
-   }
+   rc = sdbtop.runSDBTOP( ) ;
    if( rc && SDB_SDBTOP_DONE != rc )
    {
       snprintf( errStrBuf, errStrLength,"%s",  errStr ) ;
