@@ -288,11 +288,13 @@ function checkEnv()
          return 1
       fi
 
-      #检查信任关系
-      checkTrust ${target}
-      if [ $? -ne 0 ]; then
-         echo_r "Error" $FUNCNAME $LINENO "The current host and ${target} is not a trust relationship"
-         return 1
+      if [ "${1}" -eq 1 ]; then
+         #检查信任关系
+         checkTrust ${target}
+         if [ $? -ne 0 ]; then
+            echo_r "Error" $FUNCNAME $LINENO "The current host and ${target} is not a trust relationship"
+            return 1
+         fi
       fi
 
       #检查hosts与目标hostname是否匹配
