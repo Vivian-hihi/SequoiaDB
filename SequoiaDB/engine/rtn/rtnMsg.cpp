@@ -11,7 +11,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( pMsg->header.messageLength < sizeof( MsgHeader ) )
+      if ( (UINT32)pMsg->header.messageLength < sizeof( MsgHeader ) )
       {
          PD_LOG( PDERROR, "Recieve invalid msg[length: %d]",
                  pMsg->header.messageLength ) ;

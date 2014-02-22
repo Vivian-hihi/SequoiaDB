@@ -60,7 +60,7 @@ shellEnv.StaticLibrary('util', utilFiles)
 #Shell Executable
 sdb = shellEnv.Program("sdb", shellMain,
       LIBDEPS=["spt","oss","pd","util"],
-      _LIBDEPS='$_LIBDEPS_OBJS' )
+      _LIBDEPS='$_LIBDEPS_OBJS')
 
 shellEnv.Install( '#/bin', sdb )
 
