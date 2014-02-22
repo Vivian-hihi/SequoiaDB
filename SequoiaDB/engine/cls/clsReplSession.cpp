@@ -65,7 +65,6 @@ namespace engine
       _agent = pmdGetKRCB()->getClsCB()->getReplRouteAgent() ;
       _repl = pmdGetKRCB()->getClsCB()->getReplCB() ;
       _pReplBucket = _repl->getBucket() ;
-      _pReplBucket->reset() ;
 
       _requestID = 0 ;
       _syncFailedNum = 0 ;
@@ -145,9 +144,15 @@ namespace engine
                 pmdGetKRCB()->getEDUMgr()->getWritingEDUCount() > 0 )
       {
          PD_LOG( PDWARNING, "Sync Session[%s]: Has some writing edus don't "
-                 "exist, can't to sync", sessionName() ) ;
+                 "exit, can't to sync", sessionName() ) ;
          goto done ;
       }
+
+      if ( _isFirstToSync && _pReplBucket->isEmpty() )
+      {
+         _pReplBucket->reset() ;
+      }
+
       _isFirstToSync = FALSE ;
 
       //if the peer node is sharing-break, shoud change node
