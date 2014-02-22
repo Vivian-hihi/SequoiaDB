@@ -482,8 +482,8 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH="/lib64" )
         # use project-related boost library
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux64') )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux64') )
+        # static link SSL library
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir, "lib/linux64/libcrypto.a") + " " )
         # use project-related curl library
         env.Append( EXTRALIBPATH=join(curl_dir,'lib/linux64') )
         # use project-related spidermonkey library
@@ -496,7 +496,6 @@ if guess_os == "linux":
                 smlib_dir = join(js_dir,'lib/release/linux64/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/release/linux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/linux64')
         curllib_dir = join(curl_dir,'lib/linux64')
         env.Append( LIBS=["pthread"] )
         force64 = False
@@ -508,8 +507,8 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH="/lib" )
         # we want 32 bit boost library
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux32') )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
+        # static link SSL library
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/linux32/libcrypto.a") + " " )
         # use project-related curl library
         env.Append( EXTRALIBPATH=join(curl_dir,'lib/linux32') )
         # and 32 bit spidermonkey library
@@ -523,14 +522,13 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/linux32/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
                 # if we are in 64 bit box but want to build 32 bit release
-        ssllib_dir = join(ssl_dir,'lib/linux32')
         curllib_dir = join(curl_dir,'lib/linux32')
     elif guess_arch == "ia64" and force32:
         # let's use 32 bit boost library
         env.Append( EXTRALIBPATH=["/usr/lib32", join(boost_lib_dir,'linux32')] )
         env.Append( LIBS=["pthread"] )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
+        # static link SSL library
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/linux32/libcrypto.a") + " " )
         #use project-related curl library
         env.Append( EXTRALIBPATH=join(curl_dir,'lib/linux32') )
         # and use 32 bit spider monkey
@@ -543,7 +541,6 @@ if guess_os == "linux":
                 smlib_dir = join(js_dir,'lib/release/linux32/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/release/linux32/include') )
                 env.Append( EXTRALIBPATH=join(js_dir,'lib/release/linux32/lib') )
-        ssllib_dir = join(ssl_dir,'lib/linux32')
         curllib_dir = join(curl_dir,'lib/linux32')
     elif guess_arch == "ppc64" and not force32:
         linux64 = True
@@ -553,8 +550,8 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH="/lib64" )
         # use project-related boost library
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'ppclinux64') )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclinux64') )
+        # static link SSL library
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/ppclinux64/libcrypto.a") + " " )
         # use project-related curl library
         env.Append( EXTRALIBPATH=join(curl_dir,'lib/ppclinux64') )
         # use project-related spidermonkey library
@@ -567,7 +564,6 @@ if guess_os == "linux":
                 smlib_dir = join(js_dir,'lib/release/ppclinux64/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/release/ppclinux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/ppclinux64')
         curllib_dir = join(curl_dir,'lib/ppclinux64')
         env.Append( LIBS=["pthread"] )
         force64 = False
@@ -577,8 +573,6 @@ if guess_os == "linux":
         env.Append( CPPDEFINES=[ "XP_UNIX" ] )
         env.Append( LIBS=['js_static'] )
     env.Append( LIBS=['crypto'] )
-    ssllib_file = join(ssllib_dir, 'libcrypto.a')
-    ssllib_file1 = join(ssllib_dir, 'libcrypto.a')
     curllib_file = join(curllib_dir, 'libcurl.a')
     nix = True
     if static:
@@ -603,8 +597,11 @@ elif "win32" == guess_os:
     if guess_arch == "ia64" and not force32:
         # use 64 bit boost library
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'win64') )
+        # static link SSL library
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/win64/libeay32.lib") + " " )
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/win64/ssleay32.lib") + " " )
         # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
+        #env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
         # use project-related curl library
         env.Append( EXTRALIBPATH=join(curl_dir,'lib/win64') )
         # use 64 bit spidermonkey
@@ -618,13 +615,16 @@ elif "win32" == guess_os:
                 env.Append( CPPPATH=join(js_dir,'lib/release/win64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         force64 = False
-        ssllib_dir = join(ssl_dir,'lib/win64')
+        #ssllib_dir = join(ssl_dir,'lib/win64')
         curllib_dir = join(curl_dir,'lib/win64')
     else:
 	      # either we are 32 bit or force 32 bit
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'win32') )
+        # static link SSL library
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/win64/libeay32.lib") + " " )
+        env.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(ssl_dir,"lib/win64/ssleay32.lib") + " " )
         # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
+        #env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
         # use project-related curl library
         env.Append( EXTRALIBPATH=join(curl_dir,'lib/win32') )
         if usesm:
@@ -636,16 +636,16 @@ elif "win32" == guess_os:
                 smlib_dir = join(js_dir,'lib/release/win32/lib')
                 env.Append( CPPPATH=join(js_dir,'lib/release/win32/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
-        ssllib_dir = join(ssl_dir,'lib/win32')
+        #ssllib_dir = join(ssl_dir,'lib/win32')
         curllib_dir = join(curl_dir,'lib/win32')
     if usesm:
         smlib_file = join(smlib_dir, 'mozjs185-1.0.dll')
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
         env.Append( LIBS=['mozjs185-1.0'] )
         env.Append( CPPDEFINES=["JS_HAVE_STDINT_H"] )
-    env.Append( LIBS=['libeay32'] )
-    ssllib_file = join(ssllib_dir, 'libeay32.dll')
-    ssllib_file1 = join(ssllib_dir, 'ssleay32.dll')
+    #env.Append( LIBS=['libeay32'] )
+    #ssllib_file = join(ssllib_dir, 'libeay32.dll')
+    #ssllib_file1 = join(ssllib_dir, 'ssleay32.dll')
     curllib_file = join(curllib_dir, 'libcurl.dll')
     boostLibs = []
 
@@ -973,16 +973,14 @@ clientCEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 testEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 shellEnv.Append( CPPDEFINES=[ "SDB_SHELL" ] )
-shellEnv.Append( LIBPATH=[clientlib_dir] )
-shellEnv.Append( LIBS=['sdbc'] )
+shellEnv.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(clientlib_dir,"libsdbc.a") + " " )
 toolEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 toolEnv.Append( CPPDEFINES=[ "SDB_TOOL" ] )
-toolEnv.Append( LIBPATH=[clientlib_dir] )
-toolEnv.Append( LIBS=['sdbc','sdbcpp'] )
+toolEnv.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(clientlib_dir,"libsdbc.a") + " " )
+toolEnv.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(clientlib_dir,"libsdbcpp.a") + " " )
 fmpEnv.Append( CPPDEFINES=[ "SDB_FMP" ] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
-fmpEnv.Append( LIBPATH=[clientlib_dir] )
-fmpEnv.Append( LIBS=['sdbc'] )
+fmpEnv.Append( _LIBFLAGS='${SLIBS}',SLIBS=" " + join(clientlib_dir,"libsdbc.a") + " " )
 
 def checkErrorCodes():
     import buildscripts.errorcodes as x
@@ -1081,8 +1079,8 @@ Export("usesm")
 Export("windows linux nix")
 if usesm:
    Export("smlib_file")
-Export("ssllib_file")
-Export("ssllib_file1")
+#Export("ssllib_file")
+#Export("ssllib_file1")
 Export("curllib_file")
 Export("hasEngine")
 Export("hasTestcase")
