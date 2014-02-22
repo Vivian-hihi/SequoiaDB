@@ -126,6 +126,12 @@ BOOLEAN _utilDataParser::parse_number ( const CHAR *buffer, UINT32 size )
 {
    BOOLEAN  rc             = FALSE ;
 
+   if ( *buffer != '-' && ( *buffer < '0' || *buffer >'9' ) )
+   {
+      rc = FALSE ;
+      goto done ;
+   }
+
    if ( 0 == size )
    {
       rc = FALSE ;
