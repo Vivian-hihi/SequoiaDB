@@ -34,6 +34,7 @@ array( "tmppath", 		"input",			"",								"临时文件存储路径", 										
 array( "sortbuf", 		"input",			"",								"排序缓存大小", 																											"all",	"512", ),
 array( "hjbuf", 			"input",			"",								"哈希join缓存大小", 																										"all",	"128", ),
 array( "syncstrategy",  "input",       array("none","keepnormal","keepall"),"副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为none。",               "all",   "none", ),
+array( "preferedreplica","input",      array("M","S","A","1","2","3","4","5","6","7"), "读请求优先选择的副本,默认值:A,取值列表:M,S,A,1-7",                        "all",   "A", ),
 ) ;
 
 ?>
