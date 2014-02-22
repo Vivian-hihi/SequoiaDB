@@ -1,5 +1,8 @@
 package com.sequoiadb.hive;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -138,7 +141,7 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 		// BSONObject selector = null;
 		BasicBSONObject selector = new BasicBSONObject();
 		for (String column : parserReadColumns(columnsMap, readColIDs)) {
-			selector.put(column.toLowerCase(), 1);
+			selector.put(column.toLowerCase(), null);
 		}
 		LOG.debug("selector:" + selector);
 		
@@ -387,11 +390,17 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 			
 			return false;
 		}
+		
+//		File file = new File("/mnt/chenfool/cloudera/chentest.txt");
+//		BufferedWriter writer = new BufferedWriter(new FileWriter(file,true));
+		
+		
 		// text always start from byte 10 here
 		final int TEXT_START_POS = 10;
 		// get the byte array from result buffer, each fields are seaprated by bar
 		// what happen if there's bar in the text? we don't handle and let it break~~~
 		byte[] record = cursor.getNextRaw();
+//		writer.write((new String(record))+"****record is **********\n");
 		// record the length so that we can keep monitoring the progress
 		recordsLenth += record.length;
 
@@ -410,6 +419,7 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 		for (; i < record.length - 1; i++) {
 			if (record[i] == '|') {
 				ByteArrayField ref = new ByteArrayField(record, startPos, i);
+//				writer.write(ref.toString()+"****ref*********\n");
 				byteArrayRef[nFileNum++] = ref;
 				startPos = i + 1;
 			}
@@ -419,7 +429,11 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 		if (startPos <= i) {
 			ByteArrayField ref = new ByteArrayField(record, startPos, i);
 			byteArrayRef[nFileNum++] = ref;
+//			writer.write(ref.toString()+"****ref  , startPos<=i*********\n");
 		}
+		
+		
+		
 		// need to add columnsMap.length since we need to create extra "|"
 		// it seems like there's always 2 columns extra in columnsMap for
 		// BLOCK__OFFSET__INSIDE__FILE
@@ -451,11 +465,17 @@ public class SdbReader implements RecordReader<LongWritable, BytesWritable> {
 			if(pos != recordWithAllColumns.length ){
 				recordWithAllColumns[pos++] = '|';
 			}
+			String chentest = new String(recordWithAllColumns);
+			
+//			writer.write(chentest+"*****recordWithAllColumns*****\n");
+			
+			
 		}
 		//String rcWAC = new String(recordWithAllColumns);
 		//LOG.info("byte returned to hive is " + rcWAC );
 		// set the valueHolder from the result buffer, starting from 0 until pos
 		valueHolder.set(recordWithAllColumns, 0, pos);
+//		writer.close();
 		return true;
 	}
 }
