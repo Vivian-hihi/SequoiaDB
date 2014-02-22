@@ -207,7 +207,7 @@ CHAR* HELP_Header = "[Help for SDBTOP]"; //DISPLAYTYPE_STATICTEXT_HELP_Header ou
 CHAR* LICENSE_Footer = 
    "Licensed Materials - Property of SequoiaDB\nCopyright SequoiaDB Corp. 2013-2014 All Rights Reserved. "; //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
 CHAR* Hello_Body = 
-" ###### ######  ######  ####### ####### ######   For help type h or ...\n"
+" #####  ######  ######  ####### ####### ######   For help type h or ...\n"
 "#       #     # #     #    #    #     # #     #  sdbtop -h: usage\n"
 "#       #     # #     #    #    #     # #     #\n"
 " #####  #     # ######     #    #     # ######\n"

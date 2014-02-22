@@ -3,7 +3,7 @@
 <topic id="references_exception">
    <title>Error Code List</title>
    <body>
-      <simpletable frame="all" relcolwidth="5.25* 1.2*" id="references_exceptionmapping_table">
+      <simpletable frame="all" relcolwidth="5.25* 1.0*" id="references_exceptionmapping_table">
          <sthead>
             <stentry>Description</stentry>
             <stentry>Error Code</stentry>
@@ -673,11 +673,11 @@
             <stentry>-166</stentry>
          </strow>
          <strow>
-            <stentry>The shard info not exist</stentry>
+            <stentry>The group info not exist</stentry>
             <stentry>-167</stentry>
          </strow>
          <strow>
-            <stentry>Shard name is conflict</stentry>
+            <stentry>Group name is conflict</stentry>
             <stentry>-168</stentry>
          </strow>
          <strow>
@@ -979,6 +979,42 @@
          <strow>
             <stentry>task has canceled</stentry>
             <stentry>-243</stentry>
+         </strow>
+         <strow>
+            <stentry>the sharding-type of main-collection must be range</stentry>
+            <stentry>-244</stentry>
+         </strow>
+         <strow>
+            <stentry>there is no valid sharding-key field</stentry>
+            <stentry>-245</stentry>
+         </strow>
+         <strow>
+            <stentry>the operation not support on main-collection</stentry>
+            <stentry>-246</stentry>
+         </strow>
+         <strow>
+            <stentry>redefine index</stentry>
+            <stentry>-247</stentry>
+         </strow>
+         <strow>
+            <stentry>Deleting the CS</stentry>
+            <stentry>-248</stentry>
+         </strow>
+         <strow>
+            <stentry>Reached the maximum number of nodes</stentry>
+            <stentry>-249</stentry>
+         </strow>
+         <strow>
+            <stentry>the node is business-failures</stentry>
+            <stentry>-250</stentry>
+         </strow>
+         <strow>
+            <stentry>the node info is expired</stentry>
+            <stentry>-251</stentry>
+         </strow>
+         <strow>
+            <stentry>wait secondary nodes sync the operation failed</stentry>
+            <stentry>-252</stentry>
          </strow>
       </simpletable>
    </body>

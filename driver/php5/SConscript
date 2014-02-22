@@ -26,7 +26,7 @@ clienttestFiles = [
       #root_dir + "/../../client/CPP/bson/bson.c"
       ]
 clientFiles = [
-      root_dir + "/../../SequoiaDB/engine/client/client.cpp"
+      root_dir + "/../../SequoiaDB/engine/client/clientcpp.cpp"
       ]
 #for threadsafe build, we should add this into clientLibFiles
 clientThreadSafe = [
@@ -72,7 +72,7 @@ for file in clientFiles:
 for file in clientLibFiles:
    env.Execute(Copy(root_dir + "/ext/temp", file))
 srcFile = [
-      root_dir + "/ext/temp/client.cpp",
+      root_dir + "/ext/temp/clientcpp.cpp",
       root_dir + "/ext/temp/oss.cpp",
       root_dir + "/ext/temp/ossUtil.cpp",
       root_dir + "/ext/temp/ossSocket.cpp",

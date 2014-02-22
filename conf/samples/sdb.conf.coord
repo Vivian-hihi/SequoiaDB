@@ -1,5 +1,11 @@
 # SequoiaDB configuration
 
+# database path
+dbpath=/opt/sequoiadb/database/coord
+
+# index path
+# indexpath=
+
 # configure file path
 # confpath=
 
@@ -9,32 +15,26 @@
 # diagnostic log file path
 # diagpath=
 
-# database path
-dbpath=/opt/sequoiadb/database/coord
-
-# index path
-# indexpath=
-
 # backup path
 # bkuppath=
 
 # max pooled agent,defalut:0
-maxpool=0
+# maxpool=
 
 # local service name or port
-svcname=50000
+svcname=11810
 
-# replication service name or port
-replname=50001
+# replication service name or port, default: 'svcname'+1
+replname=11811
 
-# sharding service name or port
-shardname=50002
+# sharding service name or port, default: 'svcname'+2
+shardname=11812
 
-# catalog service name or port
-catalogname=50003
+# catalog service name or port, default: 'svcname'+3
+catalogname=11813
 
-# REST service name or port
-httpname=50004
+# REST service name or port, default: 'svcname'+4
+httpname=11814
 
 # diag level,default:3,value range:[0-5]
 diaglevel=3
@@ -48,27 +48,39 @@ role=coord
 # log file size(MB),default:64,value range:[64,2048]
 logfilesz=64
 
-# number of log files,default:20, value range:[1,60000]
+# number of log files,default:20, value range:[1,11800]
 logfilenum=20
 
 # turn on transaction, default:FALSE
 transactionon=false
 
 # number of pre-loaders,default:0,value range:[0,100]
-numpreload=0
+# numpreload=
 
 # maximum number of prefetchers, default:200, value range:[0,1000]
-maxprefpool=200
+# maxprefpool=
 
 # maximum number of query's sub-query, default:10, min value is 0, max value can't more than param 'maxprefpool'
-maxsubquery=10
+# maxsubquery=
+
+# maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync
+# maxreplsync=
 
 # the replica-log's memory page number,default is 1024, value range:[512,1024000], but total log memory size can't more than all log file size; a page size is 64KB
-logbuffsize=1024
+# logbuffsize=
 
 # path of the tmp file
 # tmppath=
 
-# size of the sorting buf(MB)
-sortbuf=256
+# size of the sorting buf(MB), default:512, min value:128
+# sortbuf=
+
+# size of the hash join buf(MB), default:128, min value:64
+# hjbuf=
+
+# The control strategy of data sync in ReplGroup, value enumeration: none,keepnormal,keepall, default:none.
+# syncstrategy=
+
+# Prefered replica when read request, default:A, value enum:M,S,A,1-7
+preferedreplica=A
 

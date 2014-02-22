@@ -285,4 +285,7 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_IXM_REDEF                   -247  /**< redefine index */
 #define SDB_DMS_CS_DELETING             -248  /**< Deleting the CS */
 #define SDB_DMS_REACHED_MAX_NODES       -249  /**< Reached the maximum number of nodes */
+#define SDB_CLS_NODE_BSFAULT            -250  /**< the node is business-failures */
+#define SDB_CLS_NODE_INFO_EXPIRED       -251  /**< the node info is expired */
+#define SDB_CLS_WAIT_SYNC_FAILED        -252  /**< wait secondary nodes sync the operation failed */
 #endif /* OSSERR_HPP_ */

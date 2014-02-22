@@ -523,7 +523,7 @@ sqlTest2Files =[
 #      ]
 
 clientCPPFiles = [
-      "client/client.cpp",
+      "client/clientcpp.cpp",
       "client/common.c"
       ]
 

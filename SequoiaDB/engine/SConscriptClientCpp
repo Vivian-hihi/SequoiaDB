@@ -4,7 +4,7 @@ import buildscripts.utils as utils
 Import("clientCppEnv")
 
 clientCPPFiles = [
-      "client/client.cpp"
+      "client/clientcpp.cpp"
       ]
 #for threadsafe build, we should add this into clientLibFiles
 clientCPPThreadSafe = [
@@ -38,10 +38,8 @@ clientCPPLibFiles = [
 
 #Client Library
 clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', clientCPPLibFiles)
-clientCPPLibStatic = clientCppEnv.StaticLibrary('sdbcpp', clientCPPLibFiles)
 
 clientCppEnv.Install( '#/client/lib/', clientCPPLib )
-clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
 clientCppEnv.Install( '#/client/include/', "client/client.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/core.hpp" )
 clientCppEnv.Install( '#/client/include/', "include/ossFeat.hpp" )

@@ -3,7 +3,7 @@
 <topic id="references_exception">
    <title>Error Code List</title>
    <body>
-      <simpletable frame="all" relcolwidth="5.25* 1.2*" id="references_exceptionmapping_table">
+      <simpletable frame="all" relcolwidth="5.25* 1.0*" id="references_exceptionmapping_table">
          <sthead>
             <stentry>Description</stentry>
             <stentry>Error Code</stentry>
@@ -617,11 +617,11 @@
             <stentry>-152</stentry>
          </strow>
          <strow>
-            <stentry>分片组已经存在</stentry>
+            <stentry>分区组已经存在</stentry>
             <stentry>-153</stentry>
          </strow>
          <strow>
-            <stentry>分片组不存在</stentry>
+            <stentry>分区组不存在</stentry>
             <stentry>-154</stentry>
          </strow>
          <strow>
@@ -637,7 +637,7 @@
             <stentry>-157</stentry>
          </strow>
          <strow>
-            <stentry>空分片组</stentry>
+            <stentry>空分区组</stentry>
             <stentry>-158</stentry>
          </strow>
          <strow>
@@ -673,19 +673,19 @@
             <stentry>-166</stentry>
          </strow>
          <strow>
-            <stentry>该Shard信息不存在</stentry>
+            <stentry>该Group信息不存在</stentry>
             <stentry>-167</stentry>
          </strow>
          <strow>
-            <stentry>Shard名称冲突</stentry>
+            <stentry>Group名称冲突</stentry>
             <stentry>-168</stentry>
          </strow>
          <strow>
-            <stentry>非分片集合</stentry>
+            <stentry>非分区集合</stentry>
             <stentry>-169</stentry>
          </strow>
          <strow>
-            <stentry>记录不包含合法的分片键</stentry>
+            <stentry>记录不包含合法的分区键</stentry>
             <stentry>-170</stentry>
          </strow>
          <strow>
@@ -701,7 +701,7 @@
             <stentry>-173</stentry>
          </strow>
          <strow>
-            <stentry>记录包含超过一条分片键</stentry>
+            <stentry>记录包含超过一条分区键</stentry>
             <stentry>-174</stentry>
          </strow>
          <strow>
@@ -709,15 +709,15 @@
             <stentry>-175</stentry>
          </strow>
          <strow>
-            <stentry>指定的分片键不合法或不在源节点范围内</stentry>
+            <stentry>指定的分区键不合法或不在源节点范围内</stentry>
             <stentry>-176</stentry>
          </strow>
          <strow>
-            <stentry>唯一索引必须包含分片键中的所有字段</stentry>
+            <stentry>唯一索引必须包含分区键中的所有字段</stentry>
             <stentry>-177</stentry>
          </strow>
          <strow>
-            <stentry>分片键不可被更新</stentry>
+            <stentry>分区键不可被更新</stentry>
             <stentry>-178</stentry>
          </strow>
          <strow>
@@ -833,7 +833,7 @@
             <stentry>-206</stentry>
          </strow>
          <strow>
-            <stentry>分片组不存在</stentry>
+            <stentry>分区组不存在</stentry>
             <stentry>-207</stentry>
          </strow>
          <strow>
@@ -845,7 +845,7 @@
             <stentry>-209</stentry>
          </strow>
          <strow>
-            <stentry>集合不存在分片键索引,不能按百分比分片</stentry>
+            <stentry>集合不存在分区键索引,不能按百分比分区</stentry>
             <stentry>-210</stentry>
          </strow>
          <strow>
@@ -873,11 +873,11 @@
             <stentry>-216</stentry>
          </strow>
          <strow>
-            <stentry>分片类型不为哈稀</stentry>
+            <stentry>分区类型不为哈稀</stentry>
             <stentry>-217</stentry>
          </strow>
          <strow>
-            <stentry>分片百分比过低</stentry>
+            <stentry>分区百分比过低</stentry>
             <stentry>-218</stentry>
          </strow>
          <strow>
@@ -979,6 +979,42 @@
          <strow>
             <stentry>任务被取消</stentry>
             <stentry>-243</stentry>
+         </strow>
+         <strow>
+            <stentry>主表的分区类型必须是范围分区</stentry>
+            <stentry>-244</stentry>
+         </strow>
+         <strow>
+            <stentry>未包含合法的分区键字段</stentry>
+            <stentry>-245</stentry>
+         </strow>
+         <strow>
+            <stentry>主表不支持此操作</stentry>
+            <stentry>-246</stentry>
+         </strow>
+         <strow>
+            <stentry>重复定义索引</stentry>
+            <stentry>-247</stentry>
+         </strow>
+         <strow>
+            <stentry>正在删除CS</stentry>
+            <stentry>-248</stentry>
+         </strow>
+         <strow>
+            <stentry>节点数量达到上限</stentry>
+            <stentry>-249</stentry>
+         </strow>
+         <strow>
+            <stentry>节点处于业务故障状态</stentry>
+            <stentry>-250</stentry>
+         </strow>
+         <strow>
+            <stentry>节点信息过期</stentry>
+            <stentry>-251</stentry>
+         </strow>
+         <strow>
+            <stentry>等待备节点同步该操作失败</stentry>
+            <stentry>-252</stentry>
          </strow>
       </simpletable>
    </body>

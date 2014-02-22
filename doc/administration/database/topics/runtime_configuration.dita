@@ -20,12 +20,25 @@
 					<stentry>打印帮助</stentry>
 				</strow>
 				<strow>
+					<stentry>--dbpath</stentry>
+					<stentry>-d</stentry>
+					<stentry>str</stentry>
+					<stentry>1.指定数据文件存放路径。2.如果不指定，则默认为当前路径。</stentry>
+				</strow>
+				<strow>
+					<stentry>--indexpath</stentry>
+					<stentry>-i</stentry>
+					<stentry>str</stentry>
+					<stentry>1.指定索引文件存放路径。2.如果不指定，则默认与&apos;dbpath&apos;相同。</stentry>
+				</strow>
+				<strow>
 					<stentry>--confpath</stentry>
 					<stentry>-c</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。 2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如
-						svcname=11810；diaglevel=3 3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。
-						4.sdb.conf可以不存在。</stentry>
+					<stentry>1.指定配置文件路径（不包含文件名），系统会在confpath下寻找sdb.conf。
+             2.sdb.conf中填入需要的配置项，配制方法为：参数名 = 参数值。如 svcname=11810；diaglevel=3
+             3.如果不指定此参数，系统默认在当前路径寻找sdb.conf。
+             4.sdb.conf可以不存在。</stentry>
 				</strow>
 				<strow>
 					<stentry>--logpath</stentry>
@@ -40,12 +53,6 @@
 					<stentry>str</stentry>
 					<stentry>1.指定诊断日志存放目录。
              2.如果不指定，则默认为：数据文件路径/diaglog</stentry>
-				</strow>
-				<strow>
-					<stentry>--dbpath</stentry>
-					<stentry>-d</stentry>
-					<stentry>str</stentry>
-					<stentry>1.指定数据文件存放路径。2.如果不指定，则默认为当前路径。</stentry>
 				</strow>
 				<strow>
 					<stentry>--bkuppath</stentry>
@@ -65,7 +72,8 @@
 					<stentry>--svcname</stentry>
 					<stentry>-p</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定本地服务端口。 2.如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</stentry>
+					<stentry>1.指定本地服务端口。
+             2.如果不指定则默认为11810端口用于编目节点，11800用于协调节点，11820用于数据节点。</stentry>
 				</strow>
 				<strow>
 					<stentry>--replname</stentry>
@@ -99,13 +107,14 @@
 					<stentry>--diaglevel</stentry>
 					<stentry>-v</stentry>
 					<stentry>num</stentry>
-					<stentry>1.指定诊断日志打印级别。SequoiaDB中诊断日志从0-5分别代表：SEVERE, ERROR, EVENT, WARNING, INFO, DEBUG。             2.如果不指定，则默认为WARNING。</stentry>
+					<stentry>1.指定诊断日志打印级别。SequoiaDB中诊断日志从0-5分别代表：SEVERE, ERROR, EVENT, WARNING, INFO, DEBUG。
+             2.如果不指定，则默认为WARNING。</stentry>
 				</strow>
 				<strow>
 					<stentry>--role</stentry>
 					<stentry>-o</stentry>
 					<stentry>str</stentry>
-					<stentry>1.指定服务角色。SequoiaDB分别以data/coord/catalog/standalone代表：数据节点/协调节点/编目节点/单机。 
+					<stentry>1.指定服务角色。SequoiaDB分别以data/coord/catalog/standalone代表：数据节点/协调节点/编目节点/单机。
              2.如果不指定则默认为单机。</stentry>
 				</strow>
 				<strow>
@@ -135,9 +144,15 @@
 					<stentry>boolean</stentry>
 					<stentry>1.指定是否打开事务。2.如果不指定，则默认为false。</stentry>
 				</strow>
+				<strow>
+					<stentry>--syncstrategy</stentry>
+					<stentry>--</stentry>
+					<stentry>str</stentry>
+					<stentry>副本组之间数据同步控制策略,取值:none,keepnormal,keepall,默认为none。</stentry>
+				</strow>
 			</simpletable>
 			<note>
-				<p>SequoiaDB支持命令方式行及配置文件方式。当两种方式并存时，命令行参数将会覆盖配置文件中相同的配置项。</p>
+				<p>SequoiaDB支持命令行方式及配置文件方式。当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。</p>
 				<p>同步日志的总大小（logfilesz * logfilenum）决定了在同步过程中的容错能力。日志越大则进行全量恢复的可能性越小。</p>
 			</note>
 		</section>

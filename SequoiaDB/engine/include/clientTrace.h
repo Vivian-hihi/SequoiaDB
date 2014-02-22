@@ -73,11 +73,11 @@
 #define SDB_CLIENT_GETCOLLECTIONSPACE                      0x400000000044L
 #define SDB_CLIENT_CREATECOLLECTIONSPACE                   0x400000000045L
 #define SDB_CLIENT_DROPCOLLECTIONSPACE                     0x400000000046L
-#define SDB_CLIENT_getShardWITHNAME                        0x400000000047L
-#define SDB_CLIENT_getShardWITHID                          0x400000000048L
-#define SDB_CLIENT_createShard                             0x400000000049L
-#define SDB_CLIENT_removeShard                             0x40000000004aL
-#define SDB_CLIENT_createCataShard                         0x40000000004bL
+#define SDB_CLIENT_GETSHARDWITHNAME                        0x400000000047L
+#define SDB_CLIENT_GETSHARDWITHID                          0x400000000048L
+#define SDB_CLIENT_CREATESHARD                             0x400000000049L
+#define SDB_CLIENT_REMOVESHAED                             0x40000000004aL
+#define SDB_CLIENT_CREATECATASHARD                         0x40000000004bL
 #define SDB_CLIENT_ACTIVATERG                              0x40000000004cL
 #define SDB_CLIENT_EXECUPDATE                              0x40000000004dL
 #define SDB_CLIENT_EXEC                                    0x40000000004eL
@@ -95,4 +95,5 @@
 #define SDB_CLIENT_LISTTASKS                               0x40000000005aL
 #define SDB_CLIENT_WAITTASKS                               0x40000000005bL
 #define SDB_CLIENT_CANCELTASK                              0x40000000005cL
+#define SDB_CLIENT_SETSESSIONATTR                          0x40000000005dL
 #endif

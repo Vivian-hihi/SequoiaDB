@@ -24,10 +24,8 @@ clientCLibFiles = [
 
 #Client Library
 clientCLib = clientCEnv.SharedLibrary('sdbc', clientCLibFiles)
-clientCLibStatic = clientCEnv.StaticLibrary('sdbc', clientCLibFiles)
 
 clientCEnv.Install( '#/client/lib', clientCLib )
-clientCEnv.Install( '#/client/lib', clientCLibStatic )
 clientCEnv.Install( '#/client/include', "client/client.h" )
 clientCEnv.Install( '#/client/include', "client/jstobs.h" )
 clientCEnv.Install( '#/client/include', "client/base64c.h" )

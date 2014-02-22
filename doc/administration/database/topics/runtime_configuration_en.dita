@@ -20,15 +20,27 @@
 					<stentry>Print help information</stentry>
 				</strow>
 				<strow>
+					<stentry>--dbpath</stentry>
+					<stentry>-d</stentry>
+					<stentry>str</stentry>
+					<stentry>1. It specifies the path of data file.
+             2. If it is not specified, the default path is current path.</stentry>
+				</strow>
+				<strow>
+					<stentry>--indexpath</stentry>
+					<stentry>-i</stentry>
+					<stentry>str</stentry>
+					<stentry>1. It specifies the path of index file
+             2. If it is not specified, the default path is the same with &apos;dbpath&apos;.</stentry>
+				</strow>
+				<strow>
 					<stentry>--confpath</stentry>
 					<stentry>-c</stentry>
 					<stentry>str</stentry>
-					<stentry>1. Specified configuration file path (doesn&apos;t contain fiel name). The system will
-						find under confpath. 2. contains necessary configuration items. The format
-						of a configuration item is &quot;parameter name=value&quot; like
-						&quot;svcname=11810&quot; and &quot;diaglevel=3&quot;. 3. If this parameter
-						is not specified, system will automatically search for sdb.conf in current
-						path. 4. There may not be sdb.conf.</stentry>
+					<stentry>1. Specified configuration file path (doesn&apos;t contain fiel name). The system will find under confpath.
+             2. contains necessary configuration items. The format of a configuration item is &quot;parameter name=value&quot; like &quot;svcname=11810&quot; and &quot;diaglevel=3&quot;.
+             3. If this parameter is not specified, system will automatically search for sdb.conf in current path.
+             4. There may not be sdb.conf.</stentry>
 				</strow>
 				<strow>
 					<stentry>--logpath</stentry>
@@ -43,13 +55,6 @@
 					<stentry>str</stentry>
 					<stentry>1. It specifies the catalog of diagnostic log. 
              2. If it is not specified, the default path is &quot;Data file path/diaglog&quot;.</stentry>
-				</strow>
-				<strow>
-					<stentry>--dbpath</stentry>
-					<stentry>-d</stentry>
-					<stentry>str</stentry>
-					<stentry>1. It specifies the path of data file.
-             2. If it is not specified, the default path is current path.</stentry>
 				</strow>
 				<strow>
 					<stentry>--bkuppath</stentry>
@@ -69,8 +74,8 @@
 					<stentry>--svcname</stentry>
 					<stentry>-p</stentry>
 					<stentry>str</stentry>
-					<stentry>1. It specifies local service port. 2. If it is not specified, the default value are
-						11810 for coord, 11800 for catalog, 11820 for datanode.</stentry>
+					<stentry>1. It specifies local service port.
+             2. If it is not specified, the default value are 11810 for coord, 11800 for catalog, 11820 for datanode.</stentry>
 				</strow>
 				<strow>
 					<stentry>--replname</stentry>
@@ -142,9 +147,15 @@
 					<stentry>1. It specifies whether transaction turns on or not.
              2. If it is not specifed, the default value is false.</stentry>
 				</strow>
+				<strow>
+					<stentry>--syncstrategy</stentry>
+					<stentry>--</stentry>
+					<stentry>str</stentry>
+					<stentry>The control strategy of data sync in repl group, value enumeration: none,keepnormal,keepall, default:none.</stentry>
+				</strow>
 			</simpletable>
 			<note>
-				<p>SequoiaDB supports setting configuration with command line, configuration file, or both of them. When both of them are used, parameters in command line will overwrite those in configuration file.</p>
+				<p>SequoiaDB supports setting configuration with command line,configuration file, or both of them. When both of them are used, parameters in command line will overwrite those in configuration file.</p>
 				<p>The total size of synch log (logfilesz * logfilenum)determines the fault tolerance in the process of sync. If log is bigger, the possiblity of full sync is lower.</p>
 			</note>
 		</section>

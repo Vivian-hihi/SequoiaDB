@@ -272,7 +272,10 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "the operation not support on main-collection",
                    "redefine index",
                    "Deleting the CS",
-                   "Reached the maximum number of nodes"
+                   "Reached the maximum number of nodes",
+                   "the node is business-failures",
+                   "the node info is expired",
+                   "wait secondary nodes sync the operation failed"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";
