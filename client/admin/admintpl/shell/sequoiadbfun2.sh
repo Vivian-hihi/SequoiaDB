@@ -77,7 +77,9 @@ function checkFileisExist()
 #参数1 路径 例如 "/opt/sequoiadb"
 function checkFileNull()
 {
-   if [ "`ls -A $1`" = "" ]; then
+   local rootPath="${1}"
+   local files=`find ${rootPath} -type f -print`
+   if [ -z "${files}" ]; then
       return 1
    else
       return 0
