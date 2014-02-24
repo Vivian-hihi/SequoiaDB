@@ -590,6 +590,11 @@
          <en>Prefered replica when read request, default:A, value enum:M,S,A,1-7</en>
          <cn>读请求优先选择的副本,默认值:A,取值列表:M,S,A,1-7</cn>
       </description>
+      <detail>
+         <en>1. It specifies the replica on which to query.<fig></fig>
+             2. If it is not specifed, the default value is anyone.</en>
+         <cn>1.指定执行读请求时优先选择的副本节点<fig></fig>2.如果不指定，则默认为随机选择任意节点。</cn>
+      </detail>
       <typeofweb>str</typeofweb>
       <default>A</default>
    </opt>
