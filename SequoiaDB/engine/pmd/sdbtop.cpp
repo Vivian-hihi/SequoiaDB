@@ -27,7 +27,7 @@ namespace po = boost::program_options;
 #define STDIN 0
 
 #define SDBTOP_VERSION "sdbtop 1.0"
-#define SDBTOP_DEFAULT_CONFPATH "sdbtop.xml"
+#define SDBTOP_DEFAULT_CONFPATH "../conf/samples/sdbtop.xml"
 #define SDBTOP_DEFAULT_HOSTNAME "localhost"
 #define SDBTOP_DEFAULT_SERVICENAME "50000"
 
