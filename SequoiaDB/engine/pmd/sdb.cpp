@@ -55,15 +55,16 @@ struct ArgInfo
    const CHAR * variable ; // variable
 } ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_READFILE, "readFile" )
-INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * size )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_READFILE, "readFile" )
+INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * bufSize,
+                 UINT32 * readSize )
 {
    PD_TRACE_ENTRY ( SDB_READFILE );
    ossPrimitiveFileOp op ;
    ossPrimitiveFileOp::offsetType offset ;
    INT32 rc = SDB_OK ;
 
-   SDB_ASSERT ( name && buf, "Invalid arguments" ) ;
+   SDB_ASSERT ( name && buf && bufSize, "Invalid arguments" ) ;
 
    rc = op.Open ( name , OSS_PRIMITIVE_FILE_OP_READ_WRITE ) ;
    if ( rc != SDB_OK )
@@ -78,12 +79,22 @@ INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * size )
       goto error ;
    }
 
-   *buf = (CHAR *) SDB_OSS_MALLOC ( offset.offset ) ;
-   if ( ! *buf )
+   if ( *bufSize < offset.offset + 1 )
    {
-      rc = SDB_OOM ;
-      PD_LOG ( PDERROR , "fail to alloc memory" ) ;
-      goto error ;
+      if ( *buf )
+      {
+         SDB_OSS_FREE( *buf ) ;
+         *buf = NULL ;
+         *bufSize = 0 ;
+      }
+      *buf = (CHAR *) SDB_OSS_MALLOC ( offset.offset + 1 ) ;
+      if ( ! *buf )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR , "fail to alloc memory" ) ;
+         goto error ;
+      }
+      *bufSize = offset.offset + 1 ;
    }
 
    rc = op.Read ( offset.offset , *buf , NULL ) ;
@@ -91,8 +102,8 @@ INT32 readFile ( const CHAR * name , CHAR ** buf , UINT32 * size )
    {
       goto error ;
    }
-
-   if ( size ) *size = offset.offset ;
+   (*buf)[ offset.offset ] = 0 ;
+   if ( readSize ) *readSize = offset.offset ;
 
 done :
    op.Close() ;
@@ -109,7 +120,7 @@ void printUsage()
    ossPrintf ( "\t\tsdb <CMD> (Deamon mode)"OSS_NEWLINE ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_PARSEARGUMENTS, "parseArguments" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_PARSEARGUMENTS, "parseArguments" )
 INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
 {
    INT32 rc          = SDB_OK ;
@@ -215,73 +226,71 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERBATCHMODE, "enterBatchMode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERBATCHMODE, "enterBatchMode" )
 INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
                                       const CHAR * variable )
 {
    INT32    rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_ENTERBATCHMODE );
-   CHAR *   code     = NULL ;
-   CHAR *   temp     = NULL ;
    CHAR *   vcode    = NULL ;
-   CHAR *   p        = NULL ;
    CHAR *   result   = NULL ;
-   UINT32   evalLen  = 0 ;
-   UINT32   tempLen  = 0 ;
-   UINT32   len      = 0 ;
+   UINT32   varLen   = 0 ;
+   CHAR *   temp     = NULL ;
+   UINT32   tempSize = 0 ;
+   UINT32   readlen  = 0 ;
+   CHAR *   toker    = NULL ;
+   CHAR *   last     = NULL ;
+   string   content ;
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    SDB_ASSERT ( filename && filename[0] != '\0' , "invalid arguement" ) ;
 
-   // code is freed in done:
-   rc = readFile( filename , &temp , &len ) ;
-   if ( rc != SDB_OK )
+   // read var
+   if ( variable && variable[0] != '\0' )
    {
-      ossPrintf ( "fail to read file: %s"OSS_NEWLINE , filename ) ;
-      goto error ;
+      varLen = ossStrlen ( variable ) ;
+      content = variable ;
    }
 
-   if ( len > 0 )
+   toker = ossStrtok( (CHAR*)filename, ",;", &last ) ;
+   while ( toker )
    {
-      //skip BOM (notepad auto add flag for UTF-8)
-      if ( temp[0] == 0xEF && temp[1] == 0xBB && temp[1] == 0xEF ) 
+      rc = readFile( toker , &temp , &tempSize, &readlen ) ;
+      if ( rc != SDB_OK )
       {
-         vcode = &temp[3];
-         len -= 3;
+         ossPrintf ( "fail to read file: %s"OSS_NEWLINE , toker ) ;
+         goto error ;
       }
-      else 
-      {
-         vcode = temp;
-      }
-   
-      if ( variable && variable[0] != '\0' )
-      {
-         evalLen = ossStrlen ( variable ) ;
-         tempLen = len ;
 
-         len = evalLen + tempLen + 2 ;
-         code = ( CHAR * ) SDB_OSS_MALLOC ( len ) ;
-         p = code ;
-
-         ossStrncpy ( p , variable , evalLen ) ;
-         p += evalLen ;
-         *p = '\n' ;
-         p = p + 1 ;
-         ossStrncpy ( p , vcode , tempLen ) ;
-         p += tempLen;
-         *p = '\0' ;
-
-         rc = scope->evaluate ( code , len-1 , filename , 1 , &result ) ;
-      }
-      else
+      if ( readlen > 0 )
       {
-         rc = scope->evaluate ( vcode , len , filename , 1 , &result ) ;
+         content += '\n' ;
+
+         //skip BOM (notepad auto add flag for UTF-8)
+         if ( readlen >= 3 && (UINT8)temp[0] == 0xEF &&
+              (UINT8)temp[1] == 0xBB && (UINT8)temp[2] == 0xBF )
+         {
+            content += &temp[3] ;
+         }
+         else
+         {
+            content += temp ;
+         }
       }
+      toker = ossStrtok( last, ",;", &last ) ;
+   }
+
+   if ( content.length() > varLen )
+   {
+      rc = scope->evaluate ( content.c_str() , (UINT32)content.length() ,
+                             filename , 1 , &result ) ;
       if ( SDB_OK == rc )
       {
          SDB_ASSERT ( result, "evaluation succeed, but result is null" ) ;
          if ( result[0] != '\0' )
+         {
             ossPrintf ( "%s"OSS_NEWLINE, result ) ;
+         }
       }
    }
    else
@@ -290,7 +299,6 @@ INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
    }
 
 done :
-   SAFE_OSS_FREE ( code ) ;
    SAFE_OSS_FREE ( temp ) ;
    SAFE_OSS_FREE ( result ) ;
    PD_TRACE_EXITRC ( SDB_ENTERBATCHMODE, rc );
@@ -299,7 +307,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERINTATVMODE, "enterInteractiveMode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERINTATVMODE, "enterInteractiveMode" )
 INT32 enterInteractiveMode ( Scope *scope )
 {
    INT32    rc          = SDB_OK ;
@@ -387,7 +395,7 @@ INT32 enterInteractiveMode ( Scope *scope )
 
 // Concatenate into a string delimited by \0 and ended with \0\0
 // caller should free *args in the case of success
-PD_TRACE_DECLARE_FUNCTION ( SDB_FORMATARGS, "formatArgs" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_FORMATARGS, "formatArgs" )
 INT32 formatArgs ( const CHAR * program ,
                    const OSSPID & ppid ,
                    CHAR ** args )
@@ -432,7 +440,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_CREATEDAEMONPROC, "createDaemonProcess" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CREATEDAEMONPROC, "createDaemonProcess" )
 INT32 createDaemonProcess ( const CHAR * program , const OSSPID & ppid ,
                              CHAR * f2dbuf , CHAR * d2fbuf )
 {
@@ -491,7 +499,7 @@ error :
 }
 
 #define SDB_FRONTEND_RECEIVEBUFFERSIZE 128
-PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERFRONTENDMODE, "enterFrontEndMode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ENTERFRONTENDMODE, "enterFrontEndMode" )
 INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
 {
    CHAR     c           = '\0' ;
@@ -737,7 +745,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MAIN, "main" )
 int main ( int argc , CHAR **argv )
 {
    ScriptEngine *    engine   = NULL ;
