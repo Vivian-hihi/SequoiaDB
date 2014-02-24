@@ -232,7 +232,6 @@ INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
 {
    INT32    rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_ENTERBATCHMODE );
-   CHAR *   vcode    = NULL ;
    CHAR *   result   = NULL ;
    UINT32   varLen   = 0 ;
    CHAR *   temp     = NULL ;
