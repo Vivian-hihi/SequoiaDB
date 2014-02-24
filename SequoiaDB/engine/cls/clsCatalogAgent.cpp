@@ -35,6 +35,7 @@
 #include "clsTrace.hpp"
 #include "clsCatalogMatcher.hpp"
 #include "catDef.hpp"
+#include "clsCataHashMatcher.hpp"
 
 #include "../bson/lib/md5.hpp"
 
@@ -820,12 +821,35 @@ namespace engine
       clsCatalogMatcher clsMatcher( _shardingKey );
       PD_CHECK ( !_mapItems.empty(), SDB_SYS, error, PDERROR,
                "the collection[%s] cataItem is empty", name() );
-      if ( !isRangeSharding() || 1 == _groupCount )
+      if ( !isSharding() || 1 == _groupCount )
       {
          iter = _mapItems.begin();
          while( iter != _mapItems.end() )
          {
             vecGroup.push_back( iter->second->getGroupID() );
+            ++iter;
+         }
+         goto done ;
+      }
+
+      if ( isHashSharding() )
+      {
+         clsCataHashMatcher hashMatcher( _shardingKey );
+         rc = hashMatcher.loadPattern( matcher, _square );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to load match-info(rc=%d)",
+                     rc );
+         iter = _mapItems.begin();
+         while( iter != _mapItems.end() )
+         {
+            rc = hashMatcher.matches( iter->second, result );
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to match sharding-key(rc=%d)",
+                        rc );
+            if ( result )
+            {
+               vecGroup.push_back( iter->second->getGroupID() );
+            }
             ++iter;
          }
          goto done ;
@@ -2262,6 +2286,7 @@ namespace engine
       _clsCatalogSet *tmpSet = NULL ;
       UINT32 nameLen = ossStrlen(name) ;
       BOOLEAN itAdd  = TRUE ;
+      std::set< std::string > mainCLList ;
 
       CAT_MAP_IT it = _mapCatalog.begin() ;
       while ( it != _mapCatalog.end() )
@@ -2275,6 +2300,11 @@ namespace engine
             if ( ossStrncmp ( curSet->name(), name, nameLen ) == 0
                && (curSet->name())[nameLen] == '.' )
             {
+               std::string strMainCL = curSet->getMainCLName() ;
+               if ( !strMainCL.empty() )
+               {
+                  mainCLList.insert( strMainCL ) ;
+               }
                tmpSet = curSet ;
                curSet = curSet->next () ;
 
@@ -2306,6 +2336,13 @@ namespace engine
          {
             ++it ;
          }
+      }
+
+      std::set< std::string >::iterator iterMain = mainCLList.begin() ;
+      while ( iterMain != mainCLList.end() )
+      {
+         clear( (*iterMain).c_str() ) ;
+         ++iterMain ;
       }
 
       PD_TRACE_EXIT ( SDB__CLSCTAGENT_CRBYSPACENAME ) ;
@@ -2680,7 +2717,6 @@ namespace engine
          }
          ++it ;
       }
-   done :
       PD_TRACE_EXIT ( SDB__CLSGPIM_UPNODESTAT ) ;
       return ;
    }
