@@ -34,6 +34,11 @@
                <jumpName>Sessions</jumpName>
             </HotKey>
             <HotKey>
+               <button>c</button>
+               <jumpType>JUMPTYPE_PANEL</jumpType>
+               <jumpName>collectionspaces</jumpName>
+            </HotKey>
+            <HotKey>
                <button>d</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
                <jumpName>Database</jumpName>
@@ -771,7 +776,7 @@
                </NodeWindow>
             </value>
             <footerKey>-1</footerKey>
-            <labelName>COLLECTIONSPACES</labelName>
+            <labelName>collectionspaces</labelName>
             <hotKeySuiteType>0</hotKeySuiteType>
             <sourceSnapShot>SDB_SNAP_SESSIONS_TOP</sourceSnapShot>
             <bodyPanelType>BODYTYPE_NORMAL</bodyPanelType>
