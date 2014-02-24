@@ -1380,12 +1380,17 @@ namespace engine
          if ( beMainCLName.type() == String )
          {
             std::string strMainCLName = beMainCLName.str();
-            PD_CHECK( 0 == ossStrcmp( strMainCLName.c_str(), mainCLName ),
+            /*PD_CHECK( 0 == ossStrcmp( strMainCLName.c_str(), mainCLName ),
                      SDB_RELINK_SUB_CL, error, PDERROR,
                      "duplicate link sub-collection(%s), "
                      "the original main-collection is %s",
                      subCLName, strMainCLName.c_str() );
-            hasUpdateSubCL = TRUE;
+            hasUpdateSubCL = TRUE;*/
+            PD_CHECK( strMainCLName.empty(),
+                     SDB_RELINK_SUB_CL, error, PDERROR,
+                     "duplicate link sub-collection(%s), "
+                     "its main-collection is %s",
+                     subCLName, strMainCLName.c_str() );
          }
          }
 
