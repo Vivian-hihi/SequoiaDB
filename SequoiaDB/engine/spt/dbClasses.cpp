@@ -221,6 +221,7 @@ done :
 error :
    SAFE_BSON_DISPOSE ( *bs ) ;
    TRY_REPORT ( cx, "objToBson: false" ) ;
+   ret = JS_FALSE ;
    goto done ;
 }
 
