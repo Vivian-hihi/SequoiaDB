@@ -4223,14 +4223,28 @@ INT32 Event::runSDBTOP( )
    root.input.serviceName = serviceName ;
    root.input.usrName = usrName ;
    root.input.password = password ;
-   rc = coord.connect( root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str() ) ;
+   try
+   {
+      rc = coord.connect( root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str() ) ;
+   }
+   catch( std::exception &e )
+   {
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
+                "%s can't connect to the coord: %s, %s, %s, %s, e.what() =%d\n",
+                errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(),
+                root.input.usrName.c_str(), root.input.password.c_str(), e.what().c_str() ) ;
+      goto error ;
+
+   }
    if( rc )
    {
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                 "%s can't connect to the coord: %s, %s, %s, %s, rc =%d\n",
-                errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str(), rc ) ;
+                errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(),
+                root.input.usrName.c_str(), root.input.password.c_str(), rc ) ;
       goto error ;
    }
    root.input.displayModeChooser = 0 ;
