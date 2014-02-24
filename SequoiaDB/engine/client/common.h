@@ -101,6 +101,8 @@ INT32 clientBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                   SINT32 numContexts, const SINT64 *pContextIDs,
                                   BOOLEAN endianConvert ) ;
 
+INT32 clientBuildKillAllContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                      UINT64 reqID, BOOLEAN endianConvert ) ;
 
 INT32 clientExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
                            SINT32 *startFrom, SINT32 *numReturned,

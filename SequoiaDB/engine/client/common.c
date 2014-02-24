@@ -1091,6 +1091,41 @@ error :
    goto done ;
 }
 
+INT32 clientBuildKillAllContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
+                                      UINT64 reqID, BOOLEAN endianConvert )
+{
+   INT32 rc = SDB_OK ;
+   MsgOpKillAllContexts *killAllContexts = NULL ;
+   INT32 len = sizeof( MsgOpKillAllContexts ) +
+               ossRoundUpToMultipleX( 0, sizeof(ossValuePtr) ) ;
+   if ( len < 0 )
+   {
+      ossPrintf ( "Packet size overflow"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   rc = clientCheckBuffer ( ppBuffer, bufferSize, len ) ;
+   if ( rc )
+   {
+      ossPrintf ( "Failed to check buffer, rc = %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   killAllContexts                       = (MsgOpKillAllContexts *)
+                                           ( *ppBuffer ) ;
+   killAllContexts->header.messageLength = len ;
+   killAllContexts->header.opCode        = MSG_BS_INTERRUPTE ;
+   killAllContexts->header.TID           = ossGetCurrentThreadID() ;
+   killAllContexts->header.routeID.value = 0 ;
+   killAllContexts->header.requestID     = reqID ;
+   if ( endianConvert )
+   {
+      clientEndianConvertHeader ( &killAllContexts->header ) ;
+   }
+done :
+   return rc ;
+error :
+   goto done ;
+}
 
 INT32 clientExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
                            SINT32 *startFrom, SINT32 *numReturned,
