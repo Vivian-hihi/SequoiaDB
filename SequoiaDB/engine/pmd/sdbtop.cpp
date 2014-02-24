@@ -1,11 +1,14 @@
-#include "client.hpp"
+#include "../client/client.hpp"
 #include <sys/select.h>
 #include <termios.h>
 #include <string.h>
-#include <ncurses.h>
+#include "ncurses.h"
 #include <time.h>
 #include <string>
 #include <vector>
+
+#include "ossUtil.hpp"
+#include "ossMem.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -470,7 +473,7 @@ struct RootWindow
    INT32 keySuiteLength ;
 };
 
-class Event
+class Event //: public SDBObject
 {
 public: // features
    RootWindow root ;
@@ -1540,17 +1543,12 @@ INT32 Event::getActualLength( INT32 &actualLength, INT32 &referLength )
    INT32 rc = SDB_OK ;
    INT32 row =0 ;
    INT32 col = 0 ;
-   FLOAT32 SCALE_ROW = 0.0 ;
    FLOAT32 SCALE_COLUMN = 0.0 ;
    getmaxyx( stdscr, row, col ) ;
-   SCALE_ROW = (FLOAT32)row / (FLOAT32)root.referWindowRow ;
    SCALE_COLUMN = (FLOAT32)col / (FLOAT32)root.referWindowColumn ;
    actualLength = (INT32)( referLength * SCALE_COLUMN ) ;
 done :
    return rc ;
-error :
-   rc = SDB_ERROR ;
-   goto done ;
 }
 
 INT32 Event::getActualPosition( Position &actualPosition, Position &referPosition,
@@ -1560,7 +1558,6 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
    INT32 row =0 ;
    INT32 col = 0 ;
    FLOAT32 SCALE_ROW = 0.0 ;
-   FLOAT32 SCALE_COLUMN = 0.0 ;
    getmaxyx( stdscr, row, col ) ;
    if( row < root.actualWindowMinRow || col < root.actualWindowMinColumn )
    {
@@ -1571,7 +1568,6 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
       goto error ;
    }
    SCALE_ROW = (FLOAT32)row / (FLOAT32)root.referWindowRow ;
-   SCALE_COLUMN = (FLOAT32)col / (FLOAT32)root.referWindowColumn ;
    if( zoomMode == ZOOM_MODE_ALL )
    {
       actualPosition.length_X = ( INT32 )( referPosition.length_X * (FLOAT32)col /
@@ -3652,7 +3648,6 @@ error :
 INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
 {
    INT32 rc = SDB_OK ;
-   INT32 keyLength = 0 ;
    INT32 numOfSubWindow = 0 ;
    FieldStruct *Fixed = NULL ;
    FieldStruct *Mobile = NULL ;
