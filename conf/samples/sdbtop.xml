@@ -702,7 +702,7 @@
          <BodyMap>
             <headerKey>1</headerKey>
             <value>
-               <numOfSubWindow>5</numOfSubWindow>
+               <numOfSubWindow>1</numOfSubWindow>
                <NodeWindow>
                   <actualWindowMinRow>24</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
