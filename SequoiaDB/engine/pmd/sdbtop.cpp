@@ -2001,6 +2001,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
    }
    try
    {
+      element = bsonobj.getField( sourceField ) ;
       if( !canSwitch ||NULLSTRING == baseField )
       {
          result = element.toString( FALSE ) ;
@@ -2021,9 +2022,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
          }
          goto done ;
       }
-
-      element = bsonobj.getField( sourceField ) ;
-      
       baseElement = bsonobj.getField( baseField ) ;
       new_ = baseElement.toString( FALSE ) ;
       while( pos_last < root.input.last_Snapshot.size() ) //find the match bsonj
