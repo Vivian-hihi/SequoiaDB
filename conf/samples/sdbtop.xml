@@ -746,7 +746,7 @@
                         <FieldStruct>
                            <absoluteName>Collection</absoluteName>
                            <sourceField>Collection</sourceField>
-                           <contentLength>30</contentLength>
+                           <contentLength>60</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
