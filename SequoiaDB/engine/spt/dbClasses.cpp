@@ -219,7 +219,7 @@ done :
    PD_TRACE_EXIT ( SDB_OBJ2BSON );
    return ret ;
 error :
-   // SAFE_BSON_DISPOSE ( *bs ) ; already freed in toBson()
+   SAFE_BSON_DISPOSE ( *bs ) ;
    TRY_REPORT ( cx, "objToBson: false" ) ;
    ret = JS_FALSE ;
    goto done ;

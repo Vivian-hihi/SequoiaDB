@@ -82,6 +82,7 @@ error:
    if ( NULL != *bs )
    {
       bson_dispose( *bs ) ;
+      *bs = NULL ;
    }
    goto done ;
 }
