@@ -22,7 +22,7 @@
          <keySuiteLength>1</keySuiteLength>
          <KeySuite>
             <mark>0</mark>
-            <hotKeyLength>20</hotKeyLength>
+            <hotKeyLength>40</hotKeyLength>
             <HotKey>
                <button>m</button>
                <jumpType>JUMPTYPE_PANEL</jumpType>
@@ -778,7 +778,7 @@
             <footerKey>-1</footerKey>
             <labelName>collectionspaces</labelName>
             <hotKeySuiteType>0</hotKeySuiteType>
-            <sourceSnapShot>SDB_SNAP_COLLECTIONSPACES</sourceSnapShot>
+            <sourceSnapShot>SDB_SNAP_COLLECTIONSPACES_TOP</sourceSnapShot>
             <bodyPanelType>BODYTYPE_NORMAL</bodyPanelType>
             <helpPanelType>BODYTYPE_HELP_DYNAMIC</helpPanelType>
             <hotKey>s</hotKey>
