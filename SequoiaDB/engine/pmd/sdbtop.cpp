@@ -4233,7 +4233,7 @@ INT32 Event::runSDBTOP( )
       ossSnprintf( errStr, errStrLength,
                 "%s can't connect to the coord: %s, %s, %s, %s, e.what() =%d\n",
                 errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(),
-                root.input.usrName.c_str(), root.input.password.c_str(), e.what().c_str() ) ;
+                root.input.usrName.c_str(), root.input.password.c_str(), e.what() ) ;
       goto error ;
 
    }
