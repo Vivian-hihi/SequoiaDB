@@ -252,7 +252,15 @@ INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
       content = variable ;
    }
 
-   toker = ossStrtok( (CHAR*)filename, ",;", &last ) ;
+   CHAR *fileNameTmp = ossStrdup( filename ) ;
+   if ( !fileNameTmp )
+   {
+      rc = SDB_OOM ;
+      PD_LOG( PDERROR, "Failed to dup string: %s", filename ) ;
+      goto error ;
+   }
+
+   toker = ossStrtok( fileNameTmp, ",;", &last ) ;
    while ( toker )
    {
       rc = readFile( toker , &temp , &tempSize, &readlen ) ;
@@ -301,6 +309,7 @@ INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
 done :
    SAFE_OSS_FREE ( temp ) ;
    SAFE_OSS_FREE ( result ) ;
+   SAFE_OSS_FREE ( fileNameTmp ) ;
    PD_TRACE_EXITRC ( SDB_ENTERBATCHMODE, rc );
    return rc ;
 error :
