@@ -486,7 +486,6 @@ public: // operation
    INT32 assignActivatedPanelByLabelName( BodyMap **activatedPanel, string labelName ) ;
    INT32 assignActivatedPanel( BodyMap **activatedPanel, string bodyPanelType ) ;
    INT32 getActivatedHeadTailMap(  BodyMap *activatedPanel, HeadTailMap **header, HeadTailMap **footer ) ;
-   INT32 getActualLength( INT32 &actualLength, INT32 &referLength ) ;
    INT32 getActualPosition( Position &actualPosition, Position &referPosition,
                             const string zoomMode, const string occupyMode ) ;
    INT32 getActivatedKeySuite( KeySuite **keySuite ) ;
@@ -1536,19 +1535,6 @@ done :
 error :
    rc = SDB_ERROR;
    goto done ;
-}
-
-INT32 Event::getActualLength( INT32 &actualLength, INT32 &referLength )
-{
-   INT32 rc = SDB_OK ;
-   INT32 row =0 ;
-   INT32 col = 0 ;
-   FLOAT32 SCALE_COLUMN = 0.0 ;
-   getmaxyx( stdscr, row, col ) ;
-   SCALE_COLUMN = (FLOAT32)col / (FLOAT32)root.referWindowColumn ;
-   actualLength = (INT32)( referLength * SCALE_COLUMN ) ;
-done :
-   return rc ;
 }
 
 INT32 Event::getActualPosition( Position &actualPosition, Position &referPosition,
