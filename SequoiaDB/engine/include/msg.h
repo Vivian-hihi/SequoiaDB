@@ -515,6 +515,13 @@ struct _MsgOpKillContexts
 } ;
 typedef struct _MsgOpKillContexts MsgOpKillContexts ;
 
+struct _MsgOpKillAllContexts
+{
+   // 0-27 bytes
+   MsgHeader header ;    // message header
+} ;
+typedef struct _MsgOpKillAllContexts MsgOpKillAllContexts ;
+
 struct _MsgOpMsg
 {
    // 0-27 bytes
