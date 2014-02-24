@@ -109,8 +109,7 @@
 				<param name="excludes.dir.patterns" value="vote" />
 				<!--parma name="parallel.num" value="${lineNum1}" /-->
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
-				<param name="save.testLog.hostname" value="${save.testLog.hostname}" />
-				<param name="save.testLog.dir" value="${save.testLog.dir}" />
+				<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 			</sdbtest>
 			<!--getRowNum propertyName="lineNum2" /-->
 			<sdbtest host="${test.machine.no1.basic}" testscript="${test.machine.deploy.path}/deploy/exec-basic-testcases.xml" remotereports="${test.machine.deploy.path}/deploy/hlt/js_testcases/reports" masterreports="${test.reports.path}" timeout="60m" antFileName="${antFileName}">
@@ -119,6 +118,7 @@
 				<param name="excludes.dir.patterns" value="vote" />
 				<!--parma name="parallel.num" value="${lineNum2}" /-->
 				<param name="antTask.jar.path" value="${test.machine.deploy.path}/deploy/ant-sdbtasks" />
+				<param name="ci.properties.path" value="${test.machine.software.path}/ci.test.properties" />
 			</sdbtest>
 		</parallel>
 		
