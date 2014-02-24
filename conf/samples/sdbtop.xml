@@ -702,7 +702,7 @@
          <BodyMap>
             <headerKey>1</headerKey>
             <value>
-               <numOfSubWindow>1</numOfSubWindow>
+               <numOfSubWindow>5</numOfSubWindow>
                <NodeWindow>
                   <actualWindowMinRow>24</actualWindowMinRow>
                   <actualWindowMinColumn>80</actualWindowMinColumn>
@@ -778,7 +778,7 @@
             <footerKey>-1</footerKey>
             <labelName>collectionspaces</labelName>
             <hotKeySuiteType>0</hotKeySuiteType>
-            <sourceSnapShot>SDB_SNAP_SESSIONS_TOP</sourceSnapShot>
+            <sourceSnapShot>SDB_SNAP_COLLECTIONSPACES</sourceSnapShot>
             <bodyPanelType>BODYTYPE_NORMAL</bodyPanelType>
             <helpPanelType>BODYTYPE_HELP_DYNAMIC</helpPanelType>
             <hotKey>s</hotKey>
