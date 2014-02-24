@@ -69,7 +69,13 @@ INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
       goto error ;
    }
 
-   bson_finish( *bs ) ;
+   rc = bson_finish( *bs ) ;
+   if ( rc )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
 done:
    return rc ;
 error:
