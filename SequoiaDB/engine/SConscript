@@ -299,7 +299,8 @@ clsFiles = [
       "cls/clsCleanupJob.cpp",
       "cls/clsCatalogMatcher.cpp",
       "cls/clsCatalogPredicate.cpp",
-      "cls/clsReplBucket.cpp"
+      "cls/clsReplBucket.cpp",
+      "cls/clsCataHashMatcher.cpp"
       ]
 
 dpsFiles = [
