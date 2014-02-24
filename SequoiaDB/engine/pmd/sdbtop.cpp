@@ -1,4 +1,7 @@
 #include "../client/client.hpp"
+#include "ossUtil.hpp"
+#include "ossMem.hpp"
+
 #include <sys/select.h>
 #include <termios.h>
 #include <string.h>
@@ -6,9 +9,6 @@
 #include <time.h>
 #include <string>
 #include <vector>
-
-#include "ossUtil.hpp"
-#include "ossMem.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -276,8 +276,9 @@ struct ExpValueStruct
    string expression ;
 };
 
-struct ExpressionContent
+class ExpressionContent : public SDBObject
 {
+public:
    string expressionType ;
    INT32 expressionLength ;
    ExpValueStruct expressionValue ;
@@ -306,8 +307,9 @@ struct FiledWarningValue
    INT64 averageMinLimitValue ;
 };
 
-struct FieldStruct
+class FieldStruct : public SDBObject
 {
+public:
    string deltaName ;
    string absoluteName ;
    string averageName ;
@@ -368,8 +370,9 @@ struct Position
    INT32 length_Y ;
 };
 
-struct NodeWindow
+class NodeWindow : public SDBObject
 {
+public:
    INT32 actualWindowMinRow ;
    INT32 actualWindowMinColumn ;
    string zoomMode ;
@@ -386,28 +389,32 @@ struct Panel
    INT32 numOfSubWindowFromConf ; // need it to free memory
 };
 
-struct HotKey
+class HotKey : public SDBObject
 {
+public:
    INT64 button ;
    string jumpType ;
    string jumpName ;
 };
 
-struct KeySuite
+class KeySuite : public SDBObject
 {
+public:
    INT64 mark ;
    INT32 hotKeyLength ;
    HotKey *hotKey ;
 };
 
-struct HeadTailMap
+class HeadTailMap : public SDBObject
 {
+public:
    INT32 key ;
    Panel value ;
 };
 
-struct BodyMap
+class BodyMap : public SDBObject
 {
+public:
    INT32 headerKey ;
    Panel value ;
    INT32 footerKey ;
@@ -473,7 +480,7 @@ struct RootWindow
    INT32 keySuiteLength ;
 };
 
-class Event //: public SDBObject
+class Event : public SDBObject
 {
 public: // features
    RootWindow root ;
@@ -561,8 +568,8 @@ INT32 readPosition( ptree pt_position, Position& position )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s readPosition failed, e.what():%s\n", errStrBuf, e.what() ) ;
       goto error ;
    }
@@ -588,8 +595,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
       }
       catch( std::exception &e )
       {
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_STATICTEXT_HELP_Header), e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error ;
@@ -606,8 +613,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
       }
       catch( std::exception &e )
       {
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_STATICTEXT_LICENSE), e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error ;
@@ -624,8 +631,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
       }
       catch( std::exception &e )
       {
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_STATICTEXT_MAIN), e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error;
@@ -646,8 +653,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
       }
       catch( std::exception &e )
       {
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_HELP), e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error ;
@@ -660,7 +667,7 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
          display.dyExOutPut.autoSetType = pt_displayContent.get<string>( "autoSetType" ) ;
          display.dyExOutPut.expressionNumber = pt_displayContent.get<INT32>( "expressionNumber" ) ;
          display.dyExOutPut.rowNumber= pt_displayContent.get<INT32>( "rowNumber" ) ;
-         display.dyExOutPut.content = new ExpressionContent[display.dyExOutPut.expressionNumber] ;
+         display.dyExOutPut.content = SDB_OSS_NEW ExpressionContent[display.dyExOutPut.expressionNumber] ;
          INT32 expressionNumber = 0 ;
          for( BOOST_AUTO( child_displayContent, pt_displayContent.begin() ); child_displayContent != pt_displayContent.end(); ++child_displayContent )
          {
@@ -686,8 +693,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
                }
                else
                {
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                             "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION), expressionType == %s\n",
                             errStrBuf, display.dyExOutPut.content[expressionNumber].expressionType.c_str() ) ;
                   goto error ;
@@ -699,8 +706,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
       }
       catch( std::exception &e )
       {
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION), e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error ;
@@ -740,14 +747,14 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
          
          display.dySnapshotOutPut.baseField = pt_displayContent.get<string>( "baseField" ) ;
          display.dySnapshotOutPut.fieldLength = pt_displayContent.get<INT32>( "fieldLength" ) ;
-         display.dySnapshotOutPut.fixedField = new FieldStruct[display.dySnapshotOutPut.fieldLength] ;
-         display.dySnapshotOutPut.mobileField = new FieldStruct[display.dySnapshotOutPut.fieldLength] ;
+         display.dySnapshotOutPut.fixedField = SDB_OSS_NEW FieldStruct[display.dySnapshotOutPut.fieldLength] ;
+         display.dySnapshotOutPut.mobileField = SDB_OSS_NEW FieldStruct[display.dySnapshotOutPut.fieldLength] ;
 
       }
       catch( std::exception &e )
       {
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,"%s readDisplayContent failed"
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_SNAPSHOT), e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error;
@@ -892,8 +899,8 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
    }
    else
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,"%s readDisplayContent failed,"
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed,"
                 " displayType is wrong\n", errStrBuf ) ;
       goto error ;
    }
@@ -914,7 +921,7 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
    {
       value.numOfSubWindow = pt_value.get<INT32>( "numOfSubWindow" ) ;
       value.numOfSubWindowFromConf = pt_value.get<INT32>( "numOfSubWindow" ) ;
-      value.subWindow = new NodeWindow[value.numOfSubWindow] ;
+      value.subWindow = SDB_OSS_NEW NodeWindow[value.numOfSubWindow] ;
       INT32 numOfSubWindow = 0 ;
       for( BOOST_AUTO( child_value, pt_value.begin() ); child_value != pt_value.end(); ++child_value )
       {
@@ -922,8 +929,8 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
          {
             if( numOfSubWindow >= value.numOfSubWindow )
             {
-               snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-               snprintf( errStr, errStrLength,"%s readPanelValue failed,"
+               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+               ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
                          " numOfSubWindow >= value.numOfSubWindow\n", errStrBuf ) ;
                goto error ;
             }
@@ -947,8 +954,8 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
                                  value.subWindow[numOfSubWindow].displayType ) ;
                   if( rc)
                   {
-                     snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                     snprintf( errStr, errStrLength,"%s readPanelValue failed, can't readDisplayContent\n", errStrBuf ) ;
+                     ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                     ossSnprintf( errStr, errStrLength,"%s readPanelValue failed, can't readDisplayContent\n", errStrBuf ) ;
                      goto error ;
                   }
                }
@@ -957,8 +964,8 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
                   rc = readPosition( child_nodewindow->second, value.subWindow[numOfSubWindow].position ) ;
                   if( rc )
                   {
-                     snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                     snprintf( errStr, errStrLength,"%s readPanelValue failed,"
+                     ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                     ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
                                " can't readPosition\n", errStrBuf ) ;
                      goto error ;
                   }
@@ -971,8 +978,8 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,"%s readPanelValue failed,"
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
                 " e.what():%s\n", errStrBuf, e.what() ) ;
       goto error ;
    }
@@ -1033,11 +1040,11 @@ Event::~Event()
 
    while( keySuiteLength ) // free the memory root.keySuite
    {
-      delete []root.keySuite[keySuiteLength -1].hotKey ;
+      SDB_OSS_DEL []root.keySuite[keySuiteLength -1].hotKey ;
       --keySuiteLength ;
    }
    if( root.keySuiteLength )
-      delete []root.keySuite ;
+      SDB_OSS_DEL []root.keySuite ;
 
    while( headerLength ) // free the memory root.header
    {
@@ -1046,20 +1053,20 @@ Event::~Event()
       {
          if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
-            delete []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
          }
          else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
-            delete []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
-            delete []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
          }
          --numOfSubWindow ;
       }
-      delete []root.header[headerLength - 1].value.subWindow ;
+      SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow ;
       --headerLength ;
    }
    if( root.headerLength )
-      delete []root.header;
+      SDB_OSS_DEL []root.header;
 
    while( bodyLength ) // free the memory root.body
    {
@@ -1068,20 +1075,20 @@ Event::~Event()
       {
          if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
-            delete []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
          }
          else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
-            delete []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
-            delete []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
          }
          --numOfSubWindow ;
       }
-      delete []root.body[bodyLength - 1].value.subWindow ;
+      SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow ;
       --bodyLength ;
    }
    if( root.bodyLength )
-      delete []root.body ;
+      SDB_OSS_DEL []root.body ;
 
    while( footerLength ) // free the memory root.footer
    {
@@ -1090,20 +1097,20 @@ Event::~Event()
       {
          if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
-            delete []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
          }
          else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
-            delete []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
-            delete []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
          }
          --numOfSubWindow ;
       }
-      delete []root.footer[footerLength - 1].value.subWindow ;
+      SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow ;
       --footerLength ;
    }
    if( root.footerLength )
-      delete []root.footer ;
+      SDB_OSS_DEL []root.footer ;
 }
 
 
@@ -1125,8 +1132,8 @@ INT32 Event::readConfiguration( )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                 " check configuration file %s is exist, e.what():%s\n",
                 errStrBuf, root.input.confPath.c_str(), e.what() ) ;
       goto error ;
@@ -1155,8 +1162,8 @@ INT32 Event::readConfiguration( )
          }
          catch( std::exception &e )
          {
-            snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+            ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                       " scope: child_event->first ==..... ,e.what():%s\n",
                       errStrBuf, e.what() ) ;
             goto error ;
@@ -1169,12 +1176,12 @@ INT32 Event::readConfiguration( )
                {
                   root.keySuiteLength = child_root->second.get<INT32>( "keySuiteLength" ) ;
                   keySuiteLengthFromConf = child_root->second.get<INT32>( "keySuiteLength" ) ;
-                  root.keySuite = new KeySuite[root.keySuiteLength] ;
+                  root.keySuite = SDB_OSS_NEW KeySuite[root.keySuiteLength] ;
                }
                catch( std::exception &e )
                {
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                             " scope: child_root->first ==..... ,e.what():%s\n",
                             errStrBuf, e.what() ) ;
                   goto error ;
@@ -1186,8 +1193,8 @@ INT32 Event::readConfiguration( )
                   {
                      if( keySuiteLength >= root.keySuiteLength )
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                   " keySuiteLength >= root.keySuiteLength\n", errStrBuf ) ;
                         goto error ;
                      }
@@ -1195,12 +1202,12 @@ INT32 Event::readConfiguration( )
                      {
                         root.keySuite[keySuiteLength].mark = child_keysuites->second.get<INT64>( "mark" ) ;
                         root.keySuite[keySuiteLength].hotKeyLength = child_keysuites->second.get<INT32>( "hotKeyLength" ) ;
-                        root.keySuite[keySuiteLength].hotKey = new HotKey[root.keySuite[keySuiteLength].hotKeyLength ] ;
+                        root.keySuite[keySuiteLength].hotKey = SDB_OSS_NEW HotKey[root.keySuite[keySuiteLength].hotKeyLength ] ;
                      }
                      catch( std::exception &e)
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                   " scope: child_keysuites->first ==..... ,e.what():%s\n",
                                   errStrBuf, e.what() ) ;
                         goto error ;
@@ -1212,8 +1219,8 @@ INT32 Event::readConfiguration( )
                         {
                            if( hotKeyLength >= root.keySuite[keySuiteLength].hotKeyLength )
                            {
-                              snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                              snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                              ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                              ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                         " hotKeyLength >= root.keySuite[keySuiteLength].hotKeyLength\n", errStrBuf ) ;
                               goto error ;
                            }
@@ -1225,8 +1232,8 @@ INT32 Event::readConfiguration( )
                            }
                            catch( std::exception &e )
                            {
-                              snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                              snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                              ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                              ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                         " scope: child_keysuite->first ==..... ,e.what():%s\n",
                                         errStrBuf, e.what() ) ;
                               goto error ;
@@ -1246,12 +1253,12 @@ INT32 Event::readConfiguration( )
                {
                   root.headerLength = child_root->second.get<INT32>( "headerLength" ) ;
                   headerLengthFromConf = child_root->second.get<INT32>( "headerLength" ) ;
-                  root.header = new HeadTailMap[root.headerLength] ;
+                  root.header = SDB_OSS_NEW HeadTailMap[root.headerLength] ;
                }
                catch( std::exception &e )
                {
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                             " scope: child_root->first ==..... (Headers),e.what():%s\n", errStrBuf, e.what() ) ;
                   goto error ;
                }
@@ -1262,8 +1269,8 @@ INT32 Event::readConfiguration( )
                   {
                      if( headerLength >= root.headerLength )
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                   " scope: headerLength >= root.headerLength\n", errStrBuf ) ;
                         goto error ;
                      }
@@ -1273,8 +1280,8 @@ INT32 Event::readConfiguration( )
                      }
                      catch( std::exception &e )
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                   " scope: child_headers->first ==..... ,e.what():%s\n",
                                   errStrBuf, e.what() ) ;
                         goto error ;
@@ -1301,12 +1308,12 @@ INT32 Event::readConfiguration( )
                {
                   root.bodyLength = child_root->second.get<INT32>( "bodyLength" ) ;
                   bodyLengthFromConf = child_root->second.get<INT32>( "bodyLength" ) ;
-                  root.body = new BodyMap[root.bodyLength] ;
+                  root.body = SDB_OSS_NEW BodyMap[root.bodyLength] ;
                }
                catch( std::exception &e )
                {
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                             " scope: child_root->first ==..... (Bodys),e.what():%s\n", errStrBuf, e.what() ) ;
                   goto error ;
                }
@@ -1317,8 +1324,8 @@ INT32 Event::readConfiguration( )
                   {
                      if( bodyLength >= root.bodyLength )
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed, scope: bodyLength >= root.bodyLength\n", errStrBuf ) ;
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed, scope: bodyLength >= root.bodyLength\n", errStrBuf ) ;
                         goto error ;
                      }
                      try
@@ -1344,8 +1351,8 @@ INT32 Event::readConfiguration( )
                      }
                      catch( std::exception &e )
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                   " scope: child_bodys->first ==..... ,e.what():%s\n", errStrBuf, e.what() ) ;
                         goto error ;
                      }
@@ -1371,12 +1378,12 @@ INT32 Event::readConfiguration( )
                {
                   root.footerLength = child_root->second.get<INT32>( "footerLength" ) ;
                   footerLengthFromConf = child_root->second.get<INT32>( "footerLength" ) ;
-                  root.footer = new HeadTailMap[root.footerLength] ;
+                  root.footer = SDB_OSS_NEW HeadTailMap[root.footerLength] ;
                }
                catch( std::exception &e )
                {
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                             " scope: child_root->first ==..... (Footers),e.what():%s\n",
                             errStrBuf, e.what() ) ;
                   goto error ;
@@ -1388,8 +1395,8 @@ INT32 Event::readConfiguration( )
                   {
                      if( footerLength >= root.footerLength )
                      {
-                        snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        snprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
                                   " scope: footerLength >= root.footerLength\n", errStrBuf ) ;
                         goto error ;
                      }
@@ -1504,8 +1511,8 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel, HeadTailMap **hea
    }
    if( NULL == *header )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getActivatedHeadTailMap faild, SDB_HEADER_NULL\n",
                 errStrBuf ) ;
       goto error ;
@@ -1516,15 +1523,15 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel, HeadTailMap **hea
       {
          if( NULL == *header )
          {
-            snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            snprintf( errStr, errStrLength, "%s getActivatedHeadTailMap faild,"
+            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+            ossSnprintf( errStr, errStrLength, "%s getActivatedHeadTailMap faild,"
                       " SDB_HEADER_FOOTER_NULL\n", errStrBuf ) ;
             goto error ;
          }
          else
          {
-            snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            snprintf( errStr, errStrLength, "%s getActivatedHeadTailMap faild,"
+            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+            ossSnprintf( errStr, errStrLength, "%s getActivatedHeadTailMap faild,"
                       " SDB_FOOTER_NULL\n", errStrBuf ) ;
             goto error ;
          }
@@ -1548,8 +1555,8 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
    if( row < root.actualWindowMinRow || col < root.actualWindowMinColumn )
    {
       rc = SDB_ERROR ;
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength, "%s Minimum window size: %dx%d, found %dx%d\n", 
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength, "%s Minimum window size: %dx%d, found %dx%d\n", 
                 errStrBuf, root.actualWindowMinRow, root.actualWindowMinColumn, row, col ) ;
       goto error ;
    }
@@ -1677,8 +1684,8 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
    else 
    {
       rc = SDB_ERROR ;
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getActualPosition faild: wrong zoomMode:%s\n",
                 errStrBuf, zoomMode.c_str() ) ;
       goto error ;
@@ -1692,8 +1699,8 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
       else 
       {
          rc = SDB_ERROR ;
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,
                    "%s getActualPosition faild: wrong occupyMode:%s\n",
                    errStrBuf, occupyMode.c_str() ) ;
          goto error ;
@@ -1730,8 +1737,8 @@ INT32 Event::getActivatedKeySuite( KeySuite **keySuite )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getActivatedKeySuite failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
       goto error ;
@@ -1769,8 +1776,8 @@ INT32 Event::getTopKey_TOP( INT64 *keyBuffer, INT32 bufLength, INT64 &key )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-      snprintf( errStr, errStrLength, 
+      ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength, 
                 "%s getTopKey_TOP failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
       goto error ;
@@ -1818,8 +1825,8 @@ INT32 Event::SDBTOP_MEMSET( INT64 *pBuffer, INT64 c, INT32 setLength )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getTopKey_TOP failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
       goto error ;
@@ -1843,8 +1850,8 @@ INT32 Event::SDBTOP_MEMSET( CHAR *pBuffer, CHAR c, INT32 setLength )
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getTopKey_TOP failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
       goto error ;
@@ -1870,8 +1877,8 @@ INT32 Event::SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s SNPRINTF_TOP failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
       goto error ;
@@ -1895,23 +1902,23 @@ INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
    printf_str = ( CHAR * )malloc( printfLength * sizeof( CHAR ) ) ;
    if( !printf_str )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild, can't malloc memory for printf_str :%d\n", errStrBuf, expressionLength ) ;
       goto error ;
    }
    if( expressionLength <= 0 )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild, wrong expressionLength:%d\n", errStrBuf, expressionLength ) ;
       goto error ;
    }
    rc = SDBTOP_FORMATTING_OUTPUT( printf_str, printfLength, expression.c_str() ) ;
    if( rc )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild, SNPRINTF_TOP faild\n", errStrBuf ) ;
       goto error ; 
    }
@@ -1933,8 +1940,8 @@ INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
    }
    else
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP wrong alignment:%s\n", errStrBuf, alignment.c_str() ) ;
       goto error ; 
    }
@@ -1986,8 +1993,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
    CHAR *resultBuf = ( CHAR * )malloc( LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
    if( !resultBuf )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getResultFromBSONobj failed, can't malloc memory for resultBuf : %d\n",
                 errStrBuf, LENGTH_OF_RESULTBUFFER ) ;
       goto error ;
@@ -1997,7 +2004,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
       element = bsonobj.getField( sourceField ) ;
       
       baseElement = bsonobj.getField( baseField ) ;
-      baseElement_last ;
       new_ = baseElement.toString( FALSE ) ;
       if( !canSwitch ||NULLSTRING == baseField )
       {
@@ -2031,7 +2037,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
       {
          if( DELTA == displayMode || AVERAGE== displayMode )
          {
-            snprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, 0.0 ) ;
+            ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, 0.0 ) ;
             result = resultBuf ;
             root.input.cur_deltaMap[new_+sourceField] = 0.0 ;
             root.input.cur_averageMap[new_+sourceField] = 0.0 ;
@@ -2041,7 +2047,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
             if( element.isNumber() )
             {
                elementNumber = element.Number() ;
-               snprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementNumber ) ;
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementNumber ) ;
                result = resultBuf ;
                if( waringValue.absoluteMaxLimitValue != 0 &&
                    elementNumber > waringValue.absoluteMaxLimitValue )
@@ -2061,8 +2067,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
          }
          else
          {
-            snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            snprintf( errStr, errStrLength,
+            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+            ossSnprintf( errStr, errStrLength,
                       "%s getResultFromBSONobj failed, displayMode = %s\n", 
                       errStrBuf, displayMode.c_str() ) ;
             goto error ;
@@ -2076,7 +2082,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
             if( element.isNumber() )
             {
                delta = element.Number() - last_element.Number() ;
-               snprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, delta ) ;
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, delta ) ;
                result = resultBuf ;
                if( waringValue.deltaMaxLimitValue != 0 &&
                    delta > waringValue.deltaMaxLimitValue )
@@ -2106,7 +2112,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
             if( element.isNumber() )
             {
                elementNumber = element.Number();
-               snprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementNumber );
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementNumber );
                result = resultBuf;
                if( waringValue.absoluteMaxLimitValue != 0 &&
                    elementNumber > waringValue.absoluteMaxLimitValue )
@@ -2136,7 +2142,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
             {
                average = ( element.Number() - last_element.Number() ) /
                                  root.input.refreshInterval ;
-               snprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, average ) ;
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, average ) ;
                result = resultBuf ;
                if( waringValue.averageMaxLimitValue!= 0 &&
                    average > waringValue.averageMaxLimitValue )
@@ -2163,8 +2169,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
          }
          else
          {
-            snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            snprintf( errStr, errStrLength,
+            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+            ossSnprintf( errStr, errStrLength,
                          "%s getResultFromBSONobj failed, displayMode = %s\n",
                          errStrBuf, displayMode.c_str() ) ;
             goto error ;
@@ -2174,8 +2180,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
    }
    catch( std::exception &e )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s getResultFromBSONobj failed, e.what():%s ,sourceField = %s\n", 
                    errStrBuf, e.what(), sourceField.c_str() ) ;
       goto error ;
@@ -2195,8 +2201,8 @@ INT32 Event::getExpression( string& expression, string& result )
    CHAR *buf = ( CHAR * )malloc( 9 * sizeof( CHAR ) ) ;
    if( !buf )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s getExpression faild, can't malloc memory for buf :%d\n", errStrBuf, 9 ) ;
       goto error ;
    }
@@ -2214,7 +2220,7 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_REFRESH_TIME == expression )
    {
-      snprintf( buf, 9,"%d", root.input.refreshInterval ) ;
+      ossSnprintf( buf, 9,"%d", root.input.refreshInterval ) ;
       result = buf ;
    }
    else if( EXPRESSION_HOSTNAME == expression )
@@ -2238,7 +2244,7 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_FILTER_NUMBER == expression )
    {
-      snprintf( buf, 9,"%d", root.input.filterNumber ) ;
+      ossSnprintf( buf, 9,"%d", root.input.filterNumber ) ;
       result = buf ;
    }
    else if( EXPRESSION_SORTINGWAY == expression )
@@ -2270,8 +2276,8 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getExpression failed, wrong expression:%s\n",
                 errStrBuf, expression.c_str() ) ;
       goto error ; 
@@ -2346,8 +2352,8 @@ INT32 Event::getCurSnapshot()
          goto done ;
       }
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr );
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr );
+      ossSnprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,xml gave the wrong sourceSnapShot: %s\n",
                 errStrBuf, root.input.activatedPanel[0].sourceSnapShot.c_str() ) ;
 
@@ -2366,8 +2372,8 @@ INT32 Event::getCurSnapshot()
    }
    else
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,wrong sortingWay: %s\n",
                 errStrBuf, root.input.sortingWay.c_str() ) ;
       goto error ;
@@ -2437,8 +2443,8 @@ INT32 Event::getCurSnapshot()
    else
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,wrong snapshotModeChooser = %s\n",
                 errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
 
@@ -2447,8 +2453,8 @@ INT32 Event::getCurSnapshot()
    if( rc )
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,can't getSnapshot, rc = %d\n", errStrBuf, rc ) ;
   
       goto error ;
@@ -2482,8 +2488,8 @@ INT32 Event::getCurSnapshot()
    if( SDB_DMS_EOC != rc && SDB_OK != rc )   
    {      
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s refreshDisplayContent failed, snapShotCursor.next( bsonobj ) faild, rc = %d\n", errStrBuf, rc ) ;
 
       goto error ;   
@@ -2560,8 +2566,8 @@ INT32 Event::fixedOutputLocation( INT32 start_row, INT32 start_col,
    else
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s fixedOutputLocation failed,wrong autoSetType:%s\n",
                 errStrBuf, autoSetType.c_str() ) ;
 
@@ -2606,8 +2612,8 @@ INT32 Event::getFieldStructNameAndColour( const FieldStruct &fieldStruct,
    else
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s getFieldStructNameAndColour failed,wrong displayMode:%s\n",
                 errStrBuf, displayMode.c_str() ) ;
 
@@ -2637,8 +2643,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
    CHAR *printfstr = ( CHAR * )malloc( displayContent.dynamicHelp.cellLength * sizeof( CHAR ) ) ;
    if( !printfstr )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild, can't malloc memory for printfstr :%d\n",
                    errStrBuf, displayContent.dynamicHelp.cellLength ) ;
       goto error ;
@@ -2647,8 +2653,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
    if( displayContent.dynamicHelp.tableRow > actualPosition.length_Y )
    {
    
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength, 
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength, 
                  "%s refreshDisplayContent failed,displayContent.dynamicHelp.tableRow> actualPosition.length_Y\n",
                  errStrBuf ) ;
    
@@ -2699,26 +2705,26 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          if( JUMPTYPE_FIXED == keySuite->hotKey[hotKey_pos].jumpType )
          {
             if( BUTTON_TAB == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "Tab -  " ) ;
+               ossSnprintf( printfstr, 7, "Tab -  " ) ;
             else if( BUTTON_LEFT == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "  < -  " ) ;
+               ossSnprintf( printfstr, 7, "  < -  " ) ;
             else if( BUTTON_RIGHT == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "  > -  " ) ;
+               ossSnprintf( printfstr, 7, "  > -  " ) ;
             else if( BUTTON_ENTER == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "Enter-  " ) ;
+               ossSnprintf( printfstr, 7, "Enter-  " ) ;
             else if( BUTTON_ESC == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "ESC-  " ) ;
+               ossSnprintf( printfstr, 7, "ESC-  " ) ;
             else if( BUTTON_F5== keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "F5-  " ) ;
+               ossSnprintf( printfstr, 7, "F5-  " ) ;
             else if( BUTTON_Q_LOWER == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "  %c -  ", keySuite->hotKey[hotKey_pos].button ) ;
+               ossSnprintf( printfstr, 7, "  %c -  ", ( CHAR )keySuite->hotKey[hotKey_pos].button ) ;
             else if( BUTTON_H_LOWER == keySuite->hotKey[hotKey_pos].button )
-               snprintf( printfstr, 7, "  %c -  ", keySuite->hotKey[hotKey_pos].button ) ;
+               ossSnprintf( printfstr, 7, "  %c -  ", ( CHAR )keySuite->hotKey[hotKey_pos].button ) ;
             else 
-               snprintf( printfstr, 7, "NULL-  ", keySuite->hotKey[hotKey_pos].button ) ;
+               ossSnprintf( printfstr, 7, "NULL-  " ) ;
          }
          else
-            snprintf( printfstr, 7, "  %c -  ", keySuite->hotKey[hotKey_pos].button ) ;
+            ossSnprintf( printfstr, 7, "  %c -  ", ( CHAR )keySuite->hotKey[hotKey_pos].button ) ;
          _str = printfstr ;
          pairNumber = displayContent.dynamicHelp.prefixColour.foreGroundColor +
                             displayContent.dynamicHelp.prefixColour.backGroundColor * 8 ;
@@ -2799,8 +2805,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
                                 result ) ;
             if( rc )
             {
-               snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-               snprintf( errStr, errStrLength,
+               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+               ossSnprintf( errStr, errStrLength,
                          "%s refreshDisplayContent failed, getExpression faild, expressionType == DYNAMIC_EXPRESSION\n",
                          errStrBuf ) ;
                goto error ;
@@ -2913,8 +2919,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
    CHAR *serialNumber = ( CHAR * )malloc( SERIALNUMBER_LENGTH * sizeof( CHAR ) ) ;
    if( !serialNumber )
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                "%s refreshDisplayContent failed, can't malloc serialNumber == %d\n",
                errStrBuf, SERIALNUMBER_LENGTH ) ;
       goto error ; 
@@ -2973,8 +2979,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
    }
    else
    {
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                "%s refreshDisplayContent failed, wrong snapshotModeChooser == %s\n",
                errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
       goto error ;    
@@ -3207,7 +3213,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       {
          goto error;
       }
-      snprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", 0 ) ;
+      ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", 0 ) ;
       serialNumberStr = serialNumber ;
       rc = MVPRINTW_TOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
       if( rc )
@@ -3292,7 +3298,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          {
             goto error;
          }
-         snprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", pos_snapshot + 1 ) ;
+         ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", pos_snapshot + 1 ) ;
          serialNumberStr = serialNumber ;
          rc = MVPRINTW_TOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
          if( rc )
@@ -3466,8 +3472,8 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
    if( rc )
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s refreshNodeWindow failed, getActualPosition faild\n",
                 errStrBuf ) ;
 
@@ -3481,8 +3487,8 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
    if( rc )
    {
 
-      snprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s refreshNodeWindow failed, refreshDisplayContent faild\n",
                 errStrBuf );
       goto error;
@@ -3507,8 +3513,8 @@ INT32 Event::refreshHeadTail( HeadTailMap *headtail )
       if ( rc )
       {
 
-         snprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-         snprintf( errStr, errStrLength,
+         ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,
                    "%s refreshHeadTail failed, refreshNodeWindow faild, numOfSubWindow = %d\n",
                    errStrBuf, numOfSubWindow ) ;
 
@@ -3532,8 +3538,8 @@ INT32 Event::refreshBody( BodyMap *body )
       if ( rc )
       {
 
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,
                    "%s refreshBody failed, refreshNodeWindow faild, numOfSubWindow = %d\n",
                    errStrBuf, numOfSubWindow ) ;
 
@@ -3614,8 +3620,8 @@ INT32 Event::addFixedHotKey()
       catch( std::exception &e )
       {
 
-         snprintf( errStrBuf, errStrLength,"%s", errStr );
-         snprintf( errStr, errStrLength,
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr );
+         ossSnprintf( errStr, errStrLength,
                    "%s addFixedHotKey failed , e.what():%s\n",
                    errStrBuf, e.what() ) ;
 
@@ -3646,8 +3652,8 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
           root.input.activatedPanel ->value.subWindow[numOfSubWindow].displayType )
       {
          DisplayContent &displayContent = root.input.activatedPanel ->value.subWindow[numOfSubWindow].displayContent ;
-         FieldStruct *Fixed = displayContent.dySnapshotOutPut.fixedField ;
-         FieldStruct *Mobile = displayContent.dySnapshotOutPut.mobileField ;
+         Fixed = displayContent.dySnapshotOutPut.fixedField ;
+         Mobile = displayContent.dySnapshotOutPut.mobileField ;
          FixedLength = displayContent.dySnapshotOutPut.actualFixedFieldLength ;
          MobileLength = displayContent.dySnapshotOutPut.actualMobileFieldLength ;
          while( FixedLength > 0 )
@@ -3755,9 +3761,6 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
    }
 done :
    return rc ;
-error :
-   rc = SDB_ERROR;
-   goto done ;
 }
 
 
@@ -3819,8 +3822,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             if( rc )
             {
 
-               snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-               snprintf( errStr, errStrLength,
+               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+               ossSnprintf( errStr, errStrLength,
                          "%s assignActivatedPanelByLabelName failed\n",
                          errStrBuf ) ;
   
@@ -3903,8 +3906,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                if( rc )
                {
 
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,
                             "%s buttonManagement faild,getActivatedHeadTailMap failed\n",
                             errStrBuf ) ;
         
@@ -3950,8 +3953,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                }
                else
                {
-                  snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  snprintf( errStr, errStrLength,
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,
                             "%s buttonManagement faild,"
                             "select ( maxfd, &fds, NULL, NULL, NULL) failed\n",
                             errStrBuf ) ;
@@ -4184,7 +4187,9 @@ error :
 INT32 Event::runSDBTOP( )
 {
    INT32 rc = SDB_OK ;
-   INT64 key = 0 ;
+   HeadTailMap* header = NULL ;
+   HeadTailMap* footer = NULL ;
+   INT64 key = 0 ; // the operation need to do
    fd_set fds ;
    struct timeval timeout ;
    INT32 maxfd  = STDIN + 1 ;
@@ -4197,8 +4202,8 @@ INT32 Event::runSDBTOP( )
    if( rc )
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s addFixedHotKey failed\n",
                 errStrBuf ) ;
       goto error ;
@@ -4207,8 +4212,8 @@ INT32 Event::runSDBTOP( )
    if( rc )
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s assignActivatedPanel failed\n", errStrBuf ) ;
 
       goto error ;
@@ -4221,24 +4226,22 @@ INT32 Event::runSDBTOP( )
    if( rc )
    {
 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s can't connect to the coord: %s, %s, %s, %s, rc =%d\n",
                 errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str(), rc ) ;
       goto error ;
    }
    root.input.displayModeChooser = 0 ;
    initAllColourPairs() ;
-   HeadTailMap* header ;
-   HeadTailMap* footer ;
    while( 1 )
    {
       rc = getActivatedHeadTailMap( root.input.activatedPanel, &header, &footer) ;
       if( rc )
       {
 
-         snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-         snprintf( errStr, errStrLength,
+         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+         ossSnprintf( errStr, errStrLength,
                    "%s getActivatedHeadTailMap failed\n", errStrBuf ) ;
          goto error ;
       }
@@ -4375,7 +4378,6 @@ void displayArg ( po::options_description &desc )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
-   CHAR actionString[BUFFERSIZE] = {0} ;
    po::variables_map vm ;
    try
    {
@@ -4470,10 +4472,8 @@ error :
 
 INT32 main( INT32 argc, CHAR **argv)
 {
-   fd_set fds ;
    INT32 rc = 0 ; 
    Event sdbtop ;
-   INT32 maxfd  = STDIN + 1 ;
    po::options_description desc ( "Command options" ) ;
    init ( desc ) ;
    rc = resolveArgument ( desc, argc, argv ) ;
@@ -4501,8 +4501,8 @@ INT32 main( INT32 argc, CHAR **argv)
    initscr() ;
    if( FALSE == has_colors() )
    { 
-      snprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      snprintf( errStr, errStrLength,
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
                 "%s You terminal does not support color\n", errStrBuf ) ;
       goto error ;
    }
@@ -4520,8 +4520,8 @@ INT32 main( INT32 argc, CHAR **argv)
    rc = sdbtop.runSDBTOP( ) ;
    if( rc && SDB_SDBTOP_DONE != rc )
    {
-      snprintf( errStrBuf, errStrLength,"%s",  errStr ) ;
-      snprintf( errStr, errStrLength,  "%s can't runSDBTOP\n", errStrBuf ) ;
+      ossSnprintf( errStrBuf, errStrLength,"%s",  errStr ) ;
+      ossSnprintf( errStr, errStrLength,  "%s can't runSDBTOP\n", errStrBuf ) ;
       goto error ;
    }
    curs_set( 1 ) ;
