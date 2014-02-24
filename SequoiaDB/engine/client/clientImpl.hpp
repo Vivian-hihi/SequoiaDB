@@ -48,6 +48,7 @@ namespace sdbclient
       INT32 _receiveBufferSize ;
       BSONObj *_modifiedCurrent ;
       BOOLEAN _isDeleteCurrent ;
+      BOOLEAN _isClosed ;
 
       INT64 _totalRead ;
       INT32 _offset ;
@@ -68,6 +69,7 @@ namespace sdbclient
       ~_sdbCursorImpl () ;
       INT32 next          ( BSONObj &obj ) ;
       INT32 current       ( BSONObj &obj ) ;
+      INT32 close () ;
       //INT32 updateCurrent ( BSONObj &rule ) ;
       //INT32 delCurrent    () ;
    } ;
@@ -888,6 +890,11 @@ namespace sdbclient
       // set session attribute
       INT32 setSessionAttr ( const bson::BSONObj &options =
                                      _sdbStaticObject) ;
+      // close all cursors
+      INT32 closeAllCursors ();
+
+      // connection is closed
+      INT32 isClosed( BOOLEAN *result ) ;
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;

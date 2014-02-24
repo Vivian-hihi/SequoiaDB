@@ -137,6 +137,7 @@ namespace sdbclient
    _receiveBufferSize ( 0 ),
    _modifiedCurrent ( NULL ),
    _isDeleteCurrent ( FALSE ),
+   _isClosed ( FALSE ),
    _totalRead ( 0 ),
    _offset ( -1 )
    {
@@ -147,15 +148,23 @@ namespace sdbclient
    {
       if ( _connection )
       {
-         if ( -1 != _contextID )
+         // if the cursor had been closed manually
+         // it would be unregister in function isClosed()
+         if ( !_isClosed )
          {
-            _killCursor () ;
+            if ( -1 != _contextID )
+            {
+               _killCursor () ;
+            }
+            _connection->_unregCursor ( this ) ;
          }
-         _connection->_unregCursor ( this ) ;
       }
       if ( _collection )
       {
-         _collection->_unregCursor ( this ) ;
+         // if the cursor had been closed manually
+         // it would be unregister in function isClosed()
+         if ( !_isClosed )
+            _collection->_unregCursor ( this ) ;
       }
       if ( _pSendBuffer )
       {
@@ -286,6 +295,15 @@ namespace sdbclient
       INT32 rc = SDB_OK ;
       BSONObj localobj ;
       MsgOpReply *pReply = NULL ;
+      // check wether the cursor had been close or not
+      if ( _isClosed || -1 == _contextID )
+      {
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+      // begin to get next record
+      // when we come here, it means we need don't need the current record again
+      // let's clean the temporary buffer applied for modifying current record
       if ( _modifiedCurrent )
       {
          delete _modifiedCurrent ;
@@ -361,6 +379,13 @@ namespace sdbclient
       INT32 rc = SDB_OK ;
       MsgOpReply *pReply = NULL ;
       BSONObj localobj ;
+      // check wether the cursor had been close or not
+      if ( _isClosed || -1 == _contextID )
+      {
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+      // begin to get next record
       //we can't get the current record when it was deleted
       if(_isDeleteCurrent)
       {
@@ -431,6 +456,63 @@ namespace sdbclient
    error :
       goto done ;
    }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CLOSECURSOR, "_sdbCursorImpl::close" )
+   INT32 _sdbCursorImpl::close()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CLOSECURSOR ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+      BOOLEAN result ;
+      SINT64 contextID = 0 ;
+      // check wether the cursor had been close or not
+      if ( _isClosed || -1 == _contextID )
+      {
+         rc = SDB_RTN_CONTEXT_NOTEXIST ;
+         goto error ;
+      }
+      rc = clientBuildKillContextsMsg( &_pSendBuffer, &_sendBufferSize, 0, 1,
+                                        &_contextID, _connection->_endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      _connection->lock () ;
+      locked = TRUE ;
+      rc = _connection->_send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
+                                       contextID, result ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      _contextID = -1 ;
+      _isClosed = TRUE ;
+      // unreg from _connecton  and _collection
+      if ( _connection )
+      {
+         _connection->_unregCursor ( this ) ;
+      }
+      if ( _collection )
+      {
+         _collection->_unregCursor ( this ) ;
+      }
+   done :
+      if ( locked )
+      {
+         _connection->unlock () ;
+      }
+      PD_TRACE_EXITRC ( SDB_CLIENT_CLOSECURSOR, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+
 /*
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_UPDATECURRENT, "_sdbCursorImpl::updateCurrent" )
    INT32 _sdbCursorImpl::updateCurrent ( BSONObj &rule )
@@ -5441,6 +5523,77 @@ namespace sdbclient
       if ( locked )
          unlock() ;
       PD_TRACE_EXITRC( SDB_CLIENT_SETSESSIONATTR, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CLOSE_ALL_CURSORS, "_sdbImpl::closeAllCursors" )
+   INT32 _sdbImpl::closeAllCursors()
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CLOSE_ALL_CURSORS ) ;
+      INT32 rc = SDB_OK ;
+      BOOLEAN locked = FALSE ;
+/*
+      rc = clientBuildKillAllContextsMsg( &_pSendBuffer, &_sendBufferSize, 0,
+                                         _endianConvert ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      lock () ;
+      locked = TRUE ;
+      rc = _send ( _pSendBuffer ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+*/
+      // set all the cursors' status to be closed
+      for ( std::set<ossValuePtr>::iterator it = _cursors.begin();
+            it != _cursors.end(); ++it )
+      {
+//         ((_sdbCursorImpl *)(*it))->_isClosed = TRUE ;
+         rc = ((_sdbCursorImpl *)(*it))->close() ;
+         if ( rc )
+         {
+            goto error ;
+         }
+      }
+   done :
+      if ( locked )
+      {
+         unlock () ;
+      }
+      PD_TRACE_EXITRC ( SDB_CLIENT_CLOSE_ALL_CURSORS, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_CLOSED, "_sdbImpl::isClosed" )
+   INT32 _sdbImpl::isClosed( BOOLEAN *result )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_IS_CLOSED ) ;
+      INT32 rc = SDB_OK ;
+      // check argument
+      if ( result == NULL )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // if client don't connect to database or
+      // it had closed the connection
+      if ( _sock == NULL )
+      {
+         *result = TRUE ;
+      }
+      else
+      {
+         *result = !( _sock->isConnected() ) ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_IS_CLOSED, rc );
       return rc ;
    error :
       goto done ;

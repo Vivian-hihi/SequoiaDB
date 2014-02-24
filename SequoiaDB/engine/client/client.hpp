@@ -113,6 +113,7 @@ namespace sdbclient
       virtual ~_sdbCursor () {}
       virtual INT32 next          ( bson::BSONObj &obj ) = 0 ;
       virtual INT32 current       ( bson::BSONObj &obj ) = 0 ;
+      virtual INT32 close () = 0 ;
       //virtual INT32 updateCurrent ( bson &rule ) = 0 ;
       //virtual INT32 delCurrent    () = 0 ;
    } ;
@@ -129,7 +130,7 @@ namespace sdbclient
 /** \var pCursor
       \breif A pointer of virtual base class _sdbCursor
 
-      Class sdbCursor is a shell for _sdbCursor.We use pCursor to 
+      Class sdbCursor is a shell for _sdbCursor.We use pCursor to
       call the methods in class _sdbCursor.
 */
       _sdbCursor *pCursor ;
@@ -176,6 +177,20 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pCursor->current ( obj ) ;
       }
+
+/** \fn INT32 close ()
+      \brief Close the cursor's connection to database, we can't use this handle
+             to get data again.
+      \retval SDB_OK Operation Success
+      \retval Others Operation Fail
+*/
+      INT32 close ()
+      {
+         if ( !pCursor )
+            return SDB_NOT_CONNECTED ;
+         return pCursor->close () ;
+      }
+
 /*
 * \fn INT32 updateCurrent ( bson::BSONObj &rule )
     \brief Update the current document of cursor
@@ -1887,8 +1902,8 @@ namespace sdbclient
 
       virtual INT32 transactionRollback() = 0 ;
 
-   virtual INT32 flushConfigure( const bson::BSONObj &options ) = 0 ;
-   // stored procedure
+      virtual INT32 flushConfigure( const bson::BSONObj &options ) = 0 ;
+      // stored procedure
       virtual INT32 crtJSProcedure ( const CHAR *code ) = 0 ;
       virtual INT32 rmProcedures( const CHAR *spName ) = 0 ;
       virtual INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition ) = 0 ;
@@ -1902,7 +1917,7 @@ namespace sdbclient
                              SDB_SPD_RES_TYPE *type,
                              const bson::BSONObj &errmsg ) = 0 ;
 
-   // bakup
+      // bakup
       virtual INT32 backupOffline ( const bson::BSONObj &options) = 0 ;
       virtual INT32 listBackup ( _sdbCursor **cursor,
                               const bson::BSONObj &options,
@@ -1916,7 +1931,7 @@ namespace sdbclient
                               const bson::BSONObj &orderBy = _sdbStaticObject)  = 0 ;
       virtual INT32 removeBackup ( const bson::BSONObj &options ) = 0 ;
 
-   // task
+      // task
       virtual INT32 listTasks ( _sdbCursor **cursor,
                         const bson::BSONObj &condition = _sdbStaticObject,
                         const bson::BSONObj &selector = _sdbStaticObject,
@@ -1935,9 +1950,14 @@ namespace sdbclient
 
       virtual INT32 cancelTask ( SINT64 taskID,
                         BOOLEAN isAsync ) = 0 ;
-
+      // set session attribute
       virtual INT32 setSessionAttr ( const bson::BSONObj &options =
                                      _sdbStaticObject) = 0 ;
+      // close all cursor
+      virtual INT32 closeAllCursors () = 0 ;
+
+      // connection is closed
+      virtual INT32 isClosed( BOOLEAN *result ) = 0 ;
 
 /*      virtual INT32 modifyConfig ( INT32 nodeID,
                        std::map<std::string,std::string> &config ) = 0 ;
@@ -1962,16 +1982,7 @@ namespace sdbclient
    class DLLEXPORT sdb
    {
    private:
-/** \fn sdb ( const sdb& other )
-    \brief Copy constructor.
-    \param[in] A const reference of class sdb.
-*/
       sdb ( const sdb& other ) ;
-/** \fn sdb& operator=( const sdb& )
-    \brief Assignment constructor.
-    \param[in] A const object reference of class sdb.
-    \retval A const object reference of class sdb.
-*/
       sdb& operator=( const sdb& ) ;
    public :
 /** \var pSDB
@@ -3009,7 +3020,6 @@ namespace sdbclient
 
 /** \fn INT32 setSessionAttr ( const bson::BSONObj &options ) ;
     \brief Set the attributes of the session.
-    \param [in] cHandle The connection handle
     \param [in] options The configuration options for session.The options are as below:
 
         PreferedReplica : indicate which node to operate in current session.
@@ -3023,6 +3033,32 @@ namespace sdbclient
          if ( !pSDB )
             return SDB_SYS ;
          return pSDB->setSessionAttr ( options ) ;
+      }
+
+/** \fn INT32 closeAllCursors () ;
+    \brief Close all the cursors in current thread, we can't use those cursors
+           to get data again.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 closeAllCursors ()
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->closeAllCursors () ;
+      }
+
+/** \fn INT32 isClosed ( BOOLEAN *result ) ;
+    \brief Judge whether the connection is closed.
+    \param [out] result the output result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 isClosed ( BOOLEAN *result )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->isClosed ( result) ;
       }
 
 /*      INT32 modifyConfig ( INT32 nodeID,
