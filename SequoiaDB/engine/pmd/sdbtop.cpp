@@ -1988,6 +1988,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
    BSONElement last_element ; // get it with sourceField from last bsonobj
    BSONElement baseElement  ; // get it with baseField from cur bsonobj
    BSONElement baseElement_last ; // compare to baseElement
+   const char *sourceFieldbuf = sourceField.c_str();
+   const char *baseFieldbuf = baseField.c_str();
    string new_ = NULLSTRING ;
    string old_ = NULLSTRING ; // compare to new_, check out the same BSONobj
    CHAR *resultBuf = ( CHAR * )malloc( LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
@@ -2001,7 +2003,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
    }
    try
    {
-      element = bsonobj.getField( sourceField ) ;
+      element = bsonobj.getFieldDottedOrArray( sourceFieldbuf ) ;
       if( !canSwitch ||NULLSTRING == baseField )
       {
          result = element.toString( FALSE ) ;
@@ -2022,11 +2024,11 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
          }
          goto done ;
       }
-      baseElement = bsonobj.getField( baseField ) ;
+      baseElement = bsonobj.getFieldDottedOrArray( baseFieldbuf ) ;
       new_ = baseElement.toString( FALSE ) ;
       while( pos_last < root.input.last_Snapshot.size() ) //find the match bsonj
       {
-         baseElement_last = root.input.last_Snapshot[pos_last].getField( baseField ) ;
+         baseElement_last = root.input.last_Snapshot[pos_last].getFieldDottedOrArray( baseFieldbuf ) ;
          old_ = baseElement_last.toString( FALSE ) ;
          if( new_ == old_ )
             break ;
@@ -2075,7 +2077,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
       }
       else
       {
-         last_element = root.input.last_Snapshot[pos_last].getField( sourceField ) ;
+         last_element = root.input.last_Snapshot[pos_last].getFieldDottedOrArray( sourceFieldbuf ) ;
          if( DELTA == displayMode )
          {
             if( element.isNumber() )
