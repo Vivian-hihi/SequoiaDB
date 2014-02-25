@@ -259,9 +259,12 @@ namespace engine
       pUpdateMsg->header.TID = cb->getTID();
       rc = updateToDataNodeGroup( (CHAR *)pUpdateMsg, groupLst, sendGroupLst,
                                  pRouteAgent, cb, updateNum );
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to update on data-node(rc=%d)", rc );
    done:
       return rc;
    error:
+      adjustTransSession( sendGroupLst, pRouteAgent, cb );
       goto done;
    }
 

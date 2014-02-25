@@ -82,6 +82,11 @@ namespace engine
 
             CoordGroupList::iterator iterLst = groupLst.begin();
             rc = insertToAGroup( pReceiveBuffer, iterLst->first, pRouteAgent, cb );
+            if ( rc )
+            {
+               CoordGroupList emptyGroupLst;
+               adjustTransSession( emptyGroupLst, pRouteAgent, cb );
+            }
          }//end of if ( !cataInfo->isSharded() )
          else if( !cataInfo->isMainCL() )
          {
@@ -545,6 +550,10 @@ namespace engine
          GroupObjsMap::iterator iterMap = groupObjsMap.begin();
          rc = insertToAGroup( pReceiveBuffer, iterMap->first,
                               pRouteAgent, cb );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to insert on group(groupID:%u, rc=%d)",
+                     iterMap->first, rc );
+         successGroupList[iterMap->first] = iterMap->first;
       }
       else
       {
@@ -572,6 +581,7 @@ namespace engine
                ++iterSuc;
             }
             PD_LOG( PDWARNING, "failed to insert the data(rc=%d)", rc );
+            goto error;
          }
          else
          {
@@ -581,6 +591,7 @@ namespace engine
    done:
       return rc;
    error:
+      adjustTransSession( successGroupList, pRouteAgent, cb );
       goto done;
    }
 
@@ -653,6 +664,7 @@ namespace engine
             ++iterSuc;
          }
          PD_LOG( PDWARNING, "failed to insert the data(rc=%d)", rc );
+         goto error;
       }
       else
       {
@@ -661,6 +673,7 @@ namespace engine
    done:
       return rc;
    error:
+      adjustTransSession( successGroupList, pRouteAgent, cb );
       goto done;
    }
 

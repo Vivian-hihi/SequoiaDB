@@ -266,6 +266,7 @@ namespace engine
    done:
       return rc;
    error:
+      adjustTransSession( sendGroupLst, pRouteAgent, cb );
       goto done;
    }
 

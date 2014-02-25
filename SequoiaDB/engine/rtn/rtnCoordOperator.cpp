@@ -397,7 +397,29 @@ namespace engine
       }
       return rc;
    error:
+      adjustTransSession( sendGroupList, pRouteAgent, cb );
       goto done;
+   }
+
+   void rtnCoordTransOperator::adjustTransSession( CoordGroupList &transGroupLst,
+                                                   netMultiRouteAgent *pRouteAgent,
+                                                   pmdEDUCB *cb )
+   {
+      DpsTransNodeMap *pTransNodeList = cb->getTransNodeLst();
+      if ( pTransNodeList )
+      {
+         DpsTransNodeMap::iterator iter = pTransNodeList->begin();
+         while ( iter != pTransNodeList->end() )
+         {
+            if ( transGroupLst.find( iter->first )
+               == transGroupLst.end() )
+            {
+               pTransNodeList->erase( iter++ );
+               continue;
+            }
+            ++iter;
+         }
+      }
    }
 
    /*
