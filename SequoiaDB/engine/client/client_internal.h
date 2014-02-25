@@ -10,6 +10,14 @@
 #define SDB_HANDLE_TYPE_CURSOR       4
 #define SDB_HANDLE_TYPE_REPLICAGROUP 5
 #define SDB_HANDLE_TYPE_REPLICANODE  6
+
+struct _Node
+{
+   ossValuePtr data ;
+   struct _Node *next ;
+} ;
+typedef struct _Node Node ;
+
 struct _sdbConnectionStruct
 {
    // generic variables, to validate which type does this handle belongs to
@@ -20,6 +28,8 @@ struct _sdbConnectionStruct
    CHAR *_pReceiveBuffer ;
    INT32 _receiveBufferSize ;
    BOOLEAN _endianConvert ;
+
+   Node *_cursors ;
 } ;
 typedef struct _sdbConnectionStruct sdbConnectionStruct ;
 
@@ -30,6 +40,7 @@ struct _sdbRGStruct
 {
    // generic variables, to validate which type does this handle belongs to
    INT32 _handleType ;
+   sdbConnectionHandle _connection ;
    SOCKET _sock ;
    INT32 _offset ;
    CHAR *_pSendBuffer ;
@@ -49,6 +60,7 @@ struct _sdbRNStruct
 {
    // generic variables, to validate which type does this handle belongs to
    INT32 _handleType ;
+   sdbConnectionHandle _connection ;
    SOCKET _sock ;
    INT32 _offset ;
    CHAR *_pSendBuffer ;
@@ -71,6 +83,7 @@ struct _sdbCSStruct
 {
    // generic variables, to validate which type does this handle belongs to
    INT32 _handleType ;
+   sdbConnectionHandle _connection ;
    SOCKET _sock ;
    INT32 _offset ;
    CHAR *_pSendBuffer ;
@@ -88,6 +101,7 @@ struct _sdbCollectionStruct
 {
    // generic variables, to validate which type does this handle belongs to
    INT32 _handleType ;
+   sdbConnectionHandle _connection ;
    SOCKET _sock ;
    INT32 _offset ;
    CHAR *_pSendBuffer ;
@@ -107,12 +121,14 @@ struct _sdbCursorStruct
 {
    // generic variables, to validate which type does this handle belongs to
    INT32 _handleType ;
+   sdbConnectionHandle _connection ;
    SOCKET _sock ;
    INT32 _offset ;
    CHAR *_pSendBuffer ;
    INT32 _sendBufferSize ;
    CHAR *_pReceiveBuffer ;
    INT32 _receiveBufferSize ;
+   BOOLEAN _isClosed ;
    BOOLEAN _endianConvert ;
 
    // cursor specific variables

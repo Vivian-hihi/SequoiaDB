@@ -1075,14 +1075,44 @@ SDB_EXPORT INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
 #define FLG_INSERT_CONTONDUP  0x00000001
 
 /** \fn INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
-                                 SINT32 flags, bson **obj, SINT32 num )
+                              SINT32 flags, bson **obj, SINT32 num )
     \brief Insert a bulk of bson objects into current collection
     \param [in] cHandle The collection handle
-    \param [in] flags FLG_INSERT_CONTONDUP or 0
+    \param [in] flags FLG_INSERT_CONTONDUP or 0. While FLG_INSERT_CONTONDUP is
+                set, database will not stop inserting when some records contain
+                the same field "_id". However, while 0 is set, database will
+                stop inserting in that case, and return errno code.
     \param [in] obj The array of inserted bson objects, cannot be null
     \param [in] num The number of inserted bson objects
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \code
+      INT32 rc = 0 ;
+      INT32 i = 0 ;
+      const INT32 num = 10 ;
+      bson* obj[num] ;
+      // create bson poiter array
+      for ( i = 0; i < num; i++ )
+      {
+         obj[i] = bson_create();
+         rc = bson_append_int( obj[i], "num", i ) ;
+         if ( rc != 0 )
+            printf ( "something wrong.\n" ) ;
+         rc = bson_finish ( obj[i] ) ;
+         if ( rc != 0 )
+            printf ( "something wrong.\n" ) ;
+      }
+      // TODO:
+      rc = sdbBulkInsert ( cl, 0, obj, num ) ;
+      if ( rc )
+         printf ( "something wrong, rc = %d.\n", rc ) ;
+      // free memory
+      for ( i = 0; i < num; i++ )
+      {
+         bson_dispose ( obj[i] ) ;
+      }
+    \endcode
+
 */
 SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **obj, SINT32 num ) ;
@@ -1211,12 +1241,22 @@ SDB_EXPORT INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle ) ;
 
 /** \fn INT32 sdbCloseCursor( sdbCursorHandle cHandle )
     \brief Close the cursor's connection to database, we can't use this handle to get
-                 data anymore.
+                 data again.
     \param [in] cHandle The cursor handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCloseCursor ( sdbCursorHandle cHandle ) ;
+
+/** \fn INT32 sdbCloseAllCursors( sdbConnectionHandle cHandle )
+    \brief Close all the cursors in current thread, we can't use those cursors to get
+                 data anymore.
+    \param [in] cHandle The database connection handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle ) ;
+
 
 /** \fn INT32 sdbExec( sdbConnectionHandle cHandle,
                           const CHAR *sql,
@@ -1313,6 +1353,32 @@ SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle ) ;
     \param [out] handle The cursor handle of result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+    \code
+      INT32 rc = 0 ;
+      INT32 i = 0 ;
+      const INT32 num = 10 ;
+      bson* obj[num] ;
+      // create bson poiter array
+      for ( i = 0; i < num; i++ )
+      {
+         obj[i] = bson_create();
+         rc = bson_append_int( obj[i], "num", i ) ;
+         if ( rc != 0 )
+            printf ( "something wrong.\n" ) ;
+         rc = bson_finish ( obj[i] ) ;
+         if ( rc != 0 )
+            printf ( "something wrong.\n" ) ;
+      }
+      // TODO:
+      rc = sdbAggregate ( cl, obj, num, &cursor ) ;
+      if ( rc )
+         printf ( "something wrong, rc = %d.\n", rc ) ;
+      // free memory
+      for ( i = 0; i < num; i++ )
+      {
+         bson_dispose ( obj[i] ) ;
+      }
+   \endcode
 */
 SDB_EXPORT INT32 sdbAggregate ( sdbCollectionHandle cHandle,
                                 bson **obj, SINT32 num,
@@ -1470,6 +1536,8 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson *options ) ;
+
+SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result ) ;
 
 SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg ) ;
 
