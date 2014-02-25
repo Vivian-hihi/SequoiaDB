@@ -5503,7 +5503,7 @@ SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
    INT32 ret = SDB_OK ;
    SOCKET sock = 0 ;
    fd_set fds ;
-   struct timeval maxSelectTime = { 0, 1 };
+   struct timeval maxSelectTime = { 0, 1000 };
    sdbConnectionStruct *connection = (sdbConnectionStruct *)cHandle ;
    if ( !connection ||
          connection->_handleType != SDB_HANDLE_TYPE_CONNECTION )
@@ -5528,7 +5528,7 @@ SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
    {
       FD_ZERO ( &fds ) ;
       FD_SET ( sock, &fds ) ;
-      ret = select ( sock+1, NULL, NULL, &fds, &maxSelectTime ) ;
+      ret = select ( sock+1, &fds, NULL,  NULL, &maxSelectTime ) ;
       // if = 0, time out, means connection is not closed
       if ( ret == 0 )
       {
@@ -5553,9 +5553,11 @@ SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
          rc = SDB_NETWORK ;
          goto error ;
       }
-      // if > 0, check wether the return socket num is the one we interested
+      // if > 0, it means we get a  disconnect packet from server
+      // check wether the return socket num is the one we interested
       if ( FD_ISSET ( sock, &fds ) )
       {
+
          *result = TRUE ;
          goto done ;
       }
