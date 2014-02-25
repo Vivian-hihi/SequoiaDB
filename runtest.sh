@@ -5,6 +5,7 @@ testRoot="testcases/hlt/js_testcases/js"
 sdbRoot="bin"
 csprefix="local_test""$$"
 coordsvcname="50000"
+commlibstr="commlib.js"
 
 # define test parameter
 testDir=$testRoot
@@ -173,7 +174,7 @@ do
    fi
 
    libJSStr="${file%/*}"
-   libJSStr=${libJSStr}"lib.js"
+   libJSStr=${libJSStr}${commlibstr}
    if [ -e $libJSStr ] ; then
       testFile=${libJSStr}","${file}
    else
