@@ -30,6 +30,7 @@ function display()
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
    echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname]"
+   echo ""
    exit $1
 }
 
