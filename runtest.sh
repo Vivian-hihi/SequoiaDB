@@ -176,6 +176,9 @@ do
    then
       failedNum=`expr $failedNum + 1`
       echo -e "\033[31;49;1m [ Failed:$failedNum ] \033[39;49;0m"
+      if [ $stopWhenFailed -ne 0 ] ; then
+         break
+      fi
    else
       sucNum=`expr $sucNum + 1`
       echo -e "\033[32;49;1m [ Done:$sucNum ] \033[39;49;0m"
