@@ -2896,6 +2896,10 @@ namespace engine
                                     _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                     INT16 w, INT64 *pContextID )
    {
+      if ( pmdGetKRCB()->getDBRole() == SDB_ROLE_STANDALONE )
+      {
+         return SDB_RTN_COORD_ONLY ;
+      }
       return SDB_OK ;
    }
 
@@ -2963,6 +2967,10 @@ namespace engine
                                     _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
                                     INT16 w, INT64 *pContextID )
    {
+      if ( pmdGetKRCB()->getDBRole() == SDB_ROLE_STANDALONE )
+      {
+         return SDB_RTN_COORD_ONLY ;
+      }
       return SDB_OK ;
    }
 
