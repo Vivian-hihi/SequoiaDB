@@ -21,8 +21,8 @@ beginTimeSec=0
 endTimeSec=0
 
 # define ignore path and file
-pathArray=("vote" "xujianhui")
-fileArray=("libs.js" "test.js")
+pathArray=("vote")
+fileArray=("libs.js")
 
 # common function
 function display()
