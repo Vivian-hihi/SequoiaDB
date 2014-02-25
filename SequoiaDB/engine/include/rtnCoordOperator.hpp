@@ -42,6 +42,9 @@ namespace engine
       virtual INT32 releaseTransSession( CoordGroupList &groupLst,
                                        netMultiRouteAgent *pRouteAgent,
                                        pmdEDUCB *cb );
+      virtual void adjustTransSession( CoordGroupList &transGroupLst,
+                                       netMultiRouteAgent *pRouteAgent,
+                                       pmdEDUCB *cb );
       virtual INT32 modifyOpOnMainCL( CoordCataInfoPtr &cataInfo,
                                     const CoordSubCLlist &subCLList,
                                     MsgHeader *pSrcMsg,
