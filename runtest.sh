@@ -3,7 +3,7 @@
 # define root path
 testRoot="testcases/hlt/js_testcases/js"
 sdbRoot="bin"
-csprefix="local_test"
+csprefix="local_test""$$"
 coordsvcname="50000"
 
 # define test parameter
@@ -29,7 +29,7 @@ function display()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-s stopFlag]"
+   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname]"
    exit $1
 }
 
@@ -70,7 +70,7 @@ fi
 
 # loop all parameter
 p=""
-readType=0 # 1: path, 2: file, 3: stopWhenFailed
+readType=0 # 1: path, 2: file, 3: stopWhenFailed, 4: svcname
 
 for p in $@
 do
@@ -83,12 +83,17 @@ do
    elif [ $readType -eq 3 ] ; then
       stopWhenFailed=$(($p))
       readType=0
+   elif [ $readType -eq 4 ] ; then
+      coordsvcname="$p"
+      readType=0
    elif [ "$p" = "-p" ] ; then
       readType=1 ;
    elif [ "$p" = "-f" ] ; then
       readType=2
    elif [ "$p" = "-s" ] ; then
       readType=3
+   elif [ "$p" = "-n" ] ; then
+      readType=4
    else
       echo "invalid arguments: $p"
       display 1
@@ -139,7 +144,9 @@ done
 # construct find command
 findCmdStr=${findCmdStr}${beginPrefix}${pathString}${fileString}${endPrefix}"-type f -print"
 echo "*******************************************************************************"
-echo "find command: $findCmdStr"
+echo "CSPREFIX     : $csprefix"
+echo "COORDSVCNAME : $coordsvcname"
+echo "Find command : $findCmdStr"
 echo "*******************************************************************************"
 
 #for file in $($findCmdStr)
@@ -153,11 +160,17 @@ echo -e "\e[46;31m ======>Begin to test usecase=====> \e[0m"
 echo ""
 
 libJSStr=""
+postfix=""
 testFile=""
 beginTime=`date`
 beginTimeSec=`date +%s`
 for file in $($findCmdStr)
 do
+   postfix="${file##*.}"
+   if [ "$postfix" != "js" ] ; then
+      continue
+   fi
+
    libJSStr="${file%/*}"
    libJSStr=${libJSStr}"lib.js"
    if [ -e $libJSStr ] ; then
