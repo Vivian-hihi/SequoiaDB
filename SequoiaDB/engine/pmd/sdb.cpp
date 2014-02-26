@@ -753,6 +753,8 @@ error :
    goto done ;
 }
 
+#define STR_UNCAUGHT_EXCPECTION_0 "uncaught exception: 0"
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_MAIN, "main" )
 int main ( int argc , CHAR **argv )
 {
@@ -800,15 +802,34 @@ int main ( int argc , CHAR **argv )
    }
 
 done :
+   if ( rc )
+   {
+      BOOLEAN exceptionZero = FALSE ;
+      if ( scope && scope->_context && scope->_context->lastMessage )
+      {
+         CHAR *subStr = ossStrstr( scope->_context->lastMessage,
+                                   STR_UNCAUGHT_EXCPECTION_0 ) ;
+         if ( subStr && ossStrlen( subStr ) ==
+              ossStrlen( STR_UNCAUGHT_EXCPECTION_0 ) )
+         {
+            exceptionZero = TRUE ;
+         }
+      }
+      // if rc is here, that means something really goes off in either
+      // javascript engine or pipe
+      if ( exceptionZero )
+      {
+         gShellReturnCode = SDB_RETURNCODE_WARNING ;
+      }
+      else
+      {
+         gShellReturnCode = SDB_RETURNCODE_SYSTEM ;
+      }
+   }
+
    SAFE_OSS_DELETE ( scope ) ;
    ScriptEngine::purgeGlobalScriptEngine() ;
    PD_TRACE_EXITRC ( SDB_SDB_MAIN, rc );
-   if ( rc )
-   {
-      // if rc is here, that means something really goes off in either
-      // javascript engine or pipe
-      gShellReturnCode = SDB_RETURNCODE_SYSTEM ;
-   }
    return gShellReturnCode ;
 error :
    goto done ;
