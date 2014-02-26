@@ -222,7 +222,6 @@ namespace engine
       //PD_TRACE_EXITRC ( SDB_RTNCODEL_EXECUTE, rc ) ;
       return rc;
    error:
-      replyHeader.flags = rc;
       if ( cb->isTransaction() )
       {
          pRollbackOperator
@@ -234,6 +233,7 @@ namespace engine
             SDB_ASSERT( NULL == *ppErrorObj, "impossible" )
          }
       }
+      replyHeader.flags = rc;
       goto done;
    }
 
