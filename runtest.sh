@@ -21,6 +21,9 @@ endTime=0
 beginTimeSec=0
 endTimeSec=0
 
+testcaseBTimeSec=0
+testcaseETimeSec=0
+
 # define ignore path and file
 pathArray=("vote")
 fileArray=("libs.js")
@@ -161,6 +164,9 @@ echo ""
 echo -e "\e[46;31m ======>Begin to test usecase=====> \e[0m"
 echo ""
 
+# create msg db connection
+$sdbRoot/sdb -s "try { db = new Sdb('localhost', '${coordsvcname}' ) } catch( e ) {} "
+
 libJSStr=""
 postfix=""
 testFile=""
@@ -182,28 +188,34 @@ do
    fi
 
    echo "===>[$file]"
-   $sdbRoot/sdb -s "db = new Sdb('localhost','${coordsvcname}' ) ; db.msg('Begin test[$file]') ; "
+   testcaseBTimeSec=`date +%s`
+   $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
    ret=$?
-   $sdbRoot/sdb -s "db = new Sdb('localhost',${coordsvcname} ) ; db.msg('End test[$file]') ; "
+   $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
+   testcaseETimeSec=`date +%s`
    echo -n "<===[$file]"
    if [ $ret -ne 0 ]
    then
       failedNum=`expr $failedNum + 1`
-      echo -e "\033[31;49;1m [ Failed:$failedNum ] \033[39;49;0m"
+      echo -e "\033[31;49;1m [ Failed:$failedNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
       if [ $stopWhenFailed -ne 0 ] ; then
          break
       fi
    else
       sucNum=`expr $sucNum + 1`
-      echo -e "\033[32;49;1m [ Done:$sucNum ] \033[39;49;0m"
+      echo -e "\033[32;49;1m [ Done:$sucNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
    fi
    echo ""
 done
 endTime=`date`
 endTimeSec=`date +%s`
 
+# destory db connection
+$sdbRoot/sdb -s "try { db.close() ; } catch( e ) {} "
 echo -e "\e[46;31m <======End test usecase<===== \e[0m"
+
+# show result
 showResult
 exit 0
 
