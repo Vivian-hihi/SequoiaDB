@@ -16,8 +16,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/typeof/typeof.hpp>
 
-
-
 using namespace sdbclient;
 using namespace bson;
 using namespace std;
@@ -86,14 +84,12 @@ namespace po = boost::program_options;
 #define BODYTYPE_NORMAL "BODYTYPE_NORMAL"
 #define BODYTYPE_HELP_DYNAMIC "BODYTYPE_HELP_DYNAMIC"
 
-
 //string globalStyle;// TABLE OR LIST
 //string groupStyle;// TABLE OR LIST
 //string nodeStyle;// TABLE OR LIST
 
 #define TABLE "TABLE"
 #define LIST "LIST"
-
 
 //displayType
 #define DISPLAYTYPE_NULL "DISPLAYTYPE_NULL"
@@ -496,10 +492,8 @@ public: // operation
    INT32 getActualPosition( Position &actualPosition, Position &referPosition,
                             const string zoomMode, const string occupyMode ) ;
    INT32 getActivatedKeySuite( KeySuite **keySuite ) ;
-   INT32 getTopKey_TOP( INT64 *keyBuffer, INT32 bufLength, INT64 &key ) ;
+   inline INT32 getTopKey_TOP( CHAR *keyBuffer, INT64 &key ) ;
    INT32 SDBTOP_strTOnum( const CHAR *str, INT32 &number ) ;
-   INT32 SDBTOP_MEMSET( INT64 *pBuffer, INT64 c, INT32 setLength ) ;
-   INT32 SDBTOP_MEMSET( CHAR *pBuffer, CHAR c, INT32 setLength ) ;
    INT32 SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const CHAR *PSrc ) ;
    INT32 MVPRINTW_TOP( string &expression, INT32 expressionLength,
                        string alignment, INT32 start_row, INT32 start_col ) ;
@@ -579,7 +573,6 @@ error :
    rc = SDB_ERROR ;
    goto done ;
 }
-
 
 INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, string displayType )
 {
@@ -1558,6 +1551,7 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength, "%s Minimum window size: %dx%d, found %dx%d\n", 
                 errStrBuf, root.actualWindowMinRow, root.actualWindowMinColumn, row, col ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    SCALE_ROW = (FLOAT32)row / (FLOAT32)root.referWindowRow ;
@@ -1688,6 +1682,7 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
       ossSnprintf( errStr, errStrLength,
                 "%s getActualPosition faild: wrong zoomMode:%s\n",
                 errStrBuf, zoomMode.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    if( occupyMode != OCCUPY_MODE_NONE )
@@ -1703,13 +1698,13 @@ INT32 Event::getActualPosition( Position &actualPosition, Position &referPositio
          ossSnprintf( errStr, errStrLength,
                    "%s getActualPosition faild: wrong occupyMode:%s\n",
                    errStrBuf, occupyMode.c_str() ) ;
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -1729,6 +1724,7 @@ INT32 Event::getActivatedKeySuite( KeySuite **keySuite )
       if( i != root.keySuiteLength )
       {
          *keySuite = root.keySuite ;
+         goto done ;
       }
       else
       {
@@ -1741,51 +1737,69 @@ INT32 Event::getActivatedKeySuite( KeySuite **keySuite )
       ossSnprintf( errStr, errStrLength,
                 "%s getActivatedKeySuite failed, e.what():%s\n",
                 errStrBuf, e.what() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
-INT32 Event::getTopKey_TOP( INT64 *keyBuffer, INT32 bufLength, INT64 &key )
+inline INT32 Event::getTopKey_TOP( CHAR *keyBuffer, INT64 &key )
 {
    INT32 rc = SDB_OK ;
    INT32 i = 0 ;
-   key = 0 ;
-   try
+   UINT32 bufLength = 0 ;
+   bufLength = ( UINT32 )ossStrlen( keyBuffer ) ;
+   if( 0 < bufLength )
    {
-      for( i = 0; i < bufLength; ++i )
+      if( 3 <= bufLength && 91 == keyBuffer[bufLength-2]
+                                  && 27 == keyBuffer[bufLength-3] )//check the button whether it is direction button
       {
-         if( 0 == keyBuffer[i] )
+         if( 68 == keyBuffer[bufLength-1] )
          {
-            break ;
+            key = BUTTON_LEFT ;
+            goto done ;
+         }
+         else if(  67 == keyBuffer[bufLength-1] )
+         {
+            key = BUTTON_RIGHT ;
+            goto done ;
+         }
+         else
+         {
+            key = 0 ;
+            goto done ;
          }
       }
-      if( i != bufLength )
+      else if( 5 <= bufLength && 53 == keyBuffer[bufLength-2]
+                                  && 49 == keyBuffer[bufLength-3]
+                                  && 91 == keyBuffer[bufLength-4]
+                                  && 27 == keyBuffer[bufLength-5] )//check the button whether it is F1 ~ F12
       {
-         key = keyBuffer[i-1] ;
-         keyBuffer[i-1] = 0 ;
+         if( 126 == keyBuffer[bufLength-1] )
+         {
+            key = BUTTON_F5 ;
+            goto done ;
+         }
+         else
+         {
+            key = 0 ;
+            goto done ;
+         }
       }
-      else
-      {
-         key = 0 ;
-      }
+      key = keyBuffer[bufLength-1] ;
    }
-   catch( std::exception &e )
+   else
    {
-      ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength, 
-                "%s getTopKey_TOP failed, e.what():%s\n",
-                errStrBuf, e.what() ) ;
+      rc = SDB_ERROR ;
+      key = 0 ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -1812,56 +1826,6 @@ error :
    goto done;
 }
 
-INT32 Event::SDBTOP_MEMSET( INT64 *pBuffer, INT64 c, INT32 setLength )
-{
-   INT32 rc = SDB_OK ;
-   INT32 i = 0 ;
-   try
-   {
-      for( i = 0; i < setLength; ++i )
-      {
-         pBuffer[i] = c ;
-      }
-   }
-   catch( std::exception &e )
-   {
-      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                "%s getTopKey_TOP failed, e.what():%s\n",
-                errStrBuf, e.what() ) ;
-      goto error ;
-   }
-done :
-   return rc ;
-error :
-   rc = SDB_ERROR ;
-   goto done ;
-}
-INT32 Event::SDBTOP_MEMSET( CHAR *pBuffer, CHAR c, INT32 setLength )
-{
-   INT32 rc = SDB_OK ;
-   INT32 i = 0 ;
-   try
-   {
-      for( i = 0; i < setLength; ++i )
-      {
-         pBuffer[i] = c ;
-      }
-   }
-   catch( std::exception &e )
-   {
-      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                "%s getTopKey_TOP failed, e.what():%s\n",
-                errStrBuf, e.what() ) ;
-      goto error ;
-   }
-done :
-   return rc ;
-error :
-   rc = SDB_ERROR ;
-   goto done ;
-}
 INT32 Event::SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const CHAR *pSrc )
 {
    INT32 rc = SDB_OK ;
@@ -2700,9 +2664,9 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
              actualPosition.referUpperLeft_X  > actualPosition.length_X )
             break ;
          start_col_copy = start_col ;
-         rc = SDBTOP_MEMSET( printfstr, 0, displayContent.dynamicHelp.cellLength );
+         ossMemset( printfstr, 0, displayContent.dynamicHelp.cellLength );
          //printf prefix
-         SDBTOP_MEMSET( printfstr, 0, displayContent.dynamicHelp.cellLength ) ;
+         ossMemset( printfstr, 0, displayContent.dynamicHelp.cellLength ) ;
          if( JUMPTYPE_FIXED == keySuite->hotKey[hotKey_pos].jumpType )
          {
             if( BUTTON_TAB == keySuite->hotKey[hotKey_pos].button )
@@ -2739,7 +2703,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          start_col_copy += _str.length() + 1 ;
    
          //printf content
-         SDBTOP_MEMSET( printfstr, 0, displayContent.dynamicHelp.cellLength ) ;
+         ossMemset( printfstr, 0, displayContent.dynamicHelp.cellLength ) ;
          pairNumber = displayContent.dynamicHelp.contentColour.foreGroundColor +
                       displayContent.dynamicHelp.contentColour.backGroundColor * 8 ;
          attron( COLOR_PAIR( pairNumber ) ) ;
@@ -2927,7 +2891,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       goto error ; 
 
    }
-   rc = SDBTOP_MEMSET( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
+   ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
    if( rc )
    {
       goto error;
@@ -3209,7 +3173,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       }
 
       // print the serial number on the screen
-      rc = SDBTOP_MEMSET( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
+      ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
       if( rc )
       {
          goto error;
@@ -3294,7 +3258,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       {
 
          // print the serial number on the screen
-         rc = SDBTOP_MEMSET( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
+         ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
          if( rc )
          {
             goto error;
@@ -3782,8 +3746,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    HeadTailMap *footer = NULL ;
    BodyMap* activatedPanel = NULL ;
    const INT32 bufLength = 256 ;
-   INT64 buf[bufLength] ;
-   rc = SDBTOP_MEMSET( buf, 0, bufLength ) ;
+   CHAR buf[bufLength] ;
+   ossMemset( buf, 0, bufLength ) ;
    if( rc )
    {
       goto error ;
@@ -3793,7 +3757,11 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    {
       goto error ;
    }
-   if( 0 > key )
+   if( 0 == key )
+   {
+      goto done ;
+   }
+   else if( 0 > key )
    {
       goto error ;
    }
@@ -3915,6 +3883,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                   goto error ;
                }
                clear() ;
+               refresh() ;
                rc = refreshHeadTail( header ) ;
                if( rc )
                {
@@ -3942,9 +3911,9 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                }
                else if( rc > 0 )
                {
-                  SDBTOP_MEMSET( buf, 0, bufLength) ;
+                  ossMemset( buf, 0, bufLength) ;
                   read(STDIN, buf, bufLength ) ;
-                  rc = getTopKey_TOP( buf, bufLength, key) ;
+                  rc = getTopKey_TOP( buf, key) ;
                   if( rc )
                   {
                      goto error ;
@@ -3986,7 +3955,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the group name:" ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            SDBTOP_MEMSET( inputBuf, 0, 128) ;
+            ossMemset( inputBuf, 0, 128) ;
             
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
@@ -4014,7 +3983,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the HostName:svcname : " ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            SDBTOP_MEMSET( inputBuf, 0, 128 ) ;
+            ossMemset( inputBuf, 0, 128 ) ;
             
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
@@ -4042,7 +4011,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the displayName which need order by asc : " ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            SDBTOP_MEMSET( inputBuf, 0, 128) ;
+            ossMemset( inputBuf, 0, 128) ;
             
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
@@ -4071,7 +4040,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the displayName which need order by desc : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 );
-            SDBTOP_MEMSET( inputBuf, 0, 128);
+            ossMemset( inputBuf, 0, 128);
             
             move( row - 1, 0 );
             clrtobot(); //clear screen from the position of cursor to the end of screen
@@ -4100,7 +4069,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the filter condition : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            SDBTOP_MEMSET( inputBuf, 0, 128 ) ;
+            ossMemset( inputBuf, 0, 128 ) ;
             
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
@@ -4138,7 +4107,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the filter number : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            SDBTOP_MEMSET( inputBuf, 0, 128 ) ;
+            ossMemset( inputBuf, 0, 128 ) ;
             
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
@@ -4195,8 +4164,8 @@ INT32 Event::runSDBTOP( )
    struct timeval timeout ;
    INT32 maxfd  = STDIN + 1 ;
    const INT32 bufLength = 256 ;
-   INT64 buf[bufLength] ;
-   SDBTOP_MEMSET( buf, 0, bufLength ) ;
+   CHAR buf[bufLength] ;
+   ossMemset( buf, 0, bufLength ) ;
    root.input.forcedToRefresh_Global = NOTREFRESH ;
    root.input.forcedToRefresh_Local= NOTREFRESH ;
    rc = addFixedHotKey() ;
@@ -4207,6 +4176,7 @@ INT32 Event::runSDBTOP( )
       ossSnprintf( errStr, errStrLength,
                 "%s addFixedHotKey failed\n",
                 errStrBuf ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    rc = assignActivatedPanel( &root.input.activatedPanel, BODYTYPE_MAIN) ;
@@ -4216,7 +4186,7 @@ INT32 Event::runSDBTOP( )
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                 "%s assignActivatedPanel failed\n", errStrBuf ) ;
-
+      rc = SDB_ERROR ;
       goto error ;
    }
    root.input.hostname = hostname ;
@@ -4234,6 +4204,7 @@ INT32 Event::runSDBTOP( )
                 "%s can't connect to the coord: %s, %s, %s, %s, e.what() =%d\n",
                 errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(),
                 root.input.usrName.c_str(), root.input.password.c_str(), e.what() ) ;
+      rc = SDB_ERROR ;
       goto error ;
 
    }
@@ -4258,6 +4229,7 @@ INT32 Event::runSDBTOP( )
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
                    "%s getActivatedHeadTailMap failed\n", errStrBuf ) ;
+         rc = SDB_ERROR ;
          goto error ;
       }
       if( root.input.activatedPanel->bodyPanelType == BODYTYPE_NORMAL )
@@ -4266,22 +4238,26 @@ INT32 Event::runSDBTOP( )
       }
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       clear() ;
       rc = refreshHeadTail( header ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       rc = refreshBody( root.input.activatedPanel ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       rc = refreshHeadTail( footer ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       refresh() ;
@@ -4299,16 +4275,19 @@ INT32 Event::runSDBTOP( )
             rc = refreshHeadTail( header ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             rc = refreshBody( root.input.activatedPanel ) ;
             if( SDB_OK != rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             rc = refreshHeadTail( footer ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             refresh() ;
@@ -4318,11 +4297,12 @@ INT32 Event::runSDBTOP( )
          {
             if ( FD_ISSET ( STDIN, &fds ) ) 
             {
-               SDBTOP_MEMSET( buf, 0, bufLength) ;
+               ossMemset( buf, 0, bufLength) ;
                read( STDIN, buf, bufLength ) ;
-               rc = getTopKey_TOP( buf, bufLength, key) ;
+               rc = getTopKey_TOP( buf, key) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                rc = buttonManagement( key, TRUE ) ;
@@ -4332,6 +4312,7 @@ INT32 Event::runSDBTOP( )
                   {
                      goto done ;
                   }
+                  rc = SDB_ERROR ;
                   goto error ;
                }
             }
@@ -4356,11 +4337,13 @@ INT32 Event::runSDBTOP( )
             rc = refreshBody( root.input.activatedPanel ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             rc = refreshHeadTail( footer ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             refresh() ;
@@ -4372,7 +4355,6 @@ INT32 Event::runSDBTOP( )
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -4511,8 +4493,8 @@ INT32 main( INT32 argc, CHAR **argv)
    {
       goto error ;
    }
-   sdbtop.SDBTOP_MEMSET( errStr, 0, errStrLength ) ;
-   sdbtop.SDBTOP_MEMSET( errStrBuf, 0, errStrLength ) ;
+   ossMemset( errStr, 0, errStrLength ) ;
+   ossMemset( errStrBuf, 0, errStrLength ) ;
    initscr() ;
    if( FALSE == has_colors() )
    { 
