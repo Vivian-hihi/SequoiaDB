@@ -19,7 +19,8 @@ namespace engine
       INT32 rc = SDB_OK;
       if ( !pmdGetKRCB()->getTransCB()->isTransOn() )
       {
-         goto done;
+         rc = SDB_DPS_TRANS_DIABLED ;
+         goto error;
       }
       if ( cb->getTransID() == DPS_INVALID_TRANS_ID )
       {
@@ -27,12 +28,14 @@ namespace engine
          cb->setCurTransLsn( DPS_INVALID_LSN_OFFSET );
          pmdGetKRCB()->getTransCB()->addTransCB( cb->getTransID(), cb );
       }
-      PD_LOG( PDEVENT,
-            "begin transaction operations(transID=%llu)",
-            cb->getTransID() );
+      PD_LOG( PDEVENT, "begin transaction operations(transID=%llu)",
+              cb->getTransID() ) ;
       PD_TRACE_EXIT ( SDB_RTNTRANSBEGIN ) ;
+
    done:
       return rc;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNTRANSCOMMIT, "rtnTransCommit" )
@@ -49,7 +52,7 @@ namespace engine
 
       if ( !pmdGetKRCB()->getTransCB()->isTransOn() )
       {
-         goto done;
+         goto done ;
       }
       curTransID = cb->getTransID();
       preTransLsn = cb->getCurTransLsn();
