@@ -6938,11 +6938,14 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
          {
             case BSON_STRING :
                str_value = bson_iterator_string ( &it ) ;
-               if ( strcmp( "M", str_value ) == 0 ) // master
+               if ( strcmp( "M", str_value ) == 0 ||
+                    strcmp( "m", str_value ) == 0 ) // master
                   value = PREFER_REPL_MASTER ;
-               else if ( strcmp( "S", str_value ) == 0 ) // slave
+               else if ( strcmp( "S", str_value ) == 0 ||
+                         strcmp( "s", str_value ) == 0 ) // slave
                   value = PREFER_REPL_SLAVE ;
-               else if ( strcmp( "A", str_value ) == 0 ) // anyone
+               else if ( strcmp( "A", str_value ) == 0 ||
+                         strcmp( "a", str_value ) == 0 ) // anyone
                   value = PREFER_REPL_ANYONE ;
                else
                {
@@ -6964,15 +6967,20 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                rc = SDB_INVALIDARG ;
                goto error ;
          }
-         // append element
-         rc = bson_append_int ( &newObj, key, value ) ;
-         if ( rc )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
          break ;
       }
+      else
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   }
+   // append element
+   rc = bson_append_int ( &newObj, key, value ) ;
+   if ( rc )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
    }
    rc = bson_finish ( &newObj ) ;
    if ( rc )

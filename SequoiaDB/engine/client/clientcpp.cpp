@@ -5446,11 +5446,14 @@ namespace sdbclient
                   try
                   {
                      str_value = ele.String().c_str() ;
-                     if ( strcmp( "M", str_value ) == 0 ) // master
+                     if ( strcmp( "M", str_value ) == 0 ||
+                          strcmp( "m", str_value ) == 0 ) // master
                         value = PREFER_REPL_MASTER ;
-                     else if ( strcmp( "S", str_value ) == 0 ) // slave
+                     else if ( strcmp( "S", str_value ) == 0 ||
+                               strcmp( "s", str_value ) == 0 ) // slave
                         value = PREFER_REPL_SLAVE ;
-                     else if ( strcmp( "A", str_value ) == 0 ) //anyone
+                     else if ( strcmp( "A", str_value ) == 0 ||
+                               strcmp( "a", str_value ) == 0 ) //anyone
                         value = PREFER_REPL_ANYONE ;
                      else
                      {
@@ -5485,16 +5488,17 @@ namespace sdbclient
                default :
                   rc = SDB_INVALIDARG ;
                   goto error ;
-               } // switch
-            // append element
-               bob.append( key, value ) ;
-         }
+            } // switch
+            break ;
+         } // if
          else
          {
             rc = SDB_INVALIDARG ;
             goto error ;
          }
       } // while()
+      // append element
+      bob.append( key, value ) ;
       // build obj
       newObj = bob.obj() ;
       // build msg
