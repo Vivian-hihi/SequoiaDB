@@ -75,13 +75,29 @@
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;&#10;
 							            &lt;testsuite errors=&quot;0&quot; failures=&quot;0&quot; hostname=&quot;${host.NAME}&quot; name=&quot;${test.suite.class.name}&quot; tests=&quot;1&quot; time=&quot;0.55&quot; timestamp=&quot;${current.time}&quot;&gt;&#10;" />
 
+
+    
+		<available file="${test.suite.fullname}/commlib.js" property="commlib.exist" />
+		<if>
+			<isset property="commlib.exist">
+			<then>
+				<echo message="${test.suite.fullname}/commlib is exist , then test will add it " />
+				<sdbProperty name="commlib.option" value=",${test.suite.fullname}/commlib.js" />
+			</then>	
+			<else>
+				<echo message="${test.suite.fullname}/commlib is not exist , then test will not add it" />
+				<sdbProperty name="commlib.option" value="" />
+			</else>
+		</if>
+		
 		<foreach target="test-one-case" param="test.case.fullname">
-			<fileset dir="${test.suite.fullname}" includes="*.js" />
+			<fileset dir="${test.suite.fullname}" includes="*.js" excludes="commlib.js" />
 			<param name="testcase.path" value="${testcase.path}" />
 			<param name="sdb.fullname" value="${sdb.fullname}" />
 			<param name="host.NAME" value="${host.NAME}" />
 			<param name="parallel.num" value="${parallel.num}" />
 			<param name="test.suite.class.name" value="${test.suite.class.name}" />
+			<param name="commlib.option" value="${commlib.option}" />
 		</foreach>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" message="
@@ -97,6 +113,7 @@
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
 		  <arg line=" -s &quot; db = new Sdb('localhost',50000);var rg = db.listShards();println(rg);db.close(); &quot;" />
 		</exec>
+		
 		<if>
 			<not>
 			<equals arg1="${ret.code.forShards}" arg2="0" />
@@ -125,9 +142,10 @@
 		</exec>
     <echo message="now test ${test.case.name}.js file" />
 	
-		
+		<!--
 		<sdbFileAdd srcFile="${testcase.path}/libs/func.js"  destFile="${test.case.fullname}.${parallel.num}" />
 		<sdbFileAdd srcFile="${test.case.fullname}" destFile="${test.case.fullname}.${parallel.num}" />		
+		-->
 		<!-- end -->
 
 		<tstamp>
@@ -163,7 +181,8 @@
 		<!--propertyregex property="CS_PRIX_TMP" input="${host.NAME}${parallel.num}${test.case.name}" regexp="-" replace="" />
 		<propertyregex property="CS_PRIX" input="${CS_PRIX_TMP}" regexp="_" replace="" /-->
 
-		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ; &quot; -f ${test.case.fullname}.${parallel.num}" />
+		<property name="sdb.cmd.argument" value="-e &quot;var CSPREFIX='${CS_PRIX}' ; var COORDSVCNAME='${COORD_SVC_NAME}' ;
+			 &quot; -f &quot;${testcase.path}/libs/func.js ${commlib.option} ,${test.case.fullname}&quot;" />
 		
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}.${parallel.num}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}.${parallel.num}" />
