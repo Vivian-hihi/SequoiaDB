@@ -805,9 +805,9 @@ done :
    if ( rc )
    {
       BOOLEAN exceptionZero = FALSE ;
-      if ( scope && scope->_context && scope->_context->lastMessage )
+      if ( scope && scope->context() && scope->context()->lastMessage )
       {
-         CHAR *subStr = ossStrstr( scope->_context->lastMessage,
+         CHAR *subStr = ossStrstr( scope->context()->lastMessage,
                                    STR_UNCAUGHT_EXCPECTION_0 ) ;
          if ( subStr && ossStrlen( subStr ) ==
               ossStrlen( STR_UNCAUGHT_EXCPECTION_0 ) )
