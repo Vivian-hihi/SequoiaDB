@@ -1,6 +1,7 @@
 #!/bin/bash 
 #config the trust relationship between the hosts 
 #path :sequoiadb/tools/
+declare -A PASSWD 
 locPath=`pwd` 
 roLen=`cat host.conf|wc -l` 
 #echo $roLen
@@ -11,17 +12,25 @@ echo "**********************************trust relationship certificate**********
 for i in $(seq 2 $roLen) 
 do 
 	USER[$i]=`sed -n ''$i'p' host.conf|cut -d ':' -f 2 ` 	
-	PASWD[$i]=`sed -n ''$i'p' host.conf|cut -d ':' -f 3 ` 
-	HOST[$i]=`sed -n ''$i'p' host.conf|cut -d ':' -f 4 ` 
-#	echo $i ${USER[$i]} ${PASWD[$i]} ${HOST[$i]} 
+#	PASSWD[$i]=`sed -n ''$i'p' host.conf|cut -d ':' -f 3 ` 
+	HOST[$i]=`sed -n ''$i'p' host.conf|cut -d ':' -f 3 ` 
+#	echo $i ${USER[$i]} ${PASSWD[$i]} ${HOST[$i]} 
+	#collect user's password ,put it in variable 
+	echo "The host is ${HOST[$i]}"
+	echo "Please input it's password:"
+	read -s PASSWD[$i] 
 
+done
+
+for i in $(seq 2 $roLen)
+do
 	#create the id_rsa.pub in the every host of group 
 	/usr/local/bin/expect -c	"
 		set timeout 10 ;
 		spawn ssh ${USER[$i]}@${HOST[$i]} ; 
 		expect {
 			\"*yes/no*\" ;{send \"yes\r\" ;exp_continue}
-			\"assword\" ;{send \"${PASWD[$i]}\r\" ; exp_continue}
+			\"assword\" ;{send \"${PASSWD[$i]}\r\" ; exp_continue}
 			\"*Documentation*\" ;{send \"cd .ssh/\r\" ;send \"mkdir -p cpfolder\r\" ;send \"ssh-keygen -t rsa\r\" ;exp_continue}
 			\"*Enter file in which to save the key*\" ;{send \"\r\" ;exp_continue}
 			\"Overwrite (y/n)\" ; {send \"y\r\" ;exp_continue}
@@ -46,7 +55,7 @@ do
 		set timeout 10 ;
 		spawn scp -r ${USER[$i]}@${HOST[$i]}:~/.ssh/cpfolder $locPath ;
 		expect {
-			\"assword\" ;{send \"${PASWD[$i]}\n\";exp_continue}
+			\"assword\" ;{send \"${PASSWD[$i]}\n\";exp_continue}
 			eof       
 			{
 				send_user \"eof\n\" ;
@@ -67,7 +76,7 @@ do
 		spawn scp /root/.ssh/authorized_keys ${USER[$i]}@${HOST[$i]}:~/.ssh/ ; 
 		expect {
 			\"yes\";{send \"yes\r\";exp_continue}
-			\"assword\";{send \"${PASWD[$i]}\n\";exp_continue}
+			\"assword\";{send \"${PASSWD[$i]}\n\";exp_continue}
 			eof
 			{	
 				send_user \"eof\n\" ; 	
@@ -87,7 +96,7 @@ do
 		spawn ssh ${USER[$i]}@${HOST[$i]} ;  
 		expect {
 			\"yes\";{send \"yes\r\";exp_continue}
-			\"assword\";{send \"${PASWD[$i]}\n\";send \"rm -rf ~/.ssh/cpfolder/\" ;exp_continue}
+			\"assword\";{send \"${PASSWD[$i]}\n\";send \"rm -rf ~/.ssh/cpfolder/\" ;exp_continue}
 			eof
 			{
 				send_user \"eof\n\" ;
