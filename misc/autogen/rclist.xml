@@ -2034,5 +2034,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_DPS_TRANS_DIABLED</name>
+         <description>
+            <en>transaction is disabled</en>
+            <cn>未开启事务功能</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
