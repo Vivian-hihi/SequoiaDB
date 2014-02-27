@@ -550,6 +550,23 @@ static inline std::string &trim ( std::string &s )
    return ltrim ( rtrim ( s ) ) ;
 }
 
+void GETNSTR_TOP( CHAR *buf, INT32 bufLength )
+{
+   //INT64 ch = 0 ;
+   //INT32 i = 0 ;
+   //while( 1 )
+   //{
+      //ch = getch() ;
+      //if( '\n' == ch && EOF == ch && 27 == ch )
+      //{
+         //break ;
+      //}
+      //buf[i] = ch ;
+      //++i ;
+   //}
+   getnstr( buf, bufLength ) ;
+}
+
 INT32 readPosition( ptree pt_position, Position& position )
 {
    INT32 rc = SDB_OK ;
@@ -3960,11 +3977,11 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             move( row - 1, 0 ) ;
             clrtobot() ; //clear screen from the position of cursor to the end of screen
             
-            nocbreak() ;
+            //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr( inputBuf, 128 ) ;
-            cbreak() ;
+            GETNSTR_TOP( inputBuf, 128 ) ;
+            //cbreak() ;
             noecho() ;
             root.input.groupName = inputBuf ;
             trim( root.input.groupName ) ;
