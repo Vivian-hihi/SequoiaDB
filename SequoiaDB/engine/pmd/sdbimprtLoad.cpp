@@ -63,6 +63,8 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define OPTION_HELP        "help"
 #define OPTION_HOSTNAME    "hostname"
 #define OPTION_SVCNAME     "svcname"
+#define OPTION_USER        "user"
+#define OPTION_PASSWORD    "password"
 #define OPTION_DELCHAR     "delchar"
 #define OPTION_DELFIELD    "delfield"
 #define OPTION_DELRECORD   "delrecord"
@@ -98,6 +100,8 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_HELP, "help" )\
        ( COMMANDS_STRING(OPTION_HOSTNAME,       ",h"), boost::program_options::value<string>(), "database host name ( default: localhost )" ) \
        ( COMMANDS_STRING(OPTION_SVCNAME,        ",s"), boost::program_options::value<string>(), "database service name ( default: 11810 " ) \
+       ( COMMANDS_STRING(OPTION_USER,           ",u"), boost::program_options::value<string>(), "databse user" ) \
+       ( COMMANDS_STRING(OPTION_PASSWORD,       ",w"), boost::program_options::value<string>(), "databse password" ) \
        ( COMMANDS_STRING(OPTION_DELCHAR,        ",a"), boost::program_options::value<string>(), "character delimiter ( default: \" )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_DELFIELD,       ",e"), boost::program_options::value<string>(), "field delimiter ( default: , )( CSV type only )" ) \
        ( COMMANDS_STRING(OPTION_DELRECORD,      ",r"), boost::program_options::value<string>(), "record delimiter ( default: '\\n' )( CSV type only )" ) \
@@ -147,6 +151,8 @@ string strDelField                        = "" ;
 string strDelRecord                       = "" ;
 string strCSName                          = "" ;
 string strCLName                          = "" ;
+CHAR *lUser                               = NULL ;
+CHAR *lPassWord                           = NULL ;
 BOOLEAN bMongoCompatible                  = FALSE ;
 BOOLEAN isHeaderline                      = FALSE ;
 BOOLEAN autoAddField                      = TRUE  ;
@@ -298,7 +304,8 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    const CHAR *pFileName = NULL ;
    const CHAR *pField = NULL ;
    const CHAR *pPath  = NULL ;
-   const CHAR *pUser  = NULL ;
+   const CHAR *pUser     = NULL ;
+   const CHAR *pPassWord = NULL ;
    try
    {
       po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
@@ -374,6 +381,32 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
             break ;
          }
       }
+   }
+
+   if ( vm.count ( OPTION_USER ) )
+   {
+      pUser = vm[OPTION_USER].as<string>().c_str() ;
+      lUser = (CHAR *)SDB_OSS_MALLOC ( ossStrlen ( pUser ) + 1 ) ;
+      lUser[ossStrlen ( pUser )] = 0 ;
+      ossStrncpy ( lUser, pUser, ossStrlen ( pUser ) ) ;
+   }
+   else
+   {
+      lUser = (CHAR *)SDB_OSS_MALLOC ( 1 ) ;
+      *lUser = '\0' ;
+   }
+
+   if ( vm.count ( OPTION_PASSWORD ) )
+   {
+      pPassWord = vm[OPTION_PASSWORD].as<string>().c_str() ;
+      lPassWord= (CHAR *)SDB_OSS_MALLOC ( ossStrlen ( pPassWord ) + 1 ) ;
+      lPassWord[ossStrlen ( pPassWord )] = 0 ;
+      ossStrncpy ( lPassWord, pPassWord, ossStrlen ( pPassWord ) ) ;
+   }
+   else
+   {
+      lPassWord = (CHAR *)SDB_OSS_MALLOC ( 1 ) ;
+      *lPassWord = '\0' ;
    }
 
    // import model is optional, default is io
@@ -571,7 +604,7 @@ INT32 getCollection ()
       goto error ;
    }
    // connection is established
-   rc = sdbConnect ( gpHostName, gpServiceName, "", "", &gConnection ) ;
+   rc = sdbConnect ( gpHostName, gpServiceName, lUser, lPassWord, &gConnection ) ;
    if ( rc )
    {
       ossPrintf ( "Failed to connect to database %s:%s, rc = %d",
