@@ -262,6 +262,22 @@ INT32 enterBatchMode( Scope * scope , const CHAR * filename ,
    toker = ossStrtok( fileNameTmp, ",;", &last ) ;
    while ( toker )
    {
+      // trim begin space
+      while ( ' ' == *toker )
+      {
+         ++toker ;
+      }
+      // trim end space
+      CHAR *lastPos = *toker ? toker + ossStrlen( toker ) : NULL ;
+      while ( lastPos && ' ' == *( lastPos - 1 ) )
+      {
+         --lastPos ;
+      }
+      if ( lastPos && ' ' == *lastPos )
+      {
+         *lastPos = 0 ;
+      }
+
       rc = readFile( toker , &temp , &tempSize, &readlen ) ;
       if ( rc != SDB_OK )
       {
