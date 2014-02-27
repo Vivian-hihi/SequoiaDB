@@ -3,7 +3,7 @@
 # define root path
 testRoot="testcases/hlt/js_testcases/js"
 sdbRoot="bin"
-csprefix="local_test""$$"
+csprefix="local_test""_$$"
 coordsvcname="50000"
 commlibstr="commlib.js"
 
