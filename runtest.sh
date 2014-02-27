@@ -3,14 +3,17 @@
 # define root path
 testRoot="testcases/hlt/js_testcases/js"
 sdbRoot="bin"
-csprefix="local_test""_$$"
+csprefix="local_test"
 coordsvcname="50000"
 commlibstr="commlib.js"
+reportDir=${csprefix}"_report"
 
 # define test parameter
 testDir=$testRoot
 testFile=""
 stopWhenFailed=1
+printOut=0
+showNameWidth=60
 
 # define stat parameter
 sucNum=0
@@ -24,6 +27,8 @@ endTimeSec=0
 testcaseBTimeSec=0
 testcaseETimeSec=0
 
+printStr=""
+
 # define ignore path and file
 pathArray=("vote")
 fileArray=("libs.js")
@@ -33,7 +38,14 @@ function display()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname]"
+   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-addpid] [-print]"
+   echo ""
+   echo " -p path     : 运行指定路径下的JS用例，如果为相对目录，则默认根目录已为用例目录"
+   echo " -f file     : 运行指定的JS用例，如果为相对目录，则默认根目录已为用例目录"
+   echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
+   echo " -n svcname  : 指定测试的COORD节点服务名"
+   echo " -addpid     : 是否在CSPREFIX上加上当前进行PID"
+   echo " -print      : 是否在屏幕上打印用例的输出"
    echo ""
    exit $1
 }
@@ -47,6 +59,11 @@ function getMyPath()
    fi
 }
 
+function printResult()
+{
+   echo "$1" >> ${reportDir}/result.txt
+}
+
 function showResult()
 {
    echo "***********************************************************"
@@ -56,14 +73,28 @@ function showResult()
    echo " use time  : `expr $endTimeSec - $beginTimeSec`(secs)"
    echo " total     : `expr $sucNum + $failedNum`"
    echo -n " succeed   :"
-   echo -e "\033[32;49;1m $sucNum \033[39;49;0m"
+   if [ $1 -ne 0 ] ; then
+      echo -e "\033[32;49;1m $sucNum \033[39;49;0m"
+   else
+      echo " $sucNum"
+   fi
    echo -n " failed    :"
-   if [ $failedNum -ne 0 ] ; then
+   if [ $failedNum -ne 0 -a $1 -ne 0 ] ; then
       echo -e "\033[31;49;1m $failedNum \033[39;49;0m"
    else
       echo " $failedNum"
    fi
    echo "***********************************************************"
+}
+
+function prepareRun()
+{
+   # remove result
+   if [ -d $reportDir ] ; then
+      rm -rf $reportDir/*
+   else
+      mkdir ${reportDir}
+   fi
 }
 
 # ***************************************************************
@@ -99,6 +130,11 @@ do
       readType=3
    elif [ "$p" = "-n" ] ; then
       readType=4
+   elif [ "$p" = "-addpid" ] ; then
+      csprefix=${csprefix}"_$$"
+      reportDir=${csprefix}"_report"
+   elif [ "$p" == "-print" ] ; then
+      printOut=1
    else
       echo "invalid arguments: $p"
       display 1
@@ -164,16 +200,30 @@ echo ""
 echo -e "\e[46;31m ======>Begin to test usecase=====> \e[0m"
 echo ""
 
+# prepare for running
+prepareRun
+
 # create msg db connection
 $sdbRoot/sdb -s "try { db = new Sdb('localhost', '${coordsvcname}' ) } catch( e ) {} "
 
 libJSStr=""
 postfix=""
 testFile=""
+shortFile=""
+printOutFile=""
+shortDir=""
 beginTime=`date`
 beginTimeSec=`date +%s`
 for file in $($findCmdStr)
 do
+   shortFile="${file#$testRoot/}"
+   shortDir="${shortFile%/*}"
+   if [ "${shortDir:0:1}" == "/" ] ; then
+      shortDir=""
+   fi
+   shortDir=${reportDir}"/"${shortDir}
+   printOutFile=${reportDir}"/"${shortFile}"_out.txt"
+
    postfix="${file##*.}"
    if [ "$postfix" != "js" ] ; then
       continue
@@ -187,26 +237,47 @@ do
       testFile=${file}
    fi
 
-   echo "===>[$file]"
+   if [ $printOut -ne 0 ] ; then
+      echo "===>[$shortFile]"
+   else
+      #echo -n "$shortFile   "
+      printf "===> %-${showNameWidth}s" $shortFile
+   fi
    testcaseBTimeSec=`date +%s`
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
-   $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
-   ret=$?
+   if [ $printOut -ne 0 ] ; then
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
+      ret=$?
+   else
+      if [ ! -d $shortDir ] ; then
+         mkdir -p $shortDir
+      fi
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile" >> ${printOutFile}
+      ret=$?
+   fi
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
    testcaseETimeSec=`date +%s`
-   echo -n "<===[$file]"
+   if [ $printOut -ne 0 ] ; then
+      echo -n "<===[$shortFile]"
+   fi
    if [ $ret -ne 0 ]
    then
       failedNum=`expr $failedNum + 1`
+      #printResult "$shortFile --- [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
+      printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
       echo -e "\033[31;49;1m [ Failed:$failedNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
       if [ $stopWhenFailed -ne 0 ] ; then
          break
       fi
    else
       sucNum=`expr $sucNum + 1`
+      #printResult "$shortFile --- [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
+      printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
       echo -e "\033[32;49;1m [ Done:$sucNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
    fi
-   echo ""
+   if [ $printOut -ne 0 ] ; then
+      echo ""
+   fi
 done
 endTime=`date`
 endTimeSec=`date +%s`
@@ -215,7 +286,13 @@ endTimeSec=`date +%s`
 $sdbRoot/sdb -s "try { db.close() ; } catch( e ) {} "
 echo -e "\e[46;31m <======End test usecase<===== \e[0m"
 
-# show result
-showResult
+# show result screen
+showResult 1
+# show result file
+printStr="$(showResult 0 )"
+printResult ""
+printResult "$printStr"
+
+# quit
 exit 0
 
