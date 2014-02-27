@@ -5489,6 +5489,8 @@ namespace sdbclient
                   rc = SDB_INVALIDARG ;
                   goto error ;
             } // switch
+            // append element
+            bob.append( key, value ) ;
             break ;
          } // if
          else
@@ -5497,8 +5499,6 @@ namespace sdbclient
             goto error ;
          }
       } // while()
-      // append element
-      bob.append( key, value ) ;
       // build obj
       newObj = bob.obj() ;
       // build msg

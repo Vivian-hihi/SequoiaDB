@@ -6967,6 +6967,13 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                rc = SDB_INVALIDARG ;
                goto error ;
          }
+         // append element
+         rc = bson_append_int ( &newObj, key, value ) ;
+         if ( rc )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
          break ;
       }
       else
@@ -6974,14 +6981,7 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-   }
-   // append element
-   rc = bson_append_int ( &newObj, key, value ) ;
-   if ( rc )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
+   } // while
    rc = bson_finish ( &newObj ) ;
    if ( rc )
    {
