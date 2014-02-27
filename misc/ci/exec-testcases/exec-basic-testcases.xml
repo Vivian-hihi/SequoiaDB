@@ -79,7 +79,7 @@
     
 		<available file="${test.suite.fullname}/commlib.js" property="commlib.exist" />
 		<if>
-			<isset property="commlib.exist">
+			<isset property="commlib.exist" />
 			<then>
 				<echo message="${test.suite.fullname}/commlib is exist , then test will add it " />
 				<sdbProperty name="commlib.option" value=",${test.suite.fullname}/commlib.js" />
