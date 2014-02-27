@@ -554,32 +554,6 @@ namespace engine
          _catLatch.release () ;
       }
 
-      if ( SDB_OK == rc )
-      {
-         _clsCatalogSet *pClSet = NULL;
-         std::vector< std::string > subCLLst;
-         _pCatAgent->lock_r();
-         pClSet = _pCatAgent->collectionSet( pCollectionName );
-         if ( NULL == pClSet )
-         {
-            _pCatAgent->release_r();
-            rc = SDB_CLS_NO_CATALOG_INFO;
-            goto error;
-         }
-         pClSet->getSubCLList( subCLLst );
-         _pCatAgent->release_r();
-         {
-         // update all sub-collection catalog info               
-         std::vector< std::string >::iterator iterLst
-                                 = subCLLst.begin();
-         while( SDB_OK == rc && iterLst != subCLLst.end() )
-         {
-            rc = syncUpdateCatalog( iterLst->c_str(), millsec );
-            ++iterLst;
-         }
-         }
-      }
-
    done:
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_SYNCUPDCAT, rc );
       return rc ;
