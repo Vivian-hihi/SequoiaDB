@@ -33,6 +33,8 @@
 *******************************************************************************/
 #include "ossVer.h"
 
+#define SDB_ENGINE_BUILD_CURRENT_DEBUG SDB_ENGINE_BUILD_CURRENT"(Debug)"
+
 void ossGetVersion ( INT32 *version,
                      INT32 *subVersion,
                      INT32 *release,
@@ -45,5 +47,9 @@ void ossGetVersion ( INT32 *version,
    if ( release )
       *release = SDB_ENGINE_RELEASE_CURRENT ;
    if ( ppBuild )
+#if defined (_DEBUG)
+      *ppBuild = SDB_ENGINE_BUILD_CURRENT_DEBUG ;
+#else
       *ppBuild = SDB_ENGINE_BUILD_CURRENT ;
+#endif
 }
