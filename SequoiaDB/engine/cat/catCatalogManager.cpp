@@ -853,7 +853,10 @@ namespace engine
             PD_CHECK( ele.isNumber(), SDB_INVALIDARG, error, PDERROR,
                       "Field[%s] type[%d] error", CAT_PAGE_SIZE_NAME,
                       ele.type() ) ;
-            csInfo._pageSize = ele.numberInt() ;
+            if ( 0 != ele.numberInt() )
+            {
+               csInfo._pageSize = ele.numberInt() ;
+            }
 
             // check size value
             PD_CHECK ( csInfo._pageSize == DMS_PAGE_SIZE4K ||
