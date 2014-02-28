@@ -8523,6 +8523,7 @@ namespace engine
          BSONObj boQuery;
          BSONElement bePreferRepl;
          INT32 sessReplType = PREFER_REPL_TYPE_MIN;
+         GROUP_VEC groupLstTmp;
 
          pSession = cb->getCoordSession();
          PD_CHECK( pSession != NULL, SDB_SYS, error, PDERROR,
@@ -8538,6 +8539,11 @@ namespace engine
                   "failed to set prefer-replica-type, invalid value!(range:%d~%d)",
                   PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX );
          pSession->setPreferReplType( sessReplType );
+
+         rc = rtnCoordGetAllGroupList( cb, groupLstTmp );
+         PD_RC_CHECK( rc, PDERROR,
+                     "failed to update all group info!(rc=%d)",
+                     rc );
       }
       catch ( std::exception &e )
       {
