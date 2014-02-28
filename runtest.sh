@@ -5,6 +5,7 @@ testRoot="testcases/hlt/js_testcases/js"
 sdbRoot="bin"
 csprefix="local_test"
 coordsvcname="50000"
+coordhostname="localhost"
 commlibstr="commlib.js"
 reportDir=${csprefix}"_report"
 
@@ -38,12 +39,13 @@ function display()
 {
    echo "run testcase 1.0.0 2014/2/25"
    echo "$0 --help"
-   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-addpid] [-print]"
+   echo "$0 [-p path]|[-f file] [-s stopFlag] [-n svcname] [-h hostname] [-addpid] [-print]"
    echo ""
    echo " -p path     : 运行指定路径下的JS用例，如果为相对目录，则默认根目录已为用例目录"
    echo " -f file     : 运行指定的JS用例，如果为相对目录，则默认根目录已为用例目录"
    echo " -s stopFlag : 发生用例错误是否停止，0表示继续，1表示停止"
    echo " -n svcname  : 指定测试的COORD节点服务名"
+   echo " -h hostname : 指定测试的COORD节点HostName或IP"
    echo " -addpid     : 是否在CSPREFIX上加上当前进行PID"
    echo " -print      : 是否在屏幕上打印用例的输出"
    echo ""
@@ -106,7 +108,7 @@ fi
 
 # loop all parameter
 p=""
-readType=0 # 1: path, 2: file, 3: stopWhenFailed, 4: svcname
+readType=0 # 1: path, 2: file, 3: stopWhenFailed, 4: svcname, 5: hostname
 
 for p in $@
 do
@@ -122,6 +124,9 @@ do
    elif [ $readType -eq 4 ] ; then
       coordsvcname="$p"
       readType=0
+   elif [ $readType -eq 5 ] ; then
+      coordhostname="$p"
+      readType=5
    elif [ "$p" = "-p" ] ; then
       readType=1 ;
    elif [ "$p" = "-f" ] ; then
@@ -130,6 +135,8 @@ do
       readType=3
    elif [ "$p" = "-n" ] ; then
       readType=4
+   elif [ "$p" = "-h" ] ; then
+      readType=5
    elif [ "$p" = "-addpid" ] ; then
       csprefix=${csprefix}"_$$"
       reportDir=${csprefix}"_report"
@@ -187,6 +194,7 @@ findCmdStr=${findCmdStr}${beginPrefix}${pathString}${fileString}${endPrefix}"-ty
 echo "*******************************************************************************"
 echo "CSPREFIX     : $csprefix"
 echo "COORDSVCNAME : $coordsvcname"
+echo "COORDSVCHOST : $coordhostname"
 echo "Find command : $findCmdStr"
 echo "*******************************************************************************"
 
@@ -204,7 +212,7 @@ echo ""
 prepareRun
 
 # create msg db connection
-$sdbRoot/sdb -s "try { db = new Sdb('localhost', '${coordsvcname}' ) } catch( e ) {} "
+$sdbRoot/sdb -s "try { db = new Sdb('${coordhostname}', '${coordsvcname}' ) } catch( e ) {} "
 
 libJSStr=""
 postfix=""
@@ -246,13 +254,13 @@ do
    testcaseBTimeSec=`date +%s`
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    if [ $printOut -ne 0 ] ; then
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}; var COORDHOSTNAME=${coordhostname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
       ret=$?
    else
       if [ ! -d $shortDir ] ; then
          mkdir -p $shortDir
       fi
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile" >> ${printOutFile}
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}; var COORDHOSTNAME=${coordhostname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile" >> ${printOutFile}
       ret=$?
    fi
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
