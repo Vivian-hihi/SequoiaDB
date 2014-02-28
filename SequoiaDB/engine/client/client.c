@@ -1483,6 +1483,7 @@ SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
       }
       ossMemset ( r, 0, sizeof( sdbRGStruct ) ) ;
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
+      r->_connection    = cHandle ;
       r->_sock          = connection->_sock ;
       r->_endianConvert = connection->_endianConvert ;
       rc = _setRGName ( (sdbShardHandle)r, pShardName ) ;
@@ -1520,8 +1521,8 @@ error :
 }
 
 SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
-                                       UINT32 id,
-                                       sdbShardHandle *handle )
+                                UINT32 id,
+                                sdbShardHandle *handle )
 {
    INT32 rc                 = SDB_OK ;
    sdbCursorHandle   cursor = SDB_INVALID_HANDLE ;
@@ -1578,6 +1579,7 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
       pShardName = bson_iterator_string ( &it ) ;
       ossMemset ( r, 0, sizeof( sdbRGStruct ) ) ;
       r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
+      r->_connection    = cHandle ;
       r->_sock          = connection->_sock ;
       r->_endianConvert = connection->_endianConvert ;
       rc = _setRGName ( (sdbShardHandle)r, pShardName ) ;
@@ -2160,8 +2162,8 @@ error :
 }
 
 SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
-                                         const CHAR *pShardName,
-                                         sdbShardHandle *handle )
+                                  const CHAR *pShardName,
+                                  sdbShardHandle *handle )
 {
    INT32 rc         = SDB_OK ;
    BOOLEAN result   = FALSE ;
@@ -2214,6 +2216,7 @@ SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
    }
    ossMemset ( r, 0, sizeof( sdbRGStruct ) ) ;
    r->_handleType    = SDB_HANDLE_TYPE_REPLICAGROUP ;
+   r->_connection    = cHandle ;
    r->_sock          = connection->_sock ;
    r->_endianConvert = connection->_endianConvert ;
    rc = _setRGName ( (sdbShardHandle)r, pShardName ) ;
@@ -2414,15 +2417,27 @@ done :
 error :
    goto done ;
 }
-
+/*
 static INT32 _sdbShardExtractNode ( SOCKET sock,
+                                    sdbNodeHandle *handle,
+                                    const CHAR *data,
+                                    BOOLEAN endianConvert )
+*/
+static INT32 _sdbShardExtractNode ( sdbShardHandle cHandle,
                                     sdbNodeHandle *handle,
                                     const CHAR *data,
                                     BOOLEAN endianConvert )
 {
    INT32 rc = SDB_OK ;
    sdbRNStruct *r = NULL ;
-
+   sdbRGStruct *s = (sdbRGStruct *)cHandle ;
+   // check the shard handle
+   if ( !s || s->_handleType != SDB_HANDLE_TYPE_REPLICAGROUP )
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+   // build a node handle
    r = (sdbRNStruct*) SDB_OSS_MALLOC ( sizeof( sdbRNStruct ) ) ;
    if ( !r )
    {
@@ -2431,7 +2446,8 @@ static INT32 _sdbShardExtractNode ( SOCKET sock,
    }
    ossMemset ( r, 0, sizeof( sdbRNStruct ) ) ;
    r->_handleType = SDB_HANDLE_TYPE_REPLICANODE ;
-   r->_sock = sock ;
+   r->_connection = s->_connection ;
+   r->_sock = s->_sock ;
    r->_endianConvert = endianConvert ;
    rc = clientReplicaGroupExtractNode ( data,
                                  r->_hostName,
@@ -2526,8 +2542,8 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbShardHandle cHandle,
    }
    if ( primaryData )
    {
-      rc = _sdbShardExtractNode ( r->_sock, handle, primaryData,
-                                         r->_endianConvert ) ;
+      rc = _sdbShardExtractNode ( cHandle, handle, primaryData,
+                                  r->_endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -2650,8 +2666,8 @@ retry :
    }
    if ( primaryData )
    {
-      rc = _sdbShardExtractNode ( r->_sock, handle, primaryData,
-                                         r->_endianConvert ) ;
+      rc = _sdbShardExtractNode ( cHandle, handle, primaryData,
+                                  r->_endianConvert ) ;
       if ( rc )
       {
          goto error ;
@@ -2765,9 +2781,9 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbShardHandle cHandle,
       // loop for all elements in Group
       while ( bson_iterator_next ( &i ) )
       {
-         rc = _sdbShardExtractNode ( r->_sock, handle,
-               (CHAR*)bson_iterator_value ( &i ),
-               r->_endianConvert ) ;
+         rc = _sdbShardExtractNode ( cHandle, handle,
+                (CHAR*)bson_iterator_value ( &i ),
+                 r->_endianConvert ) ;
          if ( rc )
          {
             goto error ;
