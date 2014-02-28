@@ -2,6 +2,7 @@
 
 # define root path
 testRoot="testcases/hlt/js_testcases/js"
+libRoot="testcases/hlt/js_testcases/libs"
 sdbRoot="bin"
 csprefix="local_test"
 coordsvcname="50000"
@@ -99,6 +100,22 @@ function prepareRun()
    fi
 }
 
+function runJSFile()
+{
+   result=0 ;
+   if [ $printOut -ne 0 ] ; then
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1"
+      result=$?
+   else
+      if [ ! -d $shortDir ] ; then
+         mkdir -p $shortDir
+      fi
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1" >> ${printOutFile}
+      result=$?
+   fi
+   return $result ;
+}
+
 # ***************************************************************
 # run entry
 # ***************************************************************
@@ -138,7 +155,7 @@ do
    elif [ "$p" = "-h" ] ; then
       readType=5
    elif [ "$p" = "-addpid" ] ; then
-      csprefix=${csprefix}"_$$"
+      csprefix="local_para_$$"
       reportDir=${csprefix}"_report"
    elif [ "$p" == "-print" ] ; then
       printOut=1
@@ -251,16 +268,20 @@ do
       #echo -n "$shortFile   "
       printf "===> %-${showNameWidth}s" $shortFile
    fi
+
+   # run prepare for testcase
+   runJSFile "${libRoot}/before_usecase.js"
+
    testcaseBTimeSec=`date +%s`
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    if [ $printOut -ne 0 ] ; then
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile"
       ret=$?
    else
       if [ ! -d $shortDir ] ; then
          mkdir -p $shortDir
       fi
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "testcases/hlt/js_testcases/libs/func.js,$testFile" >> ${printOutFile}
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile" >> ${printOutFile}
       ret=$?
    fi
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
@@ -274,15 +295,20 @@ do
       #printResult "$shortFile --- [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
       printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Failed ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
       echo -e "\033[31;49;1m [ Failed:$failedNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
-      if [ $stopWhenFailed -ne 0 ] ; then
-         break
-      fi
    else
       sucNum=`expr $sucNum + 1`
       #printResult "$shortFile --- [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
       printResult "$(printf "===> %-${showNameWidth}s" $shortFile) [ Done ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s)"
       echo -e "\033[32;49;1m [ Done:$sucNum ] `expr $testcaseETimeSec - $testcaseBTimeSec`(s) \033[39;49;0m"
    fi
+
+   # run clear for testcase
+   runJSFile "${libRoot}/after_usecase.js"
+
+   if [ $ret -ne 0 -a $stopWhenFailed -ne 0 ] ; then
+      break ;
+   fi
+
    if [ $printOut -ne 0 ] ; then
       echo ""
    fi
