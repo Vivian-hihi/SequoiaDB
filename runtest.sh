@@ -254,13 +254,13 @@ do
    testcaseBTimeSec=`date +%s`
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    if [ $printOut -ne 0 ] ; then
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}; var COORDHOSTNAME=${coordhostname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "testcases/hlt/js_testcases/libs/func.js,$testFile"
       ret=$?
    else
       if [ ! -d $shortDir ] ; then
          mkdir -p $shortDir
       fi
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME=${coordsvcname}; var COORDHOSTNAME=${coordhostname}" -f "testcases/hlt/js_testcases/libs/func.js,$testFile" >> ${printOutFile}
+      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "testcases/hlt/js_testcases/libs/func.js,$testFile" >> ${printOutFile}
       ret=$?
    fi
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
