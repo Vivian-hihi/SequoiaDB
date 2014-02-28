@@ -2055,7 +2055,8 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
         iPageSize != SDB_PAGESIZE_8K &&
         iPageSize != SDB_PAGESIZE_16K &&
         iPageSize != SDB_PAGESIZE_32K &&
-        iPageSize != SDB_PAGESIZE_64K )
+        iPageSize != SDB_PAGESIZE_64K &&
+        iPageSize != SDB_PAGESIZE_DEFAULT )
    {
       rc = SDB_INVALIDARG ;
       goto error ;

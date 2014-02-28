@@ -16,7 +16,8 @@ SDB_EXTERN_C_START
 #define SDB_PAGESIZE_16K          16384
 #define SDB_PAGESIZE_32K          32768
 #define SDB_PAGESIZE_64K          65536
-#define SDB_PAGESIZE_DEFAULT      SDB_PAGESIZE_4K
+/** 0 means using database's default pagesize, it 64k now */
+#define SDB_PAGESIZE_DEFAULT      0
 
 #define SDB_SNAP_CONTEXTS         0
 #define SDB_SNAP_CONTEXTS_CURRENT 1
@@ -438,7 +439,7 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
-                                          CHAR **ppShardName ) ;
+                                   CHAR **ppShardName ) ;
 
 /** \fn BOOLEAN sdbIsShardCatalog ( sdbShardHandle cHandle )
     \brief Test whether the specified shard is catalog
@@ -449,9 +450,9 @@ SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
 SDB_EXPORT BOOLEAN sdbIsShardCatalog ( sdbShardHandle cHandle ) ;
 
 /** \fn INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
-                                            const CHAR *pCollectionSpaceName,
-                                            INT32 iPageSize,
-                                            sdbCSHandle *handle )
+                                         const CHAR *pCollectionSpaceName,
+                                         INT32 iPageSize,
+                                         sdbCSHandle *handle )
     \brief Create the specified collection space
     \param [in] cHandle The database connection handle
     \param [in] pCollectionSpaceName The name of collection space

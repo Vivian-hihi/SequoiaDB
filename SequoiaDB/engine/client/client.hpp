@@ -48,7 +48,8 @@
 #define SDB_PAGESIZE_16K          16384
 #define SDB_PAGESIZE_32K          32768
 #define SDB_PAGESIZE_64K          65536
-#define SDB_PAGESIZE_DEFAULT      SDB_PAGESIZE_4K
+/** 0 means using database's default pagesize, it 64k now */
+#define SDB_PAGESIZE_DEFAULT      0
 
 #define SDB_SNAP_CONTEXTS         0
 #define SDB_SNAP_CONTEXTS_CURRENT 1
@@ -2390,7 +2391,7 @@ namespace sdbclient
                                     INT32 iPageSize,
                                     _sdbCollectionSpace **cs
                                   )
-    \brief Create the specified collection space with default SDB_PAGESIZE_4K.
+    \brief Create collection space with specified pagesize.
     \param [in] pCollectionSpaceName The name of collection space.
     \param [in] iPageSize The Page Size as below
 
@@ -2417,11 +2418,11 @@ namespace sdbclient
       }
 
 
-/** \fn       INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
-                                    INT32 iPageSize,
-                                    sdbCollectionSpace &cs
-                                  )
-    \brief Create the specified collection space with default SDB_PAGESIZE_4K.
+/** \fn INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                      INT32 iPageSize,
+                                      sdbCollectionSpace &cs
+                                     )
+    \brief Create collection space with specified pagesize.
     \param [in] pCollectionSpaceName The name of collection space.
     \param [in] iPageSize The Page Size as below
 
