@@ -2675,7 +2675,9 @@ namespace engine
          || SDB_CLS_NODE_NOT_ENOUGH == retCode
          || SDB_CLS_NO_CATALOG_INFO == retCode
          || SDB_NETWORK == retCode
-         || SDB_NET_CANNOT_CONNECT == retCode )
+         || SDB_NET_CANNOT_CONNECT == retCode
+         || SDB_CLS_GRP_NOT_EXIST == retCode
+         || SDB_CLS_NODE_NOT_EXIST == retCode )
       {
          return TRUE ;
       }
