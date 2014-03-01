@@ -103,7 +103,7 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
-   if [ $printOut -ne 0 ] ; then
+   if [ $printOut -ne 0 -o $# -gt 1 ] ; then
       $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1"
       result=$?
    else
@@ -239,6 +239,16 @@ printOutFile=""
 shortDir=""
 beginTime=`date`
 beginTimeSec=`date +%s`
+
+# before all test-cases running
+printStr="$(runJSFile "${libRoot}/all_prepare.js" 0 )"
+if [ "$printStr" != "" ] ; then
+   printResult "+++++++++++++++++++++++++++++++++++++++++++++++"
+   printResult "$printStr"
+   printResult "-----------------------------------------------"
+   printResult ""
+fi
+
 for file in $($findCmdStr)
 do
    shortFile="${file#$testRoot/}"
@@ -315,6 +325,15 @@ do
 done
 endTime=`date`
 endTimeSec=`date +%s`
+
+# after all test-cases clear
+printStr="$(runJSFile "${libRoot}/all_clean.js" 0)"
+if [ "$printStr" != "" ] ; then
+   printResult ""
+   printResult "++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+   printResult "$printStr"
+   printResult "--------------------------------------------------------"
+fi
 
 # destory db connection
 $sdbRoot/sdb -s "try { db.close() ; } catch( e ) {} "
