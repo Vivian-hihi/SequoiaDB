@@ -30,10 +30,11 @@ testcaseBTimeSec=0
 testcaseETimeSec=0
 
 printStr=""
+lastCmdStr=""
 
 # define ignore path and file
 pathArray=("vote")
-fileArray=("libs.js")
+fileArray=("commlib.js")
 
 # common function
 function display()
@@ -103,13 +104,16 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
+   lastCmdStr="$sdbRoot/sdb -e \"var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'\" -f \"${libRoot}/func.js,$1\""
    if [ $printOut -ne 0 -o $# -gt 1 ] ; then
+      echo "CMD: $lastCmdStr"
       $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1"
       result=$?
    else
       if [ ! -d $shortDir ] ; then
          mkdir -p $shortDir
       fi
+      echo "CMD: $lastCmdStr" >> ${printOutFile}
       $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1" >> ${printOutFile}
       result=$?
    fi
@@ -172,11 +176,11 @@ fi
 
 if [ "$testFile" != "" ] ; then
    testDir="$testFile"
+   unset fileArray
 fi
 
 if [ "$testDir" != "$testRoot" ] ; then
    unset pathArray
-   unset fileArray
 fi
 
 # construct exclude dirs and exclude files
@@ -191,7 +195,7 @@ do
    if [ "$pathString" != "" ] ; then
       pathString=${pathString}" -o "
    fi
-   pathString=${pathString}"-path ""\""${data}"\""
+   pathString=${pathString}"-path ""\""*/${data}"\""
    beginPrefix=" "
    endPrefix=" -prune -o  "
 done
@@ -207,7 +211,7 @@ do
 done
 
 # construct find command
-findCmdStr=${findCmdStr}${beginPrefix}${pathString}${fileString}${endPrefix}"-type f -print"
+findCmdStr=${findCmdStr}${beginPrefix}"\( "${pathString}${fileString}" \)"${endPrefix}"-type f -print"
 echo "*******************************************************************************"
 echo "CSPREFIX     : $csprefix"
 echo "COORDSVCNAME : $coordsvcname"
@@ -215,10 +219,11 @@ echo "COORDSVCHOST : $coordhostname"
 echo "Find command : $findCmdStr"
 echo "*******************************************************************************"
 
-#for file in $($findCmdStr)
+#for file in `eval $findCmdStr`
 #do
 #   echo ${file}
 #done
+#exit 0
 
 # begin to test...
 echo ""
@@ -249,7 +254,7 @@ if [ "$printStr" != "" ] ; then
    printResult ""
 fi
 
-for file in $($findCmdStr)
+for file in `eval $findCmdStr`
 do
    shortFile="${file#$testRoot/}"
    shortDir="${shortFile%/*}"
@@ -284,16 +289,18 @@ do
 
    testcaseBTimeSec=`date +%s`
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
-   if [ $printOut -ne 0 ] ; then
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile"
-      ret=$?
-   else
-      if [ ! -d $shortDir ] ; then
-         mkdir -p $shortDir
-      fi
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile" >> ${printOutFile}
-      ret=$?
-   fi
+   runJSFile "$testFile"
+   ret=$?
+   #if [ $printOut -ne 0 ] ; then
+   #   $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile"
+   #   ret=$?
+   #else
+   #   if [ ! -d $shortDir ] ; then
+   #      mkdir -p $shortDir
+   #   fi
+   #   $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile" >> ${printOutFile}
+   #   ret=$?
+   #fi
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
    testcaseETimeSec=`date +%s`
    if [ $printOut -ne 0 ] ; then
