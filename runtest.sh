@@ -211,7 +211,11 @@ do
 done
 
 # construct find command
-findCmdStr=${findCmdStr}${beginPrefix}"\( "${pathString}${fileString}" \)"${endPrefix}"-type f -print"
+if [ "$pathString" != "" -o "$fileString" != "" ] ; then
+   findCmdStr=${findCmdStr}${beginPrefix}"\( "${pathString}${fileString}" \)"${endPrefix}"-type f -print"
+else
+   findCmdStr=${findCmdStr}${beginPrefix}${endPrefix}"-type f -print"
+fi
 echo "*******************************************************************************"
 echo "CSPREFIX     : $csprefix"
 echo "COORDSVCNAME : $coordsvcname"
