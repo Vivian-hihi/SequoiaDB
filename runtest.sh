@@ -265,7 +265,7 @@ do
    fi
 
    libJSStr="${file%/*}"
-   libJSStr=${libJSStr}${commlibstr}
+   libJSStr=${libJSStr}/${commlibstr}
    if [ -e $libJSStr ] ; then
       testFile=${libJSStr}","${file}
    else
