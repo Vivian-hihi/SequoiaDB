@@ -271,14 +271,13 @@ public class Sequoiadb {
 		// client not connect to database or client 
 		// disconnect from database
 		if ( connection == null || connection.isClosed() )
-			return true;
+			return false;
 		try{
 			sendKillContextMsg();
 		}catch(BaseException e){
-			return true;
+			return false;
 		}
-		// connection is closed by server or network error
-		return false;
+		return true;
 	}
 	
 	/**
@@ -1589,7 +1588,7 @@ public class Sequoiadb {
 
 	private void sendKillContextMsg() {
 		if (connection == null )
-			return;
+			throw new BaseException("SDB_NETWORK");
 		long[] contextIds = new long[] { -1 };
 		byte[] request = SDBMessageHelper.buildKillCursorMsg(0, contextIds,
 				endianConvert);
