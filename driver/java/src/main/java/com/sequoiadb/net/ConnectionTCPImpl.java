@@ -128,6 +128,13 @@ public class ConnectionTCPImpl implements IConnection {
 		logger.getInstance().save();
 	}
 
+	//@Override
+	public boolean isClosed() {
+		if (clientSocket == null)
+			return true;
+		return clientSocket.isClosed();
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 

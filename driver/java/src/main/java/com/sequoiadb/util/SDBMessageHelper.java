@@ -982,6 +982,8 @@ public class SDBMessageHelper {
 		return endianConvert;
 	}
 
+
+	
 	// little endian => big endian
 	public static void bsonEndianConvert(byte[] inBytes, int offset,
 			int objSize, boolean l2r) {

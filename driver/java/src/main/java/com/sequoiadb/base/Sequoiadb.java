@@ -252,6 +252,36 @@ public class Sequoiadb {
 	}
 
 	/**
+	 * @fn boolean isClosed()
+	 * @brief Judge wether the connection is connected or not.
+	 * @return if the connection is connected, return true
+	 */
+	public boolean isClosed(){
+		if (connection == null)
+			return true;
+		return connection.isClosed();
+	}
+	
+	/**
+	 * @fn boolean isValid()
+	 * @brief Judge wether the connection is valid or not.
+	 * @return if the connection is valid, return true
+	 */
+	public boolean isValid(){
+		// client not connect to database or client 
+		// disconnect from database
+		if ( connection == null || connection.isClosed() )
+			return true;
+		try{
+			sendKillContextMsg();
+		}catch(BaseException e){
+			return true;
+		}
+		// connection is closed by server or network error
+		return false;
+	}
+	
+	/**
 	 * @fn void changeConnectionOptions(ConfigOptions opts)
 	 * @brief Change the connection options.
 	 * @param opts
@@ -1170,6 +1200,18 @@ public class Sequoiadb {
 	}
 	
 	/**
+	 * @fn void closeAllCursors()
+	 * @brief Close all the cursors created in current connection, we can't use those cursors to get
+     *        data again.
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public void closeAllCursors() throws BaseException {
+		byte[] request = SDBMessageHelper.buildTransactionRequest(
+				SequoiadbConstants.Operation.MSG_BS_INTERRUPTE, endianConvert);
+		connection.sendMessage(request);
+	}
+	
+	/**
 	 * @fn boolean isEndianConvert()
 	 * @brief Judge the endian of the physical computer
 	 * @return Big-Endian for true while Little-Endian for false
@@ -1544,5 +1586,23 @@ public class Sequoiadb {
 				.msgExtractSysInfoReply(connection.receiveSysInfoMsg(128));
 		return endianConvert;
 	}
+
+	private void sendKillContextMsg() {
+		if (connection == null )
+			return;
+		long[] contextIds = new long[] { -1 };
+		byte[] request = SDBMessageHelper.buildKillCursorMsg(0, contextIds,
+				endianConvert);
+		connection.sendMessage(request);
+
+		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
+		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		int flags = rtnSDBMessage.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags);
+		}
+
+	}
+	
 
 }

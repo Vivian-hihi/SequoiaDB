@@ -25,6 +25,7 @@ import com.sequoiadb.exception.BaseException;
 public interface IConnection {
 	public void initialize() throws BaseException;
 	public void close();
+	public boolean isClosed();
 	
 	public void setEndianConvert(boolean endianConvert);
 	public boolean isEndianConvert();
@@ -38,5 +39,6 @@ public interface IConnection {
 	public byte[] receiveSysInfoMsg(int msgSize) throws BaseException;
 	
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException;
+
 
 }
