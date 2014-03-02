@@ -127,6 +127,8 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
       /// do not use IN coz windows
       const static INT32   INN = 50;
       const static INT32   NOT = 51;
+      const static INT32   NULLL = 52;
+      const static INT32   IS = 53;
          /// trem end
 
          /// factor start
@@ -197,6 +199,8 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
          SQL_RULE(INN) in;
          SQL_RULE(NOT) nott;
          SQL_RULE(SPLITBY) splitby ;
+         SQL_RULE(NULLL) nulll ;
+         SQL_RULE(IS) is;
 
          SQL_RULE(DBATTR) dbattr ;
 
@@ -296,6 +300,10 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
             like = as_lower_d[str_p("like")] ;
 
             in = as_lower_d[str_p("in")];
+
+            nulll = as_lower_d[str_p("null")] ;
+
+            is = as_lower_d[str_p("is")] ;
 
             lbrackets = ch_p('(') ;
 
@@ -418,9 +426,9 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
             wFactor = ( dbattr
                         >> SQL_BLANKORNO
                         >> root_node_d[(eg|lte|gte
-                                        |ne|lt|gt)]
+                                        |ne|lt|gt|is)]
                         >> SQL_BLANKORNO
-                        >> ( digital | str | date |dbattr) )
+                        >> ( digital | nulll |str | date |dbattr) )
                       |( dbattr
                          >> SQL_BLANK
                          >> root_node_d[in]

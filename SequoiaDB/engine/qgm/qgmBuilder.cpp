@@ -2313,7 +2313,8 @@ namespace engine
                 || SQL_GRAMMAR::AND == type
                 || SQL_GRAMMAR::OR == type
                 || SQL_GRAMMAR::LIKE == type
-                || SQL_GRAMMAR::INN == type )
+                || SQL_GRAMMAR::INN == type
+                || SQL_GRAMMAR::IS == type )
       {
          PD_CHECK( 2 == root->children.size(),
                    SDB_INVALIDARG,
@@ -2433,6 +2434,16 @@ namespace engine
          rc = _param->addConst( f, condition->var ) ;
          if ( SDB_OK != rc )
          {
+            goto error ;
+         }
+      }
+      else if ( SQL_GRAMMAR::NULLL == type )
+      {
+         condition = SDB_OSS_NEW qgmConditionNode( type ) ;
+         if ( NULL == condition )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem" ) ;
+            rc = SDB_OOM ;
             goto error ;
          }
       }

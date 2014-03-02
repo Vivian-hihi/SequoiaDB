@@ -274,7 +274,8 @@ namespace engine
            || SQL_GRAMMAR::OR == node->type
            || SQL_GRAMMAR::LIKE == node->type
            || SQL_GRAMMAR::INN == node->type
-           || SQL_GRAMMAR::NOT == node->type )
+           || SQL_GRAMMAR::NOT == node->type
+           || SQL_GRAMMAR::IS == node->type )
       {
          BSONObjBuilder builder ;
          BSONObj left, right ;
@@ -405,6 +406,17 @@ namespace engine
             notBuilder.append( left ) ;
             builder.append( "$not", notBuilder.arr() ) ;
          }
+         else if ( SQL_GRAMMAR::IS == node->type )
+         {
+            stringstream ssLeft ;
+            rc = _toString( node->left, ssLeft, keepAlias ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            builder.append( ssLeft.str(),
+                            toBson( node->right, "$et", 3 ) ) ;
+         }
          else
          {
             PD_LOG( PDERROR, "invalid node type:%d", node->type ) ;
@@ -459,6 +471,10 @@ namespace engine
          {
             builder.appendNull( str ) ;
          }
+      }
+      else if ( SQL_GRAMMAR::NULLL == node->type )
+      {
+         builder.appendNull( str ) ;
       }
       else
       {
