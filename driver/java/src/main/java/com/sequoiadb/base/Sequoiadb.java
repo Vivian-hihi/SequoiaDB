@@ -256,7 +256,7 @@ public class Sequoiadb {
 	 * @brief Judge wether the connection is connected or not.
 	 * @return if the connection is connected, return true
 	 */
-	public boolean isClosed(){
+	private boolean isClosed(){
 		if (connection == null)
 			return true;
 		return connection.isClosed();
