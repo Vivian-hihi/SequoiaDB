@@ -2355,6 +2355,27 @@ namespace engine
             }
          }
       }
+      else if ( SQL_GRAMMAR::NOT == type )
+      {
+         PD_CHECK( 1 == root->children.size(),
+                   SDB_INVALIDARG,
+                   error, PDERROR,
+                   "invalid children size:%d",
+                   root->children.size() ) ;
+         condition = SDB_OSS_NEW qgmConditionNode( type ) ;
+         if ( NULL == condition )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         rc = _buildCondition( root->children.begin(),
+                               condition->left);
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
       else if ( SQL_GRAMMAR::DIGITAL == type
                 || SQL_GRAMMAR::STR == type )
       {

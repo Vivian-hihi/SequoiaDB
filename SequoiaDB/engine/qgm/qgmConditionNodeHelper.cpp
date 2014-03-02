@@ -273,7 +273,8 @@ namespace engine
            || SQL_GRAMMAR::AND == node->type
            || SQL_GRAMMAR::OR == node->type
            || SQL_GRAMMAR::LIKE == node->type
-           || SQL_GRAMMAR::INN == node->type )
+           || SQL_GRAMMAR::INN == node->type
+           || SQL_GRAMMAR::NOT == node->type )
       {
          BSONObjBuilder builder ;
          BSONObj left, right ;
@@ -392,6 +393,17 @@ namespace engine
             }
             builder.append( ssLeft.str(),
                             toBson( node->right, "$in",3 ) ) ;
+         }
+         else if ( SQL_GRAMMAR::NOT == node->type )
+         {
+            BSONArrayBuilder notBuilder ;
+            rc = _crtBson( node->left, left, keepAlias ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
+            notBuilder.append( left ) ;
+            builder.append( "$not", notBuilder.arr() ) ;
          }
          else
          {

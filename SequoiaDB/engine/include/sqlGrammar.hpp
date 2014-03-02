@@ -126,6 +126,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
 
       /// do not use IN coz windows
       const static INT32   INN = 50;
+      const static INT32   NOT = 51;
          /// trem end
 
          /// factor start
@@ -194,6 +195,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
          SQL_RULE(DATE) date ;
          SQL_RULE(LIKE) like ;
          SQL_RULE(INN) in;
+         SQL_RULE(NOT) nott;
          SQL_RULE(SPLITBY) splitby ;
 
          SQL_RULE(DBATTR) dbattr ;
@@ -276,6 +278,8 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
             orr = as_lower_d[str_p("or")] ;
 
             andd = as_lower_d[str_p("and")] ;
+
+            nott = as_lower_d[str_p("not")] ;
 
             eg = ch_p('=') ;
 
@@ -431,7 +435,8 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                       >> SQL_BLANKORNO
                                       >> wCondition
                                       >> SQL_BLANKORNO
-                                      >> rbrackets]) ;
+                                      >> rbrackets])
+                      | root_node_d[nott] >> SQL_BLANK >> wFactor;
 
             oFactor = ( dbattr
                         >> SQL_BLANKORNO
@@ -445,7 +450,7 @@ typedef SQL_CONTAINER::const_iterator SQL_CON_ITR ;
                                       >> SQL_BLANKORNO
                                       >> rbrackets]) ;
 
-            wCondition = wFactor % ( SQL_BLANK
+            wCondition =  wFactor % ( SQL_BLANK
                                      >> (root_node_d[(andd | orr)])
                                      >> SQL_BLANK ) ;
 
