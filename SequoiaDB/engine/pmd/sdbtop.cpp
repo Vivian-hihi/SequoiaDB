@@ -1,3 +1,37 @@
+/*******************************************************************************
+
+   OCO SOURCE MATERIALS
+
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
+
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
+
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
+
+   Source File Name = sdbimprt.cpp
+
+   Descriptive Name = Import Utility
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains main function for sdbimprt
+   which is used to do data import
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          01/25/2014  YB R  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #include "../client/client.hpp"
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
@@ -156,7 +190,10 @@ namespace po = boost::program_options;
 #define ABSOLUTE "ABSOLUTE"
 #define AVERAGE "AVERAGE"
 const INT32 DISPLAYMODENUMBER = 3;
-const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE };
+const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
+                                                       DELTA,
+                                                       AVERAGE 
+                                                     };
 
 #define ANYVALUE 0
 
@@ -165,12 +202,11 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 #define GROUP "GROUP"
 #define NODE "NODE"
 
+#define SDB_ERROR -1
 #define HEADER_NULL -1
 #define FOOTER_NULL -1
 
-#define SDB_OK 0
 #define SDB_SDBTOP_DONE 1
-#define SDB_ERROR -1
 
 //forcedToRefresh_Local 
 //forcedToRefresh_Global
@@ -180,15 +216,15 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 //foreGroundColor
 //backGroundColor
 //all had included in ncurses.h , don't redefine
-/*#define COLOR_BLACK   0
-#define COLOR_RED 1
-#define COLOR_GREEN  2
-#define COLOR_YELLOW 3
-#define COLOR_BLUE   4
-#define COLOR_MAGENTA   5
-#define COLOR_CYAN   6
-#define COLOR_WHITE  7*/
-
+//#define COLOR_BLACK   0
+//#define COLOR_RED 1
+//#define COLOR_GREEN  2
+//#define COLOR_YELLOW 3
+//#define COLOR_BLUE   4
+//#define COLOR_MAGENTA   5
+//#define COLOR_CYAN   6
+//#define COLOR_WHITE  7
+#define COLOR_MULTIPLE 8
 //if keypad( stdscr, TRUE ) ;
 //#define BUTTON_LEFT 4476699
 //#define BUTTON_RIGHT 4411163
@@ -202,9 +238,12 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE, DELTA, AVERAGE 
 #define BUTTON_Q_LOWER 'q'
 #define BUTTON_F5 542058306331
 
-CHAR* HELP_Header = "[Help for SDBTOP]"; //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
+//DISPLAYTYPE_STATICTEXT_HELP_Header outputText
+CHAR* HELP_Header = "[Help for SDBTOP]";
+//DISPLAYTYPE_STATICTEXT_HELP_Header outputText
 CHAR* LICENSE_Footer = 
-   "Licensed Materials - Property of SequoiaDB\nCopyright SequoiaDB Corp. 2013-2014 All Rights Reserved. "; //DISPLAYTYPE_STATICTEXT_HELP_Header outputText
+      "Licensed Materials - Property of SequoiaDB\n"
+      "Copyright SequoiaDB Corp. 2013-2014 All Rights Reserved.";
 CHAR* Hello_Body = 
 " #####  ######  ######  ####### ####### ######   For help type h or ...\n"
 "#       #     # #     #    #    #     # #     #  sdbtop -h: usage\n"
@@ -247,7 +286,7 @@ INT32 keySuiteLengthFromConf = 0 ;
 #define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
        ( COMMANDS_STRING(OPTION_HELP, ",h"), "help" )\
-       ( COMMANDS_STRING(OPTION_CONFPATH, ",c"), boost::program_options::value<string>(), "configuration file path" ) \
+       ( COMMANDS_STRING(OPTION_CONFPATH, ",c"),boost::program_options::value<string>(), "configuration file path" ) \
        ( COMMANDS_STRING(OPTION_HOSTNAME, ",i"), boost::program_options::value<string>(), "hostname" ) \
        ( COMMANDS_STRING(OPTION_SERVICENAME, ",s"), boost::program_options::value<string>(), "servicename" ) \
        ( COMMANDS_STRING(OPTION_USRNAME, ",u"), boost::program_options::value<string>(), "usrname" ) \
@@ -257,20 +296,20 @@ struct Colours
 {
    INT32 foreGroundColor ;
    INT32 backGroundColor ;
-};
+} ;
 
 struct StaticTextOutPut
 {
    CHAR *outputText ;
    string   autoSetType ;
    Colours colour ;
-};
+} ;
 
 struct ExpValueStruct
 {
    string text ;
    string expression ;
-};
+} ;
 
 class ExpressionContent : public SDBObject
 {
@@ -281,7 +320,7 @@ public:
    string alignment ;
    Colours colour ;
    INT32 rowLocation ;
-};
+} ;
 
 struct DynamicExpressionOutPut
 {
@@ -289,7 +328,7 @@ struct DynamicExpressionOutPut
    string autoSetType ;
    INT32 expressionNumber ;
    INT32 rowNumber ;
-};
+} ;
 
 struct FiledWarningValue
 {
@@ -301,7 +340,7 @@ struct FiledWarningValue
    
    INT64 averageMaxLimitValue ;
    INT64 averageMinLimitValue ;
-};
+} ;
 
 class FieldStruct : public SDBObject
 {
@@ -317,7 +356,7 @@ public:
    Colours averageColour ;
    BOOLEAN canSwitch ;
    FiledWarningValue warningValue ;
-};
+} ;
 
 struct DynamicSnapshotOutPut
 {
@@ -325,22 +364,28 @@ struct DynamicSnapshotOutPut
    FieldStruct* mobileField ;
    INT32 actualFixedFieldLength ;
    INT32 actualMobileFieldLength ;
-   INT32 fieldLength ; // fieldLength should longer than actualFixedFieldLength + actualMobileFieldLength
+   // fieldLength should longer than actualFixedFieldLength + 
+   //actualMobileFieldLength
+   INT32 fieldLength ;
    string globalAutoSetType ;
    string groupAutoSetType ;
    string nodeAutoSetType ;
    string baseField ;
    INT32 tableCellLength ;
-   string globalStyle ;// TABLE OR LIST
-   string groupStyle ;// TABLE OR LIST
-   string nodeStyle ;// TABLE OR LIST
+   // TABLE OR LIST
+   string globalStyle ;
+   // TABLE OR LIST
+   string groupStyle ;
+   // TABLE OR LIST
+   string nodeStyle ;
    INT32 globalRow ;
    INT32 globalCol ;
    INT32 groupRow ;
    INT32 groupCol ;
    INT32 nodeRow ;
    INT32 nodeCol ;
-};
+} ;
+
 struct DynamicHelp
 {
    INT32 tableRow ;
@@ -349,14 +394,15 @@ struct DynamicHelp
    Colours prefixColour ;
    Colours contentColour ;
    string autoSetType ;
-};
+} ;
+
 struct DisplayContent
 {
    StaticTextOutPut staticTextOutPut ;
    DynamicExpressionOutPut dyExOutPut ;
    DynamicSnapshotOutPut dySnapshotOutPut ;
    DynamicHelp dynamicHelp ;
-};
+} ;
 
 struct Position
 {
@@ -364,7 +410,7 @@ struct Position
    INT32 referUpperLeft_Y ;
    INT32 length_X ;
    INT32 length_Y ;
-};
+} ;
 
 class NodeWindow : public SDBObject
 {
@@ -382,7 +428,8 @@ struct Panel
 {
    NodeWindow* subWindow ;
    INT32 numOfSubWindow ;
-   INT32 numOfSubWindowFromConf ; // need it to free memory
+   // need it to free memory
+   INT32 numOfSubWindowFromConf ;
 };
 
 class HotKey : public SDBObject
@@ -391,7 +438,7 @@ public:
    INT64 button ;
    string jumpType ;
    string jumpName ;
-};
+} ;
 
 class KeySuite : public SDBObject
 {
@@ -399,14 +446,14 @@ public:
    INT64 mark ;
    INT32 hotKeyLength ;
    HotKey *hotKey ;
-};
+} ;
 
 class HeadTailMap : public SDBObject
 {
 public:
    INT32 key ;
    Panel value ;
-};
+} ;
 
 class BodyMap : public SDBObject
 {
@@ -419,12 +466,14 @@ public:
    string sourceSnapShot ;
    string bodyPanelType ;
    string   helpPanelType ;
-};
+} ;
 
 struct InputPanel
 {
-   INT32 displayModeChooser ; // ABSOLUTE or DELTA or AVERAGE .......pos of  DISPLAYMODECHOOSER[]
-   string snapshotModeChooser; // GLOBAL or GROUP or NODE 
+   // ABSOLUTE or DELTA or AVERAGE .......pos of  DISPLAYMODECHOOSER[]
+   INT32 displayModeChooser ;
+   // GLOBAL or GROUP or NODE 
+   string snapshotModeChooser; 
    string groupName ;
    string nodeName ;
    INT32 fieldPosition ;
@@ -434,12 +483,12 @@ struct InputPanel
    BOOLEAN isFirstGetAbsolute ;
    BOOLEAN isFirstGetDelta ;
    BOOLEAN isFirstGetAverage ;
-   map<string, FLOAT64> last_absoluteMap ;
-   map<string, FLOAT64> last_deltaMap ;
-   map<string, FLOAT64> last_averageMap ;
-   map<string, FLOAT64> cur_absoluteMap ;
-   map<string, FLOAT64> cur_deltaMap ;
-   map<string, FLOAT64> cur_averageMap ;
+   map<string, string> last_absoluteMap ;
+   map<string, string> last_deltaMap ;
+   map<string, string> last_averageMap ;
+   map<string, string> cur_absoluteMap ;
+   map<string, string> cur_deltaMap ;
+   map<string, string> cur_averageMap ;
    struct timeval startTime ;
    string confPath ;
    string hostname ;
@@ -457,7 +506,7 @@ struct InputPanel
    string sortingField ;
    string filterCondition ;
    INT32 filterNumber ;
-};
+} ;
 
 struct RootWindow
 {
@@ -474,7 +523,7 @@ struct RootWindow
    InputPanel input ;
    KeySuite *keySuite ;
    INT32 keySuiteLength ;
-};
+} ;
 
 class Event : public SDBObject
 {
@@ -486,46 +535,88 @@ public://consturct function
    ~Event() ;
 public: // operation
    INT32 readConfiguration( ) ;
-   INT32 assignActivatedPanelByLabelName( BodyMap **activatedPanel, string labelName ) ;
-   INT32 assignActivatedPanel( BodyMap **activatedPanel, string bodyPanelType ) ;
-   INT32 getActivatedHeadTailMap(  BodyMap *activatedPanel, HeadTailMap **header, HeadTailMap **footer ) ;
-   INT32 getActualPosition( Position &actualPosition, Position &referPosition,
-                            const string zoomMode, const string occupyMode ) ;
+   
+   INT32 assignActivatedPanelByLabelName( BodyMap **activatedPanel,
+                                          string labelName ) ;
+   
+   INT32 assignActivatedPanel( BodyMap **activatedPanel,
+                               string bodyPanelType ) ;
+                               
+   INT32 getActivatedHeadTailMap(  BodyMap *activatedPanel,
+                                   HeadTailMap **header,
+                                   HeadTailMap **footer ) ;
+                                   
+   INT32 getActualPosition( Position &actualPosition,
+                            Position &referPosition,
+                            const string zoomMode,
+                            const string occupyMode ) ;
+                            
    INT32 getActivatedKeySuite( KeySuite **keySuite ) ;
-   inline INT32 getTopKey_TOP( CHAR *keyBuffer, INT64 &key ) ;
+   
+   inline INT32 getTopKey_TOP( CHAR *keyBuffer,
+                               INT64 &key ) ;
    INT32 SDBTOP_strTOnum( const CHAR *str, INT32 &number ) ;
-   INT32 SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const CHAR *PSrc ) ;
+   INT32 SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer,
+                                   INT32 &printfLength, const CHAR *PSrc ) ;
    INT32 MVPRINTW_TOP( string &expression, INT32 expressionLength,
                        string alignment, INT32 start_row, INT32 start_col ) ;
+                       
    void getPairNumber_ColourOfTheMax( INT32 &colourPairNumber ) ;
+   
    void getPairNumber_ColourOfTheMin( INT32 &colourPairNumber ) ;
+   
    void getPairNumber_ColourOfTheChange( INT32 &colourPairNumber ) ;
-   INT32 getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceField,
-                               const string &displayMode, string &result, BOOLEAN canSwitch,
-                               const string& baseField, const FiledWarningValue& waringValue,
+   INT32 getResultFromBSONObj( const BSONObj &bsonobj,
+                               const string &sourceField,
+                               const string &displayMode,
+                               string &result, BOOLEAN canSwitch,
+                               const string& baseField,
+                               const FiledWarningValue& waringValue,
                                INT32 &colourPairNumber ) ;
+                               
    INT32 getExpression( string& expression, string& result ) ;
+   
    INT32 getCurSnapshot() ;
-   INT32 fixedOutputLocation( INT32 start_row, INT32 start_col, INT32 &fixed_row,
-                              INT32 &fixed_col, INT32 referRowLength,INT32 referColLength,
+   
+   INT32 fixedOutputLocation( INT32 start_row, INT32 start_col,
+                              INT32 &fixed_row, INT32 &fixed_col,
+                              INT32 referRowLength, INT32 referColLength,
                               string displayType, string autoSetType ) ;
+                              
    INT32 getFieldStructNameAndColour( const FieldStruct &fieldStruct,
-                                      const string &displayMode, string &fieldName, Colours &fieldColour ) ;
+                                      const string &displayMode,
+                                      string &fieldName,
+                                      Colours &fieldColour ) ;
+                                      
    INT32 refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
-                                                 string displayType, Position &actualPosition ) ;
-   INT32 refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayContent,
-                                                 string displayType, Position &actualPosition ) ;
+                                                 string displayType,
+                                                 Position &actualPosition ) ;
+                                                 
+   INT32 refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION(
+         DisplayContent &displayContent,
+         string displayType, Position &actualPosition ) ;
+         
    INT32 refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayContent,
-                                               string displayType, Position &actualPosition ) ;
+                                               string displayType,
+                                               Position &actualPosition ) ;
    INT32 refreshDisplayContent( DisplayContent &displayContent,
-                                string displayType, Position &actualPosition ) ;
+                                string displayType,
+                                Position &actualPosition ) ;
+                                
    INT32 refreshNodeWindow( NodeWindow &window ) ;
+   
    INT32 refreshHeadTail( HeadTailMap *headtail ) ;
+   
    INT32 refreshBody( BodyMap *body ) ;
+   
    void initAllColourPairs() ;
+   
    INT32 addFixedHotKey() ;
+   
    INT32 findSourceFieldByDisplayName( const string DisplayName ) ;
+   
    INT32 buttonManagement( INT64 key ,BOOLEAN isFirstStart ) ;
+   
    INT32 runSDBTOP( ) ;
 };
 
@@ -591,23 +682,28 @@ error :
    goto done ;
 }
 
-INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, string displayType )
+INT32 readDisplayContent( ptree pt_displayContent,
+                          DisplayContent &display, string displayType )
 {
    INT32 rc = SDB_OK ;
    if( displayType == DISPLAYTYPE_STATICTEXT_HELP_Header )
    {
       try
       {
-         display.staticTextOutPut.autoSetType = pt_displayContent.get<string>( "autoSetType" ) ;
-         display.staticTextOutPut.colour.foreGroundColor = pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
-         display.staticTextOutPut.colour.backGroundColor = pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
+         display.staticTextOutPut.autoSetType =
+               pt_displayContent.get<string>( "autoSetType" ) ;
+         display.staticTextOutPut.colour.foreGroundColor =
+               pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
+         display.staticTextOutPut.colour.backGroundColor =
+               pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
          display.staticTextOutPut.outputText = HELP_Header ;
       }
       catch( std::exception &e )
       {
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
-                   "(displayType == DISPLAYTYPE_STATICTEXT_HELP_Header), e.what():%s\n",
+                   "(displayType == DISPLAYTYPE_STATICTEXT_HELP_Header), "
+                   "e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error ;
       }
@@ -616,16 +712,20 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
    {
       try
       {
-         display.staticTextOutPut.autoSetType = pt_displayContent.get<string>( "autoSetType" ) ;
-         display.staticTextOutPut.colour.foreGroundColor = pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
-         display.staticTextOutPut.colour.backGroundColor = pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
+         display.staticTextOutPut.autoSetType =
+               pt_displayContent.get<string>( "autoSetType" ) ;
+         display.staticTextOutPut.colour.foreGroundColor =
+               pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
+         display.staticTextOutPut.colour.backGroundColor =
+               pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
          display.staticTextOutPut.outputText = LICENSE_Footer ;
       }
       catch( std::exception &e )
       {
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
-                   "(displayType == DISPLAYTYPE_STATICTEXT_LICENSE), e.what():%s\n",
+                   "(displayType == DISPLAYTYPE_STATICTEXT_LICENSE), "
+                   "e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error ;
       }
@@ -634,16 +734,20 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
    {
       try
       {
-         display.staticTextOutPut.autoSetType = pt_displayContent.get<string>( "autoSetType" ) ;
-         display.staticTextOutPut.colour.foreGroundColor = pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
-         display.staticTextOutPut.colour.backGroundColor = pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
+         display.staticTextOutPut.autoSetType =
+               pt_displayContent.get<string>( "autoSetType" ) ;
+         display.staticTextOutPut.colour.foreGroundColor =
+               pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
+         display.staticTextOutPut.colour.backGroundColor =
+               pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
          display.staticTextOutPut.outputText = Hello_Body ;
       }
       catch( std::exception &e )
       {
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
-                   "(displayType == DISPLAYTYPE_STATICTEXT_MAIN), e.what():%s\n",
+                   "(displayType == DISPLAYTYPE_STATICTEXT_MAIN), "
+                   "e.what():%s\n",
                    errStrBuf, e.what() ) ;
          goto error;
       }
@@ -652,9 +756,12 @@ INT32 readDisplayContent( ptree pt_displayContent, DisplayContent& display, stri
    {
       try
       {
-         display.dynamicHelp.autoSetType = pt_displayContent.get<string>( "autoSetType" ) ;
-         display.dynamicHelp.prefixColour.foreGroundColor = pt_displayContent.get<INT32>( "prefixColour.foreGroundColor" ) ;
-         display.dynamicHelp.prefixColour.backGroundColor = pt_displayContent.get<INT32>( "prefixColour.backGroundColor" ) ;
+         display.dynamicHelp.autoSetType =
+               pt_displayContent.get<string>( "autoSetType" ) ;
+         display.dynamicHelp.prefixColour.foreGroundColor =
+               pt_displayContent.get<INT32>( "prefixColour.foreGroundColor" ) ;
+         display.dynamicHelp.prefixColour.backGroundColor =
+               pt_displayContent.get<INT32>( "prefixColour.backGroundColor" ) ;
          display.dynamicHelp.contentColour.foreGroundColor = pt_displayContent.get<INT32>( "contentColour.foreGroundColor" ) ;
          display.dynamicHelp.contentColour.backGroundColor = pt_displayContent.get<INT32>( "contentColour.backGroundColor" ) ;
          display.dynamicHelp.tableRow = pt_displayContent.get<INT32>( "tableRow" ) ;
@@ -933,7 +1040,8 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
       value.numOfSubWindowFromConf = pt_value.get<INT32>( "numOfSubWindow" ) ;
       value.subWindow = SDB_OSS_NEW NodeWindow[value.numOfSubWindow] ;
       INT32 numOfSubWindow = 0 ;
-      for( BOOST_AUTO( child_value, pt_value.begin() ); child_value != pt_value.end(); ++child_value )
+      for( BOOST_AUTO( child_value, pt_value.begin() );
+           child_value != pt_value.end(); ++child_value )
       {
          if( child_value->first == "NodeWindow" )
          {
@@ -941,13 +1049,18 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
             {
                ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
-                         " numOfSubWindow >= value.numOfSubWindow\n", errStrBuf ) ;
+                         " numOfSubWindow >= value.numOfSubWindow\n",
+                         errStrBuf ) ;
                goto error ;
             }
-            value.subWindow[numOfSubWindow].actualWindowMinRow = child_value->second.get<INT32>( "actualWindowMinRow" ) ;
-            value.subWindow[numOfSubWindow].actualWindowMinColumn = child_value->second.get<INT32>( "actualWindowMinColumn" ) ;
-            value.subWindow[numOfSubWindow].zoomMode = child_value->second.get<string>( "zoomMode" ) ;
-            value.subWindow[numOfSubWindow].displayType = child_value->second.get<string>( "displayType" ) ;
+            value.subWindow[numOfSubWindow].actualWindowMinRow =
+                  child_value->second.get<INT32>( "actualWindowMinRow" ) ;
+            value.subWindow[numOfSubWindow].actualWindowMinColumn =
+                  child_value->second.get<INT32>( "actualWindowMinColumn" ) ;
+            value.subWindow[numOfSubWindow].zoomMode =
+                  child_value->second.get<string>( "zoomMode" ) ;
+            value.subWindow[numOfSubWindow].displayType =
+                  child_value->second.get<string>( "displayType" ) ;
             try
             {
                value.subWindow[numOfSubWindow].occupyMode = child_value->second.get<string>( "occupyMode" ) ;
@@ -956,27 +1069,37 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
             {
                value.subWindow[numOfSubWindow].occupyMode = OCCUPY_MODE_NONE;
             }
-            for( BOOST_AUTO( child_nodewindow, child_value->second.begin() ); child_nodewindow != child_value->second.end(); ++child_nodewindow )
+            for( BOOST_AUTO( child_nodewindow, child_value->second.begin() );
+                 child_nodewindow != child_value->second.end();
+                 ++child_nodewindow )
             {
                if( child_nodewindow->first == "displayContent" )
                {
-                  rc = readDisplayContent( child_nodewindow->second, value.subWindow[numOfSubWindow].displayContent,
-                                 value.subWindow[numOfSubWindow].displayType ) ;
+                  rc =
+                        readDisplayContent( 
+                              child_nodewindow->second,
+                              value.subWindow[numOfSubWindow].displayContent,
+                              value.subWindow[numOfSubWindow].displayType ) ;
                   if( rc)
                   {
                      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                     ossSnprintf( errStr, errStrLength,"%s readPanelValue failed, can't readDisplayContent\n", errStrBuf ) ;
+                     ossSnprintf( errStr, errStrLength,
+                                  "%s readPanelValue failed, "
+                                  "can't readDisplayContent\n", errStrBuf ) ;
                      goto error ;
                   }
                }
                else if( child_nodewindow->first == "position" )
                {
-                  rc = readPosition( child_nodewindow->second, value.subWindow[numOfSubWindow].position ) ;
+                  rc = readPosition(
+                              child_nodewindow->second,
+                              value.subWindow[numOfSubWindow].position ) ;
                   if( rc )
                   {
                      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                     ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
-                               " can't readPosition\n", errStrBuf ) ;
+                     ossSnprintf( errStr, errStrLength,
+                                  "%s readPanelValue failed, "
+                                  "can't readPosition\n", errStrBuf ) ;
                      goto error ;
                   }
                }
@@ -990,7 +1113,7 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
-                " e.what():%s\n", errStrBuf, e.what() ) ;
+                   " e.what():%s\n", errStrBuf, e.what() ) ;
       goto error ;
    }
 done :
@@ -1061,7 +1184,8 @@ Event::~Event()
       numOfSubWindow = root.header[headerLength - 1].value.numOfSubWindow;
       while( numOfSubWindow )
       {
-         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION ==
+               root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
          {
             SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
          }
@@ -1149,26 +1273,44 @@ INT32 Event::readConfiguration( )
       goto error ;
    }
    pt_Event = pt_sdbtopXML.get_child( "Event" ) ;
-   for( BOOST_AUTO( child_event, pt_Event.begin() ); child_event != pt_Event.end(); ++child_event )
+   for( BOOST_AUTO( child_event, pt_Event.begin() );
+        child_event != pt_Event.end(); ++child_event )
    {
       if( child_event->first == "RootWindow" )
       {
          try
          {
-            root.referWindowRow = child_event->second.get<INT32>( "referWindowRow" ) ;
-            root.referWindowColumn = child_event->second.get<INT32>( "referWindowColumn" ) ;
-            root.actualWindowMinRow = child_event->second.get<INT32>( "actualWindowMinRow" );
-            root.actualWindowMinColumn = child_event->second.get<INT32>( "actualWindowMinColumn" ) ;
-            root.input.refreshInterval = child_event->second.get<INT32>( "refreshInterval" ) ;
+            root.referWindowRow =
+                  child_event->second.get<INT32>( "referWindowRow" ) ;
+            root.referWindowColumn =
+                  child_event->second.get<INT32>( "referWindowColumn" ) ;
+            root.actualWindowMinRow =
+                  child_event->second.get<INT32>( "actualWindowMinRow" );
+            root.actualWindowMinColumn =
+                  child_event->second.get<INT32>( "actualWindowMinColumn" ) ;
+            root.input.refreshInterval =
+                  child_event->second.get<INT32>( "refreshInterval" ) ;
             
-            root.input.colourOfTheChange.foreGroundColor = child_event->second.get<INT32>( "colourOfTheChange.foreGroundColor" ) ;
-            root.input.colourOfTheChange.backGroundColor = child_event->second.get<INT32>( "colourOfTheChange.backGroundColor" ) ;
+            root.input.colourOfTheChange.foreGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheChange.foreGroundColor" ) ;
+            root.input.colourOfTheChange.backGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheChange.backGroundColor" ) ;
             
-            root.input.colourOfTheMax.foreGroundColor = child_event->second.get<INT32>( "colourOfTheMax.foreGroundColor" ) ;
-            root.input.colourOfTheMax.backGroundColor = child_event->second.get<INT32>( "colourOfTheMax.backGroundColor" ) ;
+            root.input.colourOfTheMax.foreGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheMax.foreGroundColor" ) ;
+            root.input.colourOfTheMax.backGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheMax.backGroundColor" ) ;
             
-            root.input.colourOfTheMin.foreGroundColor = child_event->second.get<INT32>( "colourOfTheMin.foreGroundColor" ) ;
-            root.input.colourOfTheMin.backGroundColor = child_event->second.get<INT32>( "colourOfTheMin.backGroundColor" ) ;
+            root.input.colourOfTheMin.foreGroundColor =
+                  child_event->second.get<INT32>(
+                  "colourOfTheMin.foreGroundColor" ) ;
+            root.input.colourOfTheMin.backGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheMin.backGroundColor" ) ;
          }
          catch( std::exception &e )
          {
@@ -1178,74 +1320,96 @@ INT32 Event::readConfiguration( )
                       errStrBuf, e.what() ) ;
             goto error ;
          }
-         for( BOOST_AUTO( child_root, child_event->second.begin() ); child_root != child_event->second.end(); ++child_root )
+         for( BOOST_AUTO( child_root, child_event->second.begin() );
+              child_root != child_event->second.end(); ++child_root )
          {
             if( child_root->first == "KeySuites" )
             {
                try
                {
-                  root.keySuiteLength = child_root->second.get<INT32>( "keySuiteLength" ) ;
-                  keySuiteLengthFromConf = child_root->second.get<INT32>( "keySuiteLength" ) ;
+                  root.keySuiteLength =
+                        child_root->second.get<INT32>( "keySuiteLength" ) ;
+                  keySuiteLengthFromConf =
+                        child_root->second.get<INT32>( "keySuiteLength" ) ;
                   root.keySuite = SDB_OSS_NEW KeySuite[root.keySuiteLength] ;
                }
                catch( std::exception &e )
                {
                   ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
-                            " scope: child_root->first ==..... ,e.what():%s\n",
+                  ossSnprintf( errStr, errStrLength,
+                               "%s readConfiguration failed,"
+                               " scope: child_root->first ==..... "
+                               ",e.what():%s\n",
                             errStrBuf, e.what() ) ;
                   goto error ;
                }
                keySuiteLength = 0 ;
-               for( BOOST_AUTO( child_keysuites, child_root->second.begin() ); child_keysuites != child_root->second.end(); ++child_keysuites )
+               for( BOOST_AUTO( child_keysuites, child_root->second.begin() );
+                    child_keysuites != child_root->second.end();
+                    ++child_keysuites )
                {
                   if( child_keysuites->first == "KeySuite" )
                   {
                      if( keySuiteLength >= root.keySuiteLength )
                      {
                         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
-                                  " keySuiteLength >= root.keySuiteLength\n", errStrBuf ) ;
+                        ossSnprintf( errStr, errStrLength,
+                                     "%s readConfiguration failed,"
+                                     " keySuiteLength >="
+                                     "root.keySuiteLength\n", errStrBuf ) ;
                         goto error ;
                      }
                      try
                      {
-                        root.keySuite[keySuiteLength].mark = child_keysuites->second.get<INT64>( "mark" ) ;
-                        root.keySuite[keySuiteLength].hotKeyLength = child_keysuites->second.get<INT32>( "hotKeyLength" ) ;
-                        root.keySuite[keySuiteLength].hotKey = SDB_OSS_NEW HotKey[root.keySuite[keySuiteLength].hotKeyLength ] ;
+                        root.keySuite[keySuiteLength].mark =
+                              child_keysuites->second.get<INT64>( "mark" ) ;
+                        root.keySuite[keySuiteLength].hotKeyLength =
+                              child_keysuites->second.get<INT32>(
+                                    "hotKeyLength" ) ;
+                        root.keySuite[keySuiteLength].hotKey =
+                              SDB_OSS_NEW HotKey[root.keySuite[keySuiteLength].hotKeyLength ] ;
                      }
                      catch( std::exception &e)
                      {
                         ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
-                                  " scope: child_keysuites->first ==..... ,e.what():%s\n",
+                        ossSnprintf( errStr, errStrLength,
+                                     "%s readConfiguration failed,"
+                                     " scope: child_keysuites->first ==..... ,"
+                                     "e.what():%s\n",
                                   errStrBuf, e.what() ) ;
                         goto error ;
                      }
                      hotKeyLength = 0 ;
-                     for( BOOST_AUTO( child_keysuite, child_keysuites->second.begin() ); child_keysuite != child_keysuites->second.end(); ++child_keysuite )
+                     for( BOOST_AUTO( child_keysuite, child_keysuites->second.begin() );
+                          child_keysuite != child_keysuites->second.end(); ++child_keysuite )
                      {
                         if( child_keysuite->first == "HotKey" )
                         {
                            if( hotKeyLength >= root.keySuite[keySuiteLength].hotKeyLength )
                            {
                               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-                              ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
-                                        " hotKeyLength >= root.keySuite[keySuiteLength].hotKeyLength\n", errStrBuf ) ;
+                              ossSnprintf( errStr, errStrLength,
+                                           "%s readConfiguration failed, "
+                                           "hotKeyLength >= "
+                                           "root.keySuite[keySuiteLength].hotKeyLength\n",
+                                           errStrBuf ) ;
                               goto error ;
                            }
                            try
                            {
-                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].button = child_keysuite->second.get<CHAR>( "button" ) ;
-                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].jumpType = child_keysuite->second.get<string>( "jumpType" ) ;
-                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].jumpName = child_keysuite->second.get<string>( "jumpName" ) ;
+                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].button =
+                                    child_keysuite->second.get<CHAR>( "button" ) ;
+                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].jumpType =
+                                    child_keysuite->second.get<string>( "jumpType" ) ;
+                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].jumpName =
+                                    child_keysuite->second.get<string>( "jumpName" ) ;
                            }
                            catch( std::exception &e )
                            {
                               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                               ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
-                                        " scope: child_keysuite->first ==..... ,e.what():%s\n",
-                                        errStrBuf, e.what() ) ;
+                                           " scope: child_keysuite->first ==..... ,e.what():%s\n",
+                                           errStrBuf, e.what() ) ;
                               goto error ;
                            }
                            ++hotKeyLength ;
@@ -1445,7 +1609,9 @@ error :
    goto done ;
 }
 
-INT32 Event::assignActivatedPanel( BodyMap **activatedPanel, string bodyPanelType )
+//find the current actived panel by the bodyPanelType
+INT32 Event::assignActivatedPanel( BodyMap **activatedPanel,
+                                   string bodyPanelType )
 {
    INT32 rc = SDB_OK ;
    INT32 i = 0 ;
@@ -1460,19 +1626,18 @@ INT32 Event::assignActivatedPanel( BodyMap **activatedPanel, string bodyPanelTyp
    }
    if( NULL == *activatedPanel )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   if( SDB_OK == rc )
-   {
-      rc = SDB_ERROR ;
-   }
    goto done ;
 }
 
-INT32 Event::assignActivatedPanelByLabelName( BodyMap **activatedPanel, string labelName )
+//find the current actived panel by the bodyLabelName
+INT32 Event::assignActivatedPanelByLabelName( BodyMap **activatedPanel,
+                                              string labelName )
 {
    INT32 rc = SDB_OK ;
    INT32 i = 0 ;
@@ -1486,17 +1651,20 @@ INT32 Event::assignActivatedPanelByLabelName( BodyMap **activatedPanel, string l
    }
    if( NULL == *activatedPanel )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    root.input.fieldPosition = 0 ;
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
-INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel, HeadTailMap **header, HeadTailMap **footer )
+// find the current actived header and footer from the  actived body
+INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel,
+                                      HeadTailMap **header,
+                                      HeadTailMap **footer )
 {
    INT32 rc = SDB_OK ;
    *header = NULL ;
@@ -1534,15 +1702,17 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel, HeadTailMap **hea
          if( NULL == *header )
          {
             ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            ossSnprintf( errStr, errStrLength, "%s getActivatedHeadTailMap faild,"
-                      " SDB_HEADER_FOOTER_NULL\n", errStrBuf ) ;
+            ossSnprintf( errStr, errStrLength,
+                         "%s getActivatedHeadTailMap faild, "
+                         "SDB_HEADER_FOOTER_NULL\n", errStrBuf ) ;
             goto error ;
          }
          else
          {
             ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            ossSnprintf( errStr, errStrLength, "%s getActivatedHeadTailMap faild,"
-                      " SDB_FOOTER_NULL\n", errStrBuf ) ;
+            ossSnprintf( errStr, errStrLength,
+                         "%s getActivatedHeadTailMap faild, "
+                         "SDB_FOOTER_NULL\n", errStrBuf ) ;
             goto error ;
          }
       }
@@ -1752,8 +1922,8 @@ INT32 Event::getActivatedKeySuite( KeySuite **keySuite )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getActivatedKeySuite failed, e.what():%s\n",
-                errStrBuf, e.what() ) ;
+                   "%s getActivatedKeySuite failed, e.what():%s\n",
+                   errStrBuf, e.what() ) ;
       rc = SDB_ERROR ;
       goto error ;
    }
@@ -1766,13 +1936,12 @@ error :
 inline INT32 Event::getTopKey_TOP( CHAR *keyBuffer, INT64 &key )
 {
    INT32 rc = SDB_OK ;
-   INT32 i = 0 ;
    UINT32 bufLength = 0 ;
    bufLength = ( UINT32 )ossStrlen( keyBuffer ) ;
    if( 0 < bufLength )
    {
       if( 3 <= bufLength && 91 == keyBuffer[bufLength-2]
-                                  && 27 == keyBuffer[bufLength-3] )//check the button whether it is direction button
+                         && 27 == keyBuffer[bufLength-3] )//check the button whether it is direction button
       {
          if( 68 == keyBuffer[bufLength-1] )
          {
@@ -1791,9 +1960,9 @@ inline INT32 Event::getTopKey_TOP( CHAR *keyBuffer, INT64 &key )
          }
       }
       else if( 5 <= bufLength && 53 == keyBuffer[bufLength-2]
-                                  && 49 == keyBuffer[bufLength-3]
-                                  && 91 == keyBuffer[bufLength-4]
-                                  && 27 == keyBuffer[bufLength-5] )//check the button whether it is F1 ~ F12
+                              && 49 == keyBuffer[bufLength-3]
+                              && 91 == keyBuffer[bufLength-4]
+                              && 27 == keyBuffer[bufLength-5] )//check the button whether it is F1 ~ F12
       {
          if( 126 == keyBuffer[bufLength-1] )
          {
@@ -1843,7 +2012,9 @@ error :
    goto done;
 }
 
-INT32 Event::SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const CHAR *pSrc )
+INT32 Event::SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer,
+                                       INT32 &printfLength,
+                                       const CHAR *pSrc )
 {
    INT32 rc = SDB_OK ;
    INT32 i = 0 ;
@@ -1860,47 +2031,53 @@ INT32 Event::SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer, INT32 &printfLength, const
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s SNPRINTF_TOP failed, e.what():%s\n",
-                errStrBuf, e.what() ) ;
+                   "%s SNPRINTF_TOP failed, e.what():%s\n",
+                   errStrBuf, e.what() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   if( SDB_OK == rc )
-   {
-      rc = SDB_ERROR ;
-   }
    goto done ;
 }
+
+// print value in the terminal
 INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
-                           string alignment, INT32 start_row, INT32 start_col )
+                           string alignment,
+                           INT32 start_row, INT32 start_col )
 {
    INT32 rc = SDB_OK ;
    INT32 col = 0 ;
    INT32 printfLength = expressionLength ;
    CHAR* printf_str = NULL ;
-   printf_str = ( CHAR * )malloc( printfLength * sizeof( CHAR ) ) ;
+   printf_str = ( CHAR * )SDB_OSS_MALLOC( printfLength * sizeof( CHAR ) ) ;
    if( !printf_str )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild, can't malloc memory for printf_str :%d\n", errStrBuf, expressionLength ) ;
+                   "%s MVPRINTW_TOP faild, "
+                   "can't malloc memory for printf_str :%d\n",
+                   errStrBuf, expressionLength ) ;
       goto error ;
    }
    if( expressionLength <= 0 )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild, wrong expressionLength:%d\n", errStrBuf, expressionLength ) ;
+                   "%s MVPRINTW_TOP faild, "
+                   "wrong expressionLength:%d\n",
+                   errStrBuf, expressionLength ) ;
       goto error ;
    }
-   rc = SDBTOP_FORMATTING_OUTPUT( printf_str, printfLength, expression.c_str() ) ;
+   rc = SDBTOP_FORMATTING_OUTPUT( printf_str,
+                                  printfLength, expression.c_str() ) ;
    if( rc )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild, SNPRINTF_TOP faild\n", errStrBuf ) ;
+                   "%s MVPRINTW_TOP faild, SNPRINTF_TOP faild\n",
+                   errStrBuf ) ;
       goto error ; 
    }
    if( LEFT == alignment )
@@ -1923,129 +2100,184 @@ INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP wrong alignment:%s\n", errStrBuf, alignment.c_str() ) ;
+                   "%s MVPRINTW_TOP wrong alignment:%s\n",
+                   errStrBuf, alignment.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ; 
    }
 done :
-   free( printf_str ) ;
+   if( printf_str )
+      SDB_OSS_FREE( printf_str ) ;
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
 void Event::getPairNumber_ColourOfTheMax( INT32& colourPairNumber )
 {
    colourPairNumber = root.input.colourOfTheMax.foreGroundColor +
-                                     root.input.colourOfTheMax.backGroundColor * 8 ;
+                      root.input.colourOfTheMax.backGroundColor *
+                      COLOR_MULTIPLE ;
 
 }
 
 void Event::getPairNumber_ColourOfTheMin( INT32& colourPairNumber )
 {
    colourPairNumber = root.input.colourOfTheMin.foreGroundColor +
-                                     root.input.colourOfTheMin.backGroundColor * 8 ;
+                      root.input.colourOfTheMin.backGroundColor *
+                      COLOR_MULTIPLE ;
 
 }
 
 void Event::getPairNumber_ColourOfTheChange( INT32& colourPairNumber )
 {
    colourPairNumber = root.input.colourOfTheChange.foreGroundColor +
-                                     root.input.colourOfTheChange.backGroundColor * 8 ;
+                      root.input.colourOfTheChange.backGroundColor *
+                      COLOR_MULTIPLE ;
 
 }
 
 
-INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceField,
-                                   const string &displayMode, string &result, BOOLEAN canSwitch,
-                                   const string &baseField, const FiledWarningValue &waringValue, INT32 &colourPairNumber )
+INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
+                                   const string &sourceField,
+                                   const string &displayMode,
+                                   string &result, BOOLEAN canSwitch,
+                                   const string &baseField,
+                                   const FiledWarningValue &waringValue,
+                                   INT32 &colourPairNumber )
 {
    INT32 rc = SDB_OK ;
    INT32 pos_last = 0 ;
-   FLOAT64 delta = 0.0 ; // when displayMode is DELTA , use it as resulte buffer
-   FLOAT64 elementNumber = 0.0 ; // when displayMode is ABSOLUTE , use it as resulte buffer
-   FLOAT64 average = 0.0 ; // when displayMode is AVERAGE , use it as resulte buffer
-   BSONElement element ; // get it with sourceField from cur bsonobj
-   BSONElement last_element ; // get it with sourceField from last bsonobj
-   BSONElement baseElement  ; // get it with baseField from cur bsonobj
-   BSONElement baseElement_last ; // compare to baseElement
+   // use it to save the result when BSONType is Double or INT64 or INT32
+   FLOAT64 elementDouble = 0.0f ;
+   // get it with sourceField from cur bsonobj
+   BSONElement element ;
+   // get it with sourceField from last bsonobj
+   BSONElement last_element ;
+   // get it with baseField from cur bsonobj
+   BSONElement baseElement  ;
+   // compare to baseElement
+   BSONElement baseElement_last ;
    const char *sourceFieldbuf = sourceField.c_str();
    const char *baseFieldbuf = baseField.c_str();
    string new_ = NULLSTRING ;
-   string old_ = NULLSTRING ; // compare to new_, check out the same BSONobj
-   CHAR *resultBuf = ( CHAR * )malloc( LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
+   // compare to new_, check out the same BSONobj
+   string old_ = NULLSTRING ;
+   CHAR *resultBuf =
+         ( CHAR * )SDB_OSS_MALLOC( LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
    if( !resultBuf )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getResultFromBSONobj failed, can't malloc memory for resultBuf : %d\n",
+                "%s getResultFromBSONobj failed, "
+                "can't malloc memory for resultBuf : %d\n",
                 errStrBuf, LENGTH_OF_RESULTBUFFER ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    try
    {
-      element = bsonobj.getFieldDottedOrArray( sourceFieldbuf ) ;
+      element = bsonobj.getFieldDotted( sourceFieldbuf ) ;
+      // if we the element can't switch the displayMode
+      // or baseField is NULLSTRING,
+      // so we deal with the element on the same way
       if( !canSwitch ||NULLSTRING == baseField )
       {
-         result = element.toString( FALSE ) ;
          if( element.isNumber() )
          {
-            elementNumber = element.Number() ;
+            if( NumberLong == element.type() || NumberInt == element.type() )
+            {
+               result = element.toString( FALSE ) ;
+            }
+            else
+            {
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                            OUTPUT_FORMATTING, elementDouble ) ;
+               result = resultBuf ;
+            }
+            elementDouble = element.Number() ;
             if( waringValue.absoluteMaxLimitValue != 0 &&
-                elementNumber > waringValue.absoluteMaxLimitValue )
+                elementDouble > waringValue.absoluteMaxLimitValue )
             {
                getPairNumber_ColourOfTheMax( colourPairNumber ) ;
             }
             else if( waringValue.absoluteMinLimitValue != 0 &&
-                     elementNumber < waringValue.absoluteMinLimitValue )
+                     elementDouble < waringValue.absoluteMinLimitValue )
             {
                getPairNumber_ColourOfTheMin( colourPairNumber ) ;
             }
-            root.input.cur_absoluteMap[new_+sourceField] = elementNumber ;
+            else if( result != root.input.last_deltaMap[new_+sourceField] )
+            {
+               getPairNumber_ColourOfTheChange( colourPairNumber ) ;
+            }
          }
+         else
+         {
+            result = element.toString( FALSE ) ;
+         }
+         root.input.cur_absoluteMap[new_+sourceField] = result ;
          goto done ;
       }
-      baseElement = bsonobj.getFieldDottedOrArray( baseFieldbuf ) ;
+      baseElement = bsonobj.getFieldDotted( baseFieldbuf ) ;
       new_ = baseElement.toString( FALSE ) ;
-      while( pos_last < root.input.last_Snapshot.size() ) //find the match bsonj
+      //judge the element whether exist in last snapshot
+      while( pos_last < root.input.last_Snapshot.size() )
       {
-         baseElement_last = root.input.last_Snapshot[pos_last].getFieldDottedOrArray( baseFieldbuf ) ;
+         baseElement_last =
+               root.input.last_Snapshot[pos_last].getFieldDotted(
+                     baseFieldbuf ) ;
          old_ = baseElement_last.toString( FALSE ) ;
          if( new_ == old_ )
             break ;
          ++pos_last ;
       }
+      //when can't match element in the last snapshot
       if( pos_last == root.input.last_Snapshot.size() )
       {
+         //to deal with the result when displayMode is DELTA or AVERAGE
+         //but not found in the last snapshot
          if( DELTA == displayMode || AVERAGE== displayMode )
          {
-            ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, 0.0 ) ;
+            ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, "%d", 0 ) ;
             result = resultBuf ;
-            root.input.cur_deltaMap[new_+sourceField] = 0.0 ;
-            root.input.cur_averageMap[new_+sourceField] = 0.0 ;
+            root.input.cur_deltaMap[new_+sourceField] = result ;
+            root.input.cur_averageMap[new_+sourceField] = result ;
          }
+         //to deal with the result when displayMode is ABSOLUTE
+         //but not found in the last snapshot
          else if( ABSOLUTE == displayMode )
          {
             if( element.isNumber() )
             {
-               elementNumber = element.Number() ;
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementNumber ) ;
-               result = resultBuf ;
+               if( NumberLong == element.type() ||
+                   NumberInt == element.type() )
+               {
+                  result = element.toString( FALSE ) ;
+               }
+               else
+               {
+                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                               OUTPUT_FORMATTING, elementDouble ) ;
+                  result = resultBuf ;
+               }
+               elementDouble = element.Number() ;
                if( waringValue.absoluteMaxLimitValue != 0 &&
-                   elementNumber > waringValue.absoluteMaxLimitValue )
+                   elementDouble > waringValue.absoluteMaxLimitValue )
                {
                   getPairNumber_ColourOfTheMax( colourPairNumber ) ;
                }
-               else if( waringValue.absoluteMinLimitValue != 0 && elementNumber < waringValue.absoluteMinLimitValue )
+               else if( waringValue.absoluteMinLimitValue != 0 &&
+                        elementDouble < waringValue.absoluteMinLimitValue )
                {
                   getPairNumber_ColourOfTheMin( colourPairNumber ) ;
                }
-               root.input.cur_absoluteMap[new_+sourceField] = elementNumber ;
             }
             else
             {
                result = element.toString( FALSE ) ;
             }
+            root.input.cur_absoluteMap[new_+sourceField] = result ;
+            goto done ;
          }
          else
          {
@@ -2053,100 +2285,130 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
             ossSnprintf( errStr, errStrLength,
                       "%s getResultFromBSONobj failed, displayMode = %s\n", 
                       errStrBuf, displayMode.c_str() ) ;
+            rc = SDB_ERROR ;
             goto error ;
          }
       }
       else
       {
-         last_element = root.input.last_Snapshot[pos_last].getFieldDottedOrArray( sourceFieldbuf ) ;
+         //BSONObjIterator iter(abc);
+         //while(iter.more())
+         //{
+            //BSONElement be;
+            //if (be.type()  == Array)
+            //{
+               //BSONObj obj = be.embeddedObject() ; 
+            //}
+         //}
+         last_element =
+               root.input.last_Snapshot[pos_last].getFieldDotted(
+                     sourceFieldbuf ) ;
+         //to deal with the result when displayMode is DELTA
+         //and have found in the last snapshot
          if( DELTA == displayMode )
          {
             if( element.isNumber() )
             {
-               delta = element.Number() - last_element.Number() ;
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, delta ) ;
+               elementDouble = element.Number() - last_element.Number() ;
+               if( element.type() == NumberInt ||
+                   element.type() == NumberLong )
+               {
+                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                               "%d", element.Long() - last_element.Long() ) ;
+               }
+               else
+               {
+                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                               OUTPUT_FORMATTING, elementDouble ) ;
+               }
                result = resultBuf ;
                if( waringValue.deltaMaxLimitValue != 0 &&
-                   delta > waringValue.deltaMaxLimitValue )
+                   elementDouble > waringValue.deltaMaxLimitValue )
                {
                   getPairNumber_ColourOfTheMax( colourPairNumber ) ;
                }
                else if( waringValue.deltaMinLimitValue!= 0 &&
-                        delta < waringValue.deltaMinLimitValue )
+                        elementDouble < waringValue.deltaMinLimitValue )
                {
                   getPairNumber_ColourOfTheMin( colourPairNumber ) ;
                }
-               else if( delta != root.input.last_deltaMap[new_+sourceField] )
+               else if( result != root.input.last_deltaMap[new_+sourceField] )
                {
                   getPairNumber_ColourOfTheChange( colourPairNumber ) ;
                }
-               root.input.cur_deltaMap[new_+sourceField] = delta ;
             }
             else
             {
-               root.input.cur_deltaMap[new_+sourceField] = 0.0 ;
-               result = NULLSTRING ;
+               result = element.toString( FALSE ) ;
             }
+            root.input.cur_deltaMap[new_+sourceField] = result ;
             goto done ;
          }
-         else if( ABSOLUTE== displayMode )
+         //to deal with the result when displayMode is ABSOLUTE
+         //and have found in the last snapshot
+         else if( ABSOLUTE == displayMode )
          {
             if( element.isNumber() )
             {
-               elementNumber = element.Number();
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementNumber );
-               result = resultBuf;
+               if( NumberLong == element.type() || NumberInt == element.type() )
+               {
+                  result = element.toString( FALSE ) ;
+               }
+               else
+               {
+                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                               OUTPUT_FORMATTING, elementDouble ) ;
+                  result = resultBuf ;
+               }
+               elementDouble = element.Number() ;
                if( waringValue.absoluteMaxLimitValue != 0 &&
-                   elementNumber > waringValue.absoluteMaxLimitValue )
+                   elementDouble > waringValue.absoluteMaxLimitValue )
                {
                   getPairNumber_ColourOfTheMax( colourPairNumber ) ;
                }
                else if( waringValue.absoluteMinLimitValue != 0 &&
-                        elementNumber < waringValue.absoluteMinLimitValue )
+                        elementDouble < waringValue.absoluteMinLimitValue )
                {
                   getPairNumber_ColourOfTheMin( colourPairNumber ) ;
                }
-               else if( elementNumber != root.input.last_absoluteMap[new_+sourceField] )
-               {
-                  getPairNumber_ColourOfTheChange( colourPairNumber ) ;
-               }
-               root.input.cur_absoluteMap[new_+sourceField] = elementNumber ;
             }
             else
             {
-               result = element.toString( FALSE );
+               result = element.toString( FALSE ) ;
             }
+            root.input.cur_absoluteMap[new_+sourceField] = result ;
             goto done ;
          }
-         else if( AVERAGE== displayMode )
+         //to deal with the result when displayMode is AVERAGE
+         //and have found in the last snapshot
+         else if( AVERAGE == displayMode )
          {
             if( element.isNumber() )
             {
-               average = ( element.Number() - last_element.Number() ) /
+               elementDouble = ( element.Number() - last_element.Number() ) /
                                  root.input.refreshInterval ;
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, average ) ;
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, OUTPUT_FORMATTING, elementDouble ) ;
                result = resultBuf ;
                if( waringValue.averageMaxLimitValue!= 0 &&
-                   average > waringValue.averageMaxLimitValue )
+                   elementDouble > waringValue.averageMaxLimitValue )
                {
                   getPairNumber_ColourOfTheMax( colourPairNumber ) ;
                }
                else if( waringValue.averageMinLimitValue!= 0 &&
-                        average < waringValue.averageMinLimitValue )
+                        elementDouble < waringValue.averageMinLimitValue )
                {
                   getPairNumber_ColourOfTheMin( colourPairNumber ) ;
                }
-               else if( average != root.input.last_averageMap[new_+sourceField] )
+               else if( result != root.input.last_averageMap[new_+sourceField] )
                {
                   getPairNumber_ColourOfTheChange( colourPairNumber ) ;
                }
-               root.input.cur_averageMap[new_+sourceField] = average ;
             }
             else
             {
-               root.input.cur_deltaMap[new_+sourceField] = 0.0 ;
-               result = NULLSTRING ;
+               result = element.toString( FALSE ) ;
             }
+            root.input.cur_averageMap[new_+sourceField] = result ;
             goto done ;
          }
          else
@@ -2155,37 +2417,42 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj, const string &sourceF
             ossSnprintf( errStr, errStrLength,
                          "%s getResultFromBSONobj failed, displayMode = %s\n",
                          errStrBuf, displayMode.c_str() ) ;
+            rc = SDB_ERROR ;
             goto error ;
          }
-         result = element.toString( FALSE ) ;
       }
    }
    catch( std::exception &e )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s getResultFromBSONobj failed, e.what():%s ,sourceField = %s\n", 
+                   "%s getResultFromBSONobj failed, e.what():%s ,"
+                   "sourceField = %s\n", 
                    errStrBuf, e.what(), sourceField.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    
 done :
-   free( resultBuf ) ;
+   if( resultBuf )
+      SDB_OSS_FREE( resultBuf ) ;
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
 INT32 Event::getExpression( string& expression, string& result )
 {
    INT32 rc = SDB_OK ;
-   CHAR *buf = ( CHAR * )malloc( 9 * sizeof( CHAR ) ) ;
+   CHAR *buf = ( CHAR * )SDB_OSS_MALLOC( BUFFERSIZE * sizeof( CHAR ) ) ;
    if( !buf )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s getExpression faild, can't malloc memory for buf :%d\n", errStrBuf, 9 ) ;
+                   "%s getExpression faild,"
+                   "can't malloc memory for buf :%d\n",
+                   errStrBuf, BUFFERSIZE ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    if( EXPRESSION_BODY_LABELNAME == expression )
@@ -2202,7 +2469,7 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_REFRESH_TIME == expression )
    {
-      ossSnprintf( buf, 9,"%d", root.input.refreshInterval ) ;
+      ossSnprintf( buf, BUFFERSIZE,"%d", root.input.refreshInterval ) ;
       result = buf ;
    }
    else if( EXPRESSION_HOSTNAME == expression )
@@ -2226,7 +2493,7 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_FILTER_NUMBER == expression )
    {
-      ossSnprintf( buf, 9,"%d", root.input.filterNumber ) ;
+      ossSnprintf( buf, BUFFERSIZE,"%d", root.input.filterNumber ) ;
       result = buf ;
    }
    else if( EXPRESSION_SORTINGWAY == expression )
@@ -2262,13 +2529,14 @@ INT32 Event::getExpression( string& expression, string& result )
       ossSnprintf( errStr, errStrLength,
                 "%s getExpression failed, wrong expression:%s\n",
                 errStrBuf, expression.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ; 
    }
 done :
-   free( buf ) ;
+   if( buf )
+      SDB_OSS_FREE( buf ) ;
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -2291,39 +2559,48 @@ INT32 Event::getCurSnapshot()
    string svcname = NULLSTRING ;
    string::size_type pos ;
    fromjson( selector, selectorObj ) ;
-   if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_CONTEXTS_TOP )
+   if( root.input.activatedPanel[0].sourceSnapShot ==
+            SDB_SNAP_CONTEXTS_TOP )
    {
       snapType = SDB_SNAP_CONTEXTS ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_CONTEXTS_CURRENT_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_CONTEXTS_CURRENT_TOP )
    {
       snapType = SDB_SNAP_CONTEXTS_CURRENT ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_SESSIONS_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_SESSIONS_TOP )
    {
       snapType = SDB_SNAP_SESSIONS ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_SESSIONS_CURRENT_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_SESSIONS_CURRENT_TOP )
    {
       snapType = SDB_SNAP_SESSIONS_CURRENT ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_COLLECTIONS_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_COLLECTIONS_TOP )
    {
       snapType = SDB_SNAP_COLLECTIONS ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_COLLECTIONSPACES_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_COLLECTIONSPACES_TOP )
    {
       snapType = SDB_SNAP_COLLECTIONSPACES ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_DATABASE_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_DATABASE_TOP )
    {
       snapType = SDB_SNAP_DATABASE ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_SYSTEM_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_SYSTEM_TOP )
    {
       snapType = SDB_SNAP_SYSTEM ;
    }
-   else if( root.input.activatedPanel[0].sourceSnapShot == SDB_SNAP_CATALOG_TOP )
+   else if( root.input.activatedPanel[0].sourceSnapShot ==
+                  SDB_SNAP_CATALOG_TOP )
    {
       snapType = SDB_SNAP_CATALOG ;
    }
@@ -2336,19 +2613,23 @@ INT32 Event::getCurSnapshot()
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr );
       ossSnprintf( errStr, errStrLength,
-                "%s getCurSnapshot failed,xml gave the wrong sourceSnapShot: %s\n",
-                errStrBuf, root.input.activatedPanel[0].sourceSnapShot.c_str() ) ;
-
+                "%s getCurSnapshot failed,"
+                "xml gave the wrong sourceSnapShot: %s\n",
+                errStrBuf,
+                root.input.activatedPanel[0].sourceSnapShot.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    if( NULLSTRING == root.input.sortingWay )
    {
       orderBy += "}" ;
    }
-   else if( SORTINGWAY_ASC == root.input.sortingWay || SORTINGWAY_DESC == root.input.sortingWay )
+   else if( SORTINGWAY_ASC == root.input.sortingWay ||
+            SORTINGWAY_DESC == root.input.sortingWay )
    {
       if( NULLSTRING != root.input.sortingField )
-         orderBy += "\"" + root.input.sortingField + "\":" + root.input.sortingWay + "}" ;
+         orderBy += "\"" + root.input.sortingField + "\":" +
+                    root.input.sortingWay + "}" ;
       else
          orderBy += "}" ;
    }
@@ -2358,6 +2639,7 @@ INT32 Event::getCurSnapshot()
       ossSnprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,wrong sortingWay: %s\n",
                 errStrBuf, root.input.sortingWay.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    fromjson( orderBy, orderByObj ) ;
@@ -2383,7 +2665,8 @@ INT32 Event::getCurSnapshot()
       else
          condition = "{}" ;
       fromjson(condition, conditionObj ) ;
-      rc = coord.getSnapshot( cursor, snapType, conditionObj, selectorObj, orderByObj) ;
+      rc = coord.getSnapshot( cursor, snapType,
+                              conditionObj, selectorObj, orderByObj) ;
    }
    else if( GROUP == root.input.snapshotModeChooser )
    {
@@ -2396,7 +2679,8 @@ INT32 Event::getCurSnapshot()
          condition += "\"}" ;
 
       fromjson(condition, conditionObj ) ;
-      rc = coord.getSnapshot( cursor, snapType, conditionObj, selectorObj, orderByObj) ;
+      rc = coord.getSnapshot( cursor, snapType,
+                              conditionObj, selectorObj, orderByObj) ;
    }
    else if( NODE == root.input.snapshotModeChooser )
    {
@@ -2420,7 +2704,8 @@ INT32 Event::getCurSnapshot()
       else
          condition += "}" ;
       fromjson(condition, conditionObj ) ;
-      rc = coord.getSnapshot( cursor, snapType, conditionObj, selectorObj, orderByObj) ;
+      rc = coord.getSnapshot( cursor, snapType,
+                              conditionObj, selectorObj, orderByObj) ;
    }
    else
    {
@@ -2429,7 +2714,7 @@ INT32 Event::getCurSnapshot()
       ossSnprintf( errStr, errStrLength,
                 "%s getCurSnapshot failed,wrong snapshotModeChooser = %s\n",
                 errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
-
+      rc = SDB_ERROR ;
       goto error ;
    }
    if( rc )
@@ -2437,8 +2722,9 @@ INT32 Event::getCurSnapshot()
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getCurSnapshot failed,can't getSnapshot, rc = %d\n", errStrBuf, rc ) ;
-  
+                "%s getCurSnapshot failed,can't getSnapshot, rc = %d\n",
+                errStrBuf, rc ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    
@@ -2472,10 +2758,13 @@ INT32 Event::getCurSnapshot()
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s refreshDisplayContent failed, snapShotCursor.next( bsonobj ) faild, rc = %d\n", errStrBuf, rc ) ;
-
+                "%s refreshDisplayContent failed, "
+                "snapShotCursor.next( bsonobj ) faild, rc = %d\n",
+                errStrBuf, rc ) ;
+      rc = SDB_ERROR ;
       goto error ;   
    }
+   //if rc == SDB_DMS_EOC, show that reading is finished, turn rc in SDB_OK
    if( SDB_DMS_EOC == rc )
    {
       rc = SDB_OK ;
@@ -2488,7 +2777,6 @@ INT32 Event::getCurSnapshot()
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -2564,26 +2852,37 @@ error :
 
 INT32 Event::getFieldStructNameAndColour( const FieldStruct &fieldStruct,
                                           const string &displayMode,
-                                          string &fieldName, Colours &fieldColour )
+                                          string &fieldName,
+                                          Colours &fieldColour )
 {
    INT32 rc = SDB_OK ;
    if( !fieldStruct.canSwitch )
    {
       fieldName = fieldStruct.absoluteName ;
-      fieldColour.backGroundColor = fieldStruct.absoluteColour.backGroundColor ;
-      fieldColour.foreGroundColor = fieldStruct.absoluteColour.foreGroundColor ;
+      
+      fieldColour.backGroundColor =
+            fieldStruct.absoluteColour.backGroundColor ;
+            
+      fieldColour.foreGroundColor =
+            fieldStruct.absoluteColour.foreGroundColor ;
    }
    else if( DELTA == displayMode )
    {
       fieldName = fieldStruct.deltaName ;
-      fieldColour.backGroundColor = fieldStruct.deltaColour.backGroundColor ;
-      fieldColour.foreGroundColor = fieldStruct.deltaColour.foreGroundColor ;
+      
+      fieldColour.backGroundColor =
+            fieldStruct.deltaColour.backGroundColor ;
+            
+      fieldColour.foreGroundColor =
+            fieldStruct.deltaColour.foreGroundColor ;
    }
    else if( ABSOLUTE == displayMode )
    {
       fieldName = fieldStruct.absoluteName ;
-      fieldColour.backGroundColor = fieldStruct.absoluteColour.backGroundColor ;
-      fieldColour.foreGroundColor = fieldStruct.absoluteColour.foreGroundColor ;
+      fieldColour.backGroundColor =
+            fieldStruct.absoluteColour.backGroundColor ;
+      fieldColour.foreGroundColor =
+            fieldStruct.absoluteColour.foreGroundColor ;
    }
    else if( AVERAGE == displayMode )
    {
@@ -2598,18 +2897,18 @@ INT32 Event::getFieldStructNameAndColour( const FieldStruct &fieldStruct,
       ossSnprintf( errStr, errStrLength,
                 "%s getFieldStructNameAndColour failed,wrong displayMode:%s\n",
                 errStrBuf, displayMode.c_str() ) ;
-
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
 INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
-                                               string displayType, Position &actualPosition )
+                                               string displayType,
+                                               Position &actualPosition )
 {
    INT32 rc = SDB_OK ;
    INT32 start_row = actualPosition.referUpperLeft_Y ;
@@ -2622,7 +2921,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
    INT32 colNumber = 0 ;
    INT32 pairNumber = 0 ;
    string _str = NULLSTRING ;
-   CHAR *printfstr = ( CHAR * )malloc( displayContent.dynamicHelp.cellLength * sizeof( CHAR ) ) ;
+   CHAR *printfstr = ( CHAR * )SDB_OSS_MALLOC( displayContent.dynamicHelp.cellLength * sizeof( CHAR ) ) ;
    if( !printfstr )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -2740,7 +3039,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
    }
 
 done :
-   free( printfstr ) ;
+   if( printfstr )
+      SDB_OSS_FREE( printfstr );
    return rc ;
 error :
    rc = SDB_ERROR ;
@@ -2898,7 +3198,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
    INT32 mLength = 0 ;
    INT32 rowNumber = 0;
    string serialNumberStr = NULLSTRING ;
-   CHAR *serialNumber = ( CHAR * )malloc( SERIALNUMBER_LENGTH * sizeof( CHAR ) ) ;
+   CHAR *serialNumber = ( CHAR * )SDB_OSS_MALLOC( SERIALNUMBER_LENGTH * sizeof( CHAR ) ) ;
    if( !serialNumber )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -3374,7 +3674,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       }   
    }
 done :
-   free( serialNumber ) ;
+   if( serialNumber )
+      SDB_OSS_FREE( serialNumber ) ;
    return rc ;
 error :
    rc = SDB_ERROR ;
@@ -3392,16 +3693,21 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
        displayType == DISPLAYTYPE_STATICTEXT_MAIN ||
        displayType == DISPLAYTYPE_STATICTEXT_LICENSE)
    {
-      pairNumber = displayContent.staticTextOutPut.colour.foreGroundColor +
-                         displayContent.staticTextOutPut.colour.backGroundColor * 8 ;
+      pairNumber =
+            displayContent.staticTextOutPut.colour.foreGroundColor +
+                  displayContent.staticTextOutPut.colour.backGroundColor *
+                  COLOR_MULTIPLE ;
       attron( COLOR_PAIR( pairNumber ) ) ;
-      mvprintw( actualPosition.referUpperLeft_Y, actualPosition.referUpperLeft_X,
+      mvprintw( actualPosition.referUpperLeft_Y,
+                actualPosition.referUpperLeft_X,
                 displayContent.staticTextOutPut.outputText ) ;
       attroff( COLOR_PAIR( pairNumber ) ) ;
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_HELP)
    {
-      rc = refresh_DISPLAYTYPE_DYNAMIC_HELP( displayContent, displayType, actualPosition ) ;
+      rc = refresh_DISPLAYTYPE_DYNAMIC_HELP( displayContent,
+                                             displayType,
+                                             actualPosition ) ;
       if( rc )
       {
          goto error ;
@@ -3410,7 +3716,9 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION )
    {
-      rc = refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( displayContent, displayType, actualPosition ) ;
+      rc = refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( displayContent,
+                                                   displayType,
+                                                   actualPosition ) ;
       if( rc )
       {
          goto error ;
@@ -3418,7 +3726,9 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_SNAPSHOT )
    {
-      rc = refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( displayContent, displayType, actualPosition ) ;
+      rc = refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( displayContent,
+                                                 displayType,
+                                                 actualPosition ) ;
       if( rc )
       {
          goto error ;
@@ -3465,7 +3775,9 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
    if( row < window.actualWindowMinRow ||
        col < window.actualWindowMinColumn )
       goto done ;
-   rc = refreshDisplayContent( window.displayContent, window.displayType, actualPosition ) ;
+   rc = refreshDisplayContent( window.displayContent,
+                               window.displayType,
+                               actualPosition ) ;
    if( rc )
    {
 
@@ -3489,7 +3801,9 @@ INT32 Event::refreshHeadTail( HeadTailMap *headtail )
    INT32 numOfSubWindow = 0 ;
    if( !headtail )
       goto done ;
-   for( numOfSubWindow = 0; numOfSubWindow < headtail->value.numOfSubWindow; ++numOfSubWindow )
+   for( numOfSubWindow = 0;
+        numOfSubWindow < headtail->value.numOfSubWindow;
+        ++numOfSubWindow )
    {
       rc = refreshNodeWindow( headtail->value.subWindow[numOfSubWindow] );
       if ( rc )
@@ -3497,7 +3811,8 @@ INT32 Event::refreshHeadTail( HeadTailMap *headtail )
 
          ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
-                   "%s refreshHeadTail failed, refreshNodeWindow faild, numOfSubWindow = %d\n",
+                   "%s refreshHeadTail failed, refreshNodeWindow faild, "
+                   "numOfSubWindow = %d\n",
                    errStrBuf, numOfSubWindow ) ;
 
          goto error ;
@@ -3514,7 +3829,9 @@ INT32 Event::refreshBody( BodyMap *body )
 {
    INT32 rc = SDB_OK ;
    INT32 numOfSubWindow = 0 ;
-   for( numOfSubWindow = 0; numOfSubWindow < body->value.numOfSubWindow; ++numOfSubWindow )
+   for( numOfSubWindow = 0;
+        numOfSubWindow < body->value.numOfSubWindow;
+        ++numOfSubWindow )
    {
       rc = refreshNodeWindow( body->value.subWindow[numOfSubWindow] ) ;
       if ( rc )
@@ -3522,7 +3839,8 @@ INT32 Event::refreshBody( BodyMap *body )
 
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
-                   "%s refreshBody failed, refreshNodeWindow faild, numOfSubWindow = %d\n",
+                   "%s refreshBody failed, refreshNodeWindow faild, "
+                   "numOfSubWindow = %d\n",
                    errStrBuf, numOfSubWindow ) ;
 
          goto error ;
@@ -3539,11 +3857,11 @@ void Event::initAllColourPairs()
    INT32 back = 0 ;
    INT32 fore = 0 ;
    INT32 pairNumber = 0 ;
-   for( back = 0; back <= 7; ++back )
+   for( back = 0; back < COLOR_MULTIPLE; ++back )
    {
-      for( fore = 0; fore <= 7; ++fore )
+      for( fore = 0; fore < COLOR_MULTIPLE; ++fore )
       {
-         pairNumber = fore + back * 8 ;
+         pairNumber = fore + back * COLOR_MULTIPLE ;
          init_pair( pairNumber, fore, back ) ;
       }
    }
@@ -3606,7 +3924,7 @@ INT32 Event::addFixedHotKey()
          ossSnprintf( errStr, errStrLength,
                    "%s addFixedHotKey failed , e.what():%s\n",
                    errStrBuf, e.what() ) ;
-
+         rc = SDB_ERROR ;
          goto error ;
       }
       root.keySuite[i].hotKeyLength = keyLength ;
@@ -3614,7 +3932,6 @@ INT32 Event::addFixedHotKey()
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -3628,20 +3945,26 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
    INT32 FixedLength = 0 ;
    INT32 MobileLength = 0 ;
    root.input.sortingField = NULLSTRING ;
-   for( numOfSubWindow = 0; numOfSubWindow < root.input.activatedPanel ->value.numOfSubWindow; ++numOfSubWindow )
+   BodyMap *Panel = root.input.activatedPanel ;
+   for( numOfSubWindow = 0;
+        numOfSubWindow < Panel->value.numOfSubWindow; ++numOfSubWindow )
    {
       if( DISPLAYTYPE_DYNAMIC_SNAPSHOT ==
-          root.input.activatedPanel ->value.subWindow[numOfSubWindow].displayType )
+          Panel->value.subWindow[numOfSubWindow].displayType )
       {
-         DisplayContent &displayContent = root.input.activatedPanel ->value.subWindow[numOfSubWindow].displayContent ;
+         DisplayContent &displayContent =
+               Panel->value.subWindow[numOfSubWindow].displayContent ;
          Fixed = displayContent.dySnapshotOutPut.fixedField ;
          Mobile = displayContent.dySnapshotOutPut.mobileField ;
-         FixedLength = displayContent.dySnapshotOutPut.actualFixedFieldLength ;
-         MobileLength = displayContent.dySnapshotOutPut.actualMobileFieldLength ;
+         FixedLength =
+               displayContent.dySnapshotOutPut.actualFixedFieldLength ;
+         MobileLength =
+               displayContent.dySnapshotOutPut.actualMobileFieldLength ;
          while( FixedLength > 0 )
          {
             --FixedLength ;
-            if( DISPLAYMODECHOOSER[root.input.displayModeChooser] == ABSOLUTE )
+            if( DISPLAYMODECHOOSER[root.input.displayModeChooser] ==
+                     ABSOLUTE )
             {
                if( DisplayName == Fixed[FixedLength].absoluteName )
                {
@@ -3649,13 +3972,15 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
                   goto done ;
                }
             }
-            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] == DELTA )
+            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] ==
+                           DELTA )
             {
                if(  Fixed[FixedLength].canSwitch )
                {
                   if( DisplayName == Fixed[FixedLength].deltaName )
                   {
-                     root.input.sortingField = Fixed[FixedLength].sourceField ;
+                     root.input.sortingField =
+                           Fixed[FixedLength].sourceField ;
                      goto done ;
                   }
                }
@@ -3663,18 +3988,21 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
                {
                   if( DisplayName == Fixed[FixedLength].absoluteName )
                   {
-                     root.input.sortingField = Fixed[FixedLength].sourceField ;
+                     root.input.sortingField =
+                           Fixed[FixedLength].sourceField ;
                      goto done ;
                   }
                }
             }
-            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] == AVERAGE )
+            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] ==
+                           AVERAGE )
             {
                if(  Fixed[FixedLength].canSwitch )
                {
                   if( DisplayName == Fixed[FixedLength].averageName )
                   {
-                     root.input.sortingField = Fixed[FixedLength].sourceField ;
+                     root.input.sortingField =
+                           Fixed[FixedLength].sourceField ;
                      goto done ;
                   }
                }
@@ -3682,7 +4010,8 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
                {
                   if( DisplayName == Fixed[FixedLength].absoluteName )
                   {
-                     root.input.sortingField = Fixed[FixedLength].sourceField ;
+                     root.input.sortingField =
+                           Fixed[FixedLength].sourceField ;
                      goto done ;
                   }
                }
@@ -3691,21 +4020,26 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
          while( MobileLength> 0 )
          {
             --MobileLength ;
-            if( DISPLAYMODECHOOSER[root.input.displayModeChooser] == ABSOLUTE )
+            if( DISPLAYMODECHOOSER[root.input.displayModeChooser] ==
+                     ABSOLUTE )
             {
                if( DisplayName == Mobile[MobileLength].absoluteName )
                {
-                  root.input.sortingField = Mobile[MobileLength].sourceField ;
+                  root.input.sortingField =
+                        Mobile[MobileLength].sourceField ;
                   goto done ;
                }
             }
-            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] == DELTA )
+            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] ==
+                           DELTA )
             {
                if(  Fixed[MobileLength].canSwitch )
                {
-                  if( DisplayName == Mobile[MobileLength].deltaName )
+                  if( DisplayName ==
+                           Mobile[MobileLength].deltaName )
                   {
-                     root.input.sortingField = Mobile[MobileLength].sourceField ;
+                     root.input.sortingField =
+                           Mobile[MobileLength].sourceField ;
                      goto done ;
                   }
                }
@@ -3713,18 +4047,21 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
                {
                   if( DisplayName == Mobile[MobileLength].absoluteName )
                   {
-                     root.input.sortingField = Mobile[MobileLength].sourceField ;
+                     root.input.sortingField =
+                           Mobile[MobileLength].sourceField ;
                      goto done ;
                   }
                }
             }
-            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] == AVERAGE )
+            else if( DISPLAYMODECHOOSER[root.input.displayModeChooser] ==
+                           AVERAGE )
             {
                if(  Fixed[MobileLength].canSwitch )
                {
                   if( DisplayName == Mobile[MobileLength].averageName )
                   {
-                     root.input.sortingField = Mobile[MobileLength].sourceField ;
+                     root.input.sortingField =
+                           Mobile[MobileLength].sourceField ;
                      goto done ;
                   }
                }
@@ -3732,7 +4069,8 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
                {
                   if( DisplayName == Mobile[MobileLength].absoluteName )
                   {
-                     root.input.sortingField = Mobile[MobileLength].sourceField ;
+                     root.input.sortingField =
+                           Mobile[MobileLength].sourceField ;
                      goto done ;
                   }
                }
@@ -3762,16 +4100,17 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    HeadTailMap *header = NULL ;
    HeadTailMap *footer = NULL ;
    BodyMap* activatedPanel = NULL ;
-   const INT32 bufLength = 256 ;
-   CHAR buf[bufLength] ;
-   ossMemset( buf, 0, bufLength ) ;
+   CHAR buf[BUFFERSIZE] ;
+   ossMemset( buf, 0, BUFFERSIZE ) ;
    if( rc )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    rc = getActivatedKeySuite( &keySuite ) ;
    if( rc || !keySuite )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    if( 0 == key )
@@ -3780,6 +4119,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    }
    else if( 0 > key )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    else
@@ -3812,7 +4152,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                ossSnprintf( errStr, errStrLength,
                          "%s assignActivatedPanelByLabelName failed\n",
                          errStrBuf ) ;
-  
+               rc = SDB_ERROR ;
                goto error ;
             }
             root.input.displayModeChooser = 0 ;
@@ -3896,7 +4236,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                   ossSnprintf( errStr, errStrLength,
                             "%s buttonManagement faild,getActivatedHeadTailMap failed\n",
                             errStrBuf ) ;
-        
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                clear() ;
@@ -3904,16 +4244,19 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = refreshHeadTail( header ) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                rc = refreshBody( activatedPanel ) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                rc = refreshHeadTail( footer ) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                refresh() ;
@@ -3928,11 +4271,12 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                }
                else if( rc > 0 )
                {
-                  ossMemset( buf, 0, bufLength) ;
-                  read(STDIN, buf, bufLength ) ;
+                  ossMemset( buf, 0, BUFFERSIZE ) ;
+                  read(STDIN, buf, BUFFERSIZE ) ;
                   rc = getTopKey_TOP( buf, key) ;
                   if( rc )
                   {
+                     rc = SDB_ERROR ;
                      goto error ;
                   }
                   rc = buttonManagement( key, FALSE ) ;
@@ -3945,6 +4289,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                             "%s buttonManagement faild,"
                             "select ( maxfd, &fds, NULL, NULL, NULL) failed\n",
                             errStrBuf ) ;
+                  rc = SDB_ERROR ;
                   goto error ;
                }
             }
@@ -3975,7 +4320,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             ossMemset( inputBuf, 0, 128) ;
             
             move( row - 1, 0 ) ;
-            clrtobot() ; //clear screen from the position of cursor to the end of screen
+            //clear screen from the position of cursor to the end of screen
+            clrtobot() ;
             
             //nocbreak() ;
             echo() ;
@@ -4003,7 +4349,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             ossMemset( inputBuf, 0, 128 ) ;
             
             move( row - 1, 0 ) ;
-            clrtobot() ; //clear screen from the position of cursor to the end of screen
+            //clear screen from the position of cursor to the end of screen
+            clrtobot() ;
             
             nocbreak() ;
             echo() ;
@@ -4031,7 +4378,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             ossMemset( inputBuf, 0, 128) ;
             
             move( row - 1, 0 ) ;
-            clrtobot() ; //clear screen from the position of cursor to the end of screen
+            //clear screen from the position of cursor to the end of screen
+            clrtobot() ;
             
             nocbreak() ;
             echo() ;
@@ -4060,7 +4408,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             ossMemset( inputBuf, 0, 128);
             
             move( row - 1, 0 );
-            clrtobot(); //clear screen from the position of cursor to the end of screen
+            //clear screen from the position of cursor to the end of screen
+            clrtobot();
             
             nocbreak() ;
             echo() ;
@@ -4089,7 +4438,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             ossMemset( inputBuf, 0, 128 ) ;
             
             move( row - 1, 0 ) ;
-            clrtobot() ; //clear screen from the position of cursor to the end of screen
+            //clear screen from the position of cursor to the end of screen
+            clrtobot() ;
             
             nocbreak() ;
             echo() ;
@@ -4127,7 +4477,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             ossMemset( inputBuf, 0, 128 ) ;
             
             move( row - 1, 0 ) ;
-            clrtobot() ; //clear screen from the position of cursor to the end of screen
+            //clear screen from the position of cursor to the end of screen
+            clrtobot() ;
             
             nocbreak() ;
             echo() ;
@@ -4167,7 +4518,6 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -4180,9 +4530,8 @@ INT32 Event::runSDBTOP( )
    fd_set fds ;
    struct timeval timeout ;
    INT32 maxfd  = STDIN + 1 ;
-   const INT32 bufLength = 256 ;
-   CHAR buf[bufLength] ;
-   ossMemset( buf, 0, bufLength ) ;
+   CHAR buf[BUFFERSIZE] ;
+   ossMemset( buf, 0, BUFFERSIZE ) ;
    root.input.forcedToRefresh_Global = NOTREFRESH ;
    root.input.forcedToRefresh_Local= NOTREFRESH ;
    rc = addFixedHotKey() ;
@@ -4212,15 +4561,22 @@ INT32 Event::runSDBTOP( )
    root.input.password = password ;
    try
    {
-      rc = coord.connect( root.input.hostname.c_str(), root.input.serviceName.c_str(), root.input.usrName.c_str(), root.input.password.c_str() ) ;
+      rc = coord.connect( root.input.hostname.c_str(),
+                          root.input.serviceName.c_str(),
+                          root.input.usrName.c_str(),
+                          root.input.password.c_str() ) ;
    }
    catch( std::exception &e )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s can't connect to the coord: %s, %s, %s, %s, e.what() =%d\n",
-                errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(),
-                root.input.usrName.c_str(), root.input.password.c_str(), e.what() ) ;
+                   "%s can't connect to the coord:"
+                   "%s, %s, %s, %s, e.what() =%d\n",
+                   errStrBuf, root.input.hostname.c_str(),
+                   root.input.serviceName.c_str(),
+                   root.input.usrName.c_str(),
+                   root.input.password.c_str(),
+                   e.what() ) ;
       rc = SDB_ERROR ;
       goto error ;
 
@@ -4231,15 +4587,19 @@ INT32 Event::runSDBTOP( )
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                 "%s can't connect to the coord: %s, %s, %s, %s, rc =%d\n",
-                errStrBuf, root.input.hostname.c_str(), root.input.serviceName.c_str(),
-                root.input.usrName.c_str(), root.input.password.c_str(), rc ) ;
+                errStrBuf, root.input.hostname.c_str(),
+                root.input.serviceName.c_str(),
+                root.input.usrName.c_str(),
+                root.input.password.c_str(), rc ) ;
       goto error ;
    }
    root.input.displayModeChooser = 0 ;
    initAllColourPairs() ;
    while( 1 )
    {
-      rc = getActivatedHeadTailMap( root.input.activatedPanel, &header, &footer) ;
+      rc = getActivatedHeadTailMap( root.input.activatedPanel,
+                                    &header,
+                                    &footer) ;
       if( rc )
       {
 
@@ -4286,7 +4646,9 @@ INT32 Event::runSDBTOP( )
          FD_ZERO ( &fds ) ;
          FD_SET ( STDIN, &fds ) ;
          rc = select ( maxfd, &fds, NULL, NULL, &timeout ) ;
-         if( rc < 0 ) //when window change the size // but why can't just break? it's question
+         //when window change the size,
+         //we should refresh the terminal
+         if( rc < 0 )
          {
             clear() ;
             rc = refreshHeadTail( header ) ;
@@ -4314,8 +4676,8 @@ INT32 Event::runSDBTOP( )
          {
             if ( FD_ISSET ( STDIN, &fds ) ) 
             {
-               ossMemset( buf, 0, bufLength) ;
-               read( STDIN, buf, bufLength ) ;
+               ossMemset( buf, 0, BUFFERSIZE) ;
+               read( STDIN, buf, BUFFERSIZE ) ;
                rc = getTopKey_TOP( buf, key) ;
                if( rc )
                {
@@ -4389,7 +4751,8 @@ void displayArg ( po::options_description &desc )
 }
 
 // resolve input argument
-INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
+INT32 resolveArgument ( po::options_description &desc,
+                        INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
    po::variables_map vm ;
@@ -4500,14 +4863,16 @@ INT32 main( INT32 argc, CHAR **argv)
       }
       goto done ;
    }
-   errStr = ( CHAR * )malloc( errStrLength * sizeof( CHAR ) ) ;
+   errStr = ( CHAR * )SDB_OSS_MALLOC( errStrLength * sizeof( CHAR ) ) ;
    if( !errStr )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
-   errStrBuf = ( CHAR * )malloc( errStrLength * sizeof( CHAR ) ) ;
+   errStrBuf = ( CHAR * )SDB_OSS_MALLOC( errStrLength * sizeof( CHAR ) ) ;
    if( !errStrBuf )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    ossMemset( errStr, 0, errStrLength ) ;
@@ -4517,7 +4882,8 @@ INT32 main( INT32 argc, CHAR **argv)
    { 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s You terminal does not support color\n", errStrBuf ) ;
+                "%s Your terminal can't support color\n", errStrBuf ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    start_color() ;
@@ -4528,6 +4894,7 @@ INT32 main( INT32 argc, CHAR **argv)
    rc = sdbtop.readConfiguration( ) ;
    if( rc )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    
@@ -4535,19 +4902,20 @@ INT32 main( INT32 argc, CHAR **argv)
    if( rc && SDB_SDBTOP_DONE != rc )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s",  errStr ) ;
-      ossSnprintf( errStr, errStrLength,  "%s can't runSDBTOP\n", errStrBuf ) ;
+      ossSnprintf( errStr, errStrLength,
+                   "%s can't runSDBTOP\n", errStrBuf ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
+done :
+   if( errStr )
+      SDB_OSS_FREE( errStr ) ;
+   if( errStrBuf )
+      SDB_OSS_FREE( errStrBuf ) ;
    curs_set( 1 ) ;
    endwin() ;
-done :
-   free( errStr ) ;
-   free( errStrBuf ) ;
    return rc ;
 error :
-   rc = SDB_ERROR ;
-   curs_set( 1 ) ;
-   endwin() ;
    std::cerr << errStr << std::endl;
    goto done ;
 }
