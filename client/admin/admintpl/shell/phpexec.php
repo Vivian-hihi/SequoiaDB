@@ -14,7 +14,7 @@ $return_arr = array() ;
 if ( $common == "checkfile" )
 {
 	//判断安装文件是否存在
-	$common = ' 1' ;
+	$common = ' "1"' ;
 	$order  = ' '.$order  ;
 	exec( './sequoiadbphp.sh'.$common.$order, $output, $return ) ;
 
@@ -95,9 +95,6 @@ else if ( $common == "checkhost" )
 }
 else if ( $common == "postallnodeconf" )
 {
-	$file = fopen( './temp2.txt', 'w' ) ;
-	fwrite( $file, $order ) ;
-	fclose( $file ) ;
 	if ( file_exists ( './sequoiadbconfig.sh' ) )
 	{
 		copy( './sequoiadbconfig.sh', './sequoiadbconfig.sh.bak' ) ;
@@ -113,7 +110,7 @@ else if ( $common == "postallnodeconf" )
 	$temp_3 = '' ;
 	$temp_4 = '' ;
 
-	$temp_1 = '#!/bin/bash'.PHP_EOL.PHP_EOL.'#是否输出调试信息[1:输出调试信息,2:输出普通信息,3:不输出]'.PHP_EOL.'IS_PRINGT_DEBUG='.$setup_conf['debug'].PHP_EOL.PHP_EOL.'#安装文件的路径'.PHP_EOL.'INSTALL_PATH="'.dirname( $setup_conf['install'] ).'"'.PHP_EOL.PHP_EOL.'#安装文件的文件名'.PHP_EOL.'INSTALL_NAME="'.basename( $setup_conf['install'] ).'"'.PHP_EOL.PHP_EOL.'#sdbcm端口'.PHP_EOL.'SDBCM_PORT="'.$setup_conf['sdbcm'].'"'.PHP_EOL.PHP_EOL.'#分区组列表'.PHP_EOL.'LIST_GROUP=('.$setup_conf['group'].')'.PHP_EOL.PHP_EOL ;
+	$temp_1 = '#!/bin/bash'.PHP_EOL.PHP_EOL.'#部署错误是否需要回滚[1:是,0:否]'.PHP_EOL.'IS_ROLLBACK=0'.PHP_EOL.PHP_EOL.'#需要回滚的路径(不需要填写)'.PHP_EOL.'DELETE_PATH_ARR=()'.PHP_EOL.PHP_EOL.'#需要回滚的任务(不需要填写)'.PHP_EOL.'REVOKE_TASK_ARR=()'.PHP_EOL.PHP_EOL.'#是否输出调试信息[1:输出调试信息,2:输出普通信息,3:不输出]'.PHP_EOL.'IS_PRINGT_DEBUG='.$setup_conf['debug'].PHP_EOL.PHP_EOL.'#安装文件的路径'.PHP_EOL.'INSTALL_PATH="'.dirname( $setup_conf['install'] ).'"'.PHP_EOL.PHP_EOL.'#安装文件的文件名'.PHP_EOL.'INSTALL_NAME="'.basename( $setup_conf['install'] ).'"'.PHP_EOL.PHP_EOL.'#sdbcm端口'.PHP_EOL.'SDBCM_PORT="'.$setup_conf['sdbcm'].'"'.PHP_EOL.PHP_EOL.'#分区组列表'.PHP_EOL.'LIST_GROUP=('.$setup_conf['group'].')'.PHP_EOL.PHP_EOL ;
 
 	$shell_str .= $temp_1 ;
 

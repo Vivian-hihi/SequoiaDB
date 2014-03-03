@@ -23,18 +23,37 @@ function showtool( obj1, obj2 )
 	}
 }
 
-function loadconnection( add, represent, user, pwd )
+function loadconnection( button_obj )
 {
-	document.getElementById("connect_address").value    = add ;
-	document.getElementById("connect_represent").value  = represent ;
-	document.getElementById("connect_user").value       = user ;
-	document.getElementById("connect_password").value   = pwd ;
+	var table_row_obj = button_obj.parentNode.parentNode ;
+	var add = table_row_obj.getElementsByTagName('td').item(0).innerHTML ;
+	var represent = table_row_obj.getElementsByTagName('td').item(1).innerHTML ;
+	var user = table_row_obj.getElementsByTagName('td').item(2).innerHTML ;
+	var pwd = table_row_obj.getElementsByTagName('td').item(3).innerHTML ;
+	document.getElementById("connect_address").value    = html_encode( add ) ;
+	document.getElementById("connect_represent").value  = html_encode( represent ) ;
+	document.getElementById("connect_user").value       = html_encode( user ) ;
+	document.getElementById("connect_password").value   = html_encode( pwd ) ;
 }
 
-function deleteconnect( address )
+function deleteconnect( button_obj )
 {
-	ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=delete&connectaddress=" + address, false ) ;
-	ajax2send('connect_list_r','post','index.php?p=connectlist&m=ajax_f','connectmodel=list');
+	var img = document.getElementById("connect_return_load") ;
+	var obj = document.getElementById("connect_return") ;
+	var table_row_obj = button_obj.parentNode.parentNode ;
+	var add = table_row_obj.getElementsByTagName('td').item(0).innerHTML ;
+	var order = "connectmodel=delete&connectaddress=" + convert2post( html_encode( add ) ) ;
+	function callback_deleteconnect_before( xhr )
+	{
+		img.style.display = '' ;
+	}
+	function callback_deleteconnect_complete( xhr, ts )
+	{
+		img.style.display = 'none' ;
+		obj.innerHTML = '' ;
+		showconnectmanager() ;
+	}
+	ajax2sendNew( 'post','index.php?p=connectlist&m=ajax_f', order, true, callback_success, callback_err, callback_deleteconnect_before, callback_deleteconnect_complete ) ;
 }
 
 function updateconnect()
@@ -44,18 +63,36 @@ function updateconnect()
 	var user = document.getElementById("connect_user").value ;
 	var pwd  = document.getElementById("connect_password").value ;
 	var rep  = document.getElementById("connect_represent").value ;
+	
+	var obj  = document.getElementById("connect_return") ;
+	var img  = document.getElementById("connect_return_load") ;
+	
+	obj.innerHTML = '' ;
 	if ( kep == false )
 	{
 		pwd = "" ;
 	}
 	if ( add == "" )
 	{
-		document.getElementById("connect_return").innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>请输入连接地址</div>' ;
+		obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>请输入连接地址</div>' ;
 	}
 	else
 	{
-		ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=update&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd + "&represent=" + rep, false ) ;
-		ajax2send('connect_list_r','post','index.php?p=connectlist&m=ajax_f','connectmodel=list');
+		function callback_updateconnect_before( xhr )
+		{
+			img.style.display = '' ;
+		}
+		function callback_updateconnect_err()
+		{
+			obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>网络错误</div>' ;
+		}
+		function callback_updateconnect_complete()
+		{
+			img.style.display = 'none' ;
+			showconnectmanager() ;
+		}
+		var order = 'connectmodel=update&connectaddress=' + convert2post( add ) + '&connectuser=' + convert2post( user ) + '&connectpwd=' + convert2post( pwd ) + "&represent=" + convert2post( rep ) ;
+		ajax2sendNew( 'post','index.php?p=connectlist&m=ajax_f', order, true, callback_success, callback_updateconnect_err, callback_updateconnect_before, callback_updateconnect_complete ) ;
 	}
 }
 
@@ -64,13 +101,57 @@ function testconnect()
 	var add  = document.getElementById("connect_address").value ;
 	var user = document.getElementById("connect_user").value ;
 	var pwd  = document.getElementById("connect_password").value ;
+	
+	var obj  = document.getElementById("connect_return") ;
+	var img  = document.getElementById("connect_return_load") ;
+	
+	obj.innerHTML = '' ;
 	if ( add == "" )
 	{
-		document.getElementById("connect_return").innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>请输入连接地址</div>' ;
+		obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>请输入连接地址</div>' ;
 	}
 	else
-	{
-		ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=testlink&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd ) ;
+	{	
+		function callback_testconnect_before( xhr )
+		{
+			img.style.display = '' ;
+		}
+		function callback_testconnect_success( str )
+		{
+			if ( str )
+			{
+				try
+				{
+					var json_obj = eval('(' + str + ')');
+					if ( json_obj['errno'] == 0 )
+					{
+						obj.innerHTML = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' + json_obj['message'] + '</div>' ;
+					}
+					else
+					{
+						obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' + json_obj['message'] + '</div>' ;
+					}
+				}
+				catch(e)
+				{
+					obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>系统错误</div>' ;
+				}
+			}
+			else
+			{
+				obj.innerHTML = "" ;
+			}
+		}
+		function callback_testconnect_err()
+		{
+			obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>网络错误</div>' ;
+		}
+		function callback_testconnect_complete()
+		{
+			img.style.display = 'none' ;
+		}
+		var order = 'connectmodel=testlink&connectaddress=' + convert2post( add ) + '&connectuser=' + convert2post( user ) + '&connectpwd=' + convert2post( pwd ) ;
+		ajax2sendNew( 'post','index.php?p=connectlist&m=ajax_f', order, true, callback_testconnect_success, callback_testconnect_err, callback_testconnect_before, callback_testconnect_complete ) ;
 	}
 }
 
@@ -79,21 +160,106 @@ function sessionconnect()
 	var add  = document.getElementById("connect_address").value ;
 	var user = document.getElementById("connect_user").value ;
 	var pwd  = document.getElementById("connect_password").value ;
+	
+	var obj  = document.getElementById("connect_return") ;
+	var img  = document.getElementById("connect_return_load") ;
+
 	if ( add == "" )
 	{
-		document.getElementById("connect_return").innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>请输入连接地址</div>' ;
+		obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>请输入连接地址</div>' ;
 	}
 	else
 	{
-		ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=connect&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd, false ) ;
-		tool_refresh_all ( location ) ;
+		function callback_sessionconnect_before( xhr )
+		{
+			img.style.display = '' ;
+		}
+		function callback_sessionconnect_success( str )
+		{
+			if ( str )
+			{
+				try
+				{
+					var json_obj = eval('(' + str + ')');
+					if ( json_obj['errno'] == 0 )
+					{
+						tool_refresh_all ( location ) ;
+					}
+					else
+					{
+						obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' + json_obj['message'] + '</div>' ;
+					}
+				}
+				catch(e)
+				{
+					obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>系统错误</div>' ;
+				}
+			}
+			else
+			{
+				obj.innerHTML = "" ;
+			}
+		}
+		function callback_sessionconnect_err()
+		{
+			obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>网络错误</div>' ;
+		}
+		function callback_sessionconnect_complete()
+		{
+			img.style.display = 'none' ;
+		}
+		//ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=connect&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd, false ) ;
+		var order = 'connectmodel=connect&connectaddress=' + convert2post( add ) + '&connectuser=' + convert2post( user ) + '&connectpwd=' + convert2post( pwd ) ;
+		ajax2sendNew( 'post','index.php?p=connectlist&m=ajax_f', order, true, callback_sessionconnect_success, callback_sessionconnect_err, callback_sessionconnect_before, callback_sessionconnect_complete ) ;
 	}
 }
 
-function sessionconnect2( add, user, pwd )
+function sessionconnect2( button_obj )
 {
-	ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=connect&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd, false ) ;
-	tool_refresh_all ( location ) ;
+	//ajax2send("connect_return","post","index.php?p=connectlist&m=ajax_f","connectmodel=connect&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd, false ) ;
+	var table_row_obj = button_obj.parentNode.parentNode ;
+	var img = document.getElementById('connect_return_load') ;
+	var obj = document.getElementById('connect_return') ;
+	var add = table_row_obj.getElementsByTagName('td').item(0).innerHTML ;
+	var user = table_row_obj.getElementsByTagName('td').item(2).innerHTML ;
+	var pwd = table_row_obj.getElementsByTagName('td').item(3).innerHTML ;
+	add = convert2post( add ) ;
+	user = convert2post( user ) ;
+	pwd = convert2post( pwd ) ;
+	
+	function callback_sessionconnect2_before( xhr )
+	{
+		img.style.display = '' ;
+	}
+	function callback_sessionconnect2_success( str )
+	{
+		try
+		{
+			var json_obj = eval('(' + str + ')');
+			if ( json_obj['errno'] == 0 )
+			{
+				tool_refresh_all ( location ) ;
+			}
+			else
+			{
+				obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button> ' + json_obj['message'] + '</div>'
+			}
+		}
+		catch(e)
+		{
+		}
+	}
+	function callback_sessionconnect2_err()
+	{
+		obj.innerHTML = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button> 网络错误</div>'
+	}
+   function callback_sessionconnect2_complete( xhr, ts )
+	{
+		img.style.display = 'none' ;
+	}
+	
+	var order = "connectmodel=connect&connectaddress=" + add + "&connectuser=" + user + "&connectpwd=" + pwd ;
+	ajax2sendNew( 'post', 'index.php?p=connectlist&m=ajax_f', order, true, callback_sessionconnect2_success, callback_sessionconnect2_err, callback_sessionconnect2_before, callback_sessionconnect2_complete ) ;
 }
 
 function convertChart ( data, step )

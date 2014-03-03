@@ -44,6 +44,7 @@ if ( $model == "all" )
 }
 else if ( $model == "ajax_r" )
 {
+	sleep( 2 ) ;
 	if ( $isConnect )
 	{
 		if ( !$smarty -> isCached ( './ajax/a-'.$mapping.'_r.html', 1 ) )
@@ -64,6 +65,7 @@ else if ( $model == "ajax_r" )
 }
 else if ( $model == "ajax_w" )
 {
+	sleep( 2 ) ;
 	if ( $isConnect )
 	{
 		if ( !$smarty -> isCached ( './ajax/a-'.$mapping.'_w.html', 1 ) )
@@ -84,6 +86,7 @@ else if ( $model == "ajax_w" )
 }
 else if ( $model == "ajax_l" )
 {
+	sleep( 2 ) ;
 	if ( $isConnect )
 	{
 		if ( !$smarty -> isCached ( './ajax/a-'.$mapping.'_l.html', 1 ) )
@@ -104,6 +107,7 @@ else if ( $model == "ajax_l" )
 }
 else if ( $model == "ajax_f" )
 {
+	sleep( 2 ) ;
 	if ( !$smarty -> isCached ( './ajax/a-'.$mapping.'_f.html', 1 ) )
 	{
 		$smarty -> clearCompiledTemplate() ;
@@ -114,9 +118,9 @@ else if ( $model == "ajax_f" )
 		}
 		
 	}
-	if ( file_exists ( './templates/ajax/a-'.$mapping.'_f.html' ) )
+	/*if ( file_exists ( './templates/ajax/a-'.$mapping.'_f.html' ) )
 	{
 		$smarty -> display ( './ajax/a-'.$mapping.'_f.html', 1 ) ;
-	}
+	}*/
 }
 ?>

@@ -1,5 +1,23 @@
 
+//ajax成功时的通用回调函数
+function callback_success( str )
+{
+}
 
+//ajax失败时的通用回调函数
+function callback_err()
+{
+}
+
+//ajax发送前的通用回调函数
+function callback_before( xhr )
+{
+}
+
+//ajax完成后的通用回调函数
+function callback_complete( xhr, ts )
+{
+}
 
 function checkresolution()
 {
@@ -32,9 +50,69 @@ function checkresolution()
 
 function showconnectmanager()
 {
-	ajax2send('connect_list_r','post','index.php?p=connectlist&m=ajax_f','connectmodel=list');
-	$('#Modal_connect').modal('toggle');
+	var img = document.getElementById("connect_list_r_load") ;
+	var div = document.getElementById("connect_list_r") ;
+	var obj = document.getElementById("connect_list_table") ;
+	function callback_showconnectmanager_before( xhr )
+	{
+		img.style.display = "" ;
+		div.style.display = 'none' ;
+		delete_table_row( obj, 1 ) ;
+	}
+	function callback_showconnectmanager_success( str )
+	{
+		try
+		{
+			//alert ( str ) ;
+			var json_obj = eval('(' + str + ')');
+			if ( json_obj['errno'] == 0 )
+			{
+				var row_arr = json_obj['connect_list'] ;
+				for( arr_key in row_arr )
+				{
+					var cell_arr = row_arr[arr_key] ;
+					var button_str = '<button type="button" class="btn btn-primary btn-sm" onclick=\'sessionconnect2(this)\'>连接</button> <button type="button" class="btn btn-primary btn-sm" onclick=\'loadconnection(this);\'>载入</button> <button type="button" class="btn btn-primary btn-sm" onclick=\'deleteconnect(this)\'>删除</button>' ;
+					var table_td_arr = new Array( html_decode( cell_arr[0] ), html_decode( cell_arr[3] ), html_decode( cell_arr[1] ), html_decode( cell_arr[2] ), button_str ) ;
+					table_insert_row_2( obj, table_td_arr ) ;
+				}
+			}
+		}
+		catch(e)
+		{
+			obj.innerHTML = "" ;
+		}
+	}
+	function callback_showconnectmanager_complete( xhr, ts )
+	{
+		img.style.display = 'none' ;
+		div.style.display = '' ;
+	}
+	ajax2sendNew( 'post','index.php?p=connectlist&m=ajax_f','connectmodel=list', true, callback_showconnectmanager_success, callback_err, callback_showconnectmanager_before, callback_showconnectmanager_complete ) ;
+	$('#Modal_connect').modal('show');
 }
+
+function html_encode( str )   
+{
+	str = replaceAllEx( str, '&quot;', '"' ) ;
+	str = replaceAllEx( str, '<br>', '\n' ) ;
+   str = replaceAllEx( str, '&lt;', '<' ) ;
+	str = replaceAllEx( str, '&gt;', '>' ) ;
+	str = replaceAllEx( str, '&nbsp;', ' ' ) ;
+	str = replaceAllEx( str, '&amp;', '&' ) ;
+	return str ;   
+}   
+
+
+function html_decode( str )   
+{
+	str = replaceAllEx( str, '&', '&amp;' ) ;
+	str = replaceAllEx( str, '"', '&quot;' ) ;
+	str = replaceAllEx( str, ' ', '&nbsp;' ) ;
+	str = replaceAllEx( str, '<', '&lt;' ) ;
+	str = replaceAllEx( str, '>', '&gt;' ) ;
+	str = replaceAllEx( str, '\n', '<br>' ) ;
+	return str ;
+}   
 
 function convert2post( str )
 {
@@ -59,7 +137,7 @@ function replaceAllEx(text, oldChar, newChar)
    while(index!=-1)
    {
 	  json  = json + text.substring(0,index)+newChar;
-	  text  = text.substring(index+1,text.length);
+	  text  = text.substring(index+oldChar.length,text.length);
 	  index = text.indexOf(oldChar);
    }
    json = json + text;
@@ -277,7 +355,7 @@ function creategrouplefttree( d, json )
 					{
 						d.add ( num1, num3, temp3["HostName"]+":"+tempName, '', "", "", "images/tree/nodeerror.png", "images/tree/nodeerror.png" ) ;
 						num1 = num1 + 1 ;
-						d.add ( num1, num5, '属性', 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", true )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
+						d.add ( num1, num5, '属性', 'senddata( "' + temp["GroupName"] + '", "' + temp3["HostName"] + '", "' + tempName + '", false )', "", "", "images/tree/attribute.png", "images/tree/attribute.png" ) ;
 						iserrornode = true ;
 						break ;
 					}
@@ -405,4 +483,50 @@ function pad(num, n) {
         len++;
     }
     return num;
+}
+
+//删除表格
+//参数1 表格对象
+//参数2 起始行(可选)
+//参数3 结束行(可选)
+function delete_table_row( table_obj )
+{
+	var delete_start = arguments[1] ? arguments[1] : 0 ;
+   var delete_end = arguments[2] ? arguments[2] : -1 ;
+	var table_row_len = table_obj.rows.length ;
+	if ( delete_end == -1 )
+	{
+		delete_end = table_row_len ;
+	}
+	for(var i = delete_end - 1; i >= delete_start; i-- )
+	{
+		table_obj.deleteRow( i ) ;
+	}
+}
+
+//表格插入新行,th
+function table_insert_row_1( table_obj, cell_arr )
+{
+	var temp_tab_row = table_obj.insertRow ( table_obj.rows.length ) ;
+	var temp_table_th = null ;
+	for( cell_arr_key in cell_arr )
+	{
+		temp_table_th = document.createElement("th") ;
+		temp_table_th.innerHTML = cell_arr[cell_arr_key] ;
+		temp_tab_row.appendChild( temp_table_th ) ;
+	}
+}
+
+//表格插入新行,td
+function table_insert_row_2( table_obj, cell_arr )
+{
+	var temp_tab_row = table_obj.insertRow ( table_obj.rows.length ) ;
+	var c = null ;
+	var i = 0 ;
+	for( cell_arr_key in cell_arr )
+	{
+		c = temp_tab_row.insertCell( i ) ;
+		c.innerHTML = cell_arr[cell_arr_key] ;
+		++i ;
+	}
 }

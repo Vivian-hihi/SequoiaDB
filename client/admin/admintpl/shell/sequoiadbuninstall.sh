@@ -1,10 +1,12 @@
 #!/bin/bash
 
-processes=`ps -ef | grep '\<sdbcm\>'|grep -v '\<grep\>'|awk '{print $2}'`
-for process in ${processes}
-do
-   kill -9 ${process}
-done
+if [ "${7}" = "1" ]; then
+   processes=`ps -ef | grep '\<sdbcm\>'|grep -v '\<grep\>'|awk '{print $2}'`
+   for process in ${processes}
+   do
+      kill -9 ${process}
+   done
+fi
 
 processes=`ps -ef | grep '\<sdbstart\>'|grep -v '\<grep\>'|awk '{print $2}'`
 for process in ${processes}
@@ -36,10 +38,19 @@ do
    kill -9 ${process}
 done
 
-if [ -n "${1}" ]; then
-   if [ -d "${1}" ]; then
-      echo "delete `hostname` ${1}"
-      rm -r ${1}
+if [ "${7}" = "1" ]; then
+   if [ -n "${1}" ]; then
+      if [ -d "${1}" ]; then
+         echo "delete `hostname` ${1}"
+         rm -r ${1}
+      fi
+   fi
+fi
+
+if [ -n "${1}/conf/local" ]; then
+   if [ -d "${1}/conf/local" ]; then
+      echo "delete `hostname` ${1}/conf/local"
+      rm -r "${1}/conf/local"
    fi
 fi
 

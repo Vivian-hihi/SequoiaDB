@@ -53,6 +53,7 @@ function switchshow( num )
 		else if ( num == 8 )
 		{
 			//触发获取
+			switch_step_8_tab(0);
 			switch_next_start_button(2) ;
 			add_host_list_to_send_install() ;
 			add_node_list_to_i_c_c_d() ;
@@ -280,7 +281,56 @@ function active_group()
 		}
 	}
 	
-	
+	function callback_active_group( str )
+	{
+		//alert ( str ) ;
+		try
+		{
+			var json_obj = eval('(' + str + ')');
+			var line = json_obj['line'] ;
+			show_diary_win( json_obj['diary'] ) ;
+			if ( json_obj['errno'] != 0 )
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[2].innerHTML = json_obj['output'] ;
+				}
+				++failed ;
+			}
+			else
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "none" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[2].innerHTML = json_obj['output'] ;
+				}
+				++success ;
+			}
+		}
+		catch(e)
+		{
+			show_error_win( "系统错误,请重试" ) ;
+			++failed ;
+		}
+	}
+	function callback_active_group_err()
+	{
+		show_error_win( "服务端网络错误,请重试" ) ;
+		++failed ;
+	}
 	for ( var i = 1; i < table_row_len; ++i )
 	{
 		image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(0) ;
@@ -292,60 +342,8 @@ function active_group()
 		order = sdbpath + ' ' + coordadd + ' ' + coordport + ' ' + table_obj.rows[i].cells[1].innerHTML ;
 		var post_context = 'common=' + convert2post( 'activegroup' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( i ) ;
 		ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_active_group, callback_active_group_err, callback_before, callback_complete ) ;
-		function callback_active_group( str )
-		{
-			//alert ( str ) ;
-			try
-			{
-				var json_obj = eval('(' + str + ')');
-				var line = json_obj['line'] ;
-				show_diary_win( json_obj['diary'] ) ;
-				if ( json_obj['errno'] != 0 )
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[2].innerHTML = json_obj['output'] ;
-					}
-					++failed ;
-				}
-				else
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "none" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[2].innerHTML = json_obj['output'] ;
-					}
-					++success ;
-				}
-			}
-			catch(e)
-			{
-				show_error_win( "系统错误,请重试" ) ;
-				++failed ;
-			}
-		}
-		function callback_active_group_err()
-		{
-			show_error_win( "服务端网络错误,请重试" ) ;
-			++failed ;
-		}
 	}
-	
-	window.setTimeout( "pd_check_end_a_g()", 500 ) ;
-	
+
 	window.pd_check_end_a_g = function()
 	{
 		if ( ( success + failed ) == ( table_row_len - 1 ) )
@@ -356,7 +354,7 @@ function active_group()
 			}
 			else
 			{
-				switchshow(7) ;
+				//switchshow(7) ;
 				switch_next_start_button(2) ;
 			}
 		}
@@ -365,6 +363,7 @@ function active_group()
 			window.setTimeout( "pd_check_end_a_g()", 500 ) ;
 		}
 	}
+	window.setTimeout( "pd_check_end_a_g()", 500 ) ;
 }
 
 //创建节点 包括 协调 编目 数据
@@ -395,26 +394,7 @@ function create_node( table_name )
 	image.style.display = "none" ;
 	image = table_obj.rows[1].cells[0].getElementsByTagName( 'img' ).item(2) ;
 	image.style.display = "none" ;
-	
-	order = table_obj.rows[1].cells[2].innerHTML + ' 0 ' + coord_add + ' ' + coord_port + ' ' + table_obj.rows[1].cells[3].innerHTML ;
-	var post_context = 'common=' + convert2post( 'createnode' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( 1 ) ;
-	ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_install_the_file, callback_install_the_file_err, callback_before, callback_create_node_complete ) ;
-	
-	function callback_create_node_complete()
-	{
-		for ( var i = 2; i < table_row_len; ++i )
-		{
-			image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(0) ;
-			image.style.display = "" ;
-			image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(1) ;
-			image.style.display = "none" ;
-			image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(2) ;
-			image.style.display = "none" ;
-			order = table_obj.rows[i].cells[2].innerHTML + ' 1 ' + coord_add + ' ' + coord_port + ' ' + table_obj.rows[i].cells[3].innerHTML ;
-			var post_context = 'common=' + convert2post( 'createnode' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( i ) ;
-			ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_install_the_file, callback_install_the_file_err, callback_before, callback_complete ) ;
-		}
-	}
+
 	function callback_install_the_file( str )
 	{
 		try
@@ -464,9 +444,25 @@ function create_node( table_name )
 		show_error_win( "服务端网络错误,请重试" ) ;
 		++failed ;
 	}
-	
-	window.setTimeout( "pd_check_end_c_n()", 500 ) ;
-	
+	function callback_create_node_complete()
+	{
+		for ( var i = 2; i < table_row_len; ++i )
+		{
+			image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(0) ;
+			image.style.display = "" ;
+			image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(1) ;
+			image.style.display = "none" ;
+			image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(2) ;
+			image.style.display = "none" ;
+			order = table_obj.rows[i].cells[2].innerHTML + ' 1 ' + coord_add + ' ' + coord_port + ' ' + table_obj.rows[i].cells[3].innerHTML ;
+			var post_context = 'common=' + convert2post( 'createnode' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( i ) ;
+			ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_install_the_file, callback_install_the_file_err, callback_before, callback_complete ) ;
+		}
+	}
+	order = table_obj.rows[1].cells[2].innerHTML + ' 0 ' + coord_add + ' ' + coord_port + ' ' + table_obj.rows[1].cells[3].innerHTML ;
+	var post_context = 'common=' + convert2post( 'createnode' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( 1 ) ;
+	ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_install_the_file, callback_install_the_file_err, callback_before, callback_create_node_complete ) ;
+
 	window.pd_check_end_c_n = function()
 	{
 		if ( ( success + failed ) == ( table_row_len - 1 ) )
@@ -477,7 +473,7 @@ function create_node( table_name )
 			}
 			else
 			{
-				switchshow(7) ;
+				//switchshow(7) ;
 				switch_next_start_button(2) ;
 			}
 		}
@@ -486,6 +482,7 @@ function create_node( table_name )
 			window.setTimeout( "pd_check_end_c_n()", 500 ) ;
 		}
 	}
+	window.setTimeout( "pd_check_end_c_n()", 500 ) ;
 }
 
 //安装sequoiadb
@@ -498,6 +495,57 @@ function install_the_file()
 	var failed  = 0 ;
 	var order = '' ;
 	var image = null ;
+	
+	function callback_install_the_file( str )
+	{
+		//alert ( str ) ;
+		try
+		{
+			var json_obj = eval('(' + str + ')');
+			var line = json_obj['line'] ;
+			show_diary_win( json_obj['diary'] ) ;
+			if ( json_obj['errno'] != 0 )
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
+				}
+				++failed ;
+			}
+			else
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "none" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
+				}
+				++success ;
+			}
+		}
+		catch(e)
+		{
+			show_error_win( "系统错误,请重试" ) ;
+			++failed ;
+		}
+	}
+	function callback_install_the_file_err()
+	{
+		show_error_win( "服务端网络错误,请重试" ) ;
+		++failed ;
+	}
 	for ( var i = 1; i < table_row_len; ++i )
 	{
 		image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(0) ;
@@ -509,60 +557,8 @@ function install_the_file()
 		order = table_obj.rows[i].cells[2].innerHTML ;
 		var post_context = 'common=' + convert2post( 'installthefile' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( i ) ;
 		ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_install_the_file, callback_install_the_file_err, callback_before, callback_complete ) ;
-		function callback_install_the_file( str )
-		{
-			//alert ( str ) ;
-			try
-			{
-				var json_obj = eval('(' + str + ')');
-				var line = json_obj['line'] ;
-				show_diary_win( json_obj['diary'] ) ;
-				if ( json_obj['errno'] != 0 )
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
-					}
-					++failed ;
-				}
-				else
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "none" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
-					}
-					++success ;
-				}
-			}
-			catch(e)
-			{
-				show_error_win( "系统错误,请重试" ) ;
-				++failed ;
-			}
-		}
-		function callback_install_the_file_err()
-		{
-			show_error_win( "服务端网络错误,请重试" ) ;
-			++failed ;
-		}
 	}
-	
-	window.setTimeout( "pd_check_end_i_t_f()", 500 ) ;
-	
+
 	window.pd_check_end_i_t_f = function()
 	{
 		if ( ( success + failed ) == ( table_row_len - 1 ) )
@@ -573,7 +569,7 @@ function install_the_file()
 			}
 			else
 			{
-				switchshow(7) ;
+				//switchshow(7) ;
 				switch_next_start_button(2) ;
 			}
 		}
@@ -582,6 +578,7 @@ function install_the_file()
 			window.setTimeout( "pd_check_end_i_t_f()", 500 ) ;
 		}
 	}
+	window.setTimeout( "pd_check_end_i_t_f()", 500 ) ;
 }
 
 //分发安装包
@@ -594,6 +591,56 @@ function send_install_file()
 	var failed  = 0 ;
 	var order = '' ;
 	var image = null ;
+	function callback_send_install_file( str )
+	{
+		//alert ( str ) ;
+		try
+		{
+			var json_obj = eval('(' + str + ')');
+			var line = json_obj['line'] ;
+			show_diary_win( json_obj['diary'] ) ;
+			if ( json_obj['errno'] != 0 )
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
+				}
+				++failed ;
+			}
+			else
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "none" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
+				}
+				++success ;
+			}
+		}
+		catch(e)
+		{
+			show_error_win( "系统错误,请重试" ) ;
+			++failed ;
+		}
+	}
+	function callback_send_install_file_err()
+	{
+		show_error_win( "服务端网络错误,请重试" ) ;
+		++failed ;
+	}
 	for ( var i = 1; i < table_row_len; ++i )
 	{
 		image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(0) ;
@@ -605,60 +652,8 @@ function send_install_file()
 		order = table_obj.rows[i].cells[2].innerHTML ;
 		var post_context = 'common=' + convert2post( 'sendinstallfile' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( i ) ;
 		ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_send_install_file, callback_send_install_file_err, callback_before, callback_complete ) ;
-		function callback_send_install_file( str )
-		{
-			//alert ( str ) ;
-			try
-			{
-				var json_obj = eval('(' + str + ')');
-				var line = json_obj['line'] ;
-				show_diary_win( json_obj['diary'] ) ;
-				if ( json_obj['errno'] != 0 )
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
-					}
-					++failed ;
-				}
-				else
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "none" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
-					}
-					++success ;
-				}
-			}
-			catch(e)
-			{
-				show_error_win( "系统错误,请重试" ) ;
-				++failed ;
-			}
-		}
-		function callback_send_install_file_err()
-		{
-			show_error_win( "服务端网络错误,请重试" ) ;
-			++failed ;
-		}
 	}
-	
-	window.setTimeout( "pd_check_end_s_i_f()", 500 ) ;
-	
+
 	window.pd_check_end_s_i_f = function()
 	{
 		if ( ( success + failed ) == ( table_row_len - 1 ) )
@@ -669,7 +664,7 @@ function send_install_file()
 			}
 			else
 			{
-				switchshow(7) ;
+				//switchshow(7) ;
 				switch_next_start_button(2) ;
 			}
 		}
@@ -678,6 +673,7 @@ function send_install_file()
 			window.setTimeout( "pd_check_end_s_i_f()", 500 ) ;
 		}
 	}
+	window.setTimeout( "pd_check_end_s_i_f()", 500 ) ;
 }
 
 //系统环境检查同步执行
@@ -690,6 +686,56 @@ function sys_check_async()
 	var failed  = 0 ;
 	var order = '' ;
 	var image = null ;
+	function callback_sys_check_async( str )
+	{
+		//alert ( str ) ;
+		try
+		{
+			var json_obj = eval('(' + str + ')');
+			var line = json_obj['line'] ;
+			show_diary_win( json_obj['diary'] ) ;
+			if ( json_obj['errno'] != 0 )
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
+				}
+				++failed ;
+			}
+			else
+			{
+				if ( line > 0 )
+				{
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
+					image.style.display = "none" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
+					image.style.display = "" ;
+					image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
+					image.style.display = "none" ;
+					//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
+					table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
+				}
+				++success ;
+			}
+		}
+		catch(e)
+		{
+			show_error_win( "系统错误,请重试" ) ;
+			++failed ;
+		}
+	}
+	function callback_sys_check_async_err()
+	{
+		show_error_win( "服务端网络错误,请重试" ) ;
+		++failed ;
+	}
 	for ( var i = 1; i < table_row_len; ++i )
 	{
 		image = table_obj.rows[i].cells[0].getElementsByTagName( 'img' ).item(0) ;
@@ -701,60 +747,8 @@ function sys_check_async()
 		order = table_obj.rows[i].cells[2].innerHTML ;
 		var post_context = 'common=' + convert2post( 'checkenvhost' ) + '&order=' + convert2post( order ) + '&line=' + convert2post( i ) ;
 		ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_sys_check_async, callback_sys_check_async_err, callback_before, callback_complete ) ;
-		function callback_sys_check_async( str )
-		{
-			//alert ( str ) ;
-			try
-			{
-				var json_obj = eval('(' + str + ')');
-				var line = json_obj['line'] ;
-				show_diary_win( json_obj['diary'] ) ;
-				if ( json_obj['errno'] != 0 )
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/delete.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
-					}
-					++failed ;
-				}
-				else
-				{
-					if ( line > 0 )
-					{
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(0) ;
-						image.style.display = "none" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(1) ;
-						image.style.display = "" ;
-						image = table_obj.rows[line].cells[0].getElementsByTagName( 'img' ).item(2) ;
-						image.style.display = "none" ;
-						//table_obj.rows[line].cells[0].innerHTML = '<img src="./images/tick.png" width="15" height="15" />' ;
-						table_obj.rows[line].cells[3].innerHTML = json_obj['output'] ;
-					}
-					++success ;
-				}
-			}
-			catch(e)
-			{
-				show_error_win( "系统错误,请重试" ) ;
-				++failed ;
-			}
-		}
-		function callback_sys_check_async_err()
-		{
-			show_error_win( "服务端网络错误,请重试" ) ;
-			++failed ;
-		}
 	}
-	
-	window.setTimeout( "pd_check_end_s_c_a()", 500 ) ;
-	
+
 	window.pd_check_end_s_c_a = function()
 	{
 		if ( ( success + failed ) == ( table_row_len - 1 ) )
@@ -773,6 +767,7 @@ function sys_check_async()
 			window.setTimeout( "pd_check_end_s_c_a()", 500 ) ;
 		}
 	}
+	window.setTimeout( "pd_check_end_s_c_a()", 500 ) ;
 }
 
 //切换下一步跟开始按钮显示
@@ -1185,6 +1180,7 @@ function add_groups_to_list()
 	for ( key in group_arr )
 	{
 		var str_group_name = group_arr[key].replace(/(^\s*)|(\s*$)/g, "");
+		str_group_name = html_decode( str_group_name ) ;
 		if ( str_group_name == "" )
 		{
 			continue ;
@@ -1245,6 +1241,31 @@ function add_groups_to_list()
 	}
 }
 
+//配置主机，把配置写到主机列表
+function set_host_conf_table()
+{
+	var table_obj = document.getElementById('step_2_tab_table') ;
+	var input_obj = document.getElementById('host_config_table').getElementsByTagName('input') ;
+	
+	var path = input_obj.item(0).value ;
+	var group = input_obj.item(1).value ;
+	var user = input_obj.item(2).value ;
+	var password = input_obj.item(3).value ;
+	
+	var table_len = table_obj.rows.length ;
+	for ( var i = 1; i < table_len; ++i )
+	{
+		var input_box = table_obj.rows[i].cells[0].getElementsByTagName('input').item(0) ;
+		if ( input_box.checked == true )
+		{
+			table_obj.rows[i].cells[3].innerHTML = path ;
+			table_obj.rows[i].cells[4].innerHTML = group ;
+			table_obj.rows[i].cells[5].innerHTML = user ;
+			table_obj.rows[i].cells[6].innerHTML = password ;
+		}
+	}
+}
+
 //获取group的数组
 function get_group_list()
 {
@@ -1291,21 +1312,6 @@ function hiddendiv()
 		}
 		obj.style.display = "none" ;
 	}
-}
-
-//ajax失败时的通用回调函数
-function callback_err()
-{
-}
-
-//ajax发送前的通用回调函数
-function callback_before( xhr )
-{
-}
-
-//ajax完成后的通用回调函数
-function callback_complete( xhr, ts )
-{
 }
 
 //修改错误提示，并显示错误框
@@ -1387,7 +1393,7 @@ function f_step_1()
 
 	//校验安装文件
 	var post_context = 'common=' + convert2post( 'checkfile' ) + '&order=' + convert2post( path_obj.value ) ;
-	ajax2sendNew( 'POST', './shell/phpexec.php', post_context, false, callback_f_step_1, callback_err, callback_before, callback_complete ) ;
+
 	//回调函数
 	function callback_f_step_1( str )
 	{
@@ -1406,6 +1412,7 @@ function f_step_1()
 			rc = false ;
 		}
 	}
+	ajax2sendNew( 'POST', './shell/phpexec.php', post_context, false, callback_f_step_1, callback_err, callback_before, callback_complete ) ;
 	
 	if ( !rc )
 	{
@@ -1559,9 +1566,6 @@ function f_step_6()
 		order = order + '["' + host_list_obj.rows[i].cells[2].innerHTML + '","' + host_list_obj.rows[i].cells[3].innerHTML + '","' + host_list_obj.rows[i].cells[4].innerHTML + '","' + host_list_obj.rows[i].cells[5].innerHTML + '","' + host_list_obj.rows[i].cells[6].innerHTML + '"]' ;
 	}
 	
-	order = order + '],"node":' + get_all_node_to_json() + '}' ;
-	var post_context = 'common=' + convert2post( 'postallnodeconf' ) + '&order=' + convert2post( order ) ;
-	ajax2sendNew( 'POST', './shell/phpexec.php', post_context, false, callback_f_step_6, callback_f_step_6_err, callback_before, callback_complete ) ;
 	function callback_f_step_6( str )
 	{
 		try
@@ -1579,6 +1583,9 @@ function f_step_6()
 	{
 		rc = 1 ;
 	}
+	order = order + '],"node":' + get_all_node_to_json() + '}' ;
+	var post_context = 'common=' + convert2post( 'postallnodeconf' ) + '&order=' + convert2post( order ) ;
+	ajax2sendNew( 'POST', './shell/phpexec.php', post_context, false, callback_f_step_6, callback_f_step_6_err, callback_before, callback_complete ) ;
 	return rc ;
 }
 
@@ -1743,58 +1750,58 @@ function f_scaning()
 		tab_obj.deleteRow( i ) ;
 	}
 	
+	//回调函数
+	function callback_f_check_host( str )
+	{
+		try
+		{
+			return_j_o_t = eval('(' + str + ')') ;
+		}
+		catch(e)
+		{
+			return_j_o_t = eval('({"output":"","errno":"1","diary":""})') ;
+		}
+		var tab_row = tab_obj.insertRow ( tab_obj.rows.length ) ;
+		var c1 = tab_row.insertCell( 0 ) ;
+		if ( return_j_o_t['errno'] == 0 )
+		{
+			++success_host ;
+			c1.innerHTML = '<input type="checkbox">' ;
+		}
+		else
+		{
+			c1.innerHTML = '<input type="checkbox" disabled>' ;
+		}
+		var c2 = tab_row.insertCell( 1 ) ;
+		c2.innerHTML = return_j_o_t['ip'] ;
+		var c3 = tab_row.insertCell( 2 ) ;
+		c3.innerHTML = return_j_o_t['host'] ;
+		var c4 = tab_row.insertCell( 3 ) ;
+		if ( return_j_o_t['errno'] == 0 )
+		{
+			c4.innerHTML = "连接成功：响应时间 " + return_j_o_t['output'] + " 毫秒" ;
+		}
+		else
+		{
+			c4.innerHTML = return_j_o_t['output'] ;
+		}
+		++cur_host_num ;
+		var load_num = parseInt(((cur_host_num/host_len)*100)) ;
+		document.getElementById("scan_load_pic").style.width = load_num + "%" ;
+		if ( cur_host_num == host_len )
+		{
+			document.getElementById("scan_load_1").style.display = "none" ;
+			document.getElementById("scan_load_2").style.display = "" ;
+			document.getElementById("scan_load_2").innerHTML = '已扫描 ' + host_len + ' 台主机，其中 ' + success_host + ' 台已连接成功连接SSH' ;
+		}
+		var scroll_obj = document.getElementById("scan_tab_scoll") ;
+		scroll_obj.scrollTop = scroll_obj.scrollHeight ;
+	}
 	for ( var key in json_obj )
 	{
 		var return_j_o_t = null ;
 		var post_context = 'common=' + convert2post( 'checkhost' ) + '&order=' + convert2post( (json_obj[key]+' '+'22') ) ;
 		ajax2sendNew( 'POST', './shell/phpexec.php', post_context, true, callback_f_check_host, callback_err, callback_before, callback_complete ) ;
-		//回调函数
-		function callback_f_check_host( str )
-		{
-			try
-			{
-				return_j_o_t = eval('(' + str + ')') ;
-			}
-			catch(e)
-			{
-				return_j_o_t = eval('({"output":"","errno":"1","diary":""})') ;
-			}
-			var tab_row = tab_obj.insertRow ( tab_obj.rows.length ) ;
-			var c1 = tab_row.insertCell( 0 ) ;
-			if ( return_j_o_t['errno'] == 0 )
-			{
-				++success_host ;
-				c1.innerHTML = '<input type="checkbox">' ;
-			}
-			else
-			{
-				c1.innerHTML = '<input type="checkbox" disabled>' ;
-			}
-			var c2 = tab_row.insertCell( 1 ) ;
-			c2.innerHTML = return_j_o_t['ip'] ;
-			var c3 = tab_row.insertCell( 2 ) ;
-			c3.innerHTML = return_j_o_t['host'] ;
-			var c4 = tab_row.insertCell( 3 ) ;
-			if ( return_j_o_t['errno'] == 0 )
-			{
-				c4.innerHTML = "连接成功：响应时间 " + return_j_o_t['output'] + " 毫秒" ;
-			}
-			else
-			{
-				c4.innerHTML = return_j_o_t['output'] ;
-			}
-			++cur_host_num ;
-			var load_num = parseInt(((cur_host_num/host_len)*100)) ;
-			document.getElementById("scan_load_pic").style.width = load_num + "%" ;
-			if ( cur_host_num == host_len )
-			{
-				document.getElementById("scan_load_1").style.display = "none" ;
-				document.getElementById("scan_load_2").style.display = "" ;
-				document.getElementById("scan_load_2").innerHTML = '已扫描 ' + host_len + ' 台主机，其中 ' + success_host + ' 台已连接成功连接SSH' ;
-			}
-			var scroll_obj = document.getElementById("scan_tab_scoll") ;
-			scroll_obj.scrollTop = scroll_obj.scrollHeight ;
-		}
 	}
 	return rc ;
 }
@@ -2669,33 +2676,6 @@ function get_host_list( str )
 		alert ( link_search[keys] ) ;
 	}*/
 	return link_search ;
-}
-
-//表格插入新行,th
-function table_insert_row_1( table_obj, cell_arr )
-{
-	var temp_tab_row = table_obj.insertRow ( table_obj.rows.length ) ;
-	var temp_table_th = null ;
-	for( cell_arr_key in cell_arr )
-	{
-		temp_table_th = document.createElement("th") ;
-		temp_table_th.innerHTML = cell_arr[cell_arr_key] ;
-		temp_tab_row.appendChild( temp_table_th ) ;
-	}
-}
-
-//表格插入新行,td
-function table_insert_row_2( table_obj, cell_arr )
-{
-	var temp_tab_row = table_obj.insertRow ( table_obj.rows.length ) ;
-	var c = null ;
-	var i = 0 ;
-	for( cell_arr_key in cell_arr )
-	{
-		c = temp_tab_row.insertCell( i ) ;
-		c.innerHTML = cell_arr[cell_arr_key] ;
-		++i ;
-	}
 }
 
 

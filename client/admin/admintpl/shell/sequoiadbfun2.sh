@@ -1,14 +1,141 @@
 #!/bin/bash
 
+#输出删除列表
+function echoDelList()
+{
+   for delPath in ${DELETE_PATH_ARR[@]}
+   do
+      echo "${delPath}" >> /tmp/sdbdel
+   done
+}
+
+#输出撤销列表
+function echoRevokeList()
+{
+   for tasks in ${REVOKE_TASK_ARR[@]}
+   do
+      echo "${tasks}" >> /tmp/sdbrevtask
+   done
+}
+
+#遍历删除列表删除路径
+function delListFile()
+{
+   local isfirst=1
+   local localHostname=`hostname`
+   while read delPath
+   do
+      if [ "${isfirst}" = "1" ]; then
+         isfirst=0
+      else
+         #删除
+         if [ -n "${delPath}" ]; then
+            if [ -d "${delPath}" ]; then
+               echo_r "Event" $FUNCNAME $LINENO "${localHostname} delete ${delPath}"
+               rm -r ${delPath}
+            fi
+         fi
+      fi
+   done < /tmp/sdbdel
+   echo "" > /tmp/sdbdel
+}
+
+#遍历撤销列表撤销任务
+function revokeListTask()
+{
+   local isfirst=1
+   local temp=""
+   local localHostname=`hostname`
+   while read tasks
+   do
+      if [ "${isfirst}" = "1" ]; then
+         isfirst=0
+      else
+         if [ "${temp}" == "${tasks}" ]; then
+            break
+         fi
+         temp="${tasks}"
+         echo_r "Event" $FUNCNAME $LINENO "${localHostname} executive command ${tasks}"
+         ${tasks}
+      fi
+   done < /tmp/sdbrevtask
+   echo "" > /tmp/sdbrevtask
+}
+
+#获取配置参数属于第几个
+#参数1 配置参数的名字
+function get_SDBCONF_num()
+{
+   num=0
+   for array_name in ${SDB_CONFIG[@]}
+   do
+      if [ "${1}" = "${array_name}" ]; then
+         echo "${num}"
+         break
+      fi
+      let "num+=1"
+   done
+}
+
 #校验步骤1的函数
 
 #检查端口是否被占用
 #参数1 端口号 例如 "50000"
 function checkLocalPort()
 {
-   portNum=0
-   portNum=`netstat -tln|grep "\<$1\>"| wc -l`
+   local portNum=0
+   local portNum=`netstat -tln|grep "\<$1\>"| wc -l`
    if [ ${portNum} -eq 0 ]; then
+      return 0
+   else
+      return 1
+   fi
+}
+
+#检查是不是sdbcm使用了端口
+#参数1 sdbcm的端口号
+function checkSdbcmStart()
+{
+   local sdbcms=`ps -ef| grep "sdbcm(${1})"|grep -v '\<grep\>'|awk '{print $2}'`
+   if [ -n "${sdbcms}" ]; then
+      return 0
+   else
+      return 1
+   fi
+}
+
+#检查是不是指定路径启动sdbcm
+#参数1 路径
+function checkSdbcmPath2()
+{
+   local sdbcms=`ps -ef| grep "\<sdbcm\>"|grep -v '\<grep\>'|awk '{print $2}'`
+   local sdbcmPath=""
+   if [ -n "${sdbcms}" ]; then
+      sdbcmPath=`ls -l /proc/${sdbcms}/exe | awk '{print $11}'`
+      if [ "${1}" = "${sdbcmPath}" ]; then
+         return 0
+      else
+         return 1
+      fi
+   else
+      return 0
+   fi
+}
+
+#检查是不是指定路径启动sdbcm
+#参数1 sdbcm端口
+#参数2 路径
+function checkSdbcmPath()
+{
+   local sdbcms=`ps -ef| grep "sdbcm(${1})"|grep -v '\<grep\>'|awk '{print $2}'`
+   local sdbcmPath=""
+   if [ -n "${sdbcms}" ]; then
+      sdbcmPath=`ls -l /proc/${sdbcms}/exe | awk '{print $11}'`
+      if [ "${2}" = "${sdbcmPath}" ]; then
+         return 0
+      else
+         return 1
+      fi
       return 0
    else
       return 1
@@ -46,7 +173,7 @@ function userExec()
 #参数2 文件夹名 例如 "/opt/sequoiadb/"
 function userCreateFolder()
 {
-   userExec $1 "mkdir -p $2"
+   userExec "${1}" "mkdir -p ${2}"
 }
 
 #判断指定目录可用空间是否达到指定大小(MB)
@@ -54,8 +181,8 @@ function userCreateFolder()
 #参数2 大小 例如 256
 function checkAvailable()
 {
-   available=`df -m $1 | tail -n1|awk '{print $4}'`
-   if [ ${available} -lt $2 ]; then
+   local available=`df -m ${1} | tail -n1|awk '{print $4}'`
+   if [ "${available}" -lt "${2}" ]; then
       return 1
    else
       return 0
@@ -73,16 +200,17 @@ function checkFileisExist()
    fi
 }
 
-#判断目录是否为空 返回1 空目录 0非空
+#判断目录是否为空 返回 0空目录 1非空
 #参数1 路径 例如 "/opt/sequoiadb"
 function checkFileNull()
 {
    local rootPath="${1}"
    local files=`find ${rootPath} -type f -print`
+   
    if [ -z "${files}" ]; then
-      return 1
-   else
       return 0
+   else
+      return 1
    fi
 }
 
@@ -95,14 +223,19 @@ function checkFileNull()
 function install()
 {
    /tmp/$1 --mode unattended --prefix $2 --username $3 --userpasswd $4 --port $5
+   if [ $? -ne 0 ]; then
+      return 1
+   else
+      return 0
+   fi
 }
 
 #检查用户组是否存在 返回0 存在 返回1 不存在
 #参数1 用户组名 例如 "root"
 function checkGroup()
 {
-   groupNum=0
-   groupNum=`cat /etc/group | grep "\<$1\>"|wc -l`
+   local groupNum=0
+   local groupNum=`cat /etc/group | grep "\<$1\>"|wc -l`
    if [ ${groupNum} -ne 0 ]; then
       return 0
    else
@@ -114,8 +247,8 @@ function checkGroup()
 #参数1 用户名 例如 "root"
 function checkUser()
 {
-   userNum=0
-   userNum=`cat /etc/passwd | grep "\<$1\>"|wc -l`
+   local userNum=0
+   local userNum=`cat /etc/passwd | grep "\<$1\>"|wc -l`
    if [ ${userNum} -ne 0 ]; then
       return 0
    else
@@ -134,17 +267,21 @@ function replaceStr()
 
 #步骤1 子系统检查本地环境
 #参数1 主机列表元素名 例如：ARRAY_HOST_1
+#参数2 数据库版本
+#参数3 安装后大小
 function checkLocalEnv()
 {
-   list_host_name="${1}"
+   local array_ele="${1}"
+   local sdbVersion="${2}"
+   local installSize="${3}"
 
    #获取本地hostname
-   thisHost=`hostname`
+   local thisHost=`hostname`
 
    #取得主机信息
-   eval "host_array=(\"\${${list_host_name}[@]}\")"
+   eval "host_array=(\"\${${array_ele}[@]}\")"
 
-   target="${host_array[0]}"
+   local target="${host_array[0]}"
 
    #以下是主机检查
 
@@ -153,9 +290,30 @@ function checkLocalEnv()
    #检查sdbcm用的端口在本地是否被占用
    checkLocalPort "${SDBCM_PORT}"
    if [ $? -ne 0 ]; then
-      echo_r "Error" $FUNCNAME $LINENO "${target} sdbcm ${SDBCM_PORT} port is already in use"
-      return 1
+      #如果被占用，检查是不是sdbcm占用
+      checkSdbcmStart "${SDBCM_PORT}"
+      if [ $? -ne 0 ]; then
+         #不是sdbcm占用
+         echo_r "Error" $FUNCNAME $LINENO "${target} sdbcm ${SDBCM_PORT} port is already in use"
+         return 1
+      else
+         checkSdbcmPath "${SDBCM_PORT}" "${host_array[1]}/bin/sdbcm"
+         if [ $? -ne 0 ]; then
+            #sdbcm启动了,但是不是指定安装路径下的sdbcm
+            echo_r "Error" $FUNCNAME $LINENO "${target} sdbcm is not ${host_array[1]}/bin/sdbcm path of sdbcm"
+            return 1
+         fi
+      fi
+   else
+      checkSdbcmPath2 "${host_array[1]}/bin/sdbcm"
+      if [ $? -ne 0 ]; then
+         #sdbcm启动了,但是不是指定安装路径下的sdbcm
+         echo_r "Error" $FUNCNAME $LINENO "${target} sdbcm is not ${host_array[1]}/bin/sdbcm path of sdbcm"
+         return 1
+      fi
    fi
+   
+   
 
    #检查用户组是否存在
    checkGroup "${host_array[2]}"
@@ -168,7 +326,9 @@ function checkLocalEnv()
    checkUser "${host_array[3]}"
    if [ $? -ne 0 ]; then
       #用户不存在,那么创建
-      useradd -d "${host_array[1]}" -g "${host_array[2]}" -p "${host_array[4]}" -s "/bin/bash" "${host_array[3]}"
+      #如果加-d命令,部分系统会自动创建路径,导致目录下有用户系统环境配置文件
+      #useradd -d "${host_array[1]}" -g "${host_array[2]}" -p "${host_array[4]}" -s "/bin/bash" "${host_array[3]}"
+      useradd -g "${host_array[2]}" -p "${host_array[4]}" -s "/bin/bash" "${host_array[3]}"
    else
       #用户存在，那么增加他的附加组
       usermod -G "${host_array[2]}" -s "/bin/bash" "${host_array[3]}"
@@ -179,21 +339,26 @@ function checkLocalEnv()
    if [ $? -ne 1 ]; then
       #检查安装路径中是否空
       checkFileNull "${host_array[1]}"
-      if [ $? -ne 1 ]; then
-         echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${host_array[1]} is not empty"
-         return 1
+      if [ $? -ne 0 ]; then
+         #获取本机数据库版本
+         lVersion=`getLocalDBVersion`
+         if [ "${2}" != "${lVersion}" ]; then
+            echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${host_array[1]} is not empty"
+            return 1
+         fi
       fi
    else
       #路径不存在，创建目录
       #创建目录
-      createFolder ${host_array[1]}
+      createFolder "${host_array[1]}"
+      DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${host_array[1]}")
    fi
 
    #修改安装路径所属用户和用户组
    chown ${host_array[3]}:${host_array[2]} -R "${host_array[1]}"
 
    #检查安装路径是否有足够大的空间
-   checkAvailable "${host_array[1]}" ${INSTALL_SDB_SIZE}
+   checkAvailable "${host_array[1]}" "${installSize}"
    if [ $? -ne 0 ]; then
       echo_r "Error" $FUNCNAME $LINENO "The ${target} ${host_array[1]} directory available space is less than ${INSTALL_SDB_SIZE}MB"
       return 1
@@ -205,7 +370,7 @@ function checkLocalEnv()
    do
       eval "node_array=(\"\${${array_name}[@]}\")"
       #只取该主机的节点
-      if [ "${list_host_name}" = "${node_array[2]}" ]; then
+      if [ "${array_ele}" = "${node_array[2]}" ]; then
          #获取该节点的配置信息
          eval "conf_array=(\"\${${node_array[3]}[@]}\")"
 
@@ -275,7 +440,7 @@ function checkLocalEnv()
          path=${conf_array[${num}]}
          if [ -z "${path}" ]; then
             #如果路径空，那么采用默认路径
-            path="${host_array}/bin"
+            path="${host_array[1]}/bin"
          fi
          dbpath="${path}"
          #检查路径是否存在
@@ -283,14 +448,15 @@ function checkLocalEnv()
          if [ $? -ne 1 ]; then
             #路径已经存在，检查路径目录内是否有文件
             checkFileNull ${path}
-            if [ $? -ne 1 ]; then
+            if [ $? -ne 0 ]; then
                echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${path} is not empty"
                return 1
             fi
          else
             #路径不存在，创建目录
             #创建目录
-            createFolder ${path}
+            createFolder "${path}"
+            DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
          chown ${host_array[3]}:${host_array[2]} -R "${path}"
@@ -313,7 +479,7 @@ function checkLocalEnv()
          if [ $? -ne 1 ]; then
             #路径已经存在，检查路径目录内是否有文件
             checkFileNull ${path}
-            if [ $? -ne 1 ]; then
+            if [ $? -ne 0 ]; then
                echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${path} is not empty"
                return 1
             fi
@@ -321,7 +487,10 @@ function checkLocalEnv()
             #路径不存在，创建目录
             #创建目录
             createFolder ${path}
+            DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
+         #修改所属用户 和 用户组
+         chown ${host_array[3]}:${host_array[2]} -R "${path}"
 
          #logpath
          num=`get_SDBCONF_num "logpath"`
@@ -335,7 +504,7 @@ function checkLocalEnv()
          if [ $? -ne 1 ]; then
             #路径已经存在，检查路径目录内是否有文件
             checkFileNull ${path}
-            if [ $? -ne 1 ]; then
+            if [ $? -ne 0 ]; then
                echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${path} is not empty"
                return 1
             fi
@@ -343,6 +512,7 @@ function checkLocalEnv()
             #路径不存在，创建目录
             #创建目录
             createFolder ${path}
+            DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
          chown ${host_array[3]}:${host_array[2]} -R "${path}"
@@ -365,7 +535,7 @@ function checkLocalEnv()
          if [ $? -ne 1 ]; then
             #路径已经存在，检查路径目录内是否有文件
             checkFileNull ${path}
-            if [ $? -ne 1 ]; then
+            if [ $? -ne 0 ]; then
                echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${path} is not empty"
                return 1
             fi
@@ -373,6 +543,7 @@ function checkLocalEnv()
             #路径不存在，创建目录
             #创建目录
             createFolder ${path}
+            DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
          chown ${host_array[3]}:${host_array[2]} -R "${path}"
@@ -395,7 +566,7 @@ function checkLocalEnv()
          if [ $? -ne 1 ]; then
             #路径已经存在，检查路径目录内是否有文件
             checkFileNull ${path}
-            if [ $? -ne 1 ]; then
+            if [ $? -ne 0 ]; then
                echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${path} is not empty"
                return 1
             fi
@@ -403,16 +574,8 @@ function checkLocalEnv()
             #路径不存在，创建目录
             #创建目录
             createFolder ${path}
+            DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
-         #修改所属用户 和 用户组
-         chown ${host_array[3]}:${host_array[2]} -R "${path}"
-         #检查路径是否有足够256MB的空间
-         checkAvailable "${path}" "256"
-         if [ $? -ne 0 ]; then
-            echo_r "Error" $FUNCNAME $LINENO "The ${target} ${path} directory available space is less than 256MB"
-            return 1
-         fi
-
          #修改所属用户 和 用户组
          chown ${host_array[3]}:${host_array[2]} -R "${path}"
          #检查路径是否有足够256MB的空间
@@ -423,8 +586,7 @@ function checkLocalEnv()
          fi
       fi
    done
-
-   echo_r "Event" $FUNCNAME $LINENO "The ${target} all clear"
+   
    return 0
 }
 
@@ -432,7 +594,11 @@ function checkLocalEnv()
 #参数1 节点列表的元素名
 function installsdb()
 {
-   eval "host_array=(\"\${${1}[@]}\")"
+   local array_ele="${1}"
+   local sdbcmport=""
+   local localHostname=`hostname`
+   INSTALL_DIR=""
+   eval "host_array=(\"\${${array_ele}[@]}\")"
 
    #检查安装路径
    checkPathExist "${host_array[1]}"
@@ -441,8 +607,27 @@ function installsdb()
       if [ $? -ne 1 ]; then
          #路径已经存在，检查路径目录内是否有文件
          checkFileNull "${host_array[1]}/bin"
-         if [ $? -ne 1 ]; then
+         if [ $? -ne 0 ]; then
             #如果已经有文件，证明已经安装了
+            #如果安装了，那么要检查sdbcm配置，看看端口是否跟配置的一样
+            sdbcmport=`grep -i "defaultPort=" ${host_array[1]}/conf/sdbcm.conf | awk '{print $1}'|cut -d "=" -f 2`
+            if [ "${sdbcmport}" != "${SDBCM_PORT}" ]; then
+               echo_r "Error" $FUNCNAME $LINENO "The ${localHostname} sdbcm.conf defaultPort and sdbconfig.sh SDBCM_PORT is not the same"
+               return 1
+            fi
+            
+            #然后检查sdbcm起了没
+            checkSdbcmStart "${SDBCM_PORT}"
+            if [ $? -ne 0 ]; then
+               #没有起,那么启动sdbcm
+               userExec "${host_array[3]}" "${host_array[1]}/bin/sdbcmart"
+               if [ $? -ne 0 ]; then
+                  #启动失败 报错
+                  echo_r "Error" $FUNCNAME $LINENO "The ${localHostname} sdbcm start error"
+                  return 1
+               fi
+               REVOKE_TASK_ARR=("${REVOKE_TASK_ARR[@]}" "${host_array[1]}/bin/sdbcmtop")
+            fi
             return 0
          fi
       fi
@@ -454,6 +639,8 @@ function installsdb()
       echo_r "Error" $FUNCNAME $LINENO "${target} Failed to install SequoiaDB"
       return 1
    fi
+   REVOKE_TASK_ARR=("${REVOKE_TASK_ARR[@]}" "${host_array[1]}/bin/sdbcmtop")
+   return 0
 }
 
 #启动coord节点
@@ -461,52 +648,51 @@ function installsdb()
 #参数2 是否第一次创建 0:是,1:否
 function startCoord()
 {
-   eval "node_array=(\"\${${1}[@]}\")"
+   local array_ele="${1}"
+   
+   eval "node_array=(\"\${${array_ele}[@]}\")"
    eval "host_array=(\"\${${node_array[2]}[@]}\")"
    eval "node_conf=(\"\${${node_array[3]}[@]}\")"
 
-   target="${host_array[0]}"
+   local target="${host_array[0]}"
 
    num=`get_SDBCONF_num "svcname"`
 
-   confpath="${host_array[1]}/conf/local/${node_conf[${num}]}"
+   local confpath="${host_array[1]}/conf/local/${node_conf[${num}]}"
    #检查配置文件路径是否存在
    checkPathExist ${confpath}
    if [ $? -ne 1 ]; then
-      #路径已经存在，检查路径目录内是否有文件
-      checkFileNull ${confpath}
-      if [ $? -ne 1 ]; then
-         echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${confpath} is not empty"
-         return 1
-      fi
+      #路径已经存在
+      echo_r "Error" $FUNCNAME $LINENO "${target} The installation path ${confpath} is exist"
    else
       #路径不存在，创建目录
       #创建目录
-      createFolder ${confpath}
+      createFolder "${confpath}"
+      DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${confpath}")
    fi
    #修改所属用户 和 用户组
    chown ${host_array[3]}:${host_array[2]} -R "${confpath}"
 
 
    #复制出配置文件
-   samconfpath="${host_array[1]}/conf/samples/sdb.conf.coord"
-   confpath="${host_array[1]}/conf/local/${node_conf[${num}]}"
+   local samconfpath="${host_array[1]}/conf/samples/sdb.conf.coord"
+   local confpath="${host_array[1]}/conf/local/${node_conf[${num}]}"
    cp "${samconfpath}" "${confpath}/sdb.conf"
+   chown ${host_array[3]}:${host_array[2]} -R "${confpath}/sdb.conf"
 
    #修改配置文件
-   coord_array=${node_conf}
-   for((i=0;i<${#coord_array[@]};i++))
+   for((i=0;i<${#node_conf[@]};i++))
    do
-      if [ -n "${coord_array[${i}]}" ]; then
-         replaceStr "${confpath}/sdb.conf" "${SDB_CONFIG[${i}]}=" "${SDB_CONFIG[${i}]}=${coord_array[${i}]}"
+      if [ -n "${node_conf[${i}]}" ]; then
+         replaceStr "${confpath}/sdb.conf" "${SDB_CONFIG[${i}]}=" "${SDB_CONFIG[${i}]}=${node_conf[${i}]}"
       fi
    done
 
    #如果不是首个coord
    if [ ${2} -ne 0 ]; then
-      catalogaddr=""
-      thisHost=""
-      isfirst=1
+      local catalogaddr=""
+      local thisHost=""
+      local isfirst=1
       #那么收集catalog信息
       for array_name in ${LIST_NODE[@]}
       do
@@ -534,7 +720,7 @@ function startCoord()
                   let "thisport=thisport+3"
                else
                   #都获取失败，那么使用默认50003端口
-                  thisport="50003"
+                  thisport="11813"
                fi
             fi
             catalogaddr="${catalogaddr}${thisHost}:${thisport}"
@@ -571,39 +757,38 @@ function startData()
    eval "host_array=(\"\${${node_array[2]}[@]}\")"
    eval "node_conf=(\"\${${node_array[3]}[@]}\")"
 
-   target="${host_array[0]}"
+   local target="${host_array[0]}"
 
-   isfirst=1
-   jsonconf=""
-   data_array=${node_conf}
-   for((i=0;i<${#data_array[@]};i++))
+   local isfirst=1
+   local jsonconf=""
+   for((i=0;i<${#node_conf[@]};i++))
    do
-      if [ -n "${data_array[${i}]}" ]; then
+      if [ -n "${node_conf[${i}]}" ]; then
          if [ ${isfirst} -eq 1 ]; then
             isfirst=0
             jsonconf="{"
          else
             jsonconf="${jsonconf},"
          fi
-         jsonconf="${jsonconf}${SDB_CONFIG[${i}]}:\"${data_array[${i}]}\""
+         jsonconf="${jsonconf}\"${SDB_CONFIG[${i}]}\":\"${node_conf[${i}]}\""
       fi
    done
    if [ -n "${jsonconf}" ]; then
-      jsonconf=${jsonconf}"}"
+      jsonconf="${jsonconf} }"
    fi
 
    #sdb连接coord
    rc=0
-   ${6} "var db = new Sdb('${4}','${5}')"
+   ${6} "var db = new Sdb(\"${4}\",\"${5}\")"
    if [ $? -ne 0 ]; then
-      echo_r "Error" $FUNCNAME $LINENO "${target} Failed to connect data"
+      echo_r "Error" $FUNCNAME $LINENO "${target} Failed to connect coord ${4} ${5}"
       return 1
    fi
    if [ ${3} -eq 0 ]; then
       #如果是首次创建数据节点，那么先遍历创建分区组
       for group_name in ${LIST_GROUP[@]}
       do
-         ${6} "db.createRG('${group_name}')"
+         ${6} "db.createRG(\"${group_name}\")"
          if [ $? -ne 0 ]; then
             echo_r "Error" $FUNCNAME $LINENO "${target} Failed to create group ${group_name}"
             return 1
@@ -612,7 +797,7 @@ function startData()
    fi
 
    #选择分区组
-   ${6} "var datarg = db.getRG('${node_array[1]}')"
+   ${6} "var datarg = db.getRG(\"${node_array[1]}\")"
    if [ $? -ne 0 ]; then
       echo_r "Error" $FUNCNAME $LINENO "${target} Failed to get group ${node_array[1]}"
       return 1
@@ -621,7 +806,7 @@ function startData()
    num=`get_SDBCONF_num "svcname"`
    data_port="${node_conf[${num}]}"
    if [ -z "${data_port}" ]; then
-      data_port="50000"
+      data_port="11810"
    fi
    num=`get_SDBCONF_num "dbpath"`
    data_path="${node_conf[${num}]}"
@@ -631,14 +816,16 @@ function startData()
 
    #创建数据节点
    if [ -n "${jsonconf}" ]; then
-      ${6} "datarg.createNode('`hostname`','${data_port}','${data_path}','${jsonconf}')"
+      ${6} "datarg.createNode(\"`hostname`\",\"${data_port}\",\"${data_path}\",${jsonconf})"
    else
-      ${6} "datarg.createNode('`hostname`','${data_port}','${data_path}')"
+      ${6} "datarg.createNode(\"`hostname`\",\"${data_port}\",\"${data_path}\")"
    fi
    if [ $? -ne 0 ]; then
       echo_r "Error" $FUNCNAME $LINENO "${target} Failed to create data"
       return 1
    fi
+   DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${host_array[1]}/conf/local/${data_port}")
+
    echo_r "Event" $FUNCNAME $LINENO "${target} ${data_port} data is create"
    return 0
 }
@@ -656,44 +843,42 @@ function startCata()
    eval "host_array=(\"\${${node_array[2]}[@]}\")"
    eval "node_conf=(\"\${${node_array[3]}[@]}\")"
 
-   target="${host_array[0]}"
+   local target="${host_array[0]}"
 
-   isfirst=1
-   jsonconf=""
-   coord_array=${node_conf}
-   for((i=0;i<${#coord_array[@]};i++))
+   local isfirst=1
+   local jsonconf=""
+   for((i=0;i<${#node_conf[@]};i++))
    do
-      if [ -n "${coord_array[${i}]}" ]; then
+      if [ -n "${node_conf[${i}]}" ]; then
          if [ ${isfirst} -eq 1 ]; then
             isfirst=0
             jsonconf="{"
          else
             jsonconf="${jsonconf},"
          fi
-         jsonconf="${jsonconf}${SDB_CONFIG[${i}]}:\"${coord_array[${i}]}\""
+         jsonconf="${jsonconf}\"${SDB_CONFIG[${i}]}\":\"${node_conf[${i}]}\""
       fi
    done
    if [ -n "${jsonconf}" ]; then
-      jsonconf=${jsonconf}"}"
-      #echo "cata配置： ${jsonconf}"
+      jsonconf="${jsonconf} }"
+      echo "cata配置： ${jsonconf}"
    fi
 
    #sdb连接coord
    rc=0
-   ${6} "var db = new Sdb('${4}','${5}')"
-   rc=$?
-   if [ ${rc} -ne 0 ]; then
-      echo_r "Error" $FUNCNAME $LINENO "${target} Failed to connect coord, rc=${rc}"
+   ${6} "var db = new Sdb(\"${4}\",\"${5}\")"
+   if [ $? -ne 0 ]; then
+      echo_r "Error" $FUNCNAME $LINENO "${target} Failed to connect coord ${4} ${5}"
       return 1
    fi
 
-   isstart1=`${6} "db.listReplicaGroups()"`
+   local temp=""
 
    localhostname=`hostname`
    num=`get_SDBCONF_num "svcname"`
    cata_port="${node_conf[${num}]}"
    if [ -z "${cata_port}" ]; then
-      cata_port="50000"
+      cata_port="11810"
    fi
    num=`get_SDBCONF_num "dbpath"`
    cata_path="${node_conf[${num}]}"
@@ -702,20 +887,29 @@ function startCata()
    fi
    if [ ${3} -eq 0 ]; then
       if [ -n "${jsonconf}" ]; then
-         ${6} "db.createCataRG('${localhostname}','${cata_port}','${cata_path}','${jsonconf}')"
+         ${6} "db.createCataRG(\"${localhostname}\",\"${cata_port}\",\"${cata_path}\",${jsonconf})"
       else
-         ${6} "db.createCataRG('${localhostname}','${cata_port}','${cata_path}')"
+         ${6} "db.createCataRG(\"${localhostname}\",\"${cata_port}\",\"${cata_path}\")"
       fi
       if [ $? -ne 0 ]; then
          echo_r "Error" $FUNCNAME $LINENO "${target} Failed to create catalog"
          return 1
       fi
+      while [ "1" = "1" ]
+      do
+         sleep 5
+         temp=`${6} "db.listReplicaGroups()"`
+         if [ $? -eq 0 ]; then
+            break
+         fi
+      done
+      sleep 10
    else
-      ${6} "var catarg = db.getRG('SYSCatalogGroup')"
+      ${6} "var catarg = db.getRG(\"SYSCatalogGroup\")"
       if [ -n "${jsonconf}" ]; then
-         ${6} "var node=catarg.createNode('${localhostname}','${cata_port}','${cata_path}','${jsonconf}')"
+         ${6} "var node=catarg.createNode(\"${localhostname}\",\"${cata_port}\",\"${cata_path}\",${jsonconf})"
       else
-         ${6} "var node=catarg.createNode('${localhostname}','${cata_port}','${cata_path}')"
+         ${6} "var node=catarg.createNode(\"${localhostname}\",\"${cata_port}\",\"${cata_path}\")"
       fi
       if [ $? -ne 0 ]; then
          echo_r "Error" $FUNCNAME $LINENO "${target} Failed to create catalog node"
@@ -727,13 +921,8 @@ function startCata()
          return 1
       fi
    fi
+   DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${host_array[1]}/conf/local/${cata_port}")
 
-   isstart2=${isstart1}
-   while [ "${isstart2}" = "${isstart1}" ]
-   do
-      sleep 30
-      isstart2=`${6} "db.listReplicaGroups()"`
-   done
    echo_r "Event" $FUNCNAME $LINENO "${target} ${cata_port} catalog is start"
    return 0
 }
@@ -745,49 +934,42 @@ function startCata()
 #参数4 节点列表元素名
 function SDBstart()
 {
-   #获取本地IP和hostname
-   thisIP=`ifconfig|grep "inet addr"|awk '{print $2}'|cut -d ":" -f 2|grep -v "127.0.0.1"`
-   thisHost=`hostname`
-   #找出属于本机的配置记录
-   child=""
-   target=""
-   eval "node_array=(\"\${${4}[@]}\")"
+   local target
+   local node_array
+   local host_array
+   local node_conf
+   local isfirst="${1}"
+   local coordaddr="${2}"
+   local coordport="${3}"
+   local array_ele="${4}"
+
+   eval "node_array=(\"\${${array_ele}[@]}\")"
    eval "host_array=(\"\${${node_array[2]}[@]}\")"
    eval "node_conf=(\"\${${node_array[3]}[@]}\")"
 
    target="${host_array[0]}"
 
+   echo "test ${target} ${node_array[0]}"
    if [ ${node_array[0]} = "coord" ]; then
-      startCoord "${4}" "${1}"
+      startCoord "${array_ele}" "${isfirst}"
       if [ $? -ne 0 ]; then
          return 1
       fi
    elif [ ${node_array[0]} = "cata" ]; then
-      startCata "${4}" "${target}" "${1}" "${2}" "${3}" "${host_array[1]}/bin/sdb"
+      startCata "${array_ele}" "${target}" "${isfirst}" "${coordaddr}" "${coordport}" "${host_array[1]}/bin/sdb"
       if [ $? -ne 0 ]; then
          return 1
       fi
    elif [ ${node_array[0]} = "data" ]; then
-      startData "${4}" "${target}" "${1}" "${2}" "${3}" "${host_array[1]}/bin/sdb"
+      startData "${array_ele}" "${target}" "${isfirst}" "${coordaddr}" "${coordport}" "${host_array[1]}/bin/sdb"
       if [ $? -ne 0 ]; then
          return 1
       fi
+   else
+      return 1
    fi
-}
-
-#获取配置参数属于第几个
-#参数1 配置参数的名字
-function get_SDBCONF_num()
-{
-   num=0
-   for array_name in ${SDB_CONFIG[@]}
-   do
-      if [ "${1}" = "${array_name}" ]; then
-         echo "${num}"
-         break
-      fi
-      let "num+=1"
-   done
+   REVOKE_TASK_ARR=("${REVOKE_TASK_ARR[@]}" "${host_array[1]}/bin/sdbstop")
+   return 0
 }
 
 

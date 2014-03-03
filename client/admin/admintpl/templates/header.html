@@ -70,7 +70,20 @@
 						<h4 class="modal-title">连接管理</h4>
 					</div>
 					<div class="modal-body">
-						<div id="connect_list_r" style="overflow:auto;max-height:200px;width:530px;word-break:break-all;"></div>
+               	<div id="connect_list_r_load" style="display:none;"><img src="images/loading.gif" /> 载入中...</div>
+						<div id="connect_list_r" style="display:none;overflow:auto;max-height:200px;width:530px;word-break:break-all;border:#D2D2D2 solid 0px;margin-bottom:20px;">
+                  	<table id="connect_list_table" class="table table-striped" style="margin:0px;">
+                     	<thead>
+                        	<tr>
+                              <th>连接地址</th>
+                              <th>描述</th>
+                              <th>用户名</th>
+                              <th>密码</th>
+                              <th>操作</th>
+                           </tr>
+                        </thead>
+                     </table>
+                  </div>
 						<div style="padding-right:5px;margin-top:10px;">
 							<form class="form-horizontal" role="form">
 								<div class="form-group">
@@ -110,11 +123,12 @@
 									<div class="col-sm-offset-2 col-sm-10">
 										<button type="button" class="btn btn-default" onClick="sessionconnect();">连接</button>
 										<button type="button" class="btn btn-default" onClick="testconnect();">连接测试</button>
-										<button type="button" class="btn btn-default" onClick="updateconnect();">保存</button>
+										<button type="button" class="btn btn-default" onClick="updateconnect();">保存到列表</button>
 									</div>
 								</div>
 							</form>
 						</div>
+                  <div id="connect_return_load" style="padding-right:5px;margin-top:10px;display:none;"><img src="images/loading.gif" /> 载入中...</div>
 						<div id="connect_return" style="padding-right:5px;margin-top:10px;"></div>
 					</div>
 					<div class="modal-footer">

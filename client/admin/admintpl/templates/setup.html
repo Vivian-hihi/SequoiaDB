@@ -102,7 +102,7 @@
                </div>
                <div class="right_box_context_box_setup_1">
                   <div class="right_box_context_box_setup_1_title">sdbcm端口</div>
-                  <div class="right_box_context_box_setup_1_input"><input type="text" id="step_1_sdbcm" class="form-control" placeholder="" value="11790"></div>
+                  <div class="right_box_context_box_setup_1_input"><input type="text" id="step_1_sdbcm" class="form-control" placeholder="" value="50010"></div>
                   <div class="right_box_context_box_setup_1_describe"></div>
                </div>
             </div>
@@ -126,6 +126,11 @@
                         <li>
                            <a href="#" onclick="delete_table_rows('step_2_tab_table')">
                            	删除主机
+                           </a>
+                        </li>
+                        <li>
+                           <a href="#" data-toggle="modal" data-target="#host_config">
+                           	配置主机参数
                            </a>
                         </li>
                      </ul>
@@ -630,6 +635,65 @@
             <div class="modal-footer">
             	<!--<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
             	<button type="button" class="btn btn-primary" onclick="addhostdiv()">搜索</button>-->
+            </div>
+         </div>
+      </div>
+   </div>
+   
+   <!-- 配置主机的弹出框 -->
+   <div class="modal fade" id="host_config" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog" style="width:800px;">
+         <div class="modal-content" style="width:799px;">
+            <div class="modal-header" style="width:797px;">
+               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+               <h4 class="modal-title" id="myModalLabel">批量配置主机</h4>
+            </div>
+            <div class="modal-body" style="width:800px;">
+               <div style="width:800px;margin-bottom:20px;">
+                  <!-- 参数列表 -->
+                  <div style="width:700px;margin-bottom:10px;padding-right:10px;overflow:auto;border:#D2D2D2 solid 1px;">
+                     <table id="host_config_table" class="table table-striped" style="margin:0px;">
+                     	<thead>
+                           <tr>
+                              <th width="200">参数</th>
+                              <th>值</td>
+                              <th width="200">描述</th>
+                        	</tr>
+                        </thead>
+                        <tr>
+                        	<td>安装路径</td>
+                           <td>
+                              <input type="text" class="form-control input-sm" value="/opt/sequoiadb">
+                           </td>
+                           <td>安装包安装路径</td>
+                        </tr>
+                        <tr>
+                        	<td>系统用户组</td>
+                           <td>
+                              <input type="text" class="form-control input-sm" value="sdbadmin_group">
+                           </td>
+                           <td>创建系统用户组</td>
+                        </tr>
+                        <tr>
+                        	<td>系统用户名</td>
+                           <td>
+                              <input type="text" class="form-control input-sm" value="sdbadmin">
+                           </td>
+                           <td>创建系统用户名</td>
+                        </tr>
+                        <tr>
+                        	<td>密码</td>
+                           <td>
+                              <input type="text" class="form-control input-sm" value="sequoiadb">
+                           </td>
+                           <td>创建系统用户名的密码</td>
+                        </tr>
+                     </table>
+                  </div>
+               </div>
+            </div>
+            <div class="modal-footer">
+            	<button type="button" class="btn btn-primary" data-dismiss="modal" onclick="set_host_conf_table()" value="">保存</button>
             </div>
          </div>
       </div>

@@ -232,6 +232,8 @@ function ajax2send4( obj, style, url, context, ajax, functions )
 // async     	false:同步 true:异步
 // function_1 	成功返回的回调函数
 // function_2 	失败返回的回调函数
+// function_3 	发送前回调函数
+// function_4 	完成后的回调函数
 function ajax2sendNew( style, url, context, async, function_1, function_2, function_3, function_4 )
 {
 	$.ajax({

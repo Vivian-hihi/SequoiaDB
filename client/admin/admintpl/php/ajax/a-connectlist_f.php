@@ -3,6 +3,7 @@
 $path = "./user/userlist.ult" ;
 $csv = "" ;
 $conn_arr_list  = array() ;
+$return_arr = array() ;
 $link_result  = "" ;
 $link_errno = 0 ;
 
@@ -24,6 +25,7 @@ if ( $model == "list" )
 	if ( file_exists ( $path ) )
 	{
 		$file = fopen( $path, "r+" ) ;
+		//array_push ( $conn_arr_list, array( '连接地址', '描述', '用户名', '操作' ) ) ;
 		while( !feof( $file ) )
 		{
 			$csv = fgetcsv( $file ) ;
@@ -34,6 +36,7 @@ if ( $model == "list" )
 		}
 		fclose( $file ) ;
 	}
+	$return_arr = array( 'errno' => 0, 'message' => '', 'connect_list' => $conn_arr_list ) ;
 }
 else if ( $model == "delete" )
 {
@@ -89,7 +92,7 @@ else if ( $model == "testlink" )
 {
 	$db_t = new SequoiaDB() ;
 	$arr = $db_t -> connect ( $address, $user, $pwd ) ;
-	$link_errno = $arr['errno'] ;
+	$rc = $arr['errno'] ;
 	if ( $arr['errno'] == 0 )
 	{
 		$link_result = "连接成功" ;
@@ -99,6 +102,7 @@ else if ( $model == "testlink" )
 		$rc = $arr['errno'] ;
 		$link_result = "连接失败：".(array_key_exists( $rc, $errno_cn ) ? $errno_cn[$rc] : $rc) ;
 	}
+	$return_arr = array( 'errno' => $rc, 'message' => $link_result  ) ;
 }
 else if ( $model == "connect" )
 {
@@ -107,15 +111,8 @@ else if ( $model == "connect" )
 	$_SESSION['sdb_monitor_password'] = $pwd ;
 	$db_t = new SequoiaDB() ;
 	$arr = $db_t -> connect ( $address, $user, $pwd ) ;
-	$link_errno = $arr['errno'] ;
-	if ( $arr['errno'] == 0 )
-	{
-		$link_result = "连接成功" ;
-	}
-	else
-	{
-		$link_result = "连接失败，错误码：".$arr['errno'] ;
-	}
+	$rc = $arr['errno'] ;
+	$return_arr = array( 'errno' => $rc, 'message' => (array_key_exists( $rc, $errno_cn ) ? $errno_cn[$rc] : $rc)  ) ;
 }
 
 $array_temp = array() ;
@@ -147,9 +144,13 @@ if ( file_exists ( $path ) )
 	}
 }
 
-$smarty -> assign( "connectlist_model", $model ) ;
+$return_json = json_encode( $return_arr ) ;
+echo $return_json ;
+
+
+/*$smarty -> assign( "connectlist_model", $model ) ;
 $smarty -> assign( "connectlist_return", $conn_arr_list ) ;
 $smarty -> assign( "link_result", $link_result ) ;
-$smarty -> assign( "link_errno", $link_errno ) ;
+$smarty -> assign( "link_errno", $link_errno ) ;*/
 
 ?>
