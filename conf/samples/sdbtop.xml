@@ -830,7 +830,7 @@
                            <absoluteName>TID</absoluteName>
                            <sourceField>TID</sourceField>
                            <contentLength>8</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
                               <foreGroundColor>3</foreGroundColor>
@@ -863,7 +863,7 @@
                            <absoluteName>QueueSize</absoluteName>
                            <sourceField>QueueSize</sourceField>
                            <contentLength>10</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
                               <foreGroundColor>3</foreGroundColor>
@@ -874,7 +874,7 @@
                            <absoluteName>ProcessEventCount</absoluteName>
                            <sourceField>ProcessEventCount</sourceField>
                            <contentLength>18</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
                               <foreGroundColor>3</foreGroundColor>
@@ -898,7 +898,7 @@
                            <averageName>TotalDataRead</averageName>
                            <sourceField>TotalDataRead</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -919,7 +919,7 @@
                            <averageName>TotalIndexRead</averageName>
                            <sourceField>TotalIndexRead</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -940,7 +940,7 @@
                            <averageName>TotalDataWrite</averageName>
                            <sourceField>TotalDataWrite</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -961,7 +961,7 @@
                            <averageName>TotalIndexWrite</averageName>
                            <sourceField>TotalIndexWrite</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -982,7 +982,7 @@
                            <averageName>TotalUpdate</averageName>
                            <sourceField>TotalUpdate</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1003,7 +1003,7 @@
                            <averageName>TotalDelete</averageName>
                            <sourceField>TotalDelete</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1024,7 +1024,7 @@
                            <averageName>TotalInsert</averageName>
                            <sourceField>TotalInsert</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1045,7 +1045,7 @@
                            <averageName>TotalSelect</averageName>
                            <sourceField>TotalSelect</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1066,7 +1066,7 @@
                            <averageName>TotalRead</averageName>
                            <sourceField>TotalRead</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1087,7 +1087,7 @@
                            <averageName>TotalReadTime</averageName>
                            <sourceField>TotalReadTime</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1108,7 +1108,7 @@
                            <averageName>TotalWriteTime</averageName>
                            <sourceField>TotalWriteTime</sourceField>
                            <contentLength>14</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1140,7 +1140,7 @@
                            <averageName>UserCPU</averageName>
                            <sourceField>UserCPU</sourceField>
                            <contentLength>8</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1161,7 +1161,7 @@
                            <averageName>SysCPU</averageName>
                            <sourceField>SysCPU</sourceField>
                            <contentLength>8</contentLength>
-                           <alignment>LEFT</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1227,7 +1227,7 @@
                            <averageName>TotalNumConnects</averageName>
                            <sourceField>TotalNumConnects</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1250,7 +1250,7 @@
                            <averageName>TotalDataRead</averageName>
                            <sourceField>TotalDataRead</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1271,7 +1271,7 @@
                            <averageName>TotalIndexRead</averageName>
                            <sourceField>TotalIndexRead</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1292,7 +1292,7 @@
                            <averageName>TotalDataWrite</averageName>
                            <sourceField>TotalDataWrite</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1313,7 +1313,7 @@
                            <averageName>TotalIndexWrite</averageName>
                            <sourceField>TotalIndexWrite</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1334,7 +1334,7 @@
                            <averageName>TotalUpdate</averageName>
                            <sourceField>TotalUpdate</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1355,7 +1355,7 @@
                            <averageName>TotalDelete</averageName>
                            <sourceField>TotalDelete</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1376,7 +1376,7 @@
                            <averageName>TotalInsert</averageName>
                            <sourceField>TotalInsert</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1397,7 +1397,7 @@
                            <averageName>ReplUpdate</averageName>
                            <sourceField>ReplUpdate</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1418,7 +1418,7 @@
                            <averageName>ReplDelete</averageName>
                            <sourceField>ReplDelete</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1439,7 +1439,7 @@
                            <averageName>ReplInsert</averageName>
                            <sourceField>ReplInsert</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1460,7 +1460,7 @@
                            <averageName>TotalSelect</averageName>
                            <sourceField>TotalSelect</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1481,7 +1481,7 @@
                            <averageName>TotalRead</averageName>
                            <sourceField>TotalRead</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1502,7 +1502,7 @@
                            <averageName>TotalReadTime</averageName>
                            <sourceField>TotalReadTime</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1523,7 +1523,7 @@
                            <averageName>TotalWriteTime</averageName>
                            <sourceField>TotalWriteTime</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
                               <foreGroundColor>6</foreGroundColor>
@@ -1542,7 +1542,7 @@
                            <absoluteName>ErrNodes</absoluteName>
                            <sourceField>ErrNodes</sourceField>
                            <contentLength>30</contentLength>
-                           <alignment>CENTER</alignment>
+                           <alignment>RIGHT</alignment>
                            <canSwitch>0</canSwitch>
                            <absoluteColour>
                               <foreGroundColor>3</foreGroundColor>
