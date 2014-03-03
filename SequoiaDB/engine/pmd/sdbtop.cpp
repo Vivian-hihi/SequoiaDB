@@ -2840,13 +2840,12 @@ INT32 Event::fixedOutputLocation( INT32 start_row, INT32 start_col,
       ossSnprintf( errStr, errStrLength,
                 "%s fixedOutputLocation failed,wrong autoSetType:%s\n",
                 errStrBuf, autoSetType.c_str() ) ;
-
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -2928,6 +2927,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
       ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild, can't malloc memory for printfstr :%d\n",
                    errStrBuf, displayContent.dynamicHelp.cellLength ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
 
@@ -2938,12 +2938,13 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
       ossSnprintf( errStr, errStrLength, 
                  "%s refreshDisplayContent failed,displayContent.dynamicHelp.tableRow> actualPosition.length_Y\n",
                  errStrBuf ) ;
-   
+      rc = SDB_ERROR ;
       goto error ;
    }
    rc = getActivatedKeySuite( &keySuite ) ;
    if( rc || !keySuite )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    rc = fixedOutputLocation( actualPosition.referUpperLeft_Y, actualPosition.referUpperLeft_X,
@@ -2952,6 +2953,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
                              displayType, displayContent.dynamicHelp.autoSetType) ;
    if( rc )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    for( rowNumber = 0; rowNumber < displayContent.dynamicHelp.tableRow; ++rowNumber )
@@ -2970,6 +2972,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
                                 displayType, displayContent.dynamicHelp.autoSetType) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       for( colNumber = 0; colNumber< displayContent.dynamicHelp.tableColumn; ++ colNumber )
@@ -3013,6 +3016,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          rc = MVPRINTW_TOP( _str, _str.length() + 1, LEFT, start_row, start_col_copy ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;
@@ -3028,6 +3032,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
                             LEFT, start_row, start_col_copy );
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;
@@ -3043,7 +3048,6 @@ done :
       SDB_OSS_FREE( printfstr );
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -3066,6 +3070,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
                              displayType, displayContent.dyExOutPut.autoSetType) ;
    if( rc )
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
    for( rowNumber = 0; rowNumber < displayContent.dyExOutPut.rowNumber && rowNumber < actualPosition.length_Y ; ++rowNumber )
@@ -3091,6 +3096,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
                ossSnprintf( errStr, errStrLength,
                          "%s refreshDisplayContent failed, getExpression faild, expressionType == DYNAMIC_EXPRESSION\n",
                          errStrBuf ) ;
+               rc = SDB_ERROR ;
                goto error ;
             }
          }
@@ -3113,6 +3119,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
                                 displayType, displayContent.dyExOutPut.autoSetType) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       for( expressionNumber = 0; expressionNumber < displayContent.dyExOutPut.expressionNumber; ++expressionNumber )
@@ -3142,6 +3149,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
                         start_row, start_col ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;
@@ -3154,7 +3162,6 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
@@ -3205,12 +3212,14 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       ossSnprintf( errStr, errStrLength,
                "%s refreshDisplayContent failed, can't malloc serialNumber == %d\n",
                errStrBuf, SERIALNUMBER_LENGTH ) ;
+      rc = SDB_ERROR ;
       goto error ; 
 
    }
    ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
    if( rc )
    {
+      rc = SDB_ERROR ;
       goto error;
    }
    if( GLOBAL == root.input.snapshotModeChooser )
@@ -3265,6 +3274,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       ossSnprintf( errStr, errStrLength,
                "%s refreshDisplayContent failed, wrong snapshotModeChooser == %s\n",
                errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
+      rc = SDB_ERROR ;
       goto error ;    
    }
    if( TABLE == STYLE)
@@ -3274,6 +3284,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                 displayType, AUTOSETTYPE ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       end_fixed_mobile = 0 ; //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
@@ -3298,6 +3309,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                    displayType, AUTOSETTYPE ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          tableCol = 0 ;
@@ -3321,6 +3333,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             rc = MVPRINTW_TOP( fieldName, tableCellLength, Fixed[end_fixed_mobile].alignment, start_row, start_col ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3342,6 +3355,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                               displayMode, fieldName, fieldColour ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3350,6 +3364,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                Mobile[end_fixed_mobile - FixedLength].alignment, start_row, start_col ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3375,6 +3390,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                       displayType, AUTOSETTYPE ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             while( 1 )
@@ -3388,6 +3404,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                rc = getFieldStructNameAndColour( Fixed[start_up], displayMode, fieldName, fieldColour) ;
                if( SDB_OK != rc )
                {
+                  rc = SDB_ERROR ;
                   goto error;
                }
                pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3398,11 +3415,13 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                attron( COLOR_PAIR( pairNumber ) ) ;
                if( SDB_OK != rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                rc = MVPRINTW_TOP( result, tableCellLength, Fixed[start_up].alignment, start_row, start_col ) ;
                if( SDB_OK != rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3420,6 +3439,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                                  displayMode, fieldName, fieldColour) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3433,6 +3453,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                attron( COLOR_PAIR( pairNumber ) ) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                rc = MVPRINTW_TOP( result, tableCellLength,
@@ -3440,6 +3461,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                   start_row, start_col ) ;
                if( rc )
                {
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3455,11 +3477,13 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          }   
          start_row -= rowNumber ;
       }
-   }// if( TABLE == STYLE)
-   else // if( LIST == STYLE)
+   }
+   // if( LIST == STYLE)
+   else
    {
       if( SDB_OK != rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       expressionLengthSum = 0 ;
@@ -3486,6 +3510,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                 displayType, AUTOSETTYPE );
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
 
@@ -3493,6 +3518,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error;
       }
       ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", 0 ) ;
@@ -3500,6 +3526,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       rc = MVPRINTW_TOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error;
       }
       start_col += SERIALNUMBER_LENGTH ;
@@ -3514,6 +3541,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          rc = getFieldStructNameAndColour( Fixed[fLength], displayMode, fieldName, fieldColour) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3522,6 +3550,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                             Fixed[fLength].alignment, start_row, start_col ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error;
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3542,6 +3571,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                            displayMode, fieldName, fieldColour);
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3550,6 +3580,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                             Mobile[mLength].alignment, start_row, start_col ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error ;
          }
          attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3569,6 +3600,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                 displayType, AUTOSETTYPE ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
       for( pos_snapshot = 0; pos_snapshot < root.input.cur_Snapshot.size(); ++pos_snapshot )
@@ -3578,6 +3610,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error;
          }
          ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", pos_snapshot + 1 ) ;
@@ -3585,6 +3618,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          rc = MVPRINTW_TOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error;
          }
          start_col += SERIALNUMBER_LENGTH ;
@@ -3599,6 +3633,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             rc = getFieldStructNameAndColour( Fixed[fLength], displayMode, fieldName, fieldColour ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3610,12 +3645,14 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             attron( COLOR_PAIR( pairNumber ) ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             rc = MVPRINTW_TOP( result, Fixed[fLength].contentLength,
                                Fixed[fLength].alignment, start_row, start_col ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error;
             }
             attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3636,6 +3673,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                               fieldName, fieldColour) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
@@ -3646,12 +3684,14 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             attron( COLOR_PAIR( pairNumber ) ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             rc = MVPRINTW_TOP( result, Mobile[mLength].contentLength,
                                Mobile[mLength].alignment, start_row, start_col ) ;
             if( rc )
             {
+               rc = SDB_ERROR ;
                goto error ;
             }
             attroff( COLOR_PAIR( pairNumber ) ) ;  
@@ -3665,6 +3705,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                                    displayType, AUTOSETTYPE);
          if( rc )
          {
+            rc = SDB_ERROR ;
             goto error;
          }
          if( start_row - actualPosition.referUpperLeft_Y >= actualPosition.length_Y )
@@ -3678,7 +3719,6 @@ done :
       SDB_OSS_FREE( serialNumber ) ;
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 
 }
@@ -3710,6 +3750,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                                              actualPosition ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
 
@@ -3721,6 +3762,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                                                    actualPosition ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -3731,6 +3773,7 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                                                  actualPosition ) ;
       if( rc )
       {
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -3740,12 +3783,12 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else
    {
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
    
@@ -3785,13 +3828,13 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
       ossSnprintf( errStr, errStrLength,
                 "%s refreshNodeWindow failed, refreshDisplayContent faild\n",
                 errStrBuf );
+      rc = SDB_ERROR;
       goto error;
    }
    
 done :
    return rc ;
 error :
-   rc = SDB_ERROR;
    goto done ;
 }
 
