@@ -23,7 +23,7 @@ namespace engine
    // write into the file
    // for opening existing file, we allocate buffer, read the header and
    // validate eyecatcher and size
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__INIT, "_dmsReorgUnit::_init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__INIT, "_dmsReorgUnit::_init" )
    INT32 _dmsReorgUnit::_init ( BOOLEAN createNew )
    {
       INT32 rc = SDB_OK ;
@@ -38,8 +38,7 @@ namespace engine
       CHAR *pBuffer = (CHAR*)SDB_OSS_MALLOC (bufSize) ;
       if ( !pBuffer )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to allocate %d bytes of memory", bufSize ) ;
+         PD_LOG ( PDERROR, "Failed to allocate %d bytes of memory", bufSize ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -61,9 +60,8 @@ namespace engine
             rc = ossWrite ( &_file, &pBuffer[bufSize-restSize], restSize, &writeSize ) ;
             if ( rc && SDB_INTERRUPT != rc )
             {
-               pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                       "Failed to write into file: %s, rc = %d",
-                       _fileName, rc ) ;
+               PD_LOG ( PDERROR, "Failed to write into file: %s, rc = %d",
+                        _fileName, rc ) ;
                goto error ;
             }
             restSize -= writeSize ;
@@ -79,9 +77,8 @@ namespace engine
             rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
             if ( rc && SDB_INTERRUPT != rc )
             {
-               pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                       "Failed to read from file: %s, rc = %d",
-                       _fileName, rc ) ;
+               PD_LOG ( PDERROR, "Failed to read from file: %s, rc = %d",
+                        _fileName, rc ) ;
                goto error ;
             }
             restSize -= readSize ;
@@ -91,8 +88,7 @@ namespace engine
                           DMS_REORG_UNIT_EYECATCHER_LEN ) ||
               unitHead->_headerSize != bufSize )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Invalid reorg file is detected" ) ;
+            PD_LOG ( PDERROR, "Invalid reorg file is detected" ) ;
             rc = SDB_DMS_INVALID_REORG_FILE ;
             goto error ;
          }
@@ -108,7 +104,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_CLNUP, "_dmsReorgUnit::cleanup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_CLNUP, "_dmsReorgUnit::cleanup" )
    INT32 _dmsReorgUnit::cleanup ()
    {
       INT32 rc = SDB_OK ;
@@ -117,9 +113,8 @@ namespace engine
       rc = ossDelete ( _fileName ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to delete reorg unit temp file, rc = %d",
-                 rc ) ;
+         PD_LOG ( PDERROR, "Failed to delete reorg unit temp file, rc = %d",
+                  rc ) ;
          goto error ;
       }
    done :
@@ -129,7 +124,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_OPEN, "_dmsReorgUnit::open" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_OPEN, "_dmsReorgUnit::open" )
    INT32 _dmsReorgUnit::open ( BOOLEAN createNew )
    {
       INT32 rc = SDB_OK ;
@@ -143,17 +138,15 @@ namespace engine
                      OSS_RU|OSS_WU, _file ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to create file %s, rc = %d",
-                 _fileName, rc ) ;
+         PD_LOG ( PDERROR, "Failed to create file %s, rc = %d",
+                  _fileName, rc ) ;
          goto error ;
       }
       rc = _init ( createNew ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to initialize file %s, rc = %d",
-                 _fileName, rc ) ;
+         PD_LOG ( PDERROR, "Failed to initialize file %s, rc = %d",
+                  _fileName, rc ) ;
          goto error ;
       }
    done :
@@ -172,7 +165,7 @@ namespace engine
       ossSeek ( &_file, 0, OSS_SEEK_SET ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_IMPMME, "_dmsReorgUnit::importMME" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_IMPMME, "_dmsReorgUnit::importMME" )
    INT32 _dmsReorgUnit::importMME ( const CHAR *pMME )
    {
       INT32 rc = SDB_OK ;
@@ -183,17 +176,15 @@ namespace engine
       INT32 bufSize = restSize ;
       if ( _readOnly )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Modify is not allowed" ) ;
+         PD_LOG ( PDERROR, "Modify is not allowed" ) ;
          rc = SDB_DMS_REORG_FILE_READONLY ;
          goto error ;
       }
       rc = ossSeek ( &_file, _headSize, OSS_SEEK_SET ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to seek to %d from file %s, rc = %d",
-                 _headSize, _fileName, rc ) ;
+         PD_LOG ( PDERROR, "Failed to seek to %d from file %s, rc = %d",
+                  _headSize, _fileName, rc ) ;
          goto error ;
       }
       while ( restSize != 0 )
@@ -201,9 +192,8 @@ namespace engine
          rc = ossWrite ( &_file, &pMME[bufSize-restSize], restSize, &writeSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to write MME into file: %s, rc = %d",
-                    _fileName, rc ) ;
+            PD_LOG ( PDERROR, "Failed to write MME into file: %s, rc = %d",
+                     _fileName, rc ) ;
             goto error ;
          }
          restSize -= (INT32)writeSize ;
@@ -215,7 +205,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPMME, "_dmsReorgUnit::exportMME" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPMME, "_dmsReorgUnit::exportMME" )
    INT32 _dmsReorgUnit::exportMME ( CHAR *pMME )
    {
       INT32 rc = SDB_OK ;
@@ -227,9 +217,8 @@ namespace engine
       rc = ossSeek ( &_file, _headSize, OSS_SEEK_SET ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to seek to %d from file %s, rc = %d",
-                 _headSize, _fileName, rc ) ;
+         PD_LOG ( PDERROR, "Failed to seek to %d from file %s, rc = %d",
+                  _headSize, _fileName, rc ) ;
          goto error ;
       }
       while ( restSize != 0 )
@@ -237,9 +226,8 @@ namespace engine
          rc = ossRead ( &_file, &pMME[bufSize-restSize], restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to write MME into file: %s, rc = %d",
-                    _fileName, rc ) ;
+            PD_LOG ( PDERROR, "Failed to write MME into file: %s, rc = %d",
+                     _fileName, rc ) ;
             goto error ;
          }
          restSize -= (INT32)readSize ;
@@ -251,7 +239,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__ALCEXT, "_dmsReorgUnit::_allocateExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__ALCEXT, "_dmsReorgUnit::_allocateExtent" )
    INT32 _dmsReorgUnit::_allocateExtent ( INT32 requestSize )
    {
       INT32 rc = SDB_OK ;
@@ -266,8 +254,7 @@ namespace engine
       _pCurrentExtent = (CHAR*)SDB_OSS_MALLOC ( requestSize ) ;
       if ( !_pCurrentExtent )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Unable to allocate %d bytes memory", requestSize ) ;
+         PD_LOG ( PDERROR, "Unable to allocate %d bytes memory", requestSize ) ;
          rc = SDB_OOM ;
          goto error ;
       }
@@ -300,7 +287,7 @@ namespace engine
                                          sizeof(dmsExtent) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__FLSEXT, "_dmsReorgUnit::_flushExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT__FLSEXT, "_dmsReorgUnit::_flushExtent" )
    INT32 _dmsReorgUnit::_flushExtent ()
    {
       INT32 rc = SDB_OK ;
@@ -311,8 +298,7 @@ namespace engine
       INT32 bufSize = restSize ;
       if ( _readOnly )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Modify is not allowed" ) ;
+         PD_LOG ( PDERROR, "Modify is not allowed" ) ;
          rc = SDB_DMS_REORG_FILE_READONLY ;
          goto error ;
       }
@@ -322,9 +308,8 @@ namespace engine
                          restSize, &writeSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to flush extent into file: %s, rc = %d",
-                    _fileName, rc ) ;
+            PD_LOG ( PDERROR, "Failed to flush extent into file: %s, rc = %d",
+                     _fileName, rc ) ;
             goto error ;
          }
          restSize -= (INT32)writeSize ;
@@ -339,7 +324,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_FLUSH, "_dmsReorgUnit::flush" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_FLUSH, "_dmsReorgUnit::flush" )
    INT32 _dmsReorgUnit::flush ()
    {
       INT32 rc = SDB_OK ;
@@ -352,7 +337,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_INSRCD, "_dmsReorgUnit::insertRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_INSRCD, "_dmsReorgUnit::insertRecord" )
    INT32 _dmsReorgUnit::insertRecord ( BSONObj &obj,
                                        _pmdEDUCB *cb, UINT32 attributes )
    {
@@ -426,14 +411,20 @@ namespace engine
          rc = _flushExtent () ;
          if ( rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to flush extent, rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to flush extent, rc = %d", rc ) ;
             goto error ;
          }
          goto alloc ;
       }
       recordOffset = _currentExtentSize - currentExtent->_freeSpace ;
       recordPtr = ((ossValuePtr)currentExtent) + recordOffset ;
+      if ( currentExtent->_freeSpace - (INT32)dmsrecordSize <
+           DMS_MIN_RECORD_SZ &&
+           currentExtent->_freeSpace <= DMS_RECORD_MAX_SZ )
+      {
+         dmsrecordSize = (UINT32)currentExtent->_freeSpace ;
+      }
+
       // set record header
       DMS_RECORD_SETSTATE ( recordPtr, DMS_RECORD_FLAG_NORMAL ) ;
       DMS_RECORD_RESETATTR ( recordPtr ) ;
@@ -475,7 +466,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_GETNXTEXTSIZE, "_dmsReorgUnit::getNextExtentSize" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_GETNXTEXTSIZE, "_dmsReorgUnit::getNextExtentSize" )
    INT32 _dmsReorgUnit::getNextExtentSize ( SINT32 &size )
    {
       INT32 rc = SDB_OK ;
@@ -527,7 +518,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPHEAD, "_dmsReorgUnit::exportHead" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPHEAD, "_dmsReorgUnit::exportHead" )
    INT32 _dmsReorgUnit::exportHead ( CHAR *pBuffer )
    {
       INT32 rc = SDB_OK ;
@@ -539,9 +530,8 @@ namespace engine
       rc = ossSeek ( &_file, 0, OSS_SEEK_SET ) ;
       if ( rc )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to seek to %d from file %s, rc = %d",
-                 0, _fileName, rc ) ;
+         PD_LOG ( PDERROR, "Failed to seek to %d from file %s, rc = %d",
+                  0, _fileName, rc ) ;
          goto error ;
       }
       while ( restSize != 0 )
@@ -549,9 +539,8 @@ namespace engine
          rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to read head from file: %s, rc = %d",
-                    _fileName, rc ) ;
+            PD_LOG ( PDERROR, "Failed to read head from file: %s, rc = %d",
+                     _fileName, rc ) ;
             goto error ;
          }
          restSize -= (INT32)readSize ;
@@ -563,7 +552,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPEXT, "_dmsReorgUnit::exportExtent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_EXPEXT, "_dmsReorgUnit::exportExtent" )
    INT32 _dmsReorgUnit::exportExtent ( CHAR *pBuffer )
    {
       INT32 rc = SDB_OK ;
@@ -579,9 +568,8 @@ namespace engine
          rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to read header from file: %s, rc = %d",
-                    _fileName, rc ) ;
+            PD_LOG ( PDERROR, "Failed to read header from file: %s, rc = %d",
+                     _fileName, rc ) ;
             goto error ;
          }
          restSize -= (INT32)readSize ;
@@ -590,8 +578,7 @@ namespace engine
       if ( DMS_EXTENT_EYECATCHER0 != extent->_eyeCatcher[0] ||
            DMS_EXTENT_EYECATCHER1 != extent->_eyeCatcher[1] )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Invalid eye catcher" ) ;
+         PD_LOG ( PDERROR, "Invalid eye catcher" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -605,9 +592,8 @@ namespace engine
                         restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
          {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to read header from file: %s, rc = %d",
-                    _fileName, rc ) ;
+            PD_LOG ( PDERROR, "Failed to read header from file: %s, rc = %d",
+                     _fileName, rc ) ;
             goto error ;
          }
          restSize -= (INT32)readSize ;
@@ -619,7 +605,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_VLDHDBUFF, "_dmsReorgUnit::validateHeadBuffer" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSROUNIT_VLDHDBUFF, "_dmsReorgUnit::validateHeadBuffer" )
    INT32 _dmsReorgUnit::validateHeadBuffer ( CHAR *pBuffer )
    {
       INT32 rc = SDB_OK ;
@@ -631,8 +617,7 @@ namespace engine
       if ( ossMemcmp ( pBuffer, DMS_REORG_UNIT_EYECATCHER,
                        DMS_REORG_UNIT_EYECATCHER_LEN ) )
       {
-         pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-                 "reorg file header is invalid" ) ;
+         PD_LOG ( PDWARNING, "reorg file header is invalid" ) ;
          rc = SDB_DMS_INVALID_REORG_FILE ;
          goto error ;
       }
@@ -641,9 +626,8 @@ namespace engine
                                    DMS_REORG_UNIT_HEAD_SIZE_UNIT ) !=
            unitHead->_headerSize )
       {
-         pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-                 "reorg file header size is not valid: %d",
-                 unitHead->_headerSize ) ;
+         PD_LOG ( PDWARNING, "reorg file header size is not valid: %d",
+                  unitHead->_headerSize ) ;
          rc = SDB_DMS_INVALID_REORG_FILE ;
          goto error ;
       }
