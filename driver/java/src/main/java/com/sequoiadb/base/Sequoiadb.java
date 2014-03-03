@@ -178,7 +178,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn connect()
-	 * @brief Connect to database
+	 * @brief authentication
 	 */
 	private void connect() {
 		endianConvert = requestSysInfo();
@@ -708,7 +708,7 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void execUpdate(String sql)
-	 * @brief Execute sql in db
+	 * @brief Execute sql in database
 	 * @param sql
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
@@ -729,8 +729,8 @@ public class Sequoiadb {
 
 	/**
 	 * @fn DBCursor exec(String sql)
-	 * @brief Execute sql in db
-	 * @param sql
+	 * @brief Execute sql in database
+	 * @param sql command
 	 * @return the DBCursor of the result
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
@@ -1119,24 +1119,26 @@ public class Sequoiadb {
 		}
 	}
 	
-	/**
+		/**
 	 * @fn void setSessionAttr( BSONObject options )
      * @brief Set the attributes of the current session.
      * @param options  The configuration options for the current session.The options are as below:
      * <ul>
      * <li>PreferedReplica   : Indicate which node to be choosed for querying in current session.
-     *                        eg:{"PreferedReplica":"M"/"S"/"A"/1-7}, prefer to choose master/slave/anyone/node1-node7,
+     *                        eg:{"PreferedReplica":"m"/"M"/"s"/"S"/"a"/"A"/1-7}, prefer to choose master/slave/anyone/node1-node7,
      *                        default to be {"PreferedReplica":"A"}, means would like to choose anyone to query.
      * </li>
      * </ul>
-     * @note Option "PreferedReplica" is used to choose which node for querying in current session.When a new session is built,
-     *      it works with default attribute {"PreferedReplica":"A"}. And it will keep the preferred node for querying in current session
-     *      until the session is closed or the node is shut down. If a shard only has 3 data notes, and we offer a configuraion option
-     *      {"PreferedReplica":5}, it will choose node 2(mod(5, 3)). 
+     * @note 1.Option "PreferedReplica" is used to choose which node for querying in current session.When a new session is built,
+     *         it works with default attribute {"PreferedReplica":"A"}. And it will keep the preferred node for querying in current session
+     *         until the session is closed or the node is shut down.
+     *       2.If a shard only has 3 data notes, and we offer a configuraion option {"PreferedReplica":5},
+     *         it will choose node 2 in most cases, the formula is (5-1)%3+1. But, if node 2 is the master node, it will choose node 3.
+     *         when offer {"PreferedReplica":1-7}, it will choose slave node first.
      *      
      * @code
      *	Sequoiadb sdb = new Sequoiadb("ubuntu-dev1", 11810, "", ""); // when build object sdb, it means we start session 1
-     *  sdb.setSessionAttr(new BasicBSONObject("PreferedReplica", 3)); // choose node 3(assume it exist) for querying
+     *  sdb.setSessionAttr(new BasicBSONObject("PreferedReplica", 3)); // choose node 3(assume it exist and it's not a master node) for querying
      *  CollectionSpace cs = sdb.getCollectionSpace("foo");
      *  DBCollection cl = cs.getCollection("bar");
      *  cl.query(); // it will choose node 3 to query data in session 1
@@ -1173,13 +1175,16 @@ public class Sequoiadb {
 			if ( v < 1 || v > 7 )
 				throw new BaseException( "SDB_INVALIDARG", options );
 		}else if ( value instanceof String ) {
-			if ( !value.equals("M") &&
-				 !value.equals("S") &&
-				 !value.equals("A") )
+			if ( !( value.equals("M") ||
+			        value.equals("m") ||
+				    value.equals("S") ||
+				    value.equals("s") ||
+				    value.equals("A") ||
+				    value.equals("a") ) )
 				throw new BaseException( "SDB_INVALIDARG", options );
-			if ( value.equals("M") )
+			if ( value.equals("M") || value.equals("m") )
 				v = PreferReplicaType.PREFER_REPL_MASTER.getCode();
-			else if ( value.equals("S") )
+			else if ( value.equals("S") || value.equals("s") )
 				v = PreferReplicaType.PREFER_REPL_SLAVE.getCode();
 			else
 				v = PreferReplicaType.PREFER_REPL_ANYONE.getCode();
@@ -1195,7 +1200,6 @@ public class Sequoiadb {
 		if ( flags != 0 ) {
 			throw new BaseException( flags );
 		}
-		
 	}
 	
 	/**
