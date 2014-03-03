@@ -93,6 +93,7 @@ namespace engine
                                        CoordGroupList &sendGroupLst,
                                        netMultiRouteAgent *pRouteAgent,
                                        pmdEDUCB *cb,
+                                       BOOLEAN onPrimary,
                                        std::set<INT32> *ignoreRCList = NULL );
       virtual INT32 executeOnCataGroup ( CHAR *pBuffer,
                                        netMultiRouteAgent *pRouteAgent,
