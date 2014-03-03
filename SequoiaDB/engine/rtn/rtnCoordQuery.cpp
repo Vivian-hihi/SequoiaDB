@@ -198,13 +198,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
-      SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      SINT64 contextID                 = -1;
       rtnContextCoord *pContext        = NULL ;
-      BOOLEAN isNeedRefresh            = FALSE;
-      BOOLEAN hasRefresh               = FALSE;
       BSONObj boQuery;
       BSONObj boOrderBy;
       CoordGroupList                   sendGroupList ;
@@ -254,7 +250,6 @@ namespace engine
          SDB_ASSERT( NULL == err, "impossible" );
          PD_RC_CHECK( rc, PDERROR, "failed to execute the command(command:%s, "
                     "rc=%d)", pCollectionName, rc );
-         contextID = replyHeader.contextID;
          goto done;
       }
 
@@ -270,97 +265,17 @@ namespace engine
                      "occur unexpected error:%s",
                      e.what() );
       }
-      rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext**)&pContext,
-                              contextID, cb );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to allocate context(rc=%d)", rc );
-      rc = pContext->open( boOrderBy, numToReturn, numToSkip );
-      PD_RC_CHECK( rc, PDERROR,
-                  "open context failed(rc=%d)", rc );
-      pSrc->header.routeID.value = 0;
-      pSrc->header.TID = cb->getTID();
-      if ( pSrc->numToReturn > 0 && pSrc->numToSkip > 0 )
-      {
-         // some record may skip on coord,
-         // so the num of records from data-node must
-         // more than "numToReturn + numToSkip"
-         pSrc->numToReturn += pSrc->numToSkip;
-      }
-      pSrc->numToSkip = 0;
-      do
-      {
-         hasRefresh = isNeedRefresh;
-         CoordCataInfoPtr cataInfo;
-         rc = rtnCoordGetCataInfo( cb, pCollectionName,
-                                 isNeedRefresh, cataInfo );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to get the catalog info(collection:%s)",
-                     pCollectionName );
-         pSrc->version = cataInfo->getVersion();
-         if ( cataInfo->isMainCL() )
-         {
-            // query on main collection
-            CoordSubCLlist subCLList ;
-            CoordGroupSubCLMap groupSubCLMap;
-            rc = cataInfo->getMatchSubCLs( boQuery, subCLList );
-            PD_CHECK( SDB_OK == rc, rc, error_retry, PDWARNING,
-                     "failed to get match sub collection(rc=%d)",
-                     rc );
-            rc = rtnCoordGetSubCLsByGroups( subCLList, sendGroupList,
-                                          cb, groupSubCLMap );
-            PD_CHECK( SDB_OK == rc, rc, error_retry, PDWARNING,
-                     "failed to get sub-collection info(rc=%d)",
-                     rc );
-            rc = queryOnMainCL( groupSubCLMap, pSrc, cb,
-                              pRouteAgent, sendGroupList,
-                              pContext );
-         }
-         else
-         {
-            CoordGroupList groupList ;
-            // query on normal collection
-            rc = getNodeGroups( cataInfo, boQuery,
-                              sendGroupList, groupList );
-            PD_CHECK( SDB_OK == rc, rc, error_retry, PDWARNING,
-                     "failed to get match sharding(rc=%d)",
-                     rc );
-            rc = queryToDataNodeGroup( (CHAR *)pSrc, groupList, sendGroupList,
-                                       pRouteAgent, cb, pContext );
-            PD_CHECK( SDB_OK == rc, rc, error_retry, PDWARNING,
-                     "query on data node failed(rc=%d)",
-                     rc );
-         }
-   error_retry:
-         if ( rc != SDB_OK && rc != SDB_APP_INTERRUPT && !hasRefresh )
-         {
-            isNeedRefresh = TRUE;
-         }
-         else
-         {
-            isNeedRefresh = FALSE;
-         }
 
-      }while( isNeedRefresh );
+      rc = executeQuery( (CHAR *)pSrc, boQuery, boOrderBy, pCollectionName,
+                        pRouteAgent, cb, pContext ) ;
       PD_RC_CHECK( rc, PDERROR, "query failed(rc=%d)", rc );
 
-      replyHeader.contextID = contextID;
+      replyHeader.contextID = pContext->contextID() ;
       pContext->addSubDone( cb );
    done:
       return rc;
    error:
-      if ( SDB_CAT_NO_MATCH_CATALOG == rc )
-      {
-         rc = SDB_OK;
-         replyHeader.contextID = contextID;
-         goto done;
-      }
       replyHeader.flags = rc;
-      if ( contextID >= 0 )
-      {
-         pRtncb->contextDelete( contextID, cb );
-         contextID = -1;
-         pContext = NULL;
-      }
       goto done;
    }
 
@@ -531,6 +446,115 @@ namespace engine
       return rc;
    error:
       goto done;
+   }
+
+   INT32 rtnCoordQuery::executeQuery( CHAR *pSrc ,
+                                    BSONObj &boQuery ,
+                                    BSONObj &boOrderBy ,
+                                    const CHAR * pCollectionName ,
+                                    netMultiRouteAgent *pRouteAgent ,
+                                    pmdEDUCB *cb ,
+                                    rtnContextCoord *&pContext )
+   {
+      SDB_ASSERT( pSrc, "pSrc can't be null!" ) ;
+      SDB_ASSERT( pCollectionName, "pCollectionName can't be null!" ) ;
+      INT32 rc = SDB_OK ;
+      SINT64 contextID = -1 ;
+      BOOLEAN isNeedRefresh = FALSE ;
+      BOOLEAN hasRetry = FALSE ;
+      CoordCataInfoPtr cataInfo ;
+      CoordGroupList sendGroupList ;
+      MsgOpQuery *pQuery = (MsgOpQuery *)pSrc ;
+      SDB_RTNCB *pRtncb = pmdGetKRCB()->getRTNCB() ;
+      rc = pRtncb->contextNew( RTN_CONTEXT_COORD,
+                              (rtnContext **)&pContext,
+                              contextID, cb ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to allocate context(rc=%d)",
+                  rc ) ;
+      rc = pContext->open( boOrderBy, pQuery->numToReturn,
+                           pQuery->numToSkip ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "open context failed(rc=%d)", rc ) ;
+      pQuery->header.routeID.value = 0;
+      pQuery->header.TID = cb->getTID();
+      if ( pQuery->numToReturn > 0 && pQuery->numToSkip > 0 )
+      {
+         // some record may skip on coord,
+         // so the num of records from data-node must
+         // more than "numToReturn + numToSkip"
+         pQuery->numToReturn += pQuery->numToSkip ;
+      }
+      pQuery->numToSkip = 0 ;
+
+   retry:
+      rc = rtnCoordGetCataInfo( cb, pCollectionName,
+                              isNeedRefresh, cataInfo ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to get the catalog info(collection:%s)",
+                  pCollectionName ) ;
+      pQuery->version = cataInfo->getVersion() ;
+      if ( cataInfo->isMainCL() )
+      {
+         // query on main collection
+         CoordSubCLlist subCLList ;
+         CoordGroupSubCLMap groupSubCLMap ;
+         rc = cataInfo->getMatchSubCLs( boQuery, subCLList ) ;
+         PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
+                  "failed to get match sub collection(rc=%d)",
+                  rc ) ;
+         rc = rtnCoordGetSubCLsByGroups( subCLList, sendGroupList,
+                                       cb, groupSubCLMap ) ;
+         PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
+                  "failed to get sub-collection info(rc=%d)",
+                  rc );
+         rc = queryOnMainCL( groupSubCLMap, pQuery, cb, pRouteAgent,
+                           sendGroupList, pContext ) ;
+         PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
+                  "query on main collection failed(rc=%d)",
+                  rc );
+      }
+      else
+      {
+         CoordGroupList groupList ;
+         // query on normal collection
+         rc = getNodeGroups( cataInfo, boQuery,
+                           sendGroupList, groupList ) ;
+         PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
+                  "failed to get match sharding(rc=%d)",
+                  rc ) ;
+         rc = queryToDataNodeGroup( pSrc, groupList, sendGroupList,
+                                    pRouteAgent, cb, pContext ) ;
+         PD_CHECK( SDB_OK == rc, rc, retry_check, PDWARNING,
+                  "query on data node failed(rc=%d)",
+                  rc ) ;
+      }
+   retry_check:
+      if ( rc != SDB_OK )
+      {
+         if ( rc != SDB_APP_INTERRUPT && !hasRetry )
+         {
+            hasRetry = TRUE ;
+            isNeedRefresh = TRUE ;
+            goto retry ;
+         }
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      if ( SDB_CAT_NO_MATCH_CATALOG == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      if ( contextID >= 0 )
+      {
+         pRtncb->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+         pContext = NULL ;
+      }
+      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETMORE_EXECUTE, "rtnCoordGetmore::execute" )

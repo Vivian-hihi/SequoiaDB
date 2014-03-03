@@ -165,6 +165,7 @@ namespace engine
                                                CoordGroupList &sendGroupLst,
                                                netMultiRouteAgent *pRouteAgent,
                                                pmdEDUCB *cb,
+                                               BOOLEAN onPrimary,
                                                std::set<INT32> *ignoreRCList )
    {
       INT32 rc = SDB_OK;
@@ -177,8 +178,8 @@ namespace engine
          hasRetry = isNeedRetry;
          isNeedRetry = FALSE;
          REQUESTID_MAP sendNodes;
-         rc = rtnCoordSendRequestToNodeGroups( (CHAR *)pMsg, groupLst, TRUE, pRouteAgent,
-                                    cb, sendNodes );
+         rc = rtnCoordSendRequestToNodeGroups( (CHAR *)pMsg, groupLst, onPrimary,
+                                             pRouteAgent, cb, sendNodes );
          if ( rc != SDB_OK )
          {
             rtnCoordClearRequest( cb, sendNodes );
@@ -1049,7 +1050,8 @@ namespace engine
       // send request to data-nodes
       pCreateReq->header.opCode = MSG_BS_QUERY_REQ;
       rc = executeOnDataGroup( (MsgHeader *)pCreateReq, groupLst,
-                              sendGroupLst, pRouteAgent, cb );
+                              sendGroupLst, pRouteAgent, cb,
+                              TRUE );
       // ignore the error from data node
       if ( rc != SDB_OK )
       {
@@ -1214,7 +1216,7 @@ namespace engine
          pCreateReq->header.opCode = MSG_BS_QUERY_REQ;
          pCreateReq->version = CAT_VERSION_BEGIN;
          rc = executeOnDataGroup( (MsgHeader *)pCreateReq, groupLst,
-                                 sendGroupLst, pRouteAgent, cb );
+                                 sendGroupLst, pRouteAgent, cb, TRUE );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDWARNING,
@@ -2704,7 +2706,7 @@ namespace engine
       // get COLLECTION-LOCK-X
       pLockReq->version = cataInfo->getVersion();
       rc = executeOnDataGroup( (MsgHeader *)pLockReq, dataNodeGroupLst,
-                              lockedGroupLst, pRouteAgent, cb, &ignoreList );
+                              lockedGroupLst, pRouteAgent, cb, TRUE, &ignoreList );
       if ( rc != SDB_OK )
       {
          goto error_retry;
@@ -2721,7 +2723,7 @@ namespace engine
       // ignore SDB_DMS_NOTEXIST
       rc = executeOnDataGroup( (MsgHeader *)pDropReq,
                                 lockedGroupLst, sendGroupLst,
-                                pRouteAgent, cb, &ignoreList );
+                                pRouteAgent, cb, TRUE, &ignoreList );
       if ( rc )
       {
          PD_LOG ( PDWARNING,
@@ -2780,7 +2782,7 @@ namespace engine
       {
          executeOnDataGroup( (MsgHeader *)pReleaseReq,
                            lockedGroupLst, sendGroupLst,
-                           pRouteAgent, cb );
+                           pRouteAgent, cb, TRUE );
       }
       if ( lockedGroupLst.size() != 0 )
       {
@@ -2919,7 +2921,7 @@ namespace engine
       // get SPACE-LOCK-X
       rc = executeOnDataGroup( (MsgHeader *)pLockReq,
                               groupLst, lockedGroupLst, pRouteAgent,
-                              cb, &ignoreList );
+                              cb, TRUE, &ignoreList );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get space-X-LOCK(rc=%d)",
                   rc );
@@ -2944,7 +2946,8 @@ namespace engine
       pDropReq->header.routeID.value = 0;
       pDropReq->header.TID = cb->getTID();
       rc = executeOnDataGroup( (MsgHeader *)pDropReq, lockedGroupLst,
-                                sendGroupLst, pRouteAgent, cb, &ignoreList );
+                                sendGroupLst, pRouteAgent, cb,
+                                TRUE, &ignoreList );
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR,
@@ -2976,7 +2979,7 @@ namespace engine
       {
          executeOnDataGroup( (MsgHeader *)pReleaseReq,
                            lockedGroupLst, sendGroupLst,
-                           pRouteAgent, cb );
+                           pRouteAgent, cb, TRUE );
       }
       if ( lockedGroupLst.size() != 0 )
       {
@@ -4893,7 +4896,7 @@ namespace engine
       // run on data partition
       rc = executeOnDataGroup( (MsgHeader *)pCreateReq,
                                dataNodeGroupLst, sendGroupLst,
-                               pRouteAgent, cb );
+                               pRouteAgent, cb, TRUE );
       if ( rc != SDB_OK )
       {
          if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc &&
@@ -4950,7 +4953,7 @@ namespace engine
       tempRC = executeOnDataGroup( (MsgHeader *)pDropMsg,
                                     sendGroupLst,
                                     hasRollBackGroups,
-                                    pRouteAgent, cb );
+                                    pRouteAgent, cb, TRUE );
       if ( tempRC != SDB_OK )
       {
          // if our version is too old, let's retry rollback again with newest
@@ -5067,7 +5070,7 @@ namespace engine
             pDropReq->header.opCode = MSG_BS_QUERY_REQ;
             rc = executeOnDataGroup( (MsgHeader *)pDropReq,
                                     dataNodeGroupLst, sendGroupLst,
-                                    pRouteAgent, cb );
+                                    pRouteAgent, cb, TRUE );
             if ( rc != SDB_OK )
             {
                if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc
@@ -5778,7 +5781,8 @@ namespace engine
       // make sure to keep request id same in request package and getCataInfo
       // call
       rc = executeOnDataGroup( (MsgHeader *)splitReadyBuffer,
-                               groupLst, groupLstTmp, pRouteAgent, cb );
+                               groupLst, groupLstTmp, pRouteAgent,
+                               cb, TRUE );
       if ( rc )
       {
          // if version is too old, let's get the most current version and try
@@ -6316,7 +6320,7 @@ namespace engine
       pSrc->opCode                     = MSG_BS_QUERY_REQ ;
       // notify to data node
       rcTmp = executeOnDataGroup( (MsgHeader*)pReceiveBuffer, groupLst,
-                                  groupLstSend, pRouteAgent, cb, NULL ) ;
+                                  groupLstSend, pRouteAgent, cb, TRUE, NULL ) ;
       if ( rcTmp )
       {
          PD_LOG( PDWARNING, "Failed to notify to data node, rc: %d", rcTmp ) ;
@@ -6362,7 +6366,6 @@ namespace engine
       SDB_RTNCB *pRtncb                = pKrcb->getRTNCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
-      SINT64 contextID                 = -1;
 
       // fill default-reply(execute success)
       MsgHeader*pHeader                = (MsgHeader *)pReceiveBuffer;
@@ -6376,7 +6379,6 @@ namespace engine
       replyHeader.numReturned          = 0;
       replyHeader.startFrom            = 0;
 
-      BOOLEAN isNeedRefresh = FALSE;
       CoordCataInfoPtr cataInfo;
       CoordGroupList dataNodeGroupLst;
       CoordGroupList sendGroupLst;
@@ -6395,6 +6397,7 @@ namespace engine
       CHAR *pOrderBy = NULL;
       CHAR *pHint = NULL;
       BSONObj boOrderBy;
+      BSONObj boQuery;
       // extract request-message
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCollectionName,
                         &numToSkip, &numToReturn, &pQuery, &pFieldSelector,
@@ -6406,6 +6409,7 @@ namespace engine
       {
          BSONObj boHint( pHint );
          boOrderBy = BSONObj( pOrderBy );
+         boQuery = BSONObj( pQuery );
 
          //get collection name
          BSONElement beCollectionName
@@ -6421,45 +6425,18 @@ namespace engine
          PD_RC_CHECK ( rc, PDERROR, "Execute failed, occured unexpected "
                        "error:%s", e.what() ) ;
       }
-      rc = pRtncb->contextNew( RTN_CONTEXT_COORD, (rtnContext**)&pContext,
-                               contextID, cb );
-      PD_RC_CHECK( rc, PDERROR, "failed to allocate context(rc=%d)", rc ) ;
-      rc = pContext->open( boOrderBy, pQueryReq->numToReturn,
-                           pQueryReq->numToSkip ) ;
-      PD_RC_CHECK( rc, PDERROR, "Open context failed, rc: %d", rc ) ;
 
-   retry:
-      // get catalog info
-      rc = rtnCoordGetCataInfo( cb, strCollectionName.c_str(),
-                                isNeedRefresh, cataInfo ) ;
-      PD_RC_CHECK( rc, PDERROR, "Get catalog failed(rc=%d)", rc ) ;
-      rc = rtnCoordGetGroupsByCataInfo( cataInfo, sendGroupLst,
-                                        dataNodeGroupLst ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to get group list(rc=%d)", rc ) ;
-      pQueryReq->version = cataInfo->getVersion();
-
-      // query on data-nodes
-      rc = queryToDataNodeGroup( (CHAR *)pQueryReq, dataNodeGroupLst,
-                                 sendGroupLst, pRouteAgent, cb,
-                                 pContext, FALSE ) ;
-      if ( rc != SDB_OK )
-      {
-         // the version of catalog-info is too old
-         // and havn't done refresh, then retry to
-         // get new catalog-info
-         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc && !isNeedRefresh )
-         {
-            isNeedRefresh = TRUE;
-            goto retry;
-         }
-         PD_RC_CHECK( rc, PDERROR, "Failed to query on data node(rc=%d)", rc ) ;
-      }
+      rc = executeQuery( pReceiveBuffer, boQuery, boOrderBy,
+                        strCollectionName.c_str(), pRouteAgent,
+                        cb, pContext ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "query failed(rc=%d)", rc ) ;
 
       // statistics the result
       rc = generateResult( pContext, pRouteAgent, cb );
       PD_RC_CHECK( rc, PDERROR, "Failed to execute statistics(rc=%d)", rc ) ;
 
-      replyHeader.contextID = contextID ;
+      replyHeader.contextID = pContext->contextID() ;
       pContext->reopen() ;
 
    done:
@@ -6467,9 +6444,9 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_RTNCOCMDSTB_EXE, rc ) ;
       return rc;
    error:
-      if ( contextID >= 0 )
+      if ( pContext )
       {
-         pRtncb->contextDelete( contextID, cb );
+         pRtncb->contextDelete( pContext->contextID(), cb );
       }
       goto done;
    }
@@ -8309,7 +8286,7 @@ namespace engine
       pLinkReq->header.opCode        = MSG_BS_QUERY_REQ;
       pLinkReq->header.routeID.value = 0;
       rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
-                              pRouteAgent, cb );
+                              pRouteAgent, cb, TRUE );
       PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
                "failed to execute on data-node(rc=%d)", rc);
 
@@ -8462,7 +8439,8 @@ namespace engine
       pReqMsg->header.routeID.value = 0;
       pReqMsg->header.TID = cb->getTID();
       pReqMsg->header.opCode = MSG_BS_QUERY_REQ;
-      rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst, pRouteAgent, cb );
+      rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
+                              pRouteAgent, cb, TRUE );
       if ( rc )
       {
          PD_CHECK( !hasRefresh && SDB_CLS_COORD_NODE_CAT_VER_OLD == rc,
