@@ -60,6 +60,7 @@ namespace engine
 
       CHAR *headBuffer = NULL ;
       CHAR *blockBuffer = NULL ;
+      UINT32 blockBuffSize = 0 ;
       INT32 headSize = 0 ;
       SINT32 blockSize = 0 ;
       SDB_ASSERT ( su && ru, "SU and RU can't be NULL" )
@@ -108,14 +109,24 @@ namespace engine
             goto error ;
          }
 
-         // free by end of the loop
-         blockBuffer = ( CHAR* )SDB_OSS_MALLOC ( blockSize ) ;
-         if ( !blockBuffer )
+         if ( blockBuffSize < blockSize )
          {
-            PD_LOG ( PDERROR, "Failed to allocate memory for block" ) ;
-            rc = SDB_OOM ;
-            goto error ;
+            if ( blockBuffer )
+            {
+               SDB_OSS_FREE( blockBuffer ) ;
+               blockBuffer = NULL ;
+               blockBuffSize = 0 ;
+            }
+            blockBuffer = ( CHAR* )SDB_OSS_MALLOC ( blockSize ) ;
+            if ( !blockBuffer )
+            {
+               PD_LOG ( PDERROR, "Failed to allocate memory for block" ) ;
+               rc = SDB_OOM ;
+               goto error ;
+            }
+            blockBuffSize = blockSize ;
          }
+
          // get the extent
          rc = ru->exportExtent ( blockBuffer ) ;
          if ( rc )
@@ -131,19 +142,19 @@ namespace engine
             PD_LOG ( PDERROR, "Failed load extent into DMS, rc = %d", rc ) ;
             goto error ;
          }
-         // release memory
-         SDB_OSS_FREE ( blockBuffer ) ;
-         blockBuffer = NULL ;
       }
 
    done :
       if ( headBuffer )
       {
          SDB_OSS_FREE ( headBuffer ) ;
+         headBuffer = NULL ;
       }
       if ( blockBuffer )
       {
          SDB_OSS_FREE ( blockBuffer ) ;
+         blockBuffer = NULL ;
+         blockBuffSize = 0 ;
       }
       PD_TRACE_EXITRC ( SDB_RTNREORGOCB, rc ) ;
       return rc ;
