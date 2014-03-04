@@ -124,9 +124,20 @@
             --extra
           </stentry>
           <stentry>Specify the import data, automatically add value."false" is default,"csv" format effective.</stentry>
+        </strow>
+        <strow>
+          <stentry>--linepriority
+          </stentry>
+          <stentry>Current delimiter default priority is: record delimiter, character delimiter, field delimiter, the default value is ture; If set to false, 
+            then the priority of the separator: character deliiter, record delimiter, field delimiter.</stentry>
         </strow>        
       </simpletable>
+      
     </section>
+    <note>Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data.<fig></fig>When the record contains "record separator" 
+      and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
+      If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.
+    </note>
     <section>
       <title>Usage</title>
       <p>In the following sample,sdbimprt will import data into local database which port is 11810,
@@ -256,9 +267,19 @@
             --extra
           </stentry>
           <stentry>Specify the import data, automatically add value."false" is default,"csv" format effective.</stentry>
-        </strow>   
+        </strow>
+        <strow>
+          <stentry>--linepriority
+          </stentry>
+          <stentry>Current delimiter default priority is: record delimiter > character delimiter > field delimiter, the default value is ture; If set to false, 
+            then the priority of the separator: character deliiter > record delimiter > field delimiter.</stentry>
+        </strow> 
       </simpletable>
     </section>
+    <note>Linepriority parameters need to be particularly concerned, if set properly, it may fail to import the data.<fig></fig>When the record contains "record separator" 
+      and linepriority is true, the tool will give priority in accordance with the "record separator" resolution, which led to the import fails. For example: 
+      If the record is {"name":"Mike\n"}, the false linepriority mode should be selected.
+    </note>
     <section>
       <title>Usage</title>
       <p> In the following sample,sdbload will import data into local database which port is 11810,

@@ -4,7 +4,7 @@
   <title>$and</title>
   <body>
     <section><title>语法</title>
-      <p><codeblock>{$and:{[{&lt;表达式1>}，{&lt;表达式2>},...,{&lt;表达式N>}]}}</codeblock></p>
+      <p><codeblock>{$and:[{&lt;表达式1>}，{&lt;表达式2>},...,{&lt;表达式N>}]}</codeblock></p>
     </section>
     <section>
       <title>描述</title>

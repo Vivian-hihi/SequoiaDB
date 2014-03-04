@@ -13,12 +13,11 @@
   <title>示例</title>
   <ul>
     <li>下面的示例使用<b>$match</b>执行简单的匹配
-            <codeblock>db.collectionspace.collection.aggregate({ $match : {$and:{[{age: {$score:80}},{"info.name":{$exists:1}}]}}})</codeblock><p>该操作表示从集合collection中返回符合条件score&lt;=80且info对象中的子对象name字段存在的记录。</p></li>
+            <codeblock>db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}})</codeblock><p>该操作表示从集合collection中返回符合条件score&lt;=80且info对象中的子对象name字段存在的记录。</p></li>
     <li>下面的示例使用<b>$match</b>匹配符合条件的记录，然后使用<xref href="jgroup.dita"><b>$group</b></xref>对结果集分组
             ，最后使用<xref href="project.dita"
-            ><b>$project</b></xref>输出结果集中指定的字段名<codeblock>db.collectionspace.collection.aggregate({ $match : {$and:{[{age: {$score:80}},{"info.name":{$exists:1}}]}}},
-              {<xref href="jgroup.dita"><b>$group</b></xref>:{_id:"$major"}},{<xref href="project.dita"
-            ><b>$project</b></xref>:{major:1,dep:1}})</codeblock><p>该操作首先集合collection中返回符合条件score&lt;=80且info对象中的子对象name字段存在的记录，然后按major字段进行分组，最后选择输出结果集中的major和dep字段。</p>
+            ><b>$project</b></xref>输出结果集中指定的字段名<codeblock>db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}},
+              {<xref href="jgroup.dita"><b>$group</b></xref>:{_id:"$major"}},{<xref href="project.dita"><b>$project</b></xref>:{major:1,dep:1}})</codeblock><p>该操作首先集合collection中返回符合条件score&lt;=80且info对象中的子对象name字段存在的记录，然后按major字段进行分组，最后选择输出结果集中的major和dep字段。</p>
         </li>
   </ul>
 </section>

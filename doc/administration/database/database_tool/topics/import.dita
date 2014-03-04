@@ -107,9 +107,16 @@
           <stentry>--extra
           </stentry>
           <stentry>指定导入数据时，自动添加值，默认false，csv格式有效。 </stentry>
-        </strow>        
+        </strow>
+        <strow>
+          <stentry>--linepriority
+          </stentry>
+          <stentry>当前分隔符默认的优先级为：记录分隔符，字符分隔符，字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符，记录分隔符，字段分隔符。</stentry>
+        </strow>
       </simpletable>
     </section>
+    <note>Linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。<fig></fig>当记录中包含“记录分隔符”并且linepriority为true时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择linepriority为false模式。
+    </note>
     <section>
       <title>用法</title>
       <p>在下面的例子，sdbimprt将数据导入到本地数据库端口11810中对应集合空间foo和集合bar，导入类型是csv，导入文件为test.csv</p>
@@ -227,10 +234,12 @@
         <strow>
           <stentry>--linepriority
           </stentry>
-          <stentry>当前分隔符默认的优先级为：记录分隔符，字符分隔符，字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符，记录分隔符，字段分隔符。</stentry>
+          <stentry>当前分隔符默认的优先级为：记录分隔符>字符分隔符>字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符>记录分隔符>字段分隔符。</stentry>
         </strow>
       </simpletable>
     </section>
+    <note>Linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。<fig></fig>当记录中包含“记录分隔符”并且linepriority为true时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择linepriority为false模式。
+    </note>
     <section>
       <title>用法</title>
       <p> 在下面的例子，sdbload将数据导入到端口11810中对应集合空间foo和集合bar，导入文件为test.json。 </p>
