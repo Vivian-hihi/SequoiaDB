@@ -39,6 +39,8 @@ public interface IConnection {
 	public byte[] receiveSysInfoMsg(int msgSize) throws BaseException;
 	
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException;
+	
+	public void shrink();
 
 
 }

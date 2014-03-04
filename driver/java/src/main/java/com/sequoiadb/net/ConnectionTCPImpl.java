@@ -41,8 +41,8 @@ public class ConnectionTCPImpl implements IConnection {
 	private ConfigOptions options;
 	private ServerAddress hostAddress;
 	private boolean endianConvert;
-	private byte[] MESSAGE_BUFFER;
-	final static private int DEF_BUFFER_LENGTH = 2 * 1024 * 1024;
+	private byte[] receive_buffer;
+	final static private int DEF_BUFFER_LENGTH = 64 * 1024;
 	private int REAL_BUFFER_LENGTH ;
 
 	//@Override
@@ -59,7 +59,7 @@ public class ConnectionTCPImpl implements IConnection {
 		this.hostAddress = addr;
 		this.options = options;
 		endianConvert = false;
-		MESSAGE_BUFFER = new byte[DEF_BUFFER_LENGTH];
+		receive_buffer = new byte[DEF_BUFFER_LENGTH];
 		REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH ;
 	}
 
@@ -150,23 +150,6 @@ public class ConnectionTCPImpl implements IConnection {
 		logger.getInstance().debug(0, "leave changeConfigOptions\n");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.sequoiadb.net.IConnection#sendMessage(byte[], int)
-	 */
-	//@Override
-	public void sendMessage(byte[] msg) throws BaseException {
-		logger.getInstance().debug(0, "enter sendMessage\n");
-		try {
-			if(output != null) {
-				output.write(msg);
-				}
-			} catch (IOException e) {
-			throw new BaseException("SDB_NETWORK");
-			}
-		logger.getInstance().debug(0, "leave sendMessage\n");
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -180,7 +163,7 @@ public class ConnectionTCPImpl implements IConnection {
 			input.mark(4);
 			int rtn = 0;
 			while (rtn < 4){
-				int retSize = input.read(MESSAGE_BUFFER, rtn, 4 - rtn);
+				int retSize = input.read(receive_buffer, rtn, 4 - rtn);
 				if (retSize == -1) {
 					close();
 					throw new BaseException("SDB_NETWORK"); 
@@ -192,25 +175,33 @@ public class ConnectionTCPImpl implements IConnection {
 			if (rtn != 4) {
 				close();
 				throw new BaseException("SDB_NETWORK");
-			}*/
-			int msgSize = Helper.byteToInt(MESSAGE_BUFFER, endianConvert);
+			}
+			*/
+			int msgSize = Helper.byteToInt(receive_buffer, endianConvert);
 			if ( msgSize>REAL_BUFFER_LENGTH)
 			{
-				MESSAGE_BUFFER = new byte[msgSize];
+				receive_buffer = new byte[msgSize];
 				REAL_BUFFER_LENGTH = msgSize;
 			}
 			input.reset();
 			rtn = 0;
 			int retSize = 0;
 			while (rtn < msgSize) {
-				retSize = input.read(MESSAGE_BUFFER, rtn, msgSize - rtn);
+				retSize = input.read(receive_buffer, rtn, msgSize - rtn);
 				if (-1 == retSize) {
 					close();
 					throw new BaseException("SDB_NETWORK");
 				}
 				rtn += retSize;
 			}
-
+			
+			// if the byte count we read is not equal with the massege length
+			// throw error
+			if (rtn != msgSize) {
+				close();
+				throw new BaseException("SDB_NETWORK");
+			}
+/*
 			if (rtn != msgSize) {
 				StringBuffer bbf = new StringBuffer();
 				for (byte by : MESSAGE_BUFFER) {
@@ -219,19 +210,20 @@ public class ConnectionTCPImpl implements IConnection {
 				close();
 				throw new BaseException("SDB_INVALIDARG");
 			}
-			
- 			ByteBuffer byteBuffer = ByteBuffer.wrap(MESSAGE_BUFFER, 0 , msgSize );
+*/			
+			// wrap the receive byte into a byteBuffer and then return it back
+ 			ByteBuffer byteBuffer = ByteBuffer.wrap(receive_buffer, 0 , msgSize );
 			if (endianConvert) {
 				byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
 			} else {
 				byteBuffer.order(ByteOrder.BIG_ENDIAN);
 			}
-			logger.getInstance().debug(0, "levae receiveMessage\n");
+			logger.getInstance().debug(0, "leave receiveMessage\n");
 			return byteBuffer;
 			
 		} catch (IOException e) {
 			throw new BaseException("SDB_NETWORK");
-		}catch(NullPointerException e){
+		} catch(NullPointerException e) {
 			logger.getInstance().error("objidentity:" + Integer.toString(hashCode()) +"\n");
 			logger.getInstance().error("thread id:" + Long.toString(Thread.currentThread().getId()) +"\n");
 			throw new BaseException("SDB_NETWORK");
@@ -284,13 +276,31 @@ public class ConnectionTCPImpl implements IConnection {
 		connect();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.sequoiadb.net.IConnection#sendMessage(byte[], int)
+	 */
+	//@Override
+	public void sendMessage(byte[] msg) throws BaseException {
+		logger.getInstance().debug(0, "enter sendMessage\n");
+		try {
+			if(output != null) {
+				output.write(msg);
+			}
+		} catch (IOException e) {
+			throw new BaseException("SDB_NETWORK");
+		}
+		logger.getInstance().debug(0, "leave sendMessage\n");
+	}
+	
 	//@Override
 	public void sendMessage(byte[] msg, int length) throws BaseException {
 	    logger.getInstance().debug(0, "enter sendMessage2\n");
         try {
             if (output != null) {
                 output.write(msg, 0, length);
-        }
+            }
             else{
             	throw new BaseException("SDB_NETWORK");
             }
@@ -300,4 +310,8 @@ public class ConnectionTCPImpl implements IConnection {
 		logger.getInstance().debug(0, "leave sendMessage2\n");
 	}
 	
+	public void shrink() {
+		receive_buffer = new byte[DEF_BUFFER_LENGTH];
+		REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH ;
+	}
 }
