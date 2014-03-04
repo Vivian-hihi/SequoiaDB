@@ -25,7 +25,8 @@ package com.sequoiadb.base;
  * @brief the option of SequoiadbDatasource
  */
 public class SequoiadbOption {
-	public static final  long CLOSE_CONNECT_TIME=4*60*60*1000;
+   private int recheckCyclePeriod = 10 * 60 * 1000 ;
+   private int deltaIncCount = 20 ;
 	private int initConnectionNum=10;
 	private int maxConnectionNum=500;
 	private int maxIdeNum=10;
@@ -75,4 +76,31 @@ public class SequoiadbOption {
 	public void setMaxIdeNum(int maxIdeNum) {
 		this.maxIdeNum = maxIdeNum;
 	}
+
+   /**
+    * @fn void setRecheckCyclePeriod()
+    * @brief set the recheck cycle in milliseconds
+    * @param recheckCyclePeriod
+    *
+    */
+   public void setRecheckCyclePeriod ( int recheckCyclePeriod ) {
+      this.recheckCyclePeriod = recheckCyclePeriod ;
+   }
+   public int getRecheckCyclePeriod () {
+      return recheckCyclePeriod ;
+   }
+
+   /**
+    * @fn void setDeltaIncCount()
+    * @brief set the number of new connections to open once running out the
+    * connection pool
+    * @param deltaIncCount
+    *
+    */
+   public void setDeltaIncCount ( int deltaIncCount ) {
+      this.deltaIncCount = deltaIncCount ;
+   }
+   public int getDeltaIncCount () {
+      return deltaIncCount ;
+   }
 }

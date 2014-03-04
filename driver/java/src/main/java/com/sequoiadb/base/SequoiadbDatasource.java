@@ -127,8 +127,9 @@ public class SequoiadbDatasource {
 	 * @since 1.0.0
 	 */
 	private void increaseConnetions() {
-		if (used_sequoiadbs.size() < option.getMaxConnectionNum() - 19) {
-			for (int i = 0; i < 20; i++) {
+		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
+                                   option.getDeltaIncCount()) {
+			for (int i = 0; i < option.getDeltaIncCount(); i++) {
 				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
 				sequoiadbs.add(sequoiadb);
 			}
@@ -166,11 +167,14 @@ public class SequoiadbDatasource {
 
 	private void clearClosedConnection() {
 		long time = System.currentTimeMillis();
-		if (time - lastClearTime >= option.CLOSE_CONNECT_TIME) {
+		if (time - lastClearTime >= option.getRecheckCyclePeriod()) {
 			if (sequoiadbs.size() > option.getMaxIdeNum()) {
 				this.lastClearTime = System.currentTimeMillis();
 				for (int i = 0; i < sequoiadbs.size() - option.getMaxIdeNum(); i++) {
-					sequoiadbs.get(i).disconnect();
+               Sequoiadb db = sequoiadbs.get(i) ;
+               db.disconnect () ;
+               sequoiadbs.remove ( db ) ;
+               i-- ;
 				}
 			}
 		}
