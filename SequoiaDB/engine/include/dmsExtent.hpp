@@ -81,7 +81,7 @@ namespace engine
       dmsOffset   _lastRecordOffset ;
       INT32       _freeSpace ;
 
-      void init( UINT16 numPages, UINT16 mbID )
+      void init( UINT16 numPages, UINT16 mbID, UINT32 totalSize )
       {
          _eyeCatcher[0]       = DMS_EXTENT_EYECATCHER0 ;
          _eyeCatcher[1]       = DMS_EXTENT_EYECATCHER1 ;
@@ -95,7 +95,7 @@ namespace engine
          _recCount            = 0 ;
          _firstRecordOffset   = DMS_INVALID_OFFSET ;
          _lastRecordOffset    = DMS_INVALID_OFFSET ;
-         _freeSpace           = 0 ;
+         _freeSpace           = (INT32)( totalSize - sizeof(_dmsExtent) ) ;
       }
       BOOLEAN validate( UINT16 mbID = DMS_INVALID_MBID )
       {
