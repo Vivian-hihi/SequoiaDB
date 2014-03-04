@@ -1419,8 +1419,9 @@ namespace engine
             goto error ;
          }
       }
-      context->mbStat()->_totalIndexPages = indexID ;
-      context->mbStat()->_totalIndexFreeSpace = 0 ;
+      context->mbStat()->_totalIndexPages = indexID << 1 ;
+      context->mbStat()->_totalIndexFreeSpace =
+         indexID * ( pageSize()-1-sizeof(ixmExtentHead) ) ;
 
    done :
       return rc ;
