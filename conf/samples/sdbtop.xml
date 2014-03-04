@@ -1219,7 +1219,7 @@
                      <nodeCol>4</nodeCol>
                      <fieldLength>30</fieldLength>
                      <tableCellLength>30</tableCellLength>
-                     <baseField>SessionID</baseField>
+                     <baseField></baseField>
                      <fixed>
                         <FieldStruct>
                            <deltaName>TotalNumConnects</deltaName>
