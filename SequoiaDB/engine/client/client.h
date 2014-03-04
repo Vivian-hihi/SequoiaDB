@@ -36,7 +36,7 @@ SDB_EXTERN_C_START
 #define SDB_LIST_COLLECTIONS      4
 #define SDB_LIST_COLLECTIONSPACES 5
 #define SDB_LIST_STORAGEUNITS     6
-#define SDB_LIST_SHARDS           7
+#define SDB_LIST_GROUPS           7
 #define SDB_LIST_STOREPROCEDURES  8
 
 #define SDB_INVALID_HANDLE       ((ossValuePtr) -1)
@@ -44,37 +44,12 @@ typedef ossValuePtr sdbConnectionHandle   ;
 typedef ossValuePtr sdbCSHandle           ;
 typedef ossValuePtr sdbCollectionHandle   ;
 typedef ossValuePtr sdbCursorHandle       ;
-typedef ossValuePtr sdbShardHandle ;
+typedef ossValuePtr sdbReplicaGroupHandle ;
 typedef ossValuePtr sdbNodeHandle  ;
 
-/** sdbReplicaGroupHandle will be deprecated in version 2.x, use sdbShardHandle instead of it. */
-typedef sdbShardHandle            sdbReplicaGroupHandle ;
 /** sdbReplicaNodeHandle will be deprecated in version 2.x, use sdbNodeHandle instead of it. */
 typedef sdbNodeHandle             sdbReplicaNodeHandle ;
-/** SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it. */
-#define SDB_LIST_GROUPS           SDB_LIST_SHARDS
-/** sdbGetReplicaGroup will be deprecated in version 2.x, use sdbGetShard instead of it. */
-#define sdbGetReplicaGroup        sdbGetShard
-/** sdbGetReplicaGroup1 will be deprecated in version 2.x, use sdbGetShard1 instead of it. */
-#define sdbGetReplicaGroup1       sdbGetShard1
-/** sdbGetReplicaGroupName will be deprecated in version 2.x, use sdbGetShardName instead of it. */
-#define sdbGetReplicaGroupName    sdbGetShardName
-/** sdbIsReplicaGroupCatalog will be deprecated in version 2.x, use sdbIsShardCatalog instead of it. */
-#define sdbIsReplicaGroupCatalog  sdbIsShardCatalog
-/** sdbCreateReplicaCataGroup will be deprecated in version 2.x, use sdbCreateCataShard instead of it. */
-#define sdbCreateReplicaCataGroup sdbCreateCataShard
-/** sdbCreateReplicaGroup will be deprecated in version 2.x, use sdbCreateShard instead of it. */
-#define sdbCreateReplicaGroup     sdbCreateShard
-/** sdbRemoveReplicaGroup will be deprecated in version 2.x, use sdbRemoveShard instead of it. */
-#define sdbRemoveReplicaGroup     sdbRemoveShard
-/** sdbStartReplicaGroup will be deprecated in version 2.x, use sdbStartShard instead of it. */
-#define sdbStartReplicaGroup      sdbStartShard
-/** sdbStopReplicaGroup will be deprecated in version 2.x, use sdbStopShard instead of it. */
-#define sdbStopReplicaGroup       sdbStopShard
-/** sdbListReplicaGroups will be deprecated in version 2.x, use sdbListShards instead of it. */
-#define sdbListReplicaGroups      sdbListShards
-/** sdbReleaseReplicaGroup will be deprecated in version 2.x, use sdbReleaseShard instead of it. */
-#define sdbReleaseReplicaGroup    sdbReleaseShard
+
 /** sdbCreateReplicaNode will be deprecated in version 2.x, use sdbCreateNode instead of it. */
 #define sdbCreateReplicaNode      sdbCreateNode
 /** sdbRemoveReplicaNode will be deprecated in version 2.x, use sdbRemoveNode instead of it. */
@@ -356,9 +331,9 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
         SDB_LIST_SESSIONS         : Get all sessions list
         SDB_LIST_SESSIONS_CURRENT : Get the current session
         SDB_LIST_COLLECTIONS      : Get all collections list
-        SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
+        SDB_LIST_COLLECTIONSPACES : Get all collecion spaces list
         SDB_LIST_STORAGEUNITS     : Get storage units list
-        SDB_LIST_SHARDS           : Get shard list ( only applicable in sharding env )
+        SDB_LIST_GROUPS           : Get replica groups list ( only applicable in sharding env )
         SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
@@ -402,9 +377,9 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
                                          const CHAR *pCollectionSpaceName,
                                          sdbCSHandle *handle ) ;
 
-/** \fn INT32 sdbGetShard ( sdbConnectionHandle cHandle,
+/** \fn INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
                                       const CHAR *pShardName,
-                                      sdbShardHandle *handle )
+                                      sdbReplicaGroupHandle *handle )
     \brief Get the specified shard
     \param [in] cHandle The database connection handle
     \param [in] pShardName The name of shard
@@ -412,13 +387,13 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
                                       const CHAR *pShardName,
-                                      sdbShardHandle *handle ) ;
+                                      sdbReplicaGroupHandle *handle ) ;
 
-/** \fn INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
+/** \fn INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
                                       UINT32 id,
-                                      sdbShardHandle *handle )
+                                      sdbReplicaGroupHandle *handle )
     \brief Get the specified shard
     \param [in] cHandle The database connection handle
     \param [in] id The id of shard
@@ -426,11 +401,11 @@ SDB_EXPORT INT32 sdbGetShard ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
                                        UINT32 id,
-                                       sdbShardHandle *handle ) ;
+                                       sdbReplicaGroupHandle *handle ) ;
 
-/** \fn INT32 sdbGetShardName ( sdbShardHandle cHandle,
+/** \fn INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
                                        CHAR **ppShardName )
     \brief Get the specified shard name
     \param [in] cHandle The shard handle
@@ -438,16 +413,16 @@ SDB_EXPORT INT32 sdbGetShard1 ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetShardName ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
                                    CHAR **ppShardName ) ;
 
-/** \fn BOOLEAN sdbIsShardCatalog ( sdbShardHandle cHandle )
+/** \fn BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
     \brief Test whether the specified shard is catalog
     \param [in] cHandle The shard handle
     \retval TRUE The shard is catalog
     \retval FALSE The shard is not catalog
 */
-SDB_EXPORT BOOLEAN sdbIsShardCatalog ( sdbShardHandle cHandle ) ;
+SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle ) ;
 
 /** \fn INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
                                          const CHAR *pCollectionSpaceName,
@@ -484,9 +459,9 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
                                           const CHAR *pCollectionSpaceName ) ;
 
-/** \fn INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
+/** \fn INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
                                          const CHAR *pShardName,
-                                         sdbShardHandle *handle )
+                                         sdbReplicaGroupHandle *handle )
     \brief Create the specified shard
     \param [in] cHandle The database connection handle
     \param [in] pShardName The name of the shard
@@ -494,10 +469,10 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
                                          const CHAR *pShardName,
-                                         sdbShardHandle *handle ) ;
-/** \fn INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
+                                         sdbReplicaGroupHandle *handle ) ;
+/** \fn INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
                                         const CHAR *pShardName )
     \brief Remove the specified shard
     \param [in] cHandle The database connection handle
@@ -505,18 +480,18 @@ SDB_EXPORT INT32 sdbCreateShard ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbRemoveShard ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
                                          const CHAR *pShardName ) ;
 
-/** \fn INT32 sdbStartShard ( sdbShardHandle cHandle )
+/** \fn INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle )
     \brief Start and activate the specified shard
     \param [in] cHandle The shard handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbStartShard ( sdbShardHandle cHandle ) ;
+SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
-/** \fn INT32 sdbGetNodeMaster ( sdbShardHandle cHandle,
+/** \fn INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
                                            sdbNodeHandle *handle )
     \brief Get the master node of the specified shard
     \param [in] cHandle The shard handle
@@ -524,10 +499,10 @@ SDB_EXPORT INT32 sdbStartShard ( sdbShardHandle cHandle ) ;
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetNodeMaster ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
                                            sdbNodeHandle *handle ) ;
 
-/** \fn INT32 sdbGetNodeSlave ( sdbShardHandle cHandle,
+/** \fn INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                                           sdbNodeHandle *handle )
     \brief Get one of slave node of the specified shard,
            if no slave exists then get master
@@ -536,10 +511,10 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbShardHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetNodeSlave ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
                                           sdbNodeHandle *handle ) ;
 
-/** \fn INT32 sdbGetNodeByName ( sdbShardHandle cHandle,
+/** \fn INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
                                            const CHAR *pNodeName,
                                            sdbNodeHandle *handle )
     \brief Get the node from the specified shard
@@ -549,11 +524,11 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbShardHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetNodeByName ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
                                            const CHAR *pNodeName,
                                            sdbNodeHandle *handle ) ;
 
-/** \fn INT32 sdbGetNodeByHost ( sdbShardHandle cHandle,
+/** \fn INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
                                            const CHAR *pHostName,
                                            const CHAR *pServiceName,
                                            sdbNodeHandle *handle )
@@ -565,7 +540,7 @@ SDB_EXPORT INT32 sdbGetNodeByName ( sdbShardHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbGetNodeByHost ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
                                            const CHAR *pHostName,
                                            const CHAR *pServiceName,
                                            sdbNodeHandle *handle ) ;
@@ -606,15 +581,15 @@ SDB_EXPORT INT32 sdbStartNode ( sdbNodeHandle cHandle ) ;
 */
 SDB_EXPORT INT32 sdbStopNode ( sdbNodeHandle cHandle ) ;
 
-/** \fn INT32 sdbStopShard ( sdbShardHandle cHandle )
+/** \fn INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle )
     \brief Stop the specified shard
     \param [in] cHandle The shard handle
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbStopShard ( sdbShardHandle cHandle ) ;
+SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
-/** \fn INT32 sdbCreateCataShard ( sdbShardHandle cHandle,
+/** \fn INT32 sdbCreateReplicaCataGroup ( sdbReplicaGroupHandle cHandle,
                                    const CHAR *pHostName,
                                    const CHAR *pServiceName,
                                    const CHAR *pDatabasePath,
@@ -628,13 +603,13 @@ SDB_EXPORT INT32 sdbStopShard ( sdbShardHandle cHandle ) ;
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbCreateCataShard ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
                                       const CHAR *pHostName,
                                       const CHAR *pServiceName,
                                       const CHAR *pDatabasePath,
                                       bson *configure );
 
-/** \fn INT32 sdbCreateNode ( sdbShardHandle cHandle,
+/** \fn INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
                                         const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
@@ -648,13 +623,13 @@ SDB_EXPORT INT32 sdbCreateCataShard ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbCreateNode ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
                                         const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         const CHAR *pDatabasePath,
                                         bson *configure ) ;
 
-/** \fn INT32 sdbRemoveNode ( sdbShardHandle cHandle,
+/** \fn INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
                                         const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         bson *configure )
@@ -666,7 +641,7 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbShardHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbRemoveNode ( sdbShardHandle cHandle,
+SDB_EXPORT INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
                                         const CHAR *pHostName,
                                         const CHAR *pServiceName,
                                         bson *configure ) ;
@@ -693,7 +668,7 @@ SDB_EXPORT INT32 sdbListCollectionSpaces ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
                                       sdbCursorHandle *handle ) ;
 
-/** \fn INT32 sdbListShards ( sdbConnectionHandle cHandle,
+/** \fn INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
                                         sdbCursorHandle *handle )
     \brief List all shards of current database
     \param [in] cHandle The database connection handle
@@ -701,7 +676,7 @@ SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbListShards ( sdbConnectionHandle cHandle,
+SDB_EXPORT INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
                                         sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
@@ -1332,11 +1307,11 @@ SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle ) ;
 */
 SDB_EXPORT void sdbReleaseCursor ( sdbCursorHandle cHandle ) ;
 
-/** \fn void sdbReleaseShard ( sdbShardHandle cHandle )
+/** \fn void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
     \brief Release the shard handle
     \param [in] cHandle The shard handle
 */
-SDB_EXPORT void sdbReleaseShard ( sdbShardHandle cHandle ) ;
+SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
 /** \fn void sdbReleaseNode ( sdbNodeHandle cHandle )
     \brief Release the node handle
