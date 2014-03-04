@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="监控集群"/>
-<meta name="description" content="连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 50000) ; 得到集群状态 &gt; db.listShards() { &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/home/sequoiadb/sequoiadb/cata&#34;, &#34;HostName&#34;: &#34;vmsvr1-rhel-x64&#34;, &#34;Service&#34;: ..."/>
+<meta name="description" content="连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到集群状态 &gt; db.listShards() { &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/home/sequoiadb/sequoiadb/cata&#34;, &#34;HostName&#34;: &#34;vmsvr1-rhel-x64&#34;, &#34;Service&#34;: ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_fw2_ygd_pl"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -38,7 +38,7 @@
     <ol class="ol">
       <li class="li">连接到协调节点
         <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt; var db = new Sdb("localhost", 50000) ;</pre>
+&gt; var db = new Sdb("localhost", 11810) ;</pre>
 </li>
 
       <li class="li">得到集群状态
@@ -51,7 +51,7 @@
       "Service": [
         {
           "Type": 0,
-          "Name": "60000"
+          "Name": "11800"
         },</pre>
 </li>
 

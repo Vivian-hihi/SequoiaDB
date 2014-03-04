@@ -42,8 +42,8 @@
 
     <ol class="ol">
       <li class="li">Connect to coord node
-        <pre class="pre codeblock">db=new Sdb('192.168.20.35', 60000)"
-192.168.20.35:60000</pre>
+        <pre class="pre codeblock">db=new Sdb('192.168.20.35', 11800)"
+192.168.20.35:11800</pre>
 </li>
 
       <li class="li">Query the collection "SYSCAT.SYSNODES" to get the information of configuration files
@@ -56,19 +56,19 @@
       "Service": [
         {
           "Type": 0,
-          <strong class="ph b">"Name": "60000"</strong>
+          <strong class="ph b">"Name": "11800"</strong>
         },
         {
           "Type": 1,
-          "Name": "60001"
+          "Name": "11801"
         },
         {
           "Type": 2,
-          "Name": "60002"
+          "Name": "11802"
         },
         {
           "Type": 3,
-          "Name": "60003"
+          "Name": "11803"
         }
       ],
       "NodeID": 1
@@ -92,15 +92,15 @@
       "Service": [
         {
           "Type": 0,
-         <strong class="ph b"> "Name": "51000"</strong>
+         <strong class="ph b"> "Name": "11820"</strong>
         },
         {
           "Type": 1,
-          "Name": "51001"
+          "Name": "11821"
         },
         {
           "Type": 2,
-          "Name": "51002"
+          "Name": "11822"
         }
       ],
       "NodeID": 1000
@@ -124,15 +124,15 @@
       "Service": [
         {
           "Type": 0,
-         <strong class="ph b"> "Name": "53000"</strong>
+         <strong class="ph b"> "Name": "11830"</strong>
         },
         {
           "Type": 1,
-          "Name": "53001"
+          "Name": "11831"
         },
         {
           "Type": 2,
-          "Name": "53002"
+          "Name": "11832"
         }
       ],
       "NodeID": 1001
@@ -159,7 +159,7 @@
       configuration files'path of the specified server.The following sample shows the unique data
       node configuration file of the replicaset "foo".</p>
 
-    <pre class="pre codeblock">[vmsvr1-rhel-x64]$ ls /opt/sequoiadb/conf/local/51000
+    <pre class="pre codeblock">[vmsvr1-rhel-x64]$ ls /opt/sequoiadb/conf/local/11820
 sdb.conf</pre>
 
   </div>

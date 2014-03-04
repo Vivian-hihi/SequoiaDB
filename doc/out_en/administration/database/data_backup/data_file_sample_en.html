@@ -42,30 +42,30 @@
 
       <li class="li">Open the node's configuration file,find the "dbpath" and "indexpath".By default,the value
         of them are the same. <div class="p">
-          <pre class="pre codeblock">$ cat /opt/sequoiadb/conf/local/51000/sdb.conf
-svcname=51000
+          <pre class="pre codeblock">$ cat /opt/sequoiadb/conf/local/11820/sdb.conf
+svcname=11820
 dbpath=/tmpfs/data1
 diaglevel=5
 transactionon=true
 role=data
-catalogaddr=vmsvr1-rhel-x64:60003</pre>
+catalogaddr=vmsvr1-rhel-x64:11803</pre>
 
         </div>
 </li>
 
       <li class="li">Connect to coord ,and stop node
         <pre class="pre codeblock">$ ~/sequoiadb/bin/sdb
-&gt;db=new Sdb('192.168.20.35',50000)
-192.168.20.35:50000
+&gt;db=new Sdb('192.168.20.35',11810)
+192.168.20.35:11810
 &gt;shard=db.getShard('foo')
 foo
-&gt;node=shard.getNode('vmsvr1-rhel-x64:51000')
-vmsvr1-rhel-x64:51000
+&gt;node=shard.getNode('vmsvr1-rhel-x64:11820')
+vmsvr1-rhel-x64:11820
 &gt;node.stop()</pre>
 </li>
 
       <li class="li">archive the files in the database and index pathes.
-        <pre class="pre codeblock">$ tar -zcvf vmsvr1-rhel-x64.50000.2013_08_21.tar.gz /tmpfs/data1/*.dat /tmpfs/data1/*.idx
+        <pre class="pre codeblock">$ tar -zcvf vmsvr1-rhel-x64.11810.2013_08_21.tar.gz /tmpfs/data1/*.dat /tmpfs/data1/*.idx
 /tmpfs/data1/foo.dat
 /tmpfs/data1/one.dat
 /tmpfs/data1/SYSTEMP.dat
@@ -76,12 +76,12 @@ vmsvr1-rhel-x64:51000
 
       <li class="li">Restart
         node<pre class="pre codeblock">$ ~/sequoiadb/bin/sdb 
-&gt;db=new Sdb('192.168.20.35',50000)
-192.168.20.35:50000
+&gt;db=new Sdb('192.168.20.35',11810)
+192.168.20.35:11810
 &gt;shard=db.getShard('foo')
 foo
-&gt;node=shard.getNode('vmsvr1-rhel-x64:51000')
-vmsvr1-rhel-x64:51000
+&gt;node=shard.getNode('vmsvr1-rhel-x64:11820')
+vmsvr1-rhel-x64:11820
 &gt;node.start()</pre>
 </li>
 

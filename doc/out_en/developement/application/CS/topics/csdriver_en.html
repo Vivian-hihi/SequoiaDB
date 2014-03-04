@@ -101,25 +101,27 @@
 
                 </li>
 
-                <li class="li">Wxamples of cluster operation
-                    <p class="lines">SequoiaDB database cluseer operations are divided into two levels:<br/>
+                <li class="li">Wxamples of cluster operation <p class="lines">SequoiaDB database cluseer operations are divided into two levels:<br/>
   1) partition group<br/>
   2) Data Node</p>
 
-                    <div class="note note"><span class="notetitle">Note:</span> partition group contains three types: Coordination partition group, cataloging partition group, the data partition group.</div>
+                    <div class="note note"><span class="notetitle">Note:</span> partition group contains three types: Coordination partition group,
+                        cataloging partition group, the data partition group.</div>
 
-                    <p class="p">Partition group instance and instance data node instances can be expressed in two classes.</p>
+                    <p class="p">Partition group instance and instance data node instances can be expressed in
+                        two classes.</p>
 
                     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-                            <td valign="top" class="stentry">ReplicaGroup</td>
+                            <td valign="top" class="stentry">Shard</td>
 
                             <td valign="top" class="stentry">Partition group class</td>
 
-                            <td valign="top" class="stentry">Partition group instance represents a separate partition group</td>
+                            <td valign="top" class="stentry">Partition group instance represents a separate partition
+                                group</td>
 
                         </tr>
 <tr class="strow">
-                            <td valign="top" class="stentry">ReplicaNode</td>
+                            <td valign="top" class="stentry">Node</td>
 
                             <td valign="top" class="stentry">Data node class</td>
 
@@ -128,13 +130,16 @@
                         </tr>
 </table>
 
-                    <p class="p">Undoubtedly related to the cluster operation requires the use of partition groups and data node instance.</p>
+                    <p class="p">Undoubtedly related to the cluster operation requires the use of partition
+                        groups and data node instance.</p>
 
-                    <p class="p">Examples ReplicaGroup for management partition group. Its operations include start, stop partition groups, access to state partition group 
-                    node name information, the number of messages.</p>
+                    <p class="p">Examples Shard for management partition group. Its operations include start,
+                        stop partition groups, access to state partition group node name
+                        information, the number of messages.</p>
 
-                    <p class="p">Examples ReplicaNode for managing node. Its operations include start, stop specified node for the specified node instance, to obtain a 
-                        master-slave node instance, access to data node address information.</p>
+                    <p class="p">Examples Node for managing node. Its operations include start, stop specified
+                        node for the specified node instance, to obtain a master-slave node
+                        instance, access to data node address information.</p>
 </li>
 
             </ul>

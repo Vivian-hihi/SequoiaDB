@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="集群停止"/>
-<meta name="description" content="手工停止特定节点 用户可以在sdb命令行使用如下步骤停止数据节点。 连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 50000) ; 得到分片组 &gt; datashard = db.getShard ( &#34;&lt;datashard&gt;&#34; ) ; 得到数据节点 &gt; datanode = datashard.getNode ( ..."/>
+<meta name="description" content="手工停止特定节点 用户可以在sdb命令行使用如下步骤停止数据节点。 连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到分片组 &gt; datashard = db.getShard ( &#34;&lt;datashard&gt;&#34; ) ; 得到数据节点 &gt; datanode = datashard.getNode ( ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_vlv_jzc_pl"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
@@ -42,7 +42,7 @@
       <ol class="ol">
         <li class="li">连接到协调节点
           <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt; var db = new Sdb("localhost", 50000) ;</pre>
+&gt; var db = new Sdb("localhost", 11810) ;</pre>
 </li>
 
         <li class="li">得到分片组
@@ -68,7 +68,7 @@
       <ol class="ol">
         <li class="li">连接到协调节点
           <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt; var db = new Sdb("localhost", 50000) ;</pre>
+&gt; var db = new Sdb("localhost", 11810) ;</pre>
 </li>
 
         <li class="li">得到分片组

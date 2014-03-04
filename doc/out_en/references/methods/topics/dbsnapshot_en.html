@@ -50,34 +50,34 @@
 
     <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d129308e30" class="stentry">Parameter name</th>
+          <th valign="bottom" align="left" id="d129733e30" class="stentry">Parameter name</th>
 
-          <th valign="bottom" align="left" id="d129308e33" class="stentry">Parameter type</th>
+          <th valign="bottom" align="left" id="d129733e33" class="stentry">Parameter type</th>
 
-          <th valign="bottom" align="left" id="d129308e36" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d129733e36" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d129308e39" class="stentry">Not null</th>
+          <th valign="bottom" align="left" id="d129733e39" class="stentry">Not null</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d129308e30" class="stentry">snapType</td>
+          <td valign="top" headers="d129733e30" class="stentry">snapType</td>
 
-          <td valign="top" headers="d129308e33" class="stentry">List</td>
+          <td valign="top" headers="d129733e33" class="stentry">List</td>
 
-          <td valign="top" headers="d129308e36" class="stentry"><a class="xref" href="../../../administration/database/topics/monitoring_en.html">Snapshot
+          <td valign="top" headers="d129733e36" class="stentry"><a class="xref" href="../../../administration/database/topics/monitoring_en.html">Snapshot
               type</a>, the value of snapshot type is in the range from 0 to 7.</td>
 
-          <td valign="top" headers="d129308e39" class="stentry">Yes</td>
+          <td valign="top" headers="d129733e39" class="stentry">Yes</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d129308e30" class="stentry">con</td>
+          <td valign="top" headers="d129733e30" class="stentry">con</td>
 
-          <td valign="top" headers="d129308e33" class="stentry">json object</td>
+          <td valign="top" headers="d129733e33" class="stentry">json object</td>
 
-          <td valign="top" headers="d129308e36" class="stentry">Selection criteria, only to return snapshot information con field specifies the node or partition group to null, returns the entire snapshot information.</td>
+          <td valign="top" headers="d129733e36" class="stentry">Selection criteria, only to return snapshot information con field specifies the node or partition group to null, returns the entire snapshot information.</td>
 
-          <td valign="top" headers="d129308e39" class="stentry">No</td>
+          <td valign="top" headers="d129733e39" class="stentry">No</td>
 
         </tr>
 </table>
@@ -120,7 +120,7 @@
           <p class="p">Returns context snapshot of the entire cluster:</p>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 8,
@@ -134,7 +134,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:52000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11830:22",
   "Contexts": [
     {
       "ContextID": 6,
@@ -148,7 +148,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
   "Contexts": [
     {
       "ContextID": 7,
@@ -172,7 +172,7 @@ Returns group called "data1" partition group snapshot information.
 Partition group snapshot return group ID is "1000" message.</div>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 11,
@@ -186,7 +186,7 @@ Partition group snapshot return group ID is "1000" message.</div>
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
   "Contexts": [
     {
       "ContextID": 10,
@@ -203,13 +203,13 @@ Partition group snapshot return group ID is "1000" message.</div>
 
         <li class="li"><p class="p">By "group name + host name + service name" or "group ID + Node ID" check snapshot information of a node, such as:</p>
 
-          <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</pre>
+          <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
             <pre class="pre codeblock">db.snapshot(0,{GroupID:1000,NodeID:1001})</pre>
 </div>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 11,
@@ -226,7 +226,7 @@ Partition group snapshot return group ID is "1000" message.</div>
 
         <li class="li"><p class="p">By "host name + service name" check snapshot information of a node, such as:</p>
 
-          <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</pre>
+          <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
             </div>
 

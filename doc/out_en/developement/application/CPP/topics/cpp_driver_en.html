@@ -43,8 +43,8 @@
     <div class="section"><h2 class="title sectiontitle">Database operations</h2>
       
       <ul class="ul">
-        <li class="li">Connecting Database <p class="p">"connect.cpp" shows how  to connect database.The file must
-            contain the head file "client.hpp" and use namespace
+        <li class="li">Connecting Database <p class="p">"connect.cpp" shows how to connect database.The file must contain
+            the head file "client.hpp" and use namespace
             "sdbclient".</p>
 <pre class="pre codeblock">#include &lt;stdio.h&gt;
 #include &lt;iostream&gt;
@@ -104,7 +104,7 @@ void displaySyntax ( CHAR *pCommand )
             </p>
 <pre class="pre codeblock">$ gcc -o connect connect.cpp -I <em class="ph i">&lt;PATH&gt;</em>/sequoiadb/client/CPP/include -lsdbcpp -L <em class="ph i">&lt;PATH&gt;</em>/sequoiadb/client/CPP/lib
 Execution results:
-$ ./connect localhost 50000 "" ""
+$ ./connect localhost 11810 "" ""
 connect success!</pre>
 <p class="p">In
             Windows,compiling and linking the dynamic library "sdbcpp.lib" and "sdbcpp.dll" like
@@ -113,12 +113,12 @@ connect success!</pre>
 &gt; link /OUT:connect.exe /LIBPATH:<em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\CPP \lib sdbcpp.lib connect.obj 
 &gt; copy <em class="ph i">&lt;PATH&gt;</em>\sequoiadb\client\CPP\lib\sdbcpp.dll .
 Execution results:
-&gt; connect.exe localhost 50000 "" ""
+&gt; connect.exe localhost 11810 "" ""
 &gt; connect success!</pre>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">This sample connects to the port "50000" of local database,usename and password are
-              null,users can configure params according to needs.For example,when the user have
-              created usename and password,you must use the correct usename and password to connect
+            <p class="p">This sample connects to the port "11810" of local database, usename and password are
+              null, users can configure params according to needs. For example, when the user have
+              created usename and password, you must use the correct usename and password to connect
               the database.</p>
 
           </div>

@@ -98,10 +98,10 @@ error:
                   Linux we can compile and link to dynamically linked librarie file called
                   "libsdbc.so" as follow:</p>
 <pre class="pre codeblock">$gcc -o connect connect.c -I /<em class="ph i">path_to</em>/C/include -lsdbc -L/<em class="ph i">path-to</em>/client/C/lib
-$ ./connect localhost 50000 "" ""
+$ ./connect localhost 11810 "" ""
 connect success!</pre>
 <div class="note note"><span class="notetitle">Note:</span> 
-                  <p class="p">This sample link to the port of 50000 of local database. It log in with null
+                  <p class="p">This sample link to the port of 11810 of local database. It log in with null
                      user name and null password. Users need to configurate parameters according to
                      their own situation. But if database has created a user, it can connect to
                      database with it and its password.</p>

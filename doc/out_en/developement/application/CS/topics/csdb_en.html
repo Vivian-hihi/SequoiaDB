@@ -55,9 +55,10 @@
       
     <div class="section">      
       <ul class="ul">
-        <li class="li">Connect to the database and authentication
-          <p class="p">If the database does not create a user, you can anonymously connect to the database:</p>
-<pre class="pre codeblock">string addr = "127.0.0.1:50000";
+        <li class="li">Connect to the database and authentication <p class="p">If the database does not create a user,
+                        you can anonymously connect to the
+                        database:</p>
+<pre class="pre codeblock">string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {
@@ -72,8 +73,10 @@ catch (System.Exception e)
 {
     Console.WriteLine(e.StackTrace);
 }</pre>
-<p class="p">Otherwise, when the connection must specify a user name and password:</p>
-<pre class="pre codeblock">string addr = "127.0.0.1:50000";
+<p class="p">Otherwise,
+                        when the connection must specify a user name and
+                        password:</p>
+<pre class="pre codeblock">string addr = "127.0.0.1:11810";
 Sequoiadb sdb = newSequoiadb(addr);
 try
 {
@@ -88,8 +91,10 @@ catch (System.Exception e)
 {
     Console.WriteLine(e.StackTrace);
     }</pre>
-<p class="p">Here are the exception information try and catch blocks, all operations following will throw the same exception information, it is no longer 
-    relevant given the try and catch blocks.</p>
+<p class="p">Here
+                        are the exception information try and catch blocks, all operations following
+                        will throw the same exception information, it is no longer relevant given
+                        the try and catch blocks.</p>
 </li>
 
         <li class="li">Disconnect from the database

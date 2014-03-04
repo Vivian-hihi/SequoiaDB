@@ -49,17 +49,23 @@
     <div class="section"><h2 class="title sectiontitle">Example</h2>
       
       <ul class="ul">
-        <li class="li">The following example uses <strong class="ph b">$match</strong> perform simple matching 
-          <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:{[{age: {$score:80}},{"info.name":{$exists:1}}]}}})</pre>
-<p class="p">This operation represents the return qualifying score from a set collection of &lt;=80 and 
+        <li class="li">The following example uses <strong class="ph b">$match</strong> perform simple matching
+            <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}})</pre>
+<p class="p">This
+            operation represents the return qualifying score from a set collection of &lt;=80 and
             the info object child object name field is present record.</p>
 </li>
 
-        <li class="li">The following example uses <strong class="ph b">$match</strong> matching records that meet that criteria, then the result set using <a class="xref" href="jgroup_en.html"><strong class="ph b">$group</strong></a> grouping final output using 
-          <a class="xref" href="project_en.html"><strong class="ph b">$project</strong></a> focused to the specified field name. <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:{[{age: {$score:80}},{"info.name":{$exists:1}}]}}},
+        <li class="li">The following example uses <strong class="ph b">$match</strong> matching records that meet that criteria, then
+          the result set using <a class="xref" href="jgroup_en.html"><strong class="ph b">$group</strong></a> grouping final
+          output using <a class="xref" href="project_en.html"><strong class="ph b">$project</strong></a> focused to the specified
+          field name.
+            <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}},
             {<a class="xref" href="jgroup_en.html"><strong class="ph b">$group</strong></a>:{_id:"$major"}},{<a class="xref" href="project_en.html"><strong class="ph b">$project</strong></a>:{major:1,dep:1}})</pre>
-<p class="p">The first set of collection operations in return qualifying score&lt;=80 and recording info objects child objects exist in the 
-            name field, and then grouped according to major fields, the final choice of major, and dep field output in the result set.</p>
+<p class="p">The
+            first set of collection operations in return qualifying score&lt;=80 and recording info
+            objects child objects exist in the name field, and then grouped according to major
+            fields, the final choice of major, and dep field output in the result set.</p>
 
         </li>
 

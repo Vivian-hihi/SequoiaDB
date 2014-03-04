@@ -47,33 +47,33 @@
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d128779e30" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d129204e30" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d128779e33" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d129204e33" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d128779e36" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d129204e36" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d128779e39" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d128779e30" class="stentry">snapType</td>
-
-          <td valign="top" headers="d128779e33" class="stentry">枚举</td>
-
-          <td valign="top" headers="d128779e36" class="stentry"><a class="xref" href="../../../administration/database/topics/monitoring.html">快照类型</a>，快照类型的值为0到7。</td>
-
-          <td valign="top" headers="d128779e39" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d129204e39" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d128779e30" class="stentry">con</td>
+          <td valign="top" headers="d129204e30" class="stentry">snapType</td>
 
-          <td valign="top" headers="d128779e33" class="stentry">json对象</td>
+          <td valign="top" headers="d129204e33" class="stentry">枚举</td>
 
-          <td valign="top" headers="d128779e36" class="stentry">选择条件，只返回con字段指定的节点或分片组的快照信息，为null时，返回整个集群的快照信息。</td>
+          <td valign="top" headers="d129204e36" class="stentry"><a class="xref" href="../../../administration/database/topics/monitoring.html">快照类型</a>，快照类型的值为0到7。</td>
 
-          <td valign="top" headers="d128779e39" class="stentry">否</td>
+          <td valign="top" headers="d129204e39" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d129204e30" class="stentry">con</td>
+
+          <td valign="top" headers="d129204e33" class="stentry">json对象</td>
+
+          <td valign="top" headers="d129204e36" class="stentry">选择条件，只返回con字段指定的节点或分片组的快照信息，为null时，返回整个集群的快照信息。</td>
+
+          <td valign="top" headers="d129204e39" class="stentry">否</td>
 
         </tr>
 </table>
@@ -109,7 +109,7 @@
           <p class="p"> 返回整个集群的上下文快照：</p>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 8,
@@ -123,7 +123,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:52000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11830:22",
   "Contexts": [
     {
       "ContextID": 6,
@@ -137,7 +137,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
   "Contexts": [
     {
       "ContextID": 7,
@@ -161,7 +161,7 @@
 返回组ID为“1000”的分片组快照信息</div>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 11,
@@ -175,7 +175,7 @@
   ]
 }
 {
-  "SessionID": "vmsvr1-cent-x64-1:53000:23",
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
   "Contexts": [
     {
       "ContextID": 10,
@@ -192,13 +192,13 @@
 
         <li class="li"><p class="p">通过“组名+主机名+服务名”或“组ID+节点ID”查询某个节点的快照信息，如：</p>
 
-          <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</pre>
+          <div class="p"><pre class="pre codeblock">db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
             <pre class="pre codeblock">db.snapshot(0,{GroupID:1000,NodeID:1001})</pre>
 </div>
 
           <pre class="pre codeblock">{
-  "SessionID": "vmsvr1-cent-x64-1:51000:22",
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
   "Contexts": [
     {
       "ContextID": 11,
@@ -215,7 +215,7 @@
 
         <li class="li"><p class="p">通过“主机名+服务名”查询某个节点的快照信息，如：</p>
 
-          <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"51000"})</pre>
+          <div class="p"><pre class="pre codeblock">db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</pre>
 
             </div>
 

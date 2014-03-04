@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Sample"/>
-<meta name="description" content="Stop the replicaset that to be restored $ /opt/sequoiadb/bin/sdb &gt;db=new Sdb('192.168.20.35',50000) 192.168.20.35:50000 &gt;shard=db.getShard('foo') foo &gt;shard.stop() Recover configuration file $ cp ..."/>
+<meta name="description" content="Stop the replicaset that to be restored $ /opt/sequoiadb/bin/sdb &gt;db=new Sdb('192.168.20.35',11810) 192.168.20.35:11810 &gt;shard=db.getShard('foo') foo &gt;shard.stop() Recover configuration file $ cp ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/database/data_recovery/data_recovery_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_5td_hy2_gl_en"/>
@@ -39,19 +39,19 @@
     <ol class="ol">
       <li class="li">Stop the replicaset that to be
         restored<pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb 
-&gt;db=new Sdb('192.168.20.35',50000)
-192.168.20.35:50000
+&gt;db=new Sdb('192.168.20.35',11810)
+192.168.20.35:11810
 &gt;shard=db.getShard('foo')
 foo
 &gt;shard.stop() </pre>
 </li>
 
       <li class="li">Recover configuration file
-        <pre class="pre codeblock">$ cp vmsvr1-rhel-x64.51000.sdb.conf /opt/sequoiadb/conf/local/51000/sdb.conf</pre>
+        <pre class="pre codeblock">$ cp vmsvr1-rhel-x64.11820.sdb.conf /opt/sequoiadb/conf/local/11820/sdb.conf</pre>
 </li>
 
       <li class="li">Recover data files
-        <pre class="pre codeblock">$ tar -zxvf vmsvr1-rhel-x64.51000.2013_08_21.tar.gz
+        <pre class="pre codeblock">$ tar -zxvf vmsvr1-rhel-x64.11820.2013_08_21.tar.gz
 /tmpfs/data1/foo.dat
 /tmpfs/data1/one.dat
 /tmpfs/data1/SYSTEMP.dat
@@ -67,8 +67,8 @@ foo
 
       <li class="li">Start replicaset
         <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb 
-&gt;db=new Sdb('192.168.20.35',50000)
-192.168.20.35:50000
+&gt;db=new Sdb('192.168.20.35',11810)
+192.168.20.35:11810
 &gt;shard=db.getShard('foo')
 foo
 &gt;shard.start()</pre>

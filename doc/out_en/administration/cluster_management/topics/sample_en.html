@@ -59,7 +59,7 @@
 <tr class="strow">
               <td valign="top" headers="d1445e24" class="stentry">catalog sharding group</td>
 
-              <td valign="top" headers="d1445e27" class="stentry">the group contain one catalog node,service port is 30000</td>
+              <td valign="top" headers="d1445e27" class="stentry">the group contain one catalog node,service port is 11800</td>
 
             </tr>
 <tr class="strow">
@@ -67,13 +67,13 @@
 
               <td valign="top" headers="d1445e27" class="stentry"> one data sharding group,group name is datashard1,contain one data
                 node:<div class="fig fignone"/>
- data node one:service host name is vmsvr1-suse-x64,port is 51000 </td>
+ data node one:service host name is vmsvr1-suse-x64,port is 11820 </td>
 
             </tr>
 <tr class="strow">
               <td valign="top" headers="d1445e24" class="stentry">coord node</td>
 
-              <td valign="top" headers="d1445e27" class="stentry">one coord node,port is 50000</td>
+              <td valign="top" headers="d1445e27" class="stentry">one coord node,port is 11810</td>
 
             </tr>
 </table>
@@ -102,7 +102,7 @@
 <tr class="strow">
               <td valign="top" headers="d1445e80" class="stentry">catalog sharding </td>
 
-              <td valign="top" headers="d1445e83" class="stentry">the group contain one catalog node,service port is 30000</td>
+              <td valign="top" headers="d1445e83" class="stentry">the group contain one catalog node,service port is 11800</td>
 
             </tr>
 <tr class="strow">
@@ -111,15 +111,15 @@
               <td valign="top" headers="d1445e83" class="stentry">one data sharding group,group name is datashard1,contain two data
                 nodes:<div class="fig fignone"/>
 data node one:service host name is vmsvr1-suse-x64,port is
-                51000<div class="fig fignone"/>
+                11820<div class="fig fignone"/>
 data node two:service host name is vmsvr2-suse-x64,port is
-                51000</td>
+                11820</td>
 
             </tr>
 <tr class="strow">
               <td valign="top" headers="d1445e80" class="stentry">coord node</td>
 
-              <td valign="top" headers="d1445e83" class="stentry">one coord node,port is 50000</td>
+              <td valign="top" headers="d1445e83" class="stentry">one coord node,port is 11810</td>
 
             </tr>
 </table>
@@ -192,9 +192,9 @@ ulimit –Su 32000      //the number of threads limit</pre>
             </em>command line,execute the following command to add a copy data node to current data
             sharding
             group:</p>
-<pre class="pre codeblock">&gt; var db = new Sdb("localhost",50000)
+<pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)
 &gt; var datashard = db.getShard("datashard")
-&gt;node=rg.createNode("vmsvr2-suse-x64",51000,"/opt/sequoiadb /database/data/51000")
+&gt;node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
 &gt; node.start()      </pre>
 <p class="p">3.
             In the <em class="ph i">SequoiaDB shell </em>command line,execute the following command to check the
@@ -206,45 +206,45 @@ ulimit –Su 32000      //the number of threads limit</pre>
 {
   "Group": [
     {
-      "dbpath": "/opt/sequoiadb/database/data/51000",
+      "dbpath": "/opt/sequoiadb/database/data/11820",
       "HostName": " vmsvr1-suse-x64",
       "Service": [
         {
           "Type": 0,
         {
           "Type": 1,
-          "Name": "51001"
+          "Name": "11821"
         },
         {
           "Type": 2,
-          "Name": "51002"
+          "Name": "11822"
         },
         {
           "Type": 3,
-          "Name": "51003"
+          "Name": "11823"
         }
       ],
       "NodeID": 1000
     },
     {
-      "dbpath": "/opt/sequoiadb/database/data/51000",
+      "dbpath": "/opt/sequoiadb/database/data/11820",
       "HostName": " vmsvr2-suse-x64",
       "Service": [
         {
           "Type": 0,
-          "Name": "51000"
+          "Name": "11820"
         },
         {
           "Type": 1,
-          "Name": "51001"
+          "Name": "11821"
         },
         {
           "Type": 2,
-          "Name": "51002"
+          "Name": "11822"
         },
         {
           "Type": 3,
-          "Name": "51003"
+          "Name": "11823"
         }
       ],
       "NodeID": 1001
