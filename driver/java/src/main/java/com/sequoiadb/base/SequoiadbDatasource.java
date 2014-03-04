@@ -36,10 +36,10 @@ import javax.swing.text.html.Option;
  * @brief SequoiaDB DataSource
  */
 public class SequoiadbDatasource {
-	private long lastClearTime = System.currentTimeMillis();// 上一次清理链接的时间
-	private volatile LinkedList<Sequoiadb> sequoiadbs;// 可用的连接
-	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>();// 已用的连接
-	private SequoiadbOption option;// 连接池配置文件
+	private long lastClearTime = System.currentTimeMillis();// last clean time
+	private volatile LinkedList<Sequoiadb> sequoiadbs;// the idle queue
+	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>();// the busy queue
+	private SequoiadbOption option;// the configuration for datasource
 	private String url = null;
 	private String username = null;
 	private String password = null;
@@ -50,7 +50,7 @@ public class SequoiadbDatasource {
 	 * @param url   the url of jdbc
 	 * @param username   the username of sequoiadb
 	 * @param password   the password of sequoiadb
-	 * @param option     the option of datasouce
+	 * @param option     the option of datasource
 	 * @throws Exception
 	 */
 	public SequoiadbDatasource(String url, String username, String password,
@@ -63,8 +63,7 @@ public class SequoiadbDatasource {
 	}
 
 	/**
-	 * 
-	 * @fn void init()
+	 * @fn void init(SequoiadbOption option)
 	 * @brief init SequoiadbDatabase,after you create a instance of SequoiadbDatabase,you must call this method.
 	 * @param option  
 	 *               this instance of SequoiadbOption
@@ -90,7 +89,7 @@ public class SequoiadbDatasource {
 	/**
 	 * 
 	 * @fn Sequoiadb getConnection()
-	 * @brief  get the connection from this datasouce
+	 * @brief  get the connection from this datasource
 	 * @throws SQLException
 	 * @throws InterruptedException
 	 * @return Sequoiadb
@@ -99,7 +98,7 @@ public class SequoiadbDatasource {
 	 */
 	public synchronized Sequoiadb getConnection() throws SQLException,
 			InterruptedException {
-		clearClosedConnection();// 关闭多余的连接
+		clearClosedConnection();
 		if (sequoiadbs.size() > 0) {
 			return getSequoiadb();
 		} else {
@@ -119,12 +118,8 @@ public class SequoiadbDatasource {
 	}
 
 	/**
-	 * 
-	 * increaseConnetions(添加连接)
-	 * 
-	 * @return void
-	 * @exception
-	 * @since 1.0.0
+	 * @fn void increaseConnetions()
+	 * @bref Add another 20 Sequoiadb objects to the datasource. 
 	 */
 	private void increaseConnetions() {
 		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
@@ -149,7 +144,6 @@ public class SequoiadbDatasource {
 	}
 
 	/**
-	 * 
 	 * @fn void close(Sequoiadb sequoiadb)
 	 * @brief  when you accomplish some actions,you should close the conncetion
 	 * @param sequoiadb
@@ -160,6 +154,8 @@ public class SequoiadbDatasource {
 	public synchronized void close(Sequoiadb sequoiadb) {
 		if (used_sequoiadbs.contains(sequoiadb)) {
 			used_sequoiadbs.remove(sequoiadb);
+			// release the heap memory or other resource holds in the instance
+			sequoiadb.release();
 			sequoiadbs.add(sequoiadb);
 			notify();
 		} 
@@ -171,10 +167,10 @@ public class SequoiadbDatasource {
 			if (sequoiadbs.size() > option.getMaxIdeNum()) {
 				this.lastClearTime = System.currentTimeMillis();
 				for (int i = 0; i < sequoiadbs.size() - option.getMaxIdeNum(); i++) {
-               Sequoiadb db = sequoiadbs.get(i) ;
-               db.disconnect () ;
-               sequoiadbs.remove ( db ) ;
-               i-- ;
+					Sequoiadb db = sequoiadbs.get(i) ;
+					db.disconnect () ;
+					sequoiadbs.remove ( db ) ;
+					i-- ;
 				}
 			}
 		}

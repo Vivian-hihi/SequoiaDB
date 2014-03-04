@@ -1388,7 +1388,7 @@ public class Sequoiadb {
 		return shardsCursor.getNext();
 	}
 
-	void clear(){
+	void release(){
 		// let the receive buffer shrink to default value
 		connection.shrink();
 	}

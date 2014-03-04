@@ -25,8 +25,8 @@ package com.sequoiadb.base;
  * @brief the option of SequoiadbDatasource
  */
 public class SequoiadbOption {
-   private int recheckCyclePeriod = 10 * 60 * 1000 ;
-   private int deltaIncCount = 20 ;
+    private int recheckCyclePeriod = 10 * 60 * 1000 ;
+    private int deltaIncCount = 20 ;
 	private int initConnectionNum=10;
 	private int maxConnectionNum=500;
 	private int maxIdeNum=10;
@@ -44,9 +44,8 @@ public class SequoiadbOption {
 	
 	/**
 	 * @fn void setInitConnectionNum()
-	 * @brief set the inittial number of connection
+	 * @brief set the initial number of connection
 	 * @param  initConnectionNum
-	 * 
 	 */
 	public void setInitConnectionNum(int initConnectionNum) {
 		this.initConnectionNum = initConnectionNum;
@@ -70,7 +69,7 @@ public class SequoiadbOption {
 	
 	/**
 	 * @fn void setMaxIdeNum()
-	 * @brief how much time to close  the free connection
+	 * @brief set how much time to close the free connection
 	 * @param maxIdeNum
 	 */
 	public void setMaxIdeNum(int maxIdeNum) {
