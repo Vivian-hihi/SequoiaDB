@@ -800,6 +800,14 @@ INT32 readDisplayContent( ptree pt_displayContent,
                display.dyExOutPut.content[expressionNumber].rowLocation = child_displayContent->second.get<INT32>( "rowLocation" ) ;
                display.dyExOutPut.content[expressionNumber].expressionType = child_displayContent->second.get<string>( "expressionType" ) ;
                display.dyExOutPut.content[expressionNumber].expressionLength = child_displayContent->second.get<INT32>( "expressionLength" ) ;
+               if( display.dyExOutPut.content[expressionNumber].expressionLength < 1 )
+               {
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
+                            "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION), expressionLength too short: %d\n",
+                            errStrBuf, display.dyExOutPut.content[expressionNumber].expressionLength ) ;
+                  goto error ;
+               }
                if( display.dyExOutPut.content[expressionNumber].expressionType == DYNAMIC_EXPRESSION )
                {
                   display.dyExOutPut.content[expressionNumber].expressionValue.expression = child_displayContent->second.get<string>( "expressionValue.expression" ) ;
@@ -1933,7 +1941,7 @@ error :
    goto done ;
 }
 
-inline INT32 Event::getTopKey_TOP( CHAR *keyBuffer, INT64 &key )
+inline INT32 Event::getTopKey_SDBTOP( CHAR *keyBuffer, INT64 &key )
 {
    INT32 rc = SDB_OK ;
    UINT32 bufLength = 0 ;
@@ -1989,7 +1997,7 @@ error :
    goto done ;
 }
 
-INT32 Event::SDBTOP_strTOnum( const CHAR *str, INT32 &number )
+INT32 Event::strTOnum_SDBTOP( const CHAR *str, INT32 &number )
 {
    INT32 rc = SDB_OK ;
    INT32 pos = 0 ;
@@ -2012,9 +2020,9 @@ error :
    goto done;
 }
 
-INT32 Event::SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer,
-                                       INT32 &printfLength,
-                                       const CHAR *pSrc )
+INT32 Event::formattingOutput_SDBTOP( CHAR *pBuffer,
+                                      INT32 &printfLength,
+                                      const CHAR *pSrc )
 {
    INT32 rc = SDB_OK ;
    INT32 i = 0 ;
@@ -2043,15 +2051,21 @@ error :
 }
 
 // print value in the terminal
-INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
-                           string alignment,
-                           INT32 start_row, INT32 start_col )
+INT32 Event::mvprintw_SDBTOP( string &expression, INT32 expressionLength,
+                              string alignment,
+                              INT32 start_row, INT32 start_col )
 {
    INT32 rc = SDB_OK ;
    INT32 col = 0 ;
    INT32 printfLength = expressionLength ;
+   // before using the mvprintw to print on the terminal
+   // formating expression and putting the result on printf_str
    CHAR* printf_str = NULL ;
-   printf_str = ( CHAR * )SDB_OSS_MALLOC( printfLength * sizeof( CHAR ) ) ;
+   // to deal with the end of printf_str .
+   // by adding one space to printf_str when mallocing space 
+   // e.g.printf_str[printfLength] = '\0'
+   printf_str =
+         ( CHAR * )SDB_OSS_MALLOC( ( 1 + printfLength ) * sizeof( CHAR ) ) ;
    if( !printf_str )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -2061,17 +2075,8 @@ INT32 Event::MVPRINTW_TOP( string &expression, INT32 expressionLength,
                    errStrBuf, expressionLength ) ;
       goto error ;
    }
-   if( expressionLength <= 0 )
-   {
-      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                   "%s MVPRINTW_TOP faild, "
-                   "wrong expressionLength:%d\n",
-                   errStrBuf, expressionLength ) ;
-      goto error ;
-   }
-   rc = SDBTOP_FORMATTING_OUTPUT( printf_str,
-                                  printfLength, expression.c_str() ) ;
+   rc = formattingOutput_SDBTOP( printf_str,
+                                 printfLength, expression.c_str() ) ;
    if( rc )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -2905,9 +2910,9 @@ error :
    goto done ;
 }
 
-INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
-                                               string displayType,
-                                               Position &actualPosition )
+INT32 Event::refreshDynamicHelp( DisplayContent &displayContent,
+                                 string displayType,
+                                 Position &actualPosition )
 {
    INT32 rc = SDB_OK ;
    INT32 start_row = actualPosition.referUpperLeft_Y ;
@@ -3013,7 +3018,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          pairNumber = displayContent.dynamicHelp.prefixColour.foreGroundColor +
                             displayContent.dynamicHelp.prefixColour.backGroundColor * 8 ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = MVPRINTW_TOP( _str, _str.length() + 1, LEFT, start_row, start_col_copy ) ;
+         rc = mvprintw_SDBTOP( _str, _str.length(), LEFT, start_row, start_col_copy ) ;
          if( rc )
          {
             rc = SDB_ERROR ;
@@ -3027,9 +3032,9 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
          pairNumber = displayContent.dynamicHelp.contentColour.foreGroundColor +
                       displayContent.dynamicHelp.contentColour.backGroundColor * 8 ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = MVPRINTW_TOP( keySuite->hotKey[hotKey_pos].jumpName,
-                            keySuite->hotKey[hotKey_pos].jumpName.length(),
-                            LEFT, start_row, start_col_copy );
+         rc = mvprintw_SDBTOP( keySuite->hotKey[hotKey_pos].jumpName,
+                               keySuite->hotKey[hotKey_pos].jumpName.length(),
+                               LEFT, start_row, start_col_copy );
          if( rc )
          {
             rc = SDB_ERROR ;
@@ -3051,9 +3056,9 @@ error :
    goto done ;
 }
 
-INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayContent,
-                                                     string displayType,
-                                                     Position &actualPosition )
+INT32 Event::refreshDynamicExpression( DisplayContent &displayContent,
+                                       string displayType,
+                                       Position &actualPosition )
 {
    INT32 rc = SDB_OK ;
    INT32 start_row = actualPosition.referUpperLeft_Y ;
@@ -3145,8 +3150,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( DisplayContent &displayCont
          pairNumber = displayContent.dyExOutPut.content[expressionNumber].colour.foreGroundColor +
                             displayContent.dyExOutPut.content[expressionNumber].colour.backGroundColor * 8 ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = MVPRINTW_TOP( result, expressionLength, displayContent.dyExOutPut.content[expressionNumber].alignment,
-                        start_row, start_col ) ;
+         rc = mvprintw_SDBTOP( result, expressionLength, displayContent.dyExOutPut.content[expressionNumber].alignment,
+                               start_row, start_col ) ;
          if( rc )
          {
             rc = SDB_ERROR ;
@@ -3165,8 +3170,9 @@ error :
    goto done ;
 }
 
-INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayContent,
-                                                   string displayType, Position &actualPosition )
+INT32 Event::refreshDynamicSnapshot( DisplayContent &displayContent,
+                                     string displayType, 
+                                     Position &actualPosition )
 {
    INT32 rc = SDB_OK ;
    BSONObj bsonobj ;
@@ -3330,7 +3336,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             }
             pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
             attron( COLOR_PAIR( pairNumber ) ) ;
-            rc = MVPRINTW_TOP( fieldName, tableCellLength, Fixed[end_fixed_mobile].alignment, start_row, start_col ) ;
+            rc = mvprintw_SDBTOP( fieldName, tableCellLength, Fixed[end_fixed_mobile].alignment, start_row, start_col ) ;
             if( rc )
             {
                rc = SDB_ERROR ;
@@ -3360,8 +3366,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
             }
             pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
             attron( COLOR_PAIR( pairNumber ) ) ;
-            rc = MVPRINTW_TOP( fieldName, tableCellLength,
-                               Mobile[end_fixed_mobile - FixedLength].alignment, start_row, start_col ) ;
+            rc = mvprintw_SDBTOP( fieldName, tableCellLength,
+                                  Mobile[end_fixed_mobile - FixedLength].alignment, start_row, start_col ) ;
             if( rc )
             {
                rc = SDB_ERROR ;
@@ -3418,7 +3424,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                   rc = SDB_ERROR ;
                   goto error ;
                }
-               rc = MVPRINTW_TOP( result, tableCellLength, Fixed[start_up].alignment, start_row, start_col ) ;
+               rc = mvprintw_SDBTOP( result, tableCellLength, Fixed[start_up].alignment, start_row, start_col ) ;
                if( SDB_OK != rc )
                {
                   rc = SDB_ERROR ;
@@ -3456,9 +3462,9 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                   rc = SDB_ERROR ;
                   goto error ;
                }
-               rc = MVPRINTW_TOP( result, tableCellLength,
-                                  Mobile[start_up - FixedLength].alignment,
-                                  start_row, start_col ) ;
+               rc = mvprintw_SDBTOP( result, tableCellLength,
+                                     Mobile[start_up - FixedLength].alignment,
+                                     start_row, start_col ) ;
                if( rc )
                {
                   rc = SDB_ERROR ;
@@ -3523,7 +3529,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
       }
       ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", 0 ) ;
       serialNumberStr = serialNumber ;
-      rc = MVPRINTW_TOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
+      rc = mvprintw_SDBTOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
       if( rc )
       {
          rc = SDB_ERROR ;
@@ -3546,8 +3552,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          }
          pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = MVPRINTW_TOP( fieldName, Fixed[fLength].contentLength,
-                            Fixed[fLength].alignment, start_row, start_col ) ;
+         rc = mvprintw_SDBTOP( fieldName, Fixed[fLength].contentLength,
+                               Fixed[fLength].alignment, start_row, start_col ) ;
          if( rc )
          {
             rc = SDB_ERROR ;
@@ -3576,8 +3582,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          }
          pairNumber = fieldColour.foreGroundColor + fieldColour.backGroundColor * 8 ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = MVPRINTW_TOP( fieldName, Mobile[mLength].contentLength,
-                            Mobile[mLength].alignment, start_row, start_col ) ;
+         rc = mvprintw_SDBTOP( fieldName, Mobile[mLength].contentLength,
+                               Mobile[mLength].alignment, start_row, start_col ) ;
          if( rc )
          {
             rc = SDB_ERROR ;
@@ -3615,7 +3621,7 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
          }
          ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", pos_snapshot + 1 ) ;
          serialNumberStr = serialNumber ;
-         rc = MVPRINTW_TOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
+         rc = mvprintw_SDBTOP( serialNumberStr, SERIALNUMBER_LENGTH, serialNumberAlignment, start_row, start_col ) ;
          if( rc )
          {
             rc = SDB_ERROR ;
@@ -3648,8 +3654,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                rc = SDB_ERROR ;
                goto error ;
             }
-            rc = MVPRINTW_TOP( result, Fixed[fLength].contentLength,
-                               Fixed[fLength].alignment, start_row, start_col ) ;
+            rc = mvprintw_SDBTOP( result, Fixed[fLength].contentLength,
+                                  Fixed[fLength].alignment, start_row, start_col ) ;
             if( rc )
             {
                rc = SDB_ERROR ;
@@ -3687,8 +3693,8 @@ INT32 Event::refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayConten
                rc = SDB_ERROR ;
                goto error ;
             }
-            rc = MVPRINTW_TOP( result, Mobile[mLength].contentLength,
-                               Mobile[mLength].alignment, start_row, start_col ) ;
+            rc = mvprintw_SDBTOP( result, Mobile[mLength].contentLength,
+                                  Mobile[mLength].alignment, start_row, start_col ) ;
             if( rc )
             {
                rc = SDB_ERROR ;
@@ -3745,9 +3751,9 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_HELP)
    {
-      rc = refresh_DISPLAYTYPE_DYNAMIC_HELP( displayContent,
-                                             displayType,
-                                             actualPosition ) ;
+      rc = refreshDynamicHelp( displayContent,
+                               displayType,
+                               actualPosition ) ;
       if( rc )
       {
          rc = SDB_ERROR ;
@@ -3757,9 +3763,9 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION )
    {
-      rc = refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION( displayContent,
-                                                   displayType,
-                                                   actualPosition ) ;
+      rc = refreshDynamicExpression( displayContent,
+                                     displayType,
+                                     actualPosition ) ;
       if( rc )
       {
          rc = SDB_ERROR ;
@@ -3768,9 +3774,9 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    }
    else if( displayType == DISPLAYTYPE_DYNAMIC_SNAPSHOT )
    {
-      rc = refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( displayContent,
-                                                 displayType,
-                                                 actualPosition ) ;
+      rc = refreshDynamicSnapshot( displayContent,
+                                   displayType,
+                                   actualPosition ) ;
       if( rc )
       {
          rc = SDB_ERROR ;
@@ -3811,7 +3817,7 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
       ossSnprintf( errStr, errStrLength,
                 "%s refreshNodeWindow failed, getActualPosition faild\n",
                 errStrBuf ) ;
-
+      rc = SDB_ERROR;
       goto error ;
    }
    getmaxyx( stdscr, row, col ) ;
@@ -4136,7 +4142,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    HotKey* hotKey = NULL ;
    INT32 row = 0 ;
    INT32 col = 0 ;
-   CHAR inputBuf[128] ;
+   CHAR inputBuf[BUFFERSIZE] ;
    INT32 filterNum = 0 ;
    string note = NULLSTRING ;
    string displayName = NULLSTRING ; // use it when sorting
@@ -4316,7 +4322,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                {
                   ossMemset( buf, 0, BUFFERSIZE ) ;
                   read(STDIN, buf, BUFFERSIZE ) ;
-                  rc = getTopKey_TOP( buf, key) ;
+                  rc = getTopKey_SDBTOP( buf, key) ;
                   if( rc )
                   {
                      rc = SDB_ERROR ;
@@ -4389,7 +4395,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the HostName:svcname : " ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            ossMemset( inputBuf, 0, 128 ) ;
+            ossMemset( inputBuf, 0, BUFFERSIZE ) ;
             
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
@@ -4398,7 +4404,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr( inputBuf, 128 ) ;
+            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             root.input.nodeName = inputBuf ;
@@ -4418,7 +4424,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the displayName which need order by asc : " ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            ossMemset( inputBuf, 0, 128) ;
+            ossMemset( inputBuf, 0, BUFFERSIZE ) ;
             
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
@@ -4427,7 +4433,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr( inputBuf, 128 ) ;
+            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             root.input.sortingWay = SORTINGWAY_ASC ;
@@ -4448,7 +4454,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the displayName which need order by desc : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 );
-            ossMemset( inputBuf, 0, 128);
+            ossMemset( inputBuf, 0, BUFFERSIZE );
             
             move( row - 1, 0 );
             //clear screen from the position of cursor to the end of screen
@@ -4457,7 +4463,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr( inputBuf, 128 );
+            GETNSTR_TOP( inputBuf, BUFFERSIZE );
             cbreak() ;
             noecho() ;
             root.input.sortingWay = SORTINGWAY_DESC ;
@@ -4478,7 +4484,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the filter condition : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            ossMemset( inputBuf, 0, 128 ) ;
+            ossMemset( inputBuf, 0, BUFFERSIZE ) ;
             
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
@@ -4487,7 +4493,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr( inputBuf, 128 ) ;
+            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             root.input.filterCondition = inputBuf ;
@@ -4517,7 +4523,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             note = "please input the filter number : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
-            ossMemset( inputBuf, 0, 128 ) ;
+            ossMemset( inputBuf, 0, BUFFERSIZE ) ;
             
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
@@ -4526,12 +4532,12 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr( inputBuf, 128 ) ;
+            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             displayName = inputBuf ;
             trim( displayName ) ;
-            rc = SDBTOP_strTOnum( displayName.c_str(), filterNum ) ;
+            rc = strTOnum_SDBTOP( displayName.c_str(), filterNum ) ;
             if( rc )
             {
               filterNum = 0 ;
@@ -4721,7 +4727,7 @@ INT32 Event::runSDBTOP( )
             {
                ossMemset( buf, 0, BUFFERSIZE) ;
                read( STDIN, buf, BUFFERSIZE ) ;
-               rc = getTopKey_TOP( buf, key) ;
+               rc = getTopKey_SDBTOP( buf, key) ;
                if( rc )
                {
                   rc = SDB_ERROR ;
