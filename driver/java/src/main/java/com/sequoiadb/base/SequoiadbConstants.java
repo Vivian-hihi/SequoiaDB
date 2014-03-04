@@ -96,7 +96,9 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_ATTACH_CL = "link collection";
 	public final static String CMD_NAME_DETACH_CL = "unlink collection";
 	public final static String CMD_NAME_SETSESS_ATTR = "set session attribute";
-	
+	public final static String CMD_NAME_LIST_TASK = "list tasks";             
+	public final static String CMD_NAME_WAITTASK = "wait task";
+	public final static String CMD_NAME_CANCEL_TASK = "cancel task";
 	
 	
 	public final static String FIELD_NAME_NAME = "Name";
@@ -127,6 +129,9 @@ public class SequoiadbConstants {
 	public final static String FIELD_NAME_FUNCTYPE = FIELD_NAME_FUNC;
 	public final static String FIELD_NAME_SUBCLNAME = "SubCLName";
 	public final static String FIELD_NAME_HINT = "Hint";
+	public final static String FIELD_NAME_ASYNC = "Async";
+	public final static String FIELD_NAME_TASKTYPE = "TaskType";
+	public final static String FIELD_NAME_TASKID = "TaskID";
 	public final static String FMP_FUNC_TYPE = "funcType";
 	public final static String FIELD_COLLECTION = "Collection";
 	public final static String FIELD_TOTAL = "Total";

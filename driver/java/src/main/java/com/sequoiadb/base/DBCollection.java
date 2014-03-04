@@ -47,10 +47,9 @@ public class DBCollection {
 	private String csName;
 	private String collectionFullName;
 
-	private IoBuffer bulk_buffer = null;
-	private IoBuffer insert_buffer = null;
-	private static final int DEF_BUFFER_LENGTH = 2 * 1024 * 1024;
-
+	private IoBuffer insert_buffer;
+	private static final int DEF_BUFFER_LENGTH = 64*1024;
+	private static final int DEF_BULK_BUFFER_LENGTH = 2*1024*1024; 
 
 	public IConnection getConnection() {
 		return connection;
@@ -118,9 +117,9 @@ public class DBCollection {
 	 * @fn DBCollection(Sequoiadb sequoiadb, CollectionSpace cs, String name)
 	 * @brief Constructor
 	 * @param sequoiadb
-	 *            Sequoiadb handle
+	 *            Sequoiadb object
 	 * @param cs
-	 *            CollectionSpace handle
+	 *            CollectionSpace object
 	 * @param name
 	 *            Collection name
 	 */
@@ -131,6 +130,7 @@ public class DBCollection {
 		this.csName = cs.getName();
 		this.collectionFullName = csName + "." + name;
 		this.connection = sequoiadb.getConnection();
+		this.insert_buffer = null;
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class DBCollection {
 				insert_buffer.order(ByteOrder.BIG_ENDIAN);
 			}
 		} else {
-			insert_buffer.position(0);
+			insert_buffer.clear();
 		}
 		
 		
@@ -245,29 +245,42 @@ public class DBCollection {
 		if (insertor == null || insertor.size() == 0)
 			throw new BaseException("SDB_INVALIDARG");
 
-		if (this.bulk_buffer == null) {
-			this.bulk_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
-			this.bulk_buffer.setAutoExpand(true);
+		if (this.insert_buffer == null) {
+			this.insert_buffer = IoBuffer.allocate(DEF_BULK_BUFFER_LENGTH);
+			this.insert_buffer.setAutoExpand(true);
 			if (sequoiadb.endianConvert) {
-				bulk_buffer.order(ByteOrder.LITTLE_ENDIAN);
+				insert_buffer.order(ByteOrder.LITTLE_ENDIAN);
 			} else {
-				bulk_buffer.order(ByteOrder.BIG_ENDIAN);
+				insert_buffer.order(ByteOrder.BIG_ENDIAN);
 			}
 		} else {
-			bulk_buffer.position(0);
+			insert_buffer.clear();
 		}
 
 		int messageLength = SDBMessageHelper.buildBulkInsertRequest(
-				bulk_buffer, collectionFullName, insertor, flag);
+				insert_buffer, collectionFullName, insertor, flag);
 
-		connection.sendMessage(bulk_buffer.array(), messageLength);
+		connection.sendMessage(insert_buffer.array(), messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
 			throw new BaseException(flags, insertor);
-
+		// shrink the memory
+		/*
+		int capacity = insert_buffer.capacity();
+		// if the capacity large then 16m, halves it
+		if(capacity >= 8 * DEF_BULK_BUFFER_LENGTH) {
+			insert_buffer.position(0);
+			insert_buffer.limit(capacity/2);
+		}
+		else {
+			insert_buffer.position(0);
+			insert_buffer.limit(DEF_BULK_BUFFER_LENGTH);
+		}
+		insert_buffer.shrink();
+		*/
 	}
 
 	/**
@@ -871,7 +884,7 @@ public class DBCollection {
 	}
 	
 	/**
-	 * @fn long getCount(BSONObject condition)
+	 * @fn long getCount(BSONObject condition, BSONObject hint)
 	 * @brief Get the count of matching BSONObject in current collection
 	 * @param condition
 	 *            The matching rule
@@ -1012,6 +1025,119 @@ public class DBCollection {
 	}
 	
 	/**
+	 * @fn long splitAsync(String sourceGroupName, String destGroupName,
+	 * 				       BSONObject splitCondition, BSONObject splitEndCondition)
+	 * @brief Split the specified collection from source group to target group by range asynchronously.
+	 * @param sourceGroupName
+	 *            the source group name
+	 * @param destGroupName
+	 *            the destination group name
+     * @param splitCondition
+	 *            the split condition
+     * @param splitEndCondition
+	 *            the split end condition or null
+	 *            eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
+     *				 we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, 
+     *			 	 the targe group will get the records whose age's hash values are in [30,60). If splitEndCondition is null,
+     *			 	 they are in [30,max).
+     * @return return the task id, we can use the return id to manage the sharding which is run backgroup.
+	 * @exception com.sequoiadb.exception.BaseException
+	 * @see listTask, cancelTask
+	 */
+	public long splitAsync(String sourceGroupName,
+			               String destGroupName,
+			               BSONObject splitCondition,
+			               BSONObject splitEndCondition) {
+		// check arguments
+		if((null == sourceGroupName || sourceGroupName.equals("")) ||
+		   (null == destGroupName || destGroupName.equals("")) ||
+		    null == splitCondition){
+			 throw new BaseException("SDB_INVALIDARG", sourceGroupName,
+					 destGroupName, splitCondition, splitEndCondition);
+		  }
+		BSONObject obj = new BasicBSONObject();
+		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+		obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
+		obj.put(SequoiadbConstants.FIELD_NAME_TARGET, destGroupName);
+		obj.put(SequoiadbConstants.FIELD_NAME_SPLITQUERY, splitCondition);
+		if(null != splitEndCondition)
+			obj.put(SequoiadbConstants.FIELD_NAME_SPLITENDQUERY, splitEndCondition);
+		// async:true
+		obj.put(SequoiadbConstants.FIELD_NAME_ASYNC, true);
+		String commandString = SequoiadbConstants.ADMIN_PROMPT
+				+ SequoiadbConstants.CMD_NAME_SPLIT;
+		BSONObject dummy = new BasicBSONObject();
+		SDBMessage rtnSDBMessage = adminCommand(commandString, obj, dummy,
+				dummy, dummy, -1, -1, 0);
+		int flags = rtnSDBMessage.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, sourceGroupName, destGroupName,
+					splitCondition, splitEndCondition);
+		}
+		// build cursor object to get result from database
+		DBCursor cursor = new DBCursor(rtnSDBMessage, this);
+		if (!cursor.hasNext())
+			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		BSONObject result = cursor.getNext();
+		boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
+		if (!flag)
+			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		long taskid = (Long)result.get(SequoiadbConstants.FIELD_NAME_TASKID);
+		return taskid;
+	}
+
+	/**
+	 * @fn long splitAsync(String sourceGroupName, String destGroupName, double percent)
+	 * @brief Split the specified collection from source group to target group by percent asynchronously.
+	 * @param sourceGroupName
+	 *            the source group name
+	 * @param destGroupName
+	 *            the destination group name
+     * @param percent
+	 *            the split percent, Range:(0,100]
+	 * @return return the task id, we can use the return id to manage the sharding which is run backgroup.
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public long splitAsync(String sourceGroupName, String destGroupName,
+			               double percent) {
+		// check arguments
+		if((null == sourceGroupName || sourceGroupName.equals("")) ||
+		   (null == destGroupName || destGroupName.equals("")) ||
+		   (percent <= 0.0 || percent > 100.0)){
+			 throw new BaseException("SDB_INVALIDARG", sourceGroupName, destGroupName,
+		                             percent);
+		  }
+		BSONObject obj = new BasicBSONObject();
+		obj.put(SequoiadbConstants.FIELD_NAME_NAME, collectionFullName);
+		obj.put(SequoiadbConstants.FIELD_NAME_SOURCE, sourceGroupName);
+		obj.put(SequoiadbConstants.FIELD_NAME_TARGET, destGroupName);
+		obj.put(SequoiadbConstants.FIELD_NAME_SPLITPERCENT, percent);
+		// async:true
+		obj.put(SequoiadbConstants.FIELD_NAME_ASYNC, true);
+		// command
+		String commandString = SequoiadbConstants.ADMIN_PROMPT
+				+ SequoiadbConstants.CMD_NAME_SPLIT;
+		BSONObject dummy = new BasicBSONObject();
+		SDBMessage rtnSDBMessage = adminCommand(commandString, obj, dummy,
+				dummy, dummy, -1, -1, 0);
+		int flags = rtnSDBMessage.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, sourceGroupName, destGroupName,
+					                percent);
+		}
+		// build cursor object to get result from database
+		DBCursor cursor = new DBCursor(rtnSDBMessage, this);
+		if (!cursor.hasNext())
+			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		BSONObject result = cursor.getNext();
+		boolean flag = result.containsField(SequoiadbConstants.FIELD_NAME_TASKID);
+		if (!flag)
+			throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+		long taskid = (Long)result.get(SequoiadbConstants.FIELD_NAME_TASKID);
+		return taskid;
+	}
+	
+	/**
 	 * @fn DBCursor aggregate(List<BSONObject> obj)
 	 * @brief Execute aggregate operation in current collection
 	 * @param obj
@@ -1024,22 +1150,22 @@ public class DBCollection {
 		if (obj == null || obj.size() == 0)
 			throw new BaseException("SDB_INVALIDARG");
 
-		if (this.bulk_buffer == null) {
-			this.bulk_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
-			this.bulk_buffer.setAutoExpand(true);
+		if (this.insert_buffer == null) {
+			this.insert_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
+			this.insert_buffer.setAutoExpand(true);
 			if (sequoiadb.endianConvert) {
-				bulk_buffer.order(ByteOrder.LITTLE_ENDIAN);
+				insert_buffer.order(ByteOrder.LITTLE_ENDIAN);
 			} else {
-				bulk_buffer.order(ByteOrder.BIG_ENDIAN);
+				insert_buffer.order(ByteOrder.BIG_ENDIAN);
 			}
 		} else {
-			bulk_buffer.position(0);
+			insert_buffer.clear();
 		}
 
 		int messageLength = SDBMessageHelper.buildAggrRequest(
-				bulk_buffer, collectionFullName, obj);
+				insert_buffer, collectionFullName, obj);
 
-		connection.sendMessage(bulk_buffer.array(), messageLength);
+		connection.sendMessage(insert_buffer.array(), messageLength);
 		
 		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);

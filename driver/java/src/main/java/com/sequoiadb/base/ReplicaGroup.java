@@ -18,12 +18,7 @@ import com.sequoiadb.util.SDBMessageHelper;
 
 /**
  * @class ReplicaGroup
- * @brief Database operation interfaces of replica group.This class will be deprecated in version 2.x.
- *        Use class Shard instead of it.
- * @note We use concept "shard" instead of "replica group",
- *       and change the class name "ReplicaGroup" to "Shard".
- * @deprecated 
- * @see Shard
+ * @brief Database operation interfaces of replica group.
  */
 public class ReplicaGroup {
 	private String name;
@@ -69,22 +64,22 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn String getGroupName()
-	 * @brief Get current replicaGroup's name
-	 * @return the current replicaGroup's name
+	 * @brief Get current replica group's name
+	 * @return the current replica group's name
 	 */
 	public String getGroupName() {
 		return name;
 	}
 
 	/**
-	 * @fn int getNodeNum(ReplicaNode.NodeStatus status)
+	 * @fn int getNodeNum(Node.NodeStatus status)
 	 * @brief Get number of nodes with the status
 	 * @param status
-	 * 			ReplicaNode.NodeStatus
+	 * 			Node.NodeStatus
 	 * @return the number
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public int getNodeNum(ReplicaNode.NodeStatus status) {
+	public int getNodeNum(Node.NodeStatus status) {
 		BSONObject group = sequoiadb.getDetailById(id);
 		try {
 			Object obj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
@@ -110,12 +105,12 @@ public class ReplicaGroup {
 	}
 
 	/**
-	 * @fn ReplicaNode getMaster()
-	 * @brief Get the master replicaNode of current replicaGroup
-	 * @return the master replicaNode
+	 * @fn Node getMaster()
+	 * @brief Get the master node of current replicaGroup
+	 * @return the master node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public ReplicaNode getMaster() {
+	public Node getMaster() {
 		BSONObject group = sequoiadb.getDetailById(id);
 		BSONObject primaryData = null;
 		Object nodeId = null;
@@ -142,19 +137,19 @@ public class ReplicaGroup {
 			String hostName = primaryData.get(
 					SequoiadbConstants.FIELD_NAME_HOST).toString();
 			int port = getNodePort(primaryData);
-			return new ReplicaNode(hostName, port, Integer.parseInt(nodeId
+			return new Node(hostName, port, Integer.parseInt(nodeId
 					.toString()), this);
 		}
 		return null;
 	}
 
 	/**
-	 * @fn ReplicaNode getSlave()
-	 * @brief Get the random slave replicaNode of current replicaGroup
-	 * @return the slave replicaNode
+	 * @fn Node getSlave()
+	 * @brief Get the random slave  of current replicaGroup
+	 * @return the slave Node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public ReplicaNode getSlave() throws BaseException {
+	public Node getSlave() throws BaseException {
 		BSONObject group = sequoiadb.getDetailById(id);
 		if (group == null)
 			return null;
@@ -187,31 +182,31 @@ public class ReplicaGroup {
 			String hostName = randNode.get(SequoiadbConstants.FIELD_NAME_HOST)
 					.toString();
 			int port = getNodePort(randNode);
-			return new ReplicaNode(hostName, port, nodeId, this);
+			return new Node(hostName, port, nodeId, this);
 		} else if (primaryData != null) {
 			int nodeId = Integer.parseInt(primaryData.get(
 					SequoiadbConstants.FIELD_NAME_NODEID).toString());
 			String hostName = primaryData.get(
 					SequoiadbConstants.FIELD_NAME_HOST).toString();
 			int port = getNodePort(primaryData);
-			return new ReplicaNode(hostName, port, nodeId, this);
+			return new Node(hostName, port, nodeId, this);
 		} else {
 			return null;
 		}
 	}
 
 	/**
-	 * @fn ReplicaNode getNode(String replicaNodeName)
-	 * @brief Get replicaNode by replicaNode name (IP:PORT)
-	 * @param replicaNodeName
-	 * 			The name of the replica node
-	 * @return the replicaNode
+	 * @fn Node getNode(String nodeName)
+	 * @brief Get node by node's name (IP:PORT)
+	 * @param nodeName
+	 * 			The name of the node
+	 * @return the Node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public ReplicaNode getNode(String replicaNodeName) {
-		String[] temp = replicaNodeName.split(":");
+	public Node getNode(String nodeName) {
+		String[] temp = nodeName.split(":");
 		if (temp.length != 2) {
-			throw new BaseException("SDB_INVALIDARG", replicaNodeName);
+			throw new BaseException("SDB_INVALIDARG", nodeName);
 		}
 		BSONObject group = sequoiadb.getDetailById(id);
 		if (group == null)
@@ -239,27 +234,27 @@ public class ReplicaGroup {
 						.toString().split("/")[1];
 				if (hostName.equals(hostName2)
 						&& port == Integer.parseInt((temp[1]))) {
-					return new ReplicaNode(hostName2, port,
+					return new Node(hostName2, port,
 							Integer.parseInt(nodeId.toString()), this);
 				}
 			}
 		} catch (Exception e) {
-			throw new BaseException("SDB_SYS", replicaNodeName);
+			throw new BaseException("SDB_SYS", nodeName);
 		}
 		return null;
 	}
 
 	/**
-	 * @fn ReplicaNode getNode(String hostName, int port)
-	 * @brief Get replicaNode by hostName and port
+	 * @fn Node getNode(String hostName, int port)
+	 * @brief Get node by hostName and port
 	 * @param hostName
 	 * 			host name
 	 * @param port
 	 * 			port
-	 * @return the replicaNode
+	 * @return the Node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public ReplicaNode getNode(String hostName, int port) {
+	public Node getNode(String hostName, int port) {
 		BSONObject group = sequoiadb.getDetailById(id);
 		try {
 			Object list = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
@@ -287,7 +282,7 @@ public class ReplicaGroup {
 				if (hostName2.equals(hostName)) {
 					nodePort = getNodePort(nodeInfo);
 					if (nodePort == port)
-						return new ReplicaNode(hostName, port, nodeId, this);
+						return new Node(hostName, port, nodeId, this);
 				}
 			}
 		} catch (BaseException e) {
@@ -299,9 +294,9 @@ public class ReplicaGroup {
 	}
 
 	/**
-	 * @fn ReplicaNode createNode(String hostName, int port, String dbPath,
+	 * @fn Node createNode(String hostName, int port, String dbPath,
 			Map<String, String> configure)
-	 * @brief Create replicaNode with some args
+	 * @brief Create node.
 	 * @param hostName
 	 * 			host name
 	 * @param port
@@ -310,10 +305,10 @@ public class ReplicaGroup {
 	 * 			the path for node
 	 * @param configure
 	 * 			configuration for this operation
-	 * @return the created replicaNode
+	 * @return the created Node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public ReplicaNode createNode(String hostName, int port, String dbPath,
+	public Node createNode(String hostName, int port, String dbPath,
 			Map<String, String> configure) throws BaseException {
 		BSONObject config = new BasicBSONObject();
 		config.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
@@ -341,7 +336,7 @@ public class ReplicaGroup {
 	/**
 	 * @fn void removeNode(String hostName, int port,
 	                       BSONObject configure)
-	 * @brief Remove replicaNode
+	 * @brief Remove node.
 	 * @param hostName
 	 * 			host name
 	 * @param port

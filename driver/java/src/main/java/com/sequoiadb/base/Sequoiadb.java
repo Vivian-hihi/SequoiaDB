@@ -31,6 +31,7 @@ import org.bson.BSONEncoder;
 import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.BasicBSONObject;
+import org.bson.types.BasicBSONList;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.util.JSON;
@@ -62,7 +63,8 @@ public class Sequoiadb {
 	public final static int SDB_PAGESIZE_16K = 16384;
 	public final static int SDB_PAGESIZE_32K = 32768;
 	public final static int SDB_PAGESIZE_64K = 65536;
-	public final static int SDB_PAGESIZE_DEFAULT = SDB_PAGESIZE_4K;
+	/** 0 means using database's default pagesize, it 64k now */
+	public final static int SDB_PAGESIZE_DEFAULT = 0;
 
 	public final static int SDB_LIST_CONTEXTS = 0;
 	public final static int SDB_LIST_CONTEXTS_CURRENT = 1;
@@ -71,9 +73,7 @@ public class Sequoiadb {
 	public final static int SDB_LIST_COLLECTIONS = 4;
 	public final static int SDB_LIST_COLLECTIONSPACES = 5;
 	public final static int SDB_LIST_STORAGEUNITS = 6;
-	/**SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it.*/
 	public final static int SDB_LIST_GROUPS = 7;
-	public final static int SDB_LIST_SHARDS = 7;
 	public final static int SDB_LIST_STOREPROCEDURES = 8;
 
 	public final static int SDB_SNAP_CONTEXTS = 0;
@@ -267,7 +267,7 @@ public class Sequoiadb {
 	 * @brief Judge wether the connection is valid or not.
 	 * @return if the connection is valid, return true
 	 */
-	public boolean isValid(){
+	private boolean isValid(){
 		// client not connect to database or client 
 		// disconnect from database
 		if ( connection == null || connection.isClosed() )
@@ -322,7 +322,7 @@ public class Sequoiadb {
 			throw new BaseException("SDB_DMS_CS_EXIST", csName);
 		if (pageSize != SDB_PAGESIZE_4K && pageSize != SDB_PAGESIZE_8K
 				&& pageSize != SDB_PAGESIZE_16K && pageSize != SDB_PAGESIZE_32K
-				&& pageSize != SDB_PAGESIZE_64K) {
+				&& pageSize != SDB_PAGESIZE_64K && pageSize != SDB_PAGESIZE_DEFAULT) {
 			throw new BaseException("SDB_INVALIDARG", pageSize);
 		}
 		SDBMessage rtnSDBMessage = createCS(csName, pageSize);
@@ -410,16 +410,6 @@ public class Sequoiadb {
 	}
 	
 	/**
-	 * @fn DBCursor listShards()
-	 * @brief List all the shards.
-	 * @return cursor of all collecionspace names
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public DBCursor listShards() throws BaseException {
-		return getList(SDB_LIST_SHARDS, 0, 0, -1, -1, null, null,
-				null, null);
-	}
-	/**
 	 * @fn ArrayList<String> getCollectionSpaceNames()
 	 * @brief Get all the collecion space names
 	 * @return A list of all collecion space names
@@ -433,24 +423,6 @@ public class Sequoiadb {
 		ArrayList<String> colList = new ArrayList<String>();
 		while (cursor.hasNext()) {
 			colList.add(cursor.getNext().get("Name").toString());
-		}
-		return colList;
-	}
-
-	/**
-	 * @fn ArrayList<String> getShardNames()
-	 * @brief Get all the shards' names.
-	 * @return A list of all the shards' names.
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public ArrayList<String> getShardNames() throws BaseException {
-		DBCursor cursor = getList(SDB_LIST_SHARDS, 0, 0, -1, -1,
-				null, null, null, null);
-		if (cursor == null)
-			return null;
-		ArrayList<String> colList = new ArrayList<String>();
-		while (cursor.hasNext()) {
-			colList.add(cursor.getNext().get("GroupName").toString());
 		}
 		return colList;
 	}
@@ -529,7 +501,7 @@ public class Sequoiadb {
      *<dt>Sequoiadb.SDB_LIST_COLLECTIONS        : Get all collections list
      *<dt>Sequoiadb.SDB_LIST_COLLECTIONSPACES        : Get all collecion spaces list
      *<dt>Sequoiadb.SDB_LIST_STORAGEUNITS        : Get storage units list
-     *<dt>Sequoiadb.SDB_LIST_SHARDS        : Get shard list ( only applicable in sharding env )
+     *<dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
      *<dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
      *</dl>
      * @param query The matching rule, match all the documents if null.
@@ -539,153 +511,6 @@ public class Sequoiadb {
 	 */
 	public DBCursor getList(int listType, BSONObject query, BSONObject selector, BSONObject orderBy) throws BaseException {
 		return getList(listType, 0, 0, 0, -1, query, selector, orderBy, null);
-	}
-	
-	/**
-	 * @fn List<String> getShardsInfo()
-	 * @brief Get the infomations of the shards.
-	 * @return A list of informations of the shards.
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public ArrayList<String> getShardsInfo() throws BaseException {
-		DBCursor cursor = getList(SDB_LIST_SHARDS, 0, 0, -1, -1, null, null,
-				null, null);
-		if (cursor == null)
-			return null;
-		ArrayList<String> colList = new ArrayList<String>();
-		while (cursor.hasNext()) {
-			colList.add(cursor.getNext().toString());
-		}
-		return colList;
-	}
-
-	/**
-	 * @fn Shard getShard(String shardName)
-	 * @brief Get shard by name.
-	 * @param shardName
-	 *            shard name
-	 * @return A shard object or null for not exit.
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public Shard getShard(String shardName)
-			throws BaseException {
-		BSONObject shard = getDetailByName(shardName);
-		if (shard == null)
-			return null;
-		return new Shard(this, shardName);
-	}
-
-	/**
-	 * @fn Shard getShard(int shardId)
-	 * @brief Get shard by id.
-	 * @param shardId
-	 *            shard id
-	 * @return A shard or null for not exit.
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public Shard getShard(int shardId) throws BaseException{
-		BSONObject shard = getDetailById(shardId);
-		if (shard == null)
-			return null;
-		return new Shard(this, shardId);
-	}
-
-	/**
-	 * @fn Shard createShard(String shardName)
-	 * @brief Create shard by name.
-	 * @param shardName
-	 *            shard name
-	 * @return A shard object.
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public Shard createShard(String shardName)
-			throws BaseException {
-		BSONObject shard = new BasicBSONObject();
-		shard.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, shardName);
-		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CREATE_GROUP,
-				0, 0, -1, -1, shard, null, null, null);
-		int flags = rtn.getFlags();
-		if (flags != 0) {
-			throw new BaseException(flags, shardName);
-		}
-		return getShard(shardName);
-	}
-
-	/**
-	 * @fn void removeShard(String shardName)
-	 * @brief Remove shard by name.
-	 * @param shardName
-	 *            shard name
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public void removeShard(String shardName)
-			throws BaseException {
-		BSONObject shard = new BasicBSONObject();
-		shard.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, shardName);
-		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_REMOVE_GROUP,
-				0, 0, -1, -1, shard, null, null, null);
-		int flags = rtn.getFlags();
-		if (flags != 0) {
-			throw new BaseException(flags, shardName);
-		}
-	}
-
-	/**
-	 * @fn void activateShard(String shardName)
-	 * @brief Active shard by name.
-	 * @param shardName
-	 *            shard name
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public void activateShard(String shardName)
-			throws BaseException {
-		BSONObject shard = new BasicBSONObject();
-		shard.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, shardName);
-		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_ACTIVE_GROUP,
-				0, 0, -1, -1, shard, null, null, null);
-		int flags = rtn.getFlags();
-		if (flags != 0) {
-			throw new BaseException(flags, shardName);
-		}
-	}
-
-	/**
-	 * @fn void createCataShard(String hostName, int port, String dbPath,
-	 *     BSONObject configuration)
-	 * @brief Create the Catalog shard with given options.
-	 * @param hostName
-	 *            The host name
-	 * @param port
-	 *            The port
-	 * @param dbpath
-	 *            The database path
-	 * @param configure
-	 *            The configure options
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public void createCataShard(String hostName, int port,
-			String dbPath, Map<String, String> configure) {
-		String commandString = SequoiadbConstants.CMD_NAME_CREATE_CATA_GROUP;
-		BSONObject obj = new BasicBSONObject();
-		obj.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
-		obj.put(SequoiadbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
-		obj.put(SequoiadbConstants.PMD_OPTION_DBPATH, dbPath);
-		if (configure != null) {
-			for (String key : configure.keySet()) {
-				if (key.equals(SequoiadbConstants.FIELD_NAME_HOST)
-						|| key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
-						|| key.equals(SequoiadbConstants.PMD_OPTION_DBPATH)) {
-					continue;
-				}
-				obj.put(key, configure.get(key).toString());
-			}
-		}
-		SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, obj, null,
-				null, null);
-		int flags = rtn.getFlags();
-		if (flags != 0) {
-			throw new BaseException(flags);
-		}
 	}
 
 	/**
@@ -769,7 +594,7 @@ public class Sequoiadb {
      * <dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
      * <dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
      * <dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     * <dt>Sequoiadb.SDB_LIST_SHARDS        : Get shard list ( only applicable in sharding env )
+     * <dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
      * <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
      * </dl>
 	 * @param matcher
@@ -810,7 +635,7 @@ public class Sequoiadb {
      *<dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
      *<dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
      *<dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     *<dt>Sequoiadb.SDB_LIST_SHARDS        : Get shard list ( only applicable in sharding env )
+     *<dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
      *<dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
      *</dl>
 	 * @param matcher
@@ -986,14 +811,14 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn void backupOffline ( BSONObject options )
-     * @brief Backup the whole database or specifed shard.
+     * @brief Backup the whole database or specifed replica group.
      * @param options Contains a series of backup configuration infomations. 
      *        Backup the whole cluster if null. The "options" contains 5 options as below. 
      *        All the elements in options are optional. 
-     *        eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", 
+     *        eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", 
      *             "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
      *<dl>
-     *<dt>GroupName   : The shards which to be backuped
+     *<dt>GroupName   : The replica groups which to be backuped
      *<dt>Path        : The backup path, if not assign, use the backup path assigned in configuration file
      *<dt>Name        : The name for the backup
      *<dt>Description : The description for the backup
@@ -1036,9 +861,9 @@ public class Sequoiadb {
      * @brief List the backups.
      * @param options Contains configuration infomations for remove backups, list all the backups in the default backup path if null.
      *        The "options" contains 3 options as below. All the elements in options are optional. 
-     *        eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+     *        eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
      * <dl>
-     * <dt>GroupName   : Assign the backups of specifed shards to be list
+     * <dt>GroupName   : Assign the backups of specifed replica groups to be list
      * <dt>Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
      * <dt>Name        : Assign the backups with specifed name to be list
      * </dl>
@@ -1086,9 +911,9 @@ public class Sequoiadb {
      * @brief Remove the backups.
      * @param options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null.
      *                The "options" contains 3 options as below. All the elements in options are optional.
-     *                eg: {"GroupName":["shardName1", "shardName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+     *                eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
      *<dl>
-     *<dt>GroupName   : Assign the backups of specifed shards to be remove
+     *<dt>GroupName   : Assign the backups of specifed replica grouops to be remove
      *<dt>Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
      *<dt>Name        : Assign the backups with specifed name to be remove
      *</dl>
@@ -1119,7 +944,91 @@ public class Sequoiadb {
 		}
 	}
 	
-		/**
+	/**
+	 * @fn DBCursor listTasks ( BSONObject condition, BSONObject selector,
+	 *		                    BSONObject orderBy, BSONObject hint )
+     * @brief List the tasks.
+     * @param condition The matching rule, return all the documents if null
+     * @param selector The selective rule, return the whole document if null
+     * @param orderBy The ordered rule, never sort if null
+     * @param hint The hint, automatically match the optimal hint if null
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public DBCursor listTasks ( BSONObject condition, BSONObject selector,
+			                BSONObject orderBy, BSONObject hint ) throws BaseException{
+	
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_LIST_TASK,
+				                      0, 0, 0, -1, condition,
+				                      selector, orderBy, hint);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, condition,
+                                    selector, orderBy, hint);
+		}
+		// return the result by cursor
+		DBCursor cursor = null;
+		cursor = new DBCursor(rtn, this);
+		return cursor;
+	}
+	
+	/**
+	 * @fn DBCursor waitTasks ( BSONObject condition, BSONObject selector,
+	 *		                    BSONObject orderBy, BSONObject hint )
+     * @brief Wait the tasks to finish.
+     * @param taskIDs The array of task id
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public void waitTasks ( long[] taskIDs ) throws BaseException{
+		// check argument
+		if ( taskIDs == null || taskIDs.length == 0)
+			throw new BaseException("SDB_INVALIDARG", taskIDs);
+		// append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
+		BSONObject newObj = new BasicBSONObject();
+		BSONObject subObj = new BasicBSONObject();
+		BSONObject list = new BasicBSONList();
+		for(int i = 0; i < taskIDs.length; i++){
+			list.put(Integer.toString(i), taskIDs[i]);
+		}
+		subObj.put("$in", list);
+		newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, subObj);
+		
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_WAITTASK,
+				                      0, 0, 0, -1, newObj,
+				                      null, null, null);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags);
+		}
+	}
+	
+	/**
+	 * @fn DBCursor cancelTask ( long taskID, boolean isAsync )
+     * @brief Cancel the specified task.
+     * @param taskID The task id
+     * @param isAsync The operation "cancel task" is async or not,
+     *                "true" for async, "false" for sync. Default sync.
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public void cancelTask ( long taskID, boolean isAsync ) throws BaseException{
+		// check argument
+		if ( taskID <= 0)
+			throw new BaseException("SDB_INVALIDARG", taskID, isAsync);
+		// append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
+		BSONObject newObj = new BasicBSONObject();
+		int flag = 0;
+		newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, taskID);
+		newObj.put(SequoiadbConstants.FIELD_NAME_ASYNC, isAsync);
+		// run command
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CANCEL_TASK,
+				                      0, 0, 0, -1, newObj,
+				                      null, null, null);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags);
+		}
+	}
+	
+	/**
 	 * @fn void setSessionAttr( BSONObject options )
      * @brief Set the attributes of the current session.
      * @param options  The configuration options for the current session.The options are as below:
@@ -1132,7 +1041,7 @@ public class Sequoiadb {
      * @note 1.Option "PreferedReplica" is used to choose which node for querying in current session.When a new session is built,
      *         it works with default attribute {"PreferedReplica":"A"}. And it will keep the preferred node for querying in current session
      *         until the session is closed or the node is shut down.
-     *       2.If a shard only has 3 data notes, and we offer a configuraion option {"PreferedReplica":5},
+     *       2.If a replica group only has 3 data notes, and we offer a configuraion option {"PreferedReplica":5},
      *         it will choose node 2 in most cases, the formula is (5-1)%3+1. But, if node 2 is the master node, it will choose node 3.
      *         when offer {"PreferedReplica":1-7}, it will choose slave node first.
      *      
@@ -1223,21 +1132,16 @@ public class Sequoiadb {
 		return endianConvert;
 	}
 	
+	
 	/**
 	 * @fn DBCursor listReplicaGroups()
 	 * @brief List all the replica group.
 	 * @return cursor of all collecionspace names
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use listShards instead of it.
-	 * @see listShards
 	 */
 	public DBCursor listReplicaGroups() throws BaseException {
-		try{
-			return listShards();
-		}catch(BaseException e){
-			throw e;
-		}
+		return getList(SDB_LIST_GROUPS, 0, 0, -1, -1, null, null,
+				null, null);
 	}
 	
 	/**
@@ -1245,16 +1149,17 @@ public class Sequoiadb {
 	 * @brief Get all the replica groups' name.
 	 * @return A list of all the replica groups' names.
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use getShardNames instead of it.
-	 * @see getShardNames
 	 */
 	public ArrayList<String> getReplicaGroupNames() throws BaseException {
-		try{
-			return getShardNames();
-		}catch(BaseException e){
-			throw e;
+		DBCursor cursor = getList(SDB_LIST_GROUPS, 0, 0, -1, -1,
+				null, null, null, null);
+		if (cursor == null)
+			return null;
+		ArrayList<String> colList = new ArrayList<String>();
+		while (cursor.hasNext()) {
+			colList.add(cursor.getNext().get("GroupName").toString());
 		}
+		return colList;
 	}
 	
 	/**
@@ -1262,16 +1167,17 @@ public class Sequoiadb {
 	 * @brief Get the infomations of the replica groups.
 	 * @return A list of informations of the replica groups.
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use getShardsInfo instead of it.
-	 * @see getShardsInfo   
 	 */
 	public ArrayList<String> getReplicaGroupsInfo() throws BaseException {
-		try{
-			return getShardsInfo();
-		}catch(BaseException e){
-			throw e;
+		DBCursor cursor = getList(SDB_LIST_GROUPS, 0, 0, -1, -1, null, null,
+				null, null);
+		if (cursor == null)
+			return null;
+		ArrayList<String> colList = new ArrayList<String>();
+		while (cursor.hasNext()) {
+			colList.add(cursor.getNext().toString());
 		}
+		return colList;
 	}
 	
 	/**
@@ -1281,9 +1187,6 @@ public class Sequoiadb {
 	 *            replica group's name
 	 * @return A replica group object or null for not exit.
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use getShard instead of it.
-	 * @see getShard  
 	 */
 	public ReplicaGroup getReplicaGroup(String rgName)
 			throws BaseException {
@@ -1295,14 +1198,11 @@ public class Sequoiadb {
 
 	/**
 	 * @fn ReplicaGroup getReplicaGroup(int rgId)
-	 * @brief Get shard by id.
+	 * @brief Get replica group by id.
 	 * @param rgId
 	 *            replica group id
 	 * @return A replica group object or null for not exit.
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use getShard instead of it.
-	 * @see getShard
 	 */
 	public ReplicaGroup getReplicaGroup(int rgId) throws BaseException{
 		BSONObject rg = getDetailById(rgId);
@@ -1313,14 +1213,11 @@ public class Sequoiadb {
 
 	/**
 	 * @fn ReplicaGroup createReplicaGroup(String rgName)
-	 * @brief Create shard by name.
+	 * @brief Create replica group by name.
 	 * @param rgName
 	 *            replica group's name
 	 * @return A replica group object.
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use createShard instead of it.
-	 * @see createShard
 	 */
 	public ReplicaGroup createReplicaGroup(String rgName)
 			throws BaseException {
@@ -1341,9 +1238,6 @@ public class Sequoiadb {
 	 * @param rgName
 	 *            replica group's name
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use removeShard instead of it.
-	 * @see removeShard
 	 */
 	public void removeReplicaGroup(String rgName)
 			throws BaseException {
@@ -1359,13 +1253,10 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void activateReplicaGroup(String rgName)
-	 * @brief Active shard by name.
+	 * @brief Active replica group by name.
 	 * @param rgName
 	 *            replica group name
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use activateShard instead of it.
-	 * @see activateShard
 	 */
 	public void activateReplicaGroup(String rgName)
 			throws BaseException {
@@ -1392,20 +1283,32 @@ public class Sequoiadb {
 	 * @param configure
 	 *            The configure options
 	 * @exception com.sequoiadb.exception.BaseException
-	 * @deprecated This function will be deprecated in version 2.x, 
-	 *             use createCataShard instead of it.
-	 * @see createCataShard
 	 */
 	public void createReplicaCataGroup(String hostName, int port,
 			String dbPath, Map<String, String> configure) {
-		try{
-			createCataShard(hostName, port, dbPath, configure);
-		}catch(BaseException e){
-			throw e;
+		String commandString = SequoiadbConstants.CMD_NAME_CREATE_CATA_GROUP;
+		BSONObject obj = new BasicBSONObject();
+		obj.put(SequoiadbConstants.FIELD_NAME_HOST, hostName);
+		obj.put(SequoiadbConstants.PMD_OPTION_SVCNAME, Integer.toString(port));
+		obj.put(SequoiadbConstants.PMD_OPTION_DBPATH, dbPath);
+		if (configure != null) {
+			for (String key : configure.keySet()) {
+				if (key.equals(SequoiadbConstants.FIELD_NAME_HOST)
+						|| key.equals(SequoiadbConstants.PMD_OPTION_SVCNAME)
+						|| key.equals(SequoiadbConstants.PMD_OPTION_DBPATH)) {
+					continue;
+				}
+				obj.put(key, configure.get(key).toString());
+			}
+		}
+		SDBMessage rtn = adminCommand(commandString, 0, 0, -1, -1, obj, null,
+				null, null);
+		int flags = rtn.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags);
 		}
 	}
-	
-	
+
 	
 	DBCursor getList(int listType, int flag, long reqID, long skipNum,
 			long returnNum, BSONObject query, BSONObject selector,
@@ -1433,7 +1336,7 @@ public class Sequoiadb {
 		case SDB_LIST_STORAGEUNITS:
 			command = SequoiadbConstants.CMD_NAME_LIST_STORAGEUNITS;
 			break;
-		case SDB_LIST_SHARDS:
+		case SDB_LIST_GROUPS:
 			command = SequoiadbConstants.CMD_NAME_LIST_GROUPS;
 			break;
 		case SDB_LIST_STOREPROCEDURES:
@@ -1468,7 +1371,7 @@ public class Sequoiadb {
 	BSONObject getDetailByName(String name) throws BaseException {
 		BSONObject condition = new BasicBSONObject();
 		condition.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, name);
-		DBCursor shardsCursor = getList(Sequoiadb.SDB_LIST_SHARDS, 0, 0, -1,
+		DBCursor shardsCursor = getList(Sequoiadb.SDB_LIST_GROUPS, 0, 0, -1,
 				-1, condition, null, null, null);
 		if (shardsCursor == null || !shardsCursor.hasNext())
 			return null;
@@ -1478,13 +1381,18 @@ public class Sequoiadb {
 	BSONObject getDetailById(int id) throws BaseException {
 		BSONObject condition = new BasicBSONObject();
 		condition.put(SequoiadbConstants.FIELD_NAME_GROUPID, id);
-		DBCursor shardsCursor = getList(Sequoiadb.SDB_LIST_SHARDS, 0, 0, -1,
+		DBCursor shardsCursor = getList(Sequoiadb.SDB_LIST_GROUPS, 0, 0, -1,
 				-1, condition, null, null, null);
 		if (shardsCursor == null || !shardsCursor.hasNext())
 			return null;
 		return shardsCursor.getNext();
 	}
 
+	void clear(){
+		// let the receive buffer shrink to default value
+		connection.shrink();
+	}
+	
 	private void initConnection() throws BaseException {
 		ConfigOptions options = new ConfigOptions();
 		connection = new ConnectionTCPImpl(serverAddress, options);
@@ -1604,7 +1512,6 @@ public class Sequoiadb {
 		if (flags != 0) {
 			throw new BaseException(flags);
 		}
-
 	}
 	
 

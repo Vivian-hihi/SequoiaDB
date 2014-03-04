@@ -20,12 +20,12 @@ public class Node {
 	private int port;
 	private String nodeName;
 	private int id;
-	private Shard shard;
+	private ReplicaGroup rg;
 	private Sequoiadb sdb;
 	private NodeStatus status;
 
-	Node(String hostName, int port, int nodeId, Shard shard) {
-		this.shard = shard;
+	Node(String hostName, int port, int nodeId, ReplicaGroup rg) {
+		this.rg = rg;
 		this.hostName = hostName;
 		this.port = port;
 		this.nodeName = hostName + SequoiadbConstants.NODE_NAME_SEP + port;
@@ -66,12 +66,12 @@ public class Node {
 	}
 
 	/**
-	 * @fn Shard getShard()
-	 * @brief Get current node's parent Shard.
-	 * @return Current node's parent Shard.
+	 * @fn ReplicaGroup getReplicaGroup()
+	 * @brief Get current node's parent replica group.
+	 * @return Current node's parent replica group.
 	 */
-	public Shard getShard() {
-		return shard;
+	public ReplicaGroup getReplicaGroup() {
+		return rg;
 	}
 
 	/**
@@ -90,8 +90,8 @@ public class Node {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb connect() {
-		sdb = new Sequoiadb(hostName, port, shard.getSequoiadb().getUserName(),
-				shard.getSequoiadb().getPassword());
+		sdb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
+				rg.getSequoiadb().getPassword());
 		return sdb;
 	}
 
@@ -154,7 +154,7 @@ public class Node {
 	 */
 	public NodeStatus getStatus() {
 		BSONObject obj = new BasicBSONObject();
-		obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, shard.getId());
+		obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, rg.getId());
 		obj.put(SequoiadbConstants.FIELD_NAME_NODEID, id);
 		String commandString = SequoiadbConstants.SNAP_CMD + " "
 				+ SequoiadbConstants.DATABASE;
@@ -228,12 +228,12 @@ public class Node {
 		sdbMessage.setOrderBy(dummyObj);
 		sdbMessage.setHint(dummyObj);
 
-		boolean endianConver = this.shard.getSequoiadb().endianConvert;
+		boolean endianConver = this.rg.getSequoiadb().endianConvert;
 		byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
 				endianConver);
-		this.shard.getSequoiadb().getConnection().sendMessage(request);
+		this.rg.getSequoiadb().getConnection().sendMessage(request);
 
-		ByteBuffer byteBuffer = this.shard.getSequoiadb().getConnection().receiveMessage(endianConver);
+		ByteBuffer byteBuffer = this.rg.getSequoiadb().getConnection().receiveMessage(endianConver);
 		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
 
 		return rtnSDBMessage;
