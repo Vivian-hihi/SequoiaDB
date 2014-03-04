@@ -177,7 +177,7 @@
 		<!--
 		<property name="test-type-list" value="basic,driver-C,driver-CPP,driver-java,sample" />
 		-->
-		<property name="test-type-list" value="driver-javas" />
+		<property name="test-type-list" value="driver-java" />
 		<for list="${test-type-list}" param="test-type">
 			<sequential>
 				<ant antfile="${WORKSPACE}/sequoiadb/misc/ci/test-type.xml" dir="." inheritAll="false">
