@@ -298,6 +298,7 @@ struct Colours
    INT32 backGroundColor ;
 } ;
 
+// used to point to  static text like CHAR* Hello_Body
 struct StaticTextOutPut
 {
    CHAR *outputText ;
@@ -305,31 +306,53 @@ struct StaticTextOutPut
    Colours colour ;
 } ;
 
+// used to save expression from sdbtop.xml
+// if expressionType is STATIC_EXPRESSION ,the result is text
+// if expressionType is DYNAMIC_EXPRESSION ,
+// use expression to calculate the result by function getExpression()
 struct ExpValueStruct
 {
    string text ;
    string expression ;
 } ;
 
+// store expression infomation from sdbtop.xml
 class ExpressionContent : public SDBObject
 {
 public:
    string expressionType ;
+   
    INT32 expressionLength ;
+   
+   //store expression
    ExpValueStruct expressionValue ;
+   
+   // when print the result of expression
+   // use it decide the result aligment
    string alignment ;
+   
    Colours colour ;
+   
+   // decide which row to print it on the terminal
    INT32 rowLocation ;
 } ;
 
+// store content infomation if displaycontent is dynamic expression
 struct DynamicExpressionOutPut
 {
    ExpressionContent *content ;
+
+   // decide all expression content position on the terminal
    string autoSetType ;
+
+   // save how many expression
    INT32 expressionNumber ;
+
+   // the limit of all ExpressionContent.rowLocation
    INT32 rowNumber ;
 } ;
 
+// store Max and Min value which used to give an alarm
 struct FiledWarningValue
 {
    INT64 absoluteMaxLimitValue ;
@@ -342,19 +365,27 @@ struct FiledWarningValue
    INT64 averageMinLimitValue ;
 } ;
 
+
+// use it to save the snapshot'field of sequoiadb infomation
 class FieldStruct : public SDBObject
 {
 public:
+
+   //store the name when displayMode is ABSOLUTE or DELTA or AVERAGE
    string deltaName ;
    string absoluteName ;
    string averageName ;
+   
    string sourceField ;
    INT32 contentLength ;
    string alignment ;
    Colours deltaColour ;
    Colours absoluteColour ;
    Colours averageColour ;
+
+   //used to judge the field whether to do 
    BOOLEAN canSwitch ;
+
    FiledWarningValue warningValue ;
 } ;
 
@@ -404,10 +435,14 @@ struct DisplayContent
    DynamicHelp dynamicHelp ;
 } ;
 
+//store the window position infomation
 struct Position
 {
+   // the position of the upper left corner
    INT32 referUpperLeft_X ;
    INT32 referUpperLeft_Y ;
+
+   // the length and hight of the window
    INT32 length_X ;
    INT32 length_Y ;
 } ;
@@ -415,12 +450,23 @@ struct Position
 class NodeWindow : public SDBObject
 {
 public:
+   // if terminal row is longer than actualWindowMinRow
+   // the window wouldn't display on the terminal
    INT32 actualWindowMinRow ;
    INT32 actualWindowMinColumn ;
+
+   // use it to decide which part of the position should be change
+   // when terminal change
    string zoomMode ;
+
+   // use it to decide which type of displayContent to display
    string displayType ;
+   
    DisplayContent displayContent ;
+   
    Position position ;
+
+   // how to occupy the other window
    string occupyMode;
 };
 
@@ -432,19 +478,30 @@ struct Panel
    INT32 numOfSubWindowFromConf ;
 };
 
+//store the hotKey infomation
 class HotKey : public SDBObject
 {
 public:
+
+   // the value of hotKey
    INT64 button ;
+   // the purpose of hotKey
    string jumpType ;
+   // the name of hotKey display on the terminal
    string jumpName ;
 } ;
 
 class KeySuite : public SDBObject
 {
 public:
+
+   // used to distinguish every keySuit
    INT64 mark ;
+
+   // the number of hotKey of the keySuite
    INT32 hotKeyLength ;
+
+   // hotKey list
    HotKey *hotKey ;
 } ;
 
@@ -480,9 +537,6 @@ struct InputPanel
    BOOLEAN isFirstGetSnapshot ;
    vector<BSONObj> last_Snapshot ;
    vector<BSONObj> cur_Snapshot ;
-   BOOLEAN isFirstGetAbsolute ;
-   BOOLEAN isFirstGetDelta ;
-   BOOLEAN isFirstGetAverage ;
    map<string, string> last_absoluteMap ;
    map<string, string> last_deltaMap ;
    map<string, string> last_averageMap ;
@@ -491,10 +545,6 @@ struct InputPanel
    map<string, string> cur_averageMap ;
    struct timeval startTime ;
    string confPath ;
-   string hostname ;
-   string serviceName ;
-   string usrName ;
-   string password ;
    INT32 refreshInterval ;
    BOOLEAN forcedToRefresh_Local ;
    BOOLEAN forcedToRefresh_Global ;
@@ -553,12 +603,11 @@ public: // operation
                             
    INT32 getActivatedKeySuite( KeySuite **keySuite ) ;
    
-   inline INT32 getTopKey_TOP( CHAR *keyBuffer,
-                               INT64 &key ) ;
-   INT32 SDBTOP_strTOnum( const CHAR *str, INT32 &number ) ;
-   INT32 SDBTOP_FORMATTING_OUTPUT( CHAR *pBuffer,
-                                   INT32 &printfLength, const CHAR *PSrc ) ;
-   INT32 MVPRINTW_TOP( string &expression, INT32 expressionLength,
+   INT32 getTopKey_SDBTOP( CHAR *keyBuffer, INT64 &key ) ;
+   INT32 strTOnum_SDBTOP( const CHAR *str, INT32 &number ) ;
+   INT32 formattingOutput_SDBTOP( CHAR *pBuffer,
+                                  INT32 &printfLength, const CHAR *PSrc ) ;
+   INT32 mvprintw_SDBTOP( string &expression, INT32 expressionLength,
                        string alignment, INT32 start_row, INT32 start_col ) ;
                        
    void getPairNumber_ColourOfTheMax( INT32 &colourPairNumber ) ;
@@ -588,17 +637,17 @@ public: // operation
                                       string &fieldName,
                                       Colours &fieldColour ) ;
                                       
-   INT32 refresh_DISPLAYTYPE_DYNAMIC_HELP( DisplayContent &displayContent,
-                                                 string displayType,
-                                                 Position &actualPosition ) ;
+   INT32 refreshDynamicHelp( DisplayContent &displayContent,
+                             string displayType,
+                             Position &actualPosition ) ;
                                                  
-   INT32 refresh_DISPLAYTYPE_DYNAMIC_EXPRESSION(
-         DisplayContent &displayContent,
-         string displayType, Position &actualPosition ) ;
+   INT32 refreshDynamicExpression( DisplayContent &displayContent,
+                                   string displayType, 
+                                   Position &actualPosition ) ;
          
-   INT32 refresh_DISPLAYTYPE_DYNAMIC_SNAPSHOT( DisplayContent &displayContent,
-                                               string displayType,
-                                               Position &actualPosition ) ;
+   INT32 refreshDynamicSnapshot( DisplayContent &displayContent,
+                                 string displayType,
+                                 Position &actualPosition ) ;
    INT32 refreshDisplayContent( DisplayContent &displayContent,
                                 string displayType,
                                 Position &actualPosition ) ;
@@ -1146,13 +1195,8 @@ Event::Event()
    root.input.groupName = NULLSTRING ;
    root.input.nodeName = NULLSTRING ;
    root.input.confPath = SDBTOP_DEFAULT_CONFPATH ;
-   root.input.hostname = SDBTOP_DEFAULT_HOSTNAME ;
-   root.input.serviceName = SDBTOP_DEFAULT_SERVICENAME ;
    root.input.refreshInterval = 0;
    root.input.isFirstGetSnapshot = TRUE ;
-   root.input.isFirstGetAbsolute = TRUE ;
-   root.input.isFirstGetDelta = TRUE ;
-   root.input.isFirstGetAverage = TRUE ;
    root.input.last_Snapshot.clear() ;
    root.input.cur_Snapshot.clear() ;
    root.input.last_absoluteMap.clear() ;
@@ -1903,6 +1947,8 @@ error :
    goto done ;
 }
 
+
+// get the keySuite of actived body panel
 INT32 Event::getActivatedKeySuite( KeySuite **keySuite )
 {
    INT32 rc = SDB_OK ;
@@ -1911,7 +1957,10 @@ INT32 Event::getActivatedKeySuite( KeySuite **keySuite )
    {
       for( i = 0; i < root.keySuiteLength; ++i )
       {
-         if( root.keySuite[i].mark == root.input.activatedPanel->hotKeySuiteType )
+         // if the actived body panel's hotKeySuiteType
+         // equal to the mark of keySuite, we find it
+         if( root.keySuite[i].mark ==
+             root.input.activatedPanel->hotKeySuiteType )
          {
             break ;
          }
@@ -1941,15 +1990,18 @@ error :
    goto done ;
 }
 
-inline INT32 Event::getTopKey_SDBTOP( CHAR *keyBuffer, INT64 &key )
+// calculate the button key which used in sdbtop
+// from keyBuffer which is used to save the input
+INT32 Event::getTopKey_SDBTOP( CHAR *keyBuffer, INT64 &key )
 {
    INT32 rc = SDB_OK ;
    UINT32 bufLength = 0 ;
    bufLength = ( UINT32 )ossStrlen( keyBuffer ) ;
    if( 0 < bufLength )
    {
+      //check the button whether it is direction button
       if( 3 <= bufLength && 91 == keyBuffer[bufLength-2]
-                         && 27 == keyBuffer[bufLength-3] )//check the button whether it is direction button
+                         && 27 == keyBuffer[bufLength-3] )
       {
          if( 68 == keyBuffer[bufLength-1] )
          {
@@ -1967,10 +2019,11 @@ inline INT32 Event::getTopKey_SDBTOP( CHAR *keyBuffer, INT64 &key )
             goto done ;
          }
       }
+      //check the button whether it is F1 ~ F12
       else if( 5 <= bufLength && 53 == keyBuffer[bufLength-2]
                               && 49 == keyBuffer[bufLength-3]
                               && 91 == keyBuffer[bufLength-4]
-                              && 27 == keyBuffer[bufLength-5] )//check the button whether it is F1 ~ F12
+                              && 27 == keyBuffer[bufLength-5] )
       {
          if( 126 == keyBuffer[bufLength-1] )
          {
@@ -1997,6 +2050,9 @@ error :
    goto done ;
 }
 
+// transform string to numerical
+// in addition to numerical,
+// if the string contain other character, return error
 INT32 Event::strTOnum_SDBTOP( const CHAR *str, INT32 &number )
 {
    INT32 rc = SDB_OK ;
@@ -2007,6 +2063,7 @@ INT32 Event::strTOnum_SDBTOP( const CHAR *str, INT32 &number )
       if( '0' > str[pos] ||'9' < str[pos] )
       {
          number = 0;
+         rc = SDB_ERROR ;
          goto error;
       }
       number *= 10 ;
@@ -2016,10 +2073,12 @@ INT32 Event::strTOnum_SDBTOP( const CHAR *str, INT32 &number )
 done:
    return rc;
 error :
-   rc = SDB_ERROR ;
    goto done;
 }
 
+// use this function before call ncurses::mvprintw()
+// formationg(cut off) pSrc by printfLength
+// re-assignment the printfLength
 INT32 Event::formattingOutput_SDBTOP( CHAR *pBuffer,
                                       INT32 &printfLength,
                                       const CHAR *pSrc )
@@ -2033,6 +2092,7 @@ INT32 Event::formattingOutput_SDBTOP( CHAR *pBuffer,
          pBuffer[i] = pSrc[i] ;
       }
       pBuffer[i] = '\0' ;
+      // re-assignment the printfLength of actual length
       printfLength = i ;
    }
    catch( std::exception &e )
@@ -2155,16 +2215,20 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
    INT32 pos_last = 0 ;
    // use it to save the result when BSONType is Double or INT64 or INT32
    FLOAT64 elementDouble = 0.0f ;
-   // get it with sourceField from cur bsonobj
+   // element come from current bsonobj with sourceField
    BSONElement element ;
-   // get it with sourceField from last bsonobj
+   // element come from last bsonobj with sourceField
    BSONElement last_element ;
-   // get it with baseField from cur bsonobj
+   // element come from current bsonobj with baseField
    BSONElement baseElement  ;
    // compare to baseElement
    BSONElement baseElement_last ;
    const char *sourceFieldbuf = sourceField.c_str();
    const char *baseFieldbuf = baseField.c_str();
+
+   // new_ come from baseElement.toString
+   // use new_+sourceFieldbuf to distinguish every BSONObj
+   // e.g. cadmin:56000:9+TotalDataRead
    string new_ = NULLSTRING ;
    // compare to new_, check out the same BSONobj
    string old_ = NULLSTRING ;
@@ -2186,10 +2250,11 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
       // if we the element can't switch the displayMode
       // or baseField is NULLSTRING,
       // so we deal with the element on the same way
-      if( !canSwitch ||NULLSTRING == baseField )
+      if( !canSwitch )
       {
          if( element.isNumber() )
          {
+            elementDouble = element.Number() ;
             if( NumberLong == element.type() || NumberInt == element.type() )
             {
                result = element.toString( FALSE ) ;
@@ -2200,7 +2265,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                             OUTPUT_FORMATTING, elementDouble ) ;
                result = resultBuf ;
             }
-            elementDouble = element.Number() ;
             if( waringValue.absoluteMaxLimitValue != 0 &&
                 elementDouble > waringValue.absoluteMaxLimitValue )
             {
@@ -2210,10 +2274,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                      elementDouble < waringValue.absoluteMinLimitValue )
             {
                getPairNumber_ColourOfTheMin( colourPairNumber ) ;
-            }
-            else if( result != root.input.last_deltaMap[new_+sourceField] )
-            {
-               getPairNumber_ColourOfTheChange( colourPairNumber ) ;
             }
          }
          else
@@ -2254,6 +2314,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
          {
             if( element.isNumber() )
             {
+               elementDouble = element.Number() ;
                if( NumberLong == element.type() ||
                    NumberInt == element.type() )
                {
@@ -2265,7 +2326,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                                OUTPUT_FORMATTING, elementDouble ) ;
                   result = resultBuf ;
                }
-               elementDouble = element.Number() ;
                if( waringValue.absoluteMaxLimitValue != 0 &&
                    elementDouble > waringValue.absoluteMaxLimitValue )
                {
@@ -2355,6 +2415,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
          {
             if( element.isNumber() )
             {
+               elementDouble = element.Number() ;
                if( NumberLong == element.type() || NumberInt == element.type() )
                {
                   result = element.toString( FALSE ) ;
@@ -2365,7 +2426,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                                OUTPUT_FORMATTING, elementDouble ) ;
                   result = resultBuf ;
                }
-               elementDouble = element.Number() ;
                if( waringValue.absoluteMaxLimitValue != 0 &&
                    elementDouble > waringValue.absoluteMaxLimitValue )
                {
@@ -2375,6 +2435,10 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                         elementDouble < waringValue.absoluteMinLimitValue )
                {
                   getPairNumber_ColourOfTheMin( colourPairNumber ) ;
+               }
+               else if( result != root.input.last_absoluteMap[new_+sourceField] )
+               {
+                  getPairNumber_ColourOfTheChange( colourPairNumber ) ;
                }
             }
             else
@@ -2479,21 +2543,21 @@ INT32 Event::getExpression( string& expression, string& result )
    }
    else if( EXPRESSION_HOSTNAME == expression )
    {
-      result = root.input.hostname ;
+      result = hostname ;
    }
    else if( EXPRESSION_SERVICENAME == expression )
    {
-      result = root.input.serviceName ;
+      result = serviceName ;
    }
    else if( EXPRESSION_USRNAME == expression )
    {
-      if( NULLSTRING == root.input.usrName )
+      if( NULLSTRING == usrName )
       {
          result = STRING_NULL ;
       }
       else
       {
-         result = root.input.usrName ;
+         result = usrName ;
       }
    }
    else if( EXPRESSION_FILTER_NUMBER == expression )
@@ -3199,10 +3263,17 @@ INT32 Event::refreshDynamicSnapshot( DisplayContent &displayContent,
    INT32 tableCellLength = displayContent.dySnapshotOutPut.tableCellLength ;
    string baseField = displayContent.dySnapshotOutPut.baseField ;
    string serialNumberAlignment = LEFT ;
-   INT32 end_fixed_mobile = 0 ; //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
-   INT32 start_fixed_mobile = 0 ; //use it to sign the start position of fixedFieldStruct or mobileFieldStruct
-   INT32 tableCol = 0 ; // when style is TABLE , use it
-   INT32 start_up = 0 ; // when style is TABLE , use it
+   
+   //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
+   INT32 end_fixed_mobile = 0 ;
+   //use it to sign the start position of fixedFieldStruct or mobileFieldStruct
+   INT32 start_fixed_mobile = 0 ;
+   
+   // when style is TABLE , use it
+   INT32 tableCol = 0 ;
+   // when style is TABLE , use it
+   INT32 start_up = 0 ;
+   
    INT32 expressionLengthSum = 0 ;
    INT32 pos_snapshot = 0 ;
    INT32 pairNumber = 0 ;
@@ -3211,12 +3282,14 @@ INT32 Event::refreshDynamicSnapshot( DisplayContent &displayContent,
    INT32 mLength = 0 ;
    INT32 rowNumber = 0;
    string serialNumberStr = NULLSTRING ;
-   CHAR *serialNumber = ( CHAR * )SDB_OSS_MALLOC( SERIALNUMBER_LENGTH * sizeof( CHAR ) ) ;
+   CHAR *serialNumber =
+         ( CHAR * )SDB_OSS_MALLOC( SERIALNUMBER_LENGTH * sizeof( CHAR ) ) ;
    if( !serialNumber )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-               "%s refreshDisplayContent failed, can't malloc serialNumber == %d\n",
+               "%s refreshDisplayContent failed, "
+               "can't malloc serialNumber == %d\n",
                errStrBuf, SERIALNUMBER_LENGTH ) ;
       rc = SDB_ERROR ;
       goto error ; 
@@ -3278,15 +3351,21 @@ INT32 Event::refreshDynamicSnapshot( DisplayContent &displayContent,
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-               "%s refreshDisplayContent failed, wrong snapshotModeChooser == %s\n",
+               "%s refreshDisplayContent failed, "
+               "wrong snapshotModeChooser == %s\n",
                errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
       rc = SDB_ERROR ;
       goto error ;    
    }
    if( TABLE == STYLE)
    {
-      rc = fixedOutputLocation( actualPosition.referUpperLeft_Y, actualPosition.referUpperLeft_X,
-                                start_row, start_col, actualPosition.length_Y - ROW * 2, 0,
+      // the height of the table should be ROW*2
+      // one row to save title of talble
+      // other row to save the value which need to display
+      rc = fixedOutputLocation( actualPosition.referUpperLeft_Y,
+                                actualPosition.referUpperLeft_X,
+                                start_row, start_col,
+                                actualPosition.length_Y - ROW * 2, 0,
                                 displayType, AUTOSETTYPE ) ;
       if( rc )
       {
@@ -3728,7 +3807,8 @@ error :
    goto done ;
 
 }
-   
+
+//refresh the specific displayConten by the specific displayType
 INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                                     string displayType,
                                     Position &actualPosition )
@@ -3797,7 +3877,8 @@ done :
 error :
    goto done ;
 }
-   
+
+// refresh the nodeWindow of the specific panel
 INT32 Event::refreshNodeWindow( NodeWindow &window )
 {
    INT32 rc = SDB_OK ;
@@ -3808,6 +3889,8 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
    actualPosition.length_Y = 0 ;
    actualPosition.referUpperLeft_X = 0 ;
    actualPosition.referUpperLeft_Y = 0 ;
+   // get the position of the window on the terminal
+   // which need to refreshed
    rc = getActualPosition( actualPosition, window.position,
                            window.zoomMode, window.occupyMode) ;
    if( rc )
@@ -3820,10 +3903,13 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
       rc = SDB_ERROR;
       goto error ;
    }
+   // terminal's row and col should longer than the window's limit
+   // which is set in the sdbtop.xml
    getmaxyx( stdscr, row, col ) ;
    if( row < window.actualWindowMinRow ||
        col < window.actualWindowMinColumn )
       goto done ;
+   // refresh the window's content by displayType
    rc = refreshDisplayContent( window.displayContent,
                                window.displayType,
                                actualPosition ) ;
@@ -3844,6 +3930,7 @@ error :
    goto done ;
 }
 
+//refresh the header and footer
 INT32 Event::refreshHeadTail( HeadTailMap *headtail )
 {
    INT32 rc = SDB_OK ;
@@ -3863,21 +3950,22 @@ INT32 Event::refreshHeadTail( HeadTailMap *headtail )
                    "%s refreshHeadTail failed, refreshNodeWindow faild, "
                    "numOfSubWindow = %d\n",
                    errStrBuf, numOfSubWindow ) ;
-
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
+// refresh the body panel
 INT32 Event::refreshBody( BodyMap *body )
 {
    INT32 rc = SDB_OK ;
    INT32 numOfSubWindow = 0 ;
+   // refresh all window of the body panel
    for( numOfSubWindow = 0;
         numOfSubWindow < body->value.numOfSubWindow;
         ++numOfSubWindow )
@@ -3891,14 +3979,13 @@ INT32 Event::refreshBody( BodyMap *body )
                    "%s refreshBody failed, refreshNodeWindow faild, "
                    "numOfSubWindow = %d\n",
                    errStrBuf, numOfSubWindow ) ;
-
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 void Event::initAllColourPairs()
@@ -3916,6 +4003,8 @@ void Event::initAllColourPairs()
    }
 }
 
+// put the keySuit which is write in the source file
+// on the end of the root.keySuit[]
 INT32 Event::addFixedHotKey()
 {
    INT32 rc = SDB_OK ;
@@ -4132,7 +4221,8 @@ done :
    return rc ;
 }
 
-
+// judge which event should do with the key come from the result 
+// of function Event::getTopKey_SDBTOP()
 INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
 {
    INT32 rc = SDB_OK ;
@@ -4148,7 +4238,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
    string displayName = NULLSTRING ; // use it when sorting
    HeadTailMap *header = NULL ;
    HeadTailMap *footer = NULL ;
-   BodyMap* activatedPanel = NULL ;
+   BodyMap* activatedPanel = root.input.activatedPanel ;
    CHAR buf[BUFFERSIZE] ;
    ossMemset( buf, 0, BUFFERSIZE ) ;
    if( rc )
@@ -4191,9 +4281,14 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
       }
       else
       {
+         // jump to other panel
+         // initialize some field of the struct root
          if( hotKey->jumpType == JUMPTYPE_PANEL )
          {
-            rc = assignActivatedPanelByLabelName( &root.input.activatedPanel, hotKey->jumpName ) ;
+            // point to the goal body panel
+            // and it became a activatedPanel
+            rc = assignActivatedPanelByLabelName( &root.input.activatedPanel,
+                                                   hotKey->jumpName ) ;
             if( rc )
             {
 
@@ -4204,6 +4299,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = SDB_ERROR ;
                goto error ;
             }
+            // equal 0 meaning displayMode is ABSOLUTE
             root.input.displayModeChooser = 0 ;
             root.input.snapshotModeChooser = GLOBAL ;
             root.input.forcedToRefresh_Global = REFRESH ;
@@ -4212,9 +4308,6 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             root.input.filterNumber = 0 ;
             root.input.filterCondition= NULLSTRING;
             root.input.isFirstGetSnapshot = TRUE ;
-            root.input.isFirstGetAbsolute = TRUE ;
-            root.input.isFirstGetDelta = TRUE ;
-            root.input.isFirstGetAverage = TRUE ;
             goto done ;
          }
          else if( hotKey->jumpType == JUMPTYPE_FIXED )
@@ -4265,7 +4358,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             }
             else if( BUTTON_TAB == hotKey->button )
             {
-               if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+               if( BODYTYPE_NORMAL !=
+                   activatedPanel->bodyPanelType )
                {
                   goto done;
                }
@@ -4276,14 +4370,17 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             }
             else if( BUTTON_H_LOWER == hotKey->button )
             {
-               rc = assignActivatedPanel( &activatedPanel, BODYTYPE_HELP_DYNAMIC) ;
-               rc = getActivatedHeadTailMap( activatedPanel, &header, &footer) ;
+               rc = assignActivatedPanel( &activatedPanel,
+                                          BODYTYPE_HELP_DYNAMIC) ;
+               rc = getActivatedHeadTailMap( activatedPanel,
+                                             &header, &footer) ;
                if( rc )
                {
 
                   ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                   ossSnprintf( errStr, errStrLength,
-                            "%s buttonManagement faild,getActivatedHeadTailMap failed\n",
+                            "%s buttonManagement faild,"
+                            "getActivatedHeadTailMap failed\n",
                             errStrBuf ) ;
                   rc = SDB_ERROR ;
                   goto error ;
@@ -4336,7 +4433,8 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                   ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
                   ossSnprintf( errStr, errStrLength,
                             "%s buttonManagement faild,"
-                            "select ( maxfd, &fds, NULL, NULL, NULL) failed\n",
+                            "select ( maxfd, &fds, NULL, NULL, NULL) "
+                            "failed\n",
                             errStrBuf ) ;
                   rc = SDB_ERROR ;
                   goto error ;
@@ -4347,7 +4445,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_GLOBAL== hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4358,7 +4456,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_GROUP == hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4387,7 +4485,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_NODE == hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4416,7 +4514,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_ASC== hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4446,7 +4544,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_DESC == hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4476,7 +4574,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_FILTER_CONDITION == hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4504,7 +4602,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_NO_FILTER_CONDITION == hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4515,7 +4613,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_FILTER_NUMBER== hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4549,7 +4647,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          }
          else if( JUMPTYPE_NO_FILTER_NUMBER== hotKey->jumpType )
          {
-            if( BODYTYPE_NORMAL != root.input.activatedPanel->bodyPanelType )
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
                rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
@@ -4583,14 +4681,15 @@ INT32 Event::runSDBTOP( )
    ossMemset( buf, 0, BUFFERSIZE ) ;
    root.input.forcedToRefresh_Global = NOTREFRESH ;
    root.input.forcedToRefresh_Local= NOTREFRESH ;
+   // extend the root.keySuite 
    rc = addFixedHotKey() ;
    if( rc )
    {
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s addFixedHotKey failed\n",
-                errStrBuf ) ;
+                   "%s addFixedHotKey failed\n",
+                   errStrBuf ) ;
       rc = SDB_ERROR ;
       goto error ;
    }
@@ -4604,28 +4703,17 @@ INT32 Event::runSDBTOP( )
       rc = SDB_ERROR ;
       goto error ;
    }
-   root.input.hostname = hostname ;
-   root.input.serviceName = serviceName ;
-   root.input.usrName = usrName ;
-   root.input.password = password ;
    try
    {
-      rc = coord.connect( root.input.hostname.c_str(),
-                          root.input.serviceName.c_str(),
-                          root.input.usrName.c_str(),
-                          root.input.password.c_str() ) ;
+      rc = coord.connect( hostname.c_str(), serviceName.c_str(),
+                          usrName.c_str(), password.c_str() ) ;
    }
    catch( std::exception &e )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                    "%s can't connect to the coord:"
-                   "%s, %s, %s, %s, e.what() =%d\n",
-                   errStrBuf, root.input.hostname.c_str(),
-                   root.input.serviceName.c_str(),
-                   root.input.usrName.c_str(),
-                   root.input.password.c_str(),
-                   e.what() ) ;
+                   "e.what() =%d\n", errStrBuf, e.what() ) ;
       rc = SDB_ERROR ;
       goto error ;
 
@@ -4635,11 +4723,14 @@ INT32 Event::runSDBTOP( )
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s can't connect to the coord: %s, %s, %s, %s, rc =%d\n",
-                errStrBuf, root.input.hostname.c_str(),
-                root.input.serviceName.c_str(),
-                root.input.usrName.c_str(),
-                root.input.password.c_str(), rc ) ;
+                   "%s can't connect to the coord: "
+                   "%s, %s, %s, %s, rc =%d\n",
+                   errStrBuf,
+                   hostname.c_str(),
+                   serviceName.c_str(),
+                   usrName.c_str(),
+                   password.c_str(), rc ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
    root.input.displayModeChooser = 0 ;
@@ -4963,8 +5054,8 @@ done :
       SDB_OSS_FREE( errStrBuf ) ;
    curs_set( 1 ) ;
    endwin() ;
+   std::cerr << errStr << std::endl;
    return rc ;
 error :
-   std::cerr << errStr << std::endl;
    goto done ;
 }
