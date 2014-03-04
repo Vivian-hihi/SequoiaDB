@@ -229,6 +229,13 @@ namespace engine
       }
       recordOffset = _currentExtentSize - _currentExtent->_freeSpace ;
       recordPtr = ((ossValuePtr)_currentExtent) + recordOffset ;
+      if ( _currentExtent->_freeSpace - (INT32)dmsrecordSize <
+           DMS_MIN_RECORD_SZ &&
+           _currentExtent->_freeSpace <= (INT32)DMS_RECORD_MAX_SZ )
+      {
+         dmsrecordSize = _currentExtent->_freeSpace ;
+      }
+
       // set record header
       DMS_RECORD_SETFLAG ( recordPtr, DMS_RECORD_FLAG_NORMAL ) ;
       DMS_RECORD_SETMYOFFSET ( recordPtr, recordOffset ) ;

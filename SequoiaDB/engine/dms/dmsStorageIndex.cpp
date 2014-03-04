@@ -131,9 +131,7 @@ namespace engine
       }
 
       extAddr = (dmsExtent*)extentAddr( extentID ) ;
-      extAddr->init( 1, mbID ) ;
-      // set free space
-      extAddr->_freeSpace = pageSize() - DMS_EXTENT_METADATA_SZ ;
+      extAddr->init( 1, mbID, pageSize() ) ;
 
       _pDataSu->_mbStatInfo[mbID]._totalIndexPages += 1 ;
 

@@ -563,7 +563,8 @@ namespace engine
       }
 
       extAddr = (dmsExtent*)extentAddr( firstFreeExtentID ) ;
-      extAddr->init( numPages, context->mbID() ) ;
+      extAddr->init( numPages, context->mbID(),
+                     (UINT32)numPages << pageSizeSquareRoot() ) ;
 
       // and add the new extent into MB's extent chain
       // now let's change the extent pointer into MB's extent list
@@ -1012,25 +1013,26 @@ namespace engine
    void _dmsStorageData::_mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
                                              SINT32 extentID )
    {
+      if ( extAddr->_freeSpace < DMS_MIN_RECORD_SZ )
+      {
+         if ( extAddr->_freeSpace != 0 )
+         {
+            PD_LOG( PDINFO, "Collection[%s, mbID: %d]'s extent[%d] free "
+                    "space[%d] is less than min record size[%d]",
+                    mb->_collectionName, mb->_blockID, extentID,
+                    extAddr->_freeSpace, DMS_MIN_RECORD_SZ ) ;
+         }
+         return ;
+      }
+
       // calculate the delete record size we need to use
       INT32 extentSize         = extAddr->_blockSize << pageSizeSquareRoot() ;
-      INT32 extentUseableSpace = 0 ;
-
-      // not all space are usable, extract header even for empty extent
-      if ( 0 == extAddr->_freeSpace )
-      {
-         extentUseableSpace = extentSize - DMS_EXTENT_METADATA_SZ ;
-      }
-      else
-      {
-         extentUseableSpace = extAddr->_freeSpace ;
-         extAddr->_freeSpace = 0 ;
-      }
+      INT32 extentUseableSpace = extAddr->_freeSpace ;
+      extAddr->_freeSpace = 0 ;
 
       // make sure the delete record is not greater 16MB
       INT32 deleteRecordSize   = OSS_MIN ( extentUseableSpace,
                                            DMS_RECORD_MAX_SZ ) ;
-
       // place first record offset
       dmsOffset recordOffset  = extentSize - extentUseableSpace ;
       INT32 curUseableSpace   = extentUseableSpace ;
