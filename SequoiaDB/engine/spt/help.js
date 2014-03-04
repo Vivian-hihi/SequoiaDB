@@ -18,19 +18,19 @@ var help = function() {
 Sdb.prototype.help = function() {
    println("DB methods:");
    println("   getCS(<name>)");
-   println("   getShard(<name>|<id>)");
+   println("   getRG(<name>|<id>)");
    println("   createCS(<name>, [pageSize])");
-   println("   createShard(<name>)");
-   println("   removeShard(<name>)");
-   println("   createCataShard(<host>,<service>,<dbpath>,[config])");
+   println("   createRG(<name>)");
+   println("   removeRG(<name>)");
+   println("   createCataRG(<host>,<service>,<dbpath>,[config])");
    println("   dropCS(<name>)");
    println("   list(<listType>, [cond], [sel], [sort])");
    println("   listCollectionSpaces()");
    println("   listCollections()");
-   println("   listShards()");
+   println("   listReplicaGroups()");
    println("   resetSnapshot([cond])");
    println("   snapshot(<snapType>, [cond], [sel], [sort])");
-   println("   startShard(<name1>,[name2]...)");
+   println("   startRG(<name1>,[name2]...)");
    println("   createUsr(<name>, <password>)");
    println("   dropUsr(<name>, <password>)");
    println("   exec(<select sql>)");
@@ -67,8 +67,8 @@ SdbNode.prototype.help = function() {
    println("   getNodeDetail()");
 }
 
-SdbShard.prototype.help = function() {
-   println("Shard methods:");
+SdbReplicaGroup.prototype.help = function() {
+   println("Replica group methods:");
    println("   getMaster()");
    println("   getSlave()");
    println("   getNode(<nodename>|<hostname>,<servicename>)");
@@ -99,10 +99,10 @@ SdbCollection.prototype.help = function() {
    //println("   rename(<newName>)");
    println("   update(<rule>, [cond], [hint])");
    println("   upsert(<rule>, [cond], [hint])");
-   println("   split(<source shard>,<target shard>,<percent(0~100)|<condition>, [endcondition])");
-   println("   splitAsync(<source shard>,<target shard>,<percent(0~100)|<condition>, [endcondition])");
+   println("   split(<source group>,<target group>,<percent(0~100)|<condition>, [endcondition])");
+   println("   splitAsync(<source group>,<target group>,<percent(0~100)|<condition>, [endcondition])");
    //println("   alter(<options>)");
-   println("   aggregate(< project | match | limit | skip | shard | sort >...)");
+   println("   aggregate(< project | match | limit | skip | group | sort >...)");
    println("   attachCL(<subCLFullName>, <options>)");
    println("   detachCL(<subCLFullName>)");
 }

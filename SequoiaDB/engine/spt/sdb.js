@@ -23,7 +23,7 @@ var SDB_LIST_SESSIONS_CURRENT    = 3 ;
 var SDB_LIST_COLLECTIONS         = 4 ;
 var SDB_LIST_COLLECTIONSPACES    = 5 ;
 var SDB_LIST_STORAGEUNITS        = 6 ;
-var SDB_LIST_SHARDS              = 7 ;
+var SDB_LIST_GROUPS              = 7 ;
 
 var SDB_INSERT_CONTONDUP         = 1 ;
 var SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one document
@@ -322,16 +322,16 @@ SdbNode.prototype.getNodeDetail = function() {
 }
 // end SdbNode
 
-// SdbShard
-SdbShard.prototype.toString = function() {
+// SdbReplicaGroup
+SdbReplicaGroup.prototype.toString = function() {
    return this._name;
 }
 
-SdbShard.prototype.getDetail = function() {
-   return this._conn.list( SDB_LIST_SHARDS,
+SdbReplicaGroup.prototype.getDetail = function() {
+   return this._conn.list( SDB_LIST_GROUPS,
                            {GroupName: this._name } ) ;
 }
-// end SdbShard
+// end SdbReplicaGroup
 
 // SdbCS
 SdbCS.prototype.toString = function() {
@@ -357,11 +357,7 @@ Sdb.prototype.listCollections = function() {
 }
 
 Sdb.prototype.listReplicaGroups = function() {
-   return this.list( SDB_LIST_SHARDS ) ;
-}
-
-Sdb.prototype.listShards = function() {
-   return this.list( SDB_LIST_SHARDS ) ;
+   return this.list( SDB_LIST_GROUPS ) ;
 }
 
 Sdb.prototype._resolveCS = function(csName) {
