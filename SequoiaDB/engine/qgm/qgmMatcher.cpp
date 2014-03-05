@@ -110,7 +110,8 @@ namespace engine
               || SQL_GRAMMAR::GT == node->type
               || SQL_GRAMMAR::LT == node->type
               || SQL_GRAMMAR::GTE == node->type
-              || SQL_GRAMMAR::LTE == node->type )
+              || SQL_GRAMMAR::LTE == node->type
+              || SQL_GRAMMAR::IS == node->type )
          {
             rc = fetch.element( node->left->value, fromFetch ) ;
             if ( SDB_OK != rc )
@@ -138,7 +139,8 @@ namespace engine
                goto error ;
             }
 
-            if ( SQL_GRAMMAR::EG == node->type )
+            if ( SQL_GRAMMAR::EG == node->type ||
+                 SQL_GRAMMAR::IS == node->type )
             {
                r = (0 == fromCondition.woCompare( fromFetch, FALSE )) ?
                    TRUE : FALSE ;
@@ -227,10 +229,20 @@ namespace engine
             }
             }
          }
+         else if ( SQL_GRAMMAR::NOT == node->type )
+         {
+            BOOLEAN rleft = FALSE ;
+            rc = _match( node->left, fetch, rleft ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
+            r = !rleft ;
+         }
          else
          {
-            SDB_ASSERT( SQL_GRAMMAR::AND == node->type
-                        || SQL_GRAMMAR::OR == node->type,
+            SDB_ASSERT( SQL_GRAMMAR::AND == node->type ||
+                        SQL_GRAMMAR::OR == node->type,
                         "impossible" )
             BOOLEAN rleft = FALSE ;
             BOOLEAN rright = FALSE ;

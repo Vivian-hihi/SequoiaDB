@@ -181,16 +181,18 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMCONDITIONNODEHELPER_SEPARATE2 ) ;
       SDB_ASSERT( NULL != predicate, "predicate can't be NULL" )
-      SDB_ASSERT( SQL_GRAMMAR::EG == predicate->type
-                  || SQL_GRAMMAR::NE == predicate->type
-                  || SQL_GRAMMAR::GT == predicate->type
-                  || SQL_GRAMMAR::LT == predicate->type
-                  || SQL_GRAMMAR::GTE == predicate->type
-                  || SQL_GRAMMAR::LTE == predicate->type
-                  || SQL_GRAMMAR::AND == predicate->type
-                  || SQL_GRAMMAR::OR == predicate->type
-                  || SQL_GRAMMAR::LIKE == predicate->type
-                  || SQL_GRAMMAR::INN == predicate->type,
+      SDB_ASSERT( SQL_GRAMMAR::EG == predicate->type ||
+                  SQL_GRAMMAR::NE == predicate->type ||
+                  SQL_GRAMMAR::GT == predicate->type ||
+                  SQL_GRAMMAR::LT == predicate->type ||
+                  SQL_GRAMMAR::GTE == predicate->type ||
+                  SQL_GRAMMAR::LTE == predicate->type ||
+                  SQL_GRAMMAR::AND == predicate->type ||
+                  SQL_GRAMMAR::OR == predicate->type ||
+                  SQL_GRAMMAR::LIKE == predicate->type ||
+                  SQL_GRAMMAR::INN == predicate->type ||
+                  SQL_GRAMMAR::NOT == predicate->type ||
+                  SQL_GRAMMAR::IS == predicate->type,
                   "Invalid predicate type" )
 
       INT32 rc = SDB_OK ;
@@ -264,18 +266,18 @@ namespace engine
          goto error ;
       }
 
-      if ( SQL_GRAMMAR::EG == node->type
-           || SQL_GRAMMAR::NE == node->type
-           || SQL_GRAMMAR::GT == node->type
-           || SQL_GRAMMAR::LT == node->type
-           || SQL_GRAMMAR::GTE == node->type
-           || SQL_GRAMMAR::LTE == node->type
-           || SQL_GRAMMAR::AND == node->type
-           || SQL_GRAMMAR::OR == node->type
-           || SQL_GRAMMAR::LIKE == node->type
-           || SQL_GRAMMAR::INN == node->type
-           || SQL_GRAMMAR::NOT == node->type
-           || SQL_GRAMMAR::IS == node->type )
+      if ( SQL_GRAMMAR::EG == node->type ||
+           SQL_GRAMMAR::NE == node->type ||
+           SQL_GRAMMAR::GT == node->type ||
+           SQL_GRAMMAR::LT == node->type ||
+           SQL_GRAMMAR::GTE == node->type ||
+           SQL_GRAMMAR::LTE == node->type ||
+           SQL_GRAMMAR::AND == node->type ||
+           SQL_GRAMMAR::OR == node->type ||
+           SQL_GRAMMAR::LIKE == node->type ||
+           SQL_GRAMMAR::INN == node->type ||
+           SQL_GRAMMAR::NOT == node->type ||
+           SQL_GRAMMAR::IS == node->type )
       {
          BSONObjBuilder builder ;
          BSONObj left, right ;
@@ -502,14 +504,16 @@ namespace engine
          goto error ;
       }
 
-      if ( SQL_GRAMMAR::EG == node->type
-           || SQL_GRAMMAR::NE == node->type
-           || SQL_GRAMMAR::GT == node->type
-           || SQL_GRAMMAR::LT == node->type
-           || SQL_GRAMMAR::GTE == node->type
-           || SQL_GRAMMAR::LTE == node->type
-           || SQL_GRAMMAR::AND == node->type
-           || SQL_GRAMMAR::OR == node->type )
+      if ( SQL_GRAMMAR::EG == node->type ||
+           SQL_GRAMMAR::NE == node->type ||
+           SQL_GRAMMAR::GT == node->type ||
+           SQL_GRAMMAR::LT == node->type ||
+           SQL_GRAMMAR::GTE == node->type ||
+           SQL_GRAMMAR::LTE == node->type ||
+           SQL_GRAMMAR::AND == node->type ||
+           SQL_GRAMMAR::OR == node->type ||
+           SQL_GRAMMAR::IS == node->type ||
+           SQL_GRAMMAR::NOT == node->type )
       {
          stringstream left, right ;
          SDB_ASSERT( NULL != node->left && NULL != node->right,
@@ -520,10 +524,13 @@ namespace engine
             goto error ;
          }
 
-         rc = _toString( node->right, right, keepAlias ) ;
-         if ( SDB_OK != rc )
+         if ( SQL_GRAMMAR::NOT != node->type )
          {
-            goto error ;
+            rc = _toString( node->right, right, keepAlias ) ;
+            if ( SDB_OK != rc )
+            {
+               goto error ;
+            }
          }
 
          if ( SQL_GRAMMAR::AND == node->type )
@@ -534,7 +541,12 @@ namespace engine
          {
             ss << "$or:[{" << left.str() << "},{" << right.str() << "}]" ;
          }
-         else if ( SQL_GRAMMAR::EG == node->type )
+         else if ( SQL_GRAMMAR::NOT == node->type )
+         {
+            ss << "$not:[{" << left.str() << "}]" ;
+         }
+         else if ( SQL_GRAMMAR::EG == node->type ||
+                   SQL_GRAMMAR::IS == node->type )
          {
             ss << left.str() << "{$et" << ":" << right.str() << "}";
          }
@@ -554,14 +566,19 @@ namespace engine
          {
             ss << left.str() << ":{$lte" << right.str() << "}" ;
          }
-         else
+         else if ( SQL_GRAMMAR::GTE == node->type )
          {
             ss << left.str() << ":{$gte" << right.str() << "}" ;
          }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
       }
-      else if ( SQL_GRAMMAR::DBATTR == node->type
-                || SQL_GRAMMAR::DIGITAL == node->type
-                || SQL_GRAMMAR::STR == node->type )
+      else if ( SQL_GRAMMAR::DBATTR == node->type ||
+                SQL_GRAMMAR::DIGITAL == node->type ||
+                SQL_GRAMMAR::STR == node->type )
       {
          if ( keepAlias )
          {
@@ -613,16 +630,17 @@ namespace engine
                 SDB_INVALIDARG,
                 error, PDERROR,
                 "root node is a NULL pointer." ) ;
-      if ( SQL_GRAMMAR::EG == node->type
-                || SQL_GRAMMAR::NE == node->type
-                || SQL_GRAMMAR::GT == node->type
-                || SQL_GRAMMAR::LT == node->type
-                || SQL_GRAMMAR::GTE == node->type
-                || SQL_GRAMMAR::LTE == node->type
-                || SQL_GRAMMAR::AND == node->type
-                || SQL_GRAMMAR::OR == node->type
-                || SQL_GRAMMAR::LIKE == node->type
-                || SQL_GRAMMAR::INN == node->type )
+      if ( SQL_GRAMMAR::EG == node->type ||
+           SQL_GRAMMAR::NE == node->type ||
+           SQL_GRAMMAR::GT == node->type ||
+           SQL_GRAMMAR::LT == node->type ||
+           SQL_GRAMMAR::GTE == node->type ||
+           SQL_GRAMMAR::LTE == node->type ||
+           SQL_GRAMMAR::AND == node->type ||
+           SQL_GRAMMAR::OR == node->type ||
+           SQL_GRAMMAR::IS == node->type ||
+           SQL_GRAMMAR::LIKE == node->type ||
+           SQL_GRAMMAR::INN == node->type )
       {
          rc = _getAllAttr( node->left, fields ) ;
          if ( SDB_OK != rc )
@@ -631,6 +649,14 @@ namespace engine
          }
          rc = _getAllAttr( node->right, fields ) ;
          if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+      else if ( SQL_GRAMMAR::NOT == node->type )
+      {
+         rc = _getAllAttr( node->left, fields ) ;
+         if ( rc )
          {
             goto error ;
          }

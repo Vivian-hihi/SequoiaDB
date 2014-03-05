@@ -75,6 +75,12 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+      else if ( cond->type == SQL_GRAMMAR::NOT )
+      {
+         PD_LOG_MSG( PDERROR, "Join condition not suport not" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
       else if ( cond->type == SQL_GRAMMAR::AND )
       {
          rc = _makeCondVar( cond->left ) ;

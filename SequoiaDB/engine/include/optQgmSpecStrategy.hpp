@@ -178,6 +178,8 @@ namespace engine
 
    BOOLEAN isCondSameRele( qgmConditionNode *condNode, BOOLEAN allowEmpty = TRUE ) ;
 
+   BOOLEAN isCondIncludedNull( qgmConditionNode *condNode ) ;
+
 }
 
 #endif //OPT_QGM_SPEC_STRATEGY_HPP_

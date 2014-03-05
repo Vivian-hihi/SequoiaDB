@@ -661,7 +661,8 @@ namespace engine
       qgmConditionNodePtrVec::iterator itSub = subConds.begin() ;
       while ( itSub != subConds.end() )
       {
-         if ( isCondSameRele( *itSub, FALSE ) )
+         if ( isCondSameRele( *itSub, FALSE ) &&
+              !isCondIncludedNull( *itSub ) )
          {
             pushConds.push_back( *itSub ) ;
             filterUnit->removeCondition( *itSub ) ;
@@ -803,14 +804,15 @@ namespace engine
    BOOLEAN isCondSameRele( qgmConditionNode * condNode, BOOLEAN allowEmpty )
    {
       if ( condNode->type != SQL_GRAMMAR::AND &&
-           condNode->type != SQL_GRAMMAR::OR )
+           condNode->type != SQL_GRAMMAR::OR &&
+           condNode->type != SQL_GRAMMAR::NOT )
       {
          if ( !allowEmpty && condNode->left->type == SQL_GRAMMAR::DBATTR &&
               condNode->left->value.relegation().empty() )
          {
             return FALSE ;
          }
-         
+
          if ( condNode->right->type == SQL_GRAMMAR::DBATTR &&
               condNode->left->type == SQL_GRAMMAR::DBATTR &&
               condNode->right->value.relegation() !=
@@ -841,6 +843,33 @@ namespace engine
          }
       }
       return TRUE ;
+   }
+
+   BOOLEAN isCondIncludedNull( qgmConditionNode * condNode )
+   {
+      if ( !condNode )
+      {
+         return FALSE ;
+      }
+      else if ( SQL_GRAMMAR::AND == condNode->type ||
+                SQL_GRAMMAR::OR == condNode->type )
+      {
+         if ( isCondIncludedNull( condNode->left ) )
+         {
+            return TRUE ;
+         }
+         return isCondIncludedNull( condNode->right ) ;
+      }
+      else if ( SQL_GRAMMAR::NOT == condNode->type )
+      {
+         return isCondIncludedNull( condNode->left ) ;
+      }
+      else if ( condNode->right &&
+                SQL_GRAMMAR::NULLL == condNode->right->type )
+      {
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
 }
