@@ -3018,7 +3018,7 @@ PHP_METHOD ( sequoiaNode, stop )
 }
 
 /////////////////////////////////////////////////////
-PHP_SEQUOIADB_API INT32 key_get_value ( zval *val, CHAR *key TSRMLS_DC )
+PHP_SEQUOIADB_API INT32 key_get_value ( zval *val, const CHAR *key TSRMLS_DC )
 {
    CHAR *buf = NULL ;
    INT32 len = ossStrlen ( key ) ;

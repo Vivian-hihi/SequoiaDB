@@ -42,7 +42,7 @@ PHP_SEQUOIADB_API BOOLEAN php_json_decode ( const CHAR *buf,
                                             zval **val TSRMLS_DC ) ;
 PHP_SEQUOIADB_API BOOLEAN php_toJson ( CHAR **buf, zval *val TSRMLS_DC );
 PHP_SEQUOIADB_API BOOLEAN php_jsonArr2Vector ( std::vector<char *> *pVector, zval *val TSRMLS_DC ) ;
-PHP_SEQUOIADB_API INT32 key_get_value ( zval *val, CHAR *key TSRMLS_DC ) ;
+PHP_SEQUOIADB_API INT32 key_get_value ( zval *val, const CHAR *key TSRMLS_DC ) ;
 PHP_SEQUOIADB_API BOOLEAN php_toNum64 ( INT64 &num64, zval *val TSRMLS_DC ) ;
 PHP_SEQUOIADB_API void map_encode_array(std::map<std::string,std::string> *pMap,
                                         zval **val TSRMLS_DC ) ;
