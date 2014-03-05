@@ -79,7 +79,7 @@ public:
            SDB_SNAP_COLLECTIONSPACE:Get all collection space snapshot
            SDB_SNAP_DATABASE: Get the database's snapshot
            SDB_SNAP_SYSTEM:Get the system's snapshot
-           SDB_SNAP_CATALOG:Get the shard's snapshot
+           SDB_SNAP_CATALOG:Get the group's snapshot
        \param [in] $condition The matching rule, match all the documents if null
        \param [in] $select The selective rule, return the whole document if null
        \param [in] $orderBy The ordered rule, never sort if null
@@ -104,7 +104,7 @@ public:
            SDB_LIST_COLLECTIONS: Get all the collections' list
            SDB_LIST_COLLECTIONSPACES: Get all the collecion spaces' list
            SDB_LIST_STORAGEUNITS: Get all the storage units' list
-           SDB_LIST_GROUPS:Get all the shard list
+           SDB_LIST_GROUPS:Get all the group list
        \param [in] $condition The matching rule, match all the documents if null
        \param [in] $select The selective rule, return the whole document if null
        \param [in] $orderBy The ordered rule, never sort if null
@@ -115,12 +115,12 @@ public:
                            array|string $select = NULL,
                            array|string $orderBy = NULL ) ;
 
-   /** \fn SequoiaShard selectShard ( string $name )
-       \brief Gets shard object
-       \param [in] $name The shard name
-       \retval a new shard object
+   /** \fn sequoiaGroup selectGroup ( string $name )
+       \brief Gets group object
+       \param [in] $name The group name
+       \retval a new group object
    */
-   SequoiaShard selectShard ( string $name ) ;
+   sequoiaGroup selectGroup ( string $name ) ;
 
    /** \fn array|string resetSnapshot ( void )
        \brief Reset the snapshot
@@ -148,18 +148,18 @@ public:
    */
    SequoiaCursor listCollections ( void ) ;
 
-   /** \fn array|string createCataShard ( string $hostname,
+   /** \fn array|string createCataGroup ( string $hostname,
                                           string $serviceName,
                                           string $databasePath,
                                           array|string $config )
-       \brief create cata shard
-       \param [in] $hostname cata shard host name
-       \param [in] $serviceName cata shard service name
-       \param [in] $databasePath cata shard path
-       \param [in] $config cata shard create config
+       \brief create cata group
+       \param [in] $hostname cata group host name
+       \param [in] $serviceName cata group service name
+       \param [in] $databasePath cata group path
+       \param [in] $config cata group create config
        \retval Returns the database response
    */
-   array|string createCataShard ( string $hostname,
+   array|string createCataGroup ( string $hostname,
                                   string $serviceName,
                                   string $databasePath,
                                   array|string $config ) ;
@@ -179,13 +179,13 @@ class SequoiaCS
 {
 public:
 
-   /** \fn SequoiaCl selectCollection ( string $name, [array|string $options] )
+   /** \fn SequoiaCL selectCollection ( string $name, [array|string $options] )
        \brief Gets a collection, if is not exist, will auto create
        \param [in] $name The collection name
        \param [in] $options create collection,set collection options
        \retval a new collection object
    */
-   SequoiaCl selectCollection ( string $name, array|string $options ) ;
+   SequoiaCL selectCollection ( string $name, array|string $options ) ;
    
    /** \fn array|string drop ( void )
        \brief Drops this collection space
@@ -206,9 +206,9 @@ public:
    string getName ( void ) ;
 } ;
 
-/** \class SequoiaCl
+/** \class SequoiaCL
  */
-class SequoiaCl
+class SequoiaCL
 {
 public:
    
@@ -382,9 +382,9 @@ public:
    /*array|string deleteCurrent ( void ) ;*/
 } ;
 
-/** \class SequoiaShard
+/** \class sequoiaGroup
  */
-class SequoiaShard
+class sequoiaGroup
 {
 public:
 
@@ -396,8 +396,8 @@ public:
    int getNodeNum ( int $status ) ;
 
    /** \fn array|string getDetail ( void )
-       \brief get the shard detail
-       \retval Returns the shard detail
+       \brief get the group detail
+       \retval Returns the group detail
    */
    array|string getDetail ( void ) ;
 
@@ -431,19 +431,19 @@ public:
    array|string createNode ( string $hostName, string $serviceName, string $databasePath, array|string $config ) ;
 
    /** \fn array|string start ( void )
-       \brief start shard
+       \brief start group
        \retval Returns the database response
    */
    array|string start ( void ) ;
 
    /** \fn array|string stop ( void )
-       \brief stop shard
+       \brief stop group
        \retval Returns the database response
    */
    array|string stop ( void ) ;
 
    /** \fn bool isCatalog ( void )
-       \brief judge shard is catalog
+       \brief judge group is catalog
        \retval Returns true or false
    */
    bool isCatalog ( void ) ;

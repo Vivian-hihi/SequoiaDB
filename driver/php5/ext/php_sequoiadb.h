@@ -68,14 +68,12 @@ PHP_METHOD ( SequoiaDB, execSQL ) ;
 PHP_METHOD ( SequoiaDB, execUpdateSQL ) ;
 PHP_METHOD ( SequoiaDB, getSnapshot ) ;
 PHP_METHOD ( SequoiaDB, getList ) ;
-PHP_METHOD ( SequoiaDB, selectGroup ) ; //waste
-PHP_METHOD ( SequoiaDB, selectShard ) ;
+PHP_METHOD ( SequoiaDB, selectGroup ) ;
 PHP_METHOD ( SequoiaDB, resetSnapshot ) ;
 PHP_METHOD ( SequoiaDB, selectCS ) ;
 PHP_METHOD ( SequoiaDB, listCSs ) ;
 PHP_METHOD ( SequoiaDB, listCollections ) ;
-PHP_METHOD ( SequoiaDB, createCataGroup ) ; //waste
-PHP_METHOD ( SequoiaDB, createCataShard ) ;
+PHP_METHOD ( SequoiaDB, createCataGroup ) ;
 PHP_METHOD ( SequoiaDB, dropCollectionSpace ) ;
 
 PHP_METHOD ( SequoiaCS, __construct ) ;
@@ -85,22 +83,22 @@ PHP_METHOD ( SequoiaCS, drop ) ;
 PHP_METHOD ( SequoiaCS, dropCollection ) ;
 PHP_METHOD ( SequoiaCS, getName ) ;
 
-PHP_METHOD ( SequoiaCl, __construct ) ;
-PHP_METHOD ( SequoiaCl, __destruct ) ;
-PHP_METHOD ( SequoiaCl, insert ) ;
-PHP_METHOD ( SequoiaCl, update ) ;
-PHP_METHOD ( SequoiaCl, remove ) ;
-PHP_METHOD ( SequoiaCl, find ) ;
-PHP_METHOD ( SequoiaCl, split ) ;
-PHP_METHOD ( SequoiaCl, drop ) ;
-PHP_METHOD ( SequoiaCl, aggregate ) ;
-PHP_METHOD ( SequoiaCl, createIndex ) ;
-PHP_METHOD ( SequoiaCl, deleteIndex ) ;
-PHP_METHOD ( SequoiaCl, getIndex ) ;
-PHP_METHOD ( SequoiaCl, getCSName ) ;
-PHP_METHOD ( SequoiaCl, getCollectionName ) ;
-PHP_METHOD ( SequoiaCl, getFullName ) ;
-PHP_METHOD ( SequoiaCl, count ) ;
+PHP_METHOD ( SequoiaCL, __construct ) ;
+PHP_METHOD ( SequoiaCL, __destruct ) ;
+PHP_METHOD ( SequoiaCL, insert ) ;
+PHP_METHOD ( SequoiaCL, update ) ;
+PHP_METHOD ( SequoiaCL, remove ) ;
+PHP_METHOD ( SequoiaCL, find ) ;
+PHP_METHOD ( SequoiaCL, split ) ;
+PHP_METHOD ( SequoiaCL, drop ) ;
+PHP_METHOD ( SequoiaCL, aggregate ) ;
+PHP_METHOD ( SequoiaCL, createIndex ) ;
+PHP_METHOD ( SequoiaCL, deleteIndex ) ;
+PHP_METHOD ( SequoiaCL, getIndex ) ;
+PHP_METHOD ( SequoiaCL, getCSName ) ;
+PHP_METHOD ( SequoiaCL, getCollectionName ) ;
+PHP_METHOD ( SequoiaCL, getFullName ) ;
+PHP_METHOD ( SequoiaCL, count ) ;
 
 PHP_METHOD ( SequoiaCursor, __construct ) ;
 PHP_METHOD ( SequoiaCursor, __destruct ) ;
@@ -124,17 +122,17 @@ PHP_METHOD ( SequoiaRegex, __toString ) ;
 PHP_METHOD ( SequoiaINT64, __construct ) ;
 PHP_METHOD ( SequoiaINT64, __toString ) ;
 
-/* ********* shard ************ */
+/* ********* group ************ */
 
-PHP_METHOD ( sequoiaShard, getNodeNum ) ;
-PHP_METHOD ( sequoiaShard, getDetail ) ;
-PHP_METHOD ( sequoiaShard, getMaster ) ;
-PHP_METHOD ( sequoiaShard, getSlave ) ;
-PHP_METHOD ( sequoiaShard, getNode ) ;
-PHP_METHOD ( sequoiaShard, createNode ) ;
-PHP_METHOD ( sequoiaShard, start ) ;
-PHP_METHOD ( sequoiaShard, stop ) ;
-PHP_METHOD ( sequoiaShard, isCatalog ) ;
+PHP_METHOD ( sequoiaGroup, getNodeNum ) ;
+PHP_METHOD ( sequoiaGroup, getDetail ) ;
+PHP_METHOD ( sequoiaGroup, getMaster ) ;
+PHP_METHOD ( sequoiaGroup, getSlave ) ;
+PHP_METHOD ( sequoiaGroup, getNode ) ;
+PHP_METHOD ( sequoiaGroup, createNode ) ;
+PHP_METHOD ( sequoiaGroup, start ) ;
+PHP_METHOD ( sequoiaGroup, stop ) ;
+PHP_METHOD ( sequoiaGroup, isCatalog ) ;
 
 /* ************* node ***************** */
 
