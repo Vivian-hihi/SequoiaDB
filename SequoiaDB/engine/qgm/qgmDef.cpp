@@ -62,12 +62,6 @@ namespace engine
             goto error ;
          }
 
-         if ( local.eoo() )
-         {
-            //rc = SDB_INVALIDARG ;
-            goto done ;
-         }
-
          ele = local ;
       }
       else
@@ -143,12 +137,6 @@ namespace engine
                PD_LOG( PDERROR, "unexpected err happend:%s", e.what() ) ;
                rc = SDB_SYS ;
                goto error ;
-            }
-
-            if ( local.eoo() )
-            {
-               //rc = SDB_INVALIDARG ;
-               goto done ;
             }
 
             ele = local ;
