@@ -187,7 +187,7 @@ namespace engine
                }
 
                rc = src.element( itr->value, ele ) ;
-               if ( SDB_INVALIDARG == rc )
+               if ( ele.eoo() )
                {
                   if ( itr->alias.empty() )
                   {
@@ -197,16 +197,9 @@ namespace engine
                   {
                      builder.appendNull( itr->alias.toString() ) ;
                   }
-                  rc = SDB_OK ;
                }
                else if ( SDB_OK != rc )
                {
-                  goto error ;
-               }
-               else if ( ele.eoo() )
-               {
-                  PD_LOG( PDERROR, "ele.eoo()" ) ;
-                  rc = SDB_SYS ;
                   goto error ;
                }
                else if ( itr->alias.empty() )
