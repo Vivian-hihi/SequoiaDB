@@ -96,7 +96,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMSELECTOR_SELECT, "_qgmSelector::select" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMSELECTOR_SELECT, "_qgmSelector::select" )
    INT32 _qgmSelector::select( const BSONObj &src, BSONObj &out ) const
    {
       PD_TRACE_ENTRY( SDB__QGMSELECTOR_SELECT ) ;
@@ -160,7 +160,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMSELECTOR_SELECT2, "_qgmSelector::select" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMSELECTOR_SELECT2, "_qgmSelector::select" )
    INT32 _qgmSelector::select( const qgmFetchOut &src,
                                BSONObj &out ) const
    {
@@ -187,7 +187,11 @@ namespace engine
                }
 
                rc = src.element( itr->value, ele ) ;
-               if ( ele.eoo() )
+               if ( rc )
+               {
+                  goto error ;
+               }
+               else if ( ele.eoo() )
                {
                   if ( itr->alias.empty() )
                   {
@@ -197,10 +201,6 @@ namespace engine
                   {
                      builder.appendNull( itr->alias.toString() ) ;
                   }
-               }
-               else if ( SDB_OK != rc )
-               {
-                  goto error ;
                }
                else if ( itr->alias.empty() )
                {
