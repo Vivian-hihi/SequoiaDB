@@ -12,7 +12,7 @@ namespace DriverTest
         private TestContext testContextInstance;
         private static Config config = null;
         private static Sequoiadb sdb = null;
-        private Shard group = null;
+        private ReplicaGroup group = null;
         private SequoiaDB.Node node = null;
 
         private string groupName = null;
@@ -64,7 +64,7 @@ namespace DriverTest
             port = config.conf.Groups[0].Nodes[0].Port;
             dbpath = config.conf.Groups[0].Nodes[0].DBPath;
             // drop the exist group
-            group = sdb.GetShard(groupName);
+            group = sdb.GetReplicaGroup(groupName);
             if (group != null)
             {
                 // drop all the cs in current group, and then remove this group
@@ -88,7 +88,7 @@ namespace DriverTest
                 }
                 try
                 {
-                    sdb.RemoveShard(group.ShardName);
+                    sdb.RemoveReplicaGroup(group.GroupName);
                 }
                 catch (BaseException e)
                 {
@@ -97,8 +97,8 @@ namespace DriverTest
                 }
             }
             // create a new group
-            group = sdb.CreateShard(groupName);
-            Assert.IsTrue(groupName.Equals(group.ShardName));
+            group = sdb.CreateReplicaGroup(groupName);
+            Assert.IsTrue(groupName.Equals(group.GroupName));
             // create a node
             Dictionary<string, string> map = new Dictionary<string, string>();
             map.Add("diaglevel", config.conf.Groups[0].Nodes[0].DiagLevel);
@@ -116,7 +116,7 @@ namespace DriverTest
                 Console.WriteLine("removeRG is for cluster environment only.");
                 return;
             }
-            group = sdb.GetShard(groupName);
+            group = sdb.GetReplicaGroup(groupName);
             if (group != null)
             {
                 // drop all the cs in current group, and then remove this group
@@ -142,7 +142,7 @@ namespace DriverTest
                 // remove group
                 try
                 {
-                    sdb.RemoveShard(group.ShardName);
+                    sdb.RemoveReplicaGroup(group.GroupName);
                 }
                 catch (BaseException e)
                 {
@@ -164,12 +164,12 @@ namespace DriverTest
                 Console.WriteLine("removeRG is for cluster environment only.");
                 return;
             }
-            group = sdb.GetShard(groupName);
+            group = sdb.GetReplicaGroup(groupName);
             if (group == null)
-                group = sdb.CreateShard(groupName);
-            Shard group1 = sdb.GetShard(group.ShardID);
-            Assert.AreEqual(group.ShardName, group1.ShardName);
-            Shard group2 = sdb.GetShard(1);
+                group = sdb.CreateReplicaGroup(groupName);
+            ReplicaGroup group1 = sdb.GetReplicaGroup(group.GroupID);
+            Assert.AreEqual(group.GroupName, group1.GroupName);
+            ReplicaGroup group2 = sdb.GetReplicaGroup(1);
             Assert.IsNotNull(group2);
             node = group.GetNode(hostName, port);
             if (node == null)
@@ -211,9 +211,9 @@ namespace DriverTest
                 return;
             }
             // get rg
-            group = sdb.GetShard(groupName);
+            group = sdb.GetReplicaGroup(groupName);
             if (group == null)
-                group = sdb.CreateShard(groupName);
+                group = sdb.CreateReplicaGroup(groupName);
             Assert.IsNotNull(group);
             // create node1
             string hostName1 = config.conf.Groups[1].Nodes[1].HostName;

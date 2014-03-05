@@ -10,9 +10,7 @@ using System.Collections.Generic;
 namespace SequoiaDB
 {
     /** \class Node
-     *  \brief Database operation interfaces of node.This class takes the place of class "replicaNode".
-     *  \note We use concept "node" instead of "replica node",
-     *       and change the class name "ReplicaNode" to "Node".
+     *  \brief Database operation interfaces of node.
      */
     public class Node
     {
@@ -21,25 +19,25 @@ namespace SequoiaDB
         private string hostName;
         private int port;
         internal bool isBigEndian = false;
-        private Shard shard;
+        private ReplicaGroup group;
 
-        internal Node(Shard shard, string hostName, int port, int nodeID)
+        internal Node(ReplicaGroup group, string hostName, int port, int nodeID)
         {
-            this.shard = shard;
+            this.group = group;
             this.hostName = hostName;
             this.port = port;
             this.nodeName = hostName + SequoiadbConstants.NODE_NAME_SERVICE_SEP + port;
             this.nodeID = nodeID;
-            this.isBigEndian = shard.isBigEndian;
+            this.isBigEndian = group.isBigEndian;
         }
 
-        /** \property Shard
-         *  \brief Return the shard of current node 
+        /** \property ReplicaGroup
+         *  \brief Return the replica group instance of current node 
          *  \return The ReplicaGroup object
          */
-        public Shard Shard
+        public ReplicaGroup ReplicaGroup
         {
-            get { return shard; }
+            get { return group; }
         }
 
         /** \property NodeName
@@ -115,7 +113,7 @@ namespace SequoiaDB
                              + SequoiadbConstants.DATABASE;
             BsonDocument condition = new BsonDocument();
             BsonDocument dummyObj = new BsonDocument();
-            condition.Add(SequoiadbConstants.FIELD_GROUPID, shard.ShardID);
+            condition.Add(SequoiadbConstants.FIELD_GROUPID, group.GroupID);
             condition.Add(SequoiadbConstants.FIELD_NODEID, nodeID);
             SDBMessage rtn = AdminCommand(command, condition, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;
@@ -175,7 +173,7 @@ namespace SequoiaDB
         private SDBMessage AdminCommand(string command, BsonDocument arg1, BsonDocument arg2,
                                         BsonDocument arg3, BsonDocument arg4)
         {
-            IConnection connection = shard.SequoiaDB.Connection;
+            IConnection connection = group.SequoiaDB.Connection;
             SDBMessage sdbMessage = new SDBMessage();
 
             sdbMessage.Matcher = arg1;

@@ -9,14 +9,8 @@ using System.Collections.Generic;
 namespace SequoiaDB
 {
     /** \class ReplicaGroup
-     *  \brief Database operation interfaces of replica group.This class will be deprecated in version 2.x.
-     *         Use class Shard instead of it.
-     *  \note We use concept "shard" instead of "replica group",
-     *        and change the class name "ReplicaGroup" to "Shard".
-     *  \deprecated 
-     *  \see Shard
+     *  \brief Database operation interfaces of replica group.
      */
-    [Obsolete("Class ReplicaGroup will be deprecated in version 2.x; use class Shard instead.")]
     public class ReplicaGroup
 	{
         private int groupID = -1;
@@ -24,7 +18,6 @@ namespace SequoiaDB
         private bool isCatalog = false;
         internal bool isBigEndian = false;
         private Sequoiadb sdb = null;
-        [Obsolete("Class ReplicaGroup will be deprecated in version 2.x; use class Shard instead.")]
         internal ReplicaGroup(Sequoiadb sdb, string groupName, int groupID)
         {
             this.sdb = sdb;
@@ -118,7 +111,7 @@ namespace SequoiaDB
                     total = nodes.Count;
                     //foreach (BsonDocument node in nodes)
                     //{
-                    //    ReplicaNode rnode = ExtractNode(node);
+                    //    Node rnode = ExtractNode(node);
                     //    SDBConst.NodeStatus sta = rnode.GetStatus();
                     //    if (SDBConst.NodeStatus.SDB_NODE_ALL == status || rnode.GetStatus() == status)
                     //        ++total;
@@ -148,7 +141,7 @@ namespace SequoiaDB
             BsonDocument dummyobj = new BsonDocument();
             matcher.Add(SequoiadbConstants.FIELD_GROUPNAME, groupName);
             matcher.Add(SequoiadbConstants.FIELD_GROUPID, groupID);
-            DBCursor cursor = sdb.GetList(SDBConst.SDB_LIST_SHARDS, matcher, dummyobj, dummyobj);
+            DBCursor cursor = sdb.GetList(SDBConst.SDB_LIST_GROUPS, matcher, dummyobj, dummyobj);
             if (cursor != null)
             {
                 BsonDocument detail = cursor.Next();
@@ -161,18 +154,18 @@ namespace SequoiaDB
                 throw new BaseException("SDB_SYS");
         }
 
-        /** \fn ReplicaNode CreateNode(string hostName, int port, string dbpath,
+        /** \fn Node CreateNode(string hostName, int port, string dbpath,
                                Dictionary<string, string> map)
          *  \brief Create the replica node
          *  \param hostName The host name of node
          *  \param port The port of node
          *  \param dbpath The database path of node
          *  \param map The other configure information of node
-         *  \return The ReplicaNode object
+         *  \return The Node object
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode CreateNode(string hostName, int port, string dbpath,
+        public Node CreateNode(string hostName, int port, string dbpath,
                                Dictionary<string, string> map)
         {
             if (hostName == null || port < 0 || port < 0 || port > 65535 ||
@@ -241,13 +234,13 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
-        /** \fn ReplicaNode GetMaster()
-         *  \brief Get the master ReplicaNode of current group
-         *  \return The fitted ReplicaNode or null
+        /** \fn Node GetMaster()
+         *  \brief Get the master node of current group
+         *  \return The fitted node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetMaster()
+        public Node GetMaster()
         {
             int primaryNode = -1;
             try
@@ -281,13 +274,13 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn ReplicaNode GetSlave()
-         *  \brief Get the slave ReplicaNode of current group
-         *  \return The fitted ReplicaNode or null
+        /** \fn Node GetSlave()
+         *  \brief Get the slave node of current group
+         *  \return The fitted node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetSlave()
+        public Node GetSlave()
         {
             int primaryID = -1;
             List<BsonDocument> nodeList = new List<BsonDocument>();
@@ -330,14 +323,14 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn ReplicaNode GetNode(string nodeName)
-         *  \brief Get the ReplicaNode by node name
+        /** \fn Node GetNode(string nodeName)
+         *  \brief Get the node by node name
          *  \param nodeName The node name
-         *  \return The fitted ReplicaNode or null
+         *  \return The fitted node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetNode(string nodeName)
+        public Node GetNode(string nodeName)
         {
             try
             {
@@ -354,15 +347,15 @@ namespace SequoiaDB
             }
         }
 
-        /** \fn ReplicaNode GetNode(string hostName, int port)
-         *  \brief Get the ReplicaNode by host name and port
+        /** \fn Node GetNode(string hostName, int port)
+         *  \brief Get the node by host name and port
          *  \param hostName The host name
          *  \param port The port
-         *  \return The fitted ReplicaNode or null
+         *  \return The fitted node or null
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ReplicaNode GetNode(string hostName, int port)
+        public Node GetNode(string hostName, int port)
         {
             try
             {
@@ -377,7 +370,7 @@ namespace SequoiaDB
                     string hostname = node[SequoiadbConstants.FIELD_HOSTNAME].AsString;
                     if (hostname.Equals(hostName))
                     {
-                        ReplicaNode rn = ExtractNode(node);
+                        Node rn = ExtractNode(node);
                         if (rn.Port == port)
                             return rn;
                     }
@@ -414,7 +407,7 @@ namespace SequoiaDB
             return rtnSDBMessage;
         }
 
-        private ReplicaNode ExtractNode(BsonDocument node)
+        private Node ExtractNode(BsonDocument node)
         {
             try
             {
@@ -437,7 +430,7 @@ namespace SequoiaDB
                         if (!svc[SequoiadbConstants.FIELD_NAME].IsString)
                             throw new BaseException("SDB_SYS");
                         string svcname = svc[SequoiadbConstants.FIELD_NAME].AsString;
-                        return new ReplicaNode(this, hostName, int.Parse(svcname), nodeID);
+                        return new Node(this, hostName, int.Parse(svcname), nodeID);
                     }
                 }
                 return null;

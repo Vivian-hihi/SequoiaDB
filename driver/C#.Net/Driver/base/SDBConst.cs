@@ -12,7 +12,7 @@
         public const int SDB_PAGESIZE_16K = 16384;
         public const int SDB_PAGESIZE_32K = 32768;
         public const int SDB_PAGESIZE_64K = 65536;
-        public const int SDB_PAGESIZE_DEFAULT = SDB_PAGESIZE_4K;
+        public const int SDB_PAGESIZE_DEFAULT = 0;
 
         public const int SDB_SNAP_CONTEXTS         = 0;
         public const int SDB_SNAP_CONTEXTS_CURRENT = 1;
@@ -31,9 +31,7 @@
         public const int SDB_LIST_COLLECTIONS      = 4;
         public const int SDB_LIST_COLLECTIONSPACES = 5;
         public const int SDB_LIST_STORAGEUNITS     = 6;
-        /**SDB_LIST_GROUPS will be deprecated in version 2.x, use SDB_LIST_SHARDS instead of it.*/
         public const int SDB_LIST_GROUPS           = 7;
-        public const int SDB_LIST_SHARDS           = 7;
 
         public enum NodeStatus
         {

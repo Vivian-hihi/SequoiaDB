@@ -13,7 +13,7 @@ namespace DriverTest
         {
             try
             {
-                sdb.ListShards();
+                sdb.ListReplicaGroups();
             }
             catch (BaseException e)
             {

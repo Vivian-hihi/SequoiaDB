@@ -5,7 +5,7 @@ namespace SequoiaDB
     public class ServerAddress
     {
         private const string DEFAULT_HOST = "127.0.0.1";
-        private const int DEFAULT_PORT = 50000;
+        private const int DEFAULT_PORT = 11810;
 
         private IPEndPoint hostAddress;
         private string host;

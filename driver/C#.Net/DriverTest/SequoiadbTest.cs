@@ -57,7 +57,7 @@ namespace DriverTest
             sdb.Disconnect();
         }
         #endregion
-
+        
         [TestMethod()]
         public void ConnectTest()
         {
@@ -84,8 +84,25 @@ namespace DriverTest
                 Assert.IsTrue(e.ErrorType == "SDB_AUTH_AUTHORITY_FORBIDDEN");
             }
         }
-
-
+        
+        [TestMethod()]
+        [Ignore]
+        public void IsClosedTest()
+        {
+            bool result = false;
+            Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
+            System.Console.WriteLine(config.conf.Coord.Address.ToString());
+            sdb2.Connect("", "");
+            Assert.IsNotNull(sdb2.Connection);
+            // TODO:
+            //result = sdb2.IsClosed();
+            Assert.IsFalse(false);
+            // check
+            sdb2.Disconnect();
+            //result = sdb2.IsClosed();
+            Assert.IsTrue(true);
+        }
+         
         [TestMethod()]
         public void CollectionSpaceTest()
         {
@@ -287,7 +304,7 @@ namespace DriverTest
                 string str1 = config.conf.Groups[2].Nodes[0].HostName.ToString();
                 string str2 = config.conf.Groups[2].Nodes[0].Port.ToString();
                 string str3 = config.conf.Groups[2].Nodes[0].DBPath.ToString();
-                sdb.CreateCataShard(config.conf.Groups[2].Nodes[0].HostName,
+                sdb.CreateReplicaCataGroup(config.conf.Groups[2].Nodes[0].HostName,
                                             config.conf.Groups[2].Nodes[0].Port,
                                             config.conf.Groups[2].Nodes[0].DBPath,
                                             null);
@@ -625,7 +642,6 @@ namespace DriverTest
             }
             Assert.IsTrue(count == 1);
         }
-
 
     }
 }

@@ -4,85 +4,6 @@
   <Password></Password>
 
   <Coord>
-    <Address>192.168.30.165:11810</Address>
-  </Coord>
-
-  <Catalog>
-    <Address>192.168.30.165:30000</Address>
-  </Catalog>
-
-  <Data>
-    <Address>192.168.30.165:25100</Address>
-  </Data>
-
-  <Groups>
-    <Group>
-      <GroupName>testgroup</GroupName>
-      <Nodes>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>40000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/40000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-      </Nodes>
-    </Group>
-    <Group>
-      <GroupName>testgroup1</GroupName>
-      <Nodes>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>45000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/45000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>46000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/46000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>47000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/47000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-      </Nodes>
-    </Group>
-    <Group>
-      <GroupName>testgroup2</GroupName>
-      <Nodes>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>55000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/55000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>56000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/56000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-        <Node>
-          <HostName>rhel</HostName>
-          <Port>57000</Port>
-          <DBPath>/opt/sequoiadb/temp/data/57000</DBPath>
-          <DiagLevel>5</DiagLevel>
-        </Node>
-      </Nodes>
-    </Group>
-  </Groups>
-
-</TestConfig>
-<!--
-<?xml version="1.0" encoding="utf-8" ?>
-<TestConfig>
-  <UserName></UserName>
-  <Password></Password>
-
-  <Coord>
     <Address>192.168.20.40:11810</Address>
   </Coord>
 
@@ -148,6 +69,86 @@
           <HostName>ubuntu-dev1</HostName>
           <Port>57000</Port>
           <DBPath>/home/users/tanzhaobo/data/database/data/57000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+      </Nodes>
+    </Group>
+  </Groups>
+
+</TestConfig>
+
+<!--
+<?xml version="1.0" encoding="utf-8" ?>
+<TestConfig>
+  <UserName></UserName>
+  <Password></Password>
+
+  <Coord>
+    <Address>192.168.30.165:11810</Address>
+  </Coord>
+
+  <Catalog>
+    <Address>192.168.30.165:30000</Address>
+  </Catalog>
+
+  <Data>
+    <Address>192.168.30.165:25100</Address>
+  </Data>
+
+  <Groups>
+    <Group>
+      <GroupName>testgroup</GroupName>
+      <Nodes>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>40000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/40000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+      </Nodes>
+    </Group>
+    <Group>
+      <GroupName>testgroup1</GroupName>
+      <Nodes>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>45000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/45000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>46000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/46000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>47000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/47000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+      </Nodes>
+    </Group>
+    <Group>
+      <GroupName>testgroup2</GroupName>
+      <Nodes>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>55000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/55000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>56000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/56000</DBPath>
+          <DiagLevel>5</DiagLevel>
+        </Node>
+        <Node>
+          <HostName>rhel</HostName>
+          <Port>57000</Port>
+          <DBPath>/opt/sequoiadb/temp/data/57000</DBPath>
           <DiagLevel>5</DiagLevel>
         </Node>
       </Nodes>

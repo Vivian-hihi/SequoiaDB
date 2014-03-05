@@ -4,6 +4,7 @@
     {
         void Connect();
         void Close();
+        bool IsClosed();
 
         void ChangeConfigOptions(ConfigOptions opts);
 

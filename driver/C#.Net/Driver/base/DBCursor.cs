@@ -23,6 +23,7 @@ namespace SequoiaDB
         private int index = -1;
         private bool hasMore = false;
         private bool isBigEndian = false;
+        private bool isClosed = false;
 
         internal DBCursor(SDBMessage rtnSDBMessage, DBCollection dbc)
         {
@@ -38,6 +39,7 @@ namespace SequoiaDB
             sdbMessage.ReturnRowsCount2 = -1;    // return data count
             hasMore = true;
             isBigEndian = dbc.isBigEndian;
+            isClosed = false;
         }
 
         internal DBCursor(SDBMessage rtnSDBMessage, Sequoiadb sdb )
@@ -53,6 +55,7 @@ namespace SequoiaDB
             sdbMessage.ReturnRowsCount2 = -1;    // return data count
             hasMore = true;
             isBigEndian = sdb.isBigEndian;
+            isClosed = false;
         }
 
         ~DBCursor()
@@ -69,6 +72,10 @@ namespace SequoiaDB
          */
         public BsonDocument Next()
         {
+            if ( isClosed )
+            {
+                throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+            }
             if (index == -1 && hasMore)
                 ReadNextBuffer();
             if ( list == null )
@@ -90,10 +97,29 @@ namespace SequoiaDB
          */
         public BsonDocument Current()
         {
+            if ( isClosed )
+            {
+                throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+            }
             if ( index == -1 )
                 return Next();
             else
                 return list[index];
+        }
+
+        /** \fn void Close()
+         *  \brief Close current cursor
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Close()
+        {
+            if ( isClosed || connection == null || contextId == -1 )
+            {
+                throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
+            }
+            KillCursor();
+            isClosed = true;
         }
 
         /* \fn void UpdateCurrent(BsonDocument modifier)

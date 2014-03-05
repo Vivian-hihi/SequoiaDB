@@ -81,6 +81,13 @@ namespace SequoiaDB
 		    connection = null;
         }
 
+        public bool IsClosed()
+        {
+            if (connection == null)
+                return true;
+            return connection.Connected;
+        }
+
         public void ChangeConfigOptions(ConfigOptions opts)
         {
             this.options = opts;

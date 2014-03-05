@@ -638,6 +638,11 @@ namespace SequoiaDB
             return buf.ToByteArray();
         }
 
+        internal static byte[] BuildKillAllContextsRequest(Operation opcode, bool isBigEndian)
+        {
+            return BuildTransactionRequest( opcode, isBigEndian);
+        }
+
         internal static SDBMessage MsgExtractReply(byte[] inBytes, bool isBigEndian)
         {
             if (logger.IsDebugEnabled)

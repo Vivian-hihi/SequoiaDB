@@ -45,8 +45,7 @@ namespace DriverTest
         {
             sdb = new Sequoiadb(config.conf.Coord.Address);
             sdb.Connect(config.conf.UserName, config.conf.Password);
-            cs = sdb.GetCollecitonSpace(csName);
-            if (cs != null)
+            if (sdb.IsCollectionSpaceExist(csName))
                 sdb.DropCollectionSpace(csName);
             cs = sdb.CreateCollectionSpace(csName);
             coll = cs.CreateCollection(cName);
@@ -55,8 +54,8 @@ namespace DriverTest
         [TestCleanup()]
         public void MyTestCleanup()
         {
-            cs.DropCollection(cName);
-            sdb.DropCollectionSpace(csName);
+            //cs.DropCollection(cName);
+            //sdb.DropCollectionSpace(csName);
             sdb.Disconnect();
         }
         #endregion
@@ -124,5 +123,179 @@ namespace DriverTest
             Assert.IsTrue(coll.GetCount(dummy) == 1);
         }
   */
+        
+        [TestMethod()]
+        public void CurrentTest()
+        {
+            BsonDocument insertor1 = new BsonDocument();
+            insertor1.Add("Last Name", "怪");
+            insertor1.Add("First Name", "啊");
+            insertor1.Add("Address", "SYSU");
+            BsonDocument sInsertor1 = new BsonDocument();
+            sInsertor1.Add("Phone", "10000");
+            sInsertor1.Add("EMail", "10000@yahoo.com.cn");
+            insertor1.Add("Contact", sInsertor1);
+            coll.Insert(insertor1);
+
+            BsonDocument dummy = new BsonDocument();
+            BsonDocument updater = new BsonDocument();
+            BsonDocument matcher = new BsonDocument();
+            BsonDocument modifier = new BsonDocument();
+            updater.Add("Age", 25);
+            modifier.Add("$group", updater);
+            matcher.Add("First Name", "啊");
+            DBCursor cursor = coll.Query(matcher, dummy, dummy, dummy);
+            Assert.IsNotNull(cursor);
+            BsonDocument obj = new BsonDocument();
+            obj = cursor.Current();
+            Assert.IsNotNull(obj);
+
+            Assert.IsTrue(obj["First Name"].AsString.Equals("啊"));
+            Assert.IsTrue(obj["Last Name"].AsString.Equals("怪"));
+            Assert.IsTrue(obj["Address"].AsString.Equals("SYSU"));
+        }
+        
+        [TestMethod()]
+        public void NextTest()
+        {
+            BsonDocument insertor = new BsonDocument();
+            insertor.Add("Last Name", "Lin");
+            insertor.Add("First Name", "Hetiu");
+            insertor.Add("Address", "SYSU");
+            BsonDocument sInsertor = new BsonDocument();
+            sInsertor.Add("Phone", "10086");
+            sInsertor.Add("EMail", "hetiu@yahoo.com.cn");
+            insertor.Add("Contact", sInsertor);
+            coll.Insert(insertor);
+
+            BsonDocument insertor1 = new BsonDocument();
+            insertor1.Add("Last Name", "怪");
+            insertor1.Add("First Name", "啊");
+            insertor1.Add("Address", "SYSU");
+            BsonDocument sInsertor1 = new BsonDocument();
+            sInsertor1.Add("Phone", "10000");
+            sInsertor1.Add("EMail", "10000@yahoo.com.cn");
+            insertor1.Add("Contact", sInsertor);
+            coll.Insert(insertor1);
+
+            BsonDocument dummy = new BsonDocument();
+            DBCursor cursor = coll.Query(dummy, dummy, dummy, dummy);
+            BsonDocument obj1 = new BsonDocument();
+            BsonDocument obj2 = new BsonDocument();
+            obj1 = cursor.Current();
+            Assert.IsNotNull(obj1);
+            obj2 = cursor.Next();
+            Assert.IsNotNull(obj2);
+
+            Assert.IsTrue(obj1["Address"].AsString.Equals("SYSU"));
+            Assert.IsTrue(obj2["Address"].AsString.Equals("SYSU"));
+        }
+
+        [TestMethod()]
+        public void CloseTest()
+        {
+            int num = 10 ;
+            for( int i =0; i < num; i++ )
+            {
+                BsonDocument insertor = new BsonDocument();
+                insertor.Add("num", i);
+                coll.Insert(insertor);
+            }
+
+            BsonDocument dummy = new BsonDocument();
+            DBCursor cursor = coll.Query(dummy, dummy, dummy, dummy);
+            BsonDocument obj = new BsonDocument();
+            obj = cursor.Current();
+            Assert.IsNotNull(obj);
+            obj = cursor.Next();
+            Assert.IsNotNull(obj);
+            // TODO:
+            cursor.Close();
+            // close
+            try
+            {
+                cursor.Close();
+            }catch( BaseException e )
+            {
+                Console.WriteLine("After close cursor, call Close() get errno " +　e.ErrorCode );
+                Assert.IsTrue( e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST") );
+            }
+            // current
+            try
+            {
+                cursor.Current();
+            }
+            catch (BaseException e)
+            {
+                Console.WriteLine("After close cursor, call Current() get errno " + e.ErrorCode);
+                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+            }
+            // next
+            try
+            {
+                cursor.Next();
+            }
+            catch (BaseException e)
+            {
+                Console.WriteLine("After close cursor, call Next() get errno " + e.ErrorCode);
+                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+            }
+
+        }
+        
+        [TestMethod()]
+        public void CloseAllCursorsTest()
+        {
+            int num = 10;
+            for (int i = 0; i < num; i++)
+            {
+                BsonDocument insertor = new BsonDocument();
+                insertor.Add("num", i);
+                coll.Insert(insertor);
+            }
+
+            BsonDocument dummy = new BsonDocument();
+            DBCursor cursor = coll.Query(dummy, dummy, dummy, dummy);
+            DBCursor cursor1 = coll.Query(dummy, dummy, dummy, dummy);
+            DBCursor cursor2 = coll.Query(dummy, dummy, dummy, dummy);
+            BsonDocument obj = new BsonDocument();
+            obj = cursor.Current();
+            obj = cursor1.Next();
+            obj = cursor2.Next();
+            // TODO:
+            sdb.closeAllCursors();
+            // cursor
+            try
+            {
+                obj = cursor.Current();
+            }
+            catch (BaseException e)
+            {
+                int eno = e.ErrorCode;
+                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+            }
+            // cursor1
+            try
+            {
+                obj = cursor1.Next();
+            }
+            catch (BaseException e)
+            {
+                int eno = e.ErrorCode;
+                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+            }
+            // curosr2
+            try
+            {
+                cursor2.Close();
+            }
+            catch (BaseException e)
+            {
+                int eno = e.ErrorCode;
+                Assert.IsTrue(e.ErrorType.Equals("SDB_RTN_CONTEXT_NOTEXIST"));
+            }
+
+        }
+
     }
 }
