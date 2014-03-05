@@ -22,7 +22,9 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
  *        <Username> <Username>
  * Win: insert.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
 #include "common.h"
@@ -67,66 +69,50 @@ INT32 main ( INT32 argc, CHAR **argv )
 
    // connect to database
    rc = sdbConnect ( pHostName, pServiceName, pUsr, pPasswd, &connection ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to connet to database, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to connet to database" ) ;
 
    // create collection space
    rc = sdbCreateCollectionSpace ( connection, COLLECTION_SPACE_NAME,
                                    SDB_PAGESIZE_4K, &collectionspace ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create collection space" ) ;
+
    // recommned to wait for a few seconds in cluster environment
    waiting ( 1 ) ;
 
    // create collection in a specified colletion space.
    // Here,we build it up in the new collection.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create collection" ) ;
+
    // recommned to wait for a few seconds in cluster environment
    waiting ( 1 ) ;
 
-   // create index
-   bson_init( &obj ) ;
    // build a bson for index definition
-   bson_append_int( &obj, "name", 1 ) ;
-   bson_append_int( &obj, "age", -1 ) ;
-   bson_finish( &obj ) ;
+   bson_init( &obj ) ;
+   rc = bson_append_int( &obj, "name", 1 ) ;
+   CHECK_RC ( rc, "Failed to append data" ) ;
+   rc = bson_append_int( &obj, "age", -1 ) ;
+   CHECK_RC ( rc, "Failed to append data" ) ;
+   rc = bson_finish( &obj ) ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
    printf("The index to build is: ") ;
    bson_print ( &obj ) ;
+
+   // create index
    rc = sdbCreateIndex ( collection, &obj, INDEX_NAME, FALSE, FALSE ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create index, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create index" ) ;
+
    bson_destroy ( &obj ) ;
    printf("Suceess to build index!" OSS_NEWLINE ) ;
+
    // drop the specified collection
    rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to drop collecton" ) ;
+
    // drop the specified collection space
    rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to drop the specified collection" ) ;
+
 done:
    // disconnect the connection
    sdbDisconnect ( connection ) ;

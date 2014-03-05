@@ -23,7 +23,9 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./sql <hostname> <servicename> \
  *        <Username> <Username>
  * Win: sql.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
 #include "common.h"
@@ -106,7 +108,9 @@ INT32 main ( INT32 argc, CHAR **argv )
       bson_init( &obj ) ;
       bson_append_string( &obj, "name", "tom" ) ;
       bson_append_int( &obj, "age", 24 ) ;
-      bson_finish( &obj ) ;
+      rc = bson_finish( &obj ) ;
+      CHECK_RC ( rc, "Failed to build bson" ) ;
+
       rc = sdbInsert ( collection, &obj ) ;
       if ( rc )
       {

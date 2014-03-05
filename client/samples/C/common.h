@@ -9,6 +9,16 @@
 #include "client.h"
 
 SDB_EXTERN_C_START
+
+#define CHECK_RC( rc, msg )                                            \
+do {                                                                   \
+   if ( rc )                                                           \
+   {                                                                   \
+      printf( "%s[%d]: %s, rc = %d\n", __FILE__, __LINE__, msg, rc ) ; \
+      goto error ;                                                     \
+   }                                                                   \
+} while ( 0 ) ;
+
 /* display syntax error */
 void displaySyntax ( CHAR *pCommand );
 

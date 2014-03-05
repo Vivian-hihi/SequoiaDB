@@ -16,7 +16,9 @@
  * Run:
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./subArrayLen
  * Win: subArrayLen.exe
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
 #include "common.h"
@@ -35,8 +37,8 @@ INT32 buildOneRecord ( bson* obj )
    bson_append_string ( obj, "", "3" ) ;
    bson_append_finish_array ( obj ) ;
    rc = bson_finish ( obj ) ;
-   if ( rc )
-      goto error ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
+
 done :
    return rc ;
 error :

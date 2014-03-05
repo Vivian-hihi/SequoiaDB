@@ -22,7 +22,8 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./snap <hostname> <servicename> \
  *        <Username> <Username>
  * Win: snap.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more detail.
  ******************************************************************************/
 #include <stdio.h>
 #include "common.h"
@@ -85,6 +86,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       }
       printf ( "Record Read [ %d ]: " OSS_NEWLINE, count ) ;
       bson_print ( &obj ) ;
+      bson_destroy ( &obj ) ;
       ++ count ;
    }
 

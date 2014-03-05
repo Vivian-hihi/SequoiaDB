@@ -22,10 +22,12 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./update_use_id <hostname> <servicename> \
  *        <Username> <Username>
  * Win: update_use_id.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
-#include "client.h"
+#include "common.h"
 
 #define NUM_RECORD 5
 
@@ -101,7 +103,9 @@ INT32 main ( INT32 argc, CHAR **argv )
    // prepare record
    bson_init( &record ) ;
    bson_append_int( &record, "age", 10 ) ;
-   bson_finish( &record ) ;
+   rc = bson_finish( &record ) ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
+
    // insert record into database
    rc = sdbInsert( collection, &record ) ;
    if( rc!=SDB_OK )
@@ -126,20 +130,24 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf("Failed to get next, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   bson_copy( &tmp, &obj ) ;
+   rc = bson_copy( &tmp, &obj ) ;
+   CHECK_RC ( rc, "Failed to copy bson" ) ;
    printf("Before update, the record is:\n") ;
    bson_print( &tmp ) ;
    // set the update condition using "_id"
    bson_find( &it, &obj, "_id" ) ;
    bson_init( &updatecondition ) ;
    bson_append_element( &updatecondition, NULL, &it ) ;
-   bson_finish( &updatecondition ) ;
+   rc = bson_finish( &updatecondition ) ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
    // set the update rule
    bson_init( &rule ) ;
    bson_append_start_object ( &rule, "$set" ) ;
    bson_append_int ( &rule, "age", 99 ) ;
    bson_append_finish_object ( &rule ) ;
-   bson_finish ( &rule ) ;
+   rc = bson_finish ( &rule ) ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
+
    // update
    rc = sdbUpdate(collection, &rule, &updatecondition, NULL ) ;
    if ( rc!=SDB_OK )

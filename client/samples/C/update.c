@@ -22,7 +22,9 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
  *        <Username> <Username>
  * Win: insert.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
 #include "common.h"
@@ -67,90 +69,67 @@ INT32 main ( INT32 argc, CHAR **argv )
 
    // connect to database
    rc = sdbConnect ( pHostName, pServiceName, pUsr, pPasswd, &connection ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to connet to database, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to connet to database" ) ;
 
    // create collection space
    rc = sdbCreateCollectionSpace ( connection, COLLECTION_SPACE_NAME,
                                    SDB_PAGESIZE_4K, &collectionspace ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create collection space" ) ;
+
    // recommned to wait for a few seconds in cluster environment
    waiting ( 1 ) ;
 
    // create collection in a specified colletion space.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create collection" ) ;
+
    // recommned to wait for a few seconds in cluster environment
    waiting ( 1 ) ;
 
    // insert records to the collection
-   bson_init( &obj ) ;
-   // insert a English record
+   bson_init ( &obj ) ;
+   // build a English record
    createEnglishRecord ( &obj  ) ;
+
+   // insert
    rc = sdbInsert ( collection, &obj ) ;
-   if ( rc )
-   {
-      printf ( "Failed to insert record, rc = %d" OSS_NEWLINE, rc ) ;
-   }
-   bson_destroy ( &obj ) ;
+   CHECK_RC ( rc, "Failed to insert record" ) ;
 
    // query the records
    // the result is in the cursor handle
    rc = sdbQuery(collection, NULL, NULL,  NULL, NULL, 0, -1, &cursor ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to query, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to query" ) ;
 
    // update the record
    // let's set the rule and query condition first
    // here,we make the condition to be NULL
    // so all the records will be update
-   bson_init( &rule ) ;
+   bson_init ( &rule ) ;
    bson_append_start_object ( &rule, "$set" ) ;
    bson_append_int ( &rule, "age", 19 ) ;
    bson_append_finish_object ( &rule ) ;
    bson_finish ( &rule ) ;
-   printf("The update rule is:") ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
+
+   printf ( "The update rule is:" ) ;
    bson_print( &rule ) ;
 
-   rc = sdbUpdate( collection, &rule, NULL, NULL ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to update the record, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
-   bson_destroy(&rule);
-   printf("Success to update!" OSS_NEWLINE ) ;
+   // update
+   rc = sdbUpdate ( collection, &rule, NULL, NULL ) ;
+   CHECK_RC ( rc, "Failed to update the record" ) ;
+
+   // free memory after finish using bson
+   bson_destroy ( &rule ) ;
+   printf ( "Success to update!" OSS_NEWLINE ) ;
+
    // drop the specified collection
-   rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   rc = sdbDropCollection ( collectionspace,COLLECTION_NAME ) ;
+   CHECK_RC ( rc, "Failed to drop the specified collection" ) ;
 
    // drop the specified collection space
-   rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   rc = sdbDropCollectionSpace ( connection,COLLECTION_SPACE_NAME ) ;
+   CHECK_RC ( rc, "Failed to drop the specified collection" ) ;
+
 done:
    // disconnect the connection
    sdbDisconnect ( connection ) ;

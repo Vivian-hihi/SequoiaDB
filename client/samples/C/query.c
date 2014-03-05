@@ -22,10 +22,12 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./query <hostname> <servicename> \
  *        <Username> <Username>
  * Win: query.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
-#include "client.h"
+#include "common.h"
 
 #define NUM_RECORD 5
 
@@ -70,35 +72,27 @@ INT32 main ( INT32 argc, CHAR **argv )
 
    // connect to database
    rc = sdbConnect ( pHostName, pServiceName, pUsr, pPasswd, &connection ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to connet to database, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to connet to database" ) ;
 
    // create collection space
    rc = sdbCreateCollectionSpace ( connection, COLLECTION_SPACE_NAME,
                                    SDB_PAGESIZE_4K, &collectionspace ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create collection space, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create collection space" ) ;
+
    // recommned to wait for a few seconds in cluster environment
    waiting( 1 ) ;
+
    // create collection in a specified colletion space.
    // Here,we build it up in the new collection.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to create collection, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to create collection" ) ;
+
    // recommned to wait for a few seconds in cluster environment
    waiting( 1 ) ;
 
    // create record list using objList
    createRecordList ( &objList[0], NUM_RECORD ) ;
+
    // insert obj and free memory that allocated by createRecordList
    for ( count = 0; count < NUM_RECORD; count++ )
    {
@@ -114,22 +108,12 @@ INT32 main ( INT32 argc, CHAR **argv )
    // query all the record in this collection
    // and return the result by the cursor handle
    rc = sdbQuery(collection, NULL, NULL, NULL, NULL, 0, -1, &cursor ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to query, rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to query" ) ;
 
    // get all the qureied records
    bson_init(&obj);
    while( !( rc=sdbNext( cursor, &obj ) ) )
    {
-      if( rc!=SDB_OK )
-      {
-         printf("Failed to get the current record,\
-                 rc = %d" OSS_NEWLINE, rc ) ;
-         goto error ;
-      }
       bson_print( &obj ) ;
       bson_destroy(&obj) ;
       bson_init(&obj);
@@ -141,28 +125,16 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
    else if( rc!=SDB_OK )
    {
-      printf("Failed to get the current record,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
+      CHECK_RC ( rc, "Failed to get the record" ) ;
    }
 
    // drop the specified collection
    rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to drop the specified collection" ) ;
 
    // drop the specified collection space
    rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
+   CHECK_RC ( rc, "Failed to drop the specified collection space" ) ;
 
 done:
    // disconnect the connection

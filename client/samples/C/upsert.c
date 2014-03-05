@@ -22,7 +22,9 @@
  * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
  *        <Username> <Username>
  * Win: insert.exe <hostname> <servicename> <Username> <Username>
- *
+ * Note: While the appended data invalid, C BSON API will return error code,
+ *       we need to handle this kind of error. Please see bson.h for more
+ *       detail.
  ******************************************************************************/
 #include <stdio.h>
 #include "common.h"
@@ -132,7 +134,9 @@ INT32 main ( INT32 argc, CHAR **argv )
    //bson_append_binary ( &rule, "id_rand", BSON_BIN_BINARY, "a", 1 ) ;
    bson_append_finish_object ( &rule ) ;
    bson_append_finish_object ( &rule ) ;
-   bson_finish ( &rule ) ;
+   rc = bson_finish ( &rule ) ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
+
    printf("The update rule is:") ;
    bson_print( &rule ) ;
 
@@ -143,7 +147,8 @@ INT32 main ( INT32 argc, CHAR **argv )
    bson_append_int ( &condition, "day", 10 ) ;
    bson_append_int ( &condition, "num", 1024 ) ;
    bson_append_finish_object ( &condition ) ;
-   bson_finish ( &condition ) ;
+   rc = bson_finish ( &condition ) ;
+   CHECK_RC ( rc, "Failed to build bson" ) ;
 
    rc = sdbUpsert( collection, &rule, &condition, NULL ) ;
    if( rc!=SDB_OK )
