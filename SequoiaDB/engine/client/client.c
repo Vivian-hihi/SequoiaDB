@@ -5514,7 +5514,7 @@ error :
    goto done ;
 }
 
-SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
+SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
 {
    INT32 rc = SDB_OK ;
    INT32 ret = SDB_OK ;
@@ -5538,7 +5538,7 @@ SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
    // invalid sock
    if ( sock < 0 )
    {
-      *result = TRUE ;
+      *result = FALSE ;
       goto done ;
    }
    while ( TRUE )
@@ -5549,7 +5549,7 @@ SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
       // if = 0, time out, means connection is not closed
       if ( ret == 0 )
       {
-         *result = FALSE ;
+         *result = TRUE ;
          goto done ;
       }
       // if < 0, means something wrong
@@ -5575,7 +5575,7 @@ SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result )
       if ( FD_ISSET ( sock, &fds ) )
       {
 
-         *result = TRUE ;
+         *result = FALSE ;
          goto done ;
       }
       else

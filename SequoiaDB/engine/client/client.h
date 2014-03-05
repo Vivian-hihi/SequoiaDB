@@ -1513,8 +1513,13 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson *options ) ;
-
-SDB_EXPORT INT32 sdbIsClosed( sdbConnectionHandle cHandle, BOOLEAN *result ) ;
+/** \fn INT32 SdbIsValid ( sdbConnectionHandle cHandle, BOOLEAN *result )
+    \brief Judge whether the connection is valid.
+    \param [out] result the output result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result ) ;
 
 SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg ) ;
 

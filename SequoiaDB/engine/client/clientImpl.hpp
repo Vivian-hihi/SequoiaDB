@@ -894,7 +894,7 @@ namespace sdbclient
       INT32 closeAllCursors ();
 
       // connection is closed
-      INT32 isClosed( BOOLEAN *result ) ;
+      INT32 isValid( BOOLEAN *result ) ;
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;

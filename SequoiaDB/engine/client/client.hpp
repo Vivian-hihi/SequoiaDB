@@ -1935,7 +1935,7 @@ namespace sdbclient
       virtual INT32 closeAllCursors () = 0 ;
 
       // connection is closed
-      virtual INT32 isClosed( BOOLEAN *result ) = 0 ;
+      virtual INT32 isValid( BOOLEAN *result ) = 0 ;
 
 /*      virtual INT32 modifyConfig ( INT32 nodeID,
                        std::map<std::string,std::string> &config ) = 0 ;
@@ -3027,17 +3027,17 @@ namespace sdbclient
          return pSDB->closeAllCursors () ;
       }
 
-/** \fn INT32 isClosed ( BOOLEAN *result ) ;
-    \brief Judge whether the connection is closed.
+/** \fn INT32 isValid ( BOOLEAN *result ) ;
+    \brief Judge whether the connection is valid.
     \param [out] result the output result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 isClosed ( BOOLEAN *result )
+      INT32 isValid ( BOOLEAN *result )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->isClosed ( result) ;
+         return pSDB->isValid ( result) ;
       }
 
 /*      INT32 modifyConfig ( INT32 nodeID,

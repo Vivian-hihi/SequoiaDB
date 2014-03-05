@@ -5575,10 +5575,10 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_CLOSED, "_sdbImpl::isClosed" )
-   INT32 _sdbImpl::isClosed( BOOLEAN *result )
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_IS_VALID, "_sdbImpl::isValid" )
+   INT32 _sdbImpl::isValid( BOOLEAN *result )
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_IS_CLOSED ) ;
+      PD_TRACE_ENTRY ( SDB_CLIENT_IS_VALID ) ;
       INT32 rc = SDB_OK ;
       // check argument
       if ( result == NULL )
@@ -5590,19 +5590,18 @@ namespace sdbclient
       // it had closed the connection
       if ( _sock == NULL )
       {
-         *result = TRUE ;
+         *result = FALSE ;
       }
       else
       {
-         *result = !( _sock->isConnected() ) ;
+         *result =  _sock->isConnected() ;
       }
    done :
-      PD_TRACE_EXITRC ( SDB_CLIENT_IS_CLOSED, rc );
+      PD_TRACE_EXITRC ( SDB_CLIENT_IS_VALID, rc );
       return rc ;
    error :
       goto done ;
    }
-
 
 /*   INT32 _sdbImpl::modifyConfig ( INT32 nodeID,
                                   std::map<std::string,std::string> &config )
