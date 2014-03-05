@@ -12,8 +12,8 @@ import org.apache.tools.ant.BuildException;
 import org.bson.BSONObject;
 
 
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.Shard;
 import com.sequoiadb.exception.BaseException;
 
 /**
@@ -27,10 +27,10 @@ public class CataNodeGroup extends NodeGroup {
 	@Override
 	public void start(Sequoiadb sdb) throws BuildException {
 
-		Shard group = null;
+		ReplicaGroup group = null;
 		try {
 			setName(CATALOG_GROUP_NAME);
-			group = sdb.getShard(getName());
+			group = sdb.getReplicaGroup(getName());
 		} catch (BaseException e) {
 			group = null;
 		}
@@ -57,8 +57,7 @@ public class CataNodeGroup extends NodeGroup {
 						"path : " + nodeInfo.getDbpath() + "\n" +
 						"configMap :"+nodeInfo.getConfigMap().toString()
 						);
-				
-				sdb.createCataShard(nodeInfo.getHost(),
+				sdb.createReplicaCataGroup(nodeInfo.getHost(),
 						nodeInfo.getBasePort(), nodeInfo.getDbpath(),
 						nodeInfo.getConfigMap() );
 				
@@ -85,13 +84,13 @@ public class CataNodeGroup extends NodeGroup {
 	@Override
 	public void waitForStart(Sequoiadb sdb, long timeout) throws BuildException {
 
-		Shard group = null;
+		ReplicaGroup group = null;
 
 		// Wait for cata select group.
 		int i = 0;
 		while (true) {
 			try {
-				group = sdb.getShard(getName());
+				group = sdb.getReplicaGroup(getName());
 				if (group != null) {
 					break;
 				}

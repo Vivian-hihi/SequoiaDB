@@ -50,7 +50,7 @@ public class SdbGetNodeInfo extends Task{
 		return this.setProInfo ; 
 	}
 	
-	public int setProperty( Shard group )
+	public int setProperty( ReplicaGroup group )
 	{
 		String propertyHostName = group.getMaster().getHostName().toString() ;
 		String propertyNodePort = Integer.toString( group.getMaster().getPort() ) ;
@@ -98,7 +98,7 @@ public class SdbGetNodeInfo extends Task{
 	{
 		Sequoiadb sdb = new Sequoiadb( this.hostName  ,50000 , "" ,"") ;
 
-		Shard group = sdb.getShard( this.groupName ) ;
+		ReplicaGroup group = sdb.getReplicaGroup( this.groupName ) ;
 		
 		this.setProperty( group ) ; 
 

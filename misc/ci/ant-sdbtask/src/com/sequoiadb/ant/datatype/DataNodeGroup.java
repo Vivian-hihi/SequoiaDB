@@ -7,7 +7,7 @@ import org.apache.tools.ant.BuildException;
 
 
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.Shard;
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.exception.BaseException;
 
 /**
@@ -19,11 +19,11 @@ public class DataNodeGroup extends NodeGroup {
 	@Override
 	public void start(Sequoiadb sdb) throws BuildException {
 		try {
-			Shard group = sdb.getShard(getName());
+			ReplicaGroup group = sdb.getReplicaGroup(getName());
 
 			if (group == null) {
 				
-				group = sdb.createShard(getName());
+				group = sdb.createReplicaGroup(getName());
 			}
 
 			for (com.sequoiadb.ant.datatype.Node nodeInfo : getNodeList()) {
@@ -59,7 +59,7 @@ public class DataNodeGroup extends NodeGroup {
 
 	public void waitForStart(Sequoiadb sdb, long timeout) throws BuildException {
 
-		Shard group = sdb.getShard(getName());
+		ReplicaGroup group = sdb.getReplicaGroup(getName());
 
 		// Wait for group select master, max wait time is 120sec;
 		int i = 0;

@@ -6,8 +6,8 @@ import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.Shard;
 import com.sequoiadb.exception.BaseException;
 /**
  * @author 
@@ -45,7 +45,7 @@ public class SdbHaveMaster extends Task {
 		this.waitTime = value ; 
 	}
 	
-	private boolean checkMaster( Shard RG , Sequoiadb sdb )
+	private boolean checkMaster( ReplicaGroup RG , Sequoiadb sdb )
 	{
 		
 			
@@ -122,16 +122,16 @@ public class SdbHaveMaster extends Task {
 	public void execute ()
 	{
 		Sequoiadb sdb = new Sequoiadb( this.hostName , Integer.parseInt( this.port ) , "" ,"") ;
-		Shard RG = null ;
+		ReplicaGroup RG = null ;
 		int i = 0 ;
 		int times = Integer.parseInt( this.waitTime ) ;
 		for(; i < times ; ++i )
 		{
 			try{
 				if( ! this.groupName.equals("1") )
-					RG = sdb.getShard( this.groupName ) ;
+					RG = sdb.getReplicaGroup( this.groupName ) ;
 				else
-					RG = sdb.getShard(1) ;
+					RG = sdb.getReplicaGroup(1) ;
 				if( RG != null )
 					break;
 			}catch( BaseException e ){ 
