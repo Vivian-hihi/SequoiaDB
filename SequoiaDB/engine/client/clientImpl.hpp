@@ -24,12 +24,12 @@
 using namespace bson ;
 namespace sdbclient
 {
-#define CLIENT_COLLECTION_NAMESZ    127
-#define CLIENT_CS_NAMESZ            127
-#define CLIENT_SHARD_NAMESZ         127
+#define CLIENT_COLLECTION_NAMESZ           127
+#define CLIENT_CS_NAMESZ                   127
+#define CLIENT_REPLICAGROUP_NAMESZ         127
    class _sdbColletionSpaceImpl ;
    class _sdbCollectionImpl ;
-   class _sdbShardImpl ;
+   class _sdbReplicaGroupImpl ;
    class _sdbNodeImpl ;
    class _sdbImpl ;
 
@@ -247,20 +247,20 @@ namespace sdbclient
       {
          return &_collectionFullName[0] ;
       }
-      INT32 split ( const CHAR *sourceShardName,
-                    const CHAR *destShardName,
+      INT32 split ( const CHAR *pSourceReplicaGroupName,
+                    const CHAR *pTargetReplicaGroupName,
                     const BSONObj &splitCondition,
                     const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
-      INT32 split ( const CHAR *sourceShardName,
-                    const CHAR *destShardName,
+      INT32 split ( const CHAR *pSourceReplicaGroupName,
+                    const CHAR *pTargetReplicaGroupName,
                     FLOAT64 percent ) ;
       INT32 splitAsync ( SINT64 &taskID,
-               const CHAR *sourceShardName,
-                    const CHAR *destShardName,
+               const CHAR *pSourceReplicaGroupName,
+                    const CHAR *pTargetReplicaGroupName,
                     const bson::BSONObj &splitCondition,
                     const bson::BSONObj &splitEndCondition = _sdbStaticObject ) ;
-      INT32 splitAsync ( const CHAR *sourceShardName,
-                    const CHAR *destShardName,
+      INT32 splitAsync ( const CHAR *pSourceReplicaGroupName,
+                    const CHAR *pTargetReplicaGroupName,
                     FLOAT64 percent,
                     SINT64 &taskID ) ;
       // aggregate
@@ -315,14 +315,14 @@ namespace sdbclient
       CHAR                     _serviceName [ OSS_MAX_SERVICENAME + 1 ] ;
       CHAR                     _nodeName [ OSS_MAX_HOSTNAME +
                                            OSS_MAX_SERVICENAME + 2 ] ;
-      INT32                    _shardID ;
+      INT32                    _replicaGroupID ;
       INT32                    _nodeID ;
       void _dropConnection()
       {
          _connection = NULL ;
       }
       INT32 _stopStart ( BOOLEAN start ) ;
-      friend class _sdbShardImpl ;
+      friend class _sdbReplicaGroupImpl ;
       friend class _sdbImpl ;
    public :
       _sdbNodeImpl () ;
@@ -366,18 +366,18 @@ namespace sdbclient
    } ;
    typedef class _sdbNodeImpl sdbNodeImpl ;
 
-   class _sdbShardImpl : public _sdbShard
+   class _sdbReplicaGroupImpl : public _sdbReplicaGroup
    {
    private :
-      _sdbShardImpl ( const _sdbShardImpl& other ) ;
-      _sdbShardImpl& operator=( const _sdbShardImpl& ) ;
+      _sdbReplicaGroupImpl ( const _sdbReplicaGroupImpl& other ) ;
+      _sdbReplicaGroupImpl& operator=( const _sdbReplicaGroupImpl& ) ;
 #if defined CLIENT_THREAD_SAFE
       ossSpinSLatch _mutex ;
 #endif
       _sdbImpl                *_connection ;
       BOOLEAN                 _isCatalog ;
-      INT32                   _shardID ;
-      CHAR                    _shardName [ CLIENT_SHARD_NAMESZ+1 ] ;
+      INT32                   _replicaGroupID ;
+      CHAR                    _replicaGroupName [ CLIENT_REPLICAGROUP_NAMESZ+1 ] ;
       void _dropConnection()
       {
          _connection = NULL ;
@@ -387,13 +387,13 @@ namespace sdbclient
                            const CHAR *primaryData ) ;
       friend class _sdbImpl ;
    public :
-      _sdbShardImpl () ;
-      ~_sdbShardImpl () ;
+      _sdbReplicaGroupImpl () ;
+      ~_sdbReplicaGroupImpl () ;
 
       // get number of logical nodes
       INT32 getNodeNum ( sdbNodeStatus status, INT32 *num ) ;
 
-      // list all nodes in the current shard
+      // list all nodes in the current replica group
       INT32 getDetail ( BSONObj &result ) ;
 
       INT32 getMaster ( _sdbNode **node ) ;
@@ -425,36 +425,36 @@ namespace sdbclient
       {
          return getNode ( pHostName, pServiceName, &node.pNode ) ;
       }
-      // create a new node in current shard
+      // create a new node in current replica group
       INT32 createNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
                          const CHAR *pDatabasePath,
                          std::map<std::string,std::string> &config ) ;
 
-      // remove the specified node in current shard
+      // remove the specified node in current replica group
       INT32 removeNode ( const CHAR *pHostName,
                          const CHAR *pServiceName,
                          const BSONObj &configure = _sdbStaticObject ) ;
 
-      // activate the shard
+      // activate the replica group
       INT32 start () ;
 
-      // stop the entire shard
+      // stop the entire replica group
       INT32 stop () ;
 
-      // get shard name
+      // get replica group name
       const CHAR *getName ()
       {
-         return _shardName ;
+         return _replicaGroupName ;
       }
 
-      // whether the current shard is catalog shard or not
+      // whether the current replica group is catalog replica group or not
       BOOLEAN isCatalog ()
       {
          return _isCatalog ;
       }
    } ;
-   typedef class _sdbShardImpl sdbShardImpl ;
+   typedef class _sdbReplicaGroupImpl sdbReplicaGroupImpl ;
    class _sdbCollectionSpaceImpl : public _sdbCollectionSpace
    {
    private :
@@ -545,7 +545,7 @@ namespace sdbclient
       std::set<ossValuePtr> _collections ;
       std::set<ossValuePtr> _collectionspaces ;
       std::set<ossValuePtr> _nodes ;
-      std::set<ossValuePtr> _shards ;
+      std::set<ossValuePtr> _replicaGroups ;
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
@@ -580,10 +580,10 @@ namespace sdbclient
          _nodes.insert ( (ossValuePtr)node ) ;
          unlock () ;
       }
-      void _regShard ( _sdbShardImpl *shard )
+      void _regReplicaGroup ( _sdbReplicaGroupImpl *replicaGroup )
       {
          lock () ;
-         _shards.insert ( (ossValuePtr)shard ) ;
+         _replicaGroups.insert ( (ossValuePtr)replicaGroup ) ;
          unlock () ;
       }
       void _unregCursor ( _sdbCursorImpl * cursor )
@@ -629,10 +629,10 @@ namespace sdbclient
          _nodes.erase ( (ossValuePtr)node ) ;
          unlock () ;
       }
-      void _unregShard ( _sdbShardImpl *shard )
+      void _unregReplicaGroup ( _sdbReplicaGroupImpl *replicaGroup )
       {
          lock () ;
-         _shards.erase ( (ossValuePtr)shard ) ;
+         _replicaGroups.erase ( (ossValuePtr)replicaGroup ) ;
          unlock () ;
       }
 
@@ -643,7 +643,7 @@ namespace sdbclient
       friend class _sdbCollectionImpl ;
       friend class _sdbCursorImpl ;
       friend class _sdbNodeImpl ;
-      friend class _sdbShardImpl ;
+      friend class _sdbReplicaGroupImpl ;
    public :
       _sdbImpl () ;
       ~_sdbImpl () ;
@@ -774,45 +774,45 @@ namespace sdbclient
          return listCollections ( &result.pCursor ) ;
       }
 
-      INT32 listShards ( _sdbCursor **result ) ;
+      INT32 listReplicaGroups ( _sdbCursor **result ) ;
 
-      INT32 listShards ( sdbCursor &result )
+      INT32 listReplicaGroups ( sdbCursor &result )
       {
-         return listShards ( &result.pCursor ) ;
+         return listReplicaGroups ( &result.pCursor ) ;
       }
 
-      INT32 getShard ( const CHAR *pName, _sdbShard **result ) ;
+      INT32 getReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **result ) ;
 
-      INT32 getShard ( const CHAR *pName, sdbShard &result )
+      INT32 getReplicaGroup ( const CHAR *pName, sdbReplicaGroup &result )
       {
-         return getShard ( pName, &result.pShard ) ;
+         return getReplicaGroup ( pName, &result.pReplicaGroup ) ;
       }
 
-      INT32 getShard ( INT32 id, _sdbShard **result ) ;
+      INT32 getReplicaGroup ( INT32 id, _sdbReplicaGroup **result ) ;
 
-      INT32 getShard ( INT32 id, sdbShard &result )
+      INT32 getReplicaGroup ( INT32 id, sdbReplicaGroup &result )
       {
-         return getShard ( id, &result.pShard ) ;
+         return getReplicaGroup ( id, &result.pReplicaGroup ) ;
       }
 
-      INT32 createShard ( const CHAR *pName, _sdbShard **shard ) ;
+      INT32 createReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup ) ;
 
-      INT32 createShard ( const CHAR *pName, sdbShard &shard )
+      INT32 createReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
-         return createShard ( pName, &shard.pShard ) ;
+         return createReplicaGroup ( pName, &replicaGroup.pReplicaGroup ) ;
       }
 
-      INT32 removeShard ( const CHAR *pName ) ;
+      INT32 removeReplicaGroup ( const CHAR *pName ) ;
 
-      INT32 createCataShard (  const CHAR *pHostName,
+      INT32 createReplicaCataGroup (  const CHAR *pHostName,
                                const CHAR *pServiceName,
                                const CHAR *pDatabasePath,
                                const BSONObj &configure ) ;
 
-      INT32 activateShard ( const CHAR *pName, _sdbShard **shard ) ;
-      INT32 activateShard ( const CHAR *pName, sdbShard &shard )
+      INT32 activateReplicaGroup ( const CHAR *pName, _sdbReplicaGroup **replicaGroup ) ;
+      INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
       {
-         return activateShard( pName, &shard.pShard ) ;
+         return activateReplicaGroup( pName, &replicaGroup.pReplicaGroup ) ;
       }
 
       // sql
