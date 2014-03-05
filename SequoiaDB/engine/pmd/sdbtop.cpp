@@ -584,7 +584,7 @@ public://consturct function
    Event() ;
    ~Event() ;
 public: // operation
-   INT32 readConfiguration( ) ;
+   //INT32 readConfiguration( ) ;
    
    INT32 assignActivatedPanelByLabelName( BodyMap **activatedPanel,
                                           string labelName ) ;
@@ -690,7 +690,8 @@ static inline std::string &trim ( std::string &s )
    return ltrim ( rtrim ( s ) ) ;
 }
 
-void GETNSTR_TOP( CHAR *buf, INT32 bufLength )
+
+void getnstr_SDBTOP( CHAR *buf, INT32 bufLength )
 {
    //INT64 ch = 0 ;
    //INT32 i = 0 ;
@@ -707,29 +708,90 @@ void GETNSTR_TOP( CHAR *buf, INT32 bufLength )
    getnstr( buf, bufLength ) ;
 }
 
+#define REFERUPPERLEFT_X "referUpperLeft_X"
+#define REFERUPPERLEFT_Y "referUpperLeft_Y"
+#define LENGTH_X "length_X"
+#define LENGTH_Y "length_Y"
 INT32 readPosition( ptree pt_position, Position& position )
 {
    INT32 rc = SDB_OK ;
    try
    {
-      position.referUpperLeft_X = pt_position.get<INT32>( "referUpperLeft_X" ) ;
-      position.referUpperLeft_Y = pt_position.get<INT32>( "referUpperLeft_Y" ) ;
-      position.length_X= pt_position.get<INT32>( "length_X" ) ;
-      position.length_Y= pt_position.get<INT32>( "length_Y" ) ;
+      position.referUpperLeft_X = pt_position.get<INT32>( REFERUPPERLEFT_X ) ;
+      position.referUpperLeft_Y = pt_position.get<INT32>( REFERUPPERLEFT_Y ) ;
+      position.length_X= pt_position.get<INT32>( LENGTH_X ) ;
+      position.length_Y= pt_position.get<INT32>( LENGTH_Y ) ;
    }
    catch( std::exception &e )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                 "%s readPosition failed, e.what():%s\n", errStrBuf, e.what() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
+
+#define AUTOSETTYPE_XML "autoSetType"
+#define COLOUR_FOREGROUNDCOLOR "colour.foreGroundColor"
+#define COLOUR_BACKGROUNDCOLOR "colour.backGroundColor"
+#define PREFIXCOLOUR_FOREGROUNDCOLOR "prefixColour.foreGroundColor"
+#define PREFIXCOLOUR_BACKGROUNDCOLOR "prefixColour.backGroundColor"
+#define CONTENTCOLOUR_FOREGROUNDCOLOR "contentColour.foreGroundColor"
+#define CONTENTCOLOUR_BACKGROUNDCOLOR "contentColour.backGroundColor"
+#define TABLEROW "tableRow"
+#define TABLECOLUMN "tableColumn"
+#define CELLLENGTH "cellLength"
+#define EXPRESSIONNUMBER "expressionNumber"
+#define ROWNUMBER "rowNumber"
+#define EXPRESSIONCONTENT "ExpressionContent"
+#define ALIGNMENT "alignment"
+#define ROWLOCATION "rowLocation"
+#define EXPRESSIONTYPE "expressionType"
+#define EXPRESSIONLENGTH "expressionLength"
+#define EXPRESSIONVALUE_TEXT "expressionValue.text"
+#define EXPRESSIONVALUE_EXPRESSION "expressionValue.expression"
+#define GLOBAL_AUTOSETTYPE "globalAutoSetType"
+#define GROUP_AUTOSETTYPE "groupAutoSetType"
+#define NODE_AUTOSETTYPE "nodeAutoSetType"
+#define GLOBAL_STYLE "globalStyle"
+#define GROUP_STYLE "groupStyle"
+#define NODE_STYLE "nodeStyle"
+#define GLOBAL_ROW "globalRow"
+#define GROUP_ROW "groupRow"
+#define NODE_ROW "nodeRow"
+#define GLOBAL_COL "globalCol"
+#define GROUP_COL "groupCol"
+#define NODE_COL "nodeCol"
+#define TABLE_CELLLENGTH "tableCellLength"
+#define BASEFIELD "baseField"
+#define FIELDLENGTH "fieldLength"
+#define FIXED "fixed"
+#define MOBILE "mobile"
+#define FIELDSTRUCT "FieldStruct"
+#define ABSOLUTENAME "absoluteName"
+#define SOURCEFIELD "sourceField"
+#define CONTENTLENGTH "contentLength"
+#define ABSOLUTECOLOUR_FOREGROUNDCOLOR "absoluteColour.foreGroundColor"
+#define ABSOLUTECOLOUR_BACKGROUNDCOLOR "absoluteColour.backGroundColor"
+#define WARNINGVALUE_ABSOLUTE_MAX_LIMITVALUE "warningValue.absoluteMaxLimitValue"
+#define WARNINGVALUE_ABSOLUTE_MIN_LIMITVALUE "warningValue.absoluteMinLimitValue"
+#define WARNINGVALUE_DELTA_MAX_LIMITVALUE "warningValue.deltaMaxLimitValue"
+#define WARNINGVALUE_DELTA_MIN_LIMITVALUE "warningValue.deltaMinLimitValue"
+#define WARNINGVALUE_AVERAGE_MAX_LIMITVALUE "warningValue.averageMaxLimitValue"
+#define WARNINGVALUE_AVERAGE_MIN_LIMITVALUE "warningValue.averageMinLimitValue"
+#define CANSWITCH "canSwitch"
+#define DELTANAME "deltaName"
+#define AVERAGENAME "averageName"
+#define DELTACOLOUR_FOREGROUNDCOLOR "deltaColour.foreGroundColor"
+#define DELTACOLOUR_BACKGROUNDCOLOR "deltaColour.backGroundColor"
+#define AVERAGECOLOUR_FOREGROUNDCOLOR "averageColour.foreGroundColor"
+#define AVERAGECOLOUR_BACKGROUNDCOLOR "averageColour.backGroundColor"
+
 
 INT32 readDisplayContent( ptree pt_displayContent,
                           DisplayContent &display, string displayType )
@@ -740,11 +802,11 @@ INT32 readDisplayContent( ptree pt_displayContent,
       try
       {
          display.staticTextOutPut.autoSetType =
-               pt_displayContent.get<string>( "autoSetType" ) ;
+               pt_displayContent.get<string>( AUTOSETTYPE_XML ) ;
          display.staticTextOutPut.colour.foreGroundColor =
-               pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
+               pt_displayContent.get<INT32>( COLOUR_FOREGROUNDCOLOR ) ;
          display.staticTextOutPut.colour.backGroundColor =
-               pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
+               pt_displayContent.get<INT32>( COLOUR_BACKGROUNDCOLOR ) ;
          display.staticTextOutPut.outputText = HELP_Header ;
       }
       catch( std::exception &e )
@@ -754,6 +816,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
                    "(displayType == DISPLAYTYPE_STATICTEXT_HELP_Header), "
                    "e.what():%s\n",
                    errStrBuf, e.what() ) ;
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -762,11 +825,11 @@ INT32 readDisplayContent( ptree pt_displayContent,
       try
       {
          display.staticTextOutPut.autoSetType =
-               pt_displayContent.get<string>( "autoSetType" ) ;
+               pt_displayContent.get<string>( AUTOSETTYPE_XML ) ;
          display.staticTextOutPut.colour.foreGroundColor =
-               pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
+               pt_displayContent.get<INT32>( COLOUR_FOREGROUNDCOLOR ) ;
          display.staticTextOutPut.colour.backGroundColor =
-               pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
+               pt_displayContent.get<INT32>( COLOUR_BACKGROUNDCOLOR ) ;
          display.staticTextOutPut.outputText = LICENSE_Footer ;
       }
       catch( std::exception &e )
@@ -776,6 +839,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
                    "(displayType == DISPLAYTYPE_STATICTEXT_LICENSE), "
                    "e.what():%s\n",
                    errStrBuf, e.what() ) ;
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -784,11 +848,11 @@ INT32 readDisplayContent( ptree pt_displayContent,
       try
       {
          display.staticTextOutPut.autoSetType =
-               pt_displayContent.get<string>( "autoSetType" ) ;
+               pt_displayContent.get<string>( AUTOSETTYPE_XML ) ;
          display.staticTextOutPut.colour.foreGroundColor =
-               pt_displayContent.get<INT32>( "colour.foreGroundColor" ) ;
+               pt_displayContent.get<INT32>( COLOUR_FOREGROUNDCOLOR ) ;
          display.staticTextOutPut.colour.backGroundColor =
-               pt_displayContent.get<INT32>( "colour.backGroundColor" ) ;
+               pt_displayContent.get<INT32>( COLOUR_BACKGROUNDCOLOR ) ;
          display.staticTextOutPut.outputText = Hello_Body ;
       }
       catch( std::exception &e )
@@ -798,6 +862,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
                    "(displayType == DISPLAYTYPE_STATICTEXT_MAIN), "
                    "e.what():%s\n",
                    errStrBuf, e.what() ) ;
+         rc = SDB_ERROR ;
          goto error;
       }
    }
@@ -806,16 +871,16 @@ INT32 readDisplayContent( ptree pt_displayContent,
       try
       {
          display.dynamicHelp.autoSetType =
-               pt_displayContent.get<string>( "autoSetType" ) ;
+               pt_displayContent.get<string>( AUTOSETTYPE_XML ) ;
          display.dynamicHelp.prefixColour.foreGroundColor =
-               pt_displayContent.get<INT32>( "prefixColour.foreGroundColor" ) ;
+               pt_displayContent.get<INT32>( PREFIXCOLOUR_FOREGROUNDCOLOR ) ;
          display.dynamicHelp.prefixColour.backGroundColor =
-               pt_displayContent.get<INT32>( "prefixColour.backGroundColor" ) ;
-         display.dynamicHelp.contentColour.foreGroundColor = pt_displayContent.get<INT32>( "contentColour.foreGroundColor" ) ;
-         display.dynamicHelp.contentColour.backGroundColor = pt_displayContent.get<INT32>( "contentColour.backGroundColor" ) ;
-         display.dynamicHelp.tableRow = pt_displayContent.get<INT32>( "tableRow" ) ;
-         display.dynamicHelp.tableColumn= pt_displayContent.get<INT32>( "tableColumn" ) ;
-         display.dynamicHelp.cellLength= pt_displayContent.get<INT32>( "cellLength" ) ;
+               pt_displayContent.get<INT32>( PREFIXCOLOUR_BACKGROUNDCOLOR ) ;
+         display.dynamicHelp.contentColour.foreGroundColor = pt_displayContent.get<INT32>( CONTENTCOLOUR_FOREGROUNDCOLOR ) ;
+         display.dynamicHelp.contentColour.backGroundColor = pt_displayContent.get<INT32>( CONTENTCOLOUR_BACKGROUNDCOLOR ) ;
+         display.dynamicHelp.tableRow = pt_displayContent.get<INT32>( TABLEROW ) ;
+         display.dynamicHelp.tableColumn= pt_displayContent.get<INT32>( TABLECOLUMN ) ;
+         display.dynamicHelp.cellLength= pt_displayContent.get<INT32>( CELLLENGTH ) ;
       }
       catch( std::exception &e )
       {
@@ -823,6 +888,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
          ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_HELP), e.what():%s\n",
                    errStrBuf, e.what() ) ;
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -830,25 +896,26 @@ INT32 readDisplayContent( ptree pt_displayContent,
    {
       try
       {
-         display.dyExOutPut.autoSetType = pt_displayContent.get<string>( "autoSetType" ) ;
-         display.dyExOutPut.expressionNumber = pt_displayContent.get<INT32>( "expressionNumber" ) ;
-         display.dyExOutPut.rowNumber= pt_displayContent.get<INT32>( "rowNumber" ) ;
+         display.dyExOutPut.autoSetType = pt_displayContent.get<string>( AUTOSETTYPE_XML ) ;
+         display.dyExOutPut.expressionNumber = pt_displayContent.get<INT32>( EXPRESSIONNUMBER ) ;
+         display.dyExOutPut.rowNumber= pt_displayContent.get<INT32>( ROWNUMBER ) ;
          display.dyExOutPut.content = SDB_OSS_NEW ExpressionContent[display.dyExOutPut.expressionNumber] ;
          INT32 expressionNumber = 0 ;
          for( BOOST_AUTO( child_displayContent, pt_displayContent.begin() ); child_displayContent != pt_displayContent.end(); ++child_displayContent )
          {
-            if( child_displayContent->first == "ExpressionContent" )
+            if( child_displayContent->first == EXPRESSIONCONTENT )
             {
                if( expressionNumber>= display.dyExOutPut.expressionNumber )
                {
+                  rc = SDB_ERROR ;
                   goto error;
                }
-               display.dyExOutPut.content[expressionNumber].alignment = child_displayContent->second.get<string>( "alignment" ) ;
-               display.dyExOutPut.content[expressionNumber].colour.foreGroundColor = child_displayContent->second.get<INT32>( "colour.foreGroundColor" ) ;
-               display.dyExOutPut.content[expressionNumber].colour.backGroundColor = child_displayContent->second.get<INT32>( "colour.backGroundColor" ) ;
-               display.dyExOutPut.content[expressionNumber].rowLocation = child_displayContent->second.get<INT32>( "rowLocation" ) ;
-               display.dyExOutPut.content[expressionNumber].expressionType = child_displayContent->second.get<string>( "expressionType" ) ;
-               display.dyExOutPut.content[expressionNumber].expressionLength = child_displayContent->second.get<INT32>( "expressionLength" ) ;
+               display.dyExOutPut.content[expressionNumber].alignment = child_displayContent->second.get<string>( ALIGNMENT ) ;
+               display.dyExOutPut.content[expressionNumber].colour.foreGroundColor = child_displayContent->second.get<INT32>( COLOUR_FOREGROUNDCOLOR ) ;
+               display.dyExOutPut.content[expressionNumber].colour.backGroundColor = child_displayContent->second.get<INT32>( COLOUR_BACKGROUNDCOLOR ) ;
+               display.dyExOutPut.content[expressionNumber].rowLocation = child_displayContent->second.get<INT32>( ROWLOCATION ) ;
+               display.dyExOutPut.content[expressionNumber].expressionType = child_displayContent->second.get<string>( EXPRESSIONTYPE ) ;
+               display.dyExOutPut.content[expressionNumber].expressionLength = child_displayContent->second.get<INT32>( EXPRESSIONLENGTH ) ;
                if( display.dyExOutPut.content[expressionNumber].expressionLength < 1 )
                {
                   ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -859,11 +926,11 @@ INT32 readDisplayContent( ptree pt_displayContent,
                }
                if( display.dyExOutPut.content[expressionNumber].expressionType == DYNAMIC_EXPRESSION )
                {
-                  display.dyExOutPut.content[expressionNumber].expressionValue.expression = child_displayContent->second.get<string>( "expressionValue.expression" ) ;
+                  display.dyExOutPut.content[expressionNumber].expressionValue.expression = child_displayContent->second.get<string>( EXPRESSIONVALUE_EXPRESSION ) ;
                }
                else if( display.dyExOutPut.content[expressionNumber].expressionType == STATIC_EXPRESSION )
                {
-                  display.dyExOutPut.content[expressionNumber].expressionValue.text = child_displayContent->second.get<string>( "expressionValue.text" ) ;
+                  display.dyExOutPut.content[expressionNumber].expressionValue.text = child_displayContent->second.get<string>( EXPRESSIONVALUE_TEXT ) ;
                }
                else
                {
@@ -871,6 +938,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
                   ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                             "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION), expressionType == %s\n",
                             errStrBuf, display.dyExOutPut.content[expressionNumber].expressionType.c_str() ) ;
+                  rc = SDB_ERROR ;
                   goto error ;
                }
                ++expressionNumber ;
@@ -884,6 +952,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
          ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION), e.what():%s\n",
                    errStrBuf, e.what() ) ;
+         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -891,36 +960,36 @@ INT32 readDisplayContent( ptree pt_displayContent,
    {
       try
       {
-         display.dySnapshotOutPut.globalAutoSetType = pt_displayContent.get<string>( "globalAutoSetType" ) ;
-         display.dySnapshotOutPut.groupAutoSetType = pt_displayContent.get<string>( "groupAutoSetType" ) ;
-         display.dySnapshotOutPut.nodeAutoSetType = pt_displayContent.get<string>( "nodeAutoSetType" ) ;
+         display.dySnapshotOutPut.globalAutoSetType = pt_displayContent.get<string>( GLOBAL_AUTOSETTYPE ) ;
+         display.dySnapshotOutPut.groupAutoSetType = pt_displayContent.get<string>( GROUP_AUTOSETTYPE ) ;
+         display.dySnapshotOutPut.nodeAutoSetType = pt_displayContent.get<string>( NODE_AUTOSETTYPE ) ;
          
-         display.dySnapshotOutPut.globalStyle = pt_displayContent.get<string>( "globalStyle" ) ;
-         display.dySnapshotOutPut.groupStyle = pt_displayContent.get<string>( "groupStyle" ) ;
-         display.dySnapshotOutPut.nodeStyle = pt_displayContent.get<string>( "nodeStyle" ) ;
+         display.dySnapshotOutPut.globalStyle = pt_displayContent.get<string>( GLOBAL_STYLE ) ;
+         display.dySnapshotOutPut.groupStyle = pt_displayContent.get<string>( GROUP_STYLE ) ;
+         display.dySnapshotOutPut.nodeStyle = pt_displayContent.get<string>( NODE_STYLE ) ;
          if( TABLE == display.dySnapshotOutPut.globalStyle )
          {
-            display.dySnapshotOutPut.globalRow = pt_displayContent.get<INT32>( "globalRow" ) ;
-            display.dySnapshotOutPut.globalCol = pt_displayContent.get<INT32>( "globalCol" ) ;
-            display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( "tableCellLength" ) ;
+            display.dySnapshotOutPut.globalRow = pt_displayContent.get<INT32>( GLOBAL_ROW ) ;
+            display.dySnapshotOutPut.globalCol = pt_displayContent.get<INT32>( GLOBAL_COL ) ;
+            display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( TABLE_CELLLENGTH ) ;
          }
          
          if( TABLE == display.dySnapshotOutPut.groupStyle )
          {
-            display.dySnapshotOutPut.groupRow = pt_displayContent.get<INT32>( "groupRow" ) ;
-            display.dySnapshotOutPut.groupCol = pt_displayContent.get<INT32>( "groupCol" ) ;
-            display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( "tableCellLength" ) ;
+            display.dySnapshotOutPut.groupRow = pt_displayContent.get<INT32>( GROUP_ROW ) ;
+            display.dySnapshotOutPut.groupCol = pt_displayContent.get<INT32>( GROUP_COL ) ;
+            display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( TABLE_CELLLENGTH ) ;
          }
 
          if( TABLE == display.dySnapshotOutPut.nodeStyle )
          {
-            display.dySnapshotOutPut.nodeRow = pt_displayContent.get<INT32>( "nodeRow" ) ;
-            display.dySnapshotOutPut.nodeCol = pt_displayContent.get<INT32>( "nodeCol" ) ;
-            display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( "tableCellLength" ) ;
+            display.dySnapshotOutPut.nodeRow = pt_displayContent.get<INT32>( NODE_ROW ) ;
+            display.dySnapshotOutPut.nodeCol = pt_displayContent.get<INT32>( NODE_COL ) ;
+            display.dySnapshotOutPut.tableCellLength = pt_displayContent.get<INT32>( TABLE_CELLLENGTH ) ;
          }
          
-         display.dySnapshotOutPut.baseField = pt_displayContent.get<string>( "baseField" ) ;
-         display.dySnapshotOutPut.fieldLength = pt_displayContent.get<INT32>( "fieldLength" ) ;
+         display.dySnapshotOutPut.baseField = pt_displayContent.get<string>( BASEFIELD ) ;
+         display.dySnapshotOutPut.fieldLength = pt_displayContent.get<INT32>( FIELDLENGTH ) ;
          display.dySnapshotOutPut.fixedField = SDB_OSS_NEW FieldStruct[display.dySnapshotOutPut.fieldLength] ;
          display.dySnapshotOutPut.mobileField = SDB_OSS_NEW FieldStruct[display.dySnapshotOutPut.fieldLength] ;
 
@@ -931,6 +1000,7 @@ INT32 readDisplayContent( ptree pt_displayContent,
          ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_SNAPSHOT), e.what():%s\n",
                    errStrBuf, e.what() ) ;
+         rc = SDB_ERROR ;
          goto error;
       }
       
@@ -938,28 +1008,28 @@ INT32 readDisplayContent( ptree pt_displayContent,
       INT32 actualMobileFieldNum = 0;
       for( BOOST_AUTO( child_displayContent, pt_displayContent.begin() ); child_displayContent != pt_displayContent.end(); ++child_displayContent )
       {
-         if( child_displayContent->first == "fixed" )
+         if( child_displayContent->first == FIXED )
          {
             for( BOOST_AUTO( child_pFixed, child_displayContent->second.begin() ); child_pFixed != child_displayContent->second.end(); ++child_pFixed )
             {
-               if( child_pFixed->first == "FieldStruct" )
+               if( child_pFixed->first == FIELDSTRUCT )
                {
                   if( actualFixedFieldNum >= display.dySnapshotOutPut.fieldLength )
                   {
                      break ;
                   }
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteName = child_pFixed->second.get<string>( "absoluteName" ) ;  
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].sourceField = child_pFixed->second.get<string>( "sourceField" ) ;
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].contentLength = child_pFixed->second.get<INT32>( "contentLength" ) ;
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].alignment = child_pFixed->second.get<string>( "alignment" ) ;
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteName = child_pFixed->second.get<string>( ABSOLUTENAME ) ;  
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].sourceField = child_pFixed->second.get<string>( SOURCEFIELD ) ;
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].contentLength = child_pFixed->second.get<INT32>( CONTENTLENGTH ) ;
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].alignment = child_pFixed->second.get<string>( ALIGNMENT ) ;
 
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteColour.foreGroundColor = child_pFixed->second.get<INT32>( "absoluteColour.foreGroundColor" ) ;
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteColour.backGroundColor = child_pFixed->second.get<INT32>( "absoluteColour.backGroundColor" ) ;
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteColour.foreGroundColor = child_pFixed->second.get<INT32>( ABSOLUTECOLOUR_FOREGROUNDCOLOR ) ;
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].absoluteColour.backGroundColor = child_pFixed->second.get<INT32>( ABSOLUTECOLOUR_BACKGROUNDCOLOR ) ;
 
                   try
                   {
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.absoluteMaxLimitValue = child_pFixed->second.get<INT64>( "warningValue.absoluteMaxLimitValue" ) ;
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.absoluteMinLimitValue = child_pFixed->second.get<INT64>( "warningValue.absoluteMinLimitValue" ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.absoluteMaxLimitValue = child_pFixed->second.get<INT64>( WARNINGVALUE_ABSOLUTE_MAX_LIMITVALUE ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.absoluteMinLimitValue = child_pFixed->second.get<INT64>( WARNINGVALUE_ABSOLUTE_MIN_LIMITVALUE ) ;
                   }
                   catch( std::exception &e )
                   {
@@ -967,23 +1037,23 @@ INT32 readDisplayContent( ptree pt_displayContent,
                      display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.absoluteMinLimitValue = 0 ;
                   }
 
-                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].canSwitch= child_pFixed->second.get<INT32>( "canSwitch" ) ;
+                  display.dySnapshotOutPut.fixedField[actualFixedFieldNum].canSwitch= child_pFixed->second.get<INT32>( CANSWITCH ) ;
                   if( 1 == display.dySnapshotOutPut.fixedField[actualFixedFieldNum].canSwitch )
                   {
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].deltaName = child_pFixed->second.get<string>( "deltaName" ) ;
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageName = child_pFixed->second.get<string>( "averageName" ) ;
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].deltaColour.foreGroundColor = child_pFixed->second.get<INT32>( "deltaColour.foreGroundColor" ) ;
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].deltaColour.backGroundColor = child_pFixed->second.get<INT32>( "deltaColour.backGroundColor" ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].deltaName = child_pFixed->second.get<string>( DELTANAME ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageName = child_pFixed->second.get<string>( AVERAGENAME ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].deltaColour.foreGroundColor = child_pFixed->second.get<INT32>( DELTACOLOUR_FOREGROUNDCOLOR ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].deltaColour.backGroundColor = child_pFixed->second.get<INT32>( DELTACOLOUR_BACKGROUNDCOLOR ) ;
 
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageColour.foreGroundColor = child_pFixed->second.get<INT32>( "averageColour.foreGroundColor" ) ;
-                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageColour.backGroundColor = child_pFixed->second.get<INT32>( "averageColour.backGroundColor" ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageColour.foreGroundColor = child_pFixed->second.get<INT32>( AVERAGECOLOUR_FOREGROUNDCOLOR ) ;
+                     display.dySnapshotOutPut.fixedField[actualFixedFieldNum].averageColour.backGroundColor = child_pFixed->second.get<INT32>( AVERAGECOLOUR_BACKGROUNDCOLOR ) ;
                      try
                      {                 
-                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMaxLimitValue = child_pFixed->second.get<INT64>( "warningValue.deltaMaxLimitValue" ) ;
-                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMinLimitValue = child_pFixed->second.get<INT64>( "warningValue.deltaMinLimitValue" ) ;
+                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMaxLimitValue = child_pFixed->second.get<INT64>( WARNINGVALUE_DELTA_MAX_LIMITVALUE ) ;
+                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.deltaMinLimitValue = child_pFixed->second.get<INT64>( WARNINGVALUE_DELTA_MIN_LIMITVALUE ) ;
                            
-                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMaxLimitValue = child_pFixed->second.get<INT64>( "warningValue.averageMaxLimitValue" ) ;
-                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMinLimitValue = child_pFixed->second.get<INT64>( "warningValue.averageMinLimitValue" ) ;
+                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMaxLimitValue = child_pFixed->second.get<INT64>( WARNINGVALUE_AVERAGE_MAX_LIMITVALUE ) ;
+                        display.dySnapshotOutPut.fixedField[actualFixedFieldNum].warningValue.averageMinLimitValue = child_pFixed->second.get<INT64>( WARNINGVALUE_AVERAGE_MIN_LIMITVALUE ) ;
                      }
                      catch( std::exception &e )
                      {
@@ -1000,29 +1070,29 @@ INT32 readDisplayContent( ptree pt_displayContent,
                ++actualFixedFieldNum ;
             }
          }
-         else if( child_displayContent->first == "mobile" )
+         else if( child_displayContent->first == MOBILE )
          {
             for( BOOST_AUTO( child_pMobile, child_displayContent->second.begin() ); child_pMobile != child_displayContent->second.end(); ++child_pMobile )
             {
-               if( child_pMobile->first == "FieldStruct" )
+               if( child_pMobile->first == FIELDSTRUCT )
                {
                   if( actualMobileFieldNum >= display.dySnapshotOutPut.fieldLength )
                   {
                      break ;
                   }
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteName = child_pMobile->second.get<string>( "absoluteName" ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteName = child_pMobile->second.get<string>( ABSOLUTENAME ) ;
                      
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].sourceField = child_pMobile->second.get<string>( "sourceField" ) ;
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].contentLength = child_pMobile->second.get<INT32>( "contentLength" ) ;
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].alignment = child_pMobile->second.get<string>( "alignment" ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].sourceField = child_pMobile->second.get<string>( SOURCEFIELD ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].contentLength = child_pMobile->second.get<INT32>( CONTENTLENGTH ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].alignment = child_pMobile->second.get<string>( ALIGNMENT ) ;
 
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteColour.foreGroundColor = child_pMobile->second.get<INT32>( "absoluteColour.foreGroundColor" ) ;
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteColour.backGroundColor = child_pMobile->second.get<INT32>( "absoluteColour.backGroundColor" ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteColour.foreGroundColor = child_pMobile->second.get<INT32>( ABSOLUTECOLOUR_FOREGROUNDCOLOR ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].absoluteColour.backGroundColor = child_pMobile->second.get<INT32>( ABSOLUTECOLOUR_BACKGROUNDCOLOR ) ;
                      
                   try
                   {
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.absoluteMaxLimitValue = child_pMobile->second.get<INT64>( "warningValue.absoluteMaxLimitValue" ) ;
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.absoluteMinLimitValue = child_pMobile->second.get<INT64>( "warningValue.absoluteMinLimitValue" ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.absoluteMaxLimitValue = child_pMobile->second.get<INT64>( WARNINGVALUE_ABSOLUTE_MAX_LIMITVALUE ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.absoluteMinLimitValue = child_pMobile->second.get<INT64>( WARNINGVALUE_ABSOLUTE_MIN_LIMITVALUE ) ;
                   }
                   catch( std::exception &e )
                   {
@@ -1030,25 +1100,25 @@ INT32 readDisplayContent( ptree pt_displayContent,
                      display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.absoluteMinLimitValue = 0 ;
                   }
 
-                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].canSwitch= child_pMobile->second.get<INT32>( "canSwitch" ) ;
+                  display.dySnapshotOutPut.mobileField[actualMobileFieldNum].canSwitch= child_pMobile->second.get<INT32>( CANSWITCH ) ;
                   if( 1 == display.dySnapshotOutPut.mobileField[actualMobileFieldNum].canSwitch )
                   {
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaName = child_pMobile->second.get<string>( "deltaName" ) ;
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageName = child_pMobile->second.get<string>( "averageName" ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaName = child_pMobile->second.get<string>( DELTANAME ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageName = child_pMobile->second.get<string>( AVERAGENAME ) ;
                      
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaColour.foreGroundColor = child_pMobile->second.get<INT32>( "deltaColour.foreGroundColor" ) ;
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaColour.backGroundColor = child_pMobile->second.get<INT32>( "deltaColour.backGroundColor" ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaColour.foreGroundColor = child_pMobile->second.get<INT32>( DELTACOLOUR_FOREGROUNDCOLOR ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].deltaColour.backGroundColor = child_pMobile->second.get<INT32>( DELTACOLOUR_BACKGROUNDCOLOR ) ;
                      
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageColour.foreGroundColor = child_pMobile->second.get<INT32>( "averageColour.foreGroundColor" ) ;
-                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageColour.backGroundColor = child_pMobile->second.get<INT32>( "averageColour.backGroundColor" ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageColour.foreGroundColor = child_pMobile->second.get<INT32>( AVERAGECOLOUR_FOREGROUNDCOLOR ) ;
+                     display.dySnapshotOutPut.mobileField[actualMobileFieldNum].averageColour.backGroundColor = child_pMobile->second.get<INT32>( AVERAGECOLOUR_BACKGROUNDCOLOR ) ;
 
                      try
                      {  
-                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMaxLimitValue = child_pMobile->second.get<INT64>( "warningValue.deltaMaxLimitValue" ) ;
-                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMinLimitValue = child_pMobile->second.get<INT64>( "warningValue.deltaMinLimitValue" ) ;
+                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMaxLimitValue = child_pMobile->second.get<INT64>( WARNINGVALUE_DELTA_MAX_LIMITVALUE ) ;
+                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.deltaMinLimitValue = child_pMobile->second.get<INT64>( WARNINGVALUE_DELTA_MIN_LIMITVALUE ) ;
                            
-                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMaxLimitValue = child_pMobile->second.get<INT64>( "warningValue.averageMaxLimitValue" ) ;
-                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMinLimitValue = child_pMobile->second.get<INT64>( "warningValue.averageMinLimitValue" ) ;
+                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMaxLimitValue = child_pMobile->second.get<INT64>( WARNINGVALUE_AVERAGE_MAX_LIMITVALUE ) ;
+                        display.dySnapshotOutPut.mobileField[actualMobileFieldNum].warningValue.averageMinLimitValue = child_pMobile->second.get<INT64>( WARNINGVALUE_AVERAGE_MIN_LIMITVALUE ) ;
                      }
                      catch( std::exception &e )
                      {            
@@ -1076,15 +1146,12 @@ INT32 readDisplayContent( ptree pt_displayContent,
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed,"
                 " displayType is wrong\n", errStrBuf ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   if( SDB_OK == rc )
-   {
-      rc = SDB_ERROR ;
-   }
    goto done ;
 }
 
@@ -1108,6 +1175,7 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
                ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
                          " numOfSubWindow >= value.numOfSubWindow\n",
                          errStrBuf ) ;
+               rc = SDB_ERROR ;
                goto error ;
             }
             value.subWindow[numOfSubWindow].actualWindowMinRow =
@@ -1143,6 +1211,7 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
                      ossSnprintf( errStr, errStrLength,
                                   "%s readPanelValue failed, "
                                   "can't readDisplayContent\n", errStrBuf ) ;
+                     rc = SDB_ERROR ;
                      goto error ;
                   }
                }
@@ -1157,6 +1226,7 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
                      ossSnprintf( errStr, errStrLength,
                                   "%s readPanelValue failed, "
                                   "can't readPosition\n", errStrBuf ) ;
+                     rc = SDB_ERROR ;
                      goto error ;
                   }
                }
@@ -1171,136 +1241,16 @@ INT32 readPanelValue( ptree pt_value, Panel& value )
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,"%s readPanelValue failed,"
                    " e.what():%s\n", errStrBuf, e.what() ) ;
+      rc = SDB_ERROR ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   rc = SDB_ERROR ;
    goto done ;
 }
 
-Event::Event()
-{
-   root.input.activatedPanel = NULL ;
-   root.input.displayModeChooser = 0 ;
-   root.input.sortingWay = NULLSTRING;
-   root.input.sortingField = NULLSTRING ;
-   root.input.filterCondition = NULLSTRING ;
-    root.input.filterNumber = 0 ;
-   root.input.snapshotModeChooser = GLOBAL ;
-   root.input.forcedToRefresh_Global = NOTREFRESH ;
-   root.input.forcedToRefresh_Global = NOTREFRESH ;
-   root.input.fieldPosition = 0 ;
-   root.input.groupName = NULLSTRING ;
-   root.input.nodeName = NULLSTRING ;
-   root.input.confPath = SDBTOP_DEFAULT_CONFPATH ;
-   root.input.refreshInterval = 0;
-   root.input.isFirstGetSnapshot = TRUE ;
-   root.input.last_Snapshot.clear() ;
-   root.input.cur_Snapshot.clear() ;
-   root.input.last_absoluteMap.clear() ;
-   root.input.last_averageMap.clear() ;
-   root.input.last_deltaMap.clear() ;
-   root.input.cur_absoluteMap.clear() ;
-   root.input.cur_averageMap.clear() ;
-   root.input.cur_deltaMap.clear() ;
-   root.input.colourOfTheMax.foreGroundColor = COLOR_BLACK ;
-   root.input.colourOfTheMax.backGroundColor = COLOR_WHITE ;
-   root.input.colourOfTheMin.foreGroundColor = COLOR_BLACK ;
-   root.input.colourOfTheMin.backGroundColor = COLOR_WHITE ;
-   root.keySuiteLength = 0 ;
-   root.headerLength = 0 ;
-   root.bodyLength = 0 ;
-   root.footerLength = 0;
-}
-
-Event::~Event()
-{
-   INT32 headerLength = root.headerLength ;
-   INT32 bodyLength = root.bodyLength ;
-   INT32 footerLength = root.footerLength ;
-   INT32 keySuiteLength = root.keySuiteLength;
-   INT32 numOfSubWindow = 0 ;
-
-   while( keySuiteLength ) // free the memory root.keySuite
-   {
-      SDB_OSS_DEL []root.keySuite[keySuiteLength -1].hotKey ;
-      --keySuiteLength ;
-   }
-   if( root.keySuiteLength )
-      SDB_OSS_DEL []root.keySuite ;
-
-   while( headerLength ) // free the memory root.header
-   {
-      numOfSubWindow = root.header[headerLength - 1].value.numOfSubWindow;
-      while( numOfSubWindow )
-      {
-         if( DISPLAYTYPE_DYNAMIC_EXPRESSION ==
-               root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
-         {
-            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
-         }
-         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
-         {
-            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
-            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
-         }
-         --numOfSubWindow ;
-      }
-      SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow ;
-      --headerLength ;
-   }
-   if( root.headerLength )
-      SDB_OSS_DEL []root.header;
-
-   while( bodyLength ) // free the memory root.body
-   {
-      numOfSubWindow = root.body[bodyLength - 1].value.numOfSubWindow ;
-      while( numOfSubWindow )
-      {
-         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
-         {
-            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
-         }
-         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
-         {
-            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
-            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
-         }
-         --numOfSubWindow ;
-      }
-      SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow ;
-      --bodyLength ;
-   }
-   if( root.bodyLength )
-      SDB_OSS_DEL []root.body ;
-
-   while( footerLength ) // free the memory root.footer
-   {
-      numOfSubWindow = root.footer[footerLength - 1].value.numOfSubWindow ;
-      while( numOfSubWindow )
-      {
-         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
-         {
-            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
-         }
-         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
-         {
-            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
-            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
-         }
-         --numOfSubWindow ;
-      }
-      SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow ;
-      --footerLength ;
-   }
-   if( root.footerLength )
-      SDB_OSS_DEL []root.footer ;
-}
-
-
-INT32 Event::readConfiguration( )
+INT32 readConfiguration( RootWindow &root )
 {
    INT32 rc = SDB_OK ;
    INT32 otherTree = 0 ;
@@ -1660,6 +1610,487 @@ error :
    }
    goto done ;
 }
+
+Event::Event()
+{
+   root.input.activatedPanel = NULL ;
+   root.input.displayModeChooser = 0 ;
+   root.input.sortingWay = NULLSTRING;
+   root.input.sortingField = NULLSTRING ;
+   root.input.filterCondition = NULLSTRING ;
+    root.input.filterNumber = 0 ;
+   root.input.snapshotModeChooser = GLOBAL ;
+   root.input.forcedToRefresh_Global = NOTREFRESH ;
+   root.input.forcedToRefresh_Global = NOTREFRESH ;
+   root.input.fieldPosition = 0 ;
+   root.input.groupName = NULLSTRING ;
+   root.input.nodeName = NULLSTRING ;
+   root.input.confPath = SDBTOP_DEFAULT_CONFPATH ;
+   root.input.refreshInterval = 0;
+   root.input.isFirstGetSnapshot = TRUE ;
+   root.input.last_Snapshot.clear() ;
+   root.input.cur_Snapshot.clear() ;
+   root.input.last_absoluteMap.clear() ;
+   root.input.last_averageMap.clear() ;
+   root.input.last_deltaMap.clear() ;
+   root.input.cur_absoluteMap.clear() ;
+   root.input.cur_averageMap.clear() ;
+   root.input.cur_deltaMap.clear() ;
+   root.input.colourOfTheMax.foreGroundColor = COLOR_BLACK ;
+   root.input.colourOfTheMax.backGroundColor = COLOR_WHITE ;
+   root.input.colourOfTheMin.foreGroundColor = COLOR_BLACK ;
+   root.input.colourOfTheMin.backGroundColor = COLOR_WHITE ;
+   root.keySuiteLength = 0 ;
+   root.headerLength = 0 ;
+   root.bodyLength = 0 ;
+   root.footerLength = 0;
+}
+
+Event::~Event()
+{
+   INT32 headerLength = root.headerLength ;
+   INT32 bodyLength = root.bodyLength ;
+   INT32 footerLength = root.footerLength ;
+   INT32 keySuiteLength = root.keySuiteLength;
+   INT32 numOfSubWindow = 0 ;
+
+   while( keySuiteLength ) // free the memory root.keySuite
+   {
+      SDB_OSS_DEL []root.keySuite[keySuiteLength -1].hotKey ;
+      --keySuiteLength ;
+   }
+   if( root.keySuiteLength )
+      SDB_OSS_DEL []root.keySuite ;
+
+   while( headerLength ) // free the memory root.header
+   {
+      numOfSubWindow = root.header[headerLength - 1].value.numOfSubWindow;
+      while( numOfSubWindow )
+      {
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION ==
+               root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+         }
+         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+         }
+         --numOfSubWindow ;
+      }
+      SDB_OSS_DEL []root.header[headerLength - 1].value.subWindow ;
+      --headerLength ;
+   }
+   if( root.headerLength )
+      SDB_OSS_DEL []root.header;
+
+   while( bodyLength ) // free the memory root.body
+   {
+      numOfSubWindow = root.body[bodyLength - 1].value.numOfSubWindow ;
+      while( numOfSubWindow )
+      {
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+         }
+         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+         }
+         --numOfSubWindow ;
+      }
+      SDB_OSS_DEL []root.body[bodyLength - 1].value.subWindow ;
+      --bodyLength ;
+   }
+   if( root.bodyLength )
+      SDB_OSS_DEL []root.body ;
+
+   while( footerLength ) // free the memory root.footer
+   {
+      numOfSubWindow = root.footer[footerLength - 1].value.numOfSubWindow ;
+      while( numOfSubWindow )
+      {
+         if( DISPLAYTYPE_DYNAMIC_EXPRESSION == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dyExOutPut.content ;
+         }
+         else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayType )
+         {
+            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.fixedField ;
+            SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow[numOfSubWindow - 1].displayContent.dySnapshotOutPut.mobileField ;
+         }
+         --numOfSubWindow ;
+      }
+      SDB_OSS_DEL []root.footer[footerLength - 1].value.subWindow ;
+      --footerLength ;
+   }
+   if( root.footerLength )
+      SDB_OSS_DEL []root.footer ;
+}
+
+
+/*INT32 Event::readConfiguration( )
+{
+   INT32 rc = SDB_OK ;
+   INT32 otherTree = 0 ;
+   ptree pt_sdbtopXML ;
+   INT32 keySuiteLength = 0 ;
+   INT32 hotKeyLength = 0 ;
+   INT32 headerLength = 0 ;
+   INT32 bodyLength = 0 ;
+   INT32 footerLength = 0 ;
+   ptree pt_Event ;
+   root.input.confPath = confPath ;
+   try
+   {
+      read_xml( root.input.confPath, pt_sdbtopXML ) ;
+   }
+   catch( std::exception &e )
+   {
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                " check configuration file %s is exist, e.what():%s\n",
+                errStrBuf, root.input.confPath.c_str(), e.what() ) ;
+      goto error ;
+   }
+   pt_Event = pt_sdbtopXML.get_child( "Event" ) ;
+   for( BOOST_AUTO( child_event, pt_Event.begin() );
+        child_event != pt_Event.end(); ++child_event )
+   {
+      if( child_event->first == "RootWindow" )
+      {
+         try
+         {
+            root.referWindowRow =
+                  child_event->second.get<INT32>( "referWindowRow" ) ;
+            root.referWindowColumn =
+                  child_event->second.get<INT32>( "referWindowColumn" ) ;
+            root.actualWindowMinRow =
+                  child_event->second.get<INT32>( "actualWindowMinRow" );
+            root.actualWindowMinColumn =
+                  child_event->second.get<INT32>( "actualWindowMinColumn" ) ;
+            root.input.refreshInterval =
+                  child_event->second.get<INT32>( "refreshInterval" ) ;
+            
+            root.input.colourOfTheChange.foreGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheChange.foreGroundColor" ) ;
+            root.input.colourOfTheChange.backGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheChange.backGroundColor" ) ;
+            
+            root.input.colourOfTheMax.foreGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheMax.foreGroundColor" ) ;
+            root.input.colourOfTheMax.backGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheMax.backGroundColor" ) ;
+            
+            root.input.colourOfTheMin.foreGroundColor =
+                  child_event->second.get<INT32>(
+                  "colourOfTheMin.foreGroundColor" ) ;
+            root.input.colourOfTheMin.backGroundColor =
+                  child_event->second.get<INT32>(
+                        "colourOfTheMin.backGroundColor" ) ;
+         }
+         catch( std::exception &e )
+         {
+            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+            ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                      " scope: child_event->first ==..... ,e.what():%s\n",
+                      errStrBuf, e.what() ) ;
+            goto error ;
+         }
+         for( BOOST_AUTO( child_root, child_event->second.begin() );
+              child_root != child_event->second.end(); ++child_root )
+         {
+            if( child_root->first == "KeySuites" )
+            {
+               try
+               {
+                  root.keySuiteLength =
+                        child_root->second.get<INT32>( "keySuiteLength" ) ;
+                  keySuiteLengthFromConf =
+                        child_root->second.get<INT32>( "keySuiteLength" ) ;
+                  root.keySuite = SDB_OSS_NEW KeySuite[root.keySuiteLength] ;
+               }
+               catch( std::exception &e )
+               {
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,
+                               "%s readConfiguration failed,"
+                               " scope: child_root->first ==..... "
+                               ",e.what():%s\n",
+                            errStrBuf, e.what() ) ;
+                  goto error ;
+               }
+               keySuiteLength = 0 ;
+               for( BOOST_AUTO( child_keysuites, child_root->second.begin() );
+                    child_keysuites != child_root->second.end();
+                    ++child_keysuites )
+               {
+                  if( child_keysuites->first == "KeySuite" )
+                  {
+                     if( keySuiteLength >= root.keySuiteLength )
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,
+                                     "%s readConfiguration failed,"
+                                     " keySuiteLength >="
+                                     "root.keySuiteLength\n", errStrBuf ) ;
+                        goto error ;
+                     }
+                     try
+                     {
+                        root.keySuite[keySuiteLength].mark =
+                              child_keysuites->second.get<INT64>( "mark" ) ;
+                        root.keySuite[keySuiteLength].hotKeyLength =
+                              child_keysuites->second.get<INT32>(
+                                    "hotKeyLength" ) ;
+                        root.keySuite[keySuiteLength].hotKey =
+                              SDB_OSS_NEW HotKey[root.keySuite[keySuiteLength].hotKeyLength ] ;
+                     }
+                     catch( std::exception &e)
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,
+                                     "%s readConfiguration failed,"
+                                     " scope: child_keysuites->first ==..... ,"
+                                     "e.what():%s\n",
+                                  errStrBuf, e.what() ) ;
+                        goto error ;
+                     }
+                     hotKeyLength = 0 ;
+                     for( BOOST_AUTO( child_keysuite, child_keysuites->second.begin() );
+                          child_keysuite != child_keysuites->second.end(); ++child_keysuite )
+                     {
+                        if( child_keysuite->first == "HotKey" )
+                        {
+                           if( hotKeyLength >= root.keySuite[keySuiteLength].hotKeyLength )
+                           {
+                              ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                              ossSnprintf( errStr, errStrLength,
+                                           "%s readConfiguration failed, "
+                                           "hotKeyLength >= "
+                                           "root.keySuite[keySuiteLength].hotKeyLength\n",
+                                           errStrBuf ) ;
+                              goto error ;
+                           }
+                           try
+                           {
+                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].button =
+                                    child_keysuite->second.get<CHAR>( "button" ) ;
+                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].jumpType =
+                                    child_keysuite->second.get<string>( "jumpType" ) ;
+                              root.keySuite[keySuiteLength].hotKey[hotKeyLength].jumpName =
+                                    child_keysuite->second.get<string>( "jumpName" ) ;
+                           }
+                           catch( std::exception &e )
+                           {
+                              ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                              ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                                           " scope: child_keysuite->first ==..... ,e.what():%s\n",
+                                           errStrBuf, e.what() ) ;
+                              goto error ;
+                           }
+                           ++hotKeyLength ;
+                        }
+                     }
+                     root.keySuite[keySuiteLength].hotKeyLength = hotKeyLength ;
+                     ++keySuiteLength ;
+                  }
+               }
+               root.keySuiteLength = keySuiteLength ;
+            }
+            else if( child_root->first == "Headers" )
+            {
+               try
+               {
+                  root.headerLength = child_root->second.get<INT32>( "headerLength" ) ;
+                  headerLengthFromConf = child_root->second.get<INT32>( "headerLength" ) ;
+                  root.header = SDB_OSS_NEW HeadTailMap[root.headerLength] ;
+               }
+               catch( std::exception &e )
+               {
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                            " scope: child_root->first ==..... (Headers),e.what():%s\n", errStrBuf, e.what() ) ;
+                  goto error ;
+               }
+               headerLength = 0 ;
+               for( BOOST_AUTO( child_headers, child_root->second.begin() ); child_headers != child_root->second.end(); ++child_headers )
+               {
+                  if( child_headers->first == "HeadTailMap" )
+                  {
+                     if( headerLength >= root.headerLength )
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                                  " scope: headerLength >= root.headerLength\n", errStrBuf ) ;
+                        goto error ;
+                     }
+                     try
+                     {
+                        root.header[headerLength].key = child_headers->second.get<INT32>( "key" ) ;
+                     }
+                     catch( std::exception &e )
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                                  " scope: child_headers->first ==..... ,e.what():%s\n",
+                                  errStrBuf, e.what() ) ;
+                        goto error ;
+                     }
+                     for( BOOST_AUTO( child_headtailmap, child_headers->second.begin() ); child_headtailmap != child_headers->second.end(); ++child_headtailmap )
+                     {
+                        if( child_headtailmap->first == "value" )
+                        {
+                           rc = readPanelValue( child_headtailmap->second, root.header[headerLength].value ) ;
+                           if( rc )
+                           {
+                              goto error ;
+                           }
+                        }
+                     }
+                     ++headerLength ;
+                  }
+               }
+               root.headerLength = headerLength ;
+            }
+            else if( child_root->first == "Bodies" )
+            {
+               try
+               {
+                  root.bodyLength = child_root->second.get<INT32>( "bodyLength" ) ;
+                  bodyLengthFromConf = child_root->second.get<INT32>( "bodyLength" ) ;
+                  root.body = SDB_OSS_NEW BodyMap[root.bodyLength] ;
+               }
+               catch( std::exception &e )
+               {
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                            " scope: child_root->first ==..... (Bodys),e.what():%s\n", errStrBuf, e.what() ) ;
+                  goto error ;
+               }
+               bodyLength = 0 ;
+               for( BOOST_AUTO( child_bodys, child_root->second.begin() ); child_bodys != child_root->second.end(); ++child_bodys )
+               {
+                  if( child_bodys->first == "BodyMap" )
+                  {
+                     if( bodyLength >= root.bodyLength )
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed, scope: bodyLength >= root.bodyLength\n", errStrBuf ) ;
+                        goto error ;
+                     }
+                     try
+                     {
+                        root.body[bodyLength].headerKey = child_bodys->second.get<INT32>( "headerKey" ) ;
+                        root.body[bodyLength].footerKey = child_bodys->second.get<INT32>( "footerKey" ) ;
+                        root.body[bodyLength].labelName = child_bodys->second.get<string>( "labelName" ) ;          
+                        root.body[bodyLength].bodyPanelType = child_bodys->second.get<string>( "bodyPanelType" ) ;
+                        if( root.body[bodyLength].bodyPanelType == BODYTYPE_MAIN ||
+                            root.body[bodyLength].bodyPanelType == BODYTYPE_NORMAL )
+                        {
+                           root.body[bodyLength].hotKeySuiteType = child_bodys->second.get<INT64>( "hotKeySuiteType" ) ;
+                           root.body[bodyLength].helpPanelType = child_bodys->second.get<string>( "helpPanelType" ) ;
+                           if( root.body[bodyLength].bodyPanelType == BODYTYPE_NORMAL )
+                           {
+                              root.body[bodyLength].sourceSnapShot = child_bodys->second.get<string>( "sourceSnapShot" ) ;
+                           }
+                           else
+                           {
+                              root.body[bodyLength].sourceSnapShot = SDB_SNAP_NULL ;
+                           }
+                        }
+                     }
+                     catch( std::exception &e )
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                                  " scope: child_bodys->first ==..... ,e.what():%s\n", errStrBuf, e.what() ) ;
+                        goto error ;
+                     }
+                     for( BOOST_AUTO( child_bodymap, child_bodys->second.begin() ); child_bodymap != child_bodys->second.end(); ++child_bodymap )
+                     {
+                        if( child_bodymap->first == "value" )
+                        {
+                           rc = readPanelValue( child_bodymap->second, root.body[bodyLength].value ) ;
+                           if( rc )
+                           {
+                              goto error ;
+                           }
+                        }
+                     }
+                     ++bodyLength ;
+                  }
+               }
+               root.bodyLength = bodyLength ;
+            }
+            else if( child_root->first == "Footers" )
+            {
+               try
+               {
+                  root.footerLength = child_root->second.get<INT32>( "footerLength" ) ;
+                  footerLengthFromConf = child_root->second.get<INT32>( "footerLength" ) ;
+                  root.footer = SDB_OSS_NEW HeadTailMap[root.footerLength] ;
+               }
+               catch( std::exception &e )
+               {
+                  ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                  ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                            " scope: child_root->first ==..... (Footers),e.what():%s\n",
+                            errStrBuf, e.what() ) ;
+                  goto error ;
+               }
+               footerLength = 0 ;
+               for( BOOST_AUTO( child_footers, child_root->second.begin() ); child_footers != child_root->second.end(); ++child_footers )
+               {
+                  if( child_footers->first == "HeadTailMap" )
+                  {
+                     if( footerLength >= root.footerLength )
+                     {
+                        ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+                        ossSnprintf( errStr, errStrLength,"%s readConfiguration failed,"
+                                  " scope: footerLength >= root.footerLength\n", errStrBuf ) ;
+                        goto error ;
+                     }
+                     root.footer[footerLength].key = child_footers->second.get<INT32>( "key" ) ;
+                     for( BOOST_AUTO( child_headtailmap, child_footers->second.begin() ); child_headtailmap != child_footers->second.end(); ++child_headtailmap )
+                     {
+                        if( child_headtailmap->first == "value" )
+                        {
+                           rc = readPanelValue( child_headtailmap->second, root.footer[footerLength].value ) ;
+                           if( rc )
+                           {
+                              goto error;
+                           }
+                        }
+                     }
+                     ++footerLength;
+                  }
+               }
+               root.footerLength = footerLength;
+            }
+         }
+      }
+      else 
+      {
+         ++otherTree ;
+      }
+   }
+   
+done :
+   return rc ;
+error :
+   if( SDB_OK == rc )
+   {
+      rc = SDB_ERROR ;
+   }
+   goto done ;
+}*/
 
 //find the current actived panel by the bodyPanelType
 INT32 Event::assignActivatedPanel( BodyMap **activatedPanel,
@@ -4473,7 +4904,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            GETNSTR_TOP( inputBuf, 128 ) ;
+            getnstr_SDBTOP( inputBuf, 128 ) ;
             //cbreak() ;
             noecho() ;
             root.input.groupName = inputBuf ;
@@ -4502,7 +4933,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
+            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             root.input.nodeName = inputBuf ;
@@ -4531,7 +4962,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
+            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             root.input.sortingWay = SORTINGWAY_ASC ;
@@ -4561,7 +4992,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            GETNSTR_TOP( inputBuf, BUFFERSIZE );
+            getnstr_SDBTOP( inputBuf, BUFFERSIZE );
             cbreak() ;
             noecho() ;
             root.input.sortingWay = SORTINGWAY_DESC ;
@@ -4591,7 +5022,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
+            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             root.input.filterCondition = inputBuf ;
@@ -4630,7 +5061,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            GETNSTR_TOP( inputBuf, BUFFERSIZE ) ;
+            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
             displayName = inputBuf ;
@@ -4681,6 +5112,18 @@ INT32 Event::runSDBTOP( )
    ossMemset( buf, 0, BUFFERSIZE ) ;
    root.input.forcedToRefresh_Global = NOTREFRESH ;
    root.input.forcedToRefresh_Local= NOTREFRESH ;
+
+   // read the configuration and store it on the specific struct
+   rc = readConfiguration( root ) ;
+   if( rc )
+   {
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
+                   "%s readConfiguration failed\n",
+                   errStrBuf ) ;
+      rc = SDB_ERROR ;
+      goto error ;
+   }
    // extend the root.keySuite 
    rc = addFixedHotKey() ;
    if( rc )
@@ -5031,13 +5474,12 @@ INT32 main( INT32 argc, CHAR **argv)
    keypad( stdscr, FALSE ) ;
    noecho() ;
    curs_set( 1 ) ;
-   rc = sdbtop.readConfiguration( ) ;
-   if( rc )
-   {
-      rc = SDB_ERROR ;
-      goto error ;
-   }
-   
+   //rc = sdbtop.readConfiguration( ) ;
+   //if( rc )
+   //{
+      //rc = SDB_ERROR ;
+      //goto error ;
+   //}
    rc = sdbtop.runSDBTOP( ) ;
    if( rc && SDB_SDBTOP_DONE != rc )
    {
