@@ -39,7 +39,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMFETCHOUT_ELEMENT, "_qgmFetchOut::element" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMFETCHOUT_ELEMENT, "_qgmFetchOut::element" )
    INT32 _qgmFetchOut::element( const _qgmDbAttr &attr,
                                 BSONElement &ele )const
    {
@@ -64,8 +64,8 @@ namespace engine
 
          if ( local.eoo() )
          {
-            rc = SDB_INVALIDARG ;
-            goto error ;
+            //rc = SDB_INVALIDARG ;
+            goto done ;
          }
 
          ele = local ;
@@ -97,14 +97,18 @@ namespace engine
             else if ( !local.eoo() && !next.eoo() )
             {
                rc = SDB_QGM_AMBIGUOUS_FIELD ;
-               PD_LOG( PDDEBUG, "ambiguous filed name:%s",
-                       attr.attr().toString().c_str() ) ;
+               PD_LOG( PDERROR, "ambiguous filed name:%s, obj: %s, "
+                       "next obj: %s", attr.attr().toString().c_str(),
+                       obj.toString().c_str(),
+                       this->next->obj.toString().c_str() ) ;
                goto error ;
             }
             else
             {
-               PD_LOG( PDDEBUG, "field [%s] not found from fetchout",
-                       attr.attr().toString().c_str() ) ;
+               PD_LOG( PDERROR, "field [%s] not found from fetchout, obj: %s, "
+                       "next obj: %s", attr.attr().toString().c_str(),
+                       obj.toString().c_str(),
+                       this->next->obj.toString().c_str() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
@@ -123,8 +127,10 @@ namespace engine
             else
             {
                rc = SDB_INVALIDARG ;
-               PD_LOG( PDDEBUG, "relegaion [%s] not found",
-                       attr.relegation().toString().c_str() ) ;
+               PD_LOG( PDERROR, "relegaion [%s] not found, alias: %s, "
+                       "next alias: %s", attr.relegation().toString().c_str(),
+                       alias.toString().c_str(),
+                       this->next->alias.toString().c_str() ) ;
                goto error ;
             }
 
@@ -141,8 +147,8 @@ namespace engine
 
             if ( local.eoo() )
             {
-               rc = SDB_INVALIDARG ;
-               goto error ;
+               //rc = SDB_INVALIDARG ;
+               goto done ;
             }
 
             ele = local ;
@@ -156,7 +162,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMFETCHOUT_ELEMENTS, "_qgmFetchOut::elements" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMFETCHOUT_ELEMENTS, "_qgmFetchOut::elements" )
    void _qgmFetchOut::elements( std::vector<BSONElement> &eles ) const
    {
       PD_TRACE_ENTRY( SDB__QGMFETCHOUT_ELEMENTS ) ;

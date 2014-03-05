@@ -116,13 +116,14 @@ namespace engine
             rc = fetch.element( node->left->value, fromFetch ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDDEBUG, "failed to get element from fetchout, rc=%d",
+               PD_LOG( PDERROR, "failed to get element from fetchout, rc=%d",
                        rc ) ;
+               goto error ;
             }
 
             if ( fromFetch.eoo() )
             {
-               r = FALSE ;
+               r = SQL_GRAMMAR::NULLL == node->right->type ? TRUE : FALSE ;
                goto done ;
             }
 
@@ -178,8 +179,9 @@ namespace engine
             rc = fetch.element( node->left->value, fromFetch ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDDEBUG, "failed to get element from fetchout, rc=%d",
+               PD_LOG( PDERROR, "failed to get element from fetchout, rc=%d",
                        rc ) ;
+               goto error ;
             }
 
             if ( fromFetch.eoo() )
@@ -205,8 +207,9 @@ namespace engine
             rc = fetch.element( node->left->value, fromFetch ) ;
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDDEBUG, "failed to get element from fetchout, rc=%d",
+               PD_LOG( PDERROR, "failed to get element from fetchout, rc=%d",
                        rc ) ;
+               goto error ;
             }
 
             if ( fromFetch.eoo() )
@@ -218,15 +221,15 @@ namespace engine
             r = FALSE ;
 
             {
-            BSONObjIterator itr( node->right->var->embeddedObject()) ;
-            while ( itr.more() )
-            {
-               if ( 0 == itr.next().woCompare( fromFetch, FALSE ) )
+               BSONObjIterator itr( node->right->var->embeddedObject()) ;
+               while ( itr.more() )
                {
-                  r = TRUE ;
-                  break ;
+                  if ( 0 == itr.next().woCompare( fromFetch, FALSE ) )
+                  {
+                     r = TRUE ;
+                     break ;
+                  }
                }
-            }
             }
          }
          else if ( SQL_GRAMMAR::NOT == node->type )
