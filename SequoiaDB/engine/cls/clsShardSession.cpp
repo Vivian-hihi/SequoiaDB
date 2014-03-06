@@ -66,7 +66,11 @@ namespace engine
       ON_MSG ( MSG_AUTH_CRTUSR_REQ, _onOPMsg )
       ON_MSG ( MSG_AUTH_DELUSR_REQ, _onOPMsg )
 #endif
+
+      ON_EVENT( PMD_EDU_EVENT_TRANS_STOP, _onTransStopEvnt )
    END_OBJ_MSG_MAP()
+
+   
 
    // The error object number objects
    extern BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
@@ -1442,6 +1446,20 @@ namespace engine
                   localRouteID.columns.serviceID );
       }
       return rc ;
+   }
+
+   INT32 _clsShdSession::_onTransStopEvnt()
+   {
+      if ( _pReplSet->primaryIsMe ())
+      {
+         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
+         if ( rcTmp )
+         {
+            PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
+         }
+      }
+      _pEDUCB->clearTransInfo();
+      return SDB_OK ;
    }
 
    INT32 _clsShdSession::_InsertToMainCL( BSONObj &objs, INT32 objNum,
