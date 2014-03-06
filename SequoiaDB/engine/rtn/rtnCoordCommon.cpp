@@ -274,7 +274,8 @@ namespace engine
          // about cb queue, pmdEDUCB::clear() is going to clean it up.
          // if it is disconnect, ignore the interrupt and go on process the reply,
          // so avoid sending too many killcontext to data-node
-         PD_CHECK( !(cb->isInterrupted ()) || cb->isDisconnected(),
+         PD_CHECK( !( cb->isForced() )
+                  && ( !(cb->isInterrupted ()) || cb->isDisconnected() ),
                   SDB_APP_INTERRUPT, error, PDERROR,
                   "Interrupt! stop receiving reply!" );
 
@@ -1037,7 +1038,8 @@ namespace engine
          {
             pmdEDUEvent pmdEvent;
             BOOLEAN isGotMsg = cb->waitEvent( pmdEvent, RTN_COORD_RSP_WAIT_TIME );
-            if ( cb->isInterrupted() && !( cb->isDisconnected() ) )
+            if ( cb->isForced()
+               || ( cb->isInterrupted() && !( cb->isDisconnected() )))
             {
                rc = SDB_APP_INTERRUPT;
                break;
