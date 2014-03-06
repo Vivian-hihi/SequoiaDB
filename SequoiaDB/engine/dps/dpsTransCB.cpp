@@ -24,6 +24,7 @@ namespace engine
       _maxUsedSize = 0;
       _logFileTotalSize = 0;
       _accquiredSpace = 0;
+      _isInit = FALSE;
    }
 
    dpsTransCB::~ dpsTransCB()
@@ -304,17 +305,7 @@ namespace engine
          TRANS_CB_MAP::iterator iterMap = _cbMap.begin();
          while( iterMap != _cbMap.end() )
          {
-            MsgHeader *pInterruptMsg = NULL;
-            pInterruptMsg = (MsgHeader *)SDB_OSS_MALLOC( sizeof(MsgHeader) );
-            if ( NULL != pInterruptMsg )
-            {
-               pInterruptMsg->messageLength = sizeof( MsgHeader );
-               pInterruptMsg->opCode = MSG_BS_INTERRUPTE;
-               pInterruptMsg->TID = 0;
-               pInterruptMsg->routeID.value = 0;
-               iterMap->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_MSG,
-                                                      TRUE, pInterruptMsg ));
-            }
+            iterMap->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_TRANS_STOP ));
             _cbMap.erase( iterMap++ );
          }
       }
@@ -481,66 +472,23 @@ namespace engine
    INT32 dpsTransCB::reservedLogSpace( UINT32 length )
    {
       INT32 rc = SDB_OK;
-      DPS_LSN_OFFSET beginLsnOffset;
-      DPS_LSN_OFFSET curLsnOffset;
-      DPS_LSN curLsn;
-      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB();
-      UINT64 logFileSize = dpsCB->getLogFileSz();
       UINT64 usedSize = 0;
-      UINT32 logFileNum = dpsCB->getLogFileNum();
       static BOOLEAN isFirstRun = TRUE;
       if ( !_isOn )
       {
          goto done;
       }
 
+      if ( !_isInit )
+      {
+         init();
+      }
+
       {
          ossScopedLock _lock( &_maxFileSizeMutex );
          _accquiredSpace += length;
       }
-
-      beginLsnOffset = getOldestBeginLsn();
-      if ( DPS_INVALID_LSN_OFFSET == beginLsnOffset )
-      {
-         goto done;
-      }
-      curLsn = dpsCB->getCurrentLsn();
-      curLsnOffset = curLsn.offset;
-      if ( DPS_INVALID_LSN_OFFSET == curLsnOffset )
-      {
-         goto done;
-      }
-
-      if ( isFirstRun )
-      {
-         ossScopedLock _lock( &_maxFileSizeMutex );
-         if ( isFirstRun )
-         {
-            _logFileTotalSize = logFileSize * logFileNum ;
-
-            // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
-            // (2).the max-size of unavailable space in cross-file is 2*DMS_RECORD_MAX_SZ*logFileNum,
-            // the available size is: availableSize = _logFileTotalSize - (1) - (2) ;
-            // the availableSize can used for operation-log and rollback-log,
-            // so the size of operation-log is: _maxUsedSize = availableSize / 2;
-            _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ * logFileNum ) / 2;
-
-            // if the logFileSize is 32M, the caculation method is:
-            // if the transaction-operation-log  caused X(MB) of log-file,
-            // the rollback-log will caused up to 2X( 1X for normal rollback-log
-            // and 1X for cross-file-space )
-            UINT64 temp = _logFileTotalSize / 3;
-            if ( _maxUsedSize < temp )
-            {
-               _maxUsedSize = temp;
-            }
-            isFirstRun = FALSE;
-         }
-      }
-
-      beginLsnOffset = beginLsnOffset % _logFileTotalSize ;
-      curLsnOffset = curLsnOffset % _logFileTotalSize ;
-      usedSize = ( curLsnOffset + _logFileTotalSize - beginLsnOffset ) % _logFileTotalSize ;
+      usedSize = usedLogSpace();
       if ( usedSize + _accquiredSpace >= _maxUsedSize )
       {
          rc = SDB_DPS_LOG_FILE_OUT_OF_SIZE ;
@@ -576,5 +524,96 @@ namespace engine
       {
          _accquiredSpace = 0 ;
       }
+   }
+
+   INT32 dpsTransCB::init()
+   {
+      if ( !_isInit )
+      {
+         ossScopedLock _lock( &_maxFileSizeMutex ) ;
+         if ( !_isInit )
+         {
+            UINT64 logFileSize = pmdGetKRCB()->getDPSCB()->getLogFileSz() ;
+            UINT32 logFileNum = pmdGetKRCB()->getLogFileNum() ;
+            _logFileTotalSize = logFileSize * logFileNum ;
+
+            // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
+            // (2).the max-size of unavailable space in cross-file is 2*DMS_RECORD_MAX_SZ*logFileNum,
+            // the available size is: availableSize = _logFileTotalSize - (1) - (2) ;
+            // the availableSize can used for operation-log and rollback-log,
+            // so the size of operation-log is: _maxUsedSize = availableSize / 2;
+            _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ * logFileNum ) / 2 ;
+
+            // if the logFileSize is 32M, the caculation method is:
+            // if the transaction-operation-log  caused X(MB) of log-file,
+            // the rollback-log will caused up to 2X( 1X for normal rollback-log
+            // and 1X for cross-file-space )
+            UINT64 temp = _logFileTotalSize / 3 ;
+            if ( _maxUsedSize < temp )
+            {
+               _maxUsedSize = temp;
+            }
+
+            _isInit = TRUE ;
+         }
+      }
+      return SDB_OK ;
+   }
+
+   UINT64 dpsTransCB::usedLogSpace()
+   {
+      DPS_LSN_OFFSET beginLsnOffset;
+      DPS_LSN_OFFSET curLsnOffset;
+      DPS_LSN curLsn;
+      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB();
+      UINT64 usedSize = 0;
+
+      beginLsnOffset = getOldestBeginLsn();
+      if ( DPS_INVALID_LSN_OFFSET == beginLsnOffset )
+      {
+         goto done;
+      }
+      curLsn = dpsCB->getCurrentLsn();
+      curLsnOffset = curLsn.offset;
+      if ( DPS_INVALID_LSN_OFFSET == curLsnOffset )
+      {
+         goto done;
+      }
+
+      beginLsnOffset = beginLsnOffset % _logFileTotalSize ;
+      curLsnOffset = curLsnOffset % _logFileTotalSize ;
+      usedSize = ( curLsnOffset + _logFileTotalSize - beginLsnOffset ) % _logFileTotalSize ;
+   done:
+      return usedSize ;
+   }
+
+   UINT64 dpsTransCB::remainLogSpace()
+   {
+      UINT64 remainSize = _logFileTotalSize ;
+      UINT64 allocatedSize = 0 ;
+      if ( !_isInit )
+      {
+         init();
+      }
+
+      if ( !_isOn )
+      {
+         goto done ;
+      }
+
+      {
+      ossScopedLock _lock( &_maxFileSizeMutex ) ;
+      allocatedSize = _accquiredSpace + usedLogSpace() ;
+      }
+      if ( _maxUsedSize > allocatedSize )
+      {
+         remainSize = _maxUsedSize - allocatedSize ;
+      }
+      else
+      {
+         remainSize = 0 ;
+      }
+   done:
+      return remainSize ;
    }
 }
