@@ -54,7 +54,8 @@ namespace engine
     _internalBlk(NULL),
     _mergeBlk(NULL),
     _blkBegin(0),
-    _fino(0)
+    _fino(0),
+    _limit(-1)
    {
 
    }
@@ -79,6 +80,7 @@ namespace engine
                             const BSONObj &orderby,
                             rtnContext *context,
                             SINT64 fino,
+                            SINT64 limit,
                             _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -103,6 +105,7 @@ namespace engine
       _orderby = orderby.getOwned() ;
       _context = context ;
       _fino = fino ;
+      _limit = limit ;
 
       PD_LOG( PDDEBUG, "sort into: bufsize[%lld(MB)],"
               "filename:[%lld], order by[%s]",
@@ -236,7 +239,7 @@ namespace engine
                   }
 
                   rc = _mergeBlk->init( _sortBuf, _totalBufSize,
-                                        _blks ) ;
+                                        _blks, _limit ) ;
                   if ( SDB_OK != rc )
                   {
                      PD_LOG( PDERROR, "failed to init merge sort:%d", rc ) ;

@@ -256,33 +256,32 @@ namespace engine
       _rtnSortTuple **j = right - 1 ;
       FLOAT64 sameNum = 0 ;
 
-      while ( TRUE )
+      while ( i < j )
       {
-         while ( i < j )
+         try
          {
-            try
+            INT32 compare = (*pivot)->compare( *j, _order ) ;
+            if ( 0 > compare )
             {
-               INT32 compare = (*pivot)->compare( *j, _order ) ;
-               if ( 0 > compare )
-               {
-                  --j ;
-               }
-               else if ( 0 == compare )
-               {
-                  ++sameNum ;
-                  --j ;
-               }
-               else
-               {
-                  break ;
-               }
+               --j ;
+               continue;
             }
-            catch ( std::exception &e )
+            else if ( 0 == compare )
             {
-               PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-               rc = SDB_SYS ;
-               goto error ;
+               ++sameNum ;
+               --j ;
+               continue;
             }
+            else
+            {
+               /// do nothing.
+            }
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
          }
 
          while ( i < j )
@@ -316,6 +315,7 @@ namespace engine
          {
             RTN_SORT_SWAP( i, j ) ;
             ++i ;
+            --j ;
          }
          else
          {
@@ -323,27 +323,35 @@ namespace engine
          }
       }
 
-      try
+      if ( i == j )
       {
-         if ( 0 > (*pivot)->compare( *j, _order))
+         try
          {
-            RTN_SORT_SWAP( pivot, j ) ;
+            if ( 0 > (*pivot)->compare( *j, _order))
+            {
+               RTN_SORT_SWAP( pivot, j ) ;
+            }
+            else if ( j + 1 < pivot )
+            {
+               ++j ;
+               RTN_SORT_SWAP( pivot, j ) ;
+            }
+            else
+            {
+               j = pivot ;
+            }
          }
-         else if ( j + 1 < right )
+         catch ( std::exception &e )
          {
-            ++j ;
-            RTN_SORT_SWAP( pivot, j ) ;
-         }
-         else
-         {
-            ++j ;
+            PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+            rc = SDB_SYS ;
+            goto error ;
          }
       }
-      catch ( std::exception &e )
+      else
       {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         j = i;
+         RTN_SORT_SWAP( pivot, j ) ;
       }
 
       leftAxis = j ;

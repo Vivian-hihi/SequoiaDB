@@ -47,6 +47,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( _read <= _loadSize, "impossible" )
 
+      if ( 0 == _limit )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
       do
       {
          if ( _loadSize - _read < sizeof( INT32 ) )
@@ -74,13 +80,20 @@ namespace engine
          }
       } while ( TRUE ) ;
 
+      SDB_ASSERT( 0 != _limit, "impossible" )
+      if ( 0 < _limit )
+      {
+         --_limit;
+      }
+      //0 < _limit ? --_limit:_limit;
    done:
       return rc ;
    error:
       goto done ;
    }
 
-   void _rtnMergeBlock::init( _dmsTmpBlk &blk, CHAR *begin, UINT64 size )
+   void _rtnMergeBlock::init( _dmsTmpBlk &blk, CHAR *begin,
+                              UINT64 size, SINT64 limit )
    {
       SDB_ASSERT( NULL != begin && DMS_RECORD_USER_MAX_SZ * 2 <= size,
                   "impossible" )
@@ -89,6 +102,7 @@ namespace engine
       _size = size ;
       _read = 0 ;
       _loadSize = 0 ;
+      _limit = limit ;
       return  ;
    }
 
@@ -128,6 +142,7 @@ namespace engine
     _size( 0 ),
     _mergeBufSize( 0 ),
     _mergePos( 0 ),
+    _limit(-1),
     _heap(_order),
     _mergeBlkSize( 0 ),
     _mergeMax(0),
@@ -145,7 +160,8 @@ namespace engine
    }
 
    INT32 _rtnMergeSorting::init( CHAR *buf, UINT64 size,
-                                 RTN_SORT_BLKS &src )
+                                 RTN_SORT_BLKS &src,
+                                 SINT64 limit )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != buf && size != 0, "impossible" )
@@ -169,10 +185,11 @@ namespace engine
       _src = &src ;
       _buf = buf ;
       _size = size ;
+      _limit = limit ;
 
       PD_LOG( PDDEBUG, "number of blks[%d], size of buf[%lld]"
-              " max merge size[%d]"
-             , _src->size(), _size, _mergeMax ) ;
+              " max merge size[%d], limit[%lld]"
+             , _src->size(), _size, _mergeMax, _limit ) ;
    done:
       return rc ;
    error:
@@ -460,9 +477,13 @@ namespace engine
          /// init data sink
          _dataSink[i].init( src.front(),
                             _buf + i * _mergeBufSize,
-                            _mergeBufSize );
+                            _mergeBufSize, _limit );
          rc = _pushObjFromSink( i ) ;
-         if ( SDB_OK != rc )
+         if ( SDB_OK == rc || SDB_DMS_EOC == rc )
+         {
+            /// do noting. if first push returned eoc, means limit is 0.
+         }
+         else
          {
             goto error ;
          }

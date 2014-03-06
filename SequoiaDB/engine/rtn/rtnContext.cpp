@@ -3958,7 +3958,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT64 sortBufSz = pmdGetKRCB()->getSortBufSize() ;
 
-      rc = _sorting.init( sortBufSz, orderby, context, contextID(), cb ) ;
+      rc = _sorting.init( sortBufSz, orderby, context,
+                          contextID(), numToReturn, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to init sort:%d", rc ) ;

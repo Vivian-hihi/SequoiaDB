@@ -52,7 +52,8 @@ namespace engine
       :_buf( NULL ),
        _size( 0 ),
        _read( 0 ),
-       _loadSize( 0 )
+       _loadSize( 0 ),
+       _limit(-1)
       {
 
       }
@@ -60,7 +61,8 @@ namespace engine
       virtual ~_rtnMergeBlock(){}
 
    public:
-      void init( _dmsTmpBlk &blk, CHAR *begin, UINT64 size ) ;
+      void init( _dmsTmpBlk &blk, CHAR *begin,
+                 UINT64 size, SINT64 limit = -1 ) ;
 
       INT32 next( _dmsTmpBlkUnit *unit, _rtnSortTuple **tuple ) ;
 
@@ -72,6 +74,7 @@ namespace engine
       UINT64 _size ;
       UINT64 _read ;
       UINT64 _loadSize ;
+      SINT64 _limit ;
    } ;
 
 
@@ -84,7 +87,7 @@ namespace engine
 
    public:
       INT32 init( CHAR *buf, UINT64 size,
-                  RTN_SORT_BLKS &src ) ;
+                  RTN_SORT_BLKS &src, SINT64 limit = -1) ;
 
       INT32 fetch( BSONObj &next, _pmdEDUCB *cb ) ;
 
@@ -121,6 +124,7 @@ namespace engine
       UINT64 _size ;
       UINT64 _mergeBufSize ;
       UINT64 _mergePos ;
+      SINT64 _limit;
 
       _rtnMergeUnitHelper _unitHelper ;
 

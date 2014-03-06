@@ -60,6 +60,7 @@ namespace engine
                   const BSONObj &orderby,
                   rtnContext *context,
                   SINT64 fino,
+                  SINT64 limit,
                   _pmdEDUCB *cb );
 
       /// do not ensure that the next is get owned.
@@ -89,6 +90,7 @@ namespace engine
       RTN_SORT_BLKS _blks ;
       UINT64 _blkBegin ;
       SINT64 _fino ;
+      SINT64 _limit ;
    };
 
    typedef class _rtnSorting rtnSorting;
