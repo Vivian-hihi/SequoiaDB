@@ -9,8 +9,8 @@
     <p>With the expansion of physical devices in the cluster,it can create more catalog nodes to
       improve  the reliability of catalog service.</p>
     <p>operation methods: </p>
-    <codeblock>>var catashard = db.getShard("SYSCatalog");
->var node1 = catashard.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+    <codeblock>>var cataRG = db.getRG("SYSCatalog");
+>var node1 = cataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
 >node1.start()</codeblock>
     <p>The first command is used to get catalog sharding,"SYSCatalogGroup" is the name of catalog
       sharding.</p>

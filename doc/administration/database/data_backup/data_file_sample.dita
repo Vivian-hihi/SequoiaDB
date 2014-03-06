@@ -18,9 +18,9 @@ catalogaddr=vmsvr1-rhel-x64:11803</codeblock>
         <codeblock>$ ~/sequoiadb/bin/sdb
 >db=new Sdb('192.168.20.35',11810)
 192.168.20.35:11810
->shard=db.getShard('foo')
+>rg=db.getRG('foo')
 foo
->node=shard.getNode('vmsvr1-rhel-x64:11820')
+>node=rg.getNode('vmsvr1-rhel-x64:11820')
 vmsvr1-rhel-x64:11820
 >node.stop()</codeblock></li>
       <li>归档数据库路径与索引路径中的文件
@@ -35,9 +35,9 @@ vmsvr1-rhel-x64:11820
         <codeblock>$ ~/sequoiadb/bin/sdb 
 >db=new Sdb('192.168.20.35',11810)
 192.168.20.35:11810
->shard=db.getShard('foo')
+>rg=db.getRG('foo')
 foo
->node=shard.getNode('vmsvr1-rhel-x64:11820')
+>node=rg.getNode('vmsvr1-rhel-x64:11820')
 vmsvr1-rhel-x64:11820
 >node.start()</codeblock></li>
     </ol>

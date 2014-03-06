@@ -7,14 +7,14 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.createCataShard()"/>
-<meta name="description" content="db.createCataShard(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]) 新建一个编目分片组，同时创建并启动一个编目节点。 参数描述 参数名 参数类型 描述 是否必填 host string 指定编目节点的主机名。 是 service int ..."/>
+<meta name="DC.Title" content="db.createCataRG()"/>
+<meta name="description" content="db.createCataRG(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]) 新建一个编目分区组，同时创建并启动一个编目节点。 参数描述 参数名 参数类型 描述 是否必填 host string 指定编目节点的主机名。 是 service int ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_k5r_rn2_dm"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.createCataShard()</title>
+<title>db.createCataRG()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -33,64 +33,64 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB javascript方法"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">SequoiaDB javascript方法</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references.html" title="参考手册">参考手册</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist.html" title="SequoiaDB javascript方法">SequoiaDB javascript方法</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.createCataShard()</h1>
+  <h1 class="title topictitle1">db.createCataRG()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.createCataShard(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</h2>
-      <p class="p">新建一个编目分片组，同时创建并启动一个编目节点。</p>
+    <div class="section"><h2 class="title sectiontitle">db.createCataRG(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config])</h2>
+      <p class="p">新建一个编目分区组，同时创建并启动一个编目节点。</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">参数描述</h2><p class="p"/>
 
       <a name="topic_k5r_rn2_dm__references_method_createCL_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="topic_k5r_rn2_dm__references_method_createCL_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d86894e27" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d86835e27" class="stentry">参数名</th>
 
-          <th valign="bottom" align="left" id="d86894e30" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d86835e30" class="stentry">参数类型</th>
 
-          <th valign="bottom" align="left" id="d86894e33" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d86835e33" class="stentry">描述</th>
 
-          <th valign="bottom" align="left" id="d86894e36" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d86894e27" class="stentry">host</td>
-
-          <td valign="top" headers="d86894e30" class="stentry">string</td>
-
-          <td valign="top" headers="d86894e33" class="stentry"> 指定编目节点的主机名。</td>
-
-          <td valign="top" headers="d86894e36" class="stentry">是</td>
+          <th valign="bottom" align="left" id="d86835e36" class="stentry">是否必填</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d86894e27" class="stentry">service</td>
+          <td valign="top" headers="d86835e27" class="stentry">host</td>
 
-          <td valign="top" headers="d86894e30" class="stentry">int</td>
+          <td valign="top" headers="d86835e30" class="stentry">string</td>
 
-          <td valign="top" headers="d86894e33" class="stentry">指定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为11800，请确保11800/11801/11802/11803端口都未被占用。</td>
+          <td valign="top" headers="d86835e33" class="stentry"> 指定编目节点的主机名。</td>
 
-          <td valign="top" headers="d86894e36" class="stentry">是</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d86894e27" class="stentry">dbpath</td>
-
-          <td valign="top" headers="d86894e30" class="stentry">string</td>
-
-          <td valign="top" headers="d86894e33" class="stentry">数据文件路径，用于存放编目数据文件，需确保数据管理员（安装时创建，默认为sdbadmin）用户有写权限。</td>
-
-          <td valign="top" headers="d86894e36" class="stentry">否</td>
+          <td valign="top" headers="d86835e36" class="stentry">是</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d86894e27" class="stentry">config</td>
+          <td valign="top" headers="d86835e27" class="stentry">service</td>
 
-          <td valign="top" headers="d86894e30" class="stentry">json</td>
+          <td valign="top" headers="d86835e30" class="stentry">int</td>
 
-          <td valign="top" headers="d86894e33" class="stentry">参数为可选参数，用于配置更多细节参数，格式必须为json格式，参数参见数据库配置一节；如需要配置日志大小参数{logfilesz:64}。</td>
+          <td valign="top" headers="d86835e33" class="stentry">指定编目节点的服务端口，请确保该端口号，以及往后延续的3个端口号未被占用；如设置为11800，请确保11800/11801/11802/11803端口都未被占用。</td>
 
-          <td valign="top" headers="d86894e36" class="stentry">是</td>
+          <td valign="top" headers="d86835e36" class="stentry">是</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d86835e27" class="stentry">dbpath</td>
+
+          <td valign="top" headers="d86835e30" class="stentry">string</td>
+
+          <td valign="top" headers="d86835e33" class="stentry">数据文件路径，用于存放编目数据文件，需确保数据管理员（安装时创建，默认为sdbadmin）用户有写权限。</td>
+
+          <td valign="top" headers="d86835e36" class="stentry">否</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d86835e27" class="stentry">config</td>
+
+          <td valign="top" headers="d86835e30" class="stentry">json</td>
+
+          <td valign="top" headers="d86835e33" class="stentry">参数为可选参数，用于配置更多细节参数，格式必须为json格式，参数参见数据库配置一节；如需要配置日志大小参数{logfilesz:64}。</td>
+
+          <td valign="top" headers="d86835e36" class="stentry">是</td>
 
         </tr>
 </table>
@@ -99,7 +99,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">createCataShard()方法的定义格式有host、service、dbpath、config四个参数，host、dbpath为字符串类型，service为整数型，config为json对象，格式如下：</p>
+      <p class="p">createCataRG()方法的定义格式有host、service、dbpath、config四个参数，host、dbpath为字符串类型，service为整数型，config为json对象，格式如下：</p>
 
       <div class="p"><pre class="pre codeblock">{"&lt;主机名&gt;",&lt;端口号&gt;,"&lt;数据文件路径&gt;",&lt;数据库配置参数对象&gt;}</pre>
 </div>
@@ -119,7 +119,7 @@
         <li class="li">
           <p class="p">在名为：sdbserver1的主机上创建一个编目节点组，服务端口为：11800，数据文件存放路径为：/opt/sequoiadb/database/cata/11800</p>
 
-          <pre class="pre codeblock">db.createCataShard("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
+          <pre class="pre codeblock">db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
 
         </li>
         

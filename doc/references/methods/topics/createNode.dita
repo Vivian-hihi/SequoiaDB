@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_getNode">
-  <title>shard.createNode()</title>
+  <title>rg.createNode()</title>
   <body>
-    <section><title>shard.createNode(&lt;host>,&lt;service>,&lt;dbpath>,[config])</title>
-      <p>在分片组中创建节点。</p>
-      <note><p>只有在分片组启动之后，才能创建节点操作。</p></note>
+    <section><title>rg.createNode(&lt;host>,&lt;service>,&lt;dbpath>,[config])</title>
+      <p>在分区组中创建节点。</p>
+      <note><p>只有在分区组启动之后，才能创建节点操作。</p></note>
     </section>
     <section><title>参数描述</title>
       <simpletable id="references_method_createNode_table">
@@ -45,14 +45,14 @@
       
     </section>
     <section><title>格式</title>
-      <p>shard.createNode()方法的定义格式有三个参数：host、service、dbpath、config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是Json对象，选填。<codeblock>("&lt;主机名>","&lt;端口号>","&lt;节点路径>"[,{&lt;configParam>:value,...}])</codeblock></p>
+      <p>rg.createNode()方法的定义格式有三个参数：host、service、dbpath、config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是Json对象，选填。<codeblock>("&lt;主机名>","&lt;端口号>","&lt;节点路径>"[,{&lt;configParam>:value,...}])</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li>在分片组shard中创建一个端口号为11800的节点，指定日志文件大小为64MB<codeblock>shard.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock></li>
+        <li>在分区组group中创建一个端口号为11800的节点，指定日志文件大小为64MB<codeblock>rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock></li>
       </ul>
       <p><note>
-        <p>在一个分片组中能创建多个节点，但是连个节点的端口号必须相差5以上。因为系统为每个节点后台控制了5个通信接口。</p>
+        <p>在一个分区组中能创建多个节点，但是连个节点的端口号必须相差5以上。因为系统为每个节点后台控制了5个通信接口。</p>
       </note></p>
     </section>
   </body>

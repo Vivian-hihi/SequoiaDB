@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_getNode">
-  <title>shard.getNode()</title>
+  <title>rd.getNode()</title>
   <body>
-    <section><title>shard.getNode(&lt;nodename>|&lt;hostname>,&lt;servicename>)</title>
+    <section><title>rd.getNode(&lt;nodename>|&lt;hostname>,&lt;servicename>)</title>
       <p>返回指定节点信息。</p>
     </section>
     <section><title>参数描述</title>
@@ -36,11 +36,11 @@
       
     </section>
     <section><title>格式</title>
-      <p>shard.getNode()方法定义了两个参数，第一个参数可是节点名称也可以是主机名，第二个参数为服务器名称。两个参数的类型都是字符串型，且必填。<codeblock>("&lt;节点名称>|&lt;主机名>","&lt;服务器名称>")</codeblock></p>
+      <p>rd.getNode()方法定义了两个参数，第一个参数可是节点名称也可以是主机名，第二个参数为服务器名称。两个参数的类型都是字符串型，且必填。<codeblock>("&lt;节点名称>|&lt;主机名>","&lt;服务器名称>")</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>
-        <li>返回指定主机名和服务器名的节点<codeblock>> shard.getNode("vmsvr2-suse-x64","11800")
+        <li>返回指定主机名和服务器名的节点<codeblock>> rd.getNode("vmsvr2-suse-x64","11800")
 返回：vmsvr2-suse-x64:11800</codeblock></li>
       </ul>
     </section>

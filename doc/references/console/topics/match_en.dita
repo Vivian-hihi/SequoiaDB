@@ -13,16 +13,15 @@
       <title>Example</title>
       <ul>
         <li>The following example uses <b>$match</b> perform simple matching
-            <codeblock>db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}})</codeblock><p>This
-            operation represents the return qualifying score from a set collection of &lt;=80 and
+            <codeblock>db.collectionspace.collection.aggregate({ $match : {$and:[{score:80},{"info.name":{$exists:1}}]}})</codeblock><p>This
+            operation represents the return qualifying score from a set collection of =80 and
             the info object child object name field is present record.</p></li>
         <li>The following example uses <b>$match</b> matching records that meet that criteria, then
           the result set using <xref href="jgroup_en.dita"><b>$group</b></xref> grouping final
           output using <xref href="project_en.dita"><b>$project</b></xref> focused to the specified
           field name.
-            <codeblock>db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}},
-            {<xref href="jgroup_en.dita"><b>$group</b></xref>:{_id:"$major"}},{<xref href="project_en.dita"><b>$project</b></xref>:{major:1,dep:1}})</codeblock><p>The
-            first set of collection operations in return qualifying score&lt;=80 and recording info
+            <codeblock>db.collectionspace.collection.aggregate({ $match : {$and:[{score:80},{"info.name":{$exists:1}}]}},{$group:{_id:"$major"}},{$project:{major:1,dep:1}})</codeblock><p>The
+            first set of collection operations in return qualifying score=80 and recording info
             objects child objects exist in the name field, and then grouped according to major
             fields, the final choice of major, and dep field output in the result set.</p>
         </li>

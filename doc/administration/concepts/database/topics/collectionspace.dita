@@ -10,7 +10,7 @@
     </section>
     <section><title>数据页</title>
      <p>集合空间将文件划分为若干个固定大小的数据页（Page），在创建集合空间时用户可以指定数据页大小，且创建后不可更改。</p>
-      <p>每个分片节点中，单个集合空间可以访问16777216个数据页。因此对应不同数据页大小，单分片中集合空间容量上限为：</p>
+      <p>每个分区节点中，单个集合空间可以访问16777216个数据页。因此对应不同数据页大小，单分区中集合空间容量上限为：</p>
      <simpletable><!-- frame="all" relcolwidth="1.0* 1.0*"
        id="administration_concepts_database_collectionspace_table1">-->
        <sthead>

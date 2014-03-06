@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="编目信息快照"/>
-<meta name="description" content="描述 编目信息快照列出当前数据库中所有集合的编目信息，每个集合一条记录。 标示 SDB_SNAP_CATALOG 适用节点 协调节点 字段信息 字段名 类型 描述 Name 字符串 集合完整名 EnsureShardingIndex 布尔类型 是否自动为分片键字段创建索引 ReplSize 整数 ..."/>
+<meta name="description" content="描述 编目信息快照列出当前数据库中所有集合的编目信息，每个集合一条记录。 标示 SDB_SNAP_CATALOG 适用节点 协调节点 字段信息 字段名 类型 描述 Name 字符串 集合完整名 EnsureShardingIndex 布尔类型 是否自动为分区键字段创建索引 ReplSize 整数 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/database/topics/snapshot/snapshot.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_dwn_xf5_ql"/>
@@ -67,7 +67,7 @@
 
           <td valign="top" headers="d24108e39" class="stentry">布尔类型</td>
 
-          <td valign="top" headers="d24108e42" class="stentry">是否自动为分片键字段创建索引</td>
+          <td valign="top" headers="d24108e42" class="stentry">是否自动为分区键字段创建索引</td>
 
         </tr>
 <tr class="strow">
@@ -83,7 +83,7 @@
 
           <td valign="top" headers="d24108e39" class="stentry">对象</td>
 
-          <td valign="top" headers="d24108e42" class="stentry">分片键定义 </td>
+          <td valign="top" headers="d24108e42" class="stentry">分区键定义 </td>
 
         </tr>
 <tr class="strow">
@@ -91,9 +91,9 @@
 
           <td valign="top" headers="d24108e39" class="stentry">字符串</td>
 
-          <td valign="top" headers="d24108e42" class="stentry"> 数据分片类型：<div class="fig fignone"/>
-range：数据按分片键值的范围进行分区存储<div class="fig fignone"/>
-hash：数据按分片键的哈希值进行分片存储 </td>
+          <td valign="top" headers="d24108e42" class="stentry"> 数据分区类型：<div class="fig fignone"/>
+range：数据按分区键值的范围进行分区存储<div class="fig fignone"/>
+hash：数据按分区键的哈希值进行分区存储 </td>
 
         </tr>
 <tr class="strow">
@@ -110,7 +110,7 @@ hash：数据按分片键的哈希值进行分片存储 </td>
 
           <td valign="top" headers="d24108e39" class="stentry">整数</td>
 
-          <td valign="top" headers="d24108e42" class="stentry">分片组 ID </td>
+          <td valign="top" headers="d24108e42" class="stentry">分区组 ID </td>
 
         </tr>
 <tr class="strow">
@@ -118,7 +118,7 @@ hash：数据按分片键的哈希值进行分片存储 </td>
 
           <td valign="top" headers="d24108e39" class="stentry">字符串</td>
 
-          <td valign="top" headers="d24108e42" class="stentry">分片组名 </td>
+          <td valign="top" headers="d24108e42" class="stentry">分区组名 </td>
 
         </tr>
 <tr class="strow">
@@ -126,7 +126,7 @@ hash：数据按分片键的哈希值进行分片存储 </td>
 
           <td valign="top" headers="d24108e39" class="stentry">对象</td>
 
-          <td valign="top" headers="d24108e42" class="stentry">数据分片区间的上限 </td>
+          <td valign="top" headers="d24108e42" class="stentry">数据分区区间的上限 </td>
 
         </tr>
 <tr class="strow">
@@ -134,7 +134,7 @@ hash：数据按分片键的哈希值进行分片存储 </td>
 
           <td valign="top" headers="d24108e39" class="stentry">对象</td>
 
-          <td valign="top" headers="d24108e42" class="stentry">数据分片区间的下限 </td>
+          <td valign="top" headers="d24108e42" class="stentry">数据分区区间的下限 </td>
 
         </tr>
 </table>

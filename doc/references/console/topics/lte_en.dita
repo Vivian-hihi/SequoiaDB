@@ -22,7 +22,7 @@
               href="../../methods/topics/dbupdate_en.dita">update()</xref> will update records that
             contains "age" value of 25 with records which conatins a "type" value lesser than or
             euqivalent to 15 under the field "service".</p>
-          <codeblock>db.foo.bar.update({<xref href="gset_en.dita">$set</xref>:{age:25}},{"service.type":{$lte:15}})</codeblock>
+          <codeblock>db.foo.bar.update({<xref href="gset_en.dita">$set</xref>:{age:25}},{"service.type":{$lte:2}})</codeblock>
         </li>
       </ul>
     </section>

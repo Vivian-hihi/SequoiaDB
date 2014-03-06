@@ -33,25 +33,25 @@
         </p><p>2.连接到协调节点 </p><p>在shell 命令中输入：
           <codeblock>>var db = new Sdb("localhost",11810)</codeblock> 其中11810为协调节点端口号 </p>
         <p>3.创建一个编目节点组</p><p>
-          <codeblock>>db.createCataShard("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
+          <codeblock>>db.createReplcaCataGroup("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
         </p><p>其中 </p><p>sdbserver1：第一个服务器主机名； </p><p>11800：为编目节点服务端口（该端口配置不要与随机端口冲突，以下其它端口的配置也需要注意）；</p><p> /opt/sequoiadb/database/cata/11800：为编目节点的数据文件存放路径；
             <note>请确保存放路径的权限，如果SequoiaDB采用的默认安装，那么给路径赋予sdbadmin权限，下同。</note></p><p>4.等待5秒，开始添加另外两个编目节点</p><p>
-          <codeblock>>var catashard = db.getshard("SYSCatalogGroup");      </codeblock>
+          <codeblock>>var cataRG = db.getRG("SYSCatalogGroup");      </codeblock>
         </p><p>
-          <codeblock>>var node1 = catashard.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800") </codeblock>
+          <codeblock>>var node1 = cataRG.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800") </codeblock>
         </p><p>
-          <codeblock>>var node2 = catashard.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</codeblock>
+          <codeblock>>var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</codeblock>
         </p><p>5.启动编目节点组 <codeblock>>node1.start()
 >node2.start()</codeblock></p><p>
           <note>
             <p>创建节点的第一个参数必须为“主机名”，而不能使主机的IP。</p>
           </note>
         </p></li>
-      <li>步骤四：通过命令配置和启动数据节点 <p>1.创建数据节点组</p><p><codeblock>>var datashard = db.createShard("datagshard")</codeblock></p>
-        <p>2.添加数据节点</p><p><codeblock>>datashard.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   </codeblock></p>
-        <p><codeblock>>datashard.createNode("sdbserver2", 11820, "/opt/sequoiadb/database/data/11820")</codeblock></p>
-        <p><codeblock>>datashard.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</codeblock>
-      </p><note><p>创建节点的第一个参数必须为“主机名”，而不能是主机的IP。</p></note><p>3.启动数据节点组</p><p><codeblock>>datashard.start()</codeblock>
+      <li>步骤四：通过命令配置和启动数据节点 <p>1.创建数据节点组</p><p><codeblock>>var dataRG = db.createRG("datagroup")</codeblock></p>
+        <p>2.添加数据节点</p><p><codeblock>>dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   </codeblock></p>
+        <p><codeblock>>dataRG.createNode("sdbserver2", 11820, "/opt/sequoiadb/database/data/11820")</codeblock></p>
+        <p><codeblock>>dataRG.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</codeblock>
+      </p><note><p>创建节点的第一个参数必须为“主机名”，而不能是主机的IP。</p></note><p>3.启动数据节点组</p><p><codeblock>>dataRG.start()</codeblock>
       </p><p>4.退出SequoiaDB shell控制台</p><p><codeblock>>quit</codeblock></p></li>
       <li>步骤五：在另外两台服务器上启动协调节点 <p>1.创建协调节点配置目录</p><codeblock>mkdir -p /opt/sequoiadb/conf/local/11810 其中11810为协调节点的服务端口，可根据需要配置</codeblock>
         <p>2.拷贝协调节点样例配置文件</p><codeblock>cp /opt/sequoiadb/conf/samples/sdb.conf.coord  /opt/sequoiadb/conf/local/11810/sdb.conf</codeblock>

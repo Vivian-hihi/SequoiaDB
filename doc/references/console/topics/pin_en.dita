@@ -27,7 +27,7 @@
       </ul>
       <note> Array containing one value like {&lt;field name>:{$in:[&lt;value>]}} equals {&lt;field
         name>:&lt;value>}.</note>
-      <codeblock>db.foo.bar.find(age:{$in:[20]})is equivalent to db.foo.bar.find({age:20})</codeblock>
+      <codeblock>db.foo.bar.find({age:{$in:[20]}})is equivalent to db.foo.bar.find({age:20})</codeblock>
     </section>
   </body>
   <related-links>

@@ -27,7 +27,7 @@
       </ul>
       <note>
         <p>When "$all" is manipulated on a field not in type of array, for example:
-          "db.foo.bar.find(age:{$all:[20]})" equals to "db.foo.bar.find({age:20})".</p>
+          "db.foo.bar.find({age:{$all:[20]}})" equals to "db.foo.bar.find({age:20})".</p>
       </note>
     </section>
   </body>

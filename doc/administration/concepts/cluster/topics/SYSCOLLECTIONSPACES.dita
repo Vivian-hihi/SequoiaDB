@@ -29,7 +29,7 @@
         <strow>
           <stentry>Group</stentry>
           <stentry>数组</stentry>
-          <stentry>该集合空间所在的分片组ID。</stentry>
+          <stentry>该集合空间所在的分区组ID。</stentry>
         </strow>
         <strow>
           <stentry>PageSize</stentry>
@@ -39,7 +39,7 @@
       </simpletable>
     </section>
     <section><title>示例</title>
-      <p>一个典型的包含一个集合，存放在一个分片组中的集合空间如下：</p>
+      <p>一个典型的包含一个集合，存放在一个分区组中的集合空间如下：</p>
       <codeblock>{ "Collection" : [ { "Name" : "foo" } ], 
   "Group" : [ { "GroupID" : 1000 } ], 
   "Name" : "test", 

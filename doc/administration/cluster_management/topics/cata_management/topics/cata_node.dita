@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_myy_ncx_tk">
-  <title>编目分片组中新增节点</title>
+  <title>编目分区组中新增节点</title>
   <body>
     <note>如果新增节点涉及到新增主机，则请首先按照在<xref href="../../create_host.dita"
       >集群中新增主机</xref>一节完成主机的主机名和参数配置。</note>
     <p>随着整个集群中的物理设备的扩展，可以通过增加更多的编目节点来提高编目服务的可靠性。</p>
     <p>操作方法：</p>
-    <codeblock>>var catashard = db.getShard("SYSCatalog");
->var node1 = catashard.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+    <codeblock>>var cataRG = db.getRG("SYSCatalog");
+>var node1 = cataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
 >node1.start()</codeblock>
-    <p>第一条命令用于获取编目分片组，"SYSCatalogGroup"为编目分片组组名；</p>
+    <p>第一条命令用于获取编目分区组，"SYSCatalogGroup"为编目分区组组名；</p>
     <p>第二条命令用于创建一个新的编目节点，其中：</p>
     <p>参数：</p>
     <p><b>host</b> ： 指定编目节点的主机名；</p>

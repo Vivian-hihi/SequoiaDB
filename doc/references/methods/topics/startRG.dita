@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_startRG">
-  <title>db.startShard()</title>
+  <title>db.startRG()</title>
   <body>
-    <section><title>db.startShard(&lt;name>)</title>
-      <p>启动指定的分片组。分片组启动后才能在分片组上创建节点。这个方法等价于<xref href="rgstart.dita">shard.start()</xref>。</p>
+    <section><title>db.startRG(&lt;name>)</title>
+      <p>启动指定的分区组。分区组启动后才能在分区组上创建节点。这个方法等价于<xref href="rgstart.dita">rg.start()</xref>。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable  id="references_method_startRG_table">
@@ -17,22 +17,21 @@
         <strow>
           <stentry>name          </stentry>
           <stentry>sring                    </stentry>
-          <stentry>分片组的名称                    </stentry>
+          <stentry>分区组的名称 </stentry>
           <stentry>是           </stentry>
         </strow>
       </simpletable>
       
     </section>
     <section><title>格式</title>
-      <p>db.startShard()的方法定义包含name一个参数，参数类型为字符串，为要启动的分片组名。<codeblock>("&lt;分片组名>")</codeblock></p>
+      <p>db.startRG()的方法定义包含name一个参数，参数类型为字符串，为要启动的分区组名。<codeblock>("&lt;分区组名>")</codeblock></p>
       <note>
-        <p>指定的分片组名必须存在，不然返回异常；如果指定的分片组已经启动，再使用该方法同样会出现异常。</p>
+        <p>指定的分区组名必须存在，不然返回异常；如果指定的分区组已经启动，再使用该方法同样会出现异常。</p>
       </note>
     </section>
     <section><title>示例</title>
       <ul>
-        <li>启动分片组名为shard的命令如下：
-        <codeblock>db.startShard("shard")</codeblock></li>
+        <li>启动分区组名为group的命令如下： <codeblock>db.startRG("group")</codeblock></li>
       </ul>
     </section>
   </body>

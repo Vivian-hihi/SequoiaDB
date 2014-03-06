@@ -86,9 +86,8 @@
       <li>Connect to the coord node
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-      <li>Get partition group
-        <codeblock>> datashard = db.getShard ( "datashard1" ) ;</codeblock></li>
-      <li>Stop partition group <codeblock>> datashard.stop()</codeblock></li>
+      <li>Get partition group <codeblock>> datarg = db.getRG ( "data" ) ;</codeblock></li>
+      <li>Stop partition group <codeblock>> datarg.stop()</codeblock></li>
       <li>Login via terminal nodes corresponding data partition group, perform data recovery.
         <codeblock>sdbadmin@vmsvr2-suse-x64-1:/opt/sequoiadb> bin/sdbrestore -p  database/11820/bakfile -n test_bk
 Begin to clean dps logs...

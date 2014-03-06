@@ -24,7 +24,7 @@
             </strow>
             <strow>
               <stentry>data sharding group</stentry>
-              <stentry> one data sharding group,group name is datashard1,contain one data
+              <stentry> one data sharding group,group name is datagroup1,contain one data
                 node:<fig/> data node one:service host name is vmsvr1-suse-x64,port is 11820 </stentry>
             </strow>
             <strow>
@@ -51,7 +51,7 @@
             </strow>
             <strow>
               <stentry>data sharding group</stentry>
-              <stentry>one data sharding group,group name is datashard1,contain two data
+              <stentry>one data sharding group,group name is datagroup1,contain two data
                 nodes:<fig/>data node one:service host name is vmsvr1-suse-x64,port is
                 11820<fig/>data node two:service host name is vmsvr2-suse-x64,port is
                 11820</stentry>
@@ -102,13 +102,13 @@ ulimit –Su 32000      //the number of threads limit</codeblock>
             </i>command line,execute the following command to add a copy data node to current data
             sharding
             group:</p><codeblock>> var db = new Sdb("localhost",11810)
-> var datashard = db.getShard("datashard")
->node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
+> var datarg = db.getRG("datagroup1")
+> node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
 > node.start()      </codeblock><p>3.
             In the <i>SequoiaDB shell </i>command line,execute the following command to check the
             configuration information of the sharding group,you can see a new data node have added
             to the data
-          group:</p><codeblock>>db.listShards();
+          group:</p><codeblock>>db.listReplicaGroups();
 …
 {
   "Group": [

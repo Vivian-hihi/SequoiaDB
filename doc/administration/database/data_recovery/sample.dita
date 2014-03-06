@@ -8,9 +8,9 @@
         <codeblock>$ /opt/sequoiadb/bin/sdb 
 >db=new Sdb('192.168.20.35',11810)
 192.168.20.35:11810
->shard=db.getShard('foo')
+>rg=db.getRG('foo')
 foo
->shard.stop() </codeblock></li>
+>rg.stop() </codeblock></li>
       <li>恢复配置文件
         <codeblock>$ cp vmsvr1-rhel-x64.11820.sdb.conf /opt/sequoiadb/conf/local/11820/sdb.conf</codeblock></li>
       <li>恢复数据文件
@@ -27,9 +27,9 @@ foo
         <codeblock>$ /opt/sequoiadb/bin/sdb 
 >db=new Sdb('192.168.20.35',11810)
 192.168.20.35:11810
->shard=db.getShard('foo')
+>rg=db.getRG('foo')
 foo
->shard.start()</codeblock></li>
+>rg.start()</codeblock></li>
     </ol>
     <note>仅恢复复制组内某一个数据节点会造成数据之间的不一致。</note>
   </body>

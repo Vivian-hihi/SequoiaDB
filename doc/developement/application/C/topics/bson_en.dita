@@ -16,10 +16,12 @@
     <title> Create Object</title><p>In general, the process of generation of a BSON object contains 3 steps:</p><p> 1)Create object (bson_create ; bson_init) </p><p> 2)Use object </p><p> 3)Clear object (bson_dispose ; bson_destory)</p>
       <ul>
         <li><p>Create a simple BSON object
-            {age:20}。<codeblock>bson obj;
+            {age:20}。<codeblock>INT32 rc = SDB_OK;
+bson obj;
 bson_init(&amp;obj);
 bson_appent_int(obj,"age",20);
-bson_finish(obj);
+if ( bson_finish(obj) != SDB_OK )
+printf("Error.") ;
 bson_destory(obj);</codeblock></p></li>
         <li>Create a complex BSON object
           <codeblock>/* Create a object contianing {name:"tom",colors:["red","blue","green"], address: {city:"Toronto, province: "Ontario"}} */

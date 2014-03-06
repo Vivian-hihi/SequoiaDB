@@ -126,7 +126,7 @@
           <stentry>限制</stentry>
         </sthead>
         <strow>
-          <stentry>每分片组最大节点数量</stentry>
+          <stentry>每分区组最大节点数量</stentry>
           <stentry>7</stentry>
         </strow>
         <strow>
@@ -139,11 +139,11 @@
         </strow>
         <strow>
           <stentry>主节点选举条件</stentry>
-          <stentry>分片组内至少存在超过半数节点参与选举</stentry>
+          <stentry>分区组内至少存在超过半数节点参与选举</stentry>
         </strow>
       </simpletable>
     </section>
-    <section><title>分片</title>
+    <section><title>分区</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 3.54*" id="references_limits_shard">-->
         <sthead>
           <stentry>描述</stentry>
@@ -154,16 +154,16 @@
           <stentry>同一时刻每个集合只能进行一个范围的切分</stentry>
         </strow>
         <strow>
-          <stentry>分片键</stentry>
-          <stentry>分片键数值在数据插入后不可修改</stentry>
+          <stentry>分区键</stentry>
+          <stentry>分区键数值在数据插入后不可修改</stentry>
         </strow>
         <strow>
           <stentry>_id</stentry>
-          <stentry>分片集合中_id仅保证分片组内唯一，不保证全局唯一</stentry>
+          <stentry>分区集合中_id仅保证分区组内唯一，不保证全局唯一</stentry>
         </strow>
         <strow>
           <stentry>唯一索引</stentry>
-          <stentry>必须包含分片键中所有字段</stentry>
+          <stentry>必须包含分区键中所有字段</stentry>
         </strow>
       </simpletable>
     </section>

@@ -22,7 +22,7 @@
         </li>
       </ul>
       <note> 当给定数组只有一个值时，即{&lt;字段名>:{$nin:[&lt;值>]}}，等价于{&lt;字段名>:{$ne:&lt;值>}}</note>
-      <codeblock>db.foo.bar.find(age:{$nin:[20]})等价于db.foo.bar.find({age:{$ne:20}})</codeblock>
+      <codeblock>db.foo.bar.find({age:{$nin:[20]}})等价于db.foo.bar.find({age:{$ne:20}})</codeblock>
     </section>
   </body>
   <related-links>

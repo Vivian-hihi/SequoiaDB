@@ -66,7 +66,7 @@
         <li class="li">
           <p class="p">向集合bar中推入不存在的数组对象和值。原记录中不存在数组对象name，如有记录：{arr[1,2],age:20}</p>
 
-          <div class="p"><pre class="pre codeblock">db.foo.bar.update({$push:{name:"Tom"}},{name:{<a class="xref" href="exists.html">$exixts</a>:0}})</pre>
+          <div class="p"><pre class="pre codeblock">db.foo.bar.update({$push:{name:"Tom"}},{name:{<a class="xref" href="exists.html">$exists</a>:0}})</pre>
 </div>
 
           <p class="p">此操作后，记录更新为：{arr[1,2],age:20,name:["Tom"]}。原记录中不存在数组对象name，使用$push操作符，会将name以数组对象的形式推入到记录中。</p>

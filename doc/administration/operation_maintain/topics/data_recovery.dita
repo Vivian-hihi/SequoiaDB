@@ -3,7 +3,7 @@
 <topic id="topic_jrl_2fd_pl">
   <title>数据恢复</title>
   <body>    
-    <p>使用备份的数据恢复某个分片组。执行数据恢复必须确保相应组已停止运行，数据恢复首先会清空原节点的所有数据和日志，然后从备份的数据中恢复配置、数据和日志。</p>
+    <p>使用备份的数据恢复某个分区组。执行数据恢复必须确保相应组已停止运行，数据恢复首先会清空原节点的所有数据和日志，然后从备份的数据中恢复配置、数据和日志。</p>
     <section>
       <title>数据恢复工具参数说明</title>
       <simpletable>        
@@ -65,7 +65,7 @@
         </strow>
         <strow>
           <stentry>--shardname</stentry>
-          <stentry>分片通讯服务名或端口。</stentry>
+          <stentry>分区通讯服务名或端口。</stentry>
         </strow>
         <strow>
           <stentry>--catalogname</stentry>
@@ -79,16 +79,15 @@
     <section>
       <title>恢复数据</title>           
     </section>
-    <note>如果一个分片组包含多个数据节点，必须停止该组中每个数据节点并进行恢复。如果将备份的数据恢复至非备份数据节点，须使用–isSelf false配置参数，同时设置相关的配置参数。</note>
+    <note>如果一个分区组包含多个数据节点，必须停止该组中每个数据节点并进行恢复。如果将备份的数据恢复至非备份数据节点，须使用–isSelf
+      false配置参数，同时设置相关的配置参数。</note>
     <ol>
       <li>连接到协调节点
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-      <li>得到分片组
-      <codeblock>> datashard = db.getShard ( "datashard" ) ;</codeblock></li>
-      <li>停止分片组
-      <codeblock>> datashard.stop()</codeblock></li>
-      <li>通过终端登入相应分片组的数据节点，执行数据恢复。
+      <li>得到分区组 <codeblock>> datarg = db.getRG ( "data" ) ;</codeblock></li>
+      <li>停止分区组 <codeblock>> dataeg.stop()</codeblock></li>
+      <li>通过终端登入相应分区组的数据节点，执行数据恢复。
         <codeblock>sdbadmin@vmsvr2-suse-x64-1:/opt/sequoiadb> bin/sdbrestore -p  database/11820/bakfile -n test_bk
 Begin to clean dps logs...
 Begin to clean dms storages...
@@ -108,7 +107,7 @@ drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 15:48 diaglog
 drwxr-xr-x 2 sdbadmin sdbadmin      4096 Nov 13 17:39 replicalog
 -rw-r----- 1 sdbadmin sdbadmin 155254784 Nov 13 17:39 test.1.data
 -rw-r----- 1 sdbadmin sdbadmin 151060480 Nov 13 17:39 test.1.idx</codeblock></li>
-      <li>删除该分片组中其它数据节点的所有数据（或者将该节点的所有.data和.idx文件拷贝至其它数据节点的数据目录和索引目录下，以及将该节点replicalog所有日志拷贝至其它数据节点的日志目录下，或者将备份文件拷贝至其它数据节点，并通过restored工具恢复）；重新启动系统。</li>
+      <li>删除该分区组中其它数据节点的所有数据（或者将该节点的所有.data和.idx文件拷贝至其它数据节点的数据目录和索引目录下，以及将该节点replicalog所有日志拷贝至其它数据节点的日志目录下，或者将备份文件拷贝至其它数据节点，并通过restored工具恢复）；重新启动系统。</li>
     </ol>
   </body>
 </topic>

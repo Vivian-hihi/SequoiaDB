@@ -30,7 +30,7 @@
         <p> Array containing one value like {&lt;field name>:{$in:[&lt;value>]}} equals {&lt;field
           name>:&lt;value>}.</p>
       </note>
-      <codeblock>db.foo.bar.find(age:{$nin:[20]}) equals to db.foo.bar.find({age:{$ne:20}})</codeblock>
+      <codeblock>db.foo.bar.find({age:{$nin:[20]}}) equals to db.foo.bar.find({age:{$ne:20}})</codeblock>
     </section>
   </body>
   <related-links>

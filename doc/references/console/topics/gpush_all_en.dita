@@ -30,7 +30,7 @@
           <p>Push array object <i>name</i> to collection <i>bar</i>,assuming the original record
             doesnot exist array object <i>name</i> ,there has a record like
             this:{arr[1,3,4,5],age:10}</p>
-          <p><codeblock>db.foo.bar.update({$push_all:{name:["Tom","Jhon"]}},{name:{<xref href="exists_en.dita">$exixts</xref>:0}})</codeblock></p>
+          <p><codeblock>db.foo.bar.update({$push_all:{name:["Tom","Jhon"]}},{name:{<xref href="exists_en.dita">$exists</xref>:0}})</codeblock></p>
           <p>after this operation,the record update
             as:{arr[1,3,4,5],age:10,name:["Tom","Mike"]}。</p>
         </li>

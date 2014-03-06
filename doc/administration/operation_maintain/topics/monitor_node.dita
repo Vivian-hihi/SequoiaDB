@@ -9,10 +9,9 @@
         <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;
 </codeblock></li>
-      <li>得到分片组
-      <codeblock>datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
+      <li>得到分区组 <codeblock>datarg = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
       <li>得到数据节点
-      <codeblock>> datanode = datagroup.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
+        <codeblock>> datanode = datarg.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
       <li>得到该节点的快照
         <codeblock>> datanode.connect().snapshot(SDB_SNAP_DATABASE)</codeblock><p>快照类型分为：</p><p><xref href="../../database/topics/snapshot/contexts.dita">SDB_SNAP_CONTEXTS</xref>
         </p><p><xref href="../../database/topics/snapshot/contexts_current.dita">SDB_SNAP_CONTEXTS_CURRENT</xref> </p><p><xref href="../../database/topics/snapshot/sessions.dita">SDB_SNAP_SESSIONS</xref> </p><p><xref href="../../database/topics/snapshot/sessions_current.dita">SDB_SNAP_SESSIONS_CURRENT</xref>
@@ -23,7 +22,7 @@
       <codeblock>[sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ cat monitor_insert.sh
 #!/bin/bash
 ~/sequoiadb/bin/sdb "db=new Sdb('localhost', 11810)" > /dev/null
-~/sequoiadb/bin/sdb "db.getShard('foo').getNode('vmsvr1-rhel-x64',11820).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
+~/sequoiadb/bin/sdb "db.getRG('foo').getNode('vmsvr1-rhel-x64',11820).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
 ~/sequoiadb/bin/sdb "quit"
 [sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ ./monitor_insert.sh
   "TotalInsert": 0,</codeblock></p>

@@ -126,7 +126,7 @@ rc = connection.createCollectionSpace ( "foo",
 rc = collectionspace.createCollection ( "bar", collection ) ;</pre>
 <p class="p">以上创建了一个名字为“foo”的集合空间和一个名字为"bar"的集合，集合空间内的集合的数据页大小为4k。可根据实际情况选择不同大小的数据页。创建集合后，可对集合做增删改查等操作。</p>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">在创建集合“bar”时并没有附加分片、压缩等信息，详情请查阅<a class="xref" href="../../../../../cpp/html/index.html">C++ API</a></p>
+            <p class="p">在创建集合“bar”时并没有附加分区、压缩等信息，详情请查阅<a class="xref" href="../../../../../cpp/html/index.html">C++ API</a></p>
 
           </div>
 </li>
@@ -182,32 +182,33 @@ collection.update( rule ) ;</pre>
     <div class="section"><h2 class="title sectiontitle">集群操作</h2>
       
       <ul class="ul">
-        <li class="li">分片组操作 <p class="p">分片组操作包括创建分片组（sdb:createShard）、得到分片组实例（sdb:getShard）、启动分片组所有数据节点（sdbShard::start）、停止分片组所有数据节点（sdbShard::stop）等。</p>
+        <li class="li">分区组操作
+            <p class="p">分区组操作包括创建分区组（sdb:createReplicaGroup）、得到分区组实例（sdb:getReplicaGroup）、启动分区组所有数据节点（sdbReplicaGroup::start）、停止分区组所有数据节点（sdbReplicaGroup::stop）等。</p>
 
-          <p class="p">以下为分片组操作示例性的例子。真正的应用应包括错误检测等。
+          <p class="p">以下为分区组操作示例性的例子。真正的应用应包括错误检测等。
           </p>
-<pre class="pre codeblock">// 定义一个分片组实例
-sdbShard shard  ;
+<pre class="pre codeblock">// 定义一个分区组实例
+sdbReplicaGroup rg  ;
 // 定义一个空的map 对象表示创建数据节点没有更多的配置内容
 map&lt;string,string&gt; config ;
 …
-// 先建立一个编目分片组
-connection.createCataShard ( HOST_NAME, SERVICE_NAME,
-                          CATALOG_SHARD_PATH , NULL ) ;
-// 睡眠5秒等待编目分片组启动并且选举好主从节点
+// 先建立一个编目分区组
+connection.createCataReplicaGroup ( HOST_NAME, SERVICE_NAME,
+                          CATALOG_GROUP_PATH , NULL ) ;
+// 睡眠5秒等待编目分区组启动并且选举好主从节点
 sleep( 5 ) ;
-// 创建数据分片组
-connection.createShard ( REPLICA_SHARD_NAME, shard ) ;
+// 创建数据分区组
+connection.createRG ( REPLICA_GROUP_NAME, rg ) ;
  
 // 创建第一个数据节点
-shard.createNode ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config ) ;
+rg.createNode ( HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, config ) ;
 …
-// 启动分片组
-shard.start () ;</pre>
+// 启动分区组
+rg.start () ;</pre>
 </li>
 
-        <li class="li">数据节点操作 <p class="p">数据节点操作包括创建数据节点（sdbShard::createNode）、得到主数据节点（sdbShard::
-            getMaster）、得到从数据节点（sdbShard::
+        <li class="li">数据节点操作 <p class="p">数据节点操作包括创建数据节点（sdbReplicaGroup::createNode）、得到主数据节点（sdbReplicaGroup::
+            getMaster）、得到从数据节点（sdbReplicaGroup::
             getSlave）、启动数据节点（sdbNode::start）、停止数据节点（sdb::Stop）等。</p>
 <p class="p">
             以下为数据节点操作示例性的例子。真正的应用应包括错误检测等。
@@ -216,13 +217,13 @@ shard.start () ;</pre>
 sdbNode masternode ;
 sdbNode slavenode ;
 …
-// 等待数据分片组启动并选举出主节点
+// 等待数据分区组启动并选举出主节点
 sleep( 15 ) ;
 
 // 获取主数据节点
-shard.getMaster( masternode ) ;
+rg.getMaster( masternode ) ;
 //获取从数据节点
-shard.getSlave( slavenode ) ;</pre>
+rg.getSlave( slavenode ) ;</pre>
 </li>
 
       </ul>

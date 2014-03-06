@@ -23,7 +23,7 @@
         <strow>
           <stentry>EnsureShardingIndex </stentry>
           <stentry>布尔类型</stentry>
-          <stentry>是否自动为分片键字段创建索引</stentry>
+          <stentry>是否自动为分区键字段创建索引</stentry>
         </strow>
         <strow>
           <stentry>ReplSize </stentry>
@@ -33,12 +33,12 @@
         <strow>
           <stentry>ShardingKey </stentry>
           <stentry>对象</stentry>
-          <stentry>分片键定义 </stentry>
+          <stentry>分区键定义 </stentry>
         </strow>
         <strow>
           <stentry>ShardingType </stentry>
           <stentry>字符串</stentry>
-          <stentry> 数据分片类型：<fig></fig>range：数据按分片键值的范围进行分区存储<fig></fig>hash：数据按分片键的哈希值进行分片存储 </stentry>
+          <stentry> 数据分区类型：<fig/>range：数据按分区键值的范围进行分区存储<fig/>hash：数据按分区键的哈希值进行分区存储 </stentry>
         </strow>
         <strow>
           <stentry>Version </stentry>
@@ -49,22 +49,22 @@
         <strow>
           <stentry>CataInfo. GroupID </stentry>
           <stentry>整数</stentry>
-          <stentry>分片组 ID </stentry>
+          <stentry>分区组 ID </stentry>
         </strow>
         <strow>
           <stentry>CataInfo. GroupName </stentry>
           <stentry>字符串</stentry>
-          <stentry>分片组名 </stentry>
+          <stentry>分区组名 </stentry>
         </strow>
         <strow>
           <stentry>CataInfo. LowBound </stentry>
           <stentry>对象</stentry>
-          <stentry>数据分片区间的上限 </stentry>
+          <stentry>数据分区区间的上限 </stentry>
         </strow>
         <strow>
           <stentry>CataInfo. UpBound </stentry>
           <stentry>对象</stentry>
-          <stentry>数据分片区间的下限 </stentry>
+          <stentry>数据分区区间的下限 </stentry>
         </strow>
       </simpletable>
     </section>

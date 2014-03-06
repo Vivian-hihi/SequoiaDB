@@ -120,18 +120,21 @@ rc = sdbCreateCollectionSpace ( connection, "foo",
 // 在新建立的集合空间中创建集合"bar"
 rc = sdbCreateCollection ( collectionspace, "bar", &amp;collection ) ;</pre>
 <div class="note note"><span class="notetitle">Note:</span> 
-   <p class="p">在创建集合“bar”时并没有附加分片、压缩等信息，关于创建集合的更详细情况，请参考详情请查阅<a class="xref" href="../../../../../c/html/index.html">C API</a></p>
+   <p class="p">在创建集合“bar”时并没有附加分区、压缩等信息，关于创建集合的更详细情况，请参考详情请查阅<a class="xref" href="../../../../../c/html/index.html">C API</a></p>
 
                </div>
 </li>
 
             <li class="li">插入数据<p class="p">SequoiaDB存储数据采用BSON的格式，BSON是一种类似JSON的二进制对象。保存数据库中的数据，首先必须创建bson对象。下面会将{name:"Tom",age:24}插入到集合中。</p>
 <pre class="pre codeblock">// 首先，我们需要创建一个插入的bson对象。
-bson obj;
+INT32 rc = SDB_OK ;
+bson obj ;
 bson_init( &amp;obj ) ;
 bson_append_string( &amp;obj, "name", "tom" ) ;
 bson_append_int( &amp;obj, "age", 24 ) ;
-bson_finish( &amp;obj ) ;
+rc = bson_finish( &amp;obj ) ;
+if ( rc != SDB_OK )
+printf("Error.");
 // 接着，把此bson对象插入集合中
 dbInsert ( collection, &amp;obj ) ;</pre>
 </li>
@@ -163,7 +166,9 @@ bson_destroy(obj) ;</pre>
 bson_init( &amp;obj ) ;
 bson_append_int( &amp;obj, "name", 1 ) ;
 bson_append_int( &amp;obj, "age", -1 ) ;
-bson_finish( &amp;obj ) ;
+rc = bson_finish( &amp;obj ) ;
+if ( rc != SDB_OK )
+printf("Error.");
 // 创建一个以"name"为升序，"age"为降序的索引
 sdbCreateIndex ( collection, &amp;obj, INDEX_NAME, FALSE, FALSE ) ;
 bson_destroy ( &amp;obj ) ;   </pre>
@@ -177,7 +182,9 @@ bson_init( &amp;rule ) ;
 bson_append_start_object ( &amp;rule, "$set" ) ;
 bson_append_int ( &amp;rule, "age", 19 ) ;
 bson_append_finish_object ( &amp;rule ) ;
-bson_finish ( &amp;rule ) ;
+rc = bson_finish ( &amp;rule ) ;
+if ( rc != SDB_OK )
+printf("Error.");
 // 打印出更新规则
 bson_print( &amp;rule ) ;
 // 更新记录
@@ -193,22 +200,23 @@ bson_destroy(&amp;rule);</pre>
      <div class="section"><h2 class="title sectiontitle">集群操作</h2>
         
         <ul class="ul">
-           <li class="li">分片组操作 <div class="p">分片组操作包括创建分片组（sdbCreateShard）、得到分片组句柄（sdbGetShard）、启动分片组（sdbStartShard）、停止分片组（sdbStopShard）等。以下为分片组操作示例性的例子。真正的应用应包括错误检测等。
-                  <pre class="pre codeblock">// 定义一个分片组句柄
-sdbShardHandle shard   = 0 ;
+           <li class="li">分区组操作
+                  <div class="p">分区组操作包括创建分区组（sdbCreateReplicaGroup）、得到分区组句柄（sdbGetReplicaGroup）、启动分区组（sdbStartReplicaGroup）、停止分区组（sdbStopReplicaGroup）等。以下为分区组操作示例性的例子。真正的应用应包括错误检测等。
+                  <pre class="pre codeblock">// 定义一个分区组句柄
+sdbReplicaGroupHandle rg = 0 ;
 …
-// 先建立一个编目分片组
-sdbCreateCataShard ( connection, HOST_NAME, SERVICE_NAME,
+// 先建立一个编目分区组
+sdbCreateCataReplicaGroup ( connection, HOST_NAME, SERVICE_NAME,
                                CATALOG_SET_PATH , NULL ) ;
-// 睡眠5秒等待编目分片组启动并且选举好主从节点
+// 睡眠5秒等待编目分区组启动并且选举好主从节点
 sleep( 5 ) ;
-// 创建数据分片组
-sdbCreateShard ( connection, SHARD_NAME, &amp;shard ) ;
+// 创建数据分区组
+sdbCreateReplicaGroup ( connection, GROUP_NAME, &amp;rg ) ;
  
 // 创建数据节点
-sdbCreateNode ( shard, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
-// 启动分片组
-sdbStartShard( shard ) ;</pre>
+sdbCreateNode ( rg, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
+// 启动分区组
+sdbStartReplicaGroup( rg ) ;</pre>
 </div>
 </li>
 
@@ -219,13 +227,13 @@ sdbStartShard( shard ) ;</pre>
 sdbNodeHandle masternode   = 0 ;
 sdbNodeHandle slavenode    = 0 ;
 …
-// 等待数据分片组启动并选举出主节点
+// 等待数据分区组启动并选举出主节点
 sleep( 10 ) ;
 
 // 获取主数据节点
-sdbGetNodeMaster ( shard, &amp;masternode ) ;
+sdbGetNodeMaster ( rg, &amp;masternode ) ;
 //获取从数据节点
-sdbGetNodeSlave ( shard, &amp;slavenode ) ;         </pre>
+sdbGetNodeSlave ( rg, &amp;slavenode ) ;         </pre>
 </div>
 
             </li>

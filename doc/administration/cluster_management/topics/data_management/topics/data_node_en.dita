@@ -10,10 +10,10 @@
       device,it may need to create the number of copies to improve the reliability of data
       shardings.</p>
     <p>operation methods: </p>
-    <codeblock>>var datashard = db.getShard(&lt;shardname&gt;);
->var node1 = datashard.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
+    <codeblock>>var dataRG = db.getRG(&lt;groupname&gt;);
+>var node1 = dataRG.createNode(&lt;host&gt;,&lt;service&gt;,&lt;dbpath&gt;,[config]); 
 >node1.start();</codeblock>
-    <p>The first command is used to get the data sharding,the param of <i>shardname </i> is the name
+    <p>The first command is used to get the data sharding,the param of <i>groupname </i> is the name
       of data sharding.</p>
     <p>The second command is used to create a new data node ,for the params,please refer to <xref
         href="../../cata_management/topics/cata_node_en.dita">create new node in catalog

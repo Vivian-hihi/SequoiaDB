@@ -72,35 +72,34 @@ while (cursor.hasNext()) {
     <section>
       <title>集群操作</title>
       <ul>
-        <li>创建分片组 <codeblock>String connString = "192.168.1.2:11810";
+        <li>创建分区组 <codeblock>String connString = "192.168.1.2:11810";
   try {
 
     Sequoiadb sdb = new Sequoiadb(connString, "", "");
-    Shard shard = sdb.createShard("shard1");
-    shard.createNode("dbserver-1", 11820, "/opt/sequoiadb/database/data/11820", null);
-    shard.start();
+    ReplicaGroup rg = sdb.createRG("group1");
+    rg.createNode("dbserver-1", 11820, "/opt/sequoiadb/database/data/11820", null);
+    rg.start();
   } catch (BaseException e) {
 	  System.out.println("Sequoiadb driver error, error description" + e.getErrorType());
 	}
         </codeblock><note>
-            <p>1)Shard.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），
+            <p>1)rg.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），
               第三个参数为数据文件存放路径，SequoiaDB 将自动新建该目录，但需要确保SequoiaDB管理员用户（默认sdbadmin）有写权限。</p>
-            <p>2)Shard.start()
-              方法用于启动一个分片组的所有节点，该函数一般需要等待10Sec钟左右才可完成。该方法不保证分片组选举完成，为了保证分片组可以正常使用，start完成后，还需要等待30Sec时间才可以正常使用新建的分片组。</p>
+            <p>2)rg.start()
+              方法用于启动一个分区组的所有节点，该函数一般需要等待10Sec钟左右才可完成。该方法不保证分区组选举完成，为了保证分区组可以正常使用，start完成后，还需要等待30Sec时间才可以正常使用新建的分区组。</p>
           </note></li>
-        <li>在分片组增加节点 <codeblock>String connString = "192.168.1.2:11810";
+        <li>在分区组增加节点 <codeblock>String connString = "192.168.1.2:11810";
   try {
 
     Sequoiadb sdb = new Sequoiadb(connString,"","");
 
-    Shard shard = sdb.getShard("shard1");
-    Node node = shard.createNode("dbserver-1", 11830, "/var/sequoiadb/database/data/11830", null);
+    ReplicaGroup rg = sdb.getReplicaGroup("group1");
+    Node node = rg.createNode("dbserver-1", 11830, "/var/sequoiadb/database/data/11830", null);
     node.start();
   } catch (BaseException e) {
 	  System.out.println("Sequoiadb driver error, error description" + e.getErrorType());
     }</codeblock><note>
-            <p>Shard.createNode()
-              方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），第三个参数为数据文件存放路径，SequoiaDB
+            <p>rg.createNode() 方法的第一个参数为新增节点所在的主机名，注意这里必须是主机名（暂时不支持使用IP地址），第三个参数为数据文件存放路径，SequoiaDB
               将自动新建该目录，但需要确保SequoiaDB管理员用户（默认sdbadmin）有写权限。</p>
           </note>
         </li>

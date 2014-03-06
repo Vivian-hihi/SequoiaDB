@@ -14,8 +14,8 @@
       <title>示例</title>
       <ul>
         <li>$group使用如下
-            <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<xref href="javg.dita">$avg</xref>:"$score"}，Major:{<xref href="jfirst.dita">$first</xref>:"$major"}}})</codeblock><p>该操作表示从集合collection中读取记录，并按major字段进行分组。
-在返回的结果集中，取各分组的第一条记录的major字段，重命名为Major；对各分组中的score字段值求平均值，重命名为avg_score。返回如下所示：<codeblock>{
+            <codeblock>db.collectionspace.collection.aggregate({$group:{_id:"$major",avg_score:{<xref href="javg.dita">$avg</xref>:" score"，Major:{<xref href="jfirst.dita">$first</xref>:" major"}}})</codeblock><p>该操作表示从集合collection中读取记录，并按major字段进行分组。
+            在返回的结果集中，取各分组的第一条记录的major字段，重命名为Major；对各分组中的score字段值求平均值，重命名为avg_score。返回如下所示：<codeblock>{
   "avg_score": 82,
   "major": "光学"
 }

@@ -22,7 +22,7 @@
         </li>
       </ul>
       <note>
-        <p>使用$all操作一个非数组类型的字段的话，例如：db.foo.bar.find(age:{$all:[20]})，它等价于db.foo.bar.find({age:20})</p>
+        <p>使用$all操作一个非数组类型的字段的话，例如：db.foo.bar.find({age:{$all:[20]}})，它等价于db.foo.bar.find({age:20})</p>
       </note>
     </section>
   </body>

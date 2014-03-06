@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="案例"/>
-<meta name="description" content="案例一：新增主机，在当前数据分片中新增一个数据副本节点 当前环境： 配置项 配置情况 主机 包含一台主机： 主机一：OS为suse 11 SP2 64位，主机名为vmsvr1-suse-x64，IP为192.168.1.10 编目分片组 分片组包含一个编目节点，服务端口为11800 数据分片组 一个数据分片组，组名为datashard，其中包含一个数据节点： ..."/>
+<meta name="description" content="案例一：新增主机，在当前数据分区中新增一个数据副本节点 当前环境： 配置项 配置情况 主机 包含一台主机： 主机一：OS为suse 11 SP2 64位，主机名为vmsvr1-suse-x64，IP为192.168.1.10 编目分区组 分区组包含一个编目节点，服务端口为11800 数据分区组 一个数据分区组，组名为datagroup1，其中包含一个数据节点： ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/cluster_management/topics/cluster_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_syz_qkx_tk"/>
@@ -36,7 +36,7 @@
   <h1 class="title topictitle1">案例</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">案例一：新增主机，在当前数据分片中新增一个数据副本节点</h2>
+    <div class="section"><h2 class="title sectiontitle">案例一：新增主机，在当前数据分区中新增一个数据副本节点</h2>
       
       <ul class="ul">
         <li class="li">当前环境： <p class="p"/>
@@ -56,15 +56,15 @@
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e24" class="stentry">编目分片组 </td>
+              <td valign="top" headers="d1404e24" class="stentry">编目分区组 </td>
 
-              <td valign="top" headers="d1404e27" class="stentry">分片组包含一个编目节点，服务端口为11800</td>
+              <td valign="top" headers="d1404e27" class="stentry">分区组包含一个编目节点，服务端口为11800</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e24" class="stentry">数据分片组</td>
+              <td valign="top" headers="d1404e24" class="stentry">数据分区组</td>
 
-              <td valign="top" headers="d1404e27" class="stentry">一个数据分片组，组名为datashard，其中包含一个数据节点：<div class="fig fignone"/>
+              <td valign="top" headers="d1404e27" class="stentry">一个数据分区组，组名为datagroup1，其中包含一个数据节点：<div class="fig fignone"/>
  数据节点一：服务主机名为vmsvr1-suse-x64，端口为11820 </td>
 
             </tr>
@@ -98,15 +98,15 @@
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e80" class="stentry">编目分片组 </td>
+              <td valign="top" headers="d1404e80" class="stentry">编目分区组 </td>
 
-              <td valign="top" headers="d1404e83" class="stentry">分片组包含一个编目节点，服务端口为11800</td>
+              <td valign="top" headers="d1404e83" class="stentry">分区组包含一个编目节点，服务端口为11800</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" headers="d1404e80" class="stentry">数据分片组</td>
+              <td valign="top" headers="d1404e80" class="stentry">数据分区组</td>
 
-              <td valign="top" headers="d1404e83" class="stentry"> 一个数据分片组，组名为datashard，其中包含两个数据节点：<div class="fig fignone"/>
+              <td valign="top" headers="d1404e83" class="stentry"> 一个数据分区组，组名为datagroup1，其中包含两个数据节点：<div class="fig fignone"/>
 
                 数据节点一：服务主机名为vmsvr1-suse-x64，端口为11820<div class="fig fignone"/>
  数据节点二：服务主机名为vmsvr2-suse-x64，端口为11820 </td>
@@ -169,18 +169,18 @@ ulimit -Su 32000      //线程个数限制</pre>
         <li class="li">步骤三：在新增主机上安装SequoiaDB软件 <p class="p">参考<a class="xref" href="../../../installation/server_installation/topics/linux.html">SequoiaDB服务器安装</a>一节进行软件安装。</p>
 </li>
 
-        <li class="li">步骤四：在当前分片中新增数据节点 <p class="p">1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb
+        <li class="li">步骤四：在当前分区中新增数据节点 <p class="p">1.在vmsvr2-suse-x64上执行如下命令，启动sequoaidb
             shell命令行：</p>
 <pre class="pre codeblock">/opt/sequoiadb/bin/sdb</pre>
 <p class="p">2.在Sequoiadb
-            shell命令行中，执行如下命令在当前数据分片组新增一副本节点：</p>
+            shell命令行中，执行如下命令在当前数据分区组新增一副本节点：</p>
 <pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)
-&gt; var datashard = db.getShard("datashard1")
-&gt;node=shard.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
+&gt; var datarg = db.getRG("datagroup1")
+&gt; node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
 &gt; node.start()      </pre>
 <p class="p">3.在Sequoiadb
-            Shell命令行中，执行如下命令检查分片组配置情况，可以看到数据组新增了一个数据节点：</p>
-<pre class="pre codeblock">&gt;db.listShards();
+            Shell命令行中，执行如下命令检查分区组配置情况，可以看到数据组新增了一个数据节点：</p>
+<pre class="pre codeblock">&gt;db.listReplicaGroups();
 …
 {
   "Group": [

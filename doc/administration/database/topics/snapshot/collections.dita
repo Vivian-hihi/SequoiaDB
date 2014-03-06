@@ -70,7 +70,7 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>节点所在分片组名（仅在集群模式下显示）</stentry>
+          <stentry>节点所在分区组名（仅在集群模式下显示）</stentry>
         </strow>
       </simpletable>
     </section>
@@ -89,7 +89,7 @@
         <strow>
           <stentry>Details.GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>节点所在分片组名 </stentry>
+          <stentry>节点所在分区组名 </stentry>
         </strow>
         <strow/>
         <strow>

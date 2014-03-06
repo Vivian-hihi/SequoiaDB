@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="监控节点状态"/>
-<meta name="description" content="用户可以使用snapshot监控每个节点的状态。 连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到分片组 datashard = db.getShard ( &#34;&lt;datashard&gt;&#34; ) ; 得到数据节点 &gt; datanode = datagroup.getNode ( ..."/>
+<meta name="description" content="用户可以使用snapshot监控每个节点的状态。 连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到分区组 datarg = db.getRG ( &#34;&lt;datagroup1&gt;&#34; ) ; 得到数据节点 &gt; datanode = datarg.getNode ( &#34;&lt;hostname1&gt;&#34;, ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/monitor.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_zmb_xgd_pl"/>
@@ -45,12 +45,11 @@
 </pre>
 </li>
 
-      <li class="li">得到分片组
-      <pre class="pre codeblock">datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
+      <li class="li">得到分区组 <pre class="pre codeblock">datarg = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
 </li>
 
       <li class="li">得到数据节点
-      <pre class="pre codeblock">&gt; datanode = datagroup.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
+        <pre class="pre codeblock">&gt; datanode = datarg.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
 </li>
 
       <li class="li">得到该节点的快照
@@ -76,7 +75,7 @@
       <pre class="pre codeblock">[sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ cat monitor_insert.sh
 #!/bin/bash
 ~/sequoiadb/bin/sdb "db=new Sdb('localhost', 11810)" &gt; /dev/null
-~/sequoiadb/bin/sdb "db.getShard('foo').getNode('vmsvr1-rhel-x64',11820).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
+~/sequoiadb/bin/sdb "db.getRG('foo').getNode('vmsvr1-rhel-x64',11820).connect().snapshot(SDB_SNAP_DATABASE)" | grep TotalInsert
 ~/sequoiadb/bin/sdb "quit"
 [sequoiadb@vmsvr1-rhel-x64 sequoiadb]$ ./monitor_insert.sh
   "TotalInsert": 0,</pre>

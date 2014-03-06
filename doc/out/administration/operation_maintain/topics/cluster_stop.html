@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="集群停止"/>
-<meta name="description" content="手工停止特定节点 用户可以在sdb命令行使用如下步骤停止数据节点。 连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到分片组 &gt; datashard = db.getShard ( &#34;&lt;datashard&gt;&#34; ) ; 得到数据节点 &gt; datanode = datashard.getNode ( ..."/>
+<meta name="description" content="手工停止特定节点 用户可以在sdb命令行使用如下步骤停止数据节点。 连接到协调节点 $ /opt/sequoiadb/bin/sdb &gt; var db = new Sdb(&#34;localhost&#34;, 11810) ; 得到分区组 &gt; dataRG = db.getRG ( &#34;&lt;datagroup1&gt;&#34; ) ; 得到数据节点 &gt; datanode = dataRG.getNode ( ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/operation_maintain/topics/cluster_start_stop.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_vlv_jzc_pl"/>
@@ -46,12 +46,11 @@
 &gt; var db = new Sdb("localhost", 11810) ;</pre>
 </li>
 
-        <li class="li">得到分片组
-        <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
+        <li class="li">得到分区组 <pre class="pre codeblock">&gt; dataRG = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
 </li>
 
         <li class="li">得到数据节点
-        <pre class="pre codeblock">&gt; datanode = datashard.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datanode = dataRG.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
 </li>
 
         <li class="li">停止节点
@@ -72,12 +71,10 @@
 &gt; var db = new Sdb("localhost", 11810) ;</pre>
 </li>
 
-        <li class="li">得到分片组
-          <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
+        <li class="li">得到分区组 <pre class="pre codeblock">&gt; dataRG = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
 </li>
 
-        <li class="li">停止数据组
-          <pre class="pre codeblock">&gt; datashard.stop() ;</pre>
+        <li class="li">停止数据组 <pre class="pre codeblock">&gt; dataRG.stop() ;</pre>
 </li>
 
       </ol>

@@ -37,7 +37,7 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>该逻辑节点所属的分片组名，独立模式下该字段不存在</stentry>
+          <stentry>该逻辑节点所属的分区组名，独立模式下该字段不存在</stentry>
         </strow>
         <strow>
           <stentry>IsPrimary</stentry>
@@ -97,7 +97,7 @@
         <strow>
           <stentry>ReceivedEvents</stentry>
           <stentry>整数</stentry>
-          <stentry>当前分片接收到的事件请求总数</stentry>
+          <stentry>当前分区接收到的事件请求总数</stentry>
         </strow>
         <strow>
           <stentry>Role</stentry>

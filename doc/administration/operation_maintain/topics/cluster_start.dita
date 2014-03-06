@@ -16,9 +16,9 @@
         <li>连接到协调节点
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;</codeblock></li>
-        <li>得到分片组 <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
+        <li>得到分区组 <codeblock>> dataRG = db.getRG ( "&lt;datagroup1>" ) ;</codeblock></li>
         <li>得到数据节点
-          <codeblock>> datanode = datashard.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
+          <codeblock>> datanode = dataRG.getNode ( "&lt;hostname1>", "&lt;servicename1>" ) ;</codeblock></li>
         <li>启动节点
         <codeblock>> datanode.start() ;</codeblock></li>
       </ol>
@@ -31,7 +31,7 @@
           <codeblock>$ /opt/sequoiadb/bin/sdb
 > var db = new Sdb("localhost", 11810) ;
 </codeblock></li>
-        <li>得到分片组 <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
+        <li>得到分区组 <codeblock>> datashard = db.getShard ( "&lt;datashard>" ) ;</codeblock></li>
         <li>启动数据组
         <codeblock>> datashard.start();</codeblock></li>
       </ol>

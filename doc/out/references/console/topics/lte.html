@@ -63,7 +63,7 @@
         <li class="li">
           <p class="p">$lte匹配一个嵌套对象中的字段名。使用<a class="xref" href="../../methods/topics/dbupdate.html">update()</a>方法更新嵌套对象service中的ID字段值小于等于2的记录，将这些记录的age字段值设定为25。</p>
 
-          <pre class="pre codeblock">db.foo.bar.update({<a class="xref" href="gset.html">$set</a>:{age:25}},{"service.ID":{$lte:15}})</pre>
+          <pre class="pre codeblock">db.foo.bar.update({<a class="xref" href="gset.html">$set</a>:{age:25}},{"service.ID":{$lte:2}})</pre>
 
         </li>
 

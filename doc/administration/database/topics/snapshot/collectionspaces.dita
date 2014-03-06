@@ -41,7 +41,7 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>集合空间所在的分片组名</stentry>
+          <stentry>集合空间所在的分区组名</stentry>
         </strow>
       </simpletable>
     </section>
@@ -70,12 +70,12 @@
         <strow>
           <stentry>Group.GroupID</stentry>
           <stentry>整数数组</stentry>
-          <stentry>该集合空间所在的分片组ID列表</stentry>
+          <stentry>该集合空间所在的分区组ID列表</stentry>
         </strow>
         <strow>
           <stentry>Group.GroupName</stentry>
           <stentry>字符串</stentry>
-          <stentry>该集合空间所在的分片组名列表</stentry>
+          <stentry>该集合空间所在的分区组名列表</stentry>
         </strow>
       </simpletable>
     </section>

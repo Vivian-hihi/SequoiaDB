@@ -104,47 +104,47 @@
           <strow>
             <stentry><xref href="as.dita">as</xref></stentry>
             <stentry>别名</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select age as 年龄 from foo.bar where age>10")</stentry>
           </strow>
           <strow>
-            <stentry><xref href="sqjoin.dita">join on</xref></stentry>
+            <stentry><xref href="sqjoin.dita">inner join</xref></stentry>
             <stentry>连接</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select E.emp_no,D.dept_name from foo.emp as E inner join foo.dept as D on E.dept_no=D.dept_no")</stentry>
           </strow>
           <strow>
             <stentry><xref href="left_join.dita">left outer join on</xref></stentry>
             <stentry>左连</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select E.emp_no,D.dept_name from foo.emp as E left outer join foo.dept as D on E.dept_no=D.dept_no where D.dept_no&lt;4")</stentry>
           </strow>
           <strow>
             <stentry><xref href="right_join.dita">right outer join on</xref></stentry>
             <stentry>右连</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select E.emp_no,D.dept_name from foo.emp as E right outer join foo.dept as D on E.dept_no=D.dept_no where E.emp_no&lt;10")</stentry>
           </strow>
           <strow>
-            <stentry><xref href="sqcount.dita">count</xref></stentry>
+            <stentry><xref href="sqcount.dita">count()</xref></stentry>
             <stentry>计数</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select count(age) as 数量 from foo.bar")</stentry>
           </strow>
           <strow>
-            <stentry><xref href="sqsum.dita">sum</xref></stentry>
+            <stentry><xref href="sqsum.dita">sum()</xref></stentry>
             <stentry>求和</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select sum(age) as 年龄总和 from foo.bar")</stentry>
           </strow>
           <strow>
-            <stentry><xref href="sqavg.dita">avg</xref></stentry>
+            <stentry><xref href="sqavg.dita">avg()</xref></stentry>
             <stentry>求平均数</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select avg(age) as 平均年龄 from foo.bar")</stentry>
           </strow>
           <strow>
-            <stentry><xref href="sqmax.dita">max</xref></stentry>
+            <stentry><xref href="sqmax.dita">max()</xref></stentry>
             <stentry>最大数</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select max(age) as 最大年龄 from foo.bar")</stentry>
           </strow>
           <strow>
-            <stentry><xref href="sqmin.dita">min</xref></stentry>
+            <stentry><xref href="sqmin.dita">min()</xref></stentry>
             <stentry>最小数</stentry>
-            <stentry></stentry>
+            <stentry>db.exec("select min(age) as 最小年龄 from foo.bar")</stentry>
           </strow>
           <strow>
             <stentry><xref href="sqfirst.dita">first</xref></stentry>
