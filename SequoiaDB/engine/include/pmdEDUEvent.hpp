@@ -50,8 +50,9 @@ namespace engine
       PMD_EDU_EVENT_DEACTIVE,
       PMD_EDU_EVENT_MSG,          // pmd msg event
       PMD_EDU_EVENT_TIMEOUT,      // pmd edu timeout,
-      PMD_EDU_EVENT_LOCKWAKEUP,    // transaction-lock wake up
-      PMD_EDU_EVENT_TRACE_BREAKPOINT_RESUME
+      PMD_EDU_EVENT_LOCKWAKEUP,   // transaction-lock wake up
+      PMD_EDU_EVENT_TRACE_BREAKPOINT_RESUME,
+      PMD_EDU_EVENT_TRANS_STOP    // stop transaction
    } ;
 
    // event message for different type of messages
