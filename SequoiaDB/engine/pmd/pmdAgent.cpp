@@ -1203,6 +1203,18 @@ namespace engine
       }
 
       pSession->attachOut () ;
+      if ( SDB_ROLE_DATA == krcb->getDBRole() )
+      {
+         if ( krcb->getReplCB()->primaryIsMe ())
+         {
+            INT32 rcTmp = SDB_OK ;
+            rcTmp = rtnTransRollback( cb, krcb->getDPSCB() );
+            if ( rcTmp)
+            {
+               PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
+            }
+         }
+      }
       PD_TRACE_EXIT ( SDB_PMDSHAREAGENTENTPNT );
       return SDB_OK ;
    }
@@ -1787,18 +1799,7 @@ namespace engine
       // the SDB_ROLE_DATA node will do rollback while closing sharding-session.
       // the SDB_ROLE_COORD node only need to delete the session and the data-node
       // will do rollback while closing sharding-session
-      if ( SDB_ROLE_DATA == dbrole )
-      {
-         if ( krcb->getReplCB()->primaryIsMe ())
-         {
-            rc = rtnTransRollback( cb, krcb->getDPSCB() );
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rc ) ;
-            }
-         }
-      }
-      else if ( SDB_ROLE_STANDALONE == dbrole )
+      if ( SDB_ROLE_STANDALONE == dbrole )
       {
          rc = rtnTransRollback( cb, krcb->getDPSCB() );
          if ( rc != SDB_OK )
