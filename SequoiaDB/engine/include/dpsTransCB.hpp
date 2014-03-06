@@ -155,6 +155,12 @@ namespace engine
 
       void releaseLogSpace( UINT32 length );
 
+      UINT64 remainLogSpace();
+
+      INT32 init();
+
+      UINT64 usedLogSpace();
+
    protected:
       // try to get record-X-lock: also try to get the space-S-lock and collection-IX-lock,
       // if failed then append to the wait-queue but not wait, caller must call waitLock()
@@ -183,6 +189,7 @@ namespace engine
       UINT64            _maxUsedSize;
       UINT64            _logFileTotalSize;
       UINT64            _accquiredSpace;
+      BOOLEAN           _isInit;
    };
 }
 
