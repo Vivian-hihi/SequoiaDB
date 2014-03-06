@@ -56,6 +56,7 @@ namespace engine
 
    class _pmdEDUCB ;
    class _clsReplicateSet ;
+   class dpsTransCB ;
 
    /*
       _dpsReplicaLogMgr define
@@ -80,6 +81,8 @@ namespace engine
 
       _clsReplicateSet           *_replSet ;
       ossQueue< dpsLSNInfoEx >   _ntyQue ;
+
+      dpsTransCB                 *_transCB ;
 
    public:
       _dpsReplicaLogMgr();
