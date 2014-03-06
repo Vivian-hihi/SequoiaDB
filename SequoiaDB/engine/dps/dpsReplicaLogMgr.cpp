@@ -41,6 +41,7 @@
 #include "pmdCB.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
+#include "dpsTransCB.hpp"
 
 namespace engine
 {
@@ -73,6 +74,8 @@ namespace engine
       _restoreFlag = FALSE ;
 
       _replSet = NULL ;
+
+      _transCB = pmdGetKRCB()->getTransCB() ;
    }
 
    _dpsReplicaLogMgr::~_dpsReplicaLogMgr()
@@ -359,6 +362,7 @@ namespace engine
    {
       SDB_ASSERT ( info.getMergeBlock().pageMeta().valid(),
                    "block not prepared" )
+      SDB_ASSERT ( _transCB != NULL, "transCB can't be null!" )
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_WRITEDATA );
 
       // if has dummy block
@@ -371,6 +375,49 @@ namespace engine
       _mergeLogs( info.getMergeBlock(), info.getMergeBlock().pageMeta() );
       SHARED_UNLOCK_NODES( info.getMergeBlock().pageMeta() );
 
+      // process transaction info
+      DPS_LSN_OFFSET lsnOffset = DPS_INVALID_LSN_OFFSET;
+      DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID;
+      dpsLogRecord &record = info.getMergeBlock().record() ;
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
+      if ( !itr.valid() )
+      {
+         goto done ;
+      }
+      transID = *((DPS_TRANS_ID *)itr.value());
+      if ( transID != DPS_INVALID_TRANS_ID )
+      {
+         if ( _transCB->isRollback( transID ))
+         {
+            itr = record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
+            if ( !itr.valid() )
+            {
+               lsnOffset = DPS_INVALID_LSN_OFFSET ;
+            }
+            else
+            {
+               lsnOffset = *((DPS_LSN_OFFSET *)itr.value()) ;
+            }
+         }
+         else if ( LOG_TYPE_TS_COMMIT == record.head()._type )
+         {
+            lsnOffset = DPS_INVALID_LSN_OFFSET ;
+         }
+         else
+         {
+            lsnOffset = record.head()._lsn;
+            if ( _transCB->isFirstOp( transID ) )
+            {
+               _transCB->addBeginLsn( lsnOffset, transID );
+            }
+         }
+         if ( DPS_INVALID_LSN_OFFSET == lsnOffset )
+         {
+            _transCB->delBeginLsn( transID );
+         }
+         _transCB->updateTransInfo( transID, lsnOffset );
+      }
+   done:
       PD_TRACE_EXIT ( SDB__DPSRPCMGR_WRITEDATA );
    }
 
