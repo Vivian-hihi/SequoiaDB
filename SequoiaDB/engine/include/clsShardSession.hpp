@@ -102,6 +102,8 @@ namespace engine
                                       INT64 &delNum ) ;
          INT32 _onCheckRouteIDReqMsg ( MsgHeader *msg ) ;
 
+         INT32 _onTransStopEvnt() ;
+
       private:
          INT32 _includeShardingOrder( const CHAR *pCollectionName,
                                     const BSONObj &orderBy,
