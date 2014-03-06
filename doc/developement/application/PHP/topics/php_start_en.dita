@@ -39,7 +39,7 @@
           </note><p>Partition group instance and instance data node instances can be expressed in
             two classes.</p><simpletable>
             <strow>
-              <stentry>SequoiaShard</stentry>
+              <stentry>SequoiaGroup</stentry>
               <stentry>partition group class</stentry>
               <stentry>Partition group instance represents a separate partition group </stentry>
             </strow>
@@ -49,7 +49,7 @@
               <stentry>data node instance represents a single data node </stentry>
             </strow>
           </simpletable><p>And requires the use of cluster-related operations and data partition
-            group node instance.</p><p>Ecamples SequoiaShard for management partition group. Its
+            group node instance.</p><p>Ecamples SequoiaGroup for management partition group. Its
             operations include start, stop partition groups, access to state partition group node
             name information, the number of messages. Examples SequoiaNode for managing node. Its
             operations include start, stop spectfied node for the specified node instance, to obtain

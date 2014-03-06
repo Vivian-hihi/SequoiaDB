@@ -84,28 +84,28 @@ if($arr['errno'] !=0 )
       <title>集群操作</title>
       <ul>
         <li>选择组
-          <codeblock>//选择名称为“shard”的组，如果不存在，则自动创建
-//返回SequoiaShard对象
-$shard = $db -> selectShard("shard");
+          <codeblock>//选择名称为“group”的组，如果不存在，则自动创建
+//返回SequoiaGroup对象
+$group = $db -> selectGroup("group");
 //检验结果，如果成功返回对象，失败返回NULL
-if( empty($shard) )
+if( empty($group) )
 { 
   exit();
 }</codeblock>
         </li>
-        <li>启动分片组
-        <codeblock>//启动分片组，首次会自动激活
+        <li>启动分区组
+          <codeblock>//启动分区组，首次会自动激活
 //返回操作信息
-$arr = $shard -> start() ;
+$arr = $group -> start() ;
 //检查结果
 If ( $arr['errno'] != 0 )
 {
    Exit() ;
    }</codeblock></li>
         <li>选择节点
-        <codeblock>//获取名称为“node”的节点
+          <codeblock>//获取名称为“node”的节点
 //返回SequoiaNode对象
-$node = $shard -> getNode( 'node') ;
+$node = $group -> getNode( 'node') ;
 //检查对象是否空
 If ( empty( $node ) )
 {
