@@ -5437,7 +5437,7 @@ namespace sdbclient
       {
          ele = it.next() ;
          key = ele.fieldName() ;
-         if ( strcmp( FIELD_NAME_PREFERED_REPLICA, key ) == 0 )
+         if ( strcmp( FIELD_NAME_PREFERED_INSTANCE, key ) == 0 )
          {
             type = ele.type() ;
             switch ( type )

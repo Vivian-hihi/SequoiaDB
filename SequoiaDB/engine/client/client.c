@@ -6949,7 +6949,7 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
       // get key
       key = bson_iterator_key( &it ) ;
       // get value
-      if ( strcmp( FIELD_NAME_PREFERED_REPLICA, key ) == 0 )
+      if ( strcmp( FIELD_NAME_PREFERED_INSTANCE, key ) == 0 )
       {
          switch ( bson_iterator_type( &it ) )
          {
