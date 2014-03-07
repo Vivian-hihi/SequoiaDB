@@ -569,13 +569,14 @@ namespace engine
          BOOLEAN operator<( const _coordOrderKey &rhs ) const ;
          void clear() ;
          void setOrderBy( const BSONObj &orderBy ) ;
-         INT32 generateKey( const BSONObj &record ) ;
+         INT32 generateKey( const BSONObj &record,
+                           _ixmIndexKeyGen *keyGen ) ;
 
       private:
          BSONObj              _orderBy ;
-         OrderKeyList         _keyList;
-         OrderKeyEleList      _keyEleList;
-         OrderKeyObjList      _tmpObjList;
+         ixmHashValue         _hash ;
+         BSONObj              _keyObj ;
+         BOOLEAN              _includeArray ;
    } ;
    typedef _coordOrderKey coordOrderKey ;
 
@@ -585,8 +586,9 @@ namespace engine
    class _coordSubContext : public SDBObject
    {
       public:
-         _coordSubContext () ;
-         _coordSubContext ( MsgRouteID routeID, SINT64 contextID ) ;
+         _coordSubContext ( MsgRouteID routeID,
+                           SINT64 contextID,
+                           _ixmIndexKeyGen *keyGen ) ;
          ~_coordSubContext () ;
 
       public:
@@ -601,10 +603,12 @@ namespace engine
          INT32    popAll() ;
          SINT32   getRecordNum() ;
          UINT32   getRemainLen() ;
-         INT32    getOrderKey( coordOrderKey &orderKey ) ;
+         INT32    getOrderKey( coordOrderKey &orderKey,
+                              _ixmIndexKeyGen *keyGen ) ;
          void     setOrderBy( const BSONObj &orderBy ) ;
 
       private:
+         _coordSubContext () ;
          _coordSubContext ( const _coordSubContext &srcContext ) ;
 
       private:
@@ -616,6 +620,7 @@ namespace engine
          BSONObj              _orderBy ;
          BOOLEAN              _isOrderKeyChange ;
          SINT32               _recordNum ;
+         _ixmIndexKeyGen      *_keyGen ;
 
    } ;
    typedef _coordSubContext coordSubContext ;
@@ -680,7 +685,9 @@ namespace engine
 
          coordOrderKey              _emptyKey ;
          BSONObj                    _orderBy ;
-         BOOLEAN                    _preRead;
+         BOOLEAN                    _preRead ;
+
+         _ixmIndexKeyGen            *_keyGen ;
 
    } ;
    typedef _rtnContextCoord rtnContextCoord ;
@@ -734,7 +741,8 @@ namespace engine
    {
    public:
       _rtnSubCLBuf();
-      _rtnSubCLBuf( BSONObj &orderBy );
+      _rtnSubCLBuf( BSONObj &orderBy,
+                  _ixmIndexKeyGen *keyGen );
       virtual ~_rtnSubCLBuf();
       const CHAR *front();
       INT32 pop();
@@ -750,6 +758,7 @@ namespace engine
       BOOLEAN              _isOrderKeyChange;
       rtnContextBuf        _buffer;
       INT32                _remainNum;
+      _ixmIndexKeyGen      *_keyGen;
    };
    typedef class _rtnSubCLBuf rtnSubCLBuf;
 
@@ -793,6 +802,7 @@ namespace engine
       SubCLBufList      _subCLBufList;
       SubCLBufList      _emptyBufList;
       BOOLEAN           _includeShardingOrder;
+      _ixmIndexKeyGen   *_keyGen;
    };
    typedef class _rtnContextMainCL rtnContextMainCL;
 
