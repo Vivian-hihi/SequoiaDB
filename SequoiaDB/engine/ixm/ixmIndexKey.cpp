@@ -76,7 +76,8 @@ namespace engine
       // input: BSONObj obj
       // output: BSONObjSet &keys
       // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN_GETKEYS, "_ixmKeyGenerator::getKeys" )
-      INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys ) const
+      INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys,
+                      BOOLEAN *pIncludeArray ) const
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN_GETKEYS );
@@ -90,7 +91,7 @@ namespace engine
          // need to modify the vectors, so we need to duplicate the object
          try
          {
-            rc =_getKeys ( fieldNames, fixed, obj, keys ) ;
+            rc =_getKeys ( fieldNames, fixed, obj, keys, pIncludeArray ) ;
          }
          catch ( std::exception &e )
          {
@@ -297,7 +298,8 @@ namespace engine
             rc = _getKeys ( fieldNames, fixed, (arrEntry.type() == Object)?
                                                 arrEntry.embeddedObject():
                                                 BSONObj(),
-                            keys, numNotFound, arrObjElt.embeddedObject() ) ;
+                            keys, NULL, numNotFound,
+                            arrObjElt.embeddedObject() ) ;
             PD_RC_CHECK ( rc, PDERROR, "Failed to expand array" ) ;
          }
       done :
@@ -337,6 +339,7 @@ namespace engine
                        vector <BSONElement>  fixed,
                        const BSONObj &obj,
                        BSONObjSet &keys,
+                       BOOLEAN *pIncludeArray = NULL,
                        UINT32 numNotFound = 0,
                        const BSONObj &array = BSONObj() ) const
       {
@@ -444,6 +447,10 @@ namespace engine
                              "Failed to get keys array element fixed, rc=%d",
                              rc ) ;
             }
+            if ( pIncludeArray )
+            {
+               *pIncludeArray = TRUE ;
+            }
          }
       done :
          PD_TRACE_EXITRC ( SDB__IXMKEYGEN__GETKEYS, rc );
@@ -512,10 +519,15 @@ namespace engine
       PD_TRACE_EXIT ( SDB__IXMINXKEYGEN__INIT );
    }
 
-   INT32 _ixmIndexKeyGen::getKeys ( const BSONObj &obj, BSONObjSet &keys ) const
+   INT32 _ixmIndexKeyGen::getKeys ( const BSONObj &obj, BSONObjSet &keys,
+                                    BOOLEAN *pIncludeArray ) const
    {
       ixmKeyGenerator g (this) ;
-      return g.getKeys ( obj, keys ) ;
+      if ( pIncludeArray )
+      {
+         *pIncludeArray = FALSE ;
+      }
+      return g.getKeys ( obj, keys, pIncludeArray ) ;
    }
 
    // return True if there are at least one element match the name
