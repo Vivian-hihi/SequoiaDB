@@ -57,7 +57,7 @@
            fork="yes" >
        <compilerarg value="-Xlint:unchecked" />
     </javac>
-    <jar file="${base.dir}/sdbdriver.jar" >
+    <jar file="${base.dir}/sequoiadb.jar" >
        <manifest>
        </manifest>
        <fileset dir="${base.dir}/build"/>

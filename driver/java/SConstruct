@@ -133,10 +133,10 @@ Export("javaEnv")
 Export("jarPath")
 if isDebug:
 	javaEnv['BUILDPATH']='build/debug'
-	javaEnv['JARNAME']='sdbdriver.jar'
+	javaEnv['JARNAME']='sequoiadb.jar'
 	javaEnv['CCFLAGS'] = '-g'
 else:
-	javaEnv['JARNAME']='sdbdriver.jar'
+	javaEnv['JARNAME']='sequoiadb.jar'
 	javaEnv['BUILDPATH']='build/release'
 javaEnv.Execute(Mkdir(javaEnv['BUILDPATH']))	
 SConscript( 'SConscript', variant_dir=javaEnv['BUILDPATH'], duplicate=False )
