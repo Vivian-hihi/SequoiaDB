@@ -211,7 +211,8 @@ ixmFiles = [
       "ixm/ixmGeo.cpp",
       "ixm/ixm2dHash.cpp",
       "ixm/ixm2dIndexCB.cpp",
-      "ixm/ixm2dPoint.cpp"
+      "ixm/ixm2dPoint.cpp",
+      "ixm/ixm_common.cpp"
       ]
 mthFiles = [
       "mth/mthMatcher.cpp",
