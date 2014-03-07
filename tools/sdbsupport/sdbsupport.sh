@@ -63,7 +63,7 @@ function Usage()
 {
 	echo "Command Options:" ;
 	echo "    --help			help information" ;
-	echo "    -N [--hostname] arg			database host name " ;
+	echo "    -N [--hostname] arg		database host name " ;
 	echo "    -p [--svcport] arg		database sevice port" ;
 	echo "    -s [--snapshot]		snapshot of sequoiadb database" ; 
 	echo "    -o [--osinfo]		operating system information" ;
