@@ -76,5 +76,14 @@ namespace engine
       }
    }
 
+   void ixmMakeHashValue( const BSONElement &eleArray,
+                          ixmHashValue &hashValue )
+   {
+      hashValue.columns.hash1 = ossHash( eleArray.value(),
+                                         eleArray.valuesize() ) ;
+      hashValue.columns.hash2 = ossHash( eleArray.value(),
+                                         eleArray.valuesize(), 3 ) ;
+   }
+
 }
 
