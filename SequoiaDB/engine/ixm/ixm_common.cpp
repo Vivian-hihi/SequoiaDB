@@ -57,7 +57,7 @@ namespace engine
          while ( itr.more() )
          {
             BSONElement orderEle = itr.next() ;
-            BSONElement arrEle = obj.getField( orderEle.fieldName() ) ;
+            BSONElement arrEle = obj.getFieldDottedOrArray( orderEle.fieldName() ) ;
             if ( Array == arrEle.type() )
             {
                hashValue.columns.hash1 = ossHash( arrEle.value(),
