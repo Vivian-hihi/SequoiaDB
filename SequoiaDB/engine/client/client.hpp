@@ -3000,7 +3000,7 @@ namespace sdbclient
     \brief Set the attributes of the session.
     \param [in] options The configuration options for session.The options are as below:
 
-        PreferedInstance : indicate which node to operate in current session.
+        PreferedInstance : indicate which instance to respond read request in current session.
                           eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7},
                           prefer to choose master/slave/anyone/node1-node7,
                           default to be {"PreferedReplica":"A"}, means would like to choose anyone to be operated
