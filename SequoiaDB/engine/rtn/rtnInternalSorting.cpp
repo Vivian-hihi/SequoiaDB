@@ -81,9 +81,10 @@ namespace engine
    INT32 _rtnInternalSorting::push( const BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
+      BSONElement arrEle ;
       BOOLEAN includeArray = FALSE ;
       BSONObjSet keySet( _orderObj ) ;
-      rc = _keyGen.getKeys( obj, keySet, &includeArray ) ;
+      rc = _keyGen.getKeys( obj, keySet, &arrEle ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed gen sort keys:%d", rc ) ;
@@ -119,7 +120,7 @@ namespace engine
                    keyObj.objsize(),
                   obj.objdata(), obj.objsize() ) ;
       tuple->setLen( keyObj.objsize(), obj.objsize() ) ;
-      if ( !includeArray )
+      if ( arrEle.eoo() )
       {
          tuple->setHash( 0, 0 ) ;
       }

@@ -3239,12 +3239,12 @@ namespace engine
       _orderBy = orderKey._orderBy ;
       _hash = orderKey._hash ;
       _keyObj = orderKey._keyObj ;
-      _includeArray = orderKey._includeArray ;
+      _arrEle = orderKey._arrEle ;
    }
 
    _coordOrderKey::_coordOrderKey ()
    {
-      _includeArray = FALSE ;
+      _hash.hash = 0 ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDERKEY_OPELT, "coordOrderKey::operator<" )
@@ -3265,7 +3265,7 @@ namespace engine
 
    void _coordOrderKey::clear()
    {
-      _includeArray = FALSE ;
+      _arrEle = BSONElement() ;
       _hash.columns.hash1 = 0 ;
       _hash.columns.hash2 = 0 ;
    }
@@ -3285,15 +3285,19 @@ namespace engine
       clear();
       BSONObjSet keySet( _orderBy ) ;
 
-      rc = keyGen->getKeys( record, keySet, &_includeArray ) ;
+      rc = keyGen->getKeys( record, keySet, &_arrEle ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "failed to generate order-key(rc=%d)",
                   rc ) ;
       SDB_ASSERT( !keySet.empty(), "empty key-set!" ) ;
       _keyObj = *(keySet.begin()) ;
-      if ( _includeArray )
+      if ( _arrEle.eoo() )
       {
-         ixmMakeHashValue( record, _orderBy, _hash ) ;
+         _hash.hash = 0 ;
+      }
+      else
+      {
+         ixmMakeHashValue( _arrEle, _hash ) ;
       }
 
    done:
