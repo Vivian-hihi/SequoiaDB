@@ -38,6 +38,7 @@
 #include "ossUtil.hpp"
 #include "pmdEDU.hpp"
 #include "ossUtil.hpp"
+#include "ixm_common.hpp"
 
 #define RTN_SORT_USE_INSERTSORT 8
 #define RTN_SORT_SAME_SWAP_THRESHOLD 0.1
@@ -80,8 +81,9 @@ namespace engine
    INT32 _rtnInternalSorting::push( const BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
+      BOOLEAN includeArray = FALSE ;
       BSONObjSet keySet( _orderObj ) ;
-      rc = _keyGen.getKeys( obj, keySet ) ;
+      rc = _keyGen.getKeys( obj, keySet, &includeArray ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed gen sort keys:%d", rc ) ;
@@ -117,18 +119,13 @@ namespace engine
                    keyObj.objsize(),
                   obj.objdata(), obj.objsize() ) ;
       tuple->setLen( keyObj.objsize(), obj.objsize() ) ;
-      if ( 1 == keySet.size() )
+      if ( !includeArray )
       {
          tuple->setHash( 0, 0 ) ;
       }
       else
       {
-         rc = _setHashFromObj( obj, tuple ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to set hash to tuple:%d", rc ) ;
-            goto error ;
-         }
+         ixmMakeHashValue( obj, _orderObj, tuple->hashValue() ) ;
       }
 
       /// set sort header.
@@ -564,10 +561,10 @@ namespace engine
       goto done ;
    }
 
-   INT32 _rtnInternalSorting::_setHashFromObj( const BSONObj &obj,
-                                            _rtnSortTuple *tuple )
+   /*INT32 _rtnInternalSorting::_setHashFromObj( const BSONObj &obj,
+                                               _rtnSortTuple *tuple )
    {
-      SDB_ASSERT( NULL != tuple, "can not be NULL" )
+      SDB_ASSERT( NULL != tuple, "can not be NULL" ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN set = FALSE ;
       BSONObjIterator itr( _orderObj ) ;
@@ -601,6 +598,6 @@ namespace engine
       return rc ;
    error:
       goto done ;
-   }
+   }*/
 }
 
