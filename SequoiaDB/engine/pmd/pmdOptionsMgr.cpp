@@ -944,7 +944,7 @@ namespace engine
       rdxString( pEX, PMD_OPTION_SYNC_STRATEGY, _syncStrategyStr,
                  sizeof( _syncStrategyStr ), FALSE, TRUE, "", FALSE ) ;
       // --preferedreplica
-      rdxString( pEX, PMD_OPTION_PREFRPL, _prefReplStr, sizeof(_prefReplStr),
+      rdxString( pEX, PMD_OPTION_PREFINST, _prefReplStr, sizeof(_prefReplStr),
                  FALSE, TRUE, "A" ) ;
       // --memdebug
       rdxBooleanS( pEX, PMD_OPTION_MEMDEBUG, _memDebugEnabled, FALSE, TRUE,
