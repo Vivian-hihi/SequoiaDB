@@ -1848,7 +1848,7 @@
                         </FieldStruct>
                         <FieldStruct>
                            <absoluteName>ErrNodes</absoluteName>
-                           <sourceField>ErrNodes.0</sourceField>
+                           <sourceField>ErrNodes</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
                            <canSwitch>0</canSwitch>
