@@ -94,7 +94,8 @@ namespace engine
       // it supposed to
       INT32 reset ( const BSONObj & info ) ;
       INT32 reset ( const _ixmIndexCB *indexCB ) ;
-      INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys ) const ;
+      INT32 getKeys ( const BSONObj &obj, BSONObjSet &keys,
+                      BOOLEAN *pIncludeArray = NULL ) const ;
       BSONElement missingField() const ;
       IndexSuitability suitability( const BSONObj &query ,
                                     const BSONObj &order ) const ;

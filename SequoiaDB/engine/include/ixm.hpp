@@ -35,7 +35,7 @@
 #ifndef IXM_HPP_
 #define IXM_HPP_
 
-#include "core.hpp"
+#include "ixm_common.hpp"
 #include "oss.hpp"
 #include "dms.hpp"
 #include "dmsExtent.hpp"
@@ -47,14 +47,6 @@
 
 using namespace std ;
 using namespace bson ;
-
-#define IXM_NAME_FIELD              IXM_FIELD_NAME_NAME
-#define IXM_KEY_FIELD               IXM_FIELD_NAME_KEY
-#define IXM_V_FIELD                 IXM_FIELD_NAME_V
-#define IXM_UNIQUE_FIELD            IXM_FIELD_NAME_UNIQUE
-#define IXM_ENFORCED_FIELD          IXM_FIELD_NAME_ENFORCED
-#define IXM_DROPDUP_FIELD           IXM_FIELD_NAME_DROPDUPS
-#define IXM_2DRANGE_FIELD           IXM_FIELD_NAME_2DRANGE
 
 namespace engine
 {

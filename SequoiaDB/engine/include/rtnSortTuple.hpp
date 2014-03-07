@@ -39,6 +39,7 @@
 #include "rtnSortDef.hpp"
 #include "../bson/ordering.h"
 #include "utilMinHeap.hpp"
+#include "ixm_common.hpp"
 
 namespace engine
 {
@@ -85,6 +86,11 @@ namespace engine
          return _hash.hash ;
       }
 
+      inline ixmHashValue& hashValue()
+      {
+         return _hash ;
+      }
+
       inline UINT32 len()const
       {
          return _len ;
@@ -102,19 +108,8 @@ namespace engine
       }
 
    private:
-      union _hashComp
-      {
-         struct
-         {
-            UINT32 hash1 ;
-            UINT32 hash2 ;
-         } columns ;
-         UINT64 hash ;
-      } ;
-
-   private:
       UINT32 _len ;
-      _hashComp _hash ;
+      ixmHashValue _hash ;
    } ;
 
    class _rtnMergeTuple

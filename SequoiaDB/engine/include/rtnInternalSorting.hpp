@@ -85,7 +85,7 @@ namespace engine
       INT32 _insertSort( _rtnSortTuple **left,
                          _rtnSortTuple **right ) ;
 
-      INT32 _setHashFromObj( const BSONObj &obj, _rtnSortTuple *tuple ) ;
+      // INT32 _setHashFromObj( const BSONObj &obj, _rtnSortTuple *tuple ) ;
 
       INT32 _swapLeftSameKey( _rtnSortTuple **left,
                               _rtnSortTuple **right,
