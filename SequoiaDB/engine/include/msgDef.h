@@ -241,7 +241,7 @@
 #define FIELD_NAME_ERROR_NODES               "ErrNodes"
 #define FIELD_NAME_FUNC                      "func"
 #define FIELD_NAME_FUNCTYPE                  "funcType"
-#define FIELD_NAME_PREFERED_REPLICA          "PreferedReplica"
+#define FIELD_NAME_PREFERED_INSTANCE          "PreferedInstance"
 
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
