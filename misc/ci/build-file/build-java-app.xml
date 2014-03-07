@@ -10,9 +10,9 @@
       
       <delete dir="${build.path}" />
       <delete file="${base.path}/java-app-test.jar" />
-      <copy file="${sdbdriver.jar.path}" tofile="${base.path}/lib/sdbdriver.jar" />
+      <copy file="${sdbdriver.jar.path}" tofile="${base.path}/lib/sequoiadb.jar" />
       <mkdir dir="${build.path}/xml" />
-      <unjar src="${base.path}/lib/sdbdriver.jar" dest="${build.path}" />
+      <unjar src="${base.path}/lib/sequoiadb.jar" dest="${build.path}" />
       <unjar src="${base.path}/lib/dom4j-2.0.0-ALPHA-2.jar" dest="${build.path}" />
       <unjar src="${base.path}/lib/mongo-java-driver-2.11.3.jar" dest="${build.path}" />
       <copy file="${base.path}/xml/test_rule.xml" todir="${build.path}/xml" />

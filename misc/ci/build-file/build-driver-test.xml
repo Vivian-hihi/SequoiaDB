@@ -15,7 +15,7 @@
 	<property name="build.testcases.C" value="${build.testcases}/C" />
 	<property name="junit.jar.dir" value="/usr/share/java/junit.jar" />
 	<property name="junit4.jar.dir" value="/usr/share/java/junit4.jar" />
-	<property name="sequoiadb.jar.dir" value="${lib.dir}/java/sdbdriver.jar" />
+	<property name="sequoiadb.jar.dir" value="${lib.dir}/java/sequoiadb.jar" />
 	<property name="deploy.path" value="${WORKSPACE}/deploy" />
 
 	<target name="clean-driver-test">

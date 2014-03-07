@@ -40,7 +40,7 @@
 		<delete dir="${CODE_DIR}/bin"  failonerror="true" />
     <mkdir dir="${CODE_DIR}/bin" />
     
-    <property name="java.driver.jar.name" value="sdbdriver.jar" />
+    <property name="java.driver.jar.name" value="sequoiadb.jar" />
     
     <if>
 			<equals arg1="${compile.debug}" arg2="true" />
@@ -93,7 +93,6 @@
     <echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
 	
 
-		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" tofile="${CODE_DIR}/driver/java/sdbdriver.jar" />
 		
 		
 		<echo message="compile source code completed." />
@@ -133,7 +132,7 @@
 		</copy>
 
     <copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
-		<copy file="${CODE_DIR}/driver/java/sdbdriver.jar" tofile="${DRIVER.DIR}/java/sdbdriver.jar" />
+		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/hive-sequoiadb.jar" tofile="${DRIVER.DIR}/hadoop/hive-sequoiadb.jar" />
 
 	  <property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
@@ -220,6 +219,10 @@
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
 			<fileset dir="${CODE_DIR}/client/lib/" includes="*" />
 		</copy>
+		
+		<copy todir="${RELEASE_DIR}/tools/sdbsupport">
+			<fileset dir="${CODE_DIR}/tools/sdbsupport" includes="**/*" />
+		</copy>
 
 
 
@@ -238,7 +241,7 @@
 
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
 
-		<copy file="${CODE_DIR}/driver/java/sdbdriver.jar" tofile="${RELEASE_DIR}/sequoiadb/java/sequoiadb.jar" />
+		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/hive-sequoiadb.jar" tofile="${RELEASE_DIR}/sequoiadb/hadoop/hive-sequoiadb.jar" />
 		
 		<if>

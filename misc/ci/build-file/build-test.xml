@@ -63,14 +63,14 @@
 	<target name="build-sdbtasks" depends="clean" >
     <echo message=" ..begin to build ant-sdbtask .." />
     <ant antfile="${ci.script.path}/../ant-sdbtask/build.xml">
-			<property name="java.driver.jar" value="${WORKSPACE}/release/driver/java/sdbdriver.jar" />
+			<property name="java.driver.jar" value="${WORKSPACE}/release/driver/java/sequoiadb.jar" />
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb" />
 			<property name="base.path" value="${ci.script.path}/../ant-sdbtask" />
 		</ant>
 		<echo message=" .. over to build ant-sdbtask .." />
 		<mkdir dir="${deploy.path}/ant-sdbtasks" />
 		<copy file="${ci.script.path}/../ant-sdbtask/ant-sdbtasks.jar" todir="${deploy.path}/ant-sdbtasks" />
-		<copy file="${WORKSPACE}/release/driver/java/sdbdriver.jar" todir="${deploy.path}/ant-sdbtasks" />
+		<copy file="${WORKSPACE}/release/driver/java/sequoiadb.jar" todir="${deploy.path}/ant-sdbtasks" />
 	</target>
 	
 	<target name="build-java-app" depends="build-driver">
@@ -78,7 +78,7 @@
 		<ant antfile="${ci.script.path}/build-java-app.xml">
 			<property name="base.path" value="${build.testcases}/java-app-test" />
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb" />
-			<property name="sdbdriver.jar.path" value="${WORKSPACE}/release/driver/java/sdbdriver.jar" />
+			<property name="sdbdriver.jar.path" value="${WORKSPACE}/release/driver/java/sequoiadb.jar" />
 		</ant>
 		
 	</target>
