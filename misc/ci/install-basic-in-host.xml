@@ -35,12 +35,14 @@
 				<exec executable="service" dir="" failonerror="true">
 					<arg value="sdbcm" />
 					<arg value="stop" />
+					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
 				</exec>
         
         
         <chmod dir="${db.path}/bin" perm="u+x" includes="*" />
 				<!-- stop db service-->
 				<exec executable="${db.path}/bin/sdbstop" dir="${db.path}/bin" failonerror="true">
+					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${install.path}/sequoiadb/lib" />
 				</exec>
 
 				<!-- unstall software-->
