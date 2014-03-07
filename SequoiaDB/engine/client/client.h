@@ -727,7 +727,7 @@ SDB_EXPORT INT32 sdbRmProcedures(sdbConnectionHandle cHandle,
                                  const CHAR *spName ) ;
 
 
-/** \fn INT32 sdbListJSProcedures(sdbConnectionHandle cHandle,
+/** \fn INT32 sdbListProcedures(sdbConnectionHandle cHandle,
  *                                bson *condition,
  *                                sdbCursorHandle *handle )
  *  \brief List store procedures.
@@ -1506,14 +1506,14 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
 
         PreferedInstance : indicate which instance to respond read request in current session.
                           eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7},
-                          prefer to choose master/slave/anyone/node1-node7,
-                          default to be {"PreferedReplica":"A"}, means would like to choose anyone to be operated
+                          prefer to choose "read and write instance"/"read only instance"/"anyone instance"/instance1-insatance7,
+                          default to be {"PreferedInstance":"A"}, means would like to choose anyone instance to respond read request such as query. 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson *options ) ;
-/** \fn INT32 SdbIsValid ( sdbConnectionHandle cHandle, BOOLEAN *result )
+/** \fn INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
     \brief Judge whether the connection is valid.
     \param [out] result the output result
     \retval SDB_OK Operation Success

@@ -2652,7 +2652,7 @@ namespace sdbclient
          return pSDB->activateReplicaGroup ( pName, replicaGroup ) ;
       }
 
-/* \fn INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
+/** \fn INT32 activateReplicaGroup ( const CHAR *pName, sdbReplicaGroup &replicaGroup )
     \brief Activate the specified replica group
     \param [in] pName The name of the replica group
     \param [out] replicaGroup The return sdbReplicaGroup object
@@ -3002,8 +3002,8 @@ namespace sdbclient
 
         PreferedInstance : indicate which instance to respond read request in current session.
                           eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7},
-                          prefer to choose master/slave/anyone/node1-node7,
-                          default to be {"PreferedReplica":"A"}, means would like to choose anyone to be operated
+                          prefer to choose "read and write instance"/"read only instance"/"anyone instance"/instance1-insatance7,
+                          default to be {"PreferedInstance":"A"}, means would like to choose anyone instance to respond read request such as query. 
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
