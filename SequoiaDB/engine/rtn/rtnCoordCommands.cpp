@@ -8507,10 +8507,10 @@ namespace engine
          PD_CHECK( pSession != NULL, SDB_SYS, error, PDERROR,
                   "failed to get session!" );
          boQuery = BSONObj( pQuery );
-         bePreferRepl = boQuery.getField( FIELD_NAME_PREFERED_REPLICA );
+         bePreferRepl = boQuery.getField( FIELD_NAME_PREFERED_INSTANCE );
          PD_CHECK( bePreferRepl.type() == NumberInt, SDB_INVALIDARG, error, PDERROR,
                   "failed to set session attribute, failed to get the field(%s)",
-                  FIELD_NAME_PREFERED_REPLICA );
+                  FIELD_NAME_PREFERED_INSTANCE );
          sessReplType = bePreferRepl.Int();
          PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN && sessReplType < PREFER_REPL_TYPE_MAX,
                   SDB_INVALIDARG, error, PDERROR,
