@@ -102,9 +102,25 @@ namespace engine
          BSONObj l( this->key(), FALSE ) ;
          BSONObj r( tuple->key(), FALSE ) ;
          INT32 comp = l.woCompare( r, order, FALSE) ;
-         return 0 == comp ?
-                this->hash() - tuple->hash() :
-                comp ;
+         if ( 0 == comp )
+         {
+            if ( this->hash() == tuple->hash() )
+            {
+               return 0 ;
+            }
+            else if ( this->hash() < tuple->hash() )
+            {
+               return -1 ;
+            }
+            else
+            {
+               return 1 ;
+            }
+         }
+         else
+         {
+            return comp ;
+         }
       }
 
    private:
