@@ -26,6 +26,9 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.sql.DataSource;
 import javax.swing.text.html.Option;
@@ -36,13 +39,16 @@ import javax.swing.text.html.Option;
  * @brief SequoiaDB DataSource
  */
 public class SequoiadbDatasource {
-	private long lastClearTime = System.currentTimeMillis();// last clean time
-	private volatile LinkedList<Sequoiadb> sequoiadbs;// the idle queue
-	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>();// the busy queue
-	private SequoiadbOption option;// the configuration for datasource
+	// the idle queue
+	private volatile LinkedList<Sequoiadb> sequoiadbs = new LinkedList<Sequoiadb>();
+	// the busy queue
+	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>();
+	// the configuration for datasource
+	private SequoiadbOption option;
 	private String url = null;
 	private String username = null;
 	private String password = null;
+	private Timer timer = new Timer(true);
 	
 	/**
 	 * @fn SequoiadbDatasource()
@@ -54,12 +60,15 @@ public class SequoiadbDatasource {
 	 * @throws Exception
 	 */
 	public SequoiadbDatasource(String url, String username, String password,
-			SequoiadbOption option) throws Exception {
+			SequoiadbOption option) throws Exception
+	{
 		this.url = url;
 		this.username = username;
 		this.password = password;
 		this.option = option;
 		init(option);
+		// after the timer start 500ms, it goes to clean periodically 
+		timer.schedule(new CleanConnectionTask(this), option.getRecheckCyclePeriod(), option.getRecheckCyclePeriod());
 	}
 
 	/**
@@ -67,112 +76,215 @@ public class SequoiadbDatasource {
 	 * @brief init SequoiadbDatabase,after you create a instance of SequoiadbDatabase,you must call this method.
 	 * @param option  
 	 *               this instance of SequoiadbOption
-	 * @throws Exception
 	 * @return void
-	 * @exception
-	 * @since 1.0.0
+	 * @exception Exception
 	 */
-	private void init(SequoiadbOption option) throws Exception {
-		sequoiadbs = new LinkedList<Sequoiadb>();
-		if (option.getMaxConnectionNum() < option.getInitConnectionNum()) {
+	private void init(SequoiadbOption option) throws Exception
+	{
+		if (option.getMaxConnectionNum() < 0)
+			throw new Exception(
+					"datasource maxconnectionnum is less than 0");
+		else if (option.getMaxConnectionNum() == 0)
+			return ; 
+		if (option.getMaxConnectionNum() < option.getInitConnectionNum())
+		{
 			throw new Exception(
 					"datasource maxconnectionnum is less than initconnectionnum");
 		}
 		if (option.getInitConnectionNum() < 0)
 			throw new Exception("this datasoure connection num is  less than 0");
-		for (int i = 0; i < option.getInitConnectionNum(); i++) {
+		for (int i = 0; i < option.getInitConnectionNum(); i++)
+		{
 			Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
 			sequoiadbs.add(sequoiadb);
 		}
 	}
 
 	/**
-	 * 
 	 * @fn Sequoiadb getConnection()
 	 * @brief  get the connection from this datasource
 	 * @throws SQLException
 	 * @throws InterruptedException
 	 * @return Sequoiadb
-	 * @exception
-	 * @since 1.0.0
+	 * @exception SQLException, InterruptedException
 	 */
-	public synchronized Sequoiadb getConnection() throws SQLException,
-			InterruptedException {
-		clearClosedConnection();
-		if (sequoiadbs.size() > 0) {
-			return getSequoiadb();
-		} else {
-			increaseConnetions();
-			if (sequoiadbs.size() > 0) {
-				return getSequoiadb();
-			} else {
+	public synchronized Sequoiadb getConnection() throws SQLException, InterruptedException
+	{
+		// when we don't want to use datasource, return sequiadb instance directly
+		if (option.getMaxConnectionNum() == 0)
+		{
+			Sequoiadb temp = new Sequoiadb(url, username, password);
+			return temp;
+		}
+		// otherwise
+		if ((sequoiadbs.size() > 0) && (used_sequoiadbs.size() < option.getMaxConnectionNum())) 
+		{
+			Sequoiadb sequoiadb = null;
+			// get connection from idle queue
+			sequoiadb = sequoiadbs.poll();
+			// get a valid instance
+			while((sequoiadb != null) && (!sequoiadb.isValid()))
+			{
+				sequoiadb = sequoiadbs.poll();
+			}
+			// if no valid instance in idle queue, let't create one return
+			if (sequoiadb == null)
+				sequoiadb = new Sequoiadb(url, username, password);
+			// add to busy queue
+			used_sequoiadbs.add(sequoiadb);
+			return sequoiadb;
+		}
+		else
+		{
+			if (used_sequoiadbs.size() >= option.getMaxConnectionNum())
+			{
 				wait(option.getTimeout());
-				if (sequoiadbs.size() > 0) {
-					return getSequoiadb();
-				}
-				throw new SQLException(
-						"can't get database connection exception");
+				// when wake up, check again
+				if (used_sequoiadbs.size() >= option.getMaxConnectionNum())
+					throw new SQLException("datasource is full," +
+							" can't get database connection exception");
 			}
-		}
-
-	}
-
-	/**
-	 * @fn void increaseConnetions()
-	 * @bref Add another 20 Sequoiadb objects to the datasource. 
-	 */
-	private void increaseConnetions() {
-		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
-                                   option.getDeltaIncCount()) {
-			for (int i = 0; i < option.getDeltaIncCount(); i++) {
-				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
-				sequoiadbs.add(sequoiadb);
-			}
-		} else {
-			for (int i = 0; i < option.getMaxConnectionNum()
-					- used_sequoiadbs.size(); i++) {
-				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
-				sequoiadbs.add(sequoiadb);
-			}
+			Sequoiadb temp = new Sequoiadb(url, username, password);
+			used_sequoiadbs.add(temp);
+			// create a thread to increase connection
+			Thread t = new Thread(new CreateConnectionTask(this));
+			t.start();
+			return temp;
 		}
 	}
-
-	private synchronized Sequoiadb getSequoiadb() {
-		Sequoiadb sequoiadb = sequoiadbs.poll();
-		used_sequoiadbs.add(sequoiadb);
-		return sequoiadb;
-	}
-
+	
 	/**
 	 * @fn void close(Sequoiadb sequoiadb)
 	 * @brief  when you accomplish some actions,you should close the conncetion
 	 * @param sequoiadb
 	 * @return void
-	 * @exception
-	 * @since 1.0.0
+	 * @exception NullPointerException if sequoiadb is null
 	 */
-	public synchronized void close(Sequoiadb sequoiadb) {
-		if (used_sequoiadbs.contains(sequoiadb)) {
+	public synchronized void close(Sequoiadb sequoiadb)
+	{
+		if (sequoiadb == null)
+			throw new NullPointerException();
+		// when datasource not be used, abandon the connection directly
+		if (option.getMaxConnectionNum() == 0)
+		{
+			sequoiadb.disconnect();
+			return;
+		}
+		// if the busy queue contain this instance
+		if (used_sequoiadbs.contains(sequoiadb)) 
+		{
+			// remove it from busy queue
 			used_sequoiadbs.remove(sequoiadb);
-			// release the heap memory or other resource holds in the instance
-			sequoiadb.release();
-			sequoiadbs.add(sequoiadb);
-			notify();
-		} 
+			// judge put it in idle queue or not
+			long lastTime = sequoiadb.getConnection().getLastUseTime();
+			long currentTime = System.currentTimeMillis();
+			// check the time keep in instance, don't let it go back to pool
+			// when it timeout
+			if (currentTime - lastTime >= option.getAbandonTime())
+			{
+				sequoiadb.disconnect();
+			}
+			else
+			{
+				// close all cursor
+				sequoiadb.closeAllCursors();
+				// release the heap memory or other resource holds in the instance
+				sequoiadb.releaseResource();
+				// put it back to idle queue
+				sequoiadbs.add(sequoiadb);
+				notify();	
+			}
+		}
+		// else, abandon it directly
+		else
+		{
+			sequoiadb.disconnect();
+		}
 	}
-
-	private void clearClosedConnection() {
-		long time = System.currentTimeMillis();
-		if (time - lastClearTime >= option.getRecheckCyclePeriod()) {
-			if (sequoiadbs.size() > option.getMaxIdeNum()) {
-				this.lastClearTime = System.currentTimeMillis();
-				for (int i = 0; i < sequoiadbs.size() - option.getMaxIdeNum(); i++) {
-					Sequoiadb db = sequoiadbs.get(i) ;
-					db.disconnect () ;
-					sequoiadbs.remove ( db ) ;
-					i-- ;
-				}
+	
+	/**
+	 * @fn void increaseConnetions()
+	 * @bref Add another 20 Sequoiadb objects to the datasource. 
+	 */
+	synchronized void increaseConnetions()
+	{
+		// when datasource not be used, return directly
+		if (option.getMaxConnectionNum() == 0)
+			return;
+		// otherwise
+		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
+                                   option.getDeltaIncCount()) 
+		{
+			for (int i = 0; i < option.getDeltaIncCount(); i++)
+			{
+				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
+				sequoiadbs.add(sequoiadb);
+			}
+		} 
+		else 
+		{
+			for (int i = 0; i < option.getMaxConnectionNum()
+					- used_sequoiadbs.size(); i++)
+			{
+				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
+				sequoiadbs.add(sequoiadb);
 			}
 		}
 	}
+	
+	/**
+	 * @fn void cleanAbandonConnection()
+	 * @brief  clean the tiemout connection periodically
+	 */
+	synchronized void cleanAbandonConnection()
+	{
+		if (sequoiadbs.size() == 0)
+			return ;
+		long lastTime = 0;
+		long currentTime = System.currentTimeMillis();
+		ListIterator<Sequoiadb> list = sequoiadbs.listIterator(0);
+		while(list.hasNext())
+		{
+			Sequoiadb db = list.next();
+			lastTime = db.getConnection().getLastUseTime();
+			if ( currentTime - lastTime >= option.getAbandonTime())
+			{
+				db.disconnect () ;
+				list.remove();
+			}
+		}
+		for (int i = 0; i < sequoiadbs.size() - option.getMaxIdeNum(); i++)
+		{
+			Sequoiadb db = sequoiadbs.poll();
+			db.disconnect();
+			i--;
+		}
+	}
+	
+}
+
+class CleanConnectionTask extends TimerTask {
+	private SequoiadbDatasource datasource;
+	
+	public CleanConnectionTask(SequoiadbDatasource ds){
+		datasource = ds;
+	}
+	@Override
+	public void run() {
+		datasource.cleanAbandonConnection();
+	}
+	
+}
+
+class CreateConnectionTask implements Runnable {
+	private SequoiadbDatasource datasource;
+	
+	public CreateConnectionTask(SequoiadbDatasource ds){
+		datasource = ds;
+	}
+	
+	public void run(){
+		datasource.increaseConnetions();
+	}
+	
 }

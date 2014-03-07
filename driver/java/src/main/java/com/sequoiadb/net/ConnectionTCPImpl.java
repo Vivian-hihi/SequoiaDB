@@ -44,6 +44,7 @@ public class ConnectionTCPImpl implements IConnection {
 	private byte[] receive_buffer;
 	final static private int DEF_BUFFER_LENGTH = 64 * 1024;
 	private int REAL_BUFFER_LENGTH ;
+	private long lastUseTime;
 
 	//@Override
 	public void setEndianConvert(boolean endianConvert) {
@@ -55,6 +56,9 @@ public class ConnectionTCPImpl implements IConnection {
 		return endianConvert;
 	}
 
+	public long getLastUseTime(){
+		return lastUseTime;
+	}
 	public ConnectionTCPImpl(ServerAddress addr, ConfigOptions options) {
 		this.hostAddress = addr;
 		this.options = options;
@@ -119,6 +123,8 @@ public class ConnectionTCPImpl implements IConnection {
 				clientSocket.close();
 			} catch (Exception e) {
 			} finally {
+				receive_buffer = null;
+				REAL_BUFFER_LENGTH = 0;
 				input = null;
 				output = null;
 				clientSocket = null;
@@ -158,6 +164,7 @@ public class ConnectionTCPImpl implements IConnection {
 	 */
 	//@Override
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException {
+		lastUseTime = System.currentTimeMillis();
 		logger.getInstance().debug(0, "enter receiveMessage\n");
 		try {
 			input.mark(4);
@@ -310,8 +317,10 @@ public class ConnectionTCPImpl implements IConnection {
 		logger.getInstance().debug(0, "leave sendMessage2\n");
 	}
 	
-	public void shrink() {
-		receive_buffer = new byte[DEF_BUFFER_LENGTH];
-		REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH ;
+	public void shrinkBuffer() {
+		if (REAL_BUFFER_LENGTH != DEF_BUFFER_LENGTH) {
+			receive_buffer = new byte[DEF_BUFFER_LENGTH];
+			REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH ;
+		}
 	}
 }

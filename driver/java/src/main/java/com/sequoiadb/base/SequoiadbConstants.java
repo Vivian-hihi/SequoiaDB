@@ -136,7 +136,7 @@ public class SequoiadbConstants {
 	public final static String FIELD_COLLECTION = "Collection";
 	public final static String FIELD_TOTAL = "Total";
 	public final static String FIELD_INDEX = "Index";
-	public final static String FIELD_NAME_PREFERED_REPLICA = "PreferedReplica";
+	public final static String FIELD_NAME_PREFERED_INSTANCE = "PreferedInstance";
 
 	public final static String IXM_NAME = "name";
 	public final static String IXM_KEY = "key";

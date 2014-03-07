@@ -247,6 +247,7 @@ public class Sequoiadb {
 	 */
 	public void disconnect() throws BaseException {
 		byte[] request = SDBMessageHelper.buildDisconnectRequest(endianConvert);
+		releaseResource();
 		connection.sendMessage(request);
 		connection.close();
 	}
@@ -267,7 +268,7 @@ public class Sequoiadb {
 	 * @brief Judge wether the connection is valid or not.
 	 * @return if the connection is valid, return true
 	 */
-	private boolean isValid(){
+	public boolean isValid(){
 		// client not connect to database or client 
 		// disconnect from database
 		if ( connection == null || connection.isClosed() )
@@ -1015,7 +1016,6 @@ public class Sequoiadb {
 			throw new BaseException("SDB_INVALIDARG", taskID, isAsync);
 		// append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
 		BSONObject newObj = new BasicBSONObject();
-		int flag = 0;
 		newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, taskID);
 		newObj.put(SequoiadbConstants.FIELD_NAME_ASYNC, isAsync);
 		// run command
@@ -1033,51 +1033,52 @@ public class Sequoiadb {
      * @brief Set the attributes of the current session.
      * @param options  The configuration options for the current session.The options are as below:
      * <ul>
-     * <li>PreferedReplica   : Indicate which node to be choosed for querying in current session.
-     *                        eg:{"PreferedReplica":"m"/"M"/"s"/"S"/"a"/"A"/1-7}, prefer to choose master/slave/anyone/node1-node7,
-     *                        default to be {"PreferedReplica":"A"}, means would like to choose anyone to query.
+     * <li>PreferedInstance   : indicate which instance to respond read request in current session.
+     *                        eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7}, prefer to choose "read and write instance"/"read only instance"/"anyone instance"/instance1-insatance7,
+     *                        default to be {"PreferedInstance":"A"}, means would like to choose anyone instance to respond read request such as query.
      * </li>
      * </ul>
-     * @note 1.Option "PreferedReplica" is used to choose which node for querying in current session.When a new session is built,
-     *         it works with default attribute {"PreferedReplica":"A"}. And it will keep the preferred node for querying in current session
-     *         until the session is closed or the node is shut down.
-     *       2.If a replica group only has 3 data notes, and we offer a configuraion option {"PreferedReplica":5},
-     *         it will choose node 2 in most cases, the formula is (5-1)%3+1. But, if node 2 is the master node, it will choose node 3.
-     *         when offer {"PreferedReplica":1-7}, it will choose slave node first.
+     * @note 1.Option "PreferedInstance" is used to choose which instance for querying in current session.When a new session is built,
+     *         it works with default attribute {"PreferedInstance":"A"}. And it will keep the preferred instance for querying in current session
+     *         until the session is closed or the data node which belongs to this instance is shut down.
+     *       2.If a replica group only has 3 data notes, and we offer a configuraion option {"PreferedInstance":5},
+     *         in most cases, it will choose the instance which node 2 is in, the formula is (5-1)%3+1. But, if the selected instance is a "read and write instance",
+     *         it will choose next instance.
+     *         when offer {"PreferedInstance":1-7}, it will choose "read only instance" first.
      *      
      * @code
      *	Sequoiadb sdb = new Sequoiadb("ubuntu-dev1", 11810, "", ""); // when build object sdb, it means we start session 1
-     *  sdb.setSessionAttr(new BasicBSONObject("PreferedReplica", 3)); // choose node 3(assume it exist and it's not a master node) for querying
+     *  sdb.setSessionAttr(new BasicBSONObject("PreferedInstance", 3)); // choose No.3 instance(assume it exist and it's not a r/w instance) for querying
      *  CollectionSpace cs = sdb.getCollectionSpace("foo");
      *  DBCollection cl = cs.getCollection("bar");
-     *  cl.query(); // it will choose node 3 to query data in session 1
+     *  cl.query(); // it will choose No.3 instance to query data in session 1
      *  
      *  Sequoiadb sdb1 = new Sequoiadb("ubuntu-dev2", 11810, "", ""); // build another Sequoiadb object, and we start session 2
-     *  sdb1.setSessionAttr(new BasicBSONObject("PreferedReplica", "M")); // choose master node for querying in session 2
+     *  sdb1.setSessionAttr(new BasicBSONObject("PreferedInstance", "M")); // choose r/w instance for querying in session 2
      *  CollectionSpace cs1 = sdb.getCollectionSpace("foo");
      *  DBCollection cl1 = cs1.getCollection("bar");
-     *  cl1.query(); // it will choose master node to query data in session 2
-     *  cl.query(); // it will choose node 3 to query data in session 1
+     *  cl1.query(); // it will choose r/w instance to query data in session 2
+     *  cl.query(); // it will choose No.3 instance to query data in session 1
      *  
      *  sdb.disconnect(); // close session 1
      *  
      *  Sequoiadb sdb = new Sequoiadb("ubuntu-dev1", 11810, "", ""); // start session 3
      *  CollectionSpace cs = sdb.getCollectionSpace("foo");
      *  DBCollection cl = cs.getCollection("bar");
-     *  cl.query(); // it will choose any node to query data in session 3. Assuming it choise node 4, when we qurey next time,
-     *              // unless node 4 was shut down, it would choose node 4 again.
-     *  cl.query(); // choose node 4 to query again
+     *  cl.query(); // it will choose any instance to query data in session 3. Assuming it choise No.4 instance, when we qurey next time,
+     *              // unless the node which belongs to NO.4 instance had shut down, it would choose No.4 instance again.
+     *  cl.query(); // choose No.4 instance to query again
      * @endcode
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void setSessionAttr( BSONObject options ) throws BaseException {
 		// check argument
 		if ( null == options || 
-		     !options.containsField(SequoiadbConstants.FIELD_NAME_PREFERED_REPLICA) )
+		     !options.containsField(SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE) )
 			throw new BaseException( "SDB_INVALIDARG", options );
 		// build obj
 		BSONObject newObj = new BasicBSONObject();
-		Object value = options.get( SequoiadbConstants.FIELD_NAME_PREFERED_REPLICA );
+		Object value = options.get( SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE );
 		int v = PreferReplicaType.PREFER_REPL_SLAVE.getCode();
 		if ( value instanceof Integer ) {
 			v = (Integer)value;
@@ -1100,7 +1101,7 @@ public class Sequoiadb {
 		}else {
 			throw new BaseException( "SDB_INVALIDARG", options );
 		}
-		newObj.put( SequoiadbConstants.FIELD_NAME_PREFERED_REPLICA, v );
+		newObj.put( SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE, v );
 		// command
 		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_SETSESS_ATTR,
 				                       0, 0, 0, -1, newObj,
@@ -1388,9 +1389,9 @@ public class Sequoiadb {
 		return shardsCursor.getNext();
 	}
 
-	void release(){
+	void releaseResource(){
 		// let the receive buffer shrink to default value
-		connection.shrink();
+		connection.shrinkBuffer();
 	}
 	
 	private void initConnection() throws BaseException {

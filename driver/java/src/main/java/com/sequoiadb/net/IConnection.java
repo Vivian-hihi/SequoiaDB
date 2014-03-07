@@ -29,7 +29,7 @@ public interface IConnection {
 	
 	public void setEndianConvert(boolean endianConvert);
 	public boolean isEndianConvert();
-
+	public long getLastUseTime();
 	public void changeConfigOptions(ConfigOptions opts) throws BaseException;
 
 	public void sendMessage(byte[] msg) throws BaseException;
@@ -40,7 +40,7 @@ public interface IConnection {
 	
 	public ByteBuffer receiveMessage(boolean endianConvert) throws BaseException;
 	
-	public void shrink();
+	public void shrinkBuffer();
 
 
 }
