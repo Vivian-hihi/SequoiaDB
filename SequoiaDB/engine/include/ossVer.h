@@ -20,9 +20,10 @@
 #define SDB_ENGINE_SUBVERSION_2        2
 #define SDB_ENGINE_SUBVERSION_3        3
 #define SDB_ENGINE_SUBVERSION_5        5
+#define SDB_ENGINE_SUBVERSION_6        6
 
 
-#define SDB_ENGINE_SUBVERSION_CURRENT  SDB_ENGINE_SUBVERSION_5
+#define SDB_ENGINE_SUBVERSION_CURRENT  SDB_ENGINE_SUBVERSION_6
 
 /*
  *    Get the version, subversion and release version.
@@ -33,3 +34,4 @@ void ossGetVersion ( INT32 *version,
                      const CHAR **ppBuild ) ;
 
 #endif /* OSSVER_HPP_ */
+
