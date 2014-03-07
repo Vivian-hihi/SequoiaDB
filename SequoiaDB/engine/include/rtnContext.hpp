@@ -576,7 +576,7 @@ namespace engine
          BSONObj              _orderBy ;
          ixmHashValue         _hash ;
          BSONObj              _keyObj ;
-         BOOLEAN              _includeArray ;
+         BSONElement          _arrEle ;
    } ;
    typedef _coordOrderKey coordOrderKey ;
 
