@@ -797,7 +797,14 @@ public: // operation
                                                  
    INT32 refreshDE( DynamicExpressionOutPut &DE,
                     Position &position ) ;
-         
+                    
+   INT32 refreshDS_Table( DynamicSnapshotOutPut &DS,
+                                 INT32 ROW, INT32 COL,
+                                 Position &position,
+                                 string autoSetType ) ;
+   INT32 refreshDS_List( DynamicSnapshotOutPut &DS,
+                                Position &position,
+                                string autoSetType ) ;
    INT32 refreshDS( DynamicSnapshotOutPut &DS,
                     Position &position ) ;
                     
@@ -3943,51 +3950,360 @@ done :
 error :
    goto done ;
 }
-
-// refresh infomation on the terminal
-// when displayType is DISPLAYTYPE_DYNAMIC_SNAPSHOT
-INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
-                                     Position &position )
+INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
+                              INT32 ROW, INT32 COL,
+                              Position &position,
+                              string autoSetType )
 {
-   INT32 rc                      = SDB_OK ;
+   INT32 rc = SDB_OK ;
    BSONObj bsonobj ;
+   string baseField              = DS.baseField ;
+   INT32 rowNumber               = 0;
+   
    FieldStruct* Fixed            = NULL ;
    FieldStruct* Mobile           = NULL ;
+   
    // actualFixedFieldLength
    INT32 FLength                 = 0 ;
    // actualMobileFieldLength
    INT32 MLength                 = 0 ;
+   
    InputPanel &input             = root.input ;
    INT32 Y                       = position.referUpperLeft_Y ;
    INT32 X                       = position.referUpperLeft_X ;
    INT32 length_Y                = position.length_Y ;
    INT32 length_X                = position.length_X ;
-   INT32 start_row               = Y ;
-   INT32 start_col               = X ;
-   string AUTOSETTYPE            = NULLSTRING ;
-   string STYLE                  = NULLSTRING ;
-   INT32 ROW                     = 0 ;
-   INT32 COL                     = 0 ;
+   INT32 cellLength              = DS.tableCellLength ;
+   
+   INT32 start_Y                 = Y ;
+   INT32 start_X                 = X ;
+
+   // indicate one row can display how many field can be displayed
+   INT32 index_COL               = 0 ;
+
+   // indicate which field would be displayed
+   INT32 pos_Field               = 0 ;
+   
+   // use it to sign the end position of
+   // fixedFieldStruct or mobileFieldStruct on every row
+   INT32 end_fixed_mobile        = 0 ;
+   
+   // use it to sign the start position of
+   // fixedFieldStruct or mobileFieldStruct on every row
+   INT32 start_fixed_mobile      = 0 ;
+   
+   string displayMode            = 
+         DISPLAYMODECHOOSER[input.displayModeChooser] ;
+
+   // store the field title
    string fieldName              = NULLSTRING ;
+   
+    // store the field colour
+   Colours fieldColour ;
+   INT32 pairNumber              = 0 ;
+   string result                 =  NULLSTRING ;
+   INT32 pos_snapshot            = 0 ;
+   
+   fieldColour.backGroundColor   = 6 ;
+   fieldColour.foreGroundColor   = 0 ;
+   FLength = DS.actualFixedFieldLength ;
+   MLength = DS.actualMobileFieldLength ;
+   // the height of the table should be ROW*2
+   // one row to save title of talble
+   // other row to save the value which need to display
+   rc = fixedOutputLocation( Y, X,
+                             start_Y, start_X,
+                             length_Y - ROW * 2, 0,
+                             autoSetType ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+   // calculate how much field will display in one row
+   for( index_COL = 0; index_COL <= COL; ++index_COL )
+   {
+      if(( index_COL + 1 ) * cellLength > length_X )
+         break ;
+   }
+   
+   // adapt to the terminal
+   ROW = ROW * COL / index_COL ;
+   // adapt to the terminal
+   COL = index_COL ;
+
+   // row by row to print the field on terminal
+   for( rowNumber = 0; rowNumber < ROW; ++rowNumber )
+   {
+      start_Y += rowNumber ;
+      // can't display outside the scope of the specified window
+      if( start_Y - Y >= length_Y )
+      {
+         break ;
+      }
+      rc = fixedOutputLocation( start_Y, X,
+                                start_Y, start_X,
+                                0,
+                                length_X -COL * cellLength,
+                                autoSetType ) ;
+      if( rc )
+      {
+         goto error ;
+      }
+      index_COL = 0 ;
+      start_fixed_mobile = end_fixed_mobile ;
+      // print the title on the screen
+      while( 1 )
+      {
+         Fixed = &DS.fixedField[end_fixed_mobile] ;
+         // if field can't completely display
+         if( start_X + cellLength -
+             X > length_X )
+            break ;
+         if( end_fixed_mobile >= FLength)
+            break ;
+         // only display the specified number field on one row
+         if( index_COL >= COL )
+            break ;
+            
+         // get the title and its colour
+         rc = getFieldNameAndColour( Fixed[0],
+                                     displayMode,
+                                     fieldName,
+                                     fieldColour) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         getColourPN( fieldColour, pairNumber ) ;
+         attron( COLOR_PAIR( pairNumber ) ) ;
+         rc = mvprintw_SDBTOP( fieldName,
+                               cellLength,
+                               Fixed->alignment,
+                               start_Y,
+                               start_X ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         attroff( COLOR_PAIR( pairNumber ) ) ;  
+         start_X += cellLength ;
+         ++start_X ; // add separate space
+         ++end_fixed_mobile ;
+         ++index_COL ;
+      }
+      
+      while( 1 )
+      {
+         Mobile = &DS.mobileField[end_fixed_mobile - FLength] ;
+         // if field can't completely display
+         if( start_X + cellLength -
+             X > length_X )
+            break ;
+         if( end_fixed_mobile - FLength >= MLength )
+            break ;
+         // only display the specified number field on one row
+         if( index_COL >= COL )
+            break ;
+         rc = getFieldNameAndColour( Mobile[0],
+                                     displayMode,
+                                     fieldName,
+                                     fieldColour ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         getColourPN( fieldColour, pairNumber ) ;
+         attron( COLOR_PAIR( pairNumber ) ) ;
+         rc = mvprintw_SDBTOP( fieldName, cellLength,
+                               Mobile->alignment,
+                               start_Y, start_X ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         attroff( COLOR_PAIR( pairNumber ) ) ;  
+         start_X += cellLength ;
+         ++start_X ; // add separate space
+         ++end_fixed_mobile ;
+         ++index_COL ;
+      }
+
+      // title can't cover field's content
+      start_Y += 1 ;
+      if( start_Y - Y >= length_Y )
+      {
+         goto done ;
+      }
+
+      // print the content which is stored in vector
+      for( pos_snapshot = 0;
+           pos_snapshot < input.cur_Snapshot.size();
+           ++pos_snapshot )
+      {      
+         pos_Field = start_fixed_mobile ;
+         bsonobj = input.cur_Snapshot[pos_snapshot] ;
+         rc = fixedOutputLocation( start_Y, X,
+                                   start_Y, start_X,
+                                   0,
+                                   length_X -COL * cellLength,
+                                   autoSetType ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         while( 1 )
+         {
+            Fixed = &DS.fixedField[pos_Field] ;
+            // if field can't completely display
+            if( start_X + cellLength -
+                X > length_X )
+               break ;
+            // if reach the end of fixedField, break
+            if( pos_Field >= FLength )
+               break ;
+            // if reach the scope of field which could display in the row
+            if( pos_Field >= end_fixed_mobile)
+               break ;
+            rc = getFieldNameAndColour( Fixed[0],
+                                        displayMode,
+                                        fieldName,
+                                        fieldColour) ;
+            if( rc )
+            {
+               goto error;
+            }
+            getColourPN( fieldColour, pairNumber ) ;
+            result = NULLSTRING ;
+            rc = getResultFromBSONObj( bsonobj,
+                                       Fixed->sourceField,
+                                       displayMode,
+                                       result,
+                                       Fixed->canSwitch,
+                                       baseField,
+                                       Fixed->warningValue,
+                                       pairNumber) ;
+            attron( COLOR_PAIR( pairNumber ) ) ;
+            if( rc )
+            {
+               goto error ;
+            }
+            rc = mvprintw_SDBTOP( result,
+                                  cellLength,
+                                  Fixed->alignment,
+                                  start_Y,
+                                  start_X ) ;
+            if( rc )
+            {
+               rc = SDB_ERROR ;
+               goto error ;
+            }
+            attroff( COLOR_PAIR( pairNumber ) ) ;  
+            start_X += cellLength ;
+            ++start_X ; // add separate pace
+            ++pos_Field ;
+         }
+         while( 1 )
+         {
+            Mobile = &DS.mobileField[pos_Field - FLength] ;
+            // if field can't completely display
+            if( start_X + cellLength -
+                X > length_X )
+               break ;
+            // if reach the scope of field which could display in the row
+            if( pos_Field >= end_fixed_mobile )
+               break ;
+            rc = getFieldNameAndColour( Mobile[0],
+                                        displayMode,
+                                        fieldName,
+                                        fieldColour ) ;
+            if( rc )
+            {
+               rc = SDB_ERROR ;
+               goto error ;
+            }
+            getColourPN( fieldColour, pairNumber ) ;
+            result = NULLSTRING ;
+            rc = getResultFromBSONObj( bsonobj,
+                                       Mobile->sourceField,
+                                       displayMode,
+                                       result,
+                                       Mobile->canSwitch,
+                                       baseField,
+                                       Mobile->warningValue,
+                                       pairNumber );
+            attron( COLOR_PAIR( pairNumber ) ) ;
+            if( rc )
+            {
+               rc = SDB_ERROR ;
+               goto error ;
+            }
+            rc = mvprintw_SDBTOP( result,
+                                  cellLength,
+                                  Mobile->alignment,
+                                  start_Y,
+                                  start_X ) ;
+            if( rc )
+            {
+               rc = SDB_ERROR ;
+               goto error ;
+            }
+            attroff( COLOR_PAIR( pairNumber ) ) ;  
+            start_X += cellLength;
+            ++start_X ; // add separate pace
+            ++pos_Field ;
+         }
+         start_Y += 1 ; 
+         if( start_Y - Y >= length_Y )
+         {
+            break ;
+         }
+      }   
+      start_Y -= rowNumber ;
+   }
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
+                             Position &position,
+                             string autoSetType )
+{
+   INT32 rc                      = SDB_OK ;
+   BSONObj bsonobj ;
+   FieldStruct* Fixed            = NULL ;
+   FieldStruct* Mobile           = NULL ;
+   
+   // actualFixedFieldLength
+   INT32 FLength                 = 0 ;
+   // actualMobileFieldLength
+   INT32 MLength                 = 0 ;
+   
+   InputPanel &input             = root.input ;
+   INT32 Y                       = position.referUpperLeft_Y ;
+   INT32 X                       = position.referUpperLeft_X ;
+   INT32 length_Y                = position.length_Y ;
+   INT32 length_X                = position.length_X ;
+   INT32 start_Y                 = Y ;
+   INT32 start_X                 = X ;
+
+
+   // store the field title
+   string fieldName              = NULLSTRING ;
+   
+    // store the field colour
    Colours fieldColour ;
    fieldColour.backGroundColor   = 6 ;
    fieldColour.foreGroundColor   = 0 ;
    string displayMode            = 
          DISPLAYMODECHOOSER[input.displayModeChooser] ;
-   INT32 tableCellLength         = DS.tableCellLength ;
+   
    string baseField              = DS.baseField ;
    string serialNumberAlignment  = LEFT ;
-   
-   //use it to sign the end position of fixedFieldStruct or mobileFieldStruct 
-   INT32 end_fixed_mobile        = 0 ;
-   //use it to sign the start position of fixedFieldStruct or mobileFieldStruct
-   INT32 start_fixed_mobile      = 0 ;
-   
-   // when style is TABLE , use it
-   INT32 tableCol                = 0 ;
-   // when style is TABLE , use it
-   INT32 start_up                = 0 ;
-   
+
+   // store the sum of all field length in the scope of length_X
    INT32 sum                     = 0 ;
    INT32 pos_snapshot            = 0 ;
    INT32 pairNumber              = 0 ;
@@ -3996,7 +4312,6 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
    INT32 fLength                 = 0 ;
    // use to traverse under the MLength 
    INT32 mLength                 = 0 ;
-   INT32 rowNumber               = 0;
    string serialNumberStr        = NULLSTRING ;
    CHAR *serialNumber            =
          ( CHAR * )SDB_OSS_MALLOC( SERIALNUMBER_LENGTH * sizeof( CHAR ) ) ;
@@ -4005,7 +4320,8 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                    "%s refreshDisplayContent failed, "
-                   "can't malloc serialNumber == %d"OSS_NEWLINE,
+                   "can't malloc serialNumber == %d"
+                   OSS_NEWLINE,
                    errStrBuf, SERIALNUMBER_LENGTH ) ;
       rc = SDB_ERROR ;
       goto error ; 
@@ -4014,11 +4330,291 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
    FLength = DS.actualFixedFieldLength ;
    MLength = DS.actualMobileFieldLength ;
    ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
+
+   // calculate the max scope of display field
+   sum = 0 ;
+   for( fLength = 0; fLength < FLength; ++fLength )
+   {
+      Fixed = &DS.fixedField[fLength] ;
+      if( sum + Fixed->contentLength > length_X )
+         break ;
+      sum += Fixed->contentLength ;
+   }
+   
+   if( input.fieldPosition >= MLength )
+   {
+      input.fieldPosition = MLength - 1 ;
+   }
+   for( mLength = input.fieldPosition;
+        mLength < MLength; ++mLength )
+   {
+      Mobile = &DS.mobileField[mLength] ;
+      if( sum + Mobile->contentLength  > length_X )
+         break ;
+      sum += Mobile->contentLength ;
+   }
+   // use the max scope to get the best start_X to display field 
+   rc = fixedOutputLocation( start_Y, X,
+                             start_Y, start_X,
+                             0, length_X - sum,
+                             autoSetType );
    if( rc )
    {
-      rc = SDB_ERROR ;
-      goto error;
+      goto error ;
    }
+
+   // correct the location to display field
+   // title row can't display serialNumber
+   start_X += SERIALNUMBER_LENGTH ;
+   ++start_X ; // add separate pace
+
+   // print the title on the screen
+   for( fLength = 0; fLength < FLength; ++fLength )
+   {
+      Fixed = &DS.fixedField[fLength] ;
+      // if field can't completely display
+      if( start_X + Fixed->contentLength -
+          X > length_X )
+         break ;
+      rc = getFieldNameAndColour( Fixed[0],
+                                  displayMode,
+                                  fieldName,
+                                  fieldColour) ;
+      if( rc )
+      {
+         goto error ;
+      }
+      getColourPN( fieldColour, pairNumber ) ;
+      attron( COLOR_PAIR( pairNumber ) ) ;
+      rc = mvprintw_SDBTOP( fieldName,
+                            Fixed->contentLength,
+                            Fixed->alignment,
+                            start_Y,
+                            start_X ) ;
+      if( rc )
+      {
+         goto error;
+      }
+      attroff( COLOR_PAIR( pairNumber ) ) ;  
+      start_X += Fixed->contentLength ;
+      ++start_X ; // add separate pace
+   }
+
+   // correct the diection of operation
+   // should display the last field
+   if( input.fieldPosition >= MLength )
+   {
+      input.fieldPosition = MLength - 1 ;
+   }
+
+   // start display on the specific index from the diection of operation
+   for( mLength = input.fieldPosition;
+        mLength < MLength; ++mLength )
+   {
+      Mobile = &DS.mobileField[mLength] ;
+      if( start_X + Mobile->contentLength -
+          X > length_X )
+         break ;
+      rc = getFieldNameAndColour( Mobile[0],
+                                  displayMode,
+                                  fieldName,
+                                  fieldColour);
+      if( rc )
+      {
+         goto error ;
+      }
+      getColourPN( fieldColour, pairNumber ) ;
+      attron( COLOR_PAIR( pairNumber ) ) ;
+      rc = mvprintw_SDBTOP( fieldName,
+                            Mobile->contentLength,
+                            Mobile->alignment,
+                            start_Y,
+                            start_X ) ;
+      if( rc )
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+      attroff( COLOR_PAIR( pairNumber ) ) ;  
+      start_X += Mobile->contentLength ;
+      ++start_X ; // add separate pace
+   }
+
+   // title can't cover field's content
+   start_Y += 1 ; // 
+   if( start_Y - Y >= length_Y )
+   {
+      goto done ;
+   }
+   rc = fixedOutputLocation( start_Y, X,
+                             start_Y, start_X,
+                             0, length_X -sum ,
+                             autoSetType ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   //print the content on the screen
+   for( pos_snapshot = 0;
+        pos_snapshot < input.cur_Snapshot.size();
+        ++pos_snapshot )
+   {
+
+      // print the serial number on the screen
+      ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
+
+      // get the row number
+      ossSnprintf( serialNumber,
+                   SERIALNUMBER_LENGTH,
+                   "%3d", pos_snapshot + 1 ) ;
+      serialNumberStr = serialNumber ;
+      rc = mvprintw_SDBTOP( serialNumberStr,
+                            SERIALNUMBER_LENGTH,
+                            serialNumberAlignment,
+                            start_Y,
+                            start_X ) ;
+      if( rc )
+      {
+         goto error;
+      }
+
+      // correct the display location
+      start_X += SERIALNUMBER_LENGTH ;
+      ++start_X ; // add separate pace
+
+      bsonobj = input.cur_Snapshot[pos_snapshot] ;
+      for( fLength = 0; fLength < FLength; ++fLength )
+      {
+         Fixed = &DS.fixedField[fLength] ;
+         if( start_X + Fixed[fLength].contentLength -
+             X > length_X )
+            break ;
+         rc = getFieldNameAndColour( Fixed[0],
+                                     displayMode,
+                                     fieldName,
+                                     fieldColour ) ;
+         if( rc )
+         {
+            rc = SDB_ERROR ;
+            goto error ;
+         }
+         getColourPN( fieldColour, pairNumber ) ;
+         result = NULLSTRING ;
+         rc = getResultFromBSONObj( bsonobj, 
+                                    Fixed->sourceField,
+                                    displayMode,
+                                    result,
+                                    Fixed->canSwitch,
+                                    baseField,
+                                    Fixed->warningValue,
+                                    pairNumber );
+         attron( COLOR_PAIR( pairNumber ) ) ;
+         if( rc )
+         {
+            rc = SDB_ERROR ;
+            goto error ;
+         }
+         rc = mvprintw_SDBTOP( result,
+                               Fixed->contentLength,
+                               Fixed->alignment,
+                               start_Y,
+                               start_X ) ;
+         if( rc )
+         {
+            goto error;
+         }
+         attroff( COLOR_PAIR( pairNumber ) ) ;  
+         start_X += Fixed->contentLength ;
+         ++start_X ; // add separate pace
+      }
+      
+      // correct the diection of operation
+      // should display the last field
+      if( input.fieldPosition >= MLength )
+      {
+         input.fieldPosition = MLength - 1 ;
+      }
+      // start display on the specific index from the diection of operation
+      for( mLength = input.fieldPosition;
+           mLength < MLength;
+           ++mLength )
+      {
+         Mobile = &DS.mobileField[mLength] ;
+         if( start_X + Mobile->contentLength -
+             X > length_X )
+            break ;
+         rc = getFieldNameAndColour( Mobile[0],
+                                     displayMode,
+                                     fieldName,
+                                     fieldColour) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         getColourPN( fieldColour, pairNumber ) ;
+         result =  NULLSTRING ;
+         rc = getResultFromBSONObj( bsonobj,
+                                    Mobile->sourceField,
+                                    displayMode,
+                                    result,
+                                    Mobile->canSwitch,
+                                    baseField,
+                                    Mobile->warningValue,
+                                    pairNumber ) ;
+         attron( COLOR_PAIR( pairNumber ) ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         rc = mvprintw_SDBTOP( result,
+                               Mobile->contentLength,
+                               Mobile->alignment,
+                               start_Y,
+                               start_X ) ;
+         if( rc )
+         {
+            goto error ;
+         }
+         attroff( COLOR_PAIR( pairNumber ) ) ;  
+         start_X += Mobile->contentLength ;
+         ++start_X ; // add separate pace
+      }
+      start_Y += 1 ; 
+      rc = fixedOutputLocation( start_Y,X,
+                                start_Y, start_X,
+                                0,
+                                length_X -sum ,
+                                autoSetType );
+      if( rc )
+      {
+         goto error;
+      }
+      if( start_Y - Y >= length_Y )
+      {
+         break ;
+      }
+   }   
+   
+done :
+   if( serialNumber )
+      SDB_OSS_FREE( serialNumber ) ;
+   return rc ;
+error :
+   goto done ;
+}
+// refresh infomation on the terminal
+// when displayType is DISPLAYTYPE_DYNAMIC_SNAPSHOT
+INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
+                        Position &position )
+{
+   INT32 rc                      = SDB_OK ;
+   InputPanel &input             = root.input ;
+   string AUTOSETTYPE            = NULLSTRING ;
+   string STYLE                  = NULLSTRING ;
+   INT32 ROW                     = 0 ;
+   INT32 COL                     = 0 ;
+   string fieldName              = NULLSTRING ;
+   
    if( GLOBAL == input.snapshotModeChooser )
    {
       AUTOSETTYPE = DS.globalAutoSetType ;
@@ -4028,12 +4624,6 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
          ROW = DS.globalRow ;
          COL = DS.globalCol ;
       }
-      else
-      {
-         ROW = 0 ;
-         COL = 0 ;
-      }
-      
    }
    else if( GROUP == input.snapshotModeChooser )
    {
@@ -4043,11 +4633,6 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
       {
          ROW = DS.groupRow ;
          COL = DS.groupCol ;
-      }
-      else
-      {
-         ROW = 0 ;
-         COL = 0 ;
       }
    }
    else if( NODE == input.snapshotModeChooser )
@@ -4059,565 +4644,37 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
          ROW = DS.nodeRow ;
          COL = DS.nodeCol ;
       }
-      else
-      {
-         ROW = 0 ;
-         COL = 0 ;
-      }
    }
    else
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-               "%s refreshDisplayContent failed, "
-               "wrong snapshotModeChooser == %s\n",
-               errStrBuf, input.snapshotModeChooser.c_str() ) ;
+                   "%s refreshDisplayContent failed, "
+                   "wrong snapshotModeChooser: %s"
+                   OSS_NEWLINE,
+                   errStrBuf,
+                   input.snapshotModeChooser.c_str() ) ;
       rc = SDB_ERROR ;
       goto error ;    
    }
-   if( TABLE == STYLE)
+   if( TABLE == STYLE )
    {
-      // the height of the table should be ROW*2
-      // one row to save title of talble
-      // other row to save the value which need to display
-      rc = fixedOutputLocation( Y,
-                                X,
-                                start_row, start_col,
-                                length_Y - ROW * 2, 0,
-                                AUTOSETTYPE ) ;
+      rc = refreshDS_Table( DS, ROW, COL, position, AUTOSETTYPE ) ;
       if( rc )
       {
-         rc = SDB_ERROR ;
          goto error ;
-      }
-      // use it to sign the end position of
-      // fixedFieldStruct or mobileFieldStruct 
-      end_fixed_mobile = 0 ;
-      // use it to sign the start position of
-      // fixedFieldStruct or mobileFieldStruct
-      start_fixed_mobile = 0 ;
-      for( tableCol = 0; tableCol <= COL; ++tableCol )
-      {
-         if(( tableCol + 1 ) * tableCellLength > length_X )
-            break ;
-      }
-      // adapt to the terminal
-      ROW = ROW * COL / tableCol ;
-      // adapt to the terminal
-      COL = tableCol ;
-      tableCol = 0;
-      for( rowNumber = 0; rowNumber < ROW; ++rowNumber )
-      {
-         start_row += rowNumber ;
-         if( start_row - Y >= length_Y )
-         {
-            break ;
-         }
-         rc = fixedOutputLocation( start_row, X,
-                                   start_row, start_col,
-                                   0,
-                                   length_X -COL * tableCellLength,
-                                   AUTOSETTYPE ) ;
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error ;
-         }
-         tableCol = 0 ;
-         start_fixed_mobile = end_fixed_mobile ;
-         // print the title on the screen
-         while( 1 )
-         {
-            Fixed = &DS.fixedField[end_fixed_mobile] ;
-            if( start_col + tableCellLength -
-                X > length_X )
-               break ;
-            if( end_fixed_mobile >= FLength)
-               break ;
-            if( tableCol >= COL )
-               break ;
-            rc = getFieldNameAndColour( Fixed[0],
-                                        displayMode,
-                                        fieldName,
-                                        fieldColour) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            getColourPN( fieldColour, pairNumber ) ;
-            attron( COLOR_PAIR( pairNumber ) ) ;
-            rc = mvprintw_SDBTOP( fieldName,
-                                  tableCellLength,
-                                  Fixed->alignment,
-                                  start_row,
-                                  start_col ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
-            start_col += tableCellLength ;
-            ++start_col ; // add separate pace
-            ++end_fixed_mobile ;
-            ++tableCol ;
-         }
-         
-         while( 1 )
-         {
-            Mobile = &DS.mobileField[end_fixed_mobile - FLength] ;
-            if( start_col + tableCellLength -
-                X > length_X )
-               break ;
-            if( end_fixed_mobile - FLength >= MLength )
-               break ;
-            if( tableCol >= COL )
-               break ;
-            rc = getFieldNameAndColour( Mobile[0],
-                                        displayMode,
-                                        fieldName,
-                                        fieldColour ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            getColourPN( fieldColour, pairNumber ) ;
-            attron( COLOR_PAIR( pairNumber ) ) ;
-            rc = mvprintw_SDBTOP( fieldName, tableCellLength,
-                                  Mobile->alignment,
-                                  start_row, start_col ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
-            start_col += tableCellLength ;
-            ++start_col ; // add separate pace
-            ++end_fixed_mobile ;
-            ++tableCol ;
-         }
-   
-         //print the content on the screen
-         start_row += 1 ; // 
-         if( start_row - Y >= length_Y )
-         {
-            goto done ;
-         }
-         for( pos_snapshot = 0;
-              pos_snapshot < input.cur_Snapshot.size();
-              ++pos_snapshot )
-         {      
-            start_up = start_fixed_mobile ;
-            bsonobj = input.cur_Snapshot[pos_snapshot] ;
-            rc = fixedOutputLocation( start_row, X,
-                                      start_row, start_col,
-                                      0,
-                                      length_X -COL * tableCellLength,
-                                      AUTOSETTYPE ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            while( 1 )
-            {
-               Fixed = &DS.fixedField[start_up] ;
-               if( start_col + tableCellLength -
-                   X > length_X )
-                  break ;
-               if( start_up >= FLength )
-                  break ;
-               if( start_up >= end_fixed_mobile)
-                  break ;
-               rc = getFieldNameAndColour( Fixed[0],
-                                           displayMode,
-                                           fieldName,
-                                           fieldColour) ;
-               if( rc )
-               {
-                  goto error;
-               }
-               getColourPN( fieldColour, pairNumber ) ;
-               result = NULLSTRING ;
-               rc = getResultFromBSONObj( bsonobj,
-                                          Fixed->sourceField,
-                                          displayMode,
-                                          result,
-                                          Fixed->canSwitch,
-                                          baseField,
-                                          Fixed->warningValue,
-                                          pairNumber) ;
-               attron( COLOR_PAIR( pairNumber ) ) ;
-               if( rc )
-               {
-                  goto error ;
-               }
-               rc = mvprintw_SDBTOP( result,
-                                     tableCellLength,
-                                     Fixed->alignment,
-                                     start_row,
-                                     start_col ) ;
-               if( rc )
-               {
-                  rc = SDB_ERROR ;
-                  goto error ;
-               }
-               attroff( COLOR_PAIR( pairNumber ) ) ;  
-               start_col += tableCellLength ;
-               ++start_col ; // add separate pace
-               ++start_up ;
-            }
-            while( 1 )
-            {
-               Mobile = &DS.mobileField[start_up - FLength] ;
-               if( start_col + tableCellLength -
-                   X > length_X )
-                  break ;
-               if( start_up >= end_fixed_mobile )
-                  break ;
-               rc = getFieldNameAndColour( Mobile[0],
-                                           displayMode,
-                                           fieldName,
-                                           fieldColour ) ;
-               if( rc )
-               {
-                  rc = SDB_ERROR ;
-                  goto error ;
-               }
-               getColourPN( fieldColour, pairNumber ) ;
-               result = NULLSTRING ;
-               rc = getResultFromBSONObj( bsonobj,
-                                          Mobile->sourceField,
-                                          displayMode,
-                                          result,
-                                          Mobile->canSwitch,
-                                          baseField,
-                                          Mobile->warningValue,
-                                          pairNumber );
-               attron( COLOR_PAIR( pairNumber ) ) ;
-               if( rc )
-               {
-                  rc = SDB_ERROR ;
-                  goto error ;
-               }
-               rc = mvprintw_SDBTOP( result,
-                                     tableCellLength,
-                                     Mobile->alignment,
-                                     start_row,
-                                     start_col ) ;
-               if( rc )
-               {
-                  rc = SDB_ERROR ;
-                  goto error ;
-               }
-               attroff( COLOR_PAIR( pairNumber ) ) ;  
-               start_col += tableCellLength;
-               ++start_col ; // add separate pace
-               ++start_up ;
-            }
-            start_row += 1 ; 
-            if( start_row - Y >= length_Y )
-            {
-               break ;
-            }
-         }   
-         start_row -= rowNumber ;
       }
    }
    // if( LIST == STYLE)
    else
    {
+      refreshDS_List( DS, position, AUTOSETTYPE ) ;
       if( rc )
       {
-         rc = SDB_ERROR ;
          goto error ;
       }
-      sum = 0 ;
-      for( fLength = 0; fLength < FLength; ++fLength )
-      {
-         Fixed = &DS.fixedField[fLength] ;
-         if( sum + Fixed->contentLength > length_X )
-            break ;
-         sum += Fixed->contentLength ;
-      }
-      
-      if( input.fieldPosition >= MLength )
-      {
-         input.fieldPosition = MLength - 1 ;
-      }
-      for( mLength = input.fieldPosition;
-           mLength < MLength; ++mLength )
-      {
-         Mobile = &DS.mobileField[mLength] ;
-         if( sum + Mobile->contentLength  > length_X )
-            break ;
-         sum += Mobile->contentLength ;
-      }
-      rc = fixedOutputLocation( start_row, X,
-                                start_row, start_col,
-                                0, length_X - sum,
-                                AUTOSETTYPE );
-      if( rc )
-      {
-         rc = SDB_ERROR ;
-         goto error ;
-      }
-
-      // print the serial number on the screen
-      ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
-      if( rc )
-      {
-         rc = SDB_ERROR ;
-         goto error;
-      }
-      ossSnprintf( serialNumber, SERIALNUMBER_LENGTH, "%3d", 0 ) ;
-      serialNumberStr = serialNumber ;
-      rc = mvprintw_SDBTOP( serialNumberStr,
-                            SERIALNUMBER_LENGTH,
-                            serialNumberAlignment,
-                            start_row,
-                            start_col ) ;
-      if( rc )
-      {
-         rc = SDB_ERROR ;
-         goto error;
-      }
-      start_col += SERIALNUMBER_LENGTH ;
-      ++start_col ; // add separate pace
-
-      // print the title on the screen
-      for( fLength = 0; fLength < FLength; ++fLength )
-      {
-         Fixed = &DS.fixedField[fLength] ;
-         if( start_col + Fixed->contentLength -
-             X > length_X )
-            break ;
-         rc = getFieldNameAndColour( Fixed[0],
-                                     displayMode,
-                                     fieldName,
-                                     fieldColour) ;
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error ;
-         }
-         getColourPN( fieldColour, pairNumber ) ;
-         attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( fieldName,
-                               Fixed->contentLength,
-                               Fixed->alignment,
-                               start_row,
-                               start_col ) ;
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error;
-         }
-         attroff( COLOR_PAIR( pairNumber ) ) ;  
-         start_col += Fixed->contentLength ;
-         ++start_col ; // add separate pace
-      }
-      
-      if( input.fieldPosition >= MLength )
-      {
-         input.fieldPosition = MLength - 1 ;
-      }
-      for( mLength = input.fieldPosition;
-           mLength < MLength; ++mLength )
-      {
-         Mobile = &DS.mobileField[mLength] ;
-         if( start_col + Mobile->contentLength -
-             X > length_X )
-            break ;
-         rc = getFieldNameAndColour( Mobile[0],
-                                     displayMode,
-                                     fieldName,
-                                     fieldColour);
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error ;
-         }
-         getColourPN( fieldColour, pairNumber ) ;
-         attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( fieldName,
-                               Mobile->contentLength,
-                               Mobile->alignment,
-                               start_row,
-                               start_col ) ;
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error ;
-         }
-         attroff( COLOR_PAIR( pairNumber ) ) ;  
-         start_col += Mobile->contentLength ;
-         ++start_col ; // add separate pace
-      }
-   
-      //print the content on the screen
-      start_row += 1 ; // 
-      if( start_row - Y >= length_Y )
-      {
-         goto done ;
-      }
-      rc = fixedOutputLocation( start_row, X,
-                                start_row, start_col,
-                                0, length_X -sum ,
-                                AUTOSETTYPE ) ;
-      if( rc )
-      {
-         rc = SDB_ERROR ;
-         goto error ;
-      }
-      for( pos_snapshot = 0;
-           pos_snapshot < input.cur_Snapshot.size();
-           ++pos_snapshot )
-      {
-
-         // print the serial number on the screen
-         ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error;
-         }
-         ossSnprintf( serialNumber,
-                      SERIALNUMBER_LENGTH,
-                      "%3d", pos_snapshot + 1 ) ;
-         serialNumberStr = serialNumber ;
-         rc = mvprintw_SDBTOP( serialNumberStr,
-                               SERIALNUMBER_LENGTH,
-                               serialNumberAlignment,
-                               start_row,
-                               start_col ) ;
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error;
-         }
-         start_col += SERIALNUMBER_LENGTH ;
-         ++start_col ; // add separate pace
-
-         bsonobj = input.cur_Snapshot[pos_snapshot] ;
-         for( fLength = 0; fLength < FLength; ++fLength )
-         {
-            Fixed = &DS.fixedField[fLength] ;
-            if( start_col + Fixed[fLength].contentLength -
-                X > length_X )
-               break ;
-            rc = getFieldNameAndColour( Fixed[0],
-                                        displayMode,
-                                        fieldName,
-                                        fieldColour ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            getColourPN( fieldColour, pairNumber ) ;
-            result = NULLSTRING ;
-            rc = getResultFromBSONObj( bsonobj, 
-                                       Fixed->sourceField,
-                                       displayMode,
-                                       result,
-                                       Fixed->canSwitch,
-                                       baseField,
-                                       Fixed->warningValue,
-                                       pairNumber );
-            attron( COLOR_PAIR( pairNumber ) ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            rc = mvprintw_SDBTOP( result,
-                                  Fixed->contentLength,
-                                  Fixed->alignment,
-                                  start_row,
-                                  start_col ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error;
-            }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
-            start_col += Fixed->contentLength ;
-            ++start_col ; // add separate pace
-         }
-         
-         if( input.fieldPosition >= MLength )
-         {
-            input.fieldPosition = MLength - 1 ;
-         }
-         for( mLength = input.fieldPosition;
-              mLength < MLength;
-              ++mLength )
-         {
-            Mobile = &DS.mobileField[mLength] ;
-            if( start_col + Mobile->contentLength -
-                X > length_X )
-               break ;
-            rc = getFieldNameAndColour( Mobile[0],
-                                        displayMode,
-                                        fieldName,
-                                        fieldColour) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            getColourPN( fieldColour, pairNumber ) ;
-            result =  NULLSTRING ;
-            rc = getResultFromBSONObj( bsonobj,
-                                       Mobile->sourceField,
-                                       displayMode,
-                                       result,
-                                       Mobile->canSwitch,
-                                       baseField,
-                                       Mobile->warningValue,
-                                       pairNumber ) ;
-            attron( COLOR_PAIR( pairNumber ) ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            rc = mvprintw_SDBTOP( result,
-                                  Mobile->contentLength,
-                                  Mobile->alignment,
-                                  start_row,
-                                  start_col ) ;
-            if( rc )
-            {
-               rc = SDB_ERROR ;
-               goto error ;
-            }
-            attroff( COLOR_PAIR( pairNumber ) ) ;  
-            start_col += Mobile->contentLength ;
-            ++start_col ; // add separate pace
-         }
-         start_row += 1 ; 
-         rc = fixedOutputLocation( start_row,X,
-                                   start_row, start_col,
-                                   0,
-                                   length_X -sum ,
-                                   AUTOSETTYPE);
-         if( rc )
-         {
-            rc = SDB_ERROR ;
-            goto error;
-         }
-         if( start_row - Y >= length_Y )
-         {
-            break ;
-         }
-      }   
    }
 done :
-   if( serialNumber )
-      SDB_OSS_FREE( serialNumber ) ;
    return rc ;
 error :
    goto done ;
@@ -4634,8 +4691,8 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
    // the follow if-else statement decide which refresh operation
    // would be used
    if( DISPLAYTYPE_STATICTEXT_HELP_Header == displayType ||
-       DISPLAYTYPE_STATICTEXT_MAIN == displayType ||
-       DISPLAYTYPE_STATICTEXT_LICENSE == displayType )
+       DISPLAYTYPE_STATICTEXT_MAIN        == displayType ||
+       DISPLAYTYPE_STATICTEXT_LICENSE     == displayType )
    {
       getColourPN( 
             displayContent.staticTextOutPut.colour,
@@ -4652,7 +4709,6 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                       actualPosition ) ;
       if( rc )
       {
-         rc = SDB_ERROR ;
          goto error ;
       }
 
@@ -4663,7 +4719,6 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                       actualPosition ) ;
       if( rc )
       {
-         rc = SDB_ERROR ;
          goto error ;
       }
    }
@@ -4673,17 +4728,17 @@ INT32 Event::refreshDisplayContent( DisplayContent &displayContent,
                       actualPosition ) ;
       if( rc )
       {
-         rc = SDB_ERROR ;
          goto error ;
       }
    }
-   else if( DISPLAYTYPE_NULL == displayType )
-   {
-      
-   }
    else
    {
-      rc = SDB_ERROR ;
+      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+      ossSnprintf( errStr, errStrLength,
+                  "%s refreshDisplayContent failed,"
+                  "wrong displayType:%s"OSS_NEWLINE,
+                  errStrBuf, displayType.c_str() ) ;
+      rc = SDB_ERROR;
       goto error ;
    }
 done :
@@ -4713,9 +4768,9 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s refreshNodeWindow failed,"
-                "getActualPosition faild"OSS_NEWLINE,
-                errStrBuf ) ;
+                   "%s refreshNodeWindow failed,"
+                   "getActualPosition faild"OSS_NEWLINE,
+                   errStrBuf ) ;
       rc = SDB_ERROR;
       goto error ;
    }
@@ -4734,9 +4789,9 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
 
       ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s refreshNodeWindow failed,"
-                "refreshDisplayContent faild"OSS_NEWLINE,
-                errStrBuf );
+                   "%s refreshNodeWindow failed,"
+                   "refreshDisplayContent faild"OSS_NEWLINE,
+                   errStrBuf );
       rc = SDB_ERROR;
       goto error;
    }
@@ -4764,10 +4819,10 @@ INT32 Event::refreshHT( HeadTailMap *headtail )
 
          ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
-                   "%s refreshHeadTail failed,"
-                   "refreshNodeWindow faild,"
-                   "numOfSubWindow = %d"OSS_NEWLINE,
-                   errStrBuf, numOfSubWindow ) ;
+                      "%s refreshHeadTail failed,"
+                      "refreshNodeWindow faild,"
+                      "numOfSubWindow = %d"OSS_NEWLINE,
+                      errStrBuf, numOfSubWindow ) ;
          rc = SDB_ERROR ;
          goto error ;
       }
@@ -4794,10 +4849,10 @@ INT32 Event::refreshBD( BodyMap *body )
 
          ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
          ossSnprintf( errStr, errStrLength,
-                   "%s refreshBody failed,"
-                   "refreshNodeWindow faild,"
-                   "numOfSubWindow = %d"OSS_NEWLINE,
-                   errStrBuf, numOfSubWindow ) ;
+                      "%s refreshBody failed,"
+                      "refreshNodeWindow faild,"
+                      "numOfSubWindow = %d"OSS_NEWLINE,
+                      errStrBuf, numOfSubWindow ) ;
          rc = SDB_ERROR ;
          goto error ;
       }
