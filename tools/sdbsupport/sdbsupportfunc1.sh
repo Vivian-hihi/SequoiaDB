@@ -16,6 +16,7 @@ function sdbPortGather()
 	lognum=`cat diagfile|wc -l` 
 	if [[ $lognum -gt 1 ]] ; then 
 		tar -zcvf $DBPATH/$HOST.$PORT.tar.gz $DBPATH/diaglog/ 
+		cp -r $DBPATH/$HOST.$PORT.tar.gz SDBNODES/	
 	#	echo ssh $HOST \tar -zcvf $HOST.$PORT.tar.gz $DBPATH/diaglog/\ 
 		#copy diaglog for every node
 	else 

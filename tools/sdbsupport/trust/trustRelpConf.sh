@@ -5,10 +5,26 @@ declare -A PASSWD
 locPath=`pwd` 
 roLen=`cat host.conf|wc -l` 
 #echo $roLen
-echo "*******Please check your host.conf,is write correct or not !****"
-echo "*******Waiting ......*******************************************"
-sleep 5
-echo "**********************************trust relationship certificate********************************"
+echo ""
+echo "*******************WARNING***************WARNING********************"
+echo "*    This program  should be run only at the request of"
+echo "* SequoiaDB support. Please confirm the trust relationship whether"
+echo "* you have config them.Otherwise,this script will delete you trust"
+echo "* relationship!"
+echo "*    This program will configure trust relationship with your"
+echo "* specify hosts.Please make sure whether you needed!"
+echo "********************************************************************"
+echo ""
+echo "You have 10 seconds to cancel this cript with Ctrl-C"
+echo ""
+sleep 10 
+#insall expect tools
+cd ../expect/ 
+chmod a+x install.sh
+./install.sh
+cd ../trust
+
+#get hosts/users/passwrds/
 for i in $(seq 2 $roLen) 
 do 
 	USER[$i]=`sed -n ''$i'p' host.conf|cut -d ':' -f 2 ` 	
@@ -17,7 +33,7 @@ do
 #	echo $i ${USER[$i]} ${PASSWD[$i]} ${HOST[$i]} 
 	#collect user's password ,put it in variable 
 	echo "The host is ${HOST[$i]}"
-	echo "Please input it's password:"
+	echo "Please input the password of ${HOST[$i]}:"
 	read -s PASSWD[$i] 
 
 done
@@ -31,12 +47,12 @@ do
 		expect {
 			\"*yes/no*\" ;{send \"yes\r\" ;exp_continue}
 			\"assword\" ;{send \"${PASSWD[$i]}\r\" ; exp_continue}
-			\"*Documentation*\" ;{send \"cd .ssh/\r\" ;send \"mkdir -p cpfolder\r\" ;send \"ssh-keygen -t rsa\r\" ;exp_continue}
+			\"*login*\" ;{send \"ssh-keygen -t rsa\r\" ;exp_continue}
 			\"*Enter file in which to save the key*\" ;{send \"\r\" ;exp_continue}
 			\"Overwrite (y/n)\" ; {send \"y\r\" ;exp_continue}
 			\"*Enter passphrase*\" ;{send \"\r\" ;exp_continue}
 			\"*Enter same passphrase again*\" ;{send \"\r\" ;exp_continue}
-			\"*The key's randomart image is*\" ;{send \"hostname >cpfolder/hostfile.$i\r\" ;send \"cp id_rsa.pub cpfolder/authorized_keys.$i\r\" ;exp_continue}
+			\"*The key's randomart image is*\" ;{send \"cd .ssh/\r\";send \"\r\" ; send \"mkdir -p cpfolder\r\" ;send \"hostname >cpfolder/hostfile.$i\r\" ;send \"cp id_rsa.pub cpfolder/authorized_keys.$i\r\" ;exp_continue}
 			eof
 			{
 				send_user \"eof\n\" ; 
@@ -73,7 +89,7 @@ for i in $(seq 2 $roLen)
 do
 	/usr/local/bin/expect -c	"
 		set timeout 5 ;
-		spawn scp /root/.ssh/authorized_keys ${USER[$i]}@${HOST[$i]}:~/.ssh/ ; 
+		spawn scp -r /root/.ssh/authorized_keys ${USER[$i]}@${HOST[$i]}:~/.ssh/ ; 
 		expect {
 			\"yes\";{send \"yes\r\";exp_continue}
 			\"assword\";{send \"${PASSWD[$i]}\n\";exp_continue}
@@ -95,8 +111,7 @@ do
 		set timeout 5 ;
 		spawn ssh ${USER[$i]}@${HOST[$i]} ;  
 		expect {
-			\"yes\";{send \"yes\r\";exp_continue}
-			\"assword\";{send \"${PASSWD[$i]}\n\";send \"rm -rf ~/.ssh/cpfolder/\" ;exp_continue}
+			\"login\";{send \"\r\";send \"cd .ssh/\r\";send \"rm -rf cpfolder/\r\" ; send \"exit\r\";exp_continue}
 			eof
 			{
 				send_user \"eof\n\" ;
