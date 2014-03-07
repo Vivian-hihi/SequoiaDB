@@ -57,7 +57,8 @@ namespace engine
          while ( itr.more() )
          {
             BSONElement orderEle = itr.next() ;
-            BSONElement arrEle = obj.getFieldDottedOrArray( orderEle.fieldName() ) ;
+            const CHAR* name = orderEle.fieldName() ;
+            BSONElement arrEle = obj.getFieldDottedOrArray( name ) ;
             if ( Array == arrEle.type() )
             {
                hashValue.columns.hash1 = ossHash( arrEle.value(),
