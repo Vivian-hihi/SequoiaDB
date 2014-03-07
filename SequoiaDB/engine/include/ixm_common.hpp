@@ -71,6 +71,9 @@ namespace engine
    void ixmMakeHashValue( const BSONObj &obj, const BSONObj &key,
                           ixmHashValue &hashValue ) ;
 
+   void ixmMakeHashValue( const BSONElement &eleArray,
+                          ixmHashValue &hashValue ) ;
+
 }
 
 #endif /* IXM_COMMON_HPP_ */
