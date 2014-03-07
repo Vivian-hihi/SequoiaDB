@@ -2228,6 +2228,7 @@ namespace engine
       _numToSkip        = 0 ;
       _netAgent         = NULL ;
       _preRead          = preRead ;
+      _keyGen           = NULL ;
    }
 
    _rtnContextCoord::~_rtnContextCoord ()
@@ -2235,6 +2236,8 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       pmdEDUMgr *eduMgr = krcb->getEDUMgr() ;
       pmdEDUCB *cb = eduMgr->getEDUByID( eduID() ) ;
+
+      SAFE_OSS_DELETE( _keyGen ) ;
 
       killSubContexts( cb ) ;
    }
@@ -2355,6 +2358,10 @@ namespace engine
       _orderBy = orderBy.getOwned() ;
       _numToReturn = numToReturn ;
       _numToSkip = numToSkip > 0 ? numToSkip : 0 ;
+
+      _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _orderBy ) ;
+      PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
+               "malloc failed!" ) ;
 
       _isOpened = TRUE ;
       _hitEnd = FALSE ;
@@ -2614,7 +2621,8 @@ namespace engine
       else
       {
          coordOrderKey orderKey ;
-         rc = pSubContext->getOrderKey( orderKey ) ;
+         rc = pSubContext->getOrderKey( orderKey,
+                                       _keyGen ) ;
          if ( rc != SDB_OK )
          {
             pSubContext->clearData() ;
@@ -2659,7 +2667,9 @@ namespace engine
          goto error ;
       }
 
-      pSubContext = SDB_OSS_NEW coordSubContext( routeID, contextID ) ;
+      pSubContext = SDB_OSS_NEW coordSubContext( routeID,
+                                                contextID,
+                                                _keyGen ) ;
       if ( NULL == pSubContext )
       {
          rc = SDB_OOM;
@@ -2945,7 +2955,7 @@ namespace engine
             else
             {
                coordOrderKey orderKey ;
-               rc = pSubContext->getOrderKey( orderKey ) ;
+               rc = pSubContext->getOrderKey( orderKey, _keyGen ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to get orderKey, rc:%d", rc ) ;
 
                _subContextMap.erase ( iterFirst ) ;
@@ -3022,8 +3032,12 @@ namespace engine
    {
    }
 
-   _coordSubContext::_coordSubContext ( MsgRouteID routeID, SINT64 contextID )
-   : _routeID( routeID ), _contextID( contextID )
+   _coordSubContext::_coordSubContext ( MsgRouteID routeID,
+                                       SINT64 contextID,
+                                       _ixmIndexKeyGen *keyGen )
+   : _routeID( routeID ),
+   _contextID( contextID ),
+   _keyGen( keyGen )
    {
       _pData = NULL ;
       _curOffset = 0 ;
@@ -3038,6 +3052,7 @@ namespace engine
          SDB_OSS_FREE ( _pData ) ;
          _pData = NULL;
       }
+      _keyGen = NULL ;
    }
 
    UINT32 _coordSubContext::getRemainLen()
@@ -3166,7 +3181,8 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_COSUBCON_GETORDERKEY, "coordSubContext::getOrderKey" )
-   INT32 _coordSubContext::getOrderKey( coordOrderKey &orderKey )
+   INT32 _coordSubContext::getOrderKey( coordOrderKey &orderKey,
+                                       _ixmIndexKeyGen *keyGen )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_COSUBCON_GETORDERKEY ) ;
@@ -3184,7 +3200,7 @@ namespace engine
          try
          {
             BSONObj boRecord( (CHAR *)_pData + _curOffset ) ;
-            rc = _orderKey.generateKey( boRecord ) ;
+            rc = _orderKey.generateKey( boRecord, _keyGen ) ;
             if ( rc != SDB_OK )
             {
                PD_LOG ( PDERROR, "Failed to get order-key(rc=%d)", rc ) ;
@@ -3221,13 +3237,14 @@ namespace engine
    _coordOrderKey::_coordOrderKey ( const _coordOrderKey &orderKey )
    {
       _orderBy = orderKey._orderBy ;
-      _keyList = orderKey._keyList ;
-      _keyEleList = orderKey._keyEleList ;
-      _tmpObjList = orderKey._tmpObjList ;
+      _hash = orderKey._hash ;
+      _keyObj = orderKey._keyObj ;
+      _includeArray = orderKey._includeArray ;
    }
 
    _coordOrderKey::_coordOrderKey ()
    {
+      _includeArray = FALSE ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDERKEY_OPELT, "coordOrderKey::operator<" )
@@ -3235,87 +3252,11 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB_COORDERKEY_OPELT ) ;
       BOOLEAN result = FALSE ;
-      try
+      INT32 rsCmp = _keyObj.woCompare( rhs._keyObj, _orderBy, FALSE ) ;
+      if ( rsCmp < 0
+         || ( 0 == rsCmp && _hash.hash < rhs._hash.hash ))
       {
-         BSONObjIterator iterOrder( _orderBy ) ;
-         UINT32 lSize = _keyList.size();
-         UINT32 rSize = rhs._keyList.size();
-         UINT32 i = 0;
-         INT32 cmpRs = 0;
-         while ( iterOrder.more() )
-         {
-            BSONElement beOrder = iterOrder.next() ;
-            if ( i >= lSize )
-            {
-               if ( i >= rSize )
-               {
-                  cmpRs = 0;
-               }
-               else
-               {
-                  cmpRs = beOrder.number() > 0 ? -1 : 1 ;
-               }
-               break ;
-            }
-            if ( i >= rSize )
-            {
-               cmpRs = beOrder.number() > 0 ? 1 : -1;
-               break;
-            }
-            BSONElement beLeft = _keyList[i] ;
-            BSONElement beRight = rhs._keyList[i] ;
-            cmpRs = beLeft.woCompare( beRight, false );
-            if ( 0 == cmpRs )
-            {
-               ++i;
-               continue;
-               if ( beLeft.type() == Array && i < _keyEleList.size()
-                  && i < rhs._keyEleList.size() )
-               {
-                  cmpRs = _keyEleList[i].woCompare( rhs._keyEleList[i], false );
-               }
-            }
-            if ( beOrder.number() < 0 )
-            {
-               cmpRs = cmpRs * -1;
-            }
-            break;
-         }
-         if ( 0 == cmpRs )
-         {
-            i = 0;
-            BSONObjIterator iterOrder2( _orderBy ) ;
-            while ( i < _keyEleList.size()
-                  && !(_keyEleList[i].eoo())
-                  && iterOrder2.more() )
-            {
-               BSONElement beOrder2 = iterOrder2.next();
-               cmpRs = _keyEleList[i].woCompare( rhs._keyEleList[i], false );
-               if ( 0 == cmpRs )
-               {
-                  ++i;
-                  continue;
-               }
-               if ( beOrder2.number() < 0 )
-               {
-                  cmpRs = cmpRs * -1;
-               }
-               break;
-            }
-         }
-         if ( cmpRs < 0 )
-         {
-            result = TRUE;
-         }
-         else
-         {
-            result = FALSE;
-         }
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG ( PDERROR, "compare failed, occured unexpected error:%s",
-                  e.what() );
+         result = TRUE ;
       }
       PD_TRACE1 ( SDB_COORDERKEY_OPELT, PD_PACK_INT(result) );
       PD_TRACE_EXIT ( SDB_COORDERKEY_OPELT ) ;
@@ -3324,9 +3265,9 @@ namespace engine
 
    void _coordOrderKey::clear()
    {
-      _keyList.clear();
-      _keyEleList.clear();
-      _tmpObjList.clear();
+      _includeArray = FALSE ;
+      _hash.columns.hash1 = 0 ;
+      _hash.columns.hash2 = 0 ;
    }
 
    void _coordOrderKey::setOrderBy( const BSONObj &orderBy )
@@ -3335,96 +3276,24 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_COORDERKEY_GENKEY, "coordOrderKey::generateKey" )
-   INT32 _coordOrderKey::generateKey( const BSONObj &record )
+   INT32 _coordOrderKey::generateKey( const BSONObj &record,
+                                    _ixmIndexKeyGen *keyGen )
    {
       INT32 rc = SDB_OK;
+      SDB_ASSERT( keyGen != NULL, "keyGen can't be null!" ) ;
       PD_TRACE_ENTRY ( SDB_COORDERKEY_GENKEY ) ;
-      _keyList.clear();
-      _keyEleList.clear();
-      _tmpObjList.clear();
+      clear();
+      BSONObjSet keySet( _orderBy ) ;
 
-      try
+      rc = keyGen->getKeys( record, keySet, &_includeArray ) ;
+      PD_RC_CHECK( rc, PDERROR,
+                  "failed to generate order-key(rc=%d)",
+                  rc ) ;
+      SDB_ASSERT( !keySet.empty(), "empty key-set!" ) ;
+      _keyObj = *(keySet.begin()) ;
+      if ( _includeArray )
       {
-         BSONObjIterator iterOrderBy( _orderBy ) ;
-         BSONElement beEmpty;
-         while ( iterOrderBy.more() )
-         {
-            BSONElement beOrderField = iterOrderBy.next() ;
-            BSONElement beKeyField =
-               record.getField( beOrderField.fieldName() ) ;
-            if ( beKeyField.eoo() )
-            {
-               _keyList.push_back( beEmpty );
-               _keyEleList.push_back( beEmpty );
-            }
-            else
-            {
-               BSONObj boArrKey;
-               if ( beKeyField.type() == Array )
-               {
-                  boArrKey = beKeyField.embeddedObject();
-               }
-               INT32 fieldNum = boArrKey.nFields();
-               if ( 0 == fieldNum )
-               {
-                  _keyList.push_back( beKeyField );
-                  _keyEleList.push_back( beEmpty );
-               }
-               else if ( 1 == fieldNum)
-               {
-                  _keyList.push_back( beKeyField );
-                  _keyEleList.push_back( beKeyField );
-               }
-               else
-               {
-                  BSONElement beSelectKey;
-                  BSONObjIterator iter( boArrKey );
-                  beSelectKey = iter.next();
-                  if ( beOrderField.number() > 0 )
-                  {
-                     while( iter.more() )
-                     {
-                        BSONElement beCurKey = iter.next();
-                        if ( beCurKey.woCompare( beSelectKey, false )
-                           < 0 )
-                        {
-                           beSelectKey = beCurKey;
-                        }
-                     }
-                  }
-                  else
-                  {
-                     while( iter.more() )
-                     {
-                        BSONElement beCurKey = iter.next();
-                        if ( beCurKey.woCompare( beSelectKey, false )
-                           > 0 )
-                        {
-                           beSelectKey = beCurKey;
-                        }
-                     }
-                  }
-                  BSONObjBuilder bobKeyTmp;
-                  BSONArrayBuilder babArrKeyVal;
-                  babArrKeyVal.append( beSelectKey );
-                  bobKeyTmp.append( "", babArrKeyVal.arr() );
-                  BSONObj boKeyTmp = bobKeyTmp.obj();
-                  _tmpObjList.push_back( boKeyTmp );
-                  BSONElement beNewKeyField = boKeyTmp.firstElement();
-                  _keyList.push_back( beNewKeyField );
-                  _keyEleList.push_back( beKeyField );
-                  
-               }
-            }
-         }
-
-      }
-      catch ( std::exception &e )
-      {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "failed to generate the key, occured exception: %s",
-                  e.what() );
-         goto error ;
+         ixmMakeHashValue( record, _orderBy, _hash ) ;
       }
 
    done:
@@ -3529,15 +3398,18 @@ namespace engine
       _remainNum = 0;
    }
 
-   _rtnSubCLBuf::_rtnSubCLBuf( BSONObj &orderBy )
+   _rtnSubCLBuf::_rtnSubCLBuf( BSONObj &orderBy,
+                              _ixmIndexKeyGen *keyGen )
    {
       _orderKey.setOrderBy( orderBy );
       _isOrderKeyChange = TRUE;
       _remainNum = 0;
+      _keyGen = keyGen;
    }
 
    _rtnSubCLBuf::~_rtnSubCLBuf()
    {
+      _keyGen = NULL;
    }
 
    const CHAR* _rtnSubCLBuf::front()
@@ -3611,7 +3483,8 @@ namespace engine
             try
             {
                BSONObj boRecord( front() );
-               rc = _orderKey.generateKey( boRecord );
+               rc = _orderKey.generateKey( boRecord,
+                                          _keyGen );
                PD_RC_CHECK( rc, PDERROR,
                            "failed to get order-key(rc=%d)",
                            rc );
@@ -3647,6 +3520,7 @@ namespace engine
    _rtnContextMainCL::_rtnContextMainCL( INT64 contextID, UINT64 eduID )
    :_rtnContextBase( contextID, eduID )
    {
+      _keyGen = NULL;
    }
    _rtnContextMainCL::~_rtnContextMainCL()
    {
@@ -3661,6 +3535,7 @@ namespace engine
          ++iterLst;
       }
       _subCLBufList.clear();
+      SAFE_OSS_DELETE( _keyGen );
    }
 
    RTN_CONTEXT_TYPE _rtnContextMainCL::getType () const
@@ -3673,9 +3548,14 @@ namespace engine
                                  INT64 numToSkip,
                                  BOOLEAN includeShardingOrder )
    {
+      INT32 rc = SDB_OK;
       _orderBy = orderBy.getOwned();
       _numToReturn = numToReturn;
       _numToSkip = numToSkip;
+      _keyGen = SDB_OSS_NEW _ixmIndexKeyGen( _orderBy ) ;
+      PD_CHECK( _keyGen != NULL, SDB_OOM, error, PDERROR,
+               "malloc failed!" ) ;
+
       _isOpened = TRUE;
       _includeShardingOrder = includeShardingOrder;
       if ( 0 == _numToReturn )
@@ -3686,12 +3566,16 @@ namespace engine
       {
          _hitEnd = FALSE;
       }
-      return SDB_OK;
+   done:
+      return rc;
+   error:
+      goto done;
    }
 
    INT32 _rtnContextMainCL::addSubContext( SINT64 contextID )
    {
-      rtnSubCLBuf emptyCTXBuf( _orderBy );
+      rtnSubCLBuf emptyCTXBuf( _orderBy,
+                              _keyGen );
       _subCLBufList[ contextID ] = emptyCTXBuf;
       return SDB_OK;
    }
