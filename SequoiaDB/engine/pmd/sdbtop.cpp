@@ -826,7 +826,7 @@ public: // operation
                                  const string DisplayName ) ;
    INT32 matchSourceFieldByDisplayName( const string DisplayName ) ;
 
-   INT32 buttonManagement( INT64 key ,BOOLEAN isFirstStart ) ;
+   INT32 eventManagement( INT64 key ,BOOLEAN isFirstStart ) ;
 
    INT32 runSDBTOP( ) ;
 };
@@ -5029,7 +5029,7 @@ done :
 
 // judge which event should do with the key come from the result 
 // of function Event::getTopKey_SDBTOP()
-INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
+INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
 {
    INT32 rc = SDB_OK ;
    fd_set fds ;
@@ -5081,7 +5081,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
       {
          if( !isFirstStart )
          {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE );
+               rc = eventManagement( BUTTON_H_LOWER, FALSE );
          }
       }
       else
@@ -5196,7 +5196,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = select ( maxfd, &fds, NULL, NULL, NULL ) ;
                if( 0 > rc )
                {
-                  rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+                  rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                }
                else if( 0 < rc )
                {
@@ -5207,7 +5207,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
                   {
                      goto error ;
                   }
-                  rc = buttonManagement( key, FALSE ) ;
+                  rc = eventManagement( key, FALSE ) ;
                }
                else
                {
@@ -5225,7 +5225,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             input.snapshotModeChooser = GLOBAL ;
@@ -5235,7 +5235,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             note = "please input the group name:" ;
@@ -5263,7 +5263,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             note = "please input the HostName:svcname : " ;
@@ -5291,7 +5291,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             note = "please input the displayName"
@@ -5321,7 +5321,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             note = "please input the displayName"
@@ -5351,7 +5351,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             note = "please input the filter condition : ";
@@ -5378,7 +5378,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             input.filterCondition = NULLSTRING;
@@ -5388,7 +5388,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             note = "please input the filter number : ";
@@ -5421,7 +5421,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
-               rc = buttonManagement( BUTTON_H_LOWER, FALSE ) ;
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
             if( 0 == root.input.filterNumber )
@@ -5595,7 +5595,7 @@ INT32 Event::runSDBTOP( )
                {
                   goto error ;
                }
-               rc = buttonManagement( key, TRUE ) ;
+               rc = eventManagement( key, TRUE ) ;
                if( rc )
                {
                   if( SDB_SDBTOP_DONE == rc )
