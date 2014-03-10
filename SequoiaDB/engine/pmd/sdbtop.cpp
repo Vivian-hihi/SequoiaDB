@@ -821,8 +821,10 @@ public: // operation
    void initAllColourPairs() ;
 
    INT32 addFixedHotKey() ;
-
-   INT32 findSourceFieldByDisplayName( const string DisplayName ) ;
+   
+   INT32 matchNameInFieldStruct( const FieldStruct *src,
+                                 const string DisplayName ) ;
+   INT32 matchSourceFieldByDisplayName( const string DisplayName ) ;
 
    INT32 buttonManagement( INT64 key ,BOOLEAN isFirstStart ) ;
 
@@ -2713,6 +2715,7 @@ INT32 Event::mvprintw_SDBTOP( string &expression, INT32 expressionLength,
                    "can't malloc memory for printf_str :%d"
                    OSS_NEWLINE,
                    errStrBuf, expressionLength ) ;
+      rc = SDB_OOM ;
       goto error ;
    }
    // before print on the terminal, format it
@@ -2826,7 +2829,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                    "can't malloc memory for resultBuf : %d"
                    OSS_NEWLINE,
                    errStrBuf, LENGTH_OF_RESULTBUFFER ) ;
-      rc = SDB_ERROR ;
+      rc = SDB_OOM ;
       goto error ;
    }
    getColourPN( input.colourOfTheMax, maxPairNumber ) ;
@@ -3133,7 +3136,7 @@ INT32 Event::getExpression( string& expression, string& result )
                    "can't malloc memory for buf :%d"
                    OSS_NEWLINE,
                    errStrBuf, BUFFERSIZE ) ;
-      rc = SDB_ERROR ;
+      rc = SDB_OOM ;
       goto error ;
    }
    if( EXPRESSION_BODY_LABELNAME == expression )
@@ -3649,7 +3652,7 @@ INT32 Event::refreshDH( DynamicHelp &DH,
                    "can't malloc memory for printfstr :%d"
                    OSS_NEWLINE,
                    errStrBuf, cellLength ) ;
-      rc = SDB_ERROR ;
+      rc = SDB_OOM ;
       goto error ;
    }
 
@@ -4267,7 +4270,7 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
                    "can't malloc serialNumber == %d"
                    OSS_NEWLINE,
                    errStrBuf, SERIALNUMBER_LENGTH ) ;
-      rc = SDB_ERROR ;
+      rc = SDB_OOM ;
       goto error ;
 
    }
@@ -4887,11 +4890,92 @@ error :
    goto done ;
 }
 
+INT32 Event::matchNameInFieldStruct( const FieldStruct *src,
+                                     const string DisplayName )
+{
+   INT32 rc           = SDB_OK ;
+   InputPanel &input  = root.input ;
+   string displayMode = DISPLAYMODECHOOSER[input.displayModeChooser] ;
+   if( ABSOLUTE == displayMode )
+   {
+      if( DisplayName == src->absoluteName )
+      {
+         input.sortingField = src->sourceField ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+   }
+   else if( DELTA == displayMode )
+   {
+      if(  src->canSwitch )
+      {
+         if( DisplayName == src->deltaName )
+         {
+            input.sortingField = src->sourceField ;
+         }
+         else
+         {
+            rc = SDB_ERROR ;
+            goto error ;
+         }
+      }
+      else
+      {
+         if( DisplayName == src->absoluteName )
+         {
+            input.sortingField = src->sourceField ;
+         }
+         else
+         {
+            rc = SDB_ERROR ;
+            goto error ;
+         }
+      }
+   }
+   else if( AVERAGE == displayMode )
+   {
+      if(  src->canSwitch )
+      {
+         if( DisplayName == src->averageName )
+         {
+            input.sortingField = src->sourceField ;
+         }
+         else
+         {
+            rc = SDB_ERROR ;
+            goto error ;
+         }
+      }
+      else
+      {
+         if( DisplayName == src->absoluteName )
+         {
+            input.sortingField = src->sourceField ;
+         }
+         else
+         {
+            rc = SDB_ERROR ;
+         }
+      }
+   }
+   else
+   {
+      rc = SDB_ERROR ;
+      goto error ;
+   }
+ done :
+   return rc ;
+ error :
+   goto done ;
+}
 
 // "DisplayName" come from terminal which is input by people
 // according to "DisplayName", find the field name on the BSONObj
 // which is combined into the filter condition
-INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
+INT32 Event::matchSourceFieldByDisplayName( const string DisplayName )
 {
    INT32 rc = SDB_OK ;
    INT32 numOfSubWindow = 0 ;
@@ -4921,102 +5005,20 @@ INT32 Event::findSourceFieldByDisplayName( const string DisplayName )
          {
             --FixedLength ;
             Fixed = &DS->fixedField[FixedLength] ;
-            if( ABSOLUTE == displayMode )
+            rc = matchNameInFieldStruct( Fixed, DisplayName ) ;
+            if( !rc )
             {
-               if( DisplayName == Fixed->absoluteName )
-               {
-                  input.sortingField = Fixed->sourceField ;
-               }
-            }
-            else if( DELTA == displayMode )
-            {
-               if(  Fixed->canSwitch )
-               {
-                  if( DisplayName == Fixed->deltaName )
-                  {
-                     input.sortingField =
-                           Fixed->sourceField ;
-                  }
-               }
-               else
-               {
-                  if( DisplayName == Fixed->absoluteName )
-                  {
-                     input.sortingField =
-                           Fixed->sourceField ;
-                  }
-               }
-            }
-            else if( AVERAGE == displayMode )
-            {
-               if(  Fixed->canSwitch )
-               {
-                  if( DisplayName == Fixed->averageName )
-                  {
-                     input.sortingField =
-                           Fixed->sourceField ;
-                  }
-               }
-               else
-               {
-                  if( DisplayName == Fixed->absoluteName )
-                  {
-                     input.sortingField =
-                           Fixed->sourceField ;
-                  }
-               }
+               goto done ;
             }
          }
          while( MobileLength> 0 )
          {
             --MobileLength ;
             Mobile = &DS->mobileField[MobileLength] ;
-            if( ABSOLUTE == displayMode )
+            rc = matchNameInFieldStruct( Mobile, DisplayName ) ;
+            if( !rc )
             {
-               if( DisplayName == Mobile->absoluteName )
-               {
-                  input.sortingField =
-                        Mobile->sourceField ;
-               }
-            }
-            else if( DELTA == displayMode )
-            {
-               if(  Mobile->canSwitch )
-               {
-                  if( DisplayName ==
-                           Mobile->deltaName )
-                  {
-                     input.sortingField =
-                           Mobile->sourceField ;
-                  }
-               }
-               else
-               {
-                  if( DisplayName == Mobile->absoluteName )
-                  {
-                     input.sortingField =
-                           Mobile->sourceField ;
-                  }
-               }
-            }
-            else if( AVERAGE == displayMode )
-            {
-               if(  Mobile->canSwitch )
-               {
-                  if( DisplayName == Mobile->averageName )
-                  {
-                     root.input.sortingField =
-                           Mobile->sourceField ;
-                  }
-               }
-               else
-               {
-                  if( DisplayName == Mobile->absoluteName )
-                  {
-                     input.sortingField =
-                           Mobile->sourceField ;
-                  }
-               }
+               goto done ;
             }
          }
       }
@@ -5311,7 +5313,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             input.sortingWay = SORTINGWAY_ASC ;
             displayName = inputBuf ;
             trim( displayName ) ;
-            findSourceFieldByDisplayName( displayName ) ;
+            matchSourceFieldByDisplayName( displayName ) ;
             input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
@@ -5341,7 +5343,7 @@ INT32 Event::buttonManagement( INT64 key ,BOOLEAN isFirstStart )
             input.sortingWay = SORTINGWAY_DESC ;
             displayName = inputBuf ;
             trim( displayName ) ;
-            findSourceFieldByDisplayName( displayName ) ;
+            matchSourceFieldByDisplayName( displayName ) ;
             input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
@@ -5768,14 +5770,14 @@ INT32 main( INT32 argc, CHAR **argv)
                            errStrLength * sizeof( CHAR ) ) ;
    if( !errStr )
    {
-      rc = SDB_ERROR ;
+      rc = SDB_OOM ;
       goto error ;
    }
    errStrBuf = ( CHAR * )SDB_OSS_MALLOC(
                               errStrLength * sizeof( CHAR ) ) ;
    if( !errStrBuf )
    {
-      rc = SDB_ERROR ;
+      rc = SDB_OOM ;
       goto error ;
    }
    ossMemset( errStr, 0, errStrLength ) ;
