@@ -110,9 +110,10 @@ namespace engine
             else if ( rc )
             {
                // if we fail due to error, let's restart socket
-               PD_LOG ( PDERROR, "Failed to accept socket in TcpListener" ) ;
-               PD_LOG ( PDEVENT, "Restarting socket to listen" ) ;
-               break ;
+               PD_LOG ( PDERROR, "Failed to accept socket in TcpListener(rc=%d)",
+                        rc ) ;
+               //PD_LOG ( PDEVENT, "Restarting socket to listen" ) ;
+               continue ;
             }
 
             cb->incEventCount() ;
