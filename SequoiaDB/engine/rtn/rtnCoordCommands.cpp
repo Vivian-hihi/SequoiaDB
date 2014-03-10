@@ -4510,18 +4510,16 @@ namespace engine
                }
                if ( rc != SDB_OK )
                {
-                  PD_LOG( PDERROR,
-                        "start the node failed\
-                        (HostName=%s, LocalService=%s, rc=%d)",
-                        strHostName.c_str(), strServiceName.c_str(), rc );
+                  PD_LOG( PDERROR, "start the node failed (HostName=%s, "
+                          "LocalService=%s, rc=%d)", strHostName.c_str(),
+                          strServiceName.c_str(), rc ) ;
                }
                else if ( retCode != SDB_OK )
                {
                   rc = retCode;
-                  PD_LOG( PDERROR,
-                        "remote node execute(start) failed\
-                        (HostName=%s, LocalService=%s, rc=%d)",
-                        strHostName.c_str(), strServiceName.c_str(), rc );
+                  PD_LOG( PDERROR, "remote node execute(start) failed "
+                          "(HostName=%s, LocalService=%s, rc=%d)", 
+                          strHostName.c_str(), strServiceName.c_str(), rc ) ;
                }
                BSONObjBuilder bobReply;
                bobReply.append( FIELD_NAME_HOST, strHostName );
@@ -4534,9 +4532,7 @@ namespace engine
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
-                     e.what() );
+            PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
             break;
          }
       }while ( FALSE );
@@ -4638,17 +4634,15 @@ namespace engine
                      else
                      {
                         rc = SDB_INVALIDARG;
-                        PD_LOG ( PDERROR,
-                                 "get invalid reply(numReturned=%d)",
+                        PD_LOG ( PDERROR, "get invalid reply(numReturned=%d)",
                                  pReply->numReturned );
                      }
                   }
                   catch ( std::exception &e )
                   {
                      rc = SDB_INVALIDARG;
-                     PD_LOG ( PDERROR,
-                              "occured unexpected error:%s",
-                              e.what() );
+                     PD_LOG ( PDERROR, "occured unexpected error:%s",
+                              e.what() ) ;
                   }
                }
             }
@@ -4697,9 +4691,8 @@ namespace engine
                               cb, boGroupInfo );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to active group, execute on catalog-node failed(rc=%d)",
-                     rc );
+            PD_LOG ( PDERROR, "Failed to active group, execute on catalog-node "
+                     "failed(rc=%d)", rc ) ;
             break;
          }
          BSONObj boReply;
@@ -4707,17 +4700,15 @@ namespace engine
          rc = startNodes( boGroupInfo, objList );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "start node failed(rc=%d)",
-                     rc );
+            PD_LOG ( PDERROR, "Start node failed(rc=%d)", rc ) ;
             UINT32 i = 0;
             std::string strNodeList;
             for ( ; i < objList.size(); i++ )
             {
                strNodeList += objList[i].toString( false, false );
             }
-            PD_LOG_MSG( PDERROR, "strart failed nodes: %s",
-                     strNodeList.c_str() );
+            PD_LOG_MSG( PDERROR, "Strart failed nodes: %s",
+                        strNodeList.c_str() ) ;
             break;
          }
       }while ( FALSE );
@@ -4941,7 +4932,7 @@ namespace engine
       if ( cataInfo->isMainCL() )
       {
          PD_LOG( PDWARNING,
-               "main-collection create index failed and will not rollback" );
+                 "main-collection create index failed and will not rollback" );
          goto error;
       }
 
@@ -5400,19 +5391,17 @@ namespace engine
                }
                if ( rc != SDB_OK )
                {
-                  PD_LOG( PDERROR,
-                        "operate failed\
-                        (HostName=%s, LocalService=%s, rc=%d)",
-                        strHostName.c_str(), strServiceName.c_str(), rc );
+                  PD_LOG( PDERROR, "Operate failed (HostName=%s, "
+                          "LocalService=%s, rc=%d)", strHostName.c_str(),
+                          strServiceName.c_str(), rc ) ;
                }
                else if ( retCode != SDB_OK )
                {
                   rc = retCode;
-                  PD_LOG( PDERROR,
-                        "remote node execute(opType=%d) failed\
-                        (HostName=%s, LocalService=%s, rc=%d)",
-                        opType, strHostName.c_str(),
-                        strServiceName.c_str(), rc );
+                  PD_LOG( PDERROR, "Remote node execute(opType=%d) failed "
+                          "(HostName=%s, LocalService=%s, rc=%d)",
+                          opType, strHostName.c_str(), strServiceName.c_str(),
+                          rc ) ;
                }
                BSONObjBuilder bobReply;
                bobReply.append( FIELD_NAME_HOST, strHostName );
@@ -5425,9 +5414,7 @@ namespace engine
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
-                     e.what() );
+            PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
             break;
          }
       }while ( FALSE );
@@ -5552,7 +5539,6 @@ namespace engine
       replyHeader.flags                = SDB_OK;
       replyHeader.numReturned          = 0;
       replyHeader.startFrom            = 0;
-
 
       BSONObj boRecord ;
       FLOAT64 percent = 0.0 ;
@@ -5890,92 +5876,76 @@ namespace engine
       INT64 startPos = 0 ;
       BSONObj obj ;
 
-      rc = rtnCoordNodeQuery( cl, condition, empty, empty,
-                              hint, skip, 1, groupList,
-                              cb, &context, NULL, flag ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to query from data group, rc = %d", rc ) ;
-
-      rc = context->getMore( -1, buffObj, startPos, cb ) ;
-      if ( SDB_OK != rc )
+      // check condition has invalid fileds
+      if ( !condition.okForStorage() )
       {
-         if ( SDB_DMS_EOC == rc && !condition.isEmpty() )
+         PD_LOG( PDERROR, "Condition[%s] has invalid field name",
+                 condition.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( condition.isEmpty() )
+      {
+         rc = rtnCoordNodeQuery( cl, condition, empty, empty,
+                                 hint, skip, 1, groupList,
+                                 cb, &context, NULL, flag ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to query from data group, rc = %d",
+                       rc ) ;
+         rc = context->getMore( -1, buffObj, startPos, cb ) ;
+         if ( SDB_OK != rc )
          {
-            // if no record returned, maybe the query still in good range but
-            // no matching record, so let's attempt to extract the key from
-            // query
-            // We can't simply convert beSplitQuery.embeddedObject().objdata
-            // () into bson record since it may contains "a.b" format.
-            // Thus we have to construct a mthModifier and set the search
-            // condition
-            BSONObj modifySource ;
-            _mthModifier modifier ;
-            rc = modifier.loadPattern ( BSON ( "$set" << condition ) ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to load pattern for modifier, rc = %d",
-                          rc ) ;
-            rc = modifier.modify ( modifySource, obj,
-                                   NULL, NULL,
-                                   NULL, NULL ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to apply modifier, rc = %d",
-                          rc ) ;
+            goto error ;
          }
          else
          {
-            goto error ;
+            obj = BSONObj( buffObj.data() ) ;
          }
       }
       else
       {
-         obj = BSONObj( buffObj.data() ) ;
+         obj = condition ;
       }
 
+      // product split key
       {
-      PD_LOG ( PDINFO, "Split found record %s", obj.toString().c_str() ) ;
-      // we need to compare with boShardingKey and extract the partition key
-      ixmIndexKeyGen keyGen ( shardingKey ) ;
-      BSONObjSet keys ;
-      BSONObjSet::iterator keyIter ;
-      rc = keyGen.getKeys ( obj, keys ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to extract keys\nkeyDef = %s\n"
-                    "record = %s\nrc = %d",
+         PD_LOG ( PDINFO, "Split found record %s", obj.toString().c_str() ) ;
+         // we need to compare with boShardingKey and extract the partition key
+         ixmIndexKeyGen keyGen ( shardingKey ) ;
+         BSONObjSet keys ;
+         BSONObjSet::iterator keyIter ;
+         rc = keyGen.getKeys ( obj, keys ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to extract keys\nkeyDef = %s\n"
+                       "record = %s\nrc = %d", shardingKey.toString().c_str(),
+                       obj.toString().c_str(), rc ) ;
+         // make sure there is one and only one element in the keys
+         PD_CHECK ( keys.size() == 1, SDB_INVALID_SHARDINGKEY, error,
+                    PDWARNING, "There must be a single key generate for "
+                    "sharding\nkeyDef = %s\nrecord = %s\n",
                     shardingKey.toString().c_str(),
-                    obj.toString().c_str(),
-                    rc ) ;
-     // make sure there is one and only one element in the keys
-     PD_CHECK ( keys.size() == 1, SDB_INVALID_SHARDINGKEY, error,
-                PDWARNING,
-                "There must be a single key generate for sharding\n",
-                "keyDef = %s\n"
-                "record = %s\n",
-                shardingKey.toString().c_str(),
-                obj.toString().c_str() ) ;
+                    obj.toString().c_str() ) ;
 
-     keyIter = keys.begin () ;
-     record = (*keyIter).copy() ;
+         keyIter = keys.begin () ;
+         record = (*keyIter).copy() ;
 
-     // validate key does not contains Undefined
-     /*{
-        BSONObjIterator iter ( record ) ;
-        while ( iter.more () )
-        {
-           BSONElement e = iter.next () ;
-           PD_CHECK ( e.type() != Undefined, SDB_CLS_BAD_SPLIT_KEY,
-                      error, PDERROR,
-                      "The split record does not contains a valid key\n"
-                      "Record: %s\n"
-                      "ShardingKey: %s\n"
-                      "SplitKey: %s",
-                      obj.toString().c_str(),
-                      shardingKey.toString().c_str(),
-                      record.toString().c_str() ) ;
-               }
-            }*/
-        PD_LOG ( PDINFO, "Split found key %s",
-                 record.toString().c_str() ) ;
+         // validate key does not contains Undefined
+         /*{
+            BSONObjIterator iter ( record ) ;
+            while ( iter.more () )
+            {
+               BSONElement e = iter.next () ;
+               PD_CHECK ( e.type() != Undefined, SDB_CLS_BAD_SPLIT_KEY,
+                          error, PDERROR, "The split record does not contains "
+                          "a valid key\nRecord: %s\nShardingKey: %s\n"
+                          "SplitKey: %s", obj.toString().c_str(),
+                          shardingKey.toString().c_str(),
+                          record.toString().c_str() ) ;
+            }
+         }*/
+
+        PD_LOG ( PDINFO, "Split found key %s", record.toString().c_str() ) ;
      }
+
    done:
       if ( NULL != context )
       {
@@ -6868,8 +6838,7 @@ namespace engine
                   strCataNodeLst += strHostName + ":" + strService;
                }*/
                rc = SDB_COORD_RECREATE_CATALOG;
-               PD_LOG( PDERROR,
-                     "repeat to create catalog-group");
+               PD_LOG( PDERROR, "repeat to create catalog-group" ) ;
                goto error;
             }
             bobNodeConf.append( PMD_OPTION_CATALOG_ADDR, strCataNodeLst );
@@ -6879,9 +6848,7 @@ namespace engine
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "occured unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
          goto error ;
       }
    done:
@@ -7342,8 +7309,8 @@ namespace engine
 
       rc = generateAggrObjs( pReceiveBuffer, pObjsBuffer, objNum, pCMDName );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to generate aggregation object(rc=%d)",
-                  rc );
+                   "failed to generate aggregation object(rc=%d)",
+                   rc );
       SDB_ASSERT( pObjsBuffer != NULL, "pObjsBuffer can't be NULL!" );
 
       try
@@ -7353,15 +7320,15 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to execute snapshot, received unexpecte error:%s",
-                     e.what() );
+                      "failed to execute snapshot, received unexpecte error:%s",
+                      e.what() );
       }
 
       rc = pmdGetKRCB()->getAggrCB()->build( objs, objNum, getIntrCMDName(),
                                              cb, contextID );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to execute aggregation operation(rc=%d)",
-                  rc );
+                   "failed to execute aggregation operation(rc=%d)",
+                   rc );
       replyHeader.contextID = contextID;
    done:
       SAFE_OSS_FREE( pObjsBuffer );
@@ -7420,8 +7387,8 @@ namespace engine
       catch ( std::exception &e )
       {
          PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "received unexpected error:%s",
-                     e.what() );
+                      "received unexpected error:%s",
+                      e.what() );
       }
    done:
       return rc;
@@ -7456,12 +7423,12 @@ namespace engine
                            &numToReturn, &pQuery, &pFieldSelector,
                            &pOrderBy, &pHint );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse request message(rc=%d)",
-                  rc );
+                   "failed to parse request message(rc=%d)",
+                   rc );
 
       pOutputBuffer = (CHAR *)SDB_OSS_MALLOC( RTNCOORD_ALLO_UNIT_SIZE );
       PD_CHECK( pOutputBuffer != NULL, SDB_OOM, error, PDERROR,
-               "malloc failed(size=%d)", RTNCOORD_ALLO_UNIT_SIZE );
+                "malloc failed(size=%d)", RTNCOORD_ALLO_UNIT_SIZE );
       bufSize = RTNCOORD_ALLO_UNIT_SIZE;
 
       try
@@ -7515,16 +7482,16 @@ namespace engine
       // aggregation
       rc = appendAggrObjs( pOutputBuffer, bufSize, addObjNum, bufUsed );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to append aggregation operation objs(rc=%d)",
-                  rc );
+                   "failed to append aggregation operation objs(rc=%d)",
+                   rc );
 
       // matcher
       if ( !newMatcher.isEmpty() )
       {
          rc = appendObj( newMatcher, pOutputBuffer, bufSize, bufUsed );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to append matcher objs(rc=%d)",
-                        rc );
+                      "failed to append matcher objs(rc=%d)",
+                      rc );
          ++addObjNum;
       }
 
@@ -7533,8 +7500,8 @@ namespace engine
       {
          rc = appendObj( orderBy, pOutputBuffer, bufSize, bufUsed );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to append orderBy objs(rc=%d)",
-                        rc );
+                      "failed to append orderBy objs(rc=%d)",
+                      rc );
          ++addObjNum;
       }
 
@@ -7582,15 +7549,15 @@ namespace engine
                            rc );
                rc = appendObj( obj, pOutputBuffer, bufferSize, bufUsed );
                PD_RC_CHECK( rc, PDERROR,
-                           "failed to append the obj(rc=%d)",
-                           rc );
+                            "failed to append the obj(rc=%d)",
+                            rc );
                ++addObjNum;
             }
             catch ( std::exception &e )
             {
                PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                           "received unexpected error:%s",
-                           e.what() );
+                            "received unexpected error:%s",
+                            e.what() );
             }
          }
 
@@ -7645,8 +7612,8 @@ namespace engine
       catch( std::exception &e )
       {
          PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "received unexpected error:%s",
-                     e.what() );
+                      "received unexpected error:%s",
+                      e.what() );
       }
    done:
       return rc;
@@ -7916,8 +7883,8 @@ namespace engine
       rc = pReply->flags ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get err from catalog when"
-                          " create store procedures:%d",rc ) ;
+         PD_LOG( PDERROR, "get err from catalog when create store "
+                 "procedures:%d", rc ) ;
          goto error ;
       }
    done:
@@ -8121,8 +8088,8 @@ namespace engine
       rc = pReply->flags ;
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "get err from catalog when"
-                          " remove store procedures:%d",rc ) ;
+         PD_LOG( PDERROR, "get err from catalog when remove store "
+                 "procedures:%d", rc ) ;
          goto error ;
       }
    done:
@@ -8157,9 +8124,7 @@ namespace engine
                             &pFieldSelector, &pOrderBy, &pHint );
       if ( rc != SDB_OK )
       {
-         PD_LOG ( PDERROR,
-                  "failed to parse query request(rc=%d)",
-                  rc );
+         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
          goto error ;
       }
 
@@ -8182,9 +8147,7 @@ namespace engine
                              &orderBy, &hint );
       if ( rc != SDB_OK )
       {
-         PD_LOG ( PDERROR,
-                  "failed to build the query message(rc=%d)",
-                  rc );
+         PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
          goto error;
       }
       {
@@ -8206,7 +8169,7 @@ namespace engine
                                              BSONObj * * ppErrorObj )
    {
       INT32 rc                         = SDB_OK;
-      //PD_TRACE_ENTRY ( SDB_RTNCOCMDLINKCL_EXE ) ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDLINKCL_EXE ) ;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
@@ -8247,8 +8210,7 @@ namespace engine
                                &pOrderBy, &pHint );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to parse link collection request(rc=%d)",
+            PD_LOG ( PDERROR, "Failed to parse link collection request(rc=%d)",
                      rc );
             goto error ;
          }
@@ -8274,12 +8236,12 @@ namespace engine
       rc = executeOnCataGroup ( (CHAR*)pLinkReq, pRouteAgent,
                                 cb, NULL, &groupLst ) ;
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to execute on catalog(rc=%d)",
-                  rc );
+                   "failed to execute on catalog(rc=%d)",
+                   rc );
 
       rc = rtnCoordGetCataInfo( cb, strMainCLName.c_str(), TRUE, cataInfo );
       PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
-               "failed to get catalog info(rc=%d)", rc );
+                "failed to get catalog info(rc=%d)", rc );
       pLinkReq->version = cataInfo->getVersion();
 
       //send request to data-node
@@ -8288,11 +8250,11 @@ namespace engine
       rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
                               pRouteAgent, cb, TRUE );
       PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
-               "failed to execute on data-node(rc=%d)", rc);
+                "failed to execute on data-node(rc=%d)", rc);
 
    done :
       replyHeader.flags = rc;
-      //PD_TRACE_EXITRC ( SDB_RTNCOCMDLINKCL_EXE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDLINKCL_EXE, rc ) ;
       return rc;
    error_rollback:
       {
@@ -8301,8 +8263,8 @@ namespace engine
       rcRBk = executeOnCataGroup ( (CHAR*)pLinkReq, pRouteAgent,
                                 cb, NULL, &groupLst ) ;
       PD_RC_CHECK( rcRBk, PDERROR,
-                  "failed to execute on catalog(rc=%d), rollback failed!",
-                  rcRBk );
+                   "failed to execute on catalog(rc=%d), rollback failed!",
+                   rcRBk );
       }
    error :
       goto done ;
@@ -8315,7 +8277,7 @@ namespace engine
                                              BSONObj * * ppErrorObj )
    {
       INT32 rc                         = SDB_OK;
-      //PD_TRACE_ENTRY ( SDB_RTNCOCMDUNLINKCL_EXE ) ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDUNLINKCL_EXE ) ;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
@@ -8357,28 +8319,28 @@ namespace engine
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip, &numToReturn,
                            &pQuery, &pFieldSelector, &pOrderBy, &pHint );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse unlink collection request(rc=%d)",
-                  rc );
+                   "failed to parse unlink collection request(rc=%d)",
+                   rc );
 
       try
       {
          BSONObj boQuery = BSONObj( pQuery );
          BSONElement beClNameTmp = boQuery.getField( CAT_SUBCL_NAME );
          PD_CHECK( beClNameTmp.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to unlink collection, failed to get sub-collection name" );
+                   "failed to unlink collection, failed to get sub-collection name" );
          strSubClName = beClNameTmp.str();
 
          beClNameTmp = boQuery.getField( CAT_COLLECTION_NAME );
          PD_CHECK( beClNameTmp.type() == String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to unlink collection, failed to get sub-collection name" );
+                   "failed to unlink collection, failed to get sub-collection name" );
          strMainClName = beClNameTmp.str();
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
          PD_LOG( PDERROR,
-               "failed to unlink collection, received unexpected error:%s",
-               e.what() );
+                 "failed to unlink collection, received unexpected error:%s",
+                 e.what() );
          goto error;
       }
 
@@ -8386,15 +8348,15 @@ namespace engine
       hasRefresh = isNeedRefresh;
       rc = rtnCoordGetCataInfo( cb, strMainClName.c_str(), isNeedRefresh, mainCataInfo );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to unlink collection(MainCL:%s, subCL:%s), "
-                  "get main-collection catalog failed(rc=%d)",
-                  strMainClName.c_str(), strSubClName.c_str(), rc );
+                   "failed to unlink collection(MainCL:%s, subCL:%s), "
+                   "get main-collection catalog failed(rc=%d)",
+                   strMainClName.c_str(), strSubClName.c_str(), rc );
 
       if ( !mainCataInfo->isMainCL() )
       {
          PD_CHECK( !hasRefresh, SDB_INVALIDARG, error, PDERROR,
-                  "collection(%s) is not main-collection",
-                  strMainClName.c_str() );
+                   "collection(%s) is not main-collection",
+                   strMainClName.c_str() );
          isNeedRefresh = TRUE;
          goto retry;
       }
@@ -8402,22 +8364,22 @@ namespace engine
       if ( !mainCataInfo->isContainSubCL( strSubClName ) )
       {
          PD_CHECK( !hasRefresh, SDB_INVALIDARG, error, PDERROR,
-                  "collection(%s) is not contain sub-collection(%s)",
-                  strMainClName.c_str(), strSubClName.c_str() );
+                   "collection(%s) is not contain sub-collection(%s)",
+                   strMainClName.c_str(), strSubClName.c_str() );
          isNeedRefresh = TRUE;
          goto retry;
       }
 
       rc = rtnCoordGetCataInfo( cb, strSubClName.c_str(), isNeedRefresh, subCataInfo );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to unlink collection(MainCL:%s, subCL:%s), "
-                  "get sub-collection catalog failed(rc=%d)",
-                  strMainClName.c_str(), strSubClName.c_str(), rc );
+                   "failed to unlink collection(MainCL:%s, subCL:%s), "
+                   "get sub-collection catalog failed(rc=%d)",
+                   strMainClName.c_str(), strSubClName.c_str(), rc );
 
       rc = rtnCoordGetGroupsByCataInfo( subCataInfo, sendGroupLst, groupLst );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to get group list(rc=%d)",
-                  rc );
+                   "failed to get group list(rc=%d)",
+                   rc );
 
       // send request to catalog
       pReqMsg->header.opCode = MSG_CAT_UNLINK_CL_REQ;
@@ -8432,9 +8394,9 @@ namespace engine
 
       rc = rtnCoordGetCataInfo( cb, strMainClName.c_str(), TRUE, mainCataInfo );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to unlink collection(MainCL:%s, subCL:%s), "
-                  "get main-collection catalog failed(rc=%d)",
-                  strMainClName.c_str(), strSubClName.c_str(), rc );
+                   "failed to unlink collection(MainCL:%s, subCL:%s), "
+                   "get main-collection catalog failed(rc=%d)",
+                   strMainClName.c_str(), strSubClName.c_str(), rc );
       pReqMsg->version = mainCataInfo->getVersion();
       pReqMsg->header.routeID.value = 0;
       pReqMsg->header.TID = cb->getTID();
@@ -8444,17 +8406,17 @@ namespace engine
       if ( rc )
       {
          PD_CHECK( !hasRefresh && SDB_CLS_COORD_NODE_CAT_VER_OLD == rc,
-                  rc, error, PDERROR,
-                  "failed to unlink collection(MainCL:%s, subCL:%s), "
-                  "execute on data-node failed(rc=%d)",
-                  strMainClName.c_str(), strSubClName.c_str(), rc );
+                   rc, error, PDERROR,
+                   "failed to unlink collection(MainCL:%s, subCL:%s), "
+                   "execute on data-node failed(rc=%d)",
+                   strMainClName.c_str(), strSubClName.c_str(), rc );
          isNeedRefresh = TRUE;
          goto retry;
       }
 
    done :
       replyHeader.flags = rc;
-      //PD_TRACE_EXITRC ( SDB_RTNCOCMDUNLINKCL_EXE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDUNLINKCL_EXE, rc ) ;
       return rc;
    error :
       goto done ;
@@ -8467,7 +8429,7 @@ namespace engine
                                              BSONObj * * ppErrorObj )
    {
       INT32 rc = SDB_OK;
-      //PD_TRACE_ENTRY ( SDB_RTNCOCMDSETSESSATTR_EXE ) ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDSETSESSATTR_EXE ) ;
       // fill default-reply(delete success)
       MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
       replyHeader.header.messageLength = sizeof( MsgOpReply );
@@ -8492,8 +8454,8 @@ namespace engine
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip, &numToReturn,
                            &pQuery, &pFieldSelector, &pOrderBy, &pHint );
       PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse unlink collection request(rc=%d)",
-                  rc );
+                   "Failed to parse unlink collection request(rc=%d)",
+                   rc );
 
       try
       {
@@ -8505,34 +8467,34 @@ namespace engine
 
          pSession = cb->getCoordSession();
          PD_CHECK( pSession != NULL, SDB_SYS, error, PDERROR,
-                  "failed to get session!" );
+                   "Failed to get session!" );
          boQuery = BSONObj( pQuery );
          bePreferRepl = boQuery.getField( FIELD_NAME_PREFERED_INSTANCE );
-         PD_CHECK( bePreferRepl.type() == NumberInt, SDB_INVALIDARG, error, PDERROR,
-                  "failed to set session attribute, failed to get the field(%s)",
-                  FIELD_NAME_PREFERED_INSTANCE );
+         PD_CHECK( bePreferRepl.type() == NumberInt, SDB_INVALIDARG, error,
+                   PDERROR, "Failed to set session attribute, failed to get "
+                   "the field(%s)", FIELD_NAME_PREFERED_INSTANCE );
          sessReplType = bePreferRepl.Int();
-         PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN && sessReplType < PREFER_REPL_TYPE_MAX,
-                  SDB_INVALIDARG, error, PDERROR,
-                  "failed to set prefer-replica-type, invalid value!(range:%d~%d)",
-                  PREFER_REPL_TYPE_MIN, PREFER_REPL_TYPE_MAX );
+         PD_CHECK( sessReplType > PREFER_REPL_TYPE_MIN &&
+                   sessReplType < PREFER_REPL_TYPE_MAX,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "Failed to set prefer-replica-type, invalid value!"
+                   "(range:%d~%d)", PREFER_REPL_TYPE_MIN,
+                   PREFER_REPL_TYPE_MAX ) ;
          pSession->setPreferReplType( sessReplType );
 
          rc = rtnCoordGetAllGroupList( cb, groupLstTmp );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to update all group info!(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to update all group info!(rc=%d)",
+                      rc ) ;
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG( PDERROR,
-               "failed to unlink collection, received unexpected error:%s",
-               e.what() );
-         goto error;
+         PD_LOG( PDERROR, "Failed to unlink collection, received unexpected "
+                 "error:%s", e.what() ) ;
+         goto error ;
       }
    done:
-      //PD_TRACE_EXITRC ( SDB_RTNCOCMDSETSESSATTR_EXE, rc ) ;
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDSETSESSATTR_EXE, rc ) ;
       return rc;
    error:
       replyHeader.flags = rc;
