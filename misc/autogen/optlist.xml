@@ -392,6 +392,11 @@
          <cn>页面预加载代理数量,默认值:0,取值范围:[0,100]</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>number of page pre-loaders, default:0, value range:[0,100]</en>
+         <cn>页面预加载代理数据，默认值为0，取值范围：[0,100]</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -402,6 +407,11 @@
          <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>maximum number of prefetchers, default:200, value range:[0,1000]</en>
+         <cn>数据预取代理池最大数量,默认值:200,取值范围:[0,1000]</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -412,6 +422,11 @@
          <cn>查询任务的最大分解子查询数量,默认值:10,最小值为0,最大值不能超过参数maxprefpool的值</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>maximum number of query's sub-query, default:10, min value is 0, max value can't more than param 'maxprefpool'</en>
+         <cn>查询任务的最大分解子查询数量,默认值:10,最小值为0,最大值不能超过参数maxprefpool的值</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -422,6 +437,11 @@
          <cn>日志同步最大并发数量，默认值:10,取值范围:[0,200], 0表示不启用日志并发同步</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</en>
+         <cn>日志同步最大并发数量，默认值:10,取值范围:[0,200], 0表示不启用日志并发同步</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -432,6 +452,11 @@
          <cn>复制日志内存页面数,默认值:1024,取值范围:[512,1024000],但日志总内存大小不能超过日志总文件大小;每个页面大小为64KB</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>the replica-log's memory page number,default is 1024, value range:[512,1024000], but total log memory size can't more than all log file size; a page size is 64KB</en>
+         <cn>复制日志内存页面数,默认值:1024,取值范围:[512,1024000],但日志总内存大小不能超过日志总文件大小;每个页面大小为64KB</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -441,6 +466,11 @@
          <en>path of the tmp file</en>
          <cn>临时文件路径</cn>
       </description>
+      <detail>
+         <en>The temp path of db, default is 'dbpath'+'/tmp'</en>
+         <cn>数据库临时文件目录，默认为'数据库路径'+'/tmp'</cn>
+      </detail>
+      <typeofweb>str</typeofweb>
    </opt>
 
    <opt>
@@ -451,6 +481,11 @@
          <cn>排序缓存大小(MB),默认值512,最小值128</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>size of the sorting buf(MB), default:512, min value:128</en>
+         <cn>排序缓存大小(MB),默认值512,最小值128</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -461,6 +496,11 @@
          <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
       </description>
       <type>int</type>
+      <detail>
+         <en>size of the hash join buf(MB), default:128, min value:64</en>
+         <cn>哈希连接缓存大小(MB),默认值128,最小值64</cn>
+      </detail>
+      <typeofweb>int</typeofweb>
    </opt>
 
    <opt>
@@ -569,7 +609,7 @@
          <cn>索引扫描步长,默认值为30,取值范围:[1,10000]</cn>
       </description>
 	  <type>int</type>
-      <hidden>true</hidden>
+     <hidden>true</hidden>
    </opt>
 
    <opt>
@@ -580,7 +620,7 @@
          <cn>节点起动漂移时间(sec),默认值:300,取值范围:[0,7200]</cn>
       </description>
 	  <type>int</type>
-      <hidden>true</hidden>
+     <hidden>true</hidden>
    </opt>
 
    <opt>
