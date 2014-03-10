@@ -20,19 +20,14 @@
  */
 package com.sequoiadb.base;
 
-import java.io.PrintWriter;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.sql.DataSource;
-import javax.swing.text.html.Option;
-//import javax.xml.bind.ValidationEvent;
+import com.sequoiadb.exception.BaseException;
 
 /**
  * @class SequoiadbDatasource
@@ -49,6 +44,7 @@ public class SequoiadbDatasource {
 	private String username = null;
 	private String password = null;
 	private Timer timer = new Timer(true);
+	private final double MULTIPLE = 1.5;
 	
 	/**
 	 * @fn SequoiadbDatasource()
@@ -57,16 +53,22 @@ public class SequoiadbDatasource {
 	 * @param username   the username of sequoiadb
 	 * @param password   the password of sequoiadb
 	 * @param option     the option of datasource
-	 * @throws Exception
+	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public SequoiadbDatasource(String url, String username, String password,
-			SequoiadbOption option) throws Exception
+			SequoiadbOption option) throws BaseException
 	{
+		if (url == null || username == null || password == null || option == null)
+			throw new BaseException("SDB_INVALIDARG", url, username, password, option);
 		this.url = url;
 		this.username = username;
 		this.password = password;
 		this.option = option;
+		try{
 		init(option);
+		}catch(BaseException e){
+			throw e;
+		}
 		// after the timer start 500ms, it goes to clean periodically 
 		timer.schedule(new CleanConnectionTask(this), option.getRecheckCyclePeriod(), option.getRecheckCyclePeriod());
 	}
@@ -76,23 +78,24 @@ public class SequoiadbDatasource {
 	 * @brief init SequoiadbDatabase,after you create a instance of SequoiadbDatabase,you must call this method.
 	 * @param option  
 	 *               this instance of SequoiadbOption
-	 * @return void
-	 * @exception Exception
+	 * @exception com.sequoiadb.Exception.BaseException              
 	 */
-	private void init(SequoiadbOption option) throws Exception
+	private void init(SequoiadbOption option) throws BaseException
 	{
+		// check option
 		if (option.getMaxConnectionNum() < 0)
-			throw new Exception(
-					"datasource maxconnectionnum is less than 0");
-		else if (option.getMaxConnectionNum() == 0)
-			return ; 
+			throw new BaseException("SDB_INVALIDARG",
+					                "maxConnectionNum is negative: " + option.getMaxConnectionNum());
+		// if no need to init, return directly
+		if (option.getMaxConnectionNum() == 0)
+			return ;
+		// check option
 		if (option.getMaxConnectionNum() < option.getInitConnectionNum())
-		{
-			throw new Exception(
-					"datasource maxconnectionnum is less than initconnectionnum");
-		}
+			throw new BaseException("SDB_INVALIDARG", "maxConnectionNum is less then initConnectionNum, maxConnectionNum is " +
+					            option.getMaxConnectionNum() + ", initConnectionNum is " + option.getInitConnectionNum());
 		if (option.getInitConnectionNum() < 0)
-			throw new Exception("this datasoure connection num is  less than 0");
+			throw new BaseException("SDB_INVALIDARG", 
+					            "initConnectionNum is negative: " + option.getInitConnectionNum());
 		for (int i = 0; i < option.getInitConnectionNum(); i++)
 		{
 			Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
@@ -106,9 +109,10 @@ public class SequoiadbDatasource {
 	 * @throws SQLException
 	 * @throws InterruptedException
 	 * @return Sequoiadb
-	 * @exception SQLException, InterruptedException
+	 * @exception InterruptedException
+	 * 			  BaseException  throws BaseException with the error type SDB_DRIVER_DS_RUNOUT when datasource had run out
 	 */
-	public synchronized Sequoiadb getConnection() throws SQLException, InterruptedException
+	public synchronized Sequoiadb getConnection() throws BaseException, InterruptedException
 	{
 		// when we don't want to use datasource, return sequiadb instance directly
 		if (option.getMaxConnectionNum() == 0)
@@ -141,8 +145,7 @@ public class SequoiadbDatasource {
 				wait(option.getTimeout());
 				// when wake up, check again
 				if (used_sequoiadbs.size() >= option.getMaxConnectionNum())
-					throw new SQLException("datasource is full," +
-							" can't get database connection exception");
+					throw new BaseException("SDB_DRIVER_DS_RUNOUT");
 			}
 			Sequoiadb temp = new Sequoiadb(url, username, password);
 			used_sequoiadbs.add(temp);
@@ -158,18 +161,26 @@ public class SequoiadbDatasource {
 	 * @brief  when you accomplish some actions,you should close the conncetion
 	 * @param sequoiadb
 	 * @return void
-	 * @exception NullPointerException if sequoiadb is null
+	 * @exception com.sequoiadb.Exception.BaseException
 	 */
-	public synchronized void close(Sequoiadb sequoiadb)
+	public synchronized void close(Sequoiadb sequoiadb) throws BaseException
 	{
 		if (sequoiadb == null)
-			throw new NullPointerException();
+			throw new BaseException("SDB_INVALIDARG", sequoiadb);
 		// when datasource not be used, abandon the connection directly
 		if (option.getMaxConnectionNum() == 0)
 		{
 			sequoiadb.disconnect();
 			return;
 		}
+		// check option
+		if (option.getAbandonTime() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + option.getAbandonTime());
+		if (option.getRecheckCyclePeriod() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + option.getRecheckCyclePeriod());
+		if (option.getRecheckCyclePeriod() >= option.getAbandonTime())
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less then abandonTime, recheckCyclePeriod is " +
+					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		// if the busy queue contain this instance
 		if (used_sequoiadbs.contains(sequoiadb)) 
 		{
@@ -180,7 +191,7 @@ public class SequoiadbDatasource {
 			long currentTime = System.currentTimeMillis();
 			// check the time keep in instance, don't let it go back to pool
 			// when it timeout
-			if (currentTime - lastTime >= option.getAbandonTime())
+			if (currentTime - lastTime + MULTIPLE*option.getRecheckCyclePeriod() >= option.getAbandonTime())
 			{
 				sequoiadb.disconnect();
 			}
@@ -206,12 +217,25 @@ public class SequoiadbDatasource {
 	 * @fn void increaseConnetions()
 	 * @bref Add another 20 Sequoiadb objects to the datasource. 
 	 */
-	synchronized void increaseConnetions()
+	synchronized void increaseConnetions() throws BaseException
 	{
 		// when datasource not be used, return directly
 		if (option.getMaxConnectionNum() == 0)
 			return;
-		// otherwise
+		// if the number of connection in the pool is less than SequoiadbOption::maxIdeNum
+		// we are going to increase. we don't want to let every request to increate the count of 
+		// connecton, if we don't limit at here, every backgroup thread created in getConnection()
+		// will create a lot of connecton. and as a result, the system's socket resource will run out easily
+		// the max number of the connection in datasource is maxConnectionNum + (maxIdeNum-1) + deltaIncCount
+		if (sequoiadbs.size() >= option.getMaxIdeNum())
+			return;
+		if (option.getDeltaIncCount() < 0)
+				throw new BaseException("SDB_INVALIDARG", 
+						                "deltaIncCount is negative: " + option.getDeltaIncCount());
+		if (option.getMaxConnectionNum() < option.getDeltaIncCount())
+			throw new BaseException("SDB_INVALIDARG",
+					                "deltaIncCount is greater then maxConnectionNum, deltaIncCount is " +
+					option.getDeltaIncCount() + ", maxConnectionNum is " + option.getMaxConnectionNum());
 		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
                                    option.getDeltaIncCount()) 
 		{
@@ -236,18 +260,26 @@ public class SequoiadbDatasource {
 	 * @fn void cleanAbandonConnection()
 	 * @brief  clean the tiemout connection periodically
 	 */
-	synchronized void cleanAbandonConnection()
+	synchronized void cleanAbandonConnection() throws BaseException
 	{
+		// when no need to clean
 		if (sequoiadbs.size() == 0)
 			return ;
+		// check option
+		if (option.getAbandonTime() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + option.getAbandonTime());
+		if (option.getRecheckCyclePeriod() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + option.getRecheckCyclePeriod());
+		if (option.getRecheckCyclePeriod() >= option.getAbandonTime())
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less then abandonTime, recheckCyclePeriod is " +
+					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		long lastTime = 0;
 		long currentTime = System.currentTimeMillis();
 		ListIterator<Sequoiadb> list = sequoiadbs.listIterator(0);
 		while(list.hasNext())
 		{
 			Sequoiadb db = list.next();
-			lastTime = db.getConnection().getLastUseTime();
-			if ( currentTime - lastTime >= option.getAbandonTime())
+			if ( currentTime - lastTime + MULTIPLE*option.getRecheckCyclePeriod() >= option.getAbandonTime())
 			{
 				db.disconnect () ;
 				list.remove();
