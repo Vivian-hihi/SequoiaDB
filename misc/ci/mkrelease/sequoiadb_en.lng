@@ -8,6 +8,8 @@ Install.Paramers.port.title=SDBCM Port
 Install.Paramers.port.Description=Port
 Install.Paramers.port.explanation=SequoiaDB Cluster Manager port
 
+Install.ErrorMsg.CreateGroup.error=Group name is exist already, skip create group action
+Install.ErrorMsg.CreateUser.error=User name is exist already, skip create group action
 Install.ErrorMsg.CreateWindowsService.error=Failed to create Sequoiadb Cluster Manager Service(sdbcm)
 Install.ErrorMsg.CreateLinuxService.error=Failed to create Sequoiadb Cluster Manager Service(sdbcm)
 Install.ErrorMsg.ChangeInsallerPathPermissions.error=Failed to change file permissions: ${installdir}/bin

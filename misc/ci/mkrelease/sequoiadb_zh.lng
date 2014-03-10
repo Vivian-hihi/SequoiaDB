@@ -8,6 +8,8 @@ Install.Paramers.port.title=集群管理服务端口配置
 Install.Paramers.port.Description=端口
 Install.Paramers.port.explanation=配置SequoiaDB集群管理服务端口,集群管理用于远程启动添加和启停数据库节点
 
+Install.ErrorMsg.CreateGroup.error=警告:用户组已经存在,跳过创建用户组操作
+Install.ErrorMsg.CreateUser.error=警告:用户已经存在,跳过创建用户操作
 Install.ErrorMsg.CreateWindowsService.error=创建集群管理服务(sdbcm)失败
 Install.ErrorMsg.CreateLinuxService.error=创建集群管理服务(sdbcm)失败
 Install.ErrorMsg.ChangeInsallerPathPermissions.error=修改安装目录(${installdir}/bin)权限失败

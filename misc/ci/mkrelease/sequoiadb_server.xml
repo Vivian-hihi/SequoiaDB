@@ -43,16 +43,22 @@
     <readyToInstallActionList>
         <runProgram>
             <abortOnError>0</abortOnError>
+            <customErrorMessage>${msg(Install.ErrorMsg.CreateGroup.error)}</customErrorMessage>
             <program>groupadd</program>
             <programArguments>${username}_group</programArguments>
             <ruleList>
                 <platformTest>
                     <type>linux</type>
                 </platformTest>
+                <userTest>
+                    <logic>not_exists</logic>
+                    <username>${username}</username>
+                </userTest>
             </ruleList>
         </runProgram>
         <runProgram>
             <abortOnError>0</abortOnError>
+            <customErrorMessage>${msg(Install.ErrorMsg.CreateUser.error)}</customErrorMessage>
             <program>useradd</program>
             <programArguments> ${username} -d ${installdir} -g ${username}_group  -s /bin/bash </programArguments>
             <ruleList>
