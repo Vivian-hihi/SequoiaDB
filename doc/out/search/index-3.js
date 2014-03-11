@@ -1,4 +1,5 @@
 //Auto generated index for searching.
+w["street1"]="1740*2";
 w["street1:"]="1740*2";
 w["street2"]="1740*1";
 w["street2:"]="1740*2";
