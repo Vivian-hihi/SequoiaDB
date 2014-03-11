@@ -104,7 +104,7 @@ function getdata2drow ()
 	
 	for ( var i = 1; i <= 4; ++i )
 	{
-		eval( 'if ( runStatus[' + (i-1) + '] ){b' + i + ' = convertChart ( b' + i + ', timeStep ) ;var str_' + i + ' = document.getElementById("selecter_' + i + '").value ;if ( oldValue[' + (i-1) + '] < 0 ){oldValue[' + (i-1) + '] = parseInt(jsonobj[str_' + i + ']===null?0:jsonobj[str_' + i + '])}b' + i + '.push ( [ 60, parseInt(jsonobj[str_' + i + ']===null?0:jsonobj[str_' + i + '])-oldValue[' + (i-1) + '] ] ) ;oldValue[' + (i-1) + '] = parseInt(jsonobj[str_' + i + ']===null?0:jsonobj[str_' + i + ']) ;drowLinePic( "myChart' + i + '", b' + i + ' );}' ) ;
+		eval( 'if ( runStatus[' + (i-1) + '] ){b' + i + ' = convertChart ( b' + i + ', timeStep ) ;var str_' + i + ' = document.getElementById("selecter_' + i + '").value ;if ( oldValue[' + (i-1) + '] < 0 ){oldValue[' + (i-1) + '] = parseInt(jsonobj[str_' + i + ']===null?0:jsonobj[str_' + i + '])}b' + i + '.push ( [ 60, (parseInt(jsonobj[str_' + i + ']===null?0:jsonobj[str_' + i + '])-oldValue[' + (i-1) + '])/timeStep ] ) ;oldValue[' + (i-1) + '] = parseInt(jsonobj[str_' + i + ']===null?0:jsonobj[str_' + i + ']) ;drowLinePic( "myChart' + i + '", b' + i + ' );}' ) ;
 	}
 
 	/*b1 = convertChart ( b1, timeStep ) ;
