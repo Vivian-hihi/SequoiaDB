@@ -275,7 +275,8 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "Reached the maximum number of nodes",
                    "the node is business-failures",
                    "the node info is expired",
-                   "wait secondary nodes sync the operation failed"
+                   "wait secondary nodes sync the operation failed",
+                   "transaction is disabled"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

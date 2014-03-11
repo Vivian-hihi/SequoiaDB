@@ -50,41 +50,45 @@ options = {}
 options_topass = {}
 
 def GuessOS():
-	id = platform.system()
-        print('id=' + id ) ;
-	if id == 'Linux':
-		return 'linux'
-	elif id == 'Windows' or id == 'Microsoft':
-		return 'win32'
-	else:
-		return None
+   id = platform.system()
+   if id == 'Linux':
+      return 'linux'
+   elif id == 'Windows' or id == 'Microsoft':
+      return 'win32'
+   else:
+      return None
 
 
 def GuessArch():
-	id = platform.machine()
-	id = id.lower()
-	if (not id) or (not re.match('(x|i[3-6])86$', id) is None):
-		return 'ia32'
-	elif id == 'i86pc':
-		return 'ia32'
-	elif id == 'x86_64':
-		return 'ia64'
-	elif id == 'amd64':
-		return 'ia64'
-        elif id == 'ppc64':
-                return 'ppc64'
-	else:
-		return None
+   id = platform.machine()
+   id = id.lower()
+   if (not id) or (not re.match('(x|i[3-6])86$', id) is None):
+      return 'ia32'
+   elif id == 'i86pc':
+      return 'ia32'
+   elif id == 'x86_64':
+      return 'ia64'
+   elif id == 'amd64':
+      return 'ia64'
+   elif id == 'ppc64':
+      return 'ppc64'
+   else:
+      return None
 
+# guess the operating system and architecture
 guess_os = GuessOS()
 guess_arch = GuessArch()
 
+# helper function, add options
+# name: name of the parameter
+# nargs: number of args for the parameter
+# contibutesToVariantDir: whether the param is part of variant dir
 def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
 
     if dest is None:
         dest = name
 
-    AddOption( "--" + name , 
+    AddOption( "--" + name ,
                dest=dest,
                type="string",
                nargs=nargs,
@@ -92,9 +96,9 @@ def add_option( name, help , nargs , contibutesToVariantDir , dest=None ):
                help=help )
 
     options[name] = { "help" : help ,
-                      "nargs" : nargs , 
+                      "nargs" : nargs ,
                       "contibutesToVariantDir" : contibutesToVariantDir ,
-                      "dest" : dest } 
+                      "dest" : dest }
 
 def get_option( name ):
     return GetOption( name )
@@ -123,23 +127,24 @@ def has_option( name ):
 
 
 def get_variant_dir():
-    
+
     a = []
-    
+
     for name in options:
         o = options[name]
         if not has_option( o["dest"] ):
             continue
+        # let's skip the param if it's not part of variant dir
         if not o["contibutesToVariantDir"]:
             continue
-        
+
         if o["nargs"] == 0:
             a.append( name )
         else:
             x = get_option( name )
             x = re.sub( "[,\\\\/]" , "_" , x )
             a.append( name + "_" + x )
-            
+
     s = "#build/${PYSYSPLATFORM}/"
 
     if len(a) > 0:
@@ -149,8 +154,8 @@ def get_variant_dir():
         s += "normal/"
     return s
 
-# installation options
-add_option( "all", "install all", 0, False)
+# build options
+add_option( "all", "build engine/tools/testcases/shell/client/fmp", 0, False)
 add_option( "engine", "install engine", 0, False)
 add_option( "tool", "install tools", 0, False)
 add_option( "testcase", "install testcases", 0, False)
@@ -158,91 +163,37 @@ add_option( "shell", "install shell", 0, False)
 add_option( "client", "install client environment", 0, False)
 add_option( "fmp", "install fmp", 0, False)
 
-
+# language could be en or cn
 add_option( "language" , "description language" , 1 , False )
-	
-# installation/packaging
-add_option( "prefix" , "installation prefix" , 1 , False )
-add_option( "distname" , "dist name (0.8.0)" , 1 , False )
-add_option( "distmod", "additional piece for full dist name" , 1 , False )
-add_option( "nostrip", "do not strip installed binaries" , 0 , False )
-
-add_option( "sharedclient", "build a libmongoclient.so/.dll" , 0 , False )
-add_option( "full", "include client and headers when doing scons install", 0 , False )
 
 # linking options
 add_option( "release" , "release build" , 0 , True )
-add_option( "static" , "fully static build" , 0 , True )
 
 # base compile flags
 add_option( "64" , "whether to force 64 bit" , 0 , True , "force64" )
 add_option( "32" , "whether to force 32 bit" , 0 , True , "force32" )
 
-add_option( "cxx", "compiler to use" , 1 , True )
-add_option( "cc", "compiler to use for c" , 1 , True )
-
-add_option( "cpppath", "Include path if you have headers in a nonstandard directory" , 1 , True )
-add_option( "libpath", "Library path if you have libraries in a nonstandard directory" , 1 , True )
-
-add_option( "extrapath", "comma separated list of add'l paths  (--extrapath /opt/foo/,/foo) static linking" , 1 , True )
-add_option( "extrapathdyn", "comma separated list of add'l paths  (--extrapath /opt/foo/,/foo) dynamic linking" , 1 , True )
-add_option( "extralib", "comma separated list of libraries  (--extralib js_static,readline" , 1 , True )
-add_option( "staticlib", "comma separated list of libs to link statically (--staticlib js_static,boost_program_options-mt,..." , 1 , True )
-add_option( "staticlibpath", "comma separated list of dirs to search for staticlib arguments" , 1 , True )
-
-add_option( "boost-compiler", "compiler used for boost (gcc41)" , 1 , True , "boostCompiler" )
-add_option( "boost-version", "boost version for linking(1_38)" , 1 , True , "boostVersion" )
-
-add_option( "no-glibc-check" , "don't check for new versions of glibc" , 0 , False )
-
-# experimental features
-add_option( "mm", "use main memory instead of memory mapped files" , 0 , True )
-add_option( "ssl" , "Enable SSL" , 0 , True )
-
 # dev options
-add_option( "d", "debug build no optimization, etc..." , 0 , True , "debugBuild" )
-add_option( "dd", "debug build no optimization, additional debug logging, etc..." , 0 , True , "debugBuildAndLogging" )
+add_option( "dd", "debug build no optimization, additional debug logging, etc..." , 0 , True , "debugBuild" )
 add_option( "noscreenout", "do not send anything to screen", 0, True )
-add_option( "durableDefaultOn" , "have durable default to on" , 0 , True )
-add_option( "durableDefaultOff" , "have durable default to off" , 0 , True )
 
-# debugging/profiling help
-
-add_option( "gdbserver" , "build in gdb server support" , 0 , True )
-
-add_option("smokedbprefix", "prefix to dbpath et al. for smoke tests", 1 , False )
-
-add_option( "use-system-pcre", "use system version of pcre library", 0, True )
-
-add_option( "use-system-all" , "use all system libraries", 0 , True )
-
-add_option( "use-cpu-profiler",
-            "Link against the google-perftools profiler library",
-            0, True )       
-            
-            
 # don't run configure if user calls --help
 if GetOption('help'):
     Return()
 
 # --- environment setup ---
-
 variantDir = get_variant_dir()
 clientCppVariantDir = variantDir + "clientcpp"
 clientCVariantDir = variantDir + "clientc"
 shellVariantDir = variantDir + "shell"
 toolVariantDir = variantDir + "tool"
 fmpVariantDir = variantDir + "fmp"
-driverDir = variantDir + "driver/"
-
-def removeIfInList( lst , thing ):
-    if thing in lst:
-        lst.remove( thing )
+driverDir = variantDir + "driver"
 
 def printLocalInfo():
-    import sys, SCons
-    print( "scons version: " + SCons.__version__ )
-    print( "python version: " + " ".join( [ `i` for i in sys.version_info ] ) )
+   import sys, SCons
+   print( "scons version: " + SCons.__version__ )
+   print( "python version: " + " ".join( [ `i` for i in sys.version_info ] ) )
 
 printLocalInfo()
 
@@ -255,86 +206,63 @@ windows = False
 force64 = has_option( "force64" )
 msarch = None
 if force64:
-    msarch = "amd64"
+   msarch = "amd64"
 
 release = True
 debugBuild = False
-debugLogging = False
 
-force32 = has_option( "force32" ) 
+force32 = has_option( "force32" )
 release = has_option( "release" )
-static = False
 
-debugBuild = has_option( "debugBuild" ) or has_option( "debugBuildAndLogging" ) 
-debugLogging = has_option( "debugBuildAndLogging" )
+# get whether we are using debug build
+debugBuild = has_option( "debugBuild" )
 
 # if neither release/debugBuild specified, by default using release
 # if both release/debugBuild specified, by defaul use debugBuild
 if not release and not debugBuild:
-	release = True
-	debugBuild = False
+   release = True
+   debugBuild = False
 elif release and debugBuild:
-  release = False
-  debugBuild = True
+   release = False
+   debugBuild = True
 
 env = Environment( BUILD_DIR=variantDir,
                    MSVS_ARCH=msarch ,
                    tools=["default", "gch", "jsheader", "mergelib" ],
                    PYSYSPLATFORM=os.sys.platform,
-
-                   PCRE_VERSION='7.4',
                    )
-
 
 libdeps.setup_environment( env )
 
 if env['PYSYSPLATFORM'] == 'linux3':
-    env['PYSYSPLATFORM'] = 'linux2'
+   env['PYSYSPLATFORM'] = 'linux2'
 
 if os.sys.platform == 'win32':
-    env['OS_FAMILY'] = 'win'
+   env['OS_FAMILY'] = 'win'
 else:
-    env['OS_FAMILY'] = 'posix'
-
-if has_option( "cxx" ):
-    env["CC"] = get_option( "cxx" )
-    env["CXX"] = get_option( "cxx" )
-
-if has_option( "cc" ):
-    env["CC"] = get_option( "cc" )
-	
+   env['OS_FAMILY'] = 'posix'
 
 if env['PYSYSPLATFORM'] == 'linux2':
-    env['LINK_LIBGROUP_START'] = '-Wl,--start-group'
-    env['LINK_LIBGROUP_END'] = '-Wl,--end-group'
-    env['RELOBJ_LIBDEPS_START'] = '--whole-archive'
-    env['RELOBJ_LIBDEPS_END'] = '--no-whole-archive'
-    env['RELOBJ_LIBDEPS_ITEM'] = ''
+   env['LINK_LIBGROUP_START'] = '-Wl,--start-group'
+   env['LINK_LIBGROUP_END'] = '-Wl,--end-group'
+   env['RELOBJ_LIBDEPS_START'] = '--whole-archive'
+   env['RELOBJ_LIBDEPS_END'] = '--no-whole-archive'
+   env['RELOBJ_LIBDEPS_ITEM'] = ''
 
 env["LIBPATH"] = []
-
-if has_option( "libpath" ):
-    env["LIBPATH"] = [get_option( "libpath" )]
-
-if has_option( "cpppath" ):
-    env["CPPPATH"] = [get_option( "cpppath" )]
 
 if has_option( "noscreenout" ):
     env.Append( CPPDEFINES=[ "_NOSCREENOUT" ] )
 
-if has_option( "durableDefaultOn" ):
-    env.Append( CPPDEFINES=[ "_DURABLEDEFAULTON" ] )
-
-if has_option( "durableDefaultOff" ):
-    env.Append( CPPDEFINES=[ "_DURABLEDEFAULTOFF" ] )
-
 hasEngine = has_option( "engine" )
 hasClient = has_option( "client" )
-hasTestcase = False
+hasTestcase = has_option( "testcase" )
 hasTool = has_option( "tool" )
 hasShell = has_option( "shell" )
 hasFmp = has_option("fmp")
 hasAll = has_option( "all" )
+
+# if everything are set, let's set everything to true
 if hasAll:
    hasEngine = True
    hasClient = True
@@ -342,22 +270,14 @@ if hasAll:
    hasTool = True
    hasShell = True
    hasFmp = True
-elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasFmp ):
+# if nothing specified, let's use engine+client+shell by default
+elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp ):
    hasEngine = True
    hasClient = True
    hasShell = True
 
-boostCompiler = GetOption( "boostCompiler" )
-if boostCompiler is None:
-    boostCompiler = ""
-else:
-    boostCompiler = "-" + boostCompiler
-
-boostVersion = GetOption( "boostVersion" )
-if boostVersion is None:
-    boostVersion = ""
-else:
-    boostVersion = "-" + boostVersion
+boostCompiler = ""
+boostVersion = ""
 
 usesm = True
 
@@ -365,23 +285,6 @@ extraLibPlaces = []
 
 env['EXTRACPPPATH'] = []
 env['EXTRALIBPATH'] = []
-
-def addExtraLibs( s ):
-    for x in s.split(","):
-        env.Append( EXTRACPPPATH=[ x + "/include" ] )
-        env.Append( EXTRALIBPATH=[ x + "/lib" ] )
-        env.Append( EXTRALIBPATH=[ x + "/lib64" ] )
-        extraLibPlaces.append( x + "/lib" )
-
-if has_option( "extrapath" ):
-    addExtraLibs( GetOption( "extrapath" ) )
-
-if has_option( "extrapathdyn" ):
-    addExtraLibs( GetOption( "extrapathdyn" ) )
-
-if has_option( "extralib" ):
-    for x in GetOption( "extralib" ).split( "," ):
-        env.Append( LIBS=[ x ] )
 
 class InstallSetup:
     binaries = False
@@ -392,7 +295,7 @@ class InstallSetup:
 
     def __init__(self):
         self.default()
-    
+
     def default(self):
         self.binaries = True
         self.libraries = False
@@ -413,10 +316,6 @@ class InstallSetup:
 
 installSetup = InstallSetup()
 
-if has_option( "full" ):
-    installSetup.headers = True
-    installSetup.libraries = True
-
 # ---- other build setup -----
 
 platform = os.sys.platform
@@ -432,16 +331,9 @@ if force64:
 
 env['PROCESSOR_ARCHITECTURE'] = processor
 
-DEFAULT_INSTALL_DIR = "/usr/local"
+DEFAULT_INSTALL_DIR = "/opt/sequoiadb"
 installDir = DEFAULT_INSTALL_DIR
 nixLibPrefix = "lib"
-
-distName = GetOption( "distname" )
-dontReplacePackage = False
-
-if has_option( "prefix" ):
-    installDir = GetOption( "prefix" )
-
 
 def findVersion( root , choices ):
     if not isinstance(root, list):
@@ -452,15 +344,6 @@ def findVersion( root , choices ):
                 return r + c
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
-def choosePathExist( choices , default=None):
-    for c in choices:
-        if c != None and os.path.exists( c ):
-            return c
-    return default
-
-def filterExists(paths):
-    return filter(os.path.exists, paths)
-
 # add database include, boost include here
 env.Append( CPPPATH=[join(engine_dir,'include'),join(ssl_dir,'include'),join(gtest_dir,'include'),join(curl_dir,'include'),pcre_dir, boost_dir] )
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
@@ -470,13 +353,16 @@ if guess_os == "linux":
     linux = True
     platform = "linux"
 
+    # -lm
     env.Append( LIBS=['m'] )
+    # -ldl
     env.Append( LIBS=['dl'] )
+    # -lpthread
+    env.Append( LIBS=["pthread"] )
     # 64 bit linux
     if guess_arch == "ia64" and not force32:
         linux64 = True
         nixLibPrefix = "lib64"
-        #env.Append( EXTRALIBPATH="/usr/lib64" )
         env.Append( EXTRALIBPATH="/lib64" )
         # use project-related boost library
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux64') )
@@ -496,13 +382,11 @@ if guess_os == "linux":
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/linux64')
         curllib_dir = join(curl_dir,'lib/linux64')
-        env.Append( LIBS=["pthread"] )
         force64 = False
-    # in case for 32 bit linux
-    elif guess_arch == "ia32":
+    # in case for 32 bit linux or compiling 32 bit in 64 env
+    elif guess_arch == "ia32" or force32:
         linux64 = False
         nixLibPrefix = "lib"
-        env.Append( EXTRALIBPATH="/usr/lib" )
         env.Append( EXTRALIBPATH="/lib" )
         # we want 32 bit boost library
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux32') )
@@ -523,29 +407,11 @@ if guess_os == "linux":
                 # if we are in 64 bit box but want to build 32 bit release
         ssllib_dir = join(ssl_dir,'lib/linux32')
         curllib_dir = join(curl_dir,'lib/linux32')
-    elif guess_arch == "ia64" and force32:
-        # let's use 32 bit boost library
-        env.Append( EXTRALIBPATH=["/usr/lib32", join(boost_lib_dir,'linux32')] )
-        env.Append( LIBS=["pthread"] )
-        # use project-related ssl library
-        env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
-        #use project-related curl library
-        env.Append( EXTRALIBPATH=join(curl_dir,'lib/linux32') )
-        # and use 32 bit spider monkey
-        if usesm:
-            if debugBuild:
-                smlib_dir = join(js_dir,'lib/debug/linux32/lib')
-                env.Append( CPPPATH=join(js_dir,'lib/debug/linux32/include') )
-                env.Append( EXTRALIBPATH=[smlib_dir] )
-            else:
-                smlib_dir = join(js_dir,'lib/release/linux32/lib')
-                env.Append( CPPPATH=join(js_dir,'lib/release/linux32/include') )
-                env.Append( EXTRALIBPATH=join(js_dir,'lib/release/linux32/lib') )
-        ssllib_dir = join(ssl_dir,'lib/linux32')
-        curllib_dir = join(curl_dir,'lib/linux32')
+    # power pc linux
     elif guess_arch == "ppc64" and not force32:
         linux64 = True
         nixLibPrefix = "lib64"
+        # use big endian
         env.Append( CPPDEFINES=[ "SDB_BIG_ENDIAN" ] )
         #env.Append( EXTRALIBPATH="/usr/lib64" )
         env.Append( EXTRALIBPATH="/lib64" )
@@ -567,35 +433,31 @@ if guess_os == "linux":
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/ppclinux64')
         curllib_dir = join(curl_dir,'lib/ppclinux64')
-        env.Append( LIBS=["pthread"] )
         force64 = False
 
+    # spider monkey
     if usesm:
         smlib_file = join(smlib_dir, 'libmozjs185.so')
         env.Append( CPPDEFINES=[ "XP_UNIX" ] )
         env.Append( LIBS=['js_static'] )
+    # SSL
     env.Append( LIBS=['crypto'] )
     ssllib_file = join(ssllib_dir, 'libcrypto.a')
     ssllib_file1 = join(ssllib_dir, 'libcrypto.a')
     curllib_file = join(curllib_dir, 'libcurl.a')
     nix = True
-    if static:
-       env.Append( LINKFLAGS=" -static " )
 
 elif "win32" == guess_os:
-    
     # when building windows
     windows = True
-    #if force64:
-
     # check VC compiler
     for pathdir in env['ENV']['PATH'].split(os.pathsep):
         if os.path.exists(os.path.join(pathdir, 'cl.exe')):
             print( "found visual studio at " + pathdir )
             break
         else:
-	          #use current environment
-	          env['ENV'] = dict(os.environ)
+            #use current environment
+            env['ENV'] = dict(os.environ)
 
     # if we are 64 bit
     if guess_arch == "ia64" and not force32:
@@ -619,7 +481,7 @@ elif "win32" == guess_os:
         ssllib_dir = join(ssl_dir,'lib/win64')
         curllib_dir = join(curl_dir,'lib/win64')
     else:
-	      # either we are 32 bit or force 32 bit
+        # either we are 32 bit or force 32 bit
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'win32') )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
@@ -641,12 +503,12 @@ elif "win32" == guess_os:
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
         env.Append( LIBS=['mozjs185-1.0'] )
         env.Append( CPPDEFINES=["JS_HAVE_STDINT_H"] )
+    # SSL
     env.Append( LIBS=['libeay32'] )
     ssllib_file = join(ssllib_dir, 'libeay32.dll')
     ssllib_file1 = join(ssllib_dir, 'ssleay32.dll')
     curllib_file = join(curllib_dir, 'libcurl.dll')
-    boostLibs = []
-
+    # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )
     # find windows SDK
@@ -681,9 +543,6 @@ elif "win32" == guess_os:
     # PSAPI_VERSION relates to process api dll Psapi.dll.
     env.Append( CPPDEFINES=["_CONSOLE","_CRT_SECURE_NO_WARNINGS","PSAPI_VERSION=1","_CRT_RAND_S" ] )
 
-    # this would be for pre-compiled headers, could play with it later  
-    #env.Append( CPPFLAGS=' /Yu"pch.h" ' ) 
-
     # docs say don't use /FD from command line (minimal rebuild)
     # /Gy function level linking
     # /Gm is minimal rebuild, but may not work in parallel mode.
@@ -710,8 +569,6 @@ elif "win32" == guess_os:
         if debugBuild:
             env.Append( LINKFLAGS=" /debug " )
             env.Append( CPPFLAGS=" /Od " )
-            
-        if debugLogging:
             env.Append( CPPDEFINES=[ "_DEBUG" ] )
 
     if guess_arch == "ia64" and not force32:
@@ -720,7 +577,6 @@ elif "win32" == guess_os:
         env.Append( EXTRALIBPATH=[ winSDKHome + "/Lib" ] )
 
     if release:
-        #env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  /NODEFAULTLIB:MSVCRTD " )
         env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  " )
     else:
         env.Append( LINKFLAGS=" /NODEFAULTLIB:MSVCPRT  /NODEFAULTLIB:MSVCRT  " )
@@ -728,38 +584,24 @@ elif "win32" == guess_os:
     winLibString = "ws2_32.lib kernel32.lib advapi32.lib Psapi.lib"
 
     if force64:
-
         winLibString += ""
-        #winLibString += " LIBCMT LIBCPMT "
-
     else:
         winLibString += " user32.lib gdi32.lib winspool.lib comdlg32.lib  shell32.lib ole32.lib oleaut32.lib "
         winLibString += " odbc32.lib odbccp32.lib uuid.lib dbghelp.lib "
 
     env.Append( LIBS=Split(winLibString) )
-
-    # dm these should automatically be defined by the compiler. commenting out to see if works. jun2010
-    #if force64:
-    #    env.Append( CPPDEFINES=["_AMD64_=1"] )
-    #else:
-    #    env.Append( CPPDEFINES=["_X86_=1"] )
-
-    env.Append( EXTRACPPPATH=["#/../winpcap/Include"] )
-    env.Append( EXTRALIBPATH=["#/../winpcap/Lib"] )
-
 else:
     print( "No special config for [" + os.sys.platform + "] which probably means it won't work" )
 
 env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = 1
 if nix:
-
-    # -Winvalid-pch Warn if a precompiled header (see Precompiled Headers) is found in the search path but can't be used. 
+    # -Winvalid-pch Warn if a precompiled header (see Precompiled Headers) is found in the search path but can't be used.
     env.Append( CPPFLAGS="-fPIC -fno-strict-aliasing -ggdb -pthread -Wno-write-strings -Wall -Wsign-compare -Wno-unknown-pragmas -Winvalid-pch -Wno-address" )
-    # env.Append( " -Wconversion" ) TODO: this doesn't really work yet
     if linux:
         env.Append( CPPFLAGS=" -pipe " )
         env.Append( CPPFLAGS=" -fno-builtin-memcmp " ) # glibc's memcmp is faster than gcc's
 
+    # make size_t as 64 bit
     env.Append( CPPDEFINES="_FILE_OFFSET_BITS=64" )
     env.Append( CXXFLAGS=" -Wnon-virtual-dtor " )
     env.Append( LINKFLAGS=" -fPIC -pthread -rdynamic" )
@@ -769,22 +611,12 @@ if nix:
     env['ENV']['HOME'] = os.environ['HOME']
     env['ENV']['TERM'] = os.environ['TERM']
 
-    if linux and has_option( "sharedclient" ):
-        env.Append( LINKFLAGS=" -Wl,--as-needed -Wl,-zdefs " )
-
     if debugBuild:
         env.Append( CPPFLAGS=" -O0 -fstack-protector " );
         env['ENV']['GLIBCXX_FORCE_NEW'] = 1; # play nice with valgrind
+        env.Append( CPPFLAGS=" -D_DEBUG" );
     else:
         env.Append( CPPFLAGS=" -O3 " )
-        #env.Append( CPPFLAGS=" -fprofile-generate" )
-        #env.Append( LINKFLAGS=" -fprofile-generate" )
-        # then:
-        #env.Append( CPPFLAGS=" -fprofile-use" )
-        #env.Append( LINKFLAGS=" -fprofile-use" )
-
-    if debugLogging:
-        env.Append( CPPFLAGS=" -D_DEBUG" );
 
     if force64:
         env.Append( CFLAGS="-m64" )
@@ -806,21 +638,9 @@ try:
 except OSError:
     pass
 
-moduleFiles = {}
-commonFiles = []
-serverOnlyFiles = []
-scriptingFiles = []
+env.Append( CPPPATH=env["EXTRACPPPATH"], LIBPATH=env["EXTRALIBPATH"])
 
-#env.Append( CPPPATH=['$EXTRACPPPATH'],
-#            LIBPATH=['$EXTRALIBPATH'] )
-env.Append( CPPPATH=env["EXTRACPPPATH"],
-	    LIBPATH=env["EXTRALIBPATH"])
-env['SEQUOIA_COMMON_FILES'] = commonFiles
-env['SEQUOIA_SERVER_ONLY_FILES' ] = serverOnlyFiles
-env['SEQUOIA_SCRIPTING_FILES'] = scriptingFiles
-env['SEQUOIA_MODULE_FILES'] = moduleFiles
 # --- check system ---
-
 def getSysInfo():
     if windows:
         return "windows " + str( sys.getwindowsversion() )
@@ -836,11 +656,6 @@ def doConfigure( myenv , shell=False ):
         if  not conf.CheckCXX():
             print( "c++ compiler not installed!" )
             Exit(1)
-
-    #if nix:
-     #   if not conf.CheckLib( "stdc++" ):
-     #       print( "can't find stdc++ library which is needed" );
-     #       Exit(1)
 
     def myCheckLib( poss , failIfNotFound=False , staticOnly=False):
 
@@ -886,51 +701,14 @@ def doConfigure( myenv , shell=False ):
         else:
             Exit(1)
 
-    # this will add it if it exists and works
-    #myCheckLib( [ "boost_system" + boostCompiler + "-mt" + boostVersion ,
-    #              "boost_system" + boostCompiler + boostVersion ] )
-
+    # check for boost libraries
     for b in boostLibs:
         l = "boost_" + b
         myCheckLib( [ l + boostCompiler + "-mt" + boostVersion ,
                       l + boostCompiler + boostVersion ] ,
                       False)
-                    #release or not shell)
     if not conf.CheckCXXHeader( "execinfo.h" ):
         myenv.Append( CPPDEFINES=[ "NOEXECINFO" ] )
-
-    myenv["_HAVEPCAP"] = myCheckLib( ["pcap", "wpcap"] )
-    removeIfInList( myenv["LIBS"] , "pcap" )
-    removeIfInList( myenv["LIBS"] , "wpcap" )
-
-    # Handle staticlib,staticlibpath options.
-    staticlibfiles = []
-    if has_option( "staticlib" ):
-        # FIXME: probably this loop ought to do something clever
-        # depending on whether we want to use 32bit or 64bit
-        # libraries.  For now, we sort of rely on the user supplying a
-        # sensible staticlibpath option. (myCheckLib implements an
-        # analogous search, but it also does other things I don't
-        # understand, so I'm not using it.)
-        if has_option ( "staticlibpath" ):
-            dirs = GetOption ( "staticlibpath" ).split( "," )
-        else:
-            dirs = [ "/usr/lib64", "/usr/lib" ]
-
-        for l in GetOption( "staticlib" ).split( "," ):
-            removeIfInList(myenv["LIBS"], l)
-            found = False
-            for d in dirs:
-                f=  "%s/lib%s.a" % ( d, l )
-                if os.path.exists( f ):
-                    staticlibfiles.append(f)
-                    found = True
-                    break
-            if not found:
-                raise RuntimeError("can't find a static %s" % l)
-
-    myenv.Append(LINKCOM=" $STATICFILES")
-    myenv.Append(STATICFILES=staticlibfiles)
 
     return conf.Finish()
 
@@ -962,7 +740,7 @@ if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
 
-shellEnv = doConfigure( shellEnv , shell=True )
+#shellEnv = doConfigure( shellEnv , shell=True )
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )
@@ -977,13 +755,6 @@ toolEnv.Append( CPPDEFINES=[ "SDB_TOOL" ] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_FMP" ] )
 fmpEnv.Append( CPPDEFINES=[ "SDB_CLIENT" ] )
 
-def checkErrorCodes():
-    import buildscripts.errorcodes as x
-    if x.checkErrorCodes() == False:
-        print( "next id to use:" + str( x.getNextCode() ) )
-        Exit(-1)
-
-#checkErrorCodes()
 #  ---- Docs ----
 def build_docs(env, target, source):
     from buildscripts import docs
@@ -1015,32 +786,6 @@ env.Alias( "style" , [] , [ doStyling ] )
 env.AlwaysBuild( "style" )
 
 
-
-#  ----  INSTALL -------
-
-def getSystemInstallName():
-    n = platform + "-" + processor
-    if static:
-        n += "-static"
-    if has_option("nostrip"):
-        n += "-debugsymbols"
-    if nix and os.uname()[2].startswith( "8." ):
-        n += "-tiger"
-
-    try:
-        findSettingsSetup()
-        import settings
-        if "distmod" in dir( settings ):
-            n = n + "-" + str( settings.distmod )
-    except:
-        pass
-
-
-    dn = GetOption( "distmod" )
-    if dn and len(dn) > 0:
-        n = n + "-" + dn
-
-    return n
 
 env['NIX_LIB_DIR'] = nixLibPrefix
 env['INSTALL_DIR'] = installDir

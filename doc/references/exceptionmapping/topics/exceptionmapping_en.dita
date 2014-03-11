@@ -1016,6 +1016,10 @@
             <stentry>wait secondary nodes sync the operation failed</stentry>
             <stentry>-252</stentry>
          </strow>
+         <strow>
+            <stentry>transaction is disabled</stentry>
+            <stentry>-253</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

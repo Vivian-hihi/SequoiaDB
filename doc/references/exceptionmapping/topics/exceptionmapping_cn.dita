@@ -673,7 +673,7 @@
             <stentry>-166</stentry>
          </strow>
          <strow>
-            <stentry>该组信息不存在</stentry>
+            <stentry>该Group信息不存在</stentry>
             <stentry>-167</stentry>
          </strow>
          <strow>
@@ -1015,6 +1015,10 @@
          <strow>
             <stentry>等待备节点同步该操作失败</stentry>
             <stentry>-252</stentry>
+         </strow>
+         <strow>
+            <stentry>未开启事务功能</stentry>
+            <stentry>-253</stentry>
          </strow>
       </simpletable>
    </body>

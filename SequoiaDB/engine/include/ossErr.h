@@ -288,4 +288,5 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_CLS_NODE_BSFAULT            -250  /**< the node is business-failures */
 #define SDB_CLS_NODE_INFO_EXPIRED       -251  /**< the node info is expired */
 #define SDB_CLS_WAIT_SYNC_FAILED        -252  /**< wait secondary nodes sync the operation failed */
+#define SDB_DPS_TRANS_DIABLED           -253  /**< transaction is disabled */
 #endif /* OSSERR_HPP_ */

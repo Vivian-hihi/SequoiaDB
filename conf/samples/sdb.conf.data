@@ -81,6 +81,6 @@ transactionon=false
 # The control strategy of data sync in ReplGroup, value enumeration: none,keepnormal,keepall, default:none.
 # syncstrategy=
 
-# Prefered replica when read request, default:A, value enum:M,S,A,1-7
-preferedreplica=A
+# Prefered instance when read request, default:A, value enum:M,S,A,1-7
+preferedinstance=A
 
