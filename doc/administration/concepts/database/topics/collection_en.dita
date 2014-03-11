@@ -23,6 +23,10 @@
             sharding.</stentry>
       </strow>
       <strow>
+        <stentry>分区类型（ShardingType）</stentry>
+        <stentry>指定集合的分区类型：范围分区（Range）或散列分区（Hash）。</stentry>
+      </strow>
+      <strow>
         <stentry>ReplSize</stentry>
         <stentry>It specifies the default  replicaiton size in the collection. If its value is less
             than 1, write request will return when one copy is written successfully. If its value is

@@ -13,7 +13,7 @@
   <ul>
     <li>Linux <p>1.解压下来的驱动开发包； </p><p>2.将压缩包中的driver目录，拷贝到开发工程目录中（建议放在第三方库目录下），并命名为sdbdriver。
             </p><p>3.将sdbdriver/include目录加入到编译头目录，并将sdbdriver/lib目录加入连接目录，并加入sdbcpp动态库，g++编译参数形式如： </p><p>
-            <codeblock>g++ main.cpp -o test -I &lt;PATH>/sdbdriver/include -L &lt;PATH>/sdbdriver/lib -lssdbcpp </codeblock>
+            <codeblock>g++ main.cpp -o test -I &lt;PATH>/sdbdriver/include -L &lt;PATH>/sdbdriver/lib -lsdbcpp </codeblock>
           </p><p>其中：PATH为sdbdriver放置路径； </p><p>4.运行程序时，用户需要将LD_LIBRARY_PATH路径指定为包含libsdbcpp.so动态库的路径。 </p><p>
             <codeblock>export LD_LIBRARY_PATH=&lt;PATH>/sdbdriver/lib </codeblock>
           </p><note>

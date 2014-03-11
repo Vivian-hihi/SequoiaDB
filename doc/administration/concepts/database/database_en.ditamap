@@ -17,6 +17,7 @@
         <topicref href="topics/aggregate_en.dita"/>
         <topicref href="topics/transaction_en.dita"/>
         <topicref href="topics/consistency_en.dita"/>
+        <topicref href="topics/dataexamples_en.dita"/>
         <topicref href="topics/read_write_en.dita"/>
     </topicref>
 </map>

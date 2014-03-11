@@ -9,7 +9,7 @@
     </p><p><b>bson::BSONObjlterator</b>：BSONObjlterator used to rtaverse BSONObj object elements.
     </p>Bson namespace type of these classes are defined as follows:<p><b>typedef bson::BSONElement be</b>; </p><p><b>typedef
       bson::BSONObj bo</b>; </p><p><b>typedef bson::BSONObjBuilder bob</b>;
-      </p><p>In addition, you can use the bo::iterator instead of PHP development environment to build <xref href="../../PHP/topics/phpenvironment_en.dita"/>BSONObjlterator。 </p></section>
+      </p><p>In addition, you can use the bo::iterator instead of PHP development environment to build BSONObjlterator。 </p></section>
     <section>
       <title>Create an objcet</title>
       <p>The following describes how to create a simple to use CPP BSON instance. For details ,see <xref href="..\..\..\..\bsoncpp\html\index.html" format="html">C++ BSON API</xref></p>

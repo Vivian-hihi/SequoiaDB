@@ -87,6 +87,22 @@
 
         </tr>
 <tr class="strow">
+          <td valign="top" headers="d2422e32" class="stentry">ShardingType</td>
+
+          <td valign="top" headers="d2422e35" class="stentry">字符串</td>
+
+          <td valign="top" headers="d2422e38" class="stentry">分区类型，在分区集合中存在。分区类型有：范围分区（Range）和散列分区（Hash）两种。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d2422e32" class="stentry">Partition</td>
+
+          <td valign="top" headers="d2422e35" class="stentry">整数</td>
+
+          <td valign="top" headers="d2422e38" class="stentry">散列分区的分区大小值，必须为2的幂。</td>
+
+        </tr>
+<tr class="strow">
           <td valign="top" headers="d2422e32" class="stentry">CataInfo</td>
 
           <td valign="top" headers="d2422e35" class="stentry">数组</td>
@@ -109,6 +125,7 @@
       <pre class="pre codeblock">{ "Name" : "foo.test", 
   "Version" : 1, 
   "ShardingKey" : { "Field1" : 1, "Field2" : -1 },
+  "ShardingType" : "range" ,
   "ReplSize": 3,
   "CataInfo" : [ 
      { "GroupID" : 1000, 

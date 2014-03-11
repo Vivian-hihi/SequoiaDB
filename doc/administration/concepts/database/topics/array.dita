@@ -8,7 +8,7 @@
     </section>
     <section><title>格式</title>
       <p>当记录中的某一字段对应多个数值是，用户可以使用数组结构存放数据。数组由“[”（左中括号）起始，至“]”（右中括号）结束，其中包含零个或多个数值。</p>
-      <codeblock>{ 字段名 : [ &lt;数值1&gt;,, &lt;数值2&gt;, &lt;数值3&gt; ... ] }</codeblock>
+      <codeblock>{ 字段名 : [ &lt;数值1&gt;, &lt;数值2&gt;, &lt;数值3&gt; ... ] }</codeblock>
     </section>
     <section><title>示例</title>
       <p>数组可以存放完全不相同的数据类型，其中每个记录以从0起始的下标表示。例如：</p>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="全量同步"/>
-<meta name="description" content="概念 在分区组内，当一个新的节点加入分区组，或者故障节点重新加入分区组，需要进行数据全量同步，以保障新的节点与现有节点之间数据的一致性。 在进行数据全量同步时有两个节点参与： 源节点 为包含有效数据的节点。主节点并不一定永远是同步的源节点。任何与主节点处于同步状态的从节点均可作为源节点进行数据同步。 目标节点 为新加入组，或重新入组的故障节点。同步时该节点下原有的数据会被废弃。 ..."/>
+<meta name="description" content="概念 在分区组内，当一个新的节点加入分区组，或者故障节点重新加入分区组，需要进行数据全量同步，以保障新的节点与现有节点之间数据的一致性。 在进行数据全量同步时有两个节点参与： 源节点 为包含有效数据的节点。主节点并不一定永远是同步的源节点。任何与主节点处于同步状态的从节点均可作为源节点进行数据同步。（目前只能主节点作为同步源节点） 目标节点 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/replset.html"/>
 <meta name="DC.Relation" scheme="URI" content="vote.html"/>
 <meta name="DC.Relation" scheme="URI" content="replicate.html"/>
@@ -47,7 +47,7 @@
         
           <dt class="dt dlterm">源节点</dt>
 
-          <dd class="dd">为包含有效数据的节点。主节点并不一定永远是同步的源节点。任何与主节点处于同步状态的从节点均可作为源节点进行数据同步。</dd>
+          <dd class="dd">为包含有效数据的节点。主节点并不一定永远是同步的源节点。任何与主节点处于同步状态的从节点均可作为源节点进行数据同步。（目前只能主节点作为同步源节点）</dd>
 
         
         

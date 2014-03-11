@@ -10,7 +10,7 @@
     <section><title>Format</title>
       <p>If there are multiple values in an array, users can store data in the format of data
         structure. Array begins with "[" and ends with "]". It contains 0 or multiple values.</p>
-      <codeblock>{ Field Name : [ &lt;Value1&gt;,, &lt;Value2&gt;, &lt;Value3&gt; ... ] }</codeblock>
+      <codeblock>{ Field Name : [ &lt;Value1&gt;, &lt;Value2&gt;, &lt;Value3&gt; ... ] }</codeblock>
     </section>
     <section><title>Sample</title>
       <p>Array can contain different data types as values. The index of elements start with 0.For

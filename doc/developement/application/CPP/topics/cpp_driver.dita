@@ -59,7 +59,7 @@ void displaySyntax ( CHAR *pCommand )
 {
    cout&lt;&lt;"Syntax:"&lt;&lt;pCommand" &lt;hostname> &lt;servicename>\
    usernamepassword"endl ;
-}</codeblock><p>在linux下，可以如下编译及链接动态链接库文件libsdbc.so:
+}</codeblock><p>在linux下，可以如下编译及链接动态链接库文件libsdbcpp.so:
             </p><codeblock>$g++ -o connect connect.cpp -I &lt;PATH&gt;/sdbdriver/include -lsdbcpp -L &lt;PATH&gt;/sdbdriver/lib  
 执行结果如下：
 $ ./connect localhost 11810 "" ""

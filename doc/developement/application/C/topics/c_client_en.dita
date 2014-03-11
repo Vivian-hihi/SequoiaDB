@@ -22,22 +22,22 @@
             database. </p><p>So in client, there are 3 Handles representing
             connection,collectionspace and collection. The other Handle represents cursor:</p><simpletable>
             <strow>
-              <stentry>Sequoiadb </stentry>
+              <stentry>sdbConnectionHandle </stentry>
               <stentry>Database instance </stentry>
               <stentry>It represents a stand-alone connection </stentry>
             </strow>
             <strow>
-              <stentry>CollectionSpace </stentry>
+              <stentry>sdbCSHandle </stentry>
               <stentry>CollectionSpace instance </stentry>
               <stentry>It represents a stand-alone collection space</stentry>
             </strow>
             <strow>
-              <stentry>DBCollection</stentry>
+              <stentry>sdbCollectionHandle</stentry>
               <stentry>Collection instance </stentry>
               <stentry>It represents a stand-alone collection</stentry>
             </strow>
             <strow>
-              <stentry>DBCursor</stentry>
+              <stentry>sdbCursorHandle</stentry>
               <stentry>Cursor instance </stentry>
               <stentry>It represents a result set of a query</stentry>
             </strow>
@@ -54,7 +54,7 @@
           </note></li>
         <li>Cluster Operation Handle<p>There are two degrees of cluster operation in
             SequoiaDB:</p><p>&nbsp;&nbsp;1) ReplicaSets</p><p>&nbsp;&nbsp;2) Data Node</p><note>
-            <p>ReplicaSet contain three tpyes:Coord ReplicaSets,Catalog ReplicaSet,Data
+            <p>ReplicaSet contain two tpyes:Catalog ReplicaSet,Data
               ReplicaSet.</p>
           </note><p>ReplicaSet instances and Data Node instances can be represented by the following
             two types of Handles.<simpletable>

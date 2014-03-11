@@ -34,7 +34,9 @@
               <li>0: preparing</li>
               <li>1: running</li>
               <li>2: paused</li>
-              <li>3: finished</li>
+              <li>3：取消</li>
+              <li>4：变更元数据</li>
+              <li>9：完成</li>
             </ul>
           </stentry>
         </strow>

@@ -66,11 +66,11 @@ SDBCM Port
 
 SequoiaDB Cluster Manager port
 
-Port [50010]:
+Port [11790]:
 
 ----------------------------------------------------------------------------</codeblock><note>Service ports of
             all servers should be the same.</note></li>
-        <li> Input port (The default port is 50010). Then affirm to install the
+        <li> Input port (The default port is 11790). Then affirm to install the
             program<p><codeblock>----------------------------------------------------------------------------
 Setup is now ready to begin installing SequoiaDB Server on your computer.
 

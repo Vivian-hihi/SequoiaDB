@@ -8,7 +8,7 @@
     </section>
     <section><title>格式</title>
       <p>时间戳的表达形式如下：</p>
-      <codeblock>{ "timestamp" : "YYYY-MM-DD-HH.mm.ss.ffffff" }</codeblock>
+      <codeblock>{ "$timestamp" : "&lt;YYYY-MM-DD-HH.mm.ss.ffffff>" }</codeblock>
     </section>
     <section><title>示例</title>
       <p>例如：</p>

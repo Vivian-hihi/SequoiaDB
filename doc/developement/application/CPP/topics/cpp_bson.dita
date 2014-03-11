@@ -9,8 +9,7 @@
           </p><p><b>bson::BSONObjlterator</b>：BSONObjlterator用来遍历BSONObj对象中的元素。
           </p>命名空间bson中定义了这些类的类型为：<p><b>typedef bson::BSONElement be</b>; </p><p><b>typedef
           bson::BSONObj bo</b>; </p><p><b>typedef bson::BSONObjBuilder bob</b>;
-        </p><p>另外，可以使用bo::iterator 代替<xref href="../../PHP/topics/phpenvironment.dita"
-        />BSONObjlterator。 </p></section>
+        </p><p>另外，可以使用bo::iterator代替BSONObjlterator。 </p></section>
     <section>
       <title>建立对象</title>
       <p>以下简单介绍如何创建用CPP BSON实例。详细内容请查阅<xref href="..\..\..\..\bsoncpp\html\index.html" format="html">C++ BSON API</xref></p>

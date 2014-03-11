@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="后台任务"/>
-<meta name="description" content="概念 后台任务是一种不阻塞前端会话的任务，并不会随着前端会话的中断而停止。 所有的后台任务都会在编目节点的SYSCAT.SYSTASKS集合中跟踪，不同类型的后台任务可能包含不同的字段。 以下字段存在于所有后台任务中： 字段名 类型 描述 JobType 整数 任务类型，分别代表： 0：数据切分 Status 整数 任务状态，分别代表： 0：准备 1：运行 2：暂停 3：结束 ..."/>
+<meta name="description" content="概念 后台任务是一种不阻塞前端会话的任务，并不会随着前端会话的中断而停止。 所有的后台任务都会在编目节点的SYSCAT.SYSTASKS集合中跟踪，不同类型的后台任务可能包含不同的字段。 以下字段存在于所有后台任务中： 字段名 类型 描述 JobType 整数 任务类型，分别代表： 0：数据切分 Status 整数 任务状态，分别代表： 0：准备 1：运行 2：暂停 3：取消 4：变更元数据 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../administration/concepts/cluster/topics/sharding.html"/>
 <meta name="DC.Relation" scheme="URI" content="SYSTASKS.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -45,19 +45,19 @@
       <p class="p">以下字段存在于所有后台任务中：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d8052e27" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d8215e27" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d8052e30" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d8215e30" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d8052e33" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d8215e33" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d8052e27" class="stentry">JobType</td>
+          <td valign="top" headers="d8215e27" class="stentry">JobType</td>
 
-          <td valign="top" headers="d8052e30" class="stentry">整数</td>
+          <td valign="top" headers="d8215e30" class="stentry">整数</td>
 
-          <td valign="top" headers="d8052e33" class="stentry">任务类型，分别代表：
+          <td valign="top" headers="d8215e33" class="stentry">任务类型，分别代表：
             <ul class="ul">
               <li class="li">0：数据切分</li>
 
@@ -67,11 +67,11 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d8052e27" class="stentry">Status</td>
+          <td valign="top" headers="d8215e27" class="stentry">Status</td>
 
-          <td valign="top" headers="d8052e30" class="stentry">整数</td>
+          <td valign="top" headers="d8215e30" class="stentry">整数</td>
 
-          <td valign="top" headers="d8052e33" class="stentry">任务状态，分别代表：
+          <td valign="top" headers="d8215e33" class="stentry">任务状态，分别代表：
             <ul class="ul">
               <li class="li">0：准备</li>
 
@@ -79,7 +79,11 @@
 
               <li class="li">2：暂停</li>
 
-              <li class="li">3：结束</li>
+              <li class="li">3：取消</li>
+
+              <li class="li">4：变更元数据</li>
+
+              <li class="li">9：完成</li>
 
             </ul>
 
@@ -87,19 +91,19 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d8052e27" class="stentry">CollectionSpace</td>
+          <td valign="top" headers="d8215e27" class="stentry">CollectionSpace</td>
 
-          <td valign="top" headers="d8052e30" class="stentry">字符串</td>
+          <td valign="top" headers="d8215e30" class="stentry">字符串</td>
 
-          <td valign="top" headers="d8052e33" class="stentry">集合空间名</td>
+          <td valign="top" headers="d8215e33" class="stentry">集合空间名</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d8052e27" class="stentry">Collection</td>
+          <td valign="top" headers="d8215e27" class="stentry">Collection</td>
 
-          <td valign="top" headers="d8052e30" class="stentry">字符串</td>
+          <td valign="top" headers="d8215e30" class="stentry">字符串</td>
 
-          <td valign="top" headers="d8052e33" class="stentry">集合名</td>
+          <td valign="top" headers="d8215e33" class="stentry">集合名</td>
 
         </tr>
 </table>

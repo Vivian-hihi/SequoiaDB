@@ -37,6 +37,16 @@
             reserve sequencing.</stentry>
         </strow>
         <strow>
+          <stentry>ShardingType</stentry>
+          <stentry>字符串</stentry>
+          <stentry>分区类型，在分区集合中存在。分区类型有：范围分区（Range）和散列分区（Hash）两种。</stentry>
+        </strow>
+        <strow>
+          <stentry>Partition</stentry>
+          <stentry>整数</stentry>
+          <stentry>散列分区的分区大小值，必须为2的幂。</stentry>
+        </strow>
+        <strow>
           <stentry>CataInfo</stentry>
           <stentry>Array</stentry>
           <stentry>Information of logical nodes of a collection. In a single sharding collection,
@@ -55,6 +65,8 @@
       <codeblock>{ "Name" : "foo.test", 
   "Version" : 1, 
   "ShardingKey" : { "Field1" : 1, "Field2" : -1 },
+  "ShardingType" : "range" ,
+  "ReplSize": 3,
   "CataInfo" : [ 
      { "GroupID" : 1000, 
        "LowBound" : { "" : MinKey, "" : MaxKey },

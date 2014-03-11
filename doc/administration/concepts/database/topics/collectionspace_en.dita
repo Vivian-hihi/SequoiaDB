@@ -25,23 +25,23 @@
        </sthead>
        <strow>
          <stentry>4096</stentry>
-         <stentry>64</stentry>
-       </strow>
-       <strow>
-         <stentry>8192</stentry>
-         <stentry>128</stentry>
-       </strow>
-       <strow>
-         <stentry>16384</stentry>
-         <stentry>256</stentry>
-       </strow>
-       <strow>
-         <stentry>32768</stentry>
          <stentry>512</stentry>
        </strow>
        <strow>
-         <stentry>65536</stentry>
+         <stentry>8192</stentry>
          <stentry>1024</stentry>
+       </strow>
+       <strow>
+         <stentry>16384</stentry>
+         <stentry>2048</stentry>
+       </strow>
+       <strow>
+         <stentry>32768</stentry>
+         <stentry>4096</stentry>
+       </strow>
+       <strow>
+         <stentry>65536</stentry>
+         <stentry>8192</stentry>
        </strow>
      </simpletable>
     </section>

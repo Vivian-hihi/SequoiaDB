@@ -9,7 +9,7 @@
     </section>    
     <section>
       <title>BSON库API</title>
-      <p>SequoiaDB数据库C#驱动使用了MongoDB的BSON库，详细介绍可以参照MongoDB官方文档：<xref href="http://docs.mongodb.org/ecosystem/tutorial/use-csharp-driver/#the-bson-library"></xref></p>
+      <p>SequoiaDB数据库的C#驱动使用了第三方公司MongoDB提供的C# BSON库，详细介绍可以参照MongoDB官方文档：<xref href="http://docs.mongodb.org/ecosystem/tutorial/use-csharp-driver/#the-bson-library"></xref></p>
     </section>
     <section>
       <title>Visual Studio版本支持</title>      

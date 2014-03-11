@@ -51,42 +51,42 @@
 <p class="p">  1）数据库</p>
 <p class="p">   2）集合空间</p>
 <p class="p">   3）集合
-            </p>
-<p class="p">每一个数据库中的集合空间没有物理上限，每个集合空间在单系统内存放为一个单独的文件，因此集合空间的数量取决于磁盘和内存的大小。每个集合空间可以包含最多4096个集合。每个集合可以包含多条记录。在一台物理系统内，每个集合空间最大256GB。对比关系型数据库，可以把记录看作关系型数据库的“行”；把集合看作关系型数据库的“表”。因此，在数据库操作中，可用3个句柄分别代表连接、集合空间、对象，另1个句柄代表游标： </p>
+        </p>
+<p class="p">每一个数据库中的集合空间没有物理上限，每个集合空间在单系统内存放为一个单独的文件，因此集合空间的数量取决于磁盘和内存的大小。每个集合空间可以包含最多4096个集合。每个集合可以包含多条记录。在一台物理系统内，每个集合空间最大256GB。对比关系型数据库，可以把记录看作关系型数据库的“行”；把集合看作关系型数据库的“表”。因此，在数据库操作中，可用3个句柄分别代表连接、集合空间、集合，另1个句柄代表游标： </p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-              <td valign="top" class="stentry">Sequoiadb </td>
+              <td valign="top" class="stentry">sdbConnectionHandle </td>
 
-              <td valign="top" class="stentry">数据库实例 </td>
+              <td valign="top" class="stentry">数据库连接句柄 </td>
 
               <td valign="top" class="stentry">代表一个单独的数据库连接 </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">CollectionSpace </td>
+              <td valign="top" class="stentry">sdbCSHandle </td>
 
-              <td valign="top" class="stentry">集合空间实例 </td>
+              <td valign="top" class="stentry">集合空间句柄 </td>
 
               <td valign="top" class="stentry">代表一个单独的集合空间 </td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">DBCollection</td>
+              <td valign="top" class="stentry">sdbCollectionHandle</td>
 
-              <td valign="top" class="stentry">集合实例</td>
+              <td valign="top" class="stentry">集合句柄</td>
 
               <td valign="top" class="stentry">代表一个单独的集合</td>
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">DBCursor</td>
+              <td valign="top" class="stentry">sdbCursorHandle</td>
 
-              <td valign="top" class="stentry">游标实例</td>
+              <td valign="top" class="stentry">游标句柄</td>
 
               <td valign="top" class="stentry">代表一个查询产生的结果集</td>
 
             </tr>
 </table>
-<p class="p">C客户端程序需要使用不同的句柄进行操作。譬如读取数据的操作需要游标句柄，而创建表空间则需要数据库连接句柄。</p>
+<p class="p">C客户端程序需要使用不同的句柄进行操作。譬如读取数据的操作需要游标句柄，而创建集合空间则需要数据库连接句柄。</p>
 <div class="note note"><span class="notetitle">Note:</span> 
             <div class="p">
               <ul class="ul">
@@ -107,7 +107,7 @@
 <p class="p">  1）分区组 </p>
 <p class="p">  2）数据节点 </p>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">分区组包三种类型：协调分区组、编目分区组、数据分区组。</p>
+          <p class="p">分区组包二种类型：编目分区组、数据分区组。</p>
 
           </div>
 <p class="p">分区组实例和数据节点实例可以用以下两类句柄表示。</p>

@@ -23,7 +23,7 @@
         </strow>
         <strow>
           <stentry>options</stentry>
-          <stentry>选项</stentry>
+          <stentry>Json对象</stentry>
           <stentry>在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。</stentry>
           <stentry>否</stentry>
         </strow>
@@ -42,27 +42,32 @@
         <strow>
           <stentry>ShardingKey</stentry>
           <stentry>分区键。 </stentry>
-          <stentry>{ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]}}   </stentry>
+          <stentry>ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]} </stentry>
         </strow>
         <strow>
           <stentry>ShardingType</stentry>
           <stentry>分区方式，默认为range分区。</stentry>
-          <stentry>{ShardingType:"hash"|"range"}</stentry>
+          <stentry>ShardingType:"hash"|"range"</stentry>
         </strow>
         <strow>
           <stentry>Partition</stentry>
           <stentry>分区数，hash分区时填写，代表了hash分区的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </stentry>
-          <stentry>{Partition:&lt;分区数>]}</stentry>
+          <stentry>Partition:&lt;分区数>]</stentry>
         </strow>
         <strow>
           <stentry>ReplSize</stentry>
           <stentry>副本数，默认情况下，副本写入个数为1。</stentry>
-          <stentry>{ReplSize:&lt;int num>}</stentry>
+          <stentry>ReplSize:&lt;int num></stentry>
         </strow>
         <strow>
           <stentry>Compressed</stentry>
           <stentry>数据压缩。</stentry>
-          <stentry>{Compressed:true|false}</stentry>
+          <stentry>Compressed:true|false</stentry>
+        </strow>
+        <strow>
+          <stentry>IsMainCL</stentry>
+          <stentry>主分区集合。标识是否为主分区集合，默认为否</stentry>
+          <stentry>IsMainCL:true|false</stentry>
         </strow>
       </simpletable></p>
       <p>创建集合的格式为：<codeblock>{"name":"&lt;集合名>",[options]} </codeblock></p>

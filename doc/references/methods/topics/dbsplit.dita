@@ -3,9 +3,8 @@
 <topic id="references_method_split">
   <title>db.collectionspace.collection.split()</title>
   <body>
-    <section><title>db.collectionspace.collection.split(&lt;source group>,&lt;target
-        group>,&lt;condition>|&lt;percent(0~100)>)</title>
-      <p>在至少存在两个分区组的环境下，将数据记录按指定的条件切分到不同的分区组中。</p>
+    <section><title>db.collectionspace.collection.split(&lt;source group>,&lt;target group>,&lt;percent(0~100)|&lt;condition>, [endcondition])</title>
+      <p>在至少存在两个分区组的环境下，将数据记录按指定的条件切分到不同的分区组中。该操作为同步操作，直到数据切分完成才返回。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.06* 4.35* 2.09*"
@@ -40,12 +39,17 @@
           <stentry>百分比切分条件。</stentry>
           <stentry>condition和percent二选一</stentry>
         </strow>
-      </simpletable>
-      
+        <strow>
+          <stentry>endcondition</stentry>
+          <stentry>json对象</stentry>
+          <stentry>结束范围条件。</stentry>
+          <stentry>可选，且只在按条件切分时有效，按百分比切分时无效</stentry>
+        </strow>
+      </simpletable>      
     </section>
     <section><title>格式</title>
       <p>数据切分分为范围切分和百分比切分，其中“source group”和“target
-        group”是公共参数，都是字符串类型；参数condition为范围切分时填入，是一个json结构的对象；参数percent为百分比切分时填入，是一个双精度浮点型数值。</p>
+        group”是公共参数，都是字符串类型；参数condition和endcondition为范围切分时填入，是一个json结构的对象；参数percent为百分比切分时填入，是一个双精度浮点型数值。</p>
       <ul>
         <li>范围切分<p>范围切分时，Range分区使用精确条件，而Hash分区使用
             Partition（分区数）条件。切分时起始条件为必填字段，而结束条件为选填条件，结束条件默认为切分源当前包含的最大数据范围。<codeblock>("&lt;源分区组>","&lt;目标分区组>"，&lt;condition>|&lt;Partition>) </codeblock>
@@ -57,7 +61,7 @@
     <section><title>示例</title>
       <ul>
         <li>Hash分区范围切分<codeblock>db.foo.bar.split("group1", "group2",{Partition:10},{Partition:20}) </codeblock></li>
-        <li>Range分区范围切分<codeblock>db.foo.bar.split("group1", "group2",{$and:[{a:{$lt:10}},{b:{$lt:20}}]})</codeblock></li>
+        <li>Range分区范围切分<codeblock>db.foo.bar.split("group1", "group2",{a:10}, {a:10000})</codeblock></li>
         <li>百分比切分<codeblock>db.foo.bar.split("group1", "group2", 50) </codeblock>
           <note>百分比切分时，需要保证源分区组中含有数据，即集合不为空。</note></li>
       </ul>

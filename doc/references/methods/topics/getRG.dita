@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_createRG">
-  <title>db.getShard()</title>
+  <title>db.getRG()</title>
   <body>
-    <section><title>db.getShard(&lt;name>|&lt;id>)</title>
-      <p>返回分片组的引用。</p>
+    <section><title>db.getRG(&lt;name>|&lt;id>)</title>
+      <p>返回分区组的引用。</p>
     </section>
     <section><title>参数描述</title>
       <simpletable><!-- frame="all" relcolwidth="1.0* 1.11* 5.31* 1.53*"
@@ -18,32 +18,32 @@
         <strow>
           <stentry>name</stentry>
           <stentry>string</stentry>
-          <stentry>分片组名。同一个数据库对象中，分片组名唯一。</stentry>
+          <stentry>分区组名。同一个数据库对象中，分区组名唯一。</stentry>
           <stentry>name和id任选</stentry>
         </strow>
         <strow>
           <stentry>id</stentry>
           <stentry>int</stentry>
-          <stentry>分片组id。创建分组时系统自动分配。</stentry>
+          <stentry>分区组id。创建分区组时系统自动分配。</stentry>
           <stentry>name和id任选</stentry>
         </strow>
       </simpletable>
       
     </section>
     <section><title>格式</title>
-      <p>getShard()方法定于格式包含name或id字段，name为字符串型，id为int型。 指定的分组名或id值要在数据库对象中存在，否则出现操作异常。 </p>
-      <p><codeblock>("&lt;分片组名>"|&lt;id>)</codeblock></p>
+      <p>getRG()方法定于格式包含name或id字段，name为字符串型，id为int型。指定的分区组名或id值要在数据库对象中存在，否则出现操作异常。 </p>
+      <p><codeblock>("&lt;分区组名>"|&lt;id>)</codeblock></p>
       <note>
         <ul><li>name字段的值不能使空串、含点（.），或者美元符号（$）。且长度不超过127B。</li></ul>
       </note>
     </section>
     <section><title>示例</title>
       <ul>
-        <li><p>指定name值，返回分片组shard的引用</p>
-         <p><codeblock>db.getShard("shard")</codeblock></p></li>
+        <li><p>指定name值，返回分区组rg1的引用</p>
+         <p><codeblock>db.getRG("rg1")</codeblock></p></li>
         <li>
-          <p>指定id值，返回分片组shard的引用</p>
-          <p><codeblock>db.getShard(1000)</codeblock></p>
+          <p>指定id值，返回分区组rg1的引用</p>
+          <p><codeblock>db.getRG(1000)</codeblock></p>
         </li>
         
       </ul>

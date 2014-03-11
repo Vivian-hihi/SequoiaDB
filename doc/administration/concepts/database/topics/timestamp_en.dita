@@ -9,7 +9,7 @@
     </section>
     <section><title>Format</title>
       <p>The format of timeline is：</p>
-      <codeblock>{ "timestamp" : "YYYY-MM-DD-HH.mm.ss.ffffff" }</codeblock>
+      <codeblock>{ "$timestamp" : "&lt;YYYY-MM-DD-HH.mm.ss.ffffff>" }</codeblock>
     </section>
     <section><title>Sample</title>
       <p>For example：</p>

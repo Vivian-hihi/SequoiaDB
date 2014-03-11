@@ -122,6 +122,8 @@
                         <file name="administration/concepts/database/topics/database.dita"/>
                         <file name="administration/concepts/database/topics/databaseserver_en.dita"/>
                         <file name="administration/concepts/database/topics/databaseserver.dita"/>
+                        <file name="administration/concepts/database/topics/dataexamples_en.dita"/>
+                        <file name="administration/concepts/database/topics/dataexamples.dita"/>
                         <file name="administration/concepts/database/topics/date_en.dita"/>
                         <file name="administration/concepts/database/topics/date.dita"/>
                         <file name="administration/concepts/database/topics/document_en.dita"/>
@@ -778,6 +780,9 @@
                 <folder name="images"/>
                 <folder name="tasks"/>
                 <folder name="topics">
+                    <file name="references/methods/topics/attachCL.dita"/>
+                    <file name="references/methods/topics/backupoffline.dita"/>
+                    <file name="references/methods/cancelTask.dita"/>
                     <file name="references/methods/topics/ccurrent_en.dita"/>
                     <file name="references/methods/topics/ccurrent.dita"/>
                     <file name="references/methods/topics/climit_en.dita"/>
@@ -820,6 +825,7 @@
                     <file name="references/methods/topics/dbupdate.dita"/>
                     <file name="references/methods/topics/deleteCurrent_en.dita"/>
                     <file name="references/methods/topics/deleteCurrent.dita"/>
+                    <file name="references/methods/topics/detachCL.dita"/>
                     <file name="references/methods/topics/dropCL_en.dita"/>
                     <file name="references/methods/topics/dropCL.dita"/>
                     <file name="references/methods/topics/dropCS_en.dita"/>
@@ -835,6 +841,7 @@
                     <file name="references/methods/topics/execUpdate_en.dita"/>
                     <file name="references/methods/topics/execUpdate.dita"/>
                     <file name="references/methods/topics/find.dita"/>
+                    <file name="references/methods/flushConfigure.dita"/>
                     <file name="references/methods/topics/getCL_en.dita"/>
                     <file name="references/methods/topics/getCL.dita"/>
                     <file name="references/methods/topics/getCS_en.dita"/>
@@ -859,6 +866,7 @@
                     <file name="references/methods/topics/getSlave.dita"/>
                     <file name="references/methods/topics/hint_en.dita"/>
                     <file name="references/methods/topics/hint.dita"/>
+                    <file name="references/methods/listBackup.dita"/>
                     <file name="references/methods/topics/listCollections_en.dita"/>
                     <file name="references/methods/topics/listCollections.dita"/>
                     <file name="references/methods/topics/listCollectionSpaces_en.dita"/>
@@ -869,6 +877,7 @@
                     <file name="references/methods/topics/listProcedures.dita"/>
                     <file name="references/methods/topics/listReplicaGroups_en.dita"/>
                     <file name="references/methods/topics/listReplicaGroups.dita"/>
+                    <file name="references/methods/listTasks.dita"/>
                     <file name="references/methods/topics/methodlist_en.dita"/>
                     <file name="references/methods/topics/methodlist.dita"/>
                     <file name="references/methods/topics/next_en.dita"/>
@@ -881,6 +890,7 @@
                     <file name="references/methods/topics/nodestop.dita"/>
                     <file name="references/methods/topics/remove_en.dita"/>
                     <file name="references/methods/topics/remove.dita"/>
+                    <file name="references/methods/removeBackup.dita"/>
                     <file name="references/methods/topics/removenode_en.dita"/>
                     <file name="references/methods/topics/removenode.dita"/>
                     <file name="references/methods/topics/removeProcedures_en.dita"/>
@@ -895,6 +905,8 @@
                     <file name="references/methods/topics/rgstart.dita"/>
                     <file name="references/methods/topics/rgstop_en.dita"/>
                     <file name="references/methods/topics/rgstop.dita"/>
+                    <file name="references/methods/setSessionAttr.dita"/>
+                    <file name="references/methods/topics/splitAsync.dita"/>
                     <file name="references/methods/topics/startRG_en.dita"/>
                     <file name="references/methods/topics/startRG.dita"/>
                     <file name="references/methods/topics/toArray_en.dita"/>
@@ -915,6 +927,7 @@
                     <file name="references/methods/topics/updateCurrent.dita"/>
                     <file name="references/methods/topics/upsert_en.dita"/>
                     <file name="references/methods/topics/upsert.dita"/>
+                    <file name="references/methods/waitTasks.dita"/>
                 </folder>
                 <file name="references/methods/methodlist_en.ditamap"/>
                 <file name="references/methods/methodlist.ditamap"/>

@@ -33,7 +33,9 @@
               <li>0：准备</li>
               <li>1：运行</li>
               <li>2：暂停</li>
-              <li>3：结束</li>
+              <li>3：取消</li>
+              <li>4：变更元数据</li>
+              <li>9：完成</li>
             </ul>
           </stentry>
         </strow>
@@ -61,27 +63,27 @@
         <strow>
           <stentry>SourceName</stentry>
           <stentry>字符串</stentry>
-          <stentry>源分区组名</stentry>
+          <stentry>源分区所在复制组名</stentry>
         </strow>
         <strow>
           <stentry>TargetName</stentry>
           <stentry>字符串</stentry>
-          <stentry>目标分区组名</stentry>
+          <stentry>目标分区所在复制组名</stentry>
         </strow>
         <strow>
           <stentry>SourceID</stentry>
           <stentry>整数</stentry>
-          <stentry>源分区组ID</stentry>
+          <stentry>源分区所在复制组ID</stentry>
         </strow>
         <strow>
           <stentry>TargetID</stentry>
           <stentry>整数</stentry>
-          <stentry>目标分区组ID</stentry>
+          <stentry>目标分区所在复制组ID</stentry>
         </strow>
         <strow>
           <stentry>SplitValue</stentry>
           <stentry>对象</stentry>
-          <stentry>数据切分键</stentry>
+          <stentry>数据分区键</stentry>
         </strow>
       </simpletable>
     </section>

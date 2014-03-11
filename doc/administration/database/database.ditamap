@@ -32,7 +32,7 @@
      <topicref href="topics/log.dita">
          <topicref href="topics/synlog.dita"/>
      </topicref>
-     <topicref href="topics/backup_recovery.dita">
+     <!--<topicref href="topics/backup_recovery.dita">
          <topicref href="../database/data_backup/data_backup.dita">
              <topicref href="../database/data_backup/confi_backup.dita">
                  <topicref href="../database/data_backup/confi_standalone.dita"/>
@@ -51,7 +51,7 @@
              <topicref href="../database/data_recovery/cluster.dita"/>
              <topicref href="../database/data_recovery/sample.dita"/>
          </topicref>
-     </topicref>
+     </topicref>-->
      <topicref href="database_tool/topics/database_tool.dita">
          <topicref href="database_tool/topics//import.dita"/>
          <topicref href="database_tool/topics/export.dita"/>

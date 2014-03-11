@@ -17,7 +17,7 @@
       <ul>
         <li>连接数据库和身份验证
                         <p>若数据库没有创建用户，则可以匿名连接到数据库：</p><codeblock>string addr = "127.0.0.1:11810";
-Sequoiadb sdb = newSequoiadb(addr);
+Sequoiadb sdb = new Sequoiadb(addr);
 try
 {
     sdb.Connect();
@@ -31,7 +31,7 @@ catch (System.Exception e)
 {
     Console.WriteLine(e.StackTrace);
 }</codeblock><p>否则，连接的时候必须指定用户名和密码：</p><codeblock>string addr = "127.0.0.1:11810";
-Sequoiadb sdb = newSequoiadb(addr);
+Sequoiadb sdb = new Sequoiadb(addr);
 try
 {
     sdb.Connect("testusr", "testpwd");
@@ -63,19 +63,19 @@ dbc = cs.CreateCollection(clName);
 //or cs.createCollection(collectionName, options), create collection with some options</codeblock>
         </li>
         <li>对Collection进行插入操作 <p>创建需要插入的数据BsonDocument并插入：</p>
-          <codeblock>BsonDocument insertor = newBsonDocument();
+                    <codeblock>BsonDocument insertor = new BsonDocument();
 string date = DateTime.Now.ToString();
 insertor.Add("operation", "Insert");
 insertor.Add("date", date);
-ObjectId id = dbc.Insert(insertor);
-           </codeblock><p>当然，BsonDocument中还可以嵌套BsonDocument对象；而且你还可以直接new一个完整的BsonDocument，而不需要通过Add方法：</p><codeblock>BsonDocumentinsertor = newBsonDocument
+ObjectId id = dbc.Insert(insertor);</codeblock>
+            <p>当然，BsonDocument中还可以嵌套BsonDocument对象；而且你还可以直接new一个完整的BsonDocument，而不需要通过Add方法：</p><codeblock>BsonDocumentinsertor = new BsonDocument
 {
     {"FirstName","John"},
     {"LastName","Smith"},
     {"Age",50},
     {"id",i},
     {"Address",
-        newBsonDocument
+        new BsonDocument
         {
             {"StreetAddress","212ndStreet"},
             {"City","NewYork"},
@@ -84,7 +84,7 @@ ObjectId id = dbc.Insert(insertor);
         }
     },
     {"PhoneNumber",
-        newBsonDocument
+        new BsonDocument
         {
             {"Type","Home"},
             {"Number","212555-1234"}
@@ -93,18 +93,18 @@ ObjectId id = dbc.Insert(insertor);
 };
 插入多条数据：
 //bulkinsert
-List&lt;BsonDocument> insertor=newList &lt;BsonDocument> ();
+List&lt;BsonDocument> insertor=new List &lt;BsonDocument> ();
 for(inti=0;i&lt;10;i++)
 {
-    BsonDocumentobj=newBsonDocument();
+    BsonDocumentobj=new BsonDocument();
     obj.Add("operation","BulkInsert");
     obj.Add("date",DateTime.Now.ToString());
     insertor.Add(obj);
 }
 dbc.BulkInsert(insertor,0);</codeblock></li>
         <li>索引的相关操作
-          <p>创建索引：</p><codeblock>//createindexkey,indexonattribute'Id'byASC(1)/DESC(-1)
-BsonDocument key = newBsonDocument();
+                        <p>创建索引：</p><codeblock>//createindexkey,indexonattribute'Id'byASC(1)/DESC(-1)
+BsonDocument key = new BsonDocument();
 key.Add("id", 1);
 string name = "index name";
 bool isUnique = true;
@@ -112,36 +112,36 @@ bool isEnforced = true;
 dbc.CreateIndex(name, key, isUnique, isEnforced);</codeblock><p>删除索引：</p><codeblock>string name = "index name";
 dbc.DropIndex(name);</codeblock></li>
         <li>查询操作 <p>进行查询操作，需要使用游标对查询结果进行遍历，而且可以先得到当前Collection的索引，如果不为空，可作为制定访问计划（hint）用于查询：
-        </p><codeblock>DBCursor icursor = dbc.GetIndex(name);
+                        </p><codeblock>DBCursor icursor = dbc.GetIndex(name);
 BsonDocument index = icursor.Current();   </codeblock><p>
-  构建相应的BsonDocument对象用于查询，包括：查询匹配规则（matcher，包含相应的查询条件）、域选择（selector）、排序规则（orderBy，增序或降序）、制定访问计划（hint）、跳过记录个数（0），返回记录个数（-1：返回所有数据）。
-查询后，得到对应的Cursor，用于遍历查询得到的结果：</p><codeblock>BsonDocument matcher = newBsonDocument();
-BsonDocument conditon = newBsonDocument();
+                        构建相应的BsonDocument对象用于查询，包括：查询匹配规则（matcher，包含相应的查询条件）、域选择（selector）、排序规则（orderBy，增序或降序）、制定访问计划（hint）、跳过记录个数（0），返回记录个数（-1：返回所有数据）。
+                        查询后，得到对应的Cursor，用于遍历查询得到的结果：</p><codeblock>BsonDocument matcher = new BsonDocument();
+BsonDocument conditon = new BsonDocument();
 conditon.Add("$gte", 0);
 conditon.Add("$lte", 9);
 matcher.Add("id", conditon);
-BsonDocument selector = newBsonDocument();
+BsonDocument selector = new BsonDocument();
 selector.Add("id", null);
 selector.Add("Age", null);
-BsonDocument orderBy = newBsonDocument();
+BsonDocument orderBy = new BsonDocument();
 orderBy.Add("id", -1);
 BsonDocument hint = null;
 if (index != null)
     hint = index;
 else
-    hint = newBsonDocument();
+    hint = new BsonDocument();
 DBCursor cursor = dbc.Query(matcher, selector, orderBy, hint, 0, -1);    </codeblock><p>使用DBCursor游标进行遍历：</p><codeblock>while (cursor.Next() != null)
 Console.WriteLine(cursor.Current());</codeblock></li>
         <li>删除操作
-          <p>构建相应的BsonDocument对象，用于设置删除的条件：</p><codeblock>//createthedeletecondition
-BsonDocument drop = newBsonDocument();
+                    <p>构建相应的BsonDocument对象，用于设置删除的条件：</p><codeblock>//createthedeletecondition
+BsonDocument drop = new BsonDocument();
 drop.Add("Last Name", "Smith");
 coll.Delete(drop);</codeblock></li>
         <li>更新操作
-          <p>构建相应的BsonDocument对象，用于设置更新条件，你还可以创建DBQuery对象封装所有的查询或更新规则：</p><codeblock>DBQuery query = newDBQuery();
-BsonDocument updater = newBsonDocument();
-BsonDocument matcher = newBsonDocument();
-BsonDocument modifier = newBsonDocument();
+                        <p>构建相应的BsonDocument对象，用于设置更新条件，你还可以创建DBQuery对象封装所有的查询或更新规则：</p><codeblock>DBQuery query = new DBQuery();
+BsonDocument updater = new BsonDocument();
+BsonDocument matcher = new BsonDocument();
+BsonDocument modifier = new BsonDocument();
 updater.Add("Age", 25);
 modifier.Add("$set", updater);
 matcher.Add("First Name", "John");

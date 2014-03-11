@@ -3,8 +3,7 @@
 <topic id="references_method_split">
   <title>db.collectionspace.collection.split()</title>
   <body>
-    <section><title>db.collectionspace.collection.split(&lt;source shard>,&lt;target
-        shard>,&lt;condition>|&lt;percent(0~100)>)</title>
+    <section><title>db.collectionspace.collection.split(&lt;source group>,&lt;target group>,&lt;percent(0~100)|&lt;condition>, [endcondition])</title>
       <p>At least two sharding groups environment,the data records will be cut into different
         sharding group according to the specified conditions.</p>
     </section>
@@ -41,12 +40,18 @@
           <stentry>percent split condition</stentry>
           <stentry>condition or percent</stentry>
         </strow>
+        <strow>
+          <stentry>endcondition</stentry>
+          <stentry>json对象</stentry>
+          <stentry>结束范围条件。</stentry>
+          <stentry>可选，且只在按条件切分时有效，按百分比切分时无效</stentry>
+        </strow>
       </simpletable>
       
     </section>
     <section><title>Format</title>
       <p>Data spliting is divided into range-spliting and percent-spliting,"source shard" and
-        "target shard"are common params,and are string type;the param "condition" is filled when
+        "target shard"are common params,and are string type;the param "condition" and "endconditionis" filled when
         range spliting,it is a object of json structure;param "percent" is filled when
         percent-spliting,it is a int type.</p>
       <ul>
@@ -64,7 +69,7 @@
         <li>Range-spliting of Hash Sharding
           <codeblock>db.foo.bar.split("shard1", "shard2",{Partition:10},{Partition:20}) </codeblock></li>
         <li>Range-spliting of Range
-          Sharding<codeblock>db.foo.bar.split("shard1", "shard2",{$and:[{a:{$lt:10}},{b:{$lt:20}}]})</codeblock></li>
+          Sharding<codeblock>db.foo.bar.split("shard1", "shard2",{a:10}, {a:10000})</codeblock></li>
         <li>Percent-spliting<codeblock>db.foo.bar.split("shard1", "shard2", 50) </codeblock></li>
       </ul>
     </section>
