@@ -734,13 +734,13 @@ fmpEnv = env.Clone() ;
 if release and ( linux64 ):
     shellEnv["LINKFLAGS"] = env["LINKFLAGS_CLEAN"]
     shellEnv["LIBS"] = env["LIBS_CLEAN"]
-    shellEnv["SLIBS"] = ""
+    #shellEnv["SLIBS"] = ""
 
 if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
 
-shellEnv = doConfigure( shellEnv , shell=True )
+#shellEnv = doConfigure( shellEnv , shell=True )
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )
