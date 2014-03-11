@@ -93,7 +93,7 @@ INT32 selectGroup ( sdb *connection,
                     const CHAR *groupName )
 {
    INT32 rc = SDB_OK ;
-   rc = connection->createReplicaGroup ( groupName, **group ) ;
+   rc = connection->getReplicaGroup ( groupName, **group ) ;
    if ( SDB_CLS_GRP_NOT_EXIST == rc )
    {
       rc = connection->createReplicaGroup ( groupName, **group ) ;
