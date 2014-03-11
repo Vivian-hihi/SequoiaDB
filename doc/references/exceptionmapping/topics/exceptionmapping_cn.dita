@@ -1020,6 +1020,10 @@
             <stentry>未开启事务功能</stentry>
             <stentry>-253</stentry>
          </strow>
+         <strow>
+            <stentry>连接池已满</stentry>
+            <stentry>-254</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

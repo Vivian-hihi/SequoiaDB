@@ -18,7 +18,7 @@ var searchData=
   ['bsonfieldvalue',['BSONFieldValue',['../classbson_1_1BSONFieldValue.html',1,'bson']]],
   ['bsonmisc_2eh',['bsonmisc.h',['../bsonmisc_8h.html',1,'']]],
   ['bsonobj',['BSONObj',['../classbson_1_1BSONObj.html',1,'bson']]],
-  ['bsonobj',['BSONObj',['../classbson_1_1BSONObj.html#a7467fa1b2d8ee3fbf76f14fa087ee7f4',1,'bson::BSONObj::BSONObj(const char *msgdata)'],['../classbson_1_1BSONObj.html#ae6e1d59fd67de2893b3bd2f8ed7fd642',1,'bson::BSONObj::BSONObj(Holder *holder)'],['../classbson_1_1BSONObj.html#a759f68fe17d400745a88444e9374fa2b',1,'bson::BSONObj::BSONObj()']]],
+  ['bsonobj',['BSONObj',['../classbson_1_1BSONObj.html#a3cf9eddbadc11ecdf95dab8eba1e2aa1',1,'bson::BSONObj::BSONObj(const char *msgdata, bool check=true)'],['../classbson_1_1BSONObj.html#ae6e1d59fd67de2893b3bd2f8ed7fd642',1,'bson::BSONObj::BSONObj(Holder *holder)'],['../classbson_1_1BSONObj.html#a759f68fe17d400745a88444e9374fa2b',1,'bson::BSONObj::BSONObj()']]],
   ['bsonobj_2eh',['bsonobj.h',['../bsonobj_8h.html',1,'']]],
   ['bsonobjbuilder',['BSONObjBuilder',['../classbson_1_1BSONObjBuilder.html',1,'bson']]],
   ['bsonobjbuilder',['BSONObjBuilder',['../classbson_1_1BSONObjBuilder.html#ae2f1343bdfc08f5363cfda0d5ee9f1b2',1,'bson::BSONObjBuilder::BSONObjBuilder(int initsize=512)'],['../classbson_1_1BSONObjBuilder.html#aceb535385f23b2aa19eeeedbd577db7c',1,'bson::BSONObjBuilder::BSONObjBuilder(BufBuilder &amp;baseBuilder)']]],

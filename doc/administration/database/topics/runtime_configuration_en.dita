@@ -148,6 +148,54 @@
              2. If it is not specifed, the default value is false.</stentry>
 				</strow>
 				<strow>
+					<stentry>--numpreload</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>number of page pre-loaders, default:0, value range:[0,100]</stentry>
+				</strow>
+				<strow>
+					<stentry>--maxprefpool</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>maximum number of prefetchers, default:200, value range:[0,1000]</stentry>
+				</strow>
+				<strow>
+					<stentry>--maxsubquery</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>maximum number of query&apos;s sub-query, default:10, min value is 0, max value can&apos;t more than param &apos;maxprefpool&apos;</stentry>
+				</strow>
+				<strow>
+					<stentry>--maxreplsync</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>maximum number of repl-sync, default:10, value range:[0, 200], 0:disable concurrent repl-sync</stentry>
+				</strow>
+				<strow>
+					<stentry>--logbuffsize</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>the replica-log&apos;s memory page number,default is 1024, value range:[512,1024000], but total log memory size can&apos;t more than all log file size; a page size is 64KB</stentry>
+				</strow>
+				<strow>
+					<stentry>--tmppath</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>The temp path of db, default is &apos;dbpath&apos;+&apos;/tmp&apos;</stentry>
+				</strow>
+				<strow>
+					<stentry>--sortbuf</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>size of the sorting buf(MB), default:512, min value:128</stentry>
+				</strow>
+				<strow>
+					<stentry>--hjbuf</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>size of the hash join buf(MB), default:128, min value:64</stentry>
+				</strow>
+				<strow>
 					<stentry>--syncstrategy</stentry>
 					<stentry>--</stentry>
 					<stentry>str</stentry>

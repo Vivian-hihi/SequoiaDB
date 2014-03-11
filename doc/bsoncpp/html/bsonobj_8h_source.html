@@ -130,13 +130,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="preprocessor"></span>    <span class="keyword">public</span>:</div>
 <div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="keyword">class </span><a class="code" href="classbson_1_1BSONObj_1_1Holder.html">Holder</a>;</div>
-<div class="line"><a name="l00097"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObj.html#a7467fa1b2d8ee3fbf76f14fa087ee7f4">   97</a></span>&#160;        <span class="keyword">explicit</span> <a class="code" href="classbson_1_1BSONObj.html#a7467fa1b2d8ee3fbf76f14fa087ee7f4" title="Construct a BSONObj from data in the proper format.">BSONObj</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *msgdata) {</div>
+<div class="line"><a name="l00097"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObj.html#a3cf9eddbadc11ecdf95dab8eba1e2aa1">   97</a></span>&#160;        <span class="keyword">explicit</span> <a class="code" href="classbson_1_1BSONObj.html#a3cf9eddbadc11ecdf95dab8eba1e2aa1" title="Construct a BSONObj from data in the proper format.">BSONObj</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *msgdata, <span class="keywordtype">bool</span> check=<span class="keyword">true</span>) {</div>
 <div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;          <span class="comment">//_holder = NULL ;</span></div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;          <a class="code" href="classbson_1_1BSONObj.html#a1d99fd3a001517eb6038e97cd79f6f83" title="initialize from existing buffer">init</a>(msgdata);</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;          <a class="code" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889" title="initialize from existing buffer">init</a>(msgdata, check);</div>
 <div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        }</div>
 <div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
 <div class="line"><a name="l00106"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObj.html#ae6e1d59fd67de2893b3bd2f8ed7fd642">  106</a></span>&#160;        <span class="keyword">explicit</span> <a class="code" href="classbson_1_1BSONObj.html#ae6e1d59fd67de2893b3bd2f8ed7fd642" title="Construct a BSONObj from data in the proper format.">BSONObj</a>(<a class="code" href="classbson_1_1BSONObj_1_1Holder.html">Holder</a>* holder) {</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;            <a class="code" href="classbson_1_1BSONObj.html#a1d99fd3a001517eb6038e97cd79f6f83" title="initialize from existing buffer">init</a>(holder);</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;            <a class="code" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889" title="initialize from existing buffer">init</a>(holder);</div>
 <div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        }</div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
 <div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;        <a class="code" href="classbson_1_1BSONObj.html#a759f68fe17d400745a88444e9374fa2b" title="Construct an empty BSONObj – that is, {}.">BSONObj</a>();</div>
@@ -376,9 +376,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00504"></a><span class="lineno">  504</span>&#160;        };</div>
 <div class="line"><a name="l00505"></a><span class="lineno">  505</span>&#160;<span class="preprocessor">#pragma pack()</span></div>
 <div class="line"><a name="l00506"></a><span class="lineno">  506</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00508"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObj.html#a1d99fd3a001517eb6038e97cd79f6f83">  508</a></span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classbson_1_1BSONObj.html#a1d99fd3a001517eb6038e97cd79f6f83" title="initialize from existing buffer">init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *data) {</div>
+<div class="line"><a name="l00508"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889">  508</a></span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889" title="initialize from existing buffer">init</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *data, <span class="keywordtype">bool</span> check=<span class="keyword">true</span> ) {</div>
 <div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;            _objdata = data;</div>
-<div class="line"><a name="l00510"></a><span class="lineno">  510</span>&#160;            <span class="keywordflow">if</span> ( !<a class="code" href="classbson_1_1BSONObj.html#a88611f11cc1c68ccd3a190ee6a40dd3d" title="performs a cursory check on the object&#39;s size only.">isValid</a>() )</div>
+<div class="line"><a name="l00510"></a><span class="lineno">  510</span>&#160;            <span class="keywordflow">if</span> ( check &amp;&amp; !<a class="code" href="classbson_1_1BSONObj.html#a88611f11cc1c68ccd3a190ee6a40dd3d" title="performs a cursory check on the object&#39;s size only.">isValid</a>() )</div>
 <div class="line"><a name="l00511"></a><span class="lineno">  511</span>&#160;                _assertInvalid();</div>
 <div class="line"><a name="l00512"></a><span class="lineno">  512</span>&#160;        }</div>
 <div class="line"><a name="l00513"></a><span class="lineno">  513</span>&#160;</div>
@@ -389,10 +389,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00518"></a><span class="lineno">  518</span>&#160;</div>
 <div class="line"><a name="l00519"></a><span class="lineno">  519</span>&#160;        <span class="keywordtype">void</span> _assertInvalid() <span class="keyword">const</span>;</div>
 <div class="line"><a name="l00520"></a><span class="lineno">  520</span>&#160;</div>
-<div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classbson_1_1BSONObj.html#a1d99fd3a001517eb6038e97cd79f6f83" title="initialize from existing buffer">init</a>(Holder *holder) {</div>
+<div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889" title="initialize from existing buffer">init</a>(Holder *holder) {</div>
 <div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;            _holder = holder; <span class="comment">// holder is now managed by intrusive_ptr</span></div>
 <div class="line"><a name="l00523"></a><span class="lineno">  523</span>&#160;            <span class="comment">//_holder-&gt;inc() ;</span></div>
-<div class="line"><a name="l00524"></a><span class="lineno">  524</span>&#160;            <a class="code" href="classbson_1_1BSONObj.html#a1d99fd3a001517eb6038e97cd79f6f83" title="initialize from existing buffer">init</a>(holder-&gt;data);</div>
+<div class="line"><a name="l00524"></a><span class="lineno">  524</span>&#160;            <a class="code" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889" title="initialize from existing buffer">init</a>(holder-&gt;data);</div>
 <div class="line"><a name="l00525"></a><span class="lineno">  525</span>&#160;        }</div>
 <div class="line"><a name="l00526"></a><span class="lineno">  526</span>&#160;    };</div>
 <div class="line"><a name="l00527"></a><span class="lineno">  527</span>&#160;</div>
@@ -413,7 +413,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 14:00:59 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 15:46:35 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

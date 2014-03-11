@@ -698,154 +698,159 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00741"></a><span class="lineno">  741</span>&#160;            _b.append(num(), x);</div>
 <div class="line"><a name="l00742"></a><span class="lineno">  742</span>&#160;            <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
 <div class="line"><a name="l00743"></a><span class="lineno">  743</span>&#160;        }</div>
-<div class="line"><a name="l00744"></a><span class="lineno">  744</span>&#160;</div>
-<div class="line"><a name="l00745"></a><span class="lineno">  745</span>&#160;        <a class="code" href="classbson_1_1BSONArrayBuilder.html">BSONArrayBuilder</a>&amp; append(<span class="keyword">const</span> <a class="code" href="classbson_1_1BSONElement.html" title="BSONElement represents an &quot;element&quot; in a BSONObj.">BSONElement</a>&amp; e) {</div>
-<div class="line"><a name="l00746"></a><span class="lineno">  746</span>&#160;            _b.appendAs(e, num());</div>
+<div class="line"><a name="l00744"></a><span class="lineno">  744</span>&#160;        </div>
+<div class="line"><a name="l00745"></a><span class="lineno">  745</span>&#160;        <a class="code" href="classbson_1_1BSONArrayBuilder.html">BSONArrayBuilder</a>&amp; appendTimestamp(<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> <span class="keywordtype">long</span> val) {</div>
+<div class="line"><a name="l00746"></a><span class="lineno">  746</span>&#160;            _b.appendTimestamp(num(),val);</div>
 <div class="line"><a name="l00747"></a><span class="lineno">  747</span>&#160;            <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
 <div class="line"><a name="l00748"></a><span class="lineno">  748</span>&#160;        }</div>
 <div class="line"><a name="l00749"></a><span class="lineno">  749</span>&#160;</div>
-<div class="line"><a name="l00750"></a><span class="lineno">  750</span>&#160;        <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00751"></a><span class="lineno">  751</span>&#160;        <a class="code" href="classbson_1_1BSONArrayBuilder.html">BSONArrayBuilder</a>&amp; operator&lt;&lt;(<span class="keyword">const</span> T&amp; x) {</div>
-<div class="line"><a name="l00752"></a><span class="lineno">  752</span>&#160;            <span class="keywordflow">return</span> append(x);</div>
+<div class="line"><a name="l00750"></a><span class="lineno">  750</span>&#160;        <a class="code" href="classbson_1_1BSONArrayBuilder.html">BSONArrayBuilder</a>&amp; append(<span class="keyword">const</span> <a class="code" href="classbson_1_1BSONElement.html" title="BSONElement represents an &quot;element&quot; in a BSONObj.">BSONElement</a>&amp; e) {</div>
+<div class="line"><a name="l00751"></a><span class="lineno">  751</span>&#160;            _b.appendAs(e, num());</div>
+<div class="line"><a name="l00752"></a><span class="lineno">  752</span>&#160;            <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
 <div class="line"><a name="l00753"></a><span class="lineno">  753</span>&#160;        }</div>
 <div class="line"><a name="l00754"></a><span class="lineno">  754</span>&#160;</div>
-<div class="line"><a name="l00755"></a><span class="lineno">  755</span>&#160;        <span class="keywordtype">void</span> appendNull() {</div>
-<div class="line"><a name="l00756"></a><span class="lineno">  756</span>&#160;            _b.appendNull(num());</div>
-<div class="line"><a name="l00757"></a><span class="lineno">  757</span>&#160;        }</div>
-<div class="line"><a name="l00758"></a><span class="lineno">  758</span>&#160;</div>
-<div class="line"><a name="l00763"></a><span class="lineno"><a class="code" href="classbson_1_1BSONArrayBuilder.html#a2975e7b1017de75fd171792a35d9ff9e">  763</a></span>&#160;        <a class="code" href="structbson_1_1BSONArray.html">BSONArray</a> <a class="code" href="classbson_1_1BSONArrayBuilder.html#a2975e7b1017de75fd171792a35d9ff9e" title="destructive - ownership moves to returned BSONArray">arr</a>() { <span class="keywordflow">return</span> <a class="code" href="structbson_1_1BSONArray.html">BSONArray</a>(_b.obj()); }</div>
-<div class="line"><a name="l00764"></a><span class="lineno">  764</span>&#160;</div>
-<div class="line"><a name="l00765"></a><span class="lineno">  765</span>&#160;        <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> done() { <span class="keywordflow">return</span> _b.done(); }</div>
-<div class="line"><a name="l00766"></a><span class="lineno">  766</span>&#160;</div>
-<div class="line"><a name="l00767"></a><span class="lineno">  767</span>&#160;        <span class="keywordtype">void</span> doneFast() { _b.doneFast(); }</div>
-<div class="line"><a name="l00768"></a><span class="lineno">  768</span>&#160;</div>
-<div class="line"><a name="l00769"></a><span class="lineno">  769</span>&#160;        <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a name="l00770"></a><span class="lineno">  770</span>&#160;        BSONArrayBuilder&amp; append(<span class="keyword">const</span> StringData&amp; name, <span class="keyword">const</span> T&amp; x) {</div>
-<div class="line"><a name="l00771"></a><span class="lineno">  771</span>&#160;            fill( name );</div>
-<div class="line"><a name="l00772"></a><span class="lineno">  772</span>&#160;            append( x );</div>
-<div class="line"><a name="l00773"></a><span class="lineno">  773</span>&#160;            <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00774"></a><span class="lineno">  774</span>&#160;        }</div>
-<div class="line"><a name="l00775"></a><span class="lineno">  775</span>&#160;</div>
-<div class="line"><a name="l00776"></a><span class="lineno">  776</span>&#160;        <span class="comment">// These two just use next position</span></div>
-<div class="line"><a name="l00777"></a><span class="lineno">  777</span>&#160;        BufBuilder &amp;subobjStart() { <span class="keywordflow">return</span> _b.subobjStart( num() ); }</div>
-<div class="line"><a name="l00778"></a><span class="lineno">  778</span>&#160;        BufBuilder &amp;subarrayStart() { <span class="keywordflow">return</span> _b.subarrayStart( num() ); }</div>
-<div class="line"><a name="l00779"></a><span class="lineno">  779</span>&#160;</div>
-<div class="line"><a name="l00780"></a><span class="lineno">  780</span>&#160;        <span class="comment">// These fill missing entries up to pos. if pos is &lt; next pos is ignored</span></div>
-<div class="line"><a name="l00781"></a><span class="lineno">  781</span>&#160;        BufBuilder &amp;subobjStart(<span class="keywordtype">int</span> pos) {</div>
-<div class="line"><a name="l00782"></a><span class="lineno">  782</span>&#160;            fill(pos);</div>
-<div class="line"><a name="l00783"></a><span class="lineno">  783</span>&#160;            <span class="keywordflow">return</span> _b.subobjStart( num() );</div>
-<div class="line"><a name="l00784"></a><span class="lineno">  784</span>&#160;        }</div>
-<div class="line"><a name="l00785"></a><span class="lineno">  785</span>&#160;        BufBuilder &amp;subarrayStart(<span class="keywordtype">int</span> pos) {</div>
-<div class="line"><a name="l00786"></a><span class="lineno">  786</span>&#160;            fill(pos);</div>
-<div class="line"><a name="l00787"></a><span class="lineno">  787</span>&#160;            <span class="keywordflow">return</span> _b.subarrayStart( num() );</div>
-<div class="line"><a name="l00788"></a><span class="lineno">  788</span>&#160;        }</div>
-<div class="line"><a name="l00789"></a><span class="lineno">  789</span>&#160;</div>
-<div class="line"><a name="l00790"></a><span class="lineno">  790</span>&#160;        <span class="comment">// These should only be used where you really need interface compatability with BSONObjBuilder</span></div>
-<div class="line"><a name="l00791"></a><span class="lineno">  791</span>&#160;        <span class="comment">// Currently they are only used by update.cpp and it should probably stay that way</span></div>
-<div class="line"><a name="l00792"></a><span class="lineno">  792</span>&#160;        BufBuilder &amp;subobjStart( <span class="keyword">const</span> StringData&amp; name ) {</div>
-<div class="line"><a name="l00793"></a><span class="lineno">  793</span>&#160;            fill( name );</div>
-<div class="line"><a name="l00794"></a><span class="lineno">  794</span>&#160;            <span class="keywordflow">return</span> _b.subobjStart( num() );</div>
-<div class="line"><a name="l00795"></a><span class="lineno">  795</span>&#160;        }</div>
-<div class="line"><a name="l00796"></a><span class="lineno">  796</span>&#160;</div>
-<div class="line"><a name="l00797"></a><span class="lineno">  797</span>&#160;        BufBuilder &amp;subarrayStart( <span class="keyword">const</span> <span class="keywordtype">char</span> *name ) {</div>
+<div class="line"><a name="l00755"></a><span class="lineno">  755</span>&#160;        <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00756"></a><span class="lineno">  756</span>&#160;        <a class="code" href="classbson_1_1BSONArrayBuilder.html">BSONArrayBuilder</a>&amp; operator&lt;&lt;(<span class="keyword">const</span> T&amp; x) {</div>
+<div class="line"><a name="l00757"></a><span class="lineno">  757</span>&#160;            <span class="keywordflow">return</span> append(x);</div>
+<div class="line"><a name="l00758"></a><span class="lineno">  758</span>&#160;        }</div>
+<div class="line"><a name="l00759"></a><span class="lineno">  759</span>&#160;</div>
+<div class="line"><a name="l00760"></a><span class="lineno">  760</span>&#160;        <span class="keywordtype">void</span> appendNull() {</div>
+<div class="line"><a name="l00761"></a><span class="lineno">  761</span>&#160;            _b.appendNull(num());</div>
+<div class="line"><a name="l00762"></a><span class="lineno">  762</span>&#160;        }</div>
+<div class="line"><a name="l00763"></a><span class="lineno">  763</span>&#160;</div>
+<div class="line"><a name="l00768"></a><span class="lineno"><a class="code" href="classbson_1_1BSONArrayBuilder.html#a2975e7b1017de75fd171792a35d9ff9e">  768</a></span>&#160;        <a class="code" href="structbson_1_1BSONArray.html">BSONArray</a> <a class="code" href="classbson_1_1BSONArrayBuilder.html#a2975e7b1017de75fd171792a35d9ff9e" title="destructive - ownership moves to returned BSONArray">arr</a>() { <span class="keywordflow">return</span> <a class="code" href="structbson_1_1BSONArray.html">BSONArray</a>(_b.obj()); }</div>
+<div class="line"><a name="l00769"></a><span class="lineno">  769</span>&#160;</div>
+<div class="line"><a name="l00770"></a><span class="lineno">  770</span>&#160;        <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> done() { <span class="keywordflow">return</span> _b.done(); }</div>
+<div class="line"><a name="l00771"></a><span class="lineno">  771</span>&#160;</div>
+<div class="line"><a name="l00772"></a><span class="lineno">  772</span>&#160;        <span class="keywordtype">void</span> doneFast() { _b.doneFast(); }</div>
+<div class="line"><a name="l00773"></a><span class="lineno">  773</span>&#160;</div>
+<div class="line"><a name="l00774"></a><span class="lineno">  774</span>&#160;        <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a name="l00775"></a><span class="lineno">  775</span>&#160;        BSONArrayBuilder&amp; append(<span class="keyword">const</span> StringData&amp; name, <span class="keyword">const</span> T&amp; x) {</div>
+<div class="line"><a name="l00776"></a><span class="lineno">  776</span>&#160;            fill( name );</div>
+<div class="line"><a name="l00777"></a><span class="lineno">  777</span>&#160;            append( x );</div>
+<div class="line"><a name="l00778"></a><span class="lineno">  778</span>&#160;            <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00779"></a><span class="lineno">  779</span>&#160;        }</div>
+<div class="line"><a name="l00780"></a><span class="lineno">  780</span>&#160;</div>
+<div class="line"><a name="l00781"></a><span class="lineno">  781</span>&#160;        <span class="comment">// These two just use next position</span></div>
+<div class="line"><a name="l00782"></a><span class="lineno">  782</span>&#160;        BufBuilder &amp;subobjStart() { <span class="keywordflow">return</span> _b.subobjStart( num() ); }</div>
+<div class="line"><a name="l00783"></a><span class="lineno">  783</span>&#160;        BufBuilder &amp;subarrayStart() { <span class="keywordflow">return</span> _b.subarrayStart( num() ); }</div>
+<div class="line"><a name="l00784"></a><span class="lineno">  784</span>&#160;</div>
+<div class="line"><a name="l00785"></a><span class="lineno">  785</span>&#160;        <span class="comment">// These fill missing entries up to pos. if pos is &lt; next pos is ignored</span></div>
+<div class="line"><a name="l00786"></a><span class="lineno">  786</span>&#160;        BufBuilder &amp;subobjStart(<span class="keywordtype">int</span> pos) {</div>
+<div class="line"><a name="l00787"></a><span class="lineno">  787</span>&#160;            fill(pos);</div>
+<div class="line"><a name="l00788"></a><span class="lineno">  788</span>&#160;            <span class="keywordflow">return</span> _b.subobjStart( num() );</div>
+<div class="line"><a name="l00789"></a><span class="lineno">  789</span>&#160;        }</div>
+<div class="line"><a name="l00790"></a><span class="lineno">  790</span>&#160;        BufBuilder &amp;subarrayStart(<span class="keywordtype">int</span> pos) {</div>
+<div class="line"><a name="l00791"></a><span class="lineno">  791</span>&#160;            fill(pos);</div>
+<div class="line"><a name="l00792"></a><span class="lineno">  792</span>&#160;            <span class="keywordflow">return</span> _b.subarrayStart( num() );</div>
+<div class="line"><a name="l00793"></a><span class="lineno">  793</span>&#160;        }</div>
+<div class="line"><a name="l00794"></a><span class="lineno">  794</span>&#160;</div>
+<div class="line"><a name="l00795"></a><span class="lineno">  795</span>&#160;        <span class="comment">// These should only be used where you really need interface compatability with BSONObjBuilder</span></div>
+<div class="line"><a name="l00796"></a><span class="lineno">  796</span>&#160;        <span class="comment">// Currently they are only used by update.cpp and it should probably stay that way</span></div>
+<div class="line"><a name="l00797"></a><span class="lineno">  797</span>&#160;        BufBuilder &amp;subobjStart( <span class="keyword">const</span> StringData&amp; name ) {</div>
 <div class="line"><a name="l00798"></a><span class="lineno">  798</span>&#160;            fill( name );</div>
-<div class="line"><a name="l00799"></a><span class="lineno">  799</span>&#160;            <span class="keywordflow">return</span> _b.subarrayStart( num() );</div>
+<div class="line"><a name="l00799"></a><span class="lineno">  799</span>&#160;            <span class="keywordflow">return</span> _b.subobjStart( num() );</div>
 <div class="line"><a name="l00800"></a><span class="lineno">  800</span>&#160;        }</div>
 <div class="line"><a name="l00801"></a><span class="lineno">  801</span>&#160;</div>
-<div class="line"><a name="l00802"></a><span class="lineno">  802</span>&#160;        <span class="keywordtype">void</span> appendArray( <span class="keyword">const</span> StringData&amp; name, BSONObj subObj ) {</div>
+<div class="line"><a name="l00802"></a><span class="lineno">  802</span>&#160;        BufBuilder &amp;subarrayStart( <span class="keyword">const</span> <span class="keywordtype">char</span> *name ) {</div>
 <div class="line"><a name="l00803"></a><span class="lineno">  803</span>&#160;            fill( name );</div>
-<div class="line"><a name="l00804"></a><span class="lineno">  804</span>&#160;            _b.appendArray( num(), subObj );</div>
+<div class="line"><a name="l00804"></a><span class="lineno">  804</span>&#160;            <span class="keywordflow">return</span> _b.subarrayStart( num() );</div>
 <div class="line"><a name="l00805"></a><span class="lineno">  805</span>&#160;        }</div>
 <div class="line"><a name="l00806"></a><span class="lineno">  806</span>&#160;</div>
-<div class="line"><a name="l00807"></a><span class="lineno">  807</span>&#160;        <span class="keywordtype">void</span> appendAs( <span class="keyword">const</span> BSONElement &amp;e, <span class="keyword">const</span> <span class="keywordtype">char</span> *name) {</div>
+<div class="line"><a name="l00807"></a><span class="lineno">  807</span>&#160;        <span class="keywordtype">void</span> appendArray( <span class="keyword">const</span> StringData&amp; name, BSONObj subObj ) {</div>
 <div class="line"><a name="l00808"></a><span class="lineno">  808</span>&#160;            fill( name );</div>
-<div class="line"><a name="l00809"></a><span class="lineno">  809</span>&#160;            append( e );</div>
+<div class="line"><a name="l00809"></a><span class="lineno">  809</span>&#160;            _b.appendArray( num(), subObj );</div>
 <div class="line"><a name="l00810"></a><span class="lineno">  810</span>&#160;        }</div>
 <div class="line"><a name="l00811"></a><span class="lineno">  811</span>&#160;</div>
-<div class="line"><a name="l00812"></a><span class="lineno">  812</span>&#160;        <span class="keywordtype">int</span> len()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _b.len(); }</div>
-<div class="line"><a name="l00813"></a><span class="lineno">  813</span>&#160;</div>
-<div class="line"><a name="l00814"></a><span class="lineno">  814</span>&#160;    <span class="keyword">private</span>:</div>
-<div class="line"><a name="l00815"></a><span class="lineno">  815</span>&#160;        <span class="keywordtype">void</span> fill( <span class="keyword">const</span> StringData&amp; name ) {</div>
-<div class="line"><a name="l00816"></a><span class="lineno">  816</span>&#160;            <span class="keywordtype">char</span> *r;</div>
-<div class="line"><a name="l00817"></a><span class="lineno">  817</span>&#160;            <span class="keywordtype">long</span> <span class="keywordtype">int</span> n = strtol( name.data(), &amp;r, 10 );</div>
-<div class="line"><a name="l00818"></a><span class="lineno">  818</span>&#160;            <span class="keywordflow">if</span> ( *r )</div>
-<div class="line"><a name="l00819"></a><span class="lineno">  819</span>&#160;                uasserted( 13048, (<span class="keywordtype">string</span>)<span class="stringliteral">&quot;can&#39;t append to array using string&quot;</span></div>
-<div class="line"><a name="l00820"></a><span class="lineno">  820</span>&#160;                  <span class="stringliteral">&quot; field name [&quot;</span> + name.data() + <span class="stringliteral">&quot;]&quot;</span> );</div>
-<div class="line"><a name="l00821"></a><span class="lineno">  821</span>&#160;            fill(n);</div>
-<div class="line"><a name="l00822"></a><span class="lineno">  822</span>&#160;        }</div>
-<div class="line"><a name="l00823"></a><span class="lineno">  823</span>&#160;</div>
-<div class="line"><a name="l00824"></a><span class="lineno">  824</span>&#160;        <span class="keywordtype">void</span> fill (<span class="keywordtype">int</span> upTo){</div>
-<div class="line"><a name="l00825"></a><span class="lineno">  825</span>&#160;            <span class="keywordflow">while</span>( _i &lt; upTo )</div>
-<div class="line"><a name="l00826"></a><span class="lineno">  826</span>&#160;                append( nullElt() );</div>
+<div class="line"><a name="l00812"></a><span class="lineno">  812</span>&#160;        <span class="keywordtype">void</span> appendAs( <span class="keyword">const</span> BSONElement &amp;e, <span class="keyword">const</span> <span class="keywordtype">char</span> *name) {</div>
+<div class="line"><a name="l00813"></a><span class="lineno">  813</span>&#160;            fill( name );</div>
+<div class="line"><a name="l00814"></a><span class="lineno">  814</span>&#160;            append( e );</div>
+<div class="line"><a name="l00815"></a><span class="lineno">  815</span>&#160;        }</div>
+<div class="line"><a name="l00816"></a><span class="lineno">  816</span>&#160;</div>
+<div class="line"><a name="l00817"></a><span class="lineno">  817</span>&#160;        <span class="keywordtype">int</span> len()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> _b.len(); }</div>
+<div class="line"><a name="l00818"></a><span class="lineno">  818</span>&#160;</div>
+<div class="line"><a name="l00819"></a><span class="lineno">  819</span>&#160;    <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00820"></a><span class="lineno">  820</span>&#160;        <span class="keywordtype">void</span> fill( <span class="keyword">const</span> StringData&amp; name ) {</div>
+<div class="line"><a name="l00821"></a><span class="lineno">  821</span>&#160;            <span class="keywordtype">char</span> *r;</div>
+<div class="line"><a name="l00822"></a><span class="lineno">  822</span>&#160;            <span class="keywordtype">long</span> <span class="keywordtype">int</span> n = strtol( name.data(), &amp;r, 10 );</div>
+<div class="line"><a name="l00823"></a><span class="lineno">  823</span>&#160;            <span class="keywordflow">if</span> ( *r )</div>
+<div class="line"><a name="l00824"></a><span class="lineno">  824</span>&#160;                uasserted( 13048, (<span class="keywordtype">string</span>)<span class="stringliteral">&quot;can&#39;t append to array using string&quot;</span></div>
+<div class="line"><a name="l00825"></a><span class="lineno">  825</span>&#160;                  <span class="stringliteral">&quot; field name [&quot;</span> + name.data() + <span class="stringliteral">&quot;]&quot;</span> );</div>
+<div class="line"><a name="l00826"></a><span class="lineno">  826</span>&#160;            fill(n);</div>
 <div class="line"><a name="l00827"></a><span class="lineno">  827</span>&#160;        }</div>
 <div class="line"><a name="l00828"></a><span class="lineno">  828</span>&#160;</div>
-<div class="line"><a name="l00829"></a><span class="lineno">  829</span>&#160;        <span class="keyword">static</span> BSONElement nullElt() {</div>
-<div class="line"><a name="l00830"></a><span class="lineno">  830</span>&#160;            <span class="keyword">static</span> BSONObj n = nullObj();</div>
-<div class="line"><a name="l00831"></a><span class="lineno">  831</span>&#160;            <span class="keywordflow">return</span> n.firstElement();</div>
+<div class="line"><a name="l00829"></a><span class="lineno">  829</span>&#160;        <span class="keywordtype">void</span> fill (<span class="keywordtype">int</span> upTo){</div>
+<div class="line"><a name="l00830"></a><span class="lineno">  830</span>&#160;            <span class="keywordflow">while</span>( _i &lt; upTo )</div>
+<div class="line"><a name="l00831"></a><span class="lineno">  831</span>&#160;                append( nullElt() );</div>
 <div class="line"><a name="l00832"></a><span class="lineno">  832</span>&#160;        }</div>
 <div class="line"><a name="l00833"></a><span class="lineno">  833</span>&#160;</div>
-<div class="line"><a name="l00834"></a><span class="lineno">  834</span>&#160;        <span class="keyword">static</span> BSONObj nullObj() {</div>
-<div class="line"><a name="l00835"></a><span class="lineno">  835</span>&#160;            BSONObjBuilder _b;</div>
-<div class="line"><a name="l00836"></a><span class="lineno">  836</span>&#160;            _b.appendNull( <span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00837"></a><span class="lineno">  837</span>&#160;            <span class="keywordflow">return</span> _b.obj();</div>
-<div class="line"><a name="l00838"></a><span class="lineno">  838</span>&#160;        }</div>
-<div class="line"><a name="l00839"></a><span class="lineno">  839</span>&#160;</div>
-<div class="line"><a name="l00840"></a><span class="lineno">  840</span>&#160;        <span class="keywordtype">string</span> num() { <span class="keywordflow">return</span> _b.numStr(_i++); }</div>
-<div class="line"><a name="l00841"></a><span class="lineno">  841</span>&#160;        <span class="keywordtype">int</span> _i;</div>
-<div class="line"><a name="l00842"></a><span class="lineno">  842</span>&#160;        BSONObjBuilder _b;</div>
-<div class="line"><a name="l00843"></a><span class="lineno">  843</span>&#160;    };</div>
+<div class="line"><a name="l00834"></a><span class="lineno">  834</span>&#160;        <span class="keyword">static</span> BSONElement nullElt() {</div>
+<div class="line"><a name="l00835"></a><span class="lineno">  835</span>&#160;            <span class="keyword">static</span> BSONObj n = nullObj();</div>
+<div class="line"><a name="l00836"></a><span class="lineno">  836</span>&#160;            <span class="keywordflow">return</span> n.firstElement();</div>
+<div class="line"><a name="l00837"></a><span class="lineno">  837</span>&#160;        }</div>
+<div class="line"><a name="l00838"></a><span class="lineno">  838</span>&#160;</div>
+<div class="line"><a name="l00839"></a><span class="lineno">  839</span>&#160;        <span class="keyword">static</span> BSONObj nullObj() {</div>
+<div class="line"><a name="l00840"></a><span class="lineno">  840</span>&#160;            BSONObjBuilder _b;</div>
+<div class="line"><a name="l00841"></a><span class="lineno">  841</span>&#160;            _b.appendNull( <span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00842"></a><span class="lineno">  842</span>&#160;            <span class="keywordflow">return</span> _b.obj();</div>
+<div class="line"><a name="l00843"></a><span class="lineno">  843</span>&#160;        }</div>
 <div class="line"><a name="l00844"></a><span class="lineno">  844</span>&#160;</div>
-<div class="line"><a name="l00845"></a><span class="lineno">  845</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> T &gt;</div>
-<div class="line"><a name="l00846"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObjBuilder.html#af83c7edfbd4ad2f89a5568f34dcfc0af">  846</a></span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; BSONObjBuilder::append( <span class="keyword">const</span> StringData&amp; fieldName,</div>
-<div class="line"><a name="l00847"></a><span class="lineno">  847</span>&#160;      <span class="keyword">const</span> vector&lt; T &gt;&amp; vals ) {</div>
-<div class="line"><a name="l00848"></a><span class="lineno">  848</span>&#160;        <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a> arrBuilder;</div>
-<div class="line"><a name="l00849"></a><span class="lineno">  849</span>&#160;        <span class="keywordflow">for</span> ( <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i = 0; i &lt; vals.size(); ++i )</div>
-<div class="line"><a name="l00850"></a><span class="lineno">  850</span>&#160;            arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#a027d9a8d8bae9244e2a91fc8944c43aa" title="append element to the object we are building">append</a>( numStr( i ), vals[ i ] );</div>
-<div class="line"><a name="l00851"></a><span class="lineno">  851</span>&#160;        appendArray( fieldName, arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#ac636b4a1a7e8a772268272e83c90ba13" title="Fetch the object we have built.">done</a>() );</div>
-<div class="line"><a name="l00852"></a><span class="lineno">  852</span>&#160;        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00853"></a><span class="lineno">  853</span>&#160;    }</div>
-<div class="line"><a name="l00854"></a><span class="lineno">  854</span>&#160;</div>
-<div class="line"><a name="l00855"></a><span class="lineno">  855</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> L &gt;</div>
-<div class="line"><a name="l00856"></a><span class="lineno">  856</span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; _appendIt( <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; _this, <span class="keyword">const</span> StringData&amp; fieldName, <span class="keyword">const</span> L&amp; vals ) {</div>
-<div class="line"><a name="l00857"></a><span class="lineno">  857</span>&#160;        <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a> arrBuilder;</div>
-<div class="line"><a name="l00858"></a><span class="lineno">  858</span>&#160;        <span class="keywordtype">int</span> n = 0;</div>
-<div class="line"><a name="l00859"></a><span class="lineno">  859</span>&#160;        <span class="keywordflow">for</span>( <span class="keyword">typename</span> L::const_iterator i = vals.begin(); i != vals.end(); i++ )</div>
-<div class="line"><a name="l00860"></a><span class="lineno">  860</span>&#160;            arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#a027d9a8d8bae9244e2a91fc8944c43aa" title="append element to the object we are building">append</a>( BSONObjBuilder::numStr(n++), *i );</div>
-<div class="line"><a name="l00861"></a><span class="lineno">  861</span>&#160;        _this.<a class="code" href="classbson_1_1BSONObjBuilder.html#a5efeb19109a007424cb93af31a2b8024" title="add a subobject as a member with type Array.">appendArray</a>( fieldName, arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#ac636b4a1a7e8a772268272e83c90ba13" title="Fetch the object we have built.">done</a>() );</div>
-<div class="line"><a name="l00862"></a><span class="lineno">  862</span>&#160;        <span class="keywordflow">return</span> _this;</div>
-<div class="line"><a name="l00863"></a><span class="lineno">  863</span>&#160;    }</div>
-<div class="line"><a name="l00864"></a><span class="lineno">  864</span>&#160;</div>
-<div class="line"><a name="l00865"></a><span class="lineno">  865</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> T &gt;</div>
-<div class="line"><a name="l00866"></a><span class="lineno">  866</span>&#160;    <span class="keyword">inline</span> BSONObjBuilder&amp; BSONObjBuilder::append( <span class="keyword">const</span> StringData&amp; fieldName, <span class="keyword">const</span> list&lt; T &gt;&amp; vals ) {</div>
-<div class="line"><a name="l00867"></a><span class="lineno">  867</span>&#160;        <span class="keywordflow">return</span> _appendIt&lt; list&lt; T &gt; &gt;( *<span class="keyword">this</span>, fieldName, vals );</div>
+<div class="line"><a name="l00845"></a><span class="lineno">  845</span>&#160;        <span class="keywordtype">string</span> num() { <span class="keywordflow">return</span> _b.numStr(_i++); }</div>
+<div class="line"><a name="l00846"></a><span class="lineno">  846</span>&#160;        <span class="keywordtype">int</span> _i;</div>
+<div class="line"><a name="l00847"></a><span class="lineno">  847</span>&#160;        BSONObjBuilder _b;</div>
+<div class="line"><a name="l00848"></a><span class="lineno">  848</span>&#160;    };</div>
+<div class="line"><a name="l00849"></a><span class="lineno">  849</span>&#160;</div>
+<div class="line"><a name="l00850"></a><span class="lineno">  850</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> T &gt;</div>
+<div class="line"><a name="l00851"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObjBuilder.html#af83c7edfbd4ad2f89a5568f34dcfc0af">  851</a></span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; BSONObjBuilder::append( <span class="keyword">const</span> StringData&amp; fieldName,</div>
+<div class="line"><a name="l00852"></a><span class="lineno">  852</span>&#160;      <span class="keyword">const</span> vector&lt; T &gt;&amp; vals ) {</div>
+<div class="line"><a name="l00853"></a><span class="lineno">  853</span>&#160;        <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a> arrBuilder;</div>
+<div class="line"><a name="l00854"></a><span class="lineno">  854</span>&#160;        <span class="keywordflow">for</span> ( <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> i = 0; i &lt; vals.size(); ++i )</div>
+<div class="line"><a name="l00855"></a><span class="lineno">  855</span>&#160;            arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#a027d9a8d8bae9244e2a91fc8944c43aa" title="append element to the object we are building">append</a>( numStr( i ), vals[ i ] );</div>
+<div class="line"><a name="l00856"></a><span class="lineno">  856</span>&#160;        appendArray( fieldName, arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#ac636b4a1a7e8a772268272e83c90ba13" title="Fetch the object we have built.">done</a>() );</div>
+<div class="line"><a name="l00857"></a><span class="lineno">  857</span>&#160;        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00858"></a><span class="lineno">  858</span>&#160;    }</div>
+<div class="line"><a name="l00859"></a><span class="lineno">  859</span>&#160;</div>
+<div class="line"><a name="l00860"></a><span class="lineno">  860</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> L &gt;</div>
+<div class="line"><a name="l00861"></a><span class="lineno">  861</span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; _appendIt( <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; _this, <span class="keyword">const</span> StringData&amp; fieldName, <span class="keyword">const</span> L&amp; vals ) {</div>
+<div class="line"><a name="l00862"></a><span class="lineno">  862</span>&#160;        <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a> arrBuilder;</div>
+<div class="line"><a name="l00863"></a><span class="lineno">  863</span>&#160;        <span class="keywordtype">int</span> n = 0;</div>
+<div class="line"><a name="l00864"></a><span class="lineno">  864</span>&#160;        <span class="keywordflow">for</span>( <span class="keyword">typename</span> L::const_iterator i = vals.begin(); i != vals.end(); i++ )</div>
+<div class="line"><a name="l00865"></a><span class="lineno">  865</span>&#160;            arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#a027d9a8d8bae9244e2a91fc8944c43aa" title="append element to the object we are building">append</a>( BSONObjBuilder::numStr(n++), *i );</div>
+<div class="line"><a name="l00866"></a><span class="lineno">  866</span>&#160;        _this.<a class="code" href="classbson_1_1BSONObjBuilder.html#a5efeb19109a007424cb93af31a2b8024" title="add a subobject as a member with type Array.">appendArray</a>( fieldName, arrBuilder.<a class="code" href="classbson_1_1BSONObjBuilder.html#ac636b4a1a7e8a772268272e83c90ba13" title="Fetch the object we have built.">done</a>() );</div>
+<div class="line"><a name="l00867"></a><span class="lineno">  867</span>&#160;        <span class="keywordflow">return</span> _this;</div>
 <div class="line"><a name="l00868"></a><span class="lineno">  868</span>&#160;    }</div>
 <div class="line"><a name="l00869"></a><span class="lineno">  869</span>&#160;</div>
 <div class="line"><a name="l00870"></a><span class="lineno">  870</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> T &gt;</div>
-<div class="line"><a name="l00871"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObjBuilder.html#a92ececb7194a2f5cc23eca8d269fed30">  871</a></span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; BSONObjBuilder::append( <span class="keyword">const</span> StringData&amp; fieldName, <span class="keyword">const</span> set&lt; T &gt;&amp; vals ) {</div>
-<div class="line"><a name="l00872"></a><span class="lineno">  872</span>&#160;        <span class="keywordflow">return</span> _appendIt&lt; set&lt; T &gt; &gt;( *<span class="keyword">this</span>, fieldName, vals );</div>
+<div class="line"><a name="l00871"></a><span class="lineno">  871</span>&#160;    <span class="keyword">inline</span> BSONObjBuilder&amp; BSONObjBuilder::append( <span class="keyword">const</span> StringData&amp; fieldName, <span class="keyword">const</span> list&lt; T &gt;&amp; vals ) {</div>
+<div class="line"><a name="l00872"></a><span class="lineno">  872</span>&#160;        <span class="keywordflow">return</span> _appendIt&lt; list&lt; T &gt; &gt;( *<span class="keyword">this</span>, fieldName, vals );</div>
 <div class="line"><a name="l00873"></a><span class="lineno">  873</span>&#160;    }</div>
 <div class="line"><a name="l00874"></a><span class="lineno">  874</span>&#160;</div>
-<div class="line"><a name="l00875"></a><span class="lineno">  875</span>&#160;</div>
-<div class="line"><a name="l00876"></a><span class="lineno">  876</span>&#160;    <span class="comment">// $or helper: OR(BSON(&quot;x&quot; &lt;&lt; GT &lt;&lt; 7), BSON(&quot;y&quot; &lt;&lt; LT 6));</span></div>
-<div class="line"><a name="l00877"></a><span class="lineno">  877</span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> OR(<span class="keyword">const</span> <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a>&amp; b)</div>
-<div class="line"><a name="l00878"></a><span class="lineno">  878</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b) ); }</div>
-<div class="line"><a name="l00879"></a><span class="lineno">  879</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c)</div>
-<div class="line"><a name="l00880"></a><span class="lineno">  880</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c) ); }</div>
-<div class="line"><a name="l00881"></a><span class="lineno">  881</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c,</div>
-<div class="line"><a name="l00882"></a><span class="lineno">  882</span>&#160;      <span class="keyword">const</span> BSONObj&amp; d)</div>
-<div class="line"><a name="l00883"></a><span class="lineno">  883</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c &lt;&lt; d) ); }</div>
-<div class="line"><a name="l00884"></a><span class="lineno">  884</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c,</div>
-<div class="line"><a name="l00885"></a><span class="lineno">  885</span>&#160;      <span class="keyword">const</span> BSONObj&amp; d, <span class="keyword">const</span> BSONObj&amp; e)</div>
-<div class="line"><a name="l00886"></a><span class="lineno">  886</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c &lt;&lt; d &lt;&lt; e) ); }</div>
-<div class="line"><a name="l00887"></a><span class="lineno">  887</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c,</div>
-<div class="line"><a name="l00888"></a><span class="lineno">  888</span>&#160;      <span class="keyword">const</span> BSONObj&amp; d, <span class="keyword">const</span> BSONObj&amp; e, <span class="keyword">const</span> BSONObj&amp; f)</div>
-<div class="line"><a name="l00889"></a><span class="lineno">  889</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c &lt;&lt; d &lt;&lt; e &lt;&lt; f) ); }</div>
-<div class="line"><a name="l00890"></a><span class="lineno">  890</span>&#160;</div>
-<div class="line"><a name="l00891"></a><span class="lineno">  891</span>&#160;}</div>
+<div class="line"><a name="l00875"></a><span class="lineno">  875</span>&#160;    <span class="keyword">template</span> &lt; <span class="keyword">class</span> T &gt;</div>
+<div class="line"><a name="l00876"></a><span class="lineno"><a class="code" href="classbson_1_1BSONObjBuilder.html#a92ececb7194a2f5cc23eca8d269fed30">  876</a></span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObjBuilder.html" title="Utility for creating a BSONObj.">BSONObjBuilder</a>&amp; BSONObjBuilder::append( <span class="keyword">const</span> StringData&amp; fieldName, <span class="keyword">const</span> set&lt; T &gt;&amp; vals ) {</div>
+<div class="line"><a name="l00877"></a><span class="lineno">  877</span>&#160;        <span class="keywordflow">return</span> _appendIt&lt; set&lt; T &gt; &gt;( *<span class="keyword">this</span>, fieldName, vals );</div>
+<div class="line"><a name="l00878"></a><span class="lineno">  878</span>&#160;    }</div>
+<div class="line"><a name="l00879"></a><span class="lineno">  879</span>&#160;</div>
+<div class="line"><a name="l00880"></a><span class="lineno">  880</span>&#160;</div>
+<div class="line"><a name="l00881"></a><span class="lineno">  881</span>&#160;    <span class="comment">// $or helper: OR(BSON(&quot;x&quot; &lt;&lt; GT &lt;&lt; 7), BSON(&quot;y&quot; &lt;&lt; LT 6));</span></div>
+<div class="line"><a name="l00882"></a><span class="lineno">  882</span>&#160;    <span class="keyword">inline</span> <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> OR(<span class="keyword">const</span> <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a>&amp; a, <span class="keyword">const</span> <a class="code" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a>&amp; b)</div>
+<div class="line"><a name="l00883"></a><span class="lineno">  883</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b) ); }</div>
+<div class="line"><a name="l00884"></a><span class="lineno">  884</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c)</div>
+<div class="line"><a name="l00885"></a><span class="lineno">  885</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c) ); }</div>
+<div class="line"><a name="l00886"></a><span class="lineno">  886</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c,</div>
+<div class="line"><a name="l00887"></a><span class="lineno">  887</span>&#160;      <span class="keyword">const</span> BSONObj&amp; d)</div>
+<div class="line"><a name="l00888"></a><span class="lineno">  888</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c &lt;&lt; d) ); }</div>
+<div class="line"><a name="l00889"></a><span class="lineno">  889</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c,</div>
+<div class="line"><a name="l00890"></a><span class="lineno">  890</span>&#160;      <span class="keyword">const</span> BSONObj&amp; d, <span class="keyword">const</span> BSONObj&amp; e)</div>
+<div class="line"><a name="l00891"></a><span class="lineno">  891</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c &lt;&lt; d &lt;&lt; e) ); }</div>
+<div class="line"><a name="l00892"></a><span class="lineno">  892</span>&#160;    <span class="keyword">inline</span> BSONObj OR(<span class="keyword">const</span> BSONObj&amp; a, <span class="keyword">const</span> BSONObj&amp; b, <span class="keyword">const</span> BSONObj&amp; c,</div>
+<div class="line"><a name="l00893"></a><span class="lineno">  893</span>&#160;      <span class="keyword">const</span> BSONObj&amp; d, <span class="keyword">const</span> BSONObj&amp; e, <span class="keyword">const</span> BSONObj&amp; f)</div>
+<div class="line"><a name="l00894"></a><span class="lineno">  894</span>&#160;        { <span class="keywordflow">return</span> <a class="code" href="bsonmisc_8h.html#ab8032d457f0074b50c2aca379a0a545a" title="Use BSON macro to build a BSONObj from a stream.">BSON</a>( <span class="stringliteral">&quot;$or&quot;</span> &lt;&lt; <a class="code" href="bsonmisc_8h.html#a7c39efe531a0b3edf6424f917345e3a7" title="Use BSON_ARRAY macro like BSON macro, but without keys.">BSON_ARRAY</a>(a &lt;&lt; b &lt;&lt; c &lt;&lt; d &lt;&lt; e &lt;&lt; f) ); }</div>
+<div class="line"><a name="l00895"></a><span class="lineno">  895</span>&#160;</div>
+<div class="line"><a name="l00896"></a><span class="lineno">  896</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 14:00:59 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 15:46:35 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

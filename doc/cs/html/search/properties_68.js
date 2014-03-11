@@ -1,5 +1,5 @@
 var searchData=
 [
   ['hint',['Hint',['../classSequoiaDB_1_1DBQuery.html#aac62fc5142f2699050975dc38734d2ef',1,'SequoiaDB::DBQuery']]],
-  ['hostname',['HostName',['../classSequoiaDB_1_1ReplicaNode.html#ad50bdc03515a79608874dc154851b157',1,'SequoiaDB::ReplicaNode']]]
+  ['hostname',['HostName',['../classSequoiaDB_1_1Node.html#aaa274a79c0868dc8fe9bf7380b3b446c',1,'SequoiaDB::Node']]]
 ];

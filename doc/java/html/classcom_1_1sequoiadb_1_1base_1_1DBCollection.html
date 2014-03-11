@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -193,27 +194,42 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnection</b> (IC
 <tr class="memitem:acccda67f1a55e9367c88487743e85ec2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#acccda67f1a55e9367c88487743e85ec2">dropIndex</a> (String name)  throws BaseException </td></tr>
 <tr class="memdesc:acccda67f1a55e9367c88487743e85ec2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the named index of current collection.  <a href="#acccda67f1a55e9367c88487743e85ec2"></a><br/></td></tr>
 <tr class="separator:acccda67f1a55e9367c88487743e85ec2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acaf4619b1df618deac3474b706196170"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acaf4619b1df618deac3474b706196170"></a>
+long&#160;</td><td class="memItemRight" valign="bottom"><b>getCount</b> ()  throws BaseException </td></tr>
+<tr class="separator:acaf4619b1df618deac3474b706196170"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8dd2f78e6b317a3ac033b00d3371b56"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#af8dd2f78e6b317a3ac033b00d3371b56">getCount</a> (String condition)  throws BaseException </td></tr>
+<tr class="memdesc:af8dd2f78e6b317a3ac033b00d3371b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the count of records in current collection.  <a href="#af8dd2f78e6b317a3ac033b00d3371b56"></a><br/></td></tr>
+<tr class="separator:af8dd2f78e6b317a3ac033b00d3371b56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1334c25380aabcd3abb3a78b8cdec2d"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#af1334c25380aabcd3abb3a78b8cdec2d">getCount</a> (BSONObject condition)  throws BaseException </td></tr>
 <tr class="memdesc:af1334c25380aabcd3abb3a78b8cdec2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the count of matching BSONObject in current collection.  <a href="#af1334c25380aabcd3abb3a78b8cdec2d"></a><br/></td></tr>
 <tr class="separator:af1334c25380aabcd3abb3a78b8cdec2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8dd2f78e6b317a3ac033b00d3371b56"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#af8dd2f78e6b317a3ac033b00d3371b56">getCount</a> (String condition)  throws BaseException </td></tr>
-<tr class="memdesc:af8dd2f78e6b317a3ac033b00d3371b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the count of matching in current collection.  <a href="#af8dd2f78e6b317a3ac033b00d3371b56"></a><br/></td></tr>
-<tr class="separator:af8dd2f78e6b317a3ac033b00d3371b56"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cff4767c52768eb7a89bb6246227ebb"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a0cff4767c52768eb7a89bb6246227ebb">getCount</a> (BSONObject condition, BSONObject hint)  throws BaseException </td></tr>
+<tr class="memdesc:a0cff4767c52768eb7a89bb6246227ebb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the count of matching BSONObject in current collection.  <a href="#a0cff4767c52768eb7a89bb6246227ebb"></a><br/></td></tr>
+<tr class="separator:a0cff4767c52768eb7a89bb6246227ebb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a042296b994f0af577325be28a30213b9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a042296b994f0af577325be28a30213b9">split</a> (String sourceGroupName, String destGroupName, BSONObject splitCondition, BSONObject splitEndCondition)</td></tr>
 <tr class="memdesc:a042296b994f0af577325be28a30213b9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source group to target group by range.  <a href="#a042296b994f0af577325be28a30213b9"></a><br/></td></tr>
 <tr class="separator:a042296b994f0af577325be28a30213b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12a74f7f7dad01b0f7612c52bc961105"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a12a74f7f7dad01b0f7612c52bc961105">split</a> (String sourceGroupName, String destGroupName, double percent)</td></tr>
 <tr class="memdesc:a12a74f7f7dad01b0f7612c52bc961105"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source group to target group by percent.  <a href="#a12a74f7f7dad01b0f7612c52bc961105"></a><br/></td></tr>
 <tr class="separator:a12a74f7f7dad01b0f7612c52bc961105"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2b74fe633c4a4aa9c6b945a6144594e"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ae2b74fe633c4a4aa9c6b945a6144594e">splitAsync</a> (String sourceGroupName, String destGroupName, BSONObject splitCondition, BSONObject splitEndCondition)</td></tr>
+<tr class="memdesc:ae2b74fe633c4a4aa9c6b945a6144594e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source group to target group by range asynchronously.  <a href="#ae2b74fe633c4a4aa9c6b945a6144594e"></a><br/></td></tr>
+<tr class="separator:ae2b74fe633c4a4aa9c6b945a6144594e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73aa89160a0f68bde95576d424761731"><td class="memItemLeft" align="right" valign="top">long&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a73aa89160a0f68bde95576d424761731">splitAsync</a> (String sourceGroupName, String destGroupName, double percent)</td></tr>
+<tr class="memdesc:a73aa89160a0f68bde95576d424761731"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source group to target group by percent asynchronously.  <a href="#a73aa89160a0f68bde95576d424761731"></a><br/></td></tr>
+<tr class="separator:a73aa89160a0f68bde95576d424761731"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8dc51878789c63f070923de9f496cda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ac8dc51878789c63f070923de9f496cda">aggregate</a> (List&lt; BSONObject &gt; obj)  throws BaseException </td></tr>
 <tr class="memdesc:ac8dc51878789c63f070923de9f496cda"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute aggregate operation in current collection.  <a href="#ac8dc51878789c63f070923de9f496cda"></a><br/></td></tr>
 <tr class="separator:ac8dc51878789c63f070923de9f496cda"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a48a3862521abfc3de2994de2aa230708"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#a48a3862521abfc3de2994de2aa230708">getQueryMeta</a> (BSONObject <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ac852fd77867a16f73d55d73e053f1584">query</a>, BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag)</td></tr>
 <tr class="memdesc:a48a3862521abfc3de2994de2aa230708"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get index blocks' or data blocks' infomation for concurrent query.  <a href="#a48a3862521abfc3de2994de2aa230708"></a><br/></td></tr>
 <tr class="separator:a48a3862521abfc3de2994de2aa230708"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac273a5eff37e320e65acba16d7a7bdcf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac273a5eff37e320e65acba16d7a7bdcf"></a>
-<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><b>getDataBlocks</b> (BSONObject <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCollection.html#ac852fd77867a16f73d55d73e053f1584">query</a>, BSONObject selector, BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag)</td></tr>
-<tr class="separator:ac273a5eff37e320e65acba16d7a7bdcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a828ef6d2fa454b81237d778f15c4bdf1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a828ef6d2fa454b81237d778f15c4bdf1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>attachCollection</b> (String subClFullName, BSONObject options)</td></tr>
+<tr class="separator:a828ef6d2fa454b81237d778f15c4bdf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d5ce2e5b38622cef2349e84c679bd79"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5d5ce2e5b38622cef2349e84c679bd79"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>detachCollection</b> (String subClFullName)</td></tr>
+<tr class="separator:a5d5ce2e5b38622cef2349e84c679bd79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -675,6 +691,53 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="af8dd2f78e6b317a3ac033b00d3371b56"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">long com.sequoiadb.base.DBCollection.getCount </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>condition</em></td><td>)</td>
+          <td>  throws BaseException </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the count of records in current collection. </p>
+<p>Get the count of matching in current collection.</p>
+<dl class="section return"><dt>Returns</dt><dd>The count of matching BSONObjects </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">condition</td><td>The matching rule </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The count of matching BSONObjects </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="af1334c25380aabcd3abb3a78b8cdec2d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -714,7 +777,7 @@ Static Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af8dd2f78e6b317a3ac033b00d3371b56"></a>
+<a class="anchor" id="a0cff4767c52768eb7a89bb6246227ebb"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -724,9 +787,19 @@ Static Public Attributes</h2></td></tr>
         <tr>
           <td class="memname">long com.sequoiadb.base.DBCollection.getCount </td>
           <td>(</td>
-          <td class="paramtype">String&#160;</td>
-          <td class="paramname"><em>condition</em></td><td>)</td>
-          <td>  throws BaseException </td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>condition</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>hint</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException </td>
         </tr>
       </table>
   </td>
@@ -736,10 +809,11 @@ Static Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the count of matching in current collection. </p>
+<p>Get the count of matching BSONObject in current collection. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">condition</td><td>The matching rule </td></tr>
+    <tr><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
   </table>
   </dd>
 </dl>
@@ -866,7 +940,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get all the indexes of current collection. </p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of indexes </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of indexes </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -970,7 +1044,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1106,7 +1180,7 @@ Static Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Query all datas of current collection. </p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> in current collection </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> in current collection </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1145,7 +1219,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of the datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of the datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1209,7 +1283,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1274,7 +1348,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1290,7 +1364,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1368,7 +1442,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1446,7 +1520,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1465,7 +1539,7 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="the cursor when query sth from DB">DBCursor</a> of datas </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1DBCursor.html" title="Database operation interfaces of cursor.">DBCursor</a> of datas or null </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1589,6 +1663,132 @@ Static Public Attributes</h2></td></tr>
   </table>
   </dd>
 </dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ae2b74fe633c4a4aa9c6b945a6144594e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">long com.sequoiadb.base.DBCollection.splitAsync </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>sourceGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>destGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>splitCondition</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BSONObject&#160;</td>
+          <td class="paramname"><em>splitEndCondition</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Split the specified collection from source group to target group by range asynchronously. </p>
+<pre class="fragment">@param sourceGroupName
+           the source group name
+@param destGroupName
+           the destination group name
+</pre> <dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">splitCondition</td><td>the split condition </td></tr>
+    <tr><td class="paramname">splitEndCondition</td><td>the split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the targe group will get the records whose age's hash values are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>return the task id, we can use the return id to manage the sharding which is run backgroup. </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section see"><dt>See Also</dt><dd>listTask, cancelTask </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a73aa89160a0f68bde95576d424761731"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">long com.sequoiadb.base.DBCollection.splitAsync </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>sourceGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>destGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>percent</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Split the specified collection from source group to target group by percent asynchronously. </p>
+<pre class="fragment">@param sourceGroupName
+           the source group name
+@param destGroupName
+           the destination group name
+</pre> <dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">percent</td><td>the split percent, Range:(0,100] </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>return the task id, we can use the return id to manage the sharding which is run backgroup. </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
@@ -1838,7 +2038,7 @@ Static Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:05:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 15:45:31 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

@@ -1020,6 +1020,10 @@
             <stentry>transaction is disabled</stentry>
             <stentry>-253</stentry>
          </strow>
+         <strow>
+            <stentry>datasource had run out</stentry>
+            <stentry>-254</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>
