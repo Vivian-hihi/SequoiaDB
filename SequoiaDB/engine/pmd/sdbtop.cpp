@@ -5030,7 +5030,6 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
    rc = getActivatedKeySuite( &keySuite ) ;
    if( rc )
    {
-      rc = SDB_ERROR ;
       goto error ;
    }
    if( 0 == key )
@@ -5252,8 +5251,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the displayName"
-                   " which need order by asc : " ;
+            note = "please input the displayName which need order by asc : " ;
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 ) ;
             ossMemset( inputBuf, 0, BUFFERSIZE ) ;
@@ -5280,8 +5278,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
                goto done ;
             }
-            note = "please input the displayName"
-                   " which need order by desc : ";
+            note = "please input the displayName which need order by desc : ";
             getmaxyx( stdscr, row, col ) ;
             curs_set( 2 );
             ossMemset( inputBuf, 0, BUFFERSIZE );
