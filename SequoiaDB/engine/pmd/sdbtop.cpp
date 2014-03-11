@@ -1034,28 +1034,23 @@ INT32 storeDS( ptree pt_display,
       dSContent.nodeStyle = pt_display.get<string>( NODE_STYLE ) ;
       if( TABLE == dSContent.globalStyle )
       {
-         dSContent.globalRow =
-               pt_display.get<INT32>( GLOBAL_ROW ) ;
-         dSContent.globalCol =
-               pt_display.get<INT32>( GLOBAL_COL ) ;
-         dSContent.tableCellLength =
-               pt_display.get<INT32>( TABLE_CELLLENGTH ) ;
+         dSContent.globalRow = pt_display.get<INT32>( GLOBAL_ROW ) ;
+         dSContent.globalCol = pt_display.get<INT32>( GLOBAL_COL ) ;
+         dSContent.tableCellLength = pt_display.get<INT32>( TABLE_CELLLENGTH ) ;
       }
 
       if( TABLE == dSContent.groupStyle )
       {
          dSContent.groupRow = pt_display.get<INT32>( GROUP_ROW ) ;
          dSContent.groupCol = pt_display.get<INT32>( GROUP_COL ) ;
-         dSContent.tableCellLength =
-               pt_display.get<INT32>( TABLE_CELLLENGTH ) ;
+         dSContent.tableCellLength = pt_display.get<INT32>( TABLE_CELLLENGTH ) ;
       }
 
       if( TABLE == dSContent.nodeStyle )
       {
          dSContent.nodeRow = pt_display.get<INT32>( NODE_ROW ) ;
          dSContent.nodeCol = pt_display.get<INT32>( NODE_COL ) ;
-         dSContent.tableCellLength =
-               pt_display.get<INT32>( TABLE_CELLLENGTH ) ;
+         dSContent.tableCellLength = pt_display.get<INT32>( TABLE_CELLLENGTH ) ;
       }
 
       dSContent.baseField = pt_display.get<string>( BASEFIELD ) ;
@@ -1071,8 +1066,7 @@ INT32 storeDS( ptree pt_display,
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
                    "(displayType == DISPLAYTYPE_DYNAMIC_SNAPSHOT),"
-                   "e.what():%s"OSS_NEWLINE,
-                   errStrBuf, e.what() ) ;
+                   "e.what():%s"OSS_NEWLINE, errStrBuf, e.what() ) ;
       rc = SDB_ERROR ;
       goto error;
    }
@@ -3109,15 +3103,12 @@ error :
 INT32 Event::getExpression( string& expression, string& result )
 {
    INT32 rc  = SDB_OK ;
-   CHAR *buf =
-         ( CHAR * )SDB_OSS_MALLOC( BUFFERSIZE * sizeof( CHAR ) ) ;
+   CHAR *buf = ( CHAR * )SDB_OSS_MALLOC( BUFFERSIZE * sizeof( CHAR ) ) ;
    if( !buf )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                   "%s getExpression faild,"
-                   "can't malloc memory for buf :%d"
-                   OSS_NEWLINE,
+      ossSnprintf( errStr, errStrLength, "%s getExpression faild,"
+                   "can't malloc memory for buf :%d"OSS_NEWLINE,
                    errStrBuf, BUFFERSIZE ) ;
       rc = SDB_OOM ;
       goto error ;
@@ -3194,9 +3185,9 @@ INT32 Event::getExpression( string& expression, string& result )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getExpression failed,"
-                "wrong expression:%s"OSS_NEWLINE,
-                errStrBuf, expression.c_str() ) ;
+                   "%s getExpression failed,"
+                   "wrong expression:%s"OSS_NEWLINE,
+                   errStrBuf, expression.c_str() ) ;
       rc = SDB_ERROR ;
       goto error ;
    }
@@ -3556,34 +3547,26 @@ INT32 Event::getFieldNameAndColour( const FieldStruct &fieldStruct,
    if( !fieldStruct.canSwitch )
    {
       fieldName = fieldStruct.absoluteName ;
-      fieldColour.backGroundColor =
-            fieldStruct.absoluteColour.backGroundColor ;
-      fieldColour.foreGroundColor =
-            fieldStruct.absoluteColour.foreGroundColor ;
+      fieldColour.backGroundColor = fieldStruct.absoluteColour.backGroundColor ;
+      fieldColour.foreGroundColor = fieldStruct.absoluteColour.foreGroundColor ;
    }
    else if( DELTA == displayMode )
    {
       fieldName = fieldStruct.deltaName ;
-      fieldColour.backGroundColor =
-            fieldStruct.deltaColour.backGroundColor ;
-      fieldColour.foreGroundColor =
-            fieldStruct.deltaColour.foreGroundColor ;
+      fieldColour.backGroundColor = fieldStruct.deltaColour.backGroundColor ;
+      fieldColour.foreGroundColor = fieldStruct.deltaColour.foreGroundColor ;
    }
    else if( ABSOLUTE == displayMode )
    {
       fieldName = fieldStruct.absoluteName ;
-      fieldColour.backGroundColor =
-            fieldStruct.absoluteColour.backGroundColor ;
-      fieldColour.foreGroundColor =
-            fieldStruct.absoluteColour.foreGroundColor ;
+      fieldColour.backGroundColor = fieldStruct.absoluteColour.backGroundColor ;
+      fieldColour.foreGroundColor = fieldStruct.absoluteColour.foreGroundColor ;
    }
    else if( AVERAGE == displayMode )
    {
       fieldName = fieldStruct.averageName ;
-      fieldColour.backGroundColor =
-            fieldStruct.averageColour.backGroundColor ;
-      fieldColour.foreGroundColor =
-            fieldStruct.averageColour.foreGroundColor ;
+      fieldColour.backGroundColor = fieldStruct.averageColour.backGroundColor ;
+      fieldColour.foreGroundColor = fieldStruct.averageColour.foreGroundColor ;
    }
    else
    {
@@ -3633,8 +3616,7 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                    "%s MVPRINTW_TOP faild,"
-                   "can't malloc memory for printfstr :%d"
-                   OSS_NEWLINE,
+                   "can't malloc memory for printfstr :%d"OSS_NEWLINE,
                    errStrBuf, cellLength ) ;
       rc = SDB_OOM ;
       goto error ;
@@ -3656,10 +3638,8 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
       goto error ;
    }
    // calculate the Y position which used to print first row help field
-   rc = fixedOutputLocation( Y, X,
-                             start_Y, start_X,
-                             position.length_Y - DH.tableRow,
-                             0,
+   rc = fixedOutputLocation( Y, X, start_Y, start_X,
+                             position.length_Y - DH.tableRow, 0,
                              DH.autoSetType) ;
    if( rc )
    {
@@ -3677,11 +3657,8 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
          sum += cellLength ;
       }
       // calculate the X position which used to print first help field
-      rc = fixedOutputLocation( start_Y, X,
-                                start_Y, start_X, 
-                                0,
-                                position.length_X - sum,
-                                DH.autoSetType) ;
+      rc = fixedOutputLocation( start_Y, X, start_Y, start_X, 0,
+                                position.length_X - sum, DH.autoSetType) ;
       if( rc )
       {
          goto error ;
@@ -3710,8 +3687,7 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
             else if( BUTTON_RIGHT == hotkey->button )
                ossSnprintf( pPrintfstr, cellLength, PREFIX_RIGHT ) ;
             else if( BUTTON_ENTER == hotkey->button )
-               ossSnprintf( pPrintfstr,
-                     cellLength, PREFIX_ENTER ) ;
+               ossSnprintf( pPrintfstr, cellLength, PREFIX_ENTER ) ;
             else if( BUTTON_ESC == hotkey->button )
                ossSnprintf( pPrintfstr, cellLength, PREFIX_ESC ) ;
             else if( BUTTON_F5 == hotkey->button )
@@ -3731,8 +3707,8 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
          // get the colour of the prefix string and print it on terminal
          getColourPN( DH.prefixColour, pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( printStr, printStr.length(),
-                               LEFT, start_Y, pos_X ) ;
+         rc = mvprintw_SDBTOP( printStr, printStr.length(), LEFT,
+                               start_Y, pos_X ) ;
          if( rc )
          {
             goto error ;
@@ -3743,10 +3719,8 @@ INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
          ossMemset( pPrintfstr, 0, cellLength ) ;
          getColourPN( DH.contentColour, pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( hotkey->jumpName,
-                               hotkey->jumpName.length(),
-                               LEFT,
-                               start_Y, pos_X );
+         rc = mvprintw_SDBTOP( hotkey->jumpName, hotkey->jumpName.length(),
+                               LEFT, start_Y, pos_X );
          if( rc )
          {
             goto error ;
@@ -4504,8 +4478,7 @@ INT32 Event::refreshDS( DynamicSnapshotOutPut &DS, Position &position )
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
                    "%s refreshDisplayContent failed, "
-                   "wrong snapshotModeChooser: %s"
-                   OSS_NEWLINE,
+                   "wrong snapshotModeChooser: %s"OSS_NEWLINE,
                    errStrBuf,
                    input.snapshotModeChooser.c_str() ) ;
       rc = SDB_ERROR ;
@@ -4635,15 +4608,13 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
       goto done ;
    }
    // refresh the window's content by displayType
-   rc = refreshDisplayContent( window.displayContent,
-                               window.displayType,
+   rc = refreshDisplayContent( window.displayContent, window.displayType,
                                actualPosition ) ;
    if( rc )
    {
 
       ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                   "%s refreshNodeWindow failed,"
+      ossSnprintf( errStr, errStrLength, "%s refreshNodeWindow failed,"
                    "refreshDisplayContent faild"OSS_NEWLINE,
                    errStrBuf );
       goto error;
@@ -4671,8 +4642,7 @@ INT32 Event::refreshHT( HeadTailMap *headtail )
       {
 
          ossSnprintf( errStrBuf, errStrLength, "%s", errStr ) ;
-         ossSnprintf( errStr, errStrLength,
-                      "%s refreshHeadTail failed,"
+         ossSnprintf( errStr, errStrLength, "%s refreshHeadTail failed,"
                       "refreshNodeWindow faild,"
                       "numOfSubWindow = %d"OSS_NEWLINE,
                       errStrBuf, numOfSubWindow ) ;
@@ -5447,8 +5417,7 @@ INT32 Event::runSDBTOP( )
    {
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                   "%s addFixedHotKey failed"OSS_NEWLINE,
+      ossSnprintf( errStr, errStrLength, "%s addFixedHotKey failed"OSS_NEWLINE,
                    errStrBuf ) ;
       goto error ;
    }
@@ -5458,8 +5427,7 @@ INT32 Event::runSDBTOP( )
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s assignActivatedPanel failed"OSS_NEWLINE,
-                   errStrBuf ) ;
+                   "%s assignActivatedPanel failed"OSS_NEWLINE, errStrBuf ) ;
       goto error ;
    }
    try
@@ -5470,10 +5438,8 @@ INT32 Event::runSDBTOP( )
    catch( std::exception &e )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                   "%s can't connect to the coord:"
-                   "e.what() =%d"OSS_NEWLINE,
-                   errStrBuf, e.what() ) ;
+      ossSnprintf( errStr, errStrLength, "%s can't connect to the coord:"
+                   "e.what() =%d"OSS_NEWLINE, errStrBuf, e.what() ) ;
       rc = SDB_ERROR ;
       goto error ;
 
@@ -5485,20 +5451,15 @@ INT32 Event::runSDBTOP( )
       ossSnprintf( errStr, errStrLength,
                    "%s can't connect to the coord: "
                    "%s, %s, %s, %s, rc =%d"OSS_NEWLINE,
-                   errStrBuf,
-                   hostname.c_str(),
-                   serviceName.c_str(),
-                   usrName.c_str(),
-                   password.c_str(), rc ) ;
+                   errStrBuf, hostname.c_str(), serviceName.c_str(),
+                   usrName.c_str(), password.c_str(), rc ) ;
       goto error ;
    }
    root.input.displayModeChooser = 0 ;
    initAllColourPairs() ;
    while( 1 )
    {
-      rc = getActivatedHeadTailMap( root.input.activatedPanel,
-                                    &header,
-                                    &footer) ;
+      rc = getActivatedHeadTailMap( root.input.activatedPanel, &header, &footer) ;
       if( rc )
       {
 
@@ -5532,8 +5493,7 @@ INT32 Event::runSDBTOP( )
          //we should refresh the terminal
          if( rc < 0 )
          {
-            rc = refreshAll( header, root.input.activatedPanel,
-                             footer, FALSE ) ;
+            rc = refreshAll( header, root.input.activatedPanel, footer, FALSE ) ;
             if( rc )
             {
                goto error ;
@@ -5573,8 +5533,7 @@ INT32 Event::runSDBTOP( )
          }
          if( REFRESH == root.input.forcedToRefresh_Local )
          {
-            rc = refreshAll( header, root.input.activatedPanel,
-                             footer, FALSE ) ;
+            rc = refreshAll( header, root.input.activatedPanel, footer, FALSE ) ;
             if( rc )
             {
                goto error ;
