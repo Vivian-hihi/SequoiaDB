@@ -740,7 +740,7 @@ if windows:
     shellEnv.Append( LIBS=["winmm.lib"] )
     #env.Append( CPPFLAGS=" /TP " )
 
-#shellEnv = doConfigure( shellEnv , shell=True )
+shellEnv = doConfigure( shellEnv , shell=True )
 
 # add engine and client variable
 env.Append( CPPDEFINES=[ "SDB_ENGINE" ] )
