@@ -68,14 +68,14 @@
          </div>
          <!-- 左边的步骤列表 -->
          <div id="config_title_img" class="left_box_setup_list_box">
-            <div class="left_box_setup_list_box_line" onclick="switchshow(1);"><img src="./images/status_2.png" /> <span>设置全局参数</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(2);"><img src="./images/status_3.png" /> <span>设置主机参数</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(3);"><img src="./images/status_3.png" /> <span>配置协调节点</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(4);"><img src="./images/status_3.png" /> <span>配置编目节点</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(5);"><img src="./images/status_3.png" /> <span>配置数据节点</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(6);"><img src="./images/status_3.png" /> <span>集群配置总结</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(7);"><img src="./images/status_3.png" /> <span>检查系统环境</span></div>
-            <div class="left_box_setup_list_box_line" onclick="switchshow(8);"><img src="./images/status_3.png" /> <span>部署集群</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_2.png" /> <span>设置全局参数</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>设置主机参数</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>配置协调节点</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>配置编目节点</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>配置数据节点</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>集群配置总结</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>检查系统环境</span></div>
+            <div class="left_box_setup_list_box_line" onclick=""><img src="./images/status_3.png" /> <span>部署集群</span></div>
          </div>
       </div>
 
@@ -97,12 +97,12 @@
                </div>
                <div class="right_box_context_box_setup_1">
                   <div class="right_box_context_box_setup_1_title">安装程序路径</div>
-                  <div class="right_box_context_box_setup_1_input"><input type="text" id="step_1_path" class="form-control" placeholder="例如：/home/sequoiadb.run" value="/home/sequoiadb/www/http/shell/sequoiadb-1.5-linux_x86_64-installer.run"></div>
+                  <div class="right_box_context_box_setup_1_input"><input type="text" id="step_1_path" class="form-control" placeholder="例如：/home/sequoiadb.run" value=""></div>
                   <div class="right_box_context_box_setup_1_describe">SequoiaDB安装程序路径(绝对路径)</div>
                </div>
                <div class="right_box_context_box_setup_1">
                   <div class="right_box_context_box_setup_1_title">sdbcm端口</div>
-                  <div class="right_box_context_box_setup_1_input"><input type="text" id="step_1_sdbcm" class="form-control" placeholder="" value="50010"></div>
+                  <div class="right_box_context_box_setup_1_input"><input type="text" id="step_1_sdbcm" class="form-control" placeholder="" value="11790"></div>
                   <div class="right_box_context_box_setup_1_describe"></div>
                </div>
             </div>
@@ -440,12 +440,12 @@
             <div class="right_box_context_box">
             	<div class="right_box_context_box_navigation_box">
                   <ul id="step_8_tab_ul" class="nav nav-tabs">
-                     <li class="active"><a href="#step_8_send" onclick="switch_step_8_tab(0);">分发SequoiaDB安装包</a></li>
-                     <li><a href="#step_8_install" onclick="switch_step_8_tab(1);">安装SequoiaDB</a></li>
-                     <li><a href="#step_8_coord" onclick="switch_step_8_tab(2);">启动协调节点</a></li>
-                     <li><a href="#step_8_cata" onclick="switch_step_8_tab(3);">启动编目节点</a></li>
-                     <li><a href="#step_8_data" onclick="switch_step_8_tab(4);">创建数据节点</a></li>
-                     <li><a href="#step_8_group" onclick="switch_step_8_tab(5);">激活分区组</a></li>
+                     <li class="active"><a href="#step_8_send" onclick="">分发SequoiaDB安装包</a></li>
+                     <li><a href="#step_8_install" onclick="">安装SequoiaDB</a></li>
+                     <li><a href="#step_8_coord" onclick="">启动协调节点</a></li>
+                     <li><a href="#step_8_cata" onclick="">启动编目节点</a></li>
+                     <li><a href="#step_8_data" onclick="">创建数据节点</a></li>
+                     <li><a href="#step_8_group" onclick="">激活分区组</a></li>
                   </ul>
                </div>
                <!-- 第一页(分发) -->
@@ -572,7 +572,7 @@
                      <!-- 添加主机的弹出框 第 1 页 -->
                      <div style="width:700px;" class="tab-pane fade in active" id="scan_tab_1">
                         <div style="width:700px;margin-bottom:10px;">
-                           <textarea id="scan_tab_1_host_text" class="form-control" rows="5">192.168.1.[211-213]</textarea>
+                           <textarea id="scan_tab_1_host_text" class="form-control" rows="5">192.168.1.[1-10]</textarea>
                         </div>
                         <div style="width:700px;" align="right">
                            <div style="float:right;width:70px;">
