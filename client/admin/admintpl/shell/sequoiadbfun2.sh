@@ -160,6 +160,33 @@ function createFolder()
    mkdir -p $1
 }
 
+#创建文件夹 返回1是不存在
+#参数1 文件夹名 例如 "myfile"
+#参数2 用户名
+#参数3 用户组
+function createFolder2()
+{
+   local path="${1}"
+   local user="${2}"
+   local group="${3}"
+   if [ -z "${path}" ]; then
+      return 0
+   fi
+   checkPathExist "${path}"
+   if [ "${?}" = "1" ]; then
+      createFolder2 "${path%/*}" "${user}" "${group}"
+      if [ "${?}" = "0" ]; then
+         #如果上一层存在,那就从当前层创建路径
+         createFolder "${path}"
+         chown ${user}:${group} -R "${path}"
+         return 0
+      fi
+      return 1
+   else
+      return 0
+   fi
+}
+
 #执行指定用户权限的命令
 #参数1 用户名   例如 sdbadmin
 #参数2 执行命令 例如 "mkdir aa"
@@ -350,7 +377,8 @@ function checkLocalEnv()
    else
       #路径不存在，创建目录
       #创建目录
-      createFolder "${host_array[1]}"
+      #createFolder "${host_array[1]}"
+      createFolder2 "${host_array[1]}" "${host_array[3]}" "${host_array[2]}"
       DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${host_array[1]}")
    fi
 
@@ -455,7 +483,8 @@ function checkLocalEnv()
          else
             #路径不存在，创建目录
             #创建目录
-            createFolder "${path}"
+            #createFolder "${path}"
+            createFolder2 "${path}" "${host_array[3]}" "${host_array[2]}"
             DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
@@ -486,7 +515,8 @@ function checkLocalEnv()
          else
             #路径不存在，创建目录
             #创建目录
-            createFolder ${path}
+            #createFolder ${path}
+            createFolder2 "${path}" "${host_array[3]}" "${host_array[2]}"
             DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
@@ -511,7 +541,8 @@ function checkLocalEnv()
          else
             #路径不存在，创建目录
             #创建目录
-            createFolder ${path}
+            #createFolder ${path}
+            createFolder2 "${path}" "${host_array[3]}" "${host_array[2]}"
             DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
@@ -542,7 +573,8 @@ function checkLocalEnv()
          else
             #路径不存在，创建目录
             #创建目录
-            createFolder ${path}
+            #createFolder ${path}
+            createFolder2 "${path}" "${host_array[3]}" "${host_array[2]}"
             DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
@@ -573,7 +605,8 @@ function checkLocalEnv()
          else
             #路径不存在，创建目录
             #创建目录
-            createFolder ${path}
+            #createFolder ${path}
+            createFolder2 "${path}" "${host_array[3]}" "${host_array[2]}"
             DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${path}")
          fi
          #修改所属用户 和 用户组
@@ -667,7 +700,8 @@ function startCoord()
    else
       #路径不存在，创建目录
       #创建目录
-      createFolder "${confpath}"
+      #createFolder "${confpath}"
+      createFolder2 "${confpath}" "${host_array[3]}" "${host_array[2]}"
       DELETE_PATH_ARR=("${DELETE_PATH_ARR[@]}" "${confpath}")
    fi
    #修改所属用户 和 用户组
