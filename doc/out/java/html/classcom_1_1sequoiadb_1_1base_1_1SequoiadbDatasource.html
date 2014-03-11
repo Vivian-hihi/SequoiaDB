@@ -36,6 +36,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -85,7 +86,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">com.sequoiadb.base.SequoiadbDatasource Class Reference</div>  </div>
@@ -97,28 +97,83 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aa517bb946dd263ccc497fa66077bd162"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa517bb946dd263ccc497fa66077bd162"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>SequoiadbDatasource</b> (String url, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a> option)  throws Exception </td></tr>
-<tr class="separator:aa517bb946dd263ccc497fa66077bd162"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae288705af90abd3bd880fcacc3e97f81"><td class="memItemLeft" align="right" valign="top">synchronized <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#ae288705af90abd3bd880fcacc3e97f81">getConnection</a> ()  throws SQLException, 			InterruptedException </td></tr>
-<tr class="memdesc:ae288705af90abd3bd880fcacc3e97f81"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the connection from this datasouce  <a href="#ae288705af90abd3bd880fcacc3e97f81"></a><br/></td></tr>
+<tr class="memitem:aacf5efa68c49f00fe0605ded4216a4f9"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#aacf5efa68c49f00fe0605ded4216a4f9">SequoiadbDatasource</a> (String url, String username, String password, <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a> option)  throws BaseException 	</td></tr>
+<tr class="memdesc:aacf5efa68c49f00fe0605ded4216a4f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">constructor method  <a href="#aacf5efa68c49f00fe0605ded4216a4f9"></a><br/></td></tr>
+<tr class="separator:aacf5efa68c49f00fe0605ded4216a4f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae288705af90abd3bd880fcacc3e97f81"><td class="memItemLeft" align="right" valign="top">synchronized <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#ae288705af90abd3bd880fcacc3e97f81">getConnection</a> ()  throws BaseException, InterruptedException 	</td></tr>
+<tr class="memdesc:ae288705af90abd3bd880fcacc3e97f81"><td class="mdescLeft">&#160;</td><td class="mdescRight">get the connection from this datasource  <a href="#ae288705af90abd3bd880fcacc3e97f81"></a><br/></td></tr>
 <tr class="separator:ae288705af90abd3bd880fcacc3e97f81"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac1d49c97f2a70b1f08a13b525344007a"><td class="memItemLeft" align="right" valign="top">synchronized void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#ac1d49c97f2a70b1f08a13b525344007a">close</a> (<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a> sequoiadb)</td></tr>
+<tr class="memitem:ac1d49c97f2a70b1f08a13b525344007a"><td class="memItemLeft" align="right" valign="top">synchronized void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbDatasource.html#ac1d49c97f2a70b1f08a13b525344007a">close</a> (<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a> sequoiadb)  throws BaseException 	</td></tr>
 <tr class="memdesc:ac1d49c97f2a70b1f08a13b525344007a"><td class="mdescLeft">&#160;</td><td class="mdescRight">when you accomplish some actions,you should close the conncetion  <a href="#ac1d49c97f2a70b1f08a13b525344007a"></a><br/></td></tr>
 <tr class="separator:ac1d49c97f2a70b1f08a13b525344007a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a9d3221dad46a5a694d5883479e7e0434"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9d3221dad46a5a694d5883479e7e0434"></a>
-volatile LinkedList&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>sequoiadbs</b></td></tr>
-<tr class="separator:a9d3221dad46a5a694d5883479e7e0434"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0b454a444ae94299d394e1a8bc6aa154"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b454a444ae94299d394e1a8bc6aa154"></a>
-volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>used_sequoiadbs</b> = new HashSet&lt;<a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a>&gt;()</td></tr>
-<tr class="separator:a0b454a444ae94299d394e1a8bc6aa154"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>SequoiaDB DataSource. </p>
-</div><h2 class="groupheader">Member Function Documentation</h2>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="aacf5efa68c49f00fe0605ded4216a4f9"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">com.sequoiadb.base.SequoiadbDatasource.SequoiadbDatasource </td>
+          <td>(</td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>url</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>username</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">String&#160;</td>
+          <td class="paramname"><em>password</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1SequoiadbOption.html">SequoiadbOption</a>&#160;</td>
+          <td class="paramname"><em>option</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td>  throws BaseException 	</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>constructor method </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">url</td><td>the url of jdbc </td></tr>
+    <tr><td class="paramname">username</td><td>the username of sequoiadb </td></tr>
+    <tr><td class="paramname">password</td><td>the password of sequoiadb </td></tr>
+    <tr><td class="paramname">option</td><td>the option of datasource </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">com.sequoiadb.exception.BaseException</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="ac1d49c97f2a70b1f08a13b525344007a"></a>
 <div class="memitem">
 <div class="memproto">
@@ -131,7 +186,7 @@ volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoi
           <td>(</td>
           <td class="paramtype"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a>&#160;</td>
           <td class="paramname"><em>sequoiadb</em></td><td>)</td>
-          <td></td>
+          <td>  throws BaseException 	</td>
         </tr>
       </table>
   </td>
@@ -151,7 +206,7 @@ volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoi
 <dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">@since</td><td>1.0.0 </td></tr>
+    <tr><td class="paramname">com.sequoiadb.Exception.BaseException</td><td></td></tr>
   </table>
   </dd>
 </dl>
@@ -169,7 +224,7 @@ volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoi
           <td class="memname"><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html">Sequoiadb</a> com.sequoiadb.base.SequoiadbDatasource.getConnection </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td>  throws SQLException, 			InterruptedException </td>
+          <td>  throws BaseException, InterruptedException 	</td>
         </tr>
       </table>
   </td>
@@ -179,7 +234,7 @@ volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoi
 </table>
 </div><div class="memdoc">
 
-<p>get the connection from this datasouce </p>
+<p>get the connection from this datasource </p>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname">SQLException</td><td></td></tr>
@@ -190,7 +245,7 @@ volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoi
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoiadb.html" title="Database operation interfaces of admin.">Sequoiadb</a> </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
-    <tr><td class="paramname">@since</td><td>1.0.0 </td></tr>
+    <tr><td class="paramname">InterruptedException</td><td>BaseException throws BaseException with the error type SDB_DRIVER_DS_RUNOUT when datasource had run out </td></tr>
   </table>
   </dd>
 </dl>
@@ -203,7 +258,7 @@ volatile HashSet&lt; <a class="el" href="classcom_1_1sequoiadb_1_1base_1_1Sequoi
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:05:16 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 16:10:48 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
