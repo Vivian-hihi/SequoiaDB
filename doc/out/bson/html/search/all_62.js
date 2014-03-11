@@ -1,11 +1,9 @@
 var searchData=
 [
-  ['base64c_2eh',['base64c.h',['../base64c_8h.html',1,'']]],
-  ['base64decode',['base64Decode',['../base64c_8h.html#a248087ef8af637688d804fe3e351455c',1,'base64c.h']]],
-  ['base64encode',['base64Encode',['../base64c_8h.html#abfc64b33acdfc90bbe979c8d047f2e52',1,'base64c.h']]],
   ['bson',['bson',['../structbson.html',1,'']]],
   ['bson_2eh',['bson.h',['../bson_8h.html',1,'']]],
   ['bson_5falready_5ffinished',['BSON_ALREADY_FINISHED',['../bson_8h.html#a4b9bcba51128a5736912d46966d35e3aa562e555cfa18a7ade9747981c69eac27',1,'bson.h']]],
+  ['bson_5fappend_5farray',['bson_append_array',['../bson_8h.html#a810ed84964953016948ed495b380dd5b',1,'bson.h']]],
   ['bson_5fappend_5fbinary',['bson_append_binary',['../bson_8h.html#ae4920bb4414124031a8ffc0d49154002',1,'bson.h']]],
   ['bson_5fappend_5fbool',['bson_append_bool',['../bson_8h.html#a2051a28a6e591168d04b6143ccd7ac42',1,'bson.h']]],
   ['bson_5fappend_5fbson',['bson_append_bson',['../bson_8h.html#ab4990c9fd9e1b79e2418d06cce80a29d',1,'bson.h']]],
@@ -20,6 +18,8 @@ var searchData=
   ['bson_5fappend_5ffinish_5fobject',['bson_append_finish_object',['../bson_8h.html#a7cb66f8e911dd217ef6541725f816310',1,'bson.h']]],
   ['bson_5fappend_5fint',['bson_append_int',['../bson_8h.html#abda63bf5c5b388266b327c575ee2543e',1,'bson.h']]],
   ['bson_5fappend_5flong',['bson_append_long',['../bson_8h.html#a9ac4f063e773f714e4e7671ae43862fc',1,'bson.h']]],
+  ['bson_5fappend_5fmaxkey',['bson_append_maxkey',['../bson_8h.html#ae4b63848a20b1e8b8a38e5783f5c8329',1,'bson.h']]],
+  ['bson_5fappend_5fminkey',['bson_append_minkey',['../bson_8h.html#a5e06c59c1378da8668b2ed8079260fbb',1,'bson.h']]],
   ['bson_5fappend_5fnew_5foid',['bson_append_new_oid',['../bson_8h.html#a0197e6d94d72cac7095b81e837187031',1,'bson.h']]],
   ['bson_5fappend_5fnull',['bson_append_null',['../bson_8h.html#ac29947077c520fbf70635da427618769',1,'bson.h']]],
   ['bson_5fappend_5foid',['bson_append_oid',['../bson_8h.html#a8b512c33cc3b2e1658736fc730d6fe7e',1,'bson.h']]],

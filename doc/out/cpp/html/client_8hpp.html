@@ -61,6 +61,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow2" class="tabs2">
     <ul class="tablist">
       <li><a href="files.html"><span>File&#160;List</span></a></li>
+      <li><a href="globals.html"><span>File&#160;Members</span></a></li>
     </ul>
   </div>
 <!-- window showing the filter options -->
@@ -68,7 +69,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -99,6 +100,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="textblock"><code>#include &quot;core.hpp&quot;</code><br/>
 <code>#include &quot;bson/bson.hpp&quot;</code><br/>
 <code>#include &quot;fromjson.hpp&quot;</code><br/>
+<code>#include &quot;spd.h&quot;</code><br/>
 </div>
 <p><a href="client_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -114,10 +116,10 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html">sdbclient::sdbCollection</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Database operation interfaces of cursor.  <a href="classsdbclient_1_1sdbCollection.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbReplicaNode.html">sdbclient::_sdbReplicaNode</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbNode.html">sdbclient::_sdbNode</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbReplicaNode.html">sdbclient::sdbReplicaNode</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Database operation interfaces of replica node.  <a href="classsdbclient_1_1sdbReplicaNode.html#details">More...</a><br/></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbNode.html">sdbclient::sdbNode</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Database operation interfaces of node.This class takes the place of class "replicaNode".  <a href="classsdbclient_1_1sdbNode.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">sdbclient::_sdbReplicaGroup</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -161,8 +163,7 @@ Macros</h2></td></tr>
 <tr class="memitem:abb7d089652956f01eb67ab6f3ba878d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abb7d089652956f01eb67ab6f3ba878d4"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_PAGESIZE_64K</b>&#160;&#160;&#160;65536</td></tr>
 <tr class="separator:abb7d089652956f01eb67ab6f3ba878d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a72a3a2a84925f6f11cd00a17b701eed9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a72a3a2a84925f6f11cd00a17b701eed9"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_PAGESIZE_DEFAULT</b>&#160;&#160;&#160;SDB_PAGESIZE_4K</td></tr>
+<tr class="memitem:a72a3a2a84925f6f11cd00a17b701eed9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8hpp.html#a72a3a2a84925f6f11cd00a17b701eed9">SDB_PAGESIZE_DEFAULT</a>&#160;&#160;&#160;0</td></tr>
 <tr class="separator:a72a3a2a84925f6f11cd00a17b701eed9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b73998967cb7a8d4211bc29f3113436"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b73998967cb7a8d4211bc29f3113436"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_SNAP_CONTEXTS</b>&#160;&#160;&#160;0</td></tr>
@@ -215,9 +216,17 @@ Macros</h2></td></tr>
 <tr class="memitem:a3c486695f3fbd920520d7b5b905805f4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3c486695f3fbd920520d7b5b905805f4"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_GROUPS</b>&#160;&#160;&#160;7</td></tr>
 <tr class="separator:a3c486695f3fbd920520d7b5b905805f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19aebca53c65109cd34afa3ea75e0939"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19aebca53c65109cd34afa3ea75e0939"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>SDB_LIST_STOREPROCEDURES</b>&#160;&#160;&#160;8</td></tr>
+<tr class="separator:a19aebca53c65109cd34afa3ea75e0939"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5387deee4c330c29a64ae8da60dde03a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5387deee4c330c29a64ae8da60dde03a"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>FLG_INSERT_CONTONDUP</b>&#160;&#160;&#160;0x00000001</td></tr>
 <tr class="separator:a5387deee4c330c29a64ae8da60dde03a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3617e3ca13b60cc785acbbf2b8fb2b2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="client_8hpp.html#ac3617e3ca13b60cc785acbbf2b8fb2b2">sdbReplicaNode</a>&#160;&#160;&#160;sdbNode</td></tr>
+<tr class="separator:ac3617e3ca13b60cc785acbbf2b8fb2b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10fe6f905fb0a7b33d0fe1613375a432"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a10fe6f905fb0a7b33d0fe1613375a432"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>activateReplicaGroup</b>&#160;&#160;&#160;activateReplicaGroup</td></tr>
+<tr class="separator:a10fe6f905fb0a7b33d0fe1613375a432"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -243,10 +252,37 @@ Enumerations</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>C++ Client Driver. </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Macro Definition Documentation</h2>
+<a class="anchor" id="a72a3a2a84925f6f11cd00a17b701eed9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SDB_PAGESIZE_DEFAULT&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>0 means using database's default pagesize, it 64k now </p>
+
+</div>
+</div>
+<a class="anchor" id="ac3617e3ca13b60cc785acbbf2b8fb2b2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define sdbReplicaNode&#160;&#160;&#160;sdbNode</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>class name 'sdbReplicaNode' will be deprecated in version 2.x, use 'sdbNode' instead of it. </p>
+
+</div>
+</div>
+</div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:30:54 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

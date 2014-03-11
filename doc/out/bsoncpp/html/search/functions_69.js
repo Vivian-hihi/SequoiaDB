@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['init',['init',['../classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889',1,'bson::BSONObj']]],
   ['isabsonobj',['isABSONObj',['../classbson_1_1BSONElement.html#ab9f8d1ce3c4a7fdd3807dff366e20be2',1,'bson::BSONElement']]],
   ['isempty',['isEmpty',['../classbson_1_1BSONObj.html#a31ee744660d52c47fa319f1860d97042',1,'bson::BSONObj']]],
   ['isnull',['isNull',['../classbson_1_1BSONElement.html#ad89361717845c5be028a853f6f0d215c',1,'bson::BSONElement']]],

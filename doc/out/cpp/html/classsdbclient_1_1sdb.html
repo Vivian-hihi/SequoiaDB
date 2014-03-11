@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -161,7 +161,7 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getCollectionSpace</
 INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createCollectionSpace</b> (const CHAR *pCollectionSpaceName, INT32 iPageSize, <a class="el" href="classsdbclient_1_1__sdbCollectionSpace.html">_sdbCollectionSpace</a> **cs)</td></tr>
 <tr class="separator:af50c46e31a1606a9caa9f289553a175e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a52f05987880262c5f1451b71aac819ae"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a52f05987880262c5f1451b71aac819ae">createCollectionSpace</a> (const CHAR *pCollectionSpaceName, INT32 iPageSize, <a class="el" href="classsdbclient_1_1sdbCollectionSpace.html">sdbCollectionSpace</a> &amp;cs)</td></tr>
-<tr class="memdesc:a52f05987880262c5f1451b71aac819ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the specified collection space with default SDB_PAGESIZE_4K.  <a href="#a52f05987880262c5f1451b71aac819ae"></a><br/></td></tr>
+<tr class="memdesc:a52f05987880262c5f1451b71aac819ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create collection space with specified pagesize.  <a href="#a52f05987880262c5f1451b71aac819ae"></a><br/></td></tr>
 <tr class="separator:a52f05987880262c5f1451b71aac819ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a0c100a59139cfbf4eaf05c67eb2c98d4">dropCollectionSpace</a> (const CHAR *pCollectionSpaceName)</td></tr>
 <tr class="memdesc:a0c100a59139cfbf4eaf05c67eb2c98d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified collection space.  <a href="#a0c100a59139cfbf4eaf05c67eb2c98d4"></a><br/></td></tr>
@@ -196,21 +196,24 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getReplicaGroup</b> 
 <tr class="memitem:ae580ee35cce39c18b54e54cc91c2089e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ae580ee35cce39c18b54e54cc91c2089e">getReplicaGroup</a> (INT32 id, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;result)</td></tr>
 <tr class="memdesc:ae580ee35cce39c18b54e54cc91c2089e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the specified replica group.  <a href="#ae580ee35cce39c18b54e54cc91c2089e"></a><br/></td></tr>
 <tr class="separator:ae580ee35cce39c18b54e54cc91c2089e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad6a200a80e2b52ce46ab9d44bf31a941"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad6a200a80e2b52ce46ab9d44bf31a941"></a>
-INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **rg)</td></tr>
-<tr class="separator:ad6a200a80e2b52ce46ab9d44bf31a941"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acfcd27437282c52b494ea0e3f1dc8b75"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#acfcd27437282c52b494ea0e3f1dc8b75">createReplicaGroup</a> (const CHAR *pName, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;rg)</td></tr>
-<tr class="memdesc:acfcd27437282c52b494ea0e3f1dc8b75"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the specified replica group.  <a href="#acfcd27437282c52b494ea0e3f1dc8b75"></a><br/></td></tr>
-<tr class="separator:acfcd27437282c52b494ea0e3f1dc8b75"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9587acb612c12e5696df9ea835aefb02"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a9587acb612c12e5696df9ea835aefb02">removeReplicaGroup</a> (const CHAR *pRGName)</td></tr>
-<tr class="memdesc:a9587acb612c12e5696df9ea835aefb02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified replica group.  <a href="#a9587acb612c12e5696df9ea835aefb02"></a><br/></td></tr>
-<tr class="separator:a9587acb612c12e5696df9ea835aefb02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af79e91ec055a25cf0cd372ca9b660920"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af79e91ec055a25cf0cd372ca9b660920"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>createReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **replicaGroup)</td></tr>
+<tr class="separator:af79e91ec055a25cf0cd372ca9b660920"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35d94e0a21b14c5bc4aee19ca7b06d79"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a35d94e0a21b14c5bc4aee19ca7b06d79">createReplicaGroup</a> (const CHAR *pName, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;replicaGroup)</td></tr>
+<tr class="memdesc:a35d94e0a21b14c5bc4aee19ca7b06d79"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create the specified replica group.  <a href="#a35d94e0a21b14c5bc4aee19ca7b06d79"></a><br/></td></tr>
+<tr class="separator:a35d94e0a21b14c5bc4aee19ca7b06d79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac30034579825cdc0deeb553d9726f54a"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ac30034579825cdc0deeb553d9726f54a">removeReplicaGroup</a> (const CHAR *pName)</td></tr>
+<tr class="memdesc:ac30034579825cdc0deeb553d9726f54a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the specified replica group.  <a href="#ac30034579825cdc0deeb553d9726f54a"></a><br/></td></tr>
+<tr class="separator:ac30034579825cdc0deeb553d9726f54a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b36154a0f5ac15e885e567b78b7bf01"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a3b36154a0f5ac15e885e567b78b7bf01">createReplicaCataGroup</a> (const CHAR *pHostName, const CHAR *pServiceName, const CHAR *pDatabasePath, const bson::BSONObj &amp;configure)</td></tr>
 <tr class="memdesc:a3b36154a0f5ac15e885e567b78b7bf01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a catalog replica group.  <a href="#a3b36154a0f5ac15e885e567b78b7bf01"></a><br/></td></tr>
 <tr class="separator:a3b36154a0f5ac15e885e567b78b7bf01"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aae45a4ca40a4961c04100df64179665a"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#aae45a4ca40a4961c04100df64179665a">activateReplicaGroup</a> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **rg)</td></tr>
-<tr class="memdesc:aae45a4ca40a4961c04100df64179665a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate the specified replica group.  <a href="#aae45a4ca40a4961c04100df64179665a"></a><br/></td></tr>
-<tr class="separator:aae45a4ca40a4961c04100df64179665a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab02022c1b298708e333b984ff930cc9b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab02022c1b298708e333b984ff930cc9b"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>activateReplicaGroup</b> (const CHAR *pName, <a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **replicaGroup)</td></tr>
+<tr class="separator:ab02022c1b298708e333b984ff930cc9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12e050b3c04d3bc374db41f813983110"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a12e050b3c04d3bc374db41f813983110">activateReplicaGroup</a> (const CHAR *pName, <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;replicaGroup)</td></tr>
+<tr class="memdesc:a12e050b3c04d3bc374db41f813983110"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate the specified replica group.  <a href="#a12e050b3c04d3bc374db41f813983110"></a><br/></td></tr>
+<tr class="separator:a12e050b3c04d3bc374db41f813983110"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08d7daff3410df13b1e43a70f78d0763"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a08d7daff3410df13b1e43a70f78d0763">execUpdate</a> (const CHAR *sql)</td></tr>
 <tr class="memdesc:a08d7daff3410df13b1e43a70f78d0763"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executing SQL command for updating.  <a href="#a08d7daff3410df13b1e43a70f78d0763"></a><br/></td></tr>
 <tr class="separator:a08d7daff3410df13b1e43a70f78d0763"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -232,6 +235,57 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>exec</b> (const CHAR
 <tr class="memitem:a4f64ee8f658595ed4582cc094caf526b"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a4f64ee8f658595ed4582cc094caf526b">flushConfigure</a> (const bson::BSONObj &amp;options)</td></tr>
 <tr class="memdesc:a4f64ee8f658595ed4582cc094caf526b"><td class="mdescLeft">&#160;</td><td class="mdescRight">flush the options to configure file.  <a href="#a4f64ee8f658595ed4582cc094caf526b"></a><br/></td></tr>
 <tr class="separator:a4f64ee8f658595ed4582cc094caf526b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a04fabc0ba18b7ee81bdf0a5f7267e485"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a04fabc0ba18b7ee81bdf0a5f7267e485">crtJSProcedure</a> (const CHAR *code)</td></tr>
+<tr class="memdesc:a04fabc0ba18b7ee81bdf0a5f7267e485"><td class="mdescLeft">&#160;</td><td class="mdescRight">create a store procedures.  <a href="#a04fabc0ba18b7ee81bdf0a5f7267e485"></a><br/></td></tr>
+<tr class="separator:a04fabc0ba18b7ee81bdf0a5f7267e485"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6168d5ae7ffefb7234069679be90cf69"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a6168d5ae7ffefb7234069679be90cf69">rmProcedures</a> (const CHAR *spName)</td></tr>
+<tr class="memdesc:a6168d5ae7ffefb7234069679be90cf69"><td class="mdescLeft">&#160;</td><td class="mdescRight">remove a store procedures.  <a href="#a6168d5ae7ffefb7234069679be90cf69"></a><br/></td></tr>
+<tr class="separator:a6168d5ae7ffefb7234069679be90cf69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adf13cf86c9ca28a408442f63bb315996"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf13cf86c9ca28a408442f63bb315996"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listProcedures</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition)</td></tr>
+<tr class="separator:adf13cf86c9ca28a408442f63bb315996"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a2fa83aaae147419194df4cd9df9a86"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a5a2fa83aaae147419194df4cd9df9a86">listProcedures</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition)</td></tr>
+<tr class="memdesc:a5a2fa83aaae147419194df4cd9df9a86"><td class="mdescLeft">&#160;</td><td class="mdescRight">list store procedures.  <a href="#a5a2fa83aaae147419194df4cd9df9a86"></a><br/></td></tr>
+<tr class="separator:a5a2fa83aaae147419194df4cd9df9a86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:addedc70eadc484dd680bce3a4f2902e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="addedc70eadc484dd680bce3a4f2902e0"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>evalJS</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)</td></tr>
+<tr class="separator:addedc70eadc484dd680bce3a4f2902e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe6d396da0d2bfd5e7ce595e69b38f70"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#afe6d396da0d2bfd5e7ce595e69b38f70">evalJS</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const CHAR *code, SDB_SPD_RES_TYPE *type, const bson::BSONObj &amp;errmsg)</td></tr>
+<tr class="memdesc:afe6d396da0d2bfd5e7ce595e69b38f70"><td class="mdescLeft">&#160;</td><td class="mdescRight">eval a func. \ type is declared in spd.h. see SDB_FMP_RES_TYPE.  <a href="#afe6d396da0d2bfd5e7ce595e69b38f70"></a><br/></td></tr>
+<tr class="separator:afe6d396da0d2bfd5e7ce595e69b38f70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ab7c326d10a759bf2922f708baa7d16"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a1ab7c326d10a759bf2922f708baa7d16">backupOffline</a> (const bson::BSONObj &amp;options)</td></tr>
+<tr class="memdesc:a1ab7c326d10a759bf2922f708baa7d16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backup the whole database or specifed replica group.  <a href="#a1ab7c326d10a759bf2922f708baa7d16"></a><br/></td></tr>
+<tr class="separator:a1ab7c326d10a759bf2922f708baa7d16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fbe6480fc5744b908e22087d00724b8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fbe6480fc5744b908e22087d00724b8"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listBackup</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;options, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject)</td></tr>
+<tr class="separator:a2fbe6480fc5744b908e22087d00724b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad7c8dbc2c79d0b3b501f906fa7a415fa"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ad7c8dbc2c79d0b3b501f906fa7a415fa">listBackup</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;options, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject)</td></tr>
+<tr class="memdesc:ad7c8dbc2c79d0b3b501f906fa7a415fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the backups.  <a href="#ad7c8dbc2c79d0b3b501f906fa7a415fa"></a><br/></td></tr>
+<tr class="separator:ad7c8dbc2c79d0b3b501f906fa7a415fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a797f130822fe81c5cc3ea378e02a31b6"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a797f130822fe81c5cc3ea378e02a31b6">removeBackup</a> (const bson::BSONObj &amp;options)</td></tr>
+<tr class="memdesc:a797f130822fe81c5cc3ea378e02a31b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove the backups.  <a href="#a797f130822fe81c5cc3ea378e02a31b6"></a><br/></td></tr>
+<tr class="separator:a797f130822fe81c5cc3ea378e02a31b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae76710138c208e12c2ab98600dedb35f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae76710138c208e12c2ab98600dedb35f"></a>
+INT32&#160;</td><td class="memItemRight" valign="bottom"><b>listTasks</b> (<a class="el" href="classsdbclient_1_1__sdbCursor.html">_sdbCursor</a> **cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
+<tr class="separator:ae76710138c208e12c2ab98600dedb35f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6cfedca719dce5d3b2c2362bb1dc42e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#ab6cfedca719dce5d3b2c2362bb1dc42e">listTasks</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition=_sdbStaticObject, const bson::BSONObj &amp;selector=_sdbStaticObject, const bson::BSONObj &amp;orderBy=_sdbStaticObject, const bson::BSONObj &amp;hint=_sdbStaticObject)</td></tr>
+<tr class="memdesc:ab6cfedca719dce5d3b2c2362bb1dc42e"><td class="mdescLeft">&#160;</td><td class="mdescRight">List the tasks.  <a href="#ab6cfedca719dce5d3b2c2362bb1dc42e"></a><br/></td></tr>
+<tr class="separator:ab6cfedca719dce5d3b2c2362bb1dc42e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7927ebb2fb8706d5d8eba031a9e2bf91"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a7927ebb2fb8706d5d8eba031a9e2bf91">waitTasks</a> (const SINT64 *taskIDs, SINT32 num)</td></tr>
+<tr class="memdesc:a7927ebb2fb8706d5d8eba031a9e2bf91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait the tasks to finish.  <a href="#a7927ebb2fb8706d5d8eba031a9e2bf91"></a><br/></td></tr>
+<tr class="separator:a7927ebb2fb8706d5d8eba031a9e2bf91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8d79a58d3b826b19f1dbf20d0e3a59f0"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a8d79a58d3b826b19f1dbf20d0e3a59f0">cancelTask</a> (SINT64 taskID, BOOLEAN isAsync)</td></tr>
+<tr class="memdesc:a8d79a58d3b826b19f1dbf20d0e3a59f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the specified task.  <a href="#a8d79a58d3b826b19f1dbf20d0e3a59f0"></a><br/></td></tr>
+<tr class="separator:a8d79a58d3b826b19f1dbf20d0e3a59f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2052443a0e641164ac89ca54f87a5f3e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a2052443a0e641164ac89ca54f87a5f3e">setSessionAttr</a> (const bson::BSONObj &amp;options=_sdbStaticObject)</td></tr>
+<tr class="memdesc:a2052443a0e641164ac89ca54f87a5f3e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the attributes of the session.  <a href="#a2052443a0e641164ac89ca54f87a5f3e"></a><br/></td></tr>
+<tr class="separator:a2052443a0e641164ac89ca54f87a5f3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2052673f94c49d421bed64e096553093"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a2052673f94c49d421bed64e096553093">closeAllCursors</a> ()</td></tr>
+<tr class="memdesc:a2052673f94c49d421bed64e096553093"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all the cursors in current thread, we can't use those cursors to get data again.  <a href="#a2052673f94c49d421bed64e096553093"></a><br/></td></tr>
+<tr class="separator:a2052673f94c49d421bed64e096553093"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a587e82a600dfefaab2872df189e08ca4"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdb.html#a587e82a600dfefaab2872df189e08ca4">isValid</a> (BOOLEAN *result)</td></tr>
+<tr class="memdesc:a587e82a600dfefaab2872df189e08ca4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Judge whether the connection is valid.  <a href="#a587e82a600dfefaab2872df189e08ca4"></a><br/></td></tr>
+<tr class="separator:a587e82a600dfefaab2872df189e08ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -240,9 +294,8 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database operation interfaces of admin. </p>
-<p>Class sdb is a handle class of virtual base class <a class="el" href="classsdbclient_1_1__sdb.html">_sdb</a>. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="aae45a4ca40a4961c04100df64179665a"></a>
+<a class="anchor" id="a12e050b3c04d3bc374db41f813983110"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -258,8 +311,8 @@ Public Attributes</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="classsdbclient_1_1__sdbReplicaGroup.html">_sdbReplicaGroup</a> **&#160;</td>
-          <td class="paramname"><em>rg</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;&#160;</td>
+          <td class="paramname"><em>replicaGroup</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -277,11 +330,138 @@ Public Attributes</h2></td></tr>
 <p>Activate the specified replica group. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The name of the replica group. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">rg</td><td>The return replica group handle. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The name of the replica group </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">replicaGroup</td><td>The return <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html" title="Database operation interfaces of replica group.">sdbReplicaGroup</a> object </td></tr>
   </table>
   </dd>
 </dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a1ab7c326d10a759bf2922f708baa7d16"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::backupOffline </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Backup the whole database or specifed replica group. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true} <pre class="fragment">GroupName   : The replica groups which to be backuped
+Path        : The backup path, if not assign, use the backup path assigned in configuration file
+Name        : The name for the backup
+Description : The description for the backup
+EnsureInc   : Whether excute increment synchronization, default to be false
+OverWrite   : Whether overwrite the old backup file, default to be false
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a8d79a58d3b826b19f1dbf20d0e3a59f0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::cancelTask </td>
+          <td>(</td>
+          <td class="paramtype">SINT64&#160;</td>
+          <td class="paramname"><em>taskID</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">BOOLEAN&#160;</td>
+          <td class="paramname"><em>isAsync</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Cancel the specified task. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">taskID</td><td>The task id </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">isAsync</td><td>The operation "cancel task" is async or not, "true" for async, "false" for sync. Default sync </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a2052673f94c49d421bed64e096553093"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::closeAllCursors </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Close all the cursors in current thread, we can't use those cursors to get data again. </p>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
@@ -558,7 +738,7 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Create the specified collection space with default SDB_PAGESIZE_4K. </p>
+<p>Create collection space with specified pagesize. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pCollectionSpaceName</td><td>The name of collection space. </td></tr>
@@ -647,7 +827,7 @@ SDB_PAGESIZE_DEFAULT
 
 </div>
 </div>
-<a class="anchor" id="acfcd27437282c52b494ea0e3f1dc8b75"></a>
+<a class="anchor" id="a35d94e0a21b14c5bc4aee19ca7b06d79"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -664,7 +844,7 @@ SDB_PAGESIZE_DEFAULT
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbReplicaGroup.html">sdbReplicaGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>rg</em>&#160;</td>
+          <td class="paramname"><em>replicaGroup</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -682,8 +862,8 @@ SDB_PAGESIZE_DEFAULT
 <p>Create the specified replica group. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The name of replication group. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">rg</td><td>The return replica group object. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The name of the replica group. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">replicaGroup</td><td>The return <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html" title="Database operation interfaces of replica group.">sdbReplicaGroup</a> object. </td></tr>
   </table>
   </dd>
 </dl>
@@ -747,6 +927,45 @@ SDB_PAGESIZE_DEFAULT
 
 </div>
 </div>
+<a class="anchor" id="a04fabc0ba18b7ee81bdf0a5f7267e485"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::crtJSProcedure </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>code</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>create a store procedures. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">code</td><td>The code of store procedures </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a0c100a59139cfbf4eaf05c67eb2c98d4"></a>
 <div class="memitem">
 <div class="memproto">
@@ -773,6 +992,70 @@ SDB_PAGESIZE_DEFAULT
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pCollectionSpaceName</td><td>The name of collection space. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="afe6d396da0d2bfd5e7ce595e69b38f70"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::evalJS </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>code</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SDB_SPD_RES_TYPE *&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>errmsg</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>eval a func. \ type is declared in spd.h. see SDB_FMP_RES_TYPE. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">code</td><td>The code to eval </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">type</td><td>The type of value </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor handle of current eval </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">errmsg</td><td>The errmsg from eval </td></tr>
   </table>
   </dd>
 </dl>
@@ -1073,7 +1356,7 @@ SDB_LIST_SESSIONS_CURRENT : Get the current session
 SDB_LIST_COLLECTIONS      : Get all collections list
 SDB_LIST_COLLECTIONSPACES : Get all collecion spaces' list
 SDB_LIST_STORAGEUNITS     : Get storage units list
-SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
+SDB_LIST_GROUPS           : Get replicaGroup list ( only applicable in sharding env )
 </pre> </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, match all the documents if null. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">select</td><td>The selective rule, return the whole document if null. </td></tr>
@@ -1128,7 +1411,7 @@ SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The name of replica group. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">result</td><td>The return replica group object of query. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">result</td><td>The <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html" title="Database operation interfaces of replica group.">sdbReplicaGroup</a> object. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1178,7 +1461,7 @@ SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">id</td><td>The id of replica group. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">result</td><td>The return replica group object of query. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">result</td><td>The <a class="el" href="classsdbclient_1_1sdbReplicaGroup.html" title="Database operation interfaces of replica group.">sdbReplicaGroup</a> object. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1249,14 +1532,128 @@ SDB_LIST_GROUPS           : Get group list ( only applicable in sharding env )
 SDB_SNAP_CONTEXTS_CURRENT : Get the current context's snapshot
 SDB_SNAP_SESSIONS         : Get all sessions' snapshot
 SDB_SNAP_SESSIONS_CURRENT : Get the current session's snapshot
-SDB_SNAP_DATABASE         : Get database snapshot
-SDB_SNAP_SYSTEM           : Get system snapshot
-SDB_SNAP_CATA           : Get catalog snapshot
+SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
+SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
+SDB_SNAP_DATABASE         : Get database's snapshot
+SDB_SNAP_SYSTEM           : Get system's snapshot
+SDB_SNAP_CATA           : Get catalog's snapshot
 </pre> </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, match all the documents if not provided. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">select</td><td>The selective rule, return the whole document if not provided. </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, result set is unordered if not provided. </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The return cursor object of query. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a587e82a600dfefaab2872df189e08ca4"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::isValid </td>
+          <td>(</td>
+          <td class="paramtype">BOOLEAN *&#160;</td>
+          <td class="paramname"><em>result</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Judge whether the connection is valid. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">result</td><td>the output result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ad7c8dbc2c79d0b3b501f906fa7a415fa"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::listBackup </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>selector</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em> = <code>_sdbStaticObject</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List the backups. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>Contains configuration infomations for remove backups, list all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["rgame1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"} <pre class="fragment">GroupName   : Assign the backups of specifed replica groups to be list
+Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
+Name        : Assign the backups with specifed name to be list
+</pre> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">select</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">handle</td><td>The cusor handle of result </td></tr>
   </table>
   </dd>
 </dl>
@@ -1348,6 +1745,56 @@ SDB_SNAP_CATA           : Get catalog snapshot
 
 </div>
 </div>
+<a class="anchor" id="a5a2fa83aaae147419194df4cd9df9a86"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::listProcedures </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>list store procedures. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The condition of list </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor of the result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a6e6d3ba5eef8738e6b92c82d386aa465"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1387,7 +1834,120 @@ SDB_SNAP_CATA           : Get catalog snapshot
 
 </div>
 </div>
-<a class="anchor" id="a9587acb612c12e5696df9ea835aefb02"></a>
+<a class="anchor" id="ab6cfedca719dce5d3b2c2362bb1dc42e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::listTasks </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;&#160;</td>
+          <td class="paramname"><em>cursor</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>condition</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>selector</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>orderBy</em> = <code>_sdbStaticObject</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>hint</em> = <code>_sdbStaticObject</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>List the tasks. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, return all the documents if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">selector</td><td>The selective rule, return the whole document if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">orderBy</td><td>The ordered rule, never sort if null </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if null </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The connection handle </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a797f130822fe81c5cc3ea378e02a31b6"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::removeBackup </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove the backups. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>Contains configuration infomations for remove backups, remove all the backups in the default backup path if null. The "options" contains 3 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"} <pre class="fragment">GroupName   : Assign the backups of specifed replica groups to be remove
+Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
+Name        : Assign the backups with specifed name to be remove
+</pre> </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ac30034579825cdc0deeb553d9726f54a"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1398,7 +1958,7 @@ SDB_SNAP_CATA           : Get catalog snapshot
           <td class="memname">INT32 sdbclient::sdb::removeReplicaGroup </td>
           <td>(</td>
           <td class="paramtype">const CHAR *&#160;</td>
-          <td class="paramname"><em>pRGName</em></td><td>)</td>
+          <td class="paramname"><em>pName</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -1412,7 +1972,7 @@ SDB_SNAP_CATA           : Get catalog snapshot
 <p>Remove the specified replica group. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">pRGName</td><td>The name of replication group </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pName</td><td>The name of the replica group </td></tr>
   </table>
   </dd>
 </dl>
@@ -1502,6 +2062,88 @@ SDB_SNAP_CATA           : Get catalog snapshot
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, usually specifies the node in sharding environment, in standalone mode, this option is ignored. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a6168d5ae7ffefb7234069679be90cf69"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::rmProcedures </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>spName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>remove a store procedures. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">spName</td><td>The name of store procedure </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a2052443a0e641164ac89ca54f87a5f3e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::setSessionAttr </td>
+          <td>(</td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em> = <code>_sdbStaticObject</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set the attributes of the session. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The configuration options for session.The options are as below: <pre class="fragment">PreferedInstance : indicate which instance to respond read request in current session.
+                  eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7},
+                  prefer to choose "read and write instance"/"read only instance"/"anyone instance"/instance1-insatance7,
+                  default to be {"PreferedInstance":"A"}, means would like to choose anyone instance to respond read request such as query. 
+</pre> </td></tr>
   </table>
   </dd>
 </dl>
@@ -1611,6 +2253,56 @@ SDB_SNAP_CATA           : Get catalog snapshot
 
 </div>
 </div>
+<a class="anchor" id="a7927ebb2fb8706d5d8eba031a9e2bf91"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdb::waitTasks </td>
+          <td>(</td>
+          <td class="paramtype">const SINT64 *&#160;</td>
+          <td class="paramname"><em>taskIDs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SINT32&#160;</td>
+          <td class="paramname"><em>num</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Wait the tasks to finish. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">taskIDs</td><td>The array of task id </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">num</td><td>The number of task id </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a class="anchor" id="ac2c38ba2117a2053533e3fcea06fa97b"></a>
 <div class="memitem">
@@ -1632,7 +2324,7 @@ SDB_SNAP_CATA           : Get catalog snapshot
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:30:55 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

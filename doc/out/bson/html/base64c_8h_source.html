@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
-<title>SequoiaDB: C:/SequoiaDB/client/include/base64c.h Source File</title>
+<title>SequoiaDB: C:/sequoiadb/client/include/base64c.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -78,7 +78,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_ad01e378f1e2b365ab9e6368d0f1d157.html">client</a></li><li class="navelem"><a class="el" href="dir_1080c4fc4aac9d35ac17fd4ac53388c5.html">include</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_1b71ffe209e43ec69c6189dda45eb145.html">client</a></li><li class="navelem"><a class="el" href="dir_78d222fede446bf1a6fcff5f99478845.html">include</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -86,7 +86,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">base64c.h</div>  </div>
 </div><!--header-->
 <div class="contents">
-<a href="base64c_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;</div>
+<div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;</div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#ifndef ALAN_BASE64_H</span></div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define ALAN_BASE64_H</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor"></span></div>
@@ -139,21 +139,21 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="comment">***************************************/</span></div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> <a class="code" href="base64c_8h.html#abfc64b33acdfc90bbe979c8d047f2e52" title="String convert base64.">base64Encode</a> ( <span class="keywordtype">char</span> *s, <span class="keywordtype">char</span> *out, <span class="keywordtype">int</span> out_size ) ;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> <a class="code" href="base64c_8h.html#a248087ef8af637688d804fe3e351455c" title="Base64 convert string.">base64Decode</a> ( <span class="keywordtype">char</span> *s, <span class="keywordtype">char</span> *out, <span class="keywordtype">int</span> out_size ) ;</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> <a class="code" href="base64c_8h.html#acee05ea8ed7c3811bb8fef8134875681" title="Get string convert base64 need size.">getEnBase64Size</a> ( <span class="keywordtype">char</span> *s ) ;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> <a class="code" href="base64c_8h.html#a92486dcef4a70123a3c5beafcbd49dd2" title="Get base64 convert string need size.">getDeBase64Size</a> ( <span class="keywordtype">char</span> *s ) ;</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;SDB_EXTERN_C_END</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> base64Encode ( <span class="keywordtype">char</span> *s, <span class="keywordtype">int</span> in_size, <span class="keywordtype">char</span> *out, <span class="keywordtype">int</span> out_size ) ;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> base64Decode ( <span class="keywordtype">char</span> *s, <span class="keywordtype">char</span> *out, <span class="keywordtype">int</span> out_size ) ;</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> getEnBase64Size ( <span class="keywordtype">int</span> size ) ;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;SDB_EXPORT <span class="keywordtype">int</span> getDeBase64Size ( <span class="keywordtype">char</span> *s ) ;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;SDB_EXTERN_C_END</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:55:19 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 16:32:07 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

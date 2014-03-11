@@ -151,9 +151,9 @@ typedef <a class="el" href="classbson_1_1BSONObjIterator.html">BSONObjIterator</
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7467fa1b2d8ee3fbf76f14fa087ee7f4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObj.html#a7467fa1b2d8ee3fbf76f14fa087ee7f4">BSONObj</a> (const char *msgdata)</td></tr>
-<tr class="memdesc:a7467fa1b2d8ee3fbf76f14fa087ee7f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> from data in the proper format.  <a href="#a7467fa1b2d8ee3fbf76f14fa087ee7f4"></a><br/></td></tr>
-<tr class="separator:a7467fa1b2d8ee3fbf76f14fa087ee7f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cf9eddbadc11ecdf95dab8eba1e2aa1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObj.html#a3cf9eddbadc11ecdf95dab8eba1e2aa1">BSONObj</a> (const char *msgdata, bool check=true)</td></tr>
+<tr class="memdesc:a3cf9eddbadc11ecdf95dab8eba1e2aa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> from data in the proper format.  <a href="#a3cf9eddbadc11ecdf95dab8eba1e2aa1"></a><br/></td></tr>
+<tr class="separator:a3cf9eddbadc11ecdf95dab8eba1e2aa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6e1d59fd67de2893b3bd2f8ed7fd642"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObj.html#ae6e1d59fd67de2893b3bd2f8ed7fd642">BSONObj</a> (<a class="el" href="classbson_1_1BSONObj_1_1Holder.html">Holder</a> *holder)</td></tr>
 <tr class="memdesc:ae6e1d59fd67de2893b3bd2f8ed7fd642"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classbson_1_1BSONObj.html" title="C++ representation of a &quot;BSON&quot; object – that is, an extended JSON-style object in a binary representa...">BSONObj</a> from data in the proper format.  <a href="#ae6e1d59fd67de2893b3bd2f8ed7fd642"></a><br/></td></tr>
 <tr class="separator:ae6e1d59fd67de2893b3bd2f8ed7fd642"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -341,9 +341,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a94cdd2ce78e1f61922eaa2350de313d8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a94cdd2ce78e1f61922eaa2350de313d8"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>appendSelfToBufBuilder</b> (BufBuilder &amp;b) const </td></tr>
 <tr class="separator:a94cdd2ce78e1f61922eaa2350de313d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d99fd3a001517eb6038e97cd79f6f83"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d99fd3a001517eb6038e97cd79f6f83"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (const char *data)</td></tr>
-<tr class="separator:a1d99fd3a001517eb6038e97cd79f6f83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0556f9467cfe9383a64730369dcce889"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0556f9467cfe9383a64730369dcce889"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbson_1_1BSONObj.html#a0556f9467cfe9383a64730369dcce889">init</a> (const char *data, bool check=true)</td></tr>
+<tr class="memdesc:a0556f9467cfe9383a64730369dcce889"><td class="mdescLeft">&#160;</td><td class="mdescRight">initialize from existing buffer <br/></td></tr>
+<tr class="separator:a0556f9467cfe9383a64730369dcce889"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
@@ -360,7 +361,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>BSONObjIterator</b><
 <p>totalSize includes itself.</p>
 <p>Data: Bool: &lt;byte&gt; EOO: nothing follows Undefined: nothing follows OID: an OID object NumberDouble: &lt;double&gt; NumberInt: &lt;int32&gt; String: &lt;unsigned32 strsizewithnull&gt;=""&gt;&lt;cstring&gt; Date: &lt;8bytes&gt; Regex: &lt;cstring regex&gt;=""&gt;&lt;cstring options&gt;=""&gt; Object: a nested object, leading with its entire size, which terminates with EOO. Array: same as object DBRef: &lt;strlen&gt; &lt;cstring ns&gt;=""&gt; &lt;oid&gt; DBRef: a database reference: basically a collection name plus an Object ID BinData: &lt;int len&gt;=""&gt; &lt;byte subtype&gt;=""&gt; &lt;byte[len] data&gt; Code: a function (not a closure): same format as String. Symbol: a language symbol (say a python symbol). same format as String. Code With Scope: &lt;total size&gt;=""&gt;&lt;String&gt;&lt;Object&gt;  </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a7467fa1b2d8ee3fbf76f14fa087ee7f4"></a>
+<a class="anchor" id="a3cf9eddbadc11ecdf95dab8eba1e2aa1"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -371,8 +372,18 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>BSONObjIterator</b><
           <td class="memname">bson::BSONObj::BSONObj </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>msgdata</em></td><td>)</td>
+          <td class="paramname"><em>msgdata</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>check</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -1365,12 +1376,12 @@ template&lt;class T &gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/SequoiaDB/client/include/bson/<a class="el" href="bsonobj_8h_source.html">bsonobj.h</a></li>
+<li>C:/sequoiadb/client/include/bson/<a class="el" href="bsonobj_8h_source.html">bsonobj.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Sep 5 2013 14:55:23 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 16:32:13 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>
