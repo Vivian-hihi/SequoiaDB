@@ -41,7 +41,7 @@
         </p><p>2.Connect to coord node </p><p>Input in shell:
           <codeblock>> var db = new Sdb("localhost",11810)</codeblock> Here "11810" is the service
           port of coord node. </p><p>3.Create a catalog node group</p><p>
-          <codeblock>>db.createReplcaCataGroup("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
+          <codeblock>>db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
         </p><p>Here "sdbserver1" is the hostname of the 1st server.</p><p>Here "11800" is the
           service port of catalog node. (The port is configured not to conflict with a random port, other ports in the following configuration also requires attention. </p><p>" /opt/sequoiadb/database/cata/11800" is the path of
           data file of catalog node.</p><p>4.Wait for 5 second, and add 2 more catalog nodes</p><p>

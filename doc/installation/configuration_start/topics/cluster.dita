@@ -33,7 +33,7 @@
         </p><p>2.连接到协调节点 </p><p>在shell 命令中输入：
           <codeblock>>var db = new Sdb("localhost",11810)</codeblock> 其中11810为协调节点端口号 </p>
         <p>3.创建一个编目节点组</p><p>
-          <codeblock>>db.createReplcaCataGroup("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
+          <codeblock>>db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</codeblock>
         </p><p>其中 </p><p>sdbserver1：第一个服务器主机名； </p><p>11800：为编目节点服务端口（该端口配置不要与随机端口冲突，以下其它端口的配置也需要注意）；</p><p> /opt/sequoiadb/database/cata/11800：为编目节点的数据文件存放路径；
             <note>请确保存放路径的权限，如果SequoiaDB采用的默认安装，那么给路径赋予sdbadmin权限，下同。</note></p><p>4.等待5秒，开始添加另外两个编目节点</p><p>
           <codeblock>>var cataRG = db.getRG("SYSCatalogGroup");      </codeblock>

@@ -89,7 +89,7 @@ rc = bson_finish( &amp;obj ) ;
 if ( rc != SDB_OK )
 printf("Error.");
 // 接着，把此bson对象插入集合中
-dbInsert ( collection, &amp;obj ) ;</codeblock></li>
+sdbInsert ( collection, &amp;obj ) ;</codeblock></li>
             <li>查询<p>查询操作需要一个游标句柄存放查询的结果到本地。要获得查询的结果需要使用游标操作。本例使用了游标操作的sdbNext接口，表示从查询结果中取到一条记录。此示例中没有设置查询条件、筛选条件、排序情况、及仅使用默认索引。</p><p>
                   <codeblock>// 定义一个游标句柄
 dbCursorHandle cursor    = 0 ;
