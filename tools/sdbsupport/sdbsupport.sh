@@ -247,13 +247,13 @@ installpath=`grep "InstallPath" sdbsupport.conf|cut -d "=" -f 2`
 #config file path 
 #echo $installpath
 ls $installpath 1>/dev/null
-#if [[ $? -ne 1 ]] ; then
+#if [ $? -ne 1 ] ; then
 #	echo "Err,Wrong install path ,Please inspect the sdbsupportconf file!$?"
 #	exit 1
 #fi  
 confpath=$installpath/sequoiadb/conf/local  
 ls $confpath 1>/dev/null
-if [[ $? -ne 1 ]] ; then 
+if [ $? -ne 1 ] ; then 
 	echo "Err,Don't have Nodes !$?"
 fi
 
@@ -266,7 +266,7 @@ fi
 cd $confpath
 dataRole=`find -name "*.conf"|xargs grep "role=data"|cut -d "/" -f 2`
 cd $localPath
-if [[ $dataRole = "" ]] ; then 
+if [ $dataRole = "" ] ; then 
 	echo "Don't have data node in the sequoiaDB" 
 	exit 1 
 fi 
@@ -285,7 +285,7 @@ for i in $(seq 1 $HostNum)
 do
 	hostcata[$i]=`awk 'BEGIN{split("'$cataddr'",cateArr,",");print cateArr['$i']'}`
 	HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
-	if [[ ${HOST[$i]} = $localhost ]] ; then 	
+	if [ ${HOST[$i]} = $localhost ] ; then 	
 		for j in $(seq 1 $PortNum)
 		do
 			PortArr=`ls $confpath` 		
@@ -327,7 +327,7 @@ done
 pHostNum=`awk 'BEGIN{print split("'$hostName'",hostarr,":")}'`
 pPortNum=`awk 'BEGIN{print split("'$svcPort'",portarr,":")}'`
 #when have parameter ,but not --all ,we must specify the hosts[--hostname] 
-if [[ $pHostNum -eq 0 ]] && [[ $all = "false"  ]] && [[ $firstLoc != "" ]] ; then 
+if [ $pHostNum -eq 0 ] && [ $all = "false"  ] && [ $firstLoc != "" ] ; then 
 	echo "Warnig !!!! Please specify hosts!"
 	exit 1
 fi 
@@ -339,10 +339,10 @@ do
 	for j in $(seq 1 $HostNumAdd)
 	do
 		count=0	
-		if [[ ${HostPara[$i]} = ${HOST[$j]} ]] ; then  
+		if [ ${HostPara[$i]} = ${HOST[$j]} ] ; then  
 			break  	
 		fi 	
-		if [[ $j -gt $HostNum ]] ; then 
+		if [ $j -gt $HostNum ] ; then 
 			echo "WARNIGN,SequoiaDB don't have host:${HostPara[$i]}" "j"$j	
 			HostPara[$i]=""	
 		fi 
@@ -355,12 +355,12 @@ do
 	PortNumAdd=$(($PortNum+1))
 	for j in $(seq 1 $PortNumAdd)
 	do
-		if [[ ${PortPara[$i]} = ${PORT[$j]} ]] ; then
+		if [ ${PortPara[$i]} = ${PORT[$j]} ] ; then
 			DbPath[$i]=${DBPATH[$j]}	
 			Role[$i]=${ROLE[$j]}	
 			break
 		fi
-		if [[ $j -gt $PortNum ]] ; then
+		if [ $j -gt $PortNum ] ; then
 			echo "WARNIGN,SequoiaDB don't have host:${PortPara[$i]}" "j"$j
 			PortPara[$i]=""
 		fi
@@ -373,7 +373,7 @@ done
 #@Fold : SDBSNAPS Exp : directory for sequoiadb snapshot
 #@Fold : HARDINFO Exp : directory for hardware information
 #******************************************************************************
-if [[ $firstLoc = "" ]] ; then
+if [ $firstLoc = "" ] ; then
 	rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/
 	mkdir HARDINFO >> sdbsupport.log 2>&1
 	mkdir OSINFO >> sdbsupport.log 2>&1
@@ -382,7 +382,7 @@ if [[ $firstLoc = "" ]] ; then
 else
 	for i in $(seq 1 $pHostNum)
 	do
-		if [[ ${HostPara[$i]} = $localhost ]] ; then
+		if [ ${HostPara[$i]} = $localhost ] ; then
 			rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/	
 			mkdir HARDINFO >> sdbsupport.log 2>&1
 			mkdir OSINFO >> sdbsupport.log 2>&1
@@ -404,7 +404,7 @@ for i in $(seq 1 $HostNum)
 do
 	for j in $(seq 1 $PortNum)
 	do
-		if [[ $firstLoc = "" ]] && [[ $localhost = ${HOST[$i]} ]] ; then
+		if [ $firstLoc = "" ] && [ $localhost = ${HOST[$i]} ] ; then
 			sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]}
 			sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]}
 			sdbSnapShot ${HOST[$i]} ${PORT[$j]}
@@ -415,10 +415,10 @@ do
 done 
 
 #>2.Parameter : --all
-if [[ $firstLoc = "--all" ]] ; then
+if [ $firstLoc = "--all" ] ; then
 	for i in $(seq 1 $HostNum)
 	do
-		if [[ ${HOST[$i]} != "" ]] ; then
+		if [ ${HOST[$i]} != "" ] ; then
 			{	
 			sdbsupport="./sdbsupport.sh -N ${HOST[$i]}"
 			#ssh host and collect information 	
@@ -433,9 +433,9 @@ fi
 for i in $(seq 1 $pHostNum)
 do
 	#HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'` 
-	if [[ ${HostPara[$i]} = $localhost ]] ; then 
+	if [ ${HostPara[$i]} = $localhost ] ; then 
 		#only have localhost ./sdbsupport.sh -h htest1 	
-		if [[ $thirdLoc = "" ]] ; then
+		if [ $thirdLoc = "" ] ; then
 			for j in $(seq 1 $PortNum)	
 			do	
 				sdbPortGather "${HostPara[$i]}" "${DBPATH[$j]}" "${PORT[$j]}"
@@ -446,15 +446,15 @@ do
 			done	
 		else
 			#Para : svcPort ->have this Port [./sdbsupport.sh -h htest1 -p 11810]	
-			if [[ $pPortNum -ne 0 ]] ; then 	
+			if [ $pPortNum -ne 0 ] ; then 	
 				for k in $(seq 1 $pPortNum)
 				do
 					sdbPortGather ${HostPara[$i]} ${DbPath[$k]} ${PortPara[$k]}	
-					if [[ ${Role[$k]} = "coord" ]] && [[ $catalog = "true" ]] ; then
+					if [ ${Role[$k]} = "coord" ] && [ $catalog = "true" ] ; then
 						sdbSnapShotCataLog "${HostPara[$i]}" "${PortPara[$k]}"
 					fi
 					#snapShot	
-					if [[ $snapShot = "true" ]] ; then
+					if [ $snapShot = "true" ] ; then
 						sdbSnapShot ${HostPara[$i]} ${PortPara[$k]}
 					else
 						sdbSnapShotExtract ${HostPara[$i]} ${PortPara[$k]} $group $context $session $collection $collectionspace $database $system
@@ -462,7 +462,7 @@ do
 				done 	
 			fi
 			#Parameter:--sysinfo ; Collect all system information or collect part of system information !
-			if [[ $sysInfo = "true" ]] ; then
+			if [ $sysInfo = "true" ] ; then
 				sdbSystemInfoAll ${HOST[$i]}
 			else
 				sdbSystemInfoPartFore ${HOST[$i]} $diskmanage $osystem $kermode $env $IDE $network
@@ -470,7 +470,7 @@ do
 			fi
 			
 			#Parameter:--hardinfo ; Collect all hardware information or collect part of system information !
-			if [[ $hardInfo = "true" ]] ; then
+			if [ $hardInfo = "true" ] ; then
 				sdbHardwareInfoAll ${HOST[$i]}
 			else
 				sdbHardwareInfoPart ${HOST[$i]} $cpu $memory $disk $netcard $mainboard $bios
@@ -481,31 +481,31 @@ do
 		for n in $(seq 1 $ParaNum)
 		do
 			Para[$n]=`echo $ParaPass|cut -d " " -f $n`	
-			if [[ ${Para[$n]} = "-N" ]] || [[ ${Para[$n]} = "--hostname" ]] ; then 
+			if [ ${Para[$n]} = "-N" ] || [ ${Para[$n]} = "--hostname" ] ; then 
 				Para[$n]=""
 			fi 
-			if [[ ${Para[$n]} = $hostName ]] ; then
+			if [ ${Para[$n]} = $hostName ] ; then
 				Para[$n]=""
 			fi 
 		done 
-		if [[ ${HostPara[$i]} != "" ]] ; then 
+		if [ ${HostPara[$i]} != "" ] ; then 
 			{	
-			sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"  
-			sdbExpectSshHosts "${HostPara[$i]}" "Password" "$localPath" "$sdbsupport" >> sdbsupport.log 
-			sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "Password" >> sdbsupport.log 
+				sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"  
+				sdbExpectSshHosts "${HostPara[$i]}" "Password" "$localPath" "$sdbsupport" >> sdbsupport.log 
+				sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "Password" >> sdbsupport.log 
 			}&	
 		fi 	
 	fi 
 done 
 
 #tar the all collect information in a packet  
-if [[ $firstLoc = "" ]] ; then 
+if [ $firstLoc = "" ] ; then 
 	sdbTarGzPack $localhost >/dev/null
 else
 	for i in $(seq 1 $pHostNum)
 	do
 		echo ${HostPara[$i]} $localhost $firstLoc 	
-		if [[ ${HostPara[$i]} = $localhost ]] ; then 	
+		if [ ${HostPara[$i]} = $localhost ] ; then 	
 			sdbTarGzPack $localhost >/dev/null
 		fi 
 	done
