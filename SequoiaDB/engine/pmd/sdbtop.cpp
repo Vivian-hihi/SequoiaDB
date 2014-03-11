@@ -56,6 +56,15 @@ using namespace std;
 using namespace boost::property_tree;
 namespace po = boost::program_options;
 
+
+#define SDBTOP_SAFE_DELETE(p) \
+   do {                    \
+      if (p) {             \
+         SDB_OSS_DEL []p ;   \
+         p = NULL ;        \
+      }                    \
+   } while (0)
+
 #define STDIN 0
 
 #define SDBTOP_VERSION "sdbtop 1.0"
@@ -635,7 +644,10 @@ public:
 
    // the number of hotKey of the keySuite
    INT32 hotKeyLength ;
-
+   
+   // the number of hotKey of the keySuite from conf
+   INT32 hotKeyLengthFromConf ;
+   
    // hotKey list
    HotKey *hotKey ;
 } ;
@@ -748,10 +760,8 @@ public: // operation
                                    HeadTailMap **header,
                                    HeadTailMap **footer ) ;
 
-   INT32 getActualPosition( Position &actualPosition,
-                            Position &referPosition,
-                            const string zoomMode,
-                            const string occupyMode ) ;
+   INT32 getActualPosition( Position &actualPosition, Position &referPosition,
+                            const string zoomMode, const string occupyMode ) ;
 
    INT32 getActivatedKeySuite( KeySuite **keySuite ) ;
 
@@ -759,8 +769,7 @@ public: // operation
 
    INT32 strTOnum_SDBTOP( const CHAR *str, INT32 &number ) ;
 
-   INT32 formattingOutput_SDBTOP( CHAR *pBuffer,
-                                  INT32 &printfLength,
+   INT32 formattingOutput_SDBTOP( CHAR *pBuffer, INT32 &printfLength,
                                   const CHAR *PSrc ) ;
 
    INT32 mvprintw_SDBTOP( string &expression, INT32 expressionLength,
@@ -788,20 +797,15 @@ public: // operation
                               string autoSetType ) ;
 
    INT32 getFieldNameAndColour( const FieldStruct &fieldStruct,
-                                const string &displayMode,
-                                string &fieldName,
+                                const string &displayMode, string &fieldName,
                                 Colours &fieldColour ) ;
 
-   INT32 refreshDH( DynamicHelp &DH,
-                    Position &position ) ;
+   INT32 refreshDH( DynamicHelp &DH, Position &position ) ;
 
-   INT32 refreshDE( DynamicExpressionOutPut &DE,
-                    Position &position ) ;
+   INT32 refreshDE( DynamicExpressionOutPut &DE, Position &position ) ;
 
-   INT32 refreshDS_Table( DynamicSnapshotOutPut &DS,
-                                 INT32 ROW, INT32 COL,
-                                 Position &position,
-                                 string autoSetType ) ;
+   INT32 refreshDS_Table( DynamicSnapshotOutPut &DS, INT32 ROW, INT32 COL,
+                          Position &position, string autoSetType ) ;
    INT32 refreshDS_List( DynamicSnapshotOutPut &DS,
                                 Position &position,
                                 string autoSetType ) ;
@@ -827,6 +831,8 @@ public: // operation
    INT32 matchSourceFieldByDisplayName( const string DisplayName ) ;
 
    INT32 eventManagement( INT64 key ,BOOLEAN isFirstStart ) ;
+   INT32 refreshAll( HeadTailMap *header, BodyMap *body,
+                     HeadTailMap *footer, BOOLEAN refreshAferClean ) ;
 
    INT32 runSDBTOP( ) ;
 };
@@ -1512,12 +1518,8 @@ INT32 storeHeaders( ptree pt_HDs, RootWindow &root )
    HeadTailMap *heder = NULL ;
    try
    {
-      root.headerLength =
-            pt_HDs.get<INT32>(
-                  HEADERLENGTH ) ;
-
-      root.header =
-            SDB_OSS_NEW HeadTailMap[root.headerLength] ;
+      root.headerLength = pt_HDs.get<INT32>( HEADERLENGTH ) ;
+      root.header = SDB_OSS_NEW HeadTailMap[root.headerLength] ;
    }
    catch( std::exception &e )
    {
@@ -1551,8 +1553,7 @@ INT32 storeHeaders( ptree pt_HDs, RootWindow &root )
          }
          try
          {
-            heder->key =
-                  pt_header->second.get<INT32>( KEY ) ;
+            heder->key = pt_header->second.get<INT32>( KEY ) ;
          }
          catch( std::exception &e )
          {
@@ -1570,9 +1571,7 @@ INT32 storeHeaders( ptree pt_HDs, RootWindow &root )
          {
             if( VALUE == pt_HValue->first )
             {
-               rc = storePanelValue(
-                          pt_HValue->second,
-                          heder->value ) ;
+               rc = storePanelValue( pt_HValue->second, heder->value ) ;
                if( rc )
                {
                   goto error ;
@@ -1823,16 +1822,11 @@ INT32 storeKeySuites( ptree pt_KSs, RootWindow &root )
          }
          try
          {
-            keySuite->mark =
-                  pt_keySuite->
-                        second.get<INT64>(
-                              MARK ) ;
-            keySuite->hotKeyLength =
-                  pt_keySuite->
-                        second.get<INT32>(
-                              HOTKEYLENGTH ) ;
-            keySuite->hotKey =
-                  SDB_OSS_NEW HotKey[keySuite->hotKeyLength ] ;
+            keySuite->mark = pt_keySuite->second.get<INT64>( MARK ) ;
+            keySuite->hotKeyLength = pt_keySuite->second.get<INT32>(
+                                           HOTKEYLENGTH ) ;
+            keySuite->hotKeyLengthFromConf = keySuite->hotKeyLength ;
+            keySuite->hotKey = SDB_OSS_NEW HotKey[keySuite->hotKeyLength ] ;
          }
          catch( std::exception &e)
          {
@@ -2085,7 +2079,7 @@ Event::~Event()
 
    while( keySuiteLength ) // free the memory root.keySuite
    {
-      SDB_OSS_DEL []root.keySuite[keySuiteLength -1].hotKey ;
+      SDBTOP_SAFE_DELETE( root.keySuite[keySuiteLength -1].hotKey ) ;
       --keySuiteLength ;
    }
    if( root.keySuiteLength )
@@ -2101,17 +2095,19 @@ Event::~Event()
          if( DISPLAYTYPE_DYNAMIC_EXPRESSION ==
                window->displayType )
          {
-            SDB_OSS_DEL []window->displayContent.dyExOutPut.content ;
+            SDBTOP_SAFE_DELETE( window->displayContent.dyExOutPut.content ) ;
          }
          else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT ==
                   window->displayType )
          {
-            SDB_OSS_DEL []window->displayContent.dySnapshotOutPut.fixedField ;
-            SDB_OSS_DEL []window->displayContent.dySnapshotOutPut.mobileField ;
+            SDBTOP_SAFE_DELETE(
+                  window->displayContent.dySnapshotOutPut.fixedField ) ;
+            SDBTOP_SAFE_DELETE(
+                  window->displayContent.dySnapshotOutPut.mobileField ) ;
          }
          --numOfSubWindow ;
       }
-      SDB_OSS_DEL []header->value.subWindow ;
+      SDBTOP_SAFE_DELETE( header->value.subWindow ) ;
       --headerLength ;
    }
    if( root.headerLength )
@@ -2127,21 +2123,23 @@ Event::~Event()
          if( DISPLAYTYPE_DYNAMIC_EXPRESSION ==
              window->displayType )
          {
-            SDB_OSS_DEL []window->displayContent.dyExOutPut.content ;
+            SDBTOP_SAFE_DELETE( window->displayContent.dyExOutPut.content ) ;
          }
          else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT ==
                   window->displayType )
          {
-            SDB_OSS_DEL []window->displayContent.dySnapshotOutPut.fixedField ;
-            SDB_OSS_DEL []window->displayContent.dySnapshotOutPut.mobileField ;
+            SDBTOP_SAFE_DELETE(
+                  window->displayContent.dySnapshotOutPut.fixedField ) ;
+            SDBTOP_SAFE_DELETE(
+                  window->displayContent.dySnapshotOutPut.mobileField ) ;
          }
          --numOfSubWindow ;
       }
-      SDB_OSS_DEL []body->value.subWindow ;
+      SDBTOP_SAFE_DELETE( body->value.subWindow ) ;
       --bodyLength ;
    }
    if( root.bodyLength )
-      SDB_OSS_DEL []root.body ;
+      SDBTOP_SAFE_DELETE( root.body ) ;
 
    while( footerLength ) // free the memory root.footer
    {
@@ -2153,21 +2151,23 @@ Event::~Event()
          if( DISPLAYTYPE_DYNAMIC_EXPRESSION ==
              window->displayType )
          {
-            SDB_OSS_DEL []window->displayContent.dyExOutPut.content ;
+            SDBTOP_SAFE_DELETE( window->displayContent.dyExOutPut.content ) ;
          }
          else if( DISPLAYTYPE_DYNAMIC_SNAPSHOT ==
                   window->displayType )
          {
-            SDB_OSS_DEL []window->displayContent.dySnapshotOutPut.fixedField ;
-            SDB_OSS_DEL []window->displayContent.dySnapshotOutPut.mobileField ;
+            SDBTOP_SAFE_DELETE(
+                  window->displayContent.dySnapshotOutPut.fixedField ) ;
+            SDBTOP_SAFE_DELETE(
+                  window->displayContent.dySnapshotOutPut.mobileField ) ;
          }
          --numOfSubWindow ;
       }
-      SDB_OSS_DEL []footer->value.subWindow ;
+      SDBTOP_SAFE_DELETE( footer->value.subWindow ) ;
       --footerLength ;
    }
    if( root.footerLength )
-      SDB_OSS_DEL []root.footer ;
+      SDBTOP_SAFE_DELETE( root.footer ) ;
 }
 
 //find the current actived panel by the bodyPanelType
@@ -2233,23 +2233,17 @@ INT32 Event::getActivatedHeadTailMap( BodyMap *activatedPanel,
    *footer            = NULL ;
    INT32 index_header = 0 ;
    INT32 index_footer = 0 ;
-   for( index_header = 0;
-        index_header < root.headerLength;
-        ++index_header )
+   for( index_header = 0; index_header < root.headerLength; ++index_header )
    {
-      if( root.header[index_header].key ==
-          activatedPanel->headerKey )
+      if( root.header[index_header].key == activatedPanel->headerKey )
       {
          *header = &root.header[index_header] ;
          break ;
       }
    }
-   for( index_footer = 0;
-        index_footer < root.footerLength;
-        ++index_footer )
+   for( index_footer = 0; index_footer < root.footerLength; ++index_footer )
    {
-      if( root.footer[index_footer].key ==
-          activatedPanel->footerKey )
+      if( root.footer[index_footer].key == activatedPanel->footerKey )
       {
          *footer = &root.footer[index_footer] ;
          break ;
@@ -2308,8 +2302,7 @@ INT32 Event::getActualPosition( Position &actualPosition,
    INT32 col         = 0 ;
    FLOAT32 SCALE_ROW = 0.0f ;
    getmaxyx( stdscr, row, col ) ;
-   if( row < root.actualWindowMinRow ||
-       col < root.actualWindowMinColumn )
+   if( row < root.actualWindowMinRow || col < root.actualWindowMinColumn )
    {
       rc = SDB_ERROR ;
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
@@ -2657,8 +2650,7 @@ error :
 // use this function before call ncurses::mvprintw()
 // formationg(cut off) pSrc by printfLength
 // re-assignment the printfLength
-INT32 Event::formattingOutput_SDBTOP( CHAR *pBuffer,
-                                      INT32 &printfLength,
+INT32 Event::formattingOutput_SDBTOP( CHAR *pBuffer, INT32 &printfLength,
                                       const CHAR *pSrc )
 {
    INT32 rc = SDB_OK ;
@@ -2692,8 +2684,8 @@ error :
 
 // print value in the terminal
 INT32 Event::mvprintw_SDBTOP( string &expression, INT32 expressionLength,
-                              string alignment,
-                              INT32 start_row, INT32 start_col )
+                              string alignment, INT32 start_row,
+                              INT32 start_col )
 {
    INT32 rc           = SDB_OK ;
    INT32 col          = 0 ;
@@ -2765,12 +2757,10 @@ error :
 }
 
 // get colour pairnumber
-void Event::getColourPN( Colours colour,
-                         INT32 &colourPairNumber )
+void Event::getColourPN( Colours colour, INT32 &colourPairNumber )
 {
-   colourPairNumber = colour.foreGroundColor +
-                      colour.backGroundColor *
-                      COLOR_MULTIPLE ;
+   colourPairNumber = colour.foreGroundColor + colour.backGroundColor *
+                                               COLOR_MULTIPLE ;
 }
 
 // "result" store the specific field value of "bsonobj"
@@ -2818,16 +2808,14 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
    INT32 maxPairNumber               = 0 ;
    INT32 minPairNumber               = 0 ;
    INT32 changePairNumber            = 0 ;
-   CHAR *resultBuf =
-         ( CHAR * )SDB_OSS_MALLOC(
-                         LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
+   CHAR *resultBuf = ( CHAR * )SDB_OSS_MALLOC(
+                           LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
    if( !resultBuf )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                   "%s getResultFromBSONobj failed, "
-                   "can't malloc memory for resultBuf : %d"
-                   OSS_NEWLINE,
+                   "%s getResultFromBSONobj failed,"
+                   "can't malloc memory for resultBuf : %d"OSS_NEWLINE,
                    errStrBuf, LENGTH_OF_RESULTBUFFER ) ;
       rc = SDB_OOM ;
       goto error ;
@@ -2847,8 +2835,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
          if( element.isNumber() )
          {
             elementDouble = element.Number() ;
-            if( NumberLong == element.type() ||
-                NumberInt == element.type() )
+            if( NumberLong == element.type() || NumberInt == element.type() )
             {
                result = element.toString( FALSE ) ;
             }
@@ -2978,8 +2965,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
             if( element.isNumber() )
             {
                elementDouble = element.Number() - last_element.Number() ;
-               if( element.type() == NumberInt ||
-                   element.type() == NumberLong )
+               if( element.type() == NumberInt || element.type() == NumberLong )
                {
                   ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
                                "%d",
@@ -3061,13 +3047,10 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
          {
             if( element.isNumber() )
             {
-               elementDouble =
-                     ( element.Number() - last_element.Number() ) /
-                     root.input.refreshInterval ;
-               ossSnprintf( resultBuf,
-                            LENGTH_OF_RESULTBUFFER,
-                            OUTPUT_FORMATTING,
-                            elementDouble ) ;
+               elementDouble = ( element.Number() - last_element.Number() ) /
+                                     root.input.refreshInterval ;
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                            OUTPUT_FORMATTING, elementDouble ) ;
                result = resultBuf ;
                if( averageMaxLimitValue!= 0 &&
                    elementDouble > averageMaxLimitValue )
@@ -3496,8 +3479,7 @@ error :
 // fixed_row and fixed_col store the fixed result
 INT32 Event::fixedOutputLocation( INT32 start_row, INT32 start_col,
                                   INT32 &fixed_row, INT32 &fixed_col,
-                                  INT32 referRowLength,
-                                  INT32 referColLength,
+                                  INT32 referRowLength, INT32 referColLength,
                                   string autoSetType )
 {
    INT32 rc  = SDB_OK ;
@@ -3568,8 +3550,7 @@ error :
 // get the title and colour of the field which will print on the terminal
 INT32 Event::getFieldNameAndColour( const FieldStruct &fieldStruct,
                                     const string &displayMode,
-                                    string &fieldName,
-                                    Colours &fieldColour )
+                                    string &fieldName, Colours &fieldColour )
 {
    INT32 rc = SDB_OK ;
    if( !fieldStruct.canSwitch )
@@ -3623,9 +3604,12 @@ error :
 
 // refresh infomation on the terminal
 // when displayType is DISPLAYTYPE_DYNAMIC_HELP
-INT32 Event::refreshDH( DynamicHelp &DH,
-                        Position &position )
+INT32 Event::refreshDH( DynamicHelp &DH, Position &position )
 {
+// step 1: get the activatedPanel's keySuite
+// step 2: print hotkey of the keySuite in its specific row
+// step 3: if on the end of keySuite or on the bottom of window, mvprint over
+// step 4: if mvprint isn't over , locate the next row, and then goto step 2
    INT32 rc                = SDB_OK ;
    INT32 Y                 = position.referUpperLeft_Y ;
    INT32 X                 = position.referUpperLeft_X ;
@@ -3707,9 +3691,10 @@ INT32 Event::refreshDH( DynamicHelp &DH,
       {
          if( hotKey_pos >= keySuite->hotKeyLength )
             break ;
-         if( start_X + cellLength -
-             X  > position.length_X )
+         if( start_X + cellLength - X  > position.length_X )
+         {
             break ;
+         }
          hotkey = &keySuite->hotKey[hotKey_pos];
          pos_X = start_X ;
          ossMemset( pPrintfstr, 0, cellLength );
@@ -3783,9 +3768,15 @@ error :
 
 // refresh infomation on the terminal
 // when displayType is DISPLAYTYPE_DYNAMIC_EXPRESSION
-INT32 Event::refreshDE( DynamicExpressionOutPut &DE,
-                        Position &position )
+INT32 Event::refreshDE( DynamicExpressionOutPut &DE, Position &position )
 {
+// step 1: get total length of all expressions'result which can
+// print on the specific row 
+// step 2: use total length to fix position and print
+// the specific expression's reult in the specific row
+// step 3: if on the end of expression list or
+// on the bottom of window, mvprint over
+// step 4: if mvprint isn't over , locate the next row, and then goto step 1
    INT32 rc                        = SDB_OK ;
    INT32 Y                         = position.referUpperLeft_Y ;
    INT32 X                         = position.referUpperLeft_X ;
@@ -3821,8 +3812,7 @@ INT32 Event::refreshDE( DynamicExpressionOutPut &DE,
       result = NULLSTRING ;
       // the follow cycle would calculate the sum of
       // expression length in specific row
-      for( expressionNumber = 0;
-           expressionNumber < DE.expressionNumber;
+      for( expressionNumber = 0; expressionNumber < DE.expressionNumber;
            ++expressionNumber )
       {
          EC = &DE.content[expressionNumber] ;
@@ -3861,16 +3851,14 @@ INT32 Event::refreshDE( DynamicExpressionOutPut &DE,
 
       // use the sum to calculate the X value which use to print the first
       // expression
-      rc = fixedOutputLocation( start_Y, X,
-                                start_Y, start_X,
+      rc = fixedOutputLocation( start_Y, X, start_Y, start_X,
                                 0, position.length_X -Sum ,
                                 DE.autoSetType) ;
       if( rc )
       {
          goto error ;
       }
-      for( expressionNumber = 0;
-           expressionNumber < DE.expressionNumber;
+      for( expressionNumber = 0; expressionNumber < DE.expressionNumber;
            ++expressionNumber )
       {
          EC = &DE.content[expressionNumber] ;
@@ -3886,19 +3874,19 @@ INT32 Event::refreshDE( DynamicExpressionOutPut &DE,
          }
          else if( DYNAMIC_EXPRESSION == EC->expressionType )
          {
-            rc = getExpression( EC->expressionValue.expression,
-                                result ) ;
+            getExpression( EC->expressionValue.expression,
+                           result ) ;
          }
          if( NULLSTRING == result )
             result = STRING_NULL ;
          expressionLength = result.length() ;
-         if( start_X + expressionLength -
-             X > position.length_X )
+         if( start_X + expressionLength - X > position.length_X )
+         {
             continue ;
+         }
          getColourPN( EC->colour,pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( result, expressionLength,
-                               EC->alignment,
+         rc = mvprintw_SDBTOP( result, expressionLength, EC->alignment,
                                start_Y, start_X ) ;
          if( rc )
          {
@@ -3916,11 +3904,16 @@ done :
 error :
    goto done ;
 }
-INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
-                              INT32 ROW, INT32 COL,
-                              Position &position,
-                              string autoSetType )
+
+// when displayType is DISPLAYTYPE_DYNAMIC_SNAPSHOT and Style is Table
+INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS, INT32 ROW, INT32 COL,
+                              Position &position, string autoSetType )
 {
+// step 1: print the fixed snapshot field title and then print the mobile
+//         snapshot field title
+// step 2: print the content which is stored in vector one row by one row
+// step 3: if on the end of content vector or reach the bottom of window,
+//         mvprint over;
    INT32 rc = SDB_OK ;
    BSONObj bsonobj ;
    string baseField              = DS.baseField ;
@@ -3968,9 +3961,7 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
    // the height of the table should be ROW*2
    // one row to save title of talble
    // other row to save the value which need to display
-   rc = fixedOutputLocation( Y, X,
-                             start_Y, start_X,
-                             length_Y - ROW * 2, 0,
+   rc = fixedOutputLocation( Y, X, start_Y, start_X, length_Y - ROW * 2, 0,
                              autoSetType ) ;
    if( rc )
    {
@@ -3997,10 +3988,8 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
       {
          break ;
       }
-      rc = fixedOutputLocation( start_Y, X,
-                                start_Y, start_X,
-                                0,
-                                length_X -COL * cellLength,
+      rc = fixedOutputLocation( start_Y, X, start_Y, start_X,
+                                0, length_X -COL * cellLength,
                                 autoSetType ) ;
       if( rc )
       {
@@ -4013,30 +4002,30 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
       {
          Fixed = &DS.fixedField[end_fixed_mobile] ;
          // if field can't completely display
-         if( start_X + cellLength -
-             X > length_X )
+         if( start_X + cellLength - X > length_X )
+         {
             break ;
+         }
          if( end_fixed_mobile >= FLength)
+         {
             break ;
+         }
          // only display the specified number field on one row
          if( index_COL >= COL )
+         {
             break ;
+         }
          // get the title and its colour
-         rc = getFieldNameAndColour( Fixed[0],
-                                     displayMode,
-                                     fieldName,
-                                     fieldColour) ;
+         rc = getFieldNameAndColour( Fixed[0], displayMode,
+                                     fieldName, fieldColour) ;
          if( rc )
          {
             goto error ;
          }
          getColourPN( fieldColour, pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( fieldName,
-                               cellLength,
-                               Fixed->alignment,
-                               start_Y,
-                               start_X ) ;
+         rc = mvprintw_SDBTOP( fieldName, cellLength, Fixed->alignment,
+                               start_Y, start_X ) ;
          if( rc )
          {
             goto error ;
@@ -4051,26 +4040,22 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
       {
          Mobile = &DS.mobileField[end_fixed_mobile - FLength] ;
          // if field can't completely display
-         if( start_X + cellLength -
-             X > length_X )
+         if( start_X + cellLength - X > length_X )
             break ;
          if( end_fixed_mobile - FLength >= MLength )
             break ;
          // only display the specified number field on one row
          if( index_COL >= COL )
             break ;
-         rc = getFieldNameAndColour( Mobile[0],
-                                     displayMode,
-                                     fieldName,
-                                     fieldColour ) ;
+         rc = getFieldNameAndColour( Mobile[0], displayMode,
+                                     fieldName, fieldColour ) ;
          if( rc )
          {
             goto error ;
          }
          getColourPN( fieldColour, pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
-         rc = mvprintw_SDBTOP( fieldName, cellLength,
-                               Mobile->alignment,
+         rc = mvprintw_SDBTOP( fieldName, cellLength, Mobile->alignment,
                                start_Y, start_X ) ;
          if( rc )
          {
@@ -4097,11 +4082,8 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
       {
          pos_Field = start_fixed_mobile ;
          bsonobj = input.cur_Snapshot[pos_snapshot] ;
-         rc = fixedOutputLocation( start_Y, X,
-                                   start_Y, start_X,
-                                   0,
-                                   length_X -COL * cellLength,
-                                   autoSetType ) ;
+         rc = fixedOutputLocation( start_Y, X, start_Y, start_X, 0,
+                                   length_X -COL * cellLength, autoSetType ) ;
          if( rc )
          {
             goto error ;
@@ -4110,8 +4092,7 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
          {
             Fixed = &DS.fixedField[pos_Field] ;
             // if field can't completely display
-            if( start_X + cellLength -
-                X > length_X )
+            if( start_X + cellLength - X > length_X )
                break ;
             // if reach the end of fixedField, break
             if( pos_Field >= FLength )
@@ -4119,34 +4100,21 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
             // if reach the scope of field which could display in the row
             if( pos_Field >= end_fixed_mobile)
                break ;
-            rc = getFieldNameAndColour( Fixed[0],
-                                        displayMode,
-                                        fieldName,
-                                        fieldColour) ;
-            if( rc )
-            {
-               goto error;
-            }
+            getFieldNameAndColour( Fixed[0], displayMode, fieldName,
+                                   fieldColour) ;
             getColourPN( fieldColour, pairNumber ) ;
             result = NULLSTRING ;
-            rc = getResultFromBSONObj( bsonobj,
-                                       Fixed->sourceField,
-                                       displayMode,
-                                       result,
-                                       Fixed->canSwitch,
-                                       baseField,
-                                       Fixed->warningValue,
+            rc = getResultFromBSONObj( bsonobj, Fixed->sourceField,
+                                       displayMode, result, Fixed->canSwitch,
+                                       baseField, Fixed->warningValue,
                                        pairNumber) ;
             attron( COLOR_PAIR( pairNumber ) ) ;
             if( rc )
             {
                goto error ;
             }
-            rc = mvprintw_SDBTOP( result,
-                                  cellLength,
-                                  Fixed->alignment,
-                                  start_Y,
-                                  start_X ) ;
+            rc = mvprintw_SDBTOP( result, cellLength, Fixed->alignment,
+                                  start_Y, start_X ) ;
             if( rc )
             {
                goto error ;
@@ -4160,40 +4128,26 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS,
          {
             Mobile = &DS.mobileField[pos_Field - FLength] ;
             // if field can't completely display
-            if( start_X + cellLength -
-                X > length_X )
+            if( start_X + cellLength - X > length_X )
                break ;
             // if reach the scope of field which could display in the row
             if( pos_Field >= end_fixed_mobile )
                break ;
-            rc = getFieldNameAndColour( Mobile[0],
-                                        displayMode,
-                                        fieldName,
-                                        fieldColour ) ;
-            if( rc )
-            {
-               goto error ;
-            }
+            getFieldNameAndColour( Mobile[0], displayMode, fieldName,
+                                   fieldColour ) ;
             getColourPN( fieldColour, pairNumber ) ;
             result = NULLSTRING ;
-            rc = getResultFromBSONObj( bsonobj,
-                                       Mobile->sourceField,
-                                       displayMode,
-                                       result,
-                                       Mobile->canSwitch,
-                                       baseField,
-                                       Mobile->warningValue,
+            rc = getResultFromBSONObj( bsonobj, Mobile->sourceField,
+                                       displayMode, result, Mobile->canSwitch,
+                                       baseField, Mobile->warningValue,
                                        pairNumber );
             attron( COLOR_PAIR( pairNumber ) ) ;
             if( rc )
             {
                goto error ;
             }
-            rc = mvprintw_SDBTOP( result,
-                                  cellLength,
-                                  Mobile->alignment,
-                                  start_Y,
-                                  start_X ) ;
+            rc = mvprintw_SDBTOP( result, cellLength, Mobile->alignment,
+                                  start_Y, start_X ) ;
             if( rc )
             {
                goto error ;
@@ -4217,15 +4171,23 @@ error :
    goto done ;
 }
 
-INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
-                             Position &position,
+// when displayType is DISPLAYTYPE_DYNAMIC_SNAPSHOT and Style is List
+INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS, Position &position,
                              string autoSetType )
 {
+// step 1: adapt to the terminal and calculate the fitting ROW and COL
+// step 2: print the result of the snapshot field on its specific row
+// step 3: if on the end of mobile FieldStruct list or
+//         on the bottom of window, print over
+// step 4: if print isn't over , locate the next row, and then goto step 1
+// waring: the snapshot field is come from the FieldStruct list 
+//         which is added by fixed FieldStruct and mobile FieldStruct,
+//         it firstly come from the fixed FieldStruct and if on the end of
+//         fixed FieldStruct ,it will come from mobile FieldStruct
    INT32 rc                      = SDB_OK ;
    BSONObj bsonobj ;
    FieldStruct* Fixed            = NULL ;
    FieldStruct* Mobile           = NULL ;
-
    // actualFixedFieldLength
    INT32 FLength                 = 0 ;
    // actualMobileFieldLength
@@ -4300,10 +4262,8 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
       sum += Mobile->contentLength ;
    }
    // use the max scope to get the best start_X to display field 
-   rc = fixedOutputLocation( start_Y, X,
-                             start_Y, start_X,
-                             0, length_X - sum,
-                             autoSetType );
+   rc = fixedOutputLocation( start_Y, X, start_Y, start_X,
+                             0, length_X - sum, autoSetType );
    if( rc )
    {
       goto error ;
@@ -4319,12 +4279,9 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
    {
       Fixed = &DS.fixedField[fLength] ;
       // if field can't completely display
-      if( start_X + Fixed->contentLength -
-          X > length_X )
+      if( start_X + Fixed->contentLength - X > length_X )
          break ;
-      rc = getFieldNameAndColour( Fixed[0],
-                                  displayMode,
-                                  fieldName,
+      rc = getFieldNameAndColour( Fixed[0], displayMode, fieldName,
                                   fieldColour) ;
       if( rc )
       {
@@ -4332,11 +4289,8 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
       }
       getColourPN( fieldColour, pairNumber ) ;
       attron( COLOR_PAIR( pairNumber ) ) ;
-      rc = mvprintw_SDBTOP( fieldName,
-                            Fixed->contentLength,
-                            Fixed->alignment,
-                            start_Y,
-                            start_X ) ;
+      rc = mvprintw_SDBTOP( fieldName, Fixed->contentLength, Fixed->alignment,
+                            start_Y, start_X ) ;
       if( rc )
       {
          goto error;
@@ -4354,28 +4308,21 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
    }
 
    // start display on the specific index from the diection of operation
-   for( mLength = input.fieldPosition;
-        mLength < MLength; ++mLength )
+   for( mLength = input.fieldPosition; mLength < MLength; ++mLength )
    {
       Mobile = &DS.mobileField[mLength] ;
-      if( start_X + Mobile->contentLength -
-          X > length_X )
+      if( start_X + Mobile->contentLength - X > length_X )
          break ;
-      rc = getFieldNameAndColour( Mobile[0],
-                                  displayMode,
-                                  fieldName,
-                                  fieldColour);
+      rc = getFieldNameAndColour( Mobile[0], displayMode,
+                                  fieldName, fieldColour);
       if( rc )
       {
          goto error ;
       }
       getColourPN( fieldColour, pairNumber ) ;
       attron( COLOR_PAIR( pairNumber ) ) ;
-      rc = mvprintw_SDBTOP( fieldName,
-                            Mobile->contentLength,
-                            Mobile->alignment,
-                            start_Y,
-                            start_X ) ;
+      rc = mvprintw_SDBTOP( fieldName, Mobile->contentLength,Mobile->alignment,
+                            start_Y, start_X ) ;
       if( rc )
       {
          goto error ;
@@ -4391,17 +4338,14 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
    {
       goto done ;
    }
-   rc = fixedOutputLocation( start_Y, X,
-                             start_Y, start_X,
-                             0, length_X -sum ,
+   rc = fixedOutputLocation( start_Y, X, start_Y, start_X, 0, length_X -sum ,
                              autoSetType ) ;
    if( rc )
    {
       goto error ;
    }
    //print the content on the screen
-   for( pos_snapshot = 0;
-        pos_snapshot < input.cur_Snapshot.size();
+   for( pos_snapshot = 0;pos_snapshot < input.cur_Snapshot.size();
         ++pos_snapshot )
    {
 
@@ -4409,15 +4353,10 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
       ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
 
       // get the row number
-      ossSnprintf( serialNumber,
-                   SERIALNUMBER_LENGTH,
-                   "%3d", pos_snapshot + 1 ) ;
+      ossSnprintf( serialNumber, SERIALNUMBER_LENGTH,"%3d", pos_snapshot + 1 ) ;
       serialNumberStr = serialNumber ;
-      rc = mvprintw_SDBTOP( serialNumberStr,
-                            SERIALNUMBER_LENGTH,
-                            serialNumberAlignment,
-                            start_Y,
-                            start_X ) ;
+      rc = mvprintw_SDBTOP( serialNumberStr, SERIALNUMBER_LENGTH,
+                            serialNumberAlignment, start_Y, start_X ) ;
       if( rc )
       {
          goto error;
@@ -4431,8 +4370,7 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
       for( fLength = 0; fLength < FLength; ++fLength )
       {
          Fixed = &DS.fixedField[fLength] ;
-         if( start_X + Fixed[fLength].contentLength -
-             X > length_X )
+         if( start_X + Fixed[fLength].contentLength - X > length_X )
             break ;
          rc = getFieldNameAndColour( Fixed[0],
                                      displayMode,
@@ -4444,24 +4382,16 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
          }
          getColourPN( fieldColour, pairNumber ) ;
          result = NULLSTRING ;
-         rc = getResultFromBSONObj( bsonobj, 
-                                    Fixed->sourceField,
-                                    displayMode,
-                                    result,
-                                    Fixed->canSwitch,
-                                    baseField,
-                                    Fixed->warningValue,
-                                    pairNumber );
+         rc = getResultFromBSONObj( bsonobj, Fixed->sourceField, displayMode,
+                                    result, Fixed->canSwitch, baseField,
+                                    Fixed->warningValue, pairNumber );
          attron( COLOR_PAIR( pairNumber ) ) ;
          if( rc )
          {
             goto error ;
          }
-         rc = mvprintw_SDBTOP( result,
-                               Fixed->contentLength,
-                               Fixed->alignment,
-                               start_Y,
-                               start_X ) ;
+         rc = mvprintw_SDBTOP( result, Fixed->contentLength, Fixed->alignment,
+                               start_Y, start_X ) ;
          if( rc )
          {
             goto error;
@@ -4477,17 +4407,12 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
          input.fieldPosition = MLength - 1 ;
       }
       // start display on the specific index from the diection of operation
-      for( mLength = input.fieldPosition;
-           mLength < MLength;
-           ++mLength )
+      for( mLength = input.fieldPosition; mLength < MLength; ++mLength )
       {
          Mobile = &DS.mobileField[mLength] ;
-         if( start_X + Mobile->contentLength -
-             X > length_X )
+         if( start_X + Mobile->contentLength - X > length_X )
             break ;
-         rc = getFieldNameAndColour( Mobile[0],
-                                     displayMode,
-                                     fieldName,
+         rc = getFieldNameAndColour( Mobile[0], displayMode, fieldName,
                                      fieldColour) ;
          if( rc )
          {
@@ -4495,24 +4420,16 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
          }
          getColourPN( fieldColour, pairNumber ) ;
          result =  NULLSTRING ;
-         rc = getResultFromBSONObj( bsonobj,
-                                    Mobile->sourceField,
-                                    displayMode,
-                                    result,
-                                    Mobile->canSwitch,
-                                    baseField,
-                                    Mobile->warningValue,
-                                    pairNumber ) ;
+         rc = getResultFromBSONObj( bsonobj, Mobile->sourceField, displayMode,
+                                    result, Mobile->canSwitch, baseField,
+                                    Mobile->warningValue, pairNumber ) ;
          attron( COLOR_PAIR( pairNumber ) ) ;
          if( rc )
          {
             goto error ;
          }
-         rc = mvprintw_SDBTOP( result,
-                               Mobile->contentLength,
-                               Mobile->alignment,
-                               start_Y,
-                               start_X ) ;
+         rc = mvprintw_SDBTOP( result, Mobile->contentLength, Mobile->alignment,
+                               start_Y, start_X ) ;
          if( rc )
          {
             goto error ;
@@ -4522,10 +4439,7 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS,
          ++start_X ; // add separate pace
       }
       start_Y += 1 ;
-      rc = fixedOutputLocation( start_Y,X,
-                                start_Y, start_X,
-                                0,
-                                length_X -sum ,
+      rc = fixedOutputLocation( start_Y, X, start_Y, start_X, 0,length_X -sum ,
                                 autoSetType );
       if( rc )
       {
@@ -4546,8 +4460,7 @@ error :
 }
 // refresh infomation on the terminal
 // when displayType is DISPLAYTYPE_DYNAMIC_SNAPSHOT
-INT32 Event::refreshDS( DynamicSnapshotOutPut &DS,
-                        Position &position )
+INT32 Event::refreshDS( DynamicSnapshotOutPut &DS, Position &position )
 {
    INT32 rc                      = SDB_OK ;
    InputPanel &input             = root.input ;
@@ -4717,9 +4630,10 @@ INT32 Event::refreshNodeWindow( NodeWindow &window )
    // terminal's row and col should longer than the window's limit
    // which is set in the sdbtop.xml
    getmaxyx( stdscr, row, col ) ;
-   if( row < window.actualWindowMinRow ||
-       col < window.actualWindowMinColumn )
+   if( row < window.actualWindowMinRow || col < window.actualWindowMinColumn )
+   {
       goto done ;
+   }
    // refresh the window's content by displayType
    rc = refreshDisplayContent( window.displayContent,
                                window.displayType,
@@ -4820,68 +4734,126 @@ INT32 Event::addFixedHotKey()
 {
    INT32 rc = SDB_OK ;
    INT32 keyLength = 0 ;
+   INT32 keyLengthFromConf = 0 ;
    KeySuite *keySuite = NULL ;
    HotKey *hotkey = NULL ;
    for( INT32 i = 0; i < root.keySuiteLength; ++i )
    {
       keySuite = &root.keySuite[i] ;
       keyLength = keySuite->hotKeyLength ;
-      try
+      keyLengthFromConf = keySuite->hotKeyLengthFromConf ;
+      if( keyLength < keyLengthFromConf )
       {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_TAB ;
          hotkey->jumpType = JUMPTYPE_FIXED;
          hotkey->jumpName = "Evaluation Model" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
 
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_LEFT;
          hotkey->jumpType = JUMPTYPE_FIXED;
          hotkey->jumpName = "Move left" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_RIGHT ;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "Move right" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_ENTER ;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "last view" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_ESC;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "last view" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_F5;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "refresh" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_H_LOWER;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "Help" ;
          ++keyLength ;
+      }
+      else
+      {
+         rc = SDB_ERROR ;
+         goto error ;
+      }
+
+      if( keyLength < keyLengthFromConf )
+      {
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_Q_LOWER;
          hotkey->jumpType = JUMPTYPE_FIXED ;
          hotkey->jumpName = "Quit" ;
          ++keyLength ;
-
       }
-      catch( std::exception &e )
+      else
       {
-
-         ossSnprintf( errStrBuf, errStrLength,"%s", errStr );
-         ossSnprintf( errStr, errStrLength,
-                      "%s addFixedHotKey failed , e.what():%s"
-                      OSS_NEWLINE,
-                      errStrBuf, e.what() ) ;
          rc = SDB_ERROR ;
          goto error ;
       }
+
       keySuite->hotKeyLength = keyLength ;
    }
 done :
@@ -4958,6 +4930,7 @@ INT32 Event::matchNameInFieldStruct( const FieldStruct *src,
          else
          {
             rc = SDB_ERROR ;
+            goto error ;
          }
       }
    }
@@ -4989,12 +4962,11 @@ INT32 Event::matchSourceFieldByDisplayName( const string DisplayName )
    NodeWindow *window = NULL ;
    DynamicSnapshotOutPut *DS = NULL ;
    string displayMode = DISPLAYMODECHOOSER[input.displayModeChooser] ;
-   for( numOfSubWindow = 0;
-        numOfSubWindow < panel.numOfSubWindow; ++numOfSubWindow )
+   for( numOfSubWindow = 0; numOfSubWindow < panel.numOfSubWindow;
+        ++numOfSubWindow )
    {
       window = &panel.subWindow[numOfSubWindow] ;
-      if( DISPLAYTYPE_DYNAMIC_SNAPSHOT ==
-          window->displayType )
+      if( DISPLAYTYPE_DYNAMIC_SNAPSHOT == window->displayType )
       {
          DS = &window->displayContent.dySnapshotOutPut ;
          FixedLength =
@@ -5029,6 +5001,9 @@ done :
 
 // judge which event should do with the key come from the result 
 // of function Event::getTopKey_SDBTOP()
+// if isFirstStart is true and the key is no meaning ,don't show anything
+// if isFirstStart is false, it is meaning the body is help panel, when the key
+// is no meaning don't close the help panel
 INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
 {
    INT32 rc = SDB_OK ;
@@ -5079,6 +5054,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
       }
       if( !hotKey )
       {
+         // if can't match any hotkey and activatedPanel is help, still stay here
          if( !isFirstStart )
          {
                rc = eventManagement( BUTTON_H_LOWER, FALSE );
@@ -5092,9 +5068,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
          {
             // point to the goal body panel
             // and it became a activatedPanel
-            rc =
-                  assignActivatedPanelByLabelName(
-                        &input.activatedPanel,
+            rc = assignActivatedPanelByLabelName( &input.activatedPanel,
                         hotKey->jumpName ) ;
             if( rc )
             {
@@ -5116,6 +5090,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             input.filterCondition= NULLSTRING;
             input.isFirstGetSnapshot = TRUE ;
          }
+         // process the event when the key is write fixed in program
          else if( JUMPTYPE_FIXED == hotKey->jumpType )
          {
             if( hotKey->button >= 256 )
@@ -5172,24 +5147,11 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
                {
                   goto error ;
                }
-               clear() ;
-               refresh() ;
-               rc = refreshHT( header ) ;
+               rc = refreshAll( header, activatedPanel, footer, TRUE ) ;
                if( rc )
                {
                   goto error ;
                }
-               rc = refreshBD( activatedPanel ) ;
-               if( rc )
-               {
-                  goto error ;
-               }
-               rc = refreshHT( footer ) ;
-               if( rc )
-               {
-                  goto error ;
-               }
-               refresh() ;
                maxfd = STDIN + 1 ;
                FD_ZERO ( &fds ) ;
                FD_SET ( STDIN, &fds ) ;
@@ -5247,9 +5209,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             clrtobot() ;
             //nocbreak() ;
             echo() ;
-            mvprintw( row - 1 ,
-                      ( col - note.length() ) / 2,
-                      note.c_str() ) ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
             getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             //cbreak() ;
             noecho() ;
@@ -5275,9 +5235,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             clrtobot() ;
             nocbreak() ;
             echo() ;
-            mvprintw( row - 1 ,
-                      ( col - note.length() ) / 2,
-                      note.c_str() ) ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
             getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
@@ -5304,9 +5262,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             clrtobot() ;
             nocbreak() ;
             echo() ;
-            mvprintw( row - 1 ,
-                     ( col - note.length() ) / 2,
-                     note.c_str() ) ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
             getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
@@ -5334,9 +5290,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             clrtobot();
             nocbreak() ;
             echo() ;
-            mvprintw( row - 1 ,
-                      ( col - note.length() ) / 2,
-                      note.c_str() ) ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
             getnstr_SDBTOP( inputBuf, BUFFERSIZE );
             cbreak() ;
             noecho() ;
@@ -5363,9 +5317,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             clrtobot() ;
             nocbreak() ;
             echo() ;
-            mvprintw( row - 1 ,
-                      ( col - note.length() ) / 2,
-                      note.c_str() ) ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
             getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
@@ -5400,9 +5352,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             clrtobot() ;
             nocbreak() ;
             echo() ;
-            mvprintw( row - 1 ,
-                     ( col - note.length() ) / 2,
-                     note.c_str() ) ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
             getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
             cbreak() ;
             noecho() ;
@@ -5434,6 +5384,39 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
 done :
    return rc ;
 error :
+   goto done ;
+}
+
+// refresh header,body and footer one time
+// when refreshAfterClean is true, should refresh right now after clear()
+INT32 Event::refreshAll( HeadTailMap *header, BodyMap *body,
+                         HeadTailMap *footer, BOOLEAN refreshAferClean )
+{
+   INT32 rc = SDB_OK ;
+   clear() ;
+   if( refreshAferClean )
+   {
+      refresh() ;
+   }
+   rc = refreshHT( header ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = refreshBD( body ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   rc = refreshHT( footer ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+   refresh() ;
+done:
+   return rc ;
+error:
    goto done ;
 }
 
@@ -5533,27 +5516,14 @@ INT32 Event::runSDBTOP( )
          rc = getCurSnapshot() ;
          if( rc )
          {
-            rc = SDB_ERROR ;
             goto error ;
          }
       }
-      clear() ;
-      rc = refreshHT( header ) ;
+      rc = refreshAll( header, root.input.activatedPanel, footer, TRUE ) ;
       if( rc )
       {
          goto error ;
       }
-      rc = refreshBD( root.input.activatedPanel ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-      rc = refreshHT( footer ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-      refresh() ;
       timeout.tv_sec = root.input.refreshInterval ;
       timeout.tv_usec = 0 ;
       while( 1 )
@@ -5565,23 +5535,12 @@ INT32 Event::runSDBTOP( )
          //we should refresh the terminal
          if( rc < 0 )
          {
-            clear() ;
-            rc = refreshHT( header ) ;
+            rc = refreshAll( header, root.input.activatedPanel,
+                             footer, FALSE ) ;
             if( rc )
             {
                goto error ;
             }
-            rc = refreshBD( root.input.activatedPanel ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            rc = refreshHT( footer ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            refresh() ;
             break ;
          }
          else if( rc > 0 )
@@ -5617,23 +5576,12 @@ INT32 Event::runSDBTOP( )
          }
          if( REFRESH == root.input.forcedToRefresh_Local )
          {
-            clear() ;
-            rc = refreshHT( header ) ;
+            rc = refreshAll( header, root.input.activatedPanel,
+                             footer, FALSE ) ;
             if( rc )
             {
                goto error ;
             }
-            rc = refreshBD( root.input.activatedPanel ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            rc = refreshHT( footer ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            refresh() ;
             root.input.forcedToRefresh_Local = NOTREFRESH ;
          }
       }
@@ -5783,7 +5731,7 @@ INT32 main( INT32 argc, CHAR **argv)
    ossMemset( errStr, 0, errStrLength ) ;
    ossMemset( errStrBuf, 0, errStrLength ) ;
    initscr() ;
-   if( FALSE == has_colors() )
+   if( !has_colors() )
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
