@@ -5,7 +5,7 @@ $groupname  = empty ( $_POST['group'] ) ? "" : $_POST['group'] ;
 $host       = empty ( $_POST['host']  ) ? "" : $_POST['host'] ;
 $svc        = empty ( $_POST['svc']   ) ? "" : $_POST['svc'] ;
 
-$db -> install ( "{ install : false }" ) ;
+//$db -> install ( "{ install : false }" ) ;
 $cursor = NULL ;
 if ( $model == "all" )
 {
@@ -23,9 +23,13 @@ if ( !empty ( $cursor ) )
 {
 	while ( $arr = $cursor -> getNext() )
 	{
-		echo $arr ;
+	   $arr['TotalInsert'] = $arr['TotalInsert'] - $arr['ReplInsert'] ;
+	   $arr['TotalRead']   = $arr['TotalRead'] - $arr['ReplInsert'] ;
+	   $arr['TotalDelete'] = $arr['TotalDelete'] - $arr['ReplInsert'] ;
+	   $arr['TotalUpdate'] = $arr['TotalUpdate'] - $arr['ReplInsert'] ;
+		echo json_encode( $arr ) ;
 	}
 }
-$db -> install ( "{ install : true }" ) ;
+//$db -> install ( "{ install : true }" ) ;
 
 ?>
