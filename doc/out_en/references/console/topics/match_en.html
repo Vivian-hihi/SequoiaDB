@@ -50,9 +50,9 @@
       
       <ul class="ul">
         <li class="li">The following example uses <strong class="ph b">$match</strong> perform simple matching
-            <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}})</pre>
+            <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:[{score:80},{"info.name":{$exists:1}}]}})</pre>
 <p class="p">This
-            operation represents the return qualifying score from a set collection of &lt;=80 and
+            operation represents the return qualifying score from a set collection of =80 and
             the info object child object name field is present record.</p>
 </li>
 
@@ -60,10 +60,9 @@
           the result set using <a class="xref" href="jgroup_en.html"><strong class="ph b">$group</strong></a> grouping final
           output using <a class="xref" href="project_en.html"><strong class="ph b">$project</strong></a> focused to the specified
           field name.
-            <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:[{age: {$score:80}},{"info.name":{$exists:1}}]}},
-            {<a class="xref" href="jgroup_en.html"><strong class="ph b">$group</strong></a>:{_id:"$major"}},{<a class="xref" href="project_en.html"><strong class="ph b">$project</strong></a>:{major:1,dep:1}})</pre>
+            <pre class="pre codeblock">db.collectionspace.collection.aggregate({ $match : {$and:[{score:80},{"info.name":{$exists:1}}]}},{$group:{_id:"$major"}},{$project:{major:1,dep:1}})</pre>
 <p class="p">The
-            first set of collection operations in return qualifying score&lt;=80 and recording info
+            first set of collection operations in return qualifying score=80 and recording info
             objects child objects exist in the name field, and then grouped according to major
             fields, the final choice of major, and dep field output in the result set.</p>
 
@@ -90,7 +89,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

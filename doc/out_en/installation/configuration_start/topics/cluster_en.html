@@ -112,7 +112,7 @@ The path is the
           port of coord node. </div>
 <p class="p">3.Create a catalog node group</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;db.createCataShard("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
+          <pre class="pre codeblock">&gt;db.createCataRG("sdbserver1", 11800, "/opt/sequoiadb/database/cata/11800")</pre>
 
         </div>
 <p class="p">Here "sdbserver1" is the hostname of the 1st server.</p>
@@ -122,15 +122,15 @@ The path is the
           data file of catalog node.</p>
 <p class="p">4.Wait for 5 second, and add 2 more catalog nodes</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;var catashard = db.getShard("SYSCatalogGroup");      </pre>
+          <pre class="pre codeblock">&gt;var cataRG = db.getRG("SYSCatalogGroup");      </pre>
 
         </div>
 <div class="p">
-          <pre class="pre codeblock">&gt;var node1 = catashard.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800") </pre>
+          <pre class="pre codeblock">&gt;var node1 = cataRG.createNode("sdbserver2", 11800,"/opt/sequoiadb/database/cata/11800") </pre>
 
         </div>
 <div class="p">
-          <pre class="pre codeblock">&gt;var node2 = catashard.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</pre>
+          <pre class="pre codeblock">&gt;var node2 = cataRG.createNode("sdbserver3", 11800,"/opt/sequoiadb/database/cata/11800")</pre>
 
         </div>
 <div class="p">5.Start catalog node group <pre class="pre codeblock">&gt;node1.start()
@@ -148,20 +148,20 @@ The path is the
 
       <li class="li">Step 4: Configurate and start data nodes with statements<p class="p">1.Create data node group</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;var datashard = db.createShard("datashard1")</pre>
+          <pre class="pre codeblock">&gt;var dataRG = db.createRG("datagroup")</pre>
 
         </div>
 <p class="p">2.Add data node</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;datashard.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   </pre>
+          <pre class="pre codeblock">&gt;dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   </pre>
 
         </div>
 <div class="p">
-          <pre class="pre codeblock">&gt;datashard.createNode("sdbserver2", 11820,"/opt/sequoiadb/database/data/11820")</pre>
+          <pre class="pre codeblock">&gt;dataRG.createNode("sdbserver2", 11820,"/opt/sequoiadb/database/data/11820")</pre>
 
         </div>
 <div class="p">
-          <pre class="pre codeblock">&gt;datashard.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</pre>
+          <pre class="pre codeblock">&gt;dataRG.createNode("sdbserver3", 11820, "/opt/sequoiadb/database/data/11820")</pre>
 
         </div>
 <div class="note note"><span class="notetitle">Note:</span> 
@@ -171,7 +171,7 @@ The path is the
         </div>
 <p class="p">3.Start data node group</p>
 <div class="p">
-          <pre class="pre codeblock">&gt;datashard.start()</pre>
+          <pre class="pre codeblock">&gt;dataRG.start()</pre>
 
         </div>
 <p class="p">4.Exit SequoiaDB shell console</p>
@@ -227,7 +227,7 @@ catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803  This id the addr
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

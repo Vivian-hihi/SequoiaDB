@@ -59,7 +59,7 @@
                         you can anonymously connect to the
                         database:</p>
 <pre class="pre codeblock">string addr = "127.0.0.1:11810";
-Sequoiadb sdb = newSequoiadb(addr);
+Sequoiadb sdb = new Sequoiadb(addr);
 try
 {
     sdb.Connect();
@@ -77,7 +77,7 @@ catch (System.Exception e)
                         when the connection must specify a user name and
                         password:</p>
 <pre class="pre codeblock">string addr = "127.0.0.1:11810";
-Sequoiadb sdb = newSequoiadb(addr);
+Sequoiadb sdb = new Sequoiadb(addr);
 try
 {
     sdb.Connect("testusr", "testpwd");
@@ -121,33 +121,35 @@ dbc = cs.CreateCollection(clName);
 
         </li>
 
-        <li class="li">Insert operation for Collection <p class="p">Need to insert data BsonDocument create and insert:</p>
+        <li class="li">Insert operation for Collection <p class="p">Need to insert data BsonDocument create and
+                        insert:</p>
 
-          <pre class="pre codeblock">BsonDocument insertor = newBsonDocument();
+                    <pre class="pre codeblock">BsonDocument insertor = new BsonDocument();
 string date = DateTime.Now.ToString();
 insertor.Add("operation", "Insert");
 insertor.Add("date", date);
-ObjectId id = dbc.Insert(insertor);
-          </pre>
-<p class="p">Of course, BsonDocument BsonDocument can also be nested object, And you can also directly a complete new BsonDocument, without going 
-            through the Add method:</p>
-<pre class="pre codeblock">BsonDocumentinsertor = newBsonDocument
+ObjectId id = dbc.Insert(insertor);</pre>
+<p class="p">Of
+                        course, BsonDocument BsonDocument can also be nested object, And you can
+                        also directly a complete new  BsonDocument, without going through the Add
+                        method:</p>
+<pre class="pre codeblock">BsonDocumentinsertor = new BsonDocument
 {
     {"FirstName","John"},
     {"LastName","Smith"},
     {"Age",50},
     {"id",i},
     {"Address",
-        newBsonDocument
+        new BsonDocument
         {
             {"StreetAddress","212ndStreet"},
-            {"City","NewYork"},
+            {"City","new York"},
             {"State","NY"},
             {"PostalCode","10021"}
         }
     },
     {"PhoneNumber",
-        newBsonDocument
+        new BsonDocument
         {
             {"Type","Home"},
             {"Number","212555-1234"}
@@ -156,10 +158,10 @@ ObjectId id = dbc.Insert(insertor);
 };
 Insert the number of data:
 //bulkinsert
-List&lt;BsonDocument&gt; insertor=newList &lt;BsonDocument&gt; ();
+List&lt;BsonDocument&gt; insertor=new List &lt;BsonDocument&gt; ();
 for(inti=0;i&lt;10;i++)
 {
-    BsonDocumentobj=newBsonDocument();
+    BsonDocumentobj=new BsonDocument();
     obj.Add("operation","BulkInsert");
     obj.Add("date",DateTime.Now.ToString());
     insertor.Add(obj);
@@ -167,73 +169,85 @@ for(inti=0;i&lt;10;i++)
 dbc.BulkInsert(insertor,0);</pre>
 </li>
 
-        <li class="li">Index-related operations
-          <p class="p">Create an index:</p>
+        <li class="li">Index-related operations <p class="p">Create an
+                        index:</p>
 <pre class="pre codeblock">//createindexkey,indexonattribute'Id'byASC(1)/DESC(-1)
-BsonDocument key = newBsonDocument();
+BsonDocument key = new BsonDocument();
 key.Add("id", 1);
 string name = "index name";
 bool isUnique = true;
 bool isEnforced = true;
 dbc.CreateIndex(name, key, isUnique, isEnforced);</pre>
-<p class="p">Delete Index:</p>
+<p class="p">Delete
+                        Index:</p>
 <pre class="pre codeblock">string name = "index name";
 dbc.DropIndex(name);</pre>
 </li>
 
-        <li class="li">Query operation<p class="p">Query, you need to use a cursor to traverse the query results, but can first get the index of the current Collection, if not empty, 
-          as the development of an access plan (hint) for inquiries:
-        </p>
+        <li class="li">Query operation<p class="p">Query, you need to use a cursor to traverse the query results, but can
+                        first get the index of the current Collection, if not empty, as the
+                        development of an access plan (hint) for inquiries:
+                        </p>
 <pre class="pre codeblock">DBCursor icursor = dbc.GetIndex(name);
 BsonDocument index = icursor.Current();   </pre>
 <p class="p">
-  BsonDocument objects are used to construct the corresponding queries, including: Query matching rules (matcher, include the appropriate query), domain selection 
-  (selector), sorting rules (oredrBy, in increasing order or descending), to develop access plans (hint), skip record number (0), the number of records returned 
-  (-1:return all data). After the inquiry, to obtain the corresponding Cursor, for the results obtained by traversing the query:
-</p>
-<pre class="pre codeblock">BsonDocument matcher = newBsonDocument();
-BsonDocument conditon = newBsonDocument();
+                        BsonDocument objects are used to construct the corresponding queries,
+                        including: Query matching rules (matcher, include the appropriate query),
+                        domain selection (selector), sorting rules (oredrBy, in increasing order or
+                        descending), to develop access plans (hint), skip record number (0), the
+                        number of records returned (-1:return all data). After the inquiry, to
+                        obtain the corresponding Cursor, for the results obtained by traversing the
+                        query:
+                        </p>
+<pre class="pre codeblock">BsonDocument matcher = new BsonDocument();
+BsonDocument conditon = new BsonDocument();
 conditon.Add("$gte", 0);
 conditon.Add("$lte", 9);
 matcher.Add("id", conditon);
-BsonDocument selector = newBsonDocument();
+BsonDocument selector = new BsonDocument();
 selector.Add("id", null);
 selector.Add("Age", null);
-BsonDocument orderBy = newBsonDocument();
+BsonDocument orderBy = new BsonDocument();
 orderBy.Add("id", -1);
 BsonDocument hint = null;
 if (index != null)
     hint = index;
 else
-    hint = newBsonDocument();
+    hint = new BsonDocument();
 DBCursor cursor = dbc.Query(matcher, selector, orderBy, hint, 0, -1);    </pre>
-<p class="p">Use DBCursor cursor to traverse:</p>
+<p class="p">Use
+                        DBCursor cursor to
+                    traverse:</p>
 <pre class="pre codeblock">while (cursor.Next() != null)
 Console.WriteLine(cursor.Current());</pre>
 </li>
 
-        <li class="li">Delete operation
-          <p class="p">Construct the corresponding BsonDocument object, set the conditions for deletion:</p>
+        <li class="li">Delete operation <p class="p">Construct the corresponding BsonDocument object, set the conditions
+                        for
+                    deletion:</p>
 <pre class="pre codeblock">//createthedeletecondition
-BsonDocument drop = newBsonDocument();
+BsonDocument drop = new BsonDocument();
 drop.Add("Last Name", "Smith");
 coll.Delete(drop);</pre>
 </li>
 
-        <li class="li">Update operation
-          <p class="p">Construct the corresponding BsonDocument object used to set the update condition, you can also create DBQuery object encapsulates all of the 
-            query or update rules:</p>
-<pre class="pre codeblock">DBQuery query = newDBQuery();
-BsonDocument updater = newBsonDocument();
-BsonDocument matcher = newBsonDocument();
-BsonDocument modifier = newBsonDocument();
+        <li class="li">Update operation <p class="p">Construct the corresponding BsonDocument object used to set the
+                        update condition, you can also create DBQuery object encapsulates all of the
+                        query or update
+                        rules:</p>
+<pre class="pre codeblock">DBQuery query = new DBQuery();
+BsonDocument updater = new BsonDocument();
+BsonDocument matcher = new BsonDocument();
+BsonDocument modifier = new BsonDocument();
 updater.Add("Age", 25);
 modifier.Add("$set", updater);
 matcher.Add("First Name", "John");
 query.Matcher = matcher;
 query.Modifier = modifier;
 dbc.Update(query);       </pre>
-<p class="p">Update operation, if the conditions are not met matcher, then insert this record:</p>
+<p class="p">Update
+                        operation, if the conditions are not met matcher, then insert this
+                        record:</p>
 <pre class="pre codeblock">dbc.Upsert(query);</pre>
 </li>
 
@@ -254,7 +268,7 @@ dbc.Update(query);       </pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

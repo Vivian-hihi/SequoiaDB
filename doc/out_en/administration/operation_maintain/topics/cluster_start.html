@@ -54,11 +54,11 @@
 &gt; var db = new Sdb("localhost", 11810) ;</pre>
 </li>
 
-        <li class="li">得到分片组 <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
+        <li class="li">得到分区组 <pre class="pre codeblock">&gt; dataRG = db.getRG ( "&lt;datagroup1&gt;" ) ;</pre>
 </li>
 
         <li class="li">得到数据节点
-          <pre class="pre codeblock">&gt; datanode = datashard.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
+          <pre class="pre codeblock">&gt; datanode = dataRG.getNode ( "&lt;hostname1&gt;", "&lt;servicename1&gt;" ) ;</pre>
 </li>
 
         <li class="li">启动节点
@@ -80,7 +80,7 @@
 </pre>
 </li>
 
-        <li class="li">得到分片组 <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
+        <li class="li">得到分区组 <pre class="pre codeblock">&gt; datashard = db.getShard ( "&lt;datashard&gt;" ) ;</pre>
 </li>
 
         <li class="li">启动数据组
@@ -102,7 +102,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

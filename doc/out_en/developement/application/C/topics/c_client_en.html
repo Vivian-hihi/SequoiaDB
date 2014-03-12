@@ -63,7 +63,7 @@
 <p class="p">So in client, there are 3 Handles representing
             connection,collectionspace and collection. The other Handle represents cursor:</p>
 <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="strow">
-              <td valign="top" class="stentry">Sequoiadb </td>
+              <td valign="top" class="stentry">sdbConnectionHandle </td>
 
               <td valign="top" class="stentry">Database instance </td>
 
@@ -71,7 +71,7 @@
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">CollectionSpace </td>
+              <td valign="top" class="stentry">sdbCSHandle </td>
 
               <td valign="top" class="stentry">CollectionSpace instance </td>
 
@@ -79,7 +79,7 @@
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">DBCollection</td>
+              <td valign="top" class="stentry">sdbCollectionHandle</td>
 
               <td valign="top" class="stentry">Collection instance </td>
 
@@ -87,7 +87,7 @@
 
             </tr>
 <tr class="strow">
-              <td valign="top" class="stentry">DBCursor</td>
+              <td valign="top" class="stentry">sdbCursorHandle</td>
 
               <td valign="top" class="stentry">Cursor instance </td>
 
@@ -117,7 +117,7 @@
 <p class="p">  1) ReplicaSets</p>
 <p class="p">  2) Data Node</p>
 <div class="note note"><span class="notetitle">Note:</span> 
-            <p class="p">ReplicaSet contain three tpyes:Coord ReplicaSets,Catalog ReplicaSet,Data
+            <p class="p">ReplicaSet contain two tpyes:Catalog ReplicaSet,Data
               ReplicaSet.</p>
 
           </div>
@@ -189,7 +189,7 @@ rc = sdbDisconnect( connection ) ;</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

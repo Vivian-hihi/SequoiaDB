@@ -114,11 +114,14 @@ connect success!</pre>
                   following sample insert the record {name:"Tom",age:24} into a
                collection:</p>
 <pre class="pre codeblock">// Firstly, a BSON object is created.
-bson obj;
+INT32 rc  = SDB_OK ;
+bson obj ;
 bson_init( &amp;obj ) ;
 bson_append_string( &amp;obj, “name”, “tom” ) ;
 bson_append_int( &amp;obj, “age”, 24 ) ;
-bson_finish( &amp;obj ) ;
+rc = bson_finish( &amp;obj ) ;
+if ( rc != SDB_OK )
+printf("Error.");
 // Secondly, insert it into a collection.
 dbInsert ( collection, &amp;obj ) ;</pre>
 </li>
@@ -151,7 +154,9 @@ dbInsert ( collection, &amp;obj ) ;</pre>
    bson_init( &amp;obj ) ;
    bson_append_int( &amp;obj, "name", 1 ) ;
    bson_append_int( &amp;obj, "age", -1 ) ;
-   bson_finish( &amp;obj ) ;
+   rc = bson_finish( &amp;obj ) ;
+   if ( rc != SDB_OK )
+printf("Error.");
    // Create an index with the BOSN object.
    sdbCreateIndex ( collection, &amp;obj, INDEX_NAME, FALSE, FALSE ) ;
    bson_destroy ( &amp;obj ) ;   </pre>
@@ -167,7 +172,9 @@ dbInsert ( collection, &amp;obj ) ;</pre>
    bson_append_start_object ( &amp;rule, "$set" ) ;
    bson_append_int ( &amp;rule, "age", 19 ) ;
    bson_append_finish_object ( &amp;rule ) ;
-   bson_finish ( &amp;rule ) ;
+   rc = bson_finish ( &amp;rule ) ;
+   if ( rc != SDB_OK )
+printf("Error.");
 	 // Print updating rule.
    bson_print( &amp;rule ) ;
    // Update records.
@@ -199,10 +206,10 @@ dbInsert ( collection, &amp;obj ) ;</pre>
 // sleep 5s to wait starting catalog ReplicaSet and electing master and slave.
    sleep( 5 ) ;
 // create data ReplicaSet
-   sdbCreateShard ( connection, SHARD_NAME, &amp;shard ) ;
+   sdbCreateShard ( connection, GROUP_NAME, &amp;rg ) ;
  
 // create data nodes
-   sdbCreateNode ( shard, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
+   sdbCreateNode ( rd, HOST_NAME1, SERVICE_NAME1, DATABASE_PATH1, NULL ) ;
 // start ReplicaSet
    sdbStartShard( shard ) ;</pre>
 </div>
@@ -244,7 +251,7 @@ dbInsert ( collection, &amp;obj ) ;</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

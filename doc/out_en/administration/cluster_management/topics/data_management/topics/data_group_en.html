@@ -45,9 +45,9 @@
 
     <p class="p">operation methods: </p>
 
-    <pre class="pre codeblock">&gt;var datashard = db.createShard("datashard1")
-&gt;datashard.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
-&gt;datashard.start()</pre>
+    <pre class="pre codeblock">&gt;var dataRG = db.createRG("datagroup1")
+&gt;dataRG.createNode("sdbserver1", 11820, "/opt/sequoiadb/database/data/11820")   
+&gt;dataRG.start()</pre>
 
     <p class="p">The first command is used to create data sharding,and what different from catalog sharding is
       that this operation will not create any data node.The param is the name of data sharding. </p>
@@ -85,7 +85,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

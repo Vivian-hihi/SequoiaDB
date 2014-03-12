@@ -55,10 +55,12 @@
 
       <ul class="ul">
         <li class="li"><div class="p">Create a simple BSON object
-            {age:20}。<pre class="pre codeblock">bson obj;
+            {age:20}。<pre class="pre codeblock">INT32 rc = SDB_OK;
+bson obj;
 bson_init(&amp;obj);
 bson_appent_int(obj,"age",20);
-bson_finish(obj);
+if ( bson_finish(obj) != SDB_OK )
+printf("Error.") ;
 bson_destory(obj);</pre>
 </div>
 </li>
@@ -149,7 +151,7 @@ bson_iterator_subiterator(i,sub);</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

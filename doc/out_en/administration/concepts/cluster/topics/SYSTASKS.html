@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="SYSTASKS集合"/>
-<meta name="description" content="所属集合空间 SYSCAT 概念 SYSTASKS集合中包含了该集群中所有正在运行的后台任务信息。每个任务保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 JobType 整数 任务类型，分别代表： 0：数据切分 Status 整数 任务状态，分别代表： 0：准备 1：运行 2：暂停 3：结束 CollectionSpace 字符串 集合空间名 Collection 字符串 集合名 ..."/>
+<meta name="description" content="所属集合空间 SYSCAT 概念 SYSTASKS集合中包含了该集群中所有正在运行的后台任务信息。每个任务保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 JobType 整数 任务类型，分别代表： 0：数据切分 Status 整数 任务状态，分别代表： 0：准备 1：运行 2：暂停 3：取消 4：变更元数据 9：完成 CollectionSpace 字符串 集合空间名 ..."/>
 <meta name="DC.Relation" scheme="URI" content="task.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_concepts_cluster_node_catalog_systasks"/>
@@ -47,19 +47,19 @@
       <p class="p">每个文档包含以下字段：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d3974e32" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d4048e32" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d3974e35" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d4048e35" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d3974e38" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d4048e38" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e32" class="stentry">JobType</td>
+          <td valign="top" headers="d4048e32" class="stentry">JobType</td>
 
-          <td valign="top" headers="d3974e35" class="stentry">整数</td>
+          <td valign="top" headers="d4048e35" class="stentry">整数</td>
 
-          <td valign="top" headers="d3974e38" class="stentry">任务类型，分别代表：
+          <td valign="top" headers="d4048e38" class="stentry">任务类型，分别代表：
             <ul class="ul">
               <li class="li">0：数据切分</li>
 
@@ -69,11 +69,11 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e32" class="stentry">Status</td>
+          <td valign="top" headers="d4048e32" class="stentry">Status</td>
 
-          <td valign="top" headers="d3974e35" class="stentry">整数</td>
+          <td valign="top" headers="d4048e35" class="stentry">整数</td>
 
-          <td valign="top" headers="d3974e38" class="stentry">任务状态，分别代表：
+          <td valign="top" headers="d4048e38" class="stentry">任务状态，分别代表：
             <ul class="ul">
               <li class="li">0：准备</li>
 
@@ -81,7 +81,11 @@
 
               <li class="li">2：暂停</li>
 
-              <li class="li">3：结束</li>
+              <li class="li">3：取消</li>
+
+              <li class="li">4：变更元数据</li>
+
+              <li class="li">9：完成</li>
 
             </ul>
 
@@ -89,19 +93,19 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e32" class="stentry">CollectionSpace</td>
+          <td valign="top" headers="d4048e32" class="stentry">CollectionSpace</td>
 
-          <td valign="top" headers="d3974e35" class="stentry">字符串</td>
+          <td valign="top" headers="d4048e35" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3974e38" class="stentry">集合空间名</td>
+          <td valign="top" headers="d4048e38" class="stentry">集合空间名</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e32" class="stentry">Collection</td>
+          <td valign="top" headers="d4048e32" class="stentry">Collection</td>
 
-          <td valign="top" headers="d3974e35" class="stentry">字符串</td>
+          <td valign="top" headers="d4048e35" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3974e38" class="stentry">集合名</td>
+          <td valign="top" headers="d4048e38" class="stentry">集合名</td>
 
         </tr>
 </table>
@@ -112,51 +116,51 @@
       <p class="p">对于数据切分操作，每个文档还存在以下字段：</p>
 
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d3974e124" class="stentry">字段名</th>
+          <th valign="bottom" align="left" id="d4048e131" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d3974e127" class="stentry">类型</th>
+          <th valign="bottom" align="left" id="d4048e134" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d3974e130" class="stentry">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3974e124" class="stentry">SourceName</td>
-
-          <td valign="top" headers="d3974e127" class="stentry">字符串</td>
-
-          <td valign="top" headers="d3974e130" class="stentry">源分片组名</td>
+          <th valign="bottom" align="left" id="d4048e137" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e124" class="stentry">TargetName</td>
+          <td valign="top" headers="d4048e131" class="stentry">SourceName</td>
 
-          <td valign="top" headers="d3974e127" class="stentry">字符串</td>
+          <td valign="top" headers="d4048e134" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3974e130" class="stentry">目标分片组名</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d3974e124" class="stentry">SourceID</td>
-
-          <td valign="top" headers="d3974e127" class="stentry">整数</td>
-
-          <td valign="top" headers="d3974e130" class="stentry">源分片组ID</td>
+          <td valign="top" headers="d4048e137" class="stentry">源分区所在复制组名</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e124" class="stentry">TargetID</td>
+          <td valign="top" headers="d4048e131" class="stentry">TargetName</td>
 
-          <td valign="top" headers="d3974e127" class="stentry">整数</td>
+          <td valign="top" headers="d4048e134" class="stentry">字符串</td>
 
-          <td valign="top" headers="d3974e130" class="stentry">目标分片组ID</td>
+          <td valign="top" headers="d4048e137" class="stentry">目标分区所在复制组名</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d3974e124" class="stentry">SplitValue</td>
+          <td valign="top" headers="d4048e131" class="stentry">SourceID</td>
 
-          <td valign="top" headers="d3974e127" class="stentry">对象</td>
+          <td valign="top" headers="d4048e134" class="stentry">整数</td>
 
-          <td valign="top" headers="d3974e130" class="stentry">数据切分键</td>
+          <td valign="top" headers="d4048e137" class="stentry">源分区所在复制组ID</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d4048e131" class="stentry">TargetID</td>
+
+          <td valign="top" headers="d4048e134" class="stentry">整数</td>
+
+          <td valign="top" headers="d4048e137" class="stentry">目标分区所在复制组ID</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d4048e131" class="stentry">SplitValue</td>
+
+          <td valign="top" headers="d4048e134" class="stentry">对象</td>
+
+          <td valign="top" headers="d4048e137" class="stentry">数据分区键</td>
 
         </tr>
 </table>
@@ -178,7 +182,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

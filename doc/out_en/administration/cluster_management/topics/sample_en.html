@@ -65,7 +65,7 @@
 <tr class="strow">
               <td valign="top" headers="d1445e24" class="stentry">data sharding group</td>
 
-              <td valign="top" headers="d1445e27" class="stentry"> one data sharding group,group name is datashard1,contain one data
+              <td valign="top" headers="d1445e27" class="stentry"> one data sharding group,group name is datagroup1,contain one data
                 node:<div class="fig fignone"/>
  data node one:service host name is vmsvr1-suse-x64,port is 11820 </td>
 
@@ -108,7 +108,7 @@
 <tr class="strow">
               <td valign="top" headers="d1445e80" class="stentry">data sharding group</td>
 
-              <td valign="top" headers="d1445e83" class="stentry">one data sharding group,group name is datashard1,contain two data
+              <td valign="top" headers="d1445e83" class="stentry">one data sharding group,group name is datagroup1,contain two data
                 nodes:<div class="fig fignone"/>
 data node one:service host name is vmsvr1-suse-x64,port is
                 11820<div class="fig fignone"/>
@@ -193,15 +193,15 @@ ulimit –Su 32000      //the number of threads limit</pre>
             sharding
             group:</p>
 <pre class="pre codeblock">&gt; var db = new Sdb("localhost",11810)
-&gt; var datashard = db.getShard("datashard")
-&gt;node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
+&gt; var datarg = db.getRG("datagroup1")
+&gt; node=rg.createNode("vmsvr2-suse-x64",11820,"/opt/sequoiadb /database/data/11820")
 &gt; node.start()      </pre>
 <p class="p">3.
             In the <em class="ph i">SequoiaDB shell </em>command line,execute the following command to check the
             configuration information of the sharding group,you can see a new data node have added
             to the data
           group:</p>
-<pre class="pre codeblock">&gt;db.listShards();
+<pre class="pre codeblock">&gt;db.listReplicaGroups();
 …
 {
   "Group": [
@@ -279,7 +279,7 @@ ulimit –Su 32000      //the number of threads limit</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

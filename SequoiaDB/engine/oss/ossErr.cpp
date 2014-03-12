@@ -276,7 +276,8 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "the node is business-failures",
                    "the node info is expired",
                    "wait secondary nodes sync the operation failed",
-                   "transaction is disabled"
+                   "transaction is disabled",
+                   "datasource had run out"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

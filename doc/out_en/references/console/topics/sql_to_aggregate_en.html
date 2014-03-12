@@ -39,51 +39,51 @@
     <p class="p">The following table describes the main SQL keywords SequoiaDB aggregation operator table.</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d106015e17" class="stentry">SQL keywords</th>
+        <th valign="bottom" align="left" id="d104972e17" class="stentry">SQL keywords</th>
 
-        <th valign="bottom" align="left" id="d106015e20" class="stentry">SequoiaDB aggregation operator</th>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">where</td>
-
-        <td valign="top" headers="d106015e20" class="stentry">$match </td>
+        <th valign="bottom" align="left" id="d104972e20" class="stentry">SequoiaDB aggregation operator</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">group by</td>
+        <td valign="top" headers="d104972e17" class="stentry">where</td>
 
-        <td valign="top" headers="d106015e20" class="stentry">$group</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">having</td>
-
-        <td valign="top" headers="d106015e20" class="stentry">$match</td>
+        <td valign="top" headers="d104972e20" class="stentry">$match </td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">select</td>
+        <td valign="top" headers="d104972e17" class="stentry">group by</td>
 
-        <td valign="top" headers="d106015e20" class="stentry">$project</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">order by</td>
-
-        <td valign="top" headers="d106015e20" class="stentry">$sort</td>
+        <td valign="top" headers="d104972e20" class="stentry">$group</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">top</td>
+        <td valign="top" headers="d104972e17" class="stentry">having</td>
 
-        <td valign="top" headers="d106015e20" class="stentry">$limit</td>
+        <td valign="top" headers="d104972e20" class="stentry">$match</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e17" class="stentry">offset</td>
+        <td valign="top" headers="d104972e17" class="stentry">select</td>
 
-        <td valign="top" headers="d106015e20" class="stentry">$skip</td>
+        <td valign="top" headers="d104972e20" class="stentry">$project</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d104972e17" class="stentry">order by</td>
+
+        <td valign="top" headers="d104972e20" class="stentry">$sort</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d104972e17" class="stentry">top</td>
+
+        <td valign="top" headers="d104972e20" class="stentry">$limit</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d104972e17" class="stentry">offset</td>
+
+        <td valign="top" headers="d104972e20" class="stentry">$skip</td>
 
       </tr>
 <tr class="strow"/>
@@ -92,18 +92,18 @@
     <p class="p">The following table describes the standard SQL statements and control statements SequoiaDB gathered between.</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d106015e98" class="stentry">SQL statement</th>
+        <th valign="bottom" align="left" id="d104972e98" class="stentry">SQL statement</th>
 
-        <th valign="bottom" align="left" id="d106015e101" class="stentry">SequoiaDB gather statement</th>
+        <th valign="bottom" align="left" id="d104972e101" class="stentry">SequoiaDB gather statement</th>
 
-        <th valign="bottom" align="left" id="d106015e104" class="stentry">Description</th>
+        <th valign="bottom" align="left" id="d104972e104" class="stentry">Description</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select product_id as p_id,price<p class="p"> from table </p>
+        <td valign="top" headers="d104972e98" class="stentry">select product_id as p_id,price<p class="p"> from table </p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$project:{p_id:"$product_id",</p>
 
@@ -113,14 +113,14 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">Return product_id and price fields for all records where product_id rename p_id, on the record date field is not returned.</td>
+        <td valign="top" headers="d104972e104" class="stentry">Return product_id and price fields for all records where product_id rename p_id, on the record date field is not returned.</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select sum(price) as total <p class="p"> from table </p>
+        <td valign="top" headers="d104972e98" class="stentry">select sum(price) as total <p class="p"> from table </p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:null,</p>
 
@@ -128,15 +128,15 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">Price for table summing the values in the field, and rename total.</td>
+        <td valign="top" headers="d104972e104" class="stentry">Price for table summing the values in the field, and rename total.</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by
+        <td valign="top" headers="d104972e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by
           product_id</p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:"$product_id",</p>
 
@@ -146,7 +146,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">
+        <td valign="top" headers="d104972e104" class="stentry">
           Table of records grouped by product_id field.
           <p class="p">Find field in each packet accumulation and price value, and rename total.</p>
 
@@ -154,12 +154,12 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id </p>
+        <td valign="top" headers="d104972e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id </p>
 <p class="p">order
           by total</p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:"$product_id",</p>
 
@@ -171,7 +171,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">
+        <td valign="top" headers="d104972e104" class="stentry">
           Table of records grouped by product_id field.
           <p class="p">Find the value of the field in each packet price and accumulated, and rename total.</p>
 
@@ -181,7 +181,7 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">
+        <td valign="top" headers="d104972e98" class="stentry">
           select product_type_id,product_id,
           <p class="p">sum(price) as total from table </p>
 
@@ -189,7 +189,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:{product_type_id:"$product_type_id",product_id:"$product_id"},</p>
 
@@ -199,7 +199,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">
+        <td valign="top" headers="d104972e104" class="stentry">
           Table records in a field by first grouping by product_type_id press product_id field grouping.
           <p class="p">Find the value of the field in each packet price and accumulated, and rename total.</p>
 
@@ -207,12 +207,12 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id
+        <td valign="top" headers="d104972e98" class="stentry">select product_id,sum(price) as total<p class="p">from table group by product_id
         </p>
 <p class="p">having total&gt;1000</p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:"$product_id",</p>
 
@@ -224,7 +224,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">
+        <td valign="top" headers="d104972e104" class="stentry">
           Table of records grouped by product_id field.
           <p class="p">Find the value of the field in each packet price and accumulated, and rename total.</p>
 
@@ -234,12 +234,12 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where
+        <td valign="top" headers="d104972e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where
           product_type_id=1001</p>
 <p class="p">group by product_id </p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$match:{product_type_id:1001}},</p>
 
@@ -251,18 +251,18 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">Select product_type_id=1001 qualifying record.<p class="p">For the selected records are grouped by product_id.</p>
+        <td valign="top" headers="d104972e104" class="stentry">Select product_type_id=1001 qualifying record.<p class="p">For the selected records are grouped by product_id.</p>
 <p class="p">The price for each packet field values on and, and rename total.</p>
 </td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where product_type_id=1001 group
+        <td valign="top" headers="d104972e98" class="stentry">select product_id,sum(price) as total<p class="p">from table where product_type_id=1001 group
           by product_id </p>
 <p class="p">having total&gt;1000</p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$match:{product_type_id:1001}},</p>
 
@@ -276,7 +276,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">
+        <td valign="top" headers="d104972e104" class="stentry">
           Select product_type_id=1001 qualifying record.
           <p class="p">For the selected records are grouped by product_id.</p>
 
@@ -288,9 +288,9 @@
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select top 10 * from table </td>
+        <td valign="top" headers="d104972e98" class="stentry">select top 10 * from table </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:null}},</p>
 
@@ -298,14 +298,14 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">Returns the result set before 10 records.</td>
+        <td valign="top" headers="d104972e104" class="stentry">Returns the result set before 10 records.</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d106015e98" class="stentry">select * from table offset 50 rows <p class="p">fetch next 10</p>
+        <td valign="top" headers="d104972e98" class="stentry">select * from table offset 50 rows <p class="p">fetch next 10</p>
 </td>
 
-        <td valign="top" headers="d106015e101" class="stentry">
+        <td valign="top" headers="d104972e101" class="stentry">
           db.cs.table.aggregate(
           <p class="p"> {$group:{_id:null}},</p>
 
@@ -315,7 +315,7 @@
 
         </td>
 
-        <td valign="top" headers="d106015e104" class="stentry">After skipping the results of 50 focus before recording, return the next 10 records.</td>
+        <td valign="top" headers="d104972e104" class="stentry">After skipping the results of 50 focus before recording, return the next 10 records.</td>
 
       </tr>
 <tr class="strow"/>
@@ -333,7 +333,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>

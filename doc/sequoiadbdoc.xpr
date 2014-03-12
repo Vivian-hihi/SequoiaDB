@@ -780,8 +780,11 @@
                 <folder name="images"/>
                 <folder name="tasks"/>
                 <folder name="topics">
+                    <file name="references/methods/topics/attachCL_en.dita"/>
                     <file name="references/methods/topics/attachCL.dita"/>
+                    <file name="references/methods/topics/backupoffline_en.dita"/>
                     <file name="references/methods/topics/backupoffline.dita"/>
+                    <file name="references/methods/cancelTask_en.dita"/>
                     <file name="references/methods/cancelTask.dita"/>
                     <file name="references/methods/topics/ccurrent_en.dita"/>
                     <file name="references/methods/topics/ccurrent.dita"/>
@@ -825,6 +828,7 @@
                     <file name="references/methods/topics/dbupdate.dita"/>
                     <file name="references/methods/topics/deleteCurrent_en.dita"/>
                     <file name="references/methods/topics/deleteCurrent.dita"/>
+                    <file name="references/methods/topics/detachCL_en.dita"/>
                     <file name="references/methods/topics/detachCL.dita"/>
                     <file name="references/methods/topics/dropCL_en.dita"/>
                     <file name="references/methods/topics/dropCL.dita"/>
@@ -841,6 +845,7 @@
                     <file name="references/methods/topics/execUpdate_en.dita"/>
                     <file name="references/methods/topics/execUpdate.dita"/>
                     <file name="references/methods/topics/find.dita"/>
+                    <file name="references/methods/flushConfigure_en.dita"/>
                     <file name="references/methods/flushConfigure.dita"/>
                     <file name="references/methods/topics/getCL_en.dita"/>
                     <file name="references/methods/topics/getCL.dita"/>
@@ -866,6 +871,7 @@
                     <file name="references/methods/topics/getSlave.dita"/>
                     <file name="references/methods/topics/hint_en.dita"/>
                     <file name="references/methods/topics/hint.dita"/>
+                    <file name="references/methods/listBackup_en.dita"/>
                     <file name="references/methods/listBackup.dita"/>
                     <file name="references/methods/topics/listCollections_en.dita"/>
                     <file name="references/methods/topics/listCollections.dita"/>
@@ -877,6 +883,7 @@
                     <file name="references/methods/topics/listProcedures.dita"/>
                     <file name="references/methods/topics/listReplicaGroups_en.dita"/>
                     <file name="references/methods/topics/listReplicaGroups.dita"/>
+                    <file name="references/methods/listTasks_en.dita"/>
                     <file name="references/methods/listTasks.dita"/>
                     <file name="references/methods/topics/methodlist_en.dita"/>
                     <file name="references/methods/topics/methodlist.dita"/>
@@ -890,6 +897,7 @@
                     <file name="references/methods/topics/nodestop.dita"/>
                     <file name="references/methods/topics/remove_en.dita"/>
                     <file name="references/methods/topics/remove.dita"/>
+                    <file name="references/methods/removeBackup_en.dita"/>
                     <file name="references/methods/removeBackup.dita"/>
                     <file name="references/methods/topics/removenode_en.dita"/>
                     <file name="references/methods/topics/removenode.dita"/>
@@ -905,7 +913,9 @@
                     <file name="references/methods/topics/rgstart.dita"/>
                     <file name="references/methods/topics/rgstop_en.dita"/>
                     <file name="references/methods/topics/rgstop.dita"/>
+                    <file name="references/methods/setSessionAttr_en.dita"/>
                     <file name="references/methods/setSessionAttr.dita"/>
+                    <file name="references/methods/topics/splitAsync_en.dita"/>
                     <file name="references/methods/topics/splitAsync.dita"/>
                     <file name="references/methods/topics/startRG_en.dita"/>
                     <file name="references/methods/topics/startRG.dita"/>
@@ -927,6 +937,7 @@
                     <file name="references/methods/topics/updateCurrent.dita"/>
                     <file name="references/methods/topics/upsert_en.dita"/>
                     <file name="references/methods/topics/upsert.dita"/>
+                    <file name="references/methods/waitTasks_en.dita"/>
                     <file name="references/methods/waitTasks.dita"/>
                 </folder>
                 <file name="references/methods/methodlist_en.ditamap"/>
