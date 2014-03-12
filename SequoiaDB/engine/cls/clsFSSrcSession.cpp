@@ -1010,6 +1010,7 @@ namespace engine
             _hasMeta = TRUE ;
          }
          rc = SDB_OK ;
+         _curCollection = ~0 - 1 ;
       }
       else
       {
