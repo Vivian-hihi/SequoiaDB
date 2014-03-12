@@ -155,36 +155,6 @@
                 <folder name="images"/>
                 <folder name="tasks"/>
                 <folder name="topics">
-                    <folder name="data_backup">
-                        <file name="administration/database/data_backup/confi_backup_en.dita"/>
-                        <file name="administration/database/data_backup/confi_backup.dita"/>
-                        <file name="administration/database/data_backup/confi_cluster_en.dita"/>
-                        <file name="administration/database/data_backup/confi_cluster.dita"/>
-                        <file name="administration/database/data_backup/confi_sample_en.dita"/>
-                        <file name="administration/database/data_backup/confi_sample.dita"/>
-                        <file name="administration/database/data_backup/confi_standalone_en.dita"/>
-                        <file name="administration/database/data_backup/confi_standalone.dita"/>
-                        <file name="administration/database/data_backup/data_backup_en.dita"/>
-                        <file name="administration/database/data_backup/data_backup.dita"/>
-                        <file name="administration/database/data_backup/data_cluster_en.dita"/>
-                        <file name="administration/database/data_backup/data_cluster.dita"/>
-                        <file name="administration/database/data_backup/data_file_backup_en.dita"/>
-                        <file name="administration/database/data_backup/data_file_backup.dita"/>
-                        <file name="administration/database/data_backup/data_file_sample_en.dita"/>
-                        <file name="administration/database/data_backup/data_file_sample.dita"/>
-                        <file name="administration/database/data_backup/data_standalone_en.dita"/>
-                        <file name="administration/database/data_backup/data_standalone.dita"/>
-                    </folder>
-                    <folder name="data_recovery">
-                        <file name="administration/database/data_recovery/cluster_en.dita"/>
-                        <file name="administration/database/data_recovery/cluster.dita"/>
-                        <file name="administration/database/data_recovery/data_recovery_en.dita"/>
-                        <file name="administration/database/data_recovery/data_recovery.dita"/>
-                        <file name="administration/database/data_recovery/sample_en.dita"/>
-                        <file name="administration/database/data_recovery/sample.dita"/>
-                        <file name="administration/database/data_recovery/standalone_en.dita"/>
-                        <file name="administration/database/data_recovery/standalone.dita"/>
-                    </folder>
                     <folder name="database_tool">
                         <folder name="topics">
                             <file name="administration/database/database_tool/topics/database_tool_en.dita"/>
@@ -239,16 +209,10 @@
                         <file name="administration/database/topics/snapshot/system_en.dita"/>
                         <file name="administration/database/topics/snapshot/system.dita"/>
                     </folder>
-                    <file name="administration/database/topics/backup_recovery_en.dita"/>
-                    <file name="administration/database/topics/backup_recovery.dita"/>
                     <file name="administration/database/topics/database_en.dita"/>
                     <file name="administration/database/topics/database.dita"/>
-                    <file name="administration/database/topics/distributed_clusters_en.dita"/>
-                    <file name="administration/database/topics/distributed_clusters.dita"/>
                     <file name="administration/database/topics/EDU_en.dita"/>
                     <file name="administration/database/topics/EDU.dita"/>
-                    <file name="administration/database/topics/journal_en.dita"/>
-                    <file name="administration/database/topics/journal.dita"/>
                     <file name="administration/database/topics/log_en.dita"/>
                     <file name="administration/database/topics/log.dita"/>
                     <file name="administration/database/topics/monitoring_en.dita"/>
