@@ -441,9 +441,8 @@ INT32 terminateProcess ( const CHAR *pPipeName )
                             NULL ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_SHUTDOWN" to %s \
-rc = %d",
-               pPipeName, rc ) ;
+      PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_SHUTDOWN" to %s "
+               "rc = %d", pPipeName, rc ) ;
    }
    rc = ossCloseNamedPipe ( handle ) ;
    if ( rc )

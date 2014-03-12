@@ -80,6 +80,10 @@ INT32 formatLog ( SINT32 logID )
    UINT32 outputBufferSz = 0 ;
    dpsLogHeader *logHeader = NULL ;
    BOOLEAN opened = FALSE ;
+
+   INT64 restLen = 0 ;
+   INT64 readPos = 0 ;
+
    // file open
    rc = ossOpen ( logFileName, OSS_DEFAULT | OSS_READONLY,
                   OSS_RU | OSS_WU | OSS_RG, file ) ;
@@ -125,12 +129,19 @@ INT32 formatLog ( SINT32 logID )
    }
 
    // read into buffer
-   rc = ossRead ( &file, pBuffer, fileSize, &fileRead ) ;
-   if ( rc || fileRead != fileSize )
+   restLen = fileSize ;
+   while ( restLen > 0 )
    {
-      printf ( "Failed to read from file, expect %lld bytes, "
-               "actual read %lld bytes, rc = %d\n", fileSize, fileRead, rc ) ;
-      goto error ;
+      rc = ossRead ( &file, pBuffer + readPos, restLen, &fileRead ) ;
+      if ( rc && SDB_INTERRUPT != rc )
+      {
+         printf ( "Failed to read from file, expect %lld bytes, "
+                  "actual read %lld bytes, rc = %d\n", fileSize, fileRead, rc ) ;
+         goto error ;
+      }
+      rc = SDB_OK ;
+      restLen -= fileRead ;
+      readPos += fileRead ;
    }
    // start format log head
    pCur = pBuffer ;

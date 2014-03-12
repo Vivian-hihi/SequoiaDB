@@ -214,10 +214,14 @@ namespace CLSMGR
       SINT64 len = iLenToWrite ;
       while ( lenWritten < len )
       {
-         rc = ossWrite ( pFile, pBufferWrite, len - lenWritten, &lenWritten ) ;
+         rc = ossWrite ( pFile, pBufferWrite, len, &lenWritten ) ;
          if ( rc && rc != SDB_INTERRUPT )
+         {
             goto error ;
+         }
+         rc = SDB_OK ;
          len -= lenWritten ;
+         pBufferWrite += lenWritten ;
       }
 
    done:

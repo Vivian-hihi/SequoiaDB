@@ -421,8 +421,13 @@ void flushOutput ( const CHAR *pBuffer, INT32 size )
       {
          rc = ossWrite ( &gFile, &pBuffer[writtenSize], size-writtenSize,
                          &writeSize ) ;
+         if ( rc && SDB_INTERRUPT != rc )
+         {
+            break ;
+         }
+         rc = SDB_OK ;
          writtenSize += writeSize ;
-      } while ( writtenSize < size && ( rc == SDB_INTERRUPT ) ) ;
+      } while ( writtenSize < size ) ;
       if ( rc )
       {
          ossPrintf ( "Error: Failed to write into file, rc = %d"OSS_NEWLINE,
@@ -2115,7 +2120,7 @@ enum SDB_INSPT_ACTION
    SDB_INSPT_ACTION_INSPECT
 } ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_ACTIONCSATTEMPT, "actionCSAttempt" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ACTIONCSATTEMPT, "actionCSAttempt" )
 void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
                        BOOLEAN specific, SDB_INSPT_ACTION action )
 {
@@ -2127,6 +2132,9 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
    CHAR     eyeCatcher[DMS_HEADER_EYECATCHER_LEN+1] = {0} ;
    SINT64   readSize = 0 ;
    CHAR     *inspectSMEBuffer = NULL ;
+
+   SINT64   restLen = 0 ;
+   SINT64   readPos = 0 ;
 
    rc = ossOpen ( pFile, OSS_DEFAULT | OSS_READONLY | OSS_EXCLUSIVE,
                   OSS_RU | OSS_WU | OSS_RG, file ) ;
@@ -2141,12 +2149,19 @@ void actionCSAttempt ( const CHAR *pFile, const CHAR *expectEye,
 
    // first let's read 8 bytes in front of the file, and make sure it's our
    // storage unit file
-   rc = ossRead ( &file, eyeCatcher, DMS_HEADER_EYECATCHER_LEN, &readSize ) ;
-   if ( rc )
+   restLen = DMS_HEADER_EYECATCHER_LEN ;
+   while ( restLen > 0 )
    {
-      dumpPrintf ( "Error: Failed to read %s, rc = %d"OSS_NEWLINE,
-                   pFile, rc ) ;
-      goto error ;
+      rc = ossRead ( &file, eyeCatcher + readPos, restLen, &readSize ) ;
+      if ( rc && SDB_INTERRUPT != rc )
+      {
+         dumpPrintf ( "Error: Failed to read %s, rc = %d"OSS_NEWLINE,
+                      pFile, rc ) ;
+         goto error ;
+      }
+      rc = SDB_OK ;
+      restLen -= readSize ;
+      readPos += readSize ;
    }
 
    // if it doens't match our eye catcher, we may or may not dump error

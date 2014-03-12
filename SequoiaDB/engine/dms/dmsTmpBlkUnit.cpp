@@ -182,6 +182,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
             goto error ;
          }
+         rc = SDB_OK ;
 
          needToW -= writeOnce ;
          written += writeOnce ;
@@ -249,7 +250,7 @@ namespace engine
          readOnce = 0 ;
          rc = ossRead( &_file, ( CHAR * )buf + hasRead,
                        toRead, &readOnce ) ;
-         if ( SDB_OK != rc )
+         if ( rc && SDB_INTERRUPT != rc )
          {
             PD_LOG( PDERROR, "failed to read blk:%d", rc ) ;
             goto error ;
@@ -258,6 +259,7 @@ namespace engine
          toRead -= readOnce ;
          blk._read += readOnce ;
          hasRead += readOnce ;
+         rc = SDB_OK ;
       }
 
       got = hasRead ;

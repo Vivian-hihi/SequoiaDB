@@ -383,9 +383,8 @@ void displayProcess ( const CHAR *pPipeName )
                             NULL ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_PID" to %s \
-rc = %d",
-               pPipeName, rc ) ;
+      PD_LOG ( PDERROR, "Failed to send "ENGINE_NPIPE_MSG_PID" to %s "
+               "rc = %d", pPipeName, rc ) ;
    }
    rc = ossReadNamedPipe ( handle, (CHAR*)&pid, sizeof(pid), &readSize,
                            LIST_TIMEOUT ) ;

@@ -956,21 +956,21 @@ namespace engine
       rc = ossOpen( szCatFilePath, OSS_READONLY, 0, catFile );
       if ( rc )
       {
-         PD_LOG( PDINFO,
-               "failed to open the catalog-configure-file(rc=%d)",
-               rc );
-         rc = SDB_OK;
-         goto done;
+         PD_LOG( PDINFO, "Failed to open the catalog-configure-file(rc=%d)",
+                 rc ) ;
+         rc = SDB_OK ;
+         goto done ;
       }
       isFileOpened = TRUE;
 
-      while( iReadReturn != SDB_EOF)
+      while( iReadReturn != SDB_EOF )
       {
          SINT64 sReadSize = 0;
          iReadReturn = ossRead ( &catFile, szBuffer + sBufferBegin,
-                              READ_BUFFER_SIZE-sBufferBegin-1, &sReadSize );
-         if ( iReadReturn != SDB_OK && iReadReturn != SDB_EOF
-            && iReadReturn != SDB_INTERRUPT )
+                                 READ_BUFFER_SIZE-sBufferBegin-1,
+                                 &sReadSize ) ;
+         if ( iReadReturn != SDB_OK && iReadReturn != SDB_EOF &&
+              iReadReturn != SDB_INTERRUPT )
          {
             rc = iReadReturn;
             PD_LOG( PDERROR, "read catalogue-configure-file error: %s, rc: %d",

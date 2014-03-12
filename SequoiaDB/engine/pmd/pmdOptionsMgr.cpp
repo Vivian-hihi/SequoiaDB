@@ -1592,13 +1592,14 @@ namespace engine
          {
             SINT64 tmpWritten = 0 ;
             rc = ossWrite( &file, line.c_str() + written , len, &tmpWritten ) ;
-            if ( SDB_OK != rc )
+            if ( rc && SDB_INTERRUPT != rc )
             {
                PD_LOG( PDERROR, "Failed to write file[%s]:%d", conf, rc ) ;
                goto error ;
             }
             written += tmpWritten ;
             len -= tmpWritten ;
+            rc = SDB_OK ;
          }
       }
 

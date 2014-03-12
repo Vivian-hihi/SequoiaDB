@@ -57,7 +57,8 @@ namespace engine
          // write header into file
          while ( restSize != 0 )
          {
-            rc = ossWrite ( &_file, &pBuffer[bufSize-restSize], restSize, &writeSize ) ;
+            rc = ossWrite ( &_file, &pBuffer[bufSize-restSize], restSize,
+                            &writeSize ) ;
             if ( rc && SDB_INTERRUPT != rc )
             {
                PD_LOG ( PDERROR, "Failed to write into file: %s, rc = %d",
@@ -65,6 +66,7 @@ namespace engine
                goto error ;
             }
             restSize -= writeSize ;
+            rc = SDB_OK ;
          }
       }
       else
@@ -72,7 +74,7 @@ namespace engine
          SINT64 readSize = 0 ;
          _readOnly = TRUE ;
          // read from file
-         while ( restSize != 0 )
+         while ( restSize > 0 )
          {
             rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
             if ( rc && SDB_INTERRUPT != rc )
@@ -82,6 +84,7 @@ namespace engine
                goto error ;
             }
             restSize -= readSize ;
+            rc = SDB_OK ;
          }
          // validate
          if ( ossMemcmp ( unitHead->_eyeCatcher, DMS_REORG_UNIT_EYECATCHER,
@@ -197,6 +200,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)writeSize ;
+         rc = SDB_OK ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_IMPMME, rc );
@@ -221,7 +225,7 @@ namespace engine
                   _headSize, _fileName, rc ) ;
          goto error ;
       }
-      while ( restSize != 0 )
+      while ( restSize > 0 )
       {
          rc = ossRead ( &_file, &pMME[bufSize-restSize], restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
@@ -231,6 +235,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)readSize ;
+         rc = SDB_OK ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_EXPMME, rc );
@@ -313,6 +318,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)writeSize ;
+         rc = SDB_OK ;
       }
       SDB_OSS_FREE ( _pCurrentExtent ) ;
       _pCurrentExtent = NULL ;
@@ -477,7 +483,7 @@ namespace engine
       INT32 restSize = sizeof(buffer) ;
       INT64 readSize = 0 ;
       INT32 bufSize = restSize ;
-      while ( restSize != 0 )
+      while ( restSize > 0 )
       {
          rc = ossRead ( &_file, &buffer[bufSize-restSize], restSize,
                         &readSize ) ;
@@ -494,6 +500,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)readSize ;
+         rc = SDB_OK ;
       }
       if ( DMS_EXTENT_EYECATCHER0 != extent->_eyeCatcher[0] ||
            DMS_EXTENT_EYECATCHER1 != extent->_eyeCatcher[1] )
@@ -534,7 +541,7 @@ namespace engine
                   0, _fileName, rc ) ;
          goto error ;
       }
-      while ( restSize != 0 )
+      while ( restSize > 0 )
       {
          rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
@@ -544,6 +551,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)readSize ;
+         rc = SDB_OK ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_EXPHEAD, rc );
@@ -563,7 +571,7 @@ namespace engine
       INT32 restSize = sizeof(dmsExtent) ;
       INT64 readSize = 0 ;
       INT32 bufSize = restSize ;
-      while ( restSize != 0 )
+      while ( restSize > 0 )
       {
          rc = ossRead ( &_file, &pBuffer[bufSize-restSize], restSize, &readSize ) ;
          if ( rc && SDB_INTERRUPT != rc )
@@ -573,6 +581,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)readSize ;
+         rc = SDB_OK ;
       }
       // validate header
       if ( DMS_EXTENT_EYECATCHER0 != extent->_eyeCatcher[0] ||
@@ -586,7 +595,7 @@ namespace engine
       restSize = extent->_blockSize * _pageSize - sizeof(dmsExtent) ;
       readSize = 0 ;
       bufSize = restSize ;
-      while ( restSize != 0 )
+      while ( restSize > 0 )
       {
          rc = ossRead ( &_file, &pBuffer[sizeof(dmsExtent)+bufSize-restSize],
                         restSize, &readSize ) ;
@@ -597,6 +606,7 @@ namespace engine
             goto error ;
          }
          restSize -= (INT32)readSize ;
+         rc = SDB_OK ;
       }
    done :
       PD_TRACE_EXITRC ( SDB__DMSROUNIT_EXPEXT, rc );

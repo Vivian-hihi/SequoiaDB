@@ -232,7 +232,7 @@ namespace engine
 
          UINT32   _totalFreeSpace() ;
 
-         INT32    _writeFile( OSSFILE &file, const CHAR *pData,
+         INT32    _writeFile( OSSFILE *file, const CHAR *pData,
                               INT64 dataLen ) ;
 
       private:

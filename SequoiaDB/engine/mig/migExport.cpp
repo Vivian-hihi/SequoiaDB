@@ -253,7 +253,9 @@ INT32 _migExtractor::_flushBuf ()
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__MIGEXTR__FLHBUF );
-   SINT64 iLenToWrite ;
+   SINT64 len = 0 ;
+   SINT64 iLenToWrite = 0 ;
+   SINT64 writePos = 0 ;
    SDB_ASSERT ( _init, "extractor must be initialized" )
    rc = _appendStr ( _delRecord ) ;
    if ( rc )
@@ -261,12 +263,18 @@ INT32 _migExtractor::_flushBuf ()
       PD_LOG ( PDERROR, "Failed to append del record, rc = %d", rc ) ;
       goto error ;
    }
-   rc = ossWrite ( &_file, _pExtractBuffer, _bufOccupied (),
-                   &iLenToWrite ) ;
-   if ( rc || (UINT64)iLenToWrite != _bufOccupied() )
+   len = _bufOccupied() ;
+   while ( len > 0 )
    {
-      PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
-      goto error ;
+      rc = ossWrite ( &_file, _pExtractBuffer + writePos, len, &iLenToWrite ) ;
+      if ( rc && SDB_INTERRUPT != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
+         goto error ;
+      }
+      len -= iLenToWrite ;
+      writePos += iLenToWrite ;
+      rc = SDB_OK ;
    }
 
 done :

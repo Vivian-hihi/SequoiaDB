@@ -74,11 +74,12 @@ INT32 _utilAccessDataLocalIO::readNextBuffer ( CHAR *pBuffer, UINT32 &size )
    INT32 rc = SDB_OK ;
    SINT64 iLenRead = 0 ;
    UINT32 sourceSize = 0 ;
+   SINT64 readPos = 0 ;
    sourceSize = size ;
    SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
-   while ( size != 0 )
+   while ( size > 0 )
    {
-      rc = ossRead ( &_fileIO, pBuffer, size, &iLenRead ) ;
+      rc = ossRead ( &_fileIO, pBuffer + readPos, size, &iLenRead ) ;
       if ( rc && SDB_INTERRUPT != rc && SDB_EOF != rc )
       {
          PD_LOG ( PDERROR, "Failed to read from file, rc = %d", rc ) ;
@@ -90,7 +91,9 @@ INT32 _utilAccessDataLocalIO::readNextBuffer ( CHAR *pBuffer, UINT32 &size )
       }
       else
       {
+         rc = SDB_OK ;
          size -= iLenRead ;
+         readPos += iLenRead ;
       }
    }
 done:

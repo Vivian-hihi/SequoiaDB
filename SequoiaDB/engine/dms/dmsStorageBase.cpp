@@ -367,7 +367,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _dmsStorageBase::_writeFile( OSSFILE & file, const CHAR * pData,
+   INT32 _dmsStorageBase::_writeFile( OSSFILE *file, const CHAR * pData,
                                       INT64 dataLen )
    {
       INT32 rc = SDB_OK;

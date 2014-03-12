@@ -393,11 +393,11 @@ static INT32 loopRead( OSSFILE  *pFile,
    while ( readLen < len )
    {
       rc = ossRead( pFile, buffer, sizeof(SINT32), &readOnce ) ;
-      if ( SDB_OK != rc )
+      if ( rc && SDB_INTERRUPT != rc )
       {
          goto error ;
       }
-
+      rc = SDB_OK ;
       readLen += readOnce ;
       buffer += readOnce ;
       readOnce = 0 ;
@@ -476,7 +476,7 @@ send:
    {
       written = 0 ;
       rc = ossWrite( &_out, buf, objsize, &written ) ;
-      if ( SDB_OK != rc )
+      if ( rc && SDB_INTERRUPT != rc )
       {
          PD_LOG( PDERROR, "failed to write msg:%d", rc ) ;
          goto error ;
@@ -485,6 +485,7 @@ send:
       {
          objsize -= written ;
          buf += written ;
+         rc = SDB_OK ;
       }
    }
 
