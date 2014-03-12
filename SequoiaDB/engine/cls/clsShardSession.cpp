@@ -615,6 +615,7 @@ namespace engine
       BSONObj shardingKey ;
       UINT32 attribute = 0 ;
       BOOLEAN isMainCL = FALSE;
+      UINT32 groupCount = 0 ;
 
       // get sharding key
       _pCatAgent->lock_r() ;
@@ -633,7 +634,8 @@ namespace engine
       }
 
       attribute = set->getAttribute() ;
-      isMainCL = set->isMainCL();
+      isMainCL = set->isMainCL() ;
+      groupCount = set->groupCount() ;
       _pCatAgent->release_r() ;
 
       if ( isMainCL )
@@ -678,6 +680,15 @@ namespace engine
       }
       else
       {
+         if( 0 == groupCount )
+         {
+            _pCatAgent->lock_w() ;
+            _pCatAgent->clear( clFullName ) ;
+            _pCatAgent->release_w() ;
+            rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+            PD_LOG( PDERROR, "can not find collection:%s", clFullName ) ;
+            goto error ;
+         }
          rc = rtnCreateCollectionCommand( clFullName, shardingKey, attribute,
                                           _pEDUCB, _pDmsCB, _pDpsCB, 0,
                                           FALSE ) ;
@@ -1504,6 +1515,19 @@ namespace engine
             insertor = BSONObj( (CHAR *)pCurPos );
             rc = rtnInsert ( pSubCLName, insertor, subObjsNum, flags, 
                              _pEDUCB, _pDmsCB, _pDpsCB, w ) ;
+            if ( SDB_DMS_NOTEXIST == rc )
+            {
+               rc = _pShdMgr->syncUpdateCatalog( pSubCLName ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                           "failed to insert on sub-collection catalog(%s)",
+                           pSubCLName ) ;
+
+               rc = _createCLByCatalog( pSubCLName ) ;
+               PD_RC_CHECK( rc, PDERROR,
+                           "failed to create sub-collection(%s)",
+                           pSubCLName ) ;
+               continue ;
+            }
             PD_RC_CHECK( rc, PDERROR, "Failed to insert to sub-collection(%s), "
                          "rc: %d", pSubCLName, rc ) ;
             pCurPos += subObjsSize;
@@ -1797,6 +1821,18 @@ namespace engine
          INT64 numTmp = 0;
          rc = rtnUpdate( (*iterSubCLSet).c_str(), boNewSelector, updator,
                         hint, flags, cb, pDmsCB, pDpsCB, w, &numTmp );
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = _pShdMgr->syncUpdateCatalog( (*iterSubCLSet).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to update on sub-collection catalog(%s)",
+                        (*iterSubCLSet).c_str() ) ;
+            rc = _createCLByCatalog( (*iterSubCLSet).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to create sub-collection(%s)",
+                        (*iterSubCLSet).c_str() ) ;
+            continue ;
+         }
          PD_RC_CHECK( rc, PDERROR,
                      "update on sub-collection(%s) failed(rc=%d)",
                      (*iterSubCLSet).c_str(), rc );
@@ -1839,6 +1875,18 @@ namespace engine
          INT64 numTmp = 0;
          rc = rtnDelete( (*iterSubCLSet).c_str(), boNewDeletor, hint,
                         flags, cb, dmsCB, dpsCB, w, &numTmp );
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = _pShdMgr->syncUpdateCatalog( (*iterSubCLSet).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to delete on sub-collection catalog(%s)",
+                        (*iterSubCLSet).c_str() ) ;
+            rc = _createCLByCatalog( (*iterSubCLSet).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to create sub-collection(%s)",
+                        (*iterSubCLSet).c_str() ) ;
+            continue ;
+         }
          PD_RC_CHECK( rc, PDERROR,
                      "delete on sub-collection(%s) failed(rc=%d)",
                      (*iterSubCLSet).c_str(), rc );
@@ -2074,6 +2122,18 @@ namespace engine
          INT32 rcTmp = SDB_OK;
          rcTmp = rtnCreateIndexCommand( iter->c_str(), boIndex, _pEDUCB,
                                      _pDmsCB, _pDpsCB );
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = _pShdMgr->syncUpdateCatalog( (*iter).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to create index on sub-collection catalog(%s)",
+                        (*iter).c_str() ) ;
+            rc = _createCLByCatalog( (*iter).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to create sub-collection(%s)",
+                        (*iter).c_str() ) ;
+            continue ;
+         }
          if ( SDB_OK != rcTmp && SDB_IXM_REDEF != rcTmp )
          {
             PD_LOG( PDERROR,
@@ -2131,6 +2191,18 @@ namespace engine
          INT32 rcTmp = SDB_OK;
          rcTmp = rtnDropIndexCommand( iter->c_str(), ele, _pEDUCB,
                                     _pDmsCB, _pDpsCB );
+         if ( SDB_DMS_NOTEXIST == rc )
+         {
+            rc = _pShdMgr->syncUpdateCatalog( (*iter).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to drop index sub-collection catalog(%s)",
+                        (*iter).c_str() ) ;
+            rc = _createCLByCatalog( (*iter).c_str() ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to create sub-collection(%s)",
+                        (*iter).c_str() ) ;
+            continue ;
+         }
          if ( SDB_OK == rcTmp )
          {
             isExist = TRUE;
