@@ -232,6 +232,9 @@ namespace engine
 
          UINT32   _totalFreeSpace() ;
 
+         INT32    _writeFile( OSSFILE &file, const CHAR *pData,
+                              INT64 dataLen ) ;
+
       private:
          INT32    _initializeStorageUnit () ;
          void     _initHeader ( dmsStorageUnitHeader *pHeader ) ;
