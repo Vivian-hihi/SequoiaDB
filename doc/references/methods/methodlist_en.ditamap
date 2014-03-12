@@ -25,6 +25,16 @@
      <topicref href="topics/removeProcedures_en.dita"/>
      <topicref href="topics/listProcedures_en.dita"/>
      <topicref href="topics/eval_en.dita"/>
+     <topicref href="topics/exec.dita"/>
+     <topicref href="topics/execUpdate_en.dita"/>
+     <topicref href="topics/backupoffline_en.dita"/>
+     <topicref href="listBackup_en.dita"/>
+     <topicref href="removeBackup_en.dita"/>
+     <topicref href="listTasks_en.dita"/>
+     <topicref href="waitTasks_en.dita"/>
+     <topicref href="cancelTask_en.dita"/>
+     <topicref href="flushConfigure_en.dita"/>
+     <topicref href="setSessionAttr_en.dita"/>
      <topicref href="topics/createCL_en.dita"/>
      <topicref href="topics/dropCL_en.dita"/>
      <topicref href="topics/getCL_en.dita"/>
@@ -40,6 +50,9 @@
      <topicref href="topics/dbupdate_en.dita"/>
      <topicref href="topics/upsert_en.dita"/>
      <topicref href="topics/dbsplit_en.dita"/>
+     <topicref href="topics/splitAsync_en.dita"/>
+     <topicref href="topics/attachCL_en.dita"/>
+     <topicref href="topics/detachCL_en.dita"/>
      <topicref href="topics/rgstart_en.dita"/>
      <topicref href="topics/createNode_en.dita"/>
      <topicref href="topics/removeNode_en.dita"/>
