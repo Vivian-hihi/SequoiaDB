@@ -7,8 +7,8 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.listShards()"/>
-<meta name="description" content="db.listShards() List all replsets: Sample Return information of all replsets: &gt; db.listShards() Return：{ &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/opt/sequoiadb/data/11800&#34;, &#34;HostName&#34;: &#34;vmsvr2-suse-x64&#34;, &#34;Service&#34;: [ ..."/>
+<meta name="DC.Title" content="db.listReplicaGroups()"/>
+<meta name="description" content="db.listReplicaGroups() List all replsets: Sample Return information of all replsets: &gt; db.listReplicaGroups() Return：{ &#34;Group&#34;: [ { &#34;dbpath&#34;: &#34;/opt/sequoiadb/data/11800&#34;, &#34;HostName&#34;: ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="listCollections_en.html"/>
 <meta name="DC.Relation" scheme="URI" content="dbsnapshot_en.html"/>
@@ -16,7 +16,7 @@
 <meta name="DC.Identifier" content="references_method_listReplicaGroups"/>
 <link rel="stylesheet" type="text/css" href="../../../commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="../../../assets/webhelp_topic.css"/>
-<title>db.listShards()</title>
+<title>db.listReplicaGroups()</title>
 <script type="text/javascript" src="../../../assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="../../../assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="../../../assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "../../../../index.html";
     var ratingFile = "";
@@ -35,10 +35,10 @@
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span><a class="link" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">Sequoiadb javascript Method List</span></a>  </div></td><td width="50%"><a class="navheader_parent_path" href="../../topics/references_en.html" title="Reference">Reference</a> / <a class="navheader_parent_path" href="../../../references/methods/topics/methodlist_en.html" title="Sequoiadb javascript Method List">Sequoiadb javascript Method List</a></td></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.listShards()</h1>
+  <h1 class="title topictitle1">db.listReplicaGroups()</h1>
 
   <div class="body">
-    <div class="section"><h2 class="title sectiontitle">db.listShards()</h2>
+    <div class="section"><h2 class="title sectiontitle">db.listReplicaGroups()</h2>
       <p class="p">List all replsets:</p>
 
     </div>
@@ -46,7 +46,7 @@
     <div class="section"><h2 class="title sectiontitle">Sample</h2>
       <ul class="ul">
         <li class="li">Return information of all replsets:
-          <pre class="pre codeblock">&gt; db.listShards()
+          <pre class="pre codeblock">&gt; db.listReplicaGroups()
 Return：{
   "Group": [
     {
@@ -130,7 +130,7 @@ Return：{
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6B
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
           
     </div>
 </body>
