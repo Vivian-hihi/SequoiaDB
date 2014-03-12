@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_vdy_1mk_kn">
-  <title>setSessionAttr()</title>
+  <title>db.setSessionAttr()</title>
   <body>
-    <section><title>setSessionAttr()</title>
-      <p>db.setSessionAttr (&lt;options>)  设置会话属性</p>
+    <section><title>db.setSessionAttr (&lt;options>)</title>
+      <p>设置会话属性</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>

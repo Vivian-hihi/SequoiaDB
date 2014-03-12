@@ -138,6 +138,56 @@
             <stentry>调用存储过程函数或直接使用javaScript语句</stentry>
             <stentry>db.eval('db.foo.bar')</stentry>
           </strow>
+          <strow>
+            <stentry><xref href="exec.dita">db.exec()</xref></stentry>
+            <stentry>执行SQL Select语句</stentry>
+            <stentry>db.exec("select * from foo.bar")</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="execUpdate.dita">db.execUpdate()</xref></stentry>
+            <stentry>扫行SQL其它语句</stentry>
+            <stentry>db.execUpdate("insert into foo.bar(name,age) values('test',20)")</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="backupoffline.dita">db.backupOffline()</xref></stentry>
+            <stentry>离线备份</stentry>
+            <stentry>db.backupOffline({Name:"backuptest"})</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../listBackup.dita">db.listBackup()</xref></stentry>
+            <stentry>查看备份</stentry>
+            <stentry>db.listBackup()</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../removeBackup.dita">db.removeBackup()</xref></stentry>
+            <stentry>删除备份</stentry>
+            <stentry>db.removeBackup()</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../listTasks.dita">db.listTasks()</xref></stentry>
+            <stentry>查看后台任务</stentry>
+            <stentry>db.listTasks()</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../waitTasks.dita">db.waitTasks()</xref></stentry>
+            <stentry>同步等待后台任务结束或取消</stentry>
+            <stentry>db.waitTasks(taskid)</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../cancelTask.dita">db.cancelTask()</xref></stentry>
+            <stentry>取消后台任务</stentry>
+            <stentry>db.cancelTask(taskid)</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../flushConfigure.dita">db.flushConfigure()</xref></stentry>
+            <stentry>刷盘配置</stentry>
+            <stentry>db.flushConfigure({Global:true})</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="../setSessionAttr.dita">db.setSessionAttr()</xref></stentry>
+            <stentry>设置当前会话/连接属性</stentry>
+            <stentry>db.setSessionAttr({PreferedInstance:"M"})</stentry>
+          </strow>
       </simpletable>
       </p>
     </section>
@@ -235,14 +285,27 @@
           <stentry><xref href="upsert.dita">db.collectionspace.collection.upsert()</xref></stentry>
           <stentry>更新记录</stentry>
           <stentry>db.foo.bar.update({$set:{age:25}},{a:1},{"":"myIndex"})</stentry>
-        </strow>
-        
+        </strow>       
         <strow>
           <stentry><xref href="dbsplit.dita">db.collectionspace.collection.split()</xref></stentry>
           <stentry>集合分区</stentry>
-          <stentry>db.foo.bar.split("sourceRG","targetRG,{age:20})</stentry>
+          <stentry>db.foo.bar.split("sourceRG","targetRG",{age:20})</stentry>
         </strow>
-        
+        <strow>
+          <stentry><xref href="splitAsync.dita">db.collectionspace.collection.splitAsync()</xref></stentry>
+          <stentry>异步分区</stentry>
+          <stentry>db.foo.bar.splitAsync('sourceRG', 'targetRG',{id:1000})</stentry>
+        </strow>
+        <strow>
+          <stentry><xref href="attachCL.dita">db.collectionspace.collection.attachCL()</xref></stentry>
+          <stentry>在主分区集合下挂载子分区集合</stentry>
+          <stentry>db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}</stentry>
+        </strow>
+        <strow>
+          <stentry><xref href="detachCL.dita">db.collectionspace.collection.detachCL()</xref></stentry>
+          <stentry>从主分区集合中分离出子分区集合</stentry>
+          <stentry>db.foo.year.detachCL("foo2.January"}</stentry>
+        </strow>
       </simpletable>
     </section>
 
@@ -255,42 +318,42 @@
           <stentry>示例</stentry>
         </sthead>
         <strow>
-          <stentry><xref href="rgstart.dita">shard.start()</xref></stentry>
+          <stentry><xref href="rgstart.dita">rg.start()</xref></stentry>
           <stentry>启动分区组</stentry>
           <stentry>rg.start()             </stentry>
         </strow>
         <strow>
-          <stentry><xref href="getDetail.dita">shard.getDetail()</xref></stentry>
+          <stentry><xref href="getDetail.dita">rg.getDetail()</xref></stentry>
           <stentry>查看分区组信息</stentry>
           <stentry>rg.getDetail()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="createNode.dita">shard.createNode()</xref></stentry>
+          <stentry><xref href="createNode.dita">rg.createNode()</xref></stentry>
           <stentry>创建节点</stentry>
           <stentry>rg.createNode(&lt;host>,&lt;service>,&lt;dbpath>[,&lt;config>])</stentry>
         </strow>
         <strow>
-          <stentry><xref href="removeNode.dita">shard.removeNode()</xref></stentry>
+          <stentry><xref href="removeNode.dita">rg.removeNode()</xref></stentry>
           <stentry>删除节点</stentry>
           <stentry>rg.removeNode(&lt;host>,&lt;service>[,&lt;config>])</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getMaster.dita">shard.getMaster()</xref></stentry>
+          <stentry><xref href="getMaster.dita">rg.getMaster()</xref></stentry>
           <stentry>查看主节点信息</stentry>
           <stentry>rg.getMaster()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getSlave.dita">shard.getSlave()</xref></stentry>
+          <stentry><xref href="getSlave.dita">rg.getSlave()</xref></stentry>
           <stentry>查看从节点信息</stentry>
           <stentry>rg.getSlave()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="getNode.dita">shard.getNode()</xref></stentry>
+          <stentry><xref href="getNode.dita">rg.getNode()</xref></stentry>
           <stentry>查看所有节点信息     </stentry>
           <stentry>rg.getNode()</stentry>
         </strow>
         <strow>
-          <stentry><xref href="rgstop.dita">shard.stop()</xref></stentry>
+          <stentry><xref href="rgstop.dita">rg.stop()</xref></stentry>
           <stentry>停止分区组</stentry>
           <stentry>rg.stop()</stentry>
         </strow>

@@ -40,7 +40,7 @@
         <li>
           <p>Supposing that the collection space "foo" exists, it will return the quotation of
             it.</p>
-          <codeblock>db.getCS(“foo”)</codeblock>
+          <codeblock>db.getCS("foo")</codeblock>
         </li>
       </ul>
     </section>

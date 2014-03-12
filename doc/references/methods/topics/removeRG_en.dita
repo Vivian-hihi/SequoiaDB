@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_ykq_wdz_gm">
-  <title>db.removeShard()</title>
+  <title>db.removeRG()</title>
   <body>
-    <section><title>db.removeShard(&lt;name>)</title>
+    <section><title>db.removeRG(&lt;name>)</title>
       <p>Deldte the database specified slice group.</p>
     </section>
     <section><title>Parameter Description</title>
@@ -25,7 +25,7 @@
       
     </section>
     <section><title>Format</title>
-      <p>Definition Format removeShard() method, only the name field, name value is a string,
+      <p>Definition Format removeRG() method, only the name field, name value is a string,
         required.</p>
       <p><codeblock>(&lt;"Slice group name">)</codeblock></p>
       <note>
@@ -34,8 +34,8 @@
     </section>
     <section><title>Example</title>
       <ul>
-        <li><p>Delete slice group called "shard" of</p>
-          <p><codeblock>db.removeShard("shard")</codeblock></p></li>
+        <li><p>Delete slice group called "group" of</p>
+          <p><codeblock>db.removeShard("group")</codeblock></p></li>
       </ul>     
     </section>
   </body>

@@ -35,9 +35,9 @@
         <li><p>the records don't exist in the specified array object,as the following
             record:{name:"Mike",age:12}</p>
         <p><codeblock>db.foo.bar.update({$addtoset:{arr:[1,3,5]}},{arr:{<xref href="exists_en.dita">$exists</xref>:0}})</codeblock></p>
-        <p>after this operation,the record update as:{arr:[1,3,5],age:10,name:"Tom"}.in the previous
-            record,these is no array object <i>arr</i>,after using <i>$addtoset</i> operator,update
-            the array object <i>arr</i>  and it's elements to the record.</p>
+        <p>after this operation,the record update as:{arr:[1,3,5],age:12,name:"Mike"}.in the
+            previous record,these is no array object <i>arr</i>,after using <i>$addtoset</i>
+            operator,update the array object <i>arr</i> and it's elements to the record.</p>
         </li>
       </ul>
     </section>

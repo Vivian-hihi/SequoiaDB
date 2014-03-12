@@ -34,7 +34,7 @@
     <section><title>示例</title>
       <ul>
         <li><p>新建名为“group”的分区组</p>
-          <p><codeblock>db.createRG(“group”)</codeblock></p></li>
+          <p><codeblock>db.createRG("group")</codeblock></p></li>
         
       </ul>     
     </section>

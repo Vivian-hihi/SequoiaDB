@@ -36,7 +36,7 @@
       <ul>
         <li>
           <p>返回集合空间foo的引用，假定foo已存在。</p>
-          <codeblock>db.getCS(“foo”)</codeblock>
+          <codeblock>db.getCS("foo")</codeblock>
         </li>
       </ul>
     </section>

@@ -41,7 +41,7 @@ function (query, select) {
     
     
     
-    <p>Please visit https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources to check all the automatically generated javascript function API
+    <p>Please visit <xref href="https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources"></xref> to check all the automatically generated javascript function API
       documents provide by shell. </p>
   </body>
 </topic>
