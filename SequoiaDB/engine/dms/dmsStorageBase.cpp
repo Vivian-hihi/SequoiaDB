@@ -377,7 +377,7 @@ namespace engine
 
       while ( 0 < needWrite )
       {
-         rc = ossWrite( &file, pData + bufOffset, needWrite, &written );
+         rc = ossWrite( file, pData + bufOffset, needWrite, &written );
          if ( rc && SDB_INTERRUPT != rc )
          {
             PD_LOG( PDWARNING, "Failed to write data, rc: %d", rc ) ;
