@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_getDetail">
-  <title>shard.getDetail()</title>
+  <title>rg.getDetail()</title>
   <body>
-    <section><title>shard.getDetail()</title>Return information of replsets.</section>
+    <section><title>rg.getDetail()</title>Return information of replsets.</section>
     <section><title>Sample</title>
      <ul>
        <li>
-         <p><codeblock>> shard.getDetail()
+         <p><codeblock>> rg.getDetail()
 {
   "Group": [
     {
