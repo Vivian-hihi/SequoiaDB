@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="references_method_startRG">
-  <title>db.startShard()</title>
+  <title>db.startRG()</title>
   <body>
-    <section><title>db.startShard(&lt;name>)</title>
+    <section><title>db.startRG(&lt;name>)</title>
       <p>Start a specified replset. Only after it is started can a node be created on it. This
-        method is equal to <xref href="rgstart_en.dita">"shard.start()"</xref>.</p>
+        method is equal to <xref href="rgstart_en.dita">"rg.start()"</xref>.</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable  id="references_method_startRG_table">
@@ -25,8 +25,8 @@
       
     </section>
     <section><title>Format</title>
-      <p>The method "db.startShard()" contains a parameter called "name". The type of it is string.
-        It is the name of the replset which is about to be
+      <p>The method "db.startRG()" contains a parameter called "name". The type of it is string. It
+        is the name of the replset which is about to be
         started.<codeblock>("&lt;Replset name>")</codeblock></p>
       <note>
         <p>Exception will occur when the specified replset doesn't exist or it has been started.</p>
@@ -34,8 +34,8 @@
     </section>
     <section><title>Sample</title>
       <ul>
-        <li>The following command starts a replset called "shard":
-          <codeblock>db.startShard("shard")</codeblock></li>
+        <li>The following command starts a replset called "group":
+          <codeblock>db.startRG("group")</codeblock></li>
       </ul>
     </section>
   </body>

@@ -25,8 +25,8 @@
     <section><title>示例</title>
       <ul>
         <li><p>同步等待数据切分任务完成</p>
-          <p><codeblock>var taskid1 = db.test.test.splitAsync(“db1”, “db2”, 50);
-var taskid2 = db.my.my.splitAsync(“db3”, “db4”, 50) ;
+          <p><codeblock>var taskid1 = db.test.test.splitAsync("db1", "db2", 50);
+var taskid2 = db.my.my.splitAsync("db3", "db4", 50) ;
 db.waitTasks( taskid1, taskid2 )</codeblock></p></li>
       </ul>      
     </section>

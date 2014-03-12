@@ -31,7 +31,7 @@
     <section><title>示例</title>
       <ul>
         <li><p>停止切分任务</p>
-          <p><codeblock>var taskid1 = db.test.test.splitAsync(“db1”, “db2”, 50);
+          <p><codeblock>var taskid1 = db.test.test.splitAsync("db1", "db2", 50);
 db.cancelTask( taskid1, true )</codeblock></p></li>
       </ul>      
     </section>

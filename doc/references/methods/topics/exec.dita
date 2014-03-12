@@ -9,7 +9,7 @@
     <section><title>示例</title>
       <ul>
         <li><p>从集合my.my中查所age = 20的记录</p>
-          <p><codeblock>db.exec(“select * from my.my where age =20”)</codeblock></p></li>
+          <p><codeblock>db.exec("select * from my.my where age = 20")</codeblock></p></li>
       </ul>
       
     </section>
