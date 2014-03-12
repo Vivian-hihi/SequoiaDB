@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_3kw_szm_zj">
-  <title>Topic title</title>
+  <title>db.exec()</title>
   <body>
-    <p>Topic paragraph</p>
+    <section><title>db.exec(&lt;select sql>)</title>
+      <p>执行SQL的select语句</p>
+    </section>
+    <section><title>示例</title>
+      <ul>
+        <li><p>从集合my.my中查所age = 20的记录</p>
+          <p><codeblock>db.exec("select * from my.my where age = 20")</codeblock></p></li>
+      </ul>
+      
+    </section>
   </body>
 </topic>
