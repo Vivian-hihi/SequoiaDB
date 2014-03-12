@@ -177,7 +177,7 @@ namespace engine
          writeOnce = 0 ;
          rc = ossWrite( &_file, (const CHAR *)buf + written,
                         needToW, &writeOnce ) ;
-         if ( SDB_OK != rc )
+         if ( rc && SDB_INTERRUPT != rc )
          {
             PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
             goto error ;

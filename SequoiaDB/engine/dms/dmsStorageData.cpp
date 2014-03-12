@@ -341,7 +341,6 @@ namespace engine
    {
       INT32 rc          = SDB_OK ;
       _dmsMME           = NULL ;
-      SINT64 lenWritten = 0 ;
 
       SDB_ASSERT( DMS_MME_OFFSET == curOffSet, "Offset is not MME offset" )
 
@@ -355,18 +354,11 @@ namespace engine
       }
       _initializeMME () ;
 
-      rc = ossWrite ( file, (CHAR *)_dmsMME, DMS_MME_SZ, &lenWritten ) ;
+      rc = _writeFile ( file, (CHAR *)_dmsMME, DMS_MME_SZ ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to write to file duirng SU init, rc: %d",
                   rc ) ;
-         goto error ;
-      }
-      if ( lenWritten != DMS_MME_SZ )
-      {
-         PD_LOG ( PDERROR, "Failed to write %d bytes during SU init",
-                  DMS_MME_SZ ) ;
-         rc = SDB_SYS ;
          goto error ;
       }
       SDB_OSS_DEL _dmsMME ;

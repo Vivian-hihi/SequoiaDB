@@ -367,10 +367,36 @@ namespace engine
       goto done ;
    }
 
+   INT32 _dmsStorageBase::_writeFile( OSSFILE & file, const CHAR * pData,
+                                      INT64 dataLen )
+   {
+      INT32 rc = SDB_OK;
+      SINT64 written = 0;
+      SINT64 needWrite = dataLen;
+      SINT64 bufOffset = 0;
+
+      while ( 0 < needWrite )
+      {
+         rc = ossWrite( &file, pData + bufOffset, needWrite, &written );
+         if ( rc && SDB_INTERRUPT != rc )
+         {
+            PD_LOG( PDWARNING, "Failed to write data, rc: %d", rc ) ;
+            goto error ;
+         }
+         needWrite -= written ;
+         bufOffset += written ;
+
+         rc = SDB_OK ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _dmsStorageBase::_initializeStorageUnit ()
    {
       INT32   rc        = SDB_OK ;
-      SINT64 lenWritten = 0 ;
       _dmsHeader        = NULL ;
       _dmsSME           = NULL ;
 
@@ -397,19 +423,11 @@ namespace engine
       _initHeader ( _dmsHeader ) ;
 
       // write the buffer into file
-      rc = ossWrite ( &_file, (CHAR *)_dmsHeader, DMS_HEADER_SZ,
-                      &lenWritten ) ;
+      rc = _writeFile ( &_file, (const CHAR *)_dmsHeader, DMS_HEADER_SZ ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to write to file duirng SU init, rc: %d",
                   rc ) ;
-         goto error ;
-      }
-      if ( lenWritten != DMS_HEADER_SZ )
-      {
-         PD_LOG ( PDERROR, "Failed to write %d bytes during SU init",
-                  DMS_HEADER_SZ ) ;
-         rc = SDB_SYS ;
          goto error ;
       }
       SDB_OSS_DEL _dmsHeader ;
@@ -425,18 +443,11 @@ namespace engine
          goto error ;
       }
 
-      rc = ossWrite ( &_file, (CHAR *)_dmsSME, DMS_SME_SZ, &lenWritten ) ;
+      rc = _writeFile ( &_file, (CHAR *)_dmsSME, DMS_SME_SZ ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to write to file duirng SU init, rc: %d",
                   rc ) ;
-         goto error ;
-      }
-      if ( lenWritten != DMS_SME_SZ )
-      {
-         PD_LOG ( PDERROR, "Failed to write %d bytes during SU init",
-                  DMS_SME_SZ ) ;
-         rc = SDB_SYS ;
          goto error ;
       }
       SDB_OSS_DEL _dmsSME ;
