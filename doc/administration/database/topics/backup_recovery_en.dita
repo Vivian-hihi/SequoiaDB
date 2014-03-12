@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
-<topic id="topic_rym_rtv_tj">
-  <title>Backup And Recovery</title>
-  <body>
-    <p><xref href="../data_backup/data_backup_en.dita">Data Backup</xref></p>
-    <p><xref href="../data_recovery/data_recovery_en.dita">Data Recovery</xref></p>
-  </body>
-</topic>
