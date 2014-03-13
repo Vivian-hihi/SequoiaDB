@@ -493,6 +493,7 @@ BOOLEAN canContinueNextLine ( const CHAR * str )
    BOOLEAN  ret         = FALSE ;
    UINT32 strlen        = 0 ;
    CHAR ch              = '\0' ;
+   const CHAR *mark     = str ;
    BOOLEAN flag1        = FALSE ;   // for ""
    BOOLEAN flag2        = FALSE ;   // for ''
 
@@ -508,11 +509,35 @@ BOOLEAN canContinueNextLine ( const CHAR * str )
          // we won't check the "()\[]\{}" in '' or ""
          if ( ( ch == '\"' ) && flag2 == FALSE )
          {
-             flag1 = !flag1 ;
+             // skip "\"", because "\"" can use as content
+             if ( str != mark )
+             {
+                 if ( *(--str) != '\\' )
+                 {
+                     flag1 = !flag1 ;
+                 }
+                 str++ ;
+             }
+             else
+             {
+                 flag1 = !flag1 ;
+             }
          }
          if ( ( ch == '\'' ) && flag1 == FALSE )
          {
-             flag2 = !flag2 ;
+             // skip "\'", because "\'" can use as content
+             if ( str != mark )
+             {
+                 if ( *(--str) != '\\' )
+                 {
+                     flag2 = !flag2 ;
+                 }
+                 str++ ;
+             }
+             else
+             {
+                 flag2 = !flag2 ;
+             }
          }
          str++ ;
          if ( flag1 == TRUE || flag2 == TRUE )
