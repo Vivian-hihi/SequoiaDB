@@ -595,23 +595,6 @@
             <file name="introduction/introduction_en.ditamap"/>
             <file name="introduction/introduction.ditamap"/>
         </folder>
-        <folder name="quickstart">
-            <folder name="cluster">
-                <folder name="images"/>
-                <folder name="tasks"/>
-                <folder name="topics"/>
-            </folder>
-            <folder name="operations">
-                <folder name="images"/>
-                <folder name="tasks"/>
-                <folder name="topics"/>
-            </folder>
-            <folder name="singlenode">
-                <folder name="images"/>
-                <folder name="tasks"/>
-                <folder name="topics"/>
-            </folder>
-        </folder>
         <folder name="references">
             <folder name="console">
                 <folder name="images"/>
