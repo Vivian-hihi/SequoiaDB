@@ -447,7 +447,11 @@ namespace engine
          id = _info->primary ;
       }*/
 
-      id = _info->primary ;
+      if ( _info.primary.columns.nodeID !=
+           _info.local.columns.nodeID )
+      {
+         id = _info->primary ;
+      }
 
       _info->mtx.release_r() ;
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG_GETFULLSRC ) ;

@@ -1226,8 +1226,8 @@ namespace engine
 
       // disconnect all collection
       pmdGetKRCB()->getClsCB()->getShardRouteAgent()->disconnectAll() ;
-
       pmdGetKRCB()->getTransCB()->clearTransInfo();
+
       PD_TRACE_EXIT ( SDB__CLSFSDS__BEGIN );
       return ;
    }
@@ -1311,6 +1311,15 @@ namespace engine
       BOOLEAN result = TRUE ;
       PD_TRACE_ENTRY ( SDB__CLSFSDS__ISREADY );
 
+      //if change to primary
+      if ( pmdGetKRCB()->getReplCB()->primaryIsMe() )
+      {
+         PD_LOG( PDWARNING, "FS Session[%s] disconnect when self is primary",
+                 sessionName() ) ;
+         _disconnect () ;
+         result = FALSE ;
+         goto done ;
+      }
       //if peer node is sharing-break, should quit
       if ( CLS_FS_STATUS_BEGIN != _status &&
            _recvTimeout > CLS_SRC_SESSION_NO_MSG_TIME &&
