@@ -136,10 +136,13 @@ namespace engine
 
       if ( createNew )
       {
-         mode |= OSS_CREATEONLY ;
          if ( delWhenExist )
          {
             mode |= OSS_REPLACE ;
+         }
+         else
+         {
+            mode |= OSS_CREATEONLY ;
          }
       }
 
