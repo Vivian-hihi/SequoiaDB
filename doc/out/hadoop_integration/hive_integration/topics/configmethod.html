@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="配置方法"/>
-<meta name="description" content="1. 安装和配置好Hadoop/Hive 环境，启动hadoop环境； 2. 拷贝sequoiadb安装目录下（默认在/opt/sequoiadb）的hadoop/hive-sequoiadb.jar和java/sdbdriver.jar两个文件拷贝到hive/lib安装目录下； 3. 修改hive安装目录下的bin/hive-site ..."/>
+<meta name="description" content="1. 安装和配置好Hadoop/Hive 环境，启动hadoop环境； 2. 拷贝sequoiadb安装目录下（默认在/opt/sequoiadb）的hadoop/hive-sequoiadb.jar和java/sequoiadb.jar两个文件拷贝到hive/lib安装目录下； 3. 修改hive安装目录下的bin/hive-site ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../hadoop_integration/hive_integration/hiveinter.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_tnk_hsv_xl"/>
@@ -38,13 +38,13 @@
   <div class="body">
     <p class="p">1.	安装和配置好Hadoop/Hive 环境，启动hadoop环境；</p>
 
-    <p class="p">2.	拷贝sequoiadb安装目录下（默认在/opt/sequoiadb）的hadoop/hive-sequoiadb.jar和java/sdbdriver.jar两个文件拷贝到hive/lib安装目录下；</p>
+    <p class="p">2.	拷贝sequoiadb安装目录下（默认在/opt/sequoiadb）的hadoop/hive-sequoiadb.jar和java/sequoiadb.jar两个文件拷贝到hive/lib安装目录下；</p>
 
     <p class="p">3.	修改hive安装目录下的bin/hive-site.xml文件（如果不存在，可拷贝$HIVE_HOME/conf/hive-default.xml.template为 hive-site.xml文件），增加如下属性：</p>
 
     <pre class="pre codeblock">&lt;property&gt;
   &lt;name&gt;hive.aux.jars.path&lt;/name&gt;   &lt;value&gt;file:///&lt;HIVE_home&gt;/lib/hive
-    -sequoiadb.jar,file:///&lt;HIVE_HOME&gt;/lib/sdbdriver.jar&lt;/value&gt;
+    -sequoiadb.jar,file:///&lt;HIVE_HOME&gt;/lib/sequoiadb.jar&lt;/value&gt;
   &lt;description&gt;Sequoiadb store handler jar file&lt;/description&gt;
 &lt;/property&gt;
             

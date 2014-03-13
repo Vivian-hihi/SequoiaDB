@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>获取驱动开发包</title>
-      <p>从<xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref>下载对应操作系统版本的SequoiaDB驱动开发包；解压驱动开发包，从driver/CSharp/目录中获取sdbcs.dll链接库，然后，在Visual Studio中引用该链接库，或者在命令行编译时指定引用该链接库，比如“csc /target:exe /reference:sdbcs.dll Find.cs Common.cs”，即可使用相关API。在安装目录下的smaples\C#目录可以找到C#驱动的完整示例。</p>
+      <p>从<xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref>下载对应操作系统版本的SequoiaDB驱动开发包；解压驱动开发包，从driver/CSharp/目录中获取sequoiadb.dll链接库，然后，在Visual Studio中引用该链接库，或者在命令行编译时指定引用该链接库，比如“csc /target:exe /reference:sequoiadb.dll Find.cs Common.cs”，即可使用相关API。在安装目录下的smaples\C#目录可以找到C#驱动的完整示例。</p>
     </section>    
     <section>
       <title>BSON库API</title>
