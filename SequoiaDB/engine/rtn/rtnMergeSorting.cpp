@@ -278,6 +278,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       RTN_SORT_BLKS *dst = &_merged ;
       RTN_SORT_BLKS *tmp = NULL ;
+      UINT32 loop = 0;
+      
       while ( _mergeMax - 1 < _src->size() )
       {
          rc = _mergeBlks( *_src, *dst, cb ) ;
@@ -291,15 +293,11 @@ namespace engine
          tmp = _src ;
          _src = dst ;
          dst = tmp ;
+         ++loop;
 
-         SDB_ASSERT( 0 == _unit->totalSize() % 2, "impossible" )
-         SDB_ASSERT( _unitHelper._outputStart == _unit->totalSize() ||
-                     _unitHelper._outputStart == _unit->totalSize() / 2,
-                     "impossible" )
-         if ( _unitHelper._outputStart == _unit->totalSize() )
-         {
-            _unitHelper._outputStart = 0 ;
-         }
+         SDB_ASSERT(_unitHelper._outputStart <= _unitHelper._originalSize * 2, "impossible" )
+         _unitHelper._outputStart = (0 == loop % 2) ?
+                                      _unitHelper._originalSize : 0;
       }
 
    done:
