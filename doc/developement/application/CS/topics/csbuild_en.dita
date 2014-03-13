@@ -6,8 +6,8 @@
     <section>
       <title>Get Driver Development Kit</title>
       <p>Form <xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref> download the corresponding operatin system version SequoiaDB Driver
-        Development Kit, extract the driver development kit, get sdbcs.dll link library form the driver/CSharp/ directory, then refer to the link library in Visual 
-        Studio or specify a reference on the command line to compile the libraries, such as "csc /target:exe /reference:sdbcs.dll Find.cs Common.cs", you can use the 
+        Development Kit, extract the driver development kit, get sequoiadb.dll link library form the driver/CSharp/ directory, then refer to the link library in Visual 
+        Studio or specify a reference on the command line to compile the libraries, such as "csc /target:exe /reference:sequoiadb.dll Find.cs Common.cs", you can use the 
         relevant API. Smaples in the installation directory \C# directory you can find a complete sample C# driven.</p>
     </section>    
     <section>

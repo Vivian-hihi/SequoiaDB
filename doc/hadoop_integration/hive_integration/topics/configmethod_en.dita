@@ -4,11 +4,11 @@
   <title>Configuration method</title>
   <body>
     <p>1.	Install adn configure Hadoop/Hive environment, start hadoop environment.</p>
-    <p>2.	Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb.jar adn java/sdbdriver.jar two files are copied to the hive/lib installation directory.</p>
+    <p>2.	Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb.jar adn java/sequoiadb.jar two files are copied to the hive/lib installation directory.</p>
     <p>3.	Modify the hive installation directory under bin/hive-site.xml file (if you do not exist, you can copy the $HIVE_HOME/conf/hive-default.xml.template to hive-site.xml file), add the following attributes:</p>
     <codeblock>&lt;property&gt;
   &lt;name&gt;hive.aux.jars.path&lt;/name&gt;   &lt;value&gt;file:///&lt;HIVE_home&gt;/lib/hive
-    -sequoiadb.jar,file:///&lt;HIVE_HOME&gt;/lib/sdbdriver.jar&lt;/value&gt;
+    -sequoiadb.jar,file:///&lt;HIVE_HOME&gt;/lib/sequoiadb.jar&lt;/value&gt;
   &lt;description&gt;Sequoiadb store handler jar file&lt;/description&gt;
 &lt;/property&gt;
             
