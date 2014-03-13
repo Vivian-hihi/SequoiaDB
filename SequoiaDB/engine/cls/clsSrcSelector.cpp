@@ -93,7 +93,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSSRCSL_SLTED ) ;
       MsgRouteID &id =  _src ;
-      _noRes  = 0 ;
+
       if ( _noRes > CLS_FS_NORES_TIMEOUT )
       {
          _src.value = MSG_INVALID_ROUTEID ;
@@ -103,6 +103,7 @@ namespace engine
       {
          goto done ;
       }
+      _noRes  = 0 ;
 
       if ( isFullSync )
       {
