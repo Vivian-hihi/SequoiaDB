@@ -376,13 +376,18 @@ namespace engine
          MsgHeader header ;
          INT32 rc = _pClientSock->recv( (CHAR*)&header , sizeof(header),
                                         receivedLen, 0, MSG_PEEK ) ;
-         if ( ( rc >= (INT32)sizeof(header) &&
-               ( MSG_BS_INTERRUPTE == header.opCode ||
-                 MSG_BS_DISCONNECT == header.opCode ) )
+         if ( ( rc >= (INT32)sizeof(header)
+                && MSG_BS_DISCONNECT == header.opCode )
               || SDB_NETWORK_CLOSE == rc || SDB_NETWORK == rc )
          {
+            _ctrlFlag |= ( EDU_CTRL_INTERRUPTED | EDU_CTRL_DISCONNECTED ) ;
             ret = TRUE ;
-            goto done ;
+         }
+         else if ( rc >= (INT32)sizeof(header)
+                   && MSG_BS_INTERRUPTE == header.opCode )
+         {
+            _ctrlFlag |= EDU_CTRL_INTERRUPTED ;
+            ret = TRUE ;
          }
       }
    done :
