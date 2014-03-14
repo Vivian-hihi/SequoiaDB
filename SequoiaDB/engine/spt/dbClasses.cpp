@@ -3694,7 +3694,7 @@ static JSBool sdb_crt_procedures( JSContext *cx, uintN argc, jsval *vp )
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "o" , &objData) ;
-   REPORT ( ret, "Sdb.createProcedures(): wrong arguments" ) ;
+   REPORT ( ret && objData , "Sdb.createProcedures(): wrong arguments" ) ;
    ret = JS_ObjectIsFunction( cx, objData ) ;
    REPORT ( ret, "Sdb.createProcedures(): wrong arguments") ;
 
