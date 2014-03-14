@@ -211,7 +211,7 @@ namespace engine
 
       // create AUTH_SPACE collectionspace
       rtnCreateCollectionSpaceCommand( AUTH_SPACE, cb, dmsCB, NULL,
-                                       DMS_PAGE_SIZE_DFT, TRUE, TRUE ) ;
+                                       DMS_PAGE_SIZE_DFT, TRUE, FALSE ) ;
 
       // no compression for all system catalog collections
       rc = rtnCreateCollectionCommand( AUTH_USR_COLLECTION,
