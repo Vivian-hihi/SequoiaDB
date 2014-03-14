@@ -5,6 +5,8 @@ testRoot="testcases/hlt/js_testcases/js"
 libRoot="testcases/hlt/js_testcases/libs"
 sdbRoot="bin"
 csprefix="local_test"
+uuid=$$
+uuname="s$$test"
 coordsvcname="50000"
 coordhostname="localhost"
 commlibstr="commlib.js"
@@ -104,17 +106,17 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
-   lastCmdStr="$sdbRoot/sdb -e \"var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'\" -f \"${libRoot}/func.js,$1\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var UUID=$uuid; var UUNAME='${uuname}'; \" -f \"${libRoot}/func.js,$1\""
    if [ $printOut -ne 0 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1"
+      eval $lastCmdStr
       result=$?
    else
       if [ ! -d $shortDir ] ; then
          mkdir -p $shortDir
       fi
       echo "CMD: $lastCmdStr" >> ${printOutFile}
-      $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$1" >> ${printOutFile}
+      eval $lastCmdStr >> ${printOutFile}
       result=$?
    fi
    return $result ;
@@ -295,16 +297,6 @@ do
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    runJSFile "$testFile"
    ret=$?
-   #if [ $printOut -ne 0 ] ; then
-   #   $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile"
-   #   ret=$?
-   #else
-   #   if [ ! -d $shortDir ] ; then
-   #      mkdir -p $shortDir
-   #   fi
-   #   $sdbRoot/sdb -e "var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'" -f "${libRoot}/func.js,$testFile" >> ${printOutFile}
-   #   ret=$?
-   #fi
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
    testcaseETimeSec=`date +%s`
    if [ $printOut -ne 0 ] ; then
