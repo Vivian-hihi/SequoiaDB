@@ -220,6 +220,8 @@ else
 fi
 echo "*******************************************************************************"
 echo "CSPREFIX     : $csprefix"
+echo "UUID         : $uuid"
+echo "UUNAME       : $uuname"
 echo "COORDSVCNAME : $coordsvcname"
 echo "COORDSVCHOST : $coordhostname"
 echo "Find command : $findCmdStr"
