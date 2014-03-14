@@ -447,8 +447,8 @@ namespace engine
          id = _info->primary ;
       }*/
 
-      if ( _info.primary.columns.nodeID !=
-           _info.local.columns.nodeID )
+      if ( _info->primary.columns.nodeID !=
+           _info->local.columns.nodeID )
       {
          id = _info->primary ;
       }
