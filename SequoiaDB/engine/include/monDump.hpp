@@ -96,6 +96,16 @@ namespace engine
 
    void  monResetMon () ;
 
+   INT32 monDBDumpStorageInfo( BSONObjBuilder &ob );
+
+   INT32 monDBDumpProcMemInfo( BSONObjBuilder &ob );
+
+   INT32 monDBDumpNetInfo( BSONObjBuilder &ob );
+
+   INT32 monDBDumpLogInfo( BSONObjBuilder &ob );
+
+   void monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb ) ;
+
 }
 
 #endif //MONDUMP_HPP_

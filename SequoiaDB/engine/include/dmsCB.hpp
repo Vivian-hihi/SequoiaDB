@@ -204,6 +204,8 @@ namespace engine
       void dumpInfo ( std::set<monStorageUnit> &storageUnitList,
                       BOOLEAN sys = FALSE ) ;
 
+      void dumpInfo ( INT64 &totalFileSize );
+
       dmsTempCB *getTempCB () ;
 
       INT32 dropCollectionSpaceP1 ( const CHAR *pName, _pmdEDUCB *cb,

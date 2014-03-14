@@ -183,6 +183,7 @@ namespace engine
       monConfigCB    _monCfgCB ;
       monDBCB        _monDBCB ;
       _pmdOptionsMgr _optioncb ;
+      ossTick        _curTime ;
 
    public :
 
@@ -546,6 +547,9 @@ namespace engine
 
       void enforceLogFileSz ( UINT32 logFileSz ) ;
       void enforceLogFileNum ( UINT32 logFileNum ) ;
+
+      ossTick getCurTime() ;
+      void syncCurTime() ;
 
    public:
       _SDB_KRCB () ;

@@ -138,6 +138,12 @@ namespace engine
 
          friend  class _netEventHandler ;
 
+         INT64 netIn() ;
+
+         INT64 netOut() ;
+
+         void resetMon() ;
+
       private:
          void _asyncAccept() ;
          void _acceptCallback( NET_EH eh,
@@ -158,6 +164,8 @@ namespace engine
          boost::asio::ip::tcp::acceptor   _acceptor ;
          _ossAtomic32                     _handle ;
          UINT32                           _timerID;
+         ossAtomicSigned64                _netOut;
+         ossAtomicSigned64                _netIn;
 
    } ;
 

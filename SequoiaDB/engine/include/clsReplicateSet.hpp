@@ -204,6 +204,10 @@ namespace engine
 
          void tearDown() ;
 
+         INT64 netIn() ;
+         INT64 netOut() ;
+         void resetMon() ;
+
 
       private:
          INT32 _setGroupSet( const CLS_GROUP_VERSION &version,

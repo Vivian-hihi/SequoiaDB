@@ -56,7 +56,9 @@ namespace engine
                          _handler(handler),
                          _acceptor(_ioservice),
                          _handle(1),
-                         _timerID(0)
+                         _timerID(0),
+                         _netOut(0),
+                         _netIn(0)
    {
       _local.value = MSG_INVALID_ROUTEID ;
    }
@@ -234,6 +236,7 @@ namespace engine
          eh->close() ;
          goto error ;
       }
+      _netOut.add( msgHeader->messageLength ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND, rc );
@@ -277,6 +280,7 @@ namespace engine
          eh->close() ;
          goto error ;
       }
+      _netOut.add( msgHeader->messageLength ) ;
       }
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND2, rc );
@@ -297,6 +301,7 @@ namespace engine
                   "handle should not be invalid" )
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND3 );
+      UINT32 headLen = header->messageLength - bodyLen ;
       NET_EH eh ;
       _mtx.get_shared() ;
       map<NET_HANDLE, NET_EH>::iterator itr =
@@ -316,21 +321,22 @@ namespace engine
       }
       eh->mtx().get() ;
       /// header len should be computed. can not get sizeof(MsgHeader)
-      rc = eh->syncSend( header, header->messageLength - bodyLen ) ;
+      rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
       {
          eh->mtx().release() ;
          eh->close() ;
          goto error ;
       }
-      rc = eh->syncSend( body,
-                         bodyLen ) ;
+      _netOut.add( headLen ) ;
+      rc = eh->syncSend( body, bodyLen ) ;
       eh->mtx().release() ;
       if ( SDB_OK != rc )
       {
          eh->close() ;
          goto error ;
       }
+      _netOut.add( bodyLen ) ;
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND3, rc );
       return rc ;
@@ -349,6 +355,7 @@ namespace engine
                   "id.value should not be zero" )
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND4 );
+      UINT32 headLen = header->messageLength - bodyLen ;
       NET_EH eh;
       _mtx.get_shared() ;
       MULTI_ITR itr =  _route.find( id.value ) ;
@@ -365,13 +372,14 @@ namespace engine
          header->routeID = _local ;
       }
       eh->mtx().get() ;
-      rc = eh->syncSend( header, header->messageLength - bodyLen ) ;
+      rc = eh->syncSend( header, headLen ) ;
       if ( SDB_OK != rc )
       {
          eh->mtx().release() ;
          eh->close() ;
          goto error ;
       }
+      _netOut.add( headLen ) ;
       rc = eh->syncSend( body,
                          bodyLen ) ;
       eh->mtx().release() ;
@@ -380,6 +388,7 @@ namespace engine
          eh->close() ;
          goto error ;
       }
+      _netOut.add( bodyLen ) ;
    done:
       PD_TRACE_EXITRC ( SDB__NETFRAME_SYNCSEND4, rc );
       return rc ;
@@ -442,6 +451,7 @@ namespace engine
          eh->close() ;
          goto error ;
       }
+      _netOut.add( sizeof(MsgHeader) ) ;
 
       for ( netIOVec::const_iterator itr = iov.begin();
             itr != iov.end();
@@ -454,6 +464,7 @@ namespace engine
             eh->close() ;
             goto error ;
          }
+         _netOut.add( itr->iovLen ) ;
       }
 
       eh->mtx().release() ;
@@ -586,6 +597,7 @@ namespace engine
       INT32 rc = _handler->handleMsg( eh->handle(),
                                       (_MsgHeader *)eh->msg(),
                                       eh->msg() ) ;
+      _netIn.add( ((_MsgHeader *)eh->msg())->messageLength ) ;
       if ( SDB_NET_BROKEN_MSG == rc )
       {
          eh->close() ;
@@ -679,6 +691,22 @@ namespace engine
       _mtx.release() ;
       PD_TRACE_EXIT ( SDB__NETFRAME__ERASE );
       return ;
+   }
+
+   INT64 _netFrame::netIn()
+   {
+      return _netIn.peek() ;
+   }
+
+   INT64 _netFrame::netOut()
+   {
+      return _netOut.peek() ;
+   }
+
+   void _netFrame::resetMon()
+   {
+      _netIn.poke( 0 ) ;
+      _netOut.poke( 0 ) ;
    }
 
 }

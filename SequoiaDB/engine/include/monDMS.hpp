@@ -131,12 +131,14 @@ namespace engine
          ossMemset ( _name, 0, sizeof(_name)) ;
          _collections.clear() ;
          _pageSize = 0 ;
+         _totalSize = 0 ;
       }
       _monCollectionSpace ( const _monCollectionSpace &right )
       {
          vector<CHAR *>::const_iterator it ;
          ossMemcpy ( _name, right._name, sizeof(_name) ) ;
          _pageSize = right._pageSize ;
+         _totalSize = right._totalSize ;
          try
          {
             for ( it = right._collections.begin();
@@ -174,6 +176,7 @@ namespace engine
       CHAR _name [ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] ;
       vector<CHAR *> _collections ;
       INT32 _pageSize ;
+      INT64 _totalSize ;
 
       inline BOOLEAN operator<(const _monCollectionSpace &r) const
       {

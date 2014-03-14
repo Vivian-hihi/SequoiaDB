@@ -568,10 +568,24 @@ namespace engine
                                                      seconds,
                                                      microseconds ) ;
       ob.append( FIELD_NAME_TOTALWRITETIME,
-                (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
+                 (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
+
+      full._monApplCB._readTimeSpent.convertToTime ( factor,
+                                                    seconds,
+                                                    microseconds ) ;
+      ob.append( FIELD_NAME_READTIMESPENT,
+                 (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
+
+      full._monApplCB._writeTimeSpent.convertToTime ( factor,
+                                                    seconds,
+                                                    microseconds ) ;
+      ob.append( FIELD_NAME_WRITETIMESPENT,
+                 (SINT64)(seconds*1000 + microseconds / 1000 ) ) ;
 
       ossTimestampToString( full._monApplCB._connectTimestamp, timestamp ) ;
       ob.append ( FIELD_NAME_CONNECTTIMESTAMP, timestamp ) ;
+
+      monDumpLastOpInfo( ob, full._monApplCB ) ;
 
       double userCpu;
       userCpu = userTime.seconds + (double)userTime.microsec / 1000000 ;
@@ -778,6 +792,10 @@ namespace engine
             ob.append ( FIELD_NAME_DISK, diskOb.obj () ) ;
          }
          monDBDump ( ob, mondbcb, factor, userTime, sysTime ) ;
+         monDBDumpLogInfo( ob ) ;
+         monDBDumpProcMemInfo( ob ) ;
+         monDBDumpStorageInfo( ob ) ;
+         monDBDumpNetInfo( ob ) ;
 
          obj = ob.obj () ;
          rc = context->monAppend( obj ) ;
@@ -1179,6 +1197,7 @@ namespace engine
                }
                ob.append ( FIELD_NAME_COLLECTION, ab.arr() ) ;
                ob.append ( FIELD_NAME_PAGE_SIZE, cs._pageSize ) ;
+               ob.append ( FIELD_NAME_TOTAL_SIZE, cs._totalSize ) ;
             }
             ob.append ( FIELD_NAME_NAME, cs._name ) ;
             monAppendSystemInfo( ob, MON_MASK_GROUP_NAME );
@@ -1537,5 +1556,215 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDBDUMPSTORINFO, "monDBDumpStorageInfo" )
+   INT32 monDBDumpStorageInfo( BSONObjBuilder &ob )
+   {
+      INT32 rc = SDB_OK ;
+      // PD_TRACE_ENTRY ( SDB_MONDBDUMPSTORINFO ) ;
+      try
+      {
+         INT64 totalMapped = 0 ;
+         pmdGetKRCB()->getDMSCB()->dumpInfo( totalMapped ) ;
+         ob.append( FIELD_NAME_TOTALMAPPED, totalMapped ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      // PD_TRACE_EXITRC ( SDB_MONDBDUMPSTORINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDBDUMPPROCMEMINFO, "monDBDumpProcMemInfo" )
+   INT32 monDBDumpProcMemInfo( BSONObjBuilder &ob )
+   {
+      INT32 rc = SDB_OK ;
+      // PD_TRACE_ENTRY ( SDB_MONDBDUMPPROCMEMINFO ) ;
+      try
+      {
+         ossProcMemInfo memInfo ;
+         rc = ossGetProcMemInfo( memInfo ) ;
+         if ( SDB_OK == rc )
+         {
+            ob.append( FIELD_NAME_VSIZE, memInfo.vSize ) ;
+            ob.append( FIELD_NAME_RSS, memInfo.rss ) ;
+            ob.append( FIELD_NAME_FAULT, memInfo.fault ) ;
+         }
+         else
+         {
+            ob.append( FIELD_NAME_VSIZE, 0 ) ;
+            ob.append( FIELD_NAME_RSS, 0 ) ;
+            ob.append( FIELD_NAME_FAULT, 0 ) ;
+            PD_RC_CHECK( rc, PDERROR,
+                        "failed to dump memory info(rc=%d)",
+                        rc ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      // PD_TRACE_EXITRC ( SDB_MONDBDUMPPROCMEMINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDBDUMPNETINFO, "monDBDumpNetInfo" )
+   INT32 monDBDumpNetInfo( BSONObjBuilder &ob )
+   {
+      INT32 rc = SDB_OK ;
+      // PD_TRACE_ENTRY ( SDB_MONDBDUMPNETINFO ) ;
+      try
+      {
+         pmdKRCB *pKrcb = pmdGetKRCB() ;
+         monDBCB *pdbCB = pKrcb->getMonDBCB() ;
+         SDB_ROLE role = pKrcb->getDBRole() ;
+         ob.append( FIELD_NAME_SVC_NETIN, pdbCB->svcNetIn() ) ;
+         ob.append( FIELD_NAME_SVC_NETOUT, pdbCB->svcNetOut() ) ;
+         if ( SDB_ROLE_DATA == role
+            || SDB_ROLE_CATALOG == role )
+         {
+            shardCB *pShardCB = pKrcb->getShardCB() ;
+            ob.append( FIELD_NAME_SHARD_NETIN, pShardCB->netIn() ) ;
+            ob.append( FIELD_NAME_SHARD_NETOUT, pShardCB->netOut() ) ;
+
+            replCB *pReplCB = pKrcb->getReplCB() ;
+            ob.append( FIELD_NAME_REPL_NETIN, pReplCB->netIn() ) ;
+            ob.append( FIELD_NAME_REPL_NETOUT, pReplCB->netOut() ) ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      // PD_TRACE_EXITRC ( SDB_MONDBDUMPNETINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDBDUMPLOGINFO, "monDBDumpLogInfo" )
+   INT32 monDBDumpLogInfo( BSONObjBuilder &ob )
+   {
+      INT32 rc = SDB_OK ;
+      // PD_TRACE_ENTRY ( SDB_MONDBDUMPLOGINFO ) ;
+      try
+      {
+         ob.append( FIELD_NAME_FREELOGSPACE,
+                  (INT64)(pmdGetKRCB()->getTransCB()->remainLogSpace()) );
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      // PD_TRACE_EXITRC ( SDB_MONDBDUMPLOGINFO, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDBDUMPLASTOPINFO, "monDumpLastOpInfo" )
+   void monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb )
+   {
+      INT32 rc = SDB_OK ;
+      // PD_TRACE_ENTRY ( SDB_MONDBDUMPLASTOPINFO ) ;
+      try
+      {
+         switch( moncb._lastOpType )
+         {
+            case MSG_BS_QUERY_REQ:
+               {
+                  if ( MSG_NULL == moncb._cmdType )
+                  {
+                     // it is query
+                     ob.append( FIELD_NAME_LASTOPTYPE, "query" ) ;
+                  }
+                  else
+                  {
+                     // it is command
+                  }
+                  break ;
+               }
+            case MSG_BS_GETMORE_REQ:
+               {
+                  ob.append( FIELD_NAME_LASTOPTYPE, "getmore" ) ;
+                  break ;
+               }
+            case MSG_BS_DELETE_REQ:
+               {
+                  ob.append( FIELD_NAME_LASTOPTYPE, "delete" ) ;
+                  break ;
+               }
+            case MSG_BS_INSERT_REQ:
+               {
+                  ob.append( FIELD_NAME_LASTOPTYPE, "insert" ) ;
+                  break ;
+               }
+            case MSG_BS_UPDATE_REQ:
+               {
+                  ob.append( FIELD_NAME_LASTOPTYPE, "update" ) ;
+                  break ;
+               }
+            default:
+               {
+                  ob.append( FIELD_NAME_LASTOPTYPE, "unknow" ) ;
+                  break ;
+               }
+         }
+
+         CHAR   timestamp[ OSS_TIMESTAMP_STRING_LEN + 1] = { 0 } ;
+         if ( ( BOOLEAN )( moncb._lastOpBeginTime ) )
+         {
+            ossTimestamp Tm;
+            moncb._lastOpBeginTime.convertToTimestamp( Tm ) ;
+            ossTimestampToString( Tm, timestamp ) ;
+         }
+         else
+         {
+            ossStrcpy(timestamp, "--") ;
+         }
+         ob.append( FIELD_NAME_LASTOPBEGIN, timestamp ) ;
+
+         if ( ( BOOLEAN )( moncb._lastOpEndTime ) )
+         {
+            ossTimestamp Tm;
+            moncb._lastOpEndTime.convertToTimestamp( Tm ) ;
+            ossTimestampToString( Tm, timestamp ) ;
+         }
+         else
+         {
+            ossStrcpy(timestamp, "--") ;
+         }
+         ob.append( FIELD_NAME_LASTOPEND, timestamp ) ;
+
+         ob.append( FIELD_NAME_LASTOPINFO, moncb._lastOpDetail ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Ocurr exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done:
+      // PD_TRACE_EXIT ( SDB_MONDBDUMPLASTOPINFO ) ;
+      return ;
+   error:
+      goto done ;
+   }
 }
 

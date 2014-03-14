@@ -141,6 +141,12 @@ namespace engine
          INT32 updateRoute( const _MsgRouteID &oldID,
                             const _MsgRouteID &newID ) ;
 
+         INT64 netIn() ;
+
+         INT64 netOut() ;
+
+         void resetMon() ;
+
       private:
          _netFrame _frame ;
          _netRoute _route ;

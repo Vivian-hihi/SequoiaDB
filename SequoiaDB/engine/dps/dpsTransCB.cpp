@@ -473,7 +473,6 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       UINT64 usedSize = 0;
-      static BOOLEAN isFirstRun = TRUE;
       if ( !_isOn )
       {
          goto done;
@@ -573,7 +572,7 @@ namespace engine
       {
          goto done;
       }
-      curLsn = dpsCB->getCurrentLsn();
+      curLsn = dpsCB->expectLsn();
       curLsnOffset = curLsn.offset;
       if ( DPS_INVALID_LSN_OFFSET == curLsnOffset )
       {

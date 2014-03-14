@@ -163,6 +163,10 @@ namespace engine
          NodeID nodeID () const ;
          INT32 clearAllData () ;
 
+         INT64 netIn() ;
+         INT64 netOut() ;
+         void resetMon() ;
+
       protected:
 
          INT32 _sendCataQueryReq( INT32 queryType, const BSONObj &query,

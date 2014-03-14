@@ -649,6 +649,14 @@ public :
       ((ossTickDelta*)this)->convertToTime( cFactor, seconds, microseconds ) ;
    } ;
 
+   // convert into timestamp
+   void convertToTimestamp( ossTimestamp &Tm ) const
+   {
+      UINT64 ticks = peek() ;
+      Tm.time = (time_t)( ticks >> 32 ) ;
+      Tm.microtm = ticks & 0x00000000ffffffff ;
+   }
+
    static UINT64 addOrSub
    (
       const UINT64 op1, const UINT64 op2, const UINT32 flags
@@ -936,4 +944,54 @@ INT32 ossGetDiskInfo ( const CHAR *pPath,
 
 INT32 ossGetCPUInfo ( SINT64 &user, SINT64 &sys,
                       SINT64 &idle, SINT64 &other ) ;
+
+typedef struct _ossProcMemInfo
+{
+   INT64    vSize;         // used virtual memory size(MB)
+   INT64    rss;           // resident size(MB)
+   INT64    fault;
+}ossProcMemInfo;
+INT32 ossGetProcMemInfo( ossProcMemInfo &memInfo,
+                        OSSPID pid = ossGetCurrentProcessID() );
+#if defined (_LINUX)
+class ossProcStatInfo
+{
+public:
+   ossProcStatInfo( OSSPID pid );
+   ~ossProcStatInfo(){}
+
+public:
+   INT32    _pid;
+   char     _comm[ OSS_MAX_PATHSIZE + 1 ];
+   char     _state;
+   INT32    _ppid;
+   INT32    _pgrp;
+   INT32    _session;
+   INT32    _tty;
+   INT32    _tpgid;
+   UINT32   _flags;
+   UINT32   _minFlt;
+   UINT32   _cMinFlt;
+   UINT32   _majFlt;
+   UINT32   _cMajFlt;
+   UINT32   _uTime;
+   UINT32   _sTime;
+   INT32    _cuTime;
+   INT32    _csTime;
+   INT32    _priority;
+   INT32    _nice;
+   INT32    _nlwp;
+   UINT32   _alarm;
+   UINT32   _startTime;
+   UINT32   _vSize;
+   INT32    _rss;
+   UINT32   _rssRlim;
+   UINT32   _startCode;
+   UINT32   _endCode;
+   UINT32   _startStack;
+   UINT32   _kstkEsp;
+   UINT32   _kstkEip;
+};
+#endif   //#if defined (_LINUX)
+
 #endif  //OSSUTIL_HPP_

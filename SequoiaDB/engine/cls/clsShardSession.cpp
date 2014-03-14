@@ -348,6 +348,8 @@ namespace engine
       _pCollectionName = NULL ;
       BOOLEAN isNeedRollback = FALSE;
 
+      MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+
       // if the node is full sync, can't service
       if ( MSG_COOR_CHECK_ROUTEID_REQ != msg->opCode &&
            MSG_BS_MSG_REQ != msg->opCode &&
@@ -573,6 +575,7 @@ namespace engine
          SDB_OSS_DEL errorObj ;
          errorObj = NULL ;
       }
+      MON_END_OP( _pEDUCB->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONOPMSG, rc ) ;
       return rc ;
    }
@@ -750,6 +753,12 @@ namespace engine
          BSONObj selector( pSelectorBuffer );
          BSONObj updator( pUpdatorBuffer );
          BSONObj hint( pHintBuffer );
+         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_UPDATE_REQ,
+                           "CL:%s, Match:%s, Updator:%s, Hint:%s",
+                           pCollectionName,
+                           selector.toString( false, false ).c_str(),
+                           updator.toString(false, false ).c_str(),
+                           hint.toString(false, false ).c_str() ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
                   "hint: %s", sessionName(), selector.toString().c_str(),
@@ -825,6 +834,10 @@ namespace engine
       try
       {
          BSONObj insertor ( pInsertorBuffer ) ;
+         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_INSERT_REQ,
+                           "CL:%s, Insertor:%s",
+                           pCollectionName,
+                           insertor.toString( false, false ).c_str() ) ;
 
          PD_LOG ( PDDEBUG, "Session[%s] Insert: %s\nCollection: %s",
                   sessionName(), insertor.toString().c_str(),
@@ -900,6 +913,11 @@ namespace engine
       {
          BSONObj deletor ( pDeletorBuffer ) ;
          BSONObj hint ( pHintBuffer ) ;
+         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_DELETE_REQ,
+                           "CL:%s, Deletor:%s, Hint:%s",
+                           pCollectionName,
+                           deletor.toString( false, false ).c_str(),
+                           hint.toString( false, false ).c_str() );
 
          PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
                   sessionName(), deletor.toString().c_str(), 
@@ -984,6 +1002,13 @@ namespace engine
             BSONObj selector ( pFieldSelector ) ;
             BSONObj orderBy ( pOrderByBuffer ) ;
             BSONObj hint ( pHintBuffer ) ;
+            MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_QUERY_REQ,
+                              "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
+                              pCollectionName,
+                              matcher.toString( false, false ).c_str(),
+                              selector.toString(false, false ).c_str(),
+                              orderBy.toString(false, false ).c_str(),
+                              hint.toString(false, false ).c_str() ) ;
 
             PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
                      "%s\norderBy: %s\nhint:%s", sessionName(),
@@ -1132,6 +1157,10 @@ namespace engine
                   sessionName(), rc ) ;
          goto error ;
       }
+
+      MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_GETMORE_REQ,
+                        "ContextID:%lld, NumToRead:%d",
+                        contextID, numToRead ) ;
 
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ;

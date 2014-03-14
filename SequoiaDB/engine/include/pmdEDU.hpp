@@ -77,6 +77,7 @@ namespace engine
       EDU_TYPE_CATCATALOGUEMANAGER,
       EDU_TYPE_CATNETWORK,
       EDU_TYPE_COORDNETWORK,
+      EDU_TYPE_SYNCCLOCK,
 #if defined (_WINDOWS)
       EDU_TYPE_WINDOWSLISTENER,
 #endif
@@ -539,5 +540,6 @@ namespace engine
 #if defined (_LINUX)
    void pmdEDUCodeTrapHandler( OSS_HANDPARMS ) ;
 #endif
+   INT32 pmdSyncClock( pmdEDUCB *cb, void *arg ) ;
 }
 #endif

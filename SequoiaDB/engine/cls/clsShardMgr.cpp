@@ -1533,5 +1533,20 @@ namespace engine
       goto done ;
    }
 
+   INT64 _clsShardMgr::netIn()
+   {
+      return _pNetRtAgent->netIn() ;
+   }
+
+   INT64 _clsShardMgr::netOut()
+   {
+      return _pNetRtAgent->netOut() ;
+   }
+
+   void _clsShardMgr::resetMon()
+   {
+      return _pNetRtAgent->resetMon() ;
+   }
+
 }
 

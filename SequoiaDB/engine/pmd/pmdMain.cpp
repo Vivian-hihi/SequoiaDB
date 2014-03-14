@@ -568,6 +568,9 @@ namespace engine
 
       dbrole = krcb->getDBRole () ;
 
+      eduMgr->startEDU( EDU_TYPE_SYNCCLOCK, NULL, &agentEDU ) ;
+      eduMgr->regSystemEDU( EDU_TYPE_SYNCCLOCK, agentEDU ) ;
+
       if ( SDB_ROLE_COORD != dbrole )
       {
          // Then start log global writer thread

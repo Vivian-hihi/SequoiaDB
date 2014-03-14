@@ -1096,6 +1096,7 @@ namespace engine
          ossMemset ( cs._name, 0, sizeof(cs._name) ) ;
          ossStrncpy ( cs._name, cscb->_name, DMS_COLLECTION_SPACE_NAME_SZ);
          cs._pageSize = su->getPageSize() ;
+         cs._totalSize = su->totalSize() ;
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;
       }
@@ -1134,6 +1135,35 @@ namespace engine
       } // for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO3 );
    }  // void dumpInfo
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DUMPINFO4, "_SDB_DMSCB::dumpInfo" )
+   void _SDB_DMSCB::dumpInfo ( INT64 &totalFileSize )
+   {
+      totalFileSize = 0;
+      // PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DUMPINFO4 );
+      dmsStorageUnit *su = NULL ;
+      DMSCB_SLOCK
+#if defined (_WINDOWS)
+      std::map<const CHAR*, dmsStorageUnitID, cmp_cscb>::const_iterator it ;
+#elif defined (_LINUX)
+      std::map<const CHAR*, dmsStorageUnitID>::const_iterator it ;
+#endif
+      for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
+      {
+         su = NULL ;
+         dmsStorageUnitID suID = (*it).second ;
+         ossScopedRWLock lock ( _latchVec[suID], SHARED ) ;
+         SDB_DMS_CSCB *cscb = _cscbVec[suID] ;
+         if ( !cscb )
+         {
+            continue ;
+         }
+         su = cscb->_su ;
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" );
+         totalFileSize += su->totalSize();
+      }
+      //PD_TRACE_EXIT ( SDB__SDB_DMSCB_DUMPINFO4 );
+   }
 
    dmsTempCB *_SDB_DMSCB::getTempCB ()
    {

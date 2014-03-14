@@ -38,9 +38,57 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossUtil.hpp"
+#include "ossAtomic.hpp"
+#include "msg.h"
 
 namespace engine
 {
+   #define MON_START_OP( _pMonAppCB_ )                      \
+   {                                                        \
+      if ( NULL != _pMonAppCB_ )                            \
+      {                                                     \
+         _pMonAppCB_->startOperator() ;                     \
+      }                                                     \
+   }
+
+   #define MON_END_OP( _pMonAppCB_ )                        \
+   {                                                        \
+      if ( NULL != _pMonAppCB_ )                            \
+      {                                                     \
+         _pMonAppCB_->endOperator() ;                       \
+      }                                                     \
+   }
+
+   #define MON_SET_OP_TYPE( _pMonAppCB_, opType )           \
+   {                                                        \
+      if ( NULL != _pMonAppCB_ )                            \
+      {                                                     \
+         _pMonAppCB_->setLastOpType( opType ) ;             \
+      }                                                     \
+   }
+
+   #define MON_SAVE_OP_DETAIL( _pMonAppCB_, opType, format, ... )    \
+   {                                                                 \
+      if ( NULL != _pMonAppCB_ )                                     \
+      {                                                              \
+         _pMonAppCB_->setLastOpType( opType ) ;                      \
+         _pMonAppCB_->saveLastOpDetail( format,                      \
+                                       ##__VA_ARGS__ ) ;             \
+      }                                                              \
+   }
+
+   #define MON_SAVE_CMD_DETAIL( _pMonAppCB_, cmdType, format, ... )  \
+   {                                                                 \
+      if ( NULL != _pMonAppCB_ )                                     \
+      {                                                              \
+         _pMonAppCB_->setLastOpType( MSG_BS_QUERY_REQ ) ;            \
+         _pMonAppCB_->setLastCmdType( cmdType ) ;                    \
+         _pMonAppCB_->saveLastOpDetail( format,                      \
+                                       ##__VA_ARGS__ ) ;             \
+      }                                                              \
+   }
+
+
    struct _monConfigCB : public SDBObject
    {
       BOOLEAN timestampON ;
@@ -94,10 +142,16 @@ namespace engine
       UINT64 replDelete ;
       UINT64 replInsert ;
 
+      ossAtomicSigned64 _svcNetIn ;
+      ossAtomicSigned64 _svcNetOut ;
+
       ossTickDelta totalReadTime ;
       ossTickDelta totalWriteTime ;
       ossTick      _activateTimeStampTick ;
       ossTimestamp _activateTimestamp ;
+
+      UINT64 totalLogSize;
+
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
          switch ( op )
@@ -172,28 +226,7 @@ namespace engine
          }
       }
 
-      void reset()
-      {
-         numConnects     = 0 ;
-
-         totalDataRead   = 0 ;
-         totalIndexRead  = 0 ;
-         totalDataWrite  = 0 ;
-         totalIndexWrite = 0 ;
-
-         totalUpdate     = 0 ;
-         totalDelete     = 0 ;
-         totalInsert     = 0 ;
-         totalSelect     = 0 ;
-         totalRead       = 0 ;
-
-         replUpdate      = 0 ;
-         replInsert      = 0 ;
-         replDelete      = 0 ;
-
-         totalReadTime.clear() ;
-         totalWriteTime.clear() ;
-      }
+      void reset();
 
       UINT32 getReceiveNum ()
       {
@@ -204,7 +237,29 @@ namespace engine
          ++receiveNum ;
       }
 
+      void svcNetInAdd( INT32 sendSize )
+      {
+         _svcNetIn.add( sendSize ) ;
+      }
+
+      void svcNetOutAdd( INT32 recvSize )
+      {
+         _svcNetOut.add( recvSize ) ;
+      }
+
+      INT64 svcNetIn()
+      {
+         return _svcNetIn.peek() ;
+      }
+
+      INT64 svcNetOut()
+      {
+         return _svcNetOut.peek() ;
+      }
+
       _monDBCB()
+      :_svcNetIn(0),
+      _svcNetOut(0)
       {
          reset() ;
          receiveNum = 0 ;
@@ -270,6 +325,14 @@ namespace engine
       ossTick      _connectTimeStampTick ;
       ossTimestamp _connectTimestamp ;
 
+      INT32 _lastOpType ;
+      INT32 _cmdType ;
+      ossTick _lastOpBeginTime ;
+      ossTick _lastOpEndTime ;
+      ossTickDelta _readTimeSpent ;
+      ossTickDelta _writeTimeSpent ;
+      CHAR _lastOpDetail[ 128 ] ;
+
       void monOperationTimeInc( MON_OPERATION_TYPES op, ossTickDelta &delta )
       {
          switch ( op )
@@ -334,25 +397,7 @@ namespace engine
          mondbcb->monOperationCountInc ( op, delta ) ;
       }
 
-      void reset()
-      {
-         totalDataRead = 0 ;
-         totalIndexRead = 0 ;
-         totalDataWrite = 0 ;
-         totalIndexWrite = 0 ;
-
-         totalUpdate = 0 ;
-         totalDelete = 0 ;
-         totalInsert = 0 ;
-         totalSelect = 0 ;
-         totalRead  = 0 ;
-
-         totalReadTime.clear() ;
-         totalWriteTime.clear() ;
-         _connectTimeStampTick.clear() ;
-         _connectTimestamp.time = 0 ;
-         _connectTimestamp.microtm = 0 ;
-      }
+      void reset() ;
 
       _monAppCB() ;
 
@@ -363,6 +408,13 @@ namespace engine
          _connectTimeStampTick.sample() ;
          ossGetCurrentTime( _connectTimestamp ) ;
       }
+
+      void startOperator() ;
+      void endOperator() ;
+      void setLastOpType( INT32 opType ) ;
+      void setLastCmdType( INT32 cmdType ) ;
+      void opTimeSpentInc( ossTickDelta delta );
+      void saveLastOpDetail( const CHAR *format, ... ) ;
 
    } ;
    typedef class _monAppCB  monAppCB ;

@@ -117,6 +117,8 @@ namespace engine
       SAFE_NEW_GOTO_ERROR( _aggrCB, aggrBuilder ) ;
       SAFE_NEW_GOTO_ERROR( _fmpCB, spdFMPMgr ) ;
       gPDTraceCB = getTraceCB() ;
+
+      _curTime.sample() ;
    done:
       return rc ;
    error:
@@ -226,6 +228,16 @@ namespace engine
    void _SDB_KRCB::destroy ()
    {
       _eduMgr.reset () ;
+   }
+
+   ossTick _SDB_KRCB::getCurTime()
+   {
+      return _curTime ;
+   }
+
+   void _SDB_KRCB::syncCurTime()
+   {
+      _curTime.sample() ;
    }
 
    /*

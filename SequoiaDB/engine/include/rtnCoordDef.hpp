@@ -17,6 +17,17 @@
                                                 TotalRead:{$sum:\"$TotalRead\"},\
                                                 TotalReadTime:{$sum:\"$TotalReadTime\"},\
                                                 TotalWriteTime:{$sum:\"$TotalWriteTime\"},\
+                                                freeLogSpace:{$sum:\"$freeLogSpace\"},\
+                                                vsize:{$sum:\"$vsize\"},\
+                                                rss:{$sum:\"$rss\"},\
+                                                fault:{$sum:\"$fault\"},\
+                                                TotalMapped:{$sum:\"$TotalMapped\"},\
+                                                svcNetIn:{$sum:\"$svcNetIn\"},\
+                                                svcNetOut:{$sum:\"$svcNetOut\"},\
+                                                shardNetIn:{$sum:\"$shardNetIn\"},\
+                                                shardNetOut:{$sum:\"$shardNetOut\"},\
+                                                replNetIn:{$sum:\"$replNetIn\"},\
+                                                replNetOut:{$sum:\"$replNetOut\"},\
                                                 ErrNodes:{$push:\"$ErrNodes\"}\
                                                 }\
                                        }"
@@ -90,6 +101,7 @@
                                                 _id:\"$Name\",\
                                                 Name:{$first:\"$Name\"},\
                                                 PageSize:{$first:\"$PageSize\"},\
+                                                TotalSize:{$sum:\"$TotalSize\"},\
                                                 Collection:{$mergearrayset:\"$Collection\"},\
                                                 Group:{$addtoset:\"$GroupName\"}\
                                                 }\

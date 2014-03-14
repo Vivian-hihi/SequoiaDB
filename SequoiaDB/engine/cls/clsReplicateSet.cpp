@@ -899,4 +899,19 @@ namespace engine
       goto done ;
    }
 
+   INT64 _clsReplicateSet::netIn()
+   {
+      return _agent->netIn() ;
+   }
+
+   INT64 _clsReplicateSet::netOut()
+   {
+      return _agent->netOut() ;
+   }
+
+   void _clsReplicateSet::resetMon()
+   {
+      return _agent->resetMon() ;
+   }
+
 }

@@ -321,4 +321,19 @@ namespace engine
       goto done ;
    }
 
+   INT64 _netRouteAgent::netIn()
+   {
+      return _frame.netIn() ;
+   }
+
+   INT64 _netRouteAgent::netOut()
+   {
+      return _frame.netOut() ;
+   }
+
+   void _netRouteAgent::resetMon()
+   {
+      return _frame.resetMon() ;
+   }
+
 }

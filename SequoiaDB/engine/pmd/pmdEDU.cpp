@@ -223,6 +223,10 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_PREFETCHER, FALSE,
                                 pmdPreLoaderEntryPoint,
                                 "PreLoader" ),
+
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SYNCCLOCK, TRUE,
+                                pmdSyncClock,
+                                "SyncClockWorker" ),
          //TODO:
 
          // For the end
@@ -1206,6 +1210,10 @@ namespace engine
          goto done ;
       }
    done :
+      if ( totalReceivedSize > 0 )
+      {
+         pmdGetKRCB()->getMonDBCB()->svcNetInAdd( totalReceivedSize ) ;
+      }
       PD_TRACE_EXITRC ( SDB_PMDRECV, rc );
       return rc ;
    }
@@ -1236,6 +1244,10 @@ namespace engine
          goto done ;
       }
    done :
+      if ( totalSentSize > 0 )
+      {
+         pmdGetKRCB()->getMonDBCB()->svcNetOutAdd( totalSentSize ) ;
+      }
       PD_TRACE_EXITRC ( SDB_PMDSEND, rc );
       return rc ;
    }
@@ -1311,4 +1323,21 @@ namespace engine
       return ;
    }
 #endif
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSYNCCLOCK, "pmdSyncClock" )
+   INT32 pmdSyncClock( pmdEDUCB * cb, void * arg )
+   {
+#define SYNCCLOCK_INTERVAL    10    //10ms
+      ossTick tmp ;
+      // PD_TRACE_ENTRY ( SDB_PMDSYNCCLOCK );
+      pmdKRCB *pKrcb = pmdGetKRCB() ;
+      while ( !cb->isDisconnected() )
+      {
+         pKrcb->syncCurTime() ;
+         ossSleep( SYNCCLOCK_INTERVAL ) ;
+      }
+
+      // PD_TRACE_EXITRC ( SDB_PMDSYNCCLOCK, rc );
+      return SDB_OK ;
+   }
 }

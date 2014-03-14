@@ -40,6 +40,8 @@
 #include "ossTrace.hpp"
 #if defined (_LINUX)
 #include <sys/statvfs.h>
+#elif defined (_WINDOWS)
+#include "Psapi.h"
 #endif
 // Wrapper of localtime, convert a time value and correct for the local time
 // zone. The input pTime represents the seconds elapsed since the Epoch,
@@ -1010,3 +1012,97 @@ error :
             ossErr ) ;
    goto done ;
 }
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETPROCMEMINFO, "ossGetProcMemInfo" )
+INT32 ossGetProcMemInfo( ossProcMemInfo &memInfo,
+                        OSSPID pid )
+{
+   INT32 rc = SDB_OK ;
+   // PD_TRACE_ENTRY ( SDB_OSSGETPROCMEMINFO );
+#if defined (_WINDOWS)
+   PROCESS_MEMORY_COUNTERS pmc ;
+   if ( GetProcessMemoryInfo( (HANDLE)pid, &pmc, sizeof( pmc ) ) )
+   {
+      memInfo.rss = pmc.WorkingSetSize ;
+      memInfo.vSize = pmc.PagefileUsage ;
+      memInfo.fault = pmc.PageFaultCount ;
+   }
+   else
+   {
+      PD_RC_CHECK( SDB_SYS, PDERROR,
+                  "failed to get process memory info(errorno:%d)",
+                  GetLastError() ) ;
+   }
+#elif defined (_LINUX)
+   ossProcStatInfo procInfo( pid ) ;
+   memInfo.rss = procInfo._rss ;
+   memInfo.vSize = procInfo._vSize ;
+   memInfo.fault = procInfo._majFlt ;
+   PD_CHECK( procInfo._pid != -1, SDB_SYS, error, PDERROR,
+            "failed to get process info(pid=%d)", pid ) ;
+#else
+   PD_RC_CHECK( SDB_SYS, PDERROR,
+               "the OS is not supported!" ) ;
+#endif
+done:
+   // PD_TRACE_EXITRC (SDB_OSSGETPROCMEMINFO, rc );
+   return rc;
+error:
+   goto done;
+}
+
+#if defined (_LINUX)
+ossProcStatInfo::ossProcStatInfo( OSSPID pid )
+:_pid(-1),_state(0),_ppid(-1),_pgrp(-1),
+_session(-1),_tty(-1),_tpgid(-1),_flags(0),
+_minFlt(0),_cMinFlt(0),_majFlt(0),_cMajFlt(0),
+_uTime(0),_sTime(0),_cuTime(-1),_csTime(-1),
+_priority(-1),_nice(-1),_nlwp(-1),_alarm(0),
+_startTime(0),_vSize(0),_rss(-1),_rssRlim(0),
+_startCode(0),_endCode(0),_startStack(0),
+_kstkEsp(0),_kstkEip(0)
+{
+   ossMemset( _comm, 0, OSS_MAX_PATHSIZE + 1 ) ;
+   CHAR pathName[ OSS_PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   ossSnprintf( pathName, sizeof(pathName), "/proc/%d/stat", pid ) ;
+   FILE *fp = NULL ;
+   fp = fopen( pathName, "r" ) ;
+   if ( fp )
+   {
+      INT32 rc = 0;
+      rc = fscanf( fp,
+                  "%d %s %c "             //&_pid, _comm, &_state,
+                  "%d %d %d %d %d "
+                  "%u %u %u %u %u "  //&_flags, &_minFlt, &_cMinFlt, &_majFlt, &_cMajFlt,
+                  "%u %u %d %d "
+                  "%d %d "
+                  "%d "                  //&_nlwp,
+                  "%u "
+                  "%u "
+                  "%u "                  //&_vSize,
+                  "%d "
+                  "%u %u %u %u %u %u ",
+                  &_pid, _comm, &_state,
+                  &_ppid, &_pgrp, &_session, &_tty, &_tpgid,
+                  &_flags, &_minFlt, &_cMinFlt, &_majFlt, &_cMajFlt,
+                  &_uTime, &_sTime, &_cuTime, &_csTime,
+                  &_priority, &_nice,
+                  &_nlwp,
+                  &_alarm,
+                  &_startTime,
+                  &_vSize,
+                  &_rss,
+                  &_rssRlim, &_startCode, &_endCode, &_startStack, &_kstkEsp, &_kstkEip );
+      fclose(fp) ;
+      if ( rc <= 0 )
+      {
+         PD_LOG( PDERROR, "failed to read proc-info" );
+      }
+   }
+   else
+   {
+      PD_LOG( PDWARNING, "open failed(%s)",
+            pathName );
+   }
+}
+#endif //#if defined (_LINUX)
