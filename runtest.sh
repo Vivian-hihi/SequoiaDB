@@ -9,6 +9,7 @@ uuid=$$
 uuname="s$$test"
 coordsvcname="50000"
 coordhostname="localhost"
+runresult=0
 commlibstr="commlib.js"
 reportDir=${csprefix}"_report"
 
@@ -106,7 +107,8 @@ function prepareRun()
 function runJSFile()
 {
    result=0 ;
-   lastCmdStr="$sdbRoot/sdb -e \"var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var UUID=$uuid; var UUNAME='${uuname}'; \" -f \"${libRoot}/func.js,$1\""
+   lastCmdStr="$sdbRoot/sdb -e \"var CSPREFIX='${csprefix}'; var COORDSVCNAME='${coordsvcname}'; var COORDHOSTNAME='${coordhostname}'; var UUID=$uuid; var UUNAME='${uuname}'; var RUNRESULT=$runresult; \" -f \"${libRoot}/func.js,$1\""
+   runresult=0
    if [ $printOut -ne 0 -o $# -gt 1 ] ; then
       echo "CMD: $lastCmdStr"
       eval $lastCmdStr
@@ -299,6 +301,7 @@ do
    $sdbRoot/sdb -s "try{ db.msg('Begin test[$file]') ; } catch( e ) { } "
    runJSFile "$testFile"
    ret=$?
+   runresult=$ret
    $sdbRoot/sdb -s "try{ db.msg('End test[$file]') ; } catch( e ) {} "
    testcaseETimeSec=`date +%s`
    if [ $printOut -ne 0 ] ; then
