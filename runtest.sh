@@ -244,7 +244,7 @@ echo ""
 prepareRun
 
 # create msg db connection
-$sdbRoot/sdb -s "try { db = new Sdb('${coordhostname}', '${coordsvcname}' ) } catch( e ) {} "
+$sdbRoot/sdb -s "try { var db = new Sdb('${coordhostname}', '${coordsvcname}' ) } catch( e ) {} "
 
 libJSStr=""
 postfix=""
