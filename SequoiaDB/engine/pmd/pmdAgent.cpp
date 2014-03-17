@@ -271,6 +271,8 @@ namespace engine
       CHAR *pHintBuffer    = NULL ;
       _rtnCommand *pCommand = NULL ;
 
+      MON_START_OP( cb->getMonAppCB() ) ;
+
       if ( krcb->getDBRole() != SDB_ROLE_STANDALONE
          && !dpsCB->isLogLocal() )
       {
@@ -335,6 +337,12 @@ namespace engine
                BSONObj selector( pSelectorBuffer ) ;
                BSONObj updator ( pUpdatorBuffer ) ;
                BSONObj hint ( pHintBuffer ) ;
+               MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_UPDATE_REQ,
+                           "CL:%s, Match:%s, Updator:%s, Hint:%s",
+                           pCollectionName,
+                           selector.toString( false, false ).c_str(),
+                           updator.toString(false, false ).c_str(),
+                           hint.toString(false, false ).c_str() ) ;
 #if defined (_DEBUG)
                PD_LOG ( PDDEBUG,
                        "Update: selector: %s\nupdator: %s\nhint: %s",
@@ -376,6 +384,10 @@ namespace engine
             try
             {
                BSONObj insertor ( pInsertorBuffer ) ;
+               MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_INSERT_REQ,
+                           "CL:%s, Insertor:%s",
+                           pCollectionName,
+                           insertor.toString( false, false ).c_str() ) ;
 #if defined (_DEBUG)
                PD_LOG ( PDDEBUG,
                        "Insert: insertor: %s\nCollection: %s",
@@ -441,6 +453,13 @@ namespace engine
                   BSONObj selector ( pFieldSelector ) ;
                   BSONObj orderBy ( pOrderByBuffer ) ;
                   BSONObj hint ( pHintBuffer ) ;
+                  MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_QUERY_REQ,
+                              "CL:%s, Match:%s, Selector:%s, OrderBy:%s, Hint:%s",
+                              pCollectionName,
+                              matcher.toString( false, false ).c_str(),
+                              selector.toString(false, false ).c_str(),
+                              orderBy.toString(false, false ).c_str(),
+                              hint.toString(false, false ).c_str() ) ;
 
 #if defined (_DEBUG)
                   PD_LOG ( PDDEBUG,
@@ -484,6 +503,9 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
+            MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_GETMORE_REQ,
+                        "ContextID:%lld, NumToRead:%d",
+                        contextID, numToRead ) ;
             rc = rtnGetMore ( contextID, numToRead, buffObj, contextStart,
                               cb, rtnCB ) ;
          }
@@ -503,6 +525,11 @@ namespace engine
             {
                BSONObj deletor ( pDeletorBuffer ) ;
                BSONObj hint ( pHintBuffer ) ;
+               MON_SAVE_OP_DETAIL( cb->getMonAppCB(), MSG_BS_DELETE_REQ,
+                           "CL:%s, Deletor:%s, Hint:%s",
+                           pCollectionName,
+                           deletor.toString( false, false ).c_str(),
+                           hint.toString( false, false ).c_str() );
 #if defined (_DEBUG)
                PD_LOG( PDDEBUG, "Delete: deletor: %s\nhint: %s",
                        deletor.toString().c_str(),
@@ -717,6 +744,7 @@ namespace engine
                     requestID ) ;
          }
       }
+      MON_END_OP( cb->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB_PMDPROCAGENTREQ, rc ) ;
       return rc ;
    error :
