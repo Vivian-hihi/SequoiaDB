@@ -4,6 +4,12 @@
 
 <project name="copy_tar_build" default="copy_tar_build">
 	<property file="${WORKSPACE}/sequoiadb/misc/ci/ci.build.properties" />
+	
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+		<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
 
 	<target name="clean" depends="">
 	</target>
