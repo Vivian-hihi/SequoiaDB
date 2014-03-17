@@ -222,7 +222,7 @@ namespace engine
 
       /// local write has been completed.
       /// synced starts from one.
-      _clsSyncSession():eduCB( NULL)
+      _clsSyncSession():endLsn(DPS_INVALID_LSN_OFFSET), eduCB( NULL)
       {}
 
       BOOLEAN operator<( const _clsSyncSession &session )
