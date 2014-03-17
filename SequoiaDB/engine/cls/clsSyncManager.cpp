@@ -550,12 +550,12 @@ namespace engine
       _clsSyncSession session ;
       /// begin from w = 2.
       UINT32 sub = 0 ;
-      while ( !plan.empty() )
+      CLS_WAKE_PLAN::reverse_iterator ritr = plan.rbegin();
+      while ( ritr != plan.rend() )
       {
          /// get max elemenet
-         CLS_WAKE_PLAN::iterator itr = --plan.end();
          DPS_LSN lsn ;
-         lsn.offset = *itr ;
+         lsn.offset = *ritr ;
          _mtxs[sub].get() ;
          _checkList[sub] = lsn.offset ;
          while ( SDB_OK == _syncList[sub].root( session ) )
@@ -572,7 +572,7 @@ namespace engine
          }
          _mtxs[sub].release() ;
 
-         plan.erase( itr ) ;
+         ++ritr ;
          ++sub ;
       }
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__WAKE ) ;
