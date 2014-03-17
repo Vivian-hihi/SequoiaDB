@@ -1559,6 +1559,7 @@ namespace engine
             if ( SDB_APP_FORCED == rc )
             {
                disconnect = TRUE ;
+               cb->disconnect() ;
                continue ;
             }
             probe = 20 ;
