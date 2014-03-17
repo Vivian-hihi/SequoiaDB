@@ -2620,11 +2620,26 @@ error :
 // if the string contain other character, return error
 INT32 Event::strTOnum_SDBTOP( const CHAR *str, INT32 &number )
 {
-   INT32 rc  = SDB_OK ;
-   INT32 pos = 0 ;
-   number = 0 ;
+   INT32 rc           = SDB_OK ;
+   INT32 pos          = 0 ;
+   BOOLEAN isPositive = TRUE ;
+   number    = 0 ;
    while( str[pos] )
    {
+      // check it is positive number or negative number
+      if( 0 == pos )
+      {
+         if( '-' == str[pos] )
+         {
+            isPositive = FALSE ;
+            ++pos ;
+         }
+         else if ( '+' == str[pos] )
+         {
+            isPositive = TRUE ;
+            ++pos ;
+         }
+      }
       if( '0' > str[pos] ||'9' < str[pos] )
       {
          number = 0;
@@ -2634,6 +2649,11 @@ INT32 Event::strTOnum_SDBTOP( const CHAR *str, INT32 &number )
       number *= 10 ;
       number = number + str[pos] -'0' ;
       ++pos;
+   }
+   // change to negative number
+   if( !isPositive )
+   {
+      number *= -1 ;
    }
 done:
    return rc;
@@ -5326,11 +5346,19 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             displayName = inputBuf ;
             trim( displayName ) ;
             rc = strTOnum_SDBTOP( displayName.c_str(), filterNum ) ;
+            // illegal input 
             if( rc )
             {
               filterNum = 0 ;
+              // it isn't a tool error, restore status
+              rc = SDB_OK ;
             }
-            input.filterNumber += filterNum;
+            input.filterNumber += filterNum ;
+            // if input.filterNumber is negative, restore to zero
+            if( 0 > input.filterNumber )
+            {
+               input.filterNumber = 0 ;
+            }
             input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
