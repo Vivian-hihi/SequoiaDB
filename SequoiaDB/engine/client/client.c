@@ -4835,6 +4835,20 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                             INT64 numToReturn,
                             sdbCursorHandle *handle )
 {
+   return sdbQuery1 ( cHandle, condition, select, orderBy, hint,
+                      numToSkip, numToReturn, 0, handle ) ;
+}
+
+SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
+                             bson *condition,
+                             bson *select,
+                             bson *orderBy,
+                             bson *hint,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             INT32 flag,
+                             sdbCursorHandle *handle )
+{
    INT32 rc = SDB_OK ;
    SINT64 contextID ;
    BOOLEAN result ;
@@ -4851,7 +4865,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
       goto error ;
    }
    rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
-                              cs->_collectionFullName, 0, 0,
+                              cs->_collectionFullName, flag, 0,
                               numToSkip, numToReturn, condition,
                               select, orderBy, hint, cs->_endianConvert ) ;
    if ( rc )

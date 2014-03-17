@@ -1143,6 +1143,38 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
                              bson *condition,
                              bson *hint ) ;
 
+/** \fn INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
+                            bson *condition,
+                            bson *select,
+                            bson *orderBy,
+                            bson *hint,
+                            INT64 numToSkip,
+                            INT64 numToReturn,
+                            sdbCursorHandle *handle )
+    \brief Get the matching documents in current collection
+    \param [in] cHandle The collection handle
+    \param [in] condition The matching rule, return all the documents if null
+    \param [in] select The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
+    \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
+    \param [in] flag The query flag
+    \param [out] handle The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
+                            bson *condition,
+                            bson *select,
+                            bson *orderBy,
+                            bson *hint,
+                            INT64 numToSkip,
+                            INT64 numToReturn,
+                            INT32 flag,
+                            sdbCursorHandle *handle ) ;
+
+
 /** \fn INT32 sdbQuery ( sdbCollectionHandle cHandle,
                             bson *condition,
                             bson *select,
