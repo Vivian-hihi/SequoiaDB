@@ -24,21 +24,13 @@ public class ReplicaGroup {
 	private String name;
 	private int id;
 	private Sequoiadb sequoiadb;
-	private boolean isCatalog;
+	private boolean isCataRG;
 
-	ReplicaGroup(Sequoiadb sdb, int id) {
-		this.sequoiadb = sdb;
-		this.id = id;
-		BSONObject group = sdb.getDetailById(id);
-		this.name = group.get(SequoiadbConstants.FIELD_NAME_GROUPNAME)
-				.toString();
-		this.isCatalog = name.startsWith("catalog");
-	}
 
 	/**
 	 * @fn Sequoiadb getSequoiadb()
-	 * @brief Get current replicaGroup's Sequoiadb
-	 * @return the current replicaGroup's Sequoiadb
+	 * @brief Get current replica group's Sequoiadb.
+	 * @return the current replica group's Sequoiadb
 	 */
 	public Sequoiadb getSequoiadb() {
 		return sequoiadb;
@@ -46,40 +38,49 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn int getId()
-	 * @brief Get current replicaGroup's id
-	 * @return the current replicaGroup's id
+	 * @brief Get current replica group's id.
+	 * @return the current replica group's id
 	 */
 	public int getId() {
 		return id;
 	}
 
-	ReplicaGroup(Sequoiadb sdb, String name) {
-		this.sequoiadb = sdb;
-		this.name = name;
-		BSONObject group = sdb.getDetailByName(name);
-		this.isCatalog = (name == Sequoiadb.CATALOG_GROUP_NAME);
-		this.id = Integer.parseInt(group.get(
-				SequoiadbConstants.FIELD_NAME_GROUPID).toString());
-	}
-
 	/**
 	 * @fn String getGroupName()
-	 * @brief Get current replica group's name
+	 * @brief Get current replica group's name.
 	 * @return the current replica group's name
 	 */
 	public String getGroupName() {
 		return name;
 	}
 
+	ReplicaGroup(Sequoiadb sdb, int id) {
+		this.sequoiadb = sdb;
+		this.id = id;
+		BSONObject group = sdb.getDetailById(id);
+		this.name = group.get(SequoiadbConstants.FIELD_NAME_GROUPNAME)
+				.toString();
+		this.isCataRG = name.startsWith("catalog");
+	}
+	
+	ReplicaGroup(Sequoiadb sdb, String name) {
+		this.sequoiadb = sdb;
+		this.name = name;
+		BSONObject group = sdb.getDetailByName(name);
+		this.isCataRG = (name == Sequoiadb.CATALOG_GROUP_NAME);
+		this.id = Integer.parseInt(group.get(
+				SequoiadbConstants.FIELD_NAME_GROUPID).toString());
+	}
+	
 	/**
 	 * @fn int getNodeNum(Node.NodeStatus status)
-	 * @brief Get number of nodes with the status
+	 * @brief Get the amount of the nodes with the specified status.
 	 * @param status
 	 * 			Node.NodeStatus
-	 * @return the number
+	 * @return the amount of the nodes with the specified status
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public int getNodeNum(Node.NodeStatus status) {
+	public int getNodeNum(Node.NodeStatus status) throws BaseException {
 		BSONObject group = sequoiadb.getDetailById(id);
 		try {
 			Object obj = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
@@ -106,11 +107,11 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn Node getMaster()
-	 * @brief Get the master node of current replicaGroup
-	 * @return the master node object
+	 * @brief Get the master node of current replica group.
+	 * @return the master node
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Node getMaster() {
+	public Node getMaster() throws BaseException {
 		BSONObject group = sequoiadb.getDetailById(id);
 		BSONObject primaryData = null;
 		Object nodeId = null;
@@ -145,8 +146,8 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn Node getSlave()
-	 * @brief Get the random slave  of current replicaGroup
-	 * @return the slave Node object
+	 * @brief Get the random slave of current replica group.
+	 * @return the slave node
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Node getSlave() throws BaseException {
@@ -197,13 +198,13 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn Node getNode(String nodeName)
-	 * @brief Get node by node's name (IP:PORT)
+	 * @brief Get node by node's name (IP:PORT).
 	 * @param nodeName
 	 * 			The name of the node
-	 * @return the Node object
+	 * @return the specified node
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Node getNode(String nodeName) {
+	public Node getNode(String nodeName) throws BaseException {
 		String[] temp = nodeName.split(":");
 		if (temp.length != 2) {
 			throw new BaseException("SDB_INVALIDARG", nodeName);
@@ -246,7 +247,7 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn Node getNode(String hostName, int port)
-	 * @brief Get node by hostName and port
+	 * @brief Get node by hostName and port.
 	 * @param hostName
 	 * 			host name
 	 * @param port
@@ -254,7 +255,7 @@ public class ReplicaGroup {
 	 * @return the Node object
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Node getNode(String hostName, int port) {
+	public Node getNode(String hostName, int port) throws BaseException {
 		BSONObject group = sequoiadb.getDetailById(id);
 		try {
 			Object list = group.get(SequoiadbConstants.FIELD_NAME_GROUP);
@@ -370,10 +371,11 @@ public class ReplicaGroup {
 
 	/**
 	 * @fn void start()
-	 * @brief Start current replicaGroup in db
+	 * @brief Start current replica group.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void start() {
+	public void start() throws BaseException {
 		BSONObject groupName = new BasicBSONObject();
 		groupName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
 		SDBMessage rtn = adminCommand(SequoiadbConstants.ACTIVE_CMD,
@@ -386,10 +388,11 @@ public class ReplicaGroup {
 	
 	/**
 	 * @fn void stop()
-	 * @brief Stop current replicaGroup in db
+	 * @brief Stop current replica group.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void stop() {
+	public void stop() throws BaseException {
 		BSONObject groupName = new BasicBSONObject();
 		groupName.put(SequoiadbConstants.FIELD_NAME_GROUPNAME, this.name);
 		SDBMessage rtn = adminCommand(SequoiadbConstants.SHUTDOWN_CMD,
@@ -402,12 +405,11 @@ public class ReplicaGroup {
 	
 	/**
 	 * @fn boolean isCatalog()
-	 * @brief Judge whether current replicaGroup is catalog or not
+	 * @brief Judge whether current replicaGroup is catalog replica group or not.
 	 * @return true is while false is not
-	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public boolean isCatalog() {
-		return isCatalog;
+		return isCataRG;
 	}
 
 	private int getNodePort(BSONObject node) {

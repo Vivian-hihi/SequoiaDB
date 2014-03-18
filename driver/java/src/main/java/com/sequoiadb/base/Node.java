@@ -36,7 +36,10 @@ public class Node {
 	 * enum Node::NodeStatus
 	 */
 	public static enum NodeStatus {
-		SDB_NODE_ALL(1), SDB_NODE_ACTIVE(2), SDB_NODE_INACTIVE(3), SDB_NODE_UNKNOWN(4);
+		SDB_NODE_ALL(1),
+		SDB_NODE_ACTIVE(2),
+		SDB_NODE_INACTIVE(3),
+		SDB_NODE_UNKNOWN(4);
 		private final int key;
 		private NodeStatus(int key){
 			this.key = key;
@@ -77,6 +80,7 @@ public class Node {
 	/**
 	 * @fn void disconnect()
 	 * @brief Disconnect from current node.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
@@ -89,7 +93,7 @@ public class Node {
 	 * @return The Sequoiadb object of current node.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Sequoiadb connect() {
+	public Sequoiadb connect() throws BaseException {
 		sdb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
 				rg.getSequoiadb().getPassword());
 		return sdb;
@@ -105,7 +109,7 @@ public class Node {
 	 * @return The Sequoiadb object of current node.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public Sequoiadb connect(String username, String password) {
+	public Sequoiadb connect(String username, String password) throws BaseException {
 		sdb = new Sequoiadb(hostName, port, username, password);
 		return sdb;
 	}
@@ -152,7 +156,7 @@ public class Node {
 	 * @return The status of current node.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public NodeStatus getStatus() {
+	public NodeStatus getStatus() throws BaseException {
 		BSONObject obj = new BasicBSONObject();
 		obj.put(SequoiadbConstants.FIELD_NAME_GROUPID, rg.getId());
 		obj.put(SequoiadbConstants.FIELD_NAME_NODEID, id);
@@ -176,18 +180,20 @@ public class Node {
 	/**
 	 * @fn void start()
 	 * @brief Start current node in database.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void start() {
+	public void start() throws BaseException {
 		startStop(true);
 	}
 
 	/**
 	 * @fn void stop()
 	 * @brief Stop current node in database.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void stop() {
+	public void stop() throws BaseException {
 		startStop(false);
 	}
 

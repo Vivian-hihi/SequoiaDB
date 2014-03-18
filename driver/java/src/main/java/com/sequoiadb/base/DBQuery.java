@@ -34,7 +34,28 @@ public class DBQuery {
 	private BSONObject modifier;
 	private Long skipRowsCount;
 	private Long returnRowsCount;
+	private int flag;
 
+	/**
+	 * @memberof FLG_QUERY_STRINGOUT 0x00000001
+	 * @brief Nornally, query return bson stream, 
+	 *        if add this flag, query return binary data stream
+	 */
+	public static final int FLG_QUERY_STRINGOUT = 0x00000001;
+	
+	/**
+	 * @memberof FLG_INSERT_CONTONDUP 0x00000080
+	 * @brief Force to use specifed hint to query,
+	 *        if database have no index assigned by the hint, fail to query
+	 */
+	public static final int FLG_QUERY_FORCE_HINT = 0x00000080;
+	
+	/**
+	 * @memberof FLG_QUERY_PARALLED 0x00000100
+	 * @brief Enable paralled sub querys
+	 */
+	public static final int FLG_QUERY_PARALLED = 0x00000100;
+	
 	public DBQuery() {
 		matcher = null;
 		selector = null;
@@ -43,6 +64,7 @@ public class DBQuery {
 		modifier = null;
 		skipRowsCount = 0L;
 		returnRowsCount = -1L;
+		flag = 0;
 	}
 	
 	/**
@@ -171,4 +193,27 @@ public class DBQuery {
 		this.returnRowsCount = returnRowsCount;
 	}
 
+	/**
+	 * @fn int getFlag()
+	 * @brief Get the query
+	 * @return The query flag
+	 * @see com.sequoiadb.base.DBCollection.query
+	 */
+	public int getFlag() {
+		return flag;
+	}
+
+	/**
+	 * @fn void setFlag(int flag)
+	 * @brief Set the query flag
+	 * @param The query flag as below:
+	 *  	  DBQuery.FLG_QUERY_STRINGOUT
+     *        DBQuery.FLG_QUERY_FORCE_HINT
+     *        DBQuery.LG_QUERY_PARALLED  
+     * @see com.sequoiadb.base.DBCollection.query
+	 */
+	public void setFlag(int flag) {
+		this.flag = flag;
+	}
+	
 }

@@ -122,8 +122,19 @@ public class Sequoiadb {
 	}
 
 	/**
+	 * @fn boolean isEndianConvert()
+	 * @brief Judge the endian of the physical computer
+	 * @return Big-Endian for true while Little-Endian for false
+	 */
+	public boolean isEndianConvert() {
+		return endianConvert;
+	}
+	
+	/**
 	 * @fn Sequoiadb(String username, String password)
-	 * @brief Default Constructor Server address "127.0.0.1 : 50000".
+	 * @brief Constructor. The server address is "127.0.0.1 : 50000".
+	 * @param username the user's Name of the account
+	 * @param password the password  of the account
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb(String username, String password) throws BaseException {
@@ -138,7 +149,9 @@ public class Sequoiadb {
 	 * @fn Sequoiadb(String connString, String username, String password)
 	 * @brief Constructor.
 	 * @param connString
-	 *            Remote server address "IP : Port" or "IP"(port is 50000)
+	 *            remote server address "IP : Port" or "IP"(port is 50000)
+	 * @param username the user's Name of the account
+	 * @param password the password  of the account
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb(String connString, String username, String password)
@@ -158,9 +171,11 @@ public class Sequoiadb {
 	 * @fn Sequoiadb(String addr, int port, String username, String password)
 	 * @brief Constructor.
 	 * @param addr
-	 *            IP address
+	 *            address of remote server
 	 * @param port
-	 *            Port
+	 *            port of remote server
+	 * @param username the user's Name of the account
+	 * @param password the password  of the account
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb(String addr, int port, String username, String password)
@@ -242,7 +257,8 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void disconnect()
-	 * @brief Disconnect the remote server.
+	 * @brief Disconnect from the remote server.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
@@ -267,8 +283,9 @@ public class Sequoiadb {
 	 * @fn boolean isValid()
 	 * @brief Judge wether the connection is valid or not.
 	 * @return if the connection is valid, return true
+	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public boolean isValid(){
+	public boolean isValid() throws BaseException{
 		// client not connect to database or client 
 		// disconnect from database
 		if ( connection == null || connection.isClosed() )
@@ -475,7 +492,8 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void resetSnapshot()
-	 * @brief Reset the snapshot
+	 * @brief Reset the snapshot.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void resetSnapshot() throws BaseException {
@@ -534,11 +552,11 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void execUpdate(String sql)
-	 * @brief Execute sql in database
-	 * @param sql
+	 * @brief Execute sql in database.
+	 * @param sql the SQL command.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void execUpdate(String sql) {
+	public void execUpdate(String sql) throws BaseException {
 		SDBMessage sdb = new SDBMessage();
 		sdb.setRequestID(0);
 		sdb.setNodeID(SequoiadbConstants.ZERO_NODEID);
@@ -555,12 +573,12 @@ public class Sequoiadb {
 
 	/**
 	 * @fn DBCursor exec(String sql)
-	 * @brief Execute sql in database
-	 * @param sql command
+	 * @brief Execute sql in database.
+	 * @param sql the SQL command
 	 * @return the DBCursor of the result
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor exec(String sql) {
+	public DBCursor exec(String sql) throws BaseException {
 		SDBMessage sdb = new SDBMessage();
 		sdb.setRequestID(0);
 		sdb.setNodeID(SequoiadbConstants.ZERO_NODEID);
@@ -599,16 +617,16 @@ public class Sequoiadb {
      * <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
      * </dl>
 	 * @param matcher
-	 *            The matching rule, match all the documents if null
+	 *            the matching rule, match all the documents if null
 	 * @param selector
-	 *            The selective rule, return the whole document if null
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule, never sort if null
-	 * @return The DBCursor of snapshot.
+	 *            the ordered rule, never sort if null
+	 * @return the DBCursor instance of the result
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor getSnapshot(int snapType, String matcher, String selector,
-			String orderBy) {
+			String orderBy) throws BaseException {
 		BSONObject ma = null;
 		BSONObject se = null;
 		BSONObject or = null;
@@ -625,31 +643,32 @@ public class Sequoiadb {
 	/**
 	 * @fn DBCursor getSnapshot(int snapType, BSONObject matcher, BSONObject
 	 *     selector, BSONObject orderBy)
-	 * @brief Get snapshot in db
-     *<dl>
-     *<dt>Sequoiadb.SDB_SNAP_CONTEXTS   : Get all contexts' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT        : Get the current context's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_SESSIONS        : Get all sessions' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT        : Get the current session's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
-     *<dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
-     *<dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
-     *<dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
-     *<dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
-     *</dl>
+	 * @brief Get snapshot of the database.
+     * @param snapType The snapshot types are as below:
+     * <dl>
+     * <dt>Sequoiadb.SDB_SNAP_CONTEXTS   : Get all contexts' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_CONTEXTS_CURRENT        : Get the current context's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_SESSIONS        : Get all sessions' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_SESSIONS_CURRENT        : Get the current session's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
+     * <dt>Sequoiadb.SDB_SNAP_DATABASE        : Get database's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_SYSTEM        : Get system's snapshot
+     * <dt>Sequoiadb.SDB_SNAP_CATALOG        : Get catalog's snapshot
+     * <dt>Sequoiadb.SDB_LIST_GROUPS        : Get replica group list ( only applicable in sharding env )
+     * <dt>Sequoiadb.SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
+     * </dl>
 	 * @param matcher
-	 *            BSONObject
+	 *            the matching rule, match all the documents if null
 	 * @param selector
-	 *            BSONObject
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            BSONObject
-	 * @return The DBCursor of snapshot.
+	 *            the ordered rule, never sort if null
+	 * @return the DBCursor instance of the result
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor getSnapshot(int snapType, BSONObject matcher,
-			BSONObject selector, BSONObject orderBy) {
+			BSONObject selector, BSONObject orderBy) throws BaseException {
 		String command = SequoiadbConstants.SNAP_CMD;
 		switch (snapType) {
 		case SDB_SNAP_CONTEXTS:
@@ -699,10 +718,11 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn void beginTransaction()
-	 * @brief Begin the transaction
+	 * @brief Begin the transaction.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void beginTransaction() {
+	public void beginTransaction() throws BaseException {
 		byte[] request = SDBMessageHelper.buildTransactionRequest(SequoiadbConstants.Operation.TRANS_BEGIN_REQ, endianConvert);
 		connection.sendMessage(request);
 		
@@ -715,10 +735,11 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn void commit()
-	 * @brief Commit the transaction
+	 * @brief Commit the transaction.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void commit() {
+	public void commit() throws BaseException {
 		byte[] request = SDBMessageHelper.buildTransactionRequest(
 				SequoiadbConstants.Operation.TRANS_COMMIT_REQ, endianConvert);
 		connection.sendMessage(request);
@@ -732,10 +753,11 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn void rollback()
-	 * @brief Rollback the transaction
+	 * @brief Rollback the transaction.
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void rollback() {
+	public void rollback() throws BaseException {
 		byte[] request = SDBMessageHelper.buildTransactionRequest(
 				SequoiadbConstants.Operation.TRANS_ROLLBACK_REQ, endianConvert);
 		connection.sendMessage(request);
@@ -753,7 +775,7 @@ public class Sequoiadb {
      * @param code The code of store procedures
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void crtJSProcedure ( String code )
+	public void crtJSProcedure ( String code ) throws BaseException
 	{
 		// check the argument
 		if ( null == code || code.equals("") ){
@@ -780,7 +802,7 @@ public class Sequoiadb {
      * @param name The name of store procedure to be removed
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void rmProcedures ( String name )
+	public void rmProcedures ( String name ) throws BaseException
 	{
 		// check the argument
 		if ( null == name || name.equals("") ) {
@@ -804,7 +826,7 @@ public class Sequoiadb {
      * @param condition The condition of list eg: {"name":"sum"}
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor listProcedures ( BSONObject condition )
+	public DBCursor listProcedures ( BSONObject condition ) throws BaseException
 	{
 		return getList(SDB_LIST_STOREPROCEDURES, 0, 0, 0,
 				       -1, condition, null, null, null);
@@ -828,7 +850,7 @@ public class Sequoiadb {
      *</dl>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void backupOffline ( BSONObject options )
+	public void backupOffline ( BSONObject options ) throws BaseException
 	{
 		// check the optional argument
 		if ( null != options ){
@@ -875,7 +897,7 @@ public class Sequoiadb {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor listBackup ( BSONObject options, BSONObject condition,
-			                     BSONObject selector, BSONObject orderBy)
+			                     BSONObject selector, BSONObject orderBy) throws BaseException
 	{
 		// check the optional argument
 		if ( null != options ){
@@ -920,7 +942,7 @@ public class Sequoiadb {
      *</dl>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void removeBackup ( BSONObject options )
+	public void removeBackup ( BSONObject options ) throws BaseException
 	{
 		// check the optional argument
 		if ( null != options ){
@@ -956,7 +978,7 @@ public class Sequoiadb {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public DBCursor listTasks ( BSONObject condition, BSONObject selector,
-			                BSONObject orderBy, BSONObject hint ) throws BaseException{
+			                BSONObject orderBy, BSONObject hint ) throws BaseException {
 	
 		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_LIST_TASK,
 				                      0, 0, 0, -1, condition,
@@ -979,7 +1001,7 @@ public class Sequoiadb {
      * @param taskIDs The array of task id
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void waitTasks ( long[] taskIDs ) throws BaseException{
+	public void waitTasks ( long[] taskIDs ) throws BaseException {
 		// check argument
 		if ( taskIDs == null || taskIDs.length == 0)
 			throw new BaseException("SDB_INVALIDARG", taskIDs);
@@ -1010,7 +1032,7 @@ public class Sequoiadb {
      *                "true" for async, "false" for sync. Default sync.
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void cancelTask ( long taskID, boolean isAsync ) throws BaseException{
+	public void cancelTask ( long taskID, boolean isAsync ) throws BaseException {
 		// check argument
 		if ( taskID <= 0)
 			throw new BaseException("SDB_INVALIDARG", taskID, isAsync);
@@ -1116,23 +1138,14 @@ public class Sequoiadb {
 	 * @fn void closeAllCursors()
 	 * @brief Close all the cursors created in current connection, we can't use those cursors to get
      *        data again.
+     * @return void
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void closeAllCursors() throws BaseException {
 		byte[] request = SDBMessageHelper.buildTransactionRequest(
 				SequoiadbConstants.Operation.MSG_BS_INTERRUPTE, endianConvert);
 		connection.sendMessage(request);
-	}
-	
-	/**
-	 * @fn boolean isEndianConvert()
-	 * @brief Judge the endian of the physical computer
-	 * @return Big-Endian for true while Little-Endian for false
-	 */
-	public boolean isEndianConvert() {
-		return endianConvert;
-	}
-	
+	}	
 	
 	/**
 	 * @fn DBCursor listReplicaGroups()

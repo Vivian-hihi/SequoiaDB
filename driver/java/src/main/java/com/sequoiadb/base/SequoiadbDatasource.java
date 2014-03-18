@@ -35,7 +35,7 @@ import com.sequoiadb.exception.BaseException;
  */
 public class SequoiadbDatasource {
 	// the idle queue
-	private volatile LinkedList<Sequoiadb> sequoiadbs = new LinkedList<Sequoiadb>();
+	private volatile LinkedList<Sequoiadb> idle_sequoiadbs = new LinkedList<Sequoiadb>();
 	// the busy queue
 	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>();
 	// the configuration for datasource
@@ -99,7 +99,7 @@ public class SequoiadbDatasource {
 		for (int i = 0; i < option.getInitConnectionNum(); i++)
 		{
 			Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
-			sequoiadbs.add(sequoiadb);
+			idle_sequoiadbs.add(sequoiadb);
 		}
 	}
 
@@ -121,15 +121,15 @@ public class SequoiadbDatasource {
 			return temp;
 		}
 		// otherwise
-		if ((sequoiadbs.size() > 0) && (used_sequoiadbs.size() < option.getMaxConnectionNum())) 
+		if ((idle_sequoiadbs.size() > 0) && (used_sequoiadbs.size() < option.getMaxConnectionNum())) 
 		{
 			Sequoiadb sequoiadb = null;
 			// get connection from idle queue
-			sequoiadb = sequoiadbs.poll();
+			sequoiadb = idle_sequoiadbs.poll();
 			// get a valid instance
 			while((sequoiadb != null) && (!sequoiadb.isValid()))
 			{
-				sequoiadb = sequoiadbs.poll();
+				sequoiadb = idle_sequoiadbs.poll();
 			}
 			// if no valid instance in idle queue, let't create one return
 			if (sequoiadb == null)
@@ -202,7 +202,7 @@ public class SequoiadbDatasource {
 				// release the heap memory or other resource holds in the instance
 				sequoiadb.releaseResource();
 				// put it back to idle queue
-				sequoiadbs.add(sequoiadb);
+				idle_sequoiadbs.add(sequoiadb);
 				notify();	
 			}
 		}
@@ -227,7 +227,7 @@ public class SequoiadbDatasource {
 		// connecton, if we don't limit at here, every backgroup thread created in getConnection()
 		// will create a lot of connecton. and as a result, the system's socket resource will run out easily
 		// the max number of the connection in datasource is maxConnectionNum + (maxIdeNum-1) + deltaIncCount
-		if (sequoiadbs.size() >= option.getMaxIdeNum())
+		if (idle_sequoiadbs.size() >= option.getMaxIdeNum())
 			return;
 		if (option.getDeltaIncCount() < 0)
 				throw new BaseException("SDB_INVALIDARG", 
@@ -242,7 +242,7 @@ public class SequoiadbDatasource {
 			for (int i = 0; i < option.getDeltaIncCount(); i++)
 			{
 				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
-				sequoiadbs.add(sequoiadb);
+				idle_sequoiadbs.add(sequoiadb);
 			}
 		} 
 		else 
@@ -251,7 +251,7 @@ public class SequoiadbDatasource {
 					- used_sequoiadbs.size(); i++)
 			{
 				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
-				sequoiadbs.add(sequoiadb);
+				idle_sequoiadbs.add(sequoiadb);
 			}
 		}
 	}
@@ -263,7 +263,7 @@ public class SequoiadbDatasource {
 	synchronized void cleanAbandonConnection() throws BaseException
 	{
 		// when no need to clean
-		if (sequoiadbs.size() == 0)
+		if (idle_sequoiadbs.size() == 0)
 			return ;
 		// check option
 		if (option.getAbandonTime() <= 0)
@@ -275,7 +275,7 @@ public class SequoiadbDatasource {
 					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		long lastTime = 0;
 		long currentTime = System.currentTimeMillis();
-		ListIterator<Sequoiadb> list = sequoiadbs.listIterator(0);
+		ListIterator<Sequoiadb> list = idle_sequoiadbs.listIterator(0);
 		while(list.hasNext())
 		{
 			Sequoiadb db = list.next();
@@ -285,9 +285,9 @@ public class SequoiadbDatasource {
 				list.remove();
 			}
 		}
-		for (int i = 0; i < sequoiadbs.size() - option.getMaxIdeNum(); i++)
+		for (int i = 0; i < idle_sequoiadbs.size() - option.getMaxIdeNum(); i++)
 		{
-			Sequoiadb db = sequoiadbs.poll();
+			Sequoiadb db = idle_sequoiadbs.poll();
 			db.disconnect();
 			i--;
 		}
@@ -320,3 +320,5 @@ class CreateConnectionTask implements Runnable {
 	}
 	
 }
+
+

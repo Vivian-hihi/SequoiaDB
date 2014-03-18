@@ -191,12 +191,14 @@ public class CollectionSpace {
 	}
 
 	/**
-	 * @fn  drop()
+	 * @fn void drop()
 	 * @brief Drop current collectionSpace
-	 * @return the created DBCollection
+	 * @return void
 	 * @exception com.sequoiadb.exception.BaseException
+	 * @deprecated the method will be deprecated in version 2.x, use dropCollectionSpace instead
+	 * @see com.sequoiadb.base.Sequoiadb.dropCollectionSpace
 	 */
-	public void drop() {
+	public void drop() throws BaseException {
 		sequoiadb.dropCollectionSpace(this.name);
 	}
 

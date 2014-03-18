@@ -28,13 +28,13 @@ public class DBCursor {
 	private byte[] currentRaw;
 	private List<byte[]> listRaw;
 	private int index;
-	private boolean hasNext;
+	private boolean hasMore;
 	private byte times;
 	private long contextId;
 	boolean endianConvert;
 
 	DBCursor() {
-		hasNext = false;
+		hasMore = false;
 		sdbMessage = null;
 		connection = null;
 		dbc = null;
@@ -57,7 +57,7 @@ public class DBCursor {
 		listRaw = new ArrayList<byte[]>();
 		reqId = rtnSDBMessage.getRequestID();
 		contextId = rtnSDBMessage.getContextIDList().get(0);
-		hasNext = false;
+		hasMore = false;
 		current = null;
 		times = 0;
 		index = -1;
@@ -72,7 +72,7 @@ public class DBCursor {
 		listRaw = new ArrayList<byte[]>();
 		reqId = rtnSDBMessage.getRequestID();
 		contextId = rtnSDBMessage.getContextIDList().get(0);
-		hasNext = false;
+		hasMore = false;
 		current = null;
 		times = 0;
 		index = -1;
@@ -81,29 +81,29 @@ public class DBCursor {
 
 	/**
 	 * @fn boolean hasNext()
-	 * @brief Judge whether next data exists
+	 * @brief Judge whether the next document exists or not.
 	 * @return true for next data exists while false for not
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public boolean hasNext() throws BaseException {
 		if (connection == null)
-			return hasNext;
+			return hasMore;
 		if (times > 0 || sdbMessage == null)
-			return hasNext;
+			return hasMore;
 		if (list == null || index >= (list.size() - 1)) {
 			getListFromDB(true);
 			index = -1;
 		}
 		if (list == null || list.size() == 0) {
-			hasNext = false;
+			hasMore = false;
 		} else {
-			hasNext = true;
+			hasMore = true;
 		}
 		++times;
-		return hasNext;
+		return hasMore;
 	}
 
-	/**
+	/*
 	 * @fn boolean hasNextRaw()
 	 * @brief Judge whether next raw data exists.
 	 * @return true for next raw data exists while false for not
@@ -111,25 +111,25 @@ public class DBCursor {
 	 */
 	public boolean hasNextRaw() throws BaseException {
 		if (connection == null)
-			return hasNext;
+			return hasMore;
 		if (times > 0 || sdbMessage == null)
-			return hasNext;
+			return hasMore;
 		if (listRaw == null || index >= (listRaw.size() - 1)) {
 			getListFromDB(false);
 			index = -1;
 		}
 		if (listRaw == null || listRaw.size() == 0) {
-			hasNext = false;
+			hasMore = false;
 		} else {
-			hasNext = true;
+			hasMore = true;
 		}
 		++times;
-		return hasNext;
+		return hasMore;
 	}
 
 	/**
 	 * @fn BSONObject getNext()
-	 * @brief Get next data.
+	 * @brief Get next document.
 	 * @return the next date or null if the cursor is empty
 	 *         or the cursor is closed
 	 * @exception com.sequoiadb.exception.BaseException
@@ -141,7 +141,7 @@ public class DBCursor {
 			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
 		if (times == 0)
 			hasNext();
-		if (hasNext) {
+		if (hasMore) {
 			++index;
 			current = list.get(index);
 			times = 0;
@@ -164,7 +164,7 @@ public class DBCursor {
 			throw new BaseException("SDB_RTN_CONTEXT_NOTEXIST");
 		if (times == 0)
 			hasNextRaw();
-		if (hasNext) {
+		if (hasMore) {
 			++index;
 			currentRaw = listRaw.get(index);
 			times = 0;
@@ -175,7 +175,7 @@ public class DBCursor {
 	
 	/**
 	 * @fn BSONObject getCurrent()
-	 * @brief Get current data.
+	 * @brief Get current document.
 	 * @return the current date or null if the cursor is empty
 	 * @exception com.sequoiadb.exception.BaseException
 	 * @note calling this function after the cursor have been closed 
@@ -193,7 +193,7 @@ public class DBCursor {
 	
 	/**
 	 * @fn void updateCurrent(BSONObject modifier, BSONObject hint)
-	 * @brief update current data
+	 * @brief update current document.
 	 * @param modifier
 	 *            the modify rule
 	 * @param hint
@@ -231,12 +231,14 @@ public class DBCursor {
 	/**
 	 * @fn void close()
 	 * @brief Close the cursor.
+	 * @return void
+	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void close() {
+	public void close() throws BaseException {
 		killCursor();
 		sdbMessage = null;
 		dbc = null;
-		hasNext = false;
+		hasMore = false;
 		current = null;
 		list = null;
 		listRaw = null;
@@ -269,7 +271,7 @@ public class DBCursor {
 		int flags = rtnSDBMessage.getFlags();
 		if (flags == SequoiadbConstants.SDB_DMS_EOC // in case end of collection or wrong contextId
 				|| contextId != rtnSDBMessage.getContextIDList().get(0)) {
-			hasNext = false;
+			hasMore = false;
 			index = -1;
 			current = null;
 			list = null;

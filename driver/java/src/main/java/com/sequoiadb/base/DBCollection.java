@@ -54,7 +54,14 @@ public class DBCollection {
 	private IoBuffer insert_buffer;
 	private static final int DEF_BUFFER_LENGTH = 64*1024;
 	private static final int DEF_BULK_BUFFER_LENGTH = 2*1024*1024; 
-
+	
+	/**
+	 * @memberof FLG_INSERT_CONTONDUP 0x00000001
+	 * @brief The flags represent whether bulk insert continue when hitting
+	 *        index key duplicate error
+	 */
+	public final static int FLG_INSERT_CONTONDUP = 0x00000001;
+	
 	public IConnection getConnection() {
 		return connection;
 	}
@@ -62,13 +69,6 @@ public class DBCollection {
 	public void setConnection(IConnection connection) {
 		this.connection = connection;
 	}
-
-	/**
-	 * @memberof FLG_INSERT_CONTONDUP 0x00000001
-	 * @brief The flags represent whether bulk insert continue when hitting
-	 *        index key duplicate error
-	 */
-	public final static int FLG_INSERT_CONTONDUP = 0x00000001;
 
 	/**
 	 * @fn String getName()
@@ -432,7 +432,7 @@ public class DBCollection {
 	 *            Hint
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void delete(String matcher, String hint) {
+	public void delete(String matcher, String hint) throws BaseException {
 		BSONObject ma = null;
 		BSONObject hi = null;
 		if (matcher != null)
@@ -568,213 +568,235 @@ public class DBCollection {
 
 	/**
 	 * @fn DBCursor query()
-	 * @brief Query all datas of current collection
-	 * @return DBCursor in current collection
+	 * @brief Get all documents of current collection.
+	 * @return a DBCursor instance of the result
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query() {
+	public DBCursor query() throws BaseException {
 		return query("", "", "", "", 0, -1);
 	}
 
 	/**
-	 * @fn DBCursor query(DBQuery query)
-	 * @brief Find datas of current collection with DBQuery
-	 * @param query
-	 *            DBQuery with matching condition, selector, order rule, hint,
-	 *            skipRowsCount and returnRowsCount
-	 * @return DBCursor of the datas
+	 * @fn DBCursor query(DBQuery matcher)
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
+	 * @see com.sequoiadb.base.DBQuery
 	 */
-	public DBCursor query(DBQuery query) throws BaseException {
-		if (query == null)
+	public DBCursor query(DBQuery matcher) throws BaseException {
+		if (matcher == null)
 			return query();
-		return query(query.getMatcher(), query.getSelector(),
-				query.getOrderBy(), query.getHint(), query.getSkipRowsCount(),
-				query.getReturnRowsCount(), 0);
+		return query(matcher.getMatcher(), matcher.getSelector(),
+				matcher.getOrderBy(), matcher.getHint(), matcher.getSkipRowsCount(),
+				matcher.getReturnRowsCount(), matcher.getFlag());
 	}
 
 	/**
-	 * @fn DBCursor query(BSONObject query, BSONObject selector, BSONObject
+	 * @fn DBCursor query(BSONObject matcher, BSONObject selector, BSONObject
 	 *     orderBy, BSONObject hint)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
-	 * @return DBCursor of datas
+	 *            the hint, automatically match the optimal hint if null
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(BSONObject query, BSONObject selector,
+	public DBCursor query(BSONObject matcher, BSONObject selector,
 			BSONObject orderBy, BSONObject hint) throws BaseException {
-		return query(query, selector, orderBy, hint, 0, -1, 0);
+		return query(matcher, selector, orderBy, hint, 0, -1, 0);
 	}
 
 	/**
-	 * @fn DBCursor query(BSONObject query, BSONObject selector, BSONObject
-	 *     orderBy, BSONObject hint)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @fn DBCursor query(BSONObject matcher, BSONObject selector, BSONObject
+	 *     orderBy, BSONObject hint, int flag)
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
-	 * @return DBCursor of datas
+	 *            the hint, automatically match the optimal hint if null
+	 * @param flag 
+	 *            the flag is used to choose the way to query, the optional options are as below:  
+     * <ul>
+     * <li>BDQuery.FLG_QUERY_STRINGOUT
+     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
+     * <li>BDQuery.FLG_QUERY_PARALLED
+     * </ul>  
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(BSONObject query, BSONObject selector,
+	public DBCursor query(BSONObject matcher, BSONObject selector,
 			BSONObject orderBy, BSONObject hint, int flag) throws BaseException {
-		return query(query, selector, orderBy, hint, 0, -1, flag);
+		return query(matcher, selector, orderBy, hint, 0, -1, flag);
 	}
 	
 	/**
-	 * @fn DBCursor query(String query, String selector, String orderBy, String
+	 * @fn DBCursor query(String matcher, String selector, String orderBy, String
 	 *     hint)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
-	 * @param flag
-	 *            The flag 0: bson, 1:raw byte
-	 * @return DBCursor of datas
+	 *            the hint, automatically match the optimal hint if null
+	 * @param skipRows
+	 *            skip the first numToSkip documents, never skip if this parameter is 0
+	 * @param returnRows
+	 *            only return returnRows documents, return all if this parameter is -1
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(String query, String selector, String orderBy,
+	public DBCursor query(String matcher, String selector, String orderBy,
 			String hint) throws BaseException {
-		return query(query, selector, orderBy, hint, 0);
+		return query(matcher, selector, orderBy, hint, 0);
 	}
 	/**
-	 * @fn DBCursor query(String query, String selector, String orderBy, String
-	 *     hint)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @fn DBCursor query(String matcher, String selector, String orderBy, String
+	 *     hint, int flag)
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
-	 * @return DBCursor of datas
+	 *            the hint, automatically match the optimal hint if null
+	 * @param flag 
+	 *            the flag is used to choose the way to query, the optional options are as below:  
+     * <ul>
+     * <li>BDQuery.FLG_QUERY_STRINGOUT
+     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
+     * <li>BDQuery.FLG_QUERY_PARALLED
+     * </ul>  
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(String query, String selector, String orderBy,
+	public DBCursor query(String matcher, String selector, String orderBy,
 			String hint, int flag) throws BaseException {
-		BSONObject qu = null;
+		BSONObject ma = null;
 		BSONObject se = null;
 		BSONObject or = null;
 		BSONObject hi = null;
-		if (query != null)
-			qu = (BSONObject) JSON.parse(query);
+		if (matcher != null)
+			ma = (BSONObject) JSON.parse(matcher);
 		if (selector != null)
 			se = (BSONObject) JSON.parse(selector);
 		if (orderBy != null && !orderBy.equals(""))
 			or = (BSONObject) JSON.parse(orderBy);
 		if (hint != null)
 			hi = (BSONObject) JSON.parse(hint);
-		return query(qu, se, or, hi, 0, -1, flag);
+		return query(ma, se, or, hi, 0, -1, flag);
 	}
 
 	/**
-	 * @fn DBCursor query(String query, String selector, String orderBy,
+	 * @fn DBCursor query(String matcher, String selector, String orderBy,
 			String hint, long skipRows, long returnRows)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
+	 *            the hint, automatically match the optimal hint if null
 	 * @param skipRows
-	 *            The rows to be skipped
+	 *            skip the first numToSkip documents, never skip if this parameter is 0
 	 * @param returnRows
-	 *            The rows to return
-	 * @return DBCursor of datas
+	 *            only return returnRows documents, return all if this parameter is -1
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(String query, String selector, String orderBy,
+	public DBCursor query(String matcher, String selector, String orderBy,
 			String hint, long skipRows, long returnRows) throws BaseException {
-		BSONObject qu = null;
+		BSONObject ma = null;
 		BSONObject se = null;
 		BSONObject or = null;
 		BSONObject hi = null;
-		if (query != null)
-			qu = (BSONObject) JSON.parse(query);
+		if (matcher != null)
+			ma = (BSONObject) JSON.parse(matcher);
 		if (selector != null)
 			se = (BSONObject) JSON.parse(selector);
 		if (orderBy != null)
 			or = (BSONObject) JSON.parse(orderBy);
 		if (hint != null)
 			hi = (BSONObject) JSON.parse(hint);
-		return query(qu, se, or, hi, skipRows, returnRows, 0);
+		return query(ma, se, or, hi, skipRows, returnRows, 0);
 	}
 	
 	
 	/**
-	 * @fn DBCursor query(BSONObject query, BSONObject selector, BSONObject
+	 * @fn DBCursor query(BSONObject matcher, BSONObject selector, BSONObject
 	 *     orderBy, BSONObject hint, long skipRows, long returnRows)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
+	 *            the hint, automatically match the optimal hint if null
 	 * @param skipRows
-	 *            The rows to be skipped
+	 *            skip the first numToSkip documents, never skip if this parameter is 0
 	 * @param returnRows
-	 *            The rows to return
-	 * @return DBCursor of datas
+	 *            only return returnRows documents, return all if this parameter is -1
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(BSONObject query, BSONObject selector,
-			BSONObject orderBy, BSONObject hint, long skipRows, long returnRows) {
-		return query(query, selector, orderBy, hint, skipRows, returnRows, 0);
+	public DBCursor query(BSONObject matcher, BSONObject selector,
+			BSONObject orderBy, BSONObject hint, long skipRows, long returnRows) throws BaseException {
+		return query(matcher, selector, orderBy, hint, skipRows, returnRows, 0);
 	}
 
 	/**
-	 * @fn DBCursor query(BSONObject query, BSONObject selector, BSONObject
-	 *     orderBy, BSONObject hint, long skipRows, long returnRows)
-	 * @brief Find datas of current collection
-	 * @param query
-	 *            The matching condition
+	 * @fn DBCursor query(BSONObject matcher, BSONObject selector,
+	 *		              BSONObject orderBy, BSONObject hint,
+	 *		              long skipRows, long returnRows,
+	 *		              int flag)
+	 * @brief Get the matching documents in current collection. 
+     * @param matcher 
+     *            the matching rule, return all the documents if null
 	 * @param selector
-	 *            The selective rule
+	 *            the selective rule, return the whole document if null
 	 * @param orderBy
-	 *            The ordered rule
+	 *            the ordered rule, never sort if null
 	 * @param hint
-	 *            Hint
+	 *            the hint, automatically match the optimal hint if null
 	 * @param skipRows
-	 *            The rows to be skipped
+	 *            skip the first numToSkip documents, never skip if this parameter is 0
 	 * @param returnRows
-	 *            The rows to return
-	 * @param flag
-	 *            The flag to use which form for record data
-	 *            0: bson stream
-	 *            1: binary data stream, form: col1|col2|col3
-	 * @return DBCursor of datas or null
+	 *            only return returnRows documents, return all if this parameter is -1
+	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+     * <ul>
+     * <li>BDQuery.FLG_QUERY_STRINGOUT
+     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
+     * <li>BDQuery.FLG_QUERY_PARALLED
+     * </ul>  
+	 * @return a DBCursor instance of the result or null if no any matched document
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor query(BSONObject query, BSONObject selector,
-			BSONObject orderBy, BSONObject hint, long skipRows, long returnRows, int flag) {
+	public DBCursor query(BSONObject matcher, BSONObject selector,
+			              BSONObject orderBy, BSONObject hint,
+			              long skipRows, long returnRows,
+			              int flag) throws BaseException {
 		BSONObject dummy = new BasicBSONObject();
-		if (query == null)
-			query = dummy;
+		if (matcher == null)
+			matcher = dummy;
 		if (selector == null)
 			selector = dummy;
 		if (orderBy == null)
@@ -783,15 +805,15 @@ public class DBCollection {
 			hint = dummy;
 		if (returnRows == 0)
 			returnRows = -1;
-		SDBMessage rtnSDBMessage = adminCommand(collectionFullName, query,
+		SDBMessage rtnSDBMessage = adminCommand(collectionFullName, matcher,
 				selector, orderBy, hint, skipRows, returnRows, flag);
 		DBCursor cursor = null;
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
-				return cursor;
+				return null;
 			} else {
-				throw new BaseException(flags, query, selector, orderBy, hint,
+				throw new BaseException(flags, matcher, selector, orderBy, hint,
 						skipRows, returnRows);
 			}
 		}
@@ -799,6 +821,51 @@ public class DBCollection {
 		return cursor;
 	}
 
+	/**
+	 * @fn BSONObject queryOne(BSONObject matcher, BSONObject selector, BSONObject
+	 *     orderBy, BSONObject hint, int flag)
+	 * @brief Returns one matched document from current collection.
+     * @param matcher 
+     *            the matching rule, return all the documents if null
+	 * @param selector
+	 *            the selective rule, return the whole document if null
+	 * @param orderBy
+	 *            the ordered rule, never sort if null
+	 * @param hint
+	 *            the hint, automatically match the optimal hint if null
+	 * @param flag the flag is used to choose the way to query, the optional options are as below:  
+     * <ul>
+     * <li>BDQuery.FLG_QUERY_STRINGOUT
+     * <li>BDQuery.FLG_QUERY_FORCE_HINT 
+     * <li>BDQuery.FLG_QUERY_PARALLED
+     * </ul>
+	 * @return the matched document or null if no such document
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public BSONObject queryOne(BSONObject matcher, BSONObject selector,
+			                   BSONObject orderBy, BSONObject hint,
+			                   int flag) throws BaseException {
+		DBCursor cursor = null;
+		try {
+			cursor = query(matcher, selector, orderBy, hint, 0, 1, flag);
+		} catch (BaseException e) {
+			throw e;
+		}
+		return cursor.getNext();
+	}
+	
+	/**
+	 * @fn BSONObject queryOne(BSONObject matcher, BSONObject selector, BSONObject
+	 *     orderBy, BSONObject hint, int flag)
+	 * @brief Returns one document from current collection.
+	 * @return the document or null if no any document in current collection
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public BSONObject queryOne() throws BaseException {
+		BSONObject empty = new BasicBSONObject();
+		return queryOne(empty, empty, empty, empty, 0);
+	}
+	
 	/**
 	 * @fn DBCursor getIndexes()
 	 * @brief Get all the indexes of current collection
@@ -949,9 +1016,9 @@ public class DBCollection {
 	}
 	
 	/**
-	 * @fn long getCount(String condition)
-	 * @brief Get the count of records in current collection.
-	 * @return The count of matching BSONObjects
+	 * @fn long getCount()
+	 * @brief Get the amount of documents in current collection.
+	 * @return the amount of matching documents
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public long getCount() throws BaseException {
@@ -959,39 +1026,39 @@ public class DBCollection {
 	}
 	
 	/**
-	 * @fn long getCount(String condition)
-	 * @brief Get the count of matching in current collection
-	 * @param condition
-	 *            The matching rule
-	 * @return The count of matching BSONObjects
+	 * @fn long getCount(String matcher)
+	 * @brief Get the amount of matching documnets in current collection.
+	 * @param matcher
+	 *            the matching rule
+	 * @return the amount of matching documents
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public long getCount(String condition) throws BaseException {
+	public long getCount(String matcher) throws BaseException {
 		BSONObject con = null;
-		if (condition != null)
-			con = (BSONObject) JSON.parse(condition);
+		if (matcher != null)
+			con = (BSONObject) JSON.parse(matcher);
 		return getCount(con);
 	}
 	
 	/**
-	 * @fn long getCount(BSONObject condition)
-	 * @brief Get the count of matching BSONObject in current collection
-	 * @param condition
+	 * @fn long getCount(BSONObject matcher)
+	 * @brief Get the amount of matching documents in current collection.
+	 * @param matcher
 	 *            The matching rule
-	 * @return The count of matching BSONObjects
+	 * @return the amount of matching documents
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public long getCount(BSONObject condition) throws BaseException {
+	public long getCount(BSONObject matcher) throws BaseException {
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
 				+ SequoiadbConstants.GET_COUNT;
 		BSONObject dummyObj = new BasicBSONObject();
 		BSONObject newobj = new BasicBSONObject();
 		newobj.put(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-		SDBMessage rtnSDBMessage = adminCommand(commandString, condition,
+		SDBMessage rtnSDBMessage = adminCommand(commandString, matcher,
 				dummyObj, dummyObj, newobj, -1, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0)
-			throw new BaseException(flags, condition);
+			throw new BaseException(flags, matcher);
 
 		List<BSONObject> rtn = getMoreCommand(rtnSDBMessage);
 		return Long.valueOf(rtn.get(0).get(SequoiadbConstants.FIELD_TOTAL)
@@ -1077,7 +1144,7 @@ public class DBCollection {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void split(String sourceGroupName, String destGroupName,
-			BSONObject splitCondition, BSONObject splitEndCondition) {
+			BSONObject splitCondition, BSONObject splitEndCondition) throws BaseException {
 		// check arguments
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
@@ -1115,7 +1182,7 @@ public class DBCollection {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void split(String sourceGroupName, String destGroupName,
-			double percent) {
+			double percent) throws BaseException {
 		// check arguments
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
@@ -1162,7 +1229,7 @@ public class DBCollection {
 	public long splitAsync(String sourceGroupName,
 			               String destGroupName,
 			               BSONObject splitCondition,
-			               BSONObject splitEndCondition) {
+			               BSONObject splitEndCondition) throws BaseException {
 		// check arguments
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
@@ -1214,7 +1281,7 @@ public class DBCollection {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public long splitAsync(String sourceGroupName, String destGroupName,
-			               double percent) {
+			               double percent) throws BaseException {
 		// check arguments
 		if((null == sourceGroupName || sourceGroupName.equals("")) ||
 		   (null == destGroupName || destGroupName.equals("")) ||
@@ -1323,7 +1390,7 @@ public class DBCollection {
 	 */
 	public DBCursor getQueryMeta(BSONObject query,BSONObject orderBy,
 			                     BSONObject hint,long skipRows, 
-			                     long returnRows, int flag) {
+			                     long returnRows, int flag) throws BaseException {
 		BSONObject dummy = new BasicBSONObject();
 		if (query == null)
 			query = dummy;
@@ -1352,8 +1419,8 @@ public class DBCollection {
 		return cursor;
 	}
 	
-	/*
-	 * @fn void attachCollection ( String subClFullName,BSONObject options )
+	/**
+	 * @fn void attachCollection( String subClFullName,BSONObject options )
 	 * @brief Attach the specified collection.
 	 * @param subClFullName
 	 *            The full name of the subcollection
@@ -1362,7 +1429,7 @@ public class DBCollection {
 	 *            eg: {"LowBound":{a:1},"UpBound":{a:100}}
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void attachCollection( String subClFullName,BSONObject options ) {
+	public void attachCollection( String subClFullName,BSONObject options ) throws BaseException {
 		// check arguments
 		if ( null == subClFullName || subClFullName.equals("") ||
 		     null == options ||
@@ -1387,14 +1454,14 @@ public class DBCollection {
 		}
 	}
 	
-	/*
-	 * @fn void detachCollection ( String subClFullName )
+	/**
+	 * @fn void detachCollection( String subClFullName )
 	 * @brief Dettach the specified collection.
 	 * @param subClFullName
 	 *            The full name of the subcollection
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void detachCollection( String subClFullName ) {
+	public void detachCollection( String subClFullName ) throws BaseException {
 		// check arguments
 		if ( null == subClFullName || subClFullName.equals("") ||
 		     null == collectionFullName || collectionFullName.equals("") ) {
