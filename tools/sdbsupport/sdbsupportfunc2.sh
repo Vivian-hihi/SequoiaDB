@@ -52,8 +52,26 @@ function sdbExpectSshHosts()
 function sdbTarGzPack()
 {
    HOST=$1
-   tar -zcvf $HOST.tar.gz HARDINFO/ SDBNODES/ OSINFO/ SDBSNAPS/
-   rm -rf HARDINFO/ SDBNODES/ OSINFO/ SDBSNAPS/
+   date=`date '+%m%d%y-%H%M%S'`
+
+   Folder="$HOST-$date"
+
+   mkdir -p $Folder/
+   if [ $? -ne 0 ] ; then
+      echo "Failed to create foler !"
+      exit 1
+   fi
+   mv HARDINFO/ SDBNODES/ OSINFO/ SDBSNAPS/ ./$Folder/
+   if [ $? -ne 0 ] ; then
+      echo "Failed to move the collected information to folder"
+      exit 1
+   fi
+   tar -zcvf $Folder.tar.gz ./$Folder/
+   if [ $? -ne 0 ] ; then
+      echo "Failed to packaging and compression"
+      exit 1
+   fi
+   rm -rf ./$Folder/
 }
 
 function sdbExpectScpHosts()
