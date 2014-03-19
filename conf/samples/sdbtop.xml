@@ -18,6 +18,10 @@
          <foreGroundColor>1</foreGroundColor>
          <backGroundColor>0</backGroundColor>
       </colourOfTheChange>
+      <colourOfTheDividingLine>
+         <foreGroundColor>7</foreGroundColor>
+         <backGroundColor>0</backGroundColor>
+      </colourOfTheDividingLine>
       <KeySuites>
          <keySuiteLength>1</keySuiteLength>
          <KeySuite>
