@@ -74,7 +74,7 @@ namespace po = boost::program_options;
 #define SDBTOP_REFRESH_QUIT_HELP "Refresh: F5, Quit: q, Help: h"
 #define NULLSTRING ""
 #define STRING_NULL "NULL"
-
+#define DIVIDINGCHAR "-"
 #define OUTPUT_FORMATTING "%.3f"
 
 #define LENGTH_OF_RESULTBUFFER 256
@@ -335,6 +335,8 @@ const string DISPLAYMODECHOOSER[DISPLAYMODENUMBER] = { ABSOLUTE,
 #define REFRESHINTERVAL "refreshInterval"
 #define COLOUROFTHECHANGE_FOREGROUNDCOLOR "colourOfTheChange.foreGroundColor"
 #define COLOUROFTHECHANGE_BACKGROUNDCOLOR "colourOfTheChange.backGroundColor"
+#define COLOUROFTHEDIVIDINGLINE_FOREGROUNDCOLOR "colourOfTheDividingLine.foreGroundColor"
+#define COLOUROFTHEDIVIDINGLINE_BACKGROUNDCOLOR "colourOfTheDividingLine.backGroundColor"
 #define COLOUROFTHEMAX_FOREGROUNDCOLOR "colourOfTheMax.foreGroundColor"
 #define COLOUROFTHEMAX_BACKGROUNDCOLOR "colourOfTheMax.backGroundColor"
 #define COLOUROFTHEMIN_FOREGROUNDCOLOR "colourOfTheMin.foreGroundColor"
@@ -713,6 +715,7 @@ struct InputPanel
    Colours colourOfTheMax ;
    Colours colourOfTheMin ;
    Colours colourOfTheChange ;
+   Colours colourOfTheDividingLine ;
    string sortingWay ;
    string sortingField ;
    string filterCondition ;
@@ -858,6 +861,30 @@ static inline std::string &trim ( std::string &s )
    return ltrim ( rtrim ( s ) ) ;
 }
 
+static inline std::string &doubleQuotesTrim( std::string &s )
+{
+   const INT32 strLength = s.length() ;
+   if( 2 >= strLength )
+   {
+      return s ;
+   }
+   if( '\"' == s[0] && '\"' == s[strLength-1] )
+   {
+      s = s.substr( 1, strLength-2 ) ;
+   }
+   return s ;
+}
+
+static inline std::string getDividingLine( string dividingChar,
+                                           INT32 dividingLength )
+{
+   string line = NULLSTRING ;
+   while( dividingLength-- )
+   {
+      line += dividingChar ;
+   }
+   return line ;
+}
 
 void getnstr_SDBTOP( CHAR *buf, INT32 bufLength )
 {
@@ -1944,6 +1971,14 @@ INT32 storeRootWindow( RootWindow &root )
                   child_event->
                         second.get<INT32>(
                               REFRESHINTERVAL ) ;
+            input.colourOfTheDividingLine.foreGroundColor =
+                  child_event->
+                        second.get<INT32>(
+                              COLOUROFTHEDIVIDINGLINE_FOREGROUNDCOLOR ) ;
+            input.colourOfTheDividingLine.backGroundColor =
+                  child_event->
+                        second.get<INT32>(
+                              COLOUROFTHEDIVIDINGLINE_BACKGROUNDCOLOR ) ;
             input.colourOfTheChange.foreGroundColor =
                   child_event->
                         second.get<INT32>(
@@ -2877,226 +2912,225 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
             result = element.toString( FALSE ) ;
          }
          input.cur_absoluteMap[new_+sourceField] = result ;
-         goto done ;
       }
-
-      // before compare with last snapshot , get the baseElement
-      // judge whether is the same bsonobj on the basis of baseElement
-      baseElement = bsonobj.getFieldDotted( baseFieldbuf ) ;
-      new_ = baseElement.toString( FALSE ) ;
-      //judge the element whether exist in last snapshot
-      while( pos_last < input.last_Snapshot.size() )
-      {
-         baseElement_last =
-               input.last_Snapshot[pos_last].getFieldDotted(
-                     baseFieldbuf ) ;
-         old_ = baseElement_last.toString( FALSE ) ;
-         if( new_ == old_ )
-            break ;
-         ++pos_last ;
-      }
-      //when can't match element in the last snapshot
-      if( pos_last == input.last_Snapshot.size() )
-      {
-         //to deal with the result when displayMode is DELTA or AVERAGE
-         //but not found in the last snapshot
-         if( DELTA == displayMode || AVERAGE== displayMode )
-         {
-            ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, "%d", 0 ) ;
-            result = resultBuf ;
-            input.cur_deltaMap[new_+sourceField] = result ;
-            input.cur_averageMap[new_+sourceField] = result ;
-         }
-         //to deal with the result when displayMode is ABSOLUTE
-         //but not found in the last snapshot
-         else if( ABSOLUTE == displayMode )
-         {
-            if( element.isNumber() )
-            {
-               elementDouble = element.Number() ;
-               if( NumberLong == element.type() ||
-                   NumberInt == element.type() )
-               {
-                  result = element.toString( FALSE ) ;
-               }
-               else
-               {
-                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
-                               OUTPUT_FORMATTING, elementDouble ) ;
-                  result = resultBuf ;
-               }
-               // absoluteMaxLimitValue == 0, don't deal with
-               if( absoluteMaxLimitValue != 0 &&
-                   elementDouble > absoluteMaxLimitValue )
-               {
-                  colourPairNumber = maxPairNumber ;
-               }
-               // absoluteMinLimitValue == 0, don't deal with
-               else if( absoluteMinLimitValue != 0 &&
-                        elementDouble < absoluteMinLimitValue )
-               {
-                  colourPairNumber = minPairNumber ;
-               }
-            }
-            else
-            {
-               result = element.toString( FALSE ) ;
-            }
-            input.cur_absoluteMap[new_+sourceField] = result ;
-            goto done ;
-         }
-         else
-         {
-            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            ossSnprintf( errStr, errStrLength,
-                         "%s getResultFromBSONobj failed,"
-                         "displayMode = %s"OSS_NEWLINE,
-                         errStrBuf, displayMode.c_str() ) ;
-            rc = SDB_ERROR ;
-            goto error ;
-         }
-      }
-      // had found it on the last snapshot
       else
       {
-         //BSONObjIterator iter(abc);
-         //while(iter.more())
-         //{
-            //BSONElement be;
-            //if (be.type()  == Array)
-            //{
-               //BSONObj obj = be.embeddedObject() ;
-            //}
-         //}
-         last_element =
-               input.last_Snapshot[pos_last].getFieldDotted(
-                     sourceFieldbuf ) ;
-         //to deal with the result when displayMode is DELTA
-         // DELTA value is the result of that
-         // current value subtract last value
-         if( DELTA == displayMode )
+         // before compare with last snapshot , get the baseElement
+         // judge whether is the same bsonobj on the basis of baseElement
+         baseElement = bsonobj.getFieldDotted( baseFieldbuf ) ;
+         new_ = baseElement.toString( FALSE ) ;
+         //judge the element whether exist in last snapshot
+         while( pos_last < input.last_Snapshot.size() )
          {
-            if( element.isNumber() )
+            baseElement_last =
+                  input.last_Snapshot[pos_last].getFieldDotted(
+                        baseFieldbuf ) ;
+            old_ = baseElement_last.toString( FALSE ) ;
+            if( new_ == old_ )
+               break ;
+            ++pos_last ;
+         }
+         //when can't match element in the last snapshot
+         if( pos_last == input.last_Snapshot.size() )
+         {
+            //to deal with the result when displayMode is DELTA or AVERAGE
+            //but not found in the last snapshot
+            if( DELTA == displayMode || AVERAGE== displayMode )
             {
-               elementDouble = element.Number() - last_element.Number() ;
-               if( element.type() == NumberInt || element.type() == NumberLong )
+               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, "%d", 0 ) ;
+               result = resultBuf ;
+               input.cur_deltaMap[new_+sourceField] = result ;
+               input.cur_averageMap[new_+sourceField] = result ;
+            }
+            //to deal with the result when displayMode is ABSOLUTE
+            //but not found in the last snapshot
+            else if( ABSOLUTE == displayMode )
+            {
+               if( element.isNumber() )
                {
-                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
-                               "%d",
-                               element.Long() - last_element.Long() ) ;
+                  elementDouble = element.Number() ;
+                  if( NumberLong == element.type() ||
+                      NumberInt == element.type() )
+                  {
+                     result = element.toString( FALSE ) ;
+                  }
+                  else
+                  {
+                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                                  OUTPUT_FORMATTING, elementDouble ) ;
+                     result = resultBuf ;
+                  }
+                  // absoluteMaxLimitValue == 0, don't deal with
+                  if( absoluteMaxLimitValue != 0 &&
+                      elementDouble > absoluteMaxLimitValue )
+                  {
+                     colourPairNumber = maxPairNumber ;
+                  }
+                  // absoluteMinLimitValue == 0, don't deal with
+                  else if( absoluteMinLimitValue != 0 &&
+                           elementDouble < absoluteMinLimitValue )
+                  {
+                     colourPairNumber = minPairNumber ;
+                  }
                }
                else
-               {
-                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
-                               OUTPUT_FORMATTING, elementDouble ) ;
-               }
-               result = resultBuf ;
-               if( deltaMaxLimitValue != 0 &&
-                   elementDouble > deltaMaxLimitValue )
-               {
-                  colourPairNumber = maxPairNumber ;
-               }
-               else if( deltaMinLimitValue!= 0 &&
-                        elementDouble < deltaMinLimitValue )
-               {
-                  colourPairNumber = minPairNumber ;
-               }
-               else if( result != input.last_deltaMap[new_+sourceField] )
-               {
-                  colourPairNumber = changePairNumber ;
-               }
-            }
-            else
-            {
-               result = element.toString( FALSE ) ;
-            }
-            input.cur_deltaMap[new_+sourceField] = result ;
-            goto done ;
-         }
-         //to deal with the result when displayMode is ABSOLUTE
-         else if( ABSOLUTE == displayMode )
-         {
-            if( element.isNumber() )
-            {
-               elementDouble = element.Number() ;
-               if( NumberLong == element.type() ||
-                   NumberInt == element.type() )
                {
                   result = element.toString( FALSE ) ;
                }
+               input.cur_absoluteMap[new_+sourceField] = result ;
+            }
+            else
+            {
+               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+               ossSnprintf( errStr, errStrLength,
+                            "%s getResultFromBSONobj failed,"
+                            "displayMode = %s"OSS_NEWLINE,
+                            errStrBuf, displayMode.c_str() ) ;
+               rc = SDB_ERROR ;
+               goto error ;
+            }
+         }
+         // had found it on the last snapshot
+         else
+         {
+            //BSONObjIterator iter(abc);
+            //while(iter.more())
+            //{
+               //BSONElement be;
+               //if (be.type()  == Array)
+               //{
+                  //BSONObj obj = be.embeddedObject() ;
+               //}
+            //}
+            last_element =
+                  input.last_Snapshot[pos_last].getFieldDotted(
+                        sourceFieldbuf ) ;
+            //to deal with the result when displayMode is DELTA
+            // DELTA value is the result of that
+            // current value subtract last value
+            if( DELTA == displayMode )
+            {
+               if( element.isNumber() )
+               {
+                  elementDouble = element.Number() - last_element.Number() ;
+                  if( element.type() == NumberInt ||
+                      element.type() == NumberLong )
+                  {
+                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                                  "%d",
+                                  element.Long() - last_element.Long() ) ;
+                  }
+                  else
+                  {
+                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                                  OUTPUT_FORMATTING, elementDouble ) ;
+                  }
+                  result = resultBuf ;
+                  if( deltaMaxLimitValue != 0 &&
+                      elementDouble > deltaMaxLimitValue )
+                  {
+                     colourPairNumber = maxPairNumber ;
+                  }
+                  else if( deltaMinLimitValue!= 0 &&
+                           elementDouble < deltaMinLimitValue )
+                  {
+                     colourPairNumber = minPairNumber ;
+                  }
+                  else if( result != input.last_deltaMap[new_+sourceField] )
+                  {
+                     colourPairNumber = changePairNumber ;
+                  }
+               }
                else
                {
+                  result = element.toString( FALSE ) ;
+               }
+               input.cur_deltaMap[new_+sourceField] = result ;
+            }
+            //to deal with the result when displayMode is ABSOLUTE
+            else if( ABSOLUTE == displayMode )
+            {
+               if( element.isNumber() )
+               {
+                  elementDouble = element.Number() ;
+                  if( NumberLong == element.type() ||
+                      NumberInt == element.type() )
+                  {
+                     result = element.toString( FALSE ) ;
+                  }
+                  else
+                  {
+                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                                  OUTPUT_FORMATTING, elementDouble ) ;
+                     result = resultBuf ;
+                  }
+                  if( absoluteMaxLimitValue != 0 &&
+                      elementDouble > absoluteMaxLimitValue )
+                  {
+                     colourPairNumber = maxPairNumber ;
+                  }
+                  else if( absoluteMinLimitValue != 0 &&
+                           elementDouble < absoluteMinLimitValue )
+                  {
+                     colourPairNumber = minPairNumber ;
+                  }
+                  else if( result !=
+                           input.last_absoluteMap[new_+sourceField] )
+                  {
+                     colourPairNumber = changePairNumber ;
+                  }
+               }
+               else
+               {
+                  result = element.toString( FALSE ) ;
+               }
+               input.cur_absoluteMap[new_+sourceField] = result ;
+            }
+            //to deal with the result when displayMode is AVERAGE
+            // DELTA value is the result of that
+            // current value subtract last value, and then use the result
+            // divided by the time interval
+            else if( AVERAGE == displayMode )
+            {
+               if( element.isNumber() )
+               {
+                  elementDouble =
+                        ( element.Number() - last_element.Number() ) /
+                         root.input.refreshInterval ;
                   ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
                                OUTPUT_FORMATTING, elementDouble ) ;
                   result = resultBuf ;
+                  if( averageMaxLimitValue!= 0 &&
+                      elementDouble > averageMaxLimitValue )
+                  {
+                     colourPairNumber = maxPairNumber ;
+                  }
+                  else if( averageMinLimitValue!= 0 &&
+                           elementDouble < averageMinLimitValue )
+                  {
+                     colourPairNumber = minPairNumber ;
+                  }
+                  else if( result != input.last_averageMap[new_+sourceField] )
+                  {
+                     colourPairNumber = changePairNumber ;
+                  }
                }
-               if( absoluteMaxLimitValue != 0 &&
-                   elementDouble > absoluteMaxLimitValue )
+               else
                {
-                  colourPairNumber = maxPairNumber ;
+                  result = element.toString( FALSE ) ;
                }
-               else if( absoluteMinLimitValue != 0 &&
-                        elementDouble < absoluteMinLimitValue )
-               {
-                  colourPairNumber = minPairNumber ;
-               }
-               else if( result !=
-                        input.last_absoluteMap[new_+sourceField] )
-               {
-                  colourPairNumber = changePairNumber ;
-               }
+               input.cur_averageMap[new_+sourceField] = result ;
             }
             else
             {
-               result = element.toString( FALSE ) ;
+               ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
+               ossSnprintf( errStr, errStrLength,
+                            "%s getResultFromBSONobj failed,"
+                            "displayMode = %s"OSS_NEWLINE,
+                            errStrBuf, displayMode.c_str() ) ;
+               rc = SDB_ERROR ;
+               goto error ;
             }
-            input.cur_absoluteMap[new_+sourceField] = result ;
-            goto done ;
-         }
-         //to deal with the result when displayMode is AVERAGE
-         // DELTA value is the result of that
-         // current value subtract last value, and then use the result
-         // divided by the time interval
-         else if( AVERAGE == displayMode )
-         {
-            if( element.isNumber() )
-            {
-               elementDouble = ( element.Number() - last_element.Number() ) /
-                                     root.input.refreshInterval ;
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
-                            OUTPUT_FORMATTING, elementDouble ) ;
-               result = resultBuf ;
-               if( averageMaxLimitValue!= 0 &&
-                   elementDouble > averageMaxLimitValue )
-               {
-                  colourPairNumber = maxPairNumber ;
-               }
-               else if( averageMinLimitValue!= 0 &&
-                        elementDouble < averageMinLimitValue )
-               {
-                  colourPairNumber = minPairNumber ;
-               }
-               else if( result != input.last_averageMap[new_+sourceField] )
-               {
-                  colourPairNumber = changePairNumber ;
-               }
-            }
-            else
-            {
-               result = element.toString( FALSE ) ;
-            }
-            input.cur_averageMap[new_+sourceField] = result ;
-            goto done ;
-         }
-         else
-         {
-            ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-            ossSnprintf( errStr, errStrLength,
-                         "%s getResultFromBSONobj failed,"
-                         "displayMode = %s"OSS_NEWLINE,
-                         errStrBuf, displayMode.c_str() ) ;
-            rc = SDB_ERROR ;
-            goto error ;
          }
       }
    }
@@ -3110,6 +3144,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
       rc = SDB_ERROR ;
       goto error ;
    }
+   
+   // trim "\""
+   doubleQuotesTrim( result ) ;
 done :
    if( resultBuf )
       SDB_OSS_FREE( resultBuf ) ;
@@ -3411,9 +3448,9 @@ INT32 Event::getCurSnapshot()
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getCurSnapshot failed,"
-                "wrong snapshotModeChooser = %s"OSS_NEWLINE,
-                errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
+                   "%s getCurSnapshot failed,"
+                   "wrong snapshotModeChooser = %s"OSS_NEWLINE,
+                   errStrBuf, root.input.snapshotModeChooser.c_str() ) ;
       rc = SDB_ERROR ;
       goto error ;
    }
@@ -3421,9 +3458,9 @@ INT32 Event::getCurSnapshot()
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s getCurSnapshot failed,can't getSnapshot,"
-                "rc = %d"OSS_NEWLINE,
-                errStrBuf, rc ) ;
+                   "%s getCurSnapshot failed,can't getSnapshot,"
+                   "rc = %d"OSS_NEWLINE,
+                   errStrBuf, rc ) ;
       goto error ;
    }
 
@@ -3462,10 +3499,10 @@ INT32 Event::getCurSnapshot()
 
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,
-                "%s refreshDisplayContent failed, "
-                "snapShotCursor.next( bsonobj ) faild,"
-                "rc = %d"OSS_NEWLINE,
-                errStrBuf, rc ) ;
+                   "%s refreshDisplayContent failed, "
+                   "snapShotCursor.next( bsonobj ) faild,"
+                   "rc = %d"OSS_NEWLINE,
+                   errStrBuf, rc ) ;
       goto error ;
    }
    // if rc == SDB_DMS_EOC,
@@ -4194,7 +4231,9 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS, Position &position,
    INT32 start_Y                 = Y ;
    INT32 start_X                 = X ;
 
-
+   string dividingChar           = DIVIDINGCHAR ;
+   INT32 dividingColour          = 0 ;
+   string dividingLine           = NULLSTRING ;
    // store the field title
    string fieldName              = NULLSTRING ;
     // store the field colour
@@ -4230,6 +4269,7 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS, Position &position,
       goto error ;
 
    }
+   getColourPN( input.colourOfTheDividingLine, dividingColour );
    FLength = DS.actualFixedFieldLength ;
    MLength = DS.actualMobileFieldLength ;
    ossMemset( serialNumber, 0, SERIALNUMBER_LENGTH ) ;
@@ -4290,6 +4330,17 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS, Position &position,
          goto error;
       }
       attroff( COLOR_PAIR( pairNumber ) ) ;
+      
+      // print the dividingLine
+      attron( COLOR_PAIR( dividingColour ) ) ;
+      dividingLine = getDividingLine( DIVIDINGCHAR, Fixed->contentLength ) ;
+      rc = mvprintw_SDBTOP( dividingLine, Fixed->contentLength,
+                            Fixed->alignment, start_Y+1, start_X ) ;
+      if( rc )
+      {
+         goto error;
+      }
+      attroff( COLOR_PAIR( dividingColour ) ) ;
       start_X += Fixed->contentLength ;
       ++start_X ; // add separate pace
    }
@@ -4322,12 +4373,23 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS, Position &position,
          goto error ;
       }
       attroff( COLOR_PAIR( pairNumber ) ) ;
+
+      // print the dividingLine
+      attron( COLOR_PAIR( dividingColour ) ) ;
+      dividingLine = getDividingLine( DIVIDINGCHAR, Mobile->contentLength ) ;
+      rc = mvprintw_SDBTOP( dividingLine, Mobile->contentLength,
+                            Mobile->alignment, start_Y+1, start_X ) ;
+      if( rc )
+      {
+         goto error;
+      }
+      attroff( COLOR_PAIR( dividingColour ) ) ;
       start_X += Mobile->contentLength ;
       ++start_X ; // add separate pace
    }
 
    // title can't cover field's content
-   start_Y += 1 ; //
+   start_Y += 2 ; //
    if( start_Y - Y >= length_Y )
    {
       goto done ;
