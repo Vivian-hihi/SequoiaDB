@@ -893,9 +893,9 @@
                            </absoluteColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalDataRead</deltaName>
+                           <deltaName>DataRead's Del</deltaName>
                            <absoluteName>TotalDataRead</absoluteName>
-                           <averageName>TotalDataRead</averageName>
+                           <averageName>DataRead's Ave</averageName>
                            <sourceField>TotalDataRead</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -914,11 +914,11 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalIndexRead</deltaName>
+                           <deltaName>IndexRead's Del</deltaName>
                            <absoluteName>TotalIndexRead</absoluteName>
-                           <averageName>TotalIndexRead</averageName>
+                           <averageName>IndexRead's Ave</averageName>
                            <sourceField>TotalIndexRead</sourceField>
-                           <contentLength>14</contentLength>
+                           <contentLength>15</contentLength>
                            <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
@@ -935,11 +935,11 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalDataWrite</deltaName>
+                           <deltaName>DataWrite's Del</deltaName>
                            <absoluteName>TotalDataWrite</absoluteName>
-                           <averageName>TotalDataWrite</averageName>
+                           <averageName>DataWrite's Ave</averageName>
                            <sourceField>TotalDataWrite</sourceField>
-                           <contentLength>14</contentLength>
+                           <contentLength>15</contentLength>
                            <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
@@ -956,11 +956,11 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalIndexWrite</deltaName>
+                           <deltaName>IndexWrite's Del</deltaName>
                            <absoluteName>TotalIndexWrite</absoluteName>
-                           <averageName>TotalIndexWrite</averageName>
+                           <averageName>IndexWrite's Ave</averageName>
                            <sourceField>TotalIndexWrite</sourceField>
-                           <contentLength>14</contentLength>
+                           <contentLength>16</contentLength>
                            <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
@@ -977,9 +977,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalUpdate</deltaName>
+                           <deltaName>Update's Del</deltaName>
                            <absoluteName>TotalUpdate</absoluteName>
-                           <averageName>TotalUpdate</averageName>
+                           <averageName>Update's Ave</averageName>
                            <sourceField>TotalUpdate</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -998,9 +998,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalDelete</deltaName>
+                           <deltaName>Delete's Del</deltaName>
                            <absoluteName>TotalDelete</absoluteName>
-                           <averageName>TotalDelete</averageName>
+                           <averageName>Delete's Ave</averageName>
                            <sourceField>TotalDelete</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1019,9 +1019,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalInsert</deltaName>
+                           <deltaName>Insert's Del</deltaName>
                            <absoluteName>TotalInsert</absoluteName>
-                           <averageName>TotalInsert</averageName>
+                           <averageName>Insert's Ave</averageName>
                            <sourceField>TotalInsert</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1040,9 +1040,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalSelect</deltaName>
+                           <deltaName>Select's Del</deltaName>
                            <absoluteName>TotalSelect</absoluteName>
-                           <averageName>TotalSelect</averageName>
+                           <averageName>Selec's Avet</averageName>
                            <sourceField>TotalSelect</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1061,9 +1061,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalRead</deltaName>
+                           <deltaName>Read's Del</deltaName>
                            <absoluteName>TotalRead</absoluteName>
-                           <averageName>TotalRead</averageName>
+                           <averageName>Read's Ave</averageName>
                            <sourceField>TotalRead</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1082,9 +1082,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalReadTime</deltaName>
+                           <deltaName>ReadTime's Del</deltaName>
                            <absoluteName>TotalReadTime</absoluteName>
-                           <averageName>TotalReadTime</averageName>
+                           <averageName>ReadTime's Ave</averageName>
                            <sourceField>TotalReadTime</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1103,11 +1103,11 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalWriteTime</deltaName>
+                           <deltaName>WriteTime's Del</deltaName>
                            <absoluteName>TotalWriteTime</absoluteName>
-                           <averageName>TotalWriteTime</averageName>
+                           <averageName>WriteTime's Ave</averageName>
                            <sourceField>TotalWriteTime</sourceField>
-                           <contentLength>14</contentLength>
+                           <contentLength>15</contentLength>
                            <alignment>RIGHT</alignment>
                            <canSwitch>1</canSwitch>
                            <deltaColour>
