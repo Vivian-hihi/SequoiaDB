@@ -874,7 +874,10 @@ static inline std::string &doubleQuotesTrim( std::string &s )
    }
    return s ;
 }
-
+static inline BOOLEAN isExist( map<string, string> src, string key )
+{
+   return ( src.find( key ) != src.end() ) ;
+}
 static inline std::string getDividingLine( string dividingChar,
                                            INT32 dividingLength )
 {
@@ -3036,7 +3039,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   {
                      colourPairNumber = minPairNumber ;
                   }
-                  else if( result != input.last_deltaMap[new_+sourceField] )
+                  else if( result != input.last_deltaMap[new_+sourceField] &&
+                           isExist( input.last_deltaMap, new_+sourceField ) )
                   {
                      colourPairNumber = changePairNumber ;
                   }
@@ -3075,7 +3079,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                      colourPairNumber = minPairNumber ;
                   }
                   else if( result !=
-                           input.last_absoluteMap[new_+sourceField] )
+                                 input.last_absoluteMap[new_+sourceField] &&
+                           isExist( input.last_absoluteMap, new_+sourceField ))
                   {
                      colourPairNumber = changePairNumber ;
                   }
@@ -3110,7 +3115,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   {
                      colourPairNumber = minPairNumber ;
                   }
-                  else if( result != input.last_averageMap[new_+sourceField] )
+                  else if( result !=
+                                 input.last_averageMap[new_+sourceField] &&
+                           isExist( input.last_averageMap, new_+sourceField ))
                   {
                      colourPairNumber = changePairNumber ;
                   }
