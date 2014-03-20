@@ -110,6 +110,15 @@ function Usage()
 
 #the parameters can use  
 optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,bios,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,kermode,env,IDE,network,nfstat,process,login,swapon,limit,vmstate,catalog,all -- "$@"`
+
+#check over the option of sdbsupport
+rc=$?
+if [ "$rc" == "1" ] ; then
+   echo "The option don't have,please check by use '--help'!"
+   exit 1
+fi
+
+
 eval set -- "$optArg"
 
 while true
@@ -492,7 +501,7 @@ if [ "$all" == "true" ] ; then
          #ssh host and collect information
          sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
          sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
-         sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
+         sdbSSHRemove "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
          #echo "concurent $i"
          #echo "" >&6
       fi
