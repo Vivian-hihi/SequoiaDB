@@ -63,6 +63,9 @@ thread=10
 ParaNum=$#
 ParaPass=$@
 
+#check is local host run
+Local=""
+
 function Usage()
 {
    echo "Command Options:" ;
@@ -404,7 +407,7 @@ fi
 if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
    for i in $(seq 1 $pHostNum)
    do
-      if [ "${HostPara[$i]}" != "" ] ; then
+      if [ "${HostPara[$i]}" != "" ] && [ "${HostPara[$i]}" != "$localhost" ] ; then
          echo "The host ${HostPara[$i]}'s password :"
          read -s PASSWD[$i]
          sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
@@ -486,8 +489,9 @@ do
    if [ $all == "false" ] ; then
       read -u 6
       #HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'` 
-      if [[ ${HostPara[$i]} = $localhost ]] ; then 
-         #only have localhost ./sdbsupport.sh -h htest1 	
+      if [[ ${HostPara[$i]} = $localhost ]] ; then
+         #only have localhost ./sdbsupport.sh -h htest1
+         Local=$localhost
          if [[ $thirdLoc = "" ]] ; then
             for j in $(seq 1 $PortNum)	
             do	
@@ -556,16 +560,8 @@ done
 wait
 
 #tar the all collect information in a packet
-if [[ $firstLoc = "" ]] ; then
+if [ $firstLoc = "" ] || [ "$Local" == "$localhost" ]; then
    sdbTarGzPack $localhost >/dev/null
-else
-   for i in $(seq 1 $pHostNum)
-   do
-      #echo ${HostPara[$i]} $localhost $firstLoc
-      if [[ ${HostPara[$i]} = $localhost ]] ; then
-         sdbTarGzPack $localhost >/dev/null
-      fi
-   done
 fi
 
 #clean environment
