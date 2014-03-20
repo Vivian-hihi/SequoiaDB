@@ -874,11 +874,13 @@ static inline std::string &doubleQuotesTrim( std::string &s )
    }
    return s ;
 }
-static inline BOOLEAN isExist( map<string, string> src, string key )
+
+static inline BOOLEAN isExist( map<string, string> &src, const string &key )
 {
    return ( src.find( key ) != src.end() ) ;
 }
-static inline std::string getDividingLine( string dividingChar,
+
+static inline std::string getDividingLine( const string &dividingChar,
                                            INT32 dividingLength )
 {
    string line = NULLSTRING ;
@@ -2938,7 +2940,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
          {
             //to deal with the result when displayMode is DELTA or AVERAGE
             //but not found in the last snapshot
-            if( DELTA == displayMode || AVERAGE== displayMode )
+            if( DELTA == displayMode || AVERAGE == displayMode )
             {
                ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, "%d", 0 ) ;
                result = resultBuf ;
@@ -3008,7 +3010,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
             last_element =
                   input.last_Snapshot[pos_last].getFieldDotted(
                         sourceFieldbuf ) ;
-            //to deal with the result when displayMode is DELTA
+            // to deal with the result when displayMode is DELTA
             // DELTA value is the result of that
             // current value subtract last value
             if( DELTA == displayMode )
@@ -3039,8 +3041,8 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   {
                      colourPairNumber = minPairNumber ;
                   }
-                  else if( result != input.last_deltaMap[new_+sourceField] &&
-                           isExist( input.last_deltaMap, new_+sourceField ) )
+                  else if( isExist( input.last_deltaMap, new_+sourceField ) &&
+                           result != input.last_deltaMap[new_+sourceField] )
                   {
                      colourPairNumber = changePairNumber ;
                   }
@@ -3078,9 +3080,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   {
                      colourPairNumber = minPairNumber ;
                   }
-                  else if( result !=
-                                 input.last_absoluteMap[new_+sourceField] &&
-                           isExist( input.last_absoluteMap, new_+sourceField ))
+                  else if( 
+                        isExist( input.last_absoluteMap, new_+sourceField ) &&
+                           result != input.last_absoluteMap[new_+sourceField] )
                   {
                      colourPairNumber = changePairNumber ;
                   }
@@ -3115,9 +3117,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   {
                      colourPairNumber = minPairNumber ;
                   }
-                  else if( result !=
-                                 input.last_averageMap[new_+sourceField] &&
-                           isExist( input.last_averageMap, new_+sourceField ))
+                  else if(
+                        isExist( input.last_averageMap, new_+sourceField ) &&
+                        result != input.last_averageMap[new_+sourceField] )
                   {
                      colourPairNumber = changePairNumber ;
                   }
