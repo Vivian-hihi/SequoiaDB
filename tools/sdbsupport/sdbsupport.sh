@@ -253,8 +253,8 @@ if [ $? -ne 0 ] ; then
    echo "Failed to go to sdbsupport path"
    exit 1
 fi
-echo $installpath
-pwd
+#echo $installpath
+#pwd
 
 #config file path
 #echo $installpath
@@ -531,7 +531,7 @@ do
             echo "" >&6
          fi
       else
-         echo "the host not equal localhost"
+         #echo "the host not equal localhost"
          for n in $(seq 1 $ParaNum)
          do
             Para[$n]=`echo $ParaPass|cut -d " " -f $n`
@@ -561,7 +561,7 @@ if [[ $firstLoc = "" ]] ; then
 else
    for i in $(seq 1 $pHostNum)
    do
-      echo ${HostPara[$i]} $localhost $firstLoc
+      #echo ${HostPara[$i]} $localhost $firstLoc
       if [[ ${HostPara[$i]} = $localhost ]] ; then
          sdbTarGzPack $localhost >/dev/null
       fi
