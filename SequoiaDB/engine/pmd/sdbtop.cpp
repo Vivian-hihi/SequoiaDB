@@ -12,7 +12,7 @@
    its trade secrets, irrespective of what has been deposited with the Copyright
    Protection Center of China
 
-   Source File Name = sdbimprt.cpp
+   Source File Name = sdbtop.cpp
 
    Descriptive Name = Import Utility
 
