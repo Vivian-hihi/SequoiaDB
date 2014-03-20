@@ -345,7 +345,7 @@ function sdbSystemInfoPartEnd()
    limit=$6
    vmstate=$7
 
-   if [ "$nfsstat"=="true" ] || [ "$progress"=="true" ] || [ "$login"=="true" ] || [ "$swapon"=="true" ] || [ "$limit"=="true" ] || [ "$vmstate"=="true" ] ; then
+   if [ "$nfsstat" == "true" ] || [ "$progress" == "true" ] || [ "$login" == "true" ] || [ "$swapon" == "true" ] || [ "$limit" == "true" ] || [ "$vmstate" == "true" ] ; then
       mkdir -p OSINFO/
    fi
 

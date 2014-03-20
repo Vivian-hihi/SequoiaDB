@@ -26,6 +26,7 @@ mainboard="false"
 bios="false"
 
 #snapshot variable
+rcPort="false"
 group="false"
 context="false"
 session="false"
@@ -156,24 +157,31 @@ do
       ;;
    --group)
       group="true"
+      rcPort="true"
       ;;
    --context)
       context="true"
+      rcPort="true"
       ;;
    --session)
       session="true"
+      rcPort="true"
       ;;
    --collection)
       collection="true"
+      rcPort="true"
       ;;
    --collectionspace)
       collectionspace="true"
+      rcPort="true"
       ;;
    --database)
       database="true"
+      rcPort="true"
       ;;
    --system)
       system="true"
+      rcPort="true"
       ;;
    --diskmanage)
       diskmanage="true"
@@ -523,7 +531,8 @@ do
                   #snapShot
                   if [[ $snapShot = "true" ]] ; then
                      sdbSnapShot ${HostPara[$i]} ${PortPara[$k]} "$installpath"
-                  else
+                  fi
+                  if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
                      sdbSnapShotExtract ${HostPara[$i]} ${PortPara[$k]} $group $context $session $collection $collectionspace $database $system "$installpath"
                   fi
                done
