@@ -386,21 +386,22 @@ done
 if [ "$all" == "true" ] ; then
    for i in $(seq 1 $HostNum)
    do
-      echo "The host ${HOST[$i]}'s password :"
-      read -s PASSWD[$i]
-      sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
-      retVal=$?
-      while [ "$retVal" == "5" ]
-      do
-         echo "Wrong password is :""${PASSWD[$i]}"
-         PASSWD[$i]=""
-         echo "Wrong password of host ${HOST[$i]}, please enter again :"
+      if [ "${HOST[$i]}" != "$localhost" ] ; then
+         echo "The host sdbadmin@${HOST[$i]}'s password :"
          read -s PASSWD[$i]
          sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
          retVal=$?
-         #echo "until return value"$retVal
-      done
-      #echo "password:" "${PASSWD[$i]}"
+         while [ "$retVal" == "5" ]
+         do
+            PASSWD[$i]=""
+            echo "Wrong password of host sdbadmin@${HOST[$i]}, please enter again :"
+            read -s PASSWD[$i]
+            sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
+            retVal=$?
+            #echo "until return value"$retVal
+         done
+         #echo "password:" "${PASSWD[$i]}"
+      fi
    done
 fi
 
@@ -408,14 +409,14 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
    for i in $(seq 1 $pHostNum)
    do
       if [ "${HostPara[$i]}" != "" ] && [ "${HostPara[$i]}" != "$localhost" ] ; then
-         echo "The host ${HostPara[$i]}'s password :"
+         echo "The host sdbadmin@${HostPara[$i]}'s password :"
          read -s PASSWD[$i]
          sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
          retVal=$?
          while [ "$retVal" == "5" ]
          do
             PASSWD[$i]=""
-            echo "Wrong password of host ${HostPara[$i]}, please enter again :"
+            echo "Wrong password of host sdbadmin@${HostPara[$i]}, please enter again :"
             read -s PASSWD[$i]
             sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
             retVal=$?
@@ -434,10 +435,10 @@ fi
 #@Fold : HARDINFO Exp : directory for hardware information
 #******************************************************************************
    rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/
-   mkdir HARDINFO >> sdbsupport.log 2>&1
-   mkdir OSINFO >> sdbsupport.log 2>&1
-   mkdir SDBNODES >> sdbsupport.log 2>&1
-   mkdir SDBSNAPS >> sdbsupport.log 2>&1
+   #mkdir HARDINFO >> sdbsupport.log 2>&1
+   #mkdir OSINFO >> sdbsupport.log 2>&1
+   #mkdir SDBNODES >> sdbsupport.log 2>&1
+   #mkdir SDBSNAPS >> sdbsupport.log 2>&1
    #echo "mkdir ok"
 
 #*************************************************************************************************
@@ -453,7 +454,7 @@ for i in $(seq 1 $HostNum)
 do
    for j in $(seq 1 $PortNum)
    do
-      if [[ $firstLoc = "" ]] && [[ $localhost = ${HOST[$i]} ]] ; then
+      if [ "$firstLoc" == "" ] && [ "$localhost" == "${HOST[$i]}" ] ; then
          #echo "localhost:$localhost"
          sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
          sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
@@ -468,17 +469,26 @@ done
 if [ "$all" == "true" ] ; then
    for i in $(seq 1 $HostNum)
    do
-      read -u 6
-      {
-      if [ "${HOST[$i]}" != "" ] ; then
+      if [ "${HOST[$i]}" == "$localhost" ] ; then
+         sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
+         sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
+         sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
+         sdbHardwareInfoAll ${HOST[$i]} $installpath
+         sdbSystemInfoAll ${HOST[$i]} $installpath
+         Local=$localhost
+      fi
+      #read -u 6
+      #{
+      if [ "${HOST[$i]}" != "" ] && [ "${HOST[$i]}" != "$localhost" ] ; then
          sdbsupport="./sdbsupport.sh -N ${HOST[$i]}"
          #ssh host and collect information
          sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
          sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
+         sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
          #echo "concurent $i"
-         echo "" >&6
+         #echo "" >&6
       fi
-      }&
+      #}&
    done
    wait
 fi
@@ -487,7 +497,7 @@ fi
 for i in $(seq 1 $pHostNum)
 do
    if [ $all == "false" ] ; then
-      read -u 6
+      #read -u 6
       #HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'` 
       if [[ ${HostPara[$i]} = $localhost ]] ; then
          #only have localhost ./sdbsupport.sh -h htest1
@@ -532,7 +542,7 @@ do
             else
                sdbHardwareInfoPart ${HOST[$i]} $cpu $memory $disk $netcard $mainboard $bios
             fi
-            echo "" >&6
+            #echo "" >&6
          fi
       else
          #echo "the host not equal localhost"
@@ -546,22 +556,22 @@ do
                Para[$n]=""
             fi
          done
-         {
          if [[ ${HostPara[$i]} != "" ]] ; then
             sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"
             sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
             sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
+            sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
          fi
-         echo "" >&6
-         }&
+#echo "" >&6
+#}&
       fi
    fi
 done
 wait
 
 #tar the all collect information in a packet
-if [ $firstLoc = "" ] || [ "$Local" == "$localhost" ]; then
-   sdbTarGzPack $localhost >/dev/null
+if [ "$firstLoc" == "" ] || [ "$Local" == "$localhost" ]; then
+   sdbTarGzPack $localhost >>sdbsupport.log
 fi
 
 #clean environment

@@ -28,31 +28,44 @@ function sdbCheckPassword()
 #ssh host and run sdbsupport
 function sdbExpectSshHosts()
 {
-   HostPara=$1
+   HOST=$1
    PASSWD=$2
    localPath=$3
    sdbsupport=$4
 
    /usr/local/bin/expect -c   "
       set timeout 10 ;
-      spawn ssh sdbadmin@$HostPara ;
+      spawn ssh sdbadmin@$HOST ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\n\";send \"chmod +x sdbsupport.sh\n\";send \"$sdbsupport\n\";exp_continue}
+         \"*login*\";{send \"cd $localPath\n\";
+                      send \"chmod +x sdbsupport.sh\n\";
+                      send \"$sdbsupport\n\";
+         exp_continue}
          eof
          {
            send_user \"eof\n\";
          }
       }
-                              "
-}
+                              " >>sdbsupport.log
+   rc=$?
+   if [ "$rc" == "4" ] ; then
+      echo "No such file or directory"
+   fi
 
+}
 
 function sdbTarGzPack()
 {
    HOST=$1
-   date=`date '+%m%d%y-%H%M%S'`
+   date=`date '+%y%m%d-%H%M%S'`
+   hard="true"
+   sdbnode="true"
+   osinfo="true"
+   sdbsnap="true"
+
+   echo "sdbtar gz pack"
 
    Folder="$HOST-$date"
 
@@ -61,12 +74,45 @@ function sdbTarGzPack()
       echo "Failed to create foler !"
       exit 1
    fi
-   mv HARDINFO/ SDBNODES/ OSINFO/ SDBSNAPS/ ./$Folder/
+
+   if ls HARDINFO/ 2>/dev/null
+   then
+      hard="false"
+      mv HARDINFO/ ./$Folder/
+   fi
+
+   if ls SDBNODES/ 2>/dev/null
+   then
+      sdbnode="false"
+      mv SDBNODES/ ./$Folder/
+   fi
+
+   if ls OSINFO/ 2>/dev/null
+   then
+      osinfo="false"
+      mv OSINFO/ ./$Folder/
+   fi
+
+   if ls SDBSNAPS/ 2>/dev/null
+   then
+      sdbsnap="false"
+      mv SDBSNAPS/ ./$Folder/
+   fi
+
+   echo "here"
+
+   if [ "$hard" == "true" ] && [ "$sdbnode" == "true" ] && [ "$osinfo" == "true" ] && [ "$sdbsnap" == "true" ] ; then
+      echo "Error,Failed to collect information "
+      exit 1
+   fi
+   echo "here"
    if [ $? -ne 0 ] ; then
       echo "Failed to move the collected information to folder"
       exit 1
    fi
+
    tar -zcvf $Folder.tar.gz ./$Folder/
+
    if [ $? -ne 0 ] ; then
       echo "Failed to packaging and compression"
       exit 1
@@ -87,14 +133,47 @@ function sdbExpectScpHosts()
       spawn scp -r sdbadmin@$HOST:$localPath/$HOST*.tar.gz ./ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
-         \"*assword\";{send \"$PASSWD\n\";exp_continue}
+         \"*assword\";{send \"$PASSWD\n\";
+         exp_continue}
          eof
          {
             send_user \"eof\n\";
          }
       }
-                              "
+                              " >>sdbsupport.log
+
+   rc=$?
+   if [ "$rc" == "4" ] ; then
+      echo "Failed to collet host:$HOST's information"
+   fi
 
 }
 
+function sdbSSHRemove()
+{
+   HOST=$1
+   PASSWD=$2
+   localPath=$3
 
+   /usr/local/bin/expect -c"
+      set timeout 10 ;
+      spawn ssh sdbadmin@$HOST ;
+      expect {
+         \"*yes/no*\";{send \"yes\n\";exp_continue}
+         \"*assword\";{send \"$PASSWD\n\";exp_continue}
+         \"*login*\";{send \"cd $localPath\n\";
+                      send \"rm  $HOST*.tar.gz\n\";
+         exp_continue}
+         eof
+         {
+           send_user \"eof\n\";
+         }
+      }
+
+                           " >>sdbsupport.log
+   rc=$?
+   if [ "$rc" == "4" ] ; then
+      echo "Failed to clean host:$HOST "
+   fi
+
+}

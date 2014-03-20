@@ -8,7 +8,9 @@ function sdbPortGather()
    PORT=$3
    installpath=$4
 
-   mkdir -p SDBNODES/
+   if [ "$PORT" != "" ] ; then
+      mkdir -p SDBNODES/
+   fi
    #get sequoiadb config path
    #installpath=`grep InstallPath sdbsupport.conf|cut -d = -f 2`
    confpath=$installpath/conf/local
@@ -34,15 +36,16 @@ function sdbSnapShotCataLog()
    PORT=$2
    installpath=$3
 
-   mkdir -p SDBSNAPS/catalog/
-
+   if [ "$PORT" != "" ] ; then
+      mkdir -p SDBSNAPS/
+   fi
    SDB=$installpath/bin/sdb
    $SDB "var db=new Sdb('localhost',$PORT)"
    if [ $? -ne 0 ] ; then
       echo "the sequoiadb is not run!"
       exit 1
    fi
-   $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/catalog/snapshot_catalog.$HOST.$PORT 2>&1
+   $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/snapshot_catalog.$HOST.$PORT 2>&1
 }
 
 #snapshot of sequoiadb to SDBSNAPS
@@ -53,7 +56,9 @@ function sdbSnapShot()
    PORT=$2
    installpath=$3
 
-   mkdir -p SDBSNAPS/
+   if [ "$PORT" != "" ] ; then
+      mkdir -p SDBSNAPS/
+   fi
 
    SDB=$installpath/bin/sdb
    $SDB "var db=new Sdb('localhost',$PORT)"
@@ -86,7 +91,9 @@ function sdbSnapShotExtract()
    system=$9
    installpath=${10}
 
-   mkdir -p SDBSNAPS/
+   if [ "$PORT" != "" ] || [ "$group" == "true" ] || [ "$context" == "true" ] || [ "$session" == "true" ] || [ "$collection" == "true" ] || [ "$collectionspace" == "true" ] || [ "$database" == "true" ] || [ "$system" == "true" ] ; then
+      mkdir -p SDBSNAPS/
+   fi
 
    SDB=$installpath/bin/sdb
    $SDB "var db=new Sdb('localhost',$PORT)"
@@ -123,6 +130,7 @@ function sdbHardwareInfoAll()
    HOST=$1
 
    mkdir -p HARDINFO/
+
    lscpu >> HARDINFO/$HOST.cpu.info 2>&1
    cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info 2>&1
 
@@ -156,7 +164,9 @@ function sdbHardwareInfoPart()
    mainboard=$6
    bios=$7
 
-   mkdir -p HARDINFO/
+   if [ "$cpu" == "true" ] || [ "$memory" == "true" ] || [ "$disk" == "true" ] || [ "$netcard" == "true" ] || [ "$mainboard" == "true" ] || [ "$bios" == "true" ] ; then
+      mkdir -p HARDINFO/
+   fi
    if [[ $cpu = true ]] ; then
       lscpu >> HARDINFO/$HOST.cpu.info 2>&1
       cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info 2>&1
@@ -265,7 +275,9 @@ function sdbSystemInfoPartFore()
    IDE=$6
    network=$7
 
-   mkdir -p OSINFO/
+   if [ "$diskmanage" == "true" ] || [ "$osystem" == "true" ] || [ "$kermode" == "true" ] || [ "$env" == "true" ] || [ "$IDE" == "true" ] || [ "$network" == "true" ] ; then
+      mkdir -p OSINFO/
+   fi
 
    if [[ $diskmanage = true ]] ; then
       uptime >> OSINFO/$HOST.diskmanage.sys 2>&1
@@ -333,7 +345,9 @@ function sdbSystemInfoPartEnd()
    limit=$6
    vmstate=$7
 
-   mkdir -p OSINFO/
+   if [ "$nfsstat"=="true" ] || [ "$progress"=="true" ] || [ "$login"=="true" ] || [ "$swapon"=="true" ] || [ "$limit"=="true" ] || [ "$vmstate"=="true" ] ; then
+      mkdir -p OSINFO/
+   fi
 
    if [[ $progress = true ]] ; then 
       uptime >> OSINFO/$HOST.progress.sys 2>&1 
