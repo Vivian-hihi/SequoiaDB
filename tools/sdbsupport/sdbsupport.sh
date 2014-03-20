@@ -61,7 +61,7 @@ thread=10
 
 #get the number of parameter and what parameters is 
 ParaNum=$#
-ParaPass=$@ 
+ParaPass=$@
 
 function Usage()
 {
@@ -227,7 +227,7 @@ shift
 done
 
 echo ""
-echo "***************WARNING***************WARNING***************"
+echo "**********************Sdbsupport***************************"
 echo "* This program run mode will collect all configuration and "
 echo "* system environment information.Please make sure whether"
 echo "* you need !"
@@ -235,33 +235,32 @@ echo "* Begin ....."
 echo "***********************************************************"
 echo ""
 
-
 #******************************************************************************
-#@Function : Check over environment  
+#@Function : Check over environment
 #******************************************************************************
 #inspect the environment of sequiaDB
 localhost=`hostname`
-localPath=`pwd` 
+localPath=`pwd`
 
 cd ../../
 if [ $? -ne 0 ] ; then
-   echo "Can't go to install path,please check"
+   echo "Failed to go to install path,please check"
    exit 1
 fi
 installpath=`pwd`
 cd $localPath
 if [ $? -ne 0 ] ; then
-   echo "Error,Can't go to sdbsupport path"
+   echo "Failed to go to sdbsupport path"
    exit 1
 fi
 echo $installpath
 pwd
 
-#config file path 
+#config file path
 #echo $installpath
 ls $installpath 1>/dev/null
 if [ $? -ne 0 ] ; then
-   echo "Err,Wrong install path ,Please inspect the sdbsupportconf file!$?"
+   echo "Wrong install path ,Please inspect the sdbsupport path and install path!$?"
    exit 1
 fi
 confpath=$installpath/conf/local
@@ -293,11 +292,11 @@ done >&6
 cd $confpath
 dataRole=`find -name "*.conf"|xargs grep "role=data"|cut -d "/" -f 2`
 cd $localPath
-if [[ $dataRole = "" ]] ; then 
-	echo "Don't have data node in the sequoiaDB" 
-	exit 1 
-fi 
-#catadrr : get the cata address and catch hosts 
+if [ "$dataRole" == "" ] ; then
+   echo "Don't have data node in the sequoiaDB"
+   exit 1
+fi
+#catadrr : get the cata address and catch hosts
 data=`echo $dataRole | cut -d " " -f 1`
 cataddr=`grep -E "catalogaddr" $confpath/$data/sdb.conf|cut -d '=' -f 2`
 HostNum=`awk 'BEGIN{print split("'$cataddr'",cateArr,",")}'`
@@ -305,45 +304,27 @@ PortNum=`ls -l $confpath|grep "^d"|wc -l`
 
 #*******************************************************************************
 #@Function : get all hosts in sequoiaDB and local host's port/dbpath/role 
-#@Var : HOST		Exp : Array variable used to store hosts in sequoiaDB
-#@Var : PORT		Exp : Array variable store local host's sevice port
-#@Var : DBPATH		Exp : Array variable store local host's dbpath
-#@Var : ROLE		Exp : Array variable store local hsot's sevice port's role 
+#@Var : HOST      Exp : Array variable used to store hosts in sequoiaDB
+#@Var : PORT      Exp : Array variable store local host's sevice port
+#@Var : DBPATH    Exp : Array variable store local host's dbpath
+#@Var : ROLE      Exp : Array variable store local hsot's sevice port's role 
 #*******************************************************************************
 for i in $(seq 1 $HostNum)
 do
-	hostcata[$i]=`awk 'BEGIN{split("'$cataddr'",cateArr,",");print cateArr['$i']'}`
-	HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
-	if [[ ${HOST[$i]} = $localhost ]] ; then 	
-		for j in $(seq 1 $PortNum)
-		do
-			PortArr=`ls $confpath` 		
-			PORT[$j]=`echo $PortArr|cut -d " " -f $j`
-			DBPATH[$j]=`grep -E "dbpath" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
-			#delete the space in config file and put in tmpconf
-			sed -i 's/\ //g' $confpath/${PORT[$j]}/sdb.conf 
-			ROLE[$j]=`grep -E "role=" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
-		done 
-	fi 
+   hostcata[$i]=`awk 'BEGIN{split("'$cataddr'",cateArr,",");print cateArr['$i']'}`
+   HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
+   if [ "${HOST[$i]}" == "$localhost" ] ; then
+      for j in $(seq 1 $PortNum)
+      do
+         PortArr=`ls $confpath`
+         PORT[$j]=`echo $PortArr|cut -d " " -f $j`
+         DBPATH[$j]=`grep -E "dbpath" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
+         #delete the space in config file and put in tmpconf
+         sed -i 's/\ //g' $confpath/${PORT[$j]}/sdb.conf 
+         ROLE[$j]=`grep -E "role=" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
+      done
+   fi
 done
-#get the all hosts's config file,?????????????????????????????? 
-#for i in $(seq 1 $HostNum)
-#do 
-#	mkdir -p $localPath/CONF/${HOST[$i]}  
-#	echo $confpath
-#
-#	/usr/local/bin/expect -c	"
-#		spawn scp -r root@${HOST[$i]}:$confpath/* $localPath/CONF/${HOST[$i]} ;  
-#		expect {
-#			\"*yes/no*\" ;{send \"yes\r\" ;exp_continue}
-#			\"assword\" ;{send \"${PASWD[$i]}\r\" ; exp_continue}
-#			eof
-#			{
-#				send_user \"eof\n\" ;
-#			}
-#		}
-#				"
-#done
 
 #*************************************************************************************************
 #@Function : Get parameter passed in and check over them wether or not correct,if don't have this 
@@ -355,44 +336,44 @@ done
 #*************************************************************************************************
 pHostNum=`awk 'BEGIN{print split("'$hostName'",hostarr,":")}'`
 pPortNum=`awk 'BEGIN{print split("'$svcPort'",portarr,":")}'`
-#when have parameter ,but not --all ,we must specify the hosts[--hostname] 
-if [[ $pHostNum -eq 0 ]] && [[ $all = "false"  ]] && [[ $firstLoc != "" ]] ; then 
-	echo "Warning !!!! Please specify hosts!"
-	exit 1
+#when have parameter ,but not --all ,we must specify the hosts[--hostname]
+if [[ $pHostNum -eq 0 ]] && [[ $all = "false"  ]] && [[ $firstLoc != "" ]] ; then
+   echo "Warning !!!! Please specify hosts!"
+   exit 1
 fi
 #Check over Host
 for i in $(seq 1 $pHostNum)
 do
-	HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'`
-	HostNumAdd=$(($HostNum+1))	
-	for j in $(seq 1 $HostNumAdd)
-	do
-		if [[ ${HostPara[$i]} = ${HOST[$j]} ]] ; then  
-			break
+   HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'`
+   HostNumAdd=$(($HostNum+1))
+   for j in $(seq 1 $HostNumAdd)
+   do
+      if [[ ${HostPara[$i]} = ${HOST[$j]} ]] ; then
+         break
       fi
-		if [[ $j -gt $HostNum ]] ; then 
-			echo "WARNIGN,SequoiaDB don't have host:${HostPara[$i]}" "j"$j	
-			HostPara[$i]=""	
-		fi 
-	done 
-done 
+      if [[ $j -gt $HostNum ]] ; then
+         echo "WARNIGN,SequoiaDB don't have host:${HostPara[$i]}"
+         HostPara[$i]=""
+      fi
+   done
+done
 #Check over Port
 for i in $(seq 1 $pPortNum)
 do
-	PortPara[$i]=`awk 'BEGIN{split("'$svcPort'",portarr,":");print portarr['$i']}'`
-	PortNumAdd=$(($PortNum+1))
-	for j in $(seq 1 $PortNumAdd)
-	do
-		if [[ ${PortPara[$i]} = ${PORT[$j]} ]] ; then
-			DbPath[$i]=${DBPATH[$j]}	
-			Role[$i]=${ROLE[$j]}	
-			break
-		fi
-		if [[ $j -gt $PortNum ]] ; then
-			echo "WARNIGN,SequoiaDB don't have host:${PortPara[$i]}" "j"$j
-			PortPara[$i]=""
-		fi
-	done 
+   PortPara[$i]=`awk 'BEGIN{split("'$svcPort'",portarr,":");print portarr['$i']}'`
+   PortNumAdd=$(($PortNum+1))
+   for j in $(seq 1 $PortNumAdd)
+   do
+      if [[ ${PortPara[$i]} = ${PORT[$j]} ]] ; then
+         DbPath[$i]=${DBPATH[$j]}
+         Role[$i]=${ROLE[$j]}
+         break
+      fi
+      if [[ $j -gt $PortNum ]] ; then
+         echo "WARNIGN,SequoiaDB don't have host:${PortPara[$i]}" "j"$j
+         PortPara[$i]=""
+      fi
+   done
 done
 
 #***********************************************************************************
@@ -435,9 +416,9 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
             read -s PASSWD[$i]
             sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
             retVal=$?
-            echo "until return value"$retVal
+            #echo "until return value"$retVal
             done
-         echo "password:" "${PASSWD[$i]}"
+         #echo "password:" "${PASSWD[$i]}"
       fi
    done
 fi
@@ -525,7 +506,7 @@ do
                   if [[ ${Role[$k]} = "coord" ]] && [[ $catalog = "true" ]] ; then
                      sdbSnapShotCataLog "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
                   fi
-                  #snapShot	
+                  #snapShot
                   if [[ $snapShot = "true" ]] ; then
                      sdbSnapShot ${HostPara[$i]} ${PortPara[$k]} "$installpath"
                   else
