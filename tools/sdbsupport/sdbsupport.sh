@@ -441,13 +441,13 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
             sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
             retVal=$?
             #echo "until return value"$retVal
-            done
+         done
          #echo "password:" "${PASSWD[$i]}"
+         echo ""
+         echo "Check over password !"
+         echo ""
       fi
    done
-   echo ""
-   echo "Check over password !"
-   echo ""
 fi
 
 #******************************************************************************
