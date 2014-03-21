@@ -891,22 +891,18 @@ static inline std::string getDividingLine( const string &dividingChar,
    return line ;
 }
 
-void getnstr_SDBTOP( CHAR *buf, INT32 bufLength )
-{
-   //INT64 ch = 0 ;
-   //INT32 i = 0 ;
-   //while( 1 )
-   //{
-      //ch = getch() ;
-      //if( '\n' == ch && EOF == ch && 27 == ch )
-      //{
-         //break ;
-      //}
-      //buf[i] = ch ;
-      //++i ;
-   //}
-   getnstr( buf, bufLength ) ;
-}
+//void getnstr_SDBTOP( CHAR *buf, INT32 bufLength )
+//{
+//   INT32 flag = getnstr( buf, bufLength ) ;
+//   if( BUTTON_ESC == flag )
+//   {
+//      flag = BUTTON_ESC ;
+//   }
+//   if( 0 == flag )
+//   {
+//      flag = 0 ;
+//   }
+//}
 
 // store the position infomation which is come from sdbtop.xml
 INT32 storePosition( ptree pt_position, Position& position )
@@ -1030,9 +1026,9 @@ INT32 storeDE( ptree pt_display,
    {
       ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
       ossSnprintf( errStr, errStrLength,"%s readDisplayContent failed"
-                "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION),"
-                "e.what():%s"OSS_NEWLINE,
-                errStrBuf, e.what() ) ;
+                   "(displayType == DISPLAYTYPE_DYNAMIC_EXPRESSION),"
+                   "e.what():%s"OSS_NEWLINE,
+                   errStrBuf, e.what() ) ;
       rc = SDB_ERROR ;
       goto error ;
    }
@@ -4864,7 +4860,7 @@ INT32 Event::addFixedHotKey()
          hotkey = &keySuite->hotKey[keyLength] ;
          hotkey->button = BUTTON_ESC;
          hotkey->jumpType = JUMPTYPE_FIXED ;
-         hotkey->jumpName = "last view" ;
+         hotkey->jumpName = "cancel the operation" ;
          ++keyLength ;
       }
       else
@@ -5270,13 +5266,19 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
+            if( BUTTON_ESC == getnstr( inputBuf, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               input.groupName = inputBuf ;
+               trim( input.groupName ) ;
+               input.snapshotModeChooser = GROUP ;
+               input.forcedToRefresh_Global = REFRESH ;
+            }
             //cbreak() ;
             noecho() ;
-            input.groupName = inputBuf ;
-            trim( input.groupName ) ;
-            input.snapshotModeChooser = GROUP ;
-            input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
          else if( JUMPTYPE_NODE == hotKey->jumpType )
@@ -5293,16 +5295,22 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
             clrtobot() ;
-            nocbreak() ;
+            //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
-            cbreak() ;
+            if( BUTTON_ESC == getnstr( inputBuf, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               input.nodeName = inputBuf ;
+               trim( root.input.nodeName ) ;
+               input.snapshotModeChooser = NODE ;
+               input.forcedToRefresh_Global = REFRESH ;
+            }
+            //cbreak() ;
             noecho() ;
-            input.nodeName = inputBuf ;
-            trim( root.input.nodeName ) ;
-            input.snapshotModeChooser = NODE ;
-            input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
          else if( JUMPTYPE_ASC== hotKey->jumpType )
@@ -5319,17 +5327,23 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
             clrtobot() ;
-            nocbreak() ;
+            //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
-            cbreak() ;
+            if( BUTTON_ESC == getnstr( inputBuf, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               input.sortingWay = SORTINGWAY_ASC ;
+               displayName = inputBuf ;
+               trim( displayName ) ;
+               matchSourceFieldByDisplayName( displayName ) ;
+               input.forcedToRefresh_Global = REFRESH ;
+            }
+            //cbreak() ;
             noecho() ;
-            input.sortingWay = SORTINGWAY_ASC ;
-            displayName = inputBuf ;
-            trim( displayName ) ;
-            matchSourceFieldByDisplayName( displayName ) ;
-            input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
          else if( JUMPTYPE_DESC == hotKey->jumpType )
@@ -5346,17 +5360,23 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             move( row - 1, 0 );
             //clear screen from the position of cursor to the end of screen
             clrtobot();
-            nocbreak() ;
+            //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr_SDBTOP( inputBuf, BUFFERSIZE );
-            cbreak() ;
+            if( BUTTON_ESC == getnstr( inputBuf, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               input.sortingWay = SORTINGWAY_DESC ;
+               displayName = inputBuf ;
+               trim( displayName ) ;
+               matchSourceFieldByDisplayName( displayName ) ;
+               input.forcedToRefresh_Global = REFRESH ;
+            }
+            //cbreak() ;
             noecho() ;
-            input.sortingWay = SORTINGWAY_DESC ;
-            displayName = inputBuf ;
-            trim( displayName ) ;
-            matchSourceFieldByDisplayName( displayName ) ;
-            input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
          else if( JUMPTYPE_FILTER_CONDITION == hotKey->jumpType )
@@ -5373,15 +5393,21 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
             clrtobot() ;
-            nocbreak() ;
+            //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
-            cbreak() ;
+            if( BUTTON_ESC == getnstr( inputBuf, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               input.filterCondition = inputBuf ;
+               trim( input.filterCondition ) ;
+               input.forcedToRefresh_Global = REFRESH ;
+            }
+            //cbreak() ;
             noecho() ;
-            input.filterCondition = inputBuf ;
-            trim( input.filterCondition ) ;
-            input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
          else if( JUMPTYPE_NO_FILTER_CONDITION == hotKey->jumpType )
@@ -5408,29 +5434,35 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             move( row - 1, 0 ) ;
             //clear screen from the position of cursor to the end of screen
             clrtobot() ;
-            nocbreak() ;
+            //nocbreak() ;
             echo() ;
             mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
-            getnstr_SDBTOP( inputBuf, BUFFERSIZE ) ;
-            cbreak() ;
+            if( BUTTON_ESC == getnstr( inputBuf, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               displayName = inputBuf ;
+               trim( displayName ) ;
+               rc = strTOnum_SDBTOP( displayName.c_str(), filterNum ) ;
+               // illegal input 
+               if( rc )
+               {
+                 filterNum = 0 ;
+                 // it isn't a tool error, restore status
+                 rc = SDB_OK ;
+               }
+               input.filterNumber += filterNum ;
+               // if input.filterNumber is negative, restore to zero
+               if( 0 > input.filterNumber )
+               {
+                  input.filterNumber = 0 ;
+               }
+               input.forcedToRefresh_Global = REFRESH ;
+            }
+            //cbreak() ;
             noecho() ;
-            displayName = inputBuf ;
-            trim( displayName ) ;
-            rc = strTOnum_SDBTOP( displayName.c_str(), filterNum ) ;
-            // illegal input 
-            if( rc )
-            {
-              filterNum = 0 ;
-              // it isn't a tool error, restore status
-              rc = SDB_OK ;
-            }
-            input.filterNumber += filterNum ;
-            // if input.filterNumber is negative, restore to zero
-            if( 0 > input.filterNumber )
-            {
-               input.filterNumber = 0 ;
-            }
-            input.forcedToRefresh_Global = REFRESH ;
             curs_set( 0 ) ;
          }
          else if( JUMPTYPE_NO_FILTER_NUMBER == hotKey->jumpType )
