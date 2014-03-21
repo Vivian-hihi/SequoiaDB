@@ -157,16 +157,17 @@ function sdbHardwareInfoAll()
 function sdbHardwareInfoPart()
 {
    HOST=$1
+
    cpu=$2
    memory=$3
    disk=$4
    netcard=$5
    mainboard=$6
-   bios=$7
 
-   if [ "$cpu" == "true" ] || [ "$memory" == "true" ] || [ "$disk" == "true" ] || [ "$netcard" == "true" ] || [ "$mainboard" == "true" ] || [ "$bios" == "true" ] ; then
+   if [ "$cpu" == "true" ] || [ "$memory" == "true" ] || [ "$disk" == "true" ] || [ "$netcard" == "true" ] || [ "$mainboard" == "true" ] ; then
       mkdir -p HARDINFO/
    fi
+
    if [[ $cpu = true ]] ; then
       lscpu >> HARDINFO/$HOST.cpu.info 2>&1
       cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info 2>&1
@@ -184,20 +185,20 @@ function sdbHardwareInfoPart()
       df -h >> HARDINFO/$HOST.disk.info 2>&1
    fi
 
-   #if [[ $netcard = true ]] ; then
-      #lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info 2>&1
+   if [[ $netcard = true ]] ; then
+      lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info 2>&1
       #ifconfig >> HARDINFO/$HOST.netcard.info 2>&1
-   #fi
+   fi
 
    if [[ $mainboard = true ]] ; then
       lspci >> HARDINFO/$HOST.mainboard1.info 2>&1
       lspci -vv >> HARDINFO/$HOST.mainboard2.info 2>&1
    fi
 
-   if [[ $bios = true ]] ; then
-      dmidecode -t bios >> HARDINFO/$HOST.bios1.info 2>&1
-      dmidecode -q >> HARDINFO/$HOST.bios2.info 2>&1
-   fi
+   #if [[ $bios = true ]] ; then
+      #dmidecode -t bios >> HARDINFO/$HOST.bios1.info 2>&1
+      #dmidecode -q >> HARDINFO/$HOST.bios2.info 2>&1
+   #fi
 }
 
 #collect operating system information all
@@ -241,7 +242,7 @@ function sdbSystemInfoAll()
    echo ">>>>>detail netstats information" >> OSINFO/$HOST.networkinfo.sys 2>&1
    netstat >> OSINFO/$HOST.networkinfo.sys 2>&1
 
-   uptime >> OSINFO/$HOST.nfsstate.sys 2>&1
+   #uptime >> OSINFO/$HOST.nfsstate.sys 2>&1
    #nfsstat >> OSINFO/$HOST.nfsstate.sys 2>&1
 
    uptime >> OSINFO/$HOST.progress.sys 2>&1
@@ -252,7 +253,7 @@ function sdbSystemInfoAll()
    last >> OSINFO/$HOST.logininfo.sys 2>&1
    history >> OSINFO/$HOST.logininfo.sys 2>&1
 
-   uptime >> OSINFO/$HOST.swapon.sys 2>&1
+   #uptime >> OSINFO/$HOST.swapon.sys 2>&1
    #swapon -s >> OSINFO/$HOST.swapon.sys 2>&1
 
    uptime >> OSINFO/$HOST.ulimit.sys 2>&1
@@ -326,10 +327,10 @@ function sdbSystemInfoPartFore()
       netstat >> OSINFO/$HOST.networkinfo.sys 2>&1
    fi
 
-   if [[ $nfsstat = true ]] ; then 	
-      uptime >> OSINFO/$HOST.nfsstate.sys 2>&1 
+   #if [[ $nfsstat = true ]] ; then 	
+      #uptime >> OSINFO/$HOST.nfsstate.sys 2>&1 
       #nfsstat >> OSINFO/$HOST.nfsstate.sys 2>&1
-   fi
+   #fi
 
 }
 
@@ -338,14 +339,12 @@ function sdbSystemInfoPartEnd()
 {
    HOST=$1
 
-   nfsstat=$2
-   progress=$3
-   login=$4
-   swapon=$5
-   limit=$6
-   vmstate=$7
+   progress=$2
+   login=$3
+   limit=$4
+   vmstate=$5
 
-   if [ "$nfsstat" == "true" ] || [ "$progress" == "true" ] || [ "$login" == "true" ] || [ "$swapon" == "true" ] || [ "$limit" == "true" ] || [ "$vmstate" == "true" ] ; then
+   if [ "$progress" == "true" ] || [ "$login" == "true" ] || [ "$limit" == "true" ] || [ "$vmstate" == "true" ] ; then
       mkdir -p OSINFO/
    fi
 
@@ -361,10 +360,10 @@ function sdbSystemInfoPartEnd()
       history >> OSINFO/$HOST.logininfo.sys 2>&1
    fi 
 
-   if [[ $swapon = true ]] ; then 
-      uptime >> OSINFO/$HOST.swapon.sys 2>&1
+   #if [[ $swapon = true ]] ; then 
+      #uptime >> OSINFO/$HOST.swapon.sys 2>&1
       #swapon -s >> OSINFO/$HOST.swapon.sys 2>&1
-   fi
+   #fi
 
    if [[ $limit = true ]] ; then 
       uptime >> OSINFO/$HOST.ulimit.sys 2>&1

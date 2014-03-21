@@ -23,7 +23,6 @@ memory="false"
 disk="false"
 netcard="false"
 mainboard="false"
-bios="false"
 
 #snapshot variable
 rcPort="false"
@@ -43,10 +42,8 @@ kermode="false"
 env="false"
 IDE="false"
 network="false"
-nfsstat="false"
 progress="false"
 login="false"
-swapon="false"
 limit="false"
 vmstate="false"
 all="false"
@@ -83,7 +80,6 @@ function Usage()
    echo "    --disk                 host disk information" ;
    echo "    --netcard              host netcard information" ;
    echo "    --mainboard            host mainboard information" ;
-   echo "    --bios                 host bios information" ;
    echo "    --catalog              catalog snapshot for database" ;
    echo "    --group                group of dababase information" ;
    echo "    --context              context snapshot" ;
@@ -98,10 +94,8 @@ function Usage()
    echo "    --env                  operating system environment variable" ;
    echo "    --IDE                  integrated development environment" ;
    echo "    --network              network information" ;
-   echo "    --nfstat               network file system state" ;
    echo "    --process              operating system process" ;
    echo "    --login                operating system users and history" ;
-   echo "    --swapon               operating system swap on" ;
    echo "    --limit                ulimit used to limit the resources occupied shell startup process" ;
    echo "    --vmstate              Show the server status value of a given time interval" ;
 
@@ -109,7 +103,7 @@ function Usage()
 }
 
 #the parameters can use  
-optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,bios,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,kermode,env,IDE,network,nfstat,process,login,swapon,limit,vmstate,catalog,all -- "$@"`
+optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,kermode,env,IDE,network,process,login,limit,vmstate,catalog,all -- "$@"`
 
 #check over the option of sdbsupport
 rc=$?
@@ -161,9 +155,6 @@ do
    --mainboard)
       mainboard="true"
       ;;
-   --bios)
-      bios="true"
-      ;;
    --group)
       group="true"
       rcPort="true"
@@ -210,17 +201,11 @@ do
    --network)
       network="true"
       ;;
-   --nfstat)
-      nfsstat="true"
-      ;;
    --process)
       progress="true"
       ;;
    --login)
       login="true"
-      ;;
-   --swapon)
-      swapon="true"
       ;;
    --limit)
       limit="true"
@@ -555,14 +540,14 @@ do
                sdbSystemInfoAll ${HOST[$i]}
             else
                sdbSystemInfoPartFore ${HOST[$i]} $diskmanage $osystem $kermode $env $IDE $network
-               sdbSystemInfoPartEnd ${HOST[$i]} $nfsstat $progress $login $swapon $limit $vmstate
+               sdbSystemInfoPartEnd ${HOST[$i]} $progress $login $limit $vmstate
             fi
 
             #Parameter:--hardinfo ; Collect all hardware information or collect part of system information !
             if [[ $hardInfo = "true" ]] ; then
                sdbHardwareInfoAll ${HOST[$i]}
             else
-               sdbHardwareInfoPart ${HOST[$i]} $cpu $memory $disk $netcard $mainboard $bios
+               sdbHardwareInfoPart ${HOST[$i]} $cpu $memory $disk $netcard $mainboard
             fi
             #echo "" >&6
          fi
