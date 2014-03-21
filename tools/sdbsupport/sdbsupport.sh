@@ -420,6 +420,9 @@ if [ "$all" == "true" ] ; then
          #echo "password:" "${PASSWD[$i]}"
       fi
    done
+   echo ""
+   echo "Check over password !"
+   echo ""
 fi
 
 if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
@@ -442,6 +445,9 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
          #echo "password:" "${PASSWD[$i]}"
       fi
    done
+   echo ""
+   echo "Check over password !"
+   echo ""
 fi
 
 #******************************************************************************
@@ -452,11 +458,6 @@ fi
 #@Fold : HARDINFO Exp : directory for hardware information
 #******************************************************************************
    rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/
-   #mkdir HARDINFO >> sdbsupport.log 2>&1
-   #mkdir OSINFO >> sdbsupport.log 2>&1
-   #mkdir SDBNODES >> sdbsupport.log 2>&1
-   #mkdir SDBSNAPS >> sdbsupport.log 2>&1
-   #echo "mkdir ok"
 
 #*************************************************************************************************
 #@Function : Collect local host information about sequoiadb,such as Dialog,
@@ -487,25 +488,28 @@ if [ "$all" == "true" ] ; then
    for i in $(seq 1 $HostNum)
    do
       if [ "${HOST[$i]}" == "$localhost" ] ; then
-         sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
-         sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
-         sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
-         sdbHardwareInfoAll ${HOST[$i]} $installpath
-         sdbSystemInfoAll ${HOST[$i]} $installpath
-         Local=$localhost
+         for j in $(seq 1 $PortNum)
+         do
+            sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
+            sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
+            sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
+            sdbHardwareInfoAll ${HOST[$i]} $installpath
+            sdbSystemInfoAll ${HOST[$i]} $installpath
+            Local=$localhost
+         done
       fi
-      #read -u 6
-      #{
+      read -u 6
       if [ "${HOST[$i]}" != "" ] && [ "${HOST[$i]}" != "$localhost" ] ; then
+         {
          sdbsupport="./sdbsupport.sh -N ${HOST[$i]}"
          #ssh host and collect information
          sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
          sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
          sdbSSHRemove "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
          #echo "concurent $i"
-         #echo "" >&6
-      fi
-      #}&
+         echo "" >&6
+         }&
+       fi
    done
    wait
 fi
@@ -514,13 +518,13 @@ fi
 for i in $(seq 1 $pHostNum)
 do
    if [ $all == "false" ] ; then
-      #read -u 6
+      read -u 6
       #HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'` 
       if [[ ${HostPara[$i]} = $localhost ]] ; then
          #only have localhost ./sdbsupport.sh -h htest1
          Local=$localhost
          if [[ $thirdLoc = "" ]] ; then
-            for j in $(seq 1 $PortNum)	
+            for j in $(seq 1 $PortNum)
             do	
                sdbPortGather "${HostPara[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
                sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$j]}" "$installpath"
@@ -575,13 +579,14 @@ do
             fi
          done
          if [[ ${HostPara[$i]} != "" ]] ; then
+            {
             sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"
             sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
             sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
             sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
+            echo "" >&6
+            }&
          fi
-#echo "" >&6
-#}&
       fi
    fi
 done

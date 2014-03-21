@@ -6,23 +6,21 @@ function sdbCheckPassword()
    HOST=$1
    PASSWD=$2
 
-   /usr/local/bin/expect -c   "
-      set timeout 4;
-      spawn ssh sdbadmin@$HOST;
+   /usr/local/bin/expect -c "
+      set timeout 10 ;
+      spawn ssh sdbadmin@$HOST ;
       expect {
-         \"*yes/no*\" ;{send \"yes\r\" ;exp_continue}
-         \"assword\" ;
-         {send \"$PASSWD\r\" ;
-            expect {
-               \"denied\" ; {exit 5;}
+            \"*yes/no*\" ;{send \"yes\r\" ;exp_continue}
+            \"assword\" ;{send \"$PASSWD\r\" ; exp_continue}
+            \"denied\" ; {exit 5;}
+            \"*login*\" ;{send \"exit\r\" ;}
+            eof
+            {
+               send_user \"eof\n\" ;
             }
-         exp_continue}
-         eof
-         {
-            send_user \"eof\" ;
-         }
       }
-                              "
+                        "
+
 }
 
 #ssh host and run sdbsupport
@@ -39,20 +37,14 @@ function sdbExpectSshHosts()
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\n\";
-                      send \"chmod +x sdbsupport.sh\n\";
-                      send \"$sdbsupport\n\";
-         exp_continue}
+         \"*login*\";{send \"cd $localPath\r\n\";send \"chmod +x sdbsupport.sh\r\n\";send \"$sdbsupport\r\n\";exp_continue}
          eof
          {
            send_user \"eof\n\";
          }
       }
                               " >>sdbsupport.log
-   rc=$?
-   if [ "$rc" == "4" ] ; then
-      echo "No such file or directory"
-   fi
+
 
 }
 
@@ -133,8 +125,7 @@ function sdbExpectScpHosts()
       spawn scp -r sdbadmin@$HOST:$localPath/$HOST*.tar.gz ./ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
-         \"*assword\";{send \"$PASSWD\n\";
-         exp_continue}
+         \"*assword\";{send \"$PASSWD\n\";exp_continue}
          eof
          {
             send_user \"eof\n\";
@@ -142,10 +133,6 @@ function sdbExpectScpHosts()
       }
                               " >>sdbsupport.log
 
-   rc=$?
-   if [ "$rc" == "4" ] ; then
-      echo "Failed to collet host:$HOST's information"
-   fi
 
 }
 
@@ -161,9 +148,7 @@ function sdbSSHRemove()
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\n\";
-                      send \"rm  $HOST*.tar.gz\n\";
-         exp_continue}
+         \"*login*\";{send \"cd $localPath\r\n\";send \"rm $HOST*.tar.gz\r\n\";send \"\r\";send \"exit\r\" ;}
          eof
          {
            send_user \"eof\n\";
@@ -171,9 +156,5 @@ function sdbSSHRemove()
       }
 
                            " >>sdbsupport.log
-   rc=$?
-   if [ "$rc" == "4" ] ; then
-      echo "Failed to clean host:$HOST "
-   fi
 
 }
