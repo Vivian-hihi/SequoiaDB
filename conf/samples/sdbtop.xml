@@ -68,6 +68,11 @@
                <jumpName>NODE_SNAPSHOT</jumpName>
             </HotKey>
             <HotKey>
+               <button>r</button>
+               <jumpType>JUMPTYPE_REFRESHINTERVAL</jumpType>
+               <jumpName>reset refreshInterval</jumpName>
+            </HotKey>
+            <HotKey>
                <button>A</button>
                <jumpType>JUMPTYPE_ASC</jumpType>
                <jumpName>Ascending order</jumpName>
@@ -897,9 +902,9 @@
                            </absoluteColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>DataRead's Del</deltaName>
-                           <absoluteName>TotalDataRead</absoluteName>
-                           <averageName>DataRead's Ave</averageName>
+                           <deltaName>DataRead</deltaName>
+                           <absoluteName>DataRead</absoluteName>
+                           <averageName>DataRead</averageName>
                            <sourceField>TotalDataRead</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -918,9 +923,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>IndexRead's Del</deltaName>
-                           <absoluteName>TotalIndexRead</absoluteName>
-                           <averageName>IndexRead's Ave</averageName>
+                           <deltaName>IndexRead</deltaName>
+                           <absoluteName>IndexRead</absoluteName>
+                           <averageName>IndexRead</averageName>
                            <sourceField>TotalIndexRead</sourceField>
                            <contentLength>15</contentLength>
                            <alignment>RIGHT</alignment>
@@ -939,9 +944,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>DataWrite's Del</deltaName>
-                           <absoluteName>TotalDataWrite</absoluteName>
-                           <averageName>DataWrite's Ave</averageName>
+                           <deltaName>DataWrite</deltaName>
+                           <absoluteName>DataWrite</absoluteName>
+                           <averageName>DataWrite</averageName>
                            <sourceField>TotalDataWrite</sourceField>
                            <contentLength>15</contentLength>
                            <alignment>RIGHT</alignment>
@@ -960,9 +965,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>IndexWrite's Del</deltaName>
-                           <absoluteName>TotalIndexWrite</absoluteName>
-                           <averageName>IndexWrite's Ave</averageName>
+                           <deltaName>IndexWrite</deltaName>
+                           <absoluteName>IndexWrite</absoluteName>
+                           <averageName>IndexWrite</averageName>
                            <sourceField>TotalIndexWrite</sourceField>
                            <contentLength>16</contentLength>
                            <alignment>RIGHT</alignment>
@@ -981,9 +986,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Update's Del</deltaName>
-                           <absoluteName>TotalUpdate</absoluteName>
-                           <averageName>Update's Ave</averageName>
+                           <deltaName>DataUpdate</deltaName>
+                           <absoluteName>DataUpdate</absoluteName>
+                           <averageName>DataUpdate</averageName>
                            <sourceField>TotalUpdate</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1002,9 +1007,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Delete's Del</deltaName>
-                           <absoluteName>TotalDelete</absoluteName>
-                           <averageName>Delete's Ave</averageName>
+                           <deltaName>DataDelete</deltaName>
+                           <absoluteName>DataDelete</absoluteName>
+                           <averageName>DataDelete</averageName>
                            <sourceField>TotalDelete</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1023,9 +1028,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Insert's Del</deltaName>
-                           <absoluteName>TotalInsert</absoluteName>
-                           <averageName>Insert's Ave</averageName>
+                           <deltaName>DataInsert</deltaName>
+                           <absoluteName>DataInsert</absoluteName>
+                           <averageName>DataInsert</averageName>
                            <sourceField>TotalInsert</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1044,9 +1049,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Select's Del</deltaName>
-                           <absoluteName>TotalSelect</absoluteName>
-                           <averageName>Selec's Avet</averageName>
+                           <deltaName>DataSelect</deltaName>
+                           <absoluteName>DataSelect</absoluteName>
+                           <averageName>DataSelect</averageName>
                            <sourceField>TotalSelect</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1065,9 +1070,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Read's Del</deltaName>
-                           <absoluteName>TotalRead</absoluteName>
-                           <averageName>Read's Ave</averageName>
+                           <deltaName>DataRead</deltaName>
+                           <absoluteName>DataRead</absoluteName>
+                           <averageName>DataRead</averageName>
                            <sourceField>TotalRead</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1086,9 +1091,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>ReadTime's Del</deltaName>
-                           <absoluteName>TotalReadTime</absoluteName>
-                           <averageName>ReadTime's Ave</averageName>
+                           <deltaName>DataReadTime</deltaName>
+                           <absoluteName>DataReadTime</absoluteName>
+                           <averageName>DataReadTime</averageName>
                            <sourceField>TotalReadTime</sourceField>
                            <contentLength>14</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1107,9 +1112,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>WriteTime's Del</deltaName>
-                           <absoluteName>TotalWriteTime</absoluteName>
-                           <averageName>WriteTime's Ave</averageName>
+                           <deltaName>DataWriteTime</deltaName>
+                           <absoluteName>DataWriteTime</absoluteName>
+                           <averageName>DataWriteTime</averageName>
                            <sourceField>TotalWriteTime</sourceField>
                            <contentLength>15</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1226,9 +1231,9 @@
                      <baseField></baseField>
                      <fixed>
                         <FieldStruct>
-                           <deltaName>NumConnects's Del</deltaName>
-                           <absoluteName>TotalNumConnects</absoluteName>
-                           <averageName>NumConnects's Ave</averageName>
+                           <deltaName>NumConnects</deltaName>
+                           <absoluteName>NumConnects</absoluteName>
+                           <averageName>NumConnects</averageName>
                            <sourceField>TotalNumConnects</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1249,9 +1254,9 @@
                      </fixed>
                      <mobile>
                         <FieldStruct>
-                           <deltaName>DataRead's Del</deltaName>
-                           <absoluteName>TotalDataRead</absoluteName>
-                           <averageName>DataRead's Ave</averageName>
+                           <deltaName>DataRead</deltaName>
+                           <absoluteName>DataRead</absoluteName>
+                           <averageName>DataRead</averageName>
                            <sourceField>TotalDataRead</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1270,9 +1275,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>IndexRead's Del</deltaName>
-                           <absoluteName>TotalIndexRead</absoluteName>
-                           <averageName>IndexRead's Ave</averageName>
+                           <deltaName>IndexRead</deltaName>
+                           <absoluteName>IndexRead</absoluteName>
+                           <averageName>IndexRead</averageName>
                            <sourceField>TotalIndexRead</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1291,9 +1296,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>DataWrite's Del</deltaName>
-                           <absoluteName>TotalDataWrite</absoluteName>
-                           <averageName>DataWrite's Ave</averageName>
+                           <deltaName>DataWrite</deltaName>
+                           <absoluteName>DataWrite</absoluteName>
+                           <averageName>DataWrite</averageName>
                            <sourceField>TotalDataWrite</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1312,9 +1317,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>IndexWrite's Del</deltaName>
-                           <absoluteName>TotalIndexWrite</absoluteName>
-                           <averageName>IndexWrite's Ave</averageName>
+                           <deltaName>IndexWrite</deltaName>
+                           <absoluteName>IndexWrite</absoluteName>
+                           <averageName>IndexWrite</averageName>
                            <sourceField>TotalIndexWrite</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1333,9 +1338,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Update's Del</deltaName>
-                           <absoluteName>TotalUpdate</absoluteName>
-                           <averageName>Update's Ave</averageName>
+                           <deltaName>Update</deltaName>
+                           <absoluteName>Update</absoluteName>
+                           <averageName>Update</averageName>
                            <sourceField>TotalUpdate</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1354,9 +1359,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Delete's Del</deltaName>
-                           <absoluteName>TotalDelete</absoluteName>
-                           <averageName>Delete's Ave</averageName>
+                           <deltaName>Delete</deltaName>
+                           <absoluteName>Delete</absoluteName>
+                           <averageName>Delete</averageName>
                            <sourceField>TotalDelete</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1375,9 +1380,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Insert's Del</deltaName>
-                           <absoluteName>TotalInsert</absoluteName>
-                           <averageName>Insert's Ave</averageName>
+                           <deltaName>Insert</deltaName>
+                           <absoluteName>Insert</absoluteName>
+                           <averageName>Insert</averageName>
                            <sourceField>TotalInsert</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1396,9 +1401,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>ReplUpdate's Del</deltaName>
+                           <deltaName>ReplUpdate</deltaName>
                            <absoluteName>ReplUpdate</absoluteName>
-                           <averageName>ReplUpdate's Ave</averageName>
+                           <averageName>ReplUpdate</averageName>
                            <sourceField>ReplUpdate</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1417,9 +1422,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>ReplDelete's Del</deltaName>
+                           <deltaName>ReplDelete</deltaName>
                            <absoluteName>ReplDelete</absoluteName>
-                           <averageName>ReplDelete's Ave</averageName>
+                           <averageName>ReplDelete</averageName>
                            <sourceField>ReplDelete</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1438,9 +1443,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>ReplInsert's Del</deltaName>
+                           <deltaName>ReplInsert</deltaName>
                            <absoluteName>ReplInsert</absoluteName>
-                           <averageName>ReplInsert's Ave</averageName>
+                           <averageName>ReplInsert</averageName>
                            <sourceField>ReplInsert</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1459,9 +1464,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Select's Del</deltaName>
-                           <absoluteName>TotalSelect</absoluteName>
-                           <averageName>Select's Ave</averageName>
+                           <deltaName>Select</deltaName>
+                           <absoluteName>Select</absoluteName>
+                           <averageName>Select</averageName>
                            <sourceField>TotalSelect</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1480,9 +1485,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Read's Del</deltaName>
-                           <absoluteName>TotalRead</absoluteName>
-                           <averageName>Read's Ave</averageName>
+                           <deltaName>Read</deltaName>
+                           <absoluteName>Read</absoluteName>
+                           <averageName>Read</averageName>
                            <sourceField>TotalRead</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1501,9 +1506,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>ReadTime's Del</deltaName>
-                           <absoluteName>TotalReadTime</absoluteName>
-                           <averageName>ReadTime's Ave</averageName>
+                           <deltaName>ReadTime</deltaName>
+                           <absoluteName>ReadTime</absoluteName>
+                           <averageName>ReadTime</averageName>
                            <sourceField>TotalReadTime</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1522,9 +1527,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>WriteTime's Del</deltaName>
-                           <absoluteName>TotalWriteTime</absoluteName>
-                           <averageName>WriteTime's Ave</averageName>
+                           <deltaName>WriteTime</deltaName>
+                           <absoluteName>WriteTime</absoluteName>
+                           <averageName>WriteTime</averageName>
                            <sourceField>TotalWriteTime</sourceField>
                            <contentLength>30</contentLength>
                            <alignment>RIGHT</alignment>
@@ -1600,8 +1605,8 @@
                      <fixed>
                         <FieldStruct>
                            <absoluteName>UserCPU</absoluteName>
-                           <deltaName>UserCPU's Del</deltaName>
-                           <averageName>UserCPU's Ave</averageName>
+                           <deltaName>UserCPU</deltaName>
+                           <averageName>UserCPU</averageName>
                            <sourceField>CPU.User</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1620,9 +1625,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>SysCPU's Del</deltaName>
+                           <deltaName>SysCPU</deltaName>
                            <absoluteName>SysCPU</absoluteName>
-                           <averageName>SysCPU's Ave</averageName>
+                           <averageName>SysCPU</averageName>
                            <sourceField>CPU.Sys</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1642,8 +1647,8 @@
                         </FieldStruct>
                         <FieldStruct>
                            <absoluteName>IdleCPU</absoluteName>
-                           <deltaName>IdleCPU's Del</deltaName>
-                           <averageName>IdleCPU's Ave</averageName>
+                           <deltaName>IdleCPU</deltaName>
+                           <averageName>IdleCPU</averageName>
                            <sourceField>CPU.Idle</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1662,9 +1667,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>OtherCPU's Del</deltaName>
+                           <deltaName>OtherCPU</deltaName>
                            <absoluteName>OtherCPU</absoluteName>
-                           <averageName>OtherCPU's Ave</averageName>
+                           <averageName>OtherCPU</averageName>
                            <sourceField>CPU.Other</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1683,9 +1688,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>RAM's Del</deltaName>
-                           <absoluteName>TotalRAM</absoluteName>
-                           <averageName>RAM's Ave</averageName>
+                           <deltaName>RAM</deltaName>
+                           <absoluteName>RAM</absoluteName>
+                           <averageName>RAM</averageName>
                            <sourceField>Memory.TotalRAM</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1704,9 +1709,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>FreeRAM's Del</deltaName>
+                           <deltaName>FreeRAM</deltaName>
                            <absoluteName>FreeRAM</absoluteName>
-                           <averageName>FreeRAM's Ave</averageName>
+                           <averageName>FreeRAM</averageName>
                            <sourceField>Memory.FreeRAM</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1725,9 +1730,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Swap's Del</deltaName>
-                           <absoluteName>TotalSwap</absoluteName>
-                           <averageName>Swap's Ave</averageName>
+                           <deltaName>MemorySwap</deltaName>
+                           <absoluteName>MemorySwap</absoluteName>
+                           <averageName>MemorySwap</averageName>
                            <sourceField>Memory.TotalSwap</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1746,9 +1751,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>FreeSwap's Del</deltaName>
+                           <deltaName>FreeSwap</deltaName>
                            <absoluteName>FreeSwap</absoluteName>
-                           <averageName>FreeSwap's Ave</averageName>
+                           <averageName>FreeSwap</averageName>
                            <sourceField>Memory.FreeSwap</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1767,9 +1772,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>Virtual's Ave</deltaName>
-                           <absoluteName>TotalVirtual</absoluteName>
-                           <averageName>Virtual's Ave</averageName>
+                           <deltaName>VirtualMemory</deltaName>
+                           <absoluteName>VirtualMemory</absoluteName>
+                           <averageName>VirtualMemory</averageName>
                            <sourceField>Memory.TotalVirtual</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1788,9 +1793,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>FreeVirtual's Del</deltaName>
+                           <deltaName>FreeVirtual</deltaName>
                            <absoluteName>FreeVirtual</absoluteName>
-                           <averageName>FreeVirtual's Ave</averageName>
+                           <averageName>FreeVirtual</averageName>
                            <sourceField>Memory.FreeVirtual</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1809,9 +1814,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>TotalSpace's Del</deltaName>
-                           <absoluteName>TotalSpace</absoluteName>
-                           <averageName>TotalSpace's Ave</averageName>
+                           <deltaName>DiskSpace</deltaName>
+                           <absoluteName>DiskSpace</absoluteName>
+                           <averageName>DiskSpace</averageName>
                            <sourceField>Disk.TotalSpace</sourceField>
                            <contentLength>20</contentLength>
                            <alignment>LEFT</alignment>
@@ -1830,9 +1835,9 @@
                            </averageColour>
                         </FieldStruct>
                         <FieldStruct>
-                           <deltaName>FreeSpace's Del</deltaName>
-                           <absoluteName>FreeSpace</absoluteName>
-                           <averageName>FreeSpace's Ave</averageName>
+                           <deltaName>FreeDiskSpace</deltaName>
+                           <absoluteName>FreeDiskSpace</absoluteName>
+                           <averageName>FreeDiskSpace</averageName>
                            <sourceField>Disk.FreeSpace</sourceField>
                            <contentLength>16</contentLength>
                            <alignment>LEFT</alignment>
