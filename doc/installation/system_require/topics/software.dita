@@ -57,7 +57,7 @@
               fsize</b>：数据库进程所允许寻址的文件大小；</p><p>
             <b>rss</b>：数据库进程所允许的最大resident set大小；</p><p><b>as</b>：数据库进程所允许最大虚拟内存寻址空间限制；</p>
           在配置文件/etc/security/limits.d/90-nproc.conf 中设置：<p><codeblock>#&lt;domain>      &lt;type>    &lt;item>     &lt;value>
-*               soft      nproc     unlimited0</codeblock></p>
+*               soft      nproc     unlimited</codeblock></p>
           <p><b>参数说明：</b></p>
           <b>nproc：</b>数据库所允许的最大线程数限制；
           
