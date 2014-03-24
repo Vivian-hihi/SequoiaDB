@@ -40,7 +40,8 @@
 #include <termios.h>
 #include <string.h>
 #include "curses.h"
-#include <time.h>
+//#include <time.h>
+#include <sys/time.h>
 #include <string>
 #include <vector>
 
@@ -76,8 +77,6 @@ namespace po = boost::program_options;
 #define STRING_NULL "NULL"
 #define DIVIDINGCHAR "-"
 #define OUTPUT_FORMATTING "%.3f"
-
-#define LENGTH_OF_RESULTBUFFER 256
 
 //zoomMode
 #define ZOOM_MODE_ALL "ZOOM_MODE_ALL"
@@ -116,7 +115,7 @@ namespace po = boost::program_options;
 #define JUMPTYPE_NO_FILTER_CONDITION "JUMPTYPE_NO_FILTER_CONDITION"
 #define JUMPTYPE_FILTER_NUMBER "JUMPTYPE_FILTER_NUMBER"
 #define JUMPTYPE_NO_FILTER_NUMBER "JUMPTYPE_NO_FILTER_NUMBER"
-
+#define JUMPTYPE_REFRESHINTERVAL "JUMPTYPE_REFRESHINTERVAL"
 
 //sortingWay
 #define SORTINGWAY_ASC "1"
@@ -2865,18 +2864,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
    INT32 maxPairNumber               = 0 ;
    INT32 minPairNumber               = 0 ;
    INT32 changePairNumber            = 0 ;
-   CHAR *resultBuf = ( CHAR * )SDB_OSS_MALLOC(
-                           LENGTH_OF_RESULTBUFFER * sizeof( CHAR ) ) ;
-   if( !resultBuf )
-   {
-      ossSnprintf( errStrBuf, errStrLength,"%s", errStr ) ;
-      ossSnprintf( errStr, errStrLength,
-                   "%s getResultFromBSONobj failed,"
-                   "can't malloc memory for resultBuf : %d"OSS_NEWLINE,
-                   errStrBuf, LENGTH_OF_RESULTBUFFER ) ;
-      rc = SDB_OOM ;
-      goto error ;
-   }
    getColourPN( input.colourOfTheMax, maxPairNumber ) ;
    getColourPN( input.colourOfTheMin, minPairNumber ) ;
    getColourPN( input.colourOfTheChange, changePairNumber ) ;
@@ -2898,9 +2885,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
             }
             else
             {
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+               ossSnprintf( sdbtopBuffer, BUFFERSIZE,
                             OUTPUT_FORMATTING, elementDouble ) ;
-               result = resultBuf ;
+               result = sdbtopBuffer ;
             }
             // absoluteMaxLimitValue == 0, don't deal with
             if( absoluteMaxLimitValue != 0 &&
@@ -2945,10 +2932,10 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
             //but not found in the last snapshot
             if( DELTA == displayMode || AVERAGE == displayMode )
             {
-               ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER, "%d", 0 ) ;
-               result = resultBuf ;
-               input.cur_deltaMap[new_+sourceField] = result ;
-               input.cur_averageMap[new_+sourceField] = result ;
+               ossSnprintf( sdbtopBuffer, BUFFERSIZE, "%d", 0 ) ;
+               result = sdbtopBuffer ;
+               input.cur_deltaMap[new_+sourceField] = sdbtopBuffer ;
+               input.cur_averageMap[new_+sourceField] = sdbtopBuffer ;
             }
             //to deal with the result when displayMode is ABSOLUTE
             //but not found in the last snapshot
@@ -2964,9 +2951,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   }
                   else
                   {
-                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                     ossSnprintf( sdbtopBuffer, BUFFERSIZE,
                                   OUTPUT_FORMATTING, elementDouble ) ;
-                     result = resultBuf ;
+                     result = sdbtopBuffer ;
                   }
                   // absoluteMaxLimitValue == 0, don't deal with
                   if( absoluteMaxLimitValue != 0 &&
@@ -3024,16 +3011,15 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   if( element.type() == NumberInt ||
                       element.type() == NumberLong )
                   {
-                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
-                                  "%d",
+                     ossSnprintf( sdbtopBuffer, BUFFERSIZE, "%d",
                                   element.Long() - last_element.Long() ) ;
                   }
                   else
                   {
-                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                     ossSnprintf( sdbtopBuffer, BUFFERSIZE,
                                   OUTPUT_FORMATTING, elementDouble ) ;
                   }
-                  result = resultBuf ;
+                  result = sdbtopBuffer ;
                   if( deltaMaxLimitValue != 0 &&
                       elementDouble > deltaMaxLimitValue )
                   {
@@ -3069,9 +3055,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   }
                   else
                   {
-                     ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                     ossSnprintf( sdbtopBuffer, BUFFERSIZE,
                                   OUTPUT_FORMATTING, elementDouble ) ;
-                     result = resultBuf ;
+                     result = sdbtopBuffer ;
                   }
                   if( absoluteMaxLimitValue != 0 &&
                       elementDouble > absoluteMaxLimitValue )
@@ -3107,9 +3093,9 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                   elementDouble =
                         ( element.Number() - last_element.Number() ) /
                          root.input.refreshInterval ;
-                  ossSnprintf( resultBuf, LENGTH_OF_RESULTBUFFER,
+                  ossSnprintf( sdbtopBuffer, BUFFERSIZE,
                                OUTPUT_FORMATTING, elementDouble ) ;
-                  result = resultBuf ;
+                  result = sdbtopBuffer ;
                   if( averageMaxLimitValue!= 0 &&
                       elementDouble > averageMaxLimitValue )
                   {
@@ -3160,8 +3146,6 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
    // trim "\""
    doubleQuotesTrim( result ) ;
 done :
-   if( resultBuf )
-      SDB_OSS_FREE( resultBuf ) ;
    return rc ;
 error :
    goto done ;
@@ -5029,6 +5013,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
    INT32 row = 0 ;
    INT32 col = 0 ;
    INT32 filterNum = 0 ;
+   INT32 refreshInterval = 0 ;
    string note = NULLSTRING ;
    string displayName = NULLSTRING ; // use it when sorting
    HeadTailMap *header = NULL ;
@@ -5370,7 +5355,7 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             input.filterCondition = NULLSTRING;
             input.forcedToRefresh_Global = REFRESH ;
          }
-         else if( JUMPTYPE_FILTER_NUMBER== hotKey->jumpType )
+         else if( JUMPTYPE_FILTER_NUMBER == hotKey->jumpType )
          {
             if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
             {
@@ -5427,6 +5412,48 @@ INT32 Event::eventManagement( INT64 key ,BOOLEAN isFirstStart )
             input.filterNumber = 0;
             input.forcedToRefresh_Global = REFRESH ;
          }
+         else if( JUMPTYPE_REFRESHINTERVAL == hotKey->jumpType )
+         {
+            if( BODYTYPE_NORMAL != activatedPanel->bodyPanelType )
+            {
+               rc = eventManagement( BUTTON_H_LOWER, FALSE ) ;
+               goto done ;
+            }
+            note = "please input the refreshInterval : ";
+            getmaxyx( stdscr, row, col ) ;
+            curs_set( 2 ) ;
+            ossMemset( sdbtopBuffer, 0, BUFFERSIZE ) ;
+            move( row - 1, 0 ) ;
+            //clear screen from the position of cursor to the end of screen
+            clrtobot() ;
+            //nocbreak() ;
+            echo() ;
+            mvprintw( row - 1 , ( col - note.length() ) / 2, note.c_str() ) ;
+            if( BUTTON_ESC == getnstr( sdbtopBuffer, BUFFERSIZE ) )
+            {
+               input.forcedToRefresh_Local = REFRESH ;
+            }
+            else
+            {
+               displayName = sdbtopBuffer ;
+               trim( displayName ) ;
+               rc = strToNum( displayName.c_str(), refreshInterval ) ;
+               // illegal input 
+               if( rc || 0 > refreshInterval )
+               {
+                 // it isn't a tool error, restore status
+                 rc = SDB_OK ;
+               }
+               else
+               {
+                  input.refreshInterval = refreshInterval ;
+                  input.forcedToRefresh_Global = REFRESH ;
+               }
+            }
+            //cbreak() ;
+            noecho() ;
+            curs_set( 0 ) ;
+         }
       }
    }
 done :
@@ -5468,6 +5495,9 @@ error:
    goto done ;
 }
 
+struct timeval waitTime ;
+struct timeval startTime ;
+struct timeval endTime ;
 INT32 Event::runSDBTOP( )
 {
    INT32 rc = SDB_OK ;
@@ -5475,7 +5505,7 @@ INT32 Event::runSDBTOP( )
    HeadTailMap* footer = NULL ;
    INT64 key = 0 ; // the operation need to do
    fd_set fds ;
-   struct timeval timeout ;
+
    INT32 maxfd  = STDIN + 1 ;
 
    root.input.forcedToRefresh_Global = NOTREFRESH ;
@@ -5539,6 +5569,7 @@ INT32 Event::runSDBTOP( )
    initAllColourPairs() ;
    while( 1 )
    {
+      gettimeofday( &startTime, 0 ) ;
       rc = getActivatedHeadTailMap( root.input.activatedPanel, &header, &footer) ;
       if( rc )
       {
@@ -5562,15 +5593,44 @@ INT32 Event::runSDBTOP( )
       {
          goto error ;
       }
-      timeout.tv_sec = root.input.refreshInterval ;
-      timeout.tv_usec = 0 ;
+      waitTime.tv_sec = root.input.refreshInterval ;
+      waitTime.tv_usec = 0 ;
+
+      gettimeofday( &endTime, 0 ) ;
+
+      waitTime.tv_sec -= ( endTime.tv_sec - startTime.tv_sec ) ;
+      waitTime.tv_usec -= ( endTime.tv_usec - startTime.tv_usec ) ;
+      //if out of scope , reset waitTime.tv_sec
+      if( 0 > waitTime.tv_sec )
+      {
+         waitTime.tv_sec = 0 ;
+         waitTime.tv_usec = 0 ;
+      }
+      //if out of scope , reset waitTime.tv_usec
+      else if( 0 > waitTime.tv_usec )
+      {
+         if( 1 > waitTime.tv_sec )
+         {
+            waitTime.tv_usec += waitTime.tv_sec * 1000000 ;
+            if( 0 > waitTime.tv_usec )
+            {
+               waitTime.tv_usec = 0 ;
+            }
+            waitTime.tv_sec = 0 ;
+         }
+         else
+         {
+            waitTime.tv_sec -= 1 ;
+            waitTime.tv_usec += 1000000 ;
+         }
+      }
+      
       while( 1 )
       {
          FD_ZERO ( &fds ) ;
          FD_SET ( STDIN, &fds ) ;
-         rc = select ( maxfd, &fds, NULL, NULL, &timeout ) ;
-         //when window change the size,
-         //we should refresh the terminal
+         rc = select ( maxfd, &fds, NULL, NULL, &waitTime ) ;
+         // when window change the size, we should refresh the terminal
          if( rc < 0 )
          {
             rc = refreshAll( header, root.input.activatedPanel, footer, FALSE ) ;
