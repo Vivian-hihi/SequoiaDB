@@ -25,7 +25,7 @@
         <strow>
           <stentry>pageSize</stentry>
           <stentry>int(32)</stentry>
-          <stentry>Size of data page. The default value is 4096B.</stentry>
+          <stentry>Size of data page. The default value is 65536B.</stentry>
           <stentry>no</stentry>
         </strow>
       </simpletable>
@@ -42,7 +42,7 @@
             length of it should not be greater than 127B.</li>
           <li>Collection space names should be unique to each other in a database object.</li>
           <li>When creating a collection space, users can specify the size of data page. It is
-            unchangable afterward. The default value of it is 4096B.</li>
+            unchangable afterward. The default value of it is 65536B.</li>
         </ul>
       </note>
     </section>

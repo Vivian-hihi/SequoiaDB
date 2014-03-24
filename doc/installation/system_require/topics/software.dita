@@ -36,8 +36,7 @@
                   <li>保存退出</li>
                 </ul>
               </stentry>
-              <stentry><p>1. ping  sdbserver1（本机主机名）可以ping通</p>2. ping sdbserver2 （远端主机名）可以ping
-                通</stentry>
+              <stentry><p>1. ping sdbserver1（本机主机名）可以ping通</p>2. ping sdbserver2（远端主机名）可以ping通</stentry>
             </strow>
             <strow/>
           </simpletable></li>
