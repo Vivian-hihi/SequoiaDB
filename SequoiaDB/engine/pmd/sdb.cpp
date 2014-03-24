@@ -115,9 +115,10 @@ error :
 
 void printUsage()
 {
-   ossPrintf ( "Usage:\tsdb (Interactive mode)"OSS_NEWLINE ) ;
-   ossPrintf ( "\t\tsdb -f <FILE> (Batch mode)"OSS_NEWLINE ) ;
-   ossPrintf ( "\t\tsdb <CMD> (Deamon mode)"OSS_NEWLINE ) ;
+   ossPrintf ( "Usage:"OSS_NEWLINE ) ;
+   ossPrintf ( "   ./sdb (Interactive mode)"OSS_NEWLINE ) ;
+   ossPrintf ( "   ./sdb -f <FILE> (Batch mode), eg: ./sdb -e \"var v = \'123\'\" -f example.js"OSS_NEWLINE ) ;
+   ossPrintf ( "   ./sdb -s <CMD> (Front end mode), eg: ./sdb -s \"var db = new Sdb(\'localhost\', 11810)\""OSS_NEWLINE ) ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PARSEARGUMENTS, "parseArguments" )
@@ -198,6 +199,7 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
    {
       // Empty. Normal interactive mode
    }
+/*
    else if ( vm.count( "file" ) )
    {
       // Batch mode
@@ -205,6 +207,7 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
       str =  vm["file"].as<string>() ;
       argInfo.filename = str.c_str() ;
    }
+*/
    else if ( vm.count( "shell" ) )
    {
       // Front-end mode
@@ -212,6 +215,14 @@ INT32 parseArguments ( int argc , CHAR ** argv , ArgInfo & argInfo )
       str =  vm["shell"].as<string>() ;
       argInfo.cmd = str.c_str() ;
    }
+   else if ( vm.count( "file" ) )
+   {
+      // Batch mode
+      argInfo.mode = BATCH_MODE ;
+      str =  vm["file"].as<string>() ;
+      argInfo.filename = str.c_str() ;
+   }
+
    else
    {
       rc = SDB_INVALIDARG ;
