@@ -89,7 +89,7 @@ namespace DriverTest
         [Ignore]
         public void IsClosedTest()
         {
-            bool result = false;
+            //bool result = false;
             Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
             System.Console.WriteLine(config.conf.Coord.Address.ToString());
             sdb2.Connect("", "");
@@ -641,6 +641,123 @@ namespace DriverTest
                 Assert.IsNotNull(bson);
             }
             Assert.IsTrue(count == 1);
+        }
+
+        ///** 
+        // * need to wait for the slave node to sync
+        // * i don't know how long it will take,
+        // * so, i ignore this test. But, this api works.
+        // */
+
+        [TestMethod()]
+        //[Ignore]
+        public void setSessionAttrTest()
+        {
+            // create another node
+            string host = "ubuntu-dev1";
+            int port = 52000;
+            string dataPath = "/home/users/tanzhaobo/data/database/data2";
+            string groupName = "group1";
+            ReplicaGroup rg = null;
+            try
+            {
+                // get the exist group
+                rg = sdb.GetReplicaGroup(groupName);
+                // remove the node we going to use
+                SequoiaDB.Node node = rg.GetNode(host, port);
+                if (node != null)
+                {
+                    rg.RemoveNode(host, port, new BsonDocument());
+                }
+                // create node
+                Dictionary<string, string> opt = new Dictionary<string, string>();
+                rg.CreateNode(host, port, dataPath, opt);
+                rg.Start();
+                // insert some records first
+                int num = 10;
+                List<BsonDocument> insertor = new List<BsonDocument>();
+                for (int i = 0; i < num; i++)
+                {
+                    BsonDocument obj = new BsonDocument();
+                    obj.Add("id", i);
+                    insertor.Add(obj);
+                }
+                coll.BulkInsert(insertor, 0);
+                // begin a new session
+                Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
+                sdb2.Connect(config.conf.UserName, config.conf.Password);
+                Assert.IsNotNull(sdb2.Connection);
+                // TODO:
+                BsonDocument conf = new BsonDocument("PreferedInstance", "m");
+                sdb2.setSessionAttr(conf);
+                // check
+                // record the slave note "TotalDataRead" before query
+                Sequoiadb sddb = new Sequoiadb(host, port);
+                sddb.Connect(config.conf.UserName, config.conf.Password);
+                DBCursor cur1 = sddb.GetSnapshot(6, null, null, null);
+                BsonDocument status1 = cur1.Next();
+                long count1 = status1.GetValue("TotalDataRead").AsInt64;
+                // query
+                DBCursor cursor = coll.Query(null, null, null, null, 0, -1);
+                BsonDocument o = new BsonDocument();
+                long count = 0;
+                while ((o = cursor.Next()) != null)
+                    count++;
+                // record the slave note "TotalRead" after query
+                DBCursor cur2 = sddb.GetSnapshot(6, null, null, null);
+                BsonDocument status2 = cur2.Next();
+                long count2 = status2.GetValue("TotalDataRead").AsInt64;
+                //Assert.IsTrue(num == count2 - count1);
+                long temp = count2 - count1;
+                Console.WriteLine("count2 is " + count2 + ", count1 is " + count1);
+                DBCursor cur3 = sddb.GetSnapshot(6, null, null, null);
+                BsonDocument status3 = cur3.Next();
+                long count3 = status3.GetValue("TotalRead").AsInt64;
+            }
+            finally
+            {
+                // remove the newly build node
+                SequoiaDB.Node node = rg.GetNode(host, port);
+                if (node != null)
+                {
+                    rg.RemoveNode(host, port, new BsonDocument());
+                }
+            }
+        }
+
+        [TestMethod()]
+        public void setSessionAttr_Arguments_Test()
+        {
+            // begin a new session
+            Sequoiadb sdb2 = new Sequoiadb(config.conf.Coord.Address);
+            sdb2.Connect(config.conf.UserName, config.conf.Password);
+            Assert.IsNotNull(sdb2.Connection);
+            // TODO:
+            BsonDocument conf = null;
+            string[] str = { "M", "m", "S", "s", "A", "a" };
+            int[] nodeNumber = { 1, 2, 3, 4, 5, 6, 7 };
+            Random rnd = new Random();
+            int r = rnd.Next(2);
+            int n = -1;
+            if (r == 0)
+            {
+                n = rnd.Next(6);
+                conf = new BsonDocument("PreferedInstance", str[n]);
+            }
+            else
+            {
+                n = rnd.Next(7);
+                conf = new BsonDocument("PreferedInstance", nodeNumber[n]);
+            }
+            try
+            {
+                sdb2.setSessionAttr(conf);
+            }
+            catch (BaseException e) 
+            {
+                Console.WriteLine(e.ErrorType);
+                Assert.Fail();
+            }
         }
 
     }

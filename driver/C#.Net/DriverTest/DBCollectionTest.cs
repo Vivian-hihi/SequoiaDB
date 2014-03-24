@@ -597,5 +597,119 @@ namespace DriverTest
                 return;
             }
         }
+
+        [TestMethod()]
+        public void AttachAndDetachCollectionTest()
+        {
+            try
+            {
+                // create main cl
+                DBCollection mainCL = null;
+                string mainCLName = "maincl";
+                if (cs.IsCollectionExist(mainCLName))
+                    cs.DropCollection(mainCLName);
+                BsonDocument conf = new BsonDocument
+                                    {
+                                        {"IsMainCL", true},
+                                        {"ShardingKey", new BsonDocument
+                                                        {
+                                                            {"id", 1}
+                                                        } 
+                                        },
+                                        {"ReplSize", 0}
+                                    };
+                mainCL = cs.CreateCollection(mainCLName, conf);
+                // create sub cl
+                DBCollection subCL = null;
+                string subCLName = "subcl";
+                if (cs.IsCollectionExist(subCLName))
+                    cs.DropCollection(subCLName);
+                BsonDocument conf1 = new BsonDocument
+                                    {
+                                        {"ReplSize", 0}
+                                    };
+                subCL = cs.CreateCollection(subCLName, conf1);
+                // case 1: test attachCollection
+                // TODO:
+                int num = 10;
+                // mainCL attach subCL
+                BsonDocument options = new BsonDocument
+                {
+                    {"LowBound", new BsonDocument{{"id", 0}}},
+                    {"UpBound", new BsonDocument{{"id", num}}}
+                };
+                string subCLFullName = cs.Name+"."+ subCLName;
+                mainCL.attachCollection(subCLFullName, options);
+                // insert some records
+                List<BsonDocument> insertor = new List<BsonDocument>();
+                for (int i = 0; i < num + 10; i++)
+                {
+                    BsonDocument obj = new BsonDocument();
+                    obj.Add("id", i);
+                    //insertor.Add(obj);
+                    try
+                    {
+                        mainCL.Insert(obj);
+                    }
+                    catch (BaseException e)
+                    {
+                        int errno = e.ErrorCode;
+                        Console.WriteLine(e.ErrorType);
+                    }
+                }
+                try
+                {
+                    //mainCL.BulkInsert(insertor, 0);
+                }
+                catch (BaseException e)
+                {
+                    Assert.IsTrue(e.ErrorType.Equals("SDB_CAT_NO_MATCH_CATALOG"));
+                }
+                // check
+                BsonDocument subobj = new BsonDocument();
+                BsonDocument matcher = new BsonDocument();
+                matcher.Add("id", subobj);
+                subobj.Add("$gte", 0);
+                subobj.Add("$lt", num);
+                DBCursor cursor = mainCL.Query(matcher, null, null, null, 0, -1);
+                long count = 0;
+                while (cursor.Next() != null)
+                {
+                    count++;
+                }
+                Assert.IsTrue(num == count);
+                BsonDocument subobj1 = new BsonDocument();
+                BsonDocument matcher1 = new BsonDocument();
+                matcher1.Add("id", subobj1);
+                subobj1.Add("$gte", num);
+                DBCursor cursor1 = mainCL.Query(matcher1, null, null, null, 0, -1);
+                count = 0;
+                while (cursor1.Next() != null)
+                {
+                    count++;
+                }
+                Assert.IsTrue(0 == count);
+                // case 2: test detachCollection
+                // TODO:
+                mainCL.detachCollection(subCLFullName);
+                // check
+                try
+                {
+                    BsonDocument obj = new BsonDocument("test", "test");
+                    mainCL.Insert(obj);
+                }
+                catch (BaseException e)
+                {
+                    Assert.IsTrue(e.ErrorType.Equals("SDB_CAT_NO_MATCH_CATALOG"));
+                    Console.WriteLine(e.ErrorType);
+                }
+            }
+            catch (BaseException e)
+            {
+                Console.WriteLine(e.ErrorType);
+                return;
+            }
+        }
+
     }
 }

@@ -58,6 +58,18 @@ namespace SequoiaDB
         public const string CATA = "catalog";
         public const string RESET = "reset";
         public const string GET_QUERYMETA = "get querymeta";
+        public const string LINK_CL = "link collection"; 
+        public const string UNLINK_CL = "unlink collection";
+        public const string SETSESS_ATTR = "set session attribute";
+        public const string LIST_TASK_CMD = "list tasks";
+	    public const string WAIT_TASK_CMD = "wait task";
+        public const string CANCEL_TASK_CMD = "cancel task";
+        public const string BACKUP_OFFLINE_CMD = "backup offline";
+        public const string LIST_BACKUP_CMD = "list backups";
+        public const string REMOVE_BACKUP_CMD = "remove backup";
+        public const string CRT_PROCEDURES_CMD = "create procedures";
+        public const string RM_PROCEDURES_CMD = "remove procedures";
+
 
         public const string OID = "_id";
         public const string CLIENT_RECORD_ID_INDEX = "$id";
@@ -87,6 +99,16 @@ namespace SequoiaDB
         public const string FIELD_STATUS = "Status";
         public const string FIELD_PRIMARYNODE = "PrimaryNode";
         public const string FIELD_SHARDINGKEY = "ShardingKey";
+        public const string FIELD_SUBCLNAME = "SubCLName";
+        public const string FIELD_PREFERED_INSTANCE = "PreferedInstance";
+        public const string FIELD_ASYNC = "Async";
+        public const string FIELD_TASKTYPE = "TaskType";
+        public const string FIELD_TASKID = "TaskID";
+        public const string FIELD_PATH = "Path";
+	    public const string FIELD_DESP = "Description";
+	    public const string FIELD_ENSURE_INC = "EnsureInc";
+        public const string FIELD_OVERWRITE = "OverWrite";
+
 
         public const string IXM_NAME = "name";
         public const string IXM_KEY = "key";
@@ -130,5 +152,21 @@ namespace SequoiaDB
         MSG_AUTH_VERIFY_REQ = 7000,
         MSG_AUTH_CRTUSR_REQ = 7001,
         MSG_AUTH_DELUSR_REQ = 7002
+    };
+
+    internal enum PreferInstanceType : int
+    { 
+		INS_TYPE_MIN = 0,
+		INS_NODE_1 = 1,
+		INS_NODE_2 = 2,
+		INS_NODE_3 = 3,
+		INS_NODE_4 = 4,
+		INS_NODE_5 = 5,
+		INS_NODE_6 = 6,
+		INS_NODE_7 = 7,
+		INS_MASTER = 8,
+		INS_SLAVE = 9,
+		INS_ANYONE = 10,
+		INS_TYPE_MAX = 11
     };
 }

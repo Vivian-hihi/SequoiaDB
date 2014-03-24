@@ -147,6 +147,120 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
+        /** \fn long SplitAsync(String sourceGroupName,
+		 *	                    String destGroupName,
+		 *	                    BsonDocument splitCondition,
+		 *	                    BsonDocument splitEndCondition)
+	     *  \brief Split the specified collection from source group to target group by range asynchronously.
+	     *  \param sourceGroupName
+	     *            the source group name
+	     *  \param destGroupName
+	     *            the destination group name
+         *  \param splitCondition
+	     *            the split condition
+         *  \param splitEndCondition
+	     *            the split end condition or null
+	     *            eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10},
+         *				 we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, 
+         *			 	 the targe group will get the records whose age's hash values are in [30,60). If splitEndCondition is null,
+         *			 	 they are in [30,max).
+         *  \return return the task id, we can use the return id to manage the sharding which is run backgroup.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+	     *  \see listTask, cancelTask
+	     */
+        public long SplitAsync(String sourceGroupName,
+			                   String destGroupName,
+			                   BsonDocument splitCondition,
+			                   BsonDocument splitEndCondition)
+        {
+            // check argument
+            if (sourceGroupName == null || sourceGroupName.Equals("") ||
+                destGroupName == null || destGroupName.Equals("") ||
+                splitCondition == null)
+                throw new BaseException("SDB_INVALIDARG");
+            // build a bson to send
+            BsonDocument asyncObj = new BsonDocument();
+            asyncObj.Add(SequoiadbConstants.FIELD_NAME, collectionFullName);
+            asyncObj.Add(SequoiadbConstants.FIELD_SOURCE, sourceGroupName);
+            asyncObj.Add(SequoiadbConstants.FIELD_TARGET, destGroupName);
+            asyncObj.Add(SequoiadbConstants.FIELD_SPLITQUERY, splitCondition);
+            if (splitEndCondition != null && splitEndCondition.ElementCount != 0)
+                asyncObj.Add(SequoiadbConstants.FIELD_SPLITENDQUERY, splitEndCondition);
+            asyncObj.Add(SequoiadbConstants.FIELD_ASYNC, true);
+            // build run command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SPLIT_CMD;
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, asyncObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            // check return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+            // build cursor object to get result from database
+            DBCursor cursor = new DBCursor(rtnSDBMessage, this);
+            BsonDocument result = cursor.Next();
+            if (result == null)
+                throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+            bool flag = result.Contains(SequoiadbConstants.FIELD_TASKID);
+            if (!flag)
+                throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+            long taskid = result.GetValue(SequoiadbConstants.FIELD_TASKID).AsInt64;
+            return taskid;
+        }
+
+        /** \fn long SplitAsync(String sourceGroupName,
+		 *	                    String destGroupName,
+		 *	                    double percent)
+	     *  \brief Split the specified collection from source group to target group by percent asynchronously.
+	     *  \param sourceGroupName
+	     *            the source group name
+	     *  \param destGroupName
+	     *            the destination group name
+         *  \param percent
+	     *            the split percent, Range:(0,100]
+         *  \return return the task id, we can use the return id to manage the sharding which is run backgroup.
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+	     *  \see listTask, cancelTask
+	     */
+        public long SplitAsync(String sourceGroupName,
+                               String destGroupName,
+                               double percent)
+        {
+            // check argument
+            if (sourceGroupName == null || sourceGroupName.Equals("") ||
+                destGroupName == null || destGroupName.Equals("") ||
+                percent <= 0.0 || percent > 100.0)
+                throw new BaseException("SDB_INVALIDARG");
+            // build a bson to send
+            BsonDocument asyncObj = new BsonDocument();
+            asyncObj.Add(SequoiadbConstants.FIELD_NAME, collectionFullName);
+            asyncObj.Add(SequoiadbConstants.FIELD_SOURCE, sourceGroupName);
+            asyncObj.Add(SequoiadbConstants.FIELD_TARGET, destGroupName);
+            asyncObj.Add(SequoiadbConstants.FIELD_SPLITPERCENT, percent);
+            asyncObj.Add(SequoiadbConstants.FIELD_ASYNC, true);
+            // build run command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SPLIT_CMD;
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, asyncObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            // check return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+            // build cursor object to get result from database
+            DBCursor cursor = new DBCursor(rtnSDBMessage, this);
+            BsonDocument result = cursor.Next();
+            if (result == null)
+                throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+            bool flag = result.Contains(SequoiadbConstants.FIELD_TASKID);
+            if (!flag)
+                throw new BaseException("SDB_CAT_TASK_NOTFOUND");
+            long taskid = result.GetValue(SequoiadbConstants.FIELD_TASKID).AsInt64;
+            return taskid;
+        }
+
         /** \fn ObjectId Insert(BsonDocument insertor)
          *  \brief Insert a document into current collection
          *  \param insertor The Bson document of insertor, can't be null
@@ -530,7 +644,7 @@ namespace SequoiaDB
             if (condition == null)
                 condition = dummyObj;
             hint.Add(SequoiadbConstants.FIELD_COLLECTION, collectionFullName);
-            SDBMessage rtnSDBMessage = AdminCommand(commandString, condition, dummyObj, dummyObj, hint, -1, -1);
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, condition, dummyObj, dummyObj, hint, 0, -1);
             int flags = rtnSDBMessage.Flags;
             if (flags != 0)
                 throw new BaseException(flags);
@@ -625,6 +739,73 @@ namespace SequoiaDB
                 }
             return new DBCursor(rtnSDBMessage, this);
         }
+
+        /** \fn void attachCollection (string subClFullName, BsonDocument options)
+         * \brief Attach the specified collection.
+         * \param subClFullName The name of the subcollection
+         * \param options The low boudary and up boudary
+         *       eg: {"LowBound":{a:1},"UpBound":{a:100}}
+         * \retval void
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void attachCollection(string subClFullName, BsonDocument options)
+        {
+            // check argument
+            if (subClFullName == null || subClFullName.Equals("") ||
+                subClFullName.Length > SequoiadbConstants.COLLECTION_MAX_SZ ||
+                options == null || options.ElementCount == 0)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // build a bson to send
+            BsonDocument attObj = new BsonDocument();
+            attObj.Add(SequoiadbConstants.FIELD_NAME, collectionFullName);
+            attObj.Add(SequoiadbConstants.FIELD_SUBCLNAME, subClFullName);
+            foreach (string key in options.Names)
+            {
+                attObj.Add(options.GetElement(key));
+            }
+            // build commond
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LINK_CL;
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, attObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            // check the return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
+        /** \fn void detachCollection(string subClFullName)
+         * \brief Detach the specified collection.
+         * \param subClFullName The name of the subcollection
+         * \retval void
+         * \exception SequoiaDB.BaseException
+         * \exception System.Exception
+         */
+        public void detachCollection(string subClFullName)
+        {
+            // check argument
+            if (subClFullName == null || subClFullName.Equals("") ||
+                subClFullName.Length > SequoiadbConstants.COLLECTION_MAX_SZ)
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // build a bson to send
+            BsonDocument detObj = new BsonDocument();
+            detObj.Add(SequoiadbConstants.FIELD_NAME, collectionFullName);
+            detObj.Add(SequoiadbConstants.FIELD_SUBCLNAME, subClFullName);
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.UNLINK_CL;
+            BsonDocument dummyObj = new BsonDocument();
+            // run command
+            SDBMessage rtnSDBMessage = AdminCommand(commandString, detObj, dummyObj, dummyObj, dummyObj, 0, -1);
+            // check the return flag
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
 
         private void _Update(int flag, BsonDocument matcher, BsonDocument modifier, BsonDocument hint)
         {

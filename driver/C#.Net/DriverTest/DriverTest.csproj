@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="BaseExceptionTest.cs" />
     <Compile Include="CollectionSpaceTest.cs" />
+    <Compile Include="Collection\CLSplitAndTask.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DBCollectionTest.cs" />
@@ -85,6 +86,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

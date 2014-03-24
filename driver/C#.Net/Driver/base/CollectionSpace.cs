@@ -114,7 +114,14 @@ namespace SequoiaDB
             BsonDocument dummyObj = new BsonDocument();
 
             cObj.Add(SequoiadbConstants.FIELD_NAME, name + "." + collectionName);
-            cObj.Add(SequoiadbConstants.FIELD_SHARDINGKEY, options[SequoiadbConstants.FIELD_SHARDINGKEY]);
+            if ( options != null && options.ElementCount !=0 )
+            {
+                foreach (string key in options.Names)
+                {
+                    cObj.Add(options.GetElement(key));
+                }
+            }
+            //cObj.Add(SequoiadbConstants.FIELD_SHARDINGKEY, options[SequoiadbConstants.FIELD_SHARDINGKEY]);
 
             SDBMessage rtn = AdminCommand(command, cObj, dummyObj, dummyObj, dummyObj);
             int flags = rtn.Flags;

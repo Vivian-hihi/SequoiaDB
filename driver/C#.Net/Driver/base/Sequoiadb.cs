@@ -639,6 +639,294 @@ namespace SequoiaDB
                 throw new BaseException(flags);
         }
 
+        /** \fn void backupOffline(BsonDocument options)
+         *  \brief Backup the whole database or specifed replica group.
+         *  \param options Contains a series of backup configuration infomations. 
+         *         Backup the whole cluster if null. The "options" contains 5 options as below. 
+         *         All the elements in options are optional. 
+         *         eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", 
+         *             "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
+         *         <ul>
+         *          <li>GroupName   : The replica groups which to be backuped
+         *          <li>Path        : The backup path, if not assign, use the backup path assigned in configuration file
+         *          <li>Name        : The name for the backup
+         *          <li>Description : The description for the backup
+         *          <li>EnsureInc   : Whether excute increment synchronization, default to be false
+         *          <li>OverWrite   : Whether overwrite the old backup file, default to be false
+         *         </ul>
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void backupOffline(BsonDocument options)
+        {
+            // check argument
+            if (options == null || options.ElementCount == 0)
+                throw new BaseException("INVALIDARG");
+            foreach (string key in options.Names)
+            {
+                if (key.Equals(SequoiadbConstants.FIELD_GROUPNAME) ||
+                    key.Equals(SequoiadbConstants.FIELD_NAME) ||
+                    key.Equals(SequoiadbConstants.FIELD_PATH) ||
+                    key.Equals(SequoiadbConstants.FIELD_DESP) ||
+                    key.Equals(SequoiadbConstants.FIELD_ENSURE_INC) ||
+                    key.Equals(SequoiadbConstants.FIELD_OVERWRITE))
+                    continue;
+                else
+                    throw new BaseException("INVALIDARG");
+            }
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.BACKUP_OFFLINE_CMD;
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(commandString,
+                                          options, dummyObj, dummyObj, dummyObj);
+            // check return flag
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn DBCursor listBackup(BsonDocument options, BsonDocument matcher,
+		 *	                        BsonDocument selector, BsonDocument orderBy)
+         *  \brief List the backups.
+         *  \param options Contains configuration infomations for remove backups, list all the backups in the default backup path if null.
+         *         The "options" contains 3 options as below. All the elements in options are optional. 
+         *         eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+         *         <ul>
+         *          <li>GroupName   : Assign the backups of specifed replica groups to be list
+         *          <li>Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
+         *          <li>Name        : Assign the backups with specifed name to be list
+         *         </ul>
+         *  \param matcher The matching rule, return all the documents if null
+         *  \param selector The selective rule, return the whole document if null
+         *  \param orderBy The ordered rule, never sort if null
+         *  \return the DBCursor of the backup or null while having no backup infonation
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor listBackup(BsonDocument options, BsonDocument matcher,
+	   	                           BsonDocument selector, BsonDocument orderBy)
+        {
+            // check argument
+            if (options != null)
+            {
+                foreach (string key in options.Names)
+                {
+                    if (key.Equals(SequoiadbConstants.FIELD_GROUPNAME) ||
+                        key.Equals(SequoiadbConstants.FIELD_NAME) ||
+                        key.Equals(SequoiadbConstants.FIELD_PATH))
+                        continue;
+                    else
+                        throw new BaseException("INVALIDARG");
+                }
+            }
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_BACKUP_CMD;
+            // run command
+            SDBMessage rtn = AdminCommand(commandString,
+                                          matcher, selector, orderBy, options);
+            // check return flag and retrun cursor
+            DBCursor cursor = null;
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                if(flags == SequoiadbConstants.SDB_DMS_EOC)
+                    return null;
+                else
+                    throw new BaseException(flags);
+            }
+            cursor = new DBCursor(rtn, this);
+            return cursor;
+        }
+
+        /** \fn void removeBackup ( BsonDocument options )
+         *  \brief Remove the backups.
+         *  \param options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null.
+         *                 The "options" contains 3 options as below. All the elements in options are optional.
+         *                 eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
+         *                 <ul>
+         *                  <li>GroupName   : Assign the backups of specifed replica grouops to be remove
+         *                  <li>Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
+         *                  <li>Name        : Assign the backups with specifed name to be remove
+         *                 </ul>
+         *  \return void
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void removeBackup(BsonDocument options)
+        {
+            // check argument
+            if (options != null)
+            {
+                foreach (string key in options.Names)
+                {
+                    if (key.Equals(SequoiadbConstants.FIELD_GROUPNAME) ||
+                        key.Equals(SequoiadbConstants.FIELD_NAME) ||
+                        key.Equals(SequoiadbConstants.FIELD_PATH))
+                        continue;
+                    else
+                        throw new BaseException("INVALIDARG");
+                }
+            }
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.REMOVE_BACKUP_CMD;
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(commandString,
+                                          options, dummyObj, dummyObj, dummyObj);
+            // check return flag
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn DBCursor listTasks(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
+         *  \brief List the tasks.
+         *  \param matcher The matching rule, return all the documents if null
+         *  \param selector The selective rule, return the whole document if null
+         *  \param orderBy The ordered rule, never sort if null
+         *  \param hint The hint, automatically match the optimal hint if null
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public DBCursor listTasks(BsonDocument matcher, BsonDocument selector, BsonDocument orderBy, BsonDocument hint)
+        {
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.LIST_TASK_CMD;
+            // run command
+            SDBMessage rtn = AdminCommand(commandString,
+                                          matcher, selector, orderBy, hint);
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+            // return the result by cursor
+            DBCursor cursor = null;
+            cursor = new DBCursor(rtn, this);
+            return cursor;
+        }
+
+        /** \fn void waitTasks(List<long> taskIDs)
+         *  \brief Wait the tasks to finish.
+         *  \param taskIDs The list of task id
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void waitTasks(List<long> taskIDs)
+        {
+            // check arguments
+            if (taskIDs == null || taskIDs.Count == 0)
+                throw new BaseException("SDB_INVALIDARG");
+            // build bson to send
+            BsonDocument dummyObj = new BsonDocument();
+            BsonDocument newObj = new BsonDocument();
+            BsonDocument subObj = new BsonDocument();
+            BsonArray subArr = new BsonArray(taskIDs);
+            subObj.Add("$in", subArr);
+            newObj.Add(SequoiadbConstants.FIELD_TASKID, subObj);
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.WAIT_TASK_CMD;
+            // run command
+            SDBMessage rtn = AdminCommand(commandString,
+                                          newObj, dummyObj, dummyObj, dummyObj);
+            // check return flag
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn void cancelTask(long taskIDs, bool isAsync)
+         *  \brief Cancel the specified task.
+         *  \param taskID The task id
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void cancelTask(long taskID, bool isAsync)
+        {
+            // check arguments
+            if (taskID <= 0)
+                throw new BaseException("SDB_INVALIDARG");
+            // build bson to send
+            BsonDocument dummyObj = new BsonDocument();
+            BsonDocument newObj = new BsonDocument();
+            newObj.Add(SequoiadbConstants.FIELD_TASKID, taskID);
+            newObj.Add(SequoiadbConstants.FIELD_ASYNC, isAsync);
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.CANCEL_TASK_CMD;
+            // run command
+            SDBMessage rtn = AdminCommand(commandString,
+                                          newObj, dummyObj, dummyObj, dummyObj);
+            // check return flag
+            int flags = rtn.Flags;
+            if (flags != 0)
+            {
+                throw new BaseException(flags);
+            }
+        }
+
+        /** \fn void setSessionAttr(BsonDocument options)
+         *  \brief Set the attributes of the session.
+         *  \param options The configuration options for session.The options are as below:
+         *  
+         *      PreferedInstance : indicate which instance to respond read request in current session.
+         *                         eg:{"PreferedInstance":"m"/"M"/"s"/"S"/"a"/"A"/1-7},
+         *                         prefer to choose "read and write instance"/"read only instance"/"anyone instance"/instance1-insatance7,
+         *                         default to be {"PreferedInstance":"A"}, means would like to choose anyone instance to respond read request such as query. 
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void setSessionAttr(BsonDocument options)
+        {
+            // check argument
+            if (options == null || !options.Contains(SequoiadbConstants.FIELD_PREFERED_INSTANCE))
+                throw new BaseException("SDB_INVALIDARG");
+            // build a bson to send
+            BsonDocument attrObj = new BsonDocument();
+            BsonValue value = options.GetValue(SequoiadbConstants.FIELD_PREFERED_INSTANCE);
+            if (value.IsInt32)
+            {
+                int v = options[SequoiadbConstants.FIELD_PREFERED_INSTANCE].AsInt32;
+                if (v < 1 || v > 7)
+                    throw new BaseException("SDB_INVALIDARG");
+                attrObj.Add(SequoiadbConstants.FIELD_PREFERED_INSTANCE, v);
+            }
+            else if (value.IsString)
+            {
+                string v = options[SequoiadbConstants.FIELD_PREFERED_INSTANCE].AsString;
+                int val = (int)PreferInstanceType.INS_TYPE_MIN;
+                if (v.Equals("M") || v.Equals("m"))
+                    val = (int)PreferInstanceType.INS_MASTER;
+                else if (v.Equals("S") || v.Equals("s"))
+                    val = (int)PreferInstanceType.INS_SLAVE;
+                else if (v.Equals("A") || v.Equals("a"))
+                    val = (int)PreferInstanceType.INS_SLAVE;
+                else
+                    throw new BaseException("SDB_INVALIDARG");
+                attrObj.Add(SequoiadbConstants.FIELD_PREFERED_INSTANCE, val);
+            }
+            else
+            {
+                throw new BaseException("SDB_INVALIDARG");
+            }
+            // build command
+            string commandString = SequoiadbConstants.ADMIN_PROMPT + SequoiadbConstants.SETSESS_ATTR;
+            // run command
+            BsonDocument dummyObj = new BsonDocument();
+            SDBMessage rtn = AdminCommand(commandString, attrObj, dummyObj, dummyObj, dummyObj);
+            // check return flag
+            int flags = rtn.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
+        }
+
         /** \fn void closeAllCursors()
          *  \brief Close all the cursors created in current connection, 
          *         we can't use those cursors to get data again.
@@ -650,6 +938,8 @@ namespace SequoiaDB
             byte[] request = SDBMessageHelper.BuildKillAllContextsRequest(Operation.OP_KILL_ALL_CONTEXTS, isBigEndian);
             connection.SendMessage(request);
         }
+
+
 
         /** \fn DBCursor ListReplicaGroups()
          *  \brief Get all the groups
