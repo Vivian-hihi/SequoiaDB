@@ -739,7 +739,6 @@ BOOLEAN historyInit ( void )
       goto error ;
    sstream << pPath << '/' << pName ;
    historyFile = sstream.str() ;
-   cout << historyFile.c_str() << endl ;
    ret = TRUE ;
 
 done :
