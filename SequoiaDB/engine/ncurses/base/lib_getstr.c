@@ -67,7 +67,9 @@ WipeOut(WINDOW *win, int y, int x, char *first, char *last, bool echoed)
     }
     return last;
 }
-
+//modified by ruanyibang
+//interrupt by esc
+#define BUTTON_ESC 27
 NCURSES_EXPORT(int)
 wgetnstr_events(WINDOW *win,
 		char *str,
@@ -124,6 +126,10 @@ wgetnstr_events(WINDOW *win,
 		&& win->_scroll)
 		wechochar(win, (chtype) '\n');
 	    break;
+	}
+	if(BUTTON_ESC == ch)
+	{
+	   break;
 	}
 #ifdef KEY_EVENT
 	if (ch == KEY_EVENT)
@@ -197,7 +203,10 @@ wgetnstr_events(WINDOW *win,
     *str = '\0';
     if (ch == ERR)
 	returnCode(ch);
-
+    if (BUTTON_ESC == ch )
+    {
+       returnCode(ch) ;
+    }
     T(("wgetnstr returns %s", _nc_visbuf(oldstr)));
 
 #ifdef KEY_EVENT
