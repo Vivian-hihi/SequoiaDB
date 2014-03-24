@@ -36,7 +36,7 @@ import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.util.JSON;
 
-import com.sequoiadb.base.SequoiadbConstants.PreferReplicaType;
+import com.sequoiadb.base.SequoiadbConstants.PreferInstanceType;
 import com.sequoiadb.exception.BaseException;
 import com.sequoiadb.net.ConfigOptions;
 import com.sequoiadb.net.ConnectionTCPImpl;
@@ -840,14 +840,14 @@ public class Sequoiadb {
      *        All the elements in options are optional. 
      *        eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", 
      *             "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
-     *<dl>
-     *<dt>GroupName   : The replica groups which to be backuped
-     *<dt>Path        : The backup path, if not assign, use the backup path assigned in configuration file
-     *<dt>Name        : The name for the backup
-     *<dt>Description : The description for the backup
-     *<dt>EnsureInc   : Whether excute increment synchronization, default to be false
-     *<dt>OverWrite   : Whether overwrite the old backup file, default to be false
-     *</dl>
+     *<ul>
+     *<li>GroupName   : The replica groups which to be backuped
+     *<li>Path        : The backup path, if not assign, use the backup path assigned in configuration file
+     *<li>Name        : The name for the backup
+     *<li>Description : The description for the backup
+     *<li>EnsureInc   : Whether excute increment synchronization, default to be false
+     *<li>OverWrite   : Whether overwrite the old backup file, default to be false
+     *</ul>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void backupOffline ( BSONObject options ) throws BaseException
@@ -879,24 +879,24 @@ public class Sequoiadb {
 	}
 	
 	/**
-	 * @fn DBCursor listBackup ( BSONObject options, BSONObject condition,
+	 * @fn DBCursor listBackup ( BSONObject options, BSONObject matcher,
 			                     BSONObject selector, BSONObject orderBy )
      * @brief List the backups.
      * @param options Contains configuration infomations for remove backups, list all the backups in the default backup path if null.
      *        The "options" contains 3 options as below. All the elements in options are optional. 
      *        eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
-     * <dl>
-     * <dt>GroupName   : Assign the backups of specifed replica groups to be list
-     * <dt>Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
-     * <dt>Name        : Assign the backups with specifed name to be list
-     * </dl>
-     * @param condition The matching rule, return all the documents if null
+     * <ul>
+     * <li>GroupName   : Assign the backups of specifed replica groups to be list
+     * <li>Path        : Assign the backups in specifed path to be list, if not assign, use the backup path asigned in the configuration file
+     * <li>Name        : Assign the backups with specifed name to be list
+     * </ul>
+     * @param matcher The matching rule, return all the documents if null
      * @param selector The selective rule, return the whole document if null
      * @param orderBy The ordered rule, never sort if null
-     * @return the DBCursor of backup or null while having no backup infonation. 
+     * @return the DBCursor of the backup or null while having no backup infonation. 
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor listBackup ( BSONObject options, BSONObject condition,
+	public DBCursor listBackup ( BSONObject options, BSONObject matcher,
 			                     BSONObject selector, BSONObject orderBy) throws BaseException
 	{
 		// check the optional argument
@@ -914,7 +914,7 @@ public class Sequoiadb {
 		}
 		
 		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_LIST_BACKUP,
-				                      0,0,0,-1,condition,
+				                      0,0,0,-1,matcher,
 				                      selector,orderBy,options);
 		DBCursor cursor = null;
 		int flags = rtn.getFlags();
@@ -922,7 +922,7 @@ public class Sequoiadb {
 			if (flags == SequoiadbConstants.SDB_DMS_EOC) {
 				return cursor;
 			} else {
-				throw new BaseException(flags, condition, selector, orderBy, options);
+				throw new BaseException(flags, matcher, selector, orderBy, options);
 			}
 		}
 		cursor = new DBCursor(rtn, this);
@@ -935,11 +935,11 @@ public class Sequoiadb {
      * @param options Contains configuration infomations for remove backups, remove all the backups in the default backup path if null.
      *                The "options" contains 3 options as below. All the elements in options are optional.
      *                eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName"}
-     *<dl>
-     *<dt>GroupName   : Assign the backups of specifed replica grouops to be remove
-     *<dt>Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
-     *<dt>Name        : Assign the backups with specifed name to be remove
-     *</dl>
+     *<ul>
+     *<li>GroupName   : Assign the backups of specifed replica grouops to be remove
+     *<li>Path        : Assign the backups in specifed path to be remove, if not assign, use the backup path asigned in the configuration file
+     *<li>Name        : Assign the backups with specifed name to be remove
+     *</ul>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void removeBackup ( BSONObject options ) throws BaseException
@@ -968,24 +968,24 @@ public class Sequoiadb {
 	}
 	
 	/**
-	 * @fn DBCursor listTasks ( BSONObject condition, BSONObject selector,
+	 * @fn DBCursor listTasks ( BSONObject matcher, BSONObject selector,
 	 *		                    BSONObject orderBy, BSONObject hint )
      * @brief List the tasks.
-     * @param condition The matching rule, return all the documents if null
+     * @param matcher The matching rule, return all the documents if null
      * @param selector The selective rule, return the whole document if null
      * @param orderBy The ordered rule, never sort if null
      * @param hint The hint, automatically match the optimal hint if null
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public DBCursor listTasks ( BSONObject condition, BSONObject selector,
+	public DBCursor listTasks ( BSONObject matcher, BSONObject selector,
 			                BSONObject orderBy, BSONObject hint ) throws BaseException {
 	
 		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_LIST_TASK,
-				                      0, 0, 0, -1, condition,
+				                      0, 0, 0, -1, matcher,
 				                      selector, orderBy, hint);
 		int flags = rtn.getFlags();
 		if (flags != 0) {
-			throw new BaseException(flags, condition,
+			throw new BaseException(flags, matcher,
                                     selector, orderBy, hint);
 		}
 		// return the result by cursor
@@ -1014,7 +1014,7 @@ public class Sequoiadb {
 		}
 		subObj.put("$in", list);
 		newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, subObj);
-		
+	
 		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_WAITTASK,
 				                      0, 0, 0, -1, newObj,
 				                      null, null, null);
@@ -1036,7 +1036,7 @@ public class Sequoiadb {
 		// check argument
 		if ( taskID <= 0)
 			throw new BaseException("SDB_INVALIDARG", taskID, isAsync);
-		// append argument:{ "TaskID": { "$in": [ 1, 2, 3 ] } }
+		// append argument
 		BSONObject newObj = new BasicBSONObject();
 		newObj.put(SequoiadbConstants.FIELD_NAME_TASKID, taskID);
 		newObj.put(SequoiadbConstants.FIELD_NAME_ASYNC, isAsync);
@@ -1101,26 +1101,21 @@ public class Sequoiadb {
 		// build obj
 		BSONObject newObj = new BasicBSONObject();
 		Object value = options.get( SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE );
-		int v = PreferReplicaType.PREFER_REPL_SLAVE.getCode();
+		int v = PreferInstanceType.INS_SLAVE.getCode();
 		if ( value instanceof Integer ) {
 			v = (Integer)value;
 			if ( v < 1 || v > 7 )
 				throw new BaseException( "SDB_INVALIDARG", options );
-		}else if ( value instanceof String ) {
-			if ( !( value.equals("M") ||
-			        value.equals("m") ||
-				    value.equals("S") ||
-				    value.equals("s") ||
-				    value.equals("A") ||
-				    value.equals("a") ) )
-				throw new BaseException( "SDB_INVALIDARG", options );
+		} else if ( value instanceof String ) {
 			if ( value.equals("M") || value.equals("m") )
-				v = PreferReplicaType.PREFER_REPL_MASTER.getCode();
+				v = PreferInstanceType.INS_MASTER.getCode();
 			else if ( value.equals("S") || value.equals("s") )
-				v = PreferReplicaType.PREFER_REPL_SLAVE.getCode();
+				v = PreferInstanceType.INS_SLAVE.getCode();
+			else if ( value.equals("A") || value.equals("a") )
+				v = PreferInstanceType.INS_ANYONE.getCode();
 			else
-				v = PreferReplicaType.PREFER_REPL_ANYONE.getCode();
-		}else {
+				throw new BaseException( "SDB_INVALIDARG", options );
+		} else {
 			throw new BaseException( "SDB_INVALIDARG", options );
 		}
 		newObj.put( SequoiadbConstants.FIELD_NAME_PREFERED_INSTANCE, v );

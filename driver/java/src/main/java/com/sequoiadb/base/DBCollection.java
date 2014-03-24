@@ -1301,7 +1301,7 @@ public class DBCollection {
 				+ SequoiadbConstants.CMD_NAME_SPLIT;
 		BSONObject dummy = new BasicBSONObject();
 		SDBMessage rtnSDBMessage = adminCommand(commandString, obj, dummy,
-				dummy, dummy, -1, -1, 0);
+				dummy, dummy, 0, -1, 0);
 		int flags = rtnSDBMessage.getFlags();
 		if (flags != 0) {
 			throw new BaseException(flags, sourceGroupName, destGroupName,

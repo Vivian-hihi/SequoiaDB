@@ -196,22 +196,22 @@ public class SequoiadbConstants {
 		}
 	}
 	
-	public enum PreferReplicaType {
-		PREFER_REPL_TYPE_MIN(0),
-		PREFER_REPL_NODE_1(1),
-		PREFER_REPL_NODE_2(2),
-		PREFER_REPL_NODE_3(3),
-		PREFER_REPL_NODE_4(4),
-		PREFER_REPL_NODE_5(5),
-		PREFER_REPL_NODE_6(6),
-		PREFER_REPL_NODE_7(7),
-		PREFER_REPL_MASTER(8),
-		PREFER_REPL_SLAVE(9),
-		PREFER_REPL_ANYONE(10),
-		PREFER_REPL_TYPE_MAX(11);
+	public enum PreferInstanceType {
+		INS_TYPE_MIN(0),
+		INS_NODE_1(1),
+		INS_NODE_2(2),
+		INS_NODE_3(3),
+		INS_NODE_4(4),
+		INS_NODE_5(5),
+		INS_NODE_6(6),
+		INS_NODE_7(7),
+		INS_MASTER(8),
+		INS_SLAVE(9),
+		INS_ANYONE(10),
+		INS_TYPE_MAX(11);
 		
 		private int typeCode;
-		private PreferReplicaType(int typeCode) {
+		private PreferInstanceType(int typeCode) {
 			this.typeCode = typeCode;
 		}
 		
