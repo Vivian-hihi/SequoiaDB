@@ -169,6 +169,7 @@ public class DBCollection {
 	 * @return ObjectId
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
+	/*
 	public ObjectId insert(BSONObject insertor) throws BaseException {
 		if (insertor == null)
 			throw new BaseException("SDB_INVALIDARG");
@@ -206,7 +207,42 @@ public class DBCollection {
 		}
 		return objId;
 	}
-
+*/
+	public Object insert(BSONObject insertor) throws BaseException {
+		if (insertor == null)
+			throw new BaseException("SDB_INVALIDARG");
+		
+		if (this.insert_buffer == null) {
+			this.insert_buffer = IoBuffer.allocate(DEF_BUFFER_LENGTH);
+			this.insert_buffer.setAutoExpand(true);
+			if (sequoiadb.endianConvert) {
+				insert_buffer.order(ByteOrder.LITTLE_ENDIAN);
+			} else {
+				insert_buffer.order(ByteOrder.BIG_ENDIAN);
+			}
+		} else {
+			insert_buffer.clear();
+		}
+		
+		Object tmp = insertor.get(SequoiadbConstants.OID);
+		if (tmp == null) {
+			ObjectId objId = ObjectId.get();
+			insertor.put(SequoiadbConstants.OID, objId);
+			tmp = objId;
+		}
+		
+		int message_length = SDBMessageHelper.buildInsertRequest(insert_buffer, collectionFullName, insertor);
+		connection.sendMessage(insert_buffer.array(), message_length);
+		
+		ByteBuffer byteBuffer = connection.receiveMessage(sequoiadb.endianConvert);
+		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractReply(byteBuffer);
+		int flags = rtnSDBMessage.getFlags();
+		if (flags != 0) {
+			throw new BaseException(flags, insertor.toString());
+		}
+		return tmp;
+	}
+	
 	/**
 	 * @fn ObjectId insert(String insertor)
 	 * @brief Insert a string of BSONObject into current collection
@@ -215,13 +251,21 @@ public class DBCollection {
 	 * @return ObjectId
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
+	/*
 	public ObjectId insert(String insertor) throws BaseException {
 		BSONObject in = null;
 		if (insertor != null)
 			in = (BSONObject) JSON.parse(insertor);
 		return insert(in);
 	}
-
+	 */
+	public Object insert(String insertor) throws BaseException {
+		BSONObject in = null;
+		if (insertor != null)
+			in = (BSONObject) JSON.parse(insertor);
+		return insert(in);
+	}
+	
 	/**
 	 * @fn <T> void save(T type)
 	 * @brief Insert an object into current collection
