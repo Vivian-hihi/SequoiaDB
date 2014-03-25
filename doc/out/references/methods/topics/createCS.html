@@ -80,7 +80,7 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">创建集合空间的定义格式有name和pageSize两个参数，name字段的值为字符串型，pageSize为32的int类型。  </p>
+      <p class="p">创建集合空间的定义格式有name和pageSize两个参数，name字段的值为字符串型，pageSize为32的int类型。</p>
 
       <div class="p"><pre class="pre codeblock">("&lt;集合空间名&gt;",[pagesize])</pre>
 </div>
@@ -93,6 +93,8 @@
 
           <li class="li">在创建集合空间时用户可以指定数据页大小，指定后不可更改。如果不指定默认为65536B。</li>
 
+          <li class="li">pageSize只能选填0，4096，8192，16384，32768，65536之一，0即为默认值65536</li>
+
         </ul>
 
       </div>
@@ -101,7 +103,7 @@
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       <ul class="ul">
-        <li class="li"><p class="p">创建名为foo的集合空间，不指定数据页大小</p>
+        <li class="li"><p class="p">创建名为foo的集合空间，不指定数据页大小，即数据页大小为默认值65536B</p>
 
           <div class="p"><pre class="pre codeblock">db.createCS("foo")</pre>
 </div>
@@ -109,9 +111,9 @@
         </li>
 
         <li class="li">
-          <p class="p">创建名为foo的集合空间，指定数据页大小为1024B</p>
+          <p class="p">创建名为foo的集合空间，指定数据页大小为4096B</p>
 
-          <div class="p"><pre class="pre codeblock">db.createCS("foo",1024)</pre>
+          <div class="p"><pre class="pre codeblock">db.createCS("foo",4096)</pre>
 </div>
 
         </li>
