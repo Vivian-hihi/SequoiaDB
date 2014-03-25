@@ -169,7 +169,6 @@ public class DBCollection {
 	 * @return ObjectId
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	/*
 	public ObjectId insert(BSONObject insertor) throws BaseException {
 		if (insertor == null)
 			throw new BaseException("SDB_INVALIDARG");
@@ -207,7 +206,7 @@ public class DBCollection {
 		}
 		return objId;
 	}
-*/
+	/*
 	public Object insert(BSONObject insertor) throws BaseException {
 		if (insertor == null)
 			throw new BaseException("SDB_INVALIDARG");
@@ -242,7 +241,7 @@ public class DBCollection {
 		}
 		return tmp;
 	}
-	
+	*/
 	/**
 	 * @fn ObjectId insert(String insertor)
 	 * @brief Insert a string of BSONObject into current collection
@@ -251,21 +250,20 @@ public class DBCollection {
 	 * @return ObjectId
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	/*
 	public ObjectId insert(String insertor) throws BaseException {
 		BSONObject in = null;
 		if (insertor != null)
 			in = (BSONObject) JSON.parse(insertor);
 		return insert(in);
 	}
-	 */
+	/*
 	public Object insert(String insertor) throws BaseException {
 		BSONObject in = null;
 		if (insertor != null)
 			in = (BSONObject) JSON.parse(insertor);
 		return insert(in);
 	}
-	
+	*/
 	/**
 	 * @fn <T> void save(T type)
 	 * @brief Insert an object into current collection
