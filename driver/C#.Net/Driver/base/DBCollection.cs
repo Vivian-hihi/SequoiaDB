@@ -268,7 +268,7 @@ namespace SequoiaDB
          *  \exception SequoiaDB.BaseException
          *  \exception System.Exception
          */
-        public ObjectId Insert(BsonDocument insertor) 
+        public BsonValue Insert(BsonDocument insertor) 
         {
             if (insertor == null)
                 throw new BaseException("SDB_INVALIDARG");
@@ -283,11 +283,15 @@ namespace SequoiaDB
 
             ObjectId objId;
             BsonValue tmp;
+            //if (insertor.
             if (insertor.TryGetValue(SequoiadbConstants.OID, out tmp))
-                objId = tmp.AsObjectId;
+            {
+                ;
+            }
             else
             {
                 objId = ObjectId.GenerateNewId();
+                tmp = objId;
                 insertor.Add(SequoiadbConstants.OID, objId);
             }
 
@@ -298,7 +302,7 @@ namespace SequoiaDB
             if (flags != 0)
                 throw new BaseException(flags);
 
-            return objId;
+            return tmp;
         }
 
         /** \fn void BulkInsert(List<BsonDocument> insertor, int flag)
