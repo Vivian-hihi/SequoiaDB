@@ -4,7 +4,7 @@ var SDB_PAGESIZE_8K              = 8192 ;
 var SDB_PAGESIZE_16K             = 16384 ;
 var SDB_PAGESIZE_32K             = 32768 ;
 var SDB_PAGESIZE_64K             = 65536 ;
-var SDB_PAGESIZE_DEFAULT         = SDB_PAGESIZE_4K ;
+var SDB_PAGESIZE_DEFAULT         = SDB_PAGESIZE_64K ;
 
 var SDB_SNAP_CONTEXTS            = 0 ;
 var SDB_SNAP_CONTEXTS_CURRENT    = 1 ;
