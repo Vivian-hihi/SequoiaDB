@@ -81,7 +81,7 @@ namespace DriverTest
             string date = DateTime.Now.ToString();
             insertor.Add("operation", "Insert");
             insertor.Add("date", date);
-            ObjectId id = coll.Insert(insertor);
+            Object id = (ObjectId)coll.Insert(insertor);
 
             BsonDocument matcher = new BsonDocument();
             DBQuery query = new DBQuery();
@@ -92,6 +92,145 @@ namespace DriverTest
             BsonDocument bson = cursor.Next();
             Assert.IsNotNull(bson);
             Assert.IsTrue(id.Equals(bson["_id"].AsObjectId));
+            //Assert.IsTrue(id.)
+        }
+
+        /// <summary>
+        ///Testing for Insert
+        ///</summary>
+        [TestMethod()]
+        public void InsertTest_WithId()
+        {
+            int testTypeSize = 8;
+            for (int i = 0; i < testTypeSize; i++)
+            {
+                // insert
+                BsonDocument insertor = new BsonDocument();
+                string date = DateTime.Now.ToString();
+                insertor.Add("operation", "Insert");
+                insertor.Add("date", date);
+                switch (i)
+                { 
+                    case 0:
+                        insertor.Add("_id", 3.14);
+                        break;
+                    case 1:
+                        insertor.Add("_id", "abcdefg");
+                        break;
+                    case 2:
+                        insertor.Add("_id", new BsonDocument("id", "id"));
+                        break;
+                    case 3:
+                        insertor.Add("_id", ObjectId.GenerateNewId());
+                        break;
+                    case 4:
+                        insertor.Add("_id", true);
+                        break;
+                    case 5:
+                        insertor.Add("_id", 1234);
+                        break;
+                    case 6:
+                        insertor.Add("_id", 10000L);
+                        break;
+                    case 7:
+                        insertor.Add("_id", new BsonTimestamp(1000000000L));
+                        break;
+                    default:
+                        continue;
+                }
+                coll.Delete(null);
+                BsonValue value = coll.Insert(insertor);
+                Object id = null;
+                BsonType type = value.BsonType;
+                if (type == BsonType.Double)
+                    id = value.AsDouble;
+                else if (type == BsonType.String)
+                    id = value.AsString;
+                else if (type == BsonType.Document)
+                    id = value.AsBsonDocument;
+                else if (type == BsonType.Array)
+                    id = value.AsBsonArray;
+                else if (type == BsonType.Binary)
+                    id = value.AsBsonBinaryData;
+                else if (type == BsonType.Undefined)
+                    id = value.AsBsonUndefined;
+                else if (type == BsonType.ObjectId)
+                    id = value.AsObjectId;
+                else if (type == BsonType.Boolean)
+                    id = value.AsBoolean;
+                else if (type == BsonType.DateTime)
+                    id = value.AsDateTime;
+                else if (type == BsonType.Null)
+                    ;
+                else if (type == BsonType.RegularExpression)
+                    id = value.AsRegex;
+                else if (type == BsonType.JavaScript)
+                    id = value.AsBsonJavaScript;
+                else if (type == BsonType.Symbol)
+                    id = value.AsBsonSymbol;
+                else if (type == BsonType.JavaScriptWithScope)
+                    id = value.AsBsonJavaScriptWithScope;
+                else if (type == BsonType.Int32)
+                    id = value.AsInt32;
+                else if (type == BsonType.Timestamp)
+                    id = value.AsBsonTimestamp;
+                else if (type == BsonType.Int64)
+                    id = value.AsInt64;
+                else if (type == BsonType.MinKey)
+                    id = value.AsBsonMinKey;
+                else if (type == BsonType.MaxKey)
+                    id = value.AsBsonMaxKey;
+
+                BsonDocument matcher = new BsonDocument();
+                DBQuery query = new DBQuery();
+                matcher.Add("date", date);
+                query.Matcher = matcher;
+                DBCursor cursor = coll.Query(query);
+                Assert.IsNotNull(cursor);
+                BsonDocument bson = cursor.Next();
+                Assert.IsNotNull(bson);
+
+                BsonValue ret = bson.GetValue("_id");
+                type = ret.BsonType;
+                if (type == BsonType.Double)
+                    Assert.IsTrue(id.Equals(ret.AsDouble));
+                else if (type == BsonType.String)
+                    Assert.IsTrue(id.Equals(ret.AsString));
+                else if (type == BsonType.Document)
+                    Assert.IsTrue(id.Equals(ret.AsBsonDocument));
+                else if (type == BsonType.Array)
+                    Assert.IsTrue(id.Equals(ret.AsBsonArray));
+                else if (type == BsonType.Binary)
+                    Assert.IsTrue(id.Equals(ret.AsBsonBinaryData));
+                else if (type == BsonType.Undefined)
+                    Assert.IsTrue(id.Equals(ret.AsBsonUndefined));
+                else if (type == BsonType.ObjectId)
+                    Assert.IsTrue(id.Equals(ret.AsObjectId));
+                else if (type == BsonType.Boolean)
+                    Assert.IsTrue(id.Equals(ret.AsBoolean));
+                else if (type == BsonType.DateTime)
+                    Assert.IsTrue(id.Equals(ret.AsDateTime));
+                else if (type == BsonType.Null)
+                    Assert.IsTrue(id == null);
+                else if (type == BsonType.RegularExpression)
+                    Assert.IsTrue(id.Equals(ret.AsRegex));
+                else if (type == BsonType.JavaScript)
+                    Assert.IsTrue(id.Equals(ret.AsBsonJavaScript));
+                else if (type == BsonType.Symbol)
+                    Assert.IsTrue(id.Equals(ret.AsBsonSymbol));
+                else if (type == BsonType.JavaScriptWithScope)
+                    Assert.IsTrue(id.Equals(ret.AsBsonJavaScriptWithScope));
+                else if (type == BsonType.Int32)
+                    Assert.IsTrue(id.Equals(ret.AsInt32));
+                else if (type == BsonType.Timestamp)
+                    Assert.IsTrue(id.Equals(ret.AsBsonTimestamp));
+                else if (type == BsonType.Int64)
+                    Assert.IsTrue(id.Equals(ret.AsInt64));
+                else if (type == BsonType.MinKey)
+                    Assert.IsTrue(id.Equals(ret.AsBsonMinKey));
+                else if (type == BsonType.MaxKey)
+                    Assert.IsTrue(id.Equals(ret.AsBsonMaxKey));
+            }
         }
 
         /// <summary>
@@ -109,7 +248,7 @@ namespace DriverTest
             sInsertor.Add("Phone", "10086");
             sInsertor.Add("EMail", "hetiu@yahoo.com.cn");
             insertor.Add("Contact", sInsertor);
-            ObjectId insertID = coll.Insert(insertor);
+            ObjectId insertID = (ObjectId)coll.Insert(insertor);
             Assert.IsNotNull(insertID);
 
             // Update
@@ -190,7 +329,7 @@ namespace DriverTest
             sInsertor.Add("Phone", "10086");
             sInsertor.Add("EMail", "hetiu@yahoo.com.cn");
             insertor.Add("Contact", sInsertor);
-            ObjectId insertID = coll.Insert(insertor);
+            ObjectId insertID = (ObjectId)coll.Insert(insertor);
             Assert.IsNotNull(insertID);
 
             // Create Index
@@ -312,7 +451,7 @@ namespace DriverTest
 
             insertor.Add("电话", phone);
 
-            ObjectId id = coll.Insert(insertor);
+            ObjectId id = (ObjectId)coll.Insert(insertor);
 
             BsonDocument matcher = new BsonDocument();
             DBQuery query = new DBQuery();
