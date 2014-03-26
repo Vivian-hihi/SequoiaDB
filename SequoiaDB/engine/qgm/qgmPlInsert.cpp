@@ -92,8 +92,8 @@ namespace engine
       BSONObjBuilder builder ;
       if ( _columns.size() != _values.size() )
       {
-         SDB_ASSERT( FALSE, "impossible" )
-         rc = SDB_SYS ;
+         PD_LOG(PDERROR, "column's size does not suit value's size");
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
