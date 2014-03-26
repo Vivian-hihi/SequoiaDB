@@ -419,6 +419,21 @@ namespace bson {
             _b.appendBuf(str, sz);
             return *this;
         }
+
+        /** Append a string element.
+            @param sz size does not include terminating null character */
+        BSONObjBuilder& appendStrWithNoTerminating(const StringData& fieldName, const char *str,
+          int sz)
+        {
+           _b.appendNum((char) String);
+           _b.appendStr(fieldName);
+           _b.appendNum((int)sz + 1);
+           _b.appendBuf(str, sz);
+           char t = '\0';
+           _b.appendBuf(&t, 1);
+           return *this;
+        }       
+
         /** Append a string element */
         BSONObjBuilder& append(const StringData& fieldName, const char *str) {
             return append(fieldName, str, (int) strlen(str)+1);
