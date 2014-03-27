@@ -102,7 +102,7 @@ private :
    BOOLEAN _incHead ;
 protected :
    INT32 _extractRecord () ;
-   INT32 _extractString ( CHAR *str, INT32 strLen, BOOLEAN trim ) ;
+   INT32 _extractString ( CHAR *str, INT32 strLen, BOOLEAN trim, CHAR delChar ) ;
 public :
    _migCSVExtractor ( vector<string> &fieldList, BOOLEAN incHead ) ;
    ~_migCSVExtractor () ;
