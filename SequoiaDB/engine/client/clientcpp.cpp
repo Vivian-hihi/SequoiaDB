@@ -3573,6 +3573,61 @@ namespace sdbclient
       goto done ;
    }
 
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CONNECTWITHSERVALADDR, "_sdbImpl::connect" )
+   INT32 _sdbImpl::connect ( const CHAR **pConnAddrs,
+                             INT32 arrSize,
+                             const CHAR *pUsrName,
+                             const CHAR *pPasswd )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTWITHSERVALADDR ) ;
+      INT32 rc = SDB_OK ;
+      const CHAR *pHostName = NULL ;
+      const CHAR *pServiceName = NULL ;
+      const CHAR *addr = NULL ;
+      CHAR *pStr = NULL ;
+      CHAR *pTmp = NULL ;
+      INT32 i = 0 ;
+      if ( !pConnAddrs || arrSize <= 0 || !pUsrName || !pPasswd )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // get host and port
+      for ( ; i < arrSize; i++ )
+      {
+         addr = pConnAddrs[i] ;
+         pStr = ossStrdup ( addr ) ;
+         if ( pStr == NULL )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         pTmp = ossStrchr ( pStr, ':' ) ;
+         if ( pTmp == NULL )
+         {
+            SDB_OSS_FREE ( pStr ) ;
+            continue ;
+         }
+         *pTmp = 0 ;
+         pHostName = pStr ;
+         pServiceName = pTmp + 1 ;
+         rc = connect ( pHostName, pServiceName, pUsrName, pPasswd ) ;
+         SDB_OSS_FREE ( pStr ) ;
+         pStr = NULL ;
+         pTmp = NULL ;
+         if ( rc == SDB_OK)
+            goto done ;
+      }
+      // if we go here, means no valid addresses
+      rc = SDB_NET_CANNOT_CONNECT ;
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_CONNECTWITHSERVALADDR, rc );
+      return rc ;
+   error :
+      goto done ;
+
+   }
+
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEUSR, "_sdbImpl::createUsr" )
    INT32 _sdbImpl::createUsr( const CHAR *pUsrName,
                               const CHAR *pPasswd )

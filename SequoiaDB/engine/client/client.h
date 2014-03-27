@@ -87,6 +87,22 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                               const CHAR *pUsrName, const CHAR *pPasswd ,
                               sdbConnectionHandle *handle ) ;
 
+/** \fn INT32 sdbConnect1 ( const CHAR **pConnAddrs, int arrSize;
+                               const CHAR *pUsrName, const CHAR *pPasswd ,
+                               sdbConnectionHandle *handle ) ;
+    \brief Connect to database used the first valid address in the array.
+    \param [in] pConnAddrs The array of the coord's address
+    \param [in] arrSize The size of the array
+    \param [in] pUsrName The User's Name of the account
+    \param [in] pPasswd The Password  of the account
+    \param [out] handle The database connection handle
+    \retval SDB_OK Connection Success
+    \retval Others Connection Fail
+*/
+SDB_EXPORT INT32 sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
+                               const CHAR *pUsrName, const CHAR *pPasswd ,
+                               sdbConnectionHandle *handle ) ;
+
 /** \fn void sdbDisconnect ( sdbConnectionHandle handle )
     \brief Disconnect to database
     \param [in] handle The database connection handle

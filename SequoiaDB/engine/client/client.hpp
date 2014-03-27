@@ -1749,10 +1749,13 @@ namespace sdbclient
                               const CHAR *pUsrName,
                               const CHAR *pPasswd ) = 0 ;
       virtual INT32 connect ( const CHAR *pHostName,
-                              const CHAR *pServiceName
-                            ) = 0 ;
+                              const CHAR *pServiceName ) = 0 ;
       virtual INT32 connect ( const CHAR *pHostName,
                               const CHAR *pServiceName,
+                              const CHAR *pUsrName,
+                              const CHAR *pPasswd ) = 0 ;
+      virtual INT32 connect ( const CHAR **pConnAddrs,
+                              INT32 arrSize,
                               const CHAR *pUsrName,
                               const CHAR *pPasswd ) = 0 ;
 
@@ -2070,6 +2073,30 @@ namespace sdbclient
          if ( !pSDB )
             return SDB_SYS ;
          return pSDB->connect ( pHostName, pServiceName,
+                                 pUsrName, pPasswd ) ;
+      }
+
+/** \fn INT32 connect ( const CHAR **pConnAddrs,
+                        INT32 arrSize,
+                        const CHAR *pUsrName,
+                        const CHAR *pPasswd
+                      )
+    \brief Connect to database used the first valid address in the array.
+    \param [in] pConnAddrs The array of the coord's address
+    \param [in] arrSize The size of the array
+    \param [in] pUsrName The connection user name.
+    \param [in] pPasswd The connection password.
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 connect ( const CHAR **pConnAddrs,
+                      INT32 arrSize,
+                      const CHAR *pUsrName,
+                      const CHAR *pPasswd )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->connect ( pConnAddrs, arrSize,
                                  pUsrName, pPasswd ) ;
       }
 

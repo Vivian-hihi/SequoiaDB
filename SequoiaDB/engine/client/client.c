@@ -727,6 +727,57 @@ error:
    goto done ;
 }
 
+//address[i] == "192.168.20.40:12345"
+SDB_EXPORT INT32 sdbConnect1 ( const CHAR **pConnAddrs, INT32 arrSize,
+                               const CHAR *pUsrName, const CHAR *pPasswd ,
+                               sdbConnectionHandle *handle )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *pHostName = NULL ;
+   const CHAR *pServiceName = NULL ;
+   const CHAR *addr = NULL ;
+   CHAR *pStr = NULL ;
+   CHAR *pTmp = NULL ;
+   INT32 i = 0 ;
+   if ( !pConnAddrs || arrSize <= 0 || !pUsrName || !pPasswd || !handle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   // get host and port
+   for ( ; i < arrSize; i++ )
+   {
+      addr = pConnAddrs[i] ;
+      pStr = ossStrdup ( addr ) ;
+      if ( pStr == NULL )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      pTmp = ossStrchr ( pStr, ':' ) ;
+      if ( pTmp == NULL )
+      {
+         SDB_OSS_FREE ( pStr ) ;
+         continue ;
+      }
+      *pTmp = 0 ;
+      pHostName = pStr ;
+      pServiceName = pTmp + 1 ;
+      rc = sdbConnect ( pHostName, pServiceName, pUsrName, pPasswd, handle ) ;
+      SDB_OSS_FREE ( pStr ) ;
+      pStr = NULL ;
+      pTmp = NULL ;
+      if ( rc == SDB_OK)
+         goto done ;
+   }
+   // if we go here, means no valid addresses
+   rc = SDB_NET_CANNOT_CONNECT ;
+done:
+   return rc ;
+error:
+   goto done;
+}
+
 SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
 {
    sdbConnectionStruct *connection = (sdbConnectionStruct*)handle ;
