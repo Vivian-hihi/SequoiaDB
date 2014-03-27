@@ -68,6 +68,7 @@ protected:
    CHAR _delField[2] ;
    CHAR _delRecord[2] ;
    sdbCollectionHandle _collection ;
+   BOOLEAN _stringType ;
    /*
    BOOLEAN _isEOF ;
    BOOLEAN _isOpened ;
@@ -125,6 +126,7 @@ public:
                 BOOLEAN autoAddField,
                 BOOLEAN autoCompletion,
                 BOOLEAN linePriority,
+                BOOLEAN stringType,
                 const CHAR *pDelChar,
                 const CHAR *pDelField,
                 const CHAR *pDelRecord ) ;
