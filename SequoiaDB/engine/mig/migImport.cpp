@@ -80,7 +80,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed )
       {
          bson_destroy ( &bsonObj ) ;
          count++ ;
-         PD_LOG ( PDERROR, "Bad record in %d", count ) ;
+         PD_LOG ( PDERROR, "Bad record in the %d row", count ) ;
          continue ;
       }
       else if ( rc )
@@ -101,7 +101,7 @@ INT32 _migParser::run ( INT32 &total, INT32 &succeed )
       bson_destroy ( &bsonObj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
+         PD_LOG ( PDERROR, "Failed to import record in the %d row", count ) ;
          continue ;
       }
       succ++ ;
@@ -346,19 +346,25 @@ INT32 _migCSVParser::_getRecord ( bson &record )
          goto error ;
       }
    }
+   if ( !isValidUTF8WSize ( buffer + startOffset, size ) )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
+      goto error ;
+   }
    rc = ccsv._convertCSVToJson ( buffer + startOffset, size,
                                  _autoAddField, _autoCompletion,
                                  _parser, &pJsonBuffer ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to convert CSV to Json, rc=%d", rc ) ;
+      //PD_LOG ( PDERROR, "Failed to convert CSV to Json, rc=%d", rc ) ;
       goto error ;
    }
    pJsonBuffer = json2rawcbson ( pJsonBuffer ) ;
    if ( !pJsonBuffer )
    {
       rc = SDB_UTIL_PARSE_JSON_INVALID ;
-      PD_LOG ( PDERROR, "Failed json" ) ;
+      PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
       goto error ;
    }
    obj.ownmem = 0 ;
@@ -495,7 +501,7 @@ INT32 _migJSONParser::_getRecord ( bson &record )
    if ( !buffer2 )
    {
       rc = SDB_UTIL_PARSE_JSON_INVALID ;
-      PD_LOG ( PDERROR, "Failed json" ) ;
+      PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
       goto error ;
    }
    obj.ownmem = 0 ;
