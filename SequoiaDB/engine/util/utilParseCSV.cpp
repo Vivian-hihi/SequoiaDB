@@ -69,7 +69,7 @@ INT32 _utilCSVParser::initialize ( _utilParserParamet *parserPara )
    _blockNum     = parserPara->blockNum ;
    _blockSize    = _bufferSize / _blockNum ;
    _headerline   = parserPara->readHeader ;
-   _accessModel = parserPara->accessModel ;
+   _accessModel  = parserPara->accessModel ;
    //_buffer
    //_buffer = (CHAR *)SDB_OSS_MALLOC ( _bufferSize ) ;
    mallocBufer ( _bufferSize ) ;
@@ -589,10 +589,11 @@ _utilCSVParser::~_utilCSVParser()
 
 
 
-_convertCSV::_convertCSV() : _pJsonBuffer(NULL),
-                             _jsonBufSize(0),
-                             _jsonBufFreeSpace(0)
+_convertCSV::_convertCSV( BOOLEAN stringType ) : _pJsonBuffer(NULL),
+                                                 _jsonBufSize(0),
+                                                 _jsonBufFreeSpace(0)
 {
+   _stringType = stringType ;
 }
 _convertCSV::~_convertCSV()
 {
@@ -964,7 +965,7 @@ delChar, rc = %d", rc ) ;
       goto error ;
    }
 
-   if ( isString )
+   if ( isString || _stringType )
    {
       JSON_BUF_APPEND ( "\"", 1 ) ;
       for ( UINT32 i = 0; i < size; ++i )
@@ -1015,8 +1016,11 @@ must double delChar, rc = %d", rc ) ;
             case '\t':
                JSON_BUF_APPEND ( "\\\t", 2 ) ;
                break ;
-            case '/':
+          /*  case '/':
                JSON_BUF_APPEND ( "\\/", 2 ) ;
+               break ;*/
+            case '\\':
+               JSON_BUF_APPEND ( "\\\\", 2 ) ;
                break ;
             default:
                JSON_BUF_APPEND ( buffer + i, 1 ) ;
