@@ -215,6 +215,7 @@ private:
    CHAR      *_pJsonBuffer ;
    UINT32     _jsonBufSize ;
    UINT32     _jsonBufFreeSpace ;
+   BOOLEAN    _stringType ;
    _utilDataParser *_parser ;
    CHAR       _fieldName[UTL_WORKER_FIELD_SIZE] ;
 private:
@@ -222,7 +223,7 @@ private:
    INT32 _jsonBufAppend ( CHAR *buffer, UINT32 size ) ;
    INT32 _allocJsonBuffer() ;
 public:
-   _convertCSV() ;
+   _convertCSV( BOOLEAN stringType ) ;
    ~_convertCSV() ;
    INT32 _convertCSVToJson ( CHAR *pBuffer,
                              UINT32 size,
