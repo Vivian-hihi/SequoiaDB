@@ -72,6 +72,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define OPTION_EXTRA       "extra"
 #define OPTION_SPARSE      "sparse"
 #define OPTION_LINEPRIORITY "linepriority"
+#define OPTION_STRINGTYPE  "stringtype"
 
 #define OPTION_FIELD             FIELD_NAME_FIELDS
 #define OPTION_HEADERLINE        FIELD_NAME_HEADERLINE
@@ -105,7 +106,8 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_HEADERLINE,    boost::program_options::value<string>(), "first line in input file is a header, default: false ( csv only )" ) \
        ( OPTION_SPARSE,        boost::program_options::value<string>(), "auto add fields, default: true ( csv only )" ) \
        ( OPTION_EXTRA,         boost::program_options::value<string>(), "auto add value, default: false ( csv only )" ) \
-       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" )
+       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" ) \
+       ( OPTION_STRINGTYPE,    boost::program_options::value<string>(), "all fields convert to string type, default: false" )
 
 //       ( COMMANDS_STRING(OPTION_MONGO,          ",m"), boost::program_options::value<string>(), "Compatible with MongoDB data format, input [true, false]" )
 enum SDBIMPORT_TYPE
@@ -138,6 +140,7 @@ BOOLEAN isHeaderline                      = FALSE ;
 BOOLEAN autoAddField                      = TRUE  ;
 BOOLEAN autoCompletion                    = FALSE ;
 BOOLEAN linePriority                      = TRUE ;
+BOOLEAN stringType                        = FALSE ;
 
 CHAR gDelList[6] = { MIG_DEFAULT_DELCHAR, 0, MIG_DEFAULT_DELFIELD, 0,
                      MIG_DEFAULT_DELRECORD, 0 } ;
@@ -513,6 +516,13 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
                         &linePriority ) ;
    }
 
+   //string type
+   if ( vm.count ( OPTION_STRINGTYPE ) )
+   {
+      ossStrToBoolean ( vm[OPTION_STRINGTYPE].as<string>().c_str(),
+                        &stringType ) ;
+   }
+
 done :
    PD_TRACE_EXITRC ( SDB_SDBIMP_RESOLVEARG, rc );
    return rc ;
@@ -610,6 +620,7 @@ INT32 importCSV ()
                        strField, isHeaderline,
                        autoAddField, autoCompletion,
                        linePriority,
+                       stringType,
                        strDelChar.length()?strDelChar.c_str():NULL,
                        strDelField.length()?strDelField.c_str():NULL,
                        strDelRecord.length()?strDelRecord.c_str():NULL ) ;
