@@ -440,7 +440,8 @@ error :
 // 0 1 2 3 4 5 6
 // { " " b " " : 1 }
 // 0 1 2 3 4 5 6 7 8
-INT32 _migCSVExtractor::_extractString ( CHAR *str, INT32 strLen, BOOLEAN trim )
+INT32 _migCSVExtractor::_extractString ( CHAR *str, INT32 strLen, BOOLEAN trim,
+                                         CHAR delChar )
 {
    INT32 rc = SDB_OK ;
    INT32 tempSize = 0 ;
@@ -476,7 +477,7 @@ INT32 _migCSVExtractor::_extractString ( CHAR *str, INT32 strLen, BOOLEAN trim )
    ossMemset ( str, 0, strLen ) ;
    for ( INT32 i = 0; i < tempSize; ++i )
    {
-      if ( '"' == temp[i] || i == tempSize - 1 )
+      if ( delChar == temp[i] || i == tempSize - 1 )
       {
          ossStrncpy ( str + strStart, temp + tempStart , i - tempStart ) ;
          strStart += ( i - tempStart + 1 ) ;
@@ -569,7 +570,14 @@ INT32 _migCSVExtractor::_extractRecord ()
             }
             ossMemset ( objectStr, 0, objectStrSize ) ;
             objectStrCur = objectStr ;
-            estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize, &it, _delChar[0] ) ;
+            if ( BSON_STRING == t )
+            {
+               estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize, &it, _delChar[0] ) ;
+            }
+            else
+            {
+               estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize, &it, '"' ) ;
+            }
             if ( 0 == estLen )
             {
                delete[] objectStr ;
@@ -577,7 +585,7 @@ INT32 _migCSVExtractor::_extractRecord ()
                rc = SDB_CORRUPTED_RECORD ;
                goto error ;
             }
-            rc = _extractString ( objectStr, objectStrSize, trim ) ;
+            rc = _extractString ( objectStr, objectStrSize, trim, _delChar[0] ) ;
             if ( rc )
             {
                delete[] objectStr ;
