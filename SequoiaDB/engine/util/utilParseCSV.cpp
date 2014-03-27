@@ -604,8 +604,6 @@ _convertCSV::~_convertCSV()
    rc = _jsonBufAppend ( buffer, size ) ; \
    if ( rc ) \
    { \
-      PD_LOG ( PDERROR, "Failed to call _jsonBufAppend, rc = %d", \
-               rc ) ; \
       goto error ; \
    } \
 }
@@ -615,8 +613,6 @@ _convertCSV::~_convertCSV()
    rc = _transferredCSV ( buffer, size ) ; \
    if ( rc ) \
    { \
-      PD_LOG ( PDERROR, "Failed to call _transferredCSV, rc = %d", \
-               rc ) ; \
       goto error ; \
    } \
 }
@@ -644,9 +640,17 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
    _parser = parser ;
    CHAR    *pCursor    = pBuffer ;
    CHAR    *pTemp      = NULL ;
+   //string read number
    UINT32   strLeft    = 0 ;
+   //field start number
    UINT32   fieldLeft  = 0 ;
+   //field sum
+   INT32 fieldSumNum = _parser->_vField.size() ;
+   //field number
    INT32    fieldNum   = 0 ;
+   //auto add field number
+   INT32    autoFieldNum = 1 ;
+   
    BOOLEAN  isFirst    = TRUE ;
 
    BOOLEAN  isString   = FALSE ;
@@ -675,10 +679,7 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
          }
          if ( !isString )
          {
-            INT32 tempSize = 0 ;
-
-            tempSize = _parser->_vField.size() ;
-            if ( fieldNum < tempSize )
+            if ( fieldNum < fieldSumNum )
             {
                if ( !isFirst )
                {
@@ -692,25 +693,47 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
                }
                else
                {
-                  JSON_BUF_APPEND ( "\"", 1 ) ;
-                  JSON_BUF_APPEND ( "\"", 1 ) ;
+                  if ( autoAddField )
+                  {
+                     ossMemset ( _fieldName, 0, UTL_WORKER_FIELD_SIZE ) ;
+                     ossSnprintf ( _fieldName,
+                                   UTL_WORKER_FIELD_SIZE,
+                                   UTL_WORKER_FIELD "%d",
+                                   autoFieldNum ) ;
+                     JSON_BUF_APPEND ( _fieldName, ossStrlen ( _fieldName ) ) ;
+                     ++autoFieldNum ;
+                  }
+                  else
+                  {
+                     //error
+                     rc = SDB_UTIL_PARSE_JSON_INVALID ;
+                     PD_LOG ( PDERROR, "CSV format error, this field is \
+empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
+                     goto error ;
+                  }
                }
+               JSON_BUF_APPEND ( ":", 1 ) ;
+               JSON_BUF_CHECK_APPEND ( pBuffer + fieldLeft,
+                                       strLeft - fieldLeft ) ;
             }
             else
             {
+               //if field list less than field number, then auto add field
                if ( autoAddField )
                {
                   if ( !isFirst )
                   {
                      JSON_BUF_APPEND ( ",", 1 ) ;
                   }
-                  tempSize = fieldNum - tempSize + 1 ;
                   ossMemset ( _fieldName, 0, UTL_WORKER_FIELD_SIZE ) ;
                   ossSnprintf ( _fieldName,
                                 UTL_WORKER_FIELD_SIZE,
                                 UTL_WORKER_FIELD "%d",
-                                tempSize ) ;
+                                autoFieldNum ) ;
+                  ++autoFieldNum ;
                   JSON_BUF_APPEND ( _fieldName, ossStrlen ( _fieldName ) ) ;
+                  JSON_BUF_APPEND ( ":", 1 ) ;
+                  JSON_BUF_APPEND ( "null", 4 ) ;
                }
             }
 
@@ -719,38 +742,13 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
                isFirst = !isFirst ;
             }
 
-            if ( fieldNum < tempSize ||
-                 ( fieldNum >= tempSize && autoAddField ) )
-            {
-               JSON_BUF_APPEND ( ":", 1 ) ;
-               if ( strLeft != fieldLeft )
-               {
-                  JSON_BUF_CHECK_APPEND ( pBuffer + fieldLeft,
-                                          strLeft - fieldLeft ) ;
-                  /*rc = _transferredCSV ( pBuffer + fieldLeft, strLeft - fieldLeft ) ;
-                  if ( rc )
-                  {
-                     PD_LOG ( PDERROR, "Failed to call _transferredCSV, rc = %d",
-                              rc ) ;
-                     goto error ;
-                  }*/
-               }
-               else
-               {
-                  //JSON_BUF_APPEND ( "\"", 1 ) ;
-                  //JSON_BUF_APPEND ( "\"", 1 ) ;
-                  JSON_BUF_APPEND ( "null", 4 ) ;
-               }
-            }
-
+            ++fieldNum ;
             if ( _parser-> _delRecord[0] == *pCursor )
             {
-               ++fieldNum ;
                break ;
             }
             else
             {
-               ++fieldNum ;
                ++strLeft ;
                ++pCursor ;
                fieldLeft = strLeft ;
@@ -777,14 +775,12 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
          ++strLeft ;
          ++pCursor ;
       }
+
       if ( strLeft >= size )
       {
-         INT32 tempSize = 0 ;
-
          tmpCharNum = 0 ;
 
-         tempSize = _parser->_vField.size() ;
-         if ( fieldNum < tempSize )
+         if ( fieldNum < fieldSumNum )
          {
             if ( !isFirst )
             {
@@ -798,9 +794,28 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
             }
             else
             {
-               JSON_BUF_APPEND ( "\"", 1 ) ;
-               JSON_BUF_APPEND ( "\"", 1 ) ;
+               if ( autoAddField )
+               {
+                  ossMemset ( _fieldName, 0, UTL_WORKER_FIELD_SIZE ) ;
+                  ossSnprintf ( _fieldName,
+                                UTL_WORKER_FIELD_SIZE,
+                                UTL_WORKER_FIELD "%d",
+                                autoFieldNum ) ;
+                  JSON_BUF_APPEND ( _fieldName, ossStrlen ( _fieldName ) ) ;
+                  ++autoFieldNum ;
+               }
+               else
+               {
+                  //error
+                  rc = SDB_UTIL_PARSE_JSON_INVALID ;
+                  PD_LOG ( PDERROR, "CSV format error, this field is \
+empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
+                  goto error ;
+               }
             }
+            JSON_BUF_APPEND ( ":", 1 ) ;
+            JSON_BUF_CHECK_APPEND ( pBuffer + fieldLeft,
+                                    strLeft - fieldLeft ) ;
          }
          else
          {
@@ -810,43 +825,28 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
                {
                   JSON_BUF_APPEND ( ",", 1 ) ;
                }
-               tempSize = fieldNum - tempSize + 1 ;
                ossMemset ( _fieldName, 0, UTL_WORKER_FIELD_SIZE ) ;
                ossSnprintf ( _fieldName,
                              UTL_WORKER_FIELD_SIZE,
                              UTL_WORKER_FIELD "%d",
-                             tempSize ) ;
+                             autoFieldNum ) ;
+               ++autoFieldNum ;
                JSON_BUF_APPEND ( _fieldName, ossStrlen ( _fieldName ) ) ;
+               JSON_BUF_APPEND ( ":", 1 ) ;
+               JSON_BUF_APPEND ( "null", 4 ) ;
             }
          }
-
+         
          if ( isFirst )
          {
             isFirst = !isFirst ;
          }
-
-         if ( fieldNum < tempSize ||
-              ( fieldNum >= tempSize && autoAddField ) )
-         {
-            JSON_BUF_APPEND ( ":", 1 ) ;
-            if ( strLeft != fieldLeft )
-            {
-               JSON_BUF_CHECK_APPEND ( pBuffer + fieldLeft,
-                                       strLeft - fieldLeft ) ;
-            }
-            else
-            {
-               //JSON_BUF_APPEND ( "\"", 1 ) ;
-               //JSON_BUF_APPEND ( "\"", 1 ) ;
-               JSON_BUF_APPEND ( "null", 4 ) ;
-            }
-         }
       }
    }//while
+   
    if ( autoCompletion )
    {
-      INT32 tempSize = _parser->_vField.size() ;
-      for ( ;fieldNum < tempSize;++fieldNum )
+      for ( ; fieldNum < fieldSumNum; ++fieldNum )
       {
          if ( !isFirst )
          {
@@ -860,12 +860,23 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
          }
          else
          {
-            JSON_BUF_APPEND ( "\"", 1 ) ;
-            JSON_BUF_APPEND ( "\"", 1 ) ;
+            if ( autoAddField )
+            {
+               ossMemset ( _fieldName, 0, UTL_WORKER_FIELD_SIZE ) ;
+               ossSnprintf ( _fieldName,
+                             UTL_WORKER_FIELD_SIZE,
+                             UTL_WORKER_FIELD "%d",
+                             autoFieldNum ) ;
+               JSON_BUF_APPEND ( _fieldName, ossStrlen ( _fieldName ) ) ;
+               ++autoFieldNum ;
+            }
+            else
+            {
+               //error
+            }
          }
          JSON_BUF_APPEND ( ":", 1 ) ;
-         JSON_BUF_APPEND ( "\"", 1 ) ;
-         JSON_BUF_APPEND ( "\"", 1 ) ;
+         JSON_BUF_APPEND ( "null", 4 ) ;
       }
    }
    JSON_BUF_APPEND ( "}", 1 ) ;
@@ -880,7 +891,6 @@ error:
 INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
 {
    INT32 rc = SDB_OK ;
-   INT32 delCharNum = 0 ;
    BOOLEAN  isString = FALSE ;
 
    buffer = _parser->_trimLeft ( buffer, size ) ;
@@ -896,61 +906,15 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
       goto done ;
    }
 
-   //is string
+   //is string "xxxxxx"
    if ( _parser->_delChar[0] == *buffer &&
         _parser->_delChar[0] == *(buffer + size - 1) )
    {
       ++buffer ;
       size -= 2 ;
-      JSON_BUF_APPEND ( "\"", 1 ) ;
-      for ( UINT32 i = 0; i < size; ++i )
-      {
-         if ( _parser->_delChar[0] == *(buffer + i) )
-         {
-            ++delCharNum ;
-         }
-         else
-         {
-            if ( delCharNum > 0 )
-            {
-               if ( delCharNum % 2 == 0 )
-               {
-                  INT32 sumChar = delCharNum / 2 ;
-                  for ( INT32 k = 0; k < sumChar; ++k )
-                  {
-                     JSON_BUF_APPEND ( "\\\"", 2 ) ;
-                  }
-               }
-               else
-               {
-                  //is error csv
-                  rc = SDB_UTIL_PARSE_JSON_INVALID ;
-                  goto error ;
-               }
-            }
-            JSON_BUF_APPEND ( buffer + i, 1 ) ;
-            delCharNum = 0 ;
-         }
-      }
-      if ( delCharNum > 0 )
-      {
-         if ( delCharNum % 2 == 0 )
-         {
-            INT32 sumChar = delCharNum / 2 ;
-            for ( INT32 k = 0; k < sumChar; ++k )
-            {
-               JSON_BUF_APPEND ( "\\\"", 2 ) ;
-            }
-         }
-         else
-         {
-            //is error csv
-            rc = SDB_UTIL_PARSE_JSON_INVALID ;
-            goto error ;
-         }
-      }
-      JSON_BUF_APPEND ( "\"", 1 ) ;
+      isString = TRUE ;
    }
+   //not string  xxxxx
    else if ( _parser->_delChar[0] != *buffer &&
              _parser->_delChar[0] != *(buffer + size - 1) )
    {
@@ -984,70 +948,73 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
       {
          isString = !_parser->parse_number ( buffer, size ) ;
       }
-
-      //is string
-      if ( isString )
-      {
-         JSON_BUF_APPEND ( "\"", 1 ) ;
-         for ( UINT32 i = 0; i < size; ++i )
-         {
-            if ( _parser->_delChar[0] == *(buffer + i) )
-            {
-               ++delCharNum ;
-            }
-            else
-            {
-               if ( delCharNum > 0 )
-               {
-                  if ( delCharNum % 2 == 0 )
-                  {
-                     INT32 sumChar = delCharNum / 2 ;
-                     for ( INT32 k = 0; k < sumChar; ++k )
-                     {
-                        JSON_BUF_APPEND ( "\\\"", 2 ) ;
-                     }
-                  }
-                  else
-                  {
-                     //is error csv
-                     rc = SDB_UTIL_PARSE_JSON_INVALID ;
-                     goto error ;
-                  }
-               }
-               JSON_BUF_APPEND ( buffer+i, 1 ) ;
-               delCharNum = 0 ;
-            }
-         }
-         if ( delCharNum > 0 )
-         {
-            if ( delCharNum % 2 == 0 )
-            {
-               INT32 sumChar = delCharNum / 2 ;
-               for ( INT32 k = 0; k < sumChar; ++k )
-               {
-                  JSON_BUF_APPEND ( "\\\"", 2 ) ;
-               }
-            }
-            else
-            {
-               //is error csv
-               rc = SDB_UTIL_PARSE_JSON_INVALID ;
-               goto error ;
-            }
-         }
-         JSON_BUF_APPEND ( "\"", 1 ) ;
-      }
-      //is number
-      else
-      {
-         JSON_BUF_APPEND ( buffer, size ) ;
-      }
    }
    else
    {
       //is error csv
       rc = SDB_UTIL_PARSE_JSON_INVALID ;
+      PD_LOG ( PDERROR, "CSV format error, only one side of the field appears \
+delChar, rc = %d", rc ) ;
       goto error ;
+   }
+
+   if ( isString )
+   {
+      JSON_BUF_APPEND ( "\"", 1 ) ;
+      for ( UINT32 i = 0; i < size; ++i )
+      {
+         // "xxx"xxxx"
+         if ( _parser->_delChar[0] == *(buffer + i) )
+         {
+            ++i ;
+            // "xx""xxx"
+            if ( i < size && _parser->_delChar[0] == *(buffer + i) )
+            {
+               JSON_BUF_APPEND ( "\\\"", 2 ) ;
+            }
+            else
+            {
+               //error csv, not double delChar
+               rc = SDB_UTIL_PARSE_JSON_INVALID ;
+               PD_LOG ( PDERROR, "CSV format error, field appears delChar, \
+must double delChar, rc = %d", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            switch( *(buffer + i) )
+            {
+            case '\b':
+               JSON_BUF_APPEND ( "\\\b", 2 ) ;
+               break ;
+            case '\f':
+               JSON_BUF_APPEND ( "\\\f", 2 ) ;
+               break ;
+            case '\n':
+               JSON_BUF_APPEND ( "\\\n", 2 ) ;
+               break ;
+            case '\r':
+               JSON_BUF_APPEND ( "\\\r", 2 ) ;
+               break ;
+            case '\t':
+               JSON_BUF_APPEND ( "\\\t", 2 ) ;
+               break ;
+            case '/':
+               JSON_BUF_APPEND ( "\\/", 2 ) ;
+               break ;
+            default:
+               JSON_BUF_APPEND ( buffer + i, 1 ) ;
+               break ;
+            }
+         }
+      }
+      JSON_BUF_APPEND ( "\"", 1 ) ;
+   }
+   //is number, true, false, null
+   else
+   {
+     JSON_BUF_APPEND ( buffer, size ) ;
    }
 done:
    return rc ;
