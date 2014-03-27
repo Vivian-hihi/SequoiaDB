@@ -56,6 +56,7 @@ thirdLoc=$3
 
 #the number of concurrent threads
 thread=10
+timeout=50
 
 #get the number of parameter and what parameters is 
 ParaNum=$#
@@ -98,12 +99,12 @@ function Usage()
    echo "    --login                operating system users and history" ;
    echo "    --limit                ulimit used to limit the resources occupied shell startup process" ;
    echo "    --vmstate              Show the server status value of a given time interval" ;
-
+   echo "    --timeout              Set too much time to collect,default:50"
 
 }
 
 #the parameters can use  
-optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,kermode,env,IDE,network,process,login,limit,vmstate,catalog,all -- "$@"`
+optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,kermode,env,IDE,network,process,login,limit,vmstate,catalog,all,timeout: -- "$@"`
 
 #check over the option of sdbsupport
 rc=$?
@@ -129,6 +130,10 @@ do
       ;;
    -t|--thread)
       thread=$2
+      shift
+      ;;
+   --timeout)
+      timeout=$2
       shift
       ;;
    -s|--snapshot)
@@ -240,9 +245,12 @@ echo "* Begin ....."
 echo "***********************************************************"
 echo ""
 
+
 #******************************************************************************
 #@Function : Check over environment
 #******************************************************************************
+mv sdbsupport.log sdbsupport.log.1 >>sdbsupport.log 2>&1
+
 #inspect the environment of sequiaDB
 localhost=`hostname`
 localPath=`pwd`
@@ -265,7 +273,7 @@ fi
 #echo $installpath
 ls $installpath 1>/dev/null
 if [ $? -ne 0 ] ; then
-   echo "Wrong install path ,Please inspect the sdbsupport path and install path!$?"
+   echo "Wrong install path ,Please check over the sdbsupport path and install path!$?"
    exit 1
 fi
 confpath=$installpath/conf/local
@@ -275,19 +283,25 @@ if [[ $? -ne 0 ]] ; then
    exit 1
 fi
 
-#*************************************************************************************************
+echo "###Check over environment." >>sdbsupport.log
+#************************************************************************
 #@Function: create Number of concurrent threads
 #@
-#*************************************************************************************************
+#************************************************************************
 fifo="/tmp/$$.fiofo"
 mkfifo $fifo
-exec 6<>$fifo
-rm -rf $fifo
-for ((i=0;i<$thread;i++))
-do
-   echo ""
-done >&6
+if [ $? -ne 0 ] ; then
+   echo "Failed to create FIFO,No parallel"
+else
+   exec 6<>$fifo
+   rm -rf $fifo
+   for ((i=0;i<$thread;i++))
+   do
+      echo ""
+   done >&6
+fi
 
+echo "###Success to create concurrent threads" >>sdbsupport.log
 #************************************************************************
 #@Function : get quantity of all hosts and local sevic port
 #@Var : HostNum   Exp : the number of hosts in the sequoiaDB
@@ -295,11 +309,56 @@ done >&6
 #@Note : Array begin 1 count ,but such as file row begin 1, so use 1 begin 
 #************************************************************************
 cd $confpath
+aloneRole=`find -name "*.conf"|xargs grep "role=standalone"|cut -d "/" -f 2`
+coordRole=`find -name "*.conf"|xargs grep "role=coord"|cut -d "/" -f 2`
+cataRole=`find -name "*.conf"|xargs grep "role=cata"|cut -d "/" -f 2`
 dataRole=`find -name "*.conf"|xargs grep "role=data"|cut -d "/" -f 2`
 cd $localPath
-if [ "$dataRole" == "" ] ; then
-   echo "Don't have data node in the sequoiaDB"
+#*************************************************************************
+#MODE:No Sdb  //Don't create SequoiaDB database,whether standalone and
+#               group.Cannot collect ,exit shell!
+#*************************************************************************
+if [ "$aloneRole" == "" ] && [ "$coordRole" == "" ] && [ "$cataRole" == "" ] && [ "$dataRole"=="" ] ; then
+   echo "Local host don't create SequoiaDB database"
    exit 1
+fi
+#***************************************************************************
+#MODE:standalone           //sequoiadb have standalone SequoiaDB collect
+#***************************************************************************
+if [ "$aloneRole" != "" ] ; then
+   echo "Node $aloneRole is standalone node"
+   dbpath=`grep -E "dbpath" $confpath/$aloneRole/sdb.conf|cut -d '=' -f 2`
+   sdbPortGather "$localhost" "$dbpath" "$aloneRole" "$installpath"
+   sdbSnapShotCataLog "$localhost" "$aloneRole" "$installpath"
+   sdbSnapShot "$localhost" "$aloneRole" "$installpath"
+   sdbHardwareInfoAll "$localhost" "$installpath"
+   sdbSystemInfoAll "$localhost" "$installpath"
+fi
+#***************************************************************************
+#MODE:Group           //SequoiaDB database cluster/[group] only have coord
+#***************************************************************************
+if [ "$coordRole" != "" ] && [ "$cataRole" == "" ] && [ "$dataRole" == "" ] ;
+then
+   echo "SequoiaDB database cluster only have coord"
+   dbpath=`grep -E "dbpath" $confpath/$coordRole/sdb.conf|cut -d '=' -f 2`
+   sdbPortGather "$localhost" "$dbpath" "$coordRole" "$installpath"
+   sdbHardwareInfoAll "$localhost" "$installpath"
+   sdbSystemInfoAll "$localhost" "$installpath"
+fi
+#****************************************************************************
+#MODE:Group   //SequoiaDB database cluster/[group] only have coord and cata
+#****************************************************************************
+if [ "$coordRole" != "" ] && [ "$cataRole" != "" ] && [ "$dataRole" == "" ] ;
+then
+   echo "SequoiaDB database cluster only have coord and cata"
+   dataRole=$coordRole
+fi
+#***************************************************************************
+#MODE:Group           //Complete SequoiaDB database cluster/[group]
+#***************************************************************************
+if [ "$dataRole" != "" ] ; then
+   echo "Complete SequoiaDB database cluster"
+   dataRole=$dataRole
 fi
 #catadrr : get the cata address and catch hosts
 data=`echo $dataRole | cut -d " " -f 1`
@@ -307,6 +366,12 @@ cataddr=`grep -E "catalogaddr" $confpath/$data/sdb.conf|cut -d '=' -f 2`
 HostNum=`awk 'BEGIN{print split("'$cataddr'",cateArr,",")}'`
 PortNum=`ls -l $confpath|grep "^d"|wc -l`
 
+if [ "$HostNum" != "0" ] && [ "$PortNum" != "0" ] ; then
+   echo "###Success to get the number of host in group and port in localhost" >>sdbsupport.log
+else
+   echo "No host and port,Please check!"
+   exit 1
+fi
 #*******************************************************************************
 #@Function : get all hosts in sequoiaDB and local host's port/dbpath/role 
 #@Var : HOST      Exp : Array variable used to store hosts in sequoiaDB
@@ -331,6 +396,8 @@ do
    fi
 done
 
+echo "###Success to get host in group and port in localhost" >>sdbsupport.log
+
 #*************************************************************************************************
 #@Function : Get parameter passed in and check over them wether or not correct,if don't have this 
 #            Host or Port ,will delete the wrong host and port 
@@ -343,7 +410,7 @@ pHostNum=`awk 'BEGIN{print split("'$hostName'",hostarr,":")}'`
 pPortNum=`awk 'BEGIN{print split("'$svcPort'",portarr,":")}'`
 #when have parameter ,but not --all ,we must specify the hosts[--hostname]
 if [[ $pHostNum -eq 0 ]] && [[ $all = "false"  ]] && [[ $firstLoc != "" ]] ; then
-   echo "Warning !!!! Please specify hosts!"
+   echo "Warning ! Please specify hosts!"
    exit 1
 fi
 #Check over Host
@@ -381,6 +448,7 @@ do
    done
 done
 
+echo "###Check over the passed para host and port" >>sdbsupport.log
 #***********************************************************************************
 #@Function: get password of host that you begin to collect information
 #@
@@ -393,6 +461,7 @@ if [ "$all" == "true" ] ; then
          read -s PASSWD[$i]
          sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
          retVal=$?
+         #echo "return value :$retVal"
          while [ "$retVal" == "5" ]
          do
             PASSWD[$i]=""
@@ -406,7 +475,7 @@ if [ "$all" == "true" ] ; then
       fi
    done
    echo ""
-   echo "Check over password !"
+   echo "Correct Password !"
    echo ""
 fi
 
@@ -429,12 +498,13 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
          done
          #echo "password:" "${PASSWD[$i]}"
          echo ""
-         echo "Check over password !"
+         echo "Correct Password !"
          echo ""
       fi
    done
 fi
 
+echo "###Check over password" >>sdbsupport.log
 #******************************************************************************
 #@Function : Create Folder OSINFO/SDBNODES/SDBSNAPS/HARDINFO in local path
 #@Fold : OSINFO   Exp : directory for Operation System Information
@@ -443,7 +513,11 @@ fi
 #@Fold : HARDINFO Exp : directory for hardware information
 #******************************************************************************
    rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/
-
+   if [ $? -ne 0 ] ; then
+      echo "Failed to remove folder"
+   else
+      echo "###Success to remove the folder four" >>sdbsupport.log
+   fi
 #*************************************************************************************************
 #@Function : Collect local host information about sequoiadb,such as Dialog,
 #				 Conf,Group,Snapshot,Hardware and System information !
@@ -455,18 +529,22 @@ fi
 #>1.no para here:./sdbsupport.sh      
 for i in $(seq 1 $HostNum)
 do
-   for j in $(seq 1 $PortNum)
-   do
-      if [ "$firstLoc" == "" ] && [ "$localhost" == "${HOST[$i]}" ] ; then
-         #echo "localhost:$localhost"
-         sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
-         sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
-         sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
-         sdbHardwareInfoAll ${HOST[$i]} $installpath
-         sdbSystemInfoAll ${HOST[$i]} $installpath
-      fi
-   done
+   if [ "$firstLoc" == "" ] && [ "$localhost" == "${HOST[$i]}" ] ; then
+      for j in $(seq 1 $PortNum)
+      do
+            echo "localhost:$localhost:${PORT[$j]}"
+            sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
+            sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
+            sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
+      done
+      sdbHardwareInfoAll ${HOST[$i]} $installpath
+      sdbSystemInfoAll ${HOST[$i]} $installpath
+   fi
+   if [ "$i" == "$HostNum" ] ; then
+      echo "###Success to Collect local information when no para passed in">>sdbsupport.log
+   fi
 done
+
 
 #>2.Parameter : --all
 if [ "$all" == "true" ] ; then
@@ -485,16 +563,17 @@ if [ "$all" == "true" ] ; then
       fi
       read -u 6
       if [ "${HOST[$i]}" != "" ] && [ "${HOST[$i]}" != "$localhost" ] ; then
-         {
+      #if [ "${HOST[$i]}" != "" ] ; then
+      {
          sdbsupport="./sdbsupport.sh -N ${HOST[$i]}"
          #ssh host and collect information
-         sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
-         sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
-         sdbSSHRemove "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
+         sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
+         sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}"
+         sdbSSHRemove "${HOST[$i]}" "${PASSWD[$i]}" "$localPath"
          #echo "concurent $i"
          echo "" >&6
-         }&
-       fi
+      }&
+      fi
    done
    wait
 fi
@@ -566,9 +645,9 @@ do
          if [[ ${HostPara[$i]} != "" ]] ; then
             {
             sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"
-            sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" >> sdbsupport.log
-            sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}" >> sdbsupport.log
-            sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" >>sdbsupport.log
+            sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
+            sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}"
+            sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath"
             echo "" >&6
             }&
          fi
