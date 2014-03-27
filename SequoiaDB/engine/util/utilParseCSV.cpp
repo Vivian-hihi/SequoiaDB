@@ -178,7 +178,7 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILCSV__GETNEXTRECORD );
    BOOLEAN     isString       = FALSE ;
-   UINT32       delCharNum     = 0 ;
+   UINT32      delCharNum     = 0 ;
    UINT32      blockSize      = _blockSize ;
    CHAR       *pCursor        = _curBuffer ;
    CHAR       *curBuffer      = NULL ;
@@ -914,6 +914,12 @@ INT32 _convertCSV::_transferredCSV ( CHAR *buffer, UINT32 size )
       size -= 2 ;
       isString = TRUE ;
    }
+   //is string xxxxx"
+   else if ( _parser->_delChar[0] != *buffer &&
+             _parser->_delChar[0] == *(buffer + size - 1) )
+   {
+      isString = TRUE ;
+   }
    //not string  xxxxx
    else if ( _parser->_delChar[0] != *buffer &&
              _parser->_delChar[0] != *(buffer + size - 1) )
@@ -963,11 +969,11 @@ delChar, rc = %d", rc ) ;
       JSON_BUF_APPEND ( "\"", 1 ) ;
       for ( UINT32 i = 0; i < size; ++i )
       {
-         // "xxx"xxxx"
+         // xxx"xxxx
          if ( _parser->_delChar[0] == *(buffer + i) )
          {
             ++i ;
-            // "xx""xxx"
+            // xx""xxx
             if ( i < size && _parser->_delChar[0] == *(buffer + i) )
             {
                JSON_BUF_APPEND ( "\\\"", 2 ) ;
@@ -985,6 +991,15 @@ must double delChar, rc = %d", rc ) ;
          {
             switch( *(buffer + i) )
             {
+            /*
+            case _delField[0]:
+            case _delRecord[0]:
+               rc = SDB_UTIL_PARSE_JSON_INVALID ;
+               PD_LOG ( PDERROR, "CSV format error, field appears delChar, \
+must double delChar, rc = %d", rc ) ;
+               goto error ;
+               break ;
+            */
             case '\b':
                JSON_BUF_APPEND ( "\\\b", 2 ) ;
                break ;
