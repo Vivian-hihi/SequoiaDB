@@ -389,7 +389,7 @@ INT32 _migCSVParser::_getRecord ( bson &record )
    PD_TRACE_ENTRY ( SDB__MIGLOADCSVPS__GETRCD );
    UINT32  startOffset = 0 ;
    UINT32  size        = 0 ;
-   _convertCSV ccsv ;
+   _convertCSV ccsv(FALSE) ;
    bson obj ;
    CHAR *buffer = _parser->getBuffer() ;
    CHAR *pJsonBuffer = NULL ;
