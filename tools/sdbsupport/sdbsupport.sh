@@ -327,12 +327,15 @@ fi
 #***************************************************************************
 if [ "$aloneRole" != "" ] ; then
    echo "Node $aloneRole is standalone node"
+   alonehost="standalone.$localhost"
    dbpath=`grep -E "dbpath" $confpath/$aloneRole/sdb.conf|cut -d '=' -f 2`
    sdbPortGather "$localhost" "$dbpath" "$aloneRole" "$installpath"
    sdbSnapShotCataLog "$localhost" "$aloneRole" "$installpath"
    sdbSnapShot "$localhost" "$aloneRole" "$installpath"
    sdbHardwareInfoAll "$localhost" "$installpath"
    sdbSystemInfoAll "$localhost" "$installpath"
+   #tar
+   sdbTarGzPack $alonehost
 fi
 #***************************************************************************
 #MODE:Group           //SequoiaDB database cluster/[group] only have coord
