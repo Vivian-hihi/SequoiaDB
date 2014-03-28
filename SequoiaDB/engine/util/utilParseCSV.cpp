@@ -992,15 +992,6 @@ must double delChar, rc = %d", rc ) ;
          {
             switch( *(buffer + i) )
             {
-            /*
-            case _delField[0]:
-            case _delRecord[0]:
-               rc = SDB_UTIL_PARSE_JSON_INVALID ;
-               PD_LOG ( PDERROR, "CSV format error, field appears delChar, \
-must double delChar, rc = %d", rc ) ;
-               goto error ;
-               break ;
-            */
             case '\b':
                JSON_BUF_APPEND ( "\\\b", 2 ) ;
                break ;
@@ -1016,11 +1007,11 @@ must double delChar, rc = %d", rc ) ;
             case '\t':
                JSON_BUF_APPEND ( "\\\t", 2 ) ;
                break ;
-          /*  case '/':
-               JSON_BUF_APPEND ( "\\/", 2 ) ;
-               break ;*/
             case '\\':
                JSON_BUF_APPEND ( "\\\\", 2 ) ;
+               break ;
+            case '"':
+               JSON_BUF_APPEND ( "\\\"", 2 ) ;
                break ;
             default:
                JSON_BUF_APPEND ( buffer + i, 1 ) ;
