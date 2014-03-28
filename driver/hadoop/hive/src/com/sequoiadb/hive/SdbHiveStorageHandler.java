@@ -15,6 +15,7 @@ import org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorization
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
 
 import com.sequoiadb.base.CollectionSpace;
@@ -204,6 +205,13 @@ public class SdbHiveStorageHandler implements HiveStorageHandler {
 
 		}
 
+	}
+
+	@Override
+	public void configureJobConf(TableDesc tableDesc, JobConf config) {
+		// TODO Auto-generated method stub
+		Properties properties = tableDesc.getProperties();
+		ConfigurationUtil.copyProperties(properties, config);
 	}
 
 }
