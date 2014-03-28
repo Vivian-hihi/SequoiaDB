@@ -158,7 +158,6 @@ namespace engine
    {
    private:
       migMaster *_master ;
-      _convertCSV ccsv ;
    private:
       INT32 _getBsonFromQueue ( pmdEDUCB *eduCB, BSONObj &obj ) ;
    public:
