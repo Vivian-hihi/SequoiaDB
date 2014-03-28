@@ -605,6 +605,7 @@ namespace engine
       UINT32 startBlock = 0 ;
       UINT32 endBlock   = 0 ;
       CHAR  *pJsonBuffer = NULL ;
+      _convertCSV ccsv( FALSE ) ;
 
       _master->popFromQueue ( eduCB,
                               offset, size,
