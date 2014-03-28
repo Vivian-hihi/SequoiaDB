@@ -385,17 +385,22 @@ fi
 for i in $(seq 1 $HostNum)
 do
    hostcata[$i]=`awk 'BEGIN{split("'$cataddr'",cateArr,",");print cateArr['$i']'}`
-   HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
+	HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
    if [ "${HOST[$i]}" == "$localhost" ] ; then
       for j in $(seq 1 $PortNum)
       do
          PortArr=`ls $confpath`
-         PORT[$j]=`echo $PortArr|cut -d " " -f $j`
-         DBPATH[$j]=`grep -E "dbpath" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
+			PORT[$j]=`echo $PortArr|cut -d " " -f $j`
+			if [ "${PORT[$j]}" == "$aloneRole" ] ; then
+				PORT[$j]=""
+				continue
+			fi
+			DBPATH[$j]=`grep -E "dbpath" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
          #delete the space in config file and put in tmpconf
          sed -i 's/\ //g' $confpath/${PORT[$j]}/sdb.conf 
          ROLE[$j]=`grep -E "role=" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
-      done
+			echo "rc:$j:${PORT[$j]}"
+		done
    fi
 done
 
@@ -536,9 +541,9 @@ do
       for j in $(seq 1 $PortNum)
       do
 				#echo "localhost:$localhost:${PORT[$j]}"
-            sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
-            sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
-            sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
+            sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
+            sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            sdbSnapShot "${HOST[$i]}" "${PORT[$j]}" "$installpath"
       done
       sdbHardwareInfoAll ${HOST[$i]} $installpath
       sdbSystemInfoAll ${HOST[$i]} $installpath
@@ -556,11 +561,11 @@ if [ "$all" == "true" ] ; then
       if [ "${HOST[$i]}" == "$localhost" ] ; then
          for j in $(seq 1 $PortNum)
          do
-            sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
-            sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
-            sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath
-            sdbHardwareInfoAll ${HOST[$i]} $installpath
-            sdbSystemInfoAll ${HOST[$i]} $installpath
+            sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
+            sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            sdbSnapShot "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            sdbHardwareInfoAll "${HOST[$i]}" "$installpath"
+            sdbSystemInfoAll "${HOST[$i]}" "$installpath"
             Local=$localhost
          done
       fi
