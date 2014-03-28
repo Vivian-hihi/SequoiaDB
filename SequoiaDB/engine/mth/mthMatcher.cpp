@@ -1864,7 +1864,7 @@ namespace engine
       // if tempFieldName is not NULL, and it's not point to static buffer, that
       // means we dynamically allocated memory so that we need to free it
       if ( tempFieldName && tempFieldName != &staticBuffer[0] )
-         free ( tempFieldName ) ;
+         SDB_OSS_FREE ( tempFieldName ) ;
       PD_TRACE_EXITRC ( SDB__MTHMACH_MATCHES, rc );
       return rc ;
    error :
