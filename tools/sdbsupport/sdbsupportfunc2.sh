@@ -132,7 +132,7 @@ function sdbExpectScpHosts()
 
    /usr/local/bin/expect -c"
       set timeout 50 ;
-      spawn scp -r sdbadmin@$HOST:$localPath/$HOST*.tar.gz ./ ;
+      spawn scp -r sdbadmin@$HOST:$localPath/*$HOST*.tar.gz ./ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
@@ -158,7 +158,7 @@ function sdbSSHRemove()
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\r\n\";send \"rm $HOST*.tar.gz\r\n\";send \"\r\";send \"exit\r\" ;}
+         \"*login*\";{send \"cd $localPath\r\n\";send \"rm *$HOST*.tar.gz\r\n\";send \"\r\";send \"exit\r\" ;}
          eof
          {
            send_user \"eof\n\";

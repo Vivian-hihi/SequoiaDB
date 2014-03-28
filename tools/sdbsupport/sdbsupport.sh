@@ -500,11 +500,11 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
             #echo "until return value"$retVal
          done
          #echo "password:" "${PASSWD[$i]}"
-         echo ""
-         echo "Correct Password !"
-         echo ""
       fi
    done
+   echo ""
+   echo "Correct Password !"
+   echo ""
 fi
 
 echo "###Check over password" >>sdbsupport.log
