@@ -399,7 +399,6 @@ do
          #delete the space in config file and put in tmpconf
          sed -i 's/\ //g' $confpath/${PORT[$j]}/sdb.conf 
          ROLE[$j]=`grep -E "role=" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
-			echo "rc:$j:${PORT[$j]}"
 		done
    fi
 done
@@ -428,10 +427,14 @@ do
    HostNumAdd=$(($HostNum+1))
    for j in $(seq 1 $HostNumAdd)
    do
-      if [[ ${HostPara[$i]} = ${HOST[$j]} ]] ; then
+      if [ "${HostPara[$i]}" == "${HOST[$j]}" ] ; then
          break
       fi
-      if [[ $j -gt $HostNum ]] ; then
+		#******************************************************************************
+		#Note:check the argument of HOST,when the host para not equal the HOST that we
+		#     get from SequoiaDB config file .We put null in the para localed in Array.
+		#******************************************************************************
+		if [ $j -gt $HostNum ] ; then
          echo "WARNIGN,SequoiaDB don't have host:${HostPara[$i]}"
          HostPara[$i]=""
       fi
@@ -444,13 +447,13 @@ do
    PortNumAdd=$(($PortNum+1))
    for j in $(seq 1 $PortNumAdd)
    do
-      if [[ ${PortPara[$i]} = ${PORT[$j]} ]] ; then
+      if [ "${PortPara[$i]}" == "${PORT[$j]}" ] ; then
          DbPath[$i]=${DBPATH[$j]}
          Role[$i]=${ROLE[$j]}
          break
       fi
-      if [[ $j -gt $PortNum ]] ; then
-         echo "WARNIGN,SequoiaDB don't have host:${PortPara[$i]}" "j"$j
+      if [ $j -gt $PortNum ] ; then
+         echo "WARNIGN,SequoiaDB don't have host:${PortPara[$i]}"
          PortPara[$i]=""
       fi
    done

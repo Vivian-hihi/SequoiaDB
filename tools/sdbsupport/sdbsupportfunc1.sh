@@ -140,26 +140,70 @@ function sdbHardwareInfoAll()
    HOST=$1
 
    mkdir -p HARDINFO/
+	
+	sdbCpu
+	sdbMemory
+	sdbDisk
+	sdbNetcard
+	sdbMainboard
+}
 
-   lscpu >> HARDINFO/$HOST.cpu.info
-   cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info
+function sdbCpu()
+{
+   lscpu >> HARDINFO/$HOST.cpu.info 2>&1
+	rc=$?
+	cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info 2>&1
+	rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+		echo "Failed to collec cpu information."
+		rm HARDINFO/$HOST.cpu.info
+	fi
+}
 
-   free -m >> HARDINFO/$HOST.memory1.info
-   cat /proc/meminfo >> HARDINFO/$HOST.memory2.info
-   #dmidecode -t memory >> HARDINFO/$HOST.memory3.info 2>&1
+function sdbMemory()
+{
+   free -m >> HARDINFO/$HOST.memory.info 2>&1
+	rc=$?
+	cat /proc/meminfo >> HARDINFO/$HOST.memory.info 2>&1
+	rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+		echo "Failed to collect memory information."
+		rm HARDINFO/$HOST.memory.info	
+	fi
+}
 
-   lsblk >> HARDINFO/$HOST.disk.info
-   #fdisk -l >> HARDINFO/$HOST.disk.info
-   df -h >> HARDINFO/$HOST.disk.info
+function sdbDisk()
+{
+   lsblk >> HARDINFO/$HOST.disk.info 2>&1
+   rc=$?
+	df -h >> HARDINFO/$HOST.disk.info 2>&1
+	rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+		echo "Failed to collect disk information"
+      rm HARDINFO/$HOST.disk.info
+	fi
+}
 
-   lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info
-   #ifconfig >> HARDINFO/$HOST.netcard.info
+function sdbNetcard()
+{
+   lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info 2>&1
+	rc=$?
+	if [ $rc -ne 0 ] ; then
+		echo "Failed to collect netcard information"	
+		rm HARDINFO/$HOST.netcard.info
+	fi
+}
 
-   lspci >> HARDINFO/$HOST.mainboard1.info
-   lspci -vv >> HARDINFO/$HOST.mainboard2.info
-
-   #dmidecode -t bios >> HARDINFO/$HOST.bios1.info
-   #dmidecode -q >> HARDINFO/$HOST.bios2.info
+function sdbMainboard()
+{
+   lspci >> HARDINFO/$HOST.mainboard.info 2>&1
+	rc=$?
+	lspci -vv >> HARDINFO/$HOST.mainboard.info 2>&1
+	rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+      echo "Failed to collect mainboard information"
+		rm HARDINFO/$HOST.mainboard.info 
+	fi
 
 }
 
@@ -181,36 +225,24 @@ function sdbHardwareInfoPart()
    fi
 
    if [ "$cpu" == "true" ] ; then
-      lscpu >> HARDINFO/$HOST.cpu.info
-      cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info
-   fi
+		sdbCpu
+	fi
 
    if [ "$memory" == "true" ] ; then
-      free -m >> HARDINFO/$HOST.memory1.info
-      cat /proc/meminfo >> HARDINFO/$HOST.memory2.info
-      #dmidecode -t memory >> HARDINFO/$HOST.memory3.info 2>&1
-   fi
+		sdbMemory
+	fi
 
    if [ "$disk" == "true" ] ; then
-      lsblk >> HARDINFO/$HOST.disk.info
-      #fdisk -l >> HARDINFO/$HOST.disk.info 2>&1
-      df -h >> HARDINFO/$HOST.disk.info
-   fi
+		sdbDisk
+	fi
 
    if [ "$netcard" == "true" ] ; then
-      lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info
-      #ifconfig >> HARDINFO/$HOST.netcard.info
-   fi
+		sdbNetcard
+	fi
 
    if [ "$mainboard" == "true" ] ; then
-      lspci >> HARDINFO/$HOST.mainboard1.info
-      lspci -vv >> HARDINFO/$HOST.mainboard2.info
-   fi
-
-   #if [[ $bios = true ]] ; then
-      #dmidecode -t bios >> HARDINFO/$HOST.bios1.info 2>&1
-      #dmidecode -q >> HARDINFO/$HOST.bios2.info 2>&1
-   #fi
+		sdbMainboard
+	fi
 }
 
 #collect operating system information all
@@ -220,59 +252,138 @@ function sdbSystemInfoAll()
 
    mkdir -p OSINFO/
 
-   uptime >> OSINFO/$HOST.diskmanage.sys
-   echo ">df ./   [disk manage information]" >> OSINFO/$HOST.diskmanage.sys
-   df ./ >> OSINFO/$HOST.diskmanage.sys
-   echo ">mount   [mount information]" >> OSINFO/$HOST.diskmanage.sys
-   mount >> OSINFO/$HOST.diskmanage.sys
+	sdbDiskManage
+	sdbSystemOS
+	sdbModules
+	sdbEnvVar
+	sdbNetworkInfo
+	sdbProcess
+	sdbLogin
+	sdbLimit
+	sdbVmstat
+}
 
-   uptime >> OSINFO/$HOST.system.sys
-   echo ">>>>>operating system version" >> OSINFO/$HOST.system.sys
-   head -n 1 /etc/issue >> OSINFO/$HOST.system.sys
-   cat /proc/version >> OSINFO/$HOST.system.sys
-   echo ">>>>>host name" >> OSINFO/$HOST.system.sys
-   hostname >> OSINFO/$HOST.system.sys
-   echo ">>>>>long bit of system" >> OSINFO/$HOST.system.sys
-   getconf LONG_BIT >> OSINFO/$HOST.system.sys
-   echo ">>>>>lsb_release -a" >> OSINFO/$HOST.system.sys
-   ulimit -a >> OSINFO/$HOST.system.sys
-   lsb_release -a >> OSINFO/$HOST.system.sys
+function sdbDiskManage()
+{
+   echo "######>df ./   " >> OSINFO/$HOST.diskmanage.sys
+   df ./ >> OSINFO/$HOST.diskmanage.sys 2>&1
+	rc=$?
+	echo "######>mount   " >> OSINFO/$HOST.diskmanage.sys
+   mount >> OSINFO/$HOST.diskmanage.sys 2>&1
+	rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then 
+		echo "Failed to collect disk manage information"
+		rm OSINFO/$HOST.diskmanage.sys
+	fi
+}
 
+function sdbSystemOS()
+{
+   echo "######>head -n 1 /etc/issue" >> OSINFO/$HOST.system.sys 2>&1
+   head -n 1 /etc/issue >> OSINFO/$HOST.system.sys 2>&1
+	rc=$?
+	echo "######>cat /proc/version" >> OSINFO/$HOST.system.sys 2>&1
+	cat /proc/version >> OSINFO/$HOST.system.sys 2>&1
+	rc1=$?
+	echo "######>hostname" >> OSINFO/$HOST.system.sys 2>&1
+   hostname >> OSINFO/$HOST.system.sys 2>&1
+   rc2=$?
+	echo "######>getconf LONG_BIT" >> OSINFO/$HOST.system.sys 2>&1
+	getconf LONG_BIT >> OSINFO/$HOST.system.sys 2>&1
+	rc3=$?
+	echo "######>ulimit -a" >> OSINFO/$HOST.system.sys 2>&1
+   ulimit -a >> OSINFO/$HOST.system.sys 2>&1
+	rc4=$?
+	echo "######>lsb_release -a" >> OSINFO/$HOST.system.sys 2>&1
+	lsb_release -a >> OSINFO/$HOST.system.sys 2>&1
+	rc5=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] && [$rc2 -ne 0 ] && [ $rc3 -ne 0 ] && [ $rc4 -ne 0 ] && [ $rc5 -ne 0 ] ; then 
+		echo "Failed to collect system information "
+		rm OSINFO/$HOST.system.sys
+	fi
 
-   uptime >> OSINFO/$HOST.mode.sys
-   lsmod >> OSINFO/$HOST.mode.sys
+}
 
-   uptime >> OSINFO/$HOST.environmentvar.sys
-   env >> OSINFO/$HOST.environmentvar.sys
+function sdbModules()
+{
+   lsmod >> OSINFO/$HOST.modules.sys 2>&1
+	rc=$?
+	if [ $rc -ne 0 ] ; then
+		echo "Failed to collect modules information"
+		rm $HOST.modules.sys
+	fi
+}
 
-   uptime >> OSINFO/$HOST.IDE.sys
-   dmesg|grep IDE >> OSINFO/$HOST.IDE.sys
+function sdbEnvVar()
+{
+   env >> OSINFO/$HOST.environmentvar.sys 2>&1
+	rc=$?
+	if [ $rc -ne 0 ] ; then
+      echo "Failed to collect environment variable"
+	   rm OSINFO/$HOST.environmentvar.sys
+	fi
+}
 
-   uptime >> OSINFO/$HOST.networkinfo.sys
-   echo ">>>>>network state information" >> OSINFO/$HOST.networkinfo.sys
-   netstat -s >> OSINFO/$HOST.networkinfo.sys
-   echo ">>>>>ifconfig information" >> OSINFO/$HOST.networkinfo.sys
-   #ifconfig >> OSINFO/$HOST.networkinfo.sys
-   echo ">>>>>detail netstats information" >> OSINFO/$HOST.networkinfo.sys
-   netstat >> OSINFO/$HOST.networkinfo.sys
+function sdbNetworkInfo()
+{	
+   echo "######>netstat -s" >> OSINFO/$HOST.networkinfo.sys 2>&1
+   netstat -s >> OSINFO/$HOST.networkinfo.sys 2>&1
+	rc=$?
+	echo "######>netstat" >> OSINFO/$HOST.networkinfo.sys 2>&1
+   netstat >> OSINFO/$HOST.networkinfo.sys 2>&1
+	rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+		echo "Failed to collect network information"
+		rm OSINFO/$HOST.networkinfo.sys
+	fi
 
-   #uptime >> OSINFO/$HOST.nfsstate.sys 2>&1
-   #nfsstat >> OSINFO/$HOST.nfsstate.sys 2>&1
-   uptime >> OSINFO/$HOST.progress.sys
-   ps -elf|sort -rn >> OSINFO/$HOST.progress.sys
-   ps aux >> OSINFO/$HOST.progress1.sys
-   uptime >> OSINFO/$HOST.logininfo.sys
-   last >> OSINFO/$HOST.logininfo.sys
-   history >> OSINFO/$HOST.logininfo.sys
+}
 
-   #uptime >> OSINFO/$HOST.swapon.sys
-   #swapon -s >> OSINFO/$HOST.swapon.sys
+function sdbProcess()
+{
+	ps -elf|sort -rn >> OSINFO/$HOST.process.sys 2>&1
+   rc=$?
+   ps aux >> OSINFO/$HOST.process.sys 2>&1
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+		echo "Failed to collect process information"
+		rm OSINFO/$HOST.process.sys
+	fi
 
-   uptime >> OSINFO/$HOST.ulimit.sys
-   ulimit -a >> OSINFO/$HOST.ulimit.sys
+}
 
-   uptime >> OSINFO/$HOST.vmstate.sys
+function sdbLogin()
+{
+	last >> OSINFO/$HOST.logininfo.sys 2>&1
+   rc=$? 
+	history >> OSINFO/$HOST.logininfo.sys 2>&1
+   rc1=$?
+	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+		echo "Failed to collect login information"
+		rm OSINFO/$HOST.logininfo.sys
+	fi
+
+}
+
+function sdbLimit()
+{
+   ulimit -a >> OSINFO/$HOST.ulimit.sys 2>&1
+	rc=$?
+	if [ $rc -ne 0 ] ; then
+		echo "Failed to collect system limit information"
+		rm OSINFO/$HOST.ulimit.sys
+	fi
+	
+}
+
+function sdbVmstat()
+{
    vmstat >> OSINFO/$HOST.vmstate.sys
+   rc=$?
+	if [ $rc -ne 0 ] ; then
+	   echo "Failed to collect vmstat information"
+		rm OSINFO/$HOST.vmstate.sys
+	fi
 
 }
 
@@ -353,21 +464,21 @@ function sdbSystemInfoPartEnd()
 {
    HOST=$1
 
-   progress=$2
+   process=$2
    login=$3
    limit=$4
    vmstate=$5
 
-   if [ "$progress" == "true" ] || [ "$login" == "true" ] || [ "$limit" == "true" ] || [ "$vmstate" == "true" ] ; then
+   if [ "$process" == "true" ] || [ "$login" == "true" ] || [ "$limit" == "true" ] || [ "$vmstate" == "true" ] ; then
       mkdir -p OSINFO/
    else
       return 0
    fi
 
-   if [ "$progress" == "true" ] ; then
-      uptime >> OSINFO/$HOST.progress.sys
-      ps -elf|sort -rn >> OSINFO/$HOST.progress.sys
-      ps aux >> OSINFO/$HOST.progress1.sys
+   if [ "$process" == "true" ] ; then
+      uptime >> OSINFO/$HOST.process.sys
+      ps -elf|sort -rn >> OSINFO/$HOST.process.sys
+      ps aux >> OSINFO/$HOST.process1.sys
    fi
 
    if [ "$login" == "true" ] ; then
