@@ -689,8 +689,10 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
                pTemp = _parser->_vField[fieldNum]->fieldBuf ;
                if ( pTemp )
                {
-                  JSON_BUF_APPEND ( pTemp,
-                                    ossStrlen(pTemp) ) ;
+                  //JSON_BUF_APPEND ( pTemp,
+                  //                  ossStrlen(pTemp) ) ;
+                  JSON_BUF_CHECK_APPEND ( pTemp,
+                                          ossStrlen(pTemp) ) ;
                }
                else
                {
@@ -790,8 +792,10 @@ empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
             pTemp = _parser->_vField[fieldNum]->fieldBuf ;
             if ( pTemp )
             {
-               JSON_BUF_APPEND ( pTemp,
-                                 ossStrlen(pTemp) ) ;
+               //JSON_BUF_APPEND ( pTemp,
+               //                  ossStrlen(pTemp) ) ;
+               JSON_BUF_CHECK_APPEND( pTemp,
+                                      ossStrlen(pTemp) ) ;
             }
             else
             {
@@ -856,8 +860,10 @@ empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
          pTemp = _parser->_vField[fieldNum]->fieldBuf ;
          if ( pTemp )
          {
-            JSON_BUF_APPEND ( pTemp,
-                              ossStrlen(pTemp) ) ;
+            //JSON_BUF_APPEND ( pTemp,
+            //                  ossStrlen(pTemp) ) ;
+            JSON_BUF_CHECK_APPEND ( pTemp,
+                                    ossStrlen(pTemp) ) ;
          }
          else
          {
@@ -874,6 +880,10 @@ empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
             else
             {
                //error
+               rc = SDB_UTIL_PARSE_JSON_INVALID ;
+               PD_LOG ( PDERROR, "CSV format error, this field is \
+empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
+               goto error ;
             }
          }
          JSON_BUF_APPEND ( ":", 1 ) ;
