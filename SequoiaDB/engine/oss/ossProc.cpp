@@ -50,7 +50,7 @@
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 #if defined (_LINUX)
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSISPROCRUNNING, "ossIsProcessRunning" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSISPROCRUNNING, "ossIsProcessRunning" )
 BOOLEAN ossIsProcessRunning ( OSSPID pid )
 {
    PD_TRACE_ENTRY ( SDB_OSSISPROCRUNNING );
@@ -65,7 +65,7 @@ BOOLEAN ossIsProcessRunning ( OSSPID pid )
 #define OSS_INVALID_MSG_QUEUE_ID -1
 // Linux wait child process
 // It calls waitpid until the given pid stop
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWAITCHLD, "ossWaitChild" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWAITCHLD, "ossWaitChild" )
 INT32 ossWaitChild ( OSSPID pid, ossResultCode &result )
 {
    INT32 rc = SDB_OK ;
@@ -159,7 +159,7 @@ INT32 ossWaitChild ( OSSPID pid, ossResultCode &result )
 // create pointer list from character array
 // the array may contain 0 or more arguments, each arguments are separated by
 // '\0'. Two adjcent '\0\0' represent end of the string
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTLST, "ossCreateList" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTLST, "ossCreateList" )
 static INT32 ossCreateList ( const CHAR *pArguments,
                              const CHAR ***pppList,
                              INT32 iMinSize,
@@ -242,7 +242,7 @@ error :
 }
 
 // called by ossExec
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXEC2, "ossExec2" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXEC2, "ossExec2" )
 static INT32 ossExec2 ( const CHAR *program,
                         const CHAR *arguments,
                         const CHAR *environment,
@@ -460,7 +460,7 @@ error :
 }
 
 // function to execute program.
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXEC, "ossExec" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEXEC, "ossExec" )
 INT32 ossExec ( const CHAR * program,
                 const CHAR * arguments,
                 const CHAR * environment,
@@ -620,7 +620,7 @@ static size_t g_workBufferLen   = OSS_RENAME_PROCESS_BUFFER_LEN ;
 static size_t g_origBufferLen   = 0 ;
 BOOLEAN g_bNameChangeEnabled    = FALSE ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSENBNMCHGS, "ossEnableNameChanges" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSENBNMCHGS, "ossEnableNameChanges" )
 void ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 )
 {
    PD_TRACE_ENTRY ( SDB_OSSENBNMCHGS );
@@ -634,7 +634,7 @@ void ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 )
    PD_TRACE_EXIT ( SDB_OSSENBNMCHGS );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRENMPROC, "ossRenameProcess" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRENMPROC, "ossRenameProcess" )
 void ossRenameProcess ( const CHAR *pNewName )
 {
    PD_TRACE_ENTRY ( SDB_OSSRENMPROC );
@@ -661,7 +661,7 @@ void ossRenameProcess ( const CHAR *pNewName )
 }
 
 #elif defined (_WINDOWS)
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSVPATH, "ossResolvePath" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSVPATH, "ossResolvePath" )
 static INT32 ossResolvePath ( const CHAR *pPathToResolve,
                               CHAR       *pResolvedPath )
 {
@@ -755,7 +755,7 @@ BOOLEAN ossIsProcessRunning ( OSSPID pid )
    return ret == WAIT_TIMEOUT ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWTINT, "ossWaitInterrupt" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWTINT, "ossWaitInterrupt" )
 INT32 ossWaitInterrupt ( HANDLE handle, DWORD timeout )
 {
    PD_TRACE_ENTRY ( SDB_OSSWTINT );
@@ -780,7 +780,7 @@ INT32 ossWaitInterrupt ( HANDLE handle, DWORD timeout )
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTPADUPHND, "ossCreatePipeAndDupHandle" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTPADUPHND, "ossCreatePipeAndDupHandle" )
 static INT32 ossCreatePipeAndDupHandle ( PHANDLE const pReadHandle,
                                          PHANDLE const pWriteHandle,
                                          PSECURITY_ATTRIBUTES const pSecAttr,
@@ -822,7 +822,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_WIN_OSSEXEC, "ossExec" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_WIN_OSSEXEC, "ossExec" )
 INT32 ossExec ( const CHAR * program,
                 const CHAR * arguments,
                 const CHAR * environment,
@@ -1140,7 +1140,7 @@ error :
 }
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETEWD, "ossGetEWD" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETEWD, "ossGetEWD" )
 INT32 ossGetEWD ( CHAR *pBuffer, INT32 maxlen )
 {
    INT32 rc = SDB_OK ;
