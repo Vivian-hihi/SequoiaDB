@@ -56,7 +56,7 @@ thirdLoc=$3
 
 #the number of concurrent threads
 thread=10
-timeout=50
+timeout=60
 
 #get the number of parameter and what parameters is 
 ParaNum=$#
@@ -535,7 +535,7 @@ do
    if [ "$firstLoc" == "" ] && [ "$localhost" == "${HOST[$i]}" ] ; then
       for j in $(seq 1 $PortNum)
       do
-            echo "localhost:$localhost:${PORT[$j]}"
+				#echo "localhost:$localhost:${PORT[$j]}"
             sdbPortGather ${HOST[$i]} ${DBPATH[$j]} ${PORT[$j]} $installpath
             sdbSnapShotCataLog ${HOST[$i]} ${PORT[$j]} $installpath
             sdbSnapShot ${HOST[$i]} ${PORT[$j]} $installpath

@@ -220,7 +220,6 @@ function sdbSystemInfoAll()
 
    mkdir -p OSINFO/
 
-   echo "success to create FOLDER"
    uptime >> OSINFO/$HOST.diskmanage.sys
    echo ">df ./   [disk manage information]" >> OSINFO/$HOST.diskmanage.sys
    df ./ >> OSINFO/$HOST.diskmanage.sys

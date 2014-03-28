@@ -132,7 +132,7 @@ function sdbExpectScpHosts()
 
    /usr/local/bin/expect -c"
       set timeout 50 ;
-      spawn scp -r sdbadmin@$HOST:$localPath/$HOST*.tar.gz ../ ;
+      spawn scp -r sdbadmin@$HOST:$localPath/$HOST*.tar.gz ./ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
