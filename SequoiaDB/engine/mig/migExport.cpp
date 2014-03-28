@@ -550,7 +550,8 @@ INT32 _migCSVExtractor::_extractRecord ()
          }
          // let's print the iterator into buffer using string delimiter
          t = bson_iterator_type( &it ) ;
-         if ( BSON_OBJECT == t || BSON_ARRAY == t || BSON_STRING == t )
+         if ( BSON_OID == t || BSON_OBJECT == t ||
+              BSON_ARRAY == t || BSON_STRING == t )
          {
             if ( BSON_STRING == t )
             {
@@ -572,11 +573,13 @@ INT32 _migCSVExtractor::_extractRecord ()
             objectStrCur = objectStr ;
             if ( BSON_STRING == t )
             {
-               estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize, &it, _delChar[0] ) ;
+               estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize,
+                                               &it, _delChar[0] ) ;
             }
             else
             {
-               estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize, &it, '"' ) ;
+               estLen = bson_sprint_iterator ( &objectStrCur, &objectStrSize,
+                                               &it, '"' ) ;
             }
             if ( 0 == estLen )
             {
@@ -585,7 +588,7 @@ INT32 _migCSVExtractor::_extractRecord ()
                rc = SDB_CORRUPTED_RECORD ;
                goto error ;
             }
-            rc = _extractString ( objectStr, objectStrSize, trim, _delChar[0] ) ;
+            rc = _extractString( objectStr, objectStrSize, trim, _delChar[0] ) ;
             if ( rc )
             {
                delete[] objectStr ;
