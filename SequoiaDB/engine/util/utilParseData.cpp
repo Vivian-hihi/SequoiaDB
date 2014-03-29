@@ -126,7 +126,8 @@ BOOLEAN _utilDataParser::parse_number ( const CHAR *buffer, UINT32 size )
 {
    BOOLEAN  rc             = FALSE ;
 
-   if ( *buffer != '-' && ( *buffer < '0' || *buffer >'9' ) )
+   if ( *buffer != '+' && *buffer != '-' &&
+        ( *buffer < '0' || *buffer >'9' ) )
    {
       rc = FALSE ;
       goto done ;
@@ -139,7 +140,7 @@ BOOLEAN _utilDataParser::parse_number ( const CHAR *buffer, UINT32 size )
    }
    /* Could use sscanf for this? */
    /* Has sign? */
-   if ( '-' == *buffer )
+   if ( '-' == *buffer || '+' == *buffer )
    {
       --size ;
       ++buffer ;
