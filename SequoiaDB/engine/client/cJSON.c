@@ -129,7 +129,16 @@ static const char *parse_number(cJSON *item,const char *num)
    long long n2 = 0 ;
    item->numType = cJSON_INT32 ;
    /* Could use sscanf for this? */
-   if (*num=='-') sign=-1,num++;   /* Has sign? */
+   if (*num=='-')
+   {
+      sign=-1 ;
+      num++ ;   /* Has sign? */
+   }
+   else if (*num=='+')
+   {
+      sign=1 ;
+      num++ ;
+   }
    while (*num=='0') num++;         /* is zero */
    if (*num>='1' && *num<='9')
    {
@@ -461,7 +470,7 @@ static const char *parse_value(cJSON *item,const char *value,int isKey,int isMon
    {
       return parse_string(item,value,isKey);
    }
-   if (*value=='-' || (*value>='0' && *value<='9'))
+   if ( *value=='+' || *value=='-' || (*value>='0' && *value<='9'))
    {
       return parse_number(item,value);
    }
