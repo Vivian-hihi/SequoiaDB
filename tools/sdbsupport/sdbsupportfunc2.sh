@@ -67,58 +67,56 @@ function sdbTarGzPack()
    osinfo="true"
    sdbsnap="true"
 
-   echo "sdbtar gz pack"
-
    Folder="$HOST-$date"
-
+#echo "Begin to packaging and compression"
    mkdir -p $Folder/
    if [ $? -ne 0 ] ; then
       echo "Failed to create foler !"
       exit 1
    fi
 
-   if ls HARDINFO/ 2>/dev/null
+   if ls HARDINFO/ >>/dev/null 2>&1
    then
       hard="false"
       mv HARDINFO/ ./$Folder/
    fi
 
-   if ls SDBNODES/ 2>/dev/null
+   if ls SDBNODES/ >>/dev/null 2>&1
    then
       sdbnode="false"
       mv SDBNODES/ ./$Folder/
    fi
 
-   if ls OSINFO/ 2>/dev/null
+   if ls OSINFO/ >>/dev/null 2>&1
    then
       osinfo="false"
       mv OSINFO/ ./$Folder/
    fi
 
-   if ls SDBSNAPS/ 2>/dev/null
+   if ls SDBSNAPS/ >>/dev/null 2>&1
    then
       sdbsnap="false"
       mv SDBSNAPS/ ./$Folder/
    fi
 
-   echo "here"
-
    if [ "$hard" == "true" ] && [ "$sdbnode" == "true" ] && [ "$osinfo" == "true" ] && [ "$sdbsnap" == "true" ] ; then
       echo "Error,Failed to collect information "
       exit 1
    fi
-   echo "here"
-   if [ $? -ne 0 ] ; then
+
+	if [ $? -ne 0 ] ; then
       echo "Failed to move the collected information to folder"
       exit 1
    fi
 
-   tar -zcvf $Folder.tar.gz ./$Folder/
+   tar -zcvf $Folder.tar.gz ./$Folder/ >>/dev/null 2>&1
 
    if [ $? -ne 0 ] ; then
       echo "Failed to packaging and compression"
       exit 1
-   fi
+	else
+		echo "Complete to packaging and compression"
+	fi
    rm -rf ./$Folder/
 }
 

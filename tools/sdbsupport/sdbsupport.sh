@@ -69,8 +69,8 @@ function Usage()
 {
    echo "Command Options:" ;
    echo "    --help                 help information" ;
-   echo "    -N [--hostname] arg    database host name " ;
-   echo "    -p [--svcport] arg     database sevice port" ;
+   echo "    -N [--hostname] arg    database host name [eg:-N hostname1:hostname2:.....]" ;
+   echo "    -p [--svcport] arg     database sevice port [eg:-p 50000:30000:......]" ;
    echo "    -t [--thread] arg      number of concurrent threads,default:10" ;
    echo "    -s [--snapshot]        snapshot of sequoiadb database" ;
    echo "    -o [--osinfo]          operating system information" ;
@@ -412,7 +412,7 @@ echo "###Success to get host in group and port in localhost" >>sdbsupport.log
 pHostNum=`awk 'BEGIN{print split("'$hostName'",hostarr,":")}'`
 pPortNum=`awk 'BEGIN{print split("'$svcPort'",portarr,":")}'`
 #when have parameter ,but not --all ,we must specify the hosts[--hostname]
-if [[ $pHostNum -eq 0 ]] && [[ $all = "false"  ]] && [[ $firstLoc != "" ]] ; then
+if [ $pHostNum -eq 0 ] && [ "$all" == "false" ] && [ "$firstLoc" != "" ] ; then
    echo "Warning ! Please specify hosts!"
    exit 1
 fi
@@ -544,8 +544,8 @@ do
             sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
             sdbSnapShot "${HOST[$i]}" "${PORT[$j]}" "$installpath"
       done
-      sdbHardwareInfoAll ${HOST[$i]} $installpath
-      sdbSystemInfoAll ${HOST[$i]} $installpath
+      sdbHardwareInfoAll "${HOST[$i]}" "$installpath"
+      sdbSystemInfoAll "${HOST[$i]}" "$installpath"
    fi
    if [ "$i" == "$HostNum" ] ; then
       echo "###Success to Collect local information when no para passed in">>sdbsupport.log
@@ -588,52 +588,66 @@ fi
 #>3.have para but not all : ./sdbsupport.sh -h htest1:htes2 -p 11810:50000
 for i in $(seq 1 $pHostNum)
 do
-   if [ $all == "false" ] ; then
+   if [ "$all" == "false" ] ; then
       read -u 6
       #HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'` 
-      if [[ ${HostPara[$i]} = $localhost ]] ; then
+      if [ "${HostPara[$i]}" == "$localhost" ] ; then
          #only have localhost ./sdbsupport.sh -h htest1
          Local=$localhost
-         if [[ $thirdLoc = "" ]] ; then
+         if [ "$thirdLoc" == "" ] ; then
             for j in $(seq 1 $PortNum)
             do	
                sdbPortGather "${HostPara[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
                sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$j]}" "$installpath"
                sdbSnapShot "${HostPara[$i]}" "${PORT[$j]}" "$installpath"
-               sdbHardwareInfoAll "${HostPara[$i]}"
-               sdbSystemInfoAll "${HostPara[$i]}"
             done	
-         else
+				sdbHardwareInfoAll "${HostPara[$i]}"
+				sdbSystemInfoAll "${HostPara[$i]}"
+			else
             #Para : svcPort ->have this Port [./sdbsupport.sh -h htest1 -p 11810]	
-            if [[ $pPortNum -ne 0 ]] ; then 	
+            if [ $pPortNum -ne 0 ] ; then 	
                for k in $(seq 1 $pPortNum)
                do
-                  sdbPortGather ${HostPara[$i]} ${DbPath[$k]} ${PortPara[$k]} "$installpath"
-                  if [[ ${Role[$k]} = "coord" ]] && [[ $catalog = "true" ]] ; then
+                  sdbPortGather "${HostPara[$i]}" "${DbPath[$k]}" "${PortPara[$k]}" "$installpath"
+                  if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
                      sdbSnapShotCataLog "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
                   fi
                   #snapShot
-                  if [[ $snapShot = "true" ]] ; then
-                     sdbSnapShot ${HostPara[$i]} ${PortPara[$k]} "$installpath"
+                  if [ "$snapShot" == "true" ] ; then
+                     sdbSnapShot "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
                   fi
                   if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
-                     sdbSnapShotExtract ${HostPara[$i]} ${PortPara[$k]} $group $context $session $collection $collectionspace $database $system "$installpath"
+                     sdbSnapShotExtract "${HostPara[$i]}" "${PortPara[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
                   fi
                done
-            fi
+				else
+					#Just have snapshot argument ,no port argument
+					for k in $(seq 1 $PortNum)
+					do
+						if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
+							sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
+						fi	
+						if [ "$snapShot" == "true" ] ; then
+							sdbSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
+						fi
+						if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
+							sdbSnapShotExtract "${HostPara[$i]}" "${PORT[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
+						fi
+					done
+				fi
             #Parameter:--sysinfo ; Collect all system information or collect part of system information !
-            if [[ $sysInfo = "true" ]] ; then
-               sdbSystemInfoAll ${HOST[$i]}
+            if [ "$sysInfo" == "true" ] ; then
+               sdbSystemInfoAll "${HOST[$i]}"
             else
-               sdbSystemInfoPartFore ${HOST[$i]} $diskmanage $osystem $module $env $network
-               sdbSystemInfoPartEnd ${HOST[$i]} $progress $login $limit $vmstate
+               sdbSystemInfoPartFore "${HOST[$i]}" "$diskmanage" "$osystem" "$module" "$env" "$network"
+               sdbSystemInfoPartEnd "${HOST[$i]}" "$progress" "$login" "$limit" "$vmstate"
             fi
 
             #Parameter:--hardinfo ; Collect all hardware information or collect part of system information !
-            if [[ $hardInfo = "true" ]] ; then
-               sdbHardwareInfoAll ${HOST[$i]}
+            if [ "$hardInfo" == "true" ] ; then
+               sdbHardwareInfoAll "${HOST[$i]}"
             else
-               sdbHardwareInfoPart ${HOST[$i]} $cpu $memory $disk $netcard $mainboard
+               sdbHardwareInfoPart "${HOST[$i]}" "$cpu" "$memory" "$disk" "$netcard" "$mainboard"
             fi
             #echo "" >&6
          fi
@@ -642,14 +656,14 @@ do
          for n in $(seq 1 $ParaNum)
          do
             Para[$n]=`echo $ParaPass|cut -d " " -f $n`
-            if [[ ${Para[$n]} = "-N" ]] || [[ ${Para[$n]} = "--hostname" ]] ; then
+            if [ "${Para[$n]}" == "-N" ] || [ "${Para[$n]}" == "--hostname" ] ; then
                Para[$n]=""
             fi
-            if [[ ${Para[$n]} = $hostName ]] ; then
+            if [ "${Para[$n]}" == "$hostName" ] ; then
                Para[$n]=""
             fi
          done
-         if [[ ${HostPara[$i]} != "" ]] ; then
+         if [ "${HostPara[$i]}" != "" ] ; then
             {
             sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"
             sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
@@ -665,7 +679,7 @@ wait
 
 #tar the all collect information in a packet
 if [ "$firstLoc" == "" ] || [ "$Local" == "$localhost" ]; then
-   sdbTarGzPack $localhost >>sdbsupport.log
+   sdbTarGzPack $localhost 
 fi
 
 #clean environment

@@ -1,6 +1,7 @@
 #!/bin/bash
-
+#******************************************
 #sdbdiag.log file to SDBSNAPS 
+#******************************************
 function sdbPortGather()
 {
    HOST=$1
@@ -15,24 +16,61 @@ function sdbPortGather()
    fi
    #get sequoiadb config path
    confpath=$installpath/conf/local
-   #ls -R $confpath >> SDBNODES/$HOST.$PORT.info 2>&1
-   ls $DBPATH/diaglog/ > diagfile
-   lognum=`cat diagfile|wc -l`
-   if [ $lognum -gt 1 ] ; then
-      tar -zcvf $DBPATH/$HOST.$PORT.tar.gz $DBPATH/diaglog/
-      cp -r $DBPATH/$HOST.$PORT.tar.gz SDBNODES/
-   #	echo ssh $HOST \tar -zcvf $HOST.$PORT.tar.gz $DBPATH/diaglog/\
-      #copy diaglog for every node
-   else
-      cp $DBPATH/diaglog/sdbdiag.log SDBNODES/$HOST.$PORT.diaglog
-   fi
-   rm -rf diagfile
-}
+	
+	#collect sdbdiag.log file 
+	core=`find -name "*core*"`
+   if [ "$core" != "" ] ; then
+      size=`du -s sdbdiag*`	
+	   crsize=`echo $size|cut -d " " -f 1`	      
+      if [ $crsize -lt 2097152 ] ; then
+			tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/ >>/dev/null 2>&1 
+			rc=$?
+			cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
+			rc1=$?
+			if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
+				echo "Failed to collect sdbdiag.log"	
+			fi
+		else 
+			tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/trap* $DBPATH/diaglog/sdbdiag.log >>/dev/null 2>&1
+			rc=$? 
+			cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
+			rc1=$?
+			if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
+				echo "Failed to collect sdbdiag.log"
+			fi
+		fi	
+	else
+		cp $DBPATH/diaglog/sdbdiag.log SDBNODES/$HOST.$PORT.diaglog
+		rc=$?
+		if [ $rc -ne 0 ] ; then
+			echo "Failed to collect sdbdiag.log"
+		fi
+	fi	
+	
+	#collect sdbcm log
+#cmlogpath=$installpath/conf/log
+#cp $cmlogpath/sdbcmd.log SDBNODES/$HOST.sdbcmd.log
+#rc=$?
+#if [ $rc -ne 0 ] ; then
+#echo "Failed to collect sdbcmd.log"
+#fi
+#cp $cmlogpath/sdbcm.log SDBNODES/$HOST.sdbcm.log
+#rc=$?
+#if [ $rc -ne 0 ] ; then
+#echo "Failed to collect sdbcm.log"
+#fi
 
+	#if folder don't have file ,then delete it
+	lsfold=`ls SDBNODES/` >>/dev/null 2>&1
+	if [ "$lsfold" == "" ] ; then
+		rm -rf SDBNODES/
+	fi
+}
+#*********************************************************************
 #collect catalog information snapshot 
+#*********************************************************************
 function sdbSnapShotCataLog()
 {
-   SDB=
    HOST=$1
    PORT=$2
    installpath=$3
@@ -46,14 +84,17 @@ function sdbSnapShotCataLog()
    $SDB "var db=new Sdb('localhost',$PORT)" >>sdbsupport.log 2>&1
    rc=$?
    if [ $rc -ne 0 ] ; then
-      echo "the sequoiadb is not run! "
+		$SDB "quit"
+		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
-      $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/snapshot_catalog.$HOST.$PORT
-   fi
-   $SDB "quit"
+      $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS.snapshot_catalog
+		$SDB "quit"
+	fi
 }
 
+#**********************************************************************
 #snapshot of sequoiadb to SDBSNAPS
+#**********************************************************************
 function sdbSnapShot()
 {
    HOST=$1
@@ -70,17 +111,18 @@ function sdbSnapShot()
    $SDB "var db=new Sdb('localhost',$PORT)" >>sdbsupport.log 2>&1
    rc=$?
    if [ $rc -ne 0 ] ; then
-      echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
-   else
-      $SDB "db.listReplicaGroups()" >> SDBSNAPS/listShards.$HOST.$PORT
-      $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/snapshot_contests.$HOST.$PORT
-      $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/snapshot_sessions.$HOST.$PORT
-      $SDB "db.snapshot(SDB_SNAP_COLLECTIONS)" >> SDBSNAPS/snapshot_collections.$HOST.$PORT
-      $SDB "db.snapshot(SDB_SNAP_COLLECTIONSPACES)" >> SDBSNAPS/snapshot_collectionspace.$HOST.$PORT
-      $SDB "db.snapshot(SDB_SNAP_DATABASE)" >> SDBSNAPS/snapshot_database.$HOST.$PORT
-      $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/snapshot_system.$HOST.$PORT
-   fi
-   $SDB "quit"
+		$SDB "quit"
+		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+	else
+      $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
+      $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contests
+      $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_sessions
+      $SDB "db.snapshot(SDB_SNAP_COLLECTIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_collections
+      $SDB "db.snapshot(SDB_SNAP_COLLECTIONSPACES)" >> SDBSNAPS/$HOST.$PORT.snapshot_collectionspace
+      $SDB "db.snapshot(SDB_SNAP_DATABASE)" >> SDBSNAPS/$HOST.$PORT.snapshot_database
+      $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/$HOST.$PORT.snapshot_system
+	   $SDB "quit"
+	fi
 }
 
 #sdbSnapShot Single Extract
@@ -107,31 +149,32 @@ function sdbSnapShotExtract()
    SDB=$installpath/bin/sdb
    $SDB "var db=new Sdb('localhost',$PORT)" >>sdbsupport.log 2>&1
    if [ $? -ne 0 ] ; then
-      echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+		$SDB "quit"
+		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
       if [ "$group" == "true" ] ; then
-         $SDB "db.listReplicaGroups()" >> SDBSNAPS/listShards.$HOST.$PORT
+         $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
       fi
       if [ "$context" == "true" ] ; then
-         $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/snapshot_contests.$HOST.$PORT
+         $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contests
       fi
       if [ "$session" == "true" ] ; then
-         $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/snapshot_sessions.$HOST.$PORT
+         $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_sessions
       fi
       if [ "$collection" == "true" ] ; then
-         $SDB "db.snapshot(SDB_SNAP_COLLECTIONS)" >> SDBSNAPS/snapshot_collections.$HOST.$PORT
+         $SDB "db.snapshot(SDB_SNAP_COLLECTIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_collections
       fi
       if [ "$collectionspace" == "true" ] ; then
-         $SDB "db.snapshot(SDB_SNAP_COLLECTIONSPACES)" >> SDBSNAPS/snapshot_collectionspace.$HOST.$PORT
+         $SDB "db.snapshot(SDB_SNAP_COLLECTIONSPACES)" >> SDBSNAPS/$HOST.$PORT.snapshot_collectionspace
       fi
       if [ "$database" == "true" ] ; then
-         $SDB "db.snapshot(SDB_SNAP_DATABASE)" >> SDBSNAPS/snapshot_database.$HOST.$PORT
+         $SDB "db.snapshot(SDB_SNAP_DATABASE)" >> SDBSNAPS/$HOST.$PORT.snapshot_database
       fi
       if [ "$system" == "true" ] ; then
-         $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/snapshot_system.$HOST.$PORT
+         $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/$HOST.$PORT.snapshot_system
       fi
-   fi
-   $SDB "quit"
+		$SDB "quit"
+	fi
 }
 
 #collect all hardware infomation
@@ -147,13 +190,13 @@ function sdbHardwareInfoAll()
 	sdbNetcard
 	sdbMainboard
 
-	#if OSINFO folder don't have file ,then delete it
+	#if folder don't have file ,then delete it
 	lsfold=`ls HARDINFO/` >>/dev/null 2>&1
 	if [ "$lsfold" == "" ] ; then
 		rm -rf HARDINFO/ 
 	fi
 }
-
+##Hardware : collect cpu information
 function sdbCpu()
 {
 	echo "######>lscpu" >> HARDINFO/$HOST.cpu.info 2>&1 
@@ -167,7 +210,7 @@ function sdbCpu()
 		rm HARDINFO/$HOST.cpu.info
 	fi
 }
-
+##Hardware : collect memory information
 function sdbMemory()
 {
    echo "######>free -m" >> HARDINFO/$HOST.memory.info 2>&1
@@ -181,7 +224,7 @@ function sdbMemory()
 		rm HARDINFO/$HOST.memory.info	
 	fi
 }
-
+##Hardware : collect disk information
 function sdbDisk()
 {
    echo "######>lsblk" >> HARDINFO/$HOST.disk.info 2>&1
@@ -195,7 +238,7 @@ function sdbDisk()
       rm HARDINFO/$HOST.disk.info
 	fi
 }
-
+##Hardware : collect network card information
 function sdbNetcard()
 {
    echo "######>lspci|grep -i 'eth'" >> HARDINFO/$HOST.netcard.info 2>&1
@@ -206,7 +249,7 @@ function sdbNetcard()
 		rm HARDINFO/$HOST.netcard.info
 	fi
 }
-
+##Hardware : collect mainboard information
 function sdbMainboard()
 {
    echo "######>lspci" >> HARDINFO/$HOST.mainboard.info 2>&1
@@ -221,8 +264,9 @@ function sdbMainboard()
 	fi
 
 }
-
+#**********************************************
 #collect part of hardware information
+#**********************************************
 function sdbHardwareInfoPart()
 {
    HOST=$1
@@ -259,14 +303,15 @@ function sdbHardwareInfoPart()
 		sdbMainboard
 	fi
 
-   #if OSINFO folder don't have file ,then delete it
+   #if folder don't have file ,then delete it
 	lsfold=`ls HARDINFO/` >>/dev/null 2>&1
 	if [ "$lsfold" == "" ] ; then
 		rm -rf HARDINFO/
 	fi
 }
-
+#******************************************************
 #collect operating system information all
+#******************************************************
 function sdbSystemInfoAll()
 {
    HOST=$1
@@ -283,14 +328,14 @@ function sdbSystemInfoAll()
 	sdbLimit
 	sdbVmstat
 
-	#if OSINFO folder don't have file ,then delete it
+	#if folder don't have file ,then delete it
 	lsfold=`ls OSINFO/` >>/dev/null 2>&1
 	if [ "$lsfold" == "" ] ; then
 		rm -rf OSINFO/
 	fi
 
 }
-##collect disk manage information
+##OSinfo : collect disk manage information
 function sdbDiskManage()
 {
    echo "######>df ./   " >> OSINFO/$HOST.diskmanage.sys
@@ -304,7 +349,7 @@ function sdbDiskManage()
 		rm OSINFO/$HOST.diskmanage.sys
 	fi
 }
-##collect system information 
+##OSinfo : collect system information 
 function sdbSystemOS()
 {
    echo "######>head -n 1 /etc/issue" >> OSINFO/$HOST.system.sys 2>&1
@@ -330,7 +375,7 @@ function sdbSystemOS()
 		rm OSINFO/$HOST.system.sys
 	fi
 }
-##collect modules information
+##OSinfo : collect modules information
 function sdbModules()
 {
 	echo "######>lsmod" >> OSINFO/$HOST.modules.sys 2>&1
@@ -341,7 +386,7 @@ function sdbModules()
 		rm $HOST.modules.sys
 	fi
 }
-##collect environment variable
+##OSinfo : collect environment variable
 function sdbEnvVar()
 {
 	echo "######>env" >> OSINFO/$HOST.environmentvar.sys 2>&1
@@ -352,7 +397,7 @@ function sdbEnvVar()
 	   rm OSINFO/$HOST.environmentvar.sys
 	fi
 }
-##collect network information
+##OSinfo : collect network information
 function sdbNetworkInfo()
 {	
    echo "######>netstat -s" >> OSINFO/$HOST.networkinfo.sys 2>&1
@@ -367,7 +412,7 @@ function sdbNetworkInfo()
 	fi
 
 }
-##collet process information
+##OSinfo : collet process information
 function sdbProcess()
 {
    echo "######>ps -elf|sort -rn" >> OSINFO/$HOST.process.sys 2>&1
@@ -381,7 +426,7 @@ function sdbProcess()
 		rm OSINFO/$HOST.process.sys
 	fi
 }
-##collect login information
+##OSinfo : collect login information
 function sdbLogin()
 {
    echo "######>last" >> OSINFO/$HOST.logininfo.sys 2>&1
@@ -395,7 +440,7 @@ function sdbLogin()
 		rm OSINFO/$HOST.logininfo.sys
 	fi
 }
-##collect limit information
+##OSinfo : collect limit information
 function sdbLimit()
 {
    echo "######>ulimit -a" >> OSINFO/$HOST.ulimit.sys 2>&1
@@ -406,7 +451,7 @@ function sdbLimit()
 		rm OSINFO/$HOST.ulimit.sys
 	fi
 }
-##collect vmstat information
+##OSinfo : collect vmstat information
 function sdbVmstat()
 {
    echo "######>vmstat" >> OSINFO/$HOST.vmstate.sys 2>&1
@@ -418,8 +463,9 @@ function sdbVmstat()
 	fi
 
 }
-
+#*************************************************************
 #collect part of operating system information ,front half
+#*************************************************************
 function sdbSystemInfoPartFore()
 {
    HOST=$1
@@ -456,15 +502,16 @@ function sdbSystemInfoPartFore()
       sdbNetworkInfo 
    fi
 
-   #if OSINFO folder don't have file ,then delete it
+   #if folder don't have file ,then delete it
 	lsfold=`ls OSINFO/` >>/dev/null 2>&1
 	if [ "$lsfold" == "" ] ; then
 		rm -rf OSINFO/
 	fi
 
 }
-
+#*************************************************************
 #collect end half part of Operating System information 
+#*************************************************************
 function sdbSystemInfoPartEnd()
 {
    HOST=$1
@@ -496,7 +543,7 @@ function sdbSystemInfoPartEnd()
       sdbVmstat 
    fi
 
-	#if OSINFO folder don't have file ,then delete it 
+	#if folder don't have file ,then delete it 
 	lsfold=`ls OSINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf OSINFO/
