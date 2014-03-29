@@ -38,7 +38,7 @@ catalog="false"
 #operation system variable
 diskmanage="false"
 osystem="false"
-kermode="false"
+module="false"
 env="false"
 IDE="false"
 network="false"
@@ -91,9 +91,8 @@ function Usage()
    echo "    --system               system snapshot" ;
    echo "    --diskmanage           operating system disk management information" ;
    echo "    --basicsys             operating system basic information" ;
-   echo "    --kermode              loadable kernel modules" ;
+   echo "    --module               loadable kernel modules" ;
    echo "    --env                  operating system environment variable" ;
-   echo "    --IDE                  integrated development environment" ;
    echo "    --network              network information" ;
    echo "    --process              operating system process" ;
    echo "    --login                operating system users and history" ;
@@ -104,7 +103,7 @@ function Usage()
 }
 
 #the parameters can use  
-optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,kermode,env,IDE,network,process,login,limit,vmstate,catalog,all,timeout: -- "$@"`
+optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,module,env,network,process,login,limit,vmstate,catalog,all,timeout: -- "$@"`
 
 #check over the option of sdbsupport
 rc=$?
@@ -194,14 +193,11 @@ do
    --basicsys)
       osystem="true"
       ;;
-   --kermode)
-      kermode="true"
+   --module )
+      module="true"
       ;;
    --env)
       env="true"
-      ;;
-   --IDE)
-      IDE="true"
       ;;
    --network)
       network="true"
@@ -629,7 +625,7 @@ do
             if [[ $sysInfo = "true" ]] ; then
                sdbSystemInfoAll ${HOST[$i]}
             else
-               sdbSystemInfoPartFore ${HOST[$i]} $diskmanage $osystem $kermode $env $IDE $network
+               sdbSystemInfoPartFore ${HOST[$i]} $diskmanage $osystem $module $env $network
                sdbSystemInfoPartEnd ${HOST[$i]} $progress $login $limit $vmstate
             fi
 
