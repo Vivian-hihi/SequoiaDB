@@ -1144,6 +1144,50 @@
                            </absoluteColour>
                         </FieldStruct>
                         <FieldStruct>
+                           <absoluteName>LastOpType</absoluteName>
+                           <sourceField>LastOpType</sourceField>
+                           <contentLength>10</contentLength>
+                           <alignment>LEFT</alignment>
+                           <canSwitch>0</canSwitch>
+                           <absoluteColour>
+                              <foreGroundColor>3</foreGroundColor>
+                              <backGroundColor>0</backGroundColor>
+                           </absoluteColour>
+                        </FieldStruct>
+                        <FieldStruct>
+                           <absoluteName>LastOpBegin</absoluteName>
+                           <sourceField>LastOpBegin</sourceField>
+                           <contentLength>28</contentLength>
+                           <alignment>LEFT</alignment>
+                           <canSwitch>0</canSwitch>
+                           <absoluteColour>
+                              <foreGroundColor>3</foreGroundColor>
+                              <backGroundColor>0</backGroundColor>
+                           </absoluteColour>
+                        </FieldStruct>
+                        <FieldStruct>
+                           <absoluteName>LastOpEnd</absoluteName>
+                           <sourceField>LastOpEnd</sourceField>
+                           <contentLength>28</contentLength>
+                           <alignment>LEFT</alignment>
+                           <canSwitch>0</canSwitch>
+                           <absoluteColour>
+                              <foreGroundColor>3</foreGroundColor>
+                              <backGroundColor>0</backGroundColor>
+                           </absoluteColour>
+                        </FieldStruct>
+                        <FieldStruct>
+                           <absoluteName>LastOpInfo</absoluteName>
+                           <sourceField>LastOpInfo</sourceField>
+                           <contentLength>35</contentLength>
+                           <alignment>LEFT</alignment>
+                           <canSwitch>0</canSwitch>
+                           <absoluteColour>
+                              <foreGroundColor>3</foreGroundColor>
+                              <backGroundColor>0</backGroundColor>
+                           </absoluteColour>
+                        </FieldStruct>
+                        <FieldStruct>
                            <deltaName>UserCPU</deltaName>
                            <absoluteName>UserCPU</absoluteName>
                            <averageName>UserCPU</averageName>
