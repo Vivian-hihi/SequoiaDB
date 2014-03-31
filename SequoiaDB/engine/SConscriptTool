@@ -332,7 +332,8 @@ toolEnv.StaticLibrary('msgload', migLoadFiles)
 #dps
 toolEnv.StaticLibrary('dps', dpsFiles)
 #ncurses
-toolEnv.StaticLibrary('ncurses', ncursesFiles)
+if linux:
+   toolEnv.StaticLibrary('ncurses', ncursesFiles)
 #Export Executable
 sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
          LIBDEPS=["mig","oss","pd","util","client","clientcpp"],
@@ -399,7 +400,8 @@ toolEnv.Install( '#/bin', sdbcm )
 toolEnv.Install( '#/bin', sdbcmd )
 toolEnv.Install( '#/bin', sdbcmart )
 toolEnv.Install( '#/bin', sdbcmtop )
-toolEnv.Install( '#/tools', sdbtop )
+if linux:
+   toolEnv.Install( '#/tools', sdbtop )
 toolEnv.Install( '#/tools', sdbload2 )
 toolEnv.Install( '#/tools', sdbmemcheck )
 toolEnv.Install( '#/tools/sdbsupport', sdbdpsdump )
