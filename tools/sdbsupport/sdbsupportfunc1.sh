@@ -87,7 +87,7 @@ function sdbSnapShotCataLog()
 		$SDB "quit"
 		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
-      $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS.snapshot_catalog
+      $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/$HOST.$PORT.snapshot_catalog
 		$SDB "quit"
 	fi
 }
