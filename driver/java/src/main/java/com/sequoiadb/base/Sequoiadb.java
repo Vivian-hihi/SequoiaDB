@@ -21,6 +21,8 @@
 package com.sequoiadb.base;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.net.UnknownHostException;
@@ -138,13 +140,16 @@ public class Sequoiadb {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb(String username, String password) throws BaseException {
+		// connect used default address
 		serverAddress = new ServerAddress();
-		initConnection();
+		ConfigOptions opts = new ConfigOptions();
+		initConnection(opts);
+		// authentication
 		this.userName = username;
 		this.password = password;
-		connect();
+		auth();
 	}
-
+	
 	/**
 	 * @fn Sequoiadb(String connString, String username, String password)
 	 * @brief Constructor.
@@ -157,16 +162,60 @@ public class Sequoiadb {
 	public Sequoiadb(String connString, String username, String password)
 			throws BaseException {
 		try {
+			// connect
 			serverAddress = new ServerAddress(connString);
-			initConnection();
+			ConfigOptions opts = new ConfigOptions();
+			initConnection(opts);
 		} catch (UnknownHostException e) {
 			throw new BaseException("SDB_NETWORK", connString);
 		}
+		// authentication
 		this.userName = username;
 		this.password = password;
-		connect();
+		auth();
 	}
 
+	/**
+	 * @fn Sequoiadb(List<String> connStrings, String username, String password)
+	 * @brief Constructor. Connect to database used the first valid address in the list.
+	 * @param connStrings The array of the coord's address
+	 * @param username the user's Name of the account
+	 * @param password the password  of the account
+	 * @param options the options to set connection
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public Sequoiadb(List<String> connStrings, String username, String password,
+			         ConfigOptions options) throws BaseException {
+		ConfigOptions opts = options;
+		if (options == null)
+			opts = new ConfigOptions();
+		Iterator<String> it = connStrings.iterator();
+		int size = connStrings.size();
+		int count = 0;
+		while (it.hasNext()) {
+			String str = it.next();
+			try {
+				// connect
+				try {
+					serverAddress = new ServerAddress(str);
+					initConnection(opts);
+				} catch (UnknownHostException e) {
+					throw new BaseException("SDB_NETWORK", str);
+				}
+				// authentication
+				this.userName = username;
+				this.password = password;
+				auth();
+			} catch (BaseException e) {
+				count++;
+				continue;
+			}
+			break;
+		}
+		if (count == size)
+			throw new BaseException("SDB_NET_CANNOT_CONNECT");
+	}
+	
 	/**
 	 * @fn Sequoiadb(String addr, int port, String username, String password)
 	 * @brief Constructor.
@@ -181,21 +230,54 @@ public class Sequoiadb {
 	public Sequoiadb(String addr, int port, String username, String password)
 			throws BaseException {
 		try {
+			// connect
 			serverAddress = new ServerAddress(addr, port);
-			initConnection();
+			ConfigOptions opts = new ConfigOptions();
+			initConnection(opts);
 		} catch (UnknownHostException e) {
 			throw new BaseException("SDB_NETWORK", addr, port);
 		}
+		// authentication
 		this.userName = username;
 		this.password = password;
-		connect();
+		auth();
 	}
 
 	/**
-	 * @fn connect()
+	 * @fn Sequoiadb(String addr, int port, String username, String password)
+	 * @brief Constructor.
+	 * @param addr
+	 *            address of remote server
+	 * @param port
+	 *            port of remote server
+	 * @param username the user's Name of the account
+	 * @param password the password  of the account
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public Sequoiadb(String addr, int port, 
+			         String username, String password,
+			         ConfigOptions options) throws BaseException {
+		ConfigOptions opts = options;
+		if (options == null)
+			opts = new ConfigOptions();
+		try {
+			// connect
+			serverAddress = new ServerAddress(addr, port);
+			initConnection(opts);
+		} catch (UnknownHostException e) {
+			throw new BaseException("SDB_NETWORK", addr, port);
+		}
+		// authentication
+		this.userName = username;
+		this.password = password;
+		auth();
+	}
+	
+	/**
+	 * @fn auth()
 	 * @brief authentication
 	 */
-	private void connect() {
+	private void auth() {
 		endianConvert = requestSysInfo();
 		byte[] request = SDBMessageHelper.buildAuthMsg(userName, password, 0,
 				(byte) 0, endianConvert);
@@ -308,7 +390,7 @@ public class Sequoiadb {
 	public void changeConnectionOptions(ConfigOptions opts)
 			throws BaseException {
 		connection.changeConfigOptions(opts);
-		connect();
+		auth();
 	}
 
 	/**
@@ -1402,8 +1484,9 @@ public class Sequoiadb {
 		connection.shrinkBuffer();
 	}
 	
-	private void initConnection() throws BaseException {
-		ConfigOptions options = new ConfigOptions();
+	private void initConnection(ConfigOptions options) throws BaseException {
+		if (options == null)
+			throw new BaseException("SDB_INVALIDARG");
 		connection = new ConnectionTCPImpl(serverAddress, options);
 		connection.initialize();
 	}

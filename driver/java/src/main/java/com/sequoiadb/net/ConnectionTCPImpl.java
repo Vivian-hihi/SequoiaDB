@@ -77,7 +77,6 @@ public class ConnectionTCPImpl implements IConnection {
 
 		long sleepTime = 100;
 		long maxAutoConnectRetryTime = options.getMaxAutoConnectRetryTime();
-
 		long start = System.currentTimeMillis();
 		while (true) {
 			BaseException lastError = null;
@@ -85,7 +84,6 @@ public class ConnectionTCPImpl implements IConnection {
 			try {
 				clientSocket = new Socket();
 				clientSocket.connect(addr, options.getConnectTimeout());
-
 				clientSocket.setTcpNoDelay(!options.getUseNagle());
 				clientSocket.setKeepAlive(options.getSocketKeepAlive());
 				clientSocket.setSoTimeout(options.getSocketTimeout());
@@ -97,9 +95,9 @@ public class ConnectionTCPImpl implements IConnection {
 				lastError = new BaseException("SDB_NETWORK");
 				close();
 			}
-
+			// when we come here, it means network error, let's try until
+			// maxAutoConnectRetryTime run out 
 			long executedTime = System.currentTimeMillis() - start;
-
 			if (executedTime >= maxAutoConnectRetryTime)
 				throw lastError;
 
@@ -167,6 +165,11 @@ public class ConnectionTCPImpl implements IConnection {
 		lastUseTime = System.currentTimeMillis();
 		logger.getInstance().debug(0, "enter receiveMessage\n");
 		try {
+			// before use, check the buffer
+			if (REAL_BUFFER_LENGTH < DEF_BUFFER_LENGTH) {
+				receive_buffer = new byte[DEF_BUFFER_LENGTH];
+				REAL_BUFFER_LENGTH = DEF_BUFFER_LENGTH;
+			}
 			input.mark(4);
 			int rtn = 0;
 			while (rtn < 4){
@@ -185,7 +188,7 @@ public class ConnectionTCPImpl implements IConnection {
 			}
 			*/
 			int msgSize = Helper.byteToInt(receive_buffer, endianConvert);
-			if ( msgSize>REAL_BUFFER_LENGTH)
+			if (msgSize > REAL_BUFFER_LENGTH)
 			{
 				receive_buffer = new byte[msgSize];
 				REAL_BUFFER_LENGTH = msgSize;
@@ -231,6 +234,7 @@ public class ConnectionTCPImpl implements IConnection {
 		} catch (IOException e) {
 			throw new BaseException("SDB_NETWORK");
 		} catch(NullPointerException e) {
+			// we can remove this case of exception now, the bug has been fix
 			logger.getInstance().error("objidentity:" + Integer.toString(hashCode()) +"\n");
 			logger.getInstance().error("thread id:" + Long.toString(Thread.currentThread().getId()) +"\n");
 			throw new BaseException("SDB_NETWORK");
