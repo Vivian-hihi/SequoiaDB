@@ -145,6 +145,10 @@ else if ( $type == "clnature" )
 			break ;
 		}
 	}
+	else
+	{
+	   $cl_split = array( 'Name' => $csname.'.'.$clname ) ;
+	}
 	$db -> install ( "{ install : true }" ) ;
 }
 
