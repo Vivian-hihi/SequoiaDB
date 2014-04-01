@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using SequoiaDB.Bson;
 using System.Text;
+using System.Collections;
 
 namespace DriverTest
 {
@@ -84,7 +85,36 @@ namespace DriverTest
                 Assert.IsTrue(e.ErrorType == "SDB_AUTH_AUTHORITY_FORBIDDEN");
             }
         }
-        
+
+        [TestMethod()]
+        public void Connect_With_Serval_Arg_Test()
+        {
+		    List<string> list = new List<string>();
+	        list.Add("192.168.20.35:12340");
+	        list.Add("192.168.20.36:12340");
+	        list.Add("123:123");
+	        list.Add("");
+	        list.Add("192.168.20.40");
+	        list.Add("localhost:50000");
+	        list.Add("localhost:11810");
+	        list.Add("localhost:12340");
+            list.Add("192.168.20.40:12340");
+
+	        ConfigOptions options = new ConfigOptions();
+	        options.MaxAutoConnectRetryTime = 0;
+	        options.ConnectTimeout = 100;
+	        // connect
+	        Sequoiadb sdb1 = new Sequoiadb(list);
+            sdb1.Connect("", "", options);
+	        // set option and change the connect
+	        options.ConnectTimeout = 2000;
+	        sdb1.ChangeConnectionOptions(options);
+	        // check
+	        DBCursor cursor = sdb1.GetList(4, null, null, null);
+	        Assert.IsTrue(cursor != null);
+	        sdb1.Disconnect();
+        }
+
         [TestMethod()]
         [Ignore]
         public void IsClosedTest()

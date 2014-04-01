@@ -18,7 +18,10 @@ namespace SequoiaDB
         private readonly Logger logger = new Logger("Sequoiadb");
 
         private ServerAddress serverAddress = null;
+        private ServerAddress[] serverAddresses = null;
         private IConnection connection = null;
+        private string userName = "";
+        private string password = "";
         internal bool isBigEndian = false ;
 
         public IConnection Connection
@@ -48,11 +51,33 @@ namespace SequoiaDB
 
         /** \fn Sequoiadb(string connString)
          *  \brief Constructor
-         *  \param connString Remote server address "IP : Port" or "IP"(port is 50000)
+         *  \param connString Remote server address "IP : Port" or "IP"(port is 11810)
          */
         public Sequoiadb(string connString)
         {
             serverAddress = new ServerAddress(connString);
+        }
+
+        /** \fn Sequoiadb(List<string> connStrings)
+         *  \brief Constructor
+         *  \param connStrings Remote server addresses "IP : Port" or "IP"(port is 11810)
+         */
+        public Sequoiadb(List<string> connStrings)
+        {
+            if (connStrings.Count == 0)
+                throw new BaseException("SDB_INVALIDARG");
+            serverAddresses = new ServerAddress[connStrings.Count];
+            for (int i = 0; i < connStrings.Count; i++)
+            {
+                try
+                {
+                    serverAddresses[i] = new ServerAddress(connStrings[i]);
+                }
+                catch (BaseException e)
+                {
+                    throw e;
+                }
+            }
         }
 
         /** \fn Sequoiadb(string host, int port)
@@ -72,7 +97,7 @@ namespace SequoiaDB
          */
         public void Connect()
         {
-            Connect("", "");
+            Connect(userName, password);
         }
 
         /** \fn void Connect(string username, string password)
@@ -84,36 +109,89 @@ namespace SequoiaDB
          */
         public void Connect(string username, string password)
         {
+            this.userName = username;
+            this.password = password;
+            Connect(username, password, null);
+        }
+
+        /** \fn void Connect(string username, string password, ConfigOptions options)
+         *  \brief Connect to remote Sequoiadb database server
+         *  \username Sequoiadb connection user name
+         *  \password Sequoiadb connection password
+         *  \options The options for connection
+         *  \exception SequoiaDB.BaseException
+         *  \exception System.Exception
+         */
+        public void Connect(string username, string password, ConfigOptions options)
+        {
+            ConfigOptions opts = options;
             if (username == null)
                 username = "";
             if (password == null)
                 password = "";
+            this.userName = username;
+            this.password = password;
+            if (options == null)
+                opts = new ConfigOptions();
             if (connection == null)
             {
-                ConfigOptions options = new ConfigOptions();
+                // single address
+                if (serverAddress != null)
+                {
+                    // connect
+                    try
+                    {
+                        connection = new ConnectionTCPImpl(serverAddress, opts);
+                        connection.Connect();
+                    }
+                    catch (System.Exception e)
+                    {
+                        connection = null;
+                        throw e;
+                    }
+                }
+                // several addresses
+                else if (serverAddresses != null)
+                {
+                    int size = serverAddresses.Length;
+                    int count = 0;
+                    for (int i = 0; i < size; i++)
+                    {
+                        // try to connect
+                        try
+                        {
+                            ServerAddress conn = serverAddresses[i];
+                            connection = new ConnectionTCPImpl(conn, opts);
+                            connection.Connect();
+                        }
+                        catch (System.Exception e)
+                        {
+                            count++;
+                            continue;
+                        }
+                        break;
+                    }
+                    if (count == size)
+                    {
+                        connection = null;
+                        throw new BaseException("SDB_NET_CANNOT_CONNECT");
+                    }
+                }
+                else
+                {
+                    throw new BaseException("SDB_NET_CANNOT_CONNECT");
+                }
+                // get endian info
+                isBigEndian = RequestSysInfo();
+                // authentication
                 try
                 {
-                    connection = new ConnectionTCPImpl(serverAddress, options);
-                    connection.Connect();
+                    auth();
                 }
-                catch (System.Exception e)
+                catch (BaseException e)
                 {
-                    connection = null;
                     throw e;
                 }
-                isBigEndian = RequestSysInfo();
-                MD5 md5 = MD5.Create();
-                byte[] data = md5.ComputeHash(Encoding.Default.GetBytes(password));
-                StringBuilder builder = new StringBuilder();
-                for ( int i = 0; i < data.Length; i++ )
-                    builder.Append(data[i].ToString("x2"));
-                byte[] request = SDBMessageHelper.BuildAuthMsg(0, username, builder.ToString(), isBigEndian);
-                connection.SendMessage(request);
-                SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
-
-                int flags = rtnSDBMessage.Flags;
-                if (flags != 0)
-                    throw new BaseException(flags);
             }
         }
 
@@ -244,6 +322,15 @@ namespace SequoiaDB
         public void ChangeConnectionOptions(ConfigOptions opts)
         {
             connection.ChangeConfigOptions(opts);
+            try
+            {
+                auth();
+            }
+            catch (BaseException e)
+            {
+                throw e;
+            }
+
         }
 
         /** \fn void CreateCollectionSpace(string csName)
@@ -1271,6 +1358,22 @@ namespace SequoiaDB
             connection.SendMessage(request);
             int osType = 0 ;
             return SDBMessageHelper.ExtractSysInfoReply(connection.ReceiveMessage(128), ref osType );
+        }
+
+        private void auth()
+        {
+            MD5 md5 = MD5.Create();
+            byte[] data = md5.ComputeHash(Encoding.Default.GetBytes(password));
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < data.Length; i++)
+                builder.Append(data[i].ToString("x2"));
+            byte[] request = SDBMessageHelper.BuildAuthMsg(0, userName, builder.ToString(), isBigEndian);
+            connection.SendMessage(request);
+            SDBMessage rtnSDBMessage = SDBMessageHelper.MsgExtractReply(connection.ReceiveMessage(isBigEndian), isBigEndian);
+
+            int flags = rtnSDBMessage.Flags;
+            if (flags != 0)
+                throw new BaseException(flags);
         }
    }
 }
