@@ -39,6 +39,7 @@
 #include "pdTrace.hpp"
 #include "migTrace.hpp"
 #include "../util/json2rawbson.h"
+#include "../util/text.h"
 
 _migParser::_migParser() : _parser(NULL),
                            _collection(NULL)
@@ -408,6 +409,12 @@ INT32 _migCSVParser::_getRecord ( bson &record )
          PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
          goto error ;
       }
+   }
+   if ( !isValidUTF8WSize ( buffer + startOffset, size ) )
+   {
+      rc = SDB_INVALIDARG ;
+      PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
+      goto error ;
    }
    rc = ccsv._convertCSVToJson ( buffer + startOffset, size,
                                  _autoAddField, _autoCompletion,
