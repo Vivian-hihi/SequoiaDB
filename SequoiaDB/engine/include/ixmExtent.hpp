@@ -234,35 +234,34 @@ namespace engine
                    _dmsStorageIndex *pIndexSu ) ;
 
       BOOLEAN verify () ;
-      UINT16 getNumKeyNode ()
+      inline UINT16 getNumKeyNode ()
       {
          return _extentHead->_totalKeyNodeNum ;
       }
-      const ixmKeyNode *getKeyNode ( UINT16 i )
+      inline const ixmKeyNode *getKeyNode ( UINT16 i )
       {
          if ( i>_extentHead->_totalKeyNodeNum )
             return NULL ;
          return (ixmKeyNode*)(((CHAR*)_extentHead) + sizeof(ixmExtentHead) +
                               sizeof(ixmKeyNode)*i) ;
       }
-      CHAR *getKeyData ( UINT16 i )
+      inline CHAR *getKeyData ( UINT16 i )
       {
          if ( i>=_extentHead->_totalKeyNodeNum )
             return NULL ;
-         const ixmKeyNode *node = getKeyNode(i) ;
-         return (CHAR*)_extentHead+node->_keyOffset ;
+         return (CHAR*)_extentHead+getKeyNode(i)->_keyOffset ;
       }
-      UINT16 getFreeSize()
+      inline UINT16 getFreeSize()
       {
          return _extentHead->_totalFreeSize ;
       }
-      UINT16 getTotalKeySize()
+      inline UINT16 getTotalKeySize()
       {
          return (UINT16)(_pageSize-1) - _extentHead->_totalFreeSize -
                 (sizeof(ixmExtentHead) +
                  _extentHead->_totalKeyNodeNum * sizeof(ixmKeyNode)) ;
       }
-      BOOLEAN isRoot()
+      inline BOOLEAN isRoot()
       {
          return DMS_INVALID_EXTENT == _extentHead->_parentExtentID ;
       }

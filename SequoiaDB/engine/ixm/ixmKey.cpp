@@ -474,33 +474,32 @@ namespace engine
    {
       const UINT8 *l = _keyData;
       const UINT8 *r = right._keyData;
-
+      UINT32 mask = 1;
+      CHAR lval = 0 ;
+      CHAR rval = 0 ;
+      INT32 x = 0 ;
+      INT32 y = 0 ;
       // if any side are native BSON, let's use compareHybrid
       if( (*l|*r) == IsBSON )
          return _compareHybrid(right, o);
 
-      UINT32 mask = 1;
       while( TRUE )
       {
-         CHAR lval = *l;
-         CHAR rval = *r;
-         {
-            INT32 x = compare(l, r); // updates l and r pointers
-            if( x )
-            {
-               if( o.descending(mask) )
-                  x = -x;
-               return x;
-            }
-         }
-         {
-            INT32 x = ((INT32)(lval & cHASMORE)) - ((INT32)(rval & cHASMORE));
-            if( x )
-               return x;
-            if( (lval & cHASMORE) == 0 )
-               break;
-         }
-
+         x = compare(l, r); // updates l and r pointers
+         if ( x )
+            return o.descending(mask)?-x:x ;
+         lval = *l;
+         rval = *r;
+         // l and r are the same, let's compare if there's more
+         y = (INT32)(lval & cHASMORE) ;
+         x = y - ((INT32)(rval & cHASMORE));
+         // return if one side got more and the other side doesn't
+         if ( x )
+            return x ;
+         // if getMore are the same for both side, let's see if lside got more,
+         // if not let's break
+         if ( !y )
+            break ;
          mask <<= 1;
      }
 
