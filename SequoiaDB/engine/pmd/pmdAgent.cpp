@@ -196,6 +196,13 @@ namespace engine
 
       SDB_ASSERT( pResultBuff == NULL, "Result must be NULL" )
 
+      if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
+      {
+         PD_LOG ( PDERROR, "Session[%s] OP[type:%u] return code error[rc:%d]",
+                  cb->getName(), pHead->opCode, rc ) ;
+         rc = SDB_SYS ;
+      }
+
       if ( rc != SDB_OK && NULL == *ppErrorObj )
       {
          replyHeader.header.messageLength = sizeof ( MsgOpReply )
