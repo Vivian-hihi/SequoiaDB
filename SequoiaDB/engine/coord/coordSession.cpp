@@ -145,8 +145,20 @@ namespace engine
          _subSessionMap[routeID.value] = subSession;
       }
       rc = checkRemoteRouteID( routeID );
-      PD_RC_CHECK( rc, PDERROR,
-                  "check remote routeID faled(rc=%d)", rc );
+      if ( rc )
+      {
+         {
+         ossScopedLock _lock( &_mutex ) ;
+         iterMap = _subSessionMap.find( routeID.value );
+         if ( iterMap != _subSessionMap.end() )
+         {
+            iterMap->second.isConnected = FALSE;
+         }
+         }
+         PD_LOG( PDERROR,
+               "check remote routeID faled(rc=%d)", rc );
+         goto error;
+      }
    done:
       return rc;
    error:
