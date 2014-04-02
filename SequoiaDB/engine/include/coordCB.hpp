@@ -67,14 +67,17 @@ namespace engine
 
       CoordGroupInfoPtr getCatGroupInfo()
       {
-         //it is not need lock
-         //modify only in init
-         return _catGroupInfo;
+         CoordGroupInfoPtr catGroupInfoTmp;
+         {
+         ossScopedLock _lock(&_mutex, SHARED) ;
+         catGroupInfoTmp = _catGroupInfo;
+         }
+         return catGroupInfoTmp;
       }
 
       MsgRouteID getPrimaryCat()
       {
-         ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
+         ossScopedLock _lock(&_mutex, SHARED) ;
          return _catGroupInfo->getPrimary();
       }
 

@@ -78,6 +78,7 @@ namespace engine
    */
    void _CoordCB::updateCatGroupInfo( CoordGroupInfoPtr &groupInfo )
    {
+      ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
       _catGroupInfo = groupInfo;
    }
 
