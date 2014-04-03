@@ -2051,10 +2051,10 @@
       </code>
 
       <code>
-         <name>SDB_TOO_MANY_SOCKET</name>
+         <name>SDB_TOO_MANY_OPEN_FD</name>
          <description>
-            <en>too many socket</en>
-            <cn>连接已达到上限</cn>
+            <en>too many open file description</en>
+            <cn>文件描述符已达到上限</cn>
          </description>
       </code>
 
