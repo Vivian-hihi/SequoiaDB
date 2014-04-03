@@ -485,11 +485,13 @@ namespace engine
 
       while( TRUE )
       {
+         // lvar and rval need to be assigned BEFORE compare, since compare is
+         // going to change l and r value
+         lval = *l;
+         rval = *r;
          x = compare(l, r); // updates l and r pointers
          if ( x )
             return o.descending(mask)?-x:x ;
-         lval = *l;
-         rval = *r;
          // l and r are the same, let's compare if there's more
          y = (INT32)(lval & cHASMORE) ;
          x = y - ((INT32)(rval & cHASMORE));
