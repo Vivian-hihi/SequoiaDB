@@ -14,10 +14,10 @@
           <stentry>CPU</stentry>
           <stentry>
             Support the following processor
-            <ul><li>x86(Intel Pentium、Intel Xeon 和 AMD) 32-bit Intel和 AMD processor</li>
-              <li>X64(64-bit AMD64 和 Intel EM64T processor)</li></ul>
+            <ul><li>x86(Intel Pentium、Intel Xeon and AMD) 32-bit Intel and AMD processor</li>
+              <li>X64(64-bit AMD64 and Intel EM64T processor)</li></ul>
           </stentry>
-          <stentry> Suggest to use X64(64-bit AMD64 和 Intel EM64T processor ) </stentry>
+          <stentry> Suggest to use X64(64-bit AMD64 and Intel EM64T processor ) </stentry>
         </strow>
         <strow>
           <stentry>Disk</stentry>

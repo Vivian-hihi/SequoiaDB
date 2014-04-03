@@ -42,14 +42,14 @@
             <strow>
               <stentry>defaultPort  </stentry>
               <stentry>the default monitoring port of sdbcm </stentry>
-              <stentry>defaultPort=50010</stentry>
+              <stentry>defaultPort=11790</stentry>
             </strow>
             <strow>
               <stentry>&lt;hostname>_Port   </stentry>
               <stentry>monitoring port of sdbcm in physical host.if it can't find the corresponding
                 param of host in the conf file,sdbcm will start with  defaultPort; if defaultPort is
-                also not exist ,then sdbcm will start the default port 50010</stentry>
-              <stentry>&lt;hostname>_Port=50010  </stentry>
+                also not exist ,then sdbcm will start the default port 11790</stentry>
+              <stentry>&lt;hostname>_Port=11790  </stentry>
             </strow>
             <strow>
               <stentry>RestartCount</stentry>

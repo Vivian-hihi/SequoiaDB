@@ -30,12 +30,12 @@
           <stentry>Integer</stentry>
           <stentry>Task status, represents:
             <ul>
-              <li>0：prepare</li>
-              <li>1：run</li>
-              <li>2：pause</li>
-              <li>3：取消</li>
-              <li>4：变更元数据</li>
-              <li>9：完成</li>
+              <li>0: prepare</li>
+              <li>1: run</li>
+              <li>2: pause</li>
+              <li>3: cancel</li>
+              <li>4: change metadata</li>
+              <li>9: completed</li>
             </ul>
           </stentry>
         </strow>
