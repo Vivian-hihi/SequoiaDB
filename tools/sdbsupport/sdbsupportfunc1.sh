@@ -16,55 +16,84 @@ function sdbPortGather()
    fi
    #get sequoiadb config path
    confpath=$installpath/conf/local
-	
-	#collect sdbdiag.log file 
-	core=`find -name "*core*"`
+   ls $confpath/$PORT >> /dev/null 2>&1
+   conf=$?
+   if [ $conf -eq 0 ] ; then
+      cp $confpath/$PORT/sdb.conf SDBNODES/$HOST.$PORT.sdb.conf >> /dev/null 2>&1
+      rc=$?
+      if [ $rc -ne 0 ] ; then
+         echo "Failed to collect sdb.conf."
+      fi
+   fi
+   #collect sdbdiag.log file
+   core=`find -name "*core*"`
    if [ "$core" != "" ] ; then
-      size=`du -s sdbdiag*`	
-	   crsize=`echo $size|cut -d " " -f 1`	      
+      size=`du -s sdbdiag*`
+      crsize=`echo $size|cut -d " " -f 1`
       if [ $crsize -lt 2097152 ] ; then
-			tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/ >>/dev/null 2>&1 
-			rc=$?
-			cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
-			rc1=$?
-			if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
-				echo "Failed to collect sdbdiag.log"	
-			fi
-		else 
-			tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/trap* $DBPATH/diaglog/sdbdiag.log >>/dev/null 2>&1
-			rc=$? 
-			cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
-			rc1=$?
-			if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
-				echo "Failed to collect sdbdiag.log"
-			fi
-		fi	
-	else
-		cp $DBPATH/diaglog/sdbdiag.log SDBNODES/$HOST.$PORT.diaglog
-		rc=$?
-		if [ $rc -ne 0 ] ; then
-			echo "Failed to collect sdbdiag.log"
-		fi
-	fi	
-	
-	#collect sdbcm log
-#cmlogpath=$installpath/conf/log
-#cp $cmlogpath/sdbcmd.log SDBNODES/$HOST.sdbcmd.log
-#rc=$?
-#if [ $rc -ne 0 ] ; then
-#echo "Failed to collect sdbcmd.log"
-#fi
-#cp $cmlogpath/sdbcm.log SDBNODES/$HOST.sdbcm.log
-#rc=$?
-#if [ $rc -ne 0 ] ; then
-#echo "Failed to collect sdbcm.log"
-#fi
+         tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/ >>/dev/null 2>&1 
+         rc=$?
+         cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
+         rc1=$?
+         if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
+            echo "Failed to collect sdbdiag.log"
+         fi
+      else
+         tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/trap* $DBPATH/diaglog/sdbdiag.log >>/dev/null 2>&1
+         rc=$? 
+         cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
+         rc1=$?
+         if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
+            echo "Failed to collect sdbdiag.log"
+         fi
+      fi
+   else
+      cp $DBPATH/diaglog/sdbdiag.log SDBNODES/$HOST.$PORT.diaglog
+      rc=$?
+      if [ $rc -ne 0 ] ; then
+         echo "Failed to collect sdbdiag.log"
+      fi
+   fi
 
-	#if folder don't have file ,then delete it
-	lsfold=`ls SDBNODES/` >>/dev/null 2>&1
-	if [ "$lsfold" == "" ] ; then
-		rm -rf SDBNODES/
-	fi
+   #collect sdbcm log
+   cmlogpath=$installpath/conf/log
+   cmcfpath=$installpath/conf
+   #collect sdbcmd log
+   ls SDBNODES/$HOST.sdbcmd.log >>/dev/null 2>&1
+   cmdlog=$?
+   if [ $cmdlog -ne 0 ] ; then
+      cp $cmlogpath/sdbcmd.log SDBNODES/$HOST.sdbcmd.log
+      rc=$?
+      if [ $rc -ne 0 ] ; then
+         echo "Failed to collect sdbcmd.log file"
+      fi
+   fi
+   #collect sdbcm log
+   ls SDBNODES/$HOST.sdbcm.log >>/dev/null 2>&1
+   cmlog=$?
+   if [ $cmlog -ne 0 ] ; then
+      cp $cmlogpath/sdbcm.log SDBNODES/$HOST.sdbcm.log
+      rc=$?
+      if [ $rc -ne 0 ] ; then
+         echo "Failed to collect sdbcm.log file"
+      fi
+   fi
+   #collect sdbcm config file
+   ls SDBNODES/$HOST.sdbcm.conf >>/dev/null 2>&1
+   cmconf=$?
+   if [ $cmconf -ne 0 ] ; then
+      cp $cmcfpath/sdbcm.conf SDBNODES/$HOST.sdbcm.conf
+      rc=$?
+      if [ $rc -ne 0 ] ; then
+         echo "Failed to collect sdbcm.conf file"
+      fi
+   fi
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBNODES/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBNODES/
+   fi
 }
 #*********************************************************************
 #collect catalog information snapshot 
@@ -84,12 +113,12 @@ function sdbSnapShotCataLog()
    $SDB "var db=new Sdb('localhost',$PORT)" >>sdbsupport.log 2>&1
    rc=$?
    if [ $rc -ne 0 ] ; then
-		$SDB "quit"
-		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+      $SDB "quit"
+      echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
       $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/$HOST.$PORT.snapshot_catalog
-		$SDB "quit"
-	fi
+      $SDB "quit"
+   fi
 }
 
 #**********************************************************************
@@ -111,9 +140,9 @@ function sdbSnapShot()
    $SDB "var db=new Sdb('localhost',$PORT)" >>sdbsupport.log 2>&1
    rc=$?
    if [ $rc -ne 0 ] ; then
-		$SDB "quit"
-		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
-	else
+      $SDB "quit"
+      echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+   else
       $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
       $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contests
       $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_sessions
@@ -121,8 +150,8 @@ function sdbSnapShot()
       $SDB "db.snapshot(SDB_SNAP_COLLECTIONSPACES)" >> SDBSNAPS/$HOST.$PORT.snapshot_collectionspace
       $SDB "db.snapshot(SDB_SNAP_DATABASE)" >> SDBSNAPS/$HOST.$PORT.snapshot_database
       $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/$HOST.$PORT.snapshot_system
-	   $SDB "quit"
-	fi
+      $SDB "quit"
+   fi
 }
 
 #sdbSnapShot Single Extract
@@ -149,8 +178,8 @@ function sdbSnapShotExtract()
    SDB=$installpath/bin/sdb
    $SDB "var db=new Sdb('localhost',$PORT)" >>sdbsupport.log 2>&1
    if [ $? -ne 0 ] ; then
-		$SDB "quit"
-		echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+      $SDB "quit"
+      echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
       if [ "$group" == "true" ] ; then
          $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
@@ -173,8 +202,8 @@ function sdbSnapShotExtract()
       if [ "$system" == "true" ] ; then
          $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/$HOST.$PORT.snapshot_system
       fi
-		$SDB "quit"
-	fi
+      $SDB "quit"
+   fi
 }
 
 #collect all hardware infomation
@@ -183,85 +212,85 @@ function sdbHardwareInfoAll()
    HOST=$1
 
    mkdir -p HARDINFO/
-	
-	sdbCpu
-	sdbMemory
-	sdbDisk
-	sdbNetcard
-	sdbMainboard
 
-	#if folder don't have file ,then delete it
-	lsfold=`ls HARDINFO/` >>/dev/null 2>&1
-	if [ "$lsfold" == "" ] ; then
-		rm -rf HARDINFO/ 
-	fi
+   sdbCpu
+   sdbMemory
+   sdbDisk
+   sdbNetcard
+   sdbMainboard
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls HARDINFO/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf HARDINFO/ 
+   fi
 }
 ##Hardware : collect cpu information
 function sdbCpu()
 {
-	echo "######>lscpu" >> HARDINFO/$HOST.cpu.info 2>&1 
-	lscpu >> HARDINFO/$HOST.cpu.info 2>&1
-	rc=$?
+   echo "######>lscpu" >> HARDINFO/$HOST.cpu.info 2>&1 
+   lscpu >> HARDINFO/$HOST.cpu.info 2>&1
+   rc=$?
    echo "######>cat /proc/cpuinfo" >> HARDINFO/$HOST.cpu.info 2>&1
-	cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info 2>&1
-	rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
-		echo "Failed to collec cpu information."
-		rm HARDINFO/$HOST.cpu.info
-	fi
+   cat /proc/cpuinfo >> HARDINFO/$HOST.cpu.info 2>&1
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+      echo "Failed to collec cpu information."
+      rm HARDINFO/$HOST.cpu.info
+   fi
 }
 ##Hardware : collect memory information
 function sdbMemory()
 {
    echo "######>free -m" >> HARDINFO/$HOST.memory.info 2>&1
-	free -m >> HARDINFO/$HOST.memory.info 2>&1
-	rc=$?
-	echo "######>cat /proc/meminfo" >> HARDINFO/$HOST.memory.info 2>&1
-	cat /proc/meminfo >> HARDINFO/$HOST.memory.info 2>&1
-	rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
-		echo "Failed to collect memory information."
-		rm HARDINFO/$HOST.memory.info	
-	fi
+   free -m >> HARDINFO/$HOST.memory.info 2>&1
+   rc=$?
+   echo "######>cat /proc/meminfo" >> HARDINFO/$HOST.memory.info 2>&1
+   cat /proc/meminfo >> HARDINFO/$HOST.memory.info 2>&1
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+      echo "Failed to collect memory information."
+      rm HARDINFO/$HOST.memory.info	
+   fi
 }
 ##Hardware : collect disk information
 function sdbDisk()
 {
    echo "######>lsblk" >> HARDINFO/$HOST.disk.info 2>&1
-	lsblk >> HARDINFO/$HOST.disk.info 2>&1
+   lsblk >> HARDINFO/$HOST.disk.info 2>&1
    rc=$?
    echo "######>df -h" >> HARDINFO/$HOST.disk.info 2>&1
-	df -h >> HARDINFO/$HOST.disk.info 2>&1
-	rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
-		echo "Failed to collect disk information"
+   df -h >> HARDINFO/$HOST.disk.info 2>&1
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+      echo "Failed to collect disk information"
       rm HARDINFO/$HOST.disk.info
-	fi
+   fi
 }
 ##Hardware : collect network card information
 function sdbNetcard()
 {
    echo "######>lspci|grep -i 'eth'" >> HARDINFO/$HOST.netcard.info 2>&1
-	lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info 2>&1
-	rc=$?
-	if [ $rc -ne 0 ] ; then
-		echo "Failed to collect netcard information"	
-		rm HARDINFO/$HOST.netcard.info
-	fi
+   lspci|grep -i 'eth' >> HARDINFO/$HOST.netcard.info 2>&1
+   rc=$?
+   if [ $rc -ne 0 ] ; then
+      echo "Failed to collect netcard information"	
+      rm HARDINFO/$HOST.netcard.info
+   fi
 }
 ##Hardware : collect mainboard information
 function sdbMainboard()
 {
    echo "######>lspci" >> HARDINFO/$HOST.mainboard.info 2>&1
-	lspci >> HARDINFO/$HOST.mainboard.info 2>&1
-	rc=$?
+   lspci >> HARDINFO/$HOST.mainboard.info 2>&1
+   rc=$?
    echo "lspci -vv" >> HARDINFO/$HOST.mainboard.info 2>&1
-	lspci -vv >> HARDINFO/$HOST.mainboard.info 2>&1
-	rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+   lspci -vv >> HARDINFO/$HOST.mainboard.info 2>&1
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect mainboard information"
-		rm HARDINFO/$HOST.mainboard.info 
-	fi
+      rm HARDINFO/$HOST.mainboard.info 
+   fi
 
 }
 #**********************************************
@@ -284,30 +313,30 @@ function sdbHardwareInfoPart()
    fi
 
    if [ "$cpu" == "true" ] ; then
-		sdbCpu
-	fi
+      sdbCpu
+   fi
 
    if [ "$memory" == "true" ] ; then
-		sdbMemory
-	fi
+      sdbMemory
+   fi
 
    if [ "$disk" == "true" ] ; then
-		sdbDisk
-	fi
+      sdbDisk
+   fi
 
    if [ "$netcard" == "true" ] ; then
-		sdbNetcard
-	fi
+      sdbNetcard
+   fi
 
    if [ "$mainboard" == "true" ] ; then
-		sdbMainboard
-	fi
+      sdbMainboard
+   fi
 
-   #if folder don't have file ,then delete it
-	lsfold=`ls HARDINFO/` >>/dev/null 2>&1
-	if [ "$lsfold" == "" ] ; then
-		rm -rf HARDINFO/
-	fi
+#if folder don't have file ,then delete it
+   lsfold=`ls HARDINFO/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf HARDINFO/
+   fi
 }
 #******************************************************
 #collect operating system information all
@@ -318,21 +347,21 @@ function sdbSystemInfoAll()
 
    mkdir -p OSINFO/
 
-	sdbDiskManage
-	sdbSystemOS
-	sdbModules
-	sdbEnvVar
-	sdbNetworkInfo
-	sdbProcess
-	sdbLogin
-	sdbLimit
-	sdbVmstat
+   sdbDiskManage
+   sdbSystemOS
+   sdbModules
+   sdbEnvVar
+   sdbNetworkInfo
+   sdbProcess
+   sdbLogin
+   sdbLimit
+   sdbVmstat
 
-	#if folder don't have file ,then delete it
-	lsfold=`ls OSINFO/` >>/dev/null 2>&1
-	if [ "$lsfold" == "" ] ; then
-		rm -rf OSINFO/
-	fi
+   #if folder don't have file ,then delete it
+   lsfold=`ls OSINFO/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf OSINFO/
+   fi
 
 }
 ##OSinfo : collect disk manage information
@@ -340,127 +369,127 @@ function sdbDiskManage()
 {
    echo "######>df ./   " >> OSINFO/$HOST.diskmanage.sys
    df ./ >> OSINFO/$HOST.diskmanage.sys 2>&1
-	rc=$?
-	echo "######>mount   " >> OSINFO/$HOST.diskmanage.sys
+   rc=$?
+   echo "######>mount   " >> OSINFO/$HOST.diskmanage.sys
    mount >> OSINFO/$HOST.diskmanage.sys 2>&1
-	rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then 
-		echo "Failed to collect disk manage information"
-		rm OSINFO/$HOST.diskmanage.sys
-	fi
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then 
+      echo "Failed to collect disk manage information"
+      rm OSINFO/$HOST.diskmanage.sys
+   fi
 }
 ##OSinfo : collect system information 
 function sdbSystemOS()
 {
    echo "######>head -n 1 /etc/issue" >> OSINFO/$HOST.system.sys 2>&1
    head -n 1 /etc/issue >> OSINFO/$HOST.system.sys 2>&1
-	rc=$?
-	echo "######>cat /proc/version" >> OSINFO/$HOST.system.sys 2>&1
-	cat /proc/version >> OSINFO/$HOST.system.sys 2>&1
-	rc1=$?
-	echo "######>hostname" >> OSINFO/$HOST.system.sys 2>&1
+   rc=$?
+   echo "######>cat /proc/version" >> OSINFO/$HOST.system.sys 2>&1
+   cat /proc/version >> OSINFO/$HOST.system.sys 2>&1
+   rc1=$?
+   echo "######>hostname" >> OSINFO/$HOST.system.sys 2>&1
    hostname >> OSINFO/$HOST.system.sys 2>&1
    rc2=$?
-	echo "######>getconf LONG_BIT" >> OSINFO/$HOST.system.sys 2>&1
-	getconf LONG_BIT >> OSINFO/$HOST.system.sys 2>&1
-	rc3=$?
-	echo "######>ulimit -a" >> OSINFO/$HOST.system.sys 2>&1
+   echo "######>getconf LONG_BIT" >> OSINFO/$HOST.system.sys 2>&1
+   getconf LONG_BIT >> OSINFO/$HOST.system.sys 2>&1
+   rc3=$?
+   echo "######>ulimit -a" >> OSINFO/$HOST.system.sys 2>&1
    ulimit -a >> OSINFO/$HOST.system.sys 2>&1
-	rc4=$?
-	echo "######>lsb_release -a" >> OSINFO/$HOST.system.sys 2>&1
-	lsb_release -a >> OSINFO/$HOST.system.sys 2>&1
-	rc5=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] && [$rc2 -ne 0 ] && [ $rc3 -ne 0 ] && [ $rc4 -ne 0 ] && [ $rc5 -ne 0 ] ; then 
-		echo "Failed to collect system information "
-		rm OSINFO/$HOST.system.sys
-	fi
+   rc4=$?
+   echo "######>lsb_release -a" >> OSINFO/$HOST.system.sys 2>&1
+   lsb_release -a >> OSINFO/$HOST.system.sys 2>&1
+   rc5=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] && [$rc2 -ne 0 ] && [ $rc3 -ne 0 ] && [ $rc4 -ne 0 ] && [ $rc5 -ne 0 ] ; then 
+      echo "Failed to collect system information "
+      rm OSINFO/$HOST.system.sys
+   fi
 }
 ##OSinfo : collect modules information
 function sdbModules()
 {
-	echo "######>lsmod" >> OSINFO/$HOST.modules.sys 2>&1
-	lsmod >> OSINFO/$HOST.modules.sys 2>&1
-	rc=$?
-	if [ $rc -ne 0 ] ; then
-		echo "Failed to collect modules information"
-		rm $HOST.modules.sys
-	fi
+   echo "######>lsmod" >> OSINFO/$HOST.modules.sys 2>&1
+   lsmod >> OSINFO/$HOST.modules.sys 2>&1
+   rc=$?
+   if [ $rc -ne 0 ] ; then
+      echo "Failed to collect modules information"
+      rm $HOST.modules.sys
+   fi
 }
 ##OSinfo : collect environment variable
 function sdbEnvVar()
 {
-	echo "######>env" >> OSINFO/$HOST.environmentvar.sys 2>&1
-	env >> OSINFO/$HOST.environmentvar.sys 2>&1
-	rc=$?
-	if [ $rc -ne 0 ] ; then
+   echo "######>env" >> OSINFO/$HOST.environmentvar.sys 2>&1
+   env >> OSINFO/$HOST.environmentvar.sys 2>&1
+   rc=$?
+   if [ $rc -ne 0 ] ; then
       echo "Failed to collect environment variable"
-	   rm OSINFO/$HOST.environmentvar.sys
-	fi
+      rm OSINFO/$HOST.environmentvar.sys
+   fi
 }
 ##OSinfo : collect network information
 function sdbNetworkInfo()
-{	
+{
    echo "######>netstat -s" >> OSINFO/$HOST.networkinfo.sys 2>&1
    netstat -s >> OSINFO/$HOST.networkinfo.sys 2>&1
-	rc=$?
-	echo "######>netstat" >> OSINFO/$HOST.networkinfo.sys 2>&1
+   rc=$?
+   echo "######>netstat" >> OSINFO/$HOST.networkinfo.sys 2>&1
    netstat >> OSINFO/$HOST.networkinfo.sys 2>&1
-	rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
-		echo "Failed to collect network information"
-		rm OSINFO/$HOST.networkinfo.sys
-	fi
+   rc1=$?
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+      echo "Failed to collect network information"
+      rm OSINFO/$HOST.networkinfo.sys
+   fi
 
 }
 ##OSinfo : collet process information
 function sdbProcess()
 {
    echo "######>ps -elf|sort -rn" >> OSINFO/$HOST.process.sys 2>&1
-	ps -elf|sort -rn >> OSINFO/$HOST.process.sys 2>&1
+   ps -elf|sort -rn >> OSINFO/$HOST.process.sys 2>&1
    rc=$?
-	echo "######>ps aux" >> OSINFO/$HOST.process.sys 2>&1
-	ps aux >> OSINFO/$HOST.process.sys 2>&1
+   echo "######>ps aux" >> OSINFO/$HOST.process.sys 2>&1
+   ps aux >> OSINFO/$HOST.process.sys 2>&1
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
-		echo "Failed to collect process information"
-		rm OSINFO/$HOST.process.sys
-	fi
+      echo "Failed to collect process information"
+      rm OSINFO/$HOST.process.sys
+   fi
 }
 ##OSinfo : collect login information
 function sdbLogin()
 {
    echo "######>last" >> OSINFO/$HOST.logininfo.sys 2>&1
-	last >> OSINFO/$HOST.logininfo.sys 2>&1
+   last >> OSINFO/$HOST.logininfo.sys 2>&1
    rc=$? 
-	echo "######>history" >> OSINFO/$HOST.logininfo.sys 2>&1
-	history >> OSINFO/$HOST.logininfo.sys 2>&1
+   echo "######>history" >> OSINFO/$HOST.logininfo.sys 2>&1
+   history >> OSINFO/$HOST.logininfo.sys 2>&1
    rc1=$?
-	if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
-		echo "Failed to collect login information"
-		rm OSINFO/$HOST.logininfo.sys
-	fi
+   if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
+      echo "Failed to collect login information"
+      rm OSINFO/$HOST.logininfo.sys
+   fi
 }
 ##OSinfo : collect limit information
 function sdbLimit()
 {
    echo "######>ulimit -a" >> OSINFO/$HOST.ulimit.sys 2>&1
-	ulimit -a >> OSINFO/$HOST.ulimit.sys 2>&1
-	rc=$?
-	if [ $rc -ne 0 ] ; then
-		echo "Failed to collect system limit information"
-		rm OSINFO/$HOST.ulimit.sys
-	fi
+   ulimit -a >> OSINFO/$HOST.ulimit.sys 2>&1
+   rc=$?
+   if [ $rc -ne 0 ] ; then
+      echo "Failed to collect system limit information"
+      rm OSINFO/$HOST.ulimit.sys
+   fi
 }
 ##OSinfo : collect vmstat information
 function sdbVmstat()
 {
    echo "######>vmstat" >> OSINFO/$HOST.vmstate.sys 2>&1
-	vmstat >> OSINFO/$HOST.vmstate.sys 2>&1
+   vmstat >> OSINFO/$HOST.vmstate.sys 2>&1
    rc=$?
-	if [ $rc -ne 0 ] ; then
-	   echo "Failed to collect vmstat information"
-		rm OSINFO/$HOST.vmstate.sys
-	fi
+   if [ $rc -ne 0 ] ; then
+      echo "Failed to collect vmstat information"
+      rm OSINFO/$HOST.vmstate.sys
+   fi
 
 }
 #*************************************************************
@@ -484,7 +513,7 @@ function sdbSystemInfoPartFore()
 
    if [ "$diskmanage" == "true" ] ; then
       sdbDiskManage
-	fi
+   fi
 
    if [ "$osystem" == "true" ] ; then
       sdbSystemOS 
@@ -503,10 +532,10 @@ function sdbSystemInfoPartFore()
    fi
 
    #if folder don't have file ,then delete it
-	lsfold=`ls OSINFO/` >>/dev/null 2>&1
-	if [ "$lsfold" == "" ] ; then
-		rm -rf OSINFO/
-	fi
+   lsfold=`ls OSINFO/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf OSINFO/
+   fi
 
 }
 #*************************************************************
@@ -528,23 +557,23 @@ function sdbSystemInfoPartEnd()
    fi
 
    if [ "$process" == "true" ] ; then
-      sdbProcess 
+      sdbProcess
    fi
 
    if [ "$login" == "true" ] ; then
-      sdbLogin 
+      sdbLogin
    fi
 
    if [ "$limit" == "true" ] ; then
-      sdbLimit 
+      sdbLimit
    fi
 
    if [ "$vmstate" == "true" ] ; then
-      sdbVmstat 
+      sdbVmstat
    fi
 
-	#if folder don't have file ,then delete it 
-	lsfold=`ls OSINFO/` >>/dev/null 2>&1
+   #if folder don't have file ,then delete it
+   lsfold=`ls OSINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf OSINFO/
    fi
