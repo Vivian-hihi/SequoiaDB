@@ -2050,5 +2050,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_TOO_MANY_SOCKET</name>
+         <description>
+            <en>too many socket</en>
+            <cn>连接已达到上限</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
