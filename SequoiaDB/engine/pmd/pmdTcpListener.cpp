@@ -96,7 +96,7 @@ namespace engine
                isLatched = FALSE ;
             }
             // if we don't get anything for a period of time, let's loop
-            if ( SDB_TIMEOUT == rc )
+            if ( SDB_TIMEOUT == rc || SDB_TOO_MANY_OPEN_FD == rc )
             {
                rc = SDB_OK ;
                continue ;
@@ -112,10 +112,11 @@ namespace engine
                // if we fail due to error, let's restart socket
                PD_LOG ( PDERROR, "Failed to accept socket in TcpListener(rc=%d)",
                         rc ) ;
-               //PD_LOG ( PDEVENT, "Restarting socket to listen" ) ;
-               continue ;
+               PD_LOG ( PDEVENT, "Restarting socket to listen" ) ;
+               break ;
             }
 
+            retry = 0 ;
             cb->incEventCount() ;
             ++mondbcb->numConnects ;
 
