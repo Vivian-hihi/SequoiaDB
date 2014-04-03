@@ -4,7 +4,7 @@
 #include <string.h>
 #include <wchar.h>
 #include "common.h"
-
+#if defined _WIN32
 struct interval {
   unsigned short first;
   unsigned short last;
@@ -182,3 +182,4 @@ int isblank ( char c )
 {
 	return ( c == ' ' || c == '\t' ) ;
 }
+#endif
