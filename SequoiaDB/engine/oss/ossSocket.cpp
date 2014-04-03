@@ -787,6 +787,8 @@ INT32 ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
 {
    INT32 rc = SDB_OK ;
    SOCKET maxFD = _fd ;
+   INT32 sysError = 0 ;
+   INT32 tmpErr = 0 ;
    struct timeval maxSelectTime ;
    SDB_ASSERT ( _init, "socket is not initialized" )
    SDB_ASSERT ( sock, "Output sock is NULL" )
@@ -811,7 +813,7 @@ INT32 ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
       // if < 0, means something wrong
       if ( 0 > rc )
       {
-         rc = SOCKET_GETLASTERROR ;
+         sysError = SOCKET_GETLASTERROR ;
          // if we failed due to interrupt, let's continue
          if (
 #if defined (_WINDOWS)
@@ -819,12 +821,12 @@ INT32 ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
 #else
                EINTR
 #endif
-               == rc )
+               == sysError )
          {
             continue ;
          }
          PD_LOG ( PDERROR, "Failed to select from socket, rc = %d",
-                  SOCKET_GETLASTERROR);
+                  sysError );
          rc = SDB_NETWORK ;
          goto error ;
       }
@@ -839,20 +841,26 @@ INT32 ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
    rc = SDB_OK ;
    *sock = ::accept ( _fd, addr, addrlen ) ;
 #if defined (_WINDOWS)
+   tmpErr = WSAEMFILE ;
    if ( INVALID_SOCKET == *sock )
 #else
+   tmpErr = EMFILE ;
    if ( -1 == *sock )
 #endif
    {
-      PD_LOG ( PDERROR, "Failed to accept socket, rc = %d",
-               SOCKET_GETLASTERROR ) ;
-      rc = SDB_NETWORK ;
+      sysError = SOCKET_GETLASTERROR ;
+      rc = ( tmpErr == sysError ) ? SDB_TOO_MANY_OPEN_FD : SDB_NETWORK ;
+      PD_LOG ( ( rc == SDB_NETWORK ? PDERROR : PDINFO ) ,
+               "Failed to accept socket, rc = %d", sysError ) ;
       goto error ;
    }
 done :
    return rc ;
 error :
-   close () ;
+   if ( rc != SDB_TOO_MANY_OPEN_FD )
+   {
+      close () ;
+   }
    goto done ;
 }
 
