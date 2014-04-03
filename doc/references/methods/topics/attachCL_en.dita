@@ -4,33 +4,33 @@
   <title>db.collectionspace.collection.attachCL()</title>
   <body>
     <section><title>db.collectionspace.collection.attachCL(&lt;subCLFullName>, &lt;options>)</title>
-      <p>在主分区集合下挂载子分区集合</p>
+      <p>Colletion of child partition mounted under the main partition collection.</p>
     </section>
-    <section><title>参数描述</title>
+    <section><title>Parameter Description</title>
       <simpletable>
         <sthead>
-          <stentry>参数名</stentry>
-          <stentry>参数类型</stentry>
-          <stentry>描述</stentry>
-          <stentry>是否必填</stentry>
+          <stentry>Parameter name</stentry>
+          <stentry>Parameter type</stentry>
+          <stentry>Description</stentry>
+          <stentry>Are Required</stentry>
         </sthead>
         <strow>
           <stentry>subCLFullName</stentry>
           <stentry>string</stentry>
-          <stentry>子分区集合名（包含集合空间名）</stentry>
-          <stentry>是</stentry>
+          <stentry>The partition set name(the name that contains a collection of space)</stentry>
+          <stentry>Yes</stentry>
         </strow>
         <strow>
           <stentry>options</stentry>
-          <stentry>json对象</stentry>
-          <stentry>分区范围，包含两个字段“LowBound”（区间左值）以及“UpBound”（区间右值），例如：{LowBound:{a:0},UpBound:{a:100}表示取字段“a”的范围区间：[0, 100)</stentry>
-          <stentry>是</stentry>
+          <stentry>json object</stentry>
+          <stentry>The boundaries, contains two fields "LowBound"(the value of the left section) and "UpBound"(R interval value), for example: {LowBound:{a:0},UpBound:{a:100}, means to take the field "a" range interval: [0, 100)</stentry>
+          <stentry>Yes</stentry>
         </strow>        
       </simpletable>      
     </section>    
-    <section><title>示例</title>
+    <section><title>Example</title>
       <ul>
-        <li><p>在主分区集合的指定区间下挂载子分区集合</p>
+        <li><p>mount the specified range in the primary partition of the sub-set of partitions collection.</p>
           <p><codeblock>db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}</codeblock></p></li>
       </ul>      
     </section>

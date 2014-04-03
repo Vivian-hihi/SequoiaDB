@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.collection.attachCL()"/>
-<meta name="description" content="db.collectionspace.collection.attachCL(&lt;subCLFullName&gt;, &lt;options&gt;) 在主分区集合下挂载子分区集合 参数描述 参数名 参数类型 描述 是否必填 subCLFullName string 子分区集合名（包含集合空间名） 是 options json对象 ..."/>
+<meta name="description" content="db.collectionspace.collection.attachCL(&lt;subCLFullName&gt;, &lt;options&gt;) Colletion of child partition mounted under the main partition collection. Parameter Description Parameter name Parameter type ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_wyj_3jr_kn"/>
@@ -37,19 +37,19 @@
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">db.collectionspace.collection.attachCL(&lt;subCLFullName&gt;, &lt;options&gt;)</h2>
-      <p class="p">在主分区集合下挂载子分区集合</p>
+      <p class="p">Colletion of child partition mounted under the main partition collection.</p>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
+    <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d119538e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d119538e26" class="stentry">Parameter name</th>
 
-          <th valign="bottom" align="left" id="d119538e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d119538e29" class="stentry">Parameter type</th>
 
-          <th valign="bottom" align="left" id="d119538e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d119538e32" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d119538e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d119538e35" class="stentry">Are Required</th>
 
         </tr>
 <tr class="strow">
@@ -57,28 +57,28 @@
 
           <td valign="top" headers="d119538e29" class="stentry">string</td>
 
-          <td valign="top" headers="d119538e32" class="stentry">子分区集合名（包含集合空间名）</td>
+          <td valign="top" headers="d119538e32" class="stentry">The partition set name(the name that contains a collection of space)</td>
 
-          <td valign="top" headers="d119538e35" class="stentry">是</td>
+          <td valign="top" headers="d119538e35" class="stentry">Yes</td>
 
         </tr>
 <tr class="strow">
           <td valign="top" headers="d119538e26" class="stentry">options</td>
 
-          <td valign="top" headers="d119538e29" class="stentry">json对象</td>
+          <td valign="top" headers="d119538e29" class="stentry">json object</td>
 
-          <td valign="top" headers="d119538e32" class="stentry">分区范围，包含两个字段“LowBound”（区间左值）以及“UpBound”（区间右值），例如：{LowBound:{a:0},UpBound:{a:100}表示取字段“a”的范围区间：[0, 100)</td>
+          <td valign="top" headers="d119538e32" class="stentry">The boundaries, contains two fields "LowBound"(the value of the left section) and "UpBound"(R interval value), for example: {LowBound:{a:0},UpBound:{a:100}, means to take the field "a" range interval: [0, 100)</td>
 
-          <td valign="top" headers="d119538e35" class="stentry">是</td>
+          <td valign="top" headers="d119538e35" class="stentry">Yes</td>
 
         </tr>
 </table>
       
     </div>
     
-    <div class="section"><h2 class="title sectiontitle">示例</h2>
+    <div class="section"><h2 class="title sectiontitle">Example</h2>
       <ul class="ul">
-        <li class="li"><p class="p">在主分区集合的指定区间下挂载子分区集合</p>
+        <li class="li"><p class="p">mount the specified range in the primary partition of the sub-set of partitions collection.</p>
 
           <div class="p"><pre class="pre codeblock">db.foo.year.attachCL("foo2.January",{LowBound:{date:"20130101"},UpBound:{date:"20130131"}}</pre>
 </div>
@@ -100,7 +100,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaSQL Version 1.2.0
           
     </div>
 </body>

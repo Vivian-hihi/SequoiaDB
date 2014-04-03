@@ -23,8 +23,8 @@
             sharding.</stentry>
       </strow>
       <strow>
-        <stentry>分区类型（ShardingType）</stentry>
-        <stentry>指定集合的分区类型：范围分区（Range）或散列分区（Hash）。</stentry>
+        <stentry>ShardingType</stentry>
+        <stentry>Specified set partition type:range partitioning (Range) or hash partitioning (Hash).</stentry>
       </strow>
       <strow>
         <stentry>ReplSize</stentry>

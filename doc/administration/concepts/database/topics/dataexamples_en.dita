@@ -3,7 +3,8 @@
 <topic id="topic_thb_4lj_kn">
   <title>Examples</title>
   <body>
-    <p><b>Replica Group Examples</b> 复制组中的每个数据节点都存储该复制组的一份完整数据，因此也称复制组中的每个节点为复制组实例。复制组实例可根据节点在复制组中的位置分为“主”、“备”或“0~7”标识。</p>
-    <p><b>数据库实例</b> 所有复制组中相同位置的复制组实例共同构成数据库实例，因此数据库实例也可以分为“主”、“备”或“0~7”标识。</p>
+    <p><b>Replica Group Examples</b> Copy each data node in the group is a complete data stored in the replication group, and therefore also called copy group copy for each node instance. 
+      Examples of replication group can be divided into "main", "prepared" or "0~7" logo based on the node position in the replication group.</p>
+    <p><b>Database instance</b> All instances of copy group copy group together constitute the same position database instance, the database instance can also be divided into "main", "prepared" or "0~7"logo.</p>
   </body>
 </topic>

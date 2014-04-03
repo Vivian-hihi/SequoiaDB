@@ -67,7 +67,7 @@
         </strow>
         <strow>
           <stentry>单节点集合空间最大容量</stentry>
-          <stentry> 对应每种数据页大小，分别为64GB、128GB、256GB、512GB、1TB </stentry>
+          <stentry> 对应每种数据页大小，分别为512GB、1TB、2TB、4TB、8TB </stentry>
         </strow>
         <strow>
           <stentry>单节点集合空间最大数量</stentry>

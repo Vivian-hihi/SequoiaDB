@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="Configuration method"/>
-<meta name="description" content="1. Install adn configure Hadoop/Hive environment, start hadoop environment. 2. Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb.jar adn java/sdbdriver ..."/>
+<meta name="description" content="1. Install adn configure Hadoop/Hive environment, start hadoop environment. 2. Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb.jar adn java/sequoiadb ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../hadoop_integration/hive_integration/hiveinter_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_nbk_zfq_fm"/>
@@ -38,13 +38,13 @@
   <div class="body">
     <p class="p">1.	Install adn configure Hadoop/Hive environment, start hadoop environment.</p>
 
-    <p class="p">2.	Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb.jar adn java/sdbdriver.jar two files are copied to the hive/lib installation directory.</p>
+    <p class="p">2.	Copy the sequoiadb installation directory (by default in /opt/sequoiadb) of hadoop/hive-sequiadb.jar adn java/sequoiadb.jar two files are copied to the hive/lib installation directory.</p>
 
     <p class="p">3.	Modify the hive installation directory under bin/hive-site.xml file (if you do not exist, you can copy the $HIVE_HOME/conf/hive-default.xml.template to hive-site.xml file), add the following attributes:</p>
 
     <pre class="pre codeblock">&lt;property&gt;
   &lt;name&gt;hive.aux.jars.path&lt;/name&gt;   &lt;value&gt;file:///&lt;HIVE_home&gt;/lib/hive
-    -sequoiadb.jar,file:///&lt;HIVE_HOME&gt;/lib/sdbdriver.jar&lt;/value&gt;
+    -sequoiadb.jar,file:///&lt;HIVE_HOME&gt;/lib/sequoiadb.jar&lt;/value&gt;
   &lt;description&gt;Sequoiadb store handler jar file&lt;/description&gt;
 &lt;/property&gt;
             
@@ -65,7 +65,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaSQL Version 1.2.0
           
     </div>
 </body>

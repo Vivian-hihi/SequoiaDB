@@ -70,7 +70,7 @@
         <strow>
           <stentry>Maximum capacity of collection space consisted of single node</stentry>
           <stentry>
-            It can be 64GB, 128GB, 256GB, 512GB, 1TB.
+            It can be 512GB, 1TB, 2TB, 4TB, 8TB.
           </stentry>
         </strow>
         <strow>

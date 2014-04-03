@@ -38,13 +38,13 @@
         </strow>
         <strow>
           <stentry>ShardingType</stentry>
-          <stentry>字符串</stentry>
-          <stentry>分区类型，在分区集合中存在。分区类型有：范围分区（Range）和散列分区（Hash）两种。</stentry>
+          <stentry>String</stentry>
+          <stentry>Partition types: the presence in the partition collection. Partition types: range partitioning(Range) and hash partitioning(Hash) two.</stentry>
         </strow>
         <strow>
           <stentry>Partition</stentry>
-          <stentry>整数</stentry>
-          <stentry>散列分区的分区大小值，必须为2的幂。</stentry>
+          <stentry>Integer</stentry>
+          <stentry>The partition size of the hash value must be a power of 2.</stentry>
         </strow>
         <strow>
           <stentry>CataInfo</stentry>

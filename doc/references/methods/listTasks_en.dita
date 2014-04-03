@@ -4,39 +4,39 @@
   <title>db.listTasks()</title>
   <body>
     <section><title>db.listTasks()</title>
-      <p>db.listTasks([cond],[sel],[orderBy],[hint]) 查看数据库所有后台任务</p>
+      <p>db.listTasks([cond],[sel],[orderBy],[hint]) View database of all background tasks</p>
     </section>
-    <section><title>参数描述</title>
+    <section><title>Parameter Description</title>
       <simpletable>
         <sthead>
-          <stentry>参数名</stentry>
-          <stentry>参数类型</stentry>
-          <stentry>描述</stentry>
-          <stentry>是否必填</stentry>
+          <stentry>Parameter name</stentry>
+          <stentry>Parameter type</stentry>
+          <stentry>Description</stentry>
+          <stentry>Are Required</stentry>
         </sthead>        
         <strow>
           <stentry>cond</stentry>
-          <stentry>Json对象</stentry>
-          <stentry>任务过滤条件</stentry>
-          <stentry>否</stentry>
+          <stentry>Json object</stentry>
+          <stentry>Tasks filter</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>sel</stentry>
-          <stentry>Json对象</stentry>
-          <stentry>任务选择字段</stentry>
-          <stentry>否</stentry>
+          <stentry>Json object</stentry>
+          <stentry>Task selection field</stentry>
+          <stentry>No</stentry>
         </strow>
         <strow>
           <stentry>hint</stentry>
-          <stentry>Json对象</stentry>
-          <stentry>保留项</stentry>
-          <stentry>否</stentry>
+          <stentry>Json object</stentry>
+          <stentry>Reservations</stentry>
+          <stentry>No</stentry>
         </strow>
       </simpletable>      
     </section>    
-    <section><title>示例</title>
+    <section><title>Example</title>
       <ul>
-        <li><p>列出系统所有后台任务</p>
+        <li><p>List all system background tasks.</p>
           <p><codeblock>db.listTasks()</codeblock></p></li>
       </ul>      
     </section>

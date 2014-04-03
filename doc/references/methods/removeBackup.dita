@@ -17,7 +17,7 @@
         <strow>
           <stentry>options</stentry>
           <stentry>Json对象</stentry>
-          <stentry>设定备份名，指定复制组，备份备径等参数</stentry>
+          <stentry>设定备份名，指定复制组，备份路径等参数</stentry>
           <stentry>否</stentry>
         </strow>        
       </simpletable>      
@@ -51,7 +51,7 @@
         </strow>
         <strow>
           <stentry>IsSubDir</stentry>
-          <stentry>上述Path参数所配置的路径是否为配置参数指 定的备份路径的子目录，缺少为false</stentry>
+          <stentry>上述Path参数所配置的路径是否为配置参数指定的备份路径的子目录，缺省为false</stentry>
           <stentry>IsSubDir:false</stentry>
         </strow>
         <strow>

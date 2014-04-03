@@ -4,7 +4,8 @@
   <title>db.collectionspace.collection.splitAsync()</title>
   <body>
     <section><title>db.collectionspace.collection. splitAsync(&lt;source group>,&lt;target group>,&lt;percent(0~100)|&lt;condition>, [endcondition])</title>
-      <p>该操作与 db.collectionspace.collection.split 功能相同，但该操作为异步分区操作，分区任务建立后立即返回任务ID。</p>
+      <p>Interview operation "db.collectionspace.collection.split" the same function, but it operates as an asynchronous partition operation, the task ID 
+returned immediately after the partition created task.</p>
     </section>    
   </body>  
 </topic>

@@ -3,17 +3,26 @@
 <topic id="administration_concepts_sharding">
   <title>Sharding</title>
   <body>
-    <p><b>Horizontal Partitioning</b>Horizontal partition database partition called double or horizontal partition.</p>
-    <p>在SequoiaDB集群环境中，用户可以通过将一个集合中的数据切分到多个复制组中，以达到并行计算的目的，此数据切分称为水平分区。水平分区是按一定的条件把全局关系的所有元组划分成若干不相交的子集，每个子集为关系的一个片段，称为分区；一个分区只能存在于一个复制组中，但一个复制组可以承载多个分区；分区在复制组之间可以通过水平切分操作进行移动。</p>
+    <p><b>Horizontal Partitioning</b> Horizontal partition database partition called double or horizontal partition.</p>
+    <p>In SequoiaDB cluster environment, the user can be cut in a collection of data into multiple replication groups in order to achieve the purpose parallel computing, 
+    the data segmentation called horizontal partitioning. Horizontal partitioning is based on certain conditions all tuples divided into a number of global relations disjoint 
+    subsets, each subset of a fragment of the relationship, called partitions; one partition can only exist in a replication group, but a copy groups can host multiple partition 
+    between the replication group segmentation operation can move through the levels.</p>
     <image href="../images/sh3.jpg"/>
-    <p><b>垂直分区</b> 垂直分区又称为集合分区或纵向分区。</p>
-    <p>在SequoiaDB集群环境中，用户也可以将一个集合全局关系的属性分成若干子集，并在这些子集上作投影运算，将这些子集映射到另外的集合上，从而实现集合关系的垂直切分；该集合称之为主集合，每个切分的子集称为分区，分区映射的集合称为子集合；一个分区只能映射到一个子集合中，但一个子集合可以承载多个分区；分区在子集合之间可以通过垂直切分操作进行重映射。</p>
+    <p><b>Vertical partitionging</b> also known as a collection of vertical partition partition or vertical partitions.</p>
+    <p>In SequoiaDB cluster environment, the user can also be a collection of properties of the global relations into several subsets, and make the projection operator 
+    on these subsets, the subset of these maps to another collection, a collection of relations in order to achieve the sub-vertical shear; the collection is called the main 
+    collection, each subset is called segmentation partitions, partition map collection called subsets; one partition can be mapped to a subset of, but a subset can host multiple 
+    partitios; partition between the subset of operations can be cut by vertical remapping.</p>
     <image href="../images/sh4.jpg"/>
-    <p><b>混合分区</b> 在SequoiaDB集群环境中，可以将集合先通过垂直分区映射到多个子集合中，再通过水平分区将子集合切分到多个复制组中，从而实现混合分区。</p>
-    <p><b>分区方式</b></p>
+    <p><b>Mixed partitions</b> In SequoiaDB clustered environment can be mapped through the first set of vertical partitioning into multiple subsets, and then cut through 
+    the horizontal partitioning into multiple subsets replication group in order to achieve a mixed partition.</p>
+    <p><b>Partitioning</b></p>
     <p></p>
-    <p>无论是水平分区还是垂直分区都有两种方式：散列分区（Hash）和范围分区（Range）。两种分区方式中判定分区划分所依据的字段称为“分区键”。分区键基于集合定义，每个分区键可以包含一个或多个字段。</p>
-    <p>Range方式下依据记录中分区键的范围选择所要插入的分区。Hash方式下根据记录中分区键生成的hash值选择所要插入的分区。</p>
+    <p>Whether horizontal or vertical partition partition has two ways: hash partitioning(Hash) and range partitioning(Range). Field is determined in two ways zoning district 
+    is based is called "partitioning key". Based on the definition of the partition key collection, each partition key can contain one or more fields.</p>
+    <p>Under Range partitioning approach based on the scope of the record keys to select the partition you want to insert. Partitioning key records generated hash value 
+    selected according to the partition you want to insert Hash under way.</p>
     <p>Sharding is based on the definition of collection. Every collection key contains one or more fields.</p>
     <image href="../images/sharding_concept.jpg"/>
     <p>In this chart, 3 square areas represent 3 data nodes. The ellipse represents coord node.

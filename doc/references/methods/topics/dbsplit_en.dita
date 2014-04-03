@@ -42,9 +42,9 @@
         </strow>
         <strow>
           <stentry>endcondition</stentry>
-          <stentry>json对象</stentry>
-          <stentry>结束范围条件。</stentry>
-          <stentry>可选，且只在按条件切分时有效，按百分比切分时无效</stentry>
+          <stentry>json objcet</stentry>
+          <stentry>End of the range condition.</stentry>
+          <stentry>Optional, and only in the conditional cut time-effective, time-sharing a percentage cut invalid.</stentry>
         </strow>
       </simpletable>
       

@@ -31,7 +31,7 @@
       
     </section>
     <section><title>格式</title>
-      <p> insert() 方法的定义格式包含doc|docs和flag两个字段，doc|docs是一个JSON对象，flag为int类型，在插入单条记录时，如果设置flag参数的值为“SDB_INSERT_RETURN_ID”，会返回记录的_id值，设置为“SDB_INSERT_CONTONDUP”，不返回；默认不返回。</p>
+      <p> insert() 方法的定义格式包含doc|docs和flag两个字段，doc|docs是一个JSON对象，flag为int类型，在插入单条记录时，如果设置flag参数的值为“SDB_INSERT_RETURN_ID”，会返回记录的_id值；设置为“SDB_INSERT_CONTONDUP”，不返回；默认不返回。</p>
       <p>doc：<codeblock>{"&lt; 字段名 1&gt;":"&lt; 值 &gt;","&lt; 字段名 2&gt;":"&lt; 值 &gt;",…}</codeblock></p>
       <p>
         docs：<codeblock>{ [

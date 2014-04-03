@@ -50,23 +50,23 @@
 
     <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d127733e30" class="stentry">Parameter name</th>
+          <th valign="bottom" align="left" id="d127742e30" class="stentry">Parameter name</th>
 
-          <th valign="bottom" align="left" id="d127733e33" class="stentry">Parameter type</th>
+          <th valign="bottom" align="left" id="d127742e33" class="stentry">Parameter type</th>
 
-          <th valign="bottom" align="left" id="d127733e36" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d127742e36" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d127733e39" class="stentry">Required</th>
+          <th valign="bottom" align="left" id="d127742e39" class="stentry">Required</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d127733e30" class="stentry">subOp</td>
+          <td valign="top" headers="d127742e30" class="stentry">subOp</td>
 
-          <td valign="top" headers="d127733e33" class="stentry">json object</td>
+          <td valign="top" headers="d127742e33" class="stentry">json object</td>
 
-          <td valign="top" headers="d127733e36" class="stentry">subOp said sub-operation, In aggregate() method can fill 1~N sub-operation.</td>
+          <td valign="top" headers="d127742e36" class="stentry">subOp said sub-operation, In aggregate() method can fill 1~N sub-operation.</td>
 
-          <td valign="top" headers="d127733e39" class="stentry">Yes</td>
+          <td valign="top" headers="d127742e39" class="stentry">Yes</td>
 
         </tr>
 <tr class="strow"/>
@@ -80,59 +80,59 @@
       <p class="p"> aggregate() method has only one parameter subOp, which represents 1~N sub-operations,each sub-operation is a json 
         object, separated by commas sub-operation. Aggregation framework supports the following sub-operating parameters:</p>
 <div class="p"> <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d127733e75" class="stentry">Parameter name </th>
+          <th valign="bottom" align="left" id="d127742e75" class="stentry">Parameter name </th>
 
-          <th valign="bottom" align="left" id="d127733e78" class="stentry">Description</th>
+          <th valign="bottom" align="left" id="d127742e78" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d127733e81" class="stentry">Example </th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d127733e75" class="stentry"><a class="xref" href="../../console/topics/project_en.html">$project</a></td>
-
-          <td valign="top" headers="d127733e78" class="stentry">Selection field names need to output "1" output, "0" means no output, you can also implement rename fields </td>
-
-          <td valign="top" headers="d127733e81" class="stentry">{$project:{field1:1,field:0,aliase:"$field3"}} </td>
+          <th valign="bottom" align="left" id="d127742e81" class="stentry">Example </th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d127733e75" class="stentry"><a class="xref" href="../../console/topics/match_en.html">$match</a></td>
+          <td valign="top" headers="d127742e75" class="stentry"><a class="xref" href="../../console/topics/project_en.html">$project</a></td>
 
-          <td valign="top" headers="d127733e78" class="stentry">Match to achieve matching criteria to select from a collection of records, rather with the SQL statement where </td>
+          <td valign="top" headers="d127742e78" class="stentry">Selection field names need to output "1" output, "0" means no output, you can also implement rename fields </td>
 
-          <td valign="top" headers="d127733e81" class="stentry">{$match:{field:{$lte:value}}}</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d127733e75" class="stentry"><a class="xref" href="../../console/topics/jlimit_en.html">$limit</a></td>
-
-          <td valign="top" headers="d127733e78" class="stentry">Limit the number of returned </td>
-
-          <td valign="top" headers="d127733e81" class="stentry">{$limit:10} </td>
+          <td valign="top" headers="d127742e81" class="stentry">{$project:{field1:1,field:0,aliase:"$field3"}} </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d127733e75" class="stentry"><a class="xref" href="../../console/topics/jskip_en.html">$skip</a></td>
+          <td valign="top" headers="d127742e75" class="stentry"><a class="xref" href="../../console/topics/match_en.html">$match</a></td>
 
-          <td valign="top" headers="d127733e78" class="stentry">Control of the result set the starting point, ie the number of skips specified result set records </td>
+          <td valign="top" headers="d127742e78" class="stentry">Match to achieve matching criteria to select from a collection of records, rather with the SQL statement where </td>
 
-          <td valign="top" headers="d127733e81" class="stentry">{$skip:5}</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d127733e75" class="stentry"><a class="xref" href="../../console/topics/jgroup_en.html">$group</a></td>
-
-          <td valign="top" headers="d127733e78" class="stentry">Achieve grouping of records, similar to SQL's group by statement, "_id" designated group field </td>
-
-          <td valign="top" headers="d127733e81" class="stentry">{$group:{_id:"$field"}}</td>
+          <td valign="top" headers="d127742e81" class="stentry">{$match:{field:{$lte:value}}}</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d127733e75" class="stentry"><a class="xref" href="../../console/topics/jsort_en.html">$sort</a></td>
+          <td valign="top" headers="d127742e75" class="stentry"><a class="xref" href="../../console/topics/jlimit_en.html">$limit</a></td>
 
-          <td valign="top" headers="d127733e78" class="stentry">Sort the result set to achieve, "1" represents the ASC, "-1" for descending.</td>
+          <td valign="top" headers="d127742e78" class="stentry">Limit the number of returned </td>
 
-          <td valign="top" headers="d127733e81" class="stentry">{$sort:{field1:1,field2:-1,...}}</td>
+          <td valign="top" headers="d127742e81" class="stentry">{$limit:10} </td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d127742e75" class="stentry"><a class="xref" href="../../console/topics/jskip_en.html">$skip</a></td>
+
+          <td valign="top" headers="d127742e78" class="stentry">Control of the result set the starting point, ie the number of skips specified result set records </td>
+
+          <td valign="top" headers="d127742e81" class="stentry">{$skip:5}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d127742e75" class="stentry"><a class="xref" href="../../console/topics/jgroup_en.html">$group</a></td>
+
+          <td valign="top" headers="d127742e78" class="stentry">Achieve grouping of records, similar to SQL's group by statement, "_id" designated group field </td>
+
+          <td valign="top" headers="d127742e81" class="stentry">{$group:{_id:"$field"}}</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d127742e75" class="stentry"><a class="xref" href="../../console/topics/jsort_en.html">$sort</a></td>
+
+          <td valign="top" headers="d127742e78" class="stentry">Sort the result set to achieve, "1" represents the ASC, "-1" for descending.</td>
+
+          <td valign="top" headers="d127742e81" class="stentry">{$sort:{field1:1,field2:-1,...}}</td>
 
         </tr>
 </table>
@@ -256,7 +256,7 @@ major:{<a class="xref" href="../../console/topics/jfirst_en.html">$first</a>:"$m
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaSQL Version 1.2.0
           
     </div>
 </body>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.waitTasks()"/>
-<meta name="description" content="db.waitTasks() db.waitTasks(&lt;id1&gt;,[id2],...) 同步等待指定任务结束或取消 参数描述 参数名 参数类型 描述 是否必填 id1, id2… 整数 任务ID 是 示例 同步等待数据切分任务完成 var taskid1 = db.test.test.splitAsync(&#34;db1&#34;, &#34;db2&#34;, 50); var taskid2 = db.my.my ..."/>
+<meta name="description" content="db.waitTasks() db.waitTasks(&lt;id1&gt;,[id2],...) Wait for the end of the specified task synchronizaton or canceled. Parameter Description Parameter name Parameter type Description Are Required id1, id2… ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../references/methods/topics/methodlist_en.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_kvc_dlr_kn"/>
@@ -37,38 +37,38 @@
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">db.waitTasks()</h2>
-      <p class="p">db.waitTasks(&lt;id1&gt;,[id2],...)  同步等待指定任务结束或取消</p>
+      <p class="p">db.waitTasks(&lt;id1&gt;,[id2],...)  Wait for the end of the specified task synchronizaton or canceled.</p>
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2>
+    <div class="section"><h2 class="title sectiontitle">Parameter Description</h2>
       <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d153724e26" class="stentry">参数名</th>
+          <th valign="bottom" align="left" id="d153733e26" class="stentry">Parameter name</th>
 
-          <th valign="bottom" align="left" id="d153724e29" class="stentry">参数类型</th>
+          <th valign="bottom" align="left" id="d153733e29" class="stentry">Parameter type</th>
 
-          <th valign="bottom" align="left" id="d153724e32" class="stentry">描述</th>
+          <th valign="bottom" align="left" id="d153733e32" class="stentry">Description</th>
 
-          <th valign="bottom" align="left" id="d153724e35" class="stentry">是否必填</th>
+          <th valign="bottom" align="left" id="d153733e35" class="stentry">Are Required</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d153724e26" class="stentry">id1, id2…</td>
+          <td valign="top" headers="d153733e26" class="stentry">id1, id2…</td>
 
-          <td valign="top" headers="d153724e29" class="stentry">整数</td>
+          <td valign="top" headers="d153733e29" class="stentry">Integers</td>
 
-          <td valign="top" headers="d153724e32" class="stentry">任务ID</td>
+          <td valign="top" headers="d153733e32" class="stentry">Task ID</td>
 
-          <td valign="top" headers="d153724e35" class="stentry">是</td>
+          <td valign="top" headers="d153733e35" class="stentry">Yes</td>
 
         </tr>
 </table>
       
     </div>
     
-    <div class="section"><h2 class="title sectiontitle">示例</h2>
+    <div class="section"><h2 class="title sectiontitle">Example</h2>
       <ul class="ul">
-        <li class="li"><p class="p">同步等待数据切分任务完成</p>
+        <li class="li"><p class="p">Wait for data synchronization segmentation task is completed.</p>
 
           <div class="p"><pre class="pre codeblock">var taskid1 = db.test.test.splitAsync("db1", "db2", 50);
 var taskid2 = db.my.my.splitAsync("db3", "db4", 50) ;
@@ -92,7 +92,7 @@ db.waitTasks( taskid1, taskid2 )</pre>
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaSQL Version 1.2.0
           
     </div>
 </body>

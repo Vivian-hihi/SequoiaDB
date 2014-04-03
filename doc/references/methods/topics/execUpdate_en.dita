@@ -4,11 +4,11 @@
   <title>db.execUpdate()</title>
   <body>
     <section><title>db.execUpdate(&lt;other sql>)</title>
-      <p>执行SQL的其它语句</p>
+      <p>SQL execution of other statements.</p>
     </section>
-    <section><title>示例</title>
+    <section><title>Example</title>
       <ul>
-        <li><p>向集合my.my中插入新的记录</p>
+        <li><p>The collection "my.my" insert a new record.</p>
           <p><codeblock>db.execUpdate("insert into my.my(name,age) values('zhangshang', 30) ")</codeblock></p></li>
       </ul>
       

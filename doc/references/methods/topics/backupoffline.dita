@@ -51,7 +51,7 @@
         </strow>
         <strow>
           <stentry>IsSubDir</stentry>
-          <stentry>上述Path参数所配置的路径是否为配置参数指 定的备份路径的子目录，缺少为false</stentry>
+          <stentry>上述Path参数所配置的路径是否为配置参数指定的备份路径的子目录，缺省为false</stentry>
           <stentry>IsSubDir:false</stentry>
         </strow>
         <strow>
