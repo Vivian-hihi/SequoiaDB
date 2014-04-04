@@ -1,7 +1,7 @@
 #include "dpsTransLockBucket.hpp"
 #include "dpsTransLockUnit.hpp"
 #include "dpsTransLockDef.hpp"
-#include "pmdEDUEvent.hpp"
+#include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
 

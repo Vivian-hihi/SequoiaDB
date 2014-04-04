@@ -7,7 +7,7 @@
 #include "pmdEDUMgr.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
-#include "pmdEDUEvent.hpp"
+#include "pmdDef.hpp"
 #include "dpsLogRecord.hpp"
 #include "dpsMessageBlock.hpp"
 #include "dpsLogRecordDef.hpp"

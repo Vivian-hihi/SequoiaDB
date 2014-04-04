@@ -37,7 +37,7 @@
 #include "pdTrace.hpp"
 #if defined (SDB_ENGINE)
 #include "pmd.hpp"
-#include "pmdEDUEvent.hpp"
+#include "pmdDef.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #endif

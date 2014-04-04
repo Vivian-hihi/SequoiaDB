@@ -11,7 +11,7 @@
 #include "msgMessage.hpp"
 #include "msgAuth.hpp"
 #include "../util/fromjson.hpp"
-#include "pmdEDUEvent.hpp"
+#include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 
