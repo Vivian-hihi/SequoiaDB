@@ -81,8 +81,7 @@ void _pdTraceCB::pause ( UINT64 funcCode )
                continue ;
             }
             // when we hit here, that means we get something
-            if ( engine::PMD_EDU_EVENT_TRACE_BREAKPOINT_RESUME !=
-                 event._eventType )
+            if ( engine::PMD_EDU_EVENT_BP_RESUME != event._eventType )
             {
                // if the event is not resume, let's add it into queue and
                // continue wait
@@ -1015,7 +1014,7 @@ void _pdTraceCB::resumePausedEDUs ()
       return ;
    _pmdEDUCBLatch.get() ;
    std::list<engine::_pmdEDUCB*>::iterator iter = _pmdEDUCBList.begin() ;
-   pmdEDUEvent event ( PMD_EDU_EVENT_TRACE_BREAKPOINT_RESUME ) ;
+   pmdEDUEvent event ( PMD_EDU_EVENT_BP_RESUME ) ;
    while ( !_pmdEDUCBList.empty() )
    {
       _pmdEDUCBList.front()->postEvent ( event ) ;
@@ -1023,4 +1022,5 @@ void _pdTraceCB::resumePausedEDUs ()
    }
    _pmdEDUCBLatch.release () ;
 }
-#endif
+
+#endif // SDB_ENGINE
