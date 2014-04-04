@@ -1,7 +1,7 @@
 #!/bin/bash
-#******************************************
-#sdbdiag.log file to SDBSNAPS 
-#******************************************
+#***********************************************************************************
+#collect all sdbdiag.log/sdb.conf/sdbcmd.log/sdbcm.log/sdbcm.conf file to SDBSNAPS
+#***********************************************************************************
 function sdbPortGather()
 {
    HOST=$1
@@ -14,6 +14,58 @@ function sdbPortGather()
    else
       return 0
    fi
+   #config file
+   sdbPortConf
+   #log file
+   sdbPortLog
+   #sdbcm config and log file
+   sdbCmConfLog
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBNODES/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBNODES/
+   fi
+}
+
+function sdbPortGatherPart()
+{
+   HOST=$1
+   DBPATH=$2
+   PORT=$3
+   installpath=$4
+   sdbconf=$5
+   sdblog=$6
+   sdbcm=$7
+
+   if [ "$sdbconf" != "false" ] || [ "$sdblog" != "false" ] || [ "$sdbcm" != "false" ] ; then
+      mkdir -p SDBNODES/
+   else
+      return 0
+   fi
+   #config file
+   if [ "$sdbconf" == "true" ] ; then
+      sdbPortConf
+   fi
+   #log file
+   if [ "$sdblog" == "true" ] ; then
+      sdbPortLog
+   fi
+   #sdbcm config and log file
+   if [ "$sdbcm" == "true" ] ; then
+      sdbCmConfLog
+   fi
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBNODES/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBNODES/
+   fi
+
+}
+
+function sdbPortConf()
+{
    #get sequoiadb config path
    confpath=$installpath/conf/local
    ls $confpath/$PORT >> /dev/null 2>&1
@@ -22,9 +74,12 @@ function sdbPortGather()
       cp $confpath/$PORT/sdb.conf SDBNODES/$HOST.$PORT.sdb.conf >> /dev/null 2>&1
       rc=$?
       if [ $rc -ne 0 ] ; then
-         echo "Failed to collect sdb.conf."
+         echo "Failed to collect $HOST:$PORT sdb.conf."
       fi
    fi
+}
+function sdbPortLog()
+{
    #collect sdbdiag.log file
    core=`find -name "*core*"`
    if [ "$core" != "" ] ; then
@@ -36,7 +91,7 @@ function sdbPortGather()
          cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
          rc1=$?
          if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
-            echo "Failed to collect sdbdiag.log"
+            echo "Failed to collect $HOST:$PORT sdbdiag.log"
          fi
       else
          tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/trap* $DBPATH/diaglog/sdbdiag.log >>/dev/null 2>&1
@@ -44,17 +99,20 @@ function sdbPortGather()
          cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
          rc1=$?
          if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
-            echo "Failed to collect sdbdiag.log"
+            echo "Failed to collect $HOST:$PORT sdbdiag.log"
          fi
       fi
    else
-      cp $DBPATH/diaglog/sdbdiag.log SDBNODES/$HOST.$PORT.diaglog
+      cp $DBPATH/diaglog/sdbdiag.log SDBNODES/$HOST.$PORT.diaglog >>/dev/null 2>&1
       rc=$?
       if [ $rc -ne 0 ] ; then
-         echo "Failed to collect sdbdiag.log"
+         echo "Failed to collect $HOST:$PORT sdbdiag.log"
       fi
    fi
+}
 
+function sdbCmConfLog()
+{
    #collect sdbcm log
    cmlogpath=$installpath/conf/log
    cmcfpath=$installpath/conf
@@ -65,7 +123,7 @@ function sdbPortGather()
       cp $cmlogpath/sdbcmd.log SDBNODES/$HOST.sdbcmd.log
       rc=$?
       if [ $rc -ne 0 ] ; then
-         echo "Failed to collect sdbcmd.log file"
+         echo "Failed to collect $HOST:$PORT sdbcmd.log file"
       fi
    fi
    #collect sdbcm log
@@ -75,7 +133,7 @@ function sdbPortGather()
       cp $cmlogpath/sdbcm.log SDBNODES/$HOST.sdbcm.log
       rc=$?
       if [ $rc -ne 0 ] ; then
-         echo "Failed to collect sdbcm.log file"
+         echo "Failed to collect $HOST:$PORT sdbcm.log file"
       fi
    fi
    #collect sdbcm config file
@@ -85,7 +143,7 @@ function sdbPortGather()
       cp $cmcfpath/sdbcm.conf SDBNODES/$HOST.sdbcm.conf
       rc=$?
       if [ $rc -ne 0 ] ; then
-         echo "Failed to collect sdbcm.conf file"
+         echo "Failed to collect $HOST:$PORT sdbcm.conf file"
       fi
    fi
 

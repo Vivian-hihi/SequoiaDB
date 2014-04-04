@@ -17,6 +17,11 @@ sysInfo="false"
 snapShot="false"
 hardInfo="false"
 
+#sdblog and conf
+sdbconf="false"
+sdblog="false"
+sdbcm="false"
+
 #hardware information variable
 cpu="false"
 memory="false"
@@ -72,10 +77,13 @@ function Usage()
    echo "    -N [--hostname] arg    database host name [eg:-N hostname1:hostname2:.....]" ;
    echo "    -p [--svcport] arg     database sevice port [eg:-p 50000:30000:......]" ;
    echo "    -t [--thread] arg      number of concurrent threads,default:10" ;
-   echo "    -s [--snapshot]        snapshot of sequoiadb database" ;
+   echo "    -s [--snapshot]        snapshot of database database" ;
    echo "    -o [--osinfo]          operating system information" ;
    echo "    -h [--hardware]        hardware information" ;
    echo "    --all                  copy the all information of database" ;
+   echo "    --conf                 collect config file of service port" ;
+   echo "    --log                  collect sdb log file of service port" ;
+   echo "    --cm                   collect sdbcm config and log file" ;
    echo "    --cpu                  host cpu information" ;
    echo "    --memory               host memory information" ;
    echo "    --disk                 host disk information" ;
@@ -103,7 +111,7 @@ function Usage()
 }
 
 #the parameters can use  
-optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,module,env,network,process,login,limit,vmstate,catalog,all,timeout: -- "$@"`
+optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,conf,log,cm,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,module,env,network,process,login,limit,vmstate,catalog,all,timeout: -- "$@"`
 
 #check over the option of sdbsupport
 rc=$?
@@ -143,6 +151,15 @@ do
       ;;
    -h|--hardware)
       hardInfo="true"
+      ;;
+   --conf)
+      sdbconf="true"
+      ;;
+   --log)
+      sdblog="true"
+      ;;
+   --cm)
+      sdbcm="true"
       ;;
    --cpu)
       cpu="true"
@@ -300,7 +317,7 @@ fi
 echo "###Success to create concurrent threads" >>sdbsupport.log
 #************************************************************************
 #@Function : get quantity of all hosts and local sevic port
-#@Var : HostNum   Exp : the number of hosts in the sequoiaDB
+#@Var : HostNum   Exp : the number of hosts in the database
 #@Var : PortNum   Exp : the number of local host's sevice port
 #@Note : Array begin 1 count ,but such as file row begin 1, so use 1 begin 
 #************************************************************************
@@ -311,15 +328,15 @@ cataRole=`find -name "*.conf"|xargs grep "role=cata"|cut -d "/" -f 2`
 dataRole=`find -name "*.conf"|xargs grep "role=data"|cut -d "/" -f 2`
 cd $localPath
 #*************************************************************************
-#MODE:No Sdb  //Don't create SequoiaDB database,whether standalone and
+#MODE:No Sdb  //Don't create database database,whether standalone and
 #               group.Cannot collect ,exit shell!
 #*************************************************************************
 if [ "$aloneRole" == "" ] && [ "$coordRole" == "" ] && [ "$cataRole" == "" ] && [ "$dataRole"=="" ] ; then
-   echo "Local host don't create SequoiaDB database"
+   echo "Local host don't create database database"
    exit 1
 fi
 #***************************************************************************
-#MODE:standalone           //sequoiadb have standalone SequoiaDB collect
+#MODE:standalone           //database have standalone database collect
 #***************************************************************************
 if [ "$aloneRole" != "" ] ; then
    echo "Node $aloneRole is standalone node"
@@ -334,29 +351,29 @@ if [ "$aloneRole" != "" ] ; then
    sdbTarGzPack $alonehost
 fi
 #***************************************************************************
-#MODE:Group           //SequoiaDB database cluster/[group] only have coord
+#MODE:Group           //database database cluster/[group] only have coord
 #***************************************************************************
 if [ "$coordRole" != "" ] && [ "$cataRole" == "" ] && [ "$dataRole" == "" ] ;
 then
-   echo "SequoiaDB database cluster only have coord"
+   echo "database database cluster only have coord"
    dbpath=`grep -E "dbpath" $confpath/$coordRole/sdb.conf|cut -d '=' -f 2`
    sdbPortGather "$localhost" "$dbpath" "$coordRole" "$installpath"
    sdbHardwareInfoAll "$localhost" "$installpath"
    sdbSystemInfoAll "$localhost" "$installpath"
 fi
 #****************************************************************************
-#MODE:Group   //SequoiaDB database cluster/[group] only have coord and cata
+#MODE:Group   //database database cluster/[group] only have coord and cata
 #****************************************************************************
 if [ "$coordRole" != "" ] && [ "$cataRole" != "" ] && [ "$dataRole" == "" ] ;
 then
-   echo "SequoiaDB database cluster only have coord and cata"
+   echo "database database cluster only have coord and cata"
    dataRole=$coordRole
 fi
 #***************************************************************************
-#MODE:Group           //Complete SequoiaDB database cluster/[group]
+#MODE:Group           //Complete database database cluster/[group]
 #***************************************************************************
 if [ "$dataRole" != "" ] ; then
-   echo "Complete SequoiaDB database cluster"
+   echo "Complete database database cluster"
    dataRole=$dataRole
 fi
 #catadrr : get the cata address and catch hosts
@@ -372,8 +389,8 @@ else
    exit 1
 fi
 #*******************************************************************************
-#@Function : get all hosts in sequoiaDB and local host's port/dbpath/role 
-#@Var : HOST      Exp : Array variable used to store hosts in sequoiaDB
+#@Function : get all hosts in database and local host's port/dbpath/role 
+#@Var : HOST      Exp : Array variable used to store hosts in database
 #@Var : PORT      Exp : Array variable store local host's sevice port
 #@Var : DBPATH    Exp : Array variable store local host's dbpath
 #@Var : ROLE      Exp : Array variable store local hsot's sevice port's role 
@@ -426,12 +443,12 @@ do
       if [ "${HostPara[$i]}" == "${HOST[$j]}" ] ; then
          break
       fi
-		#******************************************************************************
-		#Note:check the argument of HOST,when the host para not equal the HOST that we
-		#     get from SequoiaDB config file .We put null in the para localed in Array.
-		#******************************************************************************
-		if [ $j -gt $HostNum ] ; then
-         echo "WARNIGN,SequoiaDB don't have host:${HostPara[$i]}"
+      #******************************************************************************
+      #Note:check the argument of HOST,when the host para not equal the HOST that we
+      #     get from database config file .We put null in the para localed in Array.
+      #******************************************************************************
+      if [ $j -gt $HostNum ] ; then
+         echo "WARNIGN,database don't have host:${HostPara[$i]}"
          HostPara[$i]=""
       fi
    done
@@ -449,7 +466,7 @@ do
          break
       fi
       if [ $j -gt $PortNum ] ; then
-         echo "WARNIGN,SequoiaDB don't have host:${PortPara[$i]}"
+         echo "WARNIGN,database don't have port:${PortPara[$i]}"
          PortPara[$i]=""
       fi
    done
@@ -515,8 +532,8 @@ echo "###Check over password" >>sdbsupport.log
 #******************************************************************************
 #@Function : Create Folder OSINFO/SDBNODES/SDBSNAPS/HARDINFO in local path
 #@Fold : OSINFO   Exp : directory for Operation System Information
-#@Fold : SDBNODES Exp : directory for sequoiadb all nodes ,such as coord,cata,data
-#@Fold : SDBSNAPS Exp : directory for sequoiadb snapshot
+#@Fold : SDBNODES Exp : directory for database all nodes ,such as coord,cata,data
+#@Fold : SDBSNAPS Exp : directory for database snapshot
 #@Fold : HARDINFO Exp : directory for hardware information
 #******************************************************************************
    rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/
@@ -526,7 +543,7 @@ echo "###Check over password" >>sdbsupport.log
       echo "###Success to remove the folder four" >>sdbsupport.log
    fi
 #*************************************************************************************************
-#@Function : Collect local host information about sequoiadb,such as Dialog,
+#@Function : Collect local host information about database,such as Dialog,
 #				 Conf,Group,Snapshot,Hardware and System information !
 #@Var : pHostNum	Exp :	quantity of parameter hosts, such as :--hostname ubunt-dev1:ubunt-dev2: 
 #@Var : pPortNum	Exp :	quantity of parameter sevice port, such as:--svcport 51111:61111 
@@ -596,19 +613,26 @@ do
          Local=$localhost
          if [ "$thirdLoc" == "" ] ; then
             for j in $(seq 1 $PortNum)
-            do	
+            do
                sdbPortGather "${HostPara[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
                sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$j]}" "$installpath"
                sdbSnapShot "${HostPara[$i]}" "${PORT[$j]}" "$installpath"
-            done	
-				sdbHardwareInfoAll "${HostPara[$i]}"
-				sdbSystemInfoAll "${HostPara[$i]}"
-			else
-            #Para : svcPort ->have this Port [./sdbsupport.sh -h htest1 -p 11810]	
-            if [ $pPortNum -ne 0 ] ; then 	
+            done
+            sdbHardwareInfoAll "${HostPara[$i]}"
+            sdbSystemInfoAll "${HostPara[$i]}"
+         else
+            #Para : svcPort ->have this Port [./sdbsupport.sh -h htest1 -p 11810]
+            if [ $pPortNum -ne 0 ] ; then
                for k in $(seq 1 $pPortNum)
                do
-                  sdbPortGather "${HostPara[$i]}" "${DbPath[$k]}" "${PortPara[$k]}" "$installpath"
+                  if [ "${PortPara[$k]}" != "" ] ; then
+                     #collect the sdbcm.conf/sdbcmd.log/sdbcm.log/sdb.conf/sdbdiag.log file
+                     if [ "$sdbconf" == "true" ] || [ "$sdblog" == "true" ] || [ "$sdbcm" == "true" ] ; then
+                        sdbPortGatherPart "${HostPara[$i]}" "${DbPath[$k]}" "${PortPara[$k]}" "$installpath" "$sdbconf" "$sdblog" "$sdbcm"
+                     else
+                        sdbPortGather "${HostPara[$i]}" "${DbPath[$k]}" "${PortPara[$k]}" "$installpath"
+                     fi
+                  fi
                   if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
                      sdbSnapShotCataLog "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
                   fi
@@ -620,21 +644,21 @@ do
                      sdbSnapShotExtract "${HostPara[$i]}" "${PortPara[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
                   fi
                done
-				else
-					#Just have snapshot argument ,no port argument
-					for k in $(seq 1 $PortNum)
-					do
-						if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
-							sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
-						fi	
-						if [ "$snapShot" == "true" ] ; then
-							sdbSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
-						fi
-						if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
-							sdbSnapShotExtract "${HostPara[$i]}" "${PORT[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
-						fi
-					done
-				fi
+            else
+               #Just have snapshot argument ,no port argument
+               for k in $(seq 1 $PortNum)
+               do
+                  if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
+                     sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
+                  fi	
+                  if [ "$snapShot" == "true" ] ; then
+                     sdbSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
+                  fi
+                  if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
+                     sdbSnapShotExtract "${HostPara[$i]}" "${PORT[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
+                  fi
+               done
+            fi
             #Parameter:--sysinfo ; Collect all system information or collect part of system information !
             if [ "$sysInfo" == "true" ] ; then
                sdbSystemInfoAll "${HOST[$i]}"
