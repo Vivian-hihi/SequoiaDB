@@ -334,7 +334,7 @@ namespace engine
        * The order is first in first out
        * Parameter:
        *   EDU Id ( EDUID )
-       *   enum pmdEDUEventTypes, in pmdEDUEvent.hpp
+       *   enum pmdEDUEventTypes, in pmdDef.hpp
        *   pointer for data
        * Return:
        *   SDB_OK ( success )

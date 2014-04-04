@@ -41,7 +41,7 @@
 #include "ossMem.hpp"
 #include "ossSocket.hpp"
 #include "oss.hpp"
-#include "pmdEDUEvent.hpp"
+#include "pmdDef.hpp"
 #include "monEDU.hpp"
 #include "monCB.hpp"
 #include "msg.h"

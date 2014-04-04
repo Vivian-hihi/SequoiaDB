@@ -3,7 +3,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "pmdEDUEvent.hpp"
+#include "pmdDef.hpp"
 #include "msg.hpp"
 #include "netRouteAgent.hpp"
 #include "msgCatalog.hpp"
