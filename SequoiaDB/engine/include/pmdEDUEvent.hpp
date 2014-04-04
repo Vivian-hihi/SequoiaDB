@@ -37,10 +37,12 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "ossQueue.hpp"
 
 namespace engine
 {
+   /*
+      pmdEDUEventTypes define
+   */
    enum pmdEDUEventTypes
    {
       PMD_EDU_EVENT_NONE = 0 ,
@@ -51,7 +53,7 @@ namespace engine
       PMD_EDU_EVENT_MSG,          // pmd msg event
       PMD_EDU_EVENT_TIMEOUT,      // pmd edu timeout,
       PMD_EDU_EVENT_LOCKWAKEUP,   // transaction-lock wake up
-      PMD_EDU_EVENT_TRACE_BREAKPOINT_RESUME,
+      PMD_EDU_EVENT_BP_RESUME,    // break point resume
       PMD_EDU_EVENT_TRANS_STOP    // stop transaction
    } ;
 
@@ -105,6 +107,10 @@ namespace engine
          _Data = NULL ;
       }
    } ;
+
    typedef class _pmdEDUEvent pmdEDUEvent ;
+
 }
-#endif
+
+#endif // PMDEDUEVENT_HPP__
+
