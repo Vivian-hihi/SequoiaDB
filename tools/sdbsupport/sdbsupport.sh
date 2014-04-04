@@ -267,36 +267,57 @@ mv sdbsupport.log sdbsupport.log.1 >>sdbsupport.log 2>&1
 #inspect the environment of sequiaDB
 localhost=`hostname`
 localPath=`pwd`
+if [ "$localhost" == "" ] || [ "$localPath" == "" ] ; then
+   echo "Failed to get local host and local path."
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to get local host:$localhost and local path:$localPath."
+   exit 1
+fi
 
-cd ../../
-if [ $? -ne 0 ] ; then
+cd ../../ >>/dev/null 2>&1
+rc=$?
+ls ./bin/sequoiadb >>/dev/null 2>&1
+rc1=$?
+if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
    echo "Failed to go to install path,please check"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to confirm installpath"
    exit 1
 fi
 installpath=`pwd`
+ls $installpath >/dev/null 2>&1
+if [ $? -ne 0 ] ; then
+   echo "Wrong install path ,Please check over the sdbsupport path and installpath!"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Wrong install path:$installpath"
+   exit 1
+else
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Success to get install path:$installpath"
+fi
+
 cd $localPath
 if [ $? -ne 0 ] ; then
-   echo "Failed to go to sdbsupport path"
+   echo "Failed to come back to sdbsupport directory"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to come back to sdbsupport directory:$localPath"
    exit 1
 fi
-#echo $installpath
-#pwd
 
 #config file path
-#echo $installpath
-ls $installpath 1>/dev/null
-if [ $? -ne 0 ] ; then
-   echo "Wrong install path ,Please check over the sdbsupport path and install path!$?"
-   exit 1
-fi
 confpath=$installpath/conf/local
-ls $confpath 1>/dev/null
-if [[ $? -ne 0 ]] ; then
-   echo "Err,Don't have Nodes !$?"
+if ls $confpath >>/dev/null 2>&1
+then
+   retval=`ls $confpath`
+   if [ "$retval" == "" ] ; then
+      echo "Database don't have sdb nodes!"
+      sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Database don't have sdb nodes. config path:$confpath"
+      exit 1
+   else
+      echo "Check over Environment!"
+      sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Database have nodes Correct config path:$confpath"
+   fi
+else
+   echo "Wrong Config path:$confpath"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Wrong Config path:$confpath"
    exit 1
 fi
 
-echo "###Check over environment." >>sdbsupport.log
 #************************************************************************
 #@Function: create Number of concurrent threads
 #@
@@ -305,6 +326,7 @@ fifo="/tmp/$$.fiofo"
 mkfifo $fifo
 if [ $? -ne 0 ] ; then
    echo "Failed to create FIFO,No parallel"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to create FIFO,No parallel"
 else
    exec 6<>$fifo
    rm -rf $fifo
@@ -312,9 +334,9 @@ else
    do
       echo ""
    done >&6
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Success to create FIFO,parallel"
 fi
 
-echo "###Success to create concurrent threads" >>sdbsupport.log
 #************************************************************************
 #@Function : get quantity of all hosts and local sevic port
 #@Var : HostNum   Exp : the number of hosts in the database
@@ -333,6 +355,7 @@ cd $localPath
 #*************************************************************************
 if [ "$aloneRole" == "" ] && [ "$coordRole" == "" ] && [ "$cataRole" == "" ] && [ "$dataRole"=="" ] ; then
    echo "Local host don't create database database"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Local host don't create database database"
    exit 1
 fi
 #***************************************************************************
@@ -340,6 +363,7 @@ fi
 #***************************************************************************
 if [ "$aloneRole" != "" ] ; then
    echo "Node $aloneRole is standalone node"
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Node $aloneRole is standalone node"
    alonehost="standalone.$localhost"
    dbpath=`grep -E "dbpath" $confpath/$aloneRole/sdb.conf|cut -d '=' -f 2`
    sdbPortGather "$localhost" "$dbpath" "$aloneRole" "$installpath"
@@ -356,6 +380,7 @@ fi
 if [ "$coordRole" != "" ] && [ "$cataRole" == "" ] && [ "$dataRole" == "" ] ;
 then
    echo "database database cluster only have coord"
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "database database cluster only have coord"
    dbpath=`grep -E "dbpath" $confpath/$coordRole/sdb.conf|cut -d '=' -f 2`
    sdbPortGather "$localhost" "$dbpath" "$coordRole" "$installpath"
    sdbHardwareInfoAll "$localhost" "$installpath"
@@ -367,6 +392,7 @@ fi
 if [ "$coordRole" != "" ] && [ "$cataRole" != "" ] && [ "$dataRole" == "" ] ;
 then
    echo "database database cluster only have coord and cata"
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "database database cluster only have coord and cata"
    dataRole=$coordRole
 fi
 #***************************************************************************
@@ -374,6 +400,7 @@ fi
 #***************************************************************************
 if [ "$dataRole" != "" ] ; then
    echo "Complete database database cluster"
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Complete database database cluster"
    dataRole=$dataRole
 fi
 #catadrr : get the cata address and catch hosts
@@ -383,9 +410,10 @@ HostNum=`awk 'BEGIN{print split("'$cataddr'",cateArr,",")}'`
 PortNum=`ls -l $confpath|grep "^d"|wc -l`
 
 if [ "$HostNum" != "0" ] && [ "$PortNum" != "0" ] ; then
-   echo "###Success to get the number of host in group and port in localhost" >>sdbsupport.log
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Success to get the number of host in group and port in localhost"
 else
    echo "No host and port,Please check!"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "No host and port,Please check!"
    exit 1
 fi
 #*******************************************************************************
@@ -398,26 +426,25 @@ fi
 for i in $(seq 1 $HostNum)
 do
    hostcata[$i]=`awk 'BEGIN{split("'$cataddr'",cateArr,",");print cateArr['$i']'}`
-	HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
+   HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
    if [ "${HOST[$i]}" == "$localhost" ] ; then
       for j in $(seq 1 $PortNum)
       do
          PortArr=`ls $confpath`
-			PORT[$j]=`echo $PortArr|cut -d " " -f $j`
-			if [ "${PORT[$j]}" == "$aloneRole" ] ; then
-				PORT[$j]=""
-				continue
-			fi
-			DBPATH[$j]=`grep -E "dbpath" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
+         PORT[$j]=`echo $PortArr|cut -d " " -f $j`
+         if [ "${PORT[$j]}" == "$aloneRole" ] ; then
+            PORT[$j]=""
+            continue
+         fi
+         DBPATH[$j]=`grep -E "dbpath" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
          #delete the space in config file and put in tmpconf
          sed -i 's/\ //g' $confpath/${PORT[$j]}/sdb.conf 
-         ROLE[$j]=`grep -E "role=" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
-		done
+            ROLE[$j]=`grep -E "role=" $confpath/${PORT[$j]}/sdb.conf|cut -d '=' -f 2`
+      done
    fi
 done
-
-echo "###Success to get host in group and port in localhost" >>sdbsupport.log
-
+sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "allHost:[${HOST[@]}] allPort:[${PORT[@]}] allDbpath:[${DBPATH[@]}]"
+#echo "${HOST[@]} ${PORT[@]} ${DBPATH[@]}"
 #*************************************************************************************************
 #@Function : Get parameter passed in and check over them wether or not correct,if don't have this 
 #            Host or Port ,will delete the wrong host and port 
@@ -449,6 +476,7 @@ do
       #******************************************************************************
       if [ $j -gt $HostNum ] ; then
          echo "WARNIGN,database don't have host:${HostPara[$i]}"
+         sdbEchoLog "WARNING" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Don't have host:${HostPara[$i]}"
          HostPara[$i]=""
       fi
    done
@@ -467,12 +495,12 @@ do
       fi
       if [ $j -gt $PortNum ] ; then
          echo "WARNIGN,database don't have port:${PortPara[$i]}"
+         sdbEchoLog "WARNING" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Don't have port:${PortPara[$i]}"
          PortPara[$i]=""
       fi
    done
 done
-
-echo "###Check over the passed para host and port" >>sdbsupport.log
+sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "paraHost:[${HostPara[@]}] paraPort:[${PortPara[@]}] paraDbpath:[${DbPath[@]}]"
 #***********************************************************************************
 #@Function: get password of host that you begin to collect information
 #@
@@ -498,9 +526,7 @@ if [ "$all" == "true" ] ; then
          #echo "password:" "${PASSWD[$i]}"
       fi
    done
-   echo ""
-   echo "Correct Password !"
-   echo ""
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Check over password of all host,Correct."
 fi
 
 if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
@@ -523,12 +549,9 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
          #echo "password:" "${PASSWD[$i]}"
       fi
    done
-   echo ""
-   echo "Correct Password !"
-   echo ""
+   sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Check over password of specify host,Correct."
 fi
 
-echo "###Check over password" >>sdbsupport.log
 #******************************************************************************
 #@Function : Create Folder OSINFO/SDBNODES/SDBSNAPS/HARDINFO in local path
 #@Fold : OSINFO   Exp : directory for Operation System Information
@@ -538,9 +561,10 @@ echo "###Check over password" >>sdbsupport.log
 #******************************************************************************
    rm -rf HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/
    if [ $? -ne 0 ] ; then
-      echo "Failed to remove folder"
+      echo "Failed to remove folder HARDINFO/ OSINFO/ SDBNODES/ SDBSNAPS/"
+      sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to remove folder"
    else
-      echo "###Success to remove the folder four" >>sdbsupport.log
+      sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Success to remove the folder four"
    fi
 #*************************************************************************************************
 #@Function : Collect local host information about database,such as Dialog,
@@ -556,7 +580,7 @@ do
    if [ "$firstLoc" == "" ] && [ "$localhost" == "${HOST[$i]}" ] ; then
       for j in $(seq 1 $PortNum)
       do
-				#echo "localhost:$localhost:${PORT[$j]}"
+            #echo "localhost:$localhost:${PORT[$j]}"
             sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
             sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
             sdbSnapShot "${HOST[$i]}" "${PORT[$j]}" "$installpath"
@@ -564,11 +588,7 @@ do
       sdbHardwareInfoAll "${HOST[$i]}" "$installpath"
       sdbSystemInfoAll "${HOST[$i]}" "$installpath"
    fi
-   if [ "$i" == "$HostNum" ] ; then
-      echo "###Success to Collect local information when no para passed in">>sdbsupport.log
-   fi
 done
-
 
 #>2.Parameter : --all
 if [ "$all" == "true" ] ; then
@@ -650,7 +670,7 @@ do
                do
                   if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
                      sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
-                  fi	
+                  fi
                   if [ "$snapShot" == "true" ] ; then
                      sdbSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
                   fi
@@ -703,8 +723,10 @@ wait
 
 #tar the all collect information in a packet
 if [ "$firstLoc" == "" ] || [ "$Local" == "$localhost" ]; then
-   sdbTarGzPack $localhost 
+   sdbTarGzPack $localhost
 fi
 
 #clean environment
 exec 6>&-
+sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Collect information Over"
+

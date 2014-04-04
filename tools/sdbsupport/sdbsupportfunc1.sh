@@ -25,6 +25,8 @@ function sdbPortGather()
    lsfold=`ls SDBNODES/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf SDBNODES/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect config and log file"
    fi
 }
 
@@ -60,6 +62,8 @@ function sdbPortGatherPart()
    lsfold=`ls SDBNODES/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf SDBNODES/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect config and log file"
    fi
 
 }
@@ -75,6 +79,7 @@ function sdbPortConf()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdb.conf."
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdb.conf"
       fi
    fi
 }
@@ -91,7 +96,8 @@ function sdbPortLog()
          cp -r $DBPATH.tar.gz SDBNODES/ >>/dev/null 2>&1
          rc1=$?
          if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
-            echo "Failed to collect $HOST:$PORT sdbdiag.log"
+            echo "Failed to collect $HOST:$PORT sdbdiag.log and core file[big]"
+            sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbdiag.log"
          fi
       else
          tar -zcvf $DBPATH.tar.gz $DBPATH/diaglog/trap* $DBPATH/diaglog/sdbdiag.log >>/dev/null 2>&1
@@ -100,6 +106,7 @@ function sdbPortLog()
          rc1=$?
          if [ $rc -ne 0 ] || [ $rc1 -ne 0 ] ; then
             echo "Failed to collect $HOST:$PORT sdbdiag.log"
+            sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbdiag.log and core file"
          fi
       fi
    else
@@ -107,6 +114,7 @@ function sdbPortLog()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdbdiag.log"
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbdiag.log"
       fi
    fi
 }
@@ -124,6 +132,7 @@ function sdbCmConfLog()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdbcmd.log file"
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbcmd.log file"
       fi
    fi
    #collect sdbcm log
@@ -134,6 +143,7 @@ function sdbCmConfLog()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdbcm.log file"
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbcm.log file"
       fi
    fi
    #collect sdbcm config file
@@ -144,15 +154,12 @@ function sdbCmConfLog()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdbcm.conf file"
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbcm.conf file"
       fi
    fi
 
-   #if folder don't have file ,then delete it
-   lsfold=`ls SDBNODES/` >>/dev/null 2>&1
-   if [ "$lsfold" == "" ] ; then
-      rm -rf SDBNODES/
-   fi
 }
+
 #*********************************************************************
 #collect catalog information snapshot 
 #*********************************************************************
@@ -177,6 +184,15 @@ function sdbSnapShotCataLog()
       $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/$HOST.$PORT.snapshot_catalog
       $SDB "quit"
    fi
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBSNAPS/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
+   fi
+
 }
 
 #**********************************************************************
@@ -209,6 +225,14 @@ function sdbSnapShot()
       $SDB "db.snapshot(SDB_SNAP_DATABASE)" >> SDBSNAPS/$HOST.$PORT.snapshot_database
       $SDB "db.snapshot(SDB_SNAP_SYSTEM)" >> SDBSNAPS/$HOST.$PORT.snapshot_system
       $SDB "quit"
+   fi
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBSNAPS/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
    fi
 }
 
@@ -262,6 +286,14 @@ function sdbSnapShotExtract()
       fi
       $SDB "quit"
    fi
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBSNAPS/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
+   fi
 }
 
 #collect all hardware infomation
@@ -280,7 +312,9 @@ function sdbHardwareInfoAll()
    #if folder don't have file ,then delete it
    lsfold=`ls HARDINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
-      rm -rf HARDINFO/ 
+      rm -rf HARDINFO/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect Hardware Information."
    fi
 }
 ##Hardware : collect cpu information
@@ -294,6 +328,7 @@ function sdbCpu()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collec cpu information."
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "lscpu:Failed"
       rm HARDINFO/$HOST.cpu.info
    fi
 }
@@ -308,7 +343,9 @@ function sdbMemory()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect memory information."
-      rm HARDINFO/$HOST.memory.info	
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "free -m
+      :Failed"
+      rm HARDINFO/$HOST.memory.info
    fi
 }
 ##Hardware : collect disk information
@@ -322,6 +359,7 @@ function sdbDisk()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect disk information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "lsblk:Failed"
       rm HARDINFO/$HOST.disk.info
    fi
 }
@@ -333,6 +371,8 @@ function sdbNetcard()
    rc=$?
    if [ $rc -ne 0 ] ; then
       echo "Failed to collect netcard information"	
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "lspci|grep -i
+      'eth':Failed"
       rm HARDINFO/$HOST.netcard.info
    fi
 }
@@ -347,6 +387,7 @@ function sdbMainboard()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect mainboard information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "lspci:Failed"
       rm HARDINFO/$HOST.mainboard.info 
    fi
 
@@ -394,6 +435,9 @@ function sdbHardwareInfoPart()
    lsfold=`ls HARDINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf HARDINFO/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to
+         collect Hardware information"
    fi
 }
 #******************************************************
@@ -419,6 +463,8 @@ function sdbSystemInfoAll()
    lsfold=`ls OSINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf OSINFO/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect OS information"
    fi
 
 }
@@ -433,6 +479,7 @@ function sdbDiskManage()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then 
       echo "Failed to collect disk manage information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "df ./:Failed"
       rm OSINFO/$HOST.diskmanage.sys
    fi
 }
@@ -459,6 +506,7 @@ function sdbSystemOS()
    rc5=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] && [$rc2 -ne 0 ] && [ $rc3 -ne 0 ] && [ $rc4 -ne 0 ] && [ $rc5 -ne 0 ] ; then 
       echo "Failed to collect system information "
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "OSsys:Failed"
       rm OSINFO/$HOST.system.sys
    fi
 }
@@ -470,6 +518,7 @@ function sdbModules()
    rc=$?
    if [ $rc -ne 0 ] ; then
       echo "Failed to collect modules information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "lsmod:Failed"
       rm $HOST.modules.sys
    fi
 }
@@ -481,6 +530,7 @@ function sdbEnvVar()
    rc=$?
    if [ $rc -ne 0 ] ; then
       echo "Failed to collect environment variable"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "env:Failed"
       rm OSINFO/$HOST.environmentvar.sys
    fi
 }
@@ -495,6 +545,8 @@ function sdbNetworkInfo()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect network information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "netstat
+      -s/netstat:Failed"
       rm OSINFO/$HOST.networkinfo.sys
    fi
 
@@ -510,6 +562,8 @@ function sdbProcess()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect process information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "ps aux/ps
+      -elf|sort -rn:Failed"
       rm OSINFO/$HOST.process.sys
    fi
 }
@@ -524,6 +578,7 @@ function sdbLogin()
    rc1=$?
    if [ $rc -ne 0 ] && [ $rc1 -ne 0 ] ; then
       echo "Failed to collect login information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "last/history:Failed"
       rm OSINFO/$HOST.logininfo.sys
    fi
 }
@@ -535,6 +590,7 @@ function sdbLimit()
    rc=$?
    if [ $rc -ne 0 ] ; then
       echo "Failed to collect system limit information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "ulimit -a:Failed"
       rm OSINFO/$HOST.ulimit.sys
    fi
 }
@@ -546,6 +602,7 @@ function sdbVmstat()
    rc=$?
    if [ $rc -ne 0 ] ; then
       echo "Failed to collect vmstat information"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "vmstat:Failed"
       rm OSINFO/$HOST.vmstate.sys
    fi
 
@@ -574,25 +631,27 @@ function sdbSystemInfoPartFore()
    fi
 
    if [ "$osystem" == "true" ] ; then
-      sdbSystemOS 
+      sdbSystemOS
    fi
 
    if [ "$kermode" == "true" ] ; then
-      sdbModules 
+      sdbModules
    fi
 
    if [ "$env" == "true" ] ; then
-      sdbEnvVar 
+      sdbEnvVar
    fi
 
    if [ "$network" == "true" ] ; then
-      sdbNetworkInfo 
+      sdbNetworkInfo
    fi
 
    #if folder don't have file ,then delete it
    lsfold=`ls OSINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf OSINFO/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Sucess to collect OS information"
    fi
 
 }
@@ -634,6 +693,9 @@ function sdbSystemInfoPartEnd()
    lsfold=`ls OSINFO/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf OSINFO/
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Sucess to
+         collect OS information"
    fi
 }
 

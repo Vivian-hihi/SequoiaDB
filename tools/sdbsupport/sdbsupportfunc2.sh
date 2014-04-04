@@ -11,7 +11,7 @@ function sdbCheckPassword()
       spawn ssh sdbadmin@$HOST ;
       expect {
             \"*yes/no*\" ; {send \"yes\r\" ; exp_continue}
-            \"assword\" ; {send \"$PASSWD\r\" ; 
+            \"assword\" ; {send \"$PASSWD\r\" ;
                expect {
                   \"denied\" ; {exit 5 ;}
                   \"*login*\" ; {send \"exit\r\" ;}
@@ -34,7 +34,7 @@ function sdbExpectSshHosts()
    localPath=$3
    sdbsupport=$4
    timeout=$5
-#   echo "timeout:$timeout"
+   #echo "timeout:$timeout"
 
    endflag="echo \"Too much time\""
    /usr/local/bin/expect -c   "
@@ -50,11 +50,12 @@ function sdbExpectSshHosts()
            send_user \"eof\n\";
          }
       }
-                              " >>sdbsupport.log
+                              " >>/dev/null 2>&1
 
    rc=$?
    if [ "$rc" == "4" ] ; then
       echo "Run time out,please take too much time in host : $HOST"
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Run time out,please take too much time in host : $HOST"
    fi
 }
 
@@ -72,6 +73,7 @@ function sdbTarGzPack()
    mkdir -p $Folder/
    if [ $? -ne 0 ] ; then
       echo "Failed to create foler !"
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Failed to create foler !"
       exit 1
    fi
 
@@ -100,12 +102,14 @@ function sdbTarGzPack()
    fi
 
    if [ "$hard" == "true" ] && [ "$sdbnode" == "true" ] && [ "$osinfo" == "true" ] && [ "$sdbsnap" == "true" ] ; then
-      echo "Error,Failed to collect information "
+      echo "Error,Failed to collect $HOST information "
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Error,Failed to collect $HOST information "
       exit 1
    fi
 
-	if [ $? -ne 0 ] ; then
+   if [ $? -ne 0 ] ; then
       echo "Failed to move the collected information to folder"
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Error,Failed to move $HOST information to folder"
       exit 1
    fi
 
@@ -113,10 +117,12 @@ function sdbTarGzPack()
 
    if [ $? -ne 0 ] ; then
       echo "Failed to packaging and compression"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to packaging and compression "
       exit 1
-	else
-		echo "Complete to packaging and compression"
-	fi
+   else
+      echo "Complete to packaging and compression"
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to Complete to packaging and compression"
+   fi
    rm -rf ./$Folder/
 }
 
@@ -129,18 +135,22 @@ function sdbExpectScpHosts()
 #scp -r root@$HOST:$localPath/$HOST.tar.gz ./
 
    /usr/local/bin/expect -c"
-      set timeout 50 ;
+      set timeout 80 ;
       spawn scp -r sdbadmin@$HOST:$localPath/*$HOST*.tar.gz ./ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
+         timeout ;{exit 4;}
          eof
          {
             send_user \"eof\n\";
          }
       }
-                              " >>sdbsupport.log
-
+                              " >>/dev/null 2>&1
+      if [ "$rc" == "4" ] ; then
+         echo "Failed to scp the file"
+         sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to scp sdbadmin@$HOST:$localPath/*$HOST*.tar.gz"
+      fi
 
 }
 
@@ -163,6 +173,19 @@ function sdbSSHRemove()
          }
       }
 
-                           " >>sdbsupport.log
+                           " >>/dev/null 2>&1
 
 }
+
+function sdbEchoLog()
+{
+   Date=`date +%Y-%m-%d-%H:%M:%S.%N`
+
+   echo "Level: $1"
+   echo "Date: $Date"
+   echo "File/Function: $2"
+   echo "Line: $3"
+   echo "Message: "
+   echo "$4"
+   echo ""
+} >> sdbsupport.log
