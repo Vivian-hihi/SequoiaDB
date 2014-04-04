@@ -34,9 +34,8 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "clsBase.hpp"
 #include "pd.hpp"
-#include "pmdEDU.hpp"
+#include "pmdDef.hpp"
 #include "ossErr.h"
 #include "msg.h"
 #include "ossUtil.hpp"
