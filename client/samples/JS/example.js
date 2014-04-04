@@ -1,13 +1,16 @@
 // To run this example, type ./sdb -f example.js
 
 // connect to database
-var db = new Sdb('localhost', 50000);
+var db = new Sdb('localhost', 11810);
 
 // try-catch block just to ensure that you can run this example multiple times
 try {
    db.dropCS('foo');
 } catch ( e ) {
 }
+
+db.createCS("foo");
+db.foo.createCL("bar");
 
 // insert document {a:1} into collection bar on collection space foo
 // if foo or bar is not present, it will be automatically created
