@@ -157,10 +157,11 @@ while [ "$1" != "" ]; do
       -addpid )       csprefix="local_para_$$"
                       reportDir=${csprefix}"_report"
                       ;;
-      * )             echo "invalid arguments: $p"
+      * )             echo "invalid arguments: $1"
                       display 1
                       ;;
    esac
+   shift
 done
 #for p in $@
 #do
@@ -200,10 +201,10 @@ done
 #   fi
 #done
 
-if [ $readType -ne 0 ] ; then
-   echo "invalid arguments"
-   display 1
-fi
+#if [ $readType -ne 0 ] ; then
+#   echo "invalid arguments"
+#   display 1
+#fi
 
 if [ "$testFile" != "" ] ; then
    testDir="$testFile"
