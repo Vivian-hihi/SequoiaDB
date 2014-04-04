@@ -132,46 +132,73 @@ if [ $# -eq 1 -a "$1" = "--help" ] ; then
 fi
 
 # loop all parameter
-p=""
-readType=0 # 1: path, 2: file, 3: stopWhenFailed, 4: svcname, 5: hostname
+#p=""
+#readType=0 # 1: path, 2: file, 3: stopWhenFailed, 4: svcname, 5: hostname
 
-for p in $@
-do
-   if [ $readType -eq 1 ] ; then
-      testDir="$(getMyPath $p)"
-      readType=0
-   elif [ $readType -eq 2 ] ; then
-      testFile="$(getMyPath $p)"
-      readType=0
-   elif [ $readType -eq 3 ] ; then
-      stopWhenFailed=$(($p))
-      readType=0
-   elif [ $readType -eq 4 ] ; then
-      coordsvcname="$p"
-      readType=0
-   elif [ $readType -eq 5 ] ; then
-      coordhostname="$p"
-      readType=5
-   elif [ "$p" = "-p" ] ; then
-      readType=1 ;
-   elif [ "$p" = "-f" ] ; then
-      readType=2
-   elif [ "$p" = "-s" ] ; then
-      readType=3
-   elif [ "$p" = "-n" ] ; then
-      readType=4
-   elif [ "$p" = "-h" ] ; then
-      readType=5
-   elif [ "$p" = "-addpid" ] ; then
-      csprefix="local_para_$$"
-      reportDir=${csprefix}"_report"
-   elif [ "$p" == "-print" ] ; then
-      printOut=1
-   else
-      echo "invalid arguments: $p"
-      display 1
-   fi
+while [ "$1" != "" ]; do
+   case $1 in
+      -p )            shift
+                      testDir="$(getMyPath $1)"
+                      ;;
+      -f )            shift
+                      testFile="$(getMyPath $1)"
+                      ;;
+      -s )            shift
+                      stopWhenFailed=$(($1))
+                      ;;
+      -n )            shift
+                      coordsvcname="$1"
+                      ;;
+      -h )            shift
+                      coordhostname="$1"
+                      ;;
+      -print )        printOut=1
+                      ;;
+      -addpid )       csprefix="local_para_$$"
+                      reportDir=${csprefix}"_report"
+                      ;;
+      * )             echo "invalid arguments: $p"
+                      display 1
+                      ;;
+   esac
 done
+#for p in $@
+#do
+#   if [ $readType -eq 1 ] ; then
+#      testDir="$(getMyPath $p)"
+#      readType=0
+#   elif [ $readType -eq 2 ] ; then
+#      testFile="$(getMyPath $p)"
+#      readType=0
+#   elif [ $readType -eq 3 ] ; then
+#      stopWhenFailed=$(($p))
+#      readType=0
+#   elif [ $readType -eq 4 ] ; then
+#      coordsvcname="$p"
+#      readType=0
+#   elif [ $readType -eq 5 ] ; then
+#      coordhostname="$p"
+#      readType=5
+#   elif [ "$p" = "-p" ] ; then
+#      readType=1 ;
+#   elif [ "$p" = "-f" ] ; then
+#      readType=2
+#   elif [ "$p" = "-s" ] ; then
+#      readType=3
+#   elif [ "$p" = "-n" ] ; then
+#      readType=4
+#   elif [ "$p" = "-h" ] ; then
+#      readType=5
+#   elif [ "$p" = "-addpid" ] ; then
+#      csprefix="local_para_$$"
+#      reportDir=${csprefix}"_report"
+#   elif [ "$p" == "-print" ] ; then
+#      printOut=1
+#   else
+#      echo "invalid arguments: $p"
+#      display 1
+#   fi
+#done
 
 if [ $readType -ne 0 ] ; then
    echo "invalid arguments"

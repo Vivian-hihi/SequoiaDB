@@ -8,12 +8,13 @@ needInstall=0
 needCompile=1
 startSdb=0
 hostName=`hostname`
-curDir=`pwd`
+#curDir=`pwd`
+homePath=`pwd`
 
 # common function
 function display()
 {
-   echo "$0 [-c compile] [-nocompile] [-release] [-noup] [-start] [-install]  [-test]"
+   echo "$0 [-c compile] [-nocompile] [-release] [-noup] [-start] [-install] [-test] [-dbpath <db home path>]"
    exit $1
 }
 
@@ -59,7 +60,7 @@ function installSdb()
    ret=0
    while [ $ret -eq 0 ]
    do
-      outStr=`ps -ef|grep seq |grep -v grep`
+      outStr=`ps -ef|grep "sequoiadb(" |grep -v grep`
       ret=$?
       if [ $ret -eq 0 ] ; then
          echo "sequoiadb is running, stopping..."
@@ -82,7 +83,7 @@ function installSdb()
       fi
    done
 
-   outStr=`rm -rf bin/dbcoord/*`
+   outStr=`rm -rf ${homePath}/50000/*`
    outStr=`rm -f sdb.conf`
    outStr=`rm -f nohup`
 
@@ -91,14 +92,15 @@ function installSdb()
       needInstall=1
    fi
 
-   if [ $needInstall -ne 0 -a -d "30000" ] ; then
+   if [ $needInstall -ne 0 ] ; then
       echo "Begin to remove sdb...."
       rm -r 30000
       rm -r 20000
       rm -r 40000
       rm -r 41000
       rm -r 42000
-      rm -r conf/local/*
+      rm -rf conf/local
+      mkdir conf/local
       echo "Remove sdb ok"
       sleep 2
    fi
@@ -115,15 +117,15 @@ function installSdb()
    fi
 
    # start coord
-   if [ ! -d "bin/dbcoord" ] ; then
-      mkdir -p bin/dbcoord
+   if [ ! -d "${homePath}/50000" ] ; then
+      mkdir -p ${homePath}/50000
    fi
    if [ $needInstall -eq 0 ] ; then
       echo "use catalog list"
-      nohup bin/sequoiadb -o coord -d bin/dbcoord -p "50000" -t 192.168.20.106:30003 >/dev/null 2>&1 &
+      nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" -t 192.168.20.106:30003 >/dev/null 2>&1 &
    else
       echo "no catalog list"
-      nohup bin/sequoiadb -o coord -d bin/dbcoord -p "50000" >/dev/null 2>&1 &
+      nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" >/dev/null 2>&1 &
    fi
 
    # install db1 and db2
@@ -135,7 +137,7 @@ function installSdb()
          echo "Connect coord failed*******"
          exit 1
       fi
-      bin/sdb -s " db.createCataRG('${hostName}', '30000', '${curDir}/30000' ); sleep(5000);"
+      bin/sdb -s " db.createCataRG('${hostName}', '30000', '${homePath}/30000' ); sleep(5000);"
       bin/sdb -s " var dbcat ; for ( var i=0; i < 60; ++i ) { try { dbcat = new Sdb('localhost', '30000'); dbcat.close();  break ; } catch(e) { println( 'Failed: ' + e ) ; sleep(1000) ;} } "
       if [ $? -eq 0 ] ; then
          echo "Create Catalog RG Succeed"
@@ -143,7 +145,7 @@ function installSdb()
          echo "Create Catalog RG Failed********"
          exit 1
       fi
-      bin/sdb -s " var db ; try { db = new Sdb('localhost', '50000') ; var rg1= db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${curDir}/20000'); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
+      bin/sdb -s " var db ; try { db = new Sdb('localhost', '50000') ; var rg1=db.createRG('db1') ; rg1.createNode('${hostName}', '20000', '${homePath}/20000'); } catch( e) { println('Create db1 failed: ' + e ) ; throw e; } "
       if [ $? -eq 0 ] ; then
          echo "Create group db1 Succeed"
       else
@@ -151,9 +153,9 @@ function installSdb()
          exit 1
       fi
       bin/sdb -s " db.createRG('db2') ; rg2=db.getRG('db2');"
-      bin/sdb -s " rg2.createNode('${hostName}', '40000', '${curDir}/40000');"
-      bin/sdb -s " rg2.createNode('${hostName}', '41000', '${curDir}/41000');"
-      bin/sdb -s " rg2.createNode('${hostName}', '42000', '${curDir}/42000');"
+      bin/sdb -s " rg2.createNode('${hostName}', '40000', '${homePath}/40000');"
+      bin/sdb -s " rg2.createNode('${hostName}', '41000', '${homePath}/41000');"
+      bin/sdb -s " rg2.createNode('${hostName}', '42000', '${homePath}/42000');"
       bin/sdb -s " db.startRG('db1', 'db2'); db.close(); "
       if [ $? -eq 0 ] ; then
          echo "Create group db2 Succeed"
@@ -187,30 +189,57 @@ function autoTest()
 
 readType=0 # 1: compile
 # read param
-for p in $@
-do
-   if [ $readType -eq 1 ] ; then
-      buildStr=${buildStr}" "$p
-      readType=0
-   elif [ "$p" == "-c" ] ; then
-      readType=1
-   elif [ "$p" == "-noup" ] ; then
-      needUpdate=0
-   elif [ "$p" == "-test" ] ; then
-      autoTest=1
-   elif [ "$p" == "-release" ] ; then
-      isRelease=1
-   elif [ "$p" == "-install" ] ; then
-      needInstall=1
-   elif [ "$p" == "-nocompile" ] ; then
-      needCompile=0
-   elif [ "$p" == "-start" ] ; then
-      startSdb=1
-   else
-      echo "Invalid argument: $p"
-      display 1
-   fi
+while [ "$1" != "" ]; do
+   case $1 in
+      -c )                shift
+                          buildStr=${buildStr}" "$1
+                          ;;
+      -noup )             needUpdate=0
+                          ;;
+      -test )             autoTest=1
+                          ;;
+      -release )          isRelease=1
+                          ;;
+      -install )          needInstall=1
+                          ;;
+      -nocompile )        needCompile=0
+                          ;;
+      -start )            startSdb=1
+                          ;;
+      -dbpath )           shift
+                          homePath=$1
+                          ;;
+      * )                 echo "Invalid argument: $p"
+                          display 1
+   esac
+   shift
 done
+#for p in $@
+#do
+#   if [ $readType -eq 1 ] ; then
+#      buildStr=${buildStr}" "$p
+#      readType=0
+#   elif [ "$p" == "-c" ] ; then
+#      readType=1
+#   elif [ "$p" == "-noup" ] ; then
+#      needUpdate=0
+#   elif [ "$p" == "-test" ] ; then
+#      autoTest=1
+#   elif [ "$p" == "-release" ] ; then
+#      isRelease=1
+#   elif [ "$p" == "-install" ] ; then
+#      needInstall=1
+#   elif [ "$p" == "-nocompile" ] ; then
+#      needCompile=0
+#   elif [ "$p" == "-start" ] ; then
+#      startSdb=1
+#   elif [ "$p" == "-p" ] ; then
+#      homePath=
+#   else
+#      echo "Invalid argument: $p"
+#      display 1
+#   fi
+#done
 
 if [ $readType -ne 0 ] ; then
    echo "Invalid argument"
