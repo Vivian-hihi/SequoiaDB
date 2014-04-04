@@ -582,7 +582,9 @@ do
       do
             #echo "localhost:$localhost:${PORT[$j]}"
             sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
-            sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            if [ "${ROLE[$i]}" == "coord" ] && [ "$catalog" == "true" ] ; then
+               sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            fi
             sdbSnapShot "${HOST[$i]}" "${PORT[$j]}" "$installpath"
       done
       sdbHardwareInfoAll "${HOST[$i]}" "$installpath"
@@ -598,12 +600,14 @@ if [ "$all" == "true" ] ; then
          for j in $(seq 1 $PortNum)
          do
             sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
-            sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            if [ "${ROLE[$i]}" == "coord" ] && [ "$catalog" == "true" ] ; then
+               sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
+            fi
             sdbSnapShot "${HOST[$i]}" "${PORT[$j]}" "$installpath"
-            sdbHardwareInfoAll "${HOST[$i]}" "$installpath"
-            sdbSystemInfoAll "${HOST[$i]}" "$installpath"
-            Local=$localhost
          done
+         sdbHardwareInfoAll "${HOST[$i]}" "$installpath"
+         sdbSystemInfoAll "${HOST[$i]}" "$installpath"
+         Local=$localhost
       fi
       read -u 6
       if [ "${HOST[$i]}" != "" ] && [ "${HOST[$i]}" != "$localhost" ] ; then
@@ -652,30 +656,31 @@ do
                      else
                         sdbPortGather "${HostPara[$i]}" "${DbPath[$k]}" "${PortPara[$k]}" "$installpath"
                      fi
-                  fi
-                  if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
-                     sdbSnapShotCataLog "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
-                  fi
-                  #snapShot
-                  if [ "$snapShot" == "true" ] ; then
-                     sdbSnapShot "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
-                  fi
-                  if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
-                     sdbSnapShotExtract "${HostPara[$i]}" "${PortPara[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
+
+                     if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
+                        sdbCoordSnapShot "${HostPara[$i]}" "${PortPara[$k]}" "$installpath" "$catalog" "$group"
+                     fi
+                     #snapShot
+                     if [ "$snapShot" == "true" ] ; then
+                        sdbSnapShot "${HostPara[$i]}" "${PortPara[$k]}" "$installpath"
+                     fi
+                     if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
+                        sdbSnapShotExtract "${HostPara[$i]}" "${PortPara[$k]}" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
+                     fi
                   fi
                done
             else
                #Just have snapshot argument ,no port argument
                for k in $(seq 1 $PortNum)
                do
-                  if [ "${Role[$k]}" == "coord" ] && [ "$catalog" == "true" ] ; then
-                     sdbSnapShotCataLog "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
+                  if [ "${Role[$k]}" == "coord" ] ; then
+                     sdbCoordSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath" "$catalog" "$group"
                   fi
                   if [ "$snapShot" == "true" ] ; then
                      sdbSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath"
                   fi
                   if [ "$sysInfo" == "false" ] && [ "$rcPort" == "true" ] ; then
-                     sdbSnapShotExtract "${HostPara[$i]}" "${PORT[$k]}" "$group" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
+                     sdbSnapShotExtract "${HostPara[$i]}" "${PORT[$k]}" "$context" "$session" "$collection" "$collectionspace" "$database" "$system" "$installpath"
                   fi
                done
             fi

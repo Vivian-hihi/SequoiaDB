@@ -62,6 +62,7 @@ function sdbPortGatherPart()
    lsfold=`ls SDBNODES/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf SDBNODES/
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Don't have file in SDBNODES/"
    else
       sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect config and log file"
    fi
@@ -182,6 +183,7 @@ function sdbSnapShotCataLog()
       echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
       $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/$HOST.$PORT.snapshot_catalog
+      $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
       $SDB "quit"
    fi
 
@@ -189,11 +191,53 @@ function sdbSnapShotCataLog()
    lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf SDBSNAPS/
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Don't have file in SDBSNAPS/"
    else
       sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
    fi
 
 }
+function sdbCoordSnapShot()
+{
+   HOST=$1
+   PORT=$2
+   installpath=$3
+   catalog=$4
+   group=$5
+
+   if [ "$catalog" != "false" ] || [ "$group" != "false" ] ; then
+      mkdir -p SDBSNAPS/
+   else
+      return 0
+   fi
+
+   SDB=$installpath/bin/sdb
+   $SDB "var db = new Sdb('localhost',$PORT" >>sdbsupport.log 2>&1
+   rc=$?
+   if [ $rc -ne 0 ] ; then
+      $SDB "quit"
+      echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+   else
+      if [ "$catalog" == "true" ] ; then
+         $SDB "db.snapshot(SDB_SNAP_CATALOG)" >> SDBSNAPS/$HOST.$PORT.snapshot_catalog 2>&1
+      fi
+      if [ "$group" == "true" ] ; then
+         $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups 2>&1
+      fi
+      $SDB "quit"
+   fi
+
+   #if folder don't have file ,then delete it
+   lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
+   if [ "$lsfold" == "" ] ; then
+      rm -rf SDBSNAPS/
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Don't have file in SDBSNAPS/"
+   else
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
+   fi
+
+}
+
 
 #**********************************************************************
 #snapshot of sequoiadb to SDBSNAPS
@@ -217,7 +261,6 @@ function sdbSnapShot()
       $SDB "quit"
       echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
    else
-      $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
       $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contests
       $SDB "db.snapshot(SDB_SNAP_SESSIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_sessions
       $SDB "db.snapshot(SDB_SNAP_COLLECTIONS)" >> SDBSNAPS/$HOST.$PORT.snapshot_collections
@@ -231,6 +274,7 @@ function sdbSnapShot()
    lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf SDBSNAPS/
+   sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Don't have file in SDBSNAPS/"
    else
       sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
    fi
@@ -242,16 +286,15 @@ function sdbSnapShotExtract()
    HOST=$1
    PORT=$2
 
-   group=$3
-   context=$4
-   session=$5
-   collection=$6
-   collectionspace=$7
-   database=$8
-   system=$9
-   installpath=${10}
+   context=$3
+   session=$4
+   collection=$5
+   collectionspace=$6
+   database=$7
+   system=$8
+   installpath=$9
 
-   if [ "$PORT" != "" ] || [ "$group" == "true" ] || [ "$context" == "true" ] || [ "$session" == "true" ] || [ "$collection" == "true" ] || [ "$collectionspace" == "true" ] || [ "$database" == "true" ] || [ "$system" == "true" ] ; then
+   if [ "$PORT" != "" ] || [ "$context" == "true" ] || [ "$session" == "true" ] || [ "$collection" == "true" ] || [ "$collectionspace" == "true" ] || [ "$database" == "true" ] || [ "$system" == "true" ] ; then
       mkdir -p SDBSNAPS/
    else
       return 0
@@ -262,10 +305,8 @@ function sdbSnapShotExtract()
    if [ $? -ne 0 ] ; then
       $SDB "quit"
       echo "Failed to collect snapshot.Please check over the node $PORT is run or not !"
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "the node $PORT is not run"
    else
-      if [ "$group" == "true" ] ; then
-         $SDB "db.listReplicaGroups()" >> SDBSNAPS/$HOST.$PORT.listGroups
-      fi
       if [ "$context" == "true" ] ; then
          $SDB "db.snapshot(SDB_SNAP_CONTEXTS)" >> SDBSNAPS/$HOST.$PORT.snapshot_contests
       fi
@@ -291,6 +332,7 @@ function sdbSnapShotExtract()
    lsfold=`ls SDBSNAPS/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
       rm -rf SDBSNAPS/
+      sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Don't have file in SDBSNAPS/"
    else
       sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to collect sdb snapshot information"
    fi
