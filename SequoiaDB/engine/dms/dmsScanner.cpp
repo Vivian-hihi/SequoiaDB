@@ -259,6 +259,7 @@ namespace engine
                   rc = SDB_DMS_INCOMPATIBLE_MODE ;
                   goto error_release ;
                }
+               _next = DMS_RECORD_GETNEXTOFFSET(_curRecordPtr) ;
             }
          }
 
