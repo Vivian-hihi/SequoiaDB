@@ -151,6 +151,7 @@ else if ( $common == "postallnodeconf" )
 	$temp_1 = '#节点列表'.PHP_EOL.'LIST_NODE=(\\'.PHP_EOL ;
 	$temp_2 = '' ;
 	$temp_3 = '' ;
+	$temp_svcname = 0 ;
 	foreach( $node_conf['coord'] as $child )
 	{
 		$conf = $child["conf"] ;
@@ -178,7 +179,35 @@ else if ( $common == "postallnodeconf" )
 			{
 				$temp_3 .= ' ' ;
 			}
-			$temp_3 .= '"'.$conf[$i].'"' ;
+			if ( $conf[$i] == '' )
+			{
+			   $temp_name = $temp_svcname ;
+			   if ( $globalvar_setup_conf[$i][0] == 'replname' )
+			   {
+			      $temp_name = $temp_svcname + 1 ;
+			   }
+			   else if ( $globalvar_setup_conf[$i][0] == 'shardname' )
+			   {
+			      $temp_name = $temp_svcname + 2 ;
+			   }
+			   else if ( $globalvar_setup_conf[$i][0] == 'catalogname' )
+			   {
+			      $temp_name = $temp_svcname + 3 ;
+			   }
+			   else if ( $globalvar_setup_conf[$i][0] == 'httpname' )
+			   {
+			      $temp_name = $temp_svcname + 4 ;
+			   }
+			   $temp_3 .= '"'.$temp_name.'"' ;
+			}
+			else
+			{
+			   $temp_3 .= '"'.$conf[$i].'"' ;
+			}
+			if ( $globalvar_setup_conf[$i][0] == 'svcname' )
+			{
+			   $temp_svcname = (int)$conf[$i] ;
+			}
 		}
 		$temp_3 .= ')'.PHP_EOL ;
 		++$node_num ;
