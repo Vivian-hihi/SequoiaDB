@@ -114,7 +114,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_SOURCEHOST,    boost::program_options::value<string>(), "connect to source data server, hostname ( hdfs model only )" ) \
        ( OPTION_SOURCEPORT,    boost::program_options::value<string>(), "connect to source data server, port ( hdfs model only )" ) \
        ( OPTION_SOURCEUSER,    boost::program_options::value<string>(), "connect to source data server, user ( hdfs model only )" ) \
-       ( OPTION_TYPE,          boost::program_options::value<string>(), "type of file to load, default: json (json,csv)" ) \
+       ( OPTION_TYPE,          boost::program_options::value<string>(), "type of file to load, default: csv (json,csv)" ) \
        ( OPTION_FIELD,         boost::program_options::value<string>(), "comma separated list of field names e.g. --fields name,age" ) \
        ( OPTION_HEADERLINE,    boost::program_options::value<string>(), "first line in input file is a header, default: false ( CSV type only )" ) \
        ( OPTION_SPARSE,        boost::program_options::value<string>(), "auto add fields, default: true ( CSV type only )" ) \
