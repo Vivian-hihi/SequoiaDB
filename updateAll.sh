@@ -83,22 +83,22 @@ function installSdb()
       fi
    done
 
-   outStr=`rm -rf ${homePath}/50000/*`
-   outStr=`rm -f sdb.conf`
-   outStr=`rm -f nohup`
+   rm -rf ${homePath}/50000 2>/dev/null
+   #rm -f ${homePath}/sdb.conf
+   #rm -f ${homePath}/nohup
 
    # remove old sdb
-   if [ ! -d "30000" ] ; then
+   if [ ! -d "${homePath}/30000" ] ; then
       needInstall=1
    fi
 
    if [ $needInstall -ne 0 ] ; then
       echo "Begin to remove sdb...."
-      rm -r 30000
-      rm -r 20000
-      rm -r 40000
-      rm -r 41000
-      rm -r 42000
+      rm -r ${homePath}/30000 2>/dev/null
+      rm -r ${homePath}/20000 2>/dev/null
+      rm -r ${homePath}/40000 2>/dev/null
+      rm -r ${homePath}/41000 2>/dev/null
+      rm -r ${homePath}/42000 2>/dev/null
       rm -rf conf/local
       mkdir conf/local
       echo "Remove sdb ok"
@@ -122,7 +122,7 @@ function installSdb()
    fi
    if [ $needInstall -eq 0 ] ; then
       echo "use catalog list"
-      nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" -t 192.168.20.106:30003 >/dev/null 2>&1 &
+      nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" -t ${hostName}:30003 >/dev/null 2>&1 &
    else
       echo "no catalog list"
       nohup bin/sequoiadb -o coord -d ${homePath}/50000 -p "50000" >/dev/null 2>&1 &
@@ -137,7 +137,9 @@ function installSdb()
          echo "Connect coord failed*******"
          exit 1
       fi
+      echo "Start creating catalog"
       bin/sdb -s " db.createCataRG('${hostName}', '30000', '${homePath}/30000' ); sleep(5000);"
+      echo "Creating catalog complete"
       bin/sdb -s " var dbcat ; for ( var i=0; i < 60; ++i ) { try { dbcat = new Sdb('localhost', '30000'); dbcat.close();  break ; } catch(e) { println( 'Failed: ' + e ) ; sleep(1000) ;} } "
       if [ $? -eq 0 ] ; then
          echo "Create Catalog RG Succeed"
