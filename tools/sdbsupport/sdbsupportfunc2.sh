@@ -8,7 +8,7 @@ function sdbCheckPassword()
 
    /usr/local/bin/expect -c "
       set timeout 10 ;
-      spawn ssh sdbadmin@$HOST ;
+      spawn ssh $USER@$HOST ;
       expect {
             \"*yes/no*\" ; {send \"yes\r\" ; exp_continue}
             \"assword\" ; {send \"$PASSWD\r\" ;
@@ -22,7 +22,7 @@ function sdbCheckPassword()
                send_user \"eof\n\" ;
             }
       }
-                        "
+                        " >>/dev/null 2>&1
 
 }
 
@@ -39,11 +39,11 @@ function sdbExpectSshHosts()
    endflag="echo \"Too much time\""
    /usr/local/bin/expect -c   "
       set timeout $timeout ;
-      spawn ssh sdbadmin@$HOST ;
+      spawn ssh $USER@$HOST ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\r\n\";send \"chmod +x sdbsupport.sh\r\n\";send \"$sdbsupport\r\n\";send \"exit\r\n\";exp_continue}
+         \"*login*\";{send \"cd $localPath\r\n\";send \"chmod +x sdbsupport.sh\r\n\";send \"$sdbsupport\r\n\";send \"\r\n\";send \"mv sdbsupport.log sdbsupport.log.$HOST\r\n\";send \"exit\r\n\";exp_continue}
          timeout ;{exit 4;}
          eof
          {
@@ -56,6 +56,9 @@ function sdbExpectSshHosts()
    if [ "$rc" == "4" ] ; then
       echo "Run time out,please take too much time in host : $HOST"
       sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Run time out,please take too much time in host : $HOST"
+   else
+      echo "Success to run sdbsupport.sh in $HOST"
+       sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Success to run sdbsupport"
    fi
 }
 
@@ -104,6 +107,7 @@ function sdbTarGzPack()
    if [ "$hard" == "true" ] && [ "$sdbnode" == "true" ] && [ "$osinfo" == "true" ] && [ "$sdbsnap" == "true" ] ; then
       echo "Error,Failed to collect $HOST information "
       sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Error,Failed to collect $HOST information "
+      rm -rf ./$Folder/
       exit 1
    fi
 
@@ -123,6 +127,11 @@ function sdbTarGzPack()
       echo "Complete to packaging and compression"
       sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to Complete to packaging and compression"
    fi
+
+   mv $Folder.tar.gz ./log
+   if [ $? -ne 0 ] ; then
+      echo "Failed to move to log folder."
+   fi
    rm -rf ./$Folder/
 }
 
@@ -136,7 +145,7 @@ function sdbExpectScpHosts()
 
    /usr/local/bin/expect -c"
       set timeout 80 ;
-      spawn scp -r sdbadmin@$HOST:$localPath/*$HOST*.tar.gz ./ ;
+      spawn scp -r $USER@$HOST:$localPath/*$HOST*.tar.gz ./log/ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
@@ -148,9 +157,41 @@ function sdbExpectScpHosts()
       }
                               " >>/dev/null 2>&1
       if [ "$rc" == "4" ] ; then
-         echo "Failed to scp the file"
-         sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to scp sdbadmin@$HOST:$localPath/*$HOST*.tar.gz"
+         echo "Failed to copy $HOST:$localPath/*$HOST*.tar.gz"
+         sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to scp $USER@$HOST:$localPath/*$HOST*.tar.gz"
+      else
+         echo "Success to copy information from $HOST"
+         sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to copy information from $HOST"
       fi
+
+}
+
+function sdbSupportLog()
+{
+   HOST=$1
+   localPath=$2
+   PASSWD=$3
+
+   /usr/local/bin/expect -c"
+         set timeout 80 ;
+         spawn scp -r $USER@$HOST:$localPath/sdbsupport.log.$HOST ./log/ ;
+         expect {
+            \"*yes/no*\";{send \"yes\n\";exp_continue}
+            \"*assword\";{send \"$PASSWD\n\";exp_continue}
+            timeout ;{exit 4;}
+            eof
+            {
+               send_user \"eof\n\";
+            }
+         }
+                           " >>/dev/null 2>&1
+   if [ "$rc" == "4" ] ; then
+      echo "Failed to copy $HOST:$localPath/sdbsupport.log"
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to scp $USER@$HOST:$localPath/sdbsupport.log"
+   else
+      echo "Success to copy sdbsupport.log"
+      sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to copy sdbsupport.log"
+   fi
 
 }
 
@@ -162,11 +203,11 @@ function sdbSSHRemove()
 
    /usr/local/bin/expect -c"
       set timeout 50 ;
-      spawn ssh sdbadmin@$HOST ;
+      spawn ssh $USER@$HOST ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\r\n\";send \"rm *$HOST*.tar.gz\r\n\";send \"\r\";send \"exit\r\" ;}
+         \"*login*\";{send \"cd $localPath\r\n\";send \"rm *$HOST*.tar.gz sdbsupport.log.$HOST\r\n\";send \"\r\";send \"exit\r\" ;}
          eof
          {
            send_user \"eof\n\";

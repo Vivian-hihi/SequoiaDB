@@ -3,12 +3,15 @@
 . ./sdbsupportfunc1.sh
 . ./sdbsupportfunc2.sh
 #variable in bash shell
-declare -a PORT
-declare -a DBPATH
-declare -a ROLE
-declare -a HOST
+#declare -a PORT
+#declare -a DBPATH
+#declare -a ROLE
+#declare -a HOST
 confpath=""
 pHostNum=""
+
+#user permission
+USER="sdbadmin"
 
 #gloable variable
 hostName=""
@@ -50,7 +53,7 @@ network="false"
 progress="false"
 login="false"
 limit="false"
-vmstate="false"
+vmstat="false"
 all="false"
 
 #the parameter get where location
@@ -105,13 +108,13 @@ function Usage()
    echo "    --process              operating system process" ;
    echo "    --login                operating system users and history" ;
    echo "    --limit                ulimit used to limit the resources occupied shell startup process" ;
-   echo "    --vmstate              Show the server status value of a given time interval" ;
+   echo "    --vmstat               Show the server status value of a given time interval" ;
    echo "    --timeout              Set too much time to collect,default:50"
 
 }
 
 #the parameters can use  
-optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,conf,log,cm,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,module,env,network,process,login,limit,vmstate,catalog,all,timeout: -- "$@"`
+optArg=`getopt -a -o N:p:t:sohH -l hostname,svcport,thread,snapshot,osinfo,hardware,help,conf,log,cm,cpu,memory,disk,netcard,mainboard,group,context,session,collection,collectionspace,database,system,diskmanage,basicsys,module,env,network,process,login,limit,vmstat,catalog,all,timeout: -- "$@"`
 
 #check over the option of sdbsupport
 rc=$?
@@ -228,8 +231,8 @@ do
    --limit)
       limit="true"
       ;;
-   --vmstate)
-      vmstate="true"
+   --vmstat)
+      vmstat="true"
       ;;
    --catalog)
       catalog="true"
@@ -262,7 +265,12 @@ echo ""
 #******************************************************************************
 #@Function : Check over environment
 #******************************************************************************
-mv sdbsupport.log sdbsupport.log.1 >>sdbsupport.log 2>&1
+#mv sdbsupport.log sdbsupport.log.1 >>sdbsupport.log 2>&1
+mkdir -p log
+if [ $? -ne 0 ] ; then
+	echo "Failed to create folder:log"
+	exit 1
+fi
 
 #inspect the environment of sequiaDB
 localhost=`hostname`
@@ -617,6 +625,7 @@ if [ "$all" == "true" ] ; then
          #ssh host and collect information
          sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
          sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}"
+         sdbSupportLog "${HOST[$i]}" "$localPath" "${PASSWD[$i]}"
          sdbSSHRemove "${HOST[$i]}" "${PASSWD[$i]}" "$localPath"
          #echo "concurent $i"
          echo "" >&6
@@ -673,6 +682,12 @@ do
                #Just have snapshot argument ,no port argument
                for k in $(seq 1 $PortNum)
                do
+                  if [ "$sdbconf" == "true" ] || [ "$sdblog" == "true" ] || [ "$sdbcm" == "true" ] ; then
+                     sdbPortGatherPart "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath" "$sdbconf" "$sdblog" "$sdbcm"
+                  else
+                     sdbPortGather "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath"
+                  fi
+
                   if [ "${Role[$k]}" == "coord" ] ; then
                      sdbCoordSnapShot "${HostPara[$i]}" "${PORT[$k]}" "$installpath" "$catalog" "$group"
                   fi
@@ -689,7 +704,7 @@ do
                sdbSystemInfoAll "${HOST[$i]}"
             else
                sdbSystemInfoPartFore "${HOST[$i]}" "$diskmanage" "$osystem" "$module" "$env" "$network"
-               sdbSystemInfoPartEnd "${HOST[$i]}" "$progress" "$login" "$limit" "$vmstate"
+               sdbSystemInfoPartEnd "${HOST[$i]}" "$progress" "$login" "$limit" "$vmstat"
             fi
 
             #Parameter:--hardinfo ; Collect all hardware information or collect part of system information !
@@ -717,6 +732,7 @@ do
             sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"
             sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
             sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}"
+            sdbSupportLog "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}"
             sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath"
             echo "" >&6
             }&

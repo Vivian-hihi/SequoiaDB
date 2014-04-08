@@ -80,7 +80,7 @@ function sdbPortConf()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdb.conf."
-         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdb.conf"
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$confpath/$PORT/sdb.conf"
       fi
    fi
 }
@@ -115,7 +115,7 @@ function sdbPortLog()
       rc=$?
       if [ $rc -ne 0 ] ; then
          echo "Failed to collect $HOST:$PORT sdbdiag.log"
-         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$PORT sdbdiag.log"
+         sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Failed to collect $HOST:$DBPATH/diaglog/sdbdiag.log"
       fi
    fi
 }
@@ -639,13 +639,13 @@ function sdbLimit()
 ##OSinfo : collect vmstat information
 function sdbVmstat()
 {
-   echo "######>vmstat" >> OSINFO/$HOST.vmstate.sys 2>&1
-   vmstat >> OSINFO/$HOST.vmstate.sys 2>&1
+   echo "######>vmstat" >> OSINFO/$HOST.vmstat.sys 2>&1
+   vmstat >> OSINFO/$HOST.vmstat.sys 2>&1
    rc=$?
    if [ $rc -ne 0 ] ; then
       echo "Failed to collect vmstat information"
       sdbEchoLog "ERROR" "$HOST/$0/${FUNCNAME}" "${LINENO}" "vmstat:Failed"
-      rm OSINFO/$HOST.vmstate.sys
+      rm OSINFO/$HOST.vmstat.sys
    fi
 
 }
@@ -707,9 +707,9 @@ function sdbSystemInfoPartEnd()
    process=$2
    login=$3
    limit=$4
-   vmstate=$5
+   vmstat=$5
 
-   if [ "$process" == "true" ] || [ "$login" == "true" ] || [ "$limit" == "true" ] || [ "$vmstate" == "true" ] ; then
+   if [ "$process" == "true" ] || [ "$login" == "true" ] || [ "$limit" == "true" ] || [ "$vmstat" == "true" ] ; then
       mkdir -p OSINFO/
    else
       return 0
@@ -727,7 +727,7 @@ function sdbSystemInfoPartEnd()
       sdbLimit
    fi
 
-   if [ "$vmstate" == "true" ] ; then
+   if [ "$vmstat" == "true" ] ; then
       sdbVmstat
    fi
 
