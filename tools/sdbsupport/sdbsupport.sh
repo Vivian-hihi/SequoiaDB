@@ -684,8 +684,8 @@ do
                do
                   if [ "$sdbconf" == "true" ] || [ "$sdblog" == "true" ] || [ "$sdbcm" == "true" ] ; then
                      sdbPortGatherPart "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath" "$sdbconf" "$sdblog" "$sdbcm"
-                  else
-                     sdbPortGather "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath"
+#							 else
+#                     sdbPortGather "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath"
                   fi
 
                   if [ "${Role[$k]}" == "coord" ] ; then
