@@ -70,7 +70,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -112,12 +112,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac2a4d640622d115cf726626f15e5329b"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ac2a4d640622d115cf726626f15e5329b">getCount</a> (SINT64 &amp;count, const bson::BSONObj &amp;condition=_sdbStaticObject)</td></tr>
 <tr class="memdesc:ac2a4d640622d115cf726626f15e5329b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the count of matching documents in current collection.  <a href="#ac2a4d640622d115cf726626f15e5329b"></a><br/></td></tr>
 <tr class="separator:ac2a4d640622d115cf726626f15e5329b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e10fefb43c851469c39c97eee87be76"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a6e10fefb43c851469c39c97eee87be76">split</a> (const CHAR *sourceGroupName, const CHAR *destGroupName, const bson::BSONObj &amp;splitCondition, const bson::BSONObj &amp;splitEndCondition)</td></tr>
-<tr class="memdesc:a6e10fefb43c851469c39c97eee87be76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source group to target group by range.  <a href="#a6e10fefb43c851469c39c97eee87be76"></a><br/></td></tr>
-<tr class="separator:a6e10fefb43c851469c39c97eee87be76"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab29bc3d731491561808b32b028e5ae99"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ab29bc3d731491561808b32b028e5ae99">split</a> (const CHAR *sourceGroupName, const CHAR *destGroupName, FLOAT64 percent)</td></tr>
-<tr class="memdesc:ab29bc3d731491561808b32b028e5ae99"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source group to target by percent.  <a href="#ab29bc3d731491561808b32b028e5ae99"></a><br/></td></tr>
-<tr class="separator:ab29bc3d731491561808b32b028e5ae99"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6088162e2083805eb52cd2410e925203"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a6088162e2083805eb52cd2410e925203">split</a> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, const bson::BSONObj &amp;splitCondition, const bson::BSONObj &amp;splitEndCondition=_sdbStaticObject)</td></tr>
+<tr class="memdesc:a6088162e2083805eb52cd2410e925203"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source replica group to target replica group by range.  <a href="#a6088162e2083805eb52cd2410e925203"></a><br/></td></tr>
+<tr class="separator:a6088162e2083805eb52cd2410e925203"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8919c63570b4b3df679375db896339ec"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a8919c63570b4b3df679375db896339ec">split</a> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, FLOAT64 percent)</td></tr>
+<tr class="memdesc:a8919c63570b4b3df679375db896339ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source replica group to target replica group by percent.  <a href="#a8919c63570b4b3df679375db896339ec"></a><br/></td></tr>
+<tr class="separator:a8919c63570b4b3df679375db896339ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a10f9333670535e166a34a308ff5d6e"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a7a10f9333670535e166a34a308ff5d6e">splitAsync</a> (SINT64 &amp;taskID, const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, const bson::BSONObj &amp;splitCondition, const bson::BSONObj &amp;splitEndCondition=_sdbStaticObject)</td></tr>
+<tr class="memdesc:a7a10f9333670535e166a34a308ff5d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source replica group to target replica group by range.  <a href="#a7a10f9333670535e166a34a308ff5d6e"></a><br/></td></tr>
+<tr class="separator:a7a10f9333670535e166a34a308ff5d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add4fa8fa068f241d997d3c21b388c323"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#add4fa8fa068f241d997d3c21b388c323">splitAsync</a> (const CHAR *pSourceGroupName, const CHAR *pTargetGroupName, FLOAT64 percent, SINT64 &amp;taskID)</td></tr>
+<tr class="memdesc:add4fa8fa068f241d997d3c21b388c323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Split the specified collection from source replica group to target replica group by percent.  <a href="#add4fa8fa068f241d997d3c21b388c323"></a><br/></td></tr>
+<tr class="separator:add4fa8fa068f241d997d3c21b388c323"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcf15277babcda91553ba20e6bea3c06"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#adcf15277babcda91553ba20e6bea3c06">bulkInsert</a> (SINT32 flags, std::vector&lt; bson::BSONObj &gt; &amp;obj)</td></tr>
 <tr class="memdesc:adcf15277babcda91553ba20e6bea3c06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a bulk of bson objects into current collection.  <a href="#adcf15277babcda91553ba20e6bea3c06"></a><br/></td></tr>
 <tr class="separator:adcf15277babcda91553ba20e6bea3c06"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -178,6 +184,12 @@ INT32&#160;</td><td class="memItemRight" valign="bottom"><b>getQueryMeta</b> (<a
 <tr class="memitem:ad81f17ef5bbe4447ffa1edde10c13ccf"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ad81f17ef5bbe4447ffa1edde10c13ccf">getQueryMeta</a> (<a class="el" href="classsdbclient_1_1sdbCursor.html">sdbCursor</a> &amp;cursor, const bson::BSONObj &amp;condition, const bson::BSONObj &amp;orderBy, const bson::BSONObj &amp;hint, INT64 numToSkip, INT64 numToReturn)</td></tr>
 <tr class="memdesc:ad81f17ef5bbe4447ffa1edde10c13ccf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the index blocks' or data blocks' infomations for concurrent query.  <a href="#ad81f17ef5bbe4447ffa1edde10c13ccf"></a><br/></td></tr>
 <tr class="separator:ad81f17ef5bbe4447ffa1edde10c13ccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a055fd1f3bc94c2349cf4685fa3e6c7e2"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#a055fd1f3bc94c2349cf4685fa3e6c7e2">attachCollection</a> (const CHAR *subClFullName, const bson::BSONObj &amp;options)</td></tr>
+<tr class="memdesc:a055fd1f3bc94c2349cf4685fa3e6c7e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach the specified collection.  <a href="#a055fd1f3bc94c2349cf4685fa3e6c7e2"></a><br/></td></tr>
+<tr class="separator:a055fd1f3bc94c2349cf4685fa3e6c7e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae109b9915c1f22d57a448ee22f3dbdde"><td class="memItemLeft" align="right" valign="top">INT32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsdbclient_1_1sdbCollection.html#ae109b9915c1f22d57a448ee22f3dbdde">detachCollection</a> (const CHAR *subClFullName)</td></tr>
+<tr class="memdesc:ae109b9915c1f22d57a448ee22f3dbdde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dettach the specified collection.  <a href="#ae109b9915c1f22d57a448ee22f3dbdde"></a><br/></td></tr>
+<tr class="separator:ae109b9915c1f22d57a448ee22f3dbdde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
@@ -186,7 +198,6 @@ Public Attributes</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Database operation interfaces of cursor. </p>
-<p>Class <a class="el" href="classsdbclient_1_1sdbCollection.html" title="Database operation interfaces of cursor.">sdbCollection</a> is a handle class of virtual base class <a class="el" href="classsdbclient_1_1__sdbCollection.html">_sdbCollection</a>. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a18a1f054c19946c883564c260b58eeb0"></a>
 <div class="memitem">
@@ -225,6 +236,56 @@ Public Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">obj</td><td>The array of bson objects </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">cursor</td><td>The cursor object of result </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a055fd1f3bc94c2349cf4685fa3e6c7e2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::attachCollection </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>subClFullName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>options</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Attach the specified collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">subClFullName</td><td>The name of the subcollection </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">options</td><td>The low boudary and up boudary eg: {"LowBound":{a:1},"UpBound":{a:100}} </td></tr>
   </table>
   </dd>
 </dl>
@@ -422,6 +483,45 @@ Public Attributes</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">condition</td><td>The matching rule, delete all the documents if not provided </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">hint</td><td>The hint, automatically match the optimal hint if not provided </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="ae109b9915c1f22d57a448ee22f3dbdde"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::detachCollection </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>subClFullName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Dettach the specified collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">subClFullName</td><td>The name of the subcollection </td></tr>
   </table>
   </dd>
 </dl>
@@ -898,7 +998,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a6e10fefb43c851469c39c97eee87be76"></a>
+<a class="anchor" id="a6088162e2083805eb52cd2410e925203"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -909,13 +1009,13 @@ Public Attributes</h2></td></tr>
           <td class="memname">INT32 sdbclient::sdbCollection::split </td>
           <td>(</td>
           <td class="paramtype">const CHAR *&#160;</td>
-          <td class="paramname"><em>sourceGroupName</em>, </td>
+          <td class="paramname"><em>pSourceGroupName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const CHAR *&#160;</td>
-          <td class="paramname"><em>destGroupName</em>, </td>
+          <td class="paramname"><em>pTargetGroupName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -927,7 +1027,7 @@ Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
-          <td class="paramname"><em>splitEndCondition</em>&#160;</td>
+          <td class="paramname"><em>splitEndCondition</em> = <code>_sdbStaticObject</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -942,13 +1042,13 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Split the specified collection from source group to target group by range. </p>
+<p>Split the specified collection from source replica group to target replica group by range. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">sourceGroupName</td><td>The source group name </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">destGroupName</td><td>The target group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pSourceGroupName</td><td>The source replica group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pTargetGroupName</td><td>The target replica group name </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">splitCondition</td><td>The split condition </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">splitEndCondition</td><td>The split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the targe group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">splitEndCondition</td><td>The split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the target replica group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
   </table>
   </dd>
 </dl>
@@ -962,7 +1062,7 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ab29bc3d731491561808b32b028e5ae99"></a>
+<a class="anchor" id="a8919c63570b4b3df679375db896339ec"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -973,13 +1073,13 @@ Public Attributes</h2></td></tr>
           <td class="memname">INT32 sdbclient::sdbCollection::split </td>
           <td>(</td>
           <td class="paramtype">const CHAR *&#160;</td>
-          <td class="paramname"><em>sourceGroupName</em>, </td>
+          <td class="paramname"><em>pSourceGroupName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const CHAR *&#160;</td>
-          <td class="paramname"><em>destGroupName</em>, </td>
+          <td class="paramname"><em>pTargetGroupName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1000,12 +1100,147 @@ Public Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Split the specified collection from source group to target by percent. </p>
+<p>Split the specified collection from source replica group to target replica group by percent. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">sourceGroupName</td><td>The source group name </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">destGroupName</td><td>The target group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pSourceGroupName</td><td>The source replica group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pTargetGroupName</td><td>The target replica group name </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">percent</td><td>The split percent, Range:(0,100] </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a7a10f9333670535e166a34a308ff5d6e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 sdbclient::sdbCollection::splitAsync </td>
+          <td>(</td>
+          <td class="paramtype">SINT64 &amp;&#160;</td>
+          <td class="paramname"><em>taskID</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pSourceGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pTargetGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>splitCondition</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bson::BSONObj &amp;&#160;</td>
+          <td class="paramname"><em>splitEndCondition</em> = <code>_sdbStaticObject</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Split the specified collection from source replica group to target replica group by range. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[out]</td><td class="paramname">taskID</td><td>The id of current split task </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pSourceGroupName</td><td>The source replica group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pTargetGroupName</td><td>The target replica group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">splitCondition</td><td>The split condition </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">splitEndCondition</td><td>The split end condition or null eg:If we create a collection with the option {ShardingKey:{"age":1},ShardingType:"Hash",Partition:2^10}, we can fill {age:30} as the splitCondition, and fill {age:60} as the splitEndCondition. when split, the target replica group will get the records whose age's hash value are in [30,60). If splitEndCondition is null, they are in [30,max). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">SDB_OK</td><td>Operation Success </td></tr>
+    <tr><td class="paramname">Others</td><td>Operation Fail </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="add4fa8fa068f241d997d3c21b388c323"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">INT32 INT32 sdbclient::sdbCollection::splitAsync </td>
+          <td>(</td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pSourceGroup</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CHAR *&#160;</td>
+          <td class="paramname"><em>pTargetGroup</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">FLOAT64&#160;</td>
+          <td class="paramname"><em>percent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">SINT64 &amp;&#160;</td>
+          <td class="paramname"><em>taskID</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Split the specified collection from source replica group to target replica group by percent. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">pSourceGroupName</td><td>The source replica group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">pTargetGroupName</td><td>The target replica group name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">percent</td><td>The split percent, Range:(0.0, 100.0] </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">taskID</td><td>The id of current split task </td></tr>
   </table>
   </dd>
 </dl>
@@ -1156,7 +1391,7 @@ Public Attributes</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:30:54 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 16:32:40 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

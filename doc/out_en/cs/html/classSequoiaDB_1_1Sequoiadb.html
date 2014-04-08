@@ -250,6 +250,30 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:a11ed29be8a6d63fbee3d166f1cc6942a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a11ed29be8a6d63fbee3d166f1cc6942a">ExecUpdate</a> (string sql)</td></tr>
 <tr class="memdesc:a11ed29be8a6d63fbee3d166f1cc6942a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executing SQL command for updating.  <a href="#a11ed29be8a6d63fbee3d166f1cc6942a"></a><br/></td></tr>
 <tr class="separator:a11ed29be8a6d63fbee3d166f1cc6942a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92a0f4b5a09731c64cd694977a94e45f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a92a0f4b5a09731c64cd694977a94e45f">GetSnapshot</a> (int snapType, BsonDocument matcher, BsonDocument selector, BsonDocument orderBy)</td></tr>
+<tr class="memdesc:a92a0f4b5a09731c64cd694977a94e45f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the snapshots of specified type.  <a href="#a92a0f4b5a09731c64cd694977a94e45f"></a><br/></td></tr>
+<tr class="separator:a92a0f4b5a09731c64cd694977a94e45f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa70af03d0fec4274d5afd5c2245d447d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#aa70af03d0fec4274d5afd5c2245d447d">GetList</a> (int listType)</td></tr>
+<tr class="memdesc:aa70af03d0fec4274d5afd5c2245d447d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the informations of specified type.  <a href="#aa70af03d0fec4274d5afd5c2245d447d"></a><br/></td></tr>
+<tr class="separator:aa70af03d0fec4274d5afd5c2245d447d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad4306747876c083c1fb272c0acec5ee8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad4306747876c083c1fb272c0acec5ee8">GetList</a> (int listType, BsonDocument matcher, BsonDocument selector, BsonDocument orderBy)</td></tr>
+<tr class="memdesc:ad4306747876c083c1fb272c0acec5ee8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the informations of specified type.  <a href="#ad4306747876c083c1fb272c0acec5ee8"></a><br/></td></tr>
+<tr class="separator:ad4306747876c083c1fb272c0acec5ee8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a4acd6dc36c0b6edd19b8677ce28845cf">ResetSnapshot</a> (BsonDocument matcher)</td></tr>
+<tr class="memdesc:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset the snapshot.  <a href="#a4acd6dc36c0b6edd19b8677ce28845cf"></a><br/></td></tr>
+<tr class="separator:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c6ab0fa29c12c3cafc02bddc7343d39"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c6ab0fa29c12c3cafc02bddc7343d39"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a0c6ab0fa29c12c3cafc02bddc7343d39">closeAllCursors</a> ()</td></tr>
+<tr class="memdesc:a0c6ab0fa29c12c3cafc02bddc7343d39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close all the cursors created in current connection, we can't use those cursors to get data again. </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
+    <tr><td class="paramname">System.Exception.</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<br/></td></tr>
+<tr class="separator:a0c6ab0fa29c12c3cafc02bddc7343d39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4154feb73dd45bf92db4f01b97b4b4ab"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a4154feb73dd45bf92db4f01b97b4b4ab">ListReplicaGroups</a> ()</td></tr>
 <tr class="memdesc:a4154feb73dd45bf92db4f01b97b4b4ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get all the groups.  <a href="#a4154feb73dd45bf92db4f01b97b4b4ab"></a><br/></td></tr>
 <tr class="separator:a4154feb73dd45bf92db4f01b97b4b4ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -271,18 +295,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr class="memitem:af16b85f5bf3937a56b84dcb5a9a78da1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1ReplicaGroup.html">ReplicaGroup</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#af16b85f5bf3937a56b84dcb5a9a78da1">ActivateReplicaGroup</a> (string groupName)</td></tr>
 <tr class="memdesc:af16b85f5bf3937a56b84dcb5a9a78da1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Activate the <a class="el" href="classSequoiaDB_1_1ReplicaGroup.html" title="Database operation interfaces of replica group.">ReplicaGroup</a> with given name.  <a href="#af16b85f5bf3937a56b84dcb5a9a78da1"></a><br/></td></tr>
 <tr class="separator:af16b85f5bf3937a56b84dcb5a9a78da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92a0f4b5a09731c64cd694977a94e45f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a92a0f4b5a09731c64cd694977a94e45f">GetSnapshot</a> (int snapType, BsonDocument matcher, BsonDocument selector, BsonDocument orderBy)</td></tr>
-<tr class="memdesc:a92a0f4b5a09731c64cd694977a94e45f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the snapshots of specified type.  <a href="#a92a0f4b5a09731c64cd694977a94e45f"></a><br/></td></tr>
-<tr class="separator:a92a0f4b5a09731c64cd694977a94e45f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa70af03d0fec4274d5afd5c2245d447d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#aa70af03d0fec4274d5afd5c2245d447d">GetList</a> (int listType)</td></tr>
-<tr class="memdesc:aa70af03d0fec4274d5afd5c2245d447d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the informations of specified type.  <a href="#aa70af03d0fec4274d5afd5c2245d447d"></a><br/></td></tr>
-<tr class="separator:aa70af03d0fec4274d5afd5c2245d447d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad4306747876c083c1fb272c0acec5ee8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classSequoiaDB_1_1DBCursor.html">DBCursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#ad4306747876c083c1fb272c0acec5ee8">GetList</a> (int listType, BsonDocument matcher, BsonDocument selector, BsonDocument orderBy)</td></tr>
-<tr class="memdesc:ad4306747876c083c1fb272c0acec5ee8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the informations of specified type.  <a href="#ad4306747876c083c1fb272c0acec5ee8"></a><br/></td></tr>
-<tr class="separator:ad4306747876c083c1fb272c0acec5ee8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSequoiaDB_1_1Sequoiadb.html#a4acd6dc36c0b6edd19b8677ce28845cf">ResetSnapshot</a> (BsonDocument matcher)</td></tr>
-<tr class="memdesc:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reset the snapshot.  <a href="#a4acd6dc36c0b6edd19b8677ce28845cf"></a><br/></td></tr>
-<tr class="separator:a4acd6dc36c0b6edd19b8677ce28845cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="properties"></a>
 Properties</h2></td></tr>
@@ -318,7 +330,7 @@ IConnection&#160;</td><td class="memItemRight" valign="bottom"><b>Connection</b>
 </div><div class="memdoc">
 
 <p>Default Constructor. </p>
-<p>Server address "127.0.0.1 : 50000" </p>
+<p>Server address "127.0.0.1 : 11810" </p>
 
 </div>
 </div>
@@ -825,6 +837,7 @@ IConnection&#160;</td><td class="memItemRight" valign="bottom"><b>Connection</b>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The CollecionSpace handle </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>If collection space not exit, throw <a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">BaseException</a> </dd></dl>
 <dl class="exception"><dt>Exceptions</dt><dd>
   <table class="exception">
     <tr><td class="paramname"><a class="el" href="classSequoiaDB_1_1BaseException.html" title="Database operation exception.">SequoiaDB.BaseException</a></td><td></td></tr>
@@ -1291,7 +1304,7 @@ SDB_SNAP_SYSTEM
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Thu Nov 14 2013 17:15:27 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Mar 11 2014 15:44:58 for SequoiaDB by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.2
 </small></address>

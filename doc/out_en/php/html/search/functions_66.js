@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['find',['find',['../classSequoiaCollection.html#a97186585d2f75a048ab02e9636b4f848',1,'SequoiaCollection']]]
+  ['find',['find',['../classSequoiaCL.html#a2a1c45c62ae4bf9ad626c86dfd5eb8ef',1,'SequoiaCL']]]
 ];

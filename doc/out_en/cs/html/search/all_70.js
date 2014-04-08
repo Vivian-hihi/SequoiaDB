@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['port',['Port',['../classSequoiaDB_1_1ReplicaNode.html#a83dcd36deb64b60ad35a7b2033abfa3f',1,'SequoiaDB::ReplicaNode']]]
+  ['port',['Port',['../classSequoiaDB_1_1Node.html#a848094076d299bffe7bc1000d5f28d48',1,'SequoiaDB::Node']]]
 ];
