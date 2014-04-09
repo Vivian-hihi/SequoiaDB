@@ -46,7 +46,7 @@ namespace engine
 
    // this updateRoute only change the old routeID to new one. It does NOT
    // change the hostname and servicename, so we do not need to restart services
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT, "_netRouteAgent::updateRoute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT, "_netRouteAgent::updateRoute" )
    INT32 _netRouteAgent::updateRoute ( const _MsgRouteID &oldID,
                                        const _MsgRouteID &newID )
    {
@@ -64,7 +64,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT2, "_netRouteAgent::updateRoute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT2, "_netRouteAgent::updateRoute" )
    INT32 _netRouteAgent::updateRoute( const _MsgRouteID &id,
                                      const CHAR *host,
                                      const CHAR *service )
@@ -91,7 +91,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT3, "_netRouteAgent::updateRoute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_UPRT3, "_netRouteAgent::updateRoute" )
    INT32 _netRouteAgent::updateRoute( const _MsgRouteID &id,
                                       const _netRouteNode &node )
    {
@@ -111,7 +111,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_LSTN, "_netRouteAgent::listen" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_LSTN, "_netRouteAgent::listen" )
    INT32 _netRouteAgent::listen( const _MsgRouteID &id )
    {
       INT32 rc = SDB_OK ;
@@ -141,7 +141,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND, "_netRouteAgent::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND, "_netRouteAgent::syncSend" )
    INT32 _netRouteAgent::syncSend( const _MsgRouteID &id,
                                    void *header )
    {
@@ -203,7 +203,7 @@ namespace engine
       return _frame.syncSend( handle, header ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND2, "_netRouteAgent::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND2, "_netRouteAgent::syncSend" )
    INT32 _netRouteAgent::syncSend( const _MsgRouteID &id,
                                    MsgHeader *header, void *body,
                                    UINT32 bodyLen )
@@ -251,7 +251,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND3, "_netRouteAgent::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSND3, "_netRouteAgent::syncSend" )
    INT32 _netRouteAgent::syncSend( const NET_HANDLE &handle,
                                    MsgHeader *header, void *body,
                                    UINT32 bodyLen )
@@ -274,7 +274,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSNDV, "_netRouteAgent::syncSendv" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__NETRTAG_SYNCSNDV, "_netRouteAgent::syncSendv" )
    INT32 _netRouteAgent::syncSendv( const _MsgRouteID &id,
                                     MsgHeader *header,
                                     const netIOVec &iov )
