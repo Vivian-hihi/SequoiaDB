@@ -39,14 +39,18 @@
 #include "oss.hpp"
 #include "netDef.hpp"
 #include "ossLatch.hpp"
-#include "ossEvent.hpp"
 
+#include <string>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
 using namespace boost::asio ;
+using namespace std ;
 
 namespace engine
 {
+   /*
+      NET_EVENT_HANDLER_STATE define
+   */
    enum NET_EVENT_HANDLER_STATE
    {
       NET_EVENT_HANDLER_STATE_HEADER = 0,
@@ -55,6 +59,9 @@ namespace engine
 
    class _netFrame ;
 
+   /*
+      _netEventHandler define
+   */
    class _netEventHandler :
          public boost::enable_shared_from_this<_netEventHandler>,
          public SDBObject
@@ -117,7 +124,12 @@ namespace engine
          INT32 syncSend( const void *buf,
                          UINT32 len ) ;
 
-         void setOpt() ;
+         void  setOpt() ;
+
+         string localAddr() const ;
+         string remoteAddr() const ;
+         UINT16 localPort() const ;
+         UINT16 remotePort() const ;
 
       private:
          void _readCallback(const boost::system::error_code &
@@ -141,7 +153,8 @@ namespace engine
    };
 
    typedef boost::shared_ptr<_netEventHandler> NET_EH ;
+
 }
 
-#endif
+#endif // NETEVENTHANDLER_HPP_
 
