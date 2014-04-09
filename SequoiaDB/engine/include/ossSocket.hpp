@@ -161,6 +161,9 @@ void     ossSocketBindListenMutexRelease() ;
 INT32    ossGetHostName( CHAR *pName, INT32 nameLen ) ;
 INT32    ossGetPort( const CHAR *pServiceName, UINT16 &port ) ;
 
+INT32    ossGetAddrInfo( sockaddr_in *addr, CHAR *pAddress, UINT32 length,
+                         UINT16 *pPort = NULL ) ;
+
 INT32    ossIP2Str( UINT32 ip, CHAR *pStr, INT32 nameLen ) ;
 UINT32   ossStr2IP( const CHAR *pStr ) ;
 
