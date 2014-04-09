@@ -702,7 +702,6 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
    INT32 rc = SDB_OK ;
    SOCKET maxFD = _fd ;
    INT32 sysError = 0 ;
-   INT32 tmpErr = 0 ;
    struct timeval maxSelectTime ;
    SDB_ASSERT ( _init, "socket is not initialized" )
    SDB_ASSERT ( sock, "Output sock is NULL" )
@@ -1060,7 +1059,7 @@ INT32 ossIP2Str( UINT32 ip, CHAR * pStr, INT32 nameLen )
    sockAddr.sin_family = AF_INET ;
    sockAddr.sin_addr.s_addr = htonl ( ip ) ;
    sockAddr.sin_port = htons ( 0 ) ;
-   return ossGetAddrInfo( &sockAddr, pStr, length, NULL ) ;
+   return ossGetAddrInfo( &sockAddr, pStr, nameLen, NULL ) ;
 }
 
 UINT32 ossStr2IP( const CHAR * pStr )
