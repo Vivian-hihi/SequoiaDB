@@ -46,8 +46,8 @@ namespace engine
    enum _ixmCanonicalTypes
    {
       cminkey         = 1   , // minkey
-      cnull           = 2   , // NULL
-      cundefined      = 3   , // UNDEFINED
+      cundefined      = 2   , // UNDEFINED
+      cnull           = 3   , // NULL
       cdouble         = 4   , // DOUBLE
       cstring         = 6   , // STRING
       cbindata        = 7   , // Binary Data
