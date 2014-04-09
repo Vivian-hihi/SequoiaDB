@@ -52,6 +52,9 @@ namespace engine
    typedef UINT32 NET_NODE_ID ;
    typedef UINT16 NET_SERVICE_ID ;
 
+   /*
+      _NET_NODE_STATUS define
+   */
    typedef enum _NET_NODE_STATUS
    {
       NET_NODE_STAT_NORMAL = 0,
@@ -61,7 +64,9 @@ namespace engine
       NET_NODE_STAT_UNKNOWN
    }NET_NODE_STATUS;
 
-
+   /*
+      _netRouteNode define
+   */
    class _netRouteNode : public SDBObject
    {
    public :
@@ -109,6 +114,9 @@ namespace engine
       }
    } ;
 
+   /*
+      _netIOV define
+   */
    class _netIOV : public SDBObject
    {
    public:
@@ -140,5 +148,5 @@ namespace engine
    typedef std::vector<netIOV> netIOVec ;
 }
 
-#endif
+#endif // NETDEF_HPP_
 
