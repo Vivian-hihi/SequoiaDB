@@ -41,6 +41,9 @@
 
 namespace engine
 {
+   /*
+      _netMsgHandler define
+   */
    class _netMsgHandler : public SDBObject
    {
       public:
@@ -51,10 +54,14 @@ namespace engine
                                  const _MsgHeader *header,
                                  const CHAR *msg ) = 0 ;
 
-        virtual void handleClose( const NET_HANDLE &handle, _MsgRouteID id ){};
-   };
+        virtual void handleClose( const NET_HANDLE &handle, _MsgRouteID id )
+        {
+        }
+   } ;
+
+   typedef _netMsgHandler INetMsgHandler ;
 
 }
 
-#endif
+#endif // NETMSGHANDLER_HPP_
 
