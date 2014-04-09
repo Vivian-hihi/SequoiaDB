@@ -38,6 +38,8 @@
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 
+const UINT32 MAX_RECV_RETRIES = 5 ;
+
 // Create a listening socket
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK, "_ossSocket::_ossSocket" )
 _ossSocket::_ossSocket ( UINT32 port, INT32 timeoutMilli )
@@ -358,7 +360,6 @@ BOOLEAN _ossSocket::isConnected ()
    return TRUE ;
 }
 
-#define MAX_RECV_RETRIES      5
 INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
                          INT32 &receivedLen,
                          INT32 timeout, INT32 flags )
