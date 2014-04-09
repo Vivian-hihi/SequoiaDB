@@ -87,6 +87,7 @@ namespace engine
 #define MTH_WEIGHT_EXISTS    250
 #define MTH_WEIGHT_ELEMMATCH 450
 #define MTH_WEIGHT_REGEX     1000000
+#define MTH_WEIGHT_ISNULL 250
 
    class _mthMatcher : public SDBObject
    {
