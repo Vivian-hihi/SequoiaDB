@@ -45,43 +45,6 @@ namespace engine
 {
    const UINT32 NET_MSG_MAX_LEN = 1024 * 1024 * 512 ;
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_REMOTEADDR, "remoteAddr" )
-   static string remoteAddr( const tcp::socket &sock )
-   {
-      PD_TRACE_ENTRY ( SDB_REMOTEADDR );
-      string addr ;
-      try
-      {
-         addr = sock.remote_endpoint().address().to_string() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "get remote end point err: %s",
-                 e.what() ) ;
-      }
-      PD_TRACE_EXIT ( SDB_REMOTEADDR );
-      return addr ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_REMOTEPORT, "remotePort" )
-   static UINT32 remotePort( const tcp::socket &sock )
-   {
-      PD_TRACE_ENTRY ( SDB_REMOTEPORT );
-      UINT32 port = 0 ;
-      try
-      {
-         port = sock.remote_endpoint().port() ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "get remote end point err: %s",
-                 e.what() ) ;
-      }
-      PD_TRACE1 ( SDB_REMOTEPORT, PD_PACK_UINT(port) );
-      PD_TRACE_EXIT ( SDB_REMOTEPORT );
-      return port ;
-   }
-
    _netEventHandler::_netEventHandler( _netFrame *frame ):
                                       _sock(frame->ioservice()),
                                       _buf(NULL),
@@ -95,7 +58,6 @@ namespace engine
       _isInAsync     = FALSE ;
    }
 
-
    _netEventHandler::~_netEventHandler()
    {
       close() ;
@@ -103,6 +65,64 @@ namespace engine
       {
          SDB_OSS_FREE( _buf ) ;
       }
+   }
+
+   string _netEventHandler::localAddr() const
+   {
+      string addr ;
+      try
+      {
+         addr = _sock.local_endpoint().address().to_string() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "get local address occurred exception: %s",
+                 e.what() ) ;
+      }
+      return addr ;
+   }
+
+   string _netEventHandler::remoteAddr() const
+   {
+      string addr ;
+      try
+      {
+         addr = _sock.remote_endpoint().address().to_string() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "get remote address occurred exception: %s",
+                 e.what() ) ;
+      }
+      return addr ;
+   }
+
+   UINT16 _netEventHandler::localPort () const
+   {
+      UINT16 port = 0 ;
+      try
+      {
+         port = _sock.local_endpoint().port() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "get local port occurred exception: %s", e.what() ) ;
+      }
+      return port ;
+   }
+
+   UINT16 _netEventHandler::remotePort () const
+   {
+      UINT16 port = 0 ;
+      try
+      {
+         port = _sock.remote_endpoint().port() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "get remote port occurred exception: %s", e.what() ) ;
+      }
+      return port ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__NETEVNHND_SETOPT, "_netEventHandler::setOpt" )
@@ -237,7 +257,7 @@ namespace engine
       }
 */
       UINT16 port = 0 ;
-      rc = _ossSocket::getPort( serviceName, port ) ;
+      rc = ossGetPort( serviceName, port ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get port :%s", serviceName ) ;
@@ -245,34 +265,34 @@ namespace engine
       }
 
       {
-      _ossSocket sock( hostName, port ) ;
-      rc = sock.initSocket() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to init socket:%d", rc ) ;
-         goto error ;
-      }
-      sock.closeWhenDestruct( FALSE ) ;
-      rc = sock.connect() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to connect remote[%s:%s], rc:%d",
-                 hostName, serviceName, rc ) ;
-         goto error ;
-      }
+         _ossSocket sock( hostName, port ) ;
+         rc = sock.initSocket() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to init socket:%d", rc ) ;
+            goto error ;
+         }
+         sock.closeWhenDestruct( FALSE ) ;
+         rc = sock.connect() ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to connect remote[%s:%s], rc:%d",
+                    hostName, serviceName, rc ) ;
+            goto error ;
+         }
 
-      try
-      {
-         _sock.assign( tcp::v4(), sock.native() ) ; 
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         sock.close() ;
-         _sock.close() ;
-         goto error ;
-      }
+         try
+         {
+            _sock.assign( tcp::v4(), sock.native() ) ; 
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+            rc = SDB_SYS ;
+            sock.close() ;
+            _sock.close() ;
+            goto error ;
+         }
       }
 
       setOpt() ;
@@ -448,7 +468,7 @@ namespace engine
                     GET_REQUEST_TYPE(_header.opCode),
                     _header.TID, _header.routeID.columns.groupID,
                     _header.routeID.columns.nodeID,
-                    remoteAddr( _sock ).c_str(), remotePort( _sock ) ) ;
+                    remoteAddr().c_str(), remotePort() ) ;
             /// add to route table
             if ( MSG_INVALID_ROUTEID == _id.value )
             {
