@@ -977,6 +977,10 @@ namespace engine
       {
          existsSpec = e.trueValue() ;
       }
+      else if ( BSONObj::opISNULL == op )
+      {
+         existsSpec = !e.trueValue() ;
+      }
       // if input is RegEx, or we have $regex as object name
       if ( e.type() == RegEx ||
            (e.type() == Object && !e.embeddedObject()["$regex"].eoo() ))
@@ -1049,6 +1053,7 @@ namespace engine
             op = BSONObj::LT ;
             break ;
          case BSONObj::opEXISTS:
+         case BSONObj::opISNULL:
             existsSpec = !existsSpec ;
             break ;
          default:
@@ -1147,13 +1152,31 @@ namespace engine
             startKey = stopKey = bson::staticUndefined.firstElement() ;
          }
          break ;
+      case BSONObj::opISNULL:
+         if ( !existsSpec )
+         {
+            _startStopKeys.push_back ( rtnStartStopKey() ) ;
+            _startStopKeys[0]._startKey._bound =
+                  _startStopKeys[0]._stopKey._bound =
+                  bson::staticUndefined.firstElement() ;
+            _startStopKeys[1]._startKey._bound =
+                  _startStopKeys[1]._stopKey._bound =
+                  bson::staticNull.firstElement() ;
+            _startStopKeys[0]._startKey._inclusive =
+                  _startStopKeys[0]._stopKey._inclusive =
+                  TRUE ;
+            _startStopKeys[1]._startKey._inclusive =
+                  _startStopKeys[1]._stopKey._inclusive =
+                  TRUE ;
+         }
+         break ;
       default:
          break ;
       }
       _isInitialized = TRUE ;
       PD_TRACE_EXIT ( SDB_RTNPRED_RTNPRED ) ;
    }
-   
+
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_REVERSE, "rtnPredicate::reverse" )
    void rtnPredicate::reverse ( rtnPredicate &result ) const
    {

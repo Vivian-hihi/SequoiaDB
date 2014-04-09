@@ -428,7 +428,8 @@ namespace bson {
             opELEM_MATCH = 0x12,
             opNEAR = 0x13,
             opWITHIN = 0x14,
-            opMAX_DISTANCE=0x15
+            opMAX_DISTANCE=0x15,
+            opISNULL=0x16
         };
 
         /** add all elements of the object to the specified vector */

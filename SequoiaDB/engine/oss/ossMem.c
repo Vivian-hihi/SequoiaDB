@@ -40,6 +40,14 @@
 // in engine we always compile in C++, so we can include pd.hpp
 #if defined (SDB_ENGINE)
 #include "pd.hpp"
+#include "pdTrace.hpp"
+#include "ossTrace.h"
+#else
+#define SDB__OSSMEMALLOC
+#define SDB__OSSMEMREALLOC
+#define SDB__OSSMEMFREE
+#define PD_TRACE_ENTRY(x)
+#define PD_TRACE_EXIT(x)
 #endif
 
 BOOLEAN ossMemDebugEnabled = FALSE ;
@@ -272,15 +280,19 @@ static void *ossMemAlloc2 ( size_t size, const CHAR* file, UINT32 line )
    return expMem ;
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMALLOC, "ossMemAlloc" )
 void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line )
 {
+   PD_TRACE_ENTRY ( SDB__OSSMEMALLOC ) ;
+   void *p = NULL ;
    if ( size == 0 )
-      return NULL ;
-
-   if ( !ossMemDebugEnabled || !ossMemDebugSize )
-      return ossMemAlloc1 ( size, file, line ) ;
+      p = NULL ;
+   else if ( !ossMemDebugEnabled || !ossMemDebugSize )
+      p = ossMemAlloc1 ( size, file, line ) ;
    else
-      return ossMemAlloc2 ( size, file, line ) ;
+      p = ossMemAlloc2 ( size, file, line ) ;
+   PD_TRACE_EXIT ( SDB__OSSMEMALLOC ) ;
+   return p ;
 }
 
 // reallocate memory with header + debug section
@@ -388,17 +400,20 @@ static void *ossMemRealloc1 ( void* pOld, size_t size,
    return ((CHAR*)p)+OSS_MEM_HEADSZ ;
 }
 
-
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMREALLOC, "ossMemRealloc" )
 void* ossMemRealloc ( void* pOld, size_t size,
                       const CHAR* file, UINT32 line )
 {
+   PD_TRACE_ENTRY ( SDB__OSSMEMREALLOC ) ;
+   void *p = NULL ;
    if ( size == 0 )
-      return NULL ;
-
-   if ( !ossMemDebugEnabled || !ossMemDebugSize )
-      return ossMemRealloc1 ( pOld, size, file, line ) ;
+      p = NULL ;
+   else if ( !ossMemDebugEnabled || !ossMemDebugSize )
+      p = ossMemRealloc1 ( pOld, size, file, line ) ;
    else
-      return ossMemRealloc2 ( pOld, size, file, line ) ;
+      p = ossMemRealloc2 ( pOld, size, file, line ) ;
+   PD_TRACE_EXIT ( SDB__OSSMEMREALLOC ) ;
+   return p ;
 }
 
 void ossMemFree2 ( void *p )
@@ -455,10 +470,13 @@ void ossMemFree1 ( void *p )
    }
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMFREE, "ossMemFree" )
 void ossMemFree ( void *p )
 {
+   PD_TRACE_ENTRY ( SDB__OSSMEMFREE ) ;
    if ( !ossMemDebugEnabled || !ossMemDebugSize )
       ossMemFree1 ( p ) ;
    else
       ossMemFree2 ( p ) ;
+   PD_TRACE_EXIT ( SDB__OSSMEMFREE ) ;
 }

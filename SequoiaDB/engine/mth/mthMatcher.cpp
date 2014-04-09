@@ -722,6 +722,7 @@ namespace engine
       case BSONObj::opELEM_MATCH:
       case BSONObj::opSIZE:
       case BSONObj::opEXISTS:
+      case BSONObj::opISNULL:
       case BSONObj::Equality:
       {
          // create a new BSON object, with ele.fieldName as name, and embEle
@@ -1247,6 +1248,9 @@ namespace engine
          case BSONObj::opEXISTS:
             num = MTH_WEIGHT_EXISTS ;
             break ;
+         case BSONObj::opISNULL:
+            num = MTH_WEIGHT_ISNULL ;
+            break ;
          case BSONObj::opALL:
             num = MTH_WEIGHT_ALL ;
             break ;
@@ -1705,6 +1709,13 @@ namespace engine
                   result = (toMatch.trueValue()?MATCH:NMATCH) ;
                   goto done ;
                }
+               // if we can find the field and we need to compare whether if
+               // it's null
+               if ( BSONObj::opISNULL == op )
+               {
+                  result = toMatch.trueValue()?z.isNull():!z.isNull() ;
+                  goto done ;
+               }
                // if we are looking for some other operator, then let's do
                // compare the value
                if ( _valuesMatch(z, toMatch, op, bm, dollarList) )
@@ -1782,6 +1793,25 @@ namespace engine
             // otherwise, if we are looking for exist, then we return MATCH,
             // otherwise we return NMATCH
             result = (toMatch.trueValue()?MATCH:NMATCH) ;
+            goto done ;
+         }
+      }
+      // if we are looking for isnull
+      else if ( BSONObj::opISNULL == op )
+      {
+         // if we don't find the field, then return NEXIST
+         if ( e.eoo() )
+         {
+            result = NEXIST ;
+            goto done ;
+         }
+         else
+         {
+            // otherwise, if we are looking for isnull, then we return MATCH if
+            // it's NULL
+            result = toMatch.trueValue()?
+                        (e.isNull()?MATCH:NMATCH):
+                        (e.isNull()?NMATCH:MATCH) ;
             goto done ;
          }
       }
@@ -2018,7 +2048,8 @@ namespace engine
                PD_LOG ( PDERROR, "Failed to call _matcher, rc: %d", rc ) ;
                goto error ;
             }
-            if ( 0 == r && BSONObj::opEXISTS == me._op )
+            // NEXIST
+            if ( NEXIST == r )
             {
                if ( BSONObj::opEXISTS == me._op )
                {
@@ -2032,6 +2063,12 @@ namespace engine
                   // failed,
                   // false means success)
                   r = -(be.trueValue()?MATCH:NMATCH);
+               }
+               else if ( BSONObj::opISNULL == me._op )
+               {
+                  // special handle for $isnull, true for match ( not exist )
+                  // false for unmatch ( exists )
+                  r = (be.trueValue()?MATCH:NMATCH) ;
                }
                // add more special conditions here when can't find the element
             }

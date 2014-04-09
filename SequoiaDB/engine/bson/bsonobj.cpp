@@ -427,8 +427,13 @@ namespace bson {
             else if ( fn[1] == 't' && fn[2] == 'y' && fn[3] == 'p' &&
                       fn[4] == 'e' && fn[5] == 0 )
                 return BSONObj::opTYPE;
-            else if ( fn[1] == 'i' && fn[2] == 'n' && fn[3] == 0 )
-                return BSONObj::opIN;
+            else if ( fn[1] == 'i' ) {
+                if ( fn[2] == 'n' && fn[3] == 0 )
+                    return BSONObj::opIN;
+                if ( fn[2] == 's' && fn[3] == 'n' && fn[4] == 'u' &&
+                     fn[5] == 'l' && fn[6] == 'l' && fn[7] == 0 )
+                    return BSONObj::opISNULL;
+            }
             else if ( fn[1] == 'n' && fn[2] == 'i' && fn[3] == 'n' &&
                       fn[4] == 0 )
                 return BSONObj::NIN;

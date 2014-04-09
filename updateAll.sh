@@ -84,8 +84,8 @@ function installSdb()
    done
 
    rm -rf ${homePath}/50000 2>/dev/null
-   #rm -f ${homePath}/sdb.conf
-   #rm -f ${homePath}/nohup
+   rm -f sdb.conf
+   rm -f nohup
 
    # remove old sdb
    if [ ! -d "${homePath}/30000" ] ; then
