@@ -37,7 +37,7 @@
 namespace engine
 {
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCLSENTPNT, "pmdClusterEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCLSENTPNT, "pmdClusterEntryPoint" )
    INT32 pmdClusterEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK;
