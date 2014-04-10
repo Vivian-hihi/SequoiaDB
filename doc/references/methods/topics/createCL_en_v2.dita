@@ -9,8 +9,8 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <apiname>db.collectionspace.createCL</apiname>(<parmname>name</parmname><parmname>,
-        [options]</parmname>) </section>
+      <apiname>db.collectionspace.createCL</apiname>(<parmname>name</parmname><parmname>[,option]</parmname>)
+    </section>
     <section>
       <title>CATEGORY</title>
       Collectionspace
@@ -121,7 +121,7 @@
       </dl>
     </section>
     <section>
-      <title>EXAMPLE</title>
+      <title>Examples</title>
       <p>Create collection "bar" in collection space "foo" without shard key. If the collection space "foo" doesn't exist, it will automatically generate collection space "foo".</p>
       <codeblock>db.foo.createCL("foo")</codeblock>
       <p>Create a compressed normal collection "bar" in collection space "foo" with the hash shard key "age" and in ascending order, using 65535 partitions with writeconcern 1.</p>
