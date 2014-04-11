@@ -422,8 +422,8 @@ INT32 _utilCSVParser::_readFirstField( )
             if( _headerline )
             {
                ossStrncpy ( _buffer, _nextFieldCursor, _readFreeSpace ) ;
-               rc = SDB_OK ;
             }
+            rc = SDB_OK ;
             break ;
          }
          else if ( SDB_UTIL_NOT_FIND_FIELD == rc )
