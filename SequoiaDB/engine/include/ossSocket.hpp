@@ -87,6 +87,7 @@ class _ossSocket : public SDBObject
       BOOLEAN              _init ;
       BOOLEAN              _closeWhenDestruct ;
       INT32                _timeout ;
+      BOOLEAN              _enableBlock ;
 
    protected:
       UINT32   _getPort ( sockaddr_in *addr ) ;
@@ -121,17 +122,18 @@ class _ossSocket : public SDBObject
       INT32 initSocket () ;
       INT32 bind_listen () ;
       BOOLEAN isConnected () ;
+      BOOLEAN isClosed() const { return !_init ; }
 
       INT32 send ( const CHAR *pMsg, INT32 len,
                    INT32 &sentLen,
                    INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
-                   INT32 flags = 0 ) ;
+                   INT32 flags = 0,
+                   BOOLEAN block = TRUE ) ;
       INT32 recv ( CHAR *pMsg, INT32 len,
                    INT32 &receivedLen,
                    INT32 timeout = OSS_SOCKET_DFT_TIMEOUT,
-                   INT32 flags = 0 ) ;
-      INT32 recvNF ( CHAR *pMsg, INT32 &len,
-                     INT32 timeout = OSS_SOCKET_DFT_TIMEOUT ) ;
+                   INT32 flags = 0,
+                   BOOLEAN block = TRUE ) ;
 
       INT32 connect () ;
       void  close () ;
