@@ -38,7 +38,7 @@
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 
-const UINT32 MAX_RECV_RETRIES = 5 ;
+const UINT32 MAX_INTR_RETRIES = 5 ;
 
 // Create a listening socket
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSSK__OSSSK, "_ossSocket::_ossSocket" )
@@ -46,7 +46,7 @@ _ossSocket::_ossSocket ( UINT32 port, INT32 timeoutMilli )
 {
    PD_TRACE_ENTRY ( SDB__OSSSK__OSSSK );
    _init = FALSE ;
-   _fd = 0 ;
+   _fd = SOCKET_INVALIDSOCKET ;
    _timeout = timeoutMilli ;
    _closeWhenDestruct = TRUE ;
    ossMemset ( &_sockAddress, 0, sizeof(sockaddr_in) ) ;
@@ -72,7 +72,7 @@ _ossSocket::_ossSocket ( const CHAR *pHostname, UINT32 port,
    _init = FALSE ;
    _closeWhenDestruct = TRUE;
    _timeout = timeoutMilli ;
-   _fd = 0 ;
+   _fd = SOCKET_INVALIDSOCKET ;
    ossMemset ( &_sockAddress, 0, sizeof(sockaddr_in) ) ;
    ossMemset ( &_peerAddress, 0, sizeof(sockaddr_in) ) ;
    _peerAddressLen = sizeof (_peerAddress) ;
@@ -158,7 +158,7 @@ INT32 _ossSocket::initSocket ()
    _peerAddressLen = sizeof ( _peerAddress ) ;
 
    _fd = socket ( AF_INET, SOCK_STREAM, IPPROTO_TCP ) ;
-   if ( -1 == _fd )
+   if ( SOCKET_INVALIDSOCKET == _fd )
    {
       PD_LOG ( PDERROR, "Failed to initialize socket, error = %d",
                SOCKET_GETLASTERROR ) ;
@@ -180,15 +180,22 @@ INT32 _ossSocket::setSocketLi ( INT32 lOnOff, INT32 linger )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_SETSKLI );
-   SDB_ASSERT ( _init, "socket is not initialized" )
+   SDB_ASSERT ( _init, "socket is not initialized" ) ;
+
    struct linger _linger ;
    _linger.l_onoff = lOnOff ;
    _linger.l_linger = linger ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
    rc = setsockopt ( _fd, SOL_SOCKET, SO_LINGER,
                      (const char*)&_linger, sizeof (_linger) ) ;
 
+done:
    PD_TRACE_EXITRC ( SDB_OSSSK_SETSKLI, rc );
    return rc ;
+error:
+   goto done ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_BIND_LSTN, "ossSocket::bind_listen" )
@@ -197,7 +204,10 @@ INT32 _ossSocket::bind_listen ()
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_BIND_LSTN );
    INT32 temp = 1 ;
-   SDB_ASSERT ( _init, "socket is not initialized" )
+   SDB_ASSERT ( _init, "socket is not initialized" ) ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
    // Allows the socket to be bound to an address that is already in use.
    // For database shutdown and restart right away, before socket close
    rc = setsockopt ( _fd, SOL_SOCKET, SO_REUSEADDR,
@@ -242,16 +252,20 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_SEND, "ossSocket::send" )
 INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
                          INT32 &sentLen,
-                         INT32 timeout, INT32 flags )
+                         INT32 timeout, INT32 flags,
+                         BOOLEAN block )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_SEND );
-   SDB_ASSERT ( pMsg, "message is NULL" )
-   SDB_ASSERT ( _init, "socket is not initialized" )
+   SDB_ASSERT ( pMsg, "message is NULL" ) ;
+   SDB_ASSERT ( _init, "socket is not initialized" ) ;
+
    sentLen = 0 ;
    SOCKET maxFD = _fd ;
    struct timeval maxSelectTime ;
    fd_set fds ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
 
    maxSelectTime.tv_sec = timeout / 1000 ;
    maxSelectTime.tv_usec = ( timeout % 1000 ) * 1000 ;
@@ -326,6 +340,12 @@ INT32 _ossSocket::send ( const CHAR *pMsg, INT32 len,
       sentLen += rc ;
       len -= rc ;
       pMsg += rc ;
+
+      // non-block
+      if ( !block )
+      {
+         break ;
+      }
    }
    rc = SDB_OK ;
 done :
@@ -340,6 +360,13 @@ BOOLEAN _ossSocket::isConnected ()
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_ISCONN );
+
+   if ( !_init )
+   {
+      PD_TRACE_EXIT ( SDB_OSSSK_ISCONN );
+      return FALSE ;
+   }
+
 #if defined (_WINDOWS)
    rc = ::send ( _fd, "", 0, 0 ) ;
    if ( SOCKET_ERROR == rc )
@@ -362,20 +389,24 @@ BOOLEAN _ossSocket::isConnected ()
 
 INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
                          INT32 &receivedLen,
-                         INT32 timeout, INT32 flags )
+                         INT32 timeout, INT32 flags,
+                         BOOLEAN block )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT ( _init, "socket is not initialized" )
-   SDB_ASSERT ( pMsg, "message is NULL" )
+   SDB_ASSERT ( pMsg, "message is NULL" ) ;
+   SDB_ASSERT ( _init, "socket is not init" ) ;
    UINT32 retries = 0 ;
    SOCKET maxFD = _fd ;
    struct timeval maxSelectTime ;
    fd_set fds ;
    receivedLen = 0 ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
    // if we don't expect to receive anything, no need to continue
    if ( 0 == len )
    {
-      return SDB_OK ;
+      goto done ;
    }
 
    maxSelectTime.tv_sec = timeout / 1000 ;
@@ -435,6 +466,12 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
          receivedLen += rc ;
          len -= rc ;
          pMsg += rc ;
+
+         // non-block
+         if ( !block )
+         {
+            break ;
+         }
       }
       else if ( rc == 0 )
       {
@@ -456,7 +493,7 @@ INT32 _ossSocket::recv ( CHAR *pMsg, INT32 len,
             rc = SDB_TIMEOUT ;
             goto error ;
          }
-         if ( SOCKET_EINTR == rc && retries < MAX_RECV_RETRIES )
+         if ( SOCKET_EINTR == rc && retries < MAX_INTR_RETRIES )
          {
             // less than max_recv_retries number, let's retry
             retries ++ ;
@@ -476,117 +513,14 @@ error :
    goto done ;
 }
 
-INT32 _ossSocket::recvNF ( CHAR *pMsg, INT32 &len,
-                           INT32 timeout )
-{
-   INT32 rc = SDB_OK ;
-   SDB_ASSERT ( _init, "socket is not initialized" )
-   SDB_ASSERT ( pMsg, "message is NULL" )
-   UINT32 retries = 0 ;
-   SOCKET maxFD = _fd ;
-   struct timeval maxSelectTime ;
-   fd_set fds ;
-   // if we don't expect to receive anything, no need to continue
-   if ( 0 == len )
-      return SDB_OK ;
-
-   maxSelectTime.tv_sec = timeout / 1000 ;
-   maxSelectTime.tv_usec = ( timeout % 1000 ) * 1000 ;
-   // wait loop until either we timeout or get a message
-   while ( true )
-   {
-      FD_ZERO ( &fds ) ;
-      FD_SET ( _fd, &fds ) ;
-      rc = select ( maxFD + 1, &fds, NULL, NULL,
-                    timeout>=0?&maxSelectTime:NULL ) ;
-
-      // 0 means timeout
-      if ( 0 == rc )
-      {
-         rc = SDB_TIMEOUT ;
-         goto done ;
-      }
-      // if < 0, means something wrong
-      if ( 0 > rc )
-      {
-         rc = SOCKET_GETLASTERROR ;
-         // if we failed due to interrupt, let's continue
-         if ( SOCKET_EINTR == rc )
-         {
-            continue ;
-         }
-         PD_LOG ( PDERROR, "Failed to select from socket, rc = %d", rc ) ;
-         rc = SDB_NETWORK ;
-         goto error ;
-      }
-
-      // if the socket we interested is not receiving anything, let's continue
-      if ( FD_ISSET ( _fd, &fds ) )
-      {
-         break ;
-      }
-   }
-
-#if defined (_WINDOWS)
-   rc = ::recv ( _fd, pMsg, len, 0 ) ;
-#else
-   // MSG_NOSIGNAL : Requests not to send SIGPIPE on errors on stream
-   // oriented sockets when the other end breaks the connection. The EPIPE
-   // error is still returned.
-   rc = ::recv ( _fd, pMsg, len, MSG_NOSIGNAL ) ;
-#endif
-   if ( rc > 0 )
-   {
-      len = rc ;
-   }
-   else if ( rc == 0 )
-   {
-      PD_LOG ( PDERROR, "Peer unexpected shutdown" ) ;
-      rc = SDB_NETWORK_CLOSE ;
-      goto error ;
-   }
-   else
-   {
-      // if rc < 0
-      rc = SOCKET_GETLASTERROR ;
-#if defined (_WINDOWS)
-      if ( WSAETIMEDOUT == rc && _timeout > 0 )
-#else
-      if ( (EAGAIN == rc || EWOULDBLOCK == rc) &&
-           _timeout > 0 )
-#endif
-      {
-         // if we timeout, it's partial message and we should restart
-         PD_LOG ( PDWARNING, "Recv() timeout: rc = %d", rc ) ;
-         rc = SDB_TIMEOUT ;
-         goto error ;
-      }
-      if ( SOCKET_EINTR == rc && retries < MAX_RECV_RETRIES )
-      {
-         // less than max_recv_retries number, let's retry
-         retries ++ ;
-      }
-      // something bad when get here
-      PD_LOG ( PDERROR, "Recv() Failed: rc = %d", rc ) ;
-      rc = SDB_NETWORK ;
-      goto error ;
-   }
-   // Everything is fine when get here
-   rc = SDB_OK ;
-done :
-   return rc ;
-error :
-   goto done ;
-}
-
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK_CONNECT, "ossSocket::connect" )
 INT32 _ossSocket::connect ()
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_CONNECT );
-   SDB_ASSERT ( _init, "socket is not initialized" )
+
    SDB_ASSERT ( !_peerAddress.sin_addr.s_addr,
-                "Cannot connect without close/init" )
+                "Cannot connect without close/init" ) ;
 
 #if defined (_LINUX)
 
@@ -684,12 +618,7 @@ void _ossSocket::close ()
 #if defined (_WINDOWS)
       closesocket ( _fd ) ;
 #else
-      INT32 i = 0 ;
-      i = ::close ( _fd ) ;
-      if ( i < 0 )
-      {
-         i = -1 ;
-      }
+      ::close ( _fd ) ;
 #endif
       _init = FALSE ;
    }
@@ -703,12 +632,15 @@ INT32 _ossSocket::accept ( SOCKET *sock, struct sockaddr *addr, socklen_t
    SOCKET maxFD = _fd ;
    INT32 sysError = 0 ;
    struct timeval maxSelectTime ;
-   SDB_ASSERT ( _init, "socket is not initialized" )
-   SDB_ASSERT ( sock, "Output sock is NULL" )
+   SDB_ASSERT ( _init, "socket is not initialized" ) ;
+   SDB_ASSERT ( sock, "Output sock is NULL" ) ;
 
    fd_set fds ;
    maxSelectTime.tv_sec = timeout / 1000 ;
    maxSelectTime.tv_usec = ( timeout % 1000 ) * 1000 ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
    while ( true )
    {
       FD_ZERO ( &fds ) ;
@@ -772,7 +704,10 @@ INT32 _ossSocket::disableNagle ()
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_DISNAG );
    INT32 temp = 1 ;
-   SDB_ASSERT ( _init, "socket is not initialized" )
+   SDB_ASSERT ( _init, "socket is not initialized" ) ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
    rc = setsockopt ( _fd, IPPROTO_TCP, TCP_NODELAY, (CHAR *) &temp,
                      sizeof ( INT32 ) ) ;
    if ( rc )
@@ -788,13 +723,16 @@ INT32 _ossSocket::disableNagle ()
       PD_LOG ( PDWARNING, "Failed to setsockopt, rc = %d",
                SOCKET_GETLASTERROR ) ;
    }
+
+done:
    PD_TRACE_EXITRC ( SDB_OSSSK_DISNAG, rc );
    return rc ;
+error:
+   goto done ;
 }
 
 UINT32 _ossSocket::_getPort ( sockaddr_in *addr )
 {
-   SDB_ASSERT ( _init, "socket is not initialized" )
    return ntohs ( addr->sin_port ) ;
 }
 
@@ -804,7 +742,7 @@ INT32 _ossSocket::_getAddress ( sockaddr_in *addr, CHAR *pAddress,
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK__GETADDR );
-   SDB_ASSERT ( _init, "socket is not initialized" )
+
    length = length < NI_MAXHOST ? length : NI_MAXHOST ;
    rc = getnameinfo ( (struct sockaddr *)addr, sizeof(sockaddr), pAddress,
                       length, NULL, 0, NI_NUMERICHOST ) ;
@@ -847,8 +785,11 @@ INT32 _ossSocket::setTimeout ( INT32 milliSeconds )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSSK_SETTMOUT );
-   SDB_ASSERT ( _init, "socket is not initialized" )
+   SDB_ASSERT ( _init, "socket is not initialized" ) ;
    struct timeval tv ;
+
+   PD_CHECK( _init, SDB_SYS, error, PDWARNING, "Socket is not init" ) ;
+
    tv.tv_sec = milliSeconds / 1000 ;
    tv.tv_usec = ( milliSeconds % 1000 ) * 1000 ;
    // windows take milliseconds as parameter
@@ -888,8 +829,12 @@ INT32 _ossSocket::setTimeout ( INT32 milliSeconds )
                SOCKET_GETLASTERROR ) ;
    }
 #endif
+
+done:
    PD_TRACE_EXITRC ( SDB_OSSSK_SETTMOUT, rc );
    return rc ;
+error:
+   goto done ;
 }
 
 INT32 _ossSocket::getHostName ( CHAR *pName, INT32 nameLen )
