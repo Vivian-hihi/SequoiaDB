@@ -408,6 +408,13 @@ static JSFunctionSpec global_functions[] = {
 #include "../client/client_internal.h"
 #include "msg.h"
 
+SDB_EXTERN_C_START
+SDB_EXPORT INT32 __sdbGetReserveSpace1 ( sdbConnectionHandle cHandle,
+                                         UINT64 *space ) ;
+SDB_EXPORT INT32 __sdbSetReserveSpace1 ( sdbConnectionHandle cHandle,
+                                         UINT64 space ) ;
+SDB_EXTERN_C_END
+
 JSBool get_cs_and_setproperty( JSContext *cx, jsval *vp,
                                sdbConnectionHandle *connection,
                                const CHAR *csName,
@@ -847,11 +854,6 @@ done :
 error:
    goto done ;
 }
-
-static JSFunctionSpec count_functions[] = {
-   JS_FS_END
-} ;
-// end count
 
 // SdbCollection
 PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_DESTRUCTOR, "collection_destructor" )
@@ -3160,11 +3162,17 @@ static JSFunctionSpec cs_functions[] = {
 PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )
 static void sdb_destructor ( JSContext *cx , JSObject *obj )
 {
+   UINT64                  addr       = 0 ;
    PD_TRACE_ENTRY ( SDB_DESTRUCTOR );
    sdbConnectionHandle *connection = NULL ;
    connection = (sdbConnectionHandle *) JS_GetPrivate ( cx , obj ) ;
    if ( connection )
    {
+      // first need to convert retval to double
+      __sdbGetReserveSpace1 ( *connection, &addr ) ;
+      void *p = (void*)addr ;
+      JS_RemoveValueRoot ( cx, (jsval*)p ) ;
+      SAFE_JS_FREE ( cx, p ) ;
       sdbDisconnect ( *connection ) ;
       SAFE_RELEASE_CONNECTION ( connection ) ;
       SAFE_JS_FREE ( cx , connection ) ;
@@ -3288,7 +3296,7 @@ error :
 
 static JSClass sdb_class = {
    "Sdb",                                // class name
-   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE,          // flags
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE,   // flags
    JS_PropertyStub,                      // addProperty
    JS_PropertyStub,                      // delProperty
    JS_PropertyStub,                      // getProperty
@@ -3317,6 +3325,7 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
    jsval                val         = JSVAL_VOID ;
+   jsval                *pv         = NULL ;
 // fmp use localhost and coord's port in current version
 #if defined (SDB_FMP)
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
@@ -3435,12 +3444,21 @@ static JSBool sdb_constructor ( JSContext *cx , uintN argc , jsval *vp )
       REPORT_RC ( SDB_OK == rc , "new Sdb()" , rc ) ;
    }
    // new a js sdb object
-   obj = JS_NewObject ( cx , &sdb_class , 0 , 0 ) ;
+   obj = JS_NewObject ( cx , &sdb_class, NULL, NULL ) ;
    VERIFY ( obj ) ;
    // set the newly build js sdb object as a return value,
    // so we can hold this object in the sdb client like this:
    // var sdb = new Sdb("localhost", 11810)
-   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( obj ) ) ;
+   pv = (jsval*)JS_malloc ( cx, sizeof(jsval) ) ;
+   VERIFY ( pv ) ;
+   *pv = OBJECT_TO_JSVAL ( obj ) ;
+   JS_SET_RVAL ( cx , vp , *pv ) ;
+   //JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL(obj) ) ;
+   JS_AddValueRoot ( cx, pv ) ;
+   __sdbSetReserveSpace1 ( *connection, (UINT64)pv ) ;
+   // *pv must be set 0 here, otherwise destructor will not be called
+   // why? i donno... maybe some magic happen in spider monkey
+   *pv = 0 ;
    // set the connection as one of the newly build js sdb object
    // so this object holds a handle of sdb, and can use it communicate
    // with datebase
@@ -3798,136 +3816,6 @@ done:
 error:
    SAFE_RELEASE_CURSOR ( handle ) ;
    SAFE_JS_FREE ( cx , handle ) ;
-   goto done ;
-}
-
-static INT32 buildCode( JSContext *cx, uintN argc,
-                        jsval *argv, const CHAR *name,
-                        CHAR **code )
-{
-   INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL == *code, "impossible" )
-   SDB_ASSERT( NULL != name, "impossible" )
-   std::stringstream ss ;
-   std::string coded ;
-
-   if ( 0 == ossStrlen(name) )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   ss << name << "(" ;
-   for ( uintN i = 1; i < argc; i++ )
-   {
-      if ( JSVAL_IS_STRING(argv[i]) )
-      {
-         CHAR *str = NULL ;
-         JSString *jstr = JS_ValueToString( cx, argv[i] ) ;
-         if ( NULL == jstr )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         str = ( CHAR *) JS_EncodeString ( cx , jstr ) ;
-         if ( NULL == str )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         ss << "\"" << str << "\"" ;
-         SAFE_JS_FREE( cx, str ) ;
-      }
-      else if ( JSVAL_IS_PRIMITIVE(argv[i]))
-      {
-         CHAR *str = NULL ;
-         JSString *jstr = JS_ValueToString( cx, argv[i] ) ;
-         if ( NULL == jstr )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         str = ( CHAR *) JS_EncodeString ( cx , jstr ) ;
-         if ( NULL == str )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         ss << str ;
-         SAFE_JS_FREE( cx, str ) ;
-      }
-      else
-      {
-         JSObject *jsobj = NULL ;
-         JSObject *global = NULL ;
-         jsval objVar = JSVAL_VOID ;
-         jsval jstr = JSVAL_VOID ;
-         CHAR *str = NULL ;
-         if ( !JS_ValueToObject( cx, argv[i], &jsobj ) )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         if ( jsobj_is_sdbobj( cx, jsobj ) )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-
-         global = JS_GetGlobalForObject ( cx , jsobj ) ;
-         if ( NULL == global )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         if ( !JS_GetProperty( cx, global, "JSON", &objVar ) )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         if ( !JS_CallFunctionName ( cx , JSVAL_TO_OBJECT ( objVar ) ,
-                               "stringify" , 1 , &argv[i] , &jstr ) )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         str = ( CHAR *) JS_EncodeString ( cx , JSVAL_TO_STRING(jstr) ) ;
-         if ( NULL == str )
-         {
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         ss << str ;
-         SAFE_JS_FREE( cx, str ) ;
-      }
-
-      if ( i < argc - 1 )
-      {
-         ss << "," ;
-      }
-   }
-   ss << ");" ;
-   coded = ss.str() ;
-
-   *code = ( CHAR * )SDB_OSS_MALLOC( coded.size() + 1 ) ; // +1 for '\0'
-   if ( NULL == *code )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
-
-   ossMemcpy( *code, coded.c_str(), coded.size() + 1 ) ; // +1 for '\0'
-done:
-   return rc ;
-error:
    goto done ;
 }
 
@@ -5328,12 +5216,18 @@ static JSBool sdb_close ( JSContext *cx, uintN argc, jsval *vp )
    PD_TRACE_ENTRY ( SDB_SDB_CLOSE );
    sdbCollectionHandle   *connection        = NULL ;
    JSBool                 ret               = JS_TRUE ;
-
+   UINT64                 addr              = 0 ;
+   void                  *p                 = NULL ;
    connection = (sdbConnectionHandle *)
                JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
    REPORT ( connection, "Sdb.close: no connection handle" ) ;
 
    sdbDisconnect(*connection ) ;
+   __sdbGetReserveSpace1 ( *connection, &addr ) ;
+   __sdbSetReserveSpace1 ( *connection, 0 ) ;
+   p = (void*)addr ;
+   JS_RemoveValueRoot ( cx, (jsval*)p ) ;
+   SAFE_JS_FREE ( cx, p ) ;
 
    //set sdb handle to invalid handle(0)
    ret = JS_SetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ), 0 ) ;

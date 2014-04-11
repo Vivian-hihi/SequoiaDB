@@ -650,6 +650,41 @@ error :
    goto done ;
 }
 
+// internal function used by spidermonkey. _retval must be saved in this slot
+SDB_EXPORT INT32 __sdbGetReserveSpace1 ( sdbConnectionHandle cHandle,
+                                         UINT64 *space )
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+   if ( !connection || !space )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   *space = connection->reserveSpace1 ;
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+SDB_EXPORT INT32 __sdbSetReserveSpace1 ( sdbConnectionHandle cHandle,
+                                         UINT64 space )
+{
+   INT32 rc = SDB_OK ;
+   sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
+   if ( !connection )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   connection->reserveSpace1 = space ;
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                               const CHAR *pUsrName, const CHAR *pPasswd ,
                               sdbConnectionHandle *handle )

@@ -28,8 +28,9 @@ struct _sdbConnectionStruct
    CHAR *_pReceiveBuffer ;
    INT32 _receiveBufferSize ;
    BOOLEAN _endianConvert ;
-
    Node *_cursors ;
+
+   UINT64 reserveSpace1 ;
 } ;
 typedef struct _sdbConnectionStruct sdbConnectionStruct ;
 
