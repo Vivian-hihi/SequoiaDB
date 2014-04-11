@@ -35,7 +35,7 @@
 #include "pmdCommon.hpp"
 #include "ossUtil.hpp"
 #include "ossIO.hpp"
-#include "pmdOptionsMgr.hpp"
+#include "msg.h"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -73,13 +73,13 @@ namespace engine
    {
       if ( NULL == role )
          return SDB_ROLE_STANDALONE;
-      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_DATA ) )
+      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_DATA_STR ) )
          return SDB_ROLE_DATA;
-      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_CATALOG ) )
+      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_CATALOG_STR ) )
          return SDB_ROLE_CATALOG;
-      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_AUTH ) )
+      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_AUTH_STR ) )
          return SDB_ROLE_AUTH;
-      else if ( SDB_OK == ossStrcmp( role, PMD_KRCB_ROLE_COORD ) )
+      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_COORD_STR ) )
          return SDB_ROLE_COORD;
       else
          return SDB_ROLE_STANDALONE;
@@ -131,6 +131,16 @@ namespace engine
          ossSnprintf( prefReplStr, len-1, "%s", "A" ) ;
       }
       return SDB_OK ;
+   }
+
+   static SDB_ROLE g_dbRole = SDB_ROLE_STANDALONE ;
+   SDB_ROLE pmdGetDBRole()
+   {
+      return g_dbRole ;
+   }
+   void  pmdSetDBRole( SDB_ROLE role )
+   {
+      g_dbRole = role ;
    }
 
 }

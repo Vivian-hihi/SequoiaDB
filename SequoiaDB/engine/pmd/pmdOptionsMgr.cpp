@@ -906,7 +906,7 @@ namespace engine
       rdvMinMax( pEX, _krcbDiagLvl, PDSEVERE, PDDEBUG, TRUE ) ;
       // --role
       rdxString( pEX, PMD_OPTION_ROLE, _krcbRole, sizeof(_krcbRole),
-                 FALSE, FALSE, PMD_KRCB_ROLE_STANDALONE ) ;
+                 FALSE, FALSE, SDB_ROLE_STANDALONE_STR ) ;
       rdvNotEmpty( pEX, _krcbRole ) ;
       // --logfilesz
       rdxUInt( pEX, PMD_OPTION_LOGFILESZ, _logFileSz, FALSE, FALSE,
@@ -1027,11 +1027,11 @@ namespace engine
       }
 
       // dbrole check
-      if ( 0 != ossStrcmp( PMD_KRCB_ROLE_DATA, _krcbRole ) &&
-           0 != ossStrcmp( PMD_KRCB_ROLE_COORD, _krcbRole ) &&
-           0 != ossStrcmp( PMD_KRCB_ROLE_AUTH, _krcbRole ) &&
-           0 != ossStrcmp( PMD_KRCB_ROLE_STANDALONE, _krcbRole ) &&
-           0 != ossStrcmp( PMD_KRCB_ROLE_CATALOG, _krcbRole ) )
+      if ( 0 != ossStrcmp( SDB_ROLE_DATA_STR, _krcbRole ) &&
+           0 != ossStrcmp( SDB_ROLE_COORD_STR, _krcbRole ) &&
+           0 != ossStrcmp( SDB_ROLE_AUTH_STR, _krcbRole ) &&
+           0 != ossStrcmp( SDB_ROLE_STANDALONE_STR, _krcbRole ) &&
+           0 != ossStrcmp( SDB_ROLE_CATALOG_STR, _krcbRole ) )
       {
          std::cerr << "db role: " << _krcbRole << " error" << std::endl ;
          rc = SDB_INVALIDARG ;
