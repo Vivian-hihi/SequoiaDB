@@ -83,11 +83,11 @@ namespace engine
       _pEDUCB = NULL ;
    }
 
-   const CHAR* _pmdSession::sessionName ()
+   const CHAR* _pmdSession::sessionName () const
    {
       if ( _pEDUCB )
       {
-         return _pEDUCB->getName() ;
+         // TODO:XUJIANHUI
       }
       return "Unknow" ;
    }
