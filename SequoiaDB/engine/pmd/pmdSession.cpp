@@ -138,7 +138,7 @@ namespace engine
 
       while ( TRUE )
       {
-         if ( _pEDUCB->isForced () )
+         if ( _pEDUCB && _pEDUCB->isForced () )
          {
             rc = SDB_APP_FORCED ;
             goto done ;
@@ -175,7 +175,7 @@ namespace engine
 
       while ( TRUE )
       {
-         if ( cb->isForced () )
+         if ( _pEDUCB && _pEDUCB->isForced () )
          {
             rc = SDB_APP_FORCED ;
             goto done ;
