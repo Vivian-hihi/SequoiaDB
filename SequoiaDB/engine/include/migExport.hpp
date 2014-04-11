@@ -116,9 +116,11 @@ typedef class _migCSVExtractor migCSVExtractor ;
 
 class _migJSONExtractor : public _migExtractor
 {
+private:
+   BOOLEAN _hasID ;
+   vector<string> _fieldList ;
 private :
    BOOLEAN _reallocateBuffer ( CHAR **pBuf, INT32 *bufSize ) ;
-   vector<string> _fieldList ;
 protected :
    INT32 _extractRecord () ;
 public :
@@ -126,7 +128,8 @@ public :
    ~_migJSONExtractor () ;
    INT32 init ( sdbCollectionHandle collection,
                 const CHAR *pOutputFile,
-                const CHAR *pDelRecord ) ;
+                const CHAR *pDelRecord,
+                BOOLEAN hasID ) ;
 } ;
 typedef class _migJSONExtractor migJSONExtractor ;
 
