@@ -35,6 +35,7 @@
 #include "netEventHandler.hpp"
 #include "netFrame.hpp"
 #include "ossMem.hpp"
+#include "msgDef.h"
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "netTrace.hpp"
@@ -43,8 +44,6 @@
 using namespace boost::asio::ip ;
 namespace engine
 {
-   const UINT32 NET_MSG_MAX_LEN = 1024 * 1024 * 512 ;
-
    _netEventHandler::_netEventHandler( _netFrame *frame ):
                                       _sock(frame->ioservice()),
                                       _buf(NULL),
@@ -452,7 +451,7 @@ namespace engine
       {
          /// error header
          if ( sizeof(_MsgHeader) > (UINT32)_header.messageLength
-              || NET_MSG_MAX_LEN < (UINT32)_header.messageLength )
+              || SDB_MAX_MSG_LENGTH < (UINT32)_header.messageLength )
          {
             PD_LOG( PDERROR, "Error header received, node:%d, %d, %d",
                     _id.columns.groupID, _id.columns.nodeID,

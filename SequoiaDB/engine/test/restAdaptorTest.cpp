@@ -24,13 +24,11 @@ INT32 receive ( ossSocket &sock, CHAR *buffer,
       tempLen = (len + REST_ADAPTOR_RECV_BUFF_SIZE) > bufferLen ?
                 bufferLen - len : REST_ADAPTOR_RECV_BUFF_SIZE ;
       // receiving
-      rc = sock.recvNF ( buffer + len,
-                         tempLen,
-                         timeout ) ;
+      rc = sock.recv ( buffer + len, tempLen, timeout, 0, FALSE ) ;
       if ( rc )
       {
          pdLog ( PDDEBUG, __FUNC__, __FILE__, __LINE__,
-                 "Failed to call ossSocket recvNF" ) ;
+                 "Failed to call ossSocket recv" ) ;
          goto error ;
       }
       // if receive "\r\n\r\n",we will continue to receive

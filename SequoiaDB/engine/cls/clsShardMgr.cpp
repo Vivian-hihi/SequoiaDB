@@ -42,6 +42,19 @@ using namespace bson ;
 namespace engine 
 {
 
+   struct _hostAndPort
+   {
+      std::string _host ;
+      std::string _svc ;
+
+      _hostAndPort( std::string host, std::string svc )
+      {
+         _host = host ;
+         _svc = svc ;
+      }
+      _hostAndPort() {}
+   } ;
+
    BEGIN_OBJ_MSG_MAP(_clsShardMgr, _clsObjBase)
       ON_MSG ( MSG_CAT_CATGRP_RES, _onCatCatGroupRes )
       ON_MSG ( MSG_CAT_NODEGRP_RES, _onCatGroupRes )
@@ -61,7 +74,7 @@ namespace engine
       _nodeID.value = 0 ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_DECONSTRUCTOR, "_clsShardMgr::~_clsShardMgr" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_DECONSTRUCTOR, "_clsShardMgr::~_clsShardMgr" )
    _clsShardMgr::~_clsShardMgr()
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_DECONSTRUCTOR );
@@ -95,7 +108,7 @@ namespace engine
       _nodeID.columns.serviceID = 0 ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_INIT, "_clsShardMgr::initialize" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_INIT, "_clsShardMgr::initialize" )
    INT32 _clsShardMgr::initialize( )
    {
       INT32 rc = SDB_OK ;
@@ -152,7 +165,7 @@ namespace engine
       return _nodeID ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SETCATINFO, "_clsShardMgr::setCatlogInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SETCATINFO, "_clsShardMgr::setCatlogInfo" )
    void _clsShardMgr::setCatlogInfo ( const NodeID & id,
                                       const std::string& host,
                                       const std::string& service )
@@ -178,67 +191,62 @@ namespace engine
       return _pNodeMgrAgent ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCSND, "_clsShardMgr::syncSend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCSND, "_clsShardMgr::syncSend" )
    INT32 _clsShardMgr::syncSend( MsgHeader * msg, UINT32 groupID,
                                  BOOLEAN primary, MsgHeader **ppRecvMsg,
                                  INT64 millisec )
    {
-      PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCSND );
-      std::string hostName ;
-      INT32 indexID = -1 ;
-      UINT16 port = 0 ;
+      PD_TRACE_ENTRY ( SDB__CLSSHDMGR_SYNCSND ) ;
       INT32 rc = SDB_OK ;
+      std::vector< _hostAndPort > hosts ;
+      BOOLEAN hasUpdateGroup = FALSE ;
 
+   retry:
       if ( CATALOG_GROUPID == groupID )
       {
          ossScopedLock lock ( &_shardLatch, SHARED ) ;
-         indexID = _primary ;
 
-         if ( !primary )
+         if ( primary && _primary >= 0 && _primary < _vecCatlog.size() )
          {
-            indexID = ossRand() % _vecCatlog.size() ;
+            hosts.push_back( _hostAndPort( _vecCatlog[_primary].host,
+                                           _vecCatlog[_primary].service ) ) ;
          }
-
-         if ( indexID < 0 || indexID >= (INT32)_vecCatlog.size() )
+         else if ( !primary )
          {
-            rc = SDB_CLS_NODE_NOT_EXIST ;
-         }
-         else
-         {
-            hostName = _vecCatlog[indexID].host ;
-            rc = ossSocket::getPort( _vecCatlog[indexID].service.c_str(),
-                                     port ) ;
+            for ( UINT32 i = 0 ; i < _vecCatlog.size() ; ++i )
+            {
+               hosts.push_back( _hostAndPort( _vecCatlog[i].host,
+                                              _vecCatlog[i].service ) ) ;
+            }
          }
       }
       else
       {
          clsGroupItem *item = NULL ;
-         rc = getAndLockGroupItem( groupID, &item ) ;
+         rc = getAndLockGroupItem( groupID, &item, TRUE, CLS_SHARD_TIMEOUT,
+                                   &hasUpdateGroup ) ;
          if ( SDB_OK == rc )
          {
+            std::string host ;
+            std::string svc ;
+
             if ( primary )
             {
-               indexID = item->nodePos(
-                  item->primary( MSG_ROUTE_SHARD_SERVCIE ).columns.nodeID ) ;
-            }
-            else
-            {
-               indexID = ossRand() % item->nodeCount() ;
-            }
-
-            if ( indexID < 0 )
-            {
-               rc = SDB_CLS_NODE_NOT_EXIST ;
-            }
-            else
-            {
-               MsgRouteID nodeID ;
-               std::string serviceName ;
-               rc = item->getNodeInfo( indexID, nodeID, hostName,
-                                       serviceName, MSG_ROUTE_SHARD_SERVCIE ) ;
-               if ( SDB_OK == rc )
+               rc = item->getNodeInfo( item->primary(MSG_ROUTE_SHARD_SERVCIE),
+                                       host, svc ) ;
+               if ( rc )
                {
-                  rc = ossSocket::getPort( serviceName.c_str(), port ) ;
+                  goto error ;
+               }
+               hosts.push_back( _hostAndPort( host, svc ) ) ;
+            }
+            else
+            {
+               const VEC_NODE_INFO *pNodes = item->getNodes() ;
+               for ( UINT32 i = 0 ; i < pNodes->size() ; ++i )
+               {
+                  hosts.push_back( _hostAndPort( (*pNodes)[i]._host,
+                     (*pNodes)[i]._service[MSG_ROUTE_SHARD_SERVCIE] ) ) ;
                }
             }
 
@@ -246,16 +254,27 @@ namespace engine
          }
       }
 
-      if ( SDB_CLS_NODE_NOT_EXIST == rc )
+      if ( 0 == hosts.size() )
       {
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+      }
+
+      if ( SDB_CLS_NODE_NOT_EXIST == rc && !hasUpdateGroup )
+      {
+         hasUpdateGroup = TRUE ;
          // need to update
          if ( CATALOG_GROUPID == groupID )
          {
-            updateCatGroup( FALSE ) ;
+            rc = updateCatGroup( FALSE, CLS_SHARD_TIMEOUT ) ;
          }
          else
          {
-            syncUpdateGroupInfo( groupID ) ;
+            rc = syncUpdateGroupInfo( groupID ) ;
+         }
+
+         if ( SDB_OK == rc )
+         {
+            goto retry ;
          }
       }
 
@@ -266,58 +285,80 @@ namespace engine
          INT32 receivedLen = 0 ;
          INT32 sentLen = 0 ;
          CHAR* buff = NULL ;
-         // use millisecond
-         ossSocket tmpSocket ( hostName.c_str(), port, millisec ) ;
-         rc = tmpSocket.initSocket() ;
-         PD_RC_CHECK( rc, PDERROR, "Init socket %s:%d failed, rc:%d",
-                      hostName.c_str(), port, rc ) ;
+         UINT16 port = 0 ;
+         UINT32 pos = ossRand() % hosts.size() ;
 
-         rc = tmpSocket.connect() ;
-         PD_RC_CHECK( rc, PDERROR, "Connect to %s:%d failed, rc:%d",
-                      hostName.c_str(), port, rc ) ;
-
-         // send msg
-         rc = tmpSocket.send( (const CHAR *)msg, msg->messageLength,
-                              sentLen,
-                              millisec ) ;
-         PD_RC_CHECK( rc, PDERROR, "Send messge to %s:%d failed, rc:%d",
-                      hostName.c_str(), port, rc ) ;
-
-         // recieve msg, do not loop and retry
-         rc = tmpSocket.recv( (CHAR*)&msgLength, sizeof(INT32), receivedLen,
-                              millisec ) ;
-         PD_RC_CHECK( rc, PDERROR, "Recieve msg length failed, rc: %d", rc ) ;
-
-         if ( msgLength < sizeof(INT32) )
+         for ( UINT32 i = 0 ; i < hosts.size() ; ++i )
          {
-            PD_LOG ( PDERROR, "Recieve msg length[%d] error", msgLength ) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-         // buff is freed outside the function
-         buff = (CHAR*)SDB_OSS_MALLOC( msgLength + 1 ) ;
-         if ( !buff )
-         {
-            rc = SDB_OOM ;
-            PD_LOG ( PDERROR, "Failed to allocate memory for %d bytes",
-                     msgLength + 1 ) ;
-            goto error ;
-         }
-         *(INT32*)buff = msgLength ;
-         // do not loop and retry, simply return error message when we failed to
-         // recv, including timeout, because this is internal communication and
-         // we should control the timeout value
-         rc = tmpSocket.recv( &buff[sizeof(INT32)], msgLength-sizeof(INT32),
-                              receivedLen,
-                              millisec ) ;
-         if ( rc )
-         {
-            SDB_OSS_FREE( buff ) ;
-            PD_LOG ( PDERROR, "Recieve response message failed, rc: %d", rc ) ;
-            goto error ;
+            _hostAndPort &tmpInfo = hosts[pos] ;
+            pos = ( pos + 1 ) % hosts.size() ;
+            ossGetPort( tmpInfo._svc.c_str(), port ) ;
+
+            // use millisecond
+            ossSocket tmpSocket ( tmpInfo._host.c_str(), port, millisec ) ;
+            rc = tmpSocket.initSocket() ;
+            PD_RC_CHECK( rc, PDERROR, "Init socket %s:%d failed, rc:%d",
+                         tmpInfo._host.c_str(), port, rc ) ;
+
+            rc = tmpSocket.connect() ;
+            if ( rc )
+            {
+               PD_LOG( PDWARNING, "Connect to %s:%d failed, rc:%d",
+                       tmpInfo._host.c_str(), port, rc ) ;
+               continue ;
+            }
+
+            // send msg
+            rc = tmpSocket.send( (const CHAR *)msg, msg->messageLength,
+                                 sentLen, millisec ) ;
+            PD_RC_CHECK( rc, PDERROR, "Send messge to %s:%d failed, rc:%d",
+                         tmpInfo._host.c_str(), port, rc ) ;
+
+            // recieve msg, do not loop and retry
+            rc = tmpSocket.recv( (CHAR*)&msgLength, sizeof(INT32), receivedLen,
+                                 millisec ) ;
+            PD_RC_CHECK( rc, PDERROR, "Recieve msg length failed, rc: %d",
+                         rc ) ;
+
+            if ( msgLength < sizeof(INT32) || msgLength > SDB_MAX_MSG_LENGTH )
+            {
+               PD_LOG ( PDERROR, "Recieve msg length[%d] error", msgLength ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+            // buff is freed outside the function
+            buff = (CHAR*)SDB_OSS_MALLOC( msgLength + 1 ) ;
+            if ( !buff )
+            {
+               rc = SDB_OOM ;
+               PD_LOG ( PDERROR, "Failed to allocate memory for %d bytes",
+                        msgLength + 1 ) ;
+               goto error ;
+            }
+            *(INT32*)buff = msgLength ;
+            // do not loop and retry, simply return error message when we failed to
+            // recv, including timeout, because this is internal communication and
+            // we should control the timeout value
+            rc = tmpSocket.recv( &buff[sizeof(INT32)], msgLength-sizeof(INT32),
+                                 receivedLen,
+                                 millisec ) ;
+            if ( rc )
+            {
+               SDB_OSS_FREE( buff ) ;
+               PD_LOG ( PDERROR, "Recieve response message failed, rc: %d", rc ) ;
+               goto error ;
+            }
+
+            *ppRecvMsg = (MsgHeader*)buff ;
+            break ;
          }
 
-         *ppRecvMsg = (MsgHeader*)buff ;
+         // if all node connect failed
+         if ( !hasUpdateGroup )
+         {
+            hosts.clear() ;
+            goto retry ;
+         }
       }
 
    done:
@@ -327,7 +368,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SND2CAT, "_clsShardMgr::sendToCatlog" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SND2CAT, "_clsShardMgr::sendToCatlog" )
    INT32 _clsShardMgr::sendToCatlog ( MsgHeader * msg, INT32 *pSendNum )
    {
       INT32 rc = SDB_OK ;
@@ -409,8 +450,8 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPDCATGRP, "_clsShardMgr::updateCatGroup" )
-   INT32 _clsShardMgr::updateCatGroup ( BOOLEAN unsetPrimary )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPDCATGRP, "_clsShardMgr::updateCatGroup" )
+   INT32 _clsShardMgr::updateCatGroup ( BOOLEAN unsetPrimary, INT64 millsec )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_UPDCATGRP );
       if ( unsetPrimary )
@@ -427,25 +468,48 @@ namespace engine
       UINT32 index = 0 ;
       INT32 rc = SDB_OK ;
 
-      ossScopedLock lock ( &_shardLatch, SHARED ) ;
-
-      while ( index < _vecCatlog.size () )
+      if ( millsec > 0 )
       {
-         rc = _pNetRtAgent->syncSend ( _vecCatlog[index].nodeID,
-            (void*)&req ) ;
-         if ( SDB_OK == rc )
-         {
-            break ;
-         }
-
-         index++ ;
+         // use request id to store tid
+         req.header.requestID = (UINT64)ossGetCurrentThreadID() ;
+         _upCatEvent.reset() ;
       }
 
+      // send message
+      {
+         ossScopedLock lock ( &_shardLatch, SHARED ) ;
+
+         while ( index < _vecCatlog.size () )
+         {
+            rc = _pNetRtAgent->syncSend ( _vecCatlog[index].nodeID,
+               (void*)&req ) ;
+            if ( SDB_OK == rc )
+            {
+               break ;
+            }
+
+            index++ ;
+         }
+      }
+
+      if ( millsec > 0 )
+      {
+         INT32 result = 0 ;
+         rc = _upCatEvent.wait( millsec, &result ) ;
+         if ( SDB_OK == rc )
+         {
+            rc = result ;
+         }
+      }
+
+   done:
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_UPDCATGRP, rc );
       return rc ;
+   error:
+      goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_CLRALLDATA, "_clsShardMgr::clearAllData" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_CLRALLDATA, "_clsShardMgr::clearAllData" )
    INT32 _clsShardMgr::clearAllData ()
    {
       INT32 rc = SDB_OK ;
@@ -477,7 +541,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDCAT, "_clsShardMgr::syncUpdateCatalog" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDCAT, "_clsShardMgr::syncUpdateCatalog" )
    INT32 _clsShardMgr::syncUpdateCatalog ( const CHAR *pCollectionName,
                                            INT64 millsec )
    {
@@ -561,7 +625,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDGPINFO, "_clsShardMgr::syncUpdateGroupInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_SYNCUPDGPINFO, "_clsShardMgr::syncUpdateGroupInfo" )
    INT32 _clsShardMgr::syncUpdateGroupInfo ( UINT32 groupID, INT64 millsec )
    {
       INT32 rc = SDB_OK ;
@@ -638,7 +702,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPDPRM, "_clsShardMgr::updatePrimary" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_UPDPRM, "_clsShardMgr::updatePrimary" )
    INT32 _clsShardMgr::updatePrimary ( const NodeID & id, BOOLEAN primary )
    {
       INT32 rc = SDB_OK ;
@@ -681,7 +745,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDGPREQ, "_clsShardMgr::_sendGroupReq" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDGPREQ, "_clsShardMgr::_sendGroupReq" )
    INT32 _clsShardMgr::_sendGroupReq ( UINT32 groupID, UINT64 requestID,
                                        INT32 *pSendNum )
    {
@@ -744,7 +808,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDCATREQ, "_clsShardMgr::_sendCatalogReq" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__SNDCATREQ, "_clsShardMgr::_sendCatalogReq" )
    INT32 _clsShardMgr::_sendCatalogReq ( const CHAR *pCollectionName,
                                          UINT64 requestID,
                                          INT32 *pSendNum )
@@ -826,7 +890,7 @@ namespace engine
    }
 
    //message fuctions
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONCATGPRES, "_clsShardMgr::_onCatCatGroupRes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONCATGPRES, "_clsShardMgr::_onCatCatGroupRes" )
    INT32 _clsShardMgr::_onCatCatGroupRes ( NET_HANDLE handle, MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
@@ -921,13 +985,14 @@ namespace engine
       }
 
    done:
+      _upCatEvent.signalAll( rc ) ;
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR__ONCATGPRES, rc );
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONCATGRPRES, "_clsShardMgr::_onCatGroupRes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONCATGRPRES, "_clsShardMgr::_onCatGroupRes" )
    INT32 _clsShardMgr::_onCatGroupRes ( NET_HANDLE handle, MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
@@ -1036,7 +1101,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONCATREQMSG, "_clsShardMgr::_onCatalogReqMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__ONCATREQMSG, "_clsShardMgr::_onCatalogReqMsg" )
    INT32 _clsShardMgr::_onCatalogReqMsg ( NET_HANDLE handle, MsgHeader* msg )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__ONCATREQMSG );
@@ -1142,7 +1207,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATSYNCEV, "_clsShardMgr::_findCatSyncEvent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATSYNCEV, "_clsShardMgr::_findCatSyncEvent" )
    clsEventItem *_clsShardMgr::_findCatSyncEvent ( const CHAR * pCollectionName,
                                                    BOOLEAN bCreate )
    {
@@ -1173,7 +1238,7 @@ namespace engine
       return pEventInfo ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATSYNCEVN, "_clsShardMgr::_findCatSyncEvent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATSYNCEVN, "_clsShardMgr::_findCatSyncEvent" )
    clsEventItem *_clsShardMgr::_findCatSyncEvent ( UINT64 requestID )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDCATSYNCEVN );
@@ -1194,7 +1259,7 @@ namespace engine
       return pEventInfo ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDNMSYNCEV, "_clsShardMgr::_findNMSyncEvent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDNMSYNCEV, "_clsShardMgr::_findNMSyncEvent" )
    clsEventItem* _clsShardMgr::_findNMSyncEvent( UINT32 groupID,
                                                  BOOLEAN bCreate )
    {
@@ -1223,7 +1288,7 @@ namespace engine
       return pEventInfo ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDNMSYNCEVN, "_clsShardMgr::_findNMSyncEvent" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDNMSYNCEVN, "_clsShardMgr::_findNMSyncEvent" )
    clsEventItem* _clsShardMgr::_findNMSyncEvent ( UINT64 requestID )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDNMSYNCEVN );
@@ -1244,7 +1309,7 @@ namespace engine
       return pEventInfo ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATNODEID, "_clsShardMgr::_findCatNodeID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR__FNDCATNODEID, "_clsShardMgr::_findCatNodeID" )
    INT32 _clsShardMgr::_findCatNodeID ( const VECCATLOG & catNodes,
                                         const std::string & host,
                                         const std::string & service,
@@ -1269,7 +1334,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETANDLOCKCATSET, "_clsShardMgr::getAndLockCataSet" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETANDLOCKCATSET, "_clsShardMgr::getAndLockCataSet" )
    INT32 _clsShardMgr::getAndLockCataSet( const CHAR * name,
                                           clsCatalogSet **ppSet,
                                           BOOLEAN noWithUpdate,
@@ -1321,7 +1386,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETNLCKGPITEM, "_clsShardMgr::getAndLockGroupItem" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_GETNLCKGPITEM, "_clsShardMgr::getAndLockGroupItem" )
    INT32 _clsShardMgr::getAndLockGroupItem( UINT32 id, clsGroupItem **ppItem,
                                             BOOLEAN noWithUpdate,
                                             INT64 waitMillSec,

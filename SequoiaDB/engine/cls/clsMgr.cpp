@@ -1544,13 +1544,13 @@ done :
       goto done ;
    }
 
-   INT32 _clsMgr::updateCatGroup ( BOOLEAN unsetPrimary )
+   INT32 _clsMgr::updateCatGroup ( BOOLEAN unsetPrimary, INT64 millisec )
    {
       if ( !_pShdObj )
       {
          return SDB_SYS ;
       }
-      return _pShdObj->updateCatGroup ( unsetPrimary ) ;
+      return _pShdObj->updateCatGroup ( unsetPrimary, millisec ) ;
    }
 
    //message function

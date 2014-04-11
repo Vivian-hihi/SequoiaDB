@@ -227,7 +227,9 @@ namespace engine
 
       if ( _pShardCB && ( MSG_CAT_NODEGRP_RES == (UINT32)newHeader->opCode ||
            MSG_CAT_QUERY_CATALOG_RSP == (UINT32)newHeader->opCode ||
-           MSG_CAT_QUERY_SPACEINFO_RSP == (UINT32)newHeader->opCode ) )
+           MSG_CAT_QUERY_SPACEINFO_RSP == (UINT32)newHeader->opCode ||
+           ( MSG_CAT_CATGRP_RES == (UINT32)newHeader->opCode &&
+             _pShardCB->getTID() != (UINT32)newHeader->requestID ) ) )
       {
          _pShardCB->postEvent( pmdEDUEvent(PMD_EDU_EVENT_MSG, TRUE, newMsg) );
       }

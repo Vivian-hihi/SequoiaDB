@@ -757,19 +757,19 @@ namespace engine
          switch ( krcb->getDBRole() )
          {
          case SDB_ROLE_STANDALONE:
-            ob.append ( FIELD_NAME_ROLE, PMD_KRCB_ROLE_STANDALONE ) ;
+            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_STANDALONE_STR ) ;
             break ;
          case SDB_ROLE_DATA:
-            ob.append ( FIELD_NAME_ROLE, PMD_KRCB_ROLE_DATA ) ;
+            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_DATA_STR ) ;
             break ;
          case SDB_ROLE_COORD:
-            ob.append ( FIELD_NAME_ROLE, PMD_KRCB_ROLE_COORD ) ;
+            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_COORD_STR ) ;
             break ;
          case SDB_ROLE_AUTH:
-            ob.append ( FIELD_NAME_ROLE, PMD_KRCB_ROLE_AUTH ) ;
+            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_AUTH_STR ) ;
             break ;
          case SDB_ROLE_CATALOG:
-            ob.append ( FIELD_NAME_ROLE, PMD_KRCB_ROLE_CATALOG ) ;
+            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_CATALOG_STR ) ;
             break ;
          default:
             ob.append ( FIELD_NAME_ROLE, "Unknown" ) ;
