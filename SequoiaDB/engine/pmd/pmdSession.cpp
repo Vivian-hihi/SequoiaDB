@@ -312,7 +312,7 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Session[%s] failed to build sys info reply, "
                     "rc = %d", sessionName(), rc ) ;
 
-      rc = sendMsg ( (const CHAR*)pReply, replySize ) ;
+      rc = sendData ( (const CHAR*)pReply, replySize ) ;
       PD_RC_CHECK ( rc, PDERROR, "Session[%s] failed to send packet, rc = %d",
                     sessionName(), rc ) ;
 
