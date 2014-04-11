@@ -55,9 +55,6 @@ class _pdTraceCB ;
 
 namespace engine
 {
-   #define PMD_DFT_CONF     "sdb.conf"
-   #define PMD_DFT_CAT      "sdb.cat"
-   #define PMD_DFT_DIAGLOG  "sdbdiag.log"
 
 #if defined (_LINUX)
    #define PMD_ENGINE_NAME_BUF_LEN OSS_RENAME_PROCESS_BUFFER_LEN
