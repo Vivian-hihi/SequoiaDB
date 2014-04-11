@@ -736,6 +736,11 @@ UINT32 _ossSocket::_getPort ( sockaddr_in *addr )
    return ntohs ( addr->sin_port ) ;
 }
 
+UINT32 _ossSocket::_getIP( sockaddr_in * addr )
+{
+   return ntohl( addr->sin_addr.s_addr ) ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSK__GETADDR, "ossSocket::_getAddress" )
 INT32 _ossSocket::_getAddress ( sockaddr_in *addr, CHAR *pAddress,
                                 UINT32 length )
@@ -768,6 +773,16 @@ UINT32 _ossSocket::getLocalPort ()
 UINT32 _ossSocket::getPeerPort ()
 {
    return _getPort ( &_peerAddress ) ;
+}
+
+UINT32 _ossSocket::getPeerIP()
+{
+   return _getIP( &_peerAddress ) ;
+}
+
+UINT32 _ossSocket::getLocalIP()
+{
+   return _getIP( &_sockAddress ) ;
 }
 
 INT32 _ossSocket::getLocalAddress ( CHAR * pAddress, UINT32 length )

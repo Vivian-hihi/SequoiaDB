@@ -34,6 +34,7 @@
 #include "oss.hpp"
 #include "clsObjBase.hpp"
 #include "ossSocket.hpp"
+#include "pmdDef.hpp"
 
 namespace engine
 {
@@ -41,41 +42,32 @@ namespace engine
    class _pmdEDUCB ;
 
    /*
-      PDM_SESSION_TYPE define
-   */
-   enum PDM_SESSION_TYPE
-   {
-      PMD_SESSION_LOCAL                = 1,
-      PMD_SESSION_COORD,
-      PMD_SESSION_REST
-   } ;
-
-   /*
       _pmdSession define
    */
-   class _pmdSession : public _clsObjBase
+   class _pmdSession : public _clsObjBase, public _ISession
    {
       DECLARE_OBJ_MSG_MAP()
 
       public:
-         _pmdSession( _pmdEDUCB *cb, SOCKET fd ) ;
+         _pmdSession( SOCKET fd ) ;
          virtual ~_pmdSession() ;
 
-         virtual PDM_SESSION_TYPE type () const = 0 ;
-         virtual void   onAttach () {}
-         virtual void   onDetach () {}
+         virtual const CHAR*     sessionName() const ;
 
       public:
          UINT64      sessionID () const { return _eduID ; }
          EDUID       eduID () const { return _eduID ; }
          _pmdEDUCB*  eduCB () const { return _pEDUCB ; }
          ossSocket*  socket () { return &_socket ; }
-         const CHAR* sessionName() ;
+
+         void        attach( _pmdEDUCB * cb ) ;
+         void        dettach() ;
 
          INT32       getBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
 
          void        disconnect() ;
-         INT32       sendMsg( const CHAR *pData, INT32 size ) ;
+         INT32       sendData( const CHAR *pData, INT32 size ) ;
+         INT32       recvData( CHAR *pData, INT32 size ) ;
 
       protected:
 
@@ -102,7 +94,9 @@ namespace engine
       public:
          _pmdLocalSession( _pmdEDUCB *cb, SOCKET fd ) ;
          virtual ~_pmdLocalSession () ;
-         virtual PDM_SESSION_TYPE type () const { return PMD_SESSION_LOCAL ; }
+
+         virtual INT32     sessionType() const { return PMD_SESSION_LOCAL ; }
+         virtual UINT64    identifyID() ;
 
       protected:
          virtual INT32  _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;

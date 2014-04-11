@@ -47,11 +47,11 @@ namespace engine
 
    END_OBJ_MSG_MAP()
 
-   _pmdSession::_pmdSession( _pmdEDUCB *cb, SOCKET fd )
+   _pmdSession::_pmdSession( SOCKET fd )
    :_socket( &fd, SESSION_SOCKET_DFT_TIMEOUT )
    {
-      _pEDUCB  = cb ;
-      _eduID   = cb->getID() ;
+      _pEDUCB  = NULL ;
+      _eduID   = PMD_INVALID_EDUID ;
       _pBuff   = NULL ;
       _buffLen = 0 ;
 
@@ -67,6 +67,20 @@ namespace engine
          _pBuff = NULL ;
       }
       _buffLen = 0 ;
+   }
+
+   void _pmdSession::attach( _pmdEDUCB * cb )
+   {
+      SDB_ASSERT( cb, "cb can't be NULL" ) ;
+      _pEDUCB = cb ;
+      _eduID  = cb->getID() ;
+      _onAttach() ;
+   }
+
+   void _pmdSession::dettach ()
+   {
+      _onDetach() ;
+      _pEDUCB = NULL ;
    }
 
    const CHAR* _pmdSession::sessionName ()
@@ -116,7 +130,7 @@ namespace engine
       _socket.close() ;
    }
 
-   INT32 _pmdSession::sendMsg( const CHAR * pData, INT32 size )
+   INT32 _pmdSession::sendData( const CHAR * pData, INT32 size )
    {
       INT32 rc = SDB_OK ;
       INT32 sentSize = 0 ;
@@ -139,10 +153,54 @@ namespace engine
          break ;
       }
 
+      // send data failed
+      if ( totalSentSize != size )
+      {
+         disconnect() ;
+      }
+
    done :
       if ( totalSentSize > 0 )
       {
          pmdGetKRCB()->getMonDBCB()->svcNetOutAdd( totalSentSize ) ;
+      }
+      return rc ;
+   }
+
+   INT32 _pmdSession::recvData( CHAR * pData, INT32 size )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 receivedSize = 0 ;
+      INT32 totalReceivedSize = 0 ;
+
+      while ( TRUE )
+      {
+         if ( cb->isForced () )
+         {
+            rc = SDB_APP_FORCED ;
+            goto done ;
+         }
+         rc = _socket.recv ( &pData[totalReceivedSize],
+                             size-totalReceivedSize,
+                             receivedSize ) ;
+         totalReceivedSize += receivedSize ;
+         if ( SDB_TIMEOUT == rc )
+         {
+            continue ;
+         }
+         break ;
+      }
+
+      // recv data failed
+      if ( totalReceivedSize != size )
+      {
+         disconnect() ;
+      }
+
+   done :
+      if ( totalReceivedSize > 0 )
+      {
+         pmdGetKRCB()->getMonDBCB()->svcNetInAdd( totalReceivedSize ) ;
       }
       return rc ;
    }
@@ -156,13 +214,19 @@ namespace engine
    END_OBJ_MSG_MAP()
 
    _pmdLocalSession::_pmdLocalSession( _pmdEDUCB *cb, SOCKET fd )
-   :pmdSession( cb, fd )
+   :pmdSession( fd )
    {
       _authOK  = FALSE ;
+      attach( cb ) ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
    {
+   }
+
+   UINT64 _pmdLocalSession::identifyID()
+   {
+      return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
    }
 
    INT32 _pmdLocalSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader *msg )
