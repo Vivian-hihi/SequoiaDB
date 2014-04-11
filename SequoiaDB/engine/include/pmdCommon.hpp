@@ -36,6 +36,7 @@
 
 #include "core.hpp"
 #include "msgDef.h"
+#include "pmdDef.hpp"
 
 namespace engine
 {

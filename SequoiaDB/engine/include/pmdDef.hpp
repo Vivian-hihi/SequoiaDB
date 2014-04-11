@@ -121,6 +121,13 @@ namespace engine
 
    typedef class _pmdEDUEvent pmdEDUEvent ;
 
+   /*
+      define
+   */
+   #define PMD_DFT_CONF          "sdb.conf"
+   #define PMD_DFT_CAT           "sdb.cat"
+   #define PMD_DFT_DIAGLOG       "sdbdiag.log"
+
 }
 
 #endif // PMD_DEF_HPP__
