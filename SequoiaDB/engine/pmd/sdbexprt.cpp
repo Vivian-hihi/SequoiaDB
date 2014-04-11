@@ -74,6 +74,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define OPTION_CSNAME            "csname"
 #define OPTION_CLNAME            "clname"
 #define OPTION_FILENAME          "file"
+#define OPTION_HASOID            "hasoid"
 #define OPTION_TYPE              FIELD_NAME_LTYPE
 
 #define DEFAULT_OUTPUT_FILE      "sdbexport"
@@ -97,6 +98,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( COMMANDS_STRING(OPTION_DELRECORD,         ",r"), boost::program_options::value<string>(), "record delimiter ( default: '\\n' )" ) \
        ( COMMANDS_STRING(OPTION_CSNAME,            ",c"), boost::program_options::value<string>(), "collection space name" ) \
        ( COMMANDS_STRING(OPTION_CLNAME,            ",l"), boost::program_options::value<string>(), "collection name" ) \
+       ( COMMANDS_STRING(OPTION_HASOID,            ",i"), boost::program_options::value<string>(), "has _id ( default: true )" ) \
        ( OPTION_CSVFIELDLIST,     boost::program_options::value<string>(), "field list ( separate by , )" ) \
        ( OPTION_CSVFIELDINCLUDED, boost::program_options::value<string>(), "include field names ( default: true )( csv only )" ) \
        ( OPTION_FILENAME,         boost::program_options::value<string>(), "database load file name" ) \
@@ -129,6 +131,7 @@ string strCSName                          = "" ;
 string strCLName                          = "" ;
 CHAR *lUser                               = NULL ;
 CHAR *lPassWord                           = NULL ;
+BOOLEAN hasOID                            = TRUE ;
 BOOLEAN bFieldIncluded                    = TRUE ;
 CHAR gDelList[6] = { MIG_DEFAULT_DELCHAR, 0, MIG_DEFAULT_DELFIELD, 0,
                      MIG_DEFAULT_DELRECORD, 0 } ;
@@ -449,6 +452,14 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       strFieldList = vm[OPTION_CSVFIELDLIST].as<string>() ;
    }
+
+   //has oid
+   if ( vm.count ( OPTION_HASOID ) )
+   {
+      ossStrToBoolean ( vm[OPTION_HASOID].as<string>().c_str(),
+                        &hasOID ) ;
+   }
+
    // whether include csv field name
    if ( vm.count ( OPTION_CSVFIELDINCLUDED ) )
    {
@@ -658,7 +669,8 @@ INT32 exportJSON ()
    }
    // initialize
    rc = extractor->init ( gCollection, gpOutputFileName,
-                          strDelRecord.length()?strDelRecord.c_str():NULL ) ;
+                          strDelRecord.length()?strDelRecord.c_str():NULL,
+                          hasOID ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to initialize extractor, rc = %d", rc ) ;
