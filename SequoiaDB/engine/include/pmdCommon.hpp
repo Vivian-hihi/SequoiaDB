@@ -35,7 +35,7 @@
 #define PMDCOMMON_HPP_
 
 #include "core.hpp"
-#include "pmd.hpp"
+#include "msgDef.h"
 
 namespace engine
 {
@@ -50,6 +50,8 @@ namespace engine
                               CHAR *prefReplStr,
                               UINT32 len ) ;
 
+   SDB_ROLE pmdGetDBRole() ;
+   void  pmdSetDBRole( SDB_ROLE role ) ;
 
 }
 

@@ -154,7 +154,8 @@ namespace engine
                           MsgHeader **ppRecvMsg,
                           INT64 millisec = CLS_SHARD_TIMEOUT ) ;
          INT32  updatePrimary ( const NodeID & id , BOOLEAN primary ) ;
-         INT32  updateCatGroup ( BOOLEAN unsetPrimary = TRUE ) ;
+         INT32  updateCatGroup ( BOOLEAN unsetPrimary = TRUE,
+                                 INT64 millsec = 0 ) ;
 
          INT32 syncUpdateCatalog ( const CHAR *pCollectionName,
                                    INT64 millsec = CLS_SHARD_TIMEOUT ) ;
@@ -213,6 +214,7 @@ namespace engine
          VECCATLOG                     _vecCatlog ;
          INT32                         _primary ;
          UINT32                        _catVerion ;
+         ossEvent                      _upCatEvent ;
          ossSpinSLatch                 _shardLatch ;
 
          MsgRouteID                    _nodeID ;

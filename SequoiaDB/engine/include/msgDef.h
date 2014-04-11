@@ -362,6 +362,7 @@
 #define CMD_NAME_JSON_LOAD                   "json load"
 
 #define CLS_REPLSET_MAX_NODE_SIZE            7
+#define SDB_MAX_MSG_LENGTH                   ( 512 * 1024 * 1024 )
 
 #define INVALID_GROUPID                      0
 #define CATALOG_GROUPID                      1

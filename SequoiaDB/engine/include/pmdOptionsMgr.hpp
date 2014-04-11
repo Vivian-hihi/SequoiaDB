@@ -60,12 +60,6 @@ namespace engine
    #define PMD_ADD_PARAM_OPTIONS_END ;
    #define PMD_COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 
-   #define PMD_KRCB_ROLE_DATA       SDB_ROLE_DATA_STR
-   #define PMD_KRCB_ROLE_COORD      SDB_ROLE_COORD_STR
-   #define PMD_KRCB_ROLE_CATALOG    SDB_ROLE_CATALOG_STR
-   #define PMD_KRCB_ROLE_AUTH       SDB_ROLE_AUTH_STR
-   #define PMD_KRCB_ROLE_STANDALONE SDB_ROLE_STANDALONE_STR
-
    #define PMD_MIN_LOG_FILE_SZ      64
    #define PMD_MAX_LOG_FILE_SZ      2048
    #define PMD_DFT_LOG_FILE_SZ      PMD_MIN_LOG_FILE_SZ

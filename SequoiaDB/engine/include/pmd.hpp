@@ -46,6 +46,7 @@
 #include "pmdOptionsMgr.hpp"
 #include "msg.h"
 #include "msgDef.hpp"
+#include "pmdCommon.hpp"
 
 extern PDLEVEL    _curPDLevel ;
 extern CHAR       _pdDiagLogPath [ OSS_MAX_PATHSIZE + 1 ] ;
@@ -504,6 +505,7 @@ namespace engine
       void enforceDBRole ( SDB_ROLE role )
       {
          _role = role ;
+         pmdSetDBRole( _role ) ;
       }
       void unsetDBFlag ( UINT32 removedFlag )
       {
