@@ -659,6 +659,7 @@ error :
 
 _migJSONExtractor::_migJSONExtractor ( vector<string> &fieldList )
 {
+   _hasID = TRUE ;
    if ( fieldList.size() )
    {
       vector<string>::iterator it ;
@@ -680,13 +681,15 @@ _migJSONExtractor::~_migJSONExtractor ()
 // PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONEXTR_INIT, "_migJSONExtractor::init" )
 INT32 _migJSONExtractor::init ( sdbCollectionHandle collection,
                                 const CHAR *pOutputFile,
-                                const CHAR *pDelRecord )
+                                const CHAR *pDelRecord,
+                                BOOLEAN hasID )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__MIGJSONEXTR_INIT );
    SDB_ASSERT ( collection, "collection can't be NULL" )
    SDB_ASSERT ( pOutputFile, "output file can't be NULL" )
 
+   _hasID = hasID ;
    // parse record delimiter
    if ( pDelRecord && !_strToDel ( pDelRecord, _delRecord[0] ))
    {
@@ -795,7 +798,7 @@ INT32 _migJSONExtractor::_extractRecord ()
             }
          }
       }
-      if ( !hasID )
+      if ( !hasID && _hasID )
       {
          _fieldList.push_back( fieldID ) ;
       }
@@ -830,10 +833,33 @@ INT32 _migJSONExtractor::_extractRecord ()
          }
       }
    }
+   else if( !_hasID )
+   {
+      const CHAR *pKey = NULL ;
+      bson_iterator *it = bson_iterator_create() ;
+      bson_iterator_init( it, &obj ) ;
+      while( BSON_EOO != bson_iterator_next ( it ) )
+      {
+         pKey = bson_iterator_key( it ) ;
+         if ( ossStrlen( pKey ) != 3 )
+         {
+            bson_append_element ( newObj, pKey, it ) ;
+         }
+         else
+         {
+            if ( pKey[0] != '_' || pKey[1] != 'i' || pKey[2] != 'd' )
+            {
+               bson_append_element ( newObj, pKey, it ) ;
+            }
+         }
+      }
+      bson_iterator_dispose( it ) ;
+   }
    else
    {
       bson_copy ( newObj, &obj ) ;
    }
+
    bson_finish ( newObj ) ;
    if ( !jsonStr && !_reallocateBuffer( &jsonStr, &jsonSize ) )
    {
