@@ -36,6 +36,7 @@
 #include "utilParseData.hpp"
 #include "pdTrace.hpp"
 #include "utilTrace.hpp"
+#include "text.h"
 
 #define UTL_WORKER_CTJSIZE    512
 #define UTL_WORKER_FIELD      "field"
@@ -380,8 +381,16 @@ INT32 _utilCSVParser::_readFirstField( )
             PD_LOG ( PDERROR, "Faild to _allocField, rc=%d", rc ) ;
             goto error ;
          }
-         _readFreeSpace = UTIL_DATA_HEADER_SIZE - _readFreeSpace ;
-         rc = _pAccessData->readNextBuffer ( _fieldBuffer + _readNumStr, _readFreeSpace ) ;
+         _readFreeSpace = UTIL_DATA_HEADER_SIZE ;
+         rc = _pAccessData->readNextBuffer ( _fieldBuffer + _readNumStr,
+                                             _readFreeSpace ) ;
+         if ( !isValidUTF8WSize ( _fieldBuffer + _readNumStr,
+                                  _readFreeSpace ) )
+         {
+              rc = SDB_INVALIDARG ;
+              PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
+              goto error ;
+          }
          if ( !isFindField )
          {
             _readFreeSpace += _readNumStr ;
@@ -410,8 +419,11 @@ INT32 _utilCSVParser::_readFirstField( )
       {
          if ( SDB_UTIL_CSV_FIELD_END == rc )
          {
-            ossStrncpy ( _buffer, _nextFieldCursor, _readFreeSpace ) ;
-            rc = SDB_OK ;
+            if( _headerline )
+            {
+               ossStrncpy ( _buffer, _nextFieldCursor, _readFreeSpace ) ;
+               rc = SDB_OK ;
+            }
             break ;
          }
          else if ( SDB_UTIL_NOT_FIND_FIELD == rc )
