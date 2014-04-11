@@ -352,13 +352,6 @@ namespace engine
             *ppRecvMsg = (MsgHeader*)buff ;
             break ;
          }
-
-         // if all node connect failed
-         if ( !hasUpdateGroup )
-         {
-            hosts.clear() ;
-            goto retry ;
-         }
       }
 
    done:
