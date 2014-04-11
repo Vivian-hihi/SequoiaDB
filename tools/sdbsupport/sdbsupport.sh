@@ -268,13 +268,14 @@ echo ""
 #mv sdbsupport.log sdbsupport.log.1 >>sdbsupport.log 2>&1
 mkdir -p log
 if [ $? -ne 0 ] ; then
-	echo "Failed to create folder:log"
-	exit 1
+   echo "Failed to create folder:log"
+   exit 1
 fi
 
 #inspect the environment of sequiaDB
 localhost=`hostname`
-localPath=`pwd`
+localPath=$(dirname $(readlink -f $0))
+#echo $localPath
 if [ "$localhost" == "" ] || [ "$localPath" == "" ] ; then
    echo "Failed to get local host and local path."
    sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to get local host:$localhost and local path:$localPath."
@@ -684,7 +685,7 @@ do
                do
                   if [ "$sdbconf" == "true" ] || [ "$sdblog" == "true" ] || [ "$sdbcm" == "true" ] ; then
                      sdbPortGatherPart "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath" "$sdbconf" "$sdblog" "$sdbcm"
-#							 else
+#else
 #                     sdbPortGather "${HostPara[$i]}" "${DBPATH[$k]}" "${PORT[$k]}" "$installpath"
                   fi
 
