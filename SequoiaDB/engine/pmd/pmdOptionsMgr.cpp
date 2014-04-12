@@ -86,6 +86,7 @@ namespace engine
    #define PMD_DFT_START_SHIFT_TIME    (300)
    #define PMD_DFT_NUMPAGECLEAN        (1)
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
+   #define PMD_MIN_PAGECLEANINTERVAL   (1000)
 
    /*
       _pmdCfgExchange implement
@@ -1009,6 +1010,8 @@ namespace engine
       // --pagecleaninterval
       rdxUInt( pEX, PMD_OPTION_PAGECLEANINTERVAL, _pagecleanInterval,
                FALSE, TRUE, PMD_DFT_PAGECLEANINTERVAL ) ;
+      rdvMinMax ( pEX, _pagecleanInterval, PMD_MIN_PAGECLEANINTERVAL,
+                  -1, TRUE ) ;
       // end map
 
       return getResult () ;

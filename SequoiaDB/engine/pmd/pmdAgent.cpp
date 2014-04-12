@@ -1787,7 +1787,7 @@ namespace engine
                   probe = 80 ;
                   goto error ;
                }
-               SDB_ASSERT ( replyHeader.header.messageLength ==
+               SDB_ASSERT ( (UINT32)replyHeader.header.messageLength ==
                             sizeof(replyHeader) + pObj->objsize(),
                             "Reply size doesn't match actual" )
             }

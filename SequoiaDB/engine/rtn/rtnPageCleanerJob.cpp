@@ -101,6 +101,7 @@ namespace engine
             cb->waitEvent ( event, _periodTime ) ;
             continue ;
          }
+         eduMgr->activateEDU( cb->getID() ) ;
          // otherwise perform clean and reset the time
          // mark su's page cleaner is working, so that cs can't be destroyed
          // before page cleaner stop
