@@ -75,17 +75,18 @@ namespace engine
    {
       SDB_ASSERT( pSuFileName, "SU file name can't be NULL" ) ;
 
-      _pStorageInfo = pInfo ;
-      _dmsHeader  = NULL ;
-      _dmsSME     = NULL ;
-      _dataSegID  = 0 ;
+      _pStorageInfo       = pInfo ;
+      _dmsHeader          = NULL ;
+      _dmsSME             = NULL ;
+      _dataSegID          = 0 ;
+      _dirtyList          = NULL ;
 
-      _pageNum    = 0 ;
-      _maxSegID   = -1 ;
-      _segmentPages = 0 ;
+      _pageNum            = 0 ;
+      _maxSegID           = -1 ;
+      _segmentPages       = 0 ;
       _segmentPagesSquare = 0 ;
-      _pageSizeSquare = 0 ;
-      _isTempSU       = FALSE ;
+      _pageSizeSquare     = 0 ;
+      _isTempSU           = FALSE ;
 
       ossStrncpy( _suFileName, pSuFileName, DMS_SU_FILENAME_SZ ) ;
       _suFileName[ DMS_SU_FILENAME_SZ ] = 0 ;
@@ -101,6 +102,10 @@ namespace engine
    {
       closeStorage() ;
       _pStorageInfo = NULL ;
+      if ( _dirtyList )
+      {
+         SDB_OSS_FREE ( _dirtyList ) ;
+      }
    }
 
    const CHAR* _dmsStorageBase::getSuFileName () const
@@ -320,6 +325,25 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Extent segments failed, rc: %d", rc ) ;
       }
 
+      // create dirtyList to record dirty pages
+      // note dirty list doesn't contain header and metadata segments, only for
+      // data segments
+      if ( _dirtyList )
+      {
+         SDB_OSS_FREE ( _dirtyList ) ;
+      }
+      // memory will be freed in destructor
+      _dirtyList = (CHAR*)SDB_OSS_MALLOC ( DMS_MAX_SEGMENT_NUM ( pageSize() ) / 8 ) ;
+      if ( !_dirtyList )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR,
+                  "Failed to allocate memory for dirty list for %d bytes",
+                  DMS_MAX_SEGMENT_NUM ( pageSize() ) / 8 ) ;
+         goto error ;
+      }
+      ossMemset ( _dirtyList, 0, DMS_MAX_SEGMENT_NUM ( pageSize() ) / 8 ) ;
+
    done:
       return rc ;
    error:
@@ -337,10 +361,14 @@ namespace engine
       {
          _dmsHeader     = NULL ;
          _dmsSME        = NULL ;
-
+         // release header and attempt to get page cleaner latch
+         // once page cleaner released the latch, the function is able to
+         // proceed
+         ossLatch ( &_pagecleanerLatch ) ;
          _onClosed() ;
 
          ossMmapFile::close() ;
+         ossUnlatch ( &_pagecleanerLatch ) ;
       }
       _maxSegID = -1 ;
    }
@@ -828,6 +856,77 @@ namespace engine
    UINT32 _dmsStorageBase::_totalFreeSpace ()
    {
       return _smeMgr.totalFree() ;
+   }
+
+   // flush all dirty segments to disk by traverse _dirtyList array
+   // this function returns void since it doesn't affect frontend workload
+   // regardless whether the flush success or not
+   void _dmsStorageBase::flushDirtySegments ()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 maxSegmentID = 0 ;
+      // once we latch the storage unit, we have to check if the header is null.
+      // If the header is null, that means closeStorage is called and we should
+      // get out of the function
+      if ( !_dmsHeader )
+         goto done ;
+      SDB_ASSERT ( _dataSegID && _dirtyList,
+                   "starting data segment can't be 0, and "
+                   "dirty list can't be NULL" )
+      SDB_ASSERT ( (UINT32)_maxSegID <=
+                   DMS_MAX_SEGMENT_NUM ( pageSize() ) + _dataSegID,
+                   "current top segment id can't be greater than "
+                   "maximum number of segment for storage unit" )
+      // calculate how many "segment groups" we should go through
+      // note each group is consists of 8 segments
+      maxSegmentID = ceil (( _maxSegID + 1 - _dataSegID ) / 8.0f ) ;
+      // always flush header and metadata
+      for ( UINT32 i = 0; i < _dataSegID; ++i )
+      {
+         // we should check the header before every phyical flush, to make sure
+         // the storage unit is still open at the time
+         if ( !_dmsHeader )
+            goto done ;
+         rc = flush ( i ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDWARNING,
+                     "Failed to flush segment %d to disk, rc = %d",
+                     i, rc ) ;
+         }
+      }
+
+      // then flush data with dirty pages
+      for ( INT32 i = 0; i < maxSegmentID; ++i )
+      {
+         // we should check the header before every phyical flush,
+         // to make sure the storage unit is still open at the time
+         if ( !_dmsHeader )
+            goto done ;
+         // each byte represents 8 segments, let's check each byte first
+         if ( _dirtyList[i] != 0 )
+         {
+            // if the byte is not 0, let's see which page need to be flushed
+            for ( INT32 j = 0; j < 8; ++j )
+            {
+               // if the segment on j's bit is dirty, let's flush
+               if ( OSS_BIT_TEST ( _dirtyList[i], ( 1 << j ) ) )
+               {
+                  rc = flush ( _dataSegID + (i<<3) + j ) ;
+                  if ( rc )
+                  {
+                     PD_LOG ( PDWARNING,
+                              "Failed to flush segment %d to disk, rc = %d",
+                              i + _dataSegID, rc ) ;
+                  }
+                  // now let's convert the bit back to 0
+                  OSS_BIT_CLEAR ( _dirtyList[i], ( 1 << j ) ) ;
+               } // if ( _dirtyList[i] & ( 1 << j ) )
+            } // for ( INT32 j = 0; j < 8; ++j )
+         } // if ( _dirtyList[i] != 0 )
+      } // for ( INT32 i = 0; i < maxSegmentNum; ++i )
+   done :
+      return ;
    }
 
    /*

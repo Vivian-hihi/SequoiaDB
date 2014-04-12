@@ -213,6 +213,20 @@
                     A--anyone instance,
                     1-7--the nth instance</stentry>
 				</strow>
+				<strow>
+					<stentry>--numpagecleaners</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>The number of page cleaners to start during database startup.
+             0 means do not start any page cleaners.</stentry>
+				</strow>
+				<strow>
+					<stentry>--pagecleaninterval</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>The minimum interval between two cleans for each CS
+             Unit: ms</stentry>
+				</strow>
 			</simpletable>
 			<note>
 				<p>SequoiaDB supports setting configuration with command line,configuration file, or both of them. When both of them are used, parameters in command line will overwrite those in configuration file.</p>

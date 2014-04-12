@@ -650,4 +650,39 @@
       <default>A</default>
    </opt>
 
+   <opt>
+      <name>PMD_OPTION_NUMPAGECLEANERS</name>
+      <long>numpagecleaners</long>
+      <description>
+         <en>Number of page cleaners to start</en>
+         <cn>启动脏页清除器的数量</cn>
+      </description>
+      <detail>
+         <en>The number of page cleaners to start during database startup.<fig></fig>
+             0 means do not start any page cleaners.<fig></fig></en>
+         <cn>数据库启动时需要开启的脏页清除器数量<fig></fig>
+             0意味着不启动任何脏页清除器。<fig></fig></cn>
+      </detail>
+      <type>int</type>
+      <default>1</default>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
+      <name>PMD_OPTION_PAGECLEANINTERVAL</name>
+      <long>pagecleaninterval</long>
+      <description>
+         <en>The min interval between two cleans for each collection space</en>
+         <cn>对每个集合空间的进行脏页清除的最小间隔</cn>
+      </description>
+      <detail>
+         <en>The minimum interval between two cleans for each CS<fig></fig>
+             Unit: ms<fig></fig></en>
+         <cn>对每个集合空间的进行脏页清除的最小时间间隔<fig></fig>
+             单位：毫秒<fig></fig></cn>
+      </detail>
+      <type>int</type>
+      <default>10000</default>
+      <typeofweb>num</typeofweb>
+   </opt>
 </optlist>

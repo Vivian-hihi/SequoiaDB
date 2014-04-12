@@ -1024,6 +1024,10 @@
             <stentry>连接池已满</stentry>
             <stentry>-254</stentry>
          </strow>
+         <strow>
+            <stentry>文件描述符已达到上限</stentry>
+            <stentry>-255</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

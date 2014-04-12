@@ -55,7 +55,7 @@ namespace engine
 
    const CHAR* _rtnPrefetchJob::name () const
    {
-      return "Job[Prefetch]" ;
+      return "Job[Prefetcher]" ;
    }
 
    BOOLEAN _rtnPrefetchJob::muteXOn( const _rtnBaseJob * pOther )

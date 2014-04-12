@@ -210,6 +210,20 @@
                     A--任意实例
                     1-7--第n个实例</stentry>
 				</strow>
+				<strow>
+					<stentry>--numpagecleaners</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>数据库启动时需要开启的脏页清除器数量
+             0意味着不启动任何脏页清除器。</stentry>
+				</strow>
+				<strow>
+					<stentry>--pagecleaninterval</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>对每个集合空间的进行脏页清除的最小时间间隔
+             单位：毫秒</stentry>
+				</strow>
 			</simpletable>
 			<note>
 				<p>SequoiaDB支持命令行方式及配置文件方式。当两种方式并存时，命令行参数将会覆盖配置文件中的相同的配置项。</p>

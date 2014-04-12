@@ -57,7 +57,8 @@ namespace engine
       RTN_JOB_PREFETCH           = 5,
       RTN_JOB_EXTENDSEGMENT      = 6,
       RTN_JOB_RESTORE            = 7,
-      RTN_JOB_REPLSYNC           = 8
+      RTN_JOB_REPLSYNC           = 8,
+      RTN_JOB_PAGECLEANER        = 9
    } ;
 
    enum RTN_JOB_MUTEX_TYPE

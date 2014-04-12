@@ -84,3 +84,9 @@ transactionon=false
 # Prefered instance when read request, default:A, value enum:M,S,A,1-7
 preferedinstance=A
 
+# Number of page cleaners to start
+numpagecleaners=1
+
+# The min interval between two cleans for each collection space
+pagecleaninterval=10000
+

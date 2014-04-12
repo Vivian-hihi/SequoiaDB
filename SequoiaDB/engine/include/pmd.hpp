@@ -376,6 +376,16 @@ namespace engine
          return _optioncb.hjBufSize() ;
       }
 
+      UINT32 getPageCleanInterval () const
+      {
+         return _optioncb.pagecleanInterval () ;
+      }
+
+      UINT32 getPageCleanNum () const
+      {
+         return _optioncb.pagecleanNum () ;
+      }
+
       const CHAR *getTmpPath() const
       {
          return _optioncb.dmsTmpPath() ;

@@ -333,6 +333,16 @@ namespace engine
             return _hjBufSz ;
          }
 
+         inline UINT32 pagecleanNum () const
+         {
+            return _pagecleanNum ;
+         }
+
+         inline UINT32 pagecleanInterval () const
+         {
+            return _pagecleanInterval ;
+         }
+
          void clearCatAddr() ;
          void setCatAddr( const CHAR *host, const CHAR *service ) ;
 
@@ -393,6 +403,8 @@ namespace engine
          UINT32      _sortBufSz ;
          UINT32      _hjBufSz ;
          UINT32      _preferReplica ;
+         UINT32      _pagecleanNum ;
+         UINT32      _pagecleanInterval ;
 
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;

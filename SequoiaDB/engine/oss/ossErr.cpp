@@ -277,7 +277,8 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "the node info is expired",
                    "wait secondary nodes sync the operation failed",
                    "transaction is disabled",
-                   "datasource had run out"
+                   "datasource had run out",
+                   "too many open file description"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

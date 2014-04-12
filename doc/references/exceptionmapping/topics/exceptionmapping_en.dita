@@ -1024,6 +1024,10 @@
             <stentry>datasource had run out</stentry>
             <stentry>-254</stentry>
          </strow>
+         <strow>
+            <stentry>too many open file description</stentry>
+            <stentry>-255</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

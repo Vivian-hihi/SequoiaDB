@@ -70,11 +70,13 @@ namespace engine
 // 64K: 8TB
 // Note this number is 2^28
 #define DMS_MAX_PG             (128*1024*1024)
-#define DMS_MAX_SZ(x)          (DMS_MAX_PG*(x))
+#define DMS_MAX_SZ(x)          (((UINT64)DMS_MAX_PG)*(x))
 
 // fixed segment size 128MB
 #define DMS_SEGMENT_SZ         (128*1024*1024)
 #define DMS_SEGMENT_PG(x)      (DMS_SEGMENT_SZ/(x))
+// max number of segments is max size of storage unit / size of each segment
+#define DMS_MAX_SEGMENT_NUM(x) (DMS_MAX_SZ(x)/DMS_SEGMENT_SZ)
 
 #define DMS_MAX_EXTENT_SZ      DMS_SEGMENT_SZ
 #define DMS_MIN_EXTENT_SZ(x)   (x)

@@ -1983,6 +1983,9 @@ namespace engine
       // update totalInsert monitor counter
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INSERT, 1 ) ;
 
+      // mark the segment dirty
+      _markDirty ( foundDeletedID._extent ) ;
+
       // we have to create new object from deletedRecordPtr instead of using
       // record object, because we may have to add OID into the object
       {
@@ -2410,6 +2413,9 @@ namespace engine
       //increase data write counter
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
 
+      // mark as dirty
+      _markDirty ( recordID._extent ) ;
+
       return _saveDeletedRecord( mb, recordID, recordSize ) ;
    }
 
@@ -2707,6 +2713,8 @@ namespace engine
             DMS_RECORD_SETDATA ( realRecordPtr, ptr, len ) ;
          }
          DMS_MON_OP_COUNT_INC( pMonAppCB, MON_DATA_WRITE, 1 ) ;
+         // mark as dirty
+         _markDirty ( recordID._extent ) ;
          goto done ;
       }
       // over-flow recrod
@@ -2765,8 +2773,12 @@ namespace engine
          DMS_RECORD_SETOVF ( recordPtr, foundDeletedID ) ;
          if ( ovfRID.isValid() )
          {
+            // overflowed record removal is done here, and it will mark the
+            // segment dirty in the function
             _extentRemoveRecord( context->mb(), ovfRID, 0, cb ) ;
          }
+         // mark the segment as dirty
+         _markDirty ( foundDeletedID._extent ) ;
       }
 
    done :

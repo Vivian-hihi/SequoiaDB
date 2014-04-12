@@ -58,6 +58,7 @@
 #include "pmdTrace.hpp"
 #include "optQgmStrategy.hpp"
 #include "rtnBackgroundJob.hpp"
+#include "rtnPageCleanerJob.hpp"
 #include "pmdCB.hpp"
 
 using namespace std;
@@ -157,6 +158,8 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      rtnPageCleanerJob *pcJob = NULL ;
       SDB_ROLE dbRole ;
 
       //analysis the start type
@@ -287,6 +290,32 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to rebuild database, rc = %d", rc ) ;
             goto error ;
+         }
+      }
+
+      for ( UINT32 i = 0; i < krcb->getPageCleanNum (); ++i )
+      {
+         // Once all collectionspaces are loaded, let's start up page cleaners
+         pcJob = SDB_OSS_NEW rtnPageCleanerJob() ;
+         if ( NULL == pcJob )
+         {
+            PD_LOG ( PDERROR, "Failed to alloc memory for page cleaner job" ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         // start the job
+         rc = rtnGetJobMgr()->startJob( pcJob, RTN_JOB_MUTEX_NONE, NULL ) ;
+         if ( SDB_RTN_MUTEX_JOB_EXIST == rc )
+         {
+            rc = SDB_OK ;
+         }
+         // if we failed to start the job, no worry, it's not a big deal
+         if ( rc )
+         {
+            PD_LOG ( PDWARNING, "Failed to start page cleaner job, rc = %d",
+                     rc ) ;
+            rc = SDB_OK ;
          }
       }
    done :

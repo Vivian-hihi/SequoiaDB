@@ -84,7 +84,8 @@ namespace engine
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
    #define PMD_DFT_INDEX_SCAN_STEP     (30)
    #define PMD_DFT_START_SHIFT_TIME    (300)
-
+   #define PMD_DFT_NUMPAGECLEAN        (1)
+   #define PMD_DFT_PAGECLEANINTERVAL   (10000)
 
    /*
       _pmdCfgExchange implement
@@ -839,6 +840,8 @@ namespace engine
       _logBuffSize         = DPS_DFT_LOG_BUF_SZ ;
       _sortBufSz           = PMD_DEFAULT_SORTBUF_SZ ;
       _hjBufSz             = PMD_DEFAULT_HJ_SZ ;
+      _pagecleanNum        = PMD_DFT_NUMPAGECLEAN ;
+      _pagecleanInterval   = PMD_DFT_PAGECLEANINTERVAL ;
 
       // other configs
       ossMemset( _krcbConfPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
@@ -999,6 +1002,13 @@ namespace engine
       rdvMinMax( pEX, _hjBufSz, PMD_MIN_HJ_SZ,
                  -1, TRUE ) ;
 
+      // --numpagecleaners
+      rdxUInt( pEX, PMD_OPTION_NUMPAGECLEANERS, _pagecleanNum,
+               FALSE, FALSE, PMD_DFT_NUMPAGECLEAN ) ;
+
+      // --pagecleaninterval
+      rdxUInt( pEX, PMD_OPTION_PAGECLEANINTERVAL, _pagecleanInterval,
+               FALSE, TRUE, PMD_DFT_PAGECLEANINTERVAL ) ;
       // end map
 
       return getResult () ;

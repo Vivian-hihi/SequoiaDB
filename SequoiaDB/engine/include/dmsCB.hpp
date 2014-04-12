@@ -50,6 +50,7 @@
 #include <map>
 #include <set>
 
+
 using namespace std ;
 
 namespace engine
@@ -117,6 +118,12 @@ namespace engine
       std::vector<ossRWMutex*>            _latchVec ;
       std::vector<dmsStorageUnitID>       _freeList ;
 
+      // represent the last page clean timestamp for a given storage unit
+      typedef std::pair<ossTick,dmsStorageUnitID> _pageCleanHistory ;
+      // stores a list of page clean history
+      std::list<_pageCleanHistory> _pageCleanHistoryList ;
+      std::set<dmsStorageUnitID> _pageCleanHistorySet ;
+
       ossSpinXLatch           _stateMtx;
       ossEvent                _backEvent ;
       SINT64                  _writeCounter;
@@ -152,6 +159,7 @@ namespace engine
                               SDB_DPSCB *dpsCB,
                               SDB_DMS_CSCB *&pCSCB );
       void _CSCBNameMapCleanup () ;
+      INT32 _joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
    public:
       _SDB_DMSCB() :
@@ -216,6 +224,10 @@ namespace engine
 
       INT32 dropCollectionSpaceP2 ( const CHAR *pName, _pmdEDUCB *cb,
                                     SDB_DPSCB *dpsCB );
+
+      _dmsStorageUnit *dispatchPageCleanSU ( dmsStorageUnitID *suID ) ;
+
+      INT32 joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
    public:
       typedef std::vector<SDB_DMS_CSCB*>::iterator CSCB_ITERATOR;

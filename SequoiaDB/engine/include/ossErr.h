@@ -290,4 +290,5 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_CLS_WAIT_SYNC_FAILED        -252  /**< wait secondary nodes sync the operation failed */
 #define SDB_DPS_TRANS_DIABLED           -253  /**< transaction is disabled */
 #define SDB_DRIVER_DS_RUNOUT            -254  /**< datasource had run out */
+#define SDB_TOO_MANY_OPEN_FD            -255  /**< too many open file description */
 #endif /* OSSERR_HPP_ */
