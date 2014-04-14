@@ -138,27 +138,6 @@ namespace engine
       PMD_SESSION_OM
    } ;
 
-   /*
-      _pmdBaseSession define
-   */
-   class _ISession : public SDBObject
-   {
-      public:
-         _ISession() {}
-         virtual ~_ISession() {}
-
-      public:
-         virtual INT32           sessionType() const = 0 ;
-         virtual UINT64          identifyID() = 0 ;
-         virtual const CHAR*     sessionName() const = 0 ;
-
-      protected:
-         virtual void            _onAttach () {}
-         virtual void            _onDetach () {}
-
-   } ;
-   typedef _ISession ISession ;
-
 }
 
 #endif // PMD_DEF_HPP__
