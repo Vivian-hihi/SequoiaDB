@@ -7,13 +7,9 @@
 #include "../bson/bson.h"
 #include "msgMessage.hpp"
 #include "pmdSession.hpp"
-#include <vector>
 #include <map>
 
-//recv once size 1KB
-#define REST_ONCE_RECV_SIZE 100
-//http size 2MB
-#define REST_MAX_HTTP_SIZE 2097152
+//recv and send timeout
 #define REST_TIMEOUT  1000
 
 namespace engine
@@ -29,50 +25,47 @@ namespace engine
       COM_GETFILE
    } ;
 
+   struct httpConnection : public SDBObject
+   {
+      //Max http recv size
+      UINT32 _maxHttpSize ;
+      //recv and send timeout
+      UINT32 _timeout ;
+      //flag headers complete
+      BOOLEAN _recvHeaderComplete ;
+      //flag recv complete
+      BOOLEAN _recvComplete ;
+      //flag is parser key or value, true: key, false: value
+      BOOLEAN _isKey ;
+      //recv buffer
+      CHAR *_pRecvBuffer ;
+      //send buffer
+      CHAR *_pSendBuffer ;
+      //http parser
+      void *_pHttpParser ;
+      //path
+      const CHAR *_pPath ;
+
+      map<CHAR *,CHAR *> _requestHeaders ;
+      map<CHAR *,CHAR *> _requestQuery ;
+
+      httpConnection() : _maxHttpSize(0),
+                         _timeout(0),
+                         _recvHeaderComplete(FALSE),
+                         _recvComplete(FALSE),
+                         _isKey(TRUE),
+                         _pRecvBuffer(NULL),
+                         _pSendBuffer(NULL),
+                         _pHttpParser(NULL),
+                         _pPath(NULL)
+   } ;
+
    class restAdaptor : public SDBObject
    {
    private:
-      struct _requestHeader
-      {
-         //string size
-         UINT32 length ;
-         const CHAR *pBuffer ;
-      } ;
-
-      struct _responseHeader
-      {
-         const CHAR *pKey ;
-         const CHAR *pValue ;
-      } ;
-
-      struct _httpConnection : public SDBObject
-      {
-         //Max http recv size
-         UINT32 _maxHttpSize ;
-         //recv and send timeout
-         UINT32 _timeout ;
-         //flag recv complete
-         BOOLEAN _recvComplete ;
-         //flag is parser key or value, true: key, false: value
-         BOOLEAN _isKey ;
-         //recv buffer
-         CHAR *_pRecvBuffer ;
-         //send buffer
-         CHAR *_pSendBuffer ;
-         //socket
-         ossSocket *_pSocket ;
-         //http parser
-         void *_pHttpParser ;
-         //path
-         const CHAR *_pPath ;
-
-         vector<_requestHeader> _requestKey ;
-         vector<_requestHeader> _requestValue ;
-         map<CHAR *,CHAR *> _requestQuery ;
-         vector<_responseHeader> _responseField ;
-      } ;
-
-      _httpConnection *_pHttpConnection ;
+      UINT32 _maxHttpHeaderSize ;
+      UINT32 _maxHttpBodySize ;
+      UINT32 _timeout ;
       void *_pSettings ;
    private:
       static INT32 on_message_begin( void *pData ) ;
@@ -95,14 +88,16 @@ namespace engine
    public:
       restAdaptor() ;
       ~restAdaptor() ;
-      INT32 init( ossSocket *socket,
-                  UINT32 maxHttpSize = REST_MAX_HTTP_SIZE,
+      INT32 init( UINT32 maxHttpHeaderSize
+                  UINT32 maxHttpBodySize,
                   UINT32 timeout = REST_TIMEOUT ) ;
 
-      INT32 getRequest( HTTP_PARSE_COMMON &common,
-                        CHAR **pMsg,
-                        UINT32 &msgSize ) ;
-      INT32 sendResponse() ;
+      INT32 getRequestHeader( pmdSession *pSession ) ;
+      INT32 getRequestBody( pmdSession *pSession,
+                            HTTP_PARSE_COMMON &common,
+                            CHAR **pMsg,
+                            UINT32 &msgSize ) ;
+      INT32 sendResponse( pmdSession *pSession ) ;
 
       INT32 appendHttpHeader( const CHAR *pKey,
                               const CHAR *pValue ) ;
