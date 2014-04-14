@@ -329,7 +329,7 @@ barFiles = [
       ]
 
 restFiles = [
-      "rest/restAdaptor.cpp"
+      "rest/restAdaptorold.cpp"
       ]
 
 catFiles = [
