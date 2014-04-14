@@ -92,6 +92,10 @@ namespace engine
       return "Unknow" ;
    }
 
+   INT32 _pmdSession::allocBuff( INT32 len, CHAR **ppBuff, INT32 & buffLen )
+   {
+   }
+
    INT32 _pmdSession::getBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
    {
       INT32 rc = SDB_OK ;
@@ -125,16 +129,26 @@ namespace engine
       goto done ;
    }
 
+   void _pmdSession::updateBuff( CHAR * pBuff, INT32 buffLen )
+   {
+      SDB_ASSERT( _pBuff == pBuff, "The buffer is not from get buff" ) ;
+
+      _buffLen = buffLen ;
+   }
+
    void _pmdSession::disconnect()
    {
       _socket.close() ;
    }
 
-   INT32 _pmdSession::sendData( const CHAR * pData, INT32 size )
+   INT32 _pmdSession::sendData( const CHAR * pData, INT32 size,
+                                INT32 timeout, BOOLEAN block,
+                                INT32 flags )
    {
       INT32 rc = SDB_OK ;
       INT32 sentSize = 0 ;
       INT32 totalSentSize = 0 ;
+      INT32 realTimeout = timeout < 0 ? OSS_SOCKET_DFT_TIMEOUT : timeout ;
 
       while ( TRUE )
       {
@@ -144,19 +158,13 @@ namespace engine
             goto done ;
          }
          rc = _socket.send ( &pData[totalSentSize], size-totalSentSize,
-                             sentSize ) ;
+                             sentSize, realTimeout, flags, block ) ;
          totalSentSize += sentSize ;
-         if ( SDB_TIMEOUT == rc )
+         if ( timeout < 0 && SDB_TIMEOUT == rc )
          {
             continue ;
          }
          break ;
-      }
-
-      // send data failed
-      if ( totalSentSize != size )
-      {
-         disconnect() ;
       }
 
    done :
@@ -167,11 +175,13 @@ namespace engine
       return rc ;
    }
 
-   INT32 _pmdSession::recvData( CHAR * pData, INT32 size )
+   INT32 _pmdSession::recvData( CHAR * pData, INT32 size, INT32 timeout,
+                                BOOLEAN block, INT32 flags )
    {
       INT32 rc = SDB_OK ;
       INT32 receivedSize = 0 ;
       INT32 totalReceivedSize = 0 ;
+      INT32 realTimeout = timeout < 0 ? OSS_SOCKET_DFT_TIMEOUT : timeout ;
 
       while ( TRUE )
       {
@@ -180,21 +190,14 @@ namespace engine
             rc = SDB_APP_FORCED ;
             goto done ;
          }
-         rc = _socket.recv ( &pData[totalReceivedSize],
-                             size-totalReceivedSize,
-                             receivedSize ) ;
+         rc = _socket.recv ( &pData[totalReceivedSize], size-totalReceivedSize,
+                             receivedSize, realTimeout, flags, block ) ;
          totalReceivedSize += receivedSize ;
-         if ( SDB_TIMEOUT == rc )
+         if ( timeout < 0 && SDB_TIMEOUT == rc )
          {
             continue ;
          }
          break ;
-      }
-
-      // recv data failed
-      if ( totalReceivedSize != size )
-      {
-         disconnect() ;
       }
 
    done :
