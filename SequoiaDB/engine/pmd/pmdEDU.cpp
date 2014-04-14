@@ -1335,7 +1335,7 @@ namespace engine
 
    INT32 pmdSyncClockEntryPoint( pmdEDUCB * cb, void * arg )
    {
-      const syncClockInterval = 10 ; // 10ms
+      const UINT32 syncClockInterval = 10 ; // 10ms
       ossTick tmp ;
       pmdKRCB *pKrcb = pmdGetKRCB() ;
       while ( !cb->isDisconnected() )
