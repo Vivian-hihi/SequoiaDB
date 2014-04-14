@@ -280,60 +280,17 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_INIT, "restAdaptor::init" )
-   INT32 restAdaptor::init( ossSocket *socket,
-                            UINT32 maxHttpSize,
+   INT32 restAdaptor::init( UINT32 maxHttpHeaderSize
+                            UINT32 maxHttpBodySize,
                             UINT32 timeout )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_INIT );
-      SDB_ASSERT ( socket, "socket is NULL" )
-      http_parser *pParser = NULL ;
+
       http_parser_settings *pSettings = NULL ;
-      CHAR *pRecvBuffer = NULL ;
-
-      _pHttpConnection = SDB_OSS_NEW _httpConnection() ;
-      if ( !_pHttpConnection )
-      {
-         rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "Unable to allocate %d bytes memory",
-                  sizeof( _httpConnection ) ) ;
-         goto error ;
-      }
-
-      pParser = (http_parser *)SDB_OSS_MALLOC( sizeof( http_parser ) ) ;
-      if ( !pParser )
-      {
-         rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "Unable to allocate %d bytes memory",
-                  sizeof( http_parser ) ) ;
-         goto error ;
-      }
-      pParser->data = _pHttpConnection ;
-
-      _pHttpConnection->_maxHttpSize   = maxHttpSize ;
-      _pHttpConnection->_timeout       = timeout ;
-      _pHttpConnection->_pSocket       = socket ;
-      _pHttpConnection->_pHttpParser   = pParser ;
-      _pHttpConnection->_isKey         = TRUE ;
-      _pHttpConnection->_recvComplete  = FALSE ;
-      _pHttpConnection->_pRecvBuffer   = NULL ;
-      _pHttpConnection->_pSendBuffer   = NULL ;
-      _pHttpConnection->_pPath         = NULL ;
-
-      pRecvBuffer = (CHAR *)SDB_OSS_MALLOC( maxHttpSize ) ;
-      if ( !pRecvBuffer )
-      {
-         rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "Unable to allocate %d bytes memory",
-                  maxHttpSize ) ;
-         goto error ;
-      }
-      ossMemset ( pRecvBuffer, 0, maxHttpSize ) ;
-
-      _pHttpConnection->_pRecvBuffer = pRecvBuffer ;
 
       pSettings = (http_parser_settings *)SDB_OSS_MALLOC(
-                                              sizeof( http_parser_settings ) ) ;
+            sizeof( http_parser_settings ) ) ;
       if ( !pSettings )
       {
          rc = SDB_OOM ;
@@ -343,13 +300,17 @@ namespace engine
       }
 
       ossMemset( pSettings, 0, sizeof( http_parser_settings ) ) ;
-      pSettings->on_message_begin    = restAdaptor::on_message_begin;
-      pSettings->on_url              = restAdaptor::on_url;
-      pSettings->on_header_field     = restAdaptor::on_header_field;
-      pSettings->on_header_value     = restAdaptor::on_header_value;
-      pSettings->on_headers_complete = restAdaptor::on_headers_complete;
-      pSettings->on_body             = restAdaptor::on_body;
-      pSettings->on_message_complete = restAdaptor::on_message_complete;
+      pSettings->on_message_begin    = restAdaptor::on_message_begin ;
+      pSettings->on_url              = restAdaptor::on_url ;
+      pSettings->on_header_field     = restAdaptor::on_header_field ;
+      pSettings->on_header_value     = restAdaptor::on_header_value ;
+      pSettings->on_headers_complete = restAdaptor::on_headers_complete ;
+      pSettings->on_body             = restAdaptor::on_body ;
+      pSettings->on_message_complete = restAdaptor::on_message_complete ;
+
+      _maxHttpHeaderSize = maxHttpHeaderSize ;
+      _maxHttpBodySize = maxHttpHeaderSize ;
+      _timeout = timeout ;
       _pSettings = pSettings ;
    done:
       PD_TRACE_EXITRC ( SDB__RESTADP_INIT, rc ) ;
@@ -358,15 +319,30 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQ, "restAdaptor::getRequest" )
-   INT32 restAdaptor::getRequest( HTTP_PARSE_COMMON &common,
-                                  CHAR **pMsg,
-                                  UINT32 &msgSize )
+   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQHE, "restAdaptor::getRequestHeader" )
+   INT32 getRequestHeader( pmdSession *pSession )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RESTADP_GETREQ ) ;
-      SDB_ASSERT ( pMsg, "pMsg is NULL" )
-      SDB_ASSERT ( _pHttpConnection, "_pHttpConnection is NULL" )
+      PD_TRACE_ENTRY( SDB__RESTADP_GETREQHE ) ;
+      SDB_ASSERT ( pSession, "pSession is NULL" )
+
+   done:
+      PD_TRACE_EXITRC( SDB__RESTADP_GETREQHE, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQBO, "restAdaptor::getRequestBody" )
+   INT32 restAdaptor::getRequestBody( pmdSession *pSession,
+                                      HTTP_PARSE_COMMON &common,
+                                      CHAR **pMsg,
+                                      UINT32 &msgSize )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RESTADP_GETREQBO ) ;
+      SDB_ASSERT ( pSession, "pSession is NULL" )
+/*
       http_parser *pParser     = (http_parser *)_pHttpConnection->_pHttpParser ;
       ossSocket   *pSocket     = _pHttpConnection-> _pSocket ;
       CHAR        *pRecvBuffer = _pHttpConnection->_pRecvBuffer ;
@@ -426,16 +402,16 @@ namespace engine
                  _pHttpConnection->_requestValue[i].length,
                  _pHttpConnection->_requestValue[i].pBuffer ) ;
       }
-
+*/
    done:
-      PD_TRACE_EXITRC( SDB__RESTADP_GETREQ, rc ) ;
+      PD_TRACE_EXITRC( SDB__RESTADP_GETREQBO, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_SENDRE, "restAdaptor::sendResponse" )
-   INT32 restAdaptor::sendResponse()
+   INT32 restAdaptor::sendResponse( pmdSession *pSession )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_SENDRE ) ;
