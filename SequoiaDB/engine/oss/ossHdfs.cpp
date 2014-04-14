@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 
-#include "hdfs.h"
+#include "../util/hdfs.h"
 #include "ossHdfs.hpp"
 
 //typedef int ( OSS_MODULE_FUNCTION ) () ;
