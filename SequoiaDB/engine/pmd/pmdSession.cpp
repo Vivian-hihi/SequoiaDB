@@ -37,6 +37,8 @@
 namespace engine
 {
    const UINT32 SESSION_SOCKET_DFT_TIMEOUT = 10 ;
+   const UINT32 SESSION_MEM_ALIGMENT_SIZE  = 1024 ;
+   const UINT32 SESSION_MAX_CATCH_SIZE     = 16*1024*1024 ;
 
    /*
       _pmdSession implement
@@ -55,10 +57,27 @@ namespace engine
       _pBuff   = NULL ;
       _buffLen = 0 ;
 
+      _totalCatchSize   = 0 ;
+      _totalMemSize     = 0 ;
+
       _socket.disableNagle() ;
+
+      // make session name
+      CHAR tmpName [ 128 ] = {0} ;
+      _socket.getPeerAddress( tmpName, sizeof( tmpName ) -1 ) ;
+      _sessionName = tmpName ;
+      _sessionName += ":" ;
+      ossSnprintf( tmpName, sizeof( tmpName ) -1, "%d",
+                   _socket.getPeerPort() ) ;
+      _sessionName += tmpName ;
    }
 
    _pmdSession::~_pmdSession()
+   {
+      clear() ;
+   }
+
+   void _pmdSession::clear ()
    {
       // release buff
       if ( _pBuff )
@@ -67,6 +86,18 @@ namespace engine
          _pBuff = NULL ;
       }
       _buffLen = 0 ;
+
+      // clean catch
+      CATCH_MAP_IT it = _catchMap.begin() ;
+      while ( it != _catchMap.end() )
+      {
+         SDB_OSS_FREE( it->second ) ;
+         _totalCatchSize -= it->first ;
+         _totalMemSize -= it->first ;
+         ++it ;
+      }
+      _catchMap.clear() ;
+      SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
    }
 
    void _pmdSession::attach( _pmdEDUCB * cb )
@@ -85,21 +116,67 @@ namespace engine
 
    const CHAR* _pmdSession::sessionName () const
    {
-      if ( _pEDUCB )
-      {
-         // TODO:XUJIANHUI
-      }
-      return "Unknow" ;
+      return _sessionName.c_str() ;
    }
 
-   INT32 _pmdSession::allocBuff( INT32 len, CHAR **ppBuff, INT32 & buffLen )
-   {
-   }
-
-   INT32 _pmdSession::getBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
+   INT32 _pmdSession::allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
    {
       INT32 rc = SDB_OK ;
 
+      // first alloc from catch
+      if ( _totalCatchSize >= len && _allocFromCatch( len, ppBuff, buffLen ) )
+      {
+         goto done ;
+      }
+
+      // malloc
+      len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
+      *ppBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
+      if( !**ppBuff )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Session[%s] malloc memory[size: %d] failed",
+                 sessionName(), len ) ;
+         goto error ;
+      }
+      buffLen = len ;
+
+      // update meta info
+      _totalMemSize += buffLen ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
+   {
+      if ( buffLen > SESSION_MAX_CATCH_SIZE )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         _totalMemSize -= buffLen ;
+      }
+      else
+      {
+         // add to catch
+         _catchMap.insert( std::make_pair( buffLen, pBuff ) ) ;
+         _totalCatchSize += buffLen ;
+
+         // re-org catch
+         while ( _totalCatchSize > SESSION_MAX_CATCH_SIZE )
+         {
+            CATCH_MAP_IT it = _catchMap.begin() ;
+            SDB_OSS_FREE( it->second ) ;
+            _totalMemSize -= it->first ;
+            _totalCatchSize -= it->first ;
+            _catchMap.erase( it ) ;
+         }
+      }
+   }
+
+   CHAR* _pmdSession::getBuff( INT32 len )
+   {
       if ( _buffLen < len )
       {
          if ( _pBuff )
@@ -109,31 +186,35 @@ namespace engine
          }
          _buffLen = 0 ;
 
-         len = ossRoundUpToMultipleX( len, SDB_PAGE_SIZE ) ;
+         len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
          _pBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
          if ( !_pBuff )
          {
-            rc = SDB_OOM ;
-            PD_LOG( PDERROR, "Failed to alloc memory in session[%lld], "
-                    "size = %d", sessionID(), len ) ;
+            PD_LOG( PDERROR, "Session[%s] alloc memory[size: %d] failed",
+                    sessionName(), len ) ;
             goto error ;
          }
       }
 
-      *ppBuff = _pBuff ;
-      buffLen = _buffLen ;
-
    done:
-      return rc ;
+      return _pBuff ;
    error:
       goto done ;
    }
 
-   void _pmdSession::updateBuff( CHAR * pBuff, INT32 buffLen )
+   BOOLEAN _pmdSession::_allocFromCatch( INT32 len, CHAR **ppBuff,
+                                         INT32 &buffLen )
    {
-      SDB_ASSERT( _pBuff == pBuff, "The buffer is not from get buff" ) ;
-
-      _buffLen = buffLen ;
+      CATCH_MAP_IT it = _catchMap.lower_bound( len ) ;
+      if ( it != _catchMap.end() )
+      {
+         *ppBuff = it->second ;
+         buffLen = it->first ;
+         _catchMap.erase( it ) ;
+         _totalCatchSize -= buffLen ;
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
    void _pmdSession::disconnect()
