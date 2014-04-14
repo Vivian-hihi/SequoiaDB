@@ -225,7 +225,7 @@ namespace engine
                                 "PreLoader" ),
 
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SYNCCLOCK, TRUE,
-                                pmdSyncClock,
+                                pmdSyncClockEntryPoint,
                                 "SyncClockWorker" ),
          //TODO:
 
@@ -990,6 +990,9 @@ namespace engine
       goto done ;
    }
 
+   /*
+      edu entry point functions
+   */
    INT32 pmdEDUEntryPointWrapper ( EDU_TYPES type, pmdEDUCB *cb, void *arg )
    {
 #if defined (_WINDOWS)
@@ -1039,8 +1042,8 @@ namespace engine
       cb->setTID ( ossGetCurrentThreadID() ) ;
       eduMgr->setEDU ( ossGetCurrentThreadID(), myEDUID ) ;
 
-      PD_LOG ( PDDEBUG, "Start EDU %lld for thread id %d", myEDUID, 
-         ossGetCurrentThreadID() ) ;
+      PD_LOG ( PDEVENT, "Start EDU %lld for thread id %d", myEDUID, 
+               ossGetCurrentThreadID() ) ;
 
       if ( _ossEduData.get() == 0 )
       {
@@ -1054,7 +1057,7 @@ namespace engine
          // usually we don't expect agent sitting in creating for long time
          // the thread spawning the agent supposed to post event immediately
          // after the thread is created
-         if ( !cb->waitEvent ( event, 1000 ) )
+         if ( !cb->waitEvent ( event, OSS_ONE_SEC ) )
          {
             // if don't receive anything in 1000 milliseconds,
             // we should check "killed" mark for this session
@@ -1071,7 +1074,9 @@ namespace engine
                isForced = TRUE ;
             }
             else
+            {
                continue ;
+            }
          }
 
          if ( !isForced && PMD_EDU_EVENT_RESUME == event._eventType )
@@ -1125,8 +1130,8 @@ namespace engine
                      event._eventType, myEDUID, getEDUName(cb->getType()) ) ;
             rc = SDB_SYS ;
          }
-         else if ( !isForced && PMD_EDU_EVENT_TERM == event._eventType
-            && cb->isForced () )
+         else if ( !isForced && PMD_EDU_EVENT_TERM == event._eventType &&
+                   cb->isForced () )
          {
             PD_LOG ( PDEVENT, "EDU[ID:%lld, type:%s] is forced", myEDUID,
                      getEDUName(cb->getType()) ) ;
@@ -1170,8 +1175,8 @@ namespace engine
                      myEDUID, getEDUName( type ) ) ;
          }
       }
-      PD_LOG ( PDDEBUG, "Terminating thread for EDU[ID:%lld, type:%s]",
-               myEDUID, getEDUName( type ) ) ;
+      PD_LOG ( PDEVENT, "Terminating thread[%d] for EDU[ID:%lld, type:%s]",
+               ossGetCurrentThreadID(), myEDUID, getEDUName( type ) ) ;
 
    #if defined (_WINDOWS)
       // close handle
@@ -1182,7 +1187,6 @@ namespace engine
    #endif
       PD_TRACE_EXITRC ( SDB_PMDEDUENTPNT, rc );
       return rc ;
-
    }
 
    // for pmdRecv, we wait indefinitely until the agent is forced, because
@@ -1329,20 +1333,18 @@ namespace engine
    }
 #endif
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSYNCCLOCK, "pmdSyncClock" )
-   INT32 pmdSyncClock( pmdEDUCB * cb, void * arg )
+   INT32 pmdSyncClockEntryPoint( pmdEDUCB * cb, void * arg )
    {
-#define SYNCCLOCK_INTERVAL    10    //10ms
+      const syncClockInterval = 10 ; // 10ms
       ossTick tmp ;
-      // PD_TRACE_ENTRY ( SDB_PMDSYNCCLOCK );
       pmdKRCB *pKrcb = pmdGetKRCB() ;
       while ( !cb->isDisconnected() )
       {
          pKrcb->syncCurTime() ;
-         ossSleep( SYNCCLOCK_INTERVAL ) ;
+         ossSleep( syncClockInterval ) ;
       }
-
-      // PD_TRACE_EXITRC ( SDB_PMDSYNCCLOCK, rc );
       return SDB_OK ;
    }
+
 }
+
