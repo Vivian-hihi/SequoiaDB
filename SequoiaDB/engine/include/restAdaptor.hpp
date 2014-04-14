@@ -2,11 +2,11 @@
 #define RESTADAPTOR_HPP__
 #include "core.hpp"
 #include "oss.hpp"
-#include "ossSocket.hpp"
 #include "msg.hpp"
 #include "../bson/bson.h"
 #include "msgMessage.hpp"
 #include "pmdSession.hpp"
+#include "restdefine.hpp"
 #include <map>
 
 //recv and send timeout
@@ -23,43 +23,6 @@ namespace engine
       COM_SQL,
       COM_LOGIN,
       COM_GETFILE
-   } ;
-
-   struct httpConnection : public SDBObject
-   {
-      //Max http recv size
-      UINT32 _maxHttpSize ;
-      //recv and send timeout
-      UINT32 _timeout ;
-      //flag headers complete
-      BOOLEAN _recvHeaderComplete ;
-      //flag recv complete
-      BOOLEAN _recvComplete ;
-      //flag is parser key or value, true: key, false: value
-      BOOLEAN _isKey ;
-      //recv buffer
-      CHAR *_pRecvBuffer ;
-      //send buffer
-      CHAR *_pSendBuffer ;
-      //http parser
-      void *_pHttpParser ;
-      //path
-      const CHAR *_pPath ;
-
-      map<CHAR *,CHAR *> _requestHeaders ;
-      map<CHAR *,CHAR *> _requestQuery ;
-
-      httpConnection() : _maxHttpSize(0),
-                         _timeout(0),
-                         _recvHeaderComplete(FALSE),
-                         _recvComplete(FALSE),
-                         _isKey(TRUE),
-                         _pRecvBuffer(NULL),
-                         _pSendBuffer(NULL),
-                         _pHttpParser(NULL),
-                         _pPath(NULL)
-      {
-      }
    } ;
 
    class restAdaptor : public SDBObject
