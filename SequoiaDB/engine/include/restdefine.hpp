@@ -30,8 +30,8 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef REST_DEFINE_H
-#define REST_DEFINE_H
+#ifndef REST_DEFINE_HPP__
+#define REST_DEFINE_HPP__
 
 #include "core.hpp"
 #include <sys/types.h>
@@ -119,4 +119,4 @@ struct httpConnection
    }
 } ;
 
-#endif
+#endif // REST_DEFINE_HPP__
