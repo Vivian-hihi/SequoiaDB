@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.collectionspace.createCL()"/>
-<meta name="description" content="db.collectionspace.createCL(&lt;name&gt;,[options]) 在指定集合空间下创建集合（Collection）。 集合是数据库中存放文档记录的逻辑对象。任何一条文档记录必须属于一个且仅一个集合。 参数描述 参数名 参数类型 描述 是否必填 name string 集合名，在同一个集合空间中，集合名必须唯一。 是 options Json对象 ..."/>
+<meta name="description" content="db.collectionspace.createCL(&lt;name&gt;,[options]) 在指定集合空间下创建集合（Collection）。 集合是数据库中存放文档记录的逻辑对象。任何一条文档记录必须属于一个且仅一个集合。 参数描述      ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../references/methods/topics/methodlist.html"/>
 <meta name="DC.Relation" scheme="URI" content="resetSnapshot.html"/>
 <meta name="DC.Relation" scheme="URI" content="getCL.html"/>
@@ -45,105 +45,45 @@
 
     </div>
 
-    <div class="section"><h2 class="title sectiontitle">参数描述</h2><p class="p"/>
+    <p class="p"><strong class="ph b">参数描述</strong></p>
 
-      <a name="references_method_createCL__references_method_createCL_table"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="references_method_createCL__references_method_createCL_table" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d85985e27" class="stentry">参数名</th>
+    <p class="p">    <strong class="ph b">参数名    参数类型    描述                                                                                                                                                                 是否必填</strong></p>
 
-          <th valign="bottom" align="left" id="d85985e30" class="stentry">参数类型</th>
+    <p class="p">    name      string           集合名，在同一个集合空间中，集合名必须唯一。                                                                                                是</p>
 
-          <th valign="bottom" align="left" id="d85985e33" class="stentry">描述</th>
+    <p class="p">    options    Json对象     在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。     否</p>
 
-          <th valign="bottom" align="left" id="d85985e36" class="stentry">是否必填</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e27" class="stentry">name</td>
-
-          <td valign="top" headers="d85985e30" class="stentry">string</td>
-
-          <td valign="top" headers="d85985e33" class="stentry"> 集合名，在同一个集合空间中，集合名必须唯一。</td>
-
-          <td valign="top" headers="d85985e36" class="stentry">是</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e27" class="stentry">options</td>
-
-          <td valign="top" headers="d85985e30" class="stentry">Json对象</td>
-
-          <td valign="top" headers="d85985e33" class="stentry">在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。</td>
-
-          <td valign="top" headers="d85985e36" class="stentry">否</td>
-
-        </tr>
-</table>
-
-      
-    </div>
-
+    
     <div class="section"><h2 class="title sectiontitle">格式</h2>
-      <p class="p">createCL()方法的定义格式包含name和options两个参数。 name 的值为字符串类型，
-        必须有值。options是设置集合其他属性参数，目前通过options可设置集合的属性有：</p>
-<div class="p">
-      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d85985e84" class="stentry">属性名</th>
+      <p class="p">createCL()方法的定义格式包含name和options两个参数。 name 的值为字符串类型，必须有值。options是设置集合其他属性参数，目前通过options可设置集合的属性有：</p>
+<p class="p">        
+      </p>
 
-          <th valign="bottom" align="left" id="d85985e87" class="stentry">描述</th>
+      <p class="p">  <strong class="ph b">参数options选项    [ShardingKey]  [ShardingType]  [Partition]  [ReplSize]  [Compressed]  [IsMainCL]</strong></p>
 
-          <th valign="bottom" align="left" id="d85985e90" class="stentry">格式</th>
+      <p class="p">    <strong class="ph b">ShardingKey</strong></p>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e84" class="stentry">ShardingKey</td>
+      <p class="p">     分区键。Example: ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt; [,&lt;字段2&gt;:&lt;1|-1&gt;, ...]}</p>
 
-          <td valign="top" headers="d85985e87" class="stentry">分区键。 </td>
+      <p class="p">    <strong class="ph b">ShardingType</strong> </p>
 
-          <td valign="top" headers="d85985e90" class="stentry">ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt; [,&lt;字段2&gt;:&lt;1|-1&gt;, ...]} </td>
+      <p class="p">     分区方式，默认为range分区。Example: ShardingType:"hash"|"range"</p>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e84" class="stentry">ShardingType</td>
+      <p class="p">    <strong class="ph b">Partition</strong> </p>
 
-          <td valign="top" headers="d85985e87" class="stentry">分区方式，默认为range分区。</td>
+      <p class="p">     分区数，hash分区时填写，代表了hash分区的个数。其值必须是2的幂。范围在[2^3, 2^20]。Example: Partition:&lt;分区数&gt;]</p>
 
-          <td valign="top" headers="d85985e90" class="stentry">ShardingType:"hash"|"range"</td>
+      <p class="p">    <strong class="ph b">ReplSize</strong> </p>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e84" class="stentry">Partition</td>
+      <p class="p">     副本数，默认情况下，副本写入个数为1。Example: ReplSize:&lt;int num&gt;</p>
 
-          <td valign="top" headers="d85985e87" class="stentry">分区数，hash分区时填写，代表了hash分区的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </td>
+      <p class="p">    <strong class="ph b">Compressed</strong> </p>
 
-          <td valign="top" headers="d85985e90" class="stentry">Partition:&lt;分区数&gt;]</td>
+      <p class="p">     数据压缩。Example: Compressed:true|false</p>
 
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e84" class="stentry">ReplSize</td>
+      <p class="p">    <strong class="ph b">IsMainCL</strong> </p>
 
-          <td valign="top" headers="d85985e87" class="stentry">副本数，默认情况下，副本写入个数为1。</td>
-
-          <td valign="top" headers="d85985e90" class="stentry">ReplSize:&lt;int num&gt;</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e84" class="stentry">Compressed</td>
-
-          <td valign="top" headers="d85985e87" class="stentry">数据压缩。</td>
-
-          <td valign="top" headers="d85985e90" class="stentry">Compressed:true|false</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d85985e84" class="stentry">IsMainCL</td>
-
-          <td valign="top" headers="d85985e87" class="stentry">主分区集合。标识是否为主分区集合，默认为否</td>
-
-          <td valign="top" headers="d85985e90" class="stentry">IsMainCL:true|false</td>
-
-        </tr>
-</table>
-</div>
+      <p class="p">     主分区集合。标识是否为主分区集合，默认为否。Example: IsMainCL:true|false</p>
 
       <div class="p">创建集合的格式为：<pre class="pre codeblock">{"name":"&lt;集合名&gt;",[options]} </pre>
 </div>

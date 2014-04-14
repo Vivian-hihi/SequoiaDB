@@ -30,7 +30,7 @@
       <p>4. Customize the length of the return value of a certain limit, the reference SequoiaDB insert records maximum length.</p>
       <p>5. Define the temporary support functions, such as: <b>db.eval(' function sum(x,y){return x+y;} sum(1,2)')</b>
       </p>
-      <p>6. Global db usage and <xref href="createProcedures_en.dita">createProcedures</xref> same.</p>
+      <p>6. Global db usage and <xref href="createProcedure_en.dita">createProcedure</xref> same.</p>
       <note>While all the output statement will be shielded, but it is recommended not to join any print statements.</note>
     </section>
     <section><title>Example</title>
@@ -43,7 +43,7 @@
 ", "retCode": -152 }
 (nofile):0 uncaught exception: -152
 //Initialization sum()
->db.createProcedures(function sum(x,y){return x+y;})
+>db.createProcedure(function sum(x,y){return x+y;})
 //Call the sum()
 >db.eval('sum(1,2)')
 3</codeblock>

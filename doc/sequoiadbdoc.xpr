@@ -727,10 +727,13 @@
                 <folder name="images"/>
                 <folder name="tasks"/>
                 <folder name="topics">
+                    <file name="references/methods/topics/attachCL_en_v2.dita"/>
                     <file name="references/methods/topics/attachCL_en.dita"/>
                     <file name="references/methods/topics/attachCL.dita"/>
                     <file name="references/methods/topics/backupoffline_en.dita"/>
                     <file name="references/methods/topics/backupoffline.dita"/>
+                    <file name="references/methods/cancelTask_en_v2.dita"/>
+                    <file name="references/methods/topics/cancelTask_en_v2.dita"/>
                     <file name="references/methods/cancelTask_en.dita"/>
                     <file name="references/methods/cancelTask.dita"/>
                     <file name="references/methods/topics/ccurrent_en.dita"/>
@@ -887,6 +890,16 @@
                     <file name="references/methods/waitTasks_en.dita"/>
                     <file name="references/methods/waitTasks.dita"/>
                 </folder>
+                <folder name="topics_en_v2">
+                    <file name="references/methods/topics_en_v2/db.caeateCataRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.dropCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.getCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.getRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.removeRG.dita"/>
+                </folder>
+                <file name="references/methods/methodlist_en_v2.ditamap"/>
                 <file name="references/methods/methodlist_en.ditamap"/>
                 <file name="references/methods/methodlist.ditamap"/>
             </folder>

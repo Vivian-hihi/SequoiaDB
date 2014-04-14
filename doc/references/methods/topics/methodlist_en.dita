@@ -122,14 +122,14 @@
           </strow>
           
           <strow>
-            <stentry><xref href="createProcedures_en.dita">db.createProcedures()</xref></stentry>
+            <stentry><xref href="createProcedure_en.dita">db.createProcedure()</xref></stentry>
             <stentry>Create a stored procedure functions</stentry>
-            <stentry>db.createProcedures(function sum(i,j){return i+j;})</stentry>
+            <stentry>db.createProcedure(function sum(i,j){return i+j;})</stentry>
           </strow>
           <strow>
-            <stentry><xref href="removeProcedures_en.dita">db.removeProcedures()</xref></stentry>
+            <stentry><xref href="removeProcedure_en.dita">db.removeProcedure()</xref></stentry>
             <stentry>Delete stored procedure function that already exists</stentry>
-            <stentry>db.removeProcedures("sum")</stentry>
+            <stentry>db.removeProcedure("sum")</stentry>
           </strow>
           <strow>
             <stentry><xref href="listProcedures_en.dita">db.listProcedures()</xref></stentry>

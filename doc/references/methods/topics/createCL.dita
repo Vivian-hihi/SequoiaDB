@@ -6,7 +6,11 @@
     <section><title>db.collectionspace.createCL(&lt;name>,[options])</title>
       <p>在指定集合空间下创建集合（Collection）。 集合是数据库中存放文档记录的逻辑对象。任何一条文档记录必须属于一个且仅一个集合。 </p>
     </section>
-    <section><title>参数描述</title><p></p>
+    <p><b>参数描述</b></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>参数名&nbsp;&nbsp;&nbsp;&nbsp;参数类型&nbsp;&nbsp;&nbsp;&nbsp;描述&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;是否必填</b></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;集合名，在同一个集合空间中，集合名必须唯一。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;是</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;options&nbsp;&nbsp;&nbsp;&nbsp;Json对象&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在创建集合时，可以通过options参数设置集合的其他属性，如指定集合的分区键、是否以压缩的形式插入数据等。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;否</p>
+    <!--<section><title>参数描述</title><p></p>
       <simpletable 
         id="references_method_createCL_table">
         <sthead>
@@ -29,11 +33,10 @@
         </strow>
       </simpletable>
       
-    </section>
+    </section>-->
     <section><title>格式</title>
-      <p>createCL()方法的定义格式包含name和options两个参数。 name 的值为字符串类型，
-        必须有值。options是设置集合其他属性参数，目前通过options可设置集合的属性有：</p><p>
-      <simpletable>
+      <p>createCL()方法的定义格式包含name和options两个参数。 name 的值为字符串类型，必须有值。options是设置集合其他属性参数，目前通过options可设置集合的属性有：</p><p>        
+      <!--<simpletable>
         <sthead>
           <stentry>属性名</stentry>
           <stentry>描述</stentry>
@@ -69,7 +72,20 @@
           <stentry>主分区集合。标识是否为主分区集合，默认为否</stentry>
           <stentry>IsMainCL:true|false</stentry>
         </strow>
-      </simpletable></p>
+      </simpletable></p>--></p>
+      <p>&nbsp;&nbsp;<b>参数options选项&nbsp;&nbsp;&nbsp;&nbsp;[ShardingKey]&nbsp;&nbsp;[ShardingType]&nbsp;&nbsp;[Partition]&nbsp;&nbsp;[ReplSize]&nbsp;&nbsp;[Compressed]&nbsp;&nbsp;[IsMainCL]</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>ShardingKey</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; 分区键。Example: ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]}</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>ShardingType</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; 分区方式，默认为range分区。Example: ShardingType:"hash"|"range"</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>Partition</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; 分区数，hash分区时填写，代表了hash分区的个数。其值必须是2的幂。范围在[2^3, 2^20]。Example: Partition:&lt;分区数>]</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>ReplSize</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; 副本数，默认情况下，副本写入个数为1。Example: ReplSize:&lt;int num></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>Compressed</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; 数据压缩。Example: Compressed:true|false</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>IsMainCL</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; 主分区集合。标识是否为主分区集合，默认为否。Example: IsMainCL:true|false</p>
       <p>创建集合的格式为：<codeblock>{"name":"&lt;集合名>",[options]} </codeblock></p>
       <note>
         <ul>

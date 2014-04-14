@@ -34,14 +34,14 @@
           <stentry>string</stentry>
           <stentry>Data file path used to store catalog data files, administrators need to ensure that the data (created during installation, the default is 
             sdbadmin) the user has write permissions.</stentry>
-          <stentry>No</stentry>
+          <stentry>Yes</stentry>
         </strow>
         <strow>
           <stentry>config</stentry>
           <stentry>json</stentry>
           <stentry>parameter is optional, for more details on the configuration parameters, the format must be json format, database configuration parameters 
             see a, If you need to configure the log size parameters {logfilesz:64}.</stentry>
-          <stentry>Yes</stentry>
+          <stentry>No</stentry>
         </strow>
       </simpletable>
       
@@ -50,7 +50,7 @@
       <p>Definition Format createCataRG() method has host, service, dbpath, config four parameters,
         host, dbpath a string type, service is an integer type, config as json object in the
         following format:</p>
-      <p><codeblock>{"&lt;host name>",&lt;port number>,"&lt;data file path>",&lt;database configuration parameter object>}</codeblock></p>
+      <p><codeblock>{"&lt;host name>",&lt;port number>,"&lt;data file path>",[database configuration parameter object]}</codeblock></p>
       <note>
         <ul>
           <li>Make sure the permissions data file storage path, if SequoiaDB using the default installation, then the path to the authority conferred sdbadmin.</li>

@@ -119,14 +119,14 @@
           </strow>
           
           <strow>
-            <stentry><xref href="createProcedures.dita">db.createProcedures()</xref></stentry>
+            <stentry><xref href="createProcedure.dita">db.createProcedure()</xref></stentry>
             <stentry>创建存储过程函数</stentry>
-            <stentry>db.createProcedures(function sum(i,j){return i+j;})</stentry>
+            <stentry>db.createProcedure(function sum(i,j){return i+j;})</stentry>
           </strow>
           <strow>
-            <stentry><xref href="removeProcedures.dita">db.removeProcedures()</xref></stentry>
+            <stentry><xref href="removeProcedure.dita">db.removeProcedure()</xref></stentry>
             <stentry>删除已存在的存储过程函数</stentry>
-            <stentry>db.removeProcedures("sum")</stentry>
+            <stentry>db.removeProcedure("sum")</stentry>
           </strow>
           <strow>
             <stentry><xref href="listProcedures.dita">db.listProcedures()</xref></stentry>

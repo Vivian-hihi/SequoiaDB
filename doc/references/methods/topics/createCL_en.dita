@@ -9,7 +9,10 @@
     </section>
     <section>
       <title>Parameter Description</title>
-      <simpletable id="references_method_createCL_table">
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>Parameter Name&nbsp;&nbsp;&nbsp;&nbsp;Parameter Type&nbsp;&nbsp;&nbsp;&nbsp;Description&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Not null</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Collection name. Collection names should be unique to each other in a collection space.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;yes</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;options&nbsp;&nbsp;&nbsp;&nbsp;Json object&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;when create collection,you can set other properties about the collection through the param <i>options</i>,such as assigning the ShardingKey or whether storing the data in compressed form.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;no</p>
+      <!--<simpletable id="references_method_createCL_table">
         <sthead>
           <stentry>Parameter Name</stentry>
           <stentry>Parameter Type</stentry>
@@ -19,8 +22,7 @@
         <strow>
           <stentry>name</stentry>
           <stentry>string</stentry>
-          <stentry> Collection name. Collection names should be unique to each other in a collection
-            space.</stentry>
+          <stentry> Collection name. Collection names should be unique to each other in a collection space.</stentry>
           <stentry>yes</stentry>
         </strow>
         <strow>
@@ -31,20 +33,33 @@
             in compressed form.</stentry>
           <stentry>no</stentry>
         </strow>
-      </simpletable>
+      </simpletable>-->
     </section>
     <section><title>Format</title>
       <p>The method "createCL()" contains 2 parameters: name and shardingkey. The value of "name" is
         a <i>string</i>, which should not be null. the param <i>options</i> be used to set other
         properties for the collection,at present,you can set the following properties by the
           <i>options</i>:</p>
-      <p>(1)ShardingKey: a json form param,the format is:{ShardingKey:{field name1:1|-1,field
+      <p>&nbsp;&nbsp;<b>Options formats&nbsp;&nbsp;&nbsp;&nbsp;[ShardingKey]&nbsp;&nbsp;[ShardingType]&nbsp;&nbsp;[Partition]&nbsp;&nbsp;[ReplSize]&nbsp;&nbsp;[Compressed]&nbsp;&nbsp;[IsMainCL]</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>ShardingKey</b></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; ShardingKey. Example: ShardingKey:{&lt;field name1>:&lt;1|-1> [,&lt;field name2>:&lt;1|-1>, ...]}</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>ShardingType</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; ShardingType specify the way of sharding, "Range Sharding" is in default. Example: ShardingType:"hash"|"range"</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>Partition</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; Specify the number of slices, only fill in Hash Sharding.[2^3, 2^20]. Example: Partition:&lt;Partition>]</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>ReplSize</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; Copy number: a json form param. Example: ReplSize:&lt;int num></p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>Compressed</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; A json form param. Example: Compressed:true|false</p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp;<b>IsMainCL</b> </p>
+      <p>&nbsp;&nbsp;&nbsp;&nbsp; Primary partition collection. Identifies whether the primary partition the set, the default is no. Example: IsMainCL:true|false</p>
+      <!--<p>(1)ShardingKey: a json form param,the format is:{ShardingKey:{field name1:1|-1,field
         name2:1|-1,...}, {ShardingType:"hash"}  [, {Partition:&lt;number of slices>}]}，ShardingType
         specify the way of sharding,"Range Sharding" is in default;"Partition" specify the number of
         slices,only fill in Hash Sharding.</p>
       <p>(2)copy number: a json form param,the format is:{ReplSize:&lt;int num>}</p>
       <p>(3)data commpressed:a json form param,the format is:{Compressed:true|false}</p>
-      <p><codeblock>{"name":"&lt;collection name>",[options]} </codeblock></p>
+      <p><codeblock>{"name":"&lt;collection name>",[options]} </codeblock></p>-->
       <note>
         <ul>
           <li>The parameter "shardingkey" is a JSON object. Each of the fields in the JSON object

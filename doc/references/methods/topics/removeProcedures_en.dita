@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_plt_dpz_gm">
-  <title>db.removeProcedures()</title>
+  <title>db.removeProcedure()</title>
   <body>
-    <section><title>db.removeProcedures(&lt;function name>)</title>
+    <section><title>db.removeProcedure(&lt;function name>)</title>
       <p>Deletes the specified function name, function name must exist, otherwise an exception message.</p>
     </section>
     <section><title>Parameter Description</title>
@@ -22,17 +22,17 @@
           <stentry>Yes</stentry>
         </strow>
       </simpletable>
-      <p>Defined removeProcedures() method, only one string type parameter name function name, its value must already exits, otherwise an exception.</p>
+      <p>Defined removeProcedure() method, only one string type parameter name function name, its value must already exits, otherwise an exception.</p>
     </section>
     <section><title>Example</title>
       <ul>
-        <li><p>Delete the sum function</p><codeblock>db.removeProcedures("sum")</codeblock>Function must be guaranteed and consistent definition of the function name. 
-          Such as db.removeProcedures('sum') call will return a failure.</li>
+        <li><p>Delete the sum function</p><codeblock>db.removeProcedure("sum")</codeblock>Function must be guaranteed and consistent definition of the function name. 
+          Such as db.removeProcedure('sum') call will return a failure.</li>
       </ul>
     </section>
   </body>
   <related-links>
-    <link href="createProcedures_en.dita" format="dita" type="topic"></link>
+    <link href="createProcedure_en.dita" format="dita" type="topic"></link>
     <link href="listProcedures_en.dita" format="dita" type="topic"></link>
   </related-links>
 </topic>

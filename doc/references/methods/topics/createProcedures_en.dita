@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_kxr_njz_gm">
-  <title> db.createProcedures() </title>
+  <title> db.createProcedure() </title>
   <body>
-    <section><title>db.createProcedures(&lt;code>)</title>
+    <section><title>db.createProcedure(&lt;code>)</title>
       <p>Create a stord procedure in the database object.</p>
     </section>
     <section><title>Parameter Description</title>
@@ -25,10 +25,10 @@
       
     </section>
     <section><title>Format</title>
-      <p>Definition Format createProcedures() method contains the code parameter, the parameter value is the standard fuction definition.</p>
-      <p><codeblock>createProcedures(&lt;code>)</codeblock></p>
+      <p>Definition Format createProcedure() method contains the code parameter, the parameter value is the standard fuction definition.</p>
+      <p><codeblock>createProcedure(&lt;code>)</codeblock></p>
       <p><b>Description:</b><ul id="ul_p2q_bmw_ql">
-        <li> Recommended direct use stored procedures have been initialized global db, such as:  <b>db.createProcedures( function getAll(){return
+        <li> Recommended direct use stored procedures have been initialized global db, such as:  <b>db.createProcedure( function getAll(){return
           db.foo.bar.find();} )</b> . But if you need authentication, then the global db failure. Needs its own initialization db.</li>
         <li> Db initialization own form of <b>var db=new Sdb()</b>. If you need to add a user name and password, as <b>var db=new Sdb('usrname','passwd')</b>. 
           It should be noted that when the stored procedure can only be run on a connected db, db does not provide remote connection to other methods. Without 
@@ -53,7 +53,7 @@
     <section><title>Example</title>
       <ul>
         <li><p>Create a sum function</p>
-          <codeblock>db.createProcedures(function sum(x,y){return x+y;})</codeblock>
+          <codeblock>db.createProcedure(function sum(x,y){return x+y;})</codeblock>
           <p>After you crdate can be used <xref href="listProcedures_en.dita">db.listProcedures()</xref> function to view the information.</p>
         </li>
       </ul>
@@ -61,6 +61,6 @@
   </body>
   <related-links>
     <link href="listProcedures_en.dita" format="dita" type="topic"></link>
-    <link href="removeProcedures_en.dita" format="dita" type="topic"></link>
+    <link href="removeProcedure_en.dita" format="dita" type="topic"></link>
   </related-links>
 </topic>
