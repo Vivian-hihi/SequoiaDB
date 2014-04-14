@@ -29,21 +29,7 @@ extern "C" {
 #define HTTP_PARSER_VERSION_MINOR 3
 #define HTTP_PARSER_VERSION_PATCH 0
 
-#include <sys/types.h>
-#if defined(_WIN32) && !defined(__MINGW32__) && (!defined(_MSC_VER) || _MSC_VER<1600)
-#include <BaseTsd.h>
-#include <stddef.h>
-typedef __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#else
-#include <stdint.h>
-#endif
+#include "restdefine.h"
 
 /* Compile with -DHTTP_PARSER_STRICT=0 to make less checks, but run
  * faster
@@ -196,36 +182,6 @@ enum http_errno {
 
 /* Get an http_errno value from an http_parser */
 #define HTTP_PARSER_ERRNO(p)            ((enum http_errno) (p)->http_errno)
-
-
-struct http_parser {
-  /** PRIVATE **/
-  unsigned int type : 2;         /* enum http_parser_type */
-  unsigned int flags : 6;        /* F_* values from 'flags' enum; semi-public */
-  unsigned int state : 8;        /* enum state from http_parser.c */
-  unsigned int header_state : 8; /* enum header_state from http_parser.c */
-  unsigned int index : 8;        /* index into current matcher */
-
-  uint32_t nread;          /* # bytes read in various scenarios */
-  uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
-
-  /** READ-ONLY **/
-  unsigned short http_major;
-  unsigned short http_minor;
-  unsigned int status_code : 16; /* responses only */
-  unsigned int method : 8;       /* requests only */
-  unsigned int http_errno : 7;
-
-  /* 1 = Upgrade header was present and the parser has exited because of that.
-   * 0 = No upgrade header present.
-   * Should be checked when http_parser_execute() returns in addition to
-   * error checking.
-   */
-  unsigned int upgrade : 1;
-
-  /** PUBLIC **/
-  void *data; /* A pointer to get hook to the "connection" or "socket" object */
-};
 
 
 struct http_parser_settings {
