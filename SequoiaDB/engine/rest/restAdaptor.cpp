@@ -22,7 +22,7 @@ namespace engine
    INT32 restAdaptor::on_message_complete( void *pData )
    {
       http_parser *pParser = (http_parser *)pData ;
-      _httpConnection *pHttpConnection = (_httpConnection *)pParser->data ;
+      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
       pHttpConnection->_recvComplete = TRUE ;
       return 0 ;
    }
@@ -31,7 +31,7 @@ namespace engine
                               const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      _httpConnection *pHttpConnection = (_httpConnection *)pParser->data ;
+      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
       INT32 i = 0 ;
       CHAR *pPath = NULL ;
 
@@ -57,7 +57,8 @@ namespace engine
                                        const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      _httpConnection *pHttpConnection = (_httpConnection *)pParser->data ;
+      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
+      /*
       if ( pHttpConnection->_isKey )
       {
          _requestHeader httpHeader ;
@@ -74,7 +75,7 @@ namespace engine
             return 1 ;
          }
          pHttpConnection->_requestKey[vectorLen-1].length += length ;
-      }
+      }*/
       return 0 ;
    }
 
@@ -82,7 +83,8 @@ namespace engine
                                        const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      _httpConnection *pHttpConnection = (_httpConnection *)pParser->data ;
+      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
+      /*
       if ( !pHttpConnection->_isKey )
       {
          _requestHeader httpHeader ;
@@ -99,7 +101,7 @@ namespace engine
             return 1 ;
          }
          pHttpConnection->_requestValue[vectorLen-1].length += length ;
-      }
+      }*/
       return 0 ;
    }
 
@@ -107,7 +109,8 @@ namespace engine
                                const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      _httpConnection *pHttpConnection = (_httpConnection *)pParser->data ;
+      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
+      /*
       INT32 i = length ;
       CHAR *pPostQuery = NULL ;
 
@@ -118,31 +121,19 @@ namespace engine
 
       _parse_http_query( pHttpConnection,
                          pPostQuery, length ) ;
+      */
       return 0 ;
    }
 
-   restAdaptor::restAdaptor() : _pHttpConnection(NULL),
+   restAdaptor::restAdaptor() : _maxHttpHeaderSize(0),
+                                _maxHttpBodySize(0),
+                                _timeout(0),
                                 _pSettings(NULL)
    {
    }
 
    restAdaptor::~restAdaptor()
    {
-      if ( _pHttpConnection )
-      {
-         if ( _pHttpConnection->_pHttpParser )
-         {
-            SDB_OSS_FREE( _pHttpConnection->_pHttpParser ) ;
-            _pHttpConnection->_pHttpParser = NULL ;
-         }
-         if ( _pHttpConnection->_pRecvBuffer )
-         {
-            SDB_OSS_FREE( _pHttpConnection->_pRecvBuffer ) ;
-            _pHttpConnection->_pRecvBuffer = NULL ;
-         }
-         SAFE_OSS_DELETE( _pHttpConnection ) ;
-      }
-
       if ( _pSettings )
       {
          SDB_OSS_FREE( _pSettings ) ;
@@ -151,7 +142,7 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_PARQUERY, "restAdaptor::_parse_http_query" )
-   INT32 restAdaptor::_parse_http_query( _httpConnection *pHttpConnection,
+   INT32 restAdaptor::_parse_http_query( httpConnection *pHttpConnection,
                                          CHAR *pBuffer, INT32 length )
    {
       INT32 rc = SDB_OK ;
@@ -240,7 +231,7 @@ namespace engine
       const CHAR *pFileName = NULL ;
       const CHAR *pExtension = NULL ;
       INT32 fileNameSize = 0 ;
-
+      /*
       pFileName = _getResourceFileName( _pHttpConnection->_pPath ) ;
       if ( pFileName )
       {
@@ -273,6 +264,7 @@ namespace engine
             //get default file
          }
       }
+      */
    done:
       return rc ;
    error:
@@ -280,7 +272,7 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_INIT, "restAdaptor::init" )
-   INT32 restAdaptor::init( UINT32 maxHttpHeaderSize
+   INT32 restAdaptor::init( UINT32 maxHttpHeaderSize,
                             UINT32 maxHttpBodySize,
                             UINT32 timeout )
    {
