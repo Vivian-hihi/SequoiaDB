@@ -58,6 +58,8 @@ namespace engine
                          _pSendBuffer(NULL),
                          _pHttpParser(NULL),
                          _pPath(NULL)
+      {
+      }
    } ;
 
    class restAdaptor : public SDBObject
@@ -78,7 +80,7 @@ namespace engine
                                     size_t length ) ;
       static INT32 on_body( void *pData, const CHAR* at,
                             size_t length ) ;
-      static INT32 _parse_http_query( _httpConnection *pHttpConnection,
+      static INT32 _parse_http_query( httpConnection *pHttpConnection,
                                       CHAR *pBuffer, INT32 length ) ;
       inline const CHAR *_getResourceFileName( const CHAR *pPath ) ;
       inline const CHAR *_getFileExtension( const CHAR *pFileName ) ;
@@ -88,7 +90,7 @@ namespace engine
    public:
       restAdaptor() ;
       ~restAdaptor() ;
-      INT32 init( UINT32 maxHttpHeaderSize
+      INT32 init( UINT32 maxHttpHeaderSize,
                   UINT32 maxHttpBodySize,
                   UINT32 timeout = REST_TIMEOUT ) ;
 
