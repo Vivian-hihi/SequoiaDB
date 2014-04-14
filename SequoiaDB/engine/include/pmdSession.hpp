@@ -41,6 +41,7 @@ namespace engine
 
    class _pmdEDUCB ;
 
+
    /*
       _pmdSession define
    */
@@ -64,10 +65,20 @@ namespace engine
          void        dettach() ;
 
          INT32       getBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
+         void        updateBuff( CHAR *pBuff, INT32 buffLen ) ;
+
+         INT32       allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
+         void        freeBuff( CHAR *pBuff, INT32 buffLen ) ;
 
          void        disconnect() ;
-         INT32       sendData( const CHAR *pData, INT32 size ) ;
-         INT32       recvData( CHAR *pData, INT32 size ) ;
+         INT32       sendData( const CHAR *pData, INT32 size,
+                               INT32 timeout = -1,
+                               BOOLEAN block = TRUE,
+                               INT32 flags = 0 ) ;
+         INT32       recvData( CHAR *pData, INT32 size,
+                               INT32 timeout = -1,
+                               BOOLEAN block = TRUE,
+                               INT32 flags = 0 ) ;
 
       protected:
 
