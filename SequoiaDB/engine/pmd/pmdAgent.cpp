@@ -817,7 +817,7 @@ namespace engine
       sock.disableNagle () ;
 
       // create rest adaptor
-      restAdaptor httpAdaptor ;
+      restAdaptoro httpAdaptor ;
 
       // get application information
       clientPort = sock.getPeerPort () ;
