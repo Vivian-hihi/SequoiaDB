@@ -44,7 +44,7 @@
 #include "rtn.hpp"
 #include "../bson/bson.h"
 #include "pmd.hpp"
-#include "restAdaptor.hpp"
+#include "restAdaptorold.hpp"
 #include "rtnCoord.hpp"
 #include "rtnCoordCommands.hpp"
 #include "coordSession.hpp"
