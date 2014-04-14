@@ -87,7 +87,7 @@
 #define REST_SOCKET_DFT_TIMEOUT           10000
 namespace engine
 {
-   class _restAdaptor : public SDBObject
+   class _restAdaptoro : public SDBObject
    {
    private :
       CHAR CRLF[3] ;
@@ -187,8 +187,8 @@ namespace engine
                               BOOLEAN &needFetch ) ;
       INT32 _strReplace ( CHAR *pStr ) ;
    public :
-      _restAdaptor () ;
-      ~_restAdaptor () ;
+      _restAdaptoro () ;
+      ~_restAdaptoro () ;
       INT32 getRequest ( ossSocket &sock, CHAR **ppReceiveBuffer,
                          INT32 *receiveBufferSize,
                          BOOLEAN &needFetch ) ;
@@ -199,7 +199,7 @@ namespace engine
                         BOOLEAN needFetch,
                         BOOLEAN &isSendHeader ) ;
    } ;
-   typedef class _restAdaptor restAdaptor ;
+   typedef class _restAdaptoro restAdaptoro ;
 }
 
 
