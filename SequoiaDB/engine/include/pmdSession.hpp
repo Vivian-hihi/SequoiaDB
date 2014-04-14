@@ -34,13 +34,16 @@
 #include "oss.hpp"
 #include "clsObjBase.hpp"
 #include "ossSocket.hpp"
+#include "sdbInterface.hpp"
 #include "pmdDef.hpp"
+
+#include <map>
+#include <string>
 
 namespace engine
 {
 
    class _pmdEDUCB ;
-
 
    /*
       _pmdSession define
@@ -49,9 +52,14 @@ namespace engine
    {
       DECLARE_OBJ_MSG_MAP()
 
+      typedef std::multimap<INT32,CHAR*>     CATCH_MAP ;
+      typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
+
       public:
          _pmdSession( SOCKET fd ) ;
          virtual ~_pmdSession() ;
+
+         virtual void            clear() ;
 
          virtual const CHAR*     sessionName() const ;
 
@@ -64,11 +72,11 @@ namespace engine
          void        attach( _pmdEDUCB * cb ) ;
          void        dettach() ;
 
-         INT32       getBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
-         void        updateBuff( CHAR *pBuff, INT32 buffLen ) ;
+         CHAR*       getBuff( INT32 len ) ;
+         INT32       getBuffLen () const { return _buffLen ; }
 
          INT32       allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
-         void        freeBuff( CHAR *pBuff, INT32 buffLen ) ;
+         void        releaseBuff( CHAR *pBuff, INT32 buffLen ) ;
 
          void        disconnect() ;
          INT32       sendData( const CHAR *pData, INT32 size,
@@ -82,15 +90,23 @@ namespace engine
 
       protected:
 
+         BOOLEAN     _allocFromCatch( INT32 len, CHAR **ppBuff,
+                                      INT32 &buffLen ) ;
+
       protected:
 
-         _pmdEDUCB            *_pEDUCB ;
-         EDUID                _eduID ;
-         ossSocket            _socket ;
+         _pmdEDUCB                        *_pEDUCB ;
+         EDUID                            _eduID ;
+         ossSocket                        _socket ;
+         std::string                      _sessionName ;
 
       private:
-         CHAR                 *_pBuff ;
-         INT32                _buffLen ;
+         CHAR                             *_pBuff ;
+         INT32                            _buffLen ;
+
+         CATCH_MAP                        _catchMap ;
+         INT64                            _totalCatchSize ;
+         INT64                            _totalMemSize ;
 
    } ;
    typedef _pmdSession pmdSession ;
