@@ -540,6 +540,7 @@ namespace engine
 #if defined (_LINUX)
    void pmdEDUCodeTrapHandler( OSS_HANDPARMS ) ;
 #endif
-   INT32 pmdSyncClock( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
 }
-#endif
+
+#endif // PMDEDU_HPP__

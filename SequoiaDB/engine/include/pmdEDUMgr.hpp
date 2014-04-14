@@ -405,4 +405,4 @@ namespace engine
    typedef class _pmdEDUMgr pmdEDUMgr ;
 }
 
-#endif
+#endif // PMDEDUMGR_HPP__
