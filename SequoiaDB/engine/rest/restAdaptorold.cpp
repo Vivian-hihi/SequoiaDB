@@ -1,5 +1,5 @@
 #include "core.hpp"
-#include "restAdaptor.hpp"
+#include "restAdaptorold.hpp"
 #include "ossMem.h"
 #include "ossUtil.h"
 #include "../util/fromjson.hpp"
@@ -264,7 +264,8 @@ Connection: close%s", CRLF, CRLF, CRLF, CRLF2 ) ;
          rc = sock.recv ( buffer + len,
                           tempLen,
                           receivedLen,
-                          timeout ) ;
+                          timeout,
+                          FALSE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to call ossSocket recv" ) ;
