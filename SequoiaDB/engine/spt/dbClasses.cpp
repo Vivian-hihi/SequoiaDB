@@ -2,6 +2,8 @@
 #include "jsapi.h"
 #include "../client/jstobs.h"
 #include "../client/bson/bson.h"
+#include "../mdocml/parseMandocCpp.hpp"
+#include "parseTroff.hpp"
 #include "ossUtil.h"
 #include "pd.hpp"
 #include "ossErr.h"
@@ -14,6 +16,7 @@
 #include "ossSocket.hpp"
 #include "string"
 #include "climits"
+#include "sdbcommon.hpp"
 
 //#define ERRMSGBUFFERSIZE 256
 #define SAFE_JS_FREE( cx, p ) \
@@ -155,14 +158,24 @@
 #define SDB_DEF_COORD_NAME "localhost"
 #define SDB_DEF_COORD_PORT OSS_DFT_SVCPORT
 
+//                                   extern CHAR progPath[PATH_LEN] ;
+
 #if defined (SDB_SHELL)
 extern INT32 gShellReturnCode ;
 extern BOOLEAN gReadNothing ;
+//                                        extern CHAR progPath[PATH_LEN] ;
 #endif
 
 #if defined (SDB_FMP)
 extern CHAR FMP_COORD_SERVICE[OSS_MAX_PATHSIZE+1] ;
 extern CHAR *FMP_COORD_HOST ;
+#endif
+
+// troff file's relative path
+#if defined (_WINDOWS)
+#define TF_REL_PATH "\\..\\doc\\manual\\"
+#else
+#define TF_REL_PATH "/../doc/manual/"
 #endif
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj ) ;
@@ -403,9 +416,66 @@ error :
    goto done ;
 }
 
+//PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
+static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
+{
+//   PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   JSString *strName = NULL ;
+   CHAR *name = NULL ;
+   const CHAR *path = NULL ;
+   // save troff file path
+   CHAR tfPath[PATH_LEN] = { 0 } ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S" , &strName) ;
+   REPORT ( ret , "help(): wrong arguments" ) ;
+   // get the troff file path
+   path = getProgramPath() ;
+   ossStrncpy ( tfPath, path, ossStrlen(path) ) ;
+   ossStrncat ( tfPath, TF_REL_PATH, ossStrlen(TF_REL_PATH) ) ;
+   //
+   {
+   engine::manHelp *mh = engine::manHelp::createInstance( tfPath ) ;
+   if ( mh == NULL )
+   {
+      rc = SDB_OOM ;
+      REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
+   }
+   // name is freed in done:, use NULL replace cx
+   name = (CHAR *) JS_EncodeString ( NULL , strName ) ;
+   if ( name )
+   {
+      rc = mh->getFileHelp( name ) ;
+      REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
+   }
+   else
+   {
+#if defined (_DEBUG)
+      ossPrintf ( "%s"OSS_NEWLINE, "Failed to excute help()" ) ;
+#endif
+   }
+   }
+   JS_SET_RVAL ( cx , vp, JSVAL_VOID ) ;
+
+done :
+   if ( name )
+   {
+      free ( name ) ;
+      name  = NULL ;
+   }
+//   PD_TRACE_EXIT ( SDB_GLOBAL_HELP );
+   return ret ;
+error :
+   TRY_REPORT ( cx , "help(): false" ) ;
+   goto done ;
+}
+
 static JSFunctionSpec global_functions[] = {
    JS_FS ( "print" , global_print , 1 , 0 ) ,
    JS_FS ( "traceFmt", trace_fmt, 3, 0 ) ,
+   JS_FS ( "man", global_help, 1, 0 ),
    JS_FS_END
 } ;
 

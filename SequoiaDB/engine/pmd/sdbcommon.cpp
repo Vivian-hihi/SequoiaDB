@@ -1,81 +1,11 @@
-// this file is only intened to be included by sdb.cpp and sdbbp.cpp
-#ifndef SDBCOMMON_HPP__
-#define SDBCOMMON_HPP__
-
-#include "ossPrimitiveFileOp.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/filesystem/operations.hpp"
-#include "boost/filesystem/path.hpp"
+#include "sdbcommon.hpp"
+#include "pd.hpp"
+#include "ossUtil.h"
 
 namespace fs = boost::filesystem ;
 
-#define CMD_HELP           "help"
-#define CMD_QUIT           "quit"
-#define CMD_QUIT1          "quit;"
-#define CMD_CLEAR          "clear"
-#define CMD_CLEAR1         "clear;"
-#define CMD_CLEARHISTORY   "history-c"
-#define CMD_CLEARHISTORY1  "history-c;"
+CHAR progName[PROG_NAME_LEN] = { 0 } ;
 
-#define PROC_PIPE_NAME_LEN 255
-#if defined (_LINUX)
-#define PROC_PATH          "/proc"
-#define PROC_CMDLINE_PATH_FORMAT PROC_PATH"/%s/cmdline"
-#define PROC_PATH_LEN_MAX 255
-#define PROC_TEMP_BUF_SZ 256
-#define PROC_STATUS_ZOMBIE 'Z'
-#define ENGINE_NAME "sequoiadb"
-#define MODIFIED_ENGINE_NAME ENGINE_NAME "("
-//#define ENGINE_NAME_PATTERN "sequoiadb(%s)"
-#define ENGINE_NAME_PATTERN1 "sequoiadb("
-#define ENGINE_NAME_PATTERN2 ")"
-#define ENGINE_NAME_PATTERN ENGINE_NAME_PATTERN1 "%s" ENGINE_NAME_PATTERN2
-//#define MAN_PATH_PRE "../doc/manual/"
-#elif defined (_WINDOWS)
-#define ENGINE_NAME "sequoiadb.exe"
-#define ENGINE_NPIPE_PATTERN1 "sequoiadb"
-#define ENGINE_NPIPE_PATTERN2 "engine"
-#define ENGINE_NPIPE_PATTERN_SEP "_"
-#define ENGINE_NPIPE_PATTERN ENGINE_NPIPE_PATTERN1 ENGINE_NPIPE_PATTERN_SEP \
-                             ENGINE_NPIPE_PATTERN2 ENGINE_NPIPE_PATTERN_SEP \
-                             "%s"
-#define ENGINE_NPIPE_MSG_PID "$pid"
-//#define MAN_PATH_PRE "..\\doc\\manual\\"
-#define LIST_TIMEOUT 10
-#endif
-
-#define PROG_PATH_LEN 255
-#define PROG_NAME_LEN 255
-//#define MAN_PATH_SUF "_en_v2.cli"
-
-
-#define SH_VERIFY_RC                                             \
-   if ( rc != SDB_OK ) {                                          \
-      PD_LOG ( PDERROR , "%s, rc = %d" , getErrDesp(rc) , rc ) ;  \
-      goto error ;                                                \
-   }
-
-#define SH_VERIFY_COND(cond, ret)  \
-   if (!(cond)) {                   \
-      rc=ret;                       \
-      SH_VERIFY_RC                 \
-   }
-
-
-INT32 getWaitPipeName ( const OSSPID & ppid , CHAR * buf , UINT32 bufSize ) ;
-INT32 getPipeNames( const OSSPID & ppid , CHAR * f2bName , UINT32 f2bSize ,
-                    CHAR * b2fName , UINT32 b2fSize ) ;
-INT32 getPipeNames2( const OSSPID & ppid , const OSSPID & pid ,
-                     CHAR * f2bName , UINT32 f2bSize ,
-                     CHAR * b2fName , UINT32 b2fSize ) ;
-INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
-                     CHAR * bpb2fName , UINT32 bpb2fSize ,
-                     CHAR * f2bName , CHAR * b2fName ) ;
-void setProgramName( const CHAR *name ) ;
-const CHAR* getProgramName() ;
-const CHAR* getProgramPath() ;
-
-/*
 INT32 getWaitPipeName ( const OSSPID & ppid , CHAR * buf , UINT32 bufSize )
 {
    INT32          nWritten    = 0 ;
@@ -229,5 +159,21 @@ done :
 error :
    goto done ;
 }
-*/
-#endif //SDBCOMMON_HPP__
+
+const CHAR* getProgramName()
+{
+   return progName ;
+}
+
+void setProgramName( const CHAR* name )
+{
+   ossStrncpy ( progName, name, ossStrlen( name ) ) ;
+}
+
+const CHAR* getProgramPath()
+{
+   fs::path p(progName) ;
+   return p.branch_path().c_str() ;
+}
+
+

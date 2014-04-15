@@ -50,6 +50,13 @@ function sleep ( val ) {
 function rand () {
    return Math.random() ;
 }
+
+/*
+function ma ( var ) {
+//   man( 'attachCL' ) ;
+   man( var ) ;
+}
+*/
 // end Global functions
 
 // Bson

@@ -8,7 +8,8 @@ Import("shellEnv")
 sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
-      "spt/sptConvertor.cpp"
+      "spt/sptConvertor.cpp",
+      "spt/parseTroff.cpp"
       ]
 
 ossFiles = [
@@ -27,10 +28,12 @@ ossFiles = [
 
 shellMain = [
       "pmd/sdb.cpp",
+      "pmd/sdbcommon.cpp"
       ]
 
 shellBpMain = [
       "pmd/sdbbp.cpp",
+      "pmd/sdbcommon.cpp"
       ]
 
 pdFiles = [
@@ -60,6 +63,55 @@ clientCFiles = [
       "client/network.c"
       ]
 
+mdocmlFiles = [
+      "mdocml/parseMandocCpp.cpp",
+      "mdocml/eqn_html.c",
+      "mdocml/html.c",
+      "mdocml/man_html.c",
+      "mdocml/mdoc_html.c",
+      "mdocml/tbl_html.c",
+      "mdocml/mdoc_man.c",
+      "mdocml/eqn_term.c",
+      "mdocml/man_term.c",
+      "mdocml/mdoc_term.c",
+      "mdocml/term.c",
+      "mdocml/term_ascii.c",
+      "mdocml/term_ps.c",
+      "mdocml/tbl_term.c",
+      "mdocml/parseMandoc.c",
+      "mdocml/out.c",
+      "mdocml/tree.c",
+      "mdocml/compat_fgetln.c",
+      "mdocml/compat_getsubopt.c",
+      "mdocml/compat_strlcat.c",
+      "mdocml/compat_strlcpy.c",
+      "mdocml/man.c",
+      "mdocml/man_hash.c",
+      "mdocml/man_macro.c",
+      "mdocml/man_validate.c",
+      "mdocml/arch.c",
+      "mdocml/att.c",
+      "mdocml/lib.c",
+      "mdocml/mdoc.c",
+      "mdocml/mdoc_argv.c",
+      "mdocml/mdoc_hash.c",
+      "mdocml/mdoc_macro.c",
+      "mdocml/mdoc_validate.c",
+      "mdocml/st.c",
+      "mdocml/vol.c",
+      "mdocml/eqn.c",
+      "mdocml/roff.c",
+      "mdocml/tbl.c",
+      "mdocml/tbl_data.c",
+      "mdocml/tbl_layout.c",
+      "mdocml/tbl_opts.c",
+      "mdocml/chars.c",
+      "mdocml/mandoc.c",
+      "mdocml/msec.c",
+      "mdocml/read.c",
+      "mdocml/common.c"
+]
+
 #Client Driver
 shellEnv.StaticLibrary('clientc', clientCFiles)
 #Operating System Services
@@ -70,17 +122,19 @@ shellEnv.StaticLibrary('pd', pdFiles)
 shellEnv.StaticLibrary('spt', sptFiles)
 #Utilities
 shellEnv.StaticLibrary('util', utilFiles)
+#Mdocml
+shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
 
 #Shell Backend  Executable
-sdbbp = shellEnv.Program("sdbbp", shellBpMain, 
-      LIBDEPS=["spt","oss","pd","util","clientc"],
+sdbbp = shellEnv.Program("sdbbp", shellBpMain,
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdbbp )

@@ -14,12 +14,15 @@
 #include "ossVer.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "../mdocml/parseMandocCpp.hpp"
+#include "../spt/parseTroff.hpp"
 #include <vector>
 #include <string>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
+#include "sdbcommon.hpp"
 using std::ostream ;
 using std::vector ;
 using std::string ;
@@ -31,7 +34,7 @@ po::options_description display ( "Command options" ) ;
 po::positional_options_description destd ;
 po::variables_map vm ;
 
-#include "sdbcommon.hpp"
+//CHAR progPath[PATH_LEN] = {0} ;
 
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
@@ -354,7 +357,8 @@ INT32 enterInteractiveMode ( Scope *scope )
    ossTimestamp tmBegin ;
    ossTimestamp tmEnd ;
    string history ;
-
+//   engine::parseMandoc md ;
+//   CHAR manPath[PATH_LEN] = {0} ;
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );
@@ -375,9 +379,46 @@ INT32 enterInteractiveMode ( Scope *scope )
       if ( !code || '\0' == code[0] )
          goto loop_next ;
 
+      history = string( code ) ;
+/*
+{
+   const CHAR* path = "/home/users/tanzhaobo/sequoiadb/doc/manual/";
+   manHelp scf(path);
+   rc = scf.getFileHelp("createCL");
+   if ( rc )
+   {
+      printf("wrong!\n");
+   }
+   else
+   {
+      printf("OK!\n");
+   }
+
+}
+*/
+/*
+      if ( ossStrncmp ( CMD_HELP, code, ossStrlen(CMD_HELP) ) == 0 )
+      {
+         // if code is "help()", let it excute by spidermonkey
+         const CHAR *cmd = boost::algorithm::erase_all_copy( string(code), " " ).c_str() ;
+         if ( *(cmd + ossStrlen(CMD_HELP)) == '(' )
+            goto excute;
+         // get the manual file to parse
+         ossStrncpy ( manPath, progPath, PATH_LEN ) ;
+         const CHAR* filename = cmd + ossStrlen ( CMD_HELP ) ;
+         ossStrncat ( manPath, MAN_PATH_PRE, ossStrlen(MAN_PATH_PRE) ) ;
+         ossStrncat ( manPath, filename, ossStrlen(filename) ) ;
+         ossStrncat ( manPath, MAN_PATH_SUF, ossStrlen(MAN_PATH_SUF) ) ;
+         rc = md.parse ( manPath ) ;
+         if ( rc != SDB_OK )
+            ossPrintf ( "No manual for method %s"OSS_NEWLINE, filename ) ;
+         goto loop_next ;
+      }
+      else
+*/
       if ( ossStrcmp ( CMD_QUIT, code ) == 0 ||
-           ossStrcmp ( CMD_QUIT1,
-                       boost::algorithm::erase_all_copy( string(code), " " ).c_str() ) == 0 )
+                ossStrcmp ( CMD_QUIT1,
+                boost::algorithm::erase_all_copy( string(code), " " ).c_str() ) == 0 )
       {
          linenoiseHistorySave( historyFile.c_str() ) ;
          break ;
@@ -389,8 +430,7 @@ INT32 enterInteractiveMode ( Scope *scope )
          linenoiseClearScreen() ;
          goto loop_next ;
       }
-      history = string( code ) ;
-      if ( ossStrcmp ( CMD_CLEARHISTORY,
+      else if ( ossStrcmp ( CMD_CLEARHISTORY,
            boost::algorithm::erase_all_copy( history, " " ).c_str() ) == 0 ||
            ossStrcmp ( CMD_CLEARHISTORY1,
            boost::algorithm::erase_all_copy( history, " " ).c_str() ) == 0 )
@@ -399,7 +439,7 @@ INT32 enterInteractiveMode ( Scope *scope )
          goto loop_next ;
       }
 
-
+   excute :
       rc = SDB_OK ;
       ossGetCurrentTime ( tmBegin ) ;
       // result is freed in loop_next:
@@ -418,7 +458,7 @@ INT32 enterInteractiveMode ( Scope *scope )
       microSec = tkTime%1000000 ;
       ossPrintf ( "Takes %lld.%llds."OSS_NEWLINE , sec, microSec ) ;
 
-      loop_next :
+   loop_next :
          SAFE_OSS_FREE ( code ) ;
          SAFE_OSS_FREE ( result ) ;
    }
@@ -788,6 +828,22 @@ int main ( int argc , CHAR **argv )
    INT32             rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDB_MAIN );
    ArgInfo           argInfo ;
+/*   const CHAR *progCmd = argv[0] ;
+   const CHAR *p = NULL ;
+
+   // get the progrom path
+#if defined ( _WINDOWS )
+   p = strrchr( progCmd, '\\' ) ;
+#else
+   p = strrchr( progCmd, '/' ) ;
+#endif
+   if  ( p == NULL )
+      progPath[0] = 0;
+   else
+    ossMemcpy ( progPath, progCmd, p - progCmd + 1 );
+*/
+   // save the program's path
+   setProgramName( argv[0] );
 
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
 
