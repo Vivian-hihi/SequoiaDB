@@ -771,6 +771,9 @@ namespace engine
          case SDB_ROLE_CATALOG:
             ob.append ( FIELD_NAME_ROLE, SDB_ROLE_CATALOG_STR ) ;
             break ;
+         case SDB_ROLE_OM:
+            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_OM_STR ) ;
+            break ;
          default:
             ob.append ( FIELD_NAME_ROLE, "Unknown" ) ;
             break ;

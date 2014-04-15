@@ -242,6 +242,8 @@ INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
                                INT32 *osType ) ;
 
 INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
-                              CHAR **ppObjs, INT32 &count );
+                              CHAR **ppObjs, INT32 &count,
+                              INT32 *pFlags = NULL );
 
-#endif
+
+#endif // MSGMESSAGE_HPP_

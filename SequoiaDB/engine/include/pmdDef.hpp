@@ -135,7 +135,7 @@ namespace engine
    {
       PMD_SESSION_LOCAL                = 1,
       PMD_SESSION_COORD,
-      PMD_SESSION_OM
+      PMD_SESSION_REST
    } ;
 
 }

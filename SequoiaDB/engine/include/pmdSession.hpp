@@ -111,6 +111,11 @@ namespace engine
    } ;
    typedef _pmdSession pmdSession ;
 
+   class _SDB_DMSCB ;
+   class _dpsLogWrapper ;
+   class _SDB_RTNCB ;
+   class _rtnContextBuf ;
+
    /*
       _pmdLocalSession define
    */
@@ -119,7 +124,7 @@ namespace engine
       DECLARE_OBJ_MSG_MAP()
 
       public:
-         _pmdLocalSession( _pmdEDUCB *cb, SOCKET fd ) ;
+         _pmdLocalSession( SOCKET fd ) ;
          virtual ~_pmdLocalSession () ;
 
          virtual INT32     sessionType() const { return PMD_SESSION_LOCAL ; }
@@ -135,8 +140,29 @@ namespace engine
       protected:
          INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
 
+         INT32 _onInsertReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onUpdateReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onDelReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onInterruptMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onMsgReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onQueryReqMsg( NET_HANDLE handle, MsgHeader *msg, 
+                               INT64 &contextID ) ;
+         INT32 _onGetMoreReqMsg( MsgHeader *msg, _rtnContextBuf &buffObj,
+                                 INT32 &startingPos, INT64 &contextID ) ;
+         INT32 _onKillContextsReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
+         INT32 _onSQLMsg( NET_HANDLE handle, MsgHeader *msg,
+                          INT64 &contextID ) ;
+         INT32 _onTransBeginMsg () ;
+         INT32 _onTransCommitMsg () ;
+         INT32 _onTransRollbackMsg () ;
+         INT32 _onAggrReqMsg( NET_HANDLE handle, MsgHeader *msg,
+                              INT64 &contextID ) ;
+
       protected:
          BOOLEAN              _authOK ;
+         _SDB_DMSCB           *_pDMSCB ;
+         _dpsLogWrapper       *_pDPSCB ;
+         _SDB_RTNCB           *_pRTNCB ;
 
    } ;
    typedef _pmdLocalSession pmdLocalSession ;

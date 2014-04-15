@@ -81,6 +81,8 @@ namespace engine
          return SDB_ROLE_AUTH;
       else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_COORD_STR ) )
          return SDB_ROLE_COORD;
+      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_OM_STR ) )
+         return SDB_ROLE_OM ;
       else
          return SDB_ROLE_STANDALONE;
    }

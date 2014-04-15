@@ -1833,7 +1833,8 @@ error :
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTAGGRREQ, "msgExtractAggrRequest" )
 INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
-                              CHAR **ppObjs, INT32 &count )
+                              CHAR **ppObjs, INT32 &count,
+                              INT32 *pFlags )
 {
    INT32 rc = SDB_OK;
    INT32 offset = 0;
@@ -1841,12 +1842,16 @@ INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
    INT32 num = 0;
    CHAR *pCur = NULL;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTAGGRREQ ) ;
-   SDB_ASSERT( pBuffer && ppCollectionName && ppObjs, "Invalid input!" );
-   MsgOpAggregate *pAggr = (MsgOpAggregate *)pBuffer;
-   *ppCollectionName = pAggr->name;
-   msgLen = pAggr->header.messageLength;
+   SDB_ASSERT( pBuffer && ppCollectionName && ppObjs, "Invalid input!" ) ;
+   MsgOpAggregate *pAggr = (MsgOpAggregate *)pBuffer ;
+   *ppCollectionName = pAggr->name ;
+   if ( pFlags )
+   {
+      *pFlags = pAggr->flags ;
+   }
+   msgLen = pAggr->header.messageLength ;
    offset = ossRoundUpToMultipleX( offsetof(MsgOpAggregate, name) +
-                                 pAggr->nameLength + 1, 4 );
+                                   pAggr->nameLength + 1, 4 );
    *ppObjs = &pBuffer[ offset ];
    while( offset + (INT32)(sizeof(SINT32 *)) < msgLen )
    {
@@ -1855,7 +1860,7 @@ INT32 msgExtractAggrRequest ( CHAR *pBuffer, CHAR **ppCollectionName,
       ++num;
       offset += size;
    }
-   count = num;
+   count = num ;
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTAGGRREQ, rc ) ;
    return rc;
 }

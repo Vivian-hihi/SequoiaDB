@@ -87,6 +87,7 @@ namespace engine
       EDU_TYPE_SHARDAGENT,
       EDU_TYPE_REPLAGENT,
       EDU_TYPE_HTTPAGENT,
+      EDU_TYPE_RESTAGENT,
 
       //background job EDU Type
       EDU_TYPE_BACKGROUND_JOB,

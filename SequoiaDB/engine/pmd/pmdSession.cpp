@@ -31,8 +31,11 @@
 #include "pmdEDU.hpp"
 #include "pmdCommon.hpp"
 #include "msgMessage.hpp"
+#include "rtn.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -297,11 +300,10 @@ namespace engine
 
    END_OBJ_MSG_MAP()
 
-   _pmdLocalSession::_pmdLocalSession( _pmdEDUCB *cb, SOCKET fd )
+   _pmdLocalSession::_pmdLocalSession( SOCKET fd )
    :pmdSession( fd )
    {
       _authOK  = FALSE ;
-      attach( cb ) ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -411,6 +413,442 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onInsertReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flag = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pInsertor = NULL ;
+      INT32 count = 0 ;
+
+      rc = msgExtractInsert( (CHAR *)msg, &flag, &pCollectionName,
+                             &pInsertor, count ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace insert msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      try
+      {
+         BSONObj insertor( pInsertor ) ;
+         // add list op info
+         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+                             "CL:%s, Insertors:%s, count: %d",
+                             pCollectionName,
+                             insertor.toString().c_str(),
+                             count ) ;
+
+         PD_LOG ( PDDEBUG, "Session[%s] insert objs: %s\ncount: %d\n"
+                  "collection: %s", sessionName(), insertor.toString().c_str(),
+                  count, pCollectionName ) ;
+ 
+         rc = rtnInsert( pCollectionName, insertor, count, flag, _pEDUCB ) ;
+         PD_RC_CHECK( rc, PDERROR, "Session[%s] insert objs[%s, count:%d, "
+                      "collection: %s] failed, rc: %d", sessionName(),
+                      insertor.toString().c_str(), count, pCollectionName,
+                      rc ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Session[%s] insert objs occur exception: %s",
+                 sessionName(), e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onUpdateReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pSelectorBuffer = NULL ;
+      CHAR *pUpdatorBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+
+      rc = msgExtractUpdate( (CHAR*)msg, &flags, &pCollectionName,
+                             &pSelectorBuffer, &pUpdatorBuffer,
+                             &pHintBuffer );
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract update message failed, "
+                   "rc: %d", sessionName(), rc ) ;
+
+      try
+      {
+         BSONObj selector( pSelectorBuffer );
+         BSONObj updator( pUpdatorBuffer );
+         BSONObj hint( pHintBuffer );
+         // add last op info
+         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+                             "CL:%s, Match:%s, Updator:%s, Hint:%s",
+                             pCollectionName,
+                             selector.toString().c_str(),
+                             updator.toString().c_str(),
+                             hint.toString().c_str() ) ;
+
+         PD_LOG ( PDDEBUG, "Session[%s] Update: selctor: %s\nupdator: %s\n"
+                  "hint: %s", sessionName(), selector.toString().c_str(),
+                  updator.toString().c_str(), hint.toString().c_str() ) ;
+
+         rc = rtnUpdate( pCollectionName, selector, updator, hint, 
+                         flags, _pEDUCB, _pDMSCB, _pDPSCB ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to create selector and updator "
+                  "for update: %s", sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onDelReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pDeletorBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+
+      rc = msgExtractDelete ( (CHAR *)msg , &flags, &pCollectionName, 
+                              &pDeletorBuffer, &pHintBuffer ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract delete msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      try
+      {
+         BSONObj deletor ( pDeletorBuffer ) ;
+         BSONObj hint ( pHintBuffer ) ;
+         // add last op info
+         MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+                            "CL:%s, Deletor:%s, Hint:%s",
+                            pCollectionName,
+                            deletor.toString().c_str(),
+                            hint.toString().c_str() ) ;
+
+         PD_LOG ( PDDEBUG, "Session[%s] Delete: deletor: %s\nhint: %s",
+                  sessionName(), deletor.toString().c_str(), 
+                  hint.toString().c_str() ) ;
+
+         rc = rtnDelete( pCollectionName, deletor, hint, flags, _pEDUCB, 
+                         _pDMSCB, _pDPSCB ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Session[%s] Failed to create deletor for "
+                  "DELETE: %s", sessionName(), e.what () ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onInterruptMsg( NET_HANDLE handle, MsgHeader * msg )
+   {
+      PD_LOG ( PDEVENT, "Session[%s] recieved interrupt msg", sessionName() ) ;
+
+      // delete all contextID, rollback transaction
+      if ( _pEDUCB )
+      {
+         INT64 contextID = -1 ;
+         while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
+         {
+            _pRTNCB->contextDelete ( contextID, NULL ) ;
+         }
+
+         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDPSCB );
+         if ( rcTmp )
+         {
+            PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
+         }
+         _pEDUCB->clearTransInfo() ;
+      }
+
+      return SDB_OK ;
+   }
+
+   INT32 _pmdLocalSession::_onMsgReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   {
+      return rtnMsg( (MsgOpMsg*)msg ) ;
+   }
+
+   INT32 _pmdLocalSession::_onQueryReqMsg( NET_HANDLE handle, MsgHeader * msg,
+                                           INT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 flags = 0 ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pQueryBuff = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderByBuffer = NULL ;
+      CHAR *pHintBuffer = NULL ;
+      INT64 numToSkip = -1 ;
+      INT64 numToReturn = -1 ;
+      _rtnCommand *pCommand = NULL ;
+
+      rc = msgExtractQuery ( (CHAR *)msg, &flags, &pCollectionName,
+                             &numToSkip, &numToReturn, &pQueryBuff,
+                             &pFieldSelector, &pOrderByBuffer, &pHintBuffer ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract query msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      if ( !rtnIsCommand ( pCollectionName ) )
+      {
+         try
+         {
+            BSONObj matcher ( pQueryBuff ) ;
+            BSONObj selector ( pFieldSelector ) ;
+            BSONObj orderBy ( pOrderByBuffer ) ;
+            BSONObj hint ( pHintBuffer ) ;
+            // add last op info
+            MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+                               "CL:%s, Match:%s, Selector:%s, OrderBy:%s, "
+                               "Hint:%s", pCollectionName,
+                               matcher.toString().c_str(),
+                               selector.toString().c_str(),
+                               orderBy.toString().c_str(),
+                               hint.toString().c_str() ) ;
+
+            PD_LOG ( PDDEBUG, "Session[%s] Query: matcher: %s\nselector: "
+                     "%s\norderBy: %s\nhint:%s", sessionName(),
+                     matcher.toString().c_str(), selector.toString().c_str(),
+                     orderBy.toString().c_str(), hint.toString().c_str() ) ;
+
+            rc = rtnQuery( pCollectionName, selector, matcher, orderBy,
+                           hint, flags, _pEDUCB, numToSkip, numToReturn,
+                           _pDMSCB, _pRTNCB, contextID, NULL, TRUE ) ;
+         }
+         catch ( std::exception &e )
+         {
+            PD_LOG ( PDERROR, "Session[%s] Failed to create matcher and "
+                     "selector for QUERY: %s", sessionName(), e.what () ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+      }
+      else
+      {
+         rc = rtnParserCommand( pCollectionName, &pCommand ) ;
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG ( PDERROR, "Parse command[%s] failed[rc:%d]",
+                     pCollectionName, rc ) ;
+            goto error ;
+         }
+
+         rc = rtnInitCommand( pCommand , flags, numToSkip, numToReturn,
+                              pQueryBuff, pFieldSelector, pOrderByBuffer,
+                              pHintBuffer ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
+
+         //run command
+         rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_LOCAL,
+                             _pEDUCB, _pDMSCB, _pRTNCB,
+                             _pDPSCB, 1, &contextID ) ;
+      }
+
+   done:
+      if ( pCommand )
+      {
+         rtnReleaseCommand( &pCommand ) ;
+      }
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onGetMoreReqMsg( MsgHeader * msg,
+                                             rtnContextBuf &buffObj,
+                                             INT32 &startingPos,
+                                             INT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 numToRead = 0 ;
+      INT64 startPos64 = 0 ;
+
+      rc = msgExtractGetMore ( (CHAR*)msg, &numToRead, &contextID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract get more msg failed, "
+                   "rc: %d", sessionName(), rc ) ;
+
+      // add last op info
+      MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), msg->opCode,
+                          "ContextID:%lld, NumToRead:%d",
+                          contextID, numToRead ) ;
+
+      PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
+               numToRead ) ;
+
+      rc = rtnGetMore ( contextID, numToRead, buffObj, startPos64,
+                        _pEDUCB, _pRTNCB ) ;
+
+      startingPos = ( INT32 )startPos64 ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onKillContextsReqMsg( NET_HANDLE handle,
+                                                  MsgHeader *msg )
+   {
+      PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg", sessionName() ) ;
+
+      INT32 rc = SDB_OK ;
+      INT32 contextNum = 0 ;
+      INT64 *pContextIDs = NULL ;
+
+      rc = msgExtractKillContexts ( (CHAR*)msg, &contextNum, &pContextIDs ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract kill contexts msg failed, "
+                   "rc: %d", sessionName(), rc ) ;
+
+      if ( contextNum > 0 )
+      {
+         PD_LOG ( PDDEBUG, "KillContext: contextNum:%d\ncontextID: %lld",
+                  contextNum, pContextIDs[0] ) ;
+      }
+
+      rc = rtnKillContexts ( contextNum, pContextIDs, _pEDUCB, _pRTNCB ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onSQLMsg( NET_HANDLE handle, MsgHeader *msg,
+                                      INT64 &contextID )
+   {
+      CHAR *sql = NULL ;
+      INT32 rc = SDB_OK ;
+      SQL_CB *sqlcb = pmdGetKRCB()->getSqlCB() ;
+
+      rc = msgExtractSql( (CHAR*)msg, &sql ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extract sql msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      rc = sqlcb->exec( sql, _pEDUCB, contextID ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onTransBeginMsg ()
+   {
+      INT32 rc = SDB_OK ;
+      if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
+      {
+         rc = SDB_PERM ;
+         PD_LOG( PDERROR, "In sharding mode, couldn't execute "
+                 "transaction operation from local service" ) ;
+         goto error ;
+      }
+      else
+      {
+         rc = rtnTransBegin( _pEDUCB ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onTransCommitMsg ()
+   {
+      INT32 rc = SDB_OK ;
+      if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
+      {
+         rc = SDB_PERM ;
+         PD_LOG( PDERROR, "In sharding mode, couldn't execute "
+                 "transaction operation from local service" ) ;
+         goto error ;
+      }
+      else
+      {
+         rc = rtnTransCommit( _pEDUCB, _pDPSCB ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onTransRollbackMsg ()
+   {
+      INT32 rc = SDB_OK ;
+      if ( pmdGetDBRole() != SDB_ROLE_STANDALONE )
+      {
+         rc = SDB_PERM ;
+         PD_LOG( PDERROR, "In sharding mode, couldn't execute "
+                 "transaction operation from local service" ) ;
+         goto error ;
+      }
+      else
+      {
+         rc = rtnTransRollback( _pEDUCB, _pDPSCB ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_onAggrReqMsg( NET_HANDLE handle, MsgHeader *msg,
+                                          INT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pCollectionName = NULL ;
+      CHAR *pObjs = NULL ;
+      INT32 count = 0 ;
+      INT32 flags = 0 ;
+
+      rc = msgExtractAggrRequest( (CHAR*)msg, &pCollectionName,
+                                  &pObjs, count, &flags ) ;
+      PD_RC_CHECK( rc, PDERROR, "Session[%s] extrace aggr msg failed, rc: %d",
+                   sessionName(), rc ) ;
+
+      try
+      {
+         BSONObj objs( pObjs ) ;
+         rc = rtnAggregate( pCollectionName, objs, count, flags, _pEDUCB,
+                            _pDMSCB, contextID ) ;
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Session[%s] occurred exception in aggr: %s",
+                 sessionName(), e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
 
    done:
       return rc ;
