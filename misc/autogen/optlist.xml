@@ -3,8 +3,8 @@
 <!-- long: (required) configure option ( long version )                                     -->
 <!-- short: (optional) configure option ( short version, one character )                    -->
 <!-- description: (optional) description for configure option                               -->
-<!--   en: english description                                                              -->
-<!--   cn: chinese description                                                              -->
+<!--   en: English description                                                              -->
+<!--   cn: Chinese description                                                              -->
 <!-- type: (optional) expected user input type, must be C++ type or none, string by default -->
 <!-- default: (optional) default value (if rest of dft doesn not specified)                 -->
 <!-- catalogdft: (optional) default value for catalog node                                  -->
