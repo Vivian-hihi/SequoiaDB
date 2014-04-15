@@ -3,8 +3,8 @@
 <topic id="topic_cfq_fhk_kn">
   <title>db.listBackup()</title>
   <body>
-    <section><title>db.listBackup()</title>
-      <p>db.listBackup([options], [cond], [sel]) 查看数据库备份</p>
+    <section><title>db.listBackup([options], [cond], [sel])</title>
+      <p> 查看数据库备份</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>

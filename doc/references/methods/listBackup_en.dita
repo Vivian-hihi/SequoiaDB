@@ -3,8 +3,8 @@
 <topic id="topic_chq_gkr_kn">
   <title>db.listBackup()</title>
   <body>
-    <section><title>db.listBackup()</title>
-      <p>db.listBackup([options], [cond], [sel]) View database backup</p>
+    <section><title>db.listBackup([options], [cond], [sel])</title>
+      <p> View database backup</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable>

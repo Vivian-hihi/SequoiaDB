@@ -891,13 +891,33 @@
                     <file name="references/methods/waitTasks.dita"/>
                 </folder>
                 <folder name="topics_en_v2">
+                    <file name="references/methods/topics_en_v2/db.backupoffline.dita"/>
                     <file name="references/methods/topics_en_v2/db.caeateCataRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.createRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createUsr.dita"/>
                     <file name="references/methods/topics_en_v2/db.dropCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.dropUsr.dita"/>
+                    <file name="references/methods/topics_en_v2/db.eval.dita"/>
+                    <file name="references/methods/topics_en_v2/db.exec.dita"/>
+                    <file name="references/methods/topics_en_v2/db.execUpdate.dita"/>
                     <file name="references/methods/topics_en_v2/db.getCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.getRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.list.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listBackup.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listCollections.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listCollectionSpaces.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listProcedures.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listReplicaGroups.dita"/>
+                    <file name="references/methods/topics_en_v2/db.removeProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.removeRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.resetSnapshot.dita"/>
+                    <file name="references/methods/topics_en_v2/db.snapshot.dita"/>
+                    <file name="references/methods/topics_en_v2/db.startRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.transBegin.dita"/>
+                    <file name="references/methods/topics_en_v2/db.transCommit.dita"/>
+                    <file name="references/methods/topics_en_v2/db.transRollback.dita"/>
                 </folder>
                 <file name="references/methods/methodlist_en_v2.ditamap"/>
                 <file name="references/methods/methodlist_en.ditamap"/>

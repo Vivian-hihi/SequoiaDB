@@ -46,7 +46,7 @@
       
     </section>
     <section><title>格式</title>
-      <p>snapshot()方法定义格式有listType、con两个字段，listType为枚举类型，con为json对象，格式如下：</p>
+      <p>snapshot()方法定义格式有snapType、con两个字段，snapType为枚举类型，con为json对象，格式如下：</p>
       <codeblock>{"snapType":"&lt;快照类型>",["con":"{"字段名1":{"操作符1":"值1"},"字段名2":{"操作符2":"值2"}...}"]}</codeblock>
       <note>
         <ul>

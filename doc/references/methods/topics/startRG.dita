@@ -16,7 +16,7 @@
         </sthead>
         <strow>
           <stentry>name          </stentry>
-          <stentry>sring                    </stentry>
+          <stentry>string                    </stentry>
           <stentry>分区组的名称 </stentry>
           <stentry>是           </stentry>
         </strow>
