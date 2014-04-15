@@ -10,17 +10,17 @@ function sdbCheckPassword()
       set timeout 10 ;
       spawn ssh $USER@$HOST ;
       expect {
-            \"*yes/no*\" ; {send \"yes\r\" ; exp_continue}
-            \"assword\" ; {send \"$PASSWD\r\" ;
-               expect {
-                  \"denied\" ; {exit 5 ;}
-                  \"*login*\" ; {send \"exit\r\" ;}
-               }
-            exp_continue}
-            eof
-            {
-               send_user \"eof\n\" ;
+         \"*yes/no*\" ; {send \"yes\r\" ; exp_continue}
+         \"assword\" ; {send \"$PASSWD\r\" ;
+            expect {
+               \"denied\" ; { exit 5;}
+               \"*login*\" ; {send \"exit\r\" ;}
             }
+         }
+         eof
+         {
+            send_user \"eof\n\" ;
+         }
       }
                         " >>/dev/null 2>&1
 
@@ -38,7 +38,7 @@ function sdbExpectSshHosts()
 
    endflag="echo \"Too much time\""
    /usr/local/bin/expect -c   "
-      set timeout $timeout ;
+      set timeout -1 ;
       spawn ssh $USER@$HOST ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
@@ -144,7 +144,7 @@ function sdbExpectScpHosts()
 #scp -r root@$HOST:$localPath/$HOST.tar.gz ./
 
    /usr/local/bin/expect -c"
-      set timeout 80 ;
+      set timeout -1 ;
       spawn scp -r $USER@$HOST:$localPath/*$HOST*.tar.gz ./log/ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
@@ -173,7 +173,7 @@ function sdbSupportLog()
    PASSWD=$3
 
    /usr/local/bin/expect -c"
-         set timeout 80 ;
+         set timeout -1 ;
          spawn scp -r $USER@$HOST:$localPath/sdbsupport.log.$HOST ./log/ ;
          expect {
             \"*yes/no*\";{send \"yes\n\";exp_continue}
@@ -202,7 +202,7 @@ function sdbSSHRemove()
    localPath=$3
 
    /usr/local/bin/expect -c"
-      set timeout 50 ;
+      set timeout -1 ;
       spawn ssh $USER@$HOST ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
