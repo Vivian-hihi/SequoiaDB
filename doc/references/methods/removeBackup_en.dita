@@ -3,8 +3,8 @@
 <topic id="topic_3kz_tkr_kn">
   <title>db.removeBackup()</title>
   <body>
-    <section><title>db.removeBackup()</title>
-      <p>db.removeBackup ([options])  Delete the database backup</p>
+    <section><title>db.removeBackup ([options])</title>
+      <p>  Delete the database backup</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable>
