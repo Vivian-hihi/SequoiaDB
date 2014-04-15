@@ -3,8 +3,8 @@
 <topic id="topic_kvc_dlr_kn">
   <title>db.waitTasks()</title>
   <body>
-    <section><title>db.waitTasks()</title>
-      <p>db.waitTasks(&lt;id1>,[id2],...)  Wait for the end of the specified task synchronizaton or canceled.</p>
+    <section><title>db.waitTasks(&lt;id1>,[id2],...)</title>
+      <p>  Wait for the end of the specified task synchronizaton or canceled.</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable>

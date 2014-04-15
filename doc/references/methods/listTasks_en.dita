@@ -3,8 +3,8 @@
 <topic id="topic_gmt_jkr_kn">
   <title>db.listTasks()</title>
   <body>
-    <section><title>db.listTasks()</title>
-      <p>db.listTasks([cond],[sel],[orderBy],[hint]) View database of all background tasks</p>
+    <section><title>db.listTasks([cond],[sel],[orderBy],[hint])</title>
+      <p> View database of all background tasks</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable>

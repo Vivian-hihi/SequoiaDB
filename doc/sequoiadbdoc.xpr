@@ -910,6 +910,7 @@
                     <file name="references/methods/topics_en_v2/db.listCollectionSpaces.dita"/>
                     <file name="references/methods/topics_en_v2/db.listProcedures.dita"/>
                     <file name="references/methods/topics_en_v2/db.listReplicaGroups.dita"/>
+                    <file name="references/methods/topics_en_v2/db.removeBackup.dita"/>
                     <file name="references/methods/topics_en_v2/db.removeProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.removeRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.resetSnapshot.dita"/>

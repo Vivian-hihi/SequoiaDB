@@ -3,8 +3,8 @@
 <topic id="topic_4yc_5kk_kn">
   <title>db.cancelTask()</title>
   <body>
-    <section><title>db.cancelTask()</title>
-      <p>db.cancelTask(&lt;id>,[isAsync])  取消任务</p>
+    <section><title>db.cancelTask(&lt;id>,[isAsync])</title>
+      <p>  取消任务</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>

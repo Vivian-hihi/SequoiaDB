@@ -37,7 +37,7 @@
         <strow>
           <stentry>GroupName</stentry>
           <stentry>Backup copy group name is specified, the default is all replication groups.</stentry>
-          <stentry>GroupName:"data1" 或 GroupName:["data1", "data2"]</stentry>
+          <stentry>GroupName:"data1" or GroupName:["data1", "data2"]</stentry>
         </strow>
         <strow>
           <stentry>Name</stentry>

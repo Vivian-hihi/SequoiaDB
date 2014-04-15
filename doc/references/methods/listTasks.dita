@@ -3,8 +3,8 @@
 <topic id="topic_1jh_njk_kn">
   <title>db.listTasks()</title>
   <body>
-    <section><title>db.listTasks()</title>
-      <p>db.listTasks([cond],[sel],[orderBy],[hint]) 查看数据库所有后台任务</p>
+    <section><title>db.listTasks([cond],[sel],[orderBy],[hint])</title>
+      <p> 查看数据库所有后台任务</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>

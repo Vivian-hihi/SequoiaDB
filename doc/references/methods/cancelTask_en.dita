@@ -3,8 +3,8 @@
 <topic id="topic_ynr_pjr_kn">
   <title>db.cancelTask()</title>
   <body>
-    <section><title>db.cancelTask()</title>
-      <p>db.cancelTask(&lt;id>,[isAsync])  Cancel the task</p>
+    <section><title>db.cancelTask(&lt;id>,[isAsync])</title>
+      <p>  Cancel the task</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable>

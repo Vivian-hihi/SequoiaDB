@@ -3,8 +3,8 @@
 <topic id="topic_ktm_ckr_kn">
   <title>db.flushConfigure()</title>
   <body>
-    <section><title>db.flushConfigure()</title>
-      <p>db.flushConfigure(&lt;rule>) Brush disk configuration to configuration files.</p>
+    <section><title>db.flushConfigure(&lt;rule>)</title>
+      <p> Brush disk configuration to configuration files.</p>
     </section>
     <section><title>Parameter Description</title>
       <simpletable>

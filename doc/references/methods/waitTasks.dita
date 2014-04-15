@@ -3,8 +3,8 @@
 <topic id="topic_jdg_2kk_kn">
   <title>db.waitTasks()</title>
   <body>
-    <section><title>db.waitTasks()</title>
-      <p>db.waitTasks(&lt;id1>,[id2],...)  同步等待指定任务结束或取消</p>
+    <section><title>db.waitTasks(&lt;id1>,[id2],...)</title>
+      <p>同步等待指定任务结束或取消</p>
     </section>
     <section><title>参数描述</title>
       <simpletable>
