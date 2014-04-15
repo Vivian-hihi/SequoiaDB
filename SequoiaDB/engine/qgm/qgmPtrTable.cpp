@@ -88,8 +88,6 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__QGMPTRTABLE_GETFIELD, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__QGMPTRTABLE_GETOWNFIELD, "_qgmPtrTable::getOwnField" )

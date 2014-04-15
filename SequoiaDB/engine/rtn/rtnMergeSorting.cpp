@@ -64,7 +64,7 @@ namespace engine
             }
          }
          else if ( _loadSize - _read <
-                   *((INT32 *)( _buf + _read )))
+                   *((UINT32 *)( _buf + _read )))
          {
             rc = _loadData( unit ) ;
             if ( SDB_OK != rc )

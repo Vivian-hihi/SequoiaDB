@@ -174,6 +174,7 @@ namespace engine
             _memPool.release( pData, len ) ;
          }
          ++it ;
+         SDB_OSS_DEL ( pUnit ) ;
       }
       _dataBucket.clear() ;
 
@@ -228,6 +229,7 @@ namespace engine
       // create data bucket and latch
       while ( index < _bucketSize )
       {
+         // memory will be freed in destructor
          pBucket = SDB_OSS_NEW clsBucketUnit() ;
          if ( !pBucket )
          {

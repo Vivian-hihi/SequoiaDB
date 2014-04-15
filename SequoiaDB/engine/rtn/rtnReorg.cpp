@@ -55,14 +55,14 @@ namespace engine
                                    dmsReorgUnit *ru,
                                    dmsMBContext *mbContext )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNREORGOCB ) ;
 
-      CHAR *headBuffer = NULL ;
-      CHAR *blockBuffer = NULL ;
-      UINT32 blockBuffSize = 0 ;
-      INT32 headSize = 0 ;
-      SINT32 blockSize = 0 ;
+      CHAR *headBuffer    = NULL ;
+      CHAR *blockBuffer   = NULL ;
+      INT32 blockBuffSize = 0 ;
+      INT32 headSize      = 0 ;
+      SINT32 blockSize    = 0 ;
       SDB_ASSERT ( su && ru, "SU and RU can't be NULL" )
 
       // first reset pointer

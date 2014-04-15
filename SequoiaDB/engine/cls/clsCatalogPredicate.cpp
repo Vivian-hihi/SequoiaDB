@@ -8,9 +8,9 @@
 using namespace bson;
 namespace engine
 {
-   clsCatalogPredicateTree::clsCatalogPredicateTree( BSONObj shardingKey )
-   : _shardingKey( shardingKey ),
-   _logicType( CLS_CATA_LOGIC_INVALID )
+   clsCatalogPredicateTree::clsCatalogPredicateTree( BSONObj shardingKey ) :
+   _logicType( CLS_CATA_LOGIC_INVALID ),
+   _shardingKey( shardingKey )
    {
    }
 

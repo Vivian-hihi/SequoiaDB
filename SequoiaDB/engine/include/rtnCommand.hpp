@@ -64,8 +64,8 @@ namespace engine
 #define NAME_LIST_SESSIONS                   CMD_NAME_LIST_SESSIONS
 #define NAME_LIST_SESSIONS_CURRENT           CMD_NAME_LIST_SESSIONS_CURRENT
 #define NAME_LIST_STORAGEUNITS               CMD_NAME_LIST_STORAGEUNITS
-#define NAME_LIST_BACKUPS                    CMD_NAME_LIST_BACKUP
-#define NAME_LIST_TASKS                      CMD_NAME_LIST_TASK
+#define NAME_LIST_BACKUPS                    CMD_NAME_LIST_BACKUPS
+#define NAME_LIST_TASKS                      CMD_NAME_LIST_TASKS
 #define NAME_RENAME_COLLECTION               CMD_NAME_RENAME_COLLECTION
 #define NAME_REORG_OFFLINE                   CMD_NAME_REORG_OFFLINE
 #define NAME_REORG_ONLINE                    CMD_NAME_REORG_ONLINE
@@ -106,7 +106,8 @@ namespace engine
 #define NAME_ALTER_COLLECTION                CMD_NAME_ALTER_COLLECTION
 #define NAME_CREATE_CATAGROUP                CMD_NAME_CREATE_CATA_GROUP
 #define NAME_CREATE_DOMAIN                   CMD_NAME_CREATE_DOMAIN
-#define NAME_REMOVE_DOMAIN                   CMD_NAME_REMOVE_DOMAIN
+#define NAME_DROP_DOMAIN                     CMD_NAME_DROP_DOMAIN
+#define NAME_ALTER_DOMAIN                    CMD_NAME_ALTER_DOMAIN
 #define NAME_ADD_DOMAIN_GROUP                CMD_NAME_ADD_DOMAIN_GROUP
 #define NAME_REMOVE_DOMAIN_GROUP             CMD_NAME_REMOVE_DOMAIN_GROUP
 #define NAME_SNAPSHOT_CATA                   CMD_NAME_SNAPSHOT_CATA
@@ -187,11 +188,12 @@ namespace engine
       CMD_SHUTDOWN_GROUP                     = 140,
       CMD_CREATE_CATAGROUP                   = 141,
       CMD_CREATE_DOMAIN                      = 142,
-      CMD_REMOVE_DOMAIN                      = 143,
+      CMD_DROP_DOMAIN                        = 143,
       CMD_ADD_DOMAIN_GROUP                   = 144,
       CMD_REMOVE_DOMAIN_GROUP                = 145,
       CMD_WAITTASK                           = 146,
       CMD_CANCEL_TASK                        = 147,
+      CMD_ALTER_DOMAIN                       = 148,
 
       CMD_LINK_COLLECTION                    = 150,
       CMD_UNLINK_COLLECTION                  = 151,
@@ -486,17 +488,27 @@ namespace engine
          ~_rtnCreateDomain () {}
          virtual const CHAR * name () { return NAME_CREATE_DOMAIN ; }
          virtual RTN_COMMAND_TYPE type () { return CMD_CREATE_DOMAIN ; }
-   };
+   } ;
 
-   class _rtnRemoveDomain : public _rtnCoordOnly
+   class _rtnDropDomain : public _rtnCoordOnly
    {
       DECLARE_CMD_AUTO_REGISTER()
       public:
-         _rtnRemoveDomain () {}
-         ~_rtnRemoveDomain () {}
-         virtual const CHAR * name () { return NAME_REMOVE_DOMAIN ; }
-         virtual RTN_COMMAND_TYPE type () { return CMD_REMOVE_DOMAIN ; }
-   };
+         _rtnDropDomain () {}
+         ~_rtnDropDomain () {}
+         virtual const CHAR * name () { return NAME_DROP_DOMAIN ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_DROP_DOMAIN ; }
+   } ;
+
+   class _rtnAlterDomain : public _rtnCoordOnly
+   {
+      DECLARE_CMD_AUTO_REGISTER()
+      public:
+         _rtnAlterDomain () {}
+         ~_rtnAlterDomain () {}
+         virtual const CHAR * name () { return NAME_ALTER_DOMAIN ; }
+         virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_DOMAIN ; }
+   } ;
 
    class _rtnAddDomainGroup : public _rtnCoordOnly
    {

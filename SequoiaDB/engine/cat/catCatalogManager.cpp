@@ -46,8 +46,9 @@ namespace engine
       return SDB_OK;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCS, "catCatalogueManager::processCmdDropCollectionSpace" )
-   INT32 catCatalogueManager::processCmdDropCollectionSpace ( const CHAR *pQuery )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCS, "catCatalogueManager::processCmdDropCollectionSpace" )
+   INT32 catCatalogueManager::processCmdDropCollectionSpace (
+         const CHAR *pQuery )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPCS ) ;
@@ -81,7 +82,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CRT_PROCEDURES, "catCatalogueManager::processCmdCrtProcedures")
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CRT_PROCEDURES, "catCatalogueManager::processCmdCrtProcedures")
    INT32 catCatalogueManager::processCmdCrtProcedures( void *pMsg )
    {
       INT32 rc = SDB_OK ;
@@ -103,7 +104,7 @@ namespace engine
                          _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "failed to add func:%s", 
+            PD_LOG( PDERROR, "failed to add func:%s",
                     parsed.toString().c_str() ) ;
             goto error ;
          }
@@ -121,7 +122,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_RM_PROCEDURES, "catCatalogueManager::processCmdRmProcedures")
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_RM_PROCEDURES, "catCatalogueManager::processCmdRmProcedures")
    INT32 catCatalogueManager::processCmdRmProcedures( void *pMsg )
    {
       INT32 rc = SDB_OK ;
@@ -180,7 +181,6 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      
    done:
       PD_TRACE_EXITRC( SDB_CATALOGMGR_RM_PROCEDURES, rc ) ;
       return rc ;
@@ -188,7 +188,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYSPACEINFO, "catCatalogueManager::processCmdQuerySpaceInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYSPACEINFO, "catCatalogueManager::processCmdQuerySpaceInfo" )
    INT32 catCatalogueManager::processCmdQuerySpaceInfo( const CHAR * pQuery,
                                                         CHAR * * ppReplyBody,
                                                         UINT32 & replyBodyLen,
@@ -243,7 +243,7 @@ namespace engine
    }
 
    // this function is for catalog collection check
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYCATALOG, "catCatalogueManager::processQueryCatalogue" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYCATALOG, "catCatalogueManager::processQueryCatalogue" )
    INT32 catCatalogueManager::processQueryCatalogue ( void *pMsg )
    {
       INT32 rc                         = SDB_OK;
@@ -339,7 +339,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCOLLECTION, "catCatalogueManager::processCmdDropCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCOLLECTION, "catCatalogueManager::processCmdDropCollection" )
    INT32 catCatalogueManager::processCmdDropCollection( const CHAR *pQuery,
                                                       INT32 version )
    {
@@ -378,7 +378,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYTASK, "catCatalogueManager::processQueryTask" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_QUERYTASK, "catCatalogueManager::processQueryTask" )
    INT32 catCatalogueManager::processQueryTask ( void *pMsg )
    {
       INT32 rc                         = SDB_OK ;
@@ -449,7 +449,6 @@ namespace engine
       if ( SDB_OK == rc && pReply )
       {
          rc = _pCatCB->netWork()->syncSend ( pEvent->handle, pReply );
-         SDB_OSS_FREE ( pReply ) ;
       }
       else
       {
@@ -466,13 +465,17 @@ namespace engine
          PD_TRACE1 ( SDB_CATALOGMGR_QUERYTASK, PD_PACK_INT ( rc ) ) ;
          rc = _pCatCB->netWork()->syncSend ( pEvent->handle, &replyMsg );
       }
+      if ( pReply )
+      {
+         SDB_OSS_FREE ( pReply ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_QUERYTASK, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTERCOLLECTION, "catCatalogueManager::processAlterCollection" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTERCOLLECTION, "catCatalogueManager::processAlterCollection" )
    INT32 catCatalogueManager::processAlterCollection ( void *pMsg )
    {
       INT32 rc = SDB_OK ;
@@ -584,7 +587,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECS, "catCatalogueManager::processCmdCreateCS" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECS, "catCatalogueManager::processCmdCreateCS" )
    INT32 catCatalogueManager::processCmdCreateCS( const CHAR * pQuery,
                                                   const CHAR *pSelector,
                                                   CHAR * * ppReplyBody,
@@ -641,6 +644,7 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECL, "catCatalogueManager::processCmdCreateCL" )
    INT32 catCatalogueManager::processCmdCreateCL( const CHAR *pQuery,
                                                   const CHAR *pSelector,
                                                   CHAR **ppReplyBody,
@@ -649,7 +653,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 groupID = CAT_INVALID_GROUPID ;
-
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_CREATECL ) ;
       try
       {
          BSONObj query( pQuery ) ;
@@ -685,11 +689,13 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_CREATECL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDSPLIT, "catCatalogueManager::processCmdSplit" )
    INT32 catCatalogueManager::processCmdSplit( const CHAR * pQuery,
                                                INT32 opCode,
                                                CHAR * * ppReplyBody,
@@ -703,6 +709,7 @@ namespace engine
       INT32 groupID = CAT_INVALID_GROUPID ;
       UINT64 taskID = CLS_INVALID_TASKID ;
 
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDSPLIT ) ;
       try
       {
          BSONObj cataObj ;
@@ -820,11 +827,13 @@ namespace engine
       {
          SDB_OSS_DEL pCataSet ;
       }
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_CMDSPLIT, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKCSOBJ, "catCatalogueManager::_checkCSObj" )
    INT32 catCatalogueManager::_checkCSObj( const BSONObj & infoObj,
                                            catCSInfo & csInfo )
    {
@@ -834,6 +843,7 @@ namespace engine
       csInfo._domainName = NULL ;
       csInfo._pageSize = DMS_PAGE_SIZE_DFT ;
 
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR__CHECKCSOBJ ) ;
       BSONObjIterator it( infoObj ) ;
       while ( it.more() )
       {
@@ -886,11 +896,13 @@ namespace engine
                 "Collection space name not set" ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKCSOBJ, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKANDBUILDCATARECORD, "catCatalogueManager::_checkAndBuildCataRecord" )
    INT32 catCatalogueManager::_checkAndBuildCataRecord( const BSONObj &infoObj,
                                                         UINT32 &fieldMask,
                                                         catCollectionInfo &clInfo )
@@ -908,6 +920,7 @@ namespace engine
 
       fieldMask = 0 ;
 
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR__CHECKANDBUILDCATARECORD ) ;
       BSONObjIterator it( infoObj ) ;
       while ( it.more() )
       {
@@ -1051,16 +1064,18 @@ namespace engine
                 "Collection name not set" ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKANDBUILDCATARECORD, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__ASSIGNGROUP, "catCatalogueManager::_assignGroup" )
    INT32 catCatalogueManager::_assignGroup( vector < INT32 > * pGoups,
                                             INT32 & groupID )
    {
       INT32 rc = SDB_OK ;
-
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR__ASSIGNGROUP ) ;
       if ( !pGoups || pGoups->size() == 0 )
       {
          rc = _pCatCB->getAGroupRand( groupID ) ;
@@ -1070,10 +1085,11 @@ namespace engine
          UINT32 size = pGoups->size() ;
          groupID = (*pGoups)[ ossRand() % size ] ;
       }
-
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR__ASSIGNGROUP, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKGROUPINDOMAIN, "catCatalogueManager::_checkGroupInDomain" )
    INT32 catCatalogueManager::_checkGroupInDomain( const CHAR * groupName,
                                                    const CHAR * domainName,
                                                    BOOLEAN & existed,
@@ -1082,6 +1098,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       existed = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR__CHECKGROUPINDOMAIN ) ;
       BSONObj groupInfo ;
 
       // Check group exist
@@ -1121,25 +1138,27 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKGROUPINDOMAIN, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CREATECS, "catCatalogueManager::_createCS" )
    INT32 catCatalogueManager::_createCS( BSONObj & createObj,
                                          BSONObj & selector,
                                          INT32 & groupID )
    {
-      INT32 rc = SDB_OK ;
+      INT32 rc               = SDB_OK ;
+      string strGroupName ;
+
+      const CHAR *csName     = NULL ;
+      const CHAR *domainName = NULL ;
+      const CHAR *groupName  = NULL ;
+      BOOLEAN isSpaceExist   = FALSE ;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR__CREATECS ) ;
 
       catCSInfo csInfo ;
-      string    strGroupName ;
-
-      const CHAR *csName = NULL ;
-      const CHAR *domainName = NULL ;
-      const CHAR *groupName = NULL ;
-
-      BOOLEAN isSpaceExist = FALSE ;
       BSONObj spaceObj ;
       BSONObj domainObj ;
       vector< INT32 >  domainGroups ;
@@ -1228,12 +1247,13 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR__CREATECS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECOLLECTION, "catCatalogueManager::_createCL" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECOLLECTION, "catCatalogueManager::_createCL" )
    INT32 catCatalogueManager::_createCL( BSONObj & createObj,
                                          BSONObj & selector,
                                          INT32 &groupID )
@@ -1391,7 +1411,7 @@ namespace engine
    //    ShardingKey: { Key1: 1, Key2: -1 },
    //    CataInfo:
    //       [ { GroupID: 1000, LowBound:{ "":MinKey,"":MaxKey }, UpBound:{"":MaxKey,"":MinKey} } ] }
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDCATALOGRECORD, "catCatalogueManager::_buildCatalogRecord" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDCATALOGRECORD, "catCatalogueManager::_buildCatalogRecord" )
    INT32 catCatalogueManager::_buildCatalogRecord( const catCollectionInfo & clInfo,
                                                    INT32 groupID,
                                                    const CHAR *groupName,
@@ -1468,7 +1488,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDINITBOUND, "catCatalogueManager::_buildInitBound" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDINITBOUND, "catCatalogueManager::_buildInitBound" )
    INT32 catCatalogueManager::_buildInitBound ( UINT32 fieldNum,
                                                 const Ordering & order,
                                                 BSONObj & lowBound,
@@ -1501,7 +1521,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::processMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSMSG, "catCatalogueManager::processMsg" )
    INT32 catCatalogueManager::processMsg( void *pMsg )
    {
       INT32 rc = SDB_OK;
@@ -1530,6 +1550,10 @@ namespace engine
       case MSG_CAT_DROP_SPACE_REQ :
       case MSG_CAT_LINK_CL_REQ :
       case MSG_CAT_UNLINK_CL_REQ :
+      case MSG_CAT_QUERY_DOMAIN_REQ :
+      case MSG_CAT_CREATE_DOMAIN_REQ :
+      case MSG_CAT_DROP_DOMAIN_REQ :
+      case MSG_CAT_ALTER_DOMAIN_REQ :
          {
             rc = processCommandMsg( pMsg, TRUE ) ;
             break;
@@ -1561,12 +1585,14 @@ namespace engine
       return rc;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_PROCESSCOMMANDMSG, "catCatalogueManager::processCommandMsg" )
    INT32 catCatalogueManager::processCommandMsg( void * pMsg, BOOLEAN writable )
    {
       INT32 rc = SDB_OK ;
       EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent *)pMsg ;
       MsgOpQuery *pQueryReq = (MsgOpQuery *)( pEvent->data ) ;
 
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSCOMMANDMSG ) ;
       MsgOpReply replyHeader ;
       CHAR       *replyData = NULL ;
       UINT32     replyDataLen = 0 ;
@@ -1650,6 +1676,15 @@ namespace engine
             rc = processCmdUnlinkCollection( pQuery, &replyData,
                                           replyDataLen, returnNum );
             break;
+         case MSG_CAT_CREATE_DOMAIN_REQ :
+            rc = processCmdCreateDomain ( pQuery ) ;
+            break ;
+         case MSG_CAT_DROP_DOMAIN_REQ :
+            rc = processCmdDropDomain ( pQuery ) ;
+            break ;
+         case MSG_CAT_ALTER_DOMAIN_REQ :
+            rc = processCmdAlterDomain ( pQuery ) ;
+            break ;
          default :
             rc = SDB_INVALIDARG ;
             PD_LOG( PDERROR, "Recieved unknow command: %s, opCode: %d",
@@ -1684,6 +1719,7 @@ namespace engine
       {
          SDB_OSS_FREE( replyData ) ;
       }
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_PROCESSCOMMANDMSG, rc ) ;
       return rc ;
    error:
       replyHeader.flags = rc ;
@@ -1710,7 +1746,7 @@ namespace engine
       return _pCatCB->netWork()->syncSend( handle, (void*)&reply ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDHASHBOUND, "catCatalogueManager::_buildHashBound" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDHASHBOUND, "catCatalogueManager::_buildHashBound" )
    INT32 catCatalogueManager::_buildHashBound( BSONObj& lowBound,
                                                BSONObj& upBound,
                                                INT32 paritition )
@@ -1730,6 +1766,7 @@ namespace engine
       return (INT16)( _pClsCB->getReplCB()->groupSize() / 2 + 1 ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDLINKCOLLECTION, "catCatalogueManager::processCmdLinkCollection" )
    INT32 catCatalogueManager::processCmdLinkCollection( const CHAR *pQuery,
                                                         CHAR **ppReplyBody,
                                                         UINT32 &replyBodyLen,
@@ -1738,6 +1775,7 @@ namespace engine
       INT32 rc = SDB_OK;
       std::string strMainCLName;
       std::string strSubCLName;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDLINKCOLLECTION ) ;
       BSONObj boLowBound;
       BSONObj boUpBound;
       std::vector<UINT32>  groupList;
@@ -1811,11 +1849,13 @@ namespace engine
          goto error ;
       }
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_CMDLINKCOLLECTION, rc ) ;
       return rc;
    error:
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDUNLINKCOLLECTION, "catCatalogueManager::processCmdUnlinkCollection" )
    INT32 catCatalogueManager::processCmdUnlinkCollection( const CHAR *pQuery,
                                                           CHAR **ppReplyBody,
                                                           UINT32 &replyBodyLen,
@@ -1825,6 +1865,7 @@ namespace engine
       std::string strMainCLName;
       std::string strSubCLName;
       std::vector<UINT32>  groupList;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_CMDUNLINKCOLLECTION ) ;
       try
       {
          BSONObj boQuery( pQuery );
@@ -1882,9 +1923,204 @@ namespace engine
          goto error ;
       }
    done:
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_CMDUNLINKCOLLECTION, rc ) ;
       return rc;
    error:
       goto done;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATEDOMAIN, "catCatalogueManager::processCmdCreateDomain" )
+   INT32 catCatalogueManager::processCmdCreateDomain ( const CHAR *pQuery )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_CREATEDOMAIN ) ;
+      // first extract pQuery and find the options
+      try
+      {
+         BSONObj tempObj ;
+         BSONObj queryObj ;
+         BSONObj insertObj ;
+         BSONObj boQuery( pQuery );
+         BSONObjBuilder ob ;
+         BSONElement beDomainOptions ;
+         const CHAR *pDomainName = NULL ;
+         INT32 expectedObjSize   = 0 ;
+         // find out the domain name
+         BSONElement beDomainName = boQuery.getField ( CAT_DOMAIN_NAME ) ;
+         PD_CHECK( beDomainName.type() == String, SDB_INVALIDARG, error,
+                   PDERROR, "failed to drop domain, get field(%s) "
+                   "failed!", CAT_DOMAIN_NAME );
+         pDomainName = beDomainName.valuestr() ;
+         PD_TRACE1 ( SDB_CATALOGMGR_DROPDOMAIN, PD_PACK_STRING(pDomainName) ) ;
+         // domain name validation
+         rc = catDomainNameValidate ( pDomainName ) ;
+         PD_CHECK ( SDB_OK == rc, rc, error, PDERROR,
+                    "Invalid domain name: %s, rc = %d", pDomainName, rc ) ;
+         ob.append ( CAT_DOMAIN_NAME, pDomainName ) ;
+         expectedObjSize ++ ;
+         // options validation
+         beDomainOptions = boQuery.getField ( CAT_OPTIONS_NAME ) ;
+         if ( !beDomainOptions.eoo() && beDomainOptions.type() != Object )
+         {
+            PD_LOG ( PDERROR,
+                     "Invalid options type, expected eoo or object" ) ;
+            rc = SDB_INVALIDARG ;
+         }
+         // if we provide options, let's extract each option
+         if ( beDomainOptions.type() == Object )
+         {
+            rc = catDomainOptionsValidate ( beDomainOptions.embeddedObject(),
+                                            _pEduCB ) ;
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to validate domain options, rc = %d",
+                        rc ) ;
+               goto error ;
+            }
+            // iterate each element in options and add to final object
+            {
+               BSONObjIterator it ( beDomainOptions.embeddedObject() ) ;
+               while ( it.more () )
+               {
+                  ob.append ( it.next() ) ;
+               }
+            }
+            expectedObjSize ++ ;
+         }
+         // sanity check for garbage fields
+         if ( boQuery.nFields() != expectedObjSize )
+         {
+            PD_LOG ( PDERROR, "Actual input doesn't match expected opt size, "
+                     "there could be one or more invalid arguments" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         // checks are done, let's insert into collection
+         insertObj = ob.obj () ;
+         rc = rtnInsert ( CAT_DOMAIN_COLLECTION, insertObj, 1,
+                          0, _pEduCB ) ;
+         if ( rc )
+         {
+            // if there's duplicate key exception, that means the domain is
+            // already exist
+            if ( SDB_IXM_DUP_KEY == rc )
+            {
+               PD_LOG ( PDERROR, "Domain %s is already exist",
+                        pDomainName ) ;
+               rc = SDB_CAT_DOMAIN_EXIST ;
+               goto error ;
+            }
+            else
+            {
+               PD_LOG ( PDERROR,
+                        "Failed to insert domain object into %s, rc = %d",
+                        CAT_DOMAIN_COLLECTION, rc ) ;
+               goto error ;
+            }
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_CREATEDOMAIN, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPDOMAIN, "catCatalogueManager::processCmdDropDomain" )
+   INT32 catCatalogueManager::processCmdDropDomain ( const CHAR *pQuery )
+   {
+      INT32 rc                = SDB_OK ;
+      const CHAR *pDomainName = NULL ;
+      INT64 numDeleted        = 0 ;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPDOMAIN ) ;
+      // first extract pQuery and find the options
+      try
+      {
+         BSONObj tempObj ;
+         BSONObj queryObj ;
+         BSONObj resultObj ;
+         BSONObj boQuery( pQuery );
+         // find out the domain name
+         BSONElement beDomainName = boQuery.getField( CAT_DOMAIN_NAME );
+         PD_CHECK( beDomainName.type() == String, SDB_INVALIDARG, error,
+                   PDERROR, "failed to drop domain, get field(%s) "
+                   "failed!", CAT_DOMAIN_NAME );
+         pDomainName = beDomainName.valuestr() ;
+         PD_TRACE1 ( SDB_CATALOGMGR_DROPDOMAIN, PD_PACK_STRING(pDomainName) ) ;
+         // validate the domain is not empty by searching SYSCOLLECTIONSPACES
+         // for {Domain} field matches pDomainName
+         queryObj = BSON ( CAT_DOMAIN_NAME << pDomainName ) ;
+         // context will be closed when rc == 0, otherwise it should already be
+         // closed in the function
+         rc = catGetOneObj ( CAT_COLLECTION_SPACE_COLLECTION, tempObj,
+                             queryObj, tempObj, _pEduCB, resultObj ) ;
+         if ( SDB_DMS_EOC != rc )
+         {
+            if ( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to get object from %s, rc = %d",
+                        CAT_COLLECTION_SPACE_COLLECTION, rc ) ;
+               goto error ;
+            }
+            else
+            {
+               rc = SDB_DOMAIN_IS_OCCUPIED ;
+               PD_LOG ( PDERROR, "There are one or more collection spaces "
+                        "are using the domain, rc = %d", rc ) ;
+               goto error ;
+            }
+         }
+         // if we cannot find any record with given domain name, that's expected
+         // attempt to delete from the SYSDOMAINS
+         rc = rtnDelete ( CAT_DOMAIN_COLLECTION, queryObj,
+                          tempObj, 0, _pEduCB, &numDeleted ) ;
+         // if something wrong happend
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to drop domain %s, rc = %d",
+                     pDomainName, rc ) ;
+            goto error ;
+         }
+         // if delete is fine but we didn't find anything
+         if ( 0 == numDeleted )
+         {
+            PD_LOG ( PDERROR, "Domain %s does not exist",
+                     pDomainName ) ;
+            rc = SDB_CAT_DOMAIN_NOT_EXIST ;
+            goto error ;
+         }
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG ( PDERROR, "Occur exception: %s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_DROPDOMAIN, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTERDOMAIN, "catCatalogueManager::processCmdAlterDomain" )
+   INT32 catCatalogueManager::processCmdAlterDomain ( const CHAR *pQuery )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CATALOGMGR_ALTERDOMAIN ) ;
+      // first extract pQuery and find the options
+      // 1) attempt to update
+      // 2) check update number, if 0 returns domain not exist
+   done :
+      PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
 }

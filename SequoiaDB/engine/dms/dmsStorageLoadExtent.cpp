@@ -230,7 +230,7 @@ namespace engine
       recordOffset = _currentExtentSize - _currentExtent->_freeSpace ;
       recordPtr = ((ossValuePtr)_currentExtent) + recordOffset ;
       if ( _currentExtent->_freeSpace - (INT32)dmsrecordSize <
-           DMS_MIN_RECORD_SZ &&
+           (INT32)DMS_MIN_RECORD_SZ &&
            _currentExtent->_freeSpace <= (INT32)DMS_RECORD_MAX_SZ )
       {
          dmsrecordSize = _currentExtent->_freeSpace ;

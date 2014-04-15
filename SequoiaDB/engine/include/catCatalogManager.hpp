@@ -123,6 +123,9 @@ namespace engine
                                        CHAR **ppReplyBody,
                                        UINT32 &replyBodyLen,
                                        INT32 &returnNum );
+      INT32 processCmdCreateDomain ( const CHAR *pQuery ) ;
+      INT32 processCmdDropDomain ( const CHAR *pQuery ) ;
+      INT32 processCmdAlterDomain ( const CHAR *pQuery ) ;
 
    // tool functions
    protected:

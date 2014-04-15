@@ -3911,6 +3911,9 @@ namespace sdbclient
       case SDB_LIST_STOREPROCEDURES :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES ;
          break ;
+      case SDB_LIST_TASKS :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS ;
+         break ;
       default :
          rc = SDB_INVALIDARG ;
          goto exit ;
@@ -4945,7 +4948,7 @@ namespace sdbclient
       newObj = ob.obj() ;
 
       rc = clientBuildQueryMsgCpp( &_pSendBuffer, &_sendBufferSize,
-                                   (CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURES),
+                                   (CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURE),
                                    0, 0, 0, -1, newObj.objdata(), NULL, NULL, NULL,
                                    _endianConvert ) ;
       if ( SDB_OK != rc )
@@ -4993,7 +4996,7 @@ namespace sdbclient
       newObj = ob.obj() ;
 
       rc = clientBuildQueryMsgCpp( &_pSendBuffer, &_sendBufferSize,
-                                (CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURES),
+                                (CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURE),
                                 0, 0, 0, -1, newObj.objdata(), NULL, NULL, NULL,
                                  _endianConvert ) ;
       if ( SDB_OK != rc )
@@ -5158,7 +5161,7 @@ namespace sdbclient
       SINT64 contextID  = 0 ;
       BSONObj newObj ;
       BSONObjBuilder ob ;
-      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUP ) ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUPS ) ;
       {
       BSONObjIterator it ( options ) ;
       while ( it.more() )
@@ -5259,7 +5262,7 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_LISTTASKS, "_sdbImpl::listTasks" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_LISTTASKS, "_sdbImpl::listTasks" )
    INT32 _sdbImpl::listTasks ( _sdbCursor **cursor,
                            const bson::BSONObj &condition,
                            const bson::BSONObj &selector,
@@ -5267,59 +5270,7 @@ namespace sdbclient
                            const bson::BSONObj &hint)
 
    {
-      PD_TRACE_ENTRY ( SDB_CLIENT_LISTTASKS ) ;
-      INT32 rc          = SDB_OK ;
-      BOOLEAN result    = FALSE ;
-      BOOLEAN locked    = FALSE ;
-      SINT64 contextID  = 0 ;
-      BSONObj newObj ;
-      BSONObjBuilder ob ;
-
-      rc = clientBuildQueryMsgCpp ( &_pSendBuffer, &_sendBufferSize,
-                                     CMD_ADMIN_PREFIX CMD_NAME_LIST_TASK,
-                                     0, 0, 0, -1,
-                                     condition.objdata(), selector.objdata(),
-                                     orderBy.objdata(), newObj.objdata(),
-                                     _endianConvert ) ;
-      if ( rc )
-      {
-         goto done ;
-      }
-      lock () ;
-      locked = TRUE ;
-      rc = _send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                          contextID, result ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-
-      if ( *cursor )
-      {
-         delete *cursor ;
-         *cursor = NULL ;
-      }
-      *cursor = (_sdbCursor*)( new(std::nothrow) sdbCursorImpl () ) ;
-      if ( !*cursor )
-      {
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ((_sdbCursorImpl*)*cursor)->_setCollection ( NULL ) ;
-      ((_sdbCursorImpl*)*cursor)->_contextID = contextID ;
-      ((_sdbCursorImpl*)*cursor)->_setConnection ( this ) ;
-   done :
-      if ( locked )
-          unlock () ;
-      PD_TRACE_EXITRC ( SDB_CLIENT_LISTTASKS, rc ) ;
-      return rc ;
-   error :
-      goto done ;
+      return getList ( cursor, SDB_LIST_TASKS, condition, selector, orderBy ) ;
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_WAITTASKS, "_sdbImpl::waitTasks" )

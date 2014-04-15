@@ -895,8 +895,6 @@ namespace engine
       }
       PD_TRACE_EXITRC ( SDB__CLSREPSET__CHECKSYNCCTRL, rc );
       return rc ;
-   error:
-      goto done ;
    }
 
    INT64 _clsReplicateSet::netIn()

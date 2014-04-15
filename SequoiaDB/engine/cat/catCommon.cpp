@@ -41,7 +41,7 @@ using namespace bson ;
 namespace engine
 {
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPNAMEVALIDATE, "catGroupNameValidate" ) ;
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPNAMEVALIDATE, "catGroupNameValidate" )
    INT32 catGroupNameValidate ( const CHAR *pName, BOOLEAN isSys )
    {
       INT32 rc = SDB_INVALIDARG ;
@@ -49,7 +49,7 @@ namespace engine
 
       if ( !pName || pName[0] == '\0' )
       {
-         PD_LOG ( PDINFO, "group name can't be empty" ) ;
+         PD_LOG ( PDWARNING, "group name can't be empty" ) ;
          goto error ;
       }
       PD_TRACE2 ( SDB_CATGROUPNAMEVALIDATE, PD_PACK_STRING ( pName ),
@@ -57,7 +57,7 @@ namespace engine
       // name is within valid length
       if ( ossStrlen ( pName ) > OSS_MAX_GROUPNAME_SIZE )
       {
-         PD_LOG ( PDINFO, "group name %s is too long",
+         PD_LOG ( PDWARNING, "group name %s is too long",
                   pName ) ;
          goto error ;
       }
@@ -66,14 +66,14 @@ namespace engine
            ( ossStrncmp ( pName, "SYS", ossStrlen ( "SYS" ) ) == 0 ||
              ossStrncmp ( pName, "$", ossStrlen ( "$" ) ) == 0 ) )
       {
-         PD_LOG ( PDINFO, "group name should not start with SYS nor $: %s",
+         PD_LOG ( PDWARNING, "group name should not start with SYS nor $: %s",
                   pName ) ;
          goto error ;
       }
       // there shouldn't be any dot in the name
       if ( ossStrchr ( pName, '.' ) != NULL )
       {
-         PD_LOG ( PDINFO, "group name should not contain dot(.): %s",
+         PD_LOG ( PDWARNING, "group name should not contain dot(.): %s",
                   pName ) ;
          goto error ;
       }
@@ -92,6 +92,94 @@ namespace engine
       return catGroupNameValidate( pName, FALSE ) ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDOMAINOPTIONSVALIDATE, "catDomainOptionsValidate" )
+   INT32 catDomainOptionsValidate ( const BSONObj &options,
+                                    pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 expectedOptSize = 0 ;
+      PD_TRACE_ENTRY ( SDB_CATDOMAINOPTIONSVALIDATE ) ;
+      BSONObj tempObj ;
+      BSONObj resultObj ;
+      // we use std string here because
+      // 1) compare if a group name already exist, and we don't need to write
+      // comparitor
+      // 2) it's not performance sensitive code
+      std::set <std::string> groupNameList ;
+      // find out group list
+      BSONElement beGroupList = options.getField ( CAT_GROUP_NAME ) ;
+      if ( !beGroupList.eoo() && beGroupList.type() != Array )
+      {
+         PD_LOG ( PDERROR, "group list must be array" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // iterate each element for group, validate each group must be exist
+      if ( beGroupList.type() == Array )
+      {
+         BSONObjIterator it ( beGroupList.embeddedObject () ) ;
+         while ( it.more() )
+         {
+            // for each element in group, first we need to check if it's string,
+            // and we need to make sure it's in group list
+            BSONElement beGroupElement = it.next () ;
+            if ( beGroupElement.type() != String )
+            {
+               PD_LOG ( PDERROR, "Each element in group list must be string" ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            // query sysnodes, make sure it exists
+            rc = catGetOneObj ( CAT_NODE_INFO_COLLECTION, tempObj,
+                                BSON ( CAT_GROUPNAME_NAME <<
+                                       beGroupElement.valuestr() ),
+                                tempObj, cb, resultObj ) ;
+            if ( rc )
+            {
+               if ( SDB_DMS_EOC == rc )
+               {
+                  PD_LOG ( PDERROR, "group %s does not exist",
+                           beGroupElement.valuestr() ) ;
+                  rc = SDB_CLS_GRP_NOT_EXIST ;
+                  goto error ;
+               }
+               else
+               {
+                  PD_LOG ( PDERROR, "Failed to get record from %s, rc = %d",
+                           CAT_NODE_INFO_COLLECTION, rc ) ;
+                  goto error ;
+               }
+            }
+            // make sure there's no duplicate group name
+            if ( groupNameList.count ( beGroupElement.valuestr() ) != 0 )
+            {
+               PD_LOG ( PDERROR, "Duplicate group name: %s",
+                        beGroupElement.valuestr() ) ;
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            groupNameList.insert ( beGroupElement.valuestr() ) ;
+         }
+         // finished check Group, increase opt size
+         ++ expectedOptSize ;
+      }
+
+      // make sure there's no garbage fields
+      if ( options.nFields() != expectedOptSize )
+      {
+         PD_LOG ( PDERROR, "Actual input doesn't match expected opt size, "
+                  "there could be one or more invalid arguments in options" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CATDOMAINOPTIONSVALIDATE, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRESOLVECOLLECTIONNAME, "catResolveCollectionName" )
    INT32 catResolveCollectionName ( const CHAR *pInput, UINT32 inputLen,
                                     CHAR *pSpaceName, UINT32 spaceNameSize,
                                     CHAR *pCollectionName,
@@ -100,7 +188,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT32 curPos = 0 ;
       UINT32 i = 0 ;
-
+      PD_TRACE_ENTRY ( SDB_CATRESOLVECOLLECTIONNAME ) ;
       while ( pInput[curPos] != '.' )
       {
          if ( curPos >= inputLen || i >= spaceNameSize )
@@ -126,11 +214,13 @@ namespace engine
       pCollectionName[i] = '\0' ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATRESOLVECOLLECTIONNAME, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATQUERYANDGETMORE, "catQueryAndGetMore" )
    INT32 catQueryAndGetMore ( MsgOpReply **ppReply,
                               const CHAR *collectionName,
                               BSONObj &selector,
@@ -150,6 +240,7 @@ namespace engine
       SINT32 replySize       = sizeof(MsgOpReply) ;
       SINT32 replyBufferSize = 0 ;
 
+      PD_TRACE_ENTRY ( SDB_CATQUERYANDGETMORE ) ;
       // first initialize reply buffer, note the caller is responsible to free
       // the memory
       rc = rtnReallocBuffer ( (CHAR**)ppReply, &replyBufferSize, replySize,
@@ -203,6 +294,7 @@ namespace engine
       {
          rtnCB->contextDelete ( contextID, cb ) ;
       }
+      PD_TRACE_EXITRC ( SDB_CATQUERYANDGETMORE, rc ) ;
       return rc ;
    error :
       if ( *ppReply )
@@ -213,10 +305,11 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETONEOBJ, "catGetOneObj" )
    INT32 catGetOneObj( const CHAR * collectionName,
-                       BSONObj & selector,
-                       BSONObj & matcher,
-                       BSONObj & hint,
+                       const BSONObj & selector,
+                       const BSONObj & matcher,
+                       const BSONObj & hint,
                        pmdEDUCB * cb,
                        BSONObj & obj )
    {
@@ -230,6 +323,7 @@ namespace engine
       rtnContextBuf buffObj ;
       INT64 startingPos       = 0 ;
 
+      PD_TRACE_ENTRY ( SDB_CATGETONEOBJ ) ;
       // query
       rc = rtnQuery( collectionName, selector, matcher, dummyObj, hint,
                      0, cb, 0, 1, dmsCB, rtnCB, contextID ) ;
@@ -266,15 +360,18 @@ namespace engine
          buffObj.release() ;
          rtnCB->contextDelete( contextID, cb ) ;
       }
+      PD_TRACE_EXITRC ( SDB_CATGETONEOBJ, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETGROUPOBJ, "catGetGroupObj" )
    INT32 catGetGroupObj( const CHAR * groupName, BSONObj & obj, pmdEDUCB *cb  )
    {
       INT32 rc           = SDB_OK;
 
+      PD_TRACE_ENTRY ( SDB_CATGETGROUPOBJ ) ;
       BSONObj dummyObj ;
       BSONObj boMatcher = BSON( CAT_GROUPNAME_NAME << groupName );
 
@@ -292,14 +389,18 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_CATGETGROUPOBJ, rc ) ;
       return rc;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETGROUPOBJ1, "catGetGroupObj" )
    INT32 catGetGroupObj( UINT32 groupID, BSONObj &obj, pmdEDUCB *cb )
    {
       INT32 rc           = SDB_OK;
+
+      PD_TRACE_ENTRY ( SDB_CATGETGROUPOBJ1 ) ;
       BSONObj dummyObj ;
       BSONObj boMatcher = BSON( CAT_GROUPID_NAME << groupID );
 
@@ -317,16 +418,21 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_CATGETGROUPOBJ1, rc ) ;
       return rc;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETGROUPOBJ2, "catGetGroupObj" )
    INT32 catGetGroupObj( UINT16 nodeID, BSONObj &obj, pmdEDUCB *cb )
    {
       INT32 rc           = SDB_OK;
+
+      PD_TRACE_ENTRY ( SDB_CATGETGROUPOBJ2 ) ;
       BSONObj dummyObj ;
-      BSONObj boMatcher = BSON( FIELD_NAME_GROUP"."FIELD_NAME_NODEID << nodeID );
+      BSONObj boMatcher = BSON(
+            FIELD_NAME_GROUP"."FIELD_NAME_NODEID << nodeID );
 
       rc = catGetOneObj( CAT_NODE_INFO_COLLECTION, dummyObj, boMatcher,
                          dummyObj, cb, obj ) ;
@@ -342,14 +448,18 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_CATGETGROUPOBJ2, rc ) ;
       return rc;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPCHECK, "catGroupCheck" )
    INT32 catGroupCheck( const CHAR * groupName, BOOLEAN & exist, pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATGROUPCHECK ) ;
       BSONObj boGroupInfo ;
       rc = catGetGroupObj( groupName, boGroupInfo, cb ) ;
       if ( SDB_OK == rc )
@@ -361,13 +471,17 @@ namespace engine
          rc = SDB_OK;
          exist = FALSE;
       }
+      PD_TRACE_EXITRC ( SDB_CATGROUPCHECK, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATSERVICECHECK, "catServiceCheck" )
    INT32 catServiceCheck( const CHAR * hostName, const CHAR * serviceName,
                           BOOLEAN & exist, pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATSERVICECHECK ) ;
       BSONObj groupInfo ;
       BSONObj dummyObj ;
       BSONObj match = BSON( FIELD_NAME_GROUP << BSON( "$elemMatch" <<
@@ -391,16 +505,18 @@ namespace engine
       {
          exist = TRUE ;
       }
-
+      PD_TRACE_EXITRC ( SDB_CATSERVICECHECK, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPID2NAME, "catGroupID2Name" )
    INT32 catGroupID2Name( INT32 groupID, string & groupName, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj groupObj ;
       const CHAR *name = NULL ;
 
+      PD_TRACE_ENTRY ( SDB_CATGROUPID2NAME ) ;
       rc = catGetGroupObj( (UINT32)groupID, groupObj, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get group obj by id[%d], rc: %d",
                    groupID, rc ) ;
@@ -412,17 +528,20 @@ namespace engine
       groupName = name ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATGROUPID2NAME, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGROUPNAME2ID, "catGroupName2ID" )
    INT32 catGroupName2ID( const CHAR * groupName, INT32 & groupID,
                           pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj groupObj ;
 
+      PD_TRACE_ENTRY ( SDB_CATGROUPNAME2ID ) ;
       rc = catGetGroupObj( groupName, groupObj, cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get group obj by name[%s], rc: %d",
                    groupName, rc ) ;
@@ -432,14 +551,18 @@ namespace engine
                    CAT_GROUPID_NAME, rc ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATGROUPNAME2ID, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINOBJ, "catGetDomainObj" )
    INT32 catGetDomainObj( const CHAR * domainName, BSONObj & obj, pmdEDUCB * cb )
    {
       INT32 rc           = SDB_OK;
+
+      PD_TRACE_ENTRY ( SDB_CATGETDOMAINOBJ ) ;
       BSONObj dummyObj ;
       BSONObj boMatcher = BSON( CAT_DOMAINNAME_NAME << domainName );
 
@@ -457,17 +580,20 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_CATGETDOMAINOBJ, rc ) ;
       return rc;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDOMAINCHECK, "catDomainCheck" )
    INT32 catDomainCheck( const CHAR * domainName, BOOLEAN & exist,
                          pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj obj ;
 
+      PD_TRACE_ENTRY ( SDB_CATDOMAINCHECK ) ;
       rc = catGetDomainObj( domainName, obj, cb ) ;
       if ( SDB_OK == rc )
       {
@@ -478,9 +604,11 @@ namespace engine
          rc = SDB_OK ;
          exist = FALSE ;
       }
+      PD_TRACE_EXITRC ( SDB_CATDOMAINCHECK, rc ) ;
       return rc ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINGROUPS, "catGetDomainGroups" )
    INT32 catGetDomainGroups( const BSONObj & domain,
                              map < string, INT32 > & groups )
    {
@@ -488,6 +616,7 @@ namespace engine
       const CHAR *groupName = NULL ;
       INT32 groupID = CAT_INVALID_GROUPID ;
 
+      PD_TRACE_ENTRY ( SDB_CATGETDOMAINGROUPS ) ;
       BSONElement beGroups = domain.getField( CAT_GROUP_NAME ) ;
       if ( beGroups.eoo() )
       {
@@ -525,17 +654,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATGETDOMAINGROUPS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETDOMAINGROUPS1, "catGetDomainGroups" )
    INT32 catGetDomainGroups( const BSONObj &domain,
                              vector< INT32 > &groupIDs )
    {
       INT32 rc = SDB_OK ;
       INT32 groupID = CAT_INVALID_GROUPID ;
 
+      PD_TRACE_ENTRY ( SDB_CATGETDOMAINGROUPS1 ) ;
       BSONElement beGroups = domain.getField( CAT_GROUP_NAME ) ;
       if ( beGroups.eoo() )
       {
@@ -569,11 +701,13 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATGETDOMAINGROUPS1, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CAATADDCL2CS, "catAddCL2CS" )
    INT32 catAddCL2CS( const CHAR * csName, const CHAR * clName,
                       INT32 *pGroupID, const CHAR *groupName,
                       pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
@@ -581,6 +715,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY ( SDB_CAATADDCL2CS ) ;
       BSONObj boMatcher = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
 
       BSONObjBuilder updateBuild ;
@@ -621,17 +756,20 @@ namespace engine
                    updator.toString().c_str(), rc ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CAATADDCL2CS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDELCLFROMCS, "catDelCLFromCS" )
    INT32 catDelCLFromCS( const CHAR * csName, const CHAR * clName,
                          pmdEDUCB * cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
                          INT16 w )
    {
       INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY ( SDB_CATDELCLFROMCS ) ;
       BSONObj modifier = BSON( "$pull" << BSON( CAT_COLLECTION <<
                                BSON( CAT_COLLECTION_NAME << clName ) ) ) ;
       BSONObj matcher = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
@@ -645,39 +783,44 @@ namespace engine
                    rc ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATDELCLFROMCS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATRESTORECS, "catRestoreCS" )
    INT32 catRestoreCS( const CHAR * csName, const BSONObj & oldInfo,
                        pmdEDUCB * cb, SDB_DMSCB * dmsCB,
                        SDB_DPSCB * dpsCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY ( SDB_CATRESTORECS ) ;
       BSONObj boMatcher = BSON( CAT_COLLECTION_SPACE_NAME << csName ) ;
       BSONObj updator   = BSON( "$set" << oldInfo ) ;
       BSONObj hint ;
 
       rc = rtnUpdate( CAT_COLLECTION_SPACE_COLLECTION, boMatcher, updator,
                       hint, 0, cb, dmsCB, dpsCB, w ) ;
-      
       PD_RC_CHECK( rc, PDERROR, "Failed to update collection: %s, match: %s, "
                    "updator: %s, rc: %d", CAT_COLLECTION_SPACE_COLLECTION,
                    boMatcher.toString().c_str(),
                    updator.toString().c_str(), rc ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATRESTORECS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETCSGROUPS, "catGetCSGroups" )
    INT32 catGetCSGroups( const BSONObj & csObj, vector < INT32 > & groups )
    {
       INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY ( SDB_CATGETCSGROUPS ) ;
       BSONElement beGroups = csObj.getField( CAT_GROUP_NAME ) ;
       if ( beGroups.eoo() )
       {
@@ -712,17 +855,20 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATGETCSGROUPS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKSPACEEXIST, "catCheckSpaceExist" )
    INT32 catCheckSpaceExist( const char *pSpaceName, BOOLEAN &isExist,
                              BSONObj &obj, pmdEDUCB *cb )
    {
       INT32 rc           = SDB_OK ;
       isExist            = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB_CATCHECKSPACEEXIST ) ;
       BSONObj matcher = BSON( CAT_COLLECTION_SPACE_NAME << pSpaceName ) ;
       BSONObj dummyObj ;
 
@@ -746,32 +892,35 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_CATCHECKSPACEEXIST, rc ) ;
       return rc;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVECL, "catRemoveCL" )
    INT32 catRemoveCL( const CHAR * clFullName, pmdEDUCB * cb,
                       SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB, INT16 w )
    {
       INT32 rc = SDB_OK ;
 
+      PD_TRACE_ENTRY ( SDB_CATREMOVECL ) ;
       BSONObj boMatcher = BSON( CAT_CATALOGNAME_NAME << clFullName ) ;
       BSONObj dummyObj ;
 
       rc = rtnDelete( CAT_COLLECTION_INFO_COLLECTION, boMatcher, dummyObj,
                       0, cb, dmsCB, dpsCB, w ) ;
-      
       PD_RC_CHECK( rc, PDERROR, "Failed to del record from collection: %s, "
                    "match: %s, rc: %d", CAT_COLLECTION_INFO_COLLECTION,
                    boMatcher.toString().c_str(), rc ) ;
-
    done:
+      PD_TRACE_EXITRC ( SDB_CATREMOVECL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATCHECKCOLLECTIONEXIST, "catCheckCollectionExist" )
    INT32 catCheckCollectionExist( const char *pCollectionName,
                                   BOOLEAN &isExist,
                                   BSONObj &obj,
@@ -780,6 +929,7 @@ namespace engine
       INT32 rc           = SDB_OK ;
       isExist            = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB_CATCHECKCOLLECTIONEXIST ) ;
       BSONObj matcher = BSON( CAT_CATALOGNAME_NAME << pCollectionName ) ;
       BSONObj dummyObj ;
 
@@ -803,11 +953,13 @@ namespace engine
       }
 
    done :
+      PD_TRACE_EXITRC ( SDB_CATCHECKCOLLECTIONEXIST, rc ) ;
       return rc ;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATECATALOG, "catUpdateCatalog" )
    INT32 catUpdateCatalog( const CHAR * clFullName, const BSONObj & cataInfo,
                            pmdEDUCB * cb, INT16 w )
    {
@@ -815,6 +967,8 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      PD_TRACE_ENTRY ( SDB_CATUPDATECATALOG ) ;
       BSONObj dummy ;
       BSONObj match = BSON( CAT_CATALOGNAME_NAME << clFullName ) ;
       BSONObj updator = BSON( "$inc" << BSON( CAT_VERSION_NAME << 1 ) <<
@@ -824,14 +978,15 @@ namespace engine
                       cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDSEVERE, "Failed to update collection[%s] catalog info"
                    "[%s], rc: %d", clFullName, cataInfo.toString().c_str(),
-                   rc ) ;      
-
+                   rc ) ;
    done:
+      PD_TRACE_EXITRC ( SDB_CATUPDATECATALOG, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATADDTASK, "catAddTask" )
    INT32 catAddTask( BSONObj & taskObj, pmdEDUCB * cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
@@ -839,6 +994,7 @@ namespace engine
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
+      PD_TRACE_ENTRY ( SDB_CATADDTASK ) ;
       rc = rtnInsert( CAT_TASK_INFO_COLLECTION, taskObj, 1, 0, cb, dmsCB,
                       dpsCB, w ) ;
 
@@ -857,14 +1013,18 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATADDTASK, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASK, "catGetTask" )
    INT32 catGetTask( UINT64 taskID, BSONObj & obj, pmdEDUCB * cb )
    {
       INT32 rc           = SDB_OK;
+
+      PD_TRACE_ENTRY ( SDB_CATGETTASK ) ;
       BSONObj dummyObj ;
       BSONObj boMatcher = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
 
@@ -881,31 +1041,33 @@ namespace engine
                  boMatcher.toString().c_str(), CAT_TASK_INFO_COLLECTION, rc ) ;
          goto error ;
       }
-
    done :
+      PD_TRACE_EXITRC ( SDB_CATGETTASK, rc ) ;
       return rc;
    error :
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETTASKSTATUS, "catGetTaskStatus" )
    INT32 catGetTaskStatus( UINT64 taskID, INT32 & status, pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj taskObj ;
-
+      PD_TRACE_ENTRY ( SDB_CATGETTASKSTATUS ) ;
       rc = catGetTask( taskID, taskObj, cb ) ;
       PD_RC_CHECK( rc, PDWARNING, "Get task[%lld] failed, rc: %d", taskID, rc ) ;
 
       rc = rtnGetIntElement( taskObj, CAT_STATUS_NAME, status ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to get field[%s], rc: %d",
                    CAT_STATUS_NAME, rc ) ;
-
    done:
+      PD_TRACE_EXITRC ( SDB_CATGETTASKSTATUS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATGETMAXTASKID, "catGetMaxTaskID" )
    INT64 catGetMaxTaskID( pmdEDUCB * cb )
    {
       INT64 taskID            = CLS_INVALID_TASKID ;
@@ -914,6 +1076,8 @@ namespace engine
       pmdKRCB *pKRCB          = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB        = pKRCB->getDMSCB() ;
       SDB_RTNCB *rtnCB        = pKRCB->getRTNCB() ;
+
+      PD_TRACE_ENTRY ( SDB_CATGETMAXTASKID ) ;
       BSONObj dummyObj ;
       BSONObj orderby = BSON( CAT_TASKID_NAME << -1 ) ;
 
@@ -963,11 +1127,13 @@ namespace engine
          buffObj.release() ;
          rtnCB->contextDelete( contextID, cb ) ;
       }
+      PD_TRACE_EXITRC ( SDB_CATGETMAXTASKID, rc ) ;
       return taskID ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUPDATETASKSTATUS, "catUpdateTaskStatus" )
    INT32 catUpdateTaskStatus( UINT64 taskID, INT32 status, pmdEDUCB * cb,
                               INT16 w )
    {
@@ -975,6 +1141,8 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      PD_TRACE_ENTRY ( SDB_CATUPDATETASKSTATUS ) ;
       BSONObj taskObj ;
       BSONObj dummy ;
       BSONObj match = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
@@ -987,19 +1155,22 @@ namespace engine
                       cb, dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Update task[%lld] status to [%d] failed, "
                    "rc: %d", taskID, status, rc ) ;
-
    done:
+      PD_TRACE_EXITRC ( SDB_CATUPDATETASKSTATUS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVETASK, "catRemoveTask" )
    INT32 catRemoveTask( UINT64 taskID, pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
+
+      PD_TRACE_ENTRY ( SDB_CATREMOVETASK ) ;
       BSONObj taskObj ;
       BSONObj match = BSON( CAT_TASKID_NAME << (INT64)taskID ) ;
       BSONObj dummy ;
@@ -1016,11 +1187,13 @@ namespace engine
                    taskObj.toString().c_str(), rc ) ;
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATREMOVETASK, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVETASK1, "catRemoveTask" )
    INT32 catRemoveTask( BSONObj &match, pmdEDUCB *cb, INT16 w )
    {
       INT32 rc = SDB_OK ;
@@ -1029,6 +1202,8 @@ namespace engine
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
       BSONObj taskObj ;
       BSONObj dummyObj ;
+
+      PD_TRACE_ENTRY ( SDB_CATREMOVETASK1 ) ;
 
       rc = catGetOneObj( CAT_TASK_INFO_COLLECTION, dummyObj, match,
                          dummyObj, cb, taskObj ) ;
@@ -1048,13 +1223,14 @@ namespace engine
                       dmsCB, dpsCB, w ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to remove task from collection[%s], "
                    "rc: %d, del cond: %s", rc , match.toString().c_str() ) ;
-
    done:
+      PD_TRACE_EXITRC ( SDB_CATREMOVETASK1, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVECLEX, "catRemoveCLEx" )
    INT32 catRemoveCLEx( const CHAR * clFullName, pmdEDUCB * cb,
                         SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB, INT16 w,
                         BOOLEAN delSubCL, INT32 version )
@@ -1064,6 +1240,8 @@ namespace engine
       CHAR szCSName[ DMS_COLLECTION_SPACE_NAME_SZ + 1 ] = {0} ;
       BOOLEAN isExist                  = FALSE ;
       BSONObj clObj;
+
+      PD_TRACE_ENTRY ( SDB_CATREMOVECLEX ) ;
       clsCatalogSet cataInfo( clFullName );
 
       rc = catCheckCollectionExist( clFullName, isExist, clObj, cb );
@@ -1083,7 +1261,6 @@ namespace engine
       /*PD_CHECK( cataInfo.getMainCLName().empty(),
                SDB_ILL_RM_SUB_CL, error, PDERROR,
                "illegal remove sub-collection" );*/
-      
 
       rc = catResolveCollectionName( clFullName, ossStrlen(clFullName),
                                      szCSName, DMS_COLLECTION_SPACE_NAME_SZ,
@@ -1200,11 +1377,13 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_CATREMOVECLEX, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATREMOVECSEX, "catRemoveCSEx" )
    INT32 catRemoveCSEx( const CHAR * csName, pmdEDUCB * cb, SDB_DMSCB * dmsCB,
                         SDB_DPSCB * dpsCB, INT16 w )
    {
@@ -1212,6 +1391,7 @@ namespace engine
       BSONObj boSpace ;
       BOOLEAN exist = FALSE ;
 
+      PD_TRACE_ENTRY ( SDB_CATREMOVECSEX ) ;
       rc = catCheckSpaceExist( csName, exist, boSpace, cb ) ;
       PD_RC_CHECK( rc, PDWARNING, "Failed to check space exist, rc: %d", rc ) ;
       PD_CHECK( exist, SDB_DMS_CS_NOTEXIST, error, PDWARNING,
@@ -1272,16 +1452,19 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-
    done:
+      PD_TRACE_EXITRC ( SDB_CATREMOVECSEX, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATPRASEFUNC, "catPraseFunc" )
    INT32 catPraseFunc( const BSONObj &func, BSONObj &parsed )
    {
       INT32 rc = SDB_OK ;
+
+      PD_TRACE_ENTRY ( SDB_CATPRASEFUNC ) ;
       BSONElement fValue = func.getField( FMP_FUNC_VALUE ) ;
       BSONElement fType = func.getField( FMP_FUNC_TYPE ) ;
       if ( fValue.eoo() || fType.eoo() )
@@ -1348,11 +1531,13 @@ namespace engine
          parsed = builder.obj() ;
       }
    done:
+      PD_TRACE_EXITRC ( SDB_CATPRASEFUNC, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATLINKCL, "catLinkCL" )
    INT32 catLinkCL( const CHAR *mainCLName, const CHAR *subCLName,
                      BSONObj &boLowBound, BSONObj &boUpBound,
                      pmdEDUCB *cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
@@ -1364,6 +1549,7 @@ namespace engine
       BSONObj subCLObj;
       BSONObj mainCLObj;
       BOOLEAN hasUpdateSubCL = FALSE;
+      PD_TRACE_ENTRY ( SDB_CATLINKCL ) ;
       clsCatalogSet cataInfo( mainCLName );
 
       try
@@ -1474,13 +1660,14 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
-      
    done:
+      PD_TRACE_EXITRC ( SDB_CATLINKCL, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATUNLINKCL, "catUnlinkCL" )
    INT32 catUnlinkCL( const CHAR *mainCLName, const CHAR *subCLName,
                      pmdEDUCB *cb, SDB_DMSCB * dmsCB, SDB_DPSCB * dpsCB,
                      INT16 w, std::vector<UINT32>  &groupList )
@@ -1491,6 +1678,8 @@ namespace engine
       BSONObj subCLObj;
       BSONObj mainCLObj;
       BOOLEAN needUpdateSubCL = FALSE;
+
+      PD_TRACE_ENTRY ( SDB_CATUNLINKCL ) ;
       clsCatalogSet cataInfo( mainCLName );
       try
       {
@@ -1597,6 +1786,7 @@ namespace engine
          goto error ;
       }
    done:
+      PD_TRACE_EXITRC ( SDB_CATUNLINKCL, rc ) ;
       return rc ;
    error:
       goto done ;

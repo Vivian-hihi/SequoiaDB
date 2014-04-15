@@ -149,7 +149,6 @@ namespace engine
       }
 
       PD_TRACE_EXITRC( SDB__QGMOPTIAGGREGATION_DONE, rc ) ;
-   done:
       return rc ;
    }
 

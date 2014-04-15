@@ -1028,6 +1028,10 @@
             <stentry>文件描述符已达到上限</stentry>
             <stentry>-255</stentry>
          </strow>
+         <strow>
+            <stentry>域非空</stentry>
+            <stentry>-256</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

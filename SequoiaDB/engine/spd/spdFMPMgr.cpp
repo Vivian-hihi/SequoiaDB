@@ -61,7 +61,7 @@ namespace engine
             _mtx.release() ;
             break ;
          }
-         else  if ( allocated != _pool.size() )
+         else  if ( (UINT32)allocated != _pool.size() )
          {
             _mtx.release() ;
             PD_LOG( PDINFO, "not all fmp are returned:%d", allocated ) ;

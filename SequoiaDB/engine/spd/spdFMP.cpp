@@ -303,7 +303,7 @@ namespace engine
       if ( '\0' == SPD_MAGIC[_expect])
       {
 found:
-         if ( (_totalRead - _itr) < sizeof(INT32) )
+         if ( (_totalRead - _itr) < (INT32)sizeof(INT32) )
          {
             extracted = FALSE ;
             goto done ;
@@ -318,7 +318,8 @@ found:
             }
             else if ( (_totalRead - _itr) == bsonLen )
             {
-               SDB_ASSERT( _itr >= ossStrlen(FMP_MSG_MAGIC), "impossible" )
+               SDB_ASSERT( _itr >= (INT32)ossStrlen(FMP_MSG_MAGIC),
+                           "impossible" )
                BSONObj tmp ;
 
                try

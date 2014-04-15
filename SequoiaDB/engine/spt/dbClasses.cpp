@@ -140,6 +140,14 @@
       }                                               \
    } while (0)
 
+#define SAFE_RELEASE_DOMAIN(x)                        \
+   do {                                               \
+      if ( (x) && *(x) != SDB_INVALID_HANDLE ) {      \
+         sdbReleaseDomain ( *(x) ) ;                  \
+         *(x) = SDB_INVALID_HANDLE ;                  \
+      }                                               \
+   } while (0)
+
 #define SDB_JSVAL_IS_OBJECT(x) \
    (JSVAL_IS_NULL(x) || JSVAL_IS_VOID(x) || ! JSVAL_IS_PRIMITIVE(x))
 
@@ -3158,6 +3166,49 @@ static JSFunctionSpec cs_functions[] = {
    JS_FS_END
 } ;
 
+// ----------- Domain ------------
+PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_DESTRUCTOR, "domain_destructor" )
+static void domain_destructor ( JSContext *cx, JSObject *obj )
+{
+   PD_TRACE_ENTRY ( SDB_DOMAIN_DESTRUCTOR );
+   sdbDomainHandle *s = (sdbDomainHandle *)
+         JS_GetPrivate ( cx, obj ) ;
+   SAFE_RELEASE_DOMAIN ( s ) ;
+   SAFE_JS_FREE ( cx, s ) ;
+   JS_SetPrivate ( cx, obj, NULL ) ;
+   PD_TRACE_EXIT ( SDB_DOMAIN_DESTRUCTOR );
+}
+static JSClass domain_class = {
+   "SdbDomain", // class name
+   JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE ,   // flags
+   JS_PropertyStub,              // addProperty
+   JS_PropertyStub,              // delProperty
+   JS_PropertyStub,              // getProperty
+   JS_StrictPropertyStub,        // setProperty
+   JS_EnumerateStub,             // enumerate
+   JS_ResolveStub,               // resolve
+   JS_ConvertStub,               // convert
+   domain_destructor,            // finalize
+   JSCLASS_NO_OPTIONAL_MEMBERS   // optional members
+} ;
+
+static JSBool domain_constructor ( JSContext *cx, uintN argc, jsval *vp )
+{
+   JSBool ret = JS_TRUE ;
+   // the constructor should never be called, internall yor externally
+   // it is here just for the sake of defining SdbDomain.prototype
+   REPORT ( JS_FALSE, "use of new SdbDomain() is orbidden, you should use "
+                      "other functions to produce a SdbDomain object" ) ;
+done :
+   return ret ;
+error :
+   goto done ;
+}
+
+static JSFunctionSpec domain_functions[] = {
+   JS_FS_END
+} ;
+
 // ----------- Sdb --------------
 PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )
 static void sdb_destructor ( JSContext *cx , JSObject *obj )
@@ -3213,9 +3264,13 @@ static JSBool isSpecialCSName ( const CHAR *name )
                                    "transRollback",
                                    "close",
                                    "flushConfigure",
-                                   "createProcedures",
-                                   "removeProcedures",
+                                   "createProcedure",
+                                   "removeProcedure",
                                    "listProcedures",
+                                   "createDomain",
+                                   "dropDomain",
+                                   "getDomain",
+                                   "listDomains",
                                    "eval",
                                    "backupOffline",
                                    "listBackup",
@@ -3694,27 +3749,269 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_PROCEDURES, "sdb_crt_procedures" )
-static JSBool sdb_crt_procedures( JSContext *cx, uintN argc, jsval *vp )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CREATE_DOMAIN, "sdb_create_domain" )
+static JSBool sdb_create_domain ( JSContext *cx, uintN argc, jsval *vp )
 {
-   PD_TRACE_ENTRY ( SDB_SDB_CRT_PROCEDURES ) ;
+   INT32                  rc          = SDB_OK ;
+   sdbConnectionHandle   *connection  = NULL ;
+   JSBool                 ret         = JS_TRUE ;
+   jsval                 *argv        = JS_ARGV ( cx , vp ) ;
+   JSString              *domainName  = NULL ;
+   JSObject              *domainObj   = NULL ;
+   jsuint                 groupListL  = 0 ;
+   JSObject              *objDomain   = NULL ;
+   CHAR                  *name        = NULL ;
+   sdbDomainHandle       *domain      = NULL ;
+   jsval                  valDomainN  = JSVAL_VOID ;
+   bson                   bsonDef ;
+
+   PD_TRACE_ENTRY ( SDB_SDB_CREATE_DOMAIN ) ;
+   bson_init ( &bsonDef ) ;
+   // make sure there's at least one argument for domain name
+   REPORT ( argc >= 1,
+            "Sdb.createDomain(): need at least one argument" ) ;
+   // get connection handle first
+   connection = (sdbConnectionHandle *)
+         JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( connection, "Sdb.createDomain(): no connection handle" ) ;
+
+   domainName = JS_ValueToString ( cx, argv[0] ) ;
+   VERIFY ( domainName ) ;
+   argv[0] = STRING_TO_JSVAL ( domainName ) ;
+
+   // name is freed in done
+   name = JS_EncodeString ( cx, domainName ) ;
+   VERIFY ( name ) ;
+
+   // get array for group list
+   if ( argc >= 2 )
+   {
+      domainObj = JSVAL_TO_OBJECT ( argv[1] ) ;
+      VERIFY ( domainObj ) ;
+      REPORT ( JS_IsArrayObject ( cx, domainObj ),
+               "Sdb.createDomain(): second argument must be array of groups" ) ;
+      // iterate each element in array and push to bson object
+      VERIFY ( BSON_OK ==
+               bson_append_start_array ( &bsonDef, FIELD_NAME_GROUP ) ) ;
+      VERIFY ( JS_GetArrayLength ( cx, domainObj, &groupListL ) ) ;
+      for ( UINT32 i = 0; i < groupListL; ++i )
+      {
+         jsval v ;
+         CHAR  buffer [ OSS_MAX_GROUPNAME_SIZE ] = {0} ;
+         ossMemset ( buffer, 0, sizeof(buffer) ) ;
+         JSString * groupName = NULL ;
+         CHAR     * strGroupName = NULL ;
+         // get the i'th element in the array
+         VERIFY ( JS_GetElement ( cx, domainObj, (jsint)i, &v ) ) ;
+         // build group name
+         groupName = JS_ValueToString ( cx, v ) ;
+         VERIFY ( groupName ) ;
+         // memory free by end of the loop
+         strGroupName = JS_EncodeString ( cx, groupName ) ;
+         VERIFY ( strGroupName ) ;
+         // append to bson
+         ossSnprintf ( buffer, sizeof(buffer), "%d", i ) ;
+         bson_append_string ( &bsonDef, buffer, strGroupName ) ;
+         // free memory for strGroupName
+         SAFE_JS_FREE ( cx, strGroupName ) ;
+      }
+      VERIFY ( BSON_OK == bson_append_finish_array ( &bsonDef ) ) ;
+   }
+
+   domain = (sdbDomainHandle *) JS_malloc ( cx, sizeof(sdbDomainHandle) ) ;
+   VERIFY ( domain ) ;
+   *domain = SDB_INVALID_HANDLE ;
+
+   bson_finish ( &bsonDef ) ;
+   rc = sdbCreateDomain ( *connection, name, &bsonDef, domain ) ;
+   REPORT_RC ( SDB_OK == rc, "Sdb.createDomain()", rc ) ;
+   objDomain = JS_NewObject ( cx, &domain_class, 0, 0 ) ;
+   VERIFY ( objDomain ) ;
+   JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL ( objDomain ) ) ;
+   VERIFY ( JS_SetPrivate ( cx, objDomain, domain ) ) ;
+   valDomainN = STRING_TO_JSVAL ( domainName ) ;
+   VERIFY ( JS_SetProperty ( cx, objDomain, "_domainname", &valDomainN ) ) ;
+done :
+   SAFE_JS_FREE ( cx, name ) ;
+   bson_destroy ( &bsonDef ) ;
+   PD_TRACE_EXIT ( SDB_SDB_CREATE_DOMAIN ) ;
+   return ret ;
+error :
+   SAFE_RELEASE_DOMAIN ( domain ) ;
+   SAFE_JS_FREE ( cx, domain ) ;
+   TRY_REPORT ( cx, "Sdb.createDomain(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_DROP_DOMAIN, "sdb_drop_domain" )
+static JSBool sdb_drop_domain ( JSContext *cx, uintN argc, jsval *vp )
+{
+   INT32                  rc          = SDB_OK ;
+   sdbConnectionHandle   *connection  = NULL ;
+   JSBool                 ret         = JS_TRUE ;
+   JSString              *domainName  = NULL ;
+   CHAR                  *name        = NULL ;
+   PD_TRACE_ENTRY ( SDB_SDB_DROP_DOMAIN ) ;
+   connection = (sdbConnectionHandle *)
+         JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( connection, "Sdb.dropDoamin(): no connection handle" ) ;
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S" , &domainName ) ;
+   REPORT ( ret && domainName, "Sdb.dropDoamin(): wrong arguments" ) ;
+   // name is freed in done
+   name = JS_EncodeString ( cx, domainName ) ;
+   VERIFY ( name ) ;
+   rc = sdbDropDomain ( *connection, name ) ;
+   REPORT_RC ( SDB_OK == rc, "Sdb.dropDomain()", rc ) ;
+   JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
+done :
+   PD_TRACE_EXIT ( SDB_SDB_DROP_DOMAIN ) ;
+   SAFE_JS_FREE ( cx, name ) ;
+   return ret ;
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_GET_DOMAIN, "sdb_get_domain" )
+static JSBool sdb_get_domain ( JSContext *cx, uintN argc, jsval *vp )
+{
+   INT32                  rc          = SDB_OK ;
+   sdbConnectionHandle   *connection  = NULL ;
+   JSBool                 ret         = JS_TRUE ;
+   JSString              *domainName  = NULL ;
+   CHAR                  *name        = NULL ;
+   sdbDomainHandle       *domain      = NULL ;
+   JSObject              *objDomain   = NULL ;
+   jsval                  valDomainN  = JSVAL_VOID ;
+   PD_TRACE_ENTRY ( SDB_SDB_DROP_DOMAIN ) ;
+   connection = (sdbConnectionHandle *)
+         JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( connection, "Sdb.getDoamin(): no connection handle" ) ;
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "S" , &domainName ) ;
+   REPORT ( ret && domainName, "Sdb.getDoamin(): wrong arguments" ) ;
+   // name is freed in done
+   name = JS_EncodeString ( cx, domainName ) ;
+   VERIFY ( name ) ;
+   rc = sdbGetDomain ( *connection, name, domain ) ;
+   REPORT_RC ( SDB_OK == rc, "Sdb.getDomain()", rc ) ;
+   objDomain = JS_NewObject ( cx, &domain_class, 0, 0 ) ;
+   VERIFY ( objDomain ) ;
+   JS_SET_RVAL ( cx, vp, OBJECT_TO_JSVAL ( objDomain ) ) ;
+   VERIFY ( JS_SetPrivate ( cx, objDomain, domain ) ) ;
+   valDomainN = STRING_TO_JSVAL ( domainName ) ;
+   VERIFY ( JS_SetProperty ( cx, objDomain, "_domainname", &valDomainN ) ) ;
+done :
+   PD_TRACE_EXIT ( SDB_SDB_DROP_DOMAIN ) ;
+   SAFE_JS_FREE ( cx, name ) ;
+   return ret ;
+error :
+   SAFE_RELEASE_DOMAIN ( domain ) ;
+   SAFE_JS_FREE ( cx, domain ) ;
+   TRY_REPORT ( cx, "Sdb.getDomain(): false" ) ;
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_LIST_DOMAINS, "sdb_list_domains" )
+static JSBool sdb_list_domains ( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_SDB_LIST_DOMAINS );
+   sdbConnectionHandle *connection  = NULL ;
+   INT32                rc          = SDB_OK ;
+   JSBool               ret         = JS_TRUE ;
+   JSObject *           objCursor   = NULL ;
+   sdbCursorHandle *    cursor      = NULL ;
+   JSObject *           objCond     = NULL ;
+   JSObject *           objSel      = NULL ;
+   JSObject *           objOrder    = NULL ;
+   bson *               bsonCond    = NULL ;
+   bson *               bsonSel     = NULL ;
+   bson *               bsonOrder   = NULL ;
+
+   connection = (sdbConnectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( connection , "Sdb.listDomains(): no connection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) , "/ooo" ,
+                               &objCond , &objSel , &objOrder ) ;
+   REPORT ( ret , "Sdb.listDomains(): invalid arguments" ) ;
+
+   if ( objCond )
+   {
+      // bsonCond is freed in done:
+      VERIFY ( objToBson ( cx , objCond , &bsonCond ) ) ;
+   }
+
+   if ( objSel )
+   {
+      // bsonSel is freed in done:
+      VERIFY ( objToBson ( cx , objSel , &bsonSel ) ) ;
+   }
+
+   if ( objOrder )
+   {
+      // bsonOrder is freed in done:
+      VERIFY ( objToBson ( cx , objOrder , &bsonOrder ) ) ;
+   }
+
+   // cursor and the handle it contains will be deleted in error: or in the
+   // destructor of SdbCursor
+   // cursor will also be freed when rc = SDB_DMS_EOC
+   cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
+   VERIFY ( cursor ) ;
+   *cursor = SDB_INVALID_HANDLE ;
+
+   rc = sdbListDomains( *connection, bsonCond, bsonSel,
+                         bsonOrder, cursor ) ;
+   REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc  , "Sdb.listDomains()", rc ) ;
+
+   if ( SDB_DMS_EOC == rc )
+   {
+      SAFE_JS_FREE ( cx , cursor ) ;
+      cursor = NULL ;
+   }
+
+   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+   VERIFY ( objCursor ) ;
+
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
+
+   VERIFY ( JS_SetPrivate ( cx , objCursor , cursor ) ) ;
+
+done :
+   SAFE_BSON_DISPOSE ( bsonCond ) ;
+   SAFE_BSON_DISPOSE ( bsonSel ) ;
+   SAFE_BSON_DISPOSE ( bsonOrder ) ;
+   PD_TRACE_EXIT ( SDB_SDB_LIST_DOMAINS );
+   return ret ;
+error :
+   SAFE_RELEASE_CURSOR ( cursor ) ;
+   SAFE_JS_FREE ( cx , cursor ) ;
+   TRY_REPORT ( cx , "Sdb.listDomains(): false" ) ;
+   goto done ;
+}
+
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_CRT_PROCEDURE, "sdb_crt_procedure" )
+static JSBool sdb_crt_procedure( JSContext *cx, uintN argc, jsval *vp )
+{
+   PD_TRACE_ENTRY ( SDB_SDB_CRT_PROCEDURE ) ;
    INT32 rc = SDB_OK ;
-   sdbConnectionHandle   *connection = NULL ;
-   JSBool                 ret        = JS_TRUE ;
+   sdbConnectionHandle   *connection  = NULL ;
+   JSBool                 ret         = JS_TRUE ;
    JSObject *             objData     = NULL ;
    jsval                  funcvar     = JSVAL_VOID ;
    JSString              *funcjsstr   = NULL ;
    CHAR                  *funcstr     = NULL ;
 
    connection = (sdbConnectionHandle *)
-   JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection, "Sdb.createProcedures(): no connection handle" ) ;
+         JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( connection, "Sdb.createProcedure(): no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "o" , &objData) ;
-   REPORT ( ret && objData , "Sdb.createProcedures(): wrong arguments" ) ;
+   REPORT ( ret && objData , "Sdb.createProcedure(): wrong arguments" ) ;
    ret = JS_ObjectIsFunction( cx, objData ) ;
-   REPORT ( ret, "Sdb.createProcedures(): wrong arguments") ;
+   REPORT ( ret, "Sdb.createProcedure(): wrong arguments") ;
 
    funcvar = OBJECT_TO_JSVAL( objData ) ;
    funcjsstr = JS_ValueToString( cx, funcvar ) ;
@@ -3726,21 +4023,21 @@ static JSBool sdb_crt_procedures( JSContext *cx, uintN argc, jsval *vp )
    }
 
    rc = sdbCrtJSProcedure( *connection, funcstr ) ;
-   REPORT_RC ( SDB_OK == rc, "Sdb.createProcedures()", rc ) ;
+   REPORT_RC ( SDB_OK == rc, "Sdb.createProcedure()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 done:
    SAFE_JS_FREE( cx, funcstr ) ;
-   PD_TRACE_EXIT ( SDB_SDB_CRT_PROCEDURES ) ;
+   PD_TRACE_EXIT ( SDB_SDB_CRT_PROCEDURE ) ;
    return ret ;
 error:
-   TRY_REPORT ( cx, "Sdb.createProcedures(): false" ) ;
+   TRY_REPORT ( cx, "Sdb.createProcedure(): false" ) ;
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_PROCEDURES, "sdb_rm_procedures" )
-static JSBool sdb_rm_procedures( JSContext *cx, uintN argc, jsval *vp )
+PD_TRACE_DECLARE_FUNCTION ( SDB_SDB_RM_PROCEDURE, "sdb_rm_procedure" )
+static JSBool sdb_rm_procedure( JSContext *cx, uintN argc, jsval *vp )
 {
-   PD_TRACE_ENTRY( SDB_SDB_RM_PROCEDURES ) ;
+   PD_TRACE_ENTRY( SDB_SDB_RM_PROCEDURE ) ;
    INT32 rc = SDB_OK ;
    sdbConnectionHandle   *connection = NULL ;
    JSBool                 ret        = JS_TRUE ;
@@ -3749,22 +4046,22 @@ static JSBool sdb_rm_procedures( JSContext *cx, uintN argc, jsval *vp )
 
    connection = (sdbConnectionHandle *)
    JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
-   REPORT ( connection, "Sdb.removeProcedures(): no connection handle" ) ;
+   REPORT ( connection, "Sdb.removeProcedure(): no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "S" , &func ) ;
-   REPORT ( ret, "Sdb.removeProcedures(): wrong arguments" ) ;
+   REPORT ( ret, "Sdb.removeProcedure(): wrong arguments" ) ;
 
    strFunc = ( CHAR *) JS_EncodeString ( cx, func ) ;
    VERIFY( strFunc ) ;
 
-   rc = sdbRmProcedures( *connection, strFunc ) ;
-   REPORT_RC ( SDB_OK == rc, "Sdb.removeProcedures()", rc ) ;
+   rc = sdbRmProcedure( *connection, strFunc ) ;
+   REPORT_RC ( SDB_OK == rc, "Sdb.removeProcedure()", rc ) ;
    JS_SET_RVAL ( cx, vp, JSVAL_VOID ) ;
 
 done:
    SAFE_JS_FREE( cx, strFunc ) ;
-   PD_TRACE_EXIT( SDB_SDB_RM_PROCEDURES ) ;
+   PD_TRACE_EXIT( SDB_SDB_RM_PROCEDURE ) ;
    return ret ;
 error:
    goto done ;
@@ -3788,7 +4085,7 @@ static JSBool sdb_list_procedures( JSContext *cx, uintN argc, jsval *vp )
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "/o" , &condition ) ;
-   REPORT ( ret, "Sdb.removeProcedures(): wrong arguments" ) ;
+   REPORT ( ret, "Sdb.listProceduers(): wrong arguments" ) ;
 
    if ( NULL != condition )
    {
@@ -5680,8 +5977,8 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "transRollback", sdb_trans_rollback , 1, 0 ),
    JS_FS ( "flushConfigure", sdb_flush_configure, 0, 0 ),
    JS_FS ( "close", sdb_close, 1, 0 ),
-   JS_FS ( "createProcedures", sdb_crt_procedures, 1, 0 ),
-   JS_FS ( "removeProcedures", sdb_rm_procedures, 1, 0 ),
+   JS_FS ( "createProcedure", sdb_crt_procedure, 1, 0 ),
+   JS_FS ( "removeProcedure", sdb_rm_procedure, 1, 0 ),
    JS_FS ( "listProcedures", sdb_list_procedures,1, 0),
    JS_FS ( "eval", sdb_eval, 0, 0 ),
    JS_FS ( "backupOffline", sdb_backup_offline, 0, 0 ),
@@ -5692,6 +5989,10 @@ static JSFunctionSpec sdb_functions[] = {
    JS_FS ( "cancelTask", sdb_cancel_task, 1, 0 ),
    JS_FS ( "setSessionAttr", sdb_set_session_attr, 1, 0 ),
    JS_FS ( "msg", sdb_msg, 0, 0 ),
+   JS_FS ( "createDomain", sdb_create_domain, 2, 0 ),
+   JS_FS ( "dropDomain", sdb_drop_domain, 1, 0 ),
+   JS_FS ( "getDomain", sdb_get_domain, 1, 0 ),
+   JS_FS ( "listDomains", sdb_list_domains, 0, 0 ),
    JS_FS_END
 } ;
 
@@ -5815,6 +6116,10 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx , obj , NULL , &count_class ,
                            count_constructor , 1 ,
                            0 , 0 , 0 , 0 ) ) ;
+
+   VERIFY ( JS_InitClass ( cx, obj, NULL, &domain_class,
+                           domain_constructor, 0,
+                           0, domain_functions, 0, 0 ) ) ;
 #elif defined (SDB_ENGINE)
 #endif
 

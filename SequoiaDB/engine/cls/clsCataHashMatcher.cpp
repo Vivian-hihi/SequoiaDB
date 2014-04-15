@@ -101,7 +101,7 @@ namespace engine
          {
             if ( CLS_CATA_LOGIC_AND == _logicType )
             {
-               _isNull == TRUE ;
+               _isNull = TRUE ;
             }
          }
          else

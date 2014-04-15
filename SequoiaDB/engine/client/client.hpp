@@ -70,6 +70,8 @@
 #define SDB_LIST_STORAGEUNITS     6
 #define SDB_LIST_GROUPS           7
 #define SDB_LIST_STOREPROCEDURES  8
+#define SDB_LIST_DOMAINS          9
+#define SDB_LIST_TASKS            10
 
 #define FLG_INSERT_CONTONDUP  0x00000001
 

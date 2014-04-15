@@ -36,7 +36,7 @@ namespace engine
    //       because coordCommand-obj will be shared for different threads
    RTN_COORD_CMD_BEGIN
    RTN_COORD_CMD_ADD( COORD_CMD_BACKUP_OFFLINE, rtnCoordBackupOffline )
-   RTN_COORD_CMD_ADD( COORD_CMD_LIST_BACKUP, rtnCoordListBackup )
+   RTN_COORD_CMD_ADD( COORD_CMD_LIST_BACKUPS, rtnCoordListBackup )
    RTN_COORD_CMD_ADD( COORD_CMD_REMOVE_BACKUP, rtnCoordRemoveBackup )
    RTN_COORD_CMD_ADD( COORD_CMD_LISTGROUPS,  rtnCoordCMDListGroups )
    RTN_COORD_CMD_ADD( COORD_CMD_LISTCOLLECTIONSPACES, rtnCoordCMDListCollectionSpace )
@@ -89,16 +89,20 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_TRACERESUME, rtnCoordCMDTraceResume )
    RTN_COORD_CMD_ADD( COORD_CMD_TRACESTATUS, rtnCoordCMDTraceStatus )
    RTN_COORD_CMD_ADD( COORD_CMD_EXPCONFIG, rtnCoordCMDExpConfig )
-   RTN_COORD_CMD_ADD( COORD_CMD_CRT_PROCEDURES, rtnCoordCMDCrtProcedures )
+   RTN_COORD_CMD_ADD( COORD_CMD_CRT_PROCEDURE, rtnCoordCMDCrtProcedure )
    RTN_COORD_CMD_ADD( COORD_CMD_EVAL, rtnCoordCMDEval )
-   RTN_COORD_CMD_ADD( COORD_CMD_RM_PROCEDURES, rtnCoordCMDRmProcedures )
+   RTN_COORD_CMD_ADD( COORD_CMD_RM_PROCEDURE, rtnCoordCMDRmProcedure )
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_PROCEDURES, rtnCoordCMDListProcedures )
    RTN_COORD_CMD_ADD( COORD_CMD_DEFAULT, rtnCoordDefaultCommand )
-   RTN_COORD_CMD_ADD(COORD_CMD_LINK, rtnCoordCMDLinkCollection )
-   RTN_COORD_CMD_ADD(COORD_CMD_UNLINK, rtnCoordCMDUnlinkCollection )
-   RTN_COORD_CMD_ADD(COORD_CMD_LIST_TASK, rtnCoordCmdListTask )
-   RTN_COORD_CMD_ADD(COORD_CMD_CANCEL_TASK, rtnCoordCmdCancelTask )
-   RTN_COORD_CMD_ADD(COORD_CMD_SET_SESS_ATTR, rtnCoordCMDSetSessionAttr )
+   RTN_COORD_CMD_ADD( COORD_CMD_LINK, rtnCoordCMDLinkCollection )
+   RTN_COORD_CMD_ADD( COORD_CMD_UNLINK, rtnCoordCMDUnlinkCollection )
+   RTN_COORD_CMD_ADD( COORD_CMD_LIST_TASKS, rtnCoordCmdListTask )
+   RTN_COORD_CMD_ADD( COORD_CMD_CANCEL_TASK, rtnCoordCmdCancelTask )
+   RTN_COORD_CMD_ADD( COORD_CMD_SET_SESS_ATTR, rtnCoordCMDSetSessionAttr )
+   RTN_COORD_CMD_ADD( COORD_CMD_LIST_DOMAINS, rtnCoordCMDListDomains )
+   RTN_COORD_CMD_ADD( COORD_CMD_CREATE_DOMAIN, rtnCoordCMDCreateDomain )
+   RTN_COORD_CMD_ADD( COORD_CMD_DROP_DOMAIN, rtnCoordCMDDropDomain )
+   RTN_COORD_CMD_ADD( COORD_CMD_ALTER_DOMAIN, rtnCoordCMDAlterDomain )
    RTN_COORD_CMD_END
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_PROCCATREPLY, "rtnCoordCommand::processCatReply" )
@@ -457,6 +461,48 @@ namespace engine
       }
       goto done ;
    }
+
+#if defined (_DEBUG)
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM__PRINTDEBUG, "rtnCoordCommand::_printDebug" )
+   void rtnCoordCommand::_printDebug ( CHAR *pReceiveBuffer,
+                                       const CHAR *pFuncName )
+   {
+      INT32 rc         = SDB_OK ;
+      INT32 flag       = 0 ;
+      CHAR *collection = NULL ;
+      SINT64 skip      =  0;
+      SINT64 limit     = -1 ;
+      CHAR *query      = NULL ;
+      CHAR *selector   = NULL ;
+      CHAR *orderby    = NULL ;
+      CHAR *hint       = NULL ;
+      rc = msgExtractQuery( pReceiveBuffer, &flag, &collection,
+                            &skip, &limit, &query, &selector,
+                            &orderby, &hint ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         BSONObj func( query ) ;
+         PD_LOG( PDDEBUG, "%s: %s", pFuncName,
+                 func.toString().c_str() ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+   done :
+      return ;
+   error :
+      goto done ;
+   }
+#endif
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEFCOM_EXE, "rtnCoordDefaultCommand::execute" )
    INT32 rtnCoordDefaultCommand::execute( CHAR *pReceiveBuffer, SINT32 packSize,
@@ -7798,8 +7844,8 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDCRTPROCEDURES_EXE, "rtnCoordCMDCrtProcedures::execute" )
-   INT32 rtnCoordCMDCrtProcedures::execute( CHAR *pReceiveBuffer,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDCRTPROCEDURE_EXE, "rtnCoordCMDCrtProcedure::execute" )
+   INT32 rtnCoordCMDCrtProcedure::execute( CHAR *pReceiveBuffer,
                                             SINT32 packSize,
                                             CHAR **ppResultBuffer,
                                             pmdEDUCB *cb,
@@ -7807,7 +7853,7 @@ namespace engine
                                             BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY(SDB_RTNCOORDCMDCRTPROCEDURES_EXE) ;
+      PD_TRACE_ENTRY(SDB_RTNCOORDCMDCRTPROCEDURE_EXE) ;
       netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->
                                         getCoordCB()->getRouteAgent();
 
@@ -7827,39 +7873,8 @@ namespace engine
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_CRT_PROCEDURES_REQ;
       CoordGroupList groupLst ;
-      CoordGroupList sendGroupLst ;
 #if defined (_DEBUG)
-      {
-      INT32 flag = 0 ;
-      CHAR *collection = NULL ;
-      SINT64 skip =  0;
-      SINT64 limit = -1 ;
-      CHAR *query = NULL ;
-      CHAR *selector = NULL ;
-      CHAR *orderby = NULL ;
-      CHAR *hint = NULL ;
-      rc = msgExtractQuery( pReceiveBuffer, &flag, &collection,
-                            &skip, &limit, &query, &selector,
-                            &orderby, &hint ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to extract query msg:%d", rc ) ;
-         goto error ;
-      }
-
-      try
-      {
-         BSONObj func( query ) ;
-         PD_LOG( PDDEBUG, "crt store procedures:%s",
-                 func.toString().c_str() ) ;
-      }
-      catch ( std::exception &e )
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      }
+      _printDebug ( pReceiveBuffer, "rtnCoordCMDCrtProcedure" ) ;
 #endif
       rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent,
                                 cb, NULL, &groupLst ) ;
@@ -7869,14 +7884,14 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC(SDB_RTNCOORDCMDCRTPROCEDURES_EXE, rc ) ;
+      PD_TRACE_EXITRC(SDB_RTNCOORDCMDCRTPROCEDURE_EXE, rc ) ;
       return rc ;
    error:
       replyHeader.flags = rc ;
       goto done ;
    }
 
-   INT32 rtnCoordCMDCrtProcedures::processCatReply( MsgOpReply *pReply,
+   INT32 rtnCoordCMDCrtProcedure::processCatReply( MsgOpReply *pReply,
                                                     CoordGroupList &groupLst )
    {
       INT32 rc = SDB_OK ;
@@ -7884,7 +7899,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get err from catalog when create store "
-                 "procedures:%d", rc ) ;
+                 "procedure:%d", rc ) ;
          goto error ;
       }
    done:
@@ -8034,8 +8049,8 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDRMPROCEDURES_EXE, "rtnCoordCMDRmProcedures::execute" )
-   INT32 rtnCoordCMDRmProcedures::execute( CHAR *pReceiveBuffer,
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOORDCMDRMPROCEDURE_EXE, "rtnCoordCMDRmProcedure::execute" )
+   INT32 rtnCoordCMDRmProcedure::execute( CHAR *pReceiveBuffer,
                                            SINT32 packSize,
                                            CHAR **ppResultBuffer,
                                            pmdEDUCB *cb,
@@ -8043,7 +8058,7 @@ namespace engine
                                            BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY(SDB_RTNCOORDCMDRMPROCEDURES_EXE) ;
+      PD_TRACE_ENTRY(SDB_RTNCOORDCMDRMPROCEDURE_EXE) ;
       netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->
                                         getCoordCB()->getRouteAgent();
 
@@ -8063,7 +8078,6 @@ namespace engine
       forward->header.TID = cb->getTID();
       forward->header.opCode = MSG_CAT_RM_PROCEDURES_REQ;
       CoordGroupList groupLst ;
-      CoordGroupList sendGroupLst ;
 
       rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent,
                                 cb, NULL, &groupLst ) ;
@@ -8074,14 +8088,14 @@ namespace engine
          goto error ;
       }
    done:
-      PD_TRACE_EXITRC(SDB_RTNCOORDCMDRMPROCEDURES_EXE, rc ) ;
+      PD_TRACE_EXITRC(SDB_RTNCOORDCMDRMPROCEDURE_EXE, rc ) ;
       return rc ;
    error:
       replyHeader.flags = rc ;
       goto done ;
    }
 
-   INT32 rtnCoordCMDRmProcedures::processCatReply( MsgOpReply *pReply,
+   INT32 rtnCoordCMDRmProcedure::processCatReply( MsgOpReply *pReply,
                                                    CoordGroupList &groupLst )
    {
       INT32 rc = SDB_OK ;
@@ -8089,7 +8103,7 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "get err from catalog when remove store "
-                 "procedures:%d", rc ) ;
+                 "procedure:%d", rc ) ;
          goto error ;
       }
    done:
@@ -8098,7 +8112,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLISTPROCEDURES_BUILD, "rtnCoordCMDListProcedures::execute" )
+   PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLISTPROCEDURES_BUILD, "rtnCoordCMDListProcedures::buildQueryRequest" )
    INT32 rtnCoordCMDListProcedures::buildQueryRequest( CHAR *pIntput,
                                                        pmdEDUCB *cb,
                                                        CHAR **ppOutput )
@@ -8499,5 +8513,227 @@ namespace engine
    error:
       replyHeader.flags = rc;
       goto done;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDCREATEDOMAIN_EXE, "rtnCoordCMDCreateDomain::execute" )
+   INT32 rtnCoordCMDCreateDomain::execute ( CHAR *pReceiveBuffer,
+                                            SINT32 packSize,
+                                            CHAR **ppResultBuffer,
+                                            pmdEDUCB *cb,
+                                            MsgOpReply &replyHeader,
+                                            BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDCREATEDOMAIN_EXE ) ;
+      netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->
+                                        getCoordCB()->getRouteAgent();
+
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer;
+      forward->header.routeID.value = 0;
+      forward->header.TID = cb->getTID();
+      forward->header.opCode = MSG_CAT_CREATE_DOMAIN_REQ;
+#if defined (_DEBUG)
+      _printDebug ( pReceiveBuffer, "rtnCoordCMDCreateDomain" ) ;
+#endif
+      rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "failed to create domain, rc = %d", rc ) ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDCREATEDOMAIN_EXE, rc ) ;
+      return rc ;
+   error :
+      replyHeader.flags = rc ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDDROPDOMAIN_EXE, "rtnCoordCMDDropDomain::execute" )
+   INT32 rtnCoordCMDDropDomain::execute ( CHAR *pReceiveBuffer,
+                                          SINT32 packSize,
+                                          CHAR **ppResultBuffer,
+                                          pmdEDUCB *cb,
+                                          MsgOpReply &replyHeader,
+                                          BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDDROPDOMAIN_EXE ) ;
+      netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->
+                                        getCoordCB()->getRouteAgent();
+
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer;
+      forward->header.routeID.value = 0;
+      forward->header.TID = cb->getTID();
+      forward->header.opCode = MSG_CAT_DROP_DOMAIN_REQ;
+#if defined (_DEBUG)
+      _printDebug ( pReceiveBuffer, "rtnCoordCMDDropDomain" ) ;
+#endif
+      rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "failed to drop domain, rc = %d", rc ) ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDDROPDOMAIN_EXE, rc ) ;
+      return rc ;
+   error :
+      replyHeader.flags = rc ;
+      goto done ;
+
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDALTERDOMAIN_EXE, "rtnCoordCMDAlterDomain::execute" )
+   INT32 rtnCoordCMDAlterDomain::execute ( CHAR *pReceiveBuffer,
+                                           SINT32 packSize,
+                                           CHAR **ppResultBuffer,
+                                           pmdEDUCB *cb,
+                                           MsgOpReply &replyHeader,
+                                           BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNCOCMDALTERDOMAIN_EXE ) ;
+      netMultiRouteAgent *pRouteAgent = pmdGetKRCB()->
+                                        getCoordCB()->getRouteAgent();
+
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = pHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = pHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      MsgOpQuery *forward  = (MsgOpQuery *)pReceiveBuffer;
+      forward->header.routeID.value = 0;
+      forward->header.TID = cb->getTID();
+      forward->header.opCode = MSG_CAT_ALTER_DOMAIN_REQ;
+#if defined (_DEBUG)
+      _printDebug ( pReceiveBuffer, "rtnCoordCMDAlterDomain" ) ;
+#endif
+      rc = executeOnCataGroup ( (CHAR*)forward, pRouteAgent, cb ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "failed to alter domain, rc = %d", rc ) ;
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNCOCMDALTERDOMAIN_EXE, rc ) ;
+      return rc ;
+   error :
+      replyHeader.flags = rc ;
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDADDDOMAINGROUP_EXE, "rtnCoordCMDAddDomainGroup::execute" )
+   INT32 rtnCoordCMDAddDomainGroup::execute ( CHAR *pReceiveBuffer,
+                                              SINT32 packSize,
+                                              CHAR **ppResultBuffer,
+                                              pmdEDUCB *cb,
+                                              MsgOpReply &replyHeader,
+                                              BSONObj **ppErrorObj )
+   {
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDREMOVEDOMAINGROUP_EXE, "rtnCoordCMDRemoveDomainGroup::execute" )
+   INT32 rtnCoordCMDRemoveDomainGroup::execute ( CHAR *pReceiveBuffer,
+                                                 SINT32 packSize,
+                                                 CHAR **ppResultBuffer,
+                                                 pmdEDUCB *cb,
+                                                 MsgOpReply &replyHeader,
+                                                 BSONObj **ppErrorObj )
+   {
+      return SDB_OK ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLISTDOMAINS_BUILD, "rtnCoordCMDListDomains::buildQueryRequest" )
+   INT32 rtnCoordCMDListDomains::buildQueryRequest( CHAR *pInput,
+                                                    pmdEDUCB *cb,
+                                                    CHAR **ppOutput )
+   {
+      INT32 rc              = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDLISTDOMAINS_BUILD ) ;
+      INT32 flag            = 0;
+      CHAR *pCollectionName = NULL;
+      SINT64 numToSkip      = 0;
+      SINT64 numToReturn    = 0;
+      CHAR *pQuery          = NULL;
+      CHAR *pFieldSelector  = NULL;
+      CHAR *pOrderBy        = NULL;
+      CHAR *pHint           = NULL;
+      INT32 bufferSize      = 0;
+      BSONObj query;
+      BSONObj fieldSelector;
+      BSONObj orderBy;
+      BSONObj hint;
+
+      rc = msgExtractQuery( pInput, &flag, &pCollectionName,
+                            &numToSkip, &numToReturn, &pQuery,
+                            &pFieldSelector, &pOrderBy, &pHint );
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
+         goto error ;
+      }
+
+      try
+      {
+         query = BSONObj ( pQuery );
+         orderBy = BSONObj ( pOrderBy );
+         hint = BSONObj ( pHint );
+         fieldSelector = BSONObj( pFieldSelector ) ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s", e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_DOMAIN_COLLECTION,
+                             flag, 0, numToSkip, numToReturn, &query, &fieldSelector,
+                             &orderBy, &hint );
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
+         goto error;
+      }
+      {
+      MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
+      pQueryMsg->header.routeID.value = 0;
+      pQueryMsg->header.TID = cb->getTID();
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCOCMDLISTPROCEDURES_BUILD, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 }

@@ -10,6 +10,7 @@
 #define SDB_HANDLE_TYPE_CURSOR       4
 #define SDB_HANDLE_TYPE_REPLICAGROUP 5
 #define SDB_HANDLE_TYPE_REPLICANODE  6
+#define SDB_HANDLE_TYPE_DOMAIN       7
 
 struct _Node
 {
@@ -140,5 +141,24 @@ struct _sdbCursorStruct
    CHAR _collectionFullName [ CLIENT_CS_NAMESZ + CLIENT_COLLECTION_NAMESZ + 2 ];
 } ;
 typedef struct _sdbCursorStruct sdbCursorStruct ;
+
+#define CLIENT_DOMAIN_NAMESZ 127
+struct _sdbDomainStruct
+{
+   // generic variables, to validate which type does this handle belongs to
+   INT32 _handleType ;
+   sdbConnectionHandle _connection ;
+   SOCKET _sock ;
+   INT32 _offset ;
+   CHAR *_pSendBuffer ;
+   INT32 _sendBufferSize ;
+   CHAR *_pReceiveBuffer ;
+   INT32 _receiveBufferSize ;
+   BOOLEAN _endianConvert ;
+
+   // domain specific variables
+   CHAR _domainName [ CLIENT_DOMAIN_NAMESZ + 1 ] ;
+} ;
+typedef struct _sdbDomainStruct sdbDomainStruct ;
 
 #endif

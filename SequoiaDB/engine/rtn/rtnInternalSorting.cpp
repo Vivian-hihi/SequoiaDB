@@ -82,7 +82,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       BSONElement arrEle ;
-      BOOLEAN includeArray = FALSE ;
       BSONObjSet keySet( _orderObj ) ;
       rc = _keyGen.getKeys( obj, keySet, &arrEle ) ;
       if ( SDB_OK != rc )
@@ -414,10 +413,7 @@ namespace engine
             break ;
          }
       }
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _rtnInternalSorting::_swapRightSameKey( _rtnSortTuple **left,
@@ -454,10 +450,7 @@ namespace engine
             break ;
          }
       }
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _rtnInternalSorting::_quickSort( _rtnSortTuple **left,

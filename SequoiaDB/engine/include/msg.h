@@ -162,6 +162,22 @@ enum MSG_TYPE
    MSG_CAT_UNLINK_CL_REQ               = 3134,
    MSG_CAT_UNLINK_CL_RSP               = MAKE_REPLY_TYPE(MSG_CAT_UNLINK_CL_REQ),
 
+   // catalog domain related
+   // CAT_DOMAIN_NAME for domain name
+   MSG_CAT_QUERY_DOMAIN_REQ            = 3135,
+   MSG_CAT_QUERY_DOMAIN_RSP            = MAKE_REPLY_TYPE(MSG_CAT_QUERY_DOMAIN_REQ),
+   // create domain
+   // CAT_DOMAIN_NAME for domain name
+   // FIELD_NAME_OPTIONS for options
+   //    FIELD_NAME_GROUP for group list
+   MSG_CAT_CREATE_DOMAIN_REQ           = 3136,
+   MSG_CAT_CREATE_DOMAIN_RSP           = MAKE_REPLY_TYPE(MSG_CAT_CREATE_DOMAIN_REQ),
+   // drop domain
+   // CAT_DOMAIN_NAME for domain name
+   MSG_CAT_DROP_DOMAIN_REQ             = 3137,
+   MSG_CAT_DROP_DOMAIN_RSP             = MAKE_REPLY_TYPE(MSG_CAT_DROP_DOMAIN_REQ),
+   MSG_CAT_ALTER_DOMAIN_REQ            = 3138,
+   MSG_CAT_ALTER_DOMAIN_RSP            = MAKE_REPLY_TYPE(MSG_CAT_ALTER_DOMAIN_REQ),
 
    // all messages for CATALOGUE must be smaller than MSG_CAT_CATALOGUE_END
    MSG_CAT_CATALOGUE_END               = 3199,
@@ -204,8 +220,6 @@ enum MSG_TYPE
    MSG_CAT_DEL_NODE_RSP                = MAKE_REPLY_TYPE(MSG_CAT_DEL_NODE_REQ),
    MSG_CAT_RM_GROUP_REQ                = 3212,
    MSG_CAT_RM_GROUP_RES                = MAKE_REPLY_TYPE(MSG_CAT_RM_GROUP_REQ),
-   MSG_CAT_CREATE_DOMAIN_REQ           = 3213,
-   MSG_CAT_CREATE_DOMAIN_RES           = MAKE_REPLY_TYPE(MSG_CAT_CREATE_DOMAIN_REQ),
    MSG_CAT_NODE_END                    = 3299,
 
    MSG_CAT_END                         = 3999,

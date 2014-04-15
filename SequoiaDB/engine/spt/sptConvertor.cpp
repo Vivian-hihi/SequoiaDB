@@ -587,8 +587,6 @@ done:
 //      SDB_OSS_FREE( utf8 ) ;
 //   }
    return rc ;
-error:
-   goto done ;
 }
 
 INT32 sptConvertor::_toString( const jsval &val, std::string &str )

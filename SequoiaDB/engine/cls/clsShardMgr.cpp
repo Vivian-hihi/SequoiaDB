@@ -206,7 +206,7 @@ namespace engine
       {
          ossScopedLock lock ( &_shardLatch, SHARED ) ;
 
-         if ( primary && _primary >= 0 && _primary < _vecCatlog.size() )
+         if ( primary && _primary >= 0 && _primary < (INT32)_vecCatlog.size() )
          {
             hosts.push_back( _hostAndPort( _vecCatlog[_primary].host,
                                            _vecCatlog[_primary].service ) ) ;
@@ -495,11 +495,8 @@ namespace engine
          }
       }
 
-   done:
       PD_TRACE_EXITRC ( SDB__CLSSHDMGR_UPDCATGRP, rc );
       return rc ;
-   error:
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_CLRALLDATA, "_clsShardMgr::clearAllData" )

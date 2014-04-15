@@ -356,7 +356,8 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListGroups)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCataGroup)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateDomain)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveDomain)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnDropDomain)
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnAlterDomain)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnAddDomainGroup)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnRemoveDomainGroup)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnSnapshotCata )
@@ -2153,7 +2154,7 @@ namespace engine
                   BSONElement ele = it.next() ;
                   if ( ele.type() == String )
                   {
-                     for ( UINT32 i = 0; i < _pdTraceComponentNum; ++i)
+                     for ( INT32 i = 0; i < _pdTraceComponentNum; ++i)
                      {
                         if ( ossStrcmp ( pdGetTraceComponent(i),
                                      ele.valuestr() ) == 0 )

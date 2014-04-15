@@ -1028,6 +1028,10 @@
             <stentry>too many open file description</stentry>
             <stentry>-255</stentry>
          </strow>
+         <strow>
+            <stentry>Domain is not empty</stentry>
+            <stentry>-256</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

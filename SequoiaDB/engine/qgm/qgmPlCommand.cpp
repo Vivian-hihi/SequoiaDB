@@ -672,11 +672,7 @@ namespace engine
          rtnKillContexts( 1, &_contextID, _eduCB, rtnCB ) ;
          _contextID = -1 ;
       }
-
-   done:
       return ;
-   error:
-      goto done ;
    }
 }
 

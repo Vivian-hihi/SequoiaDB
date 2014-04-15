@@ -339,10 +339,7 @@ namespace engine
             param.push_back( ele ) ;
          }
       }
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _qgmPlAggregation::_push( const qgmFetchOut &next )

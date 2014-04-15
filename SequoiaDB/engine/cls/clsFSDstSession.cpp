@@ -1236,7 +1236,6 @@ namespace engine
    void _clsFSDstSession::_end()
    {
       PD_TRACE_ENTRY ( SDB__CLSFSDS__END );
-      INT32 rc = SDB_OK;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
       DPS_LSN lsn = dpsCB->expectLsn() ;
       DPS_LSN invalidLsn;

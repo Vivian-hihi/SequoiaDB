@@ -784,8 +784,6 @@ namespace engine
    done:
       PD_TRACE_EXITRC( SDB__QGMOPTINLJOIN_HANDLEHINTS, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _qgmOptiNLJoin::_extend( _qgmOptiTreeNode *&exNode )

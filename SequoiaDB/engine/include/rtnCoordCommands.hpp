@@ -9,7 +9,7 @@ namespace engine
    //default command-processer
    #define COORD_CMD_DEFAULT                  "COORD_CMD_DEFAULT"
    #define COORD_CMD_BACKUP_OFFLINE           CMD_ADMIN_PREFIX CMD_NAME_BACKUP_OFFLINE
-   #define COORD_CMD_LIST_BACKUP              CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUP
+   #define COORD_CMD_LIST_BACKUPS             CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUPS
    #define COORD_CMD_REMOVE_BACKUP            CMD_ADMIN_PREFIX CMD_NAME_REMOVE_BACKUP
    #define COORD_CMD_LISTGROUPS               CMD_ADMIN_PREFIX CMD_NAME_LIST_GROUPS
    #define COORD_CMD_LISTCOLLECTIONSPACES     CMD_ADMIN_PREFIX CMD_NAME_LIST_COLLECTIONSPACES
@@ -62,15 +62,21 @@ namespace engine
    #define COORD_CMD_SNAPSHOTCTXCURINTR       CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXCUR_INTR
    #define COORD_CMD_SNAPSHOTSESSINTR         CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSION_INTR
    #define COORD_CMD_SNAPSHOTSESSCURINTR      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONCUR_INTR
-   #define COORD_CMD_CRT_PROCEDURES           CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURES
+   #define COORD_CMD_CRT_PROCEDURE            CMD_ADMIN_PREFIX CMD_NAME_CRT_PROCEDURE
    #define COORD_CMD_EVAL                     CMD_ADMIN_PREFIX CMD_NAME_EVAL
-   #define COORD_CMD_RM_PROCEDURES            CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURES
+   #define COORD_CMD_RM_PROCEDURE             CMD_ADMIN_PREFIX CMD_NAME_RM_PROCEDURE
    #define COORD_CMD_LIST_PROCEDURES          CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES
    #define COORD_CMD_LINK                     CMD_ADMIN_PREFIX CMD_NAME_LINK_CL
    #define COORD_CMD_UNLINK                   CMD_ADMIN_PREFIX CMD_NAME_UNLINK_CL
-   #define COORD_CMD_LIST_TASK                CMD_ADMIN_PREFIX CMD_NAME_LIST_TASK
+   #define COORD_CMD_LIST_TASKS               CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS
    #define COORD_CMD_CANCEL_TASK              CMD_ADMIN_PREFIX CMD_NAME_CANCEL_TASK
    #define COORD_CMD_SET_SESS_ATTR            CMD_ADMIN_PREFIX CMD_NAME_SETSESS_ATTR
+   #define COORD_CMD_CREATE_DOMAIN            CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN
+   #define COORD_CMD_DROP_DOMAIN              CMD_ADMIN_PREFIX CMD_NAME_DROP_DOMAIN
+   #define COORD_CMD_ALTER_DOMAIN             CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN
+   #define COORD_CMD_ADD_DOMAIN_GROUP         CMD_ADMIN_PREFIX CMD_NAME_ADD_DOMAIN_GROUP
+   #define COORD_CMD_REMOVE_DOMAIN_GROUP      CMD_ADMIN_PREFIX CMD_NAME_REMOVE_DOMAIN_GROUP
+   #define COORD_CMD_LIST_DOMAINS             CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS
 
 #if defined (_DEBUG)
    #define COORD_CMD_DEBUG_QUERY              CMD_ADMIN_PREFIX CMD_NAME_DEBUG_QUERY
@@ -103,6 +109,10 @@ namespace engine
                                        BSONObj *pReplyObj = NULL );
       virtual INT32 processCatReply( MsgOpReply *pReply,
                                      CoordGroupList &groupLst );
+   protected:
+#if defined (_DEBUG)
+      virtual void _printDebug ( CHAR *pReceiveBuffer, const CHAR *pFuncName ) ;
+#endif
    private:
       // don't define any members that will change while execute
       // because this obj will be shared for different threads
@@ -175,7 +185,6 @@ namespace engine
       virtual NODE_SEL_STY    _nodeSelWhenNoFilter () ;
       virtual BOOLEAN         _allowFailed () ;
       virtual BOOLEAN         _useContext () ;
-      
    } ;
 
    class rtnCoordCMDListGroups : public rtnCoordCommand
@@ -988,7 +997,7 @@ namespace engine
       INT32 _getNodesSet( pmdEDUCB *cb, ROUTE_SET &nSet ) ;
    } ;
 
-   class rtnCoordCMDCrtProcedures : public rtnCoordCommand
+   class rtnCoordCMDCrtProcedure : public rtnCoordCommand
    {
    public:
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
@@ -1013,7 +1022,7 @@ namespace engine
                            SINT64 &contextID ) ;
    } ;
 
-   class rtnCoordCMDRmProcedures : public rtnCoordCommand
+   class rtnCoordCMDRmProcedure : public rtnCoordCommand
    {
    public:
       INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
@@ -1060,5 +1069,57 @@ namespace engine
                      BSONObj **ppErrorObj );
    };
 
+   class rtnCoordCMDCreateDomain : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
+   } ;
+
+   class rtnCoordCMDDropDomain : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
+   } ;
+
+   class rtnCoordCMDAlterDomain : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
+   } ;
+
+   class rtnCoordCMDAddDomainGroup : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
+   } ;
+
+   class rtnCoordCMDRemoveDomainGroup : public rtnCoordCommand
+   {
+   public:
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj );
+   } ;
+
+   class rtnCoordCMDListDomains : public rtnCoordCMDQueryBase
+   {
+   public:
+      virtual INT32 buildQueryRequest( CHAR *pIntput,
+                                       pmdEDUCB *cb,
+                                       CHAR **ppOutput );
+   } ;
 }
 #endif

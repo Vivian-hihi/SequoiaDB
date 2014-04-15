@@ -188,7 +188,6 @@ namespace engine
       {
          context = QGM_HT_INVALID_CONTEXT ;
       }
-   done:
       PD_TRACE_EXITRC( SDB__QGMHASHTBL_FIND, rc ) ;
       return rc ;
    }
@@ -211,7 +210,7 @@ namespace engine
             goto error ;
          }
 
-         SDB_ASSERT( context <= _bufSize, "impossible" )
+         SDB_ASSERT( context <= (QGM_HT_CONTEXT)_bufSize, "impossible" )
          tuple = ( hashTuple * )( _buf + context );
          if ( NULL == tuple )
          {

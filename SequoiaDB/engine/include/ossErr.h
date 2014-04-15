@@ -291,4 +291,5 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_DPS_TRANS_DIABLED           -253  /**< transaction is disabled */
 #define SDB_DRIVER_DS_RUNOUT            -254  /**< datasource had run out */
 #define SDB_TOO_MANY_OPEN_FD            -255  /**< too many open file description */
+#define SDB_DOMAIN_IS_OCCUPIED          -256  /**< Domain is not empty */
 #endif /* OSSERR_HPP_ */

@@ -567,6 +567,11 @@ namespace engine
          goto done;
       }
       rc = _buf.preparePages( info ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to prepare pages, rc = %d", rc ) ;
+         goto error ;
+      }
    done:
       PD_TRACE_EXITRC( SDB__DPSLGWRAPP_PREPARE, rc ) ;
       return rc ;

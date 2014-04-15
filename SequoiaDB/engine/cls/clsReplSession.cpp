@@ -793,6 +793,12 @@ namespace engine
       PD_LOG( PDDEBUG, "Sync Session[%s]: Begin to rollback lsn:[%lld, %d]",
               sessionName(), header->_lsn, header->_version ) ;
       rc = _replayer.rollback( header, eduCB() ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to rollback, lsn:[%lld, %d], rc = %d",
+                  header->_lsn, header->_version, rc ) ;
+         goto error ;
+      }
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSN__RLBCK, rc );
       return rc ;

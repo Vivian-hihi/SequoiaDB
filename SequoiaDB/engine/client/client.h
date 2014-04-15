@@ -38,6 +38,8 @@ SDB_EXTERN_C_START
 #define SDB_LIST_STORAGEUNITS     6
 #define SDB_LIST_GROUPS           7
 #define SDB_LIST_STOREPROCEDURES  8
+#define SDB_LIST_DOMAINS          9
+#define SDB_LIST_TASKS            10
 
 #define SDB_INVALID_HANDLE       ((ossValuePtr) -1)
 typedef ossValuePtr sdbConnectionHandle   ;
@@ -46,6 +48,7 @@ typedef ossValuePtr sdbCollectionHandle   ;
 typedef ossValuePtr sdbCursorHandle       ;
 typedef ossValuePtr sdbReplicaGroupHandle ;
 typedef ossValuePtr sdbNodeHandle  ;
+typedef ossValuePtr sdbDomainHandle ;
 
 /** sdbReplicaNodeHandle will be deprecated in version 2.x, use sdbNodeHandle instead of it. */
 typedef sdbNodeHandle             sdbReplicaNodeHandle ;
@@ -722,7 +725,7 @@ SDB_EXPORT INT32 sdbFlushConfigure(sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbCrtJSProcedure(sdbConnectionHandle cHandle,
  *                              const CHAR *code )
- *  \brief create a store procedures.
+ *  \brief create a store procedure.
  *  \param [in] cHandle The collection space space handle
  *  \param [in] code The code of store procedures
  *  \retval SDB_OK Operation Success
@@ -731,16 +734,16 @@ SDB_EXPORT INT32 sdbFlushConfigure(sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbCrtJSProcedure(sdbConnectionHandle cHandle,
                                    const CHAR *code ) ;
 
-/** \fn INT32 sdbRmProcedures(sdbConnectionHandle cHandle,
+/** \fn INT32 sdbRmProcedure(sdbConnectionHandle cHandle,
  *                            const CHAR *spName )
- *  \brief remove a store procedures.
+ *  \brief remove a store procedure.
  *  \param [in] cHandle The collection space space handle
  *  \param [in] spName The name of store procedure
  *  \retval SDB_OK Operation Success
  *  \retval Others  Operation Fail
  */
-SDB_EXPORT INT32 sdbRmProcedures(sdbConnectionHandle cHandle,
-                                 const CHAR *spName ) ;
+SDB_EXPORT INT32 sdbRmProcedure(sdbConnectionHandle cHandle,
+                                const CHAR *spName ) ;
 
 
 /** \fn INT32 sdbListProcedures(sdbConnectionHandle cHandle,
@@ -1367,6 +1370,12 @@ SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 */
 SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle ) ;
 
+/** \fn void sdbReleaseDomain ( sdbDomainHandle cHandle )
+    \brief Release the domain handle
+    \param [in] cHandle the domain handle
+*/
+SDB_EXPORT void sdbReleaseDomain ( sdbDomainHandle cHandle ) ;
+
 /** \fn INT32 sdbAggregate ( sdbCollectionHandle cHandle,
                              bson **obj, SINT32 num,
                              sdbCursorHandle *handle )
@@ -1571,5 +1580,72 @@ SDB_EXPORT INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result ) ;
 
 SDB_EXPORT INT32 _sdbMsg ( sdbConnectionHandle cHandle, const CHAR *msg ) ;
 
+/** \fn INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
+                                const CHAR *pDomainName,
+                                bson *options,
+                                sdbDomainHandle *handle ) ;
+    \brief Create a domain.
+    \param [in] cHandle The database connection handle
+    \param [in] pDomainName The name of the domain
+    \param [in] options The options for the domain. The options are as below:
+
+        Group: The list of name for replica groups that the domain contains.
+               eg: { "Group": [ "group1", "group2", "group3" ] }
+               If this argument is not included, the domain will contain all replica groups in the cluster.
+    \param [out] handle The domain handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
+                                   const CHAR *pDomainName,
+                                   bson *options,
+                                   sdbDomainHandle *handle ) ;
+
+/** \fn INT32 sdbDropDomain ( sdbConnectionHandle cHandle,
+                              const CHAR *pDomainName ) ;
+    \brief Create a domain.
+    \param [in] cHandle The database connection handle
+    \param [in] pDomainName The name of the domain
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbDropDomain ( sdbConnectionHandle cHandle,
+                                 const CHAR *pDomainName ) ;
+
+/** \fn INT32 sdbGetDomain ( sdbConnectionHandle cHandle,
+                             const CHAR *pDomainName,
+                             sdbDomainHandle *handle ) ;
+    \brief Get a domain.
+    \param [in] cHandle The database connection handle
+    \param [in] pDomainName The name of the domain
+    \param [out] handle The domain handle
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbGetDomain ( sdbConnectionHandle cHandle,
+                                const CHAR *pDomainName,
+                                sdbDomainHandle *handle ) ;
+
+/** \fn INT32 sdbListDomains ( sdbConnectionHandle cHandle,
+                               bson *condition,
+                               bson *selector,
+                               bson *orderBy,
+                               bson *hint,
+                               sdbCursorHandle *handle ) ;
+    \brief List the domains.
+    \param [in] cHandle The connection handle
+    \param [in] condition The matching rule, return all the documents if null
+    \param [in] selector The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [out] handle The cusor handle of result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
+                                  bson *condition,
+                                  bson *selector,
+                                  bson *orderBy,
+                                  sdbCursorHandle *handle ) ;
 SDB_EXTERN_C_END
 #endif

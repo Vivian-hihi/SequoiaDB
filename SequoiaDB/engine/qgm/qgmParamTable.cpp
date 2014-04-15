@@ -175,11 +175,8 @@ namespace engine
       }
 
       out = &( rInsert.first->second ) ;
-   done:
       PD_TRACE_EXITRC( SDB__QGMPARATABLE_ADDVAR, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__QGMPARAMTABLE_SETVAR, "_qgmParamTable::setVar" )

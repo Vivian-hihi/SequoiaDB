@@ -278,7 +278,8 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "wait secondary nodes sync the operation failed",
                    "transaction is disabled",
                    "datasource had run out",
-                   "too many open file description"
+                   "too many open file description",
+                   "Domain is not empty"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

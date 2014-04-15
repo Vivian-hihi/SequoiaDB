@@ -416,7 +416,7 @@ namespace engine
          totalLen += itr->iovLen ;
       }
 
-      if ( totalLen + sizeof(MsgHeader) != header->messageLength )
+      if ( (SINT32)(totalLen + sizeof(MsgHeader)) != header->messageLength )
       {
          PD_LOG( PDERROR, "the length in header[%d] not equal to"
                  " the whole msg's len[%d]",

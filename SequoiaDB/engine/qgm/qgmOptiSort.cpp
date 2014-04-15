@@ -205,11 +205,8 @@ namespace engine
             _orderby.push_back( f ) ;
          }
       }
-   done:
       PD_TRACE_EXITRC( SDB__QGMOPTISORT_APPEND, rc ) ;
       return rc ;
-   error:
-      goto done ;
    }
 
    string _qgmOptiSort::toString() const

@@ -51,6 +51,10 @@ namespace engine
    /* Check domain name is valid */
    INT32 catDomainNameValidate( const CHAR *pName ) ;
 
+   /* Check domain options are valid */
+   INT32 catDomainOptionsValidate ( const BSONObj &options,
+                                    pmdEDUCB *cb ) ;
+
    /* Split collection full name to cs name and cl name */
    INT32 catResolveCollectionName( const CHAR *pInput, UINT32 inputLen,
                                    CHAR *pSpaceName, UINT32 spaceNameSize,
@@ -71,9 +75,9 @@ namespace engine
 
    /* Query and get one object */
    INT32 catGetOneObj( const CHAR *collectionName,
-                       BSONObj &selector,
-                       BSONObj &matcher,
-                       BSONObj &hint,
+                       const BSONObj &selector,
+                       const BSONObj &matcher,
+                       const BSONObj &hint,
                        pmdEDUCB *cb,
                        BSONObj &obj ) ;
 

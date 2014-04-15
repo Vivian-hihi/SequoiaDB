@@ -45,6 +45,8 @@ namespace engine
       INT32 processAuthCrt( const NET_HANDLE &handle, const CHAR *pMsg ) ;
       INT32 processAuthDel( const NET_HANDLE &handle, const CHAR *pMsg ) ;
       INT32 processCheckRouteID( const NET_HANDLE &handle, const CHAR *pMsg ) ;
+      INT32 processQueryDomain ( const NET_HANDLE &handle, const CHAR *pMsg ) ;
+
       INT32 processMsg( void *pMsg ) ;
       INT32 _ensureMetadata() ;
       INT32 _createSysIndex ( const CHAR *pCollection,

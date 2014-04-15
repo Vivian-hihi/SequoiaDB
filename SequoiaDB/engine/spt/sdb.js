@@ -24,6 +24,9 @@ var SDB_LIST_COLLECTIONS         = 4 ;
 var SDB_LIST_COLLECTIONSPACES    = 5 ;
 var SDB_LIST_STORAGEUNITS        = 6 ;
 var SDB_LIST_GROUPS              = 7 ;
+var SDB_LIST_STOREPROCEDURES     = 8 ;
+var SDB_LIST_DOMAINS             = 9 ;
+var SDB_LIST_TASKS               = 10 ;
 
 var SDB_INSERT_CONTONDUP         = 1 ;
 var SDB_INSERT_RETURN_ID         = 2 ; // only available when inserting only one document
@@ -342,6 +345,13 @@ SdbCS.prototype._resolveCL = function(clName) {
    this.getCL(clName) ;
 }
 // end SdbCS
+
+
+// SdbDomain
+SdbDomain.prototype.toString = function() {
+   return this._domainname ;
+}
+// end SdbDomain
 
 // Sdb
 Sdb.prototype.toString = function() {
