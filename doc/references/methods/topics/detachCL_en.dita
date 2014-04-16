@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_44m_5jr_kn">
-  <title>db.collectionspace.collection. detachCL ()</title>
+  <title>db.collectionspace.collection.detachCL()</title>
   <body>
-    <section><title>db.collectionspace.collection. detachCL (&lt;subCLFullName>)</title>
+    <section><title>db.collectionspace.collection.detachCL(&lt;subCLFullName>)</title>
       <p>Separated from the main collection of sub-partition partition collection.</p>
     </section>
     <section><title>Parameter Description</title>

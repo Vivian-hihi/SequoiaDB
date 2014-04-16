@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_kr5_fcn_5n">
+  <title>rg.start()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>start - It starts replset.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>rg.start</apiname>()
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>ReplicaGroup
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>It starts replset. After a replset is started, operations like creating nodes can be
+        executed. Users can start specified node with the method db.startRG(&lt;name>).</p>            
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Start replset:</p>
+      <codeblock>rg.start() //Equal to db.startRG("group")</codeblock>     
+    </section>
+  </body>
+  <related-links>
+    <link href="rg.stop.dita"></link>
+    <link href="node.start.dita"></link>
+  </related-links>
+</topic>

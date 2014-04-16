@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_pj1_l1n_5n">
+  <title>db.collectionspace.collection.splitAsync()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>splitAsync - Interview operation "db.collectionspace.collection.split" the same function, but it operates as an asynchronous partition operation, the task ID 
+        returned immediately after the partition created task.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.collectionspace.collection. splitAsync</apiname>(<parmname>source group</parmname>,<parmname>target group</parmname>,<parmname>target group|cond</parmname>,<parmname>[endcondition]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Collection
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Interview operation "db.collectionspace.collection.split" the same function, but it operates as an asynchronous partition operation, the task ID 
+        returned immediately after the partition created task.</p>           
+    </section>    
+  </body>
+</topic>

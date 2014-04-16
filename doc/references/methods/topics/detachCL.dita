@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_xwj_xpk_kn">
-  <title>db.collectionspace.collection. detachCL ()</title>
+  <title>db.collectionspace.collection.detachCL()</title>
   <body>
-    <section><title>db.collectionspace.collection. detachCL (&lt;subCLFullName>)</title>
+    <section><title>db.collectionspace.collection.detachCL(&lt;subCLFullName>)</title>
       <p>从主分区集合中分离出子分区集合</p>
     </section>
     <section><title>参数描述</title>
