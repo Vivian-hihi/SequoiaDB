@@ -134,6 +134,21 @@ namespace engine
       SDB_OSS_FREE( OM_FIX_BUFF_TO_PTR( pBuff ) ) ;
    }
 
+   restSessionInfo* _omManager::getSessionInfo( const string &id )
+   {
+      restSessionInfo *pSessionInfo ;
+
+      _omLatch.get_shared() ;
+      map<string, restSessionInfo*>::iterator it = _mapSessions.find( id ) ;
+      if ( it != _mapSessions.end() )
+      {
+         pSessionInfo = it->second ;
+      }
+      _omLatch.release_shared() ;
+
+      return pSessionInfo ;
+   }
+
 
    /*
       get the global om manager object point
