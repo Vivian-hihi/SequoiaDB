@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_1kf_vfn_5n">
+  <title>rg.removeNode()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>removeNode - Delete slice group specified node.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>rg.removeNode</apiname>(<parmname>host</parmname>,<parmname>service</parmname>,<parmname>[config]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>ReplicaGroup
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Delete slice group specified node.</p>
+      <parml>
+        <plentry>
+          <pt>host (string)</pt>
+          <pd>Node hostname.</pd>
+        </plentry>
+        <plentry>
+          <pt>service (string)</pt>
+          <pd>Node port number.</pd>
+        </plentry>        
+        <plentry>
+          <pt>config (json)</pt>
+          <pd>Node configuration information.
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>Definition Format rg.removeNode() method has three parameters: host, service, config, as
+                  shown above, the following format:</pd>
+                <pd>("&lt;hostname>","&lt;port number>"[,{&lt;configParam>:value,...}])</pd>
+              </plentry>
+            </parml></pd>
+        </plentry>        
+      </parml>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Delete node command follows slice group shard.</p>
+      <codeblock>rg.removeNode("vmsvr2-suse-x64",11800)</codeblock>
+      <note><p>Delete the specified node must exist, otherwise abnormal.</p></note>      
+    </section>
+  </body>
+  <related-links>
+    <link href="rg.createNode.dita"></link>
+    <link href="rg.getDetail.dita"></link>
+  </related-links>
+</topic>

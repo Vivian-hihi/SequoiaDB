@@ -1,13 +1,13 @@
-#Wed Apr 16 17:13:35 CST 2014
+#Wed Apr 16 17:58:09 CST 2014
 copytosourcelist=
-hreftargetslist=rg.getMaster.xml,rg.createNode.xml,rg.getDetail.xml
+hreftargetslist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getNode.xml,rg.getSlave.xml,node.stop.xml,rg.stop.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=rg.createNode.xml
-fullditamapandtopiclist=rg.createNode.xml
+fullditatopiclist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getSlave.xml
+fullditamapandtopiclist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getSlave.xml
 hrefditatopicfile=hrefditatopic.list
-hrefditatopiclist=rg.createNode.xml
-user.input.file=rg.createNode.xml
+hrefditatopiclist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getSlave.xml
+user.input.file=rg.getSlave.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list
@@ -27,7 +27,7 @@ imagelist=
 htmlfile=html.list
 htmllist=
 canditopicsfile=canditopics.list
-canditopicslist=rg.getMaster.xml,rg.getDetail.xml
+canditopicslist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getNode.xml,rg.getSlave.xml,node.stop.xml,rg.stop.xml
 keyreffile=keyref.list
 subjectschemefile=subjectscheme.list
 keyreflist=
