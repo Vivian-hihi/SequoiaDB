@@ -225,7 +225,7 @@ namespace engine
 
    INT32 restAdaptor::_convertMsg( HTTP_PARSE_COMMON &common,
                                    CHAR **pMsg,
-                                   UINT32 &msgSize )
+                                   INT32 &msgSize )
    {
       INT32 rc = SDB_OK ;
       const CHAR *pFileName = NULL ;
@@ -272,9 +272,9 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_INIT, "restAdaptor::init" )
-   INT32 restAdaptor::init( UINT32 maxHttpHeaderSize,
-                            UINT32 maxHttpBodySize,
-                            UINT32 timeout )
+   INT32 restAdaptor::init( INT32 maxHttpHeaderSize,
+                            INT32 maxHttpBodySize,
+                            INT32 timeout )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_INIT );
@@ -312,12 +312,47 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQHE, "restAdaptor::getRequestHeader" )
-   INT32 getRequestHeader( pmdSession *pSession )
+   INT32 restAdaptor::getRequestHeader( pmdRestSession *pSession )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_GETREQHE ) ;
       SDB_ASSERT ( pSession, "pSession is NULL" )
+      //httpConnection *pHttpCon = pSession->getRestConn() ;
+      //CHAR *pBuffer = pSession->getFixBuff() ;
+      //INT32 bufSize = pSession->getFixBuffSize() ;
+/*
+      http_parser_init( pParser, HTTP_REQUEST ) ;
 
+      while( true )
+      {
+         rc = pSocket->recv( pRecvBuffer + receivedSize,
+                             REST_ONCE_RECV_SIZE,
+                             curRecvSize,
+                             timeout,
+                             0,
+                             FALSE ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to recv, rc=%d", rc ) ;
+            goto error ;
+         }
+
+         if ( receivedSize + curRecvSize > maxRecvSize )
+         {
+            rc = SDB_REST_RECV_SIZE ;
+            PD_LOG ( PDERROR, "Recv size greater than max recv size" ) ;
+            goto error ;
+         }
+
+         http_parser_execute( pParser, (http_parser_settings *)_pSettings,
+                              pRecvBuffer + receivedSize, curRecvSize ) ;
+         receivedSize += curRecvSize ;
+         if ( _pHttpConnection->_recvComplete )
+         {
+            break ;
+         }
+      }
+*/
    done:
       PD_TRACE_EXITRC( SDB__RESTADP_GETREQHE, rc ) ;
       return rc ;
@@ -326,10 +361,10 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQBO, "restAdaptor::getRequestBody" )
-   INT32 restAdaptor::getRequestBody( pmdSession *pSession,
+   INT32 restAdaptor::getRequestBody( pmdRestSession *pSession,
                                       HTTP_PARSE_COMMON &common,
                                       CHAR **pMsg,
-                                      UINT32 &msgSize )
+                                      INT32 &msgSize )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_GETREQBO ) ;
@@ -386,7 +421,7 @@ namespace engine
          }
       }
 
-      for ( UINT32 i = 0; i < _pHttpConnection->_requestKey.size(); ++i )
+      for ( INT32 i = 0; i < _pHttpConnection->_requestKey.size(); ++i )
       {
          printf( "%.*s : %.*s \n",
                  _pHttpConnection->_requestKey[i].length,
@@ -403,7 +438,7 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_SENDRE, "restAdaptor::sendResponse" )
-   INT32 restAdaptor::sendResponse( pmdSession *pSession )
+   INT32 restAdaptor::sendResponse( pmdRestSession *pSession )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_SENDRE ) ;
@@ -415,7 +450,8 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_APPENDHEADER, "restAdaptor::appendHttpHeader" )
-   INT32 restAdaptor::appendHttpHeader( const CHAR *pKey,
+   INT32 restAdaptor::appendHttpHeader( pmdRestSession *pSession,
+                                        const CHAR *pKey,
                                         const CHAR *pValue )
    {
       INT32 rc = SDB_OK ;
@@ -428,11 +464,14 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETHEADER, "restAdaptor::getHttpHeader" )
-   INT32 restAdaptor::getHttpHeader( const CHAR *pKey,
+   INT32 restAdaptor::getHttpHeader( pmdRestSession *pSession,
+                                     const CHAR *pKey,
                                      const CHAR **pValue )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_GETHEADER ) ;
+      //httpConnection *pHttpCon = pSession->getRestConn() ;
+
    done:
       PD_TRACE_EXITRC( SDB__RESTADP_GETHEADER, rc ) ;
       return rc ;
@@ -441,9 +480,10 @@ namespace engine
    }
 
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_APPENDBODY, "restAdaptor::appendHttpBody" )
-   INT32 restAdaptor::appendHttpBody( const CHAR *pBuffer,
-                                      UINT32 length,
-                                      UINT32 number )
+   INT32 restAdaptor::appendHttpBody( pmdRestSession *pSession,
+                                      const CHAR *pBuffer,
+                                      INT32 length,
+                                      INT32 number )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_APPENDBODY ) ;
