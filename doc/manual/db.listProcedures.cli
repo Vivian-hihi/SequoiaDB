@@ -1,0 +1,67 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.listProcedures()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+listProcedures - Enumerate all of the stored procedure fundtion.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.listProcedures(\fB[cond]\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+Enumerate all of the stored procedure fundtion.
+.sp 2
+\fBcond (json)\fR
+.br
+       Conditions is empty, enumerate all the functions, is not
+       empty, the enumeration aualified function.
+.sp 2
+Defined listProcedures() method, only a json lbject type
+parameter name condition, the function returns the input value
+matches the specified value, otherwise return all functions.
+.SH "Examples"
+
+.sp 2
+All functions return information
+.sp 2
+>db.listProcedures()
+.br
+{ "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
+.br
+    return x + y;
+.br
+}", "funcType" : 0 }
+.br
+{ "_id" : { "$oid" : "52480d3ef5ce8d5817c4c354" }, "name" : "getAll", "func" : "function getAll() {
+.br
+    return db.foo.bar.find();
+.br
+}", "funcType" : 0 }
+.br
+...
+.sp 2
+Return function named sum specified records
+.sp 2
+>db.listProcedures({name:"sum"})
+.br
+{ "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
+.br
+    return x + y;
+.br
+}", "funcType" : 0 }

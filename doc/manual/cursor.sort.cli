@@ -1,0 +1,58 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBcursor.sort()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+sort - Sort result set according to a specified field.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+cousor.sort(\fBsort\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Cursor
+.SH "DESCRIPTION"
+
+.sp 2
+Sort result set according to a specified field.
+.sp 2
+\fBsort (json object)\fR
+.br
+       Sort result set according to a specified field. The value
+       of it is 1 or -1. 1 represents ascending order. -1
+       represents descending order.
+.sp 2
+       \fBFormat\fR
+.br
+              The method "cursor.sort()" contains a parameter
+              called "sort". It is a json object. If it is not
+              specified, result set will not be sorted.
+.br
+              {<Field name 1>:<-1|1>,<Field name 2>:<-1|1>,...}
+.SH "Examples"
+
+.sp 2
+Return records that contains the value of "age" greater than 20.
+And it just return the fields named "name" and "age" in them with
+ascending order on the field "age".
+.sp 2
+db.foo.bar.find({age:{$gt:20}},{age:"",name:""}).sort({age:1})
+.sp 2
+\fBNote: \fR
+.sp 2
+Through the method "find()", we can select the fields we need. In
+the example above, it returns "age" and "name", so it we use
+"sort()" to sort the records, we can only sort according to "age"
+and "name". If we don't specify the parameter "sel" in the method
+"find", we can sort the records according to any field.

@@ -11,8 +11,14 @@ createCL - create a new collection
 .SH "SYNOPSIS"
 
 .sp 2
+
+.sp 2
+
+.sp 2
 db.collectionspace.createCL(\fBname\fR\fB[,option]\fR)
 .SH "CATEGORY"
+
+.sp 2
 
 .sp 2
 Collectionspace

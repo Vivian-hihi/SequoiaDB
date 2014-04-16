@@ -7,119 +7,109 @@
 .SH "NAME"
 
 .sp 2
-backupOffline - backup database
+backupOffline - Backup Database.
 .SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
 
 .sp 2
 db.backupOffline(\fB[options]\fR)
 .SH "CATEGORY"
 
 .sp 2
+
+.sp 2
 Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Backup database offline.
+Backup Database.
 .sp 2
-\fBoptions (object)\fR
+\fBoptions (json object)\fR
 .br
        Set the backup name, specify the replication group, backup
        and other parameters.
 .sp 2
-       \fBGroupID (number)\fR
+       \fBGroupID\fR
 .br
-              Specified the backeup group by group's ID, if not
-              specify, backup all the replica groups.
+              Backup copy group ID specified, the default is all
+              replication groups.
 .br
-              e.g. GroupID:1000 or GroupID:[1000, 1001]
+              GroupID:1000 or GroupID:[1000, 1001]
 .sp 2
-       \fBGroupName (string)\fR
+       \fBGroupName\fR
 .br
-              Specified the backeup group by group's name, if not
-              specify, backup all the replica groups.
+              Backup copy group name is specified, the default is
+              all replication groups.
 .br
-              e.g. GroupName:"data1" or GroupName:["data1",
-              "data2"]
+              GroupName:"data1" or GroupName:["data1", "data2"]
 .sp 2
-       \fBName (string)\fR
+       \fBName\fR
 .br
-              The name for this backup, default to use time
-              format "YYYY-MM-DD-HH:mm:SS" to name.
+              Backup name, default "YYYY-MM-DD-HH:mm:SS" Backup
+              name time format.
 .br
-              e.g. Name:"backup-2014-1-1"
+              Name:"backup-2014-1-1"
 .sp 2
-       \fBPath (string)\fR
+       \fBPath\fR
 .br
-              The path for this backup, default to use the path
-              specified in configuration files. It supports
+              Backup path, the default configuration parameters
+              for the specified backup path.The path supports
               wildcards (g%: group name, h%: host name,
               s%:service name).
 .br
-              e.g. Path:"/opt/sequoiadb/backup/%g"
+              Path:"/opt/sequoiadb/backup/%g"
 .sp 2
-       \fBIsSubDir (boolean)\fR
+       \fBIsSubDir\fR
 .br
-              Whether the path specified above is a subdirectory
-              of the path specified in the configuration files,
-              default to be false.
+              The above Path configuration parameter
+              configuration parameters are specified for the
+              backup path subdircetory, the default is false.
 .br
-              e.g. IsSubDir:false
+              IsSubDir:false
 .sp 2
-       \fBPrefix (string)\fR
+       \fBPrefix\fR
 .br
-              The prefix name for this backup. It supports
-              wildcards (g%,h%,s%). Default not to use prefix.
+              Backup prefix, support wildcards (g%,h%,s%), The
+              default is empty.
 .br
-              e.g. Prefix:"%g_bk_"
+              Prefix:"%g_bk_"
 .sp 2
-       \fBEnableDataDir (boolean)\fR
+       \fBEnableDataDir\fR
 .br
-              Turn on date subdirectory feature or not. If so, it
-              will get the current date and create subdirectory
-              named "YYYY-MM-DD" automatically. Default to be
-              false.
+              Date subdirectories feature is turned on, if the
+              current date is automatically rurned on create a
+              subdirectory "YYYY-MM-DD", the default according to
+              false
 .br
-              e.g. EnableDataDir:false
+              EnableDataDir:false
 .sp 2
-       \fBDescription (string)\fR
+       \fBDescription\fR
 .br
-              The description for this backup.
+              Backup description
 .br
-              e.g. Description:"First backup"
+              Description:"First backup"
 .sp 2
-       \fBEnsureInc (boolean)\fR
+       \fBEnsureInc\fR
 .br
-              Whether to open an incremental backup, default to
+              Whether to open an incremental backup, the default
               is false.
 .br
-              e.g. EnsureInc:false
+              EnsureInc:false
 .sp 2
-       \fBOverWrite (boolean)\fR
+       \fBOverWrite\fR
 .br
-              Whether the backup is covered when the same name
-              exists, default to be false.
+              Backup is covered with the same name exists, the
+              default is false.
 .br
-              e.g. OverWrite:false
+              OverWrite:false
 .sp 2
 
-.SH "RETURN VALUE"
+.SH "Examples"
 
 .sp 2
-On success, backupOffline() backup the database to the specified
-directory and return SDB_OK. On error, exception will be thrown.
-.SH "ERRORS"
-
-.sp 2
-\fBSDB_INVALIDARG (-6)\fR
-.br
-       Invalid Argument
-.sp 2
-\fBSDB_BAR_BACKUP_EXIST (-240)\fR
-.br
-       Backup already exist
-.SH "EXAMPLE"
-
-.sp 2
-Backup the whole database.
+The entire database full backup.
 .sp 2
 db.backupOffline({Name:"FullBackup1"})

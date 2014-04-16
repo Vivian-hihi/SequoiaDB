@@ -11,8 +11,14 @@ cancelTask - Cancel the task
 .SH "SYNOPSIS"
 
 .sp 2
+
+.sp 2
+
+.sp 2
 db.cancelTask(\fBid\fR\fB,[isAsync]\fR)
 .SH "CATEGORY"
+
+.sp 2
 
 .sp 2
 Sequoiadb
