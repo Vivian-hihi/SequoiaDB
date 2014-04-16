@@ -20,7 +20,7 @@
  */
 #ifndef http_parser_h
 #define http_parser_h
-#include "restdefine.hpp"
+#include "restDefine.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
