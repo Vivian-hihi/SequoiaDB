@@ -111,7 +111,7 @@ namespace engine
       _onAttach() ;
    }
 
-   void _pmdSession::dettach ()
+   void _pmdSession::detach ()
    {
       _onDetach() ;
       _pEDUCB = NULL ;
