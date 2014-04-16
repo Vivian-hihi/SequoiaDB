@@ -3,20 +3,20 @@
 <topic id="topic_3mb_bcl_5n">
   <title >$isnull</title>
   <body>
-    <section><title>语法</title>
-      <p><codeblock>{&lt;字段名>:{$isnull: &lt;0|1>}}</codeblock></p>
+    <section><title>Syntax</title>
+      <p><codeblock>{&lt;field name>:{$isnull: &lt;0|1>}}</codeblock></p>
     </section>
-    <section><title>描述</title>
-      <p>选择集合中指定的“&lt;字段名>”是否为空，或不存在。“0”代表期望该字段存在且不为null；“1”代表期望该字段不存在或为null。</p>
+    <section><title>Description</title>
+      <p>Select collection at the specified "&lt;field name>" is empty or does not exist. "0" represents the field exists and is not expected "null", "1" represents the hope that the field does not exist or is "null".</p>
     </section>
     <section><title>示例</title>
       <ul>
         <li>
-          <p>选择集合bar中age字段不为空且存在的记录。</p>
+          <p>Select Collection "bar" medium "age" field is not empty and there is a record.</p>
           <codeblock>db.foo.bar.find({age:{$isnull:0}})</codeblock>
         </li>
         <li>
-          <p>选择集合bar中嵌套对象content.name不存在或为null的记录。</p>
+          <p>Select Collection "bar" nested object "content.name" does not exist or is null record.</p>
           <codeblock>db.foo.bar.find({"content.name":{$exists:1}})</codeblock>
         </li>
       </ul>      
