@@ -429,12 +429,12 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "S" , &strName) ;
    REPORT ( ret , "help(): wrong arguments" ) ;
+#if defined (SDB_SHELL)
    // get the troff file path
    path = getProgramPath() ;
    ossStrncpy ( tfPath, path, ossStrlen(path) ) ;
    ossStrncat ( tfPath, TF_REL_PATH, ossStrlen(TF_REL_PATH) ) ;
-   //
-#if defined (SDB_SHELL)
+   // get manHelp instance
    {
    engine::manHelp *mh = engine::manHelp::createInstance( tfPath ) ;
    if ( mh == NULL )
