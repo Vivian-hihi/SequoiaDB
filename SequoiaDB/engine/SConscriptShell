@@ -9,7 +9,7 @@ sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/parseTroff.cpp"
+      "spt/sptParseTroff.cpp"
       ]
 
 ossFiles = [
