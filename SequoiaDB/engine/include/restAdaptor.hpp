@@ -5,8 +5,8 @@
 #include "msg.hpp"
 #include "../bson/bson.h"
 #include "msgMessage.hpp"
-#include "pmdSession.hpp"
-#include "restdefine.hpp"
+#include "pmdRestSession.hpp"
+#include "restDefine.hpp"
 #include <map>
 
 //recv and send timeout
@@ -28,9 +28,9 @@ namespace engine
    class restAdaptor : public SDBObject
    {
    private:
-      UINT32 _maxHttpHeaderSize ;
-      UINT32 _maxHttpBodySize ;
-      UINT32 _timeout ;
+      INT32 _maxHttpHeaderSize ;
+      INT32 _maxHttpBodySize ;
+      INT32 _timeout ;
       void *_pSettings ;
    private:
       static INT32 on_message_begin( void *pData ) ;
@@ -49,28 +49,31 @@ namespace engine
       inline const CHAR *_getFileExtension( const CHAR *pFileName ) ;
       INT32 _convertMsg( HTTP_PARSE_COMMON &common,
                          CHAR **pMsg,
-                         UINT32 &msgSize ) ;
+                         INT32 &msgSize ) ;
    public:
       restAdaptor() ;
       ~restAdaptor() ;
-      INT32 init( UINT32 maxHttpHeaderSize,
-                  UINT32 maxHttpBodySize,
-                  UINT32 timeout = REST_TIMEOUT ) ;
+      INT32 init( INT32 maxHttpHeaderSize,
+                  INT32 maxHttpBodySize,
+                  INT32 timeout = REST_TIMEOUT ) ;
 
-      INT32 getRequestHeader( pmdSession *pSession ) ;
-      INT32 getRequestBody( pmdSession *pSession,
+      INT32 getRequestHeader( pmdRestSession *pSession ) ;
+      INT32 getRequestBody( pmdRestSession *pSession,
                             HTTP_PARSE_COMMON &common,
                             CHAR **pMsg,
-                            UINT32 &msgSize ) ;
-      INT32 sendResponse( pmdSession *pSession ) ;
+                            INT32 &msgSize ) ;
+      INT32 sendResponse( pmdRestSession *pSession ) ;
 
-      INT32 appendHttpHeader( const CHAR *pKey,
+      INT32 appendHttpHeader( pmdRestSession *pSession,
+                              const CHAR *pKey,
                               const CHAR *pValue ) ;
-      INT32 getHttpHeader( const CHAR *pKey,
+      INT32 getHttpHeader( pmdRestSession *pSession,
+                           const CHAR *pKey,
                            const CHAR **pValue ) ;
-      INT32 appendHttpBody( const CHAR *pBuffer,
-                            UINT32 length,
-                            UINT32 number ) ;
+      INT32 appendHttpBody( pmdRestSession *pSession,
+                            const CHAR *pBuffer,
+                            INT32 length,
+                            INT32 number ) ;
    } ;
 }
 #endif
