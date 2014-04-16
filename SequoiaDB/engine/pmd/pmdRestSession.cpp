@@ -94,7 +94,7 @@ namespace engine
       _loginTime  = sessionInfo._attr._loginTime ;
       _userName   = sessionInfo._attr._userName ;
 
-      sessionInfo._isIn = 
+      //sessionInfo._isIn = 
    }
 
    void _pmdRestSession::saveSession( restSessionInfo &sessionInfo )
