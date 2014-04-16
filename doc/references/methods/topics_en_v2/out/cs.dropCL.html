@@ -7,15 +7,15 @@
 <meta name="copyright" content="(C) Copyright 2005"/>
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
-<meta name="DC.Title" content="db.getRG()"/>
-<meta name="description" content="NAME getRG - Return the quotation of a replset. SYNOPSIS db.getRG ( name|id ) CATEGORY Sequoiadb DESCRIPTION Return the quotation of a replset. name (string) Replset name. Replset names are unique to ..."/>
-<meta name="DC.Relation" scheme="URI" content="db.createRG.html"/>
-<meta name="DC.Relation" scheme="URI" content="db.removeRG.html"/>
+<meta name="DC.Title" content="db.collectionspace.dropCL()"/>
+<meta name="description" content="NAME dropCL - Delete a specified collection in a specified collection space. SYNOPSIS db.collectionspace.dropCL ( name ) CATEGORY Collectionspace DESCRIPTION Delete a specified collection in a ..."/>
+<meta name="DC.Relation" scheme="URI" content="cs.getCL.html"/>
+<meta name="DC.Relation" scheme="URI" content="co.count.html"/>
 <meta name="DC.Format" content="XHTML"/>
-<meta name="DC.Identifier" content="topic_qjc_vlc_tn"/>
+<meta name="DC.Identifier" content="topic_gz4_z5l_5n"/>
 <link rel="stylesheet" type="text/css" href="commonltr.css"/>
 <link rel="stylesheet" type="text/css" href="assets/webhelp_topic.css"/>
-<title>db.getRG()</title>
+<title>db.collectionspace.dropCL()</title>
 <script type="text/javascript" src="assets/jquery-1.3.2.js"> </script><script type="text/javascript" src="assets/jquery-ui-1.8.2.custom.min.js"> </script><script type="text/javascript" src="assets/frames_redirect.js"> </script><script type="text/javascript"><!--
     var prefix = "index.html";
     var ratingFile = "";
@@ -29,88 +29,86 @@
         }
     }
 //--></script></head>
-<body onload="highlightSearchTerm()" id="topic_qjc_vlc_tn"><a name="topic_qjc_vlc_tn"><!-- --></a>
+<body onload="highlightSearchTerm()" id="topic_gz4_z5l_5n"><a name="topic_gz4_z5l_5n"><!-- --></a>
 <table class="nav"><tbody><tr><td><div class="navheader"><span class="frames" onclick="redirectFrames(location.pathname)"><script type="text/javascript"><!--
   if (parent.window.location.pathname == window.location.pathname ) document.write('With Frames');                    
                     --></script></span></div></td><td width="50%"/></tr></tbody></table>
 
-  <h1 class="title topictitle1">db.getRG()</h1>
+  <h1 class="title topictitle1">db.collectionspace.dropCL()</h1>
 
   <div class="body">
     <div class="section"><h2 class="title sectiontitle">NAME</h2>
       
-      <p class="p">getRG - Return the quotation of a replset.</p>
+      <p class="p">dropCL - Delete a specified collection in a specified collection space.</p>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">SYNOPSIS</h2>
       
       <p class="p"/>
-<span class="keyword apiname">db.getRG</span>(<span class="keyword parmname">name|id</span>)
+<span class="keyword apiname">db.collectionspace.dropCL</span>(<span class="keyword parmname">name</span>)
     </div>
 
     <div class="section"><h2 class="title sectiontitle">CATEGORY</h2>
       
       <p class="p"/>
-Sequoiadb
+Collectionspace
     </div>
 
     <div class="section"><h2 class="title sectiontitle">DESCRIPTION</h2>
        
-      <p class="p">Return the quotation of a replset.</p>
+      <p class="p">Delete a specified collection in a specified collection space.</p>
 
       <dl class="dl parml">
         
           <dt class="dt pt dlterm">name (string)</dt>
 
-          <dd class="dd pd">Replset name. Replset names are unique to each other in a database object.</dd>
-
-        
-        
-          <dt class="dt pt dlterm">id (int)</dt>
-
-          <dd class="dd pd">Replset id. The system will automatically generate a replset id.
+          <dd class="dd pd">Collection name. Collection names should be unique to each other in a collection space.
             <dl class="dl parml">
               
                 <dt class="dt pt dlterm">Format</dt>
 
-                <dd class="dd pd">The method "getRG()" contains "name" or "id". The type of "name" is string. The type of "id" is "int". It the replset specified by "name" or "id" doesn't exist, operation exception will occur.</dd>
+                <dd class="dd pd">The parameter "name" should be specified in the method "dropCL()". It should be ensured
+                  that the collcection name exists in the collection space, or operation exception will
+                  occur.</dd>
 
-                <dd class="dd pd">("&lt;Replset name&gt;"|&lt;id&gt;)</dd>
+                <dd class="dd pd">{"name":"&lt;collection name&gt;"}</dd>
 
               
             </dl>
+</dd>
 
-          </dd>
-          
                 
       </dl>
-      
-      <div class="note note"><span class="notetitle">Note:</span> 
-        <ul class="ul"><li class="li">The value of "name" should not contain null string, "." or "$". The length of it should not be greater than 127B.</li>
 
-        </ul>
+<div class="note note"><span class="notetitle">Note:</span> 
+  <ul class="ul">
+    <li class="li">The value of "name" should not be null string. It should not contain "." or "$". And
+      the length of it should not be greater than 127B. If the collection name is invalid ,
+      the operation will fail. </li>
+
+    <li class="li">It should be ensured that the collection name exists in a collection space, or
+      exception will occur.</li>
+
+  </ul>
+
 </div>
-
+      
     </div>
     
     <div class="section"><h2 class="title sectiontitle">Examples</h2>
       
-      <p class="p">Specify the value of "name", the returnthe quotation of replset "rg1".</p>
+      <p class="p">Supposing that the collection "bar" exists in the collection space "foo", the following command will delete it.</p>
 
-      <pre class="pre codeblock">db.getRG("rg1")</pre>
-
-      <p class="p">Specify the value of "id", the returnthe quotation of replset "rg1".</p>
-
-      <pre class="pre codeblock">db.getRG("1000")</pre>
-
+      <pre class="pre codeblock">db.foo.dropCL("bar")</pre>
+           
     </div>
 
   </div>
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
-<div><a class="navheader_parent_path" href="db.createRG.html" title="db.createRG()">db.createRG()</a></div>
-<div><a class="navheader_parent_path" href="db.removeRG.html" title="db.removeRG()">db.removeRG()</a></div>
+<div><a class="navheader_parent_path" href="cs.getCL.html" title="db.collectionspace.getCL()">db.collectionspace.getCL()</a></div>
+<div><a class="navheader_parent_path" href="co.count.html" title="db.collectionspace.collection.count()">db.collectionspace.collection.count()</a></div>
 </div>
 </div>
 <div class="navfooter"><script type="text/javascript"><!--         
