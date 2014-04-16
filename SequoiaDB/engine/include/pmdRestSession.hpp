@@ -32,6 +32,8 @@
 
 #include "pmdSession.hpp"
 #include "restDefine.hpp"
+#include "ossRWMutex.hpp"
+#include "ossAtomic.hpp"
 
 namespace engine
 {
@@ -65,10 +67,12 @@ namespace engine
       // status
       UINT64               _activeTime ;
       BOOLEAN              _authOK ;
-      UINT32               _isIn ;
+      ossAtomic32          _inNum ;
+      ossRWMutex           _inRWLock ;
       sessionMemInfo       *_pSessionMem ;
 
       _restSessionInfo()
+      :_inNum( 0 )
       {
          _attr._sessionID     = 0 ;
          _attr._loginTime     = 0 ;
@@ -76,7 +80,6 @@ namespace engine
          _activeTime          = 0 ;
          _authOK              = FALSE ;
          
-         _isIn                = FALSE ;
          _pSessionMem         = NULL ;
       }
 
