@@ -1,0 +1,52 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.removeRG()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+removeRG - Delete the database specified slice group.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.removeRG(\fBname\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+Delete the database specified slice group.
+.sp 2
+\fBname (string)\fR
+.br
+       Slice group name, the same database object, a unique slice
+       group name.
+.sp 2
+       \fBFormat\fR
+.br
+              Definition Format removeRG() method, only the name
+              field, name value is a string, required.
+.br
+              (<"Slice group name">)
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  Slice group name must exist.
+.SH "Examples"
+
+.sp 2
+Delete slice group called "group" of.
+.sp 2
+db.removeRG("group")

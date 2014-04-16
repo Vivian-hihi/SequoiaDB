@@ -1,0 +1,56 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.getCS()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+getCS - Return the quotation of a specified collection space.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.getCS(\fBname\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+Return the quotation of a specified collection space.
+.sp 2
+\fBname (string)\fR
+.br
+       Collection space name. Collection space names are unique
+       to each other in a database instance.
+.sp 2
+       \fBFormat\fR
+.br
+              The definition formant of \fIgetCS()\fR method only
+              have\fI name \fRparam,it is a string type.
+.br
+              ("<collectionspace name>")
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  the value of param \fIname\fR can't be null 、contain dot(.)
+   or '$',the length of it must be not more than 127B.
+.sp 2
+   *  The collectionspace must be existed in the database.
+.SH "Examples"
+
+.sp 2
+Supposing that the collection space "foo" exists, it will return
+the quotation of it.
+.sp 2
+db.getCS("foo")

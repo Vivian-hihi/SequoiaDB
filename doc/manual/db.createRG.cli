@@ -1,0 +1,55 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.createRG()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+createRG - Create a replset.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.createRG(\fBname\fR)
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+Create a replset. When creating a replset, the system will
+automatically generate a "groupID" for a replset.
+.sp 2
+\fBname (string)\fR
+.br
+       Replset name. All replset names are unique to each other
+       in a database object.
+.sp 2
+       \fBFormat\fR
+.br
+              The method "createRG()" contains the parameter
+              "rgname", which is in the type od string. It should
+              not be null.
+.br
+              (<"Replset name">)
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+   *  Replset is not null string. It should not contains "." or
+   "$". The length of it should not be greater than 127B.
+.SH "Examples"
+
+.sp 2
+Create a replset named "group".
+.sp 2
+db.createRG("group")
