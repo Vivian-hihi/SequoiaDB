@@ -28,6 +28,7 @@
 *******************************************************************************/
 
 #include "pmdRestSession.hpp"
+#include "omManager.hpp"
 
 namespace engine
 {
@@ -40,10 +41,16 @@ namespace engine
    _pmdRestSession::_pmdRestSession( SOCKET fd )
    :_pmdLocalSession( fd )
    {
+      _pFixBuff         = NULL ;
    }
 
    _pmdRestSession::~_pmdRestSession()
    {
+      if ( _pFixBuff )
+      {
+         sdbGetOMManager()->releaseFixBuf( _pFixBuff ) ;
+         _pFixBuff = NULL ;
+      }
    }
 
    UINT64 _pmdRestSession::identifyID()
@@ -65,5 +72,20 @@ namespace engine
    {
       return SDB_OK ;
    }
+
+   INT32 _pmdRestSession::getFixBuffSize() const
+   {
+      return sdbGetOMManager()->getFixBufSize() ;
+   }
+
+   INT32 _pmdRestSession::getFixBuff ()
+   {
+      if ( !_pFixBuff )
+      {
+         _pFixBuff = sdbGetOMManager()->allocFixBuf() ;
+      }
+      return _pFixBuff ;
+   }
+
 }
 
