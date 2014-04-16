@@ -41,11 +41,11 @@ namespace engine
    */
    #define OM_FIX_BUFF_CATCH_NUMBER          ( 100 )
 
-   #define OM_FIX_PTR_SIZE(x)                ( x + sizeof(UINT32) )
-   #define OM_FIX_PTR_HEADER(ptr)            (*(UINT32*)(ptr))
-   #define OM_FIX_BUFF_TO_PTR(buff)          ((CHAR*)(buff)-sizeof(UINT32))
-   #define OM_FIX_PTR_TO_BUFF(ptr)           ((CHAR*)(ptr)+sizeof(UINT32))
-   #define OM_FIX_BUFF_HEADER(buff)          (*(UINT32*)((CHAR*)(buff)-sizeof(UINT32)))
+   #define OM_FIX_PTR_SIZE(x)                ( x + sizeof(INT32) )
+   #define OM_FIX_PTR_HEADER(ptr)            (*(INT32*)(ptr))
+   #define OM_FIX_BUFF_TO_PTR(buff)          ((CHAR*)(buff)-sizeof(INT32))
+   #define OM_FIX_PTR_TO_BUFF(ptr)           ((CHAR*)(ptr)+sizeof(INT32))
+   #define OM_FIX_BUFF_HEADER(buff)          (*(INT32*)((CHAR*)(buff)-sizeof(INT32)))
 
 
 }
