@@ -90,7 +90,7 @@
     </section>
   </body>
   <related-links>
-    <link href="co.count.dita" format="dita" type="topic"></link>
-    <link href="co.find.dita" format="dita" type="topic"></link>    
+    <link href="cl.count.dita" format="dita" type="topic"></link>
+    <link href="cl.find.dita" format="dita" type="topic"></link>    
   </related-links>
 </topic>

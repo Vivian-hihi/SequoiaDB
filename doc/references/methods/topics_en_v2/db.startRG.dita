@@ -45,6 +45,6 @@
   </body>
   <related-links>
     <link href="db.createRG.dita"></link>
-    <link href="db.createNode.dita"></link>
+    <link href="rg.createNode.dita"></link>
   </related-links>
 </topic>

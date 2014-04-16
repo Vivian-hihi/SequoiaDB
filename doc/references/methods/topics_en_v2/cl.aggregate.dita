@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_fzj_qdm_5n">
+  <title>db.collectionspace.collection.aggregate()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>aggregate - retrieve documents form the collection SequoiaDB's record, and return the cursor.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.collectionspace.collection.aggregate</apiname>(<parmname>subOp...</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Collection
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>aggregate() method with find() method function relatively close, but also retrieve documents form the 
+        collection SequoiaDB's record, and return the cursor.</p>
+      <parml>        
+        <plentry>
+          <pt>subOp (json object)</pt>
+          <pd>subOp said sub-operation, In aggregate() method can fill 1~N sub-operation.
+            <p>aggregate() method has only one parameter subOp, which represents 1~N sub-operations,each sub-operation is a json 
+              object, separated by commas sub-operation. Aggregation framework supports the following sub-operating parameters:</p>
+            <parml>              
+              <plentry>
+                <pt>$project</pt>
+                <pd>Selection field names need to output "1" output, "0" means no output, you can also implement rename fields.</pd>
+                <pd>{$project:{field1:1,field:0,aliase:"$field3"}}</pd>
+              </plentry>
+              <plentry>
+                <pt>$match</pt>
+                <pd>Match to achieve matching criteria to select from a collection of records, rather with the SQL statement where.</pd>
+                <pd>{$match:{field:{$lte:value}}}</pd>                
+              </plentry>
+              <plentry>
+                <pt>$limit</pt>
+                <pd>Limit the number of returned.</pd>
+                <pd>{$limit:10}</pd>
+              </plentry>
+              <plentry>
+                <pt>$skip</pt>
+                <pd>Control of the result set the starting point, ie the number of skips specified result set records.</pd>
+                <pd>{$skip:5}</pd>
+              </plentry>
+              <plentry>
+                <pt>$group</pt>
+                <pd>Achieve grouping of records, similar to SQL's group by statement, "_id" designated group field.</pd>
+                <pd>{$group:{_id:"$field"}}</pd>
+              </plentry>
+              <plentry>
+                <pt>$sort</pt>
+                <pd>Sort the result set to achieve, "1" represents the ASC, "-1" for descending.</pd>
+                <pd>{$sort:{field1:1,field2:-1,...}}</pd>
+              </plentry>
+            </parml></pd>
+        </plentry>        
+      </parml>
+      <note>
+        <ul>
+          <li><b>Description: </b>aggregate() method can have any number of word operations, but note that the name of each parameter syntax tules sub-operations.</li>
+        </ul>
+      </note>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Assuming collection of records collection contains the following format:</p>
+      <codeblock>{
+  no:1000,
+  score:80,
+  interest:["basketball","football"],
+  major:"Computer Science and Technology",
+  dep:"Computer Academy",
+  info:{
+        name:"Tom",
+        age:25,
+        gender:"male"
+        }
+        }</codeblock>
+      <p>Conditional select the record, and specify the field names returned.</p>
+      <codeblock>db.collectionspace.collection.aggregate({$match:{$and:[{no:{$gt:1002}},{no:{$lt:1015}},{dep:"Computer Academy"}]}},
+{$project:{no:1,"info.name":1,major:1}})</codeblock>
+      <p>This gathering operation the first to use <b>$match</b> operation to select records matching conditions, then use the <b>$project</b> returns only the specified field name. Return result sets as follows:</p>
+      <codeblock>{
+  "no": 1003,
+  "info.name": "Sam",
+  "major": "Computer Software and Theory"
+}
+{
+  "no": 1004,
+  "info.name": "Coll",
+  "major": "Computer Engineering"
+}
+{
+  "no": 1005,
+  "info.name": "Jim",
+  "major": "Computer Engineering"
+  }</codeblock>
+      <p>Conditional select records, and the records are grouped</p>
+      <codeblock>db.collectionspace.collection.aggregate({$match:{dep:"Computer Academy"}},{$group:{_id:"$major",Major:{$first:"$major"},
+avg_age:{$avg:"$info.age"}}})</codeblock>
+      <p>This first gathering operation to select records using <b>$match</b> matching conditions, then use <b>$group</b> of records grouped by major field and use the <b>$avg</b> returns each age group nested object field average.</p>
+      <codeblock>{
+  "Major": "Computer Engineering",
+  "avg_age": 25
+}
+{
+  "Major": "Computer Science and Technology",
+  "avg_age": 22.5
+}
+{
+  "Major": "Computer Software and Theory",
+  "avg_age": 26
+  }</codeblock>
+      <p>Conditional select records,and records grouping, sorting, limit records returned starting position and number of records returned.</p>
+      <codeblock>db.collectionspace.collection.aggregate({$match:{interest:{$exists:1}}},{$group:{_id:"$major",avg_age:{$avg:"$info.age"},
+major:{$first:"$major"}}},{$sort:{avg_age:-1,major:-1}},{$skip:2},{$limit:3})</codeblock>
+      <p>This gathering operations by <b>$match</b> first select records matching conditions, then use <b>$group</b> grouped by major and use <b>$avg</b> return nested objects in each age group in the field, on average, the output field named avg_age, finally use <b>$sort</b> by avg_age field values (in descending order), major field values (in descending order) to sort the result set, use the <b>$skip</b> OK to return to the starting posistion of the recording, use the <b>$limit</b> limit the number of records returned.</p>
+      <codeblock>{
+  "avg_age": 25,
+  "major": "Computer Science and Technology"
+}
+{
+  "avg_age": 22,
+  "major": "Computer Software and Theory"
+}
+{
+  "avg_age": 22,
+  "major": "Physics"
+}</codeblock>
+    </section>
+  </body>  
+</topic>

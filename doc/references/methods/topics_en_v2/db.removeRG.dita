@@ -44,6 +44,6 @@
   </body>
   <related-links>
     <link href="db.getRG.dita" format="dita" type="topic"></link>
-    <link href="dblist_en.dita" format="dita" type="topic"></link>
+    <link href="db.list.dita" format="dita" type="topic"></link>
   </related-links>
 </topic>
