@@ -31,7 +31,7 @@
 #define PMD_REST_SESSION_HPP_
 
 #include "pmdSession.hpp"
-#include "restDefine.hpp"
+#include "restdefine.hpp"
 
 namespace engine
 {
