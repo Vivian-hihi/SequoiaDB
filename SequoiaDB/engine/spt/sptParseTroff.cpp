@@ -1,6 +1,6 @@
 #include "core.h"
 #include "ossUtil.h"
-#include "parseTroff.hpp"
+#include "sptParseTroff.hpp"
 #include "ossErr.h"
 #include "ossMem.h"
 #include "../mdocml/parseMandocCpp.hpp"

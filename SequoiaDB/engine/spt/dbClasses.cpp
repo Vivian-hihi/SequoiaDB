@@ -158,12 +158,10 @@
 #define SDB_DEF_COORD_NAME "localhost"
 #define SDB_DEF_COORD_PORT OSS_DFT_SVCPORT
 
-//                                   extern CHAR progPath[PATH_LEN] ;
 
 #if defined (SDB_SHELL)
 extern INT32 gShellReturnCode ;
 extern BOOLEAN gReadNothing ;
-//                                        extern CHAR progPath[PATH_LEN] ;
 #endif
 
 #if defined (SDB_FMP)
@@ -436,6 +434,7 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
    ossStrncpy ( tfPath, path, ossStrlen(path) ) ;
    ossStrncat ( tfPath, TF_REL_PATH, ossStrlen(TF_REL_PATH) ) ;
    //
+#if defined (SDB_SHELL)
    {
    engine::manHelp *mh = engine::manHelp::createInstance( tfPath ) ;
    if ( mh == NULL )
@@ -457,6 +456,7 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
 #endif
    }
    }
+#endif
    JS_SET_RVAL ( cx , vp, JSVAL_VOID ) ;
 
 done :
