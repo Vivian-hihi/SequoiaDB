@@ -53,6 +53,11 @@
             <stentry>db.foo.bar.find({age:{$in:[20,21]}})</stentry>
           </strow>
           <strow>
+            <stentry><xref href="isnull.dita">$isnull</xref></stentry>
+            <stentry>为null或不存在</stentry>
+            <stentry>Db.foo.bar.find({$age:{$isnull:1}})</stentry>
+          </strow>
+          <strow>
             <stentry><xref href="nin.dita">$nin</xref></stentry>
             <stentry>集合内不存在</stentry>
             <stentry>db.foo.bar.find({age:{$nin:[20,21]})</stentry>

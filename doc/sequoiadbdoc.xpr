@@ -110,6 +110,8 @@
                         <file name="administration/concepts/database/topics/aggregate.dita"/>
                         <file name="administration/concepts/database/topics/array_en.dita"/>
                         <file name="administration/concepts/database/topics/array.dita"/>
+                        <file name="administration/concepts/database/topics/bg_task_en.dita"/>
+                        <file name="administration/concepts/database/topics/bg_task.dita"/>
                         <file name="administration/concepts/database/topics/bindata_en.dita"/>
                         <file name="administration/concepts/database/topics/bindata.dita"/>
                         <file name="administration/concepts/database/topics/collection_en.dita"/>
@@ -629,6 +631,8 @@
                     <file name="references/console/topics/gte.dita"/>
                     <file name="references/console/topics/inc_en.dita"/>
                     <file name="references/console/topics/inc.dita"/>
+                    <file name="references/console/topics/isnull_en.dita"/>
+                    <file name="references/console/topics/isnull.dita"/>
                     <file name="references/console/topics/j$addToSet_en.dita"/>
                     <file name="references/console/topics/j$addToSet.dita"/>
                     <file name="references/console/topics/j$push_en.dita"/>

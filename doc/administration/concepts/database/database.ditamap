@@ -19,5 +19,6 @@
         <topicref href="topics/consistency.dita"/>
         <topicref href="topics/dataexamples.dita"/>
         <topicref href="topics/read_write.dita"/>
+        <topicref href="topics/bg_task.dita"/>
     </topicref>
 </map>

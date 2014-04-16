@@ -130,6 +130,11 @@
           </stentry>
           <stentry>Current delimiter default priority is: record delimiter, character delimiter, field delimiter, the default value is ture; If set to false, 
             then the priority of the separator: character deliiter, record delimiter, field delimiter.</stentry>
+        </strow>
+        <strow>
+          <stentry>--stringtype
+          </stentry>
+          <stentry>All values are forced to import into a string type, default false,csv format is valid.</stentry>
         </strow>        
       </simpletable>
       

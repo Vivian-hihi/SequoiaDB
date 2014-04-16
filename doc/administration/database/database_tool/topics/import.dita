@@ -113,6 +113,11 @@
           </stentry>
           <stentry>当前分隔符默认的优先级为：记录分隔符，字符分隔符，字段分隔符，默认值是true；如果设置为false，那么分隔符的优先级为：字符分隔符，记录分隔符，字段分隔符。</stentry>
         </strow>
+        <strow>
+          <stentry>--stringtype
+          </stentry>
+          <stentry>所有导入的值都强制转换成字符串类型， 默认false，csv格式有效</stentry>
+        </strow>
       </simpletable>
     </section>
     <note>Linepriority参数需要被特别关注，如果设置不当，可能会导入数据失败。<fig></fig>当记录中包含“记录分隔符”并且linepriority为true时，工具会优先按照“记录分隔符”解析，而导致导入失败。比如：如果记录为 {"name": "Mike\n"}，应当选择linepriority为false模式。
