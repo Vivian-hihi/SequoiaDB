@@ -42,6 +42,7 @@ namespace engine
    :_pmdLocalSession( fd )
    {
       _pFixBuff         = NULL ;
+      _loginTime        = 0 ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -78,13 +79,26 @@ namespace engine
       return sdbGetOMManager()->getFixBufSize() ;
    }
 
-   INT32 _pmdRestSession::getFixBuff ()
+   CHAR* _pmdRestSession::getFixBuff ()
    {
       if ( !_pFixBuff )
       {
          _pFixBuff = sdbGetOMManager()->allocFixBuf() ;
       }
       return _pFixBuff ;
+   }
+
+   void _pmdRestSession::restoreSession( restSessionInfo &sessionInfo )
+   {
+      _authOK     = sessionInfo._authOK ;
+      _loginTime  = sessionInfo._attr._loginTime ;
+      _userName   = sessionInfo._attr._userName ;
+
+      sessionInfo._isIn = 
+   }
+
+   void _pmdRestSession::saveSession( restSessionInfo &sessionInfo )
+   {
    }
 
 }
