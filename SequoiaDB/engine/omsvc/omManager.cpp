@@ -45,6 +45,8 @@ namespace engine
    _omManager::_omManager()
    :_fixBufSize( SDB_PAGE_SIZE )
    {
+      _maxRestBodySize     = OM_REST_MAX_BODY_SIZE ;
+      _restTimeout         = REST_TIMEOUT ;
    }
 
    _omManager::~_omManager()
@@ -54,7 +56,7 @@ namespace engine
 
    INT32 _omManager::initialize ()
    {
-      return SDB_OK ;
+      return _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
    }
 
    INT32 _omManager::active ()
@@ -77,6 +79,19 @@ namespace engine
       }
       _vecFixBuf.clear() ;
       _omLatch.release() ;
+
+      // release session info
+      restSessionInfo *pSessionInfo = NULL ;
+      map<string, restSessionInfo*>::iterator it = _mapSessions.begin() ;
+      while( it != _mapSessions.end() )
+      {
+         pSessionInfo = it->second ;
+         pSessionInfo->releaseMem() ;
+         SDB_OSS_DEL pSessionInfo ;
+         ++it ;
+      }
+      _mapSessions.clear() ;
+      _mapUser2Sessions.clear() ;
 
       return SDB_OK ;
    }
@@ -134,21 +149,39 @@ namespace engine
       SDB_OSS_FREE( OM_FIX_BUFF_TO_PTR( pBuff ) ) ;
    }
 
-   restSessionInfo* _omManager::getSessionInfo( const string &id )
+   restSessionInfo* _omManager::attachSessionInfo( const string &id )
    {
-      restSessionInfo *pSessionInfo ;
+      restSessionInfo *pSessionInfo = NULL ;
 
       _omLatch.get_shared() ;
       map<string, restSessionInfo*>::iterator it = _mapSessions.find( id ) ;
       if ( it != _mapSessions.end() )
       {
          pSessionInfo = it->second ;
+         pSessionInfo->_inNum.inc() ;
       }
       _omLatch.release_shared() ;
 
       return pSessionInfo ;
    }
 
+   void _omManager::detachSessionInfo( restSessionInfo * pSessionInfo )
+   {
+      SDB_ASSERT( pSessionInfo, "Session can't be NULL" ) ;
+      pSessionInfo->_inNum.dec() ;
+   }
+
+   void _omManager::invalidSessionInfo( restSessionInfo *pSessionInfo )
+   {
+      SDB_ASSERT( pSessionInfo, "Session can't be NULL" ) ;
+      pSessionInfo->_activeTime = 0 ;
+   }
+
+   restSessionInfo* _omManager::newSessionInfo( const string &userName,
+                                                UINT32 localIP )
+   {
+      return NULL ;
+   }
 
    /*
       get the global om manager object point
