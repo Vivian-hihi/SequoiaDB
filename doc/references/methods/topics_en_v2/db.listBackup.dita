@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_hcy_v3f_5n">
+  <title>db.listBackup()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>listBackup - View database backup.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.listBackup</apiname>(<parmname>[options]</parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>View database backup.</p>
+      <parml>
+        <plentry>
+          <pt>options (json object)</pt>
+          <pd>Set the backup name, specify the replication group, and path.
+            <parml>
+              <plentry>
+                <pt>GroupID</pt>
+                <pd>Backup copy group ID specified, the default is all replication groups.</pd>
+                <pd>GroupID:1000 or GroupID:[1000, 1001]</pd>
+              </plentry>
+              <plentry>
+                <pt>GroupName</pt>
+                <pd>Backup copy group name is specified, the default is all replication groups.</pd>
+                <pd>GroupName:"data1" or GroupName:["data1", "data2"]</pd>
+              </plentry>
+              <plentry>
+                <pt>Name</pt>
+                <pd>Backup name, the default view all backups.</pd>
+                <pd>Name:"backup-2014-1-1"</pd>
+              </plentry>
+              <plentry>
+                <pt>Path</pt>
+                <pd>Backup path, the default configuration parameters for the specified backup path. The path supports wildcards(g%: group name, h%: host name, s%:service name)</pd>
+                <pd>Path:"/opt/sequoiadb/backup/%g"</pd>
+              </plentry>
+              <plentry>
+                <pt>IsSubDir</pt>
+                <pd>The above path "Path" configuration parameters are specified for the backup path configuration parameters subdirectory, the default is false.</pd>
+                <pd>IsSubDir:false</pd>
+              </plentry>
+              <plentry>
+                <pt>Prefix</pt>
+                <pd>Backup prefix, supports wildcards(g%,h%,s%), default is empty.</pd>
+                <pd>Prefix:"%g_bk_"</pd>
+              </plentry>             
+            </parml>
+          </pd>
+        </plentry>
+        <plentry>
+          <pt>cond (json object)</pt>
+          <pd>Backup filter</pd>
+        </plentry>
+        <plentry>
+          <pt>sel (json object)</pt>
+          <pd>View the backup to select the output fields.</pd>
+        </plentry>
+      </parml>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>View all database backup information.</p>
+      <codeblock>db.listBackup()</codeblock>
+    </section>
+  </body>
+</topic>

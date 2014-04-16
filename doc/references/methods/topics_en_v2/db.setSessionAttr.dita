@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_xyy_2vf_5n">
+  <title>db.setSessionAttr()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>setSessionAttr - Set Session Properties.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.setSessionAttr</apiname>(<parmname>options</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Set Session Properties.</p>
+      <parml>
+        <plentry>
+          <pt>options (json object)</pt>
+          <pd>Session Properties option.
+            <parml>
+              <plentry>
+                <pt>PreferedInstance</pt>
+                <pd>Read database instance conversation priority selected logo; value "m"/"M"/"s"/"S"/"a"/"A"/1-7, Respectively master/slave/anyone/node1-node7.</pd>
+                <pd>PreferedInstance:"M"</pd>
+              </plentry>
+            </parml></pd>
+        </plentry>        
+      </parml>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Set the session priority access to the data from the "master" database instance.</p>
+      <codeblock>db.setSessionAttr({PreferedInstance:"M"})</codeblock>      
+    </section>
+  </body> 
+</topic>

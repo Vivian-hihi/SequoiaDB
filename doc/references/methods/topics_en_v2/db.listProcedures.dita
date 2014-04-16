@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_jnd_fx2_5n">
+  <title>db.listProcedures()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>listProcedures - Enumerate all of the stored procedure fundtion.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p>
+      <apiname>db.listProcedures</apiname>(<parmname>[cond]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Enumerate all of the stored procedure fundtion.</p>
+      <parml>
+        <plentry>
+          <pt>cond (json)</pt>
+          <pd>Conditions is empty, enumerate all the functions, is not empty, the enumeration aualified function.</pd>          
+        </plentry>        
+      </parml>
+      <p>Defined listProcedures() method, only a json lbject type parameter name condition, the function returns the input value 
+        matches the specified value, otherwise return all functions.</p>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>All functions return information</p>
+      <codeblock>>db.listProcedures()
+{ "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
+    return x + y;
+}", "funcType" : 0 }
+{ "_id" : { "$oid" : "52480d3ef5ce8d5817c4c354" }, "name" : "getAll", "func" : "function getAll() {
+    return db.foo.bar.find();
+}", "funcType" : 0 }
+...</codeblock>
+      <p>Return function named sum specified records</p>
+      <codeblock>>db.listProcedures({name:"sum"})
+{ "_id" : { "$oid" : "52480389f5ce8d5817c4c353" }, "name" : "sum", "func" : "function sum(x, y) {
+    return x + y;
+}", "funcType" : 0 }</codeblock>
+    </section>
+  </body>
+  <related-links>
+    <link href="db.removeProcedure.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_lnd_lgy_tn">
+  <title>db.list()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>list - Enumerate list.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.list</apiname>(<parmname>listType</parmname>,<parmname>[con]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Enumerate list. List is a lightweight command to get the current system status.</p>
+      <parml>
+        <plentry>
+          <pt>listType (Enumeration)</pt>
+          <pd>The value of it is in the range from 0 to 7.</pd>
+        </plentry>
+        <plentry>
+          <pt>con (json object)</pt>
+          <pd>Selecting condition. It just returns the records that match conditions in "con". When it is null, return all records.</pd>
+        </plentry>
+        <plentry>
+          <pt>sel (json object)</pt>
+          <pd>Select fields to be returned. When it is null, return all records.</pd>
+        </plentry>
+        <plentry>
+          <pt>sort (json object)</pt>
+          <pd>Sort records. "1" means ascending order. "-1" means descending order.
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>The method "list()" contians 4 parameters: listType, con, sel and sort. The parameter "listType" is in the type of enumeration. Other parameters are in the type of json object. The format is as follow:</pd>
+                <pd>{"listType":"&lt;List type>",["con":"{"field name 1":{"operator 1":"value 1"},"field name 2":{"operator 2":"value 2"}...}"],["sel":"{"field name 1":"","field name 2":"",...}"],["sort":"{"field name 1":-1|1,"field name 2":1|-1,...}"]}</pd>
+              </plentry>
+            </parml>
+          </pd>          
+        </plentry>        
+      </parml>      
+      <note>
+        <ul><li>The value of "listType" is in the range from 0 to 7.</li>
+          <li>The value of "sel" is in the type of json object. The value of each field in it is always null string. If it is specified as "{"field name 1": "value 1", "field name 2":"value 2",...}", the values of existing fields are invalid. As for fields that doesn't exist, it will return "{"field name 1": "value 1", "field name 2":"value 2",...}".</li>
+          <li>If a value of a field is in the type of array, users can use "." to invoke it and add double quotation.</li>
+        </ul></note>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Specify the value of "listType" as 0：<codeblock>db.list(0)</codeblock></p>
+      <p>Return ：</p>
+      <codeblock>     {
+        "SessionID": 4,
+        "Contexts": [ 0 ]
+        } ...</codeblock>
+      <p>Specify the value of "listType" as 6：<codeblock>db.list(6)</codeblock></p>
+      <p>Return：</p>
+      <codeblock>    {
+        "Name": "foo", 
+        "ID": 4094,
+        "Logical ID": 1,
+        "PageSize": 4096, 
+        "Sequence": 1, 
+        "NumCollections": 1,
+        "CollectionHWM": 3,
+        "Size": 172032000 
+        } </codeblock>
+      <p>
+        <codeblock>db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})</codeblock>
+      </p>
+      <p>Return records that contains the value of "Logical" greater than 1. Each record just
+        return the 2 fields: Name and ID. The values of "Name" in these records are in ascending
+        order.  </p>
+      <codeblock>      {
+        "ID": 4091,
+        "Name": "foo" 
+      } 
+      {
+        "ID": 4093,
+        "Name": "name"
+       }...</codeblock>
+    </section>
+  </body>
+  <related-links>
+    <link href="db.getRG.dita" format="dita" type="topic"></link>
+    <link href="listCollectionSpaces_en.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

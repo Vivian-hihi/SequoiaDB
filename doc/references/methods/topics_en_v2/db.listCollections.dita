@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_zfb_vny_tn">
+  <title>db.listCollections()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>listCollections - Enumerate collection.</p>
+    </section>    
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Enumerate collection. It will show information of all collections in a collection space.</p>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p><codeblock>db.listCollections()</codeblock></p>
+      <p>Return：</p>
+      <codeblock>    { 
+        "Name": "foo.bar",
+        "Details": [ 
+          { 
+            "ID": 0,
+            "Logical ID": 1, 
+            "Sequence": 1, 
+            "Indexes": 2,
+            "Status": "Normal" 
+           }
+        ]
+      }</codeblock>
+    </section>
+  </body>
+  <related-links>
+    <link href="db.listCollectionSpaces.dita" format="dita" type="topic"></link>
+    <link href="db.listReplicaGroups.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

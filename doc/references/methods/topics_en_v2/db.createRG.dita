@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_xpj_bgx_tn">
+  <title>db.createRG()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>createRG - Create a replset.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.createRG</apiname>(<parmname>name</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Create a replset. When creating a replset, the system will automatically generate a "groupID" for a replset.</p>
+      <parml>
+        <plentry>
+          <pt>name (string)</pt>
+          <pd>Replset name. All replset names are unique to each other in a database object.
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>The method "createRG()" contains the parameter "rgname", which is in the type od string. It should not be null.</pd>
+                <pd>(&lt;"Replset name">)</pd>
+              </plentry>
+            </parml>
+          </pd>          
+        </plentry>        
+      </parml>      
+      <note>
+        <ul><li>Replset is not null string. It should not contains "." or "$". The length of it should not be greater than 127B.</li>
+        </ul></note>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Create a replset named "group".</p>
+      <codeblock>db.createRG("group")</codeblock>
+    </section>
+  </body>
+  <related-links>
+    <link href="db.getCS.dita" format="dita" type="topic"></link>
+    <link href="db.getRG.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

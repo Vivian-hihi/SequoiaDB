@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_rm3_kkx_tn">
+  <title>db.removeRG()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>removeRG - Delete the database specified slice group.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.removeRG</apiname>(<parmname>name</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Delete the database specified slice group.</p>
+      <parml>
+        <plentry>
+          <pt>name (string)</pt>
+          <pd>Slice group name, the same database object, a unique slice group name.
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>Definition Format removeRG() method, only the name field, name value is a string, required.</pd>
+                <pd>(&lt;"Slice group name">)</pd>
+              </plentry>
+            </parml>
+          </pd>          
+        </plentry>        
+      </parml>      
+      <note>
+        <ul><li>Slice group name must exist.</li>
+        </ul></note>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Delete slice group called "group" of.</p>
+      <codeblock>db.removeRG("group")</codeblock>
+    </section>
+  </body>
+  <related-links>
+    <link href="db.getRG.dita" format="dita" type="topic"></link>
+    <link href="dblist_en.dita" format="dita" type="topic"></link>
+  </related-links>
+</topic>

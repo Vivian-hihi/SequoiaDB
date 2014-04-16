@@ -45,7 +45,7 @@
       
     </section>
     <section><title>格式</title>
-      <p>rg.createNode()方法的定义格式有三个参数：host、service、dbpath、config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是Json对象，选填。<codeblock>("&lt;主机名>","&lt;端口号>","&lt;节点路径>"[,{&lt;configParam>:value,...}])</codeblock></p>
+      <p>rg.createNode()方法的定义格式有四个参数：host、service、dbpath、config，如上表所示，前三个参数的类型都是字符串型，必填；最后一个是Json对象，选填。<codeblock>("&lt;主机名>","&lt;端口号>","&lt;节点路径>,"[{&lt;configParam>:value,...}])</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

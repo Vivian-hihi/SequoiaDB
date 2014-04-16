@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_vb2_vt2_5n">
+  <title>db.removeProcedure()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>removeProcedure - Deletes the specified function name.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p>
+      <apiname>db.removeProcedure</apiname>(<parmname>function name</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Deletes the specified function name, function name must exist, otherwise an exception message.</p>
+      <parml>
+        <plentry>
+          <pt>function name (string)</pt>
+          <pd>function name.</pd>          
+        </plentry>        
+      </parml>
+      <p>Defined removeProcedure() method, only one string type parameter name function name, its value must already exits, otherwise an exception.</p>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p></p>Delete the sum function:
+      <codeblock>db.removeProcedure("sum")</codeblock>
+      Function must be guaranteed and consistent definition of the function name. Such as db.removeProcedure('sum') call will return a failure.
+    </section>
+  </body>
+  <related-links>
+    <link href="db.createProcedure.dita" format="dita" type="topic"></link>
+    <link href="db.listProcedures.dita" format="dita" type="topic"></link>    
+  </related-links>
+</topic>

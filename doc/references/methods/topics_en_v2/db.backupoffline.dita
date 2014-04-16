@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_zg5_cff_5n">
+  <title>db.backupOffline()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>backupOffline - Backup Database.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.backupOffline</apiname>(<parmname>[options]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Backup Database.</p>
+      <parml>        
+        <plentry>
+          <pt>options (json object)</pt>
+          <pd>Set the backup name, specify the replication group, backup and other parameters.
+            <parml>
+              <plentry>
+                <pt>GroupID</pt>
+                <pd>Backup copy group ID specified, the default is all replication groups.</pd>
+                <pd>GroupID:1000 or GroupID:[1000, 1001]</pd>
+              </plentry>
+              <plentry>
+                <pt>GroupName</pt>
+                <pd>Backup copy group name is specified, the default is all replication groups.</pd>
+                <pd>GroupName:"data1" or GroupName:["data1", "data2"]</pd>
+              </plentry>
+              <plentry>
+                <pt>Name</pt>
+                <pd>Backup name, default "YYYY-MM-DD-HH:mm:SS" Backup name time format.</pd>
+                <pd>Name:"backup-2014-1-1"</pd>
+              </plentry>
+              <plentry>
+                <pt>Path</pt>
+                <pd>Backup path, the default configuration parameters for the specified backup path.The path supports wildcards (g%: group name, h%: host name, s%:service name).</pd>
+                <pd>Path:"/opt/sequoiadb/backup/%g"</pd>
+              </plentry>
+              <plentry>
+                <pt>IsSubDir</pt>
+                <pd>The above Path configuration parameter configuration parameters are specified for the backup path subdircetory, the default is false.</pd>
+                <pd>IsSubDir:false</pd>
+              </plentry>
+              <plentry>
+                <pt>Prefix</pt>
+                <pd>Backup prefix, support wildcards (g%,h%,s%), The default is empty.</pd>
+                <pd>Prefix:"%g_bk_"</pd>
+              </plentry>
+              <plentry>
+                <pt>EnableDataDir</pt>
+                <pd>Date subdirectories feature is turned on, if the current date is automatically rurned on create a subdirectory "YYYY-MM-DD", the default according to false</pd>
+                <pd>EnableDataDir:false</pd>
+              </plentry>
+              <plentry>
+                <pt>Description</pt>
+                <pd>Backup description</pd>
+                <pd>Description:"First backup"</pd>
+              </plentry>
+              <plentry>
+                <pt>EnsureInc</pt>
+                <pd>Whether to open an incremental backup, the default is false.</pd>
+                <pd>EnsureInc:false</pd>
+              </plentry>
+              <plentry>
+                <pt>OverWrite</pt>
+                <pd>Backup is covered with the same name exists, the default is false.</pd>
+                <pd>OverWrite:false</pd>
+              </plentry>
+            </parml>
+          </pd>
+        </plentry>
+      </parml>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>The entire database full backup.</p>
+      <codeblock>db.backupOffline({Name:"FullBackup1"})</codeblock>
+    </section>
+  </body>  
+</topic>

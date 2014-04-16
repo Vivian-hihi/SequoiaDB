@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_1x2_cnd_5n">
+  <title>db.snapshot()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>snapshot - It lists snapshots.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p>
+      <apiname>snapshot</apiname>(<parmname>snapType</parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Sequoiadb
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>It lists snapshots. Snapshot is a kind of command used to get the current status of system.</p>
+      <parml>
+        <plentry>
+          <pt>snapType (List)</pt>
+          <pd>Snapshot type, the value of snapshot type is in the range from 0 to 7.</pd>
+        </plentry>
+        <plentry>
+          <pt>cond (json object)</pt>
+          <pd>Selection criteria, only to return snapshot information con field specifies the node or partition group to null, returns the entire snapshot information.        
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>The defination of the method "snapshot()" contains four fields: snapType, cond, sel, sort. The type of "snapType" is enumeration. Other fields are json objects. The format is as follow:</pd>
+                <pd>{"snapType":"&lt;snapshot type>",["cond":"{"Field name 1":{"operation 1":"value 1"},"Field name 2":{"Operation 2":"value 2"}...}"]}</pd>
+              </plentry>
+            </parml>
+          </pd>          
+        </plentry>        
+      </parml>
+      <note>
+        <ul><li>The value of snapType is in the range from 0 to 7.</li>
+          <li>The parameter "sel" is a json object. The value of field name is specified as null
+            string. It is defined as: {"Field name 1":"value 1","Field name 2":"value 2",...}.If the
+            records contain the specified field names, the values are invalid. If the records don't
+            contain specified fields, it returns "{"Field name 1":"value 1", "Field name 2":"value
+            2"}".</li>
+          <li>If the value of a field is in the type of array. We invoke the elements in it through "." and double quotations.</li>
+        </ul></note>
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Set the value of "snapType" as 0:<codeblock>db.snapshot(0)</codeblock></p>
+      <p>Returns context snapshot of the entire cluster:</p>
+      <codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
+  "Contexts": [
+    {
+      "ContextID": 8,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.07.59.146399"
+    }
+  ]
+}
+{
+  "SessionID": "vmsvr1-cent-x64-1:11830:22",
+  "Contexts": [
+    {
+      "ContextID": 6,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.07.59.147576"
+    }
+  ]
+}
+{
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
+  "Contexts": [
+    {
+      "ContextID": 7,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.07.59.148603"
+    }
+  ]
+  }</codeblock>
+      <p>A partition group snapshot information inquiry by group name or group ID, such as:</p>
+      <p><codeblock>db.snapshot(0,{GroupName:'data1'})</codeblock>Returns group called "data1" partition group snapshot information.
+        <codeblock>db.snapshot(0,{GroupID:1000})</codeblock>Partition group snapshot return group ID is "1000" message.</p>
+      <codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
+  "Contexts": [
+    {
+      "ContextID": 11,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+    }
+  ]
+}
+{
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
+  "Contexts": [
+    {
+      "ContextID": 10,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.865103"
+    }
+  ]
+  }</codeblock>
+      <p>By "group name + host name + service name" or "group ID + Node ID" check snapshot information of a node, such as:</p>
+      <p><codeblock>db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</codeblock>
+        <codeblock>db.snapshot(0,{GroupID:1000,NodeID:1001})</codeblock></p>
+      <codeblock>{
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
+  "Contexts": [
+    {
+      "ContextID": 11,
+      "Type": "DUMP",
+      "Description": "BufferSize:0",
+      "DataRead": 0,
+      "IndexRead": 0,
+      "QueryTimeSpent": 0,
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+    }
+  ]
+  }</codeblock>
+      <p>By "host name + service name" check snapshot information of a node, such as:</p>
+      <p><codeblock>db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})</codeblock>
+      </p>
+    </section>
+  </body>
+  <related-links>
+    <link href="db.listReplicaGroups.dita" format="dita" type="topic"/>
+    <link href="db.resetSnapshot.dita" format="dita" type="topic"/>
+  </related-links>
+</topic>

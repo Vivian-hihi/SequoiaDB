@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_rfb_sqk_5n">
+  <title>rg.createNode()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>createNode - Create a node in a replset.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>rg.createNode</apiname>(<parmname>host</parmname>,<parmname>service</parmname>,<parmname>dbpath</parmname>,<parmname>[config]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>ReplicaGroup
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Create a node in a replset.</p>
+      <parml>
+        <plentry>
+          <pt>host (string)</pt>
+          <pd>Specifies the host name of the node.</pd>
+        </plentry>
+        <plentry>
+          <pt>service (string)</pt>
+          <pd>Node port number.</pd>
+        </plentry>
+        <plentry>
+          <pt>dbpath (string)</pt>
+          <pd>Node path.</pd>
+        </plentry>
+        <plentry>
+          <pt>config (json)</pt>
+          <pd>Node configuration information, such as the configuration log size, whether open affairs, specifically with reference to database configuration.
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>The method "rg.createNode()" contains 4 parameters: Host, Service, dbPath, config. Type the first three parameters are string, required; last one is json object, optional.</pd>
+                <pd>("&lt;Host>","&lt;service>","&lt;dbpath>",[{&lt;configParam>:value,...}])</pd>
+              </plentry>
+            </parml></pd>
+        </plentry>        
+      </parml>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Create a node in port 11800 in replset "group", Specify the log file size is 64MB.</p>
+      <codeblock>rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock>
+      <note><p>In a replset, more than one replset can be created. But the margin between  two ports of
+        them should not be greater than 5. Because the system controls 5 communication
+        interfaces for each node.</p></note>      
+    </section>
+  </body>
+  <related-links>
+    <link href="rg.getDetail.dita"></link>
+    <link href="rg.getMaster.dita"></link>
+  </related-links>
+</topic>

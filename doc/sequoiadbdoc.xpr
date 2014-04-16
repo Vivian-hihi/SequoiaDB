@@ -732,7 +732,6 @@
                     <file name="references/methods/topics/attachCL.dita"/>
                     <file name="references/methods/topics/backupoffline_en.dita"/>
                     <file name="references/methods/topics/backupoffline.dita"/>
-                    <file name="references/methods/cancelTask_en_v2.dita"/>
                     <file name="references/methods/topics/cancelTask_en_v2.dita"/>
                     <file name="references/methods/cancelTask_en.dita"/>
                     <file name="references/methods/cancelTask.dita"/>
@@ -891,8 +890,12 @@
                     <file name="references/methods/waitTasks.dita"/>
                 </folder>
                 <folder name="topics_en_v2">
+                    <file name="references/methods/topics_en_v2/co.count.dita"/>
+                    <file name="references/methods/topics_en_v2/cs.createCL.dita"/>
+                    <file name="references/methods/topics_en_v2/cu.csort.dita"/>
                     <file name="references/methods/topics_en_v2/db.backupoffline.dita"/>
                     <file name="references/methods/topics_en_v2/db.caeateCataRG.dita"/>
+                    <file name="references/methods/topics_en_v2/db.cancelTask.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.createProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.createRG.dita"/>
@@ -902,6 +905,7 @@
                     <file name="references/methods/topics_en_v2/db.eval.dita"/>
                     <file name="references/methods/topics_en_v2/db.exec.dita"/>
                     <file name="references/methods/topics_en_v2/db.execUpdate.dita"/>
+                    <file name="references/methods/topics_en_v2/db.flushConfigure.dita"/>
                     <file name="references/methods/topics_en_v2/db.getCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.getRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.list.dita"/>
@@ -910,15 +914,20 @@
                     <file name="references/methods/topics_en_v2/db.listCollectionSpaces.dita"/>
                     <file name="references/methods/topics_en_v2/db.listProcedures.dita"/>
                     <file name="references/methods/topics_en_v2/db.listReplicaGroups.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listTasks.dita"/>
                     <file name="references/methods/topics_en_v2/db.removeBackup.dita"/>
                     <file name="references/methods/topics_en_v2/db.removeProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.removeRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.resetSnapshot.dita"/>
+                    <file name="references/methods/topics_en_v2/db.setSessionAttr.dita"/>
                     <file name="references/methods/topics_en_v2/db.snapshot.dita"/>
                     <file name="references/methods/topics_en_v2/db.startRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.transBegin.dita"/>
                     <file name="references/methods/topics_en_v2/db.transCommit.dita"/>
                     <file name="references/methods/topics_en_v2/db.transRollback.dita"/>
+                    <file name="references/methods/topics_en_v2/db.waitTasks.dita"/>
+                    <file name="references/methods/topics_en_v2/node.start.dita"/>
+                    <file name="references/methods/topics_en_v2/rg.createNode.dita"/>
                 </folder>
                 <file name="references/methods/methodlist_en_v2.ditamap"/>
                 <file name="references/methods/methodlist_en.ditamap"/>
