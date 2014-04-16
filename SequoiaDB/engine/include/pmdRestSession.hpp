@@ -31,10 +31,22 @@
 #define PMD_REST_SESSION_HPP_
 
 #include "pmdSession.hpp"
-#include "restdefine.hpp"
+#include "restDefine.hpp"
 
 namespace engine
 {
+
+   /*
+      _restSessionInfo define
+   */
+   struct _restSessionInfo
+   {
+      UINT64            _sessionID ;      // host ip + seq
+      UINT64            _loginTime ;
+      UINT64            _activeTime ;
+      
+   } ;
+   typedef _restSessionInfo restSessionInfo ;
 
    /*
       _pmdRestSession define
@@ -42,6 +54,15 @@ namespace engine
    class _pmdRestSession : public _pmdLocalSession
    {
       DECLARE_OBJ_MSG_MAP()
+
+      /*
+         Internal memory assistor
+      */
+      struct _memInfo
+      {
+         INT32       _size ;
+         CHAR        *_next ;
+      } ;
 
       public:
          _pmdRestSession( SOCKET fd ) ;
@@ -66,7 +87,6 @@ namespace engine
       protected:
          httpConnection                _restConn ;
          CHAR                          *_pFixBuff ;
-
 
    } ;
    typedef _pmdRestSession pmdRestSession ;
