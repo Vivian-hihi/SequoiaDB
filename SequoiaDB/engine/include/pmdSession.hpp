@@ -82,10 +82,12 @@ namespace engine
          INT32       sendData( const CHAR *pData, INT32 size,
                                INT32 timeout = -1,
                                BOOLEAN block = TRUE,
+                               INT32 *pSentLen = NULL,
                                INT32 flags = 0 ) ;
          INT32       recvData( CHAR *pData, INT32 size,
                                INT32 timeout = -1,
                                BOOLEAN block = TRUE,
+                               INT32 *pRecvLen = NULL,
                                INT32 flags = 0 ) ;
 
       protected:

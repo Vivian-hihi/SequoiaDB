@@ -37,14 +37,37 @@ namespace engine
 {
 
    /*
+      global define
+   */
+   #define SESSION_USER_NAME_LEN       ( 63 )
+
+   /*
       _restSessionInfo define
    */
    struct _restSessionInfo
    {
+      // attr
       UINT64            _sessionID ;      // host ip + seq
       UINT64            _loginTime ;
+      CHAR              _userName[SESSION_USER_NAME_LEN+1] ;
+
+      // status
       UINT64            _activeTime ;
-      
+      CHAR              *_pSessionMem ;
+
+      _restSessionInfo()
+      {
+         _sessionID     = 0 ;
+         _loginTime     = 0 ;
+         ossMemset( _userName, 0, sizeof( _userName ) ) ;
+         _activeTime    = 0 ;
+         _pSessionMem   = NULL ;
+      }
+
+      INT32 getAttrSize()
+      {
+         return (INT32)offsetof( _restSessionInfo, _activeTime ) ;
+      }
    } ;
    typedef _restSessionInfo restSessionInfo ;
 
