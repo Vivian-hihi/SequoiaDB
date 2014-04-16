@@ -70,7 +70,7 @@ namespace engine
          ossSocket*  socket () { return &_socket ; }
 
          void        attach( _pmdEDUCB * cb ) ;
-         void        dettach() ;
+         void        detach() ;
 
          CHAR*       getBuff( INT32 len ) ;
          INT32       getBuffLen () const { return _buffLen ; }
@@ -100,7 +100,7 @@ namespace engine
          ossSocket                        _socket ;
          std::string                      _sessionName ;
 
-      private:
+      protected:
          CHAR                             *_pBuff ;
          INT32                            _buffLen ;
 
