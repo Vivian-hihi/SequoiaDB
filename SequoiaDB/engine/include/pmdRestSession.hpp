@@ -65,7 +65,7 @@ namespace engine
       // status
       UINT64               _activeTime ;
       BOOLEAN              _authOK ;
-      UINT32               _
+      UINT32               _isIn ;
       sessionMemInfo       *_pSessionMem ;
 
       _restSessionInfo()
