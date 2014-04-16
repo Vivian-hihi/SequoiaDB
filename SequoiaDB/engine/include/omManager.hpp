@@ -33,8 +33,13 @@
 #include "omDef.hpp"
 #include "clsObjBase.hpp"
 #include "ossLatch.hpp"
+#include "pmdRestSession.hpp"
 
 #include <vector>
+#include <string>
+#include <map>
+
+using namespace std ;
 
 namespace engine
 {
@@ -59,11 +64,16 @@ namespace engine
          INT32       getFixBufSize() const { return _fixBufSize ; }
          void        releaseFixBuf( CHAR *pBuff ) ;
 
+         restSessionInfo* getSessionInfo( const string &id ) ;
+
       protected:
 
       private:
-         std::vector< CHAR* >                   _vecFixBuf ;
+         vector< CHAR* >                        _vecFixBuf ;
          const INT32                            _fixBufSize ;
+
+         map<string, restSessionInfo*>          _mapSessions ;
+         map<string, vector<restSessionInfo*> > _mapUser2Sessions ;
 
          ossSpinSLatch                          _omLatch ;
 
