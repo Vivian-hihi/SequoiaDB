@@ -36,24 +36,23 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
-#include "ossSocket.hpp"
 #include "pmdOptions.hpp"
 #include "msgDef.hpp"
+#include "ossSocket.hpp"
 
 #include <string>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 #include "../bson/bson.h"
-using namespace std;
-namespace po = boost::program_options;
 
+using namespace std ;
+namespace po = boost::program_options ;
 using namespace bson ;
 
 namespace engine
 {
    #define PMD_MAX_ENUM_STR_LEN        (32)
-   #define PMD_MAX_CATLOG_NUM          (7)
 
    #define PMD_ADD_PARAM_OPTIONS_BEGIN( desc )\
            desc.add_options()
@@ -346,7 +345,7 @@ namespace engine
          void clearCatAddr() ;
          void setCatAddr( const CHAR *host, const CHAR *service ) ;
 
-         inline UINT32 catNum() const { return PMD_MAX_CATLOG_NUM ; }
+         inline UINT32 catNum() const { return CATA_NODE_MAX_NUM ; }
          inline UINT32 groupID() const { return _groupID ; }
          inline UINT16 nodeID() const { return _nodeID ; }
          inline UINT32 logFileSz () const { return _logFileSz ; }
@@ -408,7 +407,7 @@ namespace engine
 
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;
-         pmdAddrPair _cat[ PMD_MAX_CATLOG_NUM ] ;
+         pmdAddrPair _cat[ CATA_NODE_MAX_NUM ] ;
          UINT16      _krcbSvcPort ;
 
          UINT32      _groupID ;
