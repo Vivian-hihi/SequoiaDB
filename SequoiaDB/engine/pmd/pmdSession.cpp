@@ -66,13 +66,16 @@ namespace engine
       _socket.disableNagle() ;
 
       // make session name
-      CHAR tmpName [ 128 ] = {0} ;
-      _socket.getPeerAddress( tmpName, sizeof( tmpName ) -1 ) ;
-      _sessionName = tmpName ;
-      _sessionName += ":" ;
-      ossSnprintf( tmpName, sizeof( tmpName ) -1, "%d",
-                   _socket.getPeerPort() ) ;
-      _sessionName += tmpName ;
+      if ( SOCKET_INVALIDSOCKET != fd )
+      {
+         CHAR tmpName [ 128 ] = {0} ;
+         _socket.getPeerAddress( tmpName, sizeof( tmpName ) -1 ) ;
+         _sessionName = tmpName ;
+         _sessionName += ":" ;
+         ossSnprintf( tmpName, sizeof( tmpName ) -1, "%d",
+                      _socket.getPeerPort() ) ;
+         _sessionName += tmpName ;
+      }
    }
 
    _pmdSession::~_pmdSession()
@@ -227,7 +230,7 @@ namespace engine
 
    INT32 _pmdSession::sendData( const CHAR * pData, INT32 size,
                                 INT32 timeout, BOOLEAN block,
-                                INT32 flags )
+                                INT32 *pSentLen, INT32 flags )
    {
       INT32 rc = SDB_OK ;
       INT32 sentSize = 0 ;
@@ -256,11 +259,15 @@ namespace engine
       {
          pmdGetKRCB()->getMonDBCB()->svcNetOutAdd( totalSentSize ) ;
       }
+      if ( pSentLen )
+      {
+         *pSentLen = totalSentSize ;
+      }
       return rc ;
    }
 
    INT32 _pmdSession::recvData( CHAR * pData, INT32 size, INT32 timeout,
-                                BOOLEAN block, INT32 flags )
+                                BOOLEAN block, INT32 *pRecvLen, INT32 flags )
    {
       INT32 rc = SDB_OK ;
       INT32 receivedSize = 0 ;
@@ -288,6 +295,10 @@ namespace engine
       if ( totalReceivedSize > 0 )
       {
          pmdGetKRCB()->getMonDBCB()->svcNetInAdd( totalReceivedSize ) ;
+      }
+      if ( pRecvLen )
+      {
+         *pRecvLen = totalReceivedSize ;
       }
       return rc ;
    }
