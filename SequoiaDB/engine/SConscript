@@ -124,6 +124,16 @@ sptFiles = [
       "spt/sptConvertor.cpp"
       ]
 
+spt2Files = [
+      "spt/sptContainer.cpp",
+      "spt/sptInvoker.cpp",
+      "spt/sptReturnVal.cpp",
+      "spt/sptScope.cpp",
+      "spt/sptSPParamContainer.cpp",
+      "spt/sptSPScope.cpp",
+      "spt/sptUtil.cpp"
+      ]
+
 rtnFiles = [
       "rtn/rtnContext.cpp",
       "rtn/rtnUpdate.cpp",
@@ -582,6 +592,7 @@ env.StaticLibrary('pd', pdFiles)
 env.StaticLibrary('util', utilFiles)
 #Scripting
 env.StaticLibrary('spt', sptFiles)
+env.StaticLibrary('spt2', spt2Files)
 #Runtime
 env.StaticLibrary('rtn', rtnFiles)
 #Message
