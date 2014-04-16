@@ -124,9 +124,13 @@ namespace engine
    /*
       define
    */
-   #define PMD_DFT_CONF          "sdb.conf"
-   #define PMD_DFT_CAT           "sdb.cat"
-   #define PMD_DFT_DIAGLOG       "sdbdiag.log"
+   #define PMD_DFT_CONF                "sdb.conf"
+   #define PMD_DFT_CAT                 "sdb.cat"
+   #define PMD_DFT_DIAGLOG             "sdbdiag.log"
+   #define PMD_OPTION_DIAG_PATH        "diaglog"
+   #define PMD_OPTION_LOG_PATH         "replicalog"
+   #define PMD_OPTION_BK_PATH          "bakfile"
+   #define PMD_OPTION_TMPBLK_PATH      "tmp"
 
    /*
       PDM_SESSION_TYPE define
