@@ -457,6 +457,5 @@ INT32 _fmpJSVM::_transCode2Str( const BSONElement &ele,
    INT32 rc = SDB_OK ;
    str = ele.toString(FALSE, TRUE ) ;
 //   _cmd = ele.jsonString( bson::JS, FALSE, 0) ;
-done:
    return rc ;
 }

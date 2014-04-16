@@ -1005,7 +1005,7 @@ namespace engine
    void _dmsStorageData::_mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
                                              SINT32 extentID )
    {
-      if ( extAddr->_freeSpace < DMS_MIN_RECORD_SZ )
+      if ( (UINT32)extAddr->_freeSpace < DMS_MIN_RECORD_SZ )
       {
          if ( extAddr->_freeSpace != 0 )
          {

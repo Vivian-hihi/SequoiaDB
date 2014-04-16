@@ -21,7 +21,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_ACQUIRE, "dpsLockBucket::acquire" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_ACQUIRE, "dpsLockBucket::acquire" )
    INT32 dpsLockBucket::acquire( _pmdEDUCB *eduCB,
                                  const dpsTransLockId &lockId,
                                  DPS_TRANSLOCK_TYPE lockType )
@@ -103,7 +103,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCKX, "dpsLockBucket::waitLockX" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCKX, "dpsLockBucket::waitLockX" )
    INT32 dpsLockBucket::waitLockX( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
    {
       INT32 rc = SDB_OK;
@@ -155,7 +155,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_UPGRADE, "dpsLockBucket::upgrade" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_UPGRADE, "dpsLockBucket::upgrade" )
    INT32 dpsLockBucket::upgrade( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
                                  DPS_TRANSLOCK_TYPE lockType )
    {
@@ -235,7 +235,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_LOCKID, "dpsLockBucket::lockId" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_LOCKID, "dpsLockBucket::lockId" )
    void dpsLockBucket::release( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
@@ -265,7 +265,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDTORUN, "dpsLockBucket::appendToRun" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDTORUN, "dpsLockBucket::appendToRun" )
    INT32 dpsLockBucket::appendToRun( _pmdEDUCB *eduCB,
                                     DPS_TRANSLOCK_TYPE lockType,
                                     dpsTransLockUnit *pLockUnit )
@@ -288,7 +288,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDTOWAIT, "dpsLockBucket::appendToWait" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDTOWAIT, "dpsLockBucket::appendToWait" )
    void dpsLockBucket::appendToWait( _pmdEDUCB *eduCB,
                                     const dpsTransLockId &lockId,
                                     dpsTransLockUnit *pLockUnit  )
@@ -312,13 +312,12 @@ namespace engine
             break;
          }
       }
-      
    done:
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_APPENDTOWAIT );
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDHEADTOWAIT, "dpsLockBucket::appendHeadToWait" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDHEADTOWAIT, "dpsLockBucket::appendHeadToWait" )
    void dpsLockBucket::appendHeadToWait( _pmdEDUCB *eduCB,
                                     const dpsTransLockId &lockId,
                                     dpsTransLockUnit *pLockUnit  )
@@ -334,12 +333,11 @@ namespace engine
          pLockInfo = eduCB->getTransLock( lockId );
          pLockInfo->setNextWaitCB( pWaitCB );
       }
-   done:
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_APPENDHEADTOWAIT );
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_REMOVEFROMRUN, "dpsLockBucket::removeFromRun" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_REMOVEFROMRUN, "dpsLockBucket::removeFromRun" )
    void dpsLockBucket::removeFromRun( _pmdEDUCB *eduCB,
                                     dpsTransLockUnit *pLockUnit  )
    {
@@ -358,7 +356,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_REMOVEFROMRUN );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_REMOVEFROMWAIT, "dpsLockBucket::removeFromWait" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_REMOVEFROMWAIT, "dpsLockBucket::removeFromWait" )
    void dpsLockBucket::removeFromWait( _pmdEDUCB *eduCB,
                                     dpsTransLockUnit *pLockUnit,
                                     const dpsTransLockId &lockId )
@@ -415,7 +413,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCK, "dpsLockBucket::waitLock" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCK, "dpsLockBucket::waitLock" )
    INT32 dpsLockBucket::waitLock( _pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
@@ -442,7 +440,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAKEUP, "dpsLockBucket::wakeUp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAKEUP, "dpsLockBucket::wakeUp" )
    void dpsLockBucket::wakeUp( _pmdEDUCB *eduCB )
    {
       eduCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_LOCKWAKEUP,
@@ -460,7 +458,7 @@ namespace engine
       return TRUE;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_CHECKCOMPATIBLE, "dpsLockBucket::checkCompatible" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_CHECKCOMPATIBLE, "dpsLockBucket::checkCompatible" )
    BOOLEAN dpsLockBucket::checkCompatible( _pmdEDUCB *eduCB,
                                           DPS_TRANSLOCK_TYPE lockType,
                                           dpsTransLockUnit *pLockUnit )
@@ -495,7 +493,7 @@ namespace engine
       return isCompatible;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TEST, "dpsLockBucket::test" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TEST, "dpsLockBucket::test" )
    INT32 dpsLockBucket::test( _pmdEDUCB *eduCB,
                               const dpsTransLockId &lockId,
                               DPS_TRANSLOCK_TYPE lockType )
@@ -533,7 +531,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TRYACQUIRE, "dpsLockBucket::tryAcquire" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TRYACQUIRE, "dpsLockBucket::tryAcquire" )
    INT32 dpsLockBucket::tryAcquire( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
                                     DPS_TRANSLOCK_TYPE lockType )
    {
@@ -578,7 +576,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TRYACQUIREORAPPEND, "dpsLockBucket::tryAcquireOrAppend" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TRYACQUIREORAPPEND, "dpsLockBucket::tryAcquireOrAppend" )
    INT32 dpsLockBucket::tryAcquireOrAppend( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
                                     DPS_TRANSLOCK_TYPE lockType, BOOLEAN appendHead )
    {
@@ -637,7 +635,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_HASWAIT, "dpsLockBucket::hasWait" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_HASWAIT, "dpsLockBucket::hasWait" )
    BOOLEAN dpsLockBucket::hasWait( const dpsTransLockId &lockId )
    {
       BOOLEAN result = FALSE;

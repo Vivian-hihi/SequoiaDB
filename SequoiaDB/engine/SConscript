@@ -13,7 +13,6 @@ if usesm:
     Import("smlib_file")
 #Import("ssllib_file")
 #Import("ssllib_file1")
-Import("curllib_file")
 Import("guess_os")
 Import("hasEngine")
 Import("hasTestcase")
@@ -660,7 +659,6 @@ if hasEngine:
    #env.Install( '#/bin', ssllib_file)
    #if "win32" == guess_os:
    #   env.Install( '#/bin', ssllib_file1)
-   env.Install( '#/bin', curllib_file)
 
 # Test Buckets
 if hasTestcase:

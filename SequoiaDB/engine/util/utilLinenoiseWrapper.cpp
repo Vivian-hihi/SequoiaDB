@@ -616,11 +616,8 @@ BOOLEAN historyClear ( void )
    // clear the history in linenoise
    linenoiseHistoryClear() ;
    ret = TRUE ;
-done :
    PD_TRACE_EXITRC ( SDB_HISTORYCLEAR, ret );
    return ret ;
-error :
-   goto done ;
 }
 
 // Return false if the use presses Ctrl+c when typing first line, that means

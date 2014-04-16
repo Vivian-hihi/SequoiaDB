@@ -31,15 +31,15 @@ import libdeps
 root_dir = dirname(File('SConstruct').rfile().abspath)
 db_dir = join(root_dir,'SequoiaDB')
 engine_dir = join(db_dir,'engine')
-boost_dir = join(root_dir, 'boost')
+thirdparty_dir = join(root_dir, 'thirdparty')
+boost_dir = join(thirdparty_dir, 'boost')
 boost_lib_dir = join(boost_dir, 'lib')
-parser_dir = join(root_dir, 'parser' )
+parser_dir = join(thirdparty_dir, 'parser' )
 sm_dir = join(parser_dir, 'sm')
 js_dir = join(sm_dir, 'js')
 pcre_dir = join(engine_dir,'pcre')
-crypto_dir = join(root_dir, 'crypto')
+crypto_dir = join(thirdparty_dir, 'crypto')
 ssl_dir = join(crypto_dir, 'openssl-1.0.1c')
-curl_dir = join(root_dir, 'curl')
 gtest_dir = join(engine_dir,'gtest')
 ncursesinclude_dir = join(engine_dir, 'ncurses/include')
 driver_dir = join(db_dir,'driver')
@@ -346,7 +346,7 @@ def findVersion( root , choices ):
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
 # add database include, boost include here
-env.Append( CPPPATH=[join(engine_dir,'include'),join(ssl_dir,'include'),join(gtest_dir,'include'),join(curl_dir,'include'),pcre_dir, boost_dir] )
+env.Append( CPPPATH=[join(engine_dir,'include'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir] )
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 # specify dependent libraries for javascript engine and boost
@@ -369,8 +369,6 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux64') )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux64') )
-        # use project-related curl library
-        env.Append( EXTRALIBPATH=join(curl_dir,'lib/linux64') )
         # use project-related spidermonkey library
         if usesm:
             if debugBuild:
@@ -382,7 +380,6 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/linux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/linux64')
-        curllib_dir = join(curl_dir,'lib/linux64')
         force64 = False
     # in case for 32 bit linux or compiling 32 bit in 64 env
     elif guess_arch == "ia32" or force32:
@@ -393,8 +390,6 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'linux32') )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/linux32') )
-        # use project-related curl library
-        env.Append( EXTRALIBPATH=join(curl_dir,'lib/linux32') )
         # and 32 bit spidermonkey library
         if usesm:
             if debugBuild:
@@ -407,7 +402,6 @@ if guess_os == "linux":
                 env.Append( EXTRALIBPATH=[smlib_dir] )
                 # if we are in 64 bit box but want to build 32 bit release
         ssllib_dir = join(ssl_dir,'lib/linux32')
-        curllib_dir = join(curl_dir,'lib/linux32')
     # power pc linux
     elif guess_arch == "ppc64" and not force32:
         linux64 = True
@@ -420,8 +414,6 @@ if guess_os == "linux":
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'ppclinux64') )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/ppclinux64') )
-        # use project-related curl library
-        env.Append( EXTRALIBPATH=join(curl_dir,'lib/ppclinux64') )
         # use project-related spidermonkey library
         if usesm:
             if debugBuild:
@@ -433,7 +425,6 @@ if guess_os == "linux":
                 env.Append( CPPPATH=join(js_dir,'lib/release/ppclinux64/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/ppclinux64')
-        curllib_dir = join(curl_dir,'lib/ppclinux64')
         force64 = False
 
     # spider monkey
@@ -445,7 +436,6 @@ if guess_os == "linux":
     env.Append( LIBS=['crypto'] )
     ssllib_file = join(ssllib_dir, 'libcrypto.a')
     ssllib_file1 = join(ssllib_dir, 'libcrypto.a')
-    curllib_file = join(curllib_dir, 'libcurl.a')
     nix = True
 
 elif "win32" == guess_os:
@@ -466,8 +456,6 @@ elif "win32" == guess_os:
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'win64') )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win64') )
-        # use project-related curl library
-        env.Append( EXTRALIBPATH=join(curl_dir,'lib/win64') )
         # use 64 bit spidermonkey
         if usesm:
             if debugBuild:
@@ -480,14 +468,11 @@ elif "win32" == guess_os:
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         force64 = False
         ssllib_dir = join(ssl_dir,'lib/win64')
-        curllib_dir = join(curl_dir,'lib/win64')
     else:
         # either we are 32 bit or force 32 bit
         env.Append( EXTRALIBPATH=join(boost_lib_dir,'win32') )
         # use project-related ssl library
         env.Append( EXTRALIBPATH=join(ssl_dir,'lib/win32') )
-        # use project-related curl library
-        env.Append( EXTRALIBPATH=join(curl_dir,'lib/win32') )
         if usesm:
             if debugBuild:
                 smlib_dir = join(js_dir,'lib/debug/win32/lib')
@@ -498,7 +483,6 @@ elif "win32" == guess_os:
                 env.Append( CPPPATH=join(js_dir,'lib/release/win32/include') )
                 env.Append( EXTRALIBPATH=[smlib_dir] )
         ssllib_dir = join(ssl_dir,'lib/win32')
-        curllib_dir = join(curl_dir,'lib/win32')
     if usesm:
         smlib_file = join(smlib_dir, 'mozjs185-1.0.dll')
         env.Append( CPPDEFINES=[ "XP_WIN" ] )
@@ -508,7 +492,6 @@ elif "win32" == guess_os:
     env.Append( LIBS=['libeay32'] )
     ssllib_file = join(ssllib_dir, 'libeay32.dll')
     ssllib_file1 = join(ssllib_dir, 'ssleay32.dll')
-    curllib_file = join(curllib_dir, 'libcurl.dll')
     # UNICODE
     env.Append( CPPDEFINES=[ "_UNICODE" ] )
     env.Append( CPPDEFINES=[ "UNICODE" ] )
@@ -823,7 +806,6 @@ if usesm:
    Export("smlib_file")
 Export("ssllib_file")
 Export("ssllib_file1")
-Export("curllib_file")
 Export("hasEngine")
 Export("hasTestcase")
 Export("hasTool")

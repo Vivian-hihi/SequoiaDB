@@ -80,8 +80,6 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define SDBCM_DMN_NAME              "sdbcmd"
 #endif
 // timeout for 30 seconds
-#define SDBCM_LOG_PATH              ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "log" \
-                                    OSS_FILE_SEP "sdbcmd.log"
 #define TERMINATE_TIMEOUT 30
 #define SDBCM_NAME "sdbcm"
 
@@ -227,7 +225,6 @@ INT32 stopSdbcm ( )
       if ( ( dp = readdir ( dirp ) ) != NULL )
       {
          FILE *fp = NULL ;
-         CHAR *p = NULL ;
          pid_t pid ;
          CHAR pathName [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
          CHAR commandLine [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
@@ -253,17 +250,6 @@ INT32 stopSdbcm ( )
          {
             continue;
          }
-         /*if ( NULL == ( p = ossStrstr ( commandLine, SDBCM_NAME_PATTERN1 ) ) )
-         {
-            // if it's not including what we need, let's continue
-            continue ;
-         }
-         if ( NULL == ( p = ossStrstr ( p, SDBCM_NAME_PATTERN2 ) ) ||
-              ossStrlen ( p ) != 1 )
-         {
-            // if it's not end with ), let's continue
-            continue ;
-         }*/
 
          // get pid
          pid = atoi ( dp->d_name ) ;

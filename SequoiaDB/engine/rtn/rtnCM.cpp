@@ -131,9 +131,6 @@ namespace CLSMGR
    // path of binary file "sdbstop"
    static CHAR sdbstopExecName[OSS_MAX_PATHSIZE + 1] ;
 
-   // indicates whether to exit main loop
-   static BOOLEAN gSDBCMSTOP = FALSE ;
-
    // functions declare
    INT32 writeConfigureFile ( OSSFILE *pFile, const CHAR *pBufferWrite,
                               SINT64 iLenToWrite ) ;

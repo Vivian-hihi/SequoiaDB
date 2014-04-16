@@ -10,7 +10,7 @@ Import("GuessArch")
 Import("findVersion")
 
 root_dir = dirname(File('SConscript').rfile().abspath)
-boost_dir = join(root_dir, '../../boost')
+boost_dir = join(root_dir, '../../thirdparty/boost')
 boost_lib_dir = join(boost_dir, 'lib')
 
 linux = False

@@ -767,7 +767,7 @@ INT32 _migJSONExtractor::_extractRecord ()
    CHAR *keyCursor = NULL ;
    BOOLEAN hasID = FALSE ;
    string fieldID = "_id" ;
-   INT32 filedIDLen = ossStrlen ( fieldID.c_str() ) ;
+   UINT32 filedIDLen = ossStrlen ( fieldID.c_str() ) ;
 
    newObj = bson_create () ;
    if ( !newObj )
@@ -790,7 +790,7 @@ INT32 _migJSONExtractor::_extractRecord ()
       for ( UINT32 i = 0; i < _fieldList.size(); ++i )
       {
          string str = _fieldList[i] ;
-         if ( filedIDLen == ossStrlen ( str.c_str() ) )
+         if ( ossStrlen ( str.c_str() ) == filedIDLen )
          {
             if ( 0 == ossStrncmp ( fieldID.c_str(), str.c_str(), filedIDLen ) )
             {

@@ -158,7 +158,7 @@ namespace engine
 
    void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
    {
-      if ( buffLen > SESSION_MAX_CATCH_SIZE )
+      if ( (UINT32)buffLen > SESSION_MAX_CATCH_SIZE )
       {
          SDB_OSS_FREE( pBuff ) ;
          _totalMemSize -= buffLen ;
@@ -425,10 +425,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
 
-   done:
       return rc ;
-   error:
-      goto done ;
    }
 
    INT32 _pmdLocalSession::_onInsertReqMsg( NET_HANDLE handle, MsgHeader * msg )

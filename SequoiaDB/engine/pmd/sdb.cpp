@@ -380,42 +380,6 @@ INT32 enterInteractiveMode ( Scope *scope )
          goto loop_next ;
 
       history = string( code ) ;
-/*
-{
-   const CHAR* path = "/home/users/tanzhaobo/sequoiadb/doc/manual/";
-   manHelp scf(path);
-   rc = scf.getFileHelp("createCL");
-   if ( rc )
-   {
-      printf("wrong!\n");
-   }
-   else
-   {
-      printf("OK!\n");
-   }
-
-}
-*/
-/*
-      if ( ossStrncmp ( CMD_HELP, code, ossStrlen(CMD_HELP) ) == 0 )
-      {
-         // if code is "help()", let it excute by spidermonkey
-         const CHAR *cmd = boost::algorithm::erase_all_copy( string(code), " " ).c_str() ;
-         if ( *(cmd + ossStrlen(CMD_HELP)) == '(' )
-            goto excute;
-         // get the manual file to parse
-         ossStrncpy ( manPath, progPath, PATH_LEN ) ;
-         const CHAR* filename = cmd + ossStrlen ( CMD_HELP ) ;
-         ossStrncat ( manPath, MAN_PATH_PRE, ossStrlen(MAN_PATH_PRE) ) ;
-         ossStrncat ( manPath, filename, ossStrlen(filename) ) ;
-         ossStrncat ( manPath, MAN_PATH_SUF, ossStrlen(MAN_PATH_SUF) ) ;
-         rc = md.parse ( manPath ) ;
-         if ( rc != SDB_OK )
-            ossPrintf ( "No manual for method %s"OSS_NEWLINE, filename ) ;
-         goto loop_next ;
-      }
-      else
-*/
       if ( ossStrcmp ( CMD_QUIT, code ) == 0 ||
                 ossStrcmp ( CMD_QUIT1,
                 boost::algorithm::erase_all_copy( string(code), " " ).c_str() ) == 0 )
@@ -439,7 +403,6 @@ INT32 enterInteractiveMode ( Scope *scope )
          goto loop_next ;
       }
 
-   excute :
       rc = SDB_OK ;
       ossGetCurrentTime ( tmBegin ) ;
       // result is freed in loop_next:

@@ -1,10 +1,6 @@
 #ifndef	MANDOC_CONFIG_H
 #define	MANDOC_CONFIG_H
 
-#if defined(__linux__) || defined(__MINT__)
-# define _GNU_SOURCE /* strptime(), getsubopt() */
-#endif
-
 #include <stdio.h>
 
 #define VERSION "1.12.3"
