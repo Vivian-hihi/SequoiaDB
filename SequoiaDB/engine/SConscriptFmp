@@ -66,6 +66,10 @@ clientCFiles = [
       "client/network.c"
       ]
 
+sdbFiles = [
+      "pmd/sdbcommon.cpp"
+      ]
+
 #Client Driver
 fmpEnv.StaticLibrary('clientc', clientCFiles)
 #Operating System Services
@@ -78,9 +82,11 @@ fmpEnv.StaticLibrary('spt', sptFiles)
 fmpEnv.StaticLibrary('util', utilFiles)
 #fmp
 fmpEnv.StaticLibrary('fmp', fmpFiles)
+#sdb
+fmpEnv.StaticLibrary('sdb', sdbFiles)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "fmp"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "fmp", 'sdb'],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )
