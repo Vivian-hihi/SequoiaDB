@@ -2,7 +2,7 @@
 #include "ossTypes.h"
 #include <string>
 #include "ossUtil.h"
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 
 
 using namespace std;

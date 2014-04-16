@@ -50,7 +50,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "rtnTrace.hpp"
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 
 #include <stdlib.h>
 #include <time.h>

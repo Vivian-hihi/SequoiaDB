@@ -43,7 +43,7 @@
 #include "sdbcm.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 #include "pmdCommon.hpp"
 #include "pmdOptions.h"
 

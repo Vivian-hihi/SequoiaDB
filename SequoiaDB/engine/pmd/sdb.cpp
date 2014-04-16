@@ -22,7 +22,7 @@
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 using std::ostream ;
 using std::vector ;
 using std::string ;

@@ -40,7 +40,7 @@
 #include "ossProc.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 #include <string>
 #include <iostream>
 #include <boost/program_options.hpp>

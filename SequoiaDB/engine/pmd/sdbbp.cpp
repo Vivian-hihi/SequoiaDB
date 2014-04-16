@@ -15,7 +15,7 @@
 using std::string ;
 using namespace engine ;
 
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"

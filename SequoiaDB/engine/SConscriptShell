@@ -9,6 +9,7 @@ sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
+      "spt/sptCommon.cpp",
       "spt/sptParseTroff.cpp"
       ]
 
@@ -28,12 +29,10 @@ ossFiles = [
 
 shellMain = [
       "pmd/sdb.cpp",
-      "pmd/sdbcommon.cpp"
       ]
 
 shellBpMain = [
       "pmd/sdbbp.cpp",
-      "pmd/sdbcommon.cpp"
       ]
 
 pdFiles = [

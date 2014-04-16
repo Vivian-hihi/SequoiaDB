@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <vector>
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 
 #define MFILE_SUFFIX ".cli"
 

@@ -9,7 +9,8 @@ sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/sptConvertorHelper.cpp"
+      "spt/sptConvertorHelper.cpp",
+      "spt/sptCommon.cpp"
       ]
 
 ossFiles = [
@@ -66,10 +67,6 @@ clientCFiles = [
       "client/network.c"
       ]
 
-sdbFiles = [
-      "pmd/sdbcommon.cpp"
-      ]
-
 #Client Driver
 fmpEnv.StaticLibrary('clientc', clientCFiles)
 #Operating System Services
@@ -82,11 +79,9 @@ fmpEnv.StaticLibrary('spt', sptFiles)
 fmpEnv.StaticLibrary('util', utilFiles)
 #fmp
 fmpEnv.StaticLibrary('fmp', fmpFiles)
-#sdb
-fmpEnv.StaticLibrary('sdb', sdbFiles)
 
 #
 sdbfmp = fmpEnv.Program("sdbfmp", fmpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "fmp", 'sdb'],
+      LIBDEPS=["spt","oss","pd","util","clientc", "fmp"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 fmpEnv.Install( '#/bin', sdbfmp )

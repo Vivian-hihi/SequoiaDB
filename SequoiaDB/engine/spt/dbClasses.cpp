@@ -16,7 +16,7 @@
 #include "ossSocket.hpp"
 #include "string"
 #include "climits"
-#include "sdbcommon.hpp"
+#include "sptCommon.hpp"
 
 //#define ERRMSGBUFFERSIZE 256
 #define SAFE_JS_FREE( cx, p ) \
