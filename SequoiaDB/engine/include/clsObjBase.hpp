@@ -101,6 +101,7 @@ namespace engine
 
          virtual INT32    initialize() { return SDB_OK ; }
          virtual INT32    active () { return SDB_OK ;}
+         virtual INT32    deactive() { return SDB_OK ; }
          virtual INT32    final() { return SDB_OK ; }
 
       public:

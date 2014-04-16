@@ -31,8 +31,8 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef OSSNETWORK_HPP_
-#define OSSNETWORK_HPP_
+#ifndef OSS_SOCKET_HPP__
+#define OSS_SOCKET_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -172,4 +172,5 @@ INT32    ossGetAddrInfo( sockaddr_in *addr, CHAR *pAddress, UINT32 length,
 INT32    ossIP2Str( UINT32 ip, CHAR *pStr, INT32 nameLen ) ;
 UINT32   ossStr2IP( const CHAR *pStr ) ;
 
-#endif // OSSNETWORK_HPP_
+#endif // OSS_SOCKET_HPP__
+

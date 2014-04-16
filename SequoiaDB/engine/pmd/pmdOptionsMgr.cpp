@@ -36,7 +36,6 @@
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 #include "pmdCommon.hpp"
-#include "ossSocket.hpp"
 #include "msg.hpp"
 #include "msgCatalog.hpp"
 #include "ossMem.hpp"
@@ -62,16 +61,8 @@ namespace engine
 
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
 
-   #define PMD_ARTIFICIAL_CAT_GROUP_ID    CAT_CATALOG_GROUPID
-   #define PMD_ARTIFICIAL_CAT_NODE_ID     1
-
    #define PMD_OPTION_CATALOG_ADDR_SPLITER            ","
    #define PMD_OPTION_CATALOG_ADDR_FIELD_SPLITER      ":"
-
-   #define PMD_OPTION_DIAG_PATH        "diaglog"
-   #define PMD_OPTION_LOG_PATH         "replicalog"
-   #define PMD_OPTION_BK_PATH          "bakfile"
-   #define PMD_OPTION_TMPBLK_PATH      "tmp"
 
    #define PMD_OPTION_BRK_TIME_DEFAULT (5000)
    #define PMD_MAX_PREF_POOL           (200)
@@ -846,7 +837,7 @@ namespace engine
 
       // other configs
       ossMemset( _krcbConfPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
-      for ( UINT32 i = 0; i < PMD_MAX_CATLOG_NUM; ++i )
+      for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; ++i )
       {
          ossMemset( _cat[i]._host, 0, OSS_MAX_HOSTNAME + 1 ) ;
          ossMemset( _cat[i]._service, 0, OSS_MAX_SERVICENAME + 1 ) ;
@@ -1216,7 +1207,7 @@ namespace engine
       boost::algorithm::split( addrs, _catAddrLine,
                                boost::algorithm::is_any_of(
                                PMD_OPTION_CATALOG_ADDR_SPLITER ) ) ;
-      if ( PMD_MAX_CATLOG_NUM < addrs.size() )
+      if ( CATA_NODE_MAX_NUM < addrs.size() )
       {
          std::cerr << "catalog addr more than max cat number" << endl ;
          goto error ;
@@ -1257,7 +1248,7 @@ namespace engine
    {
       UINT32 count = 0 ;
       stringstream ss ;
-      for ( UINT32 i = 0; i < PMD_MAX_CATLOG_NUM ; ++i )
+      for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; ++i )
       {
          if ( '\0' != _cat[i]._host[0] )
          {
@@ -1668,9 +1659,9 @@ namespace engine
       }
 
       {
-         UINT32 catGID = PMD_ARTIFICIAL_CAT_GROUP_ID ;
-         UINT16 catNID = PMD_ARTIFICIAL_CAT_NODE_ID ;
-         for ( UINT32 i = 0; i < PMD_MAX_CATLOG_NUM ; i++ )
+         UINT32 catGID = CATALOG_GROUPID ;
+         UINT16 catNID = CATA_NODE_ID_BEGIN ;
+         for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; i++ )
          {
             if ( 0 == ossStrlen( _cat[i]._host ) )
             {
@@ -1755,7 +1746,7 @@ namespace engine
 
    void _pmdOptionsMgr::clearCatAddr()
    {
-      for ( UINT32 i = 0 ; i < PMD_MAX_CATLOG_NUM ; ++i )
+      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
       {
          _cat[i]._host[0] = '\0' ;
          _cat[i]._service[0] = '\0' ;
@@ -1765,7 +1756,7 @@ namespace engine
    void _pmdOptionsMgr::setCatAddr( const CHAR *host,
                                     const CHAR *service )
    {
-      for ( UINT32 i = 0 ; i < PMD_MAX_CATLOG_NUM ; ++i )
+      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
       {
          if ( '\0' == _cat[i]._host[0] )
          {

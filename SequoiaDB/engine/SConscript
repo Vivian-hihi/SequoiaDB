@@ -323,6 +323,10 @@ dpsFiles = [
       "dps/dpsOp2Record.cpp",
       "dps/dpsDump.cpp"
       ]
+      
+omsvcFiles = [
+      "omsvc/omManager.cpp"
+      ]
 
 barFiles = [
       "bar/barBkupLogger.cpp",
@@ -619,6 +623,8 @@ env.StaticLibrary('auth', authFiles )
 env.StaticLibrary('gtest', gtestFiles)
 #Client CPP
 env.StaticLibrary('clientcpp', clientCPPFiles )
+#omsvc
+env.StaticLibrary('omsvc', omsvcFiles)
 
 #gtest main
 dpsgtest = env.Object ( 'dpsgtest', gtestMainFile )
