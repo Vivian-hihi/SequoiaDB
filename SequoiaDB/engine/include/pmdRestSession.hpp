@@ -31,6 +31,7 @@
 #define PMD_REST_SESSION_HPP_
 
 #include "pmdSession.hpp"
+#include "restDefine.hpp"
 
 namespace engine
 {
@@ -49,6 +50,11 @@ namespace engine
          virtual INT32     sessionType() const { return PMD_SESSION_REST ; }
          virtual UINT64    identifyID() ;
 
+      public:
+         httpConnection*   getRestConn() { return &_restConn ; }
+         CHAR*             getFixBuff() ;
+         INT32             getFixBuffSize () const ;
+
       protected:
          virtual INT32  _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
          virtual INT32  _onAuth( MsgHeader *msg ) ;
@@ -58,7 +64,9 @@ namespace engine
          INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
 
       protected:
-         BOOLEAN              _authOK ;
+         httpConnection                _restConn ;
+         CHAR                          *_pFixBuff ;
+
 
    } ;
    typedef _pmdRestSession pmdRestSession ;
