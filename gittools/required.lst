@@ -1,0 +1,16 @@
+thirdparty/boost/boost
+thirdparty/boost/lib
+buildscripts
+client/samples
+client/admin/admintpl
+conf
+thirdparty/crypto/openssl-1.0.1c/include
+thirdparty/crypto/openssl-1.0.1c/lib
+doc
+driver
+java
+license
+misc
+thirdparty/parser
+SequoiaDB
+SConstruct
