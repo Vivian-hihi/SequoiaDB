@@ -42,31 +42,58 @@ namespace engine
    #define SESSION_USER_NAME_LEN       ( 63 )
 
    /*
+      Internal memory assistor
+   */
+   typedef struct _sessionMemInfo
+   {
+      INT32                   _size ;
+      _sessionMemInfo         *_next ;
+   } sessionMemInfo ;
+
+   /*
       _restSessionInfo define
    */
    struct _restSessionInfo
    {
-      // attr
-      UINT64            _sessionID ;      // host ip + seq
-      UINT64            _loginTime ;
-      CHAR              _userName[SESSION_USER_NAME_LEN+1] ;
+      struct _sessionAttr
+      {
+         UINT64            _sessionID ;      // host ip + seq
+         UINT64            _loginTime ;
+         CHAR              _userName[SESSION_USER_NAME_LEN+1] ;
+      } _attr ;
 
       // status
-      UINT64            _activeTime ;
-      CHAR              *_pSessionMem ;
+      UINT64               _activeTime ;
+      BOOLEAN              _authOK ;
+      UINT32               _
+      sessionMemInfo       *_pSessionMem ;
 
       _restSessionInfo()
       {
-         _sessionID     = 0 ;
-         _loginTime     = 0 ;
-         ossMemset( _userName, 0, sizeof( _userName ) ) ;
-         _activeTime    = 0 ;
-         _pSessionMem   = NULL ;
+         _attr._sessionID     = 0 ;
+         _attr._loginTime     = 0 ;
+         ossMemset( _attr._userName, 0, sizeof( _attr._userName ) ) ;
+         _activeTime          = 0 ;
+         _authOK              = FALSE ;
+         
+         _isIn                = FALSE ;
+         _pSessionMem         = NULL ;
       }
 
       INT32 getAttrSize()
       {
-         return (INT32)offsetof( _restSessionInfo, _activeTime ) ;
+         return (INT32)sizeof( _attr ) ;
+      }
+
+      void releaseMem()
+      {
+         sessionMemInfo *next = _pSessionMem ;
+         while ( _pSessionMem )
+         {
+            next = _pSessionMem->_next ;
+            SDB_OSS_FREE( (CHAR*)_pSessionMem ) ;
+            _pSessionMem = next ;
+         }
       }
    } ;
    typedef _restSessionInfo restSessionInfo ;
@@ -77,15 +104,6 @@ namespace engine
    class _pmdRestSession : public _pmdLocalSession
    {
       DECLARE_OBJ_MSG_MAP()
-
-      /*
-         Internal memory assistor
-      */
-      struct _memInfo
-      {
-         INT32       _size ;
-         CHAR        *_next ;
-      } ;
 
       public:
          _pmdRestSession( SOCKET fd ) ;
@@ -99,6 +117,9 @@ namespace engine
          CHAR*             getFixBuff() ;
          INT32             getFixBuffSize () const ;
 
+         void              restoreSession( restSessionInfo &sessionInfo ) ;
+         void              saveSession( restSessionInfo &sessionInfo ) ;
+
       protected:
          virtual INT32  _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
          virtual INT32  _onAuth( MsgHeader *msg ) ;
@@ -110,6 +131,10 @@ namespace engine
       protected:
          httpConnection                _restConn ;
          CHAR                          *_pFixBuff ;
+
+         UINT64                        _loginTime ;
+         std::string                   _userName ;
+         
 
    } ;
    typedef _pmdRestSession pmdRestSession ;
