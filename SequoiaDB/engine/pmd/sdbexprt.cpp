@@ -98,7 +98,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( COMMANDS_STRING(OPTION_DELRECORD,         ",r"), boost::program_options::value<string>(), "record delimiter ( default: '\\n' )" ) \
        ( COMMANDS_STRING(OPTION_CSNAME,            ",c"), boost::program_options::value<string>(), "collection space name" ) \
        ( COMMANDS_STRING(OPTION_CLNAME,            ",l"), boost::program_options::value<string>(), "collection name" ) \
-       ( COMMANDS_STRING(OPTION_HASOID,            ",i"), boost::program_options::value<string>(), "has _id ( default: true )" ) \
+       ( COMMANDS_STRING(OPTION_HASOID,            ",i"), boost::program_options::value<string>(), "has _id ( default: true )( json only )" ) \
        ( OPTION_CSVFIELDLIST,     boost::program_options::value<string>(), "field list ( separate by , )" ) \
        ( OPTION_CSVFIELDINCLUDED, boost::program_options::value<string>(), "include field names ( default: true )( csv only )" ) \
        ( OPTION_FILENAME,         boost::program_options::value<string>(), "database load file name" ) \
