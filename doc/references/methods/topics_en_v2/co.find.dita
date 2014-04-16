@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_fpp_51m_5n">
+  <title>db.collectionspace.collection.find()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>find - The method "find()" selects records that users need.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.collectionspace.collection.find</apiname>(<parmname>[cond]</parmname>,<parmname>[sel]</parmname>)
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Collection
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>The method "find()" selects records that users need. It will return a cursor. In SequoiaDB,
+        a cursor is a pointer which point to a query result set. The client can go through teh
+        query results.</p>
+      <parml>
+        <plentry>
+          <pt>cond (json object)</pt>
+          <pd>Selecting condtion. If it is null, it will find all the records. If it is not
+            null, it will find records that matches the condition.</pd>
+        </plentry>
+        <plentry>
+          <pt>sel (json object)</pt>
+          <pd>It chooses fields to be returned. If it is null, it will return all the
+            records.If a field doesn't exist, it will return null string.
+            <parml>
+              <plentry>
+                <pt>Format</pt>
+                <pd>The definitin of "find()" contains 2 parameters: cond and sel, which are both in the type
+                  of JSON object. The parameter "cond" specifys the matching condition. The parameter "sel"
+                  specifys the fields to be returned.</pd>
+                <pd>{[{"field name 1":{"match 1":"value 1","field name 2":{"match 2":"value 2"},...}],[{"field name 1":"","field name 2":"",..}]}</pd>
+              </plentry>
+            </parml></pd>
+        </plentry>        
+      </parml>
+      <note>
+        <ul>
+          <li>The parameter "sel" is in the type of a json object. The value of the field is null
+            string. But if it is specified as :{"field name 1":"value 1","field name 2":"value 2",...}
+            and records conain choosed field, the values are invalid. If fields specified in "sel"
+            don't exist, it will return "{"field name 1":"value 1","field name 2":"value 2",...}".</li>
+        </ul>
+      </note>      
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Find all the records without specifying the field "cond" and "sel".</p>
+      <codeblock>db.foo.bar.find()</codeblock>
+      <p>Find records that matches the value of the parameter "cond".</p>
+      <codeblock>db.foo.bar.find({age:{<xref href="../../console/topics/gt_en.dita">$gt</xref>:25},name:"Tom"})</codeblock>
+      <p>This operation will return records that contains the value of "age" greater than 25
+      and the value "Tom" on the field "name".</p>
+      <p>Specify the fields to return by setting the content of the parameter "sel".For
+        example, there are 2 records: "{age:25,type:"system"}" and
+        "{age:20,name:"Tom",type:"normal"}".</p>
+      <codeblock>db.foo.bar.find(null,{age:"",name:""})</codeblock>
+      <p>This operation return the value of "age" and "name". So it will
+        return:"{age:25,name:""}，{age:20,name:"Tom"}". Although the first record doesn't contain
+        the field, it will return "name:""".</p>
+    </section>
+  </body>
+  <related-links>
+    <link href="co.insert.dita" format="dita" type="topic"></link>
+    <link href="co.remove.dita" format="dita" type="topic"></link>    
+  </related-links>
+</topic>
