@@ -325,6 +325,7 @@ dpsFiles = [
       ]
       
 omsvcFiles = [
+      "pmd/pmdSession.cpp",
       "omsvc/omManager.cpp"
       ]
 
