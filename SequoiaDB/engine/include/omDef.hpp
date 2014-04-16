@@ -47,6 +47,8 @@ namespace engine
    #define OM_FIX_PTR_TO_BUFF(ptr)           ((CHAR*)(ptr)+sizeof(INT32))
    #define OM_FIX_BUFF_HEADER(buff)          (*(INT32*)((CHAR*)(buff)-sizeof(INT32)))
 
+   // max rest body size
+   #define OM_REST_MAX_BODY_SIZE             ( 64 * 1024 * 1024 )
 
 }
 

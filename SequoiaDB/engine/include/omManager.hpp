@@ -34,6 +34,7 @@
 #include "clsObjBase.hpp"
 #include "ossLatch.hpp"
 #include "pmdRestSession.hpp"
+#include "restAdaptor.hpp"
 
 #include <vector>
 #include <string>
@@ -64,7 +65,14 @@ namespace engine
          INT32       getFixBufSize() const { return _fixBufSize ; }
          void        releaseFixBuf( CHAR *pBuff ) ;
 
-         restSessionInfo* getSessionInfo( const string &id ) ;
+         restSessionInfo*  attachSessionInfo( const string &id ) ;
+         void              detachSessionInfo( restSessionInfo *pSessionInfo ) ;
+         void              invalidSessionInfo( restSessionInfo *pSessionInfo ) ;
+
+         restSessionInfo*  newSessionInfo( const string &userName,
+                                           UINT32 localIP ) ;
+
+         restAdaptor*      getRestAdptor() { return &_restAdptor ; }
 
       protected:
 
@@ -76,6 +84,12 @@ namespace engine
          map<string, vector<restSessionInfo*> > _mapUser2Sessions ;
 
          ossSpinSLatch                          _omLatch ;
+
+         restAdaptor                            _restAdptor ;
+
+         // configure info
+         INT32                                  _maxRestBodySize ;
+         INT32                                  _restTimeout ;
 
    } ;
    typedef _omManager omManager ;
