@@ -246,6 +246,31 @@ monFiles = [
       "mon/monCB.cpp"
       ]
 
+ssh2Files = [
+      "ssh2/agent.c",
+      "ssh2/channel.c",
+      "ssh2/comp.c",
+      "ssh2/crypt.c",
+      "ssh2/global.c",
+      "ssh2/hostkey.c",
+      "ssh2/keepalive.c",
+      "ssh2/kex.c",
+      "ssh2/knownhost.c",
+      "ssh2/libgcrypt.c",
+      "ssh2/mac.c",
+      "ssh2/misc.c",
+      "ssh2/openssl.c",
+      "ssh2/packet.c",
+      "ssh2/pem.c",
+      "ssh2/publickey.c",
+      "ssh2/scp.c",
+      "ssh2/session.c",
+      "ssh2/sftp.c",
+      "ssh2/transport.c",
+      "ssh2/userauth.c",
+      "ssh2/version.c"
+      ]
+
 pcreFiles = [
      "pcre/pcre_byte_order.c",
      "pcre/pcre_compile.c",
@@ -575,6 +600,8 @@ spdTestFiles =[
 env.StaticLibrary('bson', bsonFiles)
 #PCRE
 env.StaticLibrary('pcre', pcreFiles)
+#ssh2
+env.StaticLibrary('ssh2', ssh2Files)
 #snappy
 env.StaticLibrary('snappy', snappyFiles)
 #Operating System Services

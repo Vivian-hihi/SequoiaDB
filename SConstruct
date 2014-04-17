@@ -38,6 +38,7 @@ parser_dir = join(thirdparty_dir, 'parser' )
 sm_dir = join(parser_dir, 'sm')
 js_dir = join(sm_dir, 'js')
 pcre_dir = join(engine_dir,'pcre')
+ssh2_dir = join(engine_dir,'ssh2')
 crypto_dir = join(thirdparty_dir, 'crypto')
 ssl_dir = join(crypto_dir, 'openssl-1.0.1c')
 gtest_dir = join(engine_dir,'gtest')
@@ -266,11 +267,11 @@ hasAll = has_option( "all" )
 # if everything are set, let's set everything to true
 if hasAll:
    hasEngine = True
-   hasClient = True
+#   hasClient = True
    hasTestcase = True
-   hasTool = True
-   hasShell = True
-   hasFmp = True
+#   hasTool = True
+#   hasShell = True
+#   hasFmp = True
 # if nothing specified, let's use engine+client+shell by default
 elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp ):
    hasEngine = True
@@ -346,7 +347,7 @@ def findVersion( root , choices ):
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
 # add database include, boost include here
-env.Append( CPPPATH=[join(engine_dir,'include'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir] )
+env.Append( CPPPATH=[join(engine_dir,'include'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir] )
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 # specify dependent libraries for javascript engine and boost
