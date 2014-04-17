@@ -2834,7 +2834,7 @@ INT32 Event::getResultFromBSONObj( const BSONObj &bsonobj,
                                    INT32 &colourPairNumber )
 {
    INT32 rc                          = SDB_OK ;
-   INT32 pos_last                    = 0 ;
+   UINT32 pos_last                   = 0 ;
    const char *sourceFieldbuf        = sourceField.c_str();
    const char *baseFieldbuf          = baseField.c_str();
    InputPanel &input                 = root.input ;
@@ -3968,7 +3968,7 @@ INT32 Event::refreshDS_Table( DynamicSnapshotOutPut &DS, INT32 ROW, INT32 COL,
    Colours fieldColour ;
    INT32 pairNumber              = 0 ;
    string result                 =  NULLSTRING ;
-   INT32 pos_snapshot            = 0 ;
+   UINT32 pos_snapshot           = 0 ;
    fieldColour.backGroundColor   = 6 ;
    fieldColour.foreGroundColor   = 0 ;
    FLength = DS.actualFixedFieldLength ;

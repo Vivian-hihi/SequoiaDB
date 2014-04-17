@@ -13,7 +13,6 @@ int  MAXLOOP = 100000 ;
 bool dumpHex = false ;
 int main ( int argc, char** argv )
 {
-   char input [1024] ;
    char *pHost ;
    int port ;
    int sentLen = 0 ;
@@ -28,17 +27,9 @@ int main ( int argc, char** argv )
       dumpHex = true ;
    {
       int rc = 0 ;
-      unsigned int length = 0 ;
       char *pBuffer = NULL ;
       char *pOutBuffer = NULL ;
       unsigned int buffersize = 0 ;
-      int outBufferSize = 0 ;
-      unsigned int count = 0 ;
-      long long contextID = -1 ;
-      int reqid = -1 ;
-      int replyFlag = -1 ;
-      int numReturned = -1 ;
-      int startFrom = -1 ;
       vector<BSONObj> resultList ;
       vector<BSONObj>::iterator it ;
       BSONObj dummyObj ;

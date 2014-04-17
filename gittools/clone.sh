@@ -16,23 +16,33 @@ echo "The destination directory $1 will be cleaned up"
 echo "You have 10 seconds to cancel the operation by press Ctrl-C"
 sleep 10
 
+echo "Start..."
+
 # clean up the target directory
+echo "Clean up $1"
 rm -rf $1/* 2>/dev/null
 
 # manually build SequoiaDB/engine/include/ossVer_Autogen.h
 # replace WCREV to svn version
+echo "Build svn version"
 sed "s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g" $ROOTPATH/misc/autogen/ossVer.tmp > $ROOTPATH/oss.tmp
 # replace $ to empty string and replace ossVer_autogen.h
 sed 's/\$//g' $ROOTPATH/oss.tmp > $ROOTPATH/SequoiaDB/engine/include/ossVer_Autogen.h
 
 # copy file to new location
+echo "Copy files"
 $SCRIPTPATH/copyFiles.sh $SCRIPTPATH/required.lst $1
 if [ $? -ne 0 ]; then
    echo "Failed to copy file to $1"
    exit 1
 fi
 
+# create gitfile to prevent svn loopup during compile
+echo "Create gitbuild file"
+touch $1/gitbuild
+
 # remove all svn info
+echo "Remove svn subdir from $1"
 $SCRIPTPATH/removeSvn.sh $1
 if [ $? -ne 0 ]; then
    echo "Failed to remove svn from $1"
@@ -40,6 +50,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # remove comments
+echo "Remove all comments from $1"
 $SCRIPTPATH/removeCommentForSource.sh $1
 if [ $? -ne 0 ]; then
    echo "Failed to remove comment from $1"

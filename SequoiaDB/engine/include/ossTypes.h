@@ -95,15 +95,36 @@ typedef INT32 SOCKET ;
 #if defined _LINUX
    typedef pid_t      OSSPID ;
    typedef pthread_t  OSSTID ;
-
    #define OSS_INVALID_TID      ( ( OSSTID )NULL )
-
+   #define OSS_INLINE inline
+   // any attempt to get TLS variable should use OSS_FORCE_INLINE
+   // It may avoid calling __tls_get_addr (x86 only)instruction repeatedly if
+   // there's any for loop
+   // eg:
+   // static OSS_THREAD_LOCAL pmdEDUCB *_tlsEDUCB ;
+   // OSS_FORCE_INLINE pmdEDUCB *getEDUCB ()
+   // {
+   //    return _tlsEDUCB ;
+   // }
+   #define OSS_FORCE_INLINE __attribute__((always_inline))
+   #define OSS_THREAD_LOCAL __thread
 #elif defined _WINDOWS
 
    typedef DWORD      OSSPID ;
    typedef DWORD      OSSTID ;
    #define OSS_INVALID_TID      ( ( OSSTID )0 )
-
+   #define OSS_INLINE inline
+   // any attempt to get TLS variable should use OSS_FORCE_INLINE
+   // It may avoid calling __tls_get_addr (x86 only)instruction repeatedly if
+   // there's any for loop
+   // eg:
+   // static OSS_THREAD_LOCAL pmdEDUCB *_tlsEDUCB ;
+   // OSS_FORCE_INLINE pmdEDUCB *getEDUCB ()
+   // {
+   //    return _tlsEDUCB ;
+   // }
+   #define OSS_FORCE_INLINE __forceinline
+   #define OSS_THREAD_LOCAL __declspec(thread)
 #else
    #error Unsupported platform
 #endif

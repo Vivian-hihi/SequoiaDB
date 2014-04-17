@@ -13,4 +13,4 @@ else
    exit 1
 fi
 find ${DESTPATH} -name ".svn" -exec rm -rf {} \; 2>/dev/null
-
+exit 0

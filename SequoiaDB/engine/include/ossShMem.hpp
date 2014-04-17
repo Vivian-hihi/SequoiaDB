@@ -44,32 +44,34 @@
 
 
 #if defined (_LINUX)
-#define OSS_SHM_CREATE        IPC_CREAT   // to  create  a new segment.
-                                          // If this flag is not used, then ossSHMAlloc() will find
-                                          // the segment associated with key and check to see
-                                          // if the user  has  permission to access the segment.
+// to  create  a new segment.
+// If this flag is not used, then ossSHMAlloc() will find
+// the segment associated with key and check to see
+// if the user  has  permission to access the segment.
+#define OSS_SHM_CREATE        IPC_CREAT
+// used with OSS_SHM_CREATE to ensure failure if the segment already exists
+#define OSS_SHM_EXCL          IPC_EXCL
 
-#define OSS_SHM_EXCL          IPC_EXCL    // used with OSS_SHM_CREATE to ensure failure if the segment already exists
-
-typedef int       ossSHMMid;
+typedef UINT32    ossSHMMid;
 typedef key_t     ossSHMKey;
 
 #elif defined (_WINDOWS)
 typedef HANDLE    ossSHMMid;
-typedef CHAR*   ossSHMKey;
+typedef CHAR*     ossSHMKey;
 
-#define OSS_SHM_CREATE        0X01        // to  create  a new segment.
-                                          // If this flag is not used, then ossSHMAlloc() will find
-                                          // the segment associated with key and check to see
-                                          // if the user  has  permission to access the segment.
-
-#define OSS_SHM_EXCL          0X02        // used with OSS_SHM_CREATE to ensure failure if the segment already exists
+// to  create  a new segment.
+// If this flag is not used, then ossSHMAlloc() will find
+// the segment associated with key and check to see
+// if the user  has  permission to access the segment.
+#define OSS_SHM_CREATE        0X01
+// used with OSS_SHM_CREATE to ensure failure if the segment already exists
+#define OSS_SHM_EXCL          0X02
 
 #endif
 
 
 CHAR *ossSHMAlloc( ossSHMKey shmKey, UINT32 bufSize, INT32 shmFlag,
-                     ossSHMMid &shmMid );
+                   ossSHMMid &shmMid );
 
 void ossSHMFree( ossSHMMid &shmMid, CHAR **ppBuf );
 

@@ -29,7 +29,6 @@ int main(int argc,char *argv[])
 	//pmdInitialize(pmdGetKRCB());
 	//SDB_ASSERT(1!=1, "wrong");
 	BSONObj matcher ;
-	CHAR collectionFullName [ COLLECTION_SPACE_MAX_SZ+COLLECTION_MAX_SZ+2 ];
 	CHAR BUFF  [ RECEIVE_BUFFER_SIZE ] ;
 	//rc = readInput ( "Please input a \"JSOB\"", 0 ) ;
   rc = fromjson ( argv[1], matcher ) ;

@@ -39,10 +39,12 @@ while read line ;do
    if [[ -f $SOURCEPATH ]]; then
       # if the source is a file, let's just copy
       testAndCreateDir $TARGETDIR
+      echo "copy file $SOURCEPATH to $TARGETPATH"
       cp $SOURCEPATH $TARGETPATH
    elif [[ -d $SOURCEPATH ]]; then
       # if the source is a directory, let's copy dir
       mkdir -p $TARGETPATH
+      echo "copy directory $SOURCEPATH to $TARGETDIR"
       cp -rf $SOURCEPATH $TARGETDIR
    else
       echo "$SOURCEPATH is not a file nor dir"

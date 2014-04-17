@@ -112,7 +112,7 @@ int main ( int argc, char **argv )
          printf("error = %d\n", ossGetLastError());
          return 0;
       }
-      if ( lenWritten != sizeof(char)*segmentSize )
+      if ( (UINT32)lenWritten != sizeof(char)*segmentSize )
       {
          printf("failed to write %lld bytes, rc = %d\n",
                 sizeof(char)*segmentSize, rc );
@@ -128,9 +128,8 @@ int main ( int argc, char **argv )
       pBuffer = NULL ;
    }
    ossClose ( file ) ;
-   
    t2 = boost::posix_time::microsec_clock::local_time() ;
    boost::posix_time::time_duration diff = t2-t1 ;
-   printf ( "Takes %lld ms to perform this test \n",diff.total_milliseconds()) ;
-       
+   printf ( "Takes %lld ms to perform this test \n",
+            (UINT64)diff.total_milliseconds()) ;
 }

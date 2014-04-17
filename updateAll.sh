@@ -84,8 +84,8 @@ function installSdb()
    done
 
    rm -rf ${homePath}/50000 2>/dev/null
-   rm -f sdb.conf
-   rm -f nohup
+   rm -f sdb.conf 2>/dev/null
+   rm -f nohup 2>/dev/null
 
    # remove old sdb
    if [ ! -d "${homePath}/30000" ] ; then
@@ -137,6 +137,7 @@ function installSdb()
          echo "Connect coord failed*******"
          exit 1
       fi
+      rm -f sdb.conf
       echo "Start creating catalog"
       bin/sdb -s " db.createCataRG('${hostName}', '30000', '${homePath}/30000' ); sleep(5000);"
       echo "Creating catalog complete"

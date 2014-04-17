@@ -818,13 +818,18 @@ Export("guess_os")
 # ossVer_Autogen.h is NOT in SVN, we have to generate this file by scons before
 # actually compling the project
 # Thus, we should avoid putting ossVer* files to release package
-if guess_os == "win32":
-   # In windows platform, we take advantage of SubWCRev
-   os.system ("SubWCRev . misc/autogen/ossVer.tmp SequoiaDB/engine/include/ossVer_Autogen.h")
-else:
-   # In NIX platform, we use svn and sed to send to ossVer_Autogen.h
-   os.system("sed \"s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g\" misc/autogen/ossVer.tmp > oss.tmp")
-   os.system("sed 's/\$//g' oss.tmp > SequoiaDB/engine/include/ossVer_Autogen.h")
+#
+# In github build, we don't have svn info, so we don't run svn or SubWCRev
+# command. Instead the svn fork tool should already generated the right
+# ossVer_Autogen.h file
+if not os.path.isfile ( "gitbuild" ):
+   if guess_os == "win32":
+      # In windows platform, we take advantage of SubWCRev
+      os.system ("SubWCRev . misc/autogen/ossVer.tmp SequoiaDB/engine/include/ossVer_Autogen.h")
+   else:
+      # In NIX platform, we use svn and sed to send to ossVer_Autogen.h
+      os.system("sed \"s/WCREV/$(svn info | grep Revision | awk '{print $2}')/g\" misc/autogen/ossVer.tmp > oss.tmp")
+      os.system("sed 's/\$//g' oss.tmp > SequoiaDB/engine/include/ossVer_Autogen.h")
 
 language = get_option ( "language" )
 if language is None:

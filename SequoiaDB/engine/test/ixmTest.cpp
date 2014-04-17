@@ -55,7 +55,7 @@ int main ( int argc, char **argv )
    return rc ;
    // Jun dirty test
 
-   printf("size=%d\n", sizeof(ixmKeyNode));
+   printf("size=%lld\n", sizeof(ixmKeyNode));
    rc = myUnit.open("./", "./", TRUE ) ;
    if ( rc )
    {

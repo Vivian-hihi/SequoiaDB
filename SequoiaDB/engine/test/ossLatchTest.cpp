@@ -55,14 +55,14 @@ LockedObject3 obj3;
 INT32 print_function_nolatch(void *ptr)
 {
    int thread_id=*(int*)ptr;
-   for(int i=0; i<LOOPNUM; i++)
+   for(unsigned int i=0; i<LOOPNUM; i++)
    {
       obj.count0++;
       if (SLEEPTIME)
          ossSleepmicros(SLEEPTIME);
       obj.count1++;
-      //if ( obj.count0 != obj.count1)
-      //   printf("thread %d: %d, %d\n", thread_id, obj.count0, obj.count1);
+      if ( obj.count0 != obj.count1)
+         printf("thread %d: %d, %d\n", thread_id, obj.count0, obj.count1);
       if (SLEEPTIME)
          ossSleepmicros(SLEEPTIME);
    }
@@ -72,7 +72,7 @@ INT32 print_function_nolatch(void *ptr)
 INT32 print_function_latch(void *ptr)
 {
    int thread_id=*(int*)ptr;
-   for(int i=0; i<LOOPNUM; i++)
+   for(unsigned int i=0; i<LOOPNUM; i++)
    {
       ossLatch(&obj._latch);
       obj.count0++;
@@ -91,15 +91,15 @@ INT32 print_function_latch(void *ptr)
 INT32 print_function_latch_shared(void *ptr)
 {
    int thread_id=*(int*)ptr;
-   for(int i=0; i<LOOPNUM; i++)
+   for(unsigned int i=0; i<LOOPNUM; i++)
    {
       ossLatch(&obj1._latch, SHARED);
       obj1.count0++;
       if (SLEEPTIME)
          ossSleepmicros(SLEEPTIME);
       obj1.count1++;
-      //if ( obj1.count0 != obj1.count1)
-      //   printf("thread %d: %d, %d\n", thread_id, obj1.count0, obj1.count1);
+      if ( obj1.count0 != obj1.count1)
+         printf("thread %d: %d, %d\n", thread_id, obj1.count0, obj1.count1);
       ossUnlatch(&obj1._latch,SHARED);
       if (SLEEPTIME)
          ossSleepmicros(SLEEPTIME);
@@ -110,7 +110,7 @@ INT32 print_function_latch_shared(void *ptr)
 INT32 print_function_latch_exclusive(void *ptr)
 {
    int thread_id=*(int*)ptr;
-   for(int i=0; i<LOOPNUM; i++)
+   for(unsigned int i=0; i<LOOPNUM; i++)
    {
       ossLatch(&obj1._latch, EXCLUSIVE);
       obj1.count0++;
@@ -129,7 +129,7 @@ INT32 print_function_latch_exclusive(void *ptr)
 INT32 print_function_atomic_latch (void *ptr)
 {
    int thread_id=*(int*)ptr;
-   for(int i=0; i<LOOPNUM; i++)
+   for(unsigned int i=0; i<LOOPNUM; i++)
    {
       ossLatch(&obj2._latch);
       obj2.count0++;
@@ -148,7 +148,7 @@ INT32 print_function_atomic_latch (void *ptr)
 INT32 print_function_exchange_latch ( void *ptr)
 {
    int thread_id = *(int*)ptr;
-   for(int i=0; i<LOOPNUM; i++)
+   for(unsigned int i=0; i<LOOPNUM; i++)
    {
       ossLockGet8 ( &obj3._latch);
       obj3.count0++;
@@ -172,7 +172,7 @@ void RunThreads ( threadFunc F, char *pDescription )
    int thread_id[MAXTHREADS];
    printf("%s", pDescription);
    getchar();
-   for(int i=0; i<TESTTHREADS; i++)
+   for(unsigned int i=0; i<TESTTHREADS; i++)
    {
       thread_id[i]=i;
       threadList[i]=new boost::thread ( F,

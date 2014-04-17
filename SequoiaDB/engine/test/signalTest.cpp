@@ -11,6 +11,7 @@ void dummyCore()
   OSS_INSTRUCTION_PTR ppAddress[100] ;
   char funcName[256] ;
   UINT32_64 offset = 0 ;
+  CHAR *p = NULL ;
 
   ossWalkStack( 0, ppAddress, 20 ) ;
   for ( int i = 0 ; i < 20 ; i++ )
@@ -19,12 +20,12 @@ void dummyCore()
                                    funcName,
                                    sizeof( funcName ),
                                    &offset ) ;
-      printf("[%3d] 0x%016x  %s  + 0x%x\n",
-             i, (UINT32_64)ppAddress[i], funcName, offset ) ;
+      printf("[%3d] 0x%016p  %s  + 0x%x\n",
+             i, (void*)ppAddress[i], funcName, offset ) ;
   }
-getchar();
-
-  memcpy( NULL, "CRASH", 5 ) ;
+  getchar();
+  // generate core file
+  *p = 10 ;
 }
 
 

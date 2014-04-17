@@ -9,3 +9,4 @@ fi
 sed '/PD_TRACE_DECLARE_FUNCTION/n;/^[[:space:]]*\/\//d' $1 > $1.commentTrim
 cp $1.commentTrim $1
 rm $1.commentTrim
+exit 0

@@ -25,7 +25,6 @@ HPATTERN="*.h"
 JAVAPATTERN="*.java"
 PATTERNARRAY=($CPPPATTERN $CPATTERN $HPPPATTERN $HPATTERN $JAVAPATTERN)
 PATHARRAY=($ENGINEPATH $MISCPATH $DRIVERPATH $DOCPATH)
-
 for (( i=0; i < ${#PATTERNARRAY[@]}; i++))
 do
    for (( j=0; j < ${#PATHARRAY[@]}; j++))
@@ -33,6 +32,7 @@ do
       fileList=`find ${PATHARRAY[$j]} -name ${PATTERNARRAY[$i]}`
       for file in $fileList
       do
+         echo "Remove comment for $file"
          $SCRIPTPATH/removeComment.sh $file
          if [ $? -ne 0 ]; then
             echo "Failed to remove comment for $file"
@@ -41,4 +41,4 @@ do
       done
    done
 done
-
+exit 0
