@@ -4,6 +4,12 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+#ifndef LIBSSH2_CONFIG_H
+#define LIBSSH2_CONFIG_H
+
+
+#include "core.h"
+
 #if defined(_LINUX)
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
@@ -233,9 +239,7 @@
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
 
-#else
-#ifndef LIBSSH2_CONFIG_H
-#define LIBSSH2_CONFIG_H
+#else  /// if defined(_LINUX)
 
 #ifndef WIN32
 #define WIN32
