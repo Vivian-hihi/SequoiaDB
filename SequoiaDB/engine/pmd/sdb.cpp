@@ -797,23 +797,14 @@ int main ( int argc , CHAR **argv )
    INT32             rc       = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDB_MAIN );
    ArgInfo           argInfo ;
-/*   const CHAR *progCmd = argv[0] ;
-   const CHAR *p = NULL ;
 
-   // get the progrom path
-#if defined ( _WINDOWS )
-   p = strrchr( progCmd, '\\' ) ;
-#else
-   p = strrchr( progCmd, '/' ) ;
-#endif
-   if  ( p == NULL )
-      progPath[0] = 0;
-   else
-    ossMemcpy ( progPath, progCmd, p - progCmd + 1 );
-*/
    // save the program's path
-   setProgramName( argv[0] );
-
+   rc = setProgramName( argv[0] );
+   if ( rc )
+   {
+      goto error ;
+   }
+   //
    linenoiseSetCompletionCallback( (linenoiseCompletionCallback*)lineComplete ) ;
 
    // will purge engine in done:

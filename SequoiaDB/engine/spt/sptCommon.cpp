@@ -12,7 +12,7 @@ const CHAR* getProgramName()
 INT32 setProgramName( const CHAR* name )
 {
    INT32 rc = SDB_OK ;
-   if ( name || ossStrlen( name ) > OSS_MAX_PATHSIZE + 1 )
+   if ( !name || ossStrlen( name ) > OSS_MAX_PATHSIZE + 1 )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
@@ -31,7 +31,7 @@ INT32 getProgramPath( CHAR *pOutputPath )
    CHAR *t = OSS_FILE_SEP ;
    const CHAR *p = NULL ;
    // check
-   if ( pOutputPath )
+   if ( !pOutputPath )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
