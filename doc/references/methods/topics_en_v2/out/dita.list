@@ -1,13 +1,13 @@
-#Wed Apr 16 17:58:09 CST 2014
+#Thu Apr 17 09:08:33 CST 2014
 copytosourcelist=
-hreftargetslist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getNode.xml,rg.getSlave.xml,node.stop.xml,rg.stop.xml
+hreftargetslist=db.removeRG.xml,listCollectionSpaces.xml,db.getRG.xml,db.getCS.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.dropCS.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getSlave.xml
-fullditamapandtopiclist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getSlave.xml
+fullditatopiclist=db.removeRG.xml,db.getRG.xml,db.getCS.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.dropCS.xml
+fullditamapandtopiclist=db.removeRG.xml,db.getRG.xml,db.getCS.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.dropCS.xml
 hrefditatopicfile=hrefditatopic.list
-hrefditatopiclist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getSlave.xml
-user.input.file=rg.getSlave.xml
+hrefditatopiclist=db.removeRG.xml,db.getRG.xml,db.getCS.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.dropCS.xml
+user.input.file=db.createCS.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list
@@ -27,7 +27,7 @@ imagelist=
 htmlfile=html.list
 htmllist=
 canditopicsfile=canditopics.list
-canditopicslist=rg.getMaster.xml,rg.start.xml,node.start.xml,rg.getNode.xml,rg.getSlave.xml,node.stop.xml,rg.stop.xml
+canditopicslist=db.removeRG.xml,listCollectionSpaces.xml,db.getRG.xml,db.getCS.xml,db.createRG.xml,db.list.xml,db.createCS.xml,db.dropCS.xml
 keyreffile=keyref.list
 subjectschemefile=subjectscheme.list
 keyreflist=
