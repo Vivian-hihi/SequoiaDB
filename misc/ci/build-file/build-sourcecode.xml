@@ -77,7 +77,7 @@
 			<property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hive/"/>
 		</ant>
 
-		<chmod file="${WORKSPACE}/sequoiadb/driver/php5/source/retriConfig.sh" perm="a+x" />
+		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 		
 		
 		
