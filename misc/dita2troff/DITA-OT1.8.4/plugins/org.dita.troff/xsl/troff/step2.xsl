@@ -23,28 +23,27 @@
 
 <!-- Set the default justification -->
 <xsl:template name="set-default-justification">
+	<xsl:value-of/>.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"<xsl:value-of select="$newline"/>
   <xsl:choose>
     <xsl:when test="/dita/@dir='rtl'">
-      <xsl:value-of select="$newline"/>.ad r<xsl:value-of select="$newline"/>
+      <xsl:value-of/>.ad r<xsl:value-of/>
     </xsl:when>
-    <xsl:otherwise>
-      <xsl:value-of select="$newline"/>.ad l<xsl:value-of select="$newline"/>
-    </xsl:otherwise>
+    <xsl:otherwise>.ad l</xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 <!-- Set the default line length. Tables are 72, so set it to 72. -->
 <xsl:template name="set-default-linelength">
-  <xsl:value-of select="$newline"/>.ll 72<xsl:value-of select="$newline"/>
+  <xsl:value-of/>.ll 72<xsl:value-of/>
 </xsl:template>
 
 <!-- Turn on centering -->
 <xsl:template name="start-centering">
   <!-- Centers the next 1000 lines, or until centering is turned off -->
-  <xsl:value-of select="$newline"/>.ce 1000<xsl:value-of select="$newline"/>
+  <xsl:value-of/>.ce 1000<xsl:value-of select="$newline"/>
 </xsl:template>
 <!-- Turn on centering -->
 <xsl:template name="stop-centering">
-  <xsl:value-of select="$newline"/>.ce 0<xsl:value-of select="$newline"/>
+  <xsl:value-of select="$newline"/>.ce 0<xsl:value-of/>
 </xsl:template>
 
 <!-- root rule -->
@@ -57,15 +56,15 @@
 <!-- Based on step1, section titles should come first in the section. If this is
      a *ROFF format, use the .SH macro to get roff's section-like formatting. -->
 <xsl:template match="sectiontitle">
-  <xsl:if test="preceding-sibling::*">
+  <!--<xsl:if test="preceding-sibling::*">
     <xsl:call-template name="force-two-newlines"/>
-  </xsl:if>
+  </xsl:if>-->
   <xsl:value-of select="$newline"/>.SH "<xsl:apply-templates select="*[1]"/>"<xsl:value-of select="$newline"/>
-  <xsl:call-template name="start-bold"/>
+  <!--<xsl:call-template name="start-bold"/>
   <xsl:apply-templates select="*[1]">
     <xsl:with-param name="current-style" select="'bold'"/>
   </xsl:apply-templates>
-  <xsl:call-template name="start-normal"/>
+  <xsl:call-template name="start-normal"/>-->
   <!-- Do not process following siblings: those come through from section -->
 </xsl:template>
 

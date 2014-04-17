@@ -312,7 +312,7 @@
 <!-- Indent the definition 9 spaces. The compact=yes value ensures it will appear on the
      line after the term. May want to bold ddhd? -->
 <xsl:template match="*[contains(@class,' topic/dd ')]|*[contains(@class,' topic/ddhd ')]">
-    <block indent="9" compact="yes"><xsl:call-template name="debug"/><xsl:apply-templates/></block>
+    <block indent="7" compact="yes"><xsl:call-template name="debug"/><xsl:apply-templates/></block>
 </xsl:template>
 
 <!-- Table formatting based off of DL formatting; first column aligns to start of 'page',
@@ -334,7 +334,7 @@
 <xsl:template match="*[contains(@class,' topic/stentry ')]">
   <xsl:choose>
     <xsl:when test="preceding-sibling::*[contains(@class,' topic/stentry ')]">
-      <block indent="9" compact="no">
+      <block indent="7" compact="no">
         <xsl:call-template name="debug"/>
         <xsl:choose>
           <xsl:when test="parent::*[contains(@class,' topic/sthead ')]">
@@ -360,7 +360,7 @@
 <xsl:template match="*[contains(@class,' topic/entry ')]">
   <xsl:choose>
     <xsl:when test="preceding-sibling::*[contains(@class,' topic/entry ')]">
-      <block indent="9" compact="no">
+      <block indent="7" compact="no">
         <xsl:call-template name="debug"/>
         <xsl:choose>
           <xsl:when test="parent::*/parent::*[contains(@class,' topic/thead ')]">
@@ -685,28 +685,28 @@
       <xsl:apply-templates select="exsl:node-set($prereqs)" mode="reformat-links"/>
   </xsl:if>
 </xsl:template>
-
+<!--
 <xsl:template match="*[contains(@class,' topic/related-links ')]">
   <xsl:variable name="ul-children">
-    <xsl:call-template name="ul-child-links"/><!--handle child/descendants outside of linklists in collection-type=unordered or choice-->
+    <xsl:call-template name="ul-child-links"/> // handle child/descendants outside of linklists in collection-type=unordered or choice
   </xsl:variable>
   <xsl:variable name="ol-children">
-    <xsl:call-template name="ol-child-links"/><!--handle child/descendants outside of linklists in collection-type=ordered/sequence-->
+    <xsl:call-template name="ol-child-links"/> // handle child/descendants outside of linklists in collection-type=ordered/sequence
   </xsl:variable>
   <xsl:variable name="next-previous-parent">
-    <xsl:call-template name="next-prev-parent-links"/><!--handle next and previous links-->
+    <xsl:call-template name="next-prev-parent-links"/> // handle next and previous links
   </xsl:variable>
   <xsl:variable name="relcon">
-    <xsl:call-template name="concept-links"/><!--sort remaining concept links by type-->
+    <xsl:call-template name="concept-links"/> // sort remaining concept links by type
   </xsl:variable>
   <xsl:variable name="reltask">
-    <xsl:call-template name="task-links"/><!--sort remaining task links by type-->
+    <xsl:call-template name="task-links"/> // sort remaining task links by type
   </xsl:variable>
   <xsl:variable name="relref">
-    <xsl:call-template name="reference-links"/><!--sort remaining reference links by type-->
+    <xsl:call-template name="reference-links"/> // sort remaining reference links by type
   </xsl:variable>
   <xsl:variable name="relinfo">
-    <xsl:call-template name="relinfo-links"/><!--handle remaining untyped and unknown-type links-->
+    <xsl:call-template name="relinfo-links"/> // handle remaining untyped and unknown-type links
   </xsl:variable>
   <xsl:variable name="linklists">
     <xsl:apply-templates select="*[contains(@class,' topic/linklist ')]"/>
@@ -724,7 +724,7 @@
     <xsl:apply-templates select="exsl:node-set($linklists)" mode="reformat-links"/>
   </block>
 </xsl:template>
-
+-->
 <xsl:template match="ul[@class='ullinks']" mode="reformat-links">
   <xsl:apply-templates mode="reformat-links"/>
 </xsl:template>
@@ -814,7 +814,7 @@
     </block>
 </xsl:template>
 <xsl:template match="dl[contains(@class,'prereqlinks')]/dd" mode="reformat-links">
-  <block indent="9" compact="yes"><xsl:apply-templates mode="reformat-links"/></block>
+  <block indent="7" compact="yes"><xsl:apply-templates mode="reformat-links"/></block>
 </xsl:template>
 
 <!-- If something already fell through to the ordinary processor, copy it as-is -->

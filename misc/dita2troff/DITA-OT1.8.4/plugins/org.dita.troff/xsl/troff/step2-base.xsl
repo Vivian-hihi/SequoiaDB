@@ -83,11 +83,11 @@
 
 <!-- Turn on centering -->
 <xsl:template name="start-centering">
-  <xsl:value-of select="$newline"/>
+  <!--<xsl:value-of select="$newline"/>-->
 </xsl:template>
 <!-- Turn on centering -->
 <xsl:template name="stop-centering">
-  <xsl:value-of select="$newline"/>
+  <!--<xsl:value-of select="$newline"/>-->
 </xsl:template>
 
 <!-- root rule -->
@@ -147,9 +147,9 @@
     <xsl:choose>
       <xsl:when test="@expanse='page'"/>  <!-- Ignore any active indent -->
       <!-- If there is lead-in text that does not indent, only get the indent from ancestor blocks -->
-      <xsl:when test="string-length(normalize-space($leadin))>0">
+      <!--<xsl:when test="string-length(normalize-space($leadin))>0">
         <xsl:apply-templates select="ancestor-or-self::block/ancestor::*[@indent]" mode="find-indent"/>
-      </xsl:when>
+      </xsl:when>-->
       <!-- Otherwise, start with the indent on the current element -->
       <xsl:otherwise>
         <xsl:apply-templates select="ancestor-or-self::*[@indent]" mode="find-indent"/>
