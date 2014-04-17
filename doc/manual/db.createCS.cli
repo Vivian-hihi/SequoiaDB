@@ -1,15 +1,20 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
-.ad l.ll 72.ce 1000
+
+.ad l
+
+.ll 72
+
+.ce 1000
 \fBdb.createCS()\fR
 .ce 0
+
 .sp 2
 
 .SH "NAME"
-
+\fBNAME\fR
 .sp 2
 createCS - Create a collection space in a database instance.
 .SH "SYNOPSIS"
-
+\fBSYNOPSIS\fR
 .sp 2
 
 .sp 2
@@ -17,50 +22,50 @@ createCS - Create a collection space in a database instance.
 .sp 2
 db.createCS(\fBname\fR,\fB[pageSize]\fR)
 .SH "CATEGORY"
-
+\fBCATEGORY\fR
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-
+\fBDESCRIPTION\fR
 .sp 2
 Create a collection space in a database instance.
 .sp 2
 \fBname (string)\fR
 .br
-       Collection space name. Collection space names should be
-       unique to each other in a database object.
+         Collection space name. Collection space names should be
+         unique to each other in a database object.
 .sp 2
 \fBpageSize (int)\fR
 .br
-       Size of data page. The default value is 65536B.
+         Size of data page. The default value is 65536B.
 .sp 2
-       \fBFormat\fR
+         \fBFormat\fR
 .br
-              Users can create a collection space with 2
-              parameters: name and pageSize.The parameter "name"
-              is in the type of string. The parameter "pageSize"
-              is in the type of 32-bit integer.
+                  Users can create a collection space with 2
+                  parameters: name and pageSize.The parameter
+                  "name" is in the type of string. The parameter
+                  "pageSize" is in the type of 32-bit integer.
 .br
-              ("<collection space name>",[pagesize])
+                  ("<collection space name>",[pagesize])
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  The parameter "name" should not be null string. It should
-   not contain "." or "$". The length of it should not be greater
+*  The parameter "name" should not be null string. It should not
+   contain "." or "$". The length of it should not be greater
    than 127B.
 .sp 2
-   *  Collection space names should be unique to each other in a
+*  Collection space names should be unique to each other in a
    database object.
 .sp 2
-   *  When creating a collection space, users can specify the
-   size of data page. It is unchangable afterward. The default
-   value of it is 65536B.
+*  When creating a collection space, users can specify the size
+   of data page. It is unchangable afterward. The default value
+   of it is 65536B.
 .SH "Examples"
-
+\fBExamples\fR
 .sp 2
 Create a collection space named "foo" without specifying the size
 of data page.
@@ -71,3 +76,7 @@ Create a collection space named "foo" and specify the size of
 data page as 1024.
 .sp 2
 db.createCS("foo",1024)
+.sp 2
+\fBRelated information\fR
+.br
+db.dropCS()

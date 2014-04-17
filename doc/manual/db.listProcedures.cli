@@ -1,15 +1,20 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
-.ad l.ll 72.ce 1000
+
+.ad l
+
+.ll 72
+
+.ce 1000
 \fBdb.listProcedures()\fR
 .ce 0
+
 .sp 2
 
 .SH "NAME"
-
+\fBNAME\fR
 .sp 2
 listProcedures - Enumerate all of the stored procedure fundtion.
 .SH "SYNOPSIS"
-
+\fBSYNOPSIS\fR
 .sp 2
 
 .sp 2
@@ -17,26 +22,26 @@ listProcedures - Enumerate all of the stored procedure fundtion.
 .sp 2
 db.listProcedures(\fB[cond]\fR)
 .SH "CATEGORY"
-
+\fBCATEGORY\fR
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-
+\fBDESCRIPTION\fR
 .sp 2
 Enumerate all of the stored procedure fundtion.
 .sp 2
 \fBcond (json)\fR
 .br
-       Conditions is empty, enumerate all the functions, is not
-       empty, the enumeration aualified function.
+         Conditions is empty, enumerate all the functions, is not
+         empty, the enumeration aualified function.
 .sp 2
 Defined listProcedures() method, only a json lbject type
 parameter name condition, the function returns the input value
 matches the specified value, otherwise return all functions.
 .SH "Examples"
-
+\fBExamples\fR
 .sp 2
 All functions return information
 .sp 2
@@ -65,3 +70,7 @@ Return function named sum specified records
     return x + y;
 .br
 }", "funcType" : 0 }
+.sp 2
+\fBRelated information\fR
+.br
+db.removeProcedure()

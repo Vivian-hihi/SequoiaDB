@@ -4,7 +4,7 @@
 .ll 72
 
 .ce 1000
-\fBnode.start()\fR
+\fBnode.getHostName()\fR
 .ce 0
 
 .sp 2
@@ -12,7 +12,7 @@
 .SH "NAME"
 \fBNAME\fR
 .sp 2
-start - Start the current node.
+getHostName - Return the hostname of a node.
 .SH "SYNOPSIS"
 \fBSYNOPSIS\fR
 .sp 2
@@ -20,7 +20,7 @@ start - Start the current node.
 .sp 2
 
 .sp 2
-node.start(\fB\fR)
+node.getHostName()
 .SH "CATEGORY"
 \fBCATEGORY\fR
 .sp 2
@@ -30,16 +30,18 @@ Node
 .SH "DESCRIPTION"
 \fBDESCRIPTION\fR
 .sp 2
-Start the current node.
+Return the hostname of a node.
 .SH "Examples"
 \fBExamples\fR
 .sp 2
-Start a current node named "node".
+Return the hostname of a node called "node".
 .sp 2
-node.start()
+> node.getHostName()
+.br
+Return：vmsvr2-suse-x64
 .sp 2
 \fBRelated information\fR
 .br
-rg.stop()
+node.connect()
 .br
-node.stop()
+node.getServiceName()

@@ -1,16 +1,21 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
-.ad l.ll 72.ce 1000
+
+.ad l
+
+.ll 72
+
+.ce 1000
 \fBdb.createProcedure()\fR
 .ce 0
+
 .sp 2
 
 .SH "NAME"
-
+\fBNAME\fR
 .sp 2
 createProcedure - Create a stord procedure in the database
 object.
 .SH "SYNOPSIS"
-
+\fBSYNOPSIS\fR
 .sp 2
 
 .sp 2
@@ -18,39 +23,39 @@ object.
 .sp 2
 db.createProcedure(\fBcode\fR)
 .SH "CATEGORY"
-
+\fBCATEGORY\fR
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-
+\fBDESCRIPTION\fR
 .sp 2
 Create a stord procedure in the database object.
 .sp 2
 \fBcode (Custom Functions)\fR
 .br
-       Standard function definition, not a string type, input
-       parameters can not use quotation marks.
+         Standard function definition, not a string type, input
+         parameters can not use quotation marks.
 .sp 2
-       \fBFormat\fR
+         \fBFormat\fR
 .br
-              Definition Format createProcedure() method contains
-              the code parameter, the parameter value is the
-              standard fuction definition.
+                  Definition Format createProcedure() method
+                  contains the code parameter, the parameter
+                  value is the standard fuction definition.
 .br
-              createProcedure(<code>)
+                  createProcedure(<code>)
 .sp 2
 
 .sp 2
-   *  Recommended direct use stored procedures have been
-   initialized global db, such as: \fBdb.createProcedure(
-   function getAll(){return db.foo.bar.find();} )\fR . But if you
-   need authentication, then the global db failure. Needs its own
+*  Recommended direct use stored procedures have been initialized
+   global db, such as: \fBdb.createProcedure( function
+   getAll(){return db.foo.bar.find();} )\fR . But if you need
+   authentication, then the global db failure. Needs its own
    initialization db.
 .sp 2
-   *  Db initialization own form of \fBvar db=new Sdb()\fR. If
-   you need to add a user name and password, as \fBvar db=new
+*  Db initialization own form of \fBvar db=new Sdb()\fR. If you
+   need to add a user name and password, as \fBvar db=new
    Sdb('usrname','passwd')\fR. It should be noted that when the
    stored procedure can only be run on a connected db, db does
    not provide remote connection to other methods. Without the
@@ -58,10 +63,10 @@ Create a stord procedure in the database object.
    Sdb('hostname', 'servicename')\fR statement is executed
    normally. Db still get local db.
 .sp 2
-   *  Db role must be coordinated nodes. standalone mode does not
+*  Db role must be coordinated nodes. standalone mode does not
    provide the stored procedure functionality.
 .SH "Function definition"
-
+\fBFunction definition\fR
 .sp 2
 *  
    Function definition
@@ -78,23 +83,23 @@ Create a stord procedure in the database object.
    4. Each fuction are available in the whole system. Feel free
    to delete a stored procedure may cause others to fail.
 .sp 2
-   *  Function parameters
+*  Function parameters
 .sp 2
    native type of JS
 .sp 2
-   *  Function outputs
+*  Function outputs
 .sp 2
    Function for all standard output, standard error will be
    masked. While not recommend adding output statements in the
    function definition or execution. The output may result in
    large number of stored procedures fail.
 .sp 2
-   *  function return values
+*  function return values
 .sp 2
    Function return value can be any type of data except for db.
    Such as: \fBfunction getCL(){return db.foo.bar;}\fR
 .SH "Examples"
-
+\fBExamples\fR
 .sp 2
 
 .sp 2
@@ -104,3 +109,9 @@ db.createProcedure(function sum(x,y){return x+y;})
 .sp 2
 After you crdate can be used db.listProcedures() function to view
 the information.
+.sp 2
+\fBRelated information\fR
+.br
+db.listProcedures()
+.br
+db.removeProcedure()

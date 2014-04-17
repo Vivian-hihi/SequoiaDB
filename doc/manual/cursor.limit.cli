@@ -1,0 +1,68 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBcursor.limit()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+limit - Set the maximum amount of records in result set.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+cursor.limit(\fB[num]\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Cursor
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Set the maximum amount of records in result set.
+.sp 2
+\fBnum (int)\fR
+.br
+         The parameter "num" sets the maximum amount of records
+         in result set.
+.sp 2
+         \fBFormat\fR
+.br
+                  The method "cousor.limit()" contains the
+                  parameter "num". It is in the type of "int". If
+                  the value of "num" is not specified, it will
+                  return all the records in the result set. If
+                  users need the first 5 records, the value of
+                  "num"should be set as 5.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Select records with the value of "age" greater than 10 in the
+collection "bar" and return the first 10 records.
+.sp 2
+db.foo.bar.find({age:{$gt:10}}).limit(10)
+.sp 2
+\fBNote: \fR
+.sp 2
+If the amount of records in the result set is lesser than 10, it
+will return all the records. It it is greater than 10, it will
+return the first 10 records.
+.sp 2
+\fBRelated information\fR
+.br
+cursor.hint()
+.br
+cursor.skip()
+.br
+db.collectionspace.collection.find()

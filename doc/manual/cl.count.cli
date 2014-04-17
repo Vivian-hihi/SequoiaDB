@@ -1,16 +1,21 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
-.ad l.ll 72.ce 1000
+
+.ad l
+
+.ll 72
+
+.ce 1000
 \fBdb.collectionspace.collection.count()\fR
 .ce 0
+
 .sp 2
 
 .SH "NAME"
-
+\fBNAME\fR
 .sp 2
 count - Return the total amount of records in a specified
 collection in a collection space.
 .SH "SYNOPSIS"
-
+\fBSYNOPSIS\fR
 .sp 2
 
 .sp 2
@@ -18,32 +23,32 @@ collection in a collection space.
 .sp 2
 db.collectionspace.collection.count(\fB[cond]\fR)
 .SH "CATEGORY"
-
+\fBCATEGORY\fR
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-
+\fBDESCRIPTION\fR
 .sp 2
 Return the total amount of records in a specified collection in a
 collection space.
 .sp 2
 \fBcond (json object)\fR
 .br
-       Selecting condition. If it is null, it will count all the
-       records in the collection. If it is not null, it will
-       count records that match the conditions.
+         Selecting condition. If it is null, it will count all
+         the records in the collection. If it is not null, it
+         will count records that match the conditions.
 .sp 2
-       \fBFormat\fR
+         \fBFormat\fR
 .br
-              The method "count()" contains field named "cond".
-              It is a JSON object.
+                  The method "count()" contains field named
+                  "cond". It is a JSON object.
 .br
-              {[{"Field name 1":{"match 1":"value 1"},"Field name
-              2":{"match 2":"value 2"},...}]}
+                  {[{"Field name 1":{"match 1":"value 1"},"Field
+                  name 2":{"match 2":"value 2"},...}]}
 .SH "Examples"
-
+\fBExamples\fR
 .sp 2
 Count all the records in collection "bar" without specifying
 "cond".
@@ -54,3 +59,9 @@ Count records that contain the value "Tom" on the field "name"
 and the value on the field "age" greater than 25.
 .sp 2
 db.foo.bar.count({name:”Tom”,age:{$gt:25}})
+.sp 2
+\fBRelated information\fR
+.br
+db.dropCS()
+.br
+db.collectionspace.collection.insert()

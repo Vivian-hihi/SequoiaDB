@@ -1,0 +1,49 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBnode.connect()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+connect - Connect the database to specified node.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+node.connect()
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Node
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Connect the database to specified node. After connecting them,
+users can execute a set of operations. Users can check relative
+manipulations with the method "node.connect().help()".
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Connect the database to a node named "node".
+.sp 2
+> node.connect()
+.br
+Return：vmsvr2-suse-x64:11800
+.sp 2
+\fBRelated information\fR
+.br
+node.stop()
+.br
+node.getHostName()

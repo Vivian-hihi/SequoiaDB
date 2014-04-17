@@ -1,0 +1,155 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.list()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+list - Enumerate list.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+db.list(\fBlistType\fR,\fB[con]\fR,\fB[sel]\fR,\fB[sort]\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Enumerate list. List is a lightweight command to get the current
+system status.
+.sp 2
+\fBlistType (Enumeration)\fR
+.br
+         The value of it is in the range from 0 to 7.
+.sp 2
+\fBcon (json object)\fR
+.br
+         Selecting condition. It just returns the records that
+         match conditions in "con". When it is null, return all
+         records.
+.sp 2
+\fBsel (json object)\fR
+.br
+         Select fields to be returned. When it is null, return
+         all records.
+.sp 2
+\fBsort (json object)\fR
+.br
+         Sort records. "1" means ascending order. "-1" means
+         descending order.
+.sp 2
+         \fBFormat\fR
+.br
+                  The method "list()" contians 4 parameters:
+                  listType, con, sel and sort. The parameter
+                  "listType" is in the type of enumeration. Other
+                  parameters are in the type of json object. The
+                  format is as follow:
+.br
+                  {"listType":"<List type>",["con":"{"field name
+                  1":{"operator 1":"value 1"},"field name
+                  2":{"operator 2":"value
+                  2"}...}"],["sel":"{"field name 1":"","field
+                  name 2":"",...}"],["sort":"{"field name
+                  1":-1|1,"field name 2":1|-1,...}"]}
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+*  The value of "listType" is in the range from 0 to 7.
+.sp 2
+*  The value of "sel" is in the type of json object. The value of
+   each field in it is always null string. If it is specified as
+   "{"field name 1": "value 1", "field name 2":"value 2",...}",
+   the values of existing fields are invalid. As for fields that
+   doesn't exist, it will return "{"field name 1": "value 1",
+   "field name 2":"value 2",...}".
+.sp 2
+*  If a value of a field is in the type of array, users can use
+   "." to invoke it and add double quotation.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Specify the value of "listType" as 0：
+.sp 2
+db.list(0)
+.sp 2
+Return ：
+.sp 2
+     {
+.br
+        "SessionID": 4,
+.br
+        "Contexts": [ 0 ]
+.br
+        } ...
+.sp 2
+Specify the value of "listType" as 6：
+.sp 2
+db.list(6)
+.sp 2
+Return：
+.sp 2
+    {
+.br
+        "Name": "foo", 
+.br
+        "ID": 4094,
+.br
+        "Logical ID": 1,
+.br
+        "PageSize": 4096, 
+.br
+        "Sequence": 1, 
+.br
+        "NumCollections": 1,
+.br
+        "CollectionHWM": 3,
+.br
+        "Size": 172032000 
+.br
+        } 
+.sp 2
+db.list(6,{"Logical ID":{$gt:1}},{Name:"space",ID:2},{Name：1})
+.sp 2
+Return records that contains the value of "Logical" greater than
+1. Each record just return the 2 fields: Name and ID. The values
+of "Name" in these records are in ascending order.
+.sp 2
+      {
+.br
+        "ID": 4091,
+.br
+        "Name": "foo" 
+.br
+      } 
+.br
+      {
+.br
+        "ID": 4093,
+.br
+        "Name": "name"
+.br
+       }...
+.sp 2
+\fBRelated information\fR
+.br
+db.getRG()
+.br
+db.listCollectionSpaces()

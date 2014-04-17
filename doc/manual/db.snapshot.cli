@@ -1,0 +1,279 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.snapshot()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+snapshot - It lists snapshots.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+snapshot(\fBsnapType\fR,\fB[cond]\fR,\fB[sel]\fR,\fB[sort]\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+It lists snapshots. Snapshot is a kind of command used to get the
+current status of system.
+.sp 2
+\fBsnapType (List)\fR
+.br
+         Snapshot type, the value of snapshot type is in the
+         range from 0 to 7.
+.sp 2
+\fBcond (json object)\fR
+.br
+         Selection criteria, only to return snapshot information
+         con field specifies the node or partition group to null,
+         returns the entire snapshot information.
+.sp 2
+         \fBFormat\fR
+.br
+                  The defination of the method "snapshot()"
+                  contains four fields: snapType, cond, sel,
+                  sort. The type of "snapType" is enumeration.
+                  Other fields are json objects. The format is as
+                  follow:
+.br
+                  {"snapType":"<snapshot type>",["cond":"{"Field
+                  name 1":{"operation 1":"value 1"},"Field name
+                  2":{"Operation 2":"value 2"}...}"]}
+.sp 2
+
+.sp 2
+\fBNote: \fR
+.sp 2
+*  The value of snapType is in the range from 0 to 7.
+.sp 2
+*  The parameter "sel" is a json object. The value of field name
+   is specified as null string. It is defined as: {"Field name
+   1":"value 1","Field name 2":"value 2",...}.If the records
+   contain the specified field names, the values are invalid. If
+   the records don't contain specified fields, it returns
+   "{"Field name 1":"value 1", "Field name 2":"value 2"}".
+.sp 2
+*  If the value of a field is in the type of array. We invoke the
+   elements in it through "." and double quotations.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Set the value of "snapType" as 0:
+.sp 2
+db.snapshot(0)
+.sp 2
+Returns context snapshot of the entire cluster:
+.sp 2
+{
+.br
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
+.br
+  "Contexts": [
+.br
+    {
+.br
+      "ContextID": 8,
+.br
+      "Type": "DUMP",
+.br
+      "Description": "BufferSize:0",
+.br
+      "DataRead": 0,
+.br
+      "IndexRead": 0,
+.br
+      "QueryTimeSpent": 0,
+.br
+      "StartTimestamp": "2013-12-28-16.07.59.146399"
+.br
+    }
+.br
+  ]
+.br
+}
+.br
+{
+.br
+  "SessionID": "vmsvr1-cent-x64-1:11830:22",
+.br
+  "Contexts": [
+.br
+    {
+.br
+      "ContextID": 6,
+.br
+      "Type": "DUMP",
+.br
+      "Description": "BufferSize:0",
+.br
+      "DataRead": 0,
+.br
+      "IndexRead": 0,
+.br
+      "QueryTimeSpent": 0,
+.br
+      "StartTimestamp": "2013-12-28-16.07.59.147576"
+.br
+    }
+.br
+  ]
+.br
+}
+.br
+{
+.br
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
+.br
+  "Contexts": [
+.br
+    {
+.br
+      "ContextID": 7,
+.br
+      "Type": "DUMP",
+.br
+      "Description": "BufferSize:0",
+.br
+      "DataRead": 0,
+.br
+      "IndexRead": 0,
+.br
+      "QueryTimeSpent": 0,
+.br
+      "StartTimestamp": "2013-12-28-16.07.59.148603"
+.br
+    }
+.br
+  ]
+.br
+  }
+.sp 2
+A partition group snapshot information inquiry by group name or
+group ID, such as:
+.sp 2
+db.snapshot(0,{GroupName:'data1'})
+.sp 2
+Returns group called "data1" partition group snapshot
+information.
+.sp 2
+db.snapshot(0,{GroupID:1000})
+.sp 2
+Partition group snapshot return group ID is "1000" message.
+.sp 2
+{
+.br
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
+.br
+  "Contexts": [
+.br
+    {
+.br
+      "ContextID": 11,
+.br
+      "Type": "DUMP",
+.br
+      "Description": "BufferSize:0",
+.br
+      "DataRead": 0,
+.br
+      "IndexRead": 0,
+.br
+      "QueryTimeSpent": 0,
+.br
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+.br
+    }
+.br
+  ]
+.br
+}
+.br
+{
+.br
+  "SessionID": "vmsvr1-cent-x64-1:11840:23",
+.br
+  "Contexts": [
+.br
+    {
+.br
+      "ContextID": 10,
+.br
+      "Type": "DUMP",
+.br
+      "Description": "BufferSize:0",
+.br
+      "DataRead": 0,
+.br
+      "IndexRead": 0,
+.br
+      "QueryTimeSpent": 0,
+.br
+      "StartTimestamp": "2013-12-28-16.13.57.865103"
+.br
+    }
+.br
+  ]
+.br
+  }
+.sp 2
+By "group name + host name + service name" or "group ID + Node
+ID" check snapshot information of a node, such as:
+.sp 2
+db.snapshot(0,{GroupName:'data1',HostName:"vmsvr1-cent-x64-1",svcname:"11820"})
+.sp 2
+db.snapshot(0,{GroupID:1000,NodeID:1001})
+.sp 2
+{
+.br
+  "SessionID": "vmsvr1-cent-x64-1:11820:22",
+.br
+  "Contexts": [
+.br
+    {
+.br
+      "ContextID": 11,
+.br
+      "Type": "DUMP",
+.br
+      "Description": "BufferSize:0",
+.br
+      "DataRead": 0,
+.br
+      "IndexRead": 0,
+.br
+      "QueryTimeSpent": 0,
+.br
+      "StartTimestamp": "2013-12-28-16.13.57.864245"
+.br
+    }
+.br
+  ]
+.br
+  }
+.sp 2
+By "host name + service name" check snapshot information of a
+node, such as:
+.sp 2
+db.snapshot(0,{HostName:"vmsvr1-cent-x64-1",svcname:"11820"})
+.sp 2
+\fBRelated information\fR
+.br
+db.listReplicaGroups()
+.br
+db.resetSnapshot()

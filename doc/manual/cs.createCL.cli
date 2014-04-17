@@ -1,15 +1,20 @@
-.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
-.ad l.ll 72.ce 1000
+
+.ad l
+
+.ll 72
+
+.ce 1000
 \fBdb.collectionspace.createCL()\fR
 .ce 0
+
 .sp 2
 
 .SH "NAME"
-
+\fBNAME\fR
 .sp 2
 createCL - create a new collection
 .SH "SYNOPSIS"
-
+\fBSYNOPSIS\fR
 .sp 2
 
 .sp 2
@@ -17,13 +22,13 @@ createCL - create a new collection
 .sp 2
 db.collectionspace.createCL(\fBname\fR\fB[,option]\fR)
 .SH "CATEGORY"
-
+\fBCATEGORY\fR
 .sp 2
 
 .sp 2
 Collectionspace
 .SH "DESCRIPTION"
-
+\fBDESCRIPTION\fR
 .sp 2
 Create a collection in a specified collection space.
 .sp 2
@@ -32,111 +37,112 @@ should belong to on and only one collection.
 .sp 2
 \fBname (string)\fR
 .br
-       The name of the collection, should be unique to each other
-       in a collectionspace.
+         The name of the collection, should be unique to each
+         other in a collectionspace.
 .sp 2
 \fBoptions (object)\fR
 .br
-       The parameters of the collection, could be a combination
-       of the following options
+         The parameters of the collection, could be a combination
+         of the following options
 .sp 2
-       \fBShardingKey (object)\fR
+         \fBShardingKey (object)\fR
 .br
-              The sharding key of the collection.
+                  The sharding key of the collection.
 .sp 2
-       \fBShardingType (string)\fR
+         \fBShardingType (string)\fR
 .br
-              The sharding type of the collection, could be one
-              of the following
+                  The sharding type of the collection, could be
+                  one of the following
 .sp 2
-              \fB"hash"\fR
+                  \fB"hash"\fR
 .br
-                     Sharding by hash
+                           Sharding by hash
 .sp 2
-              \fB"range"\fR
+                  \fB"range"\fR
 .br
-                     Sharding by range
+                           Sharding by range
 .sp 2
 
 .sp 2
-       \fBPartition (number)\fR
+         \fBPartition (number)\fR
 .br
-              Specify the number of slices, only valid for {
-              ShardingType:"hash" }
+                  Specify the number of slices, only valid for {
+                  ShardingType:"hash" }
 .sp 2
-       \fBReplSize (number)\fR
+         \fBReplSize (number)\fR
 .br
-              Number of WriteConcern. Minimum 0 and maximum 7.
+                  Number of WriteConcern. Minimum 0 and maximum
+                  7.
 .sp 2
-              \fB0\fR
+                  \fB0\fR
 .br
-                     WriteConcern equal to the number of nodes in
-                     each replica group
+                           WriteConcern equal to the number of
+                           nodes in each replica group
 .sp 2
-              \fB1 - 7\fR
+                  \fB1 - 7\fR
 .br
-                     WriteConcern = 1-7
+                           WriteConcern = 1-7
 .sp 2
 
 .sp 2
-       \fBCompressed (boolean)\fR
+         \fBCompressed (boolean)\fR
 .br
-              ompress the collection or not
+                  ompress the collection or not
 .sp 2
-       \fBIsMainCL (boolean)\fR
+         \fBIsMainCL (boolean)\fR
 .br
-              Partitioned collection
+                  Partitioned collection
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  The parameter "ShardingKey" is a JSON object. Each of the
+*  The parameter "ShardingKey" is a JSON object. Each of the
    fields in the JSON object corresponds to that in shard key.
    The value is 1 or -1, representing ascending and descending
    order.
 .sp 2
-   *  The parameter "ReplSize" is a JSON object,the value of it
-   is a \fIint\fR type,Be used to set the number of writed data
-   nodes, the value can not be greater than the number of nodes
-   in the current data group.
+*  The parameter "ReplSize" is a JSON object,the value of it is a
+   \fIint\fR type,Be used to set the number of writed data nodes,
+   the value can not be greater than the number of nodes in the
+   current data group.
 .sp 2
-   *  The parameter "Compressed" is a JSON object,the value of it
-   is \fIboolean \fRtype,if the value is "true",then standing for
+*  The parameter "Compressed" is a JSON object,the value of it is
+   \fIboolean \fRtype,if the value is "true",then standing for
    the data of the collection will be stored in compressed form
    ,otherwise,data will be stored in normal .
 .sp 2
-   *  when the \fIoptions\fR have one or more params,please use
+*  when the \fIoptions\fR have one or more params,please use
    comma(,) to separate.
 .sp 2
-   *  The value of "name" should not be null string, "." or "$".
-   The length of it should not be greater than 127B, or exception
+*  The value of "name" should not be null string, "." or "$". The
+   length of it should not be greater than 127B, or exception
    will occur.
 .SH "RETURN VALUE"
-
+\fBRETURN VALUE\fR
 .sp 2
 On success, createCL() creates a new collection and return the
 object. On error, exception will be thrown.
 .SH "ERRORS"
-
+\fBERRORS\fR
 .sp 2
 \fBSDB_OOM (-2)\fR
 .br
-       Unable to allocate memory for creating collection
+         Unable to allocate memory for creating collection
 .sp 2
 \fBSDB_NOSPC (-11)\fR
 .br
-       Out of space
+         Out of space
 .sp 2
 \fBSDB_DMS_EXIST (-22)\fR
 .br
-       Collection already exist
+         Collection already exist
 .sp 2
 \fBSDB_DMS_CS_NOTEXIST (-34)\fR
 .br
-       Collection space does not exist
+         Collection space does not exist
 .SH "Examples"
-
+\fBExamples\fR
 .sp 2
 Create collection "bar" in collection space "foo" without shard
 key. If the collection space "foo" doesn't exist, it will
@@ -149,3 +155,9 @@ Create a compressed normal collection "bar" in collection space
 65535 partitions with writeconcern 1.
 .sp 2
 db.foo.createCL("bar",{ShardingKey:{age:1},ShardingType:"hash", Partition:65535, ReplSize:1, Compressed:true, IsMainCL:false})
+.sp 2
+\fBRelated information\fR
+.br
+db.resetSnapshot()
+.br
+db.collectionspace.getCL()
