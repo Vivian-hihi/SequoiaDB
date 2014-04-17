@@ -1,0 +1,39 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.execUpdate()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+execUpdate - SQL execution of other statements.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+db.execUpdate(\fBother sql\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+SQL execution of other statements.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+The collection "my.my" insert a new record.
+.sp 2
+db.execUpdate("insert into my.my(name,age) values('zhangshang', 30) ")

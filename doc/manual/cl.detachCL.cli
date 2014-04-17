@@ -1,0 +1,47 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.collectionspace.collection.detachCL()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+detachCL - Separated from the main collection of sub-partition
+partition collection.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+db.collectionspace.collection.detachCL(\fBsubCLFullName\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Collection
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Separated from the main collection of sub-partition partition
+collection.
+.sp 2
+\fBsubCLFullName (string)\fR
+.br
+         Sub-partition name (originally a collection of
+         sub-partition name)
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Specify the partition separating the child from the primary
+partition collection.
+.sp 2
+db.foo.year.detachCL("foo2.January"}

@@ -1,0 +1,53 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.setSessionAttr()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+setSessionAttr - Set Session Properties.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+db.setSessionAttr(\fBoptions\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Set Session Properties.
+.sp 2
+\fBoptions (json object)\fR
+.br
+         Session Properties option.
+.sp 2
+         \fBPreferedInstance\fR
+.br
+                  Read database instance conversation priority
+                  selected logo; value
+                  "m"/"M"/"s"/"S"/"a"/"A"/1-7, Respectively
+                  master/slave/anyone/node1-node7.
+.br
+                  PreferedInstance:"M"
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Set the session priority access to the data from the "master"
+database instance.
+.sp 2
+db.setSessionAttr({PreferedInstance:"M"})

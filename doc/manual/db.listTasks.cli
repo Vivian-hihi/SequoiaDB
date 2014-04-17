@@ -1,0 +1,51 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.listTasks()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+listTasks - View database of all background tasks.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+db.listTasks(\fB[cond]\fR,\fB[sel]\fR,\fB[orderBy]\fR,\fB[hint]\fR)
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+View database of all background tasks.
+.sp 2
+\fBcond (json object)\fR
+.br
+         Tasks filter.
+.sp 2
+\fBsel (json object)\fR
+.br
+         Task selection field.
+.sp 2
+\fBhint (json object)\fR
+.br
+         Reservations.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+List all system background tasks.
+.sp 2
+db.listTasks()

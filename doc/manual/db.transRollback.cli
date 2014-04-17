@@ -1,0 +1,38 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.transRollback()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+transRollback - Transaction rollback.
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Transaction rollback, After the open transaction, the operation
+if a single logical unit of work performed by abnormal, perform
+transaction rollback command, then the database back to its
+original state.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+Transaction rollback command:
+.sp 2
+db.transRollback() 
+.sp 2
+\fBRelated information\fR
+.br
+db.transCommit()
