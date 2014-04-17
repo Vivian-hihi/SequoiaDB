@@ -152,7 +152,8 @@
   <target name="build-and-copy-php" depends="">
   	<delete dir="${CODE_DIR}/driver/php5/build}" />
   	<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
-  	<exec executable="${WORKSPACE}/sequoiadb/driver/php5/source/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/driver/php5/source" failonerror="true">
+  	
+  	<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
 			<arg line="  ${php.version} " />
 		</exec>
 
