@@ -922,8 +922,8 @@
                     <file name="references/methods/topics_en_v2/cursor.toArray.dita"/>
                     <file name="references/methods/topics_en_v2/db.backupoffline.dita"/>
                     <file name="references/methods/topics_en_v2/db.backupOffline.dita"/>
-                    <file name="references/methods/topics_en_v2/db.caeateCataRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.cancelTask.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createCataRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCS.dita"/>
                     <file name="references/methods/topics_en_v2/db.createProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.createRG.dita"/>
