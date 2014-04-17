@@ -1,0 +1,45 @@
+
+.ad l
+
+.ll 72
+
+.ce 1000
+\fBdb.collectionspace.collection.listIndexes()\fR
+.ce 0
+
+.sp 2
+
+.SH "NAME"
+\fBNAME\fR
+.sp 2
+listIndexes - Enumerate indexes.
+.SH "SYNOPSIS"
+\fBSYNOPSIS\fR
+.sp 2
+
+.sp 2
+
+.sp 2
+db.collectionspace.collection.getIndex()
+.SH "CATEGORY"
+\fBCATEGORY\fR
+.sp 2
+
+.sp 2
+Collection
+.SH "DESCRIPTION"
+\fBDESCRIPTION\fR
+.sp 2
+Enumerate indexes. It will show information of all indexes in the
+specified collection.
+.SH "Examples"
+\fBExamples\fR
+.sp 2
+The following command will return information of all the indexes
+in the collection "bar".
+.sp 2
+db.foo.bar.listIndexes()
+.sp 2
+\fBRelated information\fR
+.br
+db.collectionspace.collection.getIndex()
