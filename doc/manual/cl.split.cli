@@ -1,22 +1,17 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.split()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 split - At least two sharding groups environment,the data records
 will be cut into different sharding group according to the
 specified conditions.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -25,13 +20,13 @@ specified conditions.
 db.collectionspace.collection.split(\fBsource group\fR,\fBtarget
 group\fR,\fBtarget group|cond\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 At least two sharding groups environment,the data records will be
 cut into different sharding group according to the specified
@@ -39,62 +34,61 @@ conditions.
 .sp 2
 \fBsource group (string)\fR
 .br
-         The source sharding group.
+       The source sharding group.
 .sp 2
 \fBtarget group (string)\fR
 .br
-         The target sharding group.
+       The target sharding group.
 .sp 2
 \fBcond (json object)\fR
 .br
-         Range split condition. (condition or percent.)
+       Range split condition. (condition or percent.)
 .sp 2
 \fBpercent(0~100) (double)\fR
 .br
-         percent split condition. (condition or percent.)
+       percent split condition. (condition or percent.)
 .sp 2
 \fBendcondition (json object)\fR
 .br
-         End of the range condition. (Optional, and only in the
-         conditional cut time-effective, time-sharing a
-         percentage cut invalid.)
+       End of the range condition. (Optional, and only in the
+       conditional cut time-effective, time-sharing a percentage
+       cut invalid.)
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  Data spliting is divided into range-spliting
-                  and percent-spliting,"source shard" and "target
-                  shard"are common params,and are string type;the
-                  param "condition" and "endconditionis" filled
-                  when range spliting,it is a object of json
-                  structure;param "percent" is filled when
-                  percent-spliting,it is a int type.
+              Data spliting is divided into range-spliting and
+              percent-spliting,"source shard" and "target
+              shard"are common params,and are string type;the
+              param "condition" and "endconditionis" filled when
+              range spliting,it is a object of json
+              structure;param "percent" is filled when
+              percent-spliting,it is a int type.
 .br
-                  \fBrange-splitingRange\fR Sharding use exact
-                  conditions when range-spliting, while Hash
-                  Sharding use "Partition"(number of slices)
-                  conditions. The starting condition is a
-                  required field and the ending condition is a
-                  optional condition when spliting, if the ending
-                  condition doesn't fill, then it default as the
-                  max range of data that "source shard" contains.
+              \fBrange-splitingRange\fR Sharding use exact
+              conditions when range-spliting, while Hash Sharding
+              use "Partition"(number of slices) conditions. The
+              starting condition is a required field and the
+              ending condition is a optional condition when
+              spliting, if the ending condition doesn't fill,
+              then it default as the max range of data that
+              "source shard" contains.
 .br
-                  ("<source shard>","<target shard>"，<condition>)
+              ("<source shard>","<target shard>"，<condition>)
 .br
-                  \fBpercent-spliting\fR
-                  db.foo.bar.split("<source shard>","<target
-                  shard>"，<percent>)
+              \fBpercent-spliting\fR db.foo.bar.split("<source
+              shard>","<target shard>"，<percent>)
 .sp 2
 
 .sp 2
-         \fBNote: \fRThe range of partition, if you specify the
-         partition key fields such as when
-         descending:{groupingKey:{<field 1>:<-1>,condition (or
-         Partition) the starting conditions range should be
-         greater than the scope of the termination conditions.
+       \fBNote: \fRThe range of partition, if you specify the
+       partition key fields such as when
+       descending:{groupingKey:{<field 1>:<-1>,condition (or
+       Partition) the starting conditions range should be greater
+       than the scope of the termination conditions.
 .sp 2
 
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Range-spliting of Hash Sharding
 .sp 2

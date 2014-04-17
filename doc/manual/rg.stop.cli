@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBrg.stop()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 stop - Stop replset.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,25 +17,19 @@ stop - Stop replset.
 .sp 2
 rg.stop()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 ReplicaGroup
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Stop replset. After stopping replset, manipulations lilke
 creating nodes cannot be executed on the replset.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Stop replset.
 .sp 2
 rg.stop()
-.sp 2
-\fBRelated information\fR
-.br
-rg.start()
-.br
-node.start()

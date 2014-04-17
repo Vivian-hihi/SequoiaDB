@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBcursor.next()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 next - Return the next record in current cursor.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,25 +17,19 @@ next - Return the next record in current cursor.
 .sp 2
 cursor.next()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Cursor
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return the next record in current cursor.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Select records with the value of "age" greater than 10 in the
 collection "bar" and return the next record in current cursor.
 .sp 2
 db.foo.bar.find({age:{$gt:10}}).next()
-.sp 2
-\fBRelated information\fR
-.br
-cursor.current()
-.br
-db.collectionspace.collection.find()

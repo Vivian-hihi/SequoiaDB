@@ -1,31 +1,26 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.listCollectionSpaces()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 listCollectionSpaces - Emurate all the collection spaces in the
 database.
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Emurate all the collection spaces in the database.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 db.listCollectionSpace()
 .sp 2
@@ -36,9 +31,3 @@ Returns:
         "Name":"foo" 
 .br
       }...
-.sp 2
-\fBRelated information\fR
-.br
-db.list()
-.br
-db.listCollections()

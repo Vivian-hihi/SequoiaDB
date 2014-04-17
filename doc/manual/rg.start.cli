@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBrg.start()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 start - It starts replset.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,26 +17,20 @@ start - It starts replset.
 .sp 2
 rg.start()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 ReplicaGroup
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 It starts replset. After a replset is started, operations like
 creating nodes can be executed. Users can start specified node
 with the method db.startRG(<name>).
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Start replset:
 .sp 2
 rg.start() //Equal to db.startRG("group")
-.sp 2
-\fBRelated information\fR
-.br
-rg.stop()
-.br
-node.start()

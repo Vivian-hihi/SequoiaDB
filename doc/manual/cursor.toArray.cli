@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBcursor.toArray()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 toArray - Return result set in the type of array.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,17 +17,17 @@ toArray - Return result set in the type of array.
 .sp 2
 cursor.toArray()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Cursor
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return result set in the type of array.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Select records with the value of "age" greater than 5 in the
 collection "bar" and return the amount of record in the range
@@ -75,9 +70,3 @@ Return:{
   "age": 15
 .br
 }
-.sp 2
-\fBRelated information\fR
-.br
-cursor.size()
-.br
-db.collectionspace.collection.find()

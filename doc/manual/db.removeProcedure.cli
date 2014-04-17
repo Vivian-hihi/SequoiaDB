@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.removeProcedure()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 removeProcedure - Deletes the specified function name.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,26 +17,26 @@ removeProcedure - Deletes the specified function name.
 .sp 2
 db.removeProcedure(\fBfunction name\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Deletes the specified function name, function name must exist,
 otherwise an exception message.
 .sp 2
 \fBfunction name (string)\fR
 .br
-         function name.
+       function name.
 .sp 2
 Defined removeProcedure() method, only one string type parameter
 name function name, its value must already exits, otherwise an
 exception.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 
 .sp 2
@@ -52,9 +47,3 @@ db.removeProcedure("sum")
 Function must be guaranteed and consistent definition of the
 function name. Such as db.removeProcedure('sum') call will return
 a failure.
-.sp 2
-\fBRelated information\fR
-.br
-db.createProcedure()
-.br
-db.listProcedures()

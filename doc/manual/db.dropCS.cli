@@ -1,21 +1,16 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.dropCS()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 dropCS - Delete a specified collection space in a database
 instance.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -23,53 +18,46 @@ instance.
 .sp 2
 db.dropCS(\fBname\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Delete a specified collection space in a database instance.
 .sp 2
 \fBname (string)\fR
 .br
-         Collection space name. All the collection sapces in a
-         database instance is unique to each other.
+       Collection space name. All the collection sapces in a
+       database instance is unique to each other.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The parameter "name" should be specified in the
-                  method "dropCS()". The type of collection space
-                  name should be string. It should be ensured
-                  that the collcection space name exists in the
-                  database instance, or operation exception will
-                  occur.
+              The parameter "name" should be specified in the
+              method "dropCS()". The type of collection space
+              name should be string. It should be ensured that
+              the collcection space name exists in the database
+              instance, or operation exception will occur.
 .br
-                  ("<Collection space name>")
+              ("<Collection space name>")
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-*  The value of "name" should not be null string. It should not
-   contain "." or "$". And the length of it should not be greater
-   than 127B. If the collection space name is invalid , the
-   operation will fail.
+   *  The value of "name" should not be null string. It should
+   not contain "." or "$". And the length of it should not be
+   greater than 127B. If the collection space name is invalid ,
+   the operation will fail.
 .sp 2
-*  It should be ensured that the collection space name exists, or
-   exception will occur.
+   *  It should be ensured that the collection space name exists,
+   or exception will occur.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Supposing that a collection space called "foo" exists, the
 following command will delete it.
 .sp 2
 db.dropCS("foo")
-.sp 2
-\fBRelated information\fR
-.br
-db.createCS()
-.br
-db.getCS()

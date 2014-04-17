@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.flushConfigure()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 flushConfigure - Brush disk configuration to configuration files.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,29 +17,29 @@ flushConfigure - Brush disk configuration to configuration files.
 .sp 2
 db.flushConfigure(\fBrule\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Brush disk configuration to configuration files.
 .sp 2
 \fBrule (json object)\fR
 .br
-         Brush rules.
+       Brush rules.
 .sp 2
-         \fBGlobal\fR
+       \fBGlobal\fR
 .br
-                  True indicates whether the brush plate
-                  system-wide configuration, false indicates that
-                  only brush plate node configuration.
+              True indicates whether the brush plate system-wide
+              configuration, false indicates that only brush
+              plate node configuration.
 .br
-                  Global:true
+              Global:true
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Brush database configuration.
 .sp 2

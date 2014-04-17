@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.eval()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 eval - According need to fill javaScript statement.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,46 +17,47 @@ eval - According need to fill javaScript statement.
 .sp 2
 db.eval(\fBcode\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 According need to fill javaScript statement. Meanwhile you can a
 stored procedure in the statement has been created good.
 .sp 2
 \fBcode (string)\fR
 .br
-         JavaScript statement or stored procedure to create a
-         good function.
+       JavaScript statement or stored procedure to create a good
+       function.
 .sp 2
-*  In accordance with the statement executed successfully return
-   results. The return value can be directly assigned to another
-   variable. Eg: \fBvar a = db.eval(' db.foo.bar'); a.find(); \fR
+   *  In accordance with the statement executed successfully
+   return results. The return value can be directly assigned to
+   another variable. Eg: \fBvar a = db.eval(' db.foo.bar');
+   a.find(); \fR
 .sp 2
-*  fails returns an error code and error message. Such as: \fB{
-   "errmsg": "(nofile):1 ReferenceError: sum is not
+   *  fails returns an error code and error message. Such as:
+   \fB{ "errmsg": "(nofile):1 ReferenceError: sum is not
    defined","retCode": -152 } \fR
 .sp 2
-*  Operation does not return before the end of the function
+   *  Operation does not return before the end of the function
    execution. Dropouts terminated throughout the implementation,
    but the code has been executed will not be rolled back.
 .sp 2
-*  Customize the length of the return value of a certain limit,
-   the reference SequoiaDB insert records maximum length.
+   *  Customize the length of the return value of a certain
+   limit, the reference SequoiaDB insert records maximum length.
 .sp 2
-*  Define the temporary support functions, such as: \fBdb.eval('
-   function sum(x,y){return x+y;} sum(1,2)')\fR
+   *  Define the temporary support functions, such as:
+   \fBdb.eval(' function sum(x,y){return x+y;} sum(1,2)')\fR
 .sp 2
-*  Global db usage and createProcedure same.
+   *  Global db usage and createProcedure same.
 .sp 2
 \fBNote: \fRWhile all the output statement will be shielded, but
 it is recommended not to join any print statements.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 
 .sp 2
@@ -116,7 +112,3 @@ Fill javaScript statement eval() method
   "a": 2
 .br
 }...
-.sp 2
-\fBRelated information\fR
-.br
-db.listProcedures()

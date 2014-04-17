@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.dropIndex()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 dropIndex - Delete specified index in a collection.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,46 +17,39 @@ dropIndex - Delete specified index in a collection.
 .sp 2
 db.collectionspace.collection.dropIndex(\fBname\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Delete specified index in a collection.
 .sp 2
 \fBname (string)\fR
 .br
-         Index name. Index names should be unique to each other
-         in the same collection.
+       Index name. Index names should be unique to each other in
+       the same collection.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  Then method "dropIndex()" contains a field
-                  named "name". The value of "name" should be
-                  string.
+              Then method "dropIndex()" contains a field named
+              "name". The value of "name" should be string.
 .br
-                  {"name":"<index name>"}
+              {"name":"<index name>"}
 .sp 2
 \fBNote: \fR
 .sp 2
-*  When deleting index, it should be ensured that the index name
-   is in the collection.
+   *  When deleting index, it should be ensured that the index
+   name is in the collection.
 .sp 2
-*  The index name can't be bull、contain dot(.) or '$',and the
+   *  The index name can't be bull、contain dot(.) or '$',and the
    length of it must be not more than 127B.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Supposing that the index "ageIndex" exists in the collection
 "bar", the following command will delete it.
 .sp 2
 db.foo.bar.dropIndex("ageIndex")
-.sp 2
-\fBRelated information\fR
-.br
-db.collectionspace.collection.createIndex()
-.br
-db.collectionspace.collection.getIndex()

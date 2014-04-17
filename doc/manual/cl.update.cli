@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.update()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 update - Update records in a collection.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,58 +17,58 @@ update - Update records in a collection.
 .sp 2
 db.collectionspace.collection.update(\fBrule\fR,\fB[cond]\fR,\fB[hint]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Update records in a collection.
 .sp 2
 \fBrule (json object)\fR
 .br
-         Update rule. Records will be updated according the value
-         of "rule".
+       Update rule. Records will be updated according the value
+       of "rule".
 .sp 2
 \fBcond (json object)\fR
 .br
-         Selecting condition. If it is null, update all the
-         records. If it is not null, it will update records that
-         match the condition.
+       Selecting condition. If it is null, update all the
+       records. If it is not null, it will update records that
+       match the condition.
 .sp 2
 \fBhint (json object)\fR
 .br
-         It specify the visiting plan by giving an index.
+       It specify the visiting plan by giving an index.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "update()" should contains the field
-                  "rule". It is a json object. The parameter
-                  "cond" and "hint" are selectable. The parameter
-                  "hint" contains one json object that contains
-                  one field. The "name" in this field is ignored,
-                  but the value specify the index to visit
-                  records. When the value is null, it will visit
-                  all the records in the collection. The format
-                  is "{"":null}" or "{"":"<indexname>"}".
+              The method "update()" should contains the field
+              "rule". It is a json object. The parameter "cond"
+              and "hint" are selectable. The parameter "hint"
+              contains one json object that contains one field.
+              The "name" in this field is ignored, but the value
+              specify the index to visit records. When the value
+              is null, it will visit all the records in the
+              collection. The format is "{"":null}" or
+              "{"":"<indexname>"}".
 .br
-                  {<{""Update character 1"":{field name
-                  1:"value"},"Update character 2":{"field name
-                  2":"value 2"},...}>, [{"field name 1":{"match
-                  1":"value 1"},"field name 2":{"match 2":"value
-                  2"},...}],[{"":"Index name"|null}]}
+              {<{""Update character 1"":{field name
+              1:"value"},"Update character 2":{"field name
+              2":"value 2"},...}>, [{"field name 1":{"match
+              1":"value 1"},"field name 2":{"match 2":"value
+              2"},...}],[{"":"Index name"|null}]}
 .sp 2
 \fBNote: \fR
 .sp 2
-*  "update" does not support this version of the table
+   *  "update" does not support this version of the table
    partitioning key(ShardingKey) segment updates, if you include
    the partition key update operations to weed out automatically
    update the partition key, but other fields update to take
    effect, and no error occurs.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Update all the records according to the updating rule. That's to
 say, we merely set the value of "rule", but not "cond" or "hint".
@@ -101,9 +96,3 @@ db.foo.bar.update({$inc:{age:1}},{age:{$gt:20}},{"":"testIndex"})>
 This operation visit records that contains the value of "age"
 greater than 20 in the collection "bar" through the index
 "testIndex". Add 1 to the field of "age".
-.sp 2
-\fBRelated information\fR
-.br
-db.collectionspace.collection.listIndexes()
-.br
-db.collectionspace.collection.upsert()

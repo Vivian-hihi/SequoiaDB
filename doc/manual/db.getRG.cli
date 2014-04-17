@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.getRG()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 getRG - Return the quotation of a replset.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,44 +17,43 @@ getRG - Return the quotation of a replset.
 .sp 2
 db.getRG(\fBname|id\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return the quotation of a replset.
 .sp 2
 \fBname (string)\fR
 .br
-         Replset name. Replset names are unique to each other in
-         a database object.
+       Replset name. Replset names are unique to each other in a
+       database object.
 .sp 2
 \fBid (int)\fR
 .br
-         Replset id. The system will automatically generate a
-         replset id.
+       Replset id. The system will automatically generate a
+       replset id.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "getRG()" contains "name" or "id".
-                  The type of "name" is string. The type of "id"
-                  is "int". It the replset specified by "name" or
-                  "id" doesn't exist, operation exception will
-                  occur.
+              The method "getRG()" contains "name" or "id". The
+              type of "name" is string. The type of "id" is
+              "int". It the replset specified by "name" or "id"
+              doesn't exist, operation exception will occur.
 .br
-                  ("<Replset name>"|<id>)
+              ("<Replset name>"|<id>)
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-*  The value of "name" should not contain null string, "." or
+   *  The value of "name" should not contain null string, "." or
    "$". The length of it should not be greater than 127B.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Specify the value of "name", the returnthe quotation of replset
 "rg1".
@@ -70,9 +64,3 @@ Specify the value of "id", the returnthe quotation of replset
 "rg1".
 .sp 2
 db.getRG("1000")
-.sp 2
-\fBRelated information\fR
-.br
-db.createRG()
-.br
-db.removeRG()

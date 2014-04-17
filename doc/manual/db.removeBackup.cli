@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.removeBackup()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 removeBackup - Delete the database backup.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,69 +17,68 @@ removeBackup - Delete the database backup.
 .sp 2
 db.removeBackup(\fB[options]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Delete the database backup.
 .sp 2
 \fBoptions (json object)\fR
 .br
-         Set the backup name, specify the replication group, the
-         backup path and other parameters.
+       Set the backup name, specify the replication group, the
+       backup path and other parameters.
 .sp 2
-         \fBGroupID\fR
+       \fBGroupID\fR
 .br
-                  Backup copy group ID specified, the default is
-                  all replication groups.
+              Backup copy group ID specified, the default is all
+              replication groups.
 .br
-                  GroupID:1000 or GroupID:[1000, 1001]
+              GroupID:1000 or GroupID:[1000, 1001]
 .sp 2
-         \fBGroupName\fR
+       \fBGroupName\fR
 .br
-                  Backup copy group name is specified, the
-                  default is all replication groups.
+              Backup copy group name is specified, the default is
+              all replication groups.
 .br
-                  GroupName:"data1" or GroupName:["data1",
-                  "data2"]
+              GroupName:"data1" or GroupName:["data1", "data2"]
 .sp 2
-         \fBName\fR
+       \fBName\fR
 .br
-                  Backup name, the default view all backups.
+              Backup name, the default view all backups.
 .br
-                  Name:"backup-2014-1-1"
+              Name:"backup-2014-1-1"
 .sp 2
-         \fBPath\fR
+       \fBPath\fR
 .br
-                  Backup path, the default configuration
-                  parameters for the specified backup path. The
-                  path supports wildcards(g%: group name, h%:
-                  host name, s%:service name)
+              Backup path, the default configuration parameters
+              for the specified backup path. The path supports
+              wildcards(g%: group name, h%: host name, s%:service
+              name)
 .br
-                  Path:"/opt/sequoiadb/backup/%g"
+              Path:"/opt/sequoiadb/backup/%g"
 .sp 2
-         \fBIsSubDir\fR
+       \fBIsSubDir\fR
 .br
-                  The above path "Path" configuration parameters
-                  are specified for the backup path configuration
-                  parameters subdirectory, the default is false.
+              The above path "Path" configuration parameters are
+              specified for the backup path configuration
+              parameters subdirectory, the default is false.
 .br
-                  IsSubDir:false
+              IsSubDir:false
 .sp 2
-         \fBPrefix\fR
+       \fBPrefix\fR
 .br
-                  Backup prefix, supports wildcards(g%,h%,s%),
-                  default is empty.
+              Backup prefix, supports wildcards(g%,h%,s%),
+              default is empty.
 .br
-                  Prefix:"%g_bk_"
+              Prefix:"%g_bk_"
 .sp 2
 
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Backup information called "backup-2014-1-1" delete the database.
 .sp 2

@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.remove()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 remove - Delete record in a collection.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,44 +17,42 @@ remove - Delete record in a collection.
 .sp 2
 db.collectionspace.collection.remove(\fB[cond]\fR,\fB[hint]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Delete record in a collection.
 .sp 2
 \fBcont (json object)\fR
 .br
-         Selectable condition. If it is null, it will delete all
-         the records. If it is not null, delete records that
-         match the condition.
+       Selectable condition. If it is null, it will delete all
+       the records. If it is not null, delete records that match
+       the condition.
 .sp 2
 \fBhint (json object)\fR
 .br
-         Specify visiting plan.
+       Specify visiting plan.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The "cond" is a json object. When it is null (
-                  For example, "{}".), delete all records in the
-                  collection. "hint" is a json object that
-                  contains a single element. The field name of
-                  this element is ignored. But the value of the
-                  field in it is specified as the name of index
-                  which is needed to visit. When the value of
-                  field is null, it will visit all the records in
-                  the collection.
+              The "cond" is a json object. When it is null ( For
+              example, "{}".), delete all records in the
+              collection. "hint" is a json object that contains a
+              single element. The field name of this element is
+              ignored. But the value of the field in it is
+              specified as the name of index which is needed to
+              visit. When the value of field is null, it will
+              visit all the records in the collection.
 .br
-                  {[{"Field name 1":{"Matching character
-                  1":"value 1","Field name 2":{"Matching
-                  character 2":"value 2"},...}],[{"":"index
-                  name"|null}]}
+              {[{"Field name 1":{"Matching character 1":"value
+              1","Field name 2":{"Matching character 2":"value
+              2"},...}],[{"":"index name"|null}]}
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Delete all the records in the collection "bar".
 .sp 2
@@ -73,9 +66,3 @@ db.foo.bar.remove({age:{$gte:20}},{"":"myIndex"})
 This manipulation visits records in a collection named "bar"
 according to the index named "myIndex" and delete records which
 contains the value of "age" greater than 20.
-.sp 2
-\fBRelated information\fR
-.br
-db.collectionspace.collection.find()
-.br
-db.collectionspace.collection.createIndex()

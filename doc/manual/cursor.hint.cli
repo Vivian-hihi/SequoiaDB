@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBcursor.hint()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 hint - Visit result set using specified index.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,45 +17,35 @@ hint - Visit result set using specified index.
 .sp 2
 cousor.hint(\fB[hint]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Cursor
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Visit result set using specified index.
 .sp 2
 \fBhint (json object)\fR
 .br
-         It specifies the visiting plan to accelarate query
-         speed.
+       It specifies the visiting plan to accelarate query speed.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "cursor.hint()" contains parameter
-                  "hint". If it is not specified, the query will
-                  not use index to visit records. The parameter
-                  "hint" contain a one-field json object. The
-                  field name is ignored. But the field value is
-                  specified as the index which will be visited.
-                  When it is null, it will visit all the records
-                  in the collection.
+              The method "cursor.hint()" contains parameter
+              "hint". If it is not specified, the query will not
+              use index to visit records. The parameter "hint"
+              contain a one-field json object. The field name is
+              ignored. But the field value is specified as the
+              index which will be visited. When it is null, it
+              will visit all the records in the collection.
 .br
-                  {"":null} or {"":"<indexname>"}
+              {"":null} or {"":"<indexname>"}
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Find records that contains the field "age" in the collection
 "bar" using the index "ageIndex" and return results.
 .sp 2
 db.foo.bar.find({age:{$exists:1}}).hint({"":"ageIndex"})
-.sp 2
-\fBRelated information\fR
-.br
-cursor.sort()
-.br
-cursor.limit()
-.br
-db.collectionspace.collection.find()

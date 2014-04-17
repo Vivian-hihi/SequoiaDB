@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBrg.createNode()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 createNode - Create a node in a replset.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,44 +17,44 @@ createNode - Create a node in a replset.
 .sp 2
 rg.createNode(\fBhost\fR,\fBservice\fR,\fBdbpath\fR,\fB[config]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 ReplicaGroup
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Create a node in a replset.
 .sp 2
 \fBhost (string)\fR
 .br
-         Specifies the host name of the node.
+       Specifies the host name of the node.
 .sp 2
 \fBservice (string)\fR
 .br
-         Node port number.
+       Node port number.
 .sp 2
 \fBdbpath (string)\fR
 .br
-         Node path.
+       Node path.
 .sp 2
 \fBconfig (json)\fR
 .br
-         Node configuration information, such as the
-         configuration log size, whether open affairs,
-         specifically with reference to database configuration.
+       Node configuration information, such as the configuration
+       log size, whether open affairs, specifically with
+       reference to database configuration.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "rg.createNode()" contains 4
-                  parameters: Host, Service, dbPath, config. Type
-                  the first three parameters are string,
-                  required; last one is json object, optional.
+              The method "rg.createNode()" contains 4 parameters:
+              Host, Service, dbPath, config. Type the first three
+              parameters are string, required; last one is json
+              object, optional.
 .br
-                  ("<Host>","<service>","<dbpath>",[{<configParam>:value,...}])
+              ("<Host>","<service>","<dbpath>",[{<configParam>:value,...}])
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Create a node in port 11800 in replset "group", Specify the log
 file size is 64MB.
@@ -72,9 +67,3 @@ In a replset, more than one replset can be created. But the
 margin between two ports of them should not be greater than 5.
 Because the system controls 5 communication interfaces for each
 node.
-.sp 2
-\fBRelated information\fR
-.br
-rg.getDetail()
-.br
-rg.getMaster()

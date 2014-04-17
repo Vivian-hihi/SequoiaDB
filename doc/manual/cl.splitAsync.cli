@@ -1,23 +1,18 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.splitAsync()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 splitAsync - Interview operation
 "db.collectionspace.collection.split" the same function, but it
 operates as an asynchronous partition operation, the task ID
 returned immediately after the partition created task.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -27,13 +22,13 @@ db.collectionspace.collection. splitAsync(\fBsource
 group\fR,\fBtarget group\fR,\fBtarget
 group|cond\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Interview operation "db.collectionspace.collection.split" the
 same function, but it operates as an asynchronous partition

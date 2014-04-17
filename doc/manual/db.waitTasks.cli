@@ -1,21 +1,16 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.waitTasks()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 waitTasks - Wait for the end of the specified task synchronizaton
 or canceled.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -23,22 +18,22 @@ or canceled.
 .sp 2
 db.waitTasks(\fBid1\fR,\fB[id2]\fR,\fB...\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Wait for the end of the specified task synchronizaton or
 canceled.
 .sp 2
 \fBid1,id2,... (Integer)\fR
 .br
-         Task ID.
+       Task ID.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Wait for data synchronization segmentation task is completed.
 .sp 2

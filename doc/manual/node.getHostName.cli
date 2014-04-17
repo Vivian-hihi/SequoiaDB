@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBnode.getHostName()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 getHostName - Return the hostname of a node.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,26 +17,20 @@ getHostName - Return the hostname of a node.
 .sp 2
 node.getHostName()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Node
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return the hostname of a node.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Return the hostname of a node called "node".
 .sp 2
 > node.getHostName()
 .br
 Return：vmsvr2-suse-x64
-.sp 2
-\fBRelated information\fR
-.br
-node.connect()
-.br
-node.getServiceName()

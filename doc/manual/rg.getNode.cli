@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBrg.getNode()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 getNode() - Return information of specified node.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,48 +17,41 @@ getNode() - Return information of specified node.
 .sp 2
 rg.getNode(\fBnodename|hostname\fR,\fBservicename\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 ReplicaGroup
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return information of specified node.
 .sp 2
 \fBnodename (string)\fR
 .br
-         Node name. Either "nodename" or "hostname".
+       Node name. Either "nodename" or "hostname".
 .sp 2
 \fBhostname (string)\fR
 .br
-         Hostname. Either "nodename" or "hostname".
+       Hostname. Either "nodename" or "hostname".
 .sp 2
 \fBservicename (string)\fR
 .br
-         Server name.
+       Server name.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "rg.getNode()" has 2 parameter. The
-                  first one is node name or hostname. The secend
-                  one is server name. The types of the 2
-                  parameters are both string. And they should not
-                  be null.
+              The method "rg.getNode()" has 2 parameter. The
+              first one is node name or hostname. The secend one
+              is server name. The types of the 2 parameters are
+              both string. And they should not be null.
 .br
-                  ("<Node name>|<hostname>","<server name>")
+              ("<Node name>|<hostname>","<server name>")
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Return node according to specified hostname and server name
 .sp 2
 > rg.getNode("vmsvr2-suse-x64","11800")
 .br
 Return: vmsvr2-suse-x64:11800
-.sp 2
-\fBRelated information\fR
-.br
-rg.createNode()
-.br
-rg.getMaster()

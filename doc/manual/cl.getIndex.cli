@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.getIndex()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 getIndex - Return the quotation of specified index.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,45 +17,39 @@ getIndex - Return the quotation of specified index.
 .sp 2
 db.collectionspace.collection.getIndex(\fBname\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return the quotation of specified index.
 .sp 2
 \fBname (string)\fR
 .br
-         Index name, all the index name in a collection should be
-         unique to each other.
+       Index name, all the index name in a collection should be
+       unique to each other.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "getIndex()" contains the field
-                  "name", which is in the type of string.
+              The method "getIndex()" contains the field "name",
+              which is in the type of string.
 .br
-                  {"name":"<index name>"}
+              {"name":"<index name>"}
 .sp 2
 \fBNote: \fR
 .sp 2
-*  It should be ensured that the index name exists in the
+   *  It should be ensured that the index name exists in the
    collection before users get index quotation.
 .sp 2
-*  Index name should not contain null string, "." or "$". The
+   *  Index name should not contain null string, "." or "$". The
    length of it should not be greater than 127B.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Supposing that the index "ageIndex" exists in collection "bar",
 the following command will return the quotation of it.
 .sp 2
 db.foo.bar.getIndex("ageIndex")
-.sp 2
-\fBRelated information\fR
-.br
-db.collectionspace.collection.dropIndex()
-.br
-db.collectionspace.collection.listIndexes()

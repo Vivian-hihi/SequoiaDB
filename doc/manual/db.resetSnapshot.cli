@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.resetSnapshot()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 resetSnapshot - Reset snapshot.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,33 +17,33 @@ resetSnapshot - Reset snapshot.
 .sp 2
 resetSnapshot(\fB[con]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Sequoiadb
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Reset snapshot.
 .sp 2
 \fBcon (json object)\fR
 .br
-         Selecting condition. It merely resets snapshot records
-         that match the conditions in "con". If it is null, it
-         will reset all the snapshot records.
+       Selecting condition. It merely resets snapshot records
+       that match the conditions in "con". If it is null, it will
+       reset all the snapshot records.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "resetSnapshot()" contains the
-                  parameter "con". It is a json object.
+              The method "resetSnapshot()" contains the parameter
+              "con". It is a json object.
 .br
-                  {["con":"{"Field name 1":{"match 1":"value
-                  1"},"Field name 2":{"match 2":"value 2"}...}"]}
+              {["con":"{"Field name 1":{"match 1":"value
+              1"},"Field name 2":{"match 2":"value 2"}...}"]}
 .sp 2
 
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 
 .sp 2

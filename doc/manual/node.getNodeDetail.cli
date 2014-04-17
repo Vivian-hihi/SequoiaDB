@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBnode.getNodeDetail()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 getNodeDetail - Return information of current node.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,17 +17,17 @@ getNodeDetail - Return information of current node.
 .sp 2
 node.getNodeDetail()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Node
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return information of current node.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Return information of a node named "node".
 .sp 2
@@ -43,7 +38,3 @@ Return：1000:vmsvr2-suse-x64:11800(shard)
 Here "1000" is node ID（NodeID）；"vmsvr2-suse-x64" is hostname（HostName）；
 .br
 "11800" is service name（ServiceName），"(shard)" is the replset name of the node.
-.sp 2
-\fBRelated information\fR
-.br
-node.getServiceName()

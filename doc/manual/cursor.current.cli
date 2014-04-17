@@ -1,21 +1,16 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBcursor.current()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 current - Return the record that current cursor currently point
 to.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -23,26 +18,20 @@ to.
 .sp 2
 cursor.current()
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Cursor
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Return the record that current cursor currently point to.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Select records with the value of "age" greater than 10 in the
 collection "bar" and return the record that current cursor
 currently point to.
 .sp 2
 db.foo.bar.find({age:{$gt:10}}).current()
-.sp 2
-\fBRelated information\fR
-.br
-cursor.hint()
-.br
-db.collectionspace.collection.find()

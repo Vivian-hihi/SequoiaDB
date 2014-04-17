@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.upsert()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 upsert - Update collection records.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,13 +17,13 @@ upsert - Update collection records.
 .sp 2
 db.collectionspace.collection.upsert(\fBrule\fR,\fB[cond]\fR,\fB[hint]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Update collection records. The method "upsert" and the method
 "update" are used to update records. But when no records is
@@ -37,48 +32,47 @@ but "upset" will insert data once.
 .sp 2
 \fBrule (json object)\fR
 .br
-         Update rule. It will update record according to the
-         value of "rule".
+       Update rule. It will update record according to the value
+       of "rule".
 .sp 2
 \fBcond (json object)\fR
 .br
-         Selectable condition. When it is null, update all the
-         records. If it is not null, update records that match
-         the condition in "cond".
+       Selectable condition. When it is null, update all the
+       records. If it is not null, update records that match the
+       condition in "cond".
 .sp 2
 \fBhint (json object)\fR
 .br
-         Specify visiting plan.
+       Specify visiting plan.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The method "upsert()" should contians the
-                  parameter "rule". The parameter "rule" is a
-                  json object. The parameters "cond" and "hint"
-                  are selectable.The parameter "cond" and "hint"
-                  are selectable. The parameter "hint" contains
-                  one json object that contains one field. The
-                  "name" in this field is ignored, but the value
-                  specify the index to visit records. When the
-                  value is null, it will visit all the records in
-                  the collection. The format is "{"":null}" or
-                  "{"":"<indexname>"}".
+              The method "upsert()" should contians the parameter
+              "rule". The parameter "rule" is a json object. The
+              parameters "cond" and "hint" are selectable.The
+              parameter "cond" and "hint" are selectable. The
+              parameter "hint" contains one json object that
+              contains one field. The "name" in this field is
+              ignored, but the value specify the index to visit
+              records. When the value is null, it will visit all
+              the records in the collection. The format is
+              "{"":null}" or "{"":"<indexname>"}".
 .br
-                  {<{""Update character 1"":{"Field name
-                  1":"value"},"Update character 2":{"Field name
-                  2":"value 2"},...}>, [{"Field name 1":{"match
-                  1":"value 1"},"field name 2":{"match 2":"value
-                  2"},...}],[{"":"index name "|null}]}
+              {<{""Update character 1"":{"Field name
+              1":"value"},"Update character 2":{"Field name
+              2":"value 2"},...}>, [{"Field name 1":{"match
+              1":"value 1"},"field name 2":{"match 2":"value
+              2"},...}],[{"":"index name "|null}]}
 .sp 2
 \fBNote: \fR
 .sp 2
-*  "upsert" does not support this version of the table
+   *  "upsert" does not support this version of the table
    partitioning key(ShardingKey) segment updates, if you include
    the partition key update operations to weed out automatically
    update the partition key, but other fields update to take
    effect, and no error occurs.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Supposing that there are 2 records in the collection "bar".
 .sp 2
@@ -231,7 +225,3 @@ value of the field "age" in these records. Then it returns:
     "name":"Mike"
 .br
   } 
-.sp 2
-\fBRelated information\fR
-.br
-db.collectionspace.collection.update()

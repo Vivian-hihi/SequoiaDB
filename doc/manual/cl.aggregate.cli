@@ -1,21 +1,16 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.aggregate()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 aggregate - retrieve documents form the collection SequoiaDB's
 record, and return the cursor.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -23,13 +18,13 @@ record, and return the cursor.
 .sp 2
 db.collectionspace.collection.aggregate(\fBsubOp...\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 aggregate() method with find() method function relatively close,
 but also retrieve documents form the collection SequoiaDB's
@@ -37,69 +32,66 @@ record, and return the cursor.
 .sp 2
 \fBsubOp (json object)\fR
 .br
-         subOp said sub-operation, In aggregate() method can fill
-         1~N sub-operation.
+       subOp said sub-operation, In aggregate() method can fill
+       1~N sub-operation.
 .sp 2
-         aggregate() method has only one parameter subOp, which
-         represents 1~N sub-operations,each sub-operation is a
-         json object, separated by commas sub-operation.
-         Aggregation framework supports the following
-         sub-operating parameters:
+       aggregate() method has only one parameter subOp, which
+       represents 1~N sub-operations,each sub-operation is a json
+       object, separated by commas sub-operation. Aggregation
+       framework supports the following sub-operating parameters:
 .sp 2
 
 .sp 2
-         \fB$project\fR
+       \fB$project\fR
 .br
-                  Selection field names need to output "1"
-                  output, "0" means no output, you can also
-                  implement rename fields.
+              Selection field names need to output "1" output,
+              "0" means no output, you can also implement rename
+              fields.
 .br
-                  {$project:{field1:1,field:0,aliase:"$field3"}}
+              {$project:{field1:1,field:0,aliase:"$field3"}}
 .sp 2
-         \fB$match\fR
+       \fB$match\fR
 .br
-                  Match to achieve matching criteria to select
-                  from a collection of records, rather with the
-                  SQL statement where.
+              Match to achieve matching criteria to select from a
+              collection of records, rather with the SQL
+              statement where.
 .br
-                  {$match:{field:{$lte:value}}}
+              {$match:{field:{$lte:value}}}
 .sp 2
-         \fB$limit\fR
+       \fB$limit\fR
 .br
-                  Limit the number of returned.
+              Limit the number of returned.
 .br
-                  {$limit:10}
+              {$limit:10}
 .sp 2
-         \fB$skip\fR
+       \fB$skip\fR
 .br
-                  Control of the result set the starting point,
-                  ie the number of skips specified result set
-                  records.
+              Control of the result set the starting point, ie
+              the number of skips specified result set records.
 .br
-                  {$skip:5}
+              {$skip:5}
 .sp 2
-         \fB$group\fR
+       \fB$group\fR
 .br
-                  Achieve grouping of records, similar to SQL's
-                  group by statement, "_id" designated group
-                  field.
+              Achieve grouping of records, similar to SQL's group
+              by statement, "_id" designated group field.
 .br
-                  {$group:{_id:"$field"}}
+              {$group:{_id:"$field"}}
 .sp 2
-         \fB$sort\fR
+       \fB$sort\fR
 .br
-                  Sort the result set to achieve, "1" represents
-                  the ASC, "-1" for descending.
+              Sort the result set to achieve, "1" represents the
+              ASC, "-1" for descending.
 .br
-                  {$sort:{field1:1,field2:-1,...}}
+              {$sort:{field1:1,field2:-1,...}}
 .sp 2
 \fBNote: \fR
 .sp 2
-*  \fBDescription: \fRaggregate() method can have any number of
-   word operations, but note that the name of each parameter
+   *  \fBDescription: \fRaggregate() method can have any number
+   of word operations, but note that the name of each parameter
    syntax tules sub-operations.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Assuming collection of records collection contains the following
 format:

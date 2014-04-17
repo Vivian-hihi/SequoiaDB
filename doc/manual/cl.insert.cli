@@ -1,20 +1,15 @@
-
-.ad l
-
-.ll 72
-
-.ce 1000
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
 \fBdb.collectionspace.collection.insert()\fR
 .ce 0
-
 .sp 2
 
 .SH "NAME"
-\fBNAME\fR
+
 .sp 2
 insert - Insert records into specified collection.
 .SH "SYNOPSIS"
-\fBSYNOPSIS\fR
+
 .sp 2
 
 .sp 2
@@ -22,13 +17,13 @@ insert - Insert records into specified collection.
 .sp 2
 db.collectionspace.collection.insert(\fBdoc|docs\fR,\fB[flag]\fR)
 .SH "CATEGORY"
-\fBCATEGORY\fR
+
 .sp 2
 
 .sp 2
 Collection
 .SH "DESCRIPTION"
-\fBDESCRIPTION\fR
+
 .sp 2
 Insert records into specified collection. If collection space or
 collection doesn't exist, please create a new collection space.
@@ -41,46 +36,43 @@ collection "bar".
 .sp 2
 \fBdoc|docs (json object)\fR
 .br
-         Document record. The parameter "doc" means one record.
-         The parameter "docs" means more than one record.
+       Document record. The parameter "doc" means one record. The
+       parameter "docs" means more than one record.
 .sp 2
 \fBflag (int)\fR
 .br
-         The paremeter "flag" means whether the value of "_id"
-         should be showed. The value of it is
-         SDB_INSERT_CONTONDUP or SDB_INSERT_RETURN_ID. It is only
-         be effective when insert one document.
+       The paremeter "flag" means whether the value of "_id"
+       should be showed. The value of it is SDB_INSERT_CONTONDUP
+       or SDB_INSERT_RETURN_ID. It is only be effective when
+       insert one document.
 .sp 2
-         \fBFormat\fR
+       \fBFormat\fR
 .br
-                  The definition of "insert()" contains two
-                  fields: doc|docs and flag. The parameter
-                  "doc|docs" is in the type of JSON object. The
-                  parameter "flag" is in the type of int. The
-                  value of "flag" is SDB_INSERT_CONTONDUP or
-                  SDB_INSERT_RETURN_ID,when you want to insert
-                  one document and set it as
-                  SDB_INSERT_RETURN_ID,then it will return a
-                  value of _id of the document;if you set
-                  SDB_INSERT_CONTONDUP,return nothing;
+              The definition of "insert()" contains two fields:
+              doc|docs and flag. The parameter "doc|docs" is in
+              the type of JSON object. The parameter "flag" is in
+              the type of int. The value of "flag" is
+              SDB_INSERT_CONTONDUP or SDB_INSERT_RETURN_ID,when
+              you want to insert one document and set it as
+              SDB_INSERT_RETURN_ID,then it will return a value of
+              _id of the document;if you set
+              SDB_INSERT_CONTONDUP,return nothing;
 .br
-                  doc: ({"< field name 1>":"< value >","< field
-                  name 2>":"< value
-                  >",…}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID
-                  })
+              doc: ({"< field name 1>":"< value >","< field name
+              2>":"< value
+              >",…}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID })
 .br
-                  docs: ([ {"< field name 1>":"< value >","<
-                  field name 2>":"< value >",…}, {"< field name
-                  1>":"< value >","< field name 2>":"< value
-                  >",…},... ])
+              docs: ([ {"< field name 1>":"< value >","< field
+              name 2>":"< value >",…}, {"< field name 1>":"<
+              value >","< field name 2>":"< value >",…},... ])
 .sp 2
 \fBNote: \fR
 .sp 2
-*  If the value of "_id" is not specified in a record that is
+   *  If the value of "_id" is not specified in a record that is
    about to be inserted, the system will generate the value of
    "_id" automatically to ensure the uniqueness of the record.
 .SH "Examples"
-\fBExamples\fR
+
 .sp 2
 Insert a record without the value of "_id".
 .sp 2
@@ -135,9 +127,3 @@ The value of "phone" is 123.
         "phone": 123 
 .br
         }
-.sp 2
-\fBRelated information\fR
-.br
-db.collectionspace.collection.count()
-.br
-db.collectionspace.collection.find()
