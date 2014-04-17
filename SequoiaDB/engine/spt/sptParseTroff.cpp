@@ -80,7 +80,7 @@ INT32 manHelp::scan()
       if ( ossStrncmp( fs::extension(*it).c_str(), MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) ) == 0 )
       {
          // get the file name
-         fname = (*it).leaf().c_str();
+         fname = (*it).leaf().string().c_str();
          strLen = ossStrlen( fname ) - ossStrlen( MFILE_SUFFIX );
          if ( strLen > NAME_LEN - 1 )
          {

@@ -283,7 +283,7 @@ static void *ossMemAlloc2 ( size_t size, const CHAR* file, UINT32 line )
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMALLOC, "ossMemAlloc" )
 void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line )
 {
-   PD_TRACE_ENTRY ( SDB__OSSMEMALLOC ) ;
+//   PD_TRACE_ENTRY ( SDB__OSSMEMALLOC ) ;
    void *p = NULL ;
    if ( size == 0 )
       p = NULL ;
@@ -291,7 +291,7 @@ void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line )
       p = ossMemAlloc1 ( size, file, line ) ;
    else
       p = ossMemAlloc2 ( size, file, line ) ;
-   PD_TRACE_EXIT ( SDB__OSSMEMALLOC ) ;
+//   PD_TRACE_EXIT ( SDB__OSSMEMALLOC ) ;
    return p ;
 }
 
@@ -404,7 +404,7 @@ static void *ossMemRealloc1 ( void* pOld, size_t size,
 void* ossMemRealloc ( void* pOld, size_t size,
                       const CHAR* file, UINT32 line )
 {
-   PD_TRACE_ENTRY ( SDB__OSSMEMREALLOC ) ;
+//   PD_TRACE_ENTRY ( SDB__OSSMEMREALLOC ) ;
    void *p = NULL ;
    if ( size == 0 )
       p = NULL ;
@@ -412,7 +412,7 @@ void* ossMemRealloc ( void* pOld, size_t size,
       p = ossMemRealloc1 ( pOld, size, file, line ) ;
    else
       p = ossMemRealloc2 ( pOld, size, file, line ) ;
-   PD_TRACE_EXIT ( SDB__OSSMEMREALLOC ) ;
+//   PD_TRACE_EXIT ( SDB__OSSMEMREALLOC ) ;
    return p ;
 }
 
@@ -473,10 +473,10 @@ void ossMemFree1 ( void *p )
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMFREE, "ossMemFree" )
 void ossMemFree ( void *p )
 {
-   PD_TRACE_ENTRY ( SDB__OSSMEMFREE ) ;
+//   PD_TRACE_ENTRY ( SDB__OSSMEMFREE ) ;
    if ( !ossMemDebugEnabled || !ossMemDebugSize )
       ossMemFree1 ( p ) ;
    else
       ossMemFree2 ( p ) ;
-   PD_TRACE_EXIT ( SDB__OSSMEMFREE ) ;
+//   PD_TRACE_EXIT ( SDB__OSSMEMFREE ) ;
 }

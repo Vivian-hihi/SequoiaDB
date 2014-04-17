@@ -132,6 +132,7 @@ namespace engine
    #define PMD_OPTION_BK_PATH          "bakfile"
    #define PMD_OPTION_TMPBLK_PATH      "tmp"
 
+   #define PROC_PIPE_NAME_LEN 255
    #if defined (_LINUX)
    #define PROC_PATH          "/proc"
    #define PROC_CMDLINE_PATH_FORMAT PROC_PATH"/%s/cmdline"

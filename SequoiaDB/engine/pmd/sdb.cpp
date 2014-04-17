@@ -686,6 +686,9 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       // loop until reading something
       if ( rc )
          break ;
+      //(tanzhaobo)here we use 2 buffers to receive context
+      // no mater witch buffer we are in, if the current buffer 
+      // not full, go on receiving to current buffer
       if ( ( pCurrentReceivePtr - &receiveBuffer1[0] <
              SDB_FRONTEND_RECEIVEBUFFERSIZE-1 &&
              pCurrentReceivePtr >= &receiveBuffer1[0] ) ||
@@ -700,10 +703,12 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       else if ( pCurrentReceivePtr - &receiveBuffer1[0] ==
                 SDB_FRONTEND_RECEIVEBUFFERSIZE-1 )
       {
-         // if we are at end of buffer 1, let's dump buffer 2 and then clear the
+         // (liangzhongkai)if we are at end of buffer 1, let's dump buffer 2 and then clear the
          // buffer
          // note we should NOT dump buffer 1 at the moment since we need to
          // extract the rc at the end
+         //(tanzhaobo)if buffer 1 is full, we are going to use buffer 2, before this, let's ossPrintf the
+         // contexts in buffer 2 and clear it up
          receiveBuffer2[SDB_FRONTEND_RECEIVEBUFFERSIZE-1] = '\0' ;
          ossPrintf ( "%s", receiveBuffer2 ) ;
          ossMemset ( receiveBuffer2, 0, SDB_FRONTEND_RECEIVEBUFFERSIZE ) ;
@@ -714,10 +719,12 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       else if ( pCurrentReceivePtr - &receiveBuffer2[0] ==
                 SDB_FRONTEND_RECEIVEBUFFERSIZE-1 )
       {
-         // if we are at end of buffer 1, let's dump buffer 2 and then clear the
+         // (liangzhongkai)if we are at end of buffer 1, let's dump buffer 2 and then clear the
          // buffer
          // note we should NOT dump buffer 1 at the moment since we need to
          // extract the rc at the end
+         //(tanzhaobo)if buffer 2 is full, we are going to use buffer 1, before this, let's ossPrintf the
+         // contexts in buffer 1 and clear it up
          receiveBuffer1[SDB_FRONTEND_RECEIVEBUFFERSIZE-1] = '\0' ;
          ossPrintf ( "%s", receiveBuffer1 ) ;
          ossMemset ( receiveBuffer1, 0, SDB_FRONTEND_RECEIVEBUFFERSIZE ) ;
@@ -734,10 +741,11 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
          goto error ;
       }
    }
-   // after we receive buffer, let's scan the buffer
-   // the rule is simple, let's copy the one not currently writing, then the
-   // buffer we are currently writting to
-   if ( pCurrentReceivePtr - &receiveBuffer1[0] <
+   // (tanzhaobo)after we receive buffer, we may have some contents had not been ossPrintf,
+   // let's scan the buffer to ossPrintf the rest,
+   // the rule is simple, let's copy the contexts from the buffer which we are not writing to latest,
+   // and then copy from the buffer we are currently writting to
+   if ( pCurrentReceivePtr - &receiveBuffer1[0] <=
         SDB_FRONTEND_RECEIVEBUFFERSIZE-1 &&
         pCurrentReceivePtr >= &receiveBuffer1[0] )
    {
@@ -746,7 +754,7 @@ INT32 enterFrontEndMode ( const CHAR * program , const CHAR * cmd )
       ossStrncat ( receiveBufferFinal, receiveBuffer1,
                    SDB_FRONTEND_RECEIVEBUFFERSIZE ) ;
    }
-   else if ( pCurrentReceivePtr - &receiveBuffer2[0] <
+   else if ( pCurrentReceivePtr - &receiveBuffer2[0] <=
              SDB_FRONTEND_RECEIVEBUFFERSIZE-1 &&
              pCurrentReceivePtr >= &receiveBuffer2[0] )
    {
