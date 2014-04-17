@@ -1,15 +1,15 @@
 Processing started...
 Initialize log directory and file name...
 Validate and init input arguments...
-  [delete] Deleting directory C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984
-  [mkdir] Created dir: C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984
+  [delete] Deleting directory C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156
+  [mkdir] Created dir: C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156
   [echo] *****************************************************************
   [echo] * basedir = C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4
   [echo] * dita.dir = C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4
-  [echo] * input = C:\sequoiadb\doc\references\methods\topics_en_v2\node.start.dita
+  [echo] * input = C:\sequoiadb\doc\references\methods\topics_en_v2\node.stop.dita
   [echo] * inputdir = C:\sequoiadb\doc\references\methods\topics_en_v2
   [echo] * transtype = troff
-  [echo] * tempdir = temp\temp20140417143728984
+  [echo] * tempdir = temp\temp20140417154643156
   [echo] * outputdir = C:\sequoiadb\doc\manual
   [echo] * extname = ${dita.ext}
   [echo] * clean.temp = true
@@ -19,17 +19,17 @@ Validate and init input arguments...
   [echo] * collator = ICU
   [echo] *****************************************************************
   [echo] #Ant properties
-  [echo] #Thu Apr 17 14:37:32 CST 2014
+  [echo] #Thu Apr 17 15:46:45 CST 2014
   [echo] args.css.file.temp=${args.css}
   [echo] args.css.real=${args.css}
   [echo] args.grammar.cache=yes
-  [echo] args.input=C\:\\sequoiadb\\doc\\references\\methods\\topics_en_v2\\node.start.dita
+  [echo] args.input=C\:\\sequoiadb\\doc\\references\\methods\\topics_en_v2\\node.stop.dita
   [echo] args.logdir=C\:\\sequoiadb\\doc\\manual
   [echo] args.xml.systemid.set=yes
   [echo] dita.dir=C\:\\sequoiadb\\misc\\dita2troff\\DITA-OT1.8.4
   [echo] dita.input.dirname=C\:\\sequoiadb\\doc\\references\\methods\\topics_en_v2
-  [echo] dita.input.filename=node.start.dita
-  [echo] dita.map.filename.root=node.start.dita
+  [echo] dita.input.filename=node.stop.dita
+  [echo] dita.map.filename.root=node.stop.dita
   [echo] dita.plugin.com.sophos.tocjs.dir=C\:\\sequoiadb\\misc\\dita2troff\\DITA-OT1.8.4\\plugins\\com.sophos.tocjs
   [echo] dita.plugin.org.dita.base.dir=C\:\\sequoiadb\\misc\\dita2troff\\DITA-OT1.8.4
   [echo] dita.plugin.org.dita.docbook.dir=C\:\\sequoiadb\\misc\\dita2troff\\DITA-OT1.8.4\\plugins\\org.dita.docbook
@@ -49,97 +49,91 @@ Validate and init input arguments...
   [echo] dita.plugin.org.dita.wordrtf.dir=C\:\\sequoiadb\\misc\\dita2troff\\DITA-OT1.8.4\\plugins\\org.dita.wordrtf
   [echo] dita.plugin.org.dita.xhtml.dir=C\:\\sequoiadb\\misc\\dita2troff\\DITA-OT1.8.4\\plugins\\org.dita.xhtml
   [echo] dita.preprocess.reloadstylesheet=false
-  [echo] dita.temp.dir=temp\\temp20140417143728984
-  [echo] dita.topic.filename.root=node.start.dita
+  [echo] dita.temp.dir=temp\\temp20140417154643156
+  [echo] dita.topic.filename.root=node.stop.dita
   [echo] *****************************************************************
 Generate file list...
   [gen-list] GenMapAndTopicListModule.execute(): Starting...
   [gen-list] Using Xerces grammar pool for DTD and schema caching.
-  [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.start.dita
-  [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\rg.stop.dita
   [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.stop.dita
-  [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\rg.start.dita
   [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.connect.dita
   [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.getHostName.dita
   [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.getServiceName.dita
   [gen-list] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.getNodeDetail.dita
   [gen-list] Serializing job specification
-  [gen-list] GenMapAndTopicListModule.execute(): Execution time: 1.75 seconds
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\outditafiles.list
+  [gen-list] GenMapAndTopicListModule.execute(): Execution time: 1.062 seconds
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\outditafiles.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\fullditamapandtopic.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\fullditamapandtopic.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\fullditatopic.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\fullditatopic.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\fullditamap.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\fullditamap.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\hrefditatopic.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\hrefditatopic.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\conref.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\conref.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\image.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\image.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\flagimage.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\flagimage.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\html.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\html.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\hreftargets.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\hreftargets.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\canditopics.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\canditopics.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\skipchunk.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\skipchunk.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\subjectscheme.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\subjectscheme.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\conreftargets.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\conreftargets.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\copytosource.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\copytosource.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\subtargets.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\subtargets.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\conrefpush.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\conrefpush.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\keyref.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\keyref.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\coderef.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\coderef.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\resourceonly.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\resourceonly.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
 Debug and filter input files...
   [filter] DebugAndFilterModule.execute(): Starting...
   [filter] Using Xerces grammar pool for DTD and schema caching.
   [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.connect.dita
   [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.stop.dita
-  [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\rg.start.dita
   [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.getNodeDetail.dita
-  [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\rg.stop.dita
   [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.getServiceName.dita
-  [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.start.dita
   [filter] Processing C:\sequoiadb\doc\references\methods\topics_en_v2\node.getHostName.dita
-  [filter] Execution time: 234 milliseconds
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\user.input.file.list
+  [filter] Execution time: 297 milliseconds
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\user.input.file.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\hreftargets.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\hreftargets.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\conref.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\conref.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\hrefditatopic.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\hrefditatopic.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\fullditatopic.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\fullditatopic.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\fullditamapandtopic.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\fullditamapandtopic.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\conreftargets.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\conreftargets.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\conrefpush.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\conrefpush.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\keyref.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\keyref.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\skipchunk.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\skipchunk.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\canditopics.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\canditopics.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
-  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\resourceonly.list
+  [job-helper] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\.job.xml to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\resourceonly.list
   [job-helper] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\job-helper.xsl
 Copy image files...
 Copy image files...
@@ -160,43 +154,34 @@ Process chunks...
 Find and generate related link information...
 Move the related link information to topics...
 Pull metadata for link and xref element...
-  [topicpull] Transforming into C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.connect.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.connect.dita.pull
+  [topicpull] Transforming into C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156
+  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.connect.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.connect.dita.pull
   [topicpull] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\xsl\preprocess\topicpull.xsl
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getHostName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getHostName.dita.pull
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getNodeDetail.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getNodeDetail.dita.pull
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getServiceName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getServiceName.dita.pull
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.start.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.start.dita.pull
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.stop.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.stop.dita.pull
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.start.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.start.dita.pull
-  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.stop.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.stop.dita.pull
-  [move] Moving 8 files to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984
+  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getHostName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getHostName.dita.pull
+  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getNodeDetail.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getNodeDetail.dita.pull
+  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getServiceName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getServiceName.dita.pull
+  [topicpull] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.stop.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.stop.dita.pull
+  [move] Moving 5 files to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156
 Add flagging information to topics...
 Preprocessing ended...
 Build troff output from dita inner and outer topics,which will adjust the directory....
 Build troff output from inner dita topics...
-  [xslt] Transforming into C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.connect.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.connect.dita.tr1
+  [xslt] Transforming into C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.connect.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.connect.dita.tr1
   [xslt] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\plugins\org.dita.troff\xsl\dita2troff-step1-shell.xsl
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getHostName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getHostName.dita.tr1
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getNodeDetail.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getNodeDetail.dita.tr1
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getServiceName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getServiceName.dita.tr1
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.start.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.start.dita.tr1
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.stop.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.stop.dita.tr1
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.start.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.start.dita.tr1
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.stop.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.stop.dita.tr1
-  [move] Moving 8 files to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getHostName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getHostName.dita.tr1
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getNodeDetail.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getNodeDetail.dita.tr1
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getServiceName.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getServiceName.dita.tr1
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.stop.dita to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.stop.dita.tr1
+  [move] Moving 5 files to C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156
   [echo] the ditmapoutputdir is C:\sequoiadb\doc\manual
   [xslt] Transforming into C:\sequoiadb\doc\manual
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.connect.dita to C:\sequoiadb\doc\manual\node.connect.cli
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.connect.dita to C:\sequoiadb\doc\manual\node.connect.cli
   [xslt] Loading stylesheet C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\plugins\org.dita.troff\xsl\dita2troff-step2-shell.xsl
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getHostName.dita to C:\sequoiadb\doc\manual\node.getHostName.cli
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getNodeDetail.dita to C:\sequoiadb\doc\manual\node.getNodeDetail.cli
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.getServiceName.dita to C:\sequoiadb\doc\manual\node.getServiceName.cli
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.start.dita to C:\sequoiadb\doc\manual\node.start.cli
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\node.stop.dita to C:\sequoiadb\doc\manual\node.stop.cli
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.start.dita to C:\sequoiadb\doc\manual\rg.start.cli
-  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417143728984\rg.stop.dita to C:\sequoiadb\doc\manual\rg.stop.cli
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getHostName.dita to C:\sequoiadb\doc\manual\node.getHostName.cli
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getNodeDetail.dita to C:\sequoiadb\doc\manual\node.getNodeDetail.cli
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.getServiceName.dita to C:\sequoiadb\doc\manual\node.getServiceName.cli
+  [xslt] Processing C:\sequoiadb\misc\dita2troff\DITA-OT1.8.4\temp\temp20140417154643156\node.stop.dita to C:\sequoiadb\doc\manual\node.stop.cli
 Build troff output from outer dita topics...
 Clean temp directory...
 Processing ended.
