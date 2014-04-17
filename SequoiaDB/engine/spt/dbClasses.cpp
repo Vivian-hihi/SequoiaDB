@@ -414,25 +414,31 @@ error :
    goto done ;
 }
 
-//PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
+PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
 static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
 {
-//   PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
+   PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    JSString *strName = NULL ;
    CHAR *name = NULL ;
-   const CHAR *path = NULL ;
+   INT32 len = 0 ;
    // save troff file path
-   CHAR tfPath[PATH_LEN] = { 0 } ;
+   CHAR tfPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
                                "S" , &strName) ;
    REPORT ( ret , "help(): wrong arguments" ) ;
 #if defined (SDB_SHELL)
    // get the troff file path
-   path = getProgramPath() ;
-   ossStrncpy ( tfPath, path, ossStrlen(path) ) ;
+   rc = getProgramPath( tfPath ) ;
+   REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
+   len = ossStrlen(TF_REL_PATH) ;
+   if ( ossStrlen( tfPath ) + len  > OSS_MAX_PATHSIZE )
+   {
+      rc = SDB_INVALIDARG ;
+      REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
+   }
    ossStrncat ( tfPath, TF_REL_PATH, ossStrlen(TF_REL_PATH) ) ;
    // get manHelp instance
    {
@@ -465,7 +471,7 @@ done :
       free ( name ) ;
       name  = NULL ;
    }
-//   PD_TRACE_EXIT ( SDB_GLOBAL_HELP );
+   PD_TRACE_EXIT ( SDB_GLOBAL_HELP );
    return ret ;
 error :
    TRY_REPORT ( cx , "help(): false" ) ;

@@ -43,7 +43,6 @@
 #include "sdbcm.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "sptCommon.hpp"
 #include "pmdCommon.hpp"
 #include "pmdOptions.h"
 
@@ -100,8 +99,8 @@ BOOLEAN serviceExists ( const CHAR *pServiceName  )
 #if defined (_LINUX)
    DIR *dirp ;
    struct dirent *dp ;
-   CHAR engineName [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
-   ossSnprintf ( engineName, PROC_PATH_LEN_MAX, ENGINE_NAME_PATTERN,
+   CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+   ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
                  pServiceName ) ;
    if ( ( dirp = opendir ( "/proc" ) ) == NULL )
    {
@@ -114,9 +113,9 @@ BOOLEAN serviceExists ( const CHAR *pServiceName  )
       if ( ( dp = readdir ( dirp ) ) != NULL )
       {
          FILE *fp = NULL ;
-         CHAR pathName [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
-         CHAR commandLine [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
-         ossSnprintf ( pathName, PROC_PATH_LEN_MAX, "/proc/%s/cmdline",
+         CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
                        dp->d_name ) ;
          fp = fopen ( pathName, "r" ) ;
          if ( !fp )
@@ -124,7 +123,7 @@ BOOLEAN serviceExists ( const CHAR *pServiceName  )
             // we do not care if we can't open the file
             continue ;
          }
-         if ( NULL == fgets ( commandLine, PROC_PATH_LEN_MAX, fp ) )
+         if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
          {
             // we do not care if the file is empty (even thou it shouldn't
             // happen )
@@ -428,19 +427,19 @@ INT32 verifyPID ( OSSPID inputpid, const CHAR *engineName )
    INT32 numScaned                            = 0 ;
    INT32 pid                                  = 0 ;
    INT32 ppid                                 = 0 ;
-   CHAR procName [ PROC_TEMP_BUF_SZ ]         = {0} ;
-   CHAR status [ PROC_TEMP_BUF_SZ ]           = {0} ;
-   CHAR pathName [ PROC_PATH_LEN_MAX + 1 ]    = {0} ;
-   CHAR pathName1 [ PROC_PATH_LEN_MAX + 1 ]   = {0} ;
-   CHAR commandLine [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   CHAR procName [ OSS_PROCESS_NAME_LEN + 1]  = {0} ;
+   CHAR status [ OSS_PROCESS_NAME_LEN + 1]    = {0} ;
+   CHAR pathName [ OSS_MAX_PATHSIZE + 1 ]     = {0} ;
+   CHAR pathName1 [ OSS_MAX_PATHSIZE + 1 ]    = {0} ;
+   CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ]  = {0} ;
    BOOLEAN loop                               = TRUE ;
    INT32 round                                = 0 ;
    // since we are single-thread program, it's safe to use FILE
    FILE *fp                                   = NULL ;
    FILE *fp1                                  = NULL ;
    // read /proc/pid/stat can get both pid and ppid
-   ossSnprintf ( pathName, PROC_PATH_LEN_MAX, "/proc/%d/stat", inputpid ) ;
-   ossSnprintf ( pathName1, PROC_PATH_LEN_MAX, "/proc/%d/cmdline", inputpid ) ;
+   ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%d/stat", inputpid ) ;
+   ossSnprintf ( pathName1, OSS_MAX_PATHSIZE, "/proc/%d/cmdline", inputpid ) ;
    //while ( round < PROC_START_TIMEOUT && loop )
    // we do not timeout. Because in crash recovery mode we may stay in recovery
    // state for long time, in this case we should keep waiting until it success
@@ -477,7 +476,7 @@ INT32 verifyPID ( OSSPID inputpid, const CHAR *engineName )
             //    successfully run )
             else if ( pid == inputpid && getpid() == ppid )
             {
-               if ( NULL != fgets ( commandLine, PROC_PATH_LEN_MAX, fp1 ) &&
+               if ( NULL != fgets ( commandLine, OSS_MAX_PATHSIZE, fp1 ) &&
                     ossStrstr ( commandLine, engineName ) )
                {
                   ossPrintf ( "Success: SequoiaDB engine is successfully "

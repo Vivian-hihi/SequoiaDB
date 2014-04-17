@@ -110,7 +110,7 @@ INT32 manHelp::getFileHelp( const CHAR* name )
    INT32 rc = SDB_OK;
    sset tmp;
    const CHAR *str = NULL;
-   CHAR fPath[PROG_PATH_LEN] = { 0 };
+   CHAR fPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 };
    // get a instance use to parse troff file
    engine::parseMandoc *md = engine::parseMandoc::createInstance();
    if ( md == NULL )

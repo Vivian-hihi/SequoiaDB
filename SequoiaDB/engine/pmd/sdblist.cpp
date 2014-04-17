@@ -39,8 +39,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "sptCommon.hpp"
-
+#include "pmdDef.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -58,8 +57,6 @@
 using namespace std;
 namespace po = boost::program_options;
 
-// timeout for 10 seconds
-#define LIST_TIMEOUT 10
 #define OPTION_HELP "help"
 #define OPTION_SVCNAME "svcname"
 
@@ -217,11 +214,11 @@ void listEngine ( string serviceName, INT32 &total )
    PD_TRACE_ENTRY ( SDB_LISTENGINE );
    DIR *dirp ;
    struct dirent *dp ;
-   CHAR engineName [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
    BOOLEAN listAll = FALSE ;
    if ( !serviceName.empty () )
    {
-      ossSnprintf ( engineName, PROC_PATH_LEN_MAX, ENGINE_NAME_PATTERN,
+      ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
                     serviceName.c_str() ) ;
    }
    else
@@ -241,10 +238,10 @@ void listEngine ( string serviceName, INT32 &total )
          FILE *fp = NULL ;
          CHAR *p = NULL ;
          pid_t pid ;
-         CHAR pathName [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
-         CHAR commandLine [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
-         CHAR tempName [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
-         ossSnprintf ( pathName, PROC_PATH_LEN_MAX, "/proc/%s/cmdline",
+         CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         CHAR tempName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
                        dp->d_name ) ;
          fp = fopen ( pathName, "r" ) ;
          if ( !fp )
@@ -252,7 +249,7 @@ void listEngine ( string serviceName, INT32 &total )
             // we do not care if we can't open the file
             continue ;
          }
-         if ( NULL == fgets ( commandLine, PROC_PATH_LEN_MAX, fp ) )
+         if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
          {
             // we do not care if the file is empty (even thou it shouldn't
             // happen )
@@ -294,8 +291,8 @@ void listEngine ( string serviceName, INT32 &total )
          // get pid
          pid = atoi ( dp->d_name ) ;
          // verify
-         ossSnprintf ( tempName, PROC_PATH_LEN_MAX, "%d", pid ) ;
-         if ( ossStrncmp ( tempName, dp->d_name, PROC_PATH_LEN_MAX ) == 0 )
+         ossSnprintf ( tempName, OSS_MAX_PATHSIZE, "%d", pid ) ;
+         if ( ossStrncmp ( tempName, dp->d_name, OSS_MAX_PATHSIZE ) == 0 )
          {
             displayProcess ( pid, commandLine ) ;
             ++total ;

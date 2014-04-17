@@ -11,11 +11,11 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/thread/thread.hpp>
 #include <string>
+#include "sptCommon.hpp"
+#include "utilPipe.hpp"
 
 using std::string ;
 using namespace engine ;
-
-#include "sptCommon.hpp"
 
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"

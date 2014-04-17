@@ -2,11 +2,11 @@
 #ifndef optTRACE_H__
 #define optTRACE_H__
 // Component: opt
-#define SDB__OPTACCPLAN__OPTHINT                           0x10000000000180L
-#define SDB__OPTACCPLAN__OPTHINT2                          0x10000000000181L
-#define SDB__OPTACCPLAN__OPTHINT3                          0x10000000000182L
-#define SDB__OPTACCPLAN__ESTINX                            0x10000000000183L
-#define SDB__OPTACCPLAN__ESTINX2                           0x10000000000184L
-#define SDB__OPTACCPLAN__USEINX                            0x10000000000185L
-#define SDB__OPTACCPLAN_OPT                                0x10000000000186L
+#define SDB__OPTACCPLAN__OPTHINT                           0x1000000000059cL
+#define SDB__OPTACCPLAN__OPTHINT2                          0x1000000000059dL
+#define SDB__OPTACCPLAN__OPTHINT3                          0x1000000000059eL
+#define SDB__OPTACCPLAN__ESTINX                            0x1000000000059fL
+#define SDB__OPTACCPLAN__ESTINX2                           0x100000000005a0L
+#define SDB__OPTACCPLAN__USEINX                            0x100000000005a1L
+#define SDB__OPTACCPLAN_OPT                                0x100000000005a2L
 #endif

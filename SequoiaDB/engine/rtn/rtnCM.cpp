@@ -50,7 +50,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "rtnTrace.hpp"
-#include "sptCommon.hpp"
+#include "pmdDef.hpp"
 
 #include <stdlib.h>
 #include <time.h>
@@ -2074,19 +2074,19 @@ namespace CLSMGR
       PD_TRACE_ENTRY ( SDB_SDBCM_LINUXGETPROCESSINFOBYSVCNAME );
       DIR *pDir;
       struct dirent *pDirent;
-      CHAR engineName [ PROC_PATH_LEN_MAX + 1 ] = {0};
+      CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0};
       BOOLEAN isOpen = FALSE;
       pDir = opendir( PROC_PATH );
       PD_CHECK( pDir != NULL, SDB_IO, error, PDERROR,
                "failed to open the directory:%s, errno=%d",
                PROC_PATH, ossGetLastError() );
       isOpen = TRUE;
-      ossSnprintf ( engineName, PROC_PATH_LEN_MAX, ENGINE_NAME_PATTERN,
+      ossSnprintf ( engineName, OSS_MAX_PATHSIZE, ENGINE_NAME_PATTERN,
                     svcName.c_str() ) ;
       while( (pDirent = readdir( pDir )) != NULL )
       {
-         CHAR pathName[ PROC_PATH_LEN_MAX + 1 ] = {0};
-         ossSnprintf( pathName, PROC_PATH_LEN_MAX, PROC_CMDLINE_PATH_FORMAT,
+         CHAR pathName[ OSS_MAX_PATHSIZE + 1 ] = {0};
+         ossSnprintf( pathName, OSS_MAX_PATHSIZE, PROC_CMDLINE_PATH_FORMAT,
                      pDirent->d_name );
          FILE *fp = NULL;
          fp = fopen( pathName, "r" );
@@ -2094,8 +2094,8 @@ namespace CLSMGR
          {
             continue;
          }
-         CHAR commandLine[ PROC_PATH_LEN_MAX + 1 ] = {0};
-         CHAR *pTmp = fgets ( commandLine, PROC_PATH_LEN_MAX, fp );
+         CHAR commandLine[ OSS_MAX_PATHSIZE + 1 ] = {0};
+         CHAR *pTmp = fgets ( commandLine, OSS_MAX_PATHSIZE, fp );
          fclose(fp);
          if ( NULL == pTmp )
          {

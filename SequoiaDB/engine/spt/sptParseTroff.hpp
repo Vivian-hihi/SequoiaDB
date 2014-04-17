@@ -27,7 +27,7 @@ private:
    static manHelp *m_pInstance;
    typedef std::set<string> sset;
    sset nset;
-   CHAR filePath[PROG_PATH_LEN];
+   CHAR filePath[ OSS_MAX_PATHSIZE + 1 ];
 } ;
 
 }

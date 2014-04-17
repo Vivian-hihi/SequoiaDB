@@ -23,6 +23,8 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 #include "sptCommon.hpp"
+#include "utilPipe.hpp"
+
 using std::ostream ;
 using std::vector ;
 using std::string ;
@@ -33,8 +35,6 @@ namespace po = boost::program_options ;
 po::options_description display ( "Command options" ) ;
 po::positional_options_description destd ;
 po::variables_map vm ;
-
-//CHAR progPath[PATH_LEN] = {0} ;
 
 #if !defined (SDB_SHELL)
 #error "sdbbp should always have SDB_SHELL defined"
@@ -357,8 +357,6 @@ INT32 enterInteractiveMode ( Scope *scope )
    ossTimestamp tmBegin ;
    ossTimestamp tmEnd ;
    string history ;
-//   engine::parseMandoc md ;
-//   CHAR manPath[PATH_LEN] = {0} ;
 
    SDB_ASSERT ( scope , "invalid argument" ) ;
    PD_TRACE_ENTRY ( SDB_ENTERINTATVMODE );

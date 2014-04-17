@@ -41,6 +41,7 @@
 
 #if defined (_LINUX)
 #define PROC_SELF_EXE "/proc/self/exe"
+#define PROC_STATUS_ZOMBIE 'Z'
 #endif
 #define OSS_EXECV_CAST char*const*
 // define ossExec execute flags

@@ -40,7 +40,6 @@
 #include "ossProc.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "sptCommon.hpp"
 #include <string>
 #include <iostream>
 #include <boost/program_options.hpp>
@@ -252,19 +251,19 @@ INT32 verifyPID ( OSSPID inputpid )
    INT32 numScaned                            = 0 ;
    INT32 pid                                  = 0 ;
    INT32 ppid                                 = 0 ;
-   CHAR procName [ PROC_TEMP_BUF_SZ ]         = {0} ;
-   CHAR status [ PROC_TEMP_BUF_SZ ]           = {0} ;
-   CHAR pathName [ PROC_PATH_LEN_MAX + 1 ]    = {0} ;
-   CHAR pathName1 [ PROC_PATH_LEN_MAX + 1 ]   = {0} ;
-   CHAR commandLine [ PROC_PATH_LEN_MAX + 1 ] = {0} ;
+   CHAR procName [ OSS_PROCESS_NAME_LEN + 1 ] = {0} ;
+   CHAR status [ OSS_PROCESS_NAME_LEN + 1 ]   = {0} ;
+   CHAR pathName [ OSS_MAX_PATHSIZE + 1 ]     = {0} ;
+   CHAR pathName1 [ OSS_MAX_PATHSIZE + 1 ]    = {0} ;
+   CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ]  = {0} ;
    BOOLEAN loop                               = TRUE ;
    INT32 round                                = 0 ;
    // since we are single-thread program, it's safe to use FILE
    FILE *fp                                   = NULL ;
    FILE *fp1                                  = NULL ;
    // read /proc/pid/stat can get both pid and ppid
-   ossSnprintf ( pathName, PROC_PATH_LEN_MAX, "/proc/%d/stat", inputpid ) ;
-   ossSnprintf ( pathName1, PROC_PATH_LEN_MAX, "/proc/%d/cmdline", inputpid ) ;
+   ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%d/stat", inputpid ) ;
+   ossSnprintf ( pathName1, OSS_MAX_PATHSIZE, "/proc/%d/cmdline", inputpid ) ;
    //while ( round < PROC_START_TIMEOUT && loop )
    // we do not timeout. Because in crash recovery mode we may stay in recovery
    // state for long time, in this case we should keep waiting until it success
@@ -277,6 +276,10 @@ INT32 verifyPID ( OSSPID inputpid )
       if ( fp && fp1 )
       {
          // get first 4 elements
+         // buffer overflow attack?
+         // Since we have fp from pathName, which is hardcoded from /proc file
+         // system, it cannot be modified by users to provide a super-long
+         // string, that means we should be safe from bufferoverflow attack
          numScaned = fscanf ( fp, "%d%s%s%d",
                               &pid, // process pid
                               procName, // process name
@@ -288,7 +291,7 @@ INT32 verifyPID ( OSSPID inputpid )
             // if we detected zombie process, let's get out of here. Since we
             // have disabled SIGCHLD, so if fork() success but exec() fail, we
             // are going to get zombie status in child process
-            if ( status[0] == PROC_STATUS_ZOMBIE )
+            if ( PROC_STATUS_ZOMBIE == status[0] )
             {
                PD_LOG ( PDERROR, "Error: Failed to start sdbcm" ) ;
                rc = SDB_SYS ;
@@ -299,9 +302,9 @@ INT32 verifyPID ( OSSPID inputpid )
             // 2) parent pid matches myself
             // 3) sdbcm name matchs the pattern: "sdbcm($svcname)" ( after exec
             //    successfully run )
-            else if ( pid == inputpid && getpid() == ppid )
+            else if ( pid == inputpid && ossGetCurrentProcessID() == ppid )
             {
-               if ( NULL != fgets ( commandLine, PROC_PATH_LEN_MAX, fp1 ) &&
+               if ( NULL != fgets ( commandLine, OSS_MAX_PATHSIZE, fp1 ) &&
                     //ossStrstr ( commandLine, SDBCM_NAME_PATTERN1 ) )
                     0 == ossStrcmp( commandLine, SDBCM_DMN_SVC_NAME ) )
                {

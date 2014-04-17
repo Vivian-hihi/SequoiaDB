@@ -132,6 +132,27 @@ namespace engine
    #define PMD_OPTION_BK_PATH          "bakfile"
    #define PMD_OPTION_TMPBLK_PATH      "tmp"
 
+   #if defined (_LINUX)
+   #define PROC_PATH          "/proc"
+   #define PROC_CMDLINE_PATH_FORMAT PROC_PATH"/%s/cmdline"
+   #define ENGINE_NAME "sequoiadb"
+   #define MODIFIED_ENGINE_NAME ENGINE_NAME "("
+   #define ENGINE_NAME_PATTERN1 "sequoiadb("
+   #define ENGINE_NAME_PATTERN2 ")"
+   #define ENGINE_NAME_PATTERN ENGINE_NAME_PATTERN1 "%s" ENGINE_NAME_PATTERN2
+   #elif defined (_WINDOWS)
+   #define ENGINE_NAME "sequoiadb.exe"
+   #define ENGINE_NPIPE_PATTERN1 "sequoiadb"
+   #define ENGINE_NPIPE_PATTERN2 "engine"
+   #define ENGINE_NPIPE_PATTERN_SEP "_"
+   #define ENGINE_NPIPE_PATTERN ENGINE_NPIPE_PATTERN1 ENGINE_NPIPE_PATTERN_SEP \
+                             ENGINE_NPIPE_PATTERN2 ENGINE_NPIPE_PATTERN_SEP \
+                             "%s"
+   #define ENGINE_NPIPE_MSG_PID "$pid"
+   #define LIST_TIMEOUT 10
+   #endif
+
+
    /*
       PDM_SESSION_TYPE define
    */
