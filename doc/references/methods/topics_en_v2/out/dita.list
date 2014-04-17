@@ -1,13 +1,13 @@
-#Thu Apr 17 09:40:54 CST 2014
+#Thu Apr 17 09:54:23 CST 2014
 copytosourcelist=
-hreftargetslist=node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
+hreftargetslist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=node.getHostName.xml,node.connect.xml
-fullditamapandtopiclist=node.getHostName.xml,node.connect.xml
+fullditatopiclist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
+fullditamapandtopiclist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
 hrefditatopicfile=hrefditatopic.list
-hrefditatopiclist=node.getHostName.xml,node.connect.xml
-user.input.file=node.getHostName.xml
+hrefditatopiclist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
+user.input.file=node.stop.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list
@@ -27,7 +27,7 @@ imagelist=
 htmlfile=html.list
 htmllist=
 canditopicsfile=canditopics.list
-canditopicslist=node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
+canditopicslist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
 keyreffile=keyref.list
 subjectschemefile=subjectscheme.list
 keyreflist=

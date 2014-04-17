@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
+<topic id="topic_1jj_mds_5n">
+  <title>node.getNodeDetail()</title>
+  <body>
+    <section>
+      <title>NAME</title>
+      <p>getNodeDetail - Return information of current node.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>node.getNodeDetail</apiname>()
+    </section>
+    <section>
+      <title>CATEGORY</title>
+      <p></p>Node
+    </section>
+    <section>
+      <title>DESCRIPTION</title> 
+      <p>Return information of current node.</p>            
+    </section>    
+    <section>
+      <title>Examples</title>
+      <p>Return information of a node named "node".</p>
+      <codeblock>> node.getNodeDetail()
+Return：1000:vmsvr2-suse-x64:11800(shard)
+Here "1000" is node ID（NodeID）；"vmsvr2-suse-x64" is hostname（HostName）；
+"11800" is service name（ServiceName），"(shard)" is the replset name of the node.</codeblock>   
+    </section>
+  </body>
+  <related-links>
+    <link href="node.getServiceName.dita"></link>
+  </related-links>
+</topic>
