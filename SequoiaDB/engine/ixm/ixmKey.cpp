@@ -605,7 +605,7 @@ namespace engine
       0
    };
 
-   inline static UINT32 sizeOfElement(const UINT8 *p)
+   OSS_INLINE static UINT32 sizeOfElement(const UINT8 *p)
    {
       UINT32 type = *p & cCANONTYPEMASK;
       UINT32 sz = sizes[type];

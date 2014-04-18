@@ -178,7 +178,7 @@ extern CHAR *FMP_COORD_HOST ;
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj ) ;
 
-inline JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
+OSS_INLINE JSObject *SDB_JSVAL_TO_OBJECT( jsval x )
 {
    if ( JSVAL_IS_NULL(x) || JSVAL_IS_VOID(x) )
       return NULL ;

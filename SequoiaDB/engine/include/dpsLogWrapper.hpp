@@ -60,22 +60,22 @@ namespace engine
       _dpsLogWrapper();
       ~_dpsLogWrapper();
    public:
-      inline _dpsReplicaLogMgr *getLogMgr ()
+      OSS_INLINE _dpsReplicaLogMgr *getLogMgr ()
       {
          return &_buf ;
       }
 
-      inline void setLogLocal( BOOLEAN dpslocal )
+      OSS_INLINE void setLogLocal( BOOLEAN dpslocal )
       {
          _dpslocal = dpslocal ;
       }
 
-      inline BOOLEAN isLogLocal()
+      OSS_INLINE BOOLEAN isLogLocal()
       {
          return _dpslocal ;
       }
 
-      inline INT32 init( const CHAR *path, UINT32 pageNum = DPS_DFT_LOG_BUF_SZ )
+      OSS_INLINE INT32 init( const CHAR *path, UINT32 pageNum = DPS_DFT_LOG_BUF_SZ )
       {
          INT32 rc = _buf.init( path, pageNum ) ;
          if ( SDB_OK == rc )
@@ -83,35 +83,35 @@ namespace engine
          return rc ;
       }
 
-      inline INT32 search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
+      OSS_INLINE INT32 search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
                            UINT8 type = DPS_SEARCH_MEM | DPS_SEARCH_FILE )
       {
          SDB_ASSERT ( _initialized, "shouldn't call search without init" )
          return _buf.search( minLsn, mb, type, FALSE ) ;
       }
 
-      inline INT32 searchHeader( const DPS_LSN &lsn, _dpsMessageBlock *mb,
+      OSS_INLINE INT32 searchHeader( const DPS_LSN &lsn, _dpsMessageBlock *mb,
                                  UINT8 type = DPS_SEARCH_MEM | DPS_SEARCH_FILE )
       {
          SDB_ASSERT ( _initialized, "shouldn't call search without init" )
          return _buf.search( lsn, mb, type, TRUE ) ;
       }
 
-      inline INT32 run( _pmdEDUCB *cb )
+      OSS_INLINE INT32 run( _pmdEDUCB *cb )
       {
          if ( !_initialized )
             return SDB_OK ;
          return _buf.run( cb );
       }
 
-      inline INT32 tearDown()
+      OSS_INLINE INT32 tearDown()
       {
          if ( !_initialized )
             return SDB_OK ;
          return _buf.tearDown();
       }
 
-      inline BOOLEAN doLog ()
+      OSS_INLINE BOOLEAN doLog ()
       {
          return _initialized ;
       }
@@ -120,13 +120,13 @@ namespace engine
       // engine should NEVER call flushAll in any situation.
       // The log write thread supposed to call run() in order to flush dirty
       // pages once at a time
-      inline INT32 flushAll()
+      OSS_INLINE INT32 flushAll()
       {
          SDB_ASSERT ( _initialized, "shouldn't call flushAll without init" )
          return _buf.flushAll() ;
       }
 
-      inline DPS_LSN getStartLsn ( BOOLEAN logBufOnly = FALSE )
+      OSS_INLINE DPS_LSN getStartLsn ( BOOLEAN logBufOnly = FALSE )
       {
          if ( !_initialized )
          {
@@ -136,12 +136,12 @@ namespace engine
          return _buf.getStartLsn ( logBufOnly ) ;
       }
 
-      inline DPS_LSN  getCurrentLsn()
+      OSS_INLINE DPS_LSN  getCurrentLsn()
       {
          return _buf.currentLsn() ;
       }
 
-      inline void getLsnWindow( DPS_LSN &fileBeginLsn,
+      OSS_INLINE void getLsnWindow( DPS_LSN &fileBeginLsn,
                                 DPS_LSN &memBeginLsn,
                                 DPS_LSN &endLsn,
                                 DPS_LSN *pExpectLsn = NULL )
@@ -161,7 +161,7 @@ namespace engine
          }
       }
 
-      inline void getLsnWindow( DPS_LSN &fileBeginLsn,
+      OSS_INLINE void getLsnWindow( DPS_LSN &fileBeginLsn,
                                 DPS_LSN &memBeginLsn,
                                 DPS_LSN &endLsn,
                                 DPS_LSN &expected )
@@ -174,7 +174,7 @@ namespace engine
                             expected ) ;
       }
 
-      inline DPS_LSN expectLsn()
+      OSS_INLINE DPS_LSN expectLsn()
       {
          if ( !_initialized )
          {
@@ -184,18 +184,18 @@ namespace engine
          return _buf.expectLsn() ;
       }
 
-      inline DPS_LSN_VER incVersion()
+      OSS_INLINE DPS_LSN_VER incVersion()
       {
          return _buf.incVersion() ;
       }
 
-      inline INT32 move( const DPS_LSN_OFFSET &offset,
+      OSS_INLINE INT32 move( const DPS_LSN_OFFSET &offset,
                          const DPS_LSN_VER &version )
       {
          return _buf.move( offset, version ) ;
       }
 
-      inline INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb )
+      OSS_INLINE INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb )
       {
          return _buf.checkSyncControl( reqLen, cb ) ;
       }

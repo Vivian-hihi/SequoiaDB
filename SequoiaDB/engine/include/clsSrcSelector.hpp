@@ -66,33 +66,33 @@ namespace engine
                                         MSG_ROUTE_SERVICE_TYPE type =
                                         MSG_ROUTE_SHARD_SERVCIE ) ;
 
-      inline void addToBlakList( const MsgRouteID &id )
+      OSS_INLINE void addToBlakList( const MsgRouteID &id )
       {
          _blacklist.insert( id.value ) ;
       }
 
-      inline void clearBlacklist()
+      OSS_INLINE void clearBlacklist()
       {
          _blacklist.clear() ;
       }
 
-      inline void clearSrc()
+      OSS_INLINE void clearSrc()
       {
          _src.value = MSG_INVALID_ROUTEID ;
          _noRes = 0 ;
       }
 
-      inline void timeout( UINT32 timeout )
+      OSS_INLINE void timeout( UINT32 timeout )
       {
          _noRes += timeout ;
       }
 
-      inline void clearTime()
+      OSS_INLINE void clearTime()
       {
          _noRes = 0 ;
       }
 
-      inline const MsgRouteID &src()
+      OSS_INLINE const MsgRouteID &src()
       {
          return _src ;
       }

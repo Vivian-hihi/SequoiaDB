@@ -48,61 +48,61 @@ namespace engine
          _netRouteAgent( _netMsgHandler *handler ) ;
 
       public:
-         inline void run()
+         OSS_INLINE void run()
          {
             return _frame.run() ;
          }
 
-         inline void stop()
+         OSS_INLINE void stop()
          {
             return _frame.stop() ;
          }
 
-         inline void setLocalID( const _MsgRouteID &id )
+         OSS_INLINE void setLocalID( const _MsgRouteID &id )
          {
             _frame.setLocal( id ) ;
             _route.setLocal( id ) ;
             return ;
          }
 
-         inline MsgRouteID localID()
+         OSS_INLINE MsgRouteID localID()
          {
             return _route.local() ;
          }
 
-         inline INT32 addTimer( UINT32 millsec,
+         OSS_INLINE INT32 addTimer( UINT32 millsec,
                                 _netTimeoutHandler *handler,
                                 UINT32 &timerid )
          {
             return _frame.addTimer( millsec, handler, timerid ) ;
          }
 
-         inline INT32 removeTimer( UINT32 timerid )
+         OSS_INLINE INT32 removeTimer( UINT32 timerid )
          {
             return _frame.removeTimer( timerid ) ;
          }
 
-         inline void close( const _MsgRouteID &id )
+         OSS_INLINE void close( const _MsgRouteID &id )
          {
             _frame.close( id ) ;
          }
 
-         inline void close( const NET_HANDLE &handle )
+         OSS_INLINE void close( const NET_HANDLE &handle )
          {
             _frame.close( handle ) ;
          }
 
-         inline void disconnectAll()
+         OSS_INLINE void disconnectAll()
          {
             _frame.close() ;
          }
 
-         inline  io_service *ioservice()
+         OSS_INLINE  io_service *ioservice()
          {
             return &( _frame.ioservice() ) ;
          }
 
-         inline INT32 route( const _MsgRouteID &id,
+         OSS_INLINE INT32 route( const _MsgRouteID &id,
                              _netRouteNode &node )
          {
             return _route.route( id, node ) ;

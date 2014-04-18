@@ -50,22 +50,22 @@ namespace engine
       virtual ~_qgmPlanContainer() ;
 
    public:
-      inline qgmParamTable *paramTable()
+      OSS_INLINE qgmParamTable *paramTable()
       {
          return &_paramT ;
       }
 
-      inline qgmPtrTable *ptrTable()
+      OSS_INLINE qgmPtrTable *ptrTable()
       {
          return &_ptrT ;
       }
 
-      inline qgmPlan *&plan()
+      OSS_INLINE qgmPlan *&plan()
       {
          return _plan ;
       }
 
-      inline void close()
+      OSS_INLINE void close()
       {
          if ( NULL != _plan )
          {
@@ -74,13 +74,13 @@ namespace engine
          return ;
       }
 
-      inline QGM_PLAN_TYPE type()
+      OSS_INLINE QGM_PLAN_TYPE type()
       {
          return NULL == _plan ?
                 QGM_PLAN_TYPE_MAX : _plan->type() ;
       }
 
-      inline SQL_AST &ast()
+      OSS_INLINE SQL_AST &ast()
       {
          return _ast ;
       }

@@ -84,17 +84,17 @@ namespace engine
       ~_dpsLogFile();
 
    public:
-      inline UINT32 size()
+      OSS_INLINE UINT32 size()
       {
          return _fileSize;
       }
 
-      inline dpsLogHeader &header()
+      OSS_INLINE dpsLogHeader &header()
       {
          return _logHeader ;
       }
 
-      inline void idleSize( UINT32 size )
+      OSS_INLINE void idleSize( UINT32 size )
       {
          _idleSize = size ;
       }

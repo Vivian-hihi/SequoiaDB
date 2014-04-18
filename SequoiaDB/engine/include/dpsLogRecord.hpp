@@ -175,7 +175,7 @@ namespace engine
             _record = NULL ;
          }
     public:
-         inline BOOLEAN next()
+         OSS_INLINE BOOLEAN next()
          {
             if ( DPS_MERGE_BLOCK_MAX_DATA == ++_current )
             {
@@ -187,27 +187,27 @@ namespace engine
             }
          }
 
-         inline UINT32 len() const
+         OSS_INLINE UINT32 len() const
          {
             return (_record->_dataHeader)[_current].len ;
          }
 
-         inline UINT8 tag() const
+         OSS_INLINE UINT8 tag() const
          {
             return (_record->_dataHeader)[_current].tag ;
          }
 
-         inline const _dpsRecordEle &dataMeta() const
+         OSS_INLINE const _dpsRecordEle &dataMeta() const
          {
             return (_record->_dataHeader)[_current] ;
          }
 
-         inline const CHAR *value() const
+         OSS_INLINE const CHAR *value() const
          {
             return (_record->_data)[_current] ;
          }
 
-         inline BOOLEAN valid() const
+         OSS_INLINE BOOLEAN valid() const
          {
             return ( 0 <= _current && _current < DPS_MERGE_BLOCK_MAX_DATA ) &&
                    ( NULL != _record ) ;
@@ -236,12 +236,12 @@ namespace engine
 
       void clear() ;
 
-      inline dpsLogRecordHeader &head ()
+      OSS_INLINE dpsLogRecordHeader &head ()
       {
          return _head ;
       }
 
-      inline const dpsLogRecordHeader &head() const
+      OSS_INLINE const dpsLogRecordHeader &head() const
       {
          return _head ;
       }

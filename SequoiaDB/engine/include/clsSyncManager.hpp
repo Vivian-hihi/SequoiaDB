@@ -87,7 +87,7 @@ namespace engine
 
       MsgRouteID getFullSrc( const set<UINT64> &blacklist ) ;
 
-      inline BOOLEAN isReadyToReplay()
+      OSS_INLINE BOOLEAN isReadyToReplay()
       {
          _info->mtx.lock_r() ;
          BOOLEAN rc = _info->primary.value ==

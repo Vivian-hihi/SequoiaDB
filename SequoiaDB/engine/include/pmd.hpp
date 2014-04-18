@@ -391,40 +391,40 @@ namespace engine
          return _optioncb.dmsTmpPath() ;
       }
 
-      inline _SDB_DMSCB *getDMSCB ()
+      OSS_INLINE _SDB_DMSCB *getDMSCB ()
       {
          return _dmscb ;
       }
-      inline _SDB_RTNCB *getRTNCB ()
+      OSS_INLINE _SDB_RTNCB *getRTNCB ()
       {
          return _rtncb ;
       }
 
-      inline monConfigCB * getMonCB()
+      OSS_INLINE monConfigCB * getMonCB()
       {
          return & _monCfgCB ;
       }
 
-      inline monDBCB * getMonDBCB ()
+      OSS_INLINE monDBCB * getMonDBCB ()
       {
          return &_monDBCB ;
       }
-      inline _clsMgr *getClsCB ()
+      OSS_INLINE _clsMgr *getClsCB ()
       {
          return _clsCB ;
       }
       _clsReplicateSet *getReplCB () ;
       _clsShardMgr *getShardCB () ;
 
-      inline _dpsLogWrapper* getDPSCB ()
+      OSS_INLINE _dpsLogWrapper* getDPSCB ()
       {
          return _dpscb ;
       }
-      inline _bpsCB *getBPSCB ()
+      OSS_INLINE _bpsCB *getBPSCB ()
       {
          return _bpscb ;
       }
-      inline _pdTraceCB *getTraceCB ()
+      OSS_INLINE _pdTraceCB *getTraceCB ()
       {
          return _traceCB ;
       }
@@ -432,41 +432,41 @@ namespace engine
       UINT32 getLogFileSz () ;
       UINT32 getLogFileNum () ;
 
-      inline _pmdOptionsMgr *getOptionCB()
+      OSS_INLINE _pmdOptionsMgr *getOptionCB()
       {
          return &_optioncb;
       }
-      inline sdbCatalogueCB *getCATLOGUECB()
+      OSS_INLINE sdbCatalogueCB *getCATLOGUECB()
       {
          return _catlogueCB;
       }
 
-      inline _CoordCB *getCoordCB()
+      OSS_INLINE _CoordCB *getCoordCB()
       {
          return _coordcb ;
       }
 
-      inline _sqlCB *getSqlCB()
+      OSS_INLINE _sqlCB *getSqlCB()
       {
          return _sql ;
       }
 
-      inline _authCB *getAuthCB()
+      OSS_INLINE _authCB *getAuthCB()
       {
          return _auth ;
       }
 
-      inline dpsTransCB *getTransCB()
+      OSS_INLINE dpsTransCB *getTransCB()
       {
          return _dpsTransCB;
       }
 
-      inline aggrBuilder *getAggrCB()
+      OSS_INLINE aggrBuilder *getAggrCB()
       {
          return _aggrCB;
       }
 
-      inline _spdFMPMgr *getFMPCB()
+      OSS_INLINE _spdFMPMgr *getFMPCB()
       {
          return _fmpCB ;
       }
@@ -576,7 +576,7 @@ namespace engine
     * This variable is unique per process
     */
    extern pmdKRCB pmd_krcb ;
-   inline pmdKRCB* pmdGetKRCB()
+   OSS_INLINE pmdKRCB* pmdGetKRCB()
    {
       return &pmd_krcb ;
    }

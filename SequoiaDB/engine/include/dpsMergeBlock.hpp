@@ -96,22 +96,22 @@ namespace engine
          ~_dpsMergeBlock();
 
       public:
-         inline BOOLEAN isRow()
+         OSS_INLINE BOOLEAN isRow()
          {
             return _isRow;
          }
 
-         inline void setRow( BOOLEAN isRow )
+         OSS_INLINE void setRow( BOOLEAN isRow )
          {
             _isRow = isRow;
          }
 
-         inline dpsLogRecord &record()
+         OSS_INLINE dpsLogRecord &record()
          {
             return _record ;
          }
 
-         inline dpsPageMeta &pageMeta()
+         OSS_INLINE dpsPageMeta &pageMeta()
          {
             return _pageMeta ;
          }

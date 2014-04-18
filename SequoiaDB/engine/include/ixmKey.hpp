@@ -111,7 +111,7 @@ namespace engine
       BOOLEAN isUndefined() const ;
 
       // get raw data
-      inline const CHAR *data() const
+      OSS_INLINE const CHAR *data() const
       {
          return (const CHAR *) _keyData ;
       }
@@ -119,12 +119,12 @@ namespace engine
       // get the size of key
       INT32 dataSize() const ;
       // check if a key is valid
-      inline BOOLEAN isValid() const
+      OSS_INLINE BOOLEAN isValid() const
       {
          return (_keyData != NULL) ;
       }
       // whether the data is compact format
-      inline BOOLEAN isCompactFormat() const
+      OSS_INLINE BOOLEAN isCompactFormat() const
       {
          return *_keyData != IsBSON ;
       }

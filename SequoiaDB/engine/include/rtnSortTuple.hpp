@@ -55,48 +55,48 @@ namespace engine
       ~_rtnSortTuple() {}
 
    public:
-      inline void setLen( UINT32 keyLen, UINT32 objLen )
+      OSS_INLINE void setLen( UINT32 keyLen, UINT32 objLen )
       {
          _len = sizeof( _rtnSortTuple ) + keyLen + objLen ;
          return ;
       }
 
-      inline void setHash( UINT32 hash1, UINT32 hash2 )
+      OSS_INLINE void setHash( UINT32 hash1, UINT32 hash2 )
       {
          _hash.columns.hash1 = hash1 ;
          _hash.columns.hash2 = hash2 ;
          return ;
       }
 
-      inline const CHAR *key() const
+      OSS_INLINE const CHAR *key() const
       {
          return ( const CHAR *)this + sizeof( _rtnSortTuple ) ;
       }
 
       std::string toString()const ;
 
-      inline const CHAR *obj() const
+      OSS_INLINE const CHAR *obj() const
       {
          return ( const CHAR *)this + sizeof( _rtnSortTuple ) +
                 *((INT32 *)key()) ;
       }
 
-      inline const UINT64 &hash() const
+      OSS_INLINE const UINT64 &hash() const
       {
          return _hash.hash ;
       }
 
-      inline ixmHashValue& hashValue()
+      OSS_INLINE ixmHashValue& hashValue()
       {
          return _hash ;
       }
 
-      inline UINT32 len()const
+      OSS_INLINE UINT32 len()const
       {
          return _len ;
       }
 
-      inline INT32 compare( const _rtnSortTuple *tuple,
+      OSS_INLINE INT32 compare( const _rtnSortTuple *tuple,
                             const Ordering &order ) const
       {
          BSONObj l( this->key(), FALSE ) ;

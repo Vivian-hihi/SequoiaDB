@@ -94,14 +94,14 @@ void displayArg ( po::options_description &desc )
    std::cout << desc << std::endl ;
 }
 
-static inline std::string &ltrim ( std::string &s )
+static OSS_INLINE std::string &ltrim ( std::string &s )
 {
    s.erase ( s.begin(), std::find_if ( s.begin(), s.end(),
              std::not1 ( std::ptr_fun<int, int>(std::isspace)))) ;
    return s ;
 }
 
-static inline std::string &rtrim ( std::string &s )
+static OSS_INLINE std::string &rtrim ( std::string &s )
 {
    s.erase ( std::find_if ( s.rbegin(), s.rend(),
              std::not1 ( std::ptr_fun<int, int>(std::isspace))).base(),
@@ -109,7 +109,7 @@ static inline std::string &rtrim ( std::string &s )
    return s ;
 }
 
-static inline std::string &trim ( std::string &s )
+static OSS_INLINE std::string &trim ( std::string &s )
 {
    return ltrim ( rtrim ( s ) ) ;
 }

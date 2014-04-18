@@ -79,17 +79,17 @@ protected:
 public:
    typedef vector<ossMmapSegment>::const_iterator CONST_ITR;
 
-   inline CONST_ITR begin()
+   OSS_INLINE CONST_ITR begin()
    {
       return _segments.begin();
    }
 
-   inline CONST_ITR end()
+   OSS_INLINE CONST_ITR end()
    {
       return _segments.end();
    }
 
-   inline UINT32 segmentSize()
+   OSS_INLINE UINT32 segmentSize()
    {
       return _segments.size();
    }

@@ -186,25 +186,25 @@ namespace engine
          const dmsSpaceManagementExtent *getSME () { return _dmsSME ; }
          dmsSMEMgr *getSMEMgr () { return &_smeMgr ; }
 
-         inline UINT64  dataSize () const ;
-         inline UINT64  fileSize () const ;
+         OSS_INLINE UINT64  dataSize () const ;
+         OSS_INLINE UINT64  fileSize () const ;
 
-         inline UINT32  pageSize () const ;
-         inline UINT32  pageSizeSquareRoot () const ;
-         inline UINT32  segmentPages () const ;
-         inline UINT32  segmentPagesSquareRoot () const ;
-         inline UINT32  pageNum () const ;
-         inline INT32   maxSegID () const ;
-         inline UINT32  dataStartSegID () const ;
-         inline BOOLEAN isTempSU () const { return _isTempSU ; }
+         OSS_INLINE UINT32  pageSize () const ;
+         OSS_INLINE UINT32  pageSizeSquareRoot () const ;
+         OSS_INLINE UINT32  segmentPages () const ;
+         OSS_INLINE UINT32  segmentPagesSquareRoot () const ;
+         OSS_INLINE UINT32  pageNum () const ;
+         OSS_INLINE INT32   maxSegID () const ;
+         OSS_INLINE UINT32  dataStartSegID () const ;
+         OSS_INLINE BOOLEAN isTempSU () const { return _isTempSU ; }
 
-         inline UINT32  extent2Segment( dmsExtentID extentID,
+         OSS_INLINE UINT32  extent2Segment( dmsExtentID extentID,
                                         UINT32 *pSegOffset = NULL ) ;
-         inline dmsExtentID segment2Extent( UINT32 segID,
+         OSS_INLINE dmsExtentID segment2Extent( UINT32 segID,
                                             UINT32 segOffset = 0 ) ;
 
-         inline ossValuePtr extentAddr ( INT32 extentID ) ;
-         inline dmsExtentID extentID ( ossValuePtr extendAddr ) ;
+         OSS_INLINE ossValuePtr extentAddr ( INT32 extentID ) ;
+         OSS_INLINE dmsExtentID extentID ( ossValuePtr extendAddr ) ;
          // this function is used to prevent dmsStorageBase memory being freed
          // before page cleaner completes its job
          // the caller must perform the following steps BEFORE clean the pages
@@ -216,8 +216,8 @@ namespace engine
          // Since dmsStorageBase destructor will wait for latch before releasing
          // memory, so we should be safe here.
          // Note in page cleaning function, we check 
-         inline void lockPageCleaner () ;
-         inline void unlockPageCleaner () ;
+         OSS_INLINE void lockPageCleaner () ;
+         OSS_INLINE void unlockPageCleaner () ;
 
       public:
          INT32 openStorage ( const CHAR *pPath, BOOLEAN createNew = TRUE,
@@ -284,17 +284,17 @@ namespace engine
    typedef _dmsStorageBase dmsStorageBase ;
 
    /*
-      _dmsStorageBase inline functions :
+      _dmsStorageBase OSS_INLINE functions :
    */
-   inline void _dmsStorageBase::lockPageCleaner ()
+   OSS_INLINE void _dmsStorageBase::lockPageCleaner ()
    {
       ossLatch ( &_pagecleanerLatch ) ;
    }
-   inline void _dmsStorageBase::unlockPageCleaner ()
+   OSS_INLINE void _dmsStorageBase::unlockPageCleaner ()
    {
       ossUnlatch ( &_pagecleanerLatch ) ;
    }
-   inline UINT32 _dmsStorageBase::pageSize () const
+   OSS_INLINE UINT32 _dmsStorageBase::pageSize () const
    {
       if ( _pStorageInfo )
       {
@@ -302,35 +302,35 @@ namespace engine
       }
       return DMS_INVALID_PAGESIZE ;
    }
-   inline UINT32 _dmsStorageBase::pageSizeSquareRoot () const
+   OSS_INLINE UINT32 _dmsStorageBase::pageSizeSquareRoot () const
    {
       return _pageSizeSquare ;
    }
-   inline UINT32 _dmsStorageBase::segmentPages () const
+   OSS_INLINE UINT32 _dmsStorageBase::segmentPages () const
    {
       return _segmentPages ;
    }
-   inline UINT32 _dmsStorageBase::segmentPagesSquareRoot () const
+   OSS_INLINE UINT32 _dmsStorageBase::segmentPagesSquareRoot () const
    {
       return _segmentPagesSquare ;
    }
-   inline UINT32 _dmsStorageBase::pageNum () const
+   OSS_INLINE UINT32 _dmsStorageBase::pageNum () const
    {
       return _pageNum ;
    }
-   inline INT32 _dmsStorageBase::maxSegID () const
+   OSS_INLINE INT32 _dmsStorageBase::maxSegID () const
    {
       return _maxSegID ;
    }
-   inline UINT32 _dmsStorageBase::dataStartSegID () const
+   OSS_INLINE UINT32 _dmsStorageBase::dataStartSegID () const
    {
       return _dataSegID ;
    }
-   inline UINT64 _dmsStorageBase::dataSize () const
+   OSS_INLINE UINT64 _dmsStorageBase::dataSize () const
    {
       return (UINT64)_pageNum << _pageSizeSquare ;
    }
-   inline UINT64 _dmsStorageBase::fileSize () const
+   OSS_INLINE UINT64 _dmsStorageBase::fileSize () const
    {
       if ( _dmsHeader )
       {
@@ -338,7 +338,7 @@ namespace engine
       }
       return 0 ;
    }
-   inline UINT32 _dmsStorageBase::extent2Segment( dmsExtentID extentID,
+   OSS_INLINE UINT32 _dmsStorageBase::extent2Segment( dmsExtentID extentID,
                                                   UINT32 * pSegOffset )
    {
       if ( pSegOffset )
@@ -349,7 +349,7 @@ namespace engine
       // the same with: extentID / _segmentPages + _dataSegID
       return ( extentID >> _segmentPagesSquare ) + _dataSegID ;
    }
-   inline dmsExtentID _dmsStorageBase::segment2Extent( UINT32 segID,
+   OSS_INLINE dmsExtentID _dmsStorageBase::segment2Extent( UINT32 segID,
                                                        UINT32 segOffset )
    {
       if ( segID < _dataSegID )
@@ -359,7 +359,7 @@ namespace engine
       // the same with: ( segID - _dataSegID ) * _segmentPages + segOffset
       return (( segID - _dataSegID ) << _segmentPagesSquare ) + segOffset ;
    }
-   inline ossValuePtr _dmsStorageBase::extentAddr( INT32 extentID )
+   OSS_INLINE ossValuePtr _dmsStorageBase::extentAddr( INT32 extentID )
    {
       if ( DMS_INVALID_EXTENT == extentID )
       {
@@ -375,7 +375,7 @@ namespace engine
              (ossValuePtr)( segOffset << _pageSizeSquare ) ;
       // the same with: segOffset * _segmentPages
    }
-   inline dmsExtentID _dmsStorageBase::extentID( ossValuePtr extendAddr )
+   OSS_INLINE dmsExtentID _dmsStorageBase::extentID( ossValuePtr extendAddr )
    {
       if ( 0 == extendAddr || _maxSegID < 0 )
       {
@@ -402,7 +402,7 @@ namespace engine
       }
       return segment2Extent( (UINT32)segID, segOffset ) ;
    }
-   inline void _dmsStorageBase::_markDirty ( INT32 extentID )
+   OSS_INLINE void _dmsStorageBase::_markDirty ( INT32 extentID )
    {
       // make sure the extentID is valid
       if ( DMS_INVALID_EXTENT == extentID ||

@@ -65,7 +65,7 @@ namespace engine
       UINT64 _totalIndexFreeSpace ;
       // end
 
-      inline BOOLEAN operator<(const _detailedInfo &r) const
+      OSS_INLINE BOOLEAN operator<(const _detailedInfo &r) const
       {
          return _sequence < r._sequence ;
       }
@@ -93,11 +93,11 @@ namespace engine
    public :
       CHAR _name [ DMS_COLLECTION_FULL_NAME_SZ + 1 ] ;
       std::set<detailedInfo> _details ;
-      inline BOOLEAN operator<(const _monCollection &r) const
+      OSS_INLINE BOOLEAN operator<(const _monCollection &r) const
       {
          return ossStrncmp( _name, r._name, sizeof(_name))<0 ;
       }
-      inline void addDetails ( UINT32 sequence, UINT32 numIndexes,
+      OSS_INLINE void addDetails ( UINT32 sequence, UINT32 numIndexes,
                                UINT16 blockID, UINT16 flag,
                                UINT32 logicID, UINT64 totalRecords,
                                UINT32 totalDataPages, UINT32 totalIndexPages,
@@ -178,7 +178,7 @@ namespace engine
       INT32 _pageSize ;
       INT64 _totalSize ;
 
-      inline BOOLEAN operator<(const _monCollectionSpace &r) const
+      OSS_INLINE BOOLEAN operator<(const _monCollectionSpace &r) const
       {
          return ossStrncmp( _name, r._name, sizeof(_name))<0 ;
       }
@@ -226,7 +226,7 @@ namespace engine
       SINT32 _numCollections ;
       SINT32 _collectionHWM ;
       SINT64 _size ;
-      inline BOOLEAN operator<(const _monStorageUnit &r) const
+      OSS_INLINE BOOLEAN operator<(const _monStorageUnit &r) const
       {
          SINT32 rc = ossStrncmp( _name, r._name, sizeof(_name))<0 ;
          // if two storage unit got same name, let's check sequence

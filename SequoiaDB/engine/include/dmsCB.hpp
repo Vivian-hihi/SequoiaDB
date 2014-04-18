@@ -232,19 +232,19 @@ namespace engine
    public:
       typedef std::vector<SDB_DMS_CSCB*>::iterator CSCB_ITERATOR;
 
-      inline CSCB_ITERATOR begin()
+      OSS_INLINE CSCB_ITERATOR begin()
       {
          return _cscbVec.begin();
       }
 
-      inline CSCB_ITERATOR end()
+      OSS_INLINE CSCB_ITERATOR end()
       {
          return _cscbVec.end();
       }
 
       INT32 writable( _pmdEDUCB * cb ) ;
 
-      inline void writeDown()
+      OSS_INLINE void writeDown()
       {
          _stateMtx.get();
          --_writeCounter;
@@ -254,7 +254,7 @@ namespace engine
 
       INT32 registerBackup() ;
 
-      inline void backupDown()
+      OSS_INLINE void backupDown()
       {
          _stateMtx.get() ;
          _dmsCBState = DMS_STATE_NORMAL ;
@@ -264,14 +264,14 @@ namespace engine
 
       INT32 registerRebuild() ;
 
-      inline void rebuildDown()
+      OSS_INLINE void rebuildDown()
       {
          _stateMtx.get();
          _dmsCBState = DMS_STATE_NORMAL;
          _stateMtx.release();
       }
 
-      inline UINT8 getCBState () const
+      OSS_INLINE UINT8 getCBState () const
       {
          return _dmsCBState ;
       }

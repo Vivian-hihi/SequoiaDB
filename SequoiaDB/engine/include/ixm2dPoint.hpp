@@ -58,7 +58,7 @@ namespace engine
          return _initialized ;
       }
 
-      inline geoHash hash( const geoIndexCB &cb )
+      OSS_INLINE geoHash hash( const geoIndexCB &cb )
       {
          return geoHash( _convert( _tuple.x, cb.xScaling ),
                          _convert( _tuple.y, cb.yScaling ) ) ;
@@ -68,7 +68,7 @@ namespace engine
       void _init( const BSONElement &tuple, const BSONObj &pattern ) ;
       void _init( const BSONElement &tuple, const geoIndexCB &cb ) ;
 
-      inline UINT32 _convert( const FLOAT64 &in, const FLOAT64 scaling )
+      OSS_INLINE UINT32 _convert( const FLOAT64 &in, const FLOAT64 scaling )
       {
          return ( UINT32 )( in * scaling ) ;
       }

@@ -103,7 +103,7 @@ namespace engine
       CHAR           _dollarBuff[ MTH_DOLLAR_FIELD_SIZE + 1 ] ;
 
    private:
-      inline BOOLEAN _isNumber( CHAR c )
+      OSS_INLINE BOOLEAN _isNumber( CHAR c )
       {
          return c >= '0' && c <= '9' ;
       }
@@ -177,7 +177,7 @@ namespace engine
       INT32 _addModifier ( const BSONElement &ele, ModType type ) ;
       INT32 _parseElement ( const BSONElement &ele ) ;
       ModType _parseModType ( const CHAR *field ) ;
-      inline void _incModifierIndex( INT32 *modifierIndex ) ;
+      OSS_INLINE void _incModifierIndex( INT32 *modifierIndex ) ;
 
       template<class VType>
       INT32 _bitCalc ( ModType type, VType l, VType r, VType &out );
@@ -304,14 +304,14 @@ namespace engine
                      BSONObj *srcChange = NULL,
                      BSONObj *dstID = NULL,
                      BSONObj *dstChange = NULL ) ;
-      inline BOOLEAN isInitialized () { return _initialized ; }
+      OSS_INLINE BOOLEAN isInitialized () { return _initialized ; }
    } ;
    typedef _mthModifier mthModifier ;
 
    /*
-      inline function
+      OSS_INLINE function
    */
-   inline void _mthModifier::_incModifierIndex( INT32 *modifierIndex )
+   OSS_INLINE void _mthModifier::_incModifierIndex( INT32 *modifierIndex )
    {
       INT32 tmpModifierIndex = *modifierIndex ;
       ++(*modifierIndex) ;

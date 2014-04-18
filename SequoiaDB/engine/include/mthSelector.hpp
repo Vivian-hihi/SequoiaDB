@@ -78,7 +78,7 @@ namespace engine
       BOOLEAN _dupFieldName ( const BSONElement &l,
                               const BSONElement &r ) ;
 
-      inline void _incSelectorIndex( INT32 *selectorIndex ) ;
+      OSS_INLINE void _incSelectorIndex( INT32 *selectorIndex ) ;
 
       // when requested update want to change something that not exist in
       // original
@@ -132,23 +132,23 @@ namespace engine
 
       INT32 select ( const BSONObj &source, BSONObj &target ) ;
 
-      inline void setStringOutput ( BOOLEAN strOut )
+      OSS_INLINE void setStringOutput ( BOOLEAN strOut )
       {
          _stringOutput = strOut ;
       }
-      inline BOOLEAN getStringOutput () const
+      OSS_INLINE BOOLEAN getStringOutput () const
       {
          return _stringOutput ;
       }
-      inline BOOLEAN isInitialized () { return _initialized ; }
+      OSS_INLINE BOOLEAN isInitialized () { return _initialized ; }
 
    } ;
    typedef _mthSelector mthSelector ;
 
    /*
-      inline function
+      OSS_INLINE function
    */
-   inline void _mthSelector::_incSelectorIndex( INT32 *selectorIndex )
+   OSS_INLINE void _mthSelector::_incSelectorIndex( INT32 *selectorIndex )
    {
       ++(*selectorIndex) ;
    }

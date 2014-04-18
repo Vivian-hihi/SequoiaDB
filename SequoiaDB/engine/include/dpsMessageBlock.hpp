@@ -62,27 +62,27 @@ namespace engine
       _dpsMessageBlock &operator=(const _dpsMessageBlock &mb ) ;
       ~_dpsMessageBlock();
    public:
-      inline UINT32 size() const
+      OSS_INLINE UINT32 size() const
       {
          return _size;
       }
 
-      inline UINT32 idleSize() const
+      OSS_INLINE UINT32 idleSize() const
       {
          return _size - _length;
       }
 
-      inline UINT32 length() const
+      OSS_INLINE UINT32 length() const
       {
          return _length;
       }
 
-      inline CHAR *writePtr() const
+      OSS_INLINE CHAR *writePtr() const
       {
          return _write;
       }
 
-      inline void writePtr( UINT32 offset )
+      OSS_INLINE void writePtr( UINT32 offset )
       {
          _write = _start + offset;
          _length = offset;
@@ -90,29 +90,29 @@ namespace engine
          return;
       }
 
-      inline const CHAR *readPtr() const
+      OSS_INLINE const CHAR *readPtr() const
       {
          return _read;
       }
 
-      inline void readPtr( INT32 offset )
+      OSS_INLINE void readPtr( INT32 offset )
       {
          _read = _start + offset;
       }
 
-      inline CHAR *offset( UINT32 offset )const
+      OSS_INLINE CHAR *offset( UINT32 offset )const
       {
          return _start + offset;
       }
 
-      inline void clear()
+      OSS_INLINE void clear()
       {
          _write = _start;
          _read = _start;
          _length = 0;
       }
 
-      inline const CHAR *startPtr() const
+      OSS_INLINE const CHAR *startPtr() const
       {
          return _start ;
       }

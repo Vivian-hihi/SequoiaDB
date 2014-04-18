@@ -76,7 +76,7 @@ namespace engine
 
       void contextDelete ( SINT64 contextID, _pmdEDUCB *cb ) ;
 
-      inline rtnContext *contextFind ( SINT64 contextID )
+      OSS_INLINE rtnContext *contextFind ( SINT64 contextID )
       {
          RTNCB_SLOCK
          std::map<SINT64, rtnContext*>::const_iterator it ;
@@ -85,13 +85,13 @@ namespace engine
          return (*it).second ;
       }
 
-      inline INT32 contextNum ()
+      OSS_INLINE INT32 contextNum ()
       {
          RTNCB_SLOCK
          return _contextList.size() ;
       }
 
-      inline void contextDump ( std::map<UINT64, std::set<SINT64> > &contextList )
+      OSS_INLINE void contextDump ( std::map<UINT64, std::set<SINT64> > &contextList )
       {
          UINT64 eduID = PMD_INVALID_EDUID ;
          INT64  contextID = -1  ;
@@ -107,7 +107,7 @@ namespace engine
          }
       }
 
-      inline void monContextSnap ( std::map<UINT64, std::set<monContextFull> >
+      OSS_INLINE void monContextSnap ( std::map<UINT64, std::set<monContextFull> >
                                    &contextList )
       {
          UINT64 eduID = PMD_INVALID_EDUID ;
@@ -130,7 +130,7 @@ namespace engine
          }
       }
 
-      inline void monContextSnap( UINT64 eduID,
+      OSS_INLINE void monContextSnap( UINT64 eduID,
                                   std::set<monContextFull> &contextList )
       {
          INT64  contextID = -1  ;

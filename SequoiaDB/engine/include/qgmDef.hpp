@@ -184,26 +184,26 @@ namespace engine
       virtual ~_qgmDbAttr(){}
 
    public:
-      inline const qgmField &relegation() const { return _relegation ;}
+      OSS_INLINE const qgmField &relegation() const { return _relegation ;}
 
-      inline const qgmField &attr() const { return _attr ;}
+      OSS_INLINE const qgmField &attr() const { return _attr ;}
 
-      inline qgmField &relegation() { return _relegation ;}
+      OSS_INLINE qgmField &relegation() { return _relegation ;}
 
-      inline qgmField &attr() { return _attr ;}
+      OSS_INLINE qgmField &attr() { return _attr ;}
 
-      inline BOOLEAN empty()const
+      OSS_INLINE BOOLEAN empty()const
       {
          return _relegation.empty() && _attr.empty() ;
       }
 
-      inline BOOLEAN operator==( const _qgmDbAttr &attr ) const
+      OSS_INLINE BOOLEAN operator==( const _qgmDbAttr &attr ) const
       {
          return _relegation == attr._relegation
                 && _attr == attr._attr ;
       }
 
-      inline string toString() const
+      OSS_INLINE string toString() const
       {
          if ( !_relegation.empty() && !_attr.empty() )
          {
@@ -220,7 +220,7 @@ namespace engine
          }
       }
 
-      inline BOOLEAN operator<( const _qgmDbAttr &attr ) const
+      OSS_INLINE BOOLEAN operator<( const _qgmDbAttr &attr ) const
       {
          if ( _relegation < attr._relegation )
          {

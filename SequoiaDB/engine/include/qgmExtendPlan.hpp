@@ -56,13 +56,13 @@ namespace engine
       /// when local is not NULL, it will be defined as local.
       INT32 insertPlan( UINT32 id, qgmOptiTreeNode *ex = NULL ) ;
 
-      inline qgmOptiTreeNode *getNode( UINT32 id )
+      OSS_INLINE qgmOptiTreeNode *getNode( UINT32 id )
       {
          QGM_EXTEND_TABLE::iterator it = _table.find( id ) ;
          return ( it == _table.end() ) ? NULL : it->second ;
       }
 
-      inline void pushAlias( const qgmField &alias )
+      OSS_INLINE void pushAlias( const qgmField &alias )
       {
          _aliases.push( alias ) ;
       }

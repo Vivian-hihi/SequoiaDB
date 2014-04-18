@@ -64,95 +64,95 @@ namespace engine
          ~_dpsLogPage();
 
       public:
-         inline UINT32 getLastSize() const
+         OSS_INLINE UINT32 getLastSize() const
          {
             return _mb->idleSize();
          }
 
-         inline UINT32 getBufSize() const
+         OSS_INLINE UINT32 getBufSize() const
          {
             return _mb->size();
          }
 
-         inline UINT32 getLength() const
+         OSS_INLINE UINT32 getLength() const
          {
             return _mb->length();
          }
 
-         inline void clear()
+         OSS_INLINE void clear()
          {
             _startPage = DPS_LSN_START_FROM_HEAD ;
             _mb->clear();
             return ;
          }
 
-         inline void setStartFlag( INT8 flag )
+         OSS_INLINE void setStartFlag( INT8 flag )
          {
             _startPage = flag;
             return;
          }
 
-         inline INT8 getStartFlag() const
+         OSS_INLINE INT8 getStartFlag() const
          {
             return _startPage;
          }
 
-         inline void setLsn( const DPS_LSN &lsn , UINT32 offset )
+         OSS_INLINE void setLsn( const DPS_LSN &lsn , UINT32 offset )
          {
             ossMemcpy( _mb->offset( offset ), ( CHAR * )&lsn,
                        sizeof(DPS_LSN) );
             return;
          }
 
-         inline DPS_LSN getLsn( UINT32 offset )
+         OSS_INLINE DPS_LSN getLsn( UINT32 offset )
          {
             return *( (DPS_LSN *)_mb->offset( offset ) );
          }
 
-         inline void setBeginLSN ( const DPS_LSN &lsn )
+         OSS_INLINE void setBeginLSN ( const DPS_LSN &lsn )
          {
             _beginLSN = lsn  ;
          }
-         inline DPS_LSN getBeginLSN ()
+         OSS_INLINE DPS_LSN getBeginLSN ()
          {
             return _beginLSN ;
          }
 
-         inline _dpsMessageBlock *mb()
+         OSS_INLINE _dpsMessageBlock *mb()
          {
             return _mb;
          }
 
-         inline void setNumber( UINT32 number )
+         OSS_INLINE void setNumber( UINT32 number )
          {
             _pageNumber = number;
             return;
          }
 
-         inline UINT32 getNumber()
+         OSS_INLINE UINT32 getNumber()
          {
             return _pageNumber;
          }
 
-         inline void lockShared()
+         OSS_INLINE void lockShared()
          {
             _mtx.lock_r();
             return ;
          }
 
-         inline void unlockShared()
+         OSS_INLINE void unlockShared()
          {
             _mtx.release_r() ;
             return ;
          }
 
-         inline void lock()
+         OSS_INLINE void lock()
          {
             _mtx.lock_w() ;
             return ;
          }
 
-         inline void unlock()
+         OSS_INLINE void unlock()
          {
             _mtx.release_w() ;
             return ;

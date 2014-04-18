@@ -45,8 +45,8 @@ namespace engine
                             size_t length ) ;
       static INT32 _parse_http_query( httpConnection *pHttpConnection,
                                       CHAR *pBuffer, INT32 length ) ;
-      inline const CHAR *_getResourceFileName( const CHAR *pPath ) ;
-      inline const CHAR *_getFileExtension( const CHAR *pFileName ) ;
+      OSS_INLINE const CHAR *_getResourceFileName( const CHAR *pPath ) ;
+      OSS_INLINE const CHAR *_getFileExtension( const CHAR *pFileName ) ;
       INT32 _convertMsg( HTTP_PARSE_COMMON &common,
                          CHAR **pMsg,
                          INT32 &msgSize ) ;

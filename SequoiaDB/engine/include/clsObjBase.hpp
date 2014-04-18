@@ -105,16 +105,16 @@ namespace engine
          virtual INT32    final() { return SDB_OK ; }
 
       public:
-         inline BOOLEAN isProcess () const { return _bProcess ; }
-         inline INT32   dispatch ( pmdEDUEvent *event, INT32 *pTime = NULL ) ;
-         inline INT32   dispatchEvent ( pmdEDUEvent *event,
+         OSS_INLINE BOOLEAN isProcess () const { return _bProcess ; }
+         OSS_INLINE INT32   dispatch ( pmdEDUEvent *event, INT32 *pTime = NULL ) ;
+         OSS_INLINE INT32   dispatchEvent ( pmdEDUEvent *event,
                                         INT32 *pTime = NULL ) ;
-         inline INT32   dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
+         OSS_INLINE INT32   dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
                                      INT32 *pTime = NULL ) ;
          virtual void   onTimer ( UINT64 timerID, UINT32 interval ) { }
 
       protected:
-         virtual inline INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg )
+         virtual OSS_INLINE INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg )
          {
             PD_LOG( PDWARNING, "[%s]Recieve unknow msg[type:[%d]%u, len:%u]",
                name(), IS_REPLY_TYPE( msg->opCode ) ? 1 : 0,
@@ -122,7 +122,7 @@ namespace engine
                msg->messageLength );
             return SDB_CLS_UNKNOW_MSG;
          }
-         virtual inline INT32 _defaultEventFunc ( pmdEDUEvent *event )
+         virtual OSS_INLINE INT32 _defaultEventFunc ( pmdEDUEvent *event )
          {
             PD_LOG ( PDWARNING, "[%s]Recieve unknow event[type:%u]",
                name(), event->_eventType ) ;
@@ -142,8 +142,8 @@ namespace engine
             onTimer ( timerID, interval ) ;
          }
 
-         inline static const _msgMap* getThisMsgMap();
-         inline static const _msgMap* _getBaseMsgMap() { return NULL; }
+         OSS_INLINE static const _msgMap* getThisMsgMap();
+         OSS_INLINE static const _msgMap* _getBaseMsgMap() { return NULL; }
 
          virtual const _msgMap* getMsgMap() const { return getThisMsgMap(); }
          virtual const CHAR *name () const { return "_clsObjBase"; }
@@ -167,7 +167,7 @@ namespace engine
       EVENT_FUNC              pEventFn ;
    };
 
-   inline INT32 _clsObjBase::dispatch ( pmdEDUEvent * event, INT32 *pTime )
+   OSS_INLINE INT32 _clsObjBase::dispatch ( pmdEDUEvent * event, INT32 *pTime )
    {
       if ( event->_eventType == PMD_EDU_EVENT_MSG )
       {
@@ -179,7 +179,7 @@ namespace engine
       }
    }
 
-   inline INT32 _clsObjBase::dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
+   OSS_INLINE INT32 _clsObjBase::dispatchMsg( NET_HANDLE handle, MsgHeader* msg,
                                           INT32 *pTime )
    {
       _bProcess = TRUE ;
@@ -232,7 +232,7 @@ namespace engine
       return rc;
    }
 
-   inline INT32 _clsObjBase::dispatchEvent( pmdEDUEvent * event, INT32 *pTime )
+   OSS_INLINE INT32 _clsObjBase::dispatchEvent( pmdEDUEvent * event, INT32 *pTime )
    {
       _bProcess = TRUE ;
       INT32 rc = SDB_OK;
@@ -297,7 +297,7 @@ namespace engine
       return rc;
    }
 
-   inline  const _msgMap* _clsObjBase::getThisMsgMap()
+   OSS_INLINE  const _msgMap* _clsObjBase::getThisMsgMap()
    {
       static const _msgMapEntry msgEntries[] = {
          {0, 0, sig_end, "", NULL, NULL } };

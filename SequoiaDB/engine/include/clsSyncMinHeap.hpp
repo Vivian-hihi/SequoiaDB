@@ -66,17 +66,17 @@ namespace engine
 
 
    public:
-      inline const UINT32 &dataSize() const
+      OSS_INLINE const UINT32 &dataSize() const
       {
          return _dataSize ;
       }
 
-      inline const UINT32 &spcSize() const
+      OSS_INLINE const UINT32 &spcSize() const
       {
          return _spcSize ;
       }
 
-      inline void clear()
+      OSS_INLINE void clear()
       {
          _dataSize = 0 ;
          return ;
@@ -87,7 +87,7 @@ namespace engine
          return _heap[sub] ;
       }
 
-      inline INT32 push( const _clsSyncSession &session )
+      OSS_INLINE INT32 push( const _clsSyncSession &session )
       {
          INT32 rc = SDB_OK ;
          if ( _dataSize == _spcSize )
@@ -108,7 +108,7 @@ namespace engine
          goto done ;
       }
 
-      inline INT32 pop( _clsSyncSession &session )
+      OSS_INLINE INT32 pop( _clsSyncSession &session )
       {
          INT32 rc = SDB_OK ;
          if ( 0 == _dataSize )
@@ -126,7 +126,7 @@ namespace engine
          goto done ;
       }
 
-      inline INT32 erase( const UINT32 &sub )
+      OSS_INLINE INT32 erase( const UINT32 &sub )
       {
          INT32 rc = SDB_OK ;
          if ( 0 == _dataSize ||
@@ -147,7 +147,7 @@ namespace engine
          goto done ;
       }
 
-      inline INT32 root( _clsSyncSession &session )
+      OSS_INLINE INT32 root( _clsSyncSession &session )
       {
          INT32 rc = SDB_OK ;
          if ( 0 == _dataSize )
@@ -162,7 +162,7 @@ namespace engine
          goto done ;
       }
 
-      inline void dump()
+      OSS_INLINE void dump()
       {
          for ( UINT32 i = 0; i < _dataSize; i++ )
          {
@@ -210,7 +210,7 @@ namespace engine
          return father * 2 + 2 ;
       }
 
-      inline void _shiftUp( const UINT32 &sub )
+      OSS_INLINE void _shiftUp( const UINT32 &sub )
       {
          UINT32 up = sub ;
          while ( CLS_HEAP_ROOT != up )
@@ -229,7 +229,7 @@ namespace engine
          return ;
       }
 
-      inline void _shiftDown( const UINT32 &sub )
+      OSS_INLINE void _shiftDown( const UINT32 &sub )
       {
          UINT32 down = sub ;
          UINT32 swap = 0 ;
@@ -262,7 +262,7 @@ namespace engine
          return ;
       }
 
-      inline void _swap( const UINT32 &sub1,
+      OSS_INLINE void _swap( const UINT32 &sub1,
                          const UINT32 &sub2 )
       {
          _clsSyncSession tmp = _heap[sub1] ;

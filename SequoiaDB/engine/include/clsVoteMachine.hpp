@@ -50,7 +50,7 @@ namespace engine
       ~_clsVoteMachine() ;
 
    public:
-      inline BOOLEAN primaryIsMe()
+      OSS_INLINE BOOLEAN primaryIsMe()
       {
          _groupInfo->mtx.lock_r() ;
          BOOLEAN res = _groupInfo->local.value == _groupInfo->primary.value &&

@@ -837,14 +837,14 @@ public: // operation
 };
 
 
-static inline std::string &ltrim ( std::string &s )
+static OSS_INLINE std::string &ltrim ( std::string &s )
 {
    s.erase ( s.begin(), std::find_if ( s.begin(), s.end(),
              std::not1 ( std::ptr_fun<int, int>(std::isspace)))) ;
    return s ;
 }
 
-static inline std::string &rtrim ( std::string &s )
+static OSS_INLINE std::string &rtrim ( std::string &s )
 {
    s.erase ( std::find_if ( s.rbegin(), s.rend(),
              std::not1 ( std::ptr_fun<int, int>(std::isspace))).base(),
@@ -852,12 +852,12 @@ static inline std::string &rtrim ( std::string &s )
    return s ;
 }
 
-static inline std::string &trim ( std::string &s )
+static OSS_INLINE std::string &trim ( std::string &s )
 {
    return ltrim ( rtrim ( s ) ) ;
 }
 
-static inline std::string &doubleQuotesTrim( std::string &s )
+static OSS_INLINE std::string &doubleQuotesTrim( std::string &s )
 {
    const INT32 strLength = s.length() ;
    if( 2 >= strLength )
@@ -871,12 +871,12 @@ static inline std::string &doubleQuotesTrim( std::string &s )
    return s ;
 }
 
-static inline BOOLEAN isExist( map<string, string> &src, const string &key )
+static OSS_INLINE BOOLEAN isExist( map<string, string> &src, const string &key )
 {
    return ( src.find( key ) != src.end() ) ;
 }
 
-static inline std::string getDividingLine( const string &dividingChar,
+static OSS_INLINE std::string getDividingLine( const string &dividingChar,
                                            INT32 dividingLength )
 {
    string line = NULLSTRING ;
@@ -993,7 +993,7 @@ error :
 
 // use this function before call ncurses::mvprintw()
 // formationg(cut off) pSrc by fixedLength
-static inline INT32 formattingOutput( CHAR *pBuffer, const INT32 fixedLength,
+static OSS_INLINE INT32 formattingOutput( CHAR *pBuffer, const INT32 fixedLength,
                                       const CHAR *pSrc )
 {
    INT32 rc = SDB_OK ;
@@ -1024,7 +1024,7 @@ error :
    goto done ;
 }
 
-static inline INT32 MVPRINTW( const INT32 start_row, INT32 start_col,
+static OSS_INLINE INT32 MVPRINTW( const INT32 start_row, INT32 start_col,
                               const INT32 fixedLength, const char *printf_str,
                               const string &alignment )
 {

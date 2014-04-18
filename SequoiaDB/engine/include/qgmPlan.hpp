@@ -76,36 +76,36 @@ namespace engine
 
       virtual string toString() const { return "" ;}
 
-      inline QGM_PLAN_TYPE type() const { return _type ; }
+      OSS_INLINE QGM_PLAN_TYPE type() const { return _type ; }
 
-      inline void merge( BOOLEAN ifMerge ){ _merge = ifMerge ; }
+      OSS_INLINE void merge( BOOLEAN ifMerge ){ _merge = ifMerge ; }
 
-      inline const qgmField &alias() const { return _alias ; }
+      OSS_INLINE const qgmField &alias() const { return _alias ; }
 
-      inline UINT32 inputSize() const { return _input.size() ; }
+      OSS_INLINE UINT32 inputSize() const { return _input.size() ; }
 
-      inline BOOLEAN ready(){ return _initialized ;}
+      OSS_INLINE BOOLEAN ready(){ return _initialized ;}
 
-      inline void setParamTable( _qgmParamTable *param )
+      OSS_INLINE void setParamTable( _qgmParamTable *param )
       {
          SDB_ASSERT( NULL != param, "impossible" )
          _param = param ;
          return ;
       }
 
-      inline _qgmPlan *input( UINT32 id ) const
+      OSS_INLINE _qgmPlan *input( UINT32 id ) const
       {
          return id <= _input.size() ?
                 _input.at( id ) : NULL ;
       }
 
-      inline void addVar( const varItem &item )
+      OSS_INLINE void addVar( const varItem &item )
       {
          _varlist.push_back( item ) ;
          return ;
       }
 
-      inline void setVar( const QGM_VARLIST &list )
+      OSS_INLINE void setVar( const QGM_VARLIST &list )
       {
          _varlist = list ;
          return ;

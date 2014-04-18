@@ -194,7 +194,7 @@ namespace engine
          return ;
       }
 
-      inline void _shiftDown( const UINT32 &sub )
+      OSS_INLINE void _shiftDown( const UINT32 &sub )
       {
          UINT32 down = sub ;
          UINT32 swap = 0 ;
@@ -227,7 +227,7 @@ namespace engine
          return ;
       }
 
-      inline void _swap( const UINT32 &sub1,
+      OSS_INLINE void _swap( const UINT32 &sub1,
                          const UINT32 &sub2 )
       {
          T tmp = _root[sub1] ;

@@ -73,7 +73,7 @@ namespace engine
 
       protected:
          void   _clear () ;
-         inline INT32  _typeCheck ( INT32 oprUnitType, INT32 nodeType ) ;
+         OSS_INLINE INT32  _typeCheck ( INT32 oprUnitType, INT32 nodeType ) ;
          optQgmStrategyBase* _findFromMap( const std::string &typeName ) ;
          void                _addToMap ( const std::string &typeName,
                                          optQgmStrategyBase *pStrategy ) ;
@@ -85,7 +85,7 @@ namespace engine
    };
    typedef _optQgmStrategyTable optQgmStrategyTable ;
 
-   inline INT32 _optQgmStrategyTable::_typeCheck( INT32 oprUnitType,
+   OSS_INLINE INT32 _optQgmStrategyTable::_typeCheck( INT32 oprUnitType,
                                                   INT32 nodeType )
    {
       INT32 rc = SDB_OK ;

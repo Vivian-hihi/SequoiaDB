@@ -100,7 +100,7 @@ namespace engine
          BOOLEAN     eof () const { return _curOffset >= _buffSize ; }
          void        resetItr () { _curOffset = 0 ; }
 
-         inline   INT32  nextObj ( BSONObj &obj ) ;
+         OSS_INLINE   INT32  nextObj ( BSONObj &obj ) ;
 
       protected:
          const CHAR           *_pBuff ;
@@ -111,9 +111,9 @@ namespace engine
    typedef _rtnObjBuff rtnObjBuff ;
 
    /*
-      _rtnObjBuff inline functions
+      _rtnObjBuff OSS_INLINE functions
    */
-   inline INT32 _rtnObjBuff::nextObj( BSONObj &obj )
+   OSS_INLINE INT32 _rtnObjBuff::nextObj( BSONObj &obj )
    {
       if ( eof() )
       {
@@ -254,12 +254,12 @@ namespace engine
          virtual INT32    getMore( INT32 maxNumToReturn, rtnContextBuf &buffObj,
                            INT64 &startPos, _pmdEDUCB *cb ) ;
 
-         inline BOOLEAN  isEmpty () const ;
+         OSS_INLINE BOOLEAN  isEmpty () const ;
 
          INT64    numRecords () const { return _bufferNumRecords ; }
          INT32    buffSize () const { return _resultBufferSize ; }
          INT64    totalRecords () const { return _totalRecords ; }
-         inline INT32 freeSize () const ;
+         OSS_INLINE INT32 freeSize () const ;
          INT32    buffEndOffset () const { return _bufferEndOffset ; }
 
          BOOLEAN  isOpened () const { return _isOpened ; }
@@ -294,8 +294,8 @@ namespace engine
       protected:
          INT32    _reallocBuffer ( SINT32 requiredSize ) ;
          void     _release () ;
-         inline void _empty () ;
-         inline void _close () { _isOpened = FALSE ; }
+         OSS_INLINE void _empty () ;
+         OSS_INLINE void _close () { _isOpened = FALSE ; }
          UINT32   _getWaitPrefetchNum () { return _waitPrefetchNum.peek() ; }
          BOOLEAN  _isInPrefetching () const { return _isInPrefetch ; }
 
@@ -333,20 +333,20 @@ namespace engine
    typedef _rtnContextBase rtnContextBase ;
 
    /*
-      _rtnContextBase inline functions
+      _rtnContextBase OSS_INLINE functions
    */
-   inline BOOLEAN _rtnContextBase::isEmpty () const
+   OSS_INLINE BOOLEAN _rtnContextBase::isEmpty () const
    {
       return _bufferCurrentOffset >= _bufferEndOffset ;
    }
-   inline void _rtnContextBase::_empty ()
+   OSS_INLINE void _rtnContextBase::_empty ()
    {
       _bufferCurrentOffset = 0 ;
       _bufferEndOffset     = 0 ;
       _totalRecords        = _totalRecords - _bufferNumRecords ;
       _bufferNumRecords    = 0 ;
    }
-   inline INT32 _rtnContextBase::freeSize () const
+   OSS_INLINE INT32 _rtnContextBase::freeSize () const
    {
       return _resultBufferSize - ossAlign4((UINT32)_bufferEndOffset) ;
    }
@@ -654,7 +654,7 @@ namespace engine
          virtual RTN_CONTEXT_TYPE getType () const ;
          virtual _dmsStorageUnit*  getSU () { return NULL ; }
 
-         inline  BOOLEAN requireOrder () const ;
+         OSS_INLINE  BOOLEAN requireOrder () const ;
 
       protected:
          virtual INT32  _prepareData( _pmdEDUCB *cb ) ;
@@ -693,9 +693,9 @@ namespace engine
    typedef _rtnContextCoord rtnContextCoord ;
 
    /*
-      _rtnContextCoord inline functions
+      _rtnContextCoord OSS_INLINE functions
    */
-   inline BOOLEAN _rtnContextCoord::requireOrder () const
+   OSS_INLINE BOOLEAN _rtnContextCoord::requireOrder () const
    {
       if ( _orderBy.isEmpty() ||
            _subContextMap.size() + _emptyContextMap.size() +
@@ -709,7 +709,7 @@ namespace engine
    typedef class _rtnContextBase rtnContext ;
 
    /*
-      _rtnContextSP inline functions
+      _rtnContextSP OSS_INLINE functions
    */
    class _spdSession ;
 

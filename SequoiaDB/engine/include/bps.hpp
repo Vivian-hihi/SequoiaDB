@@ -66,31 +66,31 @@ namespace engine
          INT32    _addPreLoader () ;
 
       public :
-         inline ossQueue<_bpsPreLoadReq*> *getReqQueue ()
+         OSS_INLINE ossQueue<_bpsPreLoadReq*> *getReqQueue ()
          {
             return &_requestQueue ;
          }
-         inline ossQueue<_bpsPreLoadReq*> *getDropQueue ()
+         OSS_INLINE ossQueue<_bpsPreLoadReq*> *getDropQueue ()
          {
             return &_dropBackQueue ;
          }
-         inline ossQueue< bpsDataPref > *getPrefetchQueue ()
+         OSS_INLINE ossQueue< bpsDataPref > *getPrefetchQueue ()
          {
             return &_dataPrefetchQueue ;
          }
-         inline BOOLEAN isPreLoadEnabled () const
+         OSS_INLINE BOOLEAN isPreLoadEnabled () const
          {
             return _preLoaderList.size() > 0 ;
          }
-         inline BOOLEAN isPrefetchEnabled () const
+         OSS_INLINE BOOLEAN isPrefetchEnabled () const
          {
             return _maxPrefPool > 0 ? TRUE : FALSE ;
          }
-         inline void setNumPreLoads ( UINT32 numPreLoad )
+         OSS_INLINE void setNumPreLoads ( UINT32 numPreLoad )
          {
             _numPreLoad = (INT32)numPreLoad ;
          }
-         inline void setMaxPrefPool( UINT32 maxPrefPool )
+         OSS_INLINE void setMaxPrefPool( UINT32 maxPrefPool )
          {
             _maxPrefPool = maxPrefPool ;
          }

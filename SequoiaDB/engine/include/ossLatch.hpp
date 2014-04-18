@@ -56,14 +56,14 @@ typedef volatile ossLockType ossLock ;
 // Atomic operations, also used in ossAtomicXLatch
 #define ossLockPeek(pLock) *(volatile const ossLock *)pLock
 /*
-static inline ossLockType ossLockPeek( volatile const ossLock * const pLock )
+static OSS_INLINE ossLockType ossLockPeek( volatile const ossLock * const pLock )
 {
    return *pLock ;
 }*/
 
 #define ossLockGetStatus(pLock) ossAtomicFetch32( ( volatile SINT32 * )pLock )
 /*
-static inline ossLockType ossLockGetStatus(volatile const ossLock * const pLock)
+static OSS_INLINE ossLockType ossLockGetStatus(volatile const ossLock * const pLock)
 {
    return ossAtomicFetch32( ( volatile SINT32 * )pLock ) ;
 }*/
@@ -72,7 +72,7 @@ static inline ossLockType ossLockGetStatus(volatile const ossLock * const pLock)
 #define ossLockTestGet(pLock) ossCompareAndSwap32( pLock, OSS_LOCK_UNLOCKED, \
                                                    OSS_LOCK_LOCKED )
 /*
-static inline BOOLEAN ossLockTestGet( volatile ossLock * const  pLock )
+static OSS_INLINE BOOLEAN ossLockTestGet( volatile ossLock * const  pLock )
 {
    return ( ossCompareAndSwap32( pLock, OSS_LOCK_UNLOCKED, OSS_LOCK_LOCKED ) ) ;
 }*/
@@ -80,7 +80,7 @@ static inline BOOLEAN ossLockTestGet( volatile ossLock * const  pLock )
 // must be called before using an atomic lock
 #define ossLockInit(pLock) *(volatile ossLock *)pLock=OSS_LOCK_UNLOCKED
 /*
-static inline void ossLockInit( volatile ossLock * const pLock )
+static OSS_INLINE void ossLockInit( volatile ossLock * const pLock )
 {
    *pLock = OSS_LOCK_UNLOCKED ;
 }*/
@@ -91,7 +91,7 @@ static inline void ossLockInit( volatile ossLock * const pLock )
            ossAtomicExchange32((volatile ossLock *)pLock, OSS_LOCK_UNLOCKED );\
         }
 /*
-static inline void ossLockRelease( volatile ossLock * const pLock )
+static OSS_INLINE void ossLockRelease( volatile ossLock * const pLock )
 {
    ossCompilerFence() ;
    ossAtomicExchange32( pLock, OSS_LOCK_UNLOCKED ) ;
@@ -107,7 +107,7 @@ static inline void ossLockRelease( volatile ossLock * const pLock )
            }while(__i<x);\
         }
 /*
-static inline void ossWait( UINT32 x )
+static OSS_INLINE void ossWait( UINT32 x )
 {
    UINT32 i = 0 ;
    do
@@ -125,7 +125,7 @@ static inline void ossWait( UINT32 x )
            }\
         }
 /*
-static inline void ossLockGet( volatile ossLock * const pLock )
+static OSS_INLINE void ossLockGet( volatile ossLock * const pLock )
 {
    while( ! ossLockTestGet( pLock ) )
    {
@@ -134,7 +134,7 @@ static inline void ossLockGet( volatile ossLock * const pLock )
 }*/
 
 #if defined (_LINUX)
-static inline void ossLockGet8 ( volatile CHAR * const pLock )
+static OSS_INLINE void ossLockGet8 ( volatile CHAR * const pLock )
 {
    if ( !*pLock && !ossAtomicExchange8 ( pLock, OSS_LOCK_LOCKED ) )
       return ;
@@ -148,7 +148,7 @@ static inline void ossLockGet8 ( volatile CHAR * const pLock )
       usleep ( 1000 ) ;
 }
 
-static inline void ossLockRelease8 ( volatile CHAR * const pLock )
+static OSS_INLINE void ossLockRelease8 ( volatile CHAR * const pLock )
 {
    ossCompilerFence() ;
    ossAtomicExchange8( pLock, OSS_LOCK_UNLOCKED ) ;

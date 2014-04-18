@@ -59,22 +59,22 @@ public:
 
    virtual INT32 initGlobalDB( BSONObj &res ) = 0 ;
 
-   inline BOOLEAN ok() const { return _ok ;}
+   OSS_INLINE BOOLEAN ok() const { return _ok ;}
 
 protected:
-   inline void _setContext( SINT64 contextID )
+   OSS_INLINE void _setContext( SINT64 contextID )
    {
       _contextID = contextID ;
       return ;
    }
-   inline SINT64 _getContext(){return _contextID ;}
+   OSS_INLINE SINT64 _getContext(){return _contextID ;}
 
-   inline const BSONObj &_getParam() const
+   OSS_INLINE const BSONObj &_getParam() const
    {
       return _param ;
    }
 
-   inline void _setOK( BOOLEAN isOK )
+   OSS_INLINE void _setOK( BOOLEAN isOK )
    {
       _ok = isOK ;
       return ;

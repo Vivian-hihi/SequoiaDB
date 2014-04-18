@@ -215,7 +215,7 @@ namespace engine
       dmsExtentID _extentID ;
 
       // Whether the given extent is a valid control block
-      inline BOOLEAN _verify()
+      OSS_INLINE BOOLEAN _verify()
       {
          if ( IXM_EXTENT_CB_EYECATCHER0 != _extent->_eyeCatcher[0] ||
               IXM_EXTENT_CB_EYECATCHER1 != _extent->_eyeCatcher[1] )
@@ -398,7 +398,7 @@ namespace engine
          return keyPatternOffset( key ) >= 0 ;
       }
       // return the name of index
-      inline const CHAR *getName()
+      OSS_INLINE const CHAR *getName()
       {
          SDB_ASSERT ( _isInitialized,
                       "index details must be initialized first" )

@@ -228,8 +228,8 @@ namespace engine
          return !_children.empty() ;
       }
 
-      inline _qgmParamTable *getParam(){return _param ;}
-      inline _qgmPtrTable *getPtrT(){return _table ;}
+      OSS_INLINE _qgmParamTable *getParam(){return _param ;}
+      OSS_INLINE _qgmPtrTable *getPtrT(){return _table ;}
 
       QGM_OPTI_TYPE getType() const { return _type ; }
 

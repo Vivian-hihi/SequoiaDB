@@ -26,13 +26,13 @@
 //   The value to round up
 // X [in]
 //   The alignment amount. It MUST be a power of 2.
-inline UINT32 ossAlignX( UINT32 i, UINT32_64 X  )
+OSS_INLINE UINT32 ossAlignX( UINT32 i, UINT32_64 X  )
 {
    return ( ( i + ( X - 1 ) ) & ( ~( ( UINT32 ) ( X - 1 ) ) ) ) ;
 }
 
 
-inline UINT64 ossAlignX( UINT64 i, UINT32_64   X )
+OSS_INLINE UINT64 ossAlignX( UINT64 i, UINT32_64   X )
 {
    return ( ( i + ( X - 1 ) ) & ( ~( ( UINT64 ) ( X - 1 ) ) ) ) ;
 }
@@ -42,19 +42,19 @@ inline UINT64 ossAlignX( UINT64 i, UINT32_64   X )
 //   The address number to round up
 // X [in]
 //   The alignment amount, MUST be a power of 2
-inline char * ossAlignX( char * pAddr, UINT32_64 X )
+OSS_INLINE char * ossAlignX( char * pAddr, UINT32_64 X )
 {
    return ( ( char * ) ossAlignX( ( UINT32_64 ) pAddr, X ) ) ;
 }
 
 
-inline unsigned char * ossAlignX( unsigned char * pAddr, UINT32_64 X )
+OSS_INLINE unsigned char * ossAlignX( unsigned char * pAddr, UINT32_64 X )
 {
    return ( ( unsigned char * ) ossAlignX( ( UINT32_64 ) pAddr, X ) ) ;
 }
 
 
-inline void * ossAlignX( void * pAddr, UINT32_64 X )
+OSS_INLINE void * ossAlignX( void * pAddr, UINT32_64 X )
 {
    return ( ( void * ) ossAlignX( ( UINT32_64 ) pAddr, X ) ) ;
 }

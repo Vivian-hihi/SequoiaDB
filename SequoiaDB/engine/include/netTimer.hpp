@@ -73,7 +73,7 @@ namespace engine
          {
          }
       public:
-         inline void timeoutCallback( const boost::system::error_code &
+         OSS_INLINE void timeoutCallback( const boost::system::error_code &
                                       error )
          {
             if ( !error )
@@ -83,15 +83,15 @@ namespace engine
             asyncWait() ;
             return ;
          }
-         inline UINT32 id()
+         OSS_INLINE UINT32 id()
          {
             return _id ;
          }
-         inline UINT32 timeout()
+         OSS_INLINE UINT32 timeout()
          {
             return _millisec ;
          }
-         inline void asyncWait()
+         OSS_INLINE void asyncWait()
          {
             if ( !_actived )
             {
@@ -102,7 +102,7 @@ namespace engine
                                           shared_from_this(),
                                           boost::asio::placeholders::error));
          }
-         inline void cancel()
+         OSS_INLINE void cancel()
          {
             _actived = FALSE ;
             _timer.cancel() ;

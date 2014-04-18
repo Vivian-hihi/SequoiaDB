@@ -98,7 +98,7 @@ namespace engine
       INT32 select ( const BSONObj &outer,
                      const BSONObj &inner,
                      BSONObj &target ) ;
-      inline BOOLEAN isInitialized () { return _initialized ; }
+      OSS_INLINE BOOLEAN isInitialized () { return _initialized ; }
       BSONObj getPattern ()
       {
          return _selectorPattern ;

@@ -253,91 +253,91 @@ namespace engine
          INT32 _mkdir() ;
 
       public:
-         inline const CHAR *krcbConfPath() const
+         OSS_INLINE const CHAR *krcbConfPath() const
          {
             return _krcbConfPath;
          }
-         inline const CHAR *krcbLogPath() const
+         OSS_INLINE const CHAR *krcbLogPath() const
          {
             return _krcbLogPath;
          }
-         inline const CHAR *krcbDbPath() const
+         OSS_INLINE const CHAR *krcbDbPath() const
          {
             return _krcbDbPath;
          }
-         inline const CHAR *krcbIndexPath() const
+         OSS_INLINE const CHAR *krcbIndexPath() const
          {
             return _krcbIndexPath;
          }
-         inline const CHAR *krcbBkupPath() const
+         OSS_INLINE const CHAR *krcbBkupPath() const
          {
             return _krcbBkupPath;
          }
-         inline const CHAR *krcbDiagLogPath() const
+         OSS_INLINE const CHAR *krcbDiagLogPath() const
          {
             return _krcbDiagLogPath;
          }
-         inline UINT32 krcbMaxPool() const
+         OSS_INLINE UINT32 krcbMaxPool() const
          {
             return _krcbMaxPool;
          }
-         inline UINT16 krcbSvcPort() const
+         OSS_INLINE UINT16 krcbSvcPort() const
          {
             return _krcbSvcPort;
          }
-         inline UINT16 krcbDiagLvl() const
+         OSS_INLINE UINT16 krcbDiagLvl() const
          {
             return _krcbDiagLvl;
          }
-         inline const CHAR *krcbRole() const
+         OSS_INLINE const CHAR *krcbRole() const
          {
             return _krcbRole;
          }
-         inline const CHAR *replService() const
+         OSS_INLINE const CHAR *replService() const
          {
             return _replServiceName ;
          }
-         inline const CHAR *catService() const
+         OSS_INLINE const CHAR *catService() const
          {
             return _catServiceName ;
          }
-         inline const CHAR *shardService() const
+         OSS_INLINE const CHAR *shardService() const
          {
             return _shardServiceName ;
          }
-         inline const CHAR *restService() const
+         OSS_INLINE const CHAR *restService() const
          {
             return _restServiceName ;
          }
-         inline const CHAR *krcbService() const
+         OSS_INLINE const CHAR *krcbService() const
          {
             return _krcbSvcName ;
          }
-         inline const _pmdOptionsMgr::_pmdAddrPair *catAddrs() const
+         OSS_INLINE const _pmdOptionsMgr::_pmdAddrPair *catAddrs() const
          {
             return _cat ;
          }
-         inline const CHAR *dmsTmpPath() const
+         OSS_INLINE const CHAR *dmsTmpPath() const
          {
             return _dmsTmpBlkPath ;
          }
 
-         inline UINT32 sortBufSize() const
+         OSS_INLINE UINT32 sortBufSize() const
          {
             return _sortBufSz ;
          }
 
-         inline UINT32 hjBufSize() const
+         OSS_INLINE UINT32 hjBufSize() const
          {
             return _hjBufSz ;
          }
 
-         inline UINT32 pagecleanNum () const
+         OSS_INLINE UINT32 pagecleanNum () const
          {
             return _pagecleanNum ;
          }
 
-         inline UINT32 pagecleanInterval () const
+         OSS_INLINE UINT32 pagecleanInterval () const
          {
             return _pagecleanInterval ;
          }
@@ -345,23 +345,23 @@ namespace engine
          void clearCatAddr() ;
          void setCatAddr( const CHAR *host, const CHAR *service ) ;
 
-         inline UINT32 catNum() const { return CATA_NODE_MAX_NUM ; }
-         inline UINT32 groupID() const { return _groupID ; }
-         inline UINT16 nodeID() const { return _nodeID ; }
-         inline UINT32 logFileSz () const { return _logFileSz ; }
-         inline UINT32 logFileNum () const { return _logFileNum ; }
-         inline UINT32 numPreLoaders () const { return _numPreLoaders ; }
-         inline UINT32 maxPrefPool () const { return _maxPrefPool ; }
-         inline UINT32 maxSubQuery () const { return _maxSubQuery ; }
-         inline UINT32 maxReplSync () const { return _maxReplSync ; }
-         inline INT32  syncStrategy () const { return _syncStrategy ; }
-         inline UINT32 replBucketSize () const { return _replBucketSize ; }
-         inline BOOLEAN transactionOn () const { return _transactionOn ; }
-         inline BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
-         inline UINT32 memDebugSize () const { return _memDebugSize ; }
-         inline UINT32 indexScanStep () const { return _indexScanStep ; }
-         inline UINT32 logBuffSize () const { return _logBuffSize ; }
-         inline UINT32 preferedReplica () const { return _preferReplica ; }
+         OSS_INLINE UINT32 catNum() const { return CATA_NODE_MAX_NUM ; }
+         OSS_INLINE UINT32 groupID() const { return _groupID ; }
+         OSS_INLINE UINT16 nodeID() const { return _nodeID ; }
+         OSS_INLINE UINT32 logFileSz () const { return _logFileSz ; }
+         OSS_INLINE UINT32 logFileNum () const { return _logFileNum ; }
+         OSS_INLINE UINT32 numPreLoaders () const { return _numPreLoaders ; }
+         OSS_INLINE UINT32 maxPrefPool () const { return _maxPrefPool ; }
+         OSS_INLINE UINT32 maxSubQuery () const { return _maxSubQuery ; }
+         OSS_INLINE UINT32 maxReplSync () const { return _maxReplSync ; }
+         OSS_INLINE INT32  syncStrategy () const { return _syncStrategy ; }
+         OSS_INLINE UINT32 replBucketSize () const { return _replBucketSize ; }
+         OSS_INLINE BOOLEAN transactionOn () const { return _transactionOn ; }
+         OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
+         OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
+         OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
+         OSS_INLINE UINT32 logBuffSize () const { return _logBuffSize ; }
+         OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;

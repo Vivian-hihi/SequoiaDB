@@ -183,7 +183,7 @@ namespace engine
       goto done ;
    }
 
-   inline const CHAR *restAdaptor::_getResourceFileName( const CHAR *pPath )
+   OSS_INLINE const CHAR *restAdaptor::_getResourceFileName( const CHAR *pPath )
    {
       INT32 pathLen = ossStrlen( pPath ) ;
       for ( INT32 i = pathLen - 1; i >= 0; --i )
@@ -203,7 +203,8 @@ namespace engine
       return NULL ;
    }
 
-   inline const CHAR *restAdaptor::_getFileExtension( const CHAR *pFileName )
+   OSS_INLINE const CHAR *restAdaptor::_getFileExtension(
+         const CHAR *pFileName )
    {
       INT32 fileNameLen = ossStrlen( pFileName ) ;
       for ( INT32 i = fileNameLen - 1; i >= 0; --i )

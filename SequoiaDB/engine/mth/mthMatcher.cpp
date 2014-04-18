@@ -985,9 +985,9 @@ namespace engine
       goto done ;
    }
 
-   inline BOOLEAN _mthMatcher::_regexMatches ( const REMatchElement &me,
-                                               const BSONElement& e
-                                             )
+   OSS_INLINE BOOLEAN _mthMatcher::_regexMatches ( const REMatchElement &me,
+                                                   const BSONElement& e
+                                                 )
    {
       switch ( e.type() )
       {
@@ -1002,11 +1002,11 @@ namespace engine
       }
    }
 
-   inline INT32 _mthMatcher::_valuesMatch ( const BSONElement &l,
-                                            const BSONElement &r,
-                                            BSONObj::MatchType op,
-                                            const MatchElement &bm,
-                                            vector<INT64> *dollarList )
+   OSS_INLINE INT32 _mthMatcher::_valuesMatch ( const BSONElement &l,
+                                                const BSONElement &r,
+                                                BSONObj::MatchType op,
+                                                const MatchElement &bm,
+                                                vector<INT64> *dollarList )
    {
       SDB_ASSERT(BSONObj::NE != op, "op shouldn't be NE")
       SDB_ASSERT(BSONObj::NIN != op, "op shouldn't be NIN")

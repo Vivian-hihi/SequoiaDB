@@ -72,23 +72,23 @@ namespace engine
          ~_netEventHandler() ;
 
       public:
-         inline void id( const _MsgRouteID &id )
+         OSS_INLINE void id( const _MsgRouteID &id )
          {
             _id = id ;
          }
-         inline const _MsgRouteID &id()
+         OSS_INLINE const _MsgRouteID &id()
          {
             return _id ;
          }
-         inline boost::asio::ip::tcp::socket &socket()
+         OSS_INLINE boost::asio::ip::tcp::socket &socket()
          {
             return _sock ;
          }
-         inline _ossSpinXLatch &mtx()
+         OSS_INLINE _ossSpinXLatch &mtx()
          {
             return _mtx ;
          }
-         inline NET_HANDLE handle()
+         OSS_INLINE NET_HANDLE handle()
          {
             return _handle ;
          }
@@ -96,11 +96,11 @@ namespace engine
          {
             return _buf ;
          }
-         inline NET_EVENT_HANDLER_STATE state()
+         OSS_INLINE NET_EVENT_HANDLER_STATE state()
          {
             return _state ;
          }
-         inline void close()
+         OSS_INLINE void close()
          {
             UINT32 timeout = 0 ;
             _mtx.get() ;

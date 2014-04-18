@@ -58,7 +58,7 @@ namespace engine
 
       virtual INT32 _fetchNext ( qgmFetchOut &next ) ;
 
-      inline BOOLEAN _directInsert()
+      OSS_INLINE BOOLEAN _directInsert()
       {
          return !_columns.empty() ;
       }

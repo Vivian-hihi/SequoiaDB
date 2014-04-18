@@ -77,7 +77,7 @@ namespace engine
    } ;
 
    // return TRUE if the pos is at edge
-   inline BOOLEAN rtnSSKPosAtEdge ( RTN_SSK_VALUE_POS pos )
+   OSS_INLINE BOOLEAN rtnSSKPosAtEdge ( RTN_SSK_VALUE_POS pos )
    {
       return pos == RTN_SSK_VALUE_POS_LET ||
              pos == RTN_SSK_VALUE_POS_GET ;
@@ -94,7 +94,7 @@ namespace engine
       RTN_SSK_RANGE_POS_RT
    } ;
 
-   inline BOOLEAN rtnSSKRangeAtEdge ( RTN_SSK_RANGE_POS pos )
+   OSS_INLINE BOOLEAN rtnSSKRangeAtEdge ( RTN_SSK_RANGE_POS pos )
    {
       return pos == RTN_SSK_RANGE_POS_LET ||
              pos == RTN_SSK_RANGE_POS_RET ;

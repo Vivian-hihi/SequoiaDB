@@ -234,34 +234,34 @@ namespace engine
                    _dmsStorageIndex *pIndexSu ) ;
 
       BOOLEAN verify () ;
-      inline UINT16 getNumKeyNode ()
+      OSS_INLINE UINT16 getNumKeyNode ()
       {
          return _extentHead->_totalKeyNodeNum ;
       }
-      inline const ixmKeyNode *getKeyNode ( UINT16 i )
+      OSS_INLINE const ixmKeyNode *getKeyNode ( UINT16 i )
       {
          if ( i>_extentHead->_totalKeyNodeNum )
             return NULL ;
          return (ixmKeyNode*)(((CHAR*)_extentHead) + sizeof(ixmExtentHead) +
                               sizeof(ixmKeyNode)*i) ;
       }
-      inline CHAR *getKeyData ( UINT16 i )
+      OSS_INLINE CHAR *getKeyData ( UINT16 i )
       {
          if ( i>=_extentHead->_totalKeyNodeNum )
             return NULL ;
          return (CHAR*)_extentHead+getKeyNode(i)->_keyOffset ;
       }
-      inline UINT16 getFreeSize()
+      OSS_INLINE UINT16 getFreeSize()
       {
          return _extentHead->_totalFreeSize ;
       }
-      inline UINT16 getTotalKeySize()
+      OSS_INLINE UINT16 getTotalKeySize()
       {
          return (UINT16)(_pageSize-1) - _extentHead->_totalFreeSize -
                 (sizeof(ixmExtentHead) +
                  _extentHead->_totalKeyNodeNum * sizeof(ixmKeyNode)) ;
       }
-      inline BOOLEAN isRoot()
+      OSS_INLINE BOOLEAN isRoot()
       {
          return DMS_INVALID_EXTENT == _extentHead->_parentExtentID ;
       }
@@ -279,17 +279,17 @@ namespace engine
          if ( kn->isUnused() ) return dmsRecordID() ;
          return kn->_rid ;
       }
-      inline dmsExtentID getParent ()
+      OSS_INLINE dmsExtentID getParent ()
       {
          return _extentHead->_parentExtentID ;
       }
-      inline void setParent ( dmsExtentID extentID )
+      OSS_INLINE void setParent ( dmsExtentID extentID )
       {
          _extentHead->_parentExtentID = extentID ;
       }
       void setChildExtentID ( UINT16 i, dmsExtentID extentID ) ;
       // get the pointer to child
-      inline ossValuePtr getChildExtentPtr ( UINT16 i ) ;
+      OSS_INLINE ossValuePtr getChildExtentPtr ( UINT16 i ) ;
       void setCompact()
       {
          ((CHAR*)_extentHead)[(_pageSize-1)] = 1 ;

@@ -103,21 +103,21 @@ namespace engine
 
       // only for LOAD
       public:
-         inline void    mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
+         OSS_INLINE void    mapExtent2DelList( dmsMB * mb, dmsExtent * extAddr,
                                            SINT32 extentID ) ;
 
-         inline INT32   extentRemoveRecord( dmsMB *mb,
+         OSS_INLINE INT32   extentRemoveRecord( dmsMB *mb,
                                             const dmsRecordID &recordID,
                                             INT32 recordSize,
                                             _pmdEDUCB *cb ) ;
 
-         inline void    addExtentRecordCount( dmsMB *mb, UINT32 count ) ;
+         OSS_INLINE void    addExtentRecordCount( dmsMB *mb, UINT32 count ) ;
 
       // for dmsCB
       protected:
-         inline void  _setLogicalCSID( UINT32 logicalID ) ;
+         OSS_INLINE void  _setLogicalCSID( UINT32 logicalID ) ;
 
-         inline void  _setCSID( dmsStorageUnitID CSID ) ;
+         OSS_INLINE void  _setCSID( dmsStorageUnitID CSID ) ;
 
          INT32        _resetCollection( dmsMBContext *context ) ;
 
@@ -207,33 +207,33 @@ namespace engine
    typedef _dmsStorageUnit dmsStorageUnit ;
 
    /*
-      _dmsStorageUnit inline functions
+      _dmsStorageUnit OSS_INLINE functions
    */
-   inline void _dmsStorageUnit::mapExtent2DelList( dmsMB * mb,
+   OSS_INLINE void _dmsStorageUnit::mapExtent2DelList( dmsMB * mb,
                                                    dmsExtent *extAddr,
                                                    SINT32 extentID )
    {
       return _pDataSu->_mapExtent2DelList( mb, extAddr, extentID ) ;
    }
-   inline INT32 _dmsStorageUnit::extentRemoveRecord(dmsMB * mb,
+   OSS_INLINE INT32 _dmsStorageUnit::extentRemoveRecord(dmsMB * mb,
                                                     const dmsRecordID &recordID,
                                                     INT32 recordSize,
                                                     _pmdEDUCB *cb )
    {
       return _pDataSu->_extentRemoveRecord( mb, recordID, recordSize, cb ) ;
    }
-   inline void _dmsStorageUnit::addExtentRecordCount( dmsMB * mb, UINT32 count )
+   OSS_INLINE void _dmsStorageUnit::addExtentRecordCount( dmsMB * mb, UINT32 count )
    {
       _pDataSu->_mbStatInfo[ mb->_blockID ]._totalRecords += count ;
    }
-   inline void _dmsStorageUnit::_setLogicalCSID( UINT32 logicalID )
+   OSS_INLINE void _dmsStorageUnit::_setLogicalCSID( UINT32 logicalID )
    {
       if ( _pDataSu )
       {
          _pDataSu->_logicalCSID = logicalID ;
       }
    }
-   inline void _dmsStorageUnit::_setCSID( dmsStorageUnitID CSID )
+   OSS_INLINE void _dmsStorageUnit::_setCSID( dmsStorageUnitID CSID )
    {
       if ( _pDataSu )
       {

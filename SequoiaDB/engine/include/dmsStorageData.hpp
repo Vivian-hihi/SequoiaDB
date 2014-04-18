@@ -404,16 +404,16 @@ namespace engine
          virtual INT32  pause () ;
          virtual INT32  resume () ;
 
-         inline INT32   mbLock( INT32 lockType ) ;
-         inline INT32   mbUnlock() ;
-         inline BOOLEAN isMBLock( INT32 lockType ) const ;
-         inline BOOLEAN isMBLock() const ;
-         inline BOOLEAN canResume() const ;
+         OSS_INLINE INT32   mbLock( INT32 lockType ) ;
+         OSS_INLINE INT32   mbUnlock() ;
+         OSS_INLINE BOOLEAN isMBLock( INT32 lockType ) const ;
+         OSS_INLINE BOOLEAN isMBLock() const ;
+         OSS_INLINE BOOLEAN canResume() const ;
 
-         inline  UINT16 mbID () const { return _mbID ; }
-         inline  dmsMB* mb () { return _mb ; }
-         inline  dmsMBStatInfo* mbStat() { return _mbStat ; }
-         inline  UINT32 clLID () const { return _clLID ; }
+         OSS_INLINE  UINT16 mbID () const { return _mbID ; }
+         OSS_INLINE  dmsMB* mb () { return _mb ; }
+         OSS_INLINE  dmsMBStatInfo* mbStat() { return _mbStat ; }
+         OSS_INLINE  UINT32 clLID () const { return _clLID ; }
 
       private:
          dmsMB             *_mb ;
@@ -428,9 +428,9 @@ namespace engine
    typedef _dmsMBContext   dmsMBContext ;
 
    /*
-      _dmsMBContext inline functions
+      _dmsMBContext OSS_INLINE functions
    */
-   inline INT32 _dmsMBContext::mbLock( INT32 lockType )
+   OSS_INLINE INT32 _dmsMBContext::mbLock( INT32 lockType )
    {
       INT32 rc = SDB_OK ;
       if ( SHARED != lockType && EXCLUSIVE != lockType )
@@ -462,7 +462,7 @@ namespace engine
       _resumeType = -1 ;
       return SDB_OK ;
    }
-   inline INT32 _dmsMBContext::mbUnlock()
+   OSS_INLINE INT32 _dmsMBContext::mbUnlock()
    {
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
@@ -472,11 +472,11 @@ namespace engine
       }
       return SDB_OK ;
    }
-   inline BOOLEAN _dmsMBContext::isMBLock( INT32 lockType ) const
+   OSS_INLINE BOOLEAN _dmsMBContext::isMBLock( INT32 lockType ) const
    {
       return lockType == _mbLockType ? TRUE : FALSE ;
    }
-   inline BOOLEAN _dmsMBContext::isMBLock() const
+   OSS_INLINE BOOLEAN _dmsMBContext::isMBLock() const
    {
       if ( SHARED == _mbLockType || EXCLUSIVE == _mbLockType )
       {
@@ -484,7 +484,7 @@ namespace engine
       }
       return FALSE ;
    }
-   inline BOOLEAN _dmsMBContext::canResume() const
+   OSS_INLINE BOOLEAN _dmsMBContext::canResume() const
    {
       if ( SHARED == _resumeType || EXCLUSIVE == _resumeType )
       {
@@ -545,18 +545,18 @@ namespace engine
 
          virtual void  syncMemToMmap () ;
 
-         inline ossValuePtr   recordAddr ( const dmsRecordID &record ) ;
+         OSS_INLINE ossValuePtr   recordAddr ( const dmsRecordID &record ) ;
 
          UINT32 logicalID () const { return _logicalCSID ; }
          dmsStorageUnitID CSID () const { return _CSID ; }
 
-         inline INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
+         OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, UINT16 mbID,
                                      UINT32 clLID, INT32 lockType = -1 );
-         inline INT32  getMBContext( dmsMBContext **pContext, const CHAR* pName,
+         OSS_INLINE INT32  getMBContext( dmsMBContext **pContext, const CHAR* pName,
                                      INT32 lockType = -1 ) ;
-         inline void   releaseMBContext( dmsMBContext *&pContext ) ;
+         OSS_INLINE void   releaseMBContext( dmsMBContext *&pContext ) ;
 
-         inline const dmsMBStatInfo* getMBStatInfo( UINT16 mbID ) const ;
+         OSS_INLINE const dmsMBStatInfo* getMBStatInfo( UINT16 mbID ) const ;
 
          // update extent logical id and expanded meta
          // must hold mb exclusive lock
@@ -636,7 +636,7 @@ namespace engine
          virtual void   _onClosed() ;
 
       protected:
-         inline const CHAR*   _clFullName ( const CHAR *clName,
+         OSS_INLINE const CHAR*   _clFullName ( const CHAR *clName,
                                             CHAR *clFullName,
                                             UINT32 fullNameLen ) ;
 
@@ -646,11 +646,11 @@ namespace engine
       private:
          void           _initializeMME () ;
 
-         inline void    _collectionNameInsert ( const CHAR *pName,
+         OSS_INLINE void    _collectionNameInsert ( const CHAR *pName,
                                                 UINT16 mbID ) ;
-         inline UINT16  _collectionNameLookup ( const CHAR *pName ) ;
-         inline void    _collectionNameRemove ( const CHAR *pName ) ;
-         inline void    _collectionNameMapCleanup () ;
+         OSS_INLINE UINT16  _collectionNameLookup ( const CHAR *pName ) ;
+         OSS_INLINE void    _collectionNameRemove ( const CHAR *pName ) ;
+         OSS_INLINE void    _collectionNameMapCleanup () ;
 
          INT32          _logDPS( SDB_DPSCB *dpsCB, dpsMergeInfo &info,
                                  _pmdEDUCB * cb, ossSLatch *pLatch,
@@ -715,7 +715,7 @@ namespace engine
                                                INT32 len,
                                                _pmdEDUCB *cb ) ;
 
-         inline UINT32  _getFactor () const ;
+         OSS_INLINE UINT32  _getFactor () const ;
 
       private:
          dmsMetadataManagementExtent         *_dmsMME ;     // 4MB
@@ -739,14 +739,14 @@ namespace engine
    typedef _dmsStorageData dmsStorageData ;
 
    /*
-      inline functions :
+      OSS_INLINE functions :
    */
-   inline void _dmsStorageData::_collectionNameInsert( const CHAR * pName,
+   OSS_INLINE void _dmsStorageData::_collectionNameInsert( const CHAR * pName,
                                                        UINT16 mbID )
    {
       _collectionNameMap[ ossStrdup( pName ) ] = mbID ;
    }
-   inline UINT16 _dmsStorageData::_collectionNameLookup( const CHAR * pName )
+   OSS_INLINE UINT16 _dmsStorageData::_collectionNameLookup( const CHAR * pName )
    {
       COLNAME_MAP_CIT it = _collectionNameMap.find( pName ) ;
       if ( _collectionNameMap.end() == it  )
@@ -755,7 +755,7 @@ namespace engine
       }
       return (*it).second ;
    }
-   inline void _dmsStorageData::_collectionNameRemove( const CHAR * pName )
+   OSS_INLINE void _dmsStorageData::_collectionNameRemove( const CHAR * pName )
    {
       COLNAME_MAP_IT it = _collectionNameMap.find( pName ) ;
       if ( _collectionNameMap.end() != it )
@@ -765,7 +765,7 @@ namespace engine
          SDB_OSS_FREE( const_cast<CHAR *>(tp) ) ;
       }
    }
-   inline void _dmsStorageData::_collectionNameMapCleanup ()
+   OSS_INLINE void _dmsStorageData::_collectionNameMapCleanup ()
    {
       COLNAME_MAP_CIT it = _collectionNameMap.begin() ;
 
@@ -775,7 +775,7 @@ namespace engine
       }
       _collectionNameMap.clear() ;
    }
-   inline ossValuePtr _dmsStorageData::recordAddr( const dmsRecordID &record )
+   OSS_INLINE ossValuePtr _dmsStorageData::recordAddr( const dmsRecordID &record )
    {
       ossValuePtr extPtr = extentAddr( record._extent ) ;
       if ( 0 != extPtr )
@@ -784,7 +784,7 @@ namespace engine
       }
       return extPtr ;
    }
-   inline const CHAR* _dmsStorageData::_clFullName( const CHAR *clName,
+   OSS_INLINE const CHAR* _dmsStorageData::_clFullName( const CHAR *clName,
                                                     CHAR * clFullName,
                                                     UINT32 fullNameLen )
    {
@@ -797,7 +797,7 @@ namespace engine
 
       return clFullName ;
    }
-   inline INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
+   OSS_INLINE INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
                                                UINT16 mbID, UINT32 clLID,
                                                INT32 lockType )
    {
@@ -842,7 +842,7 @@ namespace engine
       }
       return SDB_OK ;
    }
-   inline INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
+   OSS_INLINE INT32 _dmsStorageData::getMBContext( dmsMBContext ** pContext,
                                                const CHAR * pName,
                                                INT32 lockType )
    {
@@ -864,7 +864,7 @@ namespace engine
       }
       return getMBContext( pContext, mbID, clLID, lockType ) ;
    }
-   inline void _dmsStorageData::releaseMBContext( dmsMBContext *&pContext )
+   OSS_INLINE void _dmsStorageData::releaseMBContext( dmsMBContext *&pContext )
    {
       if ( !pContext )
       {
@@ -885,7 +885,7 @@ namespace engine
       _latchContext.release() ;
       pContext = NULL ;
    }
-   inline const dmsMBStatInfo* _dmsStorageData::getMBStatInfo( UINT16 mbID ) const
+   OSS_INLINE const dmsMBStatInfo* _dmsStorageData::getMBStatInfo( UINT16 mbID ) const
    {
       if ( mbID >= DMS_MME_SLOTS )
       {
@@ -893,7 +893,7 @@ namespace engine
       }
       return &_mbStatInfo[ mbID ] ;
    }
-   inline UINT32 _dmsStorageData::_getFactor() const
+   OSS_INLINE UINT32 _dmsStorageData::_getFactor() const
    {
       return 16 + 14 - pageSizeSquareRoot() ;
    }

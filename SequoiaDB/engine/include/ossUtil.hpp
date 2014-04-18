@@ -45,7 +45,7 @@
 #include "ossUtil.h"
 UINT32 ossRand () ;
 // djb2 hashing algorithm
-inline UINT32 ossHash ( const CHAR *str )
+OSS_INLINE UINT32 ossHash ( const CHAR *str )
 {
    UINT32 hash = 5381 ;
    CHAR c ;
@@ -54,7 +54,7 @@ inline UINT32 ossHash ( const CHAR *str )
    return hash ;
 }
 
-inline UINT32 ossHash( const CHAR *value, UINT32 size, UINT32 bit = 5)
+OSS_INLINE UINT32 ossHash( const CHAR *value, UINT32 size, UINT32 bit = 5)
 {
    UINT32 hash = 5381 ;
    const CHAR *end = value + size ;
@@ -66,12 +66,12 @@ inline UINT32 ossHash( const CHAR *value, UINT32 size, UINT32 bit = 5)
 BOOLEAN ossIsPowerOf2( UINT32 num, UINT32 *pSquare = NULL ) ;
 
 #if defined (_WINDOWS)
-inline void ossSleepmillis ( UINT64 s )
+OSS_INLINE void ossSleepmillis ( UINT64 s )
 {
    Sleep ( ( DWORD ) s ) ;
 }
 // sad truth in windows is that we don't have nansleep nor usleep, so we need to depends on boost again
-inline void ossSleepmicros(UINT64 s)
+OSS_INLINE void ossSleepmicros(UINT64 s)
 {
    boost::xtime xt ;
    boost::xtime_get ( &xt, boost::TIME_UTC ) ;
@@ -86,7 +86,7 @@ inline void ossSleepmicros(UINT64 s)
 }
 #else
 // we use nanosleep instead of usleep because we want to capture signal during sleep
-inline void ossSleepmicros(UINT64 s)
+OSS_INLINE void ossSleepmicros(UINT64 s)
 {
    struct timespec t;
    t.tv_sec = (time_t)(s / 1000000);
@@ -94,12 +94,12 @@ inline void ossSleepmicros(UINT64 s)
    // nanosleep can be interrupted by signal, the remaining time is put in rem
    while(nanosleep( &t , &t )==-1 && ossGetLastError()==EINTR);
 }
-inline void ossSleepmillis(UINT64 s)
+OSS_INLINE void ossSleepmillis(UINT64 s)
 {
    ossSleepmicros( s * 1000 );
 }
 #endif
-inline void ossSleepsecs(UINT32 s)
+OSS_INLINE void ossSleepsecs(UINT32 s)
 {
    ossSleepmicros((UINT64)s * 1000000);
 }
@@ -163,12 +163,12 @@ SINT32 ossGetCPUUsage
    ossTime &sysTime
 ) ;
 
-inline UINT64 ossPack32To64( UINT32 hi, UINT32 lo )
+OSS_INLINE UINT64 ossPack32To64( UINT32 hi, UINT32 lo )
 {
    return ((UINT64)hi << 32) | (UINT64)lo ;
 }
 
-inline void ossUnpack32From64 ( UINT64 u64, UINT32 & hi, UINT32 & lo )
+OSS_INLINE void ossUnpack32From64 ( UINT64 u64, UINT32 & hi, UINT32 & lo )
 {
    hi = (UINT32)( u64 >> 32 ) ;
    lo = (UINT32)( u64 & 0xFFFFFFFF ) ;
@@ -220,7 +220,7 @@ inline void ossUnpack32From64 ( UINT64 u64, UINT32 & hi, UINT32 & lo )
 // The ossRdtsc is also provided as single API, which may be used/fit for
 // some specific condition in the future.
 #if defined (_LINUX)
-inline UINT64 ossRdtsc()
+OSS_INLINE UINT64 ossRdtsc()
 {
    UINT32 lo, hi;
    __asm__ __volatile__ (
@@ -235,7 +235,7 @@ inline UINT64 ossRdtsc()
 #endif
 
 #if defined (_LINUX)
-inline void ossGetTimeOfDay( struct timeval * pTV )
+OSS_INLINE void ossGetTimeOfDay( struct timeval * pTV )
 {
    if ( pTV )
    {
@@ -248,7 +248,7 @@ inline void ossGetTimeOfDay( struct timeval * pTV )
    return ;
 }
 
-inline UINT64 ossTimeValToUint64( struct timeval & tv )
+OSS_INLINE UINT64 ossTimeValToUint64( struct timeval & tv )
 {
    return ossPack32To64( (UINT32)tv.tv_sec, (UINT32)tv.tv_usec ) ;
 }
@@ -270,7 +270,7 @@ public :
    UINT64 _value ;
 #endif
 
-   inline UINT64 peek(void) const
+   OSS_INLINE UINT64 peek(void) const
    {
    #if defined (_WINDOWS)
       return _value.QuadPart ;
@@ -279,7 +279,7 @@ public :
    #endif
    } ;
 
-   inline void poke(const UINT64 val)
+   OSS_INLINE void poke(const UINT64 val)
    {
    #if defined (_WINDOWS)
       _value.QuadPart = val ;
@@ -446,29 +446,29 @@ class ossTickDelta : protected ossTickCore
    friend ossTick operator +  (const ossTickDelta &x, const ossTick      &y) ;
 public :
    // set the tick value to zero
-   inline void clear(void)
+   OSS_INLINE void clear(void)
    {
       poke( 0 ) ;
    } ;
 
    // test tick for non-zero
-   inline operator BOOLEAN() const
+   OSS_INLINE operator BOOLEAN() const
    {
       return ( 0 != peek() ) ;
    } ;
 
-   inline UINT64 peek(void) const
+   OSS_INLINE UINT64 peek(void) const
    {
       return ossTickCore::peek() ;
    } ;
 
-   inline void poke(const UINT64 val)
+   OSS_INLINE void poke(const UINT64 val)
    {
       ossTickCore::poke( val ) ;
    } ;
 
    // retrive _value as a UINT64
-   inline UINT64 toUINT64() const
+   OSS_INLINE UINT64 toUINT64() const
    {
       UINT64 val = peek() ;
    #if defined (_LINUX)
@@ -485,7 +485,7 @@ public :
    } ;
 
    // cast to UINT64
-   inline operator UINT64() const
+   OSS_INLINE operator UINT64() const
    {
       return toUINT64() ;
    } ;
@@ -493,7 +493,7 @@ public :
    // store a tick delta value into the internal value, i.e., _value
    // here we expect the v is accquired by QueryPerformanceCounter ( windows )
    // gettimeofday(Linux)
-   inline void fromUINT64( const UINT64 v )
+   OSS_INLINE void fromUINT64( const UINT64 v )
    {
    #if defined (_WINDOWS)
       poke( v ) ;
@@ -513,20 +513,20 @@ public :
    } ;
 
    // add a tick delta to an existing tick interval.
-   inline ossTickDelta & operator += ( const ossTickDelta & x )
+   OSS_INLINE ossTickDelta & operator += ( const ossTickDelta & x )
    {
       poke( ossTickCore::addOrSub( *this, x, OSS_TICKS_OP_ADD ) ) ;
       return *this ;
    } ;
 
-   inline ossTickDelta & operator= ( const ossTickDelta &rhs )
+   OSS_INLINE ossTickDelta & operator= ( const ossTickDelta &rhs )
    {
       poke( rhs.peek() ) ;
       return *this ;
    }
 
    // convert into time units ( seconds and microseconds )
-   inline void convertToTime
+   OSS_INLINE void convertToTime
    (
       const ossTickConversionFactor &  cFactor,
       UINT32 &                         seconds,
@@ -546,7 +546,7 @@ public :
    } ;
 
    // convert a time value( microseconds ) to a tick equivalent.
-   inline SINT32 initFromTimeValue
+   OSS_INLINE SINT32 initFromTimeValue
    (
       const ossTickConversionFactor &  cFactor,
       const UINT64                     timeValueInMicroseconds
@@ -593,7 +593,7 @@ public :
    // Tick values are only valid relative to each other, and cannot be
    // converted to time of day/date values. Conversion to time units can be
    // done via convertToTime.
-   inline void sample(void)
+   OSS_INLINE void sample(void)
    {
    #if defined (_WINDOWS)
       if ( ! QueryPerformanceCounter( & _value ) )
@@ -611,19 +611,19 @@ public :
    } ;
 
    // Set the tick value to zero
-   inline void clear(void)
+   OSS_INLINE void clear(void)
    {
       poke( 0 ) ;
    } ;
 
    // Test tick for non-zero
-   inline operator BOOLEAN() const
+   OSS_INLINE operator BOOLEAN() const
    {
       return (0 != peek()) ;
    } ;
 
 
-   inline ossTick & operator= ( const ossTick &rhs )
+   OSS_INLINE ossTick & operator= ( const ossTick &rhs )
    {
       poke( rhs.peek() ) ;
       return *this ;
@@ -667,7 +667,7 @@ public :
 } ;
 
 
-inline BOOLEAN operator > (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE BOOLEAN operator > (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() > y.peek() ) ;
@@ -676,7 +676,7 @@ inline BOOLEAN operator > (const ossTickDelta &x, const ossTickDelta &y )
 #endif
 }
 
-inline BOOLEAN operator >= (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE BOOLEAN operator >= (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() >= y.peek() ) ;
@@ -685,7 +685,7 @@ inline BOOLEAN operator >= (const ossTickDelta &x, const ossTickDelta &y )
 #endif
 }
 
-inline BOOLEAN operator < (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE BOOLEAN operator < (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() < y.peek() ) ;
@@ -694,7 +694,7 @@ inline BOOLEAN operator < (const ossTickDelta &x, const ossTickDelta &y )
 #endif
 }
 
-inline BOOLEAN operator <= (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE BOOLEAN operator <= (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() <= y.peek() ) ;
@@ -703,7 +703,7 @@ inline BOOLEAN operator <= (const ossTickDelta &x, const ossTickDelta &y )
 #endif
 }
 
-inline BOOLEAN operator == (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE BOOLEAN operator == (const ossTickDelta &x, const ossTickDelta &y )
 {
 #if defined (_WINDOWS)
    return ( x.peek() == y.peek() ) ;
@@ -712,7 +712,7 @@ inline BOOLEAN operator == (const ossTickDelta &x, const ossTickDelta &y )
 #endif
 }
 
-inline BOOLEAN operator > (const ossTick &x, const ossTick &y)
+OSS_INLINE BOOLEAN operator > (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() > y.peek() ) ;
@@ -721,7 +721,7 @@ inline BOOLEAN operator > (const ossTick &x, const ossTick &y)
 #endif
 }
 
-inline BOOLEAN operator >= (const ossTick &x, const ossTick &y)
+OSS_INLINE BOOLEAN operator >= (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() >= y.peek() ) ;
@@ -730,7 +730,7 @@ inline BOOLEAN operator >= (const ossTick &x, const ossTick &y)
 #endif
 }
 
-inline BOOLEAN operator < (const ossTick &x, const ossTick &y)
+OSS_INLINE BOOLEAN operator < (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() < y.peek() ) ;
@@ -739,7 +739,7 @@ inline BOOLEAN operator < (const ossTick &x, const ossTick &y)
 #endif
 }
 
-inline BOOLEAN operator <= (const ossTick &x, const ossTick &y)
+OSS_INLINE BOOLEAN operator <= (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() <= y.peek() ) ;
@@ -748,7 +748,7 @@ inline BOOLEAN operator <= (const ossTick &x, const ossTick &y)
 #endif
 }
 
-inline BOOLEAN operator == (const ossTick &x, const ossTick &y)
+OSS_INLINE BOOLEAN operator == (const ossTick &x, const ossTick &y)
 {
 #if defined (_WINDOWS)
    return ( x.peek() == y.peek() ) ;
@@ -757,7 +757,7 @@ inline BOOLEAN operator == (const ossTick &x, const ossTick &y)
 #endif
 }
 
-inline ossTickDelta operator + (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE ossTickDelta operator + (const ossTickDelta &x, const ossTickDelta &y )
 {
    ossTickDelta result ;
 
@@ -765,7 +765,7 @@ inline ossTickDelta operator + (const ossTickDelta &x, const ossTickDelta &y )
    return result ;
 }
 
-inline ossTick operator + (const ossTick &x, const ossTickDelta &y)
+OSS_INLINE ossTick operator + (const ossTick &x, const ossTickDelta &y)
 {
    ossTick result ;
 
@@ -773,7 +773,7 @@ inline ossTick operator + (const ossTick &x, const ossTickDelta &y)
    return result ;
 }
 
-inline ossTick operator + (const ossTickDelta &x, const ossTick &y)
+OSS_INLINE ossTick operator + (const ossTickDelta &x, const ossTick &y)
 {
    ossTick result ;
 
@@ -781,7 +781,7 @@ inline ossTick operator + (const ossTickDelta &x, const ossTick &y)
    return result ;
 }
 
-inline ossTickDelta operator - (const ossTickDelta &x, const ossTickDelta &y )
+OSS_INLINE ossTickDelta operator - (const ossTickDelta &x, const ossTickDelta &y )
 {
    ossTickDelta result ;
 
@@ -789,7 +789,7 @@ inline ossTickDelta operator - (const ossTickDelta &x, const ossTickDelta &y )
    return result ;
 }
 
-inline ossTickDelta operator - (const ossTick &x, const ossTick &y )
+OSS_INLINE ossTickDelta operator - (const ossTick &x, const ossTick &y )
 {
    ossTickDelta result ;
 

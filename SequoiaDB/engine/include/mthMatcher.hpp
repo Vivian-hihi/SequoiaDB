@@ -98,7 +98,7 @@ namespace engine
       class _REMatchElement : public SDBObject
       {
       private :
-         inline pcrecpp::RE_Options flags2options(const char* flags)
+         OSS_INLINE pcrecpp::RE_Options flags2options(const char* flags)
          {
             pcrecpp::RE_Options options;
             options.set_utf8(true);

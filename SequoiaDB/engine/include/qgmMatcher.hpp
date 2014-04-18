@@ -48,7 +48,7 @@ namespace engine
       virtual ~_qgmMatcher() ;
 
    public:
-      inline BOOLEAN ready(){return _ready ;}
+      OSS_INLINE BOOLEAN ready(){return _ready ;}
 
       string toString() const ;
 

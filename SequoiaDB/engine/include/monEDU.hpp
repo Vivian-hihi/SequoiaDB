@@ -64,7 +64,7 @@ namespace engine
          _eduID = 0 ;
          _tid = 0 ;
       }
-      inline BOOLEAN operator< (const _monEDUSimple &r) const
+      OSS_INLINE BOOLEAN operator< (const _monEDUSimple &r) const
       {
          return _eduID < r._eduID ;
       }
@@ -101,7 +101,7 @@ namespace engine
          _queueSize = 0 ;
          _processEventCount = 0 ;
       }
-      inline BOOLEAN operator< (const _monEDUFull &r) const
+      OSS_INLINE BOOLEAN operator< (const _monEDUFull &r) const
       {
          return _eduID < r._eduID ;
       }

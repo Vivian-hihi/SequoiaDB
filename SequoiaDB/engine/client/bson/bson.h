@@ -40,10 +40,8 @@
 #include <stdarg.h>
 
 #ifdef __GNUC__
-    #define SDB_INLINE static __inline__
     #define SDB_EXPORT
 #else
-    #define SDB_INLINE static
     #ifdef SDB_STATIC_BUILD
         #define SDB_EXPORT
     #elif defined(SDB_DLL_BUILD)

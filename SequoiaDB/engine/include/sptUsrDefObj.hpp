@@ -54,7 +54,7 @@ namespace engine
 
       SPT_MEMBER_FUNC_DISPATCH_DECLARE ;
    public:
-      inline _sptReturnVal &getRVal()
+      OSS_INLINE _sptReturnVal &getRVal()
       {
          return _rval ;
       }

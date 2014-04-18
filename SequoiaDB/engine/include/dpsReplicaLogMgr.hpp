@@ -90,12 +90,12 @@ namespace engine
       ~_dpsReplicaLogMgr();
 
    public:
-      inline UINT32 idleSize()
+      OSS_INLINE UINT32 idleSize()
       {
          return _idleSize.peek();
       }
 
-      inline DPS_LSN expectLsn()
+      OSS_INLINE DPS_LSN expectLsn()
       {
          DPS_LSN lsn ;
          _mtx.get();
@@ -104,7 +104,7 @@ namespace engine
          return lsn;
       }
 
-      inline DPS_LSN currentLsn()
+      OSS_INLINE DPS_LSN currentLsn()
       {
          DPS_LSN lsn ;
          _mtx.get();
@@ -113,7 +113,7 @@ namespace engine
          return lsn;
       }
 
-      inline DPS_LSN_VER incVersion()
+      OSS_INLINE DPS_LSN_VER incVersion()
       {
          DPS_LSN_VER version = DPS_INVALID_LSN_VERSION ;
          _mtx.get();
@@ -122,7 +122,7 @@ namespace engine
          return version ;
       }
 
-      inline ossQueue< dpsLSNInfoEx >* getNtyQue ()
+      OSS_INLINE ossQueue< dpsLSNInfoEx >* getNtyQue ()
       {
          return &_ntyQue ;
       }

@@ -70,54 +70,54 @@ namespace engine
       virtual const CHAR *name() const { return "" ;}
 
    public:
-      inline const INT32 &id()
+      OSS_INLINE const INT32 &id()
       {
          return _id ;
       }
 
    protected:
-      inline INT32 _vote()
+      OSS_INLINE INT32 _vote()
       {
          return _launch( CLS_ELECTION_ROUND_STAGE_ONE ) ;
       }
 
-      inline INT32 _announce()
+      OSS_INLINE INT32 _announce()
       {
          return _launch( CLS_ELECTION_ROUND_STAGE_TWO ) ;
       }
 
-      inline INT32 _promise( const _MsgClsElectionBallot *msg )
+      OSS_INLINE INT32 _promise( const _MsgClsElectionBallot *msg )
       {
          return _launch( msg->weights,
                          msg->identity,
                          CLS_ELECTION_ROUND_STAGE_ONE ) ;
       }
 
-      inline INT32 _accept( const _MsgClsElectionBallot *msg )
+      OSS_INLINE INT32 _accept( const _MsgClsElectionBallot *msg )
       {
          return _launch( msg->weights,
                         msg->identity,
                         CLS_ELECTION_ROUND_STAGE_TWO ) ;
       }
 
-      inline BOOLEAN _isAccepted()
+      OSS_INLINE BOOLEAN _isAccepted()
       {
          /// must be approved by myself
          return CLS_IS_MAJORITY( _acceptedNum + 1,
                                  _groupInfo->groupSize() ) ;
       }
 
-      inline UINT32 &_timeout()
+      OSS_INLINE UINT32 &_timeout()
       {
          return _time ;
       }
 
-      inline UINT32 &_accepted()
+      OSS_INLINE UINT32 &_accepted()
       {
          return _acceptedNum ;
       }
 
-      inline _clsGroupInfo *_info()
+      OSS_INLINE _clsGroupInfo *_info()
       {
          return _groupInfo ;
       }

@@ -83,12 +83,12 @@ namespace engine
       virtual ~_dmsTmpBlkUnit() ;
 
    public:
-      inline UINT64 totalSize() const
+      OSS_INLINE UINT64 totalSize() const
       {
          return _totalSize ;
       }
 
-      inline BOOLEAN isOpened() const
+      OSS_INLINE BOOLEAN isOpened() const
       {
          return _opened ;
       }

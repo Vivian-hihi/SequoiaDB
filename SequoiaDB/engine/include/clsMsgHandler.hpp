@@ -46,11 +46,11 @@ namespace engine
 
          virtual INT32 type () const = 0 ;
 
-         inline void attach( pmdEDUCB *cb ) { _pMgrEDUCB = cb; }
-         inline void detach() { _pMgrEDUCB = NULL; }
+         OSS_INLINE void attach( pmdEDUCB *cb ) { _pMgrEDUCB = cb; }
+         OSS_INLINE void detach() { _pMgrEDUCB = NULL; }
 
-         inline void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }
-         inline void detachShardCB() { _pShardCB = NULL ; }
+         OSS_INLINE void attachShardCB( pmdEDUCB *cb ) { _pShardCB = cb ; }
+         OSS_INLINE void detachShardCB() { _pShardCB = NULL ; }
 
          virtual INT32 handleMsg( const NET_HANDLE &handle,
                                   const _MsgHeader *header,

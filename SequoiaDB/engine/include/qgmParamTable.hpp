@@ -72,25 +72,25 @@ namespace engine
       INT32 setVar( const varItem &item,
                     const BSONObj &obj ) ;
 
-      inline void removeVar( const qgmDbAttr &key )
+      OSS_INLINE void removeVar( const qgmDbAttr &key )
       {
          _var.erase( key ) ;
          return ;
       }
 
-      inline void clearVar()
+      OSS_INLINE void clearVar()
       {
          _var.clear() ;
          return ;
       }
 
-      inline void clearConst()
+      OSS_INLINE void clearConst()
       {
          _const.clear() ;
          return ;
       }
 
-      inline void clear()
+      OSS_INLINE void clear()
       {
          _var.clear() ;
          _const.clear() ;

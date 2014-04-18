@@ -67,33 +67,33 @@ namespace engine
          virtual ~_clsReplicateSet() ;
 
       public:
-         inline BOOLEAN primaryIsMe()
+         OSS_INLINE BOOLEAN primaryIsMe()
          {
             return _vote.primaryIsMe() ;
          }
 
-         inline BOOLEAN isFullSync ()
+         OSS_INLINE BOOLEAN isFullSync ()
          {
             return CLS_BS_FULLSYNC == _replStatus ? TRUE : FALSE ;
          }
 
-         inline CLS_BS_STATUS getStatus () const
+         OSS_INLINE CLS_BS_STATUS getStatus () const
          {
             return _replStatus ;
          }
 
-         inline clsBucket* getBucket ()
+         OSS_INLINE clsBucket* getBucket ()
          {
             return &_replBucket ;
          }
 
-         inline void setLocalID( const MsgRouteID &id )
+         OSS_INLINE void setLocalID( const MsgRouteID &id )
          {
             _info.local = id ;
             /// _agent was set by clsMgr.
          }
 
-         inline void setFullSync( BOOLEAN fullSync )
+         OSS_INLINE void setFullSync( BOOLEAN fullSync )
          {
             if ( fullSync )
             {
@@ -105,12 +105,12 @@ namespace engine
             }
          }
 
-         inline void setStatus( CLS_BS_STATUS status )
+         OSS_INLINE void setStatus( CLS_BS_STATUS status )
          {
             _replStatus = status ;
          }
 
-         inline const UINT32 ailves()
+         OSS_INLINE const UINT32 ailves()
          {
             UINT32 num = 0 ;
             _info.mtx.lock_r() ;
@@ -119,7 +119,7 @@ namespace engine
             return num ;
          }
 
-         inline UINT32 groupSize ()
+         OSS_INLINE UINT32 groupSize ()
          {
             UINT32 num = 0 ;
             _info.mtx.lock_r () ;
@@ -128,7 +128,7 @@ namespace engine
             return num ;
          }
 
-         inline BOOLEAN isAlive ( NodeID node )
+         OSS_INLINE BOOLEAN isAlive ( NodeID node )
          {
             BOOLEAN bAlive = FALSE ;
             _info.mtx.lock_r() ;
@@ -143,12 +143,12 @@ namespace engine
             return bAlive ;
          }
 
-         inline _clsSyncManager *syncMgr()
+         OSS_INLINE _clsSyncManager *syncMgr()
          {
             return &_sync ;
          }
 
-         inline INT32 sync( const DPS_LSN_OFFSET &offset,
+         OSS_INLINE INT32 sync( const DPS_LSN_OFFSET &offset,
                             _pmdEDUCB *&eduCB,
                             UINT32 w = 1 )
          {
@@ -169,7 +169,7 @@ namespace engine
             return _sync.sync( session, w ) ;
          }
 
-         inline UINT32 getNtySessionNum ()
+         OSS_INLINE UINT32 getNtySessionNum ()
          {
             return _srcSessionNum ;
          }

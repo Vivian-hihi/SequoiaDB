@@ -50,7 +50,7 @@ public:
 
    BOOLEAN init();
 
-   inline JSContext *context(){ return _context ;}
+   OSS_INLINE JSContext *context(){ return _context ;}
 
    /**
     * if len > 0, then assume code is a string of length len, which may

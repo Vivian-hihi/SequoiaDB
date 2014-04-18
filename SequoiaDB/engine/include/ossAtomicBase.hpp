@@ -73,7 +73,7 @@
         __sync_lock_test_and_set((volatile CHAR*)pAddr, (CHAR)iNewValue )
 #else
    #define ossYield() __asm__ __volatile__ ( "pause\n": : :"memory" )
-   static inline char ossAtomicExchange8( volatile char* pAddr, char iNewValue)
+   static OSS_INLINE char ossAtomicExchange8( volatile char* pAddr, char iNewValue)
    {
       char result ;
        __asm__ __volatile__
@@ -105,7 +105,7 @@
 #endif
 
 /*
-static inline SINT32 ossCompareAndSwap32WithReturn
+static OSS_INLINE SINT32 ossCompareAndSwap32WithReturn
 (
    volatile SINT32 * const pAddr,
    SINT32                  iCompareValue,
@@ -132,7 +132,7 @@ static inline SINT32 ossCompareAndSwap32WithReturn
        (long)iCompareValue) == (UINT32)iCompareValue )
 #endif
 /*
-static inline BOOLEAN ossCompareAndSwap32
+static OSS_INLINE BOOLEAN ossCompareAndSwap32
 (
    volatile SINT32 * const pAddr,
    SINT32                  iCompareValue,
@@ -161,7 +161,7 @@ static inline BOOLEAN ossCompareAndSwap32
                                 (long long)iCompareValue )
 #endif
 /*
-static inline SINT64 ossCompareAndSwap64WithReturn
+static OSS_INLINE SINT64 ossCompareAndSwap64WithReturn
 (
    volatile SINT64 * const pAddr,
    SINT64                  iCompareValue,
@@ -189,7 +189,7 @@ static inline SINT64 ossCompareAndSwap64WithReturn
       (long long)iCompareValue ) == (UINT64)iCompareValue )
 #endif
 /*
-static inline BOOLEAN ossCompareAndSwap64
+static OSS_INLINE BOOLEAN ossCompareAndSwap64
 (
    volatile SINT64 * const pAddr,
    SINT64                  iCompareValue,
@@ -216,7 +216,7 @@ static inline BOOLEAN ossCompareAndSwap64
                      (ossValuePtr)compareValue, (ossValuePtr)newValue)
 #endif
 /*
-static inline ossValuePtr ossCompareAndSwapPtrWithReturn
+static OSS_INLINE ossValuePtr ossCompareAndSwapPtrWithReturn
 (
    volatile ossValuePtr * pAddr,
    ossValuePtr            compareValue,
@@ -250,7 +250,7 @@ static inline ossValuePtr ossCompareAndSwapPtrWithReturn
                      (ossValuePtr)compareValue, (ossValuePtr)newValue)
 #endif
 /*
-static inline BOOLEAN ossCompareAndSwapPtr
+static OSS_INLINE BOOLEAN ossCompareAndSwapPtr
 (
    volatile ossValuePtr * pAddr,
    ossValuePtr            compareValue,
@@ -279,7 +279,7 @@ static inline BOOLEAN ossCompareAndSwapPtr
          InterlockedExchangeAdd( (long*)pAddr, (long)iAddVale )
 #endif
 /*
-static inline SINT32 ossFetchAndAdd32
+static OSS_INLINE SINT32 ossFetchAndAdd32
 (
    volatile SINT32 * const pAddr,
    SINT32                  iAddVale
@@ -303,7 +303,7 @@ static inline SINT32 ossFetchAndAdd32
         _InterlockedOr( (long*)pAddr, (long)iValue )
 #endif
 /*
-static inline SINT32 ossFetchAndOR32
+static OSS_INLINE SINT32 ossFetchAndOR32
 (
    volatile SINT32 * const pAddr,
    SINT32                  iValue
@@ -327,7 +327,7 @@ static inline SINT32 ossFetchAndOR32
         _InterlockedAnd( (long*)pAddr, (long)iValue )
 #endif
 /*
-static inline SINT32 ossFetchAndAND32
+static OSS_INLINE SINT32 ossFetchAndAND32
 (
    volatile SINT32 * const pAddr,
    SINT32                  iValue
@@ -351,7 +351,7 @@ static inline SINT32 ossFetchAndAND32
         _InterlockedXor( (long*)pAddr, (long)iValue )
 #endif
 /*
-static inline SINT32 ossFetchAndXOR32
+static OSS_INLINE SINT32 ossFetchAndXOR32
 (
    volatile SINT32 * const pAddr,
    SINT32                  iValue
@@ -369,7 +369,7 @@ static inline SINT32 ossFetchAndXOR32
 #define ossFetchAndIncrement32(pAddr) \
         ossFetchAndAdd32((volatile SINT32*)pAddr,1)
 /*
-static inline SINT32 ossFetchAndIncrement32( volatile SINT32 * const pAddr )
+static OSS_INLINE SINT32 ossFetchAndIncrement32( volatile SINT32 * const pAddr )
 {
    return ossFetchAndAdd32( pAddr, 1 ) ;
 }*/
@@ -379,7 +379,7 @@ static inline SINT32 ossFetchAndIncrement32( volatile SINT32 * const pAddr )
 #define ossFetchAndDecrement32(pAddr) \
         ossFetchAndAdd32((volatile SINT32*)pAddr,-1)
 /*
-static inline SINT32 ossFetchAndDecrement32( volatile SINT32 * const pAddr )
+static OSS_INLINE SINT32 ossFetchAndDecrement32( volatile SINT32 * const pAddr )
 {
    return ossFetchAndAdd32( pAddr, -1 ) ;
 }*/
@@ -395,7 +395,7 @@ static inline SINT32 ossFetchAndDecrement32( volatile SINT32 * const pAddr )
         InterlockedExchangeAdd64( (long long*)pAddr, (long long)iAddVale )
 #endif
 /*
-static inline SINT64 ossFetchAndAdd64
+static OSS_INLINE SINT64 ossFetchAndAdd64
 (
    volatile SINT64 * const pAddr,
    SINT64                  iAddVale
@@ -419,7 +419,7 @@ static inline SINT64 ossFetchAndAdd64
         InterlockedOr64( (long long*)pAddr, (long long)iValue )
 #endif
 /*
-static inline SINT64 ossFetchAndOR64
+static OSS_INLINE SINT64 ossFetchAndOR64
 (
    volatile SINT64 * const pAddr,
    SINT64                  iValue
@@ -443,7 +443,7 @@ static inline SINT64 ossFetchAndOR64
         InterlockedXor64( (long long*)pAddr, (long long)iValue )
 #endif
 /*
-static inline SINT64 ossFetchAndXOR64
+static OSS_INLINE SINT64 ossFetchAndXOR64
 (
    volatile SINT64 * const pAddr,
    SINT64                  iValue
@@ -467,7 +467,7 @@ static inline SINT64 ossFetchAndXOR64
         InterlockedAnd64( (long long*)pAddr, (long long)iValue )
 #endif
 /*
-static inline SINT64 ossFetchAndAND64
+static OSS_INLINE SINT64 ossFetchAndAND64
 (
    volatile SINT64 * const pAddr,
    SINT64                  iValue
@@ -485,7 +485,7 @@ static inline SINT64 ossFetchAndAND64
 #define ossFetchAndIncrement64(pAddr) \
         ossFetchAndAdd64((volatile SINT64*)pAddr,1)
 /*
-static inline SINT64 ossFetchAndIncrement64( volatile SINT64 * const pAddr )
+static OSS_INLINE SINT64 ossFetchAndIncrement64( volatile SINT64 * const pAddr )
 {
    return ossFetchAndAdd64( pAddr, 1 ) ;
 }*/
@@ -495,7 +495,7 @@ static inline SINT64 ossFetchAndIncrement64( volatile SINT64 * const pAddr )
 #define ossFetchAndDecrement64(pAddr) \
         ossFetchAndAdd64((volatile SINT64*)pAddr,-1)
 /*
-static inline SINT64 ossFetchAndDecrement64( volatile SINT64 * const pAddr )
+static OSS_INLINE SINT64 ossFetchAndDecrement64( volatile SINT64 * const pAddr )
 {
    return ossFetchAndAdd64( pAddr, -1 ) ;
 }*/
@@ -520,7 +520,7 @@ static inline SINT64 ossFetchAndDecrement64( volatile SINT64 * const pAddr )
         InterlockedExchange( (long*)pAddr, (long)iNewValue )
 #endif
 /*
-static inline SINT32 ossAtomicExchange32
+static OSS_INLINE SINT32 ossAtomicExchange32
 (
    volatile SINT32 * const pAddr,
    SINT32                  iNewValue
@@ -544,7 +544,7 @@ static inline SINT32 ossAtomicExchange32
         InterlockedExchange64( (long long*)pAddr, (long long)iNewValue )
 #endif
 /*
-static inline SINT64 ossAtomicExchange64
+static OSS_INLINE SINT64 ossAtomicExchange64
 (
    volatile SINT64 * const pAddr,
    SINT64                  iNewValue
@@ -567,7 +567,7 @@ static inline SINT64 ossAtomicExchange64
         ossAtomicExchange32( ( volatile SINT32 * )pAddr, (ossValuePtr)newValue )
 #endif
 /*
-static inline ossValuePtr ossAtomicExchangePtr
+static OSS_INLINE ossValuePtr ossAtomicExchangePtr
 (
    volatile ossValuePtr * pAddr,
    ossValuePtr            newValue 
@@ -586,7 +586,7 @@ static inline ossValuePtr ossAtomicExchangePtr
 #define ossAtomicFetch32(pAddr) \
         ossFetchAndAdd32((volatile SINT32*)pAddr, 0)
 /*
-static inline SINT32 ossAtomicFetch32( volatile SINT32 * const pAddr )
+static OSS_INLINE SINT32 ossAtomicFetch32( volatile SINT32 * const pAddr )
 {
    return ( ossFetchAndAdd32( pAddr, 0 ) ) ;
 }*/
@@ -596,7 +596,7 @@ static inline SINT32 ossAtomicFetch32( volatile SINT32 * const pAddr )
 #define ossAtomicFetch64(pAddr) \
         ossFetchAndAdd64((volatile SINT64*)pAddr, 0)
 /*
-static inline SINT64 ossAtomicFetch64( volatile SINT64 * const pAddr )
+static OSS_INLINE SINT64 ossAtomicFetch64( volatile SINT64 * const pAddr )
 {
    return ( ossFetchAndAdd64( pAddr, 0 ) ) ;	 
 }*/
@@ -605,7 +605,7 @@ static inline SINT64 ossAtomicFetch64( volatile SINT64 * const pAddr )
 // un-ordered fetch 32bit data
 #define ossAtomicPeek32(pAddr) *(SINT32*)pAddr
 /*
-static inline SINT32 ossAtomicPeek32( volatile const SINT32 * const pAddr )
+static OSS_INLINE SINT32 ossAtomicPeek32( volatile const SINT32 * const pAddr )
 {
    return *pAddr ;
 }*/
@@ -614,7 +614,7 @@ static inline SINT32 ossAtomicPeek32( volatile const SINT32 * const pAddr )
 // un-ordered fetch 64bit data
 #define ossAtomicPeek64(pAddr) *(SINT64*)pAddr
 /*
-static inline SINT64 ossAtomicPeek64( volatile const SINT64 * const pAddr )
+static OSS_INLINE SINT64 ossAtomicPeek64( volatile const SINT64 * const pAddr )
 {
    return *pAddr ;
 }*/

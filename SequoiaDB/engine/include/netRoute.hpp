@@ -68,12 +68,12 @@ namespace engine
 
          void clear() ;
 
-         inline void setLocal( const _MsgRouteID &id )
+         OSS_INLINE void setLocal( const _MsgRouteID &id )
          {
             _local = id ;
          }
 
-         inline const _MsgRouteID &local()
+         OSS_INLINE const _MsgRouteID &local()
          {
             return _local ;
          }

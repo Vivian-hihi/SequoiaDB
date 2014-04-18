@@ -16,7 +16,7 @@
 #define CORE_H_
 
 #ifdef __GNUC__
-    #define SDB_INLINE static __inline__
+    #define SDB_INLINE static __OSS_INLINE__
     #define SDB_EXPORT
 #else
     #define SDB_INLINE static

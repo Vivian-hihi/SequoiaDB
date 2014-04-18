@@ -51,8 +51,8 @@ namespace engine
                                      const UINT32 &id ) ;
 
       public:
-         inline void attach ( pmdEDUCB *cb ) { _pMgrCB = cb ; }
-         inline void detach () { _pMgrCB = NULL ; }
+         OSS_INLINE void attach ( pmdEDUCB *cb ) { _pMgrCB = cb ; }
+         OSS_INLINE void detach () { _pMgrCB = NULL ; }
 
       protected:
          pmdEDUCB             *_pMgrCB ;

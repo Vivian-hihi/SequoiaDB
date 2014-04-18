@@ -61,17 +61,17 @@ namespace engine
          ~_netFrame() ;
 
       public:
-         inline io_service &ioservice()
+         OSS_INLINE io_service &ioservice()
          {
             return _ioservice ;
          }
 
-         inline NET_HANDLE allocateHandle()
+         OSS_INLINE NET_HANDLE allocateHandle()
          {
             return _handle.inc() ;
          }
 
-         inline void setLocal( const MsgRouteID &id )
+         OSS_INLINE void setLocal( const MsgRouteID &id )
          {
             _local = id ;
          }

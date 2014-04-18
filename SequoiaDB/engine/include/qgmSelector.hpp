@@ -46,9 +46,9 @@ namespace engine
       virtual ~_qgmSelector() ;
 
    public:
-      inline BOOLEAN empty()const{ return _selector.empty() ;}
+      OSS_INLINE BOOLEAN empty()const{ return _selector.empty() ;}
 
-      inline BOOLEAN hasAlias()const{return _hasAlias ;}
+      OSS_INLINE BOOLEAN hasAlias()const{return _hasAlias ;}
 
       INT32 load( const qgmOPFieldVec &op ) ;
 

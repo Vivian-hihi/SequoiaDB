@@ -81,11 +81,11 @@ protected :
    INT32 _reallocMem ( UINT32 requiredSize ) ;
    INT32 _appendStr ( const CHAR *pStr ) ;
    INT32 _flushBuf () ;
-   inline ossValuePtr _bufOccupied ()
+   OSS_INLINE ossValuePtr _bufOccupied ()
    {
       return _pCurPtr - _pExtractBuffer ;
    }
-   inline ossValuePtr _bufFree ()
+   OSS_INLINE ossValuePtr _bufFree ()
    {
       return _bufSize - _bufOccupied() ;
    }

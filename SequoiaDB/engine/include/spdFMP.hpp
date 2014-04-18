@@ -60,18 +60,18 @@ namespace engine
 
       virtual INT32 write( const BSONObj &msg ) ;
 
-      inline const OSSPID &id() const
+      OSS_INLINE const OSSPID &id() const
       {
          return _id ;
       }
 
-      inline void setDiscarded()
+      OSS_INLINE void setDiscarded()
       {
          _discarded = TRUE ;
          return ;
       }
 
-      inline BOOLEAN discarded()const
+      OSS_INLINE BOOLEAN discarded()const
       {
          return _discarded ;
       }
@@ -87,7 +87,7 @@ namespace engine
 
       INT32 _extractMsg( BSONObj &msg, BOOLEAN &extracted ) ;
 
-      inline void _clear()
+      OSS_INLINE void _clear()
       {
          _totalRead = 0 ;
          _itr = 0 ;

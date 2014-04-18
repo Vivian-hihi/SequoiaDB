@@ -114,8 +114,8 @@ class _ossSocket : public SDBObject
          }
       }
 
-      inline SOCKET native()const{ return _fd ; }
-      inline void closeWhenDestruct( BOOLEAN closeWhenDestruct )
+      OSS_INLINE SOCKET native()const{ return _fd ; }
+      OSS_INLINE void closeWhenDestruct( BOOLEAN closeWhenDestruct )
       {
          _closeWhenDestruct = closeWhenDestruct ;
       }
