@@ -153,9 +153,6 @@
 /* Enable newer diffie-hellman-group-exchange-sha1 syntax */
 #define LIBSSH2_DH_GEX_NEW 1
 
-/* Compile in zlib support */
-#define LIBSSH2_HAVE_ZLIB 1
-
 /* Use libgcrypt */
 /* #undef LIBSSH2_LIBGCRYPT */
 
