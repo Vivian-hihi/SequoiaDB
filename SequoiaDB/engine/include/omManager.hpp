@@ -76,12 +76,18 @@ namespace engine
 
       protected:
 
+         string            _makeID( restSessionInfo *pSessionInfo ) ;
+
+         void              _add2UserMap( const string &user,
+                                         restSessionInfo *pSessionInfo ) ;
+
       private:
          vector< CHAR* >                        _vecFixBuf ;
          const INT32                            _fixBufSize ;
 
          map<string, restSessionInfo*>          _mapSessions ;
          map<string, vector<restSessionInfo*> > _mapUser2Sessions ;
+         UINT32                                 _sequence ;
 
          ossSpinSLatch                          _omLatch ;
 

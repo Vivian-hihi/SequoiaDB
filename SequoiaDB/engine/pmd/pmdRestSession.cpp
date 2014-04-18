@@ -33,11 +33,9 @@
 namespace engine
 {
 
-   // message map
-   BEGIN_OBJ_MSG_MAP(_pmdRestSession, _pmdLocalSession)
-
-   END_OBJ_MSG_MAP()
-
+   /*
+      _pmdRestSession implement
+   */
    _pmdRestSession::_pmdRestSession( SOCKET fd )
    :_pmdLocalSession( fd )
    {
@@ -59,17 +57,7 @@ namespace engine
       return 0 ;
    }
 
-   INT32 _pmdRestSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader *msg )
-   {
-      return SDB_OK ;
-   }
-
    INT32 _pmdRestSession::_onAuth( MsgHeader * msg )
-   {
-      return SDB_OK ;
-   }
-
-   INT32 _pmdRestSession::_onOPMsg( NET_HANDLE handle, MsgHeader * msg )
    {
       return SDB_OK ;
    }

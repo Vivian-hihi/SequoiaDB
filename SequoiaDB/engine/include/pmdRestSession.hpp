@@ -35,6 +35,8 @@
 #include "ossRWMutex.hpp"
 #include "ossAtomic.hpp"
 
+#include <string>
+
 namespace engine
 {
 
@@ -55,7 +57,7 @@ namespace engine
    /*
       _restSessionInfo define
    */
-   struct _restSessionInfo
+   struct _restSessionInfo : public SDBObject
    {
       struct _sessionAttr
       {
@@ -69,15 +71,16 @@ namespace engine
       BOOLEAN              _authOK ;
       ossAtomic32          _inNum ;
       ossRWMutex           _inRWLock ;
+      std::string          _id ;
       sessionMemInfo       *_pSessionMem ;
 
       _restSessionInfo()
       :_inNum( 0 )
       {
          _attr._sessionID     = 0 ;
-         _attr._loginTime     = 0 ;
+         _attr._loginTime     = (UINT64)time(NULL) ;
          ossMemset( _attr._userName, 0, sizeof( _attr._userName ) ) ;
-         _activeTime          = 0 ;
+         _activeTime          = _attr._loginTime ;
          _authOK              = FALSE ;
          
          _pSessionMem         = NULL ;
@@ -98,6 +101,16 @@ namespace engine
             _pSessionMem = next ;
          }
       }
+
+      BOOLEAN isValid() const
+      {
+         return _id.size() == 0 ? TRUE : FALSE ;
+      }
+
+      void invalidate()
+      {
+         _id = "" ;
+      }
    } ;
    typedef _restSessionInfo restSessionInfo ;
 
@@ -106,8 +119,6 @@ namespace engine
    */
    class _pmdRestSession : public _pmdLocalSession
    {
-      DECLARE_OBJ_MSG_MAP()
-
       public:
          _pmdRestSession( SOCKET fd ) ;
          virtual ~_pmdRestSession () ;
@@ -124,12 +135,9 @@ namespace engine
          void              saveSession( restSessionInfo &sessionInfo ) ;
 
       protected:
-         virtual INT32  _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
          virtual INT32  _onAuth( MsgHeader *msg ) ;
 
-      // message functions
       protected:
-         INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
 
       protected:
          httpConnection                _restConn ;

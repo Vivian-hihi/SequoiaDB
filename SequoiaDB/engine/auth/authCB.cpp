@@ -52,7 +52,7 @@ namespace engine
       return _initAuthentication( cb ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
    INT32 _authCB::authenticate( BSONObj &obj, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -135,7 +135,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
    INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -153,7 +153,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_REMOVEUSR, "_authCB::removeUsr" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_REMOVEUSR, "_authCB::removeUsr" )
    INT32 _authCB::removeUsr( BSONObj &obj, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -196,7 +196,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_INITAUTH, "_authCB::_initAuthentication" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_INITAUTH, "_authCB::_initAuthentication" )
    INT32 _authCB::_initAuthentication( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -250,7 +250,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CHECKNEEDAUTH, "_authCB::checkNeedAuth" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CHECKNEEDAUTH, "_authCB::checkNeedAuth" )
    INT32 _authCB::checkNeedAuth( _pmdEDUCB *cb, BOOLEAN forcecheck )
    {
       INT32 rc = SDB_OK ;
@@ -299,7 +299,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CREATEUSR, "_authCB::_createUsr" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CREATEUSR, "_authCB::_createUsr" )
    INT32 _authCB::_createUsr( BSONObj &obj,
                               _pmdEDUCB *cb )
    {
@@ -346,7 +346,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__VALID, "_authCB::_valid" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__VALID, "_authCB::_valid" )
    INT32 _authCB::_valid( BSONObj &obj, BOOLEAN notEmpty )
    {
       INT32 rc = SDB_OK ;

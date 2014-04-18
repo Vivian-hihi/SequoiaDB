@@ -37,6 +37,7 @@
 #include "core.hpp"
 #include "msgDef.h"
 #include "pmdDef.hpp"
+#include "msg.h"
 
 namespace engine
 {
@@ -51,8 +52,32 @@ namespace engine
                               CHAR *prefReplStr,
                               UINT32 len ) ;
 
-   SDB_ROLE pmdGetDBRole() ;
-   void  pmdSetDBRole( SDB_ROLE role ) ;
+   /*
+      pmd system info define
+   */
+   typedef struct _pmdSysInfo
+   {
+      SDB_ROLE                      _dbrole ;
+      MsgRouteID                    _nodeID ;
+
+      _pmdSysInfo()
+      {
+         _dbrole        = SDB_ROLE_STANDALONE ;
+         _nodeID.value  = MSG_INVALID_ROUTEID ;
+      }
+   } pmdSysInfo ;
+
+   SDB_ROLE       pmdGetDBRole() ;
+   void           pmdSetDBRole( SDB_ROLE role ) ;
+   MsgRouteID     pmdGetNodeID() ;
+   void           pmdSetNodeID( MsgRouteID id ) ;
+
+   pmdSysInfo*    pmdGetSysInfo () ;
+
+   /*
+      pmd get fixed error bson
+   */
+   const CHAR*    pmdGetErrorBsonData( INT32 flags, INT32 &len ) ;
 
 }
 

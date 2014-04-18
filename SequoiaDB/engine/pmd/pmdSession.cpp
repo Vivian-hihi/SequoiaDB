@@ -46,12 +46,6 @@ namespace engine
    /*
       _pmdSession implement
    */
-
-   // message map define
-   BEGIN_OBJ_MSG_MAP( _pmdSession, _clsObjBase )
-
-   END_OBJ_MSG_MAP()
-
    _pmdSession::_pmdSession( SOCKET fd )
    :_socket( &fd, SESSION_SOCKET_DFT_TIMEOUT )
    {
@@ -88,7 +82,7 @@ namespace engine
       // release buff
       if ( _pBuff )
       {
-         SDB_OSS_FREE( _pBuff ) ;
+         releaseBuff( _pBuff, _buffLen ) ;
          _pBuff = NULL ;
       }
       _buffLen = 0 ;
@@ -187,25 +181,15 @@ namespace engine
       {
          if ( _pBuff )
          {
-            SDB_OSS_FREE( _pBuff ) ;
+            releaseBuff( _pBuff, _buffLen ) ;
             _pBuff = NULL ;
          }
          _buffLen = 0 ;
 
-         len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
-         _pBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
-         if ( !_pBuff )
-         {
-            PD_LOG( PDERROR, "Session[%s] alloc memory[size: %d] failed",
-                    sessionName(), len ) ;
-            goto error ;
-         }
+         allocBuff( len, &_pBuff, _buffLen ) ;
       }
 
-   done:
       return _pBuff ;
-   error:
-      goto done ;
    }
 
    BOOLEAN _pmdSession::_allocFromCatch( INT32 len, CHAR **ppBuff,
@@ -306,15 +290,12 @@ namespace engine
    /*
       _pmdLocalSession implement
    */
-
-   BEGIN_OBJ_MSG_MAP( _pmdLocalSession, pmdSession )
-
-   END_OBJ_MSG_MAP()
-
    _pmdLocalSession::_pmdLocalSession( SOCKET fd )
    :pmdSession( fd )
    {
       _authOK  = FALSE ;
+      ossMemset( (void*)&_replayHeader, 0, sizeof(_replayHeader) ) ;
+      _needReply = TRUE ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -326,8 +307,124 @@ namespace engine
       return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
    }
 
-   INT32 _pmdLocalSession::_defaultMsgFunc( NET_HANDLE handle, MsgHeader *msg )
+   INT32 _pmdLocalSession::run()
    {
+      INT32 rc                = SDB_OK ;
+      UINT32 msgSize          = 0 ;
+      CHAR *pBuff             = NULL ;
+      INT32 buffSize          = 0 ;
+      pmdEDUMgr *pmdEDUMgr    = NULL ;
+
+      if ( !_pEDUCB )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pmdEDUMgr               = _pEDUCB->getEDUMgr() ;
+
+      while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
+      {
+         _pEDUCB->resetInterrupt() ;
+         _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
+
+         // recv msg
+         rc = recvData( (CHAR*)&msgSize, sizeof(UINT32) ) ;
+         if ( rc )
+         {
+            if ( SDB_APP_FORCED != rc )
+            {
+               PD_LOG( PDERROR, "Session[%s] failed to recv msg size, "
+                       "rc: %d", sessionName(), rc ) ;
+            }
+            break ;
+         }
+
+         // if system info msg
+         if ( msgSize == (UINT32)MSG_SYSTEM_INFO_LEN )
+         {
+            rc = _recvSysInfoMsg( msgSize, &pBuff, buffSize ) ;
+            if ( rc )
+            {
+               break ;
+            }
+            rc = _processSysInfoRequest( pBuff ) ;
+            if ( rc )
+            {
+               break ;
+            }
+         }
+         // error msg
+         else if ( msgSize < sizeof(MsgHeader) || msgSize > SDB_MAX_MSG_LENGTH )
+         {
+            PD_LOG( PDERROR, "Session[%s] recv msg size[%d] is less than "
+                    "MsgHeader size[%d] or more than max msg size[%d]",
+                    msgSize, sizeof(MsgHeader), SDB_MAX_MSG_LENGTH ) ;
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+         // other msg
+         else
+         {
+            pBuff = getBuff( msgSize + 1 ) ;
+            if ( !pBuff )
+            {
+               break ;
+            }
+            buffSize = getBuffLen() ;
+            *(UINT32*)pBuff = msgSize ;
+            // recv the rest msg
+            rc = recvData( pBuff + sizeof(UINT32), msgSize - sizeof(UINT32) ) ;
+            if ( rc )
+            {
+               if ( SDB_APP_FORCED != rc )
+               {
+                  PD_LOG( PDERROR, "Session failed to recv rest msg, rc: %d",
+                          sessionName(), rc ) ;
+               }
+               break ;
+            }
+            // increase process event count
+            _pEDUCB->incEventCount() ;
+            pBuff[ msgSize ] = 0 ;
+            // activate edu
+            if ( SDB_OK != ( rc = pmdEDUMgr->activateEDU( _pEDUCB ) ) )
+            {
+               PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
+                       sessionName(), rc ) ;
+               break ;
+            }
+            // process msg
+            rc = _processMsg( (MsgHeader*)pBuff ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Session[%s] process msg failed, rc: %d",
+                       sessionName(), rc ) ;
+               break ;
+            }
+            // wait edu
+            if ( SDB_OK != ( rc = pmdEDUMgr->waitEDU( _pEDUCB ) ) )
+            {
+               PD_LOG( PDERROR, "Session[%s] wait edu failed, rc: %d",
+                       sessionName(), rc ) ;
+               break ;
+            }
+         }
+      } // end while
+
+      disconnect() ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_recvSysInfoMsg( UINT32 msgSize,
+                                            CHAR **ppBuff,
+                                            INT32 &buffLen )
+   {
+      // TODO:XUJIANHUI
       return SDB_OK ;
    }
 
@@ -391,7 +488,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onSysInfoRequest( const CHAR * msg )
+   INT32 _pmdLocalSession::_processSysInfoRequest( const CHAR * msg )
    {
       INT32 rc = SDB_OK ;
       BOOLEAN endianConvert = FALSE ;
@@ -420,15 +517,142 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onOPMsg( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _pmdLocalSession::_onMsgBegin( MsgHeader *msg )
    {
-      INT32 rc = SDB_OK ;
+      // set reply header ( except flags, length )
+      _replayHeader.contextID          = -1 ;
+      _replayHeader.numReturned        = 0 ;
+      _replayHeader.startFrom          = 0 ;
+      _replayHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
+      _replayHeader.header.requestID   = msg->requestID ;
+      _replayHeader.header.TID         = msg->TID ;
+      _replayHeader.header.routeID     = pmdGetNodeID() ;
 
+      if ( MSG_BS_INTERRUPTE == msg->opCode ||
+           MSG_BS_DISCONNECT == msg->opCode )
+      {
+         _needReply = FALSE ;
+      }
+      else
+      {
+         _needReply = TRUE ;
+      }
+
+      // start operator
+      MON_START_OP( _pEDUCB->getMonAppCB() ) ;
+
+      return SDB_OK ;
+   }
+
+   void _pmdLocalSession::_onMsgEnd( INT32 result, MsgHeader *msg )
+   {
+      if ( SDB_DMS_EOC != result )
+      {
+         PD_LOG( PDWARNING, "Session[%s] process msg[opCode=%d, len: %d, "
+                 "TID: %d, requestID: %llu] failed, rc: %d",
+                 sessionName(), msg->opCode, msg->messageLength, msg->TID,
+                 msg->requestID, result ) ;
+      }
+      // end operator
+      MON_END_OP( _pEDUCB->getMonAppCB() ) ;
+   }
+
+   INT32 _pmdLocalSession::_processMsg( MsgHeader * msg )
+   {
+      INT32 rc          = SDB_OK ;
+      const CHAR *pBody = NULL ;
+      INT32 bodyLen     = 0 ;
+
+      // prepare
+      rc = _onMsgBegin( msg ) ;
+      if ( SDB_OK == rc )
+      {
+         if ( MSG_AUTH_VERIFY_REQ == msg->opCode )
+         {
+            rc = _onAuth( msg ) ;
+         }
+         else if ( !_authOK )
+         {
+            rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
+         }
+         else
+         {
+            rc = _processOPMsg( msg, _replayHeader.contextID, &pBody,
+                                bodyLen, _replayHeader.numReturned ) ;
+         }
+      }
+
+      if ( _needReply )
+      {
+         if ( rc && bodyLen == 0 )
+         {
+            pBody = pmdGetErrorBsonData( rc, bodyLen ) ;
+            _replayHeader.numReturned = 1 ;
+         }
+         _replayHeader.flags = rc ;
+         _replayHeader.header.messageLength = sizeof( _replayHeader ) +
+                                              bodyLen ;
+
+         // send response
+         INT32 rcTmp = _replay( &_replayHeader, pBody, bodyLen ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Session[%s] failed to send response, rc: %d",
+                    sessionName(), rc ) ;
+            disconnect() ;
+         }
+      }
+
+      // end
+      _onMsgEnd( rc, msg ) ;
 
       return rc ;
    }
 
-   INT32 _pmdLocalSession::_onInsertReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _pmdLocalSession::_replay( MsgOpReply *responseMsg,
+                                    const CHAR *pBody,
+                                    INT32 bodyLen )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( responseMsg->header.messageLength ==
+                  sizeof(MsgOpReply) + bodyLen, "Invalid msg" ) ;
+
+      // response header
+      rc = sendData( (const CHAR*)responseMsg, sizeof(MsgOpReply) ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Session[%s] failed to send response header, rc: %d",
+                 sessionName(), rc ) ;
+         goto error ;
+      }
+      // response body
+      if ( pBody )
+      {
+         rc = sendData( pBody, bodyLen ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] failed to send response body, rc: %d",
+                    sessionName(), rc ) ;
+            goto error ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdLocalSession::_processOPMsg( MsgHeader *msg, INT64 &contextID,
+                                          const CHAR **ppBody, INT32 &bodyLen,
+                                          INT32 &returnNum )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
+   }
+
+   INT32 _pmdLocalSession::_onInsertReqMsg( MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
       INT32 flag = 0 ;
@@ -475,7 +699,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onUpdateReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _pmdLocalSession::_onUpdateReqMsg( MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -524,7 +748,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onDelReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _pmdLocalSession::_onDelReqMsg( MsgHeader * msg )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -569,7 +793,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onInterruptMsg( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _pmdLocalSession::_onInterruptMsg( MsgHeader * msg )
    {
       PD_LOG ( PDEVENT, "Session[%s] recieved interrupt msg", sessionName() ) ;
 
@@ -593,13 +817,12 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _pmdLocalSession::_onMsgReqMsg( NET_HANDLE handle, MsgHeader * msg )
+   INT32 _pmdLocalSession::_onMsgReqMsg( MsgHeader * msg )
    {
       return rtnMsg( (MsgOpMsg*)msg ) ;
    }
 
-   INT32 _pmdLocalSession::_onQueryReqMsg( NET_HANDLE handle, MsgHeader * msg,
-                                           INT64 &contextID )
+   INT32 _pmdLocalSession::_onQueryReqMsg( MsgHeader * msg, INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       INT32 flags = 0 ;
@@ -721,8 +944,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onKillContextsReqMsg( NET_HANDLE handle,
-                                                  MsgHeader *msg )
+   INT32 _pmdLocalSession::_onKillContextsReqMsg( MsgHeader *msg )
    {
       PD_LOG ( PDDEBUG, "session[%s] _onKillContextsReqMsg", sessionName() ) ;
 
@@ -748,8 +970,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onSQLMsg( NET_HANDLE handle, MsgHeader *msg,
-                                      INT64 &contextID )
+   INT32 _pmdLocalSession::_onSQLMsg( MsgHeader *msg, INT64 &contextID )
    {
       CHAR *sql = NULL ;
       INT32 rc = SDB_OK ;
@@ -830,8 +1051,7 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdLocalSession::_onAggrReqMsg( NET_HANDLE handle, MsgHeader *msg,
-                                          INT64 &contextID )
+   INT32 _pmdLocalSession::_onAggrReqMsg( MsgHeader *msg, INT64 &contextID )
    {
       INT32 rc = SDB_OK ;
       CHAR *pCollectionName = NULL ;

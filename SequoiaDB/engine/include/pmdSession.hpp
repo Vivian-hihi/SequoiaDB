@@ -32,9 +32,9 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "clsObjBase.hpp"
 #include "ossSocket.hpp"
 #include "sdbInterface.hpp"
+#include "msg.h"
 #include "pmdDef.hpp"
 
 #include <map>
@@ -48,10 +48,8 @@ namespace engine
    /*
       _pmdSession define
    */
-   class _pmdSession : public _clsObjBase, public _ISession
+   class _pmdSession : public _ISession
    {
-      DECLARE_OBJ_MSG_MAP()
-
       typedef std::multimap<INT32,CHAR*>     CATCH_MAP ;
       typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
 
@@ -123,8 +121,6 @@ namespace engine
    */
    class _pmdLocalSession : public _pmdSession
    {
-      DECLARE_OBJ_MSG_MAP()
-
       public:
          _pmdLocalSession( SOCKET fd ) ;
          virtual ~_pmdLocalSession () ;
@@ -132,39 +128,52 @@ namespace engine
          virtual INT32     sessionType() const { return PMD_SESSION_LOCAL ; }
          virtual UINT64    identifyID() ;
 
+         virtual INT32     run() ;
+
       protected:
-         virtual INT32  _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
+         INT32          _processMsg( MsgHeader *msg ) ;
+         virtual INT32  _onMsgBegin( MsgHeader *msg ) ;
+         virtual void   _onMsgEnd( INT32 result, MsgHeader *msg ) ;
+
+         virtual INT32  _processOPMsg( MsgHeader *msg, INT64 &contextID,
+                                       const CHAR **ppBody, INT32 &bodyLen,
+                                       INT32 &returnNum ) ;
+
          virtual INT32  _onAuth( MsgHeader *msg ) ;
 
-         INT32          _onSysInfoRequest( const CHAR *msg ) ;
+         INT32          _recvSysInfoMsg( UINT32 msgSize, CHAR **ppBuff,
+                                         INT32 &buffLen ) ;
+         INT32          _processSysInfoRequest( const CHAR *msg ) ;
 
-      // message functions
+         INT32          _replay( MsgOpReply* responseMsg, const CHAR *pBody,
+                                 INT32 bodyLen ) ;
+
+      // message process functions
       protected:
-         INT32 _onOPMsg ( NET_HANDLE handle, MsgHeader *msg ) ;
 
-         INT32 _onInsertReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onUpdateReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onDelReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onInterruptMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onMsgReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onQueryReqMsg( NET_HANDLE handle, MsgHeader *msg, 
-                               INT64 &contextID ) ;
+         INT32 _onInsertReqMsg( MsgHeader *msg ) ;
+         INT32 _onUpdateReqMsg( MsgHeader *msg ) ;
+         INT32 _onDelReqMsg( MsgHeader *msg ) ;
+         INT32 _onInterruptMsg( MsgHeader *msg ) ;
+         INT32 _onMsgReqMsg( MsgHeader *msg ) ;
+         INT32 _onQueryReqMsg( MsgHeader *msg, INT64 &contextID ) ;
          INT32 _onGetMoreReqMsg( MsgHeader *msg, _rtnContextBuf &buffObj,
                                  INT32 &startingPos, INT64 &contextID ) ;
-         INT32 _onKillContextsReqMsg( NET_HANDLE handle, MsgHeader *msg ) ;
-         INT32 _onSQLMsg( NET_HANDLE handle, MsgHeader *msg,
-                          INT64 &contextID ) ;
+         INT32 _onKillContextsReqMsg( MsgHeader *msg ) ;
+         INT32 _onSQLMsg( MsgHeader *msg, INT64 &contextID ) ;
          INT32 _onTransBeginMsg () ;
          INT32 _onTransCommitMsg () ;
          INT32 _onTransRollbackMsg () ;
-         INT32 _onAggrReqMsg( NET_HANDLE handle, MsgHeader *msg,
-                              INT64 &contextID ) ;
+         INT32 _onAggrReqMsg( MsgHeader *msg, INT64 &contextID ) ;
 
       protected:
          BOOLEAN              _authOK ;
          _SDB_DMSCB           *_pDMSCB ;
          _dpsLogWrapper       *_pDPSCB ;
          _SDB_RTNCB           *_pRTNCB ;
+
+         MsgOpReply           _replayHeader ;
+         BOOLEAN              _needReply ;
 
    } ;
    typedef _pmdLocalSession pmdLocalSession ;

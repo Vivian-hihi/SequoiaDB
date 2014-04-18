@@ -50,6 +50,8 @@ namespace engine
          _ISession() {}
          virtual ~_ISession() {}
 
+         virtual INT32           run() = 0 ;
+
       public:
          virtual INT32           sessionType() const = 0 ;
          virtual UINT64          identifyID() = 0 ;

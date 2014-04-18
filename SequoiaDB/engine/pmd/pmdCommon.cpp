@@ -135,14 +135,32 @@ namespace engine
       return SDB_OK ;
    }
 
-   static SDB_ROLE g_dbRole = SDB_ROLE_STANDALONE ;
+   pmdSysInfo* pmdGetSysInfo()
+   {
+      static pmdSysInfo s_sysInfo ;
+      return &s_sysInfo ;
+   }
    SDB_ROLE pmdGetDBRole()
    {
-      return g_dbRole ;
+      return pmdGetSysInfo()->_dbrole ;
    }
    void  pmdSetDBRole( SDB_ROLE role )
    {
-      g_dbRole = role ;
+      pmdGetSysInfo()->_dbrole = role ;
+   }
+   MsgRouteID pmdGetNodeID()
+   {
+      return pmdGetSysInfo()->_nodeID ;
+   }
+   void pmdSetNodeID( MsgRouteID id )
+   {
+      pmdGetSysInfo()->_nodeID = id ;
+   }
+
+   const CHAR* pmdGetErrorBsonData( INT32 flags, INT32 &len )
+   {
+      //TODO:XUJIANHUI
+      return NULL ;
    }
 
 }

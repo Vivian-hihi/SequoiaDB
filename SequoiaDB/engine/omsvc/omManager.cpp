@@ -28,6 +28,7 @@
 *******************************************************************************/
 
 #include "omManager.hpp"
+#include "../bson/lib/md5.hpp"
 
 namespace engine
 {
@@ -47,6 +48,7 @@ namespace engine
    {
       _maxRestBodySize     = OM_REST_MAX_BODY_SIZE ;
       _restTimeout         = REST_TIMEOUT ;
+      _sequence            = 1 ;
    }
 
    _omManager::~_omManager()
@@ -158,7 +160,14 @@ namespace engine
       if ( it != _mapSessions.end() )
       {
          pSessionInfo = it->second ;
-         pSessionInfo->_inNum.inc() ;
+         if ( pSessionInfo->isValid() )
+         {
+            pSessionInfo->_inNum.inc() ;
+         }
+         else
+         {
+            pSessionInfo = NULL ;
+         }
       }
       _omLatch.release_shared() ;
 
@@ -174,13 +183,75 @@ namespace engine
    void _omManager::invalidSessionInfo( restSessionInfo *pSessionInfo )
    {
       SDB_ASSERT( pSessionInfo, "Session can't be NULL" ) ;
-      pSessionInfo->_activeTime = 0 ;
+      pSessionInfo->invalidate() ;
    }
 
    restSessionInfo* _omManager::newSessionInfo( const string &userName,
                                                 UINT32 localIP )
    {
-      return NULL ;
+      restSessionInfo *newSession = SDB_OSS_NEW restSessionInfo ;
+      if( !newSession )
+      {
+         PD_LOG( PDERROR, "Alloc rest session info failed" ) ;
+         goto error ;
+      }
+
+      // get lock
+      _omLatch.get() ;
+      newSession->_attr._sessionID = ossPack32To64( localIP, _sequence++ ) ;
+      ossStrncpy( newSession->_attr._userName, userName.c_str(),
+                  SESSION_USER_NAME_LEN ) ;
+      // add to session map
+      _mapSessions[ _makeID( newSession ) ] = newSession ;
+      // add to user session map
+      _add2UserMap( userName, newSession ) ;
+      // attach session
+      newSession->_inNum.inc() ;
+      // release lock
+      _omLatch.release() ;
+
+   done:
+      return newSession ;
+   error:
+      goto done ;
+   }
+
+   void _omManager::_add2UserMap( const string &user,
+                                  restSessionInfo *pSessionInfo )
+   {
+      map<string, vector<restSessionInfo*> >::iterator it ;
+      it = _mapUser2Sessions.find( user ) ;
+      // the user first session
+      if ( it == _mapUser2Sessions.end() )
+      {
+         vector<restSessionInfo*> vecSession ;
+         vecSession.push_back( pSessionInfo ) ;
+         _mapUser2Sessions.insert( make_pair( user, vecSession ) ) ;
+      }
+      // the user already exist
+      else
+      {
+         vector<restSessionInfo*> &vecSession = it->second ;
+         it->second.push_back( pSessionInfo ) ;
+      }
+   }
+
+   string _omManager::_makeID( restSessionInfo * pSessionInfo )
+   {
+      UINT32 ip = 0 ;
+      UINT32 seq = 0 ;
+      ossUnpack32From64( pSessionInfo->_attr._sessionID, ip, seq ) ;
+      CHAR tmp[9] = {0} ;
+      ossSnprintf( tmp, sizeof(tmp)-1, "%08x", seq ) ;
+      string strValue = md5::md5simpledigest( (const void*)pSessionInfo,
+                                              pSessionInfo->getAttrSize() ) ;
+      UINT32 size = strValue.size() ;
+      strValue = strValue.substr( 0, size - ossStrlen( tmp ) ) ;
+      strValue += tmp ;
+
+      // set id
+      pSessionInfo->_id = strValue ;
+      return strValue ;
    }
 
    /*
