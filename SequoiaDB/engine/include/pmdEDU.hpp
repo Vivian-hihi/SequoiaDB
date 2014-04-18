@@ -503,6 +503,26 @@ namespace engine
                          CHAR **ppData, INT32 *pDataSize ) ;
    };
    typedef class _pmdEDUCB pmdEDUCB ;
+
+   static OSS_THREAD_LOCAL _pmdEDUCB *__eduCB ;
+   OSS_INLINE _pmdEDUCB *pmdGetEDUCB ()
+   {
+      return __eduCB ;
+   }
+   OSS_INLINE _pmdEDUCB *pmdCreateEDUCB
+         ( _pmdEDUMgr *mgr, EDU_TYPES type )
+   {
+      __eduCB = SDB_OSS_NEW _pmdEDUCB ( mgr, type ) ;
+      return __eduCB ;
+   }
+   OSS_INLINE void pmdDeleteEDUCB ()
+   {
+      if ( __eduCB )
+      {
+         SDB_OSS_DEL __eduCB ;
+         __eduCB = NULL ;
+      }
+   }
    typedef INT32 (*pmdEntryPoint)( pmdEDUCB *, void * ) ;
 
    pmdEntryPoint getEntryFuncByType ( EDU_TYPES type ) ;
