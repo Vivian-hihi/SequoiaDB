@@ -398,8 +398,6 @@ namespace engine
             rc = _processMsg( (MsgHeader*)pBuff ) ;
             if ( rc )
             {
-               PD_LOG( PDERROR, "Session[%s] process msg failed, rc: %d",
-                       sessionName(), rc ) ;
                break ;
             }
             // wait edu
@@ -598,7 +596,7 @@ namespace engine
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "Session[%s] failed to send response, rc: %d",
-                    sessionName(), rc ) ;
+                    sessionName(), rcTmp ) ;
             disconnect() ;
          }
       }
