@@ -171,9 +171,9 @@ extern CHAR *FMP_COORD_HOST ;
 
 // troff file's relative path
 #if defined (_WINDOWS)
-#define TF_REL_PATH "\\..\\doc\\manual\\"
+#define TF_REL_PATH "..\\doc\\manual\\"
 #else
-#define TF_REL_PATH "/../doc/manual/"
+#define TF_REL_PATH "../doc/manual/"
 #endif
 
 JSBool jsobj_is_sdbobj( JSContext *cx, JSObject *obj ) ;

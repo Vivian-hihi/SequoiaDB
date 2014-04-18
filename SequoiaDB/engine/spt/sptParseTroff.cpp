@@ -76,11 +76,15 @@ INT32 manHelp::scan()
    for ( vec::const_iterator it(v.begin()), it_end(v.end());
          it != it_end; it++ )
    {
+	  // nerver use const CHAR* pTmp = fs::extension(*it).c_str();
+      std::string str = fs::extension(*it);
+	  const CHAR *pTmp = str.c_str();
       // if it is ".cli" file, save the file name
-      if ( ossStrncmp( fs::extension(*it).c_str(), MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) ) == 0 )
+      if ( ossStrncmp( pTmp, MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) ) == 0 )
       {
          // get the file name
-         fname = (*it).leaf().string().c_str();
+	    std::string str1 = (*it).leaf().string();
+         fname = str1.c_str();
          strLen = ossStrlen( fname ) - ossStrlen( MFILE_SUFFIX );
          if ( strLen > NAME_LEN - 1 )
          {
