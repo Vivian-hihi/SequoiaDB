@@ -54,11 +54,13 @@ namespace engine
 
    UINT64 _pmdRestSession::identifyID()
    {
+      // TODO:XUJIANHUI
       return 0 ;
    }
 
    INT32 _pmdRestSession::_onAuth( MsgHeader * msg )
    {
+      // TODO:XUJIANHUI
       return SDB_OK ;
    }
 
