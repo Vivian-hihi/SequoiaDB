@@ -999,7 +999,8 @@ namespace engine
       __try
       {
 #endif
-         return pmdEDUEntryPoint ( type, cb, arg ) ;
+         // register TLS, this must happen at very beginning of each thread
+         return pmdEDUEntryPoint ( type, pmdDeclareEDUCB ( cb ), arg ) ;
 #if defined (_WINDOWS)
       }
       __except ( engine::ossEDUExceptionFilter ( GetExceptionInformation() ) )
@@ -1175,6 +1176,8 @@ namespace engine
                      myEDUID, getEDUName( type ) ) ;
          }
       }
+      // undeclare must happen after all TLS access
+      pmdUndeclareEDUCB () ;
       PD_LOG ( PDEVENT, "Terminating thread[%d] for EDU[ID:%lld, type:%s]",
                ossGetCurrentThreadID(), myEDUID, getEDUName( type ) ) ;
 

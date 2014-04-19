@@ -621,7 +621,7 @@ namespace engine
          goto error ;
       }
 
-      cb = pmdCreateEDUCB ( this, type ) ;
+      cb = SDB_OSS_NEW pmdEDUCB ( this, type ) ;
       SDB_VALIDATE_GOTOERROR ( cb, SDB_OOM,
                "Out of memory to create agent control block" )
       // set to creating status
@@ -760,7 +760,11 @@ namespace engine
                break ;
             }
          }
-         pmdDeleteEDUCB () ;
+         if ( eduCB )
+         {
+            SDB_OSS_DEL eduCB ;
+            eduCB = NULL ;
+         }
       }
    done :
       PD_TRACE_EXITRC ( SDB__PMDEDUMGR_DSTEDU, rc );

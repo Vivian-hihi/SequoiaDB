@@ -509,12 +509,14 @@ namespace engine
    {
       return __eduCB ;
    }
+   // this function must be called by the thread that want to create EDUCB
    OSS_INLINE _pmdEDUCB *pmdCreateEDUCB
          ( _pmdEDUMgr *mgr, EDU_TYPES type )
    {
       __eduCB = SDB_OSS_NEW _pmdEDUCB ( mgr, type ) ;
       return __eduCB ;
    }
+   // this function must be called by the thread that want to delete EDUCB
    OSS_INLINE void pmdDeleteEDUCB ()
    {
       if ( __eduCB )
@@ -522,6 +524,15 @@ namespace engine
          SDB_OSS_DEL __eduCB ;
          __eduCB = NULL ;
       }
+   }
+   OSS_INLINE _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p )
+   {
+      __eduCB = p ;
+      return __eduCB ;
+   }
+   OSS_INLINE void pmdUndeclareEDUCB ()
+   {
+      __eduCB = NULL ;
    }
    typedef INT32 (*pmdEntryPoint)( pmdEDUCB *, void * ) ;
 
