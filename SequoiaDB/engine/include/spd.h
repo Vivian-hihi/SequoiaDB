@@ -2,8 +2,8 @@
     \brief store procedure
 */
 
-#ifndef SPD_HPP_
-#define SPD_HPP_
+#ifndef SPD_H_
+#define SPD_H_
 
 #include "core.h"
 

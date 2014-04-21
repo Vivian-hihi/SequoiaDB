@@ -9,10 +9,14 @@
 #include <string.h>
 
 #ifdef __GNUC__
-    #define SDB_INLINE static __inline__
+    #ifndef SDB_INLINE
+       #define SDB_INLINE static __inline__
+    #endif
     #define SDB_EXPORT
 #else
-    #define SDB_INLINE static
+    #ifndef SDB_INLINE
+       #define SDB_INLINE static
+    #endif
     #ifdef SDB_STATIC_BUILD
         #define SDB_EXPORT
     #elif defined(SDB_DLL_BUILD)

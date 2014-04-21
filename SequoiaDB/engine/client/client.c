@@ -9,7 +9,7 @@
 #include "pmdOptions.h"
 #include "msgCatalogDef.h"
 #include "openssl/md5.h"
-#include "fmpDef.hpp"
+#include "fmpDef.h"
 
 #define SDB_IS_EMPTY_CHAR(p) \
 ( (p) == ' ' || \

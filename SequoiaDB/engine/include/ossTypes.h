@@ -93,6 +93,7 @@ typedef INT32 SOCKET ;
 #endif
 
 #if defined _LINUX
+   #include "pthread.h"
    typedef pid_t      OSSPID ;
    typedef pthread_t  OSSTID ;
    #define OSS_INVALID_TID      ( ( OSSTID )NULL )
