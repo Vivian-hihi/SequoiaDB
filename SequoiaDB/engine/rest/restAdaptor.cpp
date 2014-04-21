@@ -7,6 +7,9 @@
 #include "pdTrace.hpp"
 #include "restTrace.hpp"
 
+//once recv size
+#define REST_ONCE_RECV_SIZE 1024
+
 namespace engine
 {
    INT32 restAdaptor::on_message_begin( void *pData )
@@ -16,6 +19,20 @@ namespace engine
 
    INT32 restAdaptor::on_headers_complete( void *pData )
    {
+      http_parser *pParser = (http_parser *)pData ;
+      httpConnection *pHttpCon = (httpConnection *)pParser->data ;
+      pHttpCon->_recvHeaderComplete = TRUE ;
+
+      if ( pHttpCon->_pTempKey && pHttpCon->_pTempValue )
+      {
+         pHttpCon->_requestHeaders.insert(
+               std::make_pair( pHttpCon->_pTempKey, pHttpCon->_pTempValue ) ) ;
+         pHttpCon->_pTempKey = NULL ;
+         pHttpCon->_pTempValue = NULL ;
+         pHttpCon->_tempKeyLen = 0 ;
+         pHttpCon->_tempValueLen = 0 ;
+      }
+      http_parser_pause( pParser, 1 ) ;
       return 0 ;
    }
 
@@ -31,23 +48,23 @@ namespace engine
                               const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
+      httpConnection *pHttpCon = (httpConnection *)pParser->data ;
       INT32 i = 0 ;
       CHAR *pPath = NULL ;
 
-      pHttpConnection->_pPath = at ;
+      pHttpCon->_pPath = at ;
       for( ; i < length && at[i] != '?'; ++i ) ;
 
-      pPath = pHttpConnection->_pRecvBuffer +
-         ( at - pHttpConnection->_pRecvBuffer ) ;
+      pPath = pHttpCon->_pHeaderBuf +
+         ( at - pHttpCon->_pHeaderBuf ) ;
       pPath[i] = 0 ;
 
-      printf( "path: %s\n", pHttpConnection->_pPath ) ;
+      printf( "path: %s\n", pHttpCon->_pPath ) ;
 
       if( i + 1 < length )
       {
          ++i ;
-         _parse_http_query( pHttpConnection,
+         _parse_http_query( pHttpCon,
                             pPath + i, length - i ) ;
       }
       return 0 ;
@@ -57,25 +74,33 @@ namespace engine
                                        const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
-      /*
-      if ( pHttpConnection->_isKey )
+      httpConnection *pHttpCon = (httpConnection *)pParser->data ;
+
+      if ( pHttpCon->_isKey )
       {
-         _requestHeader httpHeader ;
-         httpHeader.length  = length ;
-         httpHeader.pBuffer = at ;
-         pHttpConnection->_requestKey.push_back( httpHeader ) ;
-         pHttpConnection->_isKey = FALSE ;
+         if ( pHttpCon->_pTempKey && pHttpCon->_pTempValue )
+         {
+            pHttpCon->_requestHeaders.insert(
+                  std::make_pair( pHttpCon->_pTempKey,pHttpCon->_pTempValue ) );
+            pHttpCon->_pTempKey = NULL ;
+            pHttpCon->_pTempValue = NULL ;
+            pHttpCon->_tempKeyLen = 0 ;
+            pHttpCon->_tempValueLen = 0 ;
+         }
+
+         pHttpCon->_tempKeyLen = length ;
+         pHttpCon->_pTempKey = pHttpCon->_pHeaderBuf +
+               ( at - pHttpCon->_pHeaderBuf ) ;
+         pHttpCon->_isKey = FALSE ;
       }
       else
       {
-         INT32 vectorLen = pHttpConnection->_requestKey.size() ;
-         if( vectorLen <= 0 )
+         if(  pHttpCon->_pTempKey == NULL )
          {
             return 1 ;
          }
-         pHttpConnection->_requestKey[vectorLen-1].length += length ;
-      }*/
+         pHttpCon->_tempKeyLen += length ;
+      }
       return 0 ;
    }
 
@@ -83,25 +108,29 @@ namespace engine
                                        const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
-      /*
-      if ( !pHttpConnection->_isKey )
+      httpConnection *pHttpCon = (httpConnection *)pParser->data ;
+
+      if ( !pHttpCon->_isKey )
       {
-         _requestHeader httpHeader ;
-         httpHeader.length  = length ;
-         httpHeader.pBuffer = at ;
-         pHttpConnection->_requestValue.push_back( httpHeader ) ;
-         pHttpConnection->_isKey = TRUE ;
-      }
-      else
-      {
-         INT32 vectorLen = pHttpConnection->_requestValue.size() ;
-         if( vectorLen <= 0 )
+         if ( pHttpCon->_pTempKey == NULL )
          {
             return 1 ;
          }
-         pHttpConnection->_requestValue[vectorLen-1].length += length ;
-      }*/
+         pHttpCon->_pTempKey[ pHttpCon->_tempKeyLen + 1 ] = 0 ;
+
+         pHttpCon->_tempValueLen = length ;
+         pHttpCon->_pTempValue = pHttpCon->_pHeaderBuf +
+               ( at - pHttpCon->_pHeaderBuf ) ;
+         pHttpCon->_isKey = TRUE ;
+      }
+      else
+      {
+         if(  pHttpCon->_pTempValue == NULL )
+         {
+            return 1 ;
+         }
+         pHttpCon->_tempValueLen += length ;
+      }
       return 0 ;
    }
 
@@ -109,19 +138,17 @@ namespace engine
                                const CHAR* at, size_t length )
    {
       http_parser *pParser = (http_parser *)pData ;
-      httpConnection *pHttpConnection = (httpConnection *)pParser->data ;
-      /*
+      httpConnection *pHttpCon = (httpConnection *)pParser->data ;
       INT32 i = length ;
       CHAR *pPostQuery = NULL ;
 
-      pPostQuery = pHttpConnection->_pRecvBuffer +
-            ( at - pHttpConnection->_pRecvBuffer ) ;
+      pPostQuery = pHttpCon->_pBodyBuf +
+            ( at - pHttpCon->_pBodyBuf ) ;
 
       printf( "pPostQuery: %s\n", pPostQuery ) ;
 
-      _parse_http_query( pHttpConnection,
+      _parse_http_query( pHttpCon,
                          pPostQuery, length ) ;
-      */
       return 0 ;
    }
 
@@ -318,42 +345,51 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_GETREQHE ) ;
       SDB_ASSERT ( pSession, "pSession is NULL" )
-      //httpConnection *pHttpCon = pSession->getRestConn() ;
-      //CHAR *pBuffer = pSession->getFixBuff() ;
-      //INT32 bufSize = pSession->getFixBuffSize() ;
-/*
+      httpConnection *pHttpCon = pSession->getRestConn() ;
+      CHAR *pBuffer = pSession->getFixBuff() ;
+      INT32 bufSize = pSession->getFixBuffSize() ;
+      http_parser *pParser = &(pHttpCon->_httpParser) ;
+      INT32 curRecvSize  = 0 ;
+      INT32 receivedSize = 0 ;
+
+      _maxHttpHeaderSize = _maxHttpHeaderSize > bufSize ?
+            bufSize : _maxHttpHeaderSize ;
+      pHttpCon->_pHeaderBuf = pBuffer ;
       http_parser_init( pParser, HTTP_REQUEST ) ;
 
       while( true )
       {
-         rc = pSocket->recv( pRecvBuffer + receivedSize,
-                             REST_ONCE_RECV_SIZE,
-                             curRecvSize,
-                             timeout,
-                             0,
-                             FALSE ) ;
+         rc = pSession->recvData( pBuffer + receivedSize,
+                                  REST_ONCE_RECV_SIZE,
+                                  _timeout,
+                                  FALSE,
+                                  &curRecvSize,
+                                  0 ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to recv, rc=%d", rc ) ;
             goto error ;
          }
 
-         if ( receivedSize + curRecvSize > maxRecvSize )
+         if ( receivedSize + curRecvSize > _maxHttpHeaderSize )
          {
             rc = SDB_REST_RECV_SIZE ;
-            PD_LOG ( PDERROR, "Recv size greater than max recv size" ) ;
+            PD_LOG ( PDERROR, "http header size %d greater than %d",
+                     receivedSize + curRecvSize,
+                     _maxHttpHeaderSize ) ;
             goto error ;
          }
 
+         *(pBuffer + receivedSize + curRecvSize + 1) = 0 ;
+
          http_parser_execute( pParser, (http_parser_settings *)_pSettings,
-                              pRecvBuffer + receivedSize, curRecvSize ) ;
+                              pBuffer + receivedSize, curRecvSize ) ;
          receivedSize += curRecvSize ;
-         if ( _pHttpConnection->_recvComplete )
+         if ( pHttpCon->_recvHeaderComplete )
          {
             break ;
          }
       }
-*/
    done:
       PD_TRACE_EXITRC( SDB__RESTADP_GETREQHE, rc ) ;
       return rc ;
@@ -438,8 +474,15 @@ namespace engine
       goto done ;
    }
 
+   void  restAdaptor::setOPResult( pmdRestSession *pSession,
+                                   INT32 result,
+                                   const BSONObj &info )
+   {
+   }
+
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_SENDRE, "restAdaptor::sendResponse" )
-   INT32 restAdaptor::sendResponse( pmdRestSession *pSession )
+   INT32 restAdaptor::sendResponse( pmdRestSession *pSession,
+                                    HTTP_RESPONSE_CODE rspCode )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_SENDRE ) ;
