@@ -51,6 +51,26 @@ typedef unsigned __int64 uint64_t;
 #endif
 #include <map>
 
+enum HTTP_PARSE_COMMON
+{
+   COM_INSERT = 0,
+   COM_DELETE,
+   COM_UPDATE,
+   COM_QUERY,
+   COM_SQL,
+   COM_LOGIN,
+   COM_GETFILE
+} ;
+
+enum HTTP_RESPONSE_CODE
+{
+   HTTP_OK = 0,                  /* 200 ok */
+   HTTP_FOUND,                   /* 302 found */
+   HTTP_BADREQ,                  /* 400 bad request */
+   HTTP_NOTFOUND,                /* 404 not found */
+   HTTP_SERVICUNAVA,             /* 503 service unavailable */
+   HTTP_VERSION,                 /* 505 http version not supported */
+} ;
 
 struct http_parser {
   /** PRIVATE **/
@@ -83,20 +103,24 @@ struct http_parser {
 
 struct httpConnection
 {
-   //Max http recv size
-   UINT32 _maxHttpSize ;
-   //recv and send timeout
-   UINT32 _timeout ;
+   INT32 _tempKeyLen ;
+   INT32 _tempValueLen ;
    //flag headers complete
    BOOLEAN _recvHeaderComplete ;
    //flag recv complete
    BOOLEAN _recvComplete ;
    //flag is parser key or value, true: key, false: value
    BOOLEAN _isKey ;
-   //recv buffer
-   CHAR *_pRecvBuffer ;
+   //recv header buffer
+   CHAR *_pHeaderBuf ;
+   //recv body buffer
+   CHAR *_pBodyBuf ;
    //send buffer
    CHAR *_pSendBuffer ;
+   //temp key buffer
+   CHAR *_pTempKey ;
+   //temp value buffer ;
+   CHAR *_pTempValue ;
    //path
    const CHAR *_pPath ;
 
@@ -107,13 +131,16 @@ struct httpConnection
    //query list
    std::map<CHAR *,CHAR *> _requestQuery ;
 
-   httpConnection() : _maxHttpSize(0),
-                      _timeout(0),
+   httpConnection() : _tempKeyLen(0),
+                      _tempValueLen(0),
                       _recvHeaderComplete(FALSE),
                       _recvComplete(FALSE),
                       _isKey(TRUE),
-                      _pRecvBuffer(NULL),
+                      _pHeaderBuf(NULL),
+                      _pBodyBuf(NULL),
                       _pSendBuffer(NULL),
+                      _pTempKey(NULL),
+                      _pTempValue(NULL),
                       _pPath(NULL)
    {
    }
