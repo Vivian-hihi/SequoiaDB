@@ -1,6 +1,7 @@
 #include <set>
 #include "ossTypes.h"
 #include <string>
+#include <map>
 #include "ossUtil.h"
 #include "sptCommon.hpp"
 
@@ -11,23 +12,35 @@ using namespace std;
 #define PATH_LEN 255
 #endif
 
-namespace engine
-{
-
 class manHelp
 {
 public:
-   static manHelp* createInstance( const CHAR *path );
-   static void destroyInstance();
-   ~manHelp();
-   INT32 getFileHelp( const CHAR* name );
+   static manHelp* createInstance( const CHAR *path ) ;
+   static void destroyInstance() ;
+   ~manHelp() ;
+   INT32 getFileHelp( const CHAR *cmd ) ;
+   INT32 getFileHelp( const CHAR *category, const CHAR *cmd ) ;
 private:
-   manHelp( const CHAR* path );
-   INT32 scan();
-   static manHelp *m_pInstance;
-   typedef std::set<string> sset;
-   sset nset;
-   CHAR filePath[ OSS_MAX_PATHSIZE + 1 ];
+   typedef std::set<string> sset ;
+   typedef std::map<string, string> ssmap ;
+   manHelp( const CHAR* path ) ;
+   INT32 scanFile() ;
+   ssmap& getCategoryMap( const CHAR *category ) ;
+   INT32 displayMethod( const CHAR *category ) ;
+   INT32 displayManual( const CHAR *category, const CHAR *cmd ) ;
+
+   static manHelp *m_pInstance ;
+   sset nset ;
+   CHAR filePath[ OSS_MAX_PATHSIZE + 1 ] ;
+   ssmap mdb ;
+   ssmap mcs ;
+   ssmap mcl ;
+   ssmap mrg ;
+   ssmap mnode ;
+   ssmap mcursor ;
+   ssmap mclcount;
+   ssmap mempty ;
+
 } ;
 
-}
+

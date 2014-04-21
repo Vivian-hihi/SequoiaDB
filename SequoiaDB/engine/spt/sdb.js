@@ -51,12 +51,10 @@ function rand () {
    return Math.random() ;
 }
 
-/*
-function ma ( var ) {
-//   man( 'attachCL' ) ;
-   man( var ) ;
+function test() {
+   return man("attachCL") ;
 }
-*/
+
 // end Global functions
 
 // Bson
