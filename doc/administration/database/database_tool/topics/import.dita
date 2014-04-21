@@ -55,14 +55,14 @@
           <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
-          <stentry>--type
+          <stentry>--user,-u
           </stentry>
-          <stentry>指定的导入数据格式。默认csv，数据格式可以是csv或是json。</stentry>
+          <stentry>数据库用户名。</stentry>
         </strow>
         <strow>
-          <stentry>--file
+          <stentry>--password,-w
           </stentry>
-          <stentry>指定要导入的文件名。</stentry>
+          <stentry>数据库密码。</stentry>
         </strow>
         <strow>
           <stentry>--delchar,-a</stentry>
@@ -86,12 +86,22 @@
         <strow>
           <stentry>--clname,-l
           </stentry>
-          <stentry>指定导入数据的的集合名。 </stentry>
+          <stentry>指定导入数据的集合名。 </stentry>
+        </strow>
+        <strow>
+          <stentry>--file
+          </stentry>
+          <stentry>指定要导入的文件名。</stentry>
+        </strow>
+        <strow>
+          <stentry>--type
+          </stentry>
+          <stentry>指定的导入数据格式。默认csv，数据格式可以是csv或是json。</stentry>
         </strow>
         <strow>
           <stentry>--fields
           </stentry>
-          <stentry>指定导入数据的的字段名。csv格式有效。 </stentry>
+          <stentry>指定导入数据的字段名。csv格式有效。 </stentry>
         </strow>
         <strow>
           <stentry>--headerline
@@ -151,6 +161,16 @@
           <stentry>--svcname,-s
           </stentry>
           <stentry>指定的端口号。默认情况下sdbload尝试连接到端口号11810的主机。</stentry>
+        </strow>
+        <strow>
+          <stentry>--user,-u
+          </stentry>
+          <stentry>数据库用户名。</stentry>
+        </strow>
+        <strow>
+          <stentry>--password,-w
+          </stentry>
+          <stentry>数据库密码。</stentry>
         </strow>
         <strow>
           <stentry>--delchar,-a

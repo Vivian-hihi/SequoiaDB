@@ -29,15 +29,16 @@
           <stentry>指定的端口号。默认情况下sdbexprt尝试连接到端口号11810的主机。</stentry>
         </strow>
         <strow>
-          <stentry>--type
+          <stentry>--user,-u
           </stentry>
-          <stentry>指定的导出数据格式。默认csv，数据格式可以是csv或json。</stentry>
+          <stentry>数据库用户名。</stentry>
         </strow>
         <strow>
-          <stentry>--file
+          <stentry>--password,-w
           </stentry>
-          <stentry>指定要导出的文件名。</stentry>
+          <stentry>数据库密码。</stentry>
         </strow>
+        
         <strow>
           <stentry>--delchar,-a
           </stentry>
@@ -54,11 +55,6 @@
           <stentry>指定记录分隔符。默认是'\n'。 </stentry>
         </strow>
         <strow>
-          <stentry>--fields
-          </stentry>
-          <stentry>指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv格式有效。</stentry>
-        </strow>
-        <strow>
           <stentry>--csname,-c
           </stentry>
           <stentry>指定导出数据的集合空间名。</stentry>
@@ -68,6 +64,31 @@
           </stentry>
           <stentry>指定导出数的集合名。</stentry>
         </strow>
+        <strow>
+          <stentry>--hasoid,-i
+          </stentry>
+          <stentry>指定是否导出字段_id，默认true，json格式有效。</stentry>
+        </strow>
+        <strow>
+          <stentry>--fields
+          </stentry>
+          <stentry>指定一个或多个字段来导出数据，使用逗号分隔多个字段。csv格式有效。</stentry>
+        </strow>
+        <strow>
+          <stentry>--fieldincluded
+          </stentry>
+          <stentry>指定是否导出字段名到csv首行，默认 true，csv格式有效。</stentry>
+        </strow>
+        <strow>
+          <stentry>--file
+          </stentry>
+          <stentry>指定要导出的文件名。</stentry>
+        </strow>
+        <strow>
+          <stentry>--type
+          </stentry>
+          <stentry>指定的导出数据格式。默认csv，数据格式可以是csv或json。</stentry>
+        </strow>       
       </simpletable>
     </section>
     <section>

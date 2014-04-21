@@ -32,17 +32,15 @@
             number is 11810.</stentry>
         </strow>
         <strow>
-          <stentry>
-            --type
+          <stentry>--user,-u
           </stentry>
-          <stentry>specify the format of export data.It can be CSV or JSON.</stentry>
+          <stentry>database username.</stentry>
         </strow>
         <strow>
-          <stentry>
-            --file
+          <stentry>--password,-w
           </stentry>
-          <stentry>specify the name of file want to export.</stentry>
-        </strow>
+          <stentry>database password.</stentry>
+        </strow>        
         <strow>
           <stentry>
             --delchar,-a
@@ -79,6 +77,34 @@
           </stentry>
           <stentry>specify the collectionspace of exported data. </stentry>
         </strow>
+        <strow>
+          <stentry>--hasoid,-i
+          </stentry>
+          <stentry>指定是否导出字段_id，默认true，json格式有效。</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --fields
+          </stentry>
+          <stentry>specify one or more field names to export,separated by commas(,). </stentry>
+        </strow>
+        <strow>
+          <stentry>--fieldincluded
+          </stentry>
+          <stentry>指定是否导出字段名到csv首行，默认 true，csv格式有效。</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --file
+          </stentry>
+          <stentry>specify the name of file want to export.</stentry>
+        </strow>
+        <strow>
+          <stentry>
+            --type
+          </stentry>
+          <stentry>specify the format of export data.It can be CSV or JSON.</stentry>
+        </strow>        
       </simpletable>
     </section>
     <section>
