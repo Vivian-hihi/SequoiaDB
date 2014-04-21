@@ -3,9 +3,9 @@ var help = function( val ) {
    {
       println("   var db = new Sdb()                     connect to datebase use default host 'localhost' and default port 11810");
       println("   var db = new Sdb('localhost', 11810)   connect to database use specified host and port");
-      println("   help(<method>)                         help on specified method");
+      println("   help(<method>)                         help on specified method, e.g. help(\"createCS\")");
       println("   db.help()                              help on db methods");
-      println("   db.help(<method>)                      help on specified method of db");
+//      println("   db.help(<method>)                      help on specified method of db");
       println("   db.cs.help()                           help on collection space cs");
 //      println("   db.cs.help(<method>)                   help on specified method of collection space cs");
       println("   db.cs.cl                               access collection cl on collection space cs");
@@ -32,6 +32,7 @@ Sdb.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("DB methods:") ;
+      println("   db.help(<method>)                   help on specified method of db");
       man( "db" ) ;
    }
    else
@@ -44,6 +45,7 @@ SdbNode.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Node methods:") ;
+      println("   node.help(<method>)                   help on specified method of data node");
       man( "node" ) ;
    }
    else
@@ -56,6 +58,7 @@ SdbReplicaGroup.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Replica group methods:") ;
+      println("   rg.help(<method>)                   help on specified method of replica group rg");
       man( "rg" ) ;
    }
    else

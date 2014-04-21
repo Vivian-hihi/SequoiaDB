@@ -587,7 +587,6 @@ INT32 manHelp::displayManual( const CHAR *category, const CHAR *cmd )
       goto error ;
    }
 
-   // 
    cateLen = ossStrlen( category ) ;
    cmdLen = ossStrlen( cmd ) ;
    if ( cateLen + cmdLen > CMD_NAME_LEN )
@@ -597,10 +596,20 @@ INT32 manHelp::displayManual( const CHAR *category, const CHAR *cmd )
    }
    // build the full name of a command e.g. cs.createCL
    // because our troff files are named "category.cmd.cli"
-   ossMemcpy( command, category, cateLen ) ;
-   ossMemcpy( command + cateLen, ".", 1 ) ;
-   ossMemcpy( command + cateLen + 1, cmd, cmdLen ) ;
-   command[ cateLen + 1 + cmdLen ] = '\0' ;
+   // but, if user does not offer category, just use cmd to do
+   // fuzzy search
+   if ( 0 != cateLen )
+   {
+      ossMemcpy( command, category, cateLen ) ;
+      ossMemcpy( command + cateLen, ".", 1 ) ;
+      ossMemcpy( command + cateLen + 1, cmd, cmdLen ) ;
+      command[ cateLen + 1 + cmdLen ] = '\0' ;
+   }
+   else
+   {
+      ossMemcpy( command, cmd, cmdLen ) ;
+      command[ cateLen + cmdLen ] = '\0' ;
+   }
    // display man page
    rc = getFileHelp ( command ) ;
    if ( rc )
