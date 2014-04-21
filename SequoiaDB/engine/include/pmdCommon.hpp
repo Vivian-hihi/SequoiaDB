@@ -45,6 +45,7 @@ namespace engine
                            UINT32 fullSize, CHAR *full );
 
    SDB_ROLE pmdGetRoleEnum( const CHAR *role ) ;
+   const CHAR* pmdDBRoleStr( SDB_ROLE dbrole ) ;
 
    INT32 pmdPrefReplStr2Enum( const CHAR *prefReplStr ) ;
 

@@ -362,6 +362,7 @@ namespace engine
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
          OSS_INLINE UINT32 logBuffSize () const { return _logBuffSize ; }
          OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
+         OSS_INLINE const CHAR* dbroleStr() const { return _krcbRole ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;

@@ -3783,25 +3783,9 @@ namespace engine
          // assign role if it doesn't include
          if ( !hasRoleKey )
          {
-            switch ( role )
+            roleStr = pmdDBRoleStr( role ) ;
+            if ( *roleStr == 0 )
             {
-            case SDB_ROLE_DATA :
-               roleStr = SDB_ROLE_DATA_STR ;
-               break ;
-            case SDB_ROLE_COORD :
-               roleStr = SDB_ROLE_COORD_STR ;
-               break ;
-            case SDB_ROLE_CATALOG :
-               roleStr = SDB_ROLE_CATALOG_STR ;
-               break ;
-            case SDB_ROLE_AUTH :
-               roleStr = SDB_ROLE_AUTH_STR ;
-               break ;
-            case SDB_ROLE_STANDALONE :
-               roleStr = SDB_ROLE_STANDALONE_STR ;
-               break ;
-            default :
-               rc = SDB_SYS ;
                goto error ;
             }
             bobNodeConf.append ( strRoleKey, roleStr ) ;

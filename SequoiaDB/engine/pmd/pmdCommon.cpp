@@ -72,19 +72,43 @@ namespace engine
    SDB_ROLE pmdGetRoleEnum( const CHAR *role )
    {
       if ( NULL == role )
-         return SDB_ROLE_STANDALONE;
-      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_DATA_STR ) )
+         return SDB_ROLE_MAX;
+      else if ( *role == 0 || 0 == ossStrcmp( role, SDB_ROLE_STANDALONE_STR ) )
+         return SDB_ROLE_STANDALONE ;
+      else if ( 0 == ossStrcmp( role, SDB_ROLE_DATA_STR ) )
          return SDB_ROLE_DATA;
-      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_CATALOG_STR ) )
+      else if ( 0 == ossStrcmp( role, SDB_ROLE_CATALOG_STR ) )
          return SDB_ROLE_CATALOG;
-      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_AUTH_STR ) )
+      else if ( 0 == ossStrcmp( role, SDB_ROLE_AUTH_STR ) )
          return SDB_ROLE_AUTH;
-      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_COORD_STR ) )
+      else if ( 0 == ossStrcmp( role, SDB_ROLE_COORD_STR ) )
          return SDB_ROLE_COORD;
-      else if ( SDB_OK == ossStrcmp( role, SDB_ROLE_OM_STR ) )
+      else if ( 0 == ossStrcmp( role, SDB_ROLE_OM_STR ) )
          return SDB_ROLE_OM ;
       else
-         return SDB_ROLE_STANDALONE;
+         return SDB_ROLE_MAX;
+   }
+
+   const CHAR* pmdDBRoleStr( SDB_ROLE dbrole )
+   {
+      switch ( dbrole )
+      {
+         case SDB_ROLE_DATA :
+            return SDB_ROLE_DATA_STR ;
+         case SDB_ROLE_COORD :
+            return SDB_ROLE_COORD_STR ;
+         case SDB_ROLE_CATALOG :
+            return SDB_ROLE_CATALOG_STR ;
+         case SDB_ROLE_AUTH :
+            return SDB_ROLE_AUTH_STR ;
+         case SDB_ROLE_STANDALONE :
+            return SDB_ROLE_STANDALONE_STR ;
+         case SDB_ROLE_OM :
+            return SDB_ROLE_OM_STR ;
+         default :
+            break ;
+      }
+      return "" ;
    }
 
    INT32 pmdPrefReplStr2Enum( const CHAR * prefReplStr )

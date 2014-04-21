@@ -422,8 +422,33 @@ namespace engine
                                             CHAR **ppBuff,
                                             INT32 &buffLen )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      INT32 recvSize = (INT32)sizeof(MsgSysInfoRequest) ;
+
+      *ppBuff = getBuff( msgSize ) ;
+      if ( !*ppBuff )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      buffLen = getBuffLen() ;
+      *(INT32*)(*ppBuff) = msgSize ;
+      // recv rest
+      rc = recvData( *ppBuff + sizeof(UINT32), recvSize - sizeof(UINT32) ) ;
+      if ( rc )
+      {
+         if ( SDB_APP_FORCED != rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] failed to recv sys info req rest "
+                    "msg, rc: %d", sessionName(), rc ) ;
+         }
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdLocalSession::_onAuth( MsgHeader * msg )

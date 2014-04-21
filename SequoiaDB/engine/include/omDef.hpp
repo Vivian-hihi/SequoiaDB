@@ -50,6 +50,16 @@ namespace engine
    // max rest body size
    #define OM_REST_MAX_BODY_SIZE             ( 64 * 1024 * 1024 )
 
+   /*
+      HTML File Name Define
+   */
+   #define HTML_FILE_LOGIN                   "login.html"
+   #define HTML_FILE_INDEX                   "index.html"
+
+   /*
+      OM Field Define
+   */
+
 }
 
 #endif // OM_DEF_HPP__

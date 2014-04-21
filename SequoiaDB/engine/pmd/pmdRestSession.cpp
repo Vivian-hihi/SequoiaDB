@@ -62,10 +62,13 @@ namespace engine
 
    INT32 _pmdRestSession::run()
    {
-      INT32 rc = SDB_OK ;
-      restAdaptor *pAdptor = sdbGetOMManager()->getRestAdptor() ;
-      pmdEDUMgr *pEDUMgr = NULL ;
-      const CHAR *pSessionID = NULL ;
+      INT32 rc                         = SDB_OK ;
+      restAdaptor *pAdptor             = sdbGetOMManager()->getRestAdptor() ;
+      pmdEDUMgr *pEDUMgr               = NULL ;
+      const CHAR *pSessionID           = NULL ;
+      HTTP_PARSE_COMMON httpCommon     = COM_GETFILE ;
+      CHAR *pBody                      = NULL ;
+      INT32 bodySize                   = 0 ;
 
       if ( !_pEDUCB )
       {
@@ -91,7 +94,6 @@ namespace engine
             }
             break ;
          }
-
          // session is not exist
          if ( !_pSessionInfo )
          {
@@ -104,18 +106,61 @@ namespace engine
                _pSessionInfo = sdbGetOMManager()->attachSessionInfo(
                   pSessionID ) ;
             }
-            else
+
+            // if session exist, restore
+            if ( _pSessionInfo )
             {
+               restoreSession( _pSessionInfo ) ;
             }
          }
-         
+         // recv body
+         rc = pAdptor->getRequestBody( this, httpCommon, &pBody, bodySize ) ;
+         if ( rc )
+         {
+            if ( SDB_APP_FORCED != rc )
+            {
+               PD_LOG( PDERROR, "Session[%s] failed to recv rest body, "
+                       "rc: %d", sessionName(), rc ) ;
+            }
+            break ;
+         }
+         // increase process event count
+         _pEDUCB->incEventCount() ;
+         // activate edu
+         if ( SDB_OK != ( rc = pEDUMgr->activateEDU( _pEDUCB ) ) )
+         {
+            PD_LOG( PDERROR, "Session[%s] activate edu failed, rc: %d",
+                    sessionName(), rc ) ;
+            break ;
+         }
+         // process msg
+         rc = _processRestMsg( pBody, bodySize ) ;
+         if ( rc )
+         {
+            break ;
+         }
+         // wait edu
+         if ( SDB_OK != ( rc = pEDUMgr->waitEDU( _pEDUCB ) ) )
+         {
+            PD_LOG( PDERROR, "Session[%s] wait edu failed, rc: %d",
+                    sessionName(), rc ) ;
+            break ;
+         }
+         // release body msg
+         releaseBuff( pBody, bodySize ) ;
+         rc = SDB_OK ;
       } // end while
-      
 
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   INT32 _pmdRestSession::_processRestMsg( const CHAR *pData, INT32 dataLen )
+   {
+      // TODO:XUJIANHUI
+      return SDB_OK ;
    }
 
    void _pmdRestSession::_onAttach()
@@ -146,7 +191,7 @@ namespace engine
       return _pFixBuff ;
    }
 
-   void _pmdRestSession::restoreSession( restSessionInfo &sessionInfo )
+   void _pmdRestSession::restoreSession( restSessionInfo *pSessionInfo )
    {
    }
 

@@ -754,30 +754,8 @@ namespace engine
          ob.append ( FIELD_NAME_CURRENTCONTEXTS, (SINT32)rtnCB->contextNum() ) ;
          ob.append ( FIELD_NAME_RECEIVECOUNT,
                      (SINT32)mondbcb->getReceiveNum() ) ;
-         switch ( krcb->getDBRole() )
-         {
-         case SDB_ROLE_STANDALONE:
-            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_STANDALONE_STR ) ;
-            break ;
-         case SDB_ROLE_DATA:
-            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_DATA_STR ) ;
-            break ;
-         case SDB_ROLE_COORD:
-            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_COORD_STR ) ;
-            break ;
-         case SDB_ROLE_AUTH:
-            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_AUTH_STR ) ;
-            break ;
-         case SDB_ROLE_CATALOG:
-            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_CATALOG_STR ) ;
-            break ;
-         case SDB_ROLE_OM:
-            ob.append ( FIELD_NAME_ROLE, SDB_ROLE_OM_STR ) ;
-            break ;
-         default:
-            ob.append ( FIELD_NAME_ROLE, "Unknown" ) ;
-            break ;
-         }
+         ob.append ( FIELD_NAME_ROLE, krcb->getOptionCB()->dbroleStr() ) ;
+
          {
             BSONObjBuilder diskOb ;
             INT32 loadPercent = 0 ;

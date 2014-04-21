@@ -133,7 +133,7 @@ namespace engine
          CHAR*             getFixBuff() ;
          INT32             getFixBuffSize () const ;
 
-         void              restoreSession( restSessionInfo &sessionInfo ) ;
+         void              restoreSession( restSessionInfo *pSessionInfo ) ;
          void              saveSession( restSessionInfo &sessionInfo ) ;
 
       protected:
@@ -142,6 +142,8 @@ namespace engine
 
       protected:
          virtual INT32  _onAuth( MsgHeader *msg ) ;
+
+         INT32          _processRestMsg( const CHAR *pData, INT32 dataLen ) ;
 
       protected:
 

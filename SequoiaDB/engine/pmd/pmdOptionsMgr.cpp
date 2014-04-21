@@ -1031,12 +1031,7 @@ namespace engine
       }
 
       // dbrole check
-      if ( 0 != ossStrcmp( SDB_ROLE_DATA_STR, _krcbRole ) &&
-           0 != ossStrcmp( SDB_ROLE_COORD_STR, _krcbRole ) &&
-           0 != ossStrcmp( SDB_ROLE_AUTH_STR, _krcbRole ) &&
-           0 != ossStrcmp( SDB_ROLE_STANDALONE_STR, _krcbRole ) &&
-           0 != ossStrcmp( SDB_ROLE_CATALOG_STR, _krcbRole ) &&
-           0 != ossStrcmp( SDB_ROLE_OM_STR, _krcbRole ) )
+      if ( SDB_ROLE_MAX == pmdGetRoleEnum( _krcbRole ) )
       {
          std::cerr << "db role: " << _krcbRole << " error" << std::endl ;
          rc = SDB_INVALIDARG ;
