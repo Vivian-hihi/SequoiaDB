@@ -59,12 +59,6 @@ public:
    _bucket() ;
 } ;
 
-struct _fieldBuf : public SDBObject
-{
-   CHAR *buffer ;
-   CHAR *fieldBuf ;
-} ;
-
 enum SDB_UTIL_ACCESS_MODEL
 {
    UTIL_GET_IO = 0,
@@ -125,7 +119,7 @@ public:
    CHAR        _delField[2]  ;
    CHAR        _delRecord[2] ;
    //field vector
-   std::vector< _fieldBuf * > _vField ;
+   std::vector< CHAR * > _vField ;
 public:
    _utilDataParser() ;
    CHAR *_trimLeft ( CHAR *pCursor, UINT32 &size ) ;
@@ -166,8 +160,6 @@ public:
 class _utilCSVParser : public _utilDataParser
 {
 private :
-   //record cursor
-   CHAR       *_curBuffer    ;
    //record cursor in block number
    UINT32      _pBlock       ;
    //not read buffer size
@@ -179,10 +171,12 @@ private :
    UINT32      _readNumStr   ;
    //not read buffer size
    UINT32      _readFreeSpace ;
+   //left field size
+   UINT32      _leftFieldSize ;
+   //record cursor
+   CHAR       *_curBuffer    ;
    //field buffer
    CHAR       *_fieldBuffer ;
-   //field cursor
-   CHAR       *_leftField ;
    //next field cursor
    CHAR       *_nextFieldCursor ;
    // is string ?
@@ -191,9 +185,8 @@ private :
    INT32       _delCharNum ;
    // not auto add filed
 private:
-   INT32 _findDelField () ;
-   INT32 _allocField ( UINT32 size ) ;
-   INT32 _readFirstField ( ) ;
+   INT32 _allocField() ;
+   INT32 _readFirstField() ;
 public:
    virtual INT32 initialize ( _utilParserParamet *parserPara ) ;
    virtual INT32 getNextRecord ( UINT32 &startOffset,
