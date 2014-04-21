@@ -142,8 +142,9 @@ BOOLEAN ossIsUTF8 ( CHAR *pzInfo )
    else
       return TRUE ;
 #else
+   size_t size = 0 ;
    setlocale ( LC_ALL, "" ) ;
-   size_t size = mbstowcs ( NULL, pzInfo, 0 ) ;
+   size = mbstowcs ( NULL, pzInfo, 0 ) ;
    if ( (size_t)-1 == size )
       return FALSE ;
    else
