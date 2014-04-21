@@ -434,14 +434,14 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       }
       case BSON_MINKEY:
       {
-         char *temp = "MinKey" ;
+         char *temp = "{ \"$minKey\": 1 }" ;
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )
          break;
       }
       case BSON_MAXKEY:
       {
-         char *temp = "MaxKey" ;
+         char *temp = "{ \"$maxKey\": 1 }" ;
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )
          break;
