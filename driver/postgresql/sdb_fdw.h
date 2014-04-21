@@ -51,7 +51,7 @@ struct SdbInputOptions
 } ;
 typedef struct SdbInputOptions SdbInputOptions ;
 
-/* SdbColumnMapping is for mapping between bson's field name and PG's column
+/* SdbColumnMapping is for mapping between sdbbson's field name and PG's column
  * name
  */
 struct SdbColumnMapping
@@ -68,11 +68,11 @@ typedef struct SdbColumnMapping SdbColumnMapping ;
  */
 struct SdbExecState
 {
-   struct HTAB *columnMappingHash ; /* map bson fields to columns */
+   struct HTAB *columnMappingHash ; /* map sdbbson fields to columns */
    sdbCursorHandle hCursor ;
    sdbConnectionHandle hConnection ;
    sdbCollectionHandle hCollection ;
-   bson *queryDocument ; /* query request */
+   sdbbson *queryDocument ; /* query request */
 } ;
 typedef struct SdbExecState SdbExecState ;
 

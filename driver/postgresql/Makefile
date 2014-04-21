@@ -66,7 +66,7 @@ ifeq ($(endian),big)
     ALL_DEFINES+=-DSDB_BIG_ENDIAN
 endif
 OPTIMIZATION?=-O3
-WARNINGS?=-Wall -Wno-unknown-pragmas -Wno-missing-prototypes
+WARNINGS?=-Wall -Wno-unknown-pragmas -Wno-missing-prototypes -Wno-missing-format-attribute
 DEBUG?=-ggdb
 INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH)
 ALL_CFLAGS=$(CFLAGS) $(OPTIMIZATION) $(WARNINGS) $(DEBUG) $(INCLUDEPATH) $(ALL_DEFINES) $(DYN_FLAGS)
@@ -74,18 +74,19 @@ ALL_CFLAGS=$(CFLAGS) $(OPTIMIZATION) $(WARNINGS) $(DEBUG) $(INCLUDEPATH) $(ALL_D
 
 # Files declare
 COPY_FILES = $(EXTERNAL_SOURCE) $(BSON_SOURCE) $(BSON_HEADER) $(EXTERNAL_HEADER)
-OBJECTS := $(foreach filename,$(EXTERNAL_SOURCE) $(BSON_SOURCE),$(filename:%.c=%.o))
+OBJECTS := $(foreach filename,$(EXTERNAL_SOURCE) $(BSON_SOURCE),$(filename:%.c=%.os))
 COMPILEOBJECTS = $(OBJECTS)
 
 # PG Usage
-PG_CPPFLAGS = $(ALL_FLAGS)
+PG_CPPFLAGS = $(ALL_CFLAGS)
 EXTENSION = sdb_fdw
 DATA = sdb_fdw--1.0.sql
 MODULE_big = sdb_fdw
 OBJS = sdb_fdw.o $(OBJECTS)
+SHLIB_LINK = -lcrypto
 
 # Procedures
-all: $(BSON_PATH) $(COPY_FILES) $(COMPILEOBJECTS)
+local: $(BSON_PATH) $(COPY_FILES) $(COMPILEOBJECTS)
 
 $(BSON_PATH):
 	mkdir -p $@
@@ -112,12 +113,8 @@ $(EXTERNAL_PATH)/%.o: %.c
 $(BSON_PATH)/%.o: %.c
 	$(CC) -o $@ -c $(ALL_CFLAGS) $<
 
-%.o: %.c
+%.os: %.c
 	$(CC) -o $@ -c $(ALL_CFLAGS) $<
-
-clean:
-	rm -rf ${EXTERNAL_PATH}
-	rm -rf $(SDB_DYLIBNAME) *.o
 
 # Users need to specify their Postgres installation path through pg_config. For
 # example: /usr/local/pgsql/bin/pg_config or /usr/lib/postgresql/9.1/bin/pg_config

@@ -105,16 +105,16 @@ Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
    PG_RETURN_POINTER ( fdwRoutine ) ;
 }
 
-/* sdbSerializeDocument serializes the bson document to a constant
+/* sdbSerializeDocument serializes the sdbbson document to a constant
  * Note this function just copies the pointer of documents' data,
  * therefore the caller should NOT destroy the object
  */
-static Const *sdbSerializeDocument ( bson *document )
+static Const *sdbSerializeDocument ( sdbbson *document )
 {
    Const *serializedDocument = NULL ;
    Datum documentDatum       = 0 ;
-   const CHAR *documentData  = bson_data ( document ) ;
-   INT32 documentSize        = bson_buffer_size ( document ) ;
+   const CHAR *documentData  = sdbbson_data ( document ) ;
+   INT32 documentSize        = sdbbson_buffer_size ( document ) ;
    documentDatum             = CStringGetDatum ( documentData ) ;
    serializedDocument        = makeConst ( CSTRINGOID, -1,
                                            InvalidOid, documentSize,
@@ -122,15 +122,15 @@ static Const *sdbSerializeDocument ( bson *document )
    return serializedDocument ;
 }
 
-/* sdbDeserializeDocument deserializes a constant into bson document
+/* sdbDeserializeDocument deserializes a constant into sdbbson document
  */
 static void sdbDeserializeDocument ( Const *constant,
-                                     bson *document )
+                                     sdbbson *document )
 {
    Datum documentDatum = constant->constvalue ;
    CHAR *documentData = DatumGetCString ( documentDatum ) ;
-   bson_init_size ( document, 0 ) ;
-   bson_init_finished_data ( document, documentData ) ;
+   sdbbson_init_size ( document, 0 ) ;
+   sdbbson_init_finished_data ( document, documentData ) ;
    return ;
 }
 
@@ -196,7 +196,7 @@ static List *sdbUniqueColumnList ( List *operatorList )
 }
 
 /* sdbAppendConstantValue appends to query document with key and value */
-static void sdbAppendConstantValue ( bson *queryDocument,
+static void sdbAppendConstantValue ( sdbbson *queryDocument,
                                      const CHAR *keyName,
                                      Const *constant )
 {
@@ -206,7 +206,7 @@ static void sdbAppendConstantValue ( bson *queryDocument,
    if ( constantNull )
    {
       /* this matches null and not exists for both table and index scan */
-      bson_append_int ( queryDocument, "$isnull", 1 ) ;
+      sdbbson_append_int ( queryDocument, "$isnull", 1 ) ;
       goto done ;
    }
    switch ( constantTypeId )
@@ -214,44 +214,44 @@ static void sdbAppendConstantValue ( bson *queryDocument,
    case INT2OID :
    {
       INT16 value = DatumGetInt16 ( constantValue ) ;
-      bson_append_int ( queryDocument, keyName, ( INT32 ) value ) ;
+      sdbbson_append_int ( queryDocument, keyName, ( INT32 ) value ) ;
       break ;
    }
    case INT4OID :
    {
       INT32 value = DatumGetInt32 ( constantValue ) ;
-      bson_append_int ( queryDocument, keyName, value ) ;
+      sdbbson_append_int ( queryDocument, keyName, value ) ;
       break ;
    }
    case INT8OID :
    {
       INT64 value = DatumGetInt64 ( constantValue ) ;
-      bson_append_long ( queryDocument, keyName, value ) ;
+      sdbbson_append_long ( queryDocument, keyName, value ) ;
       break ;
    }
    case FLOAT4OID :
    {
       FLOAT32 value = DatumGetFloat4 ( constantValue ) ;
-      bson_append_double ( queryDocument, keyName, (FLOAT64)value ) ;
+      sdbbson_append_double ( queryDocument, keyName, (FLOAT64)value ) ;
       break ;
    }
    case FLOAT8OID :
    {
       FLOAT64 value = DatumGetFloat8 ( constantValue ) ;
-      bson_append_double ( queryDocument, keyName, value ) ;
+      sdbbson_append_double ( queryDocument, keyName, value ) ;
       break ;
    }
    case NUMERICOID :
    {
       Datum valueDatum = DirectFunctionCall1 ( numeric_float8, constantValue ) ;
       FLOAT64 value    = DatumGetFloat8 ( valueDatum ) ;
-      bson_append_double ( queryDocument, keyName, value ) ;
+      sdbbson_append_double ( queryDocument, keyName, value ) ;
       break ;
    }
    case BOOLOID :
    {
       BOOLEAN value = DatumGetBool ( constantValue ) ;
-      bson_append_bool ( queryDocument, keyName, value ) ;
+      sdbbson_append_bool ( queryDocument, keyName, value ) ;
       break ;
    }
    case BPCHAROID :
@@ -263,7 +263,7 @@ static void sdbAppendConstantValue ( bson *queryDocument,
       bool typeVarLength    = false ;
       getTypeOutputInfo ( constantTypeId, &outputFunctionId, &typeVarLength ) ;
       outputString = OidOutputFunctionCall ( outputFunctionId, constantValue ) ;
-      bson_append_string ( queryDocument, keyName, outputString ) ;
+      sdbbson_append_string ( queryDocument, keyName, outputString ) ;
       break ;
    }
    case NAMEOID :
@@ -271,12 +271,12 @@ static void sdbAppendConstantValue ( bson *queryDocument,
       CHAR *outputString    = NULL ;
       Oid outputFunctionId  = InvalidOid ;
       bool typeVarLength    = false ;
-      bson_oid_t bsonObjectId ;
-      memset ( bsonObjectId.bytes, 0, sizeof ( bsonObjectId.bytes ) ) ;
+      sdbbson_oid_t sdbbsonObjectId ;
+      memset ( sdbbsonObjectId.bytes, 0, sizeof ( sdbbsonObjectId.bytes ) ) ;
       getTypeOutputInfo ( constantTypeId, &outputFunctionId, &typeVarLength ) ;
       outputString = OidOutputFunctionCall ( outputFunctionId, constantValue ) ;
-      bson_oid_from_string ( &bsonObjectId, outputString ) ;
-      bson_append_oid ( queryDocument, keyName, &bsonObjectId ) ;
+      sdbbson_oid_from_string ( &sdbbsonObjectId, outputString ) ;
+      sdbbson_append_oid ( queryDocument, keyName, &sdbbsonObjectId ) ;
       break ;
    }
    case DATEOID :
@@ -285,7 +285,7 @@ static void sdbAppendConstantValue ( bson *queryDocument,
       Timestamp valueTimestamp = DatumGetTimestamp ( valueDatum ) ;
       INT64 valueMicroSecs = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS ;
       INT64 valueMilliSecs = valueMicroSecs / 1000 ;
-      bson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
+      sdbbson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
       break ;
    }
    case TIMESTAMPOID :
@@ -294,7 +294,7 @@ static void sdbAppendConstantValue ( bson *queryDocument,
       Timestamp valueTimestamp = DatumGetTimestamp ( constantValue ) ;
       INT64 valueMicroSecs = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS ;
       INT64 valueMilliSecs = valueMicroSecs / 1000 ;
-      bson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
+      sdbbson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
       break ;
    }
    default :
@@ -436,10 +436,10 @@ static List *sdbColumnList ( RelOptInfo *baserel )
    return columnList ;
 }
 
-/* sdbBuildQuery build bson query from opExpressionList */
+/* sdbBuildQuery build sdbbson query from opExpressionList */
 static INT32 sdbBuildQuery ( Oid relationId,
                              List *opExpressionList,
-                             bson *queryDocument )
+                             sdbbson *queryDocument )
 {
    INT32 rc                       = SDB_OK ;
    List *columnList               = NIL ;
@@ -464,7 +464,7 @@ static INT32 sdbBuildQuery ( Oid relationId,
       /* find all expression for the column */
       columnOperatorList = sdbColumnOperatorList ( column, opExpressionList ) ;
       /* for each expression, start a sub-document */
-      bson_append_start_object ( queryDocument, columnName ) ;
+      sdbbson_append_start_object ( queryDocument, columnName ) ;
       /* add element into subdocument */
       foreach ( columnOperatorCell, columnOperatorList )
       {
@@ -480,9 +480,9 @@ static INT32 sdbBuildQuery ( Oid relationId,
          sdbAppendConstantValue ( queryDocument, sdbOpName, constant ) ;
          /* TODO: variable comparison may also needed */
       }
-      bson_append_finish_object ( queryDocument ) ;
+      sdbbson_append_finish_object ( queryDocument ) ;
    }
-   bson_finish ( queryDocument ) ;
+   sdbbson_finish ( queryDocument ) ;
    return rc ;
 }
 
@@ -670,7 +670,7 @@ Datum sdb_fdw_validator ( PG_FUNCTION_ARGS )
    PG_RETURN_VOID () ;
 }
 
-/* sdbColumnMappingHash creates a hash table to map bson fields into PG column
+/* sdbColumnMappingHash creates a hash table to map sdbbson fields into PG column
  * index
  */
 static HTAB *sdbColumnMappingHash ( Oid foreignTableId,
@@ -732,14 +732,14 @@ error :
    goto done ;
 }
 
-/* sdbColumnTypesCompatible checks if a bson type is compatible with PG type */
-static BOOLEAN sdbColumnTypesCompatible ( bson_type bsonType, Oid columnTypeId )
+/* sdbColumnTypesCompatible checks if a sdbbson type is compatible with PG type */
+static BOOLEAN sdbColumnTypesCompatible ( sdbbson_type sdbbsonType, Oid columnTypeId )
 {
    BOOLEAN compatibleType = FALSE ;
    switch ( columnTypeId )
    {
    case BOOLOID :
-      if ( BSON_BOOL == bsonType )
+      if ( BSON_BOOL == sdbbsonType )
       {
          compatibleType = TRUE ;
       }
@@ -753,8 +753,8 @@ static BOOLEAN sdbColumnTypesCompatible ( bson_type bsonType, Oid columnTypeId )
    case FLOAT8OID :
    case NUMERICOID :
    {
-      if ( BSON_INT == bsonType || BSON_LONG == bsonType ||
-           BSON_DOUBLE == bsonType )
+      if ( BSON_INT == sdbbsonType || BSON_LONG == sdbbsonType ||
+           BSON_DOUBLE == sdbbsonType )
       {
          compatibleType = TRUE ;
       }
@@ -764,13 +764,13 @@ static BOOLEAN sdbColumnTypesCompatible ( bson_type bsonType, Oid columnTypeId )
    case VARCHAROID :
    case TEXTOID :
    {
-      if ( BSON_STRING == bsonType )
+      if ( BSON_STRING == sdbbsonType )
          compatibleType = TRUE ;
       break ;
    }
    case NAMEOID :
    {
-      if ( BSON_OID == bsonType )
+      if ( BSON_OID == sdbbsonType )
          compatibleType = TRUE ;
       break ;
    }
@@ -778,14 +778,14 @@ static BOOLEAN sdbColumnTypesCompatible ( bson_type bsonType, Oid columnTypeId )
    case TIMESTAMPOID :
    case TIMESTAMPTZOID :
    {
-      if ( BSON_DATE == bsonType )
+      if ( BSON_DATE == sdbbsonType )
          compatibleType = TRUE ;
       break ;
    }
    default :
    {
       ereport ( ERROR, ( errcode ( ERRCODE_FDW_INVALID_DATA_TYPE ),
-                         errmsg ( "cannot convert bson type to column type" ),
+                         errmsg ( "cannot convert sdbbson type to column type" ),
                          errhint ( "Column type: %u",
                                    (UINT32)columnTypeId ) ) ) ;
       break ;
@@ -794,9 +794,9 @@ static BOOLEAN sdbColumnTypesCompatible ( bson_type bsonType, Oid columnTypeId )
    return compatibleType ;
 }
 
-/* sdbColumnValue converts bson value into PG datum
+/* sdbColumnValue converts sdbbson value into PG datum
  */
-static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
+static Datum sdbColumnValue ( sdbbson_iterator *sdbbsonIterator, Oid columnTypeId,
                               INT32 columnTypeMod )
 {
    Datum columnValue = 0 ;
@@ -804,50 +804,50 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    {
    case INT2OID :
    {
-      INT16 value = (INT16) bson_iterator_int ( bsonIterator ) ;
+      INT16 value = (INT16) sdbbson_iterator_int ( sdbbsonIterator ) ;
       columnValue = Int16GetDatum ( value ) ;
       break ;
    }
    case INT4OID :
    {
-      INT32 value = bson_iterator_int ( bsonIterator ) ;
+      INT32 value = sdbbson_iterator_int ( sdbbsonIterator ) ;
       columnValue = Int32GetDatum ( value ) ;
       break ;
    }
    case INT8OID :
    {
-      INT64 value = bson_iterator_long ( bsonIterator ) ;
+      INT64 value = sdbbson_iterator_long ( sdbbsonIterator ) ;
       columnValue = Int64GetDatum ( value ) ;
       break ;
    }
    case FLOAT4OID :
    {
-      FLOAT32 value = (FLOAT32)bson_iterator_double ( bsonIterator ) ;
+      FLOAT32 value = (FLOAT32)sdbbson_iterator_double ( sdbbsonIterator ) ;
       columnValue = Float4GetDatum ( value ) ;
       break ;
    }
    case FLOAT8OID :
    {
-      FLOAT64 value = bson_iterator_double ( bsonIterator ) ;
+      FLOAT64 value = sdbbson_iterator_double ( sdbbsonIterator ) ;
       columnValue = Float8GetDatum ( value ) ;
       break ;
    }
    case NUMERICOID :
    {
-      FLOAT64 value = bson_iterator_double ( bsonIterator ) ;
+      FLOAT64 value = sdbbson_iterator_double ( sdbbsonIterator ) ;
       Datum valueDatum = Float8GetDatum ( value ) ;
       columnValue = DirectFunctionCall1 ( float8_numeric, valueDatum ) ;
       break ;
    }
    case BOOLOID :
    {
-      BOOLEAN value = bson_iterator_bool ( bsonIterator ) ;
+      BOOLEAN value = sdbbson_iterator_bool ( sdbbsonIterator ) ;
       columnValue = BoolGetDatum ( value ) ;
       break ;
    }
    case BPCHAROID :
    {
-      const CHAR *value = bson_iterator_string ( bsonIterator ) ;
+      const CHAR *value = sdbbson_iterator_string ( sdbbsonIterator ) ;
       Datum valueDatum = CStringGetDatum ( value ) ;
       columnValue = DirectFunctionCall3 ( bpcharin, valueDatum,
                                           ObjectIdGetDatum ( InvalidOid ),
@@ -856,7 +856,7 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    }
    case VARCHAROID :
    {
-      const CHAR *value = bson_iterator_string ( bsonIterator ) ;
+      const CHAR *value = sdbbson_iterator_string ( sdbbsonIterator ) ;
       Datum valueDatum = CStringGetDatum ( value ) ;
       columnValue = DirectFunctionCall3 ( varcharin, valueDatum,
                                           ObjectIdGetDatum ( InvalidOid ),
@@ -865,7 +865,7 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    }
    case TEXTOID :
    {
-      const CHAR *value = bson_iterator_string ( bsonIterator ) ;
+      const CHAR *value = sdbbson_iterator_string ( sdbbsonIterator ) ;
       columnValue       = CStringGetTextDatum ( value ) ;
       break ;
    }
@@ -873,8 +873,8 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    {
       CHAR value [ NAMEDATALEN ] = {0} ;
       Datum valueDatum = 0 ;
-      bson_oid_t *bsonObjectId = bson_iterator_oid ( bsonIterator ) ;
-      bson_oid_to_string ( bsonObjectId, value ) ;
+      sdbbson_oid_t *sdbbsonObjectId = sdbbson_iterator_oid ( sdbbsonIterator ) ;
+      sdbbson_oid_to_string ( sdbbsonObjectId, value ) ;
       valueDatum               = CStringGetDatum ( value ) ;
       columnValue = DirectFunctionCall3 ( namein, valueDatum,
                                           ObjectIdGetDatum ( InvalidOid ),
@@ -883,7 +883,7 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    }
    case DATEOID :
    {
-      INT64 valueMillis    = bson_iterator_date ( bsonIterator ) ;
+      INT64 valueMillis    = sdbbson_iterator_date ( sdbbsonIterator ) ;
       INT64 timestamp      = ( valueMillis * 1000L ) - POSTGRES_TO_UNIX_EPOCH_USECS ;
       Datum timestampDatum = TimestampGetDatum ( timestamp ) ;
       columnValue = DirectFunctionCall1 ( timestamp_date, timestampDatum ) ;
@@ -892,7 +892,7 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    case TIMESTAMPOID :
    case TIMESTAMPTZOID :
    {
-      INT64 valueMillis = bson_iterator_date ( bsonIterator ) ;
+      INT64 valueMillis = sdbbson_iterator_date ( sdbbsonIterator ) ;
       INT64 timestamp   = ( valueMillis * 1000L ) -
                           POSTGRES_TO_UNIX_EPOCH_USECS ;
       columnValue       = TimestampGetDatum ( timestamp ) ;
@@ -901,7 +901,7 @@ static Datum sdbColumnValue ( bson_iterator *bsonIterator, Oid columnTypeId,
    default :
    {
       ereport ( ERROR, ( errcode ( ERRCODE_FDW_INVALID_DATA_TYPE ),
-                         errmsg ( "cannot convert bson type to column type" ),
+                         errmsg ( "cannot convert sdbbson type to column type" ),
                          errhint ( "Column type: %u",
                                    (UINT32)columnTypeId ) ) ) ;
       break ;
@@ -917,7 +917,7 @@ static void sdbFreeScanState ( SdbExecState *executionState )
    if ( !executionState )
       goto done ;
    if ( executionState->queryDocument )
-      bson_dispose ( executionState->queryDocument ) ;
+      sdbbson_dispose ( executionState->queryDocument ) ;
    sdbReleaseCursor ( executionState->hCursor ) ;
    sdbReleaseCollection ( executionState->hCollection ) ;
    sdbDisconnect ( executionState->hConnection ) ;
@@ -928,7 +928,7 @@ done :
 
 /* sdbColumnValueArray build array
  */
-static Datum sdbColumnValueArray ( bson_iterator *bsonIterator,
+static Datum sdbColumnValueArray ( sdbbson_iterator *sdbbsonIterator,
                                    Oid valueTypeId )
 {
    UINT32 arrayCapacity          = INITIAL_ARRAY_CAPACITY ;
@@ -939,9 +939,9 @@ static Datum sdbColumnValueArray ( bson_iterator *bsonIterator,
    bool typeByValue              = false ;
    CHAR typeAlignment            = 0 ;
    INT16 typeLength              = 0 ;
-   bson_iterator bsonSubIterator = { NULL, 0 } ;
+   sdbbson_iterator sdbbsonSubIterator = { NULL, 0 } ;
    Datum *columnValueArray       = NULL ;
-   bson_iterator_subiterator ( bsonIterator, &bsonSubIterator ) ;
+   sdbbson_iterator_subiterator ( sdbbsonIterator, &sdbbsonSubIterator ) ;
    columnValueArray = (Datum*)palloc0 ( INITIAL_ARRAY_CAPACITY *
                                         sizeof(Datum)) ;
    if ( !columnValueArray )
@@ -953,13 +953,13 @@ static Datum sdbColumnValueArray ( bson_iterator *bsonIterator,
       goto error ;
    }
    /* go through each element in array */
-   while ( bson_iterator_next ( &bsonSubIterator ) )
+   while ( sdbbson_iterator_next ( &sdbbsonSubIterator ) )
    {
-      bson_type bsonType = bson_iterator_type ( &bsonSubIterator ) ;
+      sdbbson_type sdbbsonType = sdbbson_iterator_type ( &sdbbsonSubIterator ) ;
       BOOLEAN compatibleTypes = FALSE ;
-      compatibleTypes = sdbColumnTypesCompatible ( bsonType, valueTypeId ) ;
+      compatibleTypes = sdbColumnTypesCompatible ( sdbbsonType, valueTypeId ) ;
       /* skip the element if it's not compatible */
-      if ( BSON_NULL == bsonType || !compatibleTypes )
+      if ( BSON_NULL == sdbbsonType || !compatibleTypes )
       {
          continue ;
       }
@@ -970,7 +970,7 @@ static Datum sdbColumnValueArray ( bson_iterator *bsonIterator,
                                        arrayCapacity * sizeof(Datum) ) ;
       }
       /* use default type modifier to convert column value */
-      columnValueArray[arrayIndex] = sdbColumnValue ( &bsonSubIterator,
+      columnValueArray[arrayIndex] = sdbColumnValue ( &sdbbsonSubIterator,
                                                       valueTypeId, 0 ) ;
       ++arrayIndex ;
    }
@@ -986,30 +986,30 @@ error :
    goto done ;
 }
 
-/* sdbFillTupleSlot go through bson document and the hash table, try to build
+/* sdbFillTupleSlot go through sdbbson document and the hash table, try to build
  * the tuple for PG
- * documentKey: if we want to find things in nested bson object
+ * documentKey: if we want to find things in nested sdbbson object
  */
-static void sdbFillTupleSlot ( const bson *bsonDocument,
+static void sdbFillTupleSlot ( const sdbbson *sdbbsonDocument,
                                const CHAR *documentKey,
                                HTAB *columnMappingHash,
                                Datum *columnValues,
                                bool *columnNulls )
 {
-   bson_iterator bsonIterator = { NULL, 0 } ;
-   bson_iterator_init ( &bsonIterator, bsonDocument ) ;
+   sdbbson_iterator sdbbsonIterator = { NULL, 0 } ;
+   sdbbson_iterator_init ( &sdbbsonIterator, sdbbsonDocument ) ;
 
-   /* for each element in bson object */
-   while ( bson_iterator_next ( &bsonIterator ) )
+   /* for each element in sdbbson object */
+   while ( sdbbson_iterator_next ( &sdbbsonIterator ) )
    {
-      const CHAR *bsonKey = bson_iterator_key ( &bsonIterator ) ;
-      bson_type bsonType = bson_iterator_type ( &bsonIterator ) ;
+      const CHAR *sdbbsonKey = sdbbson_iterator_key ( &sdbbsonIterator ) ;
+      sdbbson_type sdbbsonType = sdbbson_iterator_type ( &sdbbsonIterator ) ;
       SdbColumnMapping *columnMapping = NULL ;
       Oid columnTypeId                = InvalidOid ;
       Oid columnArrayTypeId           = InvalidOid ;
       BOOLEAN compatibleTypes         = FALSE ;
       bool handleFound                = false ;
-      const CHAR *bsonFullKey         = NULL ;
+      const CHAR *sdbbsonFullKey         = NULL ;
       void *hashKey                   = NULL ;
 
       /*
@@ -1021,43 +1021,43 @@ static void sdbFillTupleSlot ( const bson *bsonDocument,
        *    },
        *    b: "hello"
        * }
-       * first round we have documentKey=NULL, then bsonKey=a
+       * first round we have documentKey=NULL, then sdbbsonKey=a
        * next we have nested object, then recursively we call sdbFillTupleSlot
        * so we have
-       * documentKey=a, bsonKey=A, then we have bsonFullKey=a.A
+       * documentKey=a, sdbbsonKey=A, then we have sdbbsonFullKey=a.A
        */
       if ( documentKey )
       {
          /* if we want to find entries in nested object, we should use this one
           */
-         StringInfo bsonFullKeyString = makeStringInfo () ;
-         appendStringInfo ( bsonFullKeyString, "%s.%s", documentKey,
-                            bsonKey ) ;
-         bsonFullKey = bsonFullKeyString->data ;
+         StringInfo sdbbsonFullKeyString = makeStringInfo () ;
+         appendStringInfo ( sdbbsonFullKeyString, "%s.%s", documentKey,
+                            sdbbsonKey ) ;
+         sdbbsonFullKey = sdbbsonFullKeyString->data ;
       }
       else
       {
-         bsonFullKey = bsonKey ;
+         sdbbsonFullKey = sdbbsonKey ;
       }
       /* recurse into nested objects */
-      if ( BSON_OBJECT == bsonType )
+      if ( BSON_OBJECT == sdbbsonType )
       {
-         bson subObject ;
-         bson_iterator_subobject ( &bsonIterator, &subObject ) ;
-         sdbFillTupleSlot ( &subObject, bsonFullKey,
+         sdbbson subObject ;
+         sdbbson_iterator_subobject ( &sdbbsonIterator, &subObject ) ;
+         sdbFillTupleSlot ( &subObject, sdbbsonFullKey,
                             columnMappingHash, columnValues, columnNulls ) ;
          continue ;
       }
-      /* match columns for bson key */
-      hashKey = (void*)bsonFullKey ;
+      /* match columns for sdbbson key */
+      hashKey = (void*)sdbbsonFullKey ;
       columnMapping = (SdbColumnMapping*)hash_search ( columnMappingHash,
                                                        hashKey,
                                                        HASH_FIND,
                                                        &handleFound ) ;
-      /* if we cannot find the column, or if the bson type is null, let's just
+      /* if we cannot find the column, or if the sdbbson type is null, let's just
        * leave it as null
        */
-      if ( NULL == columnMapping || BSON_NULL == bsonType )
+      if ( NULL == columnMapping || BSON_NULL == sdbbsonType )
       {
          continue ;
       }
@@ -1065,13 +1065,13 @@ static void sdbFillTupleSlot ( const bson *bsonDocument,
       /* check if columns have compatible types */
       columnTypeId = columnMapping->columnTypeId ;
       columnArrayTypeId = columnMapping->columnArrayTypeId ;
-      if ( OidIsValid ( columnArrayTypeId ) && bsonType == BSON_ARRAY )
+      if ( OidIsValid ( columnArrayTypeId ) && sdbbsonType == BSON_ARRAY )
       {
          compatibleTypes = TRUE ;
       }
       else
       {
-         compatibleTypes = sdbColumnTypesCompatible ( bsonType, columnTypeId ) ;
+         compatibleTypes = sdbColumnTypesCompatible ( sdbbsonType, columnTypeId ) ;
       }
 
       /* if types are incompatible, leave this column null */
@@ -1083,7 +1083,7 @@ static void sdbFillTupleSlot ( const bson *bsonDocument,
       if ( OidIsValid ( columnArrayTypeId ) )
       {
          INT32 columnIndex = columnMapping->columnIndex ;
-         columnValues[columnIndex] = sdbColumnValueArray ( &bsonIterator,
+         columnValues[columnIndex] = sdbColumnValueArray ( &sdbbsonIterator,
                                                            columnArrayTypeId ) ;
          columnNulls[columnIndex] = false ;
       }
@@ -1091,7 +1091,7 @@ static void sdbFillTupleSlot ( const bson *bsonDocument,
       {
          INT32 columnIndex = columnMapping->columnIndex ;
          Oid columnTypeMod = columnMapping->columnTypeMod ;
-         columnValues[columnIndex] = sdbColumnValue ( &bsonIterator,
+         columnValues[columnIndex] = sdbColumnValue ( &sdbbsonIterator,
                                                       columnTypeId,
                                                       columnTypeMod ) ;
          columnNulls[columnIndex] = false  ;
@@ -1300,11 +1300,11 @@ static ForeignScan *SdbGetForeignPlan ( PlannerInfo *root,
    List *opExpressionList    = NIL ;
    Const *queryBuffer        = NULL ;
    List *columnList          = NIL ;
-   bson queryDocument ;
-   bson_init ( &queryDocument ) ;
+   sdbbson queryDocument ;
+   sdbbson_init ( &queryDocument ) ;
    /* We keep all restriction clauses at PG ide to re-check */
    restrictionClauses = extract_actual_clauses ( restrictionClauses, FALSE ) ;
-   /* construct the query bson document */
+   /* construct the query sdbbson document */
    opExpressionList = sdbApplicableOpExpressionList ( baserel ) ;
    rc = sdbBuildQuery ( foreignTableId, opExpressionList, &queryDocument ) ;
    if ( rc )
@@ -1324,12 +1324,12 @@ done :
                                      foreignPrivateList ) ;
    /* object should NOT be destroyed since SerializeDocument does not make
     * memory copy
-    * So bson_destroy is only called when rc != SDB_OK ( that means no
+    * So sdbbson_destroy is only called when rc != SDB_OK ( that means no
     * SerializeDocument is called )
     */
    if ( rc )
    {
-      bson_destroy ( &queryDocument ) ;
+      sdbbson_destroy ( &queryDocument ) ;
    }
    return foreignScan ;
 error :
@@ -1357,7 +1357,7 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
                                   INT32 executorFlags )
 {
    SdbInputOptions options ;
-   bson *queryDocument             = NULL ;
+   sdbbson *queryDocument             = NULL ;
    INT32 rc                        = SDB_OK ;
    sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
    sdbCursorHandle hCursor         = SDB_INVALID_HANDLE ;
@@ -1375,16 +1375,16 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
    {
       goto done ;
    }
-   queryDocument = bson_create () ;
+   queryDocument = sdbbson_create () ;
    if ( !queryDocument )
    {
       ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
-                         errmsg ( "Unable to allocate bson object memory" ),
+                         errmsg ( "Unable to allocate sdbbson object memory" ),
                          errhint ( "Make sure the memory pool or ulimit is "
                                    "properly configured" ) ) ) ;
       goto error ;
    }
-   bson_init ( queryDocument ) ;
+   sdbbson_init ( queryDocument ) ;
    /* retreive target information */
    foreignTableId = RelationGetRelid ( scanState->ss.ss_currentRelation ) ;
    sdbGetOptions ( foreignTableId, &options ) ;
@@ -1465,7 +1465,7 @@ done :
 error :
    if ( queryDocument )
    {
-      bson_dispose ( queryDocument ) ;
+      sdbbson_dispose ( queryDocument ) ;
    }
    goto done ;
 }
@@ -1475,7 +1475,7 @@ error :
  */
 static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
 {
-   bson recordObj ;
+   sdbbson recordObj ;
    INT32 rc                     = SDB_OK ;
    SdbExecState *executionState = (SdbExecState*)scanState->fdw_state ;
    TupleTableSlot *tupleSlot    = scanState->ss.ss_ScanTupleSlot ;
@@ -1483,9 +1483,9 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
    Datum *columnValues          = tupleSlot->tts_values ;
    bool *columnNulls            = tupleSlot->tts_isnull ;
    INT32 columnCount            = tupleDescriptor->natts ;
-   const CHAR *bsonDocumentKey  = NULL ;
+   const CHAR *sdbbsonDocumentKey  = NULL ;
 
-   bson_init ( &recordObj ) ;
+   sdbbson_init ( &recordObj ) ;
    /* if there's nothing more to fetch, we return empty slot to represent
     * there's no more data to read
     */
@@ -1513,12 +1513,12 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
       /* if we get EOC, let's just goto done to return empty tupleSlot */
       goto done ;
    }
-   sdbFillTupleSlot ( &recordObj, bsonDocumentKey,
+   sdbFillTupleSlot ( &recordObj, sdbbsonDocumentKey,
                       executionState->columnMappingHash,
                       columnValues, columnNulls ) ;
    ExecStoreVirtualTuple ( tupleSlot ) ;
 done :
-   bson_destroy ( &recordObj ) ;
+   sdbbson_destroy ( &recordObj ) ;
    return tupleSlot ;
 error :
    goto done ;
@@ -1594,9 +1594,9 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
    INT32 executorFlags               = 0 ;
    MemoryContext oldContext          = CurrentMemoryContext ;
    MemoryContext tupleContext        = NULL ;
-   bson queryDocument ;
+   sdbbson queryDocument ;
 
-   bson_init ( &queryDocument ) ;
+   sdbbson_init ( &queryDocument ) ;
 
    /* create columns in the relation */
    tupleDescriptor = RelationGetDescr ( relation ) ;
@@ -1659,8 +1659,8 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
    }
    while ( TRUE )
    {
-      bson recordObj ;
-      bson_init ( &recordObj ) ;
+      sdbbson recordObj ;
+      sdbbson_init ( &recordObj ) ;
       /* check for any break or terminate events */
       vacuum_delay_point() ;
       /* init all values for this row to null */
@@ -1669,7 +1669,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
       rc = sdbNext ( hCursor, &recordObj ) ;
       if ( rc )
       {
-         bson_destroy ( &recordObj ) ;
+         sdbbson_destroy ( &recordObj ) ;
          if ( SDB_DMS_EOC != rc )
          {
             sdbFreeScanState ( executionState ) ;
@@ -1716,14 +1716,14 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
          rowCountToSkip -= 1 ;
       }
       rowCount += 1 ;
-      bson_destroy ( &recordObj ) ;
+      sdbbson_destroy ( &recordObj ) ;
    }
    sdbFreeScanState ( executionState ) ;
 done :
    MemoryContextDelete ( tupleContext ) ;
    pfree ( columnValues ) ;
    pfree ( columnNulls ) ;
-   bson_destroy ( &queryDocument ) ;
+   sdbbson_destroy ( &queryDocument ) ;
 
    /* get some result */
    relationName = RelationGetRelationName ( relation ) ;
