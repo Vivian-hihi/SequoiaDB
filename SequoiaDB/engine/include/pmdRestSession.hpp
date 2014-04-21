@@ -126,6 +126,8 @@ namespace engine
          virtual INT32     sessionType() const { return PMD_SESSION_REST ; }
          virtual UINT64    identifyID() ;
 
+         virtual INT32     run() ;
+
       public:
          httpConnection*   getRestConn() { return &_restConn ; }
          CHAR*             getFixBuff() ;
@@ -133,6 +135,10 @@ namespace engine
 
          void              restoreSession( restSessionInfo &sessionInfo ) ;
          void              saveSession( restSessionInfo &sessionInfo ) ;
+
+      protected:
+         virtual void            _onAttach () ;
+         virtual void            _onDetach () ;
 
       protected:
          virtual INT32  _onAuth( MsgHeader *msg ) ;
@@ -143,9 +149,7 @@ namespace engine
          httpConnection                _restConn ;
          CHAR                          *_pFixBuff ;
 
-         UINT64                        _loginTime ;
-         std::string                   _userName ;
-         
+         restSessionInfo               *_pSessionInfo ;
 
    } ;
    typedef _pmdRestSession pmdRestSession ;

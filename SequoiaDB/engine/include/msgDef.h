@@ -261,6 +261,8 @@
 #define FIELD_NAME_SHARD_NETIN               "shardNetIn"
 #define FIELD_NAME_SHARD_NETOUT              "shardNetOut"
 
+#define FIELD_NAME_SESSIONID                 "SessionID"
+
 #define IXM_FIELD_NAME_KEY                   "key"
 #define IXM_FIELD_NAME_NAME                  "name"
 #define IXM_FIELD_NAME_UNIQUE                "unique"
@@ -399,4 +401,4 @@ enum SDB_ROLE
    SDB_ROLE_MAX
 } ;
 
-#endif
+#endif // MSGDEF_H__

@@ -29,6 +29,8 @@
 
 #include "pmdRestSession.hpp"
 #include "omManager.hpp"
+#include "pmdEDUMgr.hpp"
+#include "msgDef.h"
 
 namespace engine
 {
@@ -40,7 +42,7 @@ namespace engine
    :_pmdLocalSession( fd )
    {
       _pFixBuff         = NULL ;
-      _loginTime        = 0 ;
+      _pSessionInfo     = NULL ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -56,6 +58,72 @@ namespace engine
    {
       // TODO:XUJIANHUI
       return 0 ;
+   }
+
+   INT32 _pmdRestSession::run()
+   {
+      INT32 rc = SDB_OK ;
+      restAdaptor *pAdptor = sdbGetOMManager()->getRestAdptor() ;
+      pmdEDUMgr *pEDUMgr = NULL ;
+      const CHAR *pSessionID = NULL ;
+
+      if ( !_pEDUCB )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      pEDUMgr = _pEDUCB->getEDUMgr() ;
+
+      while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
+      {
+         _pEDUCB->resetInterrupt() ;
+         _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
+
+         // recv rest header
+         rc = pAdptor->getRequestHeader( this ) ;
+         if ( rc )
+         {
+            if ( SDB_APP_FORCED != rc )
+            {
+               PD_LOG( PDERROR, "Session[%s] failed to recv rest header, "
+                       "rc: %d", sessionName(), rc ) ;
+            }
+            break ;
+         }
+
+         // session is not exist
+         if ( !_pSessionInfo )
+         {
+            // find session id
+            rc = pAdptor->getHttpHeader( this, FIELD_NAME_SESSIONID,
+                                         &pSessionID ) ;
+            // if 'SessionID' exist, attach the sessionInfo
+            if ( pSessionID )
+            {
+               _pSessionInfo = sdbGetOMManager()->attachSessionInfo(
+                  pSessionID ) ;
+            }
+            else
+            {
+            }
+         }
+         
+      } // end while
+      
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _pmdRestSession::_onAttach()
+   {
+   }
+
+   void _pmdRestSession::_onDetach()
+   {
    }
 
    INT32 _pmdRestSession::_onAuth( MsgHeader * msg )
@@ -80,11 +148,6 @@ namespace engine
 
    void _pmdRestSession::restoreSession( restSessionInfo &sessionInfo )
    {
-      _authOK     = sessionInfo._authOK ;
-      _loginTime  = sessionInfo._attr._loginTime ;
-      _userName   = sessionInfo._attr._userName ;
-
-      //sessionInfo._isIn = 
    }
 
    void _pmdRestSession::saveSession( restSessionInfo &sessionInfo )
