@@ -551,7 +551,10 @@ INT32 _migCSVExtractor::_extractRecord ()
          // let's print the iterator into buffer using string delimiter
          t = bson_iterator_type( &it ) ;
          if ( BSON_OID == t || BSON_OBJECT == t ||
-              BSON_ARRAY == t || BSON_STRING == t )
+              BSON_ARRAY == t || BSON_STRING == t ||
+              BSON_MINKEY == t || BSON_MAXKEY == t ||
+              BSON_BINDATA == t || BSON_DATE == t ||
+              BSON_REGEX == t || BSON_TIMESTAMP == t  )
          {
             if ( BSON_STRING == t )
             {
