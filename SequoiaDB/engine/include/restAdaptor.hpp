@@ -14,17 +14,6 @@
 
 namespace engine
 {
-   enum HTTP_PARSE_COMMON
-   {
-      COM_INSERT = 0,
-      COM_DELETE,
-      COM_UPDATE,
-      COM_QUERY,
-      COM_SQL,
-      COM_LOGIN,
-      COM_GETFILE
-   } ;
-
    class restAdaptor : public SDBObject
    {
    private:
@@ -62,7 +51,11 @@ namespace engine
                             HTTP_PARSE_COMMON &common,
                             CHAR **pMsg,
                             INT32 &msgSize ) ;
-      INT32 sendResponse( pmdRestSession *pSession ) ;
+      void  setOPResult( pmdRestSession *pSession,
+                         INT32 result,
+                         const BSONObj &info ) ;
+      INT32 sendResponse( pmdRestSession *pSession,
+                          HTTP_RESPONSE_CODE rspCode ) ;
 
       INT32 appendHttpHeader( pmdRestSession *pSession,
                               const CHAR *pKey,
