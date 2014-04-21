@@ -257,14 +257,4 @@ void _utilDataParser::setDel ( CHAR delChar, CHAR delField, CHAR delRecord )
 _utilDataParser::~_utilDataParser()
 {
    SAFE_OSS_FREE ( _buffer ) ;
-   if ( _headerline )
-   {
-      INT32 size = _vField.size() ;
-      for ( INT32 i = 0; i < size; ++i )
-      {
-         SAFE_OSS_FREE( _vField[i]->buffer ) ;
-         SDB_OSS_DEL ( _vField[i] ) ;
-      }
-      _vField.clear() ;
-   }
 }

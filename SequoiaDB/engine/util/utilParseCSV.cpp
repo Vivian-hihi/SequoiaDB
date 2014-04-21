@@ -314,48 +314,25 @@ error:
 
 
 PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCSV__ALLOCFIELD, "_utilCSVParser::_allocField" )
-INT32 _utilCSVParser::_allocField ( UINT32 size )
+INT32 _utilCSVParser::_allocField ()
 {
    INT32       rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILCSV__ALLOCFIELD );
    CHAR *newBuffer = NULL ;
 
-   if ( 0 < size )
+   _fieldSize += UTIL_DATA_HEADER_SIZE ;
+   newBuffer = (CHAR *)SDB_OSS_REALLOC ( _fieldBuffer, _fieldSize ) ;
+   if ( !newBuffer )
    {
-      _readNumStr = size ;
-      size += UTIL_DATA_HEADER_SIZE ;
-      newBuffer = (CHAR *)SDB_OSS_REALLOC ( _fieldBuffer, size ) ;
-      if ( !newBuffer )
-      {
-         SAFE_OSS_FREE ( _fieldBuffer ) ;
-         PD_LOG ( PDERROR,
-                  "Unable to allocate %d bytes memory", size ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ossMemset ( newBuffer + _readNumStr, 0, UTIL_DATA_HEADER_SIZE ) ;
-   }
-   else
-   {
-      size = UTIL_DATA_HEADER_SIZE ;
-      newBuffer = (CHAR *)SDB_OSS_MALLOC ( size ) ;
-      if ( !newBuffer )
-      {
-         PD_LOG ( PDERROR,
-                  "Unable to allocate %d bytes memory", size ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      ossMemset ( newBuffer, 0, size ) ;
-      if ( _nextFieldCursor )
-      {
-         ossStrncpy ( newBuffer, _nextFieldCursor, _readFreeSpace ) ;
-         _readNumStr = _readFreeSpace ;
-         _nextFieldCursor = NULL ;
-      }
+      SAFE_OSS_FREE ( _fieldBuffer ) ;
+      PD_LOG ( PDERROR,
+               "Unable to allocate %d bytes memory", _fieldSize ) ;
+      rc = SDB_OOM ;
+      goto error ;
    }
    _fieldBuffer = newBuffer ;
-   _fieldSize = size ;
+   _readFreeSpace = UTIL_DATA_HEADER_SIZE ;
+   ossMemset ( _fieldBuffer + _readNumStr, 0, UTIL_DATA_HEADER_SIZE ) ;
 done:
    PD_TRACE_EXITRC ( SDB__UTILCSV__ALLOCFIELD, rc );
    return rc ;
@@ -370,18 +347,27 @@ INT32 _utilCSVParser::_readFirstField( )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILCSV__READFIRSTFIELD ) ;
    BOOLEAN isFindField = FALSE ;
+   CHAR      *pNewCursor     = NULL ;
+   CHAR      *pCursor        = NULL ;
+   UINT32     cursorSize     = 0 ;
+   CHAR       *leftField     = NULL ;
+
+   if ( _fieldBuffer )
+   {
+      leftField = _fieldBuffer ;
+      pCursor = _fieldBuffer ;
+   }
 
    do
    {
-      if ( _headerline )
+      if ( _headerline && 0 == _readFreeSpace )
       {
-         rc = _allocField ( _fieldSize ) ;
+         rc = _allocField () ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Faild to _allocField, rc=%d", rc ) ;
             goto error ;
          }
-         _readFreeSpace = UTIL_DATA_HEADER_SIZE ;
          rc = _pAccessData->readNextBuffer ( _fieldBuffer + _readNumStr,
                                              _readFreeSpace ) ;
          if ( !isValidUTF8WSize ( _fieldBuffer + _readNumStr,
@@ -390,127 +376,89 @@ INT32 _utilCSVParser::_readFirstField( )
               rc = SDB_INVALIDARG ;
               PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
               goto error ;
-          }
-         if ( !isFindField )
-         {
-            _readFreeSpace += _readNumStr ;
-            _readNumStr = 0 ;
-            isFindField = TRUE ;
          }
          if ( rc )
          {
-            if ( rc == SDB_EOF && !_readFreeSpace )
+            if ( rc == SDB_EOF )
             {
-               goto done ;
+               if ( 0 == _readFreeSpace )
+               {
+                  //read file end, but not find field end
+                  rc = SDB_UTIL_CSV_FIELD_END ;
+                  goto done ;
+               }
+               else
+               {
+                  rc = SDB_OK ;
+               }
             }
-            else if ( rc != SDB_EOF )
+            else
             {
                PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
                goto error ;
             }
-            else
-            {
-               rc = SDB_OK ;
-            }
          }
+          pCursor = _fieldBuffer + _readNumStr ;
+          leftField = _fieldBuffer + _leftFieldSize ;
       }
-      rc = _findDelField() ;
-      if ( rc )
+      else if ( !_headerline && 0 == _readFreeSpace )
       {
-         if ( SDB_UTIL_CSV_FIELD_END == rc )
-         {
-            if( _headerline )
-            {
-               ossStrncpy ( _buffer, _nextFieldCursor, _readFreeSpace ) ;
-            }
-            rc = SDB_OK ;
-            break ;
-         }
-         else if ( SDB_UTIL_NOT_FIND_FIELD == rc )
-         {
-            isFindField = FALSE ;
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "Failed to findDelField rc = %d", rc ) ;
-            goto error ;
-         }
+         break ;
       }
-      else
-      {
-         isFindField = FALSE ;
-      }
-   }while ( TRUE ) ;
-done:
-   PD_TRACE_EXITRC ( SDB__UTILCSV__READFIRSTFIELD, rc );
-   return rc ;
-error:
-   goto done ;
-}
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCSV__FINDDELFIELD,"_utilCSVParser::_findDelField" )
-INT32 _utilCSVParser::_findDelField()
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__UTILCSV__FINDDELFIELD ) ;
-
-   UINT32     readFreeSpace  = _readFreeSpace ;
-   CHAR      *pNewCursor     = NULL ;
-   CHAR      *pCursor        = _fieldBuffer + _readNumStr ;
-   _fieldBuf *pFieldBuf      = NULL ;
-
-   if ( !_leftField )
-   {
-      pNewCursor = _trimLeft ( pCursor, readFreeSpace ) ;
-      _readNumStr += _readFreeSpace - readFreeSpace ;
-      _readFreeSpace = readFreeSpace ;
-      if ( !pNewCursor )
-      {
-         rc = SDB_UTIL_NOT_FIND_FIELD ;
-         goto done ;
-      }
-      _leftField = pNewCursor ;
-      pCursor = pNewCursor ;
-   }
-
-   while ( pCursor )
-   {
-      if ( 0 == _readFreeSpace )
-      {
-         if ( _headerline )
-         {
-            rc = SDB_UTIL_NOT_FIND_FIELD ;
-            goto done ;
-         }
-         else
-         {
-            rc = SDB_UTIL_CSV_FIELD_END ;
-            break ;
-         }
-      }
       if ( _delChar[0] == *pCursor )
       {
-         ++_delCharNum ;
          --_readFreeSpace ;
          ++_readNumStr ;
          ++pCursor ;
+         _isString = !_isString ;
       }
-      else if ( ( (_headerline && _delField[0] == *pCursor) ||
-                  (!_headerline && ',' == *pCursor) ||
+      else if ( ( _delField[0] == *pCursor ||
                   _delRecord[0] == *pCursor ) )
       {
-         if ( _delCharNum > 0 && _delCharNum % 2 != 0 )
-         {
-            _isString = !_isString ;
-         }
-         _delCharNum = 0 ;
          if ( !_isString )
          {
             if ( _delRecord[0] == *pCursor )
             {
                rc = SDB_UTIL_CSV_FIELD_END ;
             }
-            break ;
+
+            if ( pCursor > leftField )
+            {
+               cursorSize = pCursor - leftField ;
+               pNewCursor = _trimLeft ( leftField, cursorSize ) ;
+               leftField = pNewCursor ;
+               if ( !pNewCursor )
+               {
+                  _vField.push_back ( NULL ) ;
+               }
+               else
+               {
+                  cursorSize = pCursor - leftField ;
+                  pNewCursor = _trimRight ( pCursor - 1, cursorSize ) ;
+                  *( pNewCursor + 1 ) = 0 ;
+                  _vField.push_back ( leftField ) ;
+               }
+            }
+            else
+            {
+               _vField.push_back ( NULL ) ;
+            }
+
+            --_readFreeSpace ;
+            ++_readNumStr ;
+            ++pCursor ;
+            if ( SDB_UTIL_CSV_FIELD_END == rc )
+            {
+               rc = SDB_OK ;
+               _nextFieldCursor = pCursor ;
+               break ;
+            }
+            else
+            {
+               leftField = pCursor ;
+               _leftFieldSize = leftField - _fieldBuffer ;
+            }
          }
          else
          {
@@ -521,61 +469,19 @@ INT32 _utilCSVParser::_findDelField()
       }
       else
       {
-         if ( _delCharNum > 0 && _delCharNum % 2 != 0 )
-         {
-            _isString = !_isString ;
-         }
-         _delCharNum = 0 ;
          --_readFreeSpace ;
          ++_readNumStr ;
          ++pCursor ;
       }
+   }while ( TRUE ) ;
+
+   if( _headerline && _readFreeSpace > 0 )
+   {
+      ossStrncpy ( _buffer, _nextFieldCursor, _readFreeSpace ) ;
    }
 
-   if ( _readFreeSpace )
-   {
-      --_readFreeSpace ;
-      if ( _readFreeSpace )
-      {
-         _nextFieldCursor = pCursor + 1 ;
-         ++_readNumStr ;
-      }
-   }
-
-   pFieldBuf = SDB_OSS_NEW _fieldBuf() ;
-   if ( !pFieldBuf )
-   {
-      rc = SDB_OOM ;
-      PD_LOG ( PDERROR, "Failed to new memory" ) ;
-      goto error ;
-   }
-
-   if ( pCursor > _leftField )
-   {
-      if ( _readFreeSpace )
-      {
-         UINT32 temp = pCursor - _leftField ;
-         pNewCursor = _trimRight ( pCursor - 1, temp ) ;
-         *( pNewCursor + 1 ) = 0 ;
-      }
-      pFieldBuf->fieldBuf = _leftField ;
-   }
-   else
-   {
-      pNewCursor = NULL ;
-      pFieldBuf->fieldBuf = NULL ;
-   }
-   pFieldBuf->buffer   = _fieldBuffer ;
-   _vField.push_back ( pFieldBuf ) ;
-
-   if ( _headerline )
-   {
-      _readNumStr = 0 ;
-      _fieldSize = 0 ;
-   }
-   _leftField = NULL ;
 done:
-   PD_TRACE_EXITRC ( SDB__UTILCSV__FINDDELFIELD, rc );
+   PD_TRACE_EXITRC ( SDB__UTILCSV__READFIRSTFIELD, rc );
    return rc ;
 error:
    goto done ;
@@ -587,8 +493,8 @@ _utilCSVParser::_utilCSVParser() : _curBuffer(NULL),
                                    _fieldSize(0),
                                    _readNumStr(0),
                                    _readFreeSpace(0),
+                                   _leftFieldSize(0),
                                    _fieldBuffer(NULL),
-                                   _leftField(NULL),
                                    _nextFieldCursor(NULL),
                                    _isString(FALSE),
                                    _delCharNum(0)
@@ -597,6 +503,11 @@ _utilCSVParser::_utilCSVParser() : _curBuffer(NULL),
 
 _utilCSVParser::~_utilCSVParser()
 {
+   if ( _headerline )
+   {
+      SAFE_OSS_FREE( _fieldBuffer ) ;
+      _vField.clear() ;
+   }
 }
 
 
@@ -698,7 +609,7 @@ INT32 _convertCSV::_convertCSVToJson ( CHAR *pBuffer, UINT32 size,
                {
                   JSON_BUF_APPEND ( ",", 1 ) ;
                }
-               pTemp = _parser->_vField[fieldNum]->fieldBuf ;
+               pTemp = _parser->_vField[fieldNum] ;
                if ( pTemp )
                {
                   //JSON_BUF_APPEND ( pTemp,
@@ -801,7 +712,7 @@ empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
             {
                JSON_BUF_APPEND ( ",", 1 ) ;
             }
-            pTemp = _parser->_vField[fieldNum]->fieldBuf ;
+            pTemp = _parser->_vField[fieldNum] ;
             if ( pTemp )
             {
                //JSON_BUF_APPEND ( pTemp,
@@ -869,7 +780,7 @@ empty field, you can set \"--spare true\" to add the field, rc = %d", rc ) ;
          {
             JSON_BUF_APPEND ( ",", 1 ) ;
          }
-         pTemp = _parser->_vField[fieldNum]->fieldBuf ;
+         pTemp = _parser->_vField[fieldNum] ;
          if ( pTemp )
          {
             //JSON_BUF_APPEND ( pTemp,
