@@ -61,6 +61,7 @@ static bool SdbAnalyzeForeignTable ( Relation relation,
                                      AcquireSampleRowsFunc *acquireSampleRowsFunc,
                                      BlockNumber *totalPageCount ) ;
 
+#if PG_VERSION_NUM>90300
 AddForeignUpdateTargets_function SdbAddForeignUpdateTargets = NULL ;
 PlanForeignModify_function SdbPlanForeignModify = NULL ;
 BeginForeignModify_function SdbBeginForeignModify = NULL ;
@@ -70,6 +71,8 @@ ExecForeignDelete_function SdbExecForeignDelete = NULL ;
 EndForeignModify_function SdbEndForeignModify = NULL ;
 IsForeignRelUpdatable_function SdbIsForeignRelUpdatable = NULL ;
 ExplainForeignModify_function SdbExplainForeignModify = NULL ;
+#endif
+
 /* register handler and validator */
 PG_MODULE_MAGIC ;
 PG_FUNCTION_INFO_V1 ( sdb_fdw_handler ) ;
@@ -87,7 +90,7 @@ Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
    fdwRoutine->IterateForeignScan      = SdbIterateForeignScan ;
    fdwRoutine->ReScanForeignScan       = SdbRescanForeignScan ;
    fdwRoutine->EndForeignScan          = SdbEndForeignScan ;
-
+#if PG_VERSION_NUM>90300
    /* Remaining functions are optional */
    fdwRoutine->AddForeignUpdateTargets = SdbAddForeignUpdateTargets ;
    fdwRoutine->PlanForeignModify       = SdbPlanForeignModify ;
@@ -97,10 +100,12 @@ Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
    fdwRoutine->ExecForeignDelete       = SdbExecForeignDelete ;
    fdwRoutine->EndForeignModify        = SdbEndForeignModify ;
    fdwRoutine->IsForeignRelUpdatable   = SdbIsForeignRelUpdatable ;
-
+#endif
    /* Support functions for EXPLAIN */
    fdwRoutine->ExplainForeignScan      = SdbExplainForeignScan ;
+#if PG_VERSION_NUM>90300
    fdwRoutine->ExplainForeignModify    = SdbExplainForeignModify ;
+#endif
    fdwRoutine->AnalyzeForeignTable     = SdbAnalyzeForeignTable ;
    PG_RETURN_POINTER ( fdwRoutine ) ;
 }
