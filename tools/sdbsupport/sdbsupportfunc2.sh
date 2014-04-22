@@ -7,23 +7,19 @@ function sdbCheckPassword()
    PASSWD=$2
 
    /usr/local/bin/expect -c "
-      set timeout 10 ;
+      set timeout 20 ;
       spawn ssh $USER@$HOST ;
       expect {
          \"*yes/no*\" ; {send \"yes\r\" ; exp_continue}
-         \"assword\" ; {send \"$PASSWD\r\" ;
-            expect {
-               \"denied\" ; { exit 5;}
-               \"*login*\" ; {send \"exit\r\" ;}
-            }
-         }
+         \"assword\" ; {send \"$PASSWD\r\" ;exp_continue}
+         \"*denied*\" ; { exit 5;exp_continue}
+         \"*login*\" ; {send \"exit\r\" ;exp_continue}
          eof
          {
             send_user \"eof\n\" ;
          }
       }
                         " >>/dev/null 2>&1
-
 }
 
 #ssh host and run sdbsupport
@@ -43,9 +39,10 @@ function sdbExpectSshHosts()
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\r\n\";send \"chmod +x sdbsupport.sh\r\n\";send \"$sdbsupport\r\n\";send \"\r\n\";send \"mv sdbsupport.log sdbsupport.log.$HOST\r\n\";send \"exit\r\n\";exp_continue}
-         timeout ;{exit 4;}
-         eof
+         \"*login*\";{send \"cd $localPath\r\n\";send \"chmod +x sdbsupport.sh\r\n\";send \"$sdbsupport\r\n\";send \"\r\n\";send \"mv sdbsupport.log sdbsupport.log.$HOST\r\n\";send \"\r\n\";send \"exit\r\n\";exp_continue}
+         \"No such file\";{exit 2 ;}
+         \"Permission denied\";{exit 13;}
+      eof
          {
            send_user \"eof\n\";
          }
@@ -53,13 +50,26 @@ function sdbExpectSshHosts()
                               " >>/dev/null 2>&1
 
    rc=$?
-   if [ "$rc" == "4" ] ; then
-      echo "Run time out,please take too much time in host : $HOST"
-      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Run time out,please take too much time in host : $HOST"
+   echo return:$rc
+   if [ $rc -eq 2 ] ; then
+      echo "Host:$HOST don't have directory:$localPath or file:sdbsupport.sh"
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Host:$HOST don't have directory:$localPath or file:sdbsupport.sh"
+      continue
+  elif [ $rc -eq 13 ] ; then
+      echo "run sdbsupport tool Permission denied,please check."
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "run sdbsupport tool Permission denied,please check."
+      continue
    else
-      echo "Success to run sdbsupport.sh in $HOST"
-       sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Success to run sdbsupport"
+      echo "Success to collect information from $HOST"
+      sdbEchoLog "Event" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Success to collect information from $HOST"
    fi
+#  if [ "$rc" == "4" ] ; then
+#     echo "Run time out,please take too much time in host : $HOST"
+#     sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Run time out,please take too much time in host : $HOST"
+#  else
+#     echo "Success to run sdbsupport.sh in $HOST"
+#      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Success to run sdbsupport"
+#  fi
 }
 
 function sdbTarGzPack()
@@ -130,7 +140,7 @@ function sdbTarGzPack()
 
    mv $Folder.tar.gz ./log
    if [ $? -ne 0 ] ; then
-      echo "Failed to move to log folder."
+      echo "Failed to move pack-info to log folder."
    fi
    rm -rf ./$Folder/
 }
@@ -145,7 +155,7 @@ function sdbExpectScpHosts()
 
    /usr/local/bin/expect -c"
       set timeout -1 ;
-      spawn scp -r $USER@$HOST:$localPath/*$HOST*.tar.gz ./log/ ;
+      spawn scp -r $USER@$HOST:$localPath/log/*$HOST*.tar.gz ./log/ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
@@ -207,7 +217,9 @@ function sdbSSHRemove()
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
-         \"*login*\";{send \"cd $localPath\r\n\";send \"rm *$HOST*.tar.gz sdbsupport.log.$HOST\r\n\";send \"\r\";send \"exit\r\" ;}
+         \"*login*\";{send \"cd $localPath\r\n\";send \"rm -rf log/ sdbsupport.log.$HOST\r\n\";send \"\r\";send \"exit\r\" ;}
+         \"No such file\";{exit 2 ;}
+         \"Permission denied\";{exit 13;}
          eof
          {
            send_user \"eof\n\";
@@ -215,7 +227,20 @@ function sdbSSHRemove()
       }
 
                            " >>/dev/null 2>&1
-
+   rc=$?
+   echo return:$rc
+   if [ $rc -eq 2 ] ; then
+      echo "Host:$HOST don't have directory:$localPath or file:sdbsupport.sh"
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Host:$HOST don't have directory:$localPath or file:sdbsupport.sh"
+      continue
+   elif [ $rc -eq 13 ] ; then
+      echo "clean ENV Permission denied,please check."
+      sdbEchoLog "ERROR" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Permission denied,please check."
+      continue
+   else
+      echo "Success to clean $HOST's Environment."
+      sdbEchoLog "Event" "$0/$HOST/${FUNCNAME}" "${LINENO}" "Success to clean $HOST's Environment."
+   fi
 }
 
 function sdbEchoLog()

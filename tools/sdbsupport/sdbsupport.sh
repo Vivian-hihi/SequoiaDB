@@ -11,7 +11,7 @@ confpath=""
 pHostNum=""
 
 #user permission
-USER="sdbadmin"
+USER=`whoami`
 
 #gloable variable
 hostName=""
@@ -518,7 +518,7 @@ if [ "$all" == "true" ] ; then
    for i in $(seq 1 $HostNum)
    do
       if [ "${HOST[$i]}" != "$localhost" ] ; then
-         echo "The host sdbadmin@${HOST[$i]}'s password :"
+         echo "The host $USER@${HOST[$i]}'s password :"
          read -s PASSWD[$i]
          sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
          retVal=$?
@@ -526,7 +526,7 @@ if [ "$all" == "true" ] ; then
          while [ "$retVal" == "5" ]
          do
             PASSWD[$i]=""
-            echo "Wrong password of host sdbadmin@${HOST[$i]}, please enter again :"
+            echo "Wrong password of host $USER@${HOST[$i]}, please enter again :"
             read -s PASSWD[$i]
             sdbCheckPassword "${HOST[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
             retVal=$?
@@ -542,16 +542,17 @@ if [ "$pHostNum" -gt 0 ] && [ "$all" == "false" ] ; then
    for i in $(seq 1 $pHostNum)
    do
       if [ "${HostPara[$i]}" != "" ] && [ "${HostPara[$i]}" != "$localhost" ] ; then
-         echo "The host sdbadmin@${HostPara[$i]}'s password :"
+         echo "The host $USER@${HostPara[$i]}'s password :"
          read -s PASSWD[$i]
-         sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
+         sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}"
          retVal=$?
+         echo paswdrc:$retVal
          while [ "$retVal" == "5" ]
          do
             PASSWD[$i]=""
-            echo "Wrong password of host sdbadmin@${HostPara[$i]}, please enter again :"
+            echo "Wrong password of host $USER@${HostPara[$i]}, please enter again :"
             read -s PASSWD[$i]
-            sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}" >> sdbsupport.log 2>&1
+            sdbCheckPassword "${HostPara[$i]}" "${PASSWD[$i]}"
             retVal=$?
             #echo "until return value"$retVal
          done
@@ -622,7 +623,7 @@ if [ "$all" == "true" ] ; then
       if [ "${HOST[$i]}" != "" ] && [ "${HOST[$i]}" != "$localhost" ] ; then
       #if [ "${HOST[$i]}" != "" ] ; then
       {
-         sdbsupport="./sdbsupport.sh -N ${HOST[$i]}"
+         sdbsupport="./sdbsupport.sh -N ${HOST[$i]} >> /dev/null 2>&1"
          #ssh host and collect information
          sdbExpectSshHosts "${HOST[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
          sdbExpectScpHosts "${HOST[$i]}" "$localPath" "${PASSWD[$i]}"
@@ -730,11 +731,13 @@ do
          done
          if [ "${HostPara[$i]}" != "" ] ; then
             {
-            sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]}"
+            sdbsupport="./sdbsupport.sh -N ${HostPara[$i]} ${Para[@]} >>/dev/null 2>&1"
+            echo "Start to collect information from ${HostPara[$i]}..."
             sdbExpectSshHosts "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath" "$sdbsupport" "$timeout"
             sdbExpectScpHosts "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}"
             sdbSupportLog "${HostPara[$i]}" "$localPath" "${PASSWD[$i]}"
             sdbSSHRemove "${HostPara[$i]}" "${PASSWD[$i]}" "$localPath"
+            echo "Clean Over."
             echo "" >&6
             }&
          fi
@@ -751,4 +754,8 @@ fi
 #clean environment
 exec 6>&-
 sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Collect information Over"
-
+cp sdbsupport.log log/sdbsupport.log.$localhost >> /dev/null 2>&1
+rc=$?
+if [ $rc -ne 0 ] ;then
+	echo "Failed to copy local sdbsupport.log to log folder."
+fi
