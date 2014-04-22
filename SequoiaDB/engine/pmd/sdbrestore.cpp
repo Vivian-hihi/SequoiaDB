@@ -60,7 +60,6 @@ namespace fs = boost::filesystem ;
 namespace engine
 {
 
-   extern BSONObj gUndefinedKeys [] ;
    extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
 
    /*
@@ -353,17 +352,6 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
       //SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-
-      // initialize undefined keys, from 1 field to 10 fields
-      for ( SINT32 i = 0 ; i < IXM_MAX_PREALLOCATED_UNDEFKEY ; ++i )
-      {
-         BSONObjBuilder b ;
-         for ( SINT32 j = 0; j <= i; ++j )
-         {
-            b.appendUndefined("") ;
-         }
-         gUndefinedKeys[i] = b.obj() ;
-      }
 
       if ( _ossEduData.get()==0 )
       {

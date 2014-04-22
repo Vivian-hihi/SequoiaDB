@@ -44,12 +44,59 @@ using namespace bson ;
 
 namespace engine
 {
-   BSONObj gUndefinedKeys [IXM_MAX_PREALLOCATED_UNDEFKEY] ;
-   const static BSONObj gNullObj = BSONObjBuilder().appendNull("").obj() ;
-   const static BSONElement gNullElt = gNullObj.firstElement() ;
+
+   #define IXM_MAX_PREALLOCATED_UNDEFKEY        ( 10 )
+   /*
+      IXM Tool functions
+   */
+   BSONObj ixmGetUndefineKeyObj( INT32 fieldNum )
+   {
+      static BSONObj s_undefineKeys[ IXM_MAX_PREALLOCATED_UNDEFKEY ] ;
+      static BOOLEAN s_init = FALSE ;
+      static ossSpinXLatch s_latch ;
+
+      // init undefine keys
+      if ( FALSE == s_init )
+      {
+         s_latch.get() ;
+         if ( FALSE == s_init )
+         {
+            for ( SINT32 i = 0; i < IXM_MAX_PREALLOCATED_UNDEFKEY ; ++i )
+            {
+               BSONObjBuilder b ;
+               for ( SINT32 j = 0; j <= i; ++j )
+               {
+                  b.appendUndefined("") ;
+               }
+               s_undefineKeys[i] = b.obj() ;
+            }
+            s_init = TRUE ;
+         }
+         s_latch.release() ;
+      }
+
+      if ( fieldNum > 0 && fieldNum <= IXM_MAX_PREALLOCATED_UNDEFKEY )
+      {
+         return s_undefineKeys[ fieldNum - 1 ] ;
+      }
+      else
+      {
+         BSONObjBuilder b ;
+         for ( INT32 i = 0; i < fieldNum; ++i )
+         {
+            b.appendUndefined("") ;
+         }
+         return b.obj() ;
+      }
+   }
+
+   /*
+      IXM Global opt var
+   */
    const static BSONObj gUndefinedObj =
-         BSONObjBuilder().appendUndefined("").obj() ;
+          BSONObjBuilder().appendUndefined("").obj() ;
    const static BSONElement gUndefinedElt = gUndefinedObj.firstElement() ;
+
    // provide a BSON object, generate keys based on index keygen
    // this object is only used by ixmIndexKeyGen class
    // this class only have 1 external function "getKeys" to extract a given
@@ -498,23 +545,7 @@ namespace engine
             _fixedElements.push_back(BSONElement()) ;
             ++fieldNum ;
          }
-         // if the number of fields less than the preallocated undefined fields,
-         // let's just use preallocated memory instead of manually append every
-         // time
-         if ( fieldNum <= IXM_MAX_PREALLOCATED_UNDEFKEY &&
-              fieldNum > 0 )
-         {
-            _undefinedKey = gUndefinedKeys[fieldNum-1] ;
-         }
-         else
-         {
-            BSONObjBuilder b ;
-            for ( INT32 i = 0; i < fieldNum; ++i )
-            {
-               b.appendUndefined("") ;
-            }
-            _undefinedKey = b.obj() ;
-         }
+         _undefinedKey = ixmGetUndefineKeyObj[ fieldNum ] ;
       }
       PD_TRACE_EXIT ( SDB__IXMINXKEYGEN__INIT );
    }

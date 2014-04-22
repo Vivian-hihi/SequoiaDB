@@ -67,7 +67,6 @@ using namespace bson;
 namespace po = boost::program_options ;
 namespace engine
 {
-   extern BSONObj gUndefinedKeys [] ;
 
    extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
 
@@ -172,17 +171,6 @@ namespace engine
       {
          PD_LOG( PDERROR, "Init qgm strategy table failed, rc: %d", rc ) ;
          goto error ;
-      }
-
-      // initialize undefined keys, from 1 field to 10 fields
-      for ( SINT32 i = 0; i < IXM_MAX_PREALLOCATED_UNDEFKEY; ++i )
-      {
-         BSONObjBuilder b ;
-         for ( SINT32 j = 0; j <= i; ++j )
-         {
-            b.appendUndefined("") ;
-         }
-         gUndefinedKeys[i] = b.obj() ;
       }
 
       if ( _ossEduData.get()==0 )

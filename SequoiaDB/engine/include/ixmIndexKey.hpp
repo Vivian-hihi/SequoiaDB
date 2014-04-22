@@ -46,7 +46,11 @@ using namespace bson;
 
 namespace engine
 {
-#define IXM_MAX_PREALLOCATED_UNDEFKEY 10
+   /*
+      IXM get undefine key object
+   */
+   BSONObj ixmGetUndefineKeyObj( INT32 fieldNum ) ;
+
    enum IndexSuitability { USELESS = 0 , HELPFUL = 1 , OPTIMAL = 2 };
    class _ixmIndexCB ;
 
