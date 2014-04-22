@@ -36,6 +36,7 @@
 #include "ossUtil.hpp"
 #include "ossIO.hpp"
 #include "msg.h"
+#include "ossLatch.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -43,8 +44,6 @@ using namespace bson ;
 
 namespace engine
 {
-   extern BSONObj _retObj[] ;
-
    //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBLDFULLPATH, "pmdBuildFullPath" )
    INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
                            UINT32 fullSize, CHAR *full )
@@ -185,35 +184,48 @@ namespace engine
       pmdGetSysInfo()->_nodeID = id ;
    }
 
-   const CHAR* pmdGetErrorBsonData( INT32 flags, INT32 &len )
+   BSONObj pmdGetErrorBson( INT32 flags, const CHAR *detail )
    {
+      static BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
+      static BOOLEAN _init = FALSE ;
+      static ossSpinXLatch _lock ;
+
+      // init retobj
+      if ( FALSE == _init )
+      {
+         _lock.get() ;
+         if ( FALSE == _init )
+         {
+            for ( SINT32 i = -SDB_MAX_ERROR; i <= SDB_MAX_WARNING ; i ++ )
+            {
+               BSONObjBuilder berror ;
+               berror.append ( OP_ERRNOFIELD, i ) ;
+               berror.append ( OP_ERRDESP_FIELD, getErrDesp ( i ) ) ;
+               _retObj[ i + SDB_MAX_ERROR ] = berror.obj() ;
+            }
+            _init = TRUE ;
+         }
+         _lock.release() ;
+      }
+
+      // check flags
       if ( flags < -SDB_MAX_ERROR || flags > SDB_MAX_WARNING )
       {
          PD_LOG ( PDERROR, "Error code error[rc:%d]", flags ) ;
          flags = SDB_SYS ;
       }
 
-      len = _retObj[SDB_MAX_ERROR+flags].objsize() ;
-      return _retObj[SDB_MAX_ERROR+flags].objdata() ;
-   }
-
-   BSONObj pmdGetErrorBson( INT32 flags, const CHAR *detail )
-   {
-      BSONObj info ;
+      // return new obj
       if ( detail && *detail != 0 )
       {
          BSONObjBuilder bb ;
          bb.append ( OP_ERRNOFIELD, flags ) ;
          bb.append ( OP_ERRDESP_FIELD, getErrDesp ( flags ) ) ;
          bb.append ( OP_ERR_DETAIL, detail ) ;
-         info = bb.obj() ;
+         return bb.obj() ;
       }
-      else
-      {
-         INT32 len = 0 ;
-         info = BSONObj( pmdGetErrorBsonData( flags, len ) ) ;
-      }
-      return info ;
+      // return fix obj
+      return _retObj[ SDB_MAX_ERROR + flags ] ;
    }
 
 }
