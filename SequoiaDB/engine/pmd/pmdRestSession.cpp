@@ -190,6 +190,7 @@ namespace engine
 
    INT32 _pmdRestSession::_processRestMsg( const CHAR *pData, INT32 dataLen )
    {
+      PD_LOG( PDEVENT, "Recv rest request" ) ;
       // TODO:XUJIANHUI
       return SDB_OK ;
    }
