@@ -193,6 +193,7 @@ namespace engine
          _netRouteAgent         *_pNetAgent ;
 
          MsgOpReply             _replyHeader ;
+         BSONObj                _errorInfo ;
          const CHAR             *_pCollectionName ;
 
          ossTimestamp           _lastRecvTime ;

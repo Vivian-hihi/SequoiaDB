@@ -61,9 +61,6 @@ namespace engine
 // default timeout is 10 millisec, that we always wait for one second then come
 // back to check whether the agent is forced
 #define PMD_AGENT_SOCKET_DFT_TIMEOUT 10
-   // This global variable is initialized in pmdSysInit in pmdMain.cpp
-   // This function is executed once during main thread starts
-   BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDHANDLESYSINFOREQUEST, "pmdHandleSysInfoRequest" )
    static INT32 pmdHandleSysInfoRequest ( CHAR *pReceiveBuffer,
@@ -206,7 +203,7 @@ namespace engine
       if ( rc != SDB_OK && NULL == *ppErrorObj )
       {
          replyHeader.header.messageLength = sizeof ( MsgOpReply )
-                     + _retObj[SDB_MAX_ERROR+rc].objsize();
+            + pmdGetErrorBson( rc, NULL ).objsize() ;
          replyHeader.numReturned = 1;
       }
       if ( NULL != newMsg )
@@ -692,20 +689,14 @@ namespace engine
                }
 
                UINT32 flag = rc ;
-               BSONObj *pErrObj = &_retObj[SDB_MAX_ERROR+rc] ;
+               BSONObj errorObj = pmdGetErrorBson( rc, cb->getInfo(
+                                                   EDU_INFO_ERROR ) ) ;
+               BSONObj *pErrObj = &errorObj ;
 
                if ( ppErrorObj && cb->getInfo( EDU_INFO_ERROR ) )
                {
                   *ppErrorObj = SDB_OSS_NEW BSONObj ;
-               }
-
-               if ( *ppErrorObj )
-               {
-                  BSONObjBuilder bb ;
-                  bb.append ( OP_ERRNOFIELD, rc ) ;
-                  bb.append ( OP_ERRDESP_FIELD, getErrDesp ( rc ) ) ;
-                  bb.append ( OP_ERR_DETAIL, cb->getInfo( EDU_INFO_ERROR ) ) ;
-                  *(*ppErrorObj) = bb.obj() ;
+                  *(*ppErrorObj) = errorObj ;
                   pErrObj = *ppErrorObj ;
                }
 
@@ -850,6 +841,7 @@ namespace engine
                                     needFetch ) ;
       if ( rc )
       {
+         BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;
          PD_LOG ( PDERROR, "Failed to get http request, rc = %d", rc ) ;
          if ( SDB_NETWORK == rc || SDB_NETWORK_CLOSE == rc )
          {
@@ -859,10 +851,9 @@ namespace engine
          {
             replyHeader.numReturned = 1 ;
          }
-         sendRC = httpAdaptor.sendReply ( replyHeader,
-                                     _retObj [ SDB_MAX_ERROR + rc ].objdata(),
-                                     _retObj [ SDB_MAX_ERROR + rc ].objsize(),
-                                     sock, needFetch, isSendHeader ) ;
+         sendRC = httpAdaptor.sendReply ( replyHeader, errorObj.objdata(),
+                                          errorObj.objsize(), sock, needFetch,
+                                          isSendHeader ) ;
          if ( sendRC )
          {
             rc = sendRC ;
@@ -940,7 +931,8 @@ namespace engine
       // let's see if we hit any error
       if ( rc )
       {
-         BSONObj *pObj = &_retObj [ SDB_MAX_ERROR + rc ] ;
+         BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;
+         BSONObj *pObj = &errorObj ;
          if ( pErrorObj )
          {
             pObj = pErrorObj ;
@@ -1765,10 +1757,11 @@ namespace engine
             // when we get here, sendRC is SDB_OK but rc may be fault, we know
             // when rc is 0, we either have empty data for Insert/Update/Delete,
             // or something from query. However if rc != 0, that means we are
-            // going to send rc from _retObj[SDB_MAX_ERROR+rc].objsize()
+            // going to send rc from pmdGetErrorBson( rc, NULL ).objsize()
             if ( rc )
             {
-               BSONObj *pObj = &_retObj[SDB_MAX_ERROR+rc] ;
+               BSONObj errorObj = pmdGetErrorBson( rc, NULL ) ;
+               BSONObj *pObj = &errorObj ;
                if ( pErrorObj )
                {
                   pObj = pErrorObj ;

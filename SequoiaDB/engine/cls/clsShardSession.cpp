@@ -70,11 +70,6 @@ namespace engine
       ON_EVENT( PMD_EDU_EVENT_TRANS_STOP, _onTransStopEvnt )
    END_OBJ_MSG_MAP()
 
-   
-
-   // The error object number objects
-   extern BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSDSESS__CLSSHDSESS, "_clsShdSession::_clsShdSession" )
    _clsShdSession::_clsShdSession ( UINT64 sessionID )
       :_clsSession ( sessionID )
@@ -336,7 +331,6 @@ namespace engine
       BOOLEAN loop = TRUE ;
       INT32 loopTime = 0 ;
       INT32 rc = SDB_OK ;
-      BSONObj *errorObj = NULL ;
 
       INT32 flags = 0 ;
       SINT64 contextID = -1 ;
@@ -531,27 +525,10 @@ namespace engine
             }
          }
 
-         if ( _pEDUCB->getInfo( EDU_INFO_ERROR ) )
-         {
-            errorObj = SDB_OSS_NEW BSONObj ;
-         }
-
-         if ( errorObj )
-         {
-            BSONObjBuilder bb ;
-            bb.append ( OP_ERRNOFIELD, rc ) ;
-            bb.append ( OP_ERRDESP_FIELD, getErrDesp ( rc ) ) ;
-            bb.append ( OP_ERR_DETAIL, _pEDUCB->getInfo( EDU_INFO_ERROR ) ) ;
-            *errorObj = bb.obj() ;
-
-            buffLen = errorObj->objsize () ;
-            pReponseBuff = errorObj->objdata () ;
-         }
-         else
-         {
-            buffLen = _retObj[SDB_MAX_ERROR+rc].objsize () ;
-            pReponseBuff = _retObj[SDB_MAX_ERROR+rc].objdata () ;
-         }
+         _errorInfo = pmdGetErrorBson( rc, _pEDUCB->getInfo(
+                                       EDU_INFO_ERROR ) ) ;
+         buffLen = _errorInfo.objsize() ;
+         pReponseBuff = _errorInfo.objdata() ;
 
          if ( rc != SDB_DMS_EOC )
          {
@@ -570,11 +547,6 @@ namespace engine
 
    done:
       eduCB()->writingDB( FALSE ) ;
-      if ( errorObj )
-      {
-         SDB_OSS_DEL errorObj ;
-         errorObj = NULL ;
-      }
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__ONOPMSG, rc ) ;
       return rc ;
