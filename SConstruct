@@ -267,11 +267,11 @@ hasAll = has_option( "all" )
 # if everything are set, let's set everything to true
 if hasAll:
    hasEngine = True
-#   hasClient = True
+   hasClient = True
    hasTestcase = True
-#   hasTool = True
-#   hasShell = True
-#   hasFmp = True
+   hasTool = True
+   hasShell = True
+   hasFmp = True
 # if nothing specified, let's use engine+client+shell by default
 elif not ( hasEngine or hasClient or hasTestcase or hasTool or hasShell or hasFmp ):
    hasEngine = True
