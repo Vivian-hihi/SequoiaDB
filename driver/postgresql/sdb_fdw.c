@@ -3,6 +3,7 @@
 
 #include "access/htup_details.h"
 #include "access/reloptions.h"
+#include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
@@ -17,6 +18,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
+#include "parser/parsetree.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -61,15 +63,28 @@ static bool SdbAnalyzeForeignTable ( Relation relation,
                                      AcquireSampleRowsFunc *acquireSampleRowsFunc,
                                      BlockNumber *totalPageCount ) ;
 
+static INT32 SdbIsForeignRelUpdatable ( Relation rel ) ;
+
+static void SdbAddForeignUpdateTargets ( Query *parsetree,
+                                         RangeTblEntry *target_rte,
+                                         Relation target_relation ) ;
+
+static List *SdbPlanForeignModify ( PlannerInfo *root,
+                                    ModifyTable *plan,
+                                    Index resultRelation,
+                                    INT32 subplan_index ) ;
+/* module initialization */
+void _PG_init () ;
+
+/* transaction management */
+static void SdbFdwXactCallback ( XactEvent event, void *arg ) ;
+
 #if PG_VERSION_NUM>90300
-AddForeignUpdateTargets_function SdbAddForeignUpdateTargets = NULL ;
-PlanForeignModify_function SdbPlanForeignModify = NULL ;
 BeginForeignModify_function SdbBeginForeignModify = NULL ;
 ExecForeignInsert_function SdbExecForeignInsert = NULL ;
 ExecForeignUpdate_function SdbExecForeignUpdate = NULL ;
 ExecForeignDelete_function SdbExecForeignDelete = NULL ;
 EndForeignModify_function SdbEndForeignModify = NULL ;
-IsForeignRelUpdatable_function SdbIsForeignRelUpdatable = NULL ;
 ExplainForeignModify_function SdbExplainForeignModify = NULL ;
 #endif
 
@@ -108,6 +123,51 @@ Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
 #endif
    fdwRoutine->AnalyzeForeignTable     = SdbAnalyzeForeignTable ;
    PG_RETURN_POINTER ( fdwRoutine ) ;
+}
+
+/* connection pool */
+static SdbConnectionPool *sdbGetConnectionPool ()
+{
+   static SdbConnectionPool connPool ;
+   return &connPool ;
+}
+
+static void sdbInitConnectionPool ()
+{
+   SdbConnection *pNewMem  = NULL ;
+   SdbConnectionPool *pool = sdbGetConnectionPool() ;
+   memset ( pool, 0, sizeof ( SdbConnectionPool ) ) ;
+   pNewMem = (SdbConnection*)malloc ( sizeof(SdbConnection) *
+                                      INITIAL_ARRAY_CAPACITY ) ;
+   if ( !pNewMem )
+   {
+      ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
+                         errmsg ( "Unable to allocate connection pool" ),
+                         errhint ( "Make sure the memory pool or ulimit is "
+                                   "properly configured" ) ) ) ;
+      goto error ;
+   }
+   pool->connList = pNewMem ;
+   pool->poolSize = INITIAL_ARRAY_CAPACITY ;
+error :
+   return ;
+}
+
+static void sdbUninitConnectionPool ()
+{
+   INT32 count             = 0 ;
+   SdbConnectionPool *pool = sdbGetConnectionPool() ;
+   for ( count = 0; count < pool->numConnections; ++count )
+   {
+      SdbConnection *conn = &pool->connList[count] ;
+      if ( conn->connName )
+      {
+         free ( conn->connName ) ;
+      }
+      sdbDisconnect ( conn->hConnection ) ;
+      sdbReleaseConnection ( conn->hConnection ) ;
+   }
+   free ( pool->connList ) ;
 }
 
 /* sdbSerializeDocument serializes the sdbbson document to a constant
@@ -621,6 +681,86 @@ done :
    return ;
 }
 
+/* find a connection from pool, if the connection does not exist, let's create
+ * one
+ */
+static INT32 sdbGetConnection ( Oid foreignTableId,
+                                SdbConnection **connect )
+{
+   INT32 rc                        = SDB_OK ;
+   INT32 count                     = 0 ;
+   StringInfo connName             = makeStringInfo () ;
+   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
+   SdbConnectionPool *pool         = NULL ;
+   SdbInputOptions options ;
+   sdbGetOptions ( foreignTableId, &options ) ;
+
+   /* connection string is address + service + user + password */
+   appendStringInfo ( connName, "%s:%s:%s:%s", options.address,
+                      options.service, options.user, options.password ) ;
+   /* iterate all connections in pool */
+   pool = sdbGetConnectionPool() ;
+   for ( count = 0; count < pool->numConnections; ++count )
+   {
+      if ( strcmp ( pool->connList[count].connName, connName->data ) == 0 )
+      {
+         *connect = &pool->connList[count] ;
+         goto done ;
+      }
+   }
+   /* when we get here, we don't have the connection so let's create one */
+   rc = sdbConnect ( options.address,
+                     options.service,
+                     options.user,
+                     options.password,
+                     &hConnection ) ;
+   if ( rc )
+   {
+      ereport ( ERROR, ( errcode ( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
+                         errmsg ( "unable to establish connection to \"%s:%s\""
+                                  ", rc = %d",
+                                  options.address, options.service, rc ),
+                         errhint ( "Make sure remote service is running "
+                                   "and username/password are valid" ) ) ) ;
+      goto error ;
+   }
+   /* add connection into pool */
+addpool:
+   if ( pool->poolSize > pool->numConnections )
+   {
+      *connect = &pool->connList[pool->numConnections] ;
+      (*connect)->connName = strdup ( connName->data ) ;
+      (*connect)->hConnection = hConnection ;
+      (*connect)->transLevel = 0 ;
+      pool->numConnections ++ ;
+   }
+   else
+   {
+      /* allocate new slots */
+      SdbConnection *pNewMem = pool->connList ;
+      INT32 poolSize = pool->poolSize ;
+      poolSize = poolSize << 1 ;
+      pNewMem = (SdbConnection*)realloc ( pNewMem,
+            sizeof(SdbConnection) * poolSize ) ;
+      if ( !pNewMem )
+      {
+         ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
+                            errmsg ( "Unable to allocate connection pool" ),
+                            errhint ( "Make sure the memory pool or ulimit is "
+                                      "properly configured" ) ) ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      pool->connList = pNewMem ;
+      pool->poolSize = poolSize ;
+      goto addpool ;
+   }
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
 /* validator validates for:
  * foreign data wrapper
  * server
@@ -923,10 +1063,11 @@ static void sdbFreeScanState ( SdbExecState *executionState )
       goto done ;
    if ( executionState->queryDocument )
       sdbbson_dispose ( executionState->queryDocument ) ;
-   sdbReleaseCursor ( executionState->hCursor ) ;
-   sdbReleaseCollection ( executionState->hCollection ) ;
-   sdbDisconnect ( executionState->hConnection ) ;
-   sdbReleaseConnection ( executionState->hConnection ) ;
+   if ( SDB_INVALID_HANDLE != executionState->hCursor )
+      sdbReleaseCursor ( executionState->hCursor ) ;
+   if ( SDB_INVALID_HANDLE != executionState->hCollection )
+      sdbReleaseCollection ( executionState->hCollection ) ;
+   /* do not free collection since it's in pool */
 done :
    return ;
 }
@@ -1108,33 +1249,23 @@ static void sdbFillTupleSlot ( const sdbbson *sdbbsonDocument,
 static INT32 sdbRowsCount ( Oid foreignTableId, SINT64 *count )
 {
    INT32 rc                        = SDB_OK ;
-   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
    sdbCollectionHandle hCollection = SDB_INVALID_HANDLE ;
+   SdbConnection *connection       = NULL ;
    SdbInputOptions options ;
    StringInfo fullCollectionName = makeStringInfo () ;
 
    sdbGetOptions ( foreignTableId, &options ) ;
    /* attempt to connect to remote database */
-   rc = sdbConnect ( options.address,
-                     options.service,
-                     options.user,
-                     options.password,
-                     &hConnection ) ;
+   rc = sdbGetConnection ( foreignTableId, &connection ) ;
    if ( rc )
    {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
-                         errmsg ( "unable to establish connection to \"%s:%s\""
-                                  ", rc = %d",
-                                  options.address, options.service, rc ),
-                         errhint ( "Make sure remote service is running "
-                                   "and username/password are valid" ) ) ) ;
       goto error ;
    }
    /* get collection */
    appendStringInfoString ( fullCollectionName, options.collectionspace ) ;
    appendStringInfoString ( fullCollectionName, "." ) ;
    appendStringInfoString ( fullCollectionName, options.collection ) ;
-   rc = sdbGetCollection ( hConnection,
+   rc = sdbGetCollection ( connection->hConnection,
                            fullCollectionName->data,
                            &hCollection ) ;
    if ( rc )
@@ -1162,17 +1293,14 @@ static INT32 sdbRowsCount ( Oid foreignTableId, SINT64 *count )
 done :
    if ( SDB_INVALID_HANDLE != hCollection )
       sdbReleaseCollection ( hCollection ) ;
-   if ( SDB_INVALID_HANDLE != hConnection )
-   {
-      sdbDisconnect ( hConnection ) ;
-      sdbReleaseConnection ( hConnection ) ;
-   }
    return rc ;
 error :
    goto done ;
 }
 
-/* Get the estimation size for Sdb foreign table */
+/* Get the estimation size for Sdb foreign table
+ * This function is also responsible to establish connection to remote table
+ */
 static void SdbGetForeignRelSize ( PlannerInfo *root,
                                    RelOptInfo *baserel,
                                    Oid foreignTableId )
@@ -1365,6 +1493,7 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
    sdbbson *queryDocument             = NULL ;
    INT32 rc                        = SDB_OK ;
    sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
+   SdbConnection *connection       = NULL ;
    sdbCursorHandle hCursor         = SDB_INVALID_HANDLE ;
    sdbCollectionHandle hCollection = SDB_INVALID_HANDLE ;
    Oid foreignTableId              = InvalidOid ;
@@ -1394,19 +1523,9 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
    foreignTableId = RelationGetRelid ( scanState->ss.ss_currentRelation ) ;
    sdbGetOptions ( foreignTableId, &options ) ;
    /* attempt to connect to remote box */
-   rc = sdbConnect ( options.address,
-                     options.service,
-                     options.user,
-                     options.password,
-                     &hConnection ) ;
+   rc = sdbGetConnection ( foreignTableId, &connection ) ;
    if ( rc )
    {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
-                         errmsg ( "unable to establish connection to \"%s:%s\""
-                                  ", rc = %d",
-                                  options.address, options.service, rc ),
-                         errhint ( "Make sure remote service is running "
-                                   "and username/password are valid" ) ) ) ;
       goto error ;
    }
    /* deserialize query document, and create column info hash */
@@ -1422,7 +1541,7 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
    appendStringInfo ( namespaceName, "%s.%s", options.collectionspace,
                       options.collection ) ;
    /* fire up query */
-   rc = sdbGetCollection ( hConnection, namespaceName->data,
+   rc = sdbGetCollection ( connection->hConnection, namespaceName->data,
                            &hCollection ) ;
    if ( rc )
    {
@@ -1458,6 +1577,7 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
                                    "properly configured" ) ) ) ;
       goto error ;
    }
+   executionState->planType          = SDB_PLAN_SCAN ;
    executionState->columnMappingHash = columnMappingHash ;
    executionState->hConnection       = hConnection ;
    executionState->hCursor           = hCursor ;
@@ -1793,4 +1913,116 @@ done :
    return TRUE ;
 error :
    goto done ;
+}
+
+#if PG_VERSION_NUM>90300
+
+static INT32 SdbIsForeignRelUpdatable ( Relation rel )
+{
+   return ( 1 << CMD_INSERT ) | ( 1 << CMD_UPDATE ) |
+          ( 1 << CMD_DELETE ) ;
+}
+
+static void SdbAddForeignUpdateTargets ( Query *parsetree,
+                                         RangeTblEntry *target_rte,
+                                         Relation target_relation )
+{
+/*   Var         *var = NULL ;
+   TargetEntry *tle = NULL ;
+   var = makeVar ( parsetree->resultRelation,
+                   SelfItemPointerAttributeNumber,
+                   TIDOID,
+                   -1,
+                   InvalidOid,
+                   0 ) ;
+   tle = makeTargetEntry ( (Expr*) var,
+                           list_length ( parsetree->targetList ) + 1,
+                           pstrdup ( "rowid" ),
+                           true ) ;
+   parsetree->targetList = lappend ( parsetree->targetList, tle ) ;*/
+}
+
+static List *SdbPlanForeignModify ( PlannerInfo *root,
+                                    ModifyTable *plan,
+                                    Index resultRelation,
+                                    INT32 subplan_index )
+{
+   List                *result       = NIL ;
+   CmdType              operation ;
+   RangeTblEntry       *rte          = NULL ;
+   SdbExecState        *state        = NULL ;
+   ForeignTable        *foreignTable = NULL ;
+   BOOLEAN              is_table     = FALSE ;
+   ListCell            *elem         = NULL ;
+   List                *plan_values  = NULL ;
+   SdbInputOptions      options ;
+   StringInfo connectionString ;
+
+   /* sanity check, update only applies for base table */
+   rte          = planner_rt_fetch ( resultRelation, root ) ;
+   foreignTable = GetForeignTable ( rte->relid ) ;
+   operation    = plan->operation ;
+   foreach ( elem, foreignTable->options )
+   {
+      DefElem *option = (DefElem *)lfirst(elem) ;
+      if ( strcmp ( option->defname, "table" ) == 0 )
+      {
+         is_table = TRUE ;
+         break ;
+      }
+   }
+   if ( !is_table )
+   {
+      ereport ( ERROR, ( errcode ( ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION ),
+                         errmsg ( "cannot modify foreign table "
+                                  "\"%s\" which is based on a query",
+                                  get_rel_name ( rte->relid ) ) ) ) ;
+      goto error ;
+   }
+
+   /* pickup all columns that's try to modify */
+done :
+   return result ;
+error :
+   goto done ;
+}
+#endif
+
+/* Transaction related */
+
+static void SdbFdwXactCallback ( XactEvent event, void *arg )
+{
+   INT32 count             = 0 ;
+   SdbConnectionPool *pool = sdbGetConnectionPool() ;
+   for ( count = 0; count < pool->numConnections; ++count )
+   {
+      /* if there's no transaction started on this connection, let's continue */
+      if ( 0 == pool->connList[count].transLevel )
+         continue ;
+      /* attempt to commit/abort the transaction, ignore return code */
+      switch ( event )
+      {
+      case XACT_EVENT_COMMIT :
+         sdbTransactionCommit ( pool->connList[count].hConnection ) ;
+         pool->connList[count].transLevel = 0 ;
+         break ;
+      case XACT_EVENT_ABORT :
+         sdbTransactionRollback ( pool->connList[count].hConnection ) ;
+         pool->connList[count].transLevel = 0 ;
+         break ;
+      default :
+         break ;
+      }
+   }
+}
+
+void _PG_init ()
+{
+   sdbInitConnectionPool () ;
+   RegisterXactCallback ( SdbFdwXactCallback, NULL ) ;
+}
+
+void _PG_fini ()
+{
+   sdbUninitConnectionPool () ;
 }

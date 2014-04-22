@@ -64,10 +64,20 @@ struct SdbColumnMapping
 } ;
 typedef struct SdbColumnMapping SdbColumnMapping ;
 
-/* SdbExeState represents the runtime state for sdb cursor
+enum SDB_PLAN_TYPE
+{
+   SDB_PLAN_SCAN = 0,
+   SDB_PLAN_INSERT,
+   SDB_PLAN_UPDATE,
+   SDB_PLAN_DELETE
+} ;
+typedef enum SDB_PLAN_TYPE SDB_PLAN_TYPE ;
+
+/* SdbExecState represents the runtime state for sdb cursor
  */
 struct SdbExecState
 {
+   SDB_PLAN_TYPE planType ;
    struct HTAB *columnMappingHash ; /* map sdbbson fields to columns */
    sdbCursorHandle hCursor ;
    sdbConnectionHandle hConnection ;
@@ -75,6 +85,26 @@ struct SdbExecState
    sdbbson *queryDocument ; /* query request */
 } ;
 typedef struct SdbExecState SdbExecState ;
+
+/* Sdb represents connection handle for each host:service */
+struct SdbConnection
+{
+   /* transaction name include address:service */
+   CHAR *connName ;
+   sdbConnectionHandle hConnection ;
+   /* by default 0 means there's no transaction started on this connection */
+   INT32 transLevel ;
+} ;
+typedef struct SdbConnection SdbConnection ;
+
+/* SdbTransList represents list of active transactions */
+struct SdbConnectionPool
+{
+   INT32 numConnections ;
+   INT32 poolSize ;
+   SdbConnection *connList ;
+} ;
+typedef struct SdbConnectionPool  SdbConnectionPool ;
 
 
 extern Datum sdb_fdw_handler(PG_FUNCTION_ARGS);
