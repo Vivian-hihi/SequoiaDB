@@ -2074,5 +2074,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_DRIVER_BSON_ERROR</name>
+         <description>
+            <en>Wrong data for building bson</en>
+            <cn>构建bson失败</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
