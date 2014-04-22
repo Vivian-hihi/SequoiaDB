@@ -148,7 +148,10 @@ namespace engine
       }
       _omLatch.release() ;
 
-      SDB_OSS_FREE( OM_FIX_BUFF_TO_PTR( pBuff ) ) ;
+      if ( pBuff )
+      {
+         SDB_OSS_FREE( OM_FIX_BUFF_TO_PTR( pBuff ) ) ;
+      }
    }
 
    restSessionInfo* _omManager::attachSessionInfo( const string &id )
