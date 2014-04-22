@@ -208,7 +208,8 @@ namespace engine
            SDB_ROLE_AUTH       == dbRole ||
            SDB_ROLE_CATALOG    == dbRole ||
            SDB_ROLE_STANDALONE == dbRole ||
-           SDB_ROLE_COORD      == dbRole )
+           SDB_ROLE_COORD      == dbRole ||
+           SDB_ROLE_OM         == dbRole )
       {
          // only data and standalone role load all collectionspaces
          if ( SDB_ROLE_DATA       == dbRole ||
