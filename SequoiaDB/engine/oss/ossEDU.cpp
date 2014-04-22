@@ -75,7 +75,7 @@ void ossOneTimeOnly()
    backtrace( pSyms, 1 ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNTHND, "ossNestedTrapHandler" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSNTHND, "ossNestedTrapHandler" )
 static void ossNestedTrapHandler( OSS_HANDPARMS )
 {
    PD_TRACE_ENTRY ( SDB_OSSNTHND );
@@ -90,7 +90,7 @@ static void ossNestedTrapHandler( OSS_HANDPARMS )
    PD_TRACE_EXIT ( SDB_OSSNTHND );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSST, "ossStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSST, "ossStackTrace" )
 void ossStackTrace( OSS_HANDPARMS, const CHAR *dumpDir )
 {
    PD_TRACE_ENTRY ( SDB_OSSST );
@@ -192,7 +192,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEDUCTHND, "ossEDUCodeTrapHandler" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEDUCTHND, "ossEDUCodeTrapHandler" )
 void ossEDUCodeTrapHandler( OSS_HANDPARMS )
 {
    PD_TRACE_ENTRY ( SDB_OSSEDUCTHND );
@@ -280,7 +280,7 @@ done :
                   "Cs : %016X Ss : %016X\n"
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEDUEXCFLT, "ossEDUExceptionFilter" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSEDUEXCFLT, "ossEDUExceptionFilter" )
 SINT32 ossEDUExceptionFilter( LPEXCEPTION_POINTERS lpEP )
 {
    SINT32 rc = SDB_OK ;
@@ -310,7 +310,7 @@ done :
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDMPSYSTM, "ossDumpSystemTime" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDMPSYSTM, "ossDumpSystemTime" )
 void ossDumpSystemTime( ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDMPSYSTM );
@@ -337,7 +337,7 @@ void ossDumpSystemTime( ossPrimitiveFileOp * trapFile )
    PD_TRACE_EXIT ( SDB_OSSDMPSYSTM );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDMPDBINFO, "ossDumpDatabaseInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDMPDBINFO, "ossDumpDatabaseInfo" )
 void ossDumpDatabaseInfo ( ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDMPDBINFO );
@@ -352,7 +352,7 @@ void ossDumpDatabaseInfo ( ossPrimitiveFileOp * trapFile )
    PD_TRACE_EXIT ( SDB_OSSDMPDBINFO );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSTKTRA, "ossStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSTKTRA, "ossStackTrace" )
 void ossStackTrace( LPEXCEPTION_POINTERS lpEP, const CHAR * dumpDir )
 {
    PD_TRACE_ENTRY ( SDB_OSSSTKTRA );
@@ -669,7 +669,7 @@ void ossGetTrapExceptionPath ( CHAR **path )
       return FALSE ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_OSSREGSIGHND, "ossRegisterSignalHandle" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSREGSIGHND, "ossRegisterSignalHandle" )
    INT32 ossRegisterSignalHandle ( ossSigSet & sigSet, SIG_HANDLE handle )
    {
       // handle=NULL means reset signal handler to default ( SIG_DFL )
@@ -687,16 +687,16 @@ void ossGetTrapExceptionPath ( CHAR **path )
       {
          if ( sigSet.isMember( sig ) && sigaction ( sig, &newact, NULL ) )
          {
-            PD_LOG ( PDWARNING, "Failed to register signal handler for %d, \
-errno = %d",
-                     sig, ossGetLastError() ) ;
+            PD_LOG ( PDWARNING, "Failed to register signal handler for %d, "
+                     "errno = %d", sig, ossGetLastError() ) ;
          }
          ++sig ;
       }
-//      PD_LOG ( PDDEBUG, "Register signal handler succeed" ) ;
+      //PD_LOG ( PDDEBUG, "Register signal handler succeed" ) ;
 
       PD_TRACE_EXITRC ( SDB_OSSREGSIGHND, rc );
       return rc ;
    }
 
 #endif //_LINUX
+

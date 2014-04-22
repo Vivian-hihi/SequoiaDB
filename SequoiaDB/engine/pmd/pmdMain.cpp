@@ -814,7 +814,6 @@ namespace engine
    {
    #if defined (_WINDOWS)
       PD_TRACE_ENTRY ( SDB_PMDONETMINIT );
-      ossSymMutexInit ( TRUE ) ;
       SetConsoleCtrlHandler( (PHANDLER_ROUTINE) pmdCtrlHandler, TRUE ) ;
       PD_TRACE_EXIT ( SDB_PMDONETMINIT );
    #endif

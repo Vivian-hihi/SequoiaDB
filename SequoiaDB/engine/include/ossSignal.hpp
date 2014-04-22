@@ -85,4 +85,4 @@
 
 typedef void (* OSS_SIGFUNCPTR)(OSS_HANDPARMS) ;
 
-#endif
+#endif // OSS_SIGNAL_HPP

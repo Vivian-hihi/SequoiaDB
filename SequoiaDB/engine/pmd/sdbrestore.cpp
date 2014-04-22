@@ -787,7 +787,6 @@ namespace engine
    void pmdOnetimeInit()
    {
    #if defined (_WINDOWS)
-      ossSymMutexInit ( TRUE ) ;
       SetConsoleCtrlHandler( (PHANDLER_ROUTINE) pmdCtrlHandler, TRUE ) ;
    #endif
    }

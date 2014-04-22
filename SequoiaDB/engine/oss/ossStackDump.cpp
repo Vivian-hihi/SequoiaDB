@@ -52,13 +52,10 @@
 #include <boost/thread/thread.hpp>
 
 // Restore default signal handler, and setup for generation of a core file.
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSTSYSSIG, "ossRestoreSystemSignal" )
-void ossRestoreSystemSignal
-(
-   const INT32 sigNum,
-   const BOOLEAN isCoreNeeded,
-   const CHAR *dumpDir
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSTSYSSIG, "ossRestoreSystemSignal" )
+void ossRestoreSystemSignal( const INT32 sigNum,
+                             const BOOLEAN isCoreNeeded,
+                             const CHAR *dumpDir )
 {
    PD_TRACE_ENTRY ( SDB_OSSRSTSYSSIG );
    struct sigaction action ;
@@ -116,7 +113,7 @@ void ossRestoreSystemSignal
    PD_TRACE_EXIT ( SDB_OSSRSTSYSSIG );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSIGHNDABT, "ossSignalHandlerAbort" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSIGHNDABT, "ossSignalHandlerAbort" )
 void ossSignalHandlerAbort( OSS_HANDPARMS, const CHAR *dumpDir )
 {
    // DO NOT GENERATE CORE FILE AND RESTORE SYSTEM SIGNAL IF IT'S STACK DUMP
@@ -132,12 +129,9 @@ void ossSignalHandlerAbort( OSS_HANDPARMS, const CHAR *dumpDir )
    PD_TRACE_EXIT ( SDB_OSSSIGHNDABT );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSFUNCADDR2NM, "ossFuncAddrToName" )
-void ossFuncAddrToName
-(
-   void * address,
-   ossPrimitiveFileOp * trapFile
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSFUNCADDR2NM, "ossFuncAddrToName" )
+void ossFuncAddrToName( void * address,
+                        ossPrimitiveFileOp * trapFile )
 {
    int rc = 0 ;
    PD_TRACE_ENTRY ( SDB_OSSFUNCADDR2NM );
@@ -212,7 +206,7 @@ void ossFuncAddrToName
    PD_TRACE_EXIT ( SDB_OSSFUNCADDR2NM );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPSYSTM, "ossDumpSystemTime" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPSYSTM, "ossDumpSystemTime" )
 void ossDumpSystemTime( ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPSYSTM );
@@ -239,7 +233,7 @@ void ossDumpSystemTime( ossPrimitiveFileOp * trapFile )
    PD_TRACE_EXIT ( SDB_OSSDUMPSYSTM );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPDBINFO, "ossDumpDatabaseInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPDBINFO, "ossDumpDatabaseInfo" )
 void ossDumpDatabaseInfo ( ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPDBINFO );
@@ -254,7 +248,7 @@ void ossDumpDatabaseInfo ( ossPrimitiveFileOp * trapFile )
    PD_TRACE_EXIT ( SDB_OSSDUMPDBINFO );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPSYSINFO, "ossDumpSystemInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPSYSINFO, "ossDumpSystemInfo" )
 void ossDumpSystemInfo( ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPSYSINFO );
@@ -279,7 +273,7 @@ void ossDumpSystemInfo( ossPrimitiveFileOp * trapFile )
 }
 
 #define OSS_MCODE_LEN 16
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSMCHCODE, "ossMachineCode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSMCHCODE, "ossMachineCode" )
 CHAR *ossMachineCode( UINT32 instruction, CHAR * mCode )
 {
    PD_TRACE_ENTRY ( SDB_OSSMCHCODE );
@@ -296,12 +290,9 @@ CHAR *ossMachineCode( UINT32 instruction, CHAR * mCode )
    return mCode ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPSIGINFO, "ossDumpSigInfo" )
-void ossDumpSigInfo
-(
-   oss_siginfo_t  pSigInfo,
-   ossPrimitiveFileOp * trapFile
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPSIGINFO, "ossDumpSigInfo" )
+void ossDumpSigInfo ( oss_siginfo_t  pSigInfo,
+                      ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPSIGINFO );
    CHAR buf[64] = { 0 } ;
@@ -391,13 +382,10 @@ void ossDumpSigInfo
    PD_TRACE_EXIT ( SDB_OSSDUMPSIGINFO );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWLKSTK, "ossWalkStack" )
-void ossWalkStack
-(
-   UINT32                framesToSkip,
-   OSS_INSTRUCTION_PTR * ppInstruction,
-   UINT32                framesRequested
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWLKSTK, "ossWalkStack" )
+void ossWalkStack ( UINT32 framesToSkip,
+                    OSS_INSTRUCTION_PTR * ppInstruction,
+                    UINT32 framesRequested )
 {
    PD_TRACE_ENTRY ( SDB_OSSWLKSTK );
    void * syms[ OSS_MAX_BACKTRACE_FRAMES_SUPPORTED + 1 ] = { 0 } ;
@@ -422,14 +410,11 @@ void ossWalkStack
    PD_TRACE_EXIT ( SDB_OSSWLKSTK );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETSYMBNFA, "ossGetSymbolNameFromAddress" )
-void ossGetSymbolNameFromAddress
-(
-   OSS_INSTRUCTION_PTR  pInstruction,
-   CHAR *               pName,
-   size_t               nameSize,
-   UINT32_64 *          pOffset
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETSYMBNFA, "ossGetSymbolNameFromAddress" )
+void ossGetSymbolNameFromAddress( OSS_INSTRUCTION_PTR  pInstruction,
+                                  CHAR *pName,
+                                  size_t nameSize,
+                                  UINT32_64 *pOffset )
 {
    PD_TRACE_ENTRY ( SDB_OSSGETSYMBNFA );
    Dl_info dlip ;
@@ -482,16 +467,11 @@ exit :
    PD_TRACE_EXIT ( SDB_OSSGETSYMBNFA );
 }
 
-
-
 #if defined ( _LIN64 )
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO, "ossDumpRegistersInfo" )
-void ossDumpRegistersInfo
-(
-   ossSignalContext pContext,
-   ossPrimitiveFileOp * trapFile
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO, "ossDumpRegistersInfo" )
+void ossDumpRegistersInfo( ossSignalContext pContext,
+                           ossPrimitiveFileOp *trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO );
    greg_t * r ;
@@ -528,7 +508,7 @@ void ossDumpRegistersInfo
    PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST, "ossDumpStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST, "ossDumpStackTrace" )
 void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPST );
@@ -631,12 +611,9 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 }
 
 #elif defined (_LIN32)
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO2, "ossDumpRegistersInfo" )
-void ossDumpRegistersInfo
-(
-   ossSignalContext pContext,
-   ossPrimitiveFileOp * trapFile
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO2, "ossDumpRegistersInfo" )
+void ossDumpRegistersInfo( ossSignalContext pContext,
+                           ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO2 );
    greg_t * r ;
@@ -666,7 +643,7 @@ void ossDumpRegistersInfo
    PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO2 );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST2, "ossDumpStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST2, "ossDumpStackTrace" )
 void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPST2 );
@@ -791,12 +768,9 @@ typedef unsigned long greg_t ;
 #define PT_VSR0 150     /* each VSR reg occupies 2 slots in 64-bit */
 #define PT_VSR31 (PT_VSR0 + 2*31)
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO3, "ossDumpRegistersInfo" )
-void ossDumpRegistersInfo
-(
-   ossSignalContext pContext,
-   ossPrimitiveFileOp * trapFile
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPREGSINFO3, "ossDumpRegistersInfo" )
+void ossDumpRegistersInfo( ossSignalContext pContext,
+                           ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPREGSINFO3 );
    greg_t * r ;
@@ -853,7 +827,7 @@ void ossDumpRegistersInfo
    PD_TRACE_EXIT ( SDB_OSSDUMPREGSINFO3 );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST3, "ossDumpStackTrace" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSDUMPST3, "ossDumpStackTrace" )
 void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
 {
    PD_TRACE_ENTRY ( SDB_OSSDUMPST3 );
@@ -971,18 +945,13 @@ void ossDumpStackTrace( OSS_HANDPARMS, ossPrimitiveFileOp * trapFile )
    #define OSS_THIS_IMAGE_MACHINE_TYPE IMAGE_FILE_MACHINE_I386
 #endif
 
-static BOOLEAN  g_bSymInitialized = false ;
-static BOOLEAN  g_bSymMutexInitialized = false ;
-static BOOLEAN  g_bSymAlreadyLoaded = false ;
-ossSpinXLatch  symLatch ;
-
 // DbgHelp functions, such as SymInitialize, are single threaded.
 // Therefore, calls from more than one thread to this function will likely
 // result in unexpected behavior or memory corruption. To avoid this,
 // call SymInitialize only when your process starts and SymCleanup only
 // when your process ends. It is not necessary for each thread in the process
 // to call these functions.
-enum
+enum SYS_MUTEX_TYPE
 {
    _SymInitialize = 0,
    _SymFromAddr,
@@ -992,70 +961,69 @@ enum
    _NumOfFunctions
 } ;
 
-HANDLE symMutexes[ _NumOfFunctions ] = { 0 } ;
-
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSYMMINIT, "ossSymMutexInit" )
-void ossSymMutexInit( BOOLEAN bLatchRequired )
+HANDLE ossGetSysMutexHandle( SYS_MUTEX_TYPE type )
 {
-   PD_TRACE_ENTRY ( SDB_OSSSYMMINIT );
-   if ( bLatchRequired )
-   {
-      symLatch.get() ;
-   }
+   static HANDLE s_sysMutexes[ _NumOfFunctions ] = {0} ;
+   static BOOLEAN s_init = FALSE ;
+   static ossSpinXLatch s_latch ;
 
-   if ( ! g_bSymMutexInitialized )
+   // init sys mutex
+   if ( FALSE == s_init )
    {
-      for ( int i = _SymInitialize; i < _NumOfFunctions ; i++ )
+      s_latch.get() ;
+      if ( FALSE == s_init )
       {
-          if ( ! symMutexes[i] )
-          {
-             //
-             if ( i != _SymCleanup )
+         for ( int i = _SymInitialize; i < _NumOfFunctions ; i++ )
+         {
+             if ( ! s_sysMutexes[i] )
              {
-                symMutexes[i] = CreateMutex( NULL,    // default security attr
-                                             false,   // initially not owned
-                                             NULL ) ; // unnamed mutex
+                if ( i != _SymCleanup )
+                {
+                   s_sysMutexes[i] = CreateMutex( NULL,    // default security attr
+                                                  false,   // initially not owned
+                                                  NULL ) ; // unnamed mutex
+                }
+                else
+                {
+                   s_sysMutexes[i] = s_sysMutexes[ _SymInitialize ] ;
+                }
              }
-             else
-             {
-                symMutexes[i] = symMutexes[ _SymInitialize ] ;
-             }
-          }
+         }
+         s_init = TRUE ;
       }
-      g_bSymMutexInitialized  = true ;
+      s_latch.release() ;
    }
-
-   if ( bLatchRequired )
+   // get handle
+   if ( type >= _SymInitialize && type < _NumOfFunctions )
    {
-      symLatch.release() ;
+      return s_sysMutexes[ (INT32)type ] ;
    }
-   PD_TRACE_EXIT ( SDB_OSSSYMMINIT );
+   SDB_ASSERT( FALSE, "Invalid sys mutex type" ) ;
+   return 0 ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSYMINIT, "ossSymInitialize" )
-UINT32 ossSymInitialize
-(
-   HANDLE phProcess,
-   CHAR *  pUserSearchPath,
-   BOOLEAN bInvadeProcess
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSYMINIT, "ossSymInitialize" )
+UINT32 ossSymInitialize( HANDLE phProcess,
+                         CHAR *  pUserSearchPath,
+                         BOOLEAN bInvadeProcess )
 {
    PD_TRACE_ENTRY ( SDB_OSSSYMINIT );
+   static BOOLEAN  s_bSymInitialized = false ;
    UINT32 rc = ERROR_SUCCESS ;
 
-   WaitForSingleObject( symMutexes[ _SymInitialize ], INFINITE ) ;
-   if ( ! g_bSymInitialized )
+   WaitForSingleObject( ossGetSysMutexHandle( _SymInitialize ), INFINITE ) ;
+   if ( ! s_bSymInitialized )
    {
       if ( SymInitialize( phProcess, pUserSearchPath, bInvadeProcess ) )
       {
-         g_bSymInitialized = 1 ;
+         s_bSymInitialized = TRUE ;
       }
       else
       {
          rc = GetLastError() ;
       }
    }
-   ReleaseMutex ( symMutexes[ _SymInitialize ] ) ;
+   ReleaseMutex ( ossGetSysMutexHandle( _SymInitialize ) ) ;
 
    if ( ERROR_SUCCESS != rc )
    {
@@ -1066,14 +1034,11 @@ UINT32 ossSymInitialize
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWKSEX, "ossWalkStackEx" )
-UINT32 ossWalkStackEx
-(
-   LPEXCEPTION_POINTERS lpEP,
-   UINT32 framesToSkip,
-   UINT32 framesRequested ,
-   void ** ppInstruction
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWKSEX, "ossWalkStackEx" )
+UINT32 ossWalkStackEx( LPEXCEPTION_POINTERS lpEP,
+                       UINT32 framesToSkip,
+                       UINT32 framesRequested ,
+                       void ** ppInstruction )
 {
    PD_TRACE_ENTRY ( SDB_OSSWKSEX );
    HANDLE       hProcess   = GetCurrentProcess() ;
@@ -1125,7 +1090,7 @@ UINT32 ossWalkStackEx
       #endif
 
          bSuccess = true ;
-         WaitForSingleObject( symMutexes[ _StackWalk64 ], INFINITE ) ;
+         WaitForSingleObject( ossGetSysMutexHandle( _StackWalk64 ), INFINITE ) ;
          while ( bSuccess && framesOnStk < numFrames )
          {
             bSuccess = StackWalk64( OSS_THIS_IMAGE_MACHINE_TYPE,
@@ -1147,20 +1112,17 @@ UINT32 ossWalkStackEx
             }
             framesOnStk++ ;
          }
-         ReleaseMutex ( symMutexes[ _StackWalk64 ] ) ;
+         ReleaseMutex ( ossGetSysMutexHandle( _StackWalk64 ) ) ;
       }
    }
    PD_TRACE_EXIT ( SDB_OSSWKSEX );
    return framesOnStk ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWS, "ossWalkStack" )
-UINT32 ossWalkStack
-(
-   UINT32 framesToSkip,
-   UINT32 framesRequested ,
-   void ** ppInstruction
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSWS, "ossWalkStack" )
+UINT32 ossWalkStack( UINT32 framesToSkip,
+                     UINT32 framesRequested,
+                     void ** ppInstruction )
 {
    PD_TRACE_ENTRY ( SDB_OSSWS );
    UINT32 numFrames, framesOnStk ;
@@ -1181,15 +1143,12 @@ UINT32 ossWalkStack
    return framesOnStk ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETSYMBNFADDR, "ossGetSymbolNameFromAddress" )
-void ossGetSymbolNameFromAddress
-(
-   HANDLE hProcess,
-   UINT64 pInstruction,
-   SYMBOL_INFO * pSymbol,
-   CHAR * pName,
-   UINT32 nameSize
-)
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETSYMBNFADDR, "ossGetSymbolNameFromAddress" )
+void ossGetSymbolNameFromAddress( HANDLE hProcess,
+                                  UINT64 pInstruction,
+                                  SYMBOL_INFO * pSymbol,
+                                  CHAR *pName,
+                                  UINT32 nameSize )
 {
    PD_TRACE_ENTRY ( SDB_OSSGETSYMBNFADDR );
    SYMBOL_INFO * symbol = NULL ;
@@ -1201,7 +1160,7 @@ void ossGetSymbolNameFromAddress
    if ( ( NULL != pInstruction ) & ( NULL != pSymbol ) )
    {
       line.SizeOfStruct = sizeof(IMAGEHLP_LINE64) ;
-      WaitForSingleObject( symMutexes[ _SymFromAddr ], INFINITE ) ;
+      WaitForSingleObject( ossGetSysMutexHandle( _SymFromAddr ), INFINITE ) ;
       if ( SymFromAddr( hProcess, pInstruction, &displacement, pSymbol ) )
       {
          strLen += ossSnprintf( pName, nameSize,
@@ -1219,9 +1178,10 @@ void ossGetSymbolNameFromAddress
                                    OSS_UNKNOWN_STACKFRAME_NAME ) ;
          }
       }
-      ReleaseMutex ( symMutexes[ _SymFromAddr ] ) ;
+      ReleaseMutex ( ossGetSysMutexHandle( _SymFromAddr ) ) ;
    }
    PD_TRACE_EXIT ( SDB_OSSGETSYMBNFADDR );
 }
 
-#endif
+#endif // _WINDOWS
+

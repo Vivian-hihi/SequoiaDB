@@ -102,10 +102,10 @@ class ossPrimitiveFileOp ;
                                      SYMBOL_INFO * pSymbol,
                                      CHAR * pName,
                                      UINT32 nameSize ) ;
-   void ossSymMutexInit( BOOLEAN bLatchRequired ) ;
    UINT32 ossSymInitialize( HANDLE  phProcess,
                             PSTR    pUserSearchPath,
                             BOOLEAN bInvadeProcess ) ;
 #endif  // _LINUX
 
 #endif  // OSS_STACK_DUMP_HPP
+

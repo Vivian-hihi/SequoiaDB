@@ -11,7 +11,7 @@
    its trade secrets, irrespective of what has been deposited with the Copyright
    Protection Center of China
 
-   Source File Name = pmdMain.cpp
+   Source File Name = pmdCommon.hpp
 
    Descriptive Name = Process MoDel Main
 
@@ -26,7 +26,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          09/14/2012  TW  Initial Draft
+          24/04/2014  XJH Initial Draft
 
    Last Changed =
 
