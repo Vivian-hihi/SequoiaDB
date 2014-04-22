@@ -129,7 +129,8 @@ namespace engine
             if ( SDB_ROLE_STANDALONE == dbrole ||
                  SDB_ROLE_DATA       == dbrole ||
                  SDB_ROLE_CATALOG    == dbrole ||
-                 SDB_ROLE_AUTH       == dbrole )
+                 SDB_ROLE_AUTH       == dbrole ||
+                 SDB_ROLE_OM         == dbrole )
             {
                rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
             }
