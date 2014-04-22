@@ -545,7 +545,7 @@ namespace engine
             _fixedElements.push_back(BSONElement()) ;
             ++fieldNum ;
          }
-         _undefinedKey = ixmGetUndefineKeyObj[ fieldNum ] ;
+         _undefinedKey = ixmGetUndefineKeyObj( fieldNum ) ;
       }
       PD_TRACE_EXIT ( SDB__IXMINXKEYGEN__INIT );
    }
