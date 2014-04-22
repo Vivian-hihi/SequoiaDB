@@ -821,6 +821,11 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
    {
       return ;
    }
+   // if we had disconnected
+   if ( SOCKET_INVALIDSOCKET == connection->_sock )
+   {
+      return ;
+   }
    if ( !clientBuildDisconnectMsg ( &connection->_pSendBuffer,
                                     &connection->_sendBufferSize, 0, connection->_endianConvert ))
    {

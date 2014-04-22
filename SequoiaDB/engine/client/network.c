@@ -73,6 +73,8 @@ INT32 clientConnect ( const CHAR *pHostName,
                     sizeof( sockAddress ) ) ;
    if ( rc )
    {
+      clientDisconnect ( *sock ) ;
+      *sock = -1 ;
       rc = SDB_NETWORK ;
       goto error ;
    }
@@ -111,9 +113,9 @@ error:
 void clientDisconnect ( SOCKET sock )
 {
 #if defined (_WINDOWS)
-   closesocket ( sock ) ;
+      closesocket ( sock ) ;
 #else
-   close ( sock ) ;
+      close ( sock ) ;
 #endif
 }
 

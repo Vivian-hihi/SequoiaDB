@@ -24,6 +24,12 @@ SDB_EXTERN_C_START
 #define CLIENT_RECORD_ID_INDEX "$id"
 #define CLIENT_RECORD_ID_FIELD_STRLEN 3
 
+#if defined (_WINDOWS)
+#define SOCKET_INVALIDSOCKET  INVALID_SOCKET
+#else
+#define SOCKET_INVALIDSOCKET  -1
+#endif
+
 #ifdef __cplusplus
 INT32 clientBuildUpdateMsgCpp ( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *CollectionName, SINT32 flag,
