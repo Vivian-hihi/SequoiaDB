@@ -41,6 +41,8 @@
 
 using namespace bson ;
 
+extern BSONObj _retObj[] ;
+
 namespace engine
 {
    //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBLDFULLPATH, "pmdBuildFullPath" )
@@ -185,8 +187,14 @@ namespace engine
 
    const CHAR* pmdGetErrorBsonData( INT32 flags, INT32 &len )
    {
-      //TODO:XUJIANHUI
-      return NULL ;
+      if ( flags < -SDB_MAX_ERROR || flags > SDB_MAX_WARNING )
+      {
+         PD_LOG ( PDERROR, "Error code error[rc:%d]", flags ) ;
+         flags = SDB_SYS ;
+      }
+
+      len = _retObj[SDB_MAX_ERROR+flags].objsize() ;
+      return _retObj[SDB_MAX_ERROR+flags].objdata() ;
    }
 
    BSONObj pmdGetErrorBson( INT32 flags, const CHAR *detail )

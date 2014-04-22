@@ -60,6 +60,7 @@
 #include "rtnBackgroundJob.hpp"
 #include "rtnPageCleanerJob.hpp"
 #include "pmdCB.hpp"
+#include "omManager.hpp"
 
 using namespace std;
 using namespace bson;
@@ -232,6 +233,10 @@ namespace engine
             rtnLoadCollectionSpace ( CAT_PROCEDURES_SPACE_NAME,
                                      krcb->getDBPath(),
                                      krcb->getIndexPath(), dmsCB, FALSE ) ;
+         }
+         else if ( SDB_ROLE_OM == dbRole )
+         {
+            sdbGetOMManager()->initialize() ;
          }
 
          // initialize temp space
