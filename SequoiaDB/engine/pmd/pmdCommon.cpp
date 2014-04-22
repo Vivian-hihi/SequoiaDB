@@ -41,10 +41,10 @@
 
 using namespace bson ;
 
-extern BSONObj _retObj[] ;
-
 namespace engine
 {
+   extern BSONObj _retObj[] ;
+
    //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBLDFULLPATH, "pmdBuildFullPath" )
    INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
                            UINT32 fullSize, CHAR *full )
