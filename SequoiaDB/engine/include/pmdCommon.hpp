@@ -48,9 +48,15 @@ namespace engine
    INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
                            UINT32 fullSize, CHAR *full );
 
+   /*
+      PMD ROLE ENUM AND STRING TRANSFER
+   */
    SDB_ROLE pmdGetRoleEnum( const CHAR *role ) ;
    const CHAR* pmdDBRoleStr( SDB_ROLE dbrole ) ;
 
+   /*
+      PMD Pref instance enum and string transfer
+   */
    INT32 pmdPrefReplStr2Enum( const CHAR *prefReplStr ) ;
 
    INT32 pmdPrefReplEnum2Str( INT32 enumPrefRepl,
@@ -80,10 +86,8 @@ namespace engine
    pmdSysInfo*    pmdGetSysInfo () ;
 
    /*
-      pmd get fixed error bson
+      PMD get error bson
    */
-   const CHAR*    pmdGetErrorBsonData( INT32 flags, INT32 &len ) ;
-
    BSONObj        pmdGetErrorBson( INT32 flags, const CHAR *detail ) ;
 
 }
