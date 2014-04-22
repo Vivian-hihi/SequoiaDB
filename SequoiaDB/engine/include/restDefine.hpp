@@ -143,6 +143,7 @@ struct httpConnection
                       _pTempValue(NULL),
                       _pPath(NULL)
    {
+      _httpParser.data = this ;
    }
 } ;
 
