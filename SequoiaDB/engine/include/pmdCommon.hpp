@@ -39,6 +39,10 @@
 #include "pmdDef.hpp"
 #include "msg.h"
 
+#include "../bson/bson.h"
+
+using namespace bson ;
+
 namespace engine
 {
    INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
@@ -79,6 +83,8 @@ namespace engine
       pmd get fixed error bson
    */
    const CHAR*    pmdGetErrorBsonData( INT32 flags, INT32 &len ) ;
+
+   BSONObj        pmdGetErrorBson( INT32 flags, const CHAR *detail ) ;
 
 }
 

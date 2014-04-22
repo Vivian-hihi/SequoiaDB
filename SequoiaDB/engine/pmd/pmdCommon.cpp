@@ -39,6 +39,8 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBLDFULLPATH, "pmdBuildFullPath" )
@@ -185,6 +187,25 @@ namespace engine
    {
       //TODO:XUJIANHUI
       return NULL ;
+   }
+
+   BSONObj pmdGetErrorBson( INT32 flags, const CHAR *detail )
+   {
+      BSONObj info ;
+      if ( detail && *detail != 0 )
+      {
+         BSONObjBuilder bb ;
+         bb.append ( OP_ERRNOFIELD, flags ) ;
+         bb.append ( OP_ERRDESP_FIELD, getErrDesp ( flags ) ) ;
+         bb.append ( OP_ERR_DETAIL, detail ) ;
+         info = bb.obj() ;
+      }
+      else
+      {
+         INT32 len = 0 ;
+         info = BSONObj( pmdGetErrorBsonData( flags, len ) ) ;
+      }
+      return info ;
    }
 
 }

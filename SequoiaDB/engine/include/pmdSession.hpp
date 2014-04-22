@@ -39,6 +39,9 @@
 
 #include <map>
 #include <string>
+#include "../bson/bson.h"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -174,6 +177,8 @@ namespace engine
 
          MsgOpReply           _replayHeader ;
          BOOLEAN              _needReply ;
+
+         BSONObj              _errorInfo ;
 
    } ;
    typedef _pmdLocalSession pmdLocalSession ;

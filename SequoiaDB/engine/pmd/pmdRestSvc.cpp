@@ -167,10 +167,12 @@ namespace engine
 
       SOCKET s = *(( SOCKET *) &pData ) ;
 
-   done:
+      pmdRestSession restSession( s ) ;
+      restSession.attach( cb ) ;
+      rc = restSession.run() ;
+      restSession.detach() ;
+
       return rc ;
-   error:
-      goto done ;
    }
 
 }

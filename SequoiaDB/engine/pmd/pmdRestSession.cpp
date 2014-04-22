@@ -31,6 +31,11 @@
 #include "omManager.hpp"
 #include "pmdEDUMgr.hpp"
 #include "msgDef.h"
+#include "pmdCommon.hpp"
+
+#include "../bson/bson.h"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -69,6 +74,7 @@ namespace engine
       HTTP_PARSE_COMMON httpCommon     = COM_GETFILE ;
       CHAR *pBody                      = NULL ;
       INT32 bodySize                   = 0 ;
+      BOOLEAN needReply                = FALSE ;
 
       if ( !_pEDUCB )
       {
@@ -82,6 +88,7 @@ namespace engine
       {
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
+         needReply = TRUE ;
 
          // recv rest header
          rc = pAdptor->getRequestHeader( this ) ;
@@ -91,6 +98,10 @@ namespace engine
             {
                PD_LOG( PDERROR, "Session[%s] failed to recv rest header, "
                        "rc: %d", sessionName(), rc ) ;
+            }
+            else
+            {
+               needReply = FALSE ;
             }
             break ;
          }
@@ -122,6 +133,10 @@ namespace engine
                PD_LOG( PDERROR, "Session[%s] failed to recv rest body, "
                        "rc: %d", sessionName(), rc ) ;
             }
+            else
+            {
+               needReply = FALSE ;
+            }
             break ;
          }
          // increase process event count
@@ -133,6 +148,7 @@ namespace engine
                     sessionName(), rc ) ;
             break ;
          }
+         needReply = FALSE ;
          // process msg
          rc = _processRestMsg( pBody, bodySize ) ;
          if ( rc )
@@ -150,6 +166,21 @@ namespace engine
          releaseBuff( pBody, bodySize ) ;
          rc = SDB_OK ;
       } // end while
+
+      if ( needReply && _socket.isConnected() )
+      {
+         _errorInfo = pmdGetErrorBson( rc, _pEDUCB->getInfo(
+                                       EDU_INFO_ERROR ) ) ;
+         pAdptor->setOPResult( this, rc, _errorInfo ) ;
+         rc = pAdptor->sendResponse( this, HTTP_BADREQ ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] send rest response failed, rc: %d",
+                    sessionName(), rc ) ;
+         }
+      }
+
+      disconnect() ;
 
    done:
       return rc ;

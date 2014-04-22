@@ -619,7 +619,8 @@ namespace engine
       }
 
       // start cluster mgr
-      if ( SDB_ROLE_STANDALONE != dbrole && SDB_ROLE_COORD != dbrole )
+      if ( SDB_ROLE_STANDALONE != dbrole && SDB_ROLE_COORD != dbrole &&
+           SDB_ROLE_OM != dbrole )
       {
          krcb->setBusinessOK( FALSE ) ;
          // Then start cluster thread
@@ -661,7 +662,8 @@ namespace engine
       }
 
       // start shard & repl net work
-      if ( SDB_ROLE_STANDALONE != dbrole && SDB_ROLE_COORD != dbrole )
+      if ( SDB_ROLE_STANDALONE != dbrole && SDB_ROLE_COORD != dbrole &&
+           SDB_ROLE_OM != dbrole )
       {
          rc = krcb->getClsCB()->startNet() ;
          PD_RC_CHECK( rc, PDERROR, "Start shard or repl net failed, rc: %d", rc ) ;
@@ -694,8 +696,16 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Wait TCPListen active failed, rc: %d", rc ) ;
 
       // Then start http listening thread
-      eduMgr->startEDU ( EDU_TYPE_HTTPLISTENER, NULL, &agentEDU ) ;
-      eduMgr->regSystemEDU ( EDU_TYPE_HTTPLISTENER, agentEDU ) ;
+      if ( SDB_ROLE_OM != dbrole )
+      {
+         eduMgr->startEDU ( EDU_TYPE_HTTPLISTENER, NULL, &agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_HTTPLISTENER, agentEDU ) ;
+      }
+      else
+      {
+         eduMgr->startEDU ( EDU_TYPE_RESTLISTENER, NULL, &agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_RESTLISTENER, agentEDU ) ;
+      }
       rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
       PD_RC_CHECK( rc, PDERROR, "Wait HTTPListen active failed, rc: %d", rc ) ;
 

@@ -66,6 +66,7 @@ namespace engine
       //System EDU Type
       EDU_TYPE_TCPLISTENER = 0,
       EDU_TYPE_HTTPLISTENER,
+      EDU_TYPE_RESTLISTENER,
       EDU_TYPE_REPR,
       EDU_TYPE_LOGGW,
       EDU_TYPE_LOGGNTY,
@@ -538,12 +539,17 @@ namespace engine
 
    pmdEntryPoint getEntryFuncByType ( EDU_TYPES type ) ;
 
+   /*
+      PMD ENTRY POINTERS
+   */
    INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdShardAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdReplAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdHTTPAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdRestAgentEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdTcpListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdHTTPListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdRestSvcEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdRepREntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoggWEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoggNtyEntryPoint( pmdEDUCB *cb, void *arg ) ;
@@ -576,3 +582,4 @@ namespace engine
 }
 
 #endif // PMDEDU_HPP__
+

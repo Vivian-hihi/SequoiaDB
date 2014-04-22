@@ -609,7 +609,10 @@ namespace engine
       {
          if ( rc && bodyLen == 0 )
          {
-            pBody = pmdGetErrorBsonData( rc, bodyLen ) ;
+            _errorInfo = pmdGetErrorBson( rc, _pEDUCB->getInfo(
+                                          EDU_INFO_ERROR ) ) ;
+            pBody = _errorInfo.objdata() ;
+            bodyLen = (INT32)_errorInfo.objsize() ;
             _replayHeader.numReturned = 1 ;
          }
          _replayHeader.flags = rc ;
@@ -628,6 +631,7 @@ namespace engine
 
       // end
       _onMsgEnd( rc, msg ) ;
+      rc = SDB_OK ;
 
       return rc ;
    }

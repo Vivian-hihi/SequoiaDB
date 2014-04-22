@@ -182,9 +182,13 @@ namespace engine
 
       static BOOLEAN isPoolable ( EDU_TYPES type )
       {
-         return ( EDU_TYPE_AGENT == type ) || ( EDU_TYPE_COORDAGENT == type ) ||
-                ( EDU_TYPE_SHARDAGENT == type ) || (EDU_TYPE_HTTPAGENT == type );
+         return ( EDU_TYPE_AGENT == type ) ||
+                ( EDU_TYPE_COORDAGENT == type ) ||
+                ( EDU_TYPE_SHARDAGENT == type ) ||
+                ( EDU_TYPE_HTTPAGENT == type ) ||
+                ( EDU_TYPE_RESTAGENT == type ) ;
       }
+
 #if defined (_LINUX)
       void getEDUThreadID ( std::set<pthread_t> &tidList ) ;
 #endif
