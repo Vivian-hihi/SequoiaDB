@@ -1036,6 +1036,10 @@
             <stentry>Rest recv size greater than max size</stentry>
             <stentry>-257</stentry>
          </strow>
+         <strow>
+            <stentry>Wrong data for building bson</stentry>
+            <stentry>-258</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

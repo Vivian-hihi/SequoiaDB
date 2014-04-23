@@ -280,7 +280,8 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "datasource had run out",
                    "too many open file description",
                    "Domain is not empty",
-                   "Rest recv size greater than max size"
+                   "Rest recv size greater than max size",
+                   "Wrong data for building bson"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";

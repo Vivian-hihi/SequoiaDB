@@ -1036,6 +1036,10 @@
             <stentry>Rest接收的大小超过设置的最大值</stentry>
             <stentry>-257</stentry>
          </strow>
+         <strow>
+            <stentry>构建bson失败</stentry>
+            <stentry>-258</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

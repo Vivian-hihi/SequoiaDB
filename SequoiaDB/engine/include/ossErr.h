@@ -293,4 +293,5 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_TOO_MANY_OPEN_FD            -255  /**< too many open file description */
 #define SDB_DOMAIN_IS_OCCUPIED          -256  /**< Domain is not empty */
 #define SDB_REST_RECV_SIZE              -257  /**< Rest recv size greater than max size */
+#define SDB_DRIVER_BSON_ERROR           -258  /**< Wrong data for building bson */
 #endif /* OSSERR_HPP_ */

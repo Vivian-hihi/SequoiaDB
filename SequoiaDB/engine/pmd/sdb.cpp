@@ -15,7 +15,7 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "../mdocml/parseMandocCpp.hpp"
-#include "../spt/sptParseTroff.hpp"
+#include "sptParseTroff.hpp"
 #include <vector>
 #include <string>
 #include <boost/algorithm/string/trim.hpp>

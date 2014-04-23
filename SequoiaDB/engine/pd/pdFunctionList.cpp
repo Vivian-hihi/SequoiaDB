@@ -293,7 +293,6 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_utilCSVParser::getNextRecord"
 ,   "_utilCSVParser::_allocField"
 ,   "_utilCSVParser::_readFirstField"
-,   "_utilCSVParser::_findDelField"
 ,   "_convertCSV::_convertCSVToJson"
 ,   "fromjson"
 ,   "_linenoiseCmdBuilder::_releaseNode"
@@ -1269,7 +1268,6 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "ossDumpStackTrace"
 ,   "ossDumpRegistersInfo"
 ,   "ossDumpStackTrace"
-,   "ossSymMutexInit"
 ,   "ossSymInitialize"
 ,   "ossWalkStackEx"
 ,   "ossWalkStack"
@@ -1998,10 +1996,10 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_qgmMatcher::match"
 ,   "_qgmMatcher::_match"
 } ;
-const UINT32 _pTraceFunctionListNum = 1996 ;
+const UINT32 _pTraceFunctionListNum = 1994 ;
 const UINT32 pdGetTraceFunctionListNum()
 {
-  return 1996;
+  return 1994;
 }
 const CHAR *pdGetTraceFunction ( UINT64 id )
 {

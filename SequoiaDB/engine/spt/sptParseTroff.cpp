@@ -1,3 +1,21 @@
+/*******************************************************************************
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+*******************************************************************************/
+
 #include "core.h"
 #include "ossUtil.h"
 #include "sptParseTroff.hpp"
@@ -43,7 +61,7 @@ manHelp* manHelp::createInstance( const CHAR *path )
 {
    if ( !m_pInstance )
    {
-      m_pInstance = new manHelp( path );
+      m_pInstance = SDB_OSS_NEW manHelp( path );
       if ( !m_pInstance )
          ossPrintf( "Failed to new manHelp."OSS_NEWLINE );
    }
@@ -54,7 +72,7 @@ void manHelp::destroyInstance()
 {
    if ( m_pInstance )
    {
-      delete m_pInstance;
+      SDB_OSS_DEL m_pInstance;
       m_pInstance = NULL;
    }
 }
