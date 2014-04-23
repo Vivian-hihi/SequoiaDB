@@ -2090,5 +2090,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_REST_COMMON_UNKNOW</name>
+         <description>
+            <en>rest common unknow</en>
+            <cn>未知的命令</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
