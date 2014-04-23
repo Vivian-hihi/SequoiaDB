@@ -56,6 +56,8 @@
 namespace engine
 {
 
+   extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
+
    static std::map<EDU_TYPES, std::string> mapEDUName ;
    static std::map<EDU_TYPES,EDU_TYPES>    mapEDUTypeSys ;
 
