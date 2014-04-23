@@ -74,8 +74,8 @@ void BuildGen::run ()
         ossStrlen ( timeInfo ) )
    {
       printf ( "Length of timeinfo is not correct, expected: %d, actual: %d\n",
-               ossStrlen ( SDB_ENGINE_BUILD_CURRENT ),
-               ossStrlen ( timeInfo ) ) ;
+               (INT32)ossStrlen ( SDB_ENGINE_BUILD_CURRENT ),
+               (INT32)ossStrlen ( timeInfo ) ) ;
       goto error ;
    }
    ossMemcpy ( pPos, timeInfo, ossStrlen ( timeInfo ) ) ;
