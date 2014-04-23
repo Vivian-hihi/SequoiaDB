@@ -716,7 +716,6 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
    {
       goto error ;
    }
-   *handle = (sdbConnectionHandle)connection ;
 
    // request system information
    rc = requestSysInfo ( connection->_sock, &endianConvert ) ;
@@ -756,9 +755,26 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
    {
       goto error ;
    }
+   // set the return handle
+   *handle = (sdbConnectionHandle)connection ;
 done:
    return rc ;
 error:
+   if ( connection->_sock != -1 )
+   {
+      clientDisconnect ( connection->_sock ) ;
+      connection->_sock = -1 ;
+   }
+   if ( connection->_pSendBuffer )
+   {
+      SDB_OSS_FREE (connection->_pSendBuffer ) ;
+   }
+   if ( connection->_pReceiveBuffer )
+   {
+      SDB_OSS_FREE ( connection->_pReceiveBuffer ) ;
+   }
+   SDB_OSS_FREE ( connection ) ;
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -822,7 +838,7 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
       return ;
    }
    // if we had disconnected
-   if ( SOCKET_INVALIDSOCKET == connection->_sock )
+   if ( -1 == connection->_sock )
    {
       return ;
    }
@@ -912,6 +928,11 @@ SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
 done:
    return rc ;
 error:
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -1000,6 +1021,11 @@ done:
    bson_destroy ( &hint1 ) ;
    return rc ;
 error:
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -1102,6 +1128,11 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
 done :
    return rc ;
 error :
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -1351,6 +1382,11 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
 done :
    return rc ;
 error :
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -2205,6 +2241,7 @@ done :
    bson_destroy ( &newObj ) ;
    return rc ;
 error :
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -2566,6 +2603,11 @@ static INT32 _sdbShardExtractNode ( sdbReplicaGroupHandle cHandle,
 done :
    return rc ;
 error :
+   if ( r )
+   {
+      SDB_OSS_FREE ( r ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -3275,6 +3317,11 @@ done:
    bson_destroy( &bs ) ;
    return rc ;
 error:
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -3435,6 +3482,7 @@ done :
    bson_destroy ( &newObj ) ;
    return rc ;
 error :
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -3799,6 +3847,7 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
                      SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( rc )
    {
+      SDB_OSS_FREE ( cursor ) ;
       goto error ;
    }
    // get the taskid
@@ -4023,6 +4072,7 @@ SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
                      SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( rc )
    {
+      SDB_OSS_FREE ( cursor ) ;
       goto error ;
    }
    rc = sdbNext ( (sdbCursorHandle)cursor, &result ) ;
@@ -4313,6 +4363,11 @@ done :
    bson_destroy ( &newObj ) ;
    return rc ;
 error :
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -4471,6 +4526,7 @@ SDB_EXPORT INT32 sdbGetCount ( sdbCollectionHandle cHandle,
                      SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( rc )
    {
+      SDB_OSS_FREE ( cursor ) ;
       goto error ;
    }
    rc = sdbNext ( (sdbCursorHandle)cursor, &result ) ;
@@ -4586,6 +4642,7 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
                      SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( rc )
    {
+      SDB_OSS_FREE ( cursor ) ;
       goto error ;
    }
    rc = sdbNext ( (sdbCursorHandle)cursor, &result ) ;
@@ -5010,6 +5067,11 @@ SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
 done :
    return rc ;
 error :
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 /*
@@ -5970,6 +6032,11 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
 done:
    return rc ;
 error:
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -6084,10 +6151,15 @@ SDB_EXPORT INT32 sdbExec( sdbConnectionHandle cHandle,
       goto error ;
    }
    // set output result
-   *result                  = (sdbCursorHandle)cursor ;
+   *result = (sdbCursorHandle)cursor ;
 done:
    return rc ;
 error:
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *result = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -6424,7 +6496,7 @@ SDB_EXPORT INT32 sdbAggregate ( sdbCollectionHandle cHandle,
    cursor->_sock            = sdbCL->_sock;
    cursor->_contextID       = contextID;
    cursor->_offset          = -1;
-   cursor->_endianConvert = sdbCL->_endianConvert ;
+   cursor->_endianConvert   = sdbCL->_endianConvert ;
    // register cursor in connection
    rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor,
                      SDB_HANDLE_TYPE_CONNECTION ) ;
@@ -6437,6 +6509,11 @@ SDB_EXPORT INT32 sdbAggregate ( sdbCollectionHandle cHandle,
 done :
    return rc ;
 error :
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
@@ -6697,7 +6774,12 @@ SDB_EXPORT INT32 sdbListBackup ( sdbConnectionHandle cHandle,
          bson_append_element ( &newObj, NULL, &it ) ;
       }
    }
-   bson_finish ( &newObj ) ;
+   rc = bson_finish ( &newObj ) ;
+   if ( rc )
+   {
+      rc = SDB_DRIVER_BSON_ERROR ;
+      goto error ;
+   }
    rc = clientBuildQueryMsg ( &connection->_pSendBuffer, &connection->_sendBufferSize,
                               CMD_ADMIN_PREFIX CMD_NAME_LIST_BACKUPS,
                               0, 0, 0, -1, condition,
@@ -6747,6 +6829,11 @@ done :
    bson_destroy ( &newObj ) ;
    return rc ;
 error :
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
 
