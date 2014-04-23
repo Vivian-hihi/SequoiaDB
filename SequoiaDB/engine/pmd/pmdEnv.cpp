@@ -46,6 +46,8 @@ using namespace bson ;
 namespace engine
 {
 
+   extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
+
    pmdSysInfo* pmdGetSysInfo()
    {
       static pmdSysInfo s_sysInfo ;
