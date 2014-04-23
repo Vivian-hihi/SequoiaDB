@@ -45,6 +45,17 @@ namespace engine
 {
 
    /*
+      ENUM define
+   */
+   enum SDB_CB_TYPE
+   {
+      SDB_CB_CLS              = 0,
+
+      // THE MAX CB TYPE
+      SDB_CB_MAX
+   } ;
+
+   /*
       _pmdBaseSession define
    */
    class _ISession : public SDBObject
@@ -66,6 +77,26 @@ namespace engine
 
    } ;
    typedef _ISession ISession ;
+
+   /*
+      _IControlBlock define
+   */
+   class _IControlBlock : public SDBObject
+   {
+      public:
+         _IControlBlock () {}
+         virtual ~_IControlBlock () {}
+
+         virtual SDB_CB_TYPE cbType() const = 0 ;
+         virtual const CHAR* cbName() const = 0 ;
+
+         virtual INT32  init () = 0 ;
+         virtual INT32  active () = 0 ;
+         virtual INT32  deactive () = 0 ;
+         virtual INT32  fini () = 0 ;
+
+   } ;
+   typedef _IControlBlock IControlBlock ;
 
 }
 

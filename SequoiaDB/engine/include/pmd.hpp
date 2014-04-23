@@ -49,7 +49,7 @@
 #include "pmdOptionsMgr.hpp"
 #include "msg.h"
 #include "msgDef.hpp"
-#include "pmdCommon.hpp"
+#include "pmdEnv.hpp"
 
 extern PDLEVEL    _curPDLevel ;
 extern CHAR       _pdDiagLogPath [ OSS_MAX_PATHSIZE + 1 ] ;

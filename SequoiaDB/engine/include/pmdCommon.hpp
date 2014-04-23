@@ -67,28 +67,6 @@ namespace engine
                               UINT32 len ) ;
 
    /*
-      pmd system info define
-   */
-   typedef struct _pmdSysInfo
-   {
-      SDB_ROLE                      _dbrole ;
-      MsgRouteID                    _nodeID ;
-
-      _pmdSysInfo()
-      {
-         _dbrole        = SDB_ROLE_STANDALONE ;
-         _nodeID.value  = MSG_INVALID_ROUTEID ;
-      }
-   } pmdSysInfo ;
-
-   SDB_ROLE       pmdGetDBRole() ;
-   void           pmdSetDBRole( SDB_ROLE role ) ;
-   MsgRouteID     pmdGetNodeID() ;
-   void           pmdSetNodeID( MsgRouteID id ) ;
-
-   pmdSysInfo*    pmdGetSysInfo () ;
-
-   /*
       PMD get error bson
    */
    BSONObj        pmdGetErrorBson( INT32 flags, const CHAR *detail ) ;

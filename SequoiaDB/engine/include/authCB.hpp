@@ -30,8 +30,8 @@
 
 *******************************************************************************/
 
-#ifndef AUTHCB_HPP_
-#define AUTHCB_HPP_
+#ifndef AUTHCB_HPP__
+#define AUTHCB_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -41,8 +41,12 @@ using namespace bson ;
 
 namespace engine
 {
+
    class _pmdEDUCB ;
 
+   /*
+      _authCB define
+   */
    class _authCB : public SDBObject
    {
    public:
@@ -78,7 +82,8 @@ namespace engine
    } ;
 
    typedef class _authCB SDB_AUTHCB ;
+
 }
 
-#endif
+#endif // AUTHCB_HPP__
 

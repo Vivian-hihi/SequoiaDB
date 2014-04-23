@@ -32,7 +32,7 @@
 
 #include "pmdSession.hpp"
 #include "pmdEDU.hpp"
-#include "pmdCommon.hpp"
+#include "pmdEnv.hpp"
 #include "msgMessage.hpp"
 #include "rtn.hpp"
 #include "pmd.hpp"

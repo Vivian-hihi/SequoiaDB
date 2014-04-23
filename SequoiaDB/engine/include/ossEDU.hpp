@@ -50,10 +50,8 @@ namespace engine
    void ossStackTrace( LPEXCEPTION_POINTERS lpEP, const CHAR * dumpDir ) ;
    SINT32 ossEDUExceptionFilter( LPEXCEPTION_POINTERS lpEP ) ;
 #endif
-   void ossSetInEngine () ;
-   BOOLEAN ossGetInEngine () ;
    void ossSetTrapExceptionPath ( const CHAR *path ) ;
-   void ossGetTrapExceptionPath ( CHAR **path ) ;
+   const CHAR* ossGetTrapExceptionPath () ;
 
    //
    // class oss_edu_data
@@ -158,6 +156,9 @@ namespace engine
 #if defined (_LINUX)
 #define OSS_MAX_SIGAL         (_NSIG-1)
 
+/*
+   ossSigSet define
+*/
 class _ossSigSet : public SDBObject
 {
 public:

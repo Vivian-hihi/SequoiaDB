@@ -165,28 +165,6 @@ namespace engine
       return SDB_OK ;
    }
 
-   pmdSysInfo* pmdGetSysInfo()
-   {
-      static pmdSysInfo s_sysInfo ;
-      return &s_sysInfo ;
-   }
-   SDB_ROLE pmdGetDBRole()
-   {
-      return pmdGetSysInfo()->_dbrole ;
-   }
-   void  pmdSetDBRole( SDB_ROLE role )
-   {
-      pmdGetSysInfo()->_dbrole = role ;
-   }
-   MsgRouteID pmdGetNodeID()
-   {
-      return pmdGetSysInfo()->_nodeID ;
-   }
-   void pmdSetNodeID( MsgRouteID id )
-   {
-      pmdGetSysInfo()->_nodeID = id ;
-   }
-
    BSONObj pmdGetErrorBson( INT32 flags, const CHAR *detail )
    {
       static BSONObj _retObj [SDB_MAX_ERROR + SDB_MAX_WARNING + 1] ;

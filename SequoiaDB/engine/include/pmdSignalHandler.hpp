@@ -30,20 +30,34 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          09/14/2012  TW  Initial Draft
+          23/04/2014  XJH Initial Draft
 
    Last Changed =
 
 *******************************************************************************/
 #ifndef PMDSIGNALHANDLER_HPP_
 #define PMDSIGNALHANDLER_HPP_
+
 #include "core.hpp"
-#include "ossSignal.hpp"
-#include "ossStackDump.hpp"
-#include "ossPrimitiveFileOp.hpp"
+
 namespace engine
 {
-   void ossSignalSigsegv ( OSS_HANDPARMS ) ;
+
+   /*
+      _signalInfo define
+   */
+   struct _pmdSignalInfo
+   {
+      const CHAR        *_name ;
+      INT32             _handle ;
+   } ;
+   typedef _pmdSignalInfo pmdSignalInfo ;
+
+   /*
+      Tool functions
+   */
+   pmdSignalInfo& pmdGetSignalInfo( INT32 signum ) ;
+
 }
 
-#endif
+#endif // PMDSIGNALHANDLER_HPP_

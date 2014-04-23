@@ -578,9 +578,7 @@ namespace engine
    INT32 pmdSend ( const CHAR *pBuffer, INT32 sendSize,
                    ossSocket *sock, pmdEDUCB *cb ) ;
    INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
-#if defined (_LINUX)
-   void pmdEDUCodeTrapHandler( OSS_HANDPARMS ) ;
-#endif
+
    INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
 }
 

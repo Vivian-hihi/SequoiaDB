@@ -37,7 +37,6 @@
 *******************************************************************************/
 
 #include "pmd.hpp"
-#include "pmdSignalHandler.hpp"
 #include "msgMessage.hpp"
 #include "ossStackDump.hpp"
 #include "ossEDU.hpp"
@@ -390,22 +389,6 @@ namespace engine
          }
       }
 
-      // load all collectionspaces
-      /*rc = rtnLoadCollectionSpaces ( krcb->getDBPath(),
-                                     krcb->getIndexPath(), dmsCB ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to load collection spaces" ) ;
-         goto error ;
-      }
-
-      // initialize temp space
-      rc = dmsCB->getTempCB()->init () ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to initialize temp cb, rc:%d", rc ) ;
-         goto error ;
-      }*/
       std::cout << "Begin to init dps logs..." << std::endl ;
       // init dps
       rc = dpsCB->init( krcb->getLogPath(), krcb->getLogBufSize() ) ;
@@ -419,174 +402,6 @@ namespace engine
       return rc ;
    error :
       goto done ;
-   }
-
-#if defined (_LINUX)
-
-   // this structure should not be inherited from SDBObject because it will be
-   // assigned by array
-   struct _signalInfo
-   {
-      const CHAR *name ;
-      INT32       handle ;
-   } ;
-
-   static _signalInfo signalHandleMap [] = {
-      { "Unknow", 0 },
-      { "SIGHUP", 1 },     //1
-      { "SIGINT", 1 },     //2
-      { "SIGQUIT", 1 },    //3
-      { "SIGILL", 1 },     //4
-      { "SIGTRAP", 1 },    //5
-      { "SIGABRT", 1 },    //6
-      { "SIGBUS", 1 },     //7
-      { "SIGFPE", 1 },     //8
-      { "SIGKILL", 1 },    //9
-      { "SIGUSR1", 0 },    //10
-      { "SIGSEGV", 1 },    //11
-      { "SIGUSR2", 0 },    //12
-      { "SIGPIPE", 0 },    //13
-      { "SIGALRM", 0 },    //14
-      { "SIGTERM", 1 },    //15
-      { "SIGSTKFLT", 0 },  //16
-      { "SIGCHLD", 0 },    //17
-      { "SIGCONT", 0 },    //18
-      { "SIGSTOP", 1 },    //19
-      { "SIGTSTP", 0 },    //20
-      { "SIGTTIN", 0 },    //21
-      { "SIGTTOU", 0 },    //22
-      { "SIGURG", 0 },     //23
-      { "SIGXCPU", 0 },    //24
-      { "SIGXFSZ", 0 },    //25
-      { "SIGVTALRM", 0 },  //26
-      { "SIGPROF", 0 },    //27
-      { "SIGWINCH", 0 },   //28
-      { "SIGIO", 0 },      //29
-      { "SIGPWR", 1 },     //30
-      { "SIGSYS", 1 },     //31
-      { "UNKNOW", 0 },     //32
-      { "UNKNOW", 0 },     //33
-      { "SIGRTMIN", 0 },   //34
-      { "SIGRTMIN+1", 0 }, //35
-      { "SIGRTMIN+2", 0 }, //36
-      { "SIGRTMIN+3", 0 }, //37
-      { "SIGRTMIN+4", 0 }, //38
-      { "SIGTTMIN+5", 0 }, //39
-      { "SIGRTMIN+6", 0 }, //40
-      { "SIGRTMIN+7", 0 }, //41
-      { "SIGTTMIN+8", 0 }, //42
-      { "SIGRTMIN+9", 0 }, //43
-      { "SIGRTMIN+10", 0 },//44
-      { "SIGRTMIN+11", 0 },//45
-      { "SIGRTMIN+12", 0 },//46
-      { "SIGRTMIN+13", 0 },//47
-      { "SIGRTMIN+14", 0 },//48
-      { "SIGRTMIN+15", 0 },//49
-      { "SIGRTMAX-14", 0 },//50
-      { "SIGRTMAX-13", 0 },//51
-      { "SIGRTMAX-12", 0 },//52
-      { "SIGRTMAX-11", 0 },//53
-      { "SIGRTMAX-10", 0 },//54
-      { "SIGRTMAX-9", 0 }, //55
-      { "SIGRTMAX-8", 0 }, //56
-      { "SIGRTMAX-7", 0 }, //57
-      { "SIGRTMAX-6", 0 }, //58
-      { "SIGRTMAX-5", 0 }, //59
-      { "SIGRTMAX-4", 0 }, //60
-      { "SIGRTMAX-3", 0 }, //61
-      { "SIGRTMAX-2", 0 }, //62
-      { "SIGRTMAX-1", 0 }, //63
-      { "SIGRTMAX", 0 },   //64
-   };
-
-   void pmdSignalHandler ( INT32 sigNum )
-   {
-      if ( sigNum > 0 && sigNum <= OSS_MAX_SIGAL )
-      {
-         if ( signalHandleMap[sigNum].handle ) // quit
-         {
-            PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
-         }
-      }
-   }
-#endif
-
-   INT32 pmdSetupSignalHandler ()
-   {
-      INT32 rc = SDB_OK ;
-#if defined (_LINUX)
-      ossSigSet sigSet ;
-      struct sigaction newact ;
-      ossMemset ( &newact, 0, sizeof(newact)) ;
-      sigemptyset ( &newact.sa_mask ) ;
-#endif
-      pmdKRCB *krcb = pmdGetKRCB () ;
-      ossSetInEngine () ;
-      ossSetTrapExceptionPath ( krcb->getDiagLogPath() ) ;
-#if defined (_LINUX)
-      // Sigsegv
-      // newact.sa_sigaction = ( OSS_SIGFUNCPTR ) ossSignalSigsegv ;
-      newact.sa_sigaction = ( OSS_SIGFUNCPTR ) ossEDUCodeTrapHandler ;
-      newact.sa_flags |= SA_SIGINFO ;
-      newact.sa_flags |= SA_ONSTACK ;
-      if ( sigaction ( SIGSEGV, &newact, NULL ) )
-      {
-         std::cerr << "Failed to setup signal handler for SigSegV"
-                   << std::endl ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      if ( sigaction ( SIGBUS, &newact, NULL ) )
-      {
-         std::cerr << "Failed to setup signal handler for SigBus"
-                   << std::endl ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      // stack dump signals
-      newact.sa_sigaction = ( OSS_SIGFUNCPTR ) pmdEDUCodeTrapHandler ;
-      newact.sa_flags |= SA_SIGINFO ;
-      newact.sa_flags |= SA_ONSTACK ;
-      // capture the user stack dump signal
-      // 23 for linux
-      if ( sigaction ( OSS_STACK_DUMP_SIGNAL, &newact, NULL ) )
-      {
-         std::cerr << "Failed to setup signal handler for dump signal"
-                   << std::endl ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      // capture the internal user stack dump signal
-      if ( sigaction ( OSS_STACK_DUMP_SIGNAL_INTERNAL, &newact, NULL ) )
-      {
-         std::cerr << "Failed to setup signal handler for dump signal"
-                   << std::endl ;
-         rc = SDB_SYS ;
-         goto error ;
-      }
-
-      sigSet.fillSet () ;
-      sigSet.sigDel ( SIGSEGV ) ;
-      sigSet.sigDel ( SIGBUS ) ;
-      sigSet.sigDel ( SIGALRM ) ;
-      sigSet.sigDel ( SIGPROF ) ;
-      sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL ) ;
-      sigSet.sigDel ( OSS_STACK_DUMP_SIGNAL_INTERNAL ) ;
-      rc = ossRegisterSignalHandle( sigSet, (SIG_HANDLE)pmdSignalHandler ) ;
-      if ( SDB_OK != rc )
-      {
-         std::cerr << "Failed to register signals, rc: " << rc << std::endl ;
-         // we do not abort startup process if any signal handler can't be
-         // installed
-         rc = SDB_OK ;
-      }
-   done :
-#endif
-      return rc ;
-#if defined (_LINUX)
-   error :
-      goto done ;
-#endif
    }
 
    INT32 listBackups ( rsOptionMgr &optMgr )
@@ -646,7 +461,7 @@ namespace engine
       }
 
       // handlers and init global mem
-      rc = pmdSetupSignalHandler () ;
+      rc = pmdEnableSignalEvent( optMgr._dialogPath ) ;
       if ( rc )
       {
          std::cerr << "Failed to setup signal handler, rc: " << rc << std::endl ;
@@ -738,61 +553,6 @@ namespace engine
       goto done ;
    }
 
-#if defined (_WINDOWS)
-   BOOL pmdCtrlHandler( DWORD fdwCtrlType )
-   {
-      BOOLEAN ret = FALSE ;
-      switch( fdwCtrlType )
-      {
-      // Handle the CTRL-C signal.
-      case CTRL_C_EVENT:
-         PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
-         printf( "Ctrl-C event\n\n" );
-         Beep( 750, 300 );
-         ret = TRUE ;
-         goto done ;
-
-      // CTRL-CLOSE: confirm that the user wants to exit.
-      case CTRL_CLOSE_EVENT:
-         Beep( 600, 200 );
-         printf( "Ctrl-Close event\n\n" );
-         ret = TRUE ;
-         goto done ;
-
-      // Pass other signals to the next handler.
-      case CTRL_BREAK_EVENT:
-         Beep( 900, 200 );
-         printf( "Ctrl-Break event\n\n" );
-         ret = FALSE ;
-         goto done ;
-
-      case CTRL_LOGOFF_EVENT:
-         Beep( 1000, 200 );
-         printf( "Ctrl-Logoff event\n\n" );
-         ret = FALSE ;
-         goto done ;
-
-      case CTRL_SHUTDOWN_EVENT:
-         Beep( 750, 500 );
-         printf( "Ctrl-Shutdown event\n\n" );
-         ret = FALSE ;
-         goto done ;
-
-      default:
-         ret = FALSE ;
-         goto done ;
-      }
-   done :
-      return ret ;
-   }
-#endif
-
-   void pmdOnetimeInit()
-   {
-   #if defined (_WINDOWS)
-      SetConsoleCtrlHandler( (PHANDLER_ROUTINE) pmdCtrlHandler, TRUE ) ;
-   #endif
-   }
 }
 
 /**************************************/
@@ -801,7 +561,6 @@ namespace engine
 INT32 main ( INT32 argc, CHAR** argv )
 {
    INT32 rc = SDB_OK ;
-   engine::pmdOnetimeInit() ;
    rc = engine::pmdRestoreThreadMain ( argc, argv ) ;
    return rc ;
 }
