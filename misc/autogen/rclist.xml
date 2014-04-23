@@ -2082,5 +2082,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_OUT_OF_BOUND</name>
+         <description>
+            <en>out of bound</en>
+            <cn>超出界限</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
