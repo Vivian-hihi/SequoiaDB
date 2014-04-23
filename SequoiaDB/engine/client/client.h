@@ -82,7 +82,9 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
     \param [in] pServiceName The Service Name or Port of Database Server
     \param [in] pUsrName The User's Name of the account
     \param [in] pPasswd The Password  of the account
-    \param [out] handle The database connection handle
+    \param [out] handle The database connection handle,
+                      when fail to connect, *handle == -1 and error code
+                      is return
     \retval SDB_OK Connection Success
     \retval Others Connection Fail
 */
@@ -459,6 +461,8 @@ SDB_EXPORT BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle ) ;
         SDB_PAGESIZE_64K
         SDB_PAGESIZE_DEFAULT
     \param [out] handle The collection space handle
+                                when fail to create collection space, 
+                                *handle == -1 and error code is return
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -539,7 +543,8 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
     \brief Get the node from the specified shard
     \param [in] cHandle The shard handle
     \param [in] pNodeName The name of node
-    \param [out] handle The node handle
+    \param [out] handle The node handle, when fail to get node,
+                      *handle == -1, and error code is return
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -555,7 +560,8 @@ SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
     \param [in] cHandle The shard handle
     \param [in] pHostName The host of node
     \param [in] pServiceName The service name of the node
-    \param [out] handle The node handle
+    \param [out] handle The node handle, when fail to get node,
+                      *handle == -1, and error code is return
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -803,7 +809,9 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
            This function creates a non-sharded collection with default replsize
     \param [in] cHandle The collection space handle
     \param [in] pCollectionName The collection name
-    \param [out] handle The collection handle
+    \param [out] handle The collection handle,
+                      when fail to create collection, 
+                      *handle == -1 and error code is return
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -822,6 +830,8 @@ SDB_EXPORT INT32 sdbCreateCollection ( sdbCSHandle cHandle,
                 including "ShardingKey", "ReplSize", "IsMainCL" and "Compressed" informations,
                 no options, if null
     \param [out] handle The collection handle
+                      when fail to create collection, 
+                      *handle == -1 and error code is return
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
