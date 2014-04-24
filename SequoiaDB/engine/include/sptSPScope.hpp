@@ -49,8 +49,21 @@ namespace engine
 
       virtual void shutdown() ;
 
+      JSContext *getContext()
+      {
+         return _context ;
+      }
+
+      JSObject *getGlobalObj()
+      {
+         return _global ;
+      }
+
    public:
-      virtual INT32 eval(const CHAR *code, UINT32 len, bson::BSONObj &detail ) ;
+      virtual INT32 eval(const CHAR *code, UINT32 len,
+                         const CHAR *filename,
+                         UINT32 lineno,
+                         bson::BSONObj &detail ) ;
 
    private:
       virtual INT32 _loadUsrDefObj( _sptObjDesc *desc ) ;

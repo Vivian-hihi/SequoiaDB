@@ -33,7 +33,7 @@
 #ifndef SPT_INVOKEDEF_HPP_
 #define SPT_INVOKEDEF_HPP_
 
-#include "sptParamContainer.hpp"
+#include "sptArguments.hpp"
 #include "sptReturnVal.hpp"
 #include "jsapi.h"
 

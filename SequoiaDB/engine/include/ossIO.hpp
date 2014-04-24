@@ -145,6 +145,15 @@ public :
        fd=0;
 #endif
     }
+
+    BOOLEAN isOpened() const
+    {
+#if defined (_WINDOWS)
+       return INVALID_HANDLE_VALUE != hFile ;
+#else
+       return 0 != fd ;
+#endif
+    }
 };
 
 typedef class _OSS_FILE OSSFILE;

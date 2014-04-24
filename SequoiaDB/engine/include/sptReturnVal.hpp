@@ -35,54 +35,10 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "../bson/bson.hpp"
+#include "sptProperty.hpp"
 
 namespace engine
 {
-   class _sptProperty : public SDBObject
-   {
-   public:
-      _sptProperty() ;
-      virtual ~_sptProperty() ;
-
-      _sptProperty( const _sptProperty & ) ;
-      _sptProperty &operator=(const _sptProperty &) ;
-
-   public:
-      INT32 assign( const CHAR *name,
-                    bson::BSONType type,
-                    const void *value ) ;
-
-      void assignObject( const CHAR *name,
-                         void *value ) ;
-
-      void assignVoid() ;
-
-      const std::string &getName()const
-      {
-         return _name ;
-      }
-
-      INT32 getINT32() const ;
-      FLOAT64 getFLOAT64() const ;
-      BOOLEAN getBool() const ;
-      const CHAR * getString() const ;
-      bson::BSONType getType() const
-      {
-         return _type ;
-      }
-      void *getObj() const
-      {
-         return (void *)_value ;
-      }
-
-   protected:
-      std::string _name ;
-      UINT64 _value ;
-      bson::BSONType _type ;
-   } ;
-   typedef class _sptProperty sptProperty ;
-
    typedef std::vector<sptProperty> SPT_PROPERTIES ;
 
    class _sptReturnVal : public SDBObject
@@ -101,9 +57,15 @@ namespace engine
                           bson::BSONType type,
                           const void *value ) ;
 
-      void setObjectVal( const CHAR *name,
-                         void *value,
-                         const void *classDef ) ;
+      INT32 setStringVal( const CHAR *name,
+                          const CHAR *value ) ;
+
+      INT32 setUsrObjectVal( const CHAR *name,
+                             void *value,
+                             const void *classDef ) ;
+
+      INT32 setBSONObj( const CHAR *name,
+                        bson::BSONObj &obj ) ;
 
       const sptProperty &getVal() const
       {

@@ -53,7 +53,7 @@ namespace engine
       virtual ~_sptContainer() ;
 
    public:
-      _sptScope *newScope( SPT_SCOPE_TYPE type ) ;
+      _sptScope *newScope( SPT_SCOPE_TYPE type = SPT_SCOPE_TYPE_SP ) ;
    } ;
 
    typedef class _sptContainer sptContainer ;

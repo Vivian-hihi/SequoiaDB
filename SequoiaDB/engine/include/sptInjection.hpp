@@ -40,7 +40,7 @@ namespace engine
            {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
-              typedef INT32 (className::*FUNC)(const _sptParamContainer &,\
+              typedef INT32 (className::*FUNC)(const _sptArguments &,\
                                               _sptReturnVal &,\
                                                bson::BSONObj &);\
               rc = sptInvoker::callMemberFunc<className, FUNC>\
@@ -61,7 +61,7 @@ namespace engine
            {\
               JSBool ret = JS_TRUE ; \
               INT32 rc = SDB_OK ; \
-              typedef INT32 (className::*FUNC)(const _sptParamContainer &,\
+              typedef INT32 (className::*FUNC)(const _sptArguments &,\
                                               _sptReturnVal &,\
                                                bson::BSONObj &);\
               rc = sptInvoker::callConstructFunc<className, FUNC>\

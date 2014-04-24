@@ -39,7 +39,7 @@
 #include "sptFuncMap.hpp"
 #include "pd.hpp"
 #include "sptSPDef.hpp"
-#include "sptSPParamContainer.hpp"
+#include "sptSPArguments.hpp"
 #include "../bson/bson.hpp"
 
 
@@ -66,7 +66,7 @@ namespace engine
          SDB_ASSERT( NULL != f, "can not be NULL" )
 
          jsval jsRval = JSVAL_VOID ;
-         _sptSPParamContainer arg( cx, argc, vp ) ;
+         _sptSPArguments arg( cx, argc, vp ) ;
          _sptReturnVal rval ;
          bson::BSONObj detail ;
          void *instance = JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
@@ -82,6 +82,14 @@ namespace engine
          {
             PD_LOG( PDERROR, "member function returns err: %d, detail: %s",
                     rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
+            if ( !detail.isEmpty() )
+            {
+               JS_ReportError( cx, detail.toString().c_str() ) ;
+            }
+            else
+            {
+               JS_ReportError( cx, "failed to call this function:%d", rc ) ;
+            }
             goto error ;
          }
 
@@ -109,7 +117,7 @@ namespace engine
          SDB_ASSERT( NULL != f, "can not be NULL" )
 
          JSObject *jsObj = NULL ;
-         _sptSPParamContainer arg( cx, argc, vp ) ;
+         _sptSPArguments arg( cx, argc, vp ) ;
          _sptReturnVal rval ;
          bson::BSONObj detail ;
          T * instance = T::crtInstance() ;
@@ -125,6 +133,10 @@ namespace engine
          {
             PD_LOG( PDERROR, "construct function returns err: %d, detail: %s",
                     rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
+            if ( !detail.isEmpty() )
+            {
+               JS_ReportError( cx, detail.toString().c_str() ) ;
+            }
             goto error ;
          }
 
@@ -242,6 +254,10 @@ namespace engine
          {
             PD_LOG( PDERROR, "resolve func returns err:%d, detail:%s",
                     rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
+            if ( !detail.isEmpty() )
+            {
+               JS_ReportError( cx, detail.toString().c_str() ) ;
+            }
             goto error ;
          }
          else

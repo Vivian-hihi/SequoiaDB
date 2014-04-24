@@ -52,7 +52,10 @@ namespace engine
 
       virtual void shutdown() = 0 ;
 
-      virtual INT32 eval( const CHAR *code, UINT32 len, bson::BSONObj &detail ) = 0 ;
+      virtual INT32 eval( const CHAR *code, UINT32 len,
+                          const CHAR *filename,
+                          UINT32 lineno,
+                          bson::BSONObj &detail ) = 0 ;
 
    public:
       INT32 loadUsrDefObj( _sptObjDesc *desc ) ;
