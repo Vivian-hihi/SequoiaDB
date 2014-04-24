@@ -109,7 +109,7 @@ function Usage()
    echo "    --login                operating system users and history" ;
    echo "    --limit                ulimit used to limit the resources occupied shell startup process" ;
    echo "    --vmstat               Show the server status value of a given time interval" ;
-   echo "    --timeout              Set too much time to collect,default:50"
+#   echo "    --timeout              Set too much time to collect,default:50"
 
 }
 
@@ -452,7 +452,10 @@ do
       done
    fi
 done
-sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "allHost:[${HOST[@]}] allPort:[${PORT[@]}] allDbpath:[${DBPATH[@]}]"
+DbPath=`echo ${DBPATH[@]}`
+AllHost=`echo ${HOST[@]}`
+AllPort=`echo ${PORT[@]}`
+sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "allHost:[$AllHost] allPort:[$AllPort] allDbpath:[$DbPath]"
 #echo "${HOST[@]} ${PORT[@]} ${DBPATH[@]}"
 #*************************************************************************************************
 #@Function : Get parameter passed in and check over them wether or not correct,if don't have this 
@@ -509,7 +512,10 @@ do
       fi
    done
 done
-sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "paraHost:[${HostPara[@]}] paraPort:[${PortPara[@]}] paraDbpath:[${DbPath[@]}]"
+paraHost=`echo ${HostPara[@]}`
+paraPort=`echo ${PortPara[@]}`
+paraDbpath=`echo ${DbPath[@]}`
+sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "paraHost:[$paraHost] paraPort:[$paraPort] paraDbpath:[$paraDbpath]"
 #***********************************************************************************
 #@Function: get password of host that you begin to collect information
 #@
