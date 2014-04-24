@@ -24,6 +24,8 @@
 #include "ossMem.hpp"
 #include "pdTrace.hpp"
 #include "sptTrace.hpp"
+#include "sptApi.hpp"
+
 
 #define VERIFY(cond) if ( ! (cond) ) goto error
 

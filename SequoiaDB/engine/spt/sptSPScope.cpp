@@ -35,6 +35,7 @@
 #include "pd.hpp"
 #include "ossUtil.hpp"
 #include "sptSPDef.hpp"
+#include "sptBsonobj.hpp"
 
 const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
 
@@ -122,6 +123,12 @@ namespace engine
          goto error ;
       }
 
+      rc = loadUsrDefObj( &(_sptBsonobj::__desc) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load bsonobj:%d", rc ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -223,6 +230,8 @@ namespace engine
    }
 
    INT32 _sptSPScope::eval( const CHAR *code, UINT32 len,
+                            const CHAR *filename,
+                            UINT32 lineno,
                             bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
@@ -231,7 +240,7 @@ namespace engine
       jsval *rval = NULL ;
       jsval exception = JSVAL_VOID ;
       if ( !JS_EvaluateScript( _context, _global, code,
-                               len, NULL, 1, rval ) )
+                               len, filename, lineno, rval ) )
       {
          rc = SDB_SPT_EVAL_FAIL ;
          PD_LOG( PDERROR, "failed to eval js code" ) ;

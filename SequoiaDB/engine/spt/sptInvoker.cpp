@@ -57,15 +57,35 @@ namespace engine
       }
       else if ( Bool == pro.getType() )
       {
-         val = BOOLEAN_TO_JSVAL( pro.getBool() ) ;
+         BOOLEAN v = TRUE ;
+         rc = pro.getNative( Bool, &v ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         val = BOOLEAN_TO_JSVAL( v ) ;
       }
       else if ( NumberInt == pro.getType() )
       {
-         val = INT_TO_JSVAL( pro.getINT32() ) ;
+         INT32 v = 0 ;
+         rc = pro.getNative( NumberInt, &v ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         val = INT_TO_JSVAL( v ) ;
       }
       else if ( NumberDouble == pro.getType() )
       {
-         val = DOUBLE_TO_JSVAL( pro.getFLOAT64() ) ;
+         FLOAT64 v = 0 ;
+         rc = pro.getNative( NumberDouble, &v ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+         val = DOUBLE_TO_JSVAL( v ) ;
       }
       else
       {
@@ -104,7 +124,7 @@ namespace engine
             goto error ;
          }
 
-         JS_SetPrivate( cx, jsObj, rpro.getObj() ) ;
+         JS_SetPrivate( cx, jsObj, rpro.getValue() ) ;
 
          if ( !rval.getValProperties().empty() )
          {

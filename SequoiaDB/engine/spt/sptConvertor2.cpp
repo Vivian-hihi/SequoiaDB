@@ -1,21 +1,18 @@
 /*******************************************************************************
 
+   OCO SOURCE MATERIALS
 
-   Copyright (C) 2011-2014 SequoiaDB Ltd.
+   SEQUOIADB CONFIDENTIAL (SEQUOIADB CONFIDENTIAL-RESTRICTED when combined
+              with the Aggregated OCO Source Modules for this Program)
 
-   This program is free software: you can redistribute it and/or modify
-   it under the term of the GNU Affero General Public License, version 3,
-   as published by the Free Software Foundation.
+   COPYRIGHT: xxxxx (C) Copyright SequoiaDB Inc. 2012
+              Licensed Materials - Program Property of SequoiaDB Inc.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warrenty of
-   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU Affero General Public License for more details.
+   The source code for this program is not published or otherwise divested of
+   its trade secrets, irrespective of what has been deposited with the Copyright
+   Protection Center of China
 
-   You should have received a copy of the GNU Affero General Public License
-   along with this program. If not, see <http://www.gnu.org/license/>.
-
-   Source File Name = sptConvertor.cpp
+   Source File Name = sptConvertor2.cpp
 
    Descriptive Name =
 
@@ -36,11 +33,13 @@
 
 *******************************************************************************/
 
-#include "sptConvertor.hpp"
+#include "sptConvertor2.hpp"
 #include "pd.hpp"
 #include "ossMem.hpp"
+#include "util2Bsonobj.hpp"
 #include "utilStr.hpp"
 #include "../client/base64c.h"
+#include <boost/lexical_cast.hpp>
 
 #define SPT_CONVERTOR_SPE_OBJSTART '$'
 #define SPT_SPEOBJ_MINKEY "$minKey"
@@ -53,45 +52,28 @@
 #define SPT_SPEOBJ_TYPE "$type"
 #define SPT_SPEOBJ_OID "$oid"
 
-INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
+using namespace bson ;
+
+INT32 sptConvertor2::toBson( JSObject *obj , bson::BSONObj &bsobj )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL != _cx && NULL != bs, "can not be NULL" )
+   SDB_ASSERT( NULL != _cx, "can not be NULL" )
 
-   /// can not use SDB_OSS_MALLOC
-   *bs = bson_create() ;
-   if ( NULL == *bs )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   bson_init( *bs ) ;
-
-   rc = _traverse( obj, *bs ) ;
+   BSONObjBuilder builder ;
+   rc = _traverse( obj, builder ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 
-   rc = bson_finish( *bs ) ;
-   if ( rc )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
+   bsobj = builder.obj() ;
 done:
    return rc ;
 error:
-   if ( NULL != *bs )
-   {
-      bson_dispose( *bs ) ;
-      *bs = NULL ;
-   }
    goto done ;
 }
 
-INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
+INT32 sptConvertor2::_traverse( JSObject *obj , bson::BSONObjBuilder &builder )
 {
    INT32 rc = SDB_OK ;
    JSIdArray *properties = NULL ;
@@ -130,7 +112,7 @@ INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
          goto error ;
       }
 
-      _appendToBson( name, fieldValue, bs ) ;
+      _appendToBson( name, fieldValue, builder ) ;
    }
 done:
    return rc ;
@@ -138,9 +120,9 @@ error:
    goto done ;
 }
 
-BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
+BOOLEAN sptConvertor2::_addSpecialObj( JSObject *obj,
                                       const CHAR *key,
-                                      bson *bs )
+                                      bson::BSONObjBuilder &builder )
 {
    BOOLEAN ret = TRUE ;
    INT32 rc = SDB_OK ;
@@ -186,7 +168,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      bson_append_minkey( bs, key ) ;
+      builder.appendMinKey( key ) ;
    }
    else if ( 0 == name.compare(SPT_SPEOBJ_MAXKEY) &&
              1 == properties->length )
@@ -197,7 +179,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      bson_append_maxkey( bs, key ) ;
+      builder.appendMaxKey( key ) ;
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_OID ) &&
              1 == properties->length )
@@ -220,9 +202,10 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      bson_oid_t oid ;
-      bson_oid_from_string( &oid, strValue.c_str() ) ;
-      bson_append_oid( bs, key, &oid ) ;
+      {
+      OID id( strValue ) ;
+      builder.appendOID( key, &id ) ;
+      }
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_TIMESTAMP ) &&
              1 == properties->length )
@@ -231,7 +214,6 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       jsval value ;
       time_t tm ;
       UINT64 usec = 0 ;
-      bson_timestamp_t btm ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
          goto error ;
@@ -250,17 +232,16 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      btm.t = tm;
-      btm.i = usec ;
-      bson_append_timestamp( bs, key, &btm ) ;
+      {
+      builder.appendTimestamp( key, tm * 1000, usec ) ;
+      }
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_DATE ) &&
              1 == properties->length )
    {
       std::string strValue ;
       jsval value ;
-      time_t tm ;
-      bson_date_t datet ;
+      Date_t dt ;
       if ( !_getProperty( obj, name.c_str(), JSTYPE_STRING, value ))
       {
          goto error ;
@@ -272,14 +253,12 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      if ( SDB_OK != engine::utilStr2TimeT( strValue.c_str(),
-                                            tm ) )
+      if ( SDB_OK != engine::utilStr2Datet( strValue.c_str(), dt ) )
       {
          goto error ;
       }
 
-      datet = tm ;
-      bson_append_date( bs, key, datet ) ;
+      builder.appendDate( key, dt ) ;
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_REGEX ) &&
              2 == properties->length )
@@ -330,7 +309,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      bson_append_regex( bs, key, strRegex.c_str(), strOption.c_str() ) ;
+      builder.appendRegex( key, strRegex, strOption ) ;
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_BINARY ) &&
              2 == properties->length )
@@ -340,8 +319,9 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       jsval jsBin, jsType ;
       jsid typeId = properties->vector[1] ;
       jsval typeValName ;
+      BinDataType binType ;
       CHAR *decode = NULL ;
-      UINT32 decodeSize = 0 ;
+      UINT32 decodeSize = 0 ; 
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
       {
@@ -383,6 +363,17 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
+      try
+      {
+         binType = (BinDataType)(boost::lexical_cast<INT32>(strType)) ;
+      }      
+      catch ( std::bad_cast &e )
+      {
+         PD_LOG( PDERROR, "invalid bindata type:%s", strType.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       decodeSize = getDeBase64Size( strBin.c_str() ) ;
       decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
       if ( NULL == decode )
@@ -399,9 +390,8 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          SDB_OSS_FREE( decode ) ;
          goto error ;
       }
-
-      bson_append_binary( bs, key, strType.at(0),
-                         decode, decodeSize ) ;
+      builder.appendBinData( key, decodeSize,
+                             binType, decode ) ;
       SDB_OSS_FREE( decode ) ;
 
    }
@@ -418,21 +408,21 @@ error:
    goto done ;
 }
 
-INT32 sptConvertor::_appendToBson( const std::string &name,
+INT32 sptConvertor2::_appendToBson( const std::string &name,
                                    const jsval &val,
-                                   bson *bs )
+                                   bson::BSONObjBuilder &builder )
 {
    INT32 rc = SDB_OK ;
    switch (JS_TypeOfValue( _cx, val ))
    {
       case JSTYPE_VOID :
       {
-         bson_append_undefined( bs, name.c_str() ) ;
+         /// do nothing. 
          break ;
       }
       case JSTYPE_NULL :
       {
-         bson_append_null( bs, name.c_str() ) ;
+         builder.appendNull( name ) ;
          break ;
       }
       case JSTYPE_NUMBER :
@@ -445,7 +435,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
             {
                goto error ;
             }
-            bson_append_int( bs, name.c_str(), iN ) ;
+            builder.appendNumber( name, iN ) ;
          }
          else
          {
@@ -455,7 +445,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
             {
                goto error ;
             }
-            bson_append_double( bs, name.c_str(), fV ) ;
+            builder.appendNumber( name, fV ) ;
          }
          break ;
       }
@@ -467,7 +457,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
          {
             goto error ;
          }
-         bson_append_string( bs, name.c_str(), str.c_str() ) ;
+         builder.append( name, str ) ;
          break ;
       }
       case JSTYPE_BOOLEAN :
@@ -478,26 +468,26 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
          {
             goto error ;
          }
-         bson_append_bool( bs, name.c_str(), bL ) ;
+         builder.appendBool( name, bL ) ;
          break ;
       }
       case JSTYPE_OBJECT :
       {
          if ( JSVAL_IS_NULL( val ) )
          {
-            bson_append_null( bs, name.c_str() ) ;
+            builder.appendNull( name ) ;
          }
          else
          {
             JSObject *obj = JSVAL_TO_OBJECT( val ) ;
             if ( NULL == obj )
             {
-               bson_append_null( bs, name.c_str() ) ;
+               builder.appendNull( name ) ;
             }
-            else if ( !_addSpecialObj( obj, name.c_str(), bs ) )
+            else if ( !_addSpecialObj( obj, name.c_str(), builder ) )
             {
-               bson *bsobj = NULL ;
-               rc = toBson( obj, &bsobj ) ;
+               BSONObj bsonobj ;
+               rc = toBson( obj, bsonobj ) ;
                if ( SDB_OK != rc )
                {
                   goto error ;
@@ -505,14 +495,12 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
 
                if ( JS_IsArrayObject( _cx, obj ) )
                {
-                  bson_append_array( bs, name.c_str(), bsobj ) ;
+                  builder.appendArray( name, bsonobj ) ;
                }
                else
                {
-                  bson_append_bson( bs, name.c_str(), bsobj ) ;
+                  builder.append( name, bsonobj ) ;
                }
-
-               bson_destroy( bsobj ) ;
             }
             else
             {
@@ -530,7 +518,7 @@ INT32 sptConvertor::_appendToBson( const std::string &name,
             goto error ;
          }
 
-         bson_append_code( bs, name.c_str(), str.c_str() ) ;
+         builder.appendCode( name, str ) ;
          break ;
       }
       default :
@@ -546,7 +534,7 @@ error:
    goto done ;
 }
 
-BOOLEAN sptConvertor::_getProperty( JSObject *obj,
+BOOLEAN sptConvertor2::_getProperty( JSObject *obj,
                                     const CHAR *name,
                                     JSType type,
                                     jsval &val )
@@ -565,7 +553,7 @@ BOOLEAN sptConvertor::_getProperty( JSObject *obj,
    }
 }
 
-INT32 sptConvertor::toString( JSContext *cx,
+INT32 sptConvertor2::toString( JSContext *cx,
                               const jsval &val,
                               std::string &str )
 {
@@ -613,12 +601,12 @@ done:
    return rc ;
 }
 
-INT32 sptConvertor::_toString( const jsval &val, std::string &str )
+INT32 sptConvertor2::_toString( const jsval &val, std::string &str )
 {
    return toString( _cx, val, str ) ;
 }
 
-INT32 sptConvertor::_toInt( const jsval &val, INT32 &iN )
+INT32 sptConvertor2::_toInt( const jsval &val, INT32 &iN )
 {
    INT32 rc = SDB_OK ;
    int32 ip = 0 ;
@@ -634,7 +622,7 @@ error:
    goto done ;
 }
 
-INT32 sptConvertor::_toDouble( const jsval &val, FLOAT64 &fV )
+INT32 sptConvertor2::_toDouble( const jsval &val, FLOAT64 &fV )
 {
    INT32 rc = SDB_OK ;
    jsdouble dp = 0 ;
@@ -650,7 +638,7 @@ error:
    goto done ;
 }
 
-INT32 sptConvertor::_toBoolean( const jsval &val, BOOLEAN &bL )
+INT32 sptConvertor2::_toBoolean( const jsval &val, BOOLEAN &bL )
 {
    INT32 rc = SDB_OK ;
    JSBool bp = TRUE ;
