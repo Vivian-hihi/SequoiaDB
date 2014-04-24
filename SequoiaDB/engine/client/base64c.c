@@ -37,7 +37,7 @@ int getEnBase64Size ( int size )
    return len ;
 }
 
-int getDeBase64Size ( char *s )
+int getDeBase64Size ( const char *s )
 {
    int len = strlen ( s ) ;
    int zeroize = 0 ;
@@ -49,7 +49,7 @@ int getDeBase64Size ( char *s )
    return len ;
 }
 
-int base64Encode ( char *s, int in_size, char *_ret, int out_size )
+int base64Encode ( const char *s, int in_size, char *_ret, int out_size )
 {
    char c = 0x00 ;
    char t = 0x00 ;
@@ -135,7 +135,7 @@ char getCharIndex ( char c )
    return 0 ;
 }
 
-int base64Decode ( char *s, char *_ret, int out_size )
+int base64Decode ( const char *s, char *_ret, int out_size )
 {
    static char lpCode [ 4 ] ;
    int vLen = 0 ;
