@@ -129,9 +129,14 @@ spt2Files = [
       "spt/sptInvoker.cpp",
       "spt/sptReturnVal.cpp",
       "spt/sptScope.cpp",
-      "spt/sptSPParamContainer.cpp",
       "spt/sptSPScope.cpp",
-      "spt/sptUtil.cpp"
+      "spt/sptUtil.cpp",
+      "spt/sptSPArguments.cpp",
+      "spt/sptLibssh2Session.cpp",
+      "spt/sptProperty.cpp",
+      "spt/sptBsonobj.cpp",
+      "spt/sptSshSession.cpp",
+      "spt/sptConvertor2.cpp"
       ]
 
 rtnFiles = [
