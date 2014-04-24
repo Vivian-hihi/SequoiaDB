@@ -406,6 +406,31 @@ INT32 _utilCSVParser::_readFirstField( )
       }
       else if ( !_headerline && 0 == _readFreeSpace )
       {
+         if ( !_isString )
+         {
+            if ( pCursor > leftField )
+            {
+               cursorSize = pCursor - leftField ;
+               pNewCursor = _trimLeft ( leftField, cursorSize ) ;
+               leftField = pNewCursor ;
+               if ( !pNewCursor )
+               {
+                  _vField.push_back ( NULL ) ;
+               }
+               else
+               {
+                  cursorSize = pCursor - leftField ;
+                  pNewCursor = _trimRight ( pCursor - 1, cursorSize ) ;
+                  *( pNewCursor + 1 ) = 0 ;
+                  _vField.push_back ( leftField ) ;
+               }
+            }
+            else
+            {
+               _vField.push_back ( NULL ) ;
+            }
+            _nextFieldCursor = NULL ;
+         }
          break ;
       }
 
