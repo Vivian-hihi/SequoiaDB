@@ -82,14 +82,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "member function returns err: %d, detail: %s",
                     rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
-            if ( !detail.isEmpty() )
-            {
-               JS_ReportError( cx, detail.toString().c_str() ) ;
-            }
-            else
-            {
-               JS_ReportError( cx, "failed to call this function:%d", rc ) ;
-            }
             goto error ;
          }
 
@@ -103,8 +95,47 @@ namespace engine
       done:
          return rc ;
       error:
+         _reportError( cx, rc, detail ) ;
          goto done ;         
       }
+
+      template<typename Func>
+      static INT32 callStaticFunc( JSContext *cx,
+                                   uintN argc,
+                                   jsval *vp,
+                                   Func f )
+      {
+         INT32 rc = SDB_OK ;
+         SDB_ASSERT( NULL != cx && NULL != vp, "can not be NULL" ) ;
+         SDB_ASSERT( NULL != f, "can not be NULL" )
+
+         jsval jsRval = JSVAL_VOID ;
+         _sptSPArguments arg( cx, argc, vp ) ;
+         _sptReturnVal rval ;
+         bson::BSONObj detail ;
+
+         rc = (*f)( arg, rval, detail ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "member function returns err: %d, detail: %s",
+                    rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
+            goto error ;
+         }
+
+         rc = _callbackDone( cx, NULL, rval, detail, &jsRval ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         JS_SET_RVAL( cx, vp, jsRval ) ;
+      done:
+         return rc ;
+      error:
+         _reportError( cx, rc, detail ) ;
+         goto done ;
+      }
+
 
       template<typename T, typename Func>
       static INT32 callConstructFunc( JSContext *cx,
@@ -133,10 +164,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "construct function returns err: %d, detail: %s",
                     rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
-            if ( !detail.isEmpty() )
-            {
-               JS_ReportError( cx, detail.toString().c_str() ) ;
-            }
             goto error ;
          }
 
@@ -172,6 +199,8 @@ namespace engine
             JS_SetPrivate ( cx , jsObj , NULL ) ;
          }
          T::releaseInstance( instance ) ;
+
+         _reportError( cx, rc, detail ) ;
          goto done ;
       }
 
@@ -200,6 +229,7 @@ namespace engine
                                     Func f )
       {
          INT32 rc = SDB_OK ;
+         bson::BSONObj detail ;
          jsval valID = JSVAL_VOID ;
          CHAR *idValue = NULL ;
          void *instance = JS_GetPrivate( cx, obj ) ;
@@ -245,7 +275,6 @@ namespace engine
          }
 
          {
-         bson::BSONObj detail ;
          jsval jsRval = JSVAL_VOID ;
          _sptReturnVal rval ;
 
@@ -254,10 +283,6 @@ namespace engine
          {
             PD_LOG( PDERROR, "resolve func returns err:%d, detail:%s",
                     rc, detail.isEmpty() ? "" : detail.toString().c_str() ) ;
-            if ( !detail.isEmpty() )
-            {
-               JS_ReportError( cx, detail.toString().c_str() ) ;
-            }
             goto error ;
          }
          else
@@ -274,6 +299,7 @@ namespace engine
          SAFE_JS_FREE( cx, idValue ) ;
          return rc ;
       error:
+          _reportError( cx, rc, detail ) ;
          *objp = NULL ;
          goto done ;
       }
@@ -291,6 +317,10 @@ namespace engine
                                   const _sptReturnVal &rval,
                                   const bson::BSONObj &detail,
                                   jsval *rvp ) ;
+
+      static void _reportError( JSContext *cx,
+                                INT32 rc,
+                                const bson::BSONObj &detail ) ;
  
    private:
       _sptFuncMap _funcMap ;

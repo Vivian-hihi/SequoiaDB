@@ -107,6 +107,47 @@ namespace engine
               goto done ;\
            }
 
+   #define JS_STATIC_FUNC_DEFINE( className, funcName )\
+           static JSBool __##funcName(JSContext *cx, uintN argc , jsval *vp ) \
+           {\
+              JSBool ret = JS_TRUE ; \
+              INT32 rc = SDB_OK ; \
+              typedef INT32 (*FUNC)( const _sptArguments &,\
+                                     _sptReturnVal &,\
+                                     bson::BSONObj &);\
+              rc = sptInvoker::callStaticFunc<FUNC>\
+                         (cx, argc, vp, &className::funcName ) ;\
+              if ( SDB_OK != rc )\
+              {\
+                 ret = JS_FALSE ;\
+                 goto error ; \
+              }\
+           done:\
+              return ret ;\
+           error:\
+              goto done ;\
+           }
+
+   #define JS_GLOBAL_FUNC_DEFINE( className, funcName )\
+           static JSBool __##funcName(JSContext *cx, uintN argc , jsval *vp ) \
+           {\
+              JSBool ret = JS_TRUE ; \
+              INT32 rc = SDB_OK ; \
+              typedef INT32 (*FUNC)( const _sptArguments &,\
+                                     _sptReturnVal &,\
+                                     bson::BSONObj &);\
+              rc = sptInvoker::callStaticFunc<FUNC>\
+                         (cx, argc, vp, &className::funcName ) ;\
+              if ( SDB_OK != rc )\
+              {\
+                 ret = JS_FALSE ;\
+                 goto error ; \
+              }\
+           done:\
+              return ret ;\
+           error:\
+              goto done ;\
+           }
 
    #define JS_DECLARE_CLASS( className )\
            public: \
@@ -127,6 +168,9 @@ namespace engine
            {\
               setClassName(jsClassName) ;
 
+   #define JS_IGNORE_CLASS \
+           setIgnore() ;
+
    #define JS_ADD_MEMBER_FUNC( jsFuncName, funcName ) \
            _funcMap.addMemberFunc( jsFuncName, __##funcName ) ;
 
@@ -138,6 +182,12 @@ namespace engine
 
    #define JS_ADD_DESTRUCT_FUNC( funcName ) \
            _funcMap.setDestructor( __##funcName ) ;
+
+   #define JS_ADD_STATIC_FUNC( jsFuncName, funcName ) \
+           _funcMap.addStaticFunc( jsFuncName, __##funcName ) ;
+
+   #define JS_ADD_GLOBAL_FUNC( jsFuncName, funcName ) \
+           _funcMap.addGlobalFunc( jsFuncName, __##funcName ) ;
 
    #define JS_MAPPING_END() }
                       

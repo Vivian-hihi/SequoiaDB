@@ -92,11 +92,37 @@ namespace engine
          return _normal ;
       }
 
+      const NORMAL_FUNCS &getStaticFuncs() const
+      {
+         return _static ;
+      }
+
+      const NORMAL_FUNCS &getGlobalFuncs() const
+      {
+         return _global ;
+      }
+
       BOOLEAN addMemberFunc( const CHAR *name,
                              JS_INVOKER::MEMBER_FUNC f )
       {
          return ( NULL != name && NULL != f ) ?
                 _normal.insert( std::make_pair( name, f ) ).second :
+                FALSE ;
+      }
+
+      BOOLEAN addStaticFunc( const CHAR *name,
+                             JS_INVOKER::MEMBER_FUNC f )
+      {
+         return ( NULL != name && NULL != f ) ?
+                _static.insert( std::make_pair( name, f ) ).second :
+                FALSE ;
+      }
+
+      BOOLEAN addGlobalFunc( const CHAR *name,
+                             JS_INVOKER::MEMBER_FUNC f )
+      {
+         return ( NULL != name && NULL != f ) ?
+                _global.insert( std::make_pair( name, f ) ).second :
                 FALSE ;
       }
 
@@ -131,7 +157,9 @@ namespace engine
       }
    private:
 
-      NORMAL_FUNCS  _normal ;
+      NORMAL_FUNCS _normal ;
+      NORMAL_FUNCS _static ;
+      NORMAL_FUNCS _global ;
       JS_INVOKER::MEMBER_FUNC _construct ;
       JS_INVOKER::DESTRUCT_FUNC _destruct ;
       JS_INVOKER::RESLOVE_FUNC _resolve ;

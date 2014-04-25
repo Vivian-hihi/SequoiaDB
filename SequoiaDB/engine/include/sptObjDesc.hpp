@@ -74,6 +74,11 @@ namespace engine
          _classDef = def ;
          _init = TRUE ;
       }
+
+      BOOLEAN getIgnore() const
+      {
+         return _jsClassName.empty() ;
+      }
    protected:
       std::string _jsClassName ;
       _sptFuncMap _funcMap ;

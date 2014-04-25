@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -15,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sptSPScope.hpp
+   Source File Name = sptGlobalFunc.hpp
 
    Dependencies: N/A
 
@@ -30,55 +29,27 @@
 
 *******************************************************************************/
 
-#ifndef SPT_SPSCOPE_HPP_
-#define SPT_SPSCOPE_HPP_
+#ifndef SPT_BLOBALFUNC_HPP_
+#define SPT_BLOBALFUNC_HPP_
 
-#include "sptScope.hpp"
-#include "jsapi.h"
+#include "sptApi.hpp"
 
 namespace engine
 {
-   class _sptSPScope : public _sptScope
+   class _sptGlobalFunc : public SDBObject
    {
-   public:
-      _sptSPScope() ;
-      virtual ~_sptSPScope() ;
+   JS_DECLARE_CLASS( _sptGlobalFunc )
 
    public:
-      virtual INT32 start() ;
-
-      virtual void shutdown() ;
-
-      JSContext *getContext()
-      {
-         return _context ;
-      }
-
-      JSObject *getGlobalObj()
-      {
-         return _global ;
-      }
+      _sptGlobalFunc() {}
+      virtual ~_sptGlobalFunc() {} 
 
    public:
-      virtual INT32 eval(const CHAR *code, UINT32 len,
-                         const CHAR *filename,
-                         UINT32 lineno,
-                         bson::BSONObj &detail ) ;
-
-   private:
-      virtual INT32 _loadUsrDefObj( _sptObjDesc *desc ) ;
-
-      INT32 _loadUsrClass( _sptObjDesc *desc ) ;
-
-      INT32 _loadGlobal( _sptObjDesc *desc ) ;
-
-   private:
-      JSRuntime *_runtime ;
-      JSContext *_context ;
-      JSObject *_global ;
-      JSErrorReporter _errReporter ;
+      static INT32 getLastError( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail ) ;
    } ;
-   typedef class _sptSPScope sptSPScope ;
+   typedef class _sptGlobalFunc sptGlobalFunc ;
 }
 
 #endif
