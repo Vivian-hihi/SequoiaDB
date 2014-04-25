@@ -16,14 +16,6 @@ listIndexes - Enumerate indexes.
 
 .sp 2
 db.collectionspace.collection.listIndexes()
-.SH "SYNOPSIS"
-
-.sp 2
-
-.sp 2
-
-.sp 2
-db.collectionspace.collection.getIndex()
 .SH "CATEGORY"
 
 .sp 2
