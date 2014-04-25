@@ -20,21 +20,18 @@
 #include "config.h"
 #include "parseMandoc.h"
 
-namespace engine
+class parseMandoc
 {
-   class parseMandoc
-   {
-   public:
-      static parseMandoc* createInstance();
-      static void destroyInstance();
-      ~parseMandoc();
-      INT32 parse(const CHAR* filename);
-   private:
-      parseMandoc();
-      static parseMandoc * m_pInstance;
-      struct curparse curp;
-      enum mparset type;
-   } ;
-}
+public:
+   static parseMandoc& getInstance() ;
+   INT32 parse( const CHAR* filename ) ;
+private:
+   parseMandoc() ;
+   parseMandoc( const parseMandoc& ) ;
+   parseMandoc& operator=( const parseMandoc& ) ;
+   ~parseMandoc() ;
+   struct curparse curp ;
+   enum mparset type ;
+} ;
 
-#endif /*!PARSE_MANDOC_HPP__*/
+#endif // PARSE_MANDOC_HPP__

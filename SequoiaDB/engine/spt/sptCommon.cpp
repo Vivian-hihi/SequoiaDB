@@ -54,9 +54,9 @@ INT32 getProgramPath( CHAR *pOutputPath )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   if ( progName[0] == NULL )
+   if ( progName[0] == '\0' )
    {
-      pOutputPath[0] = NULL ;
+      pOutputPath[0] = '\0' ;
       goto done ;
    }
    // find '\\' or '/'
@@ -68,18 +68,18 @@ INT32 getProgramPath( CHAR *pOutputPath )
       // let's move to the next character after '\\' or '/'
       if ( pathLen > OSS_MAX_PATHSIZE + 1 )
       {
-         pOutputPath[0] = NULL ;
+         pOutputPath[0] = '\0' ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       // copy everything before '\\' or '/' to output
       ossMemcpy ( pOutputPath, progName, pathLen ) ;
-      pOutputPath[pathLen] = NULL ;
+      pOutputPath[pathLen] = '\0' ;
    }
    else
    {
       // if we can't find path spliter
-       pOutputPath[0] = NULL ;
+       pOutputPath[0] = '\0' ;
    }
 done :
 //   PD_TRACE_EXIT ( SDB_ENGINEPATH );

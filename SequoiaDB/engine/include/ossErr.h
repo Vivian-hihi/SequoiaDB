@@ -294,4 +294,6 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_DOMAIN_IS_OCCUPIED          -256  /**< Domain is not empty */
 #define SDB_REST_RECV_SIZE              -257  /**< Rest recv size greater than max size */
 #define SDB_DRIVER_BSON_ERROR           -258  /**< Wrong data for building bson */
+#define SDB_OUT_OF_BOUND                -259  /**< out of bound */
+#define SDB_REST_COMMON_UNKNOW          -260  /**< rest common unknow */
 #endif /* OSSERR_HPP_ */

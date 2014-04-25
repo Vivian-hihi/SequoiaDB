@@ -27,7 +27,6 @@
 #include <boost/filesystem.hpp>
 #include <vector>
 #include <fstream>
-#include "sptCommon.hpp"
 
 #define MFILE_SUFFIX ".cli"
 
@@ -53,36 +52,34 @@
 
 namespace fs = boost::filesystem;
 
+#define CATE_SIZE  7
+const CHAR* CATE_ARR[ CATE_SIZE ] = {
+   DB_CATEGORY,
+   CS_CATEGORY,
+   CL_CATEGORY,
+   RG_CATEGORY,
+   NODE_CATEGORY,
+   CURSOR_CATEGORY,
+   CLCOUNT_CATEGORY } ;
+
 static INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark ) ;
+static INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
+                           INT32 length ) ;
+static BOOLEAN isCategory( const CHAR *pName, const CHAR** arr, INT32 size ) ;
 
-manHelp* manHelp::m_pInstance = NULL;
 
-manHelp* manHelp::createInstance( const CHAR *path )
+manHelp& manHelp::getInstance( const CHAR *path )
 {
-   if ( !m_pInstance )
-   {
-      m_pInstance = SDB_OSS_NEW manHelp( path );
-      if ( !m_pInstance )
-         ossPrintf( "Failed to new manHelp."OSS_NEWLINE );
-   }
-   return m_pInstance;
-}
-
-void manHelp::destroyInstance()
-{
-   if ( m_pInstance )
-   {
-      SDB_OSS_DEL m_pInstance;
-      m_pInstance = NULL;
-   }
+   static manHelp _instance( path ) ;
+   return _instance ;
 }
 
 manHelp::manHelp( const CHAR *path )
 {
    INT32 rc = SDB_OK;
    INT32 len = ossStrlen( path );
-   ossMemcpy( filePath, path , len );
-   filePath[len] = 0;
+   ossMemcpy( _filePath, path , len );
+   _filePath[len] = 0;
    // scan the .cli files
    rc = scanFile();
    if ( rc )
@@ -99,16 +96,21 @@ INT32 manHelp::scanFile()
    INT32 rc = SDB_OK;
    INT32 tmp_buf_len = READ_CHARACTOR_NUM ;
    INT32 file_buf_len = READ_CHARACTOR_NUM ;
-   CHAR *tmp_buffer = (CHAR *)SDB_OSS_MALLOC( tmp_buf_len + 1 ) ;
+   // use to save the contents of the troff file, i don't know
+   // how large the troff file is, so i won't use array
    CHAR *file_buffer = (CHAR *)SDB_OSS_MALLOC( file_buf_len ) ;
+   // use to save the contents read from file_buffer
+   CHAR *tmp_buffer = (CHAR *)SDB_OSS_MALLOC( tmp_buf_len + 1 ) ;
    typedef vector<fs::path> vec;
    vec v;
    const INT32 file_name_len = OSS_PROCESS_NAME_LEN ;
-   fs::path p( filePath );
+   fs::path p( _filePath );
    CHAR *pFileName = NULL ;
    pFileName = (CHAR *)SDB_OSS_MALLOC( file_name_len + 1 );
    if ( !pFileName )
    {
+      ossPrintf( "Memory malloc failed(size = %d), %s:%d "OSS_NEWLINE,
+                 file_name_len + 1,  __FILE__, __LINE__ ) ;
       rc = SDB_OOM ;
       goto error ;
    }
@@ -120,6 +122,7 @@ INT32 manHelp::scanFile()
    // check the path
    if ( !fs::exists(p) || !fs::is_directory(p) )
    {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG;
       goto error;
    }
@@ -132,9 +135,9 @@ INT32 manHelp::scanFile()
    {
       std::string fPath = (*it).string() ;
       const CHAR *pfPath = fPath.c_str() ;
-     // nerver use const CHAR* pTmp = fs::extension(*it).c_str();
+      // nerver use const CHAR* pTmp = fs::extension(*it).c_str();
       std::string fSuffix = fs::extension(*it);
-     const CHAR *pfSuffix = fSuffix.c_str();
+      const CHAR *pfSuffix = fSuffix.c_str();
       // if it is ".cli" file, save the file name
       // 1: save the file name to sset
       // 2: save synopsis and cutline to ssmap
@@ -151,6 +154,8 @@ INT32 manHelp::scanFile()
          strLen = ossStrlen( pLeaf ) - ossStrlen( MFILE_SUFFIX );
          if ( strLen > file_name_len )
          {
+            ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
+                        __FILE__, __LINE__ ) ;
             rc = SDB_INVALIDARG ;
             goto error;
          }
@@ -159,7 +164,7 @@ INT32 manHelp::scanFile()
          fileName =  pFileName ;
          // save the file name without ".cli" to sset
          // the format is: cs.createCL
-         nset.insert( fileName );
+         _nset.insert( fileName );
 
          // when finishing save this file name to sset
          // i am going go save category and cutline to ssmap
@@ -167,18 +172,14 @@ INT32 manHelp::scanFile()
          pSplit = ossStrrchr( pFileName, '.' ) ;
          if ( !pSplit )
          {
+            ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
+                        __FILE__, __LINE__ ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
          *pSplit = '\0' ;
          pSplit++ ;
-         if ( ossMemcmp( pFileName, DB_CATEGORY, ossStrlen( pFileName ) ) == 0 ||
-              ossMemcmp( pFileName, CS_CATEGORY, ossStrlen( pFileName ) ) == 0 || 
-              ossMemcmp( pFileName, CL_CATEGORY, ossStrlen( pFileName ) ) == 0 ||
-              ossMemcmp( pFileName, RG_CATEGORY, ossStrlen( pFileName ) ) == 0 ||
-              ossMemcmp( pFileName, NODE_CATEGORY, ossStrlen( pFileName ) ) == 0 ||
-              ossMemcmp( pFileName, CURSOR_CATEGORY, ossStrlen( pFileName ) ) == 0 ||
-              ossMemcmp( pFileName, CLCOUNT_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+         if ( isCategory( pFileName, CATE_ARR, CATE_SIZE ) )
          {
             // read brief cutline from troff file
             std::ifstream fin ;
@@ -197,18 +198,10 @@ INT32 manHelp::scanFile()
             troff_file_len = fin.tellg() ;
             fin.seekg ( 0, fin.beg ) ;
             // check the file_buffer
-            if ( file_buf_len < troff_file_len )
+            rc = checkBuffer ( &file_buffer, &file_buf_len, troff_file_len ) ;
+            if ( rc )
             {
-               CHAR *pOld = file_buffer ;
-               file_buffer= (CHAR *)SDB_OSS_REALLOC( file_buffer, troff_file_len ) ;
-               if ( !file_buffer )
-               {
-                  ossPrintf ( "Failed to allocate %d bytes for read file"OSS_NEWLINE, troff_file_len ) ;
-                  rc = SDB_OOM ;
-                  file_buffer = pOld ;
-                  goto exit ;
-               }
-               file_buf_len = troff_file_len ;
+               goto exit ;
             }
             // read troff file
             fin.read ( file_buffer, troff_file_len ) ;
@@ -243,18 +236,12 @@ INT32 manHelp::scanFile()
             // begin to extract cutline
             // check the receive buffer
             read_real_len = ossStrlen( r_pos ) ;
-            if ( tmp_buf_len < read_real_len )
+            rc = checkBuffer ( &tmp_buffer, &tmp_buf_len, read_real_len ) ;
+            if ( rc )
             {
-               CHAR *pOld = tmp_buffer ;
-               tmp_buffer= (CHAR *)SDB_OSS_REALLOC( tmp_buffer, read_real_len + 1 ) ;
-               if ( !tmp_buffer )
-               {
-                  ossPrintf ( "Failed to allocate %d bytes for read file"OSS_NEWLINE, troff_file_len ) ;
-                  rc = SDB_OOM ;
-                  tmp_buffer = pOld ;
-                  goto exit ;
-               }
-               tmp_buf_len = read_real_len + 1 ;
+               ossPrintf( "Failed to check buffer, %s:%d "OSS_NEWLINE,
+                           __FILE__, __LINE__ ) ;
+               goto exit ;
             }
             cutline_len = read_real_len - ossStrlen(pSplit) ;
             ossMemcpy( tmp_buffer, r_pos + ossStrlen(pSplit), cutline_len ) ;
@@ -284,18 +271,12 @@ INT32 manHelp::scanFile()
             // begin to extract synopsis
             // check the recieve buffer
             read_real_len = ossStrlen( r_pos ) ;
-            if ( tmp_buf_len < read_real_len )
+            rc = checkBuffer ( &tmp_buffer, &tmp_buf_len, read_real_len ) ;
+            if ( rc )
             {
-               CHAR *pOld = tmp_buffer ;
-               tmp_buffer= (CHAR *)SDB_OSS_REALLOC( tmp_buffer, read_real_len + 1 ) ;
-               if ( !tmp_buffer )
-               {
-                  ossPrintf ( "Failed to allocate %d bytes for read file"OSS_NEWLINE, troff_file_len ) ;
-                  rc = SDB_OOM ;
-                  tmp_buffer = pOld ;
-                  goto exit ;
-               }
-               tmp_buf_len = read_real_len + 1 ;
+               ossPrintf( "Failed to check buffer, %s:%d "OSS_NEWLINE,
+                           __FILE__, __LINE__ ) ;
+               goto exit ;
             }
             ossMemcpy( tmp_buffer, r_pos, read_real_len ) ;
             tmp_buffer[read_real_len] = '\0' ;
@@ -313,31 +294,31 @@ INT32 manHelp::scanFile()
             // put synopsis and cutline in map
             if ( ossMemcmp( pFileName, DB_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mdb.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mdb.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( ossMemcmp( pFileName, CS_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mcs.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mcs.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( ossMemcmp( pFileName, CL_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mcl.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mcl.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( ossMemcmp( pFileName, RG_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mrg.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mrg.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( ossMemcmp( pFileName, NODE_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mnode.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mnode.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( ossMemcmp( pFileName, CURSOR_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mcursor.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mcursor.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else if ( ossMemcmp( pFileName, CLCOUNT_CATEGORY, ossStrlen( pFileName ) ) == 0 )
             {
-               mclcount.insert( std::pair<string, string>(synopsis, cutline) ) ;
+               _mclcount.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
             else
             {
@@ -349,8 +330,9 @@ INT32 manHelp::scanFile()
             // close file
             fin.close();
             if ( rc )
+            {
                goto error ;
-            // save category and brief command to ssmap
+            }
          }
          else
          {
@@ -384,40 +366,43 @@ error :
 INT32 manHelp::getFileHelp( const CHAR* name )
 {
    INT32 rc = SDB_OK;
-   sset tmp;
+   sset fuzzy_match ;
    const CHAR *str = NULL;
+   const CHAR *fname = NULL;
    CHAR fPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 };
-   // get a instance use to parse troff file
-   engine::parseMandoc *md = engine::parseMandoc::createInstance();
-   if ( md == NULL )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
    // check argument
    if ( name == NULL || ossStrcmp(name, "") == 0 )
    {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    // search the name set to find out the matched file name
-   for ( sset::const_iterator it(nset.begin()), it_end(nset.end());
+   for ( sset::const_iterator it(_nset.begin()), it_end(_nset.end());
          it != it_end; it++ )
    {
-      str = ossStrstr( (*it).c_str(), name );
+      fname = (*it).c_str() ;
+      str = ossStrstr( fname, name );
       if ( str != NULL )
       {
-         tmp.insert( (*it) );
+         // when we get a full fit file name, no need to scan the less
+         if ( ossStrncmp( fname, name, ossStrlen( name ) + 1 ) == 0 )
+         {
+            fuzzy_match.clear() ;
+            fuzzy_match.insert( (*it) ) ;
+            break ;
+         }
+         fuzzy_match.insert( (*it) );
       }
    }
    // if we not find any matched file name, tell the user directly
-   if ( tmp.size() == 0 )
+   if ( fuzzy_match.size() == 0 )
       ossPrintf( "No manual for method %s"OSS_NEWLINE, name );
-   else if ( tmp.size() > 1 ) // if we get more than 1 file names, let the user fill again
+   else if ( fuzzy_match.size() > 1 ) // if we get more than 1 file names, let the user fill again
    {
       ossPrintf( "%d methods named \"%s\", please fill in full name: \n",
-                 (INT32)tmp.size(), name );
-      for ( sset::const_iterator it(tmp.begin()), it_end(tmp.end());
+                 (INT32)fuzzy_match.size(), name );
+      for ( sset::const_iterator it(fuzzy_match.begin()), it_end(fuzzy_match.end());
             it != it_end; it++ )
       {
          ossPrintf( "    %s"OSS_NEWLINE, (*it).c_str() );
@@ -425,14 +410,15 @@ INT32 manHelp::getFileHelp( const CHAR* name )
    }
    else // if we get one, parse it
    {
-      sset::const_iterator it(tmp.begin());
-      ossMemcpy( fPath, filePath, ossStrlen(filePath) );
+      sset::const_iterator it(fuzzy_match.begin());
+      ossMemcpy( fPath, _filePath, ossStrlen(_filePath) );
       ossStrncat( fPath, (*it).c_str(), ossStrlen((*it).c_str()) );
       ossStrncat( fPath, MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) );
       // parse
-      rc = md->parse ( fPath ) ;
+      rc = parseMandoc::getInstance().parse ( fPath ) ;
       if ( rc != SDB_OK )
       {
+         ossPrintf( "Failed to parse troff file, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
          goto error ;
       }
    }
@@ -446,19 +432,10 @@ error :
 INT32 manHelp::getFileHelp( const CHAR* category, const CHAR* cmd )
 {
    INT32 rc = SDB_OK;
-   sset tmp;
-   const CHAR *str = NULL;
-   CHAR fPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 };
-   // get a instance use to parse troff file
-   engine::parseMandoc *md = engine::parseMandoc::createInstance();
-   if ( md == NULL )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
    // check argument
    if ( category == NULL )
    {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -467,54 +444,24 @@ INT32 manHelp::getFileHelp( const CHAR* category, const CHAR* cmd )
    {
       rc = displayMethod( category ) ;
       if ( rc )
+      {
+         ossPrintf( "Failed to display methods, %s:%d "OSS_NEWLINE,
+                     __FILE__, __LINE__ ) ;
          goto error ;
+      }
    }
    // in case name != NULL display method manual
    else
    {
       rc = displayManual( category, cmd ) ;
       if ( rc )
-         goto error ;
-   }
-   /*
-   //
-   // search the name set to find out the matched file name
-   for ( sset::const_iterator it(nset.begin()), it_end(nset.end());
-         it != it_end; it++ )
-   {
-      str = ossStrstr( (*it).c_str(), cmd );
-      if ( str != NULL )
       {
-         tmp.insert( (*it) );
-      }
-   }
-   // if we not find any matched file name, tell the user directly
-   if ( tmp.size() == 0 )
-      ossPrintf( "No manual for method %s"OSS_NEWLINE, cmd );
-   else if ( tmp.size() > 1 ) // if we get more than 1 file names, let the user fill again
-   {
-      ossPrintf( "%d methods named \"%s\", please fill in full name: \n",
-                 (INT32)tmp.size(), cmd );
-      for ( sset::const_iterator it(tmp.begin()), it_end(tmp.end());
-            it != it_end; it++ )
-      {
-         ossPrintf( "    %s"OSS_NEWLINE, (*it).c_str() );
-      }
-   }
-   else // if we get one, parse it
-   {
-      sset::const_iterator it(tmp.begin());
-      ossMemcpy( fPath, filePath, ossStrlen(filePath) );
-      ossStrncat( fPath, (*it).c_str(), ossStrlen((*it).c_str()) );
-      ossStrncat( fPath, MFILE_SUFFIX, ossStrlen(MFILE_SUFFIX) );
-      // parse
-      rc = md->parse ( fPath ) ;
-      if ( rc != SDB_OK )
-      {
+         ossPrintf( "Failed to display manual, %s:%d "OSS_NEWLINE,
+                     __FILE__, __LINE__ ) ;
          goto error ;
       }
    }
-   */
+
 done :
    return rc;
 error :
@@ -528,61 +475,63 @@ ssmap& manHelp::getCategoryMap( const CHAR *category )
 {
     if ( ossMemcmp( category, DB_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mdb ;
+       return _mdb ;
     }
     else if ( ossMemcmp( category, CS_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mcs ;
+       return _mcs ;
     }
     else if ( ossMemcmp( category, CL_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mcl ;
+       return _mcl ;
     }
     else if ( ossMemcmp( category, RG_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mrg ;
+       return _mrg ;
     }
     else if ( ossMemcmp( category, NODE_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mnode ;
+       return _mnode ;
     }
     else if ( ossMemcmp( category, CURSOR_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mcursor ;
+       return _mcursor ;
     }
     else if ( ossMemcmp( category, CLCOUNT_CATEGORY, ossStrlen( category ) ) == 0 )
     {
-       return mclcount ;
+       return _mclcount ;
     }
     else
     {
-       return mempty ;
+       return _mempty ;
     }
 }
 
 INT32 manHelp::displayMethod( const CHAR *category )
 {
-    INT32 rc = SDB_OK ;
-    ssmap &cate = getCategoryMap( category ) ;
-    if ( cate == mempty )
-    {
-       rc = SDB_INVALIDARG ;
-       goto error ;
-    }
-    else
-    {
-       const CHAR *p_first = NULL ;
-       const CHAR *p_second = NULL ;
-       ssmap::iterator it = cate.begin() ;
-       for ( ; it != cate.end(); it++ )
-       {
-          p_first = (it->first).c_str() ;
-          p_second = (it->second).c_str() ;
-//          ossPrintf ( "   %s  %s", p_first, p_second ) ;
-//          ossPrintf ( "   %s  %s"OSS_NEWLINE, p_first, p_second ) ;
-          ossPrintf ( "   %s"OSS_NEWLINE, p_first ) ;
-       }
-    }
+   INT32 rc = SDB_OK ;
+   ssmap &cate = getCategoryMap( category ) ;
+   if ( cate == _mempty )
+   {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE,
+                  __FILE__, __LINE__ ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   else
+   {
+      const CHAR *p_first = NULL ;
+      const CHAR *p_second = NULL ;
+      ssmap::iterator it = cate.begin() ;
+      for ( ; it != cate.end(); it++ )
+      {
+         p_first = (it->first).c_str() ;
+         p_second = (it->second).c_str() ;
+//         ossPrintf ( "   %s  %s", p_first, p_second ) ;
+//         ossPrintf ( "   %s  %s"OSS_NEWLINE, p_first, p_second ) ;
+         ossPrintf ( "   %s"OSS_NEWLINE, p_first ) ;
+      }
+   }
 done :
    return rc ;
 error :
@@ -592,15 +541,13 @@ error :
 INT32 manHelp::displayManual( const CHAR *category, const CHAR *cmd )
 {
    INT32 rc = SDB_OK ;
-   CHAR *p_first = NULL ;
-   CHAR *p = NULL ;
    CHAR command[ CMD_NAME_LEN + 2 ] = { 0 } ;
-   INT32 commandLen = 0 ;
    INT32 cateLen = 0 ;
    INT32 cmdLen = 0 ;
    // check
    if ( !category || !cmd )
    {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -609,6 +556,7 @@ INT32 manHelp::displayManual( const CHAR *category, const CHAR *cmd )
    cmdLen = ossStrlen( cmd ) ;
    if ( cateLen + cmdLen > CMD_NAME_LEN )
    {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -634,43 +582,14 @@ INT32 manHelp::displayManual( const CHAR *category, const CHAR *cmd )
    {
       goto error ;
    }
-/*
-   ssmap &cate = getCategoryMap( category ) ;
-   // can i compare them like this ?????
-   // it seem it will never be true
-   if ( mempty == cate )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   ssmap::iterator it = cate.begin() ;
-   for ( ; it != cate.end(); it++ )
-   {
-      p_first = (it->first).c_str() ;
-      p = ossStrrchr( p_first, MARK3 ) ;
-      if ( !p )
-      {
-         ossPrintf( "Command %s has wrong format."OSS_NEWLINE, p_first ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      cmdLen = p - p_first ;
-      ossMemcpy( command, p, cmdLen ) ;
-      command[ cmdLen + 1 ] = '\0' ;
-      p = ossStrstr( cmdLen, cmd ) ;
-      if ( !p )
-      {
 
-      }
-   }
-*/
 done :
    return rc ;
 error :
    goto done ;
 }
 
-static INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark )
+INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark )
 {
    INT32 rc = SDB_OK ;
    INT32 strLen = 0 ;
@@ -683,6 +602,7 @@ static INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark )
    CHAR *pp = NULL ;
    if ( !buffer || !mark || buffer_len <= 0 )
    {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
@@ -714,21 +634,42 @@ error :
    goto done ;
 }
 
-/*
-int main()
+INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
+                           INT32 length )
 {
-   INT32 rc = 0;
-   const CHAR* path = "/home/users/tanzhaobo/sequoiadb/doc/manual/";
-   manHelp scf(path);
-   rc = scf.getFileHelp("createCL");
-   if ( rc )
+   INT32 rc = SDB_OK ;
+   if ( length > *bufferSize )
    {
-      printf("wrong!\n");
+      CHAR *pOld = *ppBuffer ;
+      INT32 newSize = length + 1 ;
+      *ppBuffer = (CHAR*)SDB_OSS_REALLOC ( *ppBuffer, sizeof(CHAR)*(newSize)) ;
+      if ( !*ppBuffer )
+      {
+         ossPrintf ( "Failed to allocate %d bytes send buffer"OSS_NEWLINE,
+                     newSize ) ;
+         rc = SDB_OOM ;
+         *ppBuffer = pOld ;
+         goto error ;
+      }
+      *bufferSize = newSize ;
    }
-   else
-   {
-      printf("OK!\n");
-   }
-   return 0;
+done :
+   return rc ;
+error :
+   goto done ;
 }
-*/
+
+BOOLEAN isCategory( const CHAR *pName, const CHAR** arr, INT32 size )
+{
+   INT32 i = 0 ;
+   BOOLEAN result = FALSE ;
+   for ( ; i < size ; i++ )
+   {
+      if ( ossMemcmp( pName, arr[i], ossStrlen( pName ) ) == 0 )
+      {
+         result = TRUE ;
+         break ;
+      }
+   }
+   return result ;
+}

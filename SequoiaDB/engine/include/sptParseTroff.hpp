@@ -15,12 +15,13 @@
    along with this program. If not, see <http://www.gnu.org/license/>.
 
 *******************************************************************************/
+#ifndef SPTPARSETROFF_HPP__
+#define SPTPARSETROFF_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossTypes.hpp"
 #include "ossUtil.hpp"
-#include "sptCommon.hpp"
 
 #include <set>
 #include <string>
@@ -28,39 +29,36 @@
 
 using namespace std;
 
-#ifndef PATH_LEN
-#define PATH_LEN 255
-#endif
 
 class manHelp : public SDBObject
 {
 public:
-   static manHelp* createInstance( const CHAR *path ) ;
-   static void destroyInstance() ;
-   ~manHelp() ;
+   static manHelp& getInstance( const CHAR *path ) ;
    INT32 getFileHelp( const CHAR *cmd ) ;
    INT32 getFileHelp( const CHAR *category, const CHAR *cmd ) ;
 private:
    typedef std::set<string> sset ;
    typedef std::map<string, string> ssmap ;
+
    manHelp( const CHAR* path ) ;
+   manHelp( const manHelp& ) ;
+   manHelp& operator=( const manHelp& ) ;
+   ~manHelp() ;
    INT32 scanFile() ;
    ssmap& getCategoryMap( const CHAR *category ) ;
    INT32 displayMethod( const CHAR *category ) ;
    INT32 displayManual( const CHAR *category, const CHAR *cmd ) ;
 
-   static manHelp *m_pInstance ;
-   sset nset ;
-   CHAR filePath[ OSS_MAX_PATHSIZE + 1 ] ;
-   ssmap mdb ;
-   ssmap mcs ;
-   ssmap mcl ;
-   ssmap mrg ;
-   ssmap mnode ;
-   ssmap mcursor ;
-   ssmap mclcount;
-   ssmap mempty ;
-
+   sset _nset ;
+   CHAR _filePath[ OSS_MAX_PATHSIZE + 1 ] ;
+   ssmap _mdb ;
+   ssmap _mcs ;
+   ssmap _mcl ;
+   ssmap _mrg ;
+   ssmap _mnode ;
+   ssmap _mcursor ;
+   ssmap _mclcount ;
+   ssmap _mempty ;
 } ;
 
-
+#endif // SPTPARSETROFF_HPP__

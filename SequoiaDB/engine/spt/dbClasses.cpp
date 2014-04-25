@@ -438,22 +438,22 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
    PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
    INT32 rc                                     = SDB_OK ;
    JSBool ret                                   = JS_TRUE ;
-   JSString *strSyn                             = NULL ;
+   JSString *strCate                            = NULL ;
    JSString *strCmd                             = NULL ;
-   CHAR *syn                                    = NULL ;
+   CHAR *cate                                    = NULL ;
    CHAR *cmd                                    = NULL ;
    INT32 len                                    = 0 ;
    // save troff file path
-   CHAR tfPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+   CHAR tfPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    // extract arguments
    ret = JS_ConvertArguments ( cx, argc, JS_ARGV ( cx , vp ),
-                               "S/S", &strSyn, &strCmd ) ;
+                               "S/S", &strCate, &strCmd ) ;
    REPORT ( ret , "help(): wrong arguments" ) ;
 
-   // syn is freed in done:
-   syn = (CHAR *) JS_EncodeString ( cx, strSyn ) ;
-   VERIFY ( syn ) ;
+   // cate is freed in done:
+   cate = (CHAR *) JS_EncodeString ( cx, strCate ) ;
+   VERIFY ( cate ) ;
    if ( argc > 1 )
    {
       // cmd is freed in done:
@@ -472,33 +472,14 @@ static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
       REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
    }
    ossStrncat ( tfPath, TF_REL_PATH, ossStrlen(TF_REL_PATH) ) ;
-   // get manHelp instance
-   {
-   manHelp *mh = manHelp::createInstance( tfPath ) ;
-   if ( mh == NULL )
-   {
-      rc = SDB_OOM ;
-      REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   }
-   // get and display manual
-   // in case: xxx.help()
-   if ( cmd == NULL )
-   {
-         rc = mh->getFileHelp( syn, NULL ) ;
-         REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   }
-   // in case xxx.help(yyy)
-   else
-   {
-      rc = mh->getFileHelp( syn, cmd ) ;
-      REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
-   }
-   }
+   // get manHelp instance and display xxx.help() or xxx.help(yyy)
+   rc = manHelp::getInstance( tfPath ).getFileHelp( cate, cmd ) ;
+   REPORT_RC ( SDB_OK == rc, "help()", rc ) ;
 #endif
    JS_SET_RVAL ( cx , vp, JSVAL_VOID ) ;
 
 done :
-   SAFE_JS_FREE ( cx, syn ) ;
+   SAFE_JS_FREE ( cx, cate ) ;
    SAFE_JS_FREE ( cx, cmd ) ;
 
    PD_TRACE_EXIT ( SDB_GLOBAL_HELP );

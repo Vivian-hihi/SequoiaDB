@@ -2,15 +2,13 @@ var help = function( val ) {
    if ( val == undefined )
    {
       println("   var db = new Sdb()                     connect to datebase use default host 'localhost' and default port 11810");
-      println("   var db = new Sdb('localhost', 11810)   connect to database use specified host and port");
-      println("   help(<method>)                         help on specified method, e.g. help(\"createCS\")");
+      println("   var db = new Sdb('localhost',11810)    connect to database use specified host and port");
+      println("   var db = new Sdb('ubuntu',11810,\'\',\'\') connect to database with username and password");
+      println("   help(<method>)                         help on specified method, e.g. help(\'createCS\')");
       println("   db.help()                              help on db methods");
-//      println("   db.help(<method>)                      help on specified method of db");
       println("   db.cs.help()                           help on collection space cs");
-//      println("   db.cs.help(<method>)                   help on specified method of collection space cs");
       println("   db.cs.cl                               access collection cl on collection space cs");
       println("   db.cs.cl.help()                        help on collection cl");
-//      println("   db.cs.cl.help(<method>)                help on specified method of collection cl");
       println("   db.cs.cl.find()                        list all records");
       println("   db.cs.cl.find({a:1})                   list records where a=1");
       println("   db.cs.cl.find().help()                 help on find methods");
@@ -32,7 +30,7 @@ Sdb.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("DB methods:") ;
-      println("   db.help(<method>)                   help on specified method of db");
+      println("   db.help(<method>)                     help on specified method of db, e.g. db.help(\'createCS\')");
       man( "db" ) ;
    }
    else
@@ -45,7 +43,7 @@ SdbNode.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Node methods:") ;
-      println("   node.help(<method>)                   help on specified method of data node");
+      println("   node.help(<method>)                   help on specified method of data node, e.g. node.help(\'start\')");
       man( "node" ) ;
    }
    else
@@ -58,7 +56,7 @@ SdbReplicaGroup.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Replica group methods:") ;
-      println("   rg.help(<method>)                   help on specified method of replica group rg");
+      println("   rg.help(<method>)                      help on specified method of replica group rg, e.g. rg.help(\'getDetail\')");
       man( "rg" ) ;
    }
    else
@@ -71,7 +69,7 @@ SdbCS.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Collection Space methods:") ;
-      println("   db.cs.help(<method>)                   help on specified method of collection space cs");
+      println("   db.cs.help(<method>)                   help on specified method of collection space cs, e.g. db.foo.help(\'createCL\')");
       man( "cs" ) ;
    }
    else
@@ -84,7 +82,7 @@ SdbCollection.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Collection methods:") ;
-      println("   db.cs.cl.help(<method>)                help on specified method of collection cl");
+      println("   db.cs.cl.help(<method>)                help on specified method of collection cl, e.g. db.foo.bar.help(\'find\')");
       man( "cl" ) ;
    }
    else
@@ -116,7 +114,7 @@ CLCount.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("count() modifiers:");
-      println("   db.cs.cl.count().help(<method>)        help on specified count method");
+      println("   db.cs.cl.count().help(<method>)        help on specified count methods");
       man( "count" ) ;
    }
    else

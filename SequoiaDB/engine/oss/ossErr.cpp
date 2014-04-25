@@ -281,7 +281,9 @@ const CHAR* getErrDesp ( INT32 errCode )
                    "too many open file description",
                    "Domain is not empty",
                    "Rest recv size greater than max size",
-                   "Wrong data for building bson"
+                   "Wrong data for building bson",
+                   "out of bound",
+                   "rest common unknow"
     };
     if ( code < 0 || (UINT32)code >= (sizeof ( errDesp ) / sizeof ( CHAR* )) )
         return "unknown error";
