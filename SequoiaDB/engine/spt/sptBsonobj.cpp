@@ -68,7 +68,7 @@ JS_MAPPING_END()
                               _sptReturnVal &rval,
                                bson::BSONObj &detail )
    {
-      rval.setNativeVal( "", bson::String, _obj.toString().c_str()) ;
+      rval.setStringVal( "", _obj.toString().c_str()) ;
       return SDB_OK ;      
    }
 

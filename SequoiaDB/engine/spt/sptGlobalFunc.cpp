@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -15,7 +14,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sptScope.cpp
+   Source File Name = sptGlobalFunc.cpp
 
    Dependencies: N/A
 
@@ -30,50 +29,48 @@
 
 *******************************************************************************/
 
-#include "sptScope.hpp"
-#include "pd.hpp"
-#include "sptObjDesc.hpp"
+#include "sptGlobalFunc.hpp"
 #include "ossUtil.hpp"
 
 namespace engine
 {
-   _sptScope::OBJ_DESCS _sptScope::_descs ;
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastError )
 
-   _sptScope::_sptScope()
+JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
+   JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastError )
+JS_MAPPING_END()
+   
+
+   static OSS_THREAD_LOCAL CHAR *errmsg ;
+
+   OSS_FORCE_INLINE const CHAR *getErrMsg()
    {
-
+      return errmsg ;
    }
 
-   _sptScope::~_sptScope()
+   OSS_FORCE_INLINE void setErrmsg( const CHAR *err )
    {
-
+      if ( NULL != errmsg )
+      {
+         SDB_OSS_FREE( errmsg ) ;
+         errmsg = NULL ;
+      }
+      errmsg = ossStrdup( err ) ;
+      return ;
    }
 
-   INT32 _sptScope::loadUsrDefObj( _sptObjDesc *desc )
+   INT32 _sptGlobalFunc::getLastError( const _sptArguments &arg,
+                                       _sptReturnVal &rval,
+                                       bson::BSONObj &detail )
    {
-      INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != desc, "desc can not be NULL" )
-      SDB_ASSERT( NULL != desc->getJSClassName(),
-                  "obj name can not be empty" )
-
-      if ( 0 < _descs.count( desc->getJSClassName() ))
+      if ( NULL != getErrMsg() )
       {
-         PD_LOG( PDERROR, "%s has already been registered" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
+         rval.setStringVal( "", getErrMsg()) ;
       }
 
-      rc = _loadUsrDefObj( desc ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to load object defined by user:%d", rc ) ;
-         goto error ;
-      }
-
-      _descs.insert( std::make_pair( desc->getJSClassName(), desc ) ) ;
-   done:
-      return rc ;
-   error:
-      goto done ;
+      SDB_OSS_FREE( errmsg ) ;
+      errmsg = NULL ;
+      return SDB_OK ;
    }
 }
+

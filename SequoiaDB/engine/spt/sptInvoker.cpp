@@ -1,6 +1,5 @@
 /*******************************************************************************
 
-
    Copyright (C) 2011-2014 SequoiaDB Ltd.
 
    This program is free software: you can redistribute it and/or modify
@@ -37,6 +36,8 @@ using namespace bson ;
 
 namespace engine
 {
+   void setErrmsg( const CHAR *err ) ;
+
    INT32 _sptInvoker::_getValFromProperty( JSContext *cx,
                                            const sptProperty &pro,
                                            jsval &val )
@@ -146,7 +147,7 @@ namespace engine
          }
       }
 
-      if ( !rpro.getName().empty() )
+      if ( !rpro.getName().empty() && NULL != obj )
       {
          if ( !JS_SetProperty( cx, obj,
                                rpro.getName().c_str(),
@@ -192,6 +193,23 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   void _sptInvoker::_reportError( JSContext *cx,
+                                   INT32 rc,
+                                   const bson::BSONObj &detail )
+   {
+      if ( SDB_OK != rc )
+      {
+         JS_SetPendingException( cx , INT_TO_JSVAL( rc ) ) ;
+      }
+
+      if ( !detail.isEmpty() )
+      {
+         setErrmsg( detail.toString().c_str() ) ;
+      }
+
+      return ;
    }
 }
 

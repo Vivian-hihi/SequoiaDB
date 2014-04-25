@@ -36,6 +36,7 @@
 #include "ossUtil.hpp"
 #include "sptSPDef.hpp"
 #include "sptBsonobj.hpp"
+#include "sptGlobalFunc.hpp"
 
 const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
 
@@ -129,6 +130,13 @@ namespace engine
          PD_LOG( PDERROR, "failed to load bsonobj:%d", rc ) ;
          goto error ;
       }
+
+      rc = loadUsrDefObj( &(_sptGlobalFunc::__desc) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to load bsonobj:%d", rc ) ;
+         goto error ;
+      }
    done:
       return rc ;
    error:
@@ -138,8 +146,17 @@ namespace engine
 
    void _sptSPScope::shutdown()
    {
+      
       if ( NULL != _context )
       {
+         void *p = JS_GetContextPrivate( _context ) ;
+         if ( NULL != p )
+         {
+            SDB_OSS_FREE( p ) ;
+         }
+
+         JS_SetContextPrivate( _context, NULL ) ;
+
          JS_EndRequest(_context) ;
          JS_DestroyContext( _context ) ;
          _context = NULL ;
@@ -157,6 +174,72 @@ namespace engine
    }
 
    INT32 _sptSPScope::_loadUsrDefObj( _sptObjDesc *desc )
+   {
+      INT32 rc = SDB_OK ;
+      if ( !desc->getIgnore() )
+      {
+         rc = _loadUsrClass( desc ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
+
+      rc = _loadGlobal( desc ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptSPScope::_loadGlobal( _sptObjDesc *desc )
+   {
+      INT32 rc = SDB_OK ;
+      const _sptFuncMap &fMap = desc->getFuncMap() ;
+      const sptFuncMap::NORMAL_FUNCS &funcs =
+                                     fMap.getGlobalFuncs() ;
+      JSFunctionSpec *specs = new JSFunctionSpec[funcs.size() + 1] ;
+      if ( NULL == specs )
+      {
+         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      {
+      UINT32 i = 0 ;
+      sptFuncMap::NORMAL_FUNCS::const_iterator itr = funcs.begin() ;
+      for ( ; i < funcs.size() ; i++, itr++ )
+      {
+         specs[i].name = itr->first.c_str() ;
+         specs[i].call = itr->second ;
+         specs[i].nargs = 0 ;
+         specs[i].flags = 0 ;
+      }
+      specs[i].name = NULL ;
+      specs[i].call = NULL ;
+      specs[i].nargs = 0 ;
+      specs[i].flags = 0 ;
+
+      if ( !JS_DefineFunctions( _context, _global, specs ) )
+      {
+         PD_LOG( PDERROR, "failed to define global functions" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      }
+   done:
+      delete []specs ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptSPScope::_loadUsrClass( _sptObjDesc *desc )
    {
       INT32 rc = SDB_OK ;
       const CHAR *objName = desc->getJSClassName() ;
@@ -188,10 +271,23 @@ namespace engine
 
       desc->setClassDef( cDef ) ;
 
-      const sptFuncMap::NORMAL_FUNCS &memberFuncs = fMap.getMemberFuncs() ; 
+      const sptFuncMap::NORMAL_FUNCS &memberFuncs = fMap.getMemberFuncs() ;
+      const sptFuncMap::NORMAL_FUNCS &staticFuncs = fMap.getStaticFuncs() ;
+
+      JSFunctionSpec *fSpecs = NULL ;
+      JSFunctionSpec *sfSpecs = NULL ;
+ 
       /// +1 for FS_END
-      JSFunctionSpec *fSpecs = new JSFunctionSpec[memberFuncs.size() + 1] ;
+      fSpecs = new JSFunctionSpec[memberFuncs.size() + 1] ;
       if ( NULL == fSpecs )
+      {
+         PD_LOG( PDERROR, "failed to allocate mem." ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      sfSpecs = new JSFunctionSpec[staticFuncs.size() + 1] ;
+      if ( NULL == sfSpecs )
       {
          PD_LOG( PDERROR, "failed to allocate mem." ) ;
          rc = SDB_OOM ;
@@ -213,9 +309,23 @@ namespace engine
       fSpecs[i].nargs = 0 ;
       fSpecs[i].flags = 0 ;
 
+      i = 0 ;
+      itr = staticFuncs.begin() ;
+      for ( ; i < staticFuncs.size() ; i++, itr++ )
+      {
+         sfSpecs[i].name = itr->first.c_str() ;
+         sfSpecs[i].call = itr->second ;
+         sfSpecs[i].nargs = 0 ;
+         sfSpecs[i].flags = 0 ;
+      }
+      sfSpecs[i].name = NULL ;
+      sfSpecs[i].call = NULL ;
+      sfSpecs[i].nargs = 0 ;
+      sfSpecs[i].flags = 0 ;
+
       if ( !JS_InitClass( _context, _global, 0, (JSClass *)desc->getClassDef(),
                           construct, 0, 0, fSpecs,
-                          0, 0 ) )
+                          0, sfSpecs ) )
       {
          PD_LOG( PDERROR, "failed to call js_initclass" ) ;
          rc = SDB_SYS ;
@@ -224,6 +334,7 @@ namespace engine
       }
    done:
       delete []fSpecs ;
+      delete []sfSpecs ;
       return rc ;
    error:
       goto done ;

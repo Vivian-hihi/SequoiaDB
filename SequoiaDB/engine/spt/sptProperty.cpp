@@ -202,7 +202,6 @@ namespace engine
       _name.assign(name);
       _type = Object ;
       _value = ( UINT64 )value ;
-   done:
       return rc ;
    }
 
