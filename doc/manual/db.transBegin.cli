@@ -1,0 +1,38 @@
+.TH COMMAND * 2014-04-08 "SequoiaDB" "Sequoiadb sdb's Manual"
+.ad l.ll 72.ce 1000
+\fBdb.transBegin()\fR
+.ce 0
+.sp 2
+
+.SH "NAME"
+
+.sp 2
+transBegin - Open the transaction.
+.SH "SYNOPSIS"
+
+.sp 2
+
+.sp 2
+
+.sp 2
+db.transBegin()
+.SH "CATEGORY"
+
+.sp 2
+
+.sp 2
+Sequoiadb
+.SH "DESCRIPTION"
+
+.sp 2
+Open the transaction, SequoiaDB database transation is a series
+of operations as a single logical unit of work performed.
+Transaction processing to ensure that all operations within the
+unit unless all transactional successfully completed, it would
+not permanently updated data-oriented resources.
+.SH "Examples"
+
+.sp 2
+Open the transaction commands:
+.sp 2
+db.transBegin() 
