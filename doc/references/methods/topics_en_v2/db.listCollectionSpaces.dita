@@ -6,7 +6,11 @@
     <section>
       <title>NAME</title>
       <p>listCollectionSpaces - Emurate all the collection spaces in the database.</p>
-    </section>    
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.listCollectionSpaces</apiname>()
+    </section>
     <section>
       <title>CATEGORY</title>
       <p></p>Sequoiadb

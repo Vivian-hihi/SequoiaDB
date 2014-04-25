@@ -6,6 +6,10 @@
     <section>
       <title>NAME</title>
       <p>listReplicaGroups - List all replsets.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.listReplicaGroups</apiname>()
     </section>    
     <section>
       <title>CATEGORY</title>

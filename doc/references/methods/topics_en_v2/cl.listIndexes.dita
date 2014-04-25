@@ -9,6 +9,10 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
+      <p></p><apiname>db.collectionspace.collection.listIndexes</apiname>()
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
       <p></p><apiname>db.collectionspace.collection.getIndex</apiname>()
     </section>
     <section>

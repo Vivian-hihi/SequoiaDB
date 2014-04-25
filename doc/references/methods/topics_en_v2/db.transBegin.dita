@@ -6,6 +6,10 @@
     <section>
       <title>NAME</title>
       <p>transBegin - Open the transaction.</p>
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.transBegin</apiname>()
     </section>    
     <section>
       <title>CATEGORY</title>

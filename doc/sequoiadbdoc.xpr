@@ -966,7 +966,7 @@
                     <file name="references/methods/topics_en_v2/rg.getMaster.dita"/>
                     <file name="references/methods/topics_en_v2/rg.getNode.dita"/>
                     <file name="references/methods/topics_en_v2/rg.getSlave.dita"/>
-                    <file name="references/methods/topics_en_v2/rg.removenode.dita"/>
+                    <file name="references/methods/topics_en_v2/rg.removeNode.dita"/>
                     <file name="references/methods/topics_en_v2/rg.start.dita"/>
                     <file name="references/methods/topics_en_v2/rg.stop.dita"/>
                 </folder>

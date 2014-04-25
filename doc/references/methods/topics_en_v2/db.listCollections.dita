@@ -6,7 +6,11 @@
     <section>
       <title>NAME</title>
       <p>listCollections - Enumerate collection.</p>
-    </section>    
+    </section>
+    <section>
+      <title>SYNOPSIS</title>
+      <p></p><apiname>db.listCollections</apiname>()
+    </section>
     <section>
       <title>CATEGORY</title>
       <p></p>Sequoiadb
