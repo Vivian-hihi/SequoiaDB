@@ -38,23 +38,23 @@ INT32 readInput ( CHAR *pPrompt, INT32 numIndent );
 
 int main(int argc,char *argv[])
 {
-	if( argc > 2 || argc < 2 )
-	 {
-	     std::cout << "Input false !\n" ; 
-	     return 0;
-	 }
-	INT32 rc = SDB_OK ;
-	//pmdInitialize(pmdGetKRCB());
-	//SDB_ASSERT(1!=1, "wrong");
-	BSONObj matcher ;
-	CHAR BUFF  [ RECEIVE_BUFFER_SIZE ] ;
-	//rc = readInput ( "Please input a \"JSOB\"", 0 ) ;
-  rc = fromjson ( argv[1], matcher ) ;
-  std::cout << matcher <<endl ; 
+   INT32 rc = SDB_OK ;
+   if( argc > 2 || argc < 2 )
+   {
+      std::cout << "Input false !\n" ; 
+      return 0;
+   }
+   //pmdInitialize(pmdGetKRCB());
+   //SDB_ASSERT(1!=1, "wrong");
+   BSONObj matcher ;
+   CHAR BUFF  [ RECEIVE_BUFFER_SIZE ] ;
+   //rc = readInput ( "Please input a \"JSOB\"", 0 ) ;
+   rc = fromjson ( argv[1], matcher ) ;
+   std::cout << matcher <<endl ; 
 
-  ossHexDumpBuffer( matcher.objdata(), matcher.objsize(), BUFF, sizeof(BUFF), NULL, OSS_HEXDUMP_PREFIX_AS_ADDR ) ;
-  std::cout << BUFF <<endl ; 
-	return 0;
+   ossHexDumpBuffer( matcher.objdata(), matcher.objsize(), BUFF, sizeof(BUFF), NULL, OSS_HEXDUMP_PREFIX_AS_ADDR ) ;
+   std::cout << BUFF <<endl ; 
+   return rc ;
 }
 
 char *readLine ( char* p, int length )

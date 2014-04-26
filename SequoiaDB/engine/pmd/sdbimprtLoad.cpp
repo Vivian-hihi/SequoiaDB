@@ -123,8 +123,6 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_SPARSE,        boost::program_options::value<string>(), "auto add fields, default: true ( CSV type only )" ) \
        ( OPTION_EXTRA,         boost::program_options::value<string>(), "auto add value, default: false ( CSV type only )" ) \
        ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" )
-       //( OPTION_SOURCEPWD,     boost::program_options::value<string>(), "connect to source data server, password" ) \
-//       ( COMMANDS_STRING(OPTION_MONGO,          ",m"), boost::program_options::value<string>(), "Compatible with MongoDB data format, input [true, false]" )
 
 
 CHAR *SDBIMPORT_TYPE_STR[] =

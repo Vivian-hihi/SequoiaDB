@@ -646,7 +646,8 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       SDB_ASSERT( responseMsg->header.messageLength ==
-                  sizeof(MsgOpReply) + bodyLen, "Invalid msg" ) ;
+                  (SINT32)(sizeof(MsgOpReply) + bodyLen),
+                  "Invalid msg" ) ;
 
       // response header
       rc = sendData( (const CHAR*)responseMsg, sizeof(MsgOpReply) ) ;

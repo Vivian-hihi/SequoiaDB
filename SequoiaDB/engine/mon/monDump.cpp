@@ -1410,12 +1410,13 @@ namespace engine
    }
 
    #define MAX_DATABLOCK_A_RECORD_NUM  (500)
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPDATABLOCKS, "monDumpDatablocks" )
    INT32 monDumpDatablocks( std::vector<dmsExtentID> &datablocks,
                             rtnContextDump *context )
    {
       INT32 rc = SDB_OK ;
       INT32 datablockNum = 0 ;
-
+      PD_TRACE_ENTRY ( SDB_MONDUMPDATABLOCKS ) ;
       while ( datablocks.size() > 0 )
       {
          try
@@ -1457,12 +1458,14 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_MONDUMPDATABLOCKS, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
    #define MAX_INDEXBLOCK_A_RECORD_NUM  (20)
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPINDEXBLOCKS, "monDumpIndexblocks" )
    INT32 monDumpIndexblocks( std::vector< BSONObj > &idxBlocks,
                              std::vector< dmsRecordID > &idxRIDs,
                              const CHAR *indexName,
@@ -1473,7 +1476,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 indexblockNum = 0 ;
       UINT32 indexPos = 0 ;
-
+      PD_TRACE_ENTRY ( SDB_MONDUMPINDEXBLOCKS ) ;
       SDB_ASSERT( idxBlocks.size() == idxRIDs.size(), "size not same" )
 
       if ( 1 != direction )
@@ -1537,6 +1540,7 @@ namespace engine
       }
 
    done:
+      PD_TRACE_EXITRC ( SDB_MONDUMPINDEXBLOCKS, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1546,7 +1550,7 @@ namespace engine
    INT32 monDBDumpStorageInfo( BSONObjBuilder &ob )
    {
       INT32 rc = SDB_OK ;
-      // PD_TRACE_ENTRY ( SDB_MONDBDUMPSTORINFO ) ;
+      PD_TRACE_ENTRY ( SDB_MONDBDUMPSTORINFO ) ;
       try
       {
          INT64 totalMapped = 0 ;
@@ -1560,7 +1564,7 @@ namespace engine
          goto error ;
       }
    done:
-      // PD_TRACE_EXITRC ( SDB_MONDBDUMPSTORINFO, rc ) ;
+      PD_TRACE_EXITRC ( SDB_MONDBDUMPSTORINFO, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1570,7 +1574,7 @@ namespace engine
    INT32 monDBDumpProcMemInfo( BSONObjBuilder &ob )
    {
       INT32 rc = SDB_OK ;
-      // PD_TRACE_ENTRY ( SDB_MONDBDUMPPROCMEMINFO ) ;
+      PD_TRACE_ENTRY ( SDB_MONDBDUMPPROCMEMINFO ) ;
       try
       {
          ossProcMemInfo memInfo ;
@@ -1598,7 +1602,7 @@ namespace engine
          goto error ;
       }
    done:
-      // PD_TRACE_EXITRC ( SDB_MONDBDUMPPROCMEMINFO, rc ) ;
+      PD_TRACE_EXITRC ( SDB_MONDBDUMPPROCMEMINFO, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1608,7 +1612,7 @@ namespace engine
    INT32 monDBDumpNetInfo( BSONObjBuilder &ob )
    {
       INT32 rc = SDB_OK ;
-      // PD_TRACE_ENTRY ( SDB_MONDBDUMPNETINFO ) ;
+      PD_TRACE_ENTRY ( SDB_MONDBDUMPNETINFO ) ;
       try
       {
          pmdKRCB *pKrcb = pmdGetKRCB() ;
@@ -1635,7 +1639,7 @@ namespace engine
          goto error ;
       }
    done:
-      // PD_TRACE_EXITRC ( SDB_MONDBDUMPNETINFO, rc ) ;
+      PD_TRACE_EXITRC ( SDB_MONDBDUMPNETINFO, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1645,7 +1649,7 @@ namespace engine
    INT32 monDBDumpLogInfo( BSONObjBuilder &ob )
    {
       INT32 rc = SDB_OK ;
-      // PD_TRACE_ENTRY ( SDB_MONDBDUMPLOGINFO ) ;
+      PD_TRACE_ENTRY ( SDB_MONDBDUMPLOGINFO ) ;
       try
       {
          ob.append( FIELD_NAME_FREELOGSPACE,
@@ -1658,17 +1662,17 @@ namespace engine
          goto error ;
       }
    done:
-      // PD_TRACE_EXITRC ( SDB_MONDBDUMPLOGINFO, rc ) ;
+      PD_TRACE_EXITRC ( SDB_MONDBDUMPLOGINFO, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDBDUMPLASTOPINFO, "monDumpLastOpInfo" )
-   void monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb )
+   INT32 monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb )
    {
       INT32 rc = SDB_OK ;
-      // PD_TRACE_ENTRY ( SDB_MONDBDUMPLASTOPINFO ) ;
+      PD_TRACE_ENTRY ( SDB_MONDBDUMPLASTOPINFO ) ;
       try
       {
          switch( moncb._lastOpType )
@@ -1747,8 +1751,8 @@ namespace engine
          goto error ;
       }
    done:
-      // PD_TRACE_EXIT ( SDB_MONDBDUMPLASTOPINFO ) ;
-      return ;
+      PD_TRACE_EXITRC ( SDB_MONDBDUMPLASTOPINFO, rc ) ;
+      return rc ;
    error:
       goto done ;
    }

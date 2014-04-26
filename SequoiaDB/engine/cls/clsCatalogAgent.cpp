@@ -1381,7 +1381,6 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_TOCTINFOBSON, "_clsCatalogSet::toCataInfoBson" )
    BSONObj _clsCatalogSet::toCataInfoBson ()
    {
-      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSCTSET_TOCTINFOBSON ) ;
       BSONObj obj ;
       if ( !isSharding() )
@@ -1402,10 +1401,9 @@ namespace engine
          }
          catch ( std::exception &e )
          {
-            PD_RC_CHECK ( SDB_SYS, PDERROR,
-                          "Exception happened during creating "
-                          "non-sharded catainfo: %s",
-                          e.what() ) ;
+            PD_LOG ( PDERROR,
+                     "Exception happened during creating "
+                     "non-sharded catainfo: %s", e.what() ) ;
          }
       } // if ( !_isSharding )
       else
@@ -1432,10 +1430,9 @@ namespace engine
          }
          catch ( std::exception &e )
          {
-            PD_RC_CHECK ( SDB_SYS, PDERROR,
-                          "Exception happened during creating "
-                          "sharded catainfo: %s",
-                          e.what() ) ;
+            PD_LOG ( PDERROR,
+                     "Exception happened during creating "
+                     "sharded catainfo: %s", e.what() ) ;
          }
       } // else
    done :

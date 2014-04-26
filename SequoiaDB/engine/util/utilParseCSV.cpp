@@ -347,9 +347,8 @@ error:
 PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCSV__READFIRSTFIELD, "_utilCSVParser::_readFirstField" )
 INT32 _utilCSVParser::_readFirstField( )
 {
-   INT32 rc = SDB_OK ;
+   INT32 rc                  = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILCSV__READFIRSTFIELD ) ;
-   BOOLEAN isFindField = FALSE ;
    CHAR      *pNewCursor     = NULL ;
    CHAR      *pCursor        = NULL ;
    UINT32     cursorSize     = 0 ;
@@ -515,13 +514,13 @@ error:
    goto done ;
 }
 
-_utilCSVParser::_utilCSVParser() : _curBuffer(NULL),
-                                   _pBlock(0),
+_utilCSVParser::_utilCSVParser() : _pBlock(0),
                                    _unreadSpace(0),
                                    _fieldSize(0),
                                    _readNumStr(0),
                                    _readFreeSpace(0),
                                    _leftFieldSize(0),
+                                   _curBuffer(NULL),
                                    _fieldBuffer(NULL),
                                    _nextFieldCursor(NULL),
                                    _isString(FALSE),

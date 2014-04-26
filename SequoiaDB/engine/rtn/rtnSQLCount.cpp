@@ -58,7 +58,6 @@ namespace engine
       {
          ++_count ;
       }
-   done:
       return rc ;
    }
 

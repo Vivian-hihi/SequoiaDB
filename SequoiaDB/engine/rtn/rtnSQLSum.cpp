@@ -90,7 +90,6 @@ namespace engine
          _sum += ele.Number() ;
          _effective = TRUE ;
       }
-   done:
       return rc ;
    }
 }

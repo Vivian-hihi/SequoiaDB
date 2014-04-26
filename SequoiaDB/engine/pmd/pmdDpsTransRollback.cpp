@@ -31,6 +31,7 @@ namespace engine
             }
          }
       }
-      return SDB_OK;
+      rc = SDB_OK ;
+      return rc ;
    }
 }

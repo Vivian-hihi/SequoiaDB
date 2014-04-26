@@ -1016,7 +1016,6 @@ void _pdTraceCB::resumePausedEDUs ()
    if ( PMD_IS_DB_DOWN )
       return ;
    _pmdEDUCBLatch.get() ;
-   std::list<engine::_pmdEDUCB*>::iterator iter = _pmdEDUCBList.begin() ;
    pmdEDUEvent event ( PMD_EDU_EVENT_BP_RESUME ) ;
    while ( !_pmdEDUCBList.empty() )
    {

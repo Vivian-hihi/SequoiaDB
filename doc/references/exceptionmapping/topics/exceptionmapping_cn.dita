@@ -1040,6 +1040,14 @@
             <stentry>构建bson失败</stentry>
             <stentry>-258</stentry>
          </strow>
+         <strow>
+            <stentry>超出界限</stentry>
+            <stentry>-259</stentry>
+         </strow>
+         <strow>
+            <stentry>未知的命令</stentry>
+            <stentry>-260</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

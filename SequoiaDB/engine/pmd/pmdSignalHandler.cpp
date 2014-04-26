@@ -111,7 +111,7 @@ namespace engine
       } ;
 
       if ( signum > 0 &&
-           signum < sizeof(s_signalHandleMap)/sizeof(pmdSignalInfo) )
+           (UINT32)signum < sizeof(s_signalHandleMap)/sizeof(pmdSignalInfo) )
       {
          return s_signalHandleMap[ signum ] ;
       }

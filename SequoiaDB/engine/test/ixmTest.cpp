@@ -43,7 +43,7 @@ int main ( int argc, char **argv )
    ixmIndexCB *indexCB = NULL ;
 
    // Jun dirty test
-   UINT32 startOffset = DMS_PAGE_SIZE64K + DMS_SME_LEN ;
+   ossValuePtr startOffset = DMS_PAGE_SIZE64K + DMS_SME_LEN ;
    CHAR * addPtr = (CHAR*)startOffset ;
    ossPrimitiveFileOp storageUint ;
    ossPrimitiveFileOp::offsetType fileOffset ;
@@ -72,7 +72,7 @@ int main ( int argc, char **argv )
    return rc ;
    // Jun dirty test
 
-   printf("size=%lld\n", sizeof(ixmKeyNode));
+   printf("size=%d\n", (INT32)sizeof(ixmKeyNode));
    rc = myUnit.open("./", "./", TRUE ) ;
    if ( rc )
    {

@@ -60,36 +60,32 @@ namespace engine
    END_OBJ_MSG_MAP()
 
    _clsMgr::_clsMgr ()
-   :_taskMgr( 0x7FFFFFFF )
+   :_taskMgr( 0x7FFFFFFF ),
+    _pReplNetRtAgent ( NULL ),
+    _pShardNetRtAgent ( NULL ),
+    _pShdMsgHandler ( NULL ),
+    _pReplMsgHandler ( NULL ),
+    _pShdTimerHandler ( NULL ),
+    _pReplTimerHandler ( NULL ),
+    _pShdObj ( NULL ),
+    _pReplObj ( NULL ),
+    _createdObjs ( TRUE ),
+    _shardServiceID ( MSG_ROUTE_SHARD_SERVCIE ),
+    _replServiceID ( MSG_ROUTE_REPL_SERVICE ),
+    _force ( FALSE ),
+    _taskID ( 0 ),
+    _regTimerID ( CLS_INVALID_TIMERID ),
+    _oneSecTimerID ( CLS_INVALID_TIMERID ),
+    _repl1SecTimerID ( CLS_INVALID_TIMERID ),
+    _shd1MinTimerID ( CLS_INVALID_TIMERID ),
+    _shd1SecTimerID ( CLS_INVALID_TIMERID ),
+    _shdHandleCloseTimerID ( CLS_INVALID_TIMERID ),
+    _replHandleCloseTimerID ( CLS_INVALID_TIMERID )
    {
-      _pReplNetRtAgent = NULL ;
-      _pShardNetRtAgent = NULL ;
-      _pShdMsgHandler = NULL ;
-      _pReplMsgHandler = NULL ;
-      _pShdTimerHandler = NULL ;
-      _pReplTimerHandler = NULL ;
-      _pShdObj = NULL ;
-      _pReplObj = NULL ;
-      _shardServiceID = MSG_ROUTE_SHARD_SERVCIE ;
-      _replServiceID = MSG_ROUTE_REPL_SERVICE ;
-      _hostName[0] = 0 ;
+      INT32 rc            = SDB_OK ;
+      _hostName[0]        = 0 ;
       _replServiceName[0] = 0 ;
-      _shdServiceName[0] = 0 ;
-      _force = FALSE ;
-      _selfNodeID.value = INVALID_NODE_ID ;
-      _regTimerID = CLS_INVALID_TIMERID ;
-      _oneSecTimerID= CLS_INVALID_TIMERID ;
-      _repl1SecTimerID = CLS_INVALID_TIMERID ;
-      _shd1MinTimerID = CLS_INVALID_TIMERID ;
-      _shd1SecTimerID = CLS_INVALID_TIMERID ;
-
-      _shdHandleCloseTimerID = CLS_INVALID_TIMERID ;
-      _replHandleCloseTimerID = CLS_INVALID_TIMERID ;
-
-      _taskID = 0 ;
-      _createdObjs = FALSE ;
-
-      INT32 rc = SDB_OK ;
+      _shdServiceName[0]  = 0 ;
       //Init handles
       SAFE_NEW_GOTO_ERROR1 ( _pShdMsgHandler, _shdMsgHandler, this ) ;
       SAFE_NEW_GOTO_ERROR1 ( _pReplMsgHandler, _replMsgHandler, this ) ;
@@ -102,12 +98,11 @@ namespace engine
       SAFE_NEW_GOTO_ERROR1 ( _pShdObj, _clsShardMgr, _pShardNetRtAgent ) ;
       SAFE_NEW_GOTO_ERROR1 ( _pReplObj, _clsReplicateSet, _pReplNetRtAgent ) ;
 
-      _createdObjs = TRUE ;
-
    done:
+      if ( rc )
+         _createdObjs = FALSE ;
       return ;
    error:
-      _createdObjs = FALSE ;
       goto done ;
    }
 

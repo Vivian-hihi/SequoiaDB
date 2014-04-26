@@ -4234,7 +4234,7 @@ INT32 Event::refreshDS_List( DynamicSnapshotOutPut &DS, Position &position,
 
    // store the sum of all field length in the scope of length_X
    INT32 sum                     = 0 ;
-   INT32 pos_snapshot            = 0 ;
+   UINT32 pos_snapshot           = 0 ;
    INT32 pairNumber              = 0 ;
    string result                 =  NULLSTRING ;
    // use to traverse under the FLength

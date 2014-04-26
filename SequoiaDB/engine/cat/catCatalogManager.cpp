@@ -2117,10 +2117,10 @@ namespace engine
       // first extract pQuery and find the options
       // 1) attempt to update
       // 2) check update number, if 0 returns domain not exist
-   done :
+   //done :
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
       return rc ;
-   error :
-      goto done ;
+   //error :
+   //   goto done ;
    }
 }

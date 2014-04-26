@@ -25,7 +25,6 @@
 #if defined (_LINUX)
 void dummyCore()
 {
-  int x = 5 ;
   OSS_INSTRUCTION_PTR ppAddress[100] ;
   char funcName[256] ;
   UINT32_64 offset = 0 ;

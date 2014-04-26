@@ -45,7 +45,7 @@
 #include "../util/text.h"
 
 _migParser::_migParser() : _parser(NULL),
-                           _collection(NULL),
+                           _collection(SDB_INVALID_HANDLE),
                            _stringType(FALSE)
 {
    _delChar[0]     = MIG_DEFAULT_DELCHAR ;

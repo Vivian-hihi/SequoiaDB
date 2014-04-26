@@ -52,7 +52,7 @@ _migExtractor::_migExtractor()
    _delField[1]    = 0 ;
    _delRecord[0]   = MIG_DEFAULT_DELRECORD ;
    _delRecord[1]   = 0 ;
-   _collection     = NULL ;
+   _collection     = SDB_INVALID_HANDLE ;
    _isOpened       = FALSE ;
    _init           = FALSE ;
    _pExtractBuffer = NULL ;

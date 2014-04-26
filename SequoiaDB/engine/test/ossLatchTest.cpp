@@ -196,7 +196,7 @@ void RunThreads ( threadFunc F, char *pDescription )
       threadList[i]=new boost::thread ( F,
                         (void*)&(thread_id[i]));
    }
-   for(int i=0; i<TESTTHREADS; i++)
+   for(unsigned int i=0; i<TESTTHREADS; i++)
    {
       threadList[i]->join();
       delete(threadList[i]);
@@ -257,42 +257,42 @@ int main(int argc, char** argv)
       "No Latch Test\nPress any key to start" ) ;
    t2 = boost::posix_time::microsec_clock::local_time() ;
    diff = t2-t1 ;
-   printf ( "Takes %lld ms\n", diff.total_milliseconds()) ;
+   printf ( "Takes %lld ms\n",(long long)diff.total_milliseconds()) ;
 
    t1 = boost::posix_time::microsec_clock::local_time() ;
    RunThreads ( print_function_latch,
       "Latch Test\nPress any key to start" ) ;
    t2 = boost::posix_time::microsec_clock::local_time() ;
    diff = t2-t1 ;
-   printf ( "Takes %lld ms\n", diff.total_milliseconds()) ;
+   printf ( "Takes %lld ms\n", (long long)diff.total_milliseconds()) ;
 
    t1 = boost::posix_time::microsec_clock::local_time() ;
    RunThreads ( print_function_latch_shared,
       "Shared Latch Test\nPress any key to start" ) ;
    t2 = boost::posix_time::microsec_clock::local_time() ;
    diff = t2-t1 ;
-   printf ( "Takes %lld ms\n", diff.total_milliseconds()) ;
+   printf ( "Takes %lld ms\n", (long long)diff.total_milliseconds()) ;
 
    t1 = boost::posix_time::microsec_clock::local_time() ;
    RunThreads ( print_function_latch_exclusive,
       "Exclusive Latch Test\nPress any key to start" ) ;
    t2 = boost::posix_time::microsec_clock::local_time() ;
    diff = t2-t1 ;
-   printf ( "Takes %lld ms\n", diff.total_milliseconds()) ;
+   printf ( "Takes %lld ms\n", (long long)diff.total_milliseconds()) ;
 
    t1 = boost::posix_time::microsec_clock::local_time() ;
    RunThreads ( print_function_atomic_latch,
       "Atomic Latch Test\nPress any key to start" ) ;
    t2 = boost::posix_time::microsec_clock::local_time() ;
    diff = t2-t1 ;
-   printf ( "Takes %lld ms\n", diff.total_milliseconds()) ;
+   printf ( "Takes %lld ms\n", (long long)diff.total_milliseconds()) ;
 #if defined (_LINUX)
    t1 = boost::posix_time::microsec_clock::local_time() ;
    RunThreads ( print_function_exchange_latch,
       "Exchange Latch Test\nPress any key to start" ) ;
    t2 = boost::posix_time::microsec_clock::local_time() ;
    diff = t2-t1 ;
-   printf ( "Takes %lld ms\n", diff.total_milliseconds()) ;
+   printf ( "Takes %lld ms\n", (long long)diff.total_milliseconds()) ;
 #endif
    return 0;
 }

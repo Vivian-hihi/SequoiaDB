@@ -317,7 +317,7 @@ namespace engine
       }
       else
       {
-         printf( g_textBuff ) ;
+         ossPrintf ( "%s", g_textBuff ) ;
       }
    }
 
@@ -376,7 +376,7 @@ namespace engine
       }
       else
       {
-         printf( g_textBuff ) ;
+         ossPrintf ( "%s", g_textBuff ) ;
       }
 
       map< UINT64, UINT32 >::iterator it = g_memMap.begin() ;
@@ -393,7 +393,7 @@ namespace engine
          }
          else
          {
-            printf( g_textBuff ) ;
+            ossPrintf ( "%s", g_textBuff ) ;
          }
 
          ++it ;
@@ -409,7 +409,7 @@ namespace engine
       }
       else
       {
-         printf( g_textBuff ) ;
+         ossPrintf ( "%s", g_textBuff ) ;
       }
    }
 

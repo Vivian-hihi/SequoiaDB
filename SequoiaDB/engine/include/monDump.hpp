@@ -107,7 +107,7 @@ namespace engine
 
    INT32 monDBDumpLogInfo( BSONObjBuilder &ob );
 
-   void monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb ) ;
+   INT32 monDumpLastOpInfo( BSONObjBuilder &ob, const monAppCB &moncb ) ;
 
 }
 

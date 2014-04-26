@@ -361,6 +361,8 @@ if guess_os == "linux":
     env.Append( LIBS=['dl'] )
     # -lpthread
     env.Append( LIBS=["pthread"] )
+    # GNU
+    env.Append( CPPDEFINES=[ "_GNU_SOURCE" ] )
     # 64 bit linux
     if guess_arch == "ia64" and not force32:
         linux64 = True

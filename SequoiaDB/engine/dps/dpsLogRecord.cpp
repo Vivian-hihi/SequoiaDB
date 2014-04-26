@@ -225,7 +225,6 @@ namespace engine
             /// continue ;
          }
       }
-   done:
       PD_TRACE_EXIT( SDB__DPSLGRECD_FIND) ;
       return itr ;
    }

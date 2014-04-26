@@ -104,8 +104,7 @@ void ossMemTrace ( const CHAR *pPath )
 {
    ossPrimitiveFileOp trapFile ;
    CHAR fileName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   UINT32 StrLen = 0 ;
-   UINT64 totalSize = 0 ;
+   UINT64 totalSize                       = 0 ;
    // skip if not initialized
    if ( !ossMemTrackCBInit )
    {
@@ -126,8 +125,8 @@ void ossMemTrace ( const CHAR *pPath )
    }
    // build mem trace file name
    ossMemset ( fileName, 0, sizeof ( fileName ) ) ;
-   StrLen = ossSnprintf ( fileName, sizeof(fileName), "%s%s%s",
-                          pPath, OSS_PRIMITIVE_FILE_SEP, SDB_OSS_MEMDUMPNAME ) ;
+   ossSnprintf ( fileName, sizeof(fileName), "%s%s%s",
+                 pPath, OSS_PRIMITIVE_FILE_SEP, SDB_OSS_MEMDUMPNAME ) ;
    // open memtrace file
 
    trapFile.Open ( fileName ) ;

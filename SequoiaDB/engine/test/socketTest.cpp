@@ -46,7 +46,6 @@ int main ( int argc, char** argv )
       int rc = 0 ;
       char *pBuffer = NULL ;
       char *pOutBuffer = NULL ;
-      unsigned int buffersize = 0 ;
       vector<BSONObj> resultList ;
       vector<BSONObj>::iterator it ;
       BSONObj dummyObj ;
@@ -70,7 +69,6 @@ int main ( int argc, char** argv )
       sock.disableNagle();
       printf ("Successfully connected to server\n" ) ;
       pBuffer = (char*)malloc(sizeof(char)*100) ;
-      buffersize = 100 ;
       t1 =
            boost::posix_time::microsec_clock::local_time() ;
       {

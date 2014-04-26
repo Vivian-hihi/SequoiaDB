@@ -1040,6 +1040,14 @@
             <stentry>Wrong data for building bson</stentry>
             <stentry>-258</stentry>
          </strow>
+         <strow>
+            <stentry>out of bound</stentry>
+            <stentry>-259</stentry>
+         </strow>
+         <strow>
+            <stentry>rest common unknow</stentry>
+            <stentry>-260</stentry>
+         </strow>
       </simpletable>
    </body>
 </topic>

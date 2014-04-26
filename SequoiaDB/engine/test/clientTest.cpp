@@ -253,7 +253,7 @@ INT32 msgSend ( BOOLEAN incRequestID )
    {
       ++requestID ;
    }
-   header->requestID = requestID ;
+   header->requestID = (UINT64)requestID ;
 
    rc = sock->send ( pOutBuffer, (*(SINT32*)pOutBuffer),
                      sentLen ) ;
