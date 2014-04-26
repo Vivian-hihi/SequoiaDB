@@ -436,15 +436,16 @@ PD_TRACE_DECLARE_FUNCTION ( SDB_GLOBAL_HELP, "global_help" )
 static JSBool global_help ( JSContext *cx , uintN argc , jsval *vp )
 {
    PD_TRACE_ENTRY ( SDB_GLOBAL_HELP );
+#if defined (SDB_SHELL)
    INT32 rc                                     = SDB_OK ;
+   CHAR tfPath[ OSS_MAX_PATHSIZE + 1 ]          = { 0 } ;
+   INT32 len                                    = 0 ;
+#endif
    JSBool ret                                   = JS_TRUE ;
    JSString *strCate                            = NULL ;
    JSString *strCmd                             = NULL ;
    CHAR *cate                                    = NULL ;
    CHAR *cmd                                    = NULL ;
-   INT32 len                                    = 0 ;
-   // save troff file path
-   CHAR tfPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
    // extract arguments
    ret = JS_ConvertArguments ( cx, argc, JS_ARGV ( cx , vp ),

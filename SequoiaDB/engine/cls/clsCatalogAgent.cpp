@@ -1435,12 +1435,8 @@ namespace engine
                      "sharded catainfo: %s", e.what() ) ;
          }
       } // else
-   done :
       PD_TRACE_EXIT ( SDB__CLSCTSET_TOCTINFOBSON ) ;
       return obj ;
-   error :
-      obj = BSONObj () ;
-      goto done ;
    }
 
    // provide a collection record, and a groupID ( groupID = 0 means all groups

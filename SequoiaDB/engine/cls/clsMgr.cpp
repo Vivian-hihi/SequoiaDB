@@ -60,8 +60,7 @@ namespace engine
    END_OBJ_MSG_MAP()
 
    _clsMgr::_clsMgr ()
-   :_taskMgr( 0x7FFFFFFF ),
-    _pReplNetRtAgent ( NULL ),
+   :_pReplNetRtAgent ( NULL ),
     _pShardNetRtAgent ( NULL ),
     _pShdMsgHandler ( NULL ),
     _pReplMsgHandler ( NULL ),
@@ -73,6 +72,7 @@ namespace engine
     _shardServiceID ( MSG_ROUTE_SHARD_SERVCIE ),
     _replServiceID ( MSG_ROUTE_REPL_SERVICE ),
     _force ( FALSE ),
+    _taskMgr( 0x7FFFFFFF ),
     _taskID ( 0 ),
     _regTimerID ( CLS_INVALID_TIMERID ),
     _oneSecTimerID ( CLS_INVALID_TIMERID ),

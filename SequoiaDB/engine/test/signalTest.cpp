@@ -37,8 +37,8 @@ void dummyCore()
                                    funcName,
                                    sizeof( funcName ),
                                    &offset ) ;
-      printf("[%3d] 0x%016p  %s  + 0x%x\n",
-             i, (void*)ppAddress[i], funcName, offset ) ;
+      printf("[%3d] 0x%16p  %s  + 0x%llx\n",
+             i, (void*)ppAddress[i], funcName, (UINT64)offset ) ;
   }
   getchar();
   // generate core file

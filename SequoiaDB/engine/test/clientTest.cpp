@@ -343,7 +343,7 @@ INT32 msgReceive ()
          goto error ;
       }
       header = (MsgHeader*)pInBuffer ;
-      if ( header->requestID != requestID )
+      if ( header->requestID != (UINT64)requestID )
       {
          printf ( "-Warning: Reply request id is not the same, expect:%lld, "
                   "recieved:%lld\n", requestID, header->requestID ) ;
