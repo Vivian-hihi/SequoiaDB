@@ -139,6 +139,7 @@ int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 int history_len = 0;
 char **history = NULL;
 
+static void setDisplayAttribute( bool enhancedDisplay );
 static void linenoiseAtExit(void);
 
 #ifdef _WIN32
@@ -149,6 +150,7 @@ static void linenoiseAtExit(void);
 HANDLE hOut;
 HANDLE hIn;
 DWORD consolemode;
+static WORD oldDisplayAttribute;
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_WIN32READ, "win32read" )
 static int win32read(char *c) {
@@ -246,9 +248,11 @@ char *strdup(const char *s) {
 
 #endif /*   _WIN32    */
 
+
 PD_TRACE_DECLARE_FUNCTION ( SDB_ISUNSUPPTERM, "isUnsupportedTerm" )
 static int isUnsupportedTerm(void) {
    PD_TRACE_ENTRY ( SDB_ISUNSUPPTERM );
+
 #ifndef _WIN32
     char *term = getenv("TERM");
     int j;
@@ -391,10 +395,41 @@ static int getColumns(void) {
 #endif
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_REFRESHLN, "refreshLine" )
+PD_TRACE_DECLARE_FUNCTION ( SDB_REFRESHLINE, "refreshLine" )
 static void refreshLine(int fd, const char *prompt, char *buf, size_t len, size_t pos, size_t cols) {
-    PD_TRACE_ENTRY ( SDB_REFRESHLN );
+    PD_TRACE_ENTRY ( SDB_REFRESHLINE );
     char seq[64];
+    int highlight = -1 ;
+    int highlight_pos = 0 ;
+    if ( pos < len )
+    {
+       int scanDirection = 0 ;
+       if ( strchr( "}])", buf[pos] ) )
+          scanDirection = -1 ;
+       else if ( strchr( "{[(", buf[pos] ) )
+          scanDirection = 1 ;
+
+       if ( scanDirection )
+       {
+          int unmatched = scanDirection ;
+          for ( int i = pos + scanDirection ; i >= 0 && i < len ;
+                i += scanDirection )
+          {
+             if ( strchr( "}])", buf[i] ) )
+                --unmatched ;
+             else if ( strchr( "{[(", buf[i] ) )
+                ++unmatched ;
+
+             if ( unmatched == 0 )
+             {
+                highlight = 1 ;
+                highlight_pos = i ;
+                break ;
+             }
+          }
+       }
+    }
+
 #ifdef _WIN32
     DWORD pl, bl, w;
     CONSOLE_SCREEN_BUFFER_INFO b;
@@ -417,7 +452,20 @@ static void refreshLine(int fd, const char *prompt, char *buf, size_t len, size_
     if (write(fd,seq,strlen(seq)) == -1) goto done;
     /* Write the prompt and the current buffer content */
     if (write(fd,prompt,strlen(prompt)) == -1) goto done;
-    if (write(fd,buf,len) == -1) goto done;
+    // in case no need to highlight
+    if ( -1 == highlight )
+    {
+       if (write(fd,buf,len) == -1) goto done;
+    }
+    // in case need to highlight matching {}/[]/()
+    else
+    {
+       if (write(fd,buf,highlight_pos) == -1) goto done;
+       setDisplayAttribute( true ) ;
+       if (write(fd,buf+highlight_pos,1) == -1) goto done;
+       setDisplayAttribute( false ) ;
+       if (write(fd,buf+highlight_pos+1,len-highlight_pos-1) == -1) goto done;
+    }
     /* Erase to right */
     snprintf(seq,64,"\x1b[0K");
     if (write(fd,seq,strlen(seq)) == -1) goto done;
@@ -439,14 +487,29 @@ static void refreshLine(int fd, const char *prompt, char *buf, size_t len, size_
     SetConsoleCursorPosition(hOut, coord);
     /* Write the prompt and the current buffer content */
     WriteConsole(hOut, prompt, plen, &pl, NULL);
-    WriteConsole(hOut, buf, len, &bl, NULL);
+
+    // in case no need to highlight
+    if ( -1 == highlight )
+    {
+       WriteConsole(hOut, buf, len, &bl, NULL);
+    }
+    // in case need to highlight matching {}/[]/()
+    else
+    {
+       WriteConsole(hOut, buf, highlight_pos, &bl, NULL);
+       setDisplayAttribute( true ) ;
+       WriteConsole(hOut, buf + highlight_pos, 1, &bl, NULL);
+       setDisplayAttribute( false ) ;
+       WriteConsole(hOut, buf+highlight_pos + 1, len - highlight_pos - 1, &bl, NULL);
+    }
+
     /* Move cursor to original position. */
     coord.X = (int)(pos+plen);
     coord.Y = b.dwCursorPosition.Y;
     SetConsoleCursorPosition(hOut, coord);
 #endif
 done :
-    PD_TRACE_EXIT ( SDB_REFRESHLN );
+    PD_TRACE_EXIT ( SDB_REFRESHLINE );
     return ;
 }
 
@@ -608,6 +671,7 @@ static int linenoisePrompt(int fd, char *buf, size_t buflen, const char *prompt)
 
         switch(c) {
         case 13:    /* enter */
+            refreshLine(fd, prompt, buf, len, len, cols);
             history_len--;
             free(history[history_len]);
             return (int)len;
@@ -967,5 +1031,46 @@ int linenoiseHistoryLoad(const char *filename) {
     }
     fclose(fp);
     return 0;
+}
+
+PD_TRACE_DECLARE_FUNCTION ( SDB_SETDISPLAYATTRIBUTE, "setDisplayAttribute" )
+static void setDisplayAttribute( bool enhancedDisplay )
+{
+    PD_TRACE_ENTRY ( SDB_SETDISPLAYATTRIBUTE );
+#ifdef _WIN32
+    if ( enhancedDisplay ) {
+        CONSOLE_SCREEN_BUFFER_INFO inf;
+        GetConsoleScreenBufferInfo( hOut, &inf );
+        oldDisplayAttribute = inf.wAttributes;
+        BYTE oldLowByte = oldDisplayAttribute & 0xFF;
+        BYTE newLowByte;
+        switch ( oldLowByte ) {
+        case 0x07:
+            //newLowByte = FOREGROUND_BLUE | FOREGROUND_INTENSITY;  // too dim
+            //newLowByte = FOREGROUND_BLUE;                         // even dimmer
+            newLowByte = FOREGROUND_BLUE | FOREGROUND_GREEN;        // most similar to xterm appearance
+            break;
+        case 0x70:
+            newLowByte = BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+            break;
+        default:
+            newLowByte = oldLowByte ^ 0xFF;     // default to inverse video
+            break;
+        }
+        inf.wAttributes = ( inf.wAttributes & 0xFF00 ) | newLowByte;
+        SetConsoleTextAttribute( hOut, inf.wAttributes );
+    }
+    else {
+        SetConsoleTextAttribute( hOut, oldDisplayAttribute );
+    }
+#else
+    if ( enhancedDisplay ) {
+        if ( write( 1, "\x1b[1;34m", 7 ) == -1 ) return; /* bright blue (visible with both B&W bg) */
+    }
+    else {
+        if ( write( 1, "\x1b[0m", 4 ) == -1 ) return; /* reset */
+    }
+#endif
+   PD_TRACE_EXIT ( SDB_SETDISPLAYATTRIBUTE );
 }
 
