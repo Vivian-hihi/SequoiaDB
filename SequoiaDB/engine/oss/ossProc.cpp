@@ -354,7 +354,9 @@ static INT32 ossExec2 ( const CHAR *program,
          _exit ( rc ) ;
       }
       // create argument list, memory will be freed by end of the function
-      rc = ossCreateList ( arguments, &ppArgv, 1, 0, TRUE ) ;
+      rc = ossCreateList ( arguments, &ppArgv, 1, 0,
+                           OSS_BIT_TEST ( flag, OSS_EXEC_NORESIZEARGV ) ?
+                              FALSE : TRUE ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create list, rc = %d", rc ) ;
