@@ -1,7 +1,7 @@
 #!/bin/bash
-
-. ./sdbsupportfunc1.sh
-. ./sdbsupportfunc2.sh
+BashPath=$(dirname $(readlink -f $0))
+. $BashPath/sdbsupportfunc1.sh
+. $BashPath/sdbsupportfunc2.sh
 #variable in bash shell
 #declare -a PORT
 #declare -a DBPATH
@@ -266,13 +266,18 @@ echo ""
 #@Function : Check over environment
 #******************************************************************************
 #mv sdbsupport.log sdbsupport.log.1 >>sdbsupport.log 2>&1
-mkdir -p log
-if [ $? -ne 0 ] ; then
-   echo "Failed to create folder:log"
+rm -rf sdbsupport.log
+rc=$?
+if [ $rc -ne 0 ] ; then
+   echo "Failed to remove sdbsupport.log file."
+fi
+#make sure the local path
+dirpath=`pwd`
+if [ "$dirpath" == "" ] ; then
+   echo "Failed to get local directory."
    exit 1
 fi
-
-#inspect the environment of sequiaDB
+#inspect the environment of sequiaDB,localPath=where the sdbsuppor.sh run
 localhost=`hostname`
 localPath=$(dirname $(readlink -f $0))
 #echo $localPath
@@ -281,7 +286,21 @@ if [ "$localhost" == "" ] || [ "$localPath" == "" ] ; then
    sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to get local host:$localhost and local path:$localPath."
    exit 1
 fi
-
+#make a directory to story .tar.gz and .log.host file
+mkdir -p $localPath/log
+if [ $? -ne 0 ] ;then
+   echo "Failed to create directory for sdbsupport.sh"
+   sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to create folder log in local path"
+   exit 1
+fi
+#echo "log":$log
+#get install path
+cd $localPath
+rc=$?
+if [ $rc -ne 0 ] ; then
+   echo "Failed ,Permisson"
+   exit 1
+fi
 cd ../../ >>/dev/null 2>&1
 rc=$?
 ls ./bin/sequoiadb >>/dev/null 2>&1
@@ -301,7 +320,7 @@ else
    sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Success to get install path:$installpath"
 fi
 
-cd $localPath
+cd $dirpath
 if [ $? -ne 0 ] ; then
    echo "Failed to come back to sdbsupport directory"
    sdbEchoLog "ERROR" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Failed to come back to sdbsupport directory:$localPath"
@@ -353,10 +372,11 @@ fi
 #@Note : Array begin 1 count ,but such as file row begin 1, so use 1 begin 
 #************************************************************************
 cd $confpath
-aloneRole=`find -name "*.conf"|xargs grep "role=standalone"|cut -d "/" -f 2`
-coordRole=`find -name "*.conf"|xargs grep "role=coord"|cut -d "/" -f 2`
-cataRole=`find -name "*.conf"|xargs grep "role=cata"|cut -d "/" -f 2`
-dataRole=`find -name "*.conf"|xargs grep "role=data"|cut -d "/" -f 2`
+aloneRole=`find -name "*.conf"|xargs grep "\brole.*=.*standalone\b"|cut -d "/" -f 2`
+coordRole=`find -name "*.conf"|xargs grep "\brole.*=.*coord\b"|cut -d "/" -f 2`
+cataRole=`find -name "*.conf"|xargs grep "\brole.*=.*cata\b"|cut -d "/" -f 2`
+dataRole=`find -name "*.conf"|xargs grep  "\brole.*=.*data\b"|cut -d "/" -f 2`
+#echo "dataRole:$dataRole : aloneRole:$aloneRole"
 cd $localPath
 #*************************************************************************
 #MODE:No Sdb  //Don't create database database,whether standalone and
@@ -413,9 +433,14 @@ if [ "$dataRole" != "" ] ; then
    dataRole=$dataRole
 fi
 #catadrr : get the cata address and catch hosts
+
 data=`echo $dataRole | cut -d " " -f 1`
-cataddr=`grep -E "catalogaddr" $confpath/$data/sdb.conf|cut -d '=' -f 2`
-HostNum=`awk 'BEGIN{print split("'$cataddr'",cateArr,",")}'`
+#echo "date=$data...confpath=$confpath"
+#echo "grep -E "catalogaddr" $confpath/$data/sdb.conf|cut -d '=' -f 2"
+cataddr=`grep -E "catalogaddr.*=" $confpath/$data/sdb.conf|cut -d '=' -f 2`
+#echo "cataddr=$cataddr"
+HostNum=`awk 'BEGIN{print split('"\"$cataddr\""',cateArr,",")}'`
+#echo "HostNum:$HostNum"
 PortNum=`ls -l $confpath|grep "^d"|wc -l`
 
 if [ "$HostNum" != "0" ] && [ "$PortNum" != "0" ] ; then
@@ -434,7 +459,7 @@ fi
 #*******************************************************************************
 for i in $(seq 1 $HostNum)
 do
-   hostcata[$i]=`awk 'BEGIN{split("'$cataddr'",cateArr,",");print cateArr['$i']'}`
+   hostcata[$i]=`awk 'BEGIN{split('"\"$cataddr\""',cateArr,",");print cateArr['$i']'}`
    HOST[$i]=`echo ${hostcata[$i]}|cut -d ":" -f 1 `
    if [ "${HOST[$i]}" == "$localhost" ] ; then
       for j in $(seq 1 $PortNum)
@@ -465,8 +490,8 @@ sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "allHost:[$AllHost] a
 #@Var : HostPara  Exp : Array variable to store hosts parameter
 #@Var : PortPara  Exp : Array variable to store local hosts' sevice port
 #*************************************************************************************************
-pHostNum=`awk 'BEGIN{print split("'$hostName'",hostarr,":")}'`
-pPortNum=`awk 'BEGIN{print split("'$svcPort'",portarr,":")}'`
+pHostNum=`awk 'BEGIN{print split('"\"$hostName\""',hostarr,":")}'`
+pPortNum=`awk 'BEGIN{print split('"\"$svcPort\""',portarr,":")}'`
 #when have parameter ,but not --all ,we must specify the hosts[--hostname]
 if [ $pHostNum -eq 0 ] && [ "$all" == "false" ] && [ "$firstLoc" != "" ] ; then
    echo "Warning ! Please specify hosts!"
@@ -475,7 +500,7 @@ fi
 #Check over Host
 for i in $(seq 1 $pHostNum)
 do
-   HostPara[$i]=`awk 'BEGIN{split("'$hostName'",hostarr,":");print hostarr['$i']}'`
+   HostPara[$i]=`awk 'BEGIN{split('"\"$hostName\""',hostarr,":");print hostarr['$i']}'`
    HostNumAdd=$(($HostNum+1))
    for j in $(seq 1 $HostNumAdd)
    do
@@ -496,7 +521,7 @@ done
 #Check over Port
 for i in $(seq 1 $pPortNum)
 do
-   PortPara[$i]=`awk 'BEGIN{split("'$svcPort'",portarr,":");print portarr['$i']}'`
+   PortPara[$i]=`awk 'BEGIN{split('"\"$svcPort\""',portarr,":");print portarr['$i']}'`
    PortNumAdd=$(($PortNum+1))
    for j in $(seq 1 $PortNumAdd)
    do
@@ -597,7 +622,8 @@ do
       for j in $(seq 1 $PortNum)
       do
             #echo "localhost:$localhost:${PORT[$j]}"
-            sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
+            sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Start collect localhost only:[HostNum:$HostNum]-[PortNume:$PortNum]"
+	    sdbPortGather "${HOST[$i]}" "${DBPATH[$j]}" "${PORT[$j]}" "$installpath"
             if [ "${ROLE[$i]}" == "coord" ] && [ "$catalog" == "true" ] ; then
                sdbSnapShotCataLog "${HOST[$i]}" "${PORT[$j]}" "$installpath"
             fi
@@ -760,8 +786,22 @@ fi
 #clean environment
 exec 6>&-
 sdbEchoLog "EVENT" "$localhost/$0/${FUNCNAME}" "${LINENO}" "Collect information Over"
-cp sdbsupport.log log/sdbsupport.log.$localhost >> /dev/null 2>&1
+cp sdbsupport.log ./log/sdbsupport.log.$localhost >> /dev/null 2>&1
 rc=$?
 if [ $rc -ne 0 ] ;then
 	echo "Failed to copy local sdbsupport.log to log folder."
+fi
+
+#copy log folder in sdbsupport directory to local directory
+if [ "$localPath" != "$dirpath" ]; then
+   cp -r $localPath/log $dirpath
+   rc=$?
+   if [ $rc -ne 0 ] ; then
+      echo "Failed to copy information to local directory."
+   fi
+   rm -rf $localPath/log
+   rc=$?
+   if [ $rc -ne 0 ] ;then
+      echo "Failed to remove the log folder in directory:$localPath"
+   fi
 fi

@@ -6,7 +6,7 @@ function sdbCheckPassword()
    HOST=$1
    PASSWD=$2
 
-   /usr/local/bin/expect -c "
+   $localPath/expect/expect -c "
       set timeout 20 ;
       spawn ssh $USER@$HOST ;
       expect {
@@ -33,7 +33,7 @@ function sdbExpectSshHosts()
    #echo "timeout:$timeout"
 
    endflag="echo \"Too much time\""
-   /usr/local/bin/expect -c   "
+   $localPath/expect/expect -c   "
       set timeout -1 ;
       spawn ssh $USER@$HOST ;
       expect {
@@ -138,7 +138,7 @@ function sdbTarGzPack()
       sdbEchoLog "EVENT" "$HOST/$0/${FUNCNAME}" "${LINENO}" "Success to Complete to packaging and compression"
    fi
 
-   mv $Folder.tar.gz ./log
+   mv $Folder.tar.gz $localPath/log
    if [ $? -ne 0 ] ; then
       echo "Failed to move pack-info to log folder."
    fi
@@ -153,9 +153,9 @@ function sdbExpectScpHosts()
 
 #scp -r root@$HOST:$localPath/$HOST.tar.gz ./
 
-   /usr/local/bin/expect -c"
+   $localPath/expect/expect -c"
       set timeout -1 ;
-      spawn scp -r $USER@$HOST:$localPath/log/*$HOST*.tar.gz ./log/ ;
+      spawn scp -r $USER@$HOST:$localPath/log/*$HOST*.tar.gz $localPath/log/ ;
       expect {
          \"*yes/no*\";{send \"yes\n\";exp_continue}
          \"*assword\";{send \"$PASSWD\n\";exp_continue}
@@ -182,9 +182,9 @@ function sdbSupportLog()
    localPath=$2
    PASSWD=$3
 
-   /usr/local/bin/expect -c"
+   $localPath/expect/expect -c"
          set timeout -1 ;
-         spawn scp -r $USER@$HOST:$localPath/sdbsupport.log.$HOST ./log/ ;
+         spawn scp -r $USER@$HOST:$localPath/sdbsupport.log.$HOST $localPath/log/ ;
          expect {
             \"*yes/no*\";{send \"yes\n\";exp_continue}
             \"*assword\";{send \"$PASSWD\n\";exp_continue}
@@ -211,7 +211,7 @@ function sdbSSHRemove()
    PASSWD=$2
    localPath=$3
 
-   /usr/local/bin/expect -c"
+   $localPath/expect/expect -c"
       set timeout -1 ;
       spawn ssh $USER@$HOST ;
       expect {

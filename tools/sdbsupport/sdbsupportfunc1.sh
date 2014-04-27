@@ -20,7 +20,6 @@ function sdbPortGather()
    sdbPortLog
    #sdbcm config and log file
    sdbCmConfLog
-
    #if folder don't have file ,then delete it
    lsfold=`ls SDBNODES/` >>/dev/null 2>&1
    if [ "$lsfold" == "" ] ; then
