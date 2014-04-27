@@ -178,6 +178,7 @@
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/CSharp" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/hadoop" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/doc" />
+		<mkdir dir="${RELEASE_DIR}/sequoiadb/doc/manual" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/samples" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/local" />
 		<mkdir dir="${RELEASE_DIR}/sequoiadb/conf/log" />
@@ -292,6 +293,9 @@
 	  
 		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
 			<fileset dir="${CODE_DIR}/doc/out" />
+		</copy>
+		<copy todir="${RELEASE_DIR}/sequoiadb/doc/manual">
+			<fileset dir="${CODE_DIR}/doc/manual" />
 		</copy>
 		
 		<copy todir="${RELEASE_DIR}/sequoiadb/license">
