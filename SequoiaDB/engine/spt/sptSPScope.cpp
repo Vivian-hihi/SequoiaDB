@@ -255,8 +255,6 @@ namespace engine
       JSResolveOp resolveOp = NULL == resolve ?
                               JS_ResolveStub : (JSResolveOp)resolve ;
 
-      SDB_ASSERT( NULL != destruct, "destructor can not be NULL" )
-
       JSClass cDef = { ( CHAR * )objName,
                     flags,
                     JS_PropertyStub, 
