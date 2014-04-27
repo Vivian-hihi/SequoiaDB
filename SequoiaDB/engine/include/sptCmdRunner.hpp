@@ -56,7 +56,6 @@ namespace engine
       INT32 read( CHAR *buf, SINT64 len, SINT64 &got ) ;
 
    private:
-      OSSNPIPE _in ;
       OSSNPIPE _out ;
       OSSPID _id ;
    } ;
