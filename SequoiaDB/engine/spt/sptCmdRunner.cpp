@@ -133,8 +133,8 @@ namespace engine
    INT32 _sptCmdRunner::done()
    {
       /// TODO: handle invalid jargement.
-      ossCloseNamedPipe( _in ) ;
-      ossCloseNamedPipe( _out ) ;
+//      ossCloseNamedPipe( _in ) ;
+     // ossCloseNamedPipe( _out ) ;
       return SDB_OK ;
    }
 }
