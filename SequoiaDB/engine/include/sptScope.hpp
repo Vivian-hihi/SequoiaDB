@@ -37,6 +37,9 @@
 #include "oss.hpp"
 #include "../bson/bson.hpp"
 
+#define SPT_ADD_USRCLASS( scope, classsdef ) \
+        scope->loadUsrDefObj( &(classsdef::__desc) )
+
 namespace engine
 {
    class _sptObjDesc ;

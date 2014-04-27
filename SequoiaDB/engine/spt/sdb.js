@@ -378,5 +378,26 @@ Sdb.prototype.listReplicaGroups = function() {
 Sdb.prototype._resolveCS = function(csName) {
    this.getCS( csName ) ;
 }
+
+function printCallStack()
+{
+   try
+   {
+      throw new Error( "print ErrStack" ) ;
+   }
+   catch ( e )
+   {
+      print( e.stack ) ;
+   }
+}
+
+function assert( condition )
+{
+   if ( !condition )
+   {
+      printCallStack() ;
+   }
+}
+
 // end Sdb
 

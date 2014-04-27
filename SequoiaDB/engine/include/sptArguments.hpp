@@ -47,6 +47,7 @@ namespace engine
       virtual INT32 getNative( UINT32 pos, void *value ) const = 0 ;
       virtual INT32 getString( UINT32 pos, std::string &value ) const = 0 ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const = 0 ;
+      virtual UINT32 argc() const = 0 ;
    } ;
    typedef class _sptArguments sptArguments ;
 }

@@ -140,7 +140,8 @@ spt2Files = [
       "spt/sptGlobalFunc.cpp",
       "spt/sptCmdRunner.cpp",
       "spt/usrdef/sptUsrSsh.cpp",
-      "spt/usrdef/sptUsrCmd.cpp"
+      "spt/usrdef/sptUsrCmd.cpp",
+      "spt/usrdef/sptUsrFile.cpp"
       ]
 
 rtnFiles = [

@@ -91,7 +91,7 @@ namespace engine
       /// TODO: how about to achieve ossPopen() ?
       rc = ossExec( arguments, arguments, NULL,
                     OSS_EXEC_SSAVE | OSS_EXEC_NORESIZEARGV,
-                    _id, res, &_in, &_out ) ;
+                    _id, res, NULL, &_out ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to exec cmd:%s, rc:%d",

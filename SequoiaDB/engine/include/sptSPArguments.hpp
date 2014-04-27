@@ -45,6 +45,10 @@ namespace engine
       virtual INT32 getNative( UINT32 pos, void *value ) const ;
       virtual INT32 getString( UINT32 pos, std::string &value ) const ;
       virtual INT32 getBsonobj( UINT32 pos, bson::BSONObj &value ) const ;
+      virtual UINT32 argc() const
+      {
+         return _argc ;
+      }
    
    private:
       jsval *_getValAtPos( UINT32 pos ) const ;

@@ -2110,3 +2110,81 @@ done :
 error :
    goto done ;
 }
+
+INT32 ossReadN( OSSFILE *file,
+                SINT64 len,
+                CHAR *buf,
+                SINT64 &read )
+{
+   INT32 rc = SDB_OK ;
+   SDB_ASSERT( NULL != file && NULL != buf, "can not be null" )
+
+   SINT64 total = len ;
+   SINT64 totalRead = 0 ;
+
+   while ( 0 < total )
+   {
+      SINT64 onceRead = 0 ;
+      rc = ossRead( file, buf + totalRead, total, &onceRead ) ;
+      if ( SDB_OK == rc )
+      {
+         totalRead += onceRead ;
+         total -= onceRead ;
+         continue ;
+      }
+      else if ( SDB_INTERRUPT == rc )
+      {
+         rc = SDB_OK ;
+         continue ;
+      }
+      else if ( SDB_EOF == rc && 0 < totalRead )
+      {
+         rc = SDB_OK ;
+         break ;
+      }
+      else
+      {
+         goto error ;
+      }
+   }
+
+   read = totalRead ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 ossWriteN( OSSFILE *file,
+                 const CHAR *buf,
+                 SINT64 len )
+{
+   INT32 rc = SDB_OK ;
+   SDB_ASSERT( NULL != file && NULL != buf, "can not be null" )
+
+   SINT64 total = len ;
+   while ( 0 < total )
+   {
+      SINT64 onceWrite = 0 ;
+      rc = ossWrite( file, buf + len - total, total, &onceWrite ) ;
+      if ( SDB_OK == rc )
+      {
+         total -= onceWrite ;
+         continue ;
+      }
+      else if ( SDB_INTERRUPT == rc )
+      {
+         rc = SDB_OK ;
+         continue ;
+      }
+      else
+      {
+         goto error ;
+      }
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+

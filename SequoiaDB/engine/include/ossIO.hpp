@@ -516,5 +516,40 @@ INT32 ossRenamePath ( const CHAR *pOldPath, const CHAR *pNewPath ) ;
  */
 INT32 ossLockFile ( OSSFILE *pFile, OSS_FILE_LOCK lockType ) ;
 
+/*
+ * Read specified length
+ *
+ * Input
+ *   file descriptor (OSSFILE)
+ *   length (integer)
+ * OutPut
+ *   buffer (char*)
+ *   pBufferRead (integer ref)
+ * Return
+ *   rc
+ * ps
+ *   read may be less than len( because of eof ).
+ */
+INT32 ossReadN( OSSFILE *file,
+                SINT64 len,
+                CHAR *buf,
+                SINT64 &read ) ;
+
+/*
+* Write specified length
+* 
+* Input
+*   file descriptor (OSSFILE)
+*   buffer (const char*)
+*   length (integer)
+* OutPut
+*
+* Return
+*   rc
+*/
+INT32 ossWriteN( OSSFILE *file,
+                 const CHAR *buf,
+                 SINT64 len ) ;
+
 
 #endif
