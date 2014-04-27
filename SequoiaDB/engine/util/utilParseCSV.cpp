@@ -937,7 +937,14 @@ delChar, rc = %d", rc ) ;
             // xx""xxx
             if ( i < size && _parser->_delChar[0] == *(buffer + i) )
             {
-               JSON_BUF_APPEND ( "\\\"", 2 ) ;
+               if ( _parser->_delChar[0] == '"' )
+               {
+                  JSON_BUF_APPEND ( "\\\"", 2 ) ;
+               }
+               else
+               {
+                  JSON_BUF_APPEND ( _parser->_delChar[0], 1 ) ;
+               }
             }
             else
             {
