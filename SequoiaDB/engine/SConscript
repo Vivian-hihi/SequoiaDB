@@ -137,7 +137,10 @@ spt2Files = [
       "spt/sptBsonobj.cpp",
       "spt/sptSshSession.cpp",
       "spt/sptConvertor2.cpp",
-      "spt/sptGlobalFunc.cpp"
+      "spt/sptGlobalFunc.cpp",
+      "spt/sptCmdRunner.cpp",
+      "spt/usrdef/sptUsrSsh.cpp",
+      "spt/usrdef/sptUsrCmd.cpp"
       ]
 
 rtnFiles = [
