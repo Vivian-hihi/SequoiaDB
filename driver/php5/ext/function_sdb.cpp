@@ -670,7 +670,7 @@ INT32 getNext ( sdbCursor *query, CHAR **pBuf, INT32 *bufSize )
    }
    std::string str = obj.toString(FALSE,TRUE) ;
    INT32 strLen = strlen ( str.c_str() ) ;
-   if ( !_reallocateBuffer ( pBuf, bufSize, *bufSize + strLen ) )
+   if ( !_reallocateBuffer ( pBuf, bufSize, *bufSize + strLen + 1 ) )
    {
       rc = SDB_PHP_DRIVER_INTERNAL_ERROR ;
       return rc ;
