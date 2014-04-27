@@ -943,7 +943,7 @@ delChar, rc = %d", rc ) ;
                }
                else
                {
-                  JSON_BUF_APPEND ( _parser->_delChar[0], 1 ) ;
+                  JSON_BUF_APPEND ( (buffer + i), 1 ) ;
                }
             }
             else
