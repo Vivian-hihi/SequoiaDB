@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+  <property>
+    <name>sequoiadb.input.url</name>
+    <value>192.168.30.61:50000</value>
+  </property>
+  <property>
+    <name>sequoiadb.output.url</name>
+    <value>192.168.20.216:50000</value>
+  </property> 
+  <property>
+    <name>sequoiadb.in.collectionspace</name>
+    <value>test</value>
+  </property> 
+  <property>
+    <name>sequoiadb.in.collect</name>
+    <value>test</value>
+  </property> 
+  <property>
+    <name>sequoiadb.in.field</name>
+    <value>id</value>
+  </property> 
+  <property>
+    <name>sequoiadb.out.pos</name>
+    <value>/tmp/out.txt</value>
+  </property> 
+  <property>
+    <name>sequoiadb.out.collectionspace</name>
+    <value>default</value>
+  </property> 
+  <property>
+    <name>sequoiadb.out.collect</name>
+    <value>t2</value>
+  </property> 
+</configuration>
