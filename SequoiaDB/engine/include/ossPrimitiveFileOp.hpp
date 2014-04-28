@@ -139,6 +139,7 @@ public :
 
    // Default constructor.  Construct an uninitialized OSS file handle
    ossPrimitiveFileOp() ;
+   ~ossPrimitiveFileOp() ;
 
    // Create or open an existing file.
    // pFilePath [in]
