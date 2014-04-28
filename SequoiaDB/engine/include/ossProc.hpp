@@ -41,15 +41,17 @@
 #include "oss.hpp"
 #include "ossNPipe.hpp"
 #include <sys/types.h>
+#include <list>
+#include <vector>
 
 #if defined (_LINUX)
-#define PROC_SELF_EXE "/proc/self/exe"
-#define PROC_STATUS_ZOMBIE 'Z'
+#define PROC_SELF_EXE                  "/proc/self/exe"
+#define PROC_STATUS_ZOMBIE             'Z'
 #endif
-#define OSS_EXECV_CAST char*const*
+#define OSS_EXECV_CAST                 char*const*
 // define ossExec execute flags
-#define OSS_EXEC_INHERIT_HANDLES    1 // inherit fd/handles in new process
-#define OSS_EXEC_SSAVE              2 // sync process, return result
+#define OSS_EXEC_INHERIT_HANDLES       1 // inherit fd/handles in new process
+#define OSS_EXEC_SSAVE                 2 // sync process, return result
 #define OSS_EXEC_NORESIZEARGV       4 // not resize buffer for argv for rename
 
 // define term code
@@ -57,6 +59,10 @@
 #define OSS_EXIT_ERROR  1
 #define OSS_EXIT_TRAP   2
 #define OSS_EXIT_KILL   3
+
+/*
+   _ossResultCode define
+*/
 class _ossResultCode : public SDBObject
 {
 public :
@@ -116,17 +122,37 @@ INT32 ossExec ( const CHAR * program,
                 OSSNPIPE * const npHandleStdin,
                 OSSNPIPE * const npHandleStdout ) ;
 
-BOOLEAN ossIsProcessRunning ( OSSPID pid ) ;
-// get excutable file's working directory
-INT32 ossGetEWD ( CHAR *pBuffer, INT32 maxlen ) ;
+BOOLEAN  ossIsProcessRunning ( OSSPID pid ) ;
 
-INT32 ossTerminateProcess( const OSSPID &pid, BOOLEAN force = FALSE ) ;
+/*
+   get excutable file's working directory
+*/
+INT32    ossGetEWD ( CHAR *pBuffer, INT32 maxlen ) ;
+
+INT32    ossTerminateProcess( const OSSPID &pid, BOOLEAN force = FALSE ) ;
+
+INT32    ossBuildArguments ( CHAR **pArgumentBuffer,
+                             INT32 &buffSize,
+                             std::list<const CHAR*> &argv ) ;
+
+INT32    ossStartProcess( std::list<const CHAR*> &argv ) ;
 
 #if defined (_WINDOWS)
+
 INT32 ossWaitInterrupt ( HANDLE handle, DWORD timeout ) ;
+
+INT32 ossStartService ( const CHAR *serviceName ) ;
+INT32 ossStopService( const CHAR *serviceName,
+                      DWORD dwMilliseconds ) ;
+
 #elif defined (_LINUX)
+
 INT32 ossWaitChild ( OSSPID pid, ossResultCode &result ) ;
-void ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 ) ;
-void ossRenameProcess (  const CHAR *pNewName ) ;
-#endif
-#endif
+void  ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 ) ;
+void  ossRenameProcess (  const CHAR *pNewName ) ;
+INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName ) ;
+
+#endif // _WINDOWS
+
+#endif // OSSPROC_HPP__
+
