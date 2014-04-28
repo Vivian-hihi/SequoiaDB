@@ -41,7 +41,7 @@
 #include "ossProc.hpp"
 #include "ossMem.hpp"
 #include "pd.hpp"
-#include "sdbcm.hpp"
+#include "rtnCM.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdDef.hpp"
@@ -117,7 +117,7 @@ static OSS_INLINE std::string &trim ( std::string &s )
    return ltrim ( rtrim ( s ) ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT, "serviceSplit" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT, "serviceSplit" )
 INT32 serviceSplit ( string &input )
 {
    INT32 rc = SDB_OK ;
@@ -150,7 +150,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_RESVARG, "resolveArgument" )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -165,18 +165,16 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    }
    catch ( po::unknown_option &e )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-            ( ( std::string ) "Unknown argument: " +
-                e.get_option_name ()).c_str () ) ;
-              std::cerr <<  "Unknown argument: "
-                        << e.get_option_name () << std::endl ;
-              rc = SDB_INVALIDARG ;
+      PD_LOG ( PDWARNING, ( ( std::string ) "Unknown argument: " +
+               e.get_option_name ()).c_str () ) ;
+      std::cerr <<  "Unknown argument: " << e.get_option_name ()
+                << std::endl ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
    catch ( po::invalid_option_value &e )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-             ( ( std::string ) "Invalid argument: " +
+      PD_LOG ( PDWARNING, ( ( std::string ) "Invalid argument: " +
                e.get_option_name () ).c_str () ) ;
       std::cerr <<  "Invalid argument: "
                 << e.get_option_name () << std::endl ;
@@ -215,7 +213,7 @@ error :
 }
 
 #if defined (_LINUX)
-PD_TRACE_DECLARE_FUNCTION ( SDB_TERMPROC, "terminateProcess" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_TERMPROC, "terminateProcess" )
 INT32 terminateProcess ( pid_t &pid, CHAR *pName )
 {
    INT32 rc = SDB_OK ;
@@ -261,7 +259,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_STOPENGINE, "stopEngine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_STOPENGINE, "stopEngine" )
 void stopEngine ( string serviceName, INT32 &success, INT32 &total )
 {
    INT32 rc = SDB_OK ;
@@ -372,7 +370,7 @@ error :
 }
 
 #elif defined (_WINDOWS)
-PD_TRACE_DECLARE_FUNCTION ( SDB_CNVPIPE2NAME, "convertPipeToName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CNVPIPE2NAME, "convertPipeToName" )
 void convertPipeToName ( const CHAR *pPipeName, CHAR *pName, INT32 len )
 {
    PD_TRACE_ENTRY ( SDB_CNVPIPE2NAME );
@@ -419,7 +417,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_TERMPROC2, "terminateProcess" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_TERMPROC2, "terminateProcess" )
 INT32 terminateProcess ( const CHAR *pPipeName )
 {
    INT32 rc = SDB_OK ;
@@ -483,7 +481,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_STOPENGINE2, "stopEngine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_STOPENGINE2, "stopEngine" )
 void stopEngine ( string serviceName, INT32 &success, INT32 &total )
 {
    INT32 rc = SDB_OK ;
@@ -542,7 +540,7 @@ error :
 }
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTOP_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;

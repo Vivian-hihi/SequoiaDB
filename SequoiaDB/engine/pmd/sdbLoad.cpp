@@ -54,8 +54,6 @@
 using namespace std ;
 namespace po = boost::program_options ;
 
-extern CHAR _pdDiagLogPath[ OSS_MAX_PATHSIZE + 1 ] ;
-
 #define ADD_PARAM_OPTIONS_BEGIN( desc )\
            desc.add_options()
 #define ADD_PARAM_OPTIONS_END ;
@@ -156,7 +154,7 @@ void printMsg ( CHAR *buffer )
             buffer ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_RESOLVEARG, "resolveArgument" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_RESOLVEARG, "resolveArgument" )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -444,7 +442,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_LOADRECV, "loadRecv" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_LOADRECV, "loadRecv" )
 INT32 loadRecv ( CHAR **buffer, SINT32 *size )
 {
    INT32 rc = SDB_OK ;
@@ -486,7 +484,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_CONNECTSDB, "connectSdb" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_CONNECTSDB, "connectSdb" )
 INT32 connectSdb ()
 {
    INT32 rc = SDB_OK ;
@@ -541,7 +539,7 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLOAD_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -556,9 +554,9 @@ INT32 main ( INT32 argc, CHAR **argv )
 
    bson_init ( &sendObj ) ;
 
-   // set log path
-   ossMemset ( _pdDiagLogPath, 0, sizeof( _pdDiagLogPath ) ) ;
-   ossStrncpy ( _pdDiagLogPath, LOGPATH, sizeof( LOGPATH ) ) ;
+   // enable pd log
+   sdbEnablePD( LOGPATH ) ;
+   setPDLevel( PDINFO ) ;
 
    po::options_description desc ( "Command options" ) ;
    init ( desc ) ;

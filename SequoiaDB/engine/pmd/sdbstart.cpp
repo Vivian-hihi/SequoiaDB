@@ -43,7 +43,7 @@
 #include "pd.hpp"
 #include "ossProc.hpp"
 #include "ossNPipe.hpp"
-#include "sdbcm.hpp"
+#include "rtnCM.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdCommon.hpp"
@@ -92,7 +92,7 @@ void displayArg ( po::options_description &desc )
 BOOLEAN checkProcess ( const CHAR *pPipeName, OSSPID expPid ) ;
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_SERVICEEXISTS, "serviceExists" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_SERVICEEXISTS, "serviceExists" )
 BOOLEAN serviceExists ( const CHAR *pServiceName  )
 {
    BOOLEAN exists = FALSE ;
@@ -182,7 +182,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_CHECKSTARTEDSERVICES, "checkStartedServices" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_CHECKSTARTEDSERVICES, "checkStartedServices" )
 INT32 checkStartedServices ( const CHAR *pConfPath )
 {
    INT32 rc = SDB_OK ;
@@ -192,8 +192,8 @@ INT32 checkStartedServices ( const CHAR *pConfPath )
    desc.add_options()
       ( PMD_OPTION_SVCNAME, boost::program_options::value<string>(), "" ) ;
    CHAR conf[OSS_MAX_PATHSIZE + 1] = {0} ;
-   rc = engine::pmdBuildFullPath ( pConfPath, PMD_DFT_CONF,
-                                   OSS_MAX_PATHSIZE + 1, conf ) ;
+   rc = engine::utilBuildFullPath ( pConfPath, PMD_DFT_CONF,
+                                    OSS_MAX_PATHSIZE + 1, conf ) ;
    if ( rc )
    {
       std::cerr << "Failed to build full path, rc = " << rc << std::endl ;
@@ -253,7 +253,7 @@ error :
 // in this function we only validate whether there's unexpected input, we do not
 // actually doing anything. We will simply pass all parameters to sequoiadb
 // engine
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_RESVARG, "resolveArgument" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_RESVARG, "resolveArgument" )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -268,18 +268,16 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    }
    catch ( po::unknown_option &e )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-            ( ( std::string ) "Unknown argument: " +
-                e.get_option_name ()).c_str () ) ;
-              std::cerr <<  "Unknown argument: "
-                        << e.get_option_name () << std::endl ;
-              rc = SDB_INVALIDARG ;
+      PD_LOG ( PDWARNING, ( ( std::string ) "Unknown argument: " +
+               e.get_option_name ()).c_str () ) ;
+      std::cerr <<  "Unknown argument: " << e.get_option_name ()
+                << std::endl ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
    catch ( po::invalid_option_value &e )
    {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-             ( ( std::string ) "Invalid argument: " +
+      PD_LOG ( PDWARNING, ( ( std::string ) "Invalid argument: " +
                e.get_option_name () ).c_str () ) ;
       std::cerr <<  "Invalid argument: "
                 << e.get_option_name () << std::endl ;
@@ -320,7 +318,7 @@ error :
 // resolve engine path name from a given input path ( not full path name )
 // Basically we assume the input path is <xxx>/something, where <xxx> is the
 // path where sequoiadb locates
-PD_TRACE_DECLARE_FUNCTION ( SDB_ENGINEPATH, "enginePath" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ENGINEPATH, "enginePath" )
 CHAR *enginePath ( const CHAR *pInputPath, CHAR *pOutputPath )
 {
    PD_TRACE_ENTRY ( SDB_ENGINEPATH );
@@ -355,7 +353,7 @@ CHAR *enginePath ( const CHAR *pInputPath, CHAR *pOutputPath )
 }
 
 // calculate how much space we need after using engine name
-PD_TRACE_DECLARE_FUNCTION ( SDB_CALCBUFFSIZE, "calcBufferSize" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CALCBUFFSIZE, "calcBufferSize" )
 INT32 calcBufferSize ( INT32 argc, CHAR **argv )
 {
    PD_TRACE_ENTRY ( SDB_CALCBUFFSIZE );
@@ -388,7 +386,7 @@ done :
 // name plus other input parameters
 // Note engine path and parameters are all sitting in the same buffer. Each
 // arguments are separated by '\0'. Two adjcent '\0\0' represent end of buffer
-PD_TRACE_DECLARE_FUNCTION ( SDB_COPYBUFFER, "copyBuffer" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_COPYBUFFER, "copyBuffer" )
 void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
 {
    PD_TRACE_ENTRY ( SDB_COPYBUFFER );
@@ -421,110 +419,8 @@ void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
 }
 
 //#define PROC_START_TIMEOUT 10
-#if defined (_LINUX)
-PD_TRACE_DECLARE_FUNCTION ( SDB_VERIFYPID, "verifyPID" )
-INT32 verifyPID ( OSSPID inputpid, const CHAR *engineName )
-{
-   INT32 rc                                   = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_VERIFYPID );
-   INT32 numScaned                            = 0 ;
-   INT32 pid                                  = 0 ;
-   INT32 ppid                                 = 0 ;
-   CHAR procName [ OSS_PROCESS_NAME_LEN + 1]  = {0} ;
-   CHAR status [ OSS_PROCESS_NAME_LEN + 1]    = {0} ;
-   CHAR pathName [ OSS_MAX_PATHSIZE + 1 ]     = {0} ;
-   CHAR pathName1 [ OSS_MAX_PATHSIZE + 1 ]    = {0} ;
-   CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ]  = {0} ;
-   BOOLEAN loop                               = TRUE ;
-   INT32 round                                = 0 ;
-   // since we are single-thread program, it's safe to use FILE
-   FILE *fp                                   = NULL ;
-   FILE *fp1                                  = NULL ;
-   // read /proc/pid/stat can get both pid and ppid
-   ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%d/stat", inputpid ) ;
-   ossSnprintf ( pathName1, OSS_MAX_PATHSIZE, "/proc/%d/cmdline", inputpid ) ;
-   //while ( round < PROC_START_TIMEOUT && loop )
-   // we do not timeout. Because in crash recovery mode we may stay in recovery
-   // state for long time, in this case we should keep waiting until it success
-   // or fail
-   while ( loop )
-   {
-      // open proc/pid/stat file
-      fp = fopen ( pathName, "r" ) ;
-      fp1 = fopen ( pathName1, "r" ) ;
-      if ( fp && fp1 )
-      {
-         // get first 4 elements
-         numScaned = fscanf ( fp, "%d%s%s%d",
-                              &pid, // process pid
-                              procName, // process name
-                              status, // process status
-                              &ppid ) ; // parent process id
-         // if we can't read 4 elements, something wrong
-         if ( 4 == numScaned )
-         {
-            // if we detected zombie process, let's get out of here. Since we
-            // have disabled SIGCHLD, so if fork() success but exec() fail, we
-            // are going to get zombie status in child process
-            if ( status[0] == PROC_STATUS_ZOMBIE )
-            {
-               ossPrintf ( "Error: Failed to start SequoiaDB engine"
-                           OSS_NEWLINE ) ;
-               loop = FALSE ;
-            }
-            // make sure
-            // 1) pid matches what we want
-            // 2) parent pid matches myself
-            // 3) sequoiadb engine name is part of the process name ( after exec
-            //    successfully run )
-            else if ( pid == inputpid && getpid() == ppid )
-            {
-               if ( NULL != fgets ( commandLine, OSS_MAX_PATHSIZE, fp1 ) &&
-                    ossStrstr ( commandLine, engineName ) )
-               {
-                  ossPrintf ( "Success: SequoiaDB engine is successfully "
-                              "started (%d)"OSS_NEWLINE, pid ) ;
-                  loop = FALSE ;
-               }
-            }
-         }
-         // if we can't read 4 elements, something wrong
-         else
-         {
-            ossPrintf ( "Error: Failed to extract process information"
-                        OSS_NEWLINE ) ;
-            rc = SDB_SYS ;
-            loop = FALSE ;
-         }
-      }
-      else
-      {
-         // if we can't open the /proc/<pid>/stat, the child process is gone (
-         // it should never happen thou )
-         ossPrintf ( "Error: Unable to start SequoiaDB engine"OSS_NEWLINE ) ;
-         rc = SDB_SYS ;
-         loop = FALSE ;
-      }
-      fclose ( fp ) ;
-      fclose ( fp1 ) ;
-      fp = NULL ;
-      fp1 = NULL ;
-      ++round ;
-      // sleep for 1 second every round
-      sleep ( 1 ) ;
-   }
-   // if we still can't have a match after timeout period, let's dump error
-   /*if ( round == PROC_START_TIMEOUT )
-   {
-      ossPrintf ( "Error: Starting SequoiaDB engine timeout (%d)"OSS_NEWLINE,
-                  inputpid ) ;
-      rc = SDB_SYS ;
-   }*/
-   PD_TRACE_EXITRC ( SDB_VERIFYPID, rc );
-   return rc ;
-}
-#elif defined (_WINDOWS)
-PD_TRACE_DECLARE_FUNCTION ( SDB_CHKPROC, "checkProcess" )
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CHKPROC, "checkProcess" )
 BOOLEAN checkProcess ( const CHAR *pPipeName, OSSPID expPid )
 {
    INT32 rc = SDB_OK ;
@@ -576,7 +472,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_FINDENGINE, "findEngine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_FINDENGINE, "findEngine" )
 INT32 findEngine ( OSSPID pid )
 {
    INT32 rc = SDB_OK ;
@@ -641,9 +537,8 @@ done :
 error :
    goto done ;
 }
-#endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -710,7 +605,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    // really started after ossExec.
    // We don't need to do that in Windows, because CreateProcess is able to
    // garentee the process starts and run.
-   rc = verifyPID ( pid, MODIFIED_ENGINE_NAME ) ;
+   rc = ossVerifyPID ( pid, MODIFIED_ENGINE_NAME ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to verify PID, rc = %d", rc ) ;

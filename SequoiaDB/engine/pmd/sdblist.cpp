@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = sdbstop.cpp
+   Source File Name = sdblist.cpp
 
    Descriptive Name = sdbstop Main
 
@@ -110,7 +110,7 @@ static OSS_INLINE std::string &trim ( std::string &s )
    return ltrim ( rtrim ( s ) ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT2, "serviceSplit" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SVCSPLIT2, "serviceSplit" )
 INT32 serviceSplit ( string &input )
 {
    INT32 rc = SDB_OK ;
@@ -143,7 +143,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_RESVARG, "resolveArgument" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_RESVARG, "resolveArgument" )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -211,7 +211,7 @@ void displayProcess ( pid_t &pid, CHAR *pName )
    ossPrintf ( "%s (%d)"OSS_NEWLINE, pName, pid ) ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_LISTENGINE, "listEngine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_LISTENGINE, "listEngine" )
 void listEngine ( string serviceName, INT32 &total )
 {
    PD_TRACE_ENTRY ( SDB_LISTENGINE );
@@ -311,7 +311,7 @@ error :
 }
 
 #elif defined (_WINDOWS)
-PD_TRACE_DECLARE_FUNCTION ( SDB_CONVERT2NAME, "convertPipeToName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CONVERT2NAME, "convertPipeToName" )
 void convertPipeToName ( const CHAR *pPipeName, CHAR *pName, INT32 len )
 {
    PD_TRACE_ENTRY ( SDB_CONVERT2NAME );
@@ -358,7 +358,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_DSPPROC, "displayProcess" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_DSPPROC, "displayProcess" )
 void displayProcess ( const CHAR *pPipeName )
 {
    INT32 rc = SDB_OK ;
@@ -409,7 +409,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_LISTENGINE2, "listEngine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_LISTENGINE2, "listEngine" )
 void listEngine ( string serviceName, INT32 &total )
 {
    INT32 rc = SDB_OK ;
@@ -464,7 +464,7 @@ error :
 }
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBLIST_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;

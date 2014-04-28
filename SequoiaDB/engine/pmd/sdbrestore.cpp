@@ -62,8 +62,6 @@ namespace fs = boost::filesystem ;
 namespace engine
 {
 
-   extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
-
    /*
       restore logger define
    */
@@ -87,6 +85,7 @@ namespace engine
       ( PMD_COMMANDS_STRING (RS_INC_ID, ",i"), boost::program_options::value<int>(), "increase id, default is -1" ) \
       ( PMD_COMMANDS_STRING (RS_BK_NAME, ",n"), boost::program_options::value<string>(), "backup name" ) \
       ( PMD_COMMANDS_STRING (RS_BK_ACTION, ",a"), boost::program_options::value<string>(), "action(restore/list), defalut is restore" ) \
+      ( PMD_COMMANDS_STRING (PMD_OPTION_DIAGLEVEL, ",v"), boost::program_options::value<int>(), "diag level,default:3,value range:[0-5]" ) \
       ( RS_BK_IS_SELF, boost::program_options::value<string>(), "wether restore self node(true/false),default is true" ) \
       ( PMD_OPTION_DBPATH, boost::program_options::value<string>(), "database path" ) \
       ( PMD_OPTION_IDXPATH, boost::program_options::value<string>(), "index path" ) \
@@ -218,8 +217,9 @@ namespace engine
             ossMemset( _svcName, 0, sizeof( _svcName ) ) ;
             _incID = -1 ;
             _isSelf = TRUE ;
+            _diagLevel = (UINT16)PDWARNING ;
 
-            ossStrcpy( _dialogPath, "dialog" ) ;
+            ossStrcpy( _dialogPath, PMD_OPTION_DIAG_PATH ) ;
          }
 
       protected:
@@ -241,6 +241,9 @@ namespace engine
                        FALSE, FALSE, "" ) ;
             rdxBooleanS( pEX, RS_BK_IS_SELF, _isSelf, FALSE, FALSE, TRUE ) ;
             rdxInt( pEX, RS_INC_ID, _incID, FALSE, FALSE, -1 ) ;
+            rdxUShort( pEX, PMD_OPTION_DIAGLEVEL, _diagLevel, FALSE, TRUE,
+                       (UINT16)PDWARNING ) ;
+            rdvMinMax( pEX, _diagLevel, PDSEVERE, PDDEBUG, TRUE ) ;
 
             return getResult() ;
          }
@@ -272,10 +275,6 @@ namespace engine
 
             // make dir
             ossMkdir( _dialogPath, OSS_CREATE|OSS_READWRITE ) ;
-            // cur dialog
-            ossMemset ( _pdDiagLogPath, 0, sizeof(_pdDiagLogPath) ) ;
-            pmdBuildFullPath( _dialogPath, PMD_DFT_DIAGLOG,
-                              OSS_MAX_PATHSIZE, _pdDiagLogPath ) ;
 
             return SDB_OK ;
          }
@@ -292,6 +291,8 @@ namespace engine
          CHAR              _svcName[ OSS_MAX_SERVICENAME + 1 ] ;
          CHAR              _cfgPath[ OSS_MAX_PATHSIZE + 1 ] ;
 
+         UINT16            _diagLevel ;
+
          po::variables_map _vm ;
    } ;
    typedef _rsOptionMgr rsOptionMgr ;
@@ -307,7 +308,7 @@ namespace engine
          PMD_RS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
-      rc = pmdGetKRCB()->getOptionCB()->readCmd( argc, argv, desc, vm ) ;
+      rc = utilReadCommandLine( argc, argv,  desc, vm ) ;
       if ( rc )
       {
          std::cerr << "read command line failed: " << rc << std::endl ;
@@ -324,13 +325,7 @@ namespace engine
       }
       if ( vm.count( PMD_OPTION_VERSION ) )
       {
-         INT32 version, subVersion, release ;
-         const CHAR *pBuild = NULL ;
-         ossGetVersion ( &version, &subVersion, &release, &pBuild ) ;
-         std::cout << "version: " << version << "."
-         << subVersion << std::endl ;
-         std::cout << "Release: " << release << std::endl ;
-         std::cout << "Build: " << pBuild <<std::endl ;
+         ossPrintVersion( "Sdb Restore" ) ;
          rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
@@ -355,11 +350,6 @@ namespace engine
       //SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
-      if ( _ossEduData.get()==0 )
-      {
-         _ossEduData.reset(SDB_OSS_NEW oss_edu_data());
-      }
-
       std::cout << "Begin to clean dps logs..." << std::endl ;
       // clean dps logs
       rc = sdbCleanDirFiles( krcb->getLogPath() ) ;
@@ -379,8 +369,8 @@ namespace engine
       // remove start file
       {
          CHAR startFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         pmdBuildFullPath( krcb->getDBPath(), PMD_STARTUP_FILE_NAME,
-                           OSS_MAX_PATHSIZE, startFile ) ;
+         utilBuildFullPath( krcb->getDBPath(), PMD_STARTUP_FILE_NAME,
+                            OSS_MAX_PATHSIZE, startFile ) ;
          if ( SDB_OK == ossAccess( startFile ) )
          {
             rc = ossDelete( startFile ) ;
@@ -433,6 +423,11 @@ namespace engine
       return SDB_OK ;
    }
 
+   void pmdOnQuit()
+   {
+      PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
+   }
+
    INT32 pmdRestoreThreadMain ( INT32 argc, CHAR** argv )
    {
       INT32      rc       = SDB_OK ;
@@ -459,9 +454,13 @@ namespace engine
       {
          return rc ;
       }
+      // enable pd log
+      sdbEnablePD( optMgr._dialogPath ) ;
+      setPDLevel( (PDLEVEL)optMgr._diagLevel ) ;
 
       // handlers and init global mem
-      rc = pmdEnableSignalEvent( optMgr._dialogPath ) ;
+      rc = pmdEnableSignalEvent( optMgr._dialogPath,
+                                 (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       if ( rc )
       {
          std::cerr << "Failed to setup signal handler, rc: " << rc << std::endl ;
