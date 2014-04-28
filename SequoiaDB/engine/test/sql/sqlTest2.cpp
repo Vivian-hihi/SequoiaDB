@@ -63,9 +63,8 @@ TEST(sqlTest, parse_1)
    CHAR *line = new CHAR[1024*1024];
    CHAR *dumpBuf = new CHAR[1024*1024*10] ;
 
-   _curPDLevel = PDDEBUG ;
-   ossStrcpy( _pdDiagLogPath, PMD_CURRENT_PATH PMD_DFT_DIAGLOG ) ;
-
+   sdbEnablePD( NULL ) ;
+   setPDLevel( PDDEBUG ) ;
    getQgmStrategyTable()->init() ;
 
    while ( TRUE )
