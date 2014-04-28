@@ -37,7 +37,6 @@
 #include "pmdEnv.hpp"
 #include "ossEDU.hpp"
 #include "pmdSignalHandler.hpp"
-#include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -45,9 +44,6 @@ using namespace bson ;
 
 namespace engine
 {
-
-   extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
-
    pmdSysInfo* pmdGetSysInfo()
    {
       static pmdSysInfo s_sysInfo ;
@@ -70,6 +66,11 @@ namespace engine
       pmdGetSysInfo()->_nodeID = id ;
    }
 
+   BOOLEAN pmdIsQuitApp()
+   {
+      return pmdGetSysInfo()->_quitFlag ;
+   }
+
    INT32& pmdGetSigNum()
    {
       static INT32 s_sigNum = -1 ;
@@ -88,13 +89,16 @@ namespace engine
 
       if ( sigNum > 0 && sigNum <= OSS_MAX_SIGAL )
       {
-         // avoid calling PD_LOG since localtime_r is not signal safe
-         //PD_LOG ( PDEVENT, "Recieve signal[%d:%s, %s]",
-         //         sigNum, pmdGetSignalInfo( sigNum )._name,
-         //         pmdGetSignalInfo( sigNum )._handle ? "QUIT" : "IGNORE" ) ;
+         PD_LOG ( PDEVENT, "Recieve signal[%d:%s, %s]",
+                  sigNum, pmdGetSignalInfo( sigNum )._name,
+                  pmdGetSignalInfo( sigNum )._handle ? "QUIT" : "IGNORE" ) ;
          if ( pmdGetSignalInfo( sigNum )._handle ) // quit
          {
-            PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
+            pmdGetSysInfo()->_quitFlag = TRUE ;
+            if ( pmdGetSysInfo()->_pQuitFunc )
+            {
+               (*pmdGetSysInfo()->_pQuitFunc)() ;
+            }
          }
       }
       PD_TRACE_EXIT ( SDB_PMDSIGHND ) ;
@@ -112,7 +116,7 @@ namespace engine
          goto done ;
       }
 
-      pEduData = _ossEduData.get() ;
+      pEduData = ossGetThreadEDUData() ;
 
       if ( NULL == pEduData )
       {
@@ -170,7 +174,7 @@ namespace engine
       return ;
    }
 
-   INT32 pmdEnableSignalEvent( const CHAR *filepath )
+   INT32 pmdEnableSignalEvent( const CHAR *filepath, PMD_ON_QUIT_FUNC pFunc )
    {
       INT32 rc = SDB_OK ;
       ossSigSet sigSet ;
@@ -183,6 +187,7 @@ namespace engine
       {
          ossSetTrapExceptionPath ( filepath ) ;
       }
+      pmdGetSysInfo()._pQuitFunc = pFunc ;
 
       // SIGSEGV( 11 )
       newact.sa_sigaction = ( OSS_SIGFUNCPTR ) ossEDUCodeTrapHandler ;
@@ -253,8 +258,12 @@ namespace engine
       {
       // Handle the CTRL-C signal.
       case CTRL_C_EVENT:
-         PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
          printf( "Ctrl-C event\n\n" ) ;
+         pmdGetSysInfo()->_quitFlag = TRUE ;
+         if ( pmdGetSysInfo()->_pQuitFunc )
+         {
+            (*pmdGetSysInfo()->_pQuitFunc)() ;
+         }
          Beep( 750, 300 );
          ret = TRUE ;
          goto done ;
@@ -295,13 +304,14 @@ namespace engine
       return ret ;
    }
 
-   INT32 pmdEnableSignalEvent( const CHAR * filepath )
+   INT32 pmdEnableSignalEvent( const CHAR * filepath, PMD_ON_QUIT_FUNC pFunc )
    {
       // set trap file path
       if ( filepath )
       {
          ossSetTrapExceptionPath ( filepath ) ;
       }
+      pmdGetSysInfo()->_pQuitFunc = pFunc ;
 
       // install ctrl event handler
       SetConsoleCtrlHandler( (PHANDLER_ROUTINE)pmdCtrlHandler, TRUE ) ;

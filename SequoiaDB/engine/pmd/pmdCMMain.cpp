@@ -37,26 +37,54 @@
 *******************************************************************************/
 #include "rtnCM.hpp"
 #include "ossErr.h"
+#include "utilStr.hpp"
+#include "ossProc.hpp"
+#include "ossUtil.hpp"
 #include "pd.hpp"
 
-using namespace CLSMGR;
+using namespace CLSMGR ;
+
 INT32 main( INT32 argc, CHAR** argv )
 {
-   INT32 rc = SDB_OK;
-   cCMService svc;
+   INT32 rc = SDB_OK ;
+   CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+   cCMService svc ;
+   std::string shortFile = svc.getProgramName() ;
+   shortFile += PMDDMN_LOG_SUFFIX ;
+
+   rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to get working directory, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, SDBCM_LOG_PATH ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, shortFile.c_str() ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   // enable pd log
+   sdbEnablePD( dialogFile ) ;
+   setPDLevel( PDINFO ) ;
+
    rc = svc.init();
-   PD_RC_CHECK( rc, PDERROR,
-               "failed to init cm(rc=%d)",
-               rc );
-   PD_LOG( PDEVENT, "start cm" );
+   PD_RC_CHECK( rc, PDERROR, "Failed to init cm(rc=%d)", rc ) ;
+   PD_LOG( PDEVENT, "Start cm" ) ;
    rc = svc.run( argc, argv );
    if ( rc )
    {
-      PD_LOG( PDERROR,
-            "execute failed(rc=%d)", rc );
+      PD_LOG( PDERROR, "Execute failed(rc=%d)", rc ) ;
    }
-   PD_RC_CHECK( rc, PDERROR,
-               "execute failed(rc=%d)", rc );
+   PD_RC_CHECK( rc, PDERROR, "Execute failed(rc=%d)", rc ) ;
+
 done:
    return rc;
 error:

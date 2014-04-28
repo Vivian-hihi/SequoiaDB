@@ -90,8 +90,8 @@ namespace engine
    INT32 _pmdDMNProcInfo::setDMNCMD( pmdDMNSHMCmd dmnCMD )
    {
       SDB_ASSERT( PMDDMN_SHM_CMD_INVALID
-               == ( dmnCMD & PMDDMN_SHM_CMD_CHL_MASK ),
-               "invalid daemon-command!" );
+                  == ( dmnCMD & PMDDMN_SHM_CMD_CHL_MASK ),
+                  "invalid daemon-command!" );
       if ( PMDDMN_SHM_CMD_INVALID ==
          ( cmd & PMDDMN_SHM_CMD_DMN_MASK ) )
       {
@@ -114,8 +114,8 @@ namespace engine
    INT32 _pmdDMNProcInfo::setCHLCMD( pmdDMNSHMCmd chlCMD )
    {
       SDB_ASSERT( PMDDMN_SHM_CMD_INVALID
-               == ( chlCMD & PMDDMN_SHM_CMD_DMN_MASK ),
-               "invalid children-command!" );
+                  == ( chlCMD & PMDDMN_SHM_CMD_DMN_MASK ),
+                  "invalid children-command!" );
       if ( PMDDMN_SHM_CMD_INVALID ==
          ( cmd & PMDDMN_SHM_CMD_CHL_MASK ) )
       {
@@ -143,7 +143,6 @@ namespace engine
       _syncExit = TRUE;
       _pid = OSS_INVALID_PID;
       ossMemset( _execName, 0, sizeof( _execName) );
-      ossMemset( _diagLogPath, 0, sizeof( _diagLogPath ) );
 #if defined (_LINUX)
       _shmMid = -1;
       _shmKey = PMDDMN_SHMKEY_DEFAULT;
@@ -160,15 +159,13 @@ namespace engine
 #endif
    }
 
-   INT32 iPmdDMNChildProc::init( ossSHMKey shmKey,
-                                 const CHAR *pDiagLogDir )
+   INT32 iPmdDMNChildProc::init( ossSHMKey shmKey )
    {
       INT32 rc = SDB_OK;
       UINT32 len = 0;
 #if defined (_WINDOWS)
       UINT32 keyLen = 0;
 #endif
-      SDB_ASSERT( pDiagLogDir, "diaglog path can't be NULL!" );
       ossMemset( _execName, 0, sizeof( _execName) );
       rc = ossGetEWD( _execName, OSS_MAX_PATHSIZE );
       PD_RC_CHECK( rc, PDERROR,
@@ -196,22 +193,10 @@ namespace engine
 #if defined (_WINDOWS)
       ossStrncat( _execName, ".exe", ossStrlen(".exe") );
 #endif
-      ossStrncpy( _diagLogPath, pDiagLogDir, OSS_MAX_PATHSIZE );
    done:
       return rc;
    error:
       goto done;
-   }
-
-   INT32 iPmdDMNChildProc::getLogPath( CHAR *pLogPath,
-                                       UINT32 maxLen )
-   {
-      SDB_ASSERT( pLogPath, "pLogPath can't be null!" );
-      SDB_ASSERT( maxLen > 0, "maxLen can't be 0!" );
-      UINT32 len = maxLen < OSS_MAX_PATHSIZE ?
-                  maxLen : OSS_MAX_PATHSIZE ;
-      ossStrncpy( pLogPath, _diagLogPath, len );
-      return SDB_OK;
    }
 
    INT32 iPmdDMNChildProc::allocSHM()
@@ -343,8 +328,7 @@ namespace engine
             rc = DMNProcessCMD( _procInfo->getDMNCMD() );
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDERROR,
-               "failed to process command(rc=%d)", rc );
+               PD_LOG( PDERROR, "Failed to process command(rc=%d)", rc ) ;
             }
             _pid = procInfo.pid;
             ++(_procInfo->sn);
@@ -393,8 +377,7 @@ namespace engine
                && (sn + 1) != _procInfo->sn )
             {
                rc = SDB_PERM;
-               PD_RC_CHECK( rc, PDERROR,
-                           "don't repeat start the process" );
+               PD_RC_CHECK( rc, PDERROR, "Don't repeat start the process" );
             }
             ossSleep( PMDDMN_INTERVAL_TIME_DMN );
          }
@@ -402,9 +385,8 @@ namespace engine
       else
       {
          rc = allocSHM();
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to allocate share-memory(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to allocate share-memory(rc=%d)",
+                      rc ) ;
       }
    done:
       return rc;
@@ -443,8 +425,7 @@ namespace engine
       else if ( -1 == childPid )
       {
          rc = SDB_SYS;
-         PD_LOG( PDERROR,
-               "failed to fork!" );
+         PD_LOG( PDERROR, "Failed to fork!" );
       }
       else
       {
@@ -544,36 +525,16 @@ namespace engine
    {
       INT32 rc = SDB_OK;
 
-      UINT32 pathLen = 0;
-      ossMemset( _pdDiagLogPath, 0, sizeof(_pdDiagLogPath) );
-      pathLen = ossStrlen( _diagLogPath ) + 1
-               + ossStrlen( getProgramName() )
-               + ossStrlen( PMDDMN_LOG_SUFFIX );
-      if ( pathLen > OSS_MAX_PATHSIZE )
-      {
-         rc = SDB_INVALIDARG;
-         ossPrintf( "invalid log-path(size=%u)",
-                  pathLen );
-         goto error;
-      }
-      ossStrncpy( _pdDiagLogPath, _diagLogPath, OSS_MAX_PATHSIZE );
-      ossStrncat( _pdDiagLogPath, OSS_FILE_SEP, 1 );
-      ossStrncat( _pdDiagLogPath, getProgramName(),
-                  ossStrlen( getProgramName() ) );
-      ossStrncat( _pdDiagLogPath, PMDDMN_LOG_SUFFIX,
-                  ossStrlen( PMDDMN_LOG_SUFFIX ) );
-
       rc = startSyncThr();
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to start processor-info-sync-thread(rc=%d)",
-                  rc );
-      rc = svcMain( argc, argv );
-      PD_RC_CHECK( rc, PDERROR,
-                  "execute failed(rc=%d)", rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to start processor-info-sync"
+                   "-thread(rc=%d)", rc ) ;
+      rc = svcMain( argc, argv ) ;
+      PD_RC_CHECK( rc, PDERROR, "Execute failed(rc=%d)", rc ) ;
       while ( !_syncExit )
       {
-         ossSleep( PMDDMN_INTERVAL_TIME );
+         ossSleep( PMDDMN_INTERVAL_TIME ) ;
       }
+
    done:
       return rc;
    error:
@@ -637,16 +598,14 @@ namespace engine
 
          if ( !( _process->isChildRunning() ) )
          {
-            PD_LOG( PDEVENT,
-                  "start the service process...(times:%d)",
-                  retryTimes );
+            PD_LOG( PDEVENT, "Start the service process...(times:%d)",
+                    retryTimes );
             ++retryTimes;
             rc = _process->start();
             if ( SDB_OK != rc )
             {
-               PD_LOG( PDWARNING,
-                     "failed to start the process(rc=%d), retrying...",
-                     rc );
+               PD_LOG( PDWARNING, "Failed to start the process(rc=%d), "
+                       "retrying...", rc ) ;
             }
          }
          else
@@ -663,70 +622,21 @@ namespace engine
 
    INT32 cPmdDaemon::init()
    {
-      INT32 rc = SDB_OK;
-      CHAR logPath[ OSS_MAX_PATHSIZE + 1 ] = {0};
-      SDB_ASSERT( _process, "children process can't be null!" );
-
-      rc = _process->getLogPath( logPath, OSS_MAX_PATHSIZE );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get log path(rc=%d)",
-                  rc );
-      {
-      // log path: $children_logpath + $children_svcname + "_dmn.log"
-      UINT32 pathLen = 0;
-      ossMemset( _pdDiagLogPath, 0, sizeof(_pdDiagLogPath) );
-      pathLen = ossStrlen( logPath ) + 1 + ossStrlen( _procName )
-               + ossStrlen( PMDDMN_LOG_SUFFIX );
-      if ( pathLen > OSS_MAX_PATHSIZE )
-      {
-         rc = SDB_INVALIDARG;
-         ossPrintf( "invalid log-path(size=%u)",
-                  pathLen );
-         goto error;
-      }
-      ossStrncpy( _pdDiagLogPath, logPath, ossStrlen( logPath ) );
-      ossStrncat( _pdDiagLogPath, OSS_FILE_SEP, 1 );
-      ossStrncat( _pdDiagLogPath, _procName, ossStrlen( _procName ) );
-      ossStrncat( _pdDiagLogPath, PMDDMN_LOG_SUFFIX,
-                  ossStrlen( PMDDMN_LOG_SUFFIX ) );
-      }
-
-      /*rc = _process->init( shmKey );
-      if ( rc )
-      {
-         // we can't write log before initEnv()
-         // so output by STDOUT
-         ossPrintf( "failed to init children process(rc=%d)", rc );
-         goto error;
-      }
-
-      rc = _process->getDialogPath( logPath );
-      if ( rc )
-      {
-         ossPrintf( "failed to get the log path of children process(rc=%d)",
-                  rc );
-         goto error;
-      }*/
-   done:
-      return rc;
-   error:
-      goto done;
+      SDB_ASSERT( _process, "children process can't be null!" ) ;
+      return SDB_OK ;
    }
 
    INT32 cPmdDaemon::run( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK;
 #if defined (_WINDOWS)
-      rc = pmdWinstartService( _procName,
-                           &cPmdDaemon::_run );
+      rc = pmdWinstartService( _procName, &cPmdDaemon::_run ) ;
 #elif defined (_LINUX)
       ossEnableNameChanges ( argc, argv ) ;
       ossRenameProcess ( _procName ) ;
       rc = _run( argc, argv );
 #endif
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to start the service(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to start the service(rc=%d)", rc ) ;
    done:
       return rc;
    error:

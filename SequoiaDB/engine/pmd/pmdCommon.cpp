@@ -47,33 +47,6 @@ using namespace bson ;
 
 namespace engine
 {
-   //PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBLDFULLPATH, "pmdBuildFullPath" )
-   INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
-                           UINT32 fullSize, CHAR *full )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDBLDFULLPATH ) ;
-      if ( ossStrlen( path ) + ossStrlen( name )
-           + 2 > fullSize )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      ossMemset( full, 0, fullSize );
-      ossStrcpy( full, path ) ;
-      if ( '\0' != path[0] &&
-           0 != ossStrcmp(&path[ossStrlen(path)-1],OSS_FILE_SEP) )
-      {
-         ossStrncat( full, OSS_FILE_SEP, 1 ) ;
-      }
-      ossStrncat( full, name, ossStrlen( name ) ) ;
-
-   done:
-      PD_TRACE_EXITRC ( SDB_PMDBLDFULLPATH, rc ) ;
-      return rc ;
-   error:
-      goto done ;
-   }
 
    SDB_ROLE pmdGetRoleEnum( const CHAR *role )
    {

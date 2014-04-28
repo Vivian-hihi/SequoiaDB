@@ -38,7 +38,6 @@
 *******************************************************************************/
 #include "core.hpp"
 #include <stdio.h>
-#include <boost/thread/thread.hpp>
 #include "pd.hpp"
 #include "ossEDU.hpp"
 #include "ossMem.hpp"
@@ -55,9 +54,6 @@
 
 namespace engine
 {
-
-   extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
-
    static std::map<EDU_TYPES, std::string> mapEDUName ;
    static std::map<EDU_TYPES,EDU_TYPES>    mapEDUTypeSys ;
 
@@ -1055,11 +1051,6 @@ namespace engine
 
       PD_LOG ( PDEVENT, "Start EDU %lld for thread id %d", myEDUID, 
                ossGetCurrentThreadID() ) ;
-
-      if ( _ossEduData.get() == 0 )
-      {
-         _ossEduData.reset( SDB_OSS_NEW oss_edu_data() );
-      }
 
       while ( !eduDestroyed )
       {

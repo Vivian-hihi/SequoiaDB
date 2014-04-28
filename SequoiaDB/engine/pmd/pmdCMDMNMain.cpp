@@ -37,38 +37,64 @@
 *******************************************************************************/
 #include "pmdDaemon.hpp"
 #include "rtnCM.hpp"
+#include "ossProc.hpp"
+#include "utilStr.hpp"
 #include "pd.hpp"
 #include "ossUtil.h"
 
 using namespace engine;
 using namespace CLSMGR;
+
 INT32 main( INT32 argc, CHAR** argv )
 {
-   INT32 rc = SDB_OK;
+   INT32 rc = SDB_OK ;
+   CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
    cCMService svc;
-   cPmdDaemon daemon( "sdbcmd");
+   cPmdDaemon daemon( PMDDMN_SVCNAME_DEFAULT ) ;
+   std::string shortFile = PMDDMN_SVCNAME_DEFAULT ;
+   shortFile += PMDDMN_LOG_SUFFIX ;
+
+   rc = ossGetEWD( dialogFile, OSS_MAX_PATHSIZE ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to get working directory, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, SDBCM_LOG_PATH ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, shortFile.c_str() ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to make dialog path, rc: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+
+   // enable pd log
+   sdbEnablePD( dialogFile ) ;
+   setPDLevel( PDINFO ) ;
+
    rc = svc.init();
-   PD_RC_CHECK( rc, PDERROR,
-               "failed to init cm(rc=%d)", rc );
-   rc = daemon.addChildrenProcess( &svc );
-   PD_RC_CHECK( rc, PDERROR,
-               "failed to add childrenProcess(rc=%d)",
-               rc );
+   PD_RC_CHECK( rc, PDERROR, "Failed to init cm(rc=%d)", rc ) ;
+   rc = daemon.addChildrenProcess( &svc ) ;
+   PD_RC_CHECK( rc, PDERROR, "Failed to add childrenProcess(rc=%d)", rc ) ;
    rc = daemon.init();
    if ( rc != SDB_OK )
    {
-      ossPrintf( "failed to init daemon process(rc=%d)",
-               rc );
+      ossPrintf( "Failed to init daemon process(rc=%d)", rc ) ;
       goto error;
    }
-   PD_LOG( PDEVENT, "start program" );
+   PD_LOG( PDEVENT, "Start program" ) ;
    rc = daemon.run( argc, argv );
-   PD_RC_CHECK( rc, PDERROR,
-               "execute failed(rc=%d)", rc );
+   PD_RC_CHECK( rc, PDERROR, "Execute failed(rc=%d)", rc ) ;
+
 done:
-   daemon.stop();
-   PD_LOG( PDEVENT, "stop program" );
+   daemon.stop() ;
+   PD_LOG( PDEVENT, "Stop program" ) ;
    return rc;
 error:
-   goto done;
+   goto done ;
 }
