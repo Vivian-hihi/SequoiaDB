@@ -39,6 +39,7 @@ ossFiles = [
       "oss/oss.cpp",
       "oss/ossIO.cpp",
       "oss/ossUtil.cpp",
+      "oss/ossPath.cpp",
       "oss/ossLatch.cpp",
       "oss/ossSocket.cpp",
       "oss/ossPrimitiveFileOp.cpp",
@@ -96,7 +97,6 @@ pdFiles = [
       ]
 
 utilFiles = [
-      "util/utilRemoteExec.cpp",
       "util/base64.cpp",
       "util/text.cpp",
       "util/utilUnicodeGen.cpp",
@@ -110,6 +110,7 @@ utilFiles = [
       "util/utilAccessDataLocalIO.cpp",
       "util/utilAccessDataHdfs.cpp",
       "util/util2Bsonobj.cpp",
+      "util/utilParam.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",
@@ -166,6 +167,7 @@ rtnFiles = [
       "rtn/rtnCoordInsert.cpp",
       "rtn/rtnCoordDelete.cpp",
       "rtn/rtnCoordUpdate.cpp",
+      "rtn/rtnRemoteExec.cpp",
       "rtn/rtnRebuild.cpp",
       "rtn/rtnCoord.cpp",
       "rtn/rtnCB.cpp",
