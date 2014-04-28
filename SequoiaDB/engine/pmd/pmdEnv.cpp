@@ -37,6 +37,7 @@
 #include "pmdEnv.hpp"
 #include "ossEDU.hpp"
 #include "pmdSignalHandler.hpp"
+#include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -187,7 +188,7 @@ namespace engine
       {
          ossSetTrapExceptionPath ( filepath ) ;
       }
-      pmdGetSysInfo()._pQuitFunc = pFunc ;
+      pmdGetSysInfo()->_pQuitFunc = pFunc ;
 
       // SIGSEGV( 11 )
       newact.sa_sigaction = ( OSS_SIGFUNCPTR ) ossEDUCodeTrapHandler ;
