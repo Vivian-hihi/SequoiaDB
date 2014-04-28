@@ -16,7 +16,7 @@ using namespace bson;
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_INIT, "catNodeManager::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_INIT, "catNodeManager::init" )
    INT32 catNodeManager::init( pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
@@ -37,7 +37,7 @@ namespace engine
    /***********************************
    * when the node switch to  primary will call this fun
    *************************************/
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::active" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVE, "catNodeManager::active" )
    INT32 catNodeManager::active()
    {
       //get all of the nodes's id
@@ -123,7 +123,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::deactive" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DEACTIVE, "catNodeManager::deactive" )
    INT32 catNodeManager::deactive()
    {
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_DEACTIVE ) ;
@@ -132,7 +132,7 @@ namespace engine
       return SDB_OK;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::processMsg" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PROCESSMSG, "catNodeManager::processMsg" )
    INT32 catNodeManager::processMsg( void *pMsg )
    {
       INT32 rc = SDB_OK;
@@ -181,7 +181,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PRIMARYCHANGE, "catNodeManager::processPrimaryChange" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PRIMARYCHANGE, "catNodeManager::processPrimaryChange" )
    INT32 catNodeManager::processPrimaryChange(void *pMsg)
    {
       INT32 rc = SDB_OK;
@@ -270,7 +270,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GRPREQ, "catNodeManager::processGrpReq" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GRPREQ, "catNodeManager::processGrpReq" )
    INT32 catNodeManager::processGrpReq( void *pMsg )
    {
       INT32 rc = SDB_OK ;
@@ -360,7 +360,7 @@ namespace engine
       rspMsg->TID = reqMsg->TID ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_REGREQ, "catNodeManager::processRegReq" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_REGREQ, "catNodeManager::processRegReq" )
    INT32 catNodeManager::processRegReq(void *pMsg)
    {
       INT32 rc = SDB_OK;
@@ -534,7 +534,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PCREATEGRP, "catNodeManager::processCmdCreateGrp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PCREATEGRP, "catNodeManager::processCmdCreateGrp" )
    INT32 catNodeManager::processCmdCreateGrp( const CHAR *pQuery )
    {
       INT32 rc = SDB_OK ;
@@ -571,7 +571,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_CREATENODE, "catNodeManager::processCreateNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_CREATENODE, "catNodeManager::processCreateNode" )
    INT32 catNodeManager::processCmdCreateNode( const CHAR *pQuery )
    {
       INT32 rc = SDB_OK ;
@@ -647,7 +647,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_UPDATENODE, "catNodeManager::processCmdUpdateNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_UPDATENODE, "catNodeManager::processCmdUpdateNode" )
    INT32 catNodeManager::processCmdUpdateNode( const CHAR *pQuery,
                                                const CHAR *pSelector )
    {
@@ -687,7 +687,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DELNODE, "catNodeManager::processCmdDelNode" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_DELNODE, "catNodeManager::processCmdDelNode" )
    INT32 catNodeManager::processCmdDelNode( const CHAR *pQuery )
    {
       INT32 rc = SDB_OK ;
@@ -715,7 +715,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PREMOVEGRP, "catNodeManager::processRemoveGrp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PREMOVEGRP, "catNodeManager::processRemoveGrp" )
    INT32 catNodeManager::processRemoveGrp(void *pMsg)
    {
       INT32 rc = SDB_OK ;
@@ -815,7 +815,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVEGRP, "catNodeManager::processActiveGrp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_ACTIVEGRP, "catNodeManager::processActiveGrp" )
    INT32 catNodeManager::processActiveGrp(void *pMsg)
    {
       INT32 rc = SDB_OK;
@@ -940,7 +940,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_READCATACONF, "catNodeManager::readCataConf" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_READCATACONF, "catNodeManager::readCataConf" )
    INT32 catNodeManager::readCataConf()
    {
       INT32 rc = SDB_OK;
@@ -948,7 +948,7 @@ namespace engine
       SINT32 sBufferBegin = 0;
       INT32 iReadReturn = SDB_OK;
 
-      const CHAR *szCatFilePath = _pKrcb->getCatFile() ;
+      const CHAR *szCatFilePath = _pKrcb->getOptionCB()->getCatFile() ;
       CHAR szBuffer[READ_BUFFER_SIZE] = {0};
       OSSFILE catFile;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_READCATACONF ) ;
@@ -1029,7 +1029,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSECATCONF, "catNodeManager::parseCatalogConf" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSECATCONF, "catNodeManager::parseCatalogConf" )
    INT32 catNodeManager::parseCatalogConf( CHAR *pData,
                                           const SINT64 sDataSize,
                                           SINT64 &sParseBytes )
@@ -1081,7 +1081,7 @@ namespace engine
       return rc;
    }//end of parseCatalogConf()
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_SAVEGRPINFO, "catNodeManager::saveGroupInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_SAVEGRPINFO, "catNodeManager::saveGroupInfo" )
    INT32 catNodeManager::saveGroupInfo ( BSONObj &boGroupInfo,
                                          INT16 w )
    {
@@ -1113,7 +1113,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GENGROUPINFO, "catNodeManager::generateGroupInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GENGROUPINFO, "catNodeManager::generateGroupInfo" )
    INT32 catNodeManager::generateGroupInfo( BSONObj &boConf,
                                     BSONObj &boGroupInfo )
    {
@@ -1162,7 +1162,7 @@ namespace engine
       goto done;
    }//end of parseBsonObj()
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GETNODEINFOBYCONF, "catNodeManager::_getNodeInfoByConf" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GETNODEINFOBYCONF, "catNodeManager::_getNodeInfoByConf" )
    INT32 catNodeManager::_getNodeInfoByConf( BSONObj &boConf,
                                              BSONObjBuilder &bobNodeInfo )
    {
@@ -1307,7 +1307,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSELINE, "catNodeManager::parseLine" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSELINE, "catNodeManager::parseLine" )
    INT32 catNodeManager::parseLine( const CHAR *pLine, BSONObj &obj )
    {
       INT32 rc = SDB_OK;
@@ -1340,7 +1340,7 @@ namespace engine
       goto done ;
    }//end of parseLine()
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSEIDINFO, "catNodeManager::parseIDInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSEIDINFO, "catNodeManager::parseIDInfo" )
    INT32 catNodeManager::parseIDInfo( BSONObj &obj )
    {
       INT32 rc = SDB_OK;
@@ -1488,7 +1488,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GETNODEINFO, "catNodeManager::getNodeInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GETNODEINFO, "catNodeManager::getNodeInfo" )
    INT32 catNodeManager::getNodeInfo( const BSONObj &boReq, BSONObj &boNodeInfo )
    {
       INT32 rc                         = SDB_OK;
@@ -1687,7 +1687,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_CREATEGRP, "catNodeManager::_createGrp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_CREATEGRP, "catNodeManager::_createGrp" )
    INT32 catNodeManager::_createGrp( const CHAR *groupName )
    {
       INT32 rc = SDB_OK ;
@@ -1748,7 +1748,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_REMOVEGRP, "catNodeManager::removeGrp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_REMOVEGRP, "catNodeManager::removeGrp" )
    INT32 catNodeManager::removeGrp( const CHAR *groupName )
    {
       INT32 rc = SDB_OK ;
