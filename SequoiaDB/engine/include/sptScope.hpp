@@ -40,6 +40,9 @@
 #define SPT_ADD_USRCLASS( scope, classsdef ) \
         scope->loadUsrDefObj( &(classsdef::__desc) )
 
+#define SPT_EVAL_FLAG_NONE 0
+#define SPT_EVAL_FLAG_PRINT 1
+
 namespace engine
 {
    class _sptObjDesc ;
@@ -58,6 +61,7 @@ namespace engine
       virtual INT32 eval( const CHAR *code, UINT32 len,
                           const CHAR *filename,
                           UINT32 lineno,
+                          INT32 flag,
                           bson::BSONObj &detail ) = 0 ;
 
    public:

@@ -37,6 +37,7 @@
 #include "sptSPDef.hpp"
 #include "sptBsonobj.hpp"
 #include "sptGlobalFunc.hpp"
+#include "sptConvertor2.hpp"
 
 const UINT32 RUNTIME_SIZE = 8 * 1024 * 1024 ;
 
@@ -341,19 +342,37 @@ namespace engine
    INT32 _sptSPScope::eval( const CHAR *code, UINT32 len,
                             const CHAR *filename,
                             UINT32 lineno,
+                            INT32 flag,
                             bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( _context && _global, "this scope has not been initilized" )
       SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" )
-      jsval *rval = NULL ;
+      jsval rval = JSVAL_VOID ;
       jsval exception = JSVAL_VOID ;
+      string print ;
+
       if ( !JS_EvaluateScript( _context, _global, code,
-                               len, filename, lineno, rval ) )
+                               len, filename, lineno, &rval ) )
       {
          rc = SDB_SPT_EVAL_FAIL ;
          PD_LOG( PDERROR, "failed to eval js code" ) ;
          goto error ;
+      }
+
+      if ( flag & SPT_EVAL_FLAG_PRINT )
+      {
+         if ( JSVAL_IS_STRING( rval ) ||
+              JSVAL_IS_NUMBER( rval ) ||
+              JSVAL_IS_OBJECT( rval ) ||
+              JSVAL_IS_BOOLEAN( rval ) )
+         {
+            rc = sptConvertor2::toString( _context, rval, print ) ;
+            if ( SDB_OK == rc )
+            {
+               ossPrintf( "%s\n", print.c_str() ) ;
+            }
+         }
       }
    done:
       return rc ;

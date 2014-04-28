@@ -63,6 +63,7 @@ namespace engine
       virtual INT32 eval(const CHAR *code, UINT32 len,
                          const CHAR *filename,
                          UINT32 lineno,
+                         INT32 flag,
                          bson::BSONObj &detail ) ;
 
    private:

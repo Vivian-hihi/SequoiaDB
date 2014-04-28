@@ -36,6 +36,7 @@ using namespace std ;
 namespace engine
 {
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, read )
+JS_MEMBER_FUNC_DEFINE( _sptUsrFile, seek )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, write )
 JS_MEMBER_FUNC_DEFINE( _sptUsrFile, close )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrFile, construct )
@@ -47,6 +48,7 @@ JS_BEGIN_MAPPING( _sptUsrFile, "File" )
    JS_ADD_MEMBER_FUNC( "write", write )
    JS_ADD_MEMBER_FUNC( "close", close )
    JS_ADD_STATIC_FUNC( "remove", remove )
+   JS_ADD_MEMBER_FUNC( "seek", seek )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -189,6 +191,69 @@ JS_MAPPING_END()
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to write to file:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _sptUsrFile::seek( const _sptArguments &arg,
+                            _sptReturnVal &rval,
+                            bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      INT32 seekSize = 0 ;
+      OSS_SEEK whence ;
+      string whenceStr ;
+
+      if ( !_file.isOpened() )
+      {
+         PD_LOG( PDERROR, "the file is not opened." ) ;
+         rc = SDB_IO ;
+         goto error ;
+      }
+
+      rc = arg.getNative( 0, &seekSize ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get seek size" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = arg.getString( 1, whenceStr ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get whence" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      if ( "b" == whenceStr )
+      {
+         whence = OSS_SEEK_SET ;
+      }
+      else if ( "c" == whenceStr )
+      {
+         whence = OSS_SEEK_CUR ;
+      }
+      else if ( "e" == whenceStr )
+      {
+         whence = OSS_SEEK_END ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "invalid arg whence:%s", whenceStr.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = ossSeek( &_file, seekSize, whence ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to seek:%d", rc ) ;
          goto error ;
       }
    done:

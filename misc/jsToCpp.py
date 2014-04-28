@@ -79,7 +79,29 @@ def jsToCpp(engineDir):
 }
 """
 
+   evalFuncStr2 = """static INT32 evalInitScripts2( engine::_sptScope * scope )
+{
+   UINT32 i = 0 ;
+   UINT32 len = sizeof ( jsNameArray ) / sizeof ( CHAR * ) ;
+   INT32 rc = SDB_OK ;
+   bson::BSONObj detail ;
+   for ( ; i < len ; i++ )
+   {
+      rc = scope->eval( jsTextArray[i] , jsLenArray[i] , jsNameArray[i] ,
+                        1 , SPT_EVAL_FLAG_NONE, detail ) ;
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR , "fail to eval init script: %s, rc=%d" , jsNameArray[i] , rc ) ;
+         break ;
+      }
+   }
+   return rc ;
+}
+"""
+
    tbw += evalFuncStr
+
+   tbw += evalFuncStr2
 
    outFile = open(join(sptDir, 'js_in_cpp.hpp'), 'w')
    outFile.write(tbw)
