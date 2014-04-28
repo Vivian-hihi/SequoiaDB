@@ -41,6 +41,11 @@
 #include <string>
 #include <stdlib.h>
 
+#define PD_DFT_FILE_NUM             (20)
+#define PD_DFT_FILE_SZ              (100)
+#define PD_DFT_DIAGLOG              "sdbdiag.log"
+#define PD_FMP_DIAGLOG              "fmpdiag.log"
+
 #ifdef _DEBUG
 #define SDB_ASSERT(cond,str)     {if(!(cond)) {pdassert(str,__FUNC__,__FILE__,__LINE__);}}
 #define SDB_CHECK(cond,str)      {if(!(cond)) {pdcheck(str,__FUNC__,__FILE__,__LINE__);}}
@@ -57,7 +62,7 @@
 
 #define PD_LOG(level, fmt, ...) \
    do { \
-      if ( _curPDLevel >= level ) \
+      if ( getPDLevel() >= level ) \
       { \
          pdLog(level, __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
       } \
@@ -67,14 +72,13 @@
    do { \
       if ( level <= PDERROR ) \
       { \
-         UINT32 tid = ossGetCurrentThreadID () ; \
-         _pmdEDUCB *cb = pmdGetKRCB()->getEDUMgr()->getEDU( tid ) ; \
+         _pmdEDUCB *cb = pmdGetEDUCB() ; \
          if ( cb ) \
          { \
             cb->printInfo ( EDU_INFO_ERROR, fmt, ##__VA_ARGS__ ) ; \
          } \
       } \
-      if ( _curPDLevel >= level ) \
+      if ( getPDLevel() >= level ) \
       { \
          pdLog(level, __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
       } \
@@ -106,21 +110,35 @@ enum PDLEVEL
    PDWARNING,
    PDINFO,
    PDDEBUG
-};
+} ;
+
+PDLEVEL& getPDLevel() ;
+PDLEVEL  setPDLevel( PDLEVEL newLevel ) ;
+const CHAR* getDialogName() ;
+const CHAR* getDialogPath() ;
 const CHAR* getPDLevelDesp ( PDLEVEL level ) ;
 
-typedef enum PDLEVEL PDLEVEL ;
-#define PD_DFT_DIAGLEVEL PDWARNING
-void pdLog(PDLEVEL level, const CHAR* func, const CHAR* file, UINT32 line, const CHAR* format, ...);
-extern PDLEVEL _curPDLevel ;
+void sdbEnablePD( const CHAR *pdPathOrFile,
+                  INT32 fileMaxNum = PD_DFT_FILE_NUM,
+                  UINT32 fileMaxSize = PD_DFT_FILE_SZ ) ;
+void sdbDisablePD() ;
+
+BOOLEAN sdbIsPDEnabled() ;
+
+
 #ifdef _DEBUG
-void pdassert(const CHAR* string, const CHAR* func, const CHAR* file, UINT32 line) ;
-void pdcheck(const CHAR* string, const CHAR* func, const CHAR* file, UINT32 line) ;
+void pdassert( const CHAR* string, const CHAR* func,
+               const CHAR* file, UINT32 line) ;
+void pdcheck( const CHAR* string, const CHAR* func,
+              const CHAR* file, UINT32 line) ;
 #else
 #define pdassert(str1,str2,str3,str4)
 #define pdcheck(str1,str2,str3,str4)
 #endif
 
+/*
+   _pdGeneralException define
+*/
 struct _pdGeneralException : public std::exception
 {
    std::string s ;
@@ -133,5 +151,13 @@ struct _pdGeneralException : public std::exception
 } ;
 typedef struct _pdGeneralException pdGeneralException ;
 
-void pdLog(PDLEVEL level, const CHAR* func, const CHAR* file, UINT32 line, std::string message);
-#endif
+/*
+   pdLog function define
+*/
+void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
+            UINT32 line, const CHAR* format, ...) ;
+
+void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
+            UINT32 line, std::string message ) ;
+
+#endif // PD_HPP_
