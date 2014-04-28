@@ -11,10 +11,4 @@
 #define CMD_CLEARHISTORY   "history-c"
 #define CMD_CLEARHISTORY1  "history-c;"
 
-
-INT32 setProgramName( const CHAR *name ) ;
-const CHAR* getProgramName() ;
-INT32 getProgramPath( CHAR *pOutputPath ) ;
-//INT32 getProgramPath( const CHAR *pInputPath, const CHAR *pOutputPath ) ;
-
 #endif //SPTCOMMON_HPP__

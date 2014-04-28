@@ -9,7 +9,6 @@ sptFiles = [
       "spt/engine.cpp",
       "spt/dbClasses.cpp",
       "spt/sptConvertor.cpp",
-      "spt/sptCommon.cpp",
       "spt/sptParseTroff.cpp"
       ]
 
@@ -49,6 +48,7 @@ utilFiles = [
       "util/utilStr.cpp",
       "util/utilLinenoiseWrapper.cpp",
       "util/utilPipe.cpp",
+      "util/utilPath.cpp",
       "client/bson/numbers.c",
       "client/bson/bson.c",
       "client/bson/encoding.c",

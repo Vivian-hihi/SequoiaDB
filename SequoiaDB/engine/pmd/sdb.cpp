@@ -23,6 +23,7 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 #include "sptCommon.hpp"
+#include "utilPath.hpp"
 #include "utilPipe.hpp"
 
 using std::ostream ;

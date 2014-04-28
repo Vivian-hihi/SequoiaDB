@@ -43,6 +43,8 @@
 #include <termios.h>
 #include <string.h>
 #include "curses.h"
+#include "sptCommon.hpp"
+#include "utilPath.hpp"
 //#include <time.h>
 #include <sys/time.h>
 #include <string>
@@ -393,6 +395,7 @@ CHAR sdbtopBuffer[BUFFERSIZE] = {0} ;
 const INT32 errStrLength = 1024 ;
 CHAR errStr[errStrLength] = {0} ;
 CHAR errStrBuf[errStrLength] = {0} ;
+CHAR progPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 string confPath = SDBTOP_DEFAULT_CONFPATH ;
 string hostname  = SDBTOP_DEFAULT_HOSTNAME ;
 string serviceName = SDBTOP_DEFAULT_SERVICENAME ;
@@ -5709,6 +5712,7 @@ INT32 resolveArgument ( po::options_description &desc,
                         INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
+   INT32 pathLen = 0 ;
    po::variables_map vm ;
    try
    {
@@ -5749,7 +5753,17 @@ INT32 resolveArgument ( po::options_description &desc,
    }
    else
    {
-      confPath = SDBTOP_DEFAULT_CONFPATH ;
+      pathLen = ossStrlen( progPath ) + ossStrlen( SDBTOP_DEFAULT_CONFPATH ) ;
+      if ( OSS_MAX_PATHSIZE < pathLen )
+      {
+         ossPrintf( "The program's path is too long"OSS_NEWLINE ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossStrncat( progPath, SDBTOP_DEFAULT_CONFPATH, ossStrlen(SDBTOP_DEFAULT_CONFPATH) ) ;
+      progPath[pathLen] = 0 ;
+      confPath = std::string(progPath) ;
+ossPrintf( "confPath is: %s"OSS_NEWLINE, confPath.c_str() ) ;
    }
 
    if( vm.count( OPTION_HOSTNAME ) )
@@ -5803,6 +5817,20 @@ INT32 main( INT32 argc, CHAR **argv)
    Event sdbtop ;
    po::options_description desc ( "Command options" ) ;
    init ( desc ) ;
+   // save the program's path
+   rc = setProgramName( argv[0] ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to set program's path"OSS_NEWLINE ) ;
+      goto error ;
+   }
+   // get the program's path
+   rc = getProgramPath( progPath ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to get program's path"OSS_NEWLINE ) ;
+      goto error ;
+   }
    rc = resolveArgument ( desc, argc, argv ) ;
    if ( rc )
    {

@@ -35,6 +35,7 @@
 #include "string"
 #include "climits"
 #include "sptCommon.hpp"
+#include "utilPath.hpp"
 
 //#define ERRMSGBUFFERSIZE 256
 #define SAFE_JS_FREE( cx, p ) \

@@ -96,6 +96,7 @@ utilFiles = [
       "util/utilParseData.cpp",
       "util/utilAccessDataLocalIO.cpp",
       "util/utilAccessDataHdfs.cpp",
+      "util/utilPath.cpp",
       "util/text.cpp"
       ]
 
