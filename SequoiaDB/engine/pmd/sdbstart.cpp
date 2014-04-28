@@ -423,6 +423,7 @@ void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
 //#define PROC_START_TIMEOUT 10
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_CHKPROC, "checkProcess" )
+#if defined (_WINDOWS)
 BOOLEAN checkProcess ( const CHAR *pPipeName, OSSPID expPid )
 {
    INT32 rc = SDB_OK ;
@@ -538,6 +539,7 @@ done :
 error :
    goto done ;
 }
+#endif
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBSTART_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
