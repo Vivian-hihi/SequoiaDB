@@ -35,6 +35,7 @@
 
 *******************************************************************************/
 #include "ossVer.h"
+#include <iostream>
 
 #define SDB_ENGINE_BUILD_CURRENT_DEBUG SDB_ENGINE_BUILD_CURRENT"(Debug)"
 
@@ -56,3 +57,16 @@ void ossGetVersion ( INT32 *version,
       *ppBuild = SDB_ENGINE_BUILD_CURRENT ;
 #endif
 }
+
+void ossPrintVersion( const CHAR *prompt )
+{
+   std::cout << prompt << ": " << SDB_ENGINE_VERISON_CURRENT << "."
+             << SDB_ENGINE_SUBVERSION_CURRENT << std::endl ;
+   std::cout << "Release: " << SDB_ENGINE_RELEASE_CURRENT << std::endl ;
+#if defined (_DEBUG)
+   std::cout << SDB_ENGINE_BUILD_CURRENT_DEBUG << std::endl ;
+#else
+   std::cout << SDB_ENGINE_BUILD_CURRENT << std::endl ;
+#endif
+}
+

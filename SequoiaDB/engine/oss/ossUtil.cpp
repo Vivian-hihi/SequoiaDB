@@ -93,7 +93,7 @@ void ossGmtime ( time_t &Time, struct tm &TM )
 
 //
 // convert ossTimestamp to string
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTS2STR, "ossTimestampToString" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTS2STR, "ossTimestampToString" )
 void ossTimestampToString( ossTimestamp &Tm, CHAR * pStr )
 {
    PD_TRACE_ENTRY ( SDB_OSSTS2STR );
@@ -167,7 +167,7 @@ void ossGetCurrentTime( ossTimestamp &TM )
 // Get CPU usage for current process
 #define OSS_PROC_FIELD_TO_SKIP_FOR_UTIME 13
 #define OSS_PROC_PATH_LEN_MAX 255
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETCPUUSG, "ossGetCPUUsage" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETCPUUSG, "ossGetCPUUsage" )
 SINT32 ossGetCPUUsage
 (
    ossTime &usrTime,
@@ -285,7 +285,7 @@ SINT32 ossGetCPUUsage
    return rc ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETCPUUSG2, "ossGetCPUUsage" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETCPUUSG2, "ossGetCPUUsage" )
 SINT32 ossGetCPUUsage
 (
 #if defined (_WINDOWS)
@@ -413,7 +413,7 @@ static SINT32 g_tickConversionFactorInitialized = 0 ;
 static ossSpinXLatch g_tickConversionFactorLatch ;
 static ossTickConversionFactor g_tickConversionFactor ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTCF_INIT, "ossTickConversionFactor::initialize" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSTCF_INIT, "ossTickConversionFactor::initialize" )
 void ossTickConversionFactor::initialize(void)
 {
    PD_TRACE_ENTRY ( SDB_OSSTCF_INIT );
@@ -439,7 +439,7 @@ static ossSpinXLatch g_randLatch ;
 #if defined (_LINUX)
 static UINT32 g_randSeed = 0 ;
 #endif
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSRAND, "ossSrand" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSRAND, "ossSrand" )
 static void ossSrand()
 {
    PD_TRACE_ENTRY ( SDB_OSSSRAND );
@@ -457,7 +457,7 @@ static void ossSrand()
    PD_TRACE_EXIT ( SDB_OSSSRAND );
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRAND, "ossRand" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRAND, "ossRand" )
 UINT32 ossRand ()
 {
    PD_TRACE_ENTRY ( SDB_OSSRAND );
@@ -475,7 +475,7 @@ UINT32 ossRand ()
    return randVal ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSHEXDL, "ossHexDumpLine" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSHEXDL, "ossHexDumpLine" )
 UINT32 ossHexDumpLine
 (
    const void *   inPtr,
@@ -573,7 +573,7 @@ UINT32 ossHexDumpLine
    return curOff ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSHEXDUMPBUF, "ossHexDumpBuffer" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSHEXDUMPBUF, "ossHexDumpBuffer" )
 UINT32 ossHexDumpBuffer
 (
    const void * inPtr,
@@ -720,7 +720,7 @@ exit :
 #elif defined (_WINDOWS)
 #define OSS_GET_MEM_INFO_AMPLIFIER 1024LL
 #endif
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETMEMINFO, "ossGetMemoryInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETMEMINFO, "ossGetMemoryInfo" )
 INT32 ossGetMemoryInfo ( INT32 &loadPercent,
                          INT64 &totalPhys,   INT64 &availPhys,
                          INT64 &totalPF,     INT64 &availPF,
@@ -832,7 +832,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETDISKINFO, "ossGetDiskInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETDISKINFO, "ossGetDiskInfo" )
 INT32 ossGetDiskInfo ( const CHAR *pPath,
                        INT64 &totalBytes,
                        INT64 &freeBytes )
@@ -923,7 +923,7 @@ typedef NTSTATUS (__stdcall *NTQUERYSYSTEMINFORMATION)
 #define OSS_GET_CPU_INFO_PATTERN   "%lld%lld%lld%lld%lld%lld%lld"
 #endif
 // output is based on milliseconds
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETCPUINFO, "ossGetCPUInfo" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSGETCPUINFO, "ossGetCPUInfo" )
 INT32 ossGetCPUInfo ( SINT64 &user, SINT64 &sys,
                       SINT64 &idle, SINT64 &other )
 {
