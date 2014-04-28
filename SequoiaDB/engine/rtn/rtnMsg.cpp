@@ -56,7 +56,7 @@ namespace engine
       {
          CHAR *message = &pMsg->msg[0] ;
          message[ pMsg->header.messageLength - sizeof(MsgHeader) - 1 ] = 0 ;
-         PD_LOG ( _curPDLevel, "%s", message ) ;
+         PD_LOG ( getPDLevel(), "%s", message ) ;
       }
       return rc ;
    }
