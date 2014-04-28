@@ -57,7 +57,7 @@ namespace engine
    // class oss_edu_data
    //    edu specific data for oss component
    //
-   class _oss_edu_data : public SDBObject
+   struct _oss_edu_data
    {
    public :
    #define OSS_EDU_DATA_EYE_CATCHER ( 0xBEEFC0FFEE00 )
@@ -77,7 +77,7 @@ namespace engine
    #endif
       UINT64 ossEDUEyeCatcher2 ;
 
-      _oss_edu_data()
+      void init()
       {
          ossEDUEyeCatcher1 = OSS_EDU_DATA_EYE_CATCHER ;
          ossEDUFlag = 0 ;
@@ -89,7 +89,9 @@ namespace engine
          ossEDUEyeCatcher2 = OSS_EDU_DATA_EYE_CATCHER ;
       }
    } ;
-   typedef class _oss_edu_data oss_edu_data ;
+   typedef _oss_edu_data oss_edu_data ;
+
+   oss_edu_data* ossGetThreadEDUData() ;
 
    #define OSS_ENTER_SIGNAL_HANDLER( p )                                     \
    {                                                                         \
