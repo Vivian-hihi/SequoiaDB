@@ -49,9 +49,9 @@
 #include "catCommon.hpp"
 #include "../bson/bson.h"
 #include "pmdOptions.hpp"
-#include "utilRemoteExec.hpp"
+#include "rtnRemoteExec.hpp"
 #include "dms.hpp"
-#include "sdbcm.hpp"
+#include "rtnCM.hpp"
 #include "rtn.hpp"
 #include "pdTrace.hpp"
 #include "rtnTrace.hpp"
@@ -1068,7 +1068,7 @@ namespace engine
       }
 
       // print debug info
-      if ( _curPDLevel >= PDDEBUG )
+      if ( getPDLevel() >= PDDEBUG )
       {
          std::string strSpaceName;
          INT32 flag                       = 0;
@@ -2977,7 +2977,7 @@ namespace engine
       PD_LOG ( PDDEBUG,
                "drop collection-space(name:%s)",
                strSpaceName.c_str() );
-      if ( _curPDLevel >= PDDEBUG )
+      if ( getPDLevel() >= PDDEBUG )
       {
          CoordGroupList::iterator iterLst = groupLst.begin();
          while( iterLst != groupLst.end() )
@@ -3716,8 +3716,8 @@ namespace engine
       {
          execObj = BSON( FIELD_NAME_HOST << hostName
                          << PMD_OPTION_SVCNAME << serviceName ) ;
-         rc = utilRemoteExec ( SDBSTOP, hostName.c_str() ,
-                               &ret, &execObj ) ;
+         rc = rtnRemoteExec ( SDBSTOP, hostName.c_str() ,
+                              &ret, &execObj ) ;
          /// here we only return a err code. do not goto error.
          if ( SDB_OK != rc )
          {
@@ -3727,8 +3727,8 @@ namespace engine
             rrc = SDB_CATA_FAILED_TO_CLEANUP ;
          }
 
-         rc = utilRemoteExec ( SDBRM, hostName.c_str(),
-                               &ret, &execObj ) ;
+         rc = rtnRemoteExec ( SDBRM, hostName.c_str(),
+                              &ret, &execObj ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR,
@@ -4102,8 +4102,8 @@ namespace engine
                      e.what() );
          }
          SINT32 retCode;
-         rc = utilRemoteExec ( SDBADD, strHostName.c_str(),
-                      &retCode, &boNodeConfig ) ;
+         rc = rtnRemoteExec ( SDBADD, strHostName.c_str(),
+                              &retCode, &boNodeConfig ) ;
 
          rc = rc ? rc : retCode;
          if ( SDB_OK == rc )
@@ -4288,7 +4288,7 @@ namespace engine
       {
       SINT32 retCode;
       INT32 rrc = SDB_OK ;
-      rrc = utilRemoteExec ( SDBSTOP, host.c_str(),
+      rrc = rtnRemoteExec ( SDBSTOP, host.c_str(),
                             &retCode, &rInfo ) ;
       if ( SDB_OK != rrc )
       {
@@ -4298,7 +4298,7 @@ namespace engine
          rc = SDB_CATA_FAILED_TO_CLEANUP ;
       }
 
-      rrc = utilRemoteExec ( SDBRM, host.c_str(),
+      rrc = rtnRemoteExec ( SDBRM, host.c_str(),
                             &retCode, &rInfo ) ;
       if ( SDB_OK != rrc )
       {
@@ -4453,8 +4453,8 @@ namespace engine
                      e.what() );
          }
          SINT32 retCode;
-         rc = utilRemoteExec ( SDBADD, strHostName.c_str(),
-                      &retCode, &boNodeConfig ) ;
+         rc = rtnRemoteExec ( SDBADD, strHostName.c_str(),
+                              &retCode, &boNodeConfig ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR,
@@ -4470,8 +4470,8 @@ namespace engine
                   rc );
             break;
          }
-         rc = utilRemoteExec ( SDBSTOP, strHostName.c_str(),
-                      &retCode, &boNodeConfig ) ;
+         rc = rtnRemoteExec ( SDBSTOP, strHostName.c_str(),
+                              &retCode, &boNodeConfig ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR,
@@ -4487,8 +4487,8 @@ namespace engine
                   rc );
             break;
          }
-         rc = utilRemoteExec ( SDBSTART, strHostName.c_str(),
-                      &retCode, &boNodeConfig ) ;
+         rc = rtnRemoteExec ( SDBSTART, strHostName.c_str(),
+                              &retCode, &boNodeConfig ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR,
@@ -4567,8 +4567,8 @@ namespace engine
                BSONObjBuilder bobLocalService;
                bobLocalService.append( PMD_OPTION_SVCNAME, strServiceName );
                BSONObj boLocalService = bobLocalService.obj();
-               rc = utilRemoteExec ( SDBSTART, strHostName.c_str(),
-                            &retCode, &boLocalService ) ;
+               rc = rtnRemoteExec ( SDBSTART, strHostName.c_str(),
+                                    &retCode, &boLocalService ) ;
                if ( SDB_OK == rc && SDB_OK == retCode )
                {
                   continue;
@@ -5225,8 +5225,8 @@ namespace engine
          }
          SINT32 opType = getOpType();
          SINT32 retCode;
-         rc = utilRemoteExec ( opType, strHostName,
-                      &retCode, &boNodeConf ) ;
+         rc = rtnRemoteExec ( opType, strHostName,
+                              &retCode, &boNodeConf ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG( PDERROR,
@@ -5448,8 +5448,8 @@ namespace engine
                BSONObjBuilder bobLocalService;
                bobLocalService.append( PMD_OPTION_SVCNAME, strServiceName );
                BSONObj boLocalService = bobLocalService.obj();
-               rc = utilRemoteExec ( opType, strHostName.c_str(),
-                            &retCode, &boLocalService ) ;
+               rc = rtnRemoteExec ( opType, strHostName.c_str(),
+                                    &retCode, &boLocalService ) ;
                if ( SDB_OK == rc && SDB_OK == retCode )
                {
                   continue;
@@ -6747,16 +6747,17 @@ namespace engine
                   "failed to create catalog group, occured unexpected error:%s",
                   e.what() );
       }
-      rc = utilRemoteExec( SDBADD, pHostName, &retCode, &boNodeConfig, &boNodeInfo );
+      rc = rtnRemoteExec( SDBADD, pHostName, &retCode, &boNodeConfig,
+                          &boNodeInfo );
       rc = rc ? rc : retCode;
       PD_RC_CHECK( rc, PDERROR, "remote node execute(configure) failed(rc=%d)", rc );
-      rc = utilRemoteExec( SDBSTART, pHostName, &retCode, &boLocalSvc );
+      rc = rtnRemoteExec( SDBSTART, pHostName, &retCode, &boLocalSvc );
       rc = rc ? rc : retCode;
       // if start catalog failed, need to remove config
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "remote node execute(start) failed(rc=%d)", rc ) ;
-         utilRemoteExec( SDBRM, pHostName, &retCode, &boNodeConfig ) ;
+         rtnRemoteExec( SDBRM, pHostName, &retCode, &boNodeConfig ) ;
          goto error ;
       }
 

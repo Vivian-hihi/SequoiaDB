@@ -48,12 +48,12 @@
 #include "pmdStartup.hpp"
 #include "pmdOptionsMgr.hpp"
 #include "msgMessage.hpp"
-#include "sdbcm.hpp"
 #include "../bson/bson.h"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "rtnTrace.hpp"
 #include "pmdDef.hpp"
+#include "utilParam.hpp"
 
 #include <stdlib.h>
 #include <time.h>
@@ -137,11 +137,7 @@ namespace CLSMGR
    // functions declare
    INT32 writeConfigureFile ( OSSFILE *pFile, const CHAR *pBufferWrite,
                               SINT64 iLenToWrite ) ;
-   INT32 readConfigureFile( const CHAR *conf,
-                            po::options_description &desc,
-                            po::variables_map &vm ) ;
-   INT32 buildFullPath( const CHAR *path, const CHAR *name,
-                        UINT32 fullSize, CHAR *full ) ;
+
    // INT32 buildConfPath ( const CHAR *srvname,
                          // UINT32 fullSize, CHAR *full ) ;
    void cmTcpListener ( INT32 port ) ;
@@ -162,47 +158,6 @@ namespace CLSMGR
    INT32 initEnv( UINT16 &port ) ;
    INT32 getProcessInfoBySvcname( const string &svcName,
                                  struct Process &processInfo );
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_RDCFGFILE, "readConfigureFile" )
-   INT32 readConfigureFile( const CHAR *conf,
-                            po::options_description &desc,
-                            po::variables_map &vm )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_SDBCM_RDCFGFILE );
-
-      try
-      {
-         po::store ( po::parse_config_file<CHAR> ( conf, desc, TRUE ), vm ) ;
-         po::notify ( vm ) ;
-      }
-      catch( po::reading_file )
-      {
-         rc = SDB_IO ;
-         goto error ;
-      }
-      catch ( po::unknown_option)
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      catch ( po::invalid_option_value )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      catch( po::error )
-      {
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB_SDBCM_RDCFGFILE, rc );
-      return rc;
-   error:
-      goto done;
-   }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WTCFGFILE, "writeConfigureFile" )
    INT32 writeConfigureFile ( OSSFILE *pFile, const CHAR *pBufferWrite,
@@ -229,30 +184,6 @@ namespace CLSMGR
       return rc ;
    error:
       goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_BLDFULLPATH, "buildFullPath" )
-   INT32 buildFullPath ( const CHAR *path, const CHAR *name,
-                         UINT32 fullSize, CHAR *full )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB_SDBCM_BLDFULLPATH );
-      if ( ossStrlen( path ) + ossStrlen( name )
-           + 2 > fullSize )
-      {
-         rc = SDB_INVALIDARG;
-         goto error;
-      }
-      ossMemset( full, 0, fullSize );
-      ossMemcpy( full, path, ossStrlen( path ) );
-      ossStrncat( full, OSS_FILE_SEP, 1 );
-      ossStrncat( full, name, ossStrlen( name ) );
-      PD_TRACE1 ( SDB_SDBCM_BLDFULLPATH, PD_PACK_STRING(full) );
-   done:
-      PD_TRACE_EXITRC ( SDB_SDBCM_BLDFULLPATH, rc );
-      return rc;
-   error:
-      goto done;
    }
 
    // tcp listener to handle new connection request
@@ -399,7 +330,8 @@ namespace CLSMGR
          goto error ;
       }
 
-      rc = msgExtractCMRequest ( pReceiveBuffer, &remoCode, &arg1, &arg2, &arg3, &arg4 ) ;
+      rc = msgExtractCMRequest ( pReceiveBuffer, &remoCode, &arg1, &arg2,
+                                 &arg3, &arg4 ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to extract cm request" ) ;
@@ -570,7 +502,7 @@ namespace CLSMGR
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SDBSTART2 );
-      PD_TRACE1 ( SDB_SDBSTART2, PD_PACK_STRING(svcname.c_str()) );
+      PD_TRACE1 ( SDB_SDBSTART2, PD_PACK_STRING(svcname.c_str()) ) ;
 
       po::options_description desc ( "Command options" ) ;
       po::variables_map vm ;
@@ -582,7 +514,7 @@ namespace CLSMGR
       PD_TRACE1 ( SDB_SDBSTART2, PD_PACK_STRING(confpath.c_str()) );
       string conf = confpath + OSS_FILE_SEP PMD_DFT_CONF ;
       BOOLEAN isLocked = FALSE ;
-      rc = readConfigureFile ( conf.c_str(), desc, vm ) ;
+      rc = utilReadConfigureFile ( conf.c_str(), desc, vm ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Can not read configure file: %s", conf.c_str() ) ;
@@ -691,8 +623,8 @@ namespace CLSMGR
                      rc = SDB_INVALIDPATH ;
                      goto error ;
                   }
-                  rc = buildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
-                          OSS_MAX_PATHSIZE + 1, startupFile );
+                  rc = utilBuildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
+                                          OSS_MAX_PATHSIZE, startupFile );
                   if ( rc )
                   {
                      proc.startTime.push ( now ) ;
@@ -1050,7 +982,7 @@ namespace CLSMGR
             goto error ;
          }
 
-         rc = buildFullPath( pmdConf, svcname, OSS_MAX_PATHSIZE + 1, path ) ;
+         rc = utilBuildFullPath( pmdConf, svcname, OSS_MAX_PATHSIZE, path ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "configure file path is too long!" ) ;
@@ -1096,7 +1028,7 @@ namespace CLSMGR
          goto error;
       }
 
-      rc = buildFullPath( path, PMD_DFT_CONF, OSS_MAX_PATHSIZE + 1, conf );
+      rc = utilBuildFullPath( path, PMD_DFT_CONF, OSS_MAX_PATHSIZE, conf );
       if ( rc )
       {
          PD_LOG ( PDERROR, "configure file path is too long!" ) ;
@@ -1178,7 +1110,7 @@ namespace CLSMGR
          {
             goto done ;
          }
-         rc = buildFullPath( path, PMD_DFT_CAT, OSS_MAX_PATHSIZE + 1, cata ) ;
+         rc = utilBuildFullPath( path, PMD_DFT_CAT, OSS_MAX_PATHSIZE, cata ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "catalog file path is too long!" ) ;
@@ -1266,8 +1198,7 @@ namespace CLSMGR
          goto error ;
       }
 
-      rc = buildFullPath( pmdConf, svcname,
-                          OSS_MAX_PATHSIZE + 1, confPath );
+      rc = utilBuildFullPath( pmdConf, svcname, OSS_MAX_PATHSIZE, confPath ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "failed to build full path:%d", rc ) ;
@@ -1275,7 +1206,7 @@ namespace CLSMGR
       }
 
       confFile = string(confPath) + OSS_FILE_SEP PMD_DFT_CONF ;
-      rc = readConfigureFile ( confFile.c_str(), desc, vm ) ;
+      rc = utilReadConfigureFile ( confFile.c_str(), desc, vm ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Can not read configure file: %s",
@@ -1390,8 +1321,8 @@ namespace CLSMGR
       PD_TRACE_ENTRY ( SDB_SDBMODIFY );
       CHAR confpath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
       CHAR confReserved[OSS_MAX_PATHSIZE + 1] = { 0 } ;
-      rc = buildFullPath ( pmdConf, SDBCM_RESERVED,
-                           OSS_MAX_PATHSIZE + 1, confReserved ) ;
+      rc = utilBuildFullPath ( pmdConf, SDBCM_RESERVED,
+                               OSS_MAX_PATHSIZE, confReserved ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to build reserved path" ) ;
@@ -1409,10 +1340,9 @@ namespace CLSMGR
             if ( !ossStrcmp ( pKey, PMD_OPTION_SVCNAME ) )
             {
                if ( e.type() == String )
-               {   
-                  
-                  rc = buildFullPath( pmdConf, e.valuestrsafe(),
-                                      OSS_MAX_PATHSIZE + 1, confpath );
+               {
+                  rc = utilBuildFullPath( pmdConf, e.valuestrsafe(),
+                                          OSS_MAX_PATHSIZE, confpath );
                   if ( rc )
                   {
                      PD_LOG ( PDERROR, "Failed to build config path") ;
@@ -1650,7 +1580,7 @@ namespace CLSMGR
          PMD_ADD_PARAM_OPTIONS_END
          string conf = pmdConf ;
          conf += OSS_FILE_SEP + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
-         rc = readConfigureFile ( conf.c_str(), desc, vm ) ;
+         rc = utilReadConfigureFile ( conf.c_str(), desc, vm ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Can not read configure file: %s",
@@ -1674,8 +1604,8 @@ namespace CLSMGR
             ++it ;
             continue ;
          }
-         rc = buildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
-                          OSS_MAX_PATHSIZE + 1, startupFile );
+         rc = utilBuildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
+                                 OSS_MAX_PATHSIZE, startupFile ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
@@ -1769,7 +1699,7 @@ namespace CLSMGR
             PMD_ADD_PARAM_OPTIONS_END
             string conf = pmdConf ;
             conf += OSS_FILE_SEP + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
-            rc = readConfigureFile ( conf.c_str(), desc, vm ) ;
+            rc = utilReadConfigureFile ( conf.c_str(), desc, vm ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Can not read configure file: %s",
@@ -1788,8 +1718,8 @@ namespace CLSMGR
                   svcList.erase ( it++ ) ;
                   continue ;
                }
-               rc = buildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
-                                OSS_MAX_PATHSIZE + 1, startupFile );
+               rc = utilBuildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
+                                       OSS_MAX_PATHSIZE, startupFile );
                if ( rc )
                {
                   PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
@@ -1853,7 +1783,7 @@ namespace CLSMGR
          goto error ;
       }
 
-      rc = ossSocket::getHostName ( hostname, OSS_MAX_HOSTNAME ) ;
+      rc = ossGetHostName ( hostname, OSS_MAX_HOSTNAME ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get hostname, rc=%d", rc ) ;
@@ -1869,37 +1799,40 @@ namespace CLSMGR
       ;
 
       // build pmd config file path
-      rc = buildFullPath ( conf, PMD_DFT_CONF_PATH, OSS_MAX_PATHSIZE + 1, pmdConf ) ;
+      rc = utilBuildFullPath( conf, SDBCM_LOCAL_PATH, OSS_MAX_PATHSIZE,
+                              pmdConf ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Working directory too long" ) ;
          goto error ;
       }
       // build sdbstart program file path
-      rc = buildFullPath ( conf, SDBSTARTPROG, OSS_MAX_PATHSIZE + 1, sdbstartExecName ) ;
+      rc = utilBuildFullPath ( conf, SDBSTARTPROG, OSS_MAX_PATHSIZE,
+                               sdbstartExecName ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Working directory too long" ) ;
          goto error ;
       }
       // build sdbstop program file path
-      rc = buildFullPath ( conf, SDBSTOPPROG, OSS_MAX_PATHSIZE + 1, sdbstopExecName ) ;
+      rc = utilBuildFullPath ( conf, SDBSTOPPROG, OSS_MAX_PATHSIZE,
+                               sdbstopExecName ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Working directory too long" ) ;
          goto error ;
       }
       // build sdbcm config file path
-      if ( ( ossStrlen ( conf ) + sizeof ( SDBCM_CONF_PATH ) + 1 ) >
-                       OSS_MAX_PATHSIZE )
+      if ( ( ossStrlen ( conf ) + sizeof ( SDBCM_CONF_PATH_FILE ) + 1 ) >
+            OSS_MAX_PATHSIZE )
       {
          PD_LOG ( PDERROR, "Working directory too long" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       ossStrncat( conf, OSS_FILE_SEP, 1 );
-      ossStrncat( conf, SDBCM_CONF_PATH, sizeof( SDBCM_CONF_PATH ) );
-      rc = readConfigureFile ( conf, desc, vm ) ;
+      ossStrncat( conf, SDBCM_CONF_PATH_FILE, sizeof( SDBCM_CONF_PATH_FILE ) ) ;
+      rc = utilReadConfigureFile ( conf, desc, vm ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to read configure file, rc = %d", rc ) ;
@@ -1937,8 +1870,10 @@ namespace CLSMGR
             goto error ;
          }
       }
-      PD_TRACE4 ( SDB_RTNCM_INITENV, PD_PACK_STRING(pmdConf), PD_PACK_STRING(_pdDiagLogPath),
-                  PD_PACK_STRING(sdbstartExecName), PD_PACK_STRING(sdbstopExecName) );
+      PD_TRACE4 ( SDB_RTNCM_INITENV, PD_PACK_STRING(pmdConf),
+                  PD_PACK_STRING( getDialogName() ),
+                  PD_PACK_STRING(sdbstartExecName),
+                  PD_PACK_STRING(sdbstopExecName) );
 
    done:
       return rc ;
@@ -2319,26 +2254,15 @@ namespace CLSMGR
 
    INT32 cCMService::init()
    {
-      INT32 rc = SDB_OK;
-      CHAR logDir[ OSS_MAX_PATHSIZE + 1 ] = {0};
-      UINT32 len = 0;
-      rc = ossGetEWD( logDir, OSS_MAX_PATHSIZE );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get working directory(rc=%d)",
-                  rc );
-      len = ossStrlen( logDir ) + 1 + ossStrlen( SDBCM_LOG_DIR );
-      PD_CHECK( len <= OSS_MAX_PATHSIZE, SDB_INVALIDARG, error,
-               PDERROR, "log-path longer than %d", OSS_MAX_PATHSIZE );
-      ossStrncat( logDir, OSS_FILE_SEP, 1 );
-      ossStrncat( logDir, SDBCM_LOG_DIR, ossStrlen(SDBCM_LOG_DIR) );
 #if defined (_WINDOWS)
-      rc = iPmdDMNChildProc::init("50010", logDir );
+      return iPmdDMNChildProc::init( "50010" );
 #elif defined (_LINUX)
-      rc = iPmdDMNChildProc::init(50010, logDir );
+      return iPmdDMNChildProc::init( 50010 ) ;
 #endif
-   done:
-      return rc;
-   error:
-      goto done;
    }
+
+   /*
+      Tool functions
+   */
 }
+

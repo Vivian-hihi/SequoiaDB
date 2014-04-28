@@ -1901,8 +1901,9 @@ namespace engine
                                 INT16 w, INT64 * pContextID )
    {
       PD_TRACE_ENTRY ( SDB__RTNSETPDLEVEL_DOIT ) ;
-      _curPDLevel = (PDLEVEL)_pdLevel ;
-      PD_LOG ( _curPDLevel, "Set PDLEVEL to [%s]", getPDLevelDesp(_curPDLevel) ) ;
+      setPDLevel( (PDLEVEL)_pdLevel ) ;
+      PD_LOG ( getPDLevel(), "Set PDLEVEL to [%s]",
+               getPDLevelDesp( getPDLevel() ) ) ;
       PD_TRACE_EXIT ( SDB__RTNSETPDLEVEL_DOIT ) ;
       return SDB_OK ;
    }
