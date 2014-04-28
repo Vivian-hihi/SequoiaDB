@@ -40,6 +40,7 @@
 #include "core.hpp"
 #include "msgDef.h"
 #include "pmdDef.hpp"
+#include "utilStr.hpp"
 #include "msg.h"
 
 #include "../bson/bson.h"
@@ -48,8 +49,6 @@ using namespace bson ;
 
 namespace engine
 {
-   INT32 pmdBuildFullPath( const CHAR *path, const CHAR *name,
-                           UINT32 fullSize, CHAR *full );
 
    /*
       PMD ROLE ENUM AND STRING TRANSFER

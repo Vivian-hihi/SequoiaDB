@@ -129,7 +129,6 @@ namespace engine
    */
    #define PMD_DFT_CONF                "sdb.conf"
    #define PMD_DFT_CAT                 "sdb.cat"
-   #define PMD_DFT_DIAGLOG             "sdbdiag.log"
    #define PMD_OPTION_DIAG_PATH        "diaglog"
    #define PMD_OPTION_LOG_PATH         "replicalog"
    #define PMD_OPTION_BK_PATH          "bakfile"
@@ -156,6 +155,25 @@ namespace engine
    #define LIST_TIMEOUT 10
    #endif
 
+   /*
+      Config define
+   */
+   #define PMD_MIN_LOG_FILE_SZ                  64
+   #define PMD_MAX_LOG_FILE_SZ                  2048
+   #define PMD_DFT_LOG_FILE_SZ                  PMD_MIN_LOG_FILE_SZ
+   #define PMD_DFT_LOG_FILE_NUM                 20
+
+   #define PMD_REPL_PORT      1  // by default it's service port + 1
+   #define PMD_SHARD_PORT     2  // by default it's service port + 2
+   #define PMD_CAT_PORT       3  // by default it's service port + 3
+   #define PMD_REST_PORT      4  // by default it's service port + 4
+
+   /*
+      PMD Option define
+   */
+   #define PMD_ADD_PARAM_OPTIONS_BEGIN( desc )  desc.add_options()
+   #define PMD_ADD_PARAM_OPTIONS_END ;
+   #define PMD_COMMANDS_STRING( a, b )       (string(a) +string( b)).c_str()
 
    /*
       PDM_SESSION_TYPE define

@@ -48,9 +48,8 @@ namespace engine
 {
 #define PMDDMN_INTERVAL_TIME              (1*1000)   //1 second
 #define PMDDMN_INTERVAL_TIME_DMN          (PMDDMN_INTERVAL_TIME * 2)
-#define PMDDMN_SVCNAME_SUFFIX             "_dmn"
 #define PMDDMN_LOG_SUFFIX                 ".log"
-#define PMDDMN_SVCNAME_DEFAULT            "sequoiadb"PMDDMN_SVCNAME_SUFFIX
+#define PMDDMN_SVCNAME_DEFAULT            "sdbcmd"
 #define PMDDMN_SHM_TAG                    "sequoiadbDMN"
 #define PMDDMN_SHMSTAT_EXPRIRED_TIMES     10
 #define PMDDMN_STOP_CHILD_MAX_TRY_TIMES   3
@@ -112,17 +111,15 @@ namespace engine
    public:
       iPmdDMNChildProc();
       virtual ~iPmdDMNChildProc();
-      virtual INT32 init( ossSHMKey shmKey,
-                        const CHAR *pDiagLogDir );
+      virtual INT32 init( ossSHMKey shmKey ) ;
       BOOLEAN isChildRunning();
       INT32 DMNProcessCMD( INT32 cmd );
       INT32 ChildProcessCMD( INT32 cmd );
       INT32 start();    // call by daemon
       INT32 stop();     // call by daemon
       INT32 run( INT32 argc, CHAR **argv ); // call in main()
-      INT32 getLogPath( CHAR *pLogPath, UINT32 maxLen );
       INT32 active();
-      void deactive();
+      void  deactive();
 
    private:
       INT32 allocSHM( ossSHMKey shmKey );
@@ -142,7 +139,6 @@ namespace engine
       CHAR                 _execName[ OSS_MAX_PATHSIZE + 1 ];
       ossSHMKey            _shmKey;
       BOOLEAN              _syncExit;
-      CHAR                 _diagLogPath[ OSS_MAX_PATHSIZE + 1 ];
       OSSPID               _pid;
    };
 
@@ -153,7 +149,7 @@ namespace engine
       virtual ~cPmdDaemon();
       INT32 run( INT32 argc, CHAR **argv );
       INT32 addChildrenProcess( iPmdDMNChildProc *childProc );
-      void stop();
+      void  stop();
 
    public:
       INT32 init();
@@ -169,4 +165,5 @@ namespace engine
 
 }
 
-#endif
+#endif // PMDDAEMON_HPP__
+
