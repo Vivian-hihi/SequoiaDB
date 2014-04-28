@@ -33,5 +33,7 @@ void ossGetVersion ( INT32 *version,
                      INT32 *release,
                      const CHAR **ppBuild ) ;
 
+void ossPrintVersion( const CHAR *prompt ) ;
+
 #endif /* OSSVER_HPP_ */
 
