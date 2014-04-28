@@ -83,6 +83,7 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define OPTION_SOURCEPWD   "sourcepassword"
 #define OPTION_INSERTNUM   "insertnum"
 #define OPTION_LINEPRIORITY "linepriority"
+#define OPTION_STRINGTYPE  "stringtype"
 
 #define OPTION_FIELD             FIELD_NAME_FIELDS
 #define OPTION_HEADERLINE        FIELD_NAME_HEADERLINE
@@ -122,7 +123,8 @@ extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
        ( OPTION_HEADERLINE,    boost::program_options::value<string>(), "first line in input file is a header, default: false ( CSV type only )" ) \
        ( OPTION_SPARSE,        boost::program_options::value<string>(), "auto add fields, default: true ( CSV type only )" ) \
        ( OPTION_EXTRA,         boost::program_options::value<string>(), "auto add value, default: false ( CSV type only )" ) \
-       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" )
+       ( OPTION_LINEPRIORITY,  boost::program_options::value<string>(), "reverse the priority for record and character delimiter, default: true" ) \
+       ( OPTION_STRINGTYPE,    boost::program_options::value<string>(), "all fields convert to string type, default: false" )
 
 
 CHAR *SDBIMPORT_TYPE_STR[] =
@@ -160,6 +162,7 @@ BOOLEAN autoAddField                      = TRUE  ;
 BOOLEAN autoCompletion                    = FALSE ;
 BOOLEAN linePriority                      = TRUE ;
 INT32 lInsertNum = 100 ;
+BOOLEAN stringType                        = FALSE ;
 
 CHAR gDelList[6] = { MIG_DEFAULT_DELCHAR, 0, MIG_DEFAULT_DELFIELD, 0,
                      MIG_DEFAULT_DELRECORD, 0 } ;
@@ -580,6 +583,14 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
          goto error ;
       }
    }
+
+   //string type
+   if ( vm.count ( OPTION_STRINGTYPE ) )
+   {
+      ossStrToBoolean ( vm[OPTION_STRINGTYPE].as<string>().c_str(),
+                        &stringType ) ;
+   }
+
 done :
    PD_TRACE_EXITRC ( SDB_SDBIMPLOAD_RESOLVEARG, rc );
    return rc ;
@@ -684,6 +695,7 @@ INT32 importCSV ()
                        strField, isHeaderline,
                        autoAddField, autoCompletion,
                        linePriority,
+                       stringType,
                        accessModel ) ;
    if ( rc )
    {
