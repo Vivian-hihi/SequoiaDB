@@ -186,7 +186,7 @@ namespace engine
 
        builder.append( FMP_CONTROL_FIELD, FMP_CONTROL_STEP_BEGIN ) ;
        builder.append( type ) ;
-       builder.append( FMP_DIAG_PATH, pmdGetKRCB()->getDiagLogFile() ) ;
+       builder.append( FMP_DIAG_PATH, krcb->getOptionCB()->getDiagLogPath() ) ;
        builder.append( FMP_LOCAL_SERVICE, krcb->getServiceAddr() ) ;
 
        rc = _fmp->write( builder.obj() ) ;
