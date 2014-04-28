@@ -1326,7 +1326,8 @@ error :
 
 // cluster manager
 // PD_TRACE_DECLARE_FUNCTION (SDB_MSGBLDCMREQ, "msgBuildCMRequest" )
-INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize, SINT32 remoCode,
+INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize,
+                          SINT32 remoCode,
                           const BSONObj *arg1,
                           const BSONObj *arg2,
                           const BSONObj *arg3,
@@ -1356,16 +1357,14 @@ INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize, SINT32 remoCode,
    PD_TRACE1 ( SDB_MSGBLDCMREQ, PD_PACK_INT(packetLength) );
    if ( packetLength < 0 )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Packet size overflow" ) ;
+      PD_LOG ( PDERROR, "Packet size overflow" ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    rc = msgCheckBuffer ( ppBuffer, pBufferSize, packetLength ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to check buffer" ) ;
+      PD_LOG ( PDERROR, "Failed to check buffer" ) ;
       goto error ;
    }
    pCMRequest = (MsgCMRequest*) (*ppBuffer) ;
@@ -1386,11 +1385,11 @@ INT32 msgBuildCMRequest ( CHAR **ppBuffer, INT32 *pBufferSize, SINT32 remoCode,
    offset += ossRoundUpToMultipleX ( arg4->objsize(), 4 ) ;
    if ( offset != packetLength )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Invalid packet length" ) ;
+      PD_LOG ( PDERROR, "Invalid packet length" ) ;
       rc = SDB_SYS ;
       goto error ;
    }
+
 done :
    PD_TRACE_EXITRC ( SDB_MSGBLDCMREQ, rc );
    return rc ;
@@ -1403,10 +1402,12 @@ INT32 msgExtractCMRequest ( CHAR *pBuffer, SINT32 *remoCode,
                             CHAR **arg1, CHAR **arg2,
                             CHAR **arg3, CHAR **arg4 )
 {
-   SDB_ASSERT ( pBuffer && remoCode && arg1 && arg2 && arg3 && arg4, "Invalid input" ) ;
+   SDB_ASSERT ( pBuffer && remoCode && arg1 && arg2 && arg3 && arg4,
+                "Invalid input" ) ;
    INT32 rc           = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTCMREQ );
-   INT32 offset       = ossRoundUpToMultipleX ( offsetof ( MsgCMRequest, arguments ), 4 ) ;
+   INT32 offset       = ossRoundUpToMultipleX (
+                        offsetof ( MsgCMRequest, arguments ), 4 ) ;
    MsgCMRequest *pCMRequest = (MsgCMRequest*) pBuffer ;
    *remoCode = pCMRequest->remoCode ;
 
