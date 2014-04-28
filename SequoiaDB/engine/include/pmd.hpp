@@ -51,8 +51,6 @@
 #include "msgDef.hpp"
 #include "pmdEnv.hpp"
 
-extern PDLEVEL    _curPDLevel ;
-extern CHAR       _pdDiagLogPath [ OSS_MAX_PATHSIZE + 1 ] ;
 
 class _pdTraceCB ;
 
@@ -68,16 +66,6 @@ namespace engine
    #define PMD_ENGINE_NAME_PATTERN "sequoiadb(%s)"
 #endif
    #define PMD_CURRENT_PATH "./"
-
-   #define PMD_DFT_SVCPORT  OSS_DFT_SVCPORT
-   // by default it's service port + 1
-   #define PMD_REPL_PORT    1
-   // by default it's service port + 2
-   #define PMD_SHARD_PORT   2
-   // by default it's service port + 3
-   #define PMD_CAT_PORT     3
-   // by default it's service port + 4
-   #define PMD_REST_PORT    4
 
    // database status information
    #define PMD_DB_NORMAL        0
@@ -151,9 +139,6 @@ namespace engine
    #define KRCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
    private :
       // configured options
-      CHAR           _diagLogFile  [ OSS_MAX_PATHSIZE + 1 ] ;
-      CHAR           _confFile     [ OSS_MAX_PATHSIZE + 1 ] ;
-      CHAR           _catFile      [ OSS_MAX_PATHSIZE + 1 ] ;
       CHAR           _groupName    [ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
       SDB_ROLE       _role ;
       SDB_START_TYPE _startType ;
@@ -196,18 +181,6 @@ namespace engine
       {
          _startType = startType ;
       }
-      const CHAR* getDiagLogPath () const
-      {
-         return _optioncb.krcbDiagLogPath() ;
-      }
-      CHAR *getDiagLogPath ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getDiagLogPath(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
       const CHAR *getLogPath () const
       {
          return _optioncb.krcbLogPath() ;
@@ -217,54 +190,6 @@ namespace engine
          if ( !pBuffer || 0 == size )
             return NULL ;
          ossStrncpy ( pBuffer, getLogPath(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getDiagLogFile () const
-      {
-         return _diagLogFile ;
-      }
-      CHAR *getDiagLogFile ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, _diagLogFile, size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getConfPath () const
-      {
-         return _optioncb.krcbConfPath() ;
-      }
-      CHAR *getConfPath ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getConfPath(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getConfFile () const
-      {
-         return _confFile ;
-      }
-      CHAR *getConfFile ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, _confFile, size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getCatFile () const
-      {
-         return _catFile ;
-      }
-      CHAR *getCatFile ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, _catFile, size ) ;
          pBuffer[ size - 1 ] = 0 ;
          return pBuffer ;
       }
@@ -494,15 +419,6 @@ namespace engine
       {
          _businessOK = businessOK ;
       }
-      void enforceDiagLevel ( PDLEVEL level )
-      {
-         _curPDLevel = level ;
-      }
-
-      INT32 enforceDiagLogPath () ;
-
-      INT32 enforceConfPath () ;
-
       void setDBStatus ( UINT32 status )
       {
          _dbStatus = status ;
