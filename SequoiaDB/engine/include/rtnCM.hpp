@@ -48,14 +48,22 @@ namespace CLSMGR
 #define SDBCM_DFT_PORT              11790
 
 // sdbcm configure file
-#define SDBCM_CONF_PATH             ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "sdbcm.conf"
+#define SDBCM_EXE_FILE_NAME         "sdbcm"
+#define SDBCM_CONF_DIR_NAME         "conf"
+#define SDBCM_LOCAL_DIR_NAME        "local"
+#define SDBCM_LOG_DIR_NAME          "log"
+#define SDBCM_CFG_FILE_NAME         "sdbcm.conf"
+#define SDB_CM_ROOT_PATH            ".." OSS_FILE_SEP SDBCM_CONF_DIR_NAME OSS_FILE_SEP
+
+#define SDBCM_CONF_PATH_FILE        SDB_CM_ROOT_PATH SDBCM_CFG_FILE_NAME
+#define SDBCM_LOCAL_PATH            SDB_CM_ROOT_PATH SDBCM_LOCAL_DIR_NAME
+#define SDBCM_LOG_PATH              SDB_CM_ROOT_PATH SDBCM_LOG_DIR_NAME
+
 #define SDBCM_CONF_DFTPORT          "defaultPort"
 #define SDBCM_CONF_PORT             "_Port"
 #define SDBCM_RESTART_COUNT         "RestartCount"
 #define SDBCM_RESTART_INTERVAL      "RestartInterval"       // minute
 #define SDBCM_AUTO_START            "AutoStart"
-
-#define PMD_DFT_CONF_PATH           ".." OSS_FILE_SEP "conf" OSS_FILE_SEP "local"
 
 // remote operation code
 #define SDBSTART              1
@@ -67,20 +75,25 @@ namespace CLSMGR
 // stop status
 #define STOPFAIL              1
 #define STOPPART              3
-#define SDBCM_EXE_FILE_NAME            "sdbcm"
-#define SDBCM_LOG_DIR                  ".."OSS_FILE_SEP"conf"OSS_FILE_SEP"log"
 
+   /*
+      cCMService define
+   */
    class cCMService : public engine::iPmdDMNChildProc
    {
    public:
-      cCMService();
+      cCMService() ;
       ~cCMService(){}
-      INT32 init();
+      INT32 init() ;
+
+      virtual const CHAR *getProgramName() ;
+
    private:
-      virtual const CHAR *getProgramName();
       const CHAR *getArguments();
       virtual INT32 svcMain( INT32 argc, CHAR **argv );
-   };
+   } ;
+
 }
 
-#endif
+#endif // RTNCM_HPP__
+
