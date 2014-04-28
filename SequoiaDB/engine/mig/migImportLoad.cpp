@@ -45,7 +45,8 @@
 #include "../util/text.h"
 
 _migParser::_migParser() : _parser(NULL),
-                           _collection(SDB_INVALID_HANDLE)
+                           _collection(SDB_INVALID_HANDLE),
+                           _stringType(FALSE)
 {
 }
 
@@ -202,6 +203,7 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
                             BOOLEAN autoAddField,
                             BOOLEAN autoCompletion,
                             BOOLEAN linePriority,
+                            BOOLEAN stringType,
                             migImportAccess accessModel )
 {
    INT32 rc = SDB_OK ;
@@ -213,6 +215,7 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
    CHAR delRecord = '\n' ;
    _utilParserParamet parserPara ;
 
+   _stringType = stringType ;
    if ( pDelChar )
    {
       INT32 delCharSize = ossStrlen ( pDelChar ) ;
@@ -393,7 +396,7 @@ INT32 _migCSVParser::_getRecord ( bson &record )
    PD_TRACE_ENTRY ( SDB__MIGLOADCSVPS__GETRCD );
    UINT32  startOffset = 0 ;
    UINT32  size        = 0 ;
-   _convertCSV ccsv(FALSE) ;
+   _convertCSV ccsv( _stringType ) ;
    bson obj ;
    CHAR *buffer = _parser->getBuffer() ;
    CHAR *pJsonBuffer = NULL ;
