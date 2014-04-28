@@ -1617,7 +1617,7 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
    ExecClearTuple ( tupleSlot ) ;
    /* initialize all values */
    memset ( columnValues, 0, columnCount * sizeof ( Datum ) ) ;
-   memset ( columnNulls, TRUE, columnCount * sizeof(BOOLEAN) ) ;
+   memset ( columnNulls, TRUE, columnCount * sizeof(bool) ) ;
 
    /* cursor read next */
    rc = sdbNext ( executionState->hCursor, &recordObj ) ;
