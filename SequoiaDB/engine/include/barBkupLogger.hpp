@@ -44,6 +44,7 @@
 #include "dpsDef.hpp"
 #include "msgDef.h"
 #include "dms.hpp"
+#include "utilStr.hpp"
 
 using namespace bson ;
 
@@ -168,19 +169,7 @@ namespace engine
       {
          time_t tmpTime = time( NULL ) ;
          curTime = (UINT64)tmpTime ;
-         struct tm localTm ;
-         ossLocalTime( tmpTime, localTm ) ;
-
-         ossMemset( pBuff, 0, size ) ;
-         ossSnprintf( pBuff, size-1,
-                      "%04d-%02d-%02d-%02d:%02d:%02d",
-                      localTm.tm_year+1900,            // 1) Year (UINT32)
-                      localTm.tm_mon+1,                // 2) Month (UINT32)
-                      localTm.tm_mday,                 // 3) Day (UINT32)
-                      localTm.tm_hour,                 // 4) Hour (UINT32)
-                      localTm.tm_min,                  // 5) Minute (UINT32)
-                      localTm.tm_sec                   // 6) Second (UINT32)
-                     ) ;
+         utilAscTime( tmpTime, pBuff, size ) ;
       }
       void makeBeginTime ()
       {
