@@ -387,7 +387,7 @@ if linux:
             LIBDEPS=["mig","oss","pd","util","client","clientcpp","ncurses"],
             _LIBDEPS='$_LIBDEPS_OBJS' )
 sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
-          LIBDEPS=["oss","pd"],
+          LIBDEPS=["oss","pd", "util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
