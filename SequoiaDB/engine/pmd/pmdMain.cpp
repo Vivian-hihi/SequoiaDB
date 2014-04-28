@@ -40,8 +40,6 @@
 #include <string>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/tss.hpp>
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pd.hpp"
@@ -67,11 +65,9 @@
 using namespace std;
 using namespace bson;
 namespace po = boost::program_options ;
+
 namespace engine
 {
-
-   extern boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
-
    /*
     * This function resolve all input arguments from command line
     * It first construct options_description to register all
@@ -109,6 +105,11 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   void pmdOnQuit()
+   {
+      PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDREBLDDB, "pmdRebuildDB" )
@@ -173,11 +174,6 @@ namespace engine
       {
          PD_LOG( PDERROR, "Init qgm strategy table failed, rc: %d", rc ) ;
          goto error ;
-      }
-
-      if ( _ossEduData.get()==0 )
-      {
-         _ossEduData.reset(SDB_OSS_NEW oss_edu_data());
       }
 
       // check the database role, we load storage units when the role is data,
@@ -363,7 +359,11 @@ namespace engine
       UINT32     startTimerCount = 0 ;
 
       rc = krcb->init() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to init krcb, rc: %d", rc ) ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to init krcb, rc: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
 
       /*
        * This is the master thread
@@ -382,18 +382,34 @@ namespace engine
        */
       // read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
-
-      SDB_VALIDATE_GOTOERROR ( SDB_OK == rc,
-                               rc, "Failed resolving arguments, exit" )
+      if ( rc )
+      {
+         ossPrintf( "Failed resolving arguments(error=%d), exit"OSS_NEWLINE,
+                    rc ) ;
+         goto error ;
+      }
       if ( PMD_IS_DB_DOWN )
       {
          return rc ;
       }
 
+      // enalble pd log
+      sdbEnablePD( krcb->getOptionCB()->getDiagLogPath(),
+                   krcb->getOptionCB()->diagFileNum() ) ;
+      setPDLevel( (PDLEVEL)(krcb->getOptionCB()->getDiagLevel()) ) ;
+
       PD_LOG ( PDDEBUG, "Master thread starts" ) ;
 
+      // printf all configs
+      {
+         BSONObj confObj ;
+         krcb->getOptionCB()->toBSON( confObj ) ;
+         PD_LOG( PDEVENT, "All configs: %s", confObj.toString().c_str() ) ;
+      }
+
       // handlers and init global mem
-      rc = pmdEnableSignalEvent( krcb->getDiagLogPath() ) ;
+      rc = pmdEnableSignalEvent( krcb->getOptionCB()->getDiagLogPath(),
+                                 (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
 
       // initialize variables

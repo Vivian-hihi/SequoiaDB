@@ -58,9 +58,6 @@ using namespace bson ;
 
 namespace engine
 {
-   #define ALIGNMENT_SIZE sizeof( ossValuePtr )
-
-   const CHAR *CONFIG_FILE_NAME = "sdb.conf" ;
 
    #define JUDGE_RC( rc ) if ( SDB_OK != rc ) { goto error ; }
 
@@ -293,6 +290,7 @@ namespace engine
    _pmdCfgRecord::_pmdCfgRecord ()
    {
       _result = SDB_OK ;
+      _changeID = 0 ;
    }
    _pmdCfgRecord::~_pmdCfgRecord ()
    {
@@ -317,10 +315,45 @@ namespace engine
          }
       }
       rc = postLoaded() ;
+      if ( rc )
+      {
+         goto error ;
+      }
 
    done:
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 _pmdCfgRecord::change( const BSONObj &objData )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj oldCfg ;
+      pmdCfgExchange ex( objData, TRUE, PMD_CFG_STEP_CHG ) ;
+
+      // save old cfg
+      rc = toBSON( oldCfg ) ;
+      PD_RC_CHECK( rc, PDERROR, "Save old config failed, rc: %d", rc ) ;
+      // update new cfg
+      rc = doDataExchange( &ex ) ;
+      if ( rc )
+      {
+         goto restore ;
+      }
+      rc = postLoaded() ;
+      if ( rc )
+      {
+         goto restore ;
+      }
+      ++_changeID ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   restore:
+      restore( oldCfg, NULL ) ;
       goto done ;
    }
 
@@ -334,6 +367,11 @@ namespace engine
          goto error ;
       }
       rc = postLoaded() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      ++_changeID ;
 
    done:
       return rc ;
@@ -837,15 +875,18 @@ namespace engine
       _hjBufSz             = PMD_DEFAULT_HJ_SZ ;
       _pagecleanNum        = PMD_DFT_NUMPAGECLEAN ;
       _pagecleanInterval   = PMD_DFT_PAGECLEANINTERVAL ;
+      _dialogFileNum       = 0 ;
 
       // other configs
-      ossMemset( _krcbConfPath, 0, OSS_MAX_PATHSIZE + 1 ) ;
+      ossMemset( _krcbConfPath, 0, sizeof( _krcbConfPath ) ) ;
+      ossMemset( _krcbConfFile, 0, sizeof( _krcbConfFile ) ) ;
+      ossMemset( _krcbCatFile, 0, sizeof( _krcbCatFile ) ) ;
       for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; ++i )
       {
          ossMemset( _cat[i]._host, 0, OSS_MAX_HOSTNAME + 1 ) ;
          ossMemset( _cat[i]._service, 0, OSS_MAX_SERVICENAME + 1 ) ;
       }
-      _krcbSvcPort         = PMD_DFT_SVCPORT ;
+      _krcbSvcPort         = OSS_DFT_SVCPORT ;
 
       _groupID             = 0 ;
       _nodeID              = 0 ;
@@ -881,10 +922,13 @@ namespace engine
                FALSE, FALSE, "" ) ;
       // --maxpool
       rdxUInt( pEX, PMD_OPTION_MAXPOOL, _krcbMaxPool, FALSE, TRUE, 0 ) ;
+      // --diagnum
+      rdxInt( pEX, PMD_OPTION_DIAGLOG_NUM, _dialogFileNum, FALSE, TRUE,
+              PD_DFT_FILE_NUM ) ;
       // --svcname
       rdxString( pEX, PMD_OPTION_SVCNAME, _krcbSvcName, sizeof(_krcbSvcName),
                  FALSE, FALSE,
-                 boost::lexical_cast<string>(PMD_DFT_SVCPORT).c_str() ) ;
+                 boost::lexical_cast<string>(OSS_DFT_SVCPORT).c_str() ) ;
       rdvNotEmpty( pEX, _krcbSvcName ) ;
       // --replname
       rdxString( pEX, PMD_OPTION_REPLNAME, _replServiceName,
@@ -1015,7 +1059,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      ossSocket::getPort ( _krcbSvcName, _krcbSvcPort ) ;
+      ossGetPort( _krcbSvcName, _krcbSvcPort ) ;
       if ( 0 == _krcbSvcPort )
       {
          std::cerr << "Invalid svcname: " << _krcbSvcName << endl ;
@@ -1296,7 +1340,7 @@ namespace engine
          PMD_COMMANDS_OPTIONS
       PMD_ADD_PARAM_OPTIONS_END
 
-      rc = readCmd( argc, argv, all, vm );
+      rc = utilReadCommandLine( argc, argv, all, vm );
       JUDGE_RC( rc )
 
       /// read cmd first
@@ -1308,13 +1352,7 @@ namespace engine
       }
       if ( vm.count( PMD_OPTION_VERSION ) )
       {
-         INT32 version, subVersion, release ;
-         const CHAR *pBuild = NULL ;
-         ossGetVersion ( &version, &subVersion, &release, &pBuild ) ;
-         std::cout << "SequoiaDB version: " << version << "."
-         << subVersion << std::endl ;
-         std::cout << "Release: " << release << std::endl ;
-         std::cout << "Build: " << pBuild <<std::endl ;
+         ossPrintVersion( "SequoiaDB version" ) ;
          rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
@@ -1344,14 +1382,29 @@ namespace engine
          }
       }
 
-      rc = readConfigureFile( cfgTempPath, all, vm2 ) ;
+      rc = utilBuildFullPath( cfgTempPath, PMD_DFT_CONF,
+                              OSS_MAX_PATHSIZE, _krcbConfFile ) ;
+      if ( rc )
+      {
+         std::cerr << "ERROR: Failed to make config file name: " << rc << endl ;
+         goto error ;
+      }
+      rc = utilBuildFullPath( cfgTempPath, PMD_DFT_CAT,
+                              OSS_MAX_PATHSIZE, _krcbCatFile ) ;
+      if ( rc )
+      {
+         std::cerr << "ERROR: Failed to make cat file name: " << rc << endl ;
+         goto error ;
+      }
+
+      rc = utilReadConfigureFile( _krcbConfFile, all, vm2 ) ;
       if ( SDB_OK != rc )
       {
          //if user set  configure file,  but cann't read the configure file.
          //then we should exit.
          if ( vm.count( PMD_OPTION_CONFPATH ) )
          {
-            std::cerr << "Read config file: " << cfgTempPath
+            std::cerr << "Read config file: " << _krcbConfFile
                       << " failed, rc: " << rc << std::endl ;
             goto error ;
          }
@@ -1360,7 +1413,7 @@ namespace engine
          // from command line
          else if ( SDB_IO != rc )
          {
-            std::cerr << "Read default config file: " << cfgTempPath
+            std::cerr << "Read default config file: " << _krcbConfFile
                       << " failed, rc: " << rc << std::endl ;
             goto error ;
          }
@@ -1379,9 +1432,6 @@ namespace engine
       else
       {
          ossStrcpy( _krcbConfPath, cfgTempPath ) ;
-         BSONObj confObj ;
-         pmdCfgRecord::toBSON( confObj ) ;
-         PD_LOG( PDEVENT, "All configs: %s", confObj.toString().c_str() ) ;
       }
 
    done:
@@ -1451,106 +1501,6 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_RDCMD, "_pmdOptionsMgr::readCmd" )
-   INT32 _pmdOptionsMgr::readCmd( INT32 argc, CHAR **argv,
-                                  po::options_description &desc,
-                                  po::variables_map &vm )
-   {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB__PMDOPTMGR_RDCMD );
-
-      try
-      {
-         po::store ( po::command_line_parser( argc, argv).options(
-                     desc ).allow_unregistered().run(), vm ) ;
-         po::notify ( vm ) ;
-      }
-      catch ( po::unknown_option &e )
-      {
-         std::cerr <<  "Unknown argument: "
-                   << e.get_option_name () << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      catch ( po::invalid_option_value &e )
-      {
-         std::cerr <<  "Invalid argument: "
-                   << e.get_option_name () << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      catch( po::error &e )
-      {
-         std::cerr << e.what () << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__PMDOPTMGR_RDCMD, rc );
-      return rc;
-   error:
-      goto done;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_RDCONFFILE, "_pmdOptionsMgr::readConfigureFile" )
-   INT32 _pmdOptionsMgr::readConfigureFile( const CHAR *path,
-                                            po::options_description &desc,
-                                            po::variables_map &vm )
-   {
-      SDB_ASSERT( NULL != path, "path should not be NULL" )
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB__PMDOPTMGR_RDCONFFILE );
-      CHAR conf[OSS_MAX_PATHSIZE + 1] = {0} ;
-
-      rc = pmdBuildFullPath( path, CONFIG_FILE_NAME,
-                             OSS_MAX_PATHSIZE, conf ) ;
-      if ( SDB_OK != rc )
-      {
-         std::cerr << "configure file path is too long!" << std::endl ;
-         goto error;
-      }
-
-      try
-      {
-         po::store ( po::parse_config_file<char> ( conf, desc, TRUE ), vm ) ;
-         po::notify ( vm ) ;
-      }
-      catch( po::reading_file )
-      {
-         std::cerr << "Failed to open config file: "
-                   <<( std::string ) conf << std::endl;
-         rc = SDB_IO ;
-         goto error ;
-      }
-      catch ( po::unknown_option &e )
-      {
-         std::cerr << "Unknown config element: "
-                   << e.get_option_name () << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      catch ( po::invalid_option_value &e )
-      {
-         std::cerr << ( std::string ) "Invalid config element: "
-                   << e.get_option_name () << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-      catch( po::error &e )
-      {
-         std::cerr << e.what () << std::endl ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__PMDOPTMGR_RDCONFFILE, rc );
-      return rc;
-   error:
-      goto done;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDOPTMGR_REFLUSH2FILE, "_pmdOptionsMgr::reflush2file" )
    INT32 _pmdOptionsMgr::reflush2File()
    {
@@ -1568,8 +1518,8 @@ namespace engine
          goto error ;
       }
 
-      rc = pmdBuildFullPath( _krcbConfPath, CONFIG_FILE_NAME,
-                             OSS_MAX_PATHSIZE, conf ) ;
+      rc = utilBuildFullPath( _krcbConfPath, PMD_DFT_CONF,
+                              OSS_MAX_PATHSIZE, conf ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to build full path of configure file, "
@@ -1629,11 +1579,6 @@ namespace engine
       SDB_ASSERT( NULL != krcb, "krcb should not be NULL" )
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMGOPTMGR_SETKRCB ) ;
-      krcb->enforceDiagLevel( (PDLEVEL)_krcbDiagLvl ) ;
-      rc = krcb->enforceDiagLogPath() ;
-      JUDGE_RC( rc )
-      rc = krcb->enforceConfPath() ;
-      JUDGE_RC( rc )
       krcb->enforceDBRole( pmdGetRoleEnum(this->_krcbRole ) );
       krcb->enforceLogFileSz ( _logFileSz ) ;
       krcb->enforceLogFileNum ( _logFileNum ) ;
