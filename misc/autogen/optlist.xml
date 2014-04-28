@@ -130,6 +130,23 @@
    </opt>
 
    <opt>
+      <name>PMD_OPTION_DIAGLOG_NUM</name>
+      <long>diagnum</long>
+      <type>int</type>
+      <description>
+         <en>diagnostic log file max number, default:20, -1:unlimited</en>
+         <cn>诊断日志文件最大数量,默认值:20, -1表示不限制</cn>
+      </description>
+      <detail>
+         <en>1. It specifies the number of diagnostic log file. <fig></fig>
+             2. If it is not specified, the default 20; -1 means unlimited.</en>
+         <cn>1.指定诊断日志文件最大数量。<fig></fig>
+             2.如果不指定，则默认为：20，-1表示不限制。</cn>
+      </detail>
+      <typeofweb>num</typeofweb>
+   </opt>
+
+   <opt>
       <name>PMD_OPTION_BKUPPATH</name>
       <long>bkuppath</long>
       <description>
