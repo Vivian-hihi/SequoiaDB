@@ -37,21 +37,23 @@
 *******************************************************************************/
 
 #include "core.hpp"
-#if defined (_LINUX)
-#include <sys/wait.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/prctl.h>
-#elif defined (_WINDOWS)
-#include <ShlObj.h>
-#endif
 #include "ossProc.hpp"
 #include "ossEDU.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
 #include "ossMem.hpp"
+#if defined (_LINUX)
+   #include <sys/wait.h>
+   #include <sys/ipc.h>
+   #include <sys/msg.h>
+   #include <sys/prctl.h>
+#elif defined (_WINDOWS)
+   #include <ShlObj.h>
+   #include <windows.h>
+#endif
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
+
 #if defined (_LINUX)
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSISPROCRUNNING, "ossIsProcessRunning" )
 BOOLEAN ossIsProcessRunning ( OSSPID pid )
@@ -665,6 +667,99 @@ void ossRenameProcess ( const CHAR *pNewName )
    PD_TRACE_EXIT ( SDB_OSSRENMPROC );
 }
 
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSVERIFYPID, "ossVerifyPID" )
+INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName )
+{
+   INT32 rc                                   = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSSVERIFYPID ) ;
+   INT32 numScaned                            = 0 ;
+   INT32 pid                                  = 0 ;
+   INT32 ppid                                 = 0 ;
+   CHAR procName [ OSS_PROCESS_NAME_LEN + 1]  = {0} ;
+   CHAR status [ OSS_PROCESS_NAME_LEN + 1]    = {0} ;
+   CHAR pathName [ OSS_MAX_PATHSIZE + 1 ]     = {0} ;
+   CHAR pathName1 [ OSS_MAX_PATHSIZE + 1 ]    = {0} ;
+   CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ]  = {0} ;
+   BOOLEAN loop                               = TRUE ;
+   // since we are single-thread program, it's safe to use FILE
+   FILE *fp                                   = NULL ;
+   FILE *fp1                                  = NULL ;
+   // read /proc/pid/stat can get both pid and ppid
+   ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%d/stat", inputpid ) ;
+   ossSnprintf ( pathName1, OSS_MAX_PATHSIZE, "/proc/%d/cmdline", inputpid ) ;
+
+   while ( loop )
+   {
+      // open proc/pid/stat file
+      fp = fopen ( pathName, "r" ) ;
+      fp1 = fopen ( pathName1, "r" ) ;
+      if ( fp && fp1 )
+      {
+         // get first 4 elements
+         numScaned = fscanf ( fp, "%d%s%s%d",
+                              &pid,          // process pid
+                              procName,      // process name
+                              status,        // process status
+                              &ppid ) ;      // parent process id
+         // if we can't read 4 elements, something wrong
+         if ( 4 == numScaned )
+         {
+            // if we detected zombie process, let's get out of here. Since we
+            // have disabled SIGCHLD, so if fork() success but exec() fail, we
+            // are going to get zombie status in child process
+            if ( status[0] == PROC_STATUS_ZOMBIE )
+            {
+               ossPrintf ( "Error: Failed to start %s"OSS_NEWLINE,
+                           processName ) ;
+               loop = FALSE ;
+               rc = SDB_SYS ;
+            }
+            // make sure
+            // 1) pid matches what we want
+            // 2) parent pid matches myself
+            // 3) sequoiadb engine name is part of the process name ( after exec
+            //    successfully run )
+            else if ( pid == inputpid && ossGetCurrentProcessID() == ppid )
+            {
+               if ( NULL != fgets ( commandLine, OSS_MAX_PATHSIZE, fp1 ) &&
+                    ossStrstr ( commandLine, processName ) )
+               {
+                  ossPrintf ( "Success: %s is successfully started (%d)"
+                              OSS_NEWLINE, processName, pid ) ;
+                  loop = FALSE ;
+                  rc = SDB_OK ;
+               }
+            }
+         }
+         // if we can't read 4 elements, something wrong
+         else
+         {
+            ossPrintf ( "Error: Failed to extract process information"
+                        OSS_NEWLINE ) ;
+            rc = SDB_SYS ;
+            loop = FALSE ;
+         }
+      }
+      else
+      {
+         // if we can't open the /proc/<pid>/stat, the child process is gone (
+         // it should never happen thou )
+         ossPrintf ( "Error: Unable to read %s"OSS_NEWLINE, pathName ) ;
+         rc = SDB_SYS ;
+         loop = FALSE ;
+      }
+      fclose ( fp ) ;
+      fclose ( fp1 ) ;
+      fp = NULL ;
+      fp1 = NULL ;
+      // sleep for 1 second every round
+      sleep ( 1 ) ;
+   } // end while
+
+   PD_TRACE_EXITRC ( SDB_OSSVERIFYPID, rc );
+   return rc ;
+}
+
 #elif defined (_WINDOWS)
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSRSVPATH, "ossResolvePath" )
 static INT32 ossResolvePath ( const CHAR *pPathToResolve,
@@ -783,6 +878,214 @@ INT32 ossWaitInterrupt ( HANDLE handle, DWORD timeout )
    }
    PD_TRACE_EXITRC ( SDB_OSSWTINT, rc );
    return rc ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSSTARTSERVICE, "ossStartService" )
+INT32 ossStartService( const CHAR *serviceName )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSSSTARTSERVICE );
+   SERVICE_STATUS srvStatus ;
+   SC_HANDLE schSCM = NULL, schSRV = NULL ;
+   LPWSTR pszWString       = NULL ;
+   DWORD dwString          = 0 ;
+
+   rc = ossANSI2WC ( serviceName, &pszWString, &dwString ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to convert ansi to wc, rc = %d", rc ) ;
+      goto error ;
+   }
+
+   // open a handle to the sc manager database
+   schSCM = OpenSCManager ( NULL, NULL, SC_MANAGER_CONNECT ) ;
+   if ( schSCM == NULL )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR, "Failed to open SCM, error: %d", ossGetLastError() );
+      goto error ;
+   }
+
+   // open a handle to the sdbcm service
+   schSRV = OpenService ( schSCM, pszWString,
+                          SERVICE_START | SERVICE_QUERY_STATUS ) ;
+   if ( schSRV == NULL )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR, "Failed to open service[%s], error: %d",
+               serviceName, ossGetLastError() );
+      goto error ;
+   }
+   ::QueryServiceStatus ( schSRV, &srvStatus ) ;
+   if ( srvStatus.dwCurrentState == SERVICE_RUNNING )
+   {
+      goto done ;
+   }
+   else if ( ! StartService ( schSRV, 0, NULL ) )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR, "Failed to set service[%s] status RUNNING, error: %d",
+               serviceName, ossGetLastError() ) ;
+      goto error ;
+   }
+
+done :
+   if ( schSCM )
+   {
+      CloseServiceHandle ( schSCM ) ;
+   }
+   if ( schSRV )
+   {
+      CloseServiceHandle ( schSRV ) ;
+   }
+   if ( pszWString )
+   {
+      SDB_OSS_FREE ( pszWString ) ;
+      pszWString = NULL ;
+   }
+   PD_TRACE_EXITRC ( SDB_OSSSTARTSERVICE, rc );
+   return rc ;
+error :
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSS_WFSTRS, "ossWaitForServiceToReachState" )
+static BOOL ossWaitForServiceToReachState( SC_HANDLE hService,
+                                           DWORD dwDesiredState,
+                                           SERVICE_STATUS* pss,
+                                           DWORD dwMilliseconds )
+{
+   PD_TRACE_ENTRY ( SDB_OSS_WFSTRS ) ;
+   DWORD dwLastState, dwLastCheckPoint ;
+   // Don't compare state & checkpoint the first time through
+   BOOL  fFirstTime = TRUE ;
+   BOOL  fServiceOk = TRUE ;
+   DWORD dwTimeout = GetTickCount() + dwMilliseconds ;
+ 
+   // Loop until the service reaches the desired state,
+   // an error occurs, or we timeout
+   while  (TRUE)
+   {
+      // Get current state of service
+      fServiceOk = ::QueryServiceStatus( hService, pss ) ;
+ 
+      // If we can't query the service, we're done
+      if ( !fServiceOk )
+      {
+        break ;
+      }
+ 
+      // If the service reaches the desired state, we're done
+      if ( pss->dwCurrentState == dwDesiredState )
+      {
+         break ;
+      }
+ 
+      // If we timed-out, we're done
+      if ( dwMilliseconds != INFINITE && dwTimeout > GetTickCount() )
+      {
+         SetLastError( ERROR_TIMEOUT ) ;
+         break;
+      }
+ 
+      // If this is our first time, save the service's state & checkpoint
+      if ( fFirstTime )
+      {
+         dwLastState = pss->dwCurrentState ;
+         dwLastCheckPoint = pss->dwCheckPoint ;
+         fFirstTime = FALSE ;
+      }
+      else
+      {
+          // If not first time & state has changed, save state & checkpoint
+         if ( dwLastState != pss->dwCurrentState )
+         {
+            dwLastState = pss->dwCurrentState ;
+            dwLastCheckPoint = pss->dwCheckPoint ;
+         }
+         else
+         {
+            // State hasn't change, check that checkpoint is increasing
+            if ( pss->dwCheckPoint > dwLastCheckPoint )
+            {
+               // Checkpoint has increased, save checkpoint
+               dwLastCheckPoint = pss->dwCheckPoint ;
+            }
+            else
+            {
+               // Checkpoint hasn't increased, service failed, we're done!
+               fServiceOk = FALSE ; 
+               break ;
+            }
+         }
+      }
+       // We're not done, wait the specified period of time
+       Sleep( pss->dwWaitHint ) ;
+    }
+ 
+   // Note: The last SERVICE_STATUS is returned to the caller so
+   // that the caller can check the service state and error codes.
+   PD_TRACE_EXIT ( SDB_OSS_WFSTRS ) ;
+   return fServiceOk ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSS_STOPSERVICE, "ossStopService" )
+INT32 ossStopService( const CHAR * serviceName, DWORD dwMilliseconds )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSS_STOPSERVICE );
+   SERVICE_STATUS srvStatus ;
+   SC_HANDLE schSCM = NULL, schSRV = NULL ;
+   LPWSTR pszWString       = NULL ;
+   DWORD dwString          = 0 ;
+
+   rc = ossANSI2WC ( serviceName, &pszWString, &dwString ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to convert ansi to wc, rc = %d", rc ) ;
+      goto error ;
+   }
+
+   // open a handle to the sc manager database
+   schSCM = OpenSCManager ( NULL, NULL, SC_MANAGER_CONNECT ) ;
+   if ( schSCM == NULL )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR, "Failed to open SCM, error: %d", ossGetLastError() ) ;
+      goto error ;
+   }
+
+   // open a handle to the sdbcm service
+   schSRV = OpenService ( schSCM, pszWString, SERVICE_STOP ) ;
+   if ( schSRV == NULL )
+   {
+      rc = SDB_SYS ;
+      PD_LOG ( PDERROR, "Failed to open service[%s], error: %d",
+               serviceName, ossGetLastError() );
+      goto error ;
+   }
+   ::ControlService ( schSRV, SERVICE_CONTROL_STOP, &srvStatus ) ;
+   ossWaitForServiceToReachState ( schSRV, SERVICE_STOP, &srvStatus,
+                                   dwMilliseconds ) ;
+
+done :
+   if ( schSCM )
+   {
+      CloseServiceHandle ( schSCM ) ;
+   }
+   if ( schSRV )
+   {
+      CloseServiceHandle ( schSRV ) ;
+   }
+   if ( pszWString )
+   {
+      SDB_OSS_FREE ( pszWString ) ;
+      pszWString = NULL ;
+   }
+   PD_TRACE_EXITRC ( SDB_OSS_STOPSERVICE, rc ) ;
+   return rc ;
+error :
+   goto done ;
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCRTPADUPHND, "ossCreatePipeAndDupHandle" )
@@ -1092,8 +1395,8 @@ INT32 ossExec ( const CHAR * program,
             DWORD pgm_rc ;
             if ( !GetExitCodeProcess ( procInfo.hProcess, &pgm_rc ) )
             {
-               PD_LOG ( PDERROR, "Failed to get exit code for process, \
-GetLastError=%d", ossGetLastError() ) ;
+               PD_LOG ( PDERROR, "Failed to get exit code for process, "
+                        "GetLastError=%d", ossGetLastError() ) ;
                rc = SDB_SYS ;
             }
             else
@@ -1247,3 +1550,131 @@ error:
            pid, ossGetLastError() ) ;
    goto done ;
 }
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSCMSTART_BLDARGS, "ossBuildArguments" )
+INT32 ossBuildArguments( CHAR **pArgumentBuffer, INT32 &buffSize,
+                         std::list<const CHAR*> &argv )
+{
+   SDB_ASSERT ( pArgumentBuffer, "Invalid input" ) ;
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSSCMSTART_BLDARGS ) ;
+   INT32 needBuffSize = 0 ;
+   INT32 pos = 0 ;
+
+   // estimate the size of final buffer
+   for ( std::list<const CHAR*>::iterator it = argv.begin() ;
+         it != argv.end() ;
+         ++it )
+   {
+      needBuffSize += ( ossStrlen ( *it ) + 1 ) ;
+   }
+  
+   if ( needBuffSize <= 0 )
+   {
+      PD_LOG ( PDERROR, "Arguments is empty" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( buffSize < needBuffSize )
+   {
+      CHAR *pNewBuff = (CHAR*)SDB_OSS_MALLOC( needBuffSize + 1 ) ;
+      if ( !pNewBuff )
+      {
+         PD_LOG( PDERROR, "Failed to allocate buffer, size: %d",
+                 needBuffSize ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      if ( *pArgumentBuffer )
+      {
+         SDB_OSS_FREE( *pArgumentBuffer ) ;
+      }
+      *pArgumentBuffer = pNewBuff ;
+      buffSize = needBuffSize + 1 ;
+   }
+
+   ossMemset ( *pArgumentBuffer, 0, buffSize ) ;
+
+   // copy arguments into buffer
+   for ( std::list<const CHAR*>::iterator it = argv.begin() ;
+         it != argv.end() ;
+         ++it )
+   {
+      ossStrncpy ( &(*pArgumentBuffer)[pos], *it, needBuffSize - pos ) ;
+      pos += ossStrlen ( *it ) ;
+      // each arguments are separated by '\0'
+      (*pArgumentBuffer)[pos] = '\0' ;
+      ++pos ;
+   }
+
+done:
+   PD_TRACE_EXITRC ( SDB_OSSCMSTART_BLDARGS, rc ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+// PD_TRACE_DECLARE_FUNCTION( SDB_OSS_STARTPROCESS, "ossStartProcess" )
+INT32 ossStartProcess( std::list<const CHAR*> &argv )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB_OSS_STARTPROCESS );
+   CHAR *pArgumentBuffer = NULL ;
+   INT32 buffSize = 0 ;
+   OSSPID pid ;
+   ossResultCode result ;
+   const CHAR *pShortName = NULL ;
+
+   rc = ossBuildArguments ( &pArgumentBuffer, buffSize, argv ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to build arguments, rc: %d", rc ) ;
+      goto error ;
+   }
+   pShortName = ossStrrchr( argv.front(), OSS_FILE_SEP_CHAR ) ;
+   if ( pShortName )
+   {
+      pShortName = pShortName + 1 ;
+   }
+   else
+   {
+      pShortName = argv.front() ;
+   }
+
+   PD_LOG ( PDEVENT, "Starting process, bin=%s", argv.front() ) ;
+   rc = ossExec ( pArgumentBuffer, pArgumentBuffer, NULL,
+                  0, pid, result, NULL, NULL ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to execute %s, rc = %d", pShortName, rc ) ;
+      goto error ;
+   }
+
+#if defined (_LINUX)
+   rc = ossVerifyPID ( pid, pShortName ) ;
+#else
+   rc = ossIsProcessRunning( pid ) ? SDB_OK : SDB_SYS ;
+#endif
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to verify PID, rc = %d", rc ) ;
+      goto error ;
+   }
+   else
+   {
+      PD_LOG ( PDEVENT, "Successful to start %s(%d)", pShortName, pid ) ;
+   }
+
+done :
+   if ( pArgumentBuffer )
+   {
+      SDB_OSS_FREE ( pArgumentBuffer ) ;
+   }
+   PD_TRACE_EXITRC ( SDB_OSS_STARTPROCESS, rc ) ;
+   return rc ;
+error :
+   goto done ;
+}
+
+
