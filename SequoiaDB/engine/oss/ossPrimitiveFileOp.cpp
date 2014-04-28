@@ -51,10 +51,19 @@
 #include <string.h>
 #include "ossPrimitiveFileOp.hpp"
 #include "ossUtil.hpp"
+
+/*
+   ossPrimitiveFileOp implement
+*/
 ossPrimitiveFileOp::ossPrimitiveFileOp()
 {
    _fileHandle = OSS_INVALID_HANDLE_FD_VALUE ;
    _bIsStdout = false ;
+}
+
+ossPrimitiveFileOp::~ossPrimitiveFileOp()
+{
+   Close() ;
 }
 
 BOOLEAN ossPrimitiveFileOp::isValid()

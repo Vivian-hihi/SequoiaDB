@@ -1,4 +1,5 @@
-#include "ossPath.h"
+
+#include "ossPath.hpp"
 #include "ossErr.h"
 #include "ossUtil.h"
 #include "ossMem.h"
@@ -6,13 +7,15 @@
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem ;
+
 #if defined (_WINDOWS)
 
-#include <string>
-using std::string ;
-
 // append .exe if it doesn't have one
-PD_TRACE_DECLARE_FUNCTION ( SDB_GETEXECNM, "getExecutableName" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GETEXECNM, "getExecutableName" )
 static INT32 getExecutableName ( const CHAR * exeName ,
                                  CHAR * buf ,
                                  UINT32 bufSize )
@@ -55,7 +58,7 @@ error :
 
 #endif
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_OSSLCEXEC, "ossLocateExecutable" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_OSSLCEXEC, "ossLocateExecutable" )
 INT32 ossLocateExecutable ( const CHAR * refPath ,
                             const CHAR * exeName ,
                             CHAR * buf ,
@@ -125,5 +128,112 @@ done :
    return rc ;
 error :
    goto done ;
+}
+
+enum OSS_MATCH_TYPE
+{
+   OSS_MATCH_LEFT,
+   OSS_MATCH_MID,
+   OSS_MATCH_RIGHT,
+   OSS_MATCH_ALL,
+   OSS_MATCH_NULL
+} ;
+
+static INT32 _ossEnumFiles( const string &dirPath,
+                            map<string, string> &mapFiles,
+                            const CHAR *filter, UINT32 filterLen,
+                            OSS_MATCH_TYPE type, UINT32 deep )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *pFind = NULL ;
+
+   fs::path dbDir ( dirPath ) ;
+   fs::directory_iterator end_iter ;
+
+   if ( 0 == deep )
+   {
+      goto done ;
+   }
+
+   if ( fs::exists ( dbDir ) && fs::is_directory ( dbDir ) )
+   {
+      for ( fs::directory_iterator dir_iter ( dbDir );
+            dir_iter != end_iter; ++dir_iter )
+      {
+         if ( fs::is_regular_file ( dir_iter->status() ) )
+         {
+            const std::string fileName =
+               dir_iter->path().filename().string() ;
+
+            if ( ( OSS_MATCH_NULL == type ) ||
+                 ( OSS_MATCH_LEFT == type &&
+                   0 == ossStrncmp( fileName.c_str(), filter, filterLen ) ) ||
+                 ( OSS_MATCH_MID == type &&
+                   ossStrstr( fileName.c_str(), filter ) ) ||
+                 ( OSS_MATCH_RIGHT == type &&
+                   ( pFind = ossStrstr( fileName.c_str(), filter ) ) &&
+                   pFind[filterLen] == 0 ) ||
+                 ( OSS_MATCH_ALL == type &&
+                   0 == ossStrcmp( fileName.c_str(), filter ) )
+               )
+            {
+               mapFiles[ fileName ] = dir_iter->path().string() ;
+            }
+         }
+         else if ( fs::is_directory( dir_iter->path() ) && deep > 1 )
+         {
+            _ossEnumFiles( dir_iter->path().string(), mapFiles,
+                           filter, filterLen, type, deep - 1 ) ;
+         }
+      }
+   }
+   else
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 ossEnumFiles( const string &dirPath,
+                    map< string, string > &mapFiles,
+                    const CHAR *filter,
+                    UINT32 deep )
+{
+   INT32 rc = SDB_OK ;
+   string newFilter ;
+   OSS_MATCH_TYPE type = OSS_MATCH_NULL ;
+
+   if ( !filter || filter[0] == 0 || 0 == ossStrcmp( filter, "*" ) )
+   {
+      type = OSS_MATCH_NULL ;
+   }
+   else if ( filter[0] != '*' && filter[ ossStrlen( filter ) - 1 ] != '*' )
+   {
+      type = OSS_MATCH_ALL ;
+      newFilter = filter ;
+   }
+   else if ( filter[0] == '*' && filter[ ossStrlen( filter ) - 1 ] == '*' )
+   {
+      type = OSS_MATCH_MID ;
+      newFilter.assign( &filter[1], ossStrlen( filter ) - 2 ) ;
+   }
+   else if ( filter[0] == '*' )
+   {
+      type = OSS_MATCH_RIGHT ;
+      newFilter.assign( &filter[1], ossStrlen( filter ) - 1 ) ;
+   }
+   else
+   {
+      type = OSS_MATCH_LEFT ;
+      newFilter.assign( filter, ossStrlen( filter ) -1 ) ;
+   }
+
+   return _ossEnumFiles( dirPath, mapFiles, newFilter.c_str(),
+                         newFilter.length(), type, deep ) ;
 }
 
