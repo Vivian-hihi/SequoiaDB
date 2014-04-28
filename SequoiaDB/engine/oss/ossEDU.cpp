@@ -51,8 +51,6 @@
 
 #include "ossStackDump.hpp"
 #include "ossEDU.hpp"
-#include <boost/thread/thread.hpp>
-#include <boost/thread/tss.hpp>
 #include <time.h>
 
 namespace  engine
@@ -69,7 +67,19 @@ namespace  engine
    // (*_longJmpPtr)=(ossValuePtr)0xabcdabcd;
    //
    // everytime you use *_longJmpPtr, it's thread specific value
-   boost::thread_specific_ptr<oss_edu_data> _ossEduData ;
+
+   oss_edu_data* ossGetThreadEDUData()
+   {
+      static OSS_THREAD_LOCAL BOOLEAN s_init = FALSE ;
+      static OSS_THREAD_LOCAL oss_edu_data s_eduData ;
+      if ( !s_init )
+      {
+         s_eduData.init() ;
+         s_init = TRUE ;
+      }
+      return &s_eduData ;
+   }
+
 #if defined(_LINUX)
 
    void ossOneTimeOnly()
@@ -82,7 +92,7 @@ namespace  engine
    static void ossNestedTrapHandler( OSS_HANDPARMS )
    {
       PD_TRACE_ENTRY ( SDB_OSSNTHND );
-      oss_edu_data * pEduData = _ossEduData.get() ;
+      oss_edu_data * pEduData = ossGetThreadEDUData() ;
 
       if (    ( NULL != pEduData )
            && ( OSS_EDU_DATA_EYE_CATCHER == pEduData->ossEDUEyeCatcher1 )
@@ -101,7 +111,7 @@ namespace  engine
       CHAR fileName [ OSS_MAX_PATHSIZE ] = {0} ;
       UINT32 strLen = 0 ;
 
-      oss_edu_data * pEduData = _ossEduData.get() ;
+      oss_edu_data * pEduData = ossGetThreadEDUData() ;
 
       sigset_t savemask, tmpmask ;
       SINT32 prevNestedHandlerLevel = 0 ;
@@ -204,7 +214,7 @@ namespace  engine
          goto done ;
       }
 
-      pEduData = _ossEduData.get() ;
+      pEduData = ossGetThreadEDUData() ;
 
       if ( NULL == pEduData )
       {
@@ -294,7 +304,7 @@ namespace  engine
       }
       else
       {
-         oss_edu_data * pEduData = _ossEduData.get() ;
+         oss_edu_data * pEduData = ossGetThreadEDUData() ;
 
          OSS_ENTER_SIGNAL_HANDLER( pEduData ) ;
 
