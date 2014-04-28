@@ -160,7 +160,7 @@ namespace engine
          }
 
          // send message
-         rc = pmdSend ( pCMRequest, reqSize, &sock, pmdGetEDUCB() ) ;
+         rc = pmdSend ( pCMRequest, reqSize, &sock, pmdGetThreadEDUCB() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to send cm request message, rc=%d", rc ) ;
@@ -169,7 +169,7 @@ namespace engine
 
          // receive message
          rc = pmdRecv ( (CHAR*)&packetLength, sizeof (SINT32), &sock,
-                        pmdGetEDUCB() ) ;
+                        pmdGetThreadEDUCB() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to receive cm reply message, rc=%d",
@@ -197,7 +197,7 @@ namespace engine
          *(SINT32*)(pReceiveBuffer) = packetLength ;
          rc = pmdRecv ( &pReceiveBuffer[sizeof (SINT32)],
                         packetLength-sizeof (SINT32), &sock,
-                        pmdGetEDUCB() ) ;
+                        pmdGetThreadEDUCB() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to receive cm reply message, rc=%d",
