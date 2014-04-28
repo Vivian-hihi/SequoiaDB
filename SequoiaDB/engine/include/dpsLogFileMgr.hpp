@@ -41,7 +41,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogFile.hpp"
-#include "pmdOptionsMgr.hpp"
+#include "pmdDef.hpp"
 #include <vector>
 using namespace std;
 
