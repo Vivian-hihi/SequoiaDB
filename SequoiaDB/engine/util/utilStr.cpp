@@ -245,4 +245,73 @@ namespace engine
    error:
       goto done ;
    }
+
+   INT32 utilBuildFullPath( const CHAR *path, const CHAR *name,
+                            UINT32 fullSize, CHAR *full )
+   {
+      INT32 rc = SDB_OK ;
+      if ( ossStrlen( path ) + ossStrlen( name )
+           + 2 > fullSize )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossMemset( full, 0, fullSize );
+      ossStrcpy( full, path ) ;
+      if ( '\0' != path[0] &&
+           0 != ossStrcmp(&path[ossStrlen(path)-1], OSS_FILE_SEP ) )
+      {
+         ossStrncat( full, OSS_FILE_SEP, 1 ) ;
+      }
+      ossStrncat( full, name, ossStrlen( name ) ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 utilCatPath( CHAR * src, UINT32 srcSize, const CHAR * catStr )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 srcLen = ossStrlen( src ) ;
+      UINT32 catStrLen = ossStrlen( catStr ) ;
+
+      if ( srcLen + catStrLen + 2 > srcSize )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      if ( srcLen > 0 && src[srcLen-1] != OSS_FILE_SEP_CHAR )
+      {
+         ossStrncat( src, OSS_FILE_SEP, 1 ) ;
+      }
+      ossStrncat( src, catStr, catStrLen ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR* utilAscTime( time_t tTime, CHAR * pBuff, UINT32 size )
+   {
+      struct tm localTm ;
+      ossLocalTime( tTime, localTm ) ;
+
+      ossMemset( pBuff, 0, size ) ;
+      ossSnprintf( pBuff, size-1,
+                   "%04d-%02d-%02d-%02d:%02d:%02d",
+                   localTm.tm_year+1900,            // 1) Year (UINT32)
+                   localTm.tm_mon+1,                // 2) Month (UINT32)
+                   localTm.tm_mday,                 // 3) Day (UINT32)
+                   localTm.tm_hour,                 // 4) Hour (UINT32)
+                   localTm.tm_min,                  // 5) Minute (UINT32)
+                   localTm.tm_sec                   // 6) Second (UINT32)
+                  ) ;
+      pBuff[ size - 1 ] = 0 ;
+      return pBuff ;
+   }
+
 }
+
