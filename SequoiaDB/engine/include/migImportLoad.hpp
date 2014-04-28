@@ -65,6 +65,7 @@ class _migParser : public SDBObject
 protected:
    _utilDataParser *_parser ;
    sdbCollectionHandle _collection ;
+   BOOLEAN _stringType ;
    INT32 _importRecord ( bson **bsonObj, SINT32 num ) ;
    virtual INT32 _getRecord ( bson &record ) = 0 ;
 public:
@@ -94,6 +95,7 @@ public:
                 BOOLEAN autoAddField,
                 BOOLEAN autoCompletion,
                 BOOLEAN linePriority,
+                BOOLEAN stringType,
                 migImportAccess accessModel ) ;
 } ;
 typedef class _migCSVParser migCSVParser ;
