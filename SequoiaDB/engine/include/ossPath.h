@@ -22,5 +22,5 @@ INT32 ossLocateExecutable ( const CHAR * refPath ,
                             const CHAR * exeName ,
                             CHAR * buf ,
                             UINT32 bufSize ) ;
-#endif
+#endif // OSS_PATH_H
 
