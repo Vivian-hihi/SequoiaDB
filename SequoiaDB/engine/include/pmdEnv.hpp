@@ -44,6 +44,11 @@ namespace engine
 {
 
    /*
+      When recieve quit event or signal, will call
+   */
+   typedef  void (*PMD_ON_QUIT_FUNC)() ;
+
+   /*
       pmd system info define
    */
    typedef struct _pmdSysInfo
@@ -51,10 +56,15 @@ namespace engine
       SDB_ROLE                      _dbrole ;
       MsgRouteID                    _nodeID ;
 
+      BOOLEAN                       _quitFlag ;
+      PMD_ON_QUIT_FUNC              _pQuitFunc ;
+
       _pmdSysInfo()
       {
          _dbrole        = SDB_ROLE_STANDALONE ;
          _nodeID.value  = MSG_INVALID_ROUTEID ;
+         _quitFlag      = FALSE ;
+         _pQuitFunc     = NULL ;
       }
    } pmdSysInfo ;
 
@@ -63,12 +73,16 @@ namespace engine
    MsgRouteID     pmdGetNodeID() ;
    void           pmdSetNodeID( MsgRouteID id ) ;
 
+   BOOLEAN        pmdIsQuitApp() ;
+
    pmdSysInfo*    pmdGetSysInfo () ;
 
    /*
       pmd trap functions
    */
-   INT32    pmdEnableSignalEvent( const CHAR *filepath ) ;
+
+   INT32    pmdEnableSignalEvent( const CHAR *filepath,
+                                  PMD_ON_QUIT_FUNC pFunc ) ;
 
    INT32&   pmdGetSigNum() ;
 
