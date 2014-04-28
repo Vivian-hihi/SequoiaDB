@@ -44,6 +44,8 @@
 #include "ossProc.hpp"
 #include "ossNPipe.hpp"
 #include "rtnCM.hpp"
+#include "ossNPipe.hpp"
+#include "pmdDef.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdCommon.hpp"
@@ -429,7 +431,6 @@ BOOLEAN checkProcess ( const CHAR *pPipeName, OSSPID expPid )
    OSSNPIPE handle ;
    OSSPID pid ;
    INT64 readSize = 0 ;
-   INT32 round = 0 ;
    rc = ossOpenNamedPipe ( pPipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
                            OSS_NPIPE_BLOCK_WITH_TIMEOUT,
                            handle ) ;
@@ -497,7 +498,7 @@ INT32 findEngine ( OSSPID pid )
          goto error ;
       }
 
-      for ( INT32 i = 0; i < names.size(); ++i )
+      for ( UINT32 i = 0; i < names.size(); ++i )
       {
          const CHAR *pName = names[i].c_str() ;
          // if it matches the pattern
