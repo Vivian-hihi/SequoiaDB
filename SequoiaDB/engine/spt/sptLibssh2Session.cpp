@@ -31,6 +31,8 @@
 #include "pd.hpp"
 #include "ossIO.hpp"
 
+using namespace std ;
+
 #define SPT_COPY_BUF_SIZE  8192
 
 namespace engine
@@ -87,14 +89,18 @@ namespace engine
       goto done ;
    }
 
-   INT32 _sptLibssh2Session::exec( const CHAR *cmd )
+   INT32 _sptLibssh2Session::exec( const CHAR *cmd,
+                                   INT32 &exit,
+                                   CHAR *outBuf,
+                                   UINT32 len,
+                                   UINT32 &read )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != cmd, "can not be null" )
       SDB_ASSERT( NULL != _session, "call open first" )
       SDB_ASSERT( NULL == _channel, "do not share a session in multi threads" )
 
-      execDone() ;
+      string sig ;
 
       _channel = libssh2_channel_open_session( _session ) ;
       if ( NULL == _channel )
@@ -111,14 +117,43 @@ namespace engine
          rc = SDB_SYS ;
          goto error ;
       }
+
+      rc = _read( outBuf, len, read, 0 ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to read output:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _done( exit, sig ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "exit of cmd is:%d", exit ) ;
+         goto error ;
+      }
+
+      if ( SDB_OK != exit )
+      {
+         rc = SDB_SPT_EVAL_FAIL ;
+         PD_LOG( PDERROR, "exit number is:%d", exit ) ;
+         if ( 0 == read )
+         {
+            _read( outBuf, len, read, SSH_EXTENDED_DATA_STDERR ) ;
+         }
+         goto error ;
+      }
+
    done:
+      _clearChannel() ;
       return rc ;
    error:
-      _clearChannel() ;
       goto done ;
    }
 
-   INT32 _sptLibssh2Session::read( CHAR *buf, UINT32 len, UINT32 &readSize )
+   INT32 _sptLibssh2Session::_read( CHAR *buf,
+                                    UINT32 len,
+                                    UINT32 &readSize,
+                                    INT32 streamId )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != buf &&  0 < len, "impossible" )
@@ -128,11 +163,10 @@ namespace engine
       if ( libssh2_channel_eof( _channel ) )
       {
          PD_LOG( PDDEBUG, "get eof from the channel" ) ;
-         execDone() ;
          goto done ;
       }
 
-      rc = libssh2_channel_read( _channel, buf, len ) ;
+      rc = libssh2_channel_read_ex( _channel, streamId, buf, len ) ;
       if ( 0 == rc )
       {
          PD_LOG( PDDEBUG, "read 0 bytes from channel" ) ;
@@ -164,7 +198,6 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != local && NULL != dst, "can not be null" )
 
-      execDone() ;
       if ( SPT_CP_PROTOCOL_SCP == protocol )
       {
          rc = _scpSend( local, dst, mode ) ;
@@ -182,7 +215,7 @@ namespace engine
       }
 
    done:
-      execDone() ;
+      _clearChannel() ;
       return rc ;
    error:
       goto done ;
@@ -195,7 +228,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != local && NULL != remote, "can not be null" )
-      execDone() ;
 
       if ( SPT_CP_PROTOCOL_SCP == protocol )
       {
@@ -213,33 +245,40 @@ namespace engine
          goto error ;
       }
    done:
-      execDone() ;
+      _clearChannel() ;
       return rc ;
    error:
       goto done ;
    }
 
-   void _sptLibssh2Session::execDone()
+   INT32 _sptLibssh2Session::_done( INT32 &eixtcode, string &exitsignal )
    {
-      INT32 exitcode = SDB_OK ;
-      CHAR *exitsignal = NULL ;
+      INT32 rc = SDB_OK ;
+      CHAR *sig = NULL ;
+      
       if ( NULL != _channel )
       {
-         exitcode = libssh2_channel_close( _channel ) ;
-         libssh2_channel_get_exit_status( _channel ) ;
-         libssh2_channel_get_exit_signal(_channel, &exitsignal,
-                                         NULL, NULL, NULL, NULL, NULL);
-         PD_LOG( PDINFO, "channel exit code:%d", exitcode ) ;
-         if ( NULL != exitsignal )
+         rc = libssh2_channel_close( _channel ) ;
+         if ( SDB_OK != rc )
          {
-            PD_LOG( PDERROR, "channel exit signal:%s", exitsignal ) ;
-            free( exitsignal ) ;
+            PD_LOG( PDERROR, "failed to close channel:%d", rc ) ;
+            goto error ;
          }
 
-         libssh2_channel_free( _channel ) ;
-         _channel = NULL ;
+         eixtcode = libssh2_channel_get_exit_status( _channel ) ;
+
+         /// we don't own the signal's mem.
+         libssh2_channel_get_exit_signal(_channel, &sig,
+                                         NULL, NULL, NULL, NULL, NULL);
+         if ( NULL != sig )
+         {
+            exitsignal.assign( sig ) ;
+         }
       }
-      return ;
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _sptLibssh2Session::getLastError( std::string &errMsg )
@@ -475,7 +514,12 @@ namespace engine
 
    void _sptLibssh2Session::_clearChannel()
    {
-      execDone() ;
+      if ( NULL != _channel )
+      {
+         libssh2_channel_close( _channel ) ;
+         libssh2_channel_free( _channel ) ;
+         _channel = NULL ;
+      }
       return ;
    }
 

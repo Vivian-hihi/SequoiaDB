@@ -45,11 +45,12 @@ namespace engine
       virtual ~_sptLibssh2Session() ;
 
    public:
-      virtual INT32 exec( const CHAR *cmd ) ;
+      virtual INT32 exec( const CHAR *cmd, INT32 &exit,
+                          CHAR *outBuf, UINT32 len, UINT32 &read ) ;
 
-      virtual INT32 read( CHAR *buf, UINT32 len, UINT32 &readSize ) ;
+//      virtual INT32 read( CHAR *buf, UINT32 len, UINT32 &readSize ) ;
 
-      virtual void execDone() ;
+//      virtual INT32 done( INT32 &eixtcode, std::string &exitsignal ) ;
 
       virtual INT32 copy2Remote( SPT_CP_PROTOCOL protocol,
                                  const CHAR *local,
@@ -65,6 +66,11 @@ namespace engine
 
    private:
       virtual INT32 _openSshSession() ;
+
+      INT32 _read( CHAR *buf, UINT32 len, UINT32 &readSize,
+                   INT32 streamId = 0 ) ;
+
+      INT32 _done( INT32 &eixtcode, std::string &exitsignal ) ;
 
       void _clearChannel() ;
 

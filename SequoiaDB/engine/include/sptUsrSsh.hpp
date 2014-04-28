@@ -65,9 +65,6 @@ namespace engine
                             _sptReturnVal &rval,
                             bson::BSONObj &detail ) ;
 
-      INT32 getLastError( const _sptArguments &arg,
-                         _sptReturnVal &rval,
-                          bson::BSONObj &detail ) ;
    private:
       _sptSshSession *_session ;
    } ;

@@ -39,7 +39,6 @@ using namespace std ;
 namespace engine
 {
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, exec )
-JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, getLastError )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copy2Remote )
 JS_MEMBER_FUNC_DEFINE( _sptUsrSsh, copyFromRemote )
 JS_CONSTRUCT_FUNC_DEFINE( _sptUsrSsh, construct )
@@ -49,7 +48,6 @@ JS_BEGIN_MAPPING( _sptUsrSsh, "Ssh" )
    JS_ADD_MEMBER_FUNC( "exec", exec )
    JS_ADD_MEMBER_FUNC( "push", copy2Remote )
    JS_ADD_MEMBER_FUNC( "pull", copyFromRemote )
-   JS_ADD_MEMBER_FUNC( "getLastError", getLastError )
    JS_ADD_CONSTRUCT_FUNC( construct )
    JS_ADD_DESTRUCT_FUNC( destruct )
 JS_MAPPING_END()
@@ -138,6 +136,8 @@ JS_MAPPING_END()
       string local ;
       string dst ;
       INT32 mode = 0755 ;
+      
+      string errMsg ;
 
       rc = arg.getString( 0, local ) ;
       if ( SDB_OK != rc )
@@ -170,11 +170,18 @@ JS_MAPPING_END()
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to copy file:%d", rc ) ;
+         _session->getLastError( errMsg ) ;
          goto error ;
       }
+
+      
    done:
       return rc ;
    error:
+      if ( !errMsg.empty() )
+      {
+         detail = BSON( SPT_ERR << errMsg ) ;
+      }
       goto done ;
    }
 
@@ -186,6 +193,7 @@ JS_MAPPING_END()
       string remote ;
       string local ;
       INT32 mode = 0 ;
+      string errMsg ;
 
       rc = arg.getString( 0, remote ) ;
       if ( SDB_OK != rc )
@@ -218,30 +226,16 @@ JS_MAPPING_END()
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to copy file:%d", rc ) ;
+         _session->getLastError( errMsg ) ;
          goto error ;
       }
    done:
       return rc ;
    error:
-      goto done ;
-   }
-
-   INT32 _sptUsrSsh::getLastError( const _sptArguments &arg,
-                           _sptReturnVal &rval,
-                           bson::BSONObj &detail )
-   {
-      INT32 rc = SDB_OK ;
-      string errMsg ;
-      _session->getLastError( errMsg ) ;
-      rc = rval.setStringVal( "", errMsg.c_str() ) ;
-      if ( SDB_OK != rc )
+      if ( !errMsg.empty() )
       {
-         PD_LOG( PDERROR, "failed to set string to return val." ) ;
-         goto error ;
+         detail = BSON( SPT_ERR << errMsg ) ;
       }
-   done:
-      return rc ;
-   error:
       goto done ;
    }
 
@@ -251,7 +245,11 @@ JS_MAPPING_END()
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != _session, "can not be null" )
+      INT32 exit = 0 ;
       string cmd ;
+      string errMsg ;
+      string sig ;
+      
       rc = arg.getString( 0, cmd ) ;
       if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
       {
@@ -260,27 +258,28 @@ JS_MAPPING_END()
          goto error ;
       }
 
-      _session->execDone() ;
-
-      rc = _session->exec( cmd.c_str() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to exec cmd:%d", rc ) ;
-         goto error ;
-      }
-
       {
 #define READ_LEN 8192
       CHAR buf[READ_LEN + 1] ;
       UINT32 read = 0 ;
-      rc = _session->read( buf, READ_LEN, read ) ;
-      if ( SDB_OK != rc )
+
+      rc = _session->exec( cmd.c_str(), exit, buf, READ_LEN, read ) ;
+      buf[read] = '\0' ;
+      if ( SDB_OK != rc || SDB_OK != exit )
       {
          PD_LOG( PDERROR, "failed to read data from session:%d", rc ) ;
+         rc = SDB_SPT_EVAL_FAIL ;
+         if ( 0 == read )
+         {
+            _session->getLastError( errMsg ) ;
+         }
+         else
+         {
+            errMsg.assign( buf ) ;
+         }
          goto error ;
       }
 
-      buf[read] = '\0' ;
       rc = rval.setStringVal( "", buf ) ;
       if ( SDB_OK != rc )
       {
@@ -292,6 +291,10 @@ JS_MAPPING_END()
    done:
       return rc ;
    error:
+      if ( !errMsg.empty() )
+      {
+         detail = BSON( SPT_ERR << errMsg ) ;
+      }
       goto done ;
    }
 

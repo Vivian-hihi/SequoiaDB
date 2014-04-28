@@ -55,11 +55,12 @@ namespace engine
    public:
       INT32 open() ;
 
-      virtual INT32 exec( const CHAR *cmd ) = 0 ;
+      virtual INT32 exec( const CHAR *cmd, INT32 &exit,
+                          CHAR *outBuf, UINT32 size, UINT32 &read ) = 0 ;
 
-      virtual INT32 read( CHAR *buf, UINT32 len, UINT32 &readSize ) = 0 ;
+//      virtual INT32 read( CHAR *buf, UINT32 len, UINT32 &readSize ) = 0 ;
 
-      virtual void execDone() = 0 ;
+//      virtual INT32 done( INT32 &eixtcode, std::string &exitsignal ) = 0 ;
 
       virtual INT32 copy2Remote( SPT_CP_PROTOCOL protocol,
                                  const CHAR *local,   /// full path
