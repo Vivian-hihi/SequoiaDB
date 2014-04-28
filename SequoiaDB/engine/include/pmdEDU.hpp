@@ -508,36 +508,19 @@ namespace engine
    };
    typedef class _pmdEDUCB pmdEDUCB ;
 
-   static OSS_THREAD_LOCAL _pmdEDUCB *__eduCB ;
-   OSS_INLINE _pmdEDUCB *pmdGetEDUCB ()
-   {
-      return __eduCB ;
-   }
+   _pmdEDUCB *pmdGetThreadEDUCB () ;
+
    // this function must be called by the thread that want to create EDUCB
-   OSS_INLINE _pmdEDUCB *pmdCreateEDUCB
-         ( _pmdEDUMgr *mgr, EDU_TYPES type )
-   {
-      __eduCB = SDB_OSS_NEW _pmdEDUCB ( mgr, type ) ;
-      return __eduCB ;
-   }
+   _pmdEDUCB *pmdCreateThreadEDUCB ( _pmdEDUMgr *mgr, EDU_TYPES type ) ;
+
    // this function must be called by the thread that want to delete EDUCB
-   OSS_INLINE void pmdDeleteEDUCB ()
-   {
-      if ( __eduCB )
-      {
-         SDB_OSS_DEL __eduCB ;
-         __eduCB = NULL ;
-      }
-   }
-   OSS_INLINE _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p )
-   {
-      __eduCB = p ;
-      return __eduCB ;
-   }
-   OSS_INLINE void pmdUndeclareEDUCB ()
-   {
-      __eduCB = NULL ;
-   }
+   void pmdDeleteThreadEDUCB () ;
+
+   _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p ) ;
+
+   void pmdUndeclareEDUCB () ;
+
+
    typedef INT32 (*pmdEntryPoint)( pmdEDUCB *, void * ) ;
 
    pmdEntryPoint getEntryFuncByType ( EDU_TYPES type ) ;
