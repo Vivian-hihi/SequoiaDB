@@ -49,6 +49,7 @@ ossFiles = [
       "oss/ossErr.cpp",
       "oss/oss.cpp",
       "oss/ossUtil.cpp",
+      "oss/ossPath.cpp",
       "oss/ossPrimitiveFileOp.cpp",
       "oss/ossStackDump.cpp",
       "oss/ossEDU.cpp",
@@ -97,7 +98,9 @@ utilFiles = [
       "util/utilAccessDataLocalIO.cpp",
       "util/utilAccessDataHdfs.cpp",
       "util/utilPath.cpp",
-      "util/text.cpp"
+      "util/text.cpp",
+      "util/utilStr.cpp",
+      "util/utilParam.cpp"
       ]
 
 dpsFiles = [
@@ -353,31 +356,31 @@ sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbstart = toolEnv.Program("sdbstart", sdbStartMain,
-         LIBDEPS=["pd","oss","pmd"],
+         LIBDEPS=["pd","oss","pmd", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbstop = toolEnv.Program("sdbstop", sdbStopMain,
-         LIBDEPS=["pd","oss"],
+         LIBDEPS=["pd","oss", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdblist = toolEnv.Program("sdblist", sdbListMain,
-         LIBDEPS=["pd","oss"],
+         LIBDEPS=["pd","oss", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcm = toolEnv.Program("sdbcm", sdbcmMain,
-         LIBDEPS=["pd","oss","msg","bson","pmd","rtn"],
+         LIBDEPS=["pd","oss","msg","bson","pmd","rtn", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmd = toolEnv.Program("sdbcmd", sdbcmDMNMain,
-         LIBDEPS=["pd","oss","msg","bson","pmd","rtn"],
+         LIBDEPS=["pd","oss","msg","bson","pmd","rtn", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmart = toolEnv.Program("sdbcmart", sdbcmartMain,
-         LIBDEPS=["pd","oss"],
+         LIBDEPS=["pd","oss", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbcmtop = toolEnv.Program("sdbcmtop", sdbcmtopMain,
-         LIBDEPS=["pd","oss"],
+         LIBDEPS=["pd","oss", "util"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 if linux:
    sdbtop = toolEnv.Program("sdbtop", sdbtopMain,
@@ -388,7 +391,7 @@ sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
-          LIBDEPS=["oss","pd","bson","dps"],
+          LIBDEPS=["oss","pd","bson","dps", "util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbexprt )
