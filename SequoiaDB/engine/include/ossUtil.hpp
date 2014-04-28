@@ -46,6 +46,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include "ossUtil.h"
+
+
 UINT32 ossRand () ;
 // djb2 hashing algorithm
 OSS_INLINE UINT32 ossHash ( const CHAR *str )
@@ -997,4 +999,6 @@ public:
 };
 #endif   //#if defined (_LINUX)
 
+
 #endif  //OSSUTIL_HPP_
+
