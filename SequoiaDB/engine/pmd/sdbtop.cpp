@@ -5763,7 +5763,6 @@ INT32 resolveArgument ( po::options_description &desc,
       ossStrncat( progPath, SDBTOP_DEFAULT_CONFPATH, ossStrlen(SDBTOP_DEFAULT_CONFPATH) ) ;
       progPath[pathLen] = 0 ;
       confPath = std::string(progPath) ;
-ossPrintf( "confPath is: %s"OSS_NEWLINE, confPath.c_str() ) ;
    }
 
    if( vm.count( OPTION_HOSTNAME ) )
