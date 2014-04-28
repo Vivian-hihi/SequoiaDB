@@ -41,31 +41,20 @@
 #include "ossIO.hpp"
 #include "pmdOptions.hpp"
 #include "msgDef.hpp"
+#include "pmdDef.hpp"
 #include "ossSocket.hpp"
+#include "utilParam.hpp"
 
 #include <string>
 #include <iostream>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 #include "../bson/bson.h"
 
 using namespace std ;
-namespace po = boost::program_options ;
 using namespace bson ;
 
 namespace engine
 {
    #define PMD_MAX_ENUM_STR_LEN        (32)
-
-   #define PMD_ADD_PARAM_OPTIONS_BEGIN( desc )\
-           desc.add_options()
-   #define PMD_ADD_PARAM_OPTIONS_END ;
-   #define PMD_COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
-
-   #define PMD_MIN_LOG_FILE_SZ      64
-   #define PMD_MAX_LOG_FILE_SZ      2048
-   #define PMD_DFT_LOG_FILE_SZ      PMD_MIN_LOG_FILE_SZ
-   #define PMD_DFT_LOG_FILE_NUM     20
 
    class _SDB_KRCB;
 
@@ -87,6 +76,8 @@ namespace engine
    */
    class _pmdCfgExchange : public SDBObject
    {
+      friend class _pmdCfgRecord ;
+
       public:
          _pmdCfgExchange ( const BSONObj &dataObj,
                            BOOLEAN load = TRUE,
@@ -119,6 +110,7 @@ namespace engine
 
          BOOLEAN hasField( const CHAR *pFieldName ) ;
 
+      private:
          const CHAR *getData( UINT32 &dataLen ) ;
 
       private:
@@ -152,9 +144,12 @@ namespace engine
          INT32 init( po::variables_map *pVMFile, po::variables_map *pVMCMD ) ;
          INT32 restore( const BSONObj &objData,
                         po::variables_map *pVMCMD ) ;
+         INT32 change( const BSONObj &objData ) ;
 
          INT32 toBSON ( BSONObj &objData ) ;
          INT32 toString( std::string &str ) ;
+
+         UINT32 getChangeID () const { return _changeID ; }
 
       protected:
          virtual INT32 doDataExchange( pmdCfgExchange *pEX ) = 0 ;
@@ -206,6 +201,7 @@ namespace engine
       private:
          std::string                         _curFieldName ;
          INT32                               _result ;
+         UINT32                              _changeID ;
 
    } ;
    typedef _pmdCfgRecord pmdCfgRecord ;
@@ -213,7 +209,7 @@ namespace engine
    /*
       _pmdOptionsMgr define
    */
-   class _pmdOptionsMgr : public pmdCfgRecord
+   class _pmdOptionsMgr : public _pmdCfgRecord
    {
       public:
          _pmdOptionsMgr() ;
@@ -235,13 +231,6 @@ namespace engine
          INT32    _parseCatAddr() ;
 
       public:
-         INT32 readCmd( INT32 argc, CHAR **argv,
-                        po::options_description &desc,
-                        po::variables_map &vm ) ;
-
-         INT32 readConfigureFile( const CHAR *path,
-                                  po::options_description &desc,
-                                  po::variables_map &vm );
 
          INT32 init( INT32 argc, CHAR **argv ) ;
 
@@ -256,9 +245,17 @@ namespace engine
          INT32 _mkdir() ;
 
       public:
-         OSS_INLINE const CHAR *krcbConfPath() const
+         OSS_INLINE const CHAR *getConfPath() const
          {
             return _krcbConfPath;
+         }
+         OSS_INLINE const CHAR *getConfFile() const
+         {
+            return _krcbConfFile ;
+         }
+         OSS_INLINE const CHAR *getCatFile() const
+         {
+            return _krcbCatFile ;
          }
          OSS_INLINE const CHAR *krcbLogPath() const
          {
@@ -276,7 +273,7 @@ namespace engine
          {
             return _krcbBkupPath;
          }
-         OSS_INLINE const CHAR *krcbDiagLogPath() const
+         OSS_INLINE const CHAR *getDiagLogPath() const
          {
             return _krcbDiagLogPath;
          }
@@ -288,7 +285,7 @@ namespace engine
          {
             return _krcbSvcPort;
          }
-         OSS_INLINE UINT16 krcbDiagLvl() const
+         OSS_INLINE UINT16 getDiagLevel() const
          {
             return _krcbDiagLvl;
          }
@@ -366,6 +363,7 @@ namespace engine
          OSS_INLINE UINT32 logBuffSize () const { return _logBuffSize ; }
          OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
          OSS_INLINE const CHAR* dbroleStr() const { return _krcbRole ; }
+         OSS_INLINE INT32 diagFileNum() const { return _dialogFileNum ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -408,9 +406,12 @@ namespace engine
          UINT32      _preferReplica ;
          UINT32      _pagecleanNum ;
          UINT32      _pagecleanInterval ;
+         INT32       _dialogFileNum ;
 
       private: // other configs
          CHAR        _krcbConfPath[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _krcbConfFile[ OSS_MAX_PATHSIZE + 1 ] ;
+         CHAR        _krcbCatFile[ OSS_MAX_PATHSIZE + 1 ] ;
          pmdAddrPair _cat[ CATA_NODE_MAX_NUM ] ;
          UINT16      _krcbSvcPort ;
 
