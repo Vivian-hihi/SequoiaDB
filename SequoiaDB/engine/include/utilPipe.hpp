@@ -3,38 +3,7 @@
 #define UTILPIPE_HPP__
 
 #include "core.h"
-/*
-#include "ossPrimitiveFileOp.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/filesystem/operations.hpp"
-#include "boost/filesystem/path.hpp"
 
-namespace fs = boost::filesystem ;
-
-
-#if defined (_LINUX)
-#define PROC_PATH          "/proc"
-#define PROC_CMDLINE_PATH_FORMAT PROC_PATH"/%s/cmdline"
-#define ENGINE_NAME "sequoiadb"
-#define MODIFIED_ENGINE_NAME ENGINE_NAME "("
-//#define ENGINE_NAME_PATTERN "sequoiadb(%s)"
-#define ENGINE_NAME_PATTERN1 "sequoiadb("
-#define ENGINE_NAME_PATTERN2 ")"
-#define ENGINE_NAME_PATTERN ENGINE_NAME_PATTERN1 "%s" ENGINE_NAME_PATTERN2
-//#define MAN_PATH_PRE "../doc/manual/"
-#elif defined (_WINDOWS)
-#define ENGINE_NAME "sequoiadb.exe"
-#define ENGINE_NPIPE_PATTERN1 "sequoiadb"
-#define ENGINE_NPIPE_PATTERN2 "engine"
-#define ENGINE_NPIPE_PATTERN_SEP "_"
-#define ENGINE_NPIPE_PATTERN ENGINE_NPIPE_PATTERN1 ENGINE_NPIPE_PATTERN_SEP \
-                             ENGINE_NPIPE_PATTERN2 ENGINE_NPIPE_PATTERN_SEP \
-                             "%s"
-#define ENGINE_NPIPE_MSG_PID "$pid"
-
-#define LIST_TIMEOUT 10
-#endif
-*/
 
 #define SH_VERIFY_RC                                             \
    if ( rc != SDB_OK ) {                                          \
@@ -59,3 +28,4 @@ INT32 getPipeNames1( CHAR * bpf2bName , UINT32 bpf2bSize ,
                      CHAR * f2bName , CHAR * b2fName ) ;
 
 #endif //UTILPIPE_HPP__
+

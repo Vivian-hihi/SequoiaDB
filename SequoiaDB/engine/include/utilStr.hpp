@@ -60,7 +60,15 @@ namespace engine
    INT32 utilStr2TimeT( const CHAR *str,
                         time_t &tm,
                         UINT64 *usec = NULL ) ;
+
+   INT32 utilBuildFullPath( const CHAR *path, const CHAR *name,
+                            UINT32 fullSize, CHAR *full ) ;
+
+   INT32 utilCatPath( CHAR *src, UINT32 srcSize, const CHAR *catStr ) ;
+
+   const CHAR* utilAscTime( time_t tTime, CHAR *pBuff, UINT32 size ) ;
+
 }
 
-#endif
+#endif // UTILSTR_HPP_
 
