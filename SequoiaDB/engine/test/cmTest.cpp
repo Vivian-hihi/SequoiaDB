@@ -19,8 +19,8 @@
 #include "core.h"
 #include "pd.hpp"
 #include "ossSocket.hpp"
-#include "sdbcm.hpp"
-#include "utilRemoteExec.hpp"
+#include "rtnCM.hpp"
+#include "rtnRemoteExec.hpp"
 #include "../bson/bson.h"
 
 using namespace bson ;
@@ -81,7 +81,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       PD_LOG ( PDERROR, "Failed to get hostname" ) ;
       goto error ;
    }
-   utilRemoteExec ( remoCode, hostname, &retCode, &obj1, &obj2 ) ;
+   engine::rtnRemoteExec ( remoCode, hostname, &retCode, &obj1, &obj2 ) ;
    PD_LOG ( PDERROR, "rc = %d", retCode ) ;
 done:
    return 0 ;
