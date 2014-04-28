@@ -127,37 +127,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 _SDB_KRCB::enforceDiagLogPath ()
-   {
-      ossMemset ( _diagLogFile, 0, sizeof(_diagLogFile) ) ;
-
-      INT32 rc = pmdBuildFullPath( _optioncb.krcbDiagLogPath(),
-                                   PMD_DFT_DIAGLOG, OSS_MAX_PATHSIZE,
-                                   _diagLogFile ) ;
-      if ( SDB_OK == rc && 0 == ossStrlen( _pdDiagLogPath ) )
-      {
-         ossStrncpy( _pdDiagLogPath, _diagLogFile, sizeof(_pdDiagLogPath)-1 ) ;
-      }
-      return rc ;
-   }
-
-   INT32 _SDB_KRCB::enforceConfPath ()
-   {
-      ossMemset ( _confFile, 0, sizeof(_confFile) ) ;
-      ossMemset ( _catFile,  0, sizeof(_catFile ) ) ;
-
-      INT32 rc = pmdBuildFullPath( _optioncb.krcbConfPath(), PMD_DFT_CONF,
-                                   OSS_MAX_PATHSIZE, _confFile ) ;
-      if ( rc )
-      {
-         return rc ;
-      }
-
-      rc = pmdBuildFullPath( _optioncb.krcbConfPath(), PMD_DFT_CAT,
-                             OSS_MAX_PATHSIZE, _catFile ) ;
-      return rc ;
-   }
-
    replCB* _SDB_KRCB::getReplCB ()
    {
       return _clsCB->getReplCB () ;

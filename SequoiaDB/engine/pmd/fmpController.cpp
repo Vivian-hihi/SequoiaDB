@@ -39,6 +39,7 @@
 #include "fmpVM.hpp"
 #include "ossUtil.hpp"
 #include "ossSocket.hpp"
+#include "utilStr.hpp"
 #include "pd.hpp"
 
 /// TODO: get vm instance from a factroy
@@ -63,8 +64,6 @@ static INT32 FMP_STATUS_M[FMP_CONTROL_SETP_MAX][FMP_CONTROL_SETP_MAX]
 
 #define FMP_STEP_ASSIGN( step )\
         do {_step = (step) ;}while(FALSE)
-
-extern CHAR _pdDiagLogPath [OSS_MAX_PATHSIZE+1];
 
 CHAR FMP_COORD_SERVICE[OSS_MAX_SERVICENAME + 1] = {0};
 CHAR *FMP_COORD_HOST = "localhost" ;
@@ -220,12 +219,14 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
 
    if ( FMP_CONTROL_STEP_BEGIN == step )
    {
-      BSONElement diag = obj.getField( FMP_DIAG_PATH) ;
+      BSONElement diag = obj.getField( FMP_DIAG_PATH ) ;
       if ( !diag.eoo() && String == diag.type() &&
-           0 == ossStrlen(_pdDiagLogPath) )
+           FALSE == sdbIsPDEnabled() )
       {
-         ossMemcpy( _pdDiagLogPath, diag.valuestrsafe(),
-                    ossStrlen( diag.valuestrsafe()) + 1) ;
+         CHAR diaglog[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         engine::utilBuildFullPath( diag.valuestrsafe(), PD_FMP_DIAGLOG,
+                                    OSS_MAX_PATHSIZE, diaglog ) ;
+         sdbEnablePD( diaglog ) ;
       }
       BSONElement localService = obj.getField( FMP_LOCAL_SERVICE ) ;
       if ( !localService.eoo() && String == localService.type() &&
