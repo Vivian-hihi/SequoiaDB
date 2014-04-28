@@ -40,57 +40,46 @@
 #include "ossProc.hpp"
 #include "ossMem.hpp"
 #include "pd.hpp"
-#include "sdbcm.hpp"
+#include "rtnCM.hpp"
+#include "ossProc.hpp"
+#include "utilParam.hpp"
+#include "utilStr.hpp"
+#include "ossVer.h"
+#include "pmdDef.hpp"
+#include "utilParam.hpp"
+#include "pmdOptions.h"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
 
 #if defined (_LINUX)
-#include <dirent.h>
-#include <sys/types.h>
-#include <signal.h>
-#elif defined (_WINDOWS)
-#include <windows.h>
+   #include <dirent.h>
+   #include <sys/types.h>
+   #include <signal.h>
 #endif
-
 
 using namespace std;
-namespace po = boost::program_options;
-extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 
-#define OPTION_HELP "help"
-#define OPTION_CONFPATH SDBCM_OPTION_START_CONFPATH
+/*
+   Macro define
+*/
+#define SDBCMTOP_LOG_FILE_NAME      "sdbcmtop.log"
+#define SDBCMTOP_TIMEOUT            ( 30000 )
 
-#define ADD_PARAM_OPTIONS_BEGIN( desc )\
-        desc.add_options()
-
-#define ADD_PARAM_OPTIONS_END ;
-
-#define COMMANDS_STRING( a, b ) (string(a) +string( b)).c_str()
 #define COMMANDS_OPTIONS \
-       ( COMMANDS_STRING(OPTION_HELP, ",h"),                          "help" )
+       ( PMD_COMMANDS_STRING (PMD_OPTION_HELP, ",h"), "help" ) \
+       ( PMD_OPTION_VERSION, "version" )
 
-#if defined (_LINUX)
-#define SDBCM_NAME_BUF_LEN          255
-#define SDBCM_NAME_PATTERN1         "sdbcm("
-#define SDBCM_NAME_PATTERN2         ")"
-#define SDBCM_NAME_PATTERN          SDBCM_NAME_PATTERN1 "%s" SDBCM_NAME_PATTERN2
-#define SDBCM_DMN_NAME              "sdbcmd"
-#endif
-// timeout for 30 seconds
-#define TERMINATE_TIMEOUT 30
-#define SDBCM_NAME "sdbcm"
-
-// initialize options
+/*
+   Function implement
+*/
 void init ( po::options_description &desc )
 {
-   ADD_PARAM_OPTIONS_BEGIN ( desc )
+   PMD_ADD_PARAM_OPTIONS_BEGIN ( desc )
       COMMANDS_OPTIONS
-   ADD_PARAM_OPTIONS_END
+   PMD_ADD_PARAM_OPTIONS_END
 }
 
 void displayArg ( po::options_description &desc )
@@ -99,322 +88,199 @@ void displayArg ( po::options_description &desc )
    std::cout << desc << std::endl ;
 }
 
-// in this function we only validate whether there's unexpected input, we do not
-// actually doing anything. We will simply pass all parameters to sequoiadb
-// engine
-PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_RSVARG, "resolveArgument" )
-INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_CMSTOP_RSVARG );
-   po::variables_map vm ;
-   try
-   {
-      po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
-      po::notify ( vm ) ;
-   }
-   catch ( po::unknown_option &e )
-   {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-            ( ( std::string ) "Unknown argument: " +
-                e.get_option_name ()).c_str () ) ;
-              std::cerr <<  "Unknown argument: "
-                        << e.get_option_name () << std::endl ;
-              rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch ( po::invalid_option_value &e )
-   {
-      pdLog ( PDWARNING, __FUNC__, __FILE__, __LINE__,
-             ( ( std::string ) "Invalid argument: " +
-               e.get_option_name () ).c_str () ) ;
-      std::cerr <<  "Invalid argument: "
-                << e.get_option_name () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch( po::error &e )
-   {
-      std::cerr << e.what () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
+#if defined (_LINUX)
 
-   if ( vm.count ( OPTION_HELP ) )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_TERMPROC, "terminateWithTimeout" )
+   INT32 terminateWithTimeout ( pid_t &pid )
    {
-      displayArg ( desc ) ;
-      rc = SDB_PMD_HELP_ONLY ;
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_CMSTOP_TERMPROC );
+      PD_TRACE1 ( SDB_CMSTOP_TERMPROC, PD_PACK_INT(pid) ) ;
+
+      UINT32 timeout = 0 ;
+      rc = ossTerminateProcess( pid, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed sending SIGTERM to %d, errno=%d",
+                  pid, ossGetLastError() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // wait until process terminate
+      while ( ossIsProcessRunning( pid ) )
+      {
+         ossSleep( OSS_ONE_SEC ) ;
+         timeout += OSS_ONE_SEC ;
+         if ( timeout > SDBCMTOP_TIMEOUT )
+         {
+            break ;
+         }
+      }
+
+      if ( timeout > SDBCMTOP_TIMEOUT )
+      {
+         ossPrintf ( "FAILED"OSS_NEWLINE ) ;
+         rc = SDB_TIMEOUT ;
+      }
+      else
+      {
+         ossPrintf ( "DONE"OSS_NEWLINE ) ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CMSTOP_TERMPROC, rc );
+      return rc ;
+   error :
       goto done ;
    }
 
-   // we do not actually doing anything, we just parse the input parameter and
-   // forward the arguments to server
-done :
-   PD_TRACE_EXITRC ( SDB_CMSTOP_RSVARG, rc );
-   return rc ;
-error :
-   goto done ;
-}
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_LNX_STOPSDBCM, "stopSdbcm" )
+   INT32 stopSdbcm ()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_LNX_STOPSDBCM ) ;
+      DIR *dirp = NULL ;
+      struct dirent *dp = NULL ;
+      UINT32 timecount = 0 ;
 
-#if defined (_LINUX)
-PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_TERMPROC, "terminateProcess" )
-INT32 terminateProcess ( pid_t &pid, CHAR *pName )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_CMSTOP_TERMPROC );
-   PD_TRACE1 ( SDB_CMSTOP_TERMPROC, PD_PACK_INT(pid) );
-   INT32 round = 0 ;
-   CHAR fileNameBuffer [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   ossSnprintf ( fileNameBuffer, OSS_MAX_PATHSIZE, "/proc/%d/stat", pid ) ;
-   ossPrintf ( "Terminating process %d: %s"OSS_NEWLINE, pid, pName ) ;
-   // send SIGTERM to process
-   rc = kill ( pid, SIGTERM ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed sending SIGTERM to %d, errno=%d",
-               pid, errno ) ;
-      rc = SDB_SYS ;
-      goto error ;
-   }
-   // wait until process terminate
-   while ( round < TERMINATE_TIMEOUT )
-   {
-      FILE *fp = fopen ( fileNameBuffer, "r" ) ;
-      ++round ;
-      if ( fp )
+      if ( ( dirp = opendir ( "/proc" )) == NULL )
       {
-         fclose ( fp ) ;
-         sleep ( 1 ) ;
-         continue ;
+         PD_LOG ( PDERROR, "Failed to open /proc, errno = %d",
+                  ossGetLastError () ) ;
+         rc = SDB_SYS;
+         goto error ;
       }
-      break ;
-   }
-   if ( TERMINATE_TIMEOUT == round )
-   {
-      ossPrintf ( "FAILED"OSS_NEWLINE ) ;
-      rc = SDB_TIMEOUT ;
-   }
-   else
-      ossPrintf ( "DONE"OSS_NEWLINE ) ;
-done :
-   PD_TRACE_EXITRC ( SDB_CMSTOP_TERMPROC, rc );
-   return rc ;
-error :
-   goto done ;
-}
-
-PD_TRACE_DECLARE_FUNCTION ( SDB_LNX_STOPSDBCM, "stopSdbcm" )
-INT32 stopSdbcm ( )
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_LNX_STOPSDBCM );
-   DIR *dirp ;
-   struct dirent *dp ;
-   CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-   ossSnprintf ( engineName, OSS_MAX_PATHSIZE, SDBCM_NAME,
-                    "" ) ;
-
-   if ( ( dirp = opendir ( "/proc" )) == NULL )
-
-   {
-      PD_LOG ( PDERROR, "Failed to open /proc, errno = %d",
-               ossGetLastError () ) ;
-      rc = SDB_SYS;
-      goto error ;
-   }
-   do
-   {
-      if ( ( dp = readdir ( dirp ) ) != NULL )
+      do
       {
-         FILE *fp = NULL ;
-         pid_t pid ;
-         CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         CHAR tempName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
-                       dp->d_name ) ;
-         fp = fopen ( pathName, "r" ) ;
-         if ( !fp )
+         if ( ( dp = readdir ( dirp ) ) != NULL )
          {
-            // we do not care if we can't open the file
-            continue ;
-         }
-         if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
-         {
-            // we do not care if the file is empty (even thou it shouldn't
-            // happen )
-            fclose ( fp ) ;
-            continue ;
-         }
-         fclose ( fp ) ;
-
-         if ( 0 != ossStrcmp( commandLine, SDBCM_DMN_NAME ) )
-         {
-            continue;
-         }
-
-         // get pid
-         pid = atoi ( dp->d_name ) ;
-         // verify
-         ossSnprintf ( tempName, OSS_MAX_PATHSIZE, "%d", pid ) ;
-         if ( ossStrncmp ( tempName, dp->d_name, OSS_MAX_PATHSIZE ) == 0 )
-         {
-            rc = terminateProcess ( pid, commandLine ) ;
-            if ( rc )
+            timecount = 0 ;
+            FILE *fp = NULL ;
+            pid_t pid ;
+            CHAR pathName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+            CHAR commandLine [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+            CHAR tempName [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+            ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%s/cmdline",
+                          dp->d_name ) ;
+            fp = fopen ( pathName, "r" ) ;
+            if ( !fp )
             {
-               PD_LOG ( PDERROR, "Failed to terminate process %d, rc = %d",
-                        pid, rc ) ;
+               // we do not care if we can't open the file
+               continue ;
+            }
+            if ( NULL == fgets ( commandLine, OSS_MAX_PATHSIZE, fp ) )
+            {
+               // we do not care if the file is empty (even thou it shouldn't
+               // happen )
+               fclose ( fp ) ;
+               continue ;
+            }
+            fclose ( fp ) ;
+
+            if ( 0 != ossStrcmp( commandLine, PMDDMN_SVCNAME_DEFAULT ) )
+            {
+               continue ;
+            }
+
+            // get pid
+            pid = atoi ( dp->d_name ) ;
+            // verify
+            ossSnprintf ( tempName, OSS_MAX_PATHSIZE, "%d", pid ) ;
+            if ( ossStrncmp ( tempName, dp->d_name, OSS_MAX_PATHSIZE ) == 0 )
+            {
+               rc = terminateWithTimeout( pid ) ;
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to terminate process %d, rc = %d",
+                           pid, rc ) ;
+               }
             }
          }
-      }
-   } while ( dp != NULL ) ;
-   closedir ( dirp ) ;
-done :
-   PD_TRACE_EXITRC ( SDB_LNX_STOPSDBCM, rc );
-   return rc ;
-error :
-   goto done ;
-}
+      } while ( dp != NULL ) ;
+
+      closedir ( dirp ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_LNX_STOPSDBCM, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
 
 #elif defined (_WINDOWS)
-#define SDBCMDMN_SRV_NAME "sdbcmd"
-PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_WFSTRS, "WaitForServiceToReachState" )
-BOOL WaitForServiceToReachState(SC_HANDLE hService, DWORD dwDesiredState,
-                                 SERVICE_STATUS* pss, DWORD dwMilliseconds) {
-    PD_TRACE_ENTRY ( SDB_CMSTOP_WFSTRS );
-    DWORD dwLastState, dwLastCheckPoint;
-    BOOL  fFirstTime = TRUE; // Don't compare state & checkpoint the first time through
-    BOOL  fServiceOk = TRUE;
-    DWORD dwTimeout = GetTickCount() + dwMilliseconds;
- 
-    // Loop until the service reaches the desired state,
-    // an error occurs, or we timeout
-    while  (TRUE) {
-       // Get current state of service
-       fServiceOk = ::QueryServiceStatus(hService, pss);
- 
-       // If we can't query the service, we're done
-       if (!fServiceOk) break;
- 
-       // If the service reaches the desired state, we're done
-       if (pss->dwCurrentState == dwDesiredState) break;
- 
-       // If we timed-out, we're done
-       if ((dwMilliseconds != INFINITE) && (dwTimeout > GetTickCount())) {
-          SetLastError(ERROR_TIMEOUT); 
-          break;
-       }
- 
-       // If this is our first time, save the service's state & checkpoint
-       if (fFirstTime) {
-          dwLastState = pss->dwCurrentState;
-          dwLastCheckPoint = pss->dwCheckPoint;
-          fFirstTime = FALSE;
-       } else {
-          // If not first time & state has changed, save state & checkpoint
-          if (dwLastState != pss->dwCurrentState) {
-             dwLastState = pss->dwCurrentState;
-             dwLastCheckPoint = pss->dwCheckPoint;
-          } else {
-             // State hasn't change, check that checkpoint is increasing
-             if (pss->dwCheckPoint > dwLastCheckPoint) {
-                // Checkpoint has increased, save checkpoint
-                dwLastCheckPoint = pss->dwCheckPoint;
-             } else {
-                // Checkpoint hasn't increased, service failed, we're done!
-                fServiceOk = FALSE; 
-                break;
-             }
-          }
-       }
-       // We're not done, wait the specified period of time
-       Sleep(pss->dwWaitHint);
-    }
- 
-    // Note: The last SERVICE_STATUS is returned to the caller so
-    // that the caller can check the service state and error codes.
-    PD_TRACE_EXIT ( SDB_CMSTOP_WFSTRS );
-    return(fServiceOk);
- }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_WIN_STOPSDBCM, "stopSdbcm" )
-INT32 stopSdbcm ()
-{
-   INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_WIN_STOPSDBCM );
-   SERVICE_STATUS srvStatus ;
-   SC_HANDLE schSCM = NULL, schSRV = NULL ;
-
-   // open a handle to the sc manager database
-   schSCM = OpenSCManager ( NULL, NULL, SC_MANAGER_CONNECT ) ;
-   if ( schSCM == NULL )
+   INT32 stopSdbcm ()
    {
-      rc = SDB_SYS ;
-      PD_LOG ( PDERROR, "Failed to open SCM" );
-      goto error ;
+      return ossStopService( PMDDMN_SVCNAME_DEFAULT,
+                             SDBCMTOP_TIMEOUT ) ;
    }
 
-   // open a handle to the sdbcm service
-   schSRV = OpenService ( schSCM,
-                          TEXT(SDBCMDMN_SRV_NAME),
-                          SERVICE_STOP ) ;
-   if ( schSRV == NULL )
-   {
-      rc = SDB_SYS ;
-      PD_LOG ( PDERROR, "Failed to open service" );
-      goto error ;
-   }
-   ControlService ( schSRV, SERVICE_CONTROL_STOP, &srvStatus ) ;
-   WaitForServiceToReachState ( schSRV, SERVICE_STOP, &srvStatus, 15000 ) ;
+#endif // _LINUX
 
-done :
-   if ( schSCM )
-      CloseServiceHandle ( schSCM ) ;
-   if ( schSRV )
-      CloseServiceHandle ( schSRV ) ;
-   PD_TRACE_EXITRC ( SDB_WIN_STOPSDBCM, rc );
-   return rc ;
-error :
-   goto done ;
-}
-
-#endif
-
-PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_CMSTOP_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB_CMSTOP_MAIN );
+   PD_TRACE_ENTRY ( SDB_CMSTOP_MAIN ) ;
    po::options_description desc ( "Command options" ) ;
+   po::variables_map vm ;
    ossResultCode result ;
-   init ( desc ) ;
-   // validate arguments
-   rc = resolveArgument ( desc, argc, argv ) ;
+   CHAR dialogFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+
+   rc = ossGetEWD ( dialogFile, OSS_MAX_PATHSIZE ) ;
    if ( rc )
    {
-      if ( SDB_PMD_HELP_ONLY != rc )
-      {
-         PD_LOG ( PDERROR, "Invalid argument" ) ;
-         displayArg ( desc ) ;
-      }
+      ossPrintf ( "Failed to get excutable file's working "
+                  "directory"OSS_NEWLINE ) ;
+      goto error ;
+   }
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE, SDBCM_LOG_PATH ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to build dialog path: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   rc = engine::utilCatPath( dialogFile, OSS_MAX_PATHSIZE,
+                             SDBCMTOP_LOG_FILE_NAME ) ;
+   if ( rc )
+   {
+      ossPrintf( "Failed to build dialog file: %d"OSS_NEWLINE, rc ) ;
+      goto error ;
+   }
+   // enable pd log
+   sdbEnablePD( dialogFile ) ;
+   setPDLevel( PDINFO ) ;
+
+   init ( desc ) ;
+   // validate arguments
+   rc = engine::utilReadCommandLine ( argc, argv, desc, vm ) ;
+   if ( rc )
+   {
+      PD_LOG( PDERROR, "Invalid arguments, rc: %d", rc ) ;
+      displayArg ( desc ) ;
+      goto done ;
+   }
+   /// read cmd first
+   if ( vm.count( PMD_OPTION_HELP ) )
+   {
+      displayArg( desc ) ;
+      rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+   if ( vm.count( PMD_OPTION_VERSION ) )
+   {
+      ossPrintVersion( "Sdb CM Stop version" ) ;
+      rc = SDB_PMD_VERSION_ONLY ;
       goto done ;
    }
 
-   ossMemset ( _pdDiagLogPath, 0, sizeof( _pdDiagLogPath ) ) ;
-   rc = ossGetEWD ( _pdDiagLogPath, OSS_MAX_PATHSIZE ) ;
-   if ( rc )
-   {
-      ossPrintf ( "Failed to get excutable file's working directory"OSS_NEWLINE ) ;
-      goto error ;
-   }
-   ossStrncat( _pdDiagLogPath, OSS_FILE_SEP, 1 );
-   ossStrncat ( _pdDiagLogPath, SDBCM_LOG_PATH, sizeof(SDBCM_LOG_PATH) ) ;
-
+   // stop cm
    rc = stopSdbcm () ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to stop sdbcm" ) ;
-      ossPrintf ( "Failed to stop sdbcm"OSS_NEWLINE ) ;
+      PD_LOG ( PDERROR, "Failed to stop sdbcm, rc: %d", rc ) ;
+      ossPrintf ( "Failed to stop sdbcm, rc: %d"OSS_NEWLINE, rc ) ;
    }
    else
    {
@@ -423,8 +289,9 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
 
 done:
-   PD_TRACE_EXITRC ( SDB_CMSTOP_MAIN, rc );
+   PD_TRACE_EXITRC ( SDB_CMSTOP_MAIN, rc ) ;
    return rc ;
 error:
    goto error ;
 }
+
