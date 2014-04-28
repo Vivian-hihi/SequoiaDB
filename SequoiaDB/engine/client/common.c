@@ -39,7 +39,7 @@
 #include "ossUtil.h"
 #include "msgCatalogDef.h"
 #include "oss.h"
-#include "openssl/md5.h"
+#include "../bson/lib/md5.h"
 
 #ifndef offsetof
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
@@ -1763,37 +1763,28 @@ INT32 md5Encrypt( const CHAR *src,
                   CHAR *code,
                   UINT32 size )
 {
-   INT32 rc = SDB_OK ;
-   BYTE tmp[MD5_DIGEST_LENGTH+1] ;
-   INT32 i = 0 ;
-   if ( NULL == src || NULL == code )
+   INT32 rc                                  = 0 ;
+   INT32 i                                   = 0 ;
+   UINT8 md5digest [ SDB_MD5_DIGEST_LENGTH ] = {0} ;
+   md5_state_t st ;
+
+   /* sanity check */
+   if ( size <= 2*SDB_MD5_DIGEST_LENGTH )
    {
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   if ( size < 2 * MD5_DIGEST_LENGTH + 1 )
+   md5_init ( &st ) ;
+   md5_append ( &st, (const md5_byte_t *) src, ossStrlen(src) ) ;
+   md5_finish ( &st, md5digest ) ;
+   for ( ; i < SDB_MD5_DIGEST_LENGTH; i++ )
    {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   ossMemset( code, 0, 2 * MD5_DIGEST_LENGTH + 1) ;
-   {
-   MD5_CTX ctx ;
-   MD5_Init( &ctx ) ;
-   MD5_Update( &ctx, src, ossStrlen( src ) ) ;
-   MD5_Final( tmp, &ctx ) ;
-   tmp[MD5_DIGEST_LENGTH] = '\0' ;
-
-   for ( ; i < MD5_DIGEST_LENGTH; i++ )
-   {
-      ossSnprintf( code, 3, "%02x", tmp[i]) ;
+      ossSnprintf( code, 3, "%02x", md5digest[i]) ;
       code += 2 ;
    }
-   }
-done:
+done :
    return rc ;
-error:
+error :
    goto done ;
 }
 

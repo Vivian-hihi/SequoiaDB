@@ -58,7 +58,8 @@ utilFiles = [
       "client/bson/encoding.c",
       "client/base64c.c",
       "client/cJSON.c",
-      "client/jstobs.c"
+      "client/jstobs.c",
+      "bson/md5.c"
       ]
 
 clientCFiles = [

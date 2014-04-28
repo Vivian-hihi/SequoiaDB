@@ -32,6 +32,8 @@ SDB_EXTERN_C_START
 #define SOCKET_INVALIDSOCKET  -1
 #endif
 
+#define SDB_MD5_DIGEST_LENGTH 16
+
 #ifdef __cplusplus
 INT32 clientBuildUpdateMsgCpp ( CHAR **ppBuffer, INT32 *bufferSize,
                                 const CHAR *CollectionName, SINT32 flag,

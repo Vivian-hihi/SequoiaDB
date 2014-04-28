@@ -289,6 +289,7 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "getColumns"
 ,   "refreshLine"
 ,   "completeLine"
+,   "setDisplayAttribute"
 ,   "_utilCSVParser::initialize"
 ,   "_utilCSVParser::getNextRecord"
 ,   "_utilCSVParser::_allocField"
@@ -1995,10 +1996,10 @@ static const CHAR *_pTraceFunctionList[] = {
 ,   "_qgmMatcher::match"
 ,   "_qgmMatcher::_match"
 } ;
-const UINT32 _pTraceFunctionListNum = 1993 ;
+const UINT32 _pTraceFunctionListNum = 1994 ;
 const UINT32 pdGetTraceFunctionListNum()
 {
-  return 1993;
+  return 1994;
 }
 const CHAR *pdGetTraceFunction ( UINT64 id )
 {

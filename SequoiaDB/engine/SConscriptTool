@@ -336,19 +336,19 @@ if linux:
    toolEnv.StaticLibrary('ncurses', ncursesFiles)
 #Export Executable
 sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
-         LIBDEPS=["mig","oss","pd","util","client","clientcpp"],
+         LIBDEPS=["bson","mig","oss","pd","util","client","clientcpp"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbimprt = toolEnv.Program("sdbimprt", sdbImportMain,
-         LIBDEPS=["mig","oss","pd","util","client"],
+         LIBDEPS=["bson","mig","oss","pd","util","client"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload = toolEnv.Program("sdbload", sdbImportLoad,
-         LIBDEPS=["msgload","oss","pd","util","client"],
+         LIBDEPS=["bson","msgload","oss","pd","util","client"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
-         LIBDEPS=["oss","pd","util","client"],
+         LIBDEPS=["bson","oss","pd","util","client"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbstart = toolEnv.Program("sdbstart", sdbStartMain,

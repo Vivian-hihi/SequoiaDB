@@ -25,5 +25,7 @@ then
    exit 0
 fi
 
-g++ $SOURCEFILE $COMMONFILE -o $SCRIPTPATH"/build/"$PROGRAM -I$INCLUDEPATH -L$LIBPATH -lsdbcpp -O0 -ggdb -Wno-deprecated
+g++ $SOURCEFILE $COMMONFILE -o $SCRIPTPATH"/build/"$PROGRAM -I$INCLUDEPATH -L$LIBPATH -lsdbcpp -O0 -ggdb -Wno-deprecated -lm
 cp $LIBPATH/libsdbcpp.so $SCRIPTPATH"/build"
+
+g++ $SOURCEFILE $COMMONFILE -o $SCRIPTPATH"/build/"$PROGRAM.static -I$INCLUDEPATH -L$LIBPATH -O0 -ggdb -Wno-deprecated -lm $LIBPATH/libsdbcpp.a -lpthread

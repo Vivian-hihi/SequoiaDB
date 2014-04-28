@@ -42,10 +42,10 @@
 #include "pmdOptions.h"
 #include <string>
 #include <vector>
-#include "openssl/md5.h"
 #include "pdTrace.hpp"
 #include "clientTrace.hpp"
 #include "fmpDef.hpp"
+#include "../bson/lib/md5.hpp"
 
 using namespace std ;
 using namespace bson ;
@@ -3522,7 +3522,7 @@ namespace sdbclient
       PD_TRACE_ENTRY ( SDB_CLIENT_CONNECTWITHPORT ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      CHAR md5[MD5_DIGEST_LENGTH*2+1] ;
+      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
       BOOLEAN r ;
       SINT64 contextID = 0 ;
 
@@ -3538,7 +3538,7 @@ namespace sdbclient
          goto error ;
       }
 
-      rc = md5Encrypt( pPasswd, md5, MD5_DIGEST_LENGTH*2+1) ;
+      rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
       if ( rc )
       {
          goto error ;
@@ -3637,7 +3637,7 @@ namespace sdbclient
       PD_TRACE_ENTRY ( SDB_CLIENT_CREATEUSR ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      CHAR md5[MD5_DIGEST_LENGTH*2+1] ;
+      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
       BOOLEAN r ;
       SINT64 contextID = 0 ;
 
@@ -3648,7 +3648,7 @@ namespace sdbclient
          goto error ;
       }
 
-      rc = md5Encrypt( pPasswd, md5, MD5_DIGEST_LENGTH*2+1) ;
+      rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
       if ( rc )
       {
          goto error ;
@@ -3693,7 +3693,7 @@ namespace sdbclient
       PD_TRACE_ENTRY ( SDB_CLIENT_REMOVEUSR ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
-      CHAR md5[MD5_DIGEST_LENGTH*2+1] ;
+      CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
       BOOLEAN r ;
       SINT64 contextID = 0 ;
 
@@ -3704,7 +3704,7 @@ namespace sdbclient
          goto error ;
       }
 
-      rc = md5Encrypt( pPasswd, md5, MD5_DIGEST_LENGTH*2+1) ;
+      rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
       if ( rc )
       {
          goto error ;

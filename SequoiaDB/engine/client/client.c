@@ -23,7 +23,7 @@
 #include "common.h"
 #include "pmdOptions.h"
 #include "msgCatalogDef.h"
-#include "openssl/md5.h"
+#include "../bson/lib/md5.h"
 #include "fmpDef.h"
 
 #define SDB_IS_EMPTY_CHAR(p) \
@@ -706,7 +706,7 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 {
    INT32 rc = SDB_OK ;
    //for the encryted password
-   CHAR md5[MD5_DIGEST_LENGTH*2+1] ;
+   CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
    BOOLEAN r ;
    SINT64 contextID = 0 ;
    sdbConnectionStruct *connection = NULL ;
@@ -742,7 +742,7 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 
    //encryt the password
    //do we need to take care of endianess?
-   rc = md5Encrypt( pPasswd, md5, MD5_DIGEST_LENGTH*2+1) ;
+   rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
    if ( rc )
    {
       goto error ;
@@ -1155,7 +1155,7 @@ SDB_EXPORT INT32 sdbCreateUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName
                                const CHAR *pPasswd )
 {
    INT32 rc = SDB_OK ;
-   CHAR md5[MD5_DIGEST_LENGTH*2+1] ;
+   CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
    BOOLEAN r ;
    SINT64 contextID = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -1170,7 +1170,7 @@ SDB_EXPORT INT32 sdbCreateUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = md5Encrypt( pPasswd, md5, MD5_DIGEST_LENGTH*2+1) ;
+   rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
    if ( rc )
    {
       goto error ;
@@ -1207,7 +1207,7 @@ SDB_EXPORT INT32 sdbRemoveUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName
                                const CHAR *pPasswd )
 {
    INT32 rc = SDB_OK ;
-   CHAR md5[MD5_DIGEST_LENGTH*2+1] ;
+   CHAR md5[SDB_MD5_DIGEST_LENGTH*2+1] ;
    BOOLEAN r ;
    SINT64 contextID = 0 ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -1222,7 +1222,7 @@ SDB_EXPORT INT32 sdbRemoveUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   rc = md5Encrypt( pPasswd, md5, MD5_DIGEST_LENGTH*2+1) ;
+   rc = md5Encrypt( pPasswd, md5, SDB_MD5_DIGEST_LENGTH*2+1) ;
    if ( rc )
    {
       goto error ;
