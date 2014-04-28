@@ -60,7 +60,6 @@
 using namespace std ;
 namespace po = boost::program_options ;
 
-extern CHAR _pdDiagLogPath[OSS_MAX_PATHSIZE+1] ;
 #define LOGPATH "sdbimport.log"
 
 #define OPTION_HELP        "help"
@@ -194,8 +193,7 @@ static OSS_INLINE std::string &trim ( std::string &s )
 
 #if defined (_LINUX)
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MIGLOADTRAPHNDL, "migTrapHandler" )
-
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MIGLOADTRAPHNDL, "migTrapHandler" )
 void migTrapHandler ( OSS_HANDPARMS )
 {
    PD_TRACE_ENTRY ( SDB_MIGLOADTRAPHNDL );
@@ -255,7 +253,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_MIGLOADSSH, "migSetupSignalHandler" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_MIGLOADSSH, "migSetupSignalHandler" )
 INT32 migSetupSignalHandler()
 {
    INT32 rc = SDB_OK ;
@@ -299,7 +297,7 @@ void displayArg ( po::options_description &desc )
    std::cout << desc << std::endl ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBIMPLOAD_RESOLVEARG, "resolveArgument" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBIMPLOAD_RESOLVEARG, "resolveArgument" )
 INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
@@ -598,7 +596,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBIMPLOAD_GETCOLLECTION, "getCollection" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBIMPLOAD_GETCOLLECTION, "getCollection" )
 INT32 getCollection ()
 {
    INT32 rc = SDB_OK ;
@@ -662,7 +660,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_IMPORTLOADCSV, "importCSV" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_IMPORTLOADCSV, "importCSV" )
 INT32 importCSV ()
 {
    INT32 rc = SDB_OK ;
@@ -719,7 +717,7 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_IMPORTLOADJSON, "importJson" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_IMPORTLOADJSON, "importJson" )
 INT32 importJson ()
 {
    INT32 rc = SDB_OK ;
@@ -768,15 +766,15 @@ error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SDBIMPLOAD_MAIN, "main" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SDBIMPLOAD_MAIN, "main" )
 INT32 main ( INT32 argc, CHAR **argv )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDBIMPLOAD_MAIN );
 
-   // set log path
-   ossMemset ( _pdDiagLogPath, 0, sizeof( _pdDiagLogPath ) ) ;
-   ossStrncpy ( _pdDiagLogPath, LOGPATH, sizeof(LOGPATH) ) ;
+   // enable pd log
+   sdbEnablePD( LOGPATH ) ;
+   setPDLevel( PDINFO ) ;
 
    po::options_description desc ( "Command options" ) ;
    init ( desc ) ;
@@ -829,7 +827,7 @@ done :
    }
    if ( rc != SDB_PMD_HELP_ONLY )
    {
-      ossPrintf ( "Detail in log path: %s"OSS_NEWLINE, _pdDiagLogPath ) ;
+      ossPrintf ( "Detail in log path: %s"OSS_NEWLINE, getDialogName() ) ;
    }
    sdbDisconnect ( gConnection ) ;
    if ( gCollection )
