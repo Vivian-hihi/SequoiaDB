@@ -1193,6 +1193,39 @@ namespace engine
       return rc ;
    }
 
+   static OSS_THREAD_LOCAL _pmdEDUCB *__eduCB ;
+
+   _pmdEDUCB *pmdGetThreadEDUCB ()
+   {
+      return __eduCB ;
+   }
+
+   _pmdEDUCB *pmdCreateThreadEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type )
+   {
+      __eduCB = SDB_OSS_NEW _pmdEDUCB ( mgr, type ) ;
+      return __eduCB ;
+   }
+
+   void pmdDeleteThreadEDUCB ()
+   {
+      if ( __eduCB )
+      {
+         SDB_OSS_DEL __eduCB ;
+         __eduCB = NULL ;
+      }
+   }
+
+   _pmdEDUCB *pmdDeclareEDUCB ( _pmdEDUCB *p )
+   {
+      __eduCB = p ;
+      return __eduCB ;
+   }
+
+   void pmdUndeclareEDUCB ()
+   {
+      __eduCB = NULL ;
+   }
+
    // for pmdRecv, we wait indefinitely until the agent is forced, because
    // client may not send us anything due to idle of user activities
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRECV, "pmdRecv" )
