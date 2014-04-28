@@ -486,7 +486,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
           * use snprintf to display */
          CHAR temp[ BSON_TEMP_SIZE_64 ] ;
          struct tm psr;
-         time_t timer = bson_iterator_date( &i );
+         time_t timer = bson_iterator_date( &i ) / 1000 ;
          memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
          local_time ( &timer, &psr ) ;
 #ifdef WIN32
@@ -708,7 +708,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
          time_t timer ;
          memset ( temp, 0, BSON_TEMP_SIZE_64 ) ;
          ts = bson_iterator_timestamp( &i ) ;
-         timer = (time_t)ts.t ;
+         timer = (time_t)( ts.t ) ;
          local_time ( &timer, &psr ) ;
 #ifdef WIN32
          _snprintf ( temp,
@@ -966,18 +966,19 @@ static BOOLEAN jsonConvertBson ( cJSON *cj, bson *bs, BOOLEAN isObj )
             if ( isObj && cj->string )
                bson_append_timestamp2 ( bs,
                                         cj->string,
-                                        (INT32)timep,
+                                        (((INT32)timep) * 1),
                                         micros ) ;
             else
             {
                CHAR num[ INT_NUM_SIZE  ] = {0} ;
                get_char_num ( num, i, INT_NUM_SIZE ) ;
-               bson_append_timestamp2 ( bs, num, (INT32)timep , micros ) ;
+               bson_append_timestamp2 ( bs, num,
+                                        ((INT32)timep * 1) , micros ) ;
             }
          }
          else
          {
-            bson_date_t s = ( bson_date_t )timep ;
+            bson_date_t s = ((( bson_date_t )timep) * 1000 ) ;
 
             if ( isObj && cj->string )
                bson_append_date ( bs, cj->string, s ) ;
