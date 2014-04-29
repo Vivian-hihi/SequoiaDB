@@ -77,88 +77,85 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__PMDSTARTUP_INIT );
       BOOLEAN startUpFromCrash = FALSE ;
       pmdKRCB *krcb = pmdGetKRCB() ;
-      CHAR dbPath[OSS_MAX_PATHSIZE+1] = {0} ;
       _fileOpened = FALSE ;
       SINT64 written = 0 ;
-      if ( krcb->getDBPath( dbPath, OSS_MAX_PATHSIZE ) )
+
+      _fileName =  pmdGetOptionCB()->getDbPath() ;
+      _fileName += OSS_FILE_SEP ;
+      _fileName += PMD_STARTUP_FILE_NAME ;
+
+      // attempt to access the file
+      rc = ossAccess ( _fileName.c_str() ) ;
+      // if the file does not exist, that means we were normally shutdown
+      if ( SDB_FNE == rc )
       {
-         _fileName =  dbPath ;
-         _fileName += OSS_FILE_SEP ;
-         _fileName += PMD_STARTUP_FILE_NAME ;
+         krcb->setStartType ( SDB_START_NORMAL ) ;
+         startUpFromCrash = FALSE ;
+         _ok = TRUE ;
+      }
+      // if we get permission error, we can't continue
+      else if ( SDB_PERM == rc )
+      {
+         PD_LOG ( PDSEVERE,
+                  "Permission denied when creating startup file" ) ;
+         goto error ;
+      }
+      // if we can find the file, that means there were unexpected outage
+      else if ( SDB_OK == rc )
+      {
+         krcb->setStartType ( SDB_START_CRASH ) ;
+         startUpFromCrash = TRUE ;
+         _ok = FALSE ;
+      }
+      // for unknown error, let's stop starting up the engine
+      else
+      {
+         PD_LOG ( PDSEVERE, "Failed to access startup file, rc = %d", rc ) ;
+         goto error ;
+      }
 
-         // attempt to access the file
-         rc = ossAccess ( _fileName.c_str() ) ;
-         // if the file does not exist, that means we were normally shutdown
-         if ( SDB_FNE == rc )
-         {
-            krcb->setStartType ( SDB_START_NORMAL ) ;
-            startUpFromCrash = FALSE ;
-            _ok = TRUE ;
-         }
-         // if we get permission error, we can't continue
-         else if ( SDB_PERM == rc )
-         {
-            PD_LOG ( PDSEVERE,
-                     "Permission denied when creating startup file" ) ;
-            goto error ;
-         }
-         // if we can find the file, that means there were unexpected outage
-         else if ( SDB_OK == rc )
-         {
-            krcb->setStartType ( SDB_START_CRASH ) ;
-            startUpFromCrash = TRUE ;
-            _ok = FALSE ;
-         }
-         // for unknown error, let's stop starting up the engine
-         else
-         {
-            PD_LOG ( PDSEVERE, "Failed to access startup file, rc = %d", rc ) ;
-            goto error ;
-         }
-
-         rc = ossOpen ( _fileName.c_str(), OSS_REPLACE|OSS_READWRITE,
-                        OSS_RU|OSS_WU|OSS_RG, _file ) ;
-         if ( SDB_OK != rc )
-         {
+      rc = ossOpen ( _fileName.c_str(), OSS_REPLACE|OSS_READWRITE,
+                     OSS_RU|OSS_WU|OSS_RG, _file ) ;
+      if ( SDB_OK != rc )
+      {
 #if defined (_WINDOWS)
-            if ( SDB_PERM == rc )
-            {
-               PD_LOG ( PDERROR, "Failed to open startup file due to perm "
-                        "error, please check if the directory is granted "
-                        "with the right permission, or if there is another "
-                        "instance is running with the directory" ) ;
-            }
-            else
-#endif
-            {
-               PD_LOG ( PDERROR,
-                        "Failed to create startup file, rc = %d", rc ) ;
-            }
-            goto error ;
-         }
-         _fileOpened = TRUE ;
-         // lock the file
-         rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
          if ( SDB_PERM == rc )
          {
-            PD_LOG ( PDERROR, "The startup file is already locked, most likely "
-                     "there is another instance running in the directory" ) ;
-            goto error ;
+            PD_LOG ( PDERROR, "Failed to open startup file due to perm "
+                     "error, please check if the directory is granted "
+                     "with the right permission, or if there is another "
+                     "instance is running with the directory" ) ;
          }
-         else if ( rc )
+         else
+#endif
          {
-            PD_LOG ( PDERROR, "Failed to lock startup file, rc = %d", rc ) ;
-            goto error ;
+            PD_LOG ( PDERROR, "Failed to create startup file, rc = %d", rc ) ;
          }
-         _fileLocked = TRUE ;
-         //write char
-         rc = ossSeekAndWrite ( &_file, 0, PMD_STARTUP_INVALID_CHAR,
-            PMD_STARTUP_INVALID_CHAR_LEN, &written ) ;
-         if ( SDB_OK != rc )
-         {
-            goto error ;
-         }
+         goto error ;
       }
+      _fileOpened = TRUE ;
+      // lock the file
+      rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
+      if ( SDB_PERM == rc )
+      {
+         PD_LOG ( PDERROR, "The startup file is already locked, most likely "
+                  "there is another instance running in the directory" ) ;
+         goto error ;
+      }
+      else if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to lock startup file, rc = %d", rc ) ;
+         goto error ;
+      }
+      _fileLocked = TRUE ;
+      //write char
+      rc = ossSeekAndWrite ( &_file, 0, PMD_STARTUP_INVALID_CHAR,
+                             PMD_STARTUP_INVALID_CHAR_LEN, &written ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
       // print startup from crash/normal after locked the file
       if ( startUpFromCrash )
       {
@@ -168,6 +165,7 @@ namespace engine
       {
          PD_LOG ( PDEVENT, "Start up from normal" ) ;
       }
+
    done:
       /*if ( fileOpened )
       {

@@ -3049,7 +3049,7 @@ namespace engine
       UINT32 i = 0 ;
       while ( i++ < 4 )
       {
-         hashValue |= ( digest[i] << ( 32 - 8 * i ) ) ;
+         hashValue |= ( (UINT32)digest[i] << ( 32 - 8 * i ) ) ;
       }
       return (INT32)( hashValue >> ( 32 - partitionBit ) ) ;
    }

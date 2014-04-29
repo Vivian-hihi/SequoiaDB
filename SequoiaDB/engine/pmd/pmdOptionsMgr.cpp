@@ -960,7 +960,7 @@ namespace engine
                PMD_DFT_LOG_FILE_NUM ) ;
       rdvMinMax( pEX, _logFileNum, 1, 60000, TRUE ) ;
       // --logbuffsize
-      rdxUInt( pEX, PMD_OPTION_LOGBUFFSIZE, _logBuffSize, FALSE, FALSE,
+      rdxUInt( pEX, PMD_OPTION_LOGBUFFSIZE, _logBuffSize, FALSE, TRUE,
                DPS_DFT_LOG_BUF_SZ ) ;
       rdvMinMax( pEX, _logBuffSize, 512, 1024000, TRUE ) ;
       // --numpreload

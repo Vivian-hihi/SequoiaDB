@@ -38,8 +38,7 @@
 #include "core.hpp"
 #include <iostream>
 #include <string>
-#include <boost/program_options.hpp>
-#include <boost/program_options/parsers.hpp>
+#include "ossVer.h"
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pd.hpp"
@@ -64,7 +63,6 @@
 
 using namespace std;
 using namespace bson;
-namespace po = boost::program_options ;
 
 namespace engine
 {
@@ -72,17 +70,17 @@ namespace engine
     * This function resolve all input arguments from command line
     * It first construct options_description to register all
     * possible arguments we may have
-    * And then it will call pmdLoadConfigure to load from config file
+    * And then it will to load from config file
     * Then it will parse command line input again to override config file
     * Basically we want to make sure all parameters that
     * specified in config file
     * can be simply overrided from commandline
     */
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDRESVARGS, "pmdResolveArguments" )
-   INT32 pmdResolveArguments(INT32 argc, CHAR** argv)
+   INT32 pmdResolveArguments( INT32 argc, CHAR** argv )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDRESVARGS );
+      PD_TRACE_ENTRY ( SDB_PMDRESVARGS ) ;
       rc = pmdGetKRCB()->getOptionCB()->init( argc, argv );
       // if user only ask for help information, we simply return
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
@@ -91,13 +89,9 @@ namespace engine
          rc = SDB_OK;
          goto done;
       }
-      if ( SDB_OK != rc )
+      else if ( rc )
       {
          goto error;
-      }
-      else
-      {
-         /// do nothing
       }
 
    done :
@@ -190,8 +184,9 @@ namespace engine
          if ( SDB_ROLE_DATA       == dbRole ||
               SDB_ROLE_STANDALONE == dbRole )
          {
-            rc = rtnLoadCollectionSpaces ( krcb->getDBPath(),
-                                           krcb->getIndexPath(), dmsCB ) ;
+            rc = rtnLoadCollectionSpaces ( pmdGetOptionCB()->getDbPath(),
+                                           pmdGetOptionCB()->getIndexPath(),
+                                           dmsCB ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to load collection spaces" ) ;
@@ -200,13 +195,18 @@ namespace engine
          }
          else if ( SDB_ROLE_CATALOG == dbRole )
          {
-            rtnLoadCollectionSpace ( CAT_SYS_SPACE_NAME, krcb->getDBPath(),
-                                     krcb->getIndexPath(), dmsCB, FALSE ) ;
-            rtnLoadCollectionSpace ( AUTH_SPACE, krcb->getDBPath(),
-                                     krcb->getIndexPath(), dmsCB, FALSE ) ;
+            rtnLoadCollectionSpace ( CAT_SYS_SPACE_NAME,
+                                     pmdGetOptionCB()->getDbPath(),
+                                     pmdGetOptionCB()->getIndexPath(),
+                                     dmsCB, FALSE ) ;
+            rtnLoadCollectionSpace ( AUTH_SPACE,
+                                     pmdGetOptionCB()->getDbPath(),
+                                     pmdGetOptionCB()->getIndexPath(),
+                                     dmsCB, FALSE ) ;
             rtnLoadCollectionSpace ( CAT_PROCEDURES_SPACE_NAME,
-                                     krcb->getDBPath(),
-                                     krcb->getIndexPath(), dmsCB, FALSE ) ;
+                                     pmdGetOptionCB()->getDbPath(),
+                                     pmdGetOptionCB()->getIndexPath(),
+                                     dmsCB, FALSE ) ;
          }
          else if ( SDB_ROLE_OM == dbRole )
          {
@@ -230,7 +230,8 @@ namespace engine
 
       if ( SDB_ROLE_COORD != dbRole )
       {
-         rc = dpsCB->init( krcb->getLogPath(), krcb->getLogBufSize() ) ;
+         rc = dpsCB->init( pmdGetOptionCB()->getReplLogPath(),
+                           pmdGetOptionCB()->logBuffSize() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to initialize dps cb, rc = %d", rc ) ;
@@ -273,7 +274,7 @@ namespace engine
          }
       }
 
-      for ( UINT32 i = 0; i < krcb->getPageCleanNum (); ++i )
+      for ( UINT32 i = 0; i < pmdGetOptionCB()->getPageCleanNum (); ++i )
       {
          // Once all collectionspaces are loaded, let's start up page cleaners
          pcJob = SDB_OSS_NEW rtnPageCleanerJob() ;
@@ -358,29 +359,7 @@ namespace engine
       SDB_ROLE   dbrole ;
       UINT32     startTimerCount = 0 ;
 
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         ossPrintf( "Failed to init krcb, rc: %d"OSS_NEWLINE, rc ) ;
-         goto error ;
-      }
-
-      /*
-       * This is the master thread
-       * First we need to open configure files to load configurations
-       * Then we should load all signal handlers and initialize
-       * all global memory
-       * Once we know if we are data node or coord node,
-       * we are going to start related threads
-       * basically we need to spawn tcp listener to receive network
-       * request (for both data/coord nodes)
-       * And then we put master thread into a loop to check global
-       * "shutdown" status
-       * If there's no shutdown request, we are going to keep loop
-       * (with sleep to avoid eat all CPU)
-       * The actual database works are done by agent threads
-       */
-      // read command line first
+      // 1. read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
       if ( rc )
       {
@@ -393,24 +372,35 @@ namespace engine
          return rc ;
       }
 
-      // enalble pd log
-      sdbEnablePD( krcb->getOptionCB()->getDiagLogPath(),
-                   krcb->getOptionCB()->diagFileNum() ) ;
-      setPDLevel( (PDLEVEL)(krcb->getOptionCB()->getDiagLevel()) ) ;
+      // 2. enalble pd log
+      sdbEnablePD( pmdGetOptionCB()->getDiagLogPath(),
+                   pmdGetOptionCB()->diagFileNum() ) ;
+      setPDLevel( (PDLEVEL)( pmdGetOptionCB()->getDiagLevel() ) ) ;
 
-      PD_LOG ( PDDEBUG, "Master thread starts" ) ;
+      PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
+               "Start sequoiadb(%s) [Ver: %d.%d, Release: %d, Build: %s]...",
+               pmdGetOptionCB()->krcbRole(), SDB_ENGINE_VERISON_CURRENT,
+               SDB_ENGINE_SUBVERSION_CURRENT, SDB_ENGINE_RELEASE_CURRENT,
+               SDB_ENGINE_BUILD_TIME ) ;
 
-      // printf all configs
+      // 3. printf all configs
       {
          BSONObj confObj ;
          krcb->getOptionCB()->toBSON( confObj ) ;
          PD_LOG( PDEVENT, "All configs: %s", confObj.toString().c_str() ) ;
       }
 
-      // handlers and init global mem
-      rc = pmdEnableSignalEvent( krcb->getOptionCB()->getDiagLogPath(),
+      // 4. handlers and init global mem
+      rc = pmdEnableSignalEvent( pmdGetOptionCB()->getDiagLogPath(),
                                  (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
+
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to init krcb, rc: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
 
       // initialize variables
       rc = pmdSysInit () ;
@@ -557,9 +547,10 @@ namespace engine
          // once all threads starts ( especially we need to make sure the
          // TcpListener thread is successfully started ), we can rename the
          // process. Otherwise if TcpListener failed
-         CHAR pmdProcessName [ PMD_ENGINE_NAME_BUF_LEN + 1 ] = {0} ;
-         ossSnprintf ( pmdProcessName, PMD_ENGINE_NAME_BUF_LEN,
-                       PMD_ENGINE_NAME_PATTERN, krcb->getServiceAddr() ) ;
+         CHAR pmdProcessName [ OSS_RENAME_PROCESS_BUFFER_LEN + 1 ] = {0} ;
+         ossSnprintf ( pmdProcessName, OSS_RENAME_PROCESS_BUFFER_LEN,
+                       ENGINE_NAME_PATTERN,
+                       pmdGetOptionCB()->getServiceAddr() ) ;
          ossEnableNameChanges ( argc, argv ) ;
          ossRenameProcess ( pmdProcessName ) ;
       }
@@ -587,7 +578,7 @@ namespace engine
       pmdSysExistance () ;
       krcb->destroy () ;
       pmdGetStartup().final() ;
-      PD_LOG ( PDEVENT, "Master thread exits, exist code: %d",
+      PD_LOG ( PDEVENT, "Stop sequoiadb, exist code: %d",
                krcb->getExitCode() ) ;
       PD_TRACE_EXITRC ( SDB_PMDMSTTHRDMAIN, rc );
       return rc ;

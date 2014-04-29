@@ -133,6 +133,7 @@ namespace engine
    #define PMD_OPTION_LOG_PATH         "replicalog"
    #define PMD_OPTION_BK_PATH          "bakfile"
    #define PMD_OPTION_TMPBLK_PATH      "tmp"
+   #define PMD_CURRENT_PATH            "./"
 
    #if defined (_LINUX)
    #define PROC_PATH                   "/proc"

@@ -306,7 +306,7 @@ namespace engine
       UINT32 i = 0 ;
       while ( i++ < 4 )
       {
-         hashValue |= ( digest[i-1] << ( 32 - 8 * i ) ) ;
+         hashValue |= ( (UINT32)digest[i-1] << ( 32 - 8 * i ) ) ;
       }
       return (UINT32)( hashValue >> ( 32 - _bitSize ) ) ;
    }

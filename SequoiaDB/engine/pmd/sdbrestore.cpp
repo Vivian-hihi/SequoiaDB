@@ -352,24 +352,26 @@ namespace engine
 
       std::cout << "Begin to clean dps logs..." << std::endl ;
       // clean dps logs
-      rc = sdbCleanDirFiles( krcb->getLogPath() ) ;
+      rc = sdbCleanDirFiles( pmdGetOptionCB()->getReplLogPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to clean dps logs[%s], rc: %d",
-                   krcb->getLogPath(), rc ) ;
+                   pmdGetOptionCB()->getReplLogPath(), rc ) ;
       std::cout << "Begin to clean dms storages..." << std::endl ;
       // clean dms storages
-      rc = sdbCleanDirSUFiles( krcb->getDBPath() ) ;
+      rc = sdbCleanDirSUFiles( pmdGetOptionCB()->getDbPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to clean data[%s] su, rc: %d",
-                   krcb->getDBPath(), rc ) ;
-      if ( 0 != ossStrcmp( krcb->getDBPath(), krcb->getIndexPath() ) )
+                   pmdGetOptionCB()->getDbPath(), rc ) ;
+      if ( 0 != ossStrcmp( pmdGetOptionCB()->getDbPath(),
+                           pmdGetOptionCB()->getIndexPath() ) )
       {
-         rc = sdbCleanDirSUFiles( krcb->getIndexPath() ) ;
+         rc = sdbCleanDirSUFiles( pmdGetOptionCB()->getIndexPath() ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to clean index[%s], rc: %d",
-                      krcb->getIndexPath(), rc ) ;
+                      pmdGetOptionCB()->getIndexPath(), rc ) ;
       }
       // remove start file
       {
          CHAR startFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         utilBuildFullPath( krcb->getDBPath(), PMD_STARTUP_FILE_NAME,
+         utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
+                            PMD_STARTUP_FILE_NAME,
                             OSS_MAX_PATHSIZE, startFile ) ;
          if ( SDB_OK == ossAccess( startFile ) )
          {
@@ -381,7 +383,8 @@ namespace engine
 
       std::cout << "Begin to init dps logs..." << std::endl ;
       // init dps
-      rc = dpsCB->init( krcb->getLogPath(), krcb->getLogBufSize() ) ;
+      rc = dpsCB->init( pmdGetOptionCB()->getReplLogPath(),
+                        pmdGetOptionCB()->logBuffSize() ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to initialize dps cb, rc = %d", rc ) ;
@@ -436,13 +439,7 @@ namespace engine
       EDUID      agentEDU = PMD_INVALID_EDUID ;
       rsOptionMgr optMgr ;
 
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         std::cerr << "init krcb failed, " << rc << std::endl ;
-         return rc ;
-      }
-
+      // 1. read command line first
       rc = resolveArguments ( argc, argv, optMgr ) ;
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
       {
@@ -454,16 +451,25 @@ namespace engine
       {
          return rc ;
       }
-      // enable pd log
+
+      // 2. enable pd log
       sdbEnablePD( optMgr._dialogPath ) ;
       setPDLevel( (PDLEVEL)optMgr._diagLevel ) ;
 
-      // handlers and init global mem
+      // 3. handlers and init global mem
       rc = pmdEnableSignalEvent( optMgr._dialogPath,
                                  (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       if ( rc )
       {
-         std::cerr << "Failed to setup signal handler, rc: " << rc << std::endl ;
+         std::cerr << "Failed to setup signal handler, rc: " << rc
+                   << std::endl ;
+         return rc ;
+      }
+
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         std::cerr << "init krcb failed, " << rc << std::endl ;
          return rc ;
       }
 
@@ -474,7 +480,10 @@ namespace engine
          return rc ;
       }
 
-      PD_LOG ( PDEVENT, "Master thread starts..." ) ;
+      PD_LOG ( ( getPDLevel() > PDEVENT ? PDEVENT : getPDLevel() ) ,
+               "Start sdbrestore [Ver: %d.%d, Release: %d, Build: %s]...",
+               SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
+               SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
 
       rc = g_restoreLogger.init( optMgr._bkPath, optMgr._bkName, NULL,
                                  optMgr._incID ) ;
@@ -532,20 +541,20 @@ namespace engine
    done :
       PMD_SHUTDOWN_DB( rc ) ;
       krcb->destroy () ;
-      PD_LOG ( PDEVENT, "Master thread exits, exist code: %d",
+      PD_LOG ( PDEVENT, "Stop sdbrestore, exist code: %d",
                krcb->getExitCode() ) ;
 
-      std::cerr << "*****************************************************"
+      std::cout << "*****************************************************"
                 << std::endl ;
       if ( SDB_OK != krcb->getExitCode() )
       {
-         std::cerr << "Restore failed: " << krcb->getExitCode() << std::endl ;
+         std::cout << "Restore failed: " << krcb->getExitCode() << std::endl ;
       }
       else
       {
          std::cout << "Restore succeed!" << std::endl ;
       }
-      std::cerr << "*****************************************************"
+      std::cout << "*****************************************************"
                 << std::endl ;
       return rc ;
    error :

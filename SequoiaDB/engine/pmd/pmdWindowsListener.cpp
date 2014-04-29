@@ -79,7 +79,7 @@ namespace engine
       }
       ossSnprintf ( namedPipe, OSS_NPIPE_MAX_NAME_LEN,
                     PMD_WL_NPIPE_NAME_PREFIX"%s",
-                    krcb->getServiceAddr() ) ;
+                    pmdGetOptionCB()->getServiceAddr() ) ;
       PD_LOG ( PDINFO, "Attempt to create named pipe: %s",
                namedPipe ) ;
 

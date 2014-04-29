@@ -341,9 +341,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       UINT64 mvSize = 0 ;
       _rtnSortTuple *tuple = NULL ;
+
       if ( !_unit.isOpened() )
       {
-         rc = _unit.openFile( pmdGetKRCB()->getTmpPath(),
+         rc = _unit.openFile( pmdGetOptionCB()->getTmpPath(),
                               _fino ) ;
          if ( SDB_OK != rc )
          {

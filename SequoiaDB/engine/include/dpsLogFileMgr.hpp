@@ -35,8 +35,8 @@
 
 *******************************************************************************/
 
-#ifndef DPSLOGFILEMGR_H_
-#define DPSLOGFILEMGR_H_
+#ifndef DPSLOGFILEMGR_HPP__
+#define DPSLOGFILEMGR_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -47,30 +47,27 @@ using namespace std;
 
 namespace engine
 {
-   #define DPS_MAX_LOG_FILE_NUM     1000
-   #define DPS_LOG_FILE_SIZE_UNIT   (1024 * 1024)
-   // max log file size 2GB
-   #define DPS_MAX_LOG_FILE_SIZE ((UINT64)PMD_MAX_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
-   // min log file size 32MB
-   #define DPS_MIN_LOG_FILE_SIZE ((UINT64)PMD_MIN_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
-   // default log file size
-   #define DPS_DFT_LOG_FILE_SIZE ((UINT64)PMD_DFT_LOG_FILE_SZ*DPS_LOG_FILE_SIZE_UNIT)
-   #define DPS_DFT_LOG_FILE_NUM  PMD_DFT_LOG_FILE_NUM
+
+   #define DPS_LOG_FILE_SIZE_UNIT         (1024 * 1024)
 
    class _dpsLogPage;
    class _dpsMessageBlock;
    class _dpsReplicaLogMgr ;
+
+   /*
+      _dpsLogFileMgr define
+   */
    class _dpsLogFileMgr : public SDBObject
    {
    private:
-      vector<_dpsLogFile *> _files;
-      UINT32 _work;
-      UINT32 _logicalWork ;
-      UINT32 _begin ;
+      vector<_dpsLogFile *>   _files;
+      UINT32                  _work;
+      UINT32                  _logicalWork ;
+      UINT32                  _begin ;
 
-      UINT32 _logFileSz ;
-      UINT32 _logFileNum ;
-      _dpsReplicaLogMgr *_replMgr ;
+      UINT32                  _logFileSz ;
+      UINT32                  _logFileNum ;
+      _dpsReplicaLogMgr       *_replMgr ;
 
    public:
       _dpsLogFileMgr( class _dpsReplicaLogMgr *replMgr );
@@ -89,12 +86,7 @@ namespace engine
 
       void setLogFileSz ( UINT32 logFileSz )
       {
-         UINT64 fileSize = DPS_LOG_FILE_SIZE_UNIT * (UINT64)logFileSz ;
-         if ( fileSize > DPS_MAX_LOG_FILE_SIZE )
-            fileSize = DPS_MAX_LOG_FILE_SIZE ;
-         if ( fileSize < DPS_MIN_LOG_FILE_SIZE )
-            fileSize = DPS_MIN_LOG_FILE_SIZE ;
-         _logFileSz = fileSize ;
+         _logFileSz = DPS_LOG_FILE_SIZE_UNIT * (UINT64)logFileSz ;
       }
 
       DPS_LSN getStartLSN ( BOOLEAN mustExist = TRUE ) ;
@@ -117,15 +109,15 @@ namespace engine
       }
 
    protected:
-      void _analysis () ;
-      UINT32 _incFileID ( UINT32 fileID ) ;
-      UINT32 _decFileID ( UINT32 fileID ) ;
-      void   _incLogicalFileID () ;
+      void     _analysis () ;
+      UINT32   _incFileID ( UINT32 fileID ) ;
+      UINT32   _decFileID ( UINT32 fileID ) ;
+      void     _incLogicalFileID () ;
 
    };
-   typedef class _dpsLogFileMgr dpsLogFileMgr;
+   typedef class _dpsLogFileMgr dpsLogFileMgr ;
+
 }
 
-
-#endif
+#endif // DPSLOGFILEMGR_HPP__
 

@@ -68,10 +68,10 @@ namespace engine
    _dpsLogFileMgr::_dpsLogFileMgr( class _dpsReplicaLogMgr *replMgr ):_work(0),
    _logicalWork(0)
    {
-      SDB_ASSERT ( replMgr, "replMgr can't be NULL" )
-      _replMgr = replMgr ;
-      _logFileSz = (UINT32)DPS_DFT_LOG_FILE_SIZE ;
-      _logFileNum = DPS_DFT_LOG_FILE_NUM ;
+      SDB_ASSERT ( replMgr, "replMgr can't be NULL" ) ;
+      _replMgr    = replMgr ;
+      _logFileSz  = PMD_DFT_LOG_FILE_SZ * DPS_LOG_FILE_SIZE_UNIT ;
+      _logFileNum = PMD_DFT_LOG_FILE_NUM ;
 
       _begin = 0 ;
    }

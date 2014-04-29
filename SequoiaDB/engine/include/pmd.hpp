@@ -42,7 +42,6 @@
 #include "oss.hpp"
 #include "ossIO.hpp"
 #include "ossUtil.hpp"
-#include "ossLatch.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pd.hpp"
 #include "monCB.hpp"
@@ -50,37 +49,25 @@
 #include "msg.h"
 #include "msgDef.hpp"
 #include "pmdEnv.hpp"
-
+#include "sdbInterface.hpp"
 
 class _pdTraceCB ;
 
 namespace engine
 {
 
-#if defined (_LINUX)
-   #define PMD_ENGINE_NAME_BUF_LEN OSS_RENAME_PROCESS_BUFFER_LEN
-   // no space between sequoiadb and (, because our sdbstart is relying on
-   // /proc/<pid>/stat to check startup progress. It will fetch first 4 records
-   // for pid/procname/status/ppid, so if we have space between sequoiadb and (,
-   // we'll break the logic there
-   #define PMD_ENGINE_NAME_PATTERN "sequoiadb(%s)"
-#endif
-   #define PMD_CURRENT_PATH "./"
+   /*
+      PMD DB status define
+   */
+   enum PMD_DB_STATUS
+   {
+      PMD_DB_NORMAL        = 0 ,
+      PMD_DB_SHUTDOWN      = 1
+   } ;
 
-   // database status information
-   #define PMD_DB_NORMAL        0
-   #define PMD_DB_SHUTDOWN      1
-   #define PMD_DB_PANIC         2
-   #define PMD_DB_FREEZE        3
-   #define PMD_IS_DB_NORMAL     ( PMD_DB_NORMAL == pmdGetKRCB()->getDBStatus() )
-   #define PMD_IS_DB_DOWN       ( PMD_DB_SHUTDOWN ==  \
-                                  pmdGetKRCB()->getDBStatus() || \
-                                  PMD_DB_PANIC == pmdGetKRCB()->getDBStatus() )
-   #define PMD_IS_DB_FREEZE     ( PMD_DB_FREEZE == pmdGetKRCB()->getDBStatus() )
-   #define PMD_IS_DB_UP         ( !PMD_IS_DB_DOWN )
-
-   #define PMD_FREEZE_DB        { pmdGetKRCB()->setDBStatus(PMD_DB_FREEZE) ; }
-   #define PMD_UNFREEZE_DB      { pmdGetKRCB()->setDBStatus(PMD_DB_NORMAL) ; }
+   #define PMD_IS_DB_NORMAL   ( PMD_DB_NORMAL == pmdGetKRCB()->getDBStatus() )
+   #define PMD_IS_DB_DOWN     ( !PMD_IS_DB_UP  )
+   #define PMD_IS_DB_UP       PMD_IS_DB_NORMAL
 
    #define PMD_SHUTDOWN_DB(code)  \
       do { \
@@ -88,25 +75,19 @@ namespace engine
          pmdGetKRCB()->setExitCode( code ) ; \
       } while ( 0 );
 
-   // database flag
-   // access flag, whenever database opens a file, need to check for this bit
-   // in order to use the right open mode
-   // also need to check this status whenever write activity happen
-   // a database must be readable in order to operate, but it can be 
-   // "readonly" db when the media/path is not writable
-   #define PMD_DBFLAG_WRITEABLE     0x00000001
-
-
-   #define PMD_IS_FLAG_SET(x)      ( x & pmdGetKRCB()->getDBFlag() )
-   #define PMD_IS_FLAG_NOT_SET(x)  ( !PMD_IS_FLAG_SET(x) )
-   #define PMD_IS_DB_READONLY      ( PMD_IS_FLAG_NOT_SET(PMD_DBFLAG_WRITEABLE) )
-   #define PMD_IS_DB_READWRITE     ( PMD_IS_FLAG_SET(PMD_DBFLAG_WRITEABLE) )
-
+   /*
+      PMD Start type define
+   */
    enum SDB_START_TYPE
    {
       SDB_START_NORMAL  = 0,
       SDB_START_CRASH
-   };
+   } ;
+
+   /*
+      Register db to krcb
+   */
+   #define PMD_REGISTER_CB( pCB ) pmdGetKRCB()->registerCB( pCB )
 
    class _clsMgr ;
    class _clsReplicateSet ;
@@ -129,14 +110,22 @@ namespace engine
     */
    class _SDB_KRCB : public SDBObject
    {
-   #ifdef KRCB_XLOCK
-   #undef KRCB_XLOCK
-   #endif
-   #define KRCB_XLOCK ossScopedLock _lock(&_mutex, EXCLUSIVE);
-   #ifdef KRCB_SLOCK
-   #undef KRCB_SLOCK
-   #endif
-   #define KRCB_SLOCK ossScopedLock _lock(&_mutex, SHARED) ;
+   public:
+      _SDB_KRCB () ;
+      ~_SDB_KRCB () ;
+
+      INT32 init () ;
+      void  destroy () ;
+
+      IControlBlock*    getCBByType( SDB_CB_TYPE type ) ;
+      BOOLEAN           isCBValue( SDB_CB_TYPE type ) const ;
+
+      INT32             registerCB( IControlBlock *pCB ) ;
+
+   private:
+      IControlBlock                 *_arrayCBs[ SDB_CB_MAX ] ;
+      BOOLEAN                       _init ;
+
    private :
       // configured options
       CHAR           _groupName    [ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
@@ -144,12 +133,10 @@ namespace engine
       SDB_START_TYPE _startType ;
 
       UINT32         _dbStatus ;
-      UINT32         _dbFlag ;
 
       BOOLEAN        _businessOK ;
       INT32          _exitCode ;
 
-      ossSpinSLatch  _mutex ;
       _pmdEDUMgr     _eduMgr ;
 
       _clsMgr        *_clsCB ;
@@ -181,101 +168,17 @@ namespace engine
       {
          _startType = startType ;
       }
-      const CHAR *getLogPath () const
-      {
-         return _optioncb.krcbLogPath() ;
-      }
-      CHAR *getLogPath ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getLogPath(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getDBPath () const
-      {
-         return _optioncb.krcbDbPath() ;
-      }
-      CHAR *getDBPath ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getDBPath(), size  ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getIndexPath () const
-      {
-         return _optioncb.krcbIndexPath() ;
-      }
-      CHAR *getIndexPath ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getIndexPath(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getBkupPath () const
-      {
-         return _optioncb.krcbBkupPath() ;
-      }
-      CHAR *getBkupPath ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getBkupPath(), size  ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
-      const CHAR *getRestAddr () const
-      {
-         return _optioncb.restService() ;
-      }
-      CHAR *getRestAddr ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getRestAddr(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
-      }
       UINT32 getDBStatus () const
       {
          return _dbStatus ;
-      }
-      UINT32 getDBFlag () const
-      {
-         return _dbFlag ;
       }
       SDB_ROLE getDBRole () const
       {
          return _role ;
       }
-      UINT32 getMaxPooledEDU () const
-      {
-         return _optioncb.krcbMaxPool() ;
-      }
       pmdEDUMgr *getEDUMgr ()
       {
          return &_eduMgr ;
-      }
-      UINT16 getServicePort () const
-      {
-         return _optioncb.krcbSvcPort() ;
-      }
-      const CHAR *getServiceAddr () const
-      {
-         return _optioncb.krcbService() ;
-      }
-      CHAR *getServiceAddr ( CHAR *pBuffer, UINT32 size ) const
-      {
-         if ( !pBuffer || 0 == size )
-            return NULL ;
-         ossStrncpy ( pBuffer, getServiceAddr(), size ) ;
-         pBuffer[ size - 1 ] = 0 ;
-         return pBuffer ;
       }
       const CHAR *getGroupName () const
       {
@@ -289,36 +192,6 @@ namespace engine
          pBuffer[ size - 1 ] = 0 ;
          return pBuffer ;
       }
-      UINT32 getLogBufSize () const
-      {
-         return _optioncb.logBuffSize() ;
-      }
-
-      UINT32 getSortBufSize() const
-      {
-         return _optioncb.sortBufSize() ;
-      }
-
-      UINT32 getHjBufSize() const
-      {
-         return _optioncb.hjBufSize() ;
-      }
-
-      UINT32 getPageCleanInterval () const
-      {
-         return _optioncb.pagecleanInterval () ;
-      }
-
-      UINT32 getPageCleanNum () const
-      {
-         return _optioncb.pagecleanNum () ;
-      }
-
-      const CHAR *getTmpPath() const
-      {
-         return _optioncb.dmsTmpPath() ;
-      }
-
       OSS_INLINE _SDB_DMSCB *getDMSCB ()
       {
          return _dmscb ;
@@ -423,23 +296,10 @@ namespace engine
       {
          _dbStatus = status ;
       }
-
-      void setDBFlag ( UINT32 addedFlag )
-      {
-         _dbFlag |= addedFlag ;
-      }
       void enforceDBRole ( SDB_ROLE role )
       {
          _role = role ;
          pmdSetDBRole( _role ) ;
-      }
-      void unsetDBFlag ( UINT32 removedFlag )
-      {
-         _dbFlag &= ~removedFlag ;
-      }
-      void replaceDBFlag ( UINT32 newFlag )
-      {
-         _dbFlag = newFlag ;
       }
       void setMonCB( monConfigCB & monCB )
       {
@@ -479,14 +339,6 @@ namespace engine
       ossTick getCurTime() ;
       void syncCurTime() ;
 
-   public:
-      _SDB_KRCB () ;
-      ~_SDB_KRCB () ;
-
-      INT32 init () ;
-
-      void destroy () ;
-
    } ;
    typedef class _SDB_KRCB pmdKRCB ;
 
@@ -499,6 +351,11 @@ namespace engine
    {
       return &pmd_krcb ;
    }
+   OSS_INLINE pmdOptionsCB* pmdGetOptionCB()
+   {
+      return pmdGetKRCB()->getOptionCB() ;
+   }
+
 }
 
 #endif //PMD_HPP__

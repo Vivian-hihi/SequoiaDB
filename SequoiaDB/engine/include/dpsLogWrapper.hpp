@@ -35,11 +35,12 @@
 
 *******************************************************************************/
 
-#ifndef DPSLOGWRAPPER_H_
-#define DPSLOGWRAPPER_H_
+#ifndef DPSLOGWRAPPER_HPP__
+#define DPSLOGWRAPPER_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "sdbInterface.hpp"
 #include "dpsReplicaLogMgr.hpp"
 #include "../bson/bsonelement.h"
 #include "../bson/bsonobj.h"
@@ -48,73 +49,90 @@ using namespace bson;
 
 namespace engine
 {
-#define DPS_DFT_LOG_BUF_SZ 1024
+
+   /*
+      macro define
+   */
+   #define DPS_DFT_LOG_BUF_SZ          (1024)
 
    class _pmdEDUCB ;
 
-   class _dpsLogWrapper : public SDBObject
+   /*
+      _dpsLogWrapper define
+   */
+   class _dpsLogWrapper : public _IControlBlock
    {
    private:
-      _dpsReplicaLogMgr _buf;
-      BOOLEAN _initialized ;
-      BOOLEAN _dpslocal ;
+      _dpsReplicaLogMgr          _buf ;
+      BOOLEAN                    _initialized ;
+      BOOLEAN                    _dpslocal ;
 
    public:
-      _dpsLogWrapper();
-      ~_dpsLogWrapper();
+      _dpsLogWrapper() ;
+      virtual ~_dpsLogWrapper() ;
+
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_DPS ; }
+      virtual const CHAR* cbName() const { return "DPSCB" ; }
+
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
+
    public:
       OSS_INLINE _dpsReplicaLogMgr *getLogMgr ()
       {
          return &_buf ;
       }
-
       OSS_INLINE void setLogLocal( BOOLEAN dpslocal )
       {
          _dpslocal = dpslocal ;
       }
-
-      OSS_INLINE BOOLEAN isLogLocal()
+      OSS_INLINE BOOLEAN isLogLocal() const
       {
          return _dpslocal ;
       }
-
-      OSS_INLINE INT32 init( const CHAR *path, UINT32 pageNum = DPS_DFT_LOG_BUF_SZ )
+      OSS_INLINE INT32 init( const CHAR *path,
+                             UINT32 pageNum = DPS_DFT_LOG_BUF_SZ )
       {
          INT32 rc = _buf.init( path, pageNum ) ;
          if ( SDB_OK == rc )
+         {
             _initialized = TRUE ;
+         }
          return rc ;
       }
-
-      OSS_INLINE INT32 search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
-                           UINT8 type = DPS_SEARCH_MEM | DPS_SEARCH_FILE )
+      OSS_INLINE INT32 search( const DPS_LSN &minLsn,
+                               _dpsMessageBlock *mb,
+                               UINT8 type = DPS_SERCAH_ALL )
       {
          SDB_ASSERT ( _initialized, "shouldn't call search without init" )
          return _buf.search( minLsn, mb, type, FALSE ) ;
       }
-
-      OSS_INLINE INT32 searchHeader( const DPS_LSN &lsn, _dpsMessageBlock *mb,
-                                 UINT8 type = DPS_SEARCH_MEM | DPS_SEARCH_FILE )
+      OSS_INLINE INT32 searchHeader( const DPS_LSN &lsn,
+                                     _dpsMessageBlock *mb,
+                                     UINT8 type = DPS_SERCAH_ALL )
       {
          SDB_ASSERT ( _initialized, "shouldn't call search without init" )
          return _buf.search( lsn, mb, type, TRUE ) ;
       }
-
       OSS_INLINE INT32 run( _pmdEDUCB *cb )
       {
          if ( !_initialized )
+         {
             return SDB_OK ;
+         }
          return _buf.run( cb );
       }
-
       OSS_INLINE INT32 tearDown()
       {
          if ( !_initialized )
+         {
             return SDB_OK ;
+         }
          return _buf.tearDown();
       }
-
-      OSS_INLINE BOOLEAN doLog ()
+      OSS_INLINE BOOLEAN doLog () const
       {
          return _initialized ;
       }
@@ -170,7 +188,9 @@ namespace engine
                                 DPS_LSN &expected )
       {
          if ( !_initialized )
+         {
             return ;
+         }
          _buf.getLsnWindow( fileBeginLsn,
                             memBeginLsn,
                             endLsn,
@@ -193,7 +213,7 @@ namespace engine
       }
 
       OSS_INLINE INT32 move( const DPS_LSN_OFFSET &offset,
-                         const DPS_LSN_VER &version )
+                             const DPS_LSN_VER &version )
       {
          return _buf.move( offset, version ) ;
       }
@@ -206,75 +226,7 @@ namespace engine
    public:
       void  writeData ( dpsMergeInfo &info ) ;
 
-/*
-      INT32 recordInsert( const CHAR *csName,
-                          const CHAR *clName,
-                          const BSONObj &obj,
-                          const DPS_TRANS_ID &transID,
-                          const DPS_LSN_OFFSET &preTransLsn,
-                          dpsMergeInfo &info ) ;
-
-      INT32 recordUpdate( const CHAR *csName,
-                          const CHAR *clName,
-                          const BSONObj &oldMatch,
-                          const BSONObj &oldObj,
-                          const BSONObj &newMatch,
-                          const BSONObj &newObj,
-                          const DPS_TRANS_ID &transID,
-                          const DPS_LSN_OFFSET &preTransLsn,
-                          dpsMergeInfo &info ) ;
-
-      INT32 recordDelete( const CHAR *csName,
-                          const CHAR *clName,
-                          const BSONObj &oldObj,
-                          const DPS_TRANS_ID &transID,
-                          const DPS_LSN_OFFSET &preTransLsn,
-                          dpsMergeInfo &info ) ;
-
-      INT32 recordCScrt( const CHAR *csName, const INT32 &pageSize,
-                         dpsMergeInfo &info );
-
-      INT32 recordCSdel( const CHAR *csName, dpsMergeInfo &info );
-
-      INT32 recordCLcrt( const CHAR *csName,
-                         const CHAR *clName,
-                         dpsMergeInfo &info ) ;
-
-      INT32 recordCLdel( const CHAR *csName,
-                         const CHAR *clName,
-                         dpsMergeInfo &info ) ;
-
-      INT32 recordIXcrt ( const CHAR *csName,
-                          const CHAR *clName,
-                          const BSONObj &index,
-                          dpsMergeInfo &info ) ;
-
-      INT32 recordIXdel ( const CHAR *csName,
-                          const CHAR *clName,
-                          const BSONObj &index,
-                          dpsMergeInfo &info ) ;
-
-      INT32 recordCLrename ( const CHAR *csName,
-                             const CHAR *clOldName,
-                             const CHAR *clNewName,
-                             dpsMergeInfo &info ) ;
-
-      INT32 recordCLtrunc ( const CHAR *csName,
-                            const CHAR *clName,
-                            dpsMergeInfo &info ) ;
-
-      INT32 recordTransCommit( const DPS_TRANS_ID &transID,
-                           dpsMergeInfo &info );
-
-      INT32 recordTransRollback( const DPS_TRANS_ID &transID,
-                                 const DPS_LSN_OFFSET &preTransLsn,
-                                 dpsMergeInfo &info );
-
-      INT32 recordInvalidateCata( const CHAR *clFullName,
-                                  dpsMergeInfo &info ) ;
-*/
-
-      INT32 recordRow( const CHAR *row, UINT32 len );
+      INT32 recordRow( const CHAR *row, UINT32 len ) ;
 
       INT32 prepare( dpsMergeInfo &info ) ;
 
@@ -298,9 +250,16 @@ namespace engine
       {
          return _buf.calcFileID( offset ) ;
       }
-      BOOLEAN isInRestore();
+
+      BOOLEAN isInRestore() ;
    };
    typedef class _dpsLogWrapper SDB_DPSCB ;
+
+   /*
+      get dps cb
+   */
+   SDB_DPSCB* sdbGetDPSCB() ;
+
 }
 
-#endif
+#endif // DPSLOGWRAPPER_HPP__

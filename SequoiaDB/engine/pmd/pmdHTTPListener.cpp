@@ -60,7 +60,7 @@ namespace engine
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
       UINT32 retry = 0 ;
       BOOLEAN isLatched = FALSE ;
-      const CHAR *restService = pmdGetKRCB()->getRestAddr () ;
+      const CHAR *restService = pmdGetOptionCB()->getRestService() ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
       UINT16 port = 0 ;
       if ( SDB_OK != ( rc = eduMgr->activateEDU ( myEDUID )) )

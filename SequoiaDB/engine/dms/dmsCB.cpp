@@ -1199,7 +1199,7 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DISPATCHPAGECLEANSU ) ;
       *suID               = DMS_INVALID_SUID ;
-      pmdKRCB *krcb       = pmdGetKRCB () ;
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
       _dmsStorageUnit *su = NULL ;
       SDB_ASSERT ( suID, "suID can't be NULL" )
       _pageCleanHistory firstSU ;
@@ -1213,7 +1213,8 @@ namespace engine
       deltaTime = pmdGetKRCB()->getCurTime () - firstSU.first ;
       // deltaTime.toUINT64 returns timestamp in microseconds, so we need to
       // convert to milliseconds by dividing 1000
-      if ( deltaTime.toUINT64() / 1000 > (UINT64)krcb->getPageCleanInterval() )
+      if ( deltaTime.toUINT64() / 1000 >
+           (UINT64)optCB->getPageCleanInterval() )
       {
          // that means we need to dispatch the su
          PD_TRACE1 ( SDB__SDB_DMSCB_DISPATCHPAGECLEANSU,

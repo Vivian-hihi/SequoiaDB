@@ -81,11 +81,8 @@ namespace engine
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__DPSLOGFILE_INIT );
 
-      SDB_ASSERT ( _fileSize <= DPS_MAX_LOG_FILE_SIZE,
-                   "log file size can't be greater than "
-                   "DPS_MAX_LOG_FILE_SIZE  bytes" )
-      SDB_ASSERT ( 0 == (_fileSize % DPS_DEFAULT_PAGE_SIZE),
-                   "Size must be multiple of DPS_DEFAULT_PAGE_SIZE bytes" )
+      SDB_ASSERT ( 0 == ( _fileSize % DPS_DEFAULT_PAGE_SIZE ),
+                   "Size must be multiple of DPS_DEFAULT_PAGE_SIZE bytes" ) ;
 
       _fileSize = size ;
       _idleSize = _fileSize ;

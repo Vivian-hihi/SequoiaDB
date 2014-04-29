@@ -436,8 +436,8 @@ namespace engine
                      // container, if we can't open the container, maybe it's
                      // just invalid, let's continue open other storage units
                      // without this one
-                     rc = storageUnit->open ( pmdGetKRCB()->getDBPath(),
-                                              pmdGetKRCB()->getIndexPath(),
+                     rc = storageUnit->open ( pmdGetOptionCB()->getDbPath(),
+                                              pmdGetOptionCB()->getIndexPath(),
                                               FALSE ) ;
                      if ( rc )
                      {
@@ -565,13 +565,13 @@ namespace engine
                   " load from disk", pCollectionSpaceName ) ;
 
          rc = rtnLoadCollectionSpace ( pCollectionSpaceName,
-                                       pmdGetKRCB()->getDBPath(),
-                                       pmdGetKRCB()->getIndexPath(),
+                                       pmdGetOptionCB()->getDbPath(),
+                                       pmdGetOptionCB()->getIndexPath(),
                                        dmsCB, FALSE ) ;
          if ( rc )
          {
             PD_LOG_MSG ( PDERROR, "Unable to load collection %s from %s",
-                         pCollectionSpaceName, pmdGetKRCB()->getDBPath() ) ;
+                         pCollectionSpaceName, pmdGetOptionCB()->getDbPath() ) ;
             goto error ;
          }
          goto retry ;

@@ -1107,16 +1107,14 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
    PD_TRACE1 ( SDB_MSGBLDREPLYMSG2, PD_PACK_INT(packetLength) );
    if ( packetLength < 0 )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Packet size overflow" ) ;
+      PD_LOG ( PDERROR, "Packet size overflow" ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
    }
    rc = msgCheckBuffer ( ppBuffer, bufferSize, packetLength ) ;
    if ( rc )
    {
-      pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to check buffer" ) ;
+      PD_LOG ( PDERROR, "Failed to check buffer, rc: %d", rc ) ;
       goto error ;
    }
    pReply                       = (MsgOpReply*)(*ppBuffer) ;

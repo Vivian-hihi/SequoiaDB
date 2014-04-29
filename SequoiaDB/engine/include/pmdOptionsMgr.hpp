@@ -257,19 +257,19 @@ namespace engine
          {
             return _krcbCatFile ;
          }
-         OSS_INLINE const CHAR *krcbLogPath() const
+         OSS_INLINE const CHAR *getReplLogPath() const
          {
             return _krcbLogPath;
          }
-         OSS_INLINE const CHAR *krcbDbPath() const
+         OSS_INLINE const CHAR *getDbPath() const
          {
             return _krcbDbPath;
          }
-         OSS_INLINE const CHAR *krcbIndexPath() const
+         OSS_INLINE const CHAR *getIndexPath() const
          {
             return _krcbIndexPath;
          }
-         OSS_INLINE const CHAR *krcbBkupPath() const
+         OSS_INLINE const CHAR *getBkupPath() const
          {
             return _krcbBkupPath;
          }
@@ -277,11 +277,11 @@ namespace engine
          {
             return _krcbDiagLogPath;
          }
-         OSS_INLINE UINT32 krcbMaxPool() const
+         OSS_INLINE UINT32 getMaxPooledEDU() const
          {
             return _krcbMaxPool;
          }
-         OSS_INLINE UINT16 krcbSvcPort() const
+         OSS_INLINE UINT16 getServicePort() const
          {
             return _krcbSvcPort;
          }
@@ -305,11 +305,11 @@ namespace engine
          {
             return _shardServiceName ;
          }
-         OSS_INLINE const CHAR *restService() const
+         OSS_INLINE const CHAR *getRestService() const
          {
             return _restServiceName ;
          }
-         OSS_INLINE const CHAR *krcbService() const
+         OSS_INLINE const CHAR *getServiceAddr() const
          {
             return _krcbSvcName ;
          }
@@ -317,27 +317,27 @@ namespace engine
          {
             return _cat ;
          }
-         OSS_INLINE const CHAR *dmsTmpPath() const
+         OSS_INLINE const CHAR *getTmpPath() const
          {
             return _dmsTmpBlkPath ;
          }
 
-         OSS_INLINE UINT32 sortBufSize() const
+         OSS_INLINE UINT32 getSortBufSize() const
          {
             return _sortBufSz ;
          }
 
-         OSS_INLINE UINT32 hjBufSize() const
+         OSS_INLINE UINT32 getHjBufSize() const
          {
             return _hjBufSz ;
          }
 
-         OSS_INLINE UINT32 pagecleanNum () const
+         OSS_INLINE UINT32 getPageCleanNum () const
          {
             return _pagecleanNum ;
          }
 
-         OSS_INLINE UINT32 pagecleanInterval () const
+         OSS_INLINE UINT32 getPageCleanInterval () const
          {
             return _pagecleanInterval ;
          }
@@ -419,6 +419,8 @@ namespace engine
          UINT16      _nodeID ;
 
    } ;
+
+   typedef _pmdOptionsMgr pmdOptionsCB ;
 
 }
 

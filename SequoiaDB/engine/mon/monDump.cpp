@@ -108,15 +108,16 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_MONGETSESSIONNAME ) ;
       pmdKRCB *krcb     = pmdGetKRCB() ;
       *(pSessName + size - 1) = 0;
-      ossSocket::getHostName ( pSessName, size - 1 ) ;
+      ossGetHostName ( pSessName, size - 1 ) ;
       curPos = ossStrlen( pSessName );
       PD_CHECK( curPos < size - 1, SDB_INVALIDARG, error, PDERROR,
                "out off buffer!" );
       *(pSessName + curPos) = NODE_NAME_SERVICE_SEPCHAR;
       ++curPos;
       PD_CHECK( curPos < size - 1, SDB_INVALIDARG, error, PDERROR,
-               "out off buffer!" );
-      krcb->getServiceAddr ( pSessName + curPos, size - 1 - curPos ) ;
+               "out off buffer!" ) ;
+      ossStrncpy( pSessName + curPos, pmdGetOptionCB()->getServiceAddr(),
+                  size - 1 - curPos ) ;
       curPos = ossStrlen( pSessName );
       PD_CHECK( curPos < size - 1, SDB_INVALIDARG, error, PDERROR,
                "out off buffer!" );
@@ -165,7 +166,7 @@ namespace engine
       shardCB *pShardCB = krcb->getShardCB() ;
 
       CHAR hostName [ OSS_MAX_HOSTNAME + 1 ]             = {0} ;
-      const CHAR *serviceName       = krcb->getServiceAddr() ;
+      const CHAR *serviceName       = pmdGetOptionCB()->getServiceAddr() ;
       const CHAR *groupName         = krcb->getGroupName() ;
       CHAR nodeName [ OSS_MAX_HOSTNAME + OSS_MAX_SERVICENAME + 1 + 1 ] = {0} ;
       UINT32 nodeNameSize = OSS_MAX_HOSTNAME + OSS_MAX_SERVICENAME + 1 ;
@@ -627,7 +628,7 @@ namespace engine
       // disk
       INT64 diskTotalBytes  = 0 ;
       INT64 diskFreeBytes   = 0 ;
-      const CHAR *dbPath    = pmdGetKRCB()->getDBPath () ;
+      const CHAR *dbPath    = pmdGetOptionCB()->getDbPath () ;
 
       // cpu
       rc = ossGetCPUInfo ( cpuUser, cpuSys, cpuIdle, cpuOther ) ;
@@ -738,7 +739,7 @@ namespace engine
       ossTime userTime, sysTime ;
       INT64 diskTotalBytes ;
       INT64 diskFreeBytes ;
-      const CHAR *dbPath = pmdGetKRCB()->getDBPath () ;
+      const CHAR *dbPath = pmdGetOptionCB()->getDbPath () ;
       ossGetCPUUsage( userTime, sysTime ) ;
       ossGetDiskInfo ( dbPath, diskTotalBytes, diskFreeBytes ) ;
       try

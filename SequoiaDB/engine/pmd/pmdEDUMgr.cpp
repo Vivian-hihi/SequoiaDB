@@ -489,7 +489,7 @@ namespace engine
       // if the EDU type can't be pooled, or if we forced, or if the EDU is
       // destroied, or we exceed max pooled edus, let's destroy it
       if ( !isPoolable(type) || force || isDestroyed () || size () >=
-           pmdGetKRCB()->getMaxPooledEDU () )
+           pmdGetOptionCB()->getMaxPooledEDU () )
       {
          rc = destroyEDU ( eduID ) ;
          if ( destroyed )

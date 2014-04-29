@@ -62,10 +62,15 @@ namespace engine
       _aggrCB           = NULL ;
       _fmpCB            = NULL ;
 
+      for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
+      {
+         _arrayCBs[ i ] = NULL ;
+      }
+      _init             = FALSE ;
+
       _startType = SDB_START_NORMAL ;
       /* <-- internal status, can't be modified by config file --> */
       setDBStatus ( PMD_DB_NORMAL ) ;
-      replaceDBFlag ( PMD_DBFLAG_WRITEABLE ) ;
       /* <-- external status, can be changed by modifying config file --> */
 
       // standalone role by default, user may overwrite this setting
@@ -101,9 +106,84 @@ namespace engine
       SAFE_DELETE( _fmpCB ) ;
    }
 
+   IControlBlock* _SDB_KRCB::getCBByType( SDB_CB_TYPE type )
+   {
+      if ( (INT32)type < 0 || (INT32)type >= SDB_CB_MAX )
+      {
+         return NULL ;
+      }
+      return _arrayCBs[ type ] ;
+   }
+
+   BOOLEAN _SDB_KRCB::isCBValue( SDB_CB_TYPE type ) const
+   {
+      if ( (INT32)type < 0 || (INT32)type >= SDB_CB_MAX )
+      {
+         return FALSE ;
+      }
+      return _arrayCBs[ type ] ? TRUE : FALSE ;
+   }
+
+   INT32 _SDB_KRCB::registerCB( IControlBlock *pCB )
+   {
+      INT32 rc = SDB_OK ;
+
+      SDB_ASSERT( pCB, "CB can't be NULL" ) ;
+      SDB_ASSERT( FALSE == _init, "Registered cb must before init krcb" ) ;
+
+      if ( (INT32)( pCB->cbType () ) < 0 ||
+           (INT32)( pCB->cbType () ) >= SDB_CB_MAX )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      _arrayCBs[ pCB->cbType () ] = pCB ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 _SDB_KRCB::init ()
    {
       INT32 rc = SDB_OK ;
+      INT32 index = 0 ;
+      IControlBlock *pCB = NULL ;
+
+      _init = TRUE ;
+
+      // Init all registered cb
+      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      {
+         pCB = _arrayCBs[ index ] ;
+         if ( !pCB )
+         {
+            continue ;
+         }
+         if ( rc = pCB->init() )
+         {
+            PD_LOG( PDERROR, "Init cb[Type: %d, Name: %s] failed, rc: %d",
+                    pCB->cbType(), pCB->cbName(), rc ) ;
+            goto error ;
+         }
+      }
+
+      // Active all registered cb
+      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      {
+         pCB = _arrayCBs[ index ] ;
+         if ( !pCB )
+         {
+            continue ;
+         }
+         if ( rc = pCB->active() )
+         {
+            PD_LOG( PDERROR, "Active cb[Type: %d, Name: %s] failed, rc: %d",
+                    pCB->cbType(), pCB->cbName(), rc ) ;
+            goto error ;
+         }
+      }
 
       SAFE_NEW_GOTO_ERROR( _dpsTransCB, dpsTransCB ) ;
       SAFE_NEW_GOTO_ERROR( _dpscb, SDB_DPSCB ) ;
@@ -121,10 +201,51 @@ namespace engine
       gPDTraceCB = getTraceCB() ;
 
       _curTime.sample() ;
+
    done:
       return rc ;
    error:
       goto done ;
+   }
+
+   void _SDB_KRCB::destroy ()
+   {
+      INT32 rc = SDB_OK ;
+      INT32 index = 0 ;
+      IControlBlock *pCB = NULL ;
+
+      // Deactive all registered cbs
+      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      {
+         pCB = _arrayCBs[ index ] ;
+         if ( !pCB )
+         {
+            continue ;
+         }
+         if ( rc = pCB->deactive() )
+         {
+            PD_LOG( PDERROR, "Deactive cb[Type: %d, Name: %s] failed, rc: %d",
+                    pCB->cbType(), pCB->cbName(), rc ) ;
+         }
+      }
+
+      // stop all io services and edus(thread)
+      _eduMgr.reset () ;
+
+      // Fini all registered cbs
+      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      {
+         pCB = _arrayCBs[ index ] ;
+         if ( !pCB )
+         {
+            continue ;
+         }
+         if ( rc = pCB->fini() )
+         {
+            PD_LOG( PDERROR, "Fini cb[Type: %d, Name: %s] failed, rc: %d",
+                    pCB->cbType(), pCB->cbName(), rc ) ;
+         }
+      }
    }
 
    replCB* _SDB_KRCB::getReplCB ()
@@ -194,11 +315,6 @@ namespace engine
    void _SDB_KRCB::updateCatRouteID ( const _MsgRouteID &id )
    {
       _catlogueCB->updateRouteID ( id ) ;
-   }
-
-   void _SDB_KRCB::destroy ()
-   {
-      _eduMgr.reset () ;
    }
 
    ossTick _SDB_KRCB::getCurTime()

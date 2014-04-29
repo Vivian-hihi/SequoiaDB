@@ -66,7 +66,7 @@ namespace engine
       {
          retry ++ ;
          // here we read from TCP socket
-         UINT16 port = pmdGetKRCB()->getServicePort () ;
+         UINT16 port = pmdGetOptionCB()->getServicePort () ;
 
          PD_LOG ( PDEVENT, "Listening on port %d\n", port ) ;
 

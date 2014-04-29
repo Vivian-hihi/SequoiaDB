@@ -50,6 +50,7 @@ namespace engine
    enum SDB_CB_TYPE
    {
       SDB_CB_CLS              = 0,
+      SDB_CB_DPS,
 
       // THE MAX CB TYPE
       SDB_CB_MAX

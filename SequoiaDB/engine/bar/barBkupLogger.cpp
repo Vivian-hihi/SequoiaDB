@@ -131,7 +131,7 @@ namespace engine
             }
             else if ( 'S' == source[index] || 's' == source[index] )
             {
-               destStr += krcb->getServiceAddr() ;
+               destStr += pmdGetOptionCB()->getServiceAddr() ;
             }
             else
             {
@@ -555,7 +555,7 @@ namespace engine
                   BAR_BACKUP_GROUPNAME_LEN - 1 ) ;
       ossStrncpy( _metaHeader._hostName, _pClsCB->getHostName(),
                   BAR_BACKUP_HOSTNAME_LEN - 1 ) ;
-      ossStrncpy( _metaHeader._svcName, krcb->getServiceAddr(),
+      ossStrncpy( _metaHeader._svcName, pmdGetOptionCB()->getServiceAddr(),
                   BAR_BACKUP_SVCNAME_LEN - 1 ) ;
       _metaHeader._nodeID              = _pClsCB->getNodeID().value ;
       if ( backupDesp )
@@ -1992,8 +1992,8 @@ namespace engine
                   std::cout << "Begin to load all collection spaces..."
                             << std::endl ;
                   // need to load dms
-                  rc = rtnLoadCollectionSpaces ( _pOptCB->krcbDbPath(),
-                                                 _pOptCB->krcbIndexPath(),
+                  rc = rtnLoadCollectionSpaces ( _pOptCB->getDbPath(),
+                                                 _pOptCB->getIndexPath(),
                                                  _pDMSCB ) ;
                   PD_RC_CHECK( rc, PDERROR, "Failed to load collection spaces, "
                                "rc: %d", rc ) ;
@@ -2118,11 +2118,11 @@ namespace engine
 
       if ( BAR_DATA_TYPE_RAW_DATA == pExtHeader->_dataType )
       {
-         path = _pOptCB->krcbDbPath() ;
+         path = _pOptCB->getDbPath() ;
       }
       else
       {
-         path = _pOptCB->krcbIndexPath() ;
+         path = _pOptCB->getIndexPath() ;
       }
 
       rc = _openSUFile( path, suName, suFileName, sequence  ) ;
@@ -2192,8 +2192,8 @@ namespace engine
             std::cout << "Begin to load all collection spaces..." << std::endl ;
 
             // load all collectionspaces
-            rc = rtnLoadCollectionSpaces ( _pOptCB->krcbDbPath(),
-                                           _pOptCB->krcbIndexPath(),
+            rc = rtnLoadCollectionSpaces ( _pOptCB->getDbPath(),
+                                           _pOptCB->getIndexPath(),
                                            _pDMSCB ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to load collection spaces, "
                          "rc: %d", rc ) ;

@@ -219,7 +219,8 @@ namespace engine
    INT32 _dmsTempCB::_initTmpPath()
    {
       INT32 rc = SDB_OK ;
-      const CHAR *path = pmdGetKRCB()->getTmpPath() ;
+      const CHAR *path = pmdGetOptionCB()->getTmpPath() ;
+
       try
       {
          fs::path dbDir( path ) ;

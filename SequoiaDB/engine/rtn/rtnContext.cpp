@@ -3847,7 +3847,7 @@ namespace engine
       SDB_ASSERT( NULL != cb, "possible" )
       SDB_ASSERT( NULL != context, "impossible" )
       INT32 rc = SDB_OK ;
-      UINT64 sortBufSz = pmdGetKRCB()->getSortBufSize() ;
+      UINT64 sortBufSz = pmdGetOptionCB()->getSortBufSize() ;
 
       rc = _sorting.init( sortBufSz, orderby, context,
                           contextID(), numToReturn, cb ) ;

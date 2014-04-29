@@ -123,7 +123,7 @@ namespace engine
       // make path
       if ( isSubDir && path )
       {
-         bkpath = rtnFullPathName( krcb->getBkupPath(), path ) ;
+         bkpath = rtnFullPathName( pmdGetOptionCB()->getBkupPath(), path ) ;
       }
       else if ( path && 0 != path[0] )
       {
@@ -131,7 +131,7 @@ namespace engine
       }
       else
       {
-         bkpath = krcb->getBkupPath() ;
+         bkpath = pmdGetOptionCB()->getBkupPath() ;
       }
 
       if ( enableDateDir )
@@ -212,7 +212,7 @@ namespace engine
       // make path
       if ( isSubDir && pPath )
       {
-         bkpath = rtnFullPathName( krcb->getBkupPath(), pPath ) ;
+         bkpath = rtnFullPathName( pmdGetOptionCB()->getBkupPath(), pPath ) ;
       }
       else if ( pPath && 0 != pPath[0] )
       {
@@ -220,7 +220,7 @@ namespace engine
       }
       else
       {
-         bkpath = krcb->getBkupPath() ;
+         bkpath = pmdGetOptionCB()->getBkupPath() ;
       }
 
       rc = bkMgr.init( bkpath.c_str(), backupName, prefix ) ;
@@ -277,7 +277,7 @@ namespace engine
       // make path
       if ( isSubDir && path )
       {
-         bkpath = rtnFullPathName( krcb->getBkupPath(), path ) ;
+         bkpath = rtnFullPathName( pmdGetOptionCB()->getBkupPath(), path ) ;
       }
       else if ( path && 0 != path[0] )
       {
@@ -285,7 +285,7 @@ namespace engine
       }
       else
       {
-         bkpath = krcb->getBkupPath() ;
+         bkpath = pmdGetOptionCB()->getBkupPath() ;
       }
 
       rc = bkMgr.init( bkpath.c_str(), backupName, prefix ) ;

@@ -1024,8 +1024,8 @@ namespace engine
       if ( SDB_ROLE_STANDALONE == pmdGetKRCB()->getDBRole() )
       {
          rc = rtnLoadCollectionSpace ( pCollectionSpace,
-                                       pmdGetKRCB()->getDBPath(),
-                                       pmdGetKRCB()->getIndexPath(),
+                                       pmdGetOptionCB()->getDbPath(),
+                                       pmdGetOptionCB()->getIndexPath(),
                                        dmsCB, FALSE ) ;
          if ( rc != SDB_DMS_CS_NOTEXIST )
          {
@@ -1044,13 +1044,14 @@ namespace engine
          goto error ;
       }
 
-      rc = su->open ( pmdGetKRCB()->getDBPath(),
-                      pmdGetKRCB()->getIndexPath(),
+      rc = su->open ( pmdGetOptionCB()->getDbPath(),
+                      pmdGetOptionCB()->getIndexPath(),
                       TRUE, delWhenExist ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to create collection space %s at %s, rc: %d",
-                  pCollectionSpace, pmdGetKRCB()->getDBPath(), rc ) ;
+                  pCollectionSpace, pmdGetOptionCB()->getDbPath(),
+                  rc ) ;
          goto error ;
       }
 

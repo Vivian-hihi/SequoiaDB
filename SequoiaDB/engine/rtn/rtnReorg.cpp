@@ -185,6 +185,7 @@ namespace engine
       BOOLEAN ruExist = TRUE ;
       UINT16 flag = 0 ;
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+      const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
 
       // Caller must hold EXCLUSIVE lock
       if ( !mbContext->isMBLock( EXCLUSIVE ) )
@@ -196,27 +197,19 @@ namespace engine
       }
 
       // make sure the path length is valid
-      krcb->getDBPath ( fullFilePath, OSS_MAX_PATHSIZE ) ;
-      if ( ossStrlen ( fullFilePath ) + 1 +
+      if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
            ossStrlen ( RTN_REORG_SUFFIX ) >
            OSS_MAX_PATHSIZE )
       {
          PD_LOG ( PDERROR, "Can't build reorg file path size it's too long: "
-                  "%s%s%s%s", fullFilePath, OSS_FILE_SEP,
+                  "%s%s%s%s", dbpath, OSS_FILE_SEP,
                   pCollectionFullName, RTN_REORG_SUFFIX ) ;
          goto error ;
       }
 
-      // build full temp file path
-      if ( ossStrlen(fullFilePath) > 0 &&
-           0 != ossStrncmp( &fullFilePath[ossStrlen(fullFilePath)-1],
-                            OSS_FILE_SEP, 1 ) )
-      {
-         ossStrncat ( fullFilePath, OSS_FILE_SEP, 1 ) ;
-      }
-      ossStrncat ( fullFilePath, pCollectionFullName,
-                   ossStrlen (pCollectionFullName) ) ;
+      utilBuildFullPath( dbpath, pCollectionFullName,
+                         OSS_MAX_PATHSIZE, fullFilePath ) ;
       ossStrncat ( fullFilePath, RTN_REORG_SUFFIX,
                    ossStrlen (RTN_REORG_SUFFIX) ) ;
 
@@ -379,17 +372,15 @@ namespace engine
       UINT16 flag = 0 ;
       UINT32 attributes = 0 ;
       CHAR fullFilePath [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+      const CHAR *dbpath = krcb->getOptionCB()->getDbPath() ;
 
-      // make sure the path length is valid
-      krcb->getDBPath ( fullFilePath, OSS_MAX_PATHSIZE ) ;
-
-      if ( ossStrlen ( fullFilePath ) + 1 +
+      if ( ossStrlen ( dbpath ) + 1 +
            ossStrlen ( pCollectionFullName ) +
            ossStrlen ( RTN_REORG_SUFFIX ) >
            OSS_MAX_PATHSIZE )
       {
          PD_LOG ( PDERROR, "Can't build reorg file path size it's too long: "
-                  "%s%s%s%s", fullFilePath, OSS_FILE_SEP, pCollectionFullName,
+                  "%s%s%s%s", dbpath, OSS_FILE_SEP, pCollectionFullName,
                   RTN_REORG_SUFFIX ) ;
          goto error ;
       }
@@ -403,15 +394,8 @@ namespace engine
          goto error ;
       }
 
-      // build full temp file path
-      if ( ossStrlen(fullFilePath) > 0 &&
-           0 != ossStrncmp( &fullFilePath[ossStrlen(fullFilePath)-1],
-                            OSS_FILE_SEP, 1 ) )
-      {
-         ossStrncat ( fullFilePath, OSS_FILE_SEP, 1 ) ;
-      }
-      ossStrncat ( fullFilePath, pCollectionFullName,
-                   ossStrlen (pCollectionFullName) ) ;
+      utilBuildFullPath( dbpath, pCollectionFullName,
+                         OSS_MAX_PATHSIZE, fullFilePath ) ;
       ossStrncat ( fullFilePath, RTN_REORG_SUFFIX,
                    ossStrlen (RTN_REORG_SUFFIX) ) ;
 

@@ -61,7 +61,7 @@ namespace engine
       EDUID agentEDU          = PMD_INVALID_EDUID ;
 
       UINT16 port             = 0 ;
-      const CHAR *restService = pmdGetKRCB()->getRestAddr () ;
+      const CHAR *restService = pmdGetOptionCB()->getRestService() ;
 
       if ( SDB_OK != ( rc = eduMgr->activateEDU ( cb )) )
       {

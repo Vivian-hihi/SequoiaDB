@@ -996,8 +996,10 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSRPCMGR_SEARCH, "_dpsReplicaLogMgr::search" )
-   INT32 _dpsReplicaLogMgr::search( const DPS_LSN &minLsn, _dpsMessageBlock *mb,
-                                    UINT8 type, BOOLEAN onlyHeader )
+   INT32 _dpsReplicaLogMgr::search( const DPS_LSN &minLsn,
+                                    _dpsMessageBlock *mb,
+                                    UINT8 type,
+                                    BOOLEAN onlyHeader )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_SEARCH );
@@ -1271,7 +1273,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_RUN );
       _dpsLogPage *page = NULL;
       // wait for queue for 1 second
-      if ( _queue.timed_wait_and_pop( page, 1000  ) )
+      if ( _queue.timed_wait_and_pop( page, OSS_ONE_SEC  ) )
       {
          if ( cb )
          {
