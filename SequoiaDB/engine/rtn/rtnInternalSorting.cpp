@@ -128,7 +128,7 @@ namespace engine
       }
       else
       {
-         ixmMakeHashValue( obj, _orderObj, tuple->hashValue() ) ;
+         ixmMakeHashValue( arrEle, tuple->hashValue() ) ;
       }
 
       /// set sort header.
