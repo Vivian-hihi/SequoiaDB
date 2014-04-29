@@ -58,7 +58,7 @@ SDB_EXTERN_C_START
 #define SDB_LIST_DOMAINS          9
 #define SDB_LIST_TASKS            10
 
-#define SDB_INVALID_HANDLE       ((ossValuePtr) -1)
+#define SDB_INVALID_HANDLE       ((ossValuePtr) 0)
 typedef ossValuePtr sdbConnectionHandle   ;
 typedef ossValuePtr sdbCSHandle           ;
 typedef ossValuePtr sdbCollectionHandle   ;

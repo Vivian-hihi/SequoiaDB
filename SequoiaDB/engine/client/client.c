@@ -6295,7 +6295,8 @@ error:
 SDB_EXPORT void sdbReleaseConnection ( sdbConnectionHandle cHandle )
 {
    sdbConnectionStruct *cs = (sdbConnectionStruct*)cHandle ;
-   if ( !cs || cs->_handleType != SDB_HANDLE_TYPE_CONNECTION )
+   if ( SDB_INVALID_HANDLE == cHandle || !cs ||
+        cs->_handleType != SDB_HANDLE_TYPE_CONNECTION )
    {
       return ;
    }
@@ -6313,7 +6314,8 @@ SDB_EXPORT void sdbReleaseConnection ( sdbConnectionHandle cHandle )
 SDB_EXPORT void sdbReleaseCollection ( sdbCollectionHandle cHandle )
 {
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
-   if ( !cs || cs->_handleType != SDB_HANDLE_TYPE_COLLECTION )
+   if ( SDB_INVALID_HANDLE == cHandle || !cs ||
+        cs->_handleType != SDB_HANDLE_TYPE_COLLECTION )
    {
       return ;
    }
@@ -6331,7 +6333,8 @@ SDB_EXPORT void sdbReleaseCollection ( sdbCollectionHandle cHandle )
 SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle )
 {
    sdbCSStruct *cs = (sdbCSStruct*)cHandle ;
-   if ( !cs || cs->_handleType != SDB_HANDLE_TYPE_CS )
+   if ( SDB_INVALID_HANDLE == cHandle || !cs ||
+        cs->_handleType != SDB_HANDLE_TYPE_CS )
    {
       return ;
    }
@@ -6349,7 +6352,8 @@ SDB_EXPORT void sdbReleaseCS ( sdbCSHandle cHandle )
 SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
 {
    sdbRGStruct *rg = (sdbRGStruct*)cHandle ;
-   if ( !rg || rg->_handleType != SDB_HANDLE_TYPE_REPLICAGROUP )
+   if ( SDB_INVALID_HANDLE == cHandle || !rg ||
+        rg->_handleType != SDB_HANDLE_TYPE_REPLICAGROUP )
    {
       return ;
    }
@@ -6367,7 +6371,8 @@ SDB_EXPORT void sdbReleaseReplicaGroup ( sdbReplicaGroupHandle cHandle )
 SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle )
 {
    sdbRNStruct *rn = (sdbRNStruct*)cHandle ;
-   if ( !rn || rn->_handleType != SDB_HANDLE_TYPE_REPLICANODE )
+   if ( SDB_INVALID_HANDLE == cHandle || !rn ||
+        rn->_handleType != SDB_HANDLE_TYPE_REPLICANODE )
    {
       return ;
    }
@@ -6385,7 +6390,8 @@ SDB_EXPORT void sdbReleaseNode ( sdbNodeHandle cHandle )
 SDB_EXPORT void sdbReleaseDomain ( sdbDomainHandle cHandle )
 {
    sdbDomainStruct *s = (sdbDomainStruct*)cHandle ;
-   if ( !s || s->_handleType != SDB_HANDLE_TYPE_DOMAIN )
+   if ( SDB_INVALID_HANDLE == cHandle || !s ||
+        s->_handleType != SDB_HANDLE_TYPE_DOMAIN )
    {
       return ;
    }
@@ -6404,7 +6410,8 @@ SDB_EXPORT void sdbReleaseCursor ( sdbCursorHandle cHandle )
 {
    INT32 rc = SDB_OK ;
    sdbCursorStruct *cs = (sdbCursorStruct*)cHandle ;
-   if ( !cs || cs->_handleType != SDB_HANDLE_TYPE_CURSOR )
+   if ( SDB_INVALID_HANDLE == cHandle || !cs ||
+        cs->_handleType != SDB_HANDLE_TYPE_CURSOR )
    {
       return ;
    }
