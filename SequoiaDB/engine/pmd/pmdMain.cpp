@@ -231,7 +231,7 @@ namespace engine
       if ( SDB_ROLE_COORD != dbRole )
       {
          rc = dpsCB->init( pmdGetOptionCB()->getReplLogPath(),
-                           pmdGetOptionCB()->logBuffSize() ) ;
+                           pmdGetOptionCB()->getReplLogBuffSize() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to initialize dps cb, rc = %d", rc ) ;

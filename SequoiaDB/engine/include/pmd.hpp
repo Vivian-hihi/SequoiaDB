@@ -229,10 +229,6 @@ namespace engine
       {
          return _traceCB ;
       }
-
-      UINT32 getLogFileSz () ;
-      UINT32 getLogFileNum () ;
-
       OSS_INLINE _pmdOptionsMgr *getOptionCB()
       {
          return &_optioncb;

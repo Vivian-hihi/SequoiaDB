@@ -64,11 +64,11 @@ namespace engine
    {
       pmdOptionsCB *optCB = pmdGetKRCB()->getOptionCB() ;
 
-      _buf.setLogFileSz( optCB->logFileSz() ) ;
-      _buf.setLogFileNum( optCB->logFileNum() ) ;
+      _buf.setLogFileSz( optCB->getReplLogFileSz() ) ;
+      _buf.setLogFileNum( optCB->getReplLogFileNum() ) ;
 
       INT32 rc = _buf.init( optCB->getReplLogPath(),
-                            optCB->logBuffSize() ) ;
+                            optCB->getReplLogBuffSize() ) ;
       if ( SDB_OK == rc )
       {
          _initialized = TRUE ;

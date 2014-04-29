@@ -285,16 +285,6 @@ namespace engine
       _coordcb->addCatNodeAddr ( id, host, service );
    }
 
-   UINT32 _SDB_KRCB::getLogFileSz ()
-   {
-      return _dpscb->getLogFileSz () ;
-   }
-
-   UINT32 _SDB_KRCB::getLogFileNum ()
-   {
-      return _dpscb->getLogFileNum () ;
-   }
-
    void _SDB_KRCB::enforceLogFileSz ( UINT32 logFileSz )
    {
       _dpscb->setLogFileSz ( logFileSz ) ;

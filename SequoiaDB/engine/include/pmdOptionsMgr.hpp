@@ -348,8 +348,8 @@ namespace engine
          OSS_INLINE UINT32 catNum() const { return CATA_NODE_MAX_NUM ; }
          OSS_INLINE UINT32 groupID() const { return _groupID ; }
          OSS_INLINE UINT16 nodeID() const { return _nodeID ; }
-         OSS_INLINE UINT32 logFileSz () const { return _logFileSz ; }
-         OSS_INLINE UINT32 logFileNum () const { return _logFileNum ; }
+         OSS_INLINE UINT32 getReplLogFileSz () const { return _logFileSz ; }
+         OSS_INLINE UINT32 getReplLogFileNum () const { return _logFileNum ; }
          OSS_INLINE UINT32 numPreLoaders () const { return _numPreLoaders ; }
          OSS_INLINE UINT32 maxPrefPool () const { return _maxPrefPool ; }
          OSS_INLINE UINT32 maxSubQuery () const { return _maxSubQuery ; }
@@ -360,7 +360,7 @@ namespace engine
          OSS_INLINE BOOLEAN memDebugEnabled () const { return _memDebugEnabled ; }
          OSS_INLINE UINT32 memDebugSize () const { return _memDebugSize ; }
          OSS_INLINE UINT32 indexScanStep () const { return _indexScanStep ; }
-         OSS_INLINE UINT32 logBuffSize () const { return _logBuffSize ; }
+         OSS_INLINE UINT32 getReplLogBuffSize () const { return _logBuffSize ; }
          OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
          OSS_INLINE const CHAR* dbroleStr() const { return _krcbRole ; }
          OSS_INLINE INT32 diagFileNum() const { return _dialogFileNum ; }

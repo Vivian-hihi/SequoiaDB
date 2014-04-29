@@ -384,7 +384,7 @@ namespace engine
       std::cout << "Begin to init dps logs..." << std::endl ;
       // init dps
       rc = dpsCB->init( pmdGetOptionCB()->getReplLogPath(),
-                        pmdGetOptionCB()->logBuffSize() ) ;
+                        pmdGetOptionCB()->getReplLogBuffSize() ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to initialize dps cb, rc = %d", rc ) ;

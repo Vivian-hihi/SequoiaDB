@@ -550,7 +550,7 @@ namespace engine
          if ( !_isInit )
          {
             UINT64 logFileSize = pmdGetKRCB()->getDPSCB()->getLogFileSz() ;
-            UINT32 logFileNum = pmdGetKRCB()->getLogFileNum() ;
+            UINT32 logFileNum = pmdGetKRCB()->getDPSCB()->getLogFileNum() ;
             _logFileTotalSize = logFileSize * logFileNum ;
 
             // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
