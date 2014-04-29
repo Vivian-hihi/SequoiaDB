@@ -67,6 +67,8 @@ namespace engine
    */
    barRSOfflineLogger   g_restoreLogger ;
 
+   #define PMD_SDBRESTORE_DIAGLOG_NAME          "sdbrestore.txt"
+
    /*
       configure define
    */
@@ -437,6 +439,7 @@ namespace engine
       pmdKRCB   *krcb     = pmdGetKRCB () ;
       pmdEDUMgr *eduMgr   = krcb->getEDUMgr () ;
       EDUID      agentEDU = PMD_INVALID_EDUID ;
+      CHAR diaglog[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       rsOptionMgr optMgr ;
 
       // 1. read command line first
@@ -453,7 +456,9 @@ namespace engine
       }
 
       // 2. enable pd log
-      sdbEnablePD( optMgr._dialogPath ) ;
+      utilBuildFullPath( optMgr._dialogPath, PMD_SDBRESTORE_DIAGLOG_NAME,
+                         OSS_MAX_PATHSIZE, diaglog ) ;
+      sdbEnablePD( diaglog ) ;
       setPDLevel( (PDLEVEL)optMgr._diagLevel ) ;
 
       // 3. handlers and init global mem
