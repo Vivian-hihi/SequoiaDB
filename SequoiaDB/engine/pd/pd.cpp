@@ -223,6 +223,8 @@ enum _pdLogType
 } ;
 pdLogFile _pdLogFiles [ PD_LOG_MAX ] ;
 
+// driver don't use the code
+#ifndef SDB_CLIENT
 
 static void _pdRemoveOutOfDataFiles( pdCfgInfo &info )
 {
@@ -287,6 +289,8 @@ static INT32 _pdLogArchive( pdCfgInfo &info )
    return rc ;
 }
 
+#endif // SDB_CLIENT
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB_PDLOGFILEWRITE, "pdLogFileWrite" )
 // return code is errno
 static INT32 pdLogFileWrite ( _pdLogType type, CHAR *pData )
@@ -306,7 +310,11 @@ static INT32 pdLogFileWrite ( _pdLogType type, CHAR *pData )
    //{
    //   logFile._logFile.Close() ;
    //}
+
+#ifndef SDB_CLIENT
 open:
+#endif // SDB_CLIENT
+
    // attempt to open the file
    if ( !logFile._logFile.isValid() )
    {
@@ -333,6 +341,7 @@ open:
       logFile._logFile.seekToEnd () ;
    }
 
+#ifndef SDB_CLIENT
    // if file size up the limit
    if ( logFile._fileSize + dataSize > info._pdFileMaxSize )
    {
@@ -340,6 +349,7 @@ open:
       _pdLogArchive( info ) ;
       goto open ;
    }
+#endif // SDB_CLIENT
 
    PD_TRACE1 ( SDB_PDLOGFILEWRITE, PD_PACK_RAW ( pData, dataSize ) ) ;
    rc = logFile._logFile.Write ( pData, dataSize ) ;
