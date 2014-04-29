@@ -157,7 +157,7 @@ void sdbEnablePD( const CHAR *pdPathOrFile, INT32 fileMaxNum,
 
    if ( 0 == info._pdLogPath[0] )
    {
-      ossGetRealPath( ".", info._pdLogPath, OSS_MAX_PATHSIZE ) ;
+      ossStrcpy( info._pdLogPath, "." ) ;
    }
 
    if ( info._pdLogPath[0] != 0 )
