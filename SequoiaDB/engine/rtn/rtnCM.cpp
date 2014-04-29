@@ -151,7 +151,7 @@ namespace CLSMGR
    INT32 sdbAdd ( const CHAR *arg1, const CHAR *arg2 ) ;
    INT32 sdbRm ( const CHAR *arg1 ) ;
    INT32 sdbModify ( const CHAR *arg1, const CHAR *arg2, const CHAR *arg3 ) ;
-   INT32 sendRetCode ( SINT32 retCode, ossSocket *sock ) ;
+   INT32 sendRetCode ( SINT32 retCode, UINT64 reqID, ossSocket *sock ) ;
    INT32 cmRecv ( CHAR *pBuffer, INT32 recvSize, ossSocket *sock ) ;
    INT32 cmSend ( const CHAR *pBuffer, INT32 sendSize, ossSocket *sock ) ;
    void pidMonitor () ;
@@ -289,6 +289,7 @@ namespace CLSMGR
       PD_TRACE_ENTRY ( SDB_RECVREMOTECMD );
       SINT32 remoCode ;
       CHAR *arg1 = NULL, *arg2 = NULL, *arg3 = NULL, *arg4 = NULL ;
+      MsgHeader *pMsgHeader = NULL ;
 
       CHAR *pReceiveBuffer = NULL ;
       SINT32 packetLength = 0 ;
@@ -337,7 +338,9 @@ namespace CLSMGR
          PD_LOG ( PDERROR, "Failed to extract cm request" ) ;
          goto error ;
       }
-      PD_TRACE1 ( SDB_RECVREMOTECMD, PD_PACK_INT(remoCode) );
+      PD_TRACE1 ( SDB_RECVREMOTECMD, PD_PACK_INT(remoCode) ) ;
+
+      pMsgHeader = (MsgHeader*)pReceiveBuffer ;
 
       switch ( remoCode )
       {
@@ -366,11 +369,15 @@ namespace CLSMGR
       }
 
    done:
-      rc = sendRetCode ( (SINT32) rc, &sock ) ;
+      rc = sendRetCode ( (SINT32) rc, pMsgHeader->requestID, &sock ) ;
       if ( rc )
+      {
          PD_LOG ( PDERROR, "Failed to send return code, rc=%d", rc ) ;
+      }
       if ( pReceiveBuffer )
+      {
          SDB_OSS_FREE ( pReceiveBuffer ) ;
+      }
       PD_TRACE_EXIT ( SDB_RECVREMOTECMD );
       return ;
    error:
@@ -386,8 +393,12 @@ namespace CLSMGR
       INT32 bufferSize = 0 ;
       INT32 pos = 0 ;
       // estimate the size of final buffer
-      for ( list<const CHAR*>::iterator it = argv.begin(); it != argv.end(); ++it )
+      for ( list<const CHAR*>::iterator it = argv.begin() ;
+            it != argv.end(); ++it )
+      {
          bufferSize += ( ossStrlen ( *it ) + 1 ) ;
+      }
+
       if ( bufferSize <= 0 )
       {
          PD_LOG ( PDERROR, "Failed to calculate buffer size" ) ;
@@ -1409,7 +1420,7 @@ namespace CLSMGR
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SENDRETCODE, "sendRetCode" )
-   INT32 sendRetCode ( SINT32 retCode, ossSocket *sock )
+   INT32 sendRetCode ( SINT32 retCode, UINT64 reqID, ossSocket *sock )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_SENDRETCODE );
@@ -1418,7 +1429,8 @@ namespace CLSMGR
       INT32 pBufferSize = 0 ;
 
       rc = msgBuildReplyMsg ( &pBuffer, &pBufferSize, OP_CM,
-                               retCode, 0, 0, 0, 0, (BSONObj*)NULL ) ;
+                              retCode, -1, 0, 0, reqID,
+                              (BSONObj*)NULL ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to build reply message") ;
@@ -1434,7 +1446,9 @@ namespace CLSMGR
 
    done:
       if ( pBuffer )
+      {
          SDB_OSS_FREE ( pBuffer ) ;
+      }
       PD_TRACE_EXITRC ( SDB_SENDRETCODE, rc );
       return rc ;
    error:
