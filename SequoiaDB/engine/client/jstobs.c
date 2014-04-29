@@ -423,11 +423,11 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
 #ifdef WIN32
          _snprintf ( temp,
                      BSON_TEMP_SIZE_512,
-                     "%#f", bson_iterator_double( &i ) ) ;
+                     "%.16g", bson_iterator_double( &i ) ) ;
 #else
          snprintf ( temp,
                     BSON_TEMP_SIZE_512,
-                    "%#f", bson_iterator_double( &i ) ) ;
+                    "%.16g", bson_iterator_double( &i ) ) ;
 #endif
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
          CHECK_LEFT ( left )
