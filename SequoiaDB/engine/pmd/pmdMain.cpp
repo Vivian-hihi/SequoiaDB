@@ -359,6 +359,13 @@ namespace engine
       SDB_ROLE   dbrole ;
       UINT32     startTimerCount = 0 ;
 
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         ossPrintf( "Failed to init krcb, rc: %d"OSS_NEWLINE, rc ) ;
+         goto error ;
+      }
+
       // 1. read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
       if ( rc )
@@ -394,13 +401,6 @@ namespace engine
       rc = pmdEnableSignalEvent( pmdGetOptionCB()->getDiagLogPath(),
                                  (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
-
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         ossPrintf( "Failed to init krcb, rc: %d"OSS_NEWLINE, rc ) ;
-         goto error ;
-      }
 
       // initialize variables
       rc = pmdSysInit () ;

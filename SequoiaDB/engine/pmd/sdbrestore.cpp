@@ -442,6 +442,13 @@ namespace engine
       CHAR diaglog[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       rsOptionMgr optMgr ;
 
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         std::cerr << "init krcb failed, " << rc << std::endl ;
+         return rc ;
+      }
+
       // 1. read command line first
       rc = resolveArguments ( argc, argv, optMgr ) ;
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
@@ -468,13 +475,6 @@ namespace engine
       {
          std::cerr << "Failed to setup signal handler, rc: " << rc
                    << std::endl ;
-         return rc ;
-      }
-
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         std::cerr << "init krcb failed, " << rc << std::endl ;
          return rc ;
       }
 
