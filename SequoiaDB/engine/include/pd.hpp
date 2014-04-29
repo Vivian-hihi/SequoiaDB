@@ -70,7 +70,7 @@
 
 #define PD_LOG_MSG(level, fmt, ...) \
    do { \
-      if ( level <= PDERROR ) \
+/*      if ( level <= PDERROR ) \
       { \
          _pmdEDUCB *cb = pmdGetEDUCB() ; \
          if ( cb ) \
@@ -81,7 +81,7 @@
       if ( getPDLevel() >= level ) \
       { \
          pdLog(level, __FUNC__, __FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-      } \
+      } \*/
    } while ( 0 )
 
 #define PD_CHECK(cond, retCode, gotoLabel, level, fmt, ...) \
