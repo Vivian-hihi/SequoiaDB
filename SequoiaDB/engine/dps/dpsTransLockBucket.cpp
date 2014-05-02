@@ -461,7 +461,7 @@ namespace engine
    }
 
    BOOLEAN dpsLockBucket::isLockCompatible( DPS_TRANSLOCK_TYPE first,
-                                          DPS_TRANSLOCK_TYPE second )
+                                            DPS_TRANSLOCK_TYPE second )
    {
       if (( first | second ) == DPS_TRANSLOCK_X )
       {
