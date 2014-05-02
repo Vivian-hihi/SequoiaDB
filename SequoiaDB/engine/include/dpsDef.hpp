@@ -1,25 +1,63 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = dpsDef.hpp
+
+   Descriptive Name = Operating System Services Types Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of OSS component. This file contains declare for data types used in
+   SequoiaDB.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #ifndef DPSDEF_HPP_
 #define DPSDEF_HPP_
 
 #if defined (_WINDOWS)
-#define DPS_INVALID_LSN_OFFSET 0xFFFFFFFFFFFFFFFFLL
+#define DPS_INVALID_LSN_OFFSET   0xFFFFFFFFFFFFFFFFLL
 #elif defined (_LINUX)
-#define DPS_INVALID_LSN_OFFSET 0xFFFFFFFFFFFFFFFFll
+#define DPS_INVALID_LSN_OFFSET   0xFFFFFFFFFFFFFFFFll
 #endif
-#define DPS_MERGE_BLOCK_MAX_DATA 10
-#define DPS_INVALID_LSN_VERSION 0
+#define DPS_MERGE_BLOCK_MAX_DATA    10
+#define DPS_INVALID_LSN_VERSION     0
 
-#define DPS_DEFAULT_PAGE_SIZE  ( 64 * 1024 )
-#define DPS_LOG_HEAD_LEN ( 64 * 1024 )
+#define DPS_DEFAULT_PAGE_SIZE    ( 64 * 1024 )
+#define DPS_LOG_HEAD_LEN         ( 64 * 1024 )
 
 #define DPS_DMP_OPT_HEX            0x00000001
 #define DPS_DMP_OPT_HEX_WITH_ASCII 0x00000002
 #define DPS_DMP_OPT_FORMATTED      0x00000004
-#define DPS_INVALID_TRANS_ID        0
+#define DPS_INVALID_TRANS_ID       0
 
-#define DPS_INVALID_TAG 0
-#define DPS_DUMMY_TAG 256
-#define DPS_TAG UINT8
+#define DPS_INVALID_TAG    0
+#define DPS_DUMMY_TAG      256
+#define DPS_TAG            UINT8
 
 typedef UINT64 DPS_TRANS_ID;
 typedef UINT64 DPS_LSN_OFFSET ;
@@ -45,4 +83,5 @@ enum DPS_LOG_TYPE
    LOG_TYPE_INVALIDATE_CATA   = 0x0E
 };
 
-#endif
+#endif // DPSDEF_HPP_
+
