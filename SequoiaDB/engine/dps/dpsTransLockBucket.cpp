@@ -472,8 +472,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_CHECKCOMPATIBLE, "dpsLockBucket::checkCompatible" )
    BOOLEAN dpsLockBucket::checkCompatible( _pmdEDUCB *eduCB,
-                                          DPS_TRANSLOCK_TYPE lockType,
-                                          dpsTransLockUnit *pLockUnit )
+                                           DPS_TRANSLOCK_TYPE lockType,
+                                           dpsTransLockUnit *pLockUnit )
    {
       BOOLEAN isCompatible = TRUE;
       dpsTransLockRunList::iterator iterLst
