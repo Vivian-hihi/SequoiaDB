@@ -1,3 +1,41 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = dpsTransCB.hpp
+
+   Descriptive Name = Operating System Services Types Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of OSS component. This file contains declare for data types used in
+   SequoiaDB.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          09/14/2012  YW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+
 #ifndef DPSTRANSCB_HPP_
 #define DPSTRANSCB_HPP_
 
@@ -23,11 +61,14 @@ namespace engine
    class _dmsExtScanner ;
    class _dmsIXSecScanner ;
 
-   typedef std::map<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_MAP;
-   typedef std::map<DPS_TRANS_ID, _pmdEDUCB * > TRANS_CB_MAP;
-   typedef std::map<DPS_LSN_OFFSET, DPS_TRANS_ID> TRANS_LSN_ID_MAP;
-   typedef std::map<DPS_TRANS_ID, DPS_LSN_OFFSET> TRANS_ID_LSN_MAP;
+   typedef std::map<DPS_TRANS_ID, DPS_LSN_OFFSET>  TRANS_MAP;
+   typedef std::map<DPS_TRANS_ID, _pmdEDUCB * >    TRANS_CB_MAP;
+   typedef std::map<DPS_LSN_OFFSET, DPS_TRANS_ID>  TRANS_LSN_ID_MAP;
+   typedef std::map<DPS_TRANS_ID, DPS_LSN_OFFSET>  TRANS_ID_LSN_MAP;
 
+   /*
+      dpsTransCB define
+   */
    class dpsTransCB : public SDBObject
    {
       friend class _dmsExtScanner ;
@@ -42,11 +83,11 @@ namespace engine
       | nodeID(16bit) | TAG(8bit) | SN(40bit) |
       +---------------+-----------+-----------+
       */
-      DPS_TRANS_ID allocTransID();
+      DPS_TRANS_ID allocTransID() ;
 
-      DPS_TRANS_ID getRollbackID( DPS_TRANS_ID transID );
+      DPS_TRANS_ID getRollbackID( DPS_TRANS_ID transID ) ;
 
-      DPS_TRANS_ID getTransID( DPS_TRANS_ID rollbackID );
+      DPS_TRANS_ID getTransID( DPS_TRANS_ID rollbackID ) ;
 
       void setNodeID( UINT16 nodeID );
 
@@ -93,30 +134,30 @@ namespace engine
       // get record-X-lock: also get the space-S-lock and collection-IX-lock
       // get collection-X-lock: also get the space-S-lock
       INT32 transLockGetX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                           UINT16 collectionID = DMS_INVALID_MBID,
+                           const dmsRecordID *recordID = NULL );
 
       // get record-S-lock: also get the space-S-lock and collection-IS-lock
       // get collection-S-lock: also get the space-S-lock
       INT32 transLockGetS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                           UINT16 collectionID = DMS_INVALID_MBID,
+                           const dmsRecordID *recordID = NULL );
 
       // also get the space-S-lock
       INT32 transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID );
+                            UINT16 collectionID = DMS_INVALID_MBID );
 
       // also get the space-S-lock
       INT32 transLockGetIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID );
+                            UINT16 collectionID = DMS_INVALID_MBID );
 
       // release record-lock: also release the space-lock and collection-lock
       // release collection-lock: also release the space-lock
       void transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                             UINT16 collectionID = DMS_INVALID_MBID,
+                             const dmsRecordID *recordID = NULL );
 
-      void transLockReleaseAll( _pmdEDUCB *eduCB );
+      void transLockReleaseAll( _pmdEDUCB *eduCB ) ;
 
       BOOLEAN isTransOn();
 
@@ -126,30 +167,32 @@ namespace engine
       // test record-S-lock: also test the space-S-lock and collection-IS-lock
       // test collection-S-lock: also test the space-S-lock
       INT32 transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                            UINT16 collectionID = DMS_INVALID_MBID,
+                            const dmsRecordID *recordID = NULL );
 
       // not get the lock only test if the lock can be got.
       // test record-S-lock: also test the space-S-lock and collection-IS-lock
       // test collection-S-lock: also test the space-S-lock
       INT32 transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                            UINT16 collectionID = DMS_INVALID_MBID,
+                            const dmsRecordID *recordID = NULL );
 
-      // try to get record-X-lock: also try to get the space-S-lock and collection-IX-lock
+      // try to get record-X-lock: also try to get the space-S-lock and 
+      // collection-IX-lock
       // try to get collection-X-lock: also try to get the space-S-lock
       INT32 transLockTryX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                           UINT16 collectionID = DMS_INVALID_MBID,
+                           const dmsRecordID *recordID = NULL );
 
-      // try to get record-S-lock: also try to get the space-S-lock and collection-IS-lock
+      // try to get record-S-lock: also try to get the space-S-lock and 
+      // collection-IS-lock
       // try to get collection-S-lock: also try to get the space-S-lock
       INT32 transLockTryS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID = DMS_INVALID_MBID,
-                        const dmsRecordID *recordID = NULL );
+                           UINT16 collectionID = DMS_INVALID_MBID,
+                           const dmsRecordID *recordID = NULL );
 
       BOOLEAN hasWait( UINT32 logicCSID, UINT16 collectionID,
-                     const dmsRecordID *recordID);
+                       const dmsRecordID *recordID);
 
       INT32 reservedLogSpace( UINT32 length );
 
@@ -162,15 +205,17 @@ namespace engine
       UINT64 usedLogSpace();
 
    protected:
-      // try to get record-X-lock: also try to get the space-S-lock and collection-IX-lock,
-      // if failed then append to the wait-queue but not wait, caller must call waitLock()
+      // try to get record-X-lock: also try to get the space-S-lock and 
+      // collection-IX-lock,
+      // if failed then append to the wait-queue but not wait, caller must 
+      // call waitLock()
       // for waitting the lock
       INT32 tryOrAppendX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID, const dmsRecordID *recordID );
+                          UINT16 collectionID, const dmsRecordID *recordID );
 
       // waitting for the lock
       INT32 waitLock( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                     UINT16 collectionID, const dmsRecordID *recordID );
+                      UINT16 collectionID, const dmsRecordID *recordID );
    private:
       DPS_TRANS_ID      _TransIDH16;
       ossAtomic64       _TransIDL48Cur;
@@ -191,6 +236,7 @@ namespace engine
       UINT64            _accquiredSpace;
       BOOLEAN           _isInit;
    };
+
 }
 
-#endif
+#endif // DPSTRANSCB_HPP_
