@@ -465,6 +465,7 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 		// Get type of write method's first parameter.
 		Class<?> paramType = method.getParameterTypes()[0];
 		boolean result = true;
+                boolean numberCompare = false ;
 		if (paramType.isPrimitive()) {
 //			if (!(field instanceof Number) && !(field instanceof Character)) {
 //				throw new IllegalArgumentException(
@@ -497,13 +498,26 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 			return result;
 		}
 
-		if (!paramType.isInstance(field)) {
+                // make sure paramType and field are both number
+                if ( ( paramType.getName().equals("java.lang.Integer") ||
+                       paramType.getName().equals("java.lang.Long") ||
+                       paramType.getName().equals("java.lang.Float") ||
+                       paramType.getName().equals("java.lang.Double") ) &&
+                     ( field.getClass().getName().equals("java.lang.Integer") ||
+                       field.getClass().getName().equals("java.lang.Long") ||
+                       field.getClass().getName().equals("java.lang.Float") ||
+                       field.getClass().getName().equals("java.lang.Double") ) )
+                {
+                   numberCompare = true ;
+                }
+                // for number compare, we always cast to Number then cast back
+		if (!numberCompare && !paramType.isInstance(field)) {
 			throw new IllegalArgumentException("The method: "
 					+ method.getName() + " Expected parameter type:"
 					+ paramType.getName()
 					+ " does not match with the actual type:"
 					+ field.getClass().getName());
-		}
+	        }	
 
 		result = true;
 		if (String.class.isAssignableFrom(paramType)) {
@@ -511,13 +525,13 @@ public class BasicBSONObject extends TreeMap<String, Object> implements
 		} else if (Date.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (Date) field);
 		} else if (Integer.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (Integer) field);
+			method.invoke(object, new Integer(((Number)field).intValue()));
 		} else if (Long.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (Long) field);
+			method.invoke(object, new Long(((Number)field).longValue()));
 		} else if (Double.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (Double) field);
+			method.invoke(object, new Double(((Number)field).doubleValue()));
 		} else if (Float.class.isAssignableFrom(paramType)) {
-			method.invoke(object, (Float) field);
+			method.invoke(object, new Float(((Number)field).floatValue()));
 		} else if (Character.class.isAssignableFrom(paramType)) {
 			method.invoke(object, (Character) field);
 		} else if (ObjectId.class.isAssignableFrom(paramType)) {
