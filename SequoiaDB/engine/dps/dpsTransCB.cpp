@@ -34,14 +34,14 @@ namespace engine
 
    dpsTransCB::dpsTransCB():_TransIDL48Cur(1)
    {
-      _TransIDH16 = 0;
-      _isOn = FALSE;
-      _doRollback = FALSE;
-      _isNeedSyncTrans = TRUE;
-      _maxUsedSize = 0;
-      _logFileTotalSize = 0;
-      _accquiredSpace = 0;
-      _isInit = FALSE;
+      _TransIDH16          = 0;
+      _isOn                = FALSE;
+      _doRollback          = FALSE;
+      _isNeedSyncTrans     = TRUE;
+      _maxUsedSize         = 0;
+      _logFileTotalSize    = 0;
+      _accquiredSpace      = 0;
+      _isInit              = FALSE;
    }
 
    dpsTransCB::~ dpsTransCB()
@@ -54,15 +54,15 @@ namespace engine
       while ( 0 == temp )
       {
          temp = _TransIDL48Cur.inc();
-         temp = ( temp & DPS_TRANSID_SN_BIT ) | _TransIDH16
-               | DPS_TRANSID_FIRSTOP_BIT;
+         temp = ( temp & DPS_TRANSID_SN_BIT ) | _TransIDH16 |
+                DPS_TRANSID_FIRSTOP_BIT;
       }
-      return temp;
+      return temp ;
    }
 
    void dpsTransCB::setNodeID( UINT16 nodeID )
    {
-      _TransIDH16 = (DPS_TRANS_ID)nodeID << 48;
+      _TransIDH16 = (DPS_TRANS_ID)nodeID << 48 ;
    }
 
    DPS_TRANS_ID dpsTransCB::getRollbackID( DPS_TRANS_ID transID )
@@ -128,19 +128,19 @@ namespace engine
       return _doRollback;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SVTRANSINFO, "dpsTransCB::saveTransInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SVTRANSINFO, "dpsTransCB::saveTransInfo" )
    void dpsTransCB::updateTransInfo( DPS_TRANS_ID transID,
-                                 DPS_LSN_OFFSET lsnOffset )
+                                     DPS_LSN_OFFSET lsnOffset )
    {
       PD_TRACE_ENTRY ( SDB_DPSTRANSCB_SVTRANSINFO );
-      if ( !_isOn || DPS_INVALID_TRANS_ID == transID
-            || pmdGetKRCB()->getDPSCB()->isInRestore() )
+      if ( !_isOn || DPS_INVALID_TRANS_ID == transID ||
+           pmdGetKRCB()->getDPSCB()->isInRestore() )
       {
          goto done;
       }
 
-      if ( pmdGetKRCB()->getDBRole() != SDB_ROLE_DATA
-         || pmdGetKRCB()->getReplCB()->primaryIsMe() )
+      if ( pmdGetKRCB()->getDBRole() != SDB_ROLE_DATA ||
+           pmdGetKRCB()->getReplCB()->primaryIsMe() )
       {
          // in primary, transaction-info save in EDUCB
          goto done;
@@ -164,7 +164,8 @@ namespace engine
       return ;
    }
 
-   void dpsTransCB::addTransInfo( DPS_TRANS_ID transID, DPS_LSN_OFFSET lsnOffset )
+   void dpsTransCB::addTransInfo( DPS_TRANS_ID transID,
+                                  DPS_LSN_OFFSET lsnOffset )
    {
       transID = getTransID( transID );
       ossScopedLock _lock( &_MapMutex );
@@ -175,7 +176,7 @@ namespace engine
       }
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_ADDTRANSCB, "dpsTransCB::addTransCB" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_ADDTRANSCB, "dpsTransCB::addTransCB" )
    void dpsTransCB::addTransCB( DPS_TRANS_ID transID, _pmdEDUCB *eduCB )
    {
       {
@@ -186,7 +187,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_ADDTRANSCB );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_DELTRANSCB, "dpsTransCB::delTransCB" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_DELTRANSCB, "dpsTransCB::delTransCB" )
    void dpsTransCB::delTransCB( DPS_TRANS_ID transID )
    {
       {
@@ -210,7 +211,7 @@ namespace engine
       _idBeginLsnMap.clear();
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SAVETRANSINFOFROMLOG, "dpsTransCB::saveTransInfoFromLog" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SAVETRANSINFOFROMLOG, "dpsTransCB::saveTransInfoFromLog" )
    void dpsTransCB::saveTransInfoFromLog( const dpsLogRecord &record )
    {
       dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
@@ -292,19 +293,16 @@ namespace engine
          goto done;
       }
       clearTransInfo();
-      while ( curLsn.offset!= DPS_INVALID_LSN_OFFSET
-            && curLsn.compareOffset( dpsCB->expectLsn().offset ) < 0 )
+      while ( curLsn.offset!= DPS_INVALID_LSN_OFFSET &&
+              curLsn.compareOffset( dpsCB->expectLsn().offset ) < 0 )
       {
          mb.clear();
          rc = dpsCB->search( curLsn, &mb );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to search %lld in dpsCB, rc=%d",
-                     curLsn.offset, rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to search %lld in dpsCB, rc=%d",
+                      curLsn.offset, rc );
          _dpsLogRecord record ;
          rc = record.load( mb.readPtr() ) ;
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to load log record, rc=%d",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to load log record, rc=%d", rc );
          saveTransInfoFromLog( record );
          curLsn.offset += record.head()._length;
       }
@@ -314,7 +312,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_TERMALLTRANS, "dpsTransCB::termAllTrans" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_TERMALLTRANS, "dpsTransCB::termAllTrans" )
    void dpsTransCB::termAllTrans()
    {
       {
@@ -322,7 +320,8 @@ namespace engine
          TRANS_CB_MAP::iterator iterMap = _cbMap.begin();
          while( iterMap != _cbMap.end() )
          {
-            iterMap->second->postEvent( pmdEDUEvent( PMD_EDU_EVENT_TRANS_STOP ));
+            iterMap->second->postEvent( pmdEDUEvent(
+                                        PMD_EDU_EVENT_TRANS_STOP ) ) ;
             _cbMap.erase( iterMap++ );
          }
       }
@@ -330,7 +329,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockGetX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                    UINT16 collectionID,
+                                    const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -341,7 +341,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockGetS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                    UINT16 collectionID,
+                                    const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -352,7 +353,7 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockGetIX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID )
+                                     UINT16 collectionID )
    {
       if ( !_isOn )
       {
@@ -363,7 +364,7 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockGetIS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID )
+                                     UINT16 collectionID )
    {
       if ( !_isOn )
       {
@@ -374,7 +375,8 @@ namespace engine
    }
 
    void dpsTransCB::transLockRelease( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                      UINT16 collectionID,
+                                      const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -404,7 +406,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                     UINT16 collectionID,
+                                     const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -415,7 +418,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockTestX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                     UINT16 collectionID,
+                                     const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -426,7 +430,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockTryX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                    UINT16 collectionID,
+                                    const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -437,7 +442,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::transLockTryS( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                                 UINT16 collectionID, const dmsRecordID *recordID )
+                                    UINT16 collectionID,
+                                    const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -448,7 +454,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::tryOrAppendX( _pmdEDUCB *eduCB, UINT32 logicCSID,
-                        UINT16 collectionID, const dmsRecordID *recordID )
+                                   UINT16 collectionID,
+                                   const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -461,7 +468,8 @@ namespace engine
    }
 
    INT32 dpsTransCB::waitLock( _pmdEDUCB * eduCB, UINT32 logicCSID,
-                              UINT16 collectionID, const dmsRecordID *recordID )
+                              UINT16 collectionID,
+                              const dmsRecordID *recordID )
    {
       if ( !_isOn )
       {
@@ -474,7 +482,7 @@ namespace engine
    }
 
    BOOLEAN dpsTransCB::hasWait( UINT32 logicCSID, UINT16 collectionID,
-                     const dmsRecordID *recordID)
+                                const dmsRecordID *recordID)
    {
       if ( !_isOn )
       {
@@ -554,11 +562,15 @@ namespace engine
             _logFileTotalSize = logFileSize * logFileNum ;
 
             // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
-            // (2).the max-size of unavailable space in cross-file is 2*DMS_RECORD_MAX_SZ*logFileNum,
-            // the available size is: availableSize = _logFileTotalSize - (1) - (2) ;
+            // (2).the max-size of unavailable space in cross-file is 
+            // 2*DMS_RECORD_MAX_SZ*logFileNum,
+            // the available size is: availableSize =
+            // _logFileTotalSize - (1) - (2) ;
             // the availableSize can used for operation-log and rollback-log,
-            // so the size of operation-log is: _maxUsedSize = availableSize / 2;
-            _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ * logFileNum ) / 2 ;
+            // so the size of operation-log is:
+            // _maxUsedSize = availableSize / 2;
+            _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ *
+                             logFileNum ) / 2 ;
 
             // if the logFileSize is 32M, the caculation method is:
             // if the transaction-operation-log  caused X(MB) of log-file,
@@ -598,7 +610,8 @@ namespace engine
 
       beginLsnOffset = beginLsnOffset % _logFileTotalSize ;
       curLsnOffset = curLsnOffset % _logFileTotalSize ;
-      usedSize = ( curLsnOffset + _logFileTotalSize - beginLsnOffset ) % _logFileTotalSize ;
+      usedSize = ( curLsnOffset + _logFileTotalSize - beginLsnOffset ) %
+                 _logFileTotalSize ;
    done:
       return usedSize ;
    }
