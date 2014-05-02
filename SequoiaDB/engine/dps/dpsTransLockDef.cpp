@@ -23,8 +23,8 @@
 namespace engine
 {
    dpsTransLockId::dpsTransLockId( UINT32 logicCSID,
-                                 UINT16 collectionID,
-                                 const _dmsRecordID *recordID )
+                                   UINT16 collectionID,
+                                   const _dmsRecordID *recordID )
    {
       _logicCSID = logicCSID ;
       _collectionID = collectionID ;

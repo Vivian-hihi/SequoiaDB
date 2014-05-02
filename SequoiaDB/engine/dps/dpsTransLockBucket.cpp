@@ -82,9 +82,8 @@ namespace engine
             goto done ;
          }
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the lock, append failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the lock, append failed(rc=%d)",
+                   rc );
 
    waitretry:
       // waitting for the lock
@@ -115,14 +114,13 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_ACQUIRE );
       return rc;
    error:
-      PD_LOG ( PDERROR,
-               "failed to get the lock(rc=%d)",
-               rc );
+      PD_LOG ( PDERROR, "Failed to get the lock(rc=%d)", rc ) ;
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_WAITLOCKX, "dpsLockBucket::waitLockX" )
-   INT32 dpsLockBucket::waitLockX( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
+   INT32 dpsLockBucket::waitLockX( _pmdEDUCB *eduCB,
+                                   const dpsTransLockId &lockId )
    {
       INT32 rc = SDB_OK;
       dpsTransLockUnit *pLockUnit = NULL;
@@ -167,14 +165,13 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_WAITLOCKX );
       return rc;
    error:
-      PD_LOG ( PDERROR,
-               "failed to get the lock(rc=%d)",
-               rc );
+      PD_LOG ( PDERROR, "Failed to get the lock(rc=%d)", rc );
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_UPGRADE, "dpsLockBucket::upgrade" )
-   INT32 dpsLockBucket::upgrade( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
+   INT32 dpsLockBucket::upgrade( _pmdEDUCB *eduCB,
+                                 const dpsTransLockId &lockId,
                                  DPS_TRANSLOCK_TYPE lockType )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
@@ -215,9 +212,8 @@ namespace engine
             goto done ;
          }
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the lock, append failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the lock, append failed(rc=%d)",
+                   rc );
    waitretry:
       // waitting for the lock
       rc = waitLock( eduCB );
@@ -247,14 +243,13 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_UPGRADE );
       return rc;
    error:
-      PD_LOG ( PDERROR,
-               "failed to upgrade the lock(rc=%d)",
-               rc );
+      PD_LOG ( PDERROR, "Failed to upgrade the lock(rc=%d)", rc );
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_LOCKID, "dpsLockBucket::lockId" )
-   void dpsLockBucket::release( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
+   void dpsLockBucket::release( _pmdEDUCB *eduCB,
+                                const dpsTransLockId &lockId )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
 
@@ -285,8 +280,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDTORUN, "dpsLockBucket::appendToRun" )
    INT32 dpsLockBucket::appendToRun( _pmdEDUCB *eduCB,
-                                    DPS_TRANSLOCK_TYPE lockType,
-                                    dpsTransLockUnit *pLockUnit )
+                                     DPS_TRANSLOCK_TYPE lockType,
+                                     dpsTransLockUnit *pLockUnit )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
       SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
@@ -308,8 +303,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDTOWAIT, "dpsLockBucket::appendToWait" )
    void dpsLockBucket::appendToWait( _pmdEDUCB *eduCB,
-                                    const dpsTransLockId &lockId,
-                                    dpsTransLockUnit *pLockUnit  )
+                                     const dpsTransLockId &lockId,
+                                     dpsTransLockUnit *pLockUnit  )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
       SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
@@ -337,8 +332,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_APPENDHEADTOWAIT, "dpsLockBucket::appendHeadToWait" )
    void dpsLockBucket::appendHeadToWait( _pmdEDUCB *eduCB,
-                                    const dpsTransLockId &lockId,
-                                    dpsTransLockUnit *pLockUnit  )
+                                         const dpsTransLockId &lockId,
+                                         dpsTransLockUnit *pLockUnit  )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
       SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
@@ -357,7 +352,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_REMOVEFROMRUN, "dpsLockBucket::removeFromRun" )
    void dpsLockBucket::removeFromRun( _pmdEDUCB *eduCB,
-                                    dpsTransLockUnit *pLockUnit  )
+                                      dpsTransLockUnit *pLockUnit  )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
       SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
@@ -376,8 +371,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_REMOVEFROMWAIT, "dpsLockBucket::removeFromWait" )
    void dpsLockBucket::removeFromWait( _pmdEDUCB *eduCB,
-                                    dpsTransLockUnit *pLockUnit,
-                                    const dpsTransLockId &lockId )
+                                       dpsTransLockUnit *pLockUnit,
+                                       const dpsTransLockId &lockId )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" )
       SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
@@ -418,9 +413,8 @@ namespace engine
             }
             else
             {
-               PD_LOG( PDWARNING,
-                        "failed to get lock-info, "
-                        "dead-lock may occured");
+               PD_LOG( PDWARNING, "Failed to get lock-info, "
+                       "dead-lock may occured" );
                pLockInfo->setNextWaitCB( NULL );
             }
             break;
@@ -462,7 +456,7 @@ namespace engine
    void dpsLockBucket::wakeUp( _pmdEDUCB *eduCB )
    {
       eduCB->postEvent( pmdEDUEvent( PMD_EDU_EVENT_LOCKWAKEUP,
-                                 FALSE, NULL ));
+                                     FALSE, NULL ));
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_WAKEUP );
    }
 
@@ -488,8 +482,8 @@ namespace engine
       {
          // it is means the lock-type is compatible,
          // if there is a same lock-type in run-queue
-         if ( iterLst->second == lockType
-               && DPS_TRANSLOCK_X != lockType )
+         if ( iterLst->second == lockType &&
+              DPS_TRANSLOCK_X != lockType )
          {
             break ;
          }
@@ -498,9 +492,10 @@ namespace engine
             isCompatible = isLockCompatible( iterLst->second, lockType );
             if ( !isCompatible )
             {
-               PD_LOG( PDERROR, "lock conflicts!"
-                     "(myTID:%d, myLockType:%d, curTID:%d, curLockType=%d)",
-                     eduCB->getTID(), lockType, iterLst->first, iterLst->second );
+               PD_LOG( PDERROR, "Lock conflicts!"
+                       "(myTID:%d, myLockType:%d, curTID:%d, curLockType=%d)",
+                       eduCB->getTID(), lockType, iterLst->first,
+                       iterLst->second );
                //SDB_ASSERT( FALSE, "lock conflict!!!!!!!! " );
                break ;
             }
@@ -543,14 +538,13 @@ namespace engine
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_TEST );
       return rc;
    error:
-      PD_LOG ( PDINFO,
-               "failed to test the lock(rc=%d)",
-               rc );
+      PD_LOG ( PDINFO, "Failed to test the lock(rc=%d)", rc );
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TRYACQUIRE, "dpsLockBucket::tryAcquire" )
-   INT32 dpsLockBucket::tryAcquire( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
+   INT32 dpsLockBucket::tryAcquire( _pmdEDUCB *eduCB,
+                                    const dpsTransLockId &lockId,
                                     DPS_TRANSLOCK_TYPE lockType )
    {
       INT32 rc = SDB_OK;
@@ -581,22 +575,21 @@ namespace engine
          // append to run-queue
          rc = appendToRun( eduCB, lockType, pLockUnit );
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the lock, append failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the lock, append failed(rc=%d)",
+                   rc );
    done:
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_TRYACQUIRE );
       return rc;
    error:
-      PD_LOG ( PDERROR,
-               "failed to get the lock(rc=%d)",
-               rc );
+      PD_LOG ( PDERROR, "Failed to get the lock(rc=%d)", rc );
       goto done;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSLOCKBUCKET_TRYACQUIREORAPPEND, "dpsLockBucket::tryAcquireOrAppend" )
-   INT32 dpsLockBucket::tryAcquireOrAppend( _pmdEDUCB *eduCB, const dpsTransLockId &lockId,
-                                    DPS_TRANSLOCK_TYPE lockType, BOOLEAN appendHead )
+   INT32 dpsLockBucket::tryAcquireOrAppend( _pmdEDUCB *eduCB,
+                                            const dpsTransLockId &lockId,
+                                            DPS_TRANSLOCK_TYPE lockType,
+                                            BOOLEAN appendHead )
    {
       INT32 rc = SDB_OK;
       dpsTransLockUnit *pLockUnit = NULL;
@@ -640,16 +633,13 @@ namespace engine
             goto done;
          }
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the lock, append failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the lock, append failed(rc=%d)",
+                   rc );
    done:
       PD_TRACE_EXIT ( SDB_DPSLOCKBUCKET_TRYACQUIREORAPPEND );
       return rc;
    error:
-      PD_LOG ( PDERROR,
-               "failed to get the lock(rc=%d)",
-               rc );
+      PD_LOG ( PDERROR, "Failed to get the lock(rc=%d)", rc );
       goto done;
    }
 
