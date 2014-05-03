@@ -747,7 +747,7 @@ namespace engine
       goto done;
    }
 
-   / PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TESTIX, "dpsTransLock::testIX" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TESTIX, "dpsTransLock::testIX" )
    INT32 dpsTransLock::testIX( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
@@ -888,7 +888,7 @@ namespace engine
       goto done;
    }
 
-   / PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TRYS, "dpsTransLock::tryS" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TRYS, "dpsTransLock::tryS" )
    INT32 dpsTransLock::tryS( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
    {
       SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
