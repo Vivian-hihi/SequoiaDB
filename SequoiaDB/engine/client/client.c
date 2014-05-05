@@ -775,20 +775,24 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
 done:
    return rc ;
 error:
-   if ( connection->_sock != -1 )
+   if ( connection != NULL )
    {
-      clientDisconnect ( connection->_sock ) ;
-      connection->_sock = -1 ;
+      if ( connection->_sock != -1 )
+      {
+         clientDisconnect ( connection->_sock ) ;
+         connection->_sock = -1 ;
+      }
+      if ( connection->_pSendBuffer )
+      {
+        SDB_OSS_FREE (connection->_pSendBuffer ) ;
+      }
+      if ( connection->_pReceiveBuffer )
+      {
+         SDB_OSS_FREE ( connection->_pReceiveBuffer ) ;
+      }
+      SDB_OSS_FREE ( connection ) ;
+	connection = NULL ;
    }
-   if ( connection->_pSendBuffer )
-   {
-      SDB_OSS_FREE (connection->_pSendBuffer ) ;
-   }
-   if ( connection->_pReceiveBuffer )
-   {
-      SDB_OSS_FREE ( connection->_pReceiveBuffer ) ;
-   }
-   SDB_OSS_FREE ( connection ) ;
    *handle = SDB_INVALID_HANDLE ;
    goto done ;
 }
