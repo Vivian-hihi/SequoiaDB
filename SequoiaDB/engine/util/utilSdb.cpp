@@ -60,7 +60,7 @@ utilSdbTemplet::~utilSdbTemplet()
 }
 
 #if defined (_LINUX)
-void utilSdbTemplet::_utilTrapHandler ( OSS_HANDPARMS )
+void utilTrapHandler ( OSS_HANDPARMS )
 {
    CHAR dumpDir[OSS_MAX_PATHSIZE+1] = "./" ;
    if ( signum == OSS_STACK_DUMP_SIGNAL ||
@@ -123,7 +123,7 @@ INT32 utilSdbTemplet::_utilSetupSignalHandler()
    struct sigaction newact ;
    ossMemset ( &newact, 0, sizeof(newact) ) ;
    sigemptyset ( &newact.sa_mask ) ;
-   newact.sa_sigaction = ( OSS_SIGFUNCPTR ) _utilTrapHandler ;
+   newact.sa_sigaction = ( OSS_SIGFUNCPTR ) utilTrapHandler ;
    newact.sa_flags |= SA_SIGINFO ;
    newact.sa_flags |= SA_ONSTACK ;
    if ( sigaction ( OSS_STACK_DUMP_SIGNAL, &newact, NULL ) )
