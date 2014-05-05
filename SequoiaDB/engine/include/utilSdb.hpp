@@ -41,6 +41,12 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "utilTrace.hpp"
+#include "ossSignal.hpp"
+#include "ossPrimitiveFileOp.hpp"
+#include "ossStackDump.hpp"
+#if defined (_LINUX)
+#include <execinfo.h>
+#endif
 #include <vector>
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -126,7 +132,6 @@ private:
    } ;
 
 #if defined (_LINUX)
-   void _utilTrapHandler ( OSS_HANDPARMS ) ;
    INT32 _utilSetupSignalHandler() ;
 #endif
    void _initArg ( po::options_description &desc ) ;
