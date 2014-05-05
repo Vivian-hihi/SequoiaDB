@@ -100,7 +100,8 @@ utilFiles = [
       "util/utilPath.cpp",
       "util/text.cpp",
       "util/utilStr.cpp",
-      "util/utilParam.cpp"
+      "util/utilParam.cpp",
+      "util/utilSdb.cpp"
       ]
 
 dpsFiles = [
