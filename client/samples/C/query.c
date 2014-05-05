@@ -9,19 +9,22 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh query
- * Win: buildApp.bat query
+ *    Linux: ./buildApp.sh query
+ *    Win: buildApp.bat query
  * Manual Compile:
- * Linux: cc query.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Foquery.obj /c query.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:query.exe /LIBPATH:..\..\lib sdbc.lib query.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Linux: cc query.c common.c -o query -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Foquery.obj /c query.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:query.exe /LIBPATH:..\..\lib sdbc.lib query.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc query.c common.c -o query.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./query <hostname> <servicename> \
- *        <Username> <Username>
- * Win: query.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./query <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: query.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.

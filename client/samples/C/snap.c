@@ -9,19 +9,23 @@
  *              ServiceName: The service name or port number for the database
  *                           service
  * Auto Compile:
- * Linux: ./buildApp.sh snap
- * Win: buildApp.bat snap
+ *    Linux: ./buildApp.sh snap
+ *    Win: buildApp.bat snap
  * Manual Compile:
- * Linux: cc snap.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Fosnap.obj /c snap.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:snap.exe /LIBPATH:..\..\lib sdbc.lib snap.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc snap.c common.c -o snap -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Fosnap.obj /c snap.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:snap.exe /LIBPATH:..\..\lib sdbc.lib snap.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc snap.c common.c -o snap.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./snap <hostname> <servicename> \
- *        <Username> <Username>
- * Win: snap.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./snap <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: snap.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more detail.
  ******************************************************************************/

@@ -9,19 +9,23 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh index
- * Win: buildApp.bat index
+ *    Linux: ./buildApp.sh index
+ *    Win: buildApp.bat index
  * Manual Compile:
- * Linux: cc index.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Foindex.obj /c index.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:index.exe /LIBPATH:..\..\lib sdbc.lib index.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *       Linux: cc index.c common.c -o index -I../../include -L../../lib -lsdbc
+ *       Win:
+ *       cl /Foindex.obj /c index.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:index.exe /LIBPATH:..\..\lib sdbc.lib index.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *       Linux: cc index.c common.c -o index.static -I../../include -O0
+ *              -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
- *        <Username> <Username>
- * Win: insert.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: insert.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.
@@ -76,16 +80,10 @@ INT32 main ( INT32 argc, CHAR **argv )
                                    SDB_PAGESIZE_4K, &collectionspace ) ;
    CHECK_RC ( rc, "Failed to create collection space" ) ;
 
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
-
    // create collection in a specified colletion space.
    // Here,we build it up in the new collection.
    rc = sdbCreateCollection ( collectionspace, COLLECTION_NAME, &collection ) ;
    CHECK_RC ( rc, "Failed to create collection" ) ;
-
-   // recommned to wait for a few seconds in cluster environment
-   waiting ( 1 ) ;
 
    // build a bson for index definition
    bson_init( &obj ) ;
@@ -105,15 +103,13 @@ INT32 main ( INT32 argc, CHAR **argv )
    bson_destroy ( &obj ) ;
    printf("Suceess to build index!" OSS_NEWLINE ) ;
 
-   // drop the specified collection
-   rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
-   CHECK_RC ( rc, "Failed to drop collecton" ) ;
-
-   // drop the specified collection space
-   rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
-   CHECK_RC ( rc, "Failed to drop the specified collection" ) ;
-
 done:
+   // drop collection space
+   rc = sdbDropCollectionSpace( connection, COLLECTION_SPACE_NAME ) ;
+   if ( rc != SDB_OK )
+   {
+      printf ( "Failed to drop collection space, rc = %d"OSS_NEWLINE, rc ) ;
+   }
    // disconnect the connection
    sdbDisconnect ( connection ) ;
    // release the local variables

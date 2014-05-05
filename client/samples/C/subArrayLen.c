@@ -4,18 +4,22 @@
  * Description: This program demostrates how to get the length of the sub array
  *              int a bson.
  * Auto Compile:
- * Linux: ./buildApp.sh subArrayLen
- * Win: buildApp.bat subArrayLen
+ *    Linux: ./buildApp.sh subArrayLen
+ *    Win: buildApp.bat subArrayLen
  * Manual Compile:
- * Linux: cc subArrayLen.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /FosubArrayLen.obj /c subArrayLen.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:subArrayLen.exe /LIBPATH:..\..\lib sdbc.lib subArrayLen.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc subArrayLen.c common.c -o subArrayLen -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /FosubArrayLen.obj /c subArrayLen.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:subArrayLen.exe /LIBPATH:..\..\lib sdbc.lib subArrayLen.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc subArrayLen.c common.c -o subArrayLen.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./subArrayLen
- * Win: subArrayLen.exe
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./subArrayLen
+ *    Win: subArrayLen.exe
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.

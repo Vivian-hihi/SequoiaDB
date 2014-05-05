@@ -158,24 +158,15 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
    bson_destroy(&rule);
    printf("Success to update!" OSS_NEWLINE ) ;
-   // drop the specified collection
-   //rc = sdbDropCollection( collectionspace,COLLECTION_NAME ) ;
-   if( rc!=SDB_OK )
-   {
-      printf("Failed to drop the specified collection,\
-              rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
-   }
 
-   // drop the specified collection space
-   //rc = sdbDropCollectionSpace( connection,COLLECTION_SPACE_NAME ) ;
-   if( rc!=SDB_OK )
+done:
+   // drop collection space
+   rc = sdbDropCollectionSpace( connection, COLLECTION_SPACE_NAME ) ;
+   if ( rc != SDB_OK )
    {
       printf("Failed to drop the specified collection,\
               rc = %d" OSS_NEWLINE, rc ) ;
-      goto error ;
    }
-done:
    // disconnect the connection
    sdbDisconnect ( connection ) ;
    // release the local variables

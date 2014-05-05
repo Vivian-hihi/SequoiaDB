@@ -9,19 +9,23 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh connect
- * Win: buildApp.bat connect
+ *    Linux: ./buildApp.sh connect
+ *    Win: buildApp.bat connect
  * Manual Compile:
- * Linux: cc connect.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Foconnect.obj /c connect.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:connect.exe /LIBPATH:..\..\lib sdbc.lib connect.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc connect.c common.c -o connect -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Foconnect.obj /c connect.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:connect.exe /LIBPATH:..\..\lib sdbc.lib connect.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc connect.c common.c -o connect.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./connect <hostname> <servicename> \
- *        <Username> <Username>
- * Win: insert.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./connect <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: insert.exe <hostname> <servicename> <Username> <Username>
  *
  ******************************************************************************/
 #include <stdio.h>
@@ -57,11 +61,11 @@ INT32 main ( INT32 argc, CHAR **argv )
    else
       printf( "connect success!\n") ;
 
-done:
    // disconnect from database
    sdbDisconnect ( connection ) ;
    // release connection
    sdbReleaseConnection ( connection ) ;
+done:
    return 0 ;
 error:
    goto done ;

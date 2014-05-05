@@ -9,19 +9,23 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh update_use_id
- * Win: buildApp.bat update_use_id
+ *    Linux: ./buildApp.sh update_use_id
+ *    Win: buildApp.bat update_use_id
  * Manual Compile:
- * Linux: cc update_use_id.c common.c -o update_use_id -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Foupdate_use_id.obj /c update_use_id.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:update_use_id.exe /LIBPATH:..\..\lib sdbc.lib update_use_id.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc update_use_id.c common.c -o update_use_id -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Foupdate_use_id.obj /c update_use_id.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:update_use_id.exe /LIBPATH:..\..\lib sdbc.lib update_use_id.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc update_use_id.c common.c -o update_use_id.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./update_use_id <hostname> <servicename> \
- *        <Username> <Username>
- * Win: update_use_id.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./update_use_id <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: update_use_id.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.
@@ -173,11 +177,17 @@ INT32 main ( INT32 argc, CHAR **argv )
       printf("Failed to get next, rc = %d" OSS_NEWLINE, rc ) ;
       goto error ;
    }
-   printf("update update, the record is:\n") ;
+   printf("after update, the record is:\n") ;
    bson_print( &obj ) ;
    bson_destroy(&obj) ;
 
 done:
+   // drop collection space
+   rc = sdbDropCollectionSpace( connection, COLLECTION_SPACE_NAME ) ;
+   if ( rc != SDB_OK )
+   {
+     printf("Failed to drop collection space, rc = %d" OSS_NEWLINE, rc ) ;
+   }
    // disconnect the connection
    sdbDisconnect ( connection ) ;
    // release the local variables

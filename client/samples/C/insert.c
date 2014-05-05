@@ -10,19 +10,23 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh insert
- * Win: buildApp.bat insert
+ *    Linux: ./buildApp.sh insert
+ *    Win: buildApp.bat insert
  * Manual Compile:
- * Linux: cc insert.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Foinsert.obj /c insert.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:insert.exe /LIBPATH:..\..\lib sdbc.lib insert.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc insert.c common.c -o insert -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Foinsert.obj /c insert.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:insert.exe /LIBPATH:..\..\lib sdbc.lib insert.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc insert.c common.c -o insert.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
- *        <Username> <Username>
- * Win: insert.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: insert.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.

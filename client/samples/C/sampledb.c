@@ -12,19 +12,23 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh sampledb
- * Win: buildApp.bat sampledb
+ *    Linux: ./buildApp.sh sampledb
+ *    Win: buildApp.bat sampledb
  * Manual Compile:
- * Linux: cc sampledb.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Fosampledb.obj /c sampledb.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:sampledb.exe /LIBPATH:..\..\lib sdbc.lib sampledb.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc sampledb.c common.c -o sampledb -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Fosampledb.obj /c sampledb.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:sampledb.exe /LIBPATH:..\..\lib sdbc.lib sampledb.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc sampledb.c common.c -o sampledb.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./sampledb <hostname> <servicename> \
- *        <Username> <Username>
- * Win: sampledb.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./sampledb <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: sampledb.exe <hostname> <servicename> <Username> <Username>
  *
  ******************************************************************************/
 #include <stdio.h>
