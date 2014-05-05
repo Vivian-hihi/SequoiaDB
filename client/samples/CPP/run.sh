@@ -2,7 +2,7 @@
 echo "###############building file..."
 ./buildApp.sh connect
 ./buildApp.sh query
-./buildApp.sh shard
+./buildApp.sh replicaGroup
 ./buildApp.sh index
 ./buildApp.sh sql
 ./buildApp.sh insert
@@ -18,10 +18,10 @@ echo "###############running snap..."
 echo "###############running snap.static..."
 ./build/query.static localhost 11810 "" ""
 
-echo "###############running shard..."
-./build/shard localhost 11810 "" ""
-echo "###############running shard.static..."
-./build/shard.static localhost 11810 "" ""
+#echo "###############running replicaGroup..."
+#./build/replicaGroup localhost 11810 "" ""
+#echo "###############running replicaGroup.static..."
+#./build/replicaGroup.static localhost 11810 "" ""
 
 echo "###############running index..."
 ./build/index localhost 11810 "" ""

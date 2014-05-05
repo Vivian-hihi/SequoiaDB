@@ -1,8 +1,8 @@
 /******************************************************************************
  *
- * Name: shard.cpp
+ * Name: replicaGroup.cpp
  * Description: This program demostrates how to connect to SequoiaDB database,
- *              list/get shard/node, and create new node.
+ *              list/get replicaGroup/node, and create new node.
  * Parameters:
  *              HostName: The hostname for database server
  *              ServiceName: The service name or port number for the database
@@ -10,21 +10,21 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh shard
- * Win: buildApp.bat shard
+ * Linux: ./buildApp.sh replicaGroup
+ * Win: buildApp.bat replicaGroup
  * Manual Compile:
  * Linux:
- *       g++ shard.cpp common.cpp -o shard -I../../include \
+ *       g++ replicaGroup.cpp common.cpp -o replicaGroup -I../../include \
  *       -L../../lib -lsdbcpp
  * Win:
- *    cl /Foshard.obj /c shard.cpp /I..\..\include /wd4047
+ *    cl /ForeplicaGroup.obj /c replicaGroup.cpp /I..\..\include /wd4047
  *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:shard.exe /LIBPATH:..\..\lib sdbcpp.lib shard.obj common.obj
+ *    link /OUT:replicaGroup.exe /LIBPATH:..\..\lib sdbcpp.lib replicaGroup.obj common.obj
  *    copy ..\..\lib\sdbcpp.dll .
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./shard <hostname> \
+ * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./replicaGroup <hostname> \
  *        <servicename> <username> <password>
- * Win: shard.exe <hostname> <servicename> <username> <password>
+ * Win: replicaGroup.exe <hostname> <servicename> <username> <password>
  *
  ******************************************************************************/
 #include <iostream>
@@ -45,10 +45,10 @@ INT32 addGroup ( sdb *connection )
 {
    INT32 rc = SDB_OK ;
    CHAR newGroupName [ 128 ] = {0} ;
-   sdbShard shard ;
+   sdbReplicaGroup rg ;
    printf ( "Please input the new group name: " ) ;
    scanf ( "%s", newGroupName ) ;
-   rc = connection->createShard ( newGroupName, shard ) ;
+   rc = connection->createReplicaGroup ( newGroupName, rg ) ;
    if ( rc )
    {
       printf ( "Failed to create group, rc = %d" OSS_NEWLINE, rc ) ;
@@ -66,10 +66,10 @@ INT32 listGroups ( sdb *connection )
    sdbCursor cursor ;
    INT32 count = 0 ;
    BSONObj obj ;
-   rc = connection->listShards ( cursor ) ;
+   rc = connection->listReplicaGroups ( cursor ) ;
    if ( rc )
    {
-      printf ( "Failed to list shards, rc = %d"
+      printf ( "Failed to list replica groups, rc = %d"
                OSS_NEWLINE, rc ) ;
       exit ( 0 ) ;
    }
@@ -86,7 +86,7 @@ INT32 listGroups ( sdb *connection )
          }
          break ;
       }
-      printf ( "shard [ %d ]: " OSS_NEWLINE, count ) ;
+      printf ( "replica group [ %d ]: " OSS_NEWLINE, count ) ;
       cout << obj.toString() << endl ;
       ++ count ;
    }
@@ -106,7 +106,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    CHAR *pPasswd                     = NULL ;
    BSONObj detail ;
    sdb connection ;
-   sdbShard shard ;
+   sdbReplicaGroup rg ;
    sdbNode masternode ;
    sdbNode slavenode ;
    INT32 nodeNum = 0 ;
@@ -138,19 +138,19 @@ INT32 main ( INT32 argc, CHAR **argv )
    rc = listGroups ( &connection ) ;
    if ( rc )
    {
-      printf ( "Failed to list shards, rc = %d"
+      printf ( "Failed to list replica groups, rc = %d"
                OSS_NEWLINE, rc ) ;
       exit ( 0 ) ;
    }
-   // get catalog shard by name
-   rc = connection.getShard ( "SYSCatalogGroup", shard ) ;
+   // get catalog rg by name
+   rc = connection.getReplicaGroup ( "SYSCatalogGroup", rg ) ;
    if ( rc )
    {
       printf ( "Failed to get catalog group, rc = %d" OSS_NEWLINE, rc ) ;
       exit ( 0 ) ;
    }
    // find how many nodes in the set
-   rc = shard.getNodeNum ( SDB_NODE_ALL, &nodeNum ) ;
+   rc = rg.getNodeNum ( SDB_NODE_ALL, &nodeNum ) ;
    if ( rc )
    {
       printf ( "Failed to get number of node, rc = %d" OSS_NEWLINE,
@@ -160,7 +160,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    printf ( "There are totally %d nodes in the set" OSS_NEWLINE,
             nodeNum ) ;
    // get detailed information about the set
-   rc = shard.getDetail ( detail ) ;
+   rc = rg.getDetail ( detail ) ;
    if ( rc )
    {
       printf ( "Failed to get details, rc = %d" OSS_NEWLINE,
@@ -169,7 +169,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    }
    cout << detail.toString() << endl ;
    // get the master node
-   rc = shard.getMaster ( masternode ) ;
+   rc = rg.getMaster ( masternode ) ;
    if ( rc )
    {
       printf ( "Failed to get masternode, rc = %d" OSS_NEWLINE, rc ) ;
@@ -180,7 +180,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    printf ( "master service name: %s" OSS_NEWLINE,
             masternode.getServiceName () ) ;
    // get one of slave
-   rc = shard.getSlave ( slavenode ) ;
+   rc = rg.getSlave ( slavenode ) ;
    if ( rc )
    {
       printf ( "Failed to get slavenode, rc = %d" OSS_NEWLINE, rc ) ;
@@ -203,7 +203,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    rc = listGroups ( &connection ) ;
    if ( rc )
    {
-      printf ( "Failed to list shards, rc = %d"
+      printf ( "Failed to list replica groups, rc = %d"
                OSS_NEWLINE, rc ) ;
       exit ( 0 ) ;
    }
