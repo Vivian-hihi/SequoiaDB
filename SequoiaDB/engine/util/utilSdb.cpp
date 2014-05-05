@@ -282,7 +282,7 @@ void *utilSdbTemplet::_findKey( const CHAR *pKey )
 {
    std::vector<util_var *>::iterator it ;
    util_var *pVar = NULL ;
-   INT32 keySize = ossStrlen( pKey ) ;
+   UINT32 keySize = ossStrlen( pKey ) ;
 
    for( it = _argList.begin(); it != _argList.end(); ++it )
    {
@@ -373,7 +373,7 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
                                          CHAR **argv )
 {
    INT32 rc = SDB_OK ;
-   INT32 tempStrSize = 0 ;
+   UINT32 tempStrSize = 0 ;
    BOOLEAN isFind = FALSE ;
    std::vector<util_var *>::iterator it ;
    const CHAR *pTempStr = NULL ;
@@ -427,7 +427,8 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
       {
          if ( pVar->varType == UTIL_VAR_INT )
          {
-            pVar->varInt = ossAtoi ( vm[ pVar->pKey ].as<std::string>().c_str() ) ;
+            pVar->varInt = ossAtoi(
+                  vm[ pVar->pKey ].as<std::string>().c_str() ) ;
          }
          else if ( pVar->varType == UTIL_VAR_BOOL )
          {
@@ -438,17 +439,30 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
          {
             pTempStr = vm[ pVar->pKey ].as<std::string>().c_str() ;
             tempStrSize = ossStrlen ( pTempStr ) ;
-            pVar->pVarString = (CHAR *)SDB_OSS_MALLOC( tempStrSize + 1 ) ;
-            if ( !pVar->pVarString )
+            if ( pVar->maxStringSize < 0 ||
+                 ( tempStrSize <= pVar->maxStringSize && 0 < tempStrSize ) )
             {
-               PD_LOG ( PDERROR, "Failed to allocate memory for %d bytes",
-                        tempStrSize ) ;
-               rc = SDB_OOM ;
+               pVar->pVarString = (CHAR *)SDB_OSS_MALLOC( tempStrSize + 1 ) ;
+               if ( !pVar->pVarString )
+               {
+                  PD_LOG ( PDERROR, "Failed to allocate memory for %d bytes",
+                           tempStrSize ) ;
+                  rc = SDB_OOM ;
+                  goto error ;
+               }
+               pVar->pVarString[ tempStrSize ] = '\0' ;
+               pVar->stringIsMy = TRUE ;
+               ossStrncpy ( pVar->pVarString, pTempStr, tempStrSize ) ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               ossPrintf( "%s max size is %d"OSS_NEWLINE,
+                          pVar->pKey, pVar->maxStringSize );
+               PD_LOG ( PDERROR, "%s max size is %d",
+                        pVar->pKey, pVar->maxStringSize ) ;
                goto error ;
             }
-            pVar->pVarString[ tempStrSize ] = '\0' ;
-            pVar->stringIsMy = TRUE ;
-            ossStrncpy ( pVar->pVarString, pTempStr, tempStrSize ) ;
          }
          else if ( pVar->varType == UTIL_VAR_SWITCH )
          {
@@ -468,8 +482,7 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
             if ( !isFind )
             {
                rc = SDB_INVALIDARG ;
-               ossPrintf ( "%s unknow %s cmd"OSS_NEWLINE, pVar->pKey, pTempStr ) ;
-               std::cout << pVar->pKey << " unknow " << pTempStr << " cmd" << std::endl ;
+               ossPrintf( "%s unknow %s cmd"OSS_NEWLINE, pVar->pKey, pTempStr );
                PD_LOG ( PDERROR, "%s unknow %s cmd", pVar->pKey, pTempStr ) ;
                goto error ;
             }
