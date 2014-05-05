@@ -10,19 +10,23 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh sql
- * Win: buildApp.bat sql
+ *    Linux: ./buildApp.sh sql
+ *    Win: buildApp.bat sql
  * Manual Compile:
- * Linux: cc sql.c common.c -o sql -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Fosql.obj /c sql.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:sql.exe /LIBPATH:..\..\lib sdbc.lib sql.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc sql.c common.c -o sql -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Fosql.obj /c sql.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:sql.exe /LIBPATH:..\..\lib sdbc.lib sql.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *    Linux: cc sql.c common.c -o sql.static -I../../include -O0
+ *           -ggdb ../../lib/libsdbc.a -lm
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./sql <hostname> <servicename> \
- *        <Username> <Username>
- * Win: sql.exe <hostname> <servicename> <Username> <Username>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./sql <hostname> <servicename> \
+ *           <Username> <Username>
+ *    Win: sql.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.
