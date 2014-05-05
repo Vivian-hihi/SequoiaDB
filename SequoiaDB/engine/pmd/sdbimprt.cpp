@@ -41,25 +41,14 @@
 #include "ossUtil.hpp"
 #include "ossMem.hpp"
 #include "ossSocket.hpp"
-#include "ossSignal.hpp"
-#include "ossPrimitiveFileOp.hpp"
-#include "ossStackDump.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "msgDef.h"
 #include "utilSdb.hpp"
 #include <iostream>
 
-#if defined (_LINUX)
-#include <execinfo.h>
-#endif
-
 #define LOGPATH "sdbimport.log"
 
-#define OPTION_HOSTNAME          "hostname"
-#define OPTION_SVCNAME           "svcname"
-#define OPTION_USER              "user"
-#define OPTION_PASSWORD          "password"
 #define OPTION_DELCHAR           "delchar"
 #define OPTION_DELFIELD          "delfield"
 #define OPTION_DELRECORD         "delrecord"
@@ -321,7 +310,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    APPENDARGSTRING( utilSdbObj, OPTION_SVCNAME,      OPTION_SVCNAME ",p",      "database service name",                                                     FALSE, OSS_MAX_SERVICENAME, DEFAULT_SVCNAME ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_USER,         OPTION_USER ",u",         "databse user",                                                              FALSE, -1,                  "\0" ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_PASSWORD,     OPTION_PASSWORD ",w",     "databse password",                                                          FALSE, -1,                  "\0" ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_DELCHAR,      OPTION_DELCHAR ",a",      "string delimiter ( default: \" )( csv only )",                              FALSE, -1,                  "\"" ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_DELCHAR,      OPTION_DELCHAR ",a",      "string delimiter ( default: \" )( csv only )",                              FALSE, 4,                  "\"" ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_DELFIELD,     OPTION_DELFIELD ",e",     "field delimiter ( default: , )( csv only )",                                FALSE, 4,                   ","  ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_DELRECORD,    OPTION_DELRECORD ",r",    "record delimiter ( default: '\\n' )",                                       FALSE, 4,                   "\n" ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_COLLECTSPACE, OPTION_COLLECTSPACE ",c", "collection space name",                                                     TRUE,  -1,                  NULL ) ;
