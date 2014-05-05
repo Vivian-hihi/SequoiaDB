@@ -54,6 +54,11 @@ namespace po = boost::program_options ;
 
 typedef INT32 (*sdb_templet_cb) ( void *pData ) ;
 
+#define OPTION_HOSTNAME          "hostname"
+#define OPTION_SVCNAME           "svcname"
+#define OPTION_USER              "user"
+#define OPTION_PASSWORD          "password"
+
 #define APPENDARGSTRING( obj, key, cmd, explain, require, size, defaultValue )\
 {\
    rc = obj.appendArgString( key, cmd, explain, require, size, defaultValue ) ;\
