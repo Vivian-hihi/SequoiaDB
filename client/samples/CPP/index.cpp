@@ -10,21 +10,25 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh index
- * Win: buildApp.bat index
+ *    Linux: ./buildApp.sh index
+ *    Win: buildApp.bat index
  * Manual Compile:
- * Linux: 
- *       g++ index.cpp common.cpp -o index -I../../include \
+ *    Dynamic Linking:
+ *    Linux:
+ *       g++ index.cpp common.cpp -o index -I../../include
  *       -L../../lib -lsdbcpp
- * Win:
- *    cl /Foindex.obj /c index.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:index.exe /LIBPATH:..\..\lib sdbcpp.lib index.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /Foindex.obj /c index.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:index.exe /LIBPATH:..\..\lib sdbcpp.lib index.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ index.cpp common.cpp -o index.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./index <hostname> \
- *        <servicename> <username> <password>
- * Win: index.exe <hostname> <servicename> <username> <password>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./index <hostname> \
+ *           <servicename> <username> <password>
+ *    Win: index.exe <hostname> <servicename> <username> <password>
  *
  ******************************************************************************/
 #include <iostream>

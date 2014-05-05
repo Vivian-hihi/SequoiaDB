@@ -10,21 +10,25 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh update
- * Win: buildApp.bat update
+ *    Linux: ./buildApp.sh update
+ *    Win: buildApp.bat update
  * Manual Compile:
- * Linux: 
- *       g++ update.cpp common.cpp -o update -I../../include \
+ *    Dynamic Linking:
+ *    Linux:
+ *       g++ update.cpp common.cpp -o update -I../../include
  *       -L../../lib -lsdbcpp
- * Win:
- *    cl /Foupdate.obj /c update.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:update.exe /LIBPATH:..\..\lib sdbcpp.lib update.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /Foupdate.obj /c update.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:update.exe /LIBPATH:..\..\lib sdbcpp.lib update.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ update.cpp common.cpp -o update.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./update <hostname> \
- *        <servicename> <username> <password>
- * Win: update.exe <hostname> <servicename> <username> <password>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./update <hostname> \
+ *           <servicename> <username> <password>
+ *    Win: update.exe <hostname> <servicename> <username> <password>
  *
  ******************************************************************************/
 #include <iostream>

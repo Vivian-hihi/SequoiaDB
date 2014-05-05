@@ -13,18 +13,22 @@
  * Linux: ./buildApp.sh connect
  * Win: buildApp.bat connect
  * Manual Compile:
- * Linux: 
+ *    Dynamic Linking:
+ *    Linux:
  *       g++ connect.cpp common.cpp -o connect -I../../include \
  *       -L../../lib -lsdbcpp
- * Win:
- *    cl /Foconnect.obj /c connect.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:connect.exe /LIBPATH:..\..\lib sdbcpp.lib connect.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /Foconnect.obj /c connect.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:connect.exe /LIBPATH:..\..\lib sdbcpp.lib connect.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ connect.cpp common.cpp -o connect.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./connect <hostname> \
- *        <servicename> <username> <password>
- * Win: connect.exe <hostname> <servicename> <username> <password>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./connect <hostname> \
+ *           <servicename> <username> <password>
+ *    Win: connect.exe <hostname> <servicename> <username> <password>
  *
  ******************************************************************************/
 #include <iostream>

@@ -10,22 +10,26 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh sdb
- * Win: buildApp.bat sdb
+ *    Linux: ./buildApp.sh sdb
+ *    Win: buildApp.bat sdb
  * Manual Compile:
- * Linux: g++ -c -std=c99 -o sql.o -I../../include sql.cpp
+ *    Dynamic Linking:
+ *    Linux: g++ -c -std=c99 -o sql.o -I../../include sql.cpp
  *        g++ -c -std=c++0x -o common.o -I../../include common.cpp
  *        g++ sql.cpp common.cpp -o sql -I../../include \
  *        -L../../lib -lsdbcpp
- * Win:
- *    cl /Foinsert.obj /c sql.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:sql.exe /LIBPATH:..\..\lib sdbcpp.lib sql.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /Fosql.obj /c sql.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:sql.exe /LIBPATH:..\..\lib sdbcpp.lib sql.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ sql.cpp common.cpp -o sql.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./insert <hostname> \
- *        <servicename> <username> <password>
- * Win: insert.exe <hostname> <servicename> <username> <password>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./insert <hostname> \
+ *           <servicename> <username> <password>
+ *    Win: insert.exe <hostname> <servicename> <username> <password>
  *
  ******************************************************************************/
 

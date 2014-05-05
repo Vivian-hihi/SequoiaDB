@@ -10,17 +10,21 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh insert
- * Win: buildApp.bat insert
+ *    Linux: ./buildApp.sh insert
+ *    Win: buildApp.bat insert
  * Manual Compile:
- * Linux:
- *       g++ insert.cpp common.cpp -o insert -I../../include \
+ *    Dynamic Linking:
+ *    Linux:
+ *       g++ insert.cpp common.cpp -o insert -I../../include
  *       -L../../lib -lsdbcpp
- * Win:
- *    cl /Foinsert.obj /c insert.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:insert.exe /LIBPATH:..\..\lib sdbcpp.lib insert.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /Foinsert.obj /c insert.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:insert.exe /LIBPATH:..\..\lib sdbcpp.lib insert.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ insert.cpp common.cpp -o insert.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
  * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./insert <hostname> \
  *        <servicename> <username> <password>

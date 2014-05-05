@@ -13,18 +13,22 @@
  * Linux: ./buildApp.sh query
  * Win: buildApp.bat query
  * Manual Compile:
- * Linux: 
+ *    Dynamic Linking:
+ *    Linux:
  *       g++ query.cpp common.cpp -o query -I../../include \
  *       -L../../lib -lsdbcpp
- * Win:
- *    cl /Foquery.obj /c query.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:query.exe /LIBPATH:..\..\lib sdbcpp.lib query.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /Foquery.obj /c query.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:query.exe /LIBPATH:..\..\lib sdbcpp.lib query.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ query.cpp common.cpp -o query.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./query <hostname> \
- *        <servicename> <username> <password>
- * Win: query.exe <hostname> <servicename> <username> <password>
+ *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./query <hostname> \
+ *           <servicename> <username> <password>
+ *    Win: query.exe <hostname> <servicename> <username> <password>
  *
  ******************************************************************************/
 #include <iostream>

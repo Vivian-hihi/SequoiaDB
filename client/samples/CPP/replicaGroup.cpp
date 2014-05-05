@@ -10,17 +10,21 @@
  *              Username: The user name for database server
  *              Password: The password  for user
  * Auto Compile:
- * Linux: ./buildApp.sh replicaGroup
- * Win: buildApp.bat replicaGroup
+ *    Linux: ./buildApp.sh replicaGroup
+ *    Win: buildApp.bat replicaGroup
  * Manual Compile:
- * Linux:
+ *    Dynamic Linking:
+ *    Linux:
  *       g++ replicaGroup.cpp common.cpp -o replicaGroup -I../../include \
  *       -L../../lib -lsdbcpp
- * Win:
- *    cl /ForeplicaGroup.obj /c replicaGroup.cpp /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
- *    link /OUT:replicaGroup.exe /LIBPATH:..\..\lib sdbcpp.lib replicaGroup.obj common.obj
- *    copy ..\..\lib\sdbcpp.dll .
+ *    Win:
+ *       cl /ForeplicaGroup.obj /c replicaGroup.cpp /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.cpp /I..\..\include /wd4047
+ *       link /OUT:replicaGroup.exe /LIBPATH:..\..\lib sdbcpp.lib replicaGroup.obj common.obj
+ *       copy ..\..\lib\sdbcpp.dll .
+ *    Static Linking:
+ *    Linux: g++ replicaGroup.cpp common.cpp -o replicaGroup.static -I../../include -O0
+ *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
  * Run:
  * Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./replicaGroup <hostname> \
  *        <servicename> <username> <password>
