@@ -6,12 +6,20 @@
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
 
-#define OPTION_NAME_ADDRESS         "address"
-#define OPTION_NAME_SERVICE         "service"
-#define OPTION_NAME_USER            "user"
-#define OPTION_NAME_PASSWORD        "password"
-#define OPTION_NAME_COLLECTIONSPACE "collectionspace"
-#define OPTION_NAME_COLLECTION      "collection"
+/* Connection related options */
+#define OPTION_NAME_ADDRESS          "address"
+#define OPTION_NAME_SERVICE          "service"
+#define OPTION_NAME_USER             "user"
+#define OPTION_NAME_PASSWORD         "password"
+/******************************/
+
+/* Table related options */
+#define OPTION_NAME_COLLECTIONSPACE  "collectionspace"
+#define OPTION_NAME_COLLECTION       "collection"
+#define OPTION_NAME_PREFEREDINSTANCE "preferedinstance"
+
+#define DEFAULT_PREFEREDINSTANCE     "A"
+/*************************/
 
 #define DEFAULT_HOSTNAME            "localhost"
 #define DEFAULT_SERVICENAME         "30010"
@@ -32,12 +40,14 @@ typedef struct SdbInputOption SdbInputOption ;
 
 static const SdbInputOption SdbInputOptionList[] =
 {
-   { OPTION_NAME_ADDRESS,         ForeignServerRelationId },
-   { OPTION_NAME_SERVICE,         ForeignServerRelationId },
-   { OPTION_NAME_USER,            ForeignServerRelationId },
-   { OPTION_NAME_PASSWORD,        ForeignServerRelationId },
-   { OPTION_NAME_COLLECTIONSPACE, ForeignTableRelationId },
-   { OPTION_NAME_COLLECTION,      ForeignTableRelationId }
+   { OPTION_NAME_ADDRESS,          ForeignServerRelationId },
+   { OPTION_NAME_SERVICE,          ForeignServerRelationId },
+   { OPTION_NAME_USER,             ForeignServerRelationId },
+   { OPTION_NAME_PASSWORD,         ForeignServerRelationId },
+
+   { OPTION_NAME_COLLECTIONSPACE,  ForeignTableRelationId },
+   { OPTION_NAME_COLLECTION,       ForeignTableRelationId },
+   { OPTION_NAME_PREFEREDINSTANCE, ForeignTableRelationId }
 } ;
 
 struct SdbInputOptions
@@ -48,6 +58,7 @@ struct SdbInputOptions
    CHAR *password ;
    CHAR *collectionspace ;
    CHAR *collection ;
+   CHAR *preference_instance;
 } ;
 typedef struct SdbInputOptions SdbInputOptions ;
 
@@ -69,9 +80,26 @@ enum SDB_PLAN_TYPE
    SDB_PLAN_SCAN = 0,
    SDB_PLAN_INSERT,
    SDB_PLAN_UPDATE,
-   SDB_PLAN_DELETE
+   SDB_PLAN_DELETE,
+
+   SDB_PLAN_UNKNOWN = 100
 } ;
 typedef enum SDB_PLAN_TYPE SDB_PLAN_TYPE ;
+
+typedef struct PgColumnDesc_s
+{
+   char *pgname; /* PostgreSQL column name */
+   int pgattnum; /* PostgreSQL attribute number */
+   Oid pgtype;   /* PostgreSQL data type */
+   int pgtypmod; /* PostgreSQL type modifier */
+}PgColumnsDesc;
+
+typedef struct PgTableDesc_s
+{
+   char *name;    /* table name */
+   int ncols;     /* number of columns */
+   PgColumnsDesc *cols;
+}PgTableDesc;
 
 /* SdbExecState represents the runtime state for sdb cursor
  */
@@ -83,6 +111,19 @@ struct SdbExecState
    sdbConnectionHandle hConnection ;
    sdbCollectionHandle hCollection ;
    sdbbson *queryDocument ; /* query request */
+
+   /* sdb server options */
+   char *sdbServerHost;
+   char *sdbServerPort;
+   char *usr;
+   char *passwd;
+   char *preferenceInstance;
+   
+   char *sdbcs;
+   char *sdbcl;
+
+   /* pg table column's description */
+   PgTableDesc *pgTableDesc;
 } ;
 typedef struct SdbExecState SdbExecState ;
 
@@ -110,3 +151,4 @@ typedef struct SdbConnectionPool  SdbConnectionPool ;
 extern Datum sdb_fdw_handler(PG_FUNCTION_ARGS);
 extern Datum sdb_fdw_validator(PG_FUNCTION_ARGS);
 #endif
+

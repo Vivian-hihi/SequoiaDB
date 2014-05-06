@@ -69,10 +69,11 @@ static void SdbAddForeignUpdateTargets ( Query *parsetree,
                                          RangeTblEntry *target_rte,
                                          Relation target_relation ) ;
 
-static List *SdbPlanForeignModify ( PlannerInfo *root,
+static List *SdbPlanForeignModify (PlannerInfo *root,
                                     ModifyTable *plan,
                                     Index resultRelation,
-                                    INT32 subplan_index ) ;
+                                    INT32 subplan_index);
+
 /* module initialization */
 void _PG_init () ;
 
@@ -80,12 +81,19 @@ void _PG_init () ;
 static void SdbFdwXactCallback ( XactEvent event, void *arg ) ;
 
 #if PG_VERSION_NUM>90300
-BeginForeignModify_function SdbBeginForeignModify = NULL ;
-ExecForeignInsert_function SdbExecForeignInsert = NULL ;
+static void SdbBeginForeignModify(ModifyTableState *mtstate,
+      ResultRelInfo *rinfo, List *fdw_private, int subplan_index, int eflags);
+
+static TupleTableSlot *SdbExecForeignInsert(EState *estate, ResultRelInfo *rinfo,
+      TupleTableSlot *slot, TupleTableSlot *planSlot);
+
+static void SdbEndForeignModify(EState *estate, ResultRelInfo *rinfo);
+
+static void SdbExplainForeignModify(ModifyTableState *mtstate, ResultRelInfo *rinfo,
+      List *fdw_private, int subplan_index, struct ExplainState *es);
+
 ExecForeignUpdate_function SdbExecForeignUpdate = NULL ;
 ExecForeignDelete_function SdbExecForeignDelete = NULL ;
-EndForeignModify_function SdbEndForeignModify = NULL ;
-ExplainForeignModify_function SdbExplainForeignModify = NULL ;
 #endif
 
 /* register handler and validator */
@@ -125,8 +133,456 @@ Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
    PG_RETURN_POINTER ( fdwRoutine ) ;
 }
 
+static void sdbGetOptions(Oid foreignTableId, SdbInputOptions *options);
+static INT32 sdbGetConnection(Oid foreignTableId, SdbConnection **connect);
+static SdbConnectionPool *sdbGetConnectionPool();
+
+
+static int sdbSetConnectionPreference();
+static int sdbGetSdbServerOptions(Oid foreignTableId, SdbExecState *sdbExecState);
+
+static sdbConnectionHandle sdbGetConnectionHandle(const char *host, 
+      const char *port, const char *usr, const char *passwd, const char *preference_instance);
+static sdbCollectionHandle sdbGetSdbCollection(sdbConnectionHandle connectionHandle, 
+      const char *sdbcs, const char *sdbcl);
+
+static PgTableDesc *sdbGetPgTableDesc(Oid foreignTableId);
+static void initSdbExecState(SdbExecState *sdbExecState);
+
+#define serializeInt(x) makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum((int32)(x)), 0, 1)
+#define serializeOid(x) makeConst(OIDOID, -1, InvalidOid, 4, ObjectIdGetDatum(x), 0, 1)
+static Const *serializeString(const char *s);
+//static Const *serializeLong(long i);
+static List *serializeSdbExecState(SdbExecState *fdwState);
+
+static char *deserializeString(Const *constant);
+//static long deserializeLong(Const *constant);
+static SdbExecState *deserializeSdbExecState(List *sdbExecStateList);
+
+static int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum, 
+      Oid columnType, INT32 columnTypeMod);
+
+
+int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
+   const CHAR *preference_instance)
+{
+   int rc = 0;
+   if (NULL != preference_instance) {
+      sdbbson recordObj;
+      sdbbson_init(&recordObj);
+      rc = sdbbson_append_string(&recordObj, "PreferedInstance", preference_instance);
+   }
+
+   return rc;
+}
+
+int sdbGetSdbServerOptions(Oid foreignTableId, SdbExecState *sdbExecState)
+{
+   SdbInputOptions options;
+   sdbGetOptions(foreignTableId, &options);
+   sdbExecState->sdbServerHost = options.address;
+   sdbExecState->sdbServerPort = options.service;
+   sdbExecState->sdbcs         = options.collectionspace;
+   sdbExecState->sdbcl         = options.collection;
+   sdbExecState->usr           = options.user;
+   sdbExecState->passwd        = options.password;
+   sdbExecState->preferenceInstance = options.preference_instance;
+
+   return 0;
+}
+
+sdbConnectionHandle sdbGetConnectionHandle(const char *host, 
+      const char *port, const char *usr, const char *passwd, const char *preference_instance)
+{
+   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE;
+   SdbConnectionPool *pool         = NULL;
+   INT32 count            = 0;
+   INT32 rc               = SDB_OK;
+   SdbConnection *connect = NULL;
+   
+   /* connection string is address + service + user + password */
+   StringInfo connName = makeStringInfo();
+   appendStringInfo(connName, "%s:%s:%s:%s", host, port, usr, passwd);
+   
+   /* iterate all connections in pool */
+   pool = sdbGetConnectionPool();
+   for (count = 0; count < pool->numConnections; ++count)
+   {
+      if (strcmp(pool->connList[count].connName, connName->data) == 0)
+      {
+         return pool->connList[count].hConnection;
+      }
+   }
+   
+   /* when we get here, we don't have the connection so let's create one */
+   rc = sdbConnect(host, port, usr, passwd, &hConnection);
+   if (rc)
+   {
+      ereport(ERROR, (errcode(ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION),
+                         errmsg("unable to establish connection to \"%s:%s\""
+                                  ", rc = %d", host, port, rc),
+                         errhint("Make sure remote service is running "
+                                   "and username/password are valid")));
+      return SDB_INVALID_HANDLE;
+   }
+
+   rc = sdbSetConnectionPreference(hConnection, preference_instance);
+   if (rc)
+   {
+      ereport(WARNING, (errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION), 
+         errmsg("set connection's preference instance failed:rc=%d,preference=%s",
+         rc, preference_instance),
+         errhint("Make sure the OPTION_NAME_PREFEREDINSTANCE are valid")));
+   }
+   
+   /* add connection into pool */
+   if (pool->poolSize <= pool->numConnections)
+   {
+      /* allocate new slots */
+      SdbConnection *pNewMem = pool->connList;
+      INT32 poolSize = pool->poolSize ;
+      poolSize = poolSize << 1 ;
+      pNewMem  = (SdbConnection*)realloc(pNewMem, sizeof(SdbConnection) * poolSize);
+      if (!pNewMem)
+      {
+         ereport(ERROR, (errcode(ERRCODE_FDW_OUT_OF_MEMORY),
+                            errmsg("Unable to allocate connection pool" ),
+                            errhint("Make sure the memory pool or ulimit is "
+                                      "properly configured" )));
+         sdbDisconnect(hConnection);
+         return SDB_INVALID_HANDLE;
+      }
+      
+      pool->connList = pNewMem;
+      pool->poolSize = poolSize;
+   }
+
+   connect = &pool->connList[pool->numConnections];
+   connect->connName      = strdup(connName->data);
+   connect->hConnection   = hConnection;
+   connect->transLevel    = 0;
+   pool->numConnections++;
+
+   return hConnection;
+}
+
+sdbCollectionHandle sdbGetSdbCollection(sdbConnectionHandle connectionHandle, 
+      const char *sdbcs, const char *sdbcl)
+
+{
+   /* get collection */
+   int rc = SDB_OK;
+   sdbCollectionHandle hCollection = SDB_INVALID_HANDLE;
+   StringInfo fullCollectionName   = makeStringInfo();
+   appendStringInfoString(fullCollectionName, sdbcs);
+   appendStringInfoString(fullCollectionName, ".");
+   appendStringInfoString(fullCollectionName, sdbcl);
+   rc = sdbGetCollection(connectionHandle, fullCollectionName->data, &hCollection);
+   if (rc)
+   {
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR),
+                         errmsg("Unable to get collection \"%s\", rc = %d",
+                                  fullCollectionName->data, rc),
+                         errhint("Make sure the collectionspace and "
+                                   "collection exist on the remote database")));
+   }
+
+   return hCollection;
+}
+
+PgTableDesc *sdbGetPgTableDesc(Oid foreignTableId)
+{
+   int i = 0;
+   Relation rel      = heap_open(foreignTableId, NoLock);
+   TupleDesc tupdesc = rel->rd_att;
+
+   //TODO: check memory
+   PgTableDesc *tableDesc = palloc(sizeof(PgTableDesc));
+   tableDesc->ncols = tupdesc->natts;
+   tableDesc->name  = get_rel_name(foreignTableId);
+   //TODO: check memory
+   tableDesc->cols  = palloc(tableDesc->ncols * sizeof(PgColumnsDesc));
+   
+   for (i = 0; i < tupdesc->natts; i++)
+   {
+      Form_pg_attribute att_tuple = tupdesc->attrs[i];
+      tableDesc->cols[i].pgattnum = att_tuple->attnum;
+      tableDesc->cols[i].pgtype   = att_tuple->atttypid;
+      tableDesc->cols[i].pgtypmod = att_tuple->atttypmod;
+      tableDesc->cols[i].pgname   = pstrdup(NameStr(att_tuple->attname));
+   }
+
+   heap_close(rel, NoLock);
+   return tableDesc;
+}
+
+void initSdbExecState(SdbExecState *sdbExecState)
+{
+   memset(sdbExecState, 0, sizeof(SdbExecState));
+   sdbExecState->hCursor           = SDB_INVALID_HANDLE;
+   sdbExecState->hConnection       = SDB_INVALID_HANDLE;
+   sdbExecState->hCollection       = SDB_INVALID_HANDLE;
+}
+
+Const *serializeString(const char *s)
+{
+   if (s == NULL)
+      return makeNullConst(TEXTOID, -1, InvalidOid);
+   else
+      return makeConst(TEXTOID, -1, InvalidOid, -1, PointerGetDatum(cstring_to_text(s)), 0, 0);
+}
+
+//Const *serializeLong(long i)
+//{
+// if (sizeof(long) <= 4)
+//    return makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum((int32)i), 1, 0);
+// else
+//    return makeConst(INT4OID, -1, InvalidOid, 8, Int64GetDatum((int64)i),
+//#ifdef USE_FLOAT8_BYVAL
+//          1,
+//#else
+//          0,
+//#endif  /* USE_FLOAT8_BYVAL */
+//          0);
+//}
+
+List *serializeSdbExecState(SdbExecState *fdwState)
+{
+   List *result = NIL;
+   int i        = 0;
+   
+   /* sdbServerName */
+   result = lappend(result, serializeString(fdwState->sdbServerHost));
+   /* sdbServerPort */
+   result = lappend(result, serializeString(fdwState->sdbServerPort));
+   /* usr */
+   result = lappend(result, serializeString(fdwState->usr));
+   /* passwd */
+   result = lappend(result, serializeString(fdwState->passwd));
+   /* preferenceInstance */
+   result = lappend(result, serializeString(fdwState->preferenceInstance));
+   
+   /* sdbcs */
+   result = lappend(result, serializeString(fdwState->sdbcs));
+   /* sdbcl */
+   result = lappend(result, serializeString(fdwState->sdbcl));
+   
+   /* table name */
+   result = lappend(result, serializeString(fdwState->pgTableDesc->name));
+   /* number of columns in the table */
+   result = lappend(result, serializeInt(fdwState->pgTableDesc->ncols));
+   
+   /* column data */
+   for (i = 0; i<fdwState->pgTableDesc->ncols; ++i)
+   {
+      result = lappend(result, serializeString(fdwState->pgTableDesc->cols[i].pgname));
+      result = lappend(result, serializeInt(fdwState->pgTableDesc->cols[i].pgattnum));
+      result = lappend(result, serializeOid(fdwState->pgTableDesc->cols[i].pgtype));
+      result = lappend(result, serializeInt(fdwState->pgTableDesc->cols[i].pgtypmod));
+   }
+  
+   return result;
+}
+
+SdbExecState *deserializeSdbExecState(List *sdbExecStateList)
+{
+   ListCell *cell = NULL;
+   int i = 0;
+   //TODO: check memory
+   SdbExecState *fdwState = (SdbExecState*)palloc(sizeof(SdbExecState));
+   initSdbExecState(fdwState);
+
+   cell = list_head(sdbExecStateList);
+   /* sdbServerName */
+   fdwState->sdbServerHost = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+   /* sdbServerPort */
+   fdwState->sdbServerPort = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+
+   /* usr */
+   fdwState->usr = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+
+   /* passwd */
+   fdwState->passwd = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+
+   /* preferenceInstance */
+   fdwState->preferenceInstance = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+   
+   /* sdbcs */
+   fdwState->sdbcs = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+   /* sdbcl */
+   fdwState->sdbcl = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+   
+   /* table name */
+   fdwState->pgTableDesc = palloc(sizeof(PgTableDesc));
+   fdwState->pgTableDesc->name = deserializeString(lfirst(cell));
+   cell = lnext(cell);
+   
+   /* number of columns in the table */
+   fdwState->pgTableDesc->ncols= (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue);
+   cell = lnext(cell);
+
+   fdwState->pgTableDesc->cols = palloc(fdwState->pgTableDesc->ncols * sizeof(PgColumnsDesc));
+   /* column data */
+   for (i = 0; i < fdwState->pgTableDesc->ncols; ++i)
+   {
+      fdwState->pgTableDesc->cols[i].pgname = deserializeString(lfirst(cell));
+      cell = lnext(cell);
+      fdwState->pgTableDesc->cols[i].pgattnum = (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue);
+      cell = lnext(cell);
+      fdwState->pgTableDesc->cols[i].pgtype = DatumGetObjectId(((Const *)lfirst(cell))->constvalue);
+      cell = lnext(cell);
+      fdwState->pgTableDesc->cols[i].pgtypmod = (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue);
+      cell = lnext(cell);
+   }
+
+   return fdwState;
+}
+
+char *deserializeString(Const *constant)
+{
+   if (constant->constisnull)
+      return NULL;
+   else
+      return text_to_cstring(DatumGetTextP(constant->constvalue));
+}
+
+/*long deserializeLong(Const *constant)
+{
+   if (sizeof(long) <= 4)
+      return (long)DatumGetInt32(constant->constvalue);
+   else
+      return (long)DatumGetInt64(constant->constvalue);
+}*/
+
+int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum, 
+         Oid columnType, INT32 columnTypeMod)
+{
+   switch(columnType)
+   {
+      case INT2OID :
+      {
+         INT16 value = DatumGetInt16(valueDatum);
+         sdbbson_append_int(bsonObj, name, (INT32)value);
+         break ;
+      }
+      
+      case INT4OID :
+      {
+         INT32 value = DatumGetInt32(valueDatum );
+         sdbbson_append_int(bsonObj, name, value);
+         break ;
+      }
+      
+      case INT8OID :
+      {
+         INT64 value = DatumGetInt64(valueDatum);
+         sdbbson_append_long(bsonObj, name, value);
+         break ;
+      }
+      
+      case FLOAT4OID :
+      {
+         FLOAT32 value = DatumGetFloat4(valueDatum);
+         sdbbson_append_double(bsonObj, name, (FLOAT64)value);
+         break ;
+      }
+      
+      case FLOAT8OID :
+      {
+         FLOAT64 value = DatumGetFloat8(valueDatum);
+         sdbbson_append_double(bsonObj, name, value);
+         break ;
+      }
+      
+      case NUMERICOID :
+      {
+         Datum valueDatum_tmp = DirectFunctionCall1(numeric_float8, valueDatum);
+         FLOAT64 value        = DatumGetFloat8(valueDatum_tmp);
+         sdbbson_append_double(bsonObj, name, value);
+         break ;
+      }
+      
+      case BOOLOID :
+      {
+         BOOLEAN value = DatumGetBool(valueDatum);
+         sdbbson_append_bool(bsonObj, name, value);
+         break ;
+      }
+      
+      case BPCHAROID :
+      case VARCHAROID :
+      case TEXTOID :
+      {
+         CHAR *outputString    = NULL;
+         Oid outputFunctionId  = InvalidOid ;
+         bool typeVarLength    = false ;
+         getTypeOutputInfo(columnType, &outputFunctionId, &typeVarLength);
+         outputString = OidOutputFunctionCall(outputFunctionId, valueDatum);
+         sdbbson_append_string(bsonObj, name, outputString);
+         break ;
+      }
+      
+      case NAMEOID :
+      {
+         sdbbson_oid_t sdbbsonObjectId;
+         CHAR *outputString    = NULL;
+         Oid outputFunctionId  = InvalidOid;
+         bool typeVarLength    = false;         
+         getTypeOutputInfo(columnType, &outputFunctionId, &typeVarLength);
+         outputString = OidOutputFunctionCall(outputFunctionId, valueDatum);
+
+         memset(sdbbsonObjectId.bytes, 0, sizeof(sdbbsonObjectId.bytes));
+         sdbbson_oid_from_string(&sdbbsonObjectId, outputString);
+         sdbbson_append_oid(bsonObj, name, &sdbbsonObjectId);
+         break ;
+      }
+      
+      case DATEOID :
+      {
+         Datum valueDatum_tmp = DirectFunctionCall1(date_timestamp, valueDatum);
+         Timestamp valueTimestamp = DatumGetTimestamp(valueDatum_tmp);
+         INT64 valueMicroSecs     = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
+         INT64 valueMilliSecs     = valueMicroSecs / 1000;
+         sdbbson_append_date(bsonObj, name, valueMilliSecs);
+         break ;
+      }
+      
+      case TIMESTAMPOID :
+      case TIMESTAMPTZOID :
+      {
+         Timestamp valueTimestamp = DatumGetTimestamp(valueDatum);
+         INT64 valueMicroSecs     = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
+         INT64 valueMilliSecs     = valueMicroSecs / 1000;
+         sdbbson_append_date(bsonObj, name, valueMilliSecs);
+         break ;
+      }
+      
+      default :
+      {
+         /* we do not support other data types */
+         ereport (ERROR, (errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
+            errmsg("Cannot convert constant value to BSON" ), 
+            errhint("Constant value data type: %u", columnType)));
+         
+         return -1;
+      }
+   }
+
+   return 0;
+}
+
+
+
+
 /* connection pool */
-static SdbConnectionPool *sdbGetConnectionPool ()
+SdbConnectionPool *sdbGetConnectionPool ()
 {
    static SdbConnectionPool connPool ;
    return &connPool ;
@@ -607,7 +1063,7 @@ done :
 
 
 /* getOptions retreive connection options from Oid */
-static void sdbGetOptions ( Oid foreignTableId, SdbInputOptions *options )
+void sdbGetOptions ( Oid foreignTableId, SdbInputOptions *options )
 {
    CHAR *addressName         = NULL ;
    CHAR *serviceName         = NULL ;
@@ -615,6 +1071,7 @@ static void sdbGetOptions ( Oid foreignTableId, SdbInputOptions *options )
    CHAR *passwordName        = NULL ;
    CHAR *collectionspaceName = NULL ;
    CHAR *collectionName      = NULL ;
+   CHAR *preferedInstance    = NULL ;
    if ( NULL == options )
       goto done ;
    /* address name */
@@ -670,6 +1127,13 @@ static void sdbGetOptions ( Oid foreignTableId, SdbInputOptions *options )
       collectionName = get_rel_name ( foreignTableId ) ;
    }
 
+   /* OPTION_NAME_PREFEREDINSTANCE */
+   preferedInstance = sdbGetOptionValue(foreignTableId, OPTION_NAME_PREFEREDINSTANCE);
+   if (NULL == preferedInstance)
+   {
+      preferedInstance = pstrdup(DEFAULT_PREFEREDINSTANCE);
+   }
+
    /* fill up the result structure */
    options->address         = addressName ;
    options->service         = serviceName ;
@@ -677,6 +1141,8 @@ static void sdbGetOptions ( Oid foreignTableId, SdbInputOptions *options )
    options->password        = passwordName ;
    options->collectionspace = collectionspaceName ;
    options->collection      = collectionName ;
+   options->preference_instance = preferedInstance;
+   
 done :
    return ;
 }
@@ -684,7 +1150,7 @@ done :
 /* find a connection from pool, if the connection does not exist, let's create
  * one
  */
-static INT32 sdbGetConnection ( Oid foreignTableId,
+INT32 sdbGetConnection ( Oid foreignTableId,
                                 SdbConnection **connect )
 {
    INT32 rc                        = SDB_OK ;
@@ -724,6 +1190,16 @@ static INT32 sdbGetConnection ( Oid foreignTableId,
                                    "and username/password are valid" ) ) ) ;
       goto error ;
    }
+
+   rc = sdbSetConnectionPreference(hConnection, options.preference_instance);
+   if (rc)
+   {
+      ereport(WARNING, (errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION), 
+         errmsg("set connection's preference instance failed:rc=%d,preference=%s",
+         rc, options.preference_instance),
+         errhint("Make sure the OPTION_NAME_PREFEREDINSTANCE are valid")));
+   }
+   
    /* add connection into pool */
 addpool:
    if ( pool->poolSize > pool->numConnections )
@@ -1067,7 +1543,7 @@ static void sdbFreeScanState ( SdbExecState *executionState )
       sdbReleaseCursor ( executionState->hCursor ) ;
    if ( SDB_INVALID_HANDLE != executionState->hCollection )
       sdbReleaseCollection ( executionState->hCollection ) ;
-   /* do not free collection since it's in pool */
+   /* do not free connection since it's in pool */
 done :
    return ;
 }
@@ -1577,13 +2053,14 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
                                    "properly configured" ) ) ) ;
       goto error ;
    }
+   initSdbExecState(executionState);
    executionState->planType          = SDB_PLAN_SCAN ;
    executionState->columnMappingHash = columnMappingHash ;
    executionState->hConnection       = hConnection ;
    executionState->hCursor           = hCursor ;
    executionState->hCollection       = hCollection ;
    executionState->queryDocument     = queryDocument ;
-   scanState->fdw_state = (void*) executionState ;
+   scanState->fdw_state = (void*)executionState ;
 done :
    /* note we should not release cursor and connection */
    return ;
@@ -1725,8 +2202,8 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
 
    /* create columns in the relation */
    tupleDescriptor = RelationGetDescr ( relation ) ;
-   columnCount = tupleDescriptor->natts ;
-   attributesPtr = tupleDescriptor->attrs ;
+   columnCount     = tupleDescriptor->natts ;
+   attributesPtr   = tupleDescriptor->attrs ;
 
    for ( columnId = 1; columnId <= columnCount; ++columnId )
    {
@@ -1737,6 +2214,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
                             errmsg ( "Unable to allocate Var memory" ),
                             errhint ( "Make sure the memory pool or ulimit is "
                                       "properly configured" ) ) ) ;
+         //TODO: 中间失败的情况下，需要考虑释放前面已经申请的资源
          goto error ;
       }
       column->varattno  = columnId ;
@@ -1864,6 +2342,7 @@ error :
 
 /* SdbAnalyzeForeignTable collects statistics for the given foreign table
  */
+// 获取sdb某一特定表所需要的page数和表的样例数据获取函数(以便pg预算sql耗时)
 static bool SdbAnalyzeForeignTable (
       Relation relation,
       AcquireSampleRowsFunc *acquireSampleRowsFunc,
@@ -1923,69 +2402,146 @@ static INT32 SdbIsForeignRelUpdatable ( Relation rel )
           ( 1 << CMD_DELETE ) ;
 }
 
-static void SdbAddForeignUpdateTargets ( Query *parsetree,
-                                         RangeTblEntry *target_rte,
-                                         Relation target_relation )
+static void SdbAddForeignUpdateTargets(Query *parsetree, RangeTblEntry *target_rte,
+      Relation target_relation)
 {
-/*   Var         *var = NULL ;
-   TargetEntry *tle = NULL ;
-   var = makeVar ( parsetree->resultRelation,
-                   SelfItemPointerAttributeNumber,
-                   TIDOID,
-                   -1,
-                   InvalidOid,
-                   0 ) ;
-   tle = makeTargetEntry ( (Expr*) var,
-                           list_length ( parsetree->targetList ) + 1,
-                           pstrdup ( "rowid" ),
-                           true ) ;
-   parsetree->targetList = lappend ( parsetree->targetList, tle ) ;*/
+   
 }
 
-static List *SdbPlanForeignModify ( PlannerInfo *root,
-                                    ModifyTable *plan,
-                                    Index resultRelation,
-                                    INT32 subplan_index )
+ static List *SdbPlanForeignModify(PlannerInfo *root, ModifyTable *plan, 
+      Index resultRelation, INT32 subplan_index)
 {
-   List                *result       = NIL ;
-   CmdType              operation ;
-   RangeTblEntry       *rte          = NULL ;
-   SdbExecState        *state        = NULL ;
-   ForeignTable        *foreignTable = NULL ;
-   BOOLEAN              is_table     = FALSE ;
-   ListCell            *elem         = NULL ;
-   List                *plan_values  = NULL ;
-   SdbInputOptions      options ;
-   StringInfo connectionString ;
-
-   /* sanity check, update only applies for base table */
-   rte          = planner_rt_fetch ( resultRelation, root ) ;
-   foreignTable = GetForeignTable ( rte->relid ) ;
-   operation    = plan->operation ;
-   foreach ( elem, foreignTable->options )
+   RangeTblEntry *rte = NULL;
+   Oid foreignTableId;
+   CmdType operation  = CMD_INSERT;
+   /* allocate new execution state */
+   SdbExecState *executionState = (SdbExecState*)palloc(sizeof(SdbExecState));
+   if (!executionState)
    {
-      DefElem *option = (DefElem *)lfirst(elem) ;
-      if ( strcmp ( option->defname, "table" ) == 0 )
+      ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY ),
+                         errmsg("Unable to allocate execution state memory"),
+                         errhint("Make sure the memory pool or ulimit is "
+                                   "properly configured")));
+      return NULL;
+   }
+   initSdbExecState(executionState);
+
+   rte = planner_rt_fetch(resultRelation, root);
+   foreignTableId = rte->relid;
+   sdbGetSdbServerOptions(foreignTableId, executionState);
+   
+   executionState->pgTableDesc = sdbGetPgTableDesc(foreignTableId);
+   if (NULL == executionState->pgTableDesc)
+   {
+      ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY ),
+                         errmsg("Unable to allocate pgTableDesc"),
+                         errhint("Make sure the memory pool or ulimit is "
+                                   "properly configured")));
+      return NULL;
+   }
+
+   operation = plan->operation;
+   switch (operation)
+   {
+      case CMD_INSERT:
+         executionState->planType = SDB_PLAN_INSERT;
+         break;
+
+      case CMD_DELETE:
+         executionState->planType = SDB_PLAN_DELETE;
+         break;
+
+      case CMD_UPDATE:
+         executionState->planType = SDB_PLAN_UPDATE;
+         break;
+
+      default:
+         executionState->planType = SDB_PLAN_UNKNOWN;
+         break;
+   }
+
+   return serializeSdbExecState(executionState);
+}
+
+void SdbBeginForeignModify(ModifyTableState *mtstate,
+      ResultRelInfo *rinfo, List *fdw_private, int subplan_index, int eflags)
+{
+   SdbExecState *fdw_state = deserializeSdbExecState(fdw_private);
+   //将fdw_state赋值给rinfo->ri_FdwState, 以便Insert获取
+   rinfo->ri_FdwState = fdw_state;
+
+   fdw_state->hConnection = sdbGetConnectionHandle(fdw_state->sdbServerHost, 
+         fdw_state->sdbServerPort, fdw_state->usr, fdw_state->passwd, fdw_state->preferenceInstance);
+   fdw_state->hCollection = sdbGetSdbCollection(fdw_state->hConnection, 
+      fdw_state->sdbcs, fdw_state->sdbcl);
+}
+
+TupleTableSlot *SdbExecForeignInsert(EState *estate, ResultRelInfo *rinfo,
+      TupleTableSlot *slot, TupleTableSlot *planSlot)
+{
+   SdbExecState *fdw_state = (SdbExecState *)rinfo->ri_FdwState;
+   int attnum = 0;
+   PgTableDesc *tableDesc = NULL;
+   int rc = SDB_OK;
+
+   sdbbson insert;
+   sdbbson_init(&insert);
+   tableDesc = fdw_state->pgTableDesc;
+   for (; attnum < tableDesc->ncols; attnum++)
+   {
+      if (slot->tts_isnull[attnum])
       {
-         is_table = TRUE ;
-         break ;
+         continue;
       }
-   }
-   if ( !is_table )
-   {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION ),
-                         errmsg ( "cannot modify foreign table "
-                                  "\"%s\" which is based on a query",
-                                  get_rel_name ( rte->relid ) ) ) ) ;
-      goto error ;
+
+      sdbSetBsonValue(&insert, tableDesc->cols[attnum].pgname, slot->tts_values[attnum], 
+         tableDesc->cols[attnum].pgtype, tableDesc->cols[attnum].pgtypmod);
    }
 
-   /* pickup all columns that's try to modify */
-done :
-   return result ;
-error :
-   goto done ;
+   rc = sdbbson_finish(&insert);
+   if (rc != SDB_OK)
+   {
+      ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("finish bson failed:rc = %d", rc), 
+            errhint("Make sure the data type is all right")));
+
+      sdbbson_destroy(&insert);
+      return NULL;
+   }
+
+   rc = sdbInsert(fdw_state->hCollection, &insert);
+   if (rc != SDB_OK)
+   {
+      ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("sdbInsert failed:rc = %d", rc), 
+            errhint("Make sure the data type is all right")));
+
+      sdbbson_destroy(&insert);
+      return NULL;
+   }
+   
+   sdbbson_destroy(&insert);
+
+   /* store the virtual tuple */
+   ExecStoreVirtualTuple(slot);
+   return slot;
 }
+
+void SdbEndForeignModify(EState *estate, ResultRelInfo *rinfo)
+{
+   SdbExecState *fdw_state = (SdbExecState *)rinfo->ri_FdwState;
+   if (fdw_state)
+   {
+      sdbFreeScanState(fdw_state);
+   }
+}
+
+void SdbExplainForeignModify(ModifyTableState *mtstate, ResultRelInfo *rinfo,
+      List *fdw_private, int subplan_index, struct ExplainState *es)
+{
+   
+}
+
 #endif
 
 /* Transaction related */
