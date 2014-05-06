@@ -257,6 +257,13 @@ namespace engine
             {
                goto error ;
             }
+
+            if ( !rleft && SQL_GRAMMAR::AND == node->type )
+            {
+               r = FALSE ;
+               goto done ;
+            }
+
             rc = _match( node->right, fetch, rright ) ;
             if ( SDB_OK != rc )
             {
