@@ -263,6 +263,11 @@ namespace engine
                r = FALSE ;
                goto done ;
             }
+            else if ( rleft && SQL_GRAMMAR::OR == node->type )
+            {
+               r = TRUE ;
+               goto done ;
+            }
 
             rc = _match( node->right, fetch, rright ) ;
             if ( SDB_OK != rc )
@@ -270,8 +275,7 @@ namespace engine
                goto error ;
             }
 
-            r = SQL_GRAMMAR::AND == node->type ?
-                rleft && rright : rleft || rright ;
+            r = rright ;
          }
       }
       catch ( std::exception & e)
