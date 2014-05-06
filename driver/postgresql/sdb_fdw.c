@@ -134,7 +134,6 @@ Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
 }
 
 static void sdbGetOptions(Oid foreignTableId, SdbInputOptions *options);
-static INT32 sdbGetConnection(Oid foreignTableId, SdbConnection **connect);
 static SdbConnectionPool *sdbGetConnectionPool();
 
 
@@ -166,11 +165,44 @@ static int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
 int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
    const CHAR *preference_instance)
 {
+   int intPreferenece_instance = 0;
    int rc = 0;
    if (NULL != preference_instance) {
       sdbbson recordObj;
       sdbbson_init(&recordObj);
-      rc = sdbbson_append_string(&recordObj, "PreferedInstance", preference_instance);
+      intPreferenece_instance = atoi(preference_instance);
+      if (0 == intPreferenece_instance)
+      {
+         sdbbson_append_string(&recordObj, "PreferedInstance", preference_instance);
+      }
+      else
+      {
+         sdbbson_append_int(&recordObj, "PreferedInstance", intPreferenece_instance);
+      }
+      
+      rc = sdbbson_finish(&recordObj);
+      if (rc != SDB_OK)
+      {
+         ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+               errmsg("finish bson failed:rc = %d", rc), 
+               errhint("Make sure the data is all right")));
+
+         sdbbson_destroy(&recordObj);
+         return rc;
+      }
+
+      rc = sdbSetSessionAttr(hConnection, &recordObj);
+      if (rc != SDB_OK)
+      {
+         ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+               errmsg("set session attribute failed:rc = %d", rc), 
+               errhint("Make sure the session is all right")));
+
+         sdbbson_destroy(&recordObj);
+         return rc;
+      }
+
+      sdbbson_destroy(&recordObj);
    }
 
    return rc;
@@ -1147,96 +1179,6 @@ done :
    return ;
 }
 
-/* find a connection from pool, if the connection does not exist, let's create
- * one
- */
-INT32 sdbGetConnection ( Oid foreignTableId,
-                                SdbConnection **connect )
-{
-   INT32 rc                        = SDB_OK ;
-   INT32 count                     = 0 ;
-   StringInfo connName             = makeStringInfo () ;
-   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
-   SdbConnectionPool *pool         = NULL ;
-   SdbInputOptions options ;
-   sdbGetOptions ( foreignTableId, &options ) ;
-
-   /* connection string is address + service + user + password */
-   appendStringInfo ( connName, "%s:%s:%s:%s", options.address,
-                      options.service, options.user, options.password ) ;
-   /* iterate all connections in pool */
-   pool = sdbGetConnectionPool() ;
-   for ( count = 0; count < pool->numConnections; ++count )
-   {
-      if ( strcmp ( pool->connList[count].connName, connName->data ) == 0 )
-      {
-         *connect = &pool->connList[count] ;
-         goto done ;
-      }
-   }
-   /* when we get here, we don't have the connection so let's create one */
-   rc = sdbConnect ( options.address,
-                     options.service,
-                     options.user,
-                     options.password,
-                     &hConnection ) ;
-   if ( rc )
-   {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_UNABLE_TO_ESTABLISH_CONNECTION ),
-                         errmsg ( "unable to establish connection to \"%s:%s\""
-                                  ", rc = %d",
-                                  options.address, options.service, rc ),
-                         errhint ( "Make sure remote service is running "
-                                   "and username/password are valid" ) ) ) ;
-      goto error ;
-   }
-
-   rc = sdbSetConnectionPreference(hConnection, options.preference_instance);
-   if (rc)
-   {
-      ereport(WARNING, (errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION), 
-         errmsg("set connection's preference instance failed:rc=%d,preference=%s",
-         rc, options.preference_instance),
-         errhint("Make sure the OPTION_NAME_PREFEREDINSTANCE are valid")));
-   }
-   
-   /* add connection into pool */
-addpool:
-   if ( pool->poolSize > pool->numConnections )
-   {
-      *connect = &pool->connList[pool->numConnections] ;
-      (*connect)->connName = strdup ( connName->data ) ;
-      (*connect)->hConnection = hConnection ;
-      (*connect)->transLevel = 0 ;
-      pool->numConnections ++ ;
-   }
-   else
-   {
-      /* allocate new slots */
-      SdbConnection *pNewMem = pool->connList ;
-      INT32 poolSize = pool->poolSize ;
-      poolSize = poolSize << 1 ;
-      pNewMem = (SdbConnection*)realloc ( pNewMem,
-            sizeof(SdbConnection) * poolSize ) ;
-      if ( !pNewMem )
-      {
-         ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
-                            errmsg ( "Unable to allocate connection pool" ),
-                            errhint ( "Make sure the memory pool or ulimit is "
-                                      "properly configured" ) ) ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      pool->connList = pNewMem ;
-      pool->poolSize = poolSize ;
-      goto addpool ;
-   }
-done :
-   return rc ;
-error :
-   goto done ;
-}
-
 /* validator validates for:
  * foreign data wrapper
  * server
@@ -1724,36 +1666,35 @@ static void sdbFillTupleSlot ( const sdbbson *sdbbsonDocument,
 /* sdbRowsCount get count of records in the given collection */
 static INT32 sdbRowsCount ( Oid foreignTableId, SINT64 *count )
 {
-   INT32 rc                        = SDB_OK ;
-   sdbCollectionHandle hCollection = SDB_INVALID_HANDLE ;
-   SdbConnection *connection       = NULL ;
+   INT32 rc                        = SDB_OK;
+   sdbCollectionHandle hCollection = SDB_INVALID_HANDLE;
+   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE;
    SdbInputOptions options ;
    StringInfo fullCollectionName = makeStringInfo () ;
 
    sdbGetOptions ( foreignTableId, &options ) ;
    /* attempt to connect to remote database */
-   rc = sdbGetConnection ( foreignTableId, &connection ) ;
-   if ( rc )
+   hConnection = sdbGetConnectionHandle(options.address, options.service, 
+            options.user, options.password, options.preference_instance);
+   if (SDB_INVALID_HANDLE == hConnection)
    {
       goto error ;
    }
+   
    /* get collection */
-   appendStringInfoString ( fullCollectionName, options.collectionspace ) ;
-   appendStringInfoString ( fullCollectionName, "." ) ;
-   appendStringInfoString ( fullCollectionName, options.collection ) ;
-   rc = sdbGetCollection ( connection->hConnection,
-                           fullCollectionName->data,
-                           &hCollection ) ;
-   if ( rc )
+   hCollection = sdbGetSdbCollection(hConnection, options.collectionspace, 
+            options.collection);
+   if (SDB_INVALID_HANDLE == hCollection)
    {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
-                         errmsg ( "Unable to get collection \"%s\", rc = %d",
-                                  fullCollectionName->data, rc ),
-                         errhint ( "Make sure the collectionspace and "
-                                   "collection exist on the remote database" )
-                        ) ) ;
-      goto error ;
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR ), 
+            errmsg("Unable to get collection \"%s.%s\", rc = %d", 
+            options.collectionspace, options.collection, rc),
+            errhint("Make sure the collectionspace and " 
+               "collection exist on the remote database")));
+
+       goto error;
    }
+   
    /* get count */
    rc = sdbGetCount ( hCollection, NULL, count ) ;
    if ( rc )
@@ -1966,10 +1907,9 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
                                   INT32 executorFlags )
 {
    SdbInputOptions options ;
-   sdbbson *queryDocument             = NULL ;
+   sdbbson *queryDocument          = NULL ;
    INT32 rc                        = SDB_OK ;
    sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
-   SdbConnection *connection       = NULL ;
    sdbCursorHandle hCursor         = SDB_INVALID_HANDLE ;
    sdbCollectionHandle hCollection = SDB_INVALID_HANDLE ;
    Oid foreignTableId              = InvalidOid ;
@@ -1999,17 +1939,20 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
    foreignTableId = RelationGetRelid ( scanState->ss.ss_currentRelation ) ;
    sdbGetOptions ( foreignTableId, &options ) ;
    /* attempt to connect to remote box */
-   rc = sdbGetConnection ( foreignTableId, &connection ) ;
-   if ( rc )
+   hConnection = sdbGetConnectionHandle(options.address, options.service, options.user, 
+                  options.password, options.preference_instance);
+   if (SDB_INVALID_HANDLE == hConnection)
    {
       goto error ;
    }
+   
    /* deserialize query document, and create column info hash */
    foreignScan = (ForeignScan *) scanState->ss.ps.plan ;
    foreignPrivateList = foreignScan->fdw_private ;
    queryBuffer = (Const *) linitial ( foreignPrivateList ) ;
    sdbDeserializeDocument ( queryBuffer, queryDocument ) ;
    columnList = (List *) lsecond ( foreignPrivateList ) ;
+   
    /* build hash map */
    columnMappingHash = sdbColumnMappingHash ( foreignTableId, columnList ) ;
    /* attempt to query */
@@ -2017,19 +1960,18 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
    appendStringInfo ( namespaceName, "%s.%s", options.collectionspace,
                       options.collection ) ;
    /* fire up query */
-   rc = sdbGetCollection ( connection->hConnection, namespaceName->data,
-                           &hCollection ) ;
-   if ( rc )
+   hCollection = sdbGetSdbCollection(hConnection, options.collectionspace, options.collection);
+   if (SDB_INVALID_HANDLE == hCollection)
    {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
-                         errmsg ( "unable to get collection for \"%s.%s\""
-                                  ", rc = %d",
-                                  options.collectionspace,
-                                  options.collection, rc ),
-                         errhint ( "Make sure collection exists on remote "
-                                   "SequoiaDB database" ) ) ) ;
-      goto error ;
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR ), 
+            errmsg("Unable to get collection \"%s.%s\", rc = %d", 
+            options.collectionspace, options.collection, rc),
+            errhint("Make sure the collectionspace and " 
+               "collection exist on the remote database")));
+
+       goto error;
    }
+   
    rc = sdbQuery ( hCollection, queryDocument, NULL, NULL, NULL, 0, -1,
                    &hCursor ) ;
    if ( rc )
@@ -2222,6 +2164,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
       column->vartypmod = attributesPtr[columnId-1]->atttypmod ;
       columnList        = lappend ( columnList, column ) ;
    }
+   
    /* create state structure */
    scanState = makeNode ( ForeignScanState ) ;
    scanState->ss.ss_currentRelation = relation ;
@@ -2321,6 +2264,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
       rowCount += 1 ;
       sdbbson_destroy ( &recordObj ) ;
    }
+   
    sdbFreeScanState ( executionState ) ;
 done :
    MemoryContextDelete ( tupleContext ) ;
@@ -2484,6 +2428,7 @@ TupleTableSlot *SdbExecForeignInsert(EState *estate, ResultRelInfo *rinfo,
    PgTableDesc *tableDesc = NULL;
    int rc = SDB_OK;
 
+   //change the slot value to the bson format
    sdbbson insert;
    sdbbson_init(&insert);
    tableDesc = fdw_state->pgTableDesc;
@@ -2509,6 +2454,7 @@ TupleTableSlot *SdbExecForeignInsert(EState *estate, ResultRelInfo *rinfo,
       return NULL;
    }
 
+   //insert the bson to the sdb
    rc = sdbInsert(fdw_state->hCollection, &insert);
    if (rc != SDB_OK)
    {
@@ -2539,7 +2485,7 @@ void SdbEndForeignModify(EState *estate, ResultRelInfo *rinfo)
 void SdbExplainForeignModify(ModifyTableState *mtstate, ResultRelInfo *rinfo,
       List *fdw_private, int subplan_index, struct ExplainState *es)
 {
-   
+   //we have nothing to do yet
 }
 
 #endif

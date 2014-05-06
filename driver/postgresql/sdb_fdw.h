@@ -44,10 +44,10 @@ static const SdbInputOption SdbInputOptionList[] =
    { OPTION_NAME_SERVICE,          ForeignServerRelationId },
    { OPTION_NAME_USER,             ForeignServerRelationId },
    { OPTION_NAME_PASSWORD,         ForeignServerRelationId },
+   { OPTION_NAME_PREFEREDINSTANCE, ForeignServerRelationId },
 
    { OPTION_NAME_COLLECTIONSPACE,  ForeignTableRelationId },
-   { OPTION_NAME_COLLECTION,       ForeignTableRelationId },
-   { OPTION_NAME_PREFEREDINSTANCE, ForeignTableRelationId }
+   { OPTION_NAME_COLLECTION,       ForeignTableRelationId }
 } ;
 
 struct SdbInputOptions
