@@ -131,17 +131,13 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN_GETKEYS );
-         SDB_ASSERT ( _keygen, "spec can't be NULL" )
-         // create vector for all fields we interest
+         SDB_ASSERT( _keygen, "spec can't be NULL" )
+         SDB_ASSERT( !_keygen->_fieldNames.empty(), "can not be empty" )
          vector<const CHAR*> fieldNames ( _keygen->_fieldNames ) ;
-         // create BSONelement vector for all elements
-         // create from existing _fixedElements, faster
-         vector<BSONElement> fixed ( _keygen->_fixedElements ) ;
-         // note don't pass reference of fieldNames and fixed, because we might
-         // need to modify the vectors, so we need to duplicate the object
+         BSONElement arrEle ;
          try
          {
-            rc =_getKeys ( fieldNames, fixed, obj, keys, pArrEle ) ;
+            rc = _getKeys( fieldNames, obj, keys, &arrEle ) ;
          }
          catch ( std::exception &e )
          {
@@ -149,7 +145,8 @@ namespace engine
             rc = SDB_INVALIDARG ;
             goto error ;
          }
-         if ( rc )
+
+         if ( SDB_OK != rc )
          {
             PD_LOG ( PDERROR, "Failed to generate key from object: %s",
                      obj.toString().c_str() ) ;
@@ -161,6 +158,10 @@ namespace engine
             keys.insert ( _keygen->_undefinedKey ) ;
          }
 
+         if ( NULL != pArrEle && !arrEle.eoo() )
+         {
+            *pArrEle = arrEle ;
+         }
       done :
          PD_TRACE_EXITRC ( SDB__IXMKEYGEN_GETKEYS, rc );
          return rc ;
@@ -168,344 +169,221 @@ namespace engine
          goto done ;
       }
    protected:
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__EXTNXT2DELE, "_ixmKeyGenerator::_extractNext2dElement" )
-      INT32 _extractNext2dElement( const BSONObj &obj, const BSONObj &arr,
-                                   const CHAR *&field,
-                                   BOOLEAN &arrayNestedArray,
-                                   BSONElement &nextEle ) const
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "_ixmKeyGenerator::_getKeys" )
+      INT32 _getKeys( vector<const CHAR *> &fieldNames,
+                      const BSONObj &obj,
+                      BSONObjSet &keys,
+                      BSONElement *arrEle ) const
       {
          INT32 rc = SDB_OK ;
-         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__EXTNXT2DELE );
-         CHAR *firstField = ossStrdup ( field ) ;
-         CHAR *pCur = firstField ;
-         PD_CHECK ( firstField, SDB_OOM, error, PDERROR,
-                    "Failed to duplicate field name: %s",
-                    field ) ;
-         while ( *pCur )
+         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GETKEYS );
+#define IXM_DEFAULT_FIELD_NUM 3
+         BSONElement eleOnStack[IXM_DEFAULT_FIELD_NUM] ;
+         BSONElement *keyEles = NULL ;
+         const CHAR *arrEleName = NULL ;
+         UINT32 arrElePos = 0 ;
+         UINT32 eooNum = 0 ;
+
+         if ( IXM_DEFAULT_FIELD_NUM < fieldNames.size() )
          {
-            if ( '.' == *pCur )
+            keyEles = new(std::nothrow) BSONElement[fieldNames.size()] ;
+            if ( NULL == keyEles )
             {
-               *pCur = '\0' ;
-               break ;
+               PD_LOG( PDERROR, "failed to allocalte mem." ) ;
+               rc = SDB_OOM ;
+               goto error ;
             }
-            pCur ++ ;
          }
+         else
          {
-            BOOLEAN haveObjField = !obj.getField ( firstField ).eoo() ;
-            BSONElement objField ;
-            BSONElement arrField = arr.getField ( firstField ) ;
-            BOOLEAN haveArrField = !arrField.eoo() ;
-            PD_CHECK ( !haveObjField || !haveArrField, SDB_INVALIDARG, error,
-                       PDERROR, "can't have both obj and arr field" ) ;
-            arrayNestedArray = FALSE ;
-            if ( haveObjField )
+            keyEles = ( BSONElement* )eleOnStack ;
+         }
+
+         for ( UINT32 i = 0; i < fieldNames.size(); i++ )
+         {
+            const CHAR *name = fieldNames.at( i ) ;
+            SDB_ASSERT( '\0' != name[0], "can not be empty" )
+            BSONElement &e = keyEles[i] ;
+            e = obj.getFieldDottedOrArray( name ) ;
+            if ( e.eoo() )
             {
-               objField = obj.getFieldDottedOrArray ( field ) ;
-               rc = ixmGeoHash( objField, nextEle, FALSE, _objs,
-                                _keygen->_keyPattern ) ;
-               if ( SDB_OK != rc )
-               {
-                  /// if it is a nested obj.
-                  if ( objField.isABSONObj() &&
-                       objField.embeddedObject().firstElement().isABSONObj() )
-                  {
-                     nextEle = objField ;
-                     rc = SDB_OK ;
-                     goto done ;
-                  }
-                  else
-                  {
-                     /// do not return err.
-                     nextEle = BSONElement() ;
-                     rc = SDB_OK ;
-                     goto error ;
-                  }
-               }
+               ++eooNum ;
+               continue ;
             }
-            else if ( haveArrField )
+            else if ( Array == e.type() )
             {
-               if ( arrField.type() == Array )
+               if ( !arrEle->eoo() )
                {
-                  arrayNestedArray = TRUE ;
+                  PD_LOG( PDERROR, "At most one array can be in the key:",
+                          arrEle->fieldName(), e.fieldName() ) ;
+                  rc = SDB_IXM_MULTIPLE_ARRAY ;
+                  goto error ;
                }
-               nextEle = arr.getFieldDottedOrArray ( field ) ;
+               else
+               {
+                  *arrEle = e ;
+                  arrEleName = name ;
+                  arrElePos = i ;
+               }
             }
             else
             {
-               nextEle = BSONElement() ;
+               continue ;
+            }
+         }
+
+         if ( fieldNames.size() == eooNum )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+         else if ( !arrEle->eoo() )
+         {
+            rc = _genKeyWithArrayEle( keyEles, fieldNames.size(),
+                                      arrEle->embeddedObject(),
+                                      arrEleName, arrElePos,
+                                      keys ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to gen keys with array element:%d", rc ) ;
+               goto error ;
+            }
+         }
+         else
+         {
+            rc = _genKeyWithNormalEle( keyEles, fieldNames.size(), keys ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to gen keys with normal element:%d", rc ) ;
+               goto error ;
             }
          }
       done:
-         if ( NULL != firstField )
+         if ( IXM_DEFAULT_FIELD_NUM < fieldNames.size() &&
+              NULL != keyEles )
          {
-            SDB_OSS_FREE( firstField ) ;
+            delete []keyEles ;
          }
-         PD_TRACE_EXITRC ( SDB__IXMKEYGEN__EXTNXT2DELE, rc );
+         PD_TRACE_EXITRC ( SDB__IXMKEYGEN__GETKEYS, rc );
          return rc ;
       error:
          goto done ;
       }
-      
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__EXTNXTELE, "_ixmKeyGenerator::_extractNextElement" )
-      INT32 _extractNextElement ( const BSONObj &obj, const BSONObj &arr,
-                                  const CHAR *&field, BOOLEAN &arrayNestedArray,
-                                  BSONElement &nextEle ) const
-      {
-         INT32 rc = SDB_OK ;
-         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__EXTNXTELE );
-         // copy the field name
-         CHAR *firstField = ossStrdup ( field ) ;
-         CHAR *pCur = firstField ;
-         PD_CHECK ( firstField, SDB_OOM, error, PDERROR,
-                    "Failed to duplicate field name: %s",
-                    field ) ;
-         // find the first .
-         while ( *pCur )
-         {
-            if ( '.' == *pCur )
-            {
-               *pCur = '\0' ;
-               break ;
-            }
-            pCur ++ ;
-         }
-         {
-            // if both array and object contains the element, let's return error
-            BOOLEAN haveObjField = !obj.getField ( firstField ).eoo() ;
-            BSONElement arrField = arr.getField ( firstField ) ;
-            BOOLEAN haveArrField = !arrField.eoo() ;
-            PD_CHECK ( !haveObjField || !haveArrField, SDB_INVALIDARG, error,
-                       PDERROR, "can't have both obj and arr field" ) ;
-            arrayNestedArray = FALSE ;
-            // if it's object
-            if ( haveObjField )
-            {
-               nextEle = obj.getFieldDottedOrArray ( field ) ;
-            }
-            else if ( haveArrField )
-            {
-               // if it's array
-               if ( arrField.type() == Array )
-               {
-                  arrayNestedArray = TRUE ;
-               }
-               nextEle = arr.getFieldDottedOrArray ( field ) ;
-            }
-            else
-            {
-               // if it's value
-               nextEle = BSONElement() ;
-            }
-         }
-      done :
-         if ( firstField )
-            SDB_OSS_FREE ( firstField ) ;
-         PD_TRACE_EXITRC ( SDB__IXMKEYGEN__EXTNXTELE, rc );
-         return rc ;
-      error :
-         goto done ;
-      }
 
-      // arrIdxs contains the field indexes that contains array
-      // this function will loop through those indxes and build fixed object
-      // from them
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYSARRELTFIXED, "_ixmKeyGenerator::_getKeysArrEltFixed" )
-      INT32 _getKeysArrEltFixed ( vector<const CHAR*> &fieldNames,
-                                  vector<BSONElement> &fixed,
-                                  const BSONElement &arrEntry,
-                                  BSONObjSet &keys,
-                                  INT32 numNotFound,
-                                  const BSONElement &arrObjElt,
-                                  const set<UINT32>&arrIdxs,
-                                  BOOLEAN mayExpandArrayUnembedded ) const
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHARRELE, "_ixmKeyGenerator::_genKeyWithArrayEle" )
+      INT32 _genKeyWithArrayEle( BSONElement *keyEles,
+                                 UINT32 eleNum,
+                                 const BSONObj &arrObj,
+                                 const CHAR *arrEleName,
+                                 UINT32 arrElePos,
+                                 BSONObjSet &keys ) const
       {
+         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHARRELE );
          INT32 rc = SDB_OK ;
-         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GETKEYSARRELTFIXED );
-         for ( set<UINT32>::const_iterator j = arrIdxs.begin();
-               j != arrIdxs.end();
-               j++ )
-         {
-            if ( *fieldNames[*j] == '\0' )
-            {
-               if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_2D,
-                                         _keygen->_type ) &&
-                    0 == *j )
-               {
-                  BSONElement ele ;
-                  rc = ixmGeoHash( arrEntry, ele, TRUE, _objs,
-                                   _keygen->_keyPattern ) ;
-                  if ( SDB_OK != rc )
-                  {
-                     goto error ;
-                  }
-                  fixed[*j] = ele ;
-               }
-               else
-               {
-                  fixed[*j] = mayExpandArrayUnembedded?arrEntry:arrObjElt ;
-               }
-            }
-            rc = _getKeys ( fieldNames, fixed, (arrEntry.type() == Object)?
-                                                arrEntry.embeddedObject():
-                                                BSONObj(),
-                            keys, NULL, numNotFound,
-                            arrObjElt.embeddedObject() ) ;
-            PD_RC_CHECK ( rc, PDERROR, "Failed to expand array" ) ;
-         }
-      done :
-         PD_TRACE_EXITRC ( SDB__IXMKEYGEN__GETKEYSARRELTFIXED, rc );
-         return rc ;
-      error :
-         goto done ;
-      }
 
-      BSONObj _produceObj( const vector <BSONElement> &fixed ) const
-      {
-         BSONObjBuilder builder ;
-         CHAR numStr[ 10 ] = {0} ;
-         UINT32 eleNum = fixed.size() ;
-         for ( UINT32 index = 0 ; index < eleNum ; ++index )
+         /// the element must be a undefined key when it is a empty array
+         if ( arrObj.firstElement().eoo() )
          {
-            if ( GEN_OBJ_KEEP_FIELD_NAME == _keygen->_keyGenType )
+            keyEles[arrElePos] = BSONElement() ;
+            rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
+            if ( SDB_OK != rc )
             {
-               builder.appendAs ( fixed[index],
-                                  _keygen->_fieldNames[index] ) ;
-            }
-            else if ( GEN_OBJ_ARRAY_FIELD_NAME == _keygen->_keyGenType )
-            {
-               ossSnprintf( numStr, sizeof(numStr)-1, "%d", index ) ;
-               builder.appendAs ( fixed[index], numStr ) ;
-            }
-            else
-            {
-               builder.appendAs ( fixed[index], "" ) ;
+               goto error ;
             }
          }
-         return builder.obj() ;
-      }
 
-      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GETKEYS, "_ixmKeyGenerator::_getKeys" )
-      INT32 _getKeys ( vector <const CHAR *> fieldNames,
-                       vector <BSONElement>  fixed,
-                       const BSONObj &obj,
-                       BSONObjSet &keys,
-                       BSONElement *pArrEle = NULL,
-                       UINT32 numNotFound = 0,
-                       const BSONObj &array = BSONObj() ) const
-      {
-         INT32 rc = SDB_OK ;
-         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GETKEYS );
-         BSONElement arrElt ;
-         set<UINT32> arrIdxs ;
-         BOOLEAN mayExpandArrayUnembedded = TRUE ;
-         // loop through each field
-         for ( UINT32 i = 0 ; i < fieldNames.size(); i++ )
+         /// hit the end of name.
+         if ( '\0' == *arrEleName )
          {
-            // skip empty fields
-            if ( *fieldNames[i] == '\0' )
+            BSONObjIterator itr( arrObj ) ;
+            BSONElement &e = keyEles[arrElePos] ;
+            while ( itr.more() )
             {
-               continue ;
-            }
-            BOOLEAN arrayNestedArray ;
-            // extract element matching fieldName[i] from object or array
-            BSONElement e ;
-            if ( IXM_EXTENT_HAS_TYPE( IXM_EXTENT_TYPE_2D, _keygen->_type ) &&
-                 0 == i )
-            {
-               rc = _extractNext2dElement( obj, array, fieldNames[i],
-                                           arrayNestedArray, e) ;
-            }
-            else
-            {
-               rc = _extractNextElement ( obj, array, fieldNames[i],
-                                          arrayNestedArray, e ) ;
-            }
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to extract next element from obj: %s",
-                          obj.toString().c_str() ) ;
-            // if field not found
-            if ( e.eoo() )
-            {
-               fixed[i] = gUndefinedElt ;
-               fieldNames[i] = "" ;
-               numNotFound ++ ;
-            }
-            else if ( e.type() == Array )
-            {
-               // if we found array, we need to expand the array and access each
-               // element inside
-               arrIdxs.insert ( i ) ;
-               if ( arrElt.eoo() )
+               e = itr.next() ;
+               rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
+               if ( SDB_OK != rc )
                {
-                  // if this is the first time we hit this array, let's put it
-                  // into arrElt
-                  arrElt = e ;
-               }
-               // if there are two keys contains array, we don't do that so
-               // let's dump error
-               else if ( e.rawdata() != arrElt.rawdata() )
-               {
-                  PD_LOG ( PDERROR, "At most one array can be in the key: "
-                           "%s, %s", e.fieldName(), arrElt.fieldName() ) ;
-                  rc = SDB_IXM_MULTIPLE_ARRAY ;
                   goto error ;
                }
-               if ( arrayNestedArray )
-               {
-                  mayExpandArrayUnembedded = FALSE ;
-               }
-               if ( pArrEle )
-               {
-                  *pArrEle = arrElt ;
-               }
             }
-            else
-            {
-               // if we are already looking for this array, let's put it into
-               // our fixed list
-               fixed[i] = e ;
-            }
-         }
-         // if we are not deailing with array
-         if ( arrElt.eoo() )
-         {
-            // if we can't find any fields
-            if ( _keygen->_nFields == (INT32)numNotFound &&
-                 GEN_OBJ_NO_FIELD_NAME == _keygen->_keyGenType )
-            {
-               goto done ;
-            }
-            keys.insert ( _produceObj( fixed ) ) ;
-         }
-         else if ( arrElt.embeddedObject().firstElement().eoo() )
-         {
-            // if it's empty array
-            rc = _getKeysArrEltFixed ( fieldNames, fixed, gUndefinedElt,
-                                       keys, numNotFound, arrElt, arrIdxs,
-                                       TRUE ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to get keys array element fixed, rc=%d",
-                          rc ) ;
          }
          else
          {
-            // array that can be expanded, so generate a key for each member
-            BSONObj arrObj = arrElt.embeddedObject() ;
-            BSONObjIterator i(arrObj) ;
-            while (i.more() )
+            BSONObjIterator itr( arrObj ) ;
+            while ( itr.more() )
             {
-               rc = _getKeysArrEltFixed ( fieldNames, fixed, i.next(), keys,
-                                          numNotFound, arrElt, arrIdxs,
-                                          mayExpandArrayUnembedded ) ;
-               PD_RC_CHECK ( rc, PDERROR,
-                             "Failed to get keys array element fixed, rc=%d",
-                             rc ) ;
+               const CHAR *dottedName = arrEleName ;
+               BSONElement next = itr.next() ;
+               if ( Object == next.type() )
+               {
+                  BSONElement e =
+                     next.embeddedObject()
+                     .getFieldDottedOrArray( dottedName ) ;
+                  if ( Array == e.type() )
+                  {
+                     rc = _genKeyWithArrayEle(keyEles, eleNum,
+                                              e.embeddedObject(),
+                                              dottedName, arrElePos,
+                                              keys) ;
+                     if ( SDB_OK != rc )
+                     {
+                        goto error ;
+                     }
+                     else
+                     {
+                        continue ;
+                     }
+                  }
+                  else
+                  {
+                     keyEles[arrElePos] = e ;
+                  }
+               }
+               else
+               {
+                  keyEles[arrElePos] = BSONElement() ;
+               }
+
+               rc = _genKeyWithNormalEle( keyEles, eleNum, keys ) ;
+               if ( SDB_OK != rc )
+               {
+                  goto error ;
+               }
+            } 
+         }
+      done:
+         PD_TRACE_EXITRC( SDB__IXMKEYGEN__GENKEYSWITHARRELE, rc ) ;
+         return rc ;
+      error:
+         goto done ;
+      }
+
+      // PD_TRACE_DECLARE_FUNCTION ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, "_ixmKeyGenerator::_genKeyWithNormalEle" )
+      INT32 _genKeyWithNormalEle( BSONElement *keyELes,
+                                  UINT32 eleNum,
+                                  BSONObjSet &keys ) const
+      {
+         PD_TRACE_ENTRY ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE );
+         INT32 rc = SDB_OK ;
+         BSONObjBuilder builder ;
+         for ( UINT32 i = 0; i < eleNum; i++ )
+         {
+            BSONElement &e = keyELes[i] ;
+            if ( e.eoo() )
+            {
+               builder.appendAs( gUndefinedElt, "" ) ;
+            }
+            else
+            {
+               builder.appendAs( e, "" ) ;
             }
          }
-      done :
-         PD_TRACE_EXITRC ( SDB__IXMKEYGEN__GETKEYS, rc );
+
+         keys.insert( builder.obj() ) ;
+      done:
+         PD_TRACE_EXITRC ( SDB__IXMKEYGEN__GENKEYSWITHNORMALELE, rc );
          return rc ;
-      error :
+      error:
          goto done ;
       }
    } ;
