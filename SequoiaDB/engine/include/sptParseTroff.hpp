@@ -50,6 +50,7 @@ private:
    INT32 displayManual( const CHAR *category, const CHAR *cmd ) ;
 
    sset _nset ;
+   ssmap _nmap ;
    CHAR _filePath[ OSS_MAX_PATHSIZE + 1 ] ;
    ssmap _mdb ;
    ssmap _mcs ;
@@ -59,6 +60,7 @@ private:
    ssmap _mcursor ;
    ssmap _mclcount ;
    ssmap _mempty ;
+   BOOLEAN troffFileNotEixt ;
 } ;
 
 #endif // SPTPARSETROFF_HPP__
