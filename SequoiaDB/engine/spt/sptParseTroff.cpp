@@ -815,7 +815,7 @@ INT32 getSplitPos( const CHAR *pCur, INT32 part_len, INT32 *ret )
 {
    INT32 rc = SDB_OK ;
    const CHAR *p = NULL ;
-   INT32 less_part_len = NULL ;
+   INT32 less_part_len = 0 ;
    // check argument
    if ( !pCur || part_len <= 0 )
    {
@@ -854,11 +854,8 @@ INT32 splitCutline( const CHAR *cutline, vector<string> &vec )
 {
    INT32 rc = SDB_OK ;
    const CHAR *pb = NULL ;
-   const CHAR *pe = NULL ;
    INT32 move_len = -1 ;
    INT32 part_len = CONTENT_LEN ;
-   INT32 cutline_len = 0 ;
-   INT32 less_part_len = 0 ;
 
    // check argument
    if ( !cutline )
@@ -869,8 +866,6 @@ INT32 splitCutline( const CHAR *cutline, vector<string> &vec )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   cutline_len = ossStrlen( cutline ) + 1 ;
-   less_part_len = cutline_len ;
    pb = cutline ;
    while ( TRUE )
    {
