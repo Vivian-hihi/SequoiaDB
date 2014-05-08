@@ -28,9 +28,6 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/token_iterator.hpp>
-#include <boost/format.hpp>
-
 
 #define MFILE_SUFFIX ".cli"
 
@@ -73,6 +70,10 @@ const CHAR* CATE_ARR[ CATE_SIZE ] = {
 
 // remove some useless mark in a c-type string
 static INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark ) ;
+
+// replace str1 with str2
+static INT32 replaceSubStr( CHAR *buffer, INT32 buffer_len,
+                            const CHAR *pStr1, const CHAR *pStr2 ) ;
 
 // check the buffer
 static INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
@@ -275,13 +276,13 @@ INT32 manHelp::scanFile()
             cutline_len = read_real_len - ossStrlen(pSplit) ;
             ossMemcpy( tmp_buffer, r_pos + ossStrlen(pSplit), cutline_len ) ;
             tmp_buffer[ cutline_len ] = '\0' ;
-            // remove "\n", "\r\n", "\f"
+            // replace "\n", "\r\n", "\f" with " "
             #if defined ( _WINDOWS )
-            rc = removeMark( tmp_buffer, cutline_len, "\r\n" ) ;
+            rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\r\n", " " ) ;
             #else
-            rc = removeMark( tmp_buffer, cutline_len, "\n" ) ;
+            rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\n", " " ) ;
             #endif
-            rc = removeMark( tmp_buffer, cutline_len, "\f" ) ;
+            rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\f", " " ) ;
             cutline = tmp_buffer ;
             // when finishing extract cutline, i am going to extract synopsis
             r_beg = r_end + 1 ;
@@ -322,11 +323,11 @@ INT32 manHelp::scanFile()
             rc = removeMark( tmp_buffer, read_real_len, MARK1 ) ;
             rc = removeMark( tmp_buffer, read_real_len, MARK2 ) ;
             #if defined ( _WINDOWS )
-            rc = removeMark( tmp_buffer, read_real_len, "\r\n" ) ;
+            rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\r\n", " " ) ;
             #else
-            rc = removeMark( tmp_buffer, read_real_len, "\n" ) ;
+            rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\n", " " ) ;
             #endif
-            rc = removeMark( tmp_buffer, read_real_len, "\f" ) ;
+            rc = replaceSubStr( tmp_buffer, tmp_buf_len, "\f", " " ) ;
             synopsis = tmp_buffer ;
 
             // put synopsis and cutline in map
@@ -690,6 +691,63 @@ error :
    goto done ;
 }
 
+INT32 replaceSubStr( CHAR *buffer, INT32 buffer_len,
+                     const CHAR *pStr1, const CHAR *pStr2 )
+{
+   INT32 rc = SDB_OK ;
+   INT32 str1_len = ossStrlen( pStr1 ) ;
+   INT32 str2_len = ossStrlen( pStr2 ) ;
+   INT32 offset = 0 ;
+   INT32 less_part_len = 0 ;
+   CHAR buf[ READ_CHARACTOR_NUM + 1 ] = { 0 } ;
+   CHAR *pos = NULL ;
+
+   // check arguments
+   if ( !buffer || !pStr1 || !pStr2 ||
+        buffer_len > READ_CHARACTOR_NUM + 1 ||
+        str1_len  > READ_CHARACTOR_NUM ||
+        str2_len > READ_CHARACTOR_NUM )
+   {
+      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   pos = ossStrstr( buffer, pStr1 ) ;
+   while ( pos != NULL )
+   {
+      ossMemset( buf, 0, sizeof( buf ) ) ;
+      offset = pos - buffer ;
+      ossStrncpy( buf, buffer, offset ) ;
+      // check
+      if ( offset + str2_len > buffer_len - 1 )
+      {
+         ossPrintf( "Failed to replace sub str1 with str2 in buffer, %s:%d "OSS_NEWLINE,
+                        __FILE__, __LINE__ ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossStrncat( buf, pStr2, str2_len ) ;
+      less_part_len = ossStrlen( pos+str1_len ) ;
+      // check
+      if ( offset + str2_len + less_part_len > buffer_len - 1 )
+      {
+         ossPrintf( "Failed to replace sub str1 with str2 in buffer, %s:%d "OSS_NEWLINE,
+                        __FILE__, __LINE__ ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossStrncat( buf, pos + str1_len,  less_part_len );
+      ossStrncpy( buffer, buf, buffer_len -1 ) ;
+      buffer[ buffer_len - 1 ] = 0 ;
+
+      pos = ossStrstr( buffer, pStr1 ) ;
+   }
+done :
+   return rc ;
+error :
+   goto done ;
+}
 INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                            INT32 length )
 {
@@ -730,8 +788,9 @@ BOOLEAN isCategory( const CHAR *pName, const CHAR** arr, INT32 size )
    return result ;
 }
 
+// i am not going to display cutline in windows system
 INT32 display( const CHAR *first, const CHAR *second, INT32 indent1,
-                      INT32 indent2 )
+               INT32 indent2 )
 {
    INT32 rc = SDB_OK ;
    vector<string> vec ;
@@ -740,7 +799,6 @@ INT32 display( const CHAR *first, const CHAR *second, INT32 indent1,
    CHAR buf[ FORMAT_LEN ] = { 0 } ;
    INT32 idt1 = indent1 ;
    INT32 idt2 = 0 ;
-   INT32 var = 1 ;
 
    // check arguments
    if ( !first || !second || indent1 < 0 || indent2 < 0 )
@@ -752,61 +810,51 @@ INT32 display( const CHAR *first, const CHAR *second, INT32 indent1,
       goto error ;
    }
 
-   try
+   first_part_len = indent1 + ossStrlen( first ) + 1 ;
+   // in this case, display like this:
+   //                                 synopsis  - cutline
+   if ( first_part_len < indent2 )
    {
-      first_part_len = indent1 + ossStrlen( first ) + 1 ;
-      // in this case, display like this:
-      //                                 synopsis  - cutline
-      if ( first_part_len < indent2 )
+      idt2 = indent2 - first_part_len + 1 ;
+      rc = splitCutline( second, vec ) ;
+      if ( rc )
+         goto error ;
+      vector<string>::iterator it ;
+      it = vec.begin() ;
+      // display the first line
+      #if defined ( _WINDOWS )
+      cout << setw(idt1) << " " << first ;
+      #else
+      cout << setw(idt1) << " " << first << setw(idt2) << " " << *it << endl ;
+      idt2 = indent2 ;
+      for( it++; it != vec.end(); it++ )
       {
-         // display the first part
-         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt1, var ) ;
-         cout << boost::format( buf ) % first ;
-         // display the second part
-         idt2 = indent2 - first_part_len + 1 ;
-         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt2, var ) ;
-         rc = splitCutline( second, vec ) ;
-         if ( rc )
-            goto error ;
-         vector<string>::iterator it ;
-         it = vec.begin() ;
-         cout << boost::format( buf ) % *it << endl ;
-
-         idt2 = indent2 ;
-         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt2, var ) ;
-         for ( it++; it != vec.end(); it++ )
-         {
-            cout << boost::format( buf ) % *it << endl ;
-         }
+         cout << setw(idt2) << " " << *it << endl ;
       }
-      // in this case, display like this:
-      //                                 synopsis
-      //                                          - cutline
-      else
-      {
-         // display the first part
-         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt1, var ) ;
-         cout << boost::format( buf ) % first << endl ;
-         // display the second part
-         idt2 = indent2 ;
-         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt2, var ) ;
-         rc = splitCutline( second, vec ) ;
-         if ( rc )
-            goto error ;
-         vector<string>::iterator it ;
-         it = vec.begin() ;
-         for ( ; it != vec.end(); it++ )
-         {
-            cout << boost::format( buf ) % *it << endl ;
-         }
-      }
+      #endif
    }
-   catch( exception const& e )
+   // in this case, display like this:
+   //                                 synopsis
+   //                                          - cutline
+   else
    {
-      cout << "Failed to display synopsis and cutline, "
-           << __FILE__ << ":" << __LINE__ << endl << e.what() << endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      // display the first part
+      #if defined ( _WINDOWS )
+      cout << setw(idt1) << " " << first ;
+      #else
+      cout << setw(idt1) << " " << first << endl ;
+      // display the second part
+      idt2 = indent2 ;
+      rc = splitCutline( second, vec ) ;
+      if ( rc )
+         goto error ;
+      vector<string>::iterator it ;
+      it = vec.begin() ;
+      for ( ; it != vec.end(); it++ )
+      {
+         cout << setw(idt2) << " " << *it << endl ;
+      }
+      #endif
    }
 
 done :
