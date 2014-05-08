@@ -582,6 +582,10 @@ INT32 manHelp::displayMethod( const CHAR *category )
          p_second = (it->second).c_str() ;
          rc =  display( p_first, p_second, INDENT_Widt2H1,
                         INDENT_WIDTH2 ) ;
+         if ( rc )
+         {
+            goto error ;
+         }
       }
    }
 done :
