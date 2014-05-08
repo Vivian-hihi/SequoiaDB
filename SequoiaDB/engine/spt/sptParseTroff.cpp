@@ -24,9 +24,13 @@
 #include "../mdocml/parseMandocCpp.hpp"
 #include "ossTypes.h"
 #include <algorithm>
-#include <boost/filesystem.hpp>
 #include <vector>
 #include <fstream>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/token_iterator.hpp>
+#include <boost/format.hpp>
+
 
 #define MFILE_SUFFIX ".cli"
 
@@ -49,8 +53,13 @@
 #define MARK2 "\\fR"
 #define MARK3 "("
 
+#define INDENT_Widt2H1  3
+#define INDENT_WIDTH2  30
+#define CONTENT_LEN    50
+#define FORMAT_LEN     100
 
-namespace fs = boost::filesystem;
+using namespace std ;
+namespace fs = boost::filesystem ;
 
 #define CATE_SIZE  7
 const CHAR* CATE_ARR[ CATE_SIZE ] = {
@@ -62,10 +71,26 @@ const CHAR* CATE_ARR[ CATE_SIZE ] = {
    CURSOR_CATEGORY,
    CLCOUNT_CATEGORY } ;
 
+// remove some useless mark in a c-type string
 static INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark ) ;
+
+// check the buffer
 static INT32 checkBuffer ( CHAR **ppBuffer, INT32 *bufferSize,
                            INT32 length ) ;
+
+// judge whether the given pName is one of kinds of category or not
 static BOOLEAN isCategory( const CHAR *pName, const CHAR** arr, INT32 size ) ;
+
+// display synopsis and cutline
+static INT32 display( const CHAR *first, const CHAR *second, INT32 indent1,
+                      INT32 indent2 ) ;
+
+// splite the cutline into several parts to display
+static INT32 splitCutline( const CHAR *cutline, vector<string> &vec ) ;
+
+// find out the right place to split
+static INT32 getSplitPos( const CHAR *pCur, INT32 part_len, INT32 *ret ) ;
+
 
 
 manHelp& manHelp::getInstance( const CHAR *path )
@@ -80,12 +105,12 @@ manHelp::manHelp( const CHAR *path )
    INT32 len = ossStrlen( path );
    ossMemcpy( _filePath, path , len );
    _filePath[len] = 0;
+   troffFileNotEixt = FALSE ;
    // scan the .cli files
    rc = scanFile();
    if ( rc )
    {
-      ossPrintf( "Failed to scan troff files."OSS_NEWLINE );
-      ossPanic () ;
+      troffFileNotEixt = TRUE ;
    }
 }
 
@@ -122,7 +147,6 @@ INT32 manHelp::scanFile()
    // check the path
    if ( !fs::exists(p) || !fs::is_directory(p) )
    {
-      ossPrintf( "Invalid arguments, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
       rc = SDB_INVALIDARG;
       goto error;
    }
@@ -145,6 +169,7 @@ INT32 manHelp::scanFile()
       {
          INT32 strLen = 0;
          std::string fileName ;
+         std::string fileNameLower ;
          const CHAR* pLeaf = NULL;
          CHAR *pSplit = NULL ;
          // get the file name
@@ -162,10 +187,12 @@ INT32 manHelp::scanFile()
          ossMemcpy( pFileName, pLeaf, strLen );
          *(pFileName+ strLen) = 0;
          fileName =  pFileName ;
+         fileNameLower = pFileName ;
          // save the file name without ".cli" to sset
          // the format is: cs.createCL
-         _nset.insert( fileName );
-
+         _nset.insert( fileName ) ;
+         boost::to_lower( fileNameLower ) ;
+         _nmap.insert( pair<string, string>(fileNameLower, fileName) ) ;
          // when finishing save this file name to sset
          // i am going go save category and cutline to ssmap
          // split the file name cs.createCL
@@ -219,7 +246,8 @@ INT32 manHelp::scanFile()
             r_end = ossStrstr( file_buffer, READ_CUTLINE_END ) ;
             if ( !r_end )
             {
-               ossPrintf( "Failed to deal with file %s, for having no tag \"SYNOPSIS\""OSS_NEWLINE, pfPath ) ;
+               ossPrintf( "Failed to deal with file %s,\
+                           for having no tag \"SYNOPSIS\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -228,7 +256,8 @@ INT32 manHelp::scanFile()
             r_pos =  ossStrstr( r_beg, pSplit ) ;
             if ( !r_pos )
             {
-               ossPrintf ( "Failed to deal with file %s, for the content of tag \"NAME\" having no short name %s"OSS_NEWLINE, pfPath, pSplit ) ;
+               ossPrintf ( "Failed to deal with file %s, for the content of tag\
+                            \"NAME\" having no short name %s"OSS_NEWLINE, pfPath, pSplit ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -246,6 +275,13 @@ INT32 manHelp::scanFile()
             cutline_len = read_real_len - ossStrlen(pSplit) ;
             ossMemcpy( tmp_buffer, r_pos + ossStrlen(pSplit), cutline_len ) ;
             tmp_buffer[ cutline_len ] = '\0' ;
+            // remove "\n", "\r\n", "\f"
+            #if defined ( _WINDOWS )
+            rc = removeMark( tmp_buffer, cutline_len, "\r\n" ) ;
+            #else
+            rc = removeMark( tmp_buffer, cutline_len, "\n" ) ;
+            #endif
+            rc = removeMark( tmp_buffer, cutline_len, "\f" ) ;
             cutline = tmp_buffer ;
             // when finishing extract cutline, i am going to extract synopsis
             r_beg = r_end + 1 ;
@@ -254,7 +290,8 @@ INT32 manHelp::scanFile()
             r_end = ossStrstr( r_beg, READ_SYN_END ) ;
             if ( !r_end )
             {
-               ossPrintf( "Failed to deal with file %s, for having no tag \"CATEGORY\""OSS_NEWLINE, pfPath ) ;
+               ossPrintf( "Failed to deal with file %s, for having no tag\
+                          \"CATEGORY\""OSS_NEWLINE, pfPath ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -263,7 +300,8 @@ INT32 manHelp::scanFile()
             r_pos = ossStrstr ( r_beg, pSplit ) ;
             if ( !r_pos )
             {
-               ossPrintf ( "Failed to deal with file %s, for the content of tag \"SYNOPIS\" having no short name %s"OSS_NEWLINE, pfPath, pSplit ) ;
+               ossPrintf ( "Failed to deal with file %s, for the content of tag\
+                           \"SYNOPIS\" having no short name %s"OSS_NEWLINE, pfPath, pSplit ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -283,7 +321,7 @@ INT32 manHelp::scanFile()
             // remove the useless mark
             rc = removeMark( tmp_buffer, read_real_len, MARK1 ) ;
             rc = removeMark( tmp_buffer, read_real_len, MARK2 ) ;
-            #if defined ( _WINDOW )
+            #if defined ( _WINDOWS )
             rc = removeMark( tmp_buffer, read_real_len, "\r\n" ) ;
             #else
             rc = removeMark( tmp_buffer, read_real_len, "\n" ) ;
@@ -322,7 +360,8 @@ INT32 manHelp::scanFile()
             }
             else
             {
-               ossPrintf( "Failed to deal with file %s, for the wrong file name %s"OSS_NEWLINE, pfPath, pFileName ) ;
+               ossPrintf( "Failed to deal with file %s,\
+                           for the wrong file name %s"OSS_NEWLINE, pfPath, pFileName ) ;
                rc = SDB_INVALIDARG ;
                goto exit ;
             }
@@ -336,7 +375,8 @@ INT32 manHelp::scanFile()
          }
          else
          {
-            ossPrintf( "Failed to deal with file %s, for the wrong file name %s"OSS_NEWLINE, pfPath, pFileName ) ;
+            ossPrintf( "Failed to deal with file %s,\
+                        for the wrong file name %s"OSS_NEWLINE, pfPath, pFileName ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -367,9 +407,21 @@ INT32 manHelp::getFileHelp( const CHAR* name )
 {
    INT32 rc = SDB_OK;
    sset fuzzy_match ;
+   string nameLower = name ;
    const CHAR *str = NULL;
    const CHAR *fname = NULL;
+   const CHAR *nameL = NULL ;
    CHAR fPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 };
+   // transform name to lowercase
+   boost::to_lower( nameLower ) ;
+   nameL = nameLower.c_str() ;
+   // check wether success to scan file or not
+   if ( troffFileNotEixt )
+   {
+      ossPrintf( "Failed to scan troff file"OSS_NEWLINE ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
    // check argument
    if ( name == NULL || ossStrcmp(name, "") == 0 )
    {
@@ -377,22 +429,22 @@ INT32 manHelp::getFileHelp( const CHAR* name )
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   // search the name set to find out the matched file name
-   for ( sset::const_iterator it(_nset.begin()), it_end(_nset.end());
+   // search the name map to find out the matched file name
+   for ( ssmap::const_iterator it(_nmap.begin()), it_end(_nmap.end());
          it != it_end; it++ )
    {
-      fname = (*it).c_str() ;
-      str = ossStrstr( fname, name );
+      fname = (it->first).c_str() ;
+      str = ossStrstr( fname, nameL );
       if ( str != NULL )
       {
          // when we get a full fit file name, no need to scan the less
-         if ( ossStrncmp( fname, name, ossStrlen( name ) + 1 ) == 0 )
+         if ( ossStrncmp( fname, nameL, ossStrlen( nameL ) + 1 ) == 0 )
          {
             fuzzy_match.clear() ;
-            fuzzy_match.insert( (*it) ) ;
+            fuzzy_match.insert( (it->second) ) ;
             break ;
          }
-         fuzzy_match.insert( (*it) );
+         fuzzy_match.insert( (it->second) );
       }
    }
    // if we not find any matched file name, tell the user directly
@@ -400,7 +452,7 @@ INT32 manHelp::getFileHelp( const CHAR* name )
       ossPrintf( "No manual for method %s"OSS_NEWLINE, name );
    else if ( fuzzy_match.size() > 1 ) // if we get more than 1 file names, let the user fill again
    {
-      ossPrintf( "%d methods named \"%s\", please fill in full name: \n",
+      ossPrintf( "%d methods related to \"%s\", please fill in the full name: \n",
                  (INT32)fuzzy_match.size(), name );
       for ( sset::const_iterator it(fuzzy_match.begin()), it_end(fuzzy_match.end());
             it != it_end; it++ )
@@ -418,7 +470,8 @@ INT32 manHelp::getFileHelp( const CHAR* name )
       rc = parseMandoc::getInstance().parse ( fPath ) ;
       if ( rc != SDB_OK )
       {
-         ossPrintf( "Failed to parse troff file, %s:%d "OSS_NEWLINE, __FILE__, __LINE__ ) ;
+         ossPrintf( "Failed to parse troff file, %s:%d "OSS_NEWLINE,
+                     __FILE__, __LINE__ ) ;
          goto error ;
       }
    }
@@ -527,9 +580,8 @@ INT32 manHelp::displayMethod( const CHAR *category )
       {
          p_first = (it->first).c_str() ;
          p_second = (it->second).c_str() ;
-//         ossPrintf ( "   %s  %s", p_first, p_second ) ;
-//         ossPrintf ( "   %s  %s"OSS_NEWLINE, p_first, p_second ) ;
-         ossPrintf ( "   %s"OSS_NEWLINE, p_first ) ;
+         rc =  display( p_first, p_second, INDENT_Widt2H1,
+                        INDENT_WIDTH2 ) ;
       }
    }
 done :
@@ -673,3 +725,174 @@ BOOLEAN isCategory( const CHAR *pName, const CHAR** arr, INT32 size )
    }
    return result ;
 }
+
+INT32 display( const CHAR *first, const CHAR *second, INT32 indent1,
+                      INT32 indent2 )
+{
+   INT32 rc = SDB_OK ;
+   vector<string> vec ;
+   // the lenght of synopsis
+   INT32 first_part_len = 0 ;
+   CHAR buf[ FORMAT_LEN ] = { 0 } ;
+   INT32 idt1 = indent1 ;
+   INT32 idt2 = 0 ;
+   INT32 var = 1 ;
+
+   // check arguments
+   if ( !first || !second || indent1 < 0 || indent2 < 0 )
+   {
+      ossPrintf( "Invalid argument, %s:%d"OSS_NEWLINE,
+                  __FILE__, __LINE__ ) ;
+
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   try
+   {
+      first_part_len = indent1 + ossStrlen( first ) + 1 ;
+      // in this case, display like this:
+      //                                 synopsis  - cutline
+      if ( first_part_len < indent2 )
+      {
+         // display the first part
+         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt1, var ) ;
+         cout << boost::format( buf ) % first ;
+         // display the second part
+         idt2 = indent2 - first_part_len + 1 ;
+         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt2, var ) ;
+         rc = splitCutline( second, vec ) ;
+         if ( rc )
+            goto error ;
+         vector<string>::iterator it ;
+         it = vec.begin() ;
+         cout << boost::format( buf ) % *it << endl ;
+
+         idt2 = indent2 ;
+         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt2, var ) ;
+         for ( it++; it != vec.end(); it++ )
+         {
+            cout << boost::format( buf ) % *it << endl ;
+         }
+      }
+      // in this case, display like this:
+      //                                 synopsis
+      //                                          - cutline
+      else
+      {
+         // display the first part
+         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt1, var ) ;
+         cout << boost::format( buf ) % first << endl ;
+         // display the second part
+         idt2 = indent2 ;
+         ossSnprintf( buf, FORMAT_LEN, "%|%dt|%%%d%", idt2, var ) ;
+         rc = splitCutline( second, vec ) ;
+         if ( rc )
+            goto error ;
+         vector<string>::iterator it ;
+         it = vec.begin() ;
+         for ( ; it != vec.end(); it++ )
+         {
+            cout << boost::format( buf ) % *it << endl ;
+         }
+      }
+   }
+   catch( exception const& e )
+   {
+      cout << "Failed to display synopsis and cutline, "
+           << __FILE__ << ":" << __LINE__ << endl << e.what() << endl ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 getSplitPos( const CHAR *pCur, INT32 part_len, INT32 *ret )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *p = NULL ;
+   INT32 less_part_len = NULL ;
+   // check argument
+   if ( !pCur || part_len <= 0 )
+   {
+      ossPrintf( "Invalid argument, %s:%d"OSS_NEWLINE,
+                  __FILE__, __LINE__ ) ;
+
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   less_part_len = ossStrlen( pCur ) + 1 ;
+   if ( less_part_len <= part_len )
+   {
+      // means pCur point to the last part of cutline content
+      *ret = 0 ;
+      goto done ;
+   }
+   p = pCur + part_len ;
+   while( ( *p != ' ' ) && ( p > pCur ) )
+   {
+      --p ;
+   }
+   // in the case, that means no ' ' in this part,
+   // save it as a part
+   if ( p == pCur )
+      *ret = part_len ;
+   else
+      *ret = p - pCur ;
+done :
+   return rc ;
+error :
+   goto done ;
+}
+
+INT32 splitCutline( const CHAR *cutline, vector<string> &vec )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *pb = NULL ;
+   const CHAR *pe = NULL ;
+   INT32 move_len = -1 ;
+   INT32 part_len = CONTENT_LEN ;
+   INT32 cutline_len = 0 ;
+   INT32 less_part_len = 0 ;
+
+   // check argument
+   if ( !cutline )
+   {
+      ossPrintf( "Invalid argument, %s:%d"OSS_NEWLINE,
+                  __FILE__, __LINE__ ) ;
+
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   cutline_len = ossStrlen( cutline ) + 1 ;
+   less_part_len = cutline_len ;
+   pb = cutline ;
+   while ( TRUE )
+   {
+      rc = getSplitPos( pb, part_len, &move_len ) ;
+      if ( rc )
+         goto error ;
+      // if move == 0, means we finish going through the whole cutline
+      // and all the parts have been insert into vec
+      if ( move_len == 0 )
+      {
+         string str = string( pb, ossStrlen(pb) ) ;
+         vec.push_back( str ) ;
+         break ;
+      }
+      vec.push_back( string ( pb, move_len ) ) ;
+      pb = pb + move_len ;
+      move_len = -1 ;
+   }
+
+done :
+   return rc ;
+error :
+   goto done ;
+}
+

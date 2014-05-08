@@ -30,7 +30,7 @@ Sdb.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("DB methods:") ;
-      println("   db.help(<method>)                     help on specified method of db, e.g. db.help(\'createCS\')");
+      println("   db.help(<method>)           help on specified method of db, e.g. db.help(\'createCS\')");
       man( "db" ) ;
    }
    else
@@ -43,7 +43,7 @@ SdbNode.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Node methods:") ;
-      println("   node.help(<method>)                   help on specified method of data node, e.g. node.help(\'start\')");
+      println("   node.help(<method>)         help on specified method of data node, e.g. node.help(\'start\')");
       man( "node" ) ;
    }
    else
@@ -56,7 +56,7 @@ SdbReplicaGroup.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Replica group methods:") ;
-      println("   rg.help(<method>)                      help on specified method of replica group rg, e.g. rg.help(\'getDetail\')");
+      println("   rg.help(<method>)           help on specified method of replica group rg, e.g. rg.help(\'getDetail\')");
       man( "rg" ) ;
    }
    else
@@ -69,7 +69,7 @@ SdbCS.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Collection Space methods:") ;
-      println("   db.cs.help(<method>)                   help on specified method of collection space cs, e.g. db.foo.help(\'createCL\')");
+      println("   db.cs.help(<method>)        help on specified method of collection space cs, e.g. db.foo.help(\'createCL\')");
       man( "cs" ) ;
    }
    else
@@ -82,7 +82,7 @@ SdbCollection.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Collection methods:") ;
-      println("   db.cs.cl.help(<method>)                help on specified method of collection cl, e.g. db.foo.bar.help(\'find\')");
+      println("   db.cs.cl.help(<method>)     help on specified method of collection cl, e.g. db.foo.bar.help(\'find\')");
       man( "cl" ) ;
    }
    else
@@ -95,7 +95,7 @@ SdbQuery.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("Cursor methods:") ;
-      println("   db.cs.cl.find().help(<method>)         help on cursor methods");
+      println("   db.cs.cl.find().help(<method>) help on cursor methods");
       man( "cursor" ) ;
    }
    else
@@ -114,7 +114,7 @@ CLCount.prototype.help = function( val ) {
    if ( val == undefined )
    {
       println("count() modifiers:");
-      println("   db.cs.cl.count().help(<method>)        help on specified count methods");
+      println("   db.cs.cl.count().help(<method>) help on specified count methods");
       man( "count" ) ;
    }
    else
