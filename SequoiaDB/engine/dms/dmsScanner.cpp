@@ -652,7 +652,7 @@ namespace engine
          goto error ;
       }
 
-      rc = _scanner->resumeScan() ;
+      rc = _scanner->resumeScan( _recordXLock ? FALSE : TRUE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
 
       _cb   = cb ;
@@ -782,7 +782,7 @@ namespace engine
                          "rc: %d", rc ) ;
                // now haved append to lock-wait-queue, release latch and then
                // wait the lock
-               rc = _scanner->pauseScan() ;
+               rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
                PD_RC_CHECK( rc, PDERROR, "Failed to pause scan, rc: %d", rc ) ;
 
                _context->pause() ;
@@ -805,7 +805,7 @@ namespace engine
                   rc = SDB_DMS_INCOMPATIBLE_MODE ;
                   goto error_release ;
                }
-               rc = _scanner->resumeScan() ;
+               rc = _scanner->resumeScan( _recordXLock ? FALSE : TRUE ) ;
                if ( rc )
                {
                   PD_LOG( PDERROR, "Failed to resum ixscan, rc: %d", rc ) ;
@@ -909,20 +909,20 @@ namespace engine
       } // while
 
       rc = SDB_DMS_EOC ;
-      /*{
-         INT32 rcTmp = _scanner->pauseScan() ;
+      {
+         INT32 rcTmp = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rcTmp ) ;
             rc = rcTmp ;
          }
-      }*/
+      }
       goto error ;
 
    done:
       if ( SDB_OK == rc && ( _onceRestNum <= 0 || 0 == _maxRecords ) )
       {
-         rc = _scanner->pauseScan() ;
+         rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
@@ -950,7 +950,7 @@ namespace engine
       }
       if ( DMS_INVALID_OFFSET != _curRID._offset )
       {
-         INT32 rc = _scanner->pauseScan() ;
+         INT32 rc = _scanner->pauseScan( _recordXLock ? FALSE : TRUE ) ;
          if ( rc )
          {
             PD_LOG( PDERROR, "Pause scan failed, rc: %d", rc ) ;
