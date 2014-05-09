@@ -272,10 +272,10 @@ namespace engine
          FLOAT32 queryFactor = 1.0f ;
          keyItr = BSONObjIterator ( idxPattern ) ;
          nFields = idxPattern.nFields() ;
-         nQueryFields = _query.nFields() ;
          matchedFields = 0 ;
-         const map<string, rtnPredicate> predicates
+         const map<string, rtnPredicate> &predicates
                      = _matcher.getPredicateSet().predicates();
+         nQueryFields = predicates.size() ;
          while ( keyItr.more() )
          {
             BSONElement keyEle = keyItr.next() ;
