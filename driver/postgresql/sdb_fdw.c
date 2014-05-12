@@ -156,6 +156,8 @@ static void sdbFreeScanState(SdbExecState *executionState);
 static Const *sdbSerializeDocument(sdbbson *document);
 static void sdbDeserializeDocument(Const *constant, sdbbson *document);
 
+static void sdbPrintBson(sdbbson *bson);
+
 
 #define serializeInt(x) makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum((int32)(x)), 0, 1)
 #define serializeOid(x) makeConst(OIDOID, -1, InvalidOid, 4, ObjectIdGetDatum(x), 0, 1)
@@ -724,6 +726,21 @@ void sdbDeserializeDocument ( Const *constant,
    sdbbson_init_size ( document, 0 ) ;
    sdbbson_init_finished_data ( document, documentData ) ;
    return ;
+}
+
+void sdbPrintBson(sdbbson *bson)
+{
+   int bufferSize = 0;
+   char *p        = NULL;
+   
+   bufferSize = sdbbson_sprint_length(bson);
+   p = (char*)malloc(bufferSize) ;
+   sdbbson_sprint(p, bufferSize, bson);
+
+   ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+           errmsg("bson value=%s", p)));
+
+   free(p);
 }
 
 /* sdbOperatorName converts PG comparison operator to Sdb
@@ -2020,7 +2037,8 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
 
        goto error;
    }
-   
+
+   //sdbPrintBson(queryDocument);
    rc = sdbQuery ( hCollection, queryDocument, NULL, NULL, NULL, 0, -1,
                    &hCursor ) ;
    if ( rc )
@@ -2032,6 +2050,7 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
                                   options.collection, rc ),
                          errhint ( "Make sure collection exists on remote "
                                    "SequoiaDB database" ) ) ) ;
+      sdbPrintBson(queryDocument);
       goto error ;
    }
    /* allocate new execution state */
@@ -2106,6 +2125,8 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
       /* if we get EOC, let's just goto done to return empty tupleSlot */
       goto done ;
    }
+
+   //sdbPrintBson(&recordObj);
    sdbFillTupleSlot ( &recordObj, sdbbsonDocumentKey,
                       executionState->columnMappingHash,
                       columnValues, columnNulls ) ;
@@ -2398,7 +2419,28 @@ static INT32 SdbIsForeignRelUpdatable ( Relation rel )
 static void SdbAddForeignUpdateTargets(Query *parsetree, RangeTblEntry *target_rte,
       Relation target_relation)
 {
-   
+   TupleDesc tupdesc = target_relation->rd_att;
+   int i;
+
+   /* loop through all columns of the foreign table */
+   for (i = 0; i < tupdesc->natts; ++i)
+   {
+      Form_pg_attribute att = tupdesc->attrs[i];
+      AttrNumber attrno     = att->attnum;
+      Var *var;
+      TargetEntry *tle;
+
+      /* Make a Var representing the desired value */
+      var = makeVar(parsetree->resultRelation, attrno, att->atttypid, 
+               att->atttypmod, att->attcollation, 0);
+
+      /* Wrap it in a resjunk TLE with the right name ... */
+      tle = makeTargetEntry((Expr *)var, list_length(parsetree->targetList) + 1, 
+               pstrdup(NameStr(att->attname)), true);
+
+      /* ... and add it to the query's targetlist */
+      parsetree->targetList = lappend(parsetree->targetList, tle);
+   }
 }
 
  static List *SdbPlanForeignModify(PlannerInfo *root, ModifyTable *plan, 
@@ -2412,10 +2454,10 @@ static void SdbAddForeignUpdateTargets(Query *parsetree, RangeTblEntry *target_r
    //List *returningList = NIL;
 
    if (resultRelation < root->simple_rel_array_size
-			&& root->simple_rel_array[resultRelation] != NULL)
-	{
-		sdb_condition = (SdbCondition *)(root->simple_rel_array[resultRelation]->fdw_private);
-	}
+         && root->simple_rel_array[resultRelation] != NULL)
+   {
+      sdb_condition = (SdbCondition *)(root->simple_rel_array[resultRelation]->fdw_private);
+   }
    
    /* allocate new execution state */
    executionState = (SdbExecState*)palloc(sizeof(SdbExecState));
@@ -2544,12 +2586,28 @@ TupleTableSlot *SdbExecForeignInsert(EState *estate, ResultRelInfo *rinfo,
 TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
       TupleTableSlot *slot, TupleTableSlot *planSlot)
 {
+   int i   = 0;
+   sdbbson sdbbsonCondition;
+   Datum datum;
    int rc = SDB_OK;
+   bool isnull;
    SdbExecState *fdw_state = (SdbExecState *)rinfo->ri_FdwState;
-
+   
+   sdbbson_init(&sdbbsonCondition);
+   for (i = 0; i < fdw_state->pgTableDesc->ncols; i++) 
+   {
+      datum = ExecGetJunkAttribute(planSlot, fdw_state->pgTableDesc->cols[i].pgattnum, &isnull);
+      if (!isnull)
+      {
+         sdbSetBsonValue(&sdbbsonCondition, fdw_state->pgTableDesc->cols[i].pgname, 
+            datum, fdw_state->pgTableDesc->cols[i].pgtype, 
+            fdw_state->pgTableDesc->cols[i].pgtypmod);
+      }
+   }
+   sdbbson_finish(&sdbbsonCondition);
+   
    //delete the bson from the sdb
-   rc = sdbDelete(fdw_state->hCollection, 
-         &fdw_state->sdb_condition->sdbbson_condition, NULL);
+   rc = sdbDelete(fdw_state->hCollection, &sdbbsonCondition, NULL);
    if (rc != SDB_OK)
    {
       ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
@@ -2559,10 +2617,10 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
    }
 
    /* empty the result slot */
-	ExecClearTuple(slot);
+   ExecClearTuple(slot);
    
    /* store the virtual tuple */
-	ExecStoreVirtualTuple(slot);
+   ExecStoreVirtualTuple(slot);
    
    return slot;
 }
