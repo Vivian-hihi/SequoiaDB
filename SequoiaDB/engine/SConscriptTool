@@ -101,7 +101,8 @@ utilFiles = [
       "util/text.cpp",
       "util/utilStr.cpp",
       "util/utilParam.cpp",
-      "util/utilSdb.cpp"
+      "util/utilSdb.cpp",
+      "util/csv2rawbson.cpp"
       ]
 
 dpsFiles = [
