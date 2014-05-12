@@ -40,6 +40,7 @@
 #include "pd.hpp"
 #include "../client/bson/bson.h"
 #include "time.h"
+#include <math.h>
 //#include "ossUtil.h"
 
 #define CSV_STR_TABLE   '\t'
@@ -369,7 +370,7 @@ INT32 csvParser::_parseValue( _valueData &valueData,
          }
          else
          {
-            valueData.varDouble = (DOUBLE)valueData.varInt ;
+            valueData.varDouble = (FLOAT64)valueData.varInt ;
          }
       }
       break ;
@@ -447,15 +448,15 @@ INT32 csvParser::_parseNumber( CHAR *pBuffer, INT32 size,
                                CSV_TYPE &csvType,
                                INT32 *pVarInt,
                                INT64 *pVarLong,
-                               DOUBLE *pVarDouble )
+                               FLOAT64 *pVarDouble )
 {
    INT32 rc = SDB_OK ;
    CSV_TYPE type = CSV_TYPE_INT ;
-   DOUBLE n = 0 ;
-   DOUBLE sign = 1 ;
-   DOUBLE scale = 0 ;
-   DOUBLE subscale = 0 ;
-   DOUBLE signsubscale = 1 ;
+   FLOAT64 n = 0 ;
+   FLOAT64 sign = 1 ;
+   FLOAT64 scale = 0 ;
+   FLOAT64 subscale = 0 ;
+   FLOAT64 signsubscale = 1 ;
    INT32 n1 = 0 ;
    INT64 n2 = 0 ;
 
@@ -1008,7 +1009,7 @@ error:
    goto done ;
 }
 
-INT32 csvParser::_string2double( DOUBLE &value, CHAR *pBuffer, INT32 size )
+INT32 csvParser::_string2double( FLOAT64 &value, CHAR *pBuffer, INT32 size )
 {
    INT32 rc = SDB_OK ;
    CSV_TYPE csvType = CSV_TYPE_INT ;
@@ -1475,7 +1476,7 @@ void csvParser::_appendBson( void *bsonObj, CSV_TYPE csvType,
       bson_append_bool( pObj, pKey, *((BOOLEAN *)pValue) ) ;
       break ;
    case CSV_TYPE_DOUBLE:
-      bson_append_double( pObj, pKey, *((DOUBLE *)pValue) ) ;
+      bson_append_double( pObj, pKey, *((FLOAT64 *)pValue) ) ;
       break ;
    case CSV_TYPE_STRING:
       pBuffer = (CHAR *)pValue ;
