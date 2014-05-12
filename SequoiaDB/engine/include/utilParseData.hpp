@@ -187,9 +187,6 @@ private :
    // delChar number
    INT32       _delCharNum ;
    // not auto add filed
-private:
-   INT32 _allocField() ;
-   INT32 _readFirstField() ;
 public:
    virtual INT32 initialize ( _utilParserParamet *parserPara ) ;
    virtual INT32 getNextRecord ( UINT32 &startOffset,

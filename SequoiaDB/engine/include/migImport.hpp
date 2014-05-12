@@ -44,6 +44,7 @@
 #include "../client/jstobs.h"
 #include "../client/bson/bson.h"
 #include "utilParseData.hpp"
+#include "../util/csv2rawbson.hpp"
 #include <string>
 #include <vector>
 using namespace std ;
@@ -65,46 +66,13 @@ class _migParser : public SDBObject
 {
 protected:
    _utilDataParser *_parser ;
-   //migImportTypes _exportType ;
-   //OSSFILE _file ;
    CHAR _delChar[2] ;
    CHAR _delField[2] ;
    CHAR _delRecord[2] ;
    sdbCollectionHandle _collection ;
    BOOLEAN _stringType ;
-   /*
-   BOOLEAN _isEOF ;
-   BOOLEAN _isOpened ;
-   BOOLEAN _init ;
-   CHAR *_pJsonBuffer ;
-   CHAR *_pJsonCurPtr ;
-   CHAR *_pReadBuffer ;
-   CHAR *_pCurPtr ;
-   UINT32 _jsonSize ;
-   UINT32 _bufSize ;
-   UINT32 _bufUsed ;
-   BOOLEAN _bMongoCompatible ;*/
-
-   /*BOOLEAN _hexStrToDel ( const CHAR *pHexStr, CHAR &del ) ;
-   BOOLEAN _strToDel ( const CHAR *pDelStr, CHAR &del ) ;
-   INT32 _reallocReadBuf ( UINT32 requiredSize ) ;
-   INT32 _reallocJsonBuf ( UINT32 requiredSize ) ;
-   INT32 _readNext ( CHAR *pBuffer, UINT32 size ) ;
-   INT32 _appendJsonStr ( const CHAR *pStr, UINT32 num ) ;*/
    INT32 _importRecord ( bson **bsonObj, SINT32 num ) ;
    virtual INT32 _getRecord ( bson &record ) = 0 ;
-   /*UINT32 _jsonBufOccupied ()
-   {
-      return _pJsonCurPtr - _pJsonBuffer ;
-   }
-   UINT32 _bufParsed ()
-   {
-      return _pCurPtr - _pReadBuffer ;
-   }
-   UINT32 _bufNotParsed ()
-   {
-      return _bufUsed - _bufParsed () ;
-   }*/
 public:
    _migParser () ;
    virtual ~_migParser () ;
@@ -113,13 +81,11 @@ public:
 
 class _migCSVParser : public _migParser
 {
+private:
+   csvParser _csvParser ;
 protected :
    BOOLEAN _autoAddField ;
    BOOLEAN _autoCompletion ;
-   //vector<string> _fieldAll ;
-
-   //INT32 _getHead () ;
-   //INT32 _getFields () ;
    INT32 _getRecord ( bson &record ) ;
 public:
    INT32 init ( sdbCollectionHandle collection,
