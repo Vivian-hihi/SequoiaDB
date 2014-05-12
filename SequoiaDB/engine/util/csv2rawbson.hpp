@@ -110,7 +110,7 @@ private:
       BOOLEAN varBool ;
       BOOLEAN hasDefVal ;
       INT64 varLong ;
-      DOUBLE varDouble ;
+      FLOAT64 varDouble ;
       CHAR *pVarString ;
       CHAR *pField ;
       _csvTimestamp varTimestamp ;
@@ -136,7 +136,7 @@ private:
       INT32 varInt ;
       BOOLEAN varBool ;
       INT64 varLong ;
-      DOUBLE varDouble ;
+      FLOAT64 varDouble ;
       CHAR *pVarString ;
       _csvTimestamp varTimestamp ;
       _valueData() : type(CSV_TYPE_INT),
@@ -168,11 +168,11 @@ private:
                        CSV_TYPE &csvType,
                        INT32 *pVarInt = NULL,
                        INT64 *pVarLong = NULL,
-                       DOUBLE *pVarDouble = NULL ) ;
+                       FLOAT64 *pVarDouble = NULL ) ;
    INT32 _string2int( INT32 &value, CHAR *pBuffer, INT32 size ) ;
    INT32 _string2long( INT64 &value, CHAR *pBuffer, INT32 size ) ;
    INT32 _string2bool( BOOLEAN &value, CHAR *pBuffer, INT32 size ) ;
-   INT32 _string2double( DOUBLE &value, CHAR *pBuffer, INT32 size ) ;
+   INT32 _string2double( FLOAT64 &value, CHAR *pBuffer, INT32 size ) ;
    INT32 _string2timestamp( _csvTimestamp &value, CHAR *pBuffer, INT32 size ) ;
    INT32 _string2timestamp2( _csvTimestamp &value, CHAR *pBuffer, INT32 size );
    INT32 _string2date( INT64 &value, CHAR *pBuffer, INT32 size ) ;
