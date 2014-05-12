@@ -92,6 +92,9 @@ typedef struct PgColumnDesc_s
    int pgattnum; /* PostgreSQL attribute number */
    Oid pgtype;   /* PostgreSQL data type */
    int pgtypmod; /* PostgreSQL type modifier */
+
+   bool isDropped;
+   bool isInReturningList;
 }PgColumnsDesc;
 
 typedef struct PgTableDesc_s
@@ -100,6 +103,13 @@ typedef struct PgTableDesc_s
    int ncols;     /* number of columns */
    PgColumnsDesc *cols;
 }PgTableDesc;
+
+/* for deliver sdb_fdw's update/delete conditions */
+typedef struct SdbCondition_s
+{
+   sdbbson sdbbson_condition;
+}SdbCondition;
+
 
 /* SdbExecState represents the runtime state for sdb cursor
  */
@@ -124,8 +134,12 @@ struct SdbExecState
 
    /* pg table column's description */
    PgTableDesc *pgTableDesc;
+
+   /* conditions */
+   SdbCondition *sdb_condition;
 } ;
 typedef struct SdbExecState SdbExecState ;
+
 
 /* Sdb represents connection handle for each host:service */
 struct SdbConnection
