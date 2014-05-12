@@ -306,8 +306,8 @@ INT32 main ( INT32 argc, CHAR **argv )
    sdbEnablePD( LOGPATH ) ;
    setPDLevel( PDINFO ) ;
 
-   APPENDARGSTRING( utilSdbObj, OPTION_HOSTNAME,     OPTION_HOSTNAME ",s",     "database host name",                                                        FALSE, OSS_MAX_HOSTNAME,    DEFAULT_HOSTNAME ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_SVCNAME,      OPTION_SVCNAME ",p",      "database service name",                                                     FALSE, OSS_MAX_SERVICENAME, DEFAULT_SVCNAME ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_HOSTNAME,     OPTION_HOSTNAME ",s",     "database host name ( default: localhost )",                                                        FALSE, OSS_MAX_HOSTNAME,    DEFAULT_HOSTNAME ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_SVCNAME,      OPTION_SVCNAME ",p",      "database service name ( default: 11810 )",                                                     FALSE, OSS_MAX_SERVICENAME, DEFAULT_SVCNAME ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_USER,         OPTION_USER ",u",         "databse user",                                                              FALSE, -1,                  "\0" ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_PASSWORD,     OPTION_PASSWORD ",w",     "databse password",                                                          FALSE, -1,                  "\0" ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_DELCHAR,      OPTION_DELCHAR ",a",      "string delimiter ( default: \" )( csv only )",                              FALSE, 4,                  "\"" ) ;
