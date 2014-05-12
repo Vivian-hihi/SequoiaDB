@@ -138,12 +138,12 @@ INT32 _utilCSVParser::initialize ( _utilParserParamet *parserPara )
       _fieldSize     = ossStrlen ( _fieldBuffer ) ;
       _readFreeSpace = _fieldSize ;
    }
-   rc = _readFirstField( ) ;
+   /*rc = _readFirstField( ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to read header, rc = %d", rc ) ;
       goto error ;
-   }
+   }*/
 
    for ( INT32 i = 0; i < UTL_PARSER_CSV_CHAR_SPACE_NUM; ++i )
    {
@@ -183,7 +183,9 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
    PD_TRACE_ENTRY ( SDB__UTILCSV__GETNEXTRECORD );
    BOOLEAN     isString       = FALSE ;
    UINT32      delCharNum     = 0 ;
-   UINT32      blockSize      = _blockSize ;
+   UINT32      newReadSize    = 0 ;
+   UINT32      isReadSize     = 0 ;
+   UINT32      useBlockNum    = 0 ;
    CHAR       *pCursor        = _curBuffer ;
    CHAR       *curBuffer      = NULL ;
 
@@ -194,66 +196,68 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
       {
          if ( _pBlock >= _blockNum )
          {
-            UINT32 recordLeftSize = 0 ;
-            blockSize = _blockSize ;
-            _pBlock = 0 ;
-            if ( ppBucket )
+            isReadSize = pCursor - _curBuffer ;
+            if ( isReadSize > _blockSize && isReadSize < _bufferSize )
             {
-               ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
+               //is read size use block number
+               useBlockNum = ( (UINT32)( isReadSize / _blockSize ) ) + 1 ;
+               while ( useBlockNum > 0 )
+               {
+                  if ( ppBucket )
+                  {
+                     ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
+                  }
+                  ++_pBlock ;
+                  --useBlockNum ;
+               }
+               ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               newReadSize = isReadSize % _blockSize ;
+               if ( newReadSize == 0 )
+               {
+                  ++_pBlock ;
+                  continue ;
+               }
+               //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            ossMemset ( _buffer, 0, _blockSize ) ;
-            recordLeftSize = pCursor - _curBuffer ;
-            if ( recordLeftSize >= ( _blockNum * _blockSize ) )
+            else
             {
-               recordLeftSize = 0 ;
-               PD_LOG ( PDWARNING, "Data size larger than the bucket size,\
-clear bucket data" ) ;
-            }
-            else if ( recordLeftSize > 0 )
-            {
-               ossMemmove ( _buffer, _curBuffer, recordLeftSize ) ;
-            }
-            curBuffer = _buffer + recordLeftSize ;
-            _curBuffer = _buffer ;
-            pCursor = curBuffer ;
-            while ( recordLeftSize > blockSize )
-            {
-               recordLeftSize -= blockSize ;
-               ++_pBlock ;
+               if ( isReadSize == _bufferSize )
+               {
+                  isReadSize = 0 ;
+                  PD_LOG ( PDWARNING, "Data size larger than the bucket \
+size %d, clear bucket data", _bufferSize ) ;
+               }
+               _pBlock = 0 ;
                if ( ppBucket )
                {
                   ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
                }
+               ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               newReadSize = _blockSize - isReadSize ;
+               if ( newReadSize == 0 )
+               {
+                  ++_pBlock ;
+                  continue ;
+               }
+               //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            blockSize -= recordLeftSize ;
+            curBuffer = _buffer + isReadSize ;
+            pCursor = curBuffer ;
          }
          else
          {
-            blockSize = _blockSize ;
-            if ( _nextFieldCursor )
-            {
-               curBuffer = _buffer + _readFreeSpace ;
-               blockSize -= _readFreeSpace ;
-            }
-            else
-            {
-               curBuffer = _buffer + _pBlock * _blockSize ;
-            }
             if ( ppBucket )
             {
                ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
             }
-            ossMemset ( curBuffer, 0, _blockSize ) ;
+            newReadSize = _blockSize ;
+            curBuffer = _buffer + _pBlock * _blockSize ;
+            //ossMemset ( curBuffer, 0, _blockSize ) ;
          }
-         rc = _pAccessData->readNextBuffer ( curBuffer, blockSize ) ;
-         if ( _nextFieldCursor )
-         {
-            _nextFieldCursor = NULL ;
-            blockSize += _readFreeSpace ;
-         }
+         rc = _pAccessData->readNextBuffer ( curBuffer, newReadSize ) ;
          if ( rc )
          {
-            if ( rc == SDB_EOF && !blockSize )
+            if ( rc == SDB_EOF && newReadSize == 0 )
             {
                startOffset = _curBuffer - _buffer ;
                size = pCursor - _curBuffer ;
@@ -269,12 +273,8 @@ clear bucket data" ) ;
                rc = SDB_OK ;
             }
          }
-         _unreadSpace = blockSize ;
+         _unreadSpace = newReadSize ;
          ++_pBlock ;
-         if ( _unreadSpace == 0 )
-         {
-            continue ;
-         }
       }
       if ( _delChar[0] == *pCursor )
       {
@@ -294,6 +294,7 @@ clear bucket data" ) ;
             startOffset = _curBuffer - _buffer ;
             size = pCursor - _curBuffer ;
             _curBuffer = pCursor ;
+            ++_line ;
             goto done ;
          }
       }
@@ -310,205 +311,6 @@ clear bucket data" ) ;
    }while( TRUE ) ;
 done:
    PD_TRACE_EXITRC ( SDB__UTILCSV__GETNEXTRECORD, rc );
-   return rc ;
-error:
-   goto done ;
-}
-
-
-PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCSV__ALLOCFIELD, "_utilCSVParser::_allocField" )
-INT32 _utilCSVParser::_allocField ()
-{
-   INT32       rc             = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__UTILCSV__ALLOCFIELD );
-   CHAR *newBuffer = NULL ;
-
-   _fieldSize += UTIL_DATA_HEADER_SIZE ;
-   newBuffer = (CHAR *)SDB_OSS_REALLOC ( _fieldBuffer, _fieldSize ) ;
-   if ( !newBuffer )
-   {
-      SAFE_OSS_FREE ( _fieldBuffer ) ;
-      PD_LOG ( PDERROR,
-               "Unable to allocate %d bytes memory", _fieldSize ) ;
-      rc = SDB_OOM ;
-      goto error ;
-   }
-   _fieldBuffer = newBuffer ;
-   _readFreeSpace = UTIL_DATA_HEADER_SIZE ;
-   ossMemset ( _fieldBuffer + _readNumStr, 0, UTIL_DATA_HEADER_SIZE ) ;
-done:
-   PD_TRACE_EXITRC ( SDB__UTILCSV__ALLOCFIELD, rc );
-   return rc ;
-error:
-   goto done ;
-}
-
-
-PD_TRACE_DECLARE_FUNCTION ( SDB__UTILCSV__READFIRSTFIELD, "_utilCSVParser::_readFirstField" )
-INT32 _utilCSVParser::_readFirstField( )
-{
-   INT32 rc                  = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__UTILCSV__READFIRSTFIELD ) ;
-   CHAR      *pNewCursor     = NULL ;
-   CHAR      *pCursor        = NULL ;
-   UINT32     cursorSize     = 0 ;
-   CHAR       *leftField     = NULL ;
-
-   if ( _fieldBuffer )
-   {
-      leftField = _fieldBuffer ;
-      pCursor = _fieldBuffer ;
-   }
-
-   do
-   {
-      if ( _headerline && 0 == _readFreeSpace )
-      {
-         rc = _allocField () ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Faild to _allocField, rc=%d", rc ) ;
-            goto error ;
-         }
-         rc = _pAccessData->readNextBuffer ( _fieldBuffer + _readNumStr,
-                                             _readFreeSpace ) ;
-         if ( !isValidUTF8WSize ( _fieldBuffer + _readNumStr,
-                                  _readFreeSpace ) )
-         {
-              rc = SDB_INVALIDARG ;
-              PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
-              goto error ;
-         }
-         if ( rc )
-         {
-            if ( rc == SDB_EOF )
-            {
-               if ( 0 == _readFreeSpace )
-               {
-                  //read file end, but not find field end
-                  rc = SDB_UTIL_CSV_FIELD_END ;
-                  goto done ;
-               }
-               else
-               {
-                  rc = SDB_OK ;
-               }
-            }
-            else
-            {
-               PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
-               goto error ;
-            }
-         }
-          pCursor = _fieldBuffer + _readNumStr ;
-          leftField = _fieldBuffer + _leftFieldSize ;
-      }
-      else if ( !_headerline && 0 == _readFreeSpace )
-      {
-         if ( !_isString )
-         {
-            if ( pCursor > leftField )
-            {
-               cursorSize = pCursor - leftField ;
-               pNewCursor = _trimLeft ( leftField, cursorSize ) ;
-               leftField = pNewCursor ;
-               if ( !pNewCursor )
-               {
-                  _vField.push_back ( NULL ) ;
-               }
-               else
-               {
-                  cursorSize = pCursor - leftField ;
-                  pNewCursor = _trimRight ( pCursor - 1, cursorSize ) ;
-                  *( pNewCursor + 1 ) = 0 ;
-                  _vField.push_back ( leftField ) ;
-               }
-            }
-            else
-            {
-               _vField.push_back ( NULL ) ;
-            }
-            _nextFieldCursor = NULL ;
-         }
-         break ;
-      }
-
-      if ( _delChar[0] == *pCursor )
-      {
-         --_readFreeSpace ;
-         ++_readNumStr ;
-         ++pCursor ;
-         _isString = !_isString ;
-      }
-      else if ( ( _delField[0] == *pCursor ||
-                  _delRecord[0] == *pCursor ) )
-      {
-         if ( !_isString )
-         {
-            if ( _delRecord[0] == *pCursor )
-            {
-               rc = SDB_UTIL_CSV_FIELD_END ;
-            }
-
-            if ( pCursor > leftField )
-            {
-               cursorSize = pCursor - leftField ;
-               pNewCursor = _trimLeft ( leftField, cursorSize ) ;
-               leftField = pNewCursor ;
-               if ( !pNewCursor )
-               {
-                  _vField.push_back ( NULL ) ;
-               }
-               else
-               {
-                  cursorSize = pCursor - leftField ;
-                  pNewCursor = _trimRight ( pCursor - 1, cursorSize ) ;
-                  *( pNewCursor + 1 ) = 0 ;
-                  _vField.push_back ( leftField ) ;
-               }
-            }
-            else
-            {
-               _vField.push_back ( NULL ) ;
-            }
-
-            --_readFreeSpace ;
-            ++_readNumStr ;
-            ++pCursor ;
-            if ( SDB_UTIL_CSV_FIELD_END == rc )
-            {
-               rc = SDB_OK ;
-               _nextFieldCursor = pCursor ;
-               break ;
-            }
-            else
-            {
-               leftField = pCursor ;
-               _leftFieldSize = leftField - _fieldBuffer ;
-            }
-         }
-         else
-         {
-            --_readFreeSpace ;
-            ++_readNumStr ;
-            ++pCursor ;
-         }
-      }
-      else
-      {
-         --_readFreeSpace ;
-         ++_readNumStr ;
-         ++pCursor ;
-      }
-   }while ( TRUE ) ;
-
-   if( _headerline && _readFreeSpace > 0 )
-   {
-      ossStrncpy ( _buffer, _nextFieldCursor, _readFreeSpace ) ;
-   }
-
-done:
-   PD_TRACE_EXITRC ( SDB__UTILCSV__READFIRSTFIELD, rc );
    return rc ;
 error:
    goto done ;
