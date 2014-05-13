@@ -278,7 +278,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      datet = tm ;
+      datet = tm * 1000 ;
       bson_append_date( bs, key, datet ) ;
    }
    else if ( 0 == name.compare( SPT_SPEOBJ_REGEX ) &&
