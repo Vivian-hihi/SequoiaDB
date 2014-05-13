@@ -318,6 +318,48 @@ INT32 _migCSVParser::init ( sdbCollectionHandle collection,
       PD_LOG ( PDERROR, "Failed to _parser initialize, rc=%d", rc ) ;
       goto error ;
    }
+
+   if ( !isHeaderline )
+   {
+      UINT32 size = ossStrlen( fields ) ;
+      rc = _csvParser.init( autoAddField,
+                            autoCompletion,
+                            isHeaderline,
+                            delChar,
+                            delField,
+                            delRecord ) ;
+      rc = _csvParser.parseHeader( fields, size ) ;
+   }
+   else
+   {
+      CHAR *buffer = _parser->getBuffer() ;
+      UINT32  startOffset = 0 ;
+      UINT32  size        = 0 ;
+      rc = _parser->getNextRecord ( startOffset, size ) ;
+      if ( rc )
+      {
+         if ( rc == SDB_EOF )
+         {
+            if ( 0 == size )
+            {
+               goto done ;
+            }
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+      rc = _csvParser.init( autoAddField,
+                            autoCompletion,
+                            isHeaderline,
+                            delChar,
+                            delField,
+                            delRecord ) ;
+      rc = _csvParser.parseHeader( buffer + startOffset, size ) ;
+   }
+
 done :
    PD_TRACE_EXITRC ( SDB__MIGCSVPS_INIT, rc );
    return rc ;
@@ -333,9 +375,8 @@ INT32 _migCSVParser::_getRecord ( bson &record )
    UINT32  startOffset = 0 ;
    UINT32  size        = 0 ;
    _convertCSV ccsv( _stringType ) ;
-   bson obj ;
+   bson *pObj = &record ;
    CHAR *buffer = _parser->getBuffer() ;
-   CHAR *pJsonBuffer = NULL ;
    rc = _parser->getNextRecord ( startOffset, size ) ;
    if ( rc )
    {
@@ -358,6 +399,8 @@ INT32 _migCSVParser::_getRecord ( bson &record )
       PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
       goto error ;
    }
+   rc = _csvParser.csv2bson( buffer + startOffset, size, pObj ) ;
+   /*
    rc = ccsv._convertCSVToJson ( buffer + startOffset, size,
                                  _autoAddField, _autoCompletion,
                                  _parser, &pJsonBuffer ) ;
@@ -368,16 +411,20 @@ INT32 _migCSVParser::_getRecord ( bson &record )
    }
    pJsonBuffer = json2rawcbson ( pJsonBuffer ) ;
    if ( !pJsonBuffer )
+   */
+   if ( rc )
    {
       rc = SDB_UTIL_PARSE_JSON_INVALID ;
       PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
       goto error ;
    }
+   /*
    obj.ownmem = 0 ;
    obj.data = NULL ;
    bson_init_finished_data ( &obj, pJsonBuffer ) ;
    bson_copy ( &record, &obj ) ;
    free ( pJsonBuffer ) ;
+   */
 
 done :
    PD_TRACE_EXITRC ( SDB__MIGCSVPS__GETRCD, rc );
