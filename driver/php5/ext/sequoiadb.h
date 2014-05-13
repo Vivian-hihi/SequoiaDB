@@ -131,12 +131,12 @@ public:
                            array|string $select = NULL,
                            array|string $orderBy = NULL ) ;
 
-   /** \fn sequoiaGroup selectGroup ( string $name )
+   /** \fn SequoiaGroup selectGroup ( string $name )
        \brief Gets group object
        \param [in] $name The group name
        \retval a new group object
    */
-   sequoiaGroup selectGroup ( string $name ) ;
+   SequoiaGroup selectGroup ( string $name ) ;
 
    /** \fn array|string resetSnapshot ( void )
        \brief Reset the snapshot
@@ -398,9 +398,9 @@ public:
    /*array|string deleteCurrent ( void ) ;*/
 } ;
 
-/** \class sequoiaGroup
+/** \class SequoiaGroup
  */
-class sequoiaGroup
+class SequoiaGroup
 {
 public:
 
