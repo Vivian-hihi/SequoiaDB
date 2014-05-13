@@ -637,7 +637,7 @@ INT32 csvParser::_field2str( CHAR *pBuffer, INT32 size,
       goto done ;
    }
 
-   pNewBuffer = (CHAR *)SDB_OSS_MALLOC( size ) ;
+   pNewBuffer = (CHAR *)SDB_OSS_MALLOC( size + 1 ) ;
    if ( !pNewBuffer )
    {
       PD_LOG ( PDERROR, "Failed to allocate memory for %d bytes",
@@ -645,7 +645,7 @@ INT32 csvParser::_field2str( CHAR *pBuffer, INT32 size,
       rc = SDB_OOM ;
       goto error ;
    }
-   ossMemset( pNewBuffer, 0, size ) ;
+   ossMemset( pNewBuffer, 0, size + 1 ) ;
 
    if ( size > 1 &&
         ( ( _isHeaderline && pBuffer[0] == _delChar &&
@@ -676,6 +676,8 @@ INT32 csvParser::_field2str( CHAR *pBuffer, INT32 size,
       ossMemcpy( pNewBuffer, pBuffer, size ) ;
       newSize = size ;
    }
+
+   *ppOutBuf = pNewBuffer ;
 
 done:
    return rc ;
