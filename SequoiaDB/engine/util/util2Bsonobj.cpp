@@ -69,7 +69,7 @@ namespace engine
       t.tm_mday = day ;
 
       timep = mktime( &t ) ;
-      date.millis = timep ;
+      date.millis = timep * 1000 ;
    done:
       return rc ;
    error:
