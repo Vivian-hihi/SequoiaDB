@@ -5,6 +5,6 @@ var searchData=
   ['count',['count',['../classSequoiaCL.html#aed703c2e2dabfe8361829bd366036689',1,'SequoiaCL']]],
   ['createcatagroup',['createCataGroup',['../classSequoiaDB.html#afe7ad660a46c30661d9e124913b2c027',1,'SequoiaDB']]],
   ['createindex',['createIndex',['../classSequoiaCL.html#a31e2929f49d02dd7e96c75745cda38e4',1,'SequoiaCL']]],
-  ['createnode',['createNode',['../classsequoiaGroup.html#a96ab51c0a2744cde769ca410ab24b47f',1,'sequoiaGroup']]],
+  ['createnode',['createNode',['../classSequoiaGroup.html#a1d2278e3bedcd500009e79a13a56dcc2',1,'SequoiaGroup']]],
   ['current',['current',['../classSequoiaCursor.html#a384b05fd98b8a15f89cf26522d13fe03',1,'SequoiaCursor']]]
 ];
