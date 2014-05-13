@@ -204,7 +204,7 @@ namespace engine
       if ( NULL != usec )
       {
          if ( !sscanf ( str,
-                     "%d-%d-%d-%d.%d.%d.%d",
+                     "%d-%d-%d.%d.%d.%d.%d",
                      &year   ,
                      &month  ,
                      &day    ,
