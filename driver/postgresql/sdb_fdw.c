@@ -380,6 +380,8 @@ void initSdbExecState(SdbExecState *sdbExecState)
    sdbExecState->hCursor           = SDB_INVALID_HANDLE;
    sdbExecState->hConnection       = SDB_INVALID_HANDLE;
    sdbExecState->hCollection       = SDB_INVALID_HANDLE;
+
+   sdbbson_init(&sdbExecState->queryDocument);
 }
 
 Const *serializeString(const char *s)
@@ -2335,16 +2337,15 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
    HTAB *columnMappingHash           = NULL ;
    sdbCursorHandle hCursor           = SDB_INVALID_HANDLE ;
    List *columnList                  = NIL ;
-   Const *queryBuffer                = NULL ;
    ForeignScanState *scanState       = NULL ;
    List *foreignPrivateList          = NIL ;
    ForeignScan *foreignScan          = NULL ;
-   SdbExecState *executionState      = NULL ;
    CHAR *relationName                = NULL ;
    INT32 executorFlags               = 0 ;
    MemoryContext oldContext          = CurrentMemoryContext ;
    MemoryContext tupleContext        = NULL ;
    sdbbson queryDocument ;
+   SdbExecState *fdw_state            = NULL;
 
    sdbbson_init ( &queryDocument ) ;
 
@@ -2369,27 +2370,44 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
       column->vartypmod = attributesPtr[columnId-1]->atttypmod ;
       columnList        = lappend ( columnList, column ) ;
    }
+
+   foreignTableId = RelationGetRelid(relation);
+   fdw_state = palloc0(sizeof(SdbExecState));
+   initSdbExecState(fdw_state);
+   sdbGetSdbServerOptions(foreignTableId, fdw_state);
+
+   fdw_state->pgTableDesc = sdbGetPgTableDesc(foreignTableId);
+   if (NULL == fdw_state->pgTableDesc)
+   {
+      sdbFreeScanState(fdw_state);
+      ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY), 
+            errmsg("Unable to allocate pgTableDesc"),
+            errhint("Make sure the memory pool or ulimit is properly configured")));
+      goto error;
+   }
    
    /* create state structure */
    scanState = makeNode ( ForeignScanState ) ;
    scanState->ss.ss_currentRelation = relation ;
    foreignTableId = RelationGetRelid ( relation ) ;
-   rc = sdbBuildQuery ( foreignTableId, NIL, &queryDocument ) ;
+   rc = sdbBuildQuery ( foreignTableId, NIL, &fdw_state->queryDocument ) ;
    if ( rc )
    {
+      sdbFreeScanState(fdw_state);
       goto error ;
    }
-   queryBuffer = sdbSerializeDocument ( &queryDocument ) ;
-
-   /* construct foreign plan */
-   foreignPrivateList       = list_make2 ( queryBuffer, columnList ) ;
+   
+   foreignPrivateList = serializeSdbExecState(fdw_state);
+   foreignPrivateList = list_make2(foreignPrivateList, columnList);
+   
    foreignScan              = makeNode ( ForeignScan ) ;
    foreignScan->fdw_private = foreignPrivateList ;
    scanState->ss.ps.plan = (Plan *)foreignScan ;
-   SdbBeginForeignScan ( scanState, executorFlags ) ;
-   executionState = (SdbExecState*)scanState->fdw_state ;
-   hCursor = executionState->hCursor ;
-   columnMappingHash = executionState->columnMappingHash ;
+   SdbBeginForeignScan(scanState, executorFlags);
+   
+   fdw_state = (SdbExecState*)scanState->fdw_state ;
+   hCursor = fdw_state->hCursor ;
+   columnMappingHash = fdw_state->columnMappingHash ;
 
    tupleContext = AllocSetContextCreate ( CurrentMemoryContext,
                                           "sdb_fdw temp context",
@@ -2402,6 +2420,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
    columnNulls  = (bool*)palloc0 ( columnCount * sizeof(bool) ) ;
    if ( !columnValues || !columnNulls )
    {
+      sdbFreeScanState(fdw_state);
       ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
                          errmsg ( "Unable to allocate Var memory" ),
                          errhint ( "Make sure the memory pool or ulimit is "
@@ -2423,7 +2442,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
          sdbbson_destroy ( &recordObj ) ;
          if ( SDB_DMS_EOC != rc )
          {
-            sdbFreeScanState ( executionState ) ;
+            sdbFreeScanState ( fdw_state ) ;
             /* if other error happened, let's report them */
             ereport ( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
                                errmsg ( "unable to fetch next record"
@@ -2470,7 +2489,7 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
       sdbbson_destroy ( &recordObj ) ;
    }
    
-   sdbFreeScanState ( executionState ) ;
+   sdbFreeScanState ( fdw_state ) ;
 done :
    MemoryContextDelete ( tupleContext ) ;
    pfree ( columnValues ) ;
