@@ -1,46 +1,51 @@
 package com.sequoiadb.hadoop.mapreduce;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.*;
-import org.codehaus.jackson.map.DeserializerFactory.Config;
-
-import com.sequoiadb.base.CollectionSpace;
-import com.sequoiadb.base.DBCollection;
-import com.sequoiadb.base.Sequoiadb;
 import com.sequoiadb.hadoop.io.SequoiadbWriter;
 import com.sequoiadb.hadoop.util.SdbConnAddr;
 import com.sequoiadb.hadoop.util.SequoiadbConfigUtil;
 
-public class SequoiadbOutputFormat extends OutputFormat implements Configurable{
+public class SequoiadbOutputFormat extends OutputFormat implements Configurable {
 	private static final Log log = LogFactory
 			.getLog(SequoiadbInputFormat.class);
 
-	private  String collectionSpaceName;
-	private  String collectionName;
-	private	 SdbConnAddr sdbConnAddr;
-	
-	public SequoiadbOutputFormat(){
+	private String collectionSpaceName;
+	private String collectionName;
+	private int    bulkNum;
+	private SdbConnAddr[] sdbConnAddr;
+
+	public SequoiadbOutputFormat() {
 
 	}
-	
+
 	@Override
-	public void checkOutputSpecs(JobContext jobContext){	
-			Sequoiadb sequoiadb = new Sequoiadb(sdbConnAddr.getHost(), sdbConnAddr.getPort(), null, null);
-			if(!sequoiadb.isCollectionSpaceExist(collectionSpaceName)){
-				CollectionSpace cs =sequoiadb.createCollectionSpace(collectionSpaceName);
-				cs.createCollection(collectionName);
-			}else{
-				CollectionSpace cs=sequoiadb.getCollectionSpace(collectionSpaceName);
-				if(!cs.isCollectionExist(collectionName)){
-					cs.createCollection(collectionName);
-				}
-			}
-			sequoiadb.disconnect();
+	public void checkOutputSpecs(JobContext jobContext) {
+
+		// The performance is bad?
+		// Sequoiadb sequoiadb = new Sequoiadb(sdbConnAddr.getHost(),
+		// sdbConnAddr.getPort(), null, null);
+		// if (!sequoiadb.isCollectionSpaceExist(collectionSpaceName)) {
+		// CollectionSpace cs = sequoiadb
+		// .createCollectionSpace(collectionSpaceName);
+		// cs.createCollection(collectionName);
+		// } else {
+		// CollectionSpace cs = sequoiadb
+		// .getCollectionSpace(collectionSpaceName);
+		// if (!cs.isCollectionExist(collectionName)) {
+		// cs.createCollection(collectionName);
+		// }
+		// }
+		// sequoiadb.disconnect();
 	}
 
 	@Override
@@ -54,12 +59,50 @@ public class SequoiadbOutputFormat extends OutputFormat implements Configurable{
 	@Override
 	public RecordWriter getRecordWriter(TaskAttemptContext taskAttemptContext)
 			throws IOException, InterruptedException {
-		log.info("getRecordWriter");
-		return new SequoiadbWriter(collectionSpaceName,collectionName,sdbConnAddr);
+
+		// Find the local coord address from coord adress list.
+		// If cann't found, then random select a address.
+		InetAddress localAddr = null;
+		try {
+			localAddr = InetAddress.getLocalHost();
+			log.debug(localAddr.getHostAddress());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			log.error(e.getMessage());
+		}
+
+		// Get all location address.
+		ArrayList<SdbConnAddr> localAddrList = new ArrayList<SdbConnAddr>();
+		for (int i = 0; i < sdbConnAddr.length; i++) {
+			if (sdbConnAddr[i].getHost().equals(localAddr.getHostAddress())
+					|| sdbConnAddr[i].getHost().equals(localAddr.getHostName())) {
+				localAddrList.add(sdbConnAddr[i]);
+			}
+		}
+
+		// If not any local address, and all address to localAddrList
+		if (localAddrList.isEmpty()) {
+			for (int i = 0; i < sdbConnAddr.length; i++) {
+				localAddrList.add(sdbConnAddr[i]);
+			}
+		}
+
+		int i = 0;
+		// if local address list size is more than one.
+		if (localAddrList.size() > 1) {
+			// Then genarate random number, for select any one coord
+			Random rand = new Random();
+			i = rand.nextInt(localAddrList.size());
+		}
+
+		log.debug("Select coord address:" + localAddrList.get(i).toString());
+
+		return new SequoiadbWriter(collectionSpaceName, collectionName,
+				localAddrList.get(i), bulkNum);
 	}
-	
+
 	private Configuration conf;
-	
+
 	@Override
 	public Configuration getConf() {
 		// TODO Auto-generated method stub
@@ -68,11 +111,28 @@ public class SequoiadbOutputFormat extends OutputFormat implements Configurable{
 
 	@Override
 	public void setConf(Configuration configuration) {
-		this.conf=configuration;
-		this.collectionName=SequoiadbConfigUtil.getOutCollectionName(conf);
-		this.collectionSpaceName=SequoiadbConfigUtil.getOutCollectionSpaceName(conf);
-		String url=SequoiadbConfigUtil.getOutputURL(conf);
-		this.sdbConnAddr=new SdbConnAddr(url);
+		this.conf = configuration;
+		this.collectionName = SequoiadbConfigUtil.getOutCollectionName(conf);
+		this.collectionSpaceName = SequoiadbConfigUtil
+				.getOutCollectionSpaceName(conf);
+		String bulkNumStr = SequoiadbConfigUtil.getOutputBulknum(conf);
+		if (bulkNumStr != null) {
+			this.bulkNum = Integer.valueOf(bulkNumStr);
+		}
+
+		// Process coord url string;
+		// The string format is ip:port,ip:port,ip:port
+		String urlStr = SequoiadbConfigUtil.getOutputURL(conf);
+		if (urlStr == null) {
+			throw new IllegalArgumentException("The argument "
+					+ SequoiadbConfigUtil.JOB_OUTPUT_URL + " must be set.");
+		}
+		
+		sdbConnAddr = SequoiadbConfigUtil.getAddrList(urlStr);
+		if (sdbConnAddr == null || sdbConnAddr.length == 0) {
+			throw new IllegalArgumentException("The argument "
+					+ SequoiadbConfigUtil.JOB_OUTPUT_URL + " must be set.");
+		}
 	}
 
 }

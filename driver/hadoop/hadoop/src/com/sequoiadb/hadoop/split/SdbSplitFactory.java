@@ -51,18 +51,16 @@ public class SdbSplitFactory {
 	 * @exception
 	 * @since 1.0.0
 	 */
-	public static List<InputSplit> getSplits(JobContext jobContext,String collectionSpaceName,String collectionName) {
+	public static List<InputSplit> getSplits(JobContext jobContext,
+			String collectionSpaceName, String collectionName) {
 
 		System.out.println(jobContext.getClass().getName());
-		
-		Configuration conf=jobContext.getConfiguration();
-		
-		
-		String urls=SequoiadbConfigUtil.getInputURL(conf);
-		System.out.println(urls);
-		SdbConnAddr[] sdbConnAddrs = SequoiadbConfigUtil
-				.getAddrList(urls);
 
+		Configuration conf = jobContext.getConfiguration();
+
+		String urls = SequoiadbConfigUtil.getInputURL(conf);
+		System.out.println(urls);
+		SdbConnAddr[] sdbConnAddrs = SequoiadbConfigUtil.getAddrList(urls);
 
 		log.debug("test sdbConnAddrs whether it can connect or not ");
 		Sequoiadb sdb = null;
@@ -82,19 +80,19 @@ public class SdbSplitFactory {
 		}
 
 		log.debug("start get data blocks");
-		
-		if(collectionSpaceName==null||collectionName==null){
-			throw new IllegalArgumentException("collectionSpaceName and collectionName must have value");
+
+		if (collectionSpaceName == null || collectionName == null) {
+			throw new IllegalArgumentException(
+					"collectionSpaceName and collectionName must have value");
 		}
-		DBCollection collection=null;
+		DBCollection collection = null;
 		try {
-			collection= sdb.getCollectionSpace(collectionSpaceName)
+			collection = sdb.getCollectionSpace(collectionSpaceName)
 					.getCollection(collectionName);
 		} catch (Exception e) {
 			throw new Error("can't get DBCollection ,may be something wrong ");
 		}
-	
-		
+
 		DBCursor cursor = collection.getQueryMeta(null, null, null, 0, -1, 0);
 		List<InputSplit> splits = new ArrayList<InputSplit>();
 		while (cursor.hasNext()) {
@@ -128,11 +126,12 @@ public class SdbSplitFactory {
 
 			if ("tbscan".equals(scanType)) {
 				BasicBSONList blockList = (BasicBSONList) obj.get("Datablocks");
-				int i=0;
-				for(Object objBlock:blockList){
-					if(objBlock instanceof Integer){
-						Integer blockId=(Integer)objBlock;
-						splits.add(new SdbBlockSplit(new SdbConnAddr(hostname,port),scanType,blockId));
+				int i = 0;
+				for (Object objBlock : blockList) {
+					if (objBlock instanceof Integer) {
+						Integer blockId = (Integer) objBlock;
+						splits.add(new SdbBlockSplit(new SdbConnAddr(hostname,
+								port), scanType, blockId));
 					}
 				}
 			}
