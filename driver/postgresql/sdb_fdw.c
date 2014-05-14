@@ -30,7 +30,9 @@
 #include "utils/timestamp.h"
 
 #define SDB_COLLECTIONSPACE_NAME_LEN 128
-#define SDB_COLLECTION_NAME_LEN 128
+#define SDB_COLLECTION_NAME_LEN      128
+#define SDB_COLUMNA_ID_NAME          "_id"
+#define SDB_SHARDINGKEY_NAME         "ShardingKey"
 
 static void SdbGetForeignRelSize ( PlannerInfo *root,
                                    RelOptInfo *baserel,
@@ -158,19 +160,28 @@ static void sdbDeserializeDocument(Const *constant, sdbbson *document);
 
 static void sdbPrintBson(sdbbson *bson);
 
-
 #define serializeInt(x) makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum((int32)(x)), 0, 1)
 #define serializeOid(x) makeConst(OIDOID, -1, InvalidOid, 4, ObjectIdGetDatum(x), 0, 1)
 static Const *serializeString(const char *s);
+static Const *serializeUint64(UINT64 value);
 //static Const *serializeLong(long i);
 static List *serializeSdbExecState(SdbExecState *fdwState);
 
 static char *deserializeString(Const *constant);
+static UINT64 deserializeUint64(Const *constant);
 //static long deserializeLong(Const *constant);
 static SdbExecState *deserializeSdbExecState(List *sdbExecStateList);
 
 static int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum, 
       Oid columnType, INT32 columnTypeMod);
+
+static UINT64 sdbCreateBsonRecordAddr();
+static sdbbson* sdbBsonRecordValue(UINT64 id_addr);
+
+static void sdbGetColumnKeyInfo(SdbExecState *fdw_state);
+
+static bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson, 
+      sdbbson *newBson);
 
 
 int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
@@ -339,11 +350,9 @@ PgTableDesc *sdbGetPgTableDesc(Oid foreignTableId)
    Relation rel      = heap_open(foreignTableId, NoLock);
    TupleDesc tupdesc = rel->rd_att;
 
-   //TODO: check memory
    PgTableDesc *tableDesc = palloc(sizeof(PgTableDesc));
    tableDesc->ncols = tupdesc->natts;
    tableDesc->name  = get_rel_name(foreignTableId);
-   //TODO: check memory
    tableDesc->cols  = palloc(tableDesc->ncols * sizeof(PgColumnsDesc));
    
    for (i = 0; i < tupdesc->natts; i++)
@@ -379,6 +388,17 @@ Const *serializeString(const char *s)
       return makeNullConst(TEXTOID, -1, InvalidOid);
    else
       return makeConst(TEXTOID, -1, InvalidOid, -1, PointerGetDatum(cstring_to_text(s)), 0, 0);
+}
+
+Const *serializeUint64(UINT64 value)
+{
+   return makeConst(INT4OID, -1, InvalidOid, 8, Int64GetDatum((int64)value), 
+      #ifdef USE_FLOAT8_BYVAL
+          1,
+      #else
+          0,
+      #endif  /* USE_FLOAT8_BYVAL */
+          0);
 }
 
 //Const *serializeLong(long i)
@@ -430,18 +450,19 @@ List *serializeSdbExecState(SdbExecState *fdwState)
       result = lappend(result, serializeInt(fdwState->pgTableDesc->cols[i].pgtypmod));
    }
 
-   /* condition */
-   if (NULL == fdwState->sdb_condition)
+   /* queryDocument */
+   result = lappend(result, sdbSerializeDocument(&fdwState->queryDocument));
+
+   /* _id_addr */
+   result = lappend(result, serializeUint64(fdwState->bson_record_addr));
+
+   /* key_num */
+   result = lappend(result, serializeInt(fdwState->key_num));
+   for (i = 0; i < fdwState->key_num; i++)
    {
-      result = lappend(result, serializeInt(0));
+      result = lappend(result, serializeString(fdwState->key_name[i]));
    }
-   else
-   {
-      result = lappend(result, serializeInt(1));
-      result = lappend(result, 
-         sdbSerializeDocument(&fdwState->sdb_condition->sdbbson_condition));
-   }
-  
+   
    return result;
 }
 
@@ -449,8 +470,6 @@ SdbExecState *deserializeSdbExecState(List *sdbExecStateList)
 {
    ListCell *cell = NULL;
    int i = 0;
-   int hasCondition = 0;
-   //TODO: check memory
    SdbExecState *fdwState = (SdbExecState*)palloc(sizeof(SdbExecState));
    initSdbExecState(fdwState);
 
@@ -504,17 +523,25 @@ SdbExecState *deserializeSdbExecState(List *sdbExecStateList)
       cell = lnext(cell);
    }
 
-   hasCondition = (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue);
+   sdbbson_init(&fdwState->queryDocument);
+   sdbDeserializeDocument((Const *)lfirst(cell), &fdwState->queryDocument);
    cell = lnext(cell);
 
-   if (1 == hasCondition) 
+   /* _id_addr */
+   fdwState->bson_record_addr = deserializeUint64(lfirst(cell));
+   cell = lnext(cell);
+
+   /* key_num */
+   fdwState->key_num = (int)DatumGetInt32(((Const *)lfirst(cell))->constvalue);
+   cell = lnext(cell);
+
+   for (i = 0; i < fdwState->key_num; i++)
    {
-      fdwState->sdb_condition = (SdbCondition *)palloc(sizeof(SdbCondition));
-      sdbbson_init(&fdwState->sdb_condition->sdbbson_condition);
-      sdbDeserializeDocument((Const *)lfirst(cell), &fdwState->sdb_condition->sdbbson_condition);
+      strncpy(fdwState->key_name[i], deserializeString(lfirst(cell)), 
+            SDB_MAX_KEY_COLUMN_LENGTH - 1);
       cell = lnext(cell);
    }
-
+   
    return fdwState;
 }
 
@@ -525,6 +552,12 @@ char *deserializeString(Const *constant)
    else
       return text_to_cstring(DatumGetTextP(constant->constvalue));
 }
+
+UINT64 deserializeUint64(Const *constant)
+{
+   return (UINT64)DatumGetInt64(constant->constvalue);
+}
+
 
 /*long deserializeLong(Const *constant)
 {
@@ -651,7 +684,169 @@ int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
    return 0;
 }
 
+UINT64 sdbCreateBsonRecordAddr()
+{
+   sdbbson *p = palloc0(sizeof(sdbbson));
+   sdbbson_init(p);
+   
+   return (UINT64)p;
+}
 
+sdbbson *sdbBsonRecordValue(UINT64 id_addr)
+{
+   sdbbson *p = (sdbbson *)id_addr;
+   
+   return p;
+}
+
+void sdbGetColumnKeyInfo(SdbExecState *fdw_state)
+{
+   int rc = SDB_OK;
+   sdbConnectionHandle connection;
+   sdbCursorHandle cursor;
+   sdbbson condition;
+   sdbbson selector;
+   sdbbson ShardingKey;
+   
+   sdbbson_iterator ite;
+   sdbbson_type type;
+   
+   StringInfo fullCollectionName = makeStringInfo();
+   appendStringInfoString(fullCollectionName, fdw_state->sdbcs);
+   appendStringInfoString(fullCollectionName, ".");
+   appendStringInfoString(fullCollectionName, fdw_state->sdbcl);
+
+   /* first add the _id to the key_name */
+   fdw_state->key_num     = 1;
+   strncpy(fdw_state->key_name[0], SDB_COLUMNA_ID_NAME, 
+         SDB_MAX_KEY_COLUMN_LENGTH - 1);
+
+   /* get the cs.cl's shardingkey */
+   connection = sdbGetConnectionHandle(fdw_state->sdbServerHost, 
+      fdw_state->sdbServerPort, fdw_state->usr, fdw_state->passwd, 
+      fdw_state->preferenceInstance);
+
+   
+   sdbbson_init(&condition);
+   sdbbson_append_string(&condition, "Name", fullCollectionName->data);
+   rc = sdbbson_finish(&condition);
+   if (SDB_OK != rc)
+   {
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("sdbbson_finish failed:rc=%d", rc)));
+      return;
+   }
+
+   sdbbson_init(&selector);
+   sdbbson_append_string(&selector, SDB_SHARDINGKEY_NAME, "");
+   rc = sdbbson_finish(&selector);
+   if (SDB_OK != rc)
+   {
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("sdbbson_finish failed:rc=%d", rc)));
+      return;
+   }
+ 
+   rc = sdbGetSnapshot(connection, SDB_SNAP_CATALOG, &condition, &selector, 
+         NULL, &cursor);
+   if (SDB_OK != rc)
+   {
+      sdbPrintBson(&condition);
+      sdbPrintBson(&selector);
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("sdbGetSnapshot failed:rc=%d", rc)));
+      return;
+   }
+
+   sdbbson_init(&ShardingKey);
+   rc = sdbNext(cursor, &ShardingKey);
+   if(rc)
+   {
+      return;
+   }
+
+   type = sdbbson_find(&ite, &ShardingKey, SDB_SHARDINGKEY_NAME);
+   if (BSON_OBJECT == type)
+   {
+      sdbbson tmpValue;
+      sdbbson_init(&tmpValue);
+      sdbbson_iterator_subobject(&ite, &tmpValue);
+      
+      sdbbson_iterator_init(&ite, &tmpValue);
+      while (sdbbson_iterator_next(&ite))
+      {
+         const CHAR *sdbbsonKey = sdbbson_iterator_key(&ite);
+         
+         strncpy(fdw_state->key_name[fdw_state->key_num], 
+               sdbbsonKey, SDB_MAX_KEY_COLUMN_LENGTH - 1);
+         fdw_state->key_num++;
+      }
+    }
+}
+
+bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson, 
+      sdbbson *newBson)
+{
+   int i = 1;
+   sdbbson_iterator oldIte;
+   sdbbson oldSubBson;
+   sdbbson_type oldType;
+   int oldSize;
+   
+   sdbbson_iterator newIte;
+   sdbbson newSubBson;
+   sdbbson_type newType;
+   int newSize;
+   
+   /* shardingKey start from 1(0 is for the "_id") */
+   for (i = 1; i < fdw_state->key_num; i++)
+   {
+      sdbbson_init(&newSubBson);
+      newType = sdbbson_find(&newIte, newBson, fdw_state->key_name[i]);
+      if (BSON_EOO == newType)
+      {
+         /* not in the newBson, so no change */
+         continue;
+      }
+      sdbbson_append_element(&newSubBson, NULL, &newIte);
+      sdbbson_finish(&newSubBson);
+
+      sdbbson_init(&oldSubBson);
+      oldType = sdbbson_find(&oldIte, oldBson, fdw_state->key_name[i]);
+      if (BSON_EOO == oldType)
+      {
+         /* not in the oldBson, but appear in the newBson, 
+            this means the shardingKey is changed */
+         ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+               errmsg("the shardingKey is changed, shardingKey:")));
+         sdbPrintBson(&newSubBson);
+         sdbbson_destroy(&newSubBson);
+         return true;
+      }
+      sdbbson_append_element(&oldSubBson, NULL, &oldIte);
+      sdbbson_finish(&oldSubBson);
+
+      oldSize = sdbbson_size(&oldSubBson);
+      newSize = sdbbson_size(&newSubBson);
+      if ((oldSize != newSize) || 
+            (0 != memcmp(newSubBson.data, oldSubBson.data, oldSize)))
+      {
+         ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+               errmsg("the shardingKey is changed, old shardingKey:")));
+         sdbPrintBson(&oldSubBson);
+         sdbbson_destroy(&oldSubBson);
+
+         ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+               errmsg("the shardingKey is changed, new shardingKey:")));
+         sdbPrintBson(&newSubBson);
+         sdbbson_destroy(&newSubBson);
+         
+         return true;
+      }
+   }
+
+   return false;
+}
 
 
 /* connection pool */
@@ -1533,14 +1728,17 @@ static Datum sdbColumnValue ( sdbbson_iterator *sdbbsonIterator, Oid columnTypeI
  */
 void sdbFreeScanState ( SdbExecState *executionState )
 {
+   sdbbson *original = NULL;
    if ( !executionState )
       goto done ;
-   if ( executionState->queryDocument )
-      sdbbson_dispose ( executionState->queryDocument ) ;
+   
    if ( SDB_INVALID_HANDLE != executionState->hCursor )
       sdbReleaseCursor ( executionState->hCursor ) ;
    if ( SDB_INVALID_HANDLE != executionState->hCollection )
       sdbReleaseCollection ( executionState->hCollection ) ;
+
+   original = sdbBsonRecordValue(executionState->bson_record_addr);
+   sdbbson_destroy(original);
    
    /* do not free connection since it's in pool */
 done :
@@ -1779,35 +1977,41 @@ static void SdbGetForeignRelSize ( PlannerInfo *root,
                                    RelOptInfo *baserel,
                                    Oid foreignTableId )
 {
-   INT32 rc        = SDB_OK ;
-   INT64 rowsCount = -1 ;
+   INT32 rc                = SDB_OK ;
+   SdbExecState *fdw_state = NULL;
+   List *rowClauseList     = NULL;
+   FLOAT64 rowSelectivity  = 0.0;
+   FLOAT64 outputRowCount  = 0.0;
 
-   rc = sdbRowsCount ( foreignTableId, &rowsCount ) ;
-   if ( rc )
-      goto error ;
-   if ( rowsCount >= 0 )
-   {
-      SdbCondition *sdb_condition = NULL;
-      List *rowClauseList = baserel->baserestrictinfo ;
-      FLOAT64 rowSelectivity = clauselist_selectivity ( root, rowClauseList,
-                                                        0, JOIN_INNER, NULL ) ;
-      FLOAT64 outputRowCount = clamp_row_est ( rowsCount * rowSelectivity ) ;
-      baserel->rows = outputRowCount;
+   fdw_state = palloc0(sizeof(SdbExecState));
+   initSdbExecState(fdw_state);
+   sdbGetSdbServerOptions(foreignTableId, fdw_state);
 
-      sdb_condition = palloc0(sizeof(SdbCondition));
-      baserel->fdw_private = (void *)sdb_condition;
-   }
-   else
+   fdw_state->pgTableDesc = sdbGetPgTableDesc(foreignTableId);
+   if (NULL == fdw_state->pgTableDesc)
    {
-      ereport ( DEBUG1, ( errmsg ( "Unable to retrieve the row count "
-                                   "for collection" ),
-                          errhint ( "Falling back to default estimates in "
-                                    "planning" ) ) ) ;
+      ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY), 
+            errmsg("Unable to allocate pgTableDesc"),
+            errhint("Make sure the memory pool or ulimit is properly configured")));
+      return;
    }
-done :
-   return  ;
-error :
-   goto done ;
+
+   fdw_state->bson_record_addr = sdbCreateBsonRecordAddr();
+
+   sdbRowsCount(foreignTableId, &fdw_state->row_count);
+   if (rc)
+   {
+      ereport(DEBUG1, (errmsg("Unable to retrieve the row count for collection"),
+            errhint ( "Falling back to default estimates in planning")));
+      return;
+   }
+   
+   rowClauseList  = baserel->baserestrictinfo;
+   rowSelectivity = clauselist_selectivity(root, rowClauseList, 0, JOIN_INNER, NULL);
+   outputRowCount = clamp_row_est(fdw_state->row_count * rowSelectivity);
+   baserel->rows  = outputRowCount;
+
+   baserel->fdw_private = (void *)fdw_state;
 }
 
 /* SdbGetForeignPaths creates the scan path to execute query.
@@ -1824,8 +2028,6 @@ static void SdbGetForeignPaths ( PlannerInfo *root,
                                  RelOptInfo *baserel,
                                  Oid foreignTableId )
 {
-   INT32 rc                 = SDB_OK ;
-   INT64 rowsCount          = 0 ;
    BlockNumber pageCount    = 0 ;
    INT32 rowWidth           = 0 ;
    FLOAT64 selectivity      = 0.0 ;
@@ -1840,60 +2042,48 @@ static void SdbGetForeignPaths ( PlannerInfo *root,
    FLOAT64 totalStartupCost = 0.0 ;
    FLOAT64 totalCost        = 0.0 ;
 
-   rc = sdbRowsCount ( foreignTableId, &rowsCount ) ;
-   if ( rc )
-      goto error ;
-   if ( rowsCount >= 0 )
-   {
-      /* rows estimation after applying predicates */
-      opExpressionList = sdbApplicableOpExpressionList ( baserel ) ;
-      selectivity      = clauselist_selectivity ( root, opExpressionList,
-                                                  0, JOIN_INNER, NULL ) ;
-      inputRowCount    = clamp_row_est ( rowsCount * selectivity ) ;
+   SdbExecState *fdw_state  = NULL;
 
-      /* disk cost estimation */
-      rowWidth         = get_relation_data_width ( foreignTableId,
-                                                   baserel->attr_widths ) ;
-      foreignTableSize = rowWidth * rowsCount ;
-      pageCount = ( BlockNumber ) rint ( foreignTableSize / BLCKSZ ) ;
-      totalDiskCost = seq_page_cost * pageCount ;
+   fdw_state = (SdbExecState *)baserel->fdw_private;
+   /* rows estimation after applying predicates */
+   opExpressionList = sdbApplicableOpExpressionList ( baserel ) ;
+   selectivity      = clauselist_selectivity ( root, opExpressionList,
+                                               0, JOIN_INNER, NULL ) ;
+   inputRowCount    = clamp_row_est ( fdw_state->row_count * selectivity ) ;
 
-      /* cpu cost estimation, it includes the record process time + return time
-       * cpu_tuple_cost: time to process each row
-       * SDB_TUPLE_COST_MULTIPLIER * cpu_tuple_cost: time to return a row
-       * baserel->baserestrictcost.per_tuple: time to process a row in PG
-       */
-      totalCPUCost = cpu_tuple_cost * rowsCount +
-                     ( SDB_TUPLE_COST_MULTIPLIER * cpu_tuple_cost +
-                       baserel->baserestrictcost.per_tuple ) * inputRowCount ;
+   /* disk cost estimation */
+   rowWidth         = get_relation_data_width ( foreignTableId,
+                                                baserel->attr_widths ) ;
+   foreignTableSize = rowWidth * fdw_state->row_count ;
+   pageCount = ( BlockNumber ) rint ( foreignTableSize / BLCKSZ ) ;
+   totalDiskCost = seq_page_cost * pageCount ;
 
-      /* startup cost estimation, which includes query execution startup time
-       */
-      totalStartupCost = baserel->baserestrictcost.startup ;
+   /* cpu cost estimation, it includes the record process time + return time
+    * cpu_tuple_cost: time to process each row
+    * SDB_TUPLE_COST_MULTIPLIER * cpu_tuple_cost: time to return a row
+    * baserel->baserestrictcost.per_tuple: time to process a row in PG
+    */
+   totalCPUCost = cpu_tuple_cost * fdw_state->row_count +
+                  ( SDB_TUPLE_COST_MULTIPLIER * cpu_tuple_cost +
+                    baserel->baserestrictcost.per_tuple ) * inputRowCount ;
 
-      /* total cost includes totalDiskCost + totalCPUCost + totalStartupCost
-       */
-      totalCost = totalStartupCost + totalCPUCost + totalDiskCost ;
-   }
-   else
-   {
-      ereport ( DEBUG1, ( errmsg ( "Unable to retreive row count for "
-                                   "collection" ),
-                          errhint ( "Falling back to default estimates in "
-                                    "planning" ) ) ) ;
-   }
-done :
+   /* startup cost estimation, which includes query execution startup time
+    */
+   totalStartupCost = baserel->baserestrictcost.startup ;
+
+   /* total cost includes totalDiskCost + totalCPUCost + totalStartupCost
+    */
+   totalCost = totalStartupCost + totalCPUCost + totalDiskCost ;
+   
    /* create foreign path node */
-   foreignPath = (Path*) create_foreignscan_path ( root, baserel, baserel->rows,
-                                                   totalStartupCost, totalCost,
-                                                   NIL, /* no pathkeys */
-                                                   NULL, /* no outer rel */
-                                                   NIL ) ; /* no fdw_private */
+   foreignPath = (Path*)create_foreignscan_path(root, baserel, baserel->rows, 
+         totalStartupCost, totalCost, NIL, /* no pathkeys */
+         NULL, /* no outer rel */ 
+         NIL ) ; /* no fdw_private */
+   
    /* add foreign path into path */
    add_path ( baserel, foreignPath ) ;
    return ;
-error :
-   goto done ;
 }
 
 /* SdbGetForeignPlan creates a foreign scan plan node for Sdb collection */
@@ -1909,46 +2099,44 @@ static ForeignScan *SdbGetForeignPlan ( PlannerInfo *root,
    ForeignScan *foreignScan  = NULL ;
    List *foreignPrivateList  = NIL ;
    List *opExpressionList    = NIL ;
-   Const *queryBuffer        = NULL ;
    List *columnList          = NIL ;
-   sdbbson queryDocument ;
-   SdbCondition *sdb_condition = (SdbCondition *)baserel->fdw_private;
    
-   sdbbson_init ( &queryDocument ) ;
+   SdbExecState *fdw_state   = (SdbExecState *)baserel->fdw_private;
+   sdbGetColumnKeyInfo(fdw_state);
+   
+   sdbbson_init(&fdw_state->queryDocument);
    /* We keep all restriction clauses at PG ide to re-check */
    restrictionClauses = extract_actual_clauses ( restrictionClauses, FALSE ) ;
    /* construct the query sdbbson document */
-   opExpressionList = sdbApplicableOpExpressionList ( baserel ) ;
-   rc = sdbBuildQuery ( foreignTableId, opExpressionList, &queryDocument ) ;
+   opExpressionList = sdbApplicableOpExpressionList(baserel);
+   rc = sdbBuildQuery(foreignTableId, opExpressionList, &fdw_state->queryDocument);
    if ( rc )
    {
       goto error ;
    }
-
-   sdbbson_copy(&sdb_condition->sdbbson_condition, &queryDocument);
    
-   queryBuffer = sdbSerializeDocument ( &queryDocument ) ;
+   foreignPrivateList = serializeSdbExecState(fdw_state);
+   
    /* copy document list */
-   columnList = sdbColumnList ( baserel ) ;
+   columnList = sdbColumnList(baserel);
    /* construct foreign plan with query predicates and column list */
-   foreignPrivateList = list_make2 ( queryBuffer, columnList ) ;
+   foreignPrivateList = list_make2(foreignPrivateList, columnList);
+   
 done :
    /* create the foreign scan node */
    foreignScan =  make_foreignscan ( targetList, restrictionClauses,
                                      scanRangeTableIndex,
                                      NIL, /* no expressions to evaluate */
                                      foreignPrivateList ) ;
-   /* object should NOT be destroyed since SerializeDocument does not make
+   /* object should NOT be destroyed since serializeSdbExecState does not make
     * memory copy
     * So sdbbson_destroy is only called when rc != SDB_OK ( that means no
-    * SerializeDocument is called )
+    * serializeSdbExecState is called )
     */
-   if ( rc )
-   {
-      sdbbson_destroy ( &queryDocument ) ;
-   }
-   return foreignScan ;
+   return foreignScan;
+   
 error :
+   sdbbson_destroy (&fdw_state->queryDocument);
    goto done ;
 }
 
@@ -1972,114 +2160,59 @@ static void SdbExplainForeignScan ( ForeignScanState *scanState,
 static void SdbBeginForeignScan ( ForeignScanState *scanState,
                                   INT32 executorFlags )
 {
-   SdbInputOptions options ;
-   sdbbson *queryDocument          = NULL ;
-   INT32 rc                        = SDB_OK ;
-   sdbConnectionHandle hConnection = SDB_INVALID_HANDLE ;
-   sdbCursorHandle hCursor         = SDB_INVALID_HANDLE ;
-   sdbCollectionHandle hCollection = SDB_INVALID_HANDLE ;
-   Oid foreignTableId              = InvalidOid ;
-   ForeignScan *foreignScan        = NULL ;
-   List *foreignPrivateList        = NIL ;
-   Const *queryBuffer              = NULL ;
-   List *columnList                = NIL ;
-   HTAB *columnMappingHash         = NULL ;
-   StringInfo namespaceName        = NULL ;
-   SdbExecState *executionState    = NULL ;
+   INT32 rc                  = SDB_OK;
+   Oid foreignTableId        = InvalidOid;
+   ForeignScan *foreignScan  = NULL;
+   List *foreignPrivateList  = NIL;
+   List *columnList          = NIL;
+   HTAB *columnMappingHash   = NULL;
+   List *fdw_state_list      = NIL;
+   SdbExecState *fdw_state   = NULL;
+   
    /* do not begin real scan if it's explain only */
    if ( executorFlags & EXEC_FLAG_EXPLAIN_ONLY )
    {
-      goto done ;
+      return;
    }
-   queryDocument = sdbbson_create () ;
-   if ( !queryDocument )
-   {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
-                         errmsg ( "Unable to allocate sdbbson object memory" ),
-                         errhint ( "Make sure the memory pool or ulimit is "
-                                   "properly configured" ) ) ) ;
-      goto error ;
-   }
-   sdbbson_init ( queryDocument ) ;
-   /* retreive target information */
-   foreignTableId = RelationGetRelid ( scanState->ss.ss_currentRelation ) ;
-   sdbGetOptions ( foreignTableId, &options ) ;
-   /* attempt to connect to remote box */
-   hConnection = sdbGetConnectionHandle(options.address, options.service, options.user, 
-                  options.password, options.preference_instance);
-   if (SDB_INVALID_HANDLE == hConnection)
-   {
-      goto error ;
-   }
-   
-   /* deserialize query document, and create column info hash */
-   foreignScan = (ForeignScan *) scanState->ss.ps.plan ;
-   foreignPrivateList = foreignScan->fdw_private ;
-   queryBuffer = (Const *) linitial ( foreignPrivateList ) ;
-   sdbDeserializeDocument ( queryBuffer, queryDocument ) ;
-   columnList = (List *) lsecond ( foreignPrivateList ) ;
-   
+
+   foreignTableId = RelationGetRelid(scanState->ss.ss_currentRelation);
+
+   /* deserialize fdw*/
+   foreignScan        = (ForeignScan *)scanState->ss.ps.plan;
+   foreignPrivateList = foreignScan->fdw_private;
+   fdw_state_list     = (List *)linitial(foreignPrivateList);
+   fdw_state          = deserializeSdbExecState(fdw_state_list);
+
    /* build hash map */
-   columnMappingHash = sdbColumnMappingHash ( foreignTableId, columnList ) ;
-   /* attempt to query */
-   namespaceName = makeStringInfo() ;
-   appendStringInfo ( namespaceName, "%s.%s", options.collectionspace,
-                      options.collection ) ;
-   /* fire up query */
-   hCollection = sdbGetSdbCollection(hConnection, options.collectionspace, options.collection);
-   if (SDB_INVALID_HANDLE == hCollection)
-   {
-      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR ), 
-            errmsg("Unable to get collection \"%s.%s\", rc = %d", 
-            options.collectionspace, options.collection, rc),
-            errhint("Make sure the collectionspace and " 
-               "collection exist on the remote database")));
+   columnList = (List *)lsecond(foreignPrivateList);
+   columnMappingHash = sdbColumnMappingHash(foreignTableId, columnList);
 
-       goto error;
+   fdw_state->planType          = SDB_PLAN_SCAN ;
+   fdw_state->columnMappingHash = columnMappingHash ;
+   
+   /* retreive target information */
+   fdw_state->hConnection = sdbGetConnectionHandle(fdw_state->sdbServerHost,
+         fdw_state->sdbServerPort, fdw_state->usr, fdw_state->passwd, 
+         fdw_state->preferenceInstance);
+   
+   fdw_state->hCollection = sdbGetSdbCollection(fdw_state->hConnection, 
+         fdw_state->sdbcs, fdw_state->sdbcl);
+
+   rc = sdbQuery(fdw_state->hCollection, &fdw_state->queryDocument, NULL, NULL, 
+         NULL, 0, -1, &fdw_state->hCursor);
+   if (rc)
+   {
+      ereport(ERROR, (errcode (ERRCODE_FDW_ERROR),
+            errmsg("query collection failed:cs=%s,cl=%s,rc=%d", 
+               fdw_state->sdbcs, fdw_state->sdbcl, rc),
+            errhint("Make sure collection exists on remote SequoiaDB database")));
+      
+      sdbPrintBson(&fdw_state->queryDocument);
+      sdbbson_dispose(&fdw_state->queryDocument);
+      return;
    }
 
-   //sdbPrintBson(queryDocument);
-   rc = sdbQuery ( hCollection, queryDocument, NULL, NULL, NULL, 0, -1,
-                   &hCursor ) ;
-   if ( rc )
-   {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
-                         errmsg ( "unable to query collection for \"%s.%s\""
-                                  ", rc = %d",
-                                  options.collectionspace,
-                                  options.collection, rc ),
-                         errhint ( "Make sure collection exists on remote "
-                                   "SequoiaDB database" ) ) ) ;
-      sdbPrintBson(queryDocument);
-      goto error ;
-   }
-   /* allocate new execution state */
-   executionState = (SdbExecState*)palloc0 ( sizeof ( SdbExecState ) ) ;
-   if ( !executionState )
-   {
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_OUT_OF_MEMORY ),
-                         errmsg ( "Unable to allocate execution state memory" ),
-                         errhint ( "Make sure the memory pool or ulimit is "
-                                   "properly configured" ) ) ) ;
-      goto error ;
-   }
-   initSdbExecState(executionState);
-   executionState->planType          = SDB_PLAN_SCAN ;
-   executionState->columnMappingHash = columnMappingHash ;
-   executionState->hConnection       = hConnection ;
-   executionState->hCursor           = hCursor ;
-   executionState->hCollection       = hCollection ;
-   executionState->queryDocument     = queryDocument ;
-   scanState->fdw_state = (void*)executionState ;
-done :
-   /* note we should not release cursor and connection */
-   return ;
-error :
-   if ( queryDocument )
-   {
-      sdbbson_dispose ( queryDocument ) ;
-   }
-   goto done ;
+   scanState->fdw_state = (void*)fdw_state ;
 }
 
 /* SdbIterateForeignScan reads the next record from SequoiaDB and converts into
@@ -2087,7 +2220,7 @@ error :
  */
 static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
 {
-   sdbbson recordObj ;
+   sdbbson *recordObj           = NULL;
    INT32 rc                     = SDB_OK ;
    SdbExecState *executionState = (SdbExecState*)scanState->fdw_state ;
    TupleTableSlot *tupleSlot    = scanState->ss.ss_ScanTupleSlot ;
@@ -2096,8 +2229,10 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
    bool *columnNulls            = tupleSlot->tts_isnull ;
    INT32 columnCount            = tupleDescriptor->natts ;
    const CHAR *sdbbsonDocumentKey  = NULL ;
-
-   sdbbson_init ( &recordObj ) ;
+   
+   recordObj = sdbBsonRecordValue(executionState->bson_record_addr);
+   sdbbson_destroy(recordObj);
+   sdbbson_init(recordObj);
    /* if there's nothing more to fetch, we return empty slot to represent
     * there's no more data to read
     */
@@ -2107,8 +2242,8 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
    memset ( columnNulls, TRUE, columnCount * sizeof(bool) ) ;
 
    /* cursor read next */
-   rc = sdbNext ( executionState->hCursor, &recordObj ) ;
-   if ( rc )
+   rc = sdbNext(executionState->hCursor, recordObj);
+   if(rc)
    {
       if ( SDB_DMS_EOC != rc )
       {
@@ -2126,13 +2261,14 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
       goto done ;
    }
 
-   //sdbPrintBson(&recordObj);
-   sdbFillTupleSlot ( &recordObj, sdbbsonDocumentKey,
+   //sdbPrintBson(recordObj);
+   sdbFillTupleSlot(recordObj, sdbbsonDocumentKey,
                       executionState->columnMappingHash,
-                      columnValues, columnNulls ) ;
+                      columnValues, columnNulls);
+   
    ExecStoreVirtualTuple ( tupleSlot ) ;
 done :
-   sdbbson_destroy ( &recordObj ) ;
+   
    return tupleSlot ;
 error :
    goto done ;
@@ -2148,9 +2284,9 @@ static void SdbRescanForeignScan ( ForeignScanState *scanState )
       goto error ;
    /* kill the cursor and start up a new one */
    sdbReleaseCursor ( executionState->hCursor ) ;
-   rc = sdbQuery ( executionState->hCollection, executionState->queryDocument,
+   rc = sdbQuery(executionState->hCollection, &executionState->queryDocument,
                    NULL, NULL, NULL, 0, -1,
-                   &executionState->hCursor ) ;
+                   &executionState->hCursor) ;
    if ( rc )
    {
       ereport ( ERROR, ( errcode ( ERRCODE_FDW_ERROR ),
@@ -2226,7 +2362,6 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
                             errmsg ( "Unable to allocate Var memory" ),
                             errhint ( "Make sure the memory pool or ulimit is "
                                       "properly configured" ) ) ) ;
-         //TODO: 中间失败的情况下，需要考虑释放前面已经申请的资源
          goto error ;
       }
       column->varattno  = columnId ;
@@ -2448,78 +2583,53 @@ static void SdbAddForeignUpdateTargets(Query *parsetree, RangeTblEntry *target_r
 {
    RangeTblEntry *rte           = NULL;
    Oid foreignTableId;
-   CmdType operation            = CMD_INSERT;
-   SdbCondition *sdb_condition  = NULL;
-   SdbExecState *executionState = NULL;
+   SdbExecState *fdw_state      = NULL;
+   //TODO: returningList should be support for select * for update?
    //List *returningList = NIL;
 
    if (resultRelation < root->simple_rel_array_size
          && root->simple_rel_array[resultRelation] != NULL)
    {
-      sdb_condition = (SdbCondition *)(root->simple_rel_array[resultRelation]->fdw_private);
+      fdw_state = (SdbExecState *)(root->simple_rel_array[resultRelation]->fdw_private);
    }
-   
-   /* allocate new execution state */
-   executionState = (SdbExecState*)palloc(sizeof(SdbExecState));
-   if (!executionState)
+   else
    {
-      ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY ),
-                         errmsg("Unable to allocate execution state memory"),
-                         errhint("Make sure the memory pool or ulimit is "
-                                   "properly configured")));
-      return NULL;
-   }
-   initSdbExecState(executionState);
-   if (NULL != sdb_condition)
-   {
-      executionState->sdb_condition = (SdbCondition *)palloc(sizeof(SdbCondition));
-      sdbbson_init(&executionState->sdb_condition->sdbbson_condition);
-      sdbbson_copy(&executionState->sdb_condition->sdbbson_condition, 
-            &sdb_condition->sdbbson_condition);
-   }
-
-   rte = planner_rt_fetch(resultRelation, root);
-   foreignTableId = rte->relid;
-   sdbGetSdbServerOptions(foreignTableId, executionState);
-
-   executionState->pgTableDesc = sdbGetPgTableDesc(foreignTableId);
-   if (NULL == executionState->pgTableDesc)
-   {
-      ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
-                         errmsg("Unable to allocate pgTableDesc"),
-                         errhint("Make sure the memory pool or ulimit is "
-                                   "properly configured")));
-      return NULL;
-   }
-
-   operation = plan->operation;
-   switch (operation)
-   {
-      case CMD_INSERT:
-         executionState->planType = SDB_PLAN_INSERT;
-         break;
-
-      case CMD_DELETE:
-         executionState->planType = SDB_PLAN_DELETE;
-         break;
-
-      case CMD_UPDATE:
-         executionState->planType = SDB_PLAN_UPDATE;
-         break;
-
-      default:
-         ereport(ERROR,(errcode(ERRCODE_FDW_ERROR),
-                         errmsg("unknown operation type=%d", operation),
-                         errhint("make sure the sdb_fdw support this type")));
+      /* allocate new execution state */
+      fdw_state = (SdbExecState*)palloc(sizeof(SdbExecState));
+      if (!fdw_state)
+      {
+         ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY ), 
+               errmsg("Unable to allocate execution state memory"), 
+               errhint("Make sure the memory pool or ulimit is properly configured")));
+         
          return NULL;
+      }
+      
+      initSdbExecState(fdw_state);
+      rte = planner_rt_fetch(resultRelation, root);
+      foreignTableId = rte->relid;
+      sdbGetSdbServerOptions(foreignTableId, fdw_state);
+
+      fdw_state->pgTableDesc = sdbGetPgTableDesc(foreignTableId);
+      if (NULL == fdw_state->pgTableDesc)
+      {
+         ereport(ERROR,(errcode(ERRCODE_FDW_OUT_OF_MEMORY), 
+               errmsg("Unable to allocate pgTableDesc"),
+               errhint("Make sure the memory pool or ulimit is properly configured")));
+         
+         return NULL;
+      }
    }
 
-   return serializeSdbExecState(executionState);
+   return serializeSdbExecState(fdw_state);
 }
 
 void SdbBeginForeignModify(ModifyTableState *mtstate,
       ResultRelInfo *rinfo, List *fdw_private, int subplan_index, int eflags)
 {
+//   int i = 0;
+//   Plan *subplan = mtstate->mt_plans[subplan_index]->plan;
+   
    SdbExecState *fdw_state = deserializeSdbExecState(fdw_private);
    //store the pointer of fdw_state for the insert/update/delete
    rinfo->ri_FdwState = fdw_state;
@@ -2528,6 +2638,13 @@ void SdbBeginForeignModify(ModifyTableState *mtstate,
          fdw_state->sdbServerPort, fdw_state->usr, fdw_state->passwd, fdw_state->preferenceInstance);
    fdw_state->hCollection = sdbGetSdbCollection(fdw_state->hConnection, 
       fdw_state->sdbcs, fdw_state->sdbcl);
+
+//   for (i = 0; i < fdw_state->pgTableDesc->ncols; ++i)
+//   {
+//      fdw_state->pgTableDesc->cols[i].attnum_in_target = 
+//         ExecFindJunkAttributeInTlist(subplan->targetlist, 
+//         fdw_state->pgTableDesc->cols[i].pgname);
+//   }
 
 }
 
@@ -2588,21 +2705,28 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
 {
    int i   = 0;
    sdbbson sdbbsonCondition;
-   Datum datum;
+   sdbbson *original;
    int rc = SDB_OK;
-   bool isnull;
    SdbExecState *fdw_state = (SdbExecState *)rinfo->ri_FdwState;
    
    sdbbson_init(&sdbbsonCondition);
-   for (i = 0; i < fdw_state->pgTableDesc->ncols; i++) 
+//   for (i = 0; i < fdw_state->pgTableDesc->ncols; i++) 
+//   {
+//      datum = ExecGetJunkAttribute(planSlot, fdw_state->pgTableDesc->cols[i].attnum_in_target, &isnull);
+//      if (!isnull)
+//      {
+//         sdbSetBsonValue(&sdbbsonCondition, fdw_state->pgTableDesc->cols[i].pgname, 
+//            datum, fdw_state->pgTableDesc->cols[i].pgtype, 
+//            fdw_state->pgTableDesc->cols[i].pgtypmod);
+//      }
+//   }
+
+   original = sdbBsonRecordValue(fdw_state->bson_record_addr);
+   for (i = 0; i < fdw_state->key_num; i++)
    {
-      datum = ExecGetJunkAttribute(planSlot, fdw_state->pgTableDesc->cols[i].pgattnum, &isnull);
-      if (!isnull)
-      {
-         sdbSetBsonValue(&sdbbsonCondition, fdw_state->pgTableDesc->cols[i].pgname, 
-            datum, fdw_state->pgTableDesc->cols[i].pgtype, 
-            fdw_state->pgTableDesc->cols[i].pgtypmod);
-      }
+      sdbbson_iterator ite;
+      sdbbson_find(&ite, original, fdw_state->key_name[i]);
+      sdbbson_append_element(&sdbbsonCondition, NULL, &ite);
    }
    sdbbson_finish(&sdbbsonCondition);
    
@@ -2610,12 +2734,14 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
    rc = sdbDelete(fdw_state->hCollection, &sdbbsonCondition, NULL);
    if (rc != SDB_OK)
    {
+      sdbbson_destroy(&sdbbsonCondition);
       ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
             errmsg("sdbDelete failed:rc = %d", rc), 
             errhint("Make sure the data type is all right")));
       return NULL;
    }
 
+   sdbbson_destroy(&sdbbsonCondition);
    /* empty the result slot */
    ExecClearTuple(slot);
    
@@ -2625,10 +2751,82 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
    return slot;
 }
 
-TupleTableSlot *SdbExecForeignUpdate(EState *estate, ResultRelInfo *rinfo,\
+TupleTableSlot *SdbExecForeignUpdate(EState *estate, ResultRelInfo *rinfo,
       TupleTableSlot *slot, TupleTableSlot *planSlot)
 {
-   return NULL;
+   int i   = 0;
+   sdbbson sdbbsonCondition;
+   sdbbson sdbbsonValues;
+   sdbbson sdbbsonTempValue;
+   sdbbson *original = NULL;
+   Datum datum;
+   int rc = SDB_OK;
+   bool isnull;
+   SdbExecState *fdw_state = (SdbExecState *)rinfo->ri_FdwState;
+   
+   sdbbson_init(&sdbbsonTempValue);
+   for (i = 0; i < fdw_state->pgTableDesc->ncols; i++) 
+   {
+      datum = slot_getattr(slot, fdw_state->pgTableDesc->cols[i].pgattnum, &isnull);
+      if (!isnull)
+      {
+         sdbSetBsonValue(&sdbbsonTempValue, fdw_state->pgTableDesc->cols[i].pgname, 
+            datum, fdw_state->pgTableDesc->cols[i].pgtype, 
+            fdw_state->pgTableDesc->cols[i].pgtypmod);
+      }
+   }
+   sdbbson_finish(&sdbbsonTempValue);
+
+   sdbbson_init(&sdbbsonCondition);
+   original = sdbBsonRecordValue(fdw_state->bson_record_addr);
+   for (i = 0; i < fdw_state->key_num; i++)
+   {
+      sdbbson_iterator ite;
+      sdbbson_find(&ite, original, fdw_state->key_name[i]);
+      sdbbson_append_element(&sdbbsonCondition, NULL, &ite);
+   }
+   sdbbson_finish(&sdbbsonCondition);
+
+   if (sdbIsShardingKeyChanged(fdw_state, original, &sdbbsonTempValue))
+   {
+      sdbbson_destroy(&sdbbsonCondition);
+      sdbbson_destroy(&sdbbsonTempValue);
+      
+      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("update failed due to shardingkey is changed")));
+
+      return NULL;
+   }
+   
+   sdbbson_init(&sdbbsonValues);
+   sdbbson_append_sdbbson(&sdbbsonValues, "$set", &sdbbsonTempValue);
+   sdbbson_finish(&sdbbsonValues);
+   
+   //update the bson to the sdb
+   //TODO: WARNING, the shardingKey columns can not be change in the sequoiadb!!!!
+   rc = sdbUpdate(fdw_state->hCollection, &sdbbsonValues, &sdbbsonCondition, NULL);
+   if (rc != SDB_OK)
+   {
+      sdbbson_destroy(&sdbbsonCondition);
+      sdbbson_destroy(&sdbbsonTempValue);
+      sdbbson_destroy(&sdbbsonValues);
+      ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+            errmsg("sdbUpdate failed:rc = %d", rc), 
+            errhint("Make sure the data type is all right")));
+      return NULL;
+   }
+
+   sdbbson_destroy(&sdbbsonCondition);
+   sdbbson_destroy(&sdbbsonTempValue);
+   sdbbson_destroy(&sdbbsonValues);
+
+   /* empty the result slot */
+   ExecClearTuple(slot);
+   
+   /* store the virtual tuple */
+   ExecStoreVirtualTuple(slot);
+   
+   return slot;
 }
 
 
@@ -2644,7 +2842,7 @@ void SdbEndForeignModify(EState *estate, ResultRelInfo *rinfo)
 void SdbExplainForeignModify(ModifyTableState *mtstate, ResultRelInfo *rinfo,
       List *fdw_private, int subplan_index, struct ExplainState *es)
 {
-   //we have nothing to do yet
+   //TODO: we have nothing to do yet
 }
 
 #endif

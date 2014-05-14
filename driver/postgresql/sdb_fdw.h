@@ -29,6 +29,9 @@
 #define INITIAL_ARRAY_CAPACITY         8
 #define SDB_TUPLE_COST_MULTIPLIER      5
 
+#define SDB_MAX_KEY_COLUMN_COUNT       (10)
+#define SDB_MAX_KEY_COLUMN_LENGTH      (20)
+
 #define POSTGRES_TO_UNIX_EPOCH_DAYS (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE)
 #define POSTGRES_TO_UNIX_EPOCH_USECS (POSTGRES_TO_UNIX_EPOCH_DAYS * USECS_PER_DAY)
 struct SdbInputOption
@@ -90,6 +93,7 @@ typedef struct PgColumnDesc_s
 {
    char *pgname; /* PostgreSQL column name */
    int pgattnum; /* PostgreSQL attribute number */
+   int attnum_in_target;
    Oid pgtype;   /* PostgreSQL data type */
    int pgtypmod; /* PostgreSQL type modifier */
 
@@ -104,13 +108,6 @@ typedef struct PgTableDesc_s
    PgColumnsDesc *cols;
 }PgTableDesc;
 
-/* for deliver sdb_fdw's update/delete conditions */
-typedef struct SdbCondition_s
-{
-   sdbbson sdbbson_condition;
-}SdbCondition;
-
-
 /* SdbExecState represents the runtime state for sdb cursor
  */
 struct SdbExecState
@@ -120,7 +117,7 @@ struct SdbExecState
    sdbCursorHandle hCursor ;
    sdbConnectionHandle hConnection ;
    sdbCollectionHandle hCollection ;
-   sdbbson *queryDocument ; /* query request */
+   sdbbson queryDocument ; /* query request */
 
    /* sdb server options */
    char *sdbServerHost;
@@ -135,8 +132,15 @@ struct SdbExecState
    /* pg table column's description */
    PgTableDesc *pgTableDesc;
 
-   /* conditions */
-   SdbCondition *sdb_condition;
+   /* foreign table's rowcount */
+   SINT64 row_count;
+
+   /* record the fetch column's bson address */
+   UINT64 bson_record_addr;
+
+   /* save the key column name to identify the specify column */
+   int key_num;
+   char key_name[SDB_MAX_KEY_COLUMN_COUNT][SDB_MAX_KEY_COLUMN_LENGTH];
 } ;
 typedef struct SdbExecState SdbExecState ;
 
