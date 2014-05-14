@@ -3,12 +3,8 @@ package com.sequoiadb.hive;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,10 +16,10 @@ import org.apache.hadoop.mapred.JobConf;
 import org.bson.BSONObject;
 import org.bson.types.BasicBSONList;
 
-
 import com.sequoiadb.base.DBCursor;
+import com.sequoiadb.base.Node;
+import com.sequoiadb.base.ReplicaGroup;
 import com.sequoiadb.base.Sequoiadb;
-import com.sequoiadb.base.DBCollection;
 import com.sequoiadb.exception.BaseException;
 
 public class SdbSplit extends FileSplit implements InputSplit {
@@ -32,22 +28,16 @@ public class SdbSplit extends FileSplit implements InputSplit {
 
 	private static final String[] EMPTY_ARRAY = new String[] {};
 	private SdbConnAddr sdbAddr;
-	private String  scanType;
-	private Integer dataBlockId;
 
 	public SdbSplit() {
 		super((Path) null, 0, 0, EMPTY_ARRAY);
 
 	}
 
-	public SdbSplit(String host, int port, String scanType, int dataBlockID,
-			Path dummyPath) {
+	public SdbSplit(String host, int port, Path dummyPath) {
 		super(dummyPath, 0, 0, EMPTY_ARRAY);
 		this.sdbAddr = new SdbConnAddr(host, port);
-		this.scanType = scanType;
-		this.dataBlockId = dataBlockID;
 	}
-
 
 	@Override
 	public void readFields(final DataInput input) throws IOException {
@@ -55,10 +45,7 @@ public class SdbSplit extends FileSplit implements InputSplit {
 		this.sdbAddr = new SdbConnAddr();
 		sdbAddr.setHost(input.readUTF());
 		sdbAddr.setPort(input.readInt());
-		
-		scanType = input.readUTF();
-		dataBlockId = input.readInt();
-		
+
 	}
 
 	@Override
@@ -66,45 +53,32 @@ public class SdbSplit extends FileSplit implements InputSplit {
 		super.write(output);
 		output.writeUTF(this.sdbAddr.getHost());
 		output.writeInt(this.sdbAddr.getPort());
-
-		output.writeUTF(this.scanType);
-		output.writeInt(this.dataBlockId);
 	}
 
 	public SdbConnAddr getSdbAddr() {
 		return this.sdbAddr;
 	}
 
-	public String getScanType() {
-		return this.scanType;
-	}
-	
-	public Integer getDataBlockId() {
-		return this.dataBlockId;
-	}
-
 	@Override
 	public long getLength() {
-		return 128 * 1024 * 1024;
+		return super.getLength();
 	}
 
 	/* Data is remote for all nodes. */
 	@Override
 	public String[] getLocations() throws IOException {
-		return new String[] {sdbAddr.getHost()};
+		return new String[] { sdbAddr.getHost() };
 	}
 
 	@Override
 	public String toString() {
 
-		return String.format("SdbSplit(sdbaddr=%s, block id=%d)",
-				sdbAddr == null ? "null" : sdbAddr.toString(),
-				dataBlockId);
+		return String.format("SdbSplit(sdbaddr=%s)", sdbAddr == null ? "null"
+				: sdbAddr.toString());
 	}
 
 	public static InputSplit[] getSplits(JobConf conf, int numSplits) {
-
-		LOG.debug("Entry getSplits function, with numSplites=" + numSplits);
+		LOG.debug("Entry getSplits function");
 
 		SdbConnAddr[] sdbAddrList = ConfigurationUtil
 				.getAddrList(ConfigurationUtil.getDBAddr(conf));
@@ -116,80 +90,109 @@ public class SdbSplit extends FileSplit implements InputSplit {
 
 		final Path[] tablePaths = FileInputFormat.getInputPaths(conf);
 
+		// ///////////////////////////////
 		Sequoiadb sdb = null;
 		BaseException lastException = null;
-		for (int i = 0; i < sdbAddrList.length; i++) {
+
+		SdbConnAddr curCoordAddr = null;
+		for (SdbConnAddr addr : sdbAddrList) {
 			try {
-				sdb = new Sequoiadb(sdbAddrList[i].getHost(),
-						sdbAddrList[i].getPort(), null, null);
+				sdb = new Sequoiadb(addr.getHost(), addr.getPort(), null, null);
+				// Save current coord address.
+				curCoordAddr = addr;
 				break;
 			} catch (BaseException e) {
+				LOG.info("Connect coords error:" + addr);
+
 				lastException = e;
 				continue;
 			}
 		}
 		if (sdb == null) {
+			LOG.info("Connect coords error:" + lastException);
 			throw lastException;
 		}
 
-		LOG.info("Start Get data blocks");
+		// use snapshot(8,{Name:"tablename"}) for get group information
 		String spaceName = null;
-		String colName = null;
-		if( ConfigurationUtil.getCsName(conf) == null && ConfigurationUtil.getClName(conf) == null ){
+		String clName = null;
+		if (ConfigurationUtil.getCsName(conf) == null
+				&& ConfigurationUtil.getClName(conf) == null) {
 			spaceName = ConfigurationUtil.getSpaceName(conf);
-			colName = ConfigurationUtil.getCollectionName(conf);
-		}else{
+			clName = ConfigurationUtil.getCollectionName(conf);
+		} else {
 			spaceName = ConfigurationUtil.getCsName(conf);
-			colName = ConfigurationUtil.getClName(conf);
+			clName = ConfigurationUtil.getClName(conf);
 		}
-		
-		DBCollection collection = sdb.getCollectionSpace(spaceName)
-				.getCollection(colName);
-		DBCursor cursor = collection.getQueryMeta(null, null, null, 0,
-				-1, 0);
-		
+		StringBuilder snapCondBuilder = new StringBuilder();
+		String snapCond = snapCondBuilder.append("{Name:\"").append(spaceName)
+				.append('.').append(clName).append("\"}").toString();
+		// Snapshot 8 information:
+		// {
+		// "_id": {
+		// "$oid": "52e1f6885d7c4d346e2e0c1e"
+		// },
+		// "Name": "metastore.mdsn",
+		// "Version": 1,
+		// "ReplSize": 1,
+		// "CataInfo": [
+		// {
+		// "GroupID": 1000,
+		// "GroupName": "datagroup1"
+		// }
+		// ]
+		// }
+
 		List<InputSplit> splits = new LinkedList<InputSplit>();
-		
-		while (cursor.hasNext()) {
-			BSONObject obj = cursor.getNext();
+		List<Integer> groupIDList = new LinkedList<Integer>();
+		try {
+			DBCursor cursor = sdb.getSnapshot(8, snapCond, null, null);
+			while (cursor.hasNext()) {
+				BSONObject obj = cursor.getNext();
+				LOG.info("Groups record:" + obj.toString());
+				// Get cataInfo list
+				BasicBSONList cataInfoList = (BasicBSONList) obj
+						.get("CataInfo");
+				for (int i = 0; i < cataInfoList.size(); i++) {
 
-			LOG.info("mete record:" + obj.toString());
-			String hostname = (String) obj.get("HostName");
-			int port = Integer.parseInt((String) obj
-					.get("ServiceName"));
+					// Get a catainfo
+					BSONObject cataInfo = (BSONObject) cataInfoList.get(i);
+					Integer groupId = (Integer) cataInfo.get("GroupID");
 
-			String scanType = (String) obj.get("ScanType");
-
-			if (scanType.equals("ixscan")) {
-				String indexName = (String) obj.get("IndexName");
-				int indexLID = (Integer) obj.get("IndexLID");
-				int direction = (Integer) obj.get("Direction");
-
-				BasicBSONList indexBlockList = (BasicBSONList) obj
-						.get("Indexblocks");
-				for (Object objBlock : indexBlockList) {
-					if (objBlock instanceof BSONObject) {
-						BSONObject indexBlock = (BSONObject) objBlock;
-
-						BSONObject startKey = (BSONObject) indexBlock
-								.get("StartKey");
-						BSONObject endKey = (BSONObject) indexBlock
-								.get("EndKey");
+					// if the table have tow different range on the same group
+					// then the list have to same group.
+					// Don't add the group to split list, to avoid scan twice
+					// on this group.
+					if (groupIDList.contains(groupId)) {
+						continue;
 					}
-				}
-			} else if (scanType.equals("tbscan")) {
+					groupIDList.add(groupId);
 
-				BasicBSONList blockList = (BasicBSONList) obj.get("Datablocks");
-				int i = 0;
-				for (Object objBlock : blockList) {
-					if (objBlock instanceof Integer) {
-						Integer blockId = (Integer) objBlock;
-						splits.add(new SdbSplit(hostname, port, scanType, blockId,
-								tablePaths[0]));
-					}
+					// Get group information by groupId
+					ReplicaGroup group = sdb.getReplicaGroup(groupId);
+
+					// Get the slave node's host&port.
+					Node node = group.getSlave();
+
+					String hostName = node.getHostName();
+					Integer port = node.getPort();
+					
+					splits.add(new SdbSplit(hostName, port, tablePaths[0]));
 				}
 			}
+		} catch (BaseException e) {
+			// If get excepiton, have tow cause:
+			// 1. The SequoiaDB is stand-alone mode, so cannot get snapshot(8);
+			// 2. Get snapshot occurs exception.
+			// Then return just one split, the split get data from coord node,
+			// instead of data node.
+
+			// Set scan split
+			// For SequoiaDB, Just set DataNode connect information
+			splits.add(new SdbSplit(curCoordAddr.getHost(), curCoordAddr
+					.getPort(), tablePaths[0]));
 		}
+		// /////////////////////////////////
 
 		LOG.info("Exit SdbScanNode::getScanRangeLocations");
 		sdb.disconnect();

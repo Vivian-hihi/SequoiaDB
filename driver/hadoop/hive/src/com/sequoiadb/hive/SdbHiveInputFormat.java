@@ -1,9 +1,6 @@
 package com.sequoiadb.hive;
 
-import static com.sequoiadb.hive.ConfigurationUtil.getCollectionName;
-import static com.sequoiadb.hive.ConfigurationUtil.getSpaceName;
 import com.sequoiadb.hive.SdbReader;
-
 import java.io.IOException;
 import java.util.List;
 
