@@ -49,6 +49,7 @@
 #define CSV_STR_COMMA   ','
 #define CSV_STR_QUOTES  '"'
 #define CSV_STR_SPACE   32
+#define CSV_STR_SLASH   '\\'
 
 #define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
 #define DATE_FORMAT "%d-%d-%d"
@@ -660,14 +661,14 @@ INT32 csvParser::_field2str( CHAR *pBuffer, INT32 size,
       for ( INT32 i = 0, k = 0; i < size; ++i, ++k )
       {
          if ( ( _isHeaderline && pBuffer[i] == _delChar ) ||
-              ( !_isHeaderline && pBuffer[i] == CSV_STR_QUOTES ) )
+              ( !_isHeaderline && pBuffer[i] == CSV_STR_SLASH ) )
          {
             ++i ;
+            --newSize ;
          }
          else
          {
             pNewBuffer[k] = pBuffer[i] ;
-            --newSize ;
          }
       }
    }
@@ -724,6 +725,9 @@ INT32 csvParser::_parseField( _fieldData &fieldData, CHAR *pBuffer, INT32 size )
    CHAR *pType    = NULL ;
    CHAR *pDefault = NULL ;
    CHAR *pValue   = NULL ;
+
+   fieldData.pVarString = NULL ;
+   fieldData.pField = NULL ;
 
    pField = pBuffer ;
    unreadSize = size ;
@@ -880,7 +884,7 @@ INT32 csvParser::_parseField( _fieldData &fieldData, CHAR *pBuffer, INT32 size )
                         PD_LOG ( PDERROR, "unknow type %d", fieldData.type ) ;
                         goto error ;
                      }
-                     goto done ;
+                     goto finish ;
                   }
                   else
                   {
@@ -916,7 +920,7 @@ the format is:  field [type] [default <default value>]" ) ;
             {
                fieldData.type = (CSV_TYPE)_CSVTYPENUM[ i ] ;
                fieldData.hasDefVal = FALSE ;
-               goto done ;
+               goto finish ;
             }
          }
          rc = SDB_INVALIDARG ;
@@ -928,8 +932,10 @@ the format is:  field [type] [default <default value>]" ) ;
    {
       fieldSize = size ;
       fieldData.type = CSV_TYPE_AUTO ;
+      goto finish ;
    }
 
+finish:
    rc = _field2str( pField, fieldSize,
                    &pField, fieldSize ) ;
    if ( rc )
@@ -941,6 +947,8 @@ done:
    fieldData.pField = pField ;
    return rc ;
 error:
+   SAFE_OSS_FREE( fieldData.pVarString ) ;
+   SAFE_OSS_FREE( fieldData.pField ) ;
    goto done ;
 }
 
