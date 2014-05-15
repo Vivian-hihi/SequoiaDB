@@ -80,7 +80,6 @@ namespace engine
       SDB_ASSERT( cb, "cb can't be null" ) ;
       INT32 rc = SDB_OK ;
 
-      DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
       DPS_TRANS_ID curTransID = DPS_INVALID_TRANS_ID ;
       DPS_LSN_OFFSET preTransLsn = DPS_INVALID_LSN_OFFSET ;
       DPS_LSN_OFFSET firstTransLsn = DPS_INVALID_LSN_OFFSET ;

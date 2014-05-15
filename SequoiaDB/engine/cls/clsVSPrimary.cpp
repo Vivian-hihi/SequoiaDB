@@ -115,7 +115,6 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSPMY_ACTIVE, "_clsVSPrimary::active" )
    void _clsVSPrimary::active( INT32 &next )
    {
-      pmdKRCB *pKRCB = pmdGetKRCB() ;
       PD_TRACE_ENTRY ( SDB__CLSVSPMY_ACTIVE ) ;
       _timeout() = 0 ;
       next = id() ;

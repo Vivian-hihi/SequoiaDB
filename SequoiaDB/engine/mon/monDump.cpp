@@ -106,7 +106,6 @@ namespace engine
       INT32 rc = SDB_OK;
       UINT32 curPos = 0;
       PD_TRACE_ENTRY ( SDB_MONGETSESSIONNAME ) ;
-      pmdKRCB *krcb     = pmdGetKRCB() ;
       *(pSessName + size - 1) = 0;
       ossGetHostName ( pSessName, size - 1 ) ;
       curPos = ossStrlen( pSessName );

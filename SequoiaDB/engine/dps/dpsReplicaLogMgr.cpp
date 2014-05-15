@@ -381,7 +381,6 @@ namespace engine
 
       _transCB->saveTransInfoFromLog( info.getMergeBlock().record() ) ;
 
-   done:
       PD_TRACE_EXIT ( SDB__DPSRPCMGR_WRITEDATA );
    }
 

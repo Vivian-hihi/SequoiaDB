@@ -69,7 +69,6 @@ namespace engine
    {
       INT32 rc  = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNBACKUP ) ;
-      pmdKRCB *krcb = pmdGetKRCB () ;
       string bkpath ;
       INT32 maxDataFileSize = 0 ;
 

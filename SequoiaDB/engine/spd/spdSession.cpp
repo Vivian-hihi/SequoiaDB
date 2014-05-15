@@ -168,7 +168,6 @@ namespace engine
        INT32 rc = SDB_OK ;
        BSONObj cnMsg ;
        INT32 funcType = FMP_FUNC_TYPE_INVALID ;
-       pmdKRCB *krcb = pmdGetKRCB() ;
 
        /// 1. begin: {FMP_CONTROL_FIELD : FMP_CONTROL_STEP_BEGIN,
        //             FMP_FUNC_TYPE : FMP_FUNC_TYPE_XX }

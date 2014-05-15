@@ -83,7 +83,6 @@ namespace engine
     _shdHandleCloseTimerID ( CLS_INVALID_TIMERID ),
     _replHandleCloseTimerID ( CLS_INVALID_TIMERID )
    {
-      INT32 rc            = SDB_OK ;
       _replServiceName[0] = 0 ;
       _shdServiceName[0]  = 0 ;
       _selfNodeID.value   = MSG_INVALID_ROUTEID ;
@@ -106,7 +105,6 @@ namespace engine
 
    INT32 _clsMgr::init ()
    {
-      UINT32 index = 0 ;
       INT32 rc = SDB_OK ;
       NodeID nodeID = _selfNodeID ;
       const CHAR* hostName = pmdGetKRCB()->getHostName() ;
@@ -167,7 +165,6 @@ namespace engine
    INT32 _clsMgr::active ()
    {
       INT32 rc = SDB_OK ;
-      pmdEDUMgr *eduMgr   = pmdGetKRCB()->getEDUMgr () ;
       PD_TRACE_ENTRY ( SDB__CLSMGR_ACTIVE ) ;
 
       // 1. start cls edu and shard edu

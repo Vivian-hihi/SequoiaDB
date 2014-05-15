@@ -142,7 +142,7 @@ namespace engine
          {
             continue ;
          }
-         if ( rc = pCB->init() )
+         if ( SDB_OK != ( rc = pCB->init() ) )
          {
             PD_LOG( PDERROR, "Init cb[Type: %d, Name: %s] failed, rc: %d",
                     pCB->cbType(), pCB->cbName(), rc ) ;
@@ -158,7 +158,7 @@ namespace engine
          {
             continue ;
          }
-         if ( rc = pCB->active() )
+         if ( SDB_OK != ( rc = pCB->active() ) )
          {
             PD_LOG( PDERROR, "Active cb[Type: %d, Name: %s] failed, rc: %d",
                     pCB->cbType(), pCB->cbName(), rc ) ;
@@ -192,7 +192,7 @@ namespace engine
          {
             continue ;
          }
-         if ( rc = pCB->deactive() )
+         if ( SDB_OK != ( rc = pCB->deactive() ) )
          {
             PD_LOG( PDERROR, "Deactive cb[Type: %d, Name: %s] failed, rc: %d",
                     pCB->cbType(), pCB->cbName(), rc ) ;
@@ -210,7 +210,7 @@ namespace engine
          {
             continue ;
          }
-         if ( rc = pCB->fini() )
+         if ( SDB_OK != ( rc = pCB->fini() ) )
          {
             PD_LOG( PDERROR, "Fini cb[Type: %d, Name: %s] failed, rc: %d",
                     pCB->cbType(), pCB->cbName(), rc ) ;

@@ -2341,7 +2341,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTOP_DOIT ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
       pdTraceCB *traceCB = sdbGetPDTraceCB() ;
       if ( _pDumpFileName )
       {

@@ -394,7 +394,6 @@ namespace engine
       // log here
       if ( dpsCB )
       {
-         DPS_LSN_OFFSET offset ;
          info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
@@ -604,7 +603,6 @@ namespace engine
             info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
 
             dpsLogRecord &record = info.getMergeBlock().record();
-            DPS_LSN_OFFSET offset ;
 
             rc = dpsCSDel2Record( pName, record ) ;
             PD_RC_CHECK( rc, PDERROR, "failed to build record:%d", rc );
@@ -893,7 +891,6 @@ namespace engine
       if ( SDB_OK == rc && dpsCB )
       {
          UINT32 suLID = su->LogicalCSID() ;
-         DPS_LSN_OFFSET offset = 0 ;
          info.setInfoEx( suLID, ~0, DMS_INVALID_EXTENT, cb ) ;
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
