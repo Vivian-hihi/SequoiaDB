@@ -207,8 +207,8 @@ namespace engine
          INT32 _onCatQueryTaskRes ( NET_HANDLE handle, MsgHeader* msg ) ;
 
       private:
-         _shdMsgHandler                _shdMsgHandler ;
-         _replMsgHandler               _replMsgHandler ;
+         _shdMsgHandler                _shdMsgHandlerObj ;
+         _replMsgHandler               _replMsgHandlerObj ;
          _clsShardTimerHandler         _shdTimerHandler ;
          _clsReplTimerHandler          _replTimerHandler ;
 
