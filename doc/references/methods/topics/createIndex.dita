@@ -33,13 +33,19 @@
           <stentry>索引是否唯一，默认false。设置为true时代表该索引为唯一索引。</stentry>
           <stentry>否</stentry>
         </strow>
+        <strow>
+          <stentry>enforced</stentry>
+          <stentry>Boolean</stentry>
+          <stentry>索引是否强制唯一，可选参数，默认false。设置为true时代表该索引为强制唯一索引。</stentry>
+          <stentry>否</stentry>
+        </strow>
       </simpletable>
       
     </section>
     <section><title>格式</title>
       <p>createIndex()方法定义包含name、indexDef、isUnique三个参数， 其中name的值必须为字符串；indexDef则为一个JSON对象，
         indexDef的对象必须包含至少一个字段，其中字段名为用户需要索引的字段名，其值为1或者-1。其中1代表升序，-1代表降序；isUnique为布尔类型，默认false。</p>
-      <p><codeblock>{"name":"&lt;索引名>","indexDef":{"&lt;索引字段1>":&lt;1|-1> [,"&lt;索引字段2>":&lt;1|-1>...] },["isUnique":&lt;true|false>]}</codeblock></p>
+      <p><codeblock>{"name":"&lt;索引名>","indexDef":{"&lt;索引字段1>":&lt;1|-1> [,"&lt;索引字段2>":&lt;1|-1>...] },["isUnique":&lt;true|false>],["enforced":&lt;true|false>]}</codeblock></p>
       <note>
         <p>
           <ul>
