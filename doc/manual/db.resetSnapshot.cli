@@ -15,7 +15,7 @@ resetSnapshot - Reset snapshot.
 .sp 2
 
 .sp 2
-resetSnapshot(\fB[con]\fR)
+resetSnapshot(\fB[cond]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -27,18 +27,18 @@ Sequoiadb
 .sp 2
 Reset snapshot.
 .sp 2
-\fBcon (json object)\fR
+\fBcond (json object)\fR
 .br
        Selecting condition. It merely resets snapshot records
-       that match the conditions in "con". If it is null, it will
-       reset all the snapshot records.
+       that match the conditions in "cond". If it is null, it
+       will reset all the snapshot records.
 .sp 2
        \fBFormat\fR
 .br
               The method "resetSnapshot()" contains the parameter
-              "con". It is a json object.
+              "cond". It is a json object.
 .br
-              {["con":"{"Field name 1":{"match 1":"value
+              {["cond":"{"Field name 1":{"match 1":"value
               1"},"Field name 2":{"match 2":"value 2"}...}"]}
 .sp 2
 
