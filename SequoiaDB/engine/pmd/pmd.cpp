@@ -37,8 +37,6 @@
 #include <string.h>
 #include "core.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
-#include "pmdEDUMgr.hpp"
 
 namespace engine
 {
@@ -48,19 +46,7 @@ namespace engine
    */
    _SDB_KRCB::_SDB_KRCB ()
    {
-      _clsCB            = NULL ;
-      _dpsTransCB       = NULL ;
-      _dpscb            = NULL ;
-      _dmscb            = NULL ;
-      _rtncb            = NULL ;
-      _bpscb            = NULL ;
-      _catlogueCB       = NULL ;
-      _coordcb          = NULL ;
-      _sql              = NULL ;
-      _auth             = NULL ;
-      _traceCB          = NULL ;
-      _aggrCB           = NULL ;
-      _fmpCB            = NULL ;
+      ossMemset( _hostName, 0, sizeof( _hostName ) ) ;
 
       for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
       {
@@ -74,7 +60,7 @@ namespace engine
       /* <-- external status, can be changed by modifying config file --> */
 
       // standalone role by default, user may overwrite this setting
-      enforceDBRole ( SDB_ROLE_STANDALONE ) ;
+      _role = SDB_ROLE_STANDALONE ;
 
       setGroupName ( "" );
       // by default replication port is service port + 1
@@ -91,19 +77,6 @@ namespace engine
 
    _SDB_KRCB::~_SDB_KRCB ()
    {
-      SAFE_DELETE( _clsCB ) ;
-      SAFE_DELETE( _dpsTransCB ) ;
-      SAFE_DELETE( _dpscb ) ;
-      SAFE_DELETE( _dmscb ) ;
-      SAFE_DELETE( _rtncb ) ;
-      SAFE_DELETE( _bpscb ) ;
-      SAFE_DELETE( _catlogueCB ) ;
-      SAFE_DELETE( _coordcb ) ;
-      SAFE_DELETE( _sql ) ;
-      SAFE_DELETE( _auth ) ;
-      SAFE_DELETE( _traceCB ) ;
-      SAFE_DELETE( _aggrCB ) ;
-      SAFE_DELETE( _fmpCB ) ;
    }
 
    IControlBlock* _SDB_KRCB::getCBByType( SDB_CB_TYPE type )
@@ -151,6 +124,13 @@ namespace engine
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
 
+      // get hostname
+      rc = ossGetHostName( _hostName, OSS_MAX_HOSTNAME ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get host name, rc: %d", rc ) ;
+
+      _role = pmdGetRoleEnum( _optioncb.krcbRole() ) ;
+      pmdSetDBRole( _role ) ;
+
       _init = TRUE ;
 
       // Init all registered cb
@@ -184,21 +164,6 @@ namespace engine
             goto error ;
          }
       }
-
-      SAFE_NEW_GOTO_ERROR( _dpsTransCB, dpsTransCB ) ;
-      SAFE_NEW_GOTO_ERROR( _dpscb, SDB_DPSCB ) ;
-      SAFE_NEW_GOTO_ERROR( _dmscb, SDB_DMSCB ) ;
-      SAFE_NEW_GOTO_ERROR( _rtncb, SDB_RTNCB ) ;
-      SAFE_NEW_GOTO_ERROR( _bpscb, SDB_BPSCB ) ;
-      SAFE_NEW_GOTO_ERROR( _clsCB, clsCB ) ;
-      SAFE_NEW_GOTO_ERROR( _catlogueCB, sdbCatalogueCB ) ;
-      SAFE_NEW_GOTO_ERROR( _coordcb, CoordCB ) ;
-      SAFE_NEW_GOTO_ERROR( _sql, SQL_CB ) ;
-      SAFE_NEW_GOTO_ERROR( _auth, SDB_AUTHCB ) ;
-      SAFE_NEW_GOTO_ERROR( _traceCB, pdTraceCB ) ;
-      SAFE_NEW_GOTO_ERROR( _aggrCB, aggrBuilder ) ;
-      SAFE_NEW_GOTO_ERROR( _fmpCB, spdFMPMgr ) ;
-      gPDTraceCB = getTraceCB() ;
 
       _curTime.sample() ;
 
@@ -248,63 +213,21 @@ namespace engine
       }
    }
 
-   replCB* _SDB_KRCB::getReplCB ()
+   void _SDB_KRCB::configChangeNty()
    {
-      return _clsCB->getReplCB () ;
-   }
+      INT32 index = 0 ;
+      IControlBlock *pCB = NULL ;
 
-   shardCB* _SDB_KRCB::getShardCB ()
-   {
-      return _clsCB->getShardCB () ;
-   }
-
-   void _SDB_KRCB::enforceNodeInfo ( const _MsgRouteID &id , const CHAR * host )
-   {
-      _clsCB->setNodeID ( id ) ;
-      _clsCB->setHostName ( host ) ;
-   }
-
-   void _SDB_KRCB::enforceReplAddr( UINT16 serviceID, const CHAR *replService )
-   {
-      _clsCB->setReplServiceID( serviceID ) ;
-      _clsCB->setReplServiceName ( replService ) ;
-   }
-
-   void _SDB_KRCB::enforceShardAddr ( UINT16 serviceID,
-                                      const CHAR *shardService )
-   {
-      _clsCB->setShardServiceID ( serviceID ) ;
-      _clsCB->setShardServiceName ( shardService ) ;
-   }
-
-   void _SDB_KRCB::enforceCataLogGrpAddrs( const _MsgRouteID &id,
-                                           const CHAR *host,
-                                           const CHAR *service )
-   {
-      _clsCB->setCatlogInfo ( id, host, service ) ;
-      _coordcb->addCatNodeAddr ( id, host, service );
-   }
-
-   void _SDB_KRCB::enforceLogFileSz ( UINT32 logFileSz )
-   {
-      _dpscb->setLogFileSz ( logFileSz ) ;
-   }
-
-   void _SDB_KRCB::enforceLogFileNum ( UINT32 logFileNum )
-   {
-      _dpscb->setLogFileNum ( logFileNum ) ;
-   }
-
-   void _SDB_KRCB::enforceCatAddr( const _MsgRouteID &id,
-                                   const CHAR *host,
-                                   const CHAR *service )
-   {
-      _catlogueCB->setAddr(id, host, service);
-   }
-
-   void _SDB_KRCB::updateCatRouteID ( const _MsgRouteID &id )
-   {
-      _catlogueCB->updateRouteID ( id ) ;
+      // Deactive all registered cbs
+      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      {
+         pCB = _arrayCBs[ index ] ;
+         if ( !pCB )
+         {
+            continue ;
+         }
+         pCB->onConfigChange() ;
+      }
    }
 
    ossTick _SDB_KRCB::getCurTime()

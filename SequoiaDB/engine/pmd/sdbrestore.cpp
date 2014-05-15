@@ -48,6 +48,7 @@
 #include "pmdStartup.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+#include "pmdController.hpp"
 
 #include <iostream>
 #include <string>
@@ -349,8 +350,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
-      //SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
-      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
       std::cout << "Begin to clean dps logs..." << std::endl ;
       // clean dps logs
@@ -384,14 +383,6 @@ namespace engine
       }
 
       std::cout << "Begin to init dps logs..." << std::endl ;
-      // init dps
-      rc = dpsCB->init( pmdGetOptionCB()->getReplLogPath(),
-                        pmdGetOptionCB()->getReplLogBuffSize() ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to initialize dps cb, rc = %d", rc ) ;
-         goto error ;
-      }
 
    done :
       return rc ;
@@ -442,13 +433,6 @@ namespace engine
       CHAR diaglog[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
       rsOptionMgr optMgr ;
 
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         std::cerr << "init krcb failed, " << rc << std::endl ;
-         return rc ;
-      }
-
       // 1. read command line first
       rc = resolveArguments ( argc, argv, optMgr ) ;
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
@@ -475,6 +459,17 @@ namespace engine
       {
          std::cerr << "Failed to setup signal handler, rc: " << rc
                    << std::endl ;
+         return rc ;
+      }
+
+      // 4. register cbs
+      sdbGetPMDController()->registerCB( pmdGetDBRole() ) ;
+
+      // 5. inti krcb
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         std::cerr << "init krcb failed, " << rc << std::endl ;
          return rc ;
       }
 
@@ -518,13 +513,6 @@ namespace engine
       // initialize variables
       rc = restoreSysInit () ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to initialize, rc: %d", rc ) ;
-
-      // Then start log global writer thread
-      eduMgr->startEDU ( EDU_TYPE_LOGGW, NULL, &agentEDU ) ;
-      eduMgr->regSystemEDU ( EDU_TYPE_LOGGW, agentEDU ) ;
-      // dps rollback
-      eduMgr->startEDU ( EDU_TYPE_DPSROLLBACK_TASK, NULL, &agentEDU );
-      eduMgr->regSystemEDU ( EDU_TYPE_DPSROLLBACK_TASK, agentEDU );
 
       std::cout << "Begin to restore... " << std::endl ;
       // start restore task

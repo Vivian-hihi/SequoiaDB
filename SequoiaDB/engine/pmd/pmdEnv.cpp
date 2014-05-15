@@ -66,6 +66,14 @@ namespace engine
    {
       pmdGetSysInfo()->_nodeID = id ;
    }
+   BOOLEAN pmdIsPrimary ()
+   {
+      return pmdGetSysInfo()->_isPrimary.peek() ;
+   }
+   void pmdSetPrimary( BOOLEAN primary )
+   {
+      pmdGetSysInfo()->_isPrimary.init( primary ) ;
+   }
 
    BOOLEAN pmdIsQuitApp()
    {

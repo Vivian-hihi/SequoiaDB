@@ -44,135 +44,99 @@
 #include "ossSocket.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
+
 namespace engine
 {
-   #define PMD_TCPLISTENER_RETRY 5
-   // Main function to handle new connection request
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDTCPLSTNENTPNT, "pmdTcpListenerEntryPoint" )
    INT32 pmdTcpListenerEntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDTCPLSTNENTPNT );
+      PD_TRACE_ENTRY ( SDB_PMDTCPLSTNENTPNT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       SDB_ROLE dbrole = krcb->getDBRole () ;
-      EDUID myEDUID = cb->getID () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
-      UINT32 retry = 0 ;
-      BOOLEAN isLatched = FALSE ;
       EDUID agentEDU = PMD_INVALID_EDUID ;
+      ossSocket *pListerner = ( ossSocket* )pData ;
 
-      while ( retry <= PMD_TCPLISTENER_RETRY && !PMD_IS_DB_DOWN )
+      // let's set the state of EDU to RUNNING
+      if ( SDB_OK != ( rc = eduMgr->activateEDU ( cb ) ) )
       {
-         retry ++ ;
-         // here we read from TCP socket
-         UINT16 port = pmdGetOptionCB()->getServicePort () ;
+         goto error ;
+      }
 
-         PD_LOG ( PDEVENT, "Listening on port %d\n", port ) ;
-
-         ossSocketBindListenMutexGet() ;
-         isLatched = TRUE ;
-         // no need to set timeout since tcp listener only accept, it never recv
-         // or send
-         ossSocket sock ( port ) ;
-         rc = sock.initSocket () ;
-         SDB_VALIDATE_GOTOERROR ( SDB_OK==rc, rc, "Failed initialize socket" )
-
-         rc = sock.bind_listen () ;
-         SDB_VALIDATE_GOTOERROR ( SDB_OK==rc, rc,
-                                  "Failed to bind/listen socket");
-         // once bind is successful, let's set the state of EDU to RUNNING
-         if ( SDB_OK != ( rc = eduMgr->activateEDU ( myEDUID )) )
+      // master loop for tcp listener
+      while ( ! cb->isDisconnected() )
+      {
+         SOCKET s ;
+         // timeout in 10ms, so we won't hold global bind latch for too long
+         // and it's only held at first time into the loop
+         rc = pListerner->accept ( &s, NULL, NULL ) ;
+         // if we don't get anything for a period of time, let's loop
+         if ( SDB_TIMEOUT == rc || SDB_TOO_MANY_OPEN_FD == rc )
          {
-            goto error ;
+            rc = SDB_OK ;
+            continue ;
          }
-         // master loop for tcp listener
-         while ( ! cb->isDisconnected() )
+         // if we receive error due to database down, we finish
+         if ( rc && PMD_IS_DB_DOWN )
          {
-            SOCKET s ;
-            // timeout in 10ms, so we won't hold global bind latch for too long
-            // and it's only held at first time into the loop
-            rc = sock.accept ( &s, NULL, NULL ) ;
-            if ( isLatched )
+            rc = SDB_OK ;
+            goto done ;
+         }
+         else if ( rc )
+         {
+            // if we fail due to error, let's restart socket
+            PD_LOG ( PDERROR, "Failed to accept socket in TcpListener(rc=%d)",
+                     rc ) ;
+            if ( pListerner->isClosed() )
             {
-               ossSocketBindListenMutexRelease() ;
-               isLatched = FALSE ;
-            }
-            // if we don't get anything for a period of time, let's loop
-            if ( SDB_TIMEOUT == rc || SDB_TOO_MANY_OPEN_FD == rc )
-            {
-               rc = SDB_OK ;
-               continue ;
-            }
-            // if we receive error due to database down, we finish
-            if ( rc && PMD_IS_DB_DOWN )
-            {
-               rc = SDB_OK ;
-               goto done ;
-            }
-            else if ( rc )
-            {
-               // if we fail due to error, let's restart socket
-               PD_LOG ( PDERROR, "Failed to accept socket in TcpListener(rc=%d)",
-                        rc ) ;
-               PD_LOG ( PDEVENT, "Restarting socket to listen" ) ;
                break ;
-            }
-
-            retry = 0 ;
-            cb->incEventCount() ;
-            ++mondbcb->numConnects ;
-
-            // assign the socket to the arg
-            void *pData = NULL ;
-            *((SOCKET *) &pData) = s ;
-
-            // now we have a tcp socket for a new connection, let's get an agent
-            // Note the new new socket sent passing to startEDU
-            if ( SDB_ROLE_STANDALONE == dbrole ||
-                 SDB_ROLE_DATA       == dbrole ||
-                 SDB_ROLE_CATALOG    == dbrole ||
-                 SDB_ROLE_AUTH       == dbrole ||
-                 SDB_ROLE_OM         == dbrole )
-            {
-               rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
-            }
-            else if ( SDB_ROLE_COORD == dbrole )
-            {
-               rc = eduMgr->startEDU ( EDU_TYPE_COORDAGENT, pData, &agentEDU ) ;
             }
             else
             {
-               PD_LOG ( PDERROR, "Invalid database role" ) ;
-               rc = SDB_SYS ;
                continue ;
             }
-
-            if ( rc )
-            {
-               if ( rc == SDB_QUIESCED )
-               {
-                  // we cannot start EDU due to quiesced
-                  PD_LOG ( PDWARNING, "Reject new connection due to quiesced database" ) ;
-               }
-               else
-               {
-                  PD_LOG ( PDERROR, "Failed to start EDU agent" ) ;
-               }
-               // close remote connection if we can't create new thread
-               ossSocket newsock ( &s ) ;
-               newsock.close () ;
-               continue ;
-            }
-
-            // Now EDU is started and posted with the new socket, let's
-            // get back to wait for another request
-         } //while ( ! cb->isDisconnected() )
-         if ( SDB_OK != ( rc = eduMgr->waitEDU ( myEDUID )) )
-         {
-            goto error ;
          }
-      } // while ( retry <= PMD_TCPLISTENER_RETRY )
+
+         cb->incEventCount() ;
+         ++mondbcb->numConnects ;
+
+         // assign the socket to the arg
+         void *pData = NULL ;
+         *((SOCKET *) &pData) = s ;
+
+         // now we have a tcp socket for a new connection, let's get an agent
+         // Note the new new socket sent passing to startEDU
+         if ( SDB_ROLE_COORD != dbrole )
+         {
+            rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
+         }
+         else
+         {
+            rc = eduMgr->startEDU ( EDU_TYPE_COORDAGENT, pData, &agentEDU ) ;
+         }
+
+         if ( rc )
+         {
+            PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
+                    "Failed to start edu, rc: %d", rc ) ;
+
+            // close remote connection if we can't create new thread
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            continue ;
+         }
+         // Now EDU is started and posted with the new socket, let's
+         // get back to wait for another request
+      } //while ( ! cb->isDisconnected() )
+
+      if ( SDB_OK != ( rc = eduMgr->waitEDU ( cb ) ) )
+      {
+         goto error ;
+      }
+
    done :
       PD_TRACE_EXITRC ( SDB_PMDTCPLSTNENTPNT, rc );
       return rc;
@@ -187,8 +151,8 @@ namespace engine
          PD_LOG ( PDSEVERE, "Internal error" ) ;
          break ;
       }
-      if ( isLatched )
-         ossSocketBindListenMutexRelease() ;
       goto done ;
    }
+
 }
+

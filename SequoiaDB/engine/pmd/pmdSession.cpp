@@ -466,7 +466,7 @@ namespace engine
       else
       {
          MsgHeader *pAuthRes = NULL ;
-         shardCB *pShard = pmdGetKRCB()->getShardCB() ;
+         shardCB *pShard = sdbGetShardCB() ;
          BOOLEAN hasRetry = FALSE ;
 
          while ( TRUE )

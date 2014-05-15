@@ -37,7 +37,6 @@
 #include "pmdOptionsMgr.hpp"
 #include "pd.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include "pmdCommon.hpp"
 #include "msg.hpp"
 #include "msgCatalog.hpp"
@@ -46,8 +45,8 @@
 #include "pmdTrace.hpp"
 #include "ossIO.hpp"
 #include "ossVer.hpp"
+#include "dpsLogWrapper.hpp"
 
-#include "rtn.hpp"
 #include "rtnSortDef.hpp"
 #include "clsUtil.hpp"
 
@@ -113,7 +112,21 @@ namespace engine
 
       if ( PMD_CFG_DATA_BSON == _dataType )
       {
-         rc = rtnGetIntElement( _dataObj, pFieldName, value ) ;
+         BSONElement ele = _dataObj.getField( pFieldName ) ;
+         if ( ele.eoo() )
+         {
+            rc = SDB_FIELD_NOT_EXIST ;
+         }
+         else if ( !ele.isNumber() )
+         {
+            PD_LOG( PDERROR, "Field[%s] type[%d] is not number", pFieldName,
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+         }
+         else
+         {
+            value = (INT32)ele.numberInt() ;
+         }
       }
       else if ( PMD_CFG_DATA_CMD == _dataType )
       {
@@ -157,11 +170,20 @@ namespace engine
 
       if ( PMD_CFG_DATA_BSON == _dataType )
       {
-         const CHAR *tmpValue = NULL ;
-         rc = rtnGetStringElement( _dataObj, pFieldName, &tmpValue ) ;
-         if ( tmpValue )
+         BSONElement ele = _dataObj.getField( pFieldName ) ;
+         if ( ele.eoo() )
          {
-            ossStrncpy( pValue, tmpValue, len ) ;
+            rc = SDB_FIELD_NOT_EXIST ;
+         }
+         else if ( String != ele.type() )
+         {
+            PD_LOG( PDERROR, "Field[%s] type[%d] is not string", pFieldName,
+                    ele.type() ) ;
+            rc = SDB_INVALIDARG ;
+         }
+         else
+         {
+            ossStrncpy( pValue, ele.valuestr(), len ) ;
             pValue[ len - 1 ] = 0 ;
          }
       }
@@ -347,6 +369,9 @@ namespace engine
          goto restore ;
       }
       ++_changeID ;
+
+      // change notify
+      pmdGetKRCB()->configChangeNty() ;
 
    done:
       return rc ;
@@ -1221,7 +1246,7 @@ namespace engine
 
       if ( _traceOn && _traceBufSz != 0 )
       {
-         pmdGetKRCB()->getTraceCB()->start ( (UINT64)_traceBufSz, 0xFFFFFFFF ) ;
+         sdbGetPDTraceCB()->start ( (UINT64)_traceBufSz, 0xFFFFFFFF ) ;
       }
 
       rc = _mkdir() ;
@@ -1230,9 +1255,7 @@ namespace engine
          goto error ;
       }
 
-      // enforced all config
-      rc = setKrcb( pmdGetKRCB() ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to enforce all configs, rc: %d", rc ) ;
+      ossEnableMemDebug( _memDebugEnabled, _memDebugSize ) ;
 
    done:
       return rc ;
@@ -1570,82 +1593,6 @@ namespace engine
          ossDelete( conf ) ;
          opened = FALSE ;
       }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMGOPTMGR_SETKRCB, "_pmdOptionsMgr::setKrcb" )
-   INT32 _pmdOptionsMgr:: setKrcb( _SDB_KRCB *krcb )
-   {
-      SDB_ASSERT( NULL != krcb, "krcb should not be NULL" )
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMGOPTMGR_SETKRCB ) ;
-      krcb->enforceDBRole( pmdGetRoleEnum(this->_krcbRole ) );
-      krcb->enforceLogFileSz ( _logFileSz ) ;
-      krcb->enforceLogFileNum ( _logFileNum ) ;
-
-      _MsgRouteID id ;
-      id.columns.groupID = _groupID ;
-      id.columns.nodeID = _nodeID ;
-      id.columns.serviceID = 0 ;
-      {
-         CHAR host[OSS_MAX_HOSTNAME+1] = {0} ;
-         rc = ossSocket::getHostName( host, OSS_MAX_HOSTNAME ) ;
-         JUDGE_RC( rc )
-
-         krcb->enforceNodeInfo ( id, host ) ;
-         krcb->enforceReplAddr ( MSG_ROUTE_REPL_SERVICE, _replServiceName ) ;
-         krcb->enforceShardAddr ( MSG_ROUTE_SHARD_SERVCIE , _shardServiceName ) ;
-
-         //catalog-service
-         id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
-         krcb->enforceCatAddr( id, host, _catServiceName ) ;
-      }
-
-      {
-         UINT32 catGID = CATALOG_GROUPID ;
-         UINT16 catNID = CATA_NODE_ID_BEGIN ;
-         for ( UINT32 i = 0; i < CATA_NODE_MAX_NUM ; i++ )
-         {
-            if ( 0 == ossStrlen( _cat[i]._host ) )
-            {
-               break ;
-            }
-            id.columns.groupID = catGID ;
-            id.columns.nodeID = catNID++ ;
-            id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
-            krcb->enforceCataLogGrpAddrs( id, _cat[i]._host,
-                                          _cat[i]._service ) ;
-         }
-      }
-
-      if ( krcb->getDBRole() == SDB_ROLE_DATA
-         || krcb->getDBRole() == SDB_ROLE_STANDALONE )
-      {
-         krcb->getTransCB()->setTransSwitch( _transactionOn ) ;
-      }
-
-      ossMemDebugEnabled      = _memDebugEnabled ;
-      ossMemDebugSize         = _memDebugSize ;
-
-      krcb->getDPSCB()->setLogLocal( _dpslocal ) ;
-      krcb->getBPSCB()->setNumPreLoads( _numPreLoaders ) ;
-      krcb->getBPSCB()->setMaxPrefPool( _maxPrefPool ) ;
-      CLS_SHARING_BRK_TIME    = _sharingBreakTime ;
-      if ( g_startShiftTime >= 0 )
-      {
-         g_startShiftTime     = (INT32)_startShiftTime * OSS_ONE_SEC ;
-      }
-
-      if ( krcb->getReplCB() )
-      {
-         krcb->getReplCB()->getBucket()->enforceMaxReplSync( _maxReplSync ) ;
-         krcb->getReplCB()->syncMgr()->enforceSyncStrategy( _syncStrategy ) ;
-      }
-
-   done:
-      PD_TRACE_EXITRC ( SDB__PMGOPTMGR_SETKRCB, rc ) ;
-      return rc ;
-   error:
       goto done ;
    }
 

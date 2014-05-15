@@ -56,108 +56,70 @@ namespace engine
       pmdKRCB *krcb           = pmdGetKRCB() ;
       monDBCB *mondbcb        = krcb->getMonDBCB () ;
       pmdEDUMgr *eduMgr       = cb->getEDUMgr() ;
-
-      BOOLEAN isLatched       = FALSE ;
+      ossSocket *pListerner   = ( ossSocket* )pData ;
       EDUID agentEDU          = PMD_INVALID_EDUID ;
-
-      UINT16 port             = 0 ;
-      const CHAR *restService = pmdGetOptionCB()->getRestService() ;
 
       if ( SDB_OK != ( rc = eduMgr->activateEDU ( cb )) )
       {
          goto error ;
       }
 
-      rc = ossGetPort ( restService, port ) ;
-      if ( rc )
+      while ( !cb->isDisconnected() )
       {
-         PD_LOG ( PDERROR, "Failed to get port from service name: %s, rc = %d",
-                  restService, rc ) ;
-         goto error ;
-      }
-
-      PD_LOG ( PDEVENT, "Rest Service Listening on port %d\n", port ) ;
-
-      // create listen
-      {
-         ossSocketBindListenMutexGet() ;
-         isLatched = TRUE ;
-
-         ossSocket sock ( port ) ;
-         rc = sock.initSocket () ;
-         PD_RC_CHECK( rc, PDERROR, "Init rest service socket failed, rc: %d",
-                      rc ) ;
-
-         rc = sock.bind_listen () ;
-         PD_RC_CHECK( rc, PDERROR, "Bind rest service socket failed, rc: %d",
-                      rc ) ;
-
-         while ( !cb->isDisconnected() )
+         SOCKET s ;
+         rc = pListerner->accept ( &s, NULL, NULL ) ;
+         // if we don't get anything for a period of time, let's loop
+         if ( SDB_TIMEOUT == rc || SDB_TOO_MANY_OPEN_FD == rc  )
          {
-            SOCKET s ;
-            rc = sock.accept ( &s, NULL, NULL ) ;
-            if ( isLatched )
+            rc = SDB_OK ;
+            continue ;
+         }
+         // if we receive error due to database down, we finish
+         if ( rc && PMD_IS_DB_DOWN )
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+         else if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to accept rest socket, rc: %d",
+                     rc ) ;
+            if ( pListerner->isClosed() )
             {
-               ossSocketBindListenMutexRelease() ;
-               isLatched = FALSE ;
+               break ;
             }
-            // if we don't get anything for a period of time, let's loop
-            if ( SDB_TIMEOUT == rc )
+            else
             {
-               rc = SDB_OK ;
                continue ;
             }
-            // if we receive error due to database down, we finish
-            if ( rc && PMD_IS_DB_DOWN )
-            {
-               rc = SDB_OK ;
-               goto done ;
-            }
-            else if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to accept rest socket, rc: %d",
-                        rc ) ;
-               if ( sock.isClosed() )
-               {
-                  break ;
-               }
-               else
-               {
-                  continue ;
-               }
-            }
+         }
 
-            cb->incEventCount() ;
-            ++mondbcb->numConnects ;
+         cb->incEventCount() ;
+         ++mondbcb->numConnects ;
 
-            // assign the socket to the arg
-            void *pData = NULL ;
-            *((SOCKET *) &pData) = s ;
+         // assign the socket to the arg
+         void *pData = NULL ;
+         *((SOCKET *) &pData) = s ;
 
-            // now we have a tcp socket for a new connection, let's get an agent
-            // Note the new new socket sent passing to startEDU
-            rc = eduMgr->startEDU ( EDU_TYPE_RESTAGENT, pData, &agentEDU ) ;
+         // now we have a tcp socket for a new connection, let's get an agent
+         // Note the new new socket sent passing to startEDU
+         rc = eduMgr->startEDU ( EDU_TYPE_RESTAGENT, pData, &agentEDU ) ;
 
-            if ( rc )
-            {
-               PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
-                       "Failed to start edu, rc: %d", rc ) ;
+         if ( rc )
+         {
+            PD_LOG( ( rc == SDB_QUIESCED ? PDWARNING : PDERROR ),
+                    "Failed to start edu, rc: %d", rc ) ;
 
-               // close remote connection if we can't create new thread
-               ossSocket newsock ( &s ) ;
-               newsock.close () ;
-               continue ;
-            }
-         } //while ( ! cb->isDisconnected() )
-      }
+            // close remote connection if we can't create new thread
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            continue ;
+         }
+      } //while ( ! cb->isDisconnected() )
 
    done :
       return rc ;
    error :
-      if ( isLatched )
-      {
-         ossSocketBindListenMutexRelease() ;
-      }
       goto done ;
    }
 

@@ -1,6 +1,5 @@
 
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #include "netRouteAgent.hpp"
@@ -15,24 +14,21 @@ namespace engine
    {
       public:
          void handleTimeout( const UINT32 &millisec,
-                                     const UINT32 &id )
+                             const UINT32 &id )
          {
             return ;
          }
-   };
+   } ;
 
-// please add some comment about what is this thread doing
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCOORDNETWKENTPNT, "pmdCoordNetWorkEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCOORDNETWKENTPNT, "pmdCoordNetWorkEntryPoint" )
    INT32 pmdCoordNetWorkEntryPoint ( pmdEDUCB *cb, void *pData )
    {
-      PD_TRACE_ENTRY ( SDB_PMDCOORDNETWKENTPNT );
+      PD_TRACE_ENTRY ( SDB_PMDCOORDNETWKENTPNT ) ;
       pmdEDUMgr *pEduMgr = cb->getEDUMgr() ;
-      _netRouteAgent *pNetWork = pmdGetKRCB()->getCoordCB()->netWork() ;
+      _netRouteAgent *pNetWork = ( _netRouteAgent* )pData ;
       MsgRouteID coordRouteID ;
       coordTimeoutHandler timeHandler ;
       UINT32 timerid = 0 ;
-
-      PD_LOG ( PDINFO, "Runing coord-network..." ) ;
 
       INT32 rc = pEduMgr->activateEDU( cb ) ;
       PD_RC_CHECK( rc, PDERROR, "Active edu[%s] failed, rc: %d",
@@ -44,12 +40,14 @@ namespace engine
       rc = pNetWork->addTimer( 60000, &timeHandler, timerid ) ;
       PD_RC_CHECK( rc, PDERROR, "Add coord timer failed, rc: %d", rc ) ;
 
+      PD_LOG ( PDEVENT, "Runing coord-network..." ) ;
+
       pEduMgr->addIOService( pNetWork->ioservice() );
       pNetWork->run();
-      pNetWork->removeTimer( timerid );
+      pNetWork->removeTimer( timerid ) ;
       pEduMgr->deleteIOService( pNetWork->ioservice() );
 
-      PD_LOG ( PDINFO, "Stop coord-network" ) ;
+      PD_LOG ( PDEVENT, "Stop coord-network" ) ;
 
    done:
       PD_TRACE_EXIT ( SDB_PMDCOORDNETWKENTPNT );
@@ -57,5 +55,6 @@ namespace engine
    error:
       goto done ;
    }
+
 }
 

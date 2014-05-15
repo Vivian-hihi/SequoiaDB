@@ -60,6 +60,7 @@
 #include "rtnPageCleanerJob.hpp"
 #include "pmdCB.hpp"
 #include "omManager.hpp"
+#include "pmdController.hpp"
 
 using namespace std;
 using namespace bson;
@@ -115,6 +116,7 @@ namespace engine
       pmdEDUMgr *eduMgr        = krcb->getEDUMgr () ;
       pmdEDUCB *cb             = NULL ;
       SDB_START_TYPE startType = krcb->getStartType () ;
+
       if ( SDB_START_CRASH == startType )
       {
          PD_LOG ( PDEVENT, "Crash recovery is required, perform full database "
@@ -139,7 +141,9 @@ namespace engine
       }
    done :
       if ( cb )
+      {
          SDB_OSS_DEL cb ;
+      }
       PD_TRACE_EXITRC ( SDB_PMDREBLDDB, rc );
       return rc ;
    error :
@@ -153,7 +157,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDSYSINIT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
-      SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
 
       rtnPageCleanerJob *pcJob = NULL ;
       SDB_ROLE dbRole ;
@@ -174,24 +177,20 @@ namespace engine
       // catalog or auth
       dbRole = krcb->getDBRole () ;
       if ( SDB_ROLE_DATA       == dbRole ||
-           SDB_ROLE_AUTH       == dbRole ||
            SDB_ROLE_CATALOG    == dbRole ||
            SDB_ROLE_STANDALONE == dbRole ||
            SDB_ROLE_COORD      == dbRole ||
            SDB_ROLE_OM         == dbRole )
       {
-         // only data and standalone role load all collectionspaces
-         if ( SDB_ROLE_DATA       == dbRole ||
+         // 1. load all collectionspaces
+         if ( SDB_ROLE_DATA == dbRole ||
               SDB_ROLE_STANDALONE == dbRole )
          {
             rc = rtnLoadCollectionSpaces ( pmdGetOptionCB()->getDbPath(),
                                            pmdGetOptionCB()->getIndexPath(),
-                                           dmsCB ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to load collection spaces" ) ;
-               goto error ;
-            }
+                                           sdbGetDMSCB() ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to load collectionspaces, rc: %d",
+                         rc ) ;
          }
          else if ( SDB_ROLE_CATALOG == dbRole )
          {
@@ -212,53 +211,12 @@ namespace engine
          {
             sdbGetOMManager()->initialize() ;
          }
-
-         // initialize temp space
-         rc = dmsCB->getTempCB()->init () ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to initialize temp cb, rc:%d", rc ) ;
-            goto error ;
-         }
       }
       else
       {
          PD_LOG ( PDERROR, "Invalid db role: %d", dbRole ) ;
          rc = SDB_SYS ;
          goto error ;
-      }
-
-      if ( SDB_ROLE_COORD != dbRole )
-      {
-         rc = dpsCB->init( pmdGetOptionCB()->getReplLogPath(),
-                           pmdGetOptionCB()->getReplLogBuffSize() ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to initialize dps cb, rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-
-      if ( SDB_ROLE_COORD == dbRole )
-      {
-         rc = krcb->getFMPCB()->init() ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to init fmpCB:%d", rc ) ;
-            goto error ;
-         }
-      }
-
-      // initialize bsp
-      if ( SDB_ROLE_COORD != dbRole )
-      {
-         rc = krcb->getBPSCB()->init () ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to initialize bufferpool service, "
-                     "rc = %d", rc ) ;
-            goto error ;
-         }
       }
 
       if ( SDB_ROLE_STANDALONE == dbRole )
@@ -330,21 +288,6 @@ namespace engine
       goto done ;
    }
 
-   INT32 pmdSysExistance()
-   {
-      pmdKRCB *krcb = pmdGetKRCB() ;
-
-      if ( krcb->getClsCB() && krcb->getReplCB() )
-      {
-         // stop repl-sync
-         krcb->getReplCB()->setStatus( CLS_BS_CLOSED ) ;
-         // wait all repl-sync log processed
-         krcb->getReplCB()->getBucket()->waitEmpty() ;
-      }
-
-      return SDB_OK ;
-   }
-
 // based on millisecond
 #define PMD_START_WAIT_TIME         ( 300000 )
 
@@ -358,13 +301,6 @@ namespace engine
       EDUID      agentEDU = PMD_INVALID_EDUID ;
       SDB_ROLE   dbrole ;
       UINT32     startTimerCount = 0 ;
-
-      rc = krcb->init() ;
-      if ( rc )
-      {
-         ossPrintf( "Failed to init krcb, rc: %d"OSS_NEWLINE, rc ) ;
-         goto error ;
-      }
 
       // 1. read command line first
       rc = pmdResolveArguments ( argc, argv ) ;
@@ -402,115 +338,26 @@ namespace engine
                                  (PMD_ON_QUIT_FUNC)pmdOnQuit ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to enable trap, rc: %d", rc ) ;
 
+      // 5. register cbs
+      sdbGetPMDController()->registerCB( pmdGetDBRole() ) ;
+
+      // 6. inti krcb
+      rc = krcb->init() ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Failed to init krcb, rc: %d", rc ) ;
+         goto error ;
+      }
+
       // initialize variables
       rc = pmdSysInit () ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to initialize, rc: %d", rc ) ;
 
       dbrole = krcb->getDBRole () ;
 
-      eduMgr->startEDU( EDU_TYPE_SYNCCLOCK, NULL, &agentEDU ) ;
-      eduMgr->regSystemEDU( EDU_TYPE_SYNCCLOCK, agentEDU ) ;
-
-      if ( SDB_ROLE_COORD != dbrole )
-      {
-         // Then start log global writer thread
-         eduMgr->startEDU ( EDU_TYPE_LOGGW, NULL, &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_LOGGW, agentEDU ) ;
-         // Start log notify
-         eduMgr->startEDU( EDU_TYPE_LOGGNTY, NULL, &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_LOGGNTY, agentEDU ) ;
-      }
-
-      if ( SDB_ROLE_STANDALONE == dbrole || SDB_ROLE_DATA == dbrole )
-      {
-         eduMgr->startEDU ( EDU_TYPE_DPSROLLBACK_TASK, NULL, &agentEDU );
-         eduMgr->regSystemEDU ( EDU_TYPE_DPSROLLBACK_TASK, agentEDU );
-         rc = eduMgr->waitUntil( EDU_TYPE_DPSROLLBACK_TASK, PMD_EDU_WAITING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait rollback-task active failed, rc: %d", rc ) ;
-      }
-
-      // start cluster mgr
-      if ( SDB_ROLE_STANDALONE != dbrole && SDB_ROLE_COORD != dbrole &&
-           SDB_ROLE_OM != dbrole )
-      {
-         krcb->setBusinessOK( FALSE ) ;
-         // Then start cluster thread
-         eduMgr->startEDU ( EDU_TYPE_CLUSTER, NULL, &agentEDU ) ;
-         rc = eduMgr->waitUntil( EDU_TYPE_CLUSTER, PMD_EDU_WAITING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait CLSMGR active failed, rc: %d", rc ) ;
-
-         // Start cluster shard
-         rc = eduMgr->startEDU( EDU_TYPE_CLUSTERSHARD, NULL, &agentEDU ) ;
-         PD_RC_CHECK( rc, PDERROR, "Start CLSSHARD edu failed, rc: %d", rc ) ;
-      }
-
-      // start catalog service(after cluster mgr)
-      if ( SDB_ROLE_CATALOG == dbrole )
-      {
-         // Then start catalog main controller thread
-         eduMgr->startEDU ( EDU_TYPE_CATMAINCONTROLLER, NULL, &agentEDU ) ;
-         rc = eduMgr->waitUntil( EDU_TYPE_CATMAINCONTROLLER, PMD_EDU_WAITING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait CatMainController active failed, rc: %d", rc ) ;
-
-         // Then start catalog manager thread
-         eduMgr->startEDU ( EDU_TYPE_CATCATALOGUEMANAGER, NULL, &agentEDU ) ;
-         rc = eduMgr->waitUntil( EDU_TYPE_CATCATALOGUEMANAGER, PMD_EDU_WAITING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait CatalogMgr active failed, rc: %d", rc ) ;
-
-         // Then start node manager thread
-         eduMgr->startEDU ( EDU_TYPE_CATNODEMANAGER, NULL, &agentEDU ) ;
-         rc = eduMgr->waitUntil( EDU_TYPE_CATNODEMANAGER, PMD_EDU_WAITING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait CatNodeMgr active failed, rc: %d", rc ) ;
-      }
-
-      // start catalog network(after catalog service and before shard & repl network)
-      if ( SDB_ROLE_CATALOG == dbrole )
-      {
-         eduMgr->startEDU ( EDU_TYPE_CATNETWORK, NULL, &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_CATNETWORK, agentEDU ) ;
-         rc = eduMgr->waitUntil( EDU_TYPE_CATNETWORK, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait CATNET active failed, rc: %d", rc ) ;
-      }
-
-      // start shard & repl net work
-      if ( SDB_ROLE_STANDALONE != dbrole && SDB_ROLE_COORD != dbrole &&
-           SDB_ROLE_OM != dbrole )
-      {
-         rc = krcb->getClsCB()->startNet() ;
-         PD_RC_CHECK( rc, PDERROR, "Start shard or repl net failed, rc: %d", rc ) ;
-
-         // wait shard net work
-         rc = eduMgr->waitUntil( EDU_TYPE_SHARDR, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait SHARDNET active failed, rc: %d", rc ) ;
-
-         // wait repl net work
-         rc = eduMgr->waitUntil( EDU_TYPE_REPR, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait REPLNET active failed, rc: %d", rc ) ;
-      }
-
-      if  ( SDB_ROLE_COORD == dbrole )
-      {
-         // Then start coord network thread
-         eduMgr->startEDU ( EDU_TYPE_COORDNETWORK, NULL, &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_COORDNETWORK, agentEDU ) ;
-         rc = eduMgr->waitUntil( agentEDU , PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait CoordNet active failed, rc: %d", rc ) ;
-         pmdGetStartup().ok( TRUE );
-      }
-
-      // Then start tcp lisening thread and other helper threads
-      eduMgr->startEDU ( EDU_TYPE_TCPLISTENER, NULL, &agentEDU ) ;
-      eduMgr->regSystemEDU ( EDU_TYPE_TCPLISTENER, agentEDU ) ;
-
-      // wait until tcp listener starts
-      rc = eduMgr->waitUntil ( agentEDU, PMD_EDU_RUNNING ) ;
-      PD_RC_CHECK( rc, PDERROR, "Wait TCPListen active failed, rc: %d", rc ) ;
-
       // Then start http listening thread
       if ( SDB_ROLE_OM != dbrole )
       {
-         eduMgr->startEDU ( EDU_TYPE_HTTPLISTENER, NULL, &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_HTTPLISTENER, agentEDU ) ;
       }
       else
       {
@@ -575,7 +422,6 @@ namespace engine
 
    done :
       PMD_SHUTDOWN_DB( rc ) ;
-      pmdSysExistance () ;
       krcb->destroy () ;
       pmdGetStartup().final() ;
       PD_LOG ( PDEVENT, "Stop sequoiadb, exist code: %d",

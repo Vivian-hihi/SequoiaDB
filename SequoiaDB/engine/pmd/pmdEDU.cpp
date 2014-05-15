@@ -184,15 +184,15 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CLUSTERSHARD, TRUE,
                                 pmdClusterShardEntryPoint,
                                 "ClusterShard" ),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CLSLOGNTY, TRUE,
+                                pmdClsNtyEntryPoint,
+                                "ClusterLogNotify" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_REPR, TRUE,
                                 pmdRepREntryPoint,
                                 "ReplReader" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_LOGGW, TRUE,
                                 pmdLoggWEntryPoint,
                                 "LogWriter" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_LOGGNTY, TRUE,
-                                pmdLoggNtyEntryPoint,
-                                "LogNotify" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SHARDR, TRUE,
                                 pmdShardREntryPoint,
                                 "ShardReader" ),
@@ -274,8 +274,9 @@ namespace engine
    _beginLsn(0),
    _endLsn(0),
    _lsnNumber(0),
-   _curTransLSN(DPS_INVALID_LSN_OFFSET),
-   _curTransID(DPS_INVALID_TRANS_ID),
+   _relatedTransLSN( DPS_INVALID_LSN_OFFSET ),
+   _curTransLSN( DPS_INVALID_LSN_OFFSET ),
+   _curTransID( DPS_INVALID_TRANS_ID ),
    _pTransNodeMap(NULL),
    _isDoRollback(FALSE),
    _transRC(SDB_OK),
@@ -459,6 +460,7 @@ namespace engine
    void _pmdEDUCB::clearTransInfo()
    {
       _curTransID = DPS_INVALID_TRANS_ID ;
+      _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
       _curTransLSN = DPS_INVALID_LSN_OFFSET ;
       dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
       if ( pTransCB )
@@ -627,27 +629,6 @@ namespace engine
       }
    }
 
-
-   void _pmdEDUCB::setTransID( DPS_TRANS_ID transID )
-   {
-      _curTransID = transID;
-   }
-
-   DPS_TRANS_ID _pmdEDUCB::getTransID()
-   {
-      return _curTransID;
-   }
-
-   void _pmdEDUCB::setCurTransLsn( DPS_LSN_OFFSET curLsn )
-   {
-      _curTransLSN = curLsn;
-   }
-
-   DPS_LSN_OFFSET _pmdEDUCB::getCurTransLsn()
-   {
-      return _curTransLSN;
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
    dpsTransCBLockInfo *_pmdEDUCB::getTransLock( const dpsTransLockId &lockId )
    {
@@ -783,26 +764,6 @@ namespace engine
          return TRUE;
       }
       return FALSE;
-   }
-
-   void _pmdEDUCB::startRollback()
-   {
-      _isDoRollback = TRUE;
-   }
-
-   void _pmdEDUCB::stopRollback()
-   {
-      _isDoRollback = FALSE;
-   }
-
-   void _pmdEDUCB::setTransRC( INT32 rc )
-   {
-      _transRC = rc ;
-   }
-
-   INT32 _pmdEDUCB::getTransRC()
-   {
-      return _transRC ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCCOMPBUF, "_pmdEDUCB::reallocCompressionBuffer" )
@@ -1303,6 +1264,9 @@ namespace engine
       const UINT32 syncClockInterval = 10 ; // 10ms
       ossTick tmp ;
       pmdKRCB *pKrcb = pmdGetKRCB() ;
+
+      pKrcb->getEDUMgr()->activateEDU( cb ) ;
+
       while ( !cb->isDisconnected() )
       {
          pKrcb->syncCurTime() ;

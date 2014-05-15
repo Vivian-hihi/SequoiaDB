@@ -230,18 +230,7 @@ namespace engine
                                          BSONObj **ppErrorObj )
    {
       INT32 rc                 = SDB_OK ;
-
-      do {
-         if ( gPDTraceCB && gPDTraceCB->_traceStarted.compare(TRUE) )
-         {
-            pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;
-            ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;
-            pdTraceFunc ( SDB_PMDPROCAGENTREQ, PD_TRACE_RECORD_FLAG_ENTRY,
-                          __FILE__, __LINE__, &argTuple[0] ) ;
-         }
-      } while ( FALSE );
-
-      //PD_TRACE_ENTRY ( SDB_PMDPROCAGENTREQ );
+      PD_TRACE_ENTRY ( SDB_PMDPROCAGENTREQ ) ;
       UINT64 requestID         = 0 ;
       SINT32 opCode            = 0 ;
       UINT32 probe             = 0 ;
@@ -901,7 +890,6 @@ namespace engine
 
       if ( SDB_ROLE_STANDALONE == dbrole ||
            SDB_ROLE_CATALOG == dbrole ||
-           SDB_ROLE_AUTH == dbrole ||
            SDB_ROLE_DATA == dbrole ||
            SDB_COORD_UNKNOWN_OP_REQ == rc )
       {
@@ -1233,18 +1221,7 @@ namespace engine
       }
 
       pSession->attachOut () ;
-      if ( SDB_ROLE_DATA == krcb->getDBRole() )
-      {
-         if ( krcb->getReplCB()->primaryIsMe ())
-         {
-            INT32 rcTmp = SDB_OK ;
-            rcTmp = rtnTransRollback( cb, krcb->getDPSCB() );
-            if ( rcTmp)
-            {
-               PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
-            }
-         }
-      }
+
       PD_TRACE_EXIT ( SDB_PMDSHAREAGENTENTPNT );
       return SDB_OK ;
    }
@@ -1373,7 +1350,7 @@ namespace engine
       }
       else if ( SDB_ROLE_COORD != role )
       {
-         shdCB = pKrcb->getShardCB() ;
+         shdCB = sdbGetShardCB() ;
          rc = shdCB->syncSend( (MsgHeader *)pBuffer,
                                CATALOG_GROUPID,
                                TRUE,
@@ -1701,7 +1678,6 @@ namespace engine
 
          if ( SDB_ROLE_STANDALONE == dbrole ||
               SDB_ROLE_CATALOG == dbrole ||
-              SDB_ROLE_AUTH == dbrole ||
               SDB_ROLE_DATA == dbrole ||
               SDB_COORD_UNKNOWN_OP_REQ == rc )
          {

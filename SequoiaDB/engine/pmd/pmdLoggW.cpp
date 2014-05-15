@@ -55,7 +55,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDLOGGWENTPNT );
       EDUID myEDUID = cb->getID () ;
       pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
-      SDB_DPSCB *dpsCb = pmdGetKRCB()->getDPSCB();
+      SDB_DPSCB *dpsCb = ( SDB_DPSCB* )pData ;
       rc = eduMgr->activateEDU ( myEDUID ) ;
       if ( rc )
       {
@@ -93,43 +93,6 @@ namespace engine
       default :
          PD_LOG ( PDSEVERE, "Internal error, rc = %d", rc ) ;
       }
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOGGWNTY, "pmdLoggNtyEntryPoint" )
-   INT32 pmdLoggNtyEntryPoint( pmdEDUCB * cb, void * arg )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDLOGGWNTY );
-      dpsLSNInfoEx lsnInfo ;
-      EDUID myEDUID = cb->getID () ;
-      pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
-      SDB_DPSCB *dpsCb = pmdGetKRCB()->getDPSCB() ;
-      ossQueue< dpsLSNInfoEx > *pNtyQue = dpsCb->getLogMgr()->getNtyQue() ;
-      replCB *replCB = pmdGetKRCB()->getReplCB() ;
-      rc = eduMgr->activateEDU ( myEDUID ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to activate EDU" ) ;
-         goto error ;
-      }
-
-      // just sit here do nothing at the moment
-      while ( !cb->isDisconnected() )
-      {
-         if ( !pNtyQue->timed_wait_and_pop( lsnInfo, OSS_ONE_SEC ) )
-         {
-            continue ;
-         }
-         cb->incEventCount() ;
-         replCB->notify2Session( lsnInfo._clLID, lsnInfo._clLID,
-                                 lsnInfo._extLID, lsnInfo._offset ) ;
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_PMDLOGGWNTY, rc );
-      return rc;
-   error :
       goto done ;
    }
 

@@ -2,7 +2,6 @@
 #include "core.hpp"
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include "pd.hpp"
 #include "catNodeManager.hpp"
 #include "catDef.hpp"
@@ -12,20 +11,23 @@
 namespace engine
 {
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCATNODEMGRENTPNT, "pmdCatNodeManagerEntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCATNODEMGRENTPNT, "pmdCatNodeManagerEntryPoint" )
    INT32 pmdCatNodeManagerEntryPoint( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_PMDCATNODEMGRENTPNT );
       pmdEDUMgr *eduMgr   = pmdGetKRCB()->getEDUMgr();
-      catNodeManager nodeMgr;
-      rc = nodeMgr.init( cb );
-      if ( rc != SDB_OK )
+      catNodeManager* pNodeMgr = ( catNodeManager* )pData ;
+
+      pNodeMgr->attachCB( cb ) ;
+
+      rc = eduMgr->activateEDU( cb ) ;
+      if ( SDB_OK != rc )
       {
-         PD_LOG( PDEVENT,
-                     "Cat-node-manager init failed(rc = %d)", rc );
-         return rc;
+         PD_LOG ( PDERROR, "Failed to active EDU" ) ;
+         goto error ;
       }
+
       eduMgr->regSystemEDU ( EDU_TYPE_CATNODEMANAGER, cb->getID()) ;
 
       //loop:process event
@@ -41,7 +43,7 @@ namespace engine
                break;
             }
 
-            rc = nodeMgr.processEvent( event );
+            rc = pNodeMgr->processEvent( event );
             if ( event._Data != NULL )
             {
                EvntCatalogInternalEvent *pEvent =
@@ -55,7 +57,11 @@ namespace engine
          }
       }
 
+   done:
+      pNodeMgr->detachCB( cb ) ;
       PD_TRACE_EXITRC ( SDB_PMDCATNODEMGRENTPNT, rc );
-      return rc;
+      return rc ;
+   error:
+      goto done ;
    }
 }

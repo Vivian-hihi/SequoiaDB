@@ -58,8 +58,6 @@ namespace engine
          return SDB_ROLE_DATA;
       else if ( 0 == ossStrcmp( role, SDB_ROLE_CATALOG_STR ) )
          return SDB_ROLE_CATALOG;
-      else if ( 0 == ossStrcmp( role, SDB_ROLE_AUTH_STR ) )
-         return SDB_ROLE_AUTH;
       else if ( 0 == ossStrcmp( role, SDB_ROLE_COORD_STR ) )
          return SDB_ROLE_COORD;
       else if ( 0 == ossStrcmp( role, SDB_ROLE_OM_STR ) )
@@ -78,8 +76,6 @@ namespace engine
             return SDB_ROLE_COORD_STR ;
          case SDB_ROLE_CATALOG :
             return SDB_ROLE_CATALOG_STR ;
-         case SDB_ROLE_AUTH :
-            return SDB_ROLE_AUTH_STR ;
          case SDB_ROLE_STANDALONE :
             return SDB_ROLE_STANDALONE_STR ;
          case SDB_ROLE_OM :

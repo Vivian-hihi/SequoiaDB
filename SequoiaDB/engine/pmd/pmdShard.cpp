@@ -1,28 +1,26 @@
 
 #include "core.hpp"
 #include "pd.hpp"
-#include "pmd.hpp"
-#include "pmdCB.hpp"
+#include "pmdEDUMgr.hpp"
+#include "netRouteAgent.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSHARDRENTPNT, "pmdShardREntryPoint" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSHARDRENTPNT, "pmdShardREntryPoint" )
    INT32 pmdShardREntryPoint ( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_PMDSHARDRENTPNT );
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr () ;
-      _clsMgr *pClsMgr = (_clsMgr *)pData;
+      _netRouteAgent *pRouteAgent = (_netRouteAgent *)pData;
 
-      pClsMgr->attachIn() ;
-
-      rc = cb->getEDUMgr()->activateEDU( cb->getID() ) ;
+      rc = pEDUMgr->activateEDU( cb ) ;
       if ( SDB_OK != rc )
       {
-         PD_LOG ( PDERROR, "Failed to active EDU[type:%d,ID:%lld]", cb->getType() ,
-                  cb->getID() ) ;
+         PD_LOG ( PDERROR, "Failed to active EDU[type:%d,ID:%lld]",
+                  cb->getType(), cb->getID() ) ;
          goto error ;
       }
 
@@ -30,9 +28,9 @@ namespace engine
       PD_LOG ( PDEVENT, "Run sharding listen..." ) ;
       try
       {
-         pEDUMgr->addIOService( pClsMgr->getShardRouteAgent()->ioservice() ) ;
-         pClsMgr->getShardRouteAgent()->run() ;
-         pEDUMgr->deleteIOService ( pClsMgr->getShardRouteAgent()->ioservice() ) ;
+         pEDUMgr->addIOService( pRouteAgent->ioservice() ) ;
+         pRouteAgent->run() ;
+         pEDUMgr->deleteIOService ( pRouteAgent->ioservice() ) ;
       }
       catch ( std::exception &e )
       {
@@ -44,7 +42,6 @@ namespace engine
       PD_LOG ( PDEVENT, "Stop sharding listen" ) ;
 
    done:
-      pClsMgr->attachOut() ;
       PD_TRACE_EXITRC ( SDB_PMDSHARDRENTPNT, rc );
       return rc;
    error:

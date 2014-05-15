@@ -30,10 +30,9 @@
 
 *******************************************************************************/
 
-#include "pmdEDU.hpp"
-#include "pmd.hpp"
-#include "pmdCB.hpp"
-#include "ossUtil.hpp"
+#include "pmdEDUMgr.hpp"
+#include "clsMgr.hpp"
+#include "pd.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -43,33 +42,19 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCLSENTPNT, "pmdClusterEntryPoint" )
    INT32 pmdClusterEntryPoint ( pmdEDUCB *cb, void *pData )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDCLSENTPNT );
 
-      pmdKRCB *pKRCB = pmdGetKRCB() ;
-      clsCB *pClsCB = pKRCB->getClsCB() ;
+      clsCB *pClsCB = ( clsCB* )pData ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr() ;
       pmdEDUEvent eventData;
+
+      pClsCB->attachMainCB( cb ) ;
 
       rc = pEDUMgr->activateEDU( cb->getID() ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG ( PDERROR, "Failed to active EDU" ) ;
-         goto error ;
-      }
-
-      pEDUMgr->regSystemEDU ( cb->getType(), cb->getID() ) ;
-
-      rc = pClsCB->initialize ( cb ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to initialize clsCB" ) ;
-         goto error ;
-      }
-      rc = pClsCB->active () ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to active clsCB" ) ;
          goto error ;
       }
 
@@ -104,7 +89,7 @@ namespace engine
       }
 
    done:
-      pClsCB->final() ;
+      pClsCB->detachMainCB( cb ) ;
       PD_TRACE_EXITRC ( SDB_PMDCLSENTPNT, rc );
       return rc ;
    error:
@@ -115,10 +100,12 @@ namespace engine
    {
       INT32 rc = SDB_OK;
 
-      clsCB *pClsCB = pmdGetKRCB()->getClsCB() ;
+      clsCB *pClsCB = ( clsCB* )pData ;
       shardCB *pShdCB = pClsCB->getShardCB() ;
       pmdEDUMgr *pEDUMgr = cb->getEDUMgr() ;
       pmdEDUEvent eventData;
+
+      pClsCB->attachMainCB( cb ) ;
 
       rc = pEDUMgr->activateEDU( cb->getID() ) ;
       if ( SDB_OK != rc )
@@ -126,11 +113,6 @@ namespace engine
          PD_LOG ( PDERROR, "Failed to active EDU" ) ;
          goto error ;
       }
-
-      pEDUMgr->regSystemEDU ( cb->getType(), cb->getID() ) ;
-
-      // attach edu
-      pClsCB->getShardMsgHandle()->attachShardCB( cb ) ;
 
       //Wait event msg and dispatch msg
       while ( !cb->isDisconnected() )
@@ -163,9 +145,43 @@ namespace engine
       }
 
    done:
-      pClsCB->getShardMsgHandle()->detachShardCB() ;
+      pClsCB->detachMainCB( cb ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   INT32 pmdClsNtyEntryPoint( pmdEDUCB * cb, void * arg )
+   {
+      INT32 rc = SDB_OK ;
+      clsLSNNtyInfo lsnInfo ;
+      EDUID myEDUID = cb->getID () ;
+      pmdEDUMgr * eduMgr = cb->getEDUMgr() ;
+      replCB *pReplCb = ( replCB* )arg ;
+      ossQueue< clsLSNNtyInfo > *pNtyQue = pReplCb->getNtyQue() ;
+
+      rc = eduMgr->activateEDU ( myEDUID ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to activate EDU" ) ;
+         goto error ;
+      }
+
+      // just sit here do nothing at the moment
+      while ( !cb->isDisconnected() )
+      {
+         if ( !pNtyQue->timed_wait_and_pop( lsnInfo, OSS_ONE_SEC ) )
+         {
+            continue ;
+         }
+         cb->incEventCount() ;
+         pReplCb->notify2Session( lsnInfo._clLID, lsnInfo._clLID,
+                                  lsnInfo._extLID, lsnInfo._offset ) ;
+      }
+
+   done :
+      return rc ;
+   error :
       goto done ;
    }
 
