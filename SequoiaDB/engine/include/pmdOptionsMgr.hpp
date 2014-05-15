@@ -44,6 +44,7 @@
 #include "pmdDef.hpp"
 #include "ossSocket.hpp"
 #include "utilParam.hpp"
+#include "sdbInterface.hpp"
 
 #include <string>
 #include <iostream>
@@ -138,6 +139,9 @@ namespace engine
          _pmdCfgRecord () ;
          virtual ~_pmdCfgRecord () ;
 
+         void  setConfigHandler( IConfigHandle *pConfigHandler ) ;
+         IConfigHandle* getConfigHandler() const ;
+
          INT32 getResult () const { return _result ; }
          void  resetResult () { _result = SDB_OK ; }
 
@@ -202,6 +206,7 @@ namespace engine
          std::string                         _curFieldName ;
          INT32                               _result ;
          UINT32                              _changeID ;
+         IConfigHandle                       *_pConfigHander ;
 
    } ;
    typedef _pmdCfgRecord pmdCfgRecord ;
@@ -344,8 +349,6 @@ namespace engine
          void setCatAddr( const CHAR *host, const CHAR *service ) ;
 
          OSS_INLINE UINT32 catNum() const { return CATA_NODE_MAX_NUM ; }
-         OSS_INLINE UINT32 groupID() const { return _groupID ; }
-         OSS_INLINE UINT16 nodeID() const { return _nodeID ; }
          OSS_INLINE UINT32 getReplLogFileSz () const { return _logFileSz ; }
          OSS_INLINE UINT32 getReplLogFileNum () const { return _logFileNum ; }
          OSS_INLINE UINT32 numPreLoaders () const { return _numPreLoaders ; }
@@ -415,9 +418,6 @@ namespace engine
          CHAR        _krcbCatFile[ OSS_MAX_PATHSIZE + 1 ] ;
          pmdAddrPair _cat[ CATA_NODE_MAX_NUM ] ;
          UINT16      _krcbSvcPort ;
-
-         UINT32      _groupID ;
-         UINT16      _nodeID ;
 
    } ;
 
