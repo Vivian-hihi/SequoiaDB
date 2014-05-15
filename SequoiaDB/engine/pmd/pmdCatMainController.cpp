@@ -41,7 +41,8 @@ namespace engine
          {
             if (PMD_EDU_EVENT_TERM == event._eventType)
             {
-               PD_LOG ( PDEVENT, "EDU[%lld] is terminated", cb->getID() ) ;
+               PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
+                        getEDUName( cb->getType() ) ) ;
                rc = SDB_APP_FORCED ;
                break;
             }

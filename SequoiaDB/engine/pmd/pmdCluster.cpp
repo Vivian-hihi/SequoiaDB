@@ -65,7 +65,8 @@ namespace engine
          {
             if ( PMD_EDU_EVENT_TERM == eventData._eventType )
             {
-               PD_LOG ( PDEVENT, "EDU[%lld] is terminated", cb->getID() ) ;
+               PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
+                        getEDUName( cb->getType() ) ) ;
             }
             //Dispatch event msg to shardMgr
             else if ( PMD_EDU_EVENT_MSG == eventData._eventType )
@@ -121,7 +122,8 @@ namespace engine
          {
             if ( PMD_EDU_EVENT_TERM == eventData._eventType )
             {
-               PD_LOG ( PDEVENT, "EDU[%lld] is terminated", cb->getID() ) ;
+               PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
+                        getEDUName( cb->getType() ) ) ;
             }
             //Dispatch event msg to shardMgr
             else if ( PMD_EDU_EVENT_MSG == eventData._eventType )

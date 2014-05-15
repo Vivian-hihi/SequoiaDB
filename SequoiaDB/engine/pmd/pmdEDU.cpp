@@ -1010,8 +1010,8 @@ namespace engine
       cb->setTID ( ossGetCurrentThreadID() ) ;
       eduMgr->setEDU ( ossGetCurrentThreadID(), myEDUID ) ;
 
-      PD_LOG ( PDEVENT, "Start EDU %lld for thread id %d", myEDUID, 
-               ossGetCurrentThreadID() ) ;
+      PD_LOG ( PDEVENT, "Start thread[%d] for EDU[ID:%lld, type:%s]",
+               ossGetCurrentThreadID(), myEDUID, getEDUName( type ) ) ;
 
       while ( !eduDestroyed )
       {
@@ -1033,7 +1033,6 @@ namespace engine
                // the status of edu cannot be RUNNING
                // then in either CREATING/IDLE/WAITING status
                // it should be safe for us to destroy it
-               PD_LOG ( PDEVENT, "EDU %lld is forced", myEDUID ) ;
                isForced = TRUE ;
             }
             else
@@ -1062,8 +1061,6 @@ namespace engine
                // initial monAppCB
                cb->initMonAppCB() ;
 
-               PD_LOG ( PDDEBUG, "Start edu[EDUID:%lld, TID:%d]", myEDUID,
-                        cb->getTID() ) ;
                rc = entryFunc ( cb, event._Data ) ;
             }
 
@@ -1071,14 +1068,15 @@ namespace engine
             {
                if ( isSystemEDU( cb->getType() ) )
                {
-                  PD_LOG ( PDSEVERE, "System EDU[ID:%lld, type:%s] exits with %d",
-                           cb->getID(), getEDUName(cb->getType()), rc ) ;
+                  PD_LOG ( PDSEVERE, "System EDU[ID:%lld, type:%s] exit "
+                           "with %d", cb->getID(), getEDUName(cb->getType()),
+                           rc ) ;
                   PMD_SHUTDOWN_DB( rc ) ;
                }
                else if ( SDB_OK != rc )
                {
-                  PD_LOG ( PDWARNING, "EDU[ID:%lld, type:%s, Name:%s] exits with %d",
-                           cb->getID(), getEDUName(cb->getType()),
+                  PD_LOG ( PDWARNING, "EDU[ID:%lld, type:%s, Name:%s] exit "
+                           "with %d", cb->getID(), getEDUName(cb->getType()),
                            cb->getName(), rc ) ;
                }
             }
@@ -1089,15 +1087,14 @@ namespace engine
          else if ( !isForced && PMD_EDU_EVENT_TERM != event._eventType )
          {
             //the event is error
-            PD_LOG ( PDERROR, "Recieve the error event[type=%d] in EDU[ID:%lld, type:%s]", 
-                     event._eventType, myEDUID, getEDUName(cb->getType()) ) ;
+            PD_LOG ( PDERROR, "Recieve the error event[type=%d] in "
+                     "EDU[ID:%lld, type:%s]", event._eventType, myEDUID,
+                     getEDUName(cb->getType()) ) ;
             rc = SDB_SYS ;
          }
          else if ( !isForced && PMD_EDU_EVENT_TERM == event._eventType &&
                    cb->isForced () )
          {
-            PD_LOG ( PDEVENT, "EDU[ID:%lld, type:%s] is forced", myEDUID,
-                     getEDUName(cb->getType()) ) ;
             isForced = TRUE ;
          }
 

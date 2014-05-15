@@ -1089,7 +1089,8 @@ namespace engine
 
             if ( PMD_EDU_EVENT_TERM == event._eventType )
             {
-               PD_LOG ( PDEVENT, "EDU[%lld] is terminated", cb->getID() ) ;
+               PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
+                        getEDUName( cb->getType() ) ) ;
             }
             //Dispatch event msg to session
             else if ( PMD_EDU_EVENT_MSG == event._eventType )
@@ -1168,7 +1169,8 @@ namespace engine
          {
             if ( PMD_EDU_EVENT_TERM == event._eventType )
             {
-               PD_LOG ( PDEVENT, "EDU[%lld] is terminated", cb->getID() ) ;
+               PD_LOG ( PDDEBUG, "EDU[%lld, %s] is terminated", cb->getID(),
+                        getEDUName( cb->getType() ) ) ;
             }
             //Dispatch event msg to session
             else if ( PMD_EDU_EVENT_MSG == event._eventType )
