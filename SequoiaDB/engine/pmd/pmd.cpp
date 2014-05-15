@@ -180,9 +180,9 @@ namespace engine
       IControlBlock *pCB = NULL ;
 
       // Deactive all registered cbs
-      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      for ( index = SDB_CB_MAX ; index > 0 ; --index )
       {
-         pCB = _arrayCBs[ index ] ;
+         pCB = _arrayCBs[ index - 1 ] ;
          if ( !pCB )
          {
             continue ;
@@ -198,9 +198,9 @@ namespace engine
       _eduMgr.reset () ;
 
       // Fini all registered cbs
-      for ( index = 0 ; index < SDB_CB_MAX ; ++index )
+      for ( index = SDB_CB_MAX ; index > 0 ; --index )
       {
-         pCB = _arrayCBs[ index ] ;
+         pCB = _arrayCBs[ index - 1 ] ;
          if ( !pCB )
          {
             continue ;

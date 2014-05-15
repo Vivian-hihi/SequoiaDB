@@ -107,6 +107,25 @@ namespace engine
       PMD_SHUTDOWN_DB( SDB_INTERRUPT ) ;
    }
 
+   static INT32 _pmdSystemInit()
+   {
+      INT32 rc = SDB_OK ;
+
+      //analysis the start type
+      rc = pmdGetStartup().init() ;
+      PD_RC_CHECK( rc, PDERROR, "Start up check failed[rc:%d]", rc ) ;
+
+      // Init qgm strategy table
+      rc = getQgmStrategyTable()->init() ;
+      PD_RC_CHECK( rc, PDERROR, "Init qgm strategy table failed, rc: %d",
+                   rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDREBLDDB, "pmdRebuildDB" )
    static INT32 pmdRebuildDB ()
    {
@@ -160,18 +179,6 @@ namespace engine
 
       rtnPageCleanerJob *pcJob = NULL ;
       SDB_ROLE dbRole ;
-
-      //analysis the start type
-      rc = pmdGetStartup().init() ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "start up check failed[rc:%d]", rc ) ;
-
-      rc = getQgmStrategyTable()->init() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "Init qgm strategy table failed, rc: %d", rc ) ;
-         goto error ;
-      }
 
       // check the database role, we load storage units when the role is data,
       // catalog or auth
@@ -257,6 +264,7 @@ namespace engine
             rc = SDB_OK ;
          }
       }
+
    done :
       PD_TRACE_EXITRC ( SDB_PMDSYSINIT, rc );
       return rc ;
@@ -341,7 +349,14 @@ namespace engine
       // 5. register cbs
       sdbGetPMDController()->registerCB( pmdGetDBRole() ) ;
 
-      // 6. inti krcb
+      // 6. system init
+      rc = _pmdSystemInit() ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      // 7. inti krcb
       rc = krcb->init() ;
       if ( rc )
       {
@@ -363,9 +378,10 @@ namespace engine
       {
          eduMgr->startEDU ( EDU_TYPE_RESTLISTENER, NULL, &agentEDU ) ;
          eduMgr->regSystemEDU ( EDU_TYPE_RESTLISTENER, agentEDU ) ;
+         rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
+         PD_RC_CHECK( rc, PDERROR, "Wait HTTPListen active failed, rc: %d",
+                      rc ) ;
       }
-      rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
-      PD_RC_CHECK( rc, PDERROR, "Wait HTTPListen active failed, rc: %d", rc ) ;
 
       // wait until business is ok
       while ( PMD_IS_DB_UP && startTimerCount < PMD_START_WAIT_TIME &&
@@ -424,7 +440,7 @@ namespace engine
       PMD_SHUTDOWN_DB( rc ) ;
       krcb->destroy () ;
       pmdGetStartup().final() ;
-      PD_LOG ( PDEVENT, "Stop sequoiadb, exist code: %d",
+      PD_LOG ( PDEVENT, "Stop sequoiadb, exit code: %d",
                krcb->getExitCode() ) ;
       PD_TRACE_EXITRC ( SDB_PMDMSTTHRDMAIN, rc );
       return rc ;
