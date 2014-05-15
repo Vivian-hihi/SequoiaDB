@@ -127,7 +127,7 @@ namespace engine
             }
             else if ( 'H' == source[index] || 'h' == source[index] )
             {
-               destStr += _pClsCB->getHostName() ;
+               destStr += krcb->getHostName() ;
             }
             else if ( 'S' == source[index] || 's' == source[index] )
             {
@@ -553,7 +553,7 @@ namespace engine
       _metaHeader._maxDataFileSize     = (UINT64)maxDataFileSize << 20 ;
       ossStrncpy( _metaHeader._groupName, krcb->getGroupName(),
                   BAR_BACKUP_GROUPNAME_LEN - 1 ) ;
-      ossStrncpy( _metaHeader._hostName, _pClsCB->getHostName(),
+      ossStrncpy( _metaHeader._hostName, krcb->getHostName(),
                   BAR_BACKUP_HOSTNAME_LEN - 1 ) ;
       ossStrncpy( _metaHeader._svcName, pmdGetOptionCB()->getServiceAddr(),
                   BAR_BACKUP_SVCNAME_LEN - 1 ) ;
