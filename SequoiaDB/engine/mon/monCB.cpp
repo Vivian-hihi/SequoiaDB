@@ -70,12 +70,10 @@ namespace engine
 
       pmdKRCB *pKrcb = pmdGetKRCB() ;
       SDB_ROLE role = pKrcb->getDBRole() ;
-      if ( ( SDB_ROLE_DATA == role || SDB_ROLE_CATALOG == role )
-         && pKrcb->getClsCB () && pKrcb->getShardCB()
-         && pKrcb->getReplCB() )
+      if ( SDB_ROLE_DATA == role || SDB_ROLE_CATALOG == role )
       {
-         pKrcb->getShardCB()->resetMon() ;
-         pKrcb->getReplCB()->resetMon() ;
+         sdbGetShardCB()->resetMon() ;
+         sdbGetReplCB()->resetMon() ;
       }
    }
 

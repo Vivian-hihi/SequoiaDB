@@ -161,9 +161,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_MONAPPENDSYSTEMINFO ) ;
 
       pmdKRCB *krcb     = pmdGetKRCB() ;
-      replCB *pReplcb   = krcb->getReplCB() ;
+      replCB *pReplcb   = sdbGetReplCB() ;
       SDB_DPSCB *dpscb  = krcb->getDPSCB() ;
-      shardCB *pShardCB = krcb->getShardCB() ;
+      shardCB *pShardCB = sdbGetShardCB() ;
 
       CHAR hostName [ OSS_MAX_HOSTNAME + 1 ]             = {0} ;
       const CHAR *serviceName       = pmdGetOptionCB()->getServiceAddr() ;
@@ -1360,7 +1360,7 @@ namespace engine
       {
          BSONObj obj ;
          BSONObjBuilder builder ;
-         pdTraceCB *traceCB = pmdGetKRCB()->getTraceCB() ;
+         pdTraceCB *traceCB = sdbGetPDTraceCB() ;
          BOOLEAN traceStarted = traceCB->_traceStarted.peek() ;
          builder.appendBool ( FIELD_NAME_TRACESTARTED, traceStarted ) ;
          if ( traceStarted )
@@ -1624,11 +1624,11 @@ namespace engine
          if ( SDB_ROLE_DATA == role
             || SDB_ROLE_CATALOG == role )
          {
-            shardCB *pShardCB = pKrcb->getShardCB() ;
+            shardCB *pShardCB = sdbGetShardCB() ;
             ob.append( FIELD_NAME_SHARD_NETIN, pShardCB->netIn() ) ;
             ob.append( FIELD_NAME_SHARD_NETOUT, pShardCB->netOut() ) ;
 
-            replCB *pReplCB = pKrcb->getReplCB() ;
+            replCB *pReplCB = sdbGetReplCB() ;
             ob.append( FIELD_NAME_REPL_NETIN, pReplCB->netIn() ) ;
             ob.append( FIELD_NAME_REPL_NETOUT, pReplCB->netOut() ) ;
          }
