@@ -185,6 +185,10 @@ static SdbExecState *deserializeSdbExecState(List *sdbExecStateList);
 static int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum, 
       Oid columnType, INT32 columnTypeMod);
 
+static void sdbAppendConstantValue(sdbbson *bsonObj, const char *keyName, 
+      Const *constant);
+
+
 static UINT64 sdbCreateBsonRecordAddr();
 static sdbbson* sdbBsonRecordValue(UINT64 id_addr);
 
@@ -194,6 +198,8 @@ static bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson,
       sdbbson *newBson);
 
 static UINT64 utcMsecsToLocal(UINT64 utcMsecs);
+static UINT64 LocalUsecsToUte(UINT64 localUsecs);
+
 
 
 int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
@@ -666,10 +672,14 @@ int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
       
       case DATEOID :
       {
+         /* this is local time */
          Datum valueDatum_tmp = DirectFunctionCall1(date_timestamp, valueDatum);
          Timestamp valueTimestamp = DatumGetTimestamp(valueDatum_tmp);
          INT64 valueMicroSecs     = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
-         INT64 valueMilliSecs     = valueMicroSecs / 1000;
+
+         /* change it to utc */
+         INT64 localUsecs         = LocalUsecsToUte(valueMicroSecs);
+         INT64 valueMilliSecs     = localUsecs / 1000;
          /* here store the UTC time */
          sdbbson_append_date(bsonObj, name, valueMilliSecs);
          break ;
@@ -678,11 +688,18 @@ int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
       case TIMESTAMPOID :
       case TIMESTAMPTZOID :
       {
+         /* this is local time */
          Timestamp valueTimestamp = DatumGetTimestamp(valueDatum);
-         INT64 valueMicroSecs     = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
-         INT64 valueMilliSecs     = valueMicroSecs / 1000;
+         INT64 valueUsecs         = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
+
+         /* change it to utc */
+         INT64 localUsecs         = LocalUsecsToUte(valueUsecs);
          /* here store the UTC time */
-         sdbbson_append_date(bsonObj, name, valueMilliSecs);
+         sdbbson_timestamp_t bson_time;
+         bson_time.t = localUsecs/(1000L * 1000L);
+         bson_time.i = localUsecs%(1000L * 1000L);
+         
+         sdbbson_append_timestamp(bsonObj, name, &bson_time);
          break ;
       }
       
@@ -869,6 +886,12 @@ UINT64 utcMsecsToLocal(UINT64 utcMsecs)
    return (utcMsecs + (g_time_zone * SDB_MSECS_PER_HOUR));
 }
 
+UINT64 LocalUsecsToUte(UINT64 localUsecs)
+{
+   return (localUsecs - (g_time_zone * USECS_PER_HOUR));
+}
+
+
 int getLocalTimeZone()
 {
    int time_zone = 0;
@@ -1045,121 +1068,27 @@ static List *sdbUniqueColumnList ( List *operatorList )
 }
 
 /* sdbAppendConstantValue appends to query document with key and value */
-static void sdbAppendConstantValue ( sdbbson *queryDocument,
-                                     const CHAR *keyName,
-                                     Const *constant )
+void sdbAppendConstantValue (sdbbson *bsonObj, const char *keyName, 
+      Const *constant)
 {
-   Datum constantValue  = constant->constvalue ;
-   Oid constantTypeId   = constant->consttype ;
-   BOOLEAN constantNull = constant->constisnull ;
-   if ( constantNull )
+   int rc = SDB_OK;
+   
+   if (constant->constisnull)
    {
       /* this matches null and not exists for both table and index scan */
-      sdbbson_append_int ( queryDocument, "$isnull", 1 ) ;
-      goto done ;
+      sdbbson_append_int(bsonObj, "$isnull", 1);
+      return;
    }
-   switch ( constantTypeId )
+
+   rc = sdbSetBsonValue(bsonObj, keyName, constant->constvalue, 
+         constant->consttype, constant->consttypmod);
+   if (SDB_OK != rc)
    {
-   case INT2OID :
-   {
-      INT16 value = DatumGetInt16 ( constantValue ) ;
-      sdbbson_append_int ( queryDocument, keyName, ( INT32 ) value ) ;
-      break ;
+      ereport (ERROR, (errcode(ERRCODE_FDW_INVALID_DATA_TYPE),
+            errmsg("Cannot convert constant value to BSON" ), 
+            errhint("Constant value data type: %u", constant->consttype)));
    }
-   case INT4OID :
-   {
-      INT32 value = DatumGetInt32 ( constantValue ) ;
-      sdbbson_append_int ( queryDocument, keyName, value ) ;
-      break ;
-   }
-   case INT8OID :
-   {
-      INT64 value = DatumGetInt64 ( constantValue ) ;
-      sdbbson_append_long ( queryDocument, keyName, value ) ;
-      break ;
-   }
-   case FLOAT4OID :
-   {
-      FLOAT32 value = DatumGetFloat4 ( constantValue ) ;
-      sdbbson_append_double ( queryDocument, keyName, (FLOAT64)value ) ;
-      break ;
-   }
-   case FLOAT8OID :
-   {
-      FLOAT64 value = DatumGetFloat8 ( constantValue ) ;
-      sdbbson_append_double ( queryDocument, keyName, value ) ;
-      break ;
-   }
-   case NUMERICOID :
-   {
-      Datum valueDatum = DirectFunctionCall1 ( numeric_float8, constantValue ) ;
-      FLOAT64 value    = DatumGetFloat8 ( valueDatum ) ;
-      sdbbson_append_double ( queryDocument, keyName, value ) ;
-      break ;
-   }
-   case BOOLOID :
-   {
-      BOOLEAN value = DatumGetBool ( constantValue ) ;
-      sdbbson_append_bool ( queryDocument, keyName, value ) ;
-      break ;
-   }
-   case BPCHAROID :
-   case VARCHAROID :
-   case TEXTOID :
-   {
-      CHAR *outputString    = NULL ;
-      Oid outputFunctionId  = InvalidOid ;
-      bool typeVarLength    = false ;
-      getTypeOutputInfo ( constantTypeId, &outputFunctionId, &typeVarLength ) ;
-      outputString = OidOutputFunctionCall ( outputFunctionId, constantValue ) ;
-      sdbbson_append_string ( queryDocument, keyName, outputString ) ;
-      break ;
-   }
-   case NAMEOID :
-   {
-      CHAR *outputString    = NULL ;
-      Oid outputFunctionId  = InvalidOid ;
-      bool typeVarLength    = false ;
-      sdbbson_oid_t sdbbsonObjectId ;
-      memset ( sdbbsonObjectId.bytes, 0, sizeof ( sdbbsonObjectId.bytes ) ) ;
-      getTypeOutputInfo ( constantTypeId, &outputFunctionId, &typeVarLength ) ;
-      outputString = OidOutputFunctionCall ( outputFunctionId, constantValue ) ;
-      sdbbson_oid_from_string ( &sdbbsonObjectId, outputString ) ;
-      sdbbson_append_oid ( queryDocument, keyName, &sdbbsonObjectId ) ;
-      break ;
-   }
-   case DATEOID :
-   {
-      Datum valueDatum = DirectFunctionCall1 ( date_timestamp, constantValue ) ;
-      Timestamp valueTimestamp = DatumGetTimestamp ( valueDatum ) ;
-      INT64 valueMicroSecs = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS ;
-      INT64 valueMilliSecs = valueMicroSecs / 1000 ;
-      /* here store the UTC time */
-      sdbbson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
-      break ;
-   }
-   case TIMESTAMPOID :
-   case TIMESTAMPTZOID :
-   {
-      Timestamp valueTimestamp = DatumGetTimestamp ( constantValue ) ;
-      INT64 valueMicroSecs = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS ;
-      INT64 valueMilliSecs = valueMicroSecs / 1000 ;
-      /* here store the UTC time */
-      sdbbson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
-      break ;
-   }
-   default :
-   {
-      /* we do not support other data types */
-      ereport ( ERROR, ( errcode ( ERRCODE_FDW_INVALID_DATA_TYPE ),
-                         errmsg ( "Cannot convert constant value to BSON" ),
-                         errhint ( "Constant value data type: %u",
-                                   constantTypeId ) ) ) ;
-      break ;
-   }
-   }
-done :
-   return ;
+   
 }
 
 /* sdbApplicableOpExpressionList iterate all operators and push the predicates
@@ -1636,10 +1565,15 @@ static BOOLEAN sdbColumnTypesCompatible ( sdbbson_type sdbbsonType, Oid columnTy
       break ;
    }
    case DATEOID :
+   {
+      if ( BSON_DATE == sdbbsonType )
+         compatibleType = TRUE ;
+      break ;
+   }
    case TIMESTAMPOID :
    case TIMESTAMPTZOID :
    {
-      if ( BSON_DATE == sdbbsonType )
+      if (BSON_TIMESTAMP == sdbbsonType)
          compatibleType = TRUE ;
       break ;
    }
@@ -1755,10 +1689,11 @@ static Datum sdbColumnValue ( sdbbson_iterator *sdbbsonIterator, Oid columnTypeI
    case TIMESTAMPOID :
    case TIMESTAMPTZOID :
    {
-      INT64 valueMillis = sdbbson_iterator_date ( sdbbsonIterator ) ;
+      sdbbson_timestamp_t bsson_time = sdbbson_iterator_timestamp(sdbbsonIterator);
+      INT64 valueMillis = bsson_time.t * 1000L;
       /* change the UTC time to local */
       INT64 locaMillis  = utcMsecsToLocal(valueMillis);
-      INT64 timestamp   = ( locaMillis * 1000L ) - POSTGRES_TO_UNIX_EPOCH_USECS;
+      INT64 timestamp   = (locaMillis * 1000L + bsson_time.i) - POSTGRES_TO_UNIX_EPOCH_USECS;
       columnValue       = TimestampGetDatum ( timestamp ) ;
       break ;
    }
