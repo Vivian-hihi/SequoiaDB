@@ -1,6 +1,8 @@
 #include "postgres.h"
 #include "sdb_fdw.h"
 
+#include "time.h"
+
 #include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/xact.h"
@@ -33,6 +35,13 @@
 #define SDB_COLLECTION_NAME_LEN      128
 #define SDB_COLUMNA_ID_NAME          "_id"
 #define SDB_SHARDINGKEY_NAME         "ShardingKey"
+
+#define SDB_MSECS_PER_HOUR           (USECS_PER_HOUR/1000)
+
+static int g_time_zone;
+
+static int getLocalTimeZone();
+
 
 static void SdbGetForeignRelSize ( PlannerInfo *root,
                                    RelOptInfo *baserel,
@@ -111,6 +120,7 @@ PG_FUNCTION_INFO_V1 ( sdb_fdw_validator ) ;
 Datum sdb_fdw_handler ( PG_FUNCTION_ARGS )
 {
    FdwRoutine *fdwRoutine              = makeNode ( FdwRoutine ) ;
+   g_time_zone                         = getLocalTimeZone();
    /* Functions for scanning foreign tables */
    fdwRoutine->GetForeignRelSize       = SdbGetForeignRelSize ;
    fdwRoutine->GetForeignPaths         = SdbGetForeignPaths ;
@@ -182,6 +192,8 @@ static void sdbGetColumnKeyInfo(SdbExecState *fdw_state);
 
 static bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson, 
       sdbbson *newBson);
+
+static UINT64 utcMsecsToLocal(UINT64 utcMsecs);
 
 
 int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
@@ -658,6 +670,7 @@ int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
          Timestamp valueTimestamp = DatumGetTimestamp(valueDatum_tmp);
          INT64 valueMicroSecs     = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
          INT64 valueMilliSecs     = valueMicroSecs / 1000;
+         /* here store the UTC time */
          sdbbson_append_date(bsonObj, name, valueMilliSecs);
          break ;
       }
@@ -668,6 +681,7 @@ int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
          Timestamp valueTimestamp = DatumGetTimestamp(valueDatum);
          INT64 valueMicroSecs     = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS;
          INT64 valueMilliSecs     = valueMicroSecs / 1000;
+         /* here store the UTC time */
          sdbbson_append_date(bsonObj, name, valueMilliSecs);
          break ;
       }
@@ -755,7 +769,7 @@ void sdbGetColumnKeyInfo(SdbExecState *fdw_state)
    {
       sdbPrintBson(&condition);
       sdbPrintBson(&selector);
-      ereport(ERROR, (errcode(ERRCODE_FDW_ERROR), 
+      ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
             errmsg("sdbGetSnapshot failed:rc=%d", rc)));
       return;
    }
@@ -848,6 +862,35 @@ bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson,
    }
 
    return false;
+}
+
+UINT64 utcMsecsToLocal(UINT64 utcMsecs)
+{
+   return (utcMsecs + (g_time_zone * SDB_MSECS_PER_HOUR));
+}
+
+int getLocalTimeZone()
+{
+   int time_zone = 0;
+   time_t time_utc;
+   struct tm tm_local;
+   struct tm tm_utc;
+
+   time(&time_utc);
+   localtime_r(&time_utc, &tm_local);
+   gmtime_r(&time_utc, &tm_utc);
+
+   time_zone = tm_local.tm_hour - tm_utc.tm_hour;
+   if (time_zone < -12)
+   {
+      time_zone += 24;
+   }
+   else if (time_zone > 12)
+   {
+      time_zone -= 24;
+   }
+   
+   return time_zone;
 }
 
 
@@ -1091,6 +1134,7 @@ static void sdbAppendConstantValue ( sdbbson *queryDocument,
       Timestamp valueTimestamp = DatumGetTimestamp ( valueDatum ) ;
       INT64 valueMicroSecs = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS ;
       INT64 valueMilliSecs = valueMicroSecs / 1000 ;
+      /* here store the UTC time */
       sdbbson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
       break ;
    }
@@ -1100,6 +1144,7 @@ static void sdbAppendConstantValue ( sdbbson *queryDocument,
       Timestamp valueTimestamp = DatumGetTimestamp ( constantValue ) ;
       INT64 valueMicroSecs = valueTimestamp + POSTGRES_TO_UNIX_EPOCH_USECS ;
       INT64 valueMilliSecs = valueMicroSecs / 1000 ;
+      /* here store the UTC time */
       sdbbson_append_date ( queryDocument, keyName, valueMilliSecs ) ;
       break ;
    }
@@ -1699,8 +1744,10 @@ static Datum sdbColumnValue ( sdbbson_iterator *sdbbsonIterator, Oid columnTypeI
    }
    case DATEOID :
    {
-      INT64 valueMillis    = sdbbson_iterator_date ( sdbbsonIterator ) ;
-      INT64 timestamp      = ( valueMillis * 1000L ) - POSTGRES_TO_UNIX_EPOCH_USECS ;
+      INT64 utcMillis    = sdbbson_iterator_date(sdbbsonIterator);
+      /* change the UTC time to local */
+      INT64 locaMillis   = utcMsecsToLocal(utcMillis);      
+      INT64 timestamp      = (locaMillis * 1000L) - POSTGRES_TO_UNIX_EPOCH_USECS;
       Datum timestampDatum = TimestampGetDatum ( timestamp ) ;
       columnValue = DirectFunctionCall1 ( timestamp_date, timestampDatum ) ;
       break ;
@@ -1709,8 +1756,9 @@ static Datum sdbColumnValue ( sdbbson_iterator *sdbbsonIterator, Oid columnTypeI
    case TIMESTAMPTZOID :
    {
       INT64 valueMillis = sdbbson_iterator_date ( sdbbsonIterator ) ;
-      INT64 timestamp   = ( valueMillis * 1000L ) -
-                          POSTGRES_TO_UNIX_EPOCH_USECS ;
+      /* change the UTC time to local */
+      INT64 locaMillis  = utcMsecsToLocal(valueMillis);
+      INT64 timestamp   = ( locaMillis * 1000L ) - POSTGRES_TO_UNIX_EPOCH_USECS;
       columnValue       = TimestampGetDatum ( timestamp ) ;
       break ;
    }
