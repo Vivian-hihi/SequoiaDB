@@ -56,8 +56,6 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "optQgmStrategy.hpp"
-#include "rtnBackgroundJob.hpp"
-#include "rtnPageCleanerJob.hpp"
 #include "pmdCB.hpp"
 #include "omManager.hpp"
 #include "pmdController.hpp"

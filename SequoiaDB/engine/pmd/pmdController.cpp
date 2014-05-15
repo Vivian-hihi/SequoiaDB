@@ -37,6 +37,7 @@
 #include "pmdController.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+#include "rtnPageCleanerJob.hpp"
 
 namespace engine
 {
