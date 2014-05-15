@@ -15,7 +15,7 @@ list - Enumerate list.
 .sp 2
 
 .sp 2
-db.list(\fBlistType\fR,\fB[con]\fR,\fB[sel]\fR,\fB[sort]\fR)
+db.list(\fBlistType\fR,\fB[cond]\fR,\fB[sel]\fR,\fB[sort]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -32,7 +32,7 @@ system status.
 .br
        The value of it is in the range from 0 to 7.
 .sp 2
-\fBcon (json object)\fR
+\fBcond (json object)\fR
 .br
        Selecting condition. It just returns the records that
        match conditions in "con". When it is null, return all
