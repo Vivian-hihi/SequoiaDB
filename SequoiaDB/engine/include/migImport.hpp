@@ -29,7 +29,7 @@
    Change Activity:
    defect Date        Who Description
    ====== =========== === ==============================================
-          05/06/2013  HTL  Initial Draft
+          05/14/2014  JWH Initial Draft
 
    Last Changed =
 
@@ -39,80 +39,87 @@
 
 #include "core.hpp"
 #include "oss.hpp"
-#include "ossIO.hpp"
-#include "../client/client.h"
-#include "../client/jstobs.h"
 #include "../client/bson/bson.h"
 #include "utilParseData.hpp"
+#include "../client/client.h"
 #include "../util/csv2rawbson.hpp"
-#include <string>
-#include <vector>
-using namespace std ;
 
-#define MIG_MAX_READ_BUFFER 256*1024*1024
-#define MIG_INC_READ_BUFFER 4194304
+//#define MIG_MAX_READ_BUFFER (256*1024*1024)
+//#define MIG_INC_READ_BUFFER (4194304)
 
-#define MIG_DEFAULT_DELCHAR '\"'
-#define MIG_DEFAULT_DELFIELD ','
-#define MIG_DEFAULT_DELRECORD '\n'
-enum migImportTypes
+enum IMPRTTYPE
 {
-   MIG_IMPORT_TYPE_CSV = 0,
-   MIG_IMPORT_TYPE_BIN,
-   MIG_IMPORT_TYPE_JSON
+   MIGIMPRT_CSV = 0,
+   MIGIMPRT_JSON
 } ;
 
-class _migParser : public SDBObject
+struct migImprtArg : public SDBObject
 {
-protected:
-   _utilDataParser *_parser ;
-   CHAR _delChar[2] ;
-   CHAR _delField[2] ;
-   CHAR _delRecord[2] ;
-   sdbCollectionHandle _collection ;
-   BOOLEAN _stringType ;
-   INT32 _importRecord ( bson **bsonObj, SINT32 num ) ;
-   virtual INT32 _getRecord ( bson &record ) = 0 ;
-public:
-   _migParser () ;
-   virtual ~_migParser () ;
-   virtual INT32 run ( INT32 &total, INT32 &succeed ) ;
+   CHAR      delChar ;
+   CHAR      delField ;
+   CHAR      delRecord ;
+   IMPRTTYPE type ;
+   INT32     insertNum ;
+   BOOLEAN   isHeaderline ;
+   BOOLEAN   linePriority ;
+   BOOLEAN   autoAddField ;
+   BOOLEAN   autoCompletion ;
+   CHAR     *pHostname ;
+   CHAR     *pSvcname ;
+   CHAR     *pUser ;
+   CHAR     *pPassword ;
+   CHAR     *pCSName ;
+   CHAR     *pCLName ;
+   CHAR     *pFile ;
+   CHAR     *pFields ;
+   migImprtArg() : delChar(0),
+                   delField(0),
+                   delRecord(0),
+                   type(MIGIMPRT_CSV),
+                   insertNum(0),
+                   isHeaderline(TRUE),
+                   linePriority(TRUE),
+                   autoAddField(TRUE),
+                   autoCompletion(TRUE),
+                   pHostname(NULL),
+                   pSvcname(NULL),
+                   pUser(NULL),
+                   pPassword(NULL),
+                   pCSName(NULL),
+                   pCLName(NULL),
+                   pFile(NULL),
+                   pFields(NULL)
+   {
+   }
 } ;
 
-class _migCSVParser : public _migParser
+class migImport : public SDBObject
 {
 private:
-   csvParser _csvParser ;
-protected :
-   BOOLEAN _autoAddField ;
-   BOOLEAN _autoCompletion ;
+   migImprtArg        *_pMigArg ;
+   _utilDataParser    *_pParser ;
+   bson              **_ppBsonArray ;
+   sdbConnectionHandle _gConnection ;
+   sdbCSHandle         _gCollectionSpace ;
+   sdbCollectionHandle _gCollection ;
+   csvParser           _csvParser ;
+private:
+   INT32 _connectDB() ;
+   //INT32 _getCSList() ;
+   //INT32 _getCLList( CHAR *pCSName ) ;
+   INT32 _getCS( CHAR *pCSName ) ;
+   INT32 _getCL( CHAR *pCLName ) ;
+   //INT32 _getCL2( CHAR *pFullName ) ;
+private:
+   INT32 _importRecord ( bson **bsonObj ) ;
+   INT32 _importRecord ( bson **bsonObj, UINT32 bsonNum ) ;
    INT32 _getRecord ( bson &record ) ;
+   INT32 _run ( INT32 &total, INT32 &succeed ) ;
 public:
-   INT32 init ( sdbCollectionHandle collection,
-                const CHAR *pInputFile,
-                CHAR *fields,
-                BOOLEAN isHeaderline,
-                BOOLEAN autoAddField,
-                BOOLEAN autoCompletion,
-                BOOLEAN linePriority,
-                BOOLEAN stringType,
-                const CHAR *pDelChar,
-                const CHAR *pDelField,
-                const CHAR *pDelRecord ) ;
+   migImport () ;
+   ~migImport () ;
+   INT32 init ( migImprtArg *pMigArg ) ;
+   INT32 run ( INT32 &total, INT32 &succeed ) ;
 } ;
-typedef class _migCSVParser migCSVParser ;
-
-class _migJSONParser : public _migParser
-{
-protected :
-   INT32 _getRecord ( bson &record ) ;
-public:
-   INT32 init ( sdbCollectionHandle collection,
-                const CHAR *pInputFile,
-                BOOLEAN linePriority,
-                BOOLEAN bMongoCompatible,
-                const CHAR *pDelRecord ) ;
-} ;
-typedef class _migJSONParser migJSONParser ;
 
 #endif

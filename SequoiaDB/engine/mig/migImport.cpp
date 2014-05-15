@@ -39,345 +39,170 @@
 #include "migImport.hpp"
 #include "ossMem.hpp"
 #include "ossUtil.hpp"
+#include "ossIO.hpp"
 #include "pdTrace.hpp"
 #include "migTrace.hpp"
 #include "../util/json2rawbson.h"
 #include "../util/text.h"
+#include "../client/jstobs.h"
 
-_migParser::_migParser() : _parser(NULL),
-                           _collection(SDB_INVALID_HANDLE),
-                           _stringType(FALSE)
+migImport::migImport() : _pMigArg(NULL),
+                         _pParser(NULL),
+                         _ppBsonArray(NULL)
 {
-   _delChar[0]     = MIG_DEFAULT_DELCHAR ;
-   _delChar[1]     = 0 ;
-   _delField[0]    = MIG_DEFAULT_DELFIELD ;
-   _delField[1]    = 0 ;
-   _delRecord[0]   = MIG_DEFAULT_DELRECORD ;
-   _delRecord[1]   = 0 ;
 }
 
-_migParser::~_migParser()
+migImport::~migImport()
 {
-   SAFE_OSS_DELETE ( _parser ) ;
+   SAFE_OSS_DELETE ( _pParser ) ;
+   sdbDisconnect ( _gConnection ) ;
+   if ( _gCollection )
+   {
+      sdbReleaseCollection ( _gCollection ) ;
+   }
+   if ( _gCollectionSpace )
+   {
+      sdbReleaseCS ( _gCollectionSpace ) ;
+   }
+   if ( _gConnection )
+   {
+      sdbReleaseConnection ( _gConnection ) ;
+   }
+   if ( _ppBsonArray )
+   {
+      for ( INT32 i = 0; i < _pMigArg->insertNum; ++i )
+      {
+         if ( _ppBsonArray[i] )
+         {
+            delete _ppBsonArray[i] ;
+         }
+      }
+      delete _ppBsonArray ;
+   }
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGPARSER_RUN, "_migParser::run" )
-INT32 _migParser::run ( INT32 &total, INT32 &succeed )
+INT32 migImport::_connectDB()
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__MIGPARSER_RUN );
-   INT32 count = 0, succ = 0;
-
-   while ( TRUE )
+   // connection is established
+   rc = sdbConnect ( _pMigArg->pHostname, _pMigArg->pSvcname,
+                     _pMigArg->pUser, _pMigArg->pPassword,
+                     &_gConnection ) ;
+   if ( rc )
    {
-      bson bsonObj ;
-      bson_init ( &bsonObj ) ;
-      rc = _getRecord ( bsonObj ) ;
-      if ( rc == SDB_EOF )
-      {
-         bson_destroy ( &bsonObj ) ;
-         //PD_LOG ( PDEVENT, "Import Successfully" ) ;
-         rc = SDB_OK ;
-         break ;
-      }
-      else if ( rc == SDB_UTIL_PARSE_JSON_INVALID )
-      {
-         bson_destroy ( &bsonObj ) ;
-         count++ ;
-         PD_LOG ( PDERROR, "Bad record in the %d row", count ) ;
-         continue ;
-      }
-      else if ( rc )
-      {
-         bson_destroy ( &bsonObj ) ;
-         PD_LOG ( PDERROR, "Import Failed, rc = %d", rc ) ;
-         goto error ;
-      }
-      if ( bsonObj.dataSize <= 5 )
-      {
-         bson_destroy ( &bsonObj ) ;
-         // empty bson
-         continue ;
-      }
-      count++ ;
-      bson *obj = &bsonObj ;
-      rc = _importRecord ( &obj, 1 ) ;
-      bson_destroy ( &bsonObj ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to import record in the %d row", count ) ;
-         continue ;
-      }
-      succ++ ;
+      PD_LOG ( PDERROR, "Failed to connect to database %s:%s, rc = %d",
+               _pMigArg->pHostname, _pMigArg->pSvcname, rc ) ;
+      goto error ;
    }
-   total = count ;
-   succeed = succ ;
-done :
-   PD_TRACE_EXITRC ( SDB__MIGPARSER_RUN, rc );
+done:
    return rc ;
-error :
+error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGPARSER__IMPRCD, "_imgParser::_importRecord" )
-INT32 _migParser::_importRecord ( bson **bsonObj,  SINT32 num )
+INT32 migImport::_getCS( CHAR *pCSName )
 {
    INT32 rc = SDB_OK ;
+   // get collection space
+   rc = sdbGetCollectionSpace ( _gConnection, pCSName,
+                                &_gCollectionSpace ) ;
+   if ( SDB_DMS_CS_NOTEXIST == rc )
+   {
+      PD_LOG ( PDERROR, "Collection space %s does not exist",
+               pCSName ) ;
+      goto error ;
+   }
+   else if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to get collection space %s, rc = %d",
+               pCSName, rc ) ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 migImport::_getCL( CHAR *pCLName )
+{
+   INT32 rc = SDB_OK ;
+   // get collection
+   rc = sdbGetCollection1 ( _gCollectionSpace, pCLName,
+                            &_gCollection ) ;
+   if ( SDB_DMS_NOTEXIST == rc )
+   {
+      PD_LOG ( PDERROR, "Collection %s does not exist"OSS_NEWLINE,
+               pCLName ) ;
+      goto error ;
+   }
+   else if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to get collection %s, rc = %d",
+               pCLName, rc ) ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__IMPRCD, "migImport::_importRecord" )
+INT32 migImport::_importRecord ( bson **bsonObj )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT__IMPRCD ) ;
    SDB_ASSERT ( bsonObj, "bsonObj can't be NULL" ) ;
-   PD_TRACE_ENTRY ( SDB__MIGPARSER__IMPRCD );
-   rc = sdbInsert ( _collection, *bsonObj ) ;
+
+   rc = sdbInsert ( _gCollection, *bsonObj ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to insert record, rc = %d", rc ) ;
       goto error ;
    }
-
 done :
-   PD_TRACE_EXITRC ( SDB__MIGPARSER__IMPRCD, rc );
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT__IMPRCD, rc );
    return rc ;
 error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGCSVPS_INIT, "_migCSVParser::init" )
-INT32 _migCSVParser::init ( sdbCollectionHandle collection,
-                            const CHAR *pInputFile,
-                            CHAR *fields,
-                            BOOLEAN isHeaderline,
-                            BOOLEAN autoAddField,
-                            BOOLEAN autoCompletion,
-                            BOOLEAN linePriority,
-                            BOOLEAN stringType,
-                            const CHAR *pDelChar,
-                            const CHAR *pDelField,
-                            const CHAR *pDelRecord )
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__IMPRCD, "migImport::_importRecord" )
+INT32 migImport::_importRecord ( bson **bsonObj, UINT32 bsonNum )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__MIGCSVPS_INIT );
-   SDB_ASSERT ( collection, "collection can't be NULL" )
-   SDB_ASSERT ( pInputFile, "input file can't be NULL" )
-   CHAR delChar = '"' ;
-   CHAR delField = ',' ;
-   CHAR delRecord = '\n' ;
-   _utilParserParamet parserPara ;
-
-   _stringType = stringType ;
-   if ( pDelChar )
-   {
-      INT32 delCharSize = ossStrlen ( pDelChar ) ;
-      if ( delCharSize == 1 )
-      {
-         delChar = pDelChar[0] ;
-      }
-      else if ( delCharSize > 1 &&
-                pDelChar[0] == '0' &&
-                pDelChar[1] == 'x' )
-      {
-         delChar = 0 ;
-         if ( delCharSize > 4 )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         for ( INT32 i = 3; i <= delCharSize; ++i )
-         {
-            delChar *= 16 ;
-            CHAR c = pDelChar[i-1] ;
-            if ( c >= '0' && c <= '9' )
-            {
-               delChar += c - '0' ;
-            }
-            else if ( c >= 'a' && c <= 'f' )
-            {
-               delChar += c - 'a' + 10 ;
-            }
-            else if ( c >= 'A' && c <= 'F' )
-            {
-               delChar += c - 'A' + 10 ;
-            }
-         }
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "delchar must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
-         goto error ;
-      }
-   }
-
-   if ( pDelField )
-   {
-      INT32 delFieldSize = ossStrlen ( pDelField ) ;
-      if ( delFieldSize == 1 )
-      {
-         delField = pDelField[0] ;
-      }
-      else if ( delFieldSize > 1 &&
-                pDelField[0] == '0' &&
-                pDelField[1] == 'x' )
-      {
-         delField = 0 ;
-         if ( delFieldSize > 4 )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         for ( INT32 i = 3; i <= delFieldSize; ++i )
-         {
-            delField *= 16 ;
-            CHAR c = pDelField[i-1] ;
-            if ( c >= '0' && c <= '9' )
-            {
-               delField += c - '0' ;
-            }
-            else if ( c >= 'a' && c <= 'f' )
-            {
-               delField += c - 'a' + 10 ;
-            }
-            else if ( c >= 'A' && c <= 'F' )
-            {
-               delField += c - 'A' + 10 ;
-            }
-         }
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "delfield must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
-         goto error ;
-      }
-   }
-
-   if ( pDelRecord )
-   {
-      INT32 delRecordSize = ossStrlen ( pDelRecord ) ;
-      if ( delRecordSize == 1 )
-      {
-         delRecord = pDelRecord[0] ;
-      }
-      else if ( delRecordSize > 1 &&
-                pDelRecord[0] == '0' &&
-                pDelRecord[1] == 'x' )
-      {
-         delRecord = 0 ;
-         if ( delRecordSize > 4 )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         for ( INT32 i = 3; i <= delRecordSize; ++i )
-         {
-            delRecord *= 16 ;
-            CHAR c = pDelRecord[i-1] ;
-            if ( c >= '0' && c <= '9' )
-            {
-               delRecord += c - '0' ;
-            }
-            else if ( c >= 'a' && c <= 'f' )
-            {
-               delRecord += c - 'a' + 10 ;
-            }
-            else if ( c >= 'A' && c <= 'F' )
-            {
-               delRecord += c - 'A' + 10 ;
-            }
-         }
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "delrecord must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
-         goto error ;
-      }
-   }
-
-   _parser = SDB_OSS_NEW _utilCSVParser() ;
-   if ( !_parser )
-   {
-      rc = SDB_OOM ;
-      PD_LOG ( PDERROR, "memory error" ) ;
-      goto error ;
-   }
-   _parser->setDel ( delChar,
-                     delField,
-                     delRecord ) ;
-   _collection = collection ;
-
-   parserPara.fileName = pInputFile ;
-   parserPara.bufferSize = 33554432 ;
-   parserPara.blockNum = 32768 ;
-   parserPara.readHeader = isHeaderline ;
-   parserPara.headerBuffer = fields ;
-   parserPara.linePriority = linePriority ;
-   _autoAddField = autoAddField ;
-   _autoCompletion = autoCompletion ;
-
-   rc = _parser->initialize( &parserPara ) ;
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT__IMPRCD ) ;
+   SDB_ASSERT ( bsonObj, "bsonObj can't be NULL" ) ;
+   rc = sdbBulkInsert ( _gCollection,
+                        FLG_INSERT_CONTONDUP,
+                        bsonObj,
+                        bsonNum ) ;
    if ( rc )
    {
-      PD_LOG ( PDERROR, "Failed to _parser initialize, rc=%d", rc ) ;
+      PD_LOG ( PDERROR, "Failed to insert record, rc = %d", rc ) ;
       goto error ;
    }
-
-   if ( !isHeaderline )
-   {
-      UINT32 size = ossStrlen( fields ) ;
-      rc = _csvParser.init( autoAddField,
-                            autoCompletion,
-                            isHeaderline,
-                            delChar,
-                            delField,
-                            delRecord ) ;
-      rc = _csvParser.parseHeader( fields, size ) ;
-   }
-   else
-   {
-      CHAR *buffer = _parser->getBuffer() ;
-      UINT32  startOffset = 0 ;
-      UINT32  size        = 0 ;
-      rc = _parser->getNextRecord ( startOffset, size ) ;
-      if ( rc )
-      {
-         if ( rc == SDB_EOF )
-         {
-            if ( 0 == size )
-            {
-               goto done ;
-            }
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
-            goto error ;
-         }
-      }
-      rc = _csvParser.init( autoAddField,
-                            autoCompletion,
-                            isHeaderline,
-                            delChar,
-                            delField,
-                            delRecord ) ;
-      rc = _csvParser.parseHeader( buffer + startOffset, size ) ;
-   }
-
 done :
-   PD_TRACE_EXITRC ( SDB__MIGCSVPS_INIT, rc );
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT__IMPRCD, rc );
    return rc ;
 error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGCSVPS__GETRCD, "_migCSVParser::_getRecord" )
-INT32 _migCSVParser::_getRecord ( bson &record )
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__GETRCD, "_migCSVParser::_getRecord" )
+INT32 migImport::_getRecord ( bson &record )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__MIGCSVPS__GETRCD );
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT__GETRCD ) ;
    UINT32  startOffset = 0 ;
    UINT32  size        = 0 ;
-   _convertCSV ccsv( _stringType ) ;
+   bson obj ;
    bson *pObj = &record ;
-   CHAR *buffer = _parser->getBuffer() ;
-   rc = _parser->getNextRecord ( startOffset, size ) ;
+   CHAR *pBuffer = _pParser->getBuffer() ;
+   CHAR *pBuffer2 = NULL ;
+
+   rc = _pParser->getNextRecord ( startOffset, size ) ;
    if ( rc )
    {
       if ( rc == SDB_EOF )
@@ -393,283 +218,338 @@ INT32 _migCSVParser::_getRecord ( bson &record )
          goto error ;
       }
    }
-   if ( !isValidUTF8WSize ( buffer + startOffset, size ) )
+   if ( !isValidUTF8WSize ( pBuffer + startOffset, size ) )
    {
       rc = SDB_INVALIDARG ;
       PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
       goto error ;
    }
-   rc = _csvParser.csv2bson( buffer + startOffset, size, pObj ) ;
-   /*
-   rc = ccsv._convertCSVToJson ( buffer + startOffset, size,
-                                 _autoAddField, _autoCompletion,
-                                 _parser, &pJsonBuffer ) ;
-   if ( rc )
+   if ( _pMigArg->type == MIGIMPRT_CSV )
    {
-      //PD_LOG ( PDERROR, "Failed to convert CSV to Json, rc=%d", rc ) ;
-      goto error ;
+      rc = _csvParser.csv2bson( pBuffer + startOffset, size, pObj ) ;
+      if ( rc )
+      {
+         rc = SDB_UTIL_PARSE_JSON_INVALID ;
+         PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
+         goto error ;
+      }
    }
-   pJsonBuffer = json2rawcbson ( pJsonBuffer ) ;
-   if ( !pJsonBuffer )
-   */
-   if ( rc )
+   else
    {
-      rc = SDB_UTIL_PARSE_JSON_INVALID ;
-      PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
-      goto error ;
+      pBuffer2 = json2rawcbson ( pBuffer + startOffset ) ;
+      if ( !pBuffer2 )
+      {
+         rc = SDB_UTIL_PARSE_JSON_INVALID ;
+         PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
+         goto error ;
+      }
+      obj.ownmem = 0 ;
+      obj.data = NULL ;
+      bson_init_finished_data ( &obj, pBuffer2 ) ;
+      bson_copy ( pObj, &obj ) ;
+      free ( pBuffer2 ) ;
    }
-   /*
-   obj.ownmem = 0 ;
-   obj.data = NULL ;
-   bson_init_finished_data ( &obj, pJsonBuffer ) ;
-   bson_copy ( &record, &obj ) ;
-   free ( pJsonBuffer ) ;
-   */
-
 done :
-   PD_TRACE_EXITRC ( SDB__MIGCSVPS__GETRCD, rc );
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT__GETRCD, rc );
    return rc ;
 error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONPS_INIT, "_migJSONParser::init" )
-INT32 _migJSONParser::init ( sdbCollectionHandle collection,
-                             const CHAR *pInputFile,
-                             BOOLEAN linePriority,
-                             BOOLEAN bMongoCompatible,
-                             const CHAR *pDelRecord )
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__INIT, "migImport::init" )
+INT32 migImport::init ( migImprtArg *pMigArg )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__MIGJSONPS_INIT );
-   SDB_ASSERT ( collection, "collection can't be NULL" )
-   SDB_ASSERT ( pInputFile, "input file can't be NULL" )
-   CHAR delChar = '"' ;
-   CHAR delField = ',' ;
-   CHAR delRecord = '\n' ;
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT__INIT );
+   SDB_ASSERT ( pMigArg, "pMigArg can't be NULL" )
+   SDB_ASSERT ( pMigArg->pFile, "file name can't be NULL" )
+   CHAR *pBuffer = NULL ;
+   UINT32  startOffset = 0 ;
+   UINT32  fieldsSize  = 0 ;
    _utilParserParamet parserPara ;
 
-   if ( pDelRecord )
+   _pMigArg = pMigArg ;
+
+   rc = _connectDB() ;
+   if ( rc )
    {
-      INT32 delRecordSize = ossStrlen ( pDelRecord ) ;
-      if ( delRecordSize == 1 )
-      {
-         delRecord = pDelRecord[0] ;
-      }
-      else if ( delRecordSize > 1 &&
-                pDelRecord[0] == '0' &&
-                pDelRecord[1] == 'x' )
-      {
-         delRecord = 0 ;
-         if ( delRecordSize > 4 )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         for ( INT32 i = 3; i <= delRecordSize; ++i )
-         {
-            delRecord *= 16 ;
-            CHAR c = pDelRecord[i-1] ;
-            if ( c >= '0' && c <= '9' )
-            {
-               delRecord += c - '0' ;
-            }
-            else if ( c >= 'a' && c <= 'f' )
-            {
-               delRecord += c - 'a' + 10 ;
-            }
-            else if ( c >= 'A' && c <= 'F' )
-            {
-               delRecord += c - 'A' + 10 ;
-            }
-         }
-      }
-      else
-      {
-         rc = SDB_INVALIDARG ;
-         PD_LOG ( PDERROR, "delrecord must be 1 char of 16 hex format ( e.g. 0x09 )" ) ;
-         goto error ;
-      }
+      goto error ;
+   }
+   rc = _getCS( _pMigArg->pCSName ) ;
+   if ( rc )
+   {
+      goto error ;
+   }
+   rc = _getCL( _pMigArg->pCLName ) ;
+   if ( rc )
+   {
+      goto error ;
    }
 
-   _parser = SDB_OSS_NEW _utilJSONParser() ;
-   if ( !_parser )
+   _pParser = SDB_OSS_NEW _utilCSVParser() ;
+   if ( !_pParser )
    {
       rc = SDB_OOM ;
       PD_LOG ( PDERROR, "memory error" ) ;
       goto error ;
    }
-   _parser->setDel ( delChar,
-                     delField,
-                     delRecord ) ;
-   _collection = collection ;
+   _pParser->setDel ( _pMigArg->delChar,
+                      _pMigArg->delField,
+                      _pMigArg->delRecord ) ;
 
-   parserPara.fileName = pInputFile ;
-   parserPara.bufferSize = 33554432 ;
-   parserPara.blockNum = 32768 ;
-   parserPara.readHeader = FALSE ;
-   parserPara.linePriority = linePriority ;
-
-   rc = _parser->initialize( &parserPara ) ;
+   parserPara.accessModel  = UTIL_GET_IO ;
+   //parserPara.accessModel = UTIL_GET_HDFS ;
+   parserPara.fileName     = _pMigArg->pFile ;
+   parserPara.bufferSize   = 33554432 ;
+   parserPara.blockNum     = 32768 ;
+   parserPara.linePriority = _pMigArg->linePriority ;
+   rc = _pParser->initialize( &parserPara ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to _parser initialize, rc=%d", rc ) ;
       goto error ;
    }
 
+   rc = _csvParser.init( _pMigArg->autoAddField,
+                         _pMigArg->autoCompletion,
+                         _pMigArg->isHeaderline,
+                         _pMigArg->delChar,
+                         _pMigArg->delField,
+                         _pMigArg->delRecord ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to csv parser initialize, rc=%d", rc ) ;
+      goto error ;
+   }
+
+   if ( _pMigArg->isHeaderline )
+   {
+      rc = _pParser->getNextRecord ( startOffset, fieldsSize ) ;
+      if ( rc )
+      {
+         if ( rc == SDB_EOF )
+         {
+            if ( 0 == fieldsSize )
+            {
+               goto done ;
+            }
+         }
+         else
+         {
+            PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
+   }
+   
+   if ( _pMigArg->pFields )
+   {
+      fieldsSize = ossStrlen( _pMigArg->pFields ) ;
+      rc = _csvParser.parseHeader( _pMigArg->pFields, fieldsSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
+         goto error ;
+      }
+   }
+   else
+   {
+      pBuffer = _pParser->getBuffer() ;
+      rc = _csvParser.parseHeader( pBuffer + startOffset, fieldsSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
+         goto error ;
+      }
+   }
+
+   if ( _pMigArg->insertNum > 1 )
+   {
+      _ppBsonArray = new(std::nothrow) bson* [ _pMigArg->insertNum ] ;
+      if ( !_ppBsonArray )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR, "Memory Failed" ) ;
+         goto error ;
+      }
+
+      for ( INT32 i = 0; i < _pMigArg->insertNum; ++i )
+      {
+         _ppBsonArray[i] = NULL ;
+      }
+   
+      for ( INT32 i = 0; i < _pMigArg->insertNum; ++i )
+      {
+         _ppBsonArray[i] = new(std::nothrow) bson() ;
+         if ( !_ppBsonArray[i] )
+         {
+            rc = SDB_OOM ;
+            PD_LOG ( PDERROR, "Memory Failed" ) ;
+            goto error ;
+         }
+      }
+   }
+
 done :
-   PD_TRACE_EXITRC ( SDB__MIGJSONPS_INIT, rc );
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT__INIT, rc );
    return rc ;
 error :
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGJSONPS__GETRCD, "_migJSONParser::_getRecord" )
-INT32 _migJSONParser::_getRecord ( bson &record )
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT___RUN, "migImport::_run" )
+INT32 migImport::_run ( INT32 &total, INT32 &succeed )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__MIGJSONPS__GETRCD );
-   UINT32  startOffset = 0 ;
-   UINT32  size        = 0 ;
-   bson obj ;
-   CHAR *buffer = _parser->getBuffer() ;
-   CHAR *buffer2 = NULL ;
-   rc = _parser->getNextRecord ( startOffset, size ) ;
-   if ( rc )
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT___RUN );
+   INT32 count = 0 ;
+   INT32 succ  = 0 ;
+   INT32 bsonObjNum = 0 ;
+   INT32 maxInsert  = _pMigArg->insertNum ;
+   bson *tempObj = NULL ;
+
+   while ( TRUE )
    {
-      if ( rc == SDB_EOF )
+      tempObj = _ppBsonArray[ bsonObjNum ] ;
+      bson_init ( tempObj ) ;
+      rc = _getRecord ( (*tempObj) ) ;
+      if ( rc )
       {
-         goto done ;
+         bson_destroy ( tempObj ) ;
+         if ( rc == SDB_EOF )
+         {
+            if ( bsonObjNum > 0 )
+            {
+               rc = _importRecord ( _ppBsonArray, bsonObjNum ) ;
+               for ( INT32 i = 0; i < bsonObjNum; ++i )
+               {
+                  tempObj = _ppBsonArray[ i ] ;
+                  bson_destroy ( tempObj ) ;
+               }
+               if ( rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
+               }
+               else
+               {
+                  succ += bsonObjNum ;
+               }
+               bsonObjNum = 0 ;
+            }
+            PD_LOG ( PDEVENT, "Import Successfully" ) ;
+            rc = SDB_OK ;
+            break ;
+         }
+         else if ( rc == SDB_UTIL_PARSE_JSON_INVALID )
+         {
+            ++count ;
+            PD_LOG ( PDERROR, "Bad record in %d", count ) ;
+            continue ;
+         }
+         else if ( rc )
+         {
+            PD_LOG ( PDERROR, "Import Failed, rc = %d", rc ) ;
+            goto error ;
+         }
       }
-      PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
-      goto error ;
+      if ( tempObj->dataSize <= 5 )
+      {
+         bson_destroy ( tempObj ) ;
+         ++count ;
+         // empty bson
+         continue ;
+      }
+      ++count ;
+      ++bsonObjNum ;
+      if ( maxInsert == bsonObjNum )
+      {
+         rc = _importRecord ( _ppBsonArray, maxInsert ) ;
+         for ( INT32 i = 0; i < bsonObjNum; ++i )
+         {
+            tempObj = _ppBsonArray[ i ] ;
+            bson_destroy ( tempObj ) ;
+         }
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
+         }
+         else
+         {
+            succ += bsonObjNum ;
+         }
+         bsonObjNum = 0 ;
+      }
    }
-   if ( !isValidUTF8WSize ( buffer + startOffset, size ) )
+
+done :
+   total = count ;
+   succeed = succ ;
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT___RUN, rc );
+   return rc ;
+error :
+   goto done ;
+}
+
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__RUN, "migImport::run" )
+INT32 migImport::run ( INT32 &total, INT32 &succeed )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT__RUN );
+   INT32 count = 0 ;
+   INT32 succ = 0 ;
+   bson bsonObj ;
+   bson *obj = &bsonObj ; ;
+
+   if ( _pMigArg->insertNum > 1 )
    {
-      rc = SDB_INVALIDARG ;
-      PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
-      goto error ;
-   }
-   buffer2 = json2rawcbson ( buffer + startOffset ) ;
-   if ( !buffer2 )
-   {
-      rc = SDB_UTIL_PARSE_JSON_INVALID ;
-      PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
-      goto error ;
-   }
-   obj.ownmem = 0 ;
-   obj.data = NULL ;
-   bson_init_finished_data ( &obj, buffer2 ) ;
-   bson_copy ( &record, &obj ) ;
-   free ( buffer2 ) ;
-   /*
-   BOOLEAN inQuotes = FALSE ;
-   BOOLEAN inJson   = FALSE ;
-   BOOLEAN isEscape = FALSE ;
-   BOOLEAN isEOR    = FALSE ;
-   INT32 level      = 0 ;
-   CHAR tmpSaved    = 0 ;
-   CHAR *pNext      = _pCurPtr ;
-   if ( _isEOF )
-   { // end of file
-      rc = SDB_EOF ;
-      goto error ;
+      rc = _run ( count, succ ) ;
+      goto done ;
    }
 
    while ( TRUE )
-   { // read every field
-      if ( ( pNext - _pReadBuffer ) >= _bufUsed  )
-      { // hit the end of buffer
-         UINT32 readNextSize = 0 ;
-         if ( _pCurPtr == _pReadBuffer && _bufUsed == _bufSize )
-         { // the size of this record bigger than buffer size
-            rc = _reallocReadBuf ( _bufUsed + MIG_INC_READ_BUFFER ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to reallocate memory, rc = %d", rc ) ;
-               goto error ;
-            }
-            pNext = _pReadBuffer + _bufUsed ;
-            readNextSize = MIG_INC_READ_BUFFER ;
-         }
-         else if ( _pCurPtr > _pReadBuffer && _bufUsed == _bufSize )
+   {
+      bson_init ( obj ) ;
+      rc = _getRecord ( (*obj) ) ;
+      if ( rc )
+      {
+         bson_destroy ( obj ) ;
+         if ( rc == SDB_EOF )
          {
-            _bufUsed = _bufNotParsed() ;
-            ossMemmove ( _pReadBuffer, _pCurPtr, _bufUsed ) ;
-            _pCurPtr = _pReadBuffer ;
-            pNext = _pCurPtr + _bufUsed ;
-            readNextSize = MIG_INC_READ_BUFFER - _bufUsed % MIG_INC_READ_BUFFER ;
-         }
-         else
-         { // _bufUsed < _bufSize
-            readNextSize = MIG_INC_READ_BUFFER ;
-         }
-         rc = _readNext ( pNext, readNextSize ) ;
-         // hit the end of file
-         if ( SDB_EOF == rc )
-         { // need next loop to allocate one byte for fill with '\0'
-            _isEOF = TRUE ;
-            if ( !inJson )
-               goto done ;
-            isEOR = TRUE ;
             rc = SDB_OK ;
+            break ;
+         }
+         else if ( rc == SDB_UTIL_PARSE_JSON_INVALID )
+         {
+            ++count ;
+            PD_LOG ( PDERROR, "Bad record in the %d row", count ) ;
+            continue ;
          }
          else if ( rc )
-            goto error ;
-      }
-      if ( isEOR )
-      { // end of json record, end with '\0'
-         if ( level != 0 )
          {
-            rc = SDB_MIG_IMP_BAD_RECORD ;
-            _pCurPtr = pNext ;
+            PD_LOG ( PDERROR, "Import Failed, rc = %d", rc ) ;
             goto error ;
          }
-         tmpSaved = *pNext ;
-         *pNext = '\0' ;
-         break ;
       }
-      if ( isEscape )
-      {// ignore this char
-         isEscape = FALSE ;
-         pNext++ ;
+      if ( bsonObj.dataSize <= 5 )
+      {
+         bson_destroy ( obj ) ;
+         // empty bson
          continue ;
       }
-      switch ( *pNext )
+      ++count ;
+      rc = _importRecord ( &obj, 1 ) ;
+      bson_destroy ( obj ) ;
+      if ( rc )
       {
-      case '{' :
-         if ( !inQuotes && ++level == 1 )
-         { // json begin
-            inJson = TRUE ;
-            _pCurPtr = pNext ;
-         }
-         break ;
-      case '}' :
-         if ( !inQuotes && --level <= 0 )
-         // json stop, need next loop to allocate one byte for fill with '\0'
-            isEOR = TRUE ;
-         break ;
-      case '"' :
-         inQuotes = !inQuotes ;
-         break ;
-      case '\\' :
-         // escape next char
-         isEscape = TRUE ;
-         break ;
-      default :
-         // skip to next char
-         break ;
+         PD_LOG ( PDERROR, "Failed to import record in the %d row", count ) ;
+         continue ;
       }
-      pNext++ ;
-   } // while ( TRUE )
-
-   if ( !jsonToBson2 ( &record, _pCurPtr, _bMongoCompatible ) )
-      rc = SDB_MIG_IMP_BAD_RECORD ;
-   *pNext = tmpSaved ;
-   _pCurPtr = pNext ;
-   */
+      ++succ ;
+   }
 done :
-   PD_TRACE_EXITRC ( SDB__MIGJSONPS__GETRCD, rc );
+   total = count ;
+   succeed = succ ;
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT__RUN, rc );
    return rc ;
 error :
    goto done ;

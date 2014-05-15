@@ -59,6 +59,24 @@ typedef INT32 (*sdb_templet_cb) ( void *pData ) ;
 #define OPTION_USER              "user"
 #define OPTION_PASSWORD          "password"
 
+#define APPENDARGINT( obj, key, cmd, explain, require, min, max, defaultValue )\
+{\
+   rc = obj.appendArgInt( key, cmd, explain, require, min, max, defaultValue ) ;\
+   if ( rc )\
+   {\
+      goto error ;\
+   }\
+}
+
+#define APPENDARGCHAR( obj, key, cmd, explain, require, defaultValue )\
+{\
+   rc = obj.appendArgChar( key, cmd, explain, require, defaultValue ) ;\
+   if ( rc )\
+   {\
+      goto error ;\
+   }\
+}
+
 #define APPENDARGSTRING( obj, key, cmd, explain, require, size, defaultValue )\
 {\
    rc = obj.appendArgString( key, cmd, explain, require, size, defaultValue ) ;\
@@ -99,7 +117,8 @@ enum UTIL_VAR_TYPE
    UTIL_VAR_INT = 0,
    UTIL_VAR_BOOL,
    UTIL_VAR_STRING,
-   UTIL_VAR_SWITCH
+   UTIL_VAR_SWITCH,
+   UTIL_VAR_CHAR
 } ;
 
 class utilSdbTemplet : public SDBObject
@@ -107,7 +126,10 @@ class utilSdbTemplet : public SDBObject
 private:
    struct util_var : public SDBObject
    {
+      CHAR  varChar ;
       INT32 varInt ;
+      INT32 maxInt ;
+      INT32 minInt ;
       INT32 maxStringSize ;
       INT32 switchNum ;
       BOOLEAN varBool ;
@@ -120,7 +142,10 @@ private:
       const CHAR *pExplain ;
       const CHAR **ppSwitch ;
 
-      util_var() : varInt(0),
+      util_var() : varChar(0),
+                   varInt(0),
+                   maxInt(0),
+                   minInt(0),
                    maxStringSize(-1),
                    switchNum(0),
                    varBool(TRUE),
@@ -154,7 +179,14 @@ public:
                        const CHAR *pCmd,
                        const CHAR *pExplain,
                        BOOLEAN require,
+                       INT32 minInt,
+                       INT32 maxInt,
                        INT32 defaultInt = 0 ) ;
+   INT32 appendArgChar( const CHAR *pKey,
+                        const CHAR *pCmd,
+                        const CHAR *pExplain,
+                        BOOLEAN require,
+                        CHAR defaultChar = 0 ) ;
    INT32 appendArgBool( const CHAR *pKey,
                         const CHAR *pCmd,
                         const CHAR *pExplain,
@@ -174,6 +206,7 @@ public:
                           INT32 switchNum,
                           CHAR *pDefaultString = NULL ) ;
    INT32 getArgInt( const CHAR *pKey, INT32 *pVarValue ) ;
+   INT32 getArgChar( const CHAR *pKey, CHAR *pVarValue ) ;
    INT32 getArgBool( const CHAR *pKey, BOOLEAN *pVarValue ) ;
    INT32 getArgString( const CHAR *pKey, CHAR **ppVarValue ) ;
    INT32 getArgSwitch( const CHAR *pKey, INT32 *pVarValue ) ;

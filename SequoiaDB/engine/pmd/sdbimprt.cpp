@@ -62,14 +62,12 @@
 #define OPTION_COLLECTSPACE      "csname"
 #define OPTION_COLLECTION        "clname"
 #define OPTION_TYPE              FIELD_NAME_LTYPE
+#define OPTION_INSERTNUM         "insertnum"
 
 #define DEFAULT_HOSTNAME         "localhost"
 #define DEFAULT_SVCNAME          "11810"
 
 utilSdbTemplet utilSdbObj ;
-sdbConnectionHandle gConnection ;
-sdbCSHandle         gCollectionSpace ;
-sdbCollectionHandle gCollection ;
 
 const CHAR *SDBIMPORT_TYPE_STR[] =
 {
@@ -89,92 +87,42 @@ error:
 INT32 on_preparation( void *pData )
 {
    INT32 rc = SDB_OK ;
-   CHAR *pHostname = NULL ;
-   CHAR *pSvcname  = NULL ;
-   CHAR *pUser     = NULL ;
-   CHAR *pPassword = NULL ;
-   CHAR *pCsname   = NULL ;
-   CHAR *pClname   = NULL ;
-
-   utilSdbObj.getArgString( OPTION_HOSTNAME, &pHostname ) ;
-   utilSdbObj.getArgString( OPTION_SVCNAME,  &pSvcname ) ;
-   utilSdbObj.getArgString( OPTION_USER,     &pUser ) ;
-   utilSdbObj.getArgString( OPTION_PASSWORD, &pPassword ) ;
-   utilSdbObj.getArgString( OPTION_COLLECTSPACE, &pCsname ) ;
-   utilSdbObj.getArgString( OPTION_COLLECTION,   &pClname ) ;
-   // connection is established
-   rc = sdbConnect ( pHostname, pSvcname, pUser, pPassword, &gConnection ) ;
-   if ( rc )
-   {
-      ossPrintf ( "Failed to connect to database %s:%s, rc = %d",
-                  pHostname, pSvcname, rc ) ;
-      goto error ;
-   }
-
-   // get collection space
-   rc = sdbGetCollectionSpace ( gConnection, pCsname,
-                                &gCollectionSpace ) ;
-   if ( SDB_DMS_CS_NOTEXIST == rc )
-   {
-      ossPrintf ( "Collection space %s does not exist"OSS_NEWLINE,
-                  pCsname ) ;
-      goto error ;
-   }
-   else if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to get collection space %s, rc = %d",
-               pCsname, rc ) ;
-      goto error ;
-   }
-
-   // get collection
-   rc = sdbGetCollection1 ( gCollectionSpace, pClname,
-                            &gCollection ) ;
-   if ( SDB_DMS_NOTEXIST == rc )
-   {
-      ossPrintf ( "Collection %s does not exist"OSS_NEWLINE,
-                  pClname ) ;
-      goto error ;
-   }
-   else if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to get collection %s, rc = %d",
-               pClname, rc ) ;
-      goto error ;
-   }
 done:
    return rc ;
 error:
    goto done ;
 }
 
-INT32 importCSV ()
+INT32 on_main( void *pData )
 {
    INT32 rc = SDB_OK ;
-   INT32 total = 0, succ = 0 ;
-   BOOLEAN isHeaderline   = TRUE ;
-   BOOLEAN autoAddField   = TRUE ;
-   BOOLEAN autoCompletion = TRUE ;
-   BOOLEAN linePriority   = TRUE ;
-   CHAR *pFile      = NULL ;
-   CHAR *pFields    = NULL ;
-   CHAR *pDelChar   = NULL ;
-   CHAR *pDelField  = NULL ;
-   CHAR *pDelRecord = NULL ;
-   migCSVParser parser ;
+   INT32 total = 0 ;
+   INT32 succ = 0 ;
+   migImport   parser ;
+   migImprtArg imprtArg ;
 
-   utilSdbObj.getArgString( OPTION_FILENAME,  &pFile ) ;
-   utilSdbObj.getArgString( OPTION_FIELD,     &pFields ) ;
-   utilSdbObj.getArgString( OPTION_DELCHAR,   &pDelChar ) ;
-   utilSdbObj.getArgString( OPTION_DELFIELD,  &pDelField ) ;
-   utilSdbObj.getArgString( OPTION_DELRECORD, &pDelRecord ) ;
+   utilSdbObj.getArgInt   ( OPTION_INSERTNUM, &imprtArg.insertNum ) ;
+   utilSdbObj.getArgSwitch( OPTION_TYPE,  (INT32 *)(&imprtArg.type) ) ;
 
-   utilSdbObj.getArgBool( OPTION_HEADERLINE,   &isHeaderline ) ;
-   utilSdbObj.getArgBool( OPTION_SPARSE,       &autoAddField ) ;
-   utilSdbObj.getArgBool( OPTION_EXTRA,        &autoCompletion ) ;
-   utilSdbObj.getArgBool( OPTION_LINEPRIORITY, &linePriority ) ;
+   utilSdbObj.getArgString( OPTION_HOSTNAME,     &imprtArg.pHostname ) ;
+   utilSdbObj.getArgString( OPTION_SVCNAME,      &imprtArg.pSvcname ) ;
+   utilSdbObj.getArgString( OPTION_USER,         &imprtArg.pUser ) ;
+   utilSdbObj.getArgString( OPTION_PASSWORD,     &imprtArg.pPassword ) ;
+   utilSdbObj.getArgString( OPTION_COLLECTSPACE, &imprtArg.pCSName ) ;
+   utilSdbObj.getArgString( OPTION_COLLECTION,   &imprtArg.pCLName ) ;
+   utilSdbObj.getArgString( OPTION_FILENAME,     &imprtArg.pFile ) ;
+   utilSdbObj.getArgString( OPTION_FIELD,        &imprtArg.pFields ) ;
+   
+   utilSdbObj.getArgChar( OPTION_DELCHAR,   &imprtArg.delChar ) ;
+   utilSdbObj.getArgChar( OPTION_DELFIELD,  &imprtArg.delField ) ;
+   utilSdbObj.getArgChar( OPTION_DELRECORD, &imprtArg.delRecord ) ;
 
-   if ( !isHeaderline && !pFields )
+   utilSdbObj.getArgBool( OPTION_HEADERLINE,   &imprtArg.isHeaderline ) ;
+   utilSdbObj.getArgBool( OPTION_SPARSE,       &imprtArg.autoAddField ) ;
+   utilSdbObj.getArgBool( OPTION_EXTRA,        &imprtArg.autoCompletion ) ;
+   utilSdbObj.getArgBool( OPTION_LINEPRIORITY, &imprtArg.linePriority ) ;
+
+   if ( !imprtArg.isHeaderline && !imprtArg.pFields )
    {
       ossPrintf ( "if not read first line,than must input fields" ) ;
       PD_LOG ( PDERROR, "if not read first line,than must input fields" ) ;
@@ -182,90 +130,21 @@ INT32 importCSV ()
       goto error ;
    }
 
-   // initialize
-   rc = parser.init ( gCollection, pFile,
-                      pFields, isHeaderline,
-                      autoAddField, autoCompletion,
-                      linePriority,
-                      FALSE,
-                      pDelChar,
-                      pDelField,
-                      pDelRecord ) ;
+   rc = parser.init( &imprtArg ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to initialize parser, rc = %d", rc ) ;
       goto error ;
    }
-   // run it
+
    rc = parser.run ( total, succ ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to execute parser, rc = %d", rc ) ;
       goto error ;
    }
-   ossPrintf ( "%d records in CSV file, %d records import"OSS_NEWLINE, total, succ ) ;
-done :
-   return rc ;
-error :
-   goto done ;
-}
+   ossPrintf ( "%d records in file, %d records import"OSS_NEWLINE, total, succ ) ;
 
-INT32 importJson ()
-{
-   INT32 rc = SDB_OK ;
-   INT32 total = 0, succ = 0 ;
-   BOOLEAN linePriority   = TRUE ;
-   CHAR *pFile      = NULL ;
-   CHAR *pDelRecord = NULL ;
-   migJSONParser parser ;
-
-   utilSdbObj.getArgString( OPTION_FILENAME,  &pFile ) ;
-   utilSdbObj.getArgString( OPTION_DELRECORD, &pDelRecord ) ;
-   utilSdbObj.getArgBool( OPTION_LINEPRIORITY, &linePriority ) ;
-
-   // initialize
-   rc = parser.init ( gCollection, pFile,
-                      linePriority, FALSE,
-                      pDelRecord ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to initialize parser, rc = %d", rc ) ;
-      goto error ;
-   }
-   // run it
-   rc = parser.run ( total, succ ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to execute parser, rc = %d", rc ) ;
-      goto error ;
-   }
-   ossPrintf ( "%d records in Json file, %d records import"OSS_NEWLINE, total, succ ) ;
-done :
-   return rc ;
-error :
-   goto done ;
-}
-
-INT32 on_main( void *pData )
-{
-   INT32 rc = SDB_OK ;
-   INT32 type = 0 ;
-
-   utilSdbObj.getArgSwitch( OPTION_TYPE,  &type ) ;
-
-   switch( type )
-   {
-   case 0:
-      rc = importCSV () ;
-      break ;
-   case 1:
-      rc = importJson () ;
-      break ;
-   default :
-      rc = SDB_INVALIDARG ;
-      PD_LOG ( PDERROR, "Invalid type" ) ;
-      goto error ;
-   }
 done:
    return rc ;
 error:
@@ -274,24 +153,29 @@ error:
 INT32 on_end( void *pData )
 {
    INT32 rc = SDB_OK ;
-   sdbDisconnect ( gConnection ) ;
-   if ( gCollection )
-   {
-      sdbReleaseCollection ( gCollection ) ;
-   }
-   if ( gCollectionSpace )
-   {
-      sdbReleaseCS ( gCollectionSpace ) ;
-   }
-   if ( gConnection )
-   {
-      sdbReleaseConnection ( gConnection ) ;
-   }
 done:
    return rc ;
 error:
    goto done ;
 }
+
+#define EXPLAIN_HOSTNAME         "database host name ( default: localhost )"
+#define EXPLAIN_SVCNAME          "database service name ( default: 11810 )"
+#define EXPLAIN_USER             "databse user"
+#define EXPLAIN_PASSWORD         "databse password"
+#define EXPLAIN_DELCHAR          "string delimiter ( default: \" )( csv only )"
+#define EXPLAIN_DELFIELD         "field delimiter ( default: , )( csv only )"
+#define EXPLAIN_DELRECORD        "record delimiter ( default: '\\n' )"
+#define EXPLAIN_COLLECTSPACE     "collection space name"
+#define EXPLAIN_COLLECTION       "collection name"
+#define EXPLAIN_INSERTNUM        "batch insert records number, minimun 1, maximum 100000, default: 100"
+#define EXPLAIN_FILENAME         "load file name"
+#define EXPLAIN_TYPE             "type of file to load, default: json (json,csv)"
+#define EXPLAIN_FIELDS           "comma separated list of field names e.g. \"--fields name,age\" or e.g. \"--fields name string,age int default 18\" ( csv only )"
+#define EXPLAIN_HEADERLINE       "first line in input file is a header, if fill in the --fields, it will skip the first line of the file, default: false ( csv only )"
+#define EXPLAIN_SPARSE           "auto add fields, default: true ( csv only )"
+#define EXPLAIN_EXTRA            "auto add value, default: false ( csv only )"
+#define EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
 
 INT32 main ( INT32 argc, CHAR **argv )
 {
@@ -306,22 +190,23 @@ INT32 main ( INT32 argc, CHAR **argv )
    sdbEnablePD( LOGPATH ) ;
    setPDLevel( PDINFO ) ;
 
-   APPENDARGSTRING( utilSdbObj, OPTION_HOSTNAME,     OPTION_HOSTNAME ",s",     "database host name ( default: localhost )",                                                        FALSE, OSS_MAX_HOSTNAME,    DEFAULT_HOSTNAME ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_SVCNAME,      OPTION_SVCNAME ",p",      "database service name ( default: 11810 )",                                                     FALSE, OSS_MAX_SERVICENAME, DEFAULT_SVCNAME ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_USER,         OPTION_USER ",u",         "databse user",                                                              FALSE, -1,                  "\0" ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_PASSWORD,     OPTION_PASSWORD ",w",     "databse password",                                                          FALSE, -1,                  "\0" ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_DELCHAR,      OPTION_DELCHAR ",a",      "string delimiter ( default: \" )( csv only )",                              FALSE, 4,                  "\"" ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_DELFIELD,     OPTION_DELFIELD ",e",     "field delimiter ( default: , )( csv only )",                                FALSE, 4,                   ","  ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_DELRECORD,    OPTION_DELRECORD ",r",    "record delimiter ( default: '\\n' )",                                       FALSE, 4,                   "\n" ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_COLLECTSPACE, OPTION_COLLECTSPACE ",c", "collection space name",                                                     TRUE,  -1,                  NULL ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_COLLECTION,   OPTION_COLLECTION ",l",   "collection name",                                                           TRUE,  -1,                  NULL ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_FILENAME,     OPTION_FILENAME,          "database load file name",                                                   TRUE,  -1,                  NULL ) ;
-   APPENDARGSWITCH( utilSdbObj, OPTION_TYPE,         OPTION_TYPE,              "type of file to load, default: json (json,csv)",                            FALSE, SDBIMPORT_TYPE_STR,  2,   "json" ) ;
-   APPENDARGSTRING( utilSdbObj, OPTION_FIELD,        OPTION_FIELD,             "comma separated list of field names e.g. --fields name,age ( csv only )",   FALSE, -1,                  NULL ) ;
-   APPENDARGBOOL  ( utilSdbObj, OPTION_HEADERLINE,   OPTION_HEADERLINE,        "first line in input file is a header, default: false ( csv only )",         FALSE, FALSE ) ;
-   APPENDARGBOOL  ( utilSdbObj, OPTION_SPARSE,       OPTION_SPARSE,            "auto add fields, default: true ( csv only )",                               FALSE, TRUE  ) ;
-   APPENDARGBOOL  ( utilSdbObj, OPTION_EXTRA,        OPTION_EXTRA,             "auto add value, default: false ( csv only )",                               FALSE, FALSE ) ;
-   APPENDARGBOOL  ( utilSdbObj, OPTION_LINEPRIORITY, OPTION_LINEPRIORITY,      "reverse the priority for record and character delimiter, default: true",    FALSE, TRUE  ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_HOSTNAME,     OPTION_HOSTNAME ",s",     EXPLAIN_HOSTNAME,         FALSE, OSS_MAX_HOSTNAME,    DEFAULT_HOSTNAME ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_SVCNAME,      OPTION_SVCNAME ",p",      EXPLAIN_SVCNAME,          FALSE, OSS_MAX_SERVICENAME, DEFAULT_SVCNAME ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_USER,         OPTION_USER ",u",         EXPLAIN_USER,             FALSE, -1,                  "\0" ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_PASSWORD,     OPTION_PASSWORD ",w",     EXPLAIN_PASSWORD,         FALSE, -1,                  "\0" ) ;
+   APPENDARGCHAR  ( utilSdbObj, OPTION_DELCHAR,      OPTION_DELCHAR ",a",      EXPLAIN_DELCHAR,          FALSE, '"'  ) ;
+   APPENDARGCHAR  ( utilSdbObj, OPTION_DELFIELD,     OPTION_DELFIELD ",e",     EXPLAIN_DELFIELD,         FALSE, ','  ) ;
+   APPENDARGCHAR  ( utilSdbObj, OPTION_DELRECORD,    OPTION_DELRECORD ",r",    EXPLAIN_DELRECORD,        FALSE, '\n' ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_COLLECTSPACE, OPTION_COLLECTSPACE ",c", EXPLAIN_COLLECTSPACE,     TRUE,  -1,                  NULL ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_COLLECTION,   OPTION_COLLECTION ",l",   EXPLAIN_COLLECTION,       TRUE,  -1,                  NULL ) ;
+   APPENDARGINT   ( utilSdbObj, OPTION_INSERTNUM,    OPTION_INSERTNUM ",n",    EXPLAIN_INSERTNUM,        FALSE, 1,                   100000,   100 ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_FILENAME,     OPTION_FILENAME,          EXPLAIN_FILENAME,         TRUE,  -1,                  NULL ) ;
+   APPENDARGSWITCH( utilSdbObj, OPTION_TYPE,         OPTION_TYPE,              EXPLAIN_TYPE,             FALSE, SDBIMPORT_TYPE_STR,  2,   "json" ) ;
+   APPENDARGSTRING( utilSdbObj, OPTION_FIELD,        OPTION_FIELD,             EXPLAIN_FIELDS,           FALSE, -1,                  NULL ) ;
+   APPENDARGBOOL  ( utilSdbObj, OPTION_HEADERLINE,   OPTION_HEADERLINE,        EXPLAIN_HEADERLINE,       FALSE, FALSE ) ;
+   APPENDARGBOOL  ( utilSdbObj, OPTION_SPARSE,       OPTION_SPARSE,            EXPLAIN_SPARSE,           FALSE, TRUE  ) ;
+   APPENDARGBOOL  ( utilSdbObj, OPTION_EXTRA,        OPTION_EXTRA,             EXPLAIN_EXTRA,            FALSE, FALSE ) ;
+   APPENDARGBOOL  ( utilSdbObj, OPTION_LINEPRIORITY, OPTION_LINEPRIORITY,      EXPLAIN_LINEPRIORITY,     FALSE, TRUE  ) ;
 
    rc = utilSdbObj.init( setting, NULL ) ;
    if ( rc )

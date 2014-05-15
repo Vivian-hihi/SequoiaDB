@@ -149,6 +149,8 @@ INT32 utilSdbTemplet::appendArgInt( const CHAR *pKey,
                                     const CHAR *pCmd,
                                     const CHAR *pExplain,
                                     BOOLEAN require,
+                                    INT32 minInt,
+                                    INT32 maxInt,
                                     INT32 defaultInt )
 {
    INT32 rc = SDB_OK ;
@@ -165,6 +167,35 @@ INT32 utilSdbTemplet::appendArgInt( const CHAR *pKey,
    pVar->pCmd     = pCmd ;
    pVar->pExplain = pExplain ;
    pVar->varInt   = defaultInt ;
+   pVar->minInt   = minInt ;
+   pVar->maxInt   = maxInt ;
+   _argList.push_back( pVar ) ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 utilSdbTemplet::appendArgChar( const CHAR *pKey,
+                                     const CHAR *pCmd,
+                                     const CHAR *pExplain,
+                                     BOOLEAN require,
+                                     CHAR defaultChar )
+{
+   INT32 rc = SDB_OK ;
+   util_var *pVar = SDB_OSS_NEW util_var() ;
+   if ( !pVar )
+   {
+      PD_LOG ( PDERROR, "Failed to allocate memory" ) ;
+      rc = SDB_OOM ;
+      goto error ;
+   }
+   pVar->varType  = UTIL_VAR_CHAR ;
+   pVar->pKey     = pKey ;
+   pVar->require  = require ;
+   pVar->pCmd     = pCmd ;
+   pVar->pExplain = pExplain ;
+   pVar->varChar  = defaultChar ;
    _argList.push_back( pVar ) ;
 done:
    return rc ;
@@ -314,6 +345,24 @@ error:
    goto done ;
 }
 
+INT32 utilSdbTemplet::getArgChar( const CHAR *pKey, CHAR *pVarValue )
+{
+   INT32 rc = SDB_OK ;
+   util_var *pVar = NULL ;
+
+   pVar = (util_var *)_findKey( pKey ) ;
+   if ( !pVar )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+   *pVarValue = pVar->varChar ;
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 utilSdbTemplet::getArgBool( const CHAR *pKey, BOOLEAN *pVarValue )
 {
    INT32 rc = SDB_OK ;
@@ -373,8 +422,10 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
                                          CHAR **argv )
 {
    INT32 rc = SDB_OK ;
-   UINT32 tempStrSize = 0 ;
+   INT32 tempStrSize = 0 ;
    BOOLEAN isFind = FALSE ;
+   CHAR tempChar = 0 ;
+   CHAR c = 0 ;
    std::vector<util_var *>::iterator it ;
    const CHAR *pTempStr = NULL ;
    util_var *pVar = NULL ;
@@ -429,6 +480,75 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
          {
             pVar->varInt = ossAtoi(
                   vm[ pVar->pKey ].as<std::string>().c_str() ) ;
+            if ( pVar->varInt < pVar->minInt )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG ( PDERROR, "%s must be greater than %d",
+                        pVar->pKey, pVar->minInt ) ;
+               ossPrintf( "%s must be greater than %d"OSS_NEWLINE,
+                          pVar->pKey, pVar->minInt ) ;
+               goto error ;
+            }
+            else if ( pVar->varInt > pVar->maxInt )
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG ( PDERROR, "%s must be less than %d",
+                        pVar->pKey, pVar->maxInt ) ;
+               ossPrintf( "%s must be less than %d"OSS_NEWLINE,
+                          pVar->pKey, pVar->maxInt ) ;
+               goto error ;
+            }
+         }
+         else if ( pVar->varType == UTIL_VAR_CHAR )
+         {
+            pTempStr = vm[ pVar->pKey ].as<std::string>().c_str() ;
+            tempStrSize = ossStrlen ( pTempStr ) ;
+            if ( tempStrSize == 1 )
+            {
+               tempChar = pTempStr[0] ;
+            }
+            else if ( tempStrSize > 1 &&
+                      pTempStr[0] == '0' &&
+                      pTempStr[1] == 'x' )
+            {
+               tempChar = 0 ;
+               if ( tempStrSize > 4 )
+               {
+                  rc = SDB_INVALIDARG ;
+                  PD_LOG ( PDERROR, "%s must be 1 char \
+of 16 hex format ( e.g. 0x09 )", pVar->pKey ) ;
+                  ossPrintf( "%s must be 1 char \
+of 16 hex format ( e.g. 0x09 )"OSS_NEWLINE, pVar->pKey ) ;
+                  goto error ;
+               }
+               for ( INT32 i = 3; i <= tempStrSize; ++i )
+               {
+                  tempChar *= 16 ;
+                  c = pTempStr[i-1] ;
+                  if ( c >= '0' && c <= '9' )
+                  {
+                     tempChar += c - '0' ;
+                  }
+                  else if ( c >= 'a' && c <= 'f' )
+                  {
+                     tempChar += c - 'a' + 10 ;
+                  }
+                  else if ( c >= 'A' && c <= 'F' )
+                  {
+                     tempChar += c - 'A' + 10 ;
+                  }
+               }
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG ( PDERROR, "%s must be 1 char \
+of 16 hex format ( e.g. 0x09 )", pVar->pKey ) ;
+               ossPrintf( "%s must be 1 char \
+of 16 hex format ( e.g. 0x09 )"OSS_NEWLINE, pVar->pKey ) ;
+               goto error ;
+            }
+            pVar->varChar = tempChar ;
          }
          else if ( pVar->varType == UTIL_VAR_BOOL )
          {
