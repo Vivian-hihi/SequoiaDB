@@ -57,8 +57,6 @@ namespace engine
 {
    #define PMD_MAX_ENUM_STR_LEN        (32)
 
-   class _SDB_KRCB;
-
    enum PMD_CFG_STEP
    {
       PMD_CFG_STEP_INIT       = 0,           // initialize
