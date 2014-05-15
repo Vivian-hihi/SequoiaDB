@@ -103,23 +103,7 @@ namespace engine
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       const _pmdOptionsMgr::_pmdAddrPair *pCatAddrs = optCB->catAddrs() ;
 
-      // 1. init param
-      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
-      {
-         if ( 0 == pCatAddrs[i]._host )
-         {
-            break ;
-         }
-         id.columns.groupID = catGID ;
-         id.columns.nodeID = catNID++ ;
-         id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
-         addCatNodeAddr( id, pCatAddrs[i]._host, pCatAddrs[i]._service ) ;
-      }
-
-      // 2. set startup ok
-      pmdGetStartup().ok( TRUE ) ;
-
-      // 3. create objs
+      // 1. create objs
       _pNetWork = SDB_OSS_NEW _netRouteAgent( &_multiRouteAgent ) ;
       if ( !_pNetWork )
       {
@@ -138,6 +122,21 @@ namespace engine
       }
       _catGroupInfo = CoordGroupInfoPtr( pGroupInfo ) ;
 
+      // 2. init param
+      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
+      {
+         if ( 0 == pCatAddrs[i]._host )
+         {
+            break ;
+         }
+         id.columns.groupID = catGID ;
+         id.columns.nodeID = catNID++ ;
+         id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+         addCatNodeAddr( id, pCatAddrs[i]._host, pCatAddrs[i]._service ) ;
+      }
+
+      // 3. set startup ok
+      pmdGetStartup().ok( TRUE ) ;
 
    done:
       return rc ;
