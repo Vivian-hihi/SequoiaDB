@@ -124,7 +124,7 @@ namespace engine
       // 2. init param
       for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
       {
-         if ( 0 == pCatAddrs[i]._host )
+         if ( 0 == pCatAddrs[i]._host[ 0 ] )
          {
             break ;
          }
