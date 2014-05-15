@@ -46,7 +46,7 @@
 #endif
 #include "ossPrimitiveFileOp.hpp"
 using namespace engine ;
-pdTraceCB *gPDTraceCB = NULL ;
+
 ossSpinXLatch gPDTraceMutex;
 // extract high 32 bit as function component mask, and OR with
 // cb->_componentMask, if the result is 0 that means the component is not what
@@ -112,10 +112,10 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
                    pdTraceArgTuple *tuple )
 {
    // make sure trace is turned on
-   if ( !gPDTraceCB || gPDTraceCB->_traceStarted.compare(FALSE) )
+   if ( sdbGetPDTraceCB()->_traceStarted.compare(FALSE) )
       return ;
    // make sure the function is what we want
-   if ( !pdTraceMask ( funcCode, gPDTraceCB ) )
+   if ( !pdTraceMask ( funcCode, sdbGetPDTraceCB() ) )
       return ;
    INT32 numSlots = 0 ;
    pdTraceRecord record ;
@@ -146,43 +146,43 @@ void pdTraceFunc ( UINT64 funcCode, INT32 type,
    numSlots = (INT32)ceil( (FLOAT64)record._recordSize /
                            (FLOAT64)TRACE_SLOT_SIZE ) ;
    // reserve space
-   pBuffer = gPDTraceCB->reserveSlots ( numSlots ) ;
+   pBuffer = sdbGetPDTraceCB()->reserveSlots ( numSlots ) ;
    if ( !pBuffer )
       goto done ;
-   gPDTraceCB->startWrite () ;
+   sdbGetPDTraceCB()->startWrite () ;
    // fill trace buffer
-   pBuffer = gPDTraceCB->fillIn ( pBuffer, &record, sizeof(record) ) ;
+   pBuffer = sdbGetPDTraceCB()->fillIn ( pBuffer, &record, sizeof(record) ) ;
    for ( INT32 i = 0; i < PD_TRACE_MAX_ARG_NUM; ++i )
    {
       if ( PD_TRACE_ARGTYPE_NONE != tuple[i].x )
       {
-         pBuffer = gPDTraceCB->fillIn ( pBuffer, &tuple[i].x,
-                                        sizeof(tuple[i].x) ) ;
-         pBuffer = gPDTraceCB->fillIn ( pBuffer, &tuple[i].z,
-                                        sizeof(tuple[i].z) ) ;
+         pBuffer = sdbGetPDTraceCB()->fillIn ( pBuffer, &tuple[i].x,
+                                               sizeof(tuple[i].x) ) ;
+         pBuffer = sdbGetPDTraceCB()->fillIn ( pBuffer, &tuple[i].z,
+                                               sizeof(tuple[i].z) ) ;
          // size includes pdTraceArgument head, so we have to copy the rest of
          // data
-         pBuffer = gPDTraceCB->fillIn ( pBuffer, tuple[i].y,
-                                        tuple[i].z-sizeof(pdTraceArgument) ) ;
+         pBuffer = sdbGetPDTraceCB()->fillIn ( pBuffer, tuple[i].y,
+                                               tuple[i].z-sizeof(pdTraceArgument) ) ;
       }
    }
-   gPDTraceCB->finishWrite () ;
+   sdbGetPDTraceCB()->finishWrite () ;
 #if defined (SDB_ENGINE)
-   if ( gPDTraceCB->_numBP )
-      gPDTraceCB->pause ( code ) ;
+   if ( sdbGetPDTraceCB()->_numBP )
+      sdbGetPDTraceCB()->pause ( code ) ;
 #endif
 done :
    return ;
 }
 
-_pdTraceCB::_pdTraceCB() :
-_traceStarted(FALSE),
-_currentSlot(0),
-_currentWriter(0),
-_componentMask(0xFFFFFFFF),
-_totalChunks(0),
-_totalSlots(0),
-_pBuffer(NULL)
+_pdTraceCB::_pdTraceCB()
+:_traceStarted(FALSE),
+ _currentSlot(0),
+ _currentWriter(0),
+ _componentMask(0xFFFFFFFF),
+ _totalChunks(0),
+ _totalSlots(0),
+ _pBuffer(NULL)
 {
    _headerSize = sizeof(_pdTraceCB) ;
    ossMemcpy ( _eyeCatcher, TRACECB_EYE_CATCHER,
@@ -1026,3 +1026,13 @@ void _pdTraceCB::resumePausedEDUs ()
 }
 
 #endif // SDB_ENGINE
+
+/*
+   get global pdtrace cb
+*/
+pdTraceCB* sdbGetPDTraceCB ()
+{
+   static pdTraceCB s_pdTraceCB ;
+   return &s_pdTraceCB ;
+}
+
