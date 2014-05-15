@@ -49,6 +49,7 @@ namespace engine
    {
       _file = NULL ;
       _fileSize = 0 ;
+      _fileNum  = 0 ;
       _idleSize = 0 ;
    }
 
@@ -75,16 +76,17 @@ namespace engine
    }
 
    // initialize a log file, file size max 4GB
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_INIT, "_dpsLogFile::init" )
-   INT32 _dpsLogFile::init( const CHAR *path, UINT32 size )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_INIT, "_dpsLogFile::init" )
+   INT32 _dpsLogFile::init( const CHAR *path, UINT32 size, UINT32 fileNum )
    {
-      INT32 rc = SDB_OK;
-      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_INIT );
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB__DPSLOGFILE_INIT ) ;
 
       SDB_ASSERT ( 0 == ( _fileSize % DPS_DEFAULT_PAGE_SIZE ),
                    "Size must be multiple of DPS_DEFAULT_PAGE_SIZE bytes" ) ;
 
       _fileSize = size ;
+      _fileNum  = fileNum ;
       _idleSize = _fileSize ;
 
       // allocate OSS_FILE, free in destructor
@@ -97,8 +99,7 @@ namespace engine
       }
 
       // if the file exist, restore
-      if ( SDB_START_CRASH != pmdGetKRCB()->getStartType()
-         && SDB_OK == ossAccess( path ) )
+      if ( SDB_OK == ossAccess( path ) )
       {
          rc = ossOpen ( path, OSS_READWRITE|OSS_SHAREWRITE, OSS_RWXU, *_file ) ;
          if ( rc == SDB_OK )
@@ -107,8 +108,9 @@ namespace engine
             if ( rc == SDB_OK )
             {
                PD_LOG ( PDEVENT, "Restore dps log file[%s] succeed, "
-                        "firstLsn[%lld], idle space: %u", path,
-                        getFirstLSN().offset, getIdleSize() ) ;
+                        "firstLsn[%lld], idle space: %u, start offset: %d",
+                        path, getFirstLSN().offset, getIdleSize(),
+                        (INT32)( _logHeader._firstLSN.offset % _fileSize ) ) ;
                goto done ;
             }
             else
@@ -121,13 +123,14 @@ namespace engine
          }
       }
 
-      // delete the file, since we are using circular logging mode, we only
-      // delete the file during initialization
-      rc = ossDelete ( path );
-      if ( SDB_IO == rc )
+      if ( SDB_OK == ossAccess( path ) )
       {
-         PD_LOG ( PDERROR, "Failed to delete file at %s", path ) ;
-         goto error;
+         rc = ossDelete ( path );
+         if ( SDB_IO == rc )
+         {
+            PD_LOG ( PDERROR, "Failed to delete file at %s", path ) ;
+            goto error;
+         }
       }
 
       // open the file with "create only" and "read write" mode, for rx-r-----
@@ -150,7 +153,6 @@ namespace engine
          goto error;
       }
 
-      // TODO: initialize head
       _initHead ( DPS_INVALID_LOG_FILE_ID ) ;
       rc = _flushHeader () ;
       if ( rc )
@@ -181,7 +183,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__RESTRORE, "_dpsLogFile::_restore" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__RESTRORE, "_dpsLogFile::_restore" )
    INT32 _dpsLogFile::_restore ()
    {
       INT32 rc = SDB_OK ;
@@ -197,9 +199,10 @@ namespace engine
       {
          goto error ;
       }
-      if ( _fileSize != fileSize - sizeof(dpsLogHeader) )
+
+      if ( fileSize < (INT64)( _fileSize + sizeof(dpsLogHeader) ) )
       {
-         PD_LOG ( PDERROR, "DPS file size[%d] is not the same with config[%d]",
+         PD_LOG ( PDERROR, "DPS file size[%d] is smaller than config[%d]",
                   fileSize - sizeof(dpsLogHeader), _fileSize ) ;
          rc = SDB_DPS_FILE_SIZE_NOT_SAME ;
          goto error ;
@@ -213,17 +216,71 @@ namespace engine
          goto error ;
       }
 
-      PD_LOG ( PDEVENT, "Header info[first lsn:%d.%lld, logID:%d]",
-         _logHeader._firstLSN.version, _logHeader._firstLSN.offset,
-         _logHeader._logID ) ;
-
-      //check header
-      if ( ossStrncmp(_logHeader._eyeCatcher, DPS_LOG_HEADER_EYECATCHER,
-                      DPS_LOG_HEADER_EYECATCHER_LEN) != 0 )
+      // check header info
+      if ( ossStrncmp( _logHeader._eyeCatcher, DPS_LOG_HEADER_EYECATCHER,
+                       sizeof( _logHeader._eyeCatcher ) ) != 0 )
       {
+         PD_LOG( PDERROR, "DPS file eye catcher error" ) ;
          rc = SDB_DPS_FILE_NOT_RECOGNISE ;
          goto error ;
       }
+      else if ( _logHeader._fileSize != 0 &&
+                _logHeader._fileSize != _fileSize )
+      {
+         PD_LOG( PDERROR, "DPS file's meta size[%d] is not the same with "
+                 "config[%d]", _logHeader._fileSize, _fileSize ) ;
+         rc = SDB_DPS_FILE_SIZE_NOT_SAME ;
+         goto error ;
+      }
+      else if ( _logHeader._fileNum != 0 &&
+                _logHeader._fileNum != _fileNum )
+      {
+         PD_LOG( PDERROR, "DPS file's meta file num[%d] is not the same with "
+                 "config[%d]", _logHeader._fileNum, _fileNum ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // check the real size
+      if ( fileSize > (INT64)( _fileSize + sizeof(dpsLogHeader) ) )
+      {
+         PD_LOG( PDERROR, "DPS file real size[%d] is not the same with "
+                 "config[%d]", fileSize - sizeof(dpsLogHeader),
+                 _fileSize ) ;
+         // start up from crash
+         if ( SDB_START_CRASH == pmdGetKRCB()->getStartType() )
+         {
+            rc = ossTruncateFile( _file, _fileSize + sizeof(dpsLogHeader) ) ;
+            if ( rc )
+            {
+               PD_LOG( PDWARNING, "Tuncate dps file to config size failed, "
+                       "rc: %d", rc ) ;
+               goto error ;
+            }
+            PD_LOG( PDEVENT, "Tuncate dps file to config size[%d]",
+                    _fileSize ) ;
+         }
+         else
+         {
+            goto error ;
+         }
+      }
+
+      PD_LOG ( PDEVENT, "Header info[first lsn:%d.%lld, logID:%d]",
+               _logHeader._firstLSN.version, _logHeader._firstLSN.offset,
+               _logHeader._logID ) ;
+
+      // upgrade the header
+      if ( _logHeader._version != DPS_LOG_FILE_VERSION1 )
+      {
+         _logHeader._version = DPS_LOG_FILE_VERSION1 ;
+         _logHeader._fileSize = _fileSize ;
+         _logHeader._fileNum  = _fileNum ;
+
+         rc = _flushHeader() ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to flush header, rc: %d", rc ) ;
+      }
+
       if ( _logHeader._logID == DPS_INVALID_LOG_FILE_ID )
       {
          _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
@@ -233,6 +290,7 @@ namespace engine
 
       offSet = _logHeader._firstLSN.offset % _fileSize ;
       baseOffset = _logHeader._firstLSN.offset - offSet ;
+
       //analysis the file
       while ( offSet < _fileSize )
       {
@@ -253,8 +311,8 @@ namespace engine
          }
          else if ( offSet + lsnHeader._length > _fileSize )
          {
-            PD_LOG ( PDEVENT, "LSN length[%d] is over the file size[offSet:%lld]",
-                     lsnHeader._length, offSet ) ;
+            PD_LOG ( PDEVENT, "LSN length[%d] is over the file "
+                     "size[offSet:%lld]", lsnHeader._length, offSet ) ;
             break ;
          }
          else if ( lsnHeader._length < sizeof (dpsLogRecordHeader) )
@@ -267,16 +325,6 @@ namespace engine
          offSet += lsnHeader._length ;
       }
 
-      /*if ( 0 == offSet )
-      {
-         _logHeader._firstLSN.version = DPS_INVALID_LSN_VERSION ;
-         _logHeader._firstLSN.offset = DPS_INVALID_LSN_OFFSET ;
-         _logHeader._logID = DPS_INVALID_LOG_FILE_ID ;
-      }
-      else
-      {
-         _idleSize = _fileSize - offSet ;
-      }*/
       _idleSize = _fileSize - offSet ;
 
    done:
@@ -286,7 +334,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_RESET, "_dpsLogFile::reset" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_RESET, "_dpsLogFile::reset" )
    INT32 _dpsLogFile::reset ( UINT32 logID, const DPS_LSN_OFFSET &offset,
                               const DPS_LSN_VER &version )
    {
@@ -310,7 +358,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__FLUSHHD, "_dpsLogFile::_flushHeader" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__FLUSHHD, "_dpsLogFile::_flushHeader" )
    INT32 _dpsLogFile::_flushHeader ()
    {
       INT32 rc = SDB_OK ;
@@ -337,7 +385,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__RDHD, "_dpsLogFile::_readHeader" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE__RDHD, "_dpsLogFile::_readHeader" )
    INT32 _dpsLogFile::_readHeader ()
    {
       INT32 rc = SDB_OK ;
@@ -365,7 +413,7 @@ namespace engine
    }
 
    // write data into log file
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_WRITE, "_dpsLogFile::write" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_WRITE, "_dpsLogFile::write" )
    INT32 _dpsLogFile::write( const CHAR *content, UINT32 len )
    {
       INT32 rc = SDB_OK;
@@ -400,7 +448,7 @@ namespace engine
    }
 
    // read data from a given offset
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_READ, "_dpsLogFile::read" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLOGFILE_READ, "_dpsLogFile::read" )
    INT32 _dpsLogFile::read ( const DPS_LSN_OFFSET &lOffset, UINT32 len, CHAR *buf )
    {
       INT32 rc = SDB_OK;

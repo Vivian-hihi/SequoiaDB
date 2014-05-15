@@ -55,6 +55,7 @@ namespace engine
    {
       _initialized   = FALSE ;
       _dpslocal      = FALSE ;
+      _pEventHandler = NULL ;
    }
    _dpsLogWrapper::~_dpsLogWrapper()
    {
@@ -64,6 +65,7 @@ namespace engine
    {
       pmdOptionsCB *optCB = pmdGetKRCB()->getOptionCB() ;
 
+      _dpslocal = optCB->isDpsLocal() ;
       _buf.setLogFileSz( optCB->getReplLogFileSz() ) ;
       _buf.setLogFileNum( optCB->getReplLogFileNum() ) ;
 
@@ -79,25 +81,69 @@ namespace engine
 
    INT32 _dpsLogWrapper::active ()
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+
+      // dps log writer
+      rc = pEDUMgr->startEDU( EDU_TYPE_LOGGW, (void*)this, &eduID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Start dps log writer failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      pEDUMgr->regSystemEDU( EDU_TYPE_LOGGW, eduID ) ;
+      // dps trans rollback task
+      rc = pEDUMgr->startEDU( EDU_TYPE_DPSROLLBACK_TASK, NULL, &eduID ) ;
+      if ( rc )
+      {
+         PD_LOG( PDERROR, "Start dps trans rollback failed, rc: %d", rc ) ;
+         goto error ;
+      }
+      pEDUMgr->regSystemEDU( EDU_TYPE_DPSROLLBACK_TASK, eduID ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _dpsLogWrapper::deactive ()
    {
-      // TODO:XUJIANHUI
       return SDB_OK ;
    }
 
    INT32 _dpsLogWrapper::fini ()
    {
-      // TODO:XUJIANHUI
       return SDB_OK ;
    }
 
    void _dpsLogWrapper::writeData ( dpsMergeInfo & info )
    {
       _buf.writeData( info ) ;
+
+      if ( _pEventHandler && info.isNeedNotify() )
+      {
+         DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
+         pmdEDUCB *cb = info.getEDUCB() ;
+         if ( info.hasDummy() )
+         {
+            offset = info.getDummyBlock().record().head()._lsn ;
+            if ( cb )
+            {
+               cb->insertLsn( offset ) ;
+            }
+            _pEventHandler->onWriteLog( offset ) ;
+         }
+         offset = info.getMergeBlock().record().head()._lsn ;
+         if ( cb )
+         {
+            cb->insertLsn( offset ) ;
+         }
+         _pEventHandler->onWriteLog( offset ) ;
+      }
+      // reset
+      info.resetInfoEx() ;
    }
 
    // record a row

@@ -45,6 +45,7 @@ namespace engine
    /// warning: any value can not be value-passed.
    static INT32 dpsPushTran( const DPS_TRANS_ID &transID,
                              const DPS_LSN_OFFSET &preTransLsn,
+                             const DPS_LSN_OFFSET &relatedLSN,
                              dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -67,6 +68,16 @@ namespace engine
             goto error ;
          }
       }
+      if ( DPS_INVALID_LSN_OFFSET != relatedLSN )
+      {
+         rc = record.push( DPS_LOG_PUBLIC_RELATED_TRANS,
+                           sizeof( relatedLSN ),
+                           (CHAR *)( &relatedLSN ) ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+      }
    done:
       return rc ;
    error:
@@ -78,6 +89,7 @@ namespace engine
                            const BSONObj &obj,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
+                           const DPS_LSN_OFFSET &relatedLSN,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -102,9 +114,7 @@ namespace engine
          goto error ;
       }
 
-      rc = dpsPushTran( transID,
-                        preTransLsn,
-                        record ) ;
+      rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
@@ -171,6 +181,7 @@ namespace engine
                            const BSONObj &newObj,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
+                           const DPS_LSN_OFFSET &relatedLSN,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -224,9 +235,7 @@ namespace engine
          goto error ;
       }
 
-      rc = dpsPushTran( transID,
-                        preTransLsn,
-                        record ) ;
+      rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
@@ -323,6 +332,7 @@ namespace engine
                            const BSONObj &oldObj,
                            const DPS_TRANS_ID &transID,
                            const DPS_LSN_OFFSET &preTransLsn,
+                           const DPS_LSN_OFFSET &relatedLSN,
                            dpsLogRecord &record )
    {
       INT32 rc = SDB_OK ;
@@ -348,9 +358,7 @@ namespace engine
          goto error ;
       }
 
-      rc = dpsPushTran( transID,
-                        preTransLsn,
-                        record ) ;
+      rc = dpsPushTran( transID, preTransLsn, relatedLSN, record ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push trans to record, rc: %d", rc ) ;
@@ -1053,6 +1061,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__DPS_TRANSCOMMIT2RECORD, "dpsTransCommit2Record" )
    INT32 dpsTransCommit2Record( const DPS_TRANS_ID &transID,
+                                const DPS_LSN_OFFSET &preTransLsn,
+                                const DPS_LSN_OFFSET &firstTransLsn,
                                 dpsLogRecord &record )
    {
       PD_TRACE_ENTRY( SDB__DPS_TRANSCOMMIT2RECORD ) ;
@@ -1066,6 +1076,22 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "Failed to push transid to record, rc: %d", rc ) ;
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_PUBLIC_PRETRANS,
+                        sizeof( preTransLsn ),
+                        ( CHAR* )&preTransLsn ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+      rc = record.push( DPS_LOG_PUBLIC_FIRSTTRANS,
+                        sizeof( firstTransLsn ),
+                        ( CHAR* )&firstTransLsn ) ;
+      if ( rc )
+      {
          goto error ;
       }
 

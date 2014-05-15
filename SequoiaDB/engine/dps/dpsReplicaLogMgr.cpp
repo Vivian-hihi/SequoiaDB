@@ -76,9 +76,8 @@ namespace engine
       _lsn.version = 0 ;
       _restoreFlag = FALSE ;
 
-      _replSet = NULL ;
-
-      _transCB = pmdGetKRCB()->getTransCB() ;
+      _transCB = NULL ;
+      _pEventHander = NULL ;
    }
 
    _dpsReplicaLogMgr::~_dpsReplicaLogMgr()
@@ -98,7 +97,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_INIT );
       SDB_ASSERT ( path, "path can't be NULL" ) ;
 
-      _replSet = pmdGetKRCB()->getReplCB() ;
+      _transCB = sdbGetTransCB() ;
+
       // free in destructor
       _pages = SDB_OSS_NEW _dpsLogPage[pageNum];
       if ( NULL == _pages )
@@ -298,10 +298,11 @@ namespace engine
          _currentLsn = _lsn ;
          _lsn.offset += dummyhead._length ;
 
-         if ( info._needNty && _replSet && _replSet->getNtySessionNum() > 0 )
+         if ( info.isNeedNotify() && _pEventHander )
          {
-            _ntyQue.push( dpsLSNInfoEx( info._csLID, info._clLID, info._extLID,
-                                        dummyhead._lsn ) ) ;
+            _pEventHander->onPrepareLog( info.getCSLID(), info.getCLLID(),
+                                         info.getExtentLID(),
+                                         dummyhead._lsn ) ;
          }
       }
 
@@ -340,12 +341,12 @@ namespace engine
       _currentLsn = _lsn ;
       _lsn.offset += head._length ;
 
-      if ( info._needNty && _replSet && _replSet->getNtySessionNum() > 0 )
+      if ( info.isNeedNotify() && _pEventHander )
       {
-         _ntyQue.push( dpsLSNInfoEx( info._csLID, info._clLID, info._extLID,
-                                     head._lsn ) ) ;
+         _pEventHander->onPrepareLog( info.getCSLID(), info.getCLLID(),
+                                      info.getExtentLID(),
+                                      head._lsn ) ;
       }
-      info._needNty = FALSE ;
 
    done:
       // unlock metadata
@@ -364,8 +365,8 @@ namespace engine
    void _dpsReplicaLogMgr::writeData ( dpsMergeInfo & info )
    {
       SDB_ASSERT ( info.getMergeBlock().pageMeta().valid(),
-                   "block not prepared" )
-      SDB_ASSERT ( _transCB != NULL, "transCB can't be null!" )
+                   "block not prepared" ) ;
+      SDB_ASSERT ( _transCB != NULL, "transCB can't be null!" ) ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR_WRITEDATA );
 
       // if has dummy block
@@ -378,48 +379,8 @@ namespace engine
       _mergeLogs( info.getMergeBlock(), info.getMergeBlock().pageMeta() );
       SHARED_UNLOCK_NODES( info.getMergeBlock().pageMeta() );
 
-      // process transaction info
-      DPS_LSN_OFFSET lsnOffset = DPS_INVALID_LSN_OFFSET;
-      DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID;
-      dpsLogRecord &record = info.getMergeBlock().record() ;
-      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
-      if ( !itr.valid() )
-      {
-         goto done ;
-      }
-      transID = *((DPS_TRANS_ID *)itr.value());
-      if ( transID != DPS_INVALID_TRANS_ID )
-      {
-         if ( _transCB->isRollback( transID ))
-         {
-            itr = record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
-            if ( !itr.valid() )
-            {
-               lsnOffset = DPS_INVALID_LSN_OFFSET ;
-            }
-            else
-            {
-               lsnOffset = *((DPS_LSN_OFFSET *)itr.value()) ;
-            }
-         }
-         else if ( LOG_TYPE_TS_COMMIT == record.head()._type )
-         {
-            lsnOffset = DPS_INVALID_LSN_OFFSET ;
-         }
-         else
-         {
-            lsnOffset = record.head()._lsn;
-            if ( _transCB->isFirstOp( transID ) )
-            {
-               _transCB->addBeginLsn( lsnOffset, transID );
-            }
-         }
-         if ( DPS_INVALID_LSN_OFFSET == lsnOffset )
-         {
-            _transCB->delBeginLsn( transID );
-         }
-         _transCB->updateTransInfo( transID, lsnOffset );
-      }
+      _transCB->saveTransInfoFromLog( info.getMergeBlock().record() ) ;
+
    done:
       PD_TRACE_EXIT ( SDB__DPSRPCMGR_WRITEDATA );
    }
@@ -434,163 +395,13 @@ namespace engine
       {
          goto done ;
       }
-//      if ( !block.isRow() )
-//      {
-//         block.record().head() =
-//               mergeInfo.getMergeBlock().record().head() ;
-//      }
-
       writeData ( mergeInfo ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB__DPSRPCMGR_MERGE, rc );
       return rc ;
    }
  
-/*
-   INT32 _dpsReplicaLogMgr::merge( _dpsMergeBlock &block, DPS_LSN &lsn )
-   {
-      INT32 rc = SDB_OK;
-      UINT32 offset = 0;
-      std::vector<_dpsLogPage *> nodes;
-      _dpsLogInfo &head = block.logHead();
-      UINT32 logFileSz = _logger.getLogFileSz() ;
-      // dummy record
-      _dpsMergeBlock             dummyblock ;
-      std::vector<_dpsLogPage *> dummynodes ;
-      UINT32                     dummyoffset = 0;
-      BOOLEAN                    insertDummy = FALSE ;
-      BOOLEAN                    locked = FALSE ;
-
-      if ( FALSE == _restoreFlag )
-      {
-         _mtx.get();
-         locked = TRUE ;
-      }
-
-      if ( DPS_INVALID_LSN_VERSION == _lsn.version )
-      {
-         ++_lsn.version ;
-      }
-
-      // is the full record able to sit in the same log file?
-      if ( ( _lsn.offset / logFileSz ) != ( _lsn.offset + head._length - 1 ) / logFileSz )
-      {
-         // if the log is replicated and hit this logic, something really
-         // goes wrong, because the dummy record should already be inserted
-         // in primary node
-         SDB_ASSERT ( !block.isRow(), "replicated log record should never "
-                      "hit this part" )
-         // we are going to insert a dummy log record
-         UINT32 dummyLogSize = logFileSz - ( _lsn.offset % logFileSz ) ;
-         SDB_ASSERT ( dummyLogSize >= sizeof ( dpsLogInfo ),
-                      "dummy log size is smaller than log head" )
-         SDB_ASSERT ( dummyLogSize % sizeof(SINT32) == 0,
-                      "dummy log size is not 4 bytes aligned" )
-         // set dummyhead as a reference to log head
-         _dpsLogInfo &dummyhead = dummyblock.logHead() ;
-         // initialize dummyhead
-         dummyhead._length = dummyLogSize ;
-         dummyhead._type   = LOG_TYPE_DUMMY ;
-         dummyhead._namelen= 0 ;
-         // allocate the space in metadata and page, receive dummynodes for the
-         // nodes contains dummy record, and offset for where to start
-         rc = _allocate ( dummyhead._length, dummynodes, dummyoffset ) ;
-         if ( rc )
-         {
-            pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                    "Failed to allocate space for dummy record" ) ;
-            goto error ;
-         }
-         // share lock the pages we are going to write
-         SHARED_LOCK_NODES ( dummynodes ) ;
-         // send the pages into queue
-         _push2SendQueue ( dummynodes ) ;
-         // change global metadata
-         dummyhead._lsn = _lsn.offset ;
-         dummyhead._version = _lsn.version ;
-         dummyhead._preLsn = _currentLsn.offset ;
-         _currentLsn = _lsn ;
-         _lsn.offset += dummyhead._length ;
-         // mark we are going to insert dummy record
-         insertDummy = TRUE ;
-      }
-
-      // after we push dummy record, we have to check if the rest of space able
-      // to put a log head in log file
-      if ( ( (_lsn.offset+head._length) / logFileSz ) !=
-           ( (_lsn.offset+head._length+sizeof(_dpsLogInfo)) / logFileSz ) )
-      {
-         head._length = logFileSz - _lsn.offset % logFileSz ;
-         //head._length += logFileSz - ((_lsn.offset+head._length)%logFileSz) ;
-      }
-      // now let's continue allocate the real data
-      rc = _allocate( head._length, nodes, offset );
-      if ( rc )
-      {
-         // if we cannot allocate buffer for data, let's release global mutex
-         if ( locked )
-         {
-            _mtx.release() ;
-            locked = FALSE ;
-         }
-
-         // if we have allocated dummy record, make sure to write into buffer
-         // before leaving
-         if ( insertDummy )
-         {
-            _mergeLogs ( dummyblock, dummynodes, dummyoffset ) ;
-            SHARED_UNLOCK_NODES ( dummynodes ) ;
-            dummynodes.clear() ;
-         }
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to allocate space for record" ) ;
-         goto error;
-      }
-      // and share lock the nodes with real data
-      SHARED_LOCK_NODES( nodes );
-      // push them into queue together with dummy record
-      _push2SendQueue( nodes );
-      // assign lsn if it's not from replica side
-      if ( !block.isRow() )
-      {
-         head._lsn = _lsn.offset;
-         head._preLsn = _currentLsn.offset ;
-         head._version = _lsn.version ;
-      }
-      else
-      {
-         SDB_ASSERT ( _lsn.offset == head._lsn, "row lsn error" ) ;
-         _lsn.version = head._version ;
-      }
-      // change global metadata
-      _currentLsn = _lsn;
-      _lsn.offset += head._length;
-      lsn = _currentLsn ;
-      // unlock metadata
-      if ( locked )
-      {
-         _mtx.release();
-         locked = FALSE ;
-      }
-
-      // first we write dummy record if needed
-      if ( insertDummy )
-      {
-         _mergeLogs ( dummyblock, dummynodes, dummyoffset ) ;
-         SHARED_UNLOCK_NODES ( dummynodes ) ;
-         dummynodes.clear() ;
-      }
-      // and then write user data
-      _mergeLogs( block, nodes, offset );
-      SHARED_UNLOCK_NODES( nodes );
-      nodes.clear();
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-*/
-
    DPS_LSN _dpsReplicaLogMgr::getStartLsn ( BOOLEAN logBufOnly )
    {
       ossScopedLock lock( &_mtx ) ;
@@ -1406,9 +1217,9 @@ namespace engine
    INT32 _dpsReplicaLogMgr::checkSyncControl( UINT32 reqLen, _pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK ;
-      if ( _replSet )
+      if ( _pEventHander )
       {
-         rc = _replSet->checkSyncControl( reqLen, cb ) ;
+         rc = _pEventHander->canAssignLogPage( reqLen, cb ) ;
       }
       return rc ;
    }

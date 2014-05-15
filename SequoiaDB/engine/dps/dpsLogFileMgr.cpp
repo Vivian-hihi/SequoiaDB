@@ -130,7 +130,7 @@ namespace engine
          // initialize log file for each newly created one
          // we set readonly to FALSE, so that each log file is opened with
          // WRITEONLY option
-         rc = file->init( LOG_BUILDER, _logFileSz );
+         rc = file->init( LOG_BUILDER, _logFileSz, _logFileNum );
          if ( rc )
          {
             PD_LOG ( PDERROR,"Failed to init log file for %d, rc = %d", i, rc ) ;
@@ -170,11 +170,14 @@ namespace engine
             continue ;
          }
 
-         if ( beginLogID == DPS_INVALID_LOG_FILE_ID
-          || ( file->header()._logID < beginLogID
-          && beginLogID - file->header()._logID < DPS_INVALID_LOG_FILE_ID / 2 )
-          || ( file->header()._logID > beginLogID
-          && file->header()._logID - beginLogID > DPS_INVALID_LOG_FILE_ID / 2 ) )
+         if ( beginLogID == DPS_INVALID_LOG_FILE_ID ||
+              ( file->header()._logID < beginLogID &&
+                beginLogID - file->header()._logID <
+                DPS_INVALID_LOG_FILE_ID / 2 ) ||
+              ( file->header()._logID > beginLogID &&
+                file->header()._logID - beginLogID >
+                DPS_INVALID_LOG_FILE_ID / 2 )
+             )
          {
             beginLogID = file->header()._logID ;
             _begin = i ;
@@ -222,7 +225,7 @@ namespace engine
       PD_LOG( PDEVENT, "Analysis dps logs[begin: %u, work: %u, "
               "logicalWork: %u]", _begin, _work, _logicalWork ) ;
 
-      PD_TRACE_EXIT ( SB__DPSLGFILEMGR__ANLYS );
+      PD_TRACE_EXIT ( SB__DPSLGFILEMGR__ANLYS ) ;
    }
 
    // get the first LSN in log file manager

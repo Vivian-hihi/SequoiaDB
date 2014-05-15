@@ -32,7 +32,8 @@
 namespace engine
 {
 
-   dpsTransCB::dpsTransCB():_TransIDL48Cur(1)
+   dpsTransCB::dpsTransCB()
+   :_TransIDL48Cur( 1 )
    {
       _TransIDH16          = 0;
       _isOn                = FALSE;
@@ -41,11 +42,106 @@ namespace engine
       _maxUsedSize         = 0;
       _logFileTotalSize    = 0;
       _accquiredSpace      = 0;
-      _isInit              = FALSE;
    }
 
-   dpsTransCB::~ dpsTransCB()
+   dpsTransCB::~dpsTransCB()
    {
+   }
+
+   SDB_CB_TYPE dpsTransCB::cbType () const
+   {
+      return SDB_CB_TRANS ;
+   }
+
+   const CHAR* dpsTransCB::cbName () const
+   {
+      return "TRANSCB" ;
+   }
+
+   INT32 dpsTransCB::init ()
+   {
+      INT32 rc = SDB_OK ;
+
+      _isOn = pmdGetOptionCB()->transactionOn() ;
+
+      // register event handle
+      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
+      IEventHolder *pHolder = NULL ;
+      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
+      {
+         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
+         pHolder->regEventHandler( this ) ;
+      }
+
+      // if enabled dps
+      if ( pmdGetKRCB()->isCBValue( SDB_CB_DPS ) )
+      {
+         UINT64 logFileSize = pmdGetOptionCB()->getReplLogFileSz() ;
+         UINT32 logFileNum = pmdGetOptionCB()->getReplLogFileNum() ;
+         _logFileTotalSize = logFileSize * logFileNum ;
+
+         // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
+         // (2).the max-size of unavailable space in cross-file is 
+         // 2*DMS_RECORD_MAX_SZ*logFileNum,
+         // the available size is: availableSize =
+         // _logFileTotalSize - (1) - (2) ;
+         // the availableSize can used for operation-log and rollback-log,
+         // so the size of operation-log is:
+         // _maxUsedSize = availableSize / 2;
+         _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ *
+                          logFileNum ) / 2 ;
+
+         // if the logFileSize is 32M, the caculation method is:
+         // if the transaction-operation-log  caused X(MB) of log-file,
+         // the rollback-log will caused up to 2X( 1X for normal rollback-log
+         // and 1X for cross-file-space )
+         UINT64 temp = _logFileTotalSize / 3 ;
+         if ( _maxUsedSize < temp )
+         {
+            _maxUsedSize = temp ;
+         }
+
+         DPS_LSN startLSN = sdbGetDPSCB()->getStartLsn() ;
+         if ( _isOn && startLSN.offset != DPS_INVALID_LSN_OFFSET )
+         {
+            rc = syncTransInfoFromLocal( startLSN.offset ) ;
+            if ( rc )
+            {
+               PD_LOG( PDERROR, "Failed to sync trans info from local, rc: %d",
+                       rc ) ;
+               goto error ;
+            }
+         }
+         setIsNeedSyncTrans( FALSE ) ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 dpsTransCB::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 dpsTransCB::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 dpsTransCB::fini ()
+   {
+      // unregister event handle
+      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
+      IEventHolder *pHolder = NULL ;
+      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
+      {
+         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
+         pHolder->unregEventHandler( this ) ;
+      }
+      return SDB_OK ;
    }
 
    DPS_TRANS_ID dpsTransCB::allocTransID()
@@ -60,9 +156,41 @@ namespace engine
       return temp ;
    }
 
-   void dpsTransCB::setNodeID( UINT16 nodeID )
+   UINT32 dpsTransCB::getMask() const
    {
-      _TransIDH16 = (DPS_TRANS_ID)nodeID << 48 ;
+      return EVENT_MASK_ON_REGISTERED | EVENT_MASK_ON_PRIMARYCHG ;
+   }
+
+   void dpsTransCB::onRegistered( const MsgRouteID &nodeID )
+   {
+      _TransIDH16 = (DPS_TRANS_ID)nodeID.columns.nodeID << 48 ;
+   }
+
+   void dpsTransCB::onPrimaryChange( BOOLEAN primary,
+                                     SDB_EVENT_OCCUR_TYPE occurType )
+   {
+      // change to primary, start trans rollback
+      if ( primary )
+      {
+         if ( SDB_EVT_OCCUR_BEFORE == occurType )
+         {
+            _doRollback = TRUE ;
+            _rollbackEvent.reset() ;
+         }
+         else
+         {
+            startRollbackTask() ;
+         }
+      }
+      // change to secondary, stop trans rollback
+      else
+      {
+         if ( SDB_EVT_OCCUR_AFTER == occurType )
+         {
+            stopRollbackTask() ;
+            termAllTrans() ;
+         }
+      }
    }
 
    DPS_TRANS_ID dpsTransCB::getRollbackID( DPS_TRANS_ID transID )
@@ -100,51 +228,62 @@ namespace engine
 
    INT32 dpsTransCB::startRollbackTask()
    {
-      INT32 rc = SDB_OK;
-      EDUID eduID = PMD_INVALID_EDUID;
-      pmdEDUMgr *pEduMgr = NULL;
-      if ( !_isOn )
+      INT32 rc = SDB_OK ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+      pmdEDUMgr *pEduMgr = NULL ;
+      _isNeedSyncTrans = FALSE ;
+      _doRollback = TRUE ;
+      _rollbackEvent.reset() ;
+      pEduMgr = pmdGetKRCB()->getEDUMgr() ;
+      eduID = pEduMgr->getSystemEDU( EDU_TYPE_DPSROLLBACK_TASK ) ;
+      if ( PMD_INVALID_EDUID != eduID )
       {
-         goto done;
+         rc = pEduMgr->postEDUPost( eduID, PMD_EDU_EVENT_ACTIVE,
+                                    FALSE, NULL ) ;
       }
-      _isNeedSyncTrans = FALSE;
-      _doRollback = TRUE;
-      pEduMgr = pmdGetKRCB()->getEDUMgr();
-      eduID = pEduMgr->getSystemEDU( EDU_TYPE_DPSROLLBACK_TASK );
-      pEduMgr->postEDUPost( eduID, PMD_EDU_EVENT_ACTIVE, FALSE, NULL );
-   done:
-      return rc;
+      else
+      {
+         rc = SDB_SYS ;
+      }
+
+      if ( rc )
+      {
+         _doRollback = FALSE ;
+         _rollbackEvent.signalAll() ;
+      }
+      return rc ;
    }
 
    INT32 dpsTransCB::stopRollbackTask()
    {
-      INT32 rc = SDB_OK;
-      _doRollback = FALSE;
-      return rc ;
+      _doRollback = FALSE ;
+      _rollbackEvent.signalAll() ;
+      return SDB_OK ;
    }
 
-   BOOLEAN dpsTransCB::isDoRollback()
+   INT32 dpsTransCB::waitRollback( UINT64 millicSec )
    {
-      return _doRollback;
+      return _rollbackEvent.wait( millicSec ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SVTRANSINFO, "dpsTransCB::saveTransInfo" )
    void dpsTransCB::updateTransInfo( DPS_TRANS_ID transID,
                                      DPS_LSN_OFFSET lsnOffset )
    {
-      PD_TRACE_ENTRY ( SDB_DPSTRANSCB_SVTRANSINFO );
-      if ( !_isOn || DPS_INVALID_TRANS_ID == transID ||
-           pmdGetKRCB()->getDPSCB()->isInRestore() )
+      PD_TRACE_ENTRY ( SDB_DPSTRANSCB_SVTRANSINFO ) ;
+      if ( DPS_INVALID_TRANS_ID == transID ||
+           sdbGetDPSCB()->isInRestore() )
       {
-         goto done;
+         goto done ;
       }
 
-      if ( pmdGetKRCB()->getDBRole() != SDB_ROLE_DATA ||
-           pmdGetKRCB()->getReplCB()->primaryIsMe() )
+      if ( pmdGetKRCB()->isCBValue( SDB_CB_CLS ) &&
+           pmdIsPrimary() )
       {
          // in primary, transaction-info save in EDUCB
-         goto done;
+         goto done ;
       }
+      else
       {
          transID = getTransID( transID );
          ossScopedLock _lock( &_MapMutex );
@@ -152,15 +291,16 @@ namespace engine
          if ( DPS_INVALID_LSN_OFFSET == lsnOffset )
          {
             // invalid-lsn means the transaction is complete
-            _TransMap.erase( transID );
+            _TransMap.erase( transID ) ;
          }
          else
          {
-            _TransMap[ transID ] = lsnOffset;
+            _TransMap[ transID ] = lsnOffset ;
          }
       }
+
    done:
-      PD_TRACE_EXIT ( SDB_DPSTRANSCB_SVTRANSINFO );
+      PD_TRACE_EXIT ( SDB_DPSTRANSCB_SVTRANSINFO ) ;
       return ;
    }
 
@@ -192,7 +332,7 @@ namespace engine
    {
       {
          transID = getTransID( transID );
-         ossScopedLock _lock( &_CBMapMutex );
+         ossScopedLock _lock( &_CBMapMutex ) ;
          _cbMap.erase( transID );
       }
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_DELTRANSCB );
@@ -203,6 +343,12 @@ namespace engine
       return &_TransMap;
    }
 
+   UINT32 dpsTransCB::getTransCBSize ()
+   {
+      ossScopedLock _lock( &_CBMapMutex ) ;
+      return _cbMap.size() ;
+   }
+
    void dpsTransCB::clearTransInfo()
    {
       _TransMap.clear();
@@ -211,36 +357,137 @@ namespace engine
       _idBeginLsnMap.clear();
    }
 
+   BOOLEAN dpsTransCB::rollbackTransInfoFromLog( const dpsLogRecord &record )
+   {
+      BOOLEAN ret = TRUE ;
+      DPS_LSN_OFFSET lsnOffset = DPS_INVALID_LSN_OFFSET ;
+      DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID ;
+      dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
+      if ( !itr.valid() )
+      {
+         goto done ;
+      }
+
+      transID = *( (DPS_TRANS_ID*)itr.value() ) ;
+      if ( transID != DPS_INVALID_TRANS_ID )
+      {
+         itr = record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
+         if ( !itr.valid() )
+         {
+            lsnOffset = DPS_INVALID_LSN_OFFSET ;
+         }
+         else
+         {
+            lsnOffset = *((DPS_LSN_OFFSET *)itr.value()) ;
+         }
+
+         if ( LOG_TYPE_TS_COMMIT == record.head()._type )
+         {
+            DPS_LSN_OFFSET firstLsn = DPS_INVALID_LSN_OFFSET ;
+            itr = record.find( DPS_LOG_PUBLIC_FIRSTTRANS ) ;
+
+            if ( DPS_INVALID_LSN_OFFSET == lsnOffset ||
+                 !itr.valid() )
+            {
+               // In the old version, commit log have not pre trans lsn and
+               // first trans lsn. So, we can't rollback trans info
+               ret = FALSE ;
+               goto done ;
+            }
+            firstLsn = *( ( DPS_LSN_OFFSET*)itr.value() ) ;
+
+            addBeginLsn( firstLsn, transID ) ;
+         }
+         else if ( !isRollback( transID ) )
+         {
+            if ( isFirstOp( transID ) )
+            {
+               delBeginLsn( transID ) ;
+            }
+         }
+         else // is rollback
+         {
+            DPS_LSN_OFFSET relatedLsn = DPS_INVALID_LSN_OFFSET ;
+            itr = record.find( DPS_LOG_PUBLIC_RELATED_TRANS ) ;
+            if ( !itr.valid() )
+            {
+               // In the old version, rollback log have not related trans lsn,
+               // so, we can't rollback trans info correctly
+               ret = FALSE ;
+               goto done ;
+            }
+            relatedLsn = *( ( DPS_LSN_OFFSET*)itr.value() ) ;
+            if ( DPS_INVALID_LSN_OFFSET == lsnOffset )
+            {
+               // In the last rollback trans lsn, pre trans lsn is invalid
+               addBeginLsn( relatedLsn, transID ) ;
+            }
+            lsnOffset = relatedLsn ;
+         }
+
+         updateTransInfo( transID, lsnOffset ) ;
+      }
+
+   done:
+      return ret ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSCB_SAVETRANSINFOFROMLOG, "dpsTransCB::saveTransInfoFromLog" )
    void dpsTransCB::saveTransInfoFromLog( const dpsLogRecord &record )
    {
+      PD_TRACE_ENTRY( SDB_DPSTRANSCB_SAVETRANSINFOFROMLOG ) ;
+
+      DPS_LSN_OFFSET lsnOffset = DPS_INVALID_LSN_OFFSET;
+      DPS_TRANS_ID transID = DPS_INVALID_TRANS_ID;
       dpsLogRecord::iterator itr = record.find( DPS_LOG_PUBLIC_TRANSID ) ;
-      DPS_TRANS_ID transID ;
-      DPS_LSN_OFFSET lsn ;
       if ( !itr.valid() )
       {
-         goto done;
+         goto done ;
       }
-      transID = *((DPS_TRANS_ID *)itr.value()) ;
-      lsn = record.head()._lsn ;
-      updateTransInfo( transID, lsn ) ;
-      if ( isFirstOp( transID ))
+      transID = *( (DPS_TRANS_ID *)itr.value() ) ;
+      if ( transID != DPS_INVALID_TRANS_ID )
       {
-         addBeginLsn( lsn, transID );
+         if ( isRollback( transID ) )
+         {
+            itr = record.find( DPS_LOG_PUBLIC_PRETRANS ) ;
+            if ( !itr.valid() )
+            {
+               lsnOffset = DPS_INVALID_LSN_OFFSET ;
+            }
+            else
+            {
+               lsnOffset = *((DPS_LSN_OFFSET *)itr.value()) ;
+            }
+         }
+         else if ( LOG_TYPE_TS_COMMIT == record.head()._type )
+         {
+            lsnOffset = DPS_INVALID_LSN_OFFSET ;
+         }
+         else
+         {
+            lsnOffset = record.head()._lsn ;
+            if ( isFirstOp( transID ) )
+            {
+               addBeginLsn( lsnOffset, transID ) ;
+            }
+         }
+
+         if ( DPS_INVALID_LSN_OFFSET == lsnOffset )
+         {
+            delBeginLsn( transID ) ;
+         }
+         updateTransInfo( transID, lsnOffset ) ;
       }
-      else if( DPS_INVALID_LSN_OFFSET == lsn )
-      {
-         delBeginLsn( transID );
-      }
+
    done:
-      PD_TRACE_EXIT ( SDB_DPSTRANSCB_SAVETRANSINFOFROMLOG );
+      PD_TRACE_EXIT ( SDB_DPSTRANSCB_SAVETRANSINFOFROMLOG ) ;
       return ;
    }
 
    void dpsTransCB::addBeginLsn( DPS_LSN_OFFSET beginLsn, DPS_TRANS_ID transID )
    {
-      SDB_ASSERT( beginLsn != DPS_INVALID_LSN_OFFSET, "invalid begin-lsn" )
-      SDB_ASSERT( transID != DPS_INVALID_TRANS_ID, "invalid transaction-ID" )
+      SDB_ASSERT( beginLsn != DPS_INVALID_LSN_OFFSET, "invalid begin-lsn" ) ;
+      SDB_ASSERT( transID != DPS_INVALID_TRANS_ID, "invalid transaction-ID" ) ;
       transID = getTransID( transID );
       ossScopedLock _lock( &_lsnMapMutex );
       _beginLsnIdMap[ beginLsn ] = transID;
@@ -252,13 +499,25 @@ namespace engine
       transID = getTransID( transID );
       ossScopedLock _lock( &_lsnMapMutex );
       DPS_LSN_OFFSET beginLsn;
-      TRANS_LSN_ID_MAP::iterator iter = _idBeginLsnMap.find( transID );
+      TRANS_ID_LSN_MAP::iterator iter = _idBeginLsnMap.find( transID ) ;
       if ( iter != _idBeginLsnMap.end() )
       {
          beginLsn = iter->second;
          _beginLsnIdMap.erase( beginLsn );
          _idBeginLsnMap.erase( transID );
       }
+   }
+
+   DPS_LSN_OFFSET dpsTransCB::getBeginLsn( DPS_TRANS_ID transID )
+   {
+      transID = getTransID( transID ) ;
+      ossScopedLock _lock( &_lsnMapMutex ) ;
+      TRANS_ID_LSN_MAP::iterator iter = _idBeginLsnMap.find( transID ) ;
+      if ( iter != _idBeginLsnMap.end() )
+      {
+         return iter->second ;
+      }
+      return DPS_INVALID_LSN_OFFSET ;
    }
 
    DPS_LSN_OFFSET dpsTransCB::getOldestBeginLsn()
@@ -283,16 +542,16 @@ namespace engine
 
    INT32 dpsTransCB::syncTransInfoFromLocal( DPS_LSN_OFFSET beginLsn )
    {
-      INT32 rc = SDB_OK;
-      DPS_LSN curLsn;
-      curLsn.offset = beginLsn;
-      _dpsMessageBlock mb(DPS_MSG_BLOCK_DEF_LEN);
-      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB();
+      INT32 rc = SDB_OK ;
+      DPS_LSN curLsn ;
+      curLsn.offset = beginLsn ;
+      _dpsMessageBlock mb(DPS_MSG_BLOCK_DEF_LEN) ;
+      SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
       if ( !_isNeedSyncTrans || DPS_INVALID_LSN_OFFSET == beginLsn )
       {
          goto done;
       }
-      clearTransInfo();
+      clearTransInfo() ;
       while ( curLsn.offset!= DPS_INVALID_LSN_OFFSET &&
               curLsn.compareOffset( dpsCB->expectLsn().offset ) < 0 )
       {
@@ -322,7 +581,6 @@ namespace engine
          {
             iterMap->second->postEvent( pmdEDUEvent(
                                         PMD_EDU_EVENT_TRANS_STOP ) ) ;
-            _cbMap.erase( iterMap++ );
          }
       }
       PD_TRACE_EXIT ( SDB_DPSTRANSCB_TERMALLTRANS );
@@ -334,7 +592,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.acquireX( eduCB, lockId );
@@ -346,7 +604,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.acquireS( eduCB, lockId );
@@ -357,7 +615,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
       return _TransLock.acquireIX( eduCB, lockId );
@@ -368,7 +626,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, NULL );
       return _TransLock.acquireIS( eduCB, lockId );
@@ -397,12 +655,7 @@ namespace engine
 
    BOOLEAN dpsTransCB::isTransOn()
    {
-      return _isOn;
-   }
-
-   void dpsTransCB::setTransSwitch( BOOLEAN isOn )
-   {
-      _isOn = isOn;
+      return _isOn ;
    }
 
    INT32 dpsTransCB::transLockTestS( _pmdEDUCB *eduCB, UINT32 logicCSID,
@@ -411,7 +664,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.testS( eduCB, lockId );
@@ -423,7 +676,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.testX( eduCB, lockId );
@@ -435,7 +688,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.tryX( eduCB, lockId );
@@ -447,7 +700,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.tryS( eduCB, lockId );
@@ -459,7 +712,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" )
       SDB_ASSERT( recordID, "recordID can't be NULL" )
@@ -473,7 +726,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return SDB_OK;
+         return SDB_OK ;
       }
       SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" )
       SDB_ASSERT( recordID, "recordID can't be NULL" )
@@ -486,7 +739,7 @@ namespace engine
    {
       if ( !_isOn )
       {
-         return FALSE;
+         return FALSE ;
       }
       SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" )
       SDB_ASSERT( recordID, "recordID can't be NULL" )
@@ -500,12 +753,7 @@ namespace engine
       UINT64 usedSize = 0;
       if ( !_isOn )
       {
-         goto done;
-      }
-
-      if ( !_isInit )
-      {
-         init();
+         goto done ;
       }
 
       {
@@ -550,44 +798,6 @@ namespace engine
       }
    }
 
-   INT32 dpsTransCB::init()
-   {
-      if ( !_isInit )
-      {
-         ossScopedLock _lock( &_maxFileSizeMutex ) ;
-         if ( !_isInit )
-         {
-            UINT64 logFileSize = pmdGetKRCB()->getDPSCB()->getLogFileSz() ;
-            UINT32 logFileNum = pmdGetKRCB()->getDPSCB()->getLogFileNum() ;
-            _logFileTotalSize = logFileSize * logFileNum ;
-
-            // (1).the max-size of operation-log(update) is 2*DMS_RECORD_MAX_SZ,
-            // (2).the max-size of unavailable space in cross-file is 
-            // 2*DMS_RECORD_MAX_SZ*logFileNum,
-            // the available size is: availableSize =
-            // _logFileTotalSize - (1) - (2) ;
-            // the availableSize can used for operation-log and rollback-log,
-            // so the size of operation-log is:
-            // _maxUsedSize = availableSize / 2;
-            _maxUsedSize = ( _logFileTotalSize - 2 * DMS_RECORD_MAX_SZ *
-                             logFileNum ) / 2 ;
-
-            // if the logFileSize is 32M, the caculation method is:
-            // if the transaction-operation-log  caused X(MB) of log-file,
-            // the rollback-log will caused up to 2X( 1X for normal rollback-log
-            // and 1X for cross-file-space )
-            UINT64 temp = _logFileTotalSize / 3 ;
-            if ( _maxUsedSize < temp )
-            {
-               _maxUsedSize = temp;
-            }
-
-            _isInit = TRUE ;
-         }
-      }
-      return SDB_OK ;
-   }
-
    UINT64 dpsTransCB::usedLogSpace()
    {
       DPS_LSN_OFFSET beginLsnOffset;
@@ -611,7 +821,7 @@ namespace engine
       beginLsnOffset = beginLsnOffset % _logFileTotalSize ;
       curLsnOffset = curLsnOffset % _logFileTotalSize ;
       usedSize = ( curLsnOffset + _logFileTotalSize - beginLsnOffset ) %
-                 _logFileTotalSize ;
+                   _logFileTotalSize ;
    done:
       return usedSize ;
    }
@@ -620,10 +830,6 @@ namespace engine
    {
       UINT64 remainSize = _logFileTotalSize ;
       UINT64 allocatedSize = 0 ;
-      if ( !_isInit )
-      {
-         init();
-      }
 
       if ( !_isOn )
       {
@@ -645,4 +851,14 @@ namespace engine
    done:
       return remainSize ;
    }
+
+   /*
+      get global trans cb
+   */
+   dpsTransCB* sdbGetTransCB ()
+   {
+      static dpsTransCB s_transCB ;
+      return &s_transCB ;
+   }
+
 }
