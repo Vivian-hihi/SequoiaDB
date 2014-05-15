@@ -1,5 +1,4 @@
 //Auto generated index for searching.
-w["syscat系统编目集合空间，包含4个系统集合："]="10*2";
 w["syscollections"]="10*2,18*1";
 w["syscollectionspaces"]="10*2";
 w["syscollectionspaces集合"]="26*51";

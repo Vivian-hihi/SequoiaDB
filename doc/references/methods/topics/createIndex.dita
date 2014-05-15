@@ -3,7 +3,7 @@
 <topic id="references_method_createIndex">
   <title>db.collectionspace.collection.createIndex()</title>
   <body>
-    <section><title>db.collectionspace.collection.createIndex(&lt;name>,&lt;indexDef>,[isUnique])</title>
+    <section><title>db.collectionspace.collection.createIndex(&lt;name>,&lt;indexDef>,[isUnique],[enforced])</title>
       <p>为集合创建<xref href="../../../administration/concepts/database/topics/index.dita">索引</xref>，提高查询速度。</p>
     </section>
     <section><title>参数描述</title><p></p>

@@ -4430,4 +4430,5 @@ w["bson::bsonobjbuilder::appendnumber"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendoid"]="228*1,244*1,776*1,792*1";
 w["bson::bsonobjbuilder::appendregex"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendtimestamp"]="228*1,776*1";
+w["bson::bsonobjbuilder::appendtimet"]="228*1,776*1";
 
