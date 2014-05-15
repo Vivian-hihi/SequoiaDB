@@ -1,9 +1,11 @@
+
 #include "coordCB.hpp"
 #include "pmd.hpp"
 #include "ossTypes.h"
 #include "pdTrace.hpp"
 #include "coordTrace.hpp"
 #include "coordDef.hpp"
+#include "pmdStartup.hpp"
 
 using namespace bson;
 namespace engine
@@ -21,7 +23,7 @@ namespace engine
    {
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDGI_FRMBSONOBJ, "CoordGroupInfo::fromBSONObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDGI_FRMBSONOBJ, "CoordGroupInfo::fromBSONObj" )
    INT32 _CoordGroupInfo::fromBSONObj( const bson::BSONObj &boGroupInfo )
    {
       PD_TRACE_ENTRY ( SDB_COORDGI_FRMBSONOBJ ) ;
@@ -76,6 +78,113 @@ namespace engine
    /*
    note: _CoordCB implement
    */
+   _CoordCB::_CoordCB()
+   {
+      _pNetWork = NULL ;
+   }
+
+   _CoordCB::~_CoordCB()
+   {
+      if ( !_pNetWork )
+      {
+         SDB_OSS_DEL _pNetWork ;
+         _pNetWork = NULL ;
+      }
+   }
+
+   INT32 _CoordCB::init ()
+   {
+      INT32 rc = SDB_OK ;
+      CoordGroupInfo *pGroupInfo = NULL ;
+      UINT32 index = 0 ;
+      UINT32 catGID = CATALOG_GROUPID ;
+      UINT16 catNID = CATA_NODE_ID_BEGIN ;
+      MsgRouteID id ;
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+      const _pmdOptionsMgr::_pmdAddrPair *pCatAddrs = optCB->catAddrs() ;
+
+      // 1. init param
+      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
+      {
+         if ( 0 == pCatAddrs[i]._host )
+         {
+            break ;
+         }
+         id.columns.groupID = catGID ;
+         id.columns.nodeID = catNID++ ;
+         id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+         addCatNodeAddr( id, pCatAddrs[i]._host, pCatAddrs[i]._service ) ;
+      }
+
+      // 2. set startup ok
+      pmdGetStartup().ok( TRUE ) ;
+
+      // 3. create objs
+      _pNetWork = SDB_OSS_NEW _netRouteAgent( &_multiRouteAgent ) ;
+      if ( !_pNetWork )
+      {
+         PD_LOG( PDERROR, "Failed to alloc memory for net agent" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      _multiRouteAgent.setNetWork( _pNetWork ) ;
+
+      pGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
+      if ( !pGroupInfo )
+      {
+         PD_LOG( PDERROR, "Failed to alloc memory for group info" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      _catGroupInfo = CoordGroupInfoPtr( pGroupInfo ) ;
+
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _CoordCB::active ()
+   {
+      INT32 rc = SDB_OK ;
+      pmdEDUMgr* pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+
+      // 1. start coord net work
+      rc = pEDUMgr->startEDU ( EDU_TYPE_COORDNETWORK, (void*)netWork(),
+                               &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start coord network edu, rc: %d",
+                   rc ) ;
+      pEDUMgr->regSystemEDU ( EDU_TYPE_COORDNETWORK, eduID ) ;
+      rc = pEDUMgr->waitUntil( eduID , PMD_EDU_RUNNING ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait CoordNet active failed, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _CoordCB::deactive ()
+   {
+      // 1. stop io
+      if ( _pNetWork )
+      {
+         _pNetWork->stop() ;
+      }
+      return SDB_OK ;
+   }
+
+   INT32 _CoordCB::fini ()
+   {
+      return SDB_OK ;
+   }
+
+   void _CoordCB::onConfigChange ()
+   {
+   }
+
    void _CoordCB::updateCatGroupInfo( CoordGroupInfoPtr &groupInfo )
    {
       ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
@@ -92,7 +201,7 @@ namespace engine
       _cataNodeAddrList.clear();
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_COORDCB_ADDCATNDADDR, "CoordCB::addCatNodeAddr" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_COORDCB_ADDCATNDADDR, "CoordCB::addCatNodeAddr" )
    INT32 _CoordCB::addCatNodeAddr( const _MsgRouteID &id,
                                    const CHAR *pHost,
                                    const CHAR *pService )
@@ -111,7 +220,7 @@ namespace engine
                                     nodeInfo._host,
                                     nodeInfo._service[MSG_ROUTE_CAT_SERVICE].c_str() );
       PD_TRACE_EXIT ( SDB_COORDCB_ADDCATNDADDR );
-      return rc;
+      return rc ;
    }
 
    INT32 _CoordCB::_addGroupName ( const std::string& name, UINT32 id )
@@ -148,6 +257,15 @@ namespace engine
          ++it ;
       }
       return SDB_OK ;
+   }
+
+   /*
+      get global coord cb
+   */
+   CoordCB* sdbGetCoordCB ()
+   {
+      static CoordCB s_coordCB ;
+      return &s_coordCB ;
    }
 
 }
