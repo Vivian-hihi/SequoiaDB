@@ -142,6 +142,20 @@ namespace engine
    typedef _IEventHolder IEventHolder ;
 
    /*
+      _IConfigHandle define
+   */
+   class _IConfigHandle
+   {
+      public:
+         _IConfigHandle () {}
+         virtual ~_IConfigHandle () {}
+
+         virtual void   onConfigChange ( UINT32 changeID ) = 0 ;
+         virtual void   onConfigInit () = 0 ;
+   } ;
+   typedef _IConfigHandle IConfigHandle ;
+
+   /*
       _pmdBaseSession define
    */
    class _ISession : public SDBObject
