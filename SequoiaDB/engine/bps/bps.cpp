@@ -45,6 +45,15 @@ namespace engine
 
    INT32 _bpsCB::init ()
    {
+      // 1. init param
+      _numPreLoad = pmdGetOptionCB()->numPreLoaders() ;
+      _maxPrefPool = pmdGetOptionCB()->maxPrefPool() ;
+
+      return SDB_OK ;
+   }
+
+   INT32 _bpsCB::active ()
+   {
       INT32 rc = SDB_OK ;
       UINT32 curPrefAgentNum = 0 ;
       for ( INT32 i = 0; i < _numPreLoad; ++i )
@@ -74,7 +83,12 @@ namespace engine
       goto done ;
    }
 
-   void _bpsCB::destroy ()
+   INT32 _bpsCB::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _bpsCB::fini ()
    {
       bpsPreLoadReq *prefRequest = NULL ;
       while ( _dropBackQueue.try_pop ( prefRequest ) )
@@ -85,6 +99,13 @@ namespace engine
       {
          SDB_OSS_DEL ( prefRequest ) ;
       }
+      return SDB_OK ;
+   }
+
+   void _bpsCB::onConfigChange ()
+   {
+      _numPreLoad = pmdGetOptionCB()->numPreLoaders() ;
+      _maxPrefPool = pmdGetOptionCB()->maxPrefPool() ;
    }
 
    INT32 _bpsCB::_addPreLoader ()
@@ -156,6 +177,15 @@ namespace engine
       _dataPrefetchQueue.push( request ) ;
 
       return SDB_OK ;
+   }
+
+   /*
+      get global bps cb
+   */
+   SDB_BPSCB* sdbGetBPSCB()
+   {
+      static SDB_BPSCB s_bpsCB ;
+      return &s_bpsCB ;
    }
 
 }
