@@ -101,6 +101,13 @@ namespace engine
          void *pData = NULL ;
          *((SOCKET *) &pData) = s ;
 
+         if ( !krcb->isActive() )
+         {
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            continue ;
+         }
+
          // now we have a tcp socket for a new connection, let's get an agent
          // Note the new new socket sent passing to startEDU
          rc = eduMgr->startEDU ( EDU_TYPE_RESTAGENT, pData, &agentEDU ) ;

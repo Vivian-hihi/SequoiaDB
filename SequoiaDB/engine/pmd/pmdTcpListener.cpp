@@ -42,7 +42,6 @@
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
 #include "ossSocket.hpp"
-#include "pmdController.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -108,7 +107,7 @@ namespace engine
          void *pData = NULL ;
          *((SOCKET *) &pData) = s ;
 
-         if ( !sdbGetPMDController()->isActived() )
+         if ( !krcb->isActive() )
          {
             ossSocket newsock ( &s ) ;
             newsock.close () ;

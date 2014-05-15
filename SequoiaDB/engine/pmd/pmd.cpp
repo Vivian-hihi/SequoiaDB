@@ -53,6 +53,7 @@ namespace engine
          _arrayCBs[ i ] = NULL ;
       }
       _init             = FALSE ;
+      _isActive         = FALSE ;
 
       _startType = SDB_START_NORMAL ;
       /* <-- internal status, can't be modified by config file --> */
@@ -165,6 +166,8 @@ namespace engine
          }
       }
 
+      _isActive = TRUE ;
+
       _curTime.sample() ;
 
    done:
@@ -178,6 +181,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
+
+      _isActive = FALSE ;
 
       // Deactive all registered cbs
       for ( index = SDB_CB_MAX ; index > 0 ; --index )
