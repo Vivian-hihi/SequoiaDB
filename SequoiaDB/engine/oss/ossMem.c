@@ -282,6 +282,12 @@ static void *ossMemAlloc2 ( size_t size, const CHAR* file, UINT32 line )
    return expMem ;
 }
 
+void ossEnableMemDebug( BOOLEAN debugEnable, UINT32 memDebugSize )
+{
+   ossMemDebugEnabled   = debugEnable ;
+   ossMemDebugSize      = memDebugSize ;
+}
+
 // PD_TRACE_DECLARE_FUNCTION ( SDB__OSSMEMALLOC, "ossMemAlloc" )
 void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line )
 {
