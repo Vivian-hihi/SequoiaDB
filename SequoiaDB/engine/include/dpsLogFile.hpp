@@ -66,7 +66,7 @@ namespace engine
       UINT32   _version ;
       UINT64   _fileSize ;
       UINT32   _fileNum ;
-      CHAR     _padding [ DPS_LOG_HEAD_LEN - 40 ] ;
+      CHAR     _padding [ DPS_LOG_HEAD_LEN - 48 ] ;
 
       _dpsLogHeader ()
       {
