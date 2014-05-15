@@ -19,8 +19,8 @@ returned immediately after the partition created task.
 
 .sp 2
 db.collectionspace.collection. splitAsync(\fBsource
-group\fR,\fBtarget group\fR,\fBtarget
-group|cond\fR,\fB[endcondition]\fR)
+group\fR,\fBtarget
+group\fR,\fBpercent(0~100)|cond\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"
 
 .sp 2
