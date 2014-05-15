@@ -36,7 +36,6 @@
 
 #include "pmdOptionsMgr.hpp"
 #include "pd.hpp"
-#include "pmd.hpp"
 #include "pmdCommon.hpp"
 #include "msg.hpp"
 #include "msgCatalog.hpp"
@@ -313,9 +312,20 @@ namespace engine
    {
       _result = SDB_OK ;
       _changeID = 0 ;
+      _pConfigHander = NULL ;
    }
    _pmdCfgRecord::~_pmdCfgRecord ()
    {
+   }
+
+   void _pmdCfgRecord::setConfigHandler( IConfigHandle * pConfigHandler )
+   {
+      _pConfigHander = pConfigHandler ;
+   }
+
+   IConfigHandle* _pmdCfgRecord::getConfigHandler() const
+   {
+      return _pConfigHander ;
    }
 
    INT32 _pmdCfgRecord::restore( const BSONObj & objData,
@@ -340,6 +350,11 @@ namespace engine
       if ( rc )
       {
          goto error ;
+      }
+
+      if ( getConfigHandler() )
+      {
+         getConfigHandler()->onConfigInit() ;
       }
 
    done:
@@ -371,7 +386,10 @@ namespace engine
       ++_changeID ;
 
       // change notify
-      pmdGetKRCB()->configChangeNty() ;
+      if ( getConfigHandler() )
+      {
+         getConfigHandler()->onConfigChange( getChangeID() ) ;
+      }
 
    done:
       return rc ;
@@ -397,6 +415,11 @@ namespace engine
          goto error ;
       }
       ++_changeID ;
+
+      if ( getConfigHandler() )
+      {
+         getConfigHandler()->onConfigInit() ;
+      }
 
    done:
       return rc ;
@@ -912,9 +935,6 @@ namespace engine
          ossMemset( _cat[i]._service, 0, OSS_MAX_SERVICENAME + 1 ) ;
       }
       _krcbSvcPort         = OSS_DFT_SVCPORT ;
-
-      _groupID             = 0 ;
-      _nodeID              = 0 ;
    }
 
    _pmdOptionsMgr::~_pmdOptionsMgr()

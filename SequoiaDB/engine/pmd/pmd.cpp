@@ -73,6 +73,9 @@ namespace engine
 
       setBusinessOK( TRUE ) ;
       setExitCode( SDB_OK ) ;
+
+      // register config handler to option mgr
+      _optioncb.setConfigHandler( this ) ;
    }
 
    _SDB_KRCB::~_SDB_KRCB ()
@@ -127,9 +130,6 @@ namespace engine
       // get hostname
       rc = ossGetHostName( _hostName, OSS_MAX_HOSTNAME ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to get host name, rc: %d", rc ) ;
-
-      _role = pmdGetRoleEnum( _optioncb.krcbRole() ) ;
-      pmdSetDBRole( _role ) ;
 
       _init = TRUE ;
 
@@ -213,7 +213,7 @@ namespace engine
       }
    }
 
-   void _SDB_KRCB::configChangeNty()
+   void _SDB_KRCB::onConfigChange ( UINT32 changeID )
    {
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
@@ -228,6 +228,12 @@ namespace engine
          }
          pCB->onConfigChange() ;
       }
+   }
+
+   void _SDB_KRCB::onConfigInit ()
+   {
+      _role = pmdGetRoleEnum( _optioncb.krcbRole() ) ;
+      pmdSetDBRole( _role ) ;
    }
 
    ossTick _SDB_KRCB::getCurTime()
