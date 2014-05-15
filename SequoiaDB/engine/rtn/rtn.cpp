@@ -496,6 +496,135 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNDELCSCOMMAND, "rtnDelCollectionSpaceCommand" )
+   INT32 rtnDelCollectionSpaceCommand ( const CHAR *pCollectionSpace,
+                                        _pmdEDUCB *cb,
+                                        SDB_DMSCB *dmsCB,
+                                        SDB_DPSCB *dpsCB,
+                                        BOOLEAN sysCall,
+                                        BOOLEAN dropFile )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNDELCSCOMMAND ) ;
+      SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
+      SINT64 contextID = -1 ;
+      BOOLEAN writable = FALSE ;
+      SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
+      // make sure the collectionspace length is not out of range
+      UINT32 length = ossStrlen ( pCollectionSpace ) ;
+      if ( length <= 0 || length > DMS_SU_NAME_SZ )
+      {
+         PD_LOG ( PDERROR, "Invalid length for collectionspace: %s, rc: %d",
+                  pCollectionSpace, rc ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = dmsCB->writable( cb ) ;
+      PD_RC_CHECK( rc, PDERROR, "Database is not writable, rc = %d", rc ) ;
+      writable = TRUE ;
+
+      // let's find out whether the collection space is held by this
+      // EDU. If so we have to get rid of those contexts
+      if ( NULL != cb )
+      {
+         std::set<SINT64> contextList ;
+         cb->contextCopy( contextList ) ;
+
+         std::set<SINT64>::iterator it = contextList.begin() ;
+         while ( it != contextList.end() )
+         {
+            contextID = *it ;
+            ++it ;
+
+            // get each context
+            rtnContext *ctx = rtnCB->contextFind ( contextID ) ;
+            // if context doesn't exist or has not dmsStorageUnit
+            if ( !ctx || NULL == ctx->getSU() )
+            {
+               continue ;
+            }
+            if ( ossStrncmp ( ctx->getSU()->CSName(),
+                              pCollectionSpace, DMS_SU_NAME_SZ ) == 0 )
+            {
+               // if the su is held by myself, i have to kill the context 
+               // from global
+               rtnCB->contextDelete( contextID, cb ) ;
+            }
+         }
+      }
+
+      if ( dropFile )
+      {
+         rc = dmsCB->dropCollectionSpace ( pCollectionSpace, cb, dpsCB ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to drop collectionspace %s, "
+                       "rc: %d", pCollectionSpace, rc ) ;
+      }
+      else
+      {
+         rc = dmsCB->unloadCollectonSpace( pCollectionSpace, cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to unload collectionspace %s, "
+                      "rc: %d", pCollectionSpace, rc ) ;
+      }
+
+   done :
+      if ( writable )
+      {
+         dmsCB->writeDown() ;
+      }
+      PD_TRACE_EXITRC ( SDB_RTNDELCSCOMMAND, rc ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   INT32 rtnUnloadCollectionSpace( const CHAR * pCollectionSpace,
+                                   _pmdEDUCB * cb,
+                                   SDB_DMSCB * dmsCB )
+   {
+      INT32 rc = rtnDelCollectionSpaceCommand( pCollectionSpace, cb,
+                                               dmsCB, NULL, TRUE,
+                                               FALSE ) ;
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDEVENT, "Unload collectionspace %s succeed.",
+                 pCollectionSpace ) ;
+      }
+      return rc ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNUNLOADALLCS, "rtnUnloadCollectionSpaces" )
+   INT32 rtnUnloadCollectionSpaces( _pmdEDUCB * cb, SDB_DMSCB * dmsCB )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNUNLOADALLCS ) ;
+
+      std::set<_monCollectionSpace> csList ;
+
+      //dump all collectionspace
+      dmsCB->dumpInfo( csList, TRUE ) ;
+      std::set<_monCollectionSpace>::const_iterator it = csList.begin() ;
+      while ( it != csList.end() )
+      {
+         const _monCollectionSpace &cs = *it ;
+         rc = rtnUnloadCollectionSpace ( cs._name, cb, dmsCB ) ;
+         if ( SDB_OK != rc && SDB_DMS_CS_NOTEXIST != rc )
+         {
+            PD_LOG ( PDERROR, "Unload collectionspace[%s] failed[rc:%d]",
+                     cs._name, rc ) ;
+            break ;
+         }
+         ++it ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNUNLOADALLCS, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNFINDCL, "rtnFindCollection" )
    INT32 rtnFindCollection ( const CHAR *pCollection,
                              SDB_DMSCB *dmsCB )

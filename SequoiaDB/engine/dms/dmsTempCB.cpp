@@ -60,7 +60,7 @@ namespace engine
       _su   = NULL ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_INIT, "_dmsTempCB::init" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_INIT, "_dmsTempCB::init" )
    INT32 _dmsTempCB::init ()
    {
       INT32 rc = SDB_OK ;
@@ -152,11 +152,11 @@ namespace engine
    // exist in occupiedCollections (shared latch), and then will truncate the
    // collection+index (no latch), and remove the entry and add it
    // back to freeCollection (exclusive latch).
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_RELEASE, "_dmsTempCB::release" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_RELEASE, "_dmsTempCB::release" )
    INT32 _dmsTempCB::release ( dmsMBContext *&context )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__DMSTMPCB_RELEASE );
+      PD_TRACE_ENTRY ( SDB__DMSTMPCB_RELEASE ) ;
       INT32 num = 0 ;
 
       _mutex.get() ;
@@ -181,7 +181,7 @@ namespace engine
       return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_RESERVE, "_dmsTempCB::reserve" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__DMSTMPCB_RESERVE, "_dmsTempCB::reserve" )
    INT32 _dmsTempCB::reserve ( dmsMBContext **ppContext, UINT64 eduID )
    {
       INT32 rc = SDB_OK ;

@@ -174,56 +174,17 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDSYSINIT ) ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
 
       rtnPageCleanerJob *pcJob = NULL ;
       SDB_ROLE dbRole ;
 
       // check the database role, we load storage units when the role is data,
       // catalog or auth
-      dbRole = krcb->getDBRole () ;
-      if ( SDB_ROLE_DATA       == dbRole ||
-           SDB_ROLE_CATALOG    == dbRole ||
-           SDB_ROLE_STANDALONE == dbRole ||
-           SDB_ROLE_COORD      == dbRole ||
-           SDB_ROLE_OM         == dbRole )
+      dbRole = pmdGetDBRole() ;
+
+      if ( SDB_ROLE_OM == dbRole )
       {
-         // 1. load all collectionspaces
-         if ( SDB_ROLE_DATA == dbRole ||
-              SDB_ROLE_STANDALONE == dbRole )
-         {
-            rc = rtnLoadCollectionSpaces ( pmdGetOptionCB()->getDbPath(),
-                                           pmdGetOptionCB()->getIndexPath(),
-                                           sdbGetDMSCB() ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to load collectionspaces, rc: %d",
-                         rc ) ;
-         }
-         else if ( SDB_ROLE_CATALOG == dbRole )
-         {
-            rtnLoadCollectionSpace ( CAT_SYS_SPACE_NAME,
-                                     pmdGetOptionCB()->getDbPath(),
-                                     pmdGetOptionCB()->getIndexPath(),
-                                     dmsCB, FALSE ) ;
-            rtnLoadCollectionSpace ( AUTH_SPACE,
-                                     pmdGetOptionCB()->getDbPath(),
-                                     pmdGetOptionCB()->getIndexPath(),
-                                     dmsCB, FALSE ) ;
-            rtnLoadCollectionSpace ( CAT_PROCEDURES_SPACE_NAME,
-                                     pmdGetOptionCB()->getDbPath(),
-                                     pmdGetOptionCB()->getIndexPath(),
-                                     dmsCB, FALSE ) ;
-         }
-         else if ( SDB_ROLE_OM == dbRole )
-         {
-            sdbGetOMManager()->initialize() ;
-         }
-      }
-      else
-      {
-         PD_LOG ( PDERROR, "Invalid db role: %d", dbRole ) ;
-         rc = SDB_SYS ;
-         goto error ;
+         sdbGetOMManager()->initialize() ;
       }
 
       if ( SDB_ROLE_STANDALONE == dbRole )

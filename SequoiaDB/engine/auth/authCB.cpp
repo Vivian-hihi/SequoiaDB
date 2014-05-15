@@ -227,10 +227,6 @@ namespace engine
          goto done ;
       }
 
-      // create AUTH_SPACE collectionspace
-      rtnCreateCollectionSpaceCommand( AUTH_SPACE, cb, dmsCB, NULL,
-                                       DMS_PAGE_SIZE_DFT, TRUE, FALSE ) ;
-
       // no compression for all system catalog collections
       rc = rtnCreateCollectionCommand( AUTH_USR_COLLECTION,
                                        0, cb, dmsCB, NULL,
@@ -263,8 +259,7 @@ namespace engine
       PD_TRACE_EXITRC ( SDB_AUTHCB_INITAUTH, rc ) ;
       return rc ;
    error:
-      PD_LOG( PDERROR, "failed to init authentication:%d",
-                       rc ) ;
+      PD_LOG( PDERROR, "failed to init authentication:%d", rc ) ;
       goto done ;
    }
 

@@ -221,6 +221,20 @@ namespace engine
                                    const CHAR *indexPath,
                                    SDB_DMSCB *dmsCB ) ;
 
+   INT32 rtnDelCollectionSpaceCommand ( const CHAR *pCollectionSpace,
+                                        _pmdEDUCB *cb,
+                                        SDB_DMSCB *dmsCB,
+                                        SDB_DPSCB *dpsCB,
+                                        BOOLEAN sysCall,
+                                        BOOLEAN dropFile ) ;
+
+   INT32 rtnUnloadCollectionSpace( const CHAR *pCollectionSpace,
+                                   _pmdEDUCB *cb,
+                                   SDB_DMSCB *dmsCB ) ;
+
+   INT32 rtnUnloadCollectionSpaces( _pmdEDUCB * cb,
+                                    SDB_DMSCB * dmsCB ) ;
+
    INT32 rtnCollectionSpaceLock ( const CHAR *pCollectionSpaceName,
                                   SDB_DMSCB *dmsCB,
                                   BOOLEAN loadFile,

@@ -123,10 +123,10 @@ namespace engine
       std::vector<dmsStorageUnitID>       _freeList ;
 
       // represent the last page clean timestamp for a given storage unit
-      typedef std::pair<ossTick,dmsStorageUnitID> _pageCleanHistory ;
+      typedef std::pair<ossTick,dmsStorageUnitID>  _pageCleanHistory ;
       // stores a list of page clean history
-      std::list<_pageCleanHistory> _pageCleanHistoryList ;
-      std::set<dmsStorageUnitID> _pageCleanHistorySet ;
+      std::list<_pageCleanHistory>                 _pageCleanHistoryList ;
+      std::set<dmsStorageUnitID>                   _pageCleanHistorySet ;
 
       ossSpinXLatch           _stateMtx;
       ossEvent                _backEvent ;
@@ -153,17 +153,20 @@ namespace engine
       INT32 _CSCBNameRemove ( const CHAR *pName, _pmdEDUCB *cb,
                               SDB_DPSCB *dpsCB, SDB_DMS_CSCB *&pCSCB ) ;
       INT32 _CSCBNameRemoveP1 ( const CHAR *pName,
-                              _pmdEDUCB *cb,
-                              SDB_DPSCB *dpsCB );
+                                _pmdEDUCB *cb,
+                                SDB_DPSCB *dpsCB ) ;
       INT32 _CSCBNameRemoveP1Cancel ( const CHAR *pName,
-                                    _pmdEDUCB *cb,
-                                    SDB_DPSCB *dpsCB );
+                                      _pmdEDUCB *cb,
+                                      SDB_DPSCB *dpsCB ) ;
       INT32 _CSCBNameRemoveP2 ( const CHAR *pName,
-                              _pmdEDUCB *cb,
-                              SDB_DPSCB *dpsCB,
-                              SDB_DMS_CSCB *&pCSCB );
+                                _pmdEDUCB *cb,
+                                SDB_DPSCB *dpsCB,
+                                SDB_DMS_CSCB *&pCSCB ) ;
       void _CSCBNameMapCleanup () ;
       INT32 _joinPageCleanSU ( dmsStorageUnitID suID ) ;
+
+      INT32 _delCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
+                                  SDB_DPSCB *dpsCB, BOOLEAN removeFile ) ;
 
    public:
       _SDB_DMSCB() ;
@@ -191,6 +194,7 @@ namespace engine
                                  SDB_DPSCB *dpsCB ) ;
       INT32 dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
                                   SDB_DPSCB *dpsCB ) ;
+      INT32 unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb ) ;
 
       void dumpInfo ( std::set<monCollection> &collectionList,
                       BOOLEAN sys = FALSE ) ;

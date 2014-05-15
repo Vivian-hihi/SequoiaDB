@@ -48,6 +48,7 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "dpsOp2Record.hpp"
+#include "rtn.hpp"
 #include <list>
 using namespace std;
 namespace engine
@@ -88,19 +89,23 @@ namespace engine
 
    _SDB_DMSCB::~_SDB_DMSCB()
    {
-      _CSCBNameMapCleanup () ;
-      for ( UINT32 i=0; i<DMS_MAX_CS_NUM; ++i )
-      {
-         SDB_OSS_DEL _latchVec[i] ;
-         _latchVec[i] = NULL ;
-      }
    }
 
    INT32 _SDB_DMSCB::init ()
    {
       INT32 rc = SDB_OK ;
 
-      // 1. init temp cb
+      // 1. load all
+      if ( SDB_ROLE_COORD != pmdGetDBRole() )
+      {
+         rc = rtnLoadCollectionSpaces ( pmdGetOptionCB()->getDbPath(),
+                                        pmdGetOptionCB()->getIndexPath(),
+                                        this ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to load collectionspaces, rc: %d",
+                      rc ) ;
+      }
+
+      // 2. init temp cb
       rc = _tempCB.init() ;
       PD_RC_CHECK( rc, PDERROR, "Failed to init temp cb, rc: %d", rc ) ;
 
@@ -122,9 +127,18 @@ namespace engine
 
    INT32 _SDB_DMSCB::fini ()
    {
+      _CSCBNameMapCleanup () ;
+      for ( UINT32 i = 0 ; i < DMS_MAX_CS_NUM ; ++i )
+      {
+         if ( _latchVec[i] )
+         {
+            SDB_OSS_DEL _latchVec[i] ;
+            _latchVec[i] = NULL ;
+         }
+      }
       return SDB_OK ;
    }
-   
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__LGCSCBNMMAP, "_SDB_DMSCB::_logCSCBNameMap" )
    void _SDB_DMSCB::_logCSCBNameMap ()
    {
@@ -638,7 +652,7 @@ namespace engine
       for ( it = _cscbNameMap.begin(); it != _cscbNameMap.end(); it++ )
       {
          dmsStorageUnitID suID = (*it).second ;
-         _latchVec[suID]->lock_w () ;
+
          _freeList.push_back ( suID ) ;
          if ( _cscbVec[suID] )
          {
@@ -650,7 +664,6 @@ namespace engine
             SDB_OSS_DEL _delCscbVec[suID] ;
             _delCscbVec[suID] = NULL ;
          }
-         _latchVec[suID]->release_w () ;
       }
       _cscbNameMap.clear() ;
       PD_TRACE_EXIT ( SDB__SDB_DMSCB__CSCBNMMAPCLN );
@@ -911,16 +924,16 @@ namespace engine
       goto done ;
    }
 
-   // note:, the _dmsStorageUnit object will NOT be deleted
-   // caller is responsible to delete the object AFTER removing it from DMSCB
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCS, "_SDB_DMSCB::dropCollectionSpace" )
-   INT32 _SDB_DMSCB::dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
-                                           SDB_DPSCB *dpsCB )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DELCS, "_SDB_DMSCB::_delCollectionSpace" )
+   INT32 _SDB_DMSCB::_delCollectionSpace( const CHAR * pName, _pmdEDUCB * cb,
+                                          SDB_DPSCB * dpsCB,
+                                          BOOLEAN removeFile )
    {
       INT32 rc = SDB_OK ;
       SDB_DMS_CSCB *pCSCB = NULL ;
 
-      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DROPCS ) ;
+      PD_TRACE_ENTRY ( SDB__SDB_DMSCB_DELCS ) ;
+
       if ( !pName )
       {
          rc = SDB_INVALIDARG ;
@@ -936,7 +949,7 @@ namespace engine
             goto error ;
          }
          dmsStorageUnit *su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" )
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
 
          // release the DMSCB latch before attempting to drop the collectionspace
          _mutex.release_shared() ;
@@ -944,8 +957,14 @@ namespace engine
 
          if ( SDB_OK == rc && pCSCB )
          {
-            // if remove file failed, we can do nothing
-            rc = pCSCB->_su->remove() ;
+            if ( removeFile )
+            {
+               rc = pCSCB->_su->remove() ;
+            }
+            else
+            {
+               pCSCB->_su->close() ;
+            }
             SDB_OSS_DEL pCSCB ;
 
             if ( rc )
@@ -954,11 +973,23 @@ namespace engine
             }
          }
       }
+
    done :
-      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DROPCS, rc );
+      PD_TRACE_EXITRC ( SDB__SDB_DMSCB_DELCS, rc );
       return rc ;
    error :
       goto done ;
+   }
+
+   INT32 _SDB_DMSCB::dropCollectionSpace ( const CHAR *pName, _pmdEDUCB *cb,
+                                           SDB_DPSCB *dpsCB )
+   {
+      return _delCollectionSpace( pName, cb, dpsCB, TRUE ) ;
+   }
+
+   INT32 _SDB_DMSCB::unloadCollectonSpace( const CHAR *pName, _pmdEDUCB *cb )
+   {
+      return _delCollectionSpace( pName, cb, NULL, FALSE ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB_DROPCSP1, "_SDB_DMSCB::dropCollectionSpaceP1" )
