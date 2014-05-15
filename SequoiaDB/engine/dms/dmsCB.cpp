@@ -67,6 +67,64 @@ namespace engine
    /*
       _SDB_DMSCB implement
    */
+
+   _SDB_DMSCB::_SDB_DMSCB()
+   :_writeCounter(0),
+    _dmsCBState(DMS_STATE_NORMAL),
+    _logicalSUID(0),
+    _tempCB(this)
+   {
+      for ( UINT32 i = 0 ; i<DMS_MAX_CS_NUM ; ++i )
+      {
+         _cscbVec.push_back ( NULL ) ;
+         _delCscbVec.push_back ( NULL ) ;
+         // free in desctructor
+         _latchVec.push_back ( new(std::nothrow) ossRWMutex() ) ;
+         _freeList.push_back ( i ) ;
+      }
+
+      _backEvent.signal() ;
+   }
+
+   _SDB_DMSCB::~_SDB_DMSCB()
+   {
+      _CSCBNameMapCleanup () ;
+      for ( UINT32 i=0; i<DMS_MAX_CS_NUM; ++i )
+      {
+         SDB_OSS_DEL _latchVec[i] ;
+         _latchVec[i] = NULL ;
+      }
+   }
+
+   INT32 _SDB_DMSCB::init ()
+   {
+      INT32 rc = SDB_OK ;
+
+      // 1. init temp cb
+      rc = _tempCB.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to init temp cb, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _SDB_DMSCB::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _SDB_DMSCB::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _SDB_DMSCB::fini ()
+   {
+      return SDB_OK ;
+   }
+   
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_DMSCB__LGCSCBNMMAP, "_SDB_DMSCB::_logCSCBNameMap" )
    void _SDB_DMSCB::_logCSCBNameMap ()
    {
@@ -337,7 +395,7 @@ namespace engine
       if ( dpsCB )
       {
          DPS_LSN_OFFSET offset ;
-         info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT ) ;
+         info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
          {
@@ -346,22 +404,6 @@ namespace engine
             goto error ;
          }
          dpsCB->writeData( info ) ;
-         if ( cb && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
-         {
-            if ( info.hasDummy() )
-            {
-               offset = info.getDummyBlock().record().head()._lsn ;
-               cb->insertLsn ( offset ) ;
-               pmdGetKRCB()->getReplCB()->notify ( csLID, ~0,
-                                                   DMS_INVALID_EXTENT,
-                                                   offset ) ;
-            }
-            offset = info.getMergeBlock().record().head()._lsn ;
-            cb->insertLsn ( offset ) ;
-            pmdGetKRCB()->getReplCB()->notify( csLID, ~0,
-                                               DMS_INVALID_EXTENT,
-                                               offset ) ;
-         }
       }
 
       _mutex.release () ;
@@ -559,6 +601,8 @@ namespace engine
          if ( dpsCB )
          {
             dpsMergeInfo info ;
+            info.setInfoEx( csLID, ~0, DMS_INVALID_EXTENT, cb ) ;
+
             dpsLogRecord &record = info.getMergeBlock().record();
             DPS_LSN_OFFSET offset ;
 
@@ -573,22 +617,6 @@ namespace engine
                goto error ;
             }
             dpsCB->writeData( info ) ;
-            if ( cb && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
-            {
-               if ( info.hasDummy() )
-               {
-                  offset = info.getDummyBlock().record().head()._lsn ;
-                  cb->insertLsn ( offset ) ;
-                  pmdGetKRCB()->getReplCB()->notify ( csLID, ~0,
-                                                      DMS_INVALID_EXTENT,
-                                                      offset ) ;
-               }
-               offset = info.getMergeBlock().record().head()._lsn ;
-               cb->insertLsn ( offset ) ;
-               pmdGetKRCB()->getReplCB()->notify( csLID, ~0,
-                                                  DMS_INVALID_EXTENT,
-                                                  offset ) ;
-            }
          }
       }
 
@@ -866,7 +894,7 @@ namespace engine
       {
          UINT32 suLID = su->LogicalCSID() ;
          DPS_LSN_OFFSET offset = 0 ;
-         info.setInfoEx( suLID, ~0, DMS_INVALID_EXTENT ) ;
+         info.setInfoEx( suLID, ~0, DMS_INVALID_EXTENT, cb ) ;
          rc = dpsCB->prepare ( info ) ;
          if ( rc )
          {
@@ -874,20 +902,6 @@ namespace engine
             goto error ;
          }
          dpsCB->writeData( info ) ;
-         if ( cb && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
-         {
-            if ( info.hasDummy() )
-            {
-               offset = info.getDummyBlock().record().head()._lsn ;
-               cb->insertLsn( offset ) ;
-               pmdGetKRCB()->getReplCB()->notify( suLID, ~0, DMS_INVALID_EXTENT,
-                                                  offset ) ;
-            }
-            offset = info.getMergeBlock().record().head()._lsn ;
-            cb->insertLsn ( offset ) ;
-            pmdGetKRCB()->getReplCB()->notify( suLID, ~0, DMS_INVALID_EXTENT,
-                                               offset ) ;
-         }
       }
    done :
       if ( isReserved )
@@ -1291,6 +1305,15 @@ namespace engine
       return rc ;
    error :
       goto done ;
+   }
+
+   /*
+      get global SDB_DMSCB
+   */
+   SDB_DMSCB* sdbGetDMSCB ()
+   {
+      static SDB_DMSCB s_dmsCB ;
+      return &s_dmsCB ;
    }
 }
 

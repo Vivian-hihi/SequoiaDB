@@ -443,7 +443,7 @@ namespace engine
                                    dmsExtentID extLID )
    {
       INT32 rc = SDB_OK ;
-      info.setInfoEx( _logicalCSID, clLID, extLID ) ;
+      info.setInfoEx( _logicalCSID, clLID, extLID, cb ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {
@@ -464,22 +464,6 @@ namespace engine
       }
       // write dps
       dpsCB->writeData( info ) ;
-      // notify, repl or split also
-      if ( cb && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
-      {
-         DPS_LSN_OFFSET offset = 0 ;
-         if ( info.hasDummy() )
-         {
-            offset = info.getDummyBlock().record().head()._lsn ;
-            cb->insertLsn( offset ) ;
-            pmdGetKRCB()->getReplCB()->notify ( _logicalCSID, clLID,
-                                                extLID, offset ) ;
-         }
-         offset = info.getMergeBlock().record().head()._lsn ;
-         cb->insertLsn ( offset ) ;
-         pmdGetKRCB()->getReplCB()->notify( _logicalCSID, clLID,
-                                            extLID, offset ) ;
-      }
 
       return SDB_OK ;
    }
@@ -490,7 +474,7 @@ namespace engine
                                    BOOLEAN needUnLock )
    {
       INT32 rc = SDB_OK ;
-      info.setInfoEx( logicalID(), context->clLID(), extLID ) ;
+      info.setInfoEx( logicalID(), context->clLID(), extLID, cb ) ;
       rc = dpsCB->prepare( info ) ;
       if ( rc )
       {
@@ -505,24 +489,6 @@ namespace engine
 
       // write dps
       dpsCB->writeData( info ) ;
-      // notify, repl or split also
-      if ( cb && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
-      {
-         DPS_LSN_OFFSET offset = 0 ;
-         if ( info.hasDummy() )
-         {
-            offset = info.getDummyBlock().record().head()._lsn ;
-            cb->insertLsn( offset ) ;
-            pmdGetKRCB()->getReplCB()->notify ( logicalID(),
-                                                context->clLID(),
-                                                extLID, offset ) ;
-         }
-         offset = info.getMergeBlock().record().head()._lsn ;
-         cb->insertLsn ( offset ) ;
-         pmdGetKRCB()->getReplCB()->notify( logicalID(),
-                                            context->clLID(),
-                                            extLID, offset ) ;
-      }
 
       return SDB_OK ;
    }
@@ -1836,6 +1802,7 @@ namespace engine
       // trans related
       DPS_TRANS_ID transID          = cb->getTransID() ;
       DPS_LSN_OFFSET preTransLsn    = cb->getCurTransLsn() ;
+      DPS_LSN_OFFSET relatedLsn     = cb->getRelatedTransLSN() ;
       BOOLEAN  isTransLocked        = FALSE ;
       // delete record related
       dmsRecordID foundDeletedID ;
@@ -1912,7 +1879,7 @@ namespace engine
          _clFullName( context->mb()->_collectionName, fullName,
                       sizeof(fullName) ) ;
          rc = dpsInsert2Record( fullName, record, transID,
-                                preTransLsn, logRecord ) ;
+                                preTransLsn, relatedLsn, logRecord ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build record, rc: %d", rc ) ;
 
          logRecSize = ossAlign4( logRecord.alignedLen() + oidLen ) ;
@@ -2007,7 +1974,7 @@ namespace engine
          info.clear() ;
          /// here we create record again. the old one may not contain oid.
          rc = dpsInsert2Record( fullName, BSONObj((CHAR*)insertedDataPtr),
-                                transID, preTransLsn, logRecord ) ;
+                                transID, preTransLsn, relatedLsn, logRecord ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to build insert record, rc: %d",
                       rc ) ;
 
@@ -2186,6 +2153,7 @@ namespace engine
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       DPS_TRANS_ID transID          = cb->getTransID() ;
       DPS_LSN_OFFSET preLsn         = cb->getCurTransLsn() ;
+      DPS_LSN_OFFSET relatedLSN     = cb->getRelatedTransLSN() ;
       CHAR recordState              = 0 ;
 
       if ( !extentPtr )
@@ -2276,7 +2244,7 @@ namespace engine
                             sizeof(fullName) ) ;
                // reserved log-size
                rc = dpsDelete2Record( fullName, delObject, transID,
-                                      preLsn, record ) ;
+                                      preLsn, relatedLSN, record ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Failed to build record: %d",rc ) ;
@@ -2441,6 +2409,7 @@ namespace engine
       CHAR fullName[DMS_COLLECTION_FULL_NAME_SZ + 1] = {0} ;
       DPS_TRANS_ID transID = cb->getTransID() ;
       DPS_LSN_OFFSET preTransLsn = cb->getCurTransLsn() ;
+      DPS_LSN_OFFSET relatedLSN = cb->getRelatedTransLSN() ;
 
       // first we need to locate the mem addr of the extent
       extentPtr = extentAddr ( recordID._extent ) ;
@@ -2536,7 +2505,8 @@ namespace engine
                          sizeof(fullName) ) ;
             // reserved log-size
             rc = dpsUpdate2Record( fullName, oldMatch, oldChg, newMatch,
-                                   newChg, transID, preTransLsn, record ) ;
+                                   newChg, transID, preTransLsn,
+                                   relatedLSN, record ) ;
             if ( SDB_OK != rc )
             {
                PD_LOG( PDERROR, "failed to build record:%d", rc ) ;
