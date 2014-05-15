@@ -72,6 +72,7 @@ namespace engine
       EDU_TYPE_RESTLISTENER,
       EDU_TYPE_REPR,
       EDU_TYPE_LOGGW,
+      EDU_TYPE_DPSROLLBACK,
       EDU_TYPE_SHARDR,
       EDU_TYPE_CLUSTER,
       EDU_TYPE_CLUSTERSHARD,
@@ -85,7 +86,9 @@ namespace engine
 #if defined (_WINDOWS)
       EDU_TYPE_WINDOWSLISTENER,
 #endif
-      //Agent EDU Type
+      // Agent EDU Type Begin
+      EDU_TYPE_AGENT_BEGIN,
+
       EDU_TYPE_AGENT,
       EDU_TYPE_COORDAGENT,
       EDU_TYPE_SHARDAGENT,
@@ -93,11 +96,11 @@ namespace engine
       EDU_TYPE_HTTPAGENT,
       EDU_TYPE_RESTAGENT,
 
+      // Agent EDU Type END
+      EDU_TYPE_AGENT_END,
+
       //background job EDU Type
       EDU_TYPE_BACKGROUND_JOB,
-
-      //rollback task EDU Type
-      EDU_TYPE_DPSROLLBACK_TASK,
 
       EDU_TYPE_LOADWORKER,
       EDU_TYPE_PREFETCHER,
@@ -558,7 +561,7 @@ namespace engine
    INT32 pmdCoordNetWorkEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdPreLoaderEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
-   INT32 pmdDpsTransRollbackTaskEntryPoint( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdDpsTransRollbackEntryPoint( pmdEDUCB *cb, void *pData ) ;
 #if defined (_WINDOWS)
    INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
 #endif

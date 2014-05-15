@@ -243,7 +243,7 @@ namespace engine
       _doRollback = TRUE ;
       _rollbackEvent.reset() ;
       pEduMgr = pmdGetKRCB()->getEDUMgr() ;
-      eduID = pEduMgr->getSystemEDU( EDU_TYPE_DPSROLLBACK_TASK ) ;
+      eduID = pEduMgr->getSystemEDU( EDU_TYPE_DPSROLLBACK ) ;
       if ( PMD_INVALID_EDUID != eduID )
       {
          rc = pEduMgr->postEDUPost( eduID, PMD_EDU_EVENT_ACTIVE,

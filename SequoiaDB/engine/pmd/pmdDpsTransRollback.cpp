@@ -4,7 +4,7 @@
 
 namespace engine
 {
-   INT32 pmdDpsTransRollbackTaskEntryPoint( pmdEDUCB *cb, void *pData )
+   INT32 pmdDpsTransRollbackEntryPoint( pmdEDUCB *cb, void *pData )
    {
       INT32 rc = SDB_OK ;
 

@@ -220,9 +220,9 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_COORDNETWORK, TRUE,
                                 pmdCoordNetWorkEntryPoint,
                                 "CoordNetwork" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DPSROLLBACK_TASK, TRUE,
-                                pmdDpsTransRollbackTaskEntryPoint,
-                                "DpsRollbackTask"),
+         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DPSROLLBACK, TRUE,
+                                pmdDpsTransRollbackEntryPoint,
+                                "DpsRollback"),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_LOADWORKER, FALSE,
                                 pmdLoadWorkerEntryPoint,
                                 "MigLoadWork" ),
@@ -233,7 +233,6 @@ namespace engine
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SYNCCLOCK, TRUE,
                                 pmdSyncClockEntryPoint,
                                 "SyncClockWorker" ),
-         //TODO:
 
          // For the end
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,

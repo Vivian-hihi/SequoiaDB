@@ -94,13 +94,13 @@ namespace engine
       }
       pEDUMgr->regSystemEDU( EDU_TYPE_LOGGW, eduID ) ;
       // dps trans rollback task
-      rc = pEDUMgr->startEDU( EDU_TYPE_DPSROLLBACK_TASK, NULL, &eduID ) ;
+      rc = pEDUMgr->startEDU( EDU_TYPE_DPSROLLBACK, NULL, &eduID ) ;
       if ( rc )
       {
          PD_LOG( PDERROR, "Start dps trans rollback failed, rc: %d", rc ) ;
          goto error ;
       }
-      pEDUMgr->regSystemEDU( EDU_TYPE_DPSROLLBACK_TASK, eduID ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_DPSROLLBACK, eduID ) ;
 
    done:
       return rc ;
