@@ -190,16 +190,17 @@ static void sdbAppendConstantValue(sdbbson *bsonObj, const char *keyName,
 
 
 static UINT64 sdbCreateBsonRecordAddr();
-static sdbbson* sdbBsonRecordValue(UINT64 id_addr);
+static sdbbson* sdbGetRecordPointer(UINT64 record_addr);
 
 static void sdbGetColumnKeyInfo(SdbExecState *fdw_state);
 
 static bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson, 
       sdbbson *newBson);
 
-static UINT64 utcMsecsToLocal(UINT64 utcMsecs);
+static UINT64 utcUsecsToLocal(UINT64 utcUsecs);
 static UINT64 LocalUsecsToUte(UINT64 localUsecs);
 
+static UINT64 sdbbson_iterator_getusecs(sdbbson_iterator *ite);
 
 
 int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
@@ -725,9 +726,9 @@ UINT64 sdbCreateBsonRecordAddr()
    return (UINT64)p;
 }
 
-sdbbson *sdbBsonRecordValue(UINT64 id_addr)
+sdbbson *sdbGetRecordPointer(UINT64 record_addr)
 {
-   sdbbson *p = (sdbbson *)id_addr;
+   sdbbson *p = (sdbbson *)record_addr;
    
    return p;
 }
@@ -881,14 +882,28 @@ bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson,
    return false;
 }
 
-UINT64 utcMsecsToLocal(UINT64 utcMsecs)
+UINT64 utcUsecsToLocal(UINT64 utcUsecs)
 {
-   return (utcMsecs + (g_time_zone * SDB_MSECS_PER_HOUR));
+   return (utcUsecs + (g_time_zone * USECS_PER_HOUR));
 }
 
 UINT64 LocalUsecsToUte(UINT64 localUsecs)
 {
    return (localUsecs - (g_time_zone * USECS_PER_HOUR));
+}
+
+UINT64 sdbbson_iterator_getusecs(sdbbson_iterator *ite)
+{
+   sdbbson_type type = sdbbson_iterator_type(ite);
+   if (BSON_DATE == type)
+   {
+      return (sdbbson_iterator_date(ite) * 1000L);
+   }
+   else
+   {
+      sdbbson_timestamp_t timestamp = sdbbson_iterator_timestamp(ite);
+      return ((timestamp.t * 1000L * 1000L) + timestamp.i);
+   }
 }
 
 
@@ -1565,15 +1580,15 @@ static BOOLEAN sdbColumnTypesCompatible ( sdbbson_type sdbbsonType, Oid columnTy
       break ;
    }
    case DATEOID :
-   {
-      if ( BSON_DATE == sdbbsonType )
-         compatibleType = TRUE ;
-      break ;
-   }
+//   {
+//      if ( BSON_DATE == sdbbsonType )
+//         compatibleType = TRUE ;
+//      break ;
+//   }
    case TIMESTAMPOID :
    case TIMESTAMPTZOID :
    {
-      if (BSON_TIMESTAMP == sdbbsonType)
+      if ((BSON_TIMESTAMP == sdbbsonType) || (BSON_DATE == sdbbsonType))
          compatibleType = TRUE ;
       break ;
    }
@@ -1678,23 +1693,22 @@ static Datum sdbColumnValue ( sdbbson_iterator *sdbbsonIterator, Oid columnTypeI
    }
    case DATEOID :
    {
-      INT64 utcMillis    = sdbbson_iterator_date(sdbbsonIterator);
+      INT64 utcUsecs       = sdbbson_iterator_getusecs(sdbbsonIterator);
       /* change the UTC time to local */
-      INT64 locaMillis   = utcMsecsToLocal(utcMillis);      
-      INT64 timestamp      = (locaMillis * 1000L) - POSTGRES_TO_UNIX_EPOCH_USECS;
-      Datum timestampDatum = TimestampGetDatum ( timestamp ) ;
-      columnValue = DirectFunctionCall1 ( timestamp_date, timestampDatum ) ;
+      INT64 localUsecs     = utcUsecsToLocal(utcUsecs);      
+      INT64 timestamp      = localUsecs - POSTGRES_TO_UNIX_EPOCH_USECS;
+      Datum timestampDatum = TimestampGetDatum(timestamp);
+      columnValue = DirectFunctionCall1(timestamp_date, timestampDatum);
       break ;
    }
    case TIMESTAMPOID :
    case TIMESTAMPTZOID :
    {
-      sdbbson_timestamp_t bsson_time = sdbbson_iterator_timestamp(sdbbsonIterator);
-      INT64 valueMillis = bsson_time.t * 1000L;
+      INT64 utcUsecs    = sdbbson_iterator_getusecs(sdbbsonIterator);
       /* change the UTC time to local */
-      INT64 locaMillis  = utcMsecsToLocal(valueMillis);
-      INT64 timestamp   = (locaMillis * 1000L + bsson_time.i) - POSTGRES_TO_UNIX_EPOCH_USECS;
-      columnValue       = TimestampGetDatum ( timestamp ) ;
+      INT64 localUsecs  = utcUsecsToLocal(utcUsecs);
+      INT64 timestamp   = localUsecs - POSTGRES_TO_UNIX_EPOCH_USECS;
+      columnValue       = TimestampGetDatum(timestamp);
       break ;
    }
    default :
@@ -1722,7 +1736,7 @@ void sdbFreeScanState ( SdbExecState *executionState )
    if ( SDB_INVALID_HANDLE != executionState->hCollection )
       sdbReleaseCollection ( executionState->hCollection ) ;
 
-   original = sdbBsonRecordValue(executionState->bson_record_addr);
+   original = sdbGetRecordPointer(executionState->bson_record_addr);
    sdbbson_destroy(original);
    
    /* do not free connection since it's in pool */
@@ -2215,7 +2229,7 @@ static TupleTableSlot * SdbIterateForeignScan ( ForeignScanState *scanState )
    INT32 columnCount            = tupleDescriptor->natts ;
    const CHAR *sdbbsonDocumentKey  = NULL ;
    
-   recordObj = sdbBsonRecordValue(executionState->bson_record_addr);
+   recordObj = sdbGetRecordPointer(executionState->bson_record_addr);
    sdbbson_destroy(recordObj);
    sdbbson_init(recordObj);
    /* if there's nothing more to fetch, we return empty slot to represent
@@ -2723,7 +2737,7 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
 //      }
 //   }
 
-   original = sdbBsonRecordValue(fdw_state->bson_record_addr);
+   original = sdbGetRecordPointer(fdw_state->bson_record_addr);
    for (i = 0; i < fdw_state->key_num; i++)
    {
       sdbbson_iterator ite;
@@ -2780,7 +2794,7 @@ TupleTableSlot *SdbExecForeignUpdate(EState *estate, ResultRelInfo *rinfo,
    sdbbson_finish(&sdbbsonTempValue);
 
    sdbbson_init(&sdbbsonCondition);
-   original = sdbBsonRecordValue(fdw_state->bson_record_addr);
+   original = sdbGetRecordPointer(fdw_state->bson_record_addr);
    for (i = 0; i < fdw_state->key_num; i++)
    {
       sdbbson_iterator ite;
