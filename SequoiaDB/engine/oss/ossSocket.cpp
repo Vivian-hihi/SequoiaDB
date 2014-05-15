@@ -920,18 +920,6 @@ error:
 
 // socket functions implement:
 
-ossSpinXLatch  bindListenLatch ;
-
-void ossSocketBindListenMutexGet()
-{
-   bindListenLatch.get() ;
-}
-
-void ossSocketBindListenMutexRelease()
-{
-   bindListenLatch.release() ;
-}
-
 INT32 ossInitSocket()
 {
 #if defined (_WINDOWS)
