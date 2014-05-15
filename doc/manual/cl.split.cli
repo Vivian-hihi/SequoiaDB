@@ -17,8 +17,8 @@ specified conditions.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.split(\fBsource group\fR,\fBtarget
-group\fR,\fBtarget group|cond\fR,\fB[endcondition]\fR)
+db.collectionspace.collection.split(\fBsource
+group\fR,\fBtargetgroup\fR,\fBpercent(0~100)|cond\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"
 
 .sp 2
