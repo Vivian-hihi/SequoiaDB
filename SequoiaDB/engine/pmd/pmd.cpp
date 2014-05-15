@@ -45,6 +45,7 @@ namespace engine
       _SDB_KRCB implement
    */
    _SDB_KRCB::_SDB_KRCB ()
+   :_mainEDU( _eduMgr, EDU_TYPE_AGENT )
    {
       ossMemset( _hostName, 0, sizeof( _hostName ) ) ;
 
@@ -127,6 +128,12 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 index = 0 ;
       IControlBlock *pCB = NULL ;
+
+      _mainEDU.setName( "Main" ) ;
+      if ( NULL == pmdGetThreadEDUCB() )
+      {
+         pmdDeclareEDUCB( &_mainEDU ) ;
+      }
 
       // get hostname
       rc = ossGetHostName( _hostName, OSS_MAX_HOSTNAME ) ;
@@ -216,6 +223,8 @@ namespace engine
                     pCB->cbType(), pCB->cbName(), rc ) ;
          }
       }
+
+      pmdUndeclareEDUCB() ;
    }
 
    void _SDB_KRCB::onConfigChange ( UINT32 changeID )

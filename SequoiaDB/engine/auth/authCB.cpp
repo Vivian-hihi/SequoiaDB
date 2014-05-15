@@ -36,6 +36,7 @@
 #include "authTrace.hpp"
 #include "pmdCB.hpp"
 
+using namespace bson ;
 
 namespace engine
 {
@@ -46,17 +47,12 @@ namespace engine
 
    _authCB::~_authCB()
    {
-
-   }
-
-   INT32 _authCB::init( _pmdEDUCB *cb )
-   {
-      return _initAuthentication( cb ) ;
    }
 
    INT32 _authCB::init ()
    {
-      return SDB_OK ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+      return _initAuthentication( cb ) ;
    }
 
    INT32 _authCB::active ()

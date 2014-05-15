@@ -296,8 +296,8 @@ namespace engine
       goto done ;
    }
 
-// based on millisecond
-#define PMD_START_WAIT_TIME         ( 300000 )
+   // based on millisecond
+   #define PMD_START_WAIT_TIME         ( 300000 )
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDMSTTHRDMAIN, "pmdMasterThreadMain" )
    INT32 pmdMasterThreadMain ( INT32 argc, CHAR** argv )

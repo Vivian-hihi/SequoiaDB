@@ -63,7 +63,6 @@ namespace engine
       virtual INT32  fini () ;
 
    public:
-      INT32 init( _pmdEDUCB *cb ) ;
 
       INT32 createUsr( BSONObj &obj,
                        _pmdEDUCB *cb ) ;

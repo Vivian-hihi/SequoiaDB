@@ -332,20 +332,19 @@ namespace engine
    INT32 catMainController::_ensureMetadata()
    {
       INT32 rc = SDB_OK ;
-      BSONObj indexDef ;
-      pmdEDUCB *cb = pmdGetKRCB()->getEDUMgr()->getEDU() ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT__ENSUREMETADATA ) ;
 
       // create collection space and collection
       rc = rtnTestCollectionSpaceCommand( CAT_SYS_SPACE_NAME,
-                                          _pDmsCB);
+                                          _pDmsCB ) ;
       if ( rc )
       {
          if ( SDB_DMS_CS_NOTEXIST == rc )
          {
             // if collection space was not exist, let's create one
             rc = rtnCreateCollectionSpaceCommand ( CAT_SYS_SPACE_NAME,
-                                                   _pEDUCB, _pDmsCB, NULL,
+                                                   cb, _pDmsCB, NULL,
                                                    DMS_PAGE_SIZE_DFT, TRUE,
                                                    FALSE ) ;
             PD_RC_CHECK ( rc, PDERROR,
@@ -399,10 +398,6 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
                     CAT_TASK_INFO_CLOBJIDX, rc ) ;
 
-      rc = _pAuthCB->init( cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to init authCB, rc = %d",
-                    rc ) ;
-
       // create SYSCAT.SYSDOMAINS
       rc = _createSysCollection ( CAT_DOMAIN_COLLECTION, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
@@ -445,6 +440,7 @@ namespace engine
                              CAT_PROCEDURES_COLLECTION_INDEX, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
                     CAT_PROCEDURES_COLLECTION_INDEX, rc ) ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT__ENSUREMETADATA, rc ) ;
       return rc ;

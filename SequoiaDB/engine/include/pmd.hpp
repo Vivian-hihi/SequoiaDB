@@ -150,6 +150,8 @@ namespace engine
       _pmdOptionsMgr _optioncb ;
       ossTick        _curTime ;
 
+      pmdEDUCB       _mainEDU ;
+
    public :
 
       SDB_START_TYPE getStartType () const
