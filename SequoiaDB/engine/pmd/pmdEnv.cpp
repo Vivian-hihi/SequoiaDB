@@ -116,6 +116,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDEDUUSERTRAPHNDL, "pmdEDUUserTrapHandler" )
    void pmdEDUUserTrapHandler( OSS_HANDPARMS )
    {
+#if defined( SDB_ENGINE ) || defined( SDB_OM )
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDEDUUSERTRAPHNDL );
       oss_edu_data * pEduData = NULL ;
@@ -180,6 +181,7 @@ namespace engine
    done :
       PD_TRACE1 ( SDB_PMDEDUUSERTRAPHNDL, PD_PACK_INT(rc) );
       PD_TRACE_EXIT ( SDB_PMDEDUUSERTRAPHNDL ) ;
+#endif // SDB_ENGINE || SDB_OM
       return ;
    }
 
