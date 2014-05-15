@@ -37,7 +37,6 @@
 *******************************************************************************/
 #include "ossSocket.hpp"
 #include <stdio.h>
-#include "ossLatch.hpp"
 #include "pdTrace.hpp"
 #include "ossTrace.hpp"
 
