@@ -60,6 +60,8 @@ namespace engine
          virtual INT32  deactive () ;
          virtual INT32  fini () ;
 
+         BOOLEAN isActived() const { return _isActive ; }
+
       public:
 
          virtual void  registerCB( SDB_ROLE dbrole ) ;
@@ -67,6 +69,8 @@ namespace engine
       private:
          ossSocket               *_pTcpListener ;
          ossSocket               *_pHttpListener ;
+
+         BOOLEAN                 _isActive ;
 
    } ;
    typedef _pmdController pmdController ;
