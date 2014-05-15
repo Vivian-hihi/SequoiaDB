@@ -62,9 +62,7 @@ namespace engine
    const UINT32 CLS_IS_PRIMARY = 0 ;
    const UINT32 CLS_NOT_PRIMARY = 1 ;
    const UINT32 CLS_SYNC_MAX_LEN = 1024 * 1024 * 5 ;
-   extern UINT32 CLS_SHARING_BRK_TIME ;
    extern INT32  g_startShiftTime ;
-
 
    #define CLS_TID(sessionid)          ((UINT32)(sessionid & 0xFFFFFFFF))
    #define CLS_NODEID(sessionid)       ((UINT32)(sessionid >> 32))
@@ -156,9 +154,8 @@ namespace engine
    public:
       _clsGroupBeat beat ;
       UINT32 timeout ;
-      _clsSharingStatus():timeout(CLS_SHARING_BRK_TIME)
+      _clsSharingStatus():timeout(0)
       {
-         SDB_ASSERT( 0 != CLS_SHARING_BRK_TIME, "impossible" )
       }
    } ;
 
@@ -209,7 +206,6 @@ namespace engine
          return TRUE ;
       }
    } ;
-
 
    enum CLS_ELECTION_ROUND
    {
@@ -281,6 +277,34 @@ namespace engine
          return TRUE ;
       }
    } ;
+
+   /*
+      _clsLSNNtyInfo define
+   */
+   struct _clsLSNNtyInfo
+   {
+      UINT32               _csLID ;
+      UINT32               _clLID ;
+      dmsExtentID          _extLID ;
+      DPS_LSN_OFFSET       _offset ;
+
+      _clsLSNNtyInfo ()
+      {
+         _csLID = ~0 ;
+         _clLID = ~0 ;
+         _extLID = -1 ;
+         _offset = 0 ;
+      }
+      _clsLSNNtyInfo( UINT32 csLID, UINT32 clLID, dmsExtentID extLID,
+                      DPS_LSN_OFFSET offset )
+      {
+         _csLID      = csLID ;
+         _clLID      = clLID ;
+         _extLID     = extLID ;
+         _offset     = offset ;
+      }
+   } ;
+   typedef _clsLSNNtyInfo clsLSNNtyInfo ;
 
 }
 

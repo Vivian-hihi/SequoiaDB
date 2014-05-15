@@ -63,11 +63,6 @@ namespace engine
 
       ~_clsSyncManager() ;
 
-      void enforceSyncStrategy( INT32 syncStrategy )
-      {
-         _syncStrategy = syncStrategy ;
-      }
-
    public:
       INT32 sync( _clsSyncSession &session,
                   const UINT32 &w ) ;
@@ -140,7 +135,6 @@ namespace engine
       UINT32 _validSync ;
       UINT32 _timeout ;
 
-      INT32  _syncStrategy ;
    } ;
 }
 

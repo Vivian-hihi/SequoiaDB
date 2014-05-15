@@ -39,6 +39,7 @@
 
 #include "sqlGrammar.hpp"
 #include "qgmBuilder.hpp"
+#include "sdbInterface.hpp"
 
 namespace engine
 {
@@ -46,11 +47,20 @@ namespace engine
    class _qgmPlanContainer ;
    class _rtnSQLFunc ;
 
-   class _sqlCB : public SDBObject
+   class _sqlCB : public _IControlBlock
    {
    public:
       _sqlCB() ;
       virtual ~_sqlCB() ;
+
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_SQL ; }
+      virtual const CHAR* cbName() const { return "SQLCB" ; }
+
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
+
    public:
       INT32 exec( const CHAR *sql, _pmdEDUCB *cb,
                   SINT64 &contextID ) ;
@@ -68,7 +78,13 @@ namespace engine
    } ;
 
    typedef class _sqlCB SQL_CB ;
+
+   /*
+      get global sql cb
+   */
+   SQL_CB* sdbGetSQLCB () ;
+
 }
 
-#endif
+#endif // SQLCB_HPP_
 

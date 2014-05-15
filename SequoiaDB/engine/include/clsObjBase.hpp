@@ -102,11 +102,6 @@ namespace engine
          _clsObjBase() { _bProcess = FALSE ; }
          virtual ~_clsObjBase() {}
 
-         virtual INT32    initialize() { return SDB_OK ; }
-         virtual INT32    active () { return SDB_OK ;}
-         virtual INT32    deactive() { return SDB_OK ; }
-         virtual INT32    final() { return SDB_OK ; }
-
       public:
          OSS_INLINE BOOLEAN isProcess () const { return _bProcess ; }
          OSS_INLINE INT32   dispatch ( pmdEDUEvent *event, INT32 *pTime = NULL ) ;

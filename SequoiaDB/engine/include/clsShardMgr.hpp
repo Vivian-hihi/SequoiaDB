@@ -40,6 +40,7 @@
 #include "ossEvent.hpp"
 #include "ossLatch.hpp"
 #include "clsCatalogAgent.hpp"
+#include "sdbInterface.hpp"
 #include <map>
 
 using namespace bson ;
@@ -124,9 +125,14 @@ namespace engine
          _clsShardMgr( _netRouteAgent *rtAgent );
          virtual ~_clsShardMgr();
 
-         virtual INT32    initialize() ;
-         virtual INT32    active () ;
-         virtual INT32    final() ;
+         INT32    initialize() ;
+         INT32    active () ;
+         INT32    deactive () ;
+         INT32    final() ;
+         void     onConfigChange() ;
+         void     ntyPrimaryChange( BOOLEAN primary,
+                                    SDB_EVENT_OCCUR_TYPE type ) ;
+
          virtual void     onTimer ( UINT32 timerID, UINT32 interval ) ;
 
          void setCatlogInfo ( const NodeID &id, const std::string& host,
@@ -222,7 +228,7 @@ namespace engine
 
          MsgRouteID                    _nodeID ;
 
-   };
+   } ;
 
    typedef _clsShardMgr shardCB ;
 }

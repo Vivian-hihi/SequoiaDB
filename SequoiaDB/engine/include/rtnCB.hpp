@@ -46,6 +46,7 @@
 #include "monEDU.hpp"
 #include "dmsCB.hpp"
 #include "pmdEDU.hpp"
+#include "sdbInterface.hpp"
 #include <map>
 #include <set>
 
@@ -54,7 +55,7 @@ namespace engine
    /*
       _SDB_RTNCB define
    */
-   class _SDB_RTNCB : public SDBObject
+   class _SDB_RTNCB : public _IControlBlock
    {
    private :
    #ifdef RTNCB_XLOCK
@@ -72,7 +73,15 @@ namespace engine
 
    public :
       _SDB_RTNCB() ;
-      ~_SDB_RTNCB() ;
+      virtual ~_SDB_RTNCB() ;
+
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_RTN ; }
+      virtual const CHAR* cbName() const { return "RTNCB" ; }
+
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
 
       SINT32 contextNew ( RTN_CONTEXT_TYPE type, rtnContext **context,
                           SINT64 &contextID, _pmdEDUCB * pEDUCB ) ;
@@ -159,6 +168,11 @@ namespace engine
 
    } ;
    typedef class _SDB_RTNCB SDB_RTNCB ;
+
+   /*
+      get global rtn cb
+   */
+   SDB_RTNCB* sdbGetRTNCB () ;
 
 }
 

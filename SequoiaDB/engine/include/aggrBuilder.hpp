@@ -43,6 +43,7 @@
 #include "qgmOptiTree.hpp"
 #include "qgmParamTable.hpp"
 #include "qgmPlanContainer.hpp"
+#include "sdbInterface.hpp"
 #include <map>
 
 namespace engine
@@ -54,14 +55,27 @@ namespace engine
                _parserMap.insert( AGGR_PARSER_MAP::value_type(parserName, pObj));}
 
    typedef std::map< std::string, aggrParser* > AGGR_PARSER_MAP;
-   class aggrBuilder : public SDBObject
+
+   /*
+      aggrBuilder define
+   */
+   class aggrBuilder : public _IControlBlock
    {
    public:
       aggrBuilder();
       ~aggrBuilder();
+
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_AGGR ; }
+      virtual const CHAR* cbName() const { return "AGGRCB" ; }
+
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
+
       INT32 build( bson::BSONObj &objs, INT32 objNum,
-                  const CHAR *pCLName, _pmdEDUCB *cb,
-                  SINT64 &contextID  );
+                   const CHAR *pCLName, _pmdEDUCB *cb,
+                   SINT64 &contextID  ) ;
 
    private:
       INT32 buildTree( bson::BSONObj &objs,
@@ -77,9 +91,14 @@ namespace engine
       void addParser();
 
    private:
-      AGGR_PARSER_MAP         _parserMap;
-   };
+      AGGR_PARSER_MAP         _parserMap ;
+   } ;
+
+   /*
+      get global aggr cb
+   */
+   aggrBuilder* sdbGetAggrCB () ;
 
 }
 
-#endif
+#endif // AGGRBUILDER_HPP__

@@ -40,6 +40,7 @@
 #define SPDFMPMGR_HPP_
 
 #include "ossLatch.hpp"
+#include "sdbInterface.hpp"
 
 #include <list>
 #include <set>
@@ -49,14 +50,24 @@ namespace engine
    class _pmdEDUCB ;
    class _spdFMP ;
 
-   class _spdFMPMgr : public SDBObject
+   /*
+      _spdFMPMgr define
+   */
+   class _spdFMPMgr : public _IControlBlock
    {
    public:
       _spdFMPMgr() ;
       virtual ~_spdFMPMgr() ;
 
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_FMP ; }
+      virtual const CHAR* cbName() const { return "FMPCB" ; }
+
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
+
    public:
-      INT32 init() ;
       INT32 getFMP( _spdFMP *&fmp ) ;
       INT32 returnFMP( _spdFMP *fmp, _pmdEDUCB *cb ) ;
       BOOLEAN isProcedureUsr( const CHAR *usr ) ;
@@ -73,6 +84,12 @@ namespace engine
    } ;
 
    typedef class _spdFMPMgr spdFMPMgr ;
+
+   /*
+      get global fmp cb
+   */
+   spdFMPMgr* sdbGetFMPCB () ;
+
 }
 
 #endif

@@ -135,6 +135,8 @@ namespace engine
 
          void close() ;
 
+         void closeListen() ;
+
          void handleMsg( NET_EH eh ) ;
 
          void handleClose( NET_EH eh, _MsgRouteID id ) ;

@@ -65,8 +65,8 @@
    } while (0)
 
 SDB_EXTERN_C_START
-extern BOOLEAN ossMemDebugEnabled ;
-extern UINT32 ossMemDebugSize ;
+
+void  ossEnableMemDebug( BOOLEAN debugEnable, UINT32 memDebugSize ) ;
 
 void* ossMemAlloc ( size_t size, const CHAR* file, UINT32 line ) ;
 

@@ -36,6 +36,7 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "../bson/bson.h"
+#include "sdbInterface.hpp"
 
 using namespace bson ;
 
@@ -47,11 +48,19 @@ namespace engine
    /*
       _authCB define
    */
-   class _authCB : public SDBObject
+   class _authCB : public _IControlBlock
    {
    public:
       _authCB() ;
       ~_authCB() ;
+
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_AUTH ; }
+      virtual const CHAR* cbName() const { return "AUTHCB" ; }
+
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
 
    public:
       INT32 init( _pmdEDUCB *cb ) ;
@@ -82,6 +91,11 @@ namespace engine
    } ;
 
    typedef class _authCB SDB_AUTHCB ;
+
+   /*
+      get gloabl SDB_AUTHCB cb
+   */
+   SDB_AUTHCB* sdbGetAuthCB () ;
 
 }
 

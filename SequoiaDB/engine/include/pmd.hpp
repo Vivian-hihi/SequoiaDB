@@ -51,8 +51,6 @@
 #include "pmdEnv.hpp"
 #include "sdbInterface.hpp"
 
-class _pdTraceCB ;
-
 namespace engine
 {
 
@@ -87,18 +85,16 @@ namespace engine
    /*
       Register db to krcb
    */
-   #define PMD_REGISTER_CB( pCB ) pmdGetKRCB()->registerCB( pCB )
+   #define PMD_REGISTER_CB(pCB)  pmdGetKRCB()->registerCB(pCB)
 
-   class _clsMgr ;
-   class _clsReplicateSet ;
-   class _clsShardMgr ;
    class _dpsLogWrapper ;
+   class _clsMgr ;
    class dpsTransCB ;
-   class _SDB_DMSCB ;
-   class _SDB_RTNCB ;
-   class _bpsCB ;
    class sdbCatalogueCB ;
+   class _bpsCB ;
    class _CoordCB ;
+   class _SDB_RTNCB ;
+   class _SDB_DMSCB ;
    class _sqlCB ;
    class _authCB ;
    class aggrBuilder ;
@@ -122,13 +118,19 @@ namespace engine
 
       INT32             registerCB( IControlBlock *pCB ) ;
 
+      void              configChangeNty() ;
+
+   public:
+      const CHAR*       getHostName() const { return _hostName ; }
+
    private:
       IControlBlock                 *_arrayCBs[ SDB_CB_MAX ] ;
       BOOLEAN                       _init ;
 
    private :
       // configured options
-      CHAR           _groupName    [ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
+      CHAR           _groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
+      CHAR           _hostName[ OSS_MAX_HOSTNAME + 1 ] ;
       SDB_ROLE       _role ;
       SDB_START_TYPE _startType ;
 
@@ -138,20 +140,6 @@ namespace engine
       INT32          _exitCode ;
 
       _pmdEDUMgr     _eduMgr ;
-
-      _clsMgr        *_clsCB ;
-      dpsTransCB     *_dpsTransCB ;
-      _dpsLogWrapper *_dpscb ;
-      _SDB_DMSCB     *_dmscb ;
-      _SDB_RTNCB     *_rtncb ;
-      _bpsCB         *_bpscb ;
-      sdbCatalogueCB *_catlogueCB;
-      _CoordCB       *_coordcb;
-      _sqlCB         *_sql ;
-      _authCB        *_auth ;
-      _pdTraceCB     *_traceCB ;
-      aggrBuilder    *_aggrCB;
-      _spdFMPMgr     *_fmpCB ;
 
       monConfigCB    _monCfgCB ;
       monDBCB        _monDBCB ;
@@ -194,40 +182,31 @@ namespace engine
       }
       OSS_INLINE _SDB_DMSCB *getDMSCB ()
       {
-         return _dmscb ;
+         return (_SDB_DMSCB*)getCBByType( SDB_CB_DMS ) ;
       }
       OSS_INLINE _SDB_RTNCB *getRTNCB ()
       {
-         return _rtncb ;
+         return (_SDB_RTNCB*)getCBByType( SDB_CB_RTN ) ; ;
       }
-
       OSS_INLINE monConfigCB * getMonCB()
       {
          return & _monCfgCB ;
       }
-
       OSS_INLINE monDBCB * getMonDBCB ()
       {
          return &_monDBCB ;
       }
       OSS_INLINE _clsMgr *getClsCB ()
       {
-         return _clsCB ;
+         return (_clsMgr*)getCBByType( SDB_CB_CLS  ) ;
       }
-      _clsReplicateSet *getReplCB () ;
-      _clsShardMgr *getShardCB () ;
-
       OSS_INLINE _dpsLogWrapper* getDPSCB ()
       {
-         return _dpscb ;
+         return (_dpsLogWrapper*)getCBByType( SDB_CB_DPS ) ;
       }
       OSS_INLINE _bpsCB *getBPSCB ()
       {
-         return _bpscb ;
-      }
-      OSS_INLINE _pdTraceCB *getTraceCB ()
-      {
-         return _traceCB ;
+         return (_bpsCB*)getCBByType( SDB_CB_BPS ) ;
       }
       OSS_INLINE _pmdOptionsMgr *getOptionCB()
       {
@@ -235,37 +214,31 @@ namespace engine
       }
       OSS_INLINE sdbCatalogueCB *getCATLOGUECB()
       {
-         return _catlogueCB;
+         return (sdbCatalogueCB*)getCBByType( SDB_CB_CATALOGUE ) ;
       }
-
       OSS_INLINE _CoordCB *getCoordCB()
       {
-         return _coordcb ;
+         return (_CoordCB*)getCBByType( SDB_CB_COORD ) ;
       }
-
       OSS_INLINE _sqlCB *getSqlCB()
       {
-         return _sql ;
+         return (_sqlCB*)getCBByType( SDB_CB_SQL ) ;
       }
-
       OSS_INLINE _authCB *getAuthCB()
       {
-         return _auth ;
+         return (_authCB*)getCBByType( SDB_CB_AUTH ) ;
       }
-
       OSS_INLINE dpsTransCB *getTransCB()
       {
-         return _dpsTransCB;
+         return (dpsTransCB*)getCBByType( SDB_CB_TRANS ) ;
       }
-
       OSS_INLINE aggrBuilder *getAggrCB()
       {
-         return _aggrCB;
+         return (aggrBuilder*)getCBByType( SDB_CB_AGGR ) ;
       }
-
       OSS_INLINE _spdFMPMgr *getFMPCB()
       {
-         return _fmpCB ;
+         return (_spdFMPMgr*)getCBByType( SDB_CB_FMP ) ;
       }
 
       INT32 isBusinessOK() const
@@ -292,11 +265,6 @@ namespace engine
       {
          _dbStatus = status ;
       }
-      void enforceDBRole ( SDB_ROLE role )
-      {
-         _role = role ;
-         pmdSetDBRole( _role ) ;
-      }
       void setMonCB( monConfigCB & monCB )
       {
          _monCfgCB = monCB ;
@@ -312,25 +280,11 @@ namespace engine
           _monCfgCB.timestampON = flag ;
       }
 
-      void enforceNodeInfo ( const _MsgRouteID &id , const CHAR * host ) ;
-      void enforceReplAddr( UINT16 serviceID, const CHAR *replService ) ;
-      void enforceShardAddr ( UINT16 serviceID, const CHAR *shardService ) ;
       void setGroupName ( const CHAR *groupName )
       {
          ossMemset( _groupName, 0, sizeof(_groupName) ) ;
          ossStrncpy ( _groupName, groupName, sizeof(_groupName)-1 );
       }
-      void enforceCatAddr( const _MsgRouteID &id,
-                           const CHAR *host,
-                           const CHAR *service ) ;
-      void updateCatRouteID ( const _MsgRouteID &id ) ;
-
-      void enforceCataLogGrpAddrs( const _MsgRouteID &id,
-                                   const CHAR *host,
-                                   const CHAR *service ) ;
-
-      void enforceLogFileSz ( UINT32 logFileSz ) ;
-      void enforceLogFileNum ( UINT32 logFileNum ) ;
 
       ossTick getCurTime() ;
       void syncCurTime() ;

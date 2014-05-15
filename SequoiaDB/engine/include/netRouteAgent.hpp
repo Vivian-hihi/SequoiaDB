@@ -95,6 +95,11 @@ namespace engine
             _frame.close( handle ) ;
          }
 
+         OSS_INLINE void closeListen()
+         {
+            _frame.closeListen() ;
+         }
+
          OSS_INLINE void disconnectAll()
          {
             _frame.close() ;
@@ -106,7 +111,7 @@ namespace engine
          }
 
          OSS_INLINE INT32 route( const _MsgRouteID &id,
-                             _netRouteNode &node )
+                                 _netRouteNode &node )
          {
             return _route.route( id, node ) ;
          }

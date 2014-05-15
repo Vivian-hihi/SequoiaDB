@@ -50,6 +50,7 @@
 #include "ossRWMutex.hpp"
 #include "dpsLogWrapper.hpp"
 #include "ossEvent.hpp"
+#include "sdbInterface.hpp"
 #include <map>
 #include <set>
 
@@ -94,7 +95,7 @@ namespace engine
    /*
       _SDB_DMSCB define
    */
-   class _SDB_DMSCB : public SDBObject
+   class _SDB_DMSCB : public _IControlBlock
    {
    private :
    #ifdef DMSCB_XLOCK
@@ -165,33 +166,16 @@ namespace engine
       INT32 _joinPageCleanSU ( dmsStorageUnitID suID ) ;
 
    public:
-      _SDB_DMSCB() :
-      _writeCounter(0),
-      _dmsCBState(DMS_STATE_NORMAL),
-      _logicalSUID(0),
-      _tempCB(this)
-      {
-         for ( UINT32 i = 0 ; i<DMS_MAX_CS_NUM ; ++i )
-         {
-            _cscbVec.push_back ( NULL ) ;
-            _delCscbVec.push_back ( NULL ) ;
-            // free in desctructor
-            _latchVec.push_back ( new(std::nothrow) ossRWMutex() ) ;
-            _freeList.push_back ( i ) ;
-         }
+      _SDB_DMSCB() ;
+      virtual ~_SDB_DMSCB() ;
 
-         _backEvent.signal() ;
-      }
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_DMS ; }
+      virtual const CHAR* cbName() const { return "DMSCB" ; }
 
-      ~_SDB_DMSCB()
-      {
-         _CSCBNameMapCleanup () ;
-         for ( UINT32 i=0; i<DMS_MAX_CS_NUM; ++i )
-         {
-            SDB_OSS_DEL _latchVec[i] ;
-            _latchVec[i] = NULL ;
-         }
-      }
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
 
       INT32 nameToSUAndLock ( const CHAR *pName, dmsStorageUnitID &suID,
                               _dmsStorageUnit **su,
@@ -281,6 +265,11 @@ namespace engine
 
    } ;
    typedef class _SDB_DMSCB SDB_DMSCB ;
+
+   /*
+      get global SDB_DMSCB
+   */
+   SDB_DMSCB* sdbGetDMSCB () ;
 }
 
 #endif //DMSCB_HPP_

@@ -5,6 +5,7 @@
 #include "oss.hpp"
 #include "catEventProcessor.hpp"
 #include "pmd.hpp"
+#include "netDef.hpp"
 
 using namespace bson ;
 
@@ -17,28 +18,21 @@ namespace engine
    class _SDB_DMSCB ;
    class _SDB_KRCB ;
 
+   /*
+      catNodeManager define
+   */
    class catNodeManager : public catEventProcessor
    {
    public:
-      catNodeManager()
-      {
-         _status = SDB_CAT_MODULE_DEACTIVE ;
-         _pKrcb = NULL ;
-         _pDmsCB = NULL ;
-         _pDpsCB = NULL ;
-         _pRtnCB = NULL ;
-         _pEduMgr = NULL ;
-         _pCatCB = NULL ;
-         _pEduCB = NULL ;
-         _pClsCB = NULL ;
-      }
-      INT32 init()
-      {
-         return SDB_PERM ;
-      }
-      INT32 init( pmdEDUCB *cb ) ;
+      catNodeManager() ;
+      virtual ~catNodeManager() ;
+
+      INT32 init() ;
       INT32 active() ;
       INT32 deactive() ;
+
+      void  attachCB( pmdEDUCB *cb ) ;
+      void  detachCB( pmdEDUCB *cb ) ;
 
    // message process functions
    protected:

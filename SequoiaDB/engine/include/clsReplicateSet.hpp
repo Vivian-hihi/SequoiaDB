@@ -48,6 +48,8 @@
 #include "clsSyncManager.hpp"
 #include "dms.hpp"
 #include "clsReplBucket.hpp"
+#include "dpsDef.hpp"
+#include "ossQueue.hpp"
 #include <vector>
 
 using namespace std ;
@@ -61,7 +63,10 @@ namespace engine
 
    #define CLS_SYNCCTRL_THRESHOLD_SIZE          (10)
 
-   class _clsReplicateSet : public _clsObjBase
+   /*
+      _clsReplicateSet define
+   */
+   class _clsReplicateSet : public _clsObjBase, public _dpsEventHandler
    {
       DECLARE_OBJ_MSG_MAP()
 
@@ -152,8 +157,8 @@ namespace engine
          }
 
          OSS_INLINE INT32 sync( const DPS_LSN_OFFSET &offset,
-                            _pmdEDUCB *&eduCB,
-                            UINT32 w = 1 )
+                                _pmdEDUCB *&eduCB,
+                                UINT32 w = 1 )
          {
             _clsSyncSession session ;
             session.endLsn = offset ;
@@ -177,22 +182,30 @@ namespace engine
             return _srcSessionNum ;
          }
 
-         void notify( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
-                      const DPS_LSN_OFFSET &offset ) ;
+         ossQueue< clsLSNNtyInfo >* getNtyQue() { return &_ntyQue ; }
 
          void notify2Session( UINT32 suLID, UINT32 clLID, dmsExtentID extLID,
                               const DPS_LSN_OFFSET &offset ) ;
 
-         INT32 checkSyncControl( UINT32 reqLen, _pmdEDUCB *cb ) ;
+         virtual void onWriteLog( DPS_LSN_OFFSET offset ) ;
+
+         virtual void onPrepareLog( UINT32 csLID, UINT32 clLID,
+                                    INT32 extLID, DPS_LSN_OFFSET offset ) ;
+
+         virtual INT32 canAssignLogPage( UINT32 reqLen, pmdEDUCB *cb ) ;
 
       public:
          void  regSession ( _clsDataSrcBaseSession *pSession ) ;
          void  unregSession ( _clsDataSrcBaseSession *pSession ) ;
 
       public:
-         virtual INT32 active() ;
-         virtual INT32 initialize() ;
-         virtual INT32 final() ;
+         INT32 initialize() ;
+         INT32 active() ;
+         INT32 deactive () ;
+         INT32 final() ;
+         void  onConfigChange() ;
+         void  ntyPrimaryChange( BOOLEAN primary,
+                                 SDB_EVENT_OCCUR_TYPE type ) ;
 
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
 
@@ -211,7 +224,6 @@ namespace engine
          INT64 netOut() ;
          void resetMon() ;
 
-
       private:
          INT32 _setGroupSet( const CLS_GROUP_VERSION &version,
                              map<UINT64, _netRouteNode> &nodes ) ;
@@ -227,8 +239,6 @@ namespace engine
          void _sharingBeat() ;
 
          void _checkBreak( const UINT32 &millisec ) ;
-
-         void _checkPrimary () ;
 
          UINT32 _getThresholdTime( UINT64 diffSize ) ;
 
@@ -246,11 +256,13 @@ namespace engine
          UINT32                  _downloadTime ;
          BOOLEAN                 _active ;
          CLS_BS_STATUS           _replStatus ;
-         BOOLEAN                 _prevPrimary ;
 
          UINT32                  _srcSessionNum ;
          ossRWMutex              _vecLatch ;
          std::vector<_clsDataSrcBaseSession*> _vecSrcSessions ;
+
+         // notify queue
+         ossQueue< clsLSNNtyInfo >  _ntyQue ;
 
          // sync control param
          UINT64                  _totalLogSize ;

@@ -72,10 +72,10 @@ namespace engine
       EDU_TYPE_RESTLISTENER,
       EDU_TYPE_REPR,
       EDU_TYPE_LOGGW,
-      EDU_TYPE_LOGGNTY,
       EDU_TYPE_SHARDR,
       EDU_TYPE_CLUSTER,
       EDU_TYPE_CLUSTERSHARD,
+      EDU_TYPE_CLSLOGNTY,
       EDU_TYPE_CATMAINCONTROLLER,
       EDU_TYPE_CATNODEMANAGER,
       EDU_TYPE_CATCATALOGUEMANAGER,
@@ -197,16 +197,18 @@ namespace engine
       // coord related variables
       CoordSession      *_pCoordSession;
 
-      // transaction related variables
       UINT64               _beginLsn ;
       UINT64               _endLsn ;
       UINT32               _lsnNumber ;
-      DPS_LSN_OFFSET       _curTransLSN;
-      DPS_TRANS_ID         _curTransID;
-      DpsTransCBLockList   _transLockLst;
-      DpsTransNodeMap      *_pTransNodeMap;
-      BOOLEAN              _isDoRollback;
-      INT32                _transRC;
+
+      // transaction related variables
+      DPS_LSN_OFFSET       _relatedTransLSN ;
+      DPS_LSN_OFFSET       _curTransLSN ;
+      DPS_TRANS_ID         _curTransID ;
+      DpsTransCBLockList   _transLockLst ;
+      DpsTransNodeMap      *_pTransNodeMap ;
+      BOOLEAN              _isDoRollback ;
+      INT32                _transRC ;
 
       // compression related variables
       CHAR                 *_pCompressionBuffer ;
@@ -473,30 +475,37 @@ namespace engine
 
       void clear ( );
 
-      // transaction related
+      // break points
       void addBpEvents(pmdEDUEvent event);
       void clearBpEvents();
-      void setTransID( DPS_TRANS_ID transID );
-      DPS_TRANS_ID getTransID();
-      void setCurTransLsn( DPS_LSN_OFFSET curLsn );
-      DPS_LSN_OFFSET getCurTransLsn();
-      dpsTransCBLockInfo *getTransLock( const dpsTransLockId &lockId );
-      void addLockInfo( const dpsTransLockId &lockId, DPS_TRANSLOCK_TYPE lockType );
-      void delLockInfo( const dpsTransLockId &lockId );
-      DpsTransCBLockList *getLockList();
-      INT32 createTransaction();
-      void delTransaction();
-      void addTransNode( MsgRouteID &routeID );
-      void getTransNodeRouteID( UINT32 groupID, MsgRouteID &routeID );
-      DpsTransNodeMap *getTransNodeLst();
-      BOOLEAN isTransaction();
-      BOOLEAN isTransNode( MsgRouteID &routeID );
-      void startRollback();
-      void stopRollback();
-      void setTransRC( INT32 rc );
-      INT32 getTransRC();
-      void clearTransInfo();
 
+      // transaction related
+      void setTransID( DPS_TRANS_ID transID ) { _curTransID = transID ; }
+      DPS_TRANS_ID getTransID() const { return _curTransID ; }
+      void setRelatedTransLSN( DPS_LSN_OFFSET relatedLSN )
+      { _relatedTransLSN = relatedLSN ; }
+      void setCurTransLsn( DPS_LSN_OFFSET curLsn ) { _curTransLSN = curLsn ; }
+      DPS_LSN_OFFSET getRelatedTransLSN() const { return _relatedTransLSN ; }
+      DPS_LSN_OFFSET getCurTransLsn() const { return _curTransLSN ; }
+      dpsTransCBLockInfo *getTransLock( const dpsTransLockId &lockId );
+      void addLockInfo( const dpsTransLockId &lockId,
+                        DPS_TRANSLOCK_TYPE lockType ) ;
+      void delLockInfo( const dpsTransLockId &lockId ) ;
+      DpsTransCBLockList *getLockList() ;
+      INT32 createTransaction() ;
+      void delTransaction() ;
+      void addTransNode( MsgRouteID &routeID ) ;
+      void getTransNodeRouteID( UINT32 groupID, MsgRouteID &routeID ) ;
+      DpsTransNodeMap *getTransNodeLst() ;
+      BOOLEAN isTransaction() ;
+      BOOLEAN isTransNode( MsgRouteID &routeID ) ;
+      void startRollback() { _isDoRollback = TRUE ; }
+      void stopRollback() { _isDoRollback = FALSE ; }
+      void setTransRC( INT32 rc ) { _transRC = rc ; }
+      INT32 getTransRC() const { return _transRC ; }
+      void clearTransInfo() ;
+
+      // compress
       INT32 reallocCompressionBuffer ( INT32 requestedSize ) ;
       INT32 reallocUncompressionBuffer ( INT32 requestedSize ) ;
       INT32 compress ( const CHAR *pInputData, INT32 inputSize,
@@ -538,9 +547,9 @@ namespace engine
    INT32 pmdRestSvcEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdRepREntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdLoggWEntryPoint ( pmdEDUCB *cb, void *arg ) ;
-   INT32 pmdLoggNtyEntryPoint( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdClusterEntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdClusterShardEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdClsNtyEntryPoint( pmdEDUCB * cb, void * arg ) ;
    INT32 pmdShardREntryPoint ( pmdEDUCB *cb, void *pData ) ;
    INT32 pmdCatMainControllerEntryPoint ( pmdEDUCB *cb, void *pData );
    INT32 pmdCatNodeManagerEntryPoint ( pmdEDUCB *cb, void *pData );

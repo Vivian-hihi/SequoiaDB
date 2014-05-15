@@ -51,34 +51,7 @@ namespace engine
    class _dpsLogPage ;
    class _dpsReplicaLogMgr ;
    class _dpsMergeInfo ;
-
-   /*
-      _dpsLSNInfoEx define
-   */
-   struct _dpsLSNInfoEx
-   {
-      UINT32               _csLID ;
-      UINT32               _clLID ;
-      dmsExtentID          _extLID ;
-      DPS_LSN_OFFSET       _offset ;
-
-      _dpsLSNInfoEx ()
-      {
-         _csLID = ~0 ;
-         _clLID = ~0 ;
-         _extLID = -1 ;
-         _offset = 0 ;
-      }
-      _dpsLSNInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID,
-                     DPS_LSN_OFFSET offset )
-      {
-         _csLID      = csLID ;
-         _clLID      = clLID ;
-         _extLID     = extLID ;
-         _offset     = offset ;
-      }
-   } ;
-   typedef _dpsLSNInfoEx dpsLSNInfoEx ;
+   class _pmdEDUCB ;
 
    /*
       _dpsMergeBlock define
@@ -130,8 +103,6 @@ namespace engine
    */
    class _dpsMergeInfo : public SDBObject
    {
-      friend class _dpsReplicaLogMgr ;
-
       public:
          _dpsMergeInfo () ;
          _dpsMergeInfo ( dpsMergeBlock &block ) ;
@@ -146,13 +117,25 @@ namespace engine
             _dummyBlock.clear() ;
             _hasDummy = FALSE ;
          }
-         void setInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID )
+         void setInfoEx( UINT32 csLID, UINT32 clLID, dmsExtentID extLID,
+                         _pmdEDUCB *cb )
          {
             _csLID   = csLID ;
             _clLID   = clLID ;
             _extLID  = extLID ;
             _needNty = TRUE ;
+            _pCB     = cb ;
          }
+         void resetInfoEx()
+         { 
+            _needNty = FALSE ;
+            _pCB     = NULL ;
+         }
+         BOOLEAN isNeedNotify() const { return _needNty ; }
+         UINT32  getCSLID() const { return _csLID ; }
+         UINT32  getCLLID() const { return _clLID ; }
+         dmsExtentID getExtentLID() const { return _extLID ; }
+         _pmdEDUCB* getEDUCB() const { return _pCB ; }
 
       private:
          dpsMergeBlock        _mergeBlock ;
@@ -164,6 +147,7 @@ namespace engine
          UINT32               _clLID ;
          dmsExtentID          _extLID ;
          BOOLEAN              _needNty ;
+         _pmdEDUCB            *_pCB ;
 
    } ;
 

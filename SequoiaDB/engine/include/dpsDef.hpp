@@ -81,7 +81,31 @@ enum DPS_LOG_TYPE
    LOG_TYPE_TS_COMMIT    = 0x0C,
    LOG_TYPE_TS_ROLLBACK  = 0x0D,
    LOG_TYPE_INVALIDATE_CATA   = 0x0E
-};
+} ;
+
+namespace engine
+{
+   class _pmdEDUCB ;
+   /*
+      _dpsEventHandler define
+   */
+   class _dpsEventHandler
+   {
+      public:
+         _dpsEventHandler () {}
+         virtual ~_dpsEventHandler () {}
+
+         virtual INT32 canAssignLogPage( UINT32 reqLen, _pmdEDUCB *cb ) = 0 ;
+
+         virtual void onPrepareLog( UINT32 csLID, UINT32 clLID,
+                                    INT32 extLID, DPS_LSN_OFFSET offset ) = 0 ;
+
+         virtual void onWriteLog( DPS_LSN_OFFSET offset ) = 0 ;
+
+   } ;
+   typedef _dpsEventHandler dpsEventHandler ;
+
+}
 
 #endif // DPSDEF_HPP_
 

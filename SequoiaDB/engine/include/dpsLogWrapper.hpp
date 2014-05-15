@@ -66,6 +66,7 @@ namespace engine
       _dpsReplicaLogMgr          _buf ;
       BOOLEAN                    _initialized ;
       BOOLEAN                    _dpslocal ;
+      dpsEventHandler            *_pEventHandler ;
 
    public:
       _dpsLogWrapper() ;
@@ -80,27 +81,23 @@ namespace engine
       virtual INT32  fini () ;
 
    public:
+      OSS_INLINE void setEventHandler( dpsEventHandler *pHandler )
+      {
+         _pEventHandler = pHandler ;
+         _buf.setEventHandler( pHandler ) ;
+      }
+      OSS_INLINE void unsetEventHandler()
+      {
+         _pEventHandler = NULL ;
+         _buf.unsetEventHandler() ;
+      }
       OSS_INLINE _dpsReplicaLogMgr *getLogMgr ()
       {
          return &_buf ;
       }
-      OSS_INLINE void setLogLocal( BOOLEAN dpslocal )
-      {
-         _dpslocal = dpslocal ;
-      }
       OSS_INLINE BOOLEAN isLogLocal() const
       {
          return _dpslocal ;
-      }
-      OSS_INLINE INT32 init( const CHAR *path,
-                             UINT32 pageNum = DPS_DFT_LOG_BUF_SZ )
-      {
-         INT32 rc = _buf.init( path, pageNum ) ;
-         if ( SDB_OK == rc )
-         {
-            _initialized = TRUE ;
-         }
-         return rc ;
       }
       OSS_INLINE INT32 search( const DPS_LSN &minLsn,
                                _dpsMessageBlock *mb,
@@ -252,6 +249,7 @@ namespace engine
       }
 
       BOOLEAN isInRestore() ;
+
    };
    typedef class _dpsLogWrapper SDB_DPSCB ;
 

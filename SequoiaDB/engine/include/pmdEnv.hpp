@@ -37,6 +37,7 @@
 #define PMDENV_HPP_
 
 #include "pmdCommon.hpp"
+#include "ossAtomic.hpp"
 
 using namespace bson ;
 
@@ -55,11 +56,13 @@ namespace engine
    {
       SDB_ROLE                      _dbrole ;
       MsgRouteID                    _nodeID ;
+      ossAtomic32                   _isPrimary ;
 
       BOOLEAN                       _quitFlag ;
       PMD_ON_QUIT_FUNC              _pQuitFunc ;
 
       _pmdSysInfo()
+      :_isPrimary( 0 )
       {
          _dbrole        = SDB_ROLE_STANDALONE ;
          _nodeID.value  = MSG_INVALID_ROUTEID ;
@@ -72,6 +75,8 @@ namespace engine
    void           pmdSetDBRole( SDB_ROLE role ) ;
    MsgRouteID     pmdGetNodeID() ;
    void           pmdSetNodeID( MsgRouteID id ) ;
+   BOOLEAN        pmdIsPrimary() ;
+   void           pmdSetPrimary( BOOLEAN primary ) ;
 
    BOOLEAN        pmdIsQuitApp() ;
 

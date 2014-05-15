@@ -47,40 +47,56 @@
 
 namespace engine
 {
-#define DPS_LOG_HEADER_EYECATCHER "SDBLOGHD"
-#define DPS_LOG_HEADER_EYECATCHER_LEN 8
+#define DPS_LOG_HEADER_EYECATCHER      "SDBLOGHD"
+#define DPS_LOG_HEADER_EYECATCHER_LEN  8
 
 #define DPS_INVALID_LOG_FILE_ID     0xFFFFFFFF
 
+#define DPS_LOG_FILE_VERSION1       (1)
+
+   /*
+      _dpsLogHeader define
+   */
    class _dpsLogHeader : public SDBObject
    {
    public :
-      CHAR _eyeCatcher [ DPS_LOG_HEADER_EYECATCHER_LEN ] ;
-      DPS_LSN _firstLSN ;
-      UINT32 _logID ;
-      CHAR _padding [ DPS_LOG_HEAD_LEN -
-                      DPS_LOG_HEADER_EYECATCHER_LEN - // _eyeCatcher
-                      sizeof(DPS_LSN) -               // _firstLSN
-                      sizeof(UINT32)                  // _logID
-                    ] ;
+      CHAR     _eyeCatcher [ DPS_LOG_HEADER_EYECATCHER_LEN ] ;
+      DPS_LSN  _firstLSN ;
+      UINT32   _logID ;
+      UINT32   _version ;
+      UINT64   _fileSize ;
+      UINT32   _fileNum ;
+      CHAR     _padding [ DPS_LOG_HEAD_LEN - 32 ] ;
 
       _dpsLogHeader ()
       {
-         ossMemcpy(_eyeCatcher, DPS_LOG_HEADER_EYECATCHER, 
-            DPS_LOG_HEADER_EYECATCHER_LEN) ;
-         _logID = DPS_INVALID_LOG_FILE_ID ;
-         ossMemset(_padding, 0, sizeof(_padding)) ;
+         ossMemcpy( _eyeCatcher, DPS_LOG_HEADER_EYECATCHER, 
+                    DPS_LOG_HEADER_EYECATCHER_LEN) ;
+         _logID      = DPS_INVALID_LOG_FILE_ID ;
+         _version    = DPS_LOG_FILE_VERSION1 ;
+         _fileSize   = 0 ;
+         _fileNum    = 0 ;
+         ossMemset(_padding, 0, sizeof(_padding) ) ;
+
+         SDB_ASSERT( sizeof(_dpsLogHeader) == DPS_LOG_HEAD_LEN,
+                     "Log file header size must be 64K" ) ;
       }
    } ;
    typedef class _dpsLogHeader dpsLogHeader ;
+
+   /*
+      _dpsLogFile define
+   */
    class _dpsLogFile : public SDBObject
    {
    private:
-      _OSS_FILE *_file ;
+      _OSS_FILE      *_file ;
       // 32 bit size, so we can support up to 4GB file size
-      UINT32 _fileSize ;
-      UINT32 _idleSize ;
-      dpsLogHeader _logHeader ;
+      UINT32         _fileSize ;
+      UINT32         _fileNum ;
+      UINT32         _idleSize ;
+      dpsLogHeader   _logHeader ;
+
    public:
       _dpsLogFile();
 
@@ -103,7 +119,7 @@ namespace engine
       }
    public:
       // initialize file
-      INT32 init ( const CHAR *path, UINT32 fileSize ) ;
+      INT32 init ( const CHAR *path, UINT32 fileSize, UINT32 fileNum ) ;
       // write into file
       INT32 write ( const CHAR *content, UINT32 len ) ;
       // read from file
@@ -119,12 +135,26 @@ namespace engine
       // get first lsn
       DPS_LSN getFirstLSN ( BOOLEAN mustExist = TRUE ) ;
 
+      BOOLEAN isZeroStart()
+      {
+         if ( _logHeader._logID != DPS_INVALID_LOG_FILE_ID &&
+              !_logHeader._firstLSN.invalid() &&
+              _logHeader._firstLSN.offset % _fileSize == 0 )
+         {
+            return TRUE ;
+         }
+         return FALSE ;
+      }
+
    private:
       void _initHead( UINT32 logID )
       {
          ossMemcpy ( &_logHeader._eyeCatcher, DPS_LOG_HEADER_EYECATCHER,
                      DPS_LOG_HEADER_EYECATCHER_LEN ) ;
          _logHeader._logID = logID ;
+         _logHeader._fileNum = _fileNum ;
+         _logHeader._fileSize = _fileSize ;
+         _logHeader._version  = DPS_LOG_FILE_VERSION1 ;
       }
       // flush log file header
       INT32 _flushHeader() ;

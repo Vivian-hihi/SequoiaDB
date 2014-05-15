@@ -39,9 +39,6 @@
 #include "rtnBackgroundJob.hpp"
 #include "../bson/bsonobj.h"
 
-// wake up every 1000 milliseconds
-#define RTNPAGECLEANER_WAKEUPTIME 1000
-
 using namespace bson ;
 
 namespace engine
@@ -52,7 +49,7 @@ namespace engine
    class _rtnPageCleanerJob : public _rtnBaseJob
    {
    public :
-      _rtnPageCleanerJob ( INT32 periodTime = RTNPAGECLEANER_WAKEUPTIME ) ;
+      _rtnPageCleanerJob ( INT32 periodTime = OSS_ONE_SEC ) ;
       virtual ~_rtnPageCleanerJob () ;
    public :
       virtual RTN_JOB_TYPE type () const ;
@@ -64,7 +61,8 @@ namespace engine
    } ;
    typedef _rtnPageCleanerJob rtnPageCleanerJob ;
 
-   INT32 startPageCleanerJob ( EDUID *pEDUID, INT32 periodTime ) ;
+   INT32 startPageCleanerJob ( EDUID *pEDUID,
+                               INT32 periodTime = OSS_ONE_SEC ) ;
 }
 
-#endif
+#endif // RTN_PAGECLEANER_JOB_HPP_

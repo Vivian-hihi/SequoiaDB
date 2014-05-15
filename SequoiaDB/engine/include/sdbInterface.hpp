@@ -40,6 +40,7 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "msg.h"
 
 namespace engine
 {
@@ -49,12 +50,96 @@ namespace engine
    */
    enum SDB_CB_TYPE
    {
-      SDB_CB_CLS              = 0,
-      SDB_CB_DPS,
+      SDB_CB_DPS              = 0,
+      SDB_CB_DMS,
+      SDB_CB_BPS,
+      SDB_CB_RTN,
+      SDB_CB_TRANS,           // must after SDB_CB_DPS
+      SDB_CB_CATALOGUE,
+      SDB_CB_CLS,             // must after SDB_CB_CATALOGUE
+      SDB_CB_COORD,
+      SDB_CB_SQL,
+      SDB_CB_AUTH,
+      SDB_CB_AGGR,
+      SDB_CB_FMP,
 
+      SDB_CB_PMDCTRL,
       // THE MAX CB TYPE
       SDB_CB_MAX
    } ;
+
+   /*
+      SDB_INTERFACE_TYPE DEFINE
+   */
+   enum SDB_INTERFACE_TYPE
+   {
+      SDB_IF_CB      = 1,
+      SDB_IF_SESSION,
+      SDB_IF_EVT_HANDLER,
+      SDB_IF_EVT_HOLDER,
+
+      // THD MAX IF TYPE
+      SDB_IF_MAX
+   } ;
+
+   class _ISDBRoot
+   {
+      public:
+         _ISDBRoot () {}
+         virtual ~_ISDBRoot () {}
+
+         virtual void* queryInterface( SDB_INTERFACE_TYPE type )
+         {
+            return NULL ;
+         }
+   } ;
+   typedef _ISDBRoot ISDBRoot ;
+
+   /*
+      EVENT MASK DEFINE
+   */
+   #define EVENT_MASK_ON_REGISTERED          0x00000001
+   #define EVENT_MASK_ON_PRIMARYCHG          0x00000002
+
+   enum SDB_EVENT_OCCUR_TYPE
+   {
+      SDB_EVT_OCCUR_BEFORE   = 1,
+      SDB_EVT_OCCUR_AFTER
+   } ;
+
+   /*
+      _IEventHander define
+   */
+   class _IEventHander
+   {
+      public :
+         _IEventHander () {}
+         virtual ~_IEventHander () {}
+
+         virtual UINT32 getMask() const = 0 ;
+
+         virtual void   onRegistered( const MsgRouteID &nodeID )
+         {}
+         virtual void   onPrimaryChange( BOOLEAN primary,
+                                         SDB_EVENT_OCCUR_TYPE occurType )
+         {}
+
+   } ;
+   typedef _IEventHander IEventHander ;
+
+   /*
+      _IEventHolder define
+   */
+   class _IEventHolder
+   {
+      public:
+         _IEventHolder () {}
+         virtual ~_IEventHolder () {}
+
+         virtual INT32  regEventHandler( IEventHander *pHandler ) = 0 ;
+         virtual void   unregEventHandler( IEventHander *pHandler ) = 0 ;
+   } ;
+   typedef _IEventHolder IEventHolder ;
 
    /*
       _pmdBaseSession define
@@ -82,7 +167,7 @@ namespace engine
    /*
       _IControlBlock define
    */
-   class _IControlBlock : public SDBObject
+   class _IControlBlock : public SDBObject, public _ISDBRoot
    {
       public:
          _IControlBlock () {}
@@ -95,6 +180,7 @@ namespace engine
          virtual INT32  active () = 0 ;
          virtual INT32  deactive () = 0 ;
          virtual INT32  fini () = 0 ;
+         virtual void   onConfigChange() {} ;
 
    } ;
    typedef _IControlBlock IControlBlock ;

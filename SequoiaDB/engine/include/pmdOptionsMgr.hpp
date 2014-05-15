@@ -234,8 +234,6 @@ namespace engine
 
          INT32 init( INT32 argc, CHAR **argv ) ;
 
-         INT32 setKrcb( _SDB_KRCB *krcb ) ;
-
          INT32 reflush2File() ;
 
       private:
@@ -364,6 +362,9 @@ namespace engine
          OSS_INLINE UINT32 preferedReplica () const { return _preferReplica ; }
          OSS_INLINE const CHAR* dbroleStr() const { return _krcbRole ; }
          OSS_INLINE INT32 diagFileNum() const { return _dialogFileNum ; }
+         OSS_INLINE BOOLEAN isDpsLocal() const { return _dpslocal ; }
+         OSS_INLINE UINT32 sharingBreakTime() const { return _sharingBreakTime ; }
+         OSS_INLINE UINT32 startShiftTime() const { return _startShiftTime * OSS_ONE_SEC ; }
 
       protected: // rdx members
          CHAR        _krcbDbPath[ OSS_MAX_PATHSIZE + 1 ] ;

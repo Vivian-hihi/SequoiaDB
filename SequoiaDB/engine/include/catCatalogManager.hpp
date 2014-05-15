@@ -1,3 +1,5 @@
+
+
 #ifndef CATCATALOGUEMANAGER_HPP_
 #define CATCATALOGUEMANAGER_HPP_
 
@@ -71,11 +73,17 @@ namespace engine
    } ;
    typedef _catCSInfo catCSInfo ;
 
+   /*
+      catCatalogueManager define
+   */
    class catCatalogueManager : public catEventProcessor
    {
    public:
-      catCatalogueManager(pmdEDUCB *cb);
+      catCatalogueManager();
       INT32 init();
+
+      void  attachCB( pmdEDUCB *cb ) ;
+      void  detachCB( pmdEDUCB *cb ) ;
 
    protected:
       INT32 active() ;
@@ -178,4 +186,4 @@ namespace engine
    };
 }
 
-#endif
+#endif // CATCATALOGUEMANAGER_HPP_

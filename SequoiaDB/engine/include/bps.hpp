@@ -44,6 +44,7 @@
 #include "ossQueue.hpp"
 #include "bpsPrefetch.hpp"
 #include "ossAtomic.hpp"
+#include "sdbInterface.hpp"
 
 namespace engine
 {
@@ -51,7 +52,7 @@ namespace engine
    /*
       _bpsCB define
    */
-   class _bpsCB : public SDBObject
+   class _bpsCB : public _IControlBlock
    {
       private :
          ossQueue<_bpsPreLoadReq*>  _requestQueue ;
@@ -89,14 +90,6 @@ namespace engine
          {
             return _maxPrefPool > 0 ? TRUE : FALSE ;
          }
-         OSS_INLINE void setNumPreLoads ( UINT32 numPreLoad )
-         {
-            _numPreLoad = (INT32)numPreLoad ;
-         }
-         OSS_INLINE void setMaxPrefPool( UINT32 maxPrefPool )
-         {
-            _maxPrefPool = maxPrefPool ;
-         }
 
       public :
          _bpsCB () :
@@ -106,12 +99,16 @@ namespace engine
 
          ~_bpsCB ()
          {
-            destroy () ;
          }
 
-         INT32 init () ;
+         virtual SDB_CB_TYPE cbType() const { return SDB_CB_BPS ; }
+         virtual const CHAR* cbName() const { return "BPSCB" ; }
 
-         void destroy () ;
+         virtual INT32  init () ;
+         virtual INT32  active () ;
+         virtual INT32  deactive () ;
+         virtual INT32  fini () ;
+         virtual void   onConfigChange() ;
 
          INT32 sendPreLoadRequest ( const bpsPreLoadReq &request ) ;
 
@@ -120,6 +117,11 @@ namespace engine
 
    } ;
    typedef class _bpsCB SDB_BPSCB ;
+
+   /*
+      get global bps cb
+   */
+   SDB_BPSCB* sdbGetBPSCB() ;
 
 }
 

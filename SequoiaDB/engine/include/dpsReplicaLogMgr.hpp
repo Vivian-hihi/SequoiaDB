@@ -41,13 +41,13 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "dpsLogPage.hpp"
-#include "ossQueue.hpp"
 #include "ossLatch.hpp"
 #include "dpsMergeBlock.hpp"
 #include "ossAtomic.hpp"
 #include "dpsLogFileMgr.hpp"
 #include "ossUtil.hpp"
 #include "ossEvent.hpp"
+#include "ossQueue.hpp"
 
 namespace engine
 {
@@ -59,9 +59,7 @@ namespace engine
    #define  DPS_SEARCH_FILE      0x10
    #define  DPS_SERCAH_ALL       (DPS_SEARCH_MEM|DPS_SEARCH_FILE)
 
-
    class _pmdEDUCB ;
-   class _clsReplicateSet ;
    class dpsTransCB ;
 
    /*
@@ -85,10 +83,8 @@ namespace engine
       BOOLEAN                    _restoreFlag ;
       ossAutoEvent               _allocateEvent ;
 
-      _clsReplicateSet           *_replSet ;
-      ossQueue< dpsLSNInfoEx >   _ntyQue ;
-
       dpsTransCB                 *_transCB ;
+      dpsEventHandler            *_pEventHander ;
 
    public:
       _dpsReplicaLogMgr();
@@ -128,9 +124,14 @@ namespace engine
          return version ;
       }
 
-      OSS_INLINE ossQueue< dpsLSNInfoEx >* getNtyQue ()
+      OSS_INLINE void setEventHandler( dpsEventHandler *pEventHandler )
       {
-         return &_ntyQue ;
+         _pEventHander = pEventHandler ;
+      }
+
+      OSS_INLINE void unsetEventHandler()
+      {
+         _pEventHander = NULL ;
       }
 
    public:

@@ -1,3 +1,4 @@
+
 #ifndef COORDCB_HPP__
 #define COORDCB_HPP__
 
@@ -13,32 +14,30 @@
 #include "msgCatalog.hpp"
 #include "clsCatalogAgent.hpp"
 #include "coordDef.hpp"
+#include "sdbInterface.hpp"
 
 namespace engine
 {
-   class _CoordCB : public SDBObject
+   /*
+      _CoordCB define
+   */
+   class _CoordCB : public _IControlBlock
    {
       typedef std::map<std::string, UINT32>     GROUP_NAME_MAP ;
       typedef GROUP_NAME_MAP::iterator          GROUP_NAME_MAP_IT ;
 
    public:
-      _CoordCB()
-      {
-         _pNetWork = SDB_OSS_NEW _netRouteAgent( &_multiRouteAgent );
-         _multiRouteAgent.setNetWork( _pNetWork );
+      _CoordCB() ;
+      virtual ~_CoordCB() ;
 
-         CoordGroupInfo *pGroupInfo = NULL;
-         pGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID );
-         if ( pGroupInfo != NULL )
-         {
-            _catGroupInfo = CoordGroupInfoPtr( pGroupInfo );
-         }
-      }
+      virtual SDB_CB_TYPE cbType() const { return SDB_CB_COORD ; }
+      virtual const CHAR* cbName() const { return "COORDCB" ; }
 
-      ~_CoordCB()
-      {
-         SDB_OSS_DEL _pNetWork;
-      }
+      virtual INT32  init () ;
+      virtual INT32  active () ;
+      virtual INT32  deactive () ;
+      virtual INT32  fini () ;
+      virtual void   onConfigChange() ;
 
       _netRouteAgent* netWork()
       {
@@ -225,7 +224,12 @@ namespace engine
    };
    typedef _CoordCB CoordCB ;
 
+   /*
+      get global coord cb
+   */
+   CoordCB* sdbGetCoordCB() ;
+
 }
 
-#endif
+#endif // COORDCB_HPP__
 

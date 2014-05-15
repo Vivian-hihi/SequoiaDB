@@ -66,7 +66,11 @@ namespace engine
       void*       data ;
    };
 
-   class _clsMgr : public _clsObjBase
+   /*
+      _clsMgr define
+   */
+   class _clsMgr : public _clsObjBase, public _IControlBlock,
+                   public _IEventHolder
    {
       friend class _clsMsgHandler ;
       friend class _clsTimerHandler ;
@@ -87,34 +91,35 @@ namespace engine
       typedef std::map<void*, NET_HANDLE>       MAP_MSGNET ;
       typedef MAP_MSGNET::iterator              MAP_MSGNET_IT ;
 
+      typedef std::vector< IEventHander* >      VEC_EVENTHANDLER ;
+
       public:
          _clsMgr() ;
          ~_clsMgr() ;
 
-         INT32    initialize ( pmdEDUCB *pMainCB ) ;
-         INT32    active () ;
-         INT32    final () ;
-         INT32    startNet () ;
+         virtual SDB_CB_TYPE cbType() const ;
+         virtual const CHAR* cbName() const ;
 
-         // for clsReplicateSet
-         void     _onPrimaryChange ( BOOLEAN primary ) ;
+         virtual INT32  init () ;
+         virtual INT32  active () ;
+         virtual INT32  deactive () ;
+         virtual INT32  fini () ;
+         virtual void   onConfigChange() ;
+
+         virtual void* queryInterface( SDB_INTERFACE_TYPE type ) ;
+
+         void     attachMainCB ( pmdEDUCB *pMainCB ) ;
+         void     detachMainCB ( pmdEDUCB *pMainCB ) ;
+
+         void     ntyPrimaryChange( BOOLEAN primary,
+                                    SDB_EVENT_OCCUR_TYPE type ) ;
 
       public:
-         const CHAR* getHostName() const ;
          const CHAR* getShardServiceName() const ;
          const CHAR* getReplServiceName () const ;
          NodeID getNodeID () const ;
          UINT16 getShardServiceID () const ;
          UINT16 getReplServiceID () const ;
-
-         void setHostName ( const CHAR *hostName ) ;
-         void setShardServiceName ( const CHAR *serviceName ) ;
-         void setReplServiceName ( const CHAR *serviceName ) ;
-         void setNodeID ( const NodeID &nodeID ) ;
-         void setShardServiceID ( UINT16 serviceID ) ;
-         void setReplServiceID ( UINT16 serviceID ) ;
-         void setCatlogInfo ( const NodeID &id, const std::string& host,
-                              const std::string& service ) ;
 
       public:
          UINT64 setTimer ( CLS_MEMBER_TYPE type, UINT32 milliSec ) ;
@@ -128,6 +133,9 @@ namespace engine
          INT32  startTaskCheck ( const BSONObj& match ) ;
          INT32  stopTask ( UINT64 taskID ) ;
          INT32  removeTask( UINT64 taskID ) ;
+
+         virtual INT32  regEventHandler( IEventHander *pHandler ) ;
+         virtual void   unregEventHandler( IEventHander *pHandler ) ;
 
          _netRouteAgent *getShardRouteAgent () ;
          _netRouteAgent *getReplRouteAgent () ;
@@ -146,10 +154,6 @@ namespace engine
          void        pushMsgHandle ( void *msg, NET_HANDLE handle ) ;
          NET_HANDLE  peekMsgHandle ( void *msg ) ;
 
-         //sub edu attach in/out
-         void        attachIn() ;
-         void        attachOut() ;
-
       protected:
          _clsSession* getSession( INT32 type, UINT64 sessionID,
                                   INT32 startType = CLS_SESSION_PASSIVE,
@@ -167,7 +171,8 @@ namespace engine
          INT32 _releaseSession_i ( _clsSession *pSession, BOOLEAN postQuit,
                                    BOOLEAN delay ) ;
 
-         INT32          _startRouteAgentEDU ( INT32 type ) ;
+         INT32          _startEDU ( INT32 type, EDU_STATUS waitStatus,
+                                    void *agrs, BOOLEAN regSys = TRUE ) ;
 
          _clsSession    *_createSession ( INT32 type, INT32 startType,
                                           UINT64 sessionID,
@@ -179,6 +184,10 @@ namespace engine
          INT32 _sendRegisterMsg () ;
          INT32 _sendQueryTaskReq ( UINT64 requestID, const CHAR *clFullName,
                                    const BSONObj* match ) ;
+
+         void  _callRegisterEventHandler() ;
+         void  _callPrimaryChangeHandler( BOOLEAN primary,
+                                          SDB_EVENT_OCCUR_TYPE type ) ;
 
          virtual INT32 _defaultMsgFunc ( NET_HANDLE handle, MsgHeader* msg ) ;
          virtual void  onTimer ( UINT64 timerID, UINT32 interval ) ;
@@ -198,24 +207,21 @@ namespace engine
          INT32 _onCatQueryTaskRes ( NET_HANDLE handle, MsgHeader* msg ) ;
 
       private:
-         _netRouteAgent                *_pReplNetRtAgent ;
-         _netRouteAgent                *_pShardNetRtAgent ;
+         _shdMsgHandler                _shdMsgHandler ;
+         _replMsgHandler               _replMsgHandler ;
+         _clsShardTimerHandler         _shdTimerHandler ;
+         _clsReplTimerHandler          _replTimerHandler ;
 
-         _clsMsgHandler                *_pShdMsgHandler ;
-         _clsMsgHandler                *_pReplMsgHandler ;
-         _clsTimerHandler              *_pShdTimerHandler ;
-         _clsTimerHandler              *_pReplTimerHandler ;
+         _netRouteAgent                _replNetRtAgent ;
+         _netRouteAgent                _shardNetRtAgent ;
 
-         _clsShardMgr                  *_pShdObj ;
-         _clsReplicateSet              *_pReplObj ;
+         _clsShardMgr                  _shdObj ;
+         _clsReplicateSet              _replObj ;
 
-         BOOLEAN                       _createdObjs ;
-
-         ossRWMutex                    _subEduAttachLock ;
+         ossEvent                      _attachEvent ;
 
          UINT16                        _shardServiceID ;
          UINT16                        _replServiceID ;
-         CHAR                          _hostName[OSS_MAX_HOSTNAME+1] ;
          CHAR                          _replServiceName[OSS_MAX_SERVICENAME+1] ;
          CHAR                          _shdServiceName[OSS_MAX_SERVICENAME+1] ;
 
@@ -239,10 +245,11 @@ namespace engine
          map< UINT64, UINT64 >         _mapTaskID ;
          ossSpinSLatch                 _clsLatch ;
 
+         VEC_EVENTHANDLER              _vecEventHandler ;
+         ossSpinSLatch                 _handlerLatch ;
+
          MAP_MSGNET                    _mapMsg2NetHandle ;
          ossSpinXLatch                 _msg2NetLatch ;
-
-         VECCATLOG                     _vecCatlog ;
 
          UINT64                        _regTimerID ;
          UINT64                        _oneSecTimerID ;
@@ -256,6 +263,13 @@ namespace engine
    };
 
    typedef _clsMgr  clsCB ;
+
+   /*
+      get global cls cb
+   */
+   clsCB* sdbGetClsCB () ;
+   shardCB* sdbGetShardCB () ;
+   replCB* sdbGetReplCB () ;
 
 }
 

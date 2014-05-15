@@ -386,7 +386,6 @@
 #define SDB_ROLE_DATA_STR                    "data"
 #define SDB_ROLE_COORD_STR                   "coord"
 #define SDB_ROLE_CATALOG_STR                 "catalog"
-#define SDB_ROLE_AUTH_STR                    "auth"
 #define SDB_ROLE_STANDALONE_STR              "standalone"
 #define SDB_ROLE_OM_STR                      "om"
 
@@ -398,7 +397,6 @@ enum SDB_ROLE
    SDB_ROLE_DATA = 0,
    SDB_ROLE_COORD,
    SDB_ROLE_CATALOG,
-   SDB_ROLE_AUTH,
    SDB_ROLE_STANDALONE,
    SDB_ROLE_OM,
    SDB_ROLE_MAX
