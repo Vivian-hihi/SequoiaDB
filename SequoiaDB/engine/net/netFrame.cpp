@@ -95,9 +95,9 @@ namespace engine
    void _netFrame::stop()
    {
       PD_TRACE_ENTRY ( SDB__NETFRAME_STOP );
-      close() ;
+      closeListen() ;
       _ioservice.stop() ;
-      _acceptor.close() ;
+      close() ;
       PD_TRACE_EXIT ( SDB__NETFRAME_STOP );
    }
 
@@ -150,9 +150,8 @@ namespace engine
       }
       catch ( boost::system::system_error &e )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-              "Failed to listen  %s: %s: %s", hostName, serviceName,
-              e.what() ) ;
+         PD_LOG ( PDERROR, "Failed to listen  %s: %s: %s", hostName,
+                  serviceName, e.what() ) ;
          rc = SDB_NET_CANNOT_LISTEN ;
          goto error ;
       }
@@ -511,6 +510,14 @@ namespace engine
 
       PD_TRACE_EXIT ( SDB__NETFRAME_CLOSE2 );
       return ;
+   }
+
+   void _netFrame::closeListen ()
+   {
+      if ( _acceptor.is_open() )
+      {
+         _acceptor.close() ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION( SDB__NETFRAME_CLOSE3, "_netFrame::close" )

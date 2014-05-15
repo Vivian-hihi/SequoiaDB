@@ -119,10 +119,10 @@ namespace engine
                             const CHAR *service,
                             BOOLEAN *newAdd )
    {
-      SDB_ASSERT( NULL != host, "host should not be NULL" )
-      SDB_ASSERT( NULL != service, "host should not be NULL" )
+      SDB_ASSERT( NULL != host, "host should not be NULL" ) ;
+      SDB_ASSERT( NULL != service, "host should not be NULL" ) ;
       SDB_ASSERT( id.columns.serviceID < MSG_ROUTE_SERVICE_TYPE_MAX,
-                  "service ID should < MSG_ROUTE_SERVICE_TYPE_MAX " )
+                  "service ID should < MSG_ROUTE_SERVICE_TYPE_MAX " ) ;
       INT32 rc = SDB_NET_UPDATE_EXISTING_NODE ;
       PD_TRACE_ENTRY ( SDB__NETRT_UPDATE );
       _MsgRouteID tmp = id ;
@@ -152,14 +152,12 @@ namespace engine
          clsStrcpy( host, node._host, sizeof( node._host ) ) ;
          rc = SDB_OK ;
       }
-      if ( 0 !=
-           ossStrcmp( service,
-                      ((node._service)[id.columns.serviceID]).c_str() ) )
+      if ( 0 != ossStrcmp( service,
+           ((node._service)[id.columns.serviceID]).c_str() ) )
       {
-         (node._service)[id.columns.serviceID] =
-                                string( service ) ;
+         (node._service)[id.columns.serviceID] = string( service ) ;
          rc = SDB_OK ;
-         }
+      }
       _mtx.release() ;
 
       PD_TRACE_EXITRC ( SDB__NETRT_UPDATE, rc ) ;
