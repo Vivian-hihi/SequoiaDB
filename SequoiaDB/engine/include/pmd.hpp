@@ -113,7 +113,7 @@ namespace engine
       INT32 init () ;
       void  destroy () ;
 
-      BOOLEAN isAcitve() const { return _isActive ; }
+      BOOLEAN isActive() const { return _isActive ; }
 
       IControlBlock*    getCBByType( SDB_CB_TYPE type ) ;
       BOOLEAN           isCBValue( SDB_CB_TYPE type ) const ;
@@ -294,7 +294,7 @@ namespace engine
       void syncCurTime() ;
 
    } ;
-   typedef class _SDB_KRCB pmdKRCB ;
+   typedef _SDB_KRCB pmdKRCB ;
 
    /*
     * Get global kernel control block
