@@ -54,6 +54,26 @@ namespace engine
       return _initAuthentication( cb ) ;
    }
 
+   INT32 _authCB::init ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _authCB::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _authCB::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _authCB::fini ()
+   {
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
    INT32 _authCB::authenticate( BSONObj &obj, _pmdEDUCB *cb )
    {
@@ -162,7 +182,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_AUTHCB_REMOVEUSR ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-      replCB *rCB = pmdGetKRCB()->getReplCB() ;
+      replCB *rCB = sdbGetReplCB() ;
       if ( !rCB->primaryIsMe() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
@@ -289,7 +309,8 @@ namespace engine
          goto error ;
       }
       PD_TRACE1 ( SDB_AUTHCB_CHECKNEEDAUTH, PD_PACK_INT ( totalCount ) ) ;
-      _needAuth = 0 == totalCount ? FALSE:TRUE ;
+      _needAuth = ( 0 == totalCount ) ? FALSE : TRUE ;
+
    done:
       if ( DMS_INVALID_SUID != suID )
       {
@@ -309,7 +330,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_AUTHCB__CREATEUSR ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-      replCB *rCB = pmdGetKRCB()->getReplCB() ;
+      replCB *rCB = sdbGetReplCB() ;
       if ( !rCB->primaryIsMe() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
@@ -341,6 +362,7 @@ namespace engine
       {
          _needAuth = TRUE ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_AUTHCB__CREATEUSR, rc ) ;
       return rc ;
@@ -393,4 +415,15 @@ namespace engine
               obj.toString().c_str() ) ;
       goto done ;
    }
+
+   /*
+      get gloabl SDB_AUTHCB cb
+   */
+   SDB_AUTHCB* sdbGetAuthCB ()
+   {
+      static SDB_AUTHCB s_authCB ;
+      return &s_authCB ;
+   }
+
 }
+
