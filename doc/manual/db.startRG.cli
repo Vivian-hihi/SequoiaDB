@@ -15,7 +15,7 @@ startRG - Start a specified replset.
 .sp 2
 
 .sp 2
-db.startRG(\fBname\fR)
+db.startRG(\fBname1\fR,\fB[name2]\fR,\fB...\fR)
 .SH "CATEGORY"
 
 .sp 2
