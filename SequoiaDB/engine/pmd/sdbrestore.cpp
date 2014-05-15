@@ -328,7 +328,7 @@ namespace engine
       }
       if ( vm.count( PMD_OPTION_VERSION ) )
       {
-         ossPrintVersion( "Sdb Restore" ) ;
+         ossPrintVersion( "Sdb Restore Version" ) ;
          rc = SDB_PMD_VERSION_ONLY ;
          goto done ;
       }
