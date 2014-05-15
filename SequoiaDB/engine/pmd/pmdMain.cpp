@@ -82,7 +82,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDRESVARGS ) ;
-      rc = pmdGetKRCB()->getOptionCB()->init( argc, argv );
+      rc = pmdGetOptionCB()->init( argc, argv ) ;
       // if user only ask for help information, we simply return
       if ( SDB_PMD_HELP_ONLY == rc || SDB_PMD_VERSION_ONLY == rc )
       {
