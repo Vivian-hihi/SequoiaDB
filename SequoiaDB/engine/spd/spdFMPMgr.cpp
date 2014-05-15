@@ -136,6 +136,21 @@ namespace engine
       goto done ;
    }
 
+   INT32 _spdFMPMgr::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _spdFMPMgr::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _spdFMPMgr::fini ()
+   {
+      return SDB_OK ;
+   }
+
    BOOLEAN _spdFMPMgr::isProcedureUsr( const CHAR *usr )
    {
       BOOLEAN rc = FALSE ;
@@ -278,4 +293,14 @@ namespace engine
    error:
       goto done ;
    }
+
+   /*
+      get global fmp cb
+   */
+   spdFMPMgr* sdbGetFMPCB ()
+   {
+      static spdFMPMgr s_fmpCB ;
+      return &s_fmpCB ;
+   }
+
 }
