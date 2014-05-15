@@ -40,7 +40,7 @@
 
 namespace engine
 {
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLEARQ, "clearQ" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLEARQ, "clearQ" )
    static void clearQ( REPLY_QUE &queue )
    {
       PD_TRACE_ENTRY ( SDB_CLEARQ ) ;
@@ -55,11 +55,11 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOAUTHBASE_FORWARD, "rtnCoordAuthBase::forward" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOAUTHBASE_FORWARD, "rtnCoordAuthBase::forward" )
    INT32 rtnCoordAuthBase::forward( CHAR *pReceiveBuffer, SINT32 packSize,
-                                CHAR **ppResultBuffer, pmdEDUCB *cb,
-                                MsgOpReply &replyHeader, INT32 msgType,
-                                BOOLEAN sWhenNoPrimary )
+                                    CHAR **ppResultBuffer, pmdEDUCB *cb,
+                                    MsgOpReply &replyHeader, INT32 msgType,
+                                    BOOLEAN sWhenNoPrimary )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOAUTHBASE_FORWARD ) ;
@@ -72,15 +72,15 @@ namespace engine
       CoordGroupInfoPtr cata ;
       REQUESTID_MAP nodes ;
       REPLY_QUE replyQue ;
-      NodeID curNodeID = pKrcb->getClsCB()->getNodeID() ;
+      NodeID curNodeID = pmdGetNodeID() ;
       rc = rtnCoordGetCatGroupInfo( cb, FALSE, cata ) ;
       PD_RC_CHECK ( rc, PDWARNING,
                     "Failed to get catalog group info, rc = %d", rc  ) ;
       rc = rtnCoordSendRequestToPrimary( pReceiveBuffer,
-                                 cata, nodes,
-                                 pRouteAgent,
-                                 MSG_ROUTE_CAT_SERVICE,
-                                 cb ) ;
+                                         cata, nodes,
+                                         pRouteAgent,
+                                         MSG_ROUTE_CAT_SERVICE,
+                                         cb ) ;
       if ( SDB_OK != rc )
       {
          rc = rtnCoordGetCatGroupInfo( cb, TRUE, cata ) ;
