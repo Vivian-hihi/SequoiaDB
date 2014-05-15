@@ -164,8 +164,6 @@ typedef class _ossSocket ossSocket ;
 // define socket functions
 
 INT32    ossInitSocket() ;
-void     ossSocketBindListenMutexGet() ;
-void     ossSocketBindListenMutexRelease() ;
 INT32    ossGetHostName( CHAR *pName, INT32 nameLen ) ;
 INT32    ossGetPort( const CHAR *pServiceName, UINT16 &port ) ;
 
