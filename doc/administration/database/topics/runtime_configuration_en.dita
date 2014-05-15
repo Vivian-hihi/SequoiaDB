@@ -57,6 +57,13 @@
              2. If it is not specified, the default path is &quot;Data file path/diaglog&quot;.</stentry>
 				</strow>
 				<strow>
+					<stentry>--diagnum</stentry>
+					<stentry>--</stentry>
+					<stentry>num</stentry>
+					<stentry>1. It specifies the number of diagnostic log file. 
+             2. If it is not specified, the default 20; -1 means unlimited.</stentry>
+				</strow>
+				<strow>
 					<stentry>--bkuppath</stentry>
 					<stentry>--</stentry>
 					<stentry>str</stentry>

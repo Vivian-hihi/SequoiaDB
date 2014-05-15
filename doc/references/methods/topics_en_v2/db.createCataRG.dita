@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.createCataRG</apiname>(<parmname>name</parmname>)
+      <p></p><apiname>db.createCataRG</apiname>(<parmname>host</parmname>,<parmname>service</parmname>,<parmname>dbpath</parmname>,<parmname>[config]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

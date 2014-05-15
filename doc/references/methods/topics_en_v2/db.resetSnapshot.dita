@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>resetSnapshot</apiname>(<parmname>[con]</parmname>)
+      <p></p><apiname>resetSnapshot</apiname>(<parmname>[cond]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -20,13 +20,13 @@
       <p>Reset snapshot.</p>
       <parml>
         <plentry>
-          <pt>con (json object)</pt>
-          <pd>Selecting condition. It merely resets snapshot records that match the conditions in "con". If it is null, it will reset all the snapshot records.
+          <pt>cond (json object)</pt>
+          <pd>Selecting condition. It merely resets snapshot records that match the conditions in "cond". If it is null, it will reset all the snapshot records.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "resetSnapshot()" contains the parameter "con". It is a json object.</pd>
-                <pd>{["con":"{"Field name 1":{"match 1":"value 1"},"Field name 2":{"match 2":"value 2"}...}"]}</pd>
+                <pd>The method "resetSnapshot()" contains the parameter "cond". It is a json object.</pd>
+                <pd>{["cond":"{"Field name 1":{"match 1":"value 1"},"Field name 2":{"match 2":"value 2"}...}"]}</pd>
               </plentry>
             </parml>
           </pd>          

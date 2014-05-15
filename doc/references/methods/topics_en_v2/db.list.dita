@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.list</apiname>(<parmname>listType</parmname>,<parmname>[con]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
+      <p></p><apiname>db.list</apiname>(<parmname>listType</parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -24,7 +24,7 @@
           <pd>The value of it is in the range from 0 to 7.</pd>
         </plentry>
         <plentry>
-          <pt>con (json object)</pt>
+          <pt>cond (json object)</pt>
           <pd>Selecting condition. It just returns the records that match conditions in "con". When it is null, return all records.</pd>
         </plentry>
         <plentry>

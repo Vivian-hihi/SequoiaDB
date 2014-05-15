@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.createCL</apiname>(<parmname>name</parmname><parmname>[,option]</parmname>)
+      <p></p><apiname>db.collectionspace.createCL</apiname>(<parmname>name</parmname>,<parmname>[option]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

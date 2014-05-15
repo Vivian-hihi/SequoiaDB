@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="db.resetSnapshot()"/>
-<meta name="description" content="NAME resetSnapshot - Reset snapshot. SYNOPSIS resetSnapshot ( [con] ) CATEGORY Sequoiadb DESCRIPTION Reset snapshot. con (json object) Selecting condition. It merely resets snapshot records that match ..."/>
+<meta name="description" content="NAME resetSnapshot - Reset snapshot. SYNOPSIS resetSnapshot ( [cond] ) CATEGORY Sequoiadb DESCRIPTION Reset snapshot. cond (json object) Selecting condition. It merely resets snapshot records that ..."/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_4sr_vry_tn"/>
 <link rel="stylesheet" type="text/css" href="commonltr.css"/>
@@ -44,7 +44,7 @@
     <div class="section"><h2 class="title sectiontitle">SYNOPSIS</h2>
       
       <p class="p"/>
-<span class="keyword apiname">resetSnapshot</span>(<span class="keyword parmname">[con]</span>)
+<span class="keyword apiname">resetSnapshot</span>(<span class="keyword parmname">[cond]</span>)
     </div>
 
     <div class="section"><h2 class="title sectiontitle">CATEGORY</h2>
@@ -59,16 +59,16 @@ Sequoiadb
 
       <dl class="dl parml">
         
-          <dt class="dt pt dlterm">con (json object)</dt>
+          <dt class="dt pt dlterm">cond (json object)</dt>
 
-          <dd class="dd pd">Selecting condition. It merely resets snapshot records that match the conditions in "con". If it is null, it will reset all the snapshot records.
+          <dd class="dd pd">Selecting condition. It merely resets snapshot records that match the conditions in "cond". If it is null, it will reset all the snapshot records.
             <dl class="dl parml">
               
                 <dt class="dt pt dlterm">Format</dt>
 
-                <dd class="dd pd">The method "resetSnapshot()" contains the parameter "con". It is a json object.</dd>
+                <dd class="dd pd">The method "resetSnapshot()" contains the parameter "cond". It is a json object.</dd>
 
-                <dd class="dd pd">{["con":"{"Field name 1":{"match 1":"value 1"},"Field name 2":{"match 2":"value 2"}...}"]}</dd>
+                <dd class="dd pd">{["cond":"{"Field name 1":{"match 1":"value 1"},"Field name 2":{"match 2":"value 2"}...}"]}</dd>
 
               
             </dl>
