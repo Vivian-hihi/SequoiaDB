@@ -1063,6 +1063,9 @@ namespace engine
                cb->initMonAppCB() ;
 
                rc = entryFunc ( cb, event._Data ) ;
+
+               // copy name
+               ossStrncpy( eduName, cb->getName(), OSS_MAX_PATHSIZE ) ;
             }
 
             if ( PMD_IS_DB_UP )
@@ -1127,8 +1130,6 @@ namespace engine
             }
          }
 
-         // copy name
-         ossStrncpy( eduName, cb->getName(), OSS_MAX_PATHSIZE ) ;
          rc = eduMgr->returnEDU ( cb->getID (), isForced, &eduDestroyed ) ;
 
          // otherwise let's check rc and report error if it's not OK

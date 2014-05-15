@@ -166,6 +166,9 @@ namespace engine
    };
    typedef _rtnIndexJob rtnIndexJob ;
 
+   /*
+      _rtnLoadJob define
+   */
    class _rtnLoadJob : public _rtnBaseJob
    {
       protected:
@@ -182,6 +185,8 @@ namespace engine
          virtual INT32 doit () ;
    };
    typedef _rtnLoadJob rtnLoadJob ;
+
+   INT32 rtnStartLoadJob() ;
 
 }
 

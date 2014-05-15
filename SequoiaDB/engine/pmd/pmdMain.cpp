@@ -175,12 +175,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDSYSINIT ) ;
 
-      rtnPageCleanerJob *pcJob = NULL ;
-      SDB_ROLE dbRole ;
-
-      // check the database role, we load storage units when the role is data,
-      // catalog or auth
-      dbRole = pmdGetDBRole() ;
+      SDB_ROLE dbRole = pmdGetDBRole() ;
 
       if ( SDB_ROLE_OM == dbRole )
       {
@@ -200,58 +195,8 @@ namespace engine
          }
       }
 
-      for ( UINT32 i = 0; i < pmdGetOptionCB()->getPageCleanNum (); ++i )
-      {
-         // Once all collectionspaces are loaded, let's start up page cleaners
-         pcJob = SDB_OSS_NEW rtnPageCleanerJob() ;
-         if ( NULL == pcJob )
-         {
-            PD_LOG ( PDERROR, "Failed to alloc memory for page cleaner job" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-
-         // start the job
-         rc = rtnGetJobMgr()->startJob( pcJob, RTN_JOB_MUTEX_NONE, NULL ) ;
-         if ( SDB_RTN_MUTEX_JOB_EXIST == rc )
-         {
-            rc = SDB_OK ;
-         }
-         // if we failed to start the job, no worry, it's not a big deal
-         if ( rc )
-         {
-            PD_LOG ( PDWARNING, "Failed to start page cleaner job, rc = %d",
-                     rc ) ;
-            rc = SDB_OK ;
-         }
-      }
-
    done :
       PD_TRACE_EXITRC ( SDB_PMDSYSINIT, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDPOSTINIT, "pmdPostInit" )
-   INT32 pmdPostInit ()
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDPOSTINIT );
-      rtnLoadJob *loadJob = SDB_OSS_NEW rtnLoadJob() ;
-      if ( NULL == loadJob )
-      {
-         PD_LOG ( PDERROR, "Failed to alloc memory for loadJob" ) ;
-         rc = SDB_OOM ;
-         goto error ;
-      }
-      rc = rtnGetJobMgr()->startJob( loadJob, RTN_JOB_MUTEX_NONE, NULL ) ;
-      if ( SDB_RTN_MUTEX_JOB_EXIST == rc )
-      {
-         rc = SDB_OK ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB_PMDPOSTINIT, rc );
       return rc ;
    error :
       goto done ;
@@ -383,13 +328,7 @@ namespace engine
       eduMgr->startEDU ( EDU_TYPE_WINDOWSLISTENER, NULL, &agentEDU ) ;
       eduMgr->regSystemEDU ( EDU_TYPE_WINDOWSLISTENER, agentEDU ) ;
 #endif
-      // pmdPostInit () ;
-      rc = pmdPostInit() ;
-      if ( rc )
-      {
-         PD_LOG( PDERROR, "Failed to call pmdPostInit, rc=%d", rc ) ;
-         goto error ;
-      }
+
       // Now master thread get into big loop and check shutdown flag
       while ( PMD_IS_DB_UP )
       {

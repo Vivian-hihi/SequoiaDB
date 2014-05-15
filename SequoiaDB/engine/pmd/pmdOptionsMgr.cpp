@@ -1089,6 +1089,7 @@ namespace engine
       // --numpagecleaners
       rdxUInt( pEX, PMD_OPTION_NUMPAGECLEANERS, _pagecleanNum,
                FALSE, FALSE, PMD_DFT_NUMPAGECLEAN ) ;
+      rdvMinMax( pEX, _pagecleanNum, 0, 50, TRUE ) ;
 
       // --pagecleaninterval
       rdxUInt( pEX, PMD_OPTION_PAGECLEANINTERVAL, _pagecleanInterval,

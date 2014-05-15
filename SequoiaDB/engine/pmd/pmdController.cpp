@@ -144,6 +144,19 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Wait Http Listener active failed, rc: %d",
                    rc ) ;
 
+      if ( SDB_ROLE_COORD != pmdGetDBRole() )
+      {
+         UINT32 pageTaskNum = pmdGetOptionCB()->getPageCleanNum() ;
+         UINT32 pageIntervel = pmdGetOptionCB()->getPageCleanInterval() ;
+         // start page flush background task
+         for ( UINT32 i = 0; i < pageTaskNum ; ++i )
+         {
+            startPageCleanerJob( NULL, (INT32)pageIntervel ) ;
+         }
+         // start load job
+         rtnStartLoadJob() ;
+      }
+
    done:
       return rc ;
    error:

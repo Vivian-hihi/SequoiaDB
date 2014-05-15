@@ -472,7 +472,7 @@ namespace engine
       return _jobName.c_str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOADJOB_MUTEXON, "_rtnLoadJob::muteXOn" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOADJOB_MUTEXON, "_rtnLoadJob::muteXOn" )
    BOOLEAN _rtnLoadJob::muteXOn ( const _rtnBaseJob * pOther )
    {
       PD_TRACE_ENTRY ( SDB__RTNLOADJOB_MUTEXON ) ;
@@ -481,7 +481,7 @@ namespace engine
       return ret ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOADJOB_DOIT , "_rtnLoadJob::doit" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNLOADJOB_DOIT , "_rtnLoadJob::doit" )
    INT32 _rtnLoadJob::doit ()
    {
       INT32 rc = SDB_OK ;
@@ -591,6 +591,28 @@ namespace engine
       PD_TRACE_EXITRC ( SDB__RTNLOADJOB_DOIT, rc ) ;
       return rc ;
    error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNSTARTLOADJOB, "rtnStartLoadJob" )
+   INT32 rtnStartLoadJob()
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNSTARTLOADJOB );
+      rtnLoadJob *loadJob = SDB_OSS_NEW rtnLoadJob() ;
+      if ( NULL == loadJob )
+      {
+         PD_LOG ( PDERROR, "Failed to alloc memory for loadJob" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      rc = rtnGetJobMgr()->startJob( loadJob, RTN_JOB_MUTEX_NONE, NULL ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start load job, rc: %d", rc ) ;
+
+   done :
+      PD_TRACE_EXITRC ( SDB_RTNSTARTLOADJOB, rc );
+      return rc ;
+   error :
       goto done ;
    }
 
