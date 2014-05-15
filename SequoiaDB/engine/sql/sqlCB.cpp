@@ -57,6 +57,26 @@ namespace engine
 
    }
 
+   INT32 _sqlCB::init ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _sqlCB::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _sqlCB::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _sqlCB::fini ()
+   {
+      return SDB_OK ;
+   }
+
    INT32 _sqlCB::exec( const CHAR *sql, _pmdEDUCB *cb,
                        SINT64 &contextID )
    {
@@ -208,4 +228,15 @@ namespace engine
       contextID = -1 ;
       goto done ;
    }
+
+   /*
+      get global sql cb
+   */
+   SQL_CB* sdbGetSQLCB ()
+   {
+      static SQL_CB s_sqlCB ;
+      return &s_sqlCB ;
+   }
+
 }
+
