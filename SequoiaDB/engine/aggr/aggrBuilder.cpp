@@ -62,13 +62,14 @@ namespace engine
    AGGR_PARSER_ADD( AGGR_PROJECT_PARSER_NAME, aggrProjectParser )
    AGGR_PARSER_END
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_AGGRBUILDER_AGGRBUILDER, "aggrBuilder::aggrBuilder" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_AGGRBUILDER_AGGRBUILDER, "aggrBuilder::aggrBuilder" )
    aggrBuilder::aggrBuilder()
    {
       PD_TRACE_ENTRY ( SDB_AGGRBUILDER_AGGRBUILDER ) ;
       addParser();
       PD_TRACE_EXIT ( SDB_AGGRBUILDER_AGGRBUILDER ) ;
    }
+
    aggrBuilder::~aggrBuilder()
    {
       AGGR_PARSER_MAP::iterator iterMap = _parserMap.begin();
@@ -79,9 +80,29 @@ namespace engine
       }
    }
 
+   INT32 aggrBuilder::init ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 aggrBuilder::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 aggrBuilder::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 aggrBuilder::fini ()
+   {
+      return SDB_OK ;
+   }
+
    INT32 aggrBuilder::build( BSONObj &objs, INT32 objNum,
-                           const CHAR *pCLName, _pmdEDUCB *cb,
-                           SINT64 &contextID )
+                             const CHAR *pCLName, _pmdEDUCB *cb,
+                             SINT64 &contextID )
    {
       INT32 rc = SDB_OK;
       BOOLEAN hasNew = FALSE;
@@ -239,6 +260,15 @@ namespace engine
          contextID = -1 ;
       }
       goto done ;
+   }
+
+   /*
+      get global aggr cb
+   */
+   aggrBuilder* sdbGetAggrCB ()
+   {
+      static aggrBuilder s_aggrCB ;
+      return &s_aggrCB ;
    }
 }
 
