@@ -118,6 +118,7 @@ utilFiles = [
       "client/base64c.c",
       "client/cJSON.c",
       "client/jstobs.c",
+      "util/csv2rawbson.cpp"
       ]
 
 sptFiles = [
