@@ -62,12 +62,12 @@ namespace engine
    END_OBJ_MSG_MAP()
 
    _clsMgr::_clsMgr ()
-   :_shdMsgHandler ( this ),
-    _replMsgHandler ( this ),
+   :_shdMsgHandlerObj ( this ),
+    _replMsgHandlerObj ( this ),
     _shdTimerHandler ( this ),
     _replTimerHandler ( this ),
-    _replNetRtAgent ( &_replMsgHandler ),
-    _shardNetRtAgent ( &_shdMsgHandler ),
+    _replNetRtAgent ( &_replMsgHandlerObj ),
+    _shardNetRtAgent ( &_shdMsgHandlerObj ),
     _shdObj ( &_shardNetRtAgent ),
     _replObj ( &_replNetRtAgent ),
     _shardServiceID ( MSG_ROUTE_SHARD_SERVCIE ),
@@ -344,8 +344,8 @@ namespace engine
       if ( EDU_TYPE_CLUSTER == pMainCB->getType() )
       {
          //Set MsgHandler EDU
-         _shdMsgHandler.attach ( pMainCB ) ;
-         _replMsgHandler.attach ( pMainCB ) ;
+         _shdMsgHandlerObj.attach ( pMainCB ) ;
+         _replMsgHandlerObj.attach ( pMainCB ) ;
 
          //Set TimerHandler EDU
          _shdTimerHandler.attach ( pMainCB ) ;
@@ -353,7 +353,7 @@ namespace engine
       }
       else if ( EDU_TYPE_CLUSTERSHARD == pMainCB->getType() )
       {
-         _shdMsgHandler.attachShardCB( pMainCB ) ;
+         _shdMsgHandlerObj.attachShardCB( pMainCB ) ;
       }
 
       _attachEvent.signalAll() ;
@@ -364,8 +364,8 @@ namespace engine
       if ( EDU_TYPE_CLUSTER == pMainCB->getType() )
       {
          //Set MsgHandler EDU
-         _shdMsgHandler.detach() ;
-         _replMsgHandler.detach () ;
+         _shdMsgHandlerObj.detach() ;
+         _replMsgHandlerObj.detach () ;
 
          //Set TimerHandler EDU
          _shdTimerHandler.detach () ;
@@ -373,7 +373,7 @@ namespace engine
       }
       else if ( EDU_TYPE_CLUSTERSHARD == pMainCB->getType() )
       {
-         _shdMsgHandler.detachShardCB() ;
+         _shdMsgHandlerObj.detachShardCB() ;
       }
    }
 
@@ -516,7 +516,7 @@ namespace engine
    }
    _clsMsgHandler* _clsMgr::getShardMsgHandle()
    {
-      return &_shdMsgHandler ;
+      return &_shdMsgHandlerObj ;
    }
    _clsTaskMgr* _clsMgr::getTaskMgr()
    {
