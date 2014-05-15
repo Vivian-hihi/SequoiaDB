@@ -829,8 +829,7 @@ namespace engine
                && 0 != cb->getLsnCount ()
                && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
             {
-               rc = pmdGetKRCB()->getReplCB()->sync ( cb->getEndLsn (),
-                                                      cb, w ) ;
+               rc = sdbGetReplCB()->sync ( cb->getEndLsn (), cb, w ) ;
             }
             cb->resetLsn () ;
          }

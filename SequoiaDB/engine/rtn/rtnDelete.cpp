@@ -217,7 +217,7 @@ namespace engine
          if ( SDB_OK == rc && dpsCB && 0 != cb->getLsnCount () && w > 1
             && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
          {
-            rc = pmdGetKRCB()->getReplCB()->sync ( cb->getEndLsn(), cb, w ) ;
+            rc = sdbGetReplCB()->sync ( cb->getEndLsn(), cb, w ) ;
          }
          cb->resetLsn () ;
       }
@@ -371,7 +371,7 @@ namespace engine
          if ( SDB_OK == rc && dpsCB && 0 != cb->getLsnCount () && w > 1
             && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
          {
-            rc = pmdGetKRCB()->getReplCB()->sync ( cb->getEndLsn(), cb, w ) ;
+            rc = sdbGetReplCB()->sync ( cb->getEndLsn(), cb, w ) ;
          }
          cb->resetLsn () ;
       }

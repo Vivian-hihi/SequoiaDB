@@ -2233,8 +2233,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTART_DOIT ) ;
-      rc = pmdGetKRCB()->getTraceCB()->start ( (UINT64)_size, _mask,
-                                               &_funcCode ) ;
+      rc = sdbGetPDTraceCB()->start ( (UINT64)_size, _mask, &_funcCode ) ;
       PD_TRACE_EXITRC ( SDB__RTNTRACESTART_DOIT, rc ) ;
       return rc ;
    }
@@ -2275,7 +2274,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACERESUME_DOIT ) ;
-      pdTraceCB *pdTraceCB = pmdGetKRCB()->getTraceCB() ;
+      pdTraceCB *pdTraceCB = sdbGetPDTraceCB() ;
       pdTraceCB->removeAllBreakPoint () ;
       // sleep for a second so that break point removal information is broadcast
       // to all CPUs
@@ -2343,7 +2342,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTOP_DOIT ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
-      pdTraceCB *traceCB = krcb->getTraceCB() ;
+      pdTraceCB *traceCB = sdbGetPDTraceCB() ;
       if ( _pDumpFileName )
       {
          traceCB->stop() ;

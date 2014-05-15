@@ -4141,12 +4141,11 @@ namespace engine
       _pCatAgent->release_w () ;
       pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
 
-      PD_CHECK( pmdGetKRCB()->getClsCB()->isPrimary(),
-               SDB_CLS_NOT_PRIMARY, error, PDERROR,
-               "failed to drop cs before phase2(%d)", rc );
+      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
+                "Failed to drop cs before phase2(%d)", rc ) ;
 
-      _status = DELCSPHASE_2;
-      rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, _pDpsCB );
+      _status = DELCSPHASE_2 ;
+      rc = rtnDropCollectionSpaceP2( _name, cb, _pDmsCB, _pDpsCB ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "failed to drop cs in phase2(%d)", rc );
       _clean( cb );
@@ -4344,9 +4343,8 @@ namespace engine
       _pCatAgent->release_w () ;
       pmdGetKRCB()->getClsCB()->invalidateCata( _name ) ;
 
-      PD_CHECK( pmdGetKRCB()->getClsCB()->isPrimary(),
-               SDB_CLS_NOT_PRIMARY, error, PDERROR,
-               "failed to drop cs before phase2(%d)", rc );
+      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
+                "Failed to drop cs before phase2(%d)", rc );
 
       rc = rtnDropCollectionCommand( _name, cb, _pDmsCB, _pDpsCB );
       PD_RC_CHECK( rc, PDERROR,
@@ -4505,9 +4503,8 @@ namespace engine
          goto error ;
       }
 
-      PD_CHECK( pmdGetKRCB()->getClsCB()->isPrimary(),
-               SDB_CLS_NOT_PRIMARY, error, PDERROR,
-               "failed to drop cs before phase2(%d)", rc );
+      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDERROR,
+                "Failed to drop cs before phase2(%d)", rc );
 
       {
       _clsCatalogSet *pCataSet = NULL;

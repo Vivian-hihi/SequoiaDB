@@ -1249,8 +1249,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATEROUTE, "rtnCoordUpdateRoute" )
    INT32 rtnCoordUpdateRoute ( CoordGroupInfoPtr &groupInfo,
-                                         netMultiRouteAgent *pRouteAgent,
-                                         MSG_ROUTE_SERVICE_TYPE type )
+                               netMultiRouteAgent *pRouteAgent,
+                               MSG_ROUTE_SERVICE_TYPE type )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOUPDATEROUTE ) ;
@@ -1286,8 +1286,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETGROUPSBYCATAINFO, "rtnCoordGetGroupsByCataInfo" )
    INT32 rtnCoordGetGroupsByCataInfo( const CoordCataInfoPtr &cataInfo,
-                                                CoordGroupList &sendGroupLst,
-                                                CoordGroupList &groupLst )
+                                      CoordGroupList &sendGroupLst,
+                                      CoordGroupList &groupLst )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETGROUPSBYCATAINFO ) ;

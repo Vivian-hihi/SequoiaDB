@@ -58,6 +58,26 @@ namespace engine
       _contextList.clear() ;
    }
 
+   INT32 _SDB_RTNCB::init ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _SDB_RTNCB::active ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _SDB_RTNCB::deactive ()
+   {
+      return SDB_OK ;
+   }
+
+   INT32 _SDB_RTNCB::fini ()
+   {
+      return SDB_OK ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB__SDB_RTNCB_CONTEXTDEL, "_SDB_RTNCB::contextDelete" )
    void _SDB_RTNCB::contextDelete ( SINT64 contextID, pmdEDUCB *cb )
    {
@@ -179,6 +199,15 @@ namespace engine
       PD_LOG ( PDDEBUG, "Create new context(contextID=%lld, type: %d[%s])",
                contextID, type, getContextTypeDesp(type) ) ;
       return SDB_OK ;
+   }
+
+   /*
+      get global rtn cb
+   */
+   SDB_RTNCB* sdbGetRTNCB ()
+   {
+      static SDB_RTNCB s_rtnCB ;
+      return &s_rtnCB ;
    }
 
 }
