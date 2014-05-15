@@ -15,7 +15,7 @@ createCataRG - Create a new catalog partition group.
 .sp 2
 
 .sp 2
-db.createCataRG(\fBname\fR)
+db.createCataRG(\fBhost\fR,\fBservice\fR,\fBdbpath\fR,\fB[config]\fR)
 .SH "CATEGORY"
 
 .sp 2
