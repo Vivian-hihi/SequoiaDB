@@ -38,12 +38,16 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossIO.hpp"
-#include "string"
+#include <string>
 
 #define PMD_STARTUP_FILE_NAME          ".SEQUOIADB_STARTUP"
+
 namespace engine
 {
 
+   /*
+      _pmdStartup define
+   */
    class _pmdStartup : public SDBObject
    {
       public:
