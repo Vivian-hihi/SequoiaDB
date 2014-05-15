@@ -35,6 +35,7 @@
 *******************************************************************************/
 #ifndef PDTRACE_HPP__
 #define PDTRACE_HPP__
+
 #include "core.hpp"
 #include "ossUtil.hpp"
 #include "ossLatch.hpp"
@@ -42,6 +43,7 @@
 #include "oss.hpp"
 #include "pdTrace.h"
 #include <list>
+
 
 #define PD_TRACE_MAX_BP_NUM         10
 /*
@@ -208,7 +210,7 @@ typedef class _pdTraceRecord pdTraceRecord ;
 
 namespace engine
 {
-class _pmdEDUCB ;
+   class _pmdEDUCB ;
 }
 // Make sure that traceCB does NOT include any variables may refer pointer
 // When we dump trace header, we simply dump the entire pdTraceCB into the file
@@ -279,9 +281,10 @@ public :
    {
       return _numBP ;
    }
-#endif
+#endif // SDB_ENGINE
    _pdTraceCB () ;
    ~_pdTraceCB () ;
+
 } ;
 typedef class _pdTraceCB pdTraceCB ;
 
@@ -327,7 +330,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_ENTRY(funcCode)                                    \
    do {                                                             \
-      if ( gPDTraceCB && gPDTraceCB->_traceStarted.compare(TRUE) )  \
+      if ( sdbGetPDTraceCB()->_traceStarted.compare(TRUE) )  \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;          \
@@ -338,7 +341,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_EXIT(funcCode)                                     \
    do {                                                             \
-      if ( gPDTraceCB && gPDTraceCB->_traceStarted.compare(TRUE) )  \
+      if ( sdbGetPDTraceCB()->_traceStarted.compare(TRUE) )  \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;          \
@@ -349,7 +352,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_EXITRC(funcCode,rc)                                \
    do {                                                             \
-      if ( gPDTraceCB && gPDTraceCB->_traceStarted.compare(TRUE) )  \
+      if ( sdbGetPDTraceCB()->_traceStarted.compare(TRUE) )  \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          ossMemset ( &argTuple[0], 0, sizeof(argTuple) ) ;          \
@@ -361,7 +364,7 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
 
 #define PD_TRACE_FUNC(funcCode,file,line,pack0,pack1,pack2,pack3,pack4,pack5,pack6,pack7,pack8) \
    do {                                                             \
-      if ( gPDTraceCB && gPDTraceCB->_traceStarted.compare(TRUE) )  \
+      if ( sdbGetPDTraceCB()->_traceStarted.compare(TRUE) )  \
       {                                                             \
          pdTraceArgTuple argTuple[PD_TRACE_MAX_ARG_NUM] ;           \
          argTuple[0] = pack0 ;                                      \
@@ -519,11 +522,15 @@ typedef struct _pdTraceArgTuple pdTraceArgTuple ;
                       pack8 ) ;                           \
    } while ( FALSE )
 
-extern pdTraceCB *gPDTraceCB ;
 const CHAR *pdGetTraceFunction ( UINT64 id ) ;
 const CHAR *pdGetTraceComponent ( UINT32 id ) ;
 void pdTraceFunc ( UINT64 funcCode, INT32 type,
                    const CHAR* file, UINT32 line,
                    pdTraceArgTuple *tuple ) ;
 
-#endif
+/*
+   get global pdtrace cb
+*/
+pdTraceCB* sdbGetPDTraceCB () ;
+
+#endif // PDTRACE_HPP__
