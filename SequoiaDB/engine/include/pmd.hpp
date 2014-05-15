@@ -104,7 +104,7 @@ namespace engine
     * Kernel Control Block
     * Database Kernel Variables
     */
-   class _SDB_KRCB : public SDBObject
+   class _SDB_KRCB : public SDBObject, public _IConfigHandle
    {
    public:
       _SDB_KRCB () ;
@@ -118,7 +118,8 @@ namespace engine
 
       INT32             registerCB( IControlBlock *pCB ) ;
 
-      void              configChangeNty() ;
+      virtual void      onConfigChange ( UINT32 changeID ) ;
+      virtual void      onConfigInit () ;
 
    public:
       const CHAR*       getHostName() const { return _hostName ; }
