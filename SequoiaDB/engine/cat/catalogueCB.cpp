@@ -458,7 +458,7 @@ namespace engine
       if ( SDB_EVT_OCCUR_AFTER == occurType )
       {      
          EDUID eduID = pEDUMgr->getSystemEDU( EDU_TYPE_CATMAINCONTROLLER ) ;
-         if ( PMD_INVALID_EDUID == eduID )
+         if ( PMD_INVALID_EDUID != eduID )
          {
             pEDUMgr->postEDUPost( eduID, eventType ) ;
          }
