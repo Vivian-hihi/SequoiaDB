@@ -44,6 +44,8 @@ namespace engine
    {
       _pTcpListener        = NULL ;
       _pHttpListener       = NULL ;
+
+      _isActive            = FALSE ;
    }
 
    _pmdController::~_pmdController ()
@@ -144,6 +146,8 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Wait Http Listener active failed, rc: %d",
                    rc ) ;
 
+      _isActive = TRUE ;
+
    done:
       return rc ;
    error:
@@ -152,14 +156,7 @@ namespace engine
 
    INT32 _pmdController::deactive ()
    {
-      if ( _pTcpListener )
-      {
-         _pTcpListener->close() ;
-      }
-      if ( _pHttpListener )
-      {
-         _pHttpListener->close() ;
-      }
+      _isActive = FALSE ;
       return SDB_OK ;
    }
 

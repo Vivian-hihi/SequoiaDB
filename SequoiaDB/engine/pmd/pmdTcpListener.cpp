@@ -42,6 +42,7 @@
 #include "pmd.hpp"
 #include "pmdEDUMgr.hpp"
 #include "ossSocket.hpp"
+#include "pmdController.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 
@@ -107,8 +108,15 @@ namespace engine
          void *pData = NULL ;
          *((SOCKET *) &pData) = s ;
 
-         // now we have a tcp socket for a new connection, let's get an agent
-         // Note the new new socket sent passing to startEDU
+         if ( !sdbGetPMDController()->isActived() )
+         {
+            ossSocket newsock ( &s ) ;
+            newsock.close () ;
+            continue ;
+         }
+
+         // now we have a tcp socket for a new connection, let's get an 
+         // agent, Note the new new socket sent passing to startEDU
          if ( SDB_ROLE_COORD != dbrole )
          {
             rc = eduMgr->startEDU ( EDU_TYPE_AGENT, pData, &agentEDU ) ;
