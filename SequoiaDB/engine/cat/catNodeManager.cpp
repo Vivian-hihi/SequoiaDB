@@ -16,22 +16,51 @@ using namespace bson;
 
 namespace engine
 {
+
+   catNodeManager::catNodeManager()
+   {
+      _status = SDB_CAT_MODULE_DEACTIVE ;
+      _pKrcb = NULL ;
+      _pDmsCB = NULL ;
+      _pDpsCB = NULL ;
+      _pRtnCB = NULL ;
+      _pEduMgr = NULL ;
+      _pCatCB = NULL ;
+      _pEduCB = NULL ;
+      _pClsCB = NULL ;
+   }
+
+   catNodeManager::~catNodeManager()
+   {
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_INIT, "catNodeManager::init" )
-   INT32 catNodeManager::init( pmdEDUCB *cb )
+   INT32 catNodeManager::init()
    {
       INT32 rc = SDB_OK;
-      _pKrcb = pmdGetKRCB() ;
-      _pDmsCB = _pKrcb->getDMSCB();
-      _pDpsCB = _pKrcb->getDPSCB();
-      _pRtnCB = _pKrcb->getRTNCB();
+      _pKrcb   = pmdGetKRCB() ;
+      _pDmsCB  = _pKrcb->getDMSCB();
+      _pDpsCB  = _pKrcb->getDPSCB();
+      _pRtnCB  = _pKrcb->getRTNCB();
       _pEduMgr = _pKrcb->getEDUMgr();
-      _pCatCB = _pKrcb->getCATLOGUECB();
-      _pClsCB = pmdGetKRCB()->getClsCB();
-      _pEduCB = cb;
+      _pCatCB  = _pKrcb->getCATLOGUECB();
+      _pClsCB  = pmdGetKRCB()->getClsCB();
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_INIT ) ;
-      rc = readCataConf();
+      rc = readCataConf() ;
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_INIT, rc ) ;
-      return rc;
+      return rc ;
+   }
+
+   void catNodeManager::attachCB( pmdEDUCB * cb )
+   {
+      _pEduCB = cb ;
+      _pCatCB->getMainController()->attachCB( cb ) ;
+   }
+
+   void catNodeManager::detachCB( pmdEDUCB * cb )
+   {
+      _pCatCB->getMainController()->detachCB( cb ) ;
+      _pEduCB = NULL ;
    }
 
    /***********************************
@@ -52,9 +81,9 @@ namespace engine
       CHAR szBuf[ OP_MAXNAMELENGTH+1 ] = {0} ;
       ossStrncpy( szBuf, CAT_NODE_INFO_COLLECTION, OP_MAXNAMELENGTH);
       // query from collection table
-      rc = rtnQuery (szBuf, boEmpty, boEmpty,
-                     boEmpty, boEmpty, 0, _pEduCB, 0, -1, _pDmsCB,
-                     _pRtnCB, sContextID);
+      rc = rtnQuery ( szBuf, boEmpty, boEmpty,
+                      boEmpty, boEmpty, 0, _pEduCB, 0, -1, _pDmsCB,
+                      _pRtnCB, sContextID ) ;
       if ( rc )
       {
          // rtnQuery supposed to be never failed
@@ -111,7 +140,8 @@ namespace engine
             }
          } // if ( pBuffer != NULL )
       } // while ( TRUE );
-      _status = SDB_CAT_MODULE_ACTIVE;
+      _status = SDB_CAT_MODULE_ACTIVE ;
+
    done :
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_ACTIVE, rc ) ;
       return rc;
@@ -202,7 +232,7 @@ namespace engine
       msgReply.header.header.routeID.value= 0;
       msgReply.header.header.TID = pRequest->header.TID;
 
-      if ( !_pClsCB || !_pClsCB->isPrimary() ||
+      if ( !pmdIsPrimary() ||
            SDB_CAT_MODULE_ACTIVE != _status )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
@@ -285,7 +315,7 @@ namespace engine
                   PD_PACK_UINT ( groupID ) ) ;
 
       BSONObj boGroupInfo ;
-      PD_CHECK( ( ( _pClsCB && _pClsCB->isPrimary() && SDB_CAT_MODULE_ACTIVE == _status ) ||
+      PD_CHECK( ( ( pmdIsPrimary() && SDB_CAT_MODULE_ACTIVE == _status ) ||
                   CATALOG_GROUPID == groupID ), SDB_CLS_NOT_PRIMARY, error,
                   PDWARNING, "Service deactive but received group-info-request"
                   "(groupID=%u)", groupID ) ;
@@ -388,10 +418,10 @@ namespace engine
             "failed to process register-request, received unexpected error:%s",
             e.what() );
       }
-      PD_CHECK( ( ( _pClsCB && _pClsCB->isPrimary() && SDB_CAT_MODULE_ACTIVE == _status )
-            || SDB_ROLE_CATALOG == nodeRole ), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
-            "service deactive but received register-request:%s",
-            boReq.toString().c_str() );
+      PD_CHECK( ( ( pmdIsPrimary() && SDB_CAT_MODULE_ACTIVE == _status )
+                || SDB_ROLE_CATALOG == nodeRole ), SDB_CLS_NOT_PRIMARY,
+                error, PDWARNING, "service deactive but received "
+                "register-request:%s", boReq.toString().c_str() );
       PD_TRACE1 ( SDB_CATNODEMGR_REGREQ,
                   PD_PACK_STRING ( boReq.toString().c_str() ) ) ;
       rc = getNodeInfo( boReq, boNodeInfo );

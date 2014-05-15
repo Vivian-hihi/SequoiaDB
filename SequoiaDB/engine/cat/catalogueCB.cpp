@@ -41,64 +41,186 @@
 #include "pdTrace.hpp"
 #include "catTrace.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include <stdlib.h>
 
 namespace engine
 {
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INIT, "sdbCatalogueCB::init" )
-   INT32 sdbCatalogueCB::init( _netMsgHandler *handler )
+   #define CAT_WAIT_EDU_ATTACH_TIMEOUT       ( 60 * OSS_ONE_SEC )
+
+   sdbCatalogueCB::sdbCatalogueCB()
+   {
+      _routeID.value       = 0;
+      _strHostName         = "";
+      _strCatServiceName   = "";
+      _pNetWork            = NULL;
+      _iCurNodeId          = CAT_DATA_NODE_ID_BEGIN;
+      _iCurGrpId           = CAT_DATA_GROUP_ID_BEGIN;
+      _curCataNodeId       = CATA_NODE_ID_BEGIN;
+   }
+
+   sdbCatalogueCB::~sdbCatalogueCB()
+   {
+      if ( _pNetWork != NULL )
+      {
+         SDB_OSS_DEL _pNetWork;
+         _pNetWork = NULL;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INIT, "sdbCatalogueCB::init" )
+   INT32 sdbCatalogueCB::init()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_INIT ) ;
-      do
+
+      // 1. init param
+      _routeID.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+      _strHostName = pmdGetKRCB()->getHostName() ;
+      _strCatServiceName = pmdGetOptionCB()->catService() ;
+
+      // register event handle
+      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
+      IEventHolder *pHolder = NULL ;
+      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
       {
-         if ( _pNetWork != NULL )
-         {
-            SDB_OSS_DEL _pNetWork;
-            _pNetWork = NULL;
-         }
-         // free in destructor
-         _pNetWork = SDB_OSS_NEW _netRouteAgent( handler );
-         if ( !_pNetWork )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate memory for netRouteAgent" ) ;
-            rc = SDB_OOM ;
-            break ;
-         }
-         PD_TRACE1 ( SDB_CATALOGCB_INIT,
-                     PD_PACK_ULONG ( _routeID.value ) ) ;
-         _pNetWork->setLocalID( _routeID );
-         rc = _pNetWork->updateRoute( _routeID,
-                                      _strHostName.c_str(),
-                                      _strCatServiceName.c_str() );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to update route(routeID=%lld, host=%s, "
-                     "service=%s, rc=%d)", _routeID.value, _strHostName.c_str(),
-                     _strCatServiceName.c_str(), rc);
-            break;
-         }
-         rc = _pNetWork->listen( _routeID );
-         if ( rc != SDB_OK )
-         {
-            PD_LOG ( PDERROR, "Failed to open listen-port(host=%s, service=%s, "
-                     "rc=%d)", _strHostName.c_str(), _strCatServiceName.c_str(),
-                     rc );
-            break;
-         }
-      }while ( FALSE );
+         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
+         pHolder->regEventHandler( this ) ;
+      }
+
+      // 2. create objs
+      _pNetWork = SDB_OSS_NEW _netRouteAgent( &_catMainCtrl ) ;
+      if ( !_pNetWork )
+      {
+         PD_LOG ( PDERROR, "Failed to allocate memory for netRouteAgent" ) ;
+         rc = SDB_OOM ;
+         goto error ;
+      }
+
+      // 3. member objs init
+      rc = _catMainCtrl.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Init main controller failed, rc: %d", rc ) ;
+
+      rc = _catlogueMgr.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Init catlogue manager failed, rc: %d", rc ) ;
+
+      rc = _catNodeMgr.init() ;
+      PD_RC_CHECK( rc, PDERROR, "Init cat node manager failed, rc: %d", rc ) ;
+
+      // 4. create listen
+      PD_TRACE1 ( SDB_CATALOGCB_INIT,
+                  PD_PACK_ULONG ( _routeID.value ) ) ;
+      _pNetWork->setLocalID( _routeID );
+      rc = _pNetWork->updateRoute( _routeID,
+                                   _strHostName.c_str(),
+                                   _strCatServiceName.c_str() );
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Failed to update route(routeID=%lld, host=%s, "
+                  "service=%s, rc=%d)", _routeID.value, _strHostName.c_str(),
+                  _strCatServiceName.c_str(), rc);
+         goto error ;
+      }
+      rc = _pNetWork->listen( _routeID );
+      if ( rc != SDB_OK )
+      {
+         PD_LOG ( PDERROR, "Failed to open listen-port(host=%s, service=%s, "
+                  "rc=%d)", _strHostName.c_str(), _strCatServiceName.c_str(),
+                  rc );
+         goto error ;
+      }
+
+   done:
       PD_TRACE_EXITRC ( SDB_CATALOGCB_INIT, rc ) ;
-      return rc;
+      return rc ;
+   error:
+      goto done ;
    }
 
-   BOOLEAN sdbCatalogueCB::isPrimary()
+   INT32 sdbCatalogueCB::active ()
    {
-      return pmdGetKRCB()->getClsCB()->isPrimary();
+      INT32 rc = SDB_OK ;
+      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      EDUID eduID = PMD_INVALID_EDUID ;
+
+      // 1. start catMain, catlogManager, catNodeManager edus
+      _catMainCtrl.getAttachEvent()->reset() ;
+      rc = pEDUMgr->startEDU ( EDU_TYPE_CATMAINCONTROLLER,
+                               (void*)getMainController(),
+                               &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start cat main controller edu, "
+                   "rc: %d", rc ) ;
+      rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to wait cat main contoller edu "
+                   "attach, rc: %d", rc ) ;
+
+      _catMainCtrl.getAttachEvent()->reset() ;
+      rc = pEDUMgr->startEDU ( EDU_TYPE_CATCATALOGUEMANAGER,
+                               (void*)getCatlogueMgr(),
+                               &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start catlogue manager edu, "
+                   "rc: %d", rc ) ;
+      rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to wait catlogue manager edu "
+                   "attach, rc: %d", rc ) ;
+
+      _catMainCtrl.getAttachEvent()->reset() ;
+      rc = pEDUMgr->startEDU ( EDU_TYPE_CATNODEMANAGER,
+                               (void*)getCatNodeMgr(),
+                               &eduID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to start cat node manager edu, "
+                   "rc: %d", rc ) ;
+      rc = _catMainCtrl.getAttachEvent()->wait( CAT_WAIT_EDU_ATTACH_TIMEOUT ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to wait cat node manager edu "
+                   "attach, rc: %d", rc ) ;
+
+      // 2. start net edu
+      pEDUMgr->startEDU ( EDU_TYPE_CATNETWORK, (void*)netWork(), &eduID ) ;
+      pEDUMgr->regSystemEDU ( EDU_TYPE_CATNETWORK, eduID ) ;
+      rc = pEDUMgr->waitUntil( EDU_TYPE_CATNETWORK, PMD_EDU_RUNNING ) ;
+      PD_RC_CHECK( rc, PDERROR, "Wait CATNET active failed, rc: %d", rc ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INSERTGROUPID, "sdbCatalogueCB::insertGroupID" )
+   INT32 sdbCatalogueCB::deactive ()
+   {
+      // 1. stop listen
+      if ( _pNetWork )
+      {
+         _pNetWork->closeListen() ;
+      }
+
+      // 2. stop io
+      if ( _pNetWork )
+      {
+         _pNetWork->stop() ;
+      }
+
+      return SDB_OK ;
+   }
+
+   INT32 sdbCatalogueCB::fini ()
+   {
+      // unregister event handle
+      IControlBlock *pClsCB = pmdGetKRCB()->getCBByType( SDB_CB_CLS ) ;
+      IEventHolder *pHolder = NULL ;
+      if ( pClsCB && pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) )
+      {
+         pHolder = (IEventHolder*)pClsCB->queryInterface( SDB_IF_EVT_HOLDER ) ;
+         pHolder->unregEventHandler( this ) ;
+      }
+      return SDB_OK ;
+   }
+
+   void sdbCatalogueCB::onConfigChange ()
+   {
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INSERTGROUPID, "sdbCatalogueCB::insertGroupID" )
    void sdbCatalogueCB::insertGroupID( UINT32 grpID, BOOLEAN isActive )
    {
       PD_TRACE_ENTRY ( SDB_CATALOGCB_INSERTGROUPID ) ;
@@ -121,7 +243,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_CATALOGCB_INSERTGROUPID ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_REMOVEGROUPID, "sdbCatalogueCB::removeGroupID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_REMOVEGROUPID, "sdbCatalogueCB::removeGroupID" )
    void sdbCatalogueCB::removeGroupID( UINT32 grpID )
    {
       PD_TRACE_ENTRY ( SDB_CATALOGCB_REMOVEGROUPID ) ;
@@ -137,7 +259,7 @@ namespace engine
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ACTIVEGROUP, "sdbCatalogueCB::activeGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ACTIVEGROUP, "sdbCatalogueCB::activeGroup" )
    void sdbCatalogueCB::activeGroup( UINT32 groupID )
    {
       PD_TRACE_ENTRY ( SDB_CATALOGCB_ACTIVEGROUP ) ;
@@ -147,7 +269,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_CATALOGCB_ACTIVEGROUP ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INSERTNODEID, "sdbCatalogueCB::insertNodeID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INSERTNODEID, "sdbCatalogueCB::insertNodeID" )
    void sdbCatalogueCB::insertNodeID( UINT16 nodeID )
    {
       PD_TRACE_ENTRY ( SDB_CATALOGCB_INSERTNODEID ) ;
@@ -171,7 +293,7 @@ namespace engine
       _curCataNodeId = _curCataNodeId > nodeID ? _curCataNodeId : ++nodeID ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_GETAGROUPRAND, "sdbCatalogueCB::getAGroupRand" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_GETAGROUPRAND, "sdbCatalogueCB::getAGroupRand" )
    INT32 sdbCatalogueCB::getAGroupRand( INT32 &groupID )
    {
       INT32 rc = SDB_CAT_NO_NODEGROUP_INFO ;
@@ -199,7 +321,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCGROUPID, "sdbCatalogueCB::AllocGroupID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCGROUPID, "sdbCatalogueCB::AllocGroupID" )
    UINT32 sdbCatalogueCB::AllocGroupID ()
    {
       INT32 i = 0;
@@ -239,7 +361,7 @@ namespace engine
       _nodeIdMap.erase( nodeID );
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCCATANODEID, "sdbCatalogueCB::AllocCataNodeID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCCATANODEID, "sdbCatalogueCB::AllocCataNodeID" )
    UINT16 sdbCatalogueCB::AllocCataNodeID()
    {
       INT32 i = 0;
@@ -268,7 +390,7 @@ namespace engine
       return id ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCNODEID, "sdbCatalogueCB::AllocNodeID" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_ALLOCNODEID, "sdbCatalogueCB::AllocNodeID" )
    UINT16 sdbCatalogueCB::AllocNodeID()
    {
       INT32 i = 0;
@@ -296,38 +418,60 @@ namespace engine
       return id;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_SETADDR, "sdbCatalogueCB::setAddr" )
-   void sdbCatalogueCB::setAddr( const _MsgRouteID &id,
-                                 const CHAR *host,
-                                 const CHAR *service)
+   UINT32 sdbCatalogueCB::getMask() const
    {
-      PD_TRACE_ENTRY ( SDB_CATALOGCB_SETADDR ) ;
-      PD_TRACE3 ( SDB_CATALOGCB_SETADDR, PD_PACK_ULONG ( id.value ),
-                  PD_PACK_STRING ( host ), PD_PACK_STRING ( service ) ) ;
-      _routeID = id;
-      _strHostName = host;
-      _strCatServiceName = service;
-      PD_TRACE_EXIT ( SDB_CATALOGCB_SETADDR ) ;
+      return EVENT_MASK_ON_REGISTERED | EVENT_MASK_ON_PRIMARYCHG ;
    }
 
    // The caller must make sure id has the correct serviceID
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_UPDATEROUTEID, "sdbCatalogueCB::updateRouteID" )
-   void sdbCatalogueCB::updateRouteID ( const _MsgRouteID &id )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_UPDATEROUTEID, "sdbCatalogueCB::updateRouteID" )
+   void sdbCatalogueCB::onRegistered ( const MsgRouteID &nodeID )
    {
       INT32 rc = SDB_OK ;
-      if ( !_pNetWork )
-         return ;
       PD_TRACE_ENTRY ( SDB_CATALOGCB_UPDATEROUTEID ) ;
-      PD_TRACE1 ( SDB_CATALOGCB_UPDATEROUTEID, PD_PACK_ULONG ( id.value ) ) ;
+      MsgRouteID id ;
+      id.value = nodeID.value ;
+      id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+      PD_TRACE1 ( SDB_CATALOGCB_UPDATEROUTEID,
+                  PD_PACK_ULONG ( id.value ) ) ;
+
       rc = _pNetWork->updateRoute( _routeID, id ) ;
       if ( rc != SDB_OK )
       {
-         PD_LOG ( PDERROR, "Failed to update route(routeID=%lld, host=%s, "
-                  "service=%s, rc=%d)", _routeID.value, _strHostName.c_str(),
-                 _strCatServiceName.c_str(), rc);
+         PD_LOG ( PDERROR, "Failed to update route(old=%d,new=%d host=%s, "
+                  "service=%s, rc=%d)", _routeID.columns.nodeID,
+                  id.columns.nodeID, _strHostName.c_str(),
+                  _strCatServiceName.c_str(), rc );
       }
-      _pNetWork->setLocalID( id );
-      _routeID = id ;
+      _pNetWork->setLocalID( id ) ;
+      _routeID.value = id.value ;
       PD_TRACE_EXIT ( SDB_CATALOGCB_UPDATEROUTEID ) ;
    }
+
+   void sdbCatalogueCB::onPrimaryChange( BOOLEAN primary,
+                                         SDB_EVENT_OCCUR_TYPE occurType )
+   {
+      pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;
+      pmdEDUEventTypes eventType = primary ? PMD_EDU_EVENT_ACTIVE :
+                                             PMD_EDU_EVENT_DEACTIVE ;
+
+      if ( SDB_EVT_OCCUR_AFTER == occurType )
+      {      
+         EDUID eduID = pEDUMgr->getSystemEDU( EDU_TYPE_CATMAINCONTROLLER ) ;
+         if ( PMD_INVALID_EDUID == eduID )
+         {
+            pEDUMgr->postEDUPost( eduID, eventType ) ;
+         }
+      }
+   }
+
+   /*
+      get global catalogue cb
+   */
+   sdbCatalogueCB* sdbGetCatalogueCB()
+   {
+      static sdbCatalogueCB s_catacb ;
+      return &s_catacb ;
+   }
+
 }

@@ -18,7 +18,7 @@
 using namespace bson;
 namespace engine
 {
-   catMainController::catMainController ( pmdEDUCB *cb )
+   catMainController::catMainController ()
    {
       _nodeManagerEDUID    = PMD_INVALID_EDUID ;
       _catalogManagerEDUID = PMD_INVALID_EDUID ;
@@ -31,10 +31,46 @@ namespace engine
       _pNodeMgrCB          = NULL ;
       _pCataMgrCB          = NULL ;
       _pClsCB              = NULL ;
-      _pEDUCB              = cb ;
+      _pEDUCB              = NULL ;
    }
+
    catMainController::~catMainController()
    {
+   }
+
+   void catMainController::attachCB( pmdEDUCB * cb )
+   {
+      if ( EDU_TYPE_CATMAINCONTROLLER == cb->getType() )
+      {
+         _pEDUCB = cb ;
+      }
+      else if ( EDU_TYPE_CATCATALOGUEMANAGER == cb->getType() )
+      {
+         _pCataMgrCB = cb ;
+         _catalogManagerEDUID = cb->getID() ;
+      }
+      else if ( EDU_TYPE_CATNODEMANAGER == cb->getType() )
+      {
+         _pNodeMgrCB = cb ;
+         _nodeManagerEDUID = cb->getID() ;
+      }
+      _attachEvent.signalAll() ;
+   }
+
+   void catMainController::detachCB( pmdEDUCB * cb )
+   {
+      if ( EDU_TYPE_CATMAINCONTROLLER == cb->getType() )
+      {
+         _pEDUCB = NULL ;
+      }
+      else if ( EDU_TYPE_CATCATALOGUEMANAGER == cb->getType() )
+      {
+         _pCataMgrCB = NULL ;
+      }
+      else if ( EDU_TYPE_CATNODEMANAGER == cb->getType() )
+      {
+         _pNodeMgrCB = NULL ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_HANDLEMSG, "catMainController::handleMsg" )
@@ -121,64 +157,54 @@ namespace engine
       return rc ;
    }
 
-   void catMainController::handleClose( const NET_HANDLE & handle, _MsgRouteID id )
+   void catMainController::handleClose( const NET_HANDLE & handle,
+                                        _MsgRouteID id )
    {
       delContext( handle );
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_POSTMSG, "catMainController::postMsg" )
    INT32 catMainController::postMsg( const NET_HANDLE &handle,
-                                    const MsgHeader *header )
+                                     const MsgHeader *header )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_POSTMSG ) ;
       PD_TRACE1 ( SDB_CATMAINCT_POSTMSG,
                   PD_PACK_INT ( header->opCode ) ) ;
+
       EvntCatalogInternalEvent *pEvent = NULL ;
-      if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)header->opCode
-         && (UINT32)header->opCode < MSG_CAT_CATALOGUE_END )
+
+      if ( MSG_CAT_CATALOGUE_BEGIN < (UINT32)header->opCode &&
+           (UINT32)header->opCode < MSG_CAT_CATALOGUE_END )
       {
          if ( NULL == _pCataMgrCB )
          {
-            _catalogManagerEDUID
-                     = _pEduMgr->getSystemEDU( EDU_TYPE_CATCATALOGUEMANAGER );
-            PD_CHECK( _catalogManagerEDUID != PMD_INVALID_EDUID,
-                     SDB_SYS, error, PDERROR,
-                     "failed to get eduID of catalog-manager" );
-            _pCataMgrCB = _pEduMgr->getEDUByID( _catalogManagerEDUID );
-            PD_CHECK( _pCataMgrCB != NULL, SDB_SYS, error, PDERROR,
-                     "failed to get eduCB of catalog-manager(eduID=%llu)",
-                     _catalogManagerEDUID );
+            rc = SDB_SYS ;
+            goto error ;
          }
          rc = catBuildMsgEvent ( handle, header, pEvent ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
          _pCataMgrCB->postEvent(pmdEDUEvent ( PMD_EDU_EVENT_MSG,
-                                                TRUE, (void *)pEvent ));
+                                              TRUE, (void *)pEvent ) ) ;
       }
-      else if  ( MSG_CAT_NODE_BEGIN < (UINT32)header->opCode
-            && (UINT32)header->opCode < MSG_CAT_NODE_END )
+      else if  ( MSG_CAT_NODE_BEGIN < (UINT32)header->opCode &&
+                 (UINT32)header->opCode < MSG_CAT_NODE_END )
       {
          if ( NULL == _pNodeMgrCB )
          {
-            _nodeManagerEDUID
-                     = _pEduMgr->getSystemEDU( EDU_TYPE_CATNODEMANAGER );
-            PD_CHECK( _nodeManagerEDUID != PMD_INVALID_EDUID,
-                     SDB_SYS, error, PDERROR,
-                     "failed to get eduID of node-manager" );
-            _pNodeMgrCB = _pEduMgr->getEDUByID( _nodeManagerEDUID );
-            PD_CHECK( _pNodeMgrCB != NULL, SDB_SYS, error, PDERROR,
-                     "failed to get eduCB of node-manager(eduID=%llu)",
-                     _nodeManagerEDUID );
+            rc = SDB_SYS ;
+            goto error ;
          }
          rc = catBuildMsgEvent ( handle, header, pEvent ) ;
          PD_RC_CHECK( rc, PDERROR, "failed to build the event(rc=%d)", rc );
          _pNodeMgrCB->postEvent(pmdEDUEvent ( PMD_EDU_EVENT_MSG,
-                                                TRUE, (void *)pEvent ));
+                                              TRUE, (void *)pEvent ) ) ;
       }
       else
       {
          rc = SDB_UNKNOWN_MESSAGE ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_CATMAINCT_POSTMSG, rc ) ;
       return rc;
@@ -191,9 +217,8 @@ namespace engine
          }
          SDB_OSS_FREE ( pEvent );
       }
-      PD_LOG ( PDERROR,
-              "failed to process message(MessageType = %d, rc=%d)",
-              header->opCode, rc ) ;
+      PD_LOG ( PDERROR, "Failed to process message(MessageType = %d, rc=%d)",
+               header->opCode, rc ) ;
       goto done;
    }
 
@@ -201,8 +226,6 @@ namespace engine
    INT32 catMainController::init()
    {
       INT32 rc             = SDB_OK ;
-      _nodeManagerEDUID    = PMD_INVALID_EDUID ;
-      _catalogManagerEDUID = PMD_INVALID_EDUID ;
       _pKrcb               = pmdGetKRCB() ;
       _pEduMgr             = _pKrcb->getEDUMgr () ;
       _pDmsCB              = _pKrcb->getDMSCB() ;
@@ -215,16 +238,13 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_INIT ) ;
 
-      rc = _pCatCB->init( this ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "catCB init error(rc = %d)", rc ) ;
       // after initializing, let's attempt to create collectionspace and
       // collections
       rc = _ensureMetadata () ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to create metadata collections/indexes, rc = %d",
                     rc ) ;
-      _pEduMgr->activateEDU( _pEDUCB->getID() );
+
    done :
       PD_TRACE_EXITRC ( SDB_CATMAINCT_INIT, rc ) ;
       return rc ;
@@ -439,14 +459,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_ACTIVE ) ;
-      if ( PMD_INVALID_EDUID == _nodeManagerEDUID )
-      {
-         _nodeManagerEDUID
-                     = _pEduMgr->getSystemEDU( EDU_TYPE_CATNODEMANAGER );
-      }
-      PD_CHECK( _nodeManagerEDUID != PMD_INVALID_EDUID,
-               SDB_SYS, error, PDERROR,
-               "failed to get eduID of node-manager" );
+
       rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_ACTIVE ) ;
       if ( SDB_OK == rc )
       {
@@ -454,9 +467,9 @@ namespace engine
       }
       else
       {
-         PD_RC_CHECK ( rc, PDERROR,
-                       "Failed to post edu, rc = %d", rc ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to post edu, rc = %d", rc ) ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_CATMAINCT_ACTIVE, rc ) ;
       return rc ;
@@ -469,17 +482,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_DEACTIVE ) ;
-      if ( PMD_INVALID_EDUID == _nodeManagerEDUID )
-      {
-         _nodeManagerEDUID
-                     = _pEduMgr->getSystemEDU( EDU_TYPE_CATNODEMANAGER );
-      }
-      PD_CHECK( _nodeManagerEDUID != PMD_INVALID_EDUID,
-               SDB_SYS, error, PDERROR,
-               "failed to get eduID of node-manager" );
+
       rc = _pEduMgr->postEDUPost( _nodeManagerEDUID, PMD_EDU_EVENT_DEACTIVE );
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Failed to post edu, rc = %d", rc ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to post edu, rc = %d", rc ) ;
+
    done:
       PD_TRACE_EXITRC ( SDB_CATMAINCT_DEACTIVE, rc ) ;
       return rc ;
@@ -497,7 +503,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_CATMAINCT_BUILDMSGEVENT ) ;
       // caller is responsible to free memory
       pEvent = (EvntCatalogInternalEvent *)SDB_OSS_MALLOC (
-            sizeof(EvntCatalogInternalEvent));
+               sizeof(EvntCatalogInternalEvent));
       if ( NULL == pEvent )
       {
          rc = SDB_OOM ;
@@ -505,8 +511,7 @@ namespace engine
                   sizeof(EvntCatalogInternalEvent) ) ;
          goto error ;
       }
-      pEventData = (MsgHeader *)SDB_OSS_MALLOC(
-            pMsg->messageLength );
+      pEventData = (MsgHeader *)SDB_OSS_MALLOC( pMsg->messageLength ) ;
       if ( NULL == pEventData )
       {
          rc = SDB_OOM;
@@ -580,7 +585,9 @@ namespace engine
       }
    done :
       if ( pReply )
+      {
          SDB_OSS_FREE( pReply ) ;
+      }
       PD_TRACE_EXITRC ( SDB_CATMAINCT_GETMOREMSG, rc ) ;
       return rc ;
    error :
@@ -588,7 +595,8 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_KILLCONTEXT, "catMainController::processKillContext" )
-   INT32 catMainController::processKillContext(const NET_HANDLE &handle, const CHAR *pMsg )
+   INT32 catMainController::processKillContext( const NET_HANDLE &handle,
+                                                const CHAR *pMsg )
    {
       INT32 rc = SDB_OK ;
       INT32 contextNum = 0 ;
@@ -792,8 +800,8 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_QUERYREQUEST ) ;
 
-      PD_CHECK( _pClsCB->isPrimary(), SDB_CLS_NOT_PRIMARY, reply, PDWARNING,
-               "it is not primary node but received query request!" );
+      PD_CHECK( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, reply, PDWARNING,
+                "it is not primary node but received query request!" );
 
       rc = msgExtractQuery ( (CHAR *)pMsgHeader, &flags, &pCN,
                               &numToSkip, &numToReturn, &pQuery,
@@ -854,8 +862,6 @@ namespace engine
          msgReply.flags = rc;
          if ( SDB_PERM == rc)
          {
-// why don't we use errno in returned bson obj?
-// if we manage to change flags for rc, we may have some big change here
             msgReply.flags = SDB_CLS_NOT_PRIMARY ;
          }
       }
@@ -995,7 +1001,8 @@ namespace engine
    }
 
    //PD_TRACE_DECLARE_FUNCTION ( SDB_CATMAINCT_CHECKROUTEID, "catMainController::processCheckRouteID" )
-   INT32 catMainController::processCheckRouteID( const NET_HANDLE &handle, const CHAR *pMsg )
+   INT32 catMainController::processCheckRouteID( const NET_HANDLE &handle,
+                                                 const CHAR *pMsg )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CATMAINCT_CHECKROUTEID ) ;

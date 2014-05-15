@@ -17,9 +17,9 @@ using namespace bson;
 
 namespace engine
 {
-   catCatalogueManager::catCatalogueManager( pmdEDUCB *cb )
+   catCatalogueManager::catCatalogueManager()
    {
-      _pEduCB = cb;
+      _pEduCB = NULL ;
    }
 
    INT32 catCatalogueManager::active()
@@ -46,9 +46,21 @@ namespace engine
       return SDB_OK;
    }
 
+   void catCatalogueManager::attachCB( pmdEDUCB * cb )
+   {
+      _pEduCB = cb ;
+      _pCatCB->getMainController()->attachCB( cb ) ;
+   }
+
+   void catCatalogueManager::detachCB( pmdEDUCB * cb )
+   {
+      _pCatCB->getMainController()->detachCB( cb ) ;
+      _pEduCB = NULL ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_DROPCS, "catCatalogueManager::processCmdDropCollectionSpace" )
    INT32 catCatalogueManager::processCmdDropCollectionSpace (
-         const CHAR *pQuery )
+                              const CHAR *pQuery )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_DROPCS ) ;
@@ -253,8 +265,7 @@ namespace engine
       MsgOpReply *pReply               = NULL;
 
       // make sure we are on catalog primary
-      PD_CHECK ( _pCatCB->isPrimary(),
-                 SDB_CLS_NOT_PRIMARY, error, PDWARNING,
+      PD_CHECK ( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
                  "service deactive but received query catalogue request" ) ;
 
       // sanity check, header can't be too small
@@ -396,8 +407,7 @@ namespace engine
       CHAR *pCollectionName            = NULL ;
 
       // make sure we are primary in order to query tasks
-      PD_CHECK ( _pCatCB->isPrimary(),
-                 SDB_CLS_NOT_PRIMARY, error, PDWARNING,
+      PD_CHECK ( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
                  "service deactive but received query catalogue request" ) ;
 
       // sanity check, the query length should be at least header size
@@ -505,8 +515,7 @@ namespace engine
       BSONObj matcher ;
       BSONObj hint ;
       // we shouldn't alter collection on non-primary catalog
-      PD_CHECK ( _pCatCB->isPrimary(),
-                 SDB_CLS_NOT_PRIMARY, error, PDWARNING,
+      PD_CHECK ( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
                  "service deactive but received alter collection request" );
       // extract the request
       rc = msgExtractQuery( (CHAR *)pAlterReq, &flag, &pCommandName,
@@ -1622,7 +1631,7 @@ namespace engine
                             &pOrderBy, &pHint ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to extract query msg, rc: %d", rc ) ;
 
-      if ( writable && !_pCatCB->isPrimary() )
+      if ( writable && !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
          PD_LOG ( PDWARNING, "Service deactive but received command: %s,"
