@@ -113,6 +113,8 @@ namespace engine
       INT32 init () ;
       void  destroy () ;
 
+      BOOLEAN isAcitve() const { return _isActive ; }
+
       IControlBlock*    getCBByType( SDB_CB_TYPE type ) ;
       BOOLEAN           isCBValue( SDB_CB_TYPE type ) const ;
 
@@ -127,6 +129,7 @@ namespace engine
    private:
       IControlBlock                 *_arrayCBs[ SDB_CB_MAX ] ;
       BOOLEAN                       _init ;
+      BOOLEAN                       _isActive ;
 
    private :
       // configured options
