@@ -172,6 +172,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MIGLOADJSONPS__INITIALIZE );
       _utilParserParamet parserPara ;
+      UINT32  startOffset = 0 ;
+      UINT32  fieldsSize  = 0 ;
+
       _pParameters = pParameters ;
       _sock = _pParameters->clientSock ;
       _fileType = _pParameters->fileType ;
@@ -211,10 +214,8 @@ namespace engine
                         _pParameters->delCFR[2] ) ;
 
       parserPara.fileName = _pParameters->pFileName ;
-      parserPara.headerBuffer = _pParameters->pFieldArray ;
       parserPara.bufferSize = _pParameters->bufferSize ;
       parserPara.blockNum = _pParameters->bucketNum ;
-      parserPara.readHeader = _pParameters->headerline ;
 
       rc = _parser->initialize( &parserPara ) ;
       if ( rc )
@@ -228,6 +229,46 @@ namespace engine
          goto error ;
       }
       _buffer = _parser->getBuffer() ;
+
+      _delChar   = _pParameters->delCFR[0] ;
+      _delField  = _pParameters->delCFR[1] ;
+      _delRecord = _pParameters->delCFR[2] ;
+      _autoAddField   = TRUE ;
+      _autoCompletion = FALSE ;
+      _isHeaderline   = _pParameters->headerline ;
+      
+
+      if ( _isHeaderline )
+      {
+         rc = _parser->getNextRecord ( startOffset, fieldsSize ) ;
+         if ( rc )
+         {
+            if ( rc == SDB_EOF )
+            {
+               if ( 0 == fieldsSize )
+               {
+                  goto done ;
+               }
+            }
+            else
+            {
+               PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
+               goto error ;
+            }
+         }
+      }
+      
+      if ( _pParameters->pFieldArray )
+      {
+         _pFields = _pParameters->pFieldArray ;
+         _fieldsSize = ossStrlen( _pFields ) ;
+      }
+      else
+      {
+         _pFields = _buffer + startOffset ;
+         _fieldsSize = fieldsSize ;
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB__MIGLOADJSONPS__INITIALIZE, rc );
       return rc ;
@@ -608,7 +649,6 @@ namespace engine
       UINT32 startBlock = 0 ;
       UINT32 endBlock   = 0 ;
       CHAR  *pJsonBuffer = NULL ;
-      _convertCSV ccsv( FALSE ) ;
 
       _master->popFromQueue ( eduCB,
                               offset, size,
@@ -626,15 +666,14 @@ namespace engine
       }
       else if ( MIG_PARSER_CSV == _master->_fileType )
       {
-         rc = ccsv._convertCSVToJson ( _master->getBuffer() + offset, size,
-                                       TRUE, FALSE,
-                                       _master->_parser, &pJsonBuffer ) ;
+         rc = _csvParser.csv2bson( _master->getBuffer() + offset,
+                                   size, &obj ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to convert CSV to Json, rc=%d", rc ) ;
+            rc = SDB_UTIL_PARSE_JSON_INVALID ;
+            PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
             goto error ;
          }
-         tempRc = fromjson ( pJsonBuffer, obj ) ;
       }
       else
       {
@@ -710,6 +749,26 @@ namespace engine
       workRe->success = 0 ;
       workRe->failure = 0 ;
       workRe->rc      = 0 ;
+
+      rc = _csvParser.init( _master->_autoAddField,
+                            _master->_autoCompletion,
+                            _master->_isHeaderline,
+                            _master->_delChar,
+                            _master->_delField,
+                            _master->_delRecord ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to csv parser initialize, rc=%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _csvParser.parseHeader( _master->_pFields, _master->_fieldsSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
+         goto error ;
+      }
+
       while ( !_master->_exitSignal &&
               !eduCB->isInterrupted() &&
               !eduCB->isDisconnected() )

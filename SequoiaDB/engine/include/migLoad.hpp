@@ -41,6 +41,7 @@
 #include "ossQueue.hpp"
 #include "utilParseData.hpp"
 #include "../util/fromjson.hpp"
+#include "../util/csv2rawbson.hpp"
 #include "dmsStorageLoadExtent.hpp"
 #include <boost/thread/shared_mutex.hpp>
 
@@ -125,9 +126,17 @@ namespace engine
                                     UINT32 &success,
                                     UINT32 &failure ) ;
    public:
-      _utilDataParser     *_parser ;
+      CHAR                 _delChar ;
+      CHAR                 _delField ;
+      CHAR                 _delRecord ;
+      INT32                _fieldsSize ;
       BOOLEAN              _exitSignal ;
+      BOOLEAN              _autoAddField ;
+      BOOLEAN              _autoCompletion ;
+      BOOLEAN              _isHeaderline ;
+      _utilDataParser     *_parser ;
       ossSocket           *_sock ;
+      CHAR                *_pFields ;
       MIG_PARSER_FILE_TYPE _fileType ;
    public:
       INT32 sendMsgToClient ( const CHAR *format, ... ) ;
@@ -161,6 +170,7 @@ namespace engine
    {
    private:
       migMaster *_master ;
+      csvParser _csvParser ;
    private:
       INT32 _getBsonFromQueue ( pmdEDUCB *eduCB, BSONObj &obj ) ;
    public:

@@ -148,11 +148,11 @@ error:
    goto done ;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__IMPRCD, "migImport::_importRecord" )
+PD_TRACE_DECLARE_FUNCTION ( SDB__MIGIMPORT__IMPRCD2, "migImport::_importRecord" )
 INT32 migImport::_importRecord ( bson **bsonObj )
 {
    INT32 rc = SDB_OK ;
-   PD_TRACE_ENTRY ( SDB__MIGIMPORT__IMPRCD ) ;
+   PD_TRACE_ENTRY ( SDB__MIGIMPORT__IMPRCD2 ) ;
    SDB_ASSERT ( bsonObj, "bsonObj can't be NULL" ) ;
 
    rc = sdbInsert ( _gCollection, *bsonObj ) ;
@@ -162,7 +162,7 @@ INT32 migImport::_importRecord ( bson **bsonObj )
       goto error ;
    }
 done :
-   PD_TRACE_EXITRC ( SDB__MIGIMPORT__IMPRCD, rc );
+   PD_TRACE_EXITRC ( SDB__MIGIMPORT__IMPRCD2, rc );
    return rc ;
 error :
    goto done ;
