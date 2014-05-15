@@ -990,6 +990,7 @@ namespace engine
       pmdEDUEvent event ;
       BOOLEAN     eduDestroyed = FALSE ;
       BOOLEAN     isForced     = FALSE ;
+      CHAR        eduName[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
 
       // save kernel thread id ( Linux ), or thread handle ( windows )
    #if defined (_WINDOWS)
@@ -1126,19 +1127,29 @@ namespace engine
             }
          }
 
+         // copy name
+         ossStrncpy( eduName, cb->getName(), OSS_MAX_PATHSIZE ) ;
          rc = eduMgr->returnEDU ( cb->getID (), isForced, &eduDestroyed ) ;
 
          // otherwise let's check rc and report error if it's not OK
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR, "Invalid EDU Status for EDU[ID:%lld, type:%s]",
-                     myEDUID, getEDUName( type ) ) ;
+            PD_LOG ( PDERROR, "Invalid EDU Status for EDU[TID:%d, ID:%lld, "
+                     "type:%s, Name: %s]", ossGetCurrentThreadID(), myEDUID,
+                     getEDUName( type ), eduName ) ;
+         }
+         else if ( !eduDestroyed )
+         {
+            PD_LOG( PDINFO, "Push thread[%] for EDU[ID:%lld, Type:%s, "
+                    "Name: %s] to thread pool", ossGetCurrentThreadID(),
+                    myEDUID, getEDUName( type ), eduName ) ;
          }
       }
       // undeclare must happen after all TLS access
       pmdUndeclareEDUCB () ;
-      PD_LOG ( PDEVENT, "Terminating thread[%d] for EDU[ID:%lld, type:%s]",
-               ossGetCurrentThreadID(), myEDUID, getEDUName( type ) ) ;
+      PD_LOG ( PDEVENT, "Terminating thread[%d] for EDU[ID:%lld, Type:%s, "
+               "Name: %s]", ossGetCurrentThreadID(), myEDUID,
+               getEDUName( type ), eduName ) ;
 
    #if defined (_WINDOWS)
       // close handle
