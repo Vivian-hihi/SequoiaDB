@@ -214,8 +214,8 @@ namespace engine
       ossSpinXLatch *pLatch  = NULL ;
       _pDPSCB                = pmdGetKRCB()->getDPSCB() ;
       _pMonDBCB              = pmdGetKRCB()->getMonDBCB() ;
-      _maxReplSync           = pmdGetKRCB()->getOptionCB()->maxReplSync() ;
-      _bucketSize            = pmdGetKRCB()->getOptionCB()->replBucketSize() ;
+      _maxReplSync           = pmdGetOptionCB()->maxReplSync() ;
+      _bucketSize            = pmdGetOptionCB()->replBucketSize() ;
 
       if ( !ossIsPowerOf2( _bucketSize, &_bitSize ) )
       {

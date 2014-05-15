@@ -151,7 +151,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSCLNJOB_DOIT );
       clsTaskMgr *pTaskMgr = pmdGetKRCB()->getClsCB()->getTaskMgr() ;
-      shardCB *pShardCB = pmdGetKRCB()->getShardCB() ;
+      shardCB *pShardCB = sdbGetShardCB() ;
       catAgent *catAgent = pShardCB->getCataAgent() ;
       _clsCatalogSet* catSet = NULL ;
       INT32 w = 1 ;
@@ -244,7 +244,7 @@ namespace engine
                     DMS_COLLECTION_SPACE_NAME_SZ + 2] = {0} ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       INT64 contextID = -1 ;
-      UINT32 groupID = pmdGetKRCB()->getShardCB()->nodeID().columns.groupID ;
+      UINT32 groupID = sdbGetShardCB()->nodeID().columns.groupID ;
       ossStrncpy ( fullName, _clFullName.c_str(), sizeof(fullName)-1 ) ;
 
       rtnContextBuf buffObj ;
@@ -342,7 +342,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSCLNJOB__FLTDEL );
-      catAgent *catAgent = pmdGetKRCB()->getShardCB()->getCataAgent() ;
+      catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;
       INT32 indexPos = 0 ;
       const CHAR *pBuffIndex = buff + indexPos ;
       BOOLEAN needDel = FALSE ;
@@ -419,8 +419,8 @@ namespace engine
                      goto error ;
                   }
 
-                  rc = pmdGetKRCB()->getShardCB()->syncUpdateCatalog(
-                                    _clFullName.c_str(), OSS_ONE_SEC ) ;
+                  rc = sdbGetShardCB()->syncUpdateCatalog( _clFullName.c_str(),
+                                                           OSS_ONE_SEC ) ;
                   if ( SDB_OK == rc )
                   {
                      goto retry ;

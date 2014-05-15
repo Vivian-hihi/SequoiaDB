@@ -80,8 +80,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSDSESS__CLSSHDSESS ) ;
       _pCollectionName = NULL ;
       pmdKRCB *pKRCB = pmdGetKRCB () ;
-      _pReplSet  = pKRCB->getClsCB ()->getReplCB () ;
-      _pShdMgr   = pKRCB->getClsCB ()->getShardCB () ;
+      _pReplSet  = sdbGetReplCB () ;
+      _pShdMgr   = sdbGetShardCB () ;
       _pCatAgent = pKRCB->getClsCB ()->getCatAgent () ;
       _pDmsCB    = pKRCB->getDMSCB () ;
       _pDpsCB    = pKRCB->getDPSCB () ;
@@ -132,7 +132,7 @@ namespace engine
       if ( curTime.time - _lastRecvTime.time > SHD_SESSION_TIMEOUT &&
            _pEDUCB->contextNum() == 0 &&
            ( _pEDUCB->getTransID() == DPS_INVALID_TRANS_ID ||
-           !(pmdGetKRCB()->getReplCB()->primaryIsMe())))
+           !(sdbGetReplCB()->primaryIsMe())))
       {
          // will be release
          ret = TRUE ;
@@ -153,6 +153,12 @@ namespace engine
          while ( -1 != ( contextID = _pEDUCB->contextPeek() ) )
          {
             _pRtnCB->contextDelete ( contextID, NULL ) ;
+         }
+
+         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+         if ( rcTmp)
+         {
+            PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
          }
       }
 
@@ -517,14 +523,12 @@ namespace engine
          numReturn = 1 ;
          flags = rc ;
 
-         if ( isNeedRollback && _pReplSet->primaryIsMe ())
+         if ( isNeedRollback && _pReplSet->primaryIsMe () )
          {
-            INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
+            INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
             if ( rcTmp )
             {
-               PD_LOG ( PDERROR,
-                        "failed to rollback(rc=%d)",
-                        rcTmp );
+               PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
             }
          }
 
@@ -1204,15 +1208,11 @@ namespace engine
             _pRtnCB->contextDelete ( contextID, NULL ) ;
          }
 
-         if ( _pReplSet->primaryIsMe ())
+         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
+         if ( rcTmp )
          {
-            INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
-            if ( rcTmp )
-            {
-               PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
-            }
+            PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
          }
-         _pEDUCB->clearTransInfo();
       }
 
       PD_TRACE_EXIT ( SDB__CLSSHDSESS__ONINRPTMSG ) ;
@@ -1242,7 +1242,7 @@ namespace engine
       {
          return SDB_CLS_NOT_PRIMARY;
       }
-      return rtnTransRollback( _pEDUCB, _pDpsCB );
+      return rtnTransRollback( _pEDUCB, _pDpsCB ) ;
    }
 
    INT32 _clsShdSession::_onTryLockMsg( MsgHeader *msg )
@@ -1465,15 +1465,11 @@ namespace engine
 
    INT32 _clsShdSession::_onTransStopEvnt()
    {
-      if ( _pReplSet->primaryIsMe ())
+      INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB ) ;
+      if ( rcTmp )
       {
-         INT32 rcTmp = rtnTransRollback( _pEDUCB, _pDpsCB );
-         if ( rcTmp )
-         {
-            PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp );
-         }
+         PD_LOG ( PDERROR, "Failed to rollback(rc=%d)", rcTmp ) ;
       }
-      _pEDUCB->clearTransInfo();
       return SDB_OK ;
    }
 

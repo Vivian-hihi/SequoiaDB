@@ -49,8 +49,8 @@ namespace engine
     _noRes( 0 )
    {
       PD_TRACE_ENTRY ( SDB__CLSSRCSL__CLSSRCSL ) ;
-      _nodeMgrAgent = pmdGetKRCB()->getShardCB()->getNodeMgrAgent() ;
-      _syncmgr = pmdGetKRCB()->getClsCB()->getReplCB()->syncMgr() ;
+      _nodeMgrAgent = sdbGetShardCB()->getNodeMgrAgent() ;
+      _syncmgr = sdbGetReplCB()->syncMgr() ;
       _src.value = MSG_INVALID_ROUTEID ;
       PD_TRACE_EXIT ( SDB__CLSSRCSL__CLSSRCSL ) ;
    }
@@ -143,7 +143,7 @@ namespace engine
          INT32 rc = SDB_OK ;
 
          //update group info
-         rc = pmdGetKRCB()->getShardCB()->syncUpdateGroupInfo( groupID ) ;
+         rc = sdbGetShardCB()->syncUpdateGroupInfo( groupID ) ;
          if ( SDB_OK != rc )
          {
             goto done ;

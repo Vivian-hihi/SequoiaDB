@@ -423,7 +423,7 @@ namespace engine
          }
          case LOG_TYPE_INVALIDATE_CATA :
          {
-            catAgent *pCatAgent = pmdGetKRCB()->getShardCB()->getCataAgent() ;
+            catAgent *pCatAgent = sdbGetShardCB()->getCataAgent() ;
             const CHAR *name = NULL ;
             rc = dpsRecord2InvalidCata( (CHAR *)recordHeader,
                                         &name ) ;
@@ -453,8 +453,6 @@ namespace engine
          case LOG_TYPE_TS_COMMIT :
          {
             rc = SDB_OK ;
-            //pmdGetKRCB()->getTransCB()->updateTransInfo( record.head()->_transID,
-            //                                             DPS_INVALID_LSN_OFFSET );
             break ;
          }
          default :

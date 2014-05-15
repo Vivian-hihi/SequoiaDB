@@ -64,9 +64,9 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSREPSN__CLSREPSN );
       _logger = pmdGetKRCB()->getDPSCB() ;
-      _sync = pmdGetKRCB()->getClsCB()->getReplCB()->syncMgr() ;
+      _sync = sdbGetReplCB()->syncMgr() ;
       _agent = pmdGetKRCB()->getClsCB()->getReplRouteAgent() ;
-      _repl = pmdGetKRCB()->getClsCB()->getReplCB() ;
+      _repl = sdbGetReplCB() ;
       _pReplBucket = _repl->getBucket() ;
 
       _requestID = 0 ;
@@ -399,19 +399,15 @@ namespace engine
       }
       else
       {
-         if ( pmdGetKRCB()->getTransCB()->isNeedSyncTrans() )
+         if ( sdbGetTransCB()->isNeedSyncTrans() )
          {
-            rc = pmdGetKRCB()->getTransCB()->syncTransInfoFromLocal(
-                                                   msg->oldestTransLsn ) ;
-            if ( SDB_OK == rc )
-            {
-               pmdGetKRCB()->getTransCB()->setIsNeedSyncTrans( FALSE );
-            }
+            sdbGetTransCB()->syncTransInfoFromLocal( msg->oldestTransLsn ) ;
+            sdbGetTransCB()->setIsNeedSyncTrans( FALSE ) ;
          }
       }
 
    done:
-      PD_TRACE_EXITRC ( SDB__CLSREPSN_HNDSYNCRES, rc );
+      PD_TRACE_EXITRC ( SDB__CLSREPSN_HNDSYNCRES, rc ) ;
       return rc ;
    }
 
@@ -689,8 +685,8 @@ namespace engine
                }
                else
                {
-                  rollback.offset = ((dpsLogRecordHeader *)( _mb.offset(0) ))->
-                                    _preLsn ;
+                  rollback.offset = ((dpsLogRecordHeader *)
+                                    ( _mb.offset(0) ))->_preLsn ;
                }
             }
 
@@ -713,8 +709,15 @@ namespace engine
       }
       }
    done:
-      PD_TRACE_EXIT ( SDB__CLSREPSN_HNDSSTRES );
-     return SDB_OK ;
+      if ( CLS_SESSION_STATUS_SYNC == _status &&
+           sdbGetTransCB()->isNeedSyncTrans() )
+      {
+         DPS_LSN beginLsn = _logger->getStartLsn() ;
+         sdbGetTransCB()->syncTransInfoFromLocal( beginLsn.offset ) ;
+         sdbGetTransCB()->setIsNeedSyncTrans( FALSE ) ;
+      }
+      PD_TRACE_EXIT ( SDB__CLSREPSN_HNDSSTRES ) ;
+      return SDB_OK ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN__FULLSYNC, "_clsReplSession::_fullSync" )
@@ -735,10 +738,19 @@ namespace engine
       if ( CLS_BS_BACKUPOFFLINE == _repl->getStatus() ||
            CLS_BS_CLOSED == _repl->getStatus() )
       {
+         PD_LOG( PDINFO, "Repl status is[%d], can't inital full sync",
+                 _repl->getStatus() ) ;
+         goto done ;
+      }
+      else if ( sdbGetTransCB()->getTransCBSize() != 0 )
+      {
+         // has some trans edu in rollback or commit
+         PD_LOG( PDINFO, "Has %d edus in rollback or commit, can't intial "
+                 "full sync", sdbGetTransCB()->getTransCBSize() ) ;
          goto done ;
       }
 
-      SDB_ASSERT( 0 < pmdGetKRCB()->getClsCB()->getReplCB()->groupSize(),
+      SDB_ASSERT( 0 < sdbGetReplCB()->groupSize(),
                   "impossible" )
 
       // if the group size is 1, then rebuild, otherwise full sync
@@ -802,6 +814,18 @@ namespace engine
                   header->_lsn, header->_version, rc ) ;
          goto error ;
       }
+
+      // rollback trans info
+      if ( !sdbGetTransCB()->isNeedSyncTrans() )
+      {
+         dpsLogRecord record ;
+         record.load( log ) ;
+         if ( !sdbGetTransCB()->rollbackTransInfoFromLog( record ) )
+         {
+            sdbGetTransCB()->setIsNeedSyncTrans( TRUE ) ;
+         }
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSN__RLBCK, rc );
       return rc ;
@@ -1086,7 +1110,7 @@ namespace engine
       else if ( 0 > eLsn.compare( req->next ) )
       {
          rc = SDB_OK ;
-         if ( pmdGetKRCB()->getClsCB()->isPrimary() )
+         if ( pmdIsPrimary() )
          {
             if (  0 != expect.compareOffset( req->next.offset ) ||
                   0 > expect.compareVersion( req->next.version ) )

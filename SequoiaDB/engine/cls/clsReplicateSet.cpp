@@ -60,8 +60,6 @@ namespace engine
    END_OBJ_MSG_MAP ()
 
    const UINT32 CLS_REPL_SEC_TIME = 1000 ;
-   UINT32 CLS_SHARING_BRK_TIME = 0 ;
-
 
    #define CLS_REPL_ACTIVE_CHECK( rc ) \
            if ( !_active ) \
@@ -78,20 +76,19 @@ namespace engine
 
    #define CLS_SYNCCTRL_BASE_TIME         (10)
 
-   _clsReplicateSet::_clsReplicateSet( _netRouteAgent *agent ):
-                                    _agent( agent ),
-                                    _vote( &_info, _agent),
-                                    _logger( NULL ),
-                                    _sync( _agent, &_info ),
-                                    _clsCB( NULL ),
-                                    _timerID( CLS_INVALID_TIMERID ),
-                                    _beatTime( 0 ),
-                                    _downloadTime( 0 ),
-                                    _active( FALSE ),
-                                    _replStatus( CLS_BS_NORMAL )
+   _clsReplicateSet::_clsReplicateSet( _netRouteAgent *agent )
+   : _agent( agent ),
+     _vote( &_info, _agent),
+     _logger( NULL ),
+     _sync( _agent, &_info ),
+     _clsCB( NULL ),
+     _timerID( CLS_INVALID_TIMERID ),
+     _beatTime( 0 ),
+     _downloadTime( 0 ),
+     _active( FALSE ),
+     _replStatus( CLS_BS_NORMAL )
    {
       _srcSessionNum = 0 ;
-      _prevPrimary = FALSE ;
 
       _totalLogSize = 0 ;
       _inSyncCtrl   = FALSE ;
@@ -104,16 +101,18 @@ namespace engine
 
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPPSET_NOTIFY, "_clsReplicateSet::notify" )
-   void _clsReplicateSet::notify ( UINT32 suLID, UINT32 clLID,
-                                   dmsExtentID extLID,
-                                   const DPS_LSN_OFFSET &offset )
+   void _clsReplicateSet::onWriteLog( DPS_LSN_OFFSET offset )
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPPSET_NOTIFY );
-
       _sync.notify( offset ) ;
+   }
 
-      PD_TRACE_EXIT ( SDB__CLSREPPSET_NOTIFY );
+   void _clsReplicateSet::onPrepareLog( UINT32 csLID, UINT32 clLID,
+                                        INT32 extLID, DPS_LSN_OFFSET offset )
+   {
+      if ( getNtySessionNum() > 0 )
+      {
+         _ntyQue.push( clsLSNNtyInfo( csLID, clLID, extLID ,offset ) ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPPSET_NOTIFY2SESSION, "_clsReplicateSet::notify2Session" )
@@ -177,17 +176,29 @@ namespace engine
    INT32 _clsReplicateSet::initialize ()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSET_INIT );
+      PD_TRACE_ENTRY ( SDB__CLSREPSET_INIT ) ;
+
+      if ( !_agent )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      // init start shift time
+      g_startShiftTime = (INT32)pmdGetOptionCB()->startShiftTime() ;
 
       _logger = pmdGetKRCB()->getDPSCB() ;
       _clsCB = pmdGetKRCB()->getClsCB() ;
       SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
 
+      // register dps log event handler
+      _logger->setEventHandler( this ) ;
+
       rc = _replBucket.init() ;
       PD_RC_CHECK( rc, PDERROR, "Init repl bucket failed, rc: %d", rc ) ;
 
-      _totalLogSize = (UINT64)_logger->getLogFileSz() *
-                      (UINT64)_logger->getLogFileNum() ;
+      _totalLogSize = (UINT64)pmdGetOptionCB()->getReplLogFileSz()*
+                      (UINT64)pmdGetOptionCB()->getReplLogFileNum() ;
       // init sync control param
       {
          UINT32 rate = 2 ;
@@ -208,10 +219,57 @@ namespace engine
       goto done ;
    }
 
+   INT32 _clsReplicateSet::deactive ()
+   {
+      // stop repl-sync
+      setStatus( CLS_BS_CLOSED ) ;
+
+      if ( _replBucket.maxReplSync() > 0 )
+      {
+         // wait all repl-sync log processed
+         PD_LOG( PDEVENT, "Begin to wait repl bucket empty[bucket size: %d, "
+                 "all size: %d, agent number: %d]", _replBucket.bucketSize(),
+                 _replBucket.size(), _replBucket.curAgentNum() ) ;
+
+         _replBucket.waitEmpty() ;
+
+         PD_LOG( PDEVENT, "Wait repl bucket empty completed" ) ;
+      }
+
+      return SDB_OK ;
+   }
+
    INT32 _clsReplicateSet::final ()
    {
       _replBucket.fini() ;
+      if ( _logger )
+      {
+         _logger->unsetEventHandler() ;
+      }
       return SDB_OK ;
+   }
+
+   void _clsReplicateSet::onConfigChange ()
+   {
+      if ( pmdGetOptionCB()->maxReplSync() != getBucket()->maxReplSync() )
+      {
+         getBucket()->enforceMaxReplSync( pmdGetOptionCB()->maxReplSync() ) ;
+      }
+   }
+
+   void _clsReplicateSet::ntyPrimaryChange( BOOLEAN primary,
+                                            SDB_EVENT_OCCUR_TYPE type )
+   {
+      if ( primary && SDB_EVT_OCCUR_BEFORE == type )
+      {
+         _replBucket.reset() ;
+      }
+      else if ( !primary && SDB_EVT_OCCUR_AFTER == type )
+      {
+         /// when we are not primary any more, we should clear
+         /// waiting list.
+         _sync.cut( 0 ) ;
+      }
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET_ACTIVE, "_clsReplicateSet::active" )
@@ -398,8 +456,6 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSREPSET_ONTMR );
       if ( _timerID == timerID )
       {
-         _checkPrimary () ;
-
          _cata.handleTimeout( interval ) ;
          if ( !_active )
          {
@@ -571,7 +627,7 @@ namespace engine
                                         _info.info.begin() ;
       for ( ; itr != _info.info.end(); itr++ )
       {
-         if ( itr->second.timeout >= CLS_SHARING_BRK_TIME &&
+         if ( itr->second.timeout >= pmdGetOptionCB()->sharingBreakTime() &&
               itr->second.timeout >= _beatTime )
          {
             itr->second.timeout -= _beatTime ;
@@ -583,7 +639,7 @@ namespace engine
               _info.alives.find( itr->first ) == _info.alives.end() )
          {
             UINT32 resetTimeout = 0 ;
-            itr->second.timeout = CLS_SHARING_BRK_TIME - 1 ;
+            itr->second.timeout = pmdGetOptionCB()->sharingBreakTime() - 1 ;
             if ( SOCKET_GETLASTERROR == CLS_CONNREFUSED )
             {
                resetTimeout = 1800 * OSS_ONE_SEC ;
@@ -605,26 +661,6 @@ namespace engine
       return ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__CHKPRM, "_clsReplicateSet::_checkPrimary" )
-   void _clsReplicateSet::_checkPrimary ()
-   {
-      PD_TRACE_ENTRY ( SDB__CLSREPSET__CHKPRM );
-      // change to primary
-      if ( !_prevPrimary && primaryIsMe () )
-      {
-         _prevPrimary = TRUE ;
-         // start task query
-         _clsCB->_onPrimaryChange( _prevPrimary ) ;
-      }
-      // change to secondary
-      else if ( _prevPrimary && !primaryIsMe () )
-      {
-         _prevPrimary = FALSE ;
-         _clsCB->_onPrimaryChange ( _prevPrimary ) ;
-      }
-      PD_TRACE_EXIT ( SDB__CLSREPSET__CHKPRM );
-   }
-
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__CHKBRK, "_clsReplicateSet::_checkBreak" )
    void _clsReplicateSet::_checkBreak( const UINT32 &millisec )
    {
@@ -638,7 +674,7 @@ namespace engine
       for ( ; itr != _info.alives.end(); itr++ )
       {
          itr->second->timeout += millisec ;
-         if ( CLS_SHARING_BRK_TIME <= itr->second->timeout )
+         if ( pmdGetOptionCB()->sharingBreakTime() <= itr->second->timeout )
          {
             needErase = TRUE ;
          }
@@ -653,7 +689,7 @@ namespace engine
       itr = _info.alives.begin() ;
       for ( ; itr != _info.alives.end(); )
       {
-         if ( CLS_SHARING_BRK_TIME <= itr->second->timeout )
+         if ( pmdGetOptionCB()->sharingBreakTime() <= itr->second->timeout )
          {
             if ( itr->first == _info.primary.value )
             {
@@ -825,10 +861,10 @@ namespace engine
       return threshTime ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET__CHECKSYNCCTRL, "_clsReplicateSet::checkSyncControl" )
-   INT32 _clsReplicateSet::checkSyncControl( UINT32 reqLen, pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION (SDB__CLSREPSET__CANASSIGNLOGPAGE, "_clsReplicateSet::canAssignLogPage" )
+   INT32 _clsReplicateSet::canAssignLogPage( UINT32 reqLen, pmdEDUCB *cb )
    {
-      PD_TRACE_ENTRY ( SDB__CLSREPSET__CHECKSYNCCTRL );
+      PD_TRACE_ENTRY ( SDB__CLSREPSET__CANASSIGNLOGPAGE );
       INT32 rc = SDB_OK ;
 
       UINT32 threshTime = 0 ;
@@ -896,7 +932,7 @@ namespace engine
          _inSyncCtrl = FALSE ;
          PD_LOG( PDWARNING, "End sync control" ) ;
       }
-      PD_TRACE_EXITRC ( SDB__CLSREPSET__CHECKSYNCCTRL, rc );
+      PD_TRACE_EXITRC ( SDB__CLSREPSET__CANASSIGNLOGPAGE, rc );
       return rc ;
    }
 

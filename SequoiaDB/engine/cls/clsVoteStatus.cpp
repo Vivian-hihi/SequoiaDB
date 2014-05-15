@@ -60,14 +60,15 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__LAU, "_clsVoteStatus::_launch" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__LAU, "_clsVoteStatus::_launch" )
    INT32 _clsVoteStatus::_launch( const CLS_ELECTION_ROUND &round )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU ) ;
+
       if ( SDB_START_NORMAL != pmdGetKRCB()->getStartType() )
       {
-         PD_LOG ( PDWARNING, "Start type isn't normal, can't initial voting" ) ;
+         PD_LOG ( PDINFO, "Start type isn't normal, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
@@ -86,11 +87,17 @@ namespace engine
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
-      else if ( !pmdGetKRCB()->getReplCB()->getBucket()->isEmpty() )
+      else if ( !sdbGetReplCB()->getBucket()->isEmpty() )
       {
          PD_LOG( PDDEBUG, "Repl log is not empty, can't initial voting, "
                  "repl bucket size: %d",
-                 pmdGetKRCB()->getReplCB()->getBucket()->size() ) ;
+                 sdbGetReplCB()->getBucket()->size() ) ;
+         rc = SDB_CLS_VOTE_FAILED ;
+         goto error ;
+      }
+      else if ( sdbGetTransCB()->isNeedSyncTrans() )
+      {
+         PD_LOG( PDINFO, "Trans info is not sync, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
@@ -100,25 +107,28 @@ namespace engine
          _logger = pmdGetKRCB()->getDPSCB() ;
          SDB_ASSERT( NULL != _logger, "logger should not be NULL" )
       }
+
+      // launch
       {
-      DPS_LSN lsn = _logger->getCurrentLsn() ;
-      _MsgClsElectionBallot msg ;
-      msg.weights = lsn ;
-      msg.identity = _groupInfo->local ;
-      msg.round = round ;
-      map<UINT64, _clsSharingStatus *>::iterator itr=
-                                    _groupInfo->alives.begin() ;
-      for ( ; itr != _groupInfo->alives.end(); itr++ )
-      {
-         if ( 0 > lsn.compare(itr->second->beat.endLsn ) )
+         DPS_LSN lsn = _logger->getCurrentLsn() ;
+         _MsgClsElectionBallot msg ;
+         msg.weights = lsn ;
+         msg.identity = _groupInfo->local ;
+         msg.round = round ;
+         map<UINT64, _clsSharingStatus *>::iterator itr=
+                                       _groupInfo->alives.begin() ;
+         for ( ; itr != _groupInfo->alives.end(); itr++ )
          {
-            PD_LOG ( PDDEBUG, "DSP lsn is not max, can't initial voting" ) ;
-            rc = SDB_CLS_VOTE_FAILED ;
-            goto error ;
+            if ( 0 > lsn.compare(itr->second->beat.endLsn ) )
+            {
+               PD_LOG ( PDDEBUG, "DSP lsn is not max, can't initial voting" ) ;
+               rc = SDB_CLS_VOTE_FAILED ;
+               goto error ;
+            }
          }
+         _broadcastAlives( &msg ) ;
       }
-      _broadcastAlives( &msg ) ;
-      }
+
    done:
       PD_TRACE_EXITRC ( SDB__CLSVTSTUS__LAU, rc ) ;
       return rc ;
@@ -126,7 +136,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__LAU1, "_clsVoteStatus::_launch" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__LAU1, "_clsVoteStatus::_launch" )
    INT32 _clsVoteStatus::_launch( const DPS_LSN &lsn,
                                   const _MsgRouteID &id,
                                   const CLS_ELECTION_ROUND &round )
@@ -222,7 +232,7 @@ namespace engine
       goto error ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__BCALIVES, "_clsVoteStatus::_broadcastAlives" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVTSTUS__BCALIVES, "_clsVoteStatus::_broadcastAlives" )
    void _clsVoteStatus::_broadcastAlives( void *msg )
    {
       PD_TRACE_ENTRY ( SDB__CLSVTSTUS__BCALIVES ) ;

@@ -215,8 +215,9 @@ namespace engine
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB__CLSMSGHND_HNDCLSMSG );
       _MsgHeader *newHeader = NULL ;
+      void *newMsg = NULL ;
 
-      void *newMsg = copyMsg ( msg, header->messageLength ) ;
+      newMsg = copyMsg ( msg, header->messageLength ) ;
       if ( NULL == newMsg )
       {
          PD_LOG ( PDERROR, "Failed to allocate memory for new msg" ) ;

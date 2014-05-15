@@ -41,6 +41,7 @@
 #include <map>
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "pmd.hpp"
 
 using namespace std ;
 
@@ -71,7 +72,6 @@ namespace engine
       {
          _checkList[i] = DPS_INVALID_LSN_OFFSET ;
       }
-      _syncStrategy = CLS_SYNC_DTF_STRATEGY ;
 
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CLSSYNCMAG ) ;
    }
@@ -112,10 +112,11 @@ namespace engine
    DPS_LSN_OFFSET _clsSyncManager::getSyncCtrlArbitLSN()
    {
       DPS_LSN_OFFSET offset = DPS_INVALID_LSN_OFFSET ;
+      INT32 syncSty = pmdGetOptionCB()->syncStrategy() ;
 
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_GETARBITLSN ) ;
 
-      if ( 0 == _validSync || CLS_SYNC_NONE == _syncStrategy )
+      if ( 0 == _validSync || CLS_SYNC_NONE == syncSty )
       {
          goto done ;
       }
@@ -127,7 +128,7 @@ namespace engine
             {
                continue ;
             }
-            if ( CLS_SYNC_KEEPNORMAL == _syncStrategy &&
+            if ( CLS_SYNC_KEEPNORMAL == syncSty &&
                  FALSE == _notifyList[i].isValid() )
             {
                continue ;

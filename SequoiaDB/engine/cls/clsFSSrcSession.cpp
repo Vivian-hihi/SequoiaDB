@@ -81,7 +81,7 @@ namespace engine
       _quit = FALSE ;
       _needData = 1 ;
       _hasMeta = FALSE ;
-      _pRepl = pmdGetKRCB()->getClsCB()->getReplCB() ;
+      _pRepl = sdbGetReplCB() ;
       _init = FALSE ;
       _timeCounter = 0 ;
       _curExtID = DMS_INVALID_EXTENT ;
@@ -1454,8 +1454,8 @@ namespace engine
    BOOLEAN _clsFSSrcSession::_isReady()
    {
       /*return MSG_INVALID_ROUTEID !=
-             pmdGetKRCB()->getClsCB()->getReplCB()->getPrimary().value ;*/
-      return pmdGetKRCB()->getClsCB()->isPrimary() ;
+             sdbGetReplCB()->getPrimary().value ;*/
+      return pmdIsPrimary() ;
    }
 
    const CHAR* _clsFSSrcSession::_onObjFilter( const CHAR * inBuff,
@@ -1481,7 +1481,7 @@ namespace engine
    :_clsDataSrcBaseSession( sessionID, agent ), _filterMB ( 1024 ),
     _lsnSearchMB( 1024 )
    {
-      _pCatAgent = pmdGetKRCB()->getShardCB()->getCataAgent() ;
+      _pCatAgent = sdbGetShardCB()->getCataAgent() ;
       _cleanupJobID = PMD_INVALID_EDUID ;
 
       _hasShardingIndex = FALSE ;
@@ -1679,7 +1679,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSPLSS__ONFSMETA );
       _clsCatalogSet *catSet = NULL ;
       UINT32 count = 0 ;
-      UINT32 groupID = pmdGetKRCB()->getShardCB()->nodeID().columns.groupID ;
+      UINT32 groupID = sdbGetShardCB()->nodeID().columns.groupID ;
       BSONObj upBound ;
 
       /// exist $shard index
@@ -1699,8 +1699,7 @@ namespace engine
       {
          ++count ;
 
-         rc = pmdGetKRCB()->getShardCB()->syncUpdateCatalog( clFullName,
-                                                             OSS_ONE_SEC ) ;
+         rc = sdbGetShardCB()->syncUpdateCatalog( clFullName, OSS_ONE_SEC ) ;
          if ( SDB_OK == rc )
          {
             _pCatAgent->lock_r() ;
@@ -1769,7 +1768,7 @@ namespace engine
 
       //can't be self group
       if ( header->routeID.columns.groupID ==
-           pmdGetKRCB()->getShardCB()->nodeID().columns.groupID )
+           sdbGetShardCB()->nodeID().columns.groupID )
       {
          PD_LOG ( PDERROR, "Split Session[%s]: the source and dst node is in "
                   "same group", sessionName() ) ;
@@ -1889,7 +1888,7 @@ namespace engine
       //need to update catalog, and check the rangKeyObj is not in my self
       PD_TRACE_ENTRY ( SDB__CLSSPLSS_HNDEND2 );
       _clsCatalogSet *pSet = NULL ;
-      shardCB *pShard = pmdGetKRCB()->getShardCB() ;
+      shardCB *pShard = sdbGetShardCB() ;
       UINT32 groupID = pShard->nodeID().columns.groupID ;
       BOOLEAN sendRsp = FALSE ;
       INT32 rc = SDB_OK ;
@@ -1963,7 +1962,7 @@ namespace engine
 
    BOOLEAN _clsSplitSrcSession::_isReady ()
    {
-      return pmdGetKRCB()->getReplCB()->primaryIsMe() ;
+      return sdbGetReplCB()->primaryIsMe() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS__GENKEYOBJ, "_clsSplitSrcSession::_genKeyObj" )

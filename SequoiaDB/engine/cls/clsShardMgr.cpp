@@ -65,7 +65,7 @@ namespace engine
       ON_MSG ( MSG_CAT_QUERY_SPACEINFO_RSP, _onQueryCSInfoRsp )
    END_OBJ_MSG_MAP()
 
-   _clsShardMgr::_clsShardMgr (  _netRouteAgent *rtAgent )
+   _clsShardMgr::_clsShardMgr ( _netRouteAgent *rtAgent )
    {
       _pNetRtAgent = rtAgent ;
       _requestID = 0 ;
@@ -112,16 +112,34 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDMGR_INIT, "_clsShardMgr::initialize" )
-   INT32 _clsShardMgr::initialize( )
+   INT32 _clsShardMgr::initialize()
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR_INIT );
       UINT32 index = 0 ;
+      UINT32 catGID = CATALOG_GROUPID ;
+      UINT16 catNID = CATA_NODE_ID_BEGIN ;
+      MsgRouteID id ;
+      pmdOptionsCB *optCB = pmdGetOptionCB() ;
+      const _pmdOptionsMgr::_pmdAddrPair *pCatAddrs = optCB->catAddrs() ;
 
       if ( !_pNetRtAgent )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
+      }
+
+      // init param
+      for ( UINT32 i = 0 ; i < CATA_NODE_MAX_NUM ; ++i )
+      {
+         if ( 0 == pCatAddrs[i]._host )
+         {
+            break ;
+         }
+         id.columns.groupID = catGID ;
+         id.columns.nodeID = catNID++ ;
+         id.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+         setCatlogInfo( id, pCatAddrs[i]._host, pCatAddrs[i]._service ) ;
       }
 
       if ( _vecCatlog.size() == 0 )
@@ -154,9 +172,30 @@ namespace engine
       return SDB_OK ;
    }
 
+   INT32 _clsShardMgr::deactive ()
+   {
+      return SDB_OK ;
+   }
+
    INT32 _clsShardMgr::final ()
    {
       return SDB_OK ;
+   }
+
+   void _clsShardMgr::onConfigChange ()
+   {
+   }
+
+   void _clsShardMgr::ntyPrimaryChange( BOOLEAN primary,
+                                        SDB_EVENT_OCCUR_TYPE type )
+   {
+      if ( primary && SDB_EVT_OCCUR_BEFORE == type )
+      {
+           // clear catalog info
+         _pCatAgent->lock_w() ;
+         _pCatAgent->clearAll() ;
+         _pCatAgent->release_w() ;
+      }
    }
 
    void _clsShardMgr::onTimer ( UINT32 timerID, UINT32 interval )
@@ -965,7 +1004,7 @@ namespace engine
       // if catalog group, get the primary from repl
       if ( CATALOG_GROUPID == nodeID().columns.groupID )
       {
-         replCB *pRepl = pmdGetKRCB()->getReplCB() ;
+         replCB *pRepl = sdbGetReplCB() ;
          primary = pRepl->getPrimary().columns.nodeID ;
       }
 

@@ -93,27 +93,23 @@ namespace engine
    {
       _MsgCatPrimaryChange msg ;
 
+      // primary change before
+      sdbGetClsCB()->ntyPrimaryChange( FALSE, SDB_EVT_OCCUR_BEFORE ) ;
+
       _info()->mtx.lock_w() ;
       if ( _info()->local.value == _info()->primary.value )
       {
          _info()->primary.value = MSG_INVALID_ROUTEID ;
       }
+      pmdSetPrimary( FALSE ) ; // set global primary
       msg.newPrimary = _info()->primary ;
       msg.oldPrimary = _info()->local ;
       _info()->mtx.release_w() ;
 
-      // interrupt writing edus
-      pmdGetKRCB()->getEDUMgr()->interruptWritingEDUS() ;
+      // primary change after
+      sdbGetClsCB()->ntyPrimaryChange( FALSE, SDB_EVT_OCCUR_AFTER ) ;
 
-      // stop rollback
-      pmdGetKRCB()->getTransCB()->stopRollbackTask() ;
-      pmdGetKRCB()->getTransCB()->termAllTrans();
-
-      /// when we are not primary any more, we should clear
-      /// waiting list.
-      pmdGetKRCB()->getClsCB()->getReplCB()->syncMgr()->cut( 0 ) ;
-
-      pmdGetKRCB()->getClsCB()->getReplCB()->callCatalog( (MsgHeader *)&msg ) ;
+      sdbGetReplCB()->callCatalog( (MsgHeader *)&msg ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSVSPMY_ACTIVE, "_clsVSPrimary::active" )
@@ -125,25 +121,22 @@ namespace engine
       next = id() ;
       _MsgCatPrimaryChange msg ;
 
-      pmdGetKRCB()->getReplCB()->getBucket()->reset() ;
-
-      // start trans rollback
-      pKRCB->getTransCB()->startRollbackTask();
-
-      // clear catalog info
-      pKRCB->getClsCB()->getCatAgent()->lock_w() ;
-      pKRCB->getClsCB()->getCatAgent()->clearAll() ;
-      pKRCB->getClsCB()->getCatAgent()->release_w() ;
+      // before primary
+      sdbGetClsCB()->ntyPrimaryChange( TRUE, SDB_EVT_OCCUR_BEFORE ) ;
 
       _info()->mtx.lock_w() ;
       msg.newPrimary = _info()->local ;
       msg.oldPrimary = _info()->primary ;
       _info()->primary = _info()->local ;
+      pmdSetPrimary( TRUE ) ; // set global primary
       _info()->mtx.release_w() ;
-      pmdGetKRCB()->getDPSCB()->incVersion() ;
-      pmdGetKRCB()->getClsCB()->getReplCB()->callCatalog( (MsgHeader *)&msg ) ;
+
+      sdbGetReplCB()->callCatalog( (MsgHeader *)&msg ) ;
 
       PD_LOG ( PDEVENT, "Change to Primary" ) ;
+
+      // after primary
+      sdbGetClsCB()->ntyPrimaryChange( TRUE, SDB_EVT_OCCUR_AFTER ) ;
 
       PD_TRACE_EXIT ( SDB__CLSVSPMY_ACTIVE ) ;
       return ;

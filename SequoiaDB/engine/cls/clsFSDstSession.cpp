@@ -1087,7 +1087,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__CLSFSDS_HNDBGRES );
 
       MsgClsFSBeginRes *msg = ( MsgClsFSBeginRes * )header ;
@@ -1127,9 +1127,9 @@ namespace engine
       }
 
       //clear all catalog info
-      pmdGetKRCB()->getShardCB()->getCataAgent()->lock_w() ;
-      pmdGetKRCB()->getShardCB()->getCataAgent()->clearAll() ;
-      pmdGetKRCB()->getShardCB()->getCataAgent()->release_w() ;
+      sdbGetShardCB()->getCataAgent()->lock_w() ;
+      sdbGetShardCB()->getCataAgent()->clearAll() ;
+      sdbGetShardCB()->getCataAgent()->release_w() ;
 
       dpsCB = pmdGetKRCB()->getDPSCB() ;
       // clear all log
@@ -1149,7 +1149,7 @@ namespace engine
                  expect.offset ) ;
 
          /// before send meta req, we clear local data.
-         if ( SDB_OK != pmdGetKRCB()->getClsCB()->clearAllData () )
+         if ( SDB_OK != sdbGetClsCB()->clearAllData () )
          {
             PD_LOG( PDERROR, "FS Session[%s]: Failed to clear data.",
                     sessionName() ) ;
@@ -1177,6 +1177,9 @@ namespace engine
          }
          _mapEmptyCS.clear() ;
       }
+
+      // disable trans need load
+      sdbGetTransCB()->setIsNeedSyncTrans( FALSE ) ;
 
       _status = CLS_FS_STATUS_META ;
       _meta() ;
@@ -1228,8 +1231,8 @@ namespace engine
       }
 
       // disconnect all collection
-      pmdGetKRCB()->getClsCB()->getShardRouteAgent()->disconnectAll() ;
-      pmdGetKRCB()->getTransCB()->clearTransInfo();
+      sdbGetClsCB()->getShardRouteAgent()->disconnectAll() ;
+      sdbGetTransCB()->clearTransInfo() ;
 
       PD_TRACE_EXIT ( SDB__CLSFSDS__BEGIN );
       return ;
@@ -1241,7 +1244,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSFSDS__END );
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
       DPS_LSN lsn = dpsCB->expectLsn() ;
-      DPS_LSN invalidLsn;
+      DPS_LSN invalidLsn ;
       MsgClsFSEnd msg ;
 
       if ( STEP_TS_END == _tsStep )
@@ -1250,7 +1253,7 @@ namespace engine
       }
       else if ( STEP_TS_BEGIN == _tsStep )
       {
-         if ( !pmdGetKRCB()->getTransCB()->isTransOn() &&
+         if ( !sdbGetTransCB()->isTransOn() &&
               DPS_INVALID_LSN_OFFSET != dpsCB->getCurrentLsn().offset )
          {
             _tsStep = STEP_TS_END ;
@@ -1314,7 +1317,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSFSDS__ISREADY );
 
       //if change to primary
-      if ( pmdGetKRCB()->getReplCB()->primaryIsMe() )
+      if ( sdbGetReplCB()->primaryIsMe() )
       {
          PD_LOG( PDWARNING, "FS Session[%s] disconnect when self is primary",
                  sessionName() ) ;
@@ -1325,7 +1328,7 @@ namespace engine
       //if peer node is sharing-break, should quit
       if ( CLS_FS_STATUS_BEGIN != _status &&
            _recvTimeout > CLS_SRC_SESSION_NO_MSG_TIME &&
-           !pmdGetKRCB()->getReplCB()->isAlive ( _selector.src() ) )
+           !sdbGetReplCB()->isAlive ( _selector.src() ) )
       {
          PD_LOG ( PDWARNING, "FS Session[%s] peer node sharing-beak, "
                   "disconnect", sessionName() ) ;
@@ -1348,11 +1351,15 @@ namespace engine
       /// or, fullsync possibly is not happened, the
       /// status is still at begin, we do not clear
       /// data also.
-      if ( CLS_FS_STATUS_BEGIN != _status &&
-           ( CLS_FS_STATUS_END != _status || STEP_TS_END != _tsStep ) )
+      if ( CLS_FS_STATUS_END != _status || STEP_TS_END != _tsStep )
       {
-         pmdGetKRCB()->getDPSCB()->move( 0, 0 ) ;
-         pmdGetKRCB()->getClsCB()->clearAllData() ;
+         if ( CLS_FS_STATUS_BEGIN != _status )
+         {
+            sdbGetDPSCB()->move( 0, 0 ) ;
+            sdbGetClsCB()->clearAllData() ;
+         }
+         sdbGetTransCB()->clearTransInfo() ;
+         sdbGetTransCB()->setIsNeedSyncTrans( TRUE ) ;
       }
       else if ( CLS_FS_STATUS_END == _status && STEP_TS_END == _tsStep &&
                 FALSE == pmdGetStartup().isOK() )
@@ -1361,8 +1368,9 @@ namespace engine
       }
 
       PD_LOG( PDEVENT, "FS Session[%s]: start sync session.", sessionName() ) ;
-      pmdGetKRCB()->getClsCB()->startInnerSession( CLS_REPL, CLS_TID_REPL_SYC ) ;
-      pmdGetKRCB()->getClsCB()->getReplCB()->setFullSync( FALSE ) ;
+      pmdGetKRCB()->getClsCB()->startInnerSession( CLS_REPL,
+                                                   CLS_TID_REPL_SYC ) ;
+      sdbGetReplCB()->setFullSync( FALSE ) ;
 
       _disconnect() ;
       PD_TRACE_EXIT ( SDB__CLSFSDS__ONDETACH );
@@ -1414,7 +1422,6 @@ namespace engine
       if ( CLS_FS_EOF == pRsp->eof )
       {
          _tsStep = STEP_TS_END;
-         pmdGetKRCB()->getTransCB()->setIsNeedSyncTrans( FALSE ) ;
          _end();
          goto done ;
       }
@@ -1425,7 +1432,6 @@ namespace engine
          if ( _expectLSN.compareOffset( header->_lsn ) <= 0 )
          {
             _tsStep = STEP_TS_END ;
-            pmdGetKRCB()->getTransCB()->setIsNeedSyncTrans( FALSE ) ;
             _end() ;
             goto done ;
          }
@@ -1477,7 +1483,7 @@ namespace engine
    {
       _pTask = ( _clsSplitTask* )data ;
       _taskObj = _pTask->toBson( CLS_SPLIT_MASK_ID|CLS_SPLIT_MASK_CLNAME ) ;
-      _pShardMgr = pmdGetKRCB()->getShardCB() ;
+      _pShardMgr = sdbGetShardCB() ;
       _step = STEP_NONE ;
       _replayer.enableDPS () ;
       _needSyncData = 1 ;
@@ -1641,7 +1647,7 @@ namespace engine
          goto done ;
       }
       // when the node is not primary, need disconnect
-      else if ( !pmdGetKRCB()->getReplCB()->primaryIsMe() )
+      else if ( !sdbGetReplCB()->primaryIsMe() )
       {
          PD_LOG ( PDERROR, "Split Session[%s]: Self node is not primary, "
                   "disconnect. task:%s", sessionName(),
