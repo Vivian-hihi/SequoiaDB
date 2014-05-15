@@ -100,7 +100,7 @@ TEST(logWrapperTest, recordInsert_1)
    INT32 rc = SDB_OK ;
    deleteFiles();
    _dpsLogWrapper wrapper ;
-   ASSERT_TRUE ( 0 == wrapper.init ( "." ) ) ;
+   ASSERT_TRUE ( 0 == wrapper.getLogMgr()->init (".", DPS_DFT_LOG_BUF_SZ ) ) ;
    ACTIVE_THREAD(&wrapper)
    string name("recordInsert.collection");
    BSONObj obj;
@@ -110,6 +110,7 @@ TEST(logWrapperTest, recordInsert_1)
    dpsLogRecord &record = mergeInfo.getMergeBlock().record();
    rc = dpsInsert2Record( name.c_str(),
                           obj, DPS_INVALID_TRANS_ID,
+                          DPS_INVALID_LSN_OFFSET,
                           DPS_INVALID_LSN_OFFSET,
                           record ) ;
    ASSERT_TRUE( SDB_OK == rc ) ;
