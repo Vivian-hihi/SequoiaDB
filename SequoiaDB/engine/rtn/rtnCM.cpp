@@ -1179,6 +1179,8 @@ namespace CLSMGR
 
       CHAR confPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR rmPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      CHAR dbPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+      CHAR dialogPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       std::string confFile ;
       po::options_description desc ( "Command options" ) ;
       po::variables_map vm ;
@@ -1187,6 +1189,8 @@ namespace CLSMGR
       PMD_ADD_PARAM_OPTIONS_END
 
       const CHAR *svcname = NULL ;
+      std::string tmpStr ;
+
       try
       {
          BSONObj obj( arg1 ) ;
@@ -1222,6 +1226,61 @@ namespace CLSMGR
       {
          PD_LOG( PDERROR, "Can not read configure file: %s",
                  confFile.c_str()) ;
+         goto error ;
+      }
+
+      // dbpath
+      tmpStr = PMD_CURRENT_PATH ;
+      if ( vm.count( PMD_OPTION_DBPATH ) )
+      {
+         tmpStr = vm[PMD_OPTION_DBPATH].as<string>() ;
+      }
+      if ( NULL == ossGetRealPath( tmpStr.c_str(), dbPath,
+                                   OSS_MAX_PATHSIZE ) )
+      {
+         PD_LOG( PDERROR, "Failed to get real path for: %s",
+                 tmpStr.c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      // dialogpath
+      if ( vm.count( PMD_OPTION_DIAGLOGPATH ) )
+      {
+         CHAR *p = ossGetRealPath( vm[PMD_OPTION_DIAGLOGPATH].as<string>().c_str(),
+                                   dialogPath, OSS_MAX_PATHSIZE ) ;
+         if ( NULL == p )
+         {
+            PD_LOG( PDERROR, "Failed to get real path for: %s",
+                    vm[PMD_OPTION_DIAGLOGPATH].as<string>().c_str()) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+      }
+      else
+      {
+         utilBuildFullPath( dbPath, PMD_OPTION_DIAG_PATH,
+                            OSS_MAX_PATHSIZE, dialogPath ) ;
+      }
+
+      // if exist, means to backup dialog
+      if ( arg2 )
+      {
+         CHAR backPath[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+         utilBuildFullPath( getDialogPath(), svcname,
+                            OSS_MAX_PATHSIZE, backPath ) ;
+         ossDelete( backPath ) ;
+         if ( SDB_OK == ossRenamePath( rmPath, backPath ) )
+         {
+            PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
+                    svcname, rmPath, backPath ) ;
+         }
+      }
+
+      rc = ossDelete( dialogPath ) ;
+      if ( SDB_OK != rc && SDB_FNE != rc )
+      {
+         PD_LOG( PDERROR, "Failed to rm diaglog path;%s", dialogPath ) ;
          goto error ;
       }
 
@@ -1267,62 +1326,12 @@ namespace CLSMGR
          }
       }
 
-      if ( vm.count( PMD_OPTION_DIAGLOGPATH ) )
+      /// we rm db path at last.
+      rc = ossDelete( dbPath ) ;
+      if ( SDB_OK != rc && SDB_FNE != rc )
       {
-         ossMemset( rmPath, 0, OSS_MAX_PATHSIZE+1 );
-         CHAR *p = ossGetRealPath( vm[PMD_OPTION_DIAGLOGPATH].as<string>().c_str(),
-                     rmPath, OSS_MAX_PATHSIZE );
-         if ( NULL == p )
-         {
-            PD_LOG( PDERROR, "Failed to get real path for: %s",
-                    vm[PMD_OPTION_DIAGLOGPATH].as<string>().c_str()) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         // if exist, means to backup dialog
-         if ( arg2 )
-         {
-            CHAR backPath[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-            utilBuildFullPath( getDialogPath(), svcname,
-                               OSS_MAX_PATHSIZE, backPath ) ;
-            ossDelete( backPath ) ;
-            PD_LOG( PDEVENT, "Test: %s", backPath ) ;
-            if ( SDB_OK == ossRenamePath( rmPath, backPath ) )
-            {
-               PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
-                       svcname, rmPath, backPath ) ;
-            }
-         }
-
-         rc = ossDelete( rmPath ) ;
-         if ( SDB_OK != rc && SDB_FNE != rc )
-         {
-            PD_LOG( PDERROR, "Failed to rm diaglog path;%s", rmPath ) ;
-            goto error ;
-         }
-      }
-
-       /// we rm db path at last.
-      if ( vm.count( PMD_OPTION_DBPATH ) )
-      {
-         ossMemset( rmPath, 0, OSS_MAX_PATHSIZE+1 );
-         CHAR *p = ossGetRealPath( vm[PMD_OPTION_DBPATH].as<string>().c_str(),
-                     rmPath, OSS_MAX_PATHSIZE );
-         if ( NULL == p )
-         {
-            PD_LOG( PDERROR, "Failed to get real path for: %s",
-                    vm[PMD_OPTION_DBPATH].as<string>().c_str()) ;
-            rc = SDB_SYS ;
-            goto error ;
-         }
-
-         rc = ossDelete( rmPath ) ;
-         if ( SDB_OK != rc && SDB_FNE != rc )
-         {
-            PD_LOG( PDERROR, "failed to rm db path;%s", rmPath ) ;
-            goto error ;
-         }
+         PD_LOG( PDERROR, "failed to rm db path;%s", dbPath ) ;
+         goto error ;
       }
 
       rc = ossDelete( confPath ) ;
@@ -1332,7 +1341,7 @@ namespace CLSMGR
          goto error ;
       }
 
-      PD_LOG( PDEVENT, "Remove ndoe[%s] succeed.", svcname ) ;
+      PD_LOG( PDEVENT, "Remove node[svcname=%s] succeed.", svcname ) ;
       // remove monithor 
       listLocker.get () ;
       svcList.erase( svcname ) ;
