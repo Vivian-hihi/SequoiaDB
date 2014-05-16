@@ -1287,6 +1287,7 @@ namespace CLSMGR
             utilBuildFullPath( getDialogPath(), svcname,
                                OSS_MAX_PATHSIZE, backPath ) ;
             ossDelete( backPath ) ;
+            PD_LOG( PDEVENT, "Test: %s", backPath ) ;
             if ( SDB_OK == ossRenamePath( rmPath, backPath ) )
             {
                PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
@@ -1331,6 +1332,7 @@ namespace CLSMGR
          goto error ;
       }
 
+      PD_LOG( PDEVENT, "Remove ndoe[%s] succeed.", svcname ) ;
       // remove monithor 
       listLocker.get () ;
       svcList.erase( svcname ) ;
