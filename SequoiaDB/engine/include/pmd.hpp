@@ -188,13 +188,11 @@ namespace engine
       }
       OSS_INLINE _SDB_DMSCB *getDMSCB ()
       {
-         _SDB_DMSCB *p = dynamic_cast< _SDB_DMSCB* > (
-            getCBByType( SDB_CB_DMS ) ) ;
-         return p ;
+         return ( _SDB_DMSCB* )getCBByType( SDB_CB_DMS ) ;
       }
       OSS_INLINE _SDB_RTNCB *getRTNCB ()
       {
-         return dynamic_cast< _SDB_RTNCB* > ( getCBByType( SDB_CB_RTN ) ) ;
+         return ( _SDB_RTNCB* )getCBByType( SDB_CB_RTN ) ;
       }
       OSS_INLINE monConfigCB * getMonCB()
       {
@@ -206,15 +204,15 @@ namespace engine
       }
       OSS_INLINE _clsMgr *getClsCB ()
       {
-         return dynamic_cast< _clsMgr* > ( getCBByType( SDB_CB_CLS ) ) ;
+         return ( _clsMgr* )getCBByType( SDB_CB_CLS ) ;
       }
       OSS_INLINE _dpsLogWrapper* getDPSCB ()
       {
-         return dynamic_cast< _dpsLogWrapper* > ( getCBByType( SDB_CB_DPS ) ) ;
+         return ( _dpsLogWrapper* )getCBByType( SDB_CB_DPS ) ;
       }
       OSS_INLINE _bpsCB *getBPSCB ()
       {
-         return dynamic_cast< _bpsCB* > ( getCBByType( SDB_CB_BPS ) ) ;
+         return ( _bpsCB* )getCBByType( SDB_CB_BPS ) ;
       }
       OSS_INLINE _pmdOptionsMgr *getOptionCB()
       {
@@ -222,32 +220,31 @@ namespace engine
       }
       OSS_INLINE sdbCatalogueCB *getCATLOGUECB()
       {
-         return dynamic_cast< sdbCatalogueCB* > (
-            getCBByType( SDB_CB_CATALOGUE ) ) ;
+         return ( sdbCatalogueCB* )getCBByType( SDB_CB_CATALOGUE ) ;
       }
       OSS_INLINE _CoordCB *getCoordCB()
       {
-         return dynamic_cast< _CoordCB* > ( getCBByType( SDB_CB_COORD ) ) ;
+         return ( _CoordCB* )getCBByType( SDB_CB_COORD ) ;
       }
       OSS_INLINE _sqlCB *getSqlCB()
       {
-         return dynamic_cast< _sqlCB* > ( getCBByType( SDB_CB_SQL ) ) ;
+         return ( _sqlCB* )getCBByType( SDB_CB_SQL ) ;
       }
       OSS_INLINE _authCB *getAuthCB()
       {
-         return dynamic_cast< _authCB* > ( getCBByType( SDB_CB_AUTH ) ) ;
+         return ( _authCB* )getCBByType( SDB_CB_AUTH ) ;
       }
       OSS_INLINE dpsTransCB *getTransCB()
       {
-         return dynamic_cast< dpsTransCB* > ( getCBByType( SDB_CB_TRANS ) ) ;
+         return ( dpsTransCB* )getCBByType( SDB_CB_TRANS ) ;
       }
       OSS_INLINE aggrBuilder *getAggrCB()
       {
-         return dynamic_cast< aggrBuilder* > ( getCBByType( SDB_CB_AGGR ) ) ;
+         return ( aggrBuilder* )getCBByType( SDB_CB_AGGR ) ;
       }
       OSS_INLINE _spdFMPMgr *getFMPCB()
       {
-         return (_spdFMPMgr*)getCBByType( SDB_CB_FMP ) ;
+         return ( _spdFMPMgr* )getCBByType( SDB_CB_FMP ) ;
       }
 
       INT32 isBusinessOK() const
