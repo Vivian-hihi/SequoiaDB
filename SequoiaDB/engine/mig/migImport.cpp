@@ -45,17 +45,25 @@
 #include "../util/json2rawbson.h"
 #include "../util/text.h"
 #include "../client/jstobs.h"
+#include "msgDef.h"
+#include "msg.h"
 
 migImport::migImport() : _pMigArg(NULL),
                          _pParser(NULL),
-                         _ppBsonArray(NULL)
+                         _ppBsonArray(NULL),
+                         _gConnection(0),
+                         _gCollectionSpace(0),
+                         _gCollection(0)
 {
 }
 
 migImport::~migImport()
 {
    SAFE_OSS_DELETE ( _pParser ) ;
-   sdbDisconnect ( _gConnection ) ;
+   if ( _gConnection )
+   {
+      sdbDisconnect ( _gConnection ) ;
+   }
    if ( _gCollection )
    {
       sdbReleaseCollection ( _gCollection ) ;
@@ -310,56 +318,59 @@ INT32 migImport::init ( migImprtArg *pMigArg )
       goto error ;
    }
 
-   rc = _csvParser.init( _pMigArg->autoAddField,
-                         _pMigArg->autoCompletion,
-                         _pMigArg->isHeaderline,
-                         _pMigArg->delChar,
-                         _pMigArg->delField,
-                         _pMigArg->delRecord ) ;
-   if ( rc )
+   if ( _pMigArg->type == MIGIMPRT_CSV )
    {
-      PD_LOG ( PDERROR, "Failed to csv parser initialize, rc=%d", rc ) ;
-      goto error ;
-   }
-
-   if ( _pMigArg->isHeaderline )
-   {
-      rc = _pParser->getNextRecord ( startOffset, fieldsSize ) ;
+      rc = _csvParser.init( _pMigArg->autoAddField,
+                            _pMigArg->autoCompletion,
+                            _pMigArg->isHeaderline,
+                            _pMigArg->delChar,
+                            _pMigArg->delField,
+                            _pMigArg->delRecord ) ;
       if ( rc )
       {
-         if ( rc == SDB_EOF )
+         PD_LOG ( PDERROR, "Failed to csv parser initialize, rc=%d", rc ) ;
+         goto error ;
+      }
+   
+      if ( _pMigArg->isHeaderline )
+      {
+         rc = _pParser->getNextRecord ( startOffset, fieldsSize ) ;
+         if ( rc )
          {
-            if ( 0 == fieldsSize )
+            if ( rc == SDB_EOF )
             {
-               goto done ;
+               if ( 0 == fieldsSize )
+               {
+                  goto done ;
+               }
+            }
+            else
+            {
+               PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
+               goto error ;
             }
          }
-         else
+      }
+      
+      if ( _pMigArg->pFields )
+      {
+         fieldsSize = ossStrlen( _pMigArg->pFields ) ;
+         rc = _csvParser.parseHeader( _pMigArg->pFields, fieldsSize ) ;
+         if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to _parser getNextRecord, rc=%d", rc ) ;
+            PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
             goto error ;
          }
       }
-   }
-   
-   if ( _pMigArg->pFields )
-   {
-      fieldsSize = ossStrlen( _pMigArg->pFields ) ;
-      rc = _csvParser.parseHeader( _pMigArg->pFields, fieldsSize ) ;
-      if ( rc )
+      else
       {
-         PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
-         goto error ;
-      }
-   }
-   else
-   {
-      pBuffer = _pParser->getBuffer() ;
-      rc = _csvParser.parseHeader( pBuffer + startOffset, fieldsSize ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
-         goto error ;
+         pBuffer = _pParser->getBuffer() ;
+         rc = _csvParser.parseHeader( pBuffer + startOffset, fieldsSize ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to parse csv header, rc=%d", rc ) ;
+            goto error ;
+         }
       }
    }
 
@@ -406,6 +417,8 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
    INT32 succ  = 0 ;
    INT32 bsonObjNum = 0 ;
    INT32 maxInsert  = _pMigArg->insertNum ;
+   INT32 sumSize = 0 ;
+   INT32 bsonSize = 0 ;
    bson *tempObj = NULL ;
 
    while ( TRUE )
@@ -444,7 +457,14 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
          {
             ++count ;
             PD_LOG ( PDERROR, "Bad record in %d", count ) ;
-            continue ;
+            if ( _pMigArg->errorStop )
+            {
+               goto error ;
+            }
+            else
+            {
+               continue ;
+            }
          }
          else if ( rc )
          {
@@ -452,30 +472,59 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
             goto error ;
          }
       }
-      if ( tempObj->dataSize <= 5 )
+      bsonSize = tempObj->dataSize ;
+      if ( bsonSize <= 5 )
       {
          bson_destroy ( tempObj ) ;
          ++count ;
          // empty bson
          continue ;
       }
-      ++count ;
-      ++bsonObjNum ;
-      if ( maxInsert == bsonObjNum )
+      if ( ( sumSize + bsonSize ) >=
+            ( SDB_MAX_MSG_LENGTH - sizeof( MsgOpInsert ) ) )
       {
-         rc = _importRecord ( _ppBsonArray, maxInsert ) ;
+         sumSize = bsonSize ;
+         rc = _importRecord ( _ppBsonArray, bsonObjNum ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to import %d record", bsonObjNum ) ;
+         }
+         else
+         {
+            succ += bsonObjNum ;
+         }
          for ( INT32 i = 0; i < bsonObjNum; ++i )
          {
             tempObj = _ppBsonArray[ i ] ;
             bson_destroy ( tempObj ) ;
          }
+         tempObj = _ppBsonArray[ 0 ] ;
+         _ppBsonArray[ 0 ] = _ppBsonArray[ bsonObjNum ] ;
+         _ppBsonArray[ bsonObjNum ] = tempObj ;
+         bsonObjNum = 0 ;
+      }
+      else
+      {
+         sumSize += bsonSize ;
+      }
+      ++count ;
+      ++bsonObjNum ;
+      if ( maxInsert == bsonObjNum )
+      {
+         sumSize = 0 ;
+         rc = _importRecord ( _ppBsonArray, bsonObjNum ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Failed to import record in %d", count ) ;
+            PD_LOG ( PDERROR, "Failed to import %d record", bsonObjNum ) ;
          }
          else
          {
             succ += bsonObjNum ;
+         }
+         for ( INT32 i = 0; i < bsonObjNum; ++i )
+         {
+            tempObj = _ppBsonArray[ i ] ;
+            bson_destroy ( tempObj ) ;
          }
          bsonObjNum = 0 ;
       }

@@ -62,12 +62,11 @@ INT32 _utilJSONParser::initialize ( _utilParserParamet *parserPara )
    }
 
    _linePriority = parserPara->linePriority ;
-   _bufferSize  = parserPara->bufferSize ;
-   _blockNum    = parserPara->blockNum ;
-   _blockSize   = _bufferSize / _blockNum ;
-   _accessModel = parserPara->accessModel ;
-   //_buffer
-   //_buffer = (CHAR *)SDB_OSS_MALLOC ( _bufferSize ) ;
+   _bufferSize   = parserPara->bufferSize ;
+   _blockNum     = parserPara->blockNum ;
+   _blockSize    = _bufferSize / _blockNum ;
+   _accessModel  = parserPara->accessModel ;
+
    mallocBufer ( _bufferSize ) ;
    if ( !_buffer )
    {
@@ -143,17 +142,17 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
                                        UINT32 *column,
                                        _bucket **ppBucket )
 {
-   INT32       rc             = SDB_OK ;
+   INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__UTILJSONPS__GETNEXTRECORD );
-   UINT32      blockSize      = 0      ;
-   UINT32       level          = 0      ;
-   BOOLEAN     isESC          = FALSE  ;
-   BOOLEAN     isString       = FALSE  ;
-   BOOLEAN     isRecordFirst  = TRUE   ;
-   CHAR        *pCursor       = NULL   ;
-   CHAR        *curBuffer     = NULL   ;
-   blockSize = _blockSize ;
-   pCursor = _curBuffer ;
+   UINT32       newReadSize    = 0 ;
+   UINT32       isReadSize     = 0 ;
+   UINT32       level          = 0 ;
+   UINT32       useBlockNum    = 0 ;
+   BOOLEAN      isESC          = FALSE ;
+   BOOLEAN      isString       = FALSE ;
+   BOOLEAN      isRecordFirst  = FALSE ;
+   CHAR        *pCursor        = _curBuffer ;
+   CHAR        *pReadBuffer    = NULL ;
 
    do
    {
@@ -161,59 +160,72 @@ INT32 _utilJSONParser::getNextRecord ( UINT32 &startOffset,
       {
          if ( _pBlock >= _blockNum )
          {
-            UINT32 recordLeftSize = 0 ;
-            blockSize = _blockSize ;
-            _pBlock = 0 ;
-            if ( ppBucket )
+            isReadSize = pCursor - _curBuffer ;
+            if ( isReadSize > _blockSize && isReadSize < _bufferSize )
             {
-               ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
+               //is read size use block number
+               useBlockNum = ( (UINT32)( isReadSize / _blockSize ) ) + 1 ;
+               while ( useBlockNum > 0 )
+               {
+                  if ( ppBucket )
+                  {
+                     ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
+                  }
+                  ++_pBlock ;
+                  --useBlockNum ;
+               }
+               ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               newReadSize = isReadSize % _blockSize ;
+               if ( newReadSize == 0 )
+               {
+                  ++_pBlock ;
+                  continue ;
+               }
+               //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            ossMemset ( _buffer, 0, _blockSize ) ;
-            recordLeftSize = pCursor - _curBuffer ;
-            if ( recordLeftSize >= ( _blockNum * _blockSize ) )
+            else
             {
-               recordLeftSize = 0 ;
-               PD_LOG ( PDWARNING, "Data size larger than the bucket size,\
-clear bucket data" ) ;
-            }
-            else if ( recordLeftSize > 0 )
-            {
-               ossMemmove ( _buffer, _curBuffer, recordLeftSize ) ;
-            }
-            curBuffer = _buffer + recordLeftSize ;
-            _curBuffer = _buffer ;
-            pCursor = curBuffer ;
-            while ( recordLeftSize > blockSize )
-            {
-               recordLeftSize -= blockSize ;
-               ++_pBlock ;
+               if ( isReadSize == _bufferSize )
+               {
+                  isReadSize = 0 ;
+                  PD_LOG ( PDWARNING, "Data size larger than the bucket \
+size %d, clear bucket data", _bufferSize ) ;
+               }
+               _pBlock = 0 ;
                if ( ppBucket )
                {
                   ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
                }
+               ossMemmove ( _buffer, _curBuffer, isReadSize ) ;
+               newReadSize = _blockSize - isReadSize ;
+               if ( newReadSize == 0 )
+               {
+                  ++_pBlock ;
+                  continue ;
+               }
+               //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            blockSize -= recordLeftSize ;
+            _curBuffer = _buffer ;
+            pReadBuffer = _buffer + isReadSize ;
+            pCursor = pReadBuffer ;
          }
          else
          {
-            blockSize = _blockSize ;
-            curBuffer = _buffer + _pBlock * _blockSize ;
             if ( ppBucket )
             {
                ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
             }
-            ossMemset ( curBuffer, 0, _blockSize ) ;
+            newReadSize = _blockSize ;
+            pReadBuffer = _buffer + _pBlock * _blockSize ;
+            //ossMemset ( pReadBuffer, 0, _blockSize ) ;
          }
-         rc = _pAccessData->readNextBuffer ( curBuffer, blockSize ) ;
+         rc = _pAccessData->readNextBuffer ( pReadBuffer, newReadSize ) ;
          if ( rc )
          {
-            if ( rc == SDB_EOF && !blockSize )
+            if ( rc == SDB_EOF && newReadSize == 0 )
             {
-               if ( 0 < level )
-               {
-                  rc = SDB_OK ;
-                  break ;
-               }
+               startOffset = _curBuffer - _buffer ;
+               size = pCursor - _curBuffer ;
                goto done ;
             }
             else if ( rc != SDB_EOF )
@@ -226,101 +238,73 @@ clear bucket data" ) ;
                rc = SDB_OK ;
             }
          }
-         _unreadSpace = blockSize ;
+         _unreadSpace = newReadSize ;
          ++_pBlock ;
-         if ( _unreadSpace == 0 )
-         {
-            continue ;
-         }
-         if ( _lackLF )
-         {
-            while ( *pCursor != '{' )
-            {
-               if ( !_unreadSpace )
-               {
-                  rc = SDB_UTIL_PARSE_JSON_INVALID ;
-                  PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
-                  goto error ;
-               }
-               if ( *pCursor == '\n' )
-               {
-                  ++_line ;
-                  _column = 1 ;
-               }
-               if ( *pCursor != '\r' &&
-                    *pCursor != '\n' &&
-                    *pCursor != '\t' &&
-                    *pCursor != 32 &&
-                    *pCursor != _delRecord[0] )
-               {
-                   rc = SDB_UTIL_PARSE_JSON_INVALID ;
-                   PD_LOG ( PDERROR, "Failed json" ) ;
-                   goto error ;
-               }
-               ++pCursor ;
-               --_unreadSpace ;
-            }
-            _lackLF = FALSE ;
-         }
       }
-      if ( isESC )
+
+      if ( _linePriority &&
+           _delRecord[0] == *pCursor )
+      {
+         ++_line ;
+         _column = 1 ;
+         break ;
+      }
+      else if ( isESC )
       {
          isESC = FALSE ;
       }
       else
       {
-         if ( isRecordFirst &&
+         if ( !isRecordFirst &&
               '{' == *pCursor )
          {
-            isRecordFirst = FALSE ;
+            isRecordFirst = TRUE ;
          }
-         switch ( *pCursor )
+         else if ( !isRecordFirst &&
+                   '{' != *pCursor )
          {
-         case '{':
-         case '[':
-            if ( !isString )
+            if ( *pCursor == '\n' )
             {
-               ++level ;
+               ++_line ;
+               _column = 1 ;
             }
-            break ;
-         case '}':
-         case ']':
-            if ( !isString )
+            --_unreadSpace ;
+            ++pCursor ;
+            continue ;
+         }
+         else
+         {
+            switch ( *pCursor )
             {
-               --level ;
-            }
-            break ;
-         case '\"':
-            if ( !isRecordFirst )
-            {
-               if ( isString )
+            case '{':
+            case '[':
+               if ( !isString )
                {
-                  isString = FALSE ;
+                  ++level ;
                }
-               else
+               break ;
+            case '}':
+            case ']':
+               if ( !isString )
                {
-                  isString = TRUE ;
+                  --level ;
                }
-            }
-            break ;
-         case '\\':
-            if ( !isRecordFirst )
-            {
+               break ;
+            case '\"':
+               isString = !isString ;
+               break ;
+            case '\\':
                isESC = TRUE ;
+               break ;
+            default:
+               break ;
             }
-            break ;
-         default:
-            break ;
          }
       }
       --_unreadSpace ;
       ++pCursor ;
-      if ( _linePriority &&
-           _delRecord[0] == *pCursor )
-      {
-         break ;
-      }
    }while ( level > 0 || isRecordFirst ) ;
+
    if ( line )
    {
       *line = _line ;
@@ -331,45 +315,7 @@ clear bucket data" ) ;
    }
    _column += size ;
    startOffset = _curBuffer - _buffer ;
-   size   = pCursor - _curBuffer ;
-
-   do
-   {
-      if ( !_unreadSpace )
-      {
-         _lackLF = TRUE ;
-         break ;
-      }
-      if ( *pCursor == '\n' )
-      {
-         ++_line ;
-         _column = 1 ;
-      }
-      if ( *pCursor == '{' )
-      {
-         break ;
-      }
-      if ( *pCursor != '\r' &&
-           *pCursor != '\n' &&
-           *pCursor != '\t' &&
-           *pCursor != 32 &&
-           *pCursor != _delRecord[0] )
-      {
-         rc = SDB_UTIL_PARSE_JSON_INVALID ;
-         if ( line )
-         {
-            *line = _line ;
-         }
-         if ( column )
-         {
-            *column = _column ;
-         }
-         PD_LOG ( PDERROR, "Failed json" ) ;
-         goto error ;
-      }
-      ++pCursor ;
-      --_unreadSpace ;
-   }while ( *pCursor != '{' ) ;
+   size = pCursor - _curBuffer ;
    _curBuffer =  pCursor ;
 done:
    PD_TRACE_EXITRC ( SDB__UTILJSONPS__GETNEXTRECORD, rc );
@@ -380,8 +326,7 @@ error:
 
 _utilJSONParser::_utilJSONParser() : _curBuffer(NULL),
                                      _pBlock(0),
-                                     _unreadSpace(0),
-                                     _lackLF(FALSE)
+                                     _unreadSpace(0)
 {
 }
 

@@ -1366,7 +1366,7 @@ if need the space string field, please use delchar" ) ;
                else
                {
                   PD_LOG ( PDERROR, "The field can not be an empty string, \
-if need the space string field, please use \"" ) ;
+if need the space string field, please use \"\"" ) ;
                }
                rc = SDB_INVALIDARG ;
                goto error ;

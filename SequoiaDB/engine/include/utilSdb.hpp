@@ -204,7 +204,7 @@ public:
                           BOOLEAN require,
                           const CHAR **ppSwitch,
                           INT32 switchNum,
-                          CHAR *pDefaultString = NULL ) ;
+                          INT32 defaultValue = 0 ) ;
    INT32 getArgInt( const CHAR *pKey, INT32 *pVarValue ) ;
    INT32 getArgChar( const CHAR *pKey, CHAR *pVarValue ) ;
    INT32 getArgBool( const CHAR *pKey, BOOLEAN *pVarValue ) ;

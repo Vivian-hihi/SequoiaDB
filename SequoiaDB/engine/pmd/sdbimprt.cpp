@@ -63,6 +63,7 @@
 #define OPTION_COLLECTION        "clname"
 #define OPTION_TYPE              FIELD_NAME_LTYPE
 #define OPTION_INSERTNUM         "insertnum"
+#define OPTION_ERRORSTOP         "errorstop"
 
 #define DEFAULT_HOSTNAME         "localhost"
 #define DEFAULT_SVCNAME          "11810"
@@ -77,20 +78,12 @@ const CHAR *SDBIMPORT_TYPE_STR[] =
 
 INT32 on_init( void *pData )
 {
-   INT32 rc = SDB_OK ;
-done:
-   return rc ;
-error:
-   goto done ;
+   return SDB_OK ;
 }
 
 INT32 on_preparation( void *pData )
 {
-   INT32 rc = SDB_OK ;
-done:
-   return rc ;
-error:
-   goto done ;
+   return SDB_OK ;
 }
 
 INT32 on_main( void *pData )
@@ -121,8 +114,10 @@ INT32 on_main( void *pData )
    utilSdbObj.getArgBool( OPTION_SPARSE,       &imprtArg.autoAddField ) ;
    utilSdbObj.getArgBool( OPTION_EXTRA,        &imprtArg.autoCompletion ) ;
    utilSdbObj.getArgBool( OPTION_LINEPRIORITY, &imprtArg.linePriority ) ;
+   utilSdbObj.getArgBool( OPTION_ERRORSTOP,    &imprtArg.errorStop ) ;
 
-   if ( !imprtArg.isHeaderline && !imprtArg.pFields )
+   if ( imprtArg.type == MIGIMPRT_CSV &&
+        !imprtArg.isHeaderline && !imprtArg.pFields )
    {
       ossPrintf ( "if not read first line,than must input fields" ) ;
       PD_LOG ( PDERROR, "if not read first line,than must input fields" ) ;
@@ -152,11 +147,7 @@ error:
 }
 INT32 on_end( void *pData )
 {
-   INT32 rc = SDB_OK ;
-done:
-   return rc ;
-error:
-   goto done ;
+   return SDB_OK ;
 }
 
 #define EXPLAIN_HOSTNAME         "database host name ( default: localhost )"
@@ -165,17 +156,18 @@ error:
 #define EXPLAIN_PASSWORD         "databse password"
 #define EXPLAIN_DELCHAR          "string delimiter ( default: \" )( csv only )"
 #define EXPLAIN_DELFIELD         "field delimiter ( default: , )( csv only )"
-#define EXPLAIN_DELRECORD        "record delimiter ( default: '\\n' )"
+#define EXPLAIN_DELRECORD        "record delimiter ( default: '\\n' )( csv only )"
 #define EXPLAIN_COLLECTSPACE     "collection space name"
 #define EXPLAIN_COLLECTION       "collection name"
 #define EXPLAIN_INSERTNUM        "batch insert records number, minimun 1, maximum 100000, default: 100"
 #define EXPLAIN_FILENAME         "load file name"
-#define EXPLAIN_TYPE             "type of file to load, default: json (json,csv)"
+#define EXPLAIN_TYPE             "type of file to load, default: csv (json,csv)"
 #define EXPLAIN_FIELDS           "comma separated list of field names e.g. \"--fields name,age\" or e.g. \"--fields name string,age int default 18\" ( csv only )"
 #define EXPLAIN_HEADERLINE       "first line in input file is a header, if fill in the --fields, it will skip the first line of the file, default: false ( csv only )"
 #define EXPLAIN_SPARSE           "auto add fields, default: true ( csv only )"
 #define EXPLAIN_EXTRA            "auto add value, default: false ( csv only )"
 #define EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
+#define EXPLAIN_ERRORSTOP        "if an error is stopped, default false"
 
 INT32 main ( INT32 argc, CHAR **argv )
 {
@@ -201,12 +193,13 @@ INT32 main ( INT32 argc, CHAR **argv )
    APPENDARGSTRING( utilSdbObj, OPTION_COLLECTION,   OPTION_COLLECTION ",l",   EXPLAIN_COLLECTION,       TRUE,  -1,                  NULL ) ;
    APPENDARGINT   ( utilSdbObj, OPTION_INSERTNUM,    OPTION_INSERTNUM ",n",    EXPLAIN_INSERTNUM,        FALSE, 1,                   100000,   100 ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_FILENAME,     OPTION_FILENAME,          EXPLAIN_FILENAME,         TRUE,  -1,                  NULL ) ;
-   APPENDARGSWITCH( utilSdbObj, OPTION_TYPE,         OPTION_TYPE,              EXPLAIN_TYPE,             FALSE, SDBIMPORT_TYPE_STR,  2,   "json" ) ;
+   APPENDARGSWITCH( utilSdbObj, OPTION_TYPE,         OPTION_TYPE,              EXPLAIN_TYPE,             FALSE, SDBIMPORT_TYPE_STR,  2,        MIGIMPRT_CSV ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_FIELD,        OPTION_FIELD,             EXPLAIN_FIELDS,           FALSE, -1,                  NULL ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_HEADERLINE,   OPTION_HEADERLINE,        EXPLAIN_HEADERLINE,       FALSE, FALSE ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_SPARSE,       OPTION_SPARSE,            EXPLAIN_SPARSE,           FALSE, TRUE  ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_EXTRA,        OPTION_EXTRA,             EXPLAIN_EXTRA,            FALSE, FALSE ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_LINEPRIORITY, OPTION_LINEPRIORITY,      EXPLAIN_LINEPRIORITY,     FALSE, TRUE  ) ;
+   APPENDARGBOOL  ( utilSdbObj, OPTION_ERRORSTOP,    OPTION_ERRORSTOP,         EXPLAIN_ERRORSTOP,        FALSE, FALSE  ) ;
 
    rc = utilSdbObj.init( setting, NULL ) ;
    if ( rc )

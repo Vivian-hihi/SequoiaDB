@@ -64,6 +64,7 @@ struct migImprtArg : public SDBObject
    BOOLEAN   linePriority ;
    BOOLEAN   autoAddField ;
    BOOLEAN   autoCompletion ;
+   BOOLEAN   errorStop ;
    CHAR     *pHostname ;
    CHAR     *pSvcname ;
    CHAR     *pUser ;
@@ -81,6 +82,7 @@ struct migImprtArg : public SDBObject
                    linePriority(TRUE),
                    autoAddField(TRUE),
                    autoCompletion(TRUE),
+                   errorStop(TRUE),
                    pHostname(NULL),
                    pSvcname(NULL),
                    pUser(NULL),

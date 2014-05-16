@@ -266,7 +266,7 @@ INT32 utilSdbTemplet::appendArgSwitch( const CHAR *pKey,
                                        BOOLEAN require,
                                        const CHAR **ppSwitch,
                                        INT32 switchNum,
-                                       CHAR *pDefaultString )
+                                       INT32 defaultValue )
 {
    INT32 rc = SDB_OK ;
    util_var *pVar = SDB_OSS_NEW util_var() ;
@@ -282,8 +282,8 @@ INT32 utilSdbTemplet::appendArgSwitch( const CHAR *pKey,
    pVar->pCmd          = pCmd ;
    pVar->pExplain      = pExplain ;
    pVar->ppSwitch      = ppSwitch ;
-   pVar->pVarString    = pDefaultString ;
    pVar->switchNum     = switchNum ;
+   pVar->varInt        = defaultValue ;
    _argList.push_back( pVar ) ;
 done:
    return rc ;
@@ -588,6 +588,7 @@ of 16 hex format ( e.g. 0x09 )"OSS_NEWLINE, pVar->pKey ) ;
          {
             pTempStr = vm[ pVar->pKey ].as<std::string>().c_str() ;
             tempStrSize = ossStrlen( pTempStr ) ;
+            isFind = FALSE ;
             for ( INT32 i = 0; i < pVar->switchNum; ++i )
             {
                if ( ( tempStrSize == ossStrlen( pVar->ppSwitch[ i ] ) ) &&
