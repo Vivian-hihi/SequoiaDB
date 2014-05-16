@@ -206,7 +206,7 @@ namespace engine
          _dpsLogWrapper                   *_pDPSCB ;
          _monDBCB                         *_pMonDBCB ;
          clsMemPool                       _memPool ;
-         _clsReplayer                     _replayer ;
+         _clsReplayer                     *_replayer ;
          CLS_BUCKET_STATUS                _status ;
          UINT32                           _maxReplSync ;
 

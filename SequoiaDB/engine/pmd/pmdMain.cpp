@@ -35,28 +35,14 @@
    Last Changed =
 
 *******************************************************************************/
-#include "core.hpp"
-#include <iostream>
-#include <string>
 #include "ossVer.h"
 #include "pmd.hpp"
-#include "pmdEDUMgr.hpp"
-#include "pd.hpp"
-#include "msgMessage.hpp"
-#include "../bson/bson.h"
-#include "ossStackDump.hpp"
-#include "ossEDU.hpp"
 #include "rtn.hpp"
-#include "ossAtomic.hpp"
 #include "pmdCommon.hpp"
-#include "ossProc.hpp"
 #include "pmdStartup.hpp"
-#include "catDef.hpp"
-#include "authDef.hpp"
+#include "optQgmStrategy.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "optQgmStrategy.hpp"
-#include "pmdCB.hpp"
 #include "omManager.hpp"
 #include "pmdController.hpp"
 

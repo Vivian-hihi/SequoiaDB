@@ -56,14 +56,13 @@ namespace engine
 
    _clsReplayer::_clsReplayer( BOOLEAN useDps )
    {
-      pmdKRCB *krcb = pmdGetKRCB() ;
-      _dmsCB = pmdGetKRCB()->getDMSCB() ;
+      _dmsCB = sdbGetDMSCB() ;
       _dpsCB = NULL ;
       if ( useDps )
       {
-         _dpsCB = krcb->getDPSCB() ;
+         _dpsCB = sdbGetDPSCB() ;
       }
-      _monDBCB = krcb->getMonDBCB () ;
+      _monDBCB = pmdGetKRCB()->getMonDBCB () ;
    }
 
    _clsReplayer::~_clsReplayer()
@@ -73,7 +72,7 @@ namespace engine
 
    void _clsReplayer::enableDPS ()
    {
-      _dpsCB = pmdGetKRCB()->getDPSCB() ;
+      _dpsCB = sdbGetDPSCB() ;
    }
 
    void _clsReplayer::disableDPS ()

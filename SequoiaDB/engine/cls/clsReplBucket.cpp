@@ -153,6 +153,7 @@ namespace engine
       _bucketSize = 0 ;
       _bitSize    = 0 ;
       _status     = CLS_BUCKET_CLOSED ;
+      _replayer   = NULL ;
       _maxReplSync= 0 ;
       _maxSubmitOffset = 0 ;
 
@@ -191,6 +192,12 @@ namespace engine
       _latchBucket.clear() ;
 
       _memPool.final() ;
+
+      if ( _replayer )
+      {
+         SDB_OSS_DEL _replayer ;
+         _replayer = NULL ;
+      }
    }
 
    void _clsBucket::enforceMaxReplSync( UINT32 maxReplSync )
@@ -216,6 +223,14 @@ namespace engine
       _pMonDBCB              = pmdGetKRCB()->getMonDBCB() ;
       _maxReplSync           = pmdGetOptionCB()->maxReplSync() ;
       _bucketSize            = pmdGetOptionCB()->replBucketSize() ;
+
+      _replayer              = SDB_OSS_NEW clsReplayer() ;
+      if ( !_replayer )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to alloc memory" ) ;
+         goto error ;
+      }
 
       if ( !ossIsPowerOf2( _bucketSize, &_bitSize ) )
       {
@@ -673,7 +688,7 @@ namespace engine
 
       if ( CLS_BUCKET_ROLLBACKING != _status )
       {
-         rc = _replayer.replay( pHeader, cb, FALSE ) ;
+         rc = _replayer->replay( pHeader, cb, FALSE ) ;
          SDB_ASSERT( SDB_OK == rc, "Reply dps log failed" ) ;
 
          if ( rc )
@@ -693,7 +708,7 @@ namespace engine
       }
       else
       {
-         rc = _replayer.rollback( pHeader, cb ) ;
+         rc = _replayer->rollback( pHeader, cb ) ;
          SDB_ASSERT( SDB_OK == rc, "Rollback dps log failed" ) ;
          _allCount.dec() ;
          _memPool.release( pData, len ) ;

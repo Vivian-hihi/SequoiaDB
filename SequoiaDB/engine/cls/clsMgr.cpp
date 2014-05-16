@@ -425,8 +425,12 @@ namespace engine
                                    SDB_EVENT_OCCUR_TYPE type )
    {
       PD_TRACE_ENTRY ( SDB__CLSMGR__ONPRMCHG );
-      PD_LOG ( PDEVENT, "Node change to [%s]",
-               primary ? "Primary" : "Secondary" ) ;
+
+      if ( SDB_EVT_OCCUR_AFTER == type )
+      {
+         PD_LOG ( PDEVENT, "Node change to [%s]",
+                  primary ? "Primary" : "Secondary" ) ;
+      }
 
       if ( primary && SDB_EVT_OCCUR_BEFORE == type )
       {
