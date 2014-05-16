@@ -4090,10 +4090,15 @@ namespace engine
          rc = rc ? rc : retCode;
          if ( SDB_OK == rc )
          {
-            // update catalog group
-            rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo ) ;
-            // notify all nodes
-            rtnCataChangeNtyToAllNodes( cb ) ;
+            if ( 0 == ossStrcmp( boNodeConfig.getField(
+                                 PMD_OPTION_ROLE ).valuestr(),
+                                 CATALOG_GROUPNAME ) )
+            {
+               // update catalog group
+               rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo ) ;
+               // notify all nodes
+               rtnCataChangeNtyToAllNodes( cb ) ;
+            }
             break ;
          }
 
