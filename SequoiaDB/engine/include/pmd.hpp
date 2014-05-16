@@ -119,7 +119,7 @@ namespace engine
       void*             getOrgPointByType( SDB_CB_TYPE type ) ;
       BOOLEAN           isCBValue( SDB_CB_TYPE type ) const ;
 
-      INT32             registerCB( IControlBlock *pCB ) ;
+      INT32             registerCB( IControlBlock *pCB, void *pOrg ) ;
 
       virtual void      onConfigChange ( UINT32 changeID ) ;
       virtual void      onConfigInit () ;
