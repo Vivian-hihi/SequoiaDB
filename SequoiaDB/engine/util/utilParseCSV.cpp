@@ -169,7 +169,7 @@ INT32 _utilCSVParser::getNextRecord ( UINT32 &startOffset,
    UINT32      isReadSize     = 0 ;
    UINT32      useBlockNum    = 0 ;
    CHAR       *pCursor        = _curBuffer ;
-   CHAR       *curBuffer      = NULL ;
+   CHAR       *pReadBuffer     = NULL ;
 
    do
    {
@@ -222,8 +222,9 @@ size %d, clear bucket data", _bufferSize ) ;
                }
                //ossMemset ( _buffer + isReadSize, 0, newReadSize ) ;
             }
-            curBuffer = _buffer + isReadSize ;
-            pCursor = curBuffer ;
+            _curBuffer = _buffer ;
+            pReadBuffer = _buffer + isReadSize ;
+            pCursor = pReadBuffer ;
          }
          else
          {
@@ -232,10 +233,10 @@ size %d, clear bucket data", _bufferSize ) ;
                ppBucket[_pBlock]->wait_to_get_exclusive_lock() ;
             }
             newReadSize = _blockSize ;
-            curBuffer = _buffer + _pBlock * _blockSize ;
+            pReadBuffer = _buffer + _pBlock * _blockSize ;
             //ossMemset ( curBuffer, 0, _blockSize ) ;
          }
-         rc = _pAccessData->readNextBuffer ( curBuffer, newReadSize ) ;
+         rc = _pAccessData->readNextBuffer ( pReadBuffer, newReadSize ) ;
          if ( rc )
          {
             if ( rc == SDB_EOF && newReadSize == 0 )
