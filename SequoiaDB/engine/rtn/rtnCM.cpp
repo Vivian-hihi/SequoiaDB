@@ -591,8 +591,8 @@ namespace CLSMGR
                   {
                      svcList[svcname].pid = pid ;
                      OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
-                     PD_LOG ( PDEVENT, "Successfully to restart SequoiaDB node, \
-   svcname = %s", svcname.c_str() ) ;
+                     PD_LOG ( PDEVENT, "Successfully to restart SequoiaDB "
+                              "node, svcname = %s", svcname.c_str() ) ;
                   }
                   else
                   { // restart failed
@@ -692,8 +692,9 @@ namespace CLSMGR
                      { // start failed, erase it
                         svcList[svcname].pid = OSS_INVALID_TID ;
                         svcList[svcname].status = 0 ;
-                        PD_LOG ( PDERROR, "Sequoiadb has been stopped, Failed to \
-   start sequoiadb, svcname = %s", svcname.c_str() ) ;
+                        PD_LOG ( PDERROR, "Sequoiadb has been stopped, "
+                                 "Failed to start sequoiadb, svcname = %s",
+                                 svcname.c_str() ) ;
                         goto error ;
                      }
                   }
@@ -1329,6 +1330,11 @@ namespace CLSMGR
          PD_LOG( PDERROR, "Failed to rm conf path:%s", confPath ) ;
          goto error ;
       }
+
+      // remove monithor 
+      listLocker.get () ;
+      svcList.erase( svcname ) ;
+      listLocker.release () ;
 
    done:
       PD_TRACE_EXITRC ( SDB_SDBRM, rc );
@@ -2179,9 +2185,8 @@ namespace CLSMGR
                rc = SDB_OK;
                if ( autoStart )
                {
-                  PD_LOG( PDEVENT,
-                        "start the node(svcname=%s)",
-                        svcnameLst[i].c_str() );
+                  PD_LOG( PDEVENT, "Start the node(svcname=%s)",
+                          svcnameLst[i].c_str() ) ;
                   /*boost::thread *pthrd = new boost::thread( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
                   thrdLst.push_back( pthrd );*/
                   boost::thread thrd( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
@@ -2190,16 +2195,14 @@ namespace CLSMGR
             }
             else
             {
-               PD_LOG( PDERROR,
-                     "failed to get process info(svcname=%s)",
-                     svcnameLst[i].c_str() );
+               PD_LOG( PDERROR, "Failed to get process info(svcname=%s)",
+                       svcnameLst[i].c_str() );
             }
          }
          else
          {
-            PD_LOG( PDEVENT,
-                  "node(svcname=%s) has already started, do nothing!",
-                  svcnameLst[i].c_str() );
+            PD_LOG( PDEVENT, "Node(svcname=%s) has already started, "
+                    "do nothing!", svcnameLst[i].c_str() ) ;
          }
       }
       /*for ( i = 0; i < thrdLst.size(); i++ )
