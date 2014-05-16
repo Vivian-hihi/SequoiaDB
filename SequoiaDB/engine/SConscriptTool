@@ -104,9 +104,6 @@ utilFiles = [
 dpsFiles = [
       "dps/dpsDump.cpp",
       "dps/dpsLogRecord.cpp",
-      "tools/sdbDpsFilter.cpp",
-      "tools/sdbDpsLogFilter.cpp",
-      "tools/sdbDpsOption.cpp"
       ]
 
 clientFiles = [
@@ -309,7 +306,7 @@ sdbmemcheckFiles = [
       ]
 
 sdbdpsdumpFiles = [
-      "tools/sdbDpsFilterMain.cpp"
+      "tools/sdbDpsDump.cpp"
       ]
 
 #BSON
