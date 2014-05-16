@@ -969,7 +969,7 @@ namespace engine
          {
             setCatlogInfo ( it->second._id, it->second._host,
                             it->second._service[MSG_ROUTE_CAT_SERVICE] ) ;
-            optCB->setCatAddr( it->second._host.c_str(),
+            optCB->setCatAddr( it->second._host,
                                it->second._service[
                                MSG_ROUTE_CAT_SERVICE].c_str() ) ;
             ++it ;
