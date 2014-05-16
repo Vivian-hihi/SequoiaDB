@@ -188,7 +188,9 @@ namespace engine
       }
       OSS_INLINE _SDB_DMSCB *getDMSCB ()
       {
-         return dynamic_cast< _SDB_DMSCB* > ( getCBByType( SDB_CB_DMS ) ) ;
+         _SDB_DMSCB *p = dynamic_cast< _SDB_DMSCB* > (
+            getCBByType( SDB_CB_DMS ) ) ;
+         return p ;
       }
       OSS_INLINE _SDB_RTNCB *getRTNCB ()
       {
