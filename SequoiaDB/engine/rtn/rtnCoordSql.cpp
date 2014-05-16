@@ -45,7 +45,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB();
       SQL_CB *sqlcb = krcb->getSqlCB() ;
-      NodeID curNodeID = krcb->getClsCB()->getNodeID() ;
+      NodeID curNodeID = pmdGetNodeID() ;
       MsgHeader *header = (MsgHeader *)pReceiveBuffer;
       CHAR *sql = NULL ;
       SINT64 contextID = -1 ;
