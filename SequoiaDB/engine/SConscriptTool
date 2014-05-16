@@ -18,10 +18,6 @@ migFiles = [
       "mig/migImport.cpp"
       ]
 
-#migLoadFiles = [
-#      "mig/migImportLoad.cpp"
-#      ]
-
 sdbExportMain = [
       "pmd/sdbexprt.cpp"
       ]
@@ -29,10 +25,6 @@ sdbExportMain = [
 sdbImportMain = [
       "pmd/sdbimprt.cpp"
       ]
-
-#sdbImportLoad = [
-#      "pmd/sdbimprtLoad.cpp"
-#      ]
 
 sdbLoadMain = [
       "pmd/sdbLoad.cpp"
@@ -333,8 +325,6 @@ toolEnv.StaticLibrary('util', utilFiles)
 toolEnv.StaticLibrary('mig', migFiles)
 #msg
 toolEnv.StaticLibrary('msg', msgFiles)
-#mig2load
-#toolEnv.StaticLibrary('msgload', migLoadFiles)
 #dps
 toolEnv.StaticLibrary('dps', dpsFiles)
 #ncurses
@@ -348,10 +338,6 @@ sdbexprt = toolEnv.Program("sdbexprt", sdbExportMain,
 sdbimprt = toolEnv.Program("sdbimprt", sdbImportMain,
          LIBDEPS=["bson","mig","oss","pd","util","client"],
          _LIBDEPS='$_LIBDEPS_OBJS' )
-
-#sdbload = toolEnv.Program("sdbload", sdbImportLoad,
-#         LIBDEPS=["bson","msgload","oss","pd","util","client"],
-#         _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbload2 = toolEnv.Program("sdbload2", sdbLoadMain,
          LIBDEPS=["bson","oss","pd","util","client"],
@@ -398,7 +384,6 @@ sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
 
 toolEnv.Install( '#/bin', sdbexprt )
 toolEnv.Install( '#/bin', sdbimprt )
-#toolEnv.Install( '#/bin', sdbload )
 toolEnv.Install( '#/bin', sdbstart )
 toolEnv.Install( '#/bin', sdbstop )
 toolEnv.Install( '#/bin', sdblist )
