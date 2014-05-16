@@ -1061,8 +1061,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_PARSECATCONF, "catNodeManager::parseCatalogConf" )
    INT32 catNodeManager::parseCatalogConf( CHAR *pData,
-                                          const SINT64 sDataSize,
-                                          SINT64 &sParseBytes )
+                                           const SINT64 sDataSize,
+                                           SINT64 &sParseBytes )
    {
       SINT64 sEnd = 0;
       SINT64 sBegin = 0;
@@ -1122,25 +1122,28 @@ namespace engine
       BSONObjBuilder bobUpdater;
       BSONObj boMatcher;
       BSONObj boUpdater;
-      BSONObj boHint;
+      BSONObj boHint ;
+      pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+
       PD_CHECK( beGrpId.isNumber(), SDB_INVALIDARG, error, PDERROR,
-               "failed to get the field(%s), save group-info failed",
-               FIELD_NAME_GROUPID );
-      bobMatcher.append( beGrpId );
-      boMatcher = bobMatcher.obj();
+                "Failed to get the field(%s), save group-info failed",
+                FIELD_NAME_GROUPID ) ;
+      bobMatcher.append( beGrpId ) ;
+      boMatcher = bobMatcher.obj() ;
 
       bobUpdater.append("$set", boGroupInfo );
       boUpdater = bobUpdater.obj();
       rc = rtnUpdate( CAT_NODE_INFO_COLLECTION, boMatcher, boUpdater,
-                     boHint, FLG_UPDATE_UPSERT, _pEduCB, _pDmsCB,
-                     _pDpsCB, w );
-      PD_RC_CHECK(rc, PDERROR, "failed to update the group(%d) info",
-                  beGrpId.number() );
+                      boHint, FLG_UPDATE_UPSERT, cb, _pDmsCB,
+                      _pDpsCB, w ) ;
+      PD_RC_CHECK( rc, PDERROR, "failed to update the group(%d) info",
+                   beGrpId.number() ) ;
+
    done:
       PD_TRACE_EXITRC ( SDB_CATNODEMGR_SAVEGRPINFO, rc ) ;
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATNODEMGR_GENGROUPINFO, "catNodeManager::generateGroupInfo" )
