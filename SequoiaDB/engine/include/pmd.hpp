@@ -85,7 +85,7 @@ namespace engine
    /*
       Register db to krcb
    */
-   #define PMD_REGISTER_CB(pCB)  pmdGetKRCB()->registerCB(pCB)
+   #define PMD_REGISTER_CB(pCB)  pmdGetKRCB()->registerCB(pCB, (void*)pCB)
 
    class _dpsLogWrapper ;
    class _clsMgr ;
@@ -116,6 +116,7 @@ namespace engine
       BOOLEAN isActive() const { return _isActive ; }
 
       IControlBlock*    getCBByType( SDB_CB_TYPE type ) ;
+      void*             getOrgPointByType( SDB_CB_TYPE type ) ;
       BOOLEAN           isCBValue( SDB_CB_TYPE type ) const ;
 
       INT32             registerCB( IControlBlock *pCB ) ;
@@ -128,6 +129,7 @@ namespace engine
 
    private:
       IControlBlock                 *_arrayCBs[ SDB_CB_MAX ] ;
+      void                          *_arrayOrgs[ SDB_CB_MAX ] ;
       BOOLEAN                       _init ;
       BOOLEAN                       _isActive ;
 
@@ -188,11 +190,11 @@ namespace engine
       }
       OSS_INLINE _SDB_DMSCB *getDMSCB ()
       {
-         return ( _SDB_DMSCB* )getCBByType( SDB_CB_DMS ) ;
+         return ( _SDB_DMSCB* )getOrgPointByType( SDB_CB_DMS ) ;
       }
       OSS_INLINE _SDB_RTNCB *getRTNCB ()
       {
-         return ( _SDB_RTNCB* )getCBByType( SDB_CB_RTN ) ;
+         return ( _SDB_RTNCB* )getOrgPointByType( SDB_CB_RTN ) ;
       }
       OSS_INLINE monConfigCB * getMonCB()
       {
@@ -204,15 +206,15 @@ namespace engine
       }
       OSS_INLINE _clsMgr *getClsCB ()
       {
-         return ( _clsMgr* )getCBByType( SDB_CB_CLS ) ;
+         return ( _clsMgr* )getOrgPointByType( SDB_CB_CLS ) ;
       }
       OSS_INLINE _dpsLogWrapper* getDPSCB ()
       {
-         return ( _dpsLogWrapper* )getCBByType( SDB_CB_DPS ) ;
+         return ( _dpsLogWrapper* )getOrgPointByType( SDB_CB_DPS ) ;
       }
       OSS_INLINE _bpsCB *getBPSCB ()
       {
-         return ( _bpsCB* )getCBByType( SDB_CB_BPS ) ;
+         return ( _bpsCB* )getOrgPointByType( SDB_CB_BPS ) ;
       }
       OSS_INLINE _pmdOptionsMgr *getOptionCB()
       {
@@ -220,31 +222,31 @@ namespace engine
       }
       OSS_INLINE sdbCatalogueCB *getCATLOGUECB()
       {
-         return ( sdbCatalogueCB* )getCBByType( SDB_CB_CATALOGUE ) ;
+         return ( sdbCatalogueCB* )getOrgPointByType( SDB_CB_CATALOGUE ) ;
       }
       OSS_INLINE _CoordCB *getCoordCB()
       {
-         return ( _CoordCB* )getCBByType( SDB_CB_COORD ) ;
+         return ( _CoordCB* )getOrgPointByType( SDB_CB_COORD ) ;
       }
       OSS_INLINE _sqlCB *getSqlCB()
       {
-         return ( _sqlCB* )getCBByType( SDB_CB_SQL ) ;
+         return ( _sqlCB* )getOrgPointByType( SDB_CB_SQL ) ;
       }
       OSS_INLINE _authCB *getAuthCB()
       {
-         return ( _authCB* )getCBByType( SDB_CB_AUTH ) ;
+         return ( _authCB* )getOrgPointByType( SDB_CB_AUTH ) ;
       }
       OSS_INLINE dpsTransCB *getTransCB()
       {
-         return ( dpsTransCB* )getCBByType( SDB_CB_TRANS ) ;
+         return ( dpsTransCB* )getOrgPointByType( SDB_CB_TRANS ) ;
       }
       OSS_INLINE aggrBuilder *getAggrCB()
       {
-         return ( aggrBuilder* )getCBByType( SDB_CB_AGGR ) ;
+         return ( aggrBuilder* )getOrgPointByType( SDB_CB_AGGR ) ;
       }
       OSS_INLINE _spdFMPMgr *getFMPCB()
       {
-         return ( _spdFMPMgr* )getCBByType( SDB_CB_FMP ) ;
+         return ( _spdFMPMgr* )getOrgPointByType( SDB_CB_FMP ) ;
       }
 
       INT32 isBusinessOK() const
