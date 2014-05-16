@@ -1836,7 +1836,7 @@ error:
 
 INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, void *pbson )
 {
-   INT32   rc = SDB_OK ;
+   INT32 rc = SDB_OK ;
    CHAR *pBsonBuf = NULL ;
    bson *pObj = (bson *)pbson ;
    bson obj ;
