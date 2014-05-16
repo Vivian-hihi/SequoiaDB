@@ -244,7 +244,7 @@ namespace engine
       SDB_ASSERT ( disconnect, "disconnect can't be NULL" )
       SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" )
       *disconnect          = FALSE ;
-      NodeID curNodeID     = krcb->getClsCB()->getNodeID() ;
+      NodeID curNodeID     = pmdGetNodeID() ;
       // cast the buffer into MsgHeader first
       // here we know the buffer must be greater than 4 bytes, so it's safe to
       // do direct cast and validate size>headersize later
