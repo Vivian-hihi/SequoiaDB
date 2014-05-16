@@ -618,11 +618,8 @@ namespace engine
          ++it ;
       }
 
-   done :
       PD_TRACE_EXITRC ( SDB_RTNUNLOADALLCS, rc );
       return rc ;
-   error :
-      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNFINDCL, "rtnFindCollection" )
