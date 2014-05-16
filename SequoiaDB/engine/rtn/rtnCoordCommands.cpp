@@ -3762,55 +3762,53 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCONFN_GETNCONF, "rtnCoordCMDConfigNode::getNodeConf" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCONFN_GETNCONF, "rtnCoordCMDConfigNode::getNodeConf" )
    INT32 rtnCoordCMDConfigNode::getNodeConf( char *pQuery,
-                                             bson::BSONObj &nodeConf,
+                                             BSONObj &nodeConf,
                                              CoordGroupInfoPtr &catGroupInfo )
    {
-      INT32 rc            = SDB_OK;
+      INT32 rc             = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCONFN_GETNCONF ) ;
-      const CHAR *roleStr = NULL ;
-      SDB_ROLE role = SDB_ROLE_DATA;
+      const CHAR *roleStr  = NULL ;
+      SDB_ROLE role        = SDB_ROLE_DATA ;
+
       try
       {
-         // host name and group name are going to be skiped
-         std::string strHostKey(FIELD_NAME_HOST);
-         std::string strGroupNameKey(FIELD_NAME_GROUPNAME);
-         std::string strCataGroupName( CATALOG_GROUPNAME );
          // role and catalogaddr will be added if user doesn't provide
-         std::string strRoleKey(PMD_OPTION_ROLE);
-         std::string strCatalogAddrKey(PMD_OPTION_CATALOG_ADDR);
-         BSONObj boInput(pQuery);
-         BSONObjBuilder bobNodeConf;
-         BSONObjIterator iter( boInput );
+         BSONObj boInput( pQuery ) ;
+         BSONObjBuilder bobNodeConf ;
+         BSONObjIterator iter( boInput ) ;
          BOOLEAN hasRoleKey = FALSE ;
          BOOLEAN hasCatalogAddrKey = FALSE ;
+
          // loop through each input parameter
          while ( iter.more() )
          {
             BSONElement beField = iter.next();
             std::string strFieldName(beField.fieldName());
             // make sure to skip hostname and group name
-            if ( strFieldName == strHostKey )
+            if ( strFieldName == FIELD_NAME_HOST )
             {
                continue;
             }
-            if ( strFieldName == strGroupNameKey )
+            if ( strFieldName == FIELD_NAME_GROUPNAME )
             {
-               if ( 0 == strCataGroupName.compare( beField.valuestr() ))
+               if ( 0 == ossStrcmp( CATALOG_GROUPNAME, beField.valuestr() ) )
                {
-                  role = SDB_ROLE_CATALOG;
+                  role = SDB_ROLE_CATALOG ;
                }
-               continue;
+               continue ;
             }
+
             // append into beField
             bobNodeConf.append( beField );
+
             // for the ones we need to add default value
-            if ( strRoleKey == strFieldName )
+            if ( PMD_OPTION_ROLE == strFieldName )
             {
                hasRoleKey = TRUE ;
             }
-            else if ( strCatalogAddrKey == strFieldName )
+            else if ( PMD_OPTION_CATALOG_ADDR == strFieldName )
             {
                hasCatalogAddrKey = TRUE ;
             }
@@ -3823,24 +3821,24 @@ namespace engine
             {
                goto error ;
             }
-            bobNodeConf.append ( strRoleKey, roleStr ) ;
+            bobNodeConf.append ( PMD_OPTION_ROLE, roleStr ) ;
          }
          // assign catalog address, make sure to include all catalog nodes
          // that configured in the system ( for HA ), each system should be
-         // separated by "," and sit in a single key: strCatalogAddrKey
+         // separated by "," and sit in a single key: PMD_OPTION_CATALOG_ADDR
          if ( !hasCatalogAddrKey )
          {
+             MsgRouteID routeID ;
             clsGroupItem *groupItem = catGroupInfo->getGroupItem() ;
             std::string cataNodeLst = "";
             UINT32 i = 0;
             if ( catGroupInfo->getGroupSize() == 0 )
             {
-               rc = SDB_CLS_EMPTY_GROUP;
-               PD_LOG ( PDERROR, "get catalog group info failed(rc=%d)", rc );
+               rc = SDB_CLS_EMPTY_GROUP ;
+               PD_LOG ( PDERROR, "Get catalog group info failed(rc=%d)", rc ) ;
                goto error ;
             }
 
-            MsgRouteID routeID ;
             routeID.value = MSG_INVALID_ROUTEID ;
             string host ;
             string service ;
@@ -3851,34 +3849,32 @@ namespace engine
             {
                if ( i > 0 )
                {
-                  cataNodeLst += ",";
+                  cataNodeLst += "," ;
                }
-
                cataNodeLst += host + ":" + service ;
-
                ++i ;
             }
-            bobNodeConf.append( PMD_OPTION_CATALOG_ADDR, cataNodeLst );
+            bobNodeConf.append( PMD_OPTION_CATALOG_ADDR, cataNodeLst ) ;
          }
-         nodeConf = bobNodeConf.obj();
+         nodeConf = bobNodeConf.obj() ;
       }
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "occured unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR, "Occured unexpected error:%s", e.what() );
          goto error ;
       }
+
    done :
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCONFN_GETNCONF, rc ) ;
-      return rc;
+      return rc ;
    error :
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCONFN_GETNINFO, "rtnCoordCMDConfigNode::getNodeInfo" )
-   INT32 rtnCoordCMDConfigNode::getNodeInfo( char *pQuery, bson::BSONObj &NodeInfo )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCONFN_GETNINFO, "rtnCoordCMDConfigNode::getNodeInfo" )
+   INT32 rtnCoordCMDConfigNode::getNodeInfo( char *pQuery,
+                                             BSONObj &NodeInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCONFN_GETNINFO ) ;
@@ -3892,8 +3888,7 @@ namespace engine
             if ( beGroupName.eoo() || beGroupName.type()!=String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "Failed to get the field(%s)",
                         FIELD_NAME_GROUPNAME );
                break;
             }
@@ -3903,8 +3898,7 @@ namespace engine
             if ( beHostName.eoo() || beGroupName.type()!=String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "Failed to get the field(%s)",
                         FIELD_NAME_HOST );
                break;
             }
@@ -3914,8 +3908,7 @@ namespace engine
             if ( beLocalSvc.eoo() || beLocalSvc.type()!=String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "Failed to get the field(%s)",
                         PMD_OPTION_SVCNAME );
                break;
             }
@@ -3942,8 +3935,7 @@ namespace engine
             if ( beDBPath.eoo() || beDBPath.type()!=String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
+               PD_LOG ( PDERROR, "Failed to get the field(%s)",
                         PMD_OPTION_DBPATH );
                break;
             }
@@ -3953,9 +3945,7 @@ namespace engine
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                  "occured unexpected error:%s",
-                  e.what() );
+            PD_LOG ( PDERROR, "Occured unexpected error:%s", e.what() ) ;
             break;
          }
       }while ( FALSE );
@@ -3963,7 +3953,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN_EXE, "rtnCoordCMDCreateNode::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTN_EXE, "rtnCoordCMDCreateNode::execute" )
    INT32 rtnCoordCMDCreateNode::execute( CHAR *pReceiveBuffer,
                                          SINT32 packSize,
                                          CHAR **ppResultBuffer,
@@ -3991,17 +3981,17 @@ namespace engine
 
       do
       {
-         INT32 flag;
-         CHAR *pCMDName;
-         SINT64 numToSkip;
-         SINT64 numToReturn;
-         CHAR *pQuery;
-         CHAR *pFieldSelector;
-         CHAR *pOrderBy;
-         CHAR *pHint;
+         INT32 flag = 0 ;
+         CHAR *pCMDName = NULL ;
+         SINT64 numToSkip = 0 ;
+         SINT64 numToReturn = 0 ;
+         CHAR *pQuery = NULL ;
+         CHAR *pFieldSelector = NULL ;
+         CHAR *pOrderBy = NULL ;
+         CHAR *pHint = NULL ;
          rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
-                           &numToReturn, &pQuery, &pFieldSelector,
-                           &pOrderBy, &pHint );
+                               &numToReturn, &pQuery, &pFieldSelector,
+                               &pOrderBy, &pHint );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR,
@@ -4013,19 +4003,17 @@ namespace engine
          rc = getNodeInfo( pQuery, boNodeInfo );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "create node failed, failed to get node info(rc=%d)",
-                     rc );
+            PD_LOG ( PDERROR, "Create node failed, failed to get "
+                     "node info(rc=%d)", rc ) ;
             break;
          }
-         CoordGroupInfoPtr catGroupInfo;
+         CoordGroupInfoPtr catGroupInfo ;
          rc = rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "create node failed, failed to get cata-group-info(rc=%d)",
-                     rc );
-            break;
+            PD_LOG ( PDERROR, "Create node failed, failed to get "
+                     "cata-group-info(rc=%d)", rc ) ;
+            break ;
          }
          CHAR *pBuffer = NULL;
          INT32 bufferSize = 0;
@@ -4066,65 +4054,62 @@ namespace engine
          rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent, cb ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to create node, execute on catalog-node failed(rc=%d)",
-                     rc );
+            PD_LOG ( PDERROR, "Failed to create node, execute on catalog-node "
+                     "failed(rc=%d)", rc ) ;
             break;
          }
-         std::string strHostName;
-         BSONObj boNodeConfig;
+         std::string strHostName ;
+         BSONObj boNodeConfig ;
          try
          {
             BSONElement beHostName = boNodeInfo.getField( FIELD_NAME_HOST );
-            if ( beHostName.eoo() || beHostName.type()!=String )
+            if ( beHostName.eoo() || beHostName.type() != String )
             {
                rc = SDB_INVALIDARG;
-               PD_LOG ( PDERROR,
-                        "failed to get the field(%s)",
-                        FIELD_NAME_HOST );
+               PD_LOG ( PDERROR, "Failed to get the field(%s)",
+                        FIELD_NAME_HOST ) ;
                break;
             }
-            strHostName = beHostName.str();
+            strHostName = beHostName.str() ;
             rc = getNodeConf( pQuery, boNodeConfig, catGroupInfo );
             if ( rc != SDB_OK )
             {
-               PD_LOG( PDERROR,
-                     "failed to get node config(rc=%d)",
-                     rc );
-               break;
+               PD_LOG( PDERROR, "Failed to get node config(rc=%d)",
+                       rc ) ;
+               break ;
             }
          }
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG ( PDERROR,
-                     "occured unexpected error:%s",
-                     e.what() );
+            PD_LOG ( PDERROR, "Occured unexpected error:%s", e.what() ) ;
          }
          SINT32 retCode;
          rc = rtnRemoteExec ( SDBADD, strHostName.c_str(),
                               &retCode, &boNodeConfig ) ;
-
          rc = rc ? rc : retCode;
          if ( SDB_OK == rc )
          {
-            break;
+            // update catalog group
+            rtnCoordGetCatGroupInfo( cb, TRUE, catGroupInfo ) ;
+            // notify all nodes
+            rtnCataChangeNtyToAllNodes( cb ) ;
+            break ;
          }
-         PD_LOG( PDERROR,
-               "remote node execute(configure) failed(rc=%d)",
-               rc );
+
+         PD_LOG( PDERROR, "Remote node execute(configure) failed(rc=%d)",
+                 rc ) ;
          // Rollback: delete the node-info on catalog-node
-         INT32 rcDel = SDB_OK;
+         INT32 rcDel = SDB_OK ;
          rcDel = msgBuildQueryMsg( &pBuffer, &bufferSize, COORD_CMD_REMOVENODE,
                                    flag, 0, numToSkip, numToReturn,
                                    &newNodeInfo, &fieldSelector, &orderBy,
                                    &hint ) ;
          if ( rcDel != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to build the request for catalog-node(rc=%d)",
-                     rcDel );
-            break;
+            PD_LOG ( PDERROR, "failed to build the request for "
+                     "catalog-node(rc=%d)", rcDel ) ;
+            break ;
          }
          pCatReq = (MsgOpQuery *)pBuffer;
          pCatReq->header.routeID.value = 0;
@@ -4134,20 +4119,19 @@ namespace engine
          SDB_OSS_FREE(pBuffer);
          if ( rcDel!= SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "failed to delete node, execute on catalog-node failed(rc=%d)",
-                     rcDel );
-            break;
+            PD_LOG ( PDERROR, "Failed to delete node, execute on catalog-node "
+                     "failed(rc=%d)", rcDel ) ;
+            break ;
          }
+         break ;
+      }while ( FALSE ) ;
 
-         break;
-      }while ( FALSE );
-      replyHeader.flags = rc;
+      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCTN_EXE, rc ) ;
-      return rc;
+      return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDRMN_EXE, "rtnCoordCMDRemoveNode::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDRMN_EXE, "rtnCoordCMDRemoveNode::execute" )
    INT32 rtnCoordCMDRemoveNode::execute( CHAR *pReceiveBuffer,
                                          SINT32 packSize,
                                          CHAR **ppResultBuffer,

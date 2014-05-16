@@ -186,7 +186,34 @@ namespace engine
    void _CoordCB::updateCatGroupInfo( CoordGroupInfoPtr &groupInfo )
    {
       ossScopedLock _lock(&_mutex, EXCLUSIVE) ;
-      _catGroupInfo = groupInfo;
+      if ( _catGroupInfo->getGroupItem()->groupVersion() !=
+           groupInfo->getGroupItem()->groupVersion() )
+      {
+         // need to update local config
+         string oldCfg, newCfg ;
+         pmdOptionsCB *optCB = pmdGetOptionCB() ;
+         optCB->toString( oldCfg ) ;
+         optCB->clearCatAddr() ;
+         clearCatNodeAddrList() ;
+
+         UINT32 pos = 0 ;
+         MsgRouteID id ;
+         string hostName ;
+         string svcName ;
+         while ( SDB_OK == groupInfo->getGroupItem()->getNodeInfo( pos, id,
+                           hostName, svcName, MSG_ROUTE_CAT_SERVICE ) )
+         {
+            addCatNodeAddr( id, hostName.c_str(), svcName.c_str() ) ;
+            optCB->setCatAddr( hostName.c_str(), svcName.c_str() ) ;
+            ++pos ;
+         }
+         optCB->toString( newCfg ) ;
+         if ( oldCfg != newCfg )
+         {
+            optCB->reflush2File() ;
+         }
+      }
+      _catGroupInfo = groupInfo ;
    }
 
    void _CoordCB::getCatNodeAddrList ( CoordVecNodeInfo &catNodeLst )

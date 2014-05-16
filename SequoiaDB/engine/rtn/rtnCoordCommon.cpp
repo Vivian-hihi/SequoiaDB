@@ -2724,5 +2724,52 @@ namespace engine
       return FALSE ;
    }
 
+   INT32 rtnCataChangeNtyToAllNodes( pmdEDUCB * cb )
+   {
+      INT32 rc = SDB_OK ;
+      netMultiRouteAgent *pRouteAgent = sdbGetCoordCB()->getRouteAgent() ;
+      MsgHeader ntyMsg ;
+      ntyMsg.messageLength = sizeof( MsgHeader ) ;
+      ntyMsg.opCode = MSG_CAT_GRP_CHANGE_NTY ;
+      ntyMsg.requestID = 0 ;
+      ntyMsg.routeID.value = 0 ;
+      ntyMsg.TID = cb->getTID() ;
+
+      CoordGroupList groupLst ;
+      ROUTE_SET sendNodes ;
+      REQUESTID_MAP successNodes ;
+      ROUTE_RC_MAP failedNodes ;
+
+      // list all groups
+      rc = rtnCoordGetAllGroupList( cb, groupLst, NULL, FALSE ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get all group list, rc: %d", rc ) ;
+
+      // get nodes
+      rc = rtnCoordGetGroupNodes( cb, BSONObj(), NODE_SEL_ALL,
+                                  groupLst, sendNodes ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get nodes, rc: %d", rc ) ;
+      if ( sendNodes.size() == 0 )
+      {
+         PD_LOG( PDWARNING, "Not found any node" ) ;
+         rc = SDB_CLS_NODE_NOT_EXIST ;
+         goto error ;
+      }
+
+      // send msg, no response
+      rtnCoordSendRequestToNodes( (void*)&ntyMsg, sendNodes, 
+                                  pRouteAgent, cb, successNodes,
+                                  failedNodes ) ;
+      if ( failedNodes.size() != 0 )
+      {
+         rc = failedNodes.begin()->second ;
+      }
+      rtnCoordClearRequest( cb, successNodes ) ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
 }
 

@@ -249,6 +249,8 @@ namespace engine
 
    BOOLEAN rtnCoordWriteRetryRC( INT32 retCode );
 
+   INT32 rtnCataChangeNtyToAllNodes( pmdEDUCB *cb ) ;
+
 }
 
 #endif //RTNCOORDCOMMON_HPP__

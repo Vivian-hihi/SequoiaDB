@@ -220,6 +220,7 @@ enum MSG_TYPE
    MSG_CAT_DEL_NODE_RSP                = MAKE_REPLY_TYPE(MSG_CAT_DEL_NODE_REQ),
    MSG_CAT_RM_GROUP_REQ                = 3212,
    MSG_CAT_RM_GROUP_RES                = MAKE_REPLY_TYPE(MSG_CAT_RM_GROUP_REQ),
+   MSG_CAT_GRP_CHANGE_NTY              = 3213,
    MSG_CAT_NODE_END                    = 3299,
 
    MSG_CAT_END                         = 3999,

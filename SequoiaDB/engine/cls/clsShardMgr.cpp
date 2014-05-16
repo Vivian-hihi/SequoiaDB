@@ -955,16 +955,23 @@ namespace engine
       {
          _shardLatch.get () ;
 
+         pmdOptionsCB *optCB = pmdGetOptionCB() ;
+         string oldCfg, newCfg ;
+         optCB->toString( oldCfg ) ;
          VECCATLOG oldCatNodes = _vecCatlog ;
          NodeID oldID ;
 
          _catVerion = version ;
          _vecCatlog.clear() ;
+         optCB->clearCatAddr() ;
          map<UINT64, _netRouteNode>::iterator it = mapNodes.begin() ;
          while ( it != mapNodes.end() )
          {
             setCatlogInfo ( it->second._id, it->second._host,
                             it->second._service[MSG_ROUTE_CAT_SERVICE] ) ;
+            optCB->setCatAddr( it->second._host.c_str(),
+                               it->second._service[
+                               MSG_ROUTE_CAT_SERVICE].c_str() ) ;
             ++it ;
          }
 
@@ -996,6 +1003,13 @@ namespace engine
                         _vecCatlog[index].service.c_str() ) ;
             }
             index++ ;
+         }
+
+         optCB->toString( newCfg ) ;
+         if ( oldCfg != newCfg )
+         {
+            // refresh to config file
+            optCB->reflush2File() ;
          }
 
          _shardLatch.release () ;

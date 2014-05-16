@@ -69,6 +69,7 @@ namespace engine
       ON_MSG ( MSG_AUTH_CRTUSR_REQ, _onOPMsg )
       ON_MSG ( MSG_AUTH_DELUSR_REQ, _onOPMsg )
 #endif
+      ON_MSG ( MSG_CAT_GRP_CHANGE_NTY, _onCatalogChangeNtyMsg )
 
       ON_EVENT( PMD_EDU_EVENT_TRANS_STOP, _onTransStopEvnt )
    END_OBJ_MSG_MAP()
@@ -2251,5 +2252,12 @@ namespace engine
    error:
       goto done;
    }
+
+   INT32 _clsShdSession::_onCatalogChangeNtyMsg( MsgHeader * msg )
+   {
+      _pShdMgr->updateCatGroup( FALSE ) ;
+      return SDB_OK ;
+   }
+
 }
 
