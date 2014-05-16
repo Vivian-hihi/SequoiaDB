@@ -1269,11 +1269,14 @@ namespace CLSMGR
          CHAR backPath[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
          utilBuildFullPath( getDialogPath(), svcname,
                             OSS_MAX_PATHSIZE, backPath ) ;
-         ossDelete( backPath ) ;
-         if ( SDB_OK == ossRenamePath( rmPath, backPath ) )
+         if ( SDB_OK == ossAccess( backPath ) )
+         {
+            ossDelete( backPath ) ;
+         }
+         if ( SDB_OK == ossRenamePath( dialogPath, backPath ) )
          {
             PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
-                    svcname, rmPath, backPath ) ;
+                    svcname, dialogPath, backPath ) ;
          }
       }
 
