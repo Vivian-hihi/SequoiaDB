@@ -1413,7 +1413,7 @@ namespace engine
          //creating the first catalog
          SDB_ASSERT( NULL == err, "impossible" )
          if ( MSG_AUTH_VERIFY_REQ == header->opCode &&
-           SDB_CAT_NO_ADDR_LIST == rc )
+              SDB_CAT_NO_ADDR_LIST == rc )
          {
             rc = SDB_OK ;
          }

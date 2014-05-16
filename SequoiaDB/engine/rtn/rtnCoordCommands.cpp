@@ -6682,7 +6682,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_EXE, "rtnCoordCMDCreateCataGroup::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_EXE, "rtnCoordCMDCreateCataGroup::execute" )
    INT32 rtnCoordCMDCreateCataGroup::execute( CHAR *pReceiveBuffer,
                                               SINT32 packSize,
                                               CHAR **ppResultBuffer,
@@ -6692,95 +6692,102 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTCAGP_EXE ) ;
-      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
-      replyHeader.header.messageLength = sizeof( MsgOpReply );
-      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
-      replyHeader.header.requestID     = pHeader->requestID;
-      replyHeader.header.routeID.value = 0;
-      replyHeader.header.TID           = pHeader->TID;
-      replyHeader.contextID            = -1;
+      MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer ;
+      replyHeader.header.messageLength = sizeof( MsgOpReply ) ;
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES ;
+      replyHeader.header.requestID     = pHeader->requestID ;
+      replyHeader.header.routeID.value = 0 ;
+      replyHeader.header.TID           = pHeader->TID ;
+      replyHeader.contextID            = -1 ;
       replyHeader.flags                = SDB_OK;
-      replyHeader.numReturned          = 0;
-      replyHeader.startFrom            = 0;
+      replyHeader.numReturned          = 0 ;
+      replyHeader.startFrom            = 0 ;
 
-      INT32 flag;
-      CHAR *pCMDName;
-      SINT64 numToSkip;
-      SINT64 numToReturn;
-      CHAR *pQuery;
-      CHAR *pFieldSelector;
-      CHAR *pOrderBy;
-      CHAR *pHint;
+      INT32 flag = 0 ;
+      CHAR *pCMDName = NULL ;
+      SINT64 numToSkip = 0 ;
+      SINT64 numToReturn = 0 ;
+      CHAR *pQuery = NULL ;
+      CHAR *pFieldSelector = NULL ;
+      CHAR *pOrderBy = NULL ;
+      CHAR *pHint = NULL ;
       BSONObj boNodeConfig;
       BSONObj boNodeInfo;
       const CHAR *pHostName = NULL;
-      SINT32 retCode;
-      BSONObj boLocalSvc;
+      SINT32 retCode = 0 ;
+      BSONObj boLocalSvc ;
+      BSONObj boDummy ;
+
       rc = msgExtractQuery( pReceiveBuffer, &flag, &pCMDName, &numToSkip,
-                        &numToReturn, &pQuery, &pFieldSelector,
-                        &pOrderBy, &pHint );
-      PD_RC_CHECK( rc, PDERROR,
-               "failed to parse create catalog-group request(rc=%d)",
-               rc );
-      rc = getNodeConf( pQuery, boNodeConfig );
-      PD_RC_CHECK( rc, PDERROR,
-               "failed to get configure info(rc=%d)", rc );
-      rc = getNodeInfo( pQuery, boNodeInfo );
-      PD_RC_CHECK( rc, PDERROR,
-               "failed to get node info(rc=%d)", rc );
+                            &numToReturn, &pQuery, &pFieldSelector,
+                            &pOrderBy, &pHint ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse create catalog-group "
+                   "request(rc=%d)", rc ) ;
+
+      rc = getNodeConf( pQuery, boNodeConfig ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get configure info(rc=%d)", rc ) ;
+
+      rc = getNodeInfo( pQuery, boNodeInfo ) ;
+      PD_RC_CHECK( rc, PDERROR, "Failed to get node info(rc=%d)", rc ) ;
+
       try
       {
          BSONElement beHostName = boNodeInfo.getField( FIELD_NAME_HOST );
          PD_CHECK( beHostName.type()==String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to get the field(%s)", FIELD_NAME_HOST );
-         pHostName = beHostName.valuestr();
+                   "Failed to get the field(%s)", FIELD_NAME_HOST );
+         pHostName = beHostName.valuestr() ;
+
          BSONElement beLocalSvc = boNodeInfo.getField( PMD_OPTION_SVCNAME );
          PD_CHECK( beLocalSvc.type()==String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to get the field(%s)", PMD_OPTION_SVCNAME );
-         BSONObjBuilder bobLocalSvc;
-         bobLocalSvc.append( beLocalSvc );
-         boLocalSvc = bobLocalSvc.obj();
+                   "Failed to get the field(%s)", PMD_OPTION_SVCNAME );
+         BSONObjBuilder bobLocalSvc ;
+         bobLocalSvc.append( beLocalSvc ) ;
+         boLocalSvc = bobLocalSvc.obj() ;
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-                  "failed to create catalog group, occured unexpected error:%s",
-                  e.what() );
+                   "Failed to create catalog group, occured unexpected "
+                   "error:%s", e.what() );
       }
+
+      // Create
       rc = rtnRemoteExec( SDBADD, pHostName, &retCode, &boNodeConfig,
-                          &boNodeInfo );
-      rc = rc ? rc : retCode;
-      PD_RC_CHECK( rc, PDERROR, "remote node execute(configure) failed(rc=%d)", rc );
-      rc = rtnRemoteExec( SDBSTART, pHostName, &retCode, &boLocalSvc );
-      rc = rc ? rc : retCode;
+                          &boNodeInfo ) ;
+      rc = rc ? rc : retCode ;
+      PD_RC_CHECK( rc, PDERROR, "remote node execute(configure) "
+                   "failed(rc=%d)", rc ) ;
+
+      // Start
+      rc = rtnRemoteExec( SDBSTART, pHostName, &retCode, &boLocalSvc ) ;
+      rc = rc ? rc : retCode ;
       // if start catalog failed, need to remove config
       if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "remote node execute(start) failed(rc=%d)", rc ) ;
-         rtnRemoteExec( SDBRM, pHostName, &retCode, &boNodeConfig ) ;
+         PD_LOG( PDERROR, "Remote node execute(start) failed(rc=%d)", rc ) ;
+         // boDummy for remove node to backup node info
+         rtnRemoteExec( SDBRM, pHostName, &retCode, &boNodeConfig, &boDummy ) ;
          goto error ;
       }
 
       /// fillback catalog addr.
       {
-      CoordVecNodeInfo cataList ;
-      pmdGetKRCB()->getCoordCB()->getCatNodeAddrList( cataList ) ;
-      _pmdOptionsMgr *optionCB = pmdGetKRCB()->getOptionCB() ;
-      for ( CoordVecNodeInfo::const_iterator itr = cataList.begin();
-            itr != cataList.end();
-            itr++ )
-      {
-         optionCB->setCatAddr( itr->_host,
-                            itr->_service[MSG_ROUTE_CAT_SERVICE].c_str() ) ;
+         CoordVecNodeInfo cataList ;
+         sdbGetCoordCB()->getLock( EXCLUSIVE ) ;
+         sdbGetCoordCB()->getCatNodeAddrList( cataList ) ;
+         pmdOptionsCB *optCB = pmdGetKRCB()->getOptionCB() ;
+
+         for ( CoordVecNodeInfo::const_iterator itr = cataList.begin() ;
+               itr != cataList.end() ;
+               itr++ )
+         {
+            optCB->setCatAddr( itr->_host, itr->_service[
+               MSG_ROUTE_CAT_SERVICE].c_str() ) ;
+         }
+         optCB->reflush2File() ;
+         sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
       }
-      INT32 rc = optionCB->reflush2File() ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to export configure:%d",rc ) ;
-         /// do not care.
-         rc = SDB_OK ;
-      }
-      }
+
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCTCAGP_EXE, rc ) ;
       return rc;
@@ -6788,191 +6795,183 @@ namespace engine
       // clear the catalog-group info
       if ( rc != SDB_COORD_RECREATE_CATALOG )
       {
-         pmdGetKRCB()->getCoordCB()->clearCatNodeAddrList();
+         sdbGetCoordCB()->getLock( EXCLUSIVE ) ;
+         sdbGetCoordCB()->clearCatNodeAddrList() ;
+         sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
       }
-      CoordGroupInfo *pEmptyGroupInfo = NULL;
-      pEmptyGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID );
+      CoordGroupInfo *pEmptyGroupInfo = NULL ;
+      pEmptyGroupInfo = SDB_OSS_NEW CoordGroupInfo( CAT_CATALOG_GROUPID ) ;
       if ( NULL != pEmptyGroupInfo )
       {
-         CoordGroupInfoPtr groupInfo( pEmptyGroupInfo );
-         pmdGetKRCB()->getCoordCB()->updateCatGroupInfo( groupInfo );
+         CoordGroupInfoPtr groupInfo( pEmptyGroupInfo ) ;
+         sdbGetCoordCB()->updateCatGroupInfo( groupInfo ) ;
       }
-      replyHeader.flags = rc;
-      goto done;
+      replyHeader.flags = rc ;
+      goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_GETNDCF, "rtnCoordCMDCreateCataGroup::getNodeConf" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_GETNDCF, "rtnCoordCMDCreateCataGroup::getNodeConf" )
    INT32 rtnCoordCMDCreateCataGroup::getNodeConf( CHAR *pQuery,
-                                             BSONObj &boNodeConfig )
+                                                  BSONObj &boNodeConfig )
    {
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTCAGP_GETNDCF ) ;
+
       try
       {
-         // host name and group name are going to be skiped
-         std::string strHostKey(FIELD_NAME_HOST);
-         std::string strGroupNameKey(FIELD_NAME_GROUPNAME);
-         // role and catalogaddr will be added if user doesn't provide
-         std::string strRoleKey(PMD_OPTION_ROLE);
-         std::string strCatalogAddrKey(PMD_OPTION_CATALOG_ADDR);
-         std::string strCataSvcKey(PMD_OPTION_CATANAME);
-         std::string strSvcKey(PMD_OPTION_SVCNAME);
-         std::string strCataHostName;
-         std::string strCataSvc;
-         BSONObj boInput(pQuery);
-         BSONObjBuilder bobNodeConf;
-         BSONObjIterator iter( boInput );
-         BOOLEAN hasRoleKey = FALSE ;
-         BOOLEAN hasCatalogAddrKey = FALSE ;
+         std::string strCataHostName ;
+         std::string strSvcName ;
+         std::string strCataSvc ;
+         CoordVecNodeInfo cataNodeLst ;
+
+         BSONObj boInput( pQuery ) ;
+         BSONObjBuilder bobNodeConf ;
+         BSONObjIterator iter( boInput ) ;
+
          // loop through each input parameter
          while ( iter.more() )
          {
-            BSONElement beField = iter.next();
-            std::string strFieldName(beField.fieldName());
-            // make sure to skip hostname and group name
-            if ( strFieldName == strHostKey )
+            BSONElement beField = iter.next() ;
+            std::string strFieldName( beField.fieldName() ) ;
+
+            // make sure to skip hostname, group name, and role
+            if ( strFieldName == FIELD_NAME_HOST )
             {
                strCataHostName = beField.str();
                continue;
             }
-            if ( strFieldName == strGroupNameKey )
+            else if ( strFieldName == FIELD_NAME_GROUPNAME ||
+                      strFieldName == PMD_OPTION_ROLE ||
+                      strFieldName == PMD_OPTION_CATALOG_ADDR )
             {
                continue;
             }
-
-            if ( strFieldName == strSvcKey && strCataSvc.empty() )
+            else if ( strFieldName == PMD_OPTION_CATANAME )
             {
-               UINT16 svcPort = 0;
-               ossSocket::getPort( beField.valuestr(), svcPort );
-               UINT16 cataPort = svcPort + MSG_ROUTE_CAT_SERVICE;
-               CHAR szPort[10]={0};
-               ossItoa( cataPort, szPort, 10 );
-               strCataSvc = szPort;
+               strCataSvc = beField.str() ;
+            }
+            else if ( strFieldName == PMD_OPTION_SVCNAME )
+            {
+               strSvcName = beField.str() ;
             }
 
-            if ( strFieldName == strCataSvcKey )
-            {
-               strCataSvc = beField.str();
-            }
             // append into beField
-            bobNodeConf.append( beField );
-            // for the ones we need to add default value
-            if ( strRoleKey == strFieldName )
-            {
-               hasRoleKey = TRUE ;
-            }
-            else if ( strCatalogAddrKey == strFieldName )
-            {
-               hasCatalogAddrKey = TRUE ;
-            }
+            bobNodeConf.append( beField ) ;
          }
-         // assign role if it doesn't include
-         if ( !hasRoleKey )
+
+         if ( strSvcName.empty() )
          {
-            bobNodeConf.append ( strRoleKey, SDB_ROLE_CATALOG_STR ) ;
+            PD_LOG( PDERROR, "Service name can't be empty" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
+
+         if ( strCataSvc.empty() )
+         {
+            UINT16 svcPort = 0 ;
+            ossGetPort( strSvcName.c_str(), svcPort ) ;
+            CHAR szPort[ 10 ] = { 0 } ;
+            ossItoa( svcPort + MSG_ROUTE_CAT_SERVICE , szPort, 10 ) ;
+            strCataSvc = szPort ;
+         }
+
+         // assign role
+         bobNodeConf.append ( PMD_OPTION_ROLE, SDB_ROLE_CATALOG_STR ) ;
+
          // assign catalog address, make sure to include all catalog nodes
          // that configured in the system ( for HA ), each system should be
-         // separated by "," and sit in a single key: strCatalogAddrKey
-         if ( !hasCatalogAddrKey )
+         // separated by "," and sit in a single key: PMD_OPTION_CATALOG_ADDR
+         sdbGetCoordCB()->getLock( EXCLUSIVE ) ;
+         sdbGetCoordCB()->getCatNodeAddrList( cataNodeLst ) ;
+
+         // already exist catalog group
+         if ( cataNodeLst.size() > 0 )
          {
-            CoordCB *pCoordCB = pmdGetKRCB()->getCoordCB();
-            CoordVecNodeInfo cataNodeLst;
-            pCoordCB->getCatNodeAddrList( cataNodeLst );
-            std::string strCataNodeLst = "";
-            //UINT32 i = 0;
-            if ( cataNodeLst.size() == 0 )
-            {
-               strCataNodeLst = strCataHostName + ":" + strCataSvc;
-               MsgRouteID routeID;
-               routeID.columns.groupID = CATALOG_GROUPID;
-               routeID.columns.nodeID = CATA_NODE_ID_BEGIN;
-               routeID.columns.serviceID = MSG_ROUTE_CAT_SERVICE;
-               pCoordCB->addCatNodeAddr( routeID, strCataHostName.c_str(),
-                                         strCataSvc.c_str() ) ;
-            }
-            else
-            {
-               /*
-               for( ; i < cataNodeLst.size(); i++ )
-               {
-                  if ( i > 0 )
-                  {
-                     strCataNodeLst += ",";
-                  }
-                  std::string strHostName(cataNodeLst[i].host);
-                  std::string strService(cataNodeLst[i].service);
-                  strCataNodeLst += strHostName + ":" + strService;
-               }*/
-               rc = SDB_COORD_RECREATE_CATALOG;
-               PD_LOG( PDERROR, "repeat to create catalog-group" ) ;
-               goto error;
-            }
-            bobNodeConf.append( PMD_OPTION_CATALOG_ADDR, strCataNodeLst );
+            rc = SDB_COORD_RECREATE_CATALOG ;
+            PD_LOG( PDERROR, "Repeat to create catalog-group" ) ;
+            sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
+            goto error ;
          }
-         boNodeConfig = bobNodeConf.obj();
+         else
+         {
+            std::string strCataNodeLst = strCataHostName + ":" + strCataSvc ;
+            MsgRouteID routeID ;
+            routeID.columns.groupID = CATALOG_GROUPID ;
+            routeID.columns.nodeID = CATA_NODE_ID_BEGIN ;
+            routeID.columns.serviceID = MSG_ROUTE_CAT_SERVICE ;
+            sdbGetCoordCB()->addCatNodeAddr( routeID, strCataHostName.c_str(),
+                                             strCataSvc.c_str() ) ;
+            sdbGetCoordCB()->releaseLock( EXCLUSIVE ) ;
+
+            bobNodeConf.append( PMD_OPTION_CATALOG_ADDR, strCataNodeLst ) ;
+         }
+
+         boNodeConfig = bobNodeConf.obj() ;
       }
       catch ( std::exception &e )
       {
-         rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
+         rc = SDB_INVALIDARG ;
+         PD_LOG ( PDERROR, "Occured unexpected error:%s", e.what() ) ;
          goto error ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCTCAGP_GETNDCF, rc ) ;
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_GETNDINFO, "rtnCoordCMDCreateCataGroup::getNodeInfo" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTCAGP_GETNDINFO, "rtnCoordCMDCreateCataGroup::getNodeInfo" )
    INT32 rtnCoordCMDCreateCataGroup::getNodeInfo( CHAR *pQuery, BSONObj &boNodeInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDCTCAGP_GETNDINFO ) ;
+
       try
       {
-         BSONObj boConf( pQuery );
-         BSONObjBuilder bobNodeInfo;
-         BSONElement beHostName = boConf.getField( FIELD_NAME_HOST );
+         BSONObj boConf( pQuery ) ;
+         BSONObjBuilder bobNodeInfo ;
+         BSONElement beHostName = boConf.getField( FIELD_NAME_HOST ) ;
          PD_CHECK( beHostName.type()==String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to get the field(%s)", FIELD_NAME_HOST );
-         bobNodeInfo.append( beHostName );
+                  "Failed to get the field(%s)", FIELD_NAME_HOST ) ;
+         bobNodeInfo.append( beHostName ) ;
 
-         BSONElement beDBPath = boConf.getField( PMD_OPTION_DBPATH );
+         BSONElement beDBPath = boConf.getField( PMD_OPTION_DBPATH ) ;
          PD_CHECK( beDBPath.type()==String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to get the field(%s)", PMD_OPTION_DBPATH );
-         bobNodeInfo.append( beDBPath );
+                   "Failed to get the field(%s)", PMD_OPTION_DBPATH );
+         bobNodeInfo.append( beDBPath ) ;
 
-         BSONElement beLocalSvc = boConf.getField( PMD_OPTION_SVCNAME );
+         BSONElement beLocalSvc = boConf.getField( PMD_OPTION_SVCNAME ) ;
          PD_CHECK( beLocalSvc.type()==String, SDB_INVALIDARG, error, PDERROR,
-                  "failed to get the field(%s)", PMD_OPTION_SVCNAME );
-         bobNodeInfo.append( beLocalSvc );
+                   "Failed to get the field(%s)", PMD_OPTION_SVCNAME ) ;
+         bobNodeInfo.append( beLocalSvc ) ;
 
          BSONElement beReplSvc = boConf.getField( PMD_OPTION_REPLNAME );
          if ( beReplSvc.type() == String )
          {
-            bobNodeInfo.append( beReplSvc );
+            bobNodeInfo.append( beReplSvc ) ;
          }
 
-         BSONElement beShardSvc = boConf.getField( PMD_OPTION_SHARDNAME );
+         BSONElement beShardSvc = boConf.getField( PMD_OPTION_SHARDNAME ) ;
          if ( beShardSvc.type() == String )
          {
-            bobNodeInfo.append( beShardSvc );
+            bobNodeInfo.append( beShardSvc ) ;
          }
 
-         BSONElement beCataSvc = boConf.getField( PMD_OPTION_CATANAME );
+         BSONElement beCataSvc = boConf.getField( PMD_OPTION_CATANAME ) ;
          if ( beCataSvc.type() == String )
          {
-            bobNodeInfo.append( beCataSvc );
+            bobNodeInfo.append( beCataSvc ) ;
          }
-         boNodeInfo = bobNodeInfo.obj();
+         boNodeInfo = bobNodeInfo.obj() ;
       }
       catch ( std::exception &e )
       {
          PD_CHECK( SDB_INVALIDARG, SDB_INVALIDARG, error, PDERROR,
-               "occured unexpected error:%s", e.what() );
+                   "Occured unexpected error:%s", e.what() ) ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCTCAGP_GETNDINFO, rc ) ;
       return rc;

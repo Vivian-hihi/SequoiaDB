@@ -54,6 +54,29 @@ namespace engine
          return &_processerFactory;
       }
 
+      void getLock( OSS_LATCH_MODE mode )
+      {
+         if ( SHARED == mode )
+         {
+            _mutex.get_shared() ;
+         }
+         else
+         {
+            _mutex.get() ;
+         }
+      }
+      void releaseLock( OSS_LATCH_MODE mode )
+      {
+         if ( SHARED == mode )
+         {
+            _mutex.release_shared() ;
+         }
+         else
+         {
+            _mutex.release() ;
+         }
+      }
+
       INT32 addCatNodeAddr( const _MsgRouteID &id,
                             const CHAR *pHost,
                             const CHAR *pService );

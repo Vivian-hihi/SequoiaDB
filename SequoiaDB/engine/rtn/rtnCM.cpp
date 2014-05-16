@@ -149,7 +149,7 @@ namespace CLSMGR
    INT32 startNode ( const CHAR *confpath, OSSPID *pid ) ;
    INT32 sdbStop ( const CHAR *arg ) ;
    INT32 sdbAdd ( const CHAR *arg1, const CHAR *arg2 ) ;
-   INT32 sdbRm ( const CHAR *arg1 ) ;
+   INT32 sdbRm ( const CHAR *arg1, const CHAR *arg2 ) ;
    INT32 sdbModify ( const CHAR *arg1, const CHAR *arg2, const CHAR *arg3 ) ;
    INT32 sendRetCode ( SINT32 retCode, UINT64 reqID, ossSocket *sock ) ;
    INT32 cmRecv ( CHAR *pBuffer, INT32 recvSize, ossSocket *sock ) ;
@@ -360,7 +360,7 @@ namespace CLSMGR
          rc = sdbModify ( arg1, arg2, arg3 ) ;
          break ;
       case SDBRM:
-         rc = sdbRm( arg1 ) ;
+         rc = sdbRm( arg1, arg2 ) ;
          break ;
 
       default:
@@ -1171,12 +1171,12 @@ namespace CLSMGR
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBRM, "sdbRm" )
-   INT32 sdbRm ( const CHAR *arg1 )
+   INT32 sdbRm ( const CHAR *arg1, const CHAR *arg2 )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_SDBRM );
+      PD_TRACE_ENTRY ( SDB_SDBRM ) ;
 
-      CHAR confPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
+      CHAR confPath[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
       CHAR rmPath[OSS_MAX_PATHSIZE + 1] = { 0 } ;
       std::string confFile ;
       po::options_description desc ( "Command options" ) ;
@@ -1192,13 +1192,12 @@ namespace CLSMGR
          BSONElement e = obj.getField( PMD_OPTION_SVCNAME ) ;
          if ( e.eoo() || String != e.type() )
          {
-            PD_LOG( PDERROR, "failed to get srv name from[%s]",
+            PD_LOG( PDERROR, "Failed to get srv name from[%s]",
                     obj.toString().c_str() ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
 
          }
-
          svcname = e.valuestrsafe () ;
          PD_TRACE1 ( SDB_SDBRM, PD_PACK_STRING(svcname) );
       }
@@ -1227,9 +1226,9 @@ namespace CLSMGR
 
       if ( vm.count( PMD_OPTION_LOGPATH ) )
       {
-         ossMemset( rmPath, 0, OSS_MAX_PATHSIZE+1 );
+         ossMemset( rmPath, 0, OSS_MAX_PATHSIZE+1 ) ;
          CHAR *p = ossGetRealPath( vm[PMD_OPTION_LOGPATH].as<string>().c_str(),
-                     rmPath, OSS_MAX_PATHSIZE );
+                     rmPath, OSS_MAX_PATHSIZE ) ;
          if ( NULL == p )
          {
             PD_LOG( PDERROR, "Failed to get real path for: %s",
@@ -1239,7 +1238,7 @@ namespace CLSMGR
          }
 
          rc = ossDelete( rmPath ) ;
-         if ( SDB_OK != rc )
+         if ( SDB_OK != rc && SDB_FNE != rc )
          {
             PD_LOG( PDERROR, "failed to rm log path;%s", rmPath ) ;
             goto error ;
@@ -1260,7 +1259,7 @@ namespace CLSMGR
          }
 
          rc = ossDelete( rmPath ) ;
-         if ( SDB_OK != rc )
+         if ( SDB_OK != rc && SDB_FNE != rc )
          {
             PD_LOG( PDERROR, "failed to rm backup path;%s", rmPath ) ;
             goto error ;
@@ -1280,10 +1279,24 @@ namespace CLSMGR
             goto error ;
          }
 
-         rc = ossDelete( rmPath ) ;
-         if ( SDB_OK != rc )
+         // if exist, means to backup dialog
+         if ( arg2 )
          {
-            PD_LOG( PDERROR, "failed to rm diaglog path;%s", rmPath ) ;
+            CHAR backPath[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
+            utilBuildFullPath( getDialogPath(), svcname,
+                               OSS_MAX_PATHSIZE, backPath ) ;
+            ossDelete( backPath ) ;
+            if ( SDB_OK == ossRenamePath( rmPath, backPath ) )
+            {
+               PD_LOG( PDEVENT, "Move node[%s] dialog[%s] to path[%s]",
+                       svcname, rmPath, backPath ) ;
+            }
+         }
+
+         rc = ossDelete( rmPath ) ;
+         if ( SDB_OK != rc && SDB_FNE != rc )
+         {
+            PD_LOG( PDERROR, "Failed to rm diaglog path;%s", rmPath ) ;
             goto error ;
          }
       }
@@ -1303,7 +1316,7 @@ namespace CLSMGR
          }
 
          rc = ossDelete( rmPath ) ;
-         if ( SDB_OK != rc )
+         if ( SDB_OK != rc && SDB_FNE != rc )
          {
             PD_LOG( PDERROR, "failed to rm db path;%s", rmPath ) ;
             goto error ;
@@ -1311,9 +1324,9 @@ namespace CLSMGR
       }
 
       rc = ossDelete( confPath ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_OK != rc && SDB_FNE != rc )
       {
-         PD_LOG( PDERROR, "failed to rm conf path:%s", confPath ) ;
+         PD_LOG( PDERROR, "Failed to rm conf path:%s", confPath ) ;
          goto error ;
       }
 
