@@ -38,6 +38,7 @@
 #include "ossVer.h"
 #include "pmd.hpp"
 #include "rtn.hpp"
+#include "ossProc.hpp"
 #include "pmdCommon.hpp"
 #include "pmdStartup.hpp"
 #include "optQgmStrategy.hpp"
