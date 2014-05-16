@@ -2098,5 +2098,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CL_DONE_BUT_SPLIT_FAILED</name>
+         <description>
+            <en>successfully created collection, but sth wrong happened when split it.</en>
+            <cn>成功创建了集合，但切分表时发生了错误</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
