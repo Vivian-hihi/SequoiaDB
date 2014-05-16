@@ -269,14 +269,9 @@ namespace engine
 
       MON_START_OP( cb->getMonAppCB() ) ;
 
-      if ( krcb->getDBRole() != SDB_ROLE_STANDALONE
-         && !dpsCB->isLogLocal() )
+      if ( dpsCB && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
-      }
-      else
-      {
-         /// do nothing.
       }
 
       // the packet must be larger than message header size
