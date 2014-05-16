@@ -68,7 +68,11 @@ pmdFiles = [
       "pmd/pmdCommon.cpp",
       "pmd/pmdDaemon.cpp",
       "pmd/pmdWinService.cpp",
-      "pmd/pmdProc.cpp"
+      "pmd/pmdProc.cpp",
+      "cls/clsUtil.cpp",
+      "pmd/pmdOptionsMgr.cpp",
+      "pmd/pmdEnv.cpp",
+      "pmd/pmdSignalHandler.cpp"
       ]
 
 rtnFiles = [
@@ -100,6 +104,9 @@ utilFiles = [
 dpsFiles = [
       "dps/dpsDump.cpp",
       "dps/dpsLogRecord.cpp",
+      "tools/sdbDpsFilter.cpp",
+      "tools/sdbDpsLogFilter.cpp",
+      "tools/sdbDpsOption.cpp"
       ]
 
 clientFiles = [
@@ -302,7 +309,7 @@ sdbmemcheckFiles = [
       ]
 
 sdbdpsdumpFiles = [
-      "tools/sdbDpsDump.cpp"
+      "tools/sdbDpsFilterMain.cpp"
       ]
 
 #BSON
@@ -379,7 +386,7 @@ sdbmemcheck = toolEnv.Program("sdbmemcheck", sdbmemcheckFiles,
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 sdbdpsdump = toolEnv.Program("sdbdpsdump", sdbdpsdumpFiles,
-          LIBDEPS=["oss","pd","bson","dps", "util"],
+          LIBDEPS=["oss","pd","pmd","bson","dps", "util"],
           _LIBDEPS='$_LIBDEPS_OBJS' )
 
 toolEnv.Install( '#/bin', sdbexprt )
