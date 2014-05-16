@@ -53,6 +53,8 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 #include <map>
+#include <vector>
+#include "ossUtil.h"
 
 enum HTTP_PARSE_COMMON
 {
@@ -106,16 +108,43 @@ struct http_parser {
 
 struct httpConnection
 {
+/* struct */
+   struct cmp_str
+   {
+      bool operator() ( const char *a, const char *b )
+      {
+         return ossStrcmp( a, b ) < 0 ;
+      }
+   } ;
+
+/* request */
+
+   //key size
    INT32 _tempKeyLen ;
+   //value size
    INT32 _tempValueLen ;
-   //flag headers complete
-   BOOLEAN _recvHeaderComplete ;
-   //flag recv complete
-   BOOLEAN _recvComplete ;
+   // \r\n number
+   INT32 _CRLFNum ;
+   //http header buffer size
+   INT32 _headerSize ;
+   //recv temp a part of the body size
+   INT32 _partSize ;
+
+/* response */
+
+   //response first record size
+   INT32 _firstRecordSize ;
+   //response body size
+   INT32 _responseSize ;
+
+/* request */
+
    //flag is parser key or value, true: key, false: value
    BOOLEAN _isKey ;
    //recv header buffer
    CHAR *_pHeaderBuf ;
+   //recv temp a part of the body
+   CHAR *_pPartBody ;
    //recv body buffer
    CHAR *_pBodyBuf ;
    //send buffer
@@ -130,16 +159,27 @@ struct httpConnection
    //http parser
    http_parser _httpParser ;
    //header list
-   std::map<CHAR *,CHAR *> _requestHeaders ;
+   std::map<const CHAR *,const CHAR *, cmp_str> _requestHeaders ;
    //query list
-   std::map<CHAR *,CHAR *> _requestQuery ;
+   std::map<const CHAR *,const CHAR *, cmp_str> _requestQuery ;
+
+/* response */
+
+   std::map<const CHAR *,const CHAR *, cmp_str> _responseHeaders ;
+   std::vector<const CHAR *> _responseBody ;
+
+/* public */
 
    httpConnection() : _tempKeyLen(0),
                       _tempValueLen(0),
-                      _recvHeaderComplete(FALSE),
-                      _recvComplete(FALSE),
+                      _CRLFNum(0),
+                      _headerSize(0),
+                      _partSize(0),
+                      _firstRecordSize(0),
+                      _responseSize(0),
                       _isKey(TRUE),
                       _pHeaderBuf(NULL),
+                      _pPartBody(NULL),
                       _pBodyBuf(NULL),
                       _pSendBuffer(NULL),
                       _pTempKey(NULL),
@@ -148,6 +188,7 @@ struct httpConnection
    {
       _httpParser.data = this ;
    }
+
 } ;
 
 #endif // REST_DEFINE_HPP__
