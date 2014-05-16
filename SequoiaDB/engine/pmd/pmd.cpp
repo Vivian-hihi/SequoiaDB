@@ -52,6 +52,7 @@ namespace engine
       for ( INT32 i = 0 ; i < SDB_CB_MAX ; ++i )
       {
          _arrayCBs[ i ] = NULL ;
+         _arrayCBs[ i ] = NULL ;
       }
       _init             = FALSE ;
       _isActive         = FALSE ;
@@ -93,6 +94,15 @@ namespace engine
       return _arrayCBs[ type ] ;
    }
 
+   void* _SDB_KRCB::getOrgPointByType( SDB_CB_TYPE type )
+   {
+      if ( (INT32)type < 0 || (INT32)type >= SDB_CB_MAX )
+      {
+         return NULL ;
+      }
+      return _arrayOrgs[ type ] ;
+   }
+
    BOOLEAN _SDB_KRCB::isCBValue( SDB_CB_TYPE type ) const
    {
       if ( (INT32)type < 0 || (INT32)type >= SDB_CB_MAX )
@@ -102,7 +112,7 @@ namespace engine
       return _arrayCBs[ type ] ? TRUE : FALSE ;
    }
 
-   INT32 _SDB_KRCB::registerCB( IControlBlock *pCB )
+   INT32 _SDB_KRCB::registerCB( IControlBlock *pCB, void *pOrg )
    {
       INT32 rc = SDB_OK ;
 
@@ -116,6 +126,7 @@ namespace engine
          goto error ;
       }
       _arrayCBs[ pCB->cbType () ] = pCB ;
+      _arrayOrgs[ pCB->cbType () ] = pOrg ;
 
    done:
       return rc ;
