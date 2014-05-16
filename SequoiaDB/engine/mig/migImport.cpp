@@ -498,6 +498,10 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
             tempObj = _ppBsonArray[ i ] ;
             bson_destroy ( tempObj ) ;
          }
+         if ( rc && _pMigArg->errorStop )
+         {
+            goto error ;
+         }
          tempObj = _ppBsonArray[ 0 ] ;
          _ppBsonArray[ 0 ] = _ppBsonArray[ bsonObjNum ] ;
          _ppBsonArray[ bsonObjNum ] = tempObj ;
@@ -525,6 +529,10 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
          {
             tempObj = _ppBsonArray[ i ] ;
             bson_destroy ( tempObj ) ;
+         }
+         if ( rc && _pMigArg->errorStop )
+         {
+            goto error ;
          }
          bsonObjNum = 0 ;
       }
@@ -571,7 +579,14 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
          {
             ++count ;
             PD_LOG ( PDERROR, "Bad record in the %d row", count ) ;
-            continue ;
+            if ( _pMigArg->errorStop )
+            {
+               goto error ;
+            }
+            else
+            {
+               continue ;
+            }
          }
          else if ( rc )
          {
@@ -587,13 +602,19 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
       }
       ++count ;
       rc = _importRecord ( &obj, 1 ) ;
-      bson_destroy ( obj ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to import record in the %d row", count ) ;
-         continue ;
       }
-      ++succ ;
+      else
+      {
+         ++succ ;
+      }
+      bson_destroy ( obj ) ;
+      if ( rc && _pMigArg->errorStop )
+      {
+         goto error ;
+      }
    }
 done :
    total = count ;
