@@ -1104,6 +1104,7 @@ namespace engine
    INT32 _pmdOptionsMgr::postLoaded ()
    {
       INT32 rc = SDB_OK ;
+      SDB_ROLE dbRole = SDB_ROLE_STANDALONE ;
 
       ossGetPort( _krcbSvcName, _krcbSvcPort ) ;
       if ( 0 == _krcbSvcPort )
@@ -1124,7 +1125,7 @@ namespace engine
       }
 
       // dbrole check
-      if ( SDB_ROLE_MAX == pmdGetRoleEnum( _krcbRole ) )
+      if ( SDB_ROLE_MAX == ( dbRole = pmdGetRoleEnum( _krcbRole ) ) )
       {
          std::cerr << "db role: " << _krcbRole << " error" << std::endl ;
          rc = SDB_INVALIDARG ;
@@ -1268,6 +1269,12 @@ namespace engine
       if ( _traceOn && _traceBufSz != 0 )
       {
          sdbGetPDTraceCB()->start ( (UINT64)_traceBufSz, 0xFFFFFFFF ) ;
+      }
+
+      // if start is stanalone, must enable dps local
+      if ( SDB_ROLE_STANDALONE == dbRole && _traceOn )
+      {
+         _dpslocal = TRUE ;
       }
 
       rc = _mkdir() ;
