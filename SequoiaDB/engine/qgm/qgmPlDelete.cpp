@@ -48,6 +48,8 @@
 #include "qgmTrace.hpp"
 #include <sstream>
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmPlDelete::_qgmPlDelete( const qgmDbAttr &collection,
@@ -87,7 +89,7 @@ namespace engine
       return ss.str() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLDELETE__EXEC, "_qgmPlDelete::_execute" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLDELETE__EXEC, "_qgmPlDelete::_execute" )
    INT32 _qgmPlDelete::_execute( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLDELETE__EXEC ) ;
@@ -120,9 +122,8 @@ namespace engine
       else
       {
          SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-         if ( NULL != eduCB->getSocket()
-              && !dpsCB->isLogLocal()
-              && SDB_ROLE_STANDALONE != role )
+
+         if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
          {
             dpsCB = NULL ;
          }

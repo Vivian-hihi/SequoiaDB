@@ -326,6 +326,8 @@ namespace engine
          return _pClientSock ;
       }
 
+      BOOLEAN isFromLocal() const { return _pClientSock ? TRUE : FALSE ; }
+
       EDUID getID ()
       {
          return _eduID ;

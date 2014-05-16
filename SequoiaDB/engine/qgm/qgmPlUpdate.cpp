@@ -46,6 +46,8 @@
 #include "pdTrace.hpp"
 #include "qgmTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmPlUpdate::_qgmPlUpdate( const _qgmDbAttr &collection,
@@ -129,7 +131,7 @@ namespace engine
 
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLUPDATE__EXEC, "_qgmPlUpdate::_execute" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLUPDATE__EXEC, "_qgmPlUpdate::_execute" )
    INT32 _qgmPlUpdate::_execute( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLUPDATE__EXEC ) ;
@@ -173,9 +175,8 @@ namespace engine
       {
          SDB_DMSCB *dmsCB = krcb->getDMSCB() ;
          SDB_DPSCB *dpsCB = krcb->getDPSCB() ;
-         if ( SDB_ROLE_STANDALONE != role
-              && NULL != eduCB->getSocket()
-              && !dpsCB->isLogLocal() )
+
+         if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
          {
              dpsCB = NULL ;
          }

@@ -46,6 +46,8 @@
 #include "qgmTrace.hpp"
 #include <sstream>
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmPlCommand::_qgmPlCommand( INT32 type,
@@ -482,7 +484,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__EXECONDATA, "_qgmPlCommand::_executeOnData" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB__QGMPLCOMMAND__EXECONDATA, "_qgmPlCommand::_executeOnData" )
    INT32 _qgmPlCommand::_executeOnData( _pmdEDUCB *eduCB )
    {
       PD_TRACE_ENTRY( SDB__QGMPLCOMMAND__EXECONDATA ) ;
@@ -492,14 +494,7 @@ namespace engine
       SDB_DPSCB *dpsCB = pKrcb->getDPSCB() ;
       SDB_RTNCB *rtnCB = pKrcb->getRTNCB() ;
 
-      if ( NULL == eduCB->getSocket()
-           && !dpsCB->isLogLocal() )
-      {
-         dpsCB = NULL ;
-      }
-
-      if ( pKrcb->getDBRole() != SDB_ROLE_STANDALONE
-         && !dpsCB->isLogLocal() )
+      if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
       }

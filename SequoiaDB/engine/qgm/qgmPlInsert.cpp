@@ -47,6 +47,8 @@
 #include "qgmTrace.hpp"
 #include <sstream>
 
+using namespace bson ;
+
 namespace engine
 {
    _qgmPlInsert::_qgmPlInsert( const qgmDbAttr &collection )
@@ -213,9 +215,8 @@ namespace engine
       SDB_DMSCB *dmsCB = pKrcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = pKrcb->getDPSCB() ;
       BSONObj *err = NULL ;
-      if ( NULL != eduCB->getSocket()
-           && !dpsCB->isLogLocal()
-           && SDB_ROLE_STANDALONE != _role )
+
+      if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
       }

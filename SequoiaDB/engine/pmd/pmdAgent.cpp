@@ -269,7 +269,7 @@ namespace engine
 
       MON_START_OP( cb->getMonAppCB() ) ;
 
-      if ( dpsCB && !dpsCB->isLogLocal() )
+      if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
       }

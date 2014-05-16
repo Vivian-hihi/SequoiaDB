@@ -57,16 +57,13 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB () ;
       SDB_DMSCB *dmsCB = krcb->getDMSCB () ;
       SDB_DPSCB *dpsCB = krcb->getDPSCB () ;
-      if ( krcb->getDBRole() == SDB_ROLE_STANDALONE )
-      {
-         dpsCB = NULL ;
-      }
-      else if ( !dpsCB->isLogLocal() )
+
+      if ( dpsCB && cb->isFromLocal() && !dpsCB->isLogLocal() )
       {
          dpsCB = NULL ;
       }
       rc = rtnInsert ( pCollectionName, objs, objNum, flags, cb,
-                         dmsCB, dpsCB ) ;
+                       dmsCB, dpsCB ) ;
       PD_TRACE_EXITRC ( SDB_RTNINSERT1, rc ) ;
       return rc ;
    }
