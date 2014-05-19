@@ -179,9 +179,9 @@
 							<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
 						</exec-->
 
-				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
+				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" spawn="false">
-					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
+					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
 					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
 				</exec>
 
