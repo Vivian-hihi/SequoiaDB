@@ -204,7 +204,7 @@ INT32 ossEnumFiles( const string &dirPath,
                     const CHAR *filter,
                     UINT32 deep )
 {
-   INT32 rc = SDB_OK ;
+//   INT32 rc = SDB_OK ;
    string newFilter ;
    OSS_MATCH_TYPE type = OSS_MATCH_NULL ;
 
