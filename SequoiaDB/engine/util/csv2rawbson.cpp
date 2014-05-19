@@ -142,8 +142,8 @@ INT32 csvParser::_parseValue( _valueData &valueData, CHAR *pBuffer, INT32 size )
    if ( _delChar == *pBuffer &&
         _delChar == *(pBuffer + size - 1) )
    {
-      ++pBuffer ;
-      size -= 2 ;
+      //++pBuffer ;
+      //size -= 2 ;
       valueData.type = CSV_TYPE_STRING ;
       valueData.pVarString = pBuffer ;
       valueData.stringSize = size ;
@@ -686,9 +686,10 @@ error:
    goto done ;
 }
 
-void csvParser::_value2str( CHAR *pBuffer, INT32 size,
-                            CHAR **ppOutBuf, INT32 &newSize )
+INT32 csvParser::_value2str( CHAR *pBuffer, INT32 size,
+                             CHAR **ppOutBuf, INT32 &newSize )
 {
+   INT32 rc = SDB_OK ;
    if ( size > 1 &&
         pBuffer[0] == _delChar && pBuffer[size-1] == _delChar )
    {
@@ -699,17 +700,27 @@ void csvParser::_value2str( CHAR *pBuffer, INT32 size,
       {
          if ( pBuffer[i] == _delChar )
          {
-            ossMemmove( pBuffer + i, pBuffer + i + 1, size - i - 1 ) ;
-            --size ;
+            if( pBuffer[i+1] == _delChar )
+            {
+               ossMemmove( pBuffer + i, pBuffer + i + 1, size - i - 1 ) ;
+               --size ;
+            }
+            else
+            {
+               rc = SDB_INVALIDARG ;
+               PD_LOG ( PDERROR, "CSV format error, only one side of \
+the field appears delChar, rc = %d", rc ) ;
+               goto error ;
+            }
          }
       }
    }
-   else
-   {
-      // xxxxx
-      *ppOutBuf = pBuffer ;
-   }
+   *ppOutBuf = pBuffer ;
    newSize = size ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 csvParser::_parseField( _fieldData &fieldData, CHAR *pBuffer, INT32 size )
@@ -1469,9 +1480,10 @@ error:
    goto done ;
 }
 
-void csvParser::_appendBson( void *bsonObj, CSV_TYPE csvType,
-                             const CHAR *pKey, void *pValue, INT32 valueSize )
+INT32 csvParser::_appendBson( void *bsonObj, CSV_TYPE csvType,
+                              const CHAR *pKey, void *pValue, INT32 valueSize )
 {
+   INT32 rc = SDB_OK ;
    CHAR *pBuffer = NULL ;
    bson *pObj = (bson *)bsonObj ;
    switch( csvType )
@@ -1490,8 +1502,12 @@ void csvParser::_appendBson( void *bsonObj, CSV_TYPE csvType,
       break ;
    case CSV_TYPE_STRING:
       pBuffer = (CHAR *)pValue ;
-      _value2str( pBuffer, valueSize,
-                 &pBuffer, valueSize ) ;
+      rc = _value2str( pBuffer, valueSize,
+                      &pBuffer, valueSize ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       bson_append_string_n( pObj, pKey, pBuffer, valueSize ) ;
       break ;
    case CSV_TYPE_TIMESTAMP:
@@ -1506,10 +1522,15 @@ void csvParser::_appendBson( void *bsonObj, CSV_TYPE csvType,
    default:
       break ;
    }
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
-void csvParser::_appendBson( void *bsonObj, _fieldData *pFieldData )
+INT32 csvParser::_appendBson( void *bsonObj, _fieldData *pFieldData )
 {
+   INT32 rc = SDB_OK ;
    bson *pObj = (bson *)bsonObj ;
    switch( pFieldData->type )
    {
@@ -1543,11 +1564,13 @@ void csvParser::_appendBson( void *bsonObj, _fieldData *pFieldData )
    default:
       break ;
    }
+   return rc ;
 }
 
-void csvParser::_appendBson( void *bsonObj, const CHAR *pKey,
-                             _valueData *pValueData )
+INT32 csvParser::_appendBson( void *bsonObj, const CHAR *pKey,
+                              _valueData *pValueData )
 {
+   INT32 rc = SDB_OK ;
    bson *pObj = (bson *)bsonObj ;
    switch( pValueData->type )
    {
@@ -1564,8 +1587,12 @@ void csvParser::_appendBson( void *bsonObj, const CHAR *pKey,
       bson_append_double( pObj, pKey, pValueData->varDouble ) ;
       break ;
    case CSV_TYPE_STRING:
-      _value2str( pValueData->pVarString, pValueData->stringSize,
-                 &pValueData->pVarString, pValueData->stringSize ) ;
+      rc = _value2str( pValueData->pVarString, pValueData->stringSize,
+                      &pValueData->pVarString, pValueData->stringSize ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       bson_append_string_n( pObj, pKey,
                             pValueData->pVarString, pValueData->stringSize ) ;
       break ;
@@ -1583,6 +1610,10 @@ void csvParser::_appendBson( void *bsonObj, const CHAR *pKey,
    default:
       break ;
    }
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
@@ -1622,7 +1653,12 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                                    CSV_STR_FIELD_MAX_SIZE,
                                    CSV_STR_FIELD "%d",
                                    autoFieldNum ) ;
-                     _appendBson( &obj, CSV_TYPE_NULL, _fieldName, NULL, 0 ) ;
+                     rc = _appendBson( &obj, CSV_TYPE_NULL,
+                                       _fieldName, NULL, 0 ) ;
+                     if ( rc )
+                     {
+                        goto error ;
+                     }
                      ++autoFieldNum ;
                   }
                }
@@ -1630,12 +1666,19 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                {
                   if( _vField.at(fieldNum)->hasDefVal )
                   {
-                     _appendBson( &obj, _vField.at(fieldNum) ) ;
+                     rc = _appendBson( &obj, _vField.at(fieldNum) ) ;
+                     if ( rc )
+                     {
+                        goto error ;
+                     }
                   }
                   else
                   {
-                     _appendBson( &obj, CSV_TYPE_NULL,
-                                  _vField.at(fieldNum)->pField, NULL, 0 ) ;
+                     rc = _appendBson( &obj, CSV_TYPE_NULL,
+                                       _vField.at(fieldNum)->pField, NULL, 0 ) ;                     if ( rc )
+                     {
+                        goto error ;
+                     }
                   }
                }
             }
@@ -1656,7 +1699,11 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                      {
                         goto error ;
                      }
-                     _appendBson( &obj, _fieldName, &valueData ) ;
+                     rc = _appendBson( &obj, _fieldName, &valueData ) ;
+                     if ( rc )
+                     {
+                        goto error ;
+                     }
                      ++autoFieldNum ;
                   }
                }
@@ -1679,8 +1726,12 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                         goto error ;
                      }
                   }
-                  _appendBson( &obj, _vField.at(fieldNum)->pField,
-                               &valueData ) ;
+                  rc = _appendBson( &obj, _vField.at(fieldNum)->pField,
+                                    &valueData ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
                }
             }
             ++fieldNum ;
@@ -1711,7 +1762,11 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                                 CSV_STR_FIELD_MAX_SIZE,
                                 CSV_STR_FIELD "%d",
                                 autoFieldNum ) ;
-                  _appendBson( &obj, CSV_TYPE_NULL, _fieldName, NULL, 0 ) ;
+                  rc = _appendBson( &obj, CSV_TYPE_NULL, _fieldName, NULL, 0 ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
                   ++autoFieldNum ;
                }
             }
@@ -1719,12 +1774,20 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
             {
                if( _vField.at(fieldNum)->hasDefVal )
                {
-                  _appendBson( &obj, _vField.at(fieldNum) ) ;
+                  rc = _appendBson( &obj, _vField.at(fieldNum) ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
                }
                else
                {
-                  _appendBson( &obj, CSV_TYPE_NULL,
-                               _vField.at(fieldNum)->pField, NULL, 0 ) ;
+                  rc = _appendBson( &obj, CSV_TYPE_NULL,
+                                    _vField.at(fieldNum)->pField, NULL, 0 ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
                }
             }
          }
@@ -1745,7 +1808,11 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                   {
                      goto error ;
                   }
-                  _appendBson( &obj, _fieldName, &valueData ) ;
+                  rc = _appendBson( &obj, _fieldName, &valueData ) ;
+                  if ( rc )
+                  {
+                     goto error ;
+                  }
                   ++autoFieldNum ;
                }
             }
@@ -1768,7 +1835,12 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                      goto error ;
                   }
                }
-               _appendBson( &obj, _vField.at(fieldNum)->pField, &valueData ) ;
+               rc = _appendBson( &obj, _vField.at(fieldNum)->pField,
+                                 &valueData ) ;
+               if ( rc )
+               {
+                  goto error ;
+               }
             }
          }
          if ( _delRecord == *pCursor )
@@ -1796,12 +1868,20 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
       {
          if( _vField.at(fieldNum)->hasDefVal )
          {
-            _appendBson( &obj, _vField.at(fieldNum) ) ;
+            rc = _appendBson( &obj, _vField.at(fieldNum) ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
          else
          {
-            _appendBson( &obj, CSV_TYPE_NULL,
-                         _vField.at(fieldNum)->pField, NULL, 0 ) ;
+            rc = _appendBson( &obj, CSV_TYPE_NULL,
+                              _vField.at(fieldNum)->pField, NULL, 0 ) ;
+            if ( rc )
+            {
+               goto error ;
+            }
          }
       }
    }
