@@ -43,6 +43,7 @@
 #include "oss.hpp"
 #include "pdTrace.h"
 #include <list>
+#include <vector>
 
 
 #define PD_TRACE_MAX_BP_NUM         10
@@ -257,7 +258,8 @@ public :
    UINT32        getMask () ;
    UINT32        getSlotNum () ;
    UINT32        getChunkNum () ;
-   INT32         start ( UINT64 size, UINT32 mask, std::vector<UINT64> *funcCode ) ;
+   INT32         start ( UINT64 size, UINT32 mask,
+                         std::vector<UINT64> *funcCode ) ;
    INT32         start ( UINT64 size, UINT32 mask ) ;
    INT32         start ( UINT64 size ) ; // size for trace buffer size on bytes
    void          stop () ; // stop trace but keep memory available
