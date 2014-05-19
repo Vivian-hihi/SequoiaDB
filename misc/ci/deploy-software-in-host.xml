@@ -88,7 +88,7 @@
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
 		</exec>
 		-->
-		<stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" waitTime="60m"
+		<stafTools workHost="${deploy.host.name}" workType="shell" workDir="${test.machine.software.path}" waitTime="200m"
 			common="ant -l ${test.machine.software.path}/install-basic-in-host.log -f ${test.machine.software.path}/install-basic-in-host.xml -Dtest.basedir=${test.machine.software.path} -Dinstall.package.filename=${install.package.filename} -Dis.standalone.mode=${is.standalone.mode} -Dis.coord.master=${is.coord.master} -Dcatalog.addrs=${catalog.addrs}" />
 		
 		<echo message="${STAF.PATH}\bin\staf ${deploy.host.name} FS GET  FILE ${test.machine.software.path}/install-basic-in-host.log TEXT" />
