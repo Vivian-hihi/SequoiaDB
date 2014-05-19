@@ -44,6 +44,7 @@
 #include "ossSocket.hpp"
 #include "msg.hpp"
 #include <string>
+#include <vector>
 
 namespace engine
 {
