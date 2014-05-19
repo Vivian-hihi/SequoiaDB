@@ -598,7 +598,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECS, "catCatalogueManager::processCmdCreateCS" )
    INT32 catCatalogueManager::processCmdCreateCS( const CHAR * pQuery,
-                                                  const CHAR *pSelector,
                                                   CHAR * * ppReplyBody,
                                                   UINT32 & replyBodyLen,
                                                   INT32 & returnNum )
@@ -611,8 +610,7 @@ namespace engine
       {
          BSONObj groupObj ;
          BSONObj query( pQuery ) ;
-         BSONObj selector( pSelector ) ;
-         rc = _createCS( query, selector, groupID ) ;
+         rc = _createCS( query, groupID ) ;
          PD_RC_CHECK( rc, PDERROR, "Create collection space failed, rc: %d",
                       rc ) ;
 
@@ -655,19 +653,18 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECL, "catCatalogueManager::processCmdCreateCL" )
    INT32 catCatalogueManager::processCmdCreateCL( const CHAR *pQuery,
-                                                  const CHAR *pSelector,
                                                   CHAR **ppReplyBody,
                                                   UINT32 &replyBodyLen,
                                                   INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
-      INT32 groupID = CAT_INVALID_GROUPID ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CREATECL ) ;
+      INT32 groupID = CAT_INVALID_GROUPID ; 
+      std::vector<UINT64> taskIDs ;
       try
       {
          BSONObj query( pQuery ) ;
-         BSONObj selector( pSelector ) ;
-         rc = _createCL( query, selector, groupID ) ;
+         rc = _createCL( query, groupID, taskIDs ) ;
          PD_RC_CHECK( rc, PDERROR, "Create collection failed, rc: %d", rc ) ;
 
          // reply construct
@@ -677,8 +674,24 @@ namespace engine
             BSONObjBuilder replyBuild ;
             replyBuild.append( CAT_CATALOGVERSION_NAME, CAT_VERSION_BEGIN ) ;
             BSONObjBuilder sub( replyBuild.subarrayStart( CAT_GROUP_NAME ) ) ;
-            sub.append( "0", BSON( CAT_GROUPID_NAME << groupID ) ) ;
+            sub.append( "0",
+                        BSON( CAT_GROUPID_NAME << groupID ) ) ;
             sub.done() ;
+
+            if ( !taskIDs.empty() )
+            {
+               BSONObjBuilder task( replyBuild.subarrayStart( CAT_TASKID_NAME ) ) ;
+               for ( UINT32 i = 0; i < taskIDs.size(); i++ )
+               {
+                  std::stringstream ss ;
+                  ss << i ;
+                  UINT64 taskID = taskIDs.at( i ) ;
+                  task.append( ss.str(), (long long int)(taskID) ) ;
+               }
+
+               task.done() ;
+            }
+
             BSONObj replyObj = replyBuild.obj() ;
 
             replyBodyLen = replyObj.objsize() ;
@@ -851,6 +864,7 @@ namespace engine
       csInfo._pCSName = NULL ;
       csInfo._domainName = NULL ;
       csInfo._pageSize = DMS_PAGE_SIZE_DFT ;
+      INT32 expected = 0 ;
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR__CHECKCSOBJ ) ;
       BSONObjIterator it( infoObj ) ;
@@ -865,6 +879,7 @@ namespace engine
                       "Field[%s] type[%d] error", CAT_COLLECTION_NAME,
                       ele.type() ) ;
             csInfo._pCSName = ele.valuestr() ;
+            ++expected ;
          }
          // page size
          else if ( 0 == ossStrcmp( ele.fieldName(), CAT_PAGE_SIZE_NAME ) )
@@ -884,14 +899,16 @@ namespace engine
                        csInfo._pageSize == DMS_PAGE_SIZE32K ||
                        csInfo._pageSize == DMS_PAGE_SIZE64K, SDB_INVALIDARG,
                        error, PDERROR, "PageSize must be 4K/8K/16K/32K/64K" ) ;
+            ++expected ;
          }
          // domain name
-         else if ( 0 == ossStrcmp( ele.fieldName(), CAT_DOMAINNAME_NAME ) )
+         else if ( 0 == ossStrcmp( ele.fieldName(), CAT_DOMAIN_NAME ) )
          {
             PD_CHECK( String == ele.type(), SDB_INVALIDARG, error, PDERROR,
-                      "Field[%s] type[%d] error", CAT_DOMAINNAME_NAME,
+                      "Field[%s] type[%d] error", CAT_DOMAIN_NAME,
                       ele.type() ) ;
             csInfo._domainName = ele.valuestr() ;
+            ++expected ;
          }
          else
          {
@@ -903,6 +920,9 @@ namespace engine
 
       PD_CHECK( csInfo._pCSName, SDB_INVALIDARG, error, PDERROR,
                 "Collection space name not set" ) ;
+
+      PD_CHECK( infoObj.nFields() == expected, SDB_INVALIDARG, error, PDERROR,
+                "unexpected fields exsit." ) ;
 
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKCSOBJ, rc ) ;
@@ -1052,6 +1072,35 @@ namespace engine
             clInfo._isMainCL = eleTmp.boolean() ;
             fieldMask |= CAT_MASK_ISMAINCL;
          }
+         // group specified
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(),
+                                   CAT_GROUP_NAME ) )
+         {
+            PD_CHECK( String == eleTmp.type(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] type[%d] error",
+                      CAT_GROUP_NAME, eleTmp.type() ) ;
+            clInfo._gpSpecified = eleTmp.valuestr() ;
+         }
+         // auto split
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(),
+                                   CAT_DOMAIN_AUTO_SPLIT ) )
+         {
+            PD_CHECK( Bool == eleTmp.type(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] type[%d] error",
+                      CAT_DOMAIN_AUTO_SPLIT, eleTmp.type() ) ;
+            clInfo._autoSplit = eleTmp.Bool() ;
+            fieldMask |= CAT_MASK_AUTOASPLIT ;
+         }
+         // auto rebalance
+         else if ( 0 == ossStrcmp( eleTmp.fieldName(),
+                                   CAT_DOMAIN_AUTO_REBALANCE ) )
+         {
+            PD_CHECK( Bool == eleTmp.type(), SDB_INVALIDARG, error,
+                      PDERROR, "Field[%s] type[%d] error",
+                      CAT_DOMAIN_AUTO_REBALANCE, eleTmp.type() ) ;
+            clInfo._autoRebalance = eleTmp.Bool() ;
+            fieldMask |= CAT_MASK_AUTOREBALAN ;
+         }
          else
          {
             PD_RC_CHECK ( SDB_INVALIDARG, PDERROR,
@@ -1067,6 +1116,20 @@ namespace engine
          PD_CHECK ( !clInfo._isHash,
                     SDB_INVALID_MAIN_CL_TYPE, error, PDERROR,
                     "the sharding-type of main-collection must be range!" );
+      }
+      if ( clInfo._autoSplit || clInfo._autoRebalance )
+      {
+         PD_CHECK ( clInfo._isSharding,
+                    SDB_NO_SHARDINGKEY, error, PDERROR,
+                    "can not do split or rebalance with out ShardingKey!" );
+
+         PD_CHECK ( NULL == clInfo._gpSpecified,
+                    SDB_INVALIDARG, error, PDERROR,
+                    "can not do split or rebalance with out more than one group" );
+
+         PD_CHECK( clInfo._isHash,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "auto options only can be set when shard type is hash" ) ;
       }
 
       PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDERROR,
@@ -1155,7 +1218,6 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CREATECS, "catCatalogueManager::_createCS" )
    INT32 catCatalogueManager::_createCS( BSONObj & createObj,
-                                         BSONObj & selector,
                                          INT32 & groupID )
    {
       INT32 rc               = SDB_OK ;
@@ -1163,7 +1225,6 @@ namespace engine
 
       const CHAR *csName     = NULL ;
       const CHAR *domainName = NULL ;
-      const CHAR *groupName  = NULL ;
       BOOLEAN isSpaceExist   = FALSE ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR__CREATECS ) ;
 
@@ -1178,15 +1239,6 @@ namespace engine
                    "rc: %d", createObj.toString().c_str(), rc ) ;
       csName = csInfo._pCSName ;
       domainName = csInfo._domainName ;
-
-      // specical group name
-      rc = rtnGetStringElement( selector, CAT_GROUPNAME_NAME, &groupName ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
-      {
-         rc = SDB_OK ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_GROUPNAME_NAME, rc ) ;
 
       // name check
       rc = dmsCheckCSName( csName ) ;
@@ -1211,7 +1263,7 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Get domain[%s] groups failed, rc: %d",
                       domainObj.toString().c_str(), rc ) ;
       }
-
+/*
       // check group name
       if ( groupName )
       {
@@ -1226,15 +1278,13 @@ namespace engine
          // set group name
          strGroupName = groupName ;
       }
+*/
 
       // assign group
-      if ( CAT_INVALID_GROUPID == groupID )
-      {
-         rc = _assignGroup( &domainGroups, groupID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Assign group for collection space[%s] "
-                      "failed, rc: %d", csName, rc ) ;
-         catGroupID2Name( groupID, strGroupName, _pEduCB ) ;
-      }
+      rc = _assignGroup( &domainGroups, groupID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Assign group for collection space[%s] "
+                   "failed, rc: %d", csName, rc ) ;
+      catGroupID2Name( groupID, strGroupName, _pEduCB ) ;
 
       // insert new record
       {
@@ -1246,6 +1296,7 @@ namespace engine
          sub.done() ;
          BSONObjBuilder sub1( newBuilder.subarrayStart( CAT_COLLECTION ) ) ;
          sub1.done() ;
+
          BSONObj newObj = newBuilder.obj() ;
 
          rc = rtnInsert( CAT_COLLECTION_SPACE_COLLECTION, newObj, 1, 0,
@@ -1264,13 +1315,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CREATECOLLECTION, "catCatalogueManager::_createCL" )
    INT32 catCatalogueManager::_createCL( BSONObj & createObj,
-                                         BSONObj & selector,
-                                         INT32 &groupID )
+                                         INT32 &groupID,
+                                         std::vector<UINT64> &taskIDs )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_CREATECOLLECTION ) ;
-
-      groupID    = CAT_INVALID_GROUPID ;
 
       UINT32 fieldMask = 0 ;
       catCollectionInfo clInfo ;
@@ -1284,10 +1333,10 @@ namespace engine
       BSONObj boSpaceRecord ;
       BOOLEAN isCollectionExist = FALSE ;
       BSONObj boCollectionRecord ;
-
-      const CHAR *domainName = CAT_SYS_DOMAIN_NAME ;
-      const CHAR *specGroup  = NULL ;
-      string  strGroupName ;
+      BSONObj domainObj ;
+      std::string strGroupName ;
+      groupID = CAT_INVALID_GROUPID ; 
+      std::map<string, INT32> range ;
 
       // check createObj
       rc = _checkAndBuildCataRecord( createObj, fieldMask, clInfo ) ;
@@ -1336,51 +1385,39 @@ namespace engine
       PD_TRACE1 ( SDB_CATALOGMGR_CREATECOLLECTION,
                   PD_PACK_INT ( isCollectionExist ) ) ;
 
-      // check special group
-      rc = rtnGetStringElement( selector, CAT_GROUPNAME_NAME, &specGroup ) ;
-      if ( SDB_FIELD_NOT_EXIST == rc )
+      // try to get domain obj of cl.
       {
-         rc = SDB_OK ;
-      }
-      PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                   CAT_GROUPNAME_NAME, rc ) ;
-
-      // has specific the group name
-      if ( specGroup && !clInfo._isMainCL )
+      BSONElement domainEle = boSpaceRecord.getField( CAT_DOMAIN_NAME ) ;
+      if ( String == domainEle.type() )
       {
-         BOOLEAN exist = FALSE ;
-         // get cs domain name
-         rc = rtnGetStringElement( boSpaceRecord, CAT_DOMAINNAME_NAME,
-                                   &domainName ) ;
-         if ( SDB_FIELD_NOT_EXIST == rc )
+         rc = catGetDomainObj( domainEle.valuestr(), domainObj, _pEduCB ) ;
+         if ( SDB_OK != rc )
          {
-            domainName = CAT_SYS_DOMAIN_NAME ;
-            rc = SDB_OK ;
+            PD_LOG( PDERROR, "failed to get domain obj os cs[%s], rc:%d",
+                    DMS_COLLECTION_SPACE_NAME_SZ, rc ) ;
+            goto error ;
          }
-         PD_RC_CHECK( rc, PDERROR, "Failed to get field[%s], rc: %d",
-                      CAT_DOMAINNAME_NAME, rc ) ;
-         rc = _checkGroupInDomain( specGroup, domainName, exist, &groupID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Check group in domain failed, rc: %d", rc ) ;
-         PD_CHECK( exist, SDB_CAT_GROUP_NOT_IN_DOMAIN, error, PDERROR,
-                   "Group[%s] is not in domain[%s]", specGroup, domainName ) ;
-
-         strGroupName = specGroup ;
+      }
       }
 
-      // assing a group id
-      if ( CAT_INVALID_GROUPID == groupID && !clInfo._isMainCL )
+      rc = _combineOptions( domainObj, boSpaceRecord, fieldMask, clInfo ) ;
+      if ( SDB_OK != rc )
       {
-         vector< INT32 > csGroupIDs ;
-         rc = catGetCSGroups( boSpaceRecord, csGroupIDs ) ;
-         PD_RC_CHECK( rc, PDERROR, "Get space group id failed, rc: %d", rc ) ;
-         rc = _assignGroup( &csGroupIDs, groupID ) ;
-         PD_RC_CHECK( rc, PDERROR, "Assign group id failed, rc: %d", rc ) ;
-
-         catGroupID2Name( groupID, strGroupName, _pEduCB ) ;
+         PD_LOG( PDERROR, "failed to combine options, domainObj[%s],"
+                 "create cl options[%s], rc:%d", domainObj.toString().c_str(),
+                 createObj.toString().c_str(), rc ) ;
+         goto error ;
       }
 
-      // build new collection record obj
-      rc = _buildCatalogRecord( clInfo, groupID, strGroupName.c_str(),
+      /// choose a group to create cl
+      rc = _chooseGroupOfCl( domainObj, boSpaceRecord, clInfo,
+                             strGroupName, groupID, range ) ;
+      PD_RC_CHECK( rc, PDERROR, "failed to choose group for cl[%s], rc: %d",
+                   collectionName, rc ) ;
+
+      // build new collection record for meata data.
+      rc = _buildCatalogRecord( clInfo, fieldMask, groupID,
+                                strGroupName.c_str(),
                                 newCLRecordObj ) ;
       PD_RC_CHECK( rc, PDERROR, "Build new collection catalog record failed, "
                    "rc: %d", rc ) ;
@@ -1388,7 +1425,7 @@ namespace engine
       PD_TRACE1 ( SDB_CATALOGMGR_CREATECOLLECTION,
                   PD_PACK_STRING ( newCLRecordObj.toString().c_str() ) ) ;
 
-      // insert to collection
+      // insert to system collectin of meta data.
       rc = rtnInsert( CAT_COLLECTION_INFO_COLLECTION, newCLRecordObj,
                       1, 0, _pEduCB, _pDmsCB, _pDpsCB, _majoritySize() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed insert record[%s] to collection[%s], "
@@ -1404,6 +1441,17 @@ namespace engine
          goto rollback ;
       }
 
+      if ( clInfo._autoSplit ) 
+      {
+         rc = _autoHashSplit( newCLRecordObj, taskIDs,
+                              strGroupName.c_str(), &range ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to split collection[%s], rc:%d",
+                    collectionName, rc ) ;
+            goto error ;
+         }
+      }
    done :
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_CREATECOLLECTION, rc ) ;
       return rc ;
@@ -1412,6 +1460,7 @@ namespace engine
    rollback:
       catRemoveCL( collectionName , _pEduCB, _pDmsCB, _pDpsCB,
                    _majoritySize() ) ;
+      groupID = CAT_INVALID_GROUPID ;
       goto done ;
    }
 
@@ -1422,6 +1471,7 @@ namespace engine
    //       [ { GroupID: 1000, LowBound:{ "":MinKey,"":MaxKey }, UpBound:{"":MaxKey,"":MinKey} } ] }
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_BUILDCATALOGRECORD, "catCatalogueManager::_buildCatalogRecord" )
    INT32 catCatalogueManager::_buildCatalogRecord( const catCollectionInfo & clInfo,
+                                                   UINT32 mask,
                                                    INT32 groupID,
                                                    const CHAR *groupName,
                                                    BSONObj & catRecord )
@@ -1434,23 +1484,25 @@ namespace engine
       builder.append( CAT_CATALOGNAME_NAME, clInfo._pCLName ) ;
       builder.append( CAT_CATALOGVERSION_NAME, CAT_VERSION_BEGIN ) ;
       builder.append( CAT_CATALOG_W_NAME, clInfo._replSize ) ;
-      if ( clInfo._isCompressed )
+
+      /// only record the options specified by user.
+      if ( mask & CAT_MASK_COMPRESSED )
       {
          UINT32 attr = 0 ;
          attr |= DMS_MB_ATTR_COMPRESSED ;
          builder.append( CAT_ATTRIBUTE_NAME, attr ) ;
       }
-      if ( clInfo._isSharding )
+      if ( mask & CAT_MASK_SHDKEY )
       {
          builder.append( CAT_SHARDINGKEY_NAME, clInfo._shardingKey ) ;
-         builder.append( CAT_ENSURE_SHDINDEX, clInfo._enSureShardIndex ) ;
+         builder.appendBool( CAT_ENSURE_SHDINDEX, clInfo._enSureShardIndex ) ;
          builder.append( CAT_SHARDING_TYPE, clInfo._pShardingType ) ;
          if( clInfo._isHash )
          {
             builder.append( CAT_SHARDING_PARTITION, clInfo._shardPartition ) ;
          }
       }
-      if ( clInfo._isMainCL )
+      if ( mask & CAT_MASK_ISMAINCL )
       {
          builder.append( CAT_IS_MAINCL, clInfo._isMainCL );
       }
@@ -1488,6 +1540,15 @@ namespace engine
          sub.done () ;
       }
 
+      if ( mask & CAT_MASK_AUTOASPLIT )
+      {
+         builder.appendBool ( CAT_DOMAIN_AUTO_SPLIT, clInfo._autoSplit ) ;
+      }
+
+      if ( mask & CAT_MASK_AUTOREBALAN )
+      {
+         builder.appendBool ( CAT_DOMAIN_AUTO_REBALANCE, clInfo._autoRebalance ) ;
+      }
       catRecord = builder.obj () ;
 
    done:
@@ -1643,11 +1704,11 @@ namespace engine
       switch ( pQueryReq->header.opCode )
       {
          case MSG_CAT_CREATE_COLLECTION_REQ :
-            rc = processCmdCreateCL( pQuery, pFieldSelector, &replyData,
+            rc = processCmdCreateCL( pQuery, &replyData,
                                      replyDataLen, returnNum ) ;
             break ;
          case MSG_CAT_CREATE_COLLECTION_SPACE_REQ :
-            rc = processCmdCreateCS( pQuery, pFieldSelector, &replyData,
+            rc = processCmdCreateCS( pQuery, &replyData,
                                      replyDataLen, returnNum ) ;
             break ;
          case MSG_CAT_SPLIT_PREPARE_REQ :
@@ -1978,21 +2039,14 @@ namespace engine
          // if we provide options, let's extract each option
          if ( beDomainOptions.type() == Object )
          {
-            rc = catDomainOptionsValidate ( beDomainOptions.embeddedObject(),
-                                            _pEduCB ) ;
+            rc = catDomainOptionsExtract ( beDomainOptions.embeddedObject(),
+                                            _pEduCB,
+                                           ob ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to validate domain options, rc = %d",
                         rc ) ;
                goto error ;
-            }
-            // iterate each element in options and add to final object
-            {
-               BSONObjIterator it ( beDomainOptions.embeddedObject() ) ;
-               while ( it.more () )
-               {
-                  ob.append ( it.next() ) ;
-               }
             }
             expectedObjSize ++ ;
          }
@@ -2132,4 +2186,340 @@ namespace engine
    //error :
    //   goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHOOSEFGROUPOFCL, "catCatalogueManager::_chooseGroupOfCl" )
+   INT32 catCatalogueManager::_chooseGroupOfCl( const BSONObj &domainObj,
+                                                const BSONObj &csObj,
+                                                const catCollectionInfo &clInfo,
+                                                std::string &groupName,
+                                                INT32 &groupID,
+                                                std::map<string, INT32> &splitRange )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__CHOOSEFGROUPOFCL ) ;
+      BSONObj gpObj ;
+      const CHAR *domain = NULL ;
+      BOOLEAN isSysDomain = domainObj.isEmpty() ;
+      std::map<string, INT32> groupsOfDomain ;
+
+      /// if the group is specified.
+      /// 1) whether the group exsits.
+      /// 2) whether the group is one of the groups of domain.
+      if ( NULL != clInfo._gpSpecified )
+      {
+         if ( !isSysDomain )
+         {
+            rc = catGetDomainGroups( domainObj, groupsOfDomain ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
+                         "rc: %d", domainObj.toString().c_str(), rc ) ;
+            
+            {
+            map<string, INT32>::const_iterator itr =
+                                       groupsOfDomain.find( clInfo._gpSpecified ) ;
+            if ( groupsOfDomain.end() == itr )
+            {
+               PD_LOG( PDERROR, "[%s] is not a group of domain [%s]",
+                       clInfo._gpSpecified, domain ) ;
+               rc = SDB_CAT_GROUP_NOT_IN_DOMAIN ;
+               goto error ;
+            }
+
+            groupID = itr->second ;
+            }
+            /// if the group is a group of domain, it surely exsits.
+         }
+         else
+         {
+            rc = catGetGroupObj( clInfo._gpSpecified, gpObj, _pEduCB ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get group[%s] info failed, rc: %d",
+                         clInfo._gpSpecified, rc ) ;
+            rc = rtnGetIntElement( gpObj, CAT_GROUPID_NAME, groupID ) ;
+            PD_RC_CHECK( rc, PDERROR, "Get groupid of group[%s] info failed, rc: %d",
+                         clInfo._gpSpecified, rc ) ;
+         }
+
+         groupName.assign( clInfo._gpSpecified ) ;
+      }
+      /// get a group from groups of cs.
+      else
+      {
+         rc = _getGroupFromCsObjRandly( csObj, groupName,
+                                        groupID ) ;
+         PD_RC_CHECK( rc, PDERROR, "Assign group id failed, rc: %d", rc ) ;
+
+         if ( !isSysDomain )
+         {
+            rc = catGetDomainGroups( domainObj, splitRange ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to get groups from domain info[%s], "
+                         "rc: %d", domainObj.toString().c_str(), rc ) ;
+         }
+      }
+
+      SDB_ASSERT( CAT_INVALID_GROUPID != groupID, "can not be invalid" )
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__CHOOSEFGROUPOFCL, rc ) ;
+      return rc ;
+   error:
+      groupID = CAT_INVALID_GROUPID ;
+      groupName.clear() ;
+      splitRange.clear() ; 
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__GETGPFROMCS, "catCatalogueManager::_getGroupAndSplitFromCsObjRandly" )   
+   INT32 catCatalogueManager::
+                     _getGroupFromCsObjRandly( const BSONObj &csObj,
+                                               std::string &groupName,
+                                               INT32 &groupID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__GETGPFROMCS ) ;
+
+      BSONElement groups = csObj.getField( CAT_GROUP_NAME ) ;
+      if ( Array != groups.type() )
+      {
+         PD_LOG( PDERROR, "invalid cs obj:[%s]", csObj.toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      {
+      INT32 tmpID = CAT_INVALID_GROUPID ;
+      const CHAR *tmpName = NULL ;
+      BSONObj gpsObj = groups.embeddedObject() ;
+      BSONObj objPair ;
+      UINT32 rand = ossRand() % gpsObj.nFields() ;
+      std::stringstream ss ;
+      ss << rand ;
+      BSONElement elePair = gpsObj.getField(ss.str().c_str()) ;
+      PD_CHECK( Object == elePair.type(), SDB_INVALIDARG, error, PDERROR,
+                      "CS group ele type is not Object, CS info: %s",
+                      csObj.toString().c_str() ) ;
+      objPair = elePair.embeddedObject() ;
+      rc = rtnGetIntElement( objPair, CAT_GROUPID_NAME, tmpID ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get CS group id failed, rc: %d, "
+                   "CS info: %s", rc, csObj.toString().c_str() ) ;
+      rc = rtnGetStringElement( objPair, CAT_GROUPNAME_NAME, &tmpName ) ;
+      PD_RC_CHECK( rc, PDERROR, "Get CS group name failed, rc: %d, "
+                   "CS info: %s", rc, csObj.toString().c_str() ) ;
+
+      groupID = tmpID ;
+      groupName.assign( tmpName ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__GETGPFROMCS, rc ) ;
+      return rc ;
+   error:
+      groupName.clear() ;
+      groupID = CAT_INVALID_GROUPID ;
+      goto done ;
+   }
+
+   static INT32 getBoundFromClObj( const BSONObj &clObj,
+                                   UINT32 &totalBound )
+   {
+      INT32 rc = SDB_OK ;
+      BSONElement upBound =
+            clObj.getFieldDotted(CAT_CATALOGINFO_NAME".0."CAT_UPBOUND_NAME);
+      if ( Object != upBound.type() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      {
+      BSONElement first = upBound.embeddedObject().firstElement() ;
+      if ( NumberInt != first.type() )
+      {
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      totalBound = first.Int() ;
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_AUTOHASHSPLIT, "catCatalogueManager::_autoHashSplit" )
+   INT32 catCatalogueManager::_autoHashSplit( const BSONObj &clObj,
+                                              std::vector<UINT64> &taskIDs,
+                                              const CHAR *srcGroupName,
+                                              const map<string, INT32> *range )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR_AUTOHASHSPLIT ) ;
+      const CHAR *srcGroup = NULL ;
+      const map<string, INT32> *dstGroups = NULL ;
+      BSONObj splitInfo ;
+      const CHAR *fullName = NULL ;
+      UINT32 totalBound = 0 ;
+
+
+      BSONElement eleName = clObj.getField( CAT_CATALOGNAME_NAME ) ;
+      if ( String != eleName.type() )
+      {
+         SDB_ASSERT( FALSE, "impossible" )
+         PD_LOG( PDERROR, "invalid collection record:%s",
+                 clObj.toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      fullName = eleName.valuestr() ;
+
+      rc = getBoundFromClObj( clObj, totalBound ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get bound from cl obj[%s]",
+                 clObj.toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+      
+
+      if ( NULL == srcGroupName )
+      {
+         /// TODO: get src and dst id from meta data.
+         SDB_ASSERT( FALSE, "impossible" )
+      }
+      else
+      {
+         SDB_ASSERT( NULL != range, "can not be NULL" )
+         srcGroup = srcGroupName ;
+         dstGroups = range ;
+      }
+
+      if ( 1 < dstGroups->size() )
+      {
+         INT32 tmpID ;
+         UINT64 taskID = CLS_INVALID_TASKID ;
+         clsCatalogSet catSet( fullName ) ;
+         UINT32 avgBound = totalBound / dstGroups->size() ;
+         UINT32 endBound = totalBound ;
+         UINT32 beginBound = totalBound - avgBound ;
+
+         rc = catSet.updateCatSet( clObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to update catlogset:%d", rc ) ;
+            goto error ;
+         }
+
+         {
+         map<string, INT32>::const_iterator itr = dstGroups->begin() ;
+         for ( ; itr != dstGroups->end(); itr++ )
+         {
+            if ( 0 == ossStrcmp( srcGroup, itr->first.c_str() ) )
+            {
+               continue ;
+            }
+
+            splitInfo = _crtSplitInfo( fullName,
+                                       srcGroup,
+                                       itr->first.c_str(),
+                                       beginBound,
+                                       endBound ) ;
+
+            rc = catSplitReady( splitInfo, fullName,
+                                &catSet, tmpID, _taskMgr,
+                                _pEduCB, _majoritySize(),
+                                &taskID ) ;
+            if ( SDB_OK != rc )
+            {
+               PD_LOG( PDERROR, "failed to split collections[%s], rc:%d",
+                       fullName, rc ) ;
+               goto error ;
+            }
+
+            endBound = beginBound ;
+            beginBound = endBound - avgBound ;
+            taskIDs.push_back( taskID ) ;   
+         }
+         }
+      }
+      else
+      {
+         PD_LOG( PDINFO, "split range size:%d, do nothing.", dstGroups->size() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR_AUTOHASHSPLIT, rc ) ;
+      return rc ;
+   error:
+      {
+      std::vector<UINT64>::const_iterator itr = taskIDs.begin() ;
+      for ( ; itr != taskIDs.end(); itr++ )
+      {
+         catRemoveTask( *itr, _pEduCB, _majoritySize() ) ;
+      }
+
+      taskIDs.clear() ;
+      }
+      goto done ;
+   }
+
+   BSONObj catCatalogueManager::_crtSplitInfo( const CHAR *fullName,
+                                               const CHAR *src,
+                                               const CHAR *dst,
+                                               UINT32 begin,
+                                               UINT32 end )
+   {
+      SDB_ASSERT( NULL != fullName && NULL != src && NULL != dst,
+                  "can not be NULL" )
+      BSONObj obj = BSON ( CAT_COLLECTION_NAME << fullName <<
+                           CAT_SOURCE_NAME << src <<
+                           CAT_TARGET_NAME << dst <<
+                           CAT_SPLITVALUE_NAME << BSON( "" << begin ) <<
+                           CAT_SPLITENDVALUE_NAME << BSON( "" << end ) ) ;
+      return obj ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__COMBINEOPTIONS, "catCatalogueManager::_combineOptions" )
+   INT32 catCatalogueManager::_combineOptions( const BSONObj &domain,
+                                               const BSONObj &cs,
+                                               UINT32 &mask,
+                                               catCollectionInfo &options  )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__COMBINEOPTIONS ) ;
+      /// it is a sysdomain.
+      if ( domain.isEmpty() )
+      {
+         goto done ;
+      }
+
+      if ( !( CAT_MASK_AUTOASPLIT & mask ) )
+      {
+         if ( options._isSharding && options._isHash )
+         {
+            BSONElement split = domain.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
+            if ( Bool == split.type() )
+            {
+               options._autoSplit = split.Bool() ;
+               mask |= CAT_MASK_AUTOASPLIT ;
+            }
+         }
+      }
+
+      if ( !( CAT_MASK_AUTOREBALAN & mask ) )
+      {
+         if ( options._isSharding && options._isHash )
+         {
+            BSONElement rebalance = domain.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
+            if ( Bool == rebalance.type() )
+            {
+               options._autoRebalance = rebalance.Bool() ;
+               mask |= CAT_MASK_AUTOREBALAN ;
+            }
+         }
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__COMBINEOPTIONS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+   
 }

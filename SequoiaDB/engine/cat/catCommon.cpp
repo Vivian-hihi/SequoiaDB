@@ -95,21 +95,20 @@ namespace engine
       return catGroupNameValidate( pName, FALSE ) ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDOMAINOPTIONSVALIDATE, "catDomainOptionsValidate" )
-   INT32 catDomainOptionsValidate ( const BSONObj &options,
-                                    pmdEDUCB *cb )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDOMAINOPTIONSEXTRACT, "catDomainOptionsExtract" )
+   INT32 catDomainOptionsExtract( const BSONObj &options,
+                                  pmdEDUCB *cb,
+                                  BSONObjBuilder &builder )
    {
       INT32 rc = SDB_OK ;
-      INT32 expectedOptSize = 0 ;
-      PD_TRACE_ENTRY ( SDB_CATDOMAINOPTIONSVALIDATE ) ;
-      BSONObj tempObj ;
-      BSONObj resultObj ;
+      PD_TRACE_ENTRY( SDB_CATDOMAINOPTIONSEXTRACT ) ;
+
       // we use std string here because
       // 1) compare if a group name already exist, and we don't need to write
       // comparitor
       // 2) it's not performance sensitive code
       std::set <std::string> groupNameList ;
-      // find out group list
+      INT32 expectedOptSize = 0 ;
       BSONElement beGroupList = options.getField ( CAT_GROUP_NAME ) ;
       if ( !beGroupList.eoo() && beGroupList.type() != Array )
       {
@@ -117,14 +116,20 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
       // iterate each element for group, validate each group must be exist
       if ( beGroupList.type() == Array )
       {
-         BSONObjIterator it ( beGroupList.embeddedObject () ) ;
+         BSONArrayBuilder gpInfoBuilder ;
+         BSONObjIterator it ( beGroupList.embeddedObject() ) ;
          while ( it.more() )
          {
             // for each element in group, first we need to check if it's string,
             // and we need to make sure it's in group list
+            BSONObj groupInfo ;
+            BSONObjBuilder oneGroup ;
+            BSONElement gpID ;
+            BSONElement gpName ;
             BSONElement beGroupElement = it.next () ;
             if ( beGroupElement.type() != String )
             {
@@ -132,42 +137,66 @@ namespace engine
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            // query sysnodes, make sure it exists
-            rc = catGetOneObj ( CAT_NODE_INFO_COLLECTION, tempObj,
-                                BSON ( CAT_GROUPNAME_NAME <<
-                                       beGroupElement.valuestr() ),
-                                tempObj, cb, resultObj ) ;
-            if ( rc )
+
+            rc = catGetGroupObj( beGroupElement.valuestr(),
+                                 groupInfo,
+                                 cb ) ;
+            if ( SDB_OK != rc )
             {
-               if ( SDB_DMS_EOC == rc )
-               {
-                  PD_LOG ( PDERROR, "group %s does not exist",
-                           beGroupElement.valuestr() ) ;
-                  rc = SDB_CLS_GRP_NOT_EXIST ;
-                  goto error ;
-               }
-               else
-               {
-                  PD_LOG ( PDERROR, "Failed to get record from %s, rc = %d",
-                           CAT_NODE_INFO_COLLECTION, rc ) ;
-                  goto error ;
-               }
+               PD_LOG( PDERROR, "failed to get group info of [%s]",
+                       beGroupElement.valuestr() ) ;
+               goto error ;
             }
-            // make sure there's no duplicate group name
-            if ( groupNameList.count ( beGroupElement.valuestr() ) != 0 )
+
+            if ( !groupNameList.insert ( beGroupElement.valuestr() ).second )
             {
                PD_LOG ( PDERROR, "Duplicate group name: %s",
                         beGroupElement.valuestr() ) ;
                rc = SDB_INVALIDARG ;
                goto error ;
             }
-            groupNameList.insert ( beGroupElement.valuestr() ) ;
+
+            gpName = groupInfo.getField( CAT_GROUPNAME_NAME ) ;
+            SDB_ASSERT( !gpName.eoo(), "can not be eoo" )
+            if ( !gpName.eoo() )
+            {
+               oneGroup.append( gpName ) ;
+            }
+
+            gpID = groupInfo.getField( CAT_GROUPID_NAME ) ;
+            SDB_ASSERT( !gpID.eoo(), "can not be eoo" )
+            if ( !gpID.eoo() )
+            {
+               oneGroup.append( gpID ) ;
+            }
+
+            gpInfoBuilder << oneGroup.obj() ;
          }
-         // finished check Group, increase opt size
+
+         builder.append( CAT_GROUP_NAME, gpInfoBuilder.arr() ) ;
          ++ expectedOptSize ;
       }
 
-      // make sure there's no garbage fields
+      /// check option auto split
+      {
+      BSONElement autoSplit = options.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
+      if ( !autoSplit.eoo() && autoSplit.isBoolean() )
+      {
+         builder.append( autoSplit ) ;
+         ++expectedOptSize ;
+      }
+      }
+
+      /// check option auto rebalance
+      {
+      BSONElement autoRebalance = options.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
+      if ( !autoRebalance.eoo() && autoRebalance.isBoolean() )
+      {
+         builder.append( autoRebalance ) ;
+         ++expectedOptSize ;
+      }
+      } 
+      
       if ( options.nFields() != expectedOptSize )
       {
          PD_LOG ( PDERROR, "Actual input doesn't match expected opt size, "
@@ -175,10 +204,10 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-   done :
-      PD_TRACE_EXITRC ( SDB_CATDOMAINOPTIONSVALIDATE, rc ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_CATDOMAINOPTIONSEXTRACT, rc ) ;
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
@@ -567,7 +596,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATGETDOMAINOBJ ) ;
       BSONObj dummyObj ;
-      BSONObj boMatcher = BSON( CAT_DOMAINNAME_NAME << domainName );
+      BSONObj boMatcher = BSON( CAT_DOMAIN_NAME << domainName );
 
       rc = catGetOneObj( CAT_DOMAIN_COLLECTION, dummyObj, boMatcher,
                          dummyObj, cb, obj ) ;
@@ -690,7 +719,7 @@ namespace engine
          while ( i.more() )
          {
             BSONElement ele = i.next() ;
-            PD_CHECK( Object == ele.type(), SDB_INVALIDARG, error, PDERROR,
+            PD_CHECK( ele.isABSONObj(), SDB_INVALIDARG, error, PDERROR,
                       "Domain group ele type is not object, Domain info: %s",
                       domain.toString().c_str() ) ;
 

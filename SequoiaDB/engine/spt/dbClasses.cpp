@@ -3263,7 +3263,7 @@ static void domain_destructor ( JSContext *cx, JSObject *obj )
    sdbDomainHandle *s = (sdbDomainHandle *)
          JS_GetPrivate ( cx, obj ) ;
    SAFE_RELEASE_DOMAIN ( s ) ;
-   SAFE_JS_FREE ( cx, s ) ;
+   SDB_OSS_FREE( s ) ;
    JS_SetPrivate ( cx, obj, NULL ) ;
    PD_TRACE_EXIT ( SDB_DOMAIN_DESTRUCTOR );
 }
@@ -3853,9 +3853,11 @@ static JSBool sdb_create_domain ( JSContext *cx, uintN argc, jsval *vp )
    sdbDomainHandle       *domain      = NULL ;
    jsval                  valDomainN  = JSVAL_VOID ;
    bson                   bsonDef ;
+   bson                   options ;
 
    PD_TRACE_ENTRY ( SDB_SDB_CREATE_DOMAIN ) ;
    bson_init ( &bsonDef ) ;
+   bson_init ( &options ) ;
    // make sure there's at least one argument for domain name
    REPORT ( argc >= 1,
             "Sdb.createDomain(): need at least one argument" ) ;
@@ -3907,6 +3909,25 @@ static JSBool sdb_create_domain ( JSContext *cx, uintN argc, jsval *vp )
       VERIFY ( BSON_OK == bson_append_finish_array ( &bsonDef ) ) ;
    }
 
+   if ( argc >=3 )
+   {
+      if ( JSVAL_IS_OBJECT( argv[2]) )
+      {
+         sptConvertor convertor( cx ) ;
+         bson_iterator itr ;
+         JSObject *optionsObj = JSVAL_TO_OBJECT( argv[2] ) ;         
+         VERIFY ( optionsObj ) ;
+         rc = convertor.toBson( optionsObj, &options ) ;
+         VERIFY( SDB_OK == rc ) ;
+         bson_iterator_init( &itr, &options ) ;
+         while ( bson_iterator_more( &itr ) )
+         {
+            bson_iterator_next( &itr ) ;
+            bson_append_element( &bsonDef, NULL, &itr ) ;
+         }
+      }
+   }
+
    domain = (sdbDomainHandle *) JS_malloc ( cx, sizeof(sdbDomainHandle) ) ;
    VERIFY ( domain ) ;
    *domain = SDB_INVALID_HANDLE ;
@@ -3923,6 +3944,7 @@ static JSBool sdb_create_domain ( JSContext *cx, uintN argc, jsval *vp )
 done :
    SAFE_JS_FREE ( cx, name ) ;
    bson_destroy ( &bsonDef ) ;
+   bson_destroy ( &options ) ;
    PD_TRACE_EXIT ( SDB_SDB_CREATE_DOMAIN ) ;
    return ret ;
 error :
@@ -3982,6 +4004,10 @@ static JSBool sdb_get_domain ( JSContext *cx, uintN argc, jsval *vp )
    // name is freed in done
    name = JS_EncodeString ( cx, domainName ) ;
    VERIFY ( name ) ;
+
+   domain = ( sdbDomainHandle * )SDB_OSS_MALLOC( sizeof ( sdbDomainHandle ) ) ;
+   VERIFY ( domain ) ;
+
    rc = sdbGetDomain ( *connection, name, domain ) ;
    REPORT_RC ( SDB_OK == rc, "Sdb.getDomain()", rc ) ;
    objDomain = JS_NewObject ( cx, &domain_class, 0, 0 ) ;
@@ -3996,7 +4022,7 @@ done :
    return ret ;
 error :
    SAFE_RELEASE_DOMAIN ( domain ) ;
-   SAFE_JS_FREE ( cx, domain ) ;
+   SDB_OSS_FREE( domain ) ;
    TRY_REPORT ( cx, "Sdb.getDomain(): false" ) ;
    goto done ;
 }
@@ -4639,9 +4665,13 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    INT32                rc          = SDB_OK ;
    JSBool               ret         = JS_TRUE ;
    JSObject *           objCS       = NULL ;
+   JSObject *           objOptions     = NULL ;
    jsval                valConn     = JSVAL_VOID ;
    jsval                valName     = JSVAL_VOID ;
    jsval                valCS       = JSVAL_VOID ;
+   bson                 options ;
+
+   bson_init( &options ) ;
 
    cs = (sdbCSHandle *) JS_malloc ( cx , sizeof ( sdbCSHandle ) ) ;
    VERIFY ( cs ) ;
@@ -4652,15 +4682,40 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    REPORT ( connection , "Sdb.createCS: no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "S/i" , &strCSName , &pageSize ) ;
+                               "S/io" , &strCSName ,
+                               &pageSize, &objOptions ) ;
    REPORT ( ret , "Sdb.createCS(): wrong arguments" ) ;
+
+   /// TODO: put the pagesize in options obj when next release.
+   if ( 0 == pageSize && NULL == objOptions && argc > 1 )
+   {
+      ret = FALSE ;
+      REPORT ( ret , "Sdb.createCS(): wrong arguments" ) ;
+   }
+
+   if ( 0 == pageSize )
+   {
+      pageSize = SDB_PAGESIZE_DEFAULT ;
+   }
 
    // csName is freed in done:
    csName = (CHAR *) JS_EncodeString ( cx , strCSName ) ;
    VERIFY ( csName ) ;
 
+   if ( NULL != objOptions )
+   {
+      sptConvertor c( cx ) ;
+      rc = c.toBson( objOptions, &options ) ;
+      VERIFY ( SDB_OK == rc ) ;
+   }
+   else
+   {
+      bson_finish( &options ) ;
+   }
+
    // the handle contained by cs is released in done:
-   rc = sdbCreateCollectionSpace( *connection , csName , (INT32) pageSize, cs );
+   rc = sdbCreateCollectionSpaceV2( *connection , csName ,
+                                  (INT32) pageSize, &options, cs );
    REPORT_RC ( SDB_OK == rc , "Sdb.createCS()" , rc ) ;
    // get the cs handle
    rc = sdbGetCollectionSpace ( *connection , csName , cs ) ;
@@ -4685,6 +4740,7 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
 
 done :
    SAFE_JS_FREE ( cx , csName ) ;
+   bson_destroy( &options ) ;
    PD_TRACE_EXIT ( SDB_SDB_CRT_CS );
    return ret ;
 error :

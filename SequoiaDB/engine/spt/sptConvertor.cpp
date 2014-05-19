@@ -91,6 +91,28 @@ error:
    goto done ;
 }
 
+INT32 sptConvertor::toBson( JSObject *obj, bson *bs )
+{
+   INT32 rc = SDB_OK ;
+   SDB_ASSERT( NULL != obj && NULL != bs, "can not be NULL" )
+   rc = _traverse( obj, bs ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = bson_finish( bs ) ;
+   if ( rc )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 sptConvertor::_traverse( JSObject *obj , bson *bs )
 {
    INT32 rc = SDB_OK ;
@@ -572,9 +594,13 @@ INT32 sptConvertor::toString( JSContext *cx,
    INT32 rc = SDB_OK ;
    //CHAR *utf8 = NULL ;
    SDB_ASSERT( NULL != cx, "impossible" )
+   size_t len = 0 ;
    JSString *jsStr = JS_ValueToString( cx, val ) ;
-   SDB_ASSERT( NULL != jsStr, "can not be NULL" )
-   size_t len = JS_GetStringLength( jsStr ) ;
+   if ( NULL == jsStr )
+   {
+      goto done ;
+   }
+   len = JS_GetStringLength( jsStr ) ;
    if ( 0 == len )
    {
       goto done ;

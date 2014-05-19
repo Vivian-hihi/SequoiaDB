@@ -183,7 +183,7 @@ namespace engine
                 "Collection space[%s] is not exist", szSpace ) ;
 
       // get domain name
-      rc = rtnGetStringElement( csObj, CAT_DOMAINNAME_NAME, &domainName ) ;
+      rc = rtnGetStringElement( csObj, CAT_DOMAIN_NAME, &domainName ) ;
       // SYSTEM DOMAIN
       if ( SDB_FIELD_NOT_EXIST == rc )
       {

@@ -49,7 +49,6 @@
 #define FIELD_NAME_NAME                      "Name"
 #define FIELD_NAME_GROUPID                   "GroupID"
 #define FIELD_NAME_GROUPNAME                 "GroupName"
-#define FIELD_NAME_DOMAINNAME                "DomainName"
 #define FIELD_NAME_DOMAIN                    "Domain"
 #define FIELD_NAME_NODEID                    "NodeID"
 #define FIELD_NAME_IS_PRIMARY                "IsPrimary"
@@ -263,6 +262,8 @@
 #define FIELD_NAME_REPL_NETOUT               "replNetOut"
 #define FIELD_NAME_SHARD_NETIN               "shardNetIn"
 #define FIELD_NAME_SHARD_NETOUT              "shardNetOut"
+#define FIELD_NAME_DOMAIN_AUTO_SPLIT         "AutoSplit"
+#define FIELD_NAME_DOMAIN_AUTO_REBALANCE     "AutoRebalance"
 
 #define FIELD_NAME_SESSIONID                 "SessionID"
 

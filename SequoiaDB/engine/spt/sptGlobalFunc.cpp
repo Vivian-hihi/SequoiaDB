@@ -35,9 +35,11 @@
 namespace engine
 {
 JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, getLastError )
+JS_GLOBAL_FUNC_DEFINE( _sptGlobalFunc, sleep )
 
 JS_BEGIN_MAPPING( _sptGlobalFunc, "" )
    JS_ADD_GLOBAL_FUNC( "getLastErrMsg", getLastError )
+   JS_ADD_GLOBAL_FUNC( "sleep", sleep )
 JS_MAPPING_END()
    
 
@@ -71,6 +73,25 @@ JS_MAPPING_END()
       SDB_OSS_FREE( errmsg ) ;
       errmsg = NULL ;
       return SDB_OK ;
+   }
+
+   INT32 _sptGlobalFunc::sleep( const _sptArguments &arg,
+                                 _sptReturnVal &rval,
+                                 bson::BSONObj &detail )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 time = 0 ;
+      rc = arg.getNative( 0, &time ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      ossSleepmillis( time ) ;
+   done:
+      return SDB_OK ;
+   error:
+      goto done ;
    }
 }
 

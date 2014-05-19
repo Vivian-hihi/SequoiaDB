@@ -54,9 +54,11 @@ namespace engine
    /* Check domain name is valid */
    INT32 catDomainNameValidate( const CHAR *pName ) ;
 
-   /* Check domain options are valid */
-   INT32 catDomainOptionsValidate ( const BSONObj &options,
-                                    pmdEDUCB *cb ) ;
+
+   /* extract options of domain */
+   INT32 catDomainOptionsExtract( const BSONObj &options,
+                                  pmdEDUCB *cb,
+                                  BSONObjBuilder &builder ) ;
 
    /* Split collection full name to cs name and cl name */
    INT32 catResolveCollectionName( const CHAR *pInput, UINT32 inputLen,

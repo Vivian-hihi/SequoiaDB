@@ -560,9 +560,14 @@ INT32 sptConvertor2::toString( JSContext *cx,
    INT32 rc = SDB_OK ;
    //CHAR *utf8 = NULL ;
    SDB_ASSERT( NULL != cx, "impossible" )
+   size_t len = 0 ;
    JSString *jsStr = JS_ValueToString( cx, val ) ;
-   SDB_ASSERT( NULL != jsStr, "can not be NULL" )
-   size_t len = JS_GetStringLength( jsStr ) ;
+   if ( NULL == jsStr )
+   {
+      goto done ;
+   }
+
+   len = JS_GetStringLength( jsStr ) ;
    if ( 0 == len )
    {
       goto done ;

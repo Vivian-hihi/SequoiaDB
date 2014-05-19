@@ -106,7 +106,7 @@ namespace engine
                                        pmdEDUCB *cb,
                                        rtnContextCoord *pContext = NULL,
                                        CoordGroupList *pGroupList = NULL,
-                                       BSONObj *pReplyObj = NULL );
+                                       std::vector<BSONObj> *pReplyObjs = NULL );
       virtual INT32 processCatReply( MsgOpReply *pReply,
                                      CoordGroupList &groupLst );
    protected:
@@ -517,6 +517,11 @@ namespace engine
                      CHAR **ppResultBuffer,
                      pmdEDUCB *cb, MsgOpReply &replyHeader,
                      BSONObj **ppErrorObj );
+
+   private:
+      INT32 _notifyDataGroupsToStartTask( const BSONElement &task,
+                                          netMultiRouteAgent *agent,
+                                          pmdEDUCB *cb ) ;
    };
 
    class rtnCoordCMDAlterCollection : public rtnCoordCommand

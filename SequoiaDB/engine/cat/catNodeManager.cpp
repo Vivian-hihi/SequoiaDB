@@ -626,9 +626,9 @@ namespace engine
       try
       {
          BSONObj boQuery( pQuery ) ;
-         rc = rtnGetStringElement( boQuery, CAT_DOMAINNAME_NAME, &domainName ) ;
+         rc = rtnGetStringElement( boQuery, CAT_DOMAIN_NAME, &domainName ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to get the field: %s, rc: %d",
-                      CAT_DOMAINNAME_NAME, rc ) ;
+                      CAT_DOMAIN_NAME, rc ) ;
       }
       catch( std::exception &e )
       {
@@ -653,7 +653,7 @@ namespace engine
       try
       {
          BSONObjBuilder bobDomainInfo ;
-         bobDomainInfo.append( CAT_DOMAINNAME_NAME, domainName ) ;
+         bobDomainInfo.append( CAT_DOMAIN_NAME, domainName ) ;
          BSONArrayBuilder arrayBuild ;
          bobDomainInfo.append( CAT_GROUP_NAME, arrayBuild.arr() ) ;
          BSONObj boDomainInfo = bobDomainInfo.obj() ;

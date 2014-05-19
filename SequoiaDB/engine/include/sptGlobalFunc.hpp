@@ -48,6 +48,10 @@ namespace engine
       static INT32 getLastError( const _sptArguments &arg,
                                  _sptReturnVal &rval,
                                  bson::BSONObj &detail ) ;
+
+      static INT32 sleep( const _sptArguments &arg,
+                          _sptReturnVal &rval,
+                          bson::BSONObj &detail ) ;
    } ;
    typedef class _sptGlobalFunc sptGlobalFunc ;
 }

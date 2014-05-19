@@ -376,7 +376,7 @@ namespace engine
                                                pmdEDUCB *cb,
                                                rtnContextCoord *pContext,
                                                CoordGroupList *pGroupList,
-                                               BSONObj *pReplyObj )
+                                               std::vector<BSONObj> *pReplyObjs )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCOM_EXEONCATAGR ) ;
@@ -429,12 +429,17 @@ namespace engine
             {
                rc = processCatReply( pReply, *pGroupList) ;
             }
-            if ( pReplyObj && SDB_OK == rc && pReply->numReturned > 0 )
+            if ( pReplyObjs && SDB_OK == rc && pReply->numReturned > 0 )
             {
                try
                {
-                  *pReplyObj = BSONObj( (const CHAR*)pReply +
-                                        sizeof(MsgOpReply) ).getOwned() ;
+                  const CHAR *objPos = (const CHAR*)pReply + sizeof(MsgOpReply) ;
+                  for ( SINT64 i = 0; i < pReply->numReturned; i++ )
+                  {
+                     BSONObj obj( objPos ) ;
+                     pReplyObjs->push_back( obj.getOwned() ) ;
+                     objPos += obj.objsize() ;
+                  }
                }
                catch( std::exception &e )
                {
@@ -1164,6 +1169,8 @@ namespace engine
       goto done ;
    }
 
+   
+
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDALCL_EXE, "rtnCoordCMDAlterCollection::execute" )
    INT32 rtnCoordCMDAlterCollection::execute( CHAR *pReceiveBuffer, SINT32 packSize,
                                     CHAR **ppResultBuffer, pmdEDUCB *cb,
@@ -1217,6 +1224,7 @@ namespace engine
       pmdKRCB *pKrcb                   = pmdGetKRCB();
       CoordCB *pCoordcb                = pKrcb->getCoordCB();
       netMultiRouteAgent *pRouteAgent  = pCoordcb->getRouteAgent();
+      vector<BSONObj> replyFromCata ;
 
       // fill default-reply(delete success)
       MsgHeader *pHeader               = (MsgHeader *)pReceiveBuffer;
@@ -1285,7 +1293,7 @@ namespace engine
       if ( !isMainCL )
       {
          rc = executeOnCataGroup ( (CHAR*)pCreateReq, pRouteAgent,
-                                   cb, NULL, &groupLst ) ;
+                                   cb, NULL, &groupLst, &replyFromCata ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "create collection failed on catalog, rc = %d",
@@ -1319,6 +1327,24 @@ namespace engine
          }
       }
 
+      /// check whether should notify data group to complete tasks.
+      if ( !isMainCL && !replyFromCata.empty() )
+      {
+      BSONElement task = replyFromCata.at(0).getField( CAT_TASKID_NAME ) ;
+      if ( Array == task.type() )
+      {
+         rc = _notifyDataGroupsToStartTask( task, pRouteAgent, cb ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to notify data groups to start task:%d", rc ) ;
+            /// meta data has already been modified.
+            /// here we change a errno.
+            rc = SDB_CL_DONE_BUT_SPLIT_FAILED ;
+            goto error ;
+         }
+      }
+      }
+
    done :
       replyHeader.flags = rc;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDCRCL_EXE, rc ) ;
@@ -1337,6 +1363,152 @@ namespace engine
          goto error ;
       }*/
    error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, "rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask" )
+   INT32 rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask( const BSONElement &task,
+                                                                    netMultiRouteAgent *agent,
+                                                                    pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS ) ;
+      CHAR *buffer = NULL ;
+      INT32 bufferLen = 0 ;
+      std::vector<BSONObj> reply ;
+      BSONObjBuilder builder ;
+      builder.appendAs( task, "$in" ) ;
+      BSONObj condition = BSON( FIELD_NAME_TASKID << builder.obj() );
+      MsgOpQuery *msgHeader = NULL ;
+      INT32 everRc = SDB_OK ;
+
+      rc = msgBuildQueryMsg( &buffer, &bufferLen, CAT_TASK_INFO_COLLECTION,
+                             0, 0, 0, -1, &condition, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build query msg:%d", rc ) ;
+         goto error ;
+      }
+
+      msgHeader = ( MsgOpQuery * )buffer ;
+      msgHeader->header.routeID.value = MSG_INVALID_ROUTEID ;
+      msgHeader->header.TID = cb->getTID();
+      msgHeader->header.opCode = MSG_CAT_QUERY_TASK_REQ ;
+      msgHeader->header.messageLength = bufferLen ;
+      
+      /// get task info from catalog.
+      rc = executeOnCataGroup( buffer, agent,
+                                cb, NULL, NULL, &reply ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get task info from catalog, rc:%d",rc ) ;
+         goto error ;
+      }
+
+      /// notify all groups to start task.
+      {
+      BSONElement group ;
+      CoordGroupInfoPtr gpInfo ;
+      CoordGroupList groupList ;
+      CoordGroupList dummy ;
+      std::set<INT32> ignore ;
+      CoordCB *coordCb = pmdGetKRCB()->getCoordCB () ;
+      rtnCoordCommand *cmd = coordCb->getProcesserFactory()
+                                    ->getCommandProcesser( COORD_CMD_WAITTASK ) ;
+      vector<BSONObj>::const_iterator itr = reply.begin() ;
+      for ( ; itr != reply.end(); itr++ )
+      {
+         CHAR *resultBuf = NULL ;
+         MsgOpReply replyHeader ;
+         BSONObj *errObj = NULL ;
+         groupList.clear() ;
+         dummy.clear() ;
+         ignore.clear() ;
+
+         group = itr->getField( FIELD_NAME_TARGETID ) ;
+         if ( NumberInt != group.type() )
+         {
+            PD_LOG( PDERROR, "target id is not a numberint.[%s]",
+                    itr->toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         rc = rtnCoordGetGroupInfo( cb, group.Int(),
+                                    TRUE, gpInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get group info:%d", rc ) ;
+            goto error ;
+         }
+
+         groupList.insert( std::make_pair( gpInfo->getGroupID(),
+                                           gpInfo->getGroupID()) ) ;
+
+         rc = msgBuildQueryMsg( &buffer, &bufferLen,
+                                CMD_ADMIN_PREFIX CMD_NAME_SPLIT,
+                                0, 0, 0, -1, &(*itr), NULL, NULL, NULL ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build split msg:%d", rc ) ;
+            goto error ;
+         }
+
+         msgHeader = ( MsgOpQuery * )buffer ;
+         msgHeader->header.routeID.value = MSG_INVALID_ROUTEID ;
+         msgHeader->header.TID = cb->getTID();
+         msgHeader->header.opCode = MSG_BS_QUERY_REQ ;
+         msgHeader->header.messageLength = bufferLen ;
+
+         rc = executeOnDataGroup( (MsgHeader *)buffer,
+                                   groupList, dummy,
+                                   agent, cb, TRUE, &ignore ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to notify group[%s] to split",
+                    gpInfo->groupName().c_str() ) ;
+            everRc = ( SDB_OK == everRc ) ? rc : everRc ;
+            rc = SDB_OK ;
+            continue ;
+            /// here we try to send msg to all groups, do not goto error.
+         }
+
+         /// wait the task done.
+         rc = cmd->execute( buffer, bufferLen,
+                            &resultBuf, cb,
+                            replyHeader, &errObj ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to wait task:%d", rc ) ;
+            /// do not care about rc.
+            rc = SDB_OK ;
+         }
+         if ( NULL != resultBuf )
+         {
+            SDB_OSS_FREE( resultBuf ) ;
+         }
+         if ( NULL != errObj )
+         {
+            SDB_OSS_DEL( errObj ) ;
+         }
+      }
+      }
+
+      rc = ( SDB_OK == everRc ) ? SDB_OK : everRc ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "some spliting are fail, check the catalog info." ) ;
+         goto error ;
+      }
+
+   done:
+      if ( NULL != buffer )
+      {
+         SDB_OSS_FREE( buffer ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, rc ) ;
+      return rc ;
+   error:
       goto done ;
    }
 
@@ -5765,7 +5937,7 @@ namespace engine
       try
       {
          BSONObj boSend ;
-         BSONObj boRecv ;
+         vector<BSONObj> boRecv ;
          // construct the record that we are going to send to catalog
          boSend = BSON ( CAT_COLLECTION_NAME << strName <<
                          CAT_SOURCE_NAME << szSource <<
@@ -5789,7 +5961,7 @@ namespace engine
                                    cb, NULL, &groupList1, &boRecv ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to execute split ready on catalog, "
                        "rc = %d", rc ) ;
-         taskID = (UINT64)boRecv.getField( CAT_TASKID_NAME ).numberLong() ;
+         taskID = (UINT64)(boRecv.at(0).getField( CAT_TASKID_NAME ).numberLong()) ;
 
          // construct split query req
          boSend = BSON( CAT_TASKID_NAME << (long long)taskID ) ;

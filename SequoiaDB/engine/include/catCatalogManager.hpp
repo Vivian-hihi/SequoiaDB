@@ -28,32 +28,41 @@ namespace engine
    #define CAT_MASK_SHDPARTITION    0x00000020
    #define CAT_MASK_COMPRESSED      0x00000040
    #define CAT_MASK_ISMAINCL        0x00000080
+   #define CAT_MASK_AUTOASPLIT      0x00000100
+   #define CAT_MASK_AUTOREBALAN     0x00000200
 
    struct _catCollectionInfo
    {
       const CHAR  *_pCLName ;
       BSONObj     _shardingKey ;
       INT32       _replSize ;
-      bool        _enSureShardIndex ;
+      BOOLEAN     _enSureShardIndex ;
       const CHAR  *_pShardingType ;
       INT32       _shardPartition ;
       BOOLEAN     _isHash ;
       BOOLEAN     _isSharding ;
       BOOLEAN     _isCompressed ;
-      bool        _isMainCL;
+      BOOLEAN     _isMainCL;
+      BOOLEAN     _autoSplit ;
+      BOOLEAN     _autoRebalance ;
+      const CHAR * _gpSpecified ;
+      
       std::vector<std::string>   _subCLList;
 
       _catCollectionInfo()
       {
          _pCLName             = NULL ;
          _replSize            = 1 ;
-         _enSureShardIndex    = true ;
+         _enSureShardIndex    = TRUE ;
          _pShardingType       = CAT_SHARDING_TYPE_RANGE ;
          _shardPartition      = CAT_SHARDING_PARTITION_DEFAULT ;
          _isHash              = FALSE ;
          _isSharding          = FALSE ;
          _isCompressed        = FALSE ;
-         _isMainCL            = false ;
+         _isMainCL            = FALSE ;
+         _autoSplit           = FALSE ;
+         _autoRebalance       = FALSE ;
+         _gpSpecified         = NULL ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;
@@ -95,12 +104,10 @@ namespace engine
       INT32 processCommandMsg( void *pMsg, BOOLEAN writable ) ;
 
       INT32 processCmdCreateCL( const CHAR *pQuery,
-                                const CHAR *pSelector,
                                 CHAR **ppReplyBody,
                                 UINT32 &replyBodyLen,
                                 INT32 &returnNum ) ;
       INT32 processCmdCreateCS( const CHAR *pQuery,
-                                const CHAR *pSelector,
                                 CHAR **ppReplyBody,
                                 UINT32 &replyBodyLen,
                                 INT32 &returnNum ) ;
@@ -140,10 +147,10 @@ namespace engine
       void  _fillRspHeader( MsgHeader *rspMsg, const MsgHeader *reqMsg ) ;
       INT32 _sendFailedRsp( NET_HANDLE handle, INT32 res, MsgHeader *reqMsg) ;
 
-      INT32 _createCL( BSONObj & createObj, BSONObj & selector,
-                       INT32 &groupID ) ;
-      INT32 _createCS( BSONObj & createObj, BSONObj & selector,
-                       INT32 &groupID ) ;
+      INT32 _createCL( BSONObj & createObj, INT32 &groupID,
+                       std::vector<UINT64> &taskIDs ) ;
+      INT32 _createCS( BSONObj & createObj, INT32 &groupID ) ;
+
       INT32 _checkAndBuildCataRecord( const BSONObj &infoObj,
                                       UINT32 &fieldMask,
                                       catCollectionInfo &clInfo ) ;
@@ -157,9 +164,36 @@ namespace engine
       INT32 _assignGroup( vector< INT32 > *pGoups, INT32 &groupID ) ;
 
       INT32 _buildCatalogRecord( const catCollectionInfo &clInfo,
+                                 UINT32 mask,
                                  INT32 groupID,
                                  const CHAR *groupName,
                                  BSONObj &catRecord ) ;
+
+      INT32 _chooseGroupOfCl( const BSONObj &domainObj,
+                              const BSONObj &csObj,
+                              const catCollectionInfo &clInfo,
+                              std::string &groupName,
+                              INT32 &groupID,
+                              std::map<string, INT32> &splitRange ) ;
+
+      INT32 _getGroupFromCsObjRandly( const BSONObj &csObj,
+                                      std::string &groupName,
+                                      INT32 &groupID ) ;
+
+      INT32 _autoHashSplit( const BSONObj &clObj, std::vector<UINT64> &taskIDs,
+                            const CHAR *srcGroupName = NULL,
+                            const map<string, INT32> *dstIDs = NULL ) ;
+
+      INT32 _combineOptions( const BSONObj &domain,
+                             const BSONObj &cs,
+                             UINT32 &mask,
+                             catCollectionInfo &options  ) ;
+
+      BSONObj _crtSplitInfo( const CHAR *fullName,
+                             const CHAR *src,
+                             const CHAR *dst,
+                             UINT32 begin,
+                             UINT32 end ) ;
 
    private:
       INT32 _buildInitBound ( UINT32 fieldNum,
