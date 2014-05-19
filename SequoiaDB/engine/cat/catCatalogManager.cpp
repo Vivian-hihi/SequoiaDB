@@ -1505,7 +1505,7 @@ namespace engine
       /// add catainfo to record even not specified by user.
       if ( clInfo._isMainCL )
       {
-         builder.append( CAT_IS_MAINCL, clInfo._isMainCL );
+         builder.appendBool( CAT_IS_MAINCL, clInfo._isMainCL );
       }
       else
       {
