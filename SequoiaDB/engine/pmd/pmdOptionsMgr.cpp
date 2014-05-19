@@ -503,8 +503,8 @@ namespace engine
                if ( pEX->hasField( pFieldName ) )
                {
                   _result = SDB_PERM ;
-                  PD_LOG_MSG( PDWARNING, "Field[%s] do not support changing in "
-                              "runtime", pFieldName ) ;
+                  PD_LOG ( PDWARNING, "Field[%s] do not support changing in "
+                           "runtime", pFieldName ) ;
                   goto error ;
                }
                goto done ;
@@ -623,8 +623,8 @@ namespace engine
                if ( pEX->hasField( pFieldName ) )
                {
                   _result = SDB_PERM ;
-                  PD_LOG_MSG( PDWARNING, "Field[%s] do not support changing in "
-                              "runtime", pFieldName ) ;
+                  PD_LOG ( PDWARNING, "Field[%s] do not support changing in "
+                           "runtime", pFieldName ) ;
                   goto error ;
                }
                goto done ;
