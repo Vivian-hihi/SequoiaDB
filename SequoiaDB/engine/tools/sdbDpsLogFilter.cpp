@@ -140,8 +140,8 @@ INT32 _dpsLogFilter::doParse()
 
    if( isDir( _cmdData->srcPath ) )
    {
-      int const MAX_FILE_COUNT = getFileCount( _cmdData->srcPath ) ;
-      for( int idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
+      INT32 const MAX_FILE_COUNT = getFileCount( _cmdData->srcPath ) ;
+      for( INT32 idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
       {
          // src log file ;
          CHAR filename[ OSS_MAX_PATHSIZE * 2 ] = { 0 } ;
