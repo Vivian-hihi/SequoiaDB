@@ -40,13 +40,15 @@
 #include "core.hpp"
 #include "oss.hpp"
 #include <ctime>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/thread/xtime.hpp>
-#include <boost/thread/thread.hpp>
 #include <time.h>
 #include <sys/types.h>
 #include "ossUtil.h"
 
+#if defined( SDB_ENGINE )
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/xtime.hpp>
+#include <boost/thread/thread.hpp>
+#endif // SDB_ENGINE
 
 UINT32 ossRand () ;
 // djb2 hashing algorithm
@@ -75,9 +77,11 @@ OSS_INLINE void ossSleepmillis ( UINT64 s )
 {
    Sleep ( ( DWORD ) s ) ;
 }
-// sad truth in windows is that we don't have nansleep nor usleep, so we need to depends on boost again
+// sad truth in windows is that we don't have nansleep nor usleep,
+// so we need to depends on boost again
 OSS_INLINE void ossSleepmicros(UINT64 s)
 {
+#if defined( SDB_ENGINE )
    boost::xtime xt ;
    boost::xtime_get ( &xt, boost::TIME_UTC ) ;
    xt.sec += (INT32)(s/1000000);
@@ -88,6 +92,9 @@ OSS_INLINE void ossSleepmicros(UINT64 s)
       xt.sec++;
    }
    boost::thread::sleep(xt);
+#else
+   ossSleepmillis( s / 1000 ) ;
+#endif // SDB_ENGINE
 }
 #else
 // we use nanosleep instead of usleep because we want to capture signal during sleep
