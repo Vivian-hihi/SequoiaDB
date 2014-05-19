@@ -306,7 +306,7 @@ sdbmemcheckFiles = [
       ]
 
 sdbdpsdumpFiles = [
-      "tools/sdbDpsDump.cpp"
+      "tools/sdbDpsFilterMain.cpp"
       ]
 
 #BSON
