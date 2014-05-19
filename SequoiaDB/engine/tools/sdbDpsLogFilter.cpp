@@ -108,7 +108,7 @@ INT32 _dpsLogFilter::doParse()
 
    if( isDir( _cmdData->dstPath ) )
    {
-      ossSnprintf( dstFile, OSS_MAX_PATHSIZE, "%s\\%s",
+      ossSnprintf( dstFile, OSS_MAX_PATHSIZE, "%s"OSS_FILE_SEP"%s",
                    _cmdData->dstPath, "tmpLog.log" ) ;   
    }
    else
@@ -144,9 +144,11 @@ INT32 _dpsLogFilter::doParse()
       for( INT32 idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
       {
          // src log file ;
+         fs::path fileDir( _cmdData->srcPath ) ;
+         const CHAR *filepath = fileDir.string().c_str() ;
          CHAR filename[ OSS_MAX_PATHSIZE * 2 ] = { 0 } ;
          ossSnprintf( filename, OSS_MAX_PATHSIZE, "%s/sequoiadbLog.%d",
-                      _cmdData->srcPath, idx ) ;
+                      filepath, idx ) ;
 
          if( !isFileExisted( filename ) )
          {

@@ -1,6 +1,5 @@
 #include "sdbDpsOption.hpp"
 #include "ossUtil.hpp"
-#include "ossVer.hpp"
 #include "utilParam.hpp"
 
 #define ASSIGNED_FILTER( filter, nextFilter ) \
@@ -35,10 +34,11 @@ void _dpsFilterOption::displayArgs( po::options_description &desc )
 }
 
 INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
-                              po::options_description &desc, iFilter *&filter )
+                              po::options_description &desc,
+                              po::variables_map &vm,
+                              iFilter *&filter )
 {
    INT32 rc            = SDB_OK ;
-   po::variables_map vm ;
    iFilter *nextFilter = NULL ;
 
    DPS_FILTER_ADD_OPTIONS_BEGIN( desc )
@@ -49,19 +49,6 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
    if ( SDB_OK != rc )
    {
       goto error ;
-   }
-
-   if( vm.count( DPS_LOG_FILTER_HELP ) )
-   {
-      displayArgs( desc ) ;
-      rc = SDB_OK ;
-      goto done ;
-   }
-
-   if( vm.count( DPS_LOG_FILTER_VER ) )
-   {
-      ossPrintVersion( "SequoiaDB version" ) ;
-      goto done ;
    }
 
    rc = pmdCfgRecord::init( NULL, &vm ) ;
@@ -77,8 +64,17 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
       filter = dpsFilterFactory::getInstance()
                ->createFilter( SDB_LOG_FILTER_LSN ) ;
       CHECK_FILTER( filter ) ;
-      const CHAR *pLsn = vm[DPS_LOG_FILTER_LSN].as<std::string>().c_str() ;
-      _cmdData.lsn = strtoull( pLsn, NULL, 0 ) ;
+      const CHAR *pLsn = vm[ DPS_LOG_FILTER_LSN ].as<std::string>().c_str() ;
+      try
+      {
+         _cmdData.lsn = boost::lexical_cast< UINT64 >( pLsn ) ;
+      }
+      catch( boost::bad_lexical_cast& e )
+      {
+         printf( "Unable to cast lsn to UINT64\n" ) ;
+         rc SDB_INVALIDARG ;
+         goto error ;
+      }
    }
 
    if( vm.count( DPS_LOG_FILTER_TYPE ) )
@@ -108,27 +104,15 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
 
       filter = dpsFilterFactory::getInstance()
                ->createFilter( SDB_LOG_FILTER_META ) ;
-      CHECK_FILTER( filter );
+      CHECK_FILTER( filter ) ;
+      goto done ;
    }
 
-   if( vm.count( DPS_LOG_FILTER_NONE ) )
+   if( NULL == filter )
    {
-      if( NULL != filter )
-      {
-         printf( "none-filter must be used alone!\n" ) ;
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
-
       filter = dpsFilterFactory::getInstance()
                ->createFilter( SDB_LOG_FILTER_NONE ) ;
-      CHECK_FILTER( filter );
-   }
-
-   if ( NULL == filter )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      CHECK_FILTER( filter ) ;
    }
 
 done:
@@ -153,9 +137,19 @@ INT32 _dpsFilterOption::doDataExchange( engine::pmdCfgExchange *pEx )
  
    rdxString( pEx, DPS_LOG_FILTER_FROM_PATH,
             _cmdData.srcPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
+   INT32 len = ossStrlen( _cmdData.srcPath ) ;
+   if( OSS_FILE_SEP_CHAR == _cmdData.srcPath[ len - 1 ] )
+   {
+      _cmdData.srcPath[ len - 1 ] = '\0' ;
+   }
 
    rdxString( pEx, DPS_LOG_FILTER_TO_PATH,
             _cmdData.dstPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
+   len = ossStrlen( _cmdData.dstPath ) ;
+   if( OSS_FILE_SEP_CHAR ==  _cmdData.dstPath[ len - 1 ] )
+   {
+      _cmdData.dstPath[ len - 1 ] = '\0' ;
+   }
 
    rdxString( pEx, DPS_LOG_FILTER_NAME,
             _cmdData.inputName, OSS_MAX_PATHSIZE, FALSE, FALSE, "" ) ;

@@ -3,6 +3,8 @@
 
 #include "ossUtil.hpp"
 #include "ossIO.hpp"
+#include <vector>
+#include <list>
 
 struct _dpsCmdData
 {

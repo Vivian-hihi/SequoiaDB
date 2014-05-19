@@ -7,8 +7,12 @@
 #include "ossIO.hpp"
 #include "dpsDump.hpp"
 #include "sdbDpsLogFilter.hpp"
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 using namespace engine ;
+namespace fs = boost::filesystem ;
 
 #define NONE_LSN_FILTER -1
 #define BLOCK_SIZE 64 * 1024
@@ -383,174 +387,6 @@ namespace
       goto done ;
    }
 
-/////////////////////////////////////////////////////////////////
-/// now not used
-   INT32 typeFilte( iFilter *filter, const dpsCmdData *data,
-                    OSSFILE& out, const CHAR *filename )
-   {
-      SDB_ASSERT( filter, "filter is NULL" ) ;
-      SDB_ASSERT( filename, "filename cannot be NULL" ) ;
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_FORMATLOG ) ;
-      OSSFILE in ;
-   
-      CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
-      CHAR *pRecordBuffer = NULL ;
-      INT64 recordLength  = 0 ;
-      BOOLEAN opened      = FALSE ;
-      INT64 fileSize      = 0 ;
-      INT64 offset        = 0 ;
-      CHAR *pOutBuffer    = NULL ; ///< buffer for formatted log
-      INT64 outBufferSize = 0 ;
-      INT64 len           = 0 ; 
-
-      rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
-                    OSS_RU | OSS_WU | OSS_RG, in ) ;
-      if( rc )
-      {
-         printf( "Unable to open file: %s. rc = %d\n", filename, rc ) ;
-         goto error ;
-      }
-
-      opened = TRUE ;
-
-      rc = checkLogFile( in, fileSize, filename ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-      SDB_ASSERT( fileSize > 0, "fileSize must be gt 0" ) ;
-      len = DPS_LOG_HEAD_LEN * LOG_BUFFER_FORMAT_MULTIPLIER ;
-
-   retry_head:
-      // format log head
-      if( len > outBufferSize )
-      {
-         CHAR *pOrgBuff = pOutBuffer ;
-         pOutBuffer =(CHAR*)SDB_OSS_REALLOC ( pOutBuffer, len + 1 ) ;
-         if( !pOutBuffer )
-         {
-            printf( "Failed to allocate memory for %lld bytes\n", 
-                     len + 1 ) ;
-            pOutBuffer = pOrgBuff ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         outBufferSize = len ;
-         ossMemset( pOutBuffer, 0, len + 1 ) ;
-      }
-
-      rc = readLogHead( in, offset, fileSize,  pOutBuffer, outBufferSize,
-                        NULL, len ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-      if( len >= outBufferSize )
-      {
-         len += BLOCK_SIZE ;
-         goto retry_head ;
-      }
-      printf( "%s\n", pOutBuffer ) ;
-      // write to file 
-      rc = writeToFile ( out, pOutBuffer ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-
-      // then dump each record
-      while( offset < fileSize )
-      {
-         rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
-         if( rc && SDB_DPS_CORRUPTED_LOG != rc )
-         {
-            goto error ;
-         }
-
-         dpsLogRecordHeader *header = ( dpsLogRecordHeader * )pRecordHead ;
-         // filte type
-         if( !filter->match( data, pRecordHead ) )
-         {
-            offset += header->_length ;
-            continue ;
-         }
-
-         if( header->_length > recordLength )
-         {
-            pRecordBuffer = ( CHAR * )SDB_OSS_REALLOC ( 
-                              pRecordBuffer, header->_length + 1 );
-            if( !pRecordBuffer )
-            {
-               rc = SDB_OOM;
-               printf( "Failed to allocate %d bytes\n",
-                       header->_length + 1 ) ;
-               goto error;
-            }
-            recordLength = header->_length ;
-         }
-         ossMemset( pRecordBuffer, 0, recordLength ) ;
-         rc = readRecord( in, offset, fileSize, header->_length,
-                          pRecordBuffer ) ;
-         if( rc )
-         {
-            goto error;
-         }
-
-         dpsLogRecord record ;
-         record.load( pRecordBuffer ) ;
-         len = recordLength * LOG_BUFFER_FORMAT_MULTIPLIER ;
-
-      retry_record:
-         if( len > outBufferSize )
-         {
-            CHAR *pOrgBuff = pOutBuffer ;
-            pOutBuffer =(CHAR*)SDB_OSS_REALLOC( pOutBuffer, len + 1 ) ;
-            if( !pOutBuffer )
-            {
-               printf( "Failed to allocate memory for %lld bytes\n",
-                       len + 1 ) ;
-               pOutBuffer = pOrgBuff ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            outBufferSize = len ;
-            ossMemset( pOutBuffer, 0, len + 1 ) ;
-         }
-         len = record.dump( pOutBuffer, outBufferSize,
-                      DPS_DMP_OPT_HEX | DPS_DMP_OPT_HEX_WITH_ASCII |
-                      DPS_DMP_OPT_FORMATTED ) ;
-         if( len >= outBufferSize )
-         {
-            len += BLOCK_SIZE ;
-            goto retry_record ;
-         }
-
-         // write dump data
-         rc = writeToFile( out, pOutBuffer ) ;
-         if( rc )
-         {
-            goto error ;
-         }
-
-         printf( "%s\n", pOutBuffer ) ;
-         offset += header->_length ;
-      }
-   
-   done:
-      if( pRecordBuffer )
-         SDB_OSS_FREE( pRecordBuffer ) ;
-      if( pOutBuffer )
-         SDB_OSS_FREE( pOutBuffer ) ;
-      if( opened )
-         ossClose( in ) ;
-      PD_TRACE_EXITRC( SDB_FORMATLOG, rc ) ;
-      return rc ;
-   
-   error:
-      goto done ;
-   }
-
    INT32 filte( iFilter *filter, const dpsCmdData *data,
                     OSSFILE& out, const CHAR *filename )
    {
@@ -575,6 +411,12 @@ namespace
       INT64 outBufferSize = 0 ;
       INT64 len           = 0 ;
 
+      CHAR fileParseEnd[ BLOCK_SIZE ] = { 0 } ;
+      len  = ossSnprintf( fileParseEnd + len, BLOCK_SIZE,
+                          "==================================\n" ) ;
+      len += ossSnprintf( fileParseEnd, BLOCK_SIZE - len,
+                          "filename:[%s] parse begin\n\n", filename ) ;
+
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
                     OSS_RU | OSS_WU | OSS_RG, in ) ;
       if( rc )
@@ -623,7 +465,7 @@ namespace
          goto retry_head ;
       }
 
-      printf( "%s\n", pOutBuffer ) ;
+//      printf( "%s\n", pOutBuffer ) ;
       // write to file 
       rc = writeToFile ( out, pOutBuffer ) ;
       if( rc )
@@ -733,7 +575,7 @@ namespace
             goto error ;
          }
 
-         printf( "%s\n", pOutBuffer ) ;
+//         printf( "%s\n", pOutBuffer ) ;
          offset += header->_length ;
          if( SDB_LOG_FILTER_LSN == filter->getType() )
          {
@@ -798,30 +640,33 @@ namespace
       dpsFileMeta meta ;
       meta.logID = logHeader->_logID ;
       meta.firstLSN = logHeader->_firstLSN.offset ;
-      if( DPS_INVALID_LOG_FILE_ID != logHeader->_logID )
-      {
-         UINT64 beginOffset = logHeader->_firstLSN.offset ;
-         beginOffset = beginOffset %( fileSize - DPS_LOG_HEAD_LEN ) ;
-         offset += beginOffset ;
-      }
-      offset = logHeader->_firstLSN.offset ;// DPS_LOG_HEAD_LEN ;
-   
-      while ( offset < fileSize )
-      {
-         rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
-         if( rc && SDB_DPS_CORRUPTED_LOG != rc )
-         {
-            goto error ;
-         }
+      meta.lastLSN = logHeader->_firstLSN.offset ;
 
-         dpsLogRecordHeader *header = ( dpsLogRecordHeader * )pRecordHead ;
-         curLsn = header->_lsn ;
-         offset += DPS_LOG_HEAD_LEN + header->_length ;
+      if( DPS_LOG_INVALID_LSN != logHeader->_firstLSN.offset )
+      {
+         while ( offset < fileSize )
+         {
+            rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
+            if( rc && SDB_DPS_CORRUPTED_LOG != rc )
+            {
+               goto error ;
+            }
+            if( SDB_DPS_CORRUPTED_LOG == rc )
+            {
+               printf( "File was corrupted\n" ) ;
+               rc = SDB_OK ;
+               break ;
+            }
+            dpsLogRecordHeader *header = ( dpsLogRecordHeader * )pRecordHead ;
+            curLsn = header->_lsn ;
+            offset += header->_length ;
+         }
       }
       meta.lastLSN = curLsn ;
       meta.validSize = offset ;
       if( DPS_LOG_INVALID_LSN == curLsn )
       {
+         meta.validSize = DPS_LOG_HEAD_LEN ;
          meta.restSize = fileSize - DPS_LOG_HEAD_LEN ;
       }
       else
@@ -839,182 +684,6 @@ namespace
    
    error:
       goto done ;
-   }
-
-////////////////////////////////////////////////////////////
-/// now not used
-   INT32 lsnFilte( iFilter *filter, const dpsCmdData *data,
-                   OSSFILE& out, const CHAR *filename )
-   {
-      SDB_ASSERT( filter, "filter is NULL" ) ;
-      SDB_ASSERT( filename, "filename cannot be NULL" ) ;
-
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_FORMATLOG ) ;
-
-      CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
-      OSSFILE in ;
-
-      CHAR *pOutBuffer     = NULL ;
-      UINT32 outBufferSize = 0 ;
-      CHAR *pRecordBuffer  = NULL ;
-      UINT32 recordLength  = 0 ;
-
-      INT32 ahead      = data->lsnAhead ;
-      INT32 back       = data->lsnBack ;
-      INT32 totalCount = ahead + back + 1 ;
-      BOOLEAN opened   = FALSE ;
-      INT64 fileSize   = 0 ;    ///< size fo log file
-      INT64 offset     = 0 ;
-      INT64 len        = 0 ;
-
-      rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
-                    OSS_RU | OSS_WU | OSS_RG, in ) ;
-      if( rc )
-      {
-         printf( "Unable to open file: %s. rc = %d\n", filename, rc ) ;
-         goto error ;
-      }
-      opened = TRUE ;
-   
-      rc = checkLogFile( in, fileSize, filename ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-      SDB_ASSERT( fileSize > 0, "fileSize must be gt 0") ;
-      len = DPS_LOG_HEAD_LEN * LOG_BUFFER_FORMAT_MULTIPLIER ;
-
-   retry_head :
-      // format log head
-      if( len > outBufferSize )
-      {
-         CHAR *pOrgBuff = pOutBuffer ;
-         pOutBuffer =( CHAR* )SDB_OSS_REALLOC ( pOutBuffer, len + 1 ) ;
-         if( !pOutBuffer )
-         {
-            printf( "Failed to allocate memory for %lld bytes\n", 
-                     len + 1 ) ;
-            pOutBuffer = pOrgBuff ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         outBufferSize = len ;
-         ossMemset( pOutBuffer, 0, len + 1 ) ;
-      }
-
-      rc = readLogHead( in, offset, fileSize,  pOutBuffer, outBufferSize,
-                        NULL, len ) ;
-      if( rc )
-      {
-         goto error ;
-      }
-      if( len >= outBufferSize )
-      {
-         len += BLOCK_SIZE ;
-         goto retry_head ;
-      }
-      printf( "%s\n", pOutBuffer ) ;
-      offset = DPS_LOG_HEAD_LEN + data->lsn ;
-      // seek to the log by lsn assigned
-      rc = seekToLsnMatched( in, offset, fileSize, ahead ) ;
-      if( rc && rc != DPS_LOG_REACH_HEAD ) 
-      {
-         printf( "the lsn offset: %lld is invalid\n", data->lsn ) ;
-         goto error ;
-      }
-      if( DPS_LOG_REACH_HEAD == rc )
-      {
-         offset = DPS_LOG_HEAD_LEN ;
-         totalCount = ahead + back + 1 ;
-      }
-
-      while( offset < fileSize && totalCount > 0 )
-      {
-         rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
-         if( rc && SDB_DPS_CORRUPTED_LOG != rc )
-         {
-            goto error ;
-         }
-
-         dpsLogRecordHeader *header = ( dpsLogRecordHeader *)pRecordHead ;
-         if( header->_length > recordLength )
-         {
-            pRecordBuffer = ( CHAR* ) SDB_OSS_REALLOC ( 
-                              pRecordBuffer, header->_length + 1 );
-            if( !pRecordBuffer )
-            {
-               rc = SDB_OOM;
-               printf( "Failed to allocate %d bytes\n",
-                        header->_length + 1 ) ;
-               goto error;
-            }
-            recordLength = header->_length ;
-         }
-         ossMemset( pRecordBuffer, 0, recordLength ) ;
-         rc = readRecord( in, offset, fileSize, header->_length,
-                          pRecordBuffer ) ;
-         if( rc )
-         {
-            goto error;
-         }
-
-         // dump log
-         dpsLogRecord record ;
-         record.load( pRecordBuffer ) ;
-         len = recordLength * LOG_BUFFER_FORMAT_MULTIPLIER ;
-
-      retry_record:
-         if( len > outBufferSize )
-         {
-            CHAR *pOrgBuff = pOutBuffer ;
-            pOutBuffer =(CHAR*)SDB_OSS_REALLOC( pOutBuffer, len + 1 ) ;
-            if( !pOutBuffer )
-            {
-               printf( "Failed to allocate memory for %lld bytes\n",
-                       len + 1 ) ;
-               pOutBuffer = pOrgBuff ;
-               rc = SDB_OOM ;
-               goto error ;
-            }
-            outBufferSize = len ;
-            ossMemset( pOutBuffer, 0, len + 1 ) ;
-         }
-         
-         len = record.dump( pOutBuffer, outBufferSize,
-                      DPS_DMP_OPT_HEX | DPS_DMP_OPT_HEX_WITH_ASCII |
-                      DPS_DMP_OPT_FORMATTED ) ;
-         if( len >= outBufferSize )
-         {
-            len += BLOCK_SIZE ;
-            goto retry_record ;
-         }
-
-         // write dump data
-         rc = writeToFile( out, pOutBuffer ) ;
-         if( rc )
-         {
-            goto error ;
-         }
-
-         printf( "%s\n", pOutBuffer ) ;
-         offset += header->_length ;
-         --totalCount;
-      }
-
-   done:
-      if( pRecordBuffer )
-         SDB_OSS_FREE( pRecordBuffer ) ;
-      if( pOutBuffer )
-         SDB_OSS_FREE( pOutBuffer ) ;
-      if( opened )
-         ossClose( in ) ;
-
-      PD_TRACE_EXITRC( SDB_FORMATLOG, rc ) ;
-      return rc ;
-
-   error:
-      goto done ;  
    }
 
    INT64 analysisMetaData( dpsMetaData& metaData,
@@ -1045,6 +714,7 @@ namespace
          {
             metaData.fileBegin = meta.index ;
          }
+         ++idx ;
       }
       metaData.fileEnd = ( metaData.fileBegin - 1 + metaData.fileCount )
                            % metaData.fileCount ;
@@ -1058,23 +728,23 @@ namespace
 //      }
       // log begin 
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "+++++++++++++++++++++++++++++++++++++++"OSS_NEWLINE
+                         "======================================="OSS_NEWLINE
                          ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          OSS_NEWLINE
-                         "+++ [ %d ] Log Files totally "OSS_NEWLINE,
+                         "=== [ %d ] Log Files totally "OSS_NEWLINE,
                          metaData.fileCount ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          OSS_NEWLINE
-                         "+++ LogFile begin from: sequoiadbLog.%d"OSS_NEWLINE,
+                         "=== LogFile begin from: sequoiadbLog.%d"OSS_NEWLINE,
                          metaData.fileBegin ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          OSS_NEWLINE
-                         "+++ LogFile end to    : sequoiadbLog.%d"OSS_NEWLINE,
+                         "=== LogFile end to    : sequoiadbLog.%d"OSS_NEWLINE,
                          metaData.fileEnd ) ;
       
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "+++++++++++++++++++++++++++++++++++++++"OSS_NEWLINE
+                         "======================================="OSS_NEWLINE
                          ) ;
       for( idx = 0; idx < metaData.metaList.size(); ++idx )
       {
@@ -1206,13 +876,15 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
    {
       printf("Analysis Log File Data begin...\n" ) ;
 
-      int const MAX_FILE_COUNT = _dpsLogFilter::getFileCount( data->srcPath ) ;
-      for( int idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
+      INT32 const MAX_FILE_COUNT = _dpsLogFilter::getFileCount( data->srcPath ) ;
+      for( INT32 idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
       {
          // src log file ;
+         fs::path fileDir( data->srcPath ) ;
+         const CHAR *filepath = fileDir.string().c_str() ;
          CHAR filename[ OSS_MAX_PATHSIZE * 2 ] = { 0 } ;
-         ossSnprintf( filename, OSS_MAX_PATHSIZE, "%s/sequoiadbLog.%d\n",
-                      data->srcPath, idx ) ;
+         ossSnprintf( filename, OSS_MAX_PATHSIZE, "%s/sequoiadbLog.%d",
+                      filepath, idx ) ;
 
          if( !dpsLogFilter::isFileExisted( filename ) )
          {
@@ -1258,19 +930,6 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
       printf( "meta info need assigned a path of dir\n" ) ;
       rc = SDB_INVALIDPATH ;
       goto error ;
-//      if( !dpsLogFilter::isFileExisted( data->srcPath ) )
-//      {
-//         rc = SDB_INVALIDPATH ;
-//         goto error ;
-//      }
-//
-//      rc = metaFilte( metaData, out, data->srcPath ) ;
-//
-//      if( rc )
-//      {
-//         //PD_LOG( "!parse log file: [%s] error, rc = %d", logFilePath, rc ) ;
-//         goto error ;
-//      }
    }
 
 done:
