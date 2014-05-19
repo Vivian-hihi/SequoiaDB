@@ -1502,7 +1502,8 @@ namespace engine
             builder.append( CAT_SHARDING_PARTITION, clInfo._shardPartition ) ;
          }
       }
-      if ( mask & CAT_MASK_ISMAINCL )
+      /// add catainfo to record even not specified by user.
+      if ( clInfo._isMainCL )
       {
          builder.append( CAT_IS_MAINCL, clInfo._isMainCL );
       }
