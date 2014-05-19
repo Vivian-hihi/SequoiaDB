@@ -2,7 +2,7 @@
  * line editing lib needs to be 20,000 lines of C code.
  *
  * You can find the latest source code at:
- * 
+ *
  *   http://github.com/antirez/linenoise
  *
  * Does a number of crazy assumptions that happen to be true in 99.9999% of
@@ -14,18 +14,18 @@
  * Copyright (c) 2010-2013, Pieter Noordhuis <pcnoordhuis at gmail dot com>
  *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  *  *  Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
  *
  *  *  Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -37,7 +37,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * ------------------------------------------------------------------------
  *
  * References:
@@ -91,7 +91,7 @@
  * ED2 (Clear entire screen)
  *    Sequence: ESC [ 2 J
  *    Effect: clear the whole screen
- * 
+ *
  */
 
 #ifdef _UNICODE
@@ -540,7 +540,7 @@ static void freeCompletions(linenoiseCompletions *lc) {
 /* This is an helper function for linenoiseEdit() and is called when the
  * user types the <tab> key in order to complete the string currently in the
  * input.
- * 
+ *
  * The state of the editing is encapsulated into the pointed linenoiseState
  * structure as described in the structure definition. */
 static int completeLine(struct linenoiseState *ls) {
@@ -678,7 +678,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
     CONSOLE_SCREEN_BUFFER_INFO b;
     COORD coord;
 #endif
-    
+
     while((plen+pos) >= l->cols) {
         buf++;
         len--;
@@ -708,7 +708,7 @@ static void refreshSingleLine(struct linenoiseState *l) {
 //    REDIS_NOTUSED(fd);
 
     /* Get buffer console info */
-    if (!GetConsoleScreenBufferInfo(hOut, &b)) goto done;
+    if (!GetConsoleScreenBufferInfo(hOut, &b)) return;
     /* Erase Line */
     coord.X = 0;
     coord.Y = b.dwCursorPosition.Y;
@@ -723,8 +723,6 @@ static void refreshSingleLine(struct linenoiseState *l) {
     coord.Y = b.dwCursorPosition.Y;
     SetConsoleCursorPosition(hOut, coord);
 #endif
-done :
-   return;
 }
 
 /* Multi line low level line refresh.
@@ -1175,17 +1173,17 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
 
         switch(c) {
         case ENTER:    /* enter */
-         // remove colour
+            // remove colour
             l.remove_col = true ;
             refreshLine( &l ) ;
             history_len--;
             free(history[history_len]);
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
-           // remove colour
+            // remove colour
             l.remove_col = true ;
             refreshLine( &l ) ;
-            errno = EAGAIN;
+            errno = l.len == 0 ? EAGAIN : ECANCELED ;
             return -1;
         case BACKSPACE:   /* backspace */
 #ifdef _WIN32
