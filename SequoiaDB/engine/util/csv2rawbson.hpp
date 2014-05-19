@@ -182,19 +182,19 @@ private:
    CHAR *_skipSpace( CHAR *pBuffer, INT32 &size ) ;
    INT32 _field2str( CHAR *pBuffer, INT32 size,
                      CHAR **ppOutBuf, INT32 &newSize ) ;
-   void _value2str( CHAR *pBuffer, INT32 size,
-                    CHAR **ppOutBuf, INT32 &newSize ) ;
+   INT32 _value2str( CHAR *pBuffer, INT32 size,
+                     CHAR **ppOutBuf, INT32 &newSize ) ;
 private:
    INT32 _parseValue( _valueData &valueData,
                       _fieldData &fieldData,
                       CHAR *pBuffer, INT32 size ) ;
    INT32 _parseValue( _valueData &valueData, CHAR *pBuffer, INT32 size ) ;
    INT32 _parseField( _fieldData &fieldData, CHAR *pBuffer, INT32 size ) ;
-   void _appendBson( void *bsonObj, CSV_TYPE csvType,
-                     const CHAR *pKey, void *pValue, INT32 valueSize ) ;
-   void _appendBson( void *bsonObj, _fieldData *pFieldData ) ;
-   void _appendBson( void *bsonObj, const CHAR *pKey,
-                     _valueData *pValueData ) ;
+   INT32 _appendBson( void *bsonObj, CSV_TYPE csvType,
+                      const CHAR *pKey, void *pValue, INT32 valueSize ) ;
+   INT32 _appendBson( void *bsonObj, _fieldData *pFieldData ) ;
+   INT32 _appendBson( void *bsonObj, const CHAR *pKey,
+                      _valueData *pValueData ) ;
 public:
    csvParser() ;
    ~csvParser() ;
