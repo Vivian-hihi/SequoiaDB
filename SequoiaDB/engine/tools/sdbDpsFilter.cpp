@@ -686,7 +686,7 @@ namespace
       goto done ;
    }
 
-   INT64 analysisMetaData( dpsMetaData& metaData,
+   UINT64 analysisMetaData( dpsMetaData& metaData,
                            CHAR *pOutBuffer, const UINT64 outBufferSize )
    {
       SDB_ASSERT( pOutBuffer, "pOutBuffer cannot be NULL " ) ;
@@ -868,15 +868,23 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
                                const CHAR *logFilePath )
 {
    INT32 rc             = SDB_OK ;
-   INT64 len            = 0 ;
+   UINT64 len            = 0 ;
    UINT64 outBufferSize = BLOCK_SIZE ;
    CHAR *pOutBuffer     = NULL ;
+   BOOLEAN start        = FALSE ;
    dpsMetaData metaData ;
    if( dpsLogFilter::isDir( data->srcPath ) )
    {
-      printf("Analysis Log File Data begin...\n" ) ;
-
       INT32 const MAX_FILE_COUNT = _dpsLogFilter::getFileCount( data->srcPath ) ;
+      if( 0 == MAX_FILE_COUNT )
+      {
+         printf( "Cannot find any log file\n" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      printf("Analysis Log File Data begin...\n" ) ;
+      start = TRUE ;
       for( INT32 idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
       {
          // src log file ;
@@ -933,7 +941,10 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
    }
 
 done:
-   printf("Analysis Log File Data end...\n" ) ;
+   if( start )
+   {
+      printf("Analysis Log File Data end...\n" ) ;
+   }
    return rc;
 error:
    goto done;
