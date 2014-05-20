@@ -94,9 +94,9 @@
 				
 				
 				
-<!-- 				<chown owner="sdbadmin:sdbadmin_group" type="both">
+				<chown owner="sdbadmin:sdbadmin_group" type="both">
 					<fileset dir="${db.path}/" includes="**/*" />
-				</chown> -->
+				</chown>
 				
 				<echo message="start standalone process: su - sdbadmin -c '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
@@ -164,9 +164,9 @@
 				</if>
 
 				<!--chown owner="sdbadmin:sdbadmin_group" file="${db.path}" type="both" /-->
-<!-- 				<chown owner="sdbadmin:sdbadmin_group" type="both">
+				<chown owner="sdbadmin:sdbadmin_group" type="both">
 					<fileset dir="${db.path}/" includes="**/*" />
-				</chown> -->
+				</chown>
 
 				<!--echo message="start catalog: ${db.path}/bin/sdbstart -c ${db.path}/conf/local/${cata.service.port}" />
 						<exec dir="${db.path}/bin" executable="${db.path}/bin/sdbstart" spawn="true">
