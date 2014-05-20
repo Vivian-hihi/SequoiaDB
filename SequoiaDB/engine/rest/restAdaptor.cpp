@@ -906,7 +906,7 @@ namespace engine
       SDB_ASSERT ( pSession, "pSession is NULL" )
       CHAR CRLF[3] = { 0, 0, 0 } ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
-      std::map<const CHAR *,const CHAR *>::iterator it ;
+      COLNAME_MAP_IT it ;
       std::vector<const CHAR *>::iterator it2 ;
 
       CRLF[0] = REST_STRING_CR ;
@@ -1008,7 +1008,7 @@ namespace engine
       CHAR *pNewKey = NULL ;
       CHAR *pNewValue = NULL ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
-      std::map<const CHAR *, const CHAR *>::iterator it ;
+      COLNAME_MAP_IT it ;
 
       it = pHttpCon->_responseHeaders.find( pKey ) ;
       if ( it == pHttpCon->_responseHeaders.end() )
@@ -1058,7 +1058,7 @@ namespace engine
       SDB_ASSERT ( pHttpCon, "pSession is NULL" )
       SDB_ASSERT ( pKey, "pKey is NULL" )
       SDB_ASSERT ( ppValue, "ppValue is NULL" )
-      std::map<const CHAR *, const CHAR *>::iterator it ;
+      COLNAME_MAP_IT it ;
 
       it = pHttpCon->_requestQuery.find( pKey ) ;
       if ( it == pHttpCon->_requestQuery.end() )
@@ -1082,7 +1082,7 @@ namespace engine
       SDB_ASSERT ( ppValue, "ppValue is NULL" )
       PD_TRACE_ENTRY( SDB__RESTADP_GETHEADER ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
-      std::map<const CHAR *, const CHAR *>::iterator it ;
+      COLNAME_MAP_IT it ;
 
       it = pHttpCon->_requestHeaders.find( pKey ) ;
       if ( it == pHttpCon->_requestHeaders.end() )

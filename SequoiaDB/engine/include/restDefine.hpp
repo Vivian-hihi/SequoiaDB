@@ -106,17 +106,24 @@ struct http_parser {
   void *data; /* A pointer to get hook to the "connection" or "socket" object */
 };
 
+/* struct */
+struct cmp_str
+{
+   bool operator() ( const char *a, const char *b )
+   {
+      return ossStrcmp( a, b ) < 0 ;
+   }
+} ;
+
+typedef std::map<const CHAR *,const CHAR *, cmp_str> COLNAME_MAP ;
+#if defined(_WINDOWS)
+typedef COLNAME_MAP::iterator COLNAME_MAP_IT ;
+#else
+typedef std::map<const CHAR *,const CHAR *>::iterator COLNAME_MAP_IT ;
+#endif
+
 struct httpConnection
 {
-/* struct */
-   struct cmp_str
-   {
-      bool operator() ( const char *a, const char *b )
-      {
-         return ossStrcmp( a, b ) < 0 ;
-      }
-   } ;
-
 /* request */
 
    //key size
@@ -159,9 +166,9 @@ struct httpConnection
    //http parser
    http_parser _httpParser ;
    //header list
-   std::map<const CHAR *,const CHAR *, cmp_str> _requestHeaders ;
+   COLNAME_MAP _requestHeaders ;
    //query list
-   std::map<const CHAR *,const CHAR *, cmp_str> _requestQuery ;
+   COLNAME_MAP _requestQuery ;
 
 /* response */
 
