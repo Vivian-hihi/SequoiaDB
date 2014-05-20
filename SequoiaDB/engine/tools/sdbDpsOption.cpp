@@ -58,6 +58,16 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
+
+   if( vm.count( DPS_LOG_FILTER_FROM_PATH ) )
+   {
+      _cmdData.output = FALSE ;
+   }
+   else
+   {
+      _cmdData.output = TRUE ;
+   }
+
    ///< we should deal with lsn filter first
    if( vm.count( DPS_LOG_FILTER_LSN ) )
    {
@@ -76,7 +86,7 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
          goto error ;
       }
    }
-
+   
    if( vm.count( DPS_LOG_FILTER_TYPE ) )
    {
       nextFilter = dpsFilterFactory::getInstance()

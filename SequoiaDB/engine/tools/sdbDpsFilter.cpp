@@ -465,12 +465,18 @@ namespace
          goto retry_head ;
       }
 
-//      printf( "%s\n", pOutBuffer ) ;
-      // write to file 
-      rc = writeToFile ( out, pOutBuffer ) ;
-      if( rc )
+      if( data->output )
       {
-         goto error ;
+         printf( "%s\n", pOutBuffer ) ;
+      }
+      else
+      {
+         // write to file 
+         rc = writeToFile ( out, pOutBuffer ) ;
+         if( rc )
+         {
+            goto error ;
+         }
       }
 
       if( SDB_LOG_FILTER_LSN == filter->getType() )
@@ -568,14 +574,20 @@ namespace
             goto retry_record ;
          }
 
-         // write dump data
-         rc = writeToFile( out, pOutBuffer ) ;
-         if( rc )
+         if( data->output )
          {
-            goto error ;
+            printf( "%s\n", pOutBuffer ) ;
+         }
+         else
+         {
+            // write dump data
+            rc = writeToFile( out, pOutBuffer ) ;
+            if( rc )
+            {
+               goto error ;
+            }
          }
 
-//         printf( "%s\n", pOutBuffer ) ;
          offset += header->_length ;
          if( SDB_LOG_FILTER_LSN == filter->getType() )
          {
@@ -597,7 +609,8 @@ namespace
       goto done ;
    }
 
-   INT32 metaFilte( dpsMetaData& data,  OSSFILE& out, const CHAR *filename )
+   INT32 metaFilte( dpsMetaData& data,  OSSFILE& out,
+                    const CHAR *filename, INT32 index )
    {
       SDB_ASSERT( filename, "filename cannot be NULL ") ;
 
@@ -638,9 +651,10 @@ namespace
       logHeader = (dpsLogHeader*)pLogHead ;
    
       dpsFileMeta meta ;
-      meta.logID = logHeader->_logID ;
-      meta.firstLSN = logHeader->_firstLSN.offset ;
-      meta.lastLSN = logHeader->_firstLSN.offset ;
+      meta.index     = index ;
+      meta.logID     = logHeader->_logID ;
+      meta.firstLSN  = logHeader->_firstLSN.offset ;
+      meta.lastLSN   = logHeader->_firstLSN.offset ;
 
       if( DPS_LOG_INVALID_LSN != logHeader->_firstLSN.offset )
       {
@@ -690,16 +704,14 @@ namespace
                            CHAR *pOutBuffer, const UINT64 outBufferSize )
    {
       SDB_ASSERT( pOutBuffer, "pOutBuffer cannot be NULL " ) ;
-
-//      CHAR *pOutBuffer = NULL ;
-//      UINT64 outBufferSize = BLOCK_SIZE ;
-      UINT64 len = 0 ;
+      UINT64 len   = 0 ;
       UINT32 begin = DPS_INVALID_LOG_FILE_ID ;
-      UINT32 idx = 0 ;
+      UINT32 work  = 0 ;
+      UINT32 idx   = 0 ;
+      // find begin file
       while( idx < metaData.metaList.size() )
       {
-         const dpsFileMeta& meta = metaData.metaList[ idx ] ;
-
+         const dpsFileMeta &meta = metaData.metaList[ idx ] ;
          if( DPS_INVALID_LOG_FILE_ID == meta.logID )
          {
             ++idx ;
@@ -713,36 +725,61 @@ namespace
              && meta.logID - begin < DPS_INVALID_LOG_FILE_ID / 2 ) )
          {
             metaData.fileBegin = meta.index ;
+            begin = idx ;
          }
          ++idx ;
       }
+
+      // find work file
+      idx = 0 ;
+      work = begin ;
+      while( idx < metaData.metaList.size() )
+      {
+         const dpsFileMeta &meta = metaData.metaList[ work ] ;
+         if( 0 == meta.restSize )
+         {
+            metaData.fileWork = work ;
+            ++work ;
+            if( work > metaData.fileCount )
+            {
+               work = 0;
+            }
+         }
+         else
+         {
+            if( DPS_INVALID_LOG_FILE_ID != meta.logID )
+            {
+               metaData.fileWork = work ;
+               break ;
+            }
+
+         }
+         ++idx ;
+      }
+
       metaData.fileEnd = ( metaData.fileBegin - 1 + metaData.fileCount )
                            % metaData.fileCount ;
-//      pOutBuffer = ( CHAR * )SDB_OSS_REALLOC( pOutBuffer , BLOCK_SIZE ) ;
-//      if( NULL == pOutBuffer )
-//      {
-//         printf( "Failed to allocate %d bytes, LINE:%s, FILE:%s",
-//                 outBufferSize, __LINE__, __FILE__ ) ;
-//         rc = SDB_OOM ;
-//         goto error ;
-//      }
-      // log begin 
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          "======================================="OSS_NEWLINE
                          ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         OSS_NEWLINE
-                         "=== [ %d ] Log Files totally "OSS_NEWLINE,
+                         "=== Log Files in total: %d "OSS_NEWLINE,
                          metaData.fileCount ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         OSS_NEWLINE
-                         "=== LogFile begin from: sequoiadbLog.%d"OSS_NEWLINE,
+                         "=== LogFile begin     : sequoiadbLog.%d"OSS_NEWLINE,
                          metaData.fileBegin ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         OSS_NEWLINE
-                         "=== LogFile end to    : sequoiadbLog.%d"OSS_NEWLINE,
-                         metaData.fileEnd ) ;
-      
+                         "=== LogFile work      : sequoiadbLog.%d"OSS_NEWLINE,
+                         metaData.fileWork ) ;
+      len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
+                         "======= begin Lsn     : %lld "OSS_NEWLINE,
+                         metaData.metaList[ begin ].firstLSN ) ;
+      len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
+                         "======= current Lsn   : %lld "OSS_NEWLINE,
+                         metaData.metaList[ work ].lastLSN ) ;
+      len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
+                         "======= expect Lsn    : %lld "OSS_NEWLINE,
+                    metaData.metaList[ work ].validSize - DPS_LOG_HEAD_LEN ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          "======================================="OSS_NEWLINE
                          ) ;
@@ -900,7 +937,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
             goto error ;
          }
          
-         rc = metaFilte( metaData, out, filename ) ;
+         rc = metaFilte( metaData, out, filename, idx ) ;
          if( rc )
          {
             printf( "!parse log file: [%s] error, rc = %d\n", filename, rc ) ;
@@ -927,10 +964,17 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
          goto retry ;
       }
 
-      rc = writeToFile( out, pOutBuffer ) ;
-      if( rc )
+      if( data->output )
       {
-         goto error ;
+         printf( pOutBuffer ) ;
+      }
+      else
+      {
+         rc = writeToFile( out, pOutBuffer ) ;
+         if( rc )
+         {
+            goto error ;
+         }
       }
    }
    else

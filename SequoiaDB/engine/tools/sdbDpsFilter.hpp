@@ -8,13 +8,14 @@
 
 struct _dpsCmdData
 {
-   UINT16 type ;
-   INT32  lsnAhead ;
-   INT32  lsnBack ;
-   UINT64 lsn ;
-   CHAR   inputName[ OSS_MAX_PATHSIZE + 1 ] ;
-   CHAR   srcPath  [ OSS_MAX_PATHSIZE + 1 ] ;
-   CHAR   dstPath  [ OSS_MAX_PATHSIZE + 1 ] ;
+   UINT16  type ;
+   INT32   lsnAhead ;
+   INT32   lsnBack ;
+   BOOLEAN output ;
+   UINT64  lsn ;
+   CHAR    inputName[ OSS_MAX_PATHSIZE + 1 ] ;
+   CHAR    srcPath  [ OSS_MAX_PATHSIZE + 1 ] ;
+   CHAR    dstPath  [ OSS_MAX_PATHSIZE + 1 ] ;
 } ;
 typedef _dpsCmdData dpsCmdData ;
 
@@ -22,8 +23,8 @@ struct _dpsFileMeta
 {
    UINT32 index ;
    UINT32 logID ;
-   INT64 validSize ;
-   INT64 restSize ;
+   INT64  validSize ;
+   INT64  restSize ;
    UINT64 firstLSN ;
    UINT64 lastLSN ;
 } ;
@@ -36,6 +37,7 @@ typedef _dpsFileMeta dpsFileMeta ;
 struct _dpsMetaData
 {
    INT32 fileBegin ;
+   INT32 fileWork ;
    INT32 fileEnd ;
    INT32 fileCount ;
    std::vector<dpsFileMeta> metaList ;
