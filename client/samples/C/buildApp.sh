@@ -27,5 +27,6 @@ fi
 
 cc $SOURCEFILE $COMMONFILE -o $SCRIPTPATH"/build/"$PROGRAM -I$INCLUDEPATH -L$LIBPATH -lsdbc -O0 -ggdb -lm
 cp $LIBPATH/libsdbc.so $SCRIPTPATH"/build"
+cp $LIBPATH/libstaticsdbc.a $SCRIPTPATH"/build"
 
-cc $SOURCEFILE $COMMONFILE -o $SCRIPTPATH"/build/"$PROGRAM.static -I$INCLUDEPATH -L$LIBPATH -O0 -ggdb $LIBPATH/libsdbc.a -lm
+cc $SOURCEFILE $COMMONFILE -o $SCRIPTPATH"/build/"$PROGRAM.static -I$INCLUDEPATH -L$LIBPATH -O0 -ggdb $LIBPATH/libstaticsdbc.a -lm
