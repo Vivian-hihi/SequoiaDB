@@ -2544,28 +2544,28 @@ static INT32 SdbIsForeignRelUpdatable ( Relation rel )
 static void SdbAddForeignUpdateTargets(Query *parsetree, RangeTblEntry *target_rte,
       Relation target_relation)
 {
-   TupleDesc tupdesc = target_relation->rd_att;
-   int i;
+//   TupleDesc tupdesc = target_relation->rd_att;
+//   int i;
 
-   /* loop through all columns of the foreign table */
-   for (i = 0; i < tupdesc->natts; ++i)
-   {
-      Form_pg_attribute att = tupdesc->attrs[i];
-      AttrNumber attrno     = att->attnum;
-      Var *var;
-      TargetEntry *tle;
+//   /* loop through all columns of the foreign table */
+//   for (i = 0; i < tupdesc->natts; ++i)
+//   {
+//      Form_pg_attribute att = tupdesc->attrs[i];
+//      AttrNumber attrno     = att->attnum;
+//      Var *var;
+//      TargetEntry *tle;
 
-      /* Make a Var representing the desired value */
-      var = makeVar(parsetree->resultRelation, attrno, att->atttypid, 
-               att->atttypmod, att->attcollation, 0);
+//      /* Make a Var representing the desired value */
+//      var = makeVar(parsetree->resultRelation, attrno, att->atttypid, 
+//               att->atttypmod, att->attcollation, 0);
 
-      /* Wrap it in a resjunk TLE with the right name ... */
-      tle = makeTargetEntry((Expr *)var, list_length(parsetree->targetList) + 1, 
-               pstrdup(NameStr(att->attname)), true);
+//      /* Wrap it in a resjunk TLE with the right name ... */
+//      tle = makeTargetEntry((Expr *)var, list_length(parsetree->targetList) + 1, 
+//               pstrdup(NameStr(att->attname)), true);
 
-      /* ... and add it to the query's targetlist */
-      parsetree->targetList = lappend(parsetree->targetList, tle);
-   }
+//      /* ... and add it to the query's targetlist */
+//      parsetree->targetList = lappend(parsetree->targetList, tle);
+//   }
 }
 
  static List *SdbPlanForeignModify(PlannerInfo *root, ModifyTable *plan, 

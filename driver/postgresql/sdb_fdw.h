@@ -138,7 +138,7 @@ struct SdbExecState
    /* record the fetch column's bson address */
    UINT64 bson_record_addr;
 
-   /* save the key column name to identify the specify column */
+   /* save the key column name to identify the specify column(0 for _id, others for the sharding key) */
    int key_num;
    char key_name[SDB_MAX_KEY_COLUMN_COUNT][SDB_MAX_KEY_COLUMN_LENGTH];
 } ;
