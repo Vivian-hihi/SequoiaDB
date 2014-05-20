@@ -87,10 +87,10 @@
 				
 				<!--for fix coord port change to 11810 , we change coord port to 50000-->
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11811" replace="svcname=50001" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11812" replace="svcname=50002" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11813" replace="svcname=50003" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11814" replace="svcname=50004" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="svcname=50001" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="svcname=50002" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="svcname=50003" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="svcname=50004" flags="g" />
 				
 				
 				
@@ -98,9 +98,9 @@
 					<fileset dir="${db.path}/" includes="**/*" />
 				</chown>
 				
-				<echo message="start standalone process: su - sdbadmin -c '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
+				<echo message="start standalone process: su - sdbadmin -c '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" failonerror="true" failifexecutionfails="true" >
-					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
+					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
 				</exec>
 			</then>
@@ -151,10 +151,10 @@
 				
 				<!--for fix coord port change to 11810 , we change coord port to 50000-->
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11811" replace="svcname=50001" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11812" replace="svcname=50002" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11813" replace="svcname=50003" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11814" replace="svcname=50004" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="svcname=50001" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="svcname=50002" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="svcname=50003" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="svcname=50004" flags="g" />
 
 				<if>
 					<equals arg1="${is.coord.master}" arg2="false" />
@@ -179,9 +179,9 @@
 							<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
 						</exec-->
 
-				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
+				<echo message="start coord: su - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 				<exec dir="${db.path}/bin" executable="su" spawn="false">
-					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbwsart -S ${db.path}/conf/local/${coord.service.port}'" />
+					<arg line=" - sdbadmin -c  '${db.path}/bin/sdbstart -c ${db.path}/conf/local/${coord.service.port}'" />
 					<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${db.path}/bin" />
 				</exec>
 
