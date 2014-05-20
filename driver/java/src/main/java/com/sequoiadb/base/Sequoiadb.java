@@ -402,7 +402,7 @@ public class Sequoiadb {
 	 */
 	public CollectionSpace createCollectionSpace(String csName)
 			throws BaseException {
-		return createCollectionSpace(csName, SDB_PAGESIZE_4K);
+		return createCollectionSpace(csName, SDB_PAGESIZE_DEFAULT);
 	}
 
 	/**

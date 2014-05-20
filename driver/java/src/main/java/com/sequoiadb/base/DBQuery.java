@@ -78,7 +78,7 @@ public class DBQuery {
 
 	/**
 	 * @fn void setModifier(BSONObject modifier)
-	 * @brief Get modified rule
+	 * @brief Set modified rule
 	 * @param Modifier The modified rule BSONObject
 	 */
 	public void setModifier(BSONObject modifier) {
