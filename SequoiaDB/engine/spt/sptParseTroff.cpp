@@ -27,6 +27,7 @@
 #include <vector>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
