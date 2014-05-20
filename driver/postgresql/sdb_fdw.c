@@ -692,6 +692,28 @@ int sdbSetBsonValue(sdbbson *bsonObj, const char *name, Datum valueDatum,
          sdbbson_append_timestamp(bsonObj, name, &bson_time);
          break ;
       }
+
+      case TEXTARRAYOID:
+      case INT4ARRAYOID:
+      case FLOAT4ARRAYOID:
+      /* FLOAT8ARRAY is not support */
+      case INT2ARRAYOID:
+      {
+         Datum datumTmp;
+         bool isNull            = false;
+         ArrayType *arr         = DatumGetArrayTypeP(valueDatum);
+         ArrayIterator iterator = array_create_iterator(arr , 0);
+         Oid element_type       = ARR_ELEMTYPE(arr);
+         
+         sdbbson_append_start_array(bsonObj, name);
+         while (array_iterate(iterator, &datumTmp, &isNull))
+         {
+            sdbSetBsonValue(bsonObj, "", datumTmp, element_type, 0);
+         }
+         sdbbson_append_finish_array(bsonObj);
+         
+         break;
+      }
       
       default :
       {
