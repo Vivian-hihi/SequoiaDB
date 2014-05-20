@@ -87,10 +87,10 @@
 				
 				<!--for fix coord port change to 11810 , we change coord port to 50000-->
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="svcname=50001" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="svcname=50002" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="svcname=50003" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="svcname=50004" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="replname=50001" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="shardname=50002" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 				
 				
 				
@@ -151,10 +151,10 @@
 				
 				<!--for fix coord port change to 11810 , we change coord port to 50000-->
 				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="svcname=11810" replace="svcname=50000" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="svcname=50001" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="svcname=50002" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="svcname=50003" flags="g" />
-				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="svcname=50004" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="replname=11811" replace="replname=50001" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="shardname=11812" replace="shardname=50002" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="catalogname=11813" replace="catalogname=50003" flags="g" />
+				<replaceregexp file="${db.path}/conf/local/${coord.service.port}/sdb.conf" match="httpname=11814" replace="httpname=50004" flags="g" />
 
 				<if>
 					<equals arg1="${is.coord.master}" arg2="false" />
