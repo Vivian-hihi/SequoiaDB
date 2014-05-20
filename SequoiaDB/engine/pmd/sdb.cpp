@@ -25,6 +25,7 @@
 #include "sptCommon.hpp"
 #include "utilPath.hpp"
 #include "utilPipe.hpp"
+#include <iostream>
 
 using std::ostream ;
 using std::vector ;
