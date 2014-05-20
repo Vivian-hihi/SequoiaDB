@@ -144,6 +144,14 @@ INT32 _dpsLogFilter::doParse()
    if( isDir( _cmdData->srcPath ) )
    {
       INT32 const MAX_FILE_COUNT = getFileCount( _cmdData->srcPath ) ;
+      if( 0 >= MAX_FILE_COUNT )
+      {
+         printf( "Cannot find any Log files\nPlease check"
+                 " and input the correct log file path\n" ) ;
+         rc = SDB_INVALIDPATH ;
+         goto error ;
+      }
+
       for( INT32 idx = 0 ; idx < MAX_FILE_COUNT ; ++idx )
       {
          // src log file ;

@@ -16,6 +16,7 @@ namespace fs = boost::filesystem ;
 
 #define NONE_LSN_FILTER -1
 #define BLOCK_SIZE 64 * 1024
+#define DPS_LOG_FILE_INVALID 1
 
 /// filter factory implimentation
 _dpsFilterFactory::_dpsFilterFactory()
@@ -179,6 +180,10 @@ namespace
          UINT64 beginOffset = header->_firstLSN.offset ;
          beginOffset = beginOffset %( fileSize - DPS_LOG_HEAD_LEN ) ;
          offset += beginOffset ;
+      }
+      else
+      {
+         rc = DPS_LOG_FILE_INVALID ;
       }
       // modify offset
       offset += DPS_LOG_HEAD_LEN ;
@@ -464,20 +469,9 @@ namespace
       INT64 len           = 0 ;
 
       CHAR parseBegin[ BLOCK_SIZE ] = { 0 } ;
-      len  = ossSnprintf( parseBegin, BLOCK_SIZE,
-                          "==================================\n" ) ;
+      len  = ossSnprintf( parseBegin, BLOCK_SIZE, OSS_NEWLINE""OSS_NEWLINE ) ;
       len += ossSnprintf( parseBegin + len, BLOCK_SIZE - len,
-                          "filename:[%s] parse begin\n\n", filename ) ;
-      if( data->output )
-      {
-         printf( "%s\n", parseBegin ) ;
-      }
-      else
-      {
-         rc = writeToFile( out, parseBegin ) ;
-         if( rc )
-            goto error ;
-      }
+                          "parse file : [%s] "OSS_NEWLINE, filename ) ;
 
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
                     OSS_RU | OSS_WU | OSS_RG, in ) ;
@@ -517,7 +511,7 @@ namespace
 
       rc = readLogHead( in, offset, fileSize,  pOutBuffer, outBufferSize,
                         NULL, len ) ;
-      if( rc )
+      if( rc && DPS_LOG_FILE_INVALID != rc )
       {
          goto error ;
       }
@@ -527,17 +521,26 @@ namespace
          goto retry_head ;
       }
 
-      if( data->output )
+      if( DPS_LOG_FILE_INVALID != rc )
       {
-         printf( "%s\n", pOutBuffer ) ;
-      }
-      else
-      {
-         // write to file 
-         rc = writeToFile ( out, pOutBuffer ) ;
-         if( rc )
+         if( data->output )
          {
-            goto error ;
+            printf( "%s\n", parseBegin ) ;
+            printf( "%s\n", pOutBuffer ) ;
+         }
+         else
+         {
+            rc = writeToFile( out, parseBegin ) ;
+            if( rc )
+            {
+               goto error ;
+            }
+            // write to file 
+            rc = writeToFile ( out, pOutBuffer ) ;
+            if( rc )
+            {
+               goto error ;
+            }
          }
       }
 
@@ -549,7 +552,8 @@ namespace
          rc = seekToLsnMatched( in, offset, fileSize, ahead ) ;
          if( rc && DPS_LOG_REACH_HEAD != rc ) 
          {
-            printf( "the lsn offset: %lld is invalid\n", data->lsn ) ;
+            printf( "the lsn offset: %lld in file : [%s] is invalid\n",
+                     data->lsn, filename ) ;
             goto error ;
          }
          totalCount = ahead + back + 1 ;
@@ -724,7 +728,7 @@ namespace
       SDB_ASSERT( fileSize > 0, "fileSize must be gt 0" ) ;
 
       rc = readLogHead( in, offset, fileSize, NULL, 0, pLogHead, len ) ;
-      if( rc )
+      if( rc && DPS_LOG_FILE_INVALID != rc )
       {
          goto error;
       }
@@ -844,22 +848,22 @@ namespace
                          "======================================="OSS_NEWLINE
                          ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "=== Log Files in total: %d "OSS_NEWLINE,
+                         "    Log Files in total: %d "OSS_NEWLINE,
                          metaData.fileCount ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "=== LogFile begin     : sequoiadbLog.%d"OSS_NEWLINE,
+                         "    LogFile begin     : sequoiadbLog.%d"OSS_NEWLINE,
                          metaData.fileBegin ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "=== LogFile work      : sequoiadbLog.%d"OSS_NEWLINE,
+                         "    LogFile work      : sequoiadbLog.%d"OSS_NEWLINE,
                          metaData.fileWork ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "======= begin Lsn     : %lld "OSS_NEWLINE,
+                         "        begin Lsn     : %lld "OSS_NEWLINE,
                          metaData.metaList[ begin ].firstLSN ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "======= current Lsn   : %lld "OSS_NEWLINE,
+                         "        current Lsn   : %lld "OSS_NEWLINE,
                          metaData.metaList[ work ].lastLSN ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "======= expect Lsn    : %lld "OSS_NEWLINE,
+                         "        expect Lsn    : %lld "OSS_NEWLINE,
                     metaData.metaList[ work ].validSize - DPS_LOG_HEAD_LEN ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          "======================================="OSS_NEWLINE
@@ -996,7 +1000,8 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
       INT32 const MAX_FILE_COUNT = _dpsLogFilter::getFileCount( data->srcPath ) ;
       if( 0 == MAX_FILE_COUNT )
       {
-         printf( "Cannot find any log file\n" ) ;
+         printf( "Cannot find any Log files\nPlease check"
+                 " and input the correct log file path\n" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
