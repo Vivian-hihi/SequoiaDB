@@ -62,6 +62,7 @@ namespace engine
                           const CHAR *filename,
                           UINT32 lineno,
                           INT32 flag,
+                          bson::BSONObj &rval,
                           bson::BSONObj &detail ) = 0 ;
 
    public:

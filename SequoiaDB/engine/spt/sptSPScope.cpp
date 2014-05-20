@@ -343,31 +343,34 @@ namespace engine
                             const CHAR *filename,
                             UINT32 lineno,
                             INT32 flag,
+                            bson::BSONObj &rval,
                             bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( _context && _global, "this scope has not been initilized" )
       SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" )
-      jsval rval = JSVAL_VOID ;
+      jsval jsrval = JSVAL_VOID ;
       jsval exception = JSVAL_VOID ;
       string print ;
 
       if ( !JS_EvaluateScript( _context, _global, code,
-                               len, filename, lineno, &rval ) )
+                               len, filename, lineno, &jsrval ) )
       {
          rc = SDB_SPT_EVAL_FAIL ;
          PD_LOG( PDERROR, "failed to eval js code" ) ;
          goto error ;
       }
 
+      _rval2obj( _context, jsrval, rval ) ;
+
       if ( flag & SPT_EVAL_FLAG_PRINT )
       {
-         if ( JSVAL_IS_STRING( rval ) ||
-              JSVAL_IS_NUMBER( rval ) ||
-              JSVAL_IS_OBJECT( rval ) ||
-              JSVAL_IS_BOOLEAN( rval ) )
+         if ( JSVAL_IS_STRING( jsrval ) ||
+              JSVAL_IS_NUMBER( jsrval ) ||
+              JSVAL_IS_OBJECT( jsrval ) ||
+              JSVAL_IS_BOOLEAN( jsrval ) )
          {
-            rc = sptConvertor2::toString( _context, rval, print ) ;
+            rc = sptConvertor2::toString( _context, jsrval, print ) ;
             if ( SDB_OK == rc )
             {
                ossPrintf( "%s\n", print.c_str() ) ;
@@ -397,6 +400,81 @@ namespace engine
 
          JS_ClearPendingException ( _context ) ;
       }
+      goto done ;
+   }
+
+   INT32 _sptSPScope::_rval2obj( JSContext *cx,
+                                 const jsval &jsrval,
+                                 bson::BSONObj &rval )
+   {
+#define SPT_RVAL_KEY ""
+      INT32 rc = SDB_OK ;
+      bson::BSONObjBuilder builder ;
+
+      if ( JSVAL_IS_STRING( jsrval ) )
+      {
+         std::string v ;
+         rc = sptConvertor2::toString( cx, jsrval, v ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         builder.append( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_INT( jsrval ) )
+      {
+         int32 v = 0 ;
+         if ( !JS_ValueToInt32( cx, jsrval, &v ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         builder.append( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_DOUBLE( jsrval ) )
+      {
+         jsdouble v ;
+         if ( !JS_ValueToNumber( cx, jsrval, &v ))
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         builder.appendNumber( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_BOOLEAN( jsrval ) )
+      {
+         JSBool v ;
+         if ( !JS_ValueToBoolean( cx, jsrval, &v ) )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         builder.appendBool( SPT_RVAL_KEY, v ) ;
+      }
+      else if ( JSVAL_IS_OBJECT( jsrval ) )
+      {
+         sptConvertor2 c( cx ) ;
+         bson::BSONObj v ;
+         rc = c.toBson( JSVAL_TO_OBJECT( jsrval ), v ) ;
+         if ( SDB_OK != rc )
+         {
+            goto error ;
+         }
+
+         builder.append( SPT_RVAL_KEY, v ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "the type[%d] is not supported yet",
+                 JS_TypeOfValue( cx, jsrval ) ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+   done:
+      return rc ;
+   error:
       goto done ;
    }
 

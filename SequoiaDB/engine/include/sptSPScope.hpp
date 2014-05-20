@@ -64,6 +64,7 @@ namespace engine
                          const CHAR *filename,
                          UINT32 lineno,
                          INT32 flag,
+                         bson::BSONObj &rval,
                          bson::BSONObj &detail ) ;
 
    private:
@@ -72,6 +73,10 @@ namespace engine
       INT32 _loadUsrClass( _sptObjDesc *desc ) ;
 
       INT32 _loadGlobal( _sptObjDesc *desc ) ;
+
+      INT32 _rval2obj( JSContext *cx,
+                       const jsval &jsrval,
+                       bson::BSONObj &rval ) ;
 
    private:
       JSRuntime *_runtime ;
