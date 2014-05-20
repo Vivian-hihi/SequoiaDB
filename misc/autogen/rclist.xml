@@ -2106,5 +2106,13 @@
          </description>
       </code>
 
+      <code>
+         <name>SDB_CAT_NO_GROUP_IN_DOMAIN</name>
+         <description>
+            <en>domain does not have any groups at all</en>
+            <cn>域中不包含任何数据组</cn>
+         </description>
+      </code>
+
    </codelist>
 </rclist>
