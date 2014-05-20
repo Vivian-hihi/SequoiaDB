@@ -17,6 +17,7 @@
 #define DPS_LOG_FILTER_TO_PATH   "output"
 #define DPS_LOG_LSN_AHEAD   "ahead"
 #define DPS_LOG_LSN_BACK    "back"
+#define DPS_LOG_FILTER_LAST "last"
 
 #define DPS_FILTER_ADD_OPTIONS_BEGIN( desc ) desc.add_options()
 #define DPS_FILTER_ADD_OPTIONS_END ;
@@ -30,10 +31,11 @@
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_TYPE, ",t" ), boost::program_options::value< INT32 >(), "specify the record type" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_NAME, ",n" ), boost::program_options::value< std::string >(), "specify the name of collectionspace/collections" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_LSN,  ",l" ), boost::program_options::value< std::string >(), "specify the lsn, -a/-b may help" ) \
+        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_LAST, ",e" ), boost::program_options::value< INT32 >(), "specify the number of last records of file to display ")\
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_FROM_PATH, ",s" ), boost::program_options::value<std::string>(), "specify source log file path, or current path specified default" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_TO_PATH, ",o" ), boost::program_options::value< std::string >(), "specify output file path, or current path specified default " ) \
-        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of display records before the lsn specified by -l/--lsn" ) \
-        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_BACK, ",b" ), boost::program_options::value< INT32 >(), "specify the number of display records after the lsn specified by -l/--lsn" )
+        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of records to display before the lsn specified by -l/--lsn" ) \
+        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_BACK, ",b" ), boost::program_options::value< INT32 >(), "specify the number of records to display after the lsn specified by -l/--lsn" )
 
 class _dpsFilterOption : public engine::_pmdCfgRecord
 {

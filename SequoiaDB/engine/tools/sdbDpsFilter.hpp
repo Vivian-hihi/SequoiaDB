@@ -11,6 +11,7 @@ struct _dpsCmdData
    UINT16  type ;
    INT32   lsnAhead ;
    INT32   lsnBack ;
+   INT32   lastCount ;
    BOOLEAN output ;
    UINT64  lsn ;
    CHAR    inputName[ OSS_MAX_PATHSIZE + 1 ] ;
@@ -36,10 +37,10 @@ typedef _dpsFileMeta dpsFileMeta ;
 
 struct _dpsMetaData
 {
-   INT32 fileBegin ;
-   INT32 fileWork ;
-   INT32 fileEnd ;
-   INT32 fileCount ;
+   UINT32 fileBegin ;
+   UINT32 fileWork ;
+   UINT32 fileEnd ;
+   UINT32 fileCount ;
    std::vector<dpsFileMeta> metaList ;
 } ;
 typedef _dpsMetaData dpsMetaData ;
@@ -52,6 +53,7 @@ enum SDB_DPS_LOG_FILTER_TYPE
    SDB_LOG_FILTER_NAME,
    SDB_LOG_FILTER_LSN,
    SDB_LOG_FILTER_META,
+   SDB_LOG_FILTER_LAST,
 } ;
 
 class _iFilter
@@ -126,6 +128,7 @@ FILTER_DEFINITION( Name, SDB_LOG_FILTER_NAME )
 FILTER_DEFINITION( Meta, SDB_LOG_FILTER_META )
 FILTER_DEFINITION( Lsn,  SDB_LOG_FILTER_LSN  )
 FILTER_DEFINITION( None, SDB_LOG_FILTER_NONE )
+FILTER_DEFINITION( Last, SDB_LOG_FILTER_LAST )
 
 class _dpsFilterFactory
 {

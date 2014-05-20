@@ -117,14 +117,17 @@ INT32 _dpsLogFilter::doParse()
                    _cmdData->dstPath ) ;
    }
 
-   rc = ossOpen( dstFile, OSS_REPLACE | OSS_READWRITE, 
-                 OSS_RU | OSS_WU | OSS_RG, fileTo ) ;
-   if( rc )
+   if( !_cmdData->output )
    {
-      printf( "Unable to open file: %s\n", dstFile ) ;
-      goto error ;
+      rc = ossOpen( dstFile, OSS_REPLACE | OSS_READWRITE, 
+                    OSS_RU | OSS_WU | OSS_RG, fileTo ) ;
+      if( rc )
+      {
+         printf( "Unable to open file: %s\n", dstFile ) ;
+         goto error ;
+      }
+      Open = TRUE ;
    }
-   Open = TRUE ;
 
    /// < meta need do specially
    if ( SDB_LOG_FILTER_META == _filter->getType() )
@@ -157,11 +160,10 @@ INT32 _dpsLogFilter::doParse()
          }
 
          rc = _filter->doFilte( _cmdData, fileTo, filename ) ;
-         if( rc )
+         if( rc && idx != MAX_FILE_COUNT - 1 )
          {
-            //PD_LOG( "!parse log file: [%s] error, rc = %d",
-            //        filename, rc ) ;
-            goto error ;
+            rc = SDB_OK ;
+            continue ;
          }
       }
    }
@@ -176,16 +178,9 @@ INT32 _dpsLogFilter::doParse()
       rc = _filter->doFilte( _cmdData, fileTo, _cmdData->srcPath ) ;
       if( rc )
       {
-         //PD_LOG( "!parse log file: [%s] error, rc = %d",
-         //        _cmdData->srcPath, rc ) ;
          goto error ;
       }
    }
-//   rc = _filter->doFilte( _cmdData,  fileTo, _srcPath );
-//   if( rc )
-//   {
-//      goto error  ;
-//   }
  
 done:
    if( Open )

@@ -46,30 +46,35 @@ iFilter* _dpsFilterFactory::createFilter( int type )
    switch( type )
    {
    case SDB_LOG_FILTER_TYPE :
-   {
-      filter = SDB_OSS_NEW dpsTypeFilter() ;
-      break ;
-   }
+      {
+         filter = SDB_OSS_NEW dpsTypeFilter() ;
+         break ;
+      }
    case SDB_LOG_FILTER_NAME :
-   {
-      filter = SDB_OSS_NEW dpsNameFilter() ;
-      break ;
-   }
+      {
+         filter = SDB_OSS_NEW dpsNameFilter() ;
+         break ;
+      }
    case SDB_LOG_FILTER_LSN  :
-   {
-      filter = SDB_OSS_NEW dpsLsnFilter() ;
-      break ;
-   }
+      {
+         filter = SDB_OSS_NEW dpsLsnFilter() ;
+         break ;
+      }
    case SDB_LOG_FILTER_META :
-   {
-      filter = SDB_OSS_NEW dpsMetaFilter() ;
-      break ;
-   }
+      {
+         filter = SDB_OSS_NEW dpsMetaFilter() ;
+         break ;
+      }
    case SDB_LOG_FILTER_NONE :
-   {
-      filter = SDB_OSS_NEW dpsNoneFilter() ;
-      break ;
-   }
+      {
+         filter = SDB_OSS_NEW dpsNoneFilter() ;
+         break ;
+      }
+   case SDB_LOG_FILTER_LAST :
+      {
+         filter = SDB_OSS_NEW dpsLastFilter() ;
+         break ;
+      }
    
    default:
       printf("error filter type...\n") ;
@@ -387,6 +392,53 @@ namespace
       goto done ;
    }
 
+   INT32 seekToEnd( OSSFILE& in, INT64& offset, const INT64 fileSize )
+   {
+      SDB_ASSERT( offset >= DPS_LOG_HEAD_LEN, "offset lt DPS_LOG_HEAD_LEN" ) ;
+      INT32 rc    = SDB_OK ;
+      INT64 prevOffset = offset ;
+
+      CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
+      dpsLogRecordHeader *header = NULL;
+
+      if( offset > fileSize || offset < DPS_LOG_HEAD_LEN )
+      {
+         printf( "wrong LSN position\n" ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      while( offset < fileSize )
+      {
+         rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
+         // ignore the return value
+         header = ( dpsLogRecordHeader * )pRecordHead ;
+         if ( header->_length < sizeof( dpsLogRecordHeader ) ||
+              header->_length > DPS_RECORD_MAX_LEN )
+         {
+            rc = SDB_DPS_CORRUPTED_LOG ;
+            goto error ;
+         }
+   
+         if ( LOG_TYPE_DUMMY == header->_type )
+         {
+            printf( "LSN is invalid\n" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         prevOffset = offset ;
+         offset += header->_length ;
+      }
+
+   done:
+      offset = prevOffset ;
+      return rc ;
+   error:
+      goto done ;
+
+   }
+
    INT32 filte( iFilter *filter, const dpsCmdData *data,
                     OSSFILE& out, const CHAR *filename )
    {
@@ -411,11 +463,21 @@ namespace
       INT64 outBufferSize = 0 ;
       INT64 len           = 0 ;
 
-      CHAR fileParseEnd[ BLOCK_SIZE ] = { 0 } ;
-      len  = ossSnprintf( fileParseEnd + len, BLOCK_SIZE,
+      CHAR parseBegin[ BLOCK_SIZE ] = { 0 } ;
+      len  = ossSnprintf( parseBegin, BLOCK_SIZE,
                           "==================================\n" ) ;
-      len += ossSnprintf( fileParseEnd, BLOCK_SIZE - len,
+      len += ossSnprintf( parseBegin + len, BLOCK_SIZE - len,
                           "filename:[%s] parse begin\n\n", filename ) ;
+      if( data->output )
+      {
+         printf( "%s\n", parseBegin ) ;
+      }
+      else
+      {
+         rc = writeToFile( out, parseBegin ) ;
+         if( rc )
+            goto error ;
+      }
 
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
                     OSS_RU | OSS_WU | OSS_RG, in ) ;
@@ -479,17 +541,35 @@ namespace
          }
       }
 
+      // lsn must be done specially
       if( SDB_LOG_FILTER_LSN == filter->getType() )
       {
          offset = DPS_LOG_HEAD_LEN + data->lsn ;
          // seek to the log by lsn assigned
          rc = seekToLsnMatched( in, offset, fileSize, ahead ) ;
-         if( rc && rc != DPS_LOG_REACH_HEAD ) 
+         if( rc && DPS_LOG_REACH_HEAD != rc ) 
          {
             printf( "the lsn offset: %lld is invalid\n", data->lsn ) ;
             goto error ;
          }
          totalCount = ahead + back + 1 ;
+         if( DPS_LOG_REACH_HEAD == rc )
+         {
+            offset = DPS_LOG_HEAD_LEN ;
+         }
+      }
+      else if( SDB_LOG_FILTER_LAST == filter->getType() )
+      {
+         INT32 recordCount = data->lastCount - 1 ;
+         offset = DPS_LOG_HEAD_LEN ;
+         seekToEnd( in, offset, fileSize ) ;
+         rc = seekToLsnMatched( in, offset, fileSize, recordCount ) ;
+         if( rc && DPS_LOG_REACH_HEAD != rc )
+         {
+            //printf( "File was corrupted.\n" ) ;
+            goto error ;
+         }
+         totalCount = recordCount + 1 ;
          if( DPS_LOG_REACH_HEAD == rc )
          {
             offset = DPS_LOG_HEAD_LEN ;
@@ -589,7 +669,8 @@ namespace
          }
 
          offset += header->_length ;
-         if( SDB_LOG_FILTER_LSN == filter->getType() )
+         if( ( SDB_LOG_FILTER_LSN  == filter->getType() ) 
+          || ( SDB_LOG_FILTER_LAST == filter->getType() ) )
          {
             --totalCount ;
          }
@@ -667,7 +748,7 @@ namespace
             }
             if( SDB_DPS_CORRUPTED_LOG == rc )
             {
-               printf( "File was corrupted\n" ) ;
+               //printf( "File was corrupted\n" ) ;
                rc = SDB_OK ;
                break ;
             }
@@ -828,7 +909,7 @@ done:
    return rc ;
 }
 
-INT32 _dpsTypeFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
+INT32 _dpsTypeFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                                const CHAR *logFilePath )
 {
    INT32 rc = SDB_OK ;
@@ -875,7 +956,7 @@ done:
    return rc ;
 }
 
-INT32 _dpsNameFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
+INT32 _dpsNameFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                                const CHAR *logFilePath )
 {
    INT32 rc = SDB_OK ;
@@ -901,7 +982,7 @@ BOOLEAN _dpsMetaFilter::match( const dpsCmdData *data, CHAR *pRecord )
    return FALSE ;
 }
 
-INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
+INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                                const CHAR *logFilePath )
 {
    INT32 rc             = SDB_OK ;
@@ -966,7 +1047,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
 
       if( data->output )
       {
-         printf( pOutBuffer ) ;
+         printf( "%s", pOutBuffer ) ;
       }
       else
       {
@@ -1002,7 +1083,7 @@ BOOLEAN _dpsLsnFilter::match( const dpsCmdData *data, CHAR *pRecord )
    return iFilter::match( data, pRecord ) ;
 }
 
-INT32 _dpsLsnFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
+INT32 _dpsLsnFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                               const CHAR *logFilePath )
 {
    INT32 rc = SDB_OK ;
@@ -1027,7 +1108,7 @@ BOOLEAN _dpsNoneFilter::match( const dpsCmdData *data, CHAR *pRecord )
    return iFilter::match( data, pRecord ) ;
 }
 
-INT32 _dpsNoneFilter::doFilte( const dpsCmdData *data, OSSFILE& out,
+INT32 _dpsNoneFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
                                const CHAR *logFilePath )
 {
    INT32 rc = SDB_OK ;
@@ -1044,4 +1125,29 @@ done:
 
 error:
    goto done;  
+}
+
+////////////////////////////////////////////////////////////////////
+///< for lastFilter
+BOOLEAN _dpsLastFilter::match( const dpsCmdData *data, CHAR *pRecord )
+{
+   return iFilter::match( data, pRecord ) ;
+}
+
+INT32 _dpsLastFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
+                               const CHAR *logFilePath )
+{
+   INT32 rc = SDB_OK ;
+
+   rc = filte( this, data, out, logFilePath ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
+done:
+   return rc ;
+
+error:
+   goto done ;
 }

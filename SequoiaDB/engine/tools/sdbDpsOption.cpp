@@ -59,7 +59,7 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
       goto error ;
    }
 
-   if( vm.count( DPS_LOG_FILTER_FROM_PATH ) )
+   if( vm.count( DPS_LOG_FILTER_TO_PATH ) )
    {
       _cmdData.output = FALSE ;
    }
@@ -69,6 +69,12 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
    }
 
    ///< we should deal with lsn filter first
+   if( vm.count( DPS_LOG_FILTER_LSN ) && vm.count( DPS_LOG_FILTER_LAST ) )
+   {
+      printf( "--lsn cannot be used with --last!!\n" ) ;
+      goto error ;
+   }
+
    if( vm.count( DPS_LOG_FILTER_LSN ) )
    {
       filter = dpsFilterFactory::getInstance()
@@ -82,9 +88,15 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
       catch( boost::bad_lexical_cast& e )
       {
          printf( "Unable to cast lsn to UINT64\n" ) ;
-         rc SDB_INVALIDARG ;
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
+   }
+   else if( vm.count( DPS_LOG_FILTER_LAST ) )
+   {
+      filter = dpsFilterFactory::getInstance()
+               ->createFilter( SDB_LOG_FILTER_LAST ) ;
+      CHECK_FILTER( filter ) ;
    }
    
    if( vm.count( DPS_LOG_FILTER_TYPE ) )
@@ -172,6 +184,9 @@ INT32 _dpsFilterOption::doDataExchange( engine::pmdCfgExchange *pEx )
 
    rdxInt( pEx, DPS_LOG_LSN_BACK,
             _cmdData.lsnBack, FALSE, TRUE, 20 ) ;
+
+   rdxInt( pEx, DPS_LOG_FILTER_LAST,
+            _cmdData.lastCount, FALSE, TRUE, 0 ) ;
 
    return getResult() ;
 }
