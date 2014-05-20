@@ -85,10 +85,11 @@ def jsToCpp(engineDir):
    UINT32 len = sizeof ( jsNameArray ) / sizeof ( CHAR * ) ;
    INT32 rc = SDB_OK ;
    bson::BSONObj detail ;
+   bson::BSONObj rval ;
    for ( ; i < len ; i++ )
    {
       rc = scope->eval( jsTextArray[i] , jsLenArray[i] , jsNameArray[i] ,
-                        1 , SPT_EVAL_FLAG_NONE, detail ) ;
+                        1 , SPT_EVAL_FLAG_NONE, rval, detail ) ;
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR , "fail to eval init script: %s, rc=%d" , jsNameArray[i] , rc ) ;
