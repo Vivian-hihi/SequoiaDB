@@ -51,6 +51,7 @@
 
 #include <vector>
 #include <boost/algorithm/string.hpp>
+#include "sdbInterface.hpp"
 
 using namespace bson ;
 
@@ -1361,7 +1362,7 @@ namespace engine
       ossStrncpy( _catAddrLine, catAddr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
 
-      clsStrategy2String( _syncStrategy, _syncStrategyStr,
+      engine::clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
 
       pmdPrefReplEnum2Str( _preferReplica, _prefReplStr,

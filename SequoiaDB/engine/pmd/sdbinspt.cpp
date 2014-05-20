@@ -890,7 +890,7 @@ enum INSPECT_EXTENT_TYPE
 PD_TRACE_DECLARE_FUNCTION ( SDB_EXTENTSANITYCHK, "extentSanityCheck" )
 BOOLEAN extentSanityCheck ( dmsExtent &extentHead,
                             INSPECT_EXTENT_TYPE &type, // in-out
-                            UINT16 pageSize,
+                            SINT32 pageSize,
                             UINT16 expID )
 {
    PD_TRACE_ENTRY ( SDB_EXTENTSANITYCHK );
