@@ -319,17 +319,17 @@ namespace engine
          case LOG_TYPE_DUMMY :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "PAD" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "PAD", LOG_TYPE_DUMMY ) ;
             break ;
          }
          case LOG_TYPE_DATA_INSERT :
          {
             dpsLogRecord::iterator itrName, itrObj, itrTransID, itrTransLsn ;
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "INSERT" ) ;
-            itrName = this->find(DPS_LOG_PULIBC_FULLNAME) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "INSERT", LOG_TYPE_DATA_INSERT ) ;
+            itrName = this->find(DPS_LOG_PUBLIC_FULLNAME) ;
             if ( !itrName.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record" ) ;
@@ -385,13 +385,13 @@ namespace engine
          case LOG_TYPE_DATA_UPDATE :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "UPDATE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "UPDATE",  LOG_TYPE_DATA_UPDATE ) ;
 
             dpsLogRecord::iterator itrFullName, itrOldM, itrOldO,
                                    itrNewM, itrNewO, itrTransID,
                                    itrTransLsn ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record" ) ;
@@ -482,10 +482,10 @@ namespace engine
          case LOG_TYPE_DATA_DELETE :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "DELETE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "DELETE", LOG_TYPE_DATA_DELETE ) ;
             dpsLogRecord::iterator itrFullName, itrM, itrTransID, itrTransLsn ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record" ) ;
@@ -541,8 +541,8 @@ namespace engine
          case LOG_TYPE_CS_CRT:
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "CS CREATE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CS CREATE", LOG_TYPE_CS_CRT ) ;
             dpsLogRecord::iterator itrCS, itrPageSize ;
             itrCS = this->find( DPS_LOG_CSCRT_CSNAME ) ;
             if ( !itrCS.valid() )
@@ -570,8 +570,8 @@ namespace engine
          case LOG_TYPE_CS_DELETE :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "CS DROP" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CS DROP", LOG_TYPE_CS_DELETE ) ;
             dpsLogRecord::iterator itrCS, itrPageSize ;
             itrCS = this->find( DPS_LOG_CSCRT_CSNAME ) ;
             if ( !itrCS.valid() )
@@ -590,10 +590,10 @@ namespace engine
          case LOG_TYPE_CL_CRT :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "CL CREATE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CL CREATE", LOG_TYPE_CL_CRT ) ;
             dpsLogRecord::iterator itrCL =
-                      this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                      this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                PD_LOG( PDERROR, "failed to find clname in record" ) ;
@@ -608,10 +608,10 @@ namespace engine
          case LOG_TYPE_CL_DELETE :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "CL CREATE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CL CREATE", LOG_TYPE_CL_DELETE ) ;
             dpsLogRecord::iterator itrCL =
-                      this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                      this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                PD_LOG( PDERROR, "failed to find clname in record" ) ;
@@ -627,11 +627,11 @@ namespace engine
          case LOG_TYPE_IX_CRT :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "IX CREATE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "IX CREATE", LOG_TYPE_IX_CRT ) ;
 
             dpsLogRecord::iterator itrFullName, itrIX ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record" ) ;
@@ -670,11 +670,11 @@ namespace engine
          case LOG_TYPE_IX_DELETE :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "IX DROP" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "IX DROP", LOG_TYPE_IX_DELETE ) ;
 
             dpsLogRecord::iterator itrFullName, itrIX ;
-            itrFullName = this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+            itrFullName = this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrFullName.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record" ) ;
@@ -713,8 +713,8 @@ namespace engine
          case LOG_TYPE_CL_RENAME :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "CL RENAME" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CL RENAME", LOG_TYPE_CL_RENAME ) ;
             dpsLogRecord::iterator itrCS, itrO, itrN ;
             itrCS = this->find( DPS_LOG_CLRENAME_CSNAME ) ;
             if ( !itrCS.valid() )
@@ -753,10 +753,10 @@ namespace engine
          case LOG_TYPE_CL_TRUNC :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "CL TRUNCATE" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "CL TRUNCATE", LOG_TYPE_CL_TRUNC ) ;
             dpsLogRecord::iterator itrCL =
-                                       this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                                       this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record") ;
@@ -771,10 +771,10 @@ namespace engine
          case LOG_TYPE_INVALIDATE_CATA :
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "INVALIDATE CATA" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "INVALIDATE CATA", LOG_TYPE_INVALIDATE_CATA ) ;
             dpsLogRecord::iterator itrCL =
-                                       this->find( DPS_LOG_PULIBC_FULLNAME ) ;
+                                       this->find( DPS_LOG_PUBLIC_FULLNAME ) ;
             if ( !itrCL.valid() )
             {
                PD_LOG( PDERROR, "failed to find fullname in record") ;
@@ -789,8 +789,8 @@ namespace engine
          case LOG_TYPE_TS_COMMIT:
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "COMMIT" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "COMMIT", LOG_TYPE_TS_COMMIT ) ;
              dpsLogRecord::iterator itrTransID =
                                   this->find( DPS_LOG_PUBLIC_TRANSID ) ;
              if ( !itrTransID.valid() )
@@ -807,8 +807,8 @@ namespace engine
          case LOG_TYPE_TS_ROLLBACK:
          {
             len += ossSnprintf ( outBuf + len, outSize - len,
-                                 " Type   : %s"OSS_NEWLINE,
-                                 "ROLLBACK" ) ;
+                                 " Type   : %s(%d)"OSS_NEWLINE,
+                                 "ROLLBACK", LOG_TYPE_TS_ROLLBACK ) ;
             dpsLogRecord::iterator itrTransID =
                                   this->find( DPS_LOG_PUBLIC_TRANSID ) ;
              if ( !itrTransID.valid() )
