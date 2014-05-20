@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Name: update.c
+ * Name: upsert.c
  * Description: This program demostrates how to connect to update data.
  * Parameters:
  *              HostName: The hostname for database server
@@ -12,16 +12,24 @@
  * Linux: ./buildApp.sh update
  * Win: buildApp.bat update
  * Manual Compile:
- * Linux: cc update.c common.c -o query -I../../include -L../../lib -lsdbc
- * Win:
- *    cl /Foupdate.obj /c update.c /I..\..\include /wd4047
- *    cl /Focommon.obj /c common.c /I..\..\include /wd4047
- *    link /OUT:update.exe /LIBPATH:..\..\lib sdbc.lib update.obj common.obj
- *    copy ..\..\lib\sdbc.dll .
+ *    Dynamic Linking:
+ *    Linux: cc upsert.c common.c -o upsert -I../../include -L../../lib -lsdbc
+ *    Win:
+ *       cl /Foupdate.obj /c upsert.c /I..\..\include /wd4047
+ *       cl /Focommon.obj /c common.c /I..\..\include /wd4047
+ *       link /OUT:upsert.exe /LIBPATH:..\..\lib sdbc.lib upsert.obj common.obj
+ *       copy ..\..\lib\sdbc.dll .
+ *    Static Linking:
+ *       Linux: cc upsert.c common.c -o upsert.static -I../../include -O0
+ *              -ggdb ../../lib/libsdbc.a -lm
+ *       Win:
+ *          cl /Foupsertstatic.obj /c upsert.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *          cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *          link /OUT:upsertstaic.exe /LIBPATH:..\..\lib staticsdbc.lib upsertstatic.obj commonstatic.obj
  * Run:
- * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
+ * Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./upsert <hostname> <servicename> \
  *        <Username> <Username>
- * Win: insert.exe <hostname> <servicename> <Username> <Username>
+ * Win: upsert.exe <hostname> <servicename> <Username> <Username>
  * Note: While the appended data invalid, C BSON API will return error code,
  *       we need to handle this kind of error. Please see bson.h for more
  *       detail.

@@ -22,6 +22,10 @@
  *    Static Linking:
  *    Linux: cc update_use_id.c common.c -o update_use_id.static -I../../include -O0
  *           -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Foupdate_use_idstatic.obj /c update_use_id.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:update_use_idstaic.exe /LIBPATH:..\..\lib staticsdbc.lib update_use_idstatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./update_use_id <hostname> <servicename> \
  *           <Username> <Username>

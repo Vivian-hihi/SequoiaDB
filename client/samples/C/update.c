@@ -22,6 +22,10 @@
  *    Static Linking:
  *    Linux: cc update.c common.c -o update.static -I../../include -O0
  *           -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Foupdatestatic.obj /c update.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:updatestaic.exe /LIBPATH:..\..\lib staticsdbc.lib updatestatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
  *           <Username> <Username>

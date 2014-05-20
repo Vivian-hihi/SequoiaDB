@@ -22,6 +22,10 @@
  *    Static Linking:
  *       Linux: cc index.c common.c -o index.static -I../../include -O0
  *              -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Foindexstatic.obj /c index.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:indexstatic.exe /LIBPATH:..\..\lib staticsdbc.lib indexstatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./insert <hostname> <servicename> \
  *           <Username> <Username>

@@ -22,6 +22,10 @@
  *    Static Linking:
  *    Linux: cc snap.c common.c -o snap.static -I../../include -O0
  *           -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Fosnapstatic.obj /c snap.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:snapstaic.exe /LIBPATH:..\..\lib staticsdbc.lib snapstatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./snap <hostname> <servicename> \
  *           <Username> <Username>

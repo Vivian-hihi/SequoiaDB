@@ -23,6 +23,10 @@
  *    Static Linking:
  *    Linux: cc sql.c common.c -o sql.static -I../../include -O0
  *           -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Fosqlstatic.obj /c sql.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:sqlstaic.exe /LIBPATH:..\..\lib staticsdbc.lib sqlstatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./sql <hostname> <servicename> \
  *           <Username> <Username>

@@ -21,6 +21,10 @@
  *    Static Linking:
  *    Linux: cc query.c common.c -o query.static -I../../include -O0
  *           -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Foquerystatic.obj /c query.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:querystaic.exe /LIBPATH:..\..\lib staticsdbc.lib querystatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./query <hostname> <servicename> \
  *           <Username> <Username>

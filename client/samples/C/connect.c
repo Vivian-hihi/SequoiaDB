@@ -22,6 +22,10 @@
  *    Static Linking:
  *    Linux: cc connect.c common.c -o connect.static -I../../include -O0
  *           -ggdb ../../lib/libsdbc.a -lm
+ *    Win:
+ *       cl /Foconnectstatic.obj /c connect.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
+ *       link /OUT:connectstaic.exe /LIBPATH:..\..\lib staticsdbc.lib connectstatic.obj commonstatic.obj
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbc.so> ./connect <hostname> <servicename> \
  *           <Username> <Username>
