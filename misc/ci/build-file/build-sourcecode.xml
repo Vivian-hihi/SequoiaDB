@@ -9,16 +9,20 @@
 	<property environment="env" />
 	<property name="CODE_DIR" value="${WORKSPACE}/sequoiadb" />
 	<property name="RELEASE_DIR" value="${WORKSPACE}/release" />
+	<!--PYTHONPATH is for power machine-->
+	<property name="PYTHONPATH" value="/usr/local/lib64/scons-2.3.0" />
+	<!--PATH_BUILDER is for power machine-->
+	<property name="PATH_BUILDER" value="/opt/installbuilder-8.5.2/bin/" />
+
 	<target name="ready" depends="">
-  	<delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
-  	<delete dir="${RELEASE_DIR}/" failonerror="false" />
+  		<delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
+  		<delete dir="${RELEASE_DIR}/" failonerror="false" />
 		<echo message="copy the ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} file to be named ${CODE_DIR}/misc/ci/ci.build.properties" />
 		<copy file="${CODE_DIR}/misc/ci/ci-properies-files/ci.build.properties.${CPU.version}" tofile="${CODE_DIR}/misc/ci/ci.build.properties" />
 		<echo message="copy ${CODE_DIR}/misc/ci/ci.build.properties.${CPU.version} to ${CODE_DIR}/misc/ci/ci.build.properties is OK" />
 		
-		<property file="${CODE_DIR}/misc/ci/ci.build.properties" />
-		
-  </target>
+		<property file="${CODE_DIR}/misc/ci/ci.build.properties" />	
+  	</target>
 	
 	
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
@@ -26,23 +30,18 @@
 			<pathelement location="/usr/share/java/ant-contrib.jar" />
 		</classpath>
 	</taskdef>
+<!-- 	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="/usr/share/java/ant-contrib.jar"/> -->
   
 	
-	<!--PYTHONPATH is for power machine-->
-	<property name="PYTHONPATH" value="/usr/local/lib64/scons-2.3.0" />
-	<!--PATH_BUILDER is for power machine-->
-	<property name="PATH_BUILDER" value="/opt/installbuilder-8.5.2/bin/" />
+
   
 	<target name="compile-src" depends="ready">
-		<echo message="Begin to compile source code..." />
-		
+		<property name="java.driver.jar.name" value="sequoiadb.jar" />
+		<echo message="Begin to compile source code..." />		
 		<echo message="delete ${CODE_DIR}/bin" />
 		<delete dir="${CODE_DIR}/bin"  failonerror="true" />
-    <mkdir dir="${CODE_DIR}/bin" />
-    
-    <property name="java.driver.jar.name" value="sequoiadb.jar" />
-    
-    <if>
+    	<mkdir dir="${CODE_DIR}/bin" />
+    	<if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
 				<echo message="compile.debug is ture" />
@@ -55,7 +54,6 @@
 				<echo message="${compile.arg.line}" />
 			</else>
 		</if>
-
 		<echo message="exec scons ${compile.arg.line}  --all -j 4" />
 		<exec executable="scons" dir="${WORKSPACE}/sequoiadb" failonerror="true">
 			<arg line="${compile.arg.line} --all -j 4" />
@@ -76,27 +74,17 @@
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb/"/>
 			<property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hive/"/>
 		</ant>
-
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
-		
-		
-		
-		
-		
+
 		<echo>
 			/usr/bin/gcc  ${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include
 		</echo>
 		<exec executable="/usr/bin/gcc" dir="${CODE_DIR}/misc/ci/exec-tools" failonerror="true">
-    	<arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
-    </exec>
-    <exec executable="${CODE_DIR}/misc/ci/exec-tools/print_version" dir="${CODE_DIR}/misc/ci/exec-tools/" failonerror="true" outputproperty="project.version" />
-    <echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />
-	
-
-		
-		
-		<echo message="compile source code completed." />
-		
+    		<arg line="${CODE_DIR}/misc/ci/exec-tools/print_version.c -o ${CODE_DIR}/misc/ci/exec-tools/print_version -I${CODE_DIR}/SequoiaDB/engine/include" />
+    	</exec>
+    	<exec executable="${CODE_DIR}/misc/ci/exec-tools/print_version" dir="${CODE_DIR}/misc/ci/exec-tools/" failonerror="true" outputproperty="project.version" />
+    	<echo message="&#10;project.version=${project.version}" file="${CODE_DIR}/misc/ci/ci.build.properties" append="true" />	
+		<echo message="compile source code completed." />		
 	</target>
 
 	<target name="mk-driver" depends="compile-src">
@@ -117,9 +105,7 @@
 		<mkdir dir="${DRIVER.DIR}/java" />
 		<mkdir dir="${DRIVER.DIR}/CSharp"/>
 		<mkdir dir="${DRIVER.DIR}/include" />
-		
-  	<mkdir dir="${DRIVER.DIR}/lib/phplib" />
-		<mkdir dir="${DRIVER.DIR}/include" />
+  		<mkdir dir="${DRIVER.DIR}/lib/phplib" />
 		<mkdir dir="${DRIVER.DIR}/lib" />
 		<!--mkdir dir="${DRIVER.DIR}/samples" /-->
 
@@ -130,12 +116,11 @@
 		<copy todir="${DRIVER.DIR}/include">
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
-
-    <copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
+    	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
 		<copy file="${CODE_DIR}/driver/hadoop/hive/hive-sequoiadb.jar" tofile="${DRIVER.DIR}/hadoop/hive-sequoiadb.jar" />
 
-	  <property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
+	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
 		<for list="${test-type-list}" param="php.version">
 			<sequential>
 				<antcall target="build-and-copy-php" inheritAll="true">
@@ -149,11 +134,11 @@
 		<echo message="Make driver package completed." />
 	</target>
   
-  <target name="build-and-copy-php" depends="">
-  	<delete dir="${CODE_DIR}/driver/php5/build}" />
-  	<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
+  	<target name="build-and-copy-php" depends="">
+  		<delete dir="${CODE_DIR}/driver/php5/build}" />
+  		<mkdir dir="${RELEASE_DIR}/sequoiadb/lib/phplib" />
   	
-  	<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
+  		<exec executable="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" dir="${WORKSPACE}/sequoiadb/thirdparty/php" failonerror="true">
 			<arg line="  ${php.version} " />
 		</exec>
 
@@ -164,7 +149,7 @@
 		<copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsequoiadb.so" tofile="${DRIVER.DIR}/lib/phplib/libsdbphp-${php.version}.so" />
 		<copy file="${CODE_DIR}/driver/php5/build/${build.result.dir}/libsequoiadb.so" tofile="${RELEASE_DIR}/sequoiadb/lib/phplib/libsdbphp-${php.version}.so" />
 		
-  </target>
+ 	</target>
   
 	<target name="mk-release" depends="mk-driver,compile-src">
 		<echo message="Begin to make relase package ..." />
@@ -208,17 +193,17 @@
 		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/engine/sdbpdlog" todir="${RELEASE_DIR}/sequoiadb/bin" />
 		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbimprt" todir="${RELEASE_DIR}/sequoiadb/bin" />
 		<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbexprt" todir="${RELEASE_DIR}/sequoiadb/bin" />
-    <copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbload" todir="${RELEASE_DIR}/sequoiadb/bin" /-->
-    <copy todir="${RELEASE_DIR}/sequoiadb/bin" >
-       <fileset dir="${CODE_DIR}/bin">
-       	<include name="**/*" />
-       	<exclude name="lib*" />
-       </fileset>
-    </copy>
+    	<copy file="${CODE_DIR}/build/linux2/${build.result.dir}/tool/engine/sdbload" todir="${RELEASE_DIR}/sequoiadb/bin" /-->
+	    <copy todir="${RELEASE_DIR}/sequoiadb/bin" >
+	       <fileset dir="${CODE_DIR}/bin">
+	       	<include name="**/*" />
+	       	<exclude name="lib*" />
+	       </fileset>
+	    </copy>
 
 
 		<copy todir="${RELEASE_DIR}/sequoiadb/lib">
-			<fileset dir="${CODE_DIR}/client/lib/" includes="*" />
+			<fileset dir="${CODE_DIR}/client/lib/" includes="**/*" />
 		</copy>
 		
 		<copy todir="${RELEASE_DIR}/tools/sdbsupport">
@@ -283,11 +268,11 @@
 		<copy file="${CODE_DIR}/script/sequoiadb" todir="${RELEASE_DIR}/sequoiadb/" />
 		<replaceregexp file="${RELEASE_DIR}/sequoiadb/sequoiadb" match="&#13;&#10;" replace="&#10;" flags="g" />
 
-	  <copy file="${CODE_DIR}/script/sdbwsart" todir="${RELEASE_DIR}/sequoiadb/bin" />
-	  <replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />
+	  	<copy file="${CODE_DIR}/script/sdbwsart" todir="${RELEASE_DIR}/sequoiadb/bin" />
+	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwsart" match="&#13;&#10;" replace="&#10;" flags="g" />
 	  
-	  <copy file="${CODE_DIR}/script/sdbwstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
-	  <replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwstop" match="&#13;&#10;" replace="&#10;" flags="g" />
+	  	<copy file="${CODE_DIR}/script/sdbwstop" todir="${RELEASE_DIR}/sequoiadb/bin" />
+	  	<replaceregexp file="${RELEASE_DIR}/sequoiadb/bin/sdbwstop" match="&#13;&#10;" replace="&#10;" flags="g" />
 	  
 	  
 		<copy todir="${RELEASE_DIR}/sequoiadb/doc">
