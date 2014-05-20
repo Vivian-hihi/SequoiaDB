@@ -25,7 +25,7 @@ clientCLibFiles = [
 
 #Client Library
 clientCLib = clientCEnv.SharedLibrary('sdbc', clientCLibFiles)
-clientCLibStatic = clientCEnv.StaticLibrary('sdbc', clientCLibFiles)
+clientCLibStatic = clientCEnv.StaticLibrary('staticsdbc', clientCLibFiles)
 
 clientCEnv.Install( '#/client/lib', clientCLib )
 clientCEnv.Install( '#/client/lib', clientCLibStatic )

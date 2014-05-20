@@ -39,7 +39,7 @@ clientCPPLibFiles = [
 
 #Client Library
 clientCPPLib = clientCppEnv.SharedLibrary('sdbcpp', clientCPPLibFiles)
-clientCPPLibStatic = clientCppEnv.StaticLibrary('sdbcpp', clientCPPLibFiles)
+clientCPPLibStatic = clientCppEnv.StaticLibrary('staticsdbcpp', clientCPPLibFiles)
 
 clientCppEnv.Install( '#/client/lib/', clientCPPLib )
 clientCppEnv.Install( '#/client/lib/', clientCPPLibStatic )
