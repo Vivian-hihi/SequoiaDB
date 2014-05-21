@@ -116,7 +116,7 @@ SINT32  gCurFileIndex                                = 0 ;
 OSSFILE gFile ;
 
 // max size of a output file
-#define MAX_FILE_SIZE 500 * 1024 * 1024
+#define MAX_FILE_SIZE 1 * 1024 * 1024
 // increase delta max 64MB
 #define BUFFER_INC_SIZE 67108864
 // buffer init 4MB
@@ -145,6 +145,53 @@ BOOLEAN gInitMME                                     = FALSE ;
 BOOLEAN gShowRecordContent                           = FALSE ;
 SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
 
+#define RETRY_COUNT 5
+INT32 switchFile( OSSFILE& file, const INT32 size )
+{
+   INT32 rc = SDB_OK ;
+   CHAR newFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+   INT64 fileSize = 0 ;
+   INT32 retryCount = 0;
+
+   rc = ossGetFileSize( &file, &fileSize ) ;
+   if( rc )
+   {
+      printf( "Error: can not get fileSize. rc: %d\n", rc ) ;
+      goto error ;
+   }
+
+   if( MAX_FILE_SIZE <= fileSize + size )
+   {
+      ossClose( file ) ;
+   retry:
+      
+      ++gCurFileIndex ;
+      ossSnprintf( newFile, OSS_MAX_PATHSIZE, "%s.%d",
+                   gOutputFile, gCurFileIndex ) ;
+      rc = ossOpen ( newFile, OSS_REPLACE | OSS_WRITEONLY,
+                     OSS_RU|OSS_WU|OSS_RG, file ) ;
+      if ( rc )
+      {
+         printf ( "Error: Failed to open output file: %s, rc = %d"
+                  OSS_NEWLINE, newFile, rc ) ;
+         ++retryCount ;
+         if( RETRY_COUNT < retryCount )
+         {
+            printf( "retry times more than %d, return\n", RETRY_COUNT ) ;
+            goto error ;
+         }
+         printf( "retry again. times : %d\n", retryCount ) ;
+         ossMemset ( newFile, 0, OSS_MAX_PATHSIZE + 1 ) ;
+         goto retry;
+      }
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 void dumpPrintf ( const CHAR *format, ... ) ;
 #define dumpAndShowPrintf(x,...)                                               \
    do {                                                                        \
@@ -172,6 +219,7 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDBINSPT_RESVARG );
    CHAR actionString[BUFFERSIZE] = {0} ;
+   CHAR outputFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
    po::variables_map vm ;
    try
    {
@@ -251,20 +299,22 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       const CHAR *output = vm[OPTION_OUTPUT].as<string>().c_str() ;
       INT32 rc = SDB_OK ;
-      if ( ossStrlen ( output ) > OSS_MAX_PATHSIZE )
+      if ( ossStrlen ( output ) + 5 > OSS_MAX_PATHSIZE )
       {
          ossPrintf ( "Error: output is too long: %s", output ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
       ossStrncpy ( gOutputFile, output, sizeof(gOutputFile) ) ;
-      rc = ossOpen ( gOutputFile, OSS_REPLACE | OSS_WRITEONLY,
+      ossSnprintf( outputFile, OSS_MAX_PATHSIZE, "%s.%d",
+                   gOutputFile, gCurFileIndex ) ;
+      rc = ossOpen ( outputFile, OSS_REPLACE | OSS_WRITEONLY,
                      OSS_RU|OSS_WU|OSS_RG, gFile ) ;
       if ( rc )
       {
          ossPrintf ( "Error: Failed to open output file: %s, rc = %d"
                      OSS_NEWLINE,
-                     gOutputFile, rc ) ;
+                     outputFile, rc ) ;
          // if we can't open the file, let's output to screen
          ossMemset ( gOutputFile, 0, sizeof(gOutputFile) ) ;
       }
@@ -429,6 +479,13 @@ void flushOutput ( const CHAR *pBuffer, INT32 size )
    PD_TRACE_ENTRY ( SDB_FLUSHOUTPUT );
    SINT64 writeSize ;
    SINT64 writtenSize = 0 ;
+
+   rc = switchFile( gFile, size ) ;
+   if( rc )
+   {
+      goto error ;
+   }
+
    if ( ossStrlen ( gOutputFile ) != 0 )
    {
       do
