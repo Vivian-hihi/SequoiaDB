@@ -2700,17 +2700,6 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
    SdbExecState *fdw_state = (SdbExecState *)rinfo->ri_FdwState;
    
    sdbbson_init(&sdbbsonCondition);
-//   for (i = 0; i < fdw_state->pgTableDesc->ncols; i++) 
-//   {
-//      datum = ExecGetJunkAttribute(planSlot, fdw_state->pgTableDesc->cols[i].attnum_in_target, &isnull);
-//      if (!isnull)
-//      {
-//         sdbSetBsonValue(&sdbbsonCondition, fdw_state->pgTableDesc->cols[i].pgname, 
-//            datum, fdw_state->pgTableDesc->cols[i].pgtype, 
-//            fdw_state->pgTableDesc->cols[i].pgtypmod);
-//      }
-//   }
-
    original = sdbGetRecordPointer(fdw_state->bson_record_addr);
    for (i = 0; i < fdw_state->key_num; i++)
    {
@@ -2732,10 +2721,8 @@ TupleTableSlot *SdbExecForeignDelete(EState *estate, ResultRelInfo *rinfo,
    }
 
    sdbbson_destroy(&sdbbsonCondition);
-   /* empty the result slot */
-   ExecClearTuple(slot);
    
-   /* store the virtual tuple */
+   ExecClearTuple(slot);
    ExecStoreVirtualTuple(slot);
    
    return slot;
@@ -2810,10 +2797,7 @@ TupleTableSlot *SdbExecForeignUpdate(EState *estate, ResultRelInfo *rinfo,
    sdbbson_destroy(&sdbbsonTempValue);
    sdbbson_destroy(&sdbbsonValues);
 
-   /* empty the result slot */
    ExecClearTuple(slot);
-   
-   /* store the virtual tuple */
    ExecStoreVirtualTuple(slot);
    
    return slot;
