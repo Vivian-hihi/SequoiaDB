@@ -24,7 +24,7 @@
  *       copy ..\..\lib\sdbc.dll .
  *    Static Linking:
  *    Linux: cc sampledb.c common.c -o sampledb.static -I../../include -O0
- *           -ggdb ../../lib/libsdbc.a -lm
+ *           -ggdb ../../lib/libstaticsdbc.a -lm
  *    Win:
  *       cl /Fosampledbstatic.obj /c sampledb.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
  *       cl /Focommonstatic.obj /c common.c /I..\..\include /wd4047 /DSDB_STATIC_BUILD
