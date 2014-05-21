@@ -228,14 +228,14 @@ size %d, clear bucket data", _bufferSize ) ;
                size = pCursor - _curBuffer ;
                goto done ;
             }
-            else if ( rc != SDB_EOF )
+            else if ( rc == SDB_EOF && newReadSize > 0 )
             {
-               PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
-               goto error ;
+               rc = SDB_OK ;
             }
             else
             {
-               rc = SDB_OK ;
+               PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
+               goto error ;
             }
          }
          _unreadSpace = newReadSize ;
@@ -272,38 +272,35 @@ size %d, clear bucket data", _bufferSize ) ;
             ++pCursor ;
             continue ;
          }
-         else
+         switch ( *pCursor )
          {
-            switch ( *pCursor )
+         case '{':
+         case '[':
+            if ( !isString )
             {
-            case '{':
-            case '[':
-               if ( !isString )
-               {
-                  ++level ;
-               }
-               break ;
-            case '}':
-            case ']':
-               if ( !isString )
-               {
-                  --level ;
-               }
-               break ;
-            case '\"':
-               isString = !isString ;
-               break ;
-            case '\\':
-               isESC = TRUE ;
-               break ;
-            default:
-               break ;
+               ++level ;
             }
+            break ;
+         case '}':
+         case ']':
+            if ( !isString )
+            {
+               --level ;
+            }
+            break ;
+         case '\"':
+            isString = !isString ;
+            break ;
+         case '\\':
+            isESC = TRUE ;
+            break ;
+         default:
+            break ;
          }
       }
       --_unreadSpace ;
       ++pCursor ;
-   }while ( level > 0 || isRecordFirst ) ;
+   }while ( level > 0 || !isRecordFirst ) ;
 
    if ( line )
    {
