@@ -24,7 +24,7 @@
  *       copy ..\..\lib\sdbcpp.dll .
  *    Static Linking:
  *    Linux: g++ connect.cpp common.cpp -o connect.static -I../../include -O0
- *           -ggdb -Wno-deprecated ../../lib/libsdbcpp.a -lm -lpthread
+ *           -ggdb -Wno-deprecated ../../lib/libstaticsdbcpp.a -lm -lpthread
  * Run:
  *    Linux: LD_LIBRARY_PATH=<path for libsdbcpp.so> ./connect <hostname> \
  *           <servicename> <username> <password>
@@ -32,7 +32,7 @@
  *
  ******************************************************************************/
 #include <iostream>
-#include "client.hpp"
+#include "common.hpp"
 
 using namespace std ;
 using namespace sdbclient ;
