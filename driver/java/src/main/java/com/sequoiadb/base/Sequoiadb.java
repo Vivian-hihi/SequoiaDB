@@ -923,34 +923,25 @@ public class Sequoiadb {
      *        eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", 
      *             "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
      *<ul>
-     *<li>GroupName   : The replica groups which to be backuped
-     *<li>Path        : The backup path, if not assign, use the backup path assigned in configuration file
+     *<li>GroupID     : The id(s) of replica group(s) which to be backuped
+     *<li>GroupName   : The name(s) of replica group(s) which to be backuped
      *<li>Name        : The name for the backup
+     *<li>Path        : The backup path, if not assign, use the backup path assigned in the configuration file,
+     *                  the path support to use wildcard(%g/%G:group name, %h/%H:host name, %s/%S:service name).
+     *                  e.g.  {Path:"/opt/sequoiadb/backup/%g"}
+     *<li>isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of
+     *                  the path specified in the configuration file, default to be false
+     *<li>Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
+     *<li>EnableDataDir : Whether turn on the feature which will create subdirectory named to
+     *                    current date like "YYYY-MM-DD" automatically, default to be false             
      *<li>Description : The description for the backup
-     *<li>EnsureInc   : Whether excute increment synchronization, default to be false
-     *<li>OverWrite   : Whether overwrite the old backup file, default to be false
+     *<li>EnsureInc   : Whether turn on increment synchronization, default to be false
+     *<li>OverWrite   : Whether overwrite the old backup file with the same name, default to be false
      *</ul>
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void backupOffline ( BSONObject options ) throws BaseException
-	{
-		// check the optional argument
-		if ( null != options ){
-			for (String key : options.keySet() ){
-				if (key.equals(SequoiadbConstants.FIELD_NAME_GROUPNAME)
-						|| key.equals(SequoiadbConstants.FIELD_NAME_NAME)
-						|| key.equals(SequoiadbConstants.FIELD_NAME_PATH)
-						|| key.equals(SequoiadbConstants.FIELD_NAME_DESP)
-						|| key.equals(SequoiadbConstants.FIELD_NAME_ENSURE_INC)
-						|| key.equals(SequoiadbConstants.FIELD_NAME_OVERWRITE)){
-					continue ;
-				}
-				else{
-					throw new BaseException("SDB_INVALIDARG");
-				}
-			}
-		}
-		
+	{	
 		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_BACKUP_OFFLINE,
 				                      0,0,0,-1,options,
 				                      null,null,null);
