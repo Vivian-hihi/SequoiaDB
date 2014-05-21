@@ -294,7 +294,14 @@ INT32 migImport::init ( migImprtArg *pMigArg )
       goto error ;
    }
 
-   _pParser = SDB_OSS_NEW _utilCSVParser() ;
+   if ( _pMigArg->type == MIGIMPRT_CSV )
+   {
+      _pParser = SDB_OSS_NEW _utilCSVParser() ;
+   }
+   else if ( _pMigArg->type == MIGIMPRT_JSON )
+   {
+      _pParser = SDB_OSS_NEW _utilJSONParser() ;
+   }
    if ( !_pParser )
    {
       rc = SDB_OOM ;
@@ -601,7 +608,7 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
          continue ;
       }
       ++count ;
-      rc = _importRecord ( &obj, 1 ) ;
+      rc = _importRecord ( &obj ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to import record in the %d row", count ) ;
