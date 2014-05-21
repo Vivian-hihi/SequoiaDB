@@ -33,6 +33,7 @@
   (p) == '\r' )
 
 static BOOLEAN _sdbIsSrand = FALSE ;
+
 #if defined (_LINUX)
 static UINT32 _sdbRandSeed = 0 ;
 #endif
@@ -4328,7 +4329,7 @@ SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
    SINT64 contextID = 0 ;
    bson queryCond ;
    bson newObj ;
-   sdbCursorStruct *cursor ;
+   sdbCursorStruct *cursor = NULL ;
    sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
    bson_init ( &queryCond ) ;
    bson_init ( &newObj ) ;

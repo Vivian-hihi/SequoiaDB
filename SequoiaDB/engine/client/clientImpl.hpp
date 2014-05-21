@@ -838,7 +838,7 @@ namespace sdbclient
 
       // stored procedure
       INT32 crtJSProcedure ( const CHAR *code ) ;
-      INT32 rmProcedures( const CHAR *spName ) ;
+      INT32 rmProcedure( const CHAR *spName ) ;
       INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition ) ;
       INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition )
       {

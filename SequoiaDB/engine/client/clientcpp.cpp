@@ -4983,10 +4983,10 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_RMPROCEDURES, "_sdbImpl::rmProcedures" )
-   INT32 _sdbImpl::rmProcedures( const CHAR *spName )
+   PD_TRACE_DECLARE_FUNCTION( SDB_CLIENT_RMPROCEDURE, "_sdbImpl::rmProcedure" )
+   INT32 _sdbImpl::rmProcedure( const CHAR *spName )
    {
-      PD_TRACE_ENTRY( SDB_CLIENT_RMPROCEDURES ) ;
+      PD_TRACE_ENTRY( SDB_CLIENT_RMPROCEDURE ) ;
       INT32 rc = SDB_OK ;
       BOOLEAN locked = FALSE ;
       BOOLEAN r ;
@@ -5025,7 +5025,7 @@ namespace sdbclient
       {
          unlock () ;
       }
-      PD_TRACE_EXITRC ( SDB_CLIENT_RMPROCEDURES, rc ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_RMPROCEDURE, rc ) ;
       return rc ;
    error:
       goto done ;

@@ -37,6 +37,7 @@
 #include <map>
 #include <string>
 #include <vector>
+/*
 #if defined (_WINDOWS)
    #if defined (SDB_DLL_BUILD)
       #define DLLEXPORT __declspec(dllexport)
@@ -46,6 +47,9 @@
 #else
    #define DLLEXPORT
 #endif
+*/
+
+#define DLLEXPORT SDB_EXPORT
 
 #define SDB_PAGESIZE_4K           4096
 #define SDB_PAGESIZE_8K           8192
@@ -1892,7 +1896,7 @@ namespace sdbclient
       virtual INT32 flushConfigure( const bson::BSONObj &options ) = 0 ;
       // stored procedure
       virtual INT32 crtJSProcedure ( const CHAR *code ) = 0 ;
-      virtual INT32 rmProcedures( const CHAR *spName ) = 0 ;
+      virtual INT32 rmProcedure( const CHAR *spName ) = 0 ;
       virtual INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition ) = 0 ;
       virtual INT32 listProcedures( sdbCursor &cursor, const bson::BSONObj &condition ) = 0 ;
       virtual INT32 evalJS( _sdbCursor **cursor,
@@ -2808,17 +2812,17 @@ namespace sdbclient
          return pSDB->crtJSProcedure( code ) ;
       }
 
-/** \fn INT32 rmProcedures( const CHAR *spName )
- *  \brief remove a store procedures.
+/** \fn INT32 rmProcedure( const CHAR *spName )
+ *  \brief remove a store procedure.
  *  \param [in] spName The name of store procedure
  *  \retval SDB_OK Operation Success
  *  \retval Others  Operation Fail
  */
-      INT32 rmProcedures( const CHAR *spName )
+      INT32 rmProcedure( const CHAR *spName )
       {
          if ( !pSDB )
             return SDB_SYS ;
-         return pSDB->rmProcedures( spName ) ;
+         return pSDB->rmProcedure( spName ) ;
       }
 
       INT32 listProcedures( _sdbCursor **cursor, const bson::BSONObj &condition )
@@ -2879,9 +2883,14 @@ namespace sdbclient
     \brief Backup the whole database or specifed replica group.
     \param [in] options Contains a series of backup configuration infomations. Backup the whole cluster if null. The "options" contains 5 options as below. All the elements in options are optional. eg: {"GroupName":["rgName1", "rgName2"], "Path":"/opt/sequoiadb/backup", "Name":"backupName", "Description":description, "EnsureInc":true, "OverWrite":true}
 
+        GroupID     : The id(s) of replica group(s) which to be backuped
         GroupName   : The replica groups which to be backuped
-        Path        : The backup path, if not assign, use the backup path assigned in configuration file
+        Path        : The backup path, if not assign, use the backup path assigned in the configuration file,
+                      the path support to use wildcard(%g/%G:group name, %h/%H:host name, %s/%S:service name). e.g.  {Path:"/opt/sequoiadb/backup/%g"}
+        isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of the path specified in the configuration file, default to be false
         Name        : The name for the backup
+        Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
+        EnableDateDir : Whether turn on the feature which will create subdirectory named to current date like "YYYY-MM-DD" automatically, default to be false
         Description : The description for the backup
         EnsureInc   : Whether excute increment synchronization, default to be false
         OverWrite   : Whether overwrite the old backup file, default to be false
