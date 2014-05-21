@@ -562,7 +562,8 @@ namespace engine
                                     CHAR *outBuf, UINT32 outSize,
                                     CHAR *addrPrefix, UINT32 options,
                                     dmsExtentID &nextExtent,
-                                    set< dmsRecordID > *ridList )
+                                    set< dmsRecordID > *ridList,
+                                    BOOLEAN dumpRecord )
    {
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -625,29 +626,32 @@ namespace engine
             goto exit ;
          }
 
-         // start dump all records
-         dmsOffset nextRecord = extent->_firstRecordOffset ;
-         INT32 recordCount = 0 ;
-
-         while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
+         if( dumpRecord )
          {
-            if ( nextRecord >= (SINT32)inSize )
+            // start dump all records
+            dmsOffset nextRecord = extent->_firstRecordOffset ;
+            INT32 recordCount = 0 ;
+
+            while ( DMS_INVALID_OFFSET != nextRecord && len < outSize )
             {
-               len += ossSnprintf (  outBuf + len, outSize - len,
-                                     "Error : nextRecord %d is greater "
-                                     "than inSize %d",
-                                     nextRecord, inSize ) ;
-               goto exit ;
+               if ( nextRecord >= (SINT32)inSize )
+               {
+                  len += ossSnprintf (  outBuf + len, outSize - len,
+                                        "Error : nextRecord %d is greater "
+                                        "than inSize %d",
+                                        nextRecord, inSize ) ;
+                  goto exit ;
+               }
+               len += ossSnprintf ( outBuf + len, outSize - len,
+                                    "    Record %d:"OSS_NEWLINE,
+                                    recordCount ) ;
+               len += dumpDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
+                                       inSize - nextRecord,
+                                       outBuf + len, outSize - len,
+                                       nextRecord, ridList ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+               ++recordCount ;
             }
-            len += ossSnprintf ( outBuf + len, outSize - len,
-                                 "    Record %d:"OSS_NEWLINE,
-                                 recordCount ) ;
-            len += dumpDataRecord ( cb, ((CHAR*)inBuf)+nextRecord,
-                                    inSize - nextRecord,
-                                    outBuf + len, outSize - len,
-                                    nextRecord, ridList ) ;
-            len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
-            ++recordCount ;
          }
       }
 
