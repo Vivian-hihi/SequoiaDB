@@ -135,7 +135,8 @@ namespace engine
                                         CHAR * addrPrefix,
                                         UINT32 options,
                                         dmsExtentID &nextExtent,
-                                        set<dmsRecordID> *ridList = NULL ) ;
+                                        set<dmsRecordID> *ridList = NULL,
+                                        BOOLEAN dumpRecord = FALSE ) ;
 
          static UINT32 dumpExtentHeader ( void * inBuf,
                                           UINT32 inSize,
