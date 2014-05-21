@@ -853,8 +853,8 @@ public class Sequoiadb {
 
 	/**
 	 * @fn void crtJSProcedure ( String code )
-     * @brief Create a store procedures.
-     * @param code The code of store procedures
+     * @brief Create a store procedure.
+     * @param code The code of store procedure
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void crtJSProcedure ( String code ) throws BaseException
@@ -879,12 +879,12 @@ public class Sequoiadb {
 	}
 	
 	/**
-	 * @fn void rmProcedures ( String name )
-     * @brief Remove a store procedures.
+	 * @fn void rmProcedure ( String name )
+     * @brief Remove a store procedure.
      * @param name The name of store procedure to be removed
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
-	public void rmProcedures ( String name ) throws BaseException
+	public void rmProcedure ( String name ) throws BaseException
 	{
 		// check the argument
 		if ( null == name || name.equals("") ) {
@@ -932,7 +932,7 @@ public class Sequoiadb {
      *<li>isSubDir    : Whether the path specified by paramer "Path" is a subdirectory of
      *                  the path specified in the configuration file, default to be false
      *<li>Prefix      : The prefix of name for the backup, default to be null. e.g. {Prefix:"%g_bk_"}
-     *<li>EnableDataDir : Whether turn on the feature which will create subdirectory named to
+     *<li>EnableDateDir : Whether turn on the feature which will create subdirectory named to
      *                    current date like "YYYY-MM-DD" automatically, default to be false             
      *<li>Description : The description for the backup
      *<li>EnsureInc   : Whether turn on increment synchronization, default to be false
