@@ -70,6 +70,7 @@ namespace fs = boost::filesystem ;
 #define OPTION_DUMPINDEX   "dumpindex"
 #define OPTION_PAGESTART   "pagestart"
 #define OPTION_NUMPAGE     "numpage"
+#define OPTION_SHOW_RECORD "record"
 #define ADD_PARAM_OPTIONS_BEGIN( desc )\
         desc.add_options()
 
@@ -88,7 +89,8 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_DUMPDATA, ",t"), boost::program_options::value<string>(), "dump data (true/false)" ) \
        ( COMMANDS_STRING(OPTION_DUMPINDEX, ",i"), boost::program_options::value<string>(), "dump index (true/false)" ) \
        ( COMMANDS_STRING(OPTION_PAGESTART, ",s"), boost::program_options::value<SINT32>(), "starting page number" ) \
-       ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" )
+       ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
+       ( COMMANDS_STRING(OPTION_SHOW_RECORD, ",p"), boost::program_options::value<string>(), "display record content" )
 
 // bitwise operation
 #define ACTION_INSPECT           0x01
@@ -110,8 +112,11 @@ BOOLEAN gDumpData                                    = FALSE ;
 BOOLEAN gDumpIndex                                   = FALSE ;
 SINT32  gStartingPage                                = -1 ;
 SINT32  gNumPages                                    = 1 ;
+SINT32  gCurFileIndex                                = 0 ;
 OSSFILE gFile ;
 
+// max size of a output file
+#define MAX_FILE_SIZE 500 * 1024 * 1024
 // increase delta max 64MB
 #define BUFFER_INC_SIZE 67108864
 // buffer init 4MB
@@ -137,6 +142,7 @@ UINT32  gDataOffset                                  = 0 ;
 INT32   gPageNum                                     = 0 ;
 CHAR   *gMMEBuff                                     = NULL ;
 BOOLEAN gInitMME                                     = FALSE ;
+BOOLEAN gShowRecordContent                           = FALSE ;
 SDB_INSPT_TYPE gCurInsptType                         = SDB_INSPT_DATA ;
 
 void dumpPrintf ( const CHAR *format, ... ) ;
@@ -373,6 +379,11 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       displayArg ( desc ) ;
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
+   }
+   if( vm.count( OPTION_SHOW_RECORD ) )
+   {
+      ossStrToBoolean( vm[OPTION_SHOW_RECORD].as<string>().c_str(),
+                       &gShowRecordContent ) ;
    }
    // show input parameters on screen so people can see it
    // save them into output as well
@@ -1259,8 +1270,8 @@ retry :
       dumpPrintf ( "    OvfRecord 0x%08x : 0x%08x:"OSS_NEWLINE,
                    rid._extent, rid._offset ) ;
       len = dmsDump::dumpDataRecord ( cb, gExtentBuffer + offset,
-              ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
-              gBuffer, gBufferSize, offset, NULL ) ;
+                 ((dmsExtent*)gExtentBuffer)->_blockSize * pageSize - offset,
+                 gBuffer, gBufferSize, offset, NULL ) ;
       PD_TRACE1 ( SDB_DUMPOVFWRECRDS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
@@ -1836,7 +1847,8 @@ retry_data :
                                DMS_SU_DMP_OPT_HEX |
                                DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
-                               gDumpType, tempExtent, &extentRIDList ) ;
+                               gDumpType, tempExtent, &extentRIDList,
+                               gShowRecordContent ) ;
       PD_TRACE1 ( SDB_DUMPCOLL, PD_PACK_INT(len) );
       if ( (UINT32)len >= gBufferSize-1 )
       {
@@ -1851,7 +1863,7 @@ retry_data :
       }
       flushOutput ( gBuffer, len ) ;
 
-      if ( extentRIDList.size() != 0 )
+      if ( extentRIDList.size() != 0 && gShowRecordContent )
       {
          dumpOverflowedRecords ( file, pageSize, id, firstExtent,
                                  extentRIDList ) ;
