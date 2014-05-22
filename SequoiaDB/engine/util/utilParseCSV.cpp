@@ -245,14 +245,14 @@ size %d, clear bucket data", _bufferSize ) ;
                size = pCursor - _curBuffer ;
                goto done ;
             }
-            else if ( rc != SDB_EOF )
+            else if ( rc == SDB_EOF && newReadSize > 0 )
             {
-               PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
-               goto error ;
+               rc = SDB_OK ;
             }
             else
             {
-               rc = SDB_OK ;
+               PD_LOG ( PDERROR, "Failed to read next buffer rc = %d", rc ) ;
+               goto error ;
             }
          }
          _unreadSpace = newReadSize ;
