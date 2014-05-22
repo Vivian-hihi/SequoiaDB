@@ -65,6 +65,7 @@ struct migImprtArg : public SDBObject
    BOOLEAN   autoAddField ;
    BOOLEAN   autoCompletion ;
    BOOLEAN   errorStop ;
+   BOOLEAN   force ;
    CHAR     *pHostname ;
    CHAR     *pSvcname ;
    CHAR     *pUser ;
@@ -83,6 +84,7 @@ struct migImprtArg : public SDBObject
                    autoAddField(TRUE),
                    autoCompletion(TRUE),
                    errorStop(TRUE),
+                   force(FALSE),
                    pHostname(NULL),
                    pSvcname(NULL),
                    pUser(NULL),
