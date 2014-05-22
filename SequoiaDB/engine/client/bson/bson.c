@@ -396,7 +396,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          time_t timer = bson_iterator_date( i );
          struct tm psr;
          LocalTime ( &timer, &psr ) ;
-         sprintf ( temp, "{ \"$date\": \"%04d-%02d-%02d\" }", psr.tm_year + 1900, psr.tm_mon, psr.tm_mday ) ;
+         sprintf ( temp, "{ \"$date\": \"%04d-%02d-%02d\" }", psr.tm_year + 1900, psr.tm_mon + 1, psr.tm_mday ) ;
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )
          break;
@@ -416,12 +416,8 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       }
       case BSON_UNDEFINED:
       {
-         char *temp = "BSON_UNDEFINED" ;
-         bson_sprint_raw_concat ( pbuf, left, "\"" ) ;
-         CHECK_LEFT ( left )
+         char *temp = "{ \"$undefined\": 1 }" ;
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
-         CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, "\"" ) ;
          CHECK_LEFT ( left )
          break;
       }
@@ -596,7 +592,10 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
    {
    case BSON_MAXKEY :
    case BSON_MINKEY :
-      total += 6 ;
+      /* { "$minKey": 1 }
+         { "$maxKey": 1 }
+      */
+      total += 17 ;
       break ;
    case BSON_DOUBLE :
       total += 64 ;
@@ -607,7 +606,7 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += 2 + 2*strlen ( bson_iterator_string ( i ) ) ;
       break ;
    case BSON_OID :
-      /* "{ "$oid" : "<24-digits-string>" }" */
+      /* { "$oid": "<24-digits-string>" } */
       total += 39 ;
       break ;
    case BSON_BOOL :
@@ -615,7 +614,7 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += 5 ;
       break ;
    case BSON_DATE :
-      /* { "$date" : "YYYY-MM-DD" } */
+      /* { "$date": "YYYY-MM-DD" } */
       total += 26 ;
       break ;
    case BSON_BINDATA :
@@ -623,7 +622,8 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += bson_iterator_bin_len(i) * 2 + 50 ;
       break ;
    case BSON_UNDEFINED :
-      total += 14 ;
+      /* { "$undefined": 1 } */
+      total += 19 ;
       break ;
    case BSON_NULL :
       total += 4 ;
@@ -643,7 +643,7 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
       total += 32 ;
       break ;
    case BSON_TIMESTAMP :
-      /* "{ "$timestamp" : "YYYY-MM-DD-HH.MM.SS.mmmmmm" }" */
+      /* { "$timestamp": "YYYY-MM-DD-HH.MM.SS.mmmmmm" } */
       total += 47 ;
       break ;
    case BSON_OBJECT :
