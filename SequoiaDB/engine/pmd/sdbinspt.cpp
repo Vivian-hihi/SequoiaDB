@@ -90,7 +90,7 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_DUMPINDEX, ",i"), boost::program_options::value<string>(), "dump index (true/false)" ) \
        ( COMMANDS_STRING(OPTION_PAGESTART, ",s"), boost::program_options::value<SINT32>(), "starting page number" ) \
        ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
-       ( COMMANDS_STRING(OPTION_SHOW_RECORD, ",p"), boost::program_options::value<string>(), "display record content" )
+       ( COMMANDS_STRING(OPTION_SHOW_RECORD, ",p"), boost::program_options::value<string>(), "display record content(true/false)" )
 
 // bitwise operation
 #define ACTION_INSPECT           0x01
