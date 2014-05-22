@@ -116,7 +116,7 @@ SINT32  gCurFileIndex                                = 0 ;
 OSSFILE gFile ;
 
 // max size of a output file
-#define MAX_FILE_SIZE 1 * 1024 * 1024
+#define MAX_FILE_SIZE 500 * 1024 * 1024
 // increase delta max 64MB
 #define BUFFER_INC_SIZE 67108864
 // buffer init 4MB
