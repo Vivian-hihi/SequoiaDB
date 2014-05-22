@@ -101,6 +101,13 @@ typedef struct PgColumnDesc_s
    bool isInReturningList;
 }PgColumnsDesc;
 
+typedef struct SdbExprTreeState_s
+{
+   INT32 unsupport_count;
+   Index foreign_table_index;   /* range table index of foreign table */
+   Oid foreign_table_id;      
+}SdbExprTreeState;
+
 typedef struct PgTableDesc_s
 {
    char *name;    /* table name */

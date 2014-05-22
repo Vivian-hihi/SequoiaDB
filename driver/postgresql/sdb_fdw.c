@@ -7,6 +7,7 @@
 #include "access/reloptions.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_operator.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/vacuum.h"
@@ -26,6 +27,7 @@
 #include "utils/date.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/memutils.h"
 #include "utils/numeric.h"
 #include "utils/rel.h"
@@ -165,7 +167,7 @@ static void sdbFreeScanState(SdbExecState *executionState);
 static Const *sdbSerializeDocument(sdbbson *document);
 static void sdbDeserializeDocument(Const *constant, sdbbson *document);
 
-static void sdbPrintBson(sdbbson *bson);
+static void sdbPrintBson(sdbbson *bson, int log_level);
 
 #define serializeInt(x) makeConst(INT4OID, -1, InvalidOid, 4, Int32GetDatum((int32)(x)), 0, 1)
 #define serializeOid(x) makeConst(OIDOID, -1, InvalidOid, 4, ObjectIdGetDatum(x), 0, 1)
@@ -195,6 +197,28 @@ static bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson,
       sdbbson *newBson);
 
 static UINT64 sdbbson_iterator_getusecs(sdbbson_iterator *ite);
+
+static bool isAllTwoArgumentVarType(List *arguments);
+static INT32 sdbRecurOperExprTwoVar(OpExpr *opr_two_argument, SdbExprTreeState *expr_state, 
+                              sdbbson *condition);
+static INT32 sdbRecurOperExpr(OpExpr *opr, SdbExprTreeState *expr_state, 
+                        sdbbson *condition);
+
+static INT32 sdbRecurScalarArrayOpExpr(ScalarArrayOpExpr *scalaExpr, 
+                                 SdbExprTreeState *expr_state, 
+                                 sdbbson *condition);
+static INT32 sdbRecurNullTestExpr(NullTest *ntest, SdbExprTreeState *expr_state, 
+                              sdbbson *condition);
+static INT32 sdbRecurBoolExpr(BoolExpr *boolexpr, SdbExprTreeState *expr_state, 
+                                 sdbbson *condition);
+static INT32 sdbRecurExprTree ( Node *node, SdbExprTreeState *expr_state, 
+                                sdbbson *condition );
+
+static INT32 sdbGenerateFilterCondition(Oid foreign_id, RelOptInfo *baserel, sdbbson *condition);
+
+static const CHAR *sdbOperatorName ( const CHAR *operatorName );
+
+static Expr *sdbFindArgumentOfType ( List *argumentList, NodeTag argumentType );
 
 
 int sdbSetConnectionPreference(sdbConnectionHandle hConnection, 
@@ -796,8 +820,8 @@ void sdbGetColumnKeyInfo(SdbExecState *fdw_state)
          NULL, &cursor);
    if (SDB_OK != rc)
    {
-      sdbPrintBson(&condition);
-      sdbPrintBson(&selector);
+      sdbPrintBson(&condition, WARNING);
+      sdbPrintBson(&selector, WARNING);
       ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
             errmsg("sdbGetSnapshot failed:rc=%d", rc)));
       return;
@@ -864,7 +888,7 @@ bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson,
             this means the shardingKey is changed */
          ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
                errmsg("the shardingKey is changed, shardingKey:")));
-         sdbPrintBson(&newSubBson);
+         sdbPrintBson(&newSubBson, WARNING);
          sdbbson_destroy(&newSubBson);
          return true;
       }
@@ -878,12 +902,12 @@ bool sdbIsShardingKeyChanged(SdbExecState *fdw_state, sdbbson *oldBson,
       {
          ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
                errmsg("the shardingKey is changed, old shardingKey:")));
-         sdbPrintBson(&oldSubBson);
+         sdbPrintBson(&oldSubBson, WARNING);
          sdbbson_destroy(&oldSubBson);
 
          ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
                errmsg("the shardingKey is changed, new shardingKey:")));
-         sdbPrintBson(&newSubBson);
+         sdbPrintBson(&newSubBson, WARNING);
          sdbbson_destroy(&newSubBson);
          
          return true;
@@ -906,6 +930,493 @@ UINT64 sdbbson_iterator_getusecs(sdbbson_iterator *ite)
       return ((timestamp.t * SDB_SECONDS_TO_USECS) + timestamp.i);
    }
 }
+
+bool isAllTwoArgumentVarType(List *arguments)
+{
+   INT32 varCount         = 0;
+   ListCell *argumentCell = NULL ;
+   
+   foreach ( argumentCell, arguments )
+   {
+      Expr *argument = (Expr *) lfirst ( argumentCell ) ;
+      if ( nodeTag ( argument ) != T_Var )
+      {
+         return false;
+      }
+
+      varCount++;
+   }
+
+   if (varCount > 2)
+   {
+      return false;
+   }
+
+   return true;
+}
+
+INT32 sdbRecurOperExprTwoVar(OpExpr *opr_two_argument, SdbExprTreeState *expr_state, 
+                              sdbbson *condition)
+{
+   INT32 rc               = SDB_OK;
+   char *pgOpName         = NULL;
+   const CHAR *sdbOpName  = NULL;
+   char *columnName1      = NULL;
+   char *columnName2      = NULL;
+   ListCell *argumentCell = NULL ;
+   Var *argument1         = NULL;
+   Var *argument2         = NULL;
+   INT32 count            = 0;
+
+   sdbbson temp1;
+   sdbbson temp2;
+   
+   foreach ( argumentCell, opr_two_argument->args )
+   {
+      if (count == 0)
+      {
+         argument1 = (Var *) lfirst ( argumentCell ) ;
+         if ((argument1->varno != expr_state->foreign_table_index)
+          || (argument1->varlevelsup != 0))
+      	{
+            elog(DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
+                  "valevelsup=%d", expr_state->foreign_table_index, 
+                  argument1->varno, argument1->varlevelsup);
+            goto error;
+      	}
+      }
+      else
+      {
+         argument2 = (Var *) lfirst ( argumentCell ) ;
+         if ((argument2->varno != expr_state->foreign_table_index)
+                   || (argument2->varlevelsup != 0))
+         {
+            elog(DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, "
+                  "valevelsup=%d", expr_state->foreign_table_index, 
+                  argument2->varno, argument2->varlevelsup);
+            goto error;
+         }
+      }
+      
+      count++;
+   }
+   /* the caller make sure the argument have two var! */
+
+   pgOpName    = get_opname ( opr_two_argument->opno ) ;
+   sdbOpName   = sdbOperatorName ( pgOpName ) ;
+   if ( !sdbOpName )
+   {
+      elog(DEBUG1, "operator is not supported:op=%s", pgOpName);
+      goto error;
+   }
+   
+   columnName1 = get_relid_attribute_name ( expr_state->foreign_table_id, 
+                                                argument1->varattno ) ;
+   columnName2 = get_relid_attribute_name ( expr_state->foreign_table_id, 
+                                                argument2->varattno ) ;
+
+   sdbbson_init(&temp1);
+   sdbbson_append_string(&temp1, "$field", columnName2);
+   sdbbson_finish(&temp1);
+
+   sdbbson_init(&temp2);
+   sdbbson_append_sdbbson(&temp2, sdbOpName, &temp1);
+   sdbbson_finish(&temp2);
+   sdbbson_destroy(&temp1);
+
+   sdbbson_append_sdbbson(condition, columnName1, &temp2);
+   sdbbson_destroy(&temp2);
+
+done:
+   return rc;
+error:
+   rc = -1;
+   goto done;
+   
+}
+
+INT32 sdbRecurOperExpr(OpExpr *opr, SdbExprTreeState *expr_state, 
+                        sdbbson *condition)
+{
+   INT32 rc              = SDB_OK;
+   char *pgOpName        = NULL;
+   const CHAR *sdbOpName = NULL;
+   char *columnName      = NULL;
+   Var *var              = NULL;
+   Const *const_val      = NULL;
+   bool need_not_condition = false;
+   
+   if (isAllTwoArgumentVarType(opr->args))
+   {
+      rc = sdbRecurOperExprTwoVar(opr, expr_state, condition);
+      if (rc != SDB_OK)
+      {
+         goto error;
+      }
+      else
+      {
+         goto done;
+      }
+   }
+
+   pgOpName  = get_opname ( opr->opno ) ;
+   /* we only support > >= < <= <> = ~~ */
+   sdbOpName = sdbOperatorName ( pgOpName ) ;
+   if ( !sdbOpName )
+   {
+      elog(DEBUG1, "operator is not supported:op=%s", pgOpName);
+      goto error;
+   }
+
+   /* first find the key(column) */
+   var = (Var *)sdbFindArgumentOfType(opr->args, T_Var);
+   if (NULL == var)
+   {
+      /* var must exist */
+      elog(DEBUG1, " Var is null ");
+      goto error;
+   }
+   
+   if ((var->varno != expr_state->foreign_table_index)
+          || (var->varlevelsup != 0))
+	{
+      elog(DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
+            expr_state->foreign_table_index, var->varno, var->varlevelsup);
+      goto error;
+	}
+   
+   columnName = get_relid_attribute_name ( expr_state->foreign_table_id, 
+                                                var->varattno ) ;
+
+   const_val = (Const *)sdbFindArgumentOfType(opr->args, T_Const);
+   if (NULL == const_val || (InvalidOid != get_element_type ( const_val->consttype )))
+   {
+      /* const must exist and const is not array */
+      /* get_element_type() != InvalidOid indicate const_val is array */
+      elog(DEBUG1, " const_val is null ");
+      goto error;
+   }
+   
+   sdbbson_append_start_object ( condition, columnName ) ;
+   sdbAppendConstantValue ( condition, sdbOpName, const_val ) ;
+   sdbbson_append_finish_object(condition);
+
+   if (need_not_condition)
+   {
+      sdbbson temp;
+      sdbbson_init(&temp);
+      sdbbson_finish(condition);
+      sdbbson_copy(&temp, condition);
+      
+      sdbbson_destroy(condition);
+      sdbbson_init(condition);
+
+      sdbbson_append_start_array(condition, "$not");
+      sdbbson_append_sdbbson(condition, "", &temp);
+      sdbbson_append_finish_array(condition);
+      sdbbson_destroy(&temp);
+   }
+
+done:
+   return rc;
+error:
+   rc = -1;
+   goto done;
+}
+
+INT32 sdbRecurScalarArrayOpExpr(ScalarArrayOpExpr *scalaExpr, 
+                                 SdbExprTreeState *expr_state, 
+                                 sdbbson *condition)
+{
+   INT32 rc         = SDB_OK;
+   char *pgOpName   = NULL;
+   char *keyName    = NULL;
+   Var *var         = NULL;
+   char *columnName = NULL;
+   ListCell *cell   = NULL;
+   int varCount     = 0;
+   int constCount   = 0;
+   
+   pgOpName = get_opname ( scalaExpr->opno ) ;
+   if (strcmp(pgOpName, "=") == 0)
+   {
+      keyName = "$in";
+   }
+   else if (strcmp(pgOpName, "<>") == 0)
+   {
+      keyName = "$nin";
+   }
+   else
+   {
+      elog(DEBUG1, "operator is not supported:op=%d,str=%s", 
+            scalaExpr->opno, pgOpName);
+      goto error;
+   }
+
+   /* first find the key(column) */
+   var = (Var *)sdbFindArgumentOfType(scalaExpr->args, T_Var);
+   if (NULL == var)
+   {
+      /* var must exist */
+      elog(DEBUG1, " Var is null ");
+      goto error;
+   }
+   
+   if ((var->varno != expr_state->foreign_table_index)
+          || (var->varlevelsup != 0))
+	{
+      elog(DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
+            expr_state->foreign_table_index, var->varno, var->varlevelsup);
+      goto error;
+	}
+   
+   columnName = get_relid_attribute_name ( expr_state->foreign_table_id, 
+                                             var->varattno ) ;
+   foreach(cell, scalaExpr->args)
+   {
+      Node *oprarg = lfirst(cell);
+      if (T_Const == oprarg->type)
+      {
+         sdbbson temp;
+			Const *const_val = (Const *) oprarg;
+         sdbbson_init(&temp);
+         sdbSetBsonValue(&temp, keyName, const_val->constvalue, 
+                              const_val->consttype, const_val->consttypmod);
+         sdbbson_finish(&temp);
+         sdbbson_append_sdbbson(condition, columnName, &temp);
+         sdbbson_destroy(&temp);
+
+         constCount++;
+      }
+      else if (T_Var == oprarg->type)
+      {
+         varCount++;
+      }
+      else
+      {
+         goto error;
+      }
+   }
+
+   if ((varCount != 1) || (constCount != 1))
+   {
+      elog(DEBUG1, "parameter count error:varCount=%d, constCount=%d", 
+            varCount, constCount);
+      goto error;
+   }
+
+done:
+   return rc;
+error:
+   rc = -1;
+   goto done;
+}
+
+INT32 sdbRecurNullTestExpr(NullTest *ntest, SdbExprTreeState *expr_state, 
+                              sdbbson *condition)
+{
+   INT32 rc         = SDB_OK;
+   char *columnName = NULL;
+   Var *var         = NULL;
+   sdbbson isNullcondition;
+   AttrNumber columnId;
+   
+	if (ntest->argisrow)
+	{
+      elog(DEBUG1, "argisrow is true");
+      goto error;
+	}
+
+   if (T_Var != ((Expr *)(ntest->arg))->type)
+   {
+      elog(DEBUG1, "argument is not var:type=%d", ((Expr *)(ntest->arg))->type);
+      goto error;
+   }
+
+	var = (Var *) ntest->arg;
+	if ((var->varno != expr_state->foreign_table_index)
+          || (var->varlevelsup != 0))
+	{
+      elog(DEBUG1, "column is not reconigzed:table_index=%d, varno=%d, valevelsup=%d", 
+            expr_state->foreign_table_index, var->varno, var->varlevelsup);
+      goto error;
+	}
+   
+   columnId = var->varattno ;
+   columnName    = get_relid_attribute_name ( expr_state->foreign_table_id,
+                                                 columnId ) ;
+   sdbbson_init(&isNullcondition);
+   switch (ntest->nulltesttype)
+	{
+		case IS_NULL:
+         sdbbson_append_int(&isNullcondition, "$isnull", 1);
+			break;
+		case IS_NOT_NULL:
+         sdbbson_append_int(&isNullcondition, "$isnull", 0);
+         
+			break;
+      default:
+         sdbbson_destroy(&isNullcondition);
+         elog(DEBUG1, "nulltesttype error:type=%d", ntest->nulltesttype);
+         goto error;
+	}
+   
+   sdbbson_finish(&isNullcondition);
+   sdbbson_append_sdbbson(condition, columnName, &isNullcondition);
+   sdbbson_destroy(&isNullcondition);
+   
+done:
+   return rc;
+error:
+   rc = -1;
+   goto done;
+}
+
+INT32 sdbRecurBoolExpr(BoolExpr *boolexpr, SdbExprTreeState *expr_state, sdbbson *condition)
+{
+   INT32 rc = SDB_OK;
+	ListCell *cell ;
+   char *key = NULL;
+
+   switch (boolexpr->boolop)
+   {
+		case AND_EXPR:
+         key = "$and";
+			break;
+         
+		case OR_EXPR:
+			key = "$or";
+			break;
+         
+		case NOT_EXPR:
+			key = "$not";
+			break;
+		default:
+			elog(DEBUG1, "unsupported boolean expression type:type=%d", 
+            boolexpr->boolop);
+         goto error;
+   }
+
+   sdbbson_append_start_array(condition, key);
+   foreach ( cell, boolexpr->args )
+   {
+      Node *bool_arg = (Node *) lfirst (cell);
+      sdbbson sub_condition;
+      sdbbson_init(&sub_condition);
+      sdbRecurExprTree(bool_arg, expr_state, &sub_condition);
+      sdbbson_finish(&sub_condition);
+
+      sdbbson_append_sdbbson(condition, "", &sub_condition);
+      sdbbson_destroy(&sub_condition);
+   }
+   
+   sdbbson_append_finish_array(condition);
+
+done:
+   return rc;
+   
+error:
+   rc = -1;
+   goto done;
+}
+
+/* This is a recurse function to walk over the tree */
+INT32 sdbRecurExprTree ( Node *node, SdbExprTreeState *expr_state, sdbbson *condition )
+{
+   INT32 rc = SDB_OK;
+   if ( NULL == node )
+   {
+      goto done ;
+   }
+   
+   if ( IsA ( node, BoolExpr ) ) 
+   {
+      rc = sdbRecurBoolExpr(( BoolExpr * ) node, expr_state, condition);
+      if (rc != SDB_OK)
+      {
+         elog(DEBUG1, "sdbRecurBoolExpr");
+         goto error;
+      }
+   }
+   else if (IsA(node, NullTest))
+   {
+      rc = sdbRecurNullTestExpr((NullTest *)node, expr_state, condition);
+      if (rc != SDB_OK)
+      {
+         elog(DEBUG1, "sdbRecurNullTestExpr");
+         goto error;
+      }
+   }
+   /*ScalarArrayOpExpr*/
+   else if (IsA(node, ScalarArrayOpExpr))
+   {
+      rc = sdbRecurScalarArrayOpExpr((ScalarArrayOpExpr *)node, 
+                                       expr_state, condition);
+      if (rc != SDB_OK)
+      {
+         elog(DEBUG1, "sdbRecurScalarArrayOpExpr");
+         goto error;
+      }
+   }
+   else if (IsA(node, OpExpr))
+	{
+      rc = sdbRecurOperExpr((OpExpr *)node, expr_state, condition);
+      if (rc != SDB_OK)
+      {
+         elog(DEBUG1, "sdbRecurOperExpr");
+         goto error;
+      }
+	}
+   else
+   {
+      elog(DEBUG1, "node type is not supported:type=%d", nodeTag(node));
+      goto error ;
+   }
+   
+done:
+   return SDB_OK;
+
+error:
+   expr_state->unsupport_count++;
+   goto done ;
+   
+}
+
+INT32 sdbGenerateFilterCondition (Oid foreign_id, RelOptInfo *baserel, sdbbson *condition )
+{
+   ListCell *cell = NULL;
+   INT32 rc       = SDB_OK;
+   SdbExprTreeState expr_state;
+   
+   memset(&expr_state, 0, sizeof(SdbExprTreeState));
+   expr_state.foreign_table_index = baserel->relid;
+   expr_state.foreign_table_id    = foreign_id;
+
+   sdbbson_init(condition);
+   foreach ( cell, baserel->baserestrictinfo )
+	{
+		RestrictInfo *info = ( RestrictInfo * ) lfirst ( cell ) ;
+		sdbRecurExprTree( ( Node * )info->clause, &expr_state, condition ) ;
+      if ( expr_state.unsupport_count > 0 )
+      {
+         sdbbson_destroy(condition);
+         sdbbson_init(condition);
+         break;
+      }
+	}
+
+   rc = sdbbson_finish(condition);
+   if (SDB_OK != rc)
+   {
+      //sdbPrintBson(condition);
+      sdbbson_destroy(condition);
+   }
+   
+   sdbPrintBson(condition, DEBUG1);
+
+   return SDB_OK;
+}
+
 
 /* connection pool */
 SdbConnectionPool *sdbGetConnectionPool ()
@@ -981,7 +1492,7 @@ void sdbDeserializeDocument ( Const *constant,
    return ;
 }
 
-void sdbPrintBson(sdbbson *bson)
+void sdbPrintBson(sdbbson *bson, int log_level)
 {
    int bufferSize = 0;
    char *p        = NULL;
@@ -990,7 +1501,7 @@ void sdbPrintBson(sdbbson *bson)
    p = (char*)malloc(bufferSize) ;
    sdbbson_sprint(p, bufferSize, bson);
 
-   ereport(WARNING, (errcode(ERRCODE_FDW_ERROR), 
+   ereport(log_level, (errcode(ERRCODE_FDW_ERROR), 
            errmsg("bson value=%s", p)));
 
    free(p);
@@ -998,17 +1509,19 @@ void sdbPrintBson(sdbbson *bson)
 
 /* sdbOperatorName converts PG comparison operator to Sdb
  */
-static const CHAR *sdbOperatorName ( const CHAR *operatorName )
+const CHAR *sdbOperatorName ( const CHAR *operatorName )
 {
    const CHAR *pResult                  = NULL ;
    const INT32 totalNames               = 6 ;
    static const CHAR *nameMappings[][2] = {
-      { "<", "$lt" },
-      { "<=", "$lte" },
-      { ">", "$gt" },
-      { ">=", "$gte" },
-      { "=", "$et" },
-      { "<>", "$ne" } } ;
+      { "<",   "$lt"    },
+      { "<=",  "$lte"   },
+      { ">",   "$gt"    },
+      { ">=",  "$gte"   },
+      { "=",   "$et"    },
+      { "<>",  "$ne"    }
+   } ;
+   
    INT32 i = 0 ;
    for ( i = 0; i < totalNames; ++i )
    {
@@ -1025,7 +1538,7 @@ static const CHAR *sdbOperatorName ( const CHAR *operatorName )
 /* sdbFindArgumentOfType iterate the given argument list, looks for an argument
  * with the given type and returns the argument if found
  */
-static Expr *sdbFindArgumentOfType ( List *argumentList, NodeTag argumentType )
+Expr *sdbFindArgumentOfType ( List *argumentList, NodeTag argumentType )
 {
    Expr *foundArgument = NULL ;
    ListCell *argumentCell = NULL ;
@@ -1039,22 +1552,6 @@ static Expr *sdbFindArgumentOfType ( List *argumentList, NodeTag argumentType )
       }
    }
    return foundArgument ;
-}
-
-/* sdbUniqueColumnList group all expression with same column name together
- */
-static List *sdbUniqueColumnList ( List *operatorList )
-{
-   List *uniqueColumnList = NIL ;
-   ListCell *operatorCell = NULL ;
-   foreach ( operatorCell, operatorList )
-   {
-      OpExpr *operator = (OpExpr *) lfirst ( operatorCell ) ;
-      List *argumentList = operator->args ;
-      Var *column = (Var *) sdbFindArgumentOfType(argumentList, T_Var) ;
-      uniqueColumnList = list_append_unique ( uniqueColumnList, column ) ;
-   }
-   return uniqueColumnList ;
 }
 
 /* sdbAppendConstantValue appends to query document with key and value */
@@ -1138,25 +1635,6 @@ static List *sdbApplicableOpExpressionList ( RelOptInfo *baserel )
    return opExpressionList ;
 }
 
-/* sdbColumnOperatorList finds all expressions for the given column
- */
-static List *sdbColumnOperatorList ( Var *column, List *operatorList )
-{
-   List *columnOperatorList = NIL ;
-   ListCell *operatorCell   = NULL ;
-   foreach ( operatorCell, operatorList )
-   {
-      OpExpr *operator   = (OpExpr*) lfirst ( operatorCell ) ;
-      List *argumentList = operator->args ;
-      Var *foundColumn   = (Var*)sdbFindArgumentOfType ( argumentList, T_Var ) ;
-      if ( equal ( column, foundColumn ) )
-      {
-         columnOperatorList = lappend ( columnOperatorList, operator ) ;
-      }
-   }
-   return columnOperatorList ;
-}
-
 /* sdbColumnList takes the planner's information and extract all columns that
  * may be used in projections, joins, and filter clauses, de-duplicate those
  * columns and returns them in a new list
@@ -1204,56 +1682,6 @@ static List *sdbColumnList ( RelOptInfo *baserel )
       }
    }
    return columnList ;
-}
-
-/* sdbBuildQuery build sdbbson query from opExpressionList */
-static INT32 sdbBuildQuery ( Oid relationId,
-                             List *opExpressionList,
-                             sdbbson *queryDocument )
-{
-   INT32 rc                       = SDB_OK ;
-   List *columnList               = NIL ;
-   ListCell *columnCell           = NULL ;
-
-   /* first we need to group all expression with same column name together */
-   columnList = sdbUniqueColumnList ( opExpressionList ) ;
-
-   /* go through each element in column list and pick those columns from
-    * expression list
-    */
-   foreach ( columnCell, columnList )
-   {
-      Var *column                  = (Var*) lfirst ( columnCell ) ;
-      Oid columnId                 = InvalidOid ;
-      CHAR *columnName             = NULL ;
-      List *columnOperatorList     = NIL ;
-      ListCell *columnOperatorCell = NULL ;
-      columnId                     = column->varattno ;
-      columnName                   = get_relid_attribute_name ( relationId,
-                                                                columnId ) ;
-      /* find all expression for the column */
-      columnOperatorList = sdbColumnOperatorList ( column, opExpressionList ) ;
-      /* for each expression, start a sub-document */
-      sdbbson_append_start_object ( queryDocument, columnName ) ;
-      /* add element into subdocument */
-      foreach ( columnOperatorCell, columnOperatorList )
-      {
-         OpExpr *columnOperator   = (OpExpr *) lfirst ( columnOperatorCell ) ;
-         const CHAR *operatorName = NULL ;
-         const CHAR *sdbOpName    = NULL ;
-         List *argumentList = columnOperator->args ;
-         /* pickup all constant */
-         Const *constant = (Const*)sdbFindArgumentOfType ( argumentList,
-                                                           T_Const ) ;
-         operatorName = get_opname ( columnOperator->opno ) ;
-         sdbOpName = sdbOperatorName ( operatorName ) ;
-         sdbAppendConstantValue ( queryDocument, sdbOpName, constant ) ;
-         /* TODO: variable comparison may also needed */
-      }
-      sdbbson_append_finish_object ( queryDocument ) ;
-   }
-   sdbbson_finish ( queryDocument ) ;
-   return rc ;
 }
 
 /* Iterate SdbInputOptionList and return all possible option name for
@@ -2067,27 +2495,19 @@ static ForeignScan *SdbGetForeignPlan ( PlannerInfo *root,
                                         List *targetList,
                                         List *restrictionClauses )
 {
-   INT32 rc                  = SDB_OK ;
    Index scanRangeTableIndex = baserel->relid ;
    ForeignScan *foreignScan  = NULL ;
    List *foreignPrivateList  = NIL ;
-   List *opExpressionList    = NIL ;
    List *columnList          = NIL ;
    
    SdbExecState *fdw_state   = (SdbExecState *)baserel->fdw_private;
    sdbGetColumnKeyInfo(fdw_state);
    
-   sdbbson_init(&fdw_state->queryDocument);
    /* We keep all restriction clauses at PG ide to re-check */
    restrictionClauses = extract_actual_clauses ( restrictionClauses, FALSE ) ;
    /* construct the query sdbbson document */
-   opExpressionList = sdbApplicableOpExpressionList(baserel);
-   rc = sdbBuildQuery(foreignTableId, opExpressionList, &fdw_state->queryDocument);
-   if ( rc )
-   {
-      goto error ;
-   }
    
+   sdbGenerateFilterCondition(foreignTableId, baserel, &fdw_state->queryDocument);
    foreignPrivateList = serializeSdbExecState(fdw_state);
    
    /* copy document list */
@@ -2095,7 +2515,6 @@ static ForeignScan *SdbGetForeignPlan ( PlannerInfo *root,
    /* construct foreign plan with query predicates and column list */
    foreignPrivateList = list_make2(foreignPrivateList, columnList);
    
-done :
    /* create the foreign scan node */
    foreignScan =  make_foreignscan ( targetList, restrictionClauses,
                                      scanRangeTableIndex,
@@ -2107,10 +2526,6 @@ done :
     * serializeSdbExecState is called )
     */
    return foreignScan;
-   
-error :
-   sdbbson_destroy (&fdw_state->queryDocument);
-   goto done ;
 }
 
 /* SdbExplainForeignScan produces output for EXPLAIN command
@@ -2180,7 +2595,7 @@ static void SdbBeginForeignScan ( ForeignScanState *scanState,
                fdw_state->sdbcs, fdw_state->sdbcl, rc),
             errhint("Make sure collection exists on remote SequoiaDB database")));
       
-      sdbPrintBson(&fdw_state->queryDocument);
+      sdbPrintBson(&fdw_state->queryDocument, WARNING);
       sdbbson_dispose(&fdw_state->queryDocument);
       return;
    }
@@ -2360,13 +2775,6 @@ static INT32 sdbAcquireSampleRows ( Relation relation, INT32 errorLevel,
    /* create state structure */
    scanState = makeNode ( ForeignScanState ) ;
    scanState->ss.ss_currentRelation = relation ;
-   foreignTableId = RelationGetRelid ( relation ) ;
-   rc = sdbBuildQuery ( foreignTableId, NIL, &fdw_state->queryDocument ) ;
-   if ( rc )
-   {
-      sdbFreeScanState(fdw_state);
-      goto error ;
-   }
    
    foreignPrivateList = serializeSdbExecState(fdw_state);
    foreignPrivateList = list_make2(foreignPrivateList, columnList);
