@@ -7,17 +7,17 @@
 #include <boost/program_options/parsers.hpp>
 #include <iostream>
 
-#define DPS_LOG_FILTER_HELP "help"
-#define DPS_LOG_FILTER_VER  "version"
-#define DPS_LOG_FILTER_TYPE "type"
-#define DPS_LOG_FILTER_NAME "name"
-#define DPS_LOG_FILTER_META "meta"
-#define DPS_LOG_FILTER_LSN  "lsn"
-#define DPS_LOG_FILTER_FROM_PATH "source"
-#define DPS_LOG_FILTER_TO_PATH   "output"
-#define DPS_LOG_LSN_AHEAD   "ahead"
-#define DPS_LOG_LSN_BACK    "back"
-#define DPS_LOG_FILTER_LAST "last"
+#define DPS_LOG_FILTER_HELP   "help"
+#define DPS_LOG_FILTER_VER    "version"
+#define DPS_LOG_FILTER_TYPE   "type"
+#define DPS_LOG_FILTER_NAME   "name"
+#define DPS_LOG_FILTER_META   "meta"
+#define DPS_LOG_FILTER_LSN    "lsn"
+#define DPS_LOG_FILTER_SOURCE "source"
+#define DPS_LOG_FILTER_OUTPUT "output"
+#define DPS_LOG_LSN_AHEAD     "ahead"
+#define DPS_LOG_LSN_BACK      "back"
+#define DPS_LOG_FILTER_LAST   "last"
 
 #define DPS_FILTER_ADD_OPTIONS_BEGIN( desc ) desc.add_options()
 #define DPS_FILTER_ADD_OPTIONS_END ;
@@ -32,8 +32,8 @@
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_NAME, ",n" ), boost::program_options::value< std::string >(), "specify the name of collectionspace/collections" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_LSN,  ",l" ), boost::program_options::value< std::string >(), "specify the lsn, -a/-b may help" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_LAST, ",e" ), boost::program_options::value< INT32 >(), "specify the number of last records of file to display ")\
-        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_FROM_PATH, ",s" ), boost::program_options::value<std::string>(), "specify source log file path, or current path specified default" ) \
-        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_TO_PATH, ",o" ), boost::program_options::value< std::string >(), "specify output file path, or current path specified default " ) \
+        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_SOURCE, ",s" ), boost::program_options::value<std::string>(), "specify source log file path, or current path specified default" ) \
+        ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_FILTER_OUTPUT, ",o" ), boost::program_options::value< std::string >(), "specify output file path, or current path specified default " ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of records to display before the lsn specified by -l/--lsn" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_BACK, ",b" ), boost::program_options::value< INT32 >(), "specify the number of records to display after the lsn specified by -l/--lsn" )
 
@@ -48,7 +48,7 @@ public:
       return &_cmdData ;
    }
 
-   void displayArgs( po::options_description &desc ) ;
+   void displayArgs( const po::options_description &desc ) ;
 
 public:
    virtual INT32 doDataExchange( engine::pmdCfgExchange *pEx ) ;
@@ -58,8 +58,13 @@ public:
 public:
    INT32 init( INT32 argc, CHAR **argv, 
                po::options_description &desc,
-               po::variables_map &vm,
-               iFilter *&filter ) ;
+               po::variables_map &vm ) ;
+
+   BOOLEAN checkInput( const po::variables_map &vm ) ;
+
+   INT32 handle( const po::options_description &desc,
+                 const po::variables_map &vm,
+                 iFilter *&filter ) ;
 
 private:
    dpsCmdData _cmdData ;

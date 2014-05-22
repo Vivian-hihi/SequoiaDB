@@ -2,7 +2,6 @@
 #include "sdbDpsLogFilter.hpp"
 #include "sdbDpsFilter.hpp"
 #include "sdbDpsOption.hpp"
-#include "ossVer.h"
 
 INT32 main(INT32 argc, CHAR** argv)
 {
@@ -14,24 +13,17 @@ INT32 main(INT32 argc, CHAR** argv)
 
    po::options_description desc( "Command options" ) ;
    po::variables_map vm ;
-   rc = op.init( argc, argv, desc, vm, filter ) ;
+   rc = op.init( argc, argv, desc, vm ) ;
    if( rc )
    {
       op.displayArgs( desc ) ;
       goto error ;
    }
-
-   if( vm.count( DPS_LOG_FILTER_HELP ) )
+   
+   rc = op.handle( desc, vm, filter ) ;
+   if( rc )
    {
-      op.displayArgs( desc ) ;
-      rc = SDB_OK ;
-      goto done ;
-   }
-
-   if( vm.count( DPS_LOG_FILTER_VER ) )
-   {
-      ossPrintVersion( "SequoiaDB version" ) ;
-      goto done ;
+      goto error ;
    }
 
    logFilter = SDB_OSS_NEW dpsLogFilter( op.getCmdData() ) ;

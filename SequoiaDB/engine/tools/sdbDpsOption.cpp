@@ -1,6 +1,7 @@
 #include "sdbDpsOption.hpp"
 #include "ossUtil.hpp"
 #include "utilParam.hpp"
+#include "ossVer.h"
 
 #define ASSIGNED_FILTER( filter, nextFilter ) \
         if( NULL == filter )                  \
@@ -28,38 +29,51 @@ _dpsFilterOption::~_dpsFilterOption()
 {
 }
 
-void _dpsFilterOption::displayArgs( po::options_description &desc )
+void _dpsFilterOption::displayArgs( const po::options_description &desc )
 {
    std::cout << desc << std::endl ;
 }
 
-INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
-                              po::options_description &desc,
-                              po::variables_map &vm,
-                              iFilter *&filter )
+BOOLEAN _dpsFilterOption::checkInput( const po::variables_map &vm )
+{
+   BOOLEAN valid = FALSE ;
+
+   if( vm.count( DPS_LOG_FILTER_HELP )
+    || vm.count( DPS_LOG_FILTER_VER )
+    || vm.count( DPS_LOG_FILTER_TYPE )
+    || vm.count( DPS_LOG_FILTER_NAME )
+    || vm.count( DPS_LOG_FILTER_META )
+    || vm.count( DPS_LOG_FILTER_LSN )
+    || vm.count( DPS_LOG_FILTER_SOURCE )
+    || vm.count( DPS_LOG_FILTER_OUTPUT )
+    || vm.count( DPS_LOG_FILTER_LAST ) )
+   {
+      valid = TRUE ;
+   }
+   
+   return valid ;
+}
+
+INT32 _dpsFilterOption::handle( const po::options_description &desc,
+                                const po::variables_map &vm,
+                                iFilter *&filter )
 {
    INT32 rc            = SDB_OK ;
    iFilter *nextFilter = NULL ;
 
-   DPS_FILTER_ADD_OPTIONS_BEGIN( desc )
-      FILTER_OPTIONS
-   DPS_FILTER_ADD_OPTIONS_END
-
-   rc = utilReadCommandLine( argc, argv, desc, vm ) ;
-   if ( SDB_OK != rc )
+   if( vm.count( DPS_LOG_FILTER_HELP ) )
    {
-      goto error ;
+      displayArgs( desc ) ;
+      goto done ;
    }
 
-   rc = pmdCfgRecord::init( NULL, &vm ) ;
-   if( rc )
+   if( vm.count( DPS_LOG_FILTER_VER ) )
    {
-      printf( "invalid arguments\n" ) ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
+      ossPrintVersion( "SequoiaDB version" ) ;
+      goto done ;
    }
 
-   if( vm.count( DPS_LOG_FILTER_TO_PATH ) )
+   if( vm.count( DPS_LOG_FILTER_OUTPUT ) )
    {
       _cmdData.output = FALSE ;
    }
@@ -72,6 +86,7 @@ INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
    if( vm.count( DPS_LOG_FILTER_LSN ) && vm.count( DPS_LOG_FILTER_LAST ) )
    {
       printf( "--lsn cannot be used with --last!!\n" ) ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -143,6 +158,43 @@ error:
    goto done ;
 }
 
+INT32 _dpsFilterOption::init( INT32 argc, CHAR **argv,
+                              po::options_description &desc,
+                              po::variables_map &vm )
+{
+   INT32 rc            = SDB_OK ;
+
+   DPS_FILTER_ADD_OPTIONS_BEGIN( desc )
+      FILTER_OPTIONS
+   DPS_FILTER_ADD_OPTIONS_END
+
+   rc = utilReadCommandLine( argc, argv, desc, vm ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   if( !checkInput( vm ) )
+   {
+      printf( "invalid arguments\n" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   rc = pmdCfgRecord::init( NULL, &vm ) ;
+   if( rc )
+   {
+      printf( "invalid arguments\n" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 _dpsFilterOption::postLoaded()
 {
    return SDB_OK ;
@@ -157,7 +209,7 @@ INT32 _dpsFilterOption::doDataExchange( engine::pmdCfgExchange *pEx )
 {
    resetResult() ;
  
-   rdxString( pEx, DPS_LOG_FILTER_FROM_PATH,
+   rdxString( pEx, DPS_LOG_FILTER_SOURCE,
             _cmdData.srcPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
    INT32 len = ossStrlen( _cmdData.srcPath ) ;
    if( OSS_FILE_SEP_CHAR == _cmdData.srcPath[ len - 1 ] )
@@ -165,7 +217,7 @@ INT32 _dpsFilterOption::doDataExchange( engine::pmdCfgExchange *pEx )
       _cmdData.srcPath[ len - 1 ] = '\0' ;
    }
 
-   rdxString( pEx, DPS_LOG_FILTER_TO_PATH,
+   rdxString( pEx, DPS_LOG_FILTER_OUTPUT,
             _cmdData.dstPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
    len = ossStrlen( _cmdData.dstPath ) ;
    if( OSS_FILE_SEP_CHAR ==  _cmdData.dstPath[ len - 1 ] )
