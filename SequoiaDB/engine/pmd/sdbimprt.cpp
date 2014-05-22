@@ -64,6 +64,7 @@
 #define OPTION_TYPE              FIELD_NAME_LTYPE
 #define OPTION_INSERTNUM         "insertnum"
 #define OPTION_ERRORSTOP         "errorstop"
+#define OPTION_FORCE             "force"
 
 #define DEFAULT_HOSTNAME         "localhost"
 #define DEFAULT_SVCNAME          "11810"
@@ -115,6 +116,7 @@ INT32 on_main( void *pData )
    utilSdbObj.getArgBool( OPTION_EXTRA,        &imprtArg.autoCompletion ) ;
    utilSdbObj.getArgBool( OPTION_LINEPRIORITY, &imprtArg.linePriority ) ;
    utilSdbObj.getArgBool( OPTION_ERRORSTOP,    &imprtArg.errorStop ) ;
+   utilSdbObj.getArgBool( OPTION_FORCE,        &imprtArg.force ) ;
 
    if ( imprtArg.type == MIGIMPRT_CSV &&
         !imprtArg.isHeaderline && !imprtArg.pFields )
@@ -168,6 +170,7 @@ INT32 on_end( void *pData )
 #define EXPLAIN_EXTRA            "auto add value, default: false ( csv only )"
 #define EXPLAIN_LINEPRIORITY     "reverse the priority for record and character delimiter, default: true"
 #define EXPLAIN_ERRORSTOP        "if an error is stopped, default false"
+#define EXPLAIN_FORCE            "data is not utf8, forced to insert data, default: false"
 
 INT32 main ( INT32 argc, CHAR **argv )
 {
@@ -200,6 +203,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    APPENDARGBOOL  ( utilSdbObj, OPTION_EXTRA,        OPTION_EXTRA,             EXPLAIN_EXTRA,            FALSE, FALSE ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_LINEPRIORITY, OPTION_LINEPRIORITY,      EXPLAIN_LINEPRIORITY,     FALSE, TRUE  ) ;
    APPENDARGBOOL  ( utilSdbObj, OPTION_ERRORSTOP,    OPTION_ERRORSTOP,         EXPLAIN_ERRORSTOP,        FALSE, FALSE  ) ;
+   APPENDARGBOOL  ( utilSdbObj, OPTION_FORCE,        OPTION_FORCE,             EXPLAIN_FORCE,            FALSE, FALSE  ) ;
 
    rc = utilSdbObj.init( setting, NULL ) ;
    if ( rc )
