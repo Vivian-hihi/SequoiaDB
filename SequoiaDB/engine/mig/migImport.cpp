@@ -226,7 +226,8 @@ INT32 migImport::_getRecord ( bson &record )
          goto error ;
       }
    }
-   if ( !isValidUTF8WSize ( pBuffer + startOffset, size ) )
+   if ( !isValidUTF8WSize ( pBuffer + startOffset, size ) &&
+        !_pMigArg->force )
    {
       rc = SDB_INVALIDARG ;
       PD_LOG ( PDERROR, "It is not utf-8 file, rc=%d", rc ) ;
@@ -329,7 +330,7 @@ INT32 migImport::init ( migImprtArg *pMigArg )
    {
       rc = _csvParser.init( _pMigArg->autoAddField,
                             _pMigArg->autoCompletion,
-                            _pMigArg->isHeaderline,
+                            _pMigArg->pFields ? FALSE : _pMigArg->isHeaderline,
                             _pMigArg->delChar,
                             _pMigArg->delField,
                             _pMigArg->delRecord ) ;
@@ -460,7 +461,7 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
             rc = SDB_OK ;
             break ;
          }
-         else if ( rc == SDB_UTIL_PARSE_JSON_INVALID )
+         else
          {
             ++count ;
             PD_LOG ( PDERROR, "Bad record in %d", count ) ;
@@ -472,11 +473,6 @@ INT32 migImport::_run ( INT32 &total, INT32 &succeed )
             {
                continue ;
             }
-         }
-         else if ( rc )
-         {
-            PD_LOG ( PDERROR, "Import Failed, rc = %d", rc ) ;
-            goto error ;
          }
       }
       bsonSize = tempObj->dataSize ;
@@ -582,10 +578,10 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
             rc = SDB_OK ;
             break ;
          }
-         else if ( rc == SDB_UTIL_PARSE_JSON_INVALID )
+         else
          {
             ++count ;
-            PD_LOG ( PDERROR, "Bad record in the %d row", count ) ;
+            PD_LOG ( PDERROR, "Bad record in %d", count ) ;
             if ( _pMigArg->errorStop )
             {
                goto error ;
@@ -594,11 +590,6 @@ INT32 migImport::run ( INT32 &total, INT32 &succeed )
             {
                continue ;
             }
-         }
-         else if ( rc )
-         {
-            PD_LOG ( PDERROR, "Import Failed, rc = %d", rc ) ;
-            goto error ;
          }
       }
       if ( bsonObj.dataSize <= 5 )
