@@ -44,10 +44,10 @@
 
 #define TIME_FORMAT "%d-%d-%d-%d.%d.%d.%d"
 #define TIME_OUTPUT_CSV_FORMAT "%04d-%02d-%02d-%02d.%02d.%02d.%06d"
-#define TIME_OUTPUT_FORMAT "{ \"$timestamp\" : \"" TIME_OUTPUT_CSV_FORMAT "\" }"
+#define TIME_OUTPUT_FORMAT "{ \"$timestamp\": \"" TIME_OUTPUT_CSV_FORMAT "\" }"
 #define DATE_FORMAT "%d-%d-%d"
 #define DATE_OUTPUT_CSV_FORMAT "%04d-%02d-%02d"
-#define DATE_OUTPUT_FORMAT "{ \"$date\" : \"" DATE_OUTPUT_CSV_FORMAT "\" }"
+#define DATE_OUTPUT_FORMAT "{ \"$date\": \"" DATE_OUTPUT_CSV_FORMAT "\" }"
 
 SDB_EXTERN_C_START
 

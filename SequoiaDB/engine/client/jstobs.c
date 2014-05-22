@@ -409,7 +409,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
          CHECK_LEFT ( left )
          bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
          CHECK_LEFT ( left )
-         bsonConvertJsonRawConcat ( pbuf, left, " : ", FALSE ) ;
+         bsonConvertJsonRawConcat ( pbuf, left, ": ", FALSE ) ;
          CHECK_LEFT ( left )
       }
       /* then we check the data type */
@@ -460,7 +460,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
          bson_oid_to_string( bson_iterator_oid( &i ), oidhex );
          if ( !toCSV )
          {
-            bsonConvertJsonRawConcat ( pbuf, left, "{ \"$oid\" : \"", FALSE ) ;
+            bsonConvertJsonRawConcat ( pbuf, left, "{ \"$oid\": \"", FALSE ) ;
             CHECK_LEFT ( left )
          }
          bsonConvertJsonRawConcat ( pbuf, left, oidhex, FALSE ) ;
@@ -559,12 +559,12 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
 #ifdef WIN32
          _snprintf ( temp,
                      len + 48,
-                     "{ \"$binary\" : \"%s\", \"$type\" : \"%d\" }",
+                     "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
                      out, bin_type ) ;
 #else
          snprintf ( temp,
                     len + 48,
-                    "{ \"$binary\" : \"%s\", \"$type\" : \"%d\" }",
+                    "{ \"$binary\": \"%s\", \"$type\" : \"%d\" }",
                     out, bin_type ) ;
 #endif
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
@@ -575,7 +575,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
       }
       case BSON_UNDEFINED:
       {
-         const CHAR *temp = "BSON_UNDEFINED" ;
+         const CHAR *temp = "{ \"$undefined\": 1 }" ;
          /* we don't know how to deal with undefined value at the moment, let's
           * just output it as UNDEFINED, we may change it later */
          if ( toCSV )
@@ -604,7 +604,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
       }
       case BSON_MINKEY:
       {
-         const CHAR *temp = "{ \"$minKey\" : 1 }" ;
+         const CHAR *temp = "{ \"$minKey\": 1 }" ;
          /* display "null" for null type */
          if ( toCSV )
          {
@@ -616,7 +616,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
       }
       case BSON_MAXKEY:
       {
-         const CHAR *temp = "{ \"$maxKey\" : 1 }" ;
+         const CHAR *temp = "{ \"$maxKey\": 1 }" ;
          /* display "null" for null type */
          if ( toCSV )
          {
@@ -637,7 +637,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
             // we don't support CSV for regex
             break ;
          }
-         bsonConvertJsonRawConcat ( pbuf, left, "{ \"$regex\" : \"", FALSE ) ;
+         bsonConvertJsonRawConcat ( pbuf, left, "{ \"$regex\": \"", FALSE ) ;
          CHECK_LEFT ( left )
          /* get pattern string */
          bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_regex ( &i ), TRUE ) ;
@@ -645,7 +645,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
          /* bson_iterator_regex_opts get options by "p+strlen(p)+1", which means
           * we don't need to move iterator to next element. So we use
           * bson_iterator_regex_opts directly on &i */
-         bsonConvertJsonRawConcat ( pbuf, left, "\", \"$options\" : \"", FALSE ) ;
+         bsonConvertJsonRawConcat ( pbuf, left, "\", \"$options\": \"", FALSE ) ;
          CHECK_LEFT ( left )
          bsonConvertJsonRawConcat ( pbuf, left, bson_iterator_regex_opts ( &i ), FALSE ) ;
          CHECK_LEFT ( left )
