@@ -2664,7 +2664,8 @@ namespace engine
                                        DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                        DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                        DMS_SU_DMP_OPT_FORMATTED,
-                                       childExtents ) ;
+                                       childExtents,
+                                       TRUE ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to dump index extent, rc = %d", rc ) ;
       PD_LOG ( PDERROR, "Index Page Dump:\n%s", pBuffer ) ;
