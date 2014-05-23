@@ -122,16 +122,19 @@
 #include "pdTrace.hpp"
 #include "utilTrace.hpp"
 
+
+
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
-#define REDIS_NOTUSED(V) ((void) V)
 #define snprintf _snprintf
 #define read(x,y,z) _read(x,y,z)
 #define write(x,y,z) _write(x,y,z)
 #define isatty(x) _isatty(x)
 #define strdup(x) _strdup(x)
 #endif
+
+#define REDIS_NOTUSED(V) ((void) V)
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 300
 #define LINENOISE_MAX_LINE 4096
@@ -201,10 +204,12 @@ static void linenoiseAtExit(void);
 
 HANDLE hOut;
 HANDLE hIn;
-DWORD consolemode;
-static WORD oldDisplayAttribute;
+DWORD consolemode ;
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_WIN32READ, "win32read" )
+static BOOLEAN s_initDisplayAttr       = FALSE ;
+static WORD    s_oldDisplayAttribute   = -1 ;
+
+// PD_TRACE_DECLARE_FUNCTION ( SDB_WIN32READ, "win32read" )
 static int win32read(char *c) {
     PD_TRACE_ENTRY ( SDB_WIN32READ );
     DWORD foo;
@@ -320,7 +325,7 @@ void linenoiseSetMultiLine(int ml) {
 
 /* Return true if the terminal name is in the list of terminals we know are
  * not able to understand basic escape sequences. */
-PD_TRACE_DECLARE_FUNCTION ( SDB_ISUNSUPPTERM, "isUnsupportedTerm" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ISUNSUPPTERM, "isUnsupportedTerm" )
 static int isUnsupportedTerm(void) {
    PD_TRACE_ENTRY ( SDB_ISUNSUPPTERM );
 #ifndef _WIN32
@@ -336,7 +341,7 @@ static int isUnsupportedTerm(void) {
 }
 
 /* Raw mode: 1960 magic shit. */
-PD_TRACE_DECLARE_FUNCTION ( SDB_ENABLERAWMODE, "enableRawMode" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_ENABLERAWMODE, "enableRawMode" )
 static int enableRawMode(int fd) {
    PD_TRACE_ENTRY ( SDB_ENABLERAWMODE );
 #ifndef _WIN32
@@ -424,8 +429,8 @@ static void disableRawMode(int fd) {
  * and return it. On error -1 is returned, on success the position of the
  * cursor. */
 static int getCursorPosition(int ifd, int ofd) {
-    char buf[32];
-    int cols, rows;
+    char buf[32] = { 0 } ;
+    int cols = 0, rows = 0 ;
     unsigned int i = 0;
 
     /* Report cursor location */
@@ -447,29 +452,26 @@ static int getCursorPosition(int ifd, int ofd) {
 
 /* Try to get the number of columns in the current terminal, or assume 80
  * if it fails. */
- PD_TRACE_DECLARE_FUNCTION ( SDB_GETCOLUMNS, "getColumns" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_GETCOLUMNS, "getColumns" )
 static int getColumns(int ifd, int ofd) {
     PD_TRACE_ENTRY ( SDB_GETCOLUMNS );
-    int ret = 80;
-#ifdef _WIN32
-    CONSOLE_SCREEN_BUFFER_INFO b;
+    int ret = 80 ;
 
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO b ;
     if (!GetConsoleScreenBufferInfo(hOut, &b))
     {
         goto failed ;
     }
-    else
-    {
-        ret = b.srWindow.Right - b.srWindow.Left ;
-        goto done ;
-    }
+    ret = b.dwSize.X ;
+
 #else
     struct winsize ws;
 
     if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) 
     {
         /* ioctl() failed. Try to query the terminal itself. */
-        int start, cols;
+        int start = 0 , cols = 0 ;
 
         /* Get the initial position so we can restore it later. */
         start = getCursorPosition(ifd,ofd);
@@ -491,14 +493,13 @@ static int getColumns(int ifd, int ofd) {
             }
         }
         ret = cols;
-        goto done ;
     }
     else
     {
         ret = ws.ws_col;
-        goto done;
     }
-#endif
+
+#endif // _WIN32
 
 done:
     PD_TRACE_EXIT ( SDB_GETCOLUMNS );
@@ -660,92 +661,13 @@ static void abFree(struct abuf *ab) {
     free(ab->b);
 }
 
-/* Single line low level line refresh.
- *
- * Rewrite the currently edited line accordingly to the buffer content,
- * cursor position, and number of columns of the terminal. */
-static void refreshSingleLine(struct linenoiseState *l) {
-    char seq[64];
-    l->cols = getColumns(STDIN_FILENO, STDOUT_FILENO);
-    size_t plen = strlen(l->prompt);
-    int fd = l->ofd;
-    char *buf = l->buf;
-    size_t len = l->len;
-    size_t pos = l->pos;
-    struct abuf ab;
-#ifdef _WIN32
-    DWORD pl, bl, w;
-    CONSOLE_SCREEN_BUFFER_INFO b;
-    COORD coord;
-#endif
-
-    while((plen+pos) >= l->cols) {
-        buf++;
-        len--;
-        pos--;
-    }
-    while (plen+len > l->cols) {
-        len--;
-    }
-#ifndef _WIN32
-    abInit(&ab);
-    /* Cursor to left edge */
-    snprintf(seq,64,"\x1b[0G");
-    abAppend(&ab,seq,strlen(seq));
-    /* Write the prompt and the current buffer content */
-    abAppend(&ab,l->prompt,strlen(l->prompt));
-    abAppend(&ab,buf,len);
-    /* Erase to right */
-    snprintf(seq,64,"\x1b[0K");
-    abAppend(&ab,seq,strlen(seq));
-    /* Move cursor to original position. */
-    snprintf(seq,64,"\x1b[0G\x1b[%dC", (int)(pos+plen));
-    abAppend(&ab,seq,strlen(seq));
-    if (write(fd,ab.b,ab.len) == -1) {} /* Can't recover from write error. */
-    abFree(&ab);
-#else
-    REDIS_NOTUSED(seq);
-//    REDIS_NOTUSED(fd);
-
-    /* Get buffer console info */
-    if (!GetConsoleScreenBufferInfo(hOut, &b)) return;
-    /* Erase Line */
-    coord.X = 0;
-    coord.Y = b.dwCursorPosition.Y;
-    FillConsoleOutputCharacterA(hOut, ' ', b.dwSize.X, coord, &w);
-    /*  Cursor to the left edge */
-    SetConsoleCursorPosition(hOut, coord);
-    /* Write the prompt and the current buffer content */
-    WriteConsole(hOut, l->prompt, plen, &pl, NULL);
-    WriteConsole(hOut, buf, len, &bl, NULL);
-    /* Move cursor to original position. */
-    coord.X = (int)(pos+plen);
-    coord.Y = b.dwCursorPosition.Y;
-    SetConsoleCursorPosition(hOut, coord);
-#endif
-}
-
-/* Multi line low level line refresh.
- *
- * Rewrite the currently edited line accordingly to the buffer content,
- * cursor position, and number of columns of the terminal. */
-static void refreshMultiLine(struct linenoiseState *l)
+static int calcHighLightPos( struct linenoiseState *l )
 {
-    char seq[64];
-    l->cols = getColumns(STDIN_FILENO, STDOUT_FILENO);
-    int plen = strlen(l->prompt);
-    int rows = (plen+l->len+l->cols-1)/l->cols; /* rows used by current buf. */
-    int rpos = (plen+l->oldpos+l->cols)/l->cols; /* cursor relative row. */
-    int rpos2; /* rpos after refresh. */
-    int old_rows = l->maxrows;
-    int fd = l->ofd, j;
-    struct abuf ab;
-
     int len = l->len ;
     int pos = l->pos ;
     char *buffer = l->buf ;
-    int highlight = -1 ;
-    int highlight_pos = 0 ;
+    int highlight_pos = -1 ;
+
     // find out the place to high light
     if ( ( !l->remove_col ) && ( pos < len ) )
     {
@@ -768,47 +690,236 @@ static void refreshMultiLine(struct linenoiseState *l)
 
              if ( unmatched == 0 )
              {
-                highlight = 1 ;
                 highlight_pos = i ;
                 break ;
              }
           }
        }
     }
-/*
-#ifdef _WIN32
-    DWORD pl, bl, w;
-    CONSOLE_SCREEN_BUFFER_INFO b;
-    COORD coord;
-    int cols = l->cols ;
-    while( ( plen + pos ) >= cols )
-    {
-       buffer++;
-       len--;
-       pos--;
-    }
-    while ( plen + len > cols )
-    {
-       len--;
-    }
-#endif
-*/
+
     l->remove_col = false ;
-    /* Update maxrows if needed. */
-    if (rows > (int)l->maxrows) l->maxrows = rows;
+
+    return highlight_pos ;
+}
+
+#ifdef _WINDOWS
+
+static int setDisplayAttribute( bool enhancedDisplay,
+                                COORD dwCoord,
+                                int length )
+{
+    WORD attr = 0 ;
+    DWORD lp = 0 ;
+    WORD *pAttrs = &attr ;
+    int ret = -1 ;
+
+    if ( enhancedDisplay )
+    {
+        CONSOLE_SCREEN_BUFFER_INFO inf ;
+        GetConsoleScreenBufferInfo( hOut, &inf ) ;
+        s_oldDisplayAttribute = inf.wAttributes ;
+        s_initDisplayAttr     = TRUE ;
+
+        BYTE oldLowByte = s_oldDisplayAttribute & 0xFF ;
+        BYTE newLowByte = 0 ;
+        switch ( oldLowByte ) {
+        case 0x07:
+            // most similar to xterm appearance
+            newLowByte = FOREGROUND_BLUE | FOREGROUND_GREEN ;
+            break;
+        case 0x70:
+            newLowByte = BACKGROUND_BLUE | BACKGROUND_INTENSITY ;
+            break;
+        default:
+            newLowByte = oldLowByte ^ 0xFF;     // default to inverse video
+            break ;
+        }
+        attr = ( s_oldDisplayAttribute & 0xFF00 ) | newLowByte ;
+    }
+    else
+    {
+        attr = s_oldDisplayAttribute ;
+    }
+
+    if ( FALSE == s_initDisplayAttr )
+    {
+        return 0 ;
+    }
+
+    if ( length > 1 )
+    {
+        pAttrs = new WORD[ length ] ;
+        if ( !pAttrs )
+        {
+            return -1 ;
+        }
+        for ( int i = 0 ; i < length ; ++i )
+        {
+            pAttrs[ i ] = attr ;
+        }
+    }
+
+    if ( WriteConsoleOutputAttribute( hOut, pAttrs, length, dwCoord, &lp ) )
+    {
+        ret = 0 ;
+    }
+    if ( pAttrs && pAttrs != &attr )
+    {
+      delete pAttrs ;
+    }
+
+    return ret ;
+}
+
+#endif // _WINDOWS
+
+/* Single line low level line refresh.
+ *
+ * Rewrite the currently edited line accordingly to the buffer content,
+ * cursor position, and number of columns of the terminal. */
+static void refreshSingleLine(struct linenoiseState *l) {
+    char seq[64] = { 0 } ;
+    l->cols = getColumns( STDIN_FILENO, STDOUT_FILENO ) ;
+    size_t plen = strlen( l->prompt ) ;
+    int fd = l->ofd ;
+    char *buf = l->buf ;
+    size_t len = l->len ;
+    size_t pos = l->pos ;
+    struct abuf ab ;
+    BOOLEAN moveLeft = l->remove_col ? TRUE : FALSE ;
+    int highlightPos = calcHighLightPos( l ) ;
+
+    while( ( plen+pos ) >= l->cols ) {
+        buf++;
+        len--;
+        pos--;
+
+        if ( highlightPos >= 0 )
+        {
+            --highlightPos ;
+        }
+    }
+    while (plen+len > l->cols) {
+        len--;
+    }
+
 #ifndef _WIN32
+    REDIS_NOTUSED( moveLeft ) ;
+    abInit(&ab) ;
+    /* Cursor to left edge */
+    snprintf(seq,64,"\x1b[0G");
+    abAppend(&ab,seq,strlen(seq));
+    /* Write the prompt and the current buffer content */
+    abAppend(&ab,l->prompt,strlen(l->prompt));
+
+    if ( -1 == highlightPos )
+    {
+       abAppend(&ab,buf,len);
+    }
+    else
+    {
+       abAppend( &ab, l->buf, highlightPos ) ;
+       setDisplayAttribute( true, &ab ) ;
+       abAppend( &ab, l->buf + highlightPos, 1 ) ;
+       setDisplayAttribute( false, &ab ) ;
+       abAppend( &ab, l->buf + highlightPos + 1, len - highlightPos - 1 ) ;
+    }
+    /* Erase to right */
+    snprintf(seq,64,"\x1b[0K");
+    abAppend(&ab,seq,strlen(seq));
+    /* Move cursor to original position. */
+    snprintf(seq,64,"\x1b[0G\x1b[%dC", (int)(pos+plen));
+    abAppend(&ab,seq,strlen(seq));
+    if (write(fd,ab.b,ab.len) == -1) {} /* Can't recover from write error. */
+    abFree(&ab);
+#else
+    REDIS_NOTUSED( seq ) ;
+    REDIS_NOTUSED( fd ) ;
+    REDIS_NOTUSED( ab ) ;
+
+    DWORD pl, w ;
+    CONSOLE_SCREEN_BUFFER_INFO b ;
+    COORD coord ;
+
+    /* Get buffer console info */
+    if (!GetConsoleScreenBufferInfo(hOut, &b)) return;
+    /* Erase Line */
+    coord.X = 0;
+    coord.Y = b.dwCursorPosition.Y ;
+    setDisplayAttribute( false, coord, b.dwSize.X ) ;
+    FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
+
+    if ( l->pos == 0 || moveLeft )
+    {
+      SetConsoleCursorPosition( hOut, coord ) ;
+    }
+
+    /* Write prompt */
+    WriteConsoleOutputCharacter( hOut, l->prompt, plen, coord, &pl ) ;
+
+    coord.X = plen ;
+
+    /* set high light display */
+    if ( highlightPos != -1 )
+    {
+        COORD highCoord ;
+        highCoord.X = highlightPos + plen ;
+        highCoord.Y = coord.Y ;
+        setDisplayAttribute( true, highCoord, 1 ) ;
+    }
+
+    /* Write content */
+    WriteConsoleOutputCharacter( hOut, buf, len, coord, &pl ) ;
+    if ( !moveLeft )
+    {
+        /* Set Cursor */
+        coord.X = (int)( pos + plen ) ;
+        SetConsoleCursorPosition( hOut, coord ) ;
+    }
+
+#endif
+}
+
+/* Multi line low level line refresh.
+ *
+ * Rewrite the currently edited line accordingly to the buffer content,
+ * cursor position, and number of columns of the terminal. */
+static void refreshMultiLine(struct linenoiseState *l)
+{
+    char seq[64] = { 0 } ;
+    int cur_column = 0 ;
+    int old_cols = l->cols ;
+    l->cols = getColumns( STDIN_FILENO, STDOUT_FILENO ) ;
+    int plen = strlen( l->prompt ) ;
+    /* rows used by current buf. */
+    int rows = ( plen+l->len+l->cols - 1 ) / l->cols ;
+    /* cursor relative row. for Y */
+    int rpos = ( plen+l->oldpos+old_cols ) /old_cols ;
+    /* rpos after refresh. */
+    int rpos2 = ( plen + l->pos + l->cols ) / l->cols ;
+    int old_rows = l->maxrows ;
+    int fd = l->ofd ;
+    struct abuf ab ;
+    BOOLEAN moveLeft = l->remove_col ? TRUE : FALSE ;
+    int highlight_pos = calcHighLightPos( l ) ;
+
+    /* Update maxrows if needed. */
+    if ( rows > (int)l->maxrows ) l->maxrows = rows ;
+
+#ifndef _WIN32
+
     /* First step: clear all the lines used before. To do so start by
      * going to the last row. */
     abInit(&ab);
-    if (old_rows-rpos > 0)
+    if ( old_rows - rpos > 0 )
     {
-        lndebug("go down %d", old_rows-rpos);
-        snprintf(seq,64,"\x1b[%dB", old_rows-rpos);
-        abAppend(&ab,seq,strlen(seq));
+        lndebug("go down %d", old_rows - rpos ) ;
+        snprintf( seq,64,"\x1b[%dB", old_rows - rpos ) ;
+        abAppend( &ab,seq,strlen(seq) ) ;
     }
 
     /* Now for every row clear it, go up. */
-    for (j = 0; j < old_rows-1; j++)
+    for (int j = 0; j < old_rows-1 ; j++)
     {
         lndebug("clear+up");
         snprintf(seq,64,"\x1b[0G\x1b[0K\x1b[1A");
@@ -822,37 +933,39 @@ static void refreshMultiLine(struct linenoiseState *l)
 
     /* Write the prompt and the current buffer content */
     abAppend(&ab,l->prompt,strlen(l->prompt));
-    if ( -1 == highlight )
-        abAppend(&ab,l->buf,l->len);
+    if ( -1 == highlight_pos )
+    {
+        abAppend(&ab,l->buf,l->len) ;
+    }
     else
     {
         abAppend( &ab, l->buf, highlight_pos ) ;
         setDisplayAttribute( true, &ab ) ;
         abAppend( &ab, l->buf + highlight_pos, 1 ) ;
         setDisplayAttribute( false, &ab ) ;
-        abAppend( &ab, l->buf + highlight_pos + 1, len - highlight_pos - 1 ) ;
+        abAppend( &ab, l->buf + highlight_pos + 1, l->len - highlight_pos - 1 ) ;
     }
 
     /* If we are at the very end of the screen with our prompt, we need to
      * emit a newline and move the prompt to the first column. */
-    if (l->pos &&
-        l->pos == l->len &&
-        (l->pos+plen) % l->cols == 0)
+    if ( l->pos && l->pos == l->len && ( l->pos + plen ) % l->cols == 0 )
     {
         lndebug("<newline>");
         abAppend(&ab,"\n",1);
         snprintf(seq,64,"\x1b[0G");
         abAppend(&ab,seq,strlen(seq));
-        rows++;
-        if (rows > (int)l->maxrows) l->maxrows = rows;
+        rows++ ;
+        if (rows > (int)l->maxrows)
+        {
+            l->maxrows = rows ;
+        }
     }
 
     /* Move cursor to right position. */
-    rpos2 = (plen+l->pos+l->cols)/l->cols; /* current cursor relative row. */
-    lndebug("rpos2 %d", rpos2);
+    lndebug("rpos2 %d", rpos2) ;
 
     /* Go up till we reach the expected positon. */
-    if (rows-rpos2 > 0)
+    if ( rows - rpos2 > 0 && !moveLeft )
     {
         lndebug("go-up %d", rows-rpos2);
         snprintf(seq,64,"\x1b[%dA", rows-rpos2);
@@ -860,114 +973,182 @@ static void refreshMultiLine(struct linenoiseState *l)
     }
 
     /* Set column. */
-    lndebug("set col %d", 1+((plen+(int)l->pos) % (int)l->cols));
-    snprintf(seq,64,"\x1b[%dG", 1+((plen+(int)l->pos) % (int)l->cols));
+    if ( moveLeft )
+    {
+        cur_column = 1 + plen % (int)l->cols ;
+    }
+    else
+    {
+        cur_column = 1+((plen+(int)l->pos) % (int)l->cols) ;
+    }
+    lndebug("set col %d", cur_column ) ;
+    snprintf(seq,64,"\x1b[%dG", cur_column ) ;
     abAppend(&ab,seq,strlen(seq));
 
-    lndebug("\n");
-    l->oldpos = l->pos;
+    lndebug("\n") ;
+    l->oldpos = l->pos ;
 
     if (write(fd,ab.b,ab.len) == -1) {} /* Can't recover from write error. */
     abFree(&ab);
+
 #else
-    /* in windows, it don't support refleshMultiLine,
-     * we use the way like refleshSingleLine */
-    DWORD pl, bl, w;
-    CONSOLE_SCREEN_BUFFER_INFO b;
-    COORD coord;
-    int cols = l->cols ;
-    while( ( plen + pos ) >= cols )
+    REDIS_NOTUSED( seq ) ;
+    REDIS_NOTUSED( fd ) ;
+    REDIS_NOTUSED( ab ) ;
+
+    int writeLen = 0 ;
+    DWORD pl = 0, w = 0 ;
+    CONSOLE_SCREEN_BUFFER_INFO b ;
+    COORD coord ;
+    SHORT y = 0 ;
+
+    SMALL_RECT srcScrollRect ;
+    CHAR_INFO chiFill ;
+    COORD coordDest ;
+
+    if ( !GetConsoleScreenBufferInfo( hOut, &b ) ) return ;
+
+    srcScrollRect.Top = 1 ;
+    srcScrollRect.Bottom = b.dwSize.Y - 1 ;
+    srcScrollRect.Left = 0 ;
+    srcScrollRect.Right = b.dwSize.X - 1 ;
+
+    chiFill.Attributes = b.wAttributes ;
+    chiFill.Char.AsciiChar = ' ' ;
+
+    coordDest.X = 0 ;
+    coordDest.Y = 0 ;
+
+    /* Clear the contents from the last line up to the top */
+    coord.X = 0 ;
+    y = b.dwCursorPosition.Y - rpos + 1 ;
+
+    for ( int i = 0 ; i < old_rows - 1 ; ++i )
     {
-       buffer++;
-       len--;
-       pos--;
+        // in windows, we need to minus 1, because (X, Y) start from (0, 0)
+        coord.Y = y + old_rows - 1 - i ;
+        setDisplayAttribute( false, coord, b.dwSize.X ) ;
+        FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
     }
-    while ( plen + len > cols )
+
+    // clear the top line
+    coord.Y = y ;
+    setDisplayAttribute( false, coord, b.dwSize.X ) ;
+    FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
+
+    if ( l->pos == 0 ||
+         ( plen + (int)l->pos ) % (int)l->cols == 0 ||
+         moveLeft )
     {
-       len--;
+        // Move cursor to the left edge
+        SetConsoleCursorPosition( hOut, coord ) ;
+    }
+    int beginY = coord.Y ;
+
+    /* Write prompt */
+    int writeLineNum = 0 ;
+    writeLen = 0 ;
+    while ( writeLen < plen )
+    {
+        writeLineNum = plen - writeLen > l->cols ? l->cols : plen - writeLen ;
+        if ( !WriteConsoleOutputCharacter( hOut, l->prompt + writeLen,
+                                           writeLineNum, coord, &pl ) )
+        {
+            return ;
+        }
+        writeLen += writeLineNum ;
+        if ( writeLineNum == l->cols )
+        {
+            ++coord.Y ;
+            coord.X = 0 ;
+            if ( coord.Y == b.dwSize.Y )
+            {
+               ScrollConsoleScreenBuffer( hOut, &srcScrollRect, NULL,
+                                          coordDest, &chiFill ) ;
+               --coord.Y ;
+               --y ;
+               --beginY ;
+               setDisplayAttribute( false, coord, b.dwSize.X ) ;
+               FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
+            }
+        }
+        else
+        {
+            coord.X = writeLineNum % l->cols ;
+        }
     }
 
-    /* Get buffer console info */
-    if ( !GetConsoleScreenBufferInfo( hOut, &b ) ) return;
-    /* Erase Line */
-    coord.X = 0;
-    coord.Y = b.dwCursorPosition.Y;
-    FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w );
-    /*  Cursor to the left edge */
-    SetConsoleCursorPosition( hOut, coord );
-    /* Write the prompt and the current buffer content */
-    WriteConsole( hOut, l->prompt, plen, &pl, NULL );
+    /* Write content */
+    writeLen = 0 ;
+    while ( writeLen < l->len )
+    {
+        writeLineNum = ( l->len - writeLen > l->cols - coord.X ) ?
+                       l->cols - coord.X :
+                       l->len - writeLen ;
+        if ( !WriteConsoleOutputCharacter( hOut, l->buf + writeLen,
+                                           writeLineNum, coord, &pl ) )
+        {
+            return ;
+        }
+        writeLen += writeLineNum ;
+        if ( writeLineNum == l->cols - coord.X )
+        {
+            ++coord.Y ;
+            coord.X = 0 ;
+            if ( coord.Y == b.dwSize.Y )
+            {
+               ScrollConsoleScreenBuffer( hOut, &srcScrollRect, NULL,
+                                          coordDest, &chiFill ) ;
+               --coord.Y ;
+               --y ;
+               --beginY ;
+               setDisplayAttribute( false, coord, b.dwSize.X ) ;
+               FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
+            }
+        }
+        else
+        {
+            coord.X = ( coord.X + writeLineNum ) % l->cols ;
+        }
+    }
 
-    // in case no need to highlight
-    WriteConsole( hOut, buffer, len, &bl, NULL );
+    /* set highlight display */
+    if ( -1 != highlight_pos )
+    {
+        COORD highCoord ;
+        highCoord.X = ( highlight_pos + plen ) % l->cols ;
+        highCoord.Y = beginY - 1 + ( plen + highlight_pos + l->cols ) / l->cols ;
+        setDisplayAttribute( true, highCoord, 1 ) ;
+    }
 
-    /* Move cursor to original position. */
-    coord.X = (int)( pos + plen );
-    coord.Y = b.dwCursorPosition.Y;
-    SetConsoleCursorPosition( hOut, coord );
+    /* If we are at the very end of the screen with our prompt, we need to
+     * emit a newline and move the prompt to the first column. */
+    if ( l->pos && l->pos == l->len && ( l->pos+plen ) % l->cols == 0 )
+    {
+        rows++ ;
+        if ( rows > (int)l->maxrows )
+        {
+            l->maxrows = rows ;
+        }
+    }
 
-//    /* I am trying to let windows support mutil-line
-//     * but it don't work at present */
-//    SHORT x = 0 ;
-//    SHORT y = 0 ;
-//    /* Clear the contents from the last line up to the top */
-//    if ( !GetConsoleScreenBufferInfo( hOut, &b ) ) return ;
-//    //coord.X = b.dwCursorPosition.X ;
-//    // calculate the start position of prompt
-//    coord.X = 0 ;
-//    y = b.dwCursorPosition.Y - rpos + 1 ;
-//    coord.Y = y ;
-//    while( old_rows > 0 )
-//    {
-//      // in windows, we need to minus 1, because (X, Y) start from (0, 0)
-//      coord.Y = y + old_rows - 1 ;
-//      FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
-//      old_rows-- ;
-//    }
-//    // clear the top line
-//    FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
-//    // Move cursor to the left edge
-//    SetConsoleCursorPosition( hOut, coord );
-//    //FillConsoleOutputCharacterA( hOut, ' ', b.dwSize.X, coord, &w ) ;
-//
-//    /* Display prompt and new contents */
-//    WriteConsole( hOut, l->prompt, l->plen, &pl, NULL ) ;
-//    if ( -1 == highlight )
-//        WriteConsole( hOut, l->buf, l->len, &bl, NULL ) ;
-//    else
-//    {
-//        WriteConsole( hOut, l->buf, highlight_pos, &bl, NULL ) ;
-//        setDisplayAttribute( true, NULL ) ;
-//        WriteConsole( hOut, l->buf + highlight_pos, 1, &bl, NULL ) ;
-//        setDisplayAttribute( false, NULL ) ;
-//        WriteConsole( hOut, l->buf + highlight_pos + 1,
-//                           l->len - highlight_pos - 1, &bl, NULL ) ;
-//    }
-//
-//    /* If we are at the very end of the screen with our prompt, we need to
-//     * emit a newline and move the prompt to the first column. */
-//    if ( l->pos &&
-//         l->pos == l->len &&
-//         (l->pos+plen) % l->cols == 0 )
-//    {
-//        //WriteConsole( hOut, "\r\n", strlen("\r\n"), &bl, NULL ) ;
-//        rows++;
-//        if (rows > (int)l->maxrows) l->maxrows = rows;
-//    }
-//
-//    /* After display the contents, we should put the cursor to the right
-//     * place */
-//    rpos2 = ( plen + l->pos + l->cols ) / l->cols; /* current cursor relative row. */
-//
-//    //coord.Y = b.dwCursorPosition.Y + rpos2 - 1;
-//    coord.Y = y + rpos2 - 1;
-//    // In windows, (X, Y) coordinate start from top left corner (0, 0)
-//    // X = 0 is the first row
-//    coord.X = ( plen + (int)l->pos ) % (int)l->cols ;
-//    //SetConsoleCursorPosition( hOut, coord ) ;
-//
-//    /* record the position for next refresh */
-//    l->oldpos = l->pos;
+    /* After display the contents, we should put the cursor to the right
+     * place */
+    if ( !moveLeft )
+    {
+        coord.Y = y + rpos2 - 1 ;
+        // In windows, (X, Y) coordinate start from top left corner (0, 0)
+        // X = 0 is the first column
+        coord.X = ( plen + (int)l->pos ) % (int)l->cols ;
+    }
+    else
+    {
+        coord.X = plen % (int)l->cols ;
+    }
+    SetConsoleCursorPosition( hOut, coord ) ;
+
+    /* record the position for next refresh */
+    l->oldpos = l->pos ;
 
 #endif
 }
@@ -991,13 +1172,18 @@ int linenoiseEditInsert(struct linenoiseState *l, char c) {
             l->pos++;
             l->len++;
             l->buf[l->len] = '\0';
-            if ((!mlmode && l->plen+l->len < l->cols) /* || mlmode */) {
+
+#ifndef _WINDOWS
+            if ((!mlmode && l->plen+l->len < l->cols) ) {
                 /* Avoid a full update of the line in the
                  * trivial case. */
-                if (write(l->ofd,&c,1) == -1) return -1;
+                if ( write( l->ofd, &c, 1 ) == -1 ) return -1 ;
             } else {
-                refreshLine(l);
+#endif // _WINDOWS
+                refreshLine(l) ;
+#ifndef _WINDOWS
             }
+#endif // _WINDOWS
         } else {
             memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);
             l->buf[l->pos] = c;
@@ -1114,7 +1300,8 @@ void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
  * when ctrl+d is typed.
  *
  * The function returns the length of the current buffer. */
-static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, const char *prompt)
+static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
+                          size_t buflen, const char *prompt)
 {
     struct linenoiseState l;
 
@@ -1126,13 +1313,15 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
     l.buflen = buflen;
     l.prompt = prompt;
     l.plen = strlen(prompt);
-    l.oldpos = l.pos = 0;
+    l.oldpos = 0;
+    l.pos = 0 ;
     l.len = 0;
-    l.cols = getColumns(stdin_fd, stdout_fd);
-    l.maxrows = 0;
-    l.history_index = 0;
+    l.cols = getColumns( stdin_fd, stdout_fd ) ;
+    l.maxrows = 0 ;
+    l.history_index = 0 ;
+    l.remove_col = false ;
 #ifdef _WIN32
-    DWORD foo;
+    DWORD foo ;
 #endif
 
     /* Buffer starts empty. */
@@ -1144,14 +1333,14 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
     linenoiseHistoryAdd("");
 
 #ifdef _WIN32
-    if(!WriteConsole(hOut, prompt, l.plen, &foo, NULL ) ) return -1;
+    if(!WriteConsole(hOut, prompt, l.plen, &foo, NULL ) ) return -1 ;
 #else
     if (write(l.ofd,prompt,l.plen) == -1) return -1;
 #endif
     while(1) {
-        char c;
-        int nread;
-        char seq[3];
+        char c ;
+        int nread ;
+        char seq[3] ;
 
 #ifdef _WIN32
         nread = win32read(&c);
@@ -1424,7 +1613,7 @@ static void freeHistory(void) {
 }
 
 /* At exit we'll try to fix the terminal to the initial conditions. */
-PD_TRACE_DECLARE_FUNCTION ( SDB_LNNOISEATEXT, "linenoiseAtExit" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_LNNOISEATEXT, "linenoiseAtExit" )
 static void linenoiseAtExit(void) {
     PD_TRACE_ENTRY ( SDB_LNNOISEATEXT );
 #ifdef _WIN32
@@ -1551,7 +1740,7 @@ int linenoiseHistoryLoad(const char *filename) {
     return 0;
 }
 
-PD_TRACE_DECLARE_FUNCTION ( SDB_SETDISPLAYATTRIBUTE, "setDisplayAttribute" )
+// PD_TRACE_DECLARE_FUNCTION ( SDB_SETDISPLAYATTRIBUTE, "setDisplayAttribute" )
    /*
 #ifdef _WIN32
 static void setDisplayAttribute( bool enhancedDisplay )
@@ -1566,8 +1755,8 @@ static void setDisplayAttribute( bool enhancedDisplay, struct abuf *ab )
     {
         CONSOLE_SCREEN_BUFFER_INFO inf;
         GetConsoleScreenBufferInfo( hOut, &inf );
-        oldDisplayAttribute = inf.wAttributes;
-        BYTE oldLowByte = oldDisplayAttribute & 0xFF;
+        s_oldDisplayAttribute = inf.wAttributes;
+        BYTE oldLowByte = s_oldDisplayAttribute & 0xFF;
         BYTE newLowByte;
         switch ( oldLowByte ) {
         case 0x07:
@@ -1587,7 +1776,7 @@ static void setDisplayAttribute( bool enhancedDisplay, struct abuf *ab )
     }
     else
     {
-        SetConsoleTextAttribute( hOut, oldDisplayAttribute );
+        SetConsoleTextAttribute( hOut, s_oldDisplayAttribute );
     }
 #else
     if ( enhancedDisplay )
