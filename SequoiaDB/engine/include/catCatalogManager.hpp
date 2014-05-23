@@ -207,6 +207,9 @@ namespace engine
 
       INT16 _majoritySize() ;
 
+      INT32 _buildAlterGroups( const BSONObj &domain,
+                               const BSONElement &ele,
+                               BSONObjBuilder &builder ) ;
    private:
       _SDB_KRCB            *_pKrcb;
       sdbCatalogueCB       *_pCatCB;

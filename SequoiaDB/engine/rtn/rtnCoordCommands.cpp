@@ -433,12 +433,21 @@ namespace engine
             {
                try
                {
-                  const CHAR *objPos = (const CHAR*)pReply + sizeof(MsgOpReply) ;
-                  for ( SINT64 i = 0; i < pReply->numReturned; i++ )
+                  const CHAR *objPos = (const CHAR*)pReply + sizeof( MsgOpReply ) ;
+                  INT32 len = ( INT32 )
+                              ( pReply->header.messageLength - sizeof( MsgOpReply )) ;
+                  _rtnObjBuff objBuf( objPos, len, pReply->numReturned ) ;
+                  while ( !objBuf.eof() )
                   {
-                     BSONObj obj( objPos ) ;
+                     BSONObj obj ;
+                     rc = objBuf.nextObj( obj ) ;
+                     if ( SDB_OK != rc )
+                     {
+                        PD_LOG( PDERROR, "failed to get next obj from obj buf:%d", rc ) ;
+                        goto error ;
+                     }
+
                      pReplyObjs->push_back( obj.getOwned() ) ;
-                     objPos += obj.objsize() ;
                   }
                }
                catch( std::exception &e )
@@ -1477,12 +1486,6 @@ namespace engine
          rc = cmd->execute( buffer, bufferLen,
                             &resultBuf, cb,
                             replyHeader, &errObj ) ;
-         if ( SDB_OK != rc )
-         {
-            PD_LOG( PDERROR, "failed to wait task:%d", rc ) ;
-            /// do not care about rc.
-            rc = SDB_OK ;
-         }
          if ( NULL != resultBuf )
          {
             SDB_OSS_FREE( resultBuf ) ;
@@ -1490,6 +1493,13 @@ namespace engine
          if ( NULL != errObj )
          {
             SDB_OSS_DEL( errObj ) ;
+         }
+
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to wait task:%d", rc ) ;
+            /// do not care about rc.
+            rc = SDB_OK ;
          }
       }
       }

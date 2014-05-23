@@ -1709,5 +1709,17 @@ SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
                                   bson *selector,
                                   bson *orderBy,
                                   sdbCursorHandle *handle ) ;
+
+/** \fn INT32 sdbAlterDomain( sdbDomainHandle cHandle,
+                              const bson *options ) ;
+    \brief alter the domains.
+    \param [in] cHandle The domain handle
+    \param [in] options The options user wants to alter
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
+                                 const bson *options ) ;
+
 SDB_EXTERN_C_END
 #endif

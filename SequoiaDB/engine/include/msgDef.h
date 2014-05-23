@@ -57,6 +57,7 @@
 #define FIELD_NAME_LSN_VERSION               "Version"
 #define FIELD_NAME_SERVICE_STATUS            "ServiceStatus"
 #define FIELD_NAME_GROUP                     "Group"
+#define FIELD_NAME_GROUPS                    "Groups"
 #define FIELD_NAME_VERSION                   "Version"
 #define FIELD_NAME_W                         "ReplSize"
 #define FIELD_NAME_PRIMARY                   "PrimaryNode"

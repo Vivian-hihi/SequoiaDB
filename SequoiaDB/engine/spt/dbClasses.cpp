@@ -3263,7 +3263,7 @@ static void domain_destructor ( JSContext *cx, JSObject *obj )
    sdbDomainHandle *s = (sdbDomainHandle *)
          JS_GetPrivate ( cx, obj ) ;
    SAFE_RELEASE_DOMAIN ( s ) ;
-   SDB_OSS_FREE( s ) ;
+   SAFE_JS_FREE( cx, s ) ;
    JS_SetPrivate ( cx, obj, NULL ) ;
    PD_TRACE_EXIT ( SDB_DOMAIN_DESTRUCTOR );
 }
@@ -3294,7 +3294,51 @@ error :
    goto done ;
 }
 
+static JSBool domain_alter( JSContext *cx, uintN argc, jsval *vp )
+{
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+   
+   JSObject *argJSObj = NULL ;
+   jsval *argv = NULL ;
+   bson argObj ;
+   bson_init( &argObj ) ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.alter(): no domain handle" ) ;
+
+   REPORT ( argc >= 1,
+            "Domain.alter(): need one argument" ) ;
+
+   argv = JS_ARGV( cx, vp ) ;
+   REPORT( JSVAL_IS_OBJECT( argv[0] ),
+           "Domain.alter(): need a object argument") ;
+
+   argJSObj = JSVAL_TO_OBJECT( argv[0] ) ;
+   VERIFY( argJSObj ) ;
+
+   {
+   sptConvertor c( cx ) ;
+   rc = c.toBson( argJSObj, &argObj ) ;
+   VERIFY( SDB_OK == rc ) ;
+   }
+
+   rc = sdbAlterDomain( *domain, &argObj ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.alter()", rc ) ;
+
+   JS_SET_RVAL ( cx , vp , JSVAL_VOID ) ;
+
+done:
+   bson_destroy( &argObj ) ;
+   return ret ;
+error:
+   goto done ;
+}
+
 static JSFunctionSpec domain_functions[] = {
+   JS_FS( "alter", domain_alter, 0, 0 ),
    JS_FS_END
 } ;
 
@@ -3883,7 +3927,7 @@ static JSBool sdb_create_domain ( JSContext *cx, uintN argc, jsval *vp )
                "Sdb.createDomain(): second argument must be array of groups" ) ;
       // iterate each element in array and push to bson object
       VERIFY ( BSON_OK ==
-               bson_append_start_array ( &bsonDef, FIELD_NAME_GROUP ) ) ;
+               bson_append_start_array ( &bsonDef, FIELD_NAME_GROUPS ) ) ;
       VERIFY ( JS_GetArrayLength ( cx, domainObj, &groupListL ) ) ;
       for ( UINT32 i = 0; i < groupListL; ++i )
       {
@@ -4005,7 +4049,7 @@ static JSBool sdb_get_domain ( JSContext *cx, uintN argc, jsval *vp )
    name = JS_EncodeString ( cx, domainName ) ;
    VERIFY ( name ) ;
 
-   domain = ( sdbDomainHandle * )SDB_OSS_MALLOC( sizeof ( sdbDomainHandle ) ) ;
+   domain = ( sdbDomainHandle * )JS_malloc ( cx, sizeof(sdbDomainHandle) ) ;
    VERIFY ( domain ) ;
 
    rc = sdbGetDomain ( *connection, name, domain ) ;

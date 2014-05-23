@@ -14,11 +14,13 @@
 #define CAT_NODEID_NAME                   FIELD_NAME_NODEID
 #define CAT_ROLE_NAME                     FIELD_NAME_ROLE
 #define CAT_GROUP_NAME                    FIELD_NAME_GROUP
+#define CAT_GROUPS_NAME                   FIELD_NAME_GROUPS
 #define CAT_VERSION_NAME                  FIELD_NAME_VERSION
 #define CAT_PRIMARY_NAME                  FIELD_NAME_PRIMARY
 #define CAT_GROUP_STATUS                  FIELD_NAME_GROUP_STATUS
 
-#define CAT_DOMAIN_NAME                   FIELD_NAME_DOMAIN
+#define CAT_DOMAIN_NAME                   FIELD_NAME_DOMAIN 
+#define CAT_DOMAINNAME_NAME               FIELD_NAME_NAME
 
 #define CAT_COLLECTION_SPACE_NAME         FIELD_NAME_NAME
 #define CAT_COLLECTION_NAME               FIELD_NAME_NAME

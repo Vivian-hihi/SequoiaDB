@@ -27,7 +27,7 @@
                                           CAT_TASKID_NAME":1}, unique: true }"
 
 #define  CAT_DOMAIN_NAMEIDX               "{name:\"SYSIDX1\",key: {"\
-                                          CAT_DOMAIN_NAME":1}, unique: true, enforced: true } "
+                                          CAT_DOMAINNAME_NAME":1}, unique: true, enforced: true } "
 
 #define  CAT_MATCHER_HOST_NAME            CAT_HOST_FIELD_NAME
 #define  CAT_MATCHER_NODEID_NAME          CAT_GROUP_NAME"."CAT_NODEID_NAME

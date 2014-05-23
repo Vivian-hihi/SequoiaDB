@@ -1394,7 +1394,7 @@ namespace engine
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "failed to get domain obj os cs[%s], rc:%d",
-                    DMS_COLLECTION_SPACE_NAME_SZ, rc ) ;
+                    szSpace, rc ) ;
             goto error ;
          }
       }
@@ -2017,17 +2017,17 @@ namespace engine
          const CHAR *pDomainName = NULL ;
          INT32 expectedObjSize   = 0 ;
          // find out the domain name
-         BSONElement beDomainName = boQuery.getField ( CAT_DOMAIN_NAME ) ;
+         BSONElement beDomainName = boQuery.getField ( CAT_DOMAINNAME_NAME ) ;
          PD_CHECK( beDomainName.type() == String, SDB_INVALIDARG, error,
-                   PDERROR, "failed to drop domain, get field(%s) "
-                   "failed!", CAT_DOMAIN_NAME );
+                   PDERROR, "failed to create domain, get field(%s) "
+                   "failed!", CAT_DOMAINNAME_NAME );
          pDomainName = beDomainName.valuestr() ;
-         PD_TRACE1 ( SDB_CATALOGMGR_DROPDOMAIN, PD_PACK_STRING(pDomainName) ) ;
+         PD_TRACE1 ( SDB_CATALOGMGR_CREATEDOMAIN, PD_PACK_STRING(pDomainName) ) ;
          // domain name validation
          rc = catDomainNameValidate ( pDomainName ) ;
          PD_CHECK ( SDB_OK == rc, rc, error, PDERROR,
                     "Invalid domain name: %s, rc = %d", pDomainName, rc ) ;
-         ob.append ( CAT_DOMAIN_NAME, pDomainName ) ;
+         ob.append ( CAT_DOMAINNAME_NAME, pDomainName ) ;
          expectedObjSize ++ ;
          // options validation
          beDomainOptions = boQuery.getField ( CAT_OPTIONS_NAME ) ;
@@ -2042,7 +2042,7 @@ namespace engine
          {
             rc = catDomainOptionsExtract ( beDomainOptions.embeddedObject(),
                                             _pEduCB,
-                                           ob ) ;
+                                           &ob ) ;
             if ( rc )
             {
                PD_LOG ( PDERROR, "Failed to validate domain options, rc = %d",
@@ -2111,15 +2111,15 @@ namespace engine
          BSONObj resultObj ;
          BSONObj boQuery( pQuery );
          // find out the domain name
-         BSONElement beDomainName = boQuery.getField( CAT_DOMAIN_NAME );
+         BSONElement beDomainName = boQuery.getField( CAT_DOMAINNAME_NAME );
          PD_CHECK( beDomainName.type() == String, SDB_INVALIDARG, error,
                    PDERROR, "failed to drop domain, get field(%s) "
-                   "failed!", CAT_DOMAIN_NAME );
+                   "failed!", CAT_DOMAINNAME_NAME );
          pDomainName = beDomainName.valuestr() ;
          PD_TRACE1 ( SDB_CATALOGMGR_DROPDOMAIN, PD_PACK_STRING(pDomainName) ) ;
          // validate the domain is not empty by searching SYSCOLLECTIONSPACES
          // for {Domain} field matches pDomainName
-         queryObj = BSON ( CAT_DOMAIN_NAME << pDomainName ) ;
+         queryObj = BSON ( CAT_DOMAINNAME_NAME << pDomainName ) ;
          // context will be closed when rc == 0, otherwise it should already be
          // closed in the function
          rc = catGetOneObj ( CAT_COLLECTION_SPACE_COLLECTION, tempObj,
@@ -2178,14 +2178,233 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_ALTERDOMAIN ) ;
-      // first extract pQuery and find the options
-      // 1) attempt to update
-      // 2) check update number, if 0 returns domain not exist
-   //done :
+      BSONObj alterObj( pQuery ) ;
+      BSONElement eleDomainName ;
+      BSONObj domainObj ;
+      BSONElement eleOptions ;
+      BSONObjBuilder alterBuilder ;
+      BSONObjBuilder reqBuilder ;
+      BSONObj objReq ;
+
+      /// 1. be sure that the request is legal.
+      /// 2. update the record of this domain.
+
+      eleDomainName = alterObj.getField( CAT_DOMAINNAME_NAME ) ;
+      if ( String != eleDomainName.type() )
+      {
+         PD_LOG( PDERROR, "can not find valid [%s] in alter req [%s]",
+                 CAT_DOMAINNAME_NAME, alterObj.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      eleOptions = alterObj.getField( CAT_OPTIONS_NAME ) ;
+      if ( Object != eleOptions.type() )
+      {
+         PD_LOG( PDERROR, "can not find valid [%s] in alter req[%s]",
+                 CAT_OPTIONS_NAME, alterObj.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      rc = catGetDomainObj( eleDomainName.valuestr(),
+                            domainObj,
+                            _pEduCB ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get domain[%s], rc:",
+                 eleDomainName.valuestr(), rc  ) ;
+         goto error ;
+      }
+
+      rc = catDomainOptionsExtract( eleOptions.embeddedObject(),
+                                    _pEduCB,
+                                    &reqBuilder ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to validate options object:%d", rc ) ;
+         goto error ;
+      }
+
+      objReq = reqBuilder.obj() ;
+
+      {
+      BSONElement groups = objReq.getField( CAT_GROUPS_NAME ) ;
+      if ( !groups.eoo() )
+      {
+         rc = _buildAlterGroups( domainObj, groups, alterBuilder ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to add groups to builder:%d", rc ) ;
+            goto error ;
+         }
+      }
+      }
+
+      {
+      BSONElement autoSplit = objReq.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
+      if ( !autoSplit.eoo() )
+      {
+         alterBuilder.append( autoSplit ) ;
+      }
+      }
+
+      {
+      BSONElement autoRebalance = objReq.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
+      if ( !autoRebalance.eoo() )
+      {
+         alterBuilder.append( autoRebalance ) ;
+      }
+      }
+
+      {
+      BSONObjBuilder matchBuilder ;
+      matchBuilder.append( eleDomainName ) ;
+      BSONObj dummy ;
+      rc = rtnUpdate( CAT_DOMAIN_COLLECTION,
+                      matchBuilder.obj(),
+                      BSON( "$set" << alterBuilder.obj() ),
+                      dummy,
+                      0, _pEduCB, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to update cata info:%d", rc ) ;
+         goto error ;
+      }
+      }
+   done :
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERDOMAIN, rc ) ;
       return rc ;
-   //error :
-   //   goto done ;
+   error :
+      goto done ;
+   }
+
+   static INT32 _findGroupWillBeRemoved( const map<string, INT32> &groupsInDomain,
+                                         const BSONElement &groupsInReq,
+                                         map<string, INT32> &removed )
+   {
+      INT32 rc = SDB_OK ;
+      map<string, INT32>::const_iterator itr = groupsInDomain.begin() ;
+      for ( ; itr != groupsInDomain.end(); itr++ )
+      {
+         BOOLEAN found = FALSE ;
+         /// ele mst be a array. we checked it in processCmdAlterDomain.
+         BSONObjIterator i( groupsInReq.embeddedObject() ) ;
+         while ( i.more() )
+         {
+            BSONElement ele = i.next() ;
+            if ( Object != ele.type() )
+            {
+               PD_LOG( PDERROR, "invalid groups info[%s]. it should be like",
+                       " {GroupID:int, GroupName:string}",
+                       groupsInReq.toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            {
+            BSONElement groupID =
+                    ele.embeddedObject().getField( CAT_GROUPID_NAME ) ;
+            if ( NumberInt != groupID.type() )
+            {
+               PD_LOG( PDERROR, "invalid groups info[%s]. it should be like",
+                       " {GroupID:int, GroupName:string}",
+                       groupsInReq.toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            if ( groupID.Int() ==  itr->second )
+            {
+               found = TRUE ;
+               break ;
+            }
+            }
+         }
+         
+         if ( !found )
+         {
+            removed.insert( std::make_pair( itr->first, itr->second ) ) ;
+         }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDALTERGROUPS, "catCatalogueManager::_buildAlterGroups" )
+   INT32 catCatalogueManager::_buildAlterGroups( const BSONObj &domain,
+                                                 const BSONElement &ele,
+                                                 BSONObjBuilder &builder )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_CATALOGMGR__BUILDALTERGROUPS ) ;
+      map<string, INT32> groupsInDomain ;
+      map<string, INT32> toBeRemoved ;
+      BSONObj objToBeRemoved ;
+      BSONArrayBuilder arrBuilder ;
+      BSONObjBuilder inBuilder ;
+      BSONObj condition ;
+      BSONObj dummy ;
+      BSONObj res ;
+
+      rc = catGetDomainGroups( domain, groupsInDomain ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get groups from domain object:%d", rc ) ;
+         goto error ;
+      }
+
+      /// be sure that no data(of this domain) on the group witch will be remove from domain.
+      /// the groups will be added to domain are checked at before.
+      rc = _findGroupWillBeRemoved( groupsInDomain,
+                                    ele,
+                                    toBeRemoved ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get the groups those to be removed:%d", rc) ;
+         goto error ;
+      }
+
+      for ( map<string, INT32>::const_iterator itr = toBeRemoved.begin();
+            itr != toBeRemoved.end();
+            itr++ )
+      {
+         arrBuilder << itr->second ;
+      }
+
+      objToBeRemoved = arrBuilder.arr() ;
+      inBuilder.appendArray( "$in", objToBeRemoved ) ;
+      condition = BSON( CAT_DOMAIN_NAME <<
+                        domain.getField( CAT_DOMAINNAME_NAME ).valuestrsafe() <<
+                        CAT_GROUP_NAME"."CAT_GROUPID_NAME <<
+                        inBuilder.obj()  ) ;
+      rc = catGetOneObj( CAT_COLLECTION_SPACE_COLLECTION,
+                         dummy, condition, dummy, _pEduCB, res ) ;
+      if ( SDB_OK == rc )
+      {
+         PD_LOG( PDERROR, "clear data(of this domain) before rmove it from domain."
+                 " groups to be removed[%s]", objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
+         rc = SDB_DOMAIN_IS_OCCUPIED ;
+         goto error ;
+      }
+      else if ( SDB_DMS_EOC == rc )
+      {
+         /// no data on the groups those to be removed.
+         rc = SDB_OK ;
+         builder.append( ele ) ;
+      }
+      else
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__BUILDALTERGROUPS, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHOOSEFGROUPOFCL, "catCatalogueManager::_chooseGroupOfCl" )

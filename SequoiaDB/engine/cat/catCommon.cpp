@@ -98,7 +98,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATDOMAINOPTIONSEXTRACT, "catDomainOptionsExtract" )
    INT32 catDomainOptionsExtract( const BSONObj &options,
                                   pmdEDUCB *cb,
-                                  BSONObjBuilder &builder )
+                                  BSONObjBuilder *builder )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_CATDOMAINOPTIONSEXTRACT ) ;
@@ -109,7 +109,7 @@ namespace engine
       // 2) it's not performance sensitive code
       std::set <std::string> groupNameList ;
       INT32 expectedOptSize = 0 ;
-      BSONElement beGroupList = options.getField ( CAT_GROUP_NAME ) ;
+      BSONElement beGroupList = options.getField ( CAT_GROUPS_NAME ) ;
       if ( !beGroupList.eoo() && beGroupList.type() != Array )
       {
          PD_LOG ( PDERROR, "group list must be array" ) ;
@@ -158,22 +158,28 @@ namespace engine
 
             gpName = groupInfo.getField( CAT_GROUPNAME_NAME ) ;
             SDB_ASSERT( !gpName.eoo(), "can not be eoo" )
-            if ( !gpName.eoo() )
+            if ( !gpName.eoo() && NULL != builder )
             {
                oneGroup.append( gpName ) ;
             }
 
             gpID = groupInfo.getField( CAT_GROUPID_NAME ) ;
             SDB_ASSERT( !gpID.eoo(), "can not be eoo" )
-            if ( !gpID.eoo() )
+            if ( !gpID.eoo() && NULL != builder )
             {
                oneGroup.append( gpID ) ;
             }
 
-            gpInfoBuilder << oneGroup.obj() ;
+            if ( NULL != builder )
+            {
+               gpInfoBuilder << oneGroup.obj() ;
+            }
          }
 
-         builder.append( CAT_GROUP_NAME, gpInfoBuilder.arr() ) ;
+         if ( NULL != builder )
+         {
+            builder->append( CAT_GROUPS_NAME, gpInfoBuilder.arr() ) ;
+         }
          ++ expectedOptSize ;
       }
 
@@ -182,7 +188,10 @@ namespace engine
       BSONElement autoSplit = options.getField( CAT_DOMAIN_AUTO_SPLIT ) ;
       if ( !autoSplit.eoo() && autoSplit.isBoolean() )
       {
-         builder.append( autoSplit ) ;
+         if ( NULL != builder )
+         {
+            builder->append( autoSplit ) ;
+         }
          ++expectedOptSize ;
       }
       }
@@ -192,7 +201,10 @@ namespace engine
       BSONElement autoRebalance = options.getField( CAT_DOMAIN_AUTO_REBALANCE ) ;
       if ( !autoRebalance.eoo() && autoRebalance.isBoolean() )
       {
-         builder.append( autoRebalance ) ;
+         if ( NULL != builder )
+         {
+            builder->append( autoRebalance ) ;
+         }
          ++expectedOptSize ;
       }
       } 
@@ -596,7 +608,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATGETDOMAINOBJ ) ;
       BSONObj dummyObj ;
-      BSONObj boMatcher = BSON( CAT_DOMAIN_NAME << domainName );
+      BSONObj boMatcher = BSON( CAT_DOMAINNAME_NAME << domainName );
 
       rc = catGetOneObj( CAT_DOMAIN_COLLECTION, dummyObj, boMatcher,
                          dummyObj, cb, obj ) ;
@@ -649,10 +661,11 @@ namespace engine
       INT32 groupID = CAT_INVALID_GROUPID ;
 
       PD_TRACE_ENTRY ( SDB_CATGETDOMAINGROUPS ) ;
-      BSONElement beGroups = domain.getField( CAT_GROUP_NAME ) ;
+      BSONElement beGroups = domain.getField( CAT_GROUPS_NAME ) ;
       if ( beGroups.eoo() )
       {
-         goto done ;
+         rc = SDB_CAT_NO_GROUP_IN_DOMAIN ;
+         goto error ;
       }
 
       if ( Array != beGroups.type() )
@@ -685,6 +698,12 @@ namespace engine
          }
       }
 
+      if ( groups.empty() )
+      {
+         rc = SDB_CAT_NO_GROUP_IN_DOMAIN ;
+         goto error ;
+      }
+
    done:
       PD_TRACE_EXITRC ( SDB_CATGETDOMAINGROUPS, rc ) ;
       return rc ;
@@ -700,10 +719,11 @@ namespace engine
       INT32 groupID = CAT_INVALID_GROUPID ;
 
       PD_TRACE_ENTRY ( SDB_CATGETDOMAINGROUPS1 ) ;
-      BSONElement beGroups = domain.getField( CAT_GROUP_NAME ) ;
+      BSONElement beGroups = domain.getField( CAT_GROUPS_NAME ) ;
       if ( beGroups.eoo() )
       {
-         goto done ;
+         rc = SDB_CAT_NO_GROUP_IN_DOMAIN ;
+         goto error ;
       }
 
       if ( Array != beGroups.type() )
@@ -730,6 +750,12 @@ namespace engine
 
             groupIDs.push_back( groupID ) ;
          }
+      }
+
+      if ( groupIDs.empty() )
+      {
+         rc = SDB_CAT_NO_GROUP_IN_DOMAIN ;
+         goto error ;
       }
 
    done:

@@ -7309,8 +7309,8 @@ SDB_EXPORT INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
    INT32 nameLength             = 0 ;
    sdbDomainStruct *s           = NULL ;
-   CHAR *pName                  = CAT_DOMAIN_NAME ;
-   CHAR *pOptions               = CAT_OPTIONS_NAME ;
+   CHAR *pName                  = FIELD_NAME_NAME ;
+   CHAR *pOptions               = FIELD_NAME_OPTIONS ;
 
    bson_init ( &newObj ) ;
    // sanity check for connection
@@ -7435,7 +7435,7 @@ SDB_EXPORT INT32 sdbGetDomain ( sdbConnectionHandle cHandle,
    sdbCursorHandle cursor   = SDB_INVALID_HANDLE ;
    bson newObj ;
    bson result ;
-   CHAR *pName              = CAT_DOMAIN_NAME ;
+   CHAR *pName              = FIELD_NAME_NAME ;
    sdbDomainStruct *s       = NULL ;
    BOOLEAN found            = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
@@ -7514,3 +7514,62 @@ SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
    return sdbGetList ( cHandle, SDB_LIST_DOMAINS, condition,
                        selector, orderBy, handle ) ;
 }
+
+SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
+                                 const bson *options )
+{
+   INT32 rc = SDB_OK ;
+   const CHAR *command = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ;
+   sdbDomainStruct *domain = NULL ;
+   BOOLEAN ret = TRUE ;
+   bson newObj ;
+   bson_init( &newObj ) ;
+
+   if ( SDB_INVALID_HANDLE == cHandle ||
+        NULL == options )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   domain = ( sdbDomainStruct * )cHandle ;
+   if ( SDB_HANDLE_TYPE_DOMAIN != domain->_handleType )
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+
+   rc = bson_append_string( &newObj, FIELD_NAME_NAME, domain->_domainName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   rc = bson_append_bson ( &newObj, FIELD_NAME_OPTIONS, options ) ;
+   if ( rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+   bson_finish ( &newObj ) ;
+
+   rc = _runCommand( domain->_sock, &( domain->_pSendBuffer ),
+                     &( domain->_sendBufferSize ),
+                     &( domain->_pReceiveBuffer ),
+                     &( domain->_receiveBufferSize ),
+                     domain->_endianConvert,
+                     command, &ret, &newObj,
+                     NULL, NULL, NULL ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   } 
+done:
+   bson_destroy( &newObj ) ;
+   return rc ;
+error:
+   goto done ;   
+}
+
+
