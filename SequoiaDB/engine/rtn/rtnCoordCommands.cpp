@@ -4807,7 +4807,8 @@ namespace engine
          }
          REQUESTID_MAP sendNodes;
          rc = rtnCoordSendRequestToPrimary( pBuffer, catGroupInfo, sendNodes,
-                                    pRouteAgent, MSG_ROUTE_CAT_SERVICE, cb );
+                                            pRouteAgent, MSG_ROUTE_CAT_SERVICE,
+                                            cb ) ;
          if ( rc != SDB_OK )
          {
             rtnCoordClearRequest( cb, sendNodes );
@@ -4826,7 +4827,8 @@ namespace engine
          }
          REPLY_QUE replyQue;
          rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                        MAKE_REPLY_TYPE( ((MsgHeader*)pBuffer)->opCode ));
+                                MAKE_REPLY_TYPE(
+                                ((MsgHeader*)pBuffer)->opCode ) ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Execute on catalogue node failed, get reply"
@@ -4926,7 +4928,7 @@ namespace engine
       {
          BSONObj boGroupInfo;
          rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent,
-                              cb, boGroupInfo );
+                                  cb, boGroupInfo ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to active group, execute on catalog-node "

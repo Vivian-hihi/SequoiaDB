@@ -754,9 +754,9 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETGROUPINFO, "rtnCoordGetGroupInfo" )
    INT32 rtnCoordGetGroupInfo ( pmdEDUCB *cb,
-                                          UINT32 groupID,
-                                          BOOLEAN isNeedRefresh,
-                                          CoordGroupInfoPtr &groupInfo )
+                                UINT32 groupID,
+                                BOOLEAN isNeedRefresh,
+                                CoordGroupInfoPtr &groupInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETGROUPINFO ) ;
@@ -765,7 +765,7 @@ namespace engine
       {
          if ( isNeedRefresh )
          {
-            rc = rtnCoordGetRemoteGroupInfo( cb, groupID, NULL, groupInfo );
+            rc = rtnCoordGetRemoteGroupInfo( cb, groupID, NULL, groupInfo ) ;
          }
          else
          {
@@ -787,9 +787,9 @@ namespace engine
    }
 
    INT32 rtnCoordGetGroupInfo( pmdEDUCB * cb,
-                                         const CHAR * groupName,
-                                         BOOLEAN isNeedRefresh,
-                                         CoordGroupInfoPtr & groupInfo )
+                               const CHAR * groupName,
+                               BOOLEAN isNeedRefresh,
+                               CoordGroupInfoPtr & groupInfo )
    {
       INT32 rc = SDB_OK;
 
@@ -818,32 +818,49 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETLOCALGROUPINFO, "rtnCoordGetLocalGroupInfo" )
    INT32 rtnCoordGetLocalGroupInfo ( UINT32 groupID,
-                                               CoordGroupInfoPtr &groupInfo )
+                                     CoordGroupInfoPtr &groupInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETLOCALGROUPINFO ) ;
       pmdKRCB *pKrcb          = pmdGetKRCB();
       CoordCB *pCoordcb       = pKrcb->getCoordCB();
-      rc = pCoordcb->getGroupInfo( groupID, groupInfo);
+
+      if ( CATALOG_GROUPID == groupID )
+      {
+         groupInfo = pCoordcb->getCatGroupInfo() ;
+      }
+      else
+      {
+         rc = pCoordcb->getGroupInfo( groupID, groupInfo ) ;
+      }
       PD_TRACE_EXITRC ( SDB_RTNCOGETLOCALGROUPINFO, rc ) ;
-      return rc;
+      return rc ;
    }
 
    INT32 rtnCoordGetLocalGroupInfo ( const CHAR *groupName,
-                                               CoordGroupInfoPtr &groupInfo )
+                                     CoordGroupInfoPtr &groupInfo )
    {
+      INT32 rc = SDB_OK ;
       pmdKRCB *pKrcb          = pmdGetKRCB() ;
       CoordCB *pCoordcb       = pKrcb->getCoordCB() ;
-      return pCoordcb->getGroupInfo( groupName, groupInfo ) ;
+      if ( 0 == ossStrcmp( CATALOG_GROUPNAME, groupName )
+      {
+         groupInfo = pCoordcb->getCatGroupInfo() ;
+      }
+      else
+      {
+         rc = pCoordcb->getGroupInfo( groupName, groupInfo ) ;
+      }
+      return rc ;
    }
 
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETREMOTEGROUPINFO, "rtnCoordGetRemoteGroupInfo" )
    INT32 rtnCoordGetRemoteGroupInfo ( pmdEDUCB *cb,
-                                                UINT32 groupID,
-                                                const CHAR *groupName,
-                                                CoordGroupInfoPtr &groupInfo,
-                                                BOOLEAN addToLocal )
+                                      UINT32 groupID,
+                                      const CHAR *groupName,
+                                      CoordGroupInfoPtr &groupInfo,
+                                      BOOLEAN addToLocal )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETREMOTEGROUPINFO ) ;
@@ -856,6 +873,14 @@ namespace engine
 
       do
       {
+         // if catalogure group
+         if ( CATALOG_GROUPID != groupID ||
+              ( groupName && 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) ) )
+         {
+            rc = rtnCoordGetRemoteCatGroupInfo( cb, groupInfo ) ;
+            break ;
+         }
+
          CoordGroupInfoPtr cataGroupInfo;
          rc = rtnCoordGetCatGroupInfo( cb, isNeedRefresh, cataGroupInfo );
          if ( rc != SDB_OK )
@@ -900,10 +925,10 @@ namespace engine
 
          REQUESTID_MAP sendNodes;
          rc = rtnCoordSendRequestToPrimary( (CHAR *)(msg),
-                                    cataGroupInfo, sendNodes,
-                                    pRouteAgent,
-                                    MSG_ROUTE_CAT_SERVICE,
-                                    cb );
+                                            cataGroupInfo, sendNodes,
+                                            pRouteAgent,
+                                            MSG_ROUTE_CAT_SERVICE,
+                                            cb );
          if ( rc != SDB_OK )
          {
             rtnCoordClearRequest( cb, sendNodes );
@@ -981,8 +1006,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETCATGROUPINFO, "rtnCoordGetCatGroupInfo" )
    INT32 rtnCoordGetCatGroupInfo ( pmdEDUCB *cb,
-                                 BOOLEAN isNeedRefresh,
-                                 CoordGroupInfoPtr &groupInfo )
+                                   BOOLEAN isNeedRefresh,
+                                   CoordGroupInfoPtr &groupInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETCATGROUPINFO ) ;
@@ -1159,7 +1184,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETREMOTECATGROUPINFO, "rtnCoordGetRemoteCatGroupInfo" )
    INT32 rtnCoordGetRemoteCatGroupInfo ( pmdEDUCB *cb,
-                                       CoordGroupInfoPtr &groupInfo )
+                                         CoordGroupInfoPtr &groupInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETREMOTECATGROUPINFO ) ;
@@ -1195,20 +1220,20 @@ namespace engine
          msgGroupReq.header.TID = cb->getTID();
          REQUESTID_MAP sendNodes;
          rc = rtnCoordSendRequestToOne( (CHAR *)(&msgGroupReq),
-                                cataGroupInfo, sendNodes,
-                                pRouteAgent, MSG_ROUTE_CAT_SERVICE,
-                                cb );
+                                        cataGroupInfo, sendNodes,
+                                        pRouteAgent, MSG_ROUTE_CAT_SERVICE,
+                                        cb ) ;
          if ( rc != SDB_OK )
          {
             rtnCoordClearRequest( cb, sendNodes );
-            PD_LOG ( PDERROR,
-                     "Failed to get cata-group-info from catalogue-node,"
-                     "send group-info-request failed(rc=%d)", rc );
+            PD_LOG ( PDERROR, "Failed to get cata-group-info from "
+                     "catalogue-node,send group-info-request failed(rc=%d)",
+                     rc );
             break;
          }
          REPLY_QUE replyQue;
          rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                        MSG_CAT_GRP_RES );
+                                MSG_CAT_GRP_RES ) ;
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDWARNING,
@@ -1230,10 +1255,8 @@ namespace engine
                                     MSG_ROUTE_CAT_SERVICE );
                   if ( rc != SDB_OK )
                   {
-                     PD_LOG ( PDERROR,
-                              "Failed to get cata-group-info"
-                              "update route failed(rc=%d)",
-                              rc );
+                     PD_LOG ( PDERROR, "Failed to get cata-group-info"
+                              "update route failed(rc=%d)", rc ) ;
                   }
                }
             }
@@ -1315,9 +1338,8 @@ namespace engine
          // main-collection
          std::vector< std::string > subCLLst;
          rc = cataInfo->getSubCLList( subCLLst );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to get sub-collection list(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to get sub-collection list(rc=%d)",
+                      rc ) ;
          std::vector< std::string >::iterator iterCL
                            = subCLLst.begin();
          while( iterCL != subCLLst.end() )
@@ -1327,14 +1349,14 @@ namespace engine
             CoordGroupList::iterator iterGrp;
             rc = rtnCoordGetLocalCata( (*iterCL).c_str(), subCataInfo );
             PD_RC_CHECK( rc, PDWARNING,
-                        "failed to get sub-collection catalog-info(rc=%d)",
-                        rc );
+                         "Failed to get sub-collection catalog-info(rc=%d)",
+                         rc ) ;
             rc = rtnCoordGetGroupsByCataInfo( subCataInfo,
-                                             sendGroupLst,
-                                             groupLstTmp );
+                                              sendGroupLst,
+                                              groupLstTmp ) ;
             PD_RC_CHECK( rc, PDERROR,
-                        "failed to get sub-collection group-info(rc=%d)",
-                        rc );
+                         "Failed to get sub-collection group-info(rc=%d)",
+                         rc ) ;
             iterGrp = groupLstTmp.begin();
             while ( iterGrp != groupLstTmp.end() )
             {
@@ -1531,7 +1553,8 @@ namespace engine
                break;
             }
             CoordGroupInfoPtr groupInfo;
-            rc = rtnCoordGetGroupInfo( cb, iter->first, isNeedRefresh, groupInfo );
+            rc = rtnCoordGetGroupInfo( cb, iter->first, isNeedRefresh,
+                                       groupInfo );
             if ( rc != SDB_OK )
             {
                break;
@@ -1539,12 +1562,12 @@ namespace engine
             if ( isSendPrimary )
             {
                rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo, sendNodes,
-                                          pRouteAgent, iov, type, cb );
+                                                  pRouteAgent, iov, type, cb );
             }
             else
             {
                rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
-                                      pRouteAgent, iov, type, cb );
+                                              pRouteAgent, iov, type, cb );
             }
             if ( SDB_OK == rc || isNeedRefresh )
             {
@@ -1699,11 +1722,11 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTOONE, "rtnCoordSendRequestToOne" )
    INT32 rtnCoordSendRequestToOne( CHAR *pBuffer,
-                                 CoordGroupInfoPtr &groupInfo,
-                                 REQUESTID_MAP &sendNodes,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 MSG_ROUTE_SERVICE_TYPE type,
-                                 pmdEDUCB *cb )
+                                   CoordGroupInfoPtr &groupInfo,
+                                   REQUESTID_MAP &sendNodes,
+                                   netMultiRouteAgent *pRouteAgent,
+                                   MSG_ROUTE_SERVICE_TYPE type,
+                                   pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       BOOLEAN hasRetry = FALSE;
@@ -1828,7 +1851,8 @@ namespace engine
             }
             beginPos = ( beginPos + 1 ) % nodeNum ;
          }
-         if ( rc != SDB_OK && !hasRetry )
+         if ( rc != SDB_OK && !hasRetry &&
+              CATALOG_GROUPID != groupInfo->getGroupID() )
          {
             rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
                                        TRUE, groupInfo );
@@ -1844,12 +1868,12 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOSENDREQUESTTOONE2, "rtnCoordSendRequestToOne" )
    INT32 rtnCoordSendRequestToOne( MsgHeader *pBuffer,
-                                 CoordGroupInfoPtr &groupInfo,
-                                 REQUESTID_MAP &sendNodes,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 const netIOVec &iov,
-                                 MSG_ROUTE_SERVICE_TYPE type,
-                                 pmdEDUCB *cb )
+                                   CoordGroupInfoPtr &groupInfo,
+                                   REQUESTID_MAP &sendNodes,
+                                   netMultiRouteAgent *pRouteAgent,
+                                   const netIOVec &iov,
+                                   MSG_ROUTE_SERVICE_TYPE type,
+                                   pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       BOOLEAN hasRetry = FALSE;
@@ -1973,7 +1997,8 @@ namespace engine
             }
             beginPos = ( beginPos + 1 ) % nodeNum ;
          }
-         if ( rc != SDB_OK && !hasRetry )
+         if ( rc != SDB_OK && !hasRetry &&
+              CATALOG_GROUPID != groupInfo->getGroupID() )
          {
             rc = rtnCoordGetGroupInfo( cb, groupInfo->getGroupID(),
                                        TRUE, groupInfo );
