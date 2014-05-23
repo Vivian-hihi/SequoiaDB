@@ -1643,7 +1643,8 @@ retry :
                                       DMS_SU_DMP_OPT_HEX_WITH_ASCII |
                                       DMS_SU_DMP_OPT_HEX_PREFIX_AS_ADDR |
                                       gDumpType,
-                                      childExtents ) ;
+                                      childExtents,
+                                      gShowRecordContent ) ;
       PD_TRACE1 ( SDB_DUMPINXEXTS, PD_PACK_UINT(len) );
       if ( len >= gBufferSize-1 )
       {
