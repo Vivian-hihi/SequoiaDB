@@ -37,6 +37,8 @@
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_AHEAD, ",a" ), boost::program_options::value< INT32 >(), "specify the number of records to display before the lsn specified by -l/--lsn" ) \
         ( DPS_FILTER_COMMANDS_STRING( DPS_LOG_LSN_BACK, ",b" ), boost::program_options::value< INT32 >(), "specify the number of records to display after the lsn specified by -l/--lsn" )
 
+#define SDB_DPS_DUMP_HELP 1
+#define SDB_DPS_DUMP_VER  2
 class _dpsFilterOption : public engine::_pmdCfgRecord
 {
 public:

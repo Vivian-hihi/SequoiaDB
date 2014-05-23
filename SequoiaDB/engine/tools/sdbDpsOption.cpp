@@ -64,12 +64,14 @@ INT32 _dpsFilterOption::handle( const po::options_description &desc,
    if( vm.count( DPS_LOG_FILTER_HELP ) )
    {
       displayArgs( desc ) ;
+      rc = SDB_DPS_DUMP_HELP ;
       goto done ;
    }
 
    if( vm.count( DPS_LOG_FILTER_VER ) )
    {
       ossPrintVersion( "SequoiaDB version" ) ;
+      rc = SDB_DPS_DUMP_VER ;
       goto done ;
    }
 

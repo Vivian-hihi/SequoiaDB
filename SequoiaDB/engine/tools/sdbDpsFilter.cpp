@@ -842,8 +842,6 @@ namespace
          ++idx ;
       }
 
-      metaData.fileEnd = ( metaData.fileBegin - 1 + metaData.fileCount )
-                           % metaData.fileCount ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          "======================================="OSS_NEWLINE
                          ) ;

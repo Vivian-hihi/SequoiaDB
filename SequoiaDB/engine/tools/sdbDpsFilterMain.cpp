@@ -6,7 +6,7 @@
 INT32 main(INT32 argc, CHAR** argv)
 {
    INT32 rc                = SDB_OK ;
-   
+
    dpsLogFilter *logFilter = NULL ;
    iFilter *filter         = NULL ;
    dpsFilterOption op ;
@@ -19,11 +19,15 @@ INT32 main(INT32 argc, CHAR** argv)
       op.displayArgs( desc ) ;
       goto error ;
    }
-   
+
    rc = op.handle( desc, vm, filter ) ;
    if( rc )
    {
       goto error ;
+   }
+   if( SDB_DPS_DUMP_HELP == rc || SDB_DPS_DUMP_VER == rc )
+   {
+      goto done ;
    }
 
    logFilter = SDB_OSS_NEW dpsLogFilter( op.getCmdData() ) ;
