@@ -167,7 +167,8 @@ namespace engine
                                          UINT32 outSize,
                                          CHAR * addrPrefix,
                                          UINT32 options,
-                                         deque<dmsExtentID> &childExtents ) ;
+                                         deque<dmsExtentID> &childExtents,
+                                         BOOLEAN dumpIndexKey = FALSE ) ;
 
          static UINT32 dumpIndexExtentHeader ( void * inBuf,
                                                UINT32 inSize,
