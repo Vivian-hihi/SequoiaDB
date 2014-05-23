@@ -946,7 +946,8 @@ namespace engine
    UINT32 _dmsDump::dumpIndexExtent( void *inBuf, UINT32 inSize,
                                      CHAR *outBuf, UINT32 outSize,
                                      CHAR *addrPrefix, UINT32 options,
-                                     deque< dmsExtentID > &childExtents )
+                                     deque< dmsExtentID > &childExtents,
+                                     BOOLEAN dumpIndexKey )
    {
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;
@@ -1024,28 +1025,31 @@ namespace engine
             goto exit ;
          }
 
-         // dump all index keys
-         for ( INT32 i = 0; i < extentHead->_totalKeyNodeNum; ++i )
+         if( dumpIndexKey )
          {
-            UINT32 keyOffset = sizeof(ixmExtentHead) +
-                               sizeof(ixmKeyNode)*i ;
-            if ( keyOffset > inSize )
+            // dump all index keys
+            for ( INT32 i = 0; i < extentHead->_totalKeyNodeNum; ++i )
             {
+               UINT32 keyOffset = sizeof(ixmExtentHead) +
+                                  sizeof(ixmKeyNode)*i ;
+               if ( keyOffset > inSize )
+               {
+                  len += ossSnprintf ( outBuf + len, outSize - len,
+                                       "Error: key offset is out of range: %d, "
+                                       "extent size: %d, key pos: %d"OSS_NEWLINE,
+                                       keyOffset, inSize, i ) ;
+                  goto exit ;
+               }
                len += ossSnprintf ( outBuf + len, outSize - len,
-                                    "Error: key offset is out of range: %d, "
-                                    "extent size: %d, key pos: %d"OSS_NEWLINE,
-                                    keyOffset, inSize, i ) ;
-               goto exit ;
-            }
-            len += ossSnprintf ( outBuf + len, outSize - len,
-                                 "    Key %d:"OSS_NEWLINE,
-                                 i ) ;
-            len += dumpIndexRecord ( ((CHAR*)inBuf),
-                                     inSize,
-                                     outBuf + len, outSize - len,
-                                     keyOffset ) ;
-            len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
-         } // for ( INT32 i = 0; i < extentHead->_totalKeyNodeNum; ++i )
+                                    "    Key %d:"OSS_NEWLINE,
+                                    i ) ;
+               len += dumpIndexRecord ( ((CHAR*)inBuf),
+                                        inSize,
+                                        outBuf + len, outSize - len,
+                                        keyOffset ) ;
+               len += ossSnprintf ( outBuf + len, outSize - len, OSS_NEWLINE ) ;
+            } // for ( INT32 i = 0; i < extentHead->_totalKeyNodeNum; ++i )
+         }
       } // if ( DMS_SU_DMP_OPT_FORMATTED & options )
 
    exit :
