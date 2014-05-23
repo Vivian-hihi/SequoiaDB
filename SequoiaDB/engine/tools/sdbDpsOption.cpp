@@ -115,7 +115,7 @@ INT32 _dpsFilterOption::handle( const po::options_description &desc,
                ->createFilter( SDB_LOG_FILTER_LAST ) ;
       CHECK_FILTER( filter ) ;
    }
-   
+
    if( vm.count( DPS_LOG_FILTER_TYPE ) )
    {
       nextFilter = dpsFilterFactory::getInstance()
@@ -210,22 +210,12 @@ INT32 _dpsFilterOption::preSaving()
 INT32 _dpsFilterOption::doDataExchange( engine::pmdCfgExchange *pEx )
 {
    resetResult() ;
- 
-   rdxString( pEx, DPS_LOG_FILTER_SOURCE,
-            _cmdData.srcPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
-   INT32 len = ossStrlen( _cmdData.srcPath ) ;
-   if( OSS_FILE_SEP_CHAR == _cmdData.srcPath[ len - 1 ] )
-   {
-      _cmdData.srcPath[ len - 1 ] = '\0' ;
-   }
 
-   rdxString( pEx, DPS_LOG_FILTER_OUTPUT,
+   rdxPath( pEx, DPS_LOG_FILTER_SOURCE,
+            _cmdData.srcPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
+
+   rdxPath( pEx, DPS_LOG_FILTER_OUTPUT,
             _cmdData.dstPath, OSS_MAX_PATHSIZE, FALSE, FALSE, "./" ) ;
-   len = ossStrlen( _cmdData.dstPath ) ;
-   if( OSS_FILE_SEP_CHAR ==  _cmdData.dstPath[ len - 1 ] )
-   {
-      _cmdData.dstPath[ len - 1 ] = '\0' ;
-   }
 
    rdxString( pEx, DPS_LOG_FILTER_NAME,
             _cmdData.inputName, OSS_MAX_PATHSIZE, FALSE, FALSE, "" ) ;
