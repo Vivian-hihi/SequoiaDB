@@ -503,8 +503,8 @@ namespace engine
                if ( pEX->hasField( pFieldName ) )
                {
                   _result = SDB_PERM ;
-                  PD_LOG_MSG ( PDWARNING, "Field[%s] do not support changing in "
-                              "runtime", pFieldName ) ;
+                  PD_LOG ( PDWARNING, "Field[%s] do not support changing in "
+                           "runtime", pFieldName ) ;
                   goto error ;
                }
                goto done ;
@@ -623,8 +623,8 @@ namespace engine
                if ( pEX->hasField( pFieldName ) )
                {
                   _result = SDB_PERM ;
-                  PD_LOG_MSG ( PDWARNING, "Field[%s] do not support changing in "
-                               "runtime", pFieldName ) ;
+                  PD_LOG ( PDWARNING, "Field[%s] do not support changing in "
+                           "runtime", pFieldName ) ;
                   goto error ;
                }
                goto done ;
@@ -1361,7 +1361,7 @@ namespace engine
       ossStrncpy( _catAddrLine, catAddr.c_str(), OSS_MAX_PATHSIZE ) ;
       _catAddrLine[ OSS_MAX_PATHSIZE ] = 0 ;
 
-      engine::clsStrategy2String( _syncStrategy, _syncStrategyStr,
+      clsStrategy2String( _syncStrategy, _syncStrategyStr,
                           sizeof( _syncStrategyStr ) ) ;
 
       pmdPrefReplEnum2Str( _preferReplica, _prefReplStr,
