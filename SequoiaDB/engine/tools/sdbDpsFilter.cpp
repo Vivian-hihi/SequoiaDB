@@ -1020,7 +1020,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
             rc = SDB_INVALIDPATH ;
             goto error ;
          }
-         
+
          rc = metaFilte( metaData, out, filename, idx ) ;
          if( rc )
          {
@@ -1041,23 +1041,26 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
          goto error ;
       }
 
-      len = analysisMetaData( metaData, pOutBuffer, outBufferSize ) ;
-      if( len >= outBufferSize )
+      if( 0 < metaData.fileCount )
       {
-         len += BLOCK_SIZE ;
-         goto retry ;
-      }
-
-      if( data->output )
-      {
-         printf( "%s", pOutBuffer ) ;
-      }
-      else
-      {
-         rc = writeToFile( out, pOutBuffer ) ;
-         if( rc )
+         len = analysisMetaData( metaData, pOutBuffer, outBufferSize ) ;
+         if( len >= outBufferSize )
          {
-            goto error ;
+            len += BLOCK_SIZE ;
+            goto retry ;
+         }
+
+         if( data->output )
+         {
+            printf( "%s", pOutBuffer ) ;
+         }
+         else
+         {
+            rc = writeToFile( out, pOutBuffer ) ;
+            if( rc )
+            {
+               goto error ;
+            }
          }
       }
    }
