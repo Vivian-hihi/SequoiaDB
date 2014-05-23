@@ -43,7 +43,7 @@ _dpsFilterFactory* _dpsFilterFactory::getInstance()
 iFilter* _dpsFilterFactory::createFilter( int type )
 {
    iFilter *filter = NULL ;
-   
+
    switch( type )
    {
    case SDB_LOG_FILTER_TYPE :
@@ -240,7 +240,7 @@ namespace
 
       header = ( dpsLogRecordHeader * )pRecordHeadBuffer ;
       if ( header->_length < sizeof( dpsLogRecordHeader) ||
-              header->_length > DPS_RECORD_MAX_LEN )
+           header->_length > DPS_RECORD_MAX_LEN )
       {
          rc = SDB_DPS_CORRUPTED_LOG ;
          goto error ;
@@ -248,7 +248,7 @@ namespace
 
       if ( LOG_TYPE_DUMMY == header->_type )
       {
-         printf( "LSN is invalid\n" ) ;
+         printf( "Error: Dummy record head\n" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -374,10 +374,10 @@ namespace
             rc = SDB_DPS_CORRUPTED_LOG ;
             goto error ;
          }
-   
+
          if ( LOG_TYPE_DUMMY == header->_type )
          {
-            printf( "LSN is invalid\n" ) ;
+            printf( "Error: Dummy record head\n" ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -424,10 +424,10 @@ namespace
             rc = SDB_DPS_CORRUPTED_LOG ;
             goto error ;
          }
-   
+
          if ( LOG_TYPE_DUMMY == header->_type )
          {
-            printf( "LSN is invalid\n" ) ;
+            printf( "Error: Dummy record head\n" ) ;
             rc = SDB_INVALIDARG ;
             goto error ;
          }
@@ -453,7 +453,7 @@ namespace
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB_FORMATLOG ) ;
       OSSFILE in ;
-   
+
       CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
       CHAR *pRecordBuffer = NULL ;
       INT64 recordLength  = 0 ;
@@ -673,13 +673,13 @@ namespace
          }
 
          offset += header->_length ;
-         if( ( SDB_LOG_FILTER_LSN  == filter->getType() ) 
+         if( ( SDB_LOG_FILTER_LSN  == filter->getType() )
           || ( SDB_LOG_FILTER_LAST == filter->getType() ) )
          {
             --totalCount ;
          }
       }
-   
+
    done:
       if( pRecordBuffer )
          SDB_OSS_FREE( pRecordBuffer ) ;
@@ -689,7 +689,7 @@ namespace
          ossClose( in ) ;
       PD_TRACE_EXITRC( SDB_FORMATLOG, rc ) ;
       return rc ;
-   
+
    error:
       goto done ;
    }
@@ -719,7 +719,7 @@ namespace
          goto error ;
       }
       opened = TRUE ;
-   
+
       rc = checkLogFile( in, fileSize, filename );
       if( rc )
       {
@@ -734,7 +734,7 @@ namespace
       }
       // start format log head
       logHeader = (dpsLogHeader*)pLogHead ;
-   
+
       dpsFileMeta meta ;
       meta.index     = index ;
       meta.logID     = logHeader->_logID ;

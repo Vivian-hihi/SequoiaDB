@@ -143,6 +143,13 @@ INT32 _dpsLogFilter::doParse()
 
    if( isDir( _cmdData->srcPath ) )
    {
+      if( SDB_LOG_FILTER_LSN == _filter->getType() ||
+          SDB_LOG_FILTER_LAST == _filter->getType() )
+      {
+         printf( "Error: Cannot specify a dir path when using -l/-e\n" );
+         goto error ;
+      }
+
       INT32 const MAX_FILE_COUNT = getFileCount( _cmdData->srcPath ) ;
       if( 0 >= MAX_FILE_COUNT )
       {
@@ -189,7 +196,7 @@ INT32 _dpsLogFilter::doParse()
          goto error ;
       }
    }
- 
+
 done:
    if( Open )
    {
