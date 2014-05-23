@@ -4010,7 +4010,7 @@ namespace engine
          // separated by "," and sit in a single key: PMD_OPTION_CATALOG_ADDR
          if ( !hasCatalogAddrKey )
          {
-             MsgRouteID routeID ;
+            MsgRouteID routeID ;
             clsGroupItem *groupItem = catGroupInfo->getGroupItem() ;
             std::string cataNodeLst = "";
             UINT32 i = 0;
@@ -4273,7 +4273,7 @@ namespace engine
          if ( SDB_OK == rc )
          {
             if ( 0 == ossStrcmp( boNodeConfig.getField(
-                                 PMD_OPTION_ROLE ).valuestr(),
+                                 FIELD_NAME_GROUPNAME ).valuestr(),
                                  CATALOG_GROUPNAME ) )
             {
                // update catalog group
