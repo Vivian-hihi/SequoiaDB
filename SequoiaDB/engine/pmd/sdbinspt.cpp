@@ -57,20 +57,20 @@ using namespace engine ;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem ;
 
-#define BUFFERSIZE         256
-#define OPTION_HELP        "help"
-#define OPTION_DBPATH      "dbpath"
-#define OPTION_INDEXPATH   "indexpath"
-#define OPTION_OUTPUT      "output"
-#define OPTION_VERBOSE     "verbose"
-#define OPTION_CSNAME      "csname"
-#define OPTION_CLNAME      "clname"
-#define OPTION_ACTION      "action"
-#define OPTION_DUMPDATA    "dumpdata"
-#define OPTION_DUMPINDEX   "dumpindex"
-#define OPTION_PAGESTART   "pagestart"
-#define OPTION_NUMPAGE     "numpage"
-#define OPTION_SHOW_RECORD "record"
+#define BUFFERSIZE          256
+#define OPTION_HELP         "help"
+#define OPTION_DBPATH       "dbpath"
+#define OPTION_INDEXPATH    "indexpath"
+#define OPTION_OUTPUT       "output"
+#define OPTION_VERBOSE      "verbose"
+#define OPTION_CSNAME       "csname"
+#define OPTION_CLNAME       "clname"
+#define OPTION_ACTION       "action"
+#define OPTION_DUMPDATA     "dumpdata"
+#define OPTION_DUMPINDEX    "dumpindex"
+#define OPTION_PAGESTART    "pagestart"
+#define OPTION_NUMPAGE      "numpage"
+#define OPTION_SHOW_CONTENT "record"
 #define ADD_PARAM_OPTIONS_BEGIN( desc )\
         desc.add_options()
 
@@ -90,7 +90,7 @@ namespace fs = boost::filesystem ;
        ( COMMANDS_STRING(OPTION_DUMPINDEX, ",i"), boost::program_options::value<string>(), "dump index (true/false)" ) \
        ( COMMANDS_STRING(OPTION_PAGESTART, ",s"), boost::program_options::value<SINT32>(), "starting page number" ) \
        ( COMMANDS_STRING(OPTION_NUMPAGE, ",n"), boost::program_options::value<SINT32>(), "number of pages" ) \
-       ( COMMANDS_STRING(OPTION_SHOW_RECORD, ",p"), boost::program_options::value<string>(), "display record content(true/false)" )
+       ( COMMANDS_STRING(OPTION_SHOW_CONTENT, ",p"), boost::program_options::value<string>(), "display data/index content(true/false)" )
 
 // bitwise operation
 #define ACTION_INSPECT           0x01
@@ -430,9 +430,9 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }
-   if( vm.count( OPTION_SHOW_RECORD ) )
+   if( vm.count( OPTION_SHOW_CONTENT ) )
    {
-      ossStrToBoolean( vm[OPTION_SHOW_RECORD].as<string>().c_str(),
+      ossStrToBoolean( vm[OPTION_SHOW_CONTENT].as<string>().c_str(),
                        &gShowRecordContent ) ;
    }
    // show input parameters on screen so people can see it
