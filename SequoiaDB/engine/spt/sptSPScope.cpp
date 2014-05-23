@@ -476,6 +476,8 @@ namespace engine
          rc = SDB_INVALIDARG ;
          goto error ;
       }
+
+      rval = builder.obj() ;
    done:
       return rc ;
    error:
