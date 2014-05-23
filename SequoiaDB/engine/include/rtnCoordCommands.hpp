@@ -77,6 +77,8 @@ namespace engine
    #define COORD_CMD_ADD_DOMAIN_GROUP         CMD_ADMIN_PREFIX CMD_NAME_ADD_DOMAIN_GROUP
    #define COORD_CMD_REMOVE_DOMAIN_GROUP      CMD_ADMIN_PREFIX CMD_NAME_REMOVE_DOMAIN_GROUP
    #define COORD_CMD_LIST_DOMAINS             CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS
+   #define COORD_CMD_LIST_CS_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN
+   #define COORD_CMD_LIST_CL_IN_DOMAIN        CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN
 
 #if defined (_DEBUG)
    #define COORD_CMD_DEBUG_QUERY              CMD_ADMIN_PREFIX CMD_NAME_DEBUG_QUERY
@@ -1126,5 +1128,23 @@ namespace engine
                                        pmdEDUCB *cb,
                                        CHAR **ppOutput );
    } ;
+
+   class rtnCoordCMDListCSInDomain : public rtnCoordCMDQueryBase
+   {
+   public:
+      virtual INT32 buildQueryRequest( CHAR *pIntput,
+                                       pmdEDUCB *cb,
+                                       CHAR **ppOutput );
+   } ;
+
+/*
+   class rtnCoordCMDListCLInDomain : public rtnCoordCMDQueryBase
+   {
+   public:
+      virtual INT32 buildQueryRequest( CHAR *pIntput,
+                                       pmdEDUCB *cb,
+                                       CHAR **ppOutput );
+   } ;
+*/
 }
 #endif

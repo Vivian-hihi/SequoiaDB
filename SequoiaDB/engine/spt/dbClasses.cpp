@@ -3294,8 +3294,10 @@ error :
    goto done ;
 }
 
+PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_ALTER, "domain_alter" )
 static JSBool domain_alter( JSContext *cx, uintN argc, jsval *vp )
 {
+   PD_TRACE_ENTRY( SDB_DOMAIN_ALTER ) ;
    INT32 rc = SDB_OK ;
    JSBool ret = JS_TRUE ;
    sdbDomainHandle *domain = NULL ;
@@ -3332,15 +3334,93 @@ static JSBool domain_alter( JSContext *cx, uintN argc, jsval *vp )
 
 done:
    bson_destroy( &argObj ) ;
+   PD_TRACE_EXIT( SDB_DOMAIN_ALTER ) ;
    return ret ;
 error:
    goto done ;
 }
 
+PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_LIST_CS, "domain_list_cs" )
+static JSBool domain_list_cs( JSContext *cx, uintN argc, jsval *vp )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_DOMAIN_LIST_CS ) ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+   sdbCursorHandle *handle = NULL ;
+   JSObject *objCursor = NULL ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.listCollectionSpaces(): no domain handle" ) ;
+
+   handle = (sdbCursorHandle *)
+               JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
+   VERIFY ( handle ) ;
+   *handle  = SDB_INVALID_HANDLE ;
+
+   rc = sdbListCollectionSpacesInDomain( *domain,
+                                         handle ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.listCollectionSpaces()", rc ) ;
+
+   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+   VERIFY ( objCursor ) ;
+
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
+   VERIFY ( JS_SetPrivate ( cx , objCursor , handle ) ) ;
+done:
+   PD_TRACE_EXIT( SDB_DOMAIN_LIST_CS ) ;
+   return ret ;
+error:
+   SAFE_RELEASE_CURSOR ( handle ) ;
+   SAFE_JS_FREE ( cx , handle ) ;
+   goto done ;
+}
+
+PD_TRACE_DECLARE_FUNCTION ( SDB_DOMAIN_LIST_CL, "domain_list_cl" )
+static JSBool domain_list_cl( JSContext *cx, uintN argc, jsval *vp )
+{
+   INT32 rc = SDB_OK ;
+   PD_TRACE_ENTRY( SDB_DOMAIN_LIST_CL ) ;
+   JSBool ret = JS_TRUE ;
+   sdbDomainHandle *domain = NULL ;
+   sdbCursorHandle *handle = NULL ;
+   JSObject *objCursor = NULL ;
+
+   domain = ( sdbDomainHandle * )
+            JS_GetPrivate ( cx, JS_THIS_OBJECT ( cx, vp ) ) ;
+   REPORT ( domain, "Domain.listCollections(): no domain handle" ) ;
+
+   handle = (sdbCursorHandle *)
+               JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
+   VERIFY ( handle ) ;
+   *handle  = SDB_INVALID_HANDLE ;
+
+   rc = sdbListCollectionsInDomain( *domain,
+                                    handle ) ;
+   REPORT_RC ( SDB_OK == rc, "Domain.listCollections()", rc ) ;
+
+   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+   VERIFY ( objCursor ) ;
+
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
+   VERIFY ( JS_SetPrivate ( cx , objCursor , handle ) ) ;
+done:
+   PD_TRACE_EXIT( SDB_DOMAIN_LIST_CS ) ;
+   return ret ;
+error:
+   SAFE_RELEASE_CURSOR ( handle ) ;
+   SAFE_JS_FREE ( cx , handle ) ;
+   goto done ;
+}
+
 static JSFunctionSpec domain_functions[] = {
    JS_FS( "alter", domain_alter, 0, 0 ),
+   JS_FS( "listCollectionSpaces", domain_list_cs, 0, 0 ),
+   JS_FS( "listCollections", domain_list_cl, 0, 0 ),
    JS_FS_END
 } ;
+
 
 // ----------- Sdb --------------
 PD_TRACE_DECLARE_FUNCTION ( SDB_DESTRUCTOR, "sdb_destructor" )

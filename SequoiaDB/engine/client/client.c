@@ -1351,6 +1351,12 @@ static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
    case SDB_LIST_TASKS :
       p = CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS ;
       break ;
+   case SDB_LIST_CS_IN_DOMAIN :
+      p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
+      break ;
+   case SDB_LIST_CL_IN_DOMAIN :
+      p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ;
+      break ;
    default :
       return SDB_INVALIDARG ;
    }
@@ -7383,7 +7389,7 @@ SDB_EXPORT INT32 sdbDropDomain ( sdbConnectionHandle cHandle,
    INT32 nameLength       = 0 ;
    bson newObj ;
    CHAR *pDropDomain      = CMD_ADMIN_PREFIX CMD_NAME_DROP_DOMAIN ;
-   CHAR *pName            = CAT_DOMAIN_NAME ;
+   CHAR *pName            = FIELD_NAME_NAME ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
    bson_init ( &newObj ) ;
 
@@ -7572,4 +7578,59 @@ error:
    goto done ;   
 }
 
+SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
+                                                  sdbCursorHandle *cursor )
+{
+   INT32 rc = SDB_OK ;
+   sdbDomainStruct *s ;
+   bson condition ;
+   bson_init( &condition ) ;
+   bson selector ;
+   bson_init( &selector ) ;
+
+   if ( SDB_INVALID_HANDLE == cHandle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   s = ( sdbDomainStruct * )cHandle ;
+   if ( SDB_HANDLE_TYPE_DOMAIN != s->_handleType )
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+
+   rc =  bson_append_string( &condition, FIELD_NAME_DOMAIN, s->_domainName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   bson_finish( &condition ) ;
+
+   rc = bson_append_null( &selector, FIELD_NAME_NAME ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+   }
+
+   bson_finish( &selector ) ;
+
+   return sdbGetList ( s->_connection, SDB_LIST_CS_IN_DOMAIN, &condition,
+                       &selector, NULL, cursor ) ;
+done:
+   bson_destroy( &condition ) ;
+   bson_destroy( &selector ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
+                                             sdbCursorHandle *cursor )
+{
+   return SDB_SYS ;
+}
 

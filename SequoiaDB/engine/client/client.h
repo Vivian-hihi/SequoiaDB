@@ -57,6 +57,8 @@ SDB_EXTERN_C_START
 #define SDB_LIST_STOREPROCEDURES  8
 #define SDB_LIST_DOMAINS          9
 #define SDB_LIST_TASKS            10
+#define SDB_LIST_CS_IN_DOMAIN     11
+#define SDB_LIST_CL_IN_DOMAIN     12
 
 #define SDB_INVALID_HANDLE       ((ossValuePtr) 0)
 typedef ossValuePtr sdbConnectionHandle   ;
@@ -1721,5 +1723,28 @@ SDB_EXPORT INT32 sdbListDomains ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
                                  const bson *options ) ;
 
+/** \fn INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
+                                               sdbCursorHandle *cursor ) ;
+    \brief alter the domains.
+    \param [in] cHandle The domain handle
+    \param [out] handle The cusor handle of result 
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
+                                                  sdbCursorHandle *cursor ) ;
+
+/** \fn INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
+                                          sdbCursorHandle *cursor ) ;
+    \brief alter the domains.
+    \param [in] cHandle The domain handle
+    \param [out] handle The cusor handle of result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
+                                             sdbCursorHandle *cursor ) ;
+
 SDB_EXTERN_C_END
 #endif
+

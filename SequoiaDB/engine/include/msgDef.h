@@ -304,6 +304,8 @@
 #define CMD_NAME_LIST_STORAGEUNITS           "list storageunits"
 #define CMD_NAME_LIST_GROUPS                 "list groups"
 #define CMD_NAME_LIST_DOMAINS                "list domains"
+#define CMD_NAME_LIST_CS_IN_DOMAIN           "list collectionspaces in domain"
+#define CMD_NAME_LIST_CL_IN_DOMAIN           "list collections in domain"
 #define CMD_NAME_LIST_BACKUPS                "list backups"
 #define CMD_NAME_LIST_TASKS                  "list tasks"
 #define CMD_NAME_RENAME_COLLECTION           "rename collection"
