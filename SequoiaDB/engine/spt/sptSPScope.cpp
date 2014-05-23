@@ -411,7 +411,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       bson::BSONObjBuilder builder ;
 
-      if ( JSVAL_IS_STRING( jsrval ) )
+      if ( JSVAL_IS_VOID( jsrval ) )
+      {
+
+      }
+      else if ( JSVAL_IS_STRING( jsrval ) )
       {
          std::string v ;
          rc = sptConvertor2::toString( cx, jsrval, v ) ;
