@@ -41,7 +41,7 @@ public class SequoiadbOption {
 	private int timeout = 5 * 1000;
 	// clean the abandon connection period
     private int recheckCyclePeriod = 1 * 60 * 1000;
-    // when the last service time of a connection longer then this,
+    // when the last service time of a connection longer than this,
     // we will abandon it.
     private int abandonTime = 10 * 60 * 1000;
 
@@ -134,8 +134,8 @@ public class SequoiadbOption {
     * @fn void setRecheckCyclePeriod(int recheckCyclePeriod)
     * @brief Set the recheck cycle in milliseconds. In each cycle
     *        datasource cleans all the discardable connection,
-    *        and keep the number of valid connection not more then maxIdeNum. 
-    * @param recheckCyclePeriod recheckCyclePeriod should be less then abandonTime. Default to be 1 * 60 * 1000ms
+    *        and keep the number of valid connection not more than maxIdeNum. 
+    * @param recheckCyclePeriod recheckCyclePeriod should be less than abandonTime. Default to be 1 * 60 * 1000ms
     * @exception com.sequoiadb.exception.BaseException when recheckCyclePeriod is negative
     * @note recheckCyclePeriod is used to initalize datasource, it will be use in the Constructor of datasource to initalize
     * a Timer instance, once it is set, we can not change the recheck cycle of the Timer instance by setRecheckCyclePeriod().
@@ -183,7 +183,7 @@ public class SequoiadbOption {
    /**
     * @fn void setAbandonTime(int abandonTime)
     * @brief Set the time in milliseconds for abandoning discardable connection.
-    *        If a connection has not be used for a long time(longer then abandonTime),
+    *        If a connection has not be used for a long time(longer than abandonTime),
     *        datasource would not let it come back to pool. And it will clean this kind of
     *        connections in the pool periodically. 
     * @param abandonTime defalt to be 10 * 60 * 1000ms

@@ -60,7 +60,7 @@ public class ReplicaGroup {
 		BSONObject group = sdb.getDetailById(id);
 		this.name = group.get(SequoiadbConstants.FIELD_NAME_GROUPNAME)
 				.toString();
-		this.isCataRG = name.startsWith(Sequoiadb.CATALOG_GROUP_NAME);
+		this.isCataRG = name.equals(Sequoiadb.CATALOG_GROUP_NAME);
 	}
 	
 	ReplicaGroup(Sequoiadb sdb, String name) {

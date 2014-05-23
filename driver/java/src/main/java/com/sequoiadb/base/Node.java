@@ -21,7 +21,7 @@ public class Node {
 	private String nodeName;
 	private int id;
 	private ReplicaGroup rg;
-	private Sequoiadb sdb;
+	private Sequoiadb ddb;
 	private NodeStatus status;
 
 	Node(String hostName, int port, int nodeId, ReplicaGroup rg) {
@@ -84,7 +84,7 @@ public class Node {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public void disconnect() throws BaseException {
-		sdb.disconnect();
+		ddb.disconnect();
 	}
 
 	/**
@@ -94,9 +94,9 @@ public class Node {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb connect() throws BaseException {
-		sdb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
+		ddb = new Sequoiadb(hostName, port, rg.getSequoiadb().getUserName(),
 				rg.getSequoiadb().getPassword());
-		return sdb;
+		return ddb;
 	}
 
 	/**
@@ -110,8 +110,8 @@ public class Node {
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public Sequoiadb connect(String username, String password) throws BaseException {
-		sdb = new Sequoiadb(hostName, port, username, password);
-		return sdb;
+		ddb = new Sequoiadb(hostName, port, username, password);
+		return ddb;
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class Node {
 	 * @return The Sequoiadb object of current node.
 	 */
 	public Sequoiadb getSdb() {
-		return sdb;
+		return ddb;
 	}
 
 	/**

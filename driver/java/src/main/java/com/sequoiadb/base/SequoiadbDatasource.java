@@ -91,7 +91,7 @@ public class SequoiadbDatasource {
 			return ;
 		// check option
 		if (option.getMaxConnectionNum() < option.getInitConnectionNum())
-			throw new BaseException("SDB_INVALIDARG", "maxConnectionNum is less then initConnectionNum, maxConnectionNum is " +
+			throw new BaseException("SDB_INVALIDARG", "maxConnectionNum is less than initConnectionNum, maxConnectionNum is " +
 					            option.getMaxConnectionNum() + ", initConnectionNum is " + option.getInitConnectionNum());
 		if (option.getInitConnectionNum() < 0)
 			throw new BaseException("SDB_INVALIDARG", 
@@ -179,7 +179,7 @@ public class SequoiadbDatasource {
 		if (option.getRecheckCyclePeriod() <= 0)
 			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + option.getRecheckCyclePeriod());
 		if (option.getRecheckCyclePeriod() >= option.getAbandonTime())
-			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less then abandonTime, recheckCyclePeriod is " +
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less than abandonTime, recheckCyclePeriod is " +
 					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		// if the busy queue contain this instance
 		if (used_sequoiadbs.contains(sequoiadb)) 
@@ -234,7 +234,7 @@ public class SequoiadbDatasource {
 						                "deltaIncCount is negative: " + option.getDeltaIncCount());
 		if (option.getMaxConnectionNum() < option.getDeltaIncCount())
 			throw new BaseException("SDB_INVALIDARG",
-					                "deltaIncCount is greater then maxConnectionNum, deltaIncCount is " +
+					                "deltaIncCount is greater than maxConnectionNum, deltaIncCount is " +
 					option.getDeltaIncCount() + ", maxConnectionNum is " + option.getMaxConnectionNum());
 		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
                                    option.getDeltaIncCount()) 
@@ -271,7 +271,7 @@ public class SequoiadbDatasource {
 		if (option.getRecheckCyclePeriod() <= 0)
 			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + option.getRecheckCyclePeriod());
 		if (option.getRecheckCyclePeriod() >= option.getAbandonTime())
-			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less then abandonTime, recheckCyclePeriod is " +
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less than abandonTime, recheckCyclePeriod is " +
 					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		long lastTime = 0;
 		long currentTime = System.currentTimeMillis();
