@@ -843,7 +843,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdKRCB *pKrcb          = pmdGetKRCB() ;
       CoordCB *pCoordcb       = pKrcb->getCoordCB() ;
-      if ( 0 == ossStrcmp( CATALOG_GROUPNAME, groupName )
+      if ( 0 == ossStrcmp( CATALOG_GROUPNAME, groupName ) )
       {
          groupInfo = pCoordcb->getCatGroupInfo() ;
       }
