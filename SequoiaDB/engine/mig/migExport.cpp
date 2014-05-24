@@ -243,6 +243,10 @@ INT32 migExport::_writeFile( bson *pbson )
          goto error ;
       }
    }
+   else if ( _pMigArg->type == MIGEXPRT_JSON )
+   {
+      
+   }
 
    if ( bufferSize < 0 )
    {
