@@ -41,7 +41,7 @@
 #include "../client/bson/bson.h"
 #include "time.h"
 #include <math.h>
-//#include "ossUtil.h"
+#include "../client/base64c.h"
 
 #define CSV_STR_TABLE   '\t'
 #define CSV_STR_CR      '\r'
@@ -230,8 +230,12 @@ INT32 csvParser::_parseValue( _valueData &valueData,
    switch( fieldData.type )
    {
    case CSV_TYPE_INT:
-      _value2str( pBuffer, size,
-                  &pBuffer, size ) ;
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _string2int( valueData.varInt,
                         pBuffer,
                         size ) ;
@@ -259,8 +263,12 @@ INT32 csvParser::_parseValue( _valueData &valueData,
       }
       break ;
    case CSV_TYPE_LONG:
-      _value2str( pBuffer, size,
-                  &pBuffer, size ) ;
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _string2long( valueData.varLong,
                          pBuffer,
                          size ) ;
@@ -379,14 +387,22 @@ INT32 csvParser::_parseValue( _valueData &valueData,
       valueData.type = CSV_TYPE_NULL ;
       break ;
    case CSV_TYPE_STRING:
-      _value2str( pBuffer, size,
-                  &pBuffer, size ) ;
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       valueData.pVarString = pBuffer ;
       valueData.stringSize = size ;
       break ;
    case CSV_TYPE_TIMESTAMP:
-      _value2str( pBuffer, size,
-                  &pBuffer, size ) ;
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _string2timestamp( valueData.varTimestamp,
                               pBuffer,
                               size ) ;
@@ -410,8 +426,12 @@ INT32 csvParser::_parseValue( _valueData &valueData,
       }
       break ;
    case CSV_TYPE_DATE:
-      _value2str( pBuffer, size,
-                  &pBuffer, size ) ;
+      rc = _value2str( pBuffer, size,
+                      &pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
       rc = _string2date( valueData.varLong,
                          pBuffer,
                          size ) ;
@@ -527,7 +547,7 @@ INT32 csvParser::_parseNumber( CHAR *pBuffer, INT32 size,
       }
    }
 
-   if ( size > 0 && *pBuffer == 'e' || *pBuffer == 'E' )
+   if ( size > 0 && ( *pBuffer == 'e' || *pBuffer == 'E' ) )
    {
       --size ;
       ++pBuffer ;
@@ -1229,7 +1249,6 @@ error:
 INT32 csvParser::_string2date2( INT64 &value, CHAR *pBuffer, INT32 size )
 {
    INT32 rc = SDB_OK ;
-   INT64 varLong = 0 ;
 
    rc = _string2long( value, pBuffer, size ) ;
    if ( rc )
@@ -1304,7 +1323,7 @@ INT32 csvParser::init( BOOLEAN autoAddField,
 {
    INT32 rc = SDB_OK ;
 
-   if ( isHeaderline )
+   /*if ( isHeaderline  )
    {
       if( ( delChar == CSV_STR_SPACE || delChar == CSV_STR_TABLE ) ||
           ( delField == CSV_STR_SPACE || delField == CSV_STR_TABLE ) ||
@@ -1315,7 +1334,7 @@ INT32 csvParser::init( BOOLEAN autoAddField,
 can not specify delchar, delfield,delrecord as 0x20 or 0x09" ) ;
          goto error ;
       }
-   }
+   }*/
    if ( delChar == delField )
    {
       rc = SDB_INVALIDARG ;
@@ -1621,7 +1640,7 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
    INT32   rc           = SDB_OK ;
    INT32   bsonsize     = 0 ;
    INT32   fieldSize    = 0 ;
-   UINT32  fieldNum     = 0 ;
+   INT32   fieldNum     = 0 ;
    INT32   autoFieldNum = 1 ;
    //field sum
    INT32   fieldSumNum  = _vField.size() ;
@@ -1629,6 +1648,7 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
    CHAR   *pCursor      = pBuffer ;
    CHAR   *leftField    = pBuffer ;
    CHAR   *pBsonBuf     = NULL ;
+   CHAR    fieldName[CSV_STR_FIELD_MAX_SIZE] ;
    _valueData valueData ;
    bson obj ;
    bson_init ( &obj ) ;
@@ -1648,13 +1668,13 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                {
                   if ( _addField )
                   {
-                     ossMemset ( _fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
-                     ossSnprintf ( _fieldName,
+                     ossMemset ( fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
+                     ossSnprintf ( fieldName,
                                    CSV_STR_FIELD_MAX_SIZE,
                                    CSV_STR_FIELD "%d",
                                    autoFieldNum ) ;
                      rc = _appendBson( &obj, CSV_TYPE_NULL,
-                                       _fieldName, NULL, 0 ) ;
+                                       fieldName, NULL, 0 ) ;
                      if ( rc )
                      {
                         goto error ;
@@ -1675,7 +1695,8 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                   else
                   {
                      rc = _appendBson( &obj, CSV_TYPE_NULL,
-                                       _vField.at(fieldNum)->pField, NULL, 0 ) ;                     if ( rc )
+                                       _vField.at(fieldNum)->pField, NULL, 0 ) ;
+                     if ( rc )
                      {
                         goto error ;
                      }
@@ -1689,8 +1710,8 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                {
                   if ( _addField )
                   {
-                     ossMemset ( _fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
-                     ossSnprintf ( _fieldName,
+                     ossMemset ( fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
+                     ossSnprintf ( fieldName,
                                    CSV_STR_FIELD_MAX_SIZE,
                                    CSV_STR_FIELD "%d",
                                    autoFieldNum ) ;
@@ -1699,7 +1720,7 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                      {
                         goto error ;
                      }
-                     rc = _appendBson( &obj, _fieldName, &valueData ) ;
+                     rc = _appendBson( &obj, fieldName, &valueData ) ;
                      if ( rc )
                      {
                         goto error ;
@@ -1757,12 +1778,12 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
             {
                if ( _addField )
                {
-                  ossMemset ( _fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
-                  ossSnprintf ( _fieldName,
+                  ossMemset ( fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
+                  ossSnprintf ( fieldName,
                                 CSV_STR_FIELD_MAX_SIZE,
                                 CSV_STR_FIELD "%d",
                                 autoFieldNum ) ;
-                  rc = _appendBson( &obj, CSV_TYPE_NULL, _fieldName, NULL, 0 ) ;
+                  rc = _appendBson( &obj, CSV_TYPE_NULL, fieldName, NULL, 0 ) ;
                   if ( rc )
                   {
                      goto error ;
@@ -1798,8 +1819,8 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
             {
                if ( _addField )
                {
-                  ossMemset ( _fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
-                  ossSnprintf ( _fieldName,
+                  ossMemset ( fieldName, 0, CSV_STR_FIELD_MAX_SIZE ) ;
+                  ossSnprintf ( fieldName,
                                 CSV_STR_FIELD_MAX_SIZE,
                                 CSV_STR_FIELD "%d",
                                 autoFieldNum ) ;
@@ -1808,7 +1829,7 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                   {
                      goto error ;
                   }
-                  rc = _appendBson( &obj, _fieldName, &valueData ) ;
+                  rc = _appendBson( &obj, fieldName, &valueData ) ;
                   if ( rc )
                   {
                      goto error ;
