@@ -52,6 +52,9 @@
 #define CSV_STR_TIMESTAMP  "timestamp"
 #define CSV_STR_DATE       "date"
 #define CSV_STR_NULL       "null"
+#define CSV_STR_UNDEFINED  "undefined"
+#define CSV_STR_MINKEY     "minKey"
+#define CSV_STR_MAXKEY     "maxKey"
 
 /* type value */
 #define CSV_STR_TRUE       "true"
@@ -72,6 +75,9 @@
 #define CSV_STR_TIMESTAMP_SIZE   ( sizeof( CSV_STR_TIMESTAMP ) - 1 )
 #define CSV_STR_DATE_SIZE        ( sizeof( CSV_STR_DATE ) - 1 )
 #define CSV_STR_NULL_SIZE        ( sizeof( CSV_STR_NULL ) - 1 )
+#define CSV_STR_UNDEFINED_SIZE   ( sizeof( CSV_STR_UNDEFINED ) - 1 )
+#define CSV_STR_MINKEY_SIZE      ( sizeof( CSV_STR_MINKEY ) - 1 )
+#define CSV_STR_MAXKEY_SIZE      ( sizeof( CSV_STR_MAXKEY ) - 1 )
 
 #define CSV_STR_TRUE_SIZE        ( sizeof( CSV_STR_TRUE ) - 1 )
 #define CSV_STR_FALSE_SIZE       ( sizeof( CSV_STR_FALSE ) - 1 )
@@ -158,7 +164,6 @@ private:
    CHAR    _delChar ;
    CHAR    _delField ;
    CHAR    _delRecord ;
-   CHAR    _fieldName[CSV_STR_FIELD_MAX_SIZE] ;
    std::vector<_fieldData *> _vField ;
 private:
    CHAR *_trimLeft ( CHAR *pCursor, INT32 &size ) ;
