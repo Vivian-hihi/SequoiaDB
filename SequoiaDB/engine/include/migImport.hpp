@@ -109,11 +109,8 @@ private:
    csvParser           _csvParser ;
 private:
    INT32 _connectDB() ;
-   //INT32 _getCSList() ;
-   //INT32 _getCLList( CHAR *pCSName ) ;
    INT32 _getCS( CHAR *pCSName ) ;
    INT32 _getCL( CHAR *pCLName ) ;
-   //INT32 _getCL2( CHAR *pFullName ) ;
 private:
    INT32 _importRecord ( bson **bsonObj ) ;
    INT32 _importRecord ( bson **bsonObj, UINT32 bsonNum ) ;
