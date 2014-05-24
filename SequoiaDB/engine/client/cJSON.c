@@ -1133,7 +1133,7 @@ static const char *parse_second_command(cJSON *item,const char *value,int cj_typ
          value = skip ( value + 1 ) ;
       }
       else
-         value = skip ( value + 1 ) ;
+         value = skip ( value ) ;
       /* not a commond! */
       if (*value!='$')
       {
