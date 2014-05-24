@@ -259,4 +259,5 @@ void _utilDataParser::setDel ( CHAR delChar, CHAR delField, CHAR delRecord )
 _utilDataParser::~_utilDataParser()
 {
    SAFE_OSS_FREE ( _buffer ) ;
+   SAFE_OSS_DELETE( _pAccessData ) ;
 }
