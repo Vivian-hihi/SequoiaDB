@@ -30,7 +30,7 @@
    defect Date        Who Description
    ====== =========== === ==============================================
           09/14/2012  TW  Initial Draft
-
+          05/22/2014  HJW Initial Draft
    Last Changed =
 
 *******************************************************************************/
@@ -39,101 +39,85 @@
 
 #include "core.hpp"
 #include "oss.hpp"
+#include "../client/bson/bson.h"
 #include "../client/client.h"
+#include "../util/rawbson2csv.hpp"
 #include "ossIO.hpp"
-#include <string>
-#include <vector>
-using namespace std ;
-#define MIG_MAX_EXTRACT_BUFFER 256*1024*1024
-#define MIG_INC_EXTRACT_BUFFER 4194304
 
-#define MIG_DEFAULT_DELCHAR '"'
-#define MIG_DEFAULT_DELFIELD ','
-#define MIG_DEFAULT_DELRECORD '\n'
-
-#define INC_BUF_SIZE 4096
-#define INIT_BUF_SIZE 1024
-
-enum migExportTypes
+enum EXPRTTYPE
 {
-   MIG_EXPORT_TYPE_CSV = 0,
-   MIG_EXPORT_TYPE_BIN,
-   MIG_EXPORT_TYPE_JSON
+   MIGEXPRT_CSV = 0,
+   MIGEXPRT_JSON
 } ;
 
-class _migExtractor : public SDBObject
+struct migExprtArg : public SDBObject
 {
-protected :
-   migExportTypes _exportType ;
-   OSSFILE _file ;
-   CHAR _delChar[2] ;
-   CHAR _delField[2] ;
-   CHAR _delRecord[2] ;
-   sdbCollectionHandle _collection ;
-   sdbCursorHandle _cursor ;
-   BOOLEAN _isOpened ;
-   BOOLEAN _init ;
-   CHAR *_pExtractBuffer ;
-   CHAR *_pCurPtr ;
-   UINT32 _bufSize ;
-   virtual INT32 _extractRecord () = 0 ;
-   BOOLEAN _hexStrToDel ( const CHAR *pHexStr,
-                          CHAR &del ) ;
-   BOOLEAN _strToDel ( const CHAR *pDelStr,
-                       CHAR &del ) ;
-   INT32 _reallocMem ( UINT32 requiredSize ) ;
-   INT32 _appendStr ( const CHAR *pStr ) ;
-   INT32 _flushBuf () ;
-   OSS_INLINE ossValuePtr _bufOccupied ()
+   CHAR      delChar ;
+   CHAR      delField ;
+   CHAR      delRecord ;
+   EXPRTTYPE type ;
+   BOOLEAN   hasOid ;
+   BOOLEAN   include ;
+   BOOLEAN   errorStop ;
+   CHAR     *pHostname ;
+   CHAR     *pSvcname ;
+   CHAR     *pUser ;
+   CHAR     *pPassword ;
+   CHAR     *pCSName ;
+   CHAR     *pCLName ;
+   CHAR     *pFile ;
+   CHAR     *pFields ;
+   migExprtArg() : delChar(0),
+                   delField(0),
+                   delRecord(0),
+                   type(MIGEXPRT_CSV),
+                   hasOid(TRUE),
+                   include(TRUE),
+                   errorStop(TRUE),
+                   pHostname(NULL),
+                   pSvcname(NULL),
+                   pUser(NULL),
+                   pPassword(NULL),
+                   pCSName(NULL),
+                   pCLName(NULL),
+                   pFile(NULL),
+                   pFields(NULL)
    {
-      return _pCurPtr - _pExtractBuffer ;
    }
-   OSS_INLINE ossValuePtr _bufFree ()
-   {
-      return _bufSize - _bufOccupied() ;
-   }
-public :
-   _migExtractor () ;
-   virtual ~_migExtractor () ;
-   INT32 run () ;
 } ;
 
-class _migCSVExtractor : public _migExtractor
-{
-private :
-   vector<string> _fieldList ;
-   BOOLEAN _incHead ;
-protected :
-   INT32 _extractRecord () ;
-   INT32 _extractString ( CHAR *str, INT32 strLen, BOOLEAN trim, CHAR delChar ) ;
-public :
-   _migCSVExtractor ( vector<string> &fieldList, BOOLEAN incHead ) ;
-   ~_migCSVExtractor () ;
-   INT32 init ( sdbCollectionHandle collection,
-                const CHAR *pOutputFile,
-                const CHAR *pDelChar,
-                const CHAR *pDelField,
-                const CHAR *pDelRecord ) ;
-} ;
-typedef class _migCSVExtractor migCSVExtractor ;
+#define MIG_COLLECTION_SPACE_SIZE 257
 
-class _migJSONExtractor : public _migExtractor
+class migExport : public SDBObject
 {
 private:
-   BOOLEAN _hasID ;
-   vector<string> _fieldList ;
-private :
-   BOOLEAN _reallocateBuffer ( CHAR **pBuf, INT32 *bufSize ) ;
-protected :
-   INT32 _extractRecord () ;
-public :
-   _migJSONExtractor ( vector<string> &fieldList ) ;
-   ~_migJSONExtractor () ;
-   INT32 init ( sdbCollectionHandle collection,
-                const CHAR *pOutputFile,
-                const CHAR *pDelRecord,
-                BOOLEAN hasID ) ;
+   sdbConnectionHandle _gConnection ;
+   sdbCSHandle         _gCollectionSpace ;
+   sdbCollectionHandle _gCollection ;
+   sdbCursorHandle     _gCSList ;
+   sdbCursorHandle     _gCLList ;
+   sdbCursorHandle     _gCursor ;
+   INT32               _ID ;
+   BOOLEAN             _isOpen ;
+   migExprtArg        *_pMigArg ;
+   csvEncode           _csvEncode ;
+   OSSFILE             _file ;
+   CHAR                _fullName[ MIG_COLLECTION_SPACE_SIZE ] ;
+private:
+   INT32 _connectDB() ;
+   INT32 _getCSList() ;
+   INT32 _getCLList() ;
+   INT32 _getCS( const CHAR *pCSName ) ;
+   INT32 _getCL( const CHAR *pCLName ) ;
+   INT32 _query() ;
+private:
+   INT32 _writeFile( bson *pbson ) ;
+   INT32 _run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total ) ;
+public:
+   migExport() ;
+   ~migExport() ;
+   INT32 init( migExprtArg *pMigArg ) ;
+   INT32 run( INT32 &total ) ;
 } ;
-typedef class _migJSONExtractor migJSONExtractor ;
 
 #endif
