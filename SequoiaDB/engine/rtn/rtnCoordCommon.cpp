@@ -874,7 +874,7 @@ namespace engine
       do
       {
          // if catalogure group
-         if ( CATALOG_GROUPID != groupID ||
+         if ( CATALOG_GROUPID == groupID ||
               ( groupName && 0 == ossStrcmp( groupName, CATALOG_GROUPNAME ) ) )
          {
             rc = rtnCoordGetRemoteCatGroupInfo( cb, groupInfo ) ;
