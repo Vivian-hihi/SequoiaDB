@@ -769,10 +769,15 @@ namespace engine
                      BSONObj **ppErrorObj );
    private:
       INT32 executeOnCataGroup ( CHAR *pBuffer,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       bson::BSONObj &boGroupInfo );
-      INT32 startNodes( bson::BSONObj &boGroupInfo, vector<bson::BSONObj> &objList );
+                                 netMultiRouteAgent *pRouteAgent,
+                                 pmdEDUCB *cb,
+                                 bson::BSONObj &boGroupInfo ) ;
+      INT32 startNodes( bson::BSONObj &boGroupInfo,
+                        vector<bson::BSONObj> &objList ) ;
+
+      INT32 startNodes( clsGroupItem *pItem,
+                        vector<bson::BSONObj> &objList ) ;
+
    };
 
    class rtnCoordCMDCreateIndex : public rtnCoordCommand
