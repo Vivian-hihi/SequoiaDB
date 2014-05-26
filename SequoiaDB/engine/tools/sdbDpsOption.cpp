@@ -50,7 +50,7 @@ BOOLEAN _dpsFilterOption::checkInput( const po::variables_map &vm )
    {
       valid = TRUE ;
    }
-   
+
    return valid ;
 }
 

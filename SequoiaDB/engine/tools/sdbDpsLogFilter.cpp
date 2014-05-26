@@ -143,10 +143,10 @@ INT32 _dpsLogFilter::doParse()
 
    if( isDir( _cmdData->srcPath ) )
    {
-      if( SDB_LOG_FILTER_LSN == _filter->getType() ||
-          SDB_LOG_FILTER_LAST == _filter->getType() )
+      if( SDB_LOG_FILTER_LAST == _filter->getType() )
       {
-         printf( "Error: Cannot specify a dir path when using -l/-e\n" );
+         printf( "Error: Cannot specify a dir path when using --last/-e\n" );
+         rc = SDB_INVALIDARG ;
          goto error ;
       }
 
@@ -184,6 +184,12 @@ INT32 _dpsLogFilter::doParse()
    }
    else
    {
+      if( SDB_LOG_FILTER_LSN == _filter->getType() )
+      {
+         printf( "Error: Cannot specify a dir path when using --lsn/-l\n" );
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
       if( !isFileExisted( _cmdData->srcPath ) )
       {
          rc = SDB_INVALIDPATH ;

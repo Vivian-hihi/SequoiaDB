@@ -28,6 +28,7 @@ struct _dpsFileMeta
    INT64  restSize ;
    UINT64 firstLSN ;
    UINT64 lastLSN ;
+   UINT64 expectLSN ;
 } ;
 typedef _dpsFileMeta dpsFileMeta ;
 
@@ -39,7 +40,6 @@ struct _dpsMetaData
 {
    UINT32 fileBegin ;
    UINT32 fileWork ;
-   UINT32 fileEnd ;
    UINT32 fileCount ;
    std::vector<dpsFileMeta> metaList ;
 } ;

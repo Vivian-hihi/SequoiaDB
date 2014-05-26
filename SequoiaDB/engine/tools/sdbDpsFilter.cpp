@@ -248,7 +248,8 @@ namespace
 
       if ( LOG_TYPE_DUMMY == header->_type )
       {
-         printf( "Warning: Dummy record head, offset:0x%08lx\n", offset ) ;
+         //printf( "Warning: Dummy record head, offset:%lld\n", offset ) ;
+         //printf( "Reach end of last Record, offset:%lld\n", offset ) ;
          goto done ;
       }
 
@@ -337,15 +338,16 @@ namespace
       goto done ;
    }
 
-   INT32 seekToLsnMatched( OSSFILE& in, INT64& offset, const INT64 fileSize,
-                           INT32& prevCount )
+   INT32 seekToLsnMatched( OSSFILE& in, INT64 &offset, const INT64 fileSize,
+                           INT32 &prevCount )
    {
       SDB_ASSERT( offset >= DPS_LOG_HEAD_LEN, "offset lt DPS_LOG_HEAD_LEN" ) ;
-      INT32 rc    = SDB_OK ;
-      INT32 count = prevCount ;
+      INT32 rc     = SDB_OK ;
+      INT64 newOff = 0 ;
+      INT32 count  = prevCount ;
 
       CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
-      dpsLogRecordHeader *header = NULL;
+      dpsLogRecordHeader *header = NULL ;
 
       if( offset > fileSize || offset < DPS_LOG_HEAD_LEN )
       {
@@ -376,18 +378,22 @@ namespace
 
          if ( LOG_TYPE_DUMMY == header->_type )
          {
-            printf( "Warning: Dummy record head, offset:0x%08lx\n", offset ) ;
-            //rc = SDB_INVALIDARG ;
-            //goto error ;
+            //printf( "Warning: Dummy record head, offset:%lld\n", offset ) ;
+            //printf( "Reach end of last Record, offset:%lld\n", offset ) ;
+            printf( "Error: Lsn input is invalid\n" );
+            rc = SDB_INVALIDARG ;
+            goto error ;
          }
 
-         if( DPS_LOG_INVALID_LSN ==  header->_preLsn )
+         newOff = header->_lsn % ( fileSize - DPS_LOG_HEAD_LEN ) ;
+         if( 0 == newOff || DPS_LOG_INVALID_LSN ==  header->_preLsn )
          {
-            rc = DPS_LOG_REACH_HEAD ;
-            goto done;
+            rc = DPS_LOG_REACH_HEAD;
+            goto done ;
          }
+         offset = DPS_LOG_HEAD_LEN +
+                  header->_preLsn % ( fileSize - DPS_LOG_HEAD_LEN ) ;
          ++prevCount ;
-         offset = DPS_LOG_HEAD_LEN + header->_preLsn ;
       }
 
    done:
@@ -426,7 +432,9 @@ namespace
 
          if ( LOG_TYPE_DUMMY == header->_type )
          {
-            printf( "Warning: Dummy record head, offset:0x%08lx\n", offset ) ;
+            //printf( "Warning: Dummy record head, offset:%lld\n", offset ) ;
+            //printf( "Reach end of last Record, offset:%lld\n", offset ) ;
+            break ;
             //rc = SDB_INVALIDARG ;
             //goto error ;
          }
@@ -453,6 +461,7 @@ namespace
       PD_TRACE_ENTRY( SDB_FORMATLOG ) ;
       OSSFILE in ;
 
+      CHAR pLogHead[ sizeof( dpsLogHeader ) + 1 ] = { 0 } ;
       CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
       CHAR *pRecordBuffer = NULL ;
       INT64 recordLength  = 0 ;
@@ -470,7 +479,7 @@ namespace
       CHAR parseBegin[ BLOCK_SIZE ] = { 0 } ;
       len  = ossSnprintf( parseBegin, BLOCK_SIZE, OSS_NEWLINE""OSS_NEWLINE ) ;
       len += ossSnprintf( parseBegin + len, BLOCK_SIZE - len,
-                          "parse file : [%s] "OSS_NEWLINE, filename ) ;
+                          "parse file : [%s]"OSS_NEWLINE, filename ) ;
 
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
                     OSS_RU | OSS_WU | OSS_RG, in ) ;
@@ -509,7 +518,7 @@ namespace
       }
 
       rc = readLogHead( in, offset, fileSize,  pOutBuffer, outBufferSize,
-                        NULL, len ) ;
+                        pLogHead, len ) ;
       if( rc && DPS_LOG_FILE_INVALID != rc )
       {
          goto error ;
@@ -546,7 +555,13 @@ namespace
       // lsn must be done specially
       if( SDB_LOG_FILTER_LSN == filter->getType() )
       {
-         offset = DPS_LOG_HEAD_LEN + data->lsn ;
+         dpsLogHeader *logHeader = ( dpsLogHeader * )pLogHead ;
+         if( ( logHeader->_firstLSN.offset > data->lsn ) ||
+             ( data->lsn >= logHeader->_firstLSN.offset + fileSize - DPS_LOG_HEAD_LEN ) )
+         {
+            goto done ;
+         }
+         offset = DPS_LOG_HEAD_LEN + data->lsn % ( fileSize - DPS_LOG_HEAD_LEN ) ;
          // seek to the log by lsn assigned
          rc = seekToLsnMatched( in, offset, fileSize, ahead ) ;
          if( rc && DPS_LOG_REACH_HEAD != rc )
@@ -604,7 +619,7 @@ namespace
                rc = SDB_OOM;
                printf( "Failed to allocate %d bytes\n",
                        header->_length + 1 ) ;
-               goto error;
+               goto error ;
             }
             recordLength = header->_length ;
          }
@@ -703,12 +718,13 @@ namespace
       OSSFILE in ;
       CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
       CHAR pLogHead[ DPS_LOG_HEAD_LEN + 1 ] = { 0 } ;
-      BOOLEAN opened          = FALSE ;
-      INT64 fileSize          = 0 ;
-      INT64 offset            = 0 ;
-      UINT64 curLsn           = DPS_LOG_INVALID_LSN ;
-      dpsLogHeader *logHeader = NULL ;
-      INT64 len               = 0 ;
+      BOOLEAN opened             = FALSE ;
+      INT64 fileSize             = 0 ;
+      INT64 offset               = 0 ;
+      dpsLogHeader *logHeader    = NULL ;
+      dpsLogRecordHeader *header = NULL ;
+      INT64 len                  = 0 ;
+      INT64 totalRecordSize      = 0 ;
 
       printf("Parse file:[ %s ] begin\n", filename ) ;
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
@@ -733,6 +749,7 @@ namespace
          goto error;
       }
       // start format log head
+      totalRecordSize = fileSize - DPS_LOG_HEAD_LEN ;
       logHeader = (dpsLogHeader*)pLogHead ;
 
       dpsFileMeta meta ;
@@ -750,28 +767,34 @@ namespace
             {
                goto error ;
             }
+
+            header = ( dpsLogRecordHeader * )pRecordHead ;
             if( SDB_DPS_CORRUPTED_LOG == rc )
             {
-               //printf( "File was corrupted\n" ) ;
+               printf( "Warning: Record was corruptrd with length %d\n",
+                       header->_length ) ;
                rc = SDB_OK ;
                break ;
             }
-            dpsLogRecordHeader *header = ( dpsLogRecordHeader * )pRecordHead ;
-            curLsn = header->_lsn ;
+            if( LOG_TYPE_DUMMY == header->_type )
+            {
+               // reach end of record
+               //printf( "Reach end of last Record, offset:%lld\n", offset ) ;
+               break;
+            }
+
             offset += header->_length ;
          }
       }
-      meta.lastLSN = curLsn ;
-      meta.validSize = offset ;
-      if( DPS_LOG_INVALID_LSN == curLsn )
-      {
-         meta.validSize = DPS_LOG_HEAD_LEN ;
-         meta.restSize = fileSize - DPS_LOG_HEAD_LEN ;
-      }
       else
       {
-         meta.restSize = fileSize - offset ;
+         meta.validSize = 0 ;
+         meta.restSize = totalRecordSize ;
       }
+      meta.expectLSN = header->_lsn + header->_length ;
+      meta.lastLSN = header->_lsn ;
+      meta.validSize = header->_lsn % totalRecordSize ;
+      meta.restSize = totalRecordSize - ( meta.validSize + header->_length ) ;
       data.metaList.push_back( meta ) ;
 
    done:
@@ -790,10 +813,11 @@ namespace
                            CHAR *pOutBuffer, const UINT64 outBufferSize )
    {
       SDB_ASSERT( pOutBuffer, "pOutBuffer cannot be NULL " ) ;
-      UINT64 len   = 0 ;
-      UINT32 begin = DPS_INVALID_LOG_FILE_ID ;
-      UINT32 work  = 0 ;
-      UINT32 idx   = 0 ;
+      UINT64 len     = 0 ;
+      UINT32 begin   = DPS_INVALID_LOG_FILE_ID ;
+      UINT32 work    = 0 ;
+      UINT32 idx     = 0 ;
+      UINT32 beginIdx = 0 ;
       // find begin file
       while( idx < metaData.metaList.size() )
       {
@@ -805,42 +829,34 @@ namespace
          }
 
          if( DPS_INVALID_LOG_FILE_ID == begin
-             || ( meta.logID < begin
-             && begin - meta.logID < DPS_INVALID_LOG_FILE_ID / 2 )
-             || ( meta.logID > begin
-             && meta.logID - begin < DPS_INVALID_LOG_FILE_ID / 2 ) )
+             || ( meta.logID < begin &&
+                  begin - meta.logID < DPS_INVALID_LOG_FILE_ID / 2 )
+             || ( meta.logID > begin &&
+                  meta.logID - begin >  DPS_INVALID_LOG_FILE_ID / 2 ) )
          {
             metaData.fileBegin = meta.index ;
-            begin = idx ;
+            begin = meta.logID;
+            beginIdx = idx ;
          }
          ++idx ;
       }
 
       // find work file
       idx = 0 ;
-      work = begin ;
-      while( idx < metaData.metaList.size() )
+      work = beginIdx ;
+      while( 0 == metaData.metaList[ work ].restSize && idx < metaData.metaList.size() )
       {
-         const dpsFileMeta &meta = metaData.metaList[ work ] ;
-         if( 0 == meta.restSize )
+         metaData.fileWork = work ;
+         ++work ;
+         if( work > metaData.fileCount )
          {
-            metaData.fileWork = work ;
-            ++work ;
-            if( work > metaData.fileCount )
-            {
-               work = 0;
-            }
-         }
-         else
-         {
-            if( DPS_INVALID_LOG_FILE_ID != meta.logID )
-            {
-               metaData.fileWork = work ;
-               break ;
-            }
-
+            work = 0;
          }
          ++idx ;
+      }
+      if( DPS_INVALID_LOG_FILE_ID != metaData.metaList[ work ].logID )
+      {
+         metaData.fileWork = work ;
       }
 
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
@@ -856,14 +872,14 @@ namespace
                          "    LogFile work      : sequoiadbLog.%d"OSS_NEWLINE,
                          metaData.fileWork ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "        begin Lsn     : 0x%08lx "OSS_NEWLINE,
-                         metaData.metaList[ begin ].firstLSN ) ;
+                         "        begin Lsn     : 0x%08lx"OSS_NEWLINE,
+                         metaData.metaList[ beginIdx ].firstLSN ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "        current Lsn   : 0x%08lx "OSS_NEWLINE,
+                         "        current Lsn   : 0x%08lx"OSS_NEWLINE,
                          metaData.metaList[ work ].lastLSN ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "        expect Lsn    : 0x%08lx "OSS_NEWLINE,
-                    metaData.metaList[ work ].validSize - DPS_LOG_HEAD_LEN ) ;
+                         "        expect Lsn    : 0x%08lx"OSS_NEWLINE,
+                         ( metaData.metaList[ work ].expectLSN ) ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          "======================================="OSS_NEWLINE
                          ) ;
@@ -885,10 +901,8 @@ namespace
                 "Rest Size    : %lld bytes"OSS_NEWLINE, meta.restSize ) ;
       }
 
-//   done:
       return len ;
    }
-
    // helper function end
 }
 /////////////////////////////////////////////////////////////////////
