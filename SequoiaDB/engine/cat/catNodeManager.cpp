@@ -2492,7 +2492,6 @@ namespace engine
                break;
             }
             UINT32 groupID = beGroupID.number() ;
-            INT32 status =  ;
 
             // if catalog group or status is already active
             if ( CATALOG_GROUPID == groupID ||
