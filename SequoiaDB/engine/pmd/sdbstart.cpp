@@ -50,6 +50,8 @@
 #include "pmdTrace.hpp"
 #include "pmdCommon.hpp"
 #include "pmdOptions.h"
+#include "utilParam.hpp"
+#include "ossVer.h"
 
 #include <string>
 #include <iostream>
@@ -201,36 +203,17 @@ INT32 checkStartedServices ( const CHAR *pConfPath )
       std::cerr << "Failed to build full path, rc = " << rc << std::endl ;
       goto error ;
    }
-   try
-   {
-      po::store ( po::parse_config_file<char> ( conf, desc, TRUE ), vm ) ;
-      po::notify ( vm ) ;
-   }
-   catch ( po::reading_file )
+
+   rc = engine::utilReadConfigureFile( conf, desc, vm ) ;
+   if ( SDB_IO == rc )
    {
       // if the file does not exist, let's just continue so that sequoiadb is
       // able to create the file
       rc = SDB_OK ;
       goto done ;
    }
-   catch ( po::unknown_option &e )
+   if ( rc )
    {
-      std::cerr << "Unknown config element: "
-                << e.get_option_name () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch ( po::invalid_option_value &e )
-   {
-      std::cerr << ( std::string ) "Invalid config element: "
-                << e.get_option_name () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch( po::error &e )
-   {
-      std::cerr << e.what () << std::endl ;
-      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -261,35 +244,10 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDBSTART_RESVARG );
    po::variables_map vm ;
-   try
+
+   rc = engine::utilReadCommandLine( argc, argv, desc, vm ) ;
+   if ( rc )
    {
-      po::store ( po::command_line_parser ( argc, argv ).options(
-                  desc ).allow_unregistered().run(), vm ) ;
-      //po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
-      po::notify ( vm ) ;
-   }
-   catch ( po::unknown_option &e )
-   {
-      PD_LOG ( PDWARNING, ( ( std::string ) "Unknown argument: " +
-               e.get_option_name ()).c_str () ) ;
-      std::cerr <<  "Unknown argument: " << e.get_option_name ()
-                << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch ( po::invalid_option_value &e )
-   {
-      PD_LOG ( PDWARNING, ( ( std::string ) "Invalid argument: " +
-               e.get_option_name () ).c_str () ) ;
-      std::cerr <<  "Invalid argument: "
-                << e.get_option_name () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch( po::error &e )
-   {
-      std::cerr << e.what () << std::endl ;
-      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -299,12 +257,17 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
       rc = SDB_PMD_HELP_ONLY ;
       goto done ;
    }
+   else if ( vm.count( PMD_OPTION_VERSION ) )
+   {
+      ossPrintVersion( "SDB Start Version" ) ;
+      rc = SDB_PMD_VERSION_ONLY ;
+      goto done ;
+   }
 
    if ( vm.count ( PMD_OPTION_CONFPATH ) )
    {
       const CHAR *pConfPath = vm[PMD_OPTION_CONFPATH].as<string>().c_str() ;
-      PD_LOG ( PDDEBUG, "confpath=%s",
-               pConfPath ) ;
+      PD_LOG ( PDDEBUG, "confpath=%s", pConfPath ) ;
       rc = checkStartedServices ( pConfPath ) ;
    }
 
@@ -562,7 +525,8 @@ INT32 main ( INT32 argc, CHAR **argv )
          // we consider the startup success when the service is already running
          rc = SDB_OK ;
       }
-      else if ( SDB_PMD_HELP_ONLY != rc )
+      else if ( SDB_PMD_HELP_ONLY != rc &&
+                SDB_PMD_VERSION_ONLY != rc )
       {
          PD_LOG ( PDERROR, "Invalid argument" ) ;
          displayArg ( desc ) ;
@@ -608,7 +572,7 @@ INT32 main ( INT32 argc, CHAR **argv )
    // really started after ossExec.
    // We don't need to do that in Windows, because CreateProcess is able to
    // garentee the process starts and run.
-   rc = ossVerifyPID ( pid, MODIFIED_ENGINE_NAME ) ;
+   rc = ossVerifyPID ( pid, MODIFIED_ENGINE_NAME, "SequoiaDB engine" ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to verify PID, rc = %d", rc ) ;

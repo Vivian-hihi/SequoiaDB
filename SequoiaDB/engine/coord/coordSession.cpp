@@ -87,14 +87,16 @@ namespace engine
       REPLY_QUE replyQue;
 
       rc = rtnCoordSendRequestToNodeWithoutCheck( (void *)(&msgReq), routeID,
-                                                pRouteAgent, _pEduCB, requestIdMap );
+                                                pRouteAgent, _pEduCB,
+                                                requestIdMap );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to send the message to the node"
                   "(groupID=%u, nodeID=%u, serviceID=%u)",
                   routeID.columns.groupID,
                   routeID.columns.nodeID,
                   routeID.columns.serviceID );
-      rc = rtnCoordGetReply( _pEduCB, requestIdMap, replyQue, MSG_COOR_CHECK_ROUTEID_RSP );
+      rc = rtnCoordGetReply( _pEduCB, requestIdMap, replyQue,
+                             MSG_COOR_CHECK_ROUTEID_RSP );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get reply from node"
                   "(groupID=%u, nodeID=%u, serviceID=%u, rc=%d)",

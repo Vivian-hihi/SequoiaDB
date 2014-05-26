@@ -668,7 +668,8 @@ void ossRenameProcess ( const CHAR *pNewName )
 }
 
 // PD_TRACE_DECLARE_FUNCTION ( SDB_OSSVERIFYPID, "ossVerifyPID" )
-INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName )
+INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,
+                     const CHAR *promptName )
 {
    INT32 rc                                   = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSVERIFYPID ) ;
@@ -687,6 +688,11 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName )
    // read /proc/pid/stat can get both pid and ppid
    ossSnprintf ( pathName, OSS_MAX_PATHSIZE, "/proc/%d/stat", inputpid ) ;
    ossSnprintf ( pathName1, OSS_MAX_PATHSIZE, "/proc/%d/cmdline", inputpid ) ;
+
+   if ( !promptName )
+   {
+      promptName = processName ;
+   }
 
    while ( loop )
    {
@@ -710,7 +716,7 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName )
             if ( status[0] == PROC_STATUS_ZOMBIE )
             {
                ossPrintf ( "Error: Failed to start %s"OSS_NEWLINE,
-                           processName ) ;
+                            promptName ) ;
                loop = FALSE ;
                rc = SDB_SYS ;
             }
@@ -725,7 +731,7 @@ INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName )
                     ossStrstr ( commandLine, processName ) )
                {
                   ossPrintf ( "Success: %s is successfully started (%d)"
-                              OSS_NEWLINE, processName, pid ) ;
+                              OSS_NEWLINE, promptName, pid ) ;
                   loop = FALSE ;
                   rc = SDB_OK ;
                }

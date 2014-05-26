@@ -150,7 +150,8 @@ INT32 ossStopService( const CHAR *serviceName,
 INT32 ossWaitChild ( OSSPID pid, ossResultCode &result ) ;
 void  ossEnableNameChanges ( const INT32 argc, CHAR **pArgv0 ) ;
 void  ossRenameProcess (  const CHAR *pNewName ) ;
-INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName ) ;
+INT32 ossVerifyPID ( OSSPID inputpid, const CHAR *processName,
+                     const CHAR *promptName = NULL ) ;
 
 #endif // _WINDOWS
 

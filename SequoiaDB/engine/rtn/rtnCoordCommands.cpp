@@ -4684,7 +4684,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_STNS, "rtnCoordCMDActiveGroup::startNodes" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_STNS, "rtnCoordCMDActiveGroup::startNodes" )
    INT32 rtnCoordCMDActiveGroup::startNodes( bson::BSONObj &boGroupInfo,
                                              vector<BSONObj> &objList )
    {
@@ -4712,8 +4712,7 @@ namespace engine
                if ( beHostName.eoo() || beHostName.type()!=String )
                {
                   rc = SDB_INVALIDARG;
-                  PD_LOG ( PDERROR,
-                           "failed to get the HostName");
+                  PD_LOG ( PDERROR, "Failed to get the HostName" );
                   break;
                }
                std::string strHostName = beHostName.str();
@@ -4721,30 +4720,28 @@ namespace engine
                if ( beService.eoo() || beService.type()!=Array )
                {
                   rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING,
-                           "failed to get the field(%s)",
+                  PD_LOG ( PDWARNING, "Failed to get the field(%s)",
                            FIELD_NAME_SERVICE );
                   break;
                }
                std::string strServiceName;
                rc = getServiceName( beService, MSG_ROUTE_LOCAL_SERVICE,
-                                 strServiceName );
+                                    strServiceName );
                if ( rc != SDB_OK )
                {
                   rc = SDB_INVALIDARG;
-                  PD_LOG ( PDWARNING,
-                           "failed to get local-service-name" );
-                  break;
+                  PD_LOG ( PDWARNING, "Failed to get local-service-name" ) ;
+                  break ;
                }
-               SINT32 retCode;
-               BSONObjBuilder bobLocalService;
+               SINT32 retCode ;
+               BSONObjBuilder bobLocalService ;
                bobLocalService.append( PMD_OPTION_SVCNAME, strServiceName );
                BSONObj boLocalService = bobLocalService.obj();
                rc = rtnRemoteExec ( SDBSTART, strHostName.c_str(),
                                     &retCode, &boLocalService ) ;
                if ( SDB_OK == rc && SDB_OK == retCode )
                {
-                  continue;
+                  continue ;
                }
                if ( rc != SDB_OK )
                {
@@ -4765,28 +4762,29 @@ namespace engine
                bobReply.append( FIELD_NAME_ERROR_NO, retCode );
                objList.push_back( bobReply.obj() );
             }
-            break;
+            break ;
          }
          catch ( std::exception &e )
          {
-            rc = SDB_INVALIDARG;
+            rc = SDB_INVALIDARG ;
             PD_LOG ( PDERROR, "occured unexpected error:%s", e.what() ) ;
             break;
          }
       }while ( FALSE );
+
       if ( objList.size() != 0 )
       {
-         rc = SDB_CM_RUN_NODE_FAILED;
+         rc = SDB_CM_RUN_NODE_FAILED ;
       }
       PD_TRACE_EXITRC ( SDB_RTNCOCMDATGR_STNS, rc ) ;
-      return rc;
+      return rc ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXEONCATAGR, "rtnCoordCMDActiveGroup::executeOnCataGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXEONCATAGR, "rtnCoordCMDActiveGroup::executeOnCataGroup" )
    INT32 rtnCoordCMDActiveGroup::executeOnCataGroup ( CHAR *pBuffer,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       BSONObj &boGroupInfo )
+                                                      netMultiRouteAgent *pRouteAgent,
+                                                      pmdEDUCB *cb,
+                                                      BSONObj &boGroupInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDATGR_EXEONCATAGR ) ;
@@ -4795,7 +4793,7 @@ namespace engine
       BOOLEAN isNeedRefresh = FALSE;
       do
       {
-         hasRetry = isNeedRetry;
+         hasRetry = isNeedRetry ;
          isNeedRetry = FALSE;
          CoordGroupInfoPtr catGroupInfo;
          rc = rtnCoordGetCatGroupInfo( cb, isNeedRefresh, catGroupInfo );
@@ -4805,7 +4803,7 @@ namespace engine
                      "get catalogue group info(rc=%d)", rc );
             break;
          }
-         REQUESTID_MAP sendNodes;
+         REQUESTID_MAP sendNodes ;
          rc = rtnCoordSendRequestToPrimary( pBuffer, catGroupInfo, sendNodes,
                                             pRouteAgent, MSG_ROUTE_CAT_SERVICE,
                                             cb ) ;
@@ -4825,7 +4823,7 @@ namespace engine
                break;
             }
          }
-         REPLY_QUE replyQue;
+         REPLY_QUE replyQue ;
          rc = rtnCoordGetReply( cb, sendNodes, replyQue,
                                 MAKE_REPLY_TYPE(
                                 ((MsgHeader*)pBuffer)->opCode ) ) ;
@@ -4893,7 +4891,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXE, "rtnCoordCMDActiveGroup::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXE, "rtnCoordCMDActiveGroup::execute" )
    INT32 rtnCoordCMDActiveGroup::execute( CHAR *pReceiveBuffer,
                                           SINT32 packSize,
                                           CHAR **ppResultBuffer,
@@ -4919,7 +4917,7 @@ namespace engine
       replyHeader.numReturned          = 0;
       replyHeader.startFrom            = 0;
 
-      MsgOpQuery *pReq = (MsgOpQuery *)pReceiveBuffer;
+      MsgOpQuery *pReq = (MsgOpQuery *)pReceiveBuffer ;
       pReq->header.routeID.value = 0;
       pReq->header.TID = cb->getTID();
       pReq->header.opCode = MSG_CAT_ACTIVE_GROUP_REQ;
@@ -4931,8 +4929,8 @@ namespace engine
                                   cb, boGroupInfo ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR, "Failed to active group, execute on catalog-node "
-                     "failed(rc=%d)", rc ) ;
+            PD_LOG ( PDERROR, "Failed to active group, execute on "
+                     "catalog-node failed(rc=%d)", rc ) ;
             break;
          }
          BSONObj boReply;
@@ -4957,7 +4955,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTIND_EXE, "rtnCoordCMDCreateIndex::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDCTIND_EXE, "rtnCoordCMDCreateIndex::execute" )
    INT32 rtnCoordCMDCreateIndex::execute( CHAR *pReceiveBuffer,
                                           SINT32 packSize,
                                           CHAR **ppResultBuffer,

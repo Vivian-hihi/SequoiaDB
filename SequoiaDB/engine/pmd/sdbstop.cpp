@@ -45,6 +45,8 @@
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdDef.hpp"
+#include "utilParam.hpp"
+#include "ossVer.h"
 
 #include <string>
 #include <iostream>
@@ -156,35 +158,10 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_SDBSTOP_RESVARG );
    po::variables_map vm ;
-   try
+
+   rc = engine::utilReadCommandLine( argc, argv, desc, vm ) ;
+   if ( rc )
    {
-      po::store ( po::command_line_parser ( argc, argv ).options(
-                  desc ).allow_unregistered().run(), vm ) ;
-      //po::store ( po::parse_command_line ( argc, argv, desc ), vm ) ;
-      po::notify ( vm ) ;
-   }
-   catch ( po::unknown_option &e )
-   {
-      PD_LOG ( PDWARNING, ( ( std::string ) "Unknown argument: " +
-               e.get_option_name ()).c_str () ) ;
-      std::cerr <<  "Unknown argument: " << e.get_option_name ()
-                << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch ( po::invalid_option_value &e )
-   {
-      PD_LOG ( PDWARNING, ( ( std::string ) "Invalid argument: " +
-               e.get_option_name () ).c_str () ) ;
-      std::cerr <<  "Invalid argument: "
-                << e.get_option_name () << std::endl ;
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-   catch( po::error &e )
-   {
-      std::cerr << e.what () << std::endl ;
-      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
@@ -192,6 +169,12 @@ INT32 resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv )
    {
       displayArg ( desc ) ;
       rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+   else if ( vm.count( PMD_OPTION_VERSION ) )
+   {
+      ossPrintVersion( "SDB Stop Version" ) ;
+      rc = SDB_PMD_VERSION_ONLY ;
       goto done ;
    }
    if ( vm.count ( PMD_OPTION_SVCNAME ) )
