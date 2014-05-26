@@ -247,7 +247,10 @@ size %d, clear bucket data", _bufferSize ) ;
       {
          ++_line ;
          _column = 1 ;
-         break ;
+         if ( isRecordFirst )
+         {
+            break ;
+         }
       }
       else if ( isESC )
       {
@@ -263,13 +266,14 @@ size %d, clear bucket data", _bufferSize ) ;
          else if ( !isRecordFirst &&
                    '{' != *pCursor )
          {
-            if ( *pCursor == '\n' )
+            if ( *pCursor == _delRecord[0] )
             {
                ++_line ;
                _column = 1 ;
             }
             --_unreadSpace ;
             ++pCursor ;
+            _curBuffer = pCursor ;
             continue ;
          }
          switch ( *pCursor )
@@ -313,7 +317,25 @@ size %d, clear bucket data", _bufferSize ) ;
    _column += size ;
    startOffset = _curBuffer - _buffer ;
    size = pCursor - _curBuffer ;
-   _curBuffer =  pCursor ;
+   _curBuffer = pCursor ;
+
+   while( _unreadSpace > 0 )
+   {
+      if ( *_curBuffer != '{' )
+      {
+         if ( *_curBuffer == _delRecord[0] )
+         {
+            ++_line ;
+            _column = 1 ;
+         }
+         ++_curBuffer ;
+         --_unreadSpace ;
+      }
+      else
+      {
+         break ;
+      }
+   }
 done:
    PD_TRACE_EXITRC ( SDB__UTILJSONPS__GETNEXTRECORD, rc );
    return rc ;
