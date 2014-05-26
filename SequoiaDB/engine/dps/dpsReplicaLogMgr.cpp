@@ -1196,7 +1196,6 @@ namespace engine
       rc = _logger.flush( page->mb(), page->getBeginLSN(), shutdown );
       if ( rc )
       {
-         page->unlock();
          PD_LOG ( PDERROR, "Failed to flush page, rc = %d", rc ) ;
          goto error ;
       }
