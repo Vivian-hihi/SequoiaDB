@@ -41,6 +41,7 @@
 #include "ossMem.hpp"
 #include "utilStr.hpp"
 #include "../client/base64c.h"
+#include <boost/lexical_cast.hpp>
 
 #define SPT_CONVERTOR_SPE_OBJSTART '$'
 #define SPT_SPEOBJ_MINKEY "$minKey"
@@ -364,6 +365,7 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
       jsval typeValName ;
       CHAR *decode = NULL ;
       UINT32 decodeSize = 0 ;
+      INT32 binType = 0 ;
 
       if ( !JS_IdToValue( _cx, typeId, &typeValName ))
       {
@@ -405,6 +407,17 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
+      try
+      {
+         binType = boost::lexical_cast<INT32>( strType.c_str() ) ;
+      }
+      catch ( std::bad_cast &e )
+      {
+         PD_LOG( PDERROR, "bad type for binary:%s", strType.c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
       decodeSize = getDeBase64Size( strBin.c_str() ) ;
       decode = ( CHAR * )SDB_OSS_MALLOC( decodeSize ) ;
       if ( NULL == decode )
@@ -422,8 +435,8 @@ BOOLEAN sptConvertor::_addSpecialObj( JSObject *obj,
          goto error ;
       }
 
-      bson_append_binary( bs, key, strType.at(0),
-                         decode, decodeSize ) ;
+      bson_append_binary( bs, key, binType,
+                          decode, decodeSize ) ;
       SDB_OSS_FREE( decode ) ;
 
    }
