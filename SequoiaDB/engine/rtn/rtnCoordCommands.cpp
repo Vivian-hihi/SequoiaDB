@@ -4780,6 +4780,64 @@ namespace engine
       return rc ;
    }
 
+   INT32 rtnCoordCMDActiveGroup::startNodes( clsGroupItem *pItem,
+                                             vector<bson::BSONObj> &objList )
+   {
+      INT32 rc = SDB_OK ;
+      MsgRouteID id ;
+      string hostName ;
+      string svcName ;
+      UINT32 pos = 0 ;
+      SINT32 retCode = SDB_OK ;
+
+      while ( SDB_OK == pItem->getNodeInfo( pos, id, hostName, svcName,
+                                            MSG_ROUTE_LOCAL_SERVICE ) )
+      {
+         ++pos ;
+
+         retCode = SDB_OK ;
+         BSONObjBuilder bobLocalService ;
+         bobLocalService.append( PMD_OPTION_SVCNAME, svcName ) ;
+         BSONObj boLocalService = bobLocalService.obj() ;
+
+         rc = rtnRemoteExec ( SDBSTART, hostName.c_str(),
+                              &retCode, &boLocalService ) ;
+         if ( SDB_OK == rc && SDB_OK == retCode )
+         {
+            continue ;
+         }
+         if ( rc != SDB_OK )
+         {
+            PD_LOG( PDERROR, "start the node failed (HostName=%s, "
+                    "LocalService=%s, rc=%d)", hostName.c_str(),
+                    svcName.c_str(), rc ) ;
+         }
+         else if ( retCode != SDB_OK )
+         {
+            rc = retCode ;
+            PD_LOG( PDERROR, "remote node execute(start) failed "
+                    "(HostName=%s, LocalService=%s, rc=%d)", 
+                    hostName.c_str(), svcName.c_str(), rc ) ;
+         }
+         BSONObjBuilder bobReply ;
+         bobReply.append( FIELD_NAME_HOST, hostName ) ;
+         bobReply.append( PMD_OPTION_SVCNAME, svcName ) ;
+         bobReply.append( FIELD_NAME_ERROR_NO, retCode ) ;
+         objList.push_back( bobReply.obj() ) ;
+      }
+
+      if ( objList.size() != 0 )
+      {
+         rc = SDB_CM_RUN_NODE_FAILED ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDATGR_EXEONCATAGR, "rtnCoordCMDActiveGroup::executeOnCataGroup" )
    INT32 rtnCoordCMDActiveGroup::executeOnCataGroup ( CHAR *pBuffer,
                                                       netMultiRouteAgent *pRouteAgent,
@@ -4864,10 +4922,10 @@ namespace engine
                      if ( pReply->numReturned > 0 )
                      {
                         CHAR *pInfo = (CHAR *)pReply + sizeof(MsgOpReply);
-                        BSONObj boTmp(pInfo);
+                        BSONObj boTmp( pInfo ) ;
                         BSONObjBuilder bobGroupInfo;
-                        bobGroupInfo.appendElements(boTmp);
-                        boGroupInfo = bobGroupInfo.obj();
+                        bobGroupInfo.appendElements( boTmp ) ;
+                        boGroupInfo = bobGroupInfo.obj() ;
                      }
                      else
                      {
@@ -4918,12 +4976,44 @@ namespace engine
       replyHeader.startFrom            = 0;
 
       MsgOpQuery *pReq = (MsgOpQuery *)pReceiveBuffer ;
-      pReq->header.routeID.value = 0;
-      pReq->header.TID = cb->getTID();
-      pReq->header.opCode = MSG_CAT_ACTIVE_GROUP_REQ;
+      pReq->header.routeID.value = 0 ;
+      pReq->header.TID = cb->getTID() ;
+      pReq->header.opCode = MSG_CAT_ACTIVE_GROUP_REQ ;
+
+      const CHAR *pGroupName = NULL ;
+      vector<BSONObj> objList ;
+      BOOLEAN startByCataGrpInfo = FALSE ;
 
       do
       {
+         CHAR *pQuery = NULL ;
+         rc = msgExtractQuery( pReceiveBuffer, NULL, NULL, NULL, NULL,
+                               &pQuery, NULL, NULL, NULL ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to extract msg, rc: %d", rc ) ;
+            break ;
+         }
+         try
+         {
+            BSONObj boQuery( pQuery ) ;
+            BSONElement ele = boQuery.getField( CAT_GROUPNAME_NAME ) ;
+            if ( ele.type() != String )
+            {
+               PD_LOG( PDERROR, "Get field[%s] type[%d] is not String",
+                       CAT_GROUPNAME_NAME, ele.type() ) ;
+               rc = SDB_INVALIDARG ;
+               break ;
+            }
+            pGroupName = ele.valuestr() ;
+         }
+         catch( std::exception &e )
+         {
+            PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
+            rc = SDB_INVALIDARG ;
+            break ;
+         }
+
          BSONObj boGroupInfo;
          rc = executeOnCataGroup( pReceiveBuffer, pRouteAgent,
                                   cb, boGroupInfo ) ;
@@ -4931,11 +5021,27 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to active group, execute on "
                      "catalog-node failed(rc=%d)", rc ) ;
-            break;
+
+            if ( 0 == ossStrcmp( CATALOG_GROUPNAME, pGroupName ) )
+            {
+               startByCataGrpInfo = TRUE ;
+            }
+            else
+            {
+               break ;
+            }
          }
-         BSONObj boReply;
-         vector<BSONObj> objList;
-         rc = startNodes( boGroupInfo, objList );
+
+         if ( startByCataGrpInfo )
+         {
+            CoordGroupInfoPtr catGroupInfo ;
+            rtnCoordGetLocalCatGroupInfo( catGroupInfo ) ;
+            rc = startNodes( catGroupInfo->getGroupItem(), objList )
+         }
+         else
+         {
+            rc = startNodes( boGroupInfo, objList ) ;
+         }
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Start node failed(rc=%d)", rc ) ;
@@ -4949,8 +5055,9 @@ namespace engine
                         strNodeList.c_str() ) ;
             break;
          }
-      }while ( FALSE );
-      replyHeader.flags = rc;
+      }while ( FALSE ) ;
+
+      replyHeader.flags = rc ;
       PD_TRACE_EXITRC ( SDB_RTNCOCMDATGR_EXE, rc ) ;
       return rc;
    }
