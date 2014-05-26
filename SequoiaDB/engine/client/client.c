@@ -7584,8 +7584,8 @@ SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
    INT32 rc = SDB_OK ;
    sdbDomainStruct *s ;
    bson condition ;
-   bson_init( &condition ) ;
    bson selector ;
+   bson_init( &condition ) ;
    bson_init( &selector ) ;
 
    if ( SDB_INVALID_HANDLE == cHandle )
