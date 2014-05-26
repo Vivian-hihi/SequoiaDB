@@ -792,9 +792,10 @@ namespace
             if( preLsn > header->_lsn )
             {
                // current lsn will to be overwrite by next record
-               meta.expectLSN = header->_lsn ;
+               meta.expectLSN = logHeader->_firstLSN.offset +
+                                offset - DPS_LOG_HEAD_LEN ;
                meta.lastLSN = preLsn ;
-               meta.validSize = header->_lsn % totalRecordSize ;
+               meta.validSize = offset - DPS_LOG_HEAD_LEN ;
                meta.restSize = totalRecordSize - meta.validSize ;
                break ;
             }
@@ -877,7 +878,7 @@ namespace
                          "======================================="OSS_NEWLINE
                          ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
-                         "    Log Files in total: %d "OSS_NEWLINE,
+                         "    Log Files in total: %d"OSS_NEWLINE,
                          metaData.fileCount ) ;
       len += ossSnprintf( pOutBuffer + len, outBufferSize - len,
                          "    LogFile begin     : sequoiadbLog.%d"OSS_NEWLINE,
