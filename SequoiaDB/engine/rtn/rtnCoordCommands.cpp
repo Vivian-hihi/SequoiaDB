@@ -5034,7 +5034,7 @@ namespace engine
          if ( catGroupInfo->get() &&
               catGroupInfo->getGroupSize() > 0 )
          {
-            rc = startNodes( catGroupInfo->getGroupItem(), objList )
+            rc = startNodes( catGroupInfo->getGroupItem(), objList ) ;
          }
          else
          {
