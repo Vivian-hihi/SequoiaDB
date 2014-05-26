@@ -725,6 +725,7 @@ namespace
       dpsLogRecordHeader *header = NULL ;
       INT64 len                  = 0 ;
       INT64 totalRecordSize      = 0 ;
+      UINT64 preLsn              = 0 ;
 
       printf("Parse file:[ %s ] begin\n", filename ) ;
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
@@ -780,9 +781,25 @@ namespace
             {
                // reach end of record
                //printf( "Reach end of last Record, offset:%lld\n", offset ) ;
+               meta.expectLSN = header->_lsn + header->_length ;
+               meta.lastLSN = header->_lsn ;
+               meta.validSize = header->_lsn % totalRecordSize ;
+               meta.restSize = totalRecordSize - ( meta.validSize + header->_length ) ;
                break;
             }
 
+            // hit invalid lsn
+            if( preLsn > header->_lsn )
+            {
+               // current lsn will to be overwrite by next record
+               meta.expectLSN = header->_lsn ;
+               meta.lastLSN = preLsn ;
+               meta.validSize = header->_lsn % totalRecordSize ;
+               meta.restSize = totalRecordSize - meta.validSize ;
+               break ;
+            }
+
+            preLsn = header->_lsn ;
             offset += header->_length ;
          }
       }
@@ -791,10 +808,7 @@ namespace
          meta.validSize = 0 ;
          meta.restSize = totalRecordSize ;
       }
-      meta.expectLSN = header->_lsn + header->_length ;
-      meta.lastLSN = header->_lsn ;
-      meta.validSize = header->_lsn % totalRecordSize ;
-      meta.restSize = totalRecordSize - ( meta.validSize + header->_length ) ;
+
       data.metaList.push_back( meta ) ;
 
    done:
