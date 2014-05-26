@@ -4982,7 +4982,7 @@ namespace engine
 
       const CHAR *pGroupName = NULL ;
       vector<BSONObj> objList ;
-      BOOLEAN startByCataGrpInfo = FALSE ;
+      CoordGroupInfoPtr catGroupInfo ;
 
       do
       {
@@ -5022,20 +5022,18 @@ namespace engine
             PD_LOG ( PDERROR, "Failed to active group, execute on "
                      "catalog-node failed(rc=%d)", rc ) ;
 
-            if ( 0 == ossStrcmp( CATALOG_GROUPNAME, pGroupName ) )
-            {
-               startByCataGrpInfo = TRUE ;
-            }
-            else
+            if ( 0 != ossStrcmp( CATALOG_GROUPNAME, pGroupName ) ||
+                 SDB_OK != rtnCoordGetLocalCatGroupInfo( catGroupInfo ) ||
+                 NULL == catGroupInfo->get() ||
+                 catGroupInfo->getGroupSize() == 0 )
             {
                break ;
             }
          }
 
-         if ( startByCataGrpInfo )
+         if ( catGroupInfo->get() &&
+              catGroupInfo->getGroupSize() > 0 )
          {
-            CoordGroupInfoPtr catGroupInfo ;
-            rtnCoordGetLocalCatGroupInfo( catGroupInfo ) ;
             rc = startNodes( catGroupInfo->getGroupItem(), objList )
          }
          else
