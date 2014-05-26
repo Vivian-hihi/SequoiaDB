@@ -5024,14 +5024,14 @@ namespace engine
 
             if ( 0 != ossStrcmp( CATALOG_GROUPNAME, pGroupName ) ||
                  SDB_OK != rtnCoordGetLocalCatGroupInfo( catGroupInfo ) ||
-                 NULL == catGroupInfo->get() ||
+                 NULL == catGroupInfo.get() ||
                  catGroupInfo->getGroupSize() == 0 )
             {
                break ;
             }
          }
 
-         if ( catGroupInfo->get() &&
+         if ( catGroupInfo.get() &&
               catGroupInfo->getGroupSize() > 0 )
          {
             rc = startNodes( catGroupInfo->getGroupItem(), objList ) ;
