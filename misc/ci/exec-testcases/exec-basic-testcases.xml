@@ -195,9 +195,13 @@
 		
 		
 		<echo message="Exec:${sdb.fullname} ${sdb.cmd.argument}" />
+		<tstamp property="startTime" pattern="hh:mm:aa" timezone="zh" unit="second"/>
+		<sdbTime startTime="${startTime}"/>
 		<exec executable="${sdb.fullname}" dir="" timeout="1200000" outputproperty="screen.output" errorproperty="error.output" resultproperty="ret.code">
 			<arg line="${sdb.cmd.argument}" />
 		</exec>
+		<tstamp property="endTime" pattern="hh:mm:aa" timezone="zh" unit="second"/>
+		<sdbTime endTime="${endTime}"/>
 
 		<echo message="the result = ${ret.code} after exec ${test.case.fullname}.${parallel.num} testcase." />
 		<exec executable="${sdb.fullname}" dir="" timeout="300000" >
