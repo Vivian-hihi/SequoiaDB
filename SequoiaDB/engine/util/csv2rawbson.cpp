@@ -1864,6 +1864,7 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
                }
             }
          }
+         ++fieldNum ;
          if ( _delRecord == *pCursor )
          {
             break ;
@@ -1874,7 +1875,6 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
             ++pCursor ;
             leftField = pCursor ;
          }
-         ++fieldNum ;
       }
       else
       {
