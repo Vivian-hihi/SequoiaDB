@@ -8571,12 +8571,11 @@ namespace engine
    error_rollback:
       {
       INT32 rcRBk = SDB_OK;
-      pHeader->opCode = MSG_CAT_UNLINK_CL_REQ;
+      pHeader->opCode = MSG_CAT_UNLINK_CL_REQ ;
       rcRBk = executeOnCataGroup ( (CHAR*)pLinkReq, pRouteAgent,
-                                cb, NULL, &groupLst ) ;
-      PD_RC_CHECK( rcRBk, PDERROR,
-                   "failed to execute on catalog(rc=%d), rollback failed!",
-                   rcRBk );
+                                   cb, NULL, &groupLst ) ;
+      PD_RC_CHECK( rcRBk, PDERROR, "Failed to execute on catalog(rc=%d), "
+                   "rollback failed!", rcRBk ) ;
       }
    error :
       goto done ;
