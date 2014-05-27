@@ -1540,24 +1540,24 @@ namespace CLSMGR
    void pidMonitor()
    {
       INT32 rc = SDB_OK ;
-      // PD_TRACE_ENTRY ( SDB_PIDMONITOR );
+      PD_TRACE_ENTRY ( SDB_PIDMONITOR );
       ossLatch ( &listLocker ) ;
       map<string, struct Process>::iterator it = svcList.begin();
       while ( it != svcList.end() )
       {
-         // PD_TRACE1 ( SDB_PIDMONITOR, PD_PACK_STRING(svcname.c_str()) );
+         PD_TRACE1 ( SDB_PIDMONITOR, PD_PACK_STRING( svcname.c_str() ) ) ;
          const string &svcname = it->first ;
          struct Process &proc = it->second ;
-         if ( OSS_BIT_TEST ( proc.status, BIT_STARTING )
-              || OSS_BIT_TEST ( proc.status, BIT_RESTARTING ) )
+         if ( OSS_BIT_TEST ( proc.status, BIT_STARTING ) ||
+              OSS_BIT_TEST ( proc.status, BIT_RESTARTING ) )
          {
             // if status starting or restarting or running, do nothing
             ++it ;
             continue ;
          }
 
-         if ( OSS_INVALID_TID != proc.pid
-            && ossIsProcessRunning ( proc.pid ) )
+         if ( OSS_INVALID_TID != proc.pid &&
+              ossIsProcessRunning ( proc.pid ) )
          {
             // the process is running then clean the startTime info
             queue<time_t> startTime ;
@@ -1573,9 +1573,8 @@ namespace CLSMGR
          {
             queue<time_t> startTime ;
             proc.startTime = startTime ;
-            PD_LOG( PDEVENT,
-                  "node(svcname=%s) has been started, save the process info",
-                  svcname.c_str() );
+            PD_LOG( PDEVENT, "Node(svcname=%s) has been started, "
+                    "save the process info", svcname.c_str() ) ;
             ++it ;
             continue ;
          }
@@ -1583,8 +1582,8 @@ namespace CLSMGR
          // the process is not running
          proc.pid = OSS_INVALID_TID ;
          proc.status = 0 ;
-         if ( 0 == resCount
-            || ( resCount > 0 && proc.startTime.size() > (UINT32)resCount ) )
+         if ( 0 == resCount ||
+              ( resCount > 0 && proc.startTime.size() > (UINT32)resCount ) )
          {
             // the process has been start many times and all failed.
             ++it ;
@@ -1592,8 +1591,7 @@ namespace CLSMGR
          }
 
          // check if meet the restart-interval
-         if ( resInterval > 0
-            && proc.startTime.size() > 0 )
+         if ( resInterval > 0 && proc.startTime.size() > 0 )
          {
             time_t now;
             time ( &now ) ;
@@ -1643,7 +1641,7 @@ namespace CLSMGR
             continue ;
          }
          const CHAR *dbpath = vm[PMD_OPTION_DBPATH].as<string>().c_str() ;
-         CHAR startupFile[OSS_MAX_PATHSIZE + 1];
+         CHAR startupFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          if ( NULL == dbpath )
          {
             PD_LOG ( PDERROR, "Can not read dbpath from configure file: %s",
@@ -1685,11 +1683,11 @@ namespace CLSMGR
       }// end of "while ( it != svcList.end() )"
 
       ossUnlatch ( &listLocker ) ;
-      // PD_TRACE_EXIT ( SDB_PIDMONITOR );
+      PD_TRACE_EXIT ( SDB_PIDMONITOR );
       return ;
    }
 
-/*   // PD_TRACE_DECLARE_FUNCTION ( SDB_PIDMONITOR, "pidMonitor" )
+/*
    void pidMonitor ()
    {
       INT32 rc = SDB_OK ;
@@ -1898,13 +1896,14 @@ namespace CLSMGR
 
          if ( vm.count( SDBCM_AUTO_START ))
          {
-            const CHAR *pAutoStart = vm[ SDBCM_AUTO_START ].as<string>().c_str();
+            const CHAR *pAutoStart = vm[ SDBCM_AUTO_START
+               ].as<string>().c_str();
             ossStrToBoolean( pAutoStart, &autoStart );
          }
       }
-      catch ( std::exception&)
+      catch ( std::exception &e )
       {
-         PD_LOG ( PDERROR, "Failed to read configure file" ) ;
+         PD_LOG ( PDERROR, "Failed to read configure file: %s", e.what() ) ;
          rc = SDB_IO ;
          goto error ;
       }
@@ -1932,22 +1931,21 @@ namespace CLSMGR
 #if defined (_WINDOWS)
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_WINGETPROCESSINFOBYSVCNAME, "getProcessInfoBySvcname" )
    INT32 getProcessInfoBySvcname( const string &svcName,
-                              struct Process &processInfo )
+                                  struct Process &processInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_SDBCM_WINGETPROCESSINFOBYSVCNAME );
-      vector<string> names;
-      OSSNPIPE handle;
-      OSSPID pid;
-      INT64 readSize = 0;
+      vector<string> names ;
+      OSSNPIPE handle ;
+      OSSPID pid ;
+      INT64 readSize = 0 ;
       CHAR enginePipeName [ PROC_PIPE_NAME_LEN + 1 ] = {0};
       BOOLEAN isOpen = FALSE;
       ossSnprintf ( enginePipeName, PROC_PIPE_NAME_LEN, ENGINE_NPIPE_PATTERN,
                     svcName.c_str() ) ;
       rc = ossEnumNamedPipes ( names, enginePipeName );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get the process name(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get the process name(rc=%d)",
+                   rc );
       if ( names.size() != 1 )
       {
          if ( names.size() == 0 )
@@ -1956,15 +1954,15 @@ namespace CLSMGR
             goto done;
          }
          PD_LOG( PDWARNING, "named pipe conflict(name:%s)",
-               enginePipeName );
+                 enginePipeName ) ;
       }
 
       rc = ossOpenNamedPipe( enginePipeName, OSS_NPIPE_DUPLEX | OSS_NPIPE_BLOCK,
-                           OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle );
+                             OSS_NPIPE_BLOCK_WITH_TIMEOUT, handle );
       if ( rc && SDB_FE != rc )
       {
          PD_LOG ( PDERROR, "failed to create named pipe: %s(rc=%d)",
-               enginePipeName, rc );
+                  enginePipeName, rc );
          goto error;
       }
       isOpen = TRUE;
@@ -1977,7 +1975,7 @@ namespace CLSMGR
                   enginePipeName, rc );
       }
       rc = ossReadNamedPipe( handle, (CHAR *)&pid, sizeof(pid), &readSize,
-                           LIST_TIMEOUT );
+                             LIST_TIMEOUT );
       PD_RC_CHECK( rc, PDERROR, "Failed to read pid from pipe %s",
                   enginePipeName );
       PD_CHECK( sizeof( pid ) == readSize, SDB_SYS, error, PDERROR,
@@ -2003,7 +2001,7 @@ namespace CLSMGR
       BOOLEAN isOpen = FALSE;
       HANDLE hFile = NULL;
       WIN32_FIND_DATAA fd = {0};
-      CHAR searchPath[OSS_MAX_PATHSIZE + 3] ;
+      CHAR searchPath[OSS_MAX_PATHSIZE + 3] = { 0 } ;
       INT32 len = ossStrlen( pmdConf );
       ossStrncpy( searchPath, pmdConf, OSS_MAX_PATHSIZE );
       len = len < OSS_MAX_PATHSIZE ? len : OSS_MAX_PATHSIZE ;
@@ -2034,18 +2032,16 @@ namespace CLSMGR
       catch ( std::exception & e)
       {
          rc = SDB_IO;
-         PD_RC_CHECK( rc, PDERROR,
-                     "occured unexpected error(%s)",
-                     e.what() );
+         PD_RC_CHECK( rc, PDERROR, "occured unexpected error(%s)", e.what() ) ;
       }
    done:
       if ( isOpen )
       {
-         FindClose( hFile );
-         hFile = NULL;
+         FindClose( hFile ) ;
+         hFile = NULL ;
       }
-      PD_TRACE_EXITRC ( SDB_SDBCM_WINGETSVCLSTFROMCFG, rc );
-      return rc;
+      PD_TRACE_EXITRC ( SDB_SDBCM_WINGETSVCLSTFROMCFG, rc ) ;
+      return rc ;
    error:
       goto done;
    }
@@ -2053,12 +2049,12 @@ namespace CLSMGR
 #elif defined (_LINUX)
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_LINUXGETPROCESSINFOBYSVCNAME, "getProcessInfoBySvcname" )
    INT32 getProcessInfoBySvcname( const string &svcName,
-                              struct Process &processInfo )
+                                  struct Process &processInfo )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_SDBCM_LINUXGETPROCESSINFOBYSVCNAME );
       DIR *pDir;
-      struct dirent *pDirent;
+      struct dirent *pDirent = NULL ;
       CHAR engineName [ OSS_MAX_PATHSIZE + 1 ] = {0};
       BOOLEAN isOpen = FALSE;
       pDir = opendir( PROC_PATH );
@@ -2091,8 +2087,8 @@ namespace CLSMGR
             continue;
          }
          processInfo.pid = ossAtoi( pDirent->d_name );
-         processInfo.status = BIT_RUNNING;
-         break;
+         processInfo.status = BIT_RUNNING ;
+         break ;
       }
       if ( NULL == pDirent )
       {
@@ -2101,7 +2097,7 @@ namespace CLSMGR
    done:
       if ( isOpen )
       {
-         closedir( pDir );
+         closedir( pDir ) ;
       }
       PD_TRACE_EXITRC ( SDB_SDBCM_LINUXGETPROCESSINFOBYSVCNAME, rc );
       return rc;
@@ -2120,27 +2116,29 @@ namespace CLSMGR
       struct stat statBuf;
       pDir = opendir( pmdConf );
       PD_CHECK( pDir != NULL, SDB_IO, error, PDERROR,
-               "failed to open the directory:%s, errno=%d",
-               pmdConf, ossGetLastError() );
+                "failed to open the directory:%s, errno=%d",
+                pmdConf, ossGetLastError() );
       isOpen = TRUE;
       while( (pDirent = readdir( pDir )) != NULL )
       {
-         CHAR fullName[OSS_MAX_PATHSIZE + 1]={0};
+         CHAR fullName[OSS_MAX_PATHSIZE + 1] = { 0 } ;
          strncpy( fullName, pmdConf, OSS_MAX_PATHSIZE );
-         strncat( fullName, OSS_FILE_SEP, OSS_MAX_PATHSIZE - ossStrlen(fullName) );
-         strncat( fullName, pDirent->d_name, OSS_MAX_PATHSIZE - ossStrlen(fullName) );
+         strncat( fullName, OSS_FILE_SEP,
+                  OSS_MAX_PATHSIZE - ossStrlen(fullName) );
+         strncat( fullName, pDirent->d_name,
+                  OSS_MAX_PATHSIZE - ossStrlen(fullName) );
          if( stat( fullName, &statBuf ) == -1 )
          {
             rc = SDB_SYS;
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to get the status of the file:%s",
-                        fullName );
+            PD_LOG( PDERROR, "Failed to get the status of the file:%s",
+                    fullName ) ;
+            goto error ;
          }
 
          // ignore the normal file , "." and ".."
-         if ( !S_ISDIR( statBuf.st_mode )
-            || ossStrcmp( pDirent->d_name, "." ) == 0
-            || ossStrcmp( pDirent->d_name, ".." ) == 0 )
+         if ( !S_ISDIR( statBuf.st_mode ) ||
+              ossStrcmp( pDirent->d_name, "." ) == 0 ||
+              ossStrcmp( pDirent->d_name, ".." ) == 0 )
          {
             continue;
          }
@@ -2182,9 +2180,8 @@ namespace CLSMGR
       vector< string > svcnameLst;
       //vector< boost::thread * > thrdLst;
       rc = getSvcLstFromCfg( svcnameLst );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to get node list(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to get node list(rc=%d)", rc ) ;
+
       for( ; i < svcnameLst.size(); i++ )
       {
          struct Process processInfo;
@@ -2196,15 +2193,15 @@ namespace CLSMGR
          {
             if ( SDBCM_NODE_NOTEXISTED == rc )
             {
-               rc = SDB_OK;
+               rc = SDB_OK ;
                if ( autoStart )
                {
                   PD_LOG( PDEVENT, "Start the node(svcname=%s)",
                           svcnameLst[i].c_str() ) ;
-                  /*boost::thread *pthrd = new boost::thread( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
-                  thrdLst.push_back( pthrd );*/
-                  boost::thread thrd( boost::bind( &sdbStart2, svcnameLst[i], TYPE_MONITOR ) );
-                  thrd.detach();
+
+                  boost::thread thrd( boost::bind( &sdbStart2, svcnameLst[i],
+                                                   TYPE_MONITOR ) ) ;
+                  thrd.detach() ;
                }
             }
             else
@@ -2271,9 +2268,8 @@ namespace CLSMGR
       }
 
       rc = startAllNodes();
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to start nodes(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to start nodes(rc=%d)", rc ) ;
+
 #if defined (_LINUX)
       {
          // once cmTcpListener is successfully started, we can rename the process
@@ -2291,9 +2287,9 @@ namespace CLSMGR
       }
    done:
       //PD_TRACE_EXITRC ( SDB_RTNCMSVC_DMNMAIN, rc );
-      return rc;
+      return rc ;
    error:
-      goto done;
+      goto done ;
    }
 
    INT32 cCMService::init()
