@@ -558,12 +558,12 @@ namespace
          dpsLogHeader *logHeader = ( dpsLogHeader * )pLogHead ;
          if( ( logHeader->_firstLSN.offset > data->lsn ) ||
              ( data->lsn >= logHeader->_firstLSN.offset +
-               fileSize - DPS_LOG_HEAD_LEN ) )
+                            fileSize - DPS_LOG_HEAD_LEN ) )
          {
             goto done ;
          }
-         offset = DPS_LOG_HEAD_LEN + data->lsn %
-                  ( fileSize - DPS_LOG_HEAD_LEN ) ;
+         offset = DPS_LOG_HEAD_LEN +
+                  data->lsn % ( fileSize - DPS_LOG_HEAD_LEN ) ;
          // seek to the log by lsn assigned
          rc = seekToLsnMatched( in, offset, fileSize, ahead ) ;
          if( rc && DPS_LOG_REACH_HEAD != rc )
@@ -720,12 +720,12 @@ namespace
       OSSFILE in ;
       CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
       CHAR pLogHead[ DPS_LOG_HEAD_LEN + 1 ] = { 0 } ;
-      BOOLEAN opened          = FALSE ;
-      INT64 fileSize          = 0 ;
-      INT64 offset            = 0 ;
-      UINT64 curLsn           = DPS_LOG_INVALID_LSN ;
-      dpsLogHeader *logHeader = NULL ;
-      INT64 len               = 0 ;
+      BOOLEAN opened             = FALSE ;
+      INT64 fileSize             = 0 ;
+      INT64 offset               = 0 ;
+      dpsLogHeader *logHeader    = NULL ;
+      dpsLogRecordHeader *header = NULL ;
+      INT64 len                  = 0 ;
       INT64 totalRecordSize      = 0 ;
       UINT64 preLsn              = 0 ;
 
@@ -767,26 +767,6 @@ namespace
          {
             rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
             if( rc && SDB_DPS_CORRUPTED_LOG != rc )
-            {
-               goto error ;
-            }
-            if( SDB_DPS_CORRUPTED_LOG == rc )
-            {
-               //printf( "File was corrupted\n" ) ;
-               rc = SDB_OK ;
-               break ;
-            }
-            dpsLogRecordHeader *header = ( dpsLogRecordHeader * )pRecordHead ;
-            curLsn = header->_lsn ;
-            offset += header->_length ;
-            lastLength = header->_length ;
-         }
-      }
-      meta.lastRecordLength = lastLength ;
-      meta.lastLSN = curLsn ;
-      meta.validSize = offset ;
-      if( DPS_LOG_INVALID_LSN == curLsn )
-      {
             {
                goto error ;
             }
@@ -1050,7 +1030,7 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
    if( dpsLogFilter::isDir( data->srcPath ) )
    {
       INT32 const MAX_FILE_COUNT =
-                     _dpsLogFilter::getFileCount( data->srcPath ) ;
+                  _dpsLogFilter::getFileCount( data->srcPath ) ;
       if( 0 == MAX_FILE_COUNT )
       {
          printf( "Cannot find any Log files\nPlease check"
