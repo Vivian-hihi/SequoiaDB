@@ -475,6 +475,7 @@ namespace
       CHAR *pOutBuffer    = NULL ; ///< buffer for formatted log
       INT64 outBufferSize = 0 ;
       INT64 len           = 0 ;
+      BOOLEAN printLogHead= FALSE ;
 
       CHAR parseBegin[ BLOCK_SIZE ] = { 0 } ;
       len  = ossSnprintf( parseBegin, BLOCK_SIZE, OSS_NEWLINE""OSS_NEWLINE ) ;
@@ -529,29 +530,6 @@ namespace
          goto retry_head ;
       }
 
-      if( DPS_LOG_FILE_INVALID != rc )
-      {
-         if( data->output )
-         {
-            printf( "%s\n", parseBegin ) ;
-            printf( "%s\n", pOutBuffer ) ;
-         }
-         else
-         {
-            rc = writeToFile( out, parseBegin ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-            // write to file
-            rc = writeToFile ( out, pOutBuffer ) ;
-            if( rc )
-            {
-               goto error ;
-            }
-         }
-      }
-
       // lsn must be done specially
       if( SDB_LOG_FILTER_LSN == filter->getType() )
       {
@@ -560,7 +538,6 @@ namespace
              ( data->lsn >= logHeader->_firstLSN.offset +
                             fileSize - DPS_LOG_HEAD_LEN ) )
          {
-            printf( "Lsn: %lld is not in file [%s]\n", data->lsn, filename ) ;
             goto done ;
          }
 
@@ -645,6 +622,32 @@ namespace
             }
             continue ;
          }
+
+         // find first record, then print log head
+         if( !printLogHead )
+         {
+            printLogHead = TRUE ;
+            if( data->output )
+            {
+               printf( "%s\n", parseBegin ) ;
+               printf( "%s\n", pOutBuffer ) ;
+            }
+            else
+            {
+               rc = writeToFile( out, parseBegin ) ;
+               if( rc )
+               {
+                  goto error ;
+               }
+               // write to file
+               rc = writeToFile ( out, pOutBuffer ) ;
+               if( rc )
+               {
+                  goto error ;
+               }
+            }
+         }
+
          // dump log
          dpsLogRecord record ;
          record.load( pRecordBuffer ) ;
@@ -1054,8 +1057,8 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
 
          if( !dpsLogFilter::isFileExisted( filename ) )
          {
-            rc = SDB_INVALIDPATH ;
-            goto error ;
+            printf( "Warning: file:[%s] is missing\n" ) ;
+            continue ;
          }
 
          rc = metaFilte( metaData, out, filename, idx ) ;
