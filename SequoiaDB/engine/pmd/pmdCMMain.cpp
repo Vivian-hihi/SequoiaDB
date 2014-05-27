@@ -41,6 +41,7 @@
 #include "ossProc.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
+#include "ossVer.h"
 
 using namespace CLSMGR ;
 
@@ -75,9 +76,13 @@ INT32 main( INT32 argc, CHAR** argv )
    sdbEnablePD( dialogFile ) ;
    setPDLevel( PDINFO ) ;
 
+   PD_LOG( PDEVENT, "Start cm[Ver: %d.%d, Release: %d, Build: %s]...",
+           SDB_ENGINE_VERISON_CURRENT, SDB_ENGINE_SUBVERSION_CURRENT,
+           SDB_ENGINE_RELEASE_CURRENT, SDB_ENGINE_BUILD_TIME ) ;
+
    rc = svc.init();
    PD_RC_CHECK( rc, PDERROR, "Failed to init cm(rc=%d)", rc ) ;
-   PD_LOG( PDEVENT, "Start cm" ) ;
+
    rc = svc.run( argc, argv );
    if ( rc )
    {
@@ -86,7 +91,9 @@ INT32 main( INT32 argc, CHAR** argv )
    PD_RC_CHECK( rc, PDERROR, "Execute failed(rc=%d)", rc ) ;
 
 done:
-   return rc;
+   PD_LOG( PDEVENT, "Stop programme." ) ;
+   return rc ;
 error:
-   goto done;
+   goto done ;
 }
+
