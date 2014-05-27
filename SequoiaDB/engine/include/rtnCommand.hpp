@@ -92,6 +92,8 @@ namespace engine
 #define NAME_TRACE_STATUS                    CMD_NAME_TRACE_STATUS
 #define NAME_EXPORT_CONFIGURATION            CMD_NAME_EXPORT_CONFIG
 #define NAME_REMOVE_BACKUP                   CMD_NAME_REMOVE_BACKUP
+#define NAME_LINK_COLLECTION                 CMD_NAME_LINK_CL
+#define NAME_UNLINK_COLLECTION               CMD_NAME_UNLINK_CL
 
 // the commands that does not supported by data nodes or standalone mode
 #define NAME_CREATE_GROUP                    CMD_NAME_CREATE_GROUP
@@ -114,8 +116,6 @@ namespace engine
 #define NAME_ADD_DOMAIN_GROUP                CMD_NAME_ADD_DOMAIN_GROUP
 #define NAME_REMOVE_DOMAIN_GROUP             CMD_NAME_REMOVE_DOMAIN_GROUP
 #define NAME_SNAPSHOT_CATA                   CMD_NAME_SNAPSHOT_CATA
-#define NAME_LINK_COLLECTION                 CMD_NAME_LINK_CL
-#define NAME_UNLINK_COLLECTION               CMD_NAME_UNLINK_CL
 #define NAME_WAITTASK                        CMD_NAME_WAITTASK
 
 #if defined (_DEBUG)
@@ -1269,63 +1269,6 @@ namespace engine
          INT32             _pdLevel ;
    } ;
 
-   class _rtnSplit : public _rtnCommand
-   {
-      DECLARE_CMD_AUTO_REGISTER()
-
-      public:
-         _rtnSplit () ;
-         ~_rtnSplit () ;
-
-         virtual INT32 spaceService () ;
-
-      public :
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-         virtual BOOLEAN      writable () ;
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                              INT16 w = 1, INT64 *pContextID = NULL ) ;
-      protected:
-         CHAR _szCollection [ DMS_COLLECTION_SPACE_NAME_SZ +
-                              DMS_COLLECTION_NAME_SZ + 2 ] ;
-         CHAR _szTargetName [ OP_MAXNAMELENGTH + 1 ] ;
-         CHAR _szSourceName [ OP_MAXNAMELENGTH + 1 ] ;
-         FLOAT64 _percent  ;
-
-         bson::BSONObj _splitKey ;
-   } ;
-
-   class _rtnCancelTask : public _rtnCommand
-   {
-      DECLARE_CMD_AUTO_REGISTER()
-      public:
-         _rtnCancelTask () { _taskID = 0 ; }
-         ~_rtnCancelTask () {}
-         virtual INT32 spaceNode () ;
-         virtual BOOLEAN      writable () { return TRUE ; }
-         virtual const CHAR * name () { return NAME_CANCEL_TASK ; }
-         virtual RTN_COMMAND_TYPE type () { return CMD_CANCEL_TASK ; }
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn,
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                              INT16 w = 1, INT64 *pContextID = NULL ) ;
-
-      protected:
-         UINT64            _taskID ;
-
-   } ;
-
    class _rtnTraceStart : public _rtnCommand
    {
       DECLARE_CMD_AUTO_REGISTER()
@@ -1498,54 +1441,6 @@ namespace engine
          const CHAR              *_matcherBuff ;
 
    } ;
-
-   class _rtnLinkCollection : public _rtnCommand
-   {
-      DECLARE_CMD_AUTO_REGISTER()
-
-      public:
-         _rtnLinkCollection () ;
-         ~_rtnLinkCollection () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-         virtual const CHAR * collectionFullName () ;
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
-      protected:
-         const CHAR           *_collectionName ;
-   };
-
-   class _rtnUnlinkCollection : public _rtnCommand
-   {
-      DECLARE_CMD_AUTO_REGISTER()
-
-      public:
-         _rtnUnlinkCollection () ;
-         ~_rtnUnlinkCollection () ;
-
-         virtual const CHAR * name () ;
-         virtual RTN_COMMAND_TYPE type () ;
-         virtual const CHAR * collectionFullName () ;
-
-         virtual INT32 init ( INT32 flags, INT64 numToSkip, INT64 numToReturn, 
-                              const CHAR *pMatcherBuff,
-                              const CHAR *pSelectBuff,
-                              const CHAR *pOrderByBuff,
-                              const CHAR *pHintBuff ) ;
-         virtual INT32 doit ( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
-                              _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
-                              INT16 w = 1, INT64 *pContextID = NULL  ) ;
-      protected:
-         const CHAR           *_collectionName ;
-   };
 
 }
 
