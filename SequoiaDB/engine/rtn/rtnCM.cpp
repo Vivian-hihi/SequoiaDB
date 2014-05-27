@@ -107,9 +107,9 @@ namespace CLSMGR
 
    struct Process
    {
-      OSSPID pid;
-      INT32 status;
-      queue<time_t> startTime;
+      OSSPID pid ;
+      INT32 status ;
+      queue<time_t> startTime ;
    };
 
    // restart count, always restart if set "-1", never restart if set "0"
@@ -1561,8 +1561,9 @@ namespace CLSMGR
       map<string, struct Process>::iterator it = svcList.begin();
       while ( it != svcList.end() )
       {
-         PD_TRACE1 ( SDB_PIDMONITOR, PD_PACK_STRING( svcname.c_str() ) ) ;
          const string &svcname = it->first ;
+         PD_TRACE1 ( SDB_PIDMONITOR, PD_PACK_STRING( svcname.c_str() ) ) ;
+
          struct Process &proc = it->second ;
          if ( OSS_BIT_TEST ( proc.status, BIT_STARTING ) ||
               OSS_BIT_TEST ( proc.status, BIT_RESTARTING ) )
