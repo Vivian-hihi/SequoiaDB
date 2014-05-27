@@ -557,11 +557,13 @@ namespace
       {
          dpsLogHeader *logHeader = ( dpsLogHeader * )pLogHead ;
          if( ( logHeader->_firstLSN.offset > data->lsn ) ||
-             ( data->lsn >= logHeader->_firstLSN.offset + fileSize - DPS_LOG_HEAD_LEN ) )
+             ( data->lsn >= logHeader->_firstLSN.offset +
+               fileSize - DPS_LOG_HEAD_LEN ) )
          {
             goto done ;
          }
-         offset = DPS_LOG_HEAD_LEN + data->lsn % ( fileSize - DPS_LOG_HEAD_LEN ) ;
+         offset = DPS_LOG_HEAD_LEN + data->lsn %
+                  ( fileSize - DPS_LOG_HEAD_LEN ) ;
          // seek to the log by lsn assigned
          rc = seekToLsnMatched( in, offset, fileSize, ahead ) ;
          if( rc && DPS_LOG_REACH_HEAD != rc )
@@ -641,21 +643,6 @@ namespace
             }
             continue ;
          }
-         // dump log
-         dpsLogRecord record ;
-         record.load( pRecordBuffer ) ;
-         len = recordLength * LOG_BUFFER_FORMAT_MULTIPLIER ;
-
-      retry_record:
-         if( len > outBufferSize )
-         {
-            CHAR *pOrgBuff = pOutBuffer ;
-            pOutBuffer =(CHAR*)SDB_OSS_REALLOC( pOutBuffer, len + 1 ) ;
-            if( !pOutBuffer )
-            {
-               printf( "Failed to allocate memory for %lld bytes\n",
-                       len + 1 ) ;
-               pOutBuffer = pOrgBuff ;
                rc = SDB_OOM ;
                goto error ;
             }
@@ -718,14 +705,12 @@ namespace
       OSSFILE in ;
       CHAR pRecordHead[ sizeof( dpsLogRecordHeader ) + 1 ] = { 0 } ;
       CHAR pLogHead[ DPS_LOG_HEAD_LEN + 1 ] = { 0 } ;
-      BOOLEAN opened             = FALSE ;
-      INT64 fileSize             = 0 ;
-      INT64 offset               = 0 ;
-      dpsLogHeader *logHeader    = NULL ;
-      dpsLogRecordHeader *header = NULL ;
-      INT64 len                  = 0 ;
-      INT64 totalRecordSize      = 0 ;
-      UINT64 preLsn              = 0 ;
+      BOOLEAN opened          = FALSE ;
+      INT64 fileSize          = 0 ;
+      INT64 offset            = 0 ;
+      UINT64 curLsn           = DPS_LOG_INVALID_LSN ;
+      dpsLogHeader *logHeader = NULL ;
+      INT64 len               = 0 ;
 
       printf("Parse file:[ %s ] begin\n", filename ) ;
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
@@ -750,7 +735,6 @@ namespace
          goto error;
       }
       // start format log head
-      totalRecordSize = fileSize - DPS_LOG_HEAD_LEN ;
       logHeader = (dpsLogHeader*)pLogHead ;
 
       dpsFileMeta meta ;
@@ -765,6 +749,26 @@ namespace
          {
             rc = readRecordHead( in, offset, fileSize, pRecordHead ) ;
             if( rc && SDB_DPS_CORRUPTED_LOG != rc )
+            {
+               goto error ;
+            }
+            if( SDB_DPS_CORRUPTED_LOG == rc )
+            {
+               //printf( "File was corrupted\n" ) ;
+               rc = SDB_OK ;
+               break ;
+            }
+            dpsLogRecordHeader *header = ( dpsLogRecordHeader * )pRecordHead ;
+            curLsn = header->_lsn ;
+            offset += header->_length ;
+            lastLength = header->_length ;
+         }
+      }
+      meta.lastRecordLength = lastLength ;
+      meta.lastLSN = curLsn ;
+      meta.validSize = offset ;
+      if( DPS_LOG_INVALID_LSN == curLsn )
+      {
             {
                goto error ;
             }
@@ -784,7 +788,8 @@ namespace
                meta.expectLSN = header->_lsn + header->_length ;
                meta.lastLSN = header->_lsn ;
                meta.validSize = header->_lsn % totalRecordSize ;
-               meta.restSize = totalRecordSize - ( meta.validSize + header->_length ) ;
+               meta.restSize = totalRecordSize -
+                               ( meta.validSize + header->_length ) ;
                break;
             }
 
@@ -859,7 +864,8 @@ namespace
       // find work file
       idx = 0 ;
       work = beginIdx ;
-      while( 0 == metaData.metaList[ work ].restSize && idx < metaData.metaList.size() )
+      while( 0 == metaData.metaList[ work ].restSize &&
+             idx < metaData.metaList.size() )
       {
          metaData.fileWork = work ;
          ++work ;
@@ -1025,7 +1031,8 @@ INT32 _dpsMetaFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
    dpsMetaData metaData ;
    if( dpsLogFilter::isDir( data->srcPath ) )
    {
-      INT32 const MAX_FILE_COUNT = _dpsLogFilter::getFileCount( data->srcPath ) ;
+      INT32 const MAX_FILE_COUNT =
+                     _dpsLogFilter::getFileCount( data->srcPath ) ;
       if( 0 == MAX_FILE_COUNT )
       {
          printf( "Cannot find any Log files\nPlease check"
@@ -1135,35 +1142,6 @@ done:
 error:
    goto done ;
 }
-
-////////////////////////////////////////////////////////////////////
-///< for _dpsNoneFilter
-BOOLEAN _dpsNoneFilter::match( const dpsCmdData *data, CHAR *pRecord )
-{
-   return iFilter::match( data, pRecord ) ;
-}
-
-INT32 _dpsNoneFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
-                               const CHAR *logFilePath )
-{
-   INT32 rc = SDB_OK ;
-
-   rc = filte( this, data, out, logFilePath ) ;
-   if( rc )
-   {
-      //PD_LOG( "!parse log file: [%s] error, rc = %d", logFilePath, rc ) ;
-      goto error ;
-   }
-
-done:
-   return rc;
-
-error:
-   goto done;
-}
-
-////////////////////////////////////////////////////////////////////
-///< for lastFilter
 BOOLEAN _dpsLastFilter::match( const dpsCmdData *data, CHAR *pRecord )
 {
    return iFilter::match( data, pRecord ) ;
