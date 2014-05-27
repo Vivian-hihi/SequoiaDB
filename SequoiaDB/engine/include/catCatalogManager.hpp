@@ -79,6 +79,18 @@ namespace engine
          _pageSize = DMS_PAGE_SIZE_DFT ;
          _domainName = NULL ;
       }
+
+      BSONObj toBson()
+      {
+         BSONObjBuilder builder ;
+         builder.append( CAT_COLLECTION_SPACE_NAME, _pCSName ) ;
+         builder.append( CAT_PAGE_SIZE_NAME, _pageSize ) ;
+         if ( _domainName )
+         {
+            builder.append( CAT_PAGE_SIZE_NAME, _pageSize ) ;
+         }
+         return builder.obj() ;
+      }
    } ;
    typedef _catCSInfo catCSInfo ;
 
