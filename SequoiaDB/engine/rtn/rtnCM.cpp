@@ -1642,6 +1642,14 @@ namespace CLSMGR
          PMD_ADD_PARAM_OPTIONS_END
          string conf = pmdConf ;
          conf += OSS_FILE_SEP + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
+
+         rc = ossAccess( conf.c_str() ) ;
+         if ( rc && SDB_FNE == rc )
+         {
+            svcList.erase( it++ ) ;
+            continue ;
+         }
+
          rc = utilReadConfigureFile ( conf.c_str(), desc, vm ) ;
          if ( rc )
          {
