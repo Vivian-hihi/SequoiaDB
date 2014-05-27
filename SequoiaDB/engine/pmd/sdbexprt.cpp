@@ -57,7 +57,6 @@
 #define OPTION_COLLECTSPACE      "csname"
 #define OPTION_COLLECTION        "clname"
 #define OPTION_FILENAME          "file"
-#define OPTION_HASOID            "hasoid"
 #define OPTION_TYPE              FIELD_NAME_LTYPE
 #define OPTION_ERRORSTOP         "errorstop"
 
@@ -106,8 +105,15 @@ INT32 on_main( void *pData )
    utilSdbObj.getArgChar( OPTION_DELRECORD,    &exprtArg.delRecord ) ;
 
    utilSdbObj.getArgBool( OPTION_ERRORSTOP,    &exprtArg.errorStop ) ;
-   utilSdbObj.getArgBool( OPTION_HASOID,       &exprtArg.hasOid ) ;
    utilSdbObj.getArgBool( OPTION_INCLUDED,     &exprtArg.include ) ;
+
+   if ( !exprtArg.pFields && exprtArg.type == MIGEXPRT_CSV )
+   {
+      ossPrintf ( "CSV format must complete the --fields" ) ;
+      PD_LOG ( PDERROR, "CSV format must complete the --fields" ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
 
    rc = parser.init( &exprtArg ) ;
    if ( rc )
@@ -143,8 +149,7 @@ INT32 on_end( void *pData )
 #define EXPLAIN_DELRECORD        "record delimiter ( default: '\\n' )( csv only )"
 #define EXPLAIN_COLLECTSPACE     "collection space name"
 #define EXPLAIN_COLLECTION       "collection name"
-#define EXPLAIN_HASOID           "has _id ( default: true )( json only )"
-#define EXPLAIN_FIELDS           "comma separated list of field names e.g. \"--fields name,age\" ( csv only )"
+#define EXPLAIN_FIELDS           "comma separated list of field names e.g. \"--fields name,age\""
 #define EXPLAIN_INCLUDE          "include field names of the file ( default: true )( csv only )"
 #define EXPLAIN_FILENAME         "export data storage file name"
 #define EXPLAIN_TYPE             "type of file to load, default: csv (json,csv)"
@@ -172,7 +177,6 @@ INT32 main ( INT32 argc, CHAR **argv )
    APPENDARGCHAR  ( utilSdbObj, OPTION_DELRECORD,    OPTION_DELRECORD ",r",    EXPLAIN_DELRECORD,        FALSE, '\n' ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_COLLECTSPACE, OPTION_COLLECTSPACE ",c", EXPLAIN_COLLECTSPACE,     TRUE,  -1,                  NULL ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_COLLECTION,   OPTION_COLLECTION ",l",   EXPLAIN_COLLECTION,       TRUE,  -1,                  NULL ) ;
-   APPENDARGBOOL  ( utilSdbObj, OPTION_HASOID,       OPTION_HASOID ",i",       EXPLAIN_HASOID,           FALSE, TRUE ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_FILENAME,     OPTION_FILENAME,          EXPLAIN_FILENAME,         TRUE,  -1,                  NULL ) ;
    APPENDARGSWITCH( utilSdbObj, OPTION_TYPE,         OPTION_TYPE,              EXPLAIN_TYPE,             FALSE, SDBEXPORT_TYPE_STR,  2,        MIGEXPRT_CSV ) ;
    APPENDARGSTRING( utilSdbObj, OPTION_FIELD,        OPTION_FIELD,             EXPLAIN_FIELDS,           FALSE, -1,                  NULL ) ;

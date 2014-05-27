@@ -529,7 +529,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
          }
          bin_type = bson_iterator_bin_type( &i ) ;
          bin_data = (CHAR *)bson_iterator_bin_data( &i ) ;
-         bin_size = bson_iterator_bin_len ( &i ) ;
+         bin_size = bson_iterator_bin_len ( &i ) - 1 ;
          /* first we need to calculate how much space we need to put the new
           * data */
          len = getEnBase64Size ( bin_size ) ;
@@ -542,7 +542,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
             return FALSE ;
          /* then we have to allocate another piece of memory for base64 encoding
           */
-         out = (CHAR *)malloc( len ) ;
+         out = (CHAR *)malloc( len + 1 ) ;
          memset ( out, 0, len ) ;
          if ( !out )
          {

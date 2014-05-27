@@ -99,7 +99,7 @@ utilFiles = [
       "util/utilParam.cpp",
       "util/utilSdb.cpp",
       "util/csv2rawbson.cpp",
-      "util/rawbson2csv.cpp"
+      "util/rawbson2csv.c"
       ]
 
 dpsFiles = [

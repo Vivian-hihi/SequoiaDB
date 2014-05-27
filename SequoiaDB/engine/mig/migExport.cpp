@@ -47,15 +47,24 @@
 #include "msgDef.h"
 #include "msg.h"
 
+#define CSV_STR_TABLE   '\t'
+#define CSV_STR_CR      '\r'
+#define CSV_STR_LF      '\n'
+#define CSV_STR_COMMA   ','
+#define CSV_STR_SPACE   32
+#define CSV_STR_QUOTES  '"'
+#define CSV_STR_SLASH   '\\'
+
 migExport::migExport () : _gConnection(0),
                           _gCollectionSpace(0),
                           _gCollection(0),
                           _gCSList(0),
                           _gCLList(0),
                           _gCursor(0),
-                          _ID(0),
+                          _bufferSize(0),
                           _isOpen(FALSE),
-                          _pMigArg(NULL)
+                          _pMigArg(NULL),
+                          _pBuffer(NULL)
 {
 }
 
@@ -64,22 +73,6 @@ migExport::~migExport ()
    if ( _isOpen )
    {
       ossClose ( _file ) ;
-   }
-   if ( _gConnection )
-   {
-      sdbDisconnect ( _gConnection ) ;
-   }
-   if ( _gCollection )
-   {
-      sdbReleaseCollection ( _gCollection ) ;
-   }
-   if ( _gCollectionSpace )
-   {
-      sdbReleaseCS ( _gCollectionSpace ) ;
-   }
-   if ( _gConnection )
-   {
-      sdbReleaseConnection ( _gConnection ) ;
    }
    if ( _gCursor )
    {
@@ -96,6 +89,183 @@ migExport::~migExport ()
       sdbCloseCursor( _gCLList ) ;
       sdbReleaseCursor( _gCLList ) ;
    }
+   if ( _gCollection )
+   {
+      sdbReleaseCollection ( _gCollection ) ;
+   }
+   if ( _gCollectionSpace )
+   {
+      sdbReleaseCS ( _gCollectionSpace ) ;
+   }
+   if ( _gConnection )
+   {
+      sdbDisconnect ( _gConnection ) ;
+   }
+   SAFE_OSS_FREE( _pBuffer ) ;
+}
+
+CHAR *migExport::_trimLeft( CHAR *pCursor, INT32 &size )
+{
+   for ( INT32 i = 0; i < size; ++i )
+   {
+      switch( *pCursor )
+      {
+      case CSV_STR_TABLE:
+      case CSV_STR_CR:
+      case CSV_STR_LF:
+      case CSV_STR_SPACE:
+         ++pCursor ;
+         break ;
+      case 0:
+      default:
+         size -= i ;
+         return pCursor ;
+      }
+   }
+   return pCursor ;
+}
+
+CHAR *migExport::_trimRight ( CHAR *pCursor, INT32 &size )
+{
+   for ( INT32 i = 1; i <= size; ++i )
+   {
+      switch( *( pCursor + ( size - i ) ) )
+      {
+      case CSV_STR_TABLE:
+      case CSV_STR_CR:
+      case CSV_STR_LF:
+      case CSV_STR_SPACE:
+         break ;
+      case 0:
+      default:
+         size -= ( i - 1 ) ;
+         return pCursor ;
+      }
+   }
+   return pCursor ;
+}
+
+CHAR *migExport::_trim ( CHAR *pCursor, INT32 &size )
+{
+   pCursor = _trimLeft( pCursor, size ) ;
+   pCursor = _trimRight( pCursor, size ) ;
+   return pCursor ;
+}
+
+INT32 migExport::_filterString( CHAR **pField, INT32 &size )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *pBuffer = *pField ;
+   if ( pBuffer[0] == CSV_STR_QUOTES &&
+        pBuffer[size-1] == CSV_STR_QUOTES )
+   {
+      ++pBuffer ;
+      size -= 2 ;
+   }
+   *pField = pBuffer ;
+   return rc ;
+}
+
+BOOLEAN lessFields( const CHAR *pField1, const CHAR *pField2 )
+{
+   return ( ossStrcmp( pField1, pField2 ) < 0 ) ;
+}
+
+INT32 migExport::_parseFields( CHAR *pFields, INT32 size, bson &obj )
+{
+   INT32   rc         = SDB_OK ;
+   INT32   tempRc     = SDB_OK ;
+   INT32   fieldSize  = 0 ;
+   INT32   bsonSize   = 0 ;
+   BOOLEAN isString   = FALSE;
+   CHAR   *pCursor    = pFields ;
+   CHAR   *leftField  = pFields ;
+   bson_init( &obj ) ;
+   do
+   {
+      if ( 0 == size )
+      {
+         if ( !isString )
+         {
+            fieldSize = pCursor - leftField ;
+            leftField = _trim( leftField, fieldSize ) ;
+            if ( fieldSize == 0 )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            else
+            {
+               rc = _filterString( &leftField, fieldSize ) ;
+               if ( rc )
+               {
+                  rc = SDB_INVALIDARG ;
+                  goto error ;
+               }
+               leftField[ fieldSize ] = 0 ;
+               bson_append_undefined( &obj, leftField ) ;
+               _vFields.push_back( leftField ) ;
+            }
+         }
+         break ;
+      }
+
+      if ( CSV_STR_QUOTES == *pCursor )
+      {
+         --size ;
+         ++pCursor ;
+         isString = !isString ;
+      }
+      else if ( !isString &&
+                ( CSV_STR_COMMA == *pCursor || CSV_STR_LF == *pCursor ) )
+      {
+         fieldSize = pCursor - leftField ;
+         leftField = _trim( leftField, fieldSize ) ;
+         if ( CSV_STR_LF == *pCursor )
+         {
+            tempRc = SDB_UTIL_CSV_FIELD_END ;
+         }
+         if ( fieldSize == 0 )
+         {
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+         else
+         {
+            rc = _filterString( &leftField, fieldSize ) ;
+            if ( rc )
+            {
+               rc = SDB_INVALIDARG ;
+               goto error ;
+            }
+            leftField[ fieldSize ] = 0 ;
+            bson_append_undefined( &obj, leftField ) ;
+            _vFields.push_back( leftField ) ;
+         }
+
+         if ( tempRc == SDB_UTIL_CSV_FIELD_END )
+         {
+            break ;
+         }
+         else
+         {
+            --size ;
+            ++pCursor ;
+            leftField = pCursor ;
+         }
+      }
+      else
+      {
+         --size ;
+         ++pCursor ;
+      }
+   }while ( TRUE ) ;
+   bson_finish ( &obj ) ;
+   std::sort( _vFields.begin(), _vFields.end(), lessFields ) ;
+done:
+   return rc ;
+error:
+   goto done ;
 }
 
 INT32 migExport::_connectDB()
@@ -198,8 +368,26 @@ error:
 INT32 migExport::_query()
 {
    INT32 rc = SDB_OK ;
+   CHAR *pbson = NULL ;
+   bson obj ;
+   if ( _pMigArg->pFields )
+   {
+      rc = _parseFields ( _pMigArg->pFields,
+                          ossStrlen( _pMigArg->pFields ),
+                          obj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to parse Header, rc=%d", rc ) ;
+         goto error ;
+      }
+   }
+   else
+   {
+      bson_init( &obj ) ;
+      bson_empty( &obj ) ;
+   }
    // start creating cursor
-   rc = sdbQuery ( _gCollection, NULL, NULL, NULL, NULL, 0, -1,
+   rc = sdbQuery ( _gCollection, NULL, &obj, NULL, NULL, 0, -1,
                    &_gCursor ) ;
    if ( rc )
    {
@@ -214,6 +402,28 @@ INT32 migExport::_query()
       }
    }
 done:
+   bson_destroy( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 migExport::_reallocBuffer( CHAR **ppBuffer, INT32 size, INT32 newSize )
+{
+   INT32 rc = SDB_OK ;
+   CHAR *pTemp = NULL ;
+   if ( newSize > size )
+   {
+      pTemp = (CHAR *)SDB_OSS_REALLOC( *ppBuffer, newSize ) ;
+      if ( !pTemp )
+      {
+         rc = SDB_OOM ;
+         PD_LOG ( PDERROR, "out of memory, rc=%d", rc ) ;
+         goto error ;
+      }
+      *ppBuffer = pTemp ;
+   }
+done:
    return rc ;
 error:
    goto done ;
@@ -223,29 +433,72 @@ INT32 migExport::_writeFile( bson *pbson )
 {
    INT32  rc = SDB_OK ;
    INT32  bufferSize = 0 ;
+   INT32  tempSize = 0 ;
    SINT64 writedSize = 0 ;
    SINT64 curWriteSize = 0 ;
-   SINT64 tempSize = 0 ;
-   CHAR *pBuffer = NULL ;
+   SINT64 bufferSize2 = 0 ;
+   CHAR *pTemp = NULL ;
 
    if ( _pMigArg->type == MIGEXPRT_CSV )
    {
-      rc = _csvEncode.bson2csv( _ID, pbson->data ) ;
+      rc = getCSVSize( _pMigArg->delChar,
+                       _pMigArg->delField,
+                       _pMigArg->delRecord,
+                       pbson->data, &bufferSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to get csv size, rc=%d", rc ) ;
+         goto error ;
+      }
+      if ( _bufferSize < bufferSize )
+      {
+         rc = _reallocBuffer( &_pBuffer, _bufferSize, bufferSize ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to realloc memory, rc=%d", rc ) ;
+            goto error ;
+         }
+         _bufferSize = bufferSize ;
+      }
+      pTemp = _pBuffer ;
+      tempSize = bufferSize ;
+      rc = bson2csv( _pMigArg->delChar,
+                     _pMigArg->delField,
+                     _pMigArg->delRecord,
+                     pbson->data, &pTemp, &tempSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to convert bson to csv, rc=%d", rc ) ;
          goto error ;
       }
-      rc = _csvEncode.getCSV( _ID, &pBuffer, bufferSize ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to convert bson to csv, rc=%d", rc ) ;
-         goto error ;
-      }
+      bufferSize -= tempSize ;
    }
    else if ( _pMigArg->type == MIGEXPRT_JSON )
    {
-      
+      bufferSize = bson_sprint_length ( pbson ) + 1 ;
+      if ( bufferSize == 0 )
+      {
+         PD_LOG ( PDERROR, "Failed to get json size, rc=%d", rc ) ;
+         goto error ;
+      }
+      if ( _bufferSize < bufferSize )
+      {
+         rc = _reallocBuffer( &_pBuffer, _bufferSize, bufferSize ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to realloc memory, rc=%d", rc ) ;
+            goto error ;
+         }
+         _bufferSize = bufferSize ;
+      }
+      if ( !bson_sprint ( _pBuffer, _bufferSize, pbson ) )
+      {
+         PD_LOG ( PDERROR, "Failed to convert bson to json, rc=%d", rc ) ;
+         goto error ;
+      }
+      bufferSize = ossStrlen( _pBuffer ) ;
+      _pBuffer[ bufferSize ] = _pMigArg->delRecord ;
+      ++bufferSize ;
    }
 
    if ( bufferSize < 0 )
@@ -255,22 +508,21 @@ INT32 migExport::_writeFile( bson *pbson )
       goto error ;
    }
 
-   tempSize = (SINT64)bufferSize ;
+   bufferSize2 = (SINT64)bufferSize ;
 
-   while ( tempSize > 0 )
+   while ( bufferSize2 > 0 )
    {
-      rc = ossWrite ( &_file, pBuffer + writedSize,
-                      tempSize, &curWriteSize ) ;
+      rc = ossWrite ( &_file, _pBuffer + writedSize,
+                      bufferSize2, &curWriteSize ) ;
       if ( rc && SDB_INTERRUPT != rc )
       {
          PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
          goto error ;
       }
-      tempSize -= curWriteSize ;
+      bufferSize2 -= curWriteSize ;
       writedSize += curWriteSize ;
       rc = SDB_OK ;
    }
-
 done:
    return rc ;
 error:
@@ -281,7 +533,12 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
 {
    INT32 rc = SDB_OK ;
    INT32 clTotal = 0 ;
+   INT32 fieldsNum = 0 ;
+   SINT64 writedSize = 0 ;
+   SINT64 curWriteSize = 0 ;
+   SINT64 fieldSize = 0 ;
    const CHAR *pTemp = NULL ;
+   CHAR *pField = NULL ;
    bson obj ;
    bson_iterator it ;
    bson_type type ;
@@ -318,6 +575,7 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          type = bson_find( &it, &obj, "Name" ) ;
          if ( type != BSON_STRING )
          {
+            bson_destroy ( &obj ) ;
             rc = SDB_SYS ;
             PD_LOG ( PDERROR, "List collection space does not string, rc = %d",
                      rc ) ;
@@ -327,9 +585,11 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          rc = _run( pTemp, pCLName, total ) ;
          if ( rc )
          {
+            bson_destroy ( &obj ) ;
             PD_LOG ( PDERROR, "Faild to call _run, rc = %d", rc ) ;
             goto error ;
          }
+         bson_destroy ( &obj ) ;
       }
    }
    else if ( pCSName != NULL && pCLName == NULL )
@@ -363,6 +623,7 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          if ( type != BSON_STRING )
          {
             rc = SDB_SYS ;
+            bson_destroy ( &obj ) ;
             PD_LOG ( PDERROR, "List collection does not string, rc = %d",
                      rc ) ;
             goto error ;
@@ -371,9 +632,11 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          rc = _run( pCSName, pTemp, total ) ;
          if ( rc )
          {
+            bson_destroy ( &obj ) ;
             PD_LOG ( PDERROR, "Faild to call _run, rc = %d", rc ) ;
             goto error ;
          }
+         bson_destroy ( &obj ) ;
       }
    }
    else
@@ -389,6 +652,7 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
       rc = _getCL( pCLName ) ;
       if ( rc )
       {
+         sdbReleaseCS ( _gCollectionSpace ) ;
          if ( rc == SDB_DMS_NOTEXIST )
          {
             rc = SDB_OK ;
@@ -404,6 +668,8 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
       rc = _query() ;
       if ( rc )
       {
+         sdbReleaseCollection ( _gCollection ) ;
+         sdbReleaseCS ( _gCollectionSpace ) ;
          if ( SDB_DMS_EOC == rc )
          {
             rc = SDB_OK ;
@@ -416,11 +682,46 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
             goto error ;
          }
       }
+      if ( _pMigArg->type == MIGEXPRT_CSV &&
+           _pMigArg->include == TRUE )
+      {
+         fieldsNum = _vFields.size() ;
+         for ( INT32 i = 0; i < fieldsNum; ++i )
+         {
+            pField = _vFields.at( i ) ;
+            fieldSize = (SINT64)ossStrlen( pField ) ;
+            if ( i + 1 == fieldsNum )
+            {
+               pField[ fieldSize ] = _pMigArg->delRecord ;
+            }
+            else
+            {
+               pField[ fieldSize ] = _pMigArg->delField ;
+            }
+            ++fieldSize ;
+            writedSize = 0 ;
+            while ( fieldSize > 0 )
+            {
+               rc = ossWrite ( &_file, pField + writedSize,
+                               fieldSize, &curWriteSize ) ;
+               if ( rc && SDB_INTERRUPT != rc )
+               {
+                  PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
+                  goto error ;
+               }
+               fieldSize -= curWriteSize ;
+               writedSize += curWriteSize ;
+               rc = SDB_OK ;
+            }
+         }
+      }
       while ( TRUE )
       {
          rc = sdbNext( _gCursor, &obj ) ;
          if ( rc )
          {
+            sdbReleaseCollection ( _gCollection ) ;
+            sdbReleaseCS ( _gCollectionSpace ) ;
             if ( SDB_DMS_EOC != rc )
             {
                PD_LOG ( PDERROR, "Failed to get collection list, rc = %d",
@@ -436,6 +737,8 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          rc = _writeFile( &obj ) ;
          if ( rc )
          {
+            sdbReleaseCollection ( _gCollection ) ;
+            sdbReleaseCS ( _gCollectionSpace ) ;
             PD_LOG ( PDERROR, "Failed to write record to file, rc = %d",
                      rc ) ;
             goto error ;
@@ -443,6 +746,8 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          bson_destroy ( &obj ) ;
          ++clTotal ;
       }
+      sdbReleaseCollection ( _gCollection ) ;
+      sdbReleaseCS ( _gCollectionSpace ) ;
    }
 done:
    total += clTotal ;
@@ -463,31 +768,6 @@ INT32 migExport::init( migExprtArg *pMigArg )
    {
       PD_LOG ( PDERROR, "Failed to connect database, rc=%d", rc ) ;
       goto error ;
-   }
-
-   if ( _pMigArg->type == MIGEXPRT_CSV )
-   {
-      rc = _csvEncode.init( _pMigArg->delChar,
-                            _pMigArg->delField,
-                            _pMigArg->delRecord ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to csv parser initialize, rc=%d", rc ) ;
-         goto error ;
-      }
-      rc = _csvEncode.parseHeader ( _pMigArg->pFields,
-                                    ossStrlen( _pMigArg->pFields ) ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to parse Header, rc=%d", rc ) ;
-         goto error ;
-      }
-      rc = _csvEncode.getID( _ID ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to get ID, rc=%d", rc ) ;
-         goto error ;
-      }
    }
 
    // open output file

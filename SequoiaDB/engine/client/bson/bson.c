@@ -343,7 +343,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       case BSON_DOUBLE:
       {
          char temp[64] = {0} ;
-         sprintf ( temp, "%f", bson_iterator_double( i ) ) ;
+         sprintf ( temp, "%.16g", bson_iterator_double( i ) ) ;
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )
          break;

@@ -41,8 +41,9 @@
 #include "oss.hpp"
 #include "../client/bson/bson.h"
 #include "../client/client.h"
-#include "../util/rawbson2csv.hpp"
+#include "../util/rawbson2csv.h"
 #include "ossIO.hpp"
+#include <vector>
 
 enum EXPRTTYPE
 {
@@ -56,7 +57,6 @@ struct migExprtArg : public SDBObject
    CHAR      delField ;
    CHAR      delRecord ;
    EXPRTTYPE type ;
-   BOOLEAN   hasOid ;
    BOOLEAN   include ;
    BOOLEAN   errorStop ;
    CHAR     *pHostname ;
@@ -71,7 +71,6 @@ struct migExprtArg : public SDBObject
                    delField(0),
                    delRecord(0),
                    type(MIGEXPRT_CSV),
-                   hasOid(TRUE),
                    include(TRUE),
                    errorStop(TRUE),
                    pHostname(NULL),
@@ -97,13 +96,19 @@ private:
    sdbCursorHandle     _gCSList ;
    sdbCursorHandle     _gCLList ;
    sdbCursorHandle     _gCursor ;
-   INT32               _ID ;
+   INT32               _bufferSize ;
    BOOLEAN             _isOpen ;
    migExprtArg        *_pMigArg ;
-   csvEncode           _csvEncode ;
+   CHAR               *_pBuffer ;
    OSSFILE             _file ;
    CHAR                _fullName[ MIG_COLLECTION_SPACE_SIZE ] ;
+   std::vector<CHAR *> _vFields ;
 private:
+   CHAR *_trimLeft( CHAR *pCursor, INT32 &size ) ;
+   CHAR *_trimRight( CHAR *pCursor, INT32 &size ) ;
+   CHAR *_trim( CHAR *pCursor, INT32 &size ) ;
+   INT32 _filterString( CHAR **pField, INT32 &size ) ;
+   INT32 _parseFields( CHAR *pFields, INT32 size, bson &obj ) ;
    INT32 _connectDB() ;
    INT32 _getCSList() ;
    INT32 _getCLList() ;
@@ -111,6 +116,7 @@ private:
    INT32 _getCL( const CHAR *pCLName ) ;
    INT32 _query() ;
 private:
+   INT32 _reallocBuffer( CHAR **ppBuffer, INT32 size, INT32 newSize ) ;
    INT32 _writeFile( bson *pbson ) ;
    INT32 _run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total ) ;
 public:
