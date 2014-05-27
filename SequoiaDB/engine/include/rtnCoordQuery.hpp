@@ -41,23 +41,7 @@ namespace engine
                            CoordGroupList &sendGroupList,
                            rtnContextCoord *pContext );
    };
-   class rtnCoordGetmore : virtual public rtnCoordOperator
-   {
-   public:
-      virtual INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                           CHAR **ppResultBuffer, pmdEDUCB *cb,
-                           MsgOpReply &replyHeader,
-                           BSONObj** ppErrorObj );
-      INT32 getData( rtnContextData *pContext,
-                     netMultiRouteAgent *pRouteAgent,
-                     pmdEDUCB *cb,
-                     const SINT32 numToReturn );
-   private:
-      INT32 sendRequest( rtnContext *pContext,
-                        pmdEDUCB *cb,
-                        netMultiRouteAgent *pRouteAgent,
-                        const SINT32 numToReturn );
-   };
+
 }
 
 #endif

@@ -97,12 +97,12 @@ namespace engine
                                      MsgOpReply &replyHeader,
                                      INT32 requestType ) ;
       virtual INT32 executeOnDataGroup ( MsgHeader *pMsg,
-                                       CoordGroupList &groupLst,
-                                       CoordGroupList &sendGroupLst,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       BOOLEAN onPrimary,
-                                       std::set<INT32> *ignoreRCList = NULL );
+                                         CoordGroupList &groupLst,
+                                         CoordGroupList &sendGroupLst,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb,
+                                         BOOLEAN onPrimary,
+                                         std::set<INT32> *ignoreRCList = NULL );
       virtual INT32 executeOnCataGroup ( CHAR *pBuffer,
                                        netMultiRouteAgent *pRouteAgent,
                                        pmdEDUCB *cb,
@@ -908,8 +908,7 @@ namespace engine
    } ;
 
    class rtnCoordCMDStatisticsBase : virtual public rtnCoordCommand,
-                                    virtual public rtnCoordQuery,
-                                    virtual public rtnCoordGetmore
+                                    virtual public rtnCoordQuery
    {
    public :
       virtual INT32 execute ( CHAR *pReceiveBuffer, SINT32 packSize,

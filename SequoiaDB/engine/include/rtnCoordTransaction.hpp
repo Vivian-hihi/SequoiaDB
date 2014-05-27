@@ -40,8 +40,8 @@ namespace engine
       virtual INT32 buildPhase2Msg( CHAR * pReceiveBuffer, CHAR **pMsg ) = 0;
 
       virtual INT32 executeOnDataGroup ( CHAR *pMsg,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb ) = 0;
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb ) = 0;
    };
 
    class rtnCoordTransCommit : public rtnCoord2PhaseCommit
@@ -58,8 +58,8 @@ namespace engine
       virtual INT32 buildPhase2Msg( CHAR * pReceiveBuffer, CHAR **pMsg );
 
       virtual INT32 executeOnDataGroup ( CHAR *pMsg,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb );
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb );
    };
 
    class rtnCoordTransRollback : public rtnCoordOperator
@@ -72,8 +72,8 @@ namespace engine
 
    private:
       virtual INT32 executeOnDataGroup ( CHAR *pMsg,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb );
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb );
    };
 }
 
