@@ -110,6 +110,14 @@ namespace CLSMGR
       OSSPID pid ;
       INT32 status ;
       queue<time_t> startTime ;
+      INT32 errNumber ;
+
+      Process()
+      {
+         pid = OSS_INVALID_PID ;
+         status = 0 ;
+         errNumber = 0 ;
+      }
    };
 
    // restart count, always restart if set "-1", never restart if set "0"
@@ -1653,15 +1661,23 @@ namespace CLSMGR
          rc = utilReadConfigureFile ( conf.c_str(), desc, vm ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Can not read configure file: %s",
-                     conf.c_str() ) ;
+            if ( proc.errNumber != 1 )
+            {
+               PD_LOG ( PDERROR, "Can not read configure file: %s",
+                        conf.c_str() ) ;
+               proc.errNumber = 1 ;
+            }
             ++it ;
             continue ;
          }
          if ( vm.count( PMD_OPTION_DBPATH ) == 0 )
          {
-            PD_LOG ( PDERROR, "Can not get dbpath in configure file: %s",
-                     conf.c_str() ) ;
+            if ( proc.errNumber != 2 )
+            {
+               PD_LOG ( PDERROR, "Can not get dbpath in configure file: %s",
+                        conf.c_str() ) ;
+               proc.errNumber = 2 ;
+            }
             ++it ;
             continue ;
          }
@@ -1669,8 +1685,12 @@ namespace CLSMGR
          CHAR startupFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          if ( NULL == dbpath )
          {
-            PD_LOG ( PDERROR, "Can not read dbpath from configure file: %s",
-                     conf.c_str() ) ;
+            if ( proc.errNumber != 3 )
+            {
+               PD_LOG ( PDERROR, "Can not read dbpath from configure file: %s",
+                        conf.c_str() ) ;
+               proc.errNumber = 3 ;
+            }
             ++it ;
             continue ;
          }
@@ -1678,10 +1698,17 @@ namespace CLSMGR
                                  OSS_MAX_PATHSIZE, startupFile ) ;
          if ( rc )
          {
-            PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
+            if ( proc.errNumber != 4 )
+            {
+               PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
+               proc.errNumber = 4 ;
+            }
             ++it ;
             continue ;
          }
+
+         proc.errNumber = 0 ;
+
          rc = ossAccess ( startupFile ) ;
          if ( SDB_OK == rc )
          {
@@ -1705,7 +1732,7 @@ namespace CLSMGR
                      rc ) ;
          }
 
-         ++it;
+         ++it ;
       }// end of "while ( it != svcList.end() )"
 
       ossUnlatch ( &listLocker ) ;
