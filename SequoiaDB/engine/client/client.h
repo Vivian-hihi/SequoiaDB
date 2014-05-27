@@ -1329,6 +1329,7 @@ SDB_EXPORT INT32 sdbDeleteCurrent ( sdbCursorHandle cHandle ) ;
     \brief Close the cursor's connection to database, we can't use this handle to get
                  data again.
     \param [in] cHandle The cursor handle
+    \note Don't call this method after the connection handle had been released.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
