@@ -103,8 +103,9 @@ namespace engine
       callerMeta::iterator itr = _meta.find( header->header.opCode ) ;
       if ( _meta.end() != itr && SDB_OK == header->res )
       {
-         PD_LOG( PDEVENT, "response is ok, remove msg[%d]",
-                 header->header.opCode ) ;
+         PD_LOG( PDEVENT, "response is ok, remove msg[(%d)%d]",
+                 IS_REPLY_TYPE( header->header.opCode ),
+                 GET_REQUEST_TYPE( header->header.opCode ) ) ;
          itr->second.timeout = CLS_CALLER_NO_SEND ;
       }
 
