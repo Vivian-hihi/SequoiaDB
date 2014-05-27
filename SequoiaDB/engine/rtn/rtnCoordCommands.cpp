@@ -5155,7 +5155,7 @@ namespace engine
 
    retry :
       rc = rtnCoordGetCataInfo( cb, strCollectionName,
-                        isNeedRefresh, cataInfo );
+                                isNeedRefresh, cataInfo ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "failed to create index(%s), "
                     "get catalogue failed(rc=%d)",
@@ -5214,12 +5214,11 @@ namespace engine
          }
       } // if ( beCollectionName.type()!=String )
 
-      rc = rtnCoordGetGroupsByCataInfo( cataInfo, sendGroupLst, dataNodeGroupLst );
+      rc = rtnCoordGetGroupsByCataInfo( cataInfo, sendGroupLst,
+                                        dataNodeGroupLst );
       if ( rc != SDB_OK )
       {
-         PD_LOG ( PDERROR,
-                  "failed to get group list(rc=%d)",
-                  rc );
+         PD_LOG ( PDERROR, "Failed to get group list(rc=%d)", rc ) ;
          goto error;
       }
       pCreateReq                       = ( MsgOpQuery *)pReceiveBuffer;

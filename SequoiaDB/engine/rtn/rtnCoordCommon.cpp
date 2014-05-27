@@ -950,14 +950,14 @@ namespace engine
          {
             PD_LOG ( PDWARNING, "Failed to get group-info from catalogue-node,"
                      "get reply failed(rc=%d)", rc );
-            break;
+            break ;
          }
          // process reply
          while ( !replyQue.empty() )
          {
             MsgCatGroupRes *pReply = NULL;
             pReply = (MsgCatGroupRes *)(replyQue.front());
-            replyQue.pop();
+            replyQue.pop() ;
             if ( SDB_OK == rc )
             {
                rc = rtnCoordProcessGetGroupReply( pReply, groupInfo );
@@ -967,7 +967,7 @@ namespace engine
                   {
                      pCoordcb->addGroupInfo( groupInfo );
                      rc = rtnCoordUpdateRoute( groupInfo, pRouteAgent,
-                                       MSG_ROUTE_SHARD_SERVCIE ) ;
+                                               MSG_ROUTE_SHARD_SERVCIE ) ;
                   }
                }
             }
@@ -986,7 +986,13 @@ namespace engine
             else
             {
                PD_LOG ( PDERROR, "Failed to get group-info from catalogue-node,"
-                        "reply error(flag=%d)", rc );
+                        "reply error(flag=%d)", rc ) ;
+
+               // if the group not exist, means the catalog is old
+               if ( SDB_CLS_GRP_NOT_EXIST == rc )
+               {
+                  rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
+               }
             }
          }
          break;
@@ -1480,7 +1486,8 @@ namespace engine
             if ( routeID.value != 0 )
             {
                UINT64 reqID  = 0;
-               rc = pRouteAgent->syncSend( routeID, (void *)pBuffer, reqID, cb );
+               rc = pRouteAgent->syncSend( routeID, (void *)pBuffer,
+                                           reqID, cb );
                if ( SDB_OK == rc )
                {
                   sendNodes[ reqID ] = routeID ;
@@ -1488,33 +1495,34 @@ namespace engine
                break;
             }
             CoordGroupInfoPtr groupInfo;
-            rc = rtnCoordGetGroupInfo( cb, iter->first, isNeedRefresh, groupInfo );
+            rc = rtnCoordGetGroupInfo( cb, iter->first, isNeedRefresh,
+                                       groupInfo );
             if ( rc != SDB_OK )
             {
-               break;
+               break ;
             }
             if ( isSendPrimary )
             {
-               rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo, sendNodes,
-                                          pRouteAgent, type, cb );
+               rc = rtnCoordSendRequestToPrimary( pBuffer, groupInfo,
+                                                  sendNodes, pRouteAgent,
+                                                  type, cb );
             }
             else
             {
                rc = rtnCoordSendRequestToOne( pBuffer, groupInfo, sendNodes,
-                                      pRouteAgent, type, cb );
+                                              pRouteAgent, type, cb ) ;
             }
             if ( SDB_OK == rc || isNeedRefresh )
             {
                break;
             }
             isNeedRefresh = TRUE ;
-         }while( TRUE );
+         }while( TRUE ) ;
          if ( SDB_OK != rc )
          {
-            PD_LOG ( PDERROR,
-                     "Failed to send the request to the group(%u), rc=%d",
-                     iter->first, rc );
-            break;
+            PD_LOG ( PDERROR, "Failed to send the request to the group(%u), "
+                     "rc=%d", iter->first, rc ) ;
+            break ;
          }
          ++iter;
       }
@@ -2057,9 +2065,9 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_RTNCOPROCESSGETGROUPREPLY ) ;
       do
       {
-         if ( SDB_OK == pReply->header.res
-            && pReply->header.header.messageLength
-               >= (INT32)sizeof(MsgCatGroupRes)+5 )
+         if ( SDB_OK == pReply->header.res &&
+              pReply->header.header.messageLength >=
+              (INT32)sizeof(MsgCatGroupRes)+5 )
          {
             try
             {
