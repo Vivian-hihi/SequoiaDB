@@ -74,8 +74,6 @@ namespace engine
 
          INT32   _createCSByCatalog( const CHAR *clFullName ) ;
          INT32   _createCLByCatalog( const CHAR *clFullName ) ;
-         INT32   _checkSubCLCata( const std::map<std::string, INT32> subCLInfoList,
-                                  INT16 w );
 
       //message functions
       protected:
