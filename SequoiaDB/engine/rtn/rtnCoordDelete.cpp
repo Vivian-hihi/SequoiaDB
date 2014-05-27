@@ -73,12 +73,12 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEL_DELTODNGROUP, "rtnCoordDelete::deleteToDataNodeGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCODEL_DELTODNGROUP, "rtnCoordDelete::deleteToDataNodeGroup" )
    INT32 rtnCoordDelete::deleteToDataNodeGroup( CHAR *pBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb )
+                                                CoordGroupList &groupLst,
+                                                CoordGroupList &sendGroupLst,
+                                                netMultiRouteAgent *pRouteAgent,
+                                                pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCODEL_DELTODNGROUP ) ;
@@ -95,13 +95,12 @@ namespace engine
             pDelMsg->header.opCode = MSG_BS_TRANS_DELETE_REQ;
          }
          rc = rtnCoordSendRequestToNodeGroups( pBuffer, groupLst, TRUE,
-                                       pRouteAgent, cb, sendNodes );
+                                               pRouteAgent, cb, sendNodes );
          if ( rc != SDB_OK )
          {
             rtnCoordClearRequest( cb, sendNodes );
-            PD_LOG ( PDERROR,
-                     "failed to delete on data-node,\
-                     send request failed(rc=%d)");
+            PD_LOG ( PDERROR, "failed to delete on data-node,"
+                     "send request failed(rc=%d)");
             break;
          }
          REPLY_QUE replyQue;
@@ -109,9 +108,8 @@ namespace engine
                         MAKE_REPLY_TYPE(pDelMsg->header.opCode) );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDWARNING,
-                     "failed to delete on data-node,\
-                     get reply failed(rc=%d)", rc );
+            PD_LOG ( PDWARNING, "failed to delete on data-node,"
+                     "get reply failed(rc=%d)", rc );
             break;
          }
          while ( !replyQue.empty() )
@@ -128,8 +126,9 @@ namespace engine
                      && !hasRetry )
                   {
                      CoordGroupInfoPtr groupInfoTmp;
-                     rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
-                                           TRUE, groupInfoTmp );
+                     rcTmp = rtnCoordGetGroupInfo( cb,
+                        pReply->header.routeID.columns.groupID,
+                        TRUE, groupInfoTmp );
                      if ( SDB_OK == rcTmp )
                      {
                         isNeedRetry = TRUE;
@@ -250,9 +249,7 @@ namespace engine
       {
          rc = rc ? rc : cb->getTransRC();
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "delete failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "delete failed(rc=%d)", rc ) ;
    done:
       //PD_TRACE_EXITRC ( SDB_RTNCODEL_EXECUTE, rc ) ;
       return rc;
@@ -273,11 +270,11 @@ namespace engine
    }
 
    INT32 rtnCoordDelete::deleteNormalCL( CoordCataInfoPtr cataInfo,
-                                       bson::BSONObj &boDelete,
-                                       MsgOpDelete *pDelMsg,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       CoordGroupList &sendGroupLst )
+                                         bson::BSONObj &boDelete,
+                                         MsgOpDelete *pDelMsg,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb,
+                                         CoordGroupList &sendGroupLst )
    {
       INT32 rc = SDB_OK;
       CoordGroupList groupLst;

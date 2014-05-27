@@ -158,8 +158,8 @@ namespace engine
    }
 
    INT32 rtnCoord2PhaseCommit::doPhase2( CHAR * pReceiveBuffer, SINT32 packSize,
-                                       CHAR * * ppResultBuffer, pmdEDUCB * cb,
-                                       MsgOpReply & replyHeader )
+                                         CHAR * * ppResultBuffer, pmdEDUCB * cb,
+                                         MsgOpReply & replyHeader )
    {
       INT32 rc = SDB_OK;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
@@ -195,16 +195,16 @@ namespace engine
    }
 
    INT32 rtnCoord2PhaseCommit::cancelOp( CHAR * pReceiveBuffer, SINT32 packSize,
-                                       CHAR * * ppResultBuffer, pmdEDUCB * cb,
-                                       MsgOpReply & replyHeader )
+                                         CHAR * * ppResultBuffer, pmdEDUCB * cb,
+                                         MsgOpReply & replyHeader )
    {
       // do nothing
       return SDB_OK;
    }
 
    INT32 rtnCoordTransCommit::executeOnDataGroup( CHAR * pMsg,
-                                                netMultiRouteAgent * pRouteAgent,
-                                                pmdEDUCB * cb )
+                                                  netMultiRouteAgent * pRouteAgent,
+                                                  pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK;
       REQUESTID_MAP requestIdMap;
@@ -215,7 +215,7 @@ namespace engine
       while( iterMap != pNodeMap->end() )
       {
          rc = rtnCoordSendRequestToNode( (void *)pMsg, iterMap->second,
-                                       pRouteAgent, cb, requestIdMap );
+                                         pRouteAgent, cb, requestIdMap );
          if ( rc )
          {
             rtnCoordClearRequest( cb, requestIdMap );
@@ -229,7 +229,7 @@ namespace engine
          ++iterMap;
       }
       rc = rtnCoordGetReply( cb, requestIdMap, replyQue,
-                     MAKE_REPLY_TYPE( pMsgHead->opCode ));
+                             MAKE_REPLY_TYPE( pMsgHead->opCode ) ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get the reply(rc=%d)",
                   rc );
@@ -300,8 +300,8 @@ namespace engine
    done:
       return rc;
    error:
-      pRollbackOperator
-         = pmdGetKRCB()->getCoordCB()->getProcesserFactory()->getOperator( MSG_BS_TRANS_ROLLBACK_REQ );
+      pRollbackOperator = pmdGetKRCB()->getCoordCB()->getProcesserFactory(
+         )->getOperator( MSG_BS_TRANS_ROLLBACK_REQ );
       if ( pRollbackOperator )
       {
          pRollbackOperator->execute( pReceiveBuffer, packSize, ppResultBuffer,
@@ -312,9 +312,9 @@ namespace engine
    }
 
    INT32 rtnCoordTransRollback::execute( CHAR * pReceiveBuffer, SINT32 packSize,
-                                    CHAR * * ppResultBuffer, pmdEDUCB * cb,
-                                    MsgOpReply & replyHeader,
-                                    BSONObj **ppErrorObj )
+                                         CHAR * * ppResultBuffer, pmdEDUCB * cb,
+                                         MsgOpReply & replyHeader,
+                                         BSONObj **ppErrorObj )
    {
       INT32 rc                         = SDB_OK;
       CHAR *pMsgReq                    = NULL;
@@ -371,8 +371,8 @@ namespace engine
    }
 
    INT32 rtnCoordTransRollback::executeOnDataGroup( CHAR * pMsg,
-                                                netMultiRouteAgent * pRouteAgent,
-                                                pmdEDUCB * cb )
+                                                    netMultiRouteAgent * pRouteAgent,
+                                                    pmdEDUCB * cb )
    {
       INT32 rc = SDB_OK;
       REQUESTID_MAP requestIdMap;
@@ -388,7 +388,7 @@ namespace engine
       while( iterMap != pNodeMap->end() )
       {
          rc = rtnCoordSendRequestToNode( (void *)pMsg, iterMap->second,
-                                       pRouteAgent, cb, requestIdMap );
+                                         pRouteAgent, cb, requestIdMap );
          if ( rc )
          {
             rtnCoordClearRequest( cb, requestIdMap );
@@ -403,7 +403,7 @@ namespace engine
          ++iterMap;
       }
       rc = rtnCoordGetReply( cb, requestIdMap, replyQue,
-                     MAKE_REPLY_TYPE( pMsgHead->opCode ));
+                             MAKE_REPLY_TYPE( pMsgHead->opCode ));
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get the reply(rc=%d)",
                   rc );

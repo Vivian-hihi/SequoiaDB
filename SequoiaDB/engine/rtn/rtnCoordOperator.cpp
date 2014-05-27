@@ -70,7 +70,6 @@ namespace engine
    RTN_COORD_OP_ADD( MSG_BS_QUERY_REQ, rtnCoordQuery )
    RTN_COORD_OP_ADD( MSG_BS_DELETE_REQ, rtnCoordDelete )
    RTN_COORD_OP_ADD( MSG_BS_UPDATE_REQ, rtnCoordUpdate )
-   RTN_COORD_OP_ADD( MSG_BS_GETMORE_REQ, rtnCoordGetmore )
    RTN_COORD_OP_ADD( MSG_BS_AGGREGATE_REQ, rtnCoordAggregate )
    RTN_COORD_OP_ADD( MSG_BS_INTERRUPTE, rtnCoordInterrupt )
    RTN_COORD_OP_ADD( MSG_BS_KILL_CONTEXT_REQ, rtnCoordKillContext )
@@ -153,8 +152,8 @@ namespace engine
    }
 
    INT32 rtnCoordTransOperator::buildTransSession( CoordGroupList &groupLst,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb )
+                                                   netMultiRouteAgent *pRouteAgent,
+                                                   pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       DpsTransNodeMap *pTransNodeLst = NULL;
@@ -194,7 +193,7 @@ namespace engine
    retry:
       isNeedRetry = FALSE;
       rc = rtnCoordSendRequestToNodeGroups( (CHAR *)(&msgReq), newTransGroupLst,
-                                 TRUE, pRouteAgent, cb, sendNodes );
+                                            TRUE, pRouteAgent, cb, sendNodes ) ;
       if ( rc )
       {
          rtnCoordClearRequest( cb, sendNodes );
@@ -203,7 +202,7 @@ namespace engine
                "failed to build transaction session, "
                "send the request failed(rc=%d)", rc );
       rc = rtnCoordGetReply( cb, sendNodes,
-                  replyQue, MSG_BS_TRANS_BEGIN_RSP );
+                             replyQue, MSG_BS_TRANS_BEGIN_RSP );
       PD_CHECK( SDB_OK == rc, rc, errorrollback, PDERROR,
                "failed to build transaction session, "
                "get reply failed(rc=%d)", rc );
@@ -218,11 +217,11 @@ namespace engine
             newTransGroupLst.erase( pReply->header.routeID.columns.groupID );
             cb->addTransNode( pReply->header.routeID );
          }
-         else if ( !hasRetry
-                  && rtnCoordWriteRetryRC( rc ) )
+         else if ( !hasRetry && rtnCoordWriteRetryRC( rc ) )
          {
-            rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
-                                  TRUE, groupInfoTmp );
+            rcTmp = rtnCoordGetGroupInfo( cb,
+               pReply->header.routeID.columns.groupID,
+               TRUE, groupInfoTmp ) ;
             if ( SDB_OK == rcTmp )
             {
                isNeedRetry = TRUE;
@@ -341,7 +340,7 @@ namespace engine
       REQUESTID_MAP sendNodes;
 
       rc = rtnCoordGetSubCLsByGroups( subCLList, sendGroupList, cb,
-                                    groupSubCLMap );
+                                      groupSubCLMap );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get sub-collection info(rc=%d)",
                   rc );
@@ -383,7 +382,7 @@ namespace engine
 
    RECV_MSG:
       rcTmp = rtnCoordGetReply( cb, sendNodes, replyQue,
-                              MAKE_REPLY_TYPE( pSrcMsg->opCode ) );
+                                MAKE_REPLY_TYPE( pSrcMsg->opCode ) ) ;
       if ( SDB_OK != rcTmp )
       {
          PD_LOG( PDWARNING, "failed to get reply(rcTmp=%d)", rcTmp );

@@ -118,13 +118,10 @@ namespace engine
                      pCollectionName );
          rc = kickShardingKey( cataInfo, boUpdator, newUpdator, hasShardingKey );
          //rc = checkIfIncludeShardingKey( cataInfo, pUpdator, isInclude, cb );
-         PD_RC_CHECK( rc, PDERROR,
-                     "update failed, "
-                     "failed to kick the sharding-key field(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "update failed, failed to kick the "
+                      "sharding-key field(rc=%d)", rc );
          PD_CHECK( !isInclude, SDB_UPDATE_SHARD_KEY, error, PDERROR,
-                  "update failed,\
-                  couldn't update the sharding-key field" );
+                   "update failed, couldn't update the sharding-key field" );
          if ( cataInfo->isMainCL() )
          {
             std::set< INT32 > emptyRCList;
@@ -208,9 +205,7 @@ namespace engine
       {
          rc = rc ? rc : cb->getTransRC();
       }
-      PD_RC_CHECK( rc, PDERROR,
-                  "update failed(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Update failed(rc=%d)", rc ) ;
 
       // upsert
       if ( flag & FLG_UPDATE_UPSERT && 0 == updateNum )
@@ -234,18 +229,20 @@ namespace engine
          pOpProcesser = pProcesserFactory->getOperator( MSG_BS_INSERT_REQ );
          SDB_ASSERT( pOpProcesser , "pCmdProcesser can't be NULL" );
          pUpdateMsg = (MsgOpUpdate *)pReceiveBuffer;
-         rc = msgBuildInsertMsg( &pBuffer, &bufferSize, pUpdateMsg->name, 0, 0, &target );
-         PD_RC_CHECK( rc, PDERROR, "failed to build insert message(rc=%d)", rc );
-         rc = pOpProcesser->execute( pBuffer, 0, ppResultBuffer, cb, replyHeader, ppErrorObj );
+         rc = msgBuildInsertMsg( &pBuffer, &bufferSize, pUpdateMsg->name, 0,
+                                 0, &target );
+         PD_RC_CHECK( rc, PDERROR, "failed to build insert message(rc=%d)",
+                      rc );
+         rc = pOpProcesser->execute( pBuffer, 0, ppResultBuffer, cb,
+                                     replyHeader, ppErrorObj );
          if ( pBuffer != NULL )
          {
             SDB_OSS_FREE( pBuffer );
             pBuffer = NULL;
          }
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to insert the data(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "Failed to insert the data(rc=%d)", rc ) ;
       }
+
    done:
       if ( flag & FLG_UPDATE_RETURNNUM )
       {
@@ -256,12 +253,13 @@ namespace engine
    error:
       if ( rc && cb->isTransaction() )
       {
-         pRollbackOperator
-               = pCoordcb->getProcesserFactory()->getOperator( MSG_BS_TRANS_ROLLBACK_REQ );
+         pRollbackOperator = pCoordcb->getProcesserFactory()->getOperator(
+            MSG_BS_TRANS_ROLLBACK_REQ );
          if ( pRollbackOperator )
          {
-            pRollbackOperator->execute( pReceiveBuffer, packSize, ppResultBuffer,
-                                       cb, replyHeader, ppErrorObj );
+            pRollbackOperator->execute( pReceiveBuffer, packSize,
+                                        ppResultBuffer, cb, replyHeader,
+                                        ppErrorObj );
             SDB_ASSERT( NULL == *ppErrorObj, "impossible" )
          }
       }
@@ -270,12 +268,12 @@ namespace engine
    }
 
    INT32 rtnCoordUpdate::updateNormalCL( CoordCataInfoPtr cataInfo,
-                                       BSONObj &boSelector,
-                                       MsgOpUpdate *pUpdateMsg,
-                                       netMultiRouteAgent *pRouteAgent,
-                                       pmdEDUCB *cb,
-                                       CoordGroupList &sendGroupLst,
-                                       INT64 *updateNum )
+                                         BSONObj &boSelector,
+                                         MsgOpUpdate *pUpdateMsg,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb,
+                                         CoordGroupList &sendGroupLst,
+                                         INT64 *updateNum )
    {
       INT32 rc = SDB_OK;
       CoordGroupList groupLst;
@@ -293,7 +291,7 @@ namespace engine
       pUpdateMsg->header.routeID.value = 0;
       pUpdateMsg->header.TID = cb->getTID();
       rc = updateToDataNodeGroup( (CHAR *)pUpdateMsg, groupLst, sendGroupLst,
-                                 pRouteAgent, cb, updateNum );
+                                  pRouteAgent, cb, updateNum );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to update on data-node(rc=%d)", rc );
    done:
@@ -303,7 +301,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_GETNODEGROUPS, "rtnCoordUpdate::getNodeGroups" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_GETNODEGROUPS, "rtnCoordUpdate::getNodeGroups" )
    INT32 rtnCoordUpdate::getNodeGroups( const CoordCataInfoPtr &cataInfo,
                            bson::BSONObj &selectObj,
                            CoordGroupList &sendGroupLst,
@@ -331,13 +329,13 @@ namespace engine
       return rc;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_UPTODNG, "rtnCoordUpdate::updateToDataNodeGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_UPTODNG, "rtnCoordUpdate::updateToDataNodeGroup" )
    INT32 rtnCoordUpdate::updateToDataNodeGroup( CHAR *pBuffer,
-                                 CoordGroupList &groupLst,
-                                 CoordGroupList &sendGroupLst,
-                                 netMultiRouteAgent *pRouteAgent,
-                                 pmdEDUCB *cb,
-                                 INT64 *updateNum )
+                                                CoordGroupList &groupLst,
+                                                CoordGroupList &sendGroupLst,
+                                                netMultiRouteAgent *pRouteAgent,
+                                                pmdEDUCB *cb,
+                                                INT64 *updateNum )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOUPDATE_UPTODNG ) ;
@@ -354,23 +352,21 @@ namespace engine
             pUpdateMsg->header.opCode = MSG_BS_TRANS_UPDATE_REQ;
          }
          rc = rtnCoordSendRequestToNodeGroups( pBuffer, groupLst, TRUE,
-                                       pRouteAgent, cb, sendNodes );
+                                               pRouteAgent, cb, sendNodes );
          if ( rc != SDB_OK )
          {
-            rtnCoordClearRequest( cb, sendNodes );
-            PD_LOG ( PDERROR,
-                     "failed to update on data-node,\
-                     send request failed(rc=%d)" );
+            rtnCoordClearRequest( cb, sendNodes ) ;
+            PD_LOG ( PDERROR, "Failed to update on data-node,"
+                     "send request failed(rc=%d)" );
             break;
          }
          REPLY_QUE replyQue;
          rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                        MAKE_REPLY_TYPE( pUpdateMsg->header.opCode ) );
+                                MAKE_REPLY_TYPE( pUpdateMsg->header.opCode ) ) ;
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDWARNING,
-                     "failed to update on data-node,\
-                     get reply failed(rc=%d)", rc );
+            PD_LOG ( PDWARNING, "Failed to update on data-node,"
+                     "get reply failed(rc=%d)", rc );
             break;
          }
          while ( !replyQue.empty() )
@@ -387,8 +383,9 @@ namespace engine
                      && !hasRetry )
                   {
                      CoordGroupInfoPtr groupInfoTmp;
-                     rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
-                                           TRUE, groupInfoTmp );
+                     rcTmp = rtnCoordGetGroupInfo( cb,
+                        pReply->header.routeID.columns.groupID,
+                        TRUE, groupInfoTmp ) ;
                      if ( SDB_OK == rcTmp )
                      {
                         isNeedRetry = TRUE;
@@ -429,9 +426,9 @@ namespace engine
    
    //PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOUPDATE_CKIFINSHKEY, "rtnCoordUpdate::checkIfIncludeShardingKey" )
    INT32 rtnCoordUpdate::checkIfIncludeShardingKey ( const CoordCataInfoPtr &cataInfo,
-                                       const CHAR *pUpdator,
-                                       BOOLEAN &isInclude,
-                                       pmdEDUCB *cb )
+                                                     const CHAR *pUpdator,
+                                                     BOOLEAN &isInclude,
+                                                     pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       //PD_TRACE_ENTRY ( SDB_RTNCOUPDATE_CKIFINSHKEY ) ;
@@ -454,10 +451,8 @@ namespace engine
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_LOG ( PDERROR,
-                  "failed to check the record is include sharding-key,\
-                  occured unexpected error:%s",
-                  e.what() );
+         PD_LOG ( PDERROR, "Failed to check the record is include sharding-key,"
+                  "occured unexpected error:%s", e.what() );
          goto error;
       }
       done :
@@ -468,9 +463,9 @@ namespace engine
    }
 
    INT32 rtnCoordUpdate::buildOpMsg( const CoordCataInfoPtr &cataInfo,
-                                    const CoordSubCLlist &subCLList,
-                                    CHAR *pSrcMsg, CHAR *&pDstMsg,
-                                    INT32 &bufferSize )
+                                     const CoordSubCLlist &subCLList,
+                                     CHAR *pSrcMsg, CHAR *&pDstMsg,
+                                     INT32 &bufferSize )
    {
       INT32 rc = SDB_OK;
       INT32 flag;
@@ -483,9 +478,7 @@ namespace engine
       BSONObj boUpdator;
       rc = msgExtractUpdate( pSrcMsg, &flag, &pCollectionName,
                            &pSelector, &pUpdator, &pHint );
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to parse update request(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to parse update request(rc=%d)", rc );
       try
       {
          boSelector = BSONObj( pSelector );
@@ -505,9 +498,8 @@ namespace engine
          rc = msgBuildUpdateMsg( &pDstMsg, &bufferSize, pCollectionName,
                                  flag, 0, &boNewSelector, &boUpdator,
                                  &boHint );
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to build update request(rc=%d)",
-                     rc );
+         PD_RC_CHECK( rc, PDERROR, "failed to build update request(rc=%d)",
+                      rc );
          {
          MsgOpUpdate *pReqMsg = (MsgOpUpdate *)pDstMsg;
          MsgOpUpdate *pSrcReq = (MsgOpUpdate *)pSrcMsg;
@@ -517,9 +509,8 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-         PD_RC_CHECK( SDB_INVALIDARG, PDERROR,
-                     "occur unexpected error:%s",
-                     e.what() );
+         PD_RC_CHECK( SDB_INVALIDARG, PDERROR, "occur unexpected error:%s",
+                      e.what() );
       }
    done:
       return rc;

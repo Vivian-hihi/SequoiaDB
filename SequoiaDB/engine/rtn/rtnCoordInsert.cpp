@@ -48,9 +48,9 @@ namespace engine
 {
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_EXECUTE, "rtnCoordInsert::execute" )
    INT32 rtnCoordInsert::execute( CHAR *pReceiveBuffer, SINT32 packSize,
-                           CHAR **ppResultBuffer, pmdEDUCB *cb,
-                           MsgOpReply &replyHeader,
-                           BSONObj **ppErrorObj )
+                                  CHAR **ppResultBuffer, pmdEDUCB *cb,
+                                  MsgOpReply &replyHeader,
+                                  BSONObj **ppErrorObj )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOINS_EXECUTE ) ;
@@ -98,8 +98,8 @@ namespace engine
          CoordCataInfoPtr cataInfo;
          rc = rtnCoordGetCataInfo( cb, pCollectionName, isNeedRefreshCata, cataInfo );
          PD_RC_CHECK( rc, PDERROR,
-                     "failed to get the catalog info(collection name:%s)",
-                     pCollectionName );
+                      "failed to get the catalog info(collection name:%s)",
+                      pCollectionName );
 
          pSrcMsg->header.routeID.value = 0;
          pSrcMsg->version = cataInfo->getVersion();
@@ -136,8 +136,7 @@ namespace engine
          }
          if ( SDB_OK != rc )
          {
-            if ( !isNeedRefreshCata
-               && rtnCoordWriteRetryRC( rc ) )
+            if ( !isNeedRefreshCata && rtnCoordWriteRetryRC( rc ) )
             {
                isNeedRefreshCata = TRUE;
                continue;
@@ -311,11 +310,11 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_INSTOGROUP, "rtnCoordInsert::insertToAGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_INSTOGROUP, "rtnCoordInsert::insertToAGroup" )
    INT32 rtnCoordInsert::insertToAGroup( CHAR *pBuffer,
-                           UINT32 grpID,
-                           netMultiRouteAgent *pRouteAgent,
-                           pmdEDUCB *cb )
+                                         UINT32 grpID,
+                                         netMultiRouteAgent *pRouteAgent,
+                                         pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOINS_INSTOGROUP ) ;
@@ -335,7 +334,7 @@ namespace engine
          isNeedRetry = FALSE;
          REQUESTID_MAP sendNodes;
          rc = rtnCoordSendRequestToNodeGroups( pBuffer, groupLst, TRUE,
-                                 pRouteAgent, cb, sendNodes );
+                                               pRouteAgent, cb, sendNodes );
          if ( rc )
          {
             rtnCoordClearRequest( cb, sendNodes );
@@ -345,7 +344,7 @@ namespace engine
                      "send request failed(rc=%d)", rc );
          REPLY_QUE replyQue;
          rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                        MAKE_REPLY_TYPE( pHead->opCode ) );
+                                MAKE_REPLY_TYPE( pHead->opCode ) );
          PD_RC_CHECK( rc, PDWARNING,
                      "failed to insert on data-node, "
                      "get reply failed(rc=%d)", rc );
@@ -418,7 +417,7 @@ namespace engine
       goto done;
    }*/
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SENDTOGROUPS, "sendToGroups" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOINS_SENDTOGROUPS, "sendToGroups" )
    INT32 rtnCoordInsert::sendToGroups( const GroupInsertMsgMap &groupMsgMap,
                            MsgOpInsert *pSrcMsg,
                            netMultiRouteAgent *pRouteAgent,
@@ -532,12 +531,12 @@ namespace engine
    }
 
    INT32 rtnCoordInsert::insertToNormalCL( const CoordCataInfoPtr &cataInfo,
-                                          CHAR *pReceiveBuffer,
-                                          CHAR *pInsertor, INT32 count,
-                                          netMultiRouteAgent *pRouteAgent,
-                                          pmdEDUCB *cb,
-                                          GroupObjsMap &groupObjsMap,
-                                          BOOLEAN &hasSendSomeData )
+                                           CHAR *pReceiveBuffer,
+                                           CHAR *pInsertor, INT32 count,
+                                           netMultiRouteAgent *pRouteAgent,
+                                           pmdEDUCB *cb,
+                                           GroupObjsMap &groupObjsMap,
+                                           BOOLEAN &hasSendSomeData )
    {
       INT32 rc = SDB_OK;
       INT32 filler = 0;

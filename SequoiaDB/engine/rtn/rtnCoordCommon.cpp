@@ -101,8 +101,10 @@ namespace engine
 
    retry:
       rc = rtnCoordSendRequestToNodeGroups( pBuf, groupLst, TRUE, pRouteAgent,
-                                          cb, sendNodes, MSG_ROUTE_CAT_SERVICE );
-      PD_RC_CHECK( rc, PDERROR, "failed to send the message to catalog node(rc=%d)", rc );
+                                            cb, sendNodes,
+                                            MSG_ROUTE_CAT_SERVICE ) ;
+      PD_RC_CHECK( rc, PDERROR, "failed to send the message to catalog "
+                   "node(rc=%d)", rc ) ;
 
       rc = rtnCoordGetReply( cb, sendNodes, replyQue, MSG_BS_QUERY_RES );
       PD_RC_CHECK( rc, PDERROR, "failed to get the reply(rc=%d)", rc );
@@ -987,12 +989,6 @@ namespace engine
             {
                PD_LOG ( PDERROR, "Failed to get group-info from catalogue-node,"
                         "reply error(flag=%d)", rc ) ;
-
-               // if the group not exist, means the catalog is old
-               if ( SDB_CLS_GRP_NOT_EXIST == rc )
-               {
-                  rc = SDB_CLS_COORD_NODE_CAT_VER_OLD ;
-               }
             }
          }
          break;
@@ -2331,8 +2327,8 @@ namespace engine
          MsgRouteID routeID;
          routeID.value = *iter;
          rc = rtnCoordSendRequestToNode( pBuffer, routeID,
-                                       pRouteAgent, cb,
-                                       sendNodes );
+                                         pRouteAgent, cb,
+                                         sendNodes );
          if ( rc != SDB_OK )
          {
             failedNodes[*iter] = rc ;
@@ -2743,14 +2739,15 @@ namespace engine
 
    BOOLEAN rtnCoordWriteRetryRC( INT32 retCode )
    {
-      if ( SDB_CLS_NOT_PRIMARY == retCode
-         || SDB_CLS_COORD_NODE_CAT_VER_OLD == retCode
-         || SDB_CLS_NODE_NOT_ENOUGH == retCode
-         || SDB_CLS_NO_CATALOG_INFO == retCode
-         || SDB_NETWORK == retCode
-         || SDB_NET_CANNOT_CONNECT == retCode
-         || SDB_CLS_GRP_NOT_EXIST == retCode
-         || SDB_CLS_NODE_NOT_EXIST == retCode )
+      if ( SDB_CLS_NOT_PRIMARY == retCode ||
+           SDB_CLS_COORD_NODE_CAT_VER_OLD == retCode ||
+           SDB_CLS_NODE_NOT_ENOUGH == retCode ||
+           SDB_CLS_NO_CATALOG_INFO == retCode ||
+           SDB_NETWORK == retCode ||
+           SDB_NET_CANNOT_CONNECT == retCode ||
+           SDB_CLS_GRP_NOT_EXIST == retCode ||
+           SDB_CLS_NODE_NOT_EXIST == retCode ||
+           SDB_CAT_NO_MATCH_CATALOG == retCode )
       {
          return TRUE ;
       }

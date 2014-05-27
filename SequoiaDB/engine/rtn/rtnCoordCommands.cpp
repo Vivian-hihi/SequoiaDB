@@ -200,7 +200,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_EXEONDATAGR, "rtnCoordCommand::executeOnDataGroup" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_EXEONDATAGR, "rtnCoordCommand::executeOnDataGroup" )
    INT32 rtnCoordCommand::executeOnDataGroup ( MsgHeader *pMsg,
                                                CoordGroupList &groupLst,
                                                CoordGroupList &sendGroupLst,
@@ -219,8 +219,9 @@ namespace engine
          hasRetry = isNeedRetry;
          isNeedRetry = FALSE;
          REQUESTID_MAP sendNodes;
-         rc = rtnCoordSendRequestToNodeGroups( (CHAR *)pMsg, groupLst, onPrimary,
-                                             pRouteAgent, cb, sendNodes );
+         rc = rtnCoordSendRequestToNodeGroups( (CHAR *)pMsg, groupLst,
+                                               onPrimary, pRouteAgent, cb,
+                                               sendNodes ) ;
          if ( rc != SDB_OK )
          {
             rtnCoordClearRequest( cb, sendNodes );
@@ -230,7 +231,7 @@ namespace engine
          }
          REPLY_QUE replyQue;
          rc = rtnCoordGetReply( cb, sendNodes, replyQue,
-                     MAKE_REPLY_TYPE(pMsg->opCode) );
+                                MAKE_REPLY_TYPE(pMsg->opCode) );
          if ( rc != SDB_OK )
          {
             PD_LOG ( PDERROR, "Failed to execute on data-node, get reply "
@@ -245,8 +246,7 @@ namespace engine
             INT32 rcTmp = pReply->flags;
             if ( SDB_OK == rcTmp ||
                  ( ignoreRCList &&
-                   ignoreRCList->end() != ignoreRCList->find
-                                          ( rcTmp ) ) )
+                   ignoreRCList->end() != ignoreRCList->find( rcTmp ) ) )
             {
                UINT32 groupID = pReply->header.routeID.columns.groupID;
                sendGroupLst[groupID] = groupID;
@@ -255,12 +255,12 @@ namespace engine
             }
             if ( SDB_OK == rc || SDB_CLS_COORD_NODE_CAT_VER_OLD == rc )
             {
-               if ( SDB_CLS_NOT_PRIMARY == rcTmp
-                     && !hasRetry )
+               if ( SDB_CLS_NOT_PRIMARY == rcTmp && !hasRetry )
                {
                   CoordGroupInfoPtr groupInfoTmp;
-                  rcTmp = rtnCoordGetGroupInfo( cb, pReply->header.routeID.columns.groupID,
-                                        TRUE, groupInfoTmp );
+                  rcTmp = rtnCoordGetGroupInfo( cb,
+                     pReply->header.routeID.columns.groupID,
+                     TRUE, groupInfoTmp );
                   if ( SDB_OK == rcTmp )
                   {
                      isNeedRetry = TRUE;
@@ -269,9 +269,9 @@ namespace engine
                rc = rcTmp ? rcTmp : rc;
                if ( rc && rc != SDB_CLS_COORD_NODE_CAT_VER_OLD )
                {
-                  PD_LOG ( PDERROR,
-                        "failed to execute on data node(groupID=%u, rc=%d)",
-                        pReply->header.routeID.columns.groupID, rc );
+                  PD_LOG ( PDERROR, "Failed to execute on data node"
+                           "(groupID=%u, rc=%d)",
+                           pReply->header.routeID.columns.groupID, rc ) ;
                }
             }
             SDB_OSS_FREE( pReply );
@@ -281,7 +281,7 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_QUERYONCATALOG, "rtnCoordCommand::queryOnCatalog" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_QUERYONCATALOG, "rtnCoordCommand::queryOnCatalog" )
    INT32 rtnCoordCommand::queryOnCatalog ( CHAR *pReceiveBuffer, SINT32 packSize,
                                            CHAR **ppResultBuffer, pmdEDUCB *cb,
                                            MsgOpReply &replyHeader,
@@ -1026,7 +1026,7 @@ namespace engine
       goto done ;
    }*/
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTGRS_EXE, "rtnCoordCMDListGroups::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDLISTGRS_EXE, "rtnCoordCMDListGroups::execute" )
    INT32 rtnCoordCMDListGroups::execute( CHAR *pReceiveBuffer, SINT32 packSize,
                                          CHAR **ppResultBuffer, pmdEDUCB *cb,
                                          MsgOpReply &replyHeader,
@@ -1147,8 +1147,8 @@ namespace engine
       // send request to data-nodes
       pCreateReq->header.opCode = MSG_BS_QUERY_REQ;
       rc = executeOnDataGroup( (MsgHeader *)pCreateReq, groupLst,
-                              sendGroupLst, pRouteAgent, cb,
-                              TRUE );
+                               sendGroupLst, pRouteAgent, cb,
+                               TRUE ) ;
       // ignore the error from data node
       if ( rc != SDB_OK )
       {
@@ -1377,7 +1377,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, "rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask" )
+   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDSSONNODE__NOTIFYDATAGROUPS, "rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask" )
    INT32 rtnCoordCMDCreateCollection::_notifyDataGroupsToStartTask( const BSONElement &task,
                                                                     netMultiRouteAgent *agent,
                                                                     pmdEDUCB *cb )
@@ -1409,7 +1409,7 @@ namespace engine
       
       /// get task info from catalog.
       rc = executeOnCataGroup( buffer, agent,
-                                cb, NULL, NULL, &reply ) ;
+                               cb, NULL, NULL, &reply ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get task info from catalog, rc:%d",rc ) ;
@@ -1424,8 +1424,8 @@ namespace engine
       CoordGroupList dummy ;
       std::set<INT32> ignore ;
       CoordCB *coordCb = pmdGetKRCB()->getCoordCB () ;
-      rtnCoordCommand *cmd = coordCb->getProcesserFactory()
-                                    ->getCommandProcesser( COORD_CMD_WAITTASK ) ;
+      rtnCoordCommand *cmd = coordCb->getProcesserFactory(
+         )->getCommandProcesser( COORD_CMD_WAITTASK ) ;
       vector<BSONObj>::const_iterator itr = reply.begin() ;
       for ( ; itr != reply.end(); itr++ )
       {
@@ -1524,7 +1524,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSONNODE_EXE, "rtnCoordCMDSnapshotOnNode::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDSSONNODE_EXE, "rtnCoordCMDSnapshotOnNode::execute" )
    INT32 rtnCoordCMDSnapshotOnNode::execute( CHAR *pReceiveBuffer,
                                              SINT32 packSize,
                                              CHAR **ppResultBuffer,
@@ -1639,11 +1639,12 @@ namespace engine
                                &boFieldSelector, &boOrderBy, &boHint );
          if ( rc != SDB_OK )
          {
-            PD_LOG ( PDERROR,
-                     "snapshot failed, failed to build the request message(rc=%d)",
+            PD_LOG ( PDERROR, "snapshot failed, failed to build the "
+                     "request message(rc=%d)",
                      rc );
             break;
          }
+
          pSnapshotReq->header.routeID.value = 0;
          pSnapshotReq->header.TID = cb->getTID();
          BOOLEAN isNeedRefresh = FALSE;
@@ -1653,8 +1654,8 @@ namespace engine
             rc = rtnCoordGetGroupInfo( cb, groupID, isNeedRefresh, groupInfo );
             if ( rc != SDB_OK )
             {
-               PD_LOG ( PDERROR,
-                        "snapshot failed, failed to get the group info(groupID=%u, rc=%d)",
+               PD_LOG ( PDERROR, "snapshot failed, failed to get the group "
+                        "info(groupID=%u, rc=%d)",
                         groupID, rc );
                break;
             }
@@ -1687,8 +1688,9 @@ namespace engine
                }
             }
             REQUESTID_MAP requestIdMap;
-            rc = rtnCoordSendRequestToNode( (void *)pSnapshotReq, routeID, pRouteAgent,
-                                          cb, requestIdMap );
+            rc = rtnCoordSendRequestToNode( (void *)pSnapshotReq, routeID,
+                                            pRouteAgent,
+                                            cb, requestIdMap );
             if ( rc != SDB_OK )
             {
                rtnCoordClearRequest( cb, requestIdMap );
@@ -2929,7 +2931,7 @@ namespace engine
    retry :
       // first time we use cached version
       rc = rtnCoordGetCataInfo( cb, strCollectionName.c_str(),
-                        isNeedRefresh, cataInfo );
+                                isNeedRefresh, cataInfo );
       if ( rc != SDB_OK )
       {
          // if we cannot find such error, let's return SDB_DMS_NOTEXIST
@@ -2940,30 +2942,17 @@ namespace engine
          goto error;
       }
       strMainCL = cataInfo->getCatalogSet()->getMainCLName();
-      /*if ( !cataInfo->getCatalogSet()->getMainCLName().empty() )
-      {
-         if ( !isNeedRefresh )
-         {
-            isNeedRefresh = TRUE;
-            goto retry;
-         }
-         else
-         {
-            PD_RC_CHECK( SDB_ILL_RM_SUB_CL, PDERROR,
-                     "illegal remove sub-collection" );
-         }
-      }*/
+
       // then build drop request
-      rc = rtnCoordGetGroupsByCataInfo( cataInfo, lockedGroupLst, dataNodeGroupLst );
+      rc = rtnCoordGetGroupsByCataInfo( cataInfo, lockedGroupLst,
+                                        dataNodeGroupLst ) ;
       if ( rc != SDB_OK )
       {
          if ( SDB_CAT_NO_MATCH_CATALOG == rc )
          {
             goto error_retry;
          }
-         PD_LOG ( PDERROR,
-                  "failed to get group list(rc=%d)",
-                  rc );
+         PD_LOG ( PDERROR, "failed to get group list(rc=%d)", rc ) ;
          goto error;
       }
 
@@ -2971,7 +2960,8 @@ namespace engine
       // get COLLECTION-LOCK-X
       pLockReq->version = cataInfo->getVersion();
       rc = executeOnDataGroup( (MsgHeader *)pLockReq, dataNodeGroupLst,
-                              lockedGroupLst, pRouteAgent, cb, TRUE, &ignoreList );
+                               lockedGroupLst, pRouteAgent, cb, TRUE,
+                               &ignoreList ) ;
       if ( rc != SDB_OK )
       {
          goto error_retry;
@@ -3027,7 +3017,7 @@ namespace engine
    error_retry :
       // if we get version too old error, and we haven't performed refresh,
       // let's do refresh and try again
-      if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc && !isNeedRefresh )
+      if ( !isNeedRefresh && rtnCoordWriteRetryRC( rc ) )
       {
          isNeedRefresh = TRUE ;
          goto retry ;
@@ -3046,8 +3036,8 @@ namespace engine
       if ( pReleaseReq )
       {
          executeOnDataGroup( (MsgHeader *)pReleaseReq,
-                           lockedGroupLst, sendGroupLst,
-                           pRouteAgent, cb, TRUE );
+                             lockedGroupLst, sendGroupLst,
+                             pRouteAgent, cb, TRUE );
       }
       if ( lockedGroupLst.size() != 0 )
       {
@@ -3063,7 +3053,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDROPCS_EXE, "rtnCoordCMDDropCollectionSpace::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDROPCS_EXE, "rtnCoordCMDDropCollectionSpace::execute" )
    INT32 rtnCoordCMDDropCollectionSpaceOld::execute( CHAR *pReceiveBuffer,
                                                 SINT32 packSize,
                                                 CHAR **ppResultBuffer,
@@ -3185,8 +3175,8 @@ namespace engine
       /******STEP-1*******/
       // get SPACE-LOCK-X
       rc = executeOnDataGroup( (MsgHeader *)pLockReq,
-                              groupLst, lockedGroupLst, pRouteAgent,
-                              cb, TRUE, &ignoreList );
+                               groupLst, lockedGroupLst, pRouteAgent,
+                               cb, TRUE, &ignoreList );
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get space-X-LOCK(rc=%d)",
                   rc );
@@ -3243,8 +3233,8 @@ namespace engine
       if ( pReleaseReq )
       {
          executeOnDataGroup( (MsgHeader *)pReleaseReq,
-                           lockedGroupLst, sendGroupLst,
-                           pRouteAgent, cb, TRUE );
+                             lockedGroupLst, sendGroupLst,
+                             pRouteAgent, cb, TRUE );
       }
       if ( lockedGroupLst.size() != 0 )
       {
@@ -5232,8 +5222,7 @@ namespace engine
                                pRouteAgent, cb, TRUE );
       if ( rc != SDB_OK )
       {
-         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc &&
-              !isNeedRefresh )
+         if ( !isNeedRefresh && rtnCoordWriteRetryRC( rc ) )
          {
             isNeedRefresh = TRUE;
             goto retry ;
@@ -5264,7 +5253,7 @@ namespace engine
    retry_rollback :
       // let's get most current version again
       tempRC = rtnCoordGetCataInfo( cb, strCollectionName,
-                            isNeedRefresh, cataInfo );
+                                    isNeedRefresh, cataInfo );
       PD_RC_CHECK ( tempRC, PDERROR,
                     "failed to rollback create index(%s), "
                     "get catalogue failed(rc=%d)",
@@ -5291,8 +5280,7 @@ namespace engine
       {
          // if our version is too old, let's retry rollback again with newest
          // version
-         if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == tempRC &&
-              !isNeedRefresh )
+         if ( !isNeedRefresh && rtnCoordWriteRetryRC( tempRC ) )
          {
             isNeedRefresh = TRUE;
             goto retry_rollback ;
@@ -5304,7 +5292,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDPIN_EXE, "rtnCoordCMDDropIndex::execute" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCMDDPIN_EXE, "rtnCoordCMDDropIndex::execute" )
    INT32 rtnCoordCMDDropIndex::execute( CHAR *pReceiveBuffer,
                                         SINT32 packSize,
                                         CHAR **ppResultBuffer,
@@ -5379,7 +5367,7 @@ namespace engine
          {
             CoordCataInfoPtr cataInfo;
             rc = rtnCoordGetCataInfo( cb, strCollectionName.c_str(),
-                              isNeedRefresh, cataInfo );
+                                      isNeedRefresh, cataInfo );
             if ( rc != SDB_OK )
             {
                PD_LOG ( PDERROR,
@@ -5388,7 +5376,8 @@ namespace engine
                break;
             }
             CoordGroupList dataNodeGroupLst;
-            rc = rtnCoordGetGroupsByCataInfo( cataInfo, sendGroupLst, dataNodeGroupLst );
+            rc = rtnCoordGetGroupsByCataInfo( cataInfo, sendGroupLst,
+                                              dataNodeGroupLst );
             if ( rc != SDB_OK )
             {
                PD_LOG ( PDERROR,
@@ -5406,8 +5395,7 @@ namespace engine
                                     pRouteAgent, cb, TRUE );
             if ( rc != SDB_OK )
             {
-               if ( SDB_CLS_COORD_NODE_CAT_VER_OLD == rc
-                  && !isNeedRefresh )
+               if ( !isNeedRefresh && rtnCoordWriteRetryRC( rc ) )
                {
                   isNeedRefresh = TRUE;
                   continue;
@@ -8582,9 +8570,9 @@ namespace engine
 
    //PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDUNLINKCL_EXE, "rtnCoordCMDUnlinkCollection::execute" )
    INT32 rtnCoordCMDUnlinkCollection::execute( CHAR * pReceiveBuffer, SINT32 packSize,
-                                             CHAR * * ppResultBuffer, pmdEDUCB * cb,
-                                             MsgOpReply & replyHeader,
-                                             BSONObj * * ppErrorObj )
+                                               CHAR * * ppResultBuffer, pmdEDUCB * cb,
+                                               MsgOpReply & replyHeader,
+                                               BSONObj * * ppErrorObj )
    {
       INT32 rc                         = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOCMDUNLINKCL_EXE ) ;
@@ -8712,7 +8700,7 @@ namespace engine
       pReqMsg->header.TID = cb->getTID();
       pReqMsg->header.opCode = MSG_BS_QUERY_REQ;
       rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
-                              pRouteAgent, cb, TRUE );
+                               pRouteAgent, cb, TRUE );
       if ( rc )
       {
          PD_CHECK( !hasRefresh && SDB_CLS_COORD_NODE_CAT_VER_OLD == rc,
