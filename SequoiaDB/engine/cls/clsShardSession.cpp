@@ -1089,8 +1089,7 @@ namespace engine
             _pCatAgent->clear ( pCommand->collectionFullName() ) ;
             _pCatAgent->release_w () ;
 
-            pmdGetKRCB()->getClsCB()->invalidateCata(
-               pCommand->collectionFullName() ) ;
+            sdbGetClsCB()->invalidateCata( pCommand->collectionFullName() ) ;
          }
          else if ( CMD_DROP_COLLECTIONSPACE == pCommand->type () )
          {
@@ -1100,8 +1099,7 @@ namespace engine
             _pCatAgent->clearBySpaceName ( pDropCSCommand->spaceName() ) ;
             _pCatAgent->release_w () ;
 
-            pmdGetKRCB()->getClsCB()->invalidateCata(
-               pDropCSCommand->spaceName() ) ;
+            sdbGetClsCB()->invalidateCata( pDropCSCommand->spaceName() ) ;
          }
       }
 
