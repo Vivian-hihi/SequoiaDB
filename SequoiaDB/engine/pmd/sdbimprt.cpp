@@ -211,7 +211,7 @@ INT32 main ( INT32 argc, CHAR **argv )
       goto error ;
    }
 
-   rc = utilSdbObj.run( argc, argv ) ;
+   rc = utilSdbObj.run( argc, argv, "sdbimprt version" ) ;
    if ( rc )
    {
       goto error ;
@@ -220,7 +220,7 @@ INT32 main ( INT32 argc, CHAR **argv )
 done :
    if ( rc )
    {
-      if ( rc != SDB_PMD_HELP_ONLY )
+      if ( rc != SDB_PMD_HELP_ONLY && rc != SDB_PMD_VERSION_ONLY )
       {
          ossPrintf ( "Import Failed"OSS_NEWLINE ) ;
       }
@@ -229,7 +229,7 @@ done :
    {
       ossPrintf ( "Import Successfully"OSS_NEWLINE ) ;
    }
-   if ( rc != SDB_PMD_HELP_ONLY )
+   if ( rc != SDB_PMD_HELP_ONLY && rc != SDB_PMD_VERSION_ONLY )
    {
       ossPrintf ( "Detail in log path: %s"OSS_NEWLINE, getDialogName() ) ;
       PD_LOG ( PDEVENT, "Import Completed" ) ;
