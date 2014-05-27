@@ -166,7 +166,9 @@ private:
 #endif
    void _initArg ( po::options_description &desc ) ;
    void _displayArg ( po::options_description &desc ) ;
-   INT32 _resolveArgument ( po::options_description &desc, INT32 argc, CHAR **argv ) ;
+   INT32 _resolveArgument ( po::options_description &desc,
+                            INT32 argc, CHAR **argv,
+                            const CHAR *pPName ) ;
    void *_findKey( const CHAR *pKey ) ;
 private:
    void *_pData ;
@@ -211,7 +213,7 @@ public:
    INT32 getArgString( const CHAR *pKey, CHAR **ppVarValue ) ;
    INT32 getArgSwitch( const CHAR *pKey, INT32 *pVarValue ) ;
    INT32 init( util_sdb_settings &setting, void *pData ) ;
-   INT32 run( INT32 argc, CHAR **argv ) ;
+   INT32 run( INT32 argc, CHAR **argv, const CHAR *pPName ) ;
 } ;
 
 #endif
