@@ -493,6 +493,8 @@ namespace engine
       SDB_DMSCB *dmsCB = pKrcb->getDMSCB() ;
       SDB_DPSCB *dpsCB = pKrcb->getDPSCB() ;
       SDB_RTNCB *rtnCB = pKrcb->getRTNCB() ;
+      BOOLEAN addInfo = eduCB->getType() == EDU_TYPE_SHARDAGENT ?
+                        TRUE : FALSE ;
 
       if ( dpsCB && eduCB->isFromLocal() && !dpsCB->isLogLocal() )
       {
@@ -580,7 +582,7 @@ namespace engine
          rc = rtnListCommandEntry( CMD_LIST_COLLECTIONSPACES,
                                    empty, empty, empty, empty, 0, eduCB,
                                    0, -1, dmsCB, rtnCB,
-                                   _contextID ) ;
+                                   _contextID, addInfo ) ;
       }
       else if ( SQL_GRAMMAR::LISTCL == _commandType )
       {
@@ -588,7 +590,7 @@ namespace engine
          rc = rtnListCommandEntry( CMD_LIST_COLLECTIONS,
                                    empty, empty, empty, empty, 0, eduCB,
                                    0, -1, dmsCB, rtnCB,
-                                   _contextID ) ;
+                                   _contextID, addInfo ) ;
       }
       else if ( SQL_GRAMMAR::BEGINTRAN == _commandType )
       {
