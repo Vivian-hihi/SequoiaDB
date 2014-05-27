@@ -36,6 +36,7 @@
 #include "clsMgr.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "rtn.hpp"
 
 using namespace bson ;
 
