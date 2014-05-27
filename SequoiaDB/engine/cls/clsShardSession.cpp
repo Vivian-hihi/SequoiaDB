@@ -1040,6 +1040,10 @@ namespace engine
             }
             _pEDUCB->writingDB( TRUE ) ;
          }
+         else
+         {
+            w = 1 ;
+         }
 
          //check cata
          if ( pCommand->collectionFullName() &&
@@ -1535,26 +1539,6 @@ namespace engine
          PD_LOG( PDERROR, "Occur exception: %s", e.what() ) ;
          rc = SDB_INVALIDARG;
          goto error ;
-      }
-   done:
-      return rc;
-   error:
-      goto done;
-   }
-
-   INT32 _clsShdSession::_checkSubCLCata( const std::map<std::string, INT32> subCLInfoList,
-                                          INT16 w )
-   {
-      INT32 rc = SDB_OK;
-      std::map<std::string, INT32>::const_iterator iterCL
-                  = subCLInfoList.begin();
-      while( iterCL != subCLInfoList.end() )
-      {
-         BOOLEAN isMainCL;
-         rc = _checkCata( iterCL->second, iterCL->first.c_str(), w, isMainCL );
-         PD_RC_CHECK( rc, PDERROR, "The catalog of sub-collection(%s) is "
-                      "invalid(rc=%d)", iterCL->first.c_str(), rc );
-         ++iterCL;
       }
    done:
       return rc;
