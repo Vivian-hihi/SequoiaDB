@@ -8560,9 +8560,9 @@ namespace engine
       pLinkReq->header.opCode        = MSG_BS_QUERY_REQ;
       pLinkReq->header.routeID.value = 0;
       rc = executeOnDataGroup( pHeader, groupLst, sendGroupLst,
-                              pRouteAgent, cb, TRUE );
+                               pRouteAgent, cb, TRUE ) ;
       PD_CHECK( SDB_OK == rc, rc, error_rollback, PDERROR,
-                "failed to execute on data-node(rc=%d)", rc);
+                "Failed to execute on data-node(rc=%d)", rc);
 
    done :
       replyHeader.flags = rc;
