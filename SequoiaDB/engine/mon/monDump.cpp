@@ -659,11 +659,8 @@ namespace engine
       {
          BSONObj obj ;
          BSONObjBuilder ob ;
-         if ( addInfo )
-         {
-            monAppendSystemInfo ( ob ) ;
-         }
 
+         monAppendSystemInfo ( ob ) ;
          // cpu
          {
             BSONObjBuilder cpuOb ;
@@ -749,10 +746,8 @@ namespace engine
       {
          BSONObj obj ;
          BSONObjBuilder ob ;
-         if ( addInfo )
-         {
-            monAppendSystemInfo ( ob ) ;
-         }
+
+         monAppendSystemInfo ( ob ) ;
          monAppendVersion ( ob ) ;
          ossTickConversionFactor factor ;
          ob.append ( FIELD_NAME_CURRENTACTIVESESSIONS,
