@@ -4274,7 +4274,7 @@ namespace engine
          rc = rc ? rc : retCode;
          if ( SDB_OK == rc )
          {
-            if ( 0 == ossStrcmp( boNodeConfig.getField(
+            if ( 0 == ossStrcmp( newNodeInfo.getField(
                                  FIELD_NAME_GROUPNAME ).valuestr(),
                                  CATALOG_GROUPNAME ) )
             {
