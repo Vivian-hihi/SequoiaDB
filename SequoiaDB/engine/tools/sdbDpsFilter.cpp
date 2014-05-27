@@ -643,6 +643,21 @@ namespace
             }
             continue ;
          }
+         // dump log
+         dpsLogRecord record ;
+         record.load( pRecordBuffer ) ;
+         len = recordLength * LOG_BUFFER_FORMAT_MULTIPLIER ;
+
+      retry_record:
+         if( len > outBufferSize )
+         {
+            CHAR *pOrgBuff = pOutBuffer ;
+            pOutBuffer =(CHAR*)SDB_OSS_REALLOC( pOutBuffer, len + 1 ) ;
+            if( !pOutBuffer )
+            {
+               printf( "Failed to allocate memory for %lld bytes\n",
+                       len + 1 ) ;
+               pOutBuffer = pOrgBuff ;
                rc = SDB_OOM ;
                goto error ;
             }
@@ -711,6 +726,8 @@ namespace
       UINT64 curLsn           = DPS_LOG_INVALID_LSN ;
       dpsLogHeader *logHeader = NULL ;
       INT64 len               = 0 ;
+      INT64 totalRecordSize      = 0 ;
+      UINT64 preLsn              = 0 ;
 
       printf("Parse file:[ %s ] begin\n", filename ) ;
       rc = ossOpen( filename, OSS_DEFAULT | OSS_READONLY,
@@ -735,6 +752,7 @@ namespace
          goto error;
       }
       // start format log head
+      totalRecordSize = fileSize - DPS_LOG_HEAD_LEN ;
       logHeader = (dpsLogHeader*)pLogHead ;
 
       dpsFileMeta meta ;
@@ -1142,6 +1160,35 @@ done:
 error:
    goto done ;
 }
+
+////////////////////////////////////////////////////////////////////
+///< for _dpsNoneFilter
+BOOLEAN _dpsNoneFilter::match( const dpsCmdData *data, CHAR *pRecord )
+{
+   return iFilter::match( data, pRecord ) ;
+}
+
+INT32 _dpsNoneFilter::doFilte( const dpsCmdData *data, OSSFILE &out,
+                               const CHAR *logFilePath )
+{
+   INT32 rc = SDB_OK ;
+
+   rc = filte( this, data, out, logFilePath ) ;
+   if( rc )
+   {
+      //PD_LOG( "!parse log file: [%s] error, rc = %d", logFilePath, rc ) ;
+      goto error ;
+   }
+
+done:
+   return rc;
+
+error:
+   goto done;
+}
+
+////////////////////////////////////////////////////////////////////
+///< for lastFilter
 BOOLEAN _dpsLastFilter::match( const dpsCmdData *data, CHAR *pRecord )
 {
    return iFilter::match( data, pRecord ) ;
