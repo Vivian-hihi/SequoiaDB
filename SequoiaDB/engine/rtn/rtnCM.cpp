@@ -77,8 +77,6 @@ namespace CLSMGR
    // buffer size
 #define CM_NPIPE_SIZE               64
 
-   // sleep time
-#define SLEEPTIME                   10
 #if defined (_LINUX)
       #include <dirent.h>
       #define SDBCM_NAME_BUF_LEN       255
@@ -533,14 +531,16 @@ namespace CLSMGR
       }
 
       if ( vm.count( PMD_OPTION_DBPATH ) )
-      { // if exist "dbpath" in config file
+      { 
+         // if exist "dbpath" in config file
          OSSPID pid ;
          time_t now;
          time ( &now ) ;
          ossLatch ( &listLocker ) ;
          isLocked = TRUE ;
          if ( svcList.count(svcname) == 0 )
-         { // the first starting of this service name by client
+         { 
+            // the first starting of this service name by client
             Process proc;
             proc.pid = OSS_INVALID_TID ;
             OSS_BIT_CLR_SET ( proc.status, BIT_STARTING ) ;
@@ -552,7 +552,8 @@ namespace CLSMGR
             ossLatch ( &listLocker ) ;
             isLocked = TRUE ;
             if ( SDB_OK == rc )
-            { // started successfully
+            { 
+               // started successfully
                svcList[svcname].pid = pid ;
                OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
             }
@@ -569,14 +570,16 @@ namespace CLSMGR
          {
             Process &proc = svcList[svcname] ;
             if ( OSS_BIT_TEST ( proc.status, BIT_STARTING ) )
-            { // service is starting, locked by other sdbStart2() thread
+            {
+               // service is starting, locked by other sdbStart2() thread
                rc = SDBCM_SVC_STARTING ;
                PD_LOG ( PDEVENT, "sequoiadb is starting, svcname = %s",
                         svcname.c_str() ) ;
                goto error ;
             }
             else if ( OSS_BIT_TEST ( proc.status, BIT_RESTARTING ) )
-            { // status setted by pidMonitor
+            {
+               // status setted by pidMonitor
                if ( TYPE_MONITOR == type )
                { // only can be restarted by thread that called by pidMonitor()
                   // lock current svcname
@@ -595,12 +598,14 @@ namespace CLSMGR
                               "node, svcname = %s", svcname.c_str() ) ;
                   }
                   else
-                  { // restart failed
-                     // restore status to "RUNNING", detected the failure by pidMonitor() later
+                  {
+                     // restart failed
+                     // restore status to "RUNNING", detected the failure by
+                     // pidMonitor() later
                      svcList[svcname].pid = OSS_INVALID_TID ;
                      svcList[svcname].status = 0 ;
-                     PD_LOG ( PDERROR, "Failed to restart sequoiadb, svcname = %s",
-                              svcname.c_str() ) ;
+                     PD_LOG ( PDERROR, "Failed to restart sequoiadb, "
+                              "svcname = %s", svcname.c_str() ) ;
                      goto error ;
                   }
                } // if ( TYPE_MONITOR == type )
@@ -614,18 +619,19 @@ namespace CLSMGR
             }
             else
             {
-               if ( OSS_INVALID_TID != proc.pid
-                  && ossIsProcessRunning ( proc.pid ) )
+               if ( OSS_INVALID_TID != proc.pid &&
+                    ossIsProcessRunning ( proc.pid ) )
                { // process is running
                   rc = SDBCM_SVC_STARTED ;
-                  PD_LOG ( PDEVENT, "sequoiadb is started, svcname = %s, pid = %d",
-                           svcname.c_str(), proc.pid ) ;
+                  PD_LOG ( PDEVENT, "sequoiadb is started, svcname = %s, "
+                           "pid = %d", svcname.c_str(), proc.pid ) ;
                   goto error ;
                }
                else
                { // process is not running
-                  const CHAR *dbpath = vm[PMD_OPTION_DBPATH].as<string>().c_str() ;
-                  CHAR startupFile[OSS_MAX_PATHSIZE + 1];
+                  const CHAR *dbpath = vm[PMD_OPTION_DBPATH
+                     ].as<string>().c_str() ;
+                  CHAR startupFile[OSS_MAX_PATHSIZE + 1] = { 0 } ;
                   if ( NULL == dbpath )
                   { // "dbpath" in config file has not value
                      proc.startTime.push ( now ) ;
@@ -645,7 +651,9 @@ namespace CLSMGR
                   }
                   rc = ossAccess ( startupFile ) ;
                   if ( SDB_OK == rc )
-                  { // engine crash but pidMonitor not yet detect, restart it by client manually
+                  {
+                     // engine crash but pidMonitor not yet detect,
+                     // restart it by client manually
 
                      // lock current svcname
                      OSS_BIT_SET ( proc.status, BIT_STARTING ) ;
@@ -658,20 +666,25 @@ namespace CLSMGR
                      if ( SDB_OK == rc )
                      {
                         svcList[svcname].pid = pid ;
-                        OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
+                        OSS_BIT_CLR_SET ( svcList[svcname].status,
+                                          BIT_RUNNING ) ;
                      }
                      else
-                     { // restart failed
-                        // restore status to "RUNNING", detected the failure by pidMonitor() later
+                     { 
+                        // restart failed
+                        // restore status to "RUNNING", detected the failure 
+                        // by pidMonitor() later
                         svcList[svcname].pid = OSS_INVALID_TID ;
                         svcList[svcname].status = 0 ;
-                        PD_LOG ( PDERROR, "Failed to restart sequoiadb, svcname = %s",
-                                 svcname.c_str() ) ;
+                        PD_LOG ( PDERROR, "Failed to restart sequoiadb, "
+                                 "svcname = %s", svcname.c_str() ) ;
                         goto error ;
                      }
                   }
                   else if ( SDB_FNE == rc )
-                  { // engine stopped normally, but pidMonitor not yet detect, start again by client
+                  { 
+                     // engine stopped normally, but pidMonitor not yet detect,
+                     // start again by client
                      OSS_BIT_SET ( proc.status, BIT_STARTING ) ;
                      ossUnlatch ( &listLocker ) ;
                      isLocked = FALSE ;
@@ -766,7 +779,8 @@ namespace CLSMGR
                      OSS_EXEC_SSAVE, cpid, result, NULL, &outNPipe ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to execute %s, rc = %d", sdbstartExecName, rc ) ;
+         PD_LOG ( PDERROR, "Failed to execute %s, rc = %d", sdbstartExecName,
+                  rc ) ;
          rc = SDBCM_FAIL ;
          goto error ;
       }
@@ -775,7 +789,8 @@ namespace CLSMGR
       {
          // if execute sdbStart succeed
          INT64 bufRead ;
-         rc = ossReadNamedPipe ( outNPipe, pNPipeBuf, CM_NPIPE_SIZE, &bufRead, 0 ) ;
+         rc = ossReadNamedPipe ( outNPipe, pNPipeBuf, CM_NPIPE_SIZE,
+                                 &bufRead, 0 ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Failed to trace the PID, rc = %d", rc ) ;
@@ -898,7 +913,7 @@ namespace CLSMGR
       goto done ;
    }
 
-#define W_OK   2
+   #define W_OK   2
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBADD, "sdbAdd" )
    INT32 sdbAdd ( const CHAR *arg1, const CHAR *arg2 )
    {
@@ -1247,7 +1262,8 @@ namespace CLSMGR
       // dialogpath
       if ( vm.count( PMD_OPTION_DIAGLOGPATH ) )
       {
-         CHAR *p = ossGetRealPath( vm[PMD_OPTION_DIAGLOGPATH].as<string>().c_str(),
+         CHAR *p = ossGetRealPath( vm[ PMD_OPTION_DIAGLOGPATH
+                                       ].as<string>().c_str(),
                                    dialogPath, OSS_MAX_PATHSIZE ) ;
          if ( NULL == p )
          {
@@ -1357,7 +1373,7 @@ namespace CLSMGR
       goto done ;
    }
 
-#define SDBCM_RESERVED ".RESERVED"
+   #define SDBCM_RESERVED ".RESERVED"
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBMODIFY, "sdbModify" )
    INT32 sdbModify ( const CHAR *arg1, const CHAR *arg2, const CHAR *arg3 )
    {
@@ -1676,7 +1692,8 @@ namespace CLSMGR
          }
          else if ( SDB_FNE != rc )
          {
-            PD_LOG ( PDERROR, "Permission error or system error: rc = %d", rc ) ;
+            PD_LOG ( PDERROR, "Permission error or system error: rc = %d",
+                     rc ) ;
          }
 
          ++it;
@@ -1909,7 +1926,7 @@ namespace CLSMGR
       }
       if ( svcname != NULL )
       {
-         rc = ossSocket::getPort( svcname, port ) ;
+         rc = ossGetPort( svcname, port ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Bad sdbcm listening service name: %s", svcname ) ;
@@ -2171,14 +2188,37 @@ namespace CLSMGR
 
 #endif
 
+   void watchOtherService()
+   {
+      vector< string > svcnameLst ;
+      INT32 rc = getSvcLstFromCfg( svcnameLst ) ;
+      if ( rc )
+      {
+         return ;
+      }
+
+      ossLatch ( &listLocker ) ;
+      for ( UINT32 i = 0 ; i < svcnameLst.size() ; ++i )
+      {
+         if ( svcList.count( svcnameLst[i] ) != 0 )
+         {
+            continue ;
+         }
+         struct Process processInfo ;
+         processInfo.pid = OSS_INVALID_TID ;
+         processInfo.status = 0 ;
+         svcList[ svcnameLst[i] ] = processInfo ;
+      }
+      ossUnlatch ( &listLocker ) ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_SDBCM_STARTALLNODES, "startAllNodes" )
    INT32 startAllNodes()
    {
       INT32 rc = SDB_OK;
-      //PD_TRACE_ENTRY ( SDB_SDBCM_STARTALLNODES );
+      PD_TRACE_ENTRY ( SDB_SDBCM_STARTALLNODES );
       UINT32 i = 0;
       vector< string > svcnameLst;
-      //vector< boost::thread * > thrdLst;
       rc = getSvcLstFromCfg( svcnameLst );
       PD_RC_CHECK( rc, PDERROR, "Failed to get node list(rc=%d)", rc ) ;
 
@@ -2216,13 +2256,9 @@ namespace CLSMGR
                     "do nothing!", svcnameLst[i].c_str() ) ;
          }
       }
-      /*for ( i = 0; i < thrdLst.size(); i++ )
-      {
-         thrdLst[i]->join();
-         delete thrdLst[i];
-      }*/
+
    done:
-      //PD_TRACE_EXITRC ( SDB_SDBCM_STARTALLNODES, rc );
+      PD_TRACE_EXITRC ( SDB_SDBCM_STARTALLNODES, rc );
       return rc;
    error:
       goto done;
@@ -2246,15 +2282,17 @@ namespace CLSMGR
    INT32 cCMService::svcMain( INT32 argc, CHAR **argv )
    {
       INT32 rc = SDB_OK;
-      //PD_TRACE_ENTRY ( SDB_RTNCMSVC_DMNMAIN );
+      PD_TRACE_ENTRY ( SDB_RTNCMSVC_DMNMAIN );
       UINT16 port = SDBCM_DFT_PORT ;
+      UINT32 timeCounter = 0 ;
+
       rc = initEnv ( port ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to initialize environment, rc = %d", rc ) ;
          goto error ;
       }
-      //PD_TRACE1 ( SDB_RTNCMSVC_DMNMAIN, PD_PACK_USHORT(port) );
+      PD_TRACE1 ( SDB_RTNCMSVC_DMNMAIN, PD_PACK_USHORT(port) );
       try
       {
          boost::thread listener ( cmTcpListener, port ) ;
@@ -2283,10 +2321,17 @@ namespace CLSMGR
       while ( isRunning() )
       {
          pidMonitor () ;
-         ossSleepsecs ( SLEEPTIME ) ;
+         ossSleep( 2 * OSS_ONE_SEC ) ;
+         ++timeCounter ;
+
+         if ( timeCounter >= 60 )
+         {
+            timeCounter = 0 ;
+            watchOtherService () ;
+         }
       }
    done:
-      //PD_TRACE_EXITRC ( SDB_RTNCMSVC_DMNMAIN, rc );
+      PD_TRACE_EXITRC ( SDB_RTNCMSVC_DMNMAIN, rc );
       return rc ;
    error:
       goto done ;
