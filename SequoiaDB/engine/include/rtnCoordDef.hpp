@@ -65,6 +65,11 @@
                                                 Sequence:\"$Details.0.Sequence\",\
                                                 Indexes:\"$Details.0.Indexes\",\
                                                 Status:\"$Details.0.Status\",\
+                                                TotalRecords:\"$Details.0.TotalRecords\",\
+                                                TotalDataPages:\"$Details.0.TotalDataPages\",\
+                                                TotalIndexPages:\"$Details.0.TotalIndexPages\",\
+                                                TotalDataFreeSpace:\"$Details.0.TotalDataFreeSpace\",\
+                                                TotalIndexFreeSpace:\"$Details.0.TotalIndexFreeSpace\",\
                                                 NodeName:\"$Details.0.NodeName\"\
                                                 }\
                                        }\n\
