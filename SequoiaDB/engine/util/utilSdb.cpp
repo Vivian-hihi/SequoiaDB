@@ -35,9 +35,11 @@
 *******************************************************************************/
 
 #include "utilSdb.hpp"
+#include "ossVer.h"
 #include <string>
 
 #define OPTION_HELP        "help"
+#define OPTION_VERSION     "version"
 
 utilSdbTemplet::utilSdbTemplet() : _pData(NULL)
 {
@@ -297,6 +299,7 @@ void utilSdbTemplet::_initArg ( po::options_description &desc )
    util_var *pVar = NULL ;
 
    desc.add_options() ( OPTION_HELP ",h", "help" ) ;
+   desc.add_options() ( OPTION_VERSION, "version" ) ;
    for( it = _argList.begin(); it != _argList.end(); ++it )
    {
       pVar = *it ;
@@ -419,7 +422,8 @@ error:
 
 INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
                                          INT32 argc,
-                                         CHAR **argv )
+                                         CHAR **argv,
+                                         const CHAR *pPName )
 {
    INT32 rc = SDB_OK ;
    INT32 tempStrSize = 0 ;
@@ -467,6 +471,13 @@ INT32 utilSdbTemplet::_resolveArgument ( po::options_description &desc,
    {
       _displayArg ( desc ) ;
       rc = SDB_PMD_HELP_ONLY ;
+      goto done ;
+   }
+
+   if ( vm.count ( OPTION_VERSION ) )
+   {
+      ossPrintVersion( pPName ) ;
+      rc = SDB_PMD_VERSION_ONLY ;
       goto done ;
    }
 
@@ -631,16 +642,16 @@ INT32 utilSdbTemplet::init( util_sdb_settings &setting, void *pData )
    return SDB_OK ;
 }
 
-INT32 utilSdbTemplet::run( INT32 argc, CHAR **argv )
+INT32 utilSdbTemplet::run( INT32 argc, CHAR **argv, const CHAR *pPName )
 {
    INT32 rc = SDB_OK ;
    po::options_description desc ( "Command options" ) ;
    _initArg ( desc ) ;
 
-   rc = _resolveArgument ( desc, argc, argv ) ;
+   rc = _resolveArgument ( desc, argc, argv, pPName ) ;
    if ( rc )
    {
-      if ( SDB_PMD_HELP_ONLY != rc )
+      if ( SDB_PMD_HELP_ONLY != rc && SDB_PMD_VERSION_ONLY != rc )
       {
          PD_LOG ( PDERROR, "Invalid argument" ) ;
          _displayArg ( desc ) ;
