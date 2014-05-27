@@ -560,8 +560,10 @@ namespace
              ( data->lsn >= logHeader->_firstLSN.offset +
                             fileSize - DPS_LOG_HEAD_LEN ) )
          {
+            printf( "Lsn: %lld is not in file [%s]\n", data->lsn, filename ) ;
             goto done ;
          }
+
          offset = DPS_LOG_HEAD_LEN +
                   data->lsn % ( fileSize - DPS_LOG_HEAD_LEN ) ;
          // seek to the log by lsn assigned

@@ -184,12 +184,12 @@ INT32 _dpsLogFilter::doParse()
    }
    else
    {
-      if( SDB_LOG_FILTER_LSN == _filter->getType() )
-      {
-         printf( "Error: Cannot specify a dir path when using --lsn/-l\n" );
-         rc = SDB_INVALIDARG ;
-         goto error ;
-      }
+//      if( SDB_LOG_FILTER_LSN == _filter->getType() )
+//      {
+//         printf( "Error: Cannot specify a dir path when using --lsn/-l\n" );
+//         rc = SDB_INVALIDARG ;
+//         goto error ;
+//      }
       if( !isFileExisted( _cmdData->srcPath ) )
       {
          rc = SDB_INVALIDPATH ;
