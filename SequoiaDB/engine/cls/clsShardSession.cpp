@@ -233,6 +233,12 @@ namespace engine
       UINT32 groupCount = 0 ;
       _clsCatalogSet *set = NULL ;
 
+      if ( _pReplSet->isFullSync() )
+      {
+         rc = SDB_CLS_FULL_SYNC ;
+         goto error ;
+      }
+
       _pCatAgent->lock_r () ;
       set = _pCatAgent->collectionSet( name ) ;
       if ( set )
@@ -284,13 +290,12 @@ namespace engine
             w = curW ;
          }
       }
-      else
-      {
-         /// do noting.
-      }
 
+   done:
       PD_TRACE_EXITRC ( SDB__CLSSHDSESS__CKCATA, rc ) ;
       return rc ;
+   error:
+      goto done ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__REPLY, "_clsShdSession::_reply" )
@@ -353,16 +358,6 @@ namespace engine
       BOOLEAN isNeedRollback = FALSE;
 
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
-
-      // if the node is full sync, can't service
-      if ( MSG_COOR_CHECK_ROUTEID_REQ != msg->opCode &&
-           MSG_BS_MSG_REQ != msg->opCode &&
-           MSG_BS_KILL_CONTEXT_REQ != msg->opCode &&
-           _pReplSet->isFullSync() )
-      {
-         rc = SDB_CLS_FULL_SYNC ;
-         loop = FALSE ;
-      }
 
       while ( loop )
       {
@@ -1139,8 +1134,8 @@ namespace engine
       }
 
       MON_SAVE_OP_DETAIL( _pEDUCB->getMonAppCB(), MSG_BS_GETMORE_REQ,
-                        "ContextID:%lld, NumToRead:%d",
-                        contextID, numToRead ) ;
+                          "ContextID:%lld, NumToRead:%d",
+                          contextID, numToRead ) ;
 
       PD_LOG ( PDDEBUG, "GetMore: contextID:%lld\nnumToRead: %d", contextID,
                numToRead ) ;
