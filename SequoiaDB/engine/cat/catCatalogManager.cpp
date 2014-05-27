@@ -1289,7 +1289,7 @@ namespace engine
       // insert new record
       {
          BSONObjBuilder newBuilder ;
-         newBuilder.appendElements( createObj ) ;
+         newBuilder.appendElements( csInfo.toBson() ) ;
          BSONObjBuilder sub( newBuilder.subarrayStart( CAT_GROUP_NAME ) ) ;
          sub.append( "0", BSON( CAT_GROUPID_NAME << groupID <<
                                 CAT_GROUPNAME_NAME << strGroupName ) ) ;
