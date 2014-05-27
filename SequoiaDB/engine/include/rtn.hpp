@@ -381,7 +381,8 @@ namespace engine
                                SINT64 numToReturn,
                                SDB_DMSCB *dmsCB,
                                SDB_RTNCB *rtnCB,
-                               SINT64 &contextID ) ;
+                               SINT64 &contextID,
+                               BOOLEAN addInfo ) ;
 
    INT32 rtnSnapCommandEntry ( RTN_COMMAND_TYPE command,
                                const BSONObj &selector,
@@ -393,7 +394,8 @@ namespace engine
                                SINT64 numToReturn,
                                SDB_DMSCB *dmsCB,
                                SDB_RTNCB *rtnCB,
-                               SINT64 &contextID ) ;
+                               SINT64 &contextID,
+                               BOOLEAN addInfo ) ;
 
    INT32 rtnGetQueryMeta( const CHAR *pCollectionName,
                           const BSONObj &match,

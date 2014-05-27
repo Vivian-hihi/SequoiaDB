@@ -747,7 +747,8 @@ namespace engine
                                SINT64 numToReturn,
                                SDB_DMSCB *dmsCB,
                                SDB_RTNCB *rtnCB,
-                               SINT64 &contextID )
+                               SINT64 &contextID,
+                               BOOLEAN addInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNLISTCOMMANDENTRY ) ;
@@ -785,16 +786,16 @@ namespace engine
          rc = monDumpContextsFromCB ( cb, context, rtnCB ) ;
          break ;
       case CMD_LIST_SESSIONS:
-         rc = monDumpAllSessions ( cb, context ) ;
+         rc = monDumpAllSessions ( cb, context, addInfo, TRUE ) ;
          break ;
       case CMD_LIST_SESSIONS_CURRENT:
-         rc = monDumpSessionFromCB ( cb, context ) ;
+         rc = monDumpSessionFromCB ( cb, context, addInfo, TRUE ) ;
          break ;
       case CMD_LIST_COLLECTIONS:
-         rc = monDumpAllCollections ( dmsCB, context ) ;
+         rc = monDumpAllCollections ( dmsCB, context, addInfo, TRUE ) ;
          break ;
       case CMD_LIST_COLLECTIONSPACES:
-         rc = monDumpAllCollectionSpaces ( dmsCB, context ) ;
+         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, TRUE ) ;
          break ;
       case CMD_LIST_STORAGEUNITS:
          rc = monDumpAllStorageUnits ( dmsCB, context ) ;
@@ -838,7 +839,8 @@ namespace engine
                                SINT64 numToReturn,
                                SDB_DMSCB *dmsCB,
                                SDB_RTNCB *rtnCB,
-                               SINT64 &contextID )
+                               SINT64 &contextID,
+                               BOOLEAN addInfo )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNSNAPCOMMANDENTRY ) ;
@@ -888,7 +890,7 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_SESSIONS:
-         rc = monDumpAllSessions ( cb, context, FALSE ) ;
+         rc = monDumpAllSessions ( cb, context, addInfo, FALSE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump session from eduCB, rc: %d",
@@ -897,7 +899,7 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_SESSIONS_CURRENT:
-         rc = monDumpSessionFromCB ( cb, context, FALSE ) ;
+         rc = monDumpSessionFromCB ( cb, context, addInfo, FALSE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump session from eduCB, rc: %d",
@@ -906,7 +908,7 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_COLLECTIONS:
-         rc = monDumpAllCollections ( dmsCB, context, TRUE ) ;
+         rc = monDumpAllCollections ( dmsCB, context, addInfo, TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB, "
@@ -915,7 +917,7 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_COLLECTIONSPACES:
-         rc = monDumpAllCollectionSpaces ( dmsCB, context, TRUE ) ;
+         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, TRUE ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB, "
@@ -924,7 +926,7 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_DATABASE:
-         rc = monDumpMonDBCB ( context ) ;
+         rc = monDumpMonDBCB ( context, addInfo ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump database, rc: %d", rc ) ;
@@ -932,7 +934,7 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_SYSTEM:
-         rc = monDumpMonSystem ( context ) ;
+         rc = monDumpMonSystem ( context, addInfo ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump system, rc: %d", rc ) ;

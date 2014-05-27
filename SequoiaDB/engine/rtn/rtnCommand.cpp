@@ -1225,11 +1225,13 @@ namespace engine
       BSONObj selector ( _selectBuff ) ;
       BSONObj orderBy ( _orderByBuff ) ;
       BSONObj hint( _hintBuff ) ;
-      INT32 rc = SDB_OK;
+      INT32 rc = SDB_OK ;
+      BOOLEAN addInfo = getFromService() == CMD_SPACE_SERVICE_SHARD ?
+                        TRUE : FALSE ;
 
       rc = rtnListCommandEntry ( type(), selector, matcher, orderBy, hint,
                                  _flags, cb, _numToSkip, _numToReturn,
-                                 dmsCB, rtnCB, *pContextID ) ;
+                                 dmsCB, rtnCB, *pContextID, addInfo ) ;
 
       PD_TRACE_EXITRC ( SDB__RTNLIST_DOIT, rc ) ;
       return rc;
@@ -1573,10 +1575,12 @@ namespace engine
       BSONObj matcher ( _matcherBuff ) ;
       BSONObj selector ( _selectBuff ) ;
       BSONObj orderBy ( _orderByBuff ) ;
+      BOOLEAN addInfo = getFromService() == CMD_SPACE_SERVICE_SHARD ?
+                        TRUE : FALSE ;
 
       INT32 rc = rtnSnapCommandEntry ( type(), selector, matcher, orderBy,
                                        _flags, cb, _numToSkip, _numToReturn,
-                                       dmsCB, rtnCB, *pContextID ) ;
+                                       dmsCB, rtnCB, *pContextID, addInfo ) ;
       PD_TRACE_EXITRC ( SDB__RTNSNAPSHOT_DOIT, rc ) ;
       return rc ;
    }

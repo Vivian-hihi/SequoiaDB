@@ -605,7 +605,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPMONSYSTEM, "monDumpMonSystem" )
-   INT32 monDumpMonSystem ( rtnContextDump *context )
+   INT32 monDumpMonSystem ( rtnContextDump *context, BOOLEAN addInfo )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( context, "context can't be NULL" )
@@ -659,7 +659,11 @@ namespace engine
       {
          BSONObj obj ;
          BSONObjBuilder ob ;
-         monAppendSystemInfo ( ob ) ;
+         if ( addInfo )
+         {
+            monAppendSystemInfo ( ob ) ;
+         }
+
          // cpu
          {
             BSONObjBuilder cpuOb ;
@@ -725,7 +729,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPMONDBCB, "monDumpMonDBCB" )
-   INT32 monDumpMonDBCB ( rtnContextDump *context )
+   INT32 monDumpMonDBCB ( rtnContextDump *context, BOOLEAN addInfo )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( context, "context can't be NULL" )
@@ -745,7 +749,10 @@ namespace engine
       {
          BSONObj obj ;
          BSONObjBuilder ob ;
-         monAppendSystemInfo ( ob ) ;
+         if ( addInfo )
+         {
+            monAppendSystemInfo ( ob ) ;
+         }
          monAppendVersion ( ob ) ;
          ossTickConversionFactor factor ;
          ob.append ( FIELD_NAME_CURRENTACTIVESESSIONS,
@@ -810,7 +817,7 @@ namespace engine
    // dump the session information for a given control block
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPSESSIONFROMCB, "monDumpSessionFromCB" )
    INT32 monDumpSessionFromCB ( pmdEDUCB *cb, rtnContextDump *context,
-                                BOOLEAN simple )
+                                BOOLEAN addInfo, BOOLEAN simple )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( cb, "educb can't be NULL" )
@@ -829,7 +836,10 @@ namespace engine
             ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
             ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
             ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
-            monAppendSystemInfo( ob, MON_MASK_NODE_NAME ) ;
+            if ( addInfo )
+            {
+               monAppendSystemInfo( ob, MON_MASK_NODE_NAME ) ;
+            }
             obj = ob.obj () ;
             rc = context->monAppend( obj ) ;
             if ( rc )
@@ -907,7 +917,7 @@ namespace engine
    // walk through all sessions and create return records
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPALLSESSIONS, "monDumpAllSessions" )
    INT32 monDumpAllSessions ( pmdEDUCB *cb, rtnContextDump *context,
-                              BOOLEAN simple )
+                              BOOLEAN addInfo, BOOLEAN simple )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( cb, "educb can't be NULL" )
@@ -934,7 +944,10 @@ namespace engine
                ob.append ( FIELD_NAME_STATUS, simple._eduStatus ) ;
                ob.append ( FIELD_NAME_TYPE, simple._eduType ) ;
                ob.append ( FIELD_NAME_EDUNAME, simple._eduName ) ;
-               monAppendSystemInfo( ob, MON_MASK_NODE_NAME ) ;
+               if ( addInfo )
+               {
+                  monAppendSystemInfo( ob, MON_MASK_NODE_NAME ) ;
+               }
                obj = ob.obj () ;
                rc = context->monAppend( obj ) ;
                if ( rc )
@@ -1069,7 +1082,7 @@ namespace engine
    // dump information for all collections
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPALLCOLLECTIONS, "monDumpAllCollections" )
    INT32 monDumpAllCollections( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                BOOLEAN details )
+                                BOOLEAN addInfo, BOOLEAN details )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
@@ -1115,8 +1128,11 @@ namespace engine
                                (long long)((*it1)._totalDataFreeSpace )) ;
                   ob1.append ( FIELD_NAME_TOTAL_INDEX_FREESPACE,
                                (long long)((*it1)._totalIndexFreeSpace )) ;
-                  monAppendSystemInfo( ob1, MON_MASK_NODE_NAME );
-                  monAppendSystemInfo( ob1, MON_MASK_GROUP_NAME );
+                  if ( addInfo )
+                  {
+                     monAppendSystemInfo( ob1, MON_MASK_NODE_NAME ) ;
+                     monAppendSystemInfo( ob1, MON_MASK_GROUP_NAME ) ;
+                  }
                   ba.append (ob1.done()) ;
                }
                ob.append ( FIELD_NAME_DETAILS, ba.arr() ) ;
@@ -1149,7 +1165,7 @@ namespace engine
    // dump information for all collection spaces
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPALLCOLLECTIONSPACES, "monDumpAllCollectionSpaces" )
    INT32 monDumpAllCollectionSpaces ( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                      BOOLEAN details )
+                                      BOOLEAN addInfo, BOOLEAN details )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
@@ -1186,7 +1202,10 @@ namespace engine
                ob.append ( FIELD_NAME_TOTAL_SIZE, cs._totalSize ) ;
             }
             ob.append ( FIELD_NAME_NAME, cs._name ) ;
-            monAppendSystemInfo( ob, MON_MASK_GROUP_NAME );
+            if ( addInfo )
+            {
+               monAppendSystemInfo( ob, MON_MASK_GROUP_NAME );
+            }
             obj = ob.obj() ;
             rc = context->monAppend( obj ) ;
             if ( rc )

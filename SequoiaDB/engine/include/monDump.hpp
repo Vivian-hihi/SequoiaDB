@@ -67,18 +67,19 @@ namespace engine
    INT32 monDumpAllContexts ( SDB_RTNCB *rtncb, rtnContextDump *context,
                               BOOLEAN simple = TRUE ) ;
    INT32 monDumpSessionFromCB ( pmdEDUCB *cb, rtnContextDump *context,
-                                BOOLEAN simple = TRUE ) ;
+                                BOOLEAN addInfo, BOOLEAN simple = TRUE ) ;
    INT32 monDumpAllSessions ( pmdEDUCB *cb, rtnContextDump *context,
-                              BOOLEAN simple = TRUE ) ;
+                              BOOLEAN addInfo, BOOLEAN simple = TRUE ) ;
 
-   INT32 monDumpMonSystem ( rtnContextDump *context ) ;
+   INT32 monDumpMonSystem ( rtnContextDump *context, BOOLEAN addInfo ) ;
 
-   INT32 monDumpMonDBCB ( rtnContextDump *context ) ;
+   INT32 monDumpMonDBCB ( rtnContextDump *context, BOOLEAN addInfo ) ;
 
    INT32 monDumpAllCollections ( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                 BOOLEAN details = FALSE ) ;
+                                 BOOLEAN addInfo, BOOLEAN details = FALSE ) ;
 
    INT32 monDumpAllCollectionSpaces ( SDB_DMSCB *dmsCB, rtnContextDump *context,
+                                      BOOLEAN addInfo,
                                       BOOLEAN details = FALSE ) ;
 
    INT32 monDumpAllStorageUnits ( SDB_DMSCB *dmsCB, rtnContextDump *context ) ;
