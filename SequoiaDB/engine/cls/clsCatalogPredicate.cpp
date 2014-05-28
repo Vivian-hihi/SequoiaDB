@@ -196,6 +196,7 @@ namespace engine
       INT32 director = 1 ;
       BSONElement lowBound ;
       BSONElement upBound ;
+      BSONElement beShardingKey ;
       const map<string,rtnPredicate> &predicates = _predicateSet.predicates() ;
       map<string, rtnPredicate>::const_iterator itr ;
 
@@ -207,7 +208,7 @@ namespace engine
 
       SDB_ASSERT( itrLB.more() && itrUB.more(), "Invalid catalog bound" ) ;
 
-      BSONElement beShardingKey = itrSK.next() ;
+      beShardingKey = itrSK.next() ;
       director = beShardingKey.numberInt() > 0 ? 1 : -1 ;
       ssKeyPos = 0 ;
 
