@@ -182,16 +182,28 @@ enum KEY_ACTION
    CTRL_D = 4,         /* Ctrl-d */
    CTRL_E = 5,         /* Ctrl-e */
    CTRL_F = 6,         /* Ctrl-f */
+   CTRL_G = 7,         /* Ctrl-g */ // not use
    CTRL_H = 8,         /* Ctrl-h */
+   CTRL_I = 9,         /* Ctrl+i */ // not use
    TAB = 9,            /* Tab */
+   CTRL_J = 10,        /* Ctrl+j */ // not use
    CTRL_K = 11,        /* Ctrl+k */
    CTRL_L = 12,        /* Ctrl+l */
+   CTRL_M = 13,        /* Ctrl+m */ // not use
    ENTER = 13,         /* Enter */
    CTRL_N = 14,        /* Ctrl-n */
+   CTRL_O = 15,        /* Ctrl-o */ // not use
    CTRL_P = 16,        /* Ctrl-p */
+   CTRL_Q = 17,        /* Ctrl-q */ // not use
+   CTRL_R = 18,        /* Ctrl-r */ // not use
+   CTRL_S = 19,        /* Ctrl-s */ // not use
    CTRL_T = 20,        /* Ctrl-t */
    CTRL_U = 21,        /* Ctrl+u */
+   CTRL_V = 22,        /* Ctrl+v */ // not use
    CTRL_W = 23,        /* Ctrl+w */
+   CTRL_X = 24,        /* Ctrl+x */ // not use
+   CTRL_Y = 25,        /* Ctrl+y */ // not use
+   CTRL_Z = 26,        /* Ctrl+z */ // not use
    ESC = 27,           /* Escape */
    BACKSPACE =  127    /* Backspace */
 };
@@ -227,7 +239,7 @@ static int win32read(char *c)
            ret = 0;
            goto error;
         }
-        if (!foo) 
+        if (!foo)
         {
            ret = 0;
            goto error;
@@ -642,6 +654,7 @@ static int completeLine(struct linenoiseState *ls)
     PD_TRACE_ENTRY ( SDB_COMPLETELINE );
     linenoiseCompletions lc = { 0, 0, NULL, NULL };
     int nread, nwritten;
+    int ret = 0;
     char c = 0;
 
     completionCallback(ls->buf,&lc);
@@ -649,29 +662,30 @@ static int completeLine(struct linenoiseState *ls)
     {
         linenoiseBeep();
     }
+    else if ( 1== lc.len || lc.fill )
+    {
+        size_t clen = 0;
+        char *newStr = NULL;
+        if ( 1 == lc.len )
+        {
+            newStr = lc.cvec[0];
+            c = 32;
+        }
+        else
+        {
+            newStr = lc.fill;
+        }
+        nwritten = snprintf( ls->buf, ls->buflen, "%s", newStr );
+        ls->len = nwritten;
+        ls->pos = nwritten;
+        refreshLine(ls);
+    }
     else
     {
-        size_t stop = 0, i = 0;
+        size_t stop = 0;
 
         while(!stop)
         {
-            /* Show completion or original buffer */
-            if (i < lc.len)
-            {
-                struct linenoiseState saved = *ls;
-
-                ls->len = ls->pos = strlen(lc.cvec[i]);
-                ls->buf = lc.cvec[i];
-                refreshLine(ls);
-                ls->len = saved.len;
-                ls->pos = saved.pos;
-                ls->buf = saved.buf;
-            }
-            else
-            {
-                refreshLine(ls);
-            }
-
 #ifdef _WIN32
             nread = win32read(&c);
 #else
@@ -680,36 +694,59 @@ static int completeLine(struct linenoiseState *ls)
             if (nread <= 0)
             {
                 freeCompletions(&lc);
-                return -1;
+                ret = -1 ;
+                goto error ;
             }
 
             switch(c)
             {
                 case 9: /* tab */
-                    i = (i+1) % (lc.len+1);
-                    if (i == lc.len) linenoiseBeep();
+                   {
+                    unsigned int index = 0;
+                    char tmpBuf[1] = {0};
+                    struct linenoiseState saved = *ls;
+                    printf("\n");
+                    ls->len = 0;
+                    ls->pos = 0;
+                    ls->buf = tmpBuf;
+                    ls->prompt = "";
+
+                    refreshLine(ls);
+
+                    ls->len = saved.len;
+                    ls->pos = saved.pos;
+                    ls->buf = saved.buf;
+                    ls->prompt =saved.prompt;
+                    while (index < lc.len -1 )
+                    {
+                        printf( "%-s\t", lc.cvec[index] );
+                        index++;
+                    }
+                    printf( "%s\n", lc.cvec[index] );
+                    fflush(stdout);
+
+                    refreshLine(ls);
                     break;
+                   }
                 case 27: /* escape */
                     /* Re-show original buffer */
-                    if (i < lc.len) refreshLine(ls);
                     stop = 1;
                     break;
                 default:
                     /* Update buffer and return */
-                    if (i < lc.len)
-                    {
-                        nwritten = snprintf(ls->buf,ls->buflen,"%s",lc.cvec[i]);
-                        ls->len = ls->pos = nwritten;
-                    }
                     stop = 1;
                     break;
              }
         }
     }
 
+    ret = (int)c ;
+done:
     freeCompletions(&lc);
     PD_TRACE_EXIT ( SDB_COMPLETELINE );
-    return c; /* Return last read character */
+    return ret; /* Return last read character */
+error:
+   goto done;
 }
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_LNHISTORYCLEAR, "linenoiseHistoryClear" )
@@ -1369,7 +1406,7 @@ int linenoiseEditInsert(struct linenoiseState *l, char c)
 #ifndef _WINDOWS
             }
 #endif // _WINDOWS
-        } 
+        }
         else
         {
             memmove(l->buf+l->pos+1,l->buf+l->pos,l->len-l->pos);
@@ -1473,7 +1510,6 @@ void linenoiseEditHistoryNext(struct linenoiseState *l, int dir)
 done:
     PD_TRACE_EXIT ( SDB_LNEDITHISTORYNEXT );
     return;
-     
 }
 
 /* Delete the character at the right of the cursor without altering the cursor
@@ -1586,9 +1622,13 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
 #endif
     while(1)
     {
-        char c ;
+        char c = KEY_NULL ;
         int nread ;
         char seq[3] ;
+        char buf[10] = {0} ;
+        char buf2[10] = {0} ;
+        char buf3[10] = {0} ;
+        char buf4[10] = {0} ;
 
 #ifdef _WIN32
         nread = win32read(&c);
@@ -1627,23 +1667,28 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
             free(history[history_len]);
             ret = (int)l.len;
             goto done;
-        case CTRL_C:     /* ctrl-c */
+        case CTRL_C:  /* ctrl-c */
             // remove colour
             l.remove_col = true ;
             refreshLine( &l ) ;
-            errno = l.len == 0 ? EAGAIN : ECANCELED ;
+            errno = (l.len == 0 && 0 == strncmp(l.prompt, "> ", strlen("> ")))
+                     ? EAGAIN : ECANCELED ;
             ret = -1;
             goto done;
-        case BACKSPACE:   /* backspace */
+            case 127: /* backspace in linux and delete in windows */
 #ifdef _WIN32
             /* delete in _WIN32*/
             /* win32read() will send 127 for DEL and 8 for BS and Ctrl-H */
-            if (l.pos < l.len && --l.len > 0)
+            if (l.len > 0)
             {
-                memmove(l.buf+l.pos,l.buf+l.pos+1,l.len-l.pos);
-                l.len--;
-                l.buf[l.len] = '\0';
-                refreshLine(&l);
+                linenoiseEditDelete(&l);
+            }
+            else
+            {
+                history_len--;
+                free(history[history_len]);
+                ret = -1;
+                goto error;
             }
             break;
 #endif
@@ -1692,7 +1737,6 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
              * chars at different times. */
             if (read(l.ifd,seq,1) == -1) break;
             if (read(l.ifd,seq+1,1) == -1) break;
-
             /* ESC [ sequences. */
             if (seq[0] == '[')
             {
@@ -1704,8 +1748,14 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
                     {
                         switch(seq[1])
                         {
+                        case '1': /* Home */
+                            linenoiseEditMoveHome(&l);
+                            break;
                         case '3': /* Delete key. */
                             linenoiseEditDelete(&l);
+                            break;
+                        case '4': /* End */
+                            linenoiseEditMoveEnd(&l);
                             break;
                         }
                     }
@@ -1726,12 +1776,6 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
                     case 'D': /* Left */
                         linenoiseEditMoveLeft(&l);
                         break;
-                    case 'H': /* Home */
-                        linenoiseEditMoveHome(&l);
-                        break;
-                    case 'F': /* End*/
-                        linenoiseEditMoveEnd(&l);
-                        break;
                     }
                 }
             }
@@ -1748,13 +1792,6 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
                     linenoiseEditMoveEnd(&l);
                     break;
                 }
-            }
-            break;
-        default:
-            if (linenoiseEditInsert(&l,c))
-            {
-                ret = -1;
-                goto error;
             }
             break;
         case CTRL_U: /* Ctrl+u, delete the whole line. */
@@ -1780,7 +1817,26 @@ static int linenoiseEdit( int stdin_fd, int stdout_fd, char *buf,
         case CTRL_W: /* ctrl+w, delete previous word */
             linenoiseEditDeletePrevWord(&l);
             break;
+        case CTRL_G: /* Ctrl-g */ // not use
+        case CTRL_J: /* Ctrl+j */ // not use
+        case CTRL_O: /* Ctrl-o */ // not use
+        case CTRL_Q: /* Ctrl-q */ // not use
+        case CTRL_R: /* Ctrl-r */ // not use
+        case CTRL_S: /* Ctrl-s */ // not use
+        case CTRL_V: /* Ctrl+v */ // not use
+        case CTRL_X: /* Ctrl+w */ // not use
+        case CTRL_Y: /* Ctrl+w */ // not use
+        case CTRL_Z: /* Ctrl+w */ // not use
+            break;
+        default:
+            if (linenoiseEditInsert(&l,c))
+            {
+                ret = -1;
+                goto error;
+            }
+            break;
         }
+
     }
     ret = l.len;
 done:
