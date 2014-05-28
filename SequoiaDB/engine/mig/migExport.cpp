@@ -176,7 +176,6 @@ INT32 migExport::_parseFields( CHAR *pFields, INT32 size, bson &obj )
    INT32   rc         = SDB_OK ;
    INT32   tempRc     = SDB_OK ;
    INT32   fieldSize  = 0 ;
-   INT32   bsonSize   = 0 ;
    BOOLEAN isString   = FALSE;
    CHAR   *pCursor    = pFields ;
    CHAR   *leftField  = pFields ;
@@ -368,7 +367,6 @@ error:
 INT32 migExport::_query()
 {
    INT32 rc = SDB_OK ;
-   CHAR *pbson = NULL ;
    bson obj ;
    if ( _pMigArg->pFields )
    {
