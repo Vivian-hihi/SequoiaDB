@@ -220,9 +220,10 @@ namespace engine
                // the size of _startStopKeys must be "0" or "1":
                // "0": it is means the matcher is empty set.
                // "1": it is normal set include universe set.
+               // other: it is $ne
                if ( iterMap->second._startStopKeys.size() != 1 )
                {
-                  rsTmp = FALSE ;
+                  rsTmp = TRUE ;
                   goto check_children ;
                }
 
