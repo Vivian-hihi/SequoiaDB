@@ -1,3 +1,4 @@
+
 #ifndef CLSCATALOGMATCHER_HPP_
 #define CLSCATALOGMATCHER_HPP_
 
@@ -8,9 +9,12 @@
 
 namespace engine
 {
-   class clsCatalogPredicateTree;
-   class _clsCatalogItem;
+   class clsCatalogPredicateTree ;
+   class _clsCatalogItem ;
 
+   /*
+      clsCatalogMatcher define
+   */
    class clsCatalogMatcher : public SDBObject
    {
    public:
@@ -29,13 +33,16 @@ namespace engine
                         clsCatalogPredicateTree &predicateSet );
 
       INT32 parseLogicOp( const bson::BSONElement &beField,
-                        clsCatalogPredicateTree &predicateSet );
-      BOOLEAN isOpObj( const bson::BSONObj obj );
+                          clsCatalogPredicateTree &predicateSet ) ;
+      BOOLEAN isOpObj( const bson::BSONObj obj ) ;
+
    private:
       clsCatalogPredicateTree    _predicateSet;
       bson::BSONObj              _shardingKey;
       bson::BSONObj              _matcher;
-   };
+   } ;
+
 }
 
-#endif
+#endif // CLSCATALOGMATCHER_HPP_
+
