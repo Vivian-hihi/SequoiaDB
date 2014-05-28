@@ -185,6 +185,151 @@ namespace engine
       return buf.str() ;
    }
 
+   INT32 clsCatalogPredicateTree::_matches ( BSONObjIterator itrSK,
+                                             BSONObjIterator itrLB,
+                                             BSONObjIterator itrUB,
+                                             BOOLEAN &result )
+   {
+      INT32 rc = SDB_OK ;
+      UINT32 ssKeyPos = 0 ;
+      INT32 rsCmp = 0 ;
+      INT32 director = 1 ;
+      BSONElement lowBound ;
+      BSONElement upBound ;
+      const map<string,rtnPredicate> &predicates = _predicateSet.predicates() ;
+
+      if ( !itrSK.more() )
+      {
+         result = TRUE ;
+         goto done ;
+      }
+
+      SDB_ASSERT( itrLB.more() && itrUB.more(), "Invalid catalog bound" ) ;
+
+      BSONElement beShardingKey = itrSK.next() ;
+      director = beShardingKey.numberInt() > 0 ? 1 : -1 ;
+      ssKeyPos = 0 ;
+
+      if ( director > 0 )
+      {
+         lowBound = itrLB.next() ;
+         upBound = itrUB.next() ;
+      }
+      else
+      {
+         lowBound = itrUB.next() ;
+         upBound = itrLB.next() ;
+      }
+
+      map<string, rtnPredicate>::const_iterator itr =
+         predicates.find( beShardingKey.fieldName() ) ;
+      if ( itr == predicates.end() )
+      {
+         result = TRUE ;
+         goto done ;
+      }
+
+   retry:
+      if ( ssKeyPos >= itr->second._startStopKeys.size() )
+      {
+         result = FALSE ;
+         goto done ;
+      }
+      const rtnStartStopKey &matcherBound =
+         itr->second._startStopKeys[ ssKeyPos ] ;
+
+      // compare low bound
+      rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound ) ;
+      if ( rsCmp > 0 || ( rsCmp == 0 &&
+           !matcherBound._stopKey._inclusive ) )
+      {
+         // low bound > stop key, goto next start stop key
+         ++ssKeyPos ;
+         goto retry ;
+      }
+      else if ( rsCmp == 0 )
+      {
+         rc = _matches( itrSK, itrLB, itrUB, result ) ;
+         goto done ;
+      }
+
+      // compare up bound
+      rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound ) ;
+      if ( rsCmp < 0 || ( rsCmp == 0 &&
+           !matcherBound._startKey._inclusive ) )
+      {
+         // up bound < start key, goto next start stop key
+         ++ssKeyPos ;
+         goto retry ;
+      }
+      else if ( rsCmp == 0 )
+      {
+         rc = _matches( itrSK, itrLB, itrUB, result ) ;
+         goto done ;
+      }
+
+      // in the range
+      result = TRUE ;
+
+   done:
+      return rc ;
+   }
+
+   INT32 clsCatalogPredicateTree::matches( _clsCatalogItem * pCatalogItem,
+                                           BOOLEAN & result )
+   {
+      INT32 rc = SDB_OK ;
+      BOOLEAN rsTmp = TRUE ;
+
+      if ( isUniverse() )
+      {
+         goto done ;
+      }
+
+      try
+      {
+         BSONObjIterator itrSK( _shardingKey ) ;
+         BSONObjIterator itrLB( pCatalogItem->getLowBound() ) ;
+         BSONObjIterator itrUB( pCatalogItem->getUpBound() ) ;
+
+         rc = _matches( itrSK, itrLB, itrUB, rsTmp ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to match catalog item, rc: %d",
+                      rc ) ;
+
+         if ( ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ) ||
+              ( !rsTmp && CLS_CATA_LOGIC_AND == _logicType ) )
+         {
+            goto done ;
+         }
+      }
+      catch( std::exception &e )
+      {
+         PD_LOG( PDERROR, "Occur exception on match catalog item: %s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+   check_children:
+      for ( UINT32 i = 0 ; i < _children.size(); i++ )
+      {
+         rc = _children[i]->matches( pCatalogItem, rsTmp ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to match the catalog item(rc=%d)",
+                      rc );
+         if ( ( !rsTmp && CLS_CATA_LOGIC_AND == _logicType ) ||
+              ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ) )
+         {
+            break ;
+         }
+      }
+   done:
+      result = rsTmp ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+/*
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_MATCHES, "clsCatalogPredicateTree::matches" )
    INT32 clsCatalogPredicateTree::matches( _clsCatalogItem * pCatalogItem,
                                            BOOLEAN & result )
@@ -383,6 +528,7 @@ namespace engine
    error:
       goto done;
    }
+*/
 
 }
 
