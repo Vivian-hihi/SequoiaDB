@@ -202,7 +202,8 @@ rtnFiles = [
       "rtn/rtnInternalSorting.cpp",
       "rtn/rtnSorting.cpp",
       "rtn/rtnMergeSorting.cpp",
-      "rtn/rtnSortTuple.cpp"
+      "rtn/rtnSortTuple.cpp",
+      "rtn/rtnQueryOptions.cpp"
       ]
 
 msgFiles = [
