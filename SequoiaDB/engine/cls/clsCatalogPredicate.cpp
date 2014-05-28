@@ -236,37 +236,40 @@ namespace engine
          result = FALSE ;
          goto done ;
       }
-      const rtnStartStopKey &matcherBound =
-         itr->second._startStopKeys[ ssKeyPos ] ;
 
-      // compare low bound
-      rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound ) ;
-      if ( rsCmp > 0 || ( rsCmp == 0 &&
-           !matcherBound._stopKey._inclusive ) )
       {
-         // low bound > stop key, goto next start stop key
-         ++ssKeyPos ;
-         goto retry ;
-      }
-      else if ( rsCmp == 0 )
-      {
-         rc = _matches( itrSK, itrLB, itrUB, result ) ;
-         goto done ;
-      }
+         const rtnStartStopKey &matcherBound =
+            itr->second._startStopKeys[ ssKeyPos ] ;
 
-      // compare up bound
-      rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound ) ;
-      if ( rsCmp < 0 || ( rsCmp == 0 &&
-           !matcherBound._startKey._inclusive ) )
-      {
-         // up bound < start key, goto next start stop key
-         ++ssKeyPos ;
-         goto retry ;
-      }
-      else if ( rsCmp == 0 )
-      {
-         rc = _matches( itrSK, itrLB, itrUB, result ) ;
-         goto done ;
+         // compare low bound
+         rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound ) ;
+         if ( rsCmp > 0 || ( rsCmp == 0 &&
+              !matcherBound._stopKey._inclusive ) )
+         {
+            // low bound > stop key, goto next start stop key
+            ++ssKeyPos ;
+            goto retry ;
+         }
+         else if ( rsCmp == 0 )
+         {
+            rc = _matches( itrSK, itrLB, itrUB, result ) ;
+            goto done ;
+         }
+
+         // compare up bound
+         rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound ) ;
+         if ( rsCmp < 0 || ( rsCmp == 0 &&
+              !matcherBound._startKey._inclusive ) )
+         {
+            // up bound < start key, goto next start stop key
+            ++ssKeyPos ;
+            goto retry ;
+         }
+         else if ( rsCmp == 0 )
+         {
+            rc = _matches( itrSK, itrLB, itrUB, result ) ;
+            goto done ;
+         }
       }
 
       // in the range
