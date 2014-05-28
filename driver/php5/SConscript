@@ -48,6 +48,8 @@ clientLibFiles = [
       root_dir + "/../../SequoiaDB/engine/bson/nonce.cpp",
       root_dir + "/../../SequoiaDB/engine/util/fromjson.hpp",
       root_dir + "/../../SequoiaDB/engine/util/json2rawbson.h",
+      root_dir + "/../../SequoiaDB/engine/util/utilStr.hpp",
+      root_dir + "/../../SequoiaDB/engine/util/utilStr.cpp",
       root_dir + "/../../SequoiaDB/engine/client/base64c.h"
       ]
 clientLibFiles2 = [
@@ -90,7 +92,8 @@ srcFile = [
       root_dir + "/ext/temp/oid.cpp",
       root_dir + "/ext/temp/md5.c",
       root_dir + "/ext/temp/base64.cpp",
-      root_dir + "/ext/temp/nonce.cpp"
+      root_dir + "/ext/temp/nonce.cpp",
+      root_dir + "/ext/temp/utilStr.cpp"
       ]
 if testBuild:
     env.Program([testFiles])
