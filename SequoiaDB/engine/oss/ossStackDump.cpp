@@ -190,7 +190,7 @@ void ossFuncAddrToName( void * address,
                // use ( address - dli_fbase ) along with nm command to figure
                // out the symbol and the line of code manually.
                trapFile->fWrite( "address: 0x"OSS_PRIXPTR
-                                 " ; dli_fase: 0x"OSS_PRIXPTR
+                                 " ; dli_fbase: 0x"OSS_PRIXPTR
                                  " ; offset: 0x"OSS_PRIXPTR
                                  " ; (%s)"OSS_NEWLINE,
                                  (UINT32_64)address,
