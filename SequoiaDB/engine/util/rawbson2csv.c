@@ -162,7 +162,6 @@ INT32 _appendNonString( CHAR delChar, bson_iterator *pIt,
 {
    INT32 rc = SDB_OK ;
    INT32 size     = 0 ;
-   CHAR *pTempBuf = NULL ;
 
    size = bson_sprint_length_iterator( pIt ) ;
 
