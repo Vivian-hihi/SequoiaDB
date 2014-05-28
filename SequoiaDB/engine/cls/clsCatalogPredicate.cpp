@@ -197,6 +197,7 @@ namespace engine
       BSONElement lowBound ;
       BSONElement upBound ;
       const map<string,rtnPredicate> &predicates = _predicateSet.predicates() ;
+      map<string, rtnPredicate>::const_iterator itr ;
 
       if ( !itrSK.more() )
       {
@@ -221,8 +222,7 @@ namespace engine
          upBound = itrLB.next() ;
       }
 
-      map<string, rtnPredicate>::const_iterator itr =
-         predicates.find( beShardingKey.fieldName() ) ;
+      itr = predicates.find( beShardingKey.fieldName() ) ;
       if ( itr == predicates.end() )
       {
          result = TRUE ;
