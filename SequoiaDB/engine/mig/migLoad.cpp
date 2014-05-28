@@ -648,7 +648,7 @@ namespace engine
       UINT32 column = 0 ;
       UINT32 startBlock = 0 ;
       UINT32 endBlock   = 0 ;
-      CHAR  *pJsonBuffer = NULL ;
+      //CHAR  *pJsonBuffer = NULL ;
 
       _master->popFromQueue ( eduCB,
                               offset, size,
