@@ -20,11 +20,10 @@ namespace engine
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CLSCATAMATCHER_LOADPATTERN ) ;
       _matcher = matcher.copy();
-      rc = parseAnObj( _matcher, _predicateSet );
+      rc = parseAnObj( _matcher, _predicateSet ) ;
       _predicateSet.adjustByShardingKey();
-      PD_RC_CHECK( rc, PDERROR,
-                  "failed to load pattern(rc=%d)",
-                  rc );
+      PD_RC_CHECK( rc, PDERROR, "Failed to load pattern(rc=%d)", rc );
+
    done:
       PD_TRACE_EXITRC ( SDB_CLSCATAMATCHER_LOADPATTERN, rc ) ;
       return rc;
@@ -53,7 +52,7 @@ namespace engine
                pPredicateSet = SDB_OSS_NEW
                   clsCatalogPredicateTree( _shardingKey ) ;
                PD_CHECK( pPredicateSet != NULL, SDB_OOM, error, PDERROR,
-                        "malloc failed" ) ;
+                         "malloc failed" ) ;
                isNew = TRUE ;
             }
             else
@@ -103,51 +102,53 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_PARSELOGICOP, "clsCatalogMatcher::parseLogicOp" )
-   INT32 clsCatalogMatcher::parseLogicOp(const  BSONElement & beField,
-                                       clsCatalogPredicateTree & predicateSet )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_PARSELOGICOP, "clsCatalogMatcher::parseLogicOp" )
+   INT32 clsCatalogMatcher::parseLogicOp( const  BSONElement & beField,
+                                          clsCatalogPredicateTree & predicateSet )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CLSCATAMATCHER_PARSELOGICOP ) ;
-      clsCatalogPredicateTree *pPredicateSet = NULL;
-      BOOLEAN isNew = FALSE;
-      CLS_CATA_LOGIC_TYPE logicType = CLS_CATA_LOGIC_INVALID;
+      clsCatalogPredicateTree *pPredicateSet = NULL ;
+      BOOLEAN isNew = FALSE ;
+      CLS_CATA_LOGIC_TYPE logicType = CLS_CATA_LOGIC_INVALID ;
       try
       {
          const CHAR *pFieldName = beField.fieldName() ;
          if ( beField.type() == Array )
          {
-            if ( 'a' == pFieldName[1] && 'n' == pFieldName[2]
-                  && 'd' == pFieldName[3] && 0 == pFieldName[4] )
+            if ( 'a' == pFieldName[1] && 'n' == pFieldName[2] &&
+                 'd' == pFieldName[3] && 0 == pFieldName[4] )
             {
                // parse "$and"
-               logicType = CLS_CATA_LOGIC_AND;
-               predicateSet.setLogicType( CLS_CATA_LOGIC_AND );
+               logicType = CLS_CATA_LOGIC_AND ;
+               predicateSet.setLogicType( CLS_CATA_LOGIC_AND ) ;
                pPredicateSet = &predicateSet;
             }
-            else if( 'o' == pFieldName[1] && 'r' == pFieldName[2]
-                     && 0 == pFieldName[3] )
+            else if( 'o' == pFieldName[1] && 'r' == pFieldName[2] &&
+                     0 == pFieldName[3] )
             {
                // parse "$or"
                if ( predicateSet.getLogicType() != CLS_CATA_LOGIC_INVALID )
                {
-                  pPredicateSet = SDB_OSS_NEW clsCatalogPredicateTree( _shardingKey );
+                  pPredicateSet =
+                     SDB_OSS_NEW clsCatalogPredicateTree( _shardingKey );
                   PD_CHECK( pPredicateSet != NULL, SDB_OOM, error, PDERROR,
-                           "malloc failed" );
-                  pPredicateSet->setLogicType( CLS_CATA_LOGIC_OR );
-                  isNew = TRUE;
+                            "malloc failed" ) ;
+                  pPredicateSet->setLogicType( CLS_CATA_LOGIC_OR ) ;
+                  isNew = TRUE ;
                }
                else
                {
-                  predicateSet.setLogicType( CLS_CATA_LOGIC_OR );
-                  pPredicateSet = &predicateSet;
+                  predicateSet.setLogicType( CLS_CATA_LOGIC_OR ) ;
+                  pPredicateSet = &predicateSet ;
                }
-               logicType = CLS_CATA_LOGIC_OR;
+               logicType = CLS_CATA_LOGIC_OR ;
             }
             else // TODO: parse "$not"
             {
                // now "$not" is regarded as universe set
             }
+
             if ( logicType != CLS_CATA_LOGIC_INVALID )
             {
                BSONObjIterator iter( beField.embeddedObject() );
@@ -156,15 +157,14 @@ namespace engine
                   BSONElement beTmp = iter.next();
                   BSONObj boTmp = beTmp.embeddedObject();
                   rc = parseAnObj( boTmp, *pPredicateSet );
-                  PD_RC_CHECK( rc, PDERROR,
-                              "failed to parse the field(rc=%d)",
-                              rc );
+                  PD_RC_CHECK( rc, PDERROR, "Failed to parse the field(rc=%d)",
+                               rc ) ;
                }
                if ( isNew )
                {
-                  predicateSet.addChild( pPredicateSet );
+                  predicateSet.addChild( pPredicateSet ) ;
                }
-               goto done;
+               goto done ;
             }
          }
          // the regular expresion is regarded as universe set.
@@ -180,11 +180,10 @@ namespace engine
       catch ( std::exception &e )
       {
          rc = SDB_INVALIDARG;
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to parse the field "
-                     "occured unexpected error:%s",
-                     e.what() );
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse the field occured "
+                      "unexpected error:%s", e.what() );
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_CLSCATAMATCHER_PARSELOGICOP, rc ) ;
       return rc;
@@ -197,14 +196,14 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_PARSECMPOP, "clsCatalogMatcher::parseCmpOp" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_PARSECMPOP, "clsCatalogMatcher::parseCmpOp" )
    INT32 clsCatalogMatcher::parseCmpOp( const  BSONElement & beField,
-                                       clsCatalogPredicateTree & predicateSet )
+                                        clsCatalogPredicateTree & predicateSet )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CLSCATAMATCHER_PARSECMPOP ) ;
-      const CHAR *pFieldName = NULL;
-      predicateSet.setLogicType( CLS_CATA_LOGIC_AND );
+      const CHAR *pFieldName = NULL ;
+      predicateSet.setLogicType( CLS_CATA_LOGIC_AND ) ;
       BSONObj boValue;
       try
       {
@@ -213,11 +212,11 @@ namespace engine
          if ( beTmp.eoo() )
          {
             // ignore the field which is not sharding-key
-            goto done;
+            goto done ;
          }
          if ( beField.type() == Object )
          {
-            boValue = beField.embeddedObject();
+            boValue = beField.embeddedObject() ;
             if ( isOpObj( boValue ))
             {
                BSONObjIterator i( boValue );
@@ -250,7 +249,7 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_ISOPOBJ, "clsCatalogMatcher::isOpObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_ISOPOBJ, "clsCatalogMatcher::isOpObj" )
    BOOLEAN clsCatalogMatcher::isOpObj( const bson::BSONObj obj )
    {
       BOOLEAN result = FALSE;
@@ -271,17 +270,18 @@ namespace engine
       }
       catch ( std::exception &e )
       {
-         PD_LOG(PDERROR,
-               "failed to check the obj "
-               "occured unexpected error:%s",
-               e.what() );
+         PD_LOG( PDERROR, "failed to check the obj occured unexpected "
+                 "error:%s", e.what() ) ;
       }
       PD_TRACE_EXIT ( SDB_CLSCATAMATCHER_ISOPOBJ ) ;
       return result;
    }
 
-   INT32 clsCatalogMatcher::matches( _clsCatalogItem * pCatalogItem, BOOLEAN & result )
+   INT32 clsCatalogMatcher::matches( _clsCatalogItem * pCatalogItem,
+                                     BOOLEAN & result )
    {
-      return _predicateSet.matches( pCatalogItem, result );
+      return _predicateSet.matches( pCatalogItem, result ) ;
    }
+
 }
+

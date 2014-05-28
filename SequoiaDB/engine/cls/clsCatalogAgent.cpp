@@ -813,7 +813,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPIDS, "_clsCatalogSet::findGroupIDS" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSCTSET_FINDGPIDS, "_clsCatalogSet::findGroupIDS" )
    INT32 _clsCatalogSet::findGroupIDS ( const BSONObj &matcher,
                                        VEC_GROUP_ID &vecGroup )
    {
