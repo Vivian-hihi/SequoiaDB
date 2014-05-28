@@ -354,7 +354,7 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
          const char *temp = bson_iterator_string( i ) ;
          int tempSize = strlen( temp ) ;
          int i = 0 ;
-         CHAR tempChar[2] = { 0, 0 } ;
+         char tempChar[2] = { 0, 0 } ;
          bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
          CHECK_LEFT ( left )
          for ( i = 0; i < tempSize; ++i )
