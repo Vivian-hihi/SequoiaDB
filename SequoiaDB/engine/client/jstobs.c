@@ -288,13 +288,6 @@ static void bsonConvertJsonRawConcat ( CHAR **pbuf, INT32 *left, const CHAR *dat
            pTempBuf[i] = '\\' ;
            break ;
          }
-         case '/':
-         {
-           pTempBuf[i] = '\\' ;
-           ++i ;
-           pTempBuf[i] = '/' ;
-           break ;
-         }
          case '\b':
          {
            pTempBuf[i] = '\\' ;
@@ -544,18 +537,20 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
           * { $binary : xxxxx, $type : xxx }, so we have to put another 40
           * bytes */
          temp = (CHAR *)malloc( len + 48 ) ;
-         memset ( temp, 0, len + 48 ) ;
          if ( !temp )
+         {
             return FALSE ;
+         }
+         memset ( temp, 0, len + 48 ) ;
          /* then we have to allocate another piece of memory for base64 encoding
           */
          out = (CHAR *)malloc( len + 1 ) ;
-         memset ( out, 0, len ) ;
          if ( !out )
          {
             free( temp ) ;
             return FALSE ;
          }
+         memset ( out, 0, len ) ;
          /* encode bin_data to out, with size len */
          if ( !base64Encode( bin_data, bin_size, out, len ) )
          {
@@ -575,9 +570,9 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
                     out, bin_type ) ;
 #endif
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
-         CHECK_LEFT ( left )
          free( temp ) ;
          free( out ) ;
+         CHECK_LEFT ( left )
          break ;
       }
       case BSON_UNDEFINED:

@@ -25,6 +25,7 @@
 #include <time.h>
 #include "util/misc.h"
 #include "util/hex.h"
+#include "../client/base64c.h"
 
 #if defined(_WIN32)
 #undef max
@@ -787,8 +788,20 @@ namespace bson {
             s << "{ \"$binary\": \"" ;
             if (full) {
                 int len;
+                int base64_size = 0 ;
+                char *pBase64Buf = NULL ;
                 const char* data = binDataClean(len);
-                s << toHex(data, len) << "\", \"$type\": \"" << binDataType() ;
+                base64_size = getEnBase64Size( len ) ;
+                pBase64Buf = (char *)malloc( base64_size + 1 ) ;
+                if ( pBase64Buf )
+                {
+                   memset( pBase64Buf, 0, base64_size + 1 ) ;
+                   if ( base64Encode( data, len, pBase64Buf, base64_size ) )
+                   {
+                     s << pBase64Buf << "\", \"$type\": \"" << binDataType() ;
+                   }
+                   free( pBase64Buf ) ;
+                }
             }
             s << "\" }" ;
             break;

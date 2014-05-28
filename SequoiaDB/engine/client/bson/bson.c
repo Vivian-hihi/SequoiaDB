@@ -36,6 +36,7 @@
 
 #include "bson.h"
 #include "encoding.h"
+#include "../base64c.h"
 
 #if defined (__linux__)
 #include <sys/types.h>
@@ -437,11 +438,32 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       case BSON_BINDATA:
       {
          char temp[64] = {0} ;
+         int bin_size = 0 ;
+         int base64_size = 0 ;
+         char *pBase64Buf = NULL ;
+         char *pBin_data = NULL ;
          sprintf ( temp, "\", \"$type\": \"%u\" }", bson_iterator_bin_type ( i ) ) ;
          bson_sprint_raw_concat ( pbuf, left, "{ \"$binary\": \"" ) ;
          CHECK_LEFT ( left )
-         bson_sprint_hex_concat ( pbuf, left, bson_iterator_bin_data ( i ),
-                                  bson_iterator_bin_len ( i ) ) ;
+         //bson_sprint_hex_concat ( pbuf, left, bson_iterator_bin_data ( i ),
+         //                         bson_iterator_bin_len ( i ) ) ;
+         bin_size = bson_iterator_bin_len ( i ) - 1 ;
+         base64_size = getEnBase64Size( bin_size ) ;
+         pBase64Buf = (char *)malloc( base64_size + 1 ) ;
+         if ( !pBase64Buf )
+         {
+            return 0 ;
+         }
+         memset( pBase64Buf, 0, base64_size + 1 ) ;
+         pBin_data = (char *)bson_iterator_bin_data ( i ) ;
+         if ( !base64Encode( pBin_data, bin_size, pBase64Buf, base64_size ) )
+         {
+            free( pBase64Buf ) ;
+            pBase64Buf = NULL ;
+            return 0 ;
+         }
+         bson_sprint_raw_concat ( pbuf, left, pBase64Buf ) ;
+         free( pBase64Buf ) ;
          CHECK_LEFT ( left )
          bson_sprint_raw_concat ( pbuf, left, temp ) ;
          CHECK_LEFT ( left )

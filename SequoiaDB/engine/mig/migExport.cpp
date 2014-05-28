@@ -473,34 +473,6 @@ INT32 migExport::_writeFile( bson *pbson )
       }
       bufferSize -= tempSize ;
    }
-   /*else if ( _pMigArg->type == MIGEXPRT_JSON )
-   {
-      bufferSize = bson_sprint_length ( pbson ) + 1 ;
-      if ( bufferSize == 0 )
-      {
-         PD_LOG ( PDERROR, "Failed to get json size, rc=%d", rc ) ;
-         goto error ;
-      }
-      if ( _bufferSize < bufferSize )
-      {
-         rc = _reallocBuffer( &_pBuffer, _bufferSize, bufferSize ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to realloc memory, rc=%d", rc ) ;
-            goto error ;
-         }
-         _bufferSize = bufferSize ;
-      }
-      ossMemset( _pBuffer, 0, _bufferSize ) ;
-      if ( !bson_sprint ( _pBuffer, _bufferSize, pbson ) )
-      {
-         PD_LOG ( PDERROR, "Failed to convert bson to json, rc=%d", rc ) ;
-         goto error ;
-      }
-      bufferSize = ossStrlen( _pBuffer ) ;
-      _pBuffer[ bufferSize ] = _pMigArg->delRecord ;
-      ++bufferSize ;
-   }*/
    else if ( _pMigArg->type == MIGEXPRT_JSON )
    {
       bufferSize = bson_sprint_length ( pbson ) + 1 ;
