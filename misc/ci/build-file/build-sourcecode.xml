@@ -14,6 +14,9 @@
 	<!--PATH_BUILDER is for power machine-->
 	<property name="PATH_BUILDER" value="/opt/installbuilder-8.5.2/bin/" />
 
+	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
+	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
+
 	<target name="ready" depends="">
   		<delete file="${CODE_DIR}/misc/ci/ci.build.properties" failonerror="false" />
   		<delete dir="${RELEASE_DIR}/" failonerror="false" />
@@ -73,6 +76,8 @@
 			<property name="java.driver.jar" value="${CODE_DIR}/driver/java/${java.driver.jar.name}"/>
 			<property name="javac.base.dir" value="${WORKSPACE}/sequoiadb/"/>
 			<property name="root.dir" value="${WORKSPACE}/sequoiadb/driver/hadoop/hive/"/>
+			<property name="open.source.hive_connector.filename" value="${open.source.hive_connector.filename}" />
+			<property name="cdh.hive_connector.filename" value="${cdh.hive_connector.filename}" />
 		</ant>
 		<chmod file="${WORKSPACE}/sequoiadb/thirdparty/php/retriConfig.sh" perm="a+x" />
 
@@ -91,6 +96,7 @@
 		<echo message="Begin to make driver package.." />
 		<property name="DRIVER.DIR" value="${RELEASE_DIR}/driver" />
 
+
 		<if>
 			<equals arg1="${compile.debug}" arg2="true" />
 			<then>
@@ -105,7 +111,7 @@
 		<mkdir dir="${DRIVER.DIR}/java" />
 		<mkdir dir="${DRIVER.DIR}/CSharp"/>
 		<mkdir dir="${DRIVER.DIR}/include" />
-  		<mkdir dir="${DRIVER.DIR}/lib/phplib" />
+    <mkdir dir="${DRIVER.DIR}/lib/phplib" />
 		<mkdir dir="${DRIVER.DIR}/lib" />
 		<!--mkdir dir="${DRIVER.DIR}/samples" /-->
 
@@ -116,9 +122,10 @@
 		<copy todir="${DRIVER.DIR}/include">
 			<fileset dir="${CODE_DIR}/client/include/" includes="**/*" />
 		</copy>
-    	<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
+    <copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${DRIVER.DIR}/CSharp/sdbcs.dll" />
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${DRIVER.DIR}/java" />
-		<copy file="${CODE_DIR}/driver/hadoop/hive/hive-sequoiadb.jar" tofile="${DRIVER.DIR}/hadoop/hive-sequoiadb.jar" />
+		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${open.source.hive_connector.filename}" />
+    <copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${DRIVER.DIR}/hadoop/${cdh.hive_connector.filename}" />
 
 	  	<property name="test-type-list" value="5.3.3,5.3.8,5.3.10,5.3.15,5.3.18,5.4.6,5.4.15" />
 		<for list="${test-type-list}" param="php.version">
@@ -228,7 +235,9 @@
 		<copy file="${CODE_DIR}/driver/C#.Net/build/release/sdbcs.dll" tofile="${RELEASE_DIR}/sequoiadb/CSharp/sdbcs.dll" />
 
 		<copy file="${CODE_DIR}/driver/java/${java.driver.jar.name}" todir="${RELEASE_DIR}/sequoiadb/java" />
-		<copy file="${CODE_DIR}/driver/hadoop/hive/hive-sequoiadb.jar" tofile="${RELEASE_DIR}/sequoiadb/hadoop/hive-sequoiadb.jar" />
+		<copy file="${CODE_DIR}/driver/hadoop/hive/${open.source.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${open.source.hive_connector.filename}" />
+		<copy file="${CODE_DIR}/driver/hadoop/hive/${cdh.hive_connector.filename}" tofile="${RELEASE_DIR}/sequoiadb/hadoop/${cdh.hive_connector.filename}" />
+		
 		
 		<if>
 			<equals arg1="${os.arch}" arg2="ppc64" />
