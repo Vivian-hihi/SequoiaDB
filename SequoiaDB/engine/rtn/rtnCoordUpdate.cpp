@@ -217,9 +217,9 @@ namespace engine
          CHAR *pBuffer = NULL;
          INT32 bufferSize = 0;
          MsgOpUpdate *pUpdateMsg = NULL;
-         rc = modifier.loadPattern( newUpdator, &dollarList );
+         rc = modifier.loadPattern( boUpdator, &dollarList );
          PD_RC_CHECK( rc, PDERROR, "Invalid pattern is detected for updator:%s",
-                     newUpdator.toString().c_str() );
+                     boUpdator.toString().c_str() );
          rc = modifier.modify( source, target );
          PD_RC_CHECK( rc, PDERROR, "failed to generate upsertor record(rc=%d)",
                      rc );
