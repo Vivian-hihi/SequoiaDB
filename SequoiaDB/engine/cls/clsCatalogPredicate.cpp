@@ -19,46 +19,47 @@ namespace engine
       clear();
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDCHILD, "clsCatalogPredicateTree::addChild" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDCHILD, "clsCatalogPredicateTree::addChild" )
    void clsCatalogPredicateTree::addChild( clsCatalogPredicateTree * pChild )
    {
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDCHILD ) ;
       SDB_ASSERT ( pChild, "pchild can't be null" )
-      pChild->adjustByShardingKey();
+      pChild->adjustByShardingKey() ;
 
       if ( FALSE == pChild->isUniverse() )
       {
-         _children.push_back( pChild );
-         goto done;
+         _children.push_back( pChild ) ;
+         goto done ;
       }
 
       // if the child is universe set and the logic type is "$or",
       // then upgrade to universe set
       if ( CLS_CATA_LOGIC_OR == _logicType )
       {
-         upgradeToUniverse();
+         upgradeToUniverse() ;
       }
-      SDB_OSS_DEL( pChild );
+      SDB_OSS_DEL( pChild ) ;
+
    done:
       PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_ADDCHILD );
-      return;
+      return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_CLEAR, "clsCatalogPredicateTree::clear" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_CLEAR, "clsCatalogPredicateTree::clear" )
    void clsCatalogPredicateTree::clear()
    {
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_CLEAR ) ;
       // clear the children
-      clsCatalogPredicateTree *pTmp;
+      clsCatalogPredicateTree *pTmp = NULL ;
       while ( !_children.empty() )
       {
-         pTmp = _children.back();
-         _children.pop_back();
-         SDB_OSS_DEL( pTmp );
+         pTmp = _children.back() ;
+         _children.pop_back() ;
+         SDB_OSS_DEL( pTmp ) ;
       }
 
       // clear the predicateSet
-      _predicateSet.clear();
+      _predicateSet.clear() ;
 
       _logicType = CLS_CATA_LOGIC_INVALID;
       PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_CLEAR );
@@ -66,10 +67,10 @@ namespace engine
 
    void clsCatalogPredicateTree::upgradeToUniverse()
    {
-      clear();
+      clear() ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, "clsCatalogPredicateTree::addPredicate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, "clsCatalogPredicateTree::addPredicate" )
    INT32 clsCatalogPredicateTree::addPredicate( const CHAR *pFieldName,
                                              BSONElement beField )
    {
@@ -80,18 +81,21 @@ namespace engine
       return rc;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY, "clsCatalogPredicateTree::adjustByShardingKey" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY, "clsCatalogPredicateTree::adjustByShardingKey" )
    void clsCatalogPredicateTree::adjustByShardingKey()
    {
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY ) ;
       try
       {
-         const CHAR *pFirstKeyName = _shardingKey.firstElementFieldName();
-         const map<string, rtnPredicate> &mapPredicate = _predicateSet.predicates();
-         if ( _logicType != CLS_CATA_LOGIC_AND || mapPredicate.size() == 0
-            || _children.size() != 0 )
+         const CHAR *pFirstKeyName = _shardingKey.firstElementFieldName() ;
+         const map<string, rtnPredicate> &mapPredicate =
+            _predicateSet.predicates() ;
+
+         if ( _logicType != CLS_CATA_LOGIC_AND ||
+              mapPredicate.size() == 0 ||
+              _children.size() != 0 )
          {
-            goto done;
+            goto done ;
          }
          if ( 0 == pFirstKeyName[0] )
          {
@@ -99,23 +103,22 @@ namespace engine
          }
          if ( mapPredicate.find( pFirstKeyName ) != mapPredicate.end() )
          {
-            goto done;
+            goto done ;
          }
-         _predicateSet.clear();
+         _predicateSet.clear() ;
       }
       catch ( std::exception &e )
       {
-         PD_LOG(PDERROR,
-               "failed to adjust the obj "
-               "occured unexpected error:%s",
-               e.what() );
+         PD_LOG( PDERROR, "Failed to adjust the obj occured unexpected "
+                 "error:%s", e.what() ) ;
       }
-   done:
+
+   done :
       PD_TRACE_EXIT ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY );
       return ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ISUNIVERSE, "clsCatalogPredicateTree::isUniverse" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ISUNIVERSE, "clsCatalogPredicateTree::isUniverse" )
    BOOLEAN clsCatalogPredicateTree::isUniverse()
    {
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ISUNIVERSE ) ;
@@ -145,14 +148,52 @@ namespace engine
       return _logicType;
    }
 
+   string clsCatalogPredicateTree::toString() const
+   {
+      StringBuilder buf ;
+      buf << "[ " ;
+      if ( CLS_CATA_LOGIC_INVALID == _logicType )
+      {
+         buf << "$invalid: " ;
+      }
+      else if ( CLS_CATA_LOGIC_AND == _logicType )
+      {
+         buf << "$and: " ;
+      }
+      else if ( CLS_CATA_LOGIC_OR == _logicType )
+      {
+         buf << "$or: " ;
+      }
+      else
+      {
+         buf << _logicType << ": " ;
+      }
+
+      // predicate
+      if ( _predicateSet.predicates().size() > 0 )
+      {
+         buf << _predicateSet.toString() ;
+      }
+
+      // sub
+      for ( UINT32 i = 0 ; i < _children.size() ; ++i )
+      {
+         buf << _children[ i ]->toString() ;
+      }
+
+      buf << " ]" ;
+      return buf.str() ;
+   }
+
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_MATCHES, "clsCatalogPredicateTree::matches" )
    INT32 clsCatalogPredicateTree::matches( _clsCatalogItem * pCatalogItem,
-                                          BOOLEAN & result )
+                                           BOOLEAN & result )
    {
-      INT32 rc = SDB_OK;
-      BOOLEAN rsTmp = TRUE;
+      INT32 rc = SDB_OK ;
+      BOOLEAN rsTmp = TRUE ;
+
       // PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_MATCHES ) ;
-      const map<string, rtnPredicate> & predicates = _predicateSet.predicates();
+      const map<string, rtnPredicate> &predicates = _predicateSet.predicates() ;
       if ( isUniverse() )
       {
          goto done;
@@ -173,7 +214,7 @@ namespace engine
                if ( predicates.end() == iterMap )
                {
                   rsTmp = TRUE;
-                  goto check_children;
+                  goto check_children ;
                }
 
                // the size of _startStopKeys must be "0" or "1":
@@ -181,14 +222,14 @@ namespace engine
                // "1": it is normal set include universe set.
                if ( iterMap->second._startStopKeys.size() != 1 )
                {
-                  rsTmp = FALSE;
-                  goto check_children;
+                  rsTmp = FALSE ;
+                  goto check_children ;
                }
 
                rtnStartStopKey matcherBound = iterMap->second._startStopKeys[0];
-               BSONElement lowBound;
-               BSONElement upBound;
-               INT32 rsCmp = 0;
+               BSONElement lowBound ;
+               BSONElement upBound ;
+               INT32 rsCmp = 0 ;
 
                // lowBound <= upBound
                if ( beShardingKey.numberInt() >= 0 )
@@ -196,7 +237,8 @@ namespace engine
                   if ( iterLB.more() )
                   {
                      lowBound = iterLB.next();
-                     rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound );
+                     rsCmp = rtnKeyCompare( lowBound,
+                                            matcherBound._stopKey._bound );
                      if ( rsCmp > 0 )
                      {
                         rsTmp = FALSE;
@@ -224,7 +266,8 @@ namespace engine
                   if ( iterUB.more() )
                   {
                      upBound = iterUB.next();
-                     rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound );
+                     rsCmp = rtnKeyCompare( upBound,
+                                            matcherBound._startKey._bound );
                      if ( rsCmp < 0 )
                      {
                         rsTmp = FALSE;
@@ -232,8 +275,8 @@ namespace engine
                      }
                      else if ( 0 == rsCmp )
                      {
-                        if ( !matcherBound._startKey._inclusive
-                              || !iterSK.more() )
+                        if ( !matcherBound._startKey._inclusive ||
+                             !iterSK.more() )
                         {
                            rsTmp = FALSE;
                            goto check_children;
@@ -249,9 +292,10 @@ namespace engine
                   if ( iterLB.more() )
                   {
                      upBound = iterLB.next();
-                     rsCmp = rtnKeyCompare( upBound, matcherBound._startKey._bound );
-                     if ( rsCmp < 0
-                        || ( 0 == rsCmp && !matcherBound._startKey._inclusive ))
+                     rsCmp = rtnKeyCompare( upBound,
+                                            matcherBound._startKey._bound );
+                     if ( rsCmp < 0 || ( 0 == rsCmp &&
+                          !matcherBound._startKey._inclusive ) )
                      {
                         rsTmp = FALSE;
                         goto check_children;
@@ -278,7 +322,8 @@ namespace engine
                   if ( iterUB.more() )
                   {
                      lowBound = iterUB.next();
-                     rsCmp = rtnKeyCompare( lowBound, matcherBound._stopKey._bound );
+                     rsCmp = rtnKeyCompare( lowBound,
+                                            matcherBound._stopKey._bound );
                      if ( rsCmp > 0 )
                      {
                         rsTmp = FALSE;
@@ -286,8 +331,8 @@ namespace engine
                      }
                      else if ( 0 == rsCmp )
                      {
-                        if ( !matcherBound._stopKey._inclusive
-                           || !iterSK.more() )
+                        if ( !matcherBound._stopKey._inclusive ||
+                             !iterSK.more() )
                         {
                            rsTmp = FALSE;
                            goto check_children;
@@ -307,32 +352,29 @@ namespace engine
          catch ( std::exception &e )
          {
             rc = SDB_INVALIDARG;
-            PD_LOG(PDERROR,
-                  "occured unexpected error:%s",
-                  e.what() );
-            goto error;
+            PD_LOG( PDERROR, "occured unexpected error:%s", e.what() );
+            goto error ;
          }
       }
 
    check_children:
-      if ( _children.size() > 0
-         && ( predicates.size() == 0 || TRUE == rsTmp
-         || CLS_CATA_LOGIC_OR == _logicType ))
+      if ( _children.size() > 0 && ( predicates.size() == 0 ||
+           TRUE == rsTmp || CLS_CATA_LOGIC_OR == _logicType ) )
       {
          UINT32 i = 0;
          for ( ; i < _children.size(); i++ )
          {
             rc = _children[i]->matches( pCatalogItem, rsTmp );
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to match the shardingKey(rc=%d)",
-                        rc );
-            if (( !rsTmp && CLS_CATA_LOGIC_AND == _logicType )
-               || ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ))
+            PD_RC_CHECK( rc, PDERROR, "Failed to match the shardingKey(rc=%d)",
+                         rc );
+            if ( ( !rsTmp && CLS_CATA_LOGIC_AND == _logicType ) ||
+                 ( rsTmp && CLS_CATA_LOGIC_OR == _logicType ) )
             {
                break;
             }
          }
       }
+
    done:
       result = rsTmp;
       // PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_MATCHES, rc ) ;
@@ -340,4 +382,6 @@ namespace engine
    error:
       goto done;
    }
+
 }
+

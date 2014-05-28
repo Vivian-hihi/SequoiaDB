@@ -1198,7 +1198,7 @@ namespace engine
       PD_TRACE_EXIT ( SDB_RTNPRED_REVERSE ) ;
    }
    
-   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_TOSTRING, "rtnPredicate::toString()" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNPRED_TOSTRING, "rtnPredicate::toString()" )
    string rtnPredicate::toString() const
    {
       PD_TRACE_ENTRY ( SDB_RTNPRED_TOSTRING ) ;
@@ -1216,9 +1216,21 @@ namespace engine
       return buf.str() ;
    }
 
+   string _rtnPredicateSet::toString() const
+   {
+      StringBuilder buf ;
+      buf << "[ " ;
+      map<string, rtnPredicate>::const_iterator it = _predicates.begin() ;
+      while ( it != _predicates.end() )
+      {
+         buf << it->second.toString() << " " ;
+         ++it ;
+      }
+      return buf.str() ;
+   }
 
    static rtnPredicate *genericPredicate = NULL ;
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED_PRED, "_rtnPredicateSet::predicate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPRED_PRED, "_rtnPredicateSet::predicate" )
    const rtnPredicate &_rtnPredicateSet::predicate (const CHAR *fieldName) const
    {
       PD_TRACE_ENTRY ( SDB__RTNPRED_PRED ) ;
@@ -1254,10 +1266,10 @@ namespace engine
       return level ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_ADDPRED, "_rtnPredicateSet::addPredicate" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNPREDSET_ADDPRED, "_rtnPredicateSet::addPredicate" )
    INT32 _rtnPredicateSet::addPredicate ( const CHAR *fieldName,
-                                         const BSONElement &e,
-                                         BOOLEAN isNot )
+                                          const BSONElement &e,
+                                          BOOLEAN isNot )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNPREDSET_ADDPRED ) ;
@@ -1265,9 +1277,8 @@ namespace engine
       rtnPredicate pred ( e, isNot ) ;
       if ( !pred.isInit() )
       {
-         pdLog ( PDERROR, __FUNC__, __FILE__, __LINE__,
-                 "Failed to add predicate %s: %s",
-                 fieldName, e.toString().c_str()) ;
+         PD_LOG ( PDERROR, "Failed to add predicate %s: %s",
+                  fieldName, e.toString().c_str()) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

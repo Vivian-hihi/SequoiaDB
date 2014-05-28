@@ -274,6 +274,8 @@ namespace engine
       {
          _predicates.clear() ;
       }
+      string toString() const ;
+
    private:
       map<string, rtnPredicate> _predicates ;
    } ;

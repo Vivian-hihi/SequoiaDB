@@ -14,7 +14,7 @@ namespace engine
    {
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_LOADPATTERN, "clsCatalogMatcher::loadPattern" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_LOADPATTERN, "clsCatalogMatcher::loadPattern" )
    INT32 clsCatalogMatcher::loadPattern( const BSONObj &matcher )
    {
       INT32 rc = SDB_OK;
@@ -32,31 +32,33 @@ namespace engine
       goto done;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_PARSEANOBJ, "clsCatalogMatcher::parseAnObj" )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAMATCHER_PARSEANOBJ, "clsCatalogMatcher::parseAnObj" )
    INT32 clsCatalogMatcher::parseAnObj( const BSONObj &matcher,
-                                       clsCatalogPredicateTree &predicateSet )
+                                        clsCatalogPredicateTree &predicateSet )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CLSCATAMATCHER_PARSEANOBJ ) ;
       clsCatalogPredicateTree *pPredicateSet = NULL;
-      BOOLEAN isNew = FALSE;
+      BOOLEAN isNew = FALSE ;
+
       try
       {
-         BSONObjIterator i( matcher );
+         BSONObjIterator i( matcher ) ;
          while ( i.more() )
          {
             BSONElement beTmp = i.next();
             const CHAR *pFieldName = beTmp.fieldName() ;
             if ( predicateSet.getLogicType() == CLS_CATA_LOGIC_OR )
             {
-               pPredicateSet = SDB_OSS_NEW clsCatalogPredicateTree( _shardingKey );
+               pPredicateSet = SDB_OSS_NEW
+                  clsCatalogPredicateTree( _shardingKey ) ;
                PD_CHECK( pPredicateSet != NULL, SDB_OOM, error, PDERROR,
-                        "malloc failed" );
-               isNew = TRUE;
+                        "malloc failed" ) ;
+               isNew = TRUE ;
             }
             else
             {
-               pPredicateSet = &predicateSet;
+               pPredicateSet = &predicateSet ;
             }
             if ( MTH_OPERATOR_EYECATCHER == pFieldName[0] )
             {
@@ -66,30 +68,29 @@ namespace engine
             {
                rc = parseCmpOp( beTmp, *pPredicateSet );
             }
-            PD_RC_CHECK( rc, PDERROR,
-                        "failed to parse the field(rc=%d)",
-                        rc );
+            PD_RC_CHECK( rc, PDERROR, "Failed to parse the field(rc=%d)",
+                         rc ) ;
             if ( isNew )
             {
-               predicateSet.addChild( pPredicateSet );
+               predicateSet.addChild( pPredicateSet ) ;
             }
-            if ( predicateSet.getLogicType() == CLS_CATA_LOGIC_OR 
-               && predicateSet.isUniverse() )
+            if ( predicateSet.getLogicType() == CLS_CATA_LOGIC_OR &&
+                 predicateSet.isUniverse() )
             {
                // $or: ignore all predicatesets in universe set
-               goto done;
+               goto done ;
             }
          }
       }
       catch ( std::exception &e )
       {
-         rc = SDB_INVALIDARG;
-         PD_RC_CHECK( rc, PDERROR,
-                     "failed to parse the matcher(%s), "
-                     "occured unexpected error:%s",
-                     matcher.toString( false, false ).c_str(),
-                     e.what() );
+         rc = SDB_INVALIDARG ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to parse the matcher(%s), "
+                      "occured unexpected error:%s",
+                      matcher.toString( false, false ).c_str(),
+                      e.what() ) ;
       }
+
    done:
       PD_TRACE_EXITRC ( SDB_CLSCATAMATCHER_PARSEANOBJ, rc ) ;
       return rc;

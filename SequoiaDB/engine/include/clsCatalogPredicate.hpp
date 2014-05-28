@@ -8,38 +8,52 @@ namespace engine
    class clsCatalogPredicateTree;
    class _clsCatalogItem;
 
-   typedef std::map< std::string , rtnStartStopKey * >            MAP_CLSCATAPREDICATEFIELD;
-   typedef std::vector< clsCatalogPredicateTree * >                VEC_CLSCATAPREDICATESET;
+   typedef std::map< std::string , rtnStartStopKey * >  MAP_CLSCATAPREDICATEFIELD ;
+   typedef std::vector< clsCatalogPredicateTree * >     VEC_CLSCATAPREDICATESET ;
 
+   /*
+      _CLS_CATA_LOGIC_TYPE define
+   */
    typedef enum _CLS_CATA_LOGIC_TYPE
    {
-      CLS_CATA_LOGIC_INVALID=0,
-      CLS_CATA_LOGIC_AND=1,
+      CLS_CATA_LOGIC_INVALID        = 0,
+      CLS_CATA_LOGIC_AND            = 1,
       CLS_CATA_LOGIC_OR,
-   }CLS_CATA_LOGIC_TYPE;
+   }CLS_CATA_LOGIC_TYPE ;
 
+   /*
+      clsCatalogPredicateTree define
+   */
    class clsCatalogPredicateTree : public SDBObject
    {
    public:
-      clsCatalogPredicateTree( bson::BSONObj shardingKey );
-      ~clsCatalogPredicateTree();
-      void upgradeToUniverse();
-      BOOLEAN isUniverse();
-      CLS_CATA_LOGIC_TYPE getLogicType();
-      void setLogicType( CLS_CATA_LOGIC_TYPE type );
-      void addChild( clsCatalogPredicateTree *pChild );
+      clsCatalogPredicateTree( bson::BSONObj shardingKey ) ;
+      ~clsCatalogPredicateTree() ;
+
+      void upgradeToUniverse() ;
+      BOOLEAN isUniverse() ;
+      CLS_CATA_LOGIC_TYPE getLogicType() ;
+      void setLogicType( CLS_CATA_LOGIC_TYPE type ) ;
+      void addChild( clsCatalogPredicateTree *pChild ) ;
       INT32 addPredicate( const CHAR *pFieldName, bson::BSONElement beField );
-      void adjustByShardingKey();
-      void clear();
-      INT32 matches( _clsCatalogItem * pCatalogItem, BOOLEAN & result );
+      void adjustByShardingKey() ;
+      void clear() ;
+      INT32 matches( _clsCatalogItem * pCatalogItem, BOOLEAN & result ) ;
+
+      string toString() const ;
+
    private:
-      clsCatalogPredicateTree( clsCatalogPredicateTree &right ){}   // forbid copy constructor
+      // forbid copy constructor
+      clsCatalogPredicateTree( clsCatalogPredicateTree &right ){}
    private:
-      VEC_CLSCATAPREDICATESET       _children;
-      rtnPredicateSet               _predicateSet;
-      CLS_CATA_LOGIC_TYPE           _logicType;
-      bson::BSONObj                 _shardingKey;
-   };
+      VEC_CLSCATAPREDICATESET       _children ;
+      rtnPredicateSet               _predicateSet ;
+      CLS_CATA_LOGIC_TYPE           _logicType ;
+      bson::BSONObj                 _shardingKey ;
+
+   } ;
+
 }
 
-#endif
+#endif // CLSCATALOGPREDICATE_HPP_
+
