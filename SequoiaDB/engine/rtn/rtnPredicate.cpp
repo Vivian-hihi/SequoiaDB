@@ -1226,6 +1226,7 @@ namespace engine
          buf << it->second.toString() << " " ;
          ++it ;
       }
+      buf << " ]" ;
       return buf.str() ;
    }
 
