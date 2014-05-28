@@ -9491,6 +9491,13 @@ namespace engine
          goto error ;
       }
 
+      rc = (( rtnContextDump * )context)->open( BSONObj(), BSONObj() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open context:%d", rc ) ;
+         goto error ;
+      }
+
       for ( vector<BSONObj>::const_iterator itr = infoFromCata.begin();
             itr != infoFromCata.end();
             itr++ )
