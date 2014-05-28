@@ -7,23 +7,12 @@ Import("clienttestBuild")
 phpFiles = [
       "ext/sequoiadb.cpp",
       "ext/function_sdb.cpp",
-      #"ext/cJSON.c",
-      #"ext/jstobs.c",
-      #"ext/base64.c"
       ]
 testFiles = [
       root_dir + "/test/test.cpp",
-      #"ext/cJSON.c",
-      #"ext/jstobs.c",
-      #"ext/base64.c"
-      #root_dir + "/../../client/CPP/bson/bson.c"
       ]
 clienttestFiles = [
       root_dir + "/test/clienttest.cpp"
-      #"ext/function_sdb.cpp"
-      #"ext/cJSON.c",
-      #"ext/jstobs.c",
-      #root_dir + "/../../client/CPP/bson/bson.c"
       ]
 clientFiles = [
       root_dir + "/../../SequoiaDB/engine/client/clientcpp.cpp"
@@ -46,11 +35,6 @@ clientLibFiles = [
       root_dir + "/../../SequoiaDB/engine/pd/pdFunctionList.cpp",
       root_dir + "/../../SequoiaDB/engine/pd/pdComponents.cpp",
       root_dir + "/../../SequoiaDB/engine/oss/ossPrimitiveFileOp.cpp",
-      root_dir + "/../../SequoiaDB/engine/client/bson/numbers.c",
-      root_dir + "/../../SequoiaDB/engine/client/bson/bson.h",
-      root_dir + "/../../SequoiaDB/engine/client/bson/encoding.h",
-      root_dir + "/../../SequoiaDB/engine/client/bson/bson.c",
-      root_dir + "/../../SequoiaDB/engine/client/bson/encoding.c",
       root_dir + "/../../SequoiaDB/engine/client/common.c",
       root_dir + "/../../SequoiaDB/engine/client/cJSON.c",
       root_dir + "/../../SequoiaDB/engine/client/jstobs.c",
@@ -66,11 +50,21 @@ clientLibFiles = [
       root_dir + "/../../SequoiaDB/engine/util/json2rawbson.h",
       root_dir + "/../../SequoiaDB/engine/client/base64c.h"
       ]
+clientLibFiles2 = [
+      root_dir + "/../../SequoiaDB/engine/client/bson/numbers.c",
+      root_dir + "/../../SequoiaDB/engine/client/bson/bson.h",
+      root_dir + "/../../SequoiaDB/engine/client/bson/encoding.h",
+      root_dir + "/../../SequoiaDB/engine/client/bson/bson.c",
+      root_dir + "/../../SequoiaDB/engine/client/bson/encoding.c"
+      ]
 env.Execute(Mkdir(root_dir + "/ext/temp"))
+env.Execute(Mkdir(root_dir + "/ext/temp/bson"))
 for file in clientFiles:
    env.Execute(Copy(root_dir + "/ext/temp", file))
 for file in clientLibFiles:
    env.Execute(Copy(root_dir + "/ext/temp", file))
+for file in clientLibFiles2:
+   env.Execute(Copy(root_dir + "/ext/temp/bson", file))
 srcFile = [
       root_dir + "/ext/temp/clientcpp.cpp",
       root_dir + "/ext/temp/oss.cpp",
@@ -83,9 +77,9 @@ srcFile = [
       root_dir + "/ext/temp/pdFunctionList.cpp",
       root_dir + "/ext/temp/pdComponents.cpp",
       root_dir + "/ext/temp/ossPrimitiveFileOp.cpp",
-      root_dir + "/ext/temp/numbers.c",
-      root_dir + "/ext/temp/bson.c",
-      root_dir + "/ext/temp/encoding.c",
+      root_dir + "/ext/temp/bson/numbers.c",
+      root_dir + "/ext/temp/bson/bson.c",
+      root_dir + "/ext/temp/bson/encoding.c",
       root_dir + "/ext/temp/common.c",
       root_dir + "/ext/temp/cJSON.c",
       root_dir + "/ext/temp/jstobs.c",
