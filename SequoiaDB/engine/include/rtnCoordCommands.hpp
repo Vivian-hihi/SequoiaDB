@@ -4,6 +4,7 @@
 #include "rtnCoordOperator.hpp"
 #include "rtnCoordQuery.hpp"
 #include "msgDef.hpp"
+#include "rtnQueryOptions.hpp"
 namespace engine
 {
    //default command-processer
@@ -111,11 +112,22 @@ namespace engine
                                        std::vector<BSONObj> *pReplyObjs = NULL );
       virtual INT32 processCatReply( MsgOpReply *pReply,
                                      CoordGroupList &groupLst );
+
+      INT32 queryOnCatalog( const rtnQueryOptions &options,
+                            pmdEDUCB *cb,
+                            SINT64 &contextID ) ;
+
+      INT32 queryOnCataAndPushToVec( const rtnQueryOptions &options,
+                                     pmdEDUCB *cb,
+                                     std::vector<BSONObj> &objs ) ;
    protected:
 #if defined (_DEBUG)
       virtual void _printDebug ( CHAR *pReceiveBuffer, const CHAR *pFuncName ) ;
 #endif
    private:
+      INT32 _getReplyObjsFromQueue( REPLY_QUE &replyQueue,
+                                    pmdEDUCB *cb,
+                                    rtnContextCoord *context ) ;
       // don't define any members that will change while execute
       // because this obj will be shared for different threads
    };
@@ -1141,14 +1153,20 @@ namespace engine
                                        CHAR **ppOutput );
    } ;
 
-/*
-   class rtnCoordCMDListCLInDomain : public rtnCoordCMDQueryBase
+
+   class rtnCoordCMDListCLInDomain : public rtnCoordCommand
    {
    public:
-      virtual INT32 buildQueryRequest( CHAR *pIntput,
-                                       pmdEDUCB *cb,
-                                       CHAR **ppOutput );
+      INT32 execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                     CHAR **ppResultBuffer,
+                     pmdEDUCB *cb, MsgOpReply &replyHeader,
+                     BSONObj **ppErrorObj ) ;
+
+   private:
+      INT32 _rebuildListResult( const std::vector<BSONObj> &infoFromCata,
+                                pmdEDUCB *cb,
+                                SINT64 &contextID ) ;
    } ;
-*/
+
 }
 #endif

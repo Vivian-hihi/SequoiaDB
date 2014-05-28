@@ -7631,6 +7631,50 @@ error:
 SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
                                              sdbCursorHandle *cursor )
 {
-   return SDB_SYS ;
+   INT32 rc = SDB_OK ;
+   sdbDomainStruct *s ;
+   bson condition ;
+   bson selector ;
+   bson_init( &condition ) ;
+   bson_init( &selector ) ;
+
+   if ( SDB_INVALID_HANDLE == cHandle )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   s = ( sdbDomainStruct * )cHandle ;
+   if ( SDB_HANDLE_TYPE_DOMAIN != s->_handleType )
+   {
+      rc = SDB_CLT_INVALID_HANDLE ;
+      goto error ;
+   }
+
+   rc =  bson_append_string( &condition, FIELD_NAME_DOMAIN, s->_domainName ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+      goto error ;
+   }
+
+   bson_finish( &condition ) ;
+
+   rc = bson_append_null( &selector, FIELD_NAME_NAME ) ;
+   if ( SDB_OK != rc )
+   {
+      rc = SDB_SYS ;
+   }
+
+   bson_finish( &selector ) ;
+
+   return sdbGetList ( s->_connection, SDB_LIST_CL_IN_DOMAIN, &condition,
+                       &selector, NULL, cursor ) ;
+done:
+   bson_destroy( &condition ) ;
+   bson_destroy( &selector ) ;
+   return rc ;
+error:
+   goto done ;
 }
 

@@ -139,7 +139,7 @@ namespace engine
    RTN_COORD_CMD_ADD( COORD_CMD_DROP_DOMAIN, rtnCoordCMDDropDomain )
    RTN_COORD_CMD_ADD( COORD_CMD_ALTER_DOMAIN, rtnCoordCMDAlterDomain )
    RTN_COORD_CMD_ADD( COORD_CMD_LIST_CS_IN_DOMAIN, rtnCoordCMDListCSInDomain )
-   //RTN_COORD_CMD_ADD( COORD_CMD_LIST_CL_IN_DOMAIN, rtnCoordCMDListCLInDomain )
+   RTN_COORD_CMD_ADD( COORD_CMD_LIST_CL_IN_DOMAIN, rtnCoordCMDListCLInDomain )
    RTN_COORD_CMD_END
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_PROCCATREPLY, "rtnCoordCommand::processCatReply" )
@@ -369,6 +369,291 @@ namespace engine
          contextID = -1 ;
       }
       PD_TRACE_EXIT ( SDB_RTNCOCOM_QUERYONCATALOG ) ;
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOVEC, "rtnCoordCommand::queryOnCataAndPushToContext" )
+   INT32 rtnCoordCommand::queryOnCataAndPushToVec( const rtnQueryOptions &options,
+                                                   pmdEDUCB *cb,
+                                                   std::vector<BSONObj> &objs )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOVEC ) ;
+      SINT64 contextID = -1 ;
+      SINT64 startingPos = 0 ;
+      rtnContextBuf bufObj ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+      rc = queryOnCatalog( options, cb, contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to query on catalog:%d", rc ) ;
+         goto error ;
+      }
+
+      do
+      {
+         rc = rtnGetMore( contextID, -1, bufObj, startingPos,
+                          cb, rtnCB ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            contextID = -1 ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to getmore from context:%d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            while ( !bufObj.eof() )
+            {
+               BSONObj obj ;
+               rc = bufObj.nextObj( obj ) ;
+               if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to get obj from obj buf:%d", rc ) ;
+                  goto error ;
+               }
+
+               objs.push_back( obj.getOwned() ) ;
+            }
+            continue ;
+         }
+      } while ( TRUE ) ;
+   done:
+
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOVEC, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOCONTEXT, "rtnCoordCommand::queryOnCataAndPushToContext" )
+   INT32 rtnCoordCommand::queryOnCatalog( const rtnQueryOptions &options,
+                                          pmdEDUCB *cb,
+                                          SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOCONTEXT ) ;
+      BOOLEAN needToRetry = FALSE ;
+      CoordGroupInfoPtr catGroupInfo ;
+      REQUESTID_MAP sendNodes;
+      REPLY_QUE replyQueue;
+      CHAR *msgBuf = NULL ;
+      INT32 msgBufLen = 0 ;
+      netMultiRouteAgent *routeAgent = pmdGetKRCB()->getCoordCB()->
+                                       getRouteAgent() ;
+      rtnContext *context = NULL ;
+
+      rc = msgBuildQueryMsg( &msgBuf, &msgBufLen, options._fullName,
+                             options._flag, 0, options._skip,
+                             options._limit, &( options._query ),
+                             &( options._selector ),
+                             &( options._orderBy ),
+                             &( options._hint ) ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build query msg:%d", rc ) ;
+         goto error ;
+      }
+
+      {
+      MsgOpQuery *queryHeader = ( MsgOpQuery * )msgBuf ;
+      queryHeader->header.routeID.value = MSG_INVALID_ROUTEID ;
+      queryHeader->header.TID = cb->getTID();
+      queryHeader->header.opCode = MSG_BS_QUERY_REQ ;
+      queryHeader->header.messageLength = msgBufLen ;
+      }
+
+      rc = sdbGetRTNCB()->contextNew( RTN_CONTEXT_COORD,
+                                      &context,
+                                      contextID,
+                                      cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create coord context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = ( ( rtnContextCoord * )context )->open( options._orderBy,
+                                                   options._limit,
+                                                   options._skip ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open context:%d", rc ) ;
+         goto error ;
+      }
+
+      do
+      {
+         rc = rtnCoordGetCatGroupInfo( cb, needToRetry,  catGroupInfo ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get cata group:%d, will retry ? :%d",
+                    rc, !needToRetry ) ;
+            /// only retry once.
+            if ( needToRetry )
+            {
+               goto error ;
+            }
+            else if ( SDB_RTN_NO_PRIMARY_FOUND == rc ||
+                      SDB_CLS_NOT_PRIMARY == rc )
+            {
+               rc = SDB_OK ;
+               needToRetry = TRUE ;
+               continue ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+
+         rc = rtnCoordSendRequestToPrimary( msgBuf, catGroupInfo, sendNodes,
+                                            routeAgent, MSG_ROUTE_CAT_SERVICE, cb );
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get cata group:%d, will retry ? :%d",
+                    rc, !needToRetry ) ;
+            if ( needToRetry )
+            {
+               goto error ;
+            }
+            else if ( SDB_RTN_NO_PRIMARY_FOUND == rc ||
+                      SDB_CLS_NOT_PRIMARY == rc )
+            {
+               rc = SDB_OK ;
+               needToRetry = TRUE ;
+               continue ;
+            }
+            else
+            {
+               goto error ;
+            }
+         }
+      } while ( needToRetry ) ;
+
+      rc = rtnCoordGetReply( cb, sendNodes, replyQueue,
+                             MAKE_REPLY_TYPE( ((MsgHeader*)msgBuf)->opCode ));
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get reply msg from catalog:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _getReplyObjsFromQueue( replyQueue, cb, ( rtnContextCoord * )context ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get reply from queue:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      if ( NULL != msgBuf )
+      {
+         SDB_OSS_FREE( msgBuf ) ;
+         msgBuf = NULL ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCOCOM_QUERYONCATAANDPUSHTOCONTEXT, rc ) ;
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         sdbGetRTNCB()->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOCOM__GETREPLYOBJSFROMQUEUE, "rtnCoordCommand::_getReplyObjsFromQueue" )
+   INT32 rtnCoordCommand::_getReplyObjsFromQueue( REPLY_QUE &replyQueue,
+                                                  pmdEDUCB *cb,
+                                                  rtnContextCoord *context )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCOCOM__GETREPLYOBJSFROMQUEUE ) ;
+
+      while ( !replyQueue.empty() )
+      {
+         MsgOpReply *replyHeader = (MsgOpReply *)(replyQueue.front() );
+
+         rc = replyHeader->flags ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "catalog returned a err:%d", rc ) ;
+            goto error ;
+         }
+
+         /// contexid should be -1 when numreturn is over 0.
+         /// but we try to get more from catalog for safety.
+         if ( -1 != replyHeader->contextID )
+         {
+            rc = context->addSubContext( replyHeader->header.routeID,
+                                         replyHeader->contextID ) ;
+            if ( SDB_OK != rc )
+            {
+               /// TODO: how to release cata
+               PD_LOG( PDERROR, "failed to add sub context:%d", rc ) ;
+               goto error ;
+            }
+         }
+
+
+         if ( 0 < replyHeader->numReturned )
+         {
+            try
+            {
+               const CHAR *objPos = (const CHAR*)replyHeader + sizeof( MsgOpReply ) ;
+               INT32 len = ( INT32 )
+                           ( replyHeader->header.messageLength - sizeof( MsgOpReply )) ;
+               _rtnObjBuff objBuf( objPos, len, replyHeader->numReturned ) ;
+               while ( !objBuf.eof() )
+               {
+                  BSONObj obj ;
+                  rc = objBuf.nextObj( obj ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "failed to get next obj from obj buf:%d", rc ) ;
+                     goto error ;
+                  }
+
+                  rc = context->append( obj ) ;
+                  if ( SDB_OK != rc )
+                  {
+                     PD_LOG( PDERROR, "failed to append object to context:%d", rc ) ;
+                     goto error ;
+                  }
+               }
+            }
+            catch( std::exception &e )
+            {
+               PD_LOG( PDERROR, "unexpected err happeded: %s", e.what() ) ;
+               rc = SDB_SYS ;
+            }
+         }
+
+         replyQueue.pop();
+         SDB_OSS_FREE ( replyHeader );
+         /// catalog should returned only one record.
+         break ;
+      }
+   done:
+      while ( !replyQueue.empty() )
+      {
+         MsgOpReply *replyHeader = (MsgOpReply *)(replyQueue.front() );
+         replyQueue.pop() ;
+         SDB_OSS_FREE ( replyHeader );   
+      }
+      PD_TRACE_EXITRC( SDB_RTNCOCOM__GETREPLYOBJSFROMQUEUE, rc ) ;
+      return rc ;
+   error:
+      /// WARNING: if we get a error before addSubContext is done,
+      /// context in catalog will leak.
       goto done ;
    }
 
@@ -9084,31 +9369,48 @@ namespace engine
    error:
       goto done ;
    }
-/*
-   // PD_TRACE_DECLARE_FUNCTION( SDB_RTNCOCMDLISTCLINDOMAIN_BUILD, "rtnCoordCMDListCLInDomain::buildQueryRequest" )
-   INT32 rtnCoordCMDListCLInDomain::buildQueryRequest( CHAR *pIntput,
-                                                       pmdEDUCB *cb,
-                                                       CHAR **ppOutput )
-   {
-      INT32 rc              = SDB_OK ;
-      PD_TRACE_ENTRY( SDB_RTNCOCMDLISTCLINDOMAIN_BUILD ) ;
-      INT32 flag            = 0;
-      CHAR *pCollectionName = NULL;
-      SINT64 numToSkip      = 0;
-      SINT64 numToReturn    = 0;
-      CHAR *pQuery          = NULL;
-      CHAR *pFieldSelector  = NULL;
-      CHAR *pOrderBy        = NULL;
-      CHAR *pHint           = NULL;
-      INT32 bufferSize      = 0;
-      BSONObj query;
-      BSONObj fieldSelector;
-      BSONObj orderBy;
-      BSONObj hint;
 
-      rc = msgExtractQuery( pInput, &flag, &pCollectionName,
-                            &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, &pHint );
+
+   // PD_TRACE_DECLARE_FUNCTION( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, "rtnCoordCMDListCLInDomain::execute" )
+   INT32 rtnCoordCMDListCLInDomain::execute( CHAR *pReceiveBuffer, SINT32 packSize,
+                                             CHAR **ppResultBuffer,
+                                             pmdEDUCB *cb, MsgOpReply &replyHeader,
+                                             BSONObj **ppErrorObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE ) ;
+      BSONObj conObj ;
+      BSONObj selObj ;
+      BSONObj dummy ;
+      CHAR *query = NULL ;
+      CHAR *selector = NULL ;
+      CHAR *orderby = NULL ;
+      CHAR *hint = NULL ;
+      INT32 flag = 0 ;
+      CHAR *collectionName = NULL ;
+      SINT64 skip = 0 ;
+      SINT64 limit = -1 ;
+      BSONElement domain ;
+      CHAR *msgBuf = NULL ;
+      rtnQueryOptions queryOptions ;
+
+      std::vector<BSONObj> replyFromCata ;
+
+      MsgHeader *reqHeader = (MsgHeader *)pReceiveBuffer;
+
+      replyHeader.header.messageLength = sizeof( MsgOpReply );
+      replyHeader.header.opCode        = MSG_BS_QUERY_RES;
+      replyHeader.header.requestID     = reqHeader->requestID;
+      replyHeader.header.routeID.value = 0;
+      replyHeader.header.TID           = reqHeader->TID;
+      replyHeader.contextID            = -1;
+      replyHeader.flags                = SDB_OK;
+      replyHeader.numReturned          = 0;
+      replyHeader.startFrom            = 0;
+
+      rc = msgExtractQuery( pReceiveBuffer, &flag, &collectionName,
+                            &skip, &limit, &query,
+                            &selector, &orderby, &hint );
       if ( rc != SDB_OK )
       {
          PD_LOG ( PDERROR, "failed to parse query request(rc=%d)", rc ) ;
@@ -9117,10 +9419,8 @@ namespace engine
 
       try
       {
-         query = BSONObj ( pQuery );
-         orderBy = BSONObj ( pOrderBy );
-         hint = BSONObj ( pHint );
-         fieldSelector = BSONObj( pFieldSelector ) ;
+         conObj = BSONObj( query ) ;
+         selObj = BSONObj( selector ) ;
       }
       catch ( std::exception &e )
       {
@@ -9129,25 +9429,136 @@ namespace engine
          goto error ;
       }
 
-      rc = msgBuildQueryMsg( ppOutput, &bufferSize, CAT_DOMAIN_COLLECTION,
-                             flag, 0, numToSkip, numToReturn, &query, &fieldSelector,
-                             &orderBy, &hint );
-      if ( rc != SDB_OK )
+      domain = conObj.getField( FIELD_NAME_DOMAIN ) ;
+      if ( String != domain.type() )
       {
-         PD_LOG ( PDERROR, "Failed to build the query message(rc=%d)", rc );
-         goto error;
+         PD_LOG( PDERROR, "invalid domain field in object:%s",
+                  conObj.toString().c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
       }
+
+      queryOptions._query = BSON( CAT_DOMAIN_NAME << domain.valuestr() ) ;
+      queryOptions._fullName = CAT_COLLECTION_SPACE_COLLECTION ;
+
+      rc = queryOnCataAndPushToVec( queryOptions, cb, replyFromCata ) ; 
+      if ( SDB_OK != rc )
       {
-      MsgOpQuery *pQueryMsg = (MsgOpQuery *)(*ppOutput);
-      pQueryMsg->header.routeID.value = 0;
-      pQueryMsg->header.TID = cb->getTID();
+         PD_LOG( PDERROR, "failed to execute query on catalog:%d", rc ) ;
+         goto error ;
+      }
+
+      {
+      SINT64 contextID = -1 ;
+      rc = _rebuildListResult( replyFromCata, cb, contextID ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to rebuild list result:%d", rc ) ;
+         goto error ;
+      }
+      replyHeader.flags = SDB_OK ;
+      replyHeader.contextID = contextID ;
       }
    done:
-      PD_TRACE_EXITRC( SDB_RTNCOCMDLISTCLINDOMAIN_BUILD, rc ) ;
+      if ( NULL != msgBuf )
+      {
+         SDB_OSS_FREE( msgBuf ) ;
+         msgBuf = NULL ;
+      }
+      PD_TRACE_EXITRC( CMD_RTNCOCMDLISTCLINDOMAIN_EXECUTE, rc )  ;
       return rc ;
    error:
-      goto done ;      
+      replyHeader.flags = rc ;
+      goto done ;
    }
-*/
+
+   INT32 rtnCoordCMDListCLInDomain::_rebuildListResult(
+                                const std::vector<BSONObj> &infoFromCata,
+                                pmdEDUCB *cb,                       
+                                SINT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      rtnContext *context = NULL ;
+      SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
+
+      if ( infoFromCata.empty() )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = rtnCB->contextNew( RTN_CONTEXT_DUMP,
+                              &context,
+                              contextID,
+                              cb ) ;
+      if  ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create new context:%d", rc ) ;
+         goto error ;
+      }
+
+      for ( vector<BSONObj>::const_iterator itr = infoFromCata.begin();
+            itr != infoFromCata.end();
+            itr++ )
+      {
+         BSONElement cl ;
+         BSONElement cs = itr->getField( FIELD_NAME_NAME ) ;
+         if ( String != cs.type() )
+         {
+            PD_LOG( PDERROR, "invalid collection space info:%s",
+                    itr->toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+         }
+
+         cl = itr->getField( FIELD_NAME_COLLECTION ) ;
+         if ( Array != cl.type() )
+         {
+            PD_LOG( PDERROR, "invalid collection space info:%s",
+                    itr->toString().c_str() ) ;
+            rc = SDB_SYS ;
+            goto error ;
+              
+         }
+
+         {
+         BSONObjIterator clItr( cl.embeddedObject() ) ;
+         while ( clItr.more() )
+         {
+            stringstream ss ;
+            BSONElement clName ;
+            BSONElement oneCl = clItr.next() ;
+            if ( Object != oneCl.type() )
+            {
+               PD_LOG( PDERROR, "invalid collection space info:%s",
+                    itr->toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            clName = oneCl.embeddedObject().getField( FIELD_NAME_NAME ) ;
+            if ( String != clName.type() )
+            {
+               PD_LOG( PDERROR, "invalid collection space info:%s",
+                    itr->toString().c_str() ) ;
+               rc = SDB_SYS ;
+               goto error ;
+            }
+
+            ss << cs.valuestr() << "." << clName.valuestr() ;
+            context->append( BSON( FIELD_NAME_NAME << ss.str() ) ) ;
+         }
+         }
+      }
+   done:
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete ( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
 }
 
