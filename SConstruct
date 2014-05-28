@@ -347,7 +347,7 @@ def findVersion( root , choices ):
     raise RuntimeError("can't find a version of [" + repr(root) + "] choices: " + repr(choices))
 
 # add database include, boost include here
-env.Append( CPPPATH=[join(engine_dir,'include'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir] )
+env.Append( CPPPATH=[join(engine_dir,'include'),join(engine_dir,'client'),join(ssl_dir,'include'),join(gtest_dir,'include'),pcre_dir, boost_dir, ssh2_dir] )
 env.Append( CPPDEFINES=["__STDC_LIMIT_MACROS", "HAVE_CONFIG_H"] )
 env.Append( CPPDEFINES=[ "SDB_DLL_BUILD" ] )
 # specify dependent libraries for javascript engine and boost
