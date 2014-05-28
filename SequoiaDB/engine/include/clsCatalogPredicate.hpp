@@ -42,6 +42,12 @@ namespace engine
 
       string toString() const ;
 
+   protected:
+      INT32 _matches( bson::BSONObjIterator itrSK,
+                      bson::BSONObjIterator itrLB,
+                      bson::BSONObjIterator itrUB,
+                      BOOLEAN & result ) ;
+
    private:
       // forbid copy constructor
       clsCatalogPredicateTree( clsCatalogPredicateTree &right ){}
