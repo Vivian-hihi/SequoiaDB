@@ -16,7 +16,7 @@ namespace engine
 
    clsCatalogPredicateTree::~clsCatalogPredicateTree()
    {
-      clear();
+      clear() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDCHILD, "clsCatalogPredicateTree::addChild" )
@@ -72,13 +72,13 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, "clsCatalogPredicateTree::addPredicate" )
    INT32 clsCatalogPredicateTree::addPredicate( const CHAR *pFieldName,
-                                             BSONElement beField )
+                                                BSONElement beField )
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE ) ;
-      rc = _predicateSet.addPredicate( pFieldName, beField, FALSE );
+      rc = _predicateSet.addPredicate( pFieldName, beField, FALSE ) ;
       PD_TRACE_EXITRC ( SDB_CLSCATAPREDICATETREE_ADDPREDICATE, rc ) ;
-      return rc;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CLSCATAPREDICATETREE_ADJUSTBYSHARDINGKEY, "clsCatalogPredicateTree::adjustByShardingKey" )
@@ -196,7 +196,7 @@ namespace engine
       const map<string, rtnPredicate> &predicates = _predicateSet.predicates() ;
       if ( isUniverse() )
       {
-         goto done;
+         goto done ;
       }
       if ( predicates.size() > 0 )
       {
@@ -207,13 +207,13 @@ namespace engine
             BSONObjIterator iterUB( pCatalogItem->getUpBound() );
             while ( iterSK.more() )
             {
-               BSONElement beShardingKey = iterSK.next();
+               BSONElement beShardingKey = iterSK.next() ;
                SDB_ASSERT ( beShardingKey.isNumber(), "Invalid sharding-key!" )
-               map<string, rtnPredicate>::const_iterator iterMap
-                                       = predicates.find( beShardingKey.fieldName() );
+               map<string, rtnPredicate>::const_iterator iterMap =
+                                 predicates.find( beShardingKey.fieldName() );
                if ( predicates.end() == iterMap )
                {
-                  rsTmp = TRUE;
+                  rsTmp = TRUE ;
                   goto check_children ;
                }
 
