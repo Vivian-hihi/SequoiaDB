@@ -25,7 +25,7 @@
 #include <time.h>
 #include "util/misc.h"
 #include "util/hex.h"
-#include "../client/base64c.h"
+#include "base64c.h"
 
 #if defined(_WIN32)
 #undef max
