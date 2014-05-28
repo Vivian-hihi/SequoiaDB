@@ -2,9 +2,11 @@ package com.sequoiadb.hive;
 
 import com.sequoiadb.hive.SdbReader;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
@@ -25,8 +27,10 @@ public class SdbHiveInputFormat extends
 	public RecordReader<LongWritable, BytesWritable> getRecordReader(InputSplit inputSplit, JobConf jobConf,
 			Reporter Reporter) throws IOException {
 		
-		List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
-
+		Configuration conf = new Configuration( jobConf );
+//		List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
+		List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs( conf );
+		
 		String columnString = jobConf.get(ConfigurationUtil.COLUMN_MAPPING);
 
 		if (StringUtils.isBlank(columnString)) {
@@ -54,8 +58,24 @@ public class SdbHiveInputFormat extends
 			LOG.debug(TableScanDesc.FILTER_TEXT_CONF_STR + "=" + filterTextSerialized);
 			System.out.println(TableScanDesc.FILTER_TEXT_CONF_STR + "=" + filterTextSerialized);
 			
-			filterExpr = Utilities.deserializeExpression(
-					filterExprSerialized, jobConf);
+			
+			int useHiveApi_byUtilities = chooseHiveApi_byUtilities();
+			
+			switch( useHiveApi_byUtilities ){
+			case 0 :
+				//open source hive0.12 api support
+				filterExpr = Utilities.deserializeExpression(
+						filterExprSerialized, jobConf);
+				break;
+			case 1 : 
+				//cloudera cdh5.0.0 beta2 hive0.12 api support
+				filterExpr = Utilities.deserializeExpression(
+						filterExprSerialized);
+				break;	
+			default : 
+				break;
+			}
+			
 			
 		}
 		String spaceName = null;
@@ -79,5 +99,60 @@ public class SdbHiveInputFormat extends
 	public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
 		return SdbSplit.getSplits(jobConf,numSplits);
 	}
+	
+	/*
+	 * If use open source Hive 0.12 , then the Hive Api like this 
+	 *        Utilities.deserializeExpression(
+					String, Configuration);
+	 * If use Cloudera CDH5.0.0 beta2 Hive 0.12 , then the Hive Api like this 
+	 *        filterExpr = Utilities.deserializeExpression(
+					String);
+	 *
+	 * The function is check Running in which Hive version
+	 * 
+	 * If running in open source Hive 0.12 , then return 0
+	 * If running in Cloudera CDH5.0.0 beta2 version , then return 1
+	 * If running in an unknow Hive version , then return -1
+	 */
+	private int chooseHiveApi_byUtilities(){
+		Class[] parameterTypes_openSourceHive = new Class[2];
+		parameterTypes_openSourceHive[0] = String.class;
+		parameterTypes_openSourceHive[1] = Configuration.class;
+		
+		Class[] parameterTypes_cdh5_0_0beta2Hive = new Class[1];
+		parameterTypes_cdh5_0_0beta2Hive[0] = String.class;
+		
+		
+		boolean findHiveVersion = false;
+		int returnNum = -1;
+		
+		try {
+			Method method = Utilities.class.getDeclaredMethod("deserializeExpression", parameterTypes_openSourceHive);
+			findHiveVersion = true;
+			returnNum = 0;
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+//			e.printStackTrace();
+			try {
+				Method method = Utilities.class.getDeclaredMethod("deserializeExpression", parameterTypes_cdh5_0_0beta2Hive);
+				findHiveVersion = true;
+				returnNum = 1;
+			} catch (SecurityException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (NoSuchMethodException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+		}
+		if( findHiveVersion )
+			return returnNum;
+		
+		return returnNum;
+	} 
 
 }
