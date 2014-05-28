@@ -49,7 +49,7 @@ BOOLEAN rawbson2json ( const CHAR *bsonObj,
    bson_init ( &obj ) ;
    bson_init_finished_data ( &obj, (char*)bsonObj ) ;
    return bsonToJson ( pOutputBuffer, bufferLen, &obj,
-                       FALSE ) ;
+                       FALSE, FALSE ) ;
 }
 
 BOOLEAN rawbson2csv ( const CHAR *bsonObj,
@@ -60,5 +60,5 @@ BOOLEAN rawbson2csv ( const CHAR *bsonObj,
    bson_init ( &obj ) ;
    bson_init_finished_data ( &obj, (char*)bsonObj ) ;
    return bsonToJson ( pOutputBuffer, bufferLen, &obj,
-                       TRUE ) ;
+                       TRUE, FALSE ) ;
 }

@@ -355,11 +355,12 @@ static void bsonConvertJsonRawConcat ( CHAR **pbuf, INT32 *left, const CHAR *dat
  * isobj : determine the current status
  * return : the conversion result
 */
-static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
-                                 INT32 *left      ,
+static BOOLEAN bsonConvertJson ( CHAR **pbuf,
+                                 INT32 *left,
                                  const CHAR *data ,
                                  INT32 isobj,
-                                 BOOLEAN toCSV )
+                                 BOOLEAN toCSV,
+                                 BOOLEAN skipUndefined )
 {
    bson_iterator i ;
    const CHAR *key ;
@@ -388,7 +389,13 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
       bson_type t = bson_iterator_type( &i ) ;
       /* if BSON_EOO == t ( which is 0 ), that means we hit end of object */
       if ( !t )
+      {
          break ;
+      }
+      if ( skipUndefined && BSON_UNDEFINED == t )
+      {
+         continue ;
+      }
       /* do NOT concat "," for first entrance */
       if ( !first )
       {
@@ -745,7 +752,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
             break ;
          }
          if ( !bsonConvertJson( pbuf, left, bson_iterator_value( &i ) ,
-                                1, toCSV) )
+                                1, toCSV, skipUndefined ) )
             return  FALSE ;
          CHECK_LEFT ( left )
          break ;
@@ -758,7 +765,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf      ,
             break ;
          }
          if ( !bsonConvertJson( pbuf, left, bson_iterator_value( &i ),
-                                0, toCSV ) )
+                                0, toCSV, skipUndefined ) )
             return FALSE ;
          CHECK_LEFT ( left )
          break ;
@@ -1222,7 +1229,7 @@ BOOLEAN jsonToBson ( bson *bs, const CHAR *json_str )
 */
 /* THIS IS EXTERNAL FUNCTION TO CONVERT FROM BSON OBJECT INTO JSON STRING */
 BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
-                     BOOLEAN toCSV )
+                     BOOLEAN toCSV, BOOLEAN skipUndefined )
 {
     CHAR *pbuf = buffer ;
     BOOLEAN result = FALSE ;
@@ -1230,7 +1237,7 @@ BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
     if ( bufsize <= 0 || !buffer || !b )
        return FALSE ;
     //memset ( pbuf, 0, bufsize ) ;
-    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1, toCSV ) ;
+    result = bsonConvertJson ( &pbuf, &leftsize, b->data, 1, toCSV, skipUndefined ) ;
     if ( !result || !leftsize )
        return FALSE ;
     *pbuf = '\0' ;

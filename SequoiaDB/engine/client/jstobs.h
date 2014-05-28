@@ -78,7 +78,7 @@ SDB_EXPORT BOOLEAN jsonToBson2 ( bson *bs,
              a buffer for the convertion result.
 */
 SDB_EXPORT BOOLEAN bsonToJson ( CHAR *buffer, INT32 bufsize, const bson *b,
-                                BOOLEAN toCSV ) ;
+                                BOOLEAN toCSV, BOOLEAN skipUndefined ) ;
 
 SDB_EXPORT BOOLEAN bsonElementToChar ( CHAR **buffer, INT32 *bufsize,
                                        bson_iterator *in ) ;

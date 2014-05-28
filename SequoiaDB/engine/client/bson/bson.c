@@ -351,10 +351,43 @@ SDB_EXPORT int bson_sprint_iterator ( char **pbuf, int *left, bson_iterator *i,
       case BSON_STRING:
       {
          const char *temp = bson_iterator_string( i ) ;
+         int tempSize = strlen( temp ) ;
+         int i = 0 ;
+         CHAR tempChar[2] = { 0, 0 } ;
          bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
          CHECK_LEFT ( left )
-         bson_sprint_raw_concat ( pbuf, left, temp ) ;
-         CHECK_LEFT ( left )
+         for ( i = 0; i < tempSize; ++i )
+         {
+            switch( *( temp + i ) )
+            {
+            case '\"':
+               bson_sprint_raw_concat ( pbuf, left, "\\\"" ) ;
+               break ;
+            case '\\':
+               bson_sprint_raw_concat ( pbuf, left, "\\\\" ) ;
+               break ;
+            case '\b':
+               bson_sprint_raw_concat ( pbuf, left, "\\b" ) ;
+               break ;
+            case '\f':
+               bson_sprint_raw_concat ( pbuf, left, "\\f" ) ;
+               break ;
+            case '\n':
+               bson_sprint_raw_concat ( pbuf, left, "\\n" ) ;
+               break ;
+            case '\r':
+               bson_sprint_raw_concat ( pbuf, left, "\\r" ) ;
+               break ;
+            case '\t':
+               bson_sprint_raw_concat ( pbuf, left, "\\t" ) ;
+               break ;
+            default:
+               tempChar[0] = *( temp + i ) ;
+               bson_sprint_raw_concat ( pbuf, left, tempChar ) ;
+               break ;
+            }
+            CHECK_LEFT ( left )
+         }
          bson_sprint_raw_concat ( pbuf, left, delCharStr ) ;
          CHECK_LEFT ( left )
          break;
@@ -603,7 +636,7 @@ SDB_EXPORT int bson_sprint_length_iterator ( bson_iterator *i )
    case BSON_STRING :
    case BSON_SYMBOL :
       /* "<string>" */
-      total += 2 + 2*strlen ( bson_iterator_string ( i ) ) ;
+      total += 2 * ( 2 + strlen ( bson_iterator_string ( i ) ) ) ;
       break ;
    case BSON_OID :
       /* { "$oid": "<24-digits-string>" } */

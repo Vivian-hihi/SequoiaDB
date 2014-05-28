@@ -735,11 +735,6 @@ namespace bson {
                      s << "\\\\" ;
                      break ;
                   }
-                  case '/':
-                  {
-                     s << "\\/" ;
-                     break ;
-                  }
                   case '\b':
                   {
                      s << "\\b" ;

@@ -325,7 +325,7 @@ static JSBool bson_to_json ( JSContext *cx , uintN argc , jsval *vp )
    buf = (char *) JS_malloc ( cx , size ) ;
    VERIFY ( buf ) ;
 
-   VERIFY ( bsonToJson ( buf , size , record, FALSE ) );
+   VERIFY ( bsonToJson ( buf , size , record, FALSE, FALSE ) );
 
    json = JS_NewStringCopyN ( cx , buf , ossStrlen ( buf ) ) ;
    VERIFY ( json ) ;
