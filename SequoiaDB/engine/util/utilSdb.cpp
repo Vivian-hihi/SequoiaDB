@@ -602,7 +602,7 @@ of 16 hex format ( e.g. 0x09 )"OSS_NEWLINE, pVar->pKey ) ;
             isFind = FALSE ;
             for ( INT32 i = 0; i < pVar->switchNum; ++i )
             {
-               if ( ( tempStrSize == ossStrlen( pVar->ppSwitch[ i ] ) ) &&
+               if (( tempStrSize == (INT32)ossStrlen( pVar->ppSwitch[ i ] ) ) &&
                     ossStrncasecmp ( pTempStr, pVar->ppSwitch[ i ],
                                      tempStrSize ) == 0 )
                {
