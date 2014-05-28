@@ -238,7 +238,6 @@ INT32 migImport::_getRecord ( bson &record )
       rc = _csvParser.csv2bson( pBuffer + startOffset, size, pObj ) ;
       if ( rc )
       {
-         rc = SDB_UTIL_PARSE_JSON_INVALID ;
          PD_LOG ( PDERROR, "Failed to convert Bson, rc=%d", rc ) ;
          goto error ;
       }
