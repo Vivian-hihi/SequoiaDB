@@ -9481,12 +9481,6 @@ namespace engine
       rtnContext *context = NULL ;
       SDB_RTNCB *rtnCB = sdbGetRTNCB() ;
 
-      if ( infoFromCata.empty() )
-      {
-         rc = SDB_DMS_EOC ;
-         goto error ;
-      }
-
       rc = rtnCB->contextNew( RTN_CONTEXT_DUMP,
                               &context,
                               contextID,
