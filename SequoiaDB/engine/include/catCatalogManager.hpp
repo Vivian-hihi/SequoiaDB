@@ -121,7 +121,7 @@ namespace engine
          builder.append( CAT_PAGE_SIZE_NAME, _pageSize ) ;
          if ( _domainName )
          {
-            builder.append( CAT_PAGE_SIZE_NAME, _pageSize ) ;
+            builder.append( CAT_DOMAIN_NAME, _domainName ) ;
          }
          return builder.obj() ;
       }

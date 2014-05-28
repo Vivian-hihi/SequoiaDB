@@ -4793,9 +4793,15 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    jsval                valConn     = JSVAL_VOID ;
    jsval                valName     = JSVAL_VOID ;
    jsval                valCS       = JSVAL_VOID ;
+   jsval               *argv        = JS_ARGV( cx, vp ) ; 
    bson                 options ;
 
    bson_init( &options ) ;
+
+   if ( 1 != argc && 2 != argc )
+   {
+      REPORT ( ret , "Sdb.createCS(): wrong arguments" ) ;
+   }
 
    cs = (sdbCSHandle *) JS_malloc ( cx , sizeof ( sdbCSHandle ) ) ;
    VERIFY ( cs ) ;
@@ -4806,9 +4812,25 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    REPORT ( connection , "Sdb.createCS: no connection handle" ) ;
 
    ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
-                               "S/io" , &strCSName ,
-                               &pageSize, &objOptions ) ;
+                               "S" , &strCSName ) ;
    REPORT ( ret , "Sdb.createCS(): wrong arguments" ) ;
+
+   
+   if ( 2 == argc )
+   {
+      if ( JSVAL_IS_INT( argv[1] ) )
+      {
+         pageSize = JSVAL_TO_INT( argv[1] ) ;
+      }
+      else if ( JSVAL_IS_OBJECT( argv[1] ) )
+      {
+         objOptions = JSVAL_TO_OBJECT( argv[1] ) ;
+      }
+      else
+      {
+         REPORT ( ret , "Sdb.createCS(): wrong arguments" ) ;
+      }
+   }
 
    /// TODO: put the pagesize in options obj when next release.
    if ( 0 == pageSize && NULL == objOptions && argc > 1 )
@@ -4832,14 +4854,14 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
       rc = c.toBson( objOptions, &options ) ;
       VERIFY ( SDB_OK == rc ) ;
    }
-   else
+   else if ( 0 != pageSize )
    {
+      bson_append_int( &options, FIELD_NAME_PAGE_SIZE, pageSize ) ;
       bson_finish( &options ) ;
    }
 
    // the handle contained by cs is released in done:
-   rc = sdbCreateCollectionSpaceV2( *connection , csName ,
-                                  (INT32) pageSize, &options, cs );
+   rc = sdbCreateCollectionSpaceV2( *connection , csName ,&options, cs );
    REPORT_RC ( SDB_OK == rc , "Sdb.createCS()" , rc ) ;
    // get the cs handle
    rc = sdbGetCollectionSpace ( *connection , csName , cs ) ;

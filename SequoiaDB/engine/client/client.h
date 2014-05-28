@@ -492,20 +492,11 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
 
 /** \fn INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
                                            const CHAR *pCollectionSpaceName,
-                                           INT32 iPageSize,
                                            bson *options,
                                            sdbCSHandle *handle )
     \brief Create the specified collection space
     \param [in] cHandle The database connection handle
     \param [in] pCollectionSpaceName The name of collection space
-    \param [in] iPageSize The Page Size as below
-
-        SDB_PAGESIZE_4K
-        SDB_PAGESIZE_8K
-        SDB_PAGESIZE_16K
-        SDB_PAGESIZE_32K
-        SDB_PAGESIZE_64K
-        SDB_PAGESIZE_DEFAULT
     \param [in] options The options specified by user
 
     \param [out] handle The collection space handle
@@ -516,7 +507,6 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
                                               const CHAR *pCollectionSpaceName,
-                                              INT32 iPageSize,
                                               bson *options,
                                               sdbCSHandle *handle ) ;
 

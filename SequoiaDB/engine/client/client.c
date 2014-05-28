@@ -2182,7 +2182,6 @@ error:
 
 SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
                                               const CHAR *pCollectionSpaceName,
-                                              INT32 iPageSize,
                                               bson *options,
                                               sdbCSHandle *handle )
 {
@@ -2211,24 +2210,6 @@ SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
    }
 
    rc = bson_append_string ( &newObj, FIELD_NAME_NAME, pCollectionSpaceName ) ;
-   if ( rc )
-   {
-      rc = SDB_SYS ;
-      goto error ;
-   }
-
-   if ( iPageSize != SDB_PAGESIZE_4K &&
-        iPageSize != SDB_PAGESIZE_8K &&
-        iPageSize != SDB_PAGESIZE_16K &&
-        iPageSize != SDB_PAGESIZE_32K &&
-        iPageSize != SDB_PAGESIZE_64K &&
-        iPageSize != SDB_PAGESIZE_DEFAULT )
-   {
-      rc = SDB_INVALIDARG ;
-      goto error ;
-   }
-
-   rc = bson_append_int ( &newObj, FIELD_NAME_PAGE_SIZE, iPageSize ) ;
    if ( rc )
    {
       rc = SDB_SYS ;
@@ -2294,13 +2275,18 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
                                             sdbCSHandle *handle )
 {
    INT32 rc               = SDB_OK ;
+   bson options ;
+   bson_init( &options ) ;
+   bson_append_int( &options, FIELD_NAME_PAGE_SIZE, iPageSize ) ;
+   bson_finish( &options ) ;
    rc = sdbCreateCollectionSpaceV2( cHandle, pCollectionSpaceName,
-                                    iPageSize, NULL, handle ) ;
+                                    &options, handle ) ;
    if ( rc )
    {
       goto error ;
    }
 done :
+   bson_destroy( &options ) ;
    return rc ;
 error :
    *handle = SDB_INVALID_HANDLE ;
