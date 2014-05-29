@@ -40,9 +40,12 @@
 namespace engine
 {
 
+   /*
+      clsCataHashPredTree define
+   */
    class clsCataHashPredTree : public SDBObject
    {
-   typedef std::vector< clsCataHashPredTree * > VEC_CLSCATAHASHPREDSET ;
+   typedef std::vector< clsCataHashPredTree * >       VEC_CLSCATAHASHPREDSET ;
    typedef std::map< std::string, bson::BSONElement > MAP_CLSCATAHASHPREDFIELDS ;
    public:
       clsCataHashPredTree( bson::BSONObj shardingKey );
@@ -71,7 +74,8 @@ namespace engine
                      BOOLEAN &result );
 
    private:
-      clsCataHashPredTree( clsCataHashPredTree &right ){}   // forbid copy constructor
+      // forbid copy constructor
+      clsCataHashPredTree( clsCataHashPredTree &right ){}
    private:
       VEC_CLSCATAHASHPREDSET        _children;
       MAP_CLSCATAHASHPREDFIELDS     _fieldSet;
@@ -82,14 +86,21 @@ namespace engine
       BOOLEAN                       _isNull;
    };
 
+   /*
+      clsCataHashMatcher define
+   */
    class clsCataHashMatcher : public SDBObject
    {
-   typedef enum _CLS_CATA_PREDICATE_OBJ_TYPE
-   {
-      PREDICATE_OBJ_TYPE_OP_EQ = 0,
-      PREDICATE_OBJ_TYPE_OP_NOT_EQ,
-      PREDICATE_OBJ_TYPE_NOT_OP
-   }CLS_CATA_PREDICATE_OBJ_TYPE ;
+      /*
+         _CLS_CATA_PREDICATE_OBJ_TYPE define
+      */
+      typedef enum _CLS_CATA_PREDICATE_OBJ_TYPE
+      {
+         PREDICATE_OBJ_TYPE_OP_EQ = 0,
+         PREDICATE_OBJ_TYPE_OP_NOT_EQ,
+         PREDICATE_OBJ_TYPE_NOT_OP
+      }CLS_CATA_PREDICATE_OBJ_TYPE ;
+
    public:
       // note: don't delete shardingkey before delete clsCataHashMatcher
       clsCataHashMatcher( const bson::BSONObj &shardingKey );
@@ -97,7 +108,7 @@ namespace engine
       virtual ~clsCataHashMatcher(){};
 
       INT32 loadPattern( const bson::BSONObj &matcher,
-                        UINT32 partitionBit );
+                         UINT32 partitionBit );
 
       INT32 matches( _clsCatalogItem* pCatalogItem,
                      BOOLEAN &result );
@@ -110,7 +121,7 @@ namespace engine
                         clsCataHashPredTree &predicateSet );
 
       INT32 parseLogicOp( const bson::BSONElement &beField,
-                        clsCataHashPredTree &predicateSet );
+                          clsCataHashPredTree &predicateSet );
 
       INT32 checkOpObj( const bson::BSONObj obj,
                         INT32 &result );
@@ -122,4 +133,4 @@ namespace engine
    };
 }
 
-#endif
+#endif // CLS_CATA_HASH_MATCHER_HPP_
