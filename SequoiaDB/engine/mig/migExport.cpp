@@ -671,6 +671,8 @@ done:
    {
       sdbReleaseCS ( _gCollectionSpace ) ;
    }
+   _gCollection = 0 ;
+   _gCollectionSpace = 0 ;
    PD_LOG ( PDEVENT, "%s.%s export record %d in file",pCSName, pCLName, clTotal ) ;
    return rc ;
 error:
