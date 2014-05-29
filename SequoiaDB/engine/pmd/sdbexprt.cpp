@@ -109,7 +109,7 @@ INT32 on_main( void *pData )
 
    if ( !exprtArg.pFields && exprtArg.type == MIGEXPRT_CSV )
    {
-      ossPrintf ( "CSV format must complete the --fields" ) ;
+      ossPrintf ( "CSV format must complete the --fields"OSS_NEWLINE ) ;
       PD_LOG ( PDERROR, "CSV format must complete the --fields" ) ;
       rc = SDB_INVALIDARG ;
       goto error ;
