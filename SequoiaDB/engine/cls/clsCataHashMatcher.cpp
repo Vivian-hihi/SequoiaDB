@@ -130,10 +130,12 @@ namespace engine
 
       if ( CLS_CATA_LOGIC_OR == _logicType && _fieldSet.size() >= 1 )
       {
+         // _fieldSet can't be $or relations, must be $and relations
          clsCataHashPredTree *pChild = NULL ;
          pChild = SDB_OSS_NEW clsCataHashPredTree( _shardingKey ) ;
          PD_CHECK( pChild != NULL, SDB_OOM, error, PDERROR,
                    "malloc failed!" ) ;
+         pChild->setLogicType( CLS_CATA_LOGIC_AND ) ;
          rc = pChild->addPredicate( pFieldName, beField ) ;
          PD_RC_CHECK( rc, PDERROR, "Failed to add predicate(rc=%d)", rc ) ;
          addChild( pChild ) ;
@@ -142,6 +144,7 @@ namespace engine
       iter = _fieldSet.find( pFieldName ) ;
       if ( iter != _fieldSet.end() )
       {
+         // ex: a = 1 and a = 2, is not impossible
          if ( 0 != beField.woCompare( iter->second, FALSE ) )
          {
             clear() ;
