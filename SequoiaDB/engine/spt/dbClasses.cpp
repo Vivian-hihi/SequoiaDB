@@ -4857,9 +4857,13 @@ static JSBool sdb_create_cs ( JSContext *cx , uintN argc , jsval *vp )
    else if ( 0 != pageSize )
    {
       bson_append_int( &options, FIELD_NAME_PAGE_SIZE, pageSize ) ;
-      bson_finish( &options ) ;
+   }
+   else
+   {
+      
    }
 
+   bson_finish( &options ) ;
    // the handle contained by cs is released in done:
    rc = sdbCreateCollectionSpaceV2( *connection , csName ,&options, cs );
    REPORT_RC ( SDB_OK == rc , "Sdb.createCS()" , rc ) ;
