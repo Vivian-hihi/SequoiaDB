@@ -313,6 +313,59 @@ namespace engine
       goto done ;
    }
 
+   string clsCataHashPredTree::toString() const
+   {
+      StringBuilder buf ;
+      buf << "[ " ;
+      if ( CLS_CATA_LOGIC_INVALID == _logicType )
+      {
+         buf << "$invalid: " ;
+      }
+      else if ( CLS_CATA_LOGIC_AND == _logicType )
+      {
+         buf << "$and: " ;
+      }
+      else if ( CLS_CATA_LOGIC_OR == _logicType )
+      {
+         buf << "$or: " ;
+      }
+      else
+      {
+         buf << _logicType << ": " ;
+      }
+
+      // predicate
+      if ( _fieldSet.size() > 0 )
+      {
+         MAP_CLSCATAHASHPREDFIELDS::const_iterator cit = _fieldSet.begin() ;
+         while ( cit != _fieldSet.end() )
+         {
+            buf << "{ " << cit->first << ": "
+                << cit->second.toString() << " }" ;
+            ++cit ;
+         }
+      }
+
+      if ( _hasPred )
+      {
+         buf << "{ hashVal: " << _hashVal << " }" ;
+      }
+
+      if ( _isNull )
+      {
+         buf << "{ isNull: true }" ;
+      }
+
+      // sub
+      for ( UINT32 i = 0 ; i < _children.size() ; ++i )
+      {
+         buf << _children[ i ]->toString() ;
+      }
+
+      buf << " ]" ;
+      return buf.str() ;
+   }
+
    // note: don't delete shardingkey before delete clsCataHashMatcher
    clsCataHashMatcher::clsCataHashMatcher( const BSONObj &shardingKey )
    :_predicateSet( shardingKey ),

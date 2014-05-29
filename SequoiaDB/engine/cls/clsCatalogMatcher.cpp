@@ -144,7 +144,7 @@ namespace engine
                }
                logicType = CLS_CATA_LOGIC_OR ;
             }
-            else // TODO: parse "$not"
+            else // parse "$not"
             {
                // now "$not" is regarded as universe set
             }
