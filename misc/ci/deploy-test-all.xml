@@ -146,7 +146,7 @@
 			saveDir="${copy.log.path}"
 			fileName="${WORKSPACE}/${host.NAME}-copy-log/${host.NAME}-copy-log.${BUILD_NUMBER}.tar.gz"
 			toHost="${target.deploy_tar_gz.ip}" />
-		<stafTools workType="shell"
+		<stafTools workType="shell" failonerror="false"
 			workHost="${target.deploy_tar_gz.ip}"
 			common="/usr/bin/find ${copy.log.path} -mtime +3 -delete;" 
 			workDir="${save.testLog.dir}" />
