@@ -60,6 +60,9 @@
 #define RELATIVE_HOUR 24
 #define RELATIVE_MIN_SEC 60
 
+#define TIME_MAX_NUM  2147356800
+#define TIME_MIX_NUM -2209017600
+
 const CHAR *_pCSVTYPESTR[] = {
    CSV_STR_INT,         CSV_STR_INTEGER,        CSV_STR_LONG,
    CSV_STR_BOOL,        CSV_STR_BOOLEAN,        CSV_STR_DOUBLE,
@@ -1160,6 +1163,7 @@ INT32 csvParser::_string2timestamp2( _csvTimestamp &value,
                                      INT32 size )
 {
    INT32 rc = SDB_OK ;
+   INT32 valueInt = 0 ;
    INT64 varLong = 0 ;
    INT64 temp1 = 0 ;
    INT64 temp2 = 0 ;
@@ -1167,10 +1171,32 @@ INT32 csvParser::_string2timestamp2( _csvTimestamp &value,
    rc = _string2long( varLong, pBuffer, size ) ;
    if ( rc )
    {
-      goto error ;
+      rc = _string2int( valueInt, pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      varLong = (INT64)valueInt ;
    }
    temp1 = varLong / 1000 ;
    temp2 = varLong - ( temp1 * 1000 ) ;
+
+   if ( varLong < TIME_MIX_NUM )
+   {
+      PD_LOG ( PDERROR, "The time stamp %lld is greater than %d000",
+               varLong, TIME_MIX_NUM ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( ( temp1 > TIME_MAX_NUM ) ||
+        ( temp1 == TIME_MAX_NUM ) && temp2 > 0 )
+   {
+      PD_LOG ( PDERROR, "The time stamp %lld is greater than %d000",
+               varLong, TIME_MAX_NUM ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
 
    value.t = (INT32)temp1 ;
    value.i = (INT32)temp2 ;
@@ -1249,10 +1275,32 @@ error:
 INT32 csvParser::_string2date2( INT64 &value, CHAR *pBuffer, INT32 size )
 {
    INT32 rc = SDB_OK ;
+   INT32 valueInt = 0 ;
 
    rc = _string2long( value, pBuffer, size ) ;
    if ( rc )
    {
+      rc = _string2int( valueInt, pBuffer, size ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      value = (INT64)valueInt ;
+   }
+
+   if ( value < TIME_MIX_NUM )
+   {
+      PD_LOG ( PDERROR, "The time stamp %lld is greater than %d",
+               value, TIME_MIX_NUM ) ;
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   if ( value > TIME_MAX_NUM )
+   {
+      PD_LOG ( PDERROR, "The time stamp %lld is greater than %d",
+               value, TIME_MAX_NUM ) ;
+      rc = SDB_INVALIDARG ;
       goto error ;
    }
 
