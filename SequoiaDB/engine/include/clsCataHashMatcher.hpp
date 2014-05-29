@@ -68,7 +68,9 @@ namespace engine
 
       void clear();
 
-      INT32 generateHashPredicate( UINT32 partitionBit );
+      INT32 generateHashPredicate( UINT32 partitionBit ) ;
+
+      string toString() const ;
 
       INT32 matches( _clsCatalogItem* pCatalogItem,
                      BOOLEAN &result );
