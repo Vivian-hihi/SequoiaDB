@@ -109,6 +109,7 @@ private:
    CHAR *_trim( CHAR *pCursor, INT32 &size ) ;
    INT32 _filterString( CHAR **pField, INT32 &size ) ;
    INT32 _parseFields( CHAR *pFields, INT32 size, bson &obj ) ;
+   INT32 _writeInclude() ;
    INT32 _connectDB() ;
    INT32 _getCSList() ;
    INT32 _getCLList() ;
@@ -118,6 +119,7 @@ private:
 private:
    INT32 _reallocBuffer( CHAR **ppBuffer, INT32 size, INT32 newSize ) ;
    INT32 _writeFile( bson *pbson ) ;
+   INT32 _exportCL( const CHAR *pCSName, const CHAR *pCLName, INT32 &total ) ;
    INT32 _run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total ) ;
 public:
    migExport() ;

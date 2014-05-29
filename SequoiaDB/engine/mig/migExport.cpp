@@ -364,6 +364,54 @@ error:
    goto done ;
 }
 
+INT32 migExport::_writeInclude()
+{
+   INT32 rc = SDB_OK ;
+   INT32 fieldsNum = 0 ;
+   SINT64 writedSize = 0 ;
+   SINT64 curWriteSize = 0 ;
+   SINT64 fieldSize = 0 ;
+   CHAR *pField = NULL ;
+
+   if ( _pMigArg->type == MIGEXPRT_CSV &&
+        _pMigArg->include == TRUE )
+   {
+      fieldsNum = _vFields.size() ;
+      for ( INT32 i = 0; i < fieldsNum; ++i )
+      {
+         pField = _vFields.at( i ) ;
+         fieldSize = (SINT64)ossStrlen( pField ) ;
+         if ( i + 1 == fieldsNum )
+         {
+            pField[ fieldSize ] = _pMigArg->delRecord ;
+         }
+         else
+         {
+            pField[ fieldSize ] = _pMigArg->delField ;
+         }
+         ++fieldSize ;
+         writedSize = 0 ;
+         while ( fieldSize > 0 )
+         {
+            rc = ossWrite ( &_file, pField + writedSize,
+                            fieldSize, &curWriteSize ) ;
+            if ( rc && SDB_INTERRUPT != rc )
+            {
+               PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
+               goto error ;
+            }
+            fieldSize -= curWriteSize ;
+            writedSize += curWriteSize ;
+            rc = SDB_OK ;
+         }
+      }
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 migExport::_query()
 {
    INT32 rc = SDB_OK ;
@@ -376,6 +424,12 @@ INT32 migExport::_query()
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to parse Header, rc=%d", rc ) ;
+         goto error ;
+      }
+      rc = _writeInclude() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to call _writeInclude, rc=%d", rc ) ;
          goto error ;
       }
    }
@@ -528,16 +582,105 @@ error:
    goto done ;
 }
 
+INT32 migExport::_exportCL( const CHAR *pCSName,
+                            const CHAR *pCLName,
+                            INT32 &total )
+{
+   INT32 rc = SDB_OK ;
+   SINT64 writedSize = 0 ;
+   SINT64 curWriteSize = 0 ;
+   INT32 clTotal = 0 ;
+   bson obj ;
+
+   bson_init( &obj ) ;
+   _gCollection = 0 ;
+   _gCollectionSpace = 0 ;
+
+   rc = _getCS( pCSName ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to get collection space, rc = %d",
+               rc ) ;
+      goto error ;
+   }
+   rc = _getCL( pCLName ) ;
+   if ( rc )
+   {
+      if ( rc == SDB_DMS_NOTEXIST )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "Failed to get collection, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+   }
+   rc = _query() ;
+   if ( rc )
+   {
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else
+      {
+         PD_LOG ( PDERROR, "Failed to get record, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+   }
+   while ( TRUE )
+   {
+      rc = sdbNext( _gCursor, &obj ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_EOC != rc )
+         {
+            PD_LOG ( PDERROR, "Failed to get collection list, rc = %d",
+                     rc ) ;
+            goto error ;
+         }
+         else
+         {
+            rc = SDB_OK ;
+            goto done ;
+         }
+      }
+      rc = _writeFile( &obj ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to write record to file, rc = %d",
+                  rc ) ;
+         goto error ;
+      }
+      bson_destroy ( &obj ) ;
+      ++clTotal ;
+   }
+done:
+   total += clTotal ;
+   bson_destroy ( &obj ) ;
+   if ( _gCollection )
+   {
+      sdbReleaseCollection ( _gCollection ) ;
+   }
+   if ( _gCollectionSpace )
+   {
+      sdbReleaseCS ( _gCollectionSpace ) ;
+   }
+   PD_LOG ( PDEVENT, "%s.%s export record %d in file",pCSName, pCLName, clTotal ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
 {
    INT32 rc = SDB_OK ;
-   INT32 clTotal = 0 ;
-   INT32 fieldsNum = 0 ;
-   SINT64 writedSize = 0 ;
-   SINT64 curWriteSize = 0 ;
-   SINT64 fieldSize = 0 ;
    const CHAR *pTemp = NULL ;
-   CHAR *pField = NULL ;
    bson obj ;
    bson_iterator it ;
    bson_type type ;
@@ -574,7 +717,6 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          type = bson_find( &it, &obj, "Name" ) ;
          if ( type != BSON_STRING )
          {
-            bson_destroy ( &obj ) ;
             rc = SDB_SYS ;
             PD_LOG ( PDERROR, "List collection space does not string, rc = %d",
                      rc ) ;
@@ -584,11 +726,9 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          rc = _run( pTemp, pCLName, total ) ;
          if ( rc )
          {
-            bson_destroy ( &obj ) ;
             PD_LOG ( PDERROR, "Faild to call _run, rc = %d", rc ) ;
             goto error ;
          }
-         bson_destroy ( &obj ) ;
       }
    }
    else if ( pCSName != NULL && pCLName == NULL )
@@ -622,7 +762,6 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          if ( type != BSON_STRING )
          {
             rc = SDB_SYS ;
-            bson_destroy ( &obj ) ;
             PD_LOG ( PDERROR, "List collection does not string, rc = %d",
                      rc ) ;
             goto error ;
@@ -631,126 +770,23 @@ INT32 migExport::_run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total )
          rc = _run( pCSName, pTemp, total ) ;
          if ( rc )
          {
-            bson_destroy ( &obj ) ;
             PD_LOG ( PDERROR, "Faild to call _run, rc = %d", rc ) ;
             goto error ;
          }
-         bson_destroy ( &obj ) ;
       }
    }
    else
    {
       //cs and cl
-      rc = _getCS( pCSName ) ;
+      rc = _exportCL( pCSName, pCLName, total ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get collection space, rc = %d",
-                  rc ) ;
+         PD_LOG ( PDERROR, "Faild to call _export, rc = %d", rc ) ;
          goto error ;
       }
-      rc = _getCL( pCLName ) ;
-      if ( rc )
-      {
-         sdbReleaseCS ( _gCollectionSpace ) ;
-         if ( rc == SDB_DMS_NOTEXIST )
-         {
-            rc = SDB_OK ;
-            goto done ;
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "Failed to get collection, rc = %d",
-                     rc ) ;
-            goto error ;
-         }
-      }
-      rc = _query() ;
-      if ( rc )
-      {
-         sdbReleaseCollection ( _gCollection ) ;
-         sdbReleaseCS ( _gCollectionSpace ) ;
-         if ( SDB_DMS_EOC == rc )
-         {
-            rc = SDB_OK ;
-            goto done ;
-         }
-         else
-         {
-            PD_LOG ( PDERROR, "Failed to get record, rc = %d",
-                     rc ) ;
-            goto error ;
-         }
-      }
-      if ( _pMigArg->type == MIGEXPRT_CSV &&
-           _pMigArg->include == TRUE )
-      {
-         fieldsNum = _vFields.size() ;
-         for ( INT32 i = 0; i < fieldsNum; ++i )
-         {
-            pField = _vFields.at( i ) ;
-            fieldSize = (SINT64)ossStrlen( pField ) ;
-            if ( i + 1 == fieldsNum )
-            {
-               pField[ fieldSize ] = _pMigArg->delRecord ;
-            }
-            else
-            {
-               pField[ fieldSize ] = _pMigArg->delField ;
-            }
-            ++fieldSize ;
-            writedSize = 0 ;
-            while ( fieldSize > 0 )
-            {
-               rc = ossWrite ( &_file, pField + writedSize,
-                               fieldSize, &curWriteSize ) ;
-               if ( rc && SDB_INTERRUPT != rc )
-               {
-                  PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
-                  goto error ;
-               }
-               fieldSize -= curWriteSize ;
-               writedSize += curWriteSize ;
-               rc = SDB_OK ;
-            }
-         }
-      }
-      while ( TRUE )
-      {
-         rc = sdbNext( _gCursor, &obj ) ;
-         if ( rc )
-         {
-            sdbReleaseCollection ( _gCollection ) ;
-            sdbReleaseCS ( _gCollectionSpace ) ;
-            if ( SDB_DMS_EOC != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to get collection list, rc = %d",
-                        rc ) ;
-               goto error ;
-            }
-            else
-            {
-               rc = SDB_OK ;
-               goto done ;
-            }
-         }
-         rc = _writeFile( &obj ) ;
-         if ( rc )
-         {
-            sdbReleaseCollection ( _gCollection ) ;
-            sdbReleaseCS ( _gCollectionSpace ) ;
-            PD_LOG ( PDERROR, "Failed to write record to file, rc = %d",
-                     rc ) ;
-            goto error ;
-         }
-         bson_destroy ( &obj ) ;
-         ++clTotal ;
-      }
-      sdbReleaseCollection ( _gCollection ) ;
-      sdbReleaseCS ( _gCollectionSpace ) ;
    }
 done:
-   total += clTotal ;
-   PD_LOG ( PDEVENT, "%s.%s export record %d in file",pCSName, pCLName, clTotal ) ;
+   bson_destroy ( &obj ) ;
    return rc ;
 error:
    goto done ;
