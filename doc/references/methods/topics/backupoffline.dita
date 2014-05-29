@@ -47,7 +47,7 @@
         </strow>
         <strow>
           <stentry>Path</stentry>
-          <stentry>备份路径，缺省为配置参数指定的备份路径。该路径支持通配符（g%: group name, h%: host name, s%:service name）</stentry>
+          <stentry>备份路径，缺省为配置参数指定的备份路径。该路径支持通配符（%g/%G: group name, %h/%H: host name, %s/%S:service name）</stentry>
           <stentry>Path:"/opt/sequoiadb/backup/%g"</stentry>
         </strow>
         <strow>
@@ -57,7 +57,7 @@
         </strow>
         <strow>
           <stentry>Prefix</stentry>
-          <stentry>备份前缀名，支持通配符（g%,h%,s%），缺省为空</stentry>
+          <stentry>备份前缀名，支持通配符（%g,%G,%h,%H,%s,%S），缺省为空</stentry>
           <stentry>Prefix:"%g_bk_"</stentry>
         </strow>
         <strow>

@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="C 开发环境搭建"/>
-<meta name="description" content="获取驱动开发包 从 http://www.sequoiadb.com 下载对应操作系统版本的SequoiaDB驱动开发包。 配置开发环境 Linux 1.解压下来的驱动开发包； 2.将压缩包中的 driver目录，拷贝到开发工程目录中（建议放在第三方库目录下），并命名为sdbdriver。 3.将sdbdriver/include目录加入到编译头目录，并将sdbdriver/lib ..."/>
+<meta name="description" content="获取驱动开发包 从 http://www.sequoiadb.com 下载对应操作系统版本的SequoiaDB驱动开发包。 配置开发环境 Linux 1.解压下来的驱动开发包； 2.将压缩包中的 driver目录，拷贝到开发工程目录中（建议放在第三方库目录下），并命名为sdbdriver。 3 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../../developement/application/C/topics/c.html"/>
 <meta name="DC.Relation" scheme="URI" content="c_driver.html"/>
 <meta name="DC.Format" content="XHTML"/>
@@ -48,28 +48,33 @@
       <ul class="ul">
         <li class="li">Linux <p class="p">1.解压下来的驱动开发包； </p>
 <p class="p">2.将压缩包中的 driver目录，拷贝到开发工程目录中（建议放在第三方库目录下），并命名为sdbdriver。
-            </p>
-<p class="p">3.将sdbdriver/include目录加入到编译头目录，并将sdbdriver/lib 目录加入连接目录，并加入sdbc动态库，gcc编译参数形式如： </p>
-<div class="p">
+        </p>
+<p class="p">3.将sdbdriver/include目录加入到编译头目录，并将sdbdriver/lib目录加入连接目录。</p>
+<strong class="ph b"><em class="ph i">动态链接：</em></strong><p class="p"/>
+使用lib目录下的libsdbc.so动态库，gcc编译参数形式如： <div class="p">
             <pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include -L &lt;path&gt;/sdbdriver/lib -lsdbc  </pre>
 
           </div>
-<p class="p">其中：PATH为sdbdriver放置路径；</p>
-<p class="p">4.运行程序时，用户需要将LD_LIBRARY_PATH路径指定为包含libsdbc.so动态库的路径。 </p>
+<p class="p">其中：PATH为sdbdriver放置路径；运行程序时，用户需要将LD_LIBRARY_PATH路径指定为包含libsdbc.so动态库的路径。</p>
 <div class="p">
             <pre class="pre codeblock">export LD_LIBRARY_PATH=&lt;PATH&gt;/sdbdriver/lib </pre>
 
           </div>
-<div class="note note"><span class="notetitle">Note:</span> 
+<ul class="ul"><li class="li"><div class="note note"><span class="notetitle">Note:</span> 
             <p class="p">如果运行程序时会出现错误提示： </p>
 
-            <p class="p">error while loading shared libraries: libsdbc.so: cannot open shared object file: No
-              such file or directory </p>
+            <p class="p">error while loading shared libraries: libsdbc.so: cannot open shared object file: No such file or directory</p>
 
             <p class="p">表示没有正确设置LD_LIBRARY_PATH，LD_LIBRARY_PATH是环境变量，建议设置到/etc/profile或者应用程序的启动脚本中，避免每次新开终端都需要重新设置。 </p>
 
           </div>
 </li>
+</ul>
+
+          <strong class="ph b"><em class="ph i">静态链接：</em></strong><p class="p"/>
+使用lib目录下的libstaticsdbc.a静态库，gcc编译参数形式如：<pre class="pre codeblock">cc testClient.c -o testClientC -I &lt;path&gt;/sdbdriver/include –L &lt;path&gt;/sdbdriver/lib/libstaticsdbc.a -lm</pre>
+
+        </li>
 
         <li class="li">Windows
           <p class="p">暂未推出Windows驱动开发包。</p>
