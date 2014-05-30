@@ -152,7 +152,7 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
       rc = SDB_OOM ;
       goto error ;
    }
-   rc = _appendString( delChar, pTempBuf, size,
+   rc = _appendString( delChar, pBuffer, size,
                        ppCSVBuf, pCSVSize ) ;
    if ( rc )
    {
