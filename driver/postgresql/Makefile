@@ -110,6 +110,9 @@ $(MD5_HEADER_PATH):
 $(MD5_HEADER_PATH)/md5.h:
 	cp -f $< $@
 
+$(MD5_PATH):
+	mkdir -p $@
+	
 $(MD5_PATH)/md5.c:
 	cp -f $< $@
 
