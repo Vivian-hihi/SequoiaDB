@@ -119,6 +119,7 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
 {
    INT32 rc = SDB_OK ;
    INT32 size    = 0 ;
+   INT32 objSize = 0 ;
    CHAR *pBuffer = NULL ;
    CHAR *pTempBuf = NULL ;
 
@@ -145,6 +146,7 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
    pTempBuf = pBuffer ;
    ossMemset( pTempBuf, 0, size ) ;
 
+   objSize = size ;
    if( !bson_sprint_iterator ( &pTempBuf,
                                &size,
                                pIt, '"' ) )
@@ -152,7 +154,8 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
       rc = SDB_OOM ;
       goto error ;
    }
-   rc = _appendString( delChar, pBuffer, size,
+   objSize -= size ;
+   rc = _appendString( delChar, pBuffer, objSize,
                        ppCSVBuf, pCSVSize ) ;
    if ( rc )
    {
