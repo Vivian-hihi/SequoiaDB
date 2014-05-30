@@ -124,7 +124,13 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
 
    size = bson_sprint_length_iterator ( pIt ) ;
 
-   if ( ppCSVBuf && size > (*pCSVSize) )
+   if ( !ppCSVBuf )
+   {
+      (*pCSVSize) += size ;
+      goto done ;
+   }
+
+   if ( size > (*pCSVSize) )
    {
       rc = SDB_OOM ;
       goto error ;
