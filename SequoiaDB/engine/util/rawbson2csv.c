@@ -441,10 +441,6 @@ INT32 bson2csv( CHAR delChar, CHAR delField,
       {
          break ;
       }
-      else if ( BSON_UNDEFINED == fieldType )
-      {
-         continue ;
-      }
       // do NOT concat "," for first entrance
       if ( isFirst )
       {
@@ -457,6 +453,10 @@ INT32 bson2csv( CHAR delChar, CHAR delField,
          {
             goto error ;
          }
+      }
+	  if ( BSON_UNDEFINED == fieldType )
+      {
+         continue ;
       }
       //then we check the data type
       rc = _appendValue( delChar, &it, ppBuffer, pCSVSize ) ;
