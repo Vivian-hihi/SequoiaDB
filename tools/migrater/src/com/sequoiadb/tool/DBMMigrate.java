@@ -23,6 +23,7 @@ import org.jdom2.output.XMLOutputter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.PosixParser;
 import org.bson.BSONObject;
 import org.bson.BasicBSONObject;
@@ -45,12 +46,8 @@ public class DBMMigrate {
 	private String user;
 	private String password;
 	private String path;
+	private String collectionSpace;
 	private boolean clean = false;
-	
-	/************** modified by dps begin ******************/
-	private String cataHost;
-	private int cataPort;
-	/************** modified by dps end ******************/
 
 	public DBMMigrate(CommandLine commandLine) {
 		if (commandLine.hasOption('v')) {
@@ -69,6 +66,11 @@ public class DBMMigrate {
 		if (commandLine.hasOption('w')) {
 			password = commandLine.getOptionValue('w');
 		}
+
+		if (commandLine.hasOption('b')) {
+			collectionSpace = commandLine.getOptionValue('b');
+		}
+
 		if (commandLine.hasOption('d')) {
 			path = commandLine.getOptionValue('d');
 		}
@@ -76,22 +78,6 @@ public class DBMMigrate {
 		if (commandLine.hasOption('c')) {
 			clean = true;
 		}
-		
-		/************** modified by dps begin ******************/
-		if (commandLine.hasOption('e')) {
-			cataHost = commandLine.getOptionValue('e');
-		}
-		else{
-			cataHost = host;
-		}
-			
-		if (commandLine.hasOption('f')) {
-			cataPort = Integer.valueOf(commandLine.getOptionValue('f'));
-		}
-		else{
-			cataPort = 30000;
-		}
-		/************** modified by dps end ******************/
 
 	}
 
@@ -121,9 +107,7 @@ public class DBMMigrate {
 
 			jsonFileWriter.flush();
 			jsonFileWriter.close();
-			/************** modified by dps begin ******************/
-			cursor.close();
-			/************** modified by dps end ******************/
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -300,25 +284,18 @@ public class DBMMigrate {
 		csEle.setAttribute("PageSize", pageSize.toString());
 
 		DBCursor clCursor = null;
-		/************** modified by dps begin ******************/
-		Sequoiadb tmpSdb = null;
-		/************** modified by dps end ******************/
-		
+
 		try {
 			// Loop all collections of the collectionspace
-			/************** modified by dps begin ******************/
-//			clCursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG,
-//										"{Name:{$regex:'^" + csName + ".*',$options:''}}", 
-//										null, 
-//										null);
-			tmpSdb = new Sequoiadb(cataHost,cataPort,user,password);
-			clCursor = tmpSdb.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONS").query();
-			/************** modified by dps end ******************/
+			clCursor = sdb.getSnapshot(Sequoiadb.SDB_SNAP_CATALOG,
+					"{Name:{$regex:'^" + csName + ".*',$options:''}}", null,
+					null);
 			while (clCursor.hasNext()) {
 				BSONObject clObj = clCursor.getNext();
 				String clName = (String) clObj.get("Name");
-				
-				if(!clName.startsWith(csName+"."))	//the collection not in the collectionspace
+
+				if (!clName.startsWith(csName + ".")) // the collection not in
+														// the collectionspace
 					continue;
 
 				printMessage(0, "Start export collection: %s ...", clName);
@@ -335,10 +312,6 @@ public class DBMMigrate {
 					"Failed to read data from sequoiadb. exception:%s", e);
 		} finally {
 			clCursor.close();
-			/************** modified by dps begin ******************/
-			if(tmpSdb!=null)
-				tmpSdb.disconnect();
-			/************** modified by dps end ******************/
 		}
 
 		root.addContent(csEle);
@@ -372,18 +345,19 @@ public class DBMMigrate {
 			doc.setRootElement(root);
 
 			// loop all collectionspace
-			/************** modified by dps begin ******************/
-			//DBCursor csCursor = sdb.getSnapshot(
-			//		Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "", "", "");
-			Sequoiadb tmpSdb = new Sequoiadb(cataHost,cataPort,user,password);
-			DBCursor csCursor = tmpSdb.getCollectionSpace("SYSCAT").getCollection("SYSCOLLECTIONSPACES").query();
-			/************** modified by dps end ******************/
-			
+			DBCursor csCursor = sdb.getSnapshot(
+					Sequoiadb.SDB_SNAP_COLLECTIONSPACES, "", "", "");
 
 			while (csCursor.hasNext()) {
 				BSONObject csObj = csCursor.getNext();
 
 				String csName = (String) csObj.get("Name");
+
+				// if have collectionspace params, then just export this
+				// collectionspace
+				if (collectionSpace != null && !collectionSpace.equals(csName)) {
+					continue;
+				}
 
 				printMessage(0, "Start export collectionspace:%s ...", csName);
 				// export this collectionspace
@@ -391,9 +365,6 @@ public class DBMMigrate {
 				printMessage(0, "compelete export collectionspace:%s", csName);
 			}
 			csCursor.close();
-			/************** modified by dps begin ******************/
-			tmpSdb.disconnect();
-			/************** modified by dps end ******************/
 
 			Format format = Format.getCompactFormat();
 			format.setEncoding("UTF-8");
@@ -423,8 +394,8 @@ public class DBMMigrate {
 		}
 	}
 
-	public void splitToAddGroup(Sequoiadb sdb, DBCollection cl, int partitionNum)
-			throws Exception {
+	private void splitToAddGroup(Sequoiadb sdb, DBCollection cl,
+			int partitionNum) throws Exception {
 
 		// Get the collection's current group by snapshot(8)
 		String clFirstGroupName = null;
@@ -462,7 +433,7 @@ public class DBMMigrate {
 		}
 	}
 
-	public void importCollection(Sequoiadb sdb, CollectionSpace space,
+	private void importCollection(Sequoiadb sdb, CollectionSpace space,
 			Element eleCL) throws Exception {
 		// Read collection meta data, and create cl in sequoiadb
 		String clName = eleCL.getAttributeValue("name");
@@ -602,7 +573,7 @@ public class DBMMigrate {
 		}
 	}
 
-	public void importCollectionSpace(Sequoiadb sdb, Element eleCS)
+	private void importCollectionSpace(Sequoiadb sdb, Element eleCS)
 			throws Exception {
 
 		String csName = null;
@@ -663,9 +634,15 @@ public class DBMMigrate {
 			// Loop the collection spaces information
 			for (int i = 0; i < children.size(); i++) {
 				Element eleCS = children.get(i);
+				String csName = eleCS.getAttributeValue("name");
 
-				printMessage(0, "Start to import collectionspace:%s",
-						eleCS.getAttributeValue("name"));
+				// if have collectionspace params, then just import this
+				// collectionspace
+				if (collectionSpace != null && !collectionSpace.equals(csName)) {
+					continue;
+				}
+
+				printMessage(0, "Start to import collectionspace:%s", csName);
 				importCollectionSpace(sdb, eleCS);
 				printMessage(0, "Success to import collectionspace:%s",
 						eleCS.getAttributeValue("name"));
@@ -703,22 +680,23 @@ public class DBMMigrate {
 		e.printStackTrace(ps);
 		return sw.toString();
 	}
-	
-	private static void printUsage() {
-		System.out.println("Command options:");
-		System.out.println("  --help                 help");
-		System.out.println("  -a [ --action ] arg    the action: export or import.");
-		System.out.println("  -h [ --hostname ] arg  sequoiadb host name");
-		System.out.println("  -s [ --svcname ] arg   sequoiadb coord name, default:11810");
-		System.out.println("  -u [ --user ] arg      sequoiadb user, default:''");
-		System.out.println("  -w [ --password ] arg  sequoiadb password, default:''");
-		System.out.println("  -d [ --directory] arg  the path of data files which use to import or export.");
-		System.out.println("  -c [ --clean]          whether cleaning up the original data before import");
-		System.out.println("  -v [ --verbose]        whether print verbose messsage");
-		/************** modified by dps begin ******************/
-		System.out.println("  -e [ --cataloghost]    catalog host name");
-		System.out.println("  -f [ --catalogport]    catalog port");
-		/************** modified by dps end ******************/
+
+	private static void printUsage(Options options) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter
+				.printHelp(
+						"-a <export|import> -h <host> -s <port> [-u <user>] [-w <password>] -d <directory> [-b <collectionspace>] [-c] [-v]",
+						options);
+		// System.out.println("Command options:");
+		// System.out.println("  --help                 help");
+		// System.out.println("  -a [ --action ] arg    the action: export or import.");
+		// System.out.println("  -h [ --hostname ] arg  sequoiadb host name");
+		// System.out.println("  -s [ --svcname ] arg   sequoiadb coord name, default:11810");
+		// System.out.println("  -u [ --user ] arg      sequoiadb user, default:''");
+		// System.out.println("  -w [ --password ] arg  sequoiadb password, default:''");
+		// System.out.println("  -d [ --directory] arg  the path of data files which use to import or export.");
+		// System.out.println("  -c [ --clean]          whether cleaning up the original data before import");
+		// System.out.println("  -v [ --verbose]        whether print verbose messsage");
 	}
 
 	/**
@@ -729,8 +707,6 @@ public class DBMMigrate {
 		CommandLineParser parser = new PosixParser();
 		Options options = new Options();
 		options.addOption("help", false, "Print this usage information");
-		options.addOption("v", "verbose", false,
-				"Print out Verbose information");
 		options.addOption("a", "action", true, "select import or export action");
 		options.addOption("h", "host", true, "The sequoiadb host or ip");
 		options.addOption("s", "svcname", true,
@@ -741,46 +717,42 @@ public class DBMMigrate {
 				"The sequoiadb user's password, default:''");
 		options.addOption("d", "directory", true,
 				"The path of input/output for import/export");
+		options.addOption("b", "collectionspace", true,
+				"The collection space which be export or import.");
 		options.addOption(
 				"c",
 				"clean",
 				false,
 				"The flag whether clean the sequoiadb data before import. \nJust takes effect in action is export.");
-		
+		options.addOption("v", "verbose", false,
+				"Print out Verbose information");
 		// options.addOption("i", "install dir", true,
 		// "The path of sequoiadb, default:/opt/sequoiadb");
-		
-		/************** modified by dps begin ******************/
-		options.addOption("e", "cataloghost", true,
-				"catalog host name, default same as host");
-		options.addOption("f", "catalogport", true,
-				"catalog port, default:30000");
-		/************** modified by dps end ******************/
 
 		CommandLine commandLine = parser.parse(options, args);
 
-		if (!commandLine.hasOption('a') ) {
+		if (!commandLine.hasOption('a')) {
 			System.out.println("required parameter is missing in '"
 					+ options.getOption("a").getLongOpt() + "'");
-			printUsage();
+			printUsage(options);
 			System.exit(0);
 		} else if (!commandLine.hasOption('h')) {
 			System.out.println("required parameter is missing in '"
 					+ options.getOption("h").getLongOpt() + "'");
-			printUsage();
+			printUsage(options);
 			System.exit(0);
 		} else if (!commandLine.hasOption('s')) {
 			System.out.println("required parameter is missing in '"
 					+ options.getOption("s").getLongOpt() + "'");
-			printUsage();
+			printUsage(options);
 			System.exit(0);
 		} else if (!commandLine.hasOption('d')) {
 			System.out.println("required parameter is missing in '"
 					+ options.getOption("d").getLongOpt() + "'");
-			printUsage();
+			printUsage(options);
 			System.exit(0);
 		} else if (commandLine.hasOption("help")) {
-			printUsage();
+			printUsage(options);
 			System.exit(0);
 		}
 
