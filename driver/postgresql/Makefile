@@ -1,11 +1,17 @@
 
 
 CURRENT_PATH = .
-EXTERNAL_PATH = $(CURRENT_PATH)/external
+MD5_PATH = $(CURRENT_PATH)/external/sdbbson
+MD5_HEADER_PATH = $(MD5_PATH)/lib
+
+EXTERNAL_PATH = $(CURRENT_PATH)/external/client
 BSON_PATH = $(EXTERNAL_PATH)/sdbbson
 ENGINE_PATH = $(CURRENT_PATH)/../../SequoiaDB/engine
 
 BSON_SOURCE = $(BSON_PATH)/numbers.c $(BSON_PATH)/bson.c $(BSON_PATH)/encoding.c
+
+MD5_SOURCE = $(MD5_PATH)/md5.c
+MD5_HEADER = $(MD5_HEADER_PATH)/md5.h
 
 EXTERNAL_SOURCE = $(EXTERNAL_PATH)/client.c  $(EXTERNAL_PATH)/oss.c     $(EXTERNAL_PATH)/ossUtil.c \
                   $(EXTERNAL_PATH)/common.c  $(EXTERNAL_PATH)/network.c $(EXTERNAL_PATH)/ossMem.c \
@@ -20,6 +26,9 @@ EXTERNAL_HEADER = $(EXTERNAL_PATH)/client.h   $(EXTERNAL_PATH)/jstobs.h  $(EXTER
                   $(EXTERNAL_PATH)/msgDef.h   $(EXTERNAL_PATH)/network.h $(EXTERNAL_PATH)/common.h \
                   $(EXTERNAL_PATH)/pmdOptions.h                          $(EXTERNAL_PATH)/msgCatalogDef.h \
                   $(EXTERNAL_PATH)/fmpDef.h   $(EXTERNAL_PATH)/oss.h     $(EXTERNAL_PATH)/cJSON.h
+
+$(MD5_PATH)/md5.c:                  $(ENGINE_PATH)/bson/md5.c
+$(MD5_HEADER_PATH)/md5.h:           $(ENGINE_PATH)/bson/lib/md5.h
 
 $(BSON_PATH)/numbers.c:             $(ENGINE_PATH)/client/bson/numbers.c
 $(BSON_PATH)/bson.c:                $(ENGINE_PATH)/client/bson/bson.c
@@ -68,13 +77,13 @@ endif
 OPTIMIZATION?=-O3
 WARNINGS?=-Wall -Wno-unknown-pragmas -Wno-missing-prototypes -Wno-missing-format-attribute
 DEBUG?=-ggdb
-INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH)
+INCLUDEPATH=-I$(EXTERNAL_PATH) -I$(BSON_PATH) -I$(MD5_PATH)
 ALL_CFLAGS=$(CFLAGS) $(OPTIMIZATION) $(WARNINGS) $(DEBUG) $(INCLUDEPATH) $(ALL_DEFINES) $(DYN_FLAGS)
 
 
 # Files declare
-COPY_FILES = $(EXTERNAL_SOURCE) $(BSON_SOURCE) $(BSON_HEADER) $(EXTERNAL_HEADER)
-OBJECTS := $(foreach filename,$(EXTERNAL_SOURCE) $(BSON_SOURCE),$(filename:%.c=%.os))
+COPY_FILES = $(MD5_SOURCE) $(EXTERNAL_SOURCE) $(BSON_SOURCE) $(BSON_HEADER) $(EXTERNAL_HEADER) $(MD5_HEADER)
+OBJECTS := $(foreach filename,$(EXTERNAL_SOURCE) $(BSON_SOURCE) $(MD5_SOURCE),$(filename:%.c=%.os))
 COMPILEOBJECTS = $(OBJECTS)
 
 # PG Usage
@@ -86,7 +95,7 @@ OBJS = sdb_fdw.o $(OBJECTS)
 SHLIB_LINK = -lcrypto
 
 # Procedures
-local: $(BSON_PATH) $(COPY_FILES) $(COMPILEOBJECTS)
+local: $(BSON_PATH) $(MD5_HEADER_PATH) $(MD5_PATH) $(COPY_FILES) $(COMPILEOBJECTS)
 
 $(BSON_PATH):
 	mkdir -p $@
@@ -94,6 +103,15 @@ $(BSON_PATH):
 $(BSON_PATH)/%.c:
 	cp -f $< $@
 	sed -i "s/bson/sdbbson/g" $@
+	
+$(MD5_HEADER_PATH):
+	mkdir -p $@
+	
+$(MD5_HEADER_PATH)/md5.h:
+	cp -f $< $@
+
+$(MD5_PATH)/md5.c:
+	cp -f $< $@
 
 $(EXTERNAL_PATH)/%.c:
 	cp -f $< $@
@@ -106,6 +124,9 @@ $(BSON_PATH)/%.h:
 $(EXTERNAL_PATH)/%.h:
 	cp -f $< $@
 	sed -i "s/bson/sdbbson/g" $@
+
+$(MD5_PATH)/%.o: %.c
+	$(CC) -o $@ -c $(ALL_CFLAGS) $<
 
 $(EXTERNAL_PATH)/%.o: %.c
 	$(CC) -o $@ -c $(ALL_CFLAGS) $<

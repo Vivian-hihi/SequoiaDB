@@ -723,6 +723,9 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
       case FLOAT4ARRAYOID:
       /* FLOAT8ARRAY is not support */
       case INT2ARRAYOID:
+      /* this type do not have type name, so we must use the value(see more types in pg_type.h) */ 
+      case 1115:
+      case 1182:
       {
          Datum datumTmp ;
          bool isNull            = false ;
@@ -736,6 +739,8 @@ int sdbSetBsonValue( sdbbson *bsonObj, const char *name, Datum valueDatum,
             sdbSetBsonValue( bsonObj, "", datumTmp, element_type, 0 ) ;
          }
          sdbbson_append_finish_array( bsonObj ) ;
+
+         array_free_iterator(iterator);
          
          break ;
       }
