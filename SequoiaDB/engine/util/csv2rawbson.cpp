@@ -1805,6 +1805,13 @@ INT32 csvParser::csv2bson( CHAR *pBuffer, INT32 size, CHAR **ppRawbson )
             }
             ++fieldNum ;
          }
+         else
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG ( PDERROR, "CSV format error, only one side of \
+the field appears delChar, rc = %d", rc ) ;
+            goto error ;
+         }
          break ;
       }
 
