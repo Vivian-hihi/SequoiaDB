@@ -351,13 +351,27 @@ namespace engine
       INT32 rc = SDB_OK ;
       pmdKRCB *krcb = pmdGetKRCB() ;
 
-      std::cout << "Begin to clean dps logs..." << std::endl ;
+      // check sequoaidb is not running
+      rc = pmdGetStartup()->init( pmdGetOptionCB()->getDbPath() ) ;
+      if ( rc )
+      {
+         std::cout << "Check sequoiadb("
+                   << pmdGetOptionCB()->getServiceAddr()
+                   << ") is not running...FAILED" << std::endl ;
+         goto error ;
+      }
+      std::cout << "Check sequoiadb("
+                << pmdGetOptionCB()->getServiceAddr()
+                << ") is not running...OK" << std::endl ;
+
       // clean dps logs
+      std::cout << "Begin to clean dps logs..." << std::endl ;
       rc = sdbCleanDirFiles( pmdGetOptionCB()->getReplLogPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to clean dps logs[%s], rc: %d",
                    pmdGetOptionCB()->getReplLogPath(), rc ) ;
-      std::cout << "Begin to clean dms storages..." << std::endl ;
+
       // clean dms storages
+      std::cout << "Begin to clean dms storages..." << std::endl ;
       rc = sdbCleanDirSUFiles( pmdGetOptionCB()->getDbPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to clean data[%s] su, rc: %d",
                    pmdGetOptionCB()->getDbPath(), rc ) ;
@@ -368,19 +382,10 @@ namespace engine
          PD_RC_CHECK( rc, PDERROR, "Failed to clean index[%s], rc: %d",
                       pmdGetOptionCB()->getIndexPath(), rc ) ;
       }
+
       // remove start file
-      {
-         CHAR startFile[ OSS_MAX_PATHSIZE + 1 ] = {0} ;
-         utilBuildFullPath( pmdGetOptionCB()->getDbPath(),
-                            PMD_STARTUP_FILE_NAME,
-                            OSS_MAX_PATHSIZE, startFile ) ;
-         if ( SDB_OK == ossAccess( startFile ) )
-         {
-            rc = ossDelete( startFile ) ;
-            PD_RC_CHECK( rc, PDERROR, "Failed to remove start file[%s], rc: %d",
-                         startFile, rc ) ;
-         }
-      }
+      pmdGetStartup().ok( TRUE ) ;
+      pmdGetStartup().final() ;
 
       std::cout << "Begin to init dps logs..." << std::endl ;
 
