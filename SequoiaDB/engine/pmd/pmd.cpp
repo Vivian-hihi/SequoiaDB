@@ -57,7 +57,6 @@ namespace engine
       _init             = FALSE ;
       _isActive         = FALSE ;
 
-      _startType = SDB_START_NORMAL ;
       /* <-- internal status, can't be modified by config file --> */
       setDBStatus ( PMD_DB_NORMAL ) ;
       /* <-- external status, can be changed by modifying config file --> */

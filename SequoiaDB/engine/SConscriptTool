@@ -72,7 +72,8 @@ pmdFiles = [
       "cls/clsUtil.cpp",
       "pmd/pmdOptionsMgr.cpp",
       "pmd/pmdEnv.cpp",
-      "pmd/pmdSignalHandler.cpp"
+      "pmd/pmdSignalHandler.cpp",
+      "pmd/pmdStartup.cpp"
       ]
 
 rtnFiles = [

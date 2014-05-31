@@ -46,6 +46,15 @@ namespace engine
 {
 
    /*
+      PMD Start type define
+   */
+   enum SDB_START_TYPE
+   {
+      SDB_START_NORMAL  = 0,
+      SDB_START_CRASH
+   } ;
+
+   /*
       _pmdStartup define
    */
    class _pmdStartup : public SDBObject
@@ -54,17 +63,19 @@ namespace engine
          _pmdStartup () ;
          ~_pmdStartup () ;
 
-         INT32 init () ;
+         INT32 init ( const CHAR *pPath, BOOLEAN onlyCheck = FALSE ) ;
          INT32 final () ;
          void  ok ( BOOLEAN bOK = TRUE ) ;
          BOOLEAN isOK () const ;
+         SDB_START_TYPE getStartType() const { return _startType ; }
 
       private:
-         OSSFILE      _file ;
-         std::string  _fileName ;
-         BOOLEAN      _ok ;
-         BOOLEAN      _fileOpened ;
-         BOOLEAN      _fileLocked ;
+         OSSFILE           _file ;
+         std::string       _fileName ;
+         BOOLEAN           _ok ;
+         SDB_START_TYPE    _startType ;
+         BOOLEAN           _fileOpened ;
+         BOOLEAN           _fileLocked ;
    };
 
    typedef _pmdStartup pmdStartup ;

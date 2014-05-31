@@ -97,7 +97,7 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       //analysis the start type
-      rc = pmdGetStartup().init() ;
+      rc = pmdGetStartup().init( pmdGetOptionCB()->getDbPath() ) ;
       PD_RC_CHECK( rc, PDERROR, "Start up check failed[rc:%d]", rc ) ;
 
       // Init qgm strategy table
@@ -119,9 +119,8 @@ namespace engine
       pmdKRCB *krcb            = pmdGetKRCB () ;
       pmdEDUMgr *eduMgr        = krcb->getEDUMgr () ;
       pmdEDUCB *cb             = NULL ;
-      SDB_START_TYPE startType = krcb->getStartType () ;
 
-      if ( SDB_START_CRASH == startType )
+      if ( !pmdGetStartup().isOK() )
       {
          PD_LOG ( PDEVENT, "Crash recovery is required, perform full database "
                   "rebuild" ) ;

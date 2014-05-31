@@ -33,7 +33,6 @@
 *******************************************************************************/
 
 #include "pmdStartup.hpp"
-#include "pmd.hpp"
 #include "ossUtil.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
@@ -41,11 +40,14 @@
 namespace engine
 {
 
-#define PMD_STARTUP_INVALID_CHAR       "SEQUOIADB:STARTUP"
-#define PMD_STARTUP_INVALID_CHAR_LEN   ossStrlen(PMD_STARTUP_INVALID_CHAR)
+   #define PMD_STARTUP_START_CHAR         "SEQUOIADB:STARTUP"
+   #define PMD_STARTUP_STOP_CHAR          "SEQUOIADB:STOPOFF"
+   #define PMD_STARTUP_START_CHAR_LEN     ossStrlen(PMD_STARTUP_START_CHAR)
+   #define PMD_STARTUP_STOP_CHAR_LEN      ossStrlen(PMD_STARTUP_STOP_CHAR)
 
    _pmdStartup::_pmdStartup () :
    _ok(FALSE),
+   _startType(SDB_START_NORMAL),
    _fileOpened ( FALSE ),
    _fileLocked ( FALSE )
    {
@@ -58,11 +60,6 @@ namespace engine
    void _pmdStartup::ok ( BOOLEAN bOK )
    {
       _ok = bOK ;
-
-      if ( _ok )
-      {
-         pmdGetKRCB()->setStartType ( SDB_START_NORMAL ) ;
-      }
    }
 
    BOOLEAN _pmdStartup::isOK () const
@@ -70,17 +67,17 @@ namespace engine
       return _ok ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTUP_INIT, "_pmdStartup::init" )
-   INT32 _pmdStartup::init ()
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDSTARTUP_INIT, "_pmdStartup::init" )
+   INT32 _pmdStartup::init ( const CHAR *pPath, BOOLEAN onlyCheck )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDSTARTUP_INIT );
       BOOLEAN startUpFromCrash = FALSE ;
-      pmdKRCB *krcb = pmdGetKRCB() ;
       _fileOpened = FALSE ;
       SINT64 written = 0 ;
+      UINT32 mode = OSS_READWRITE ;
 
-      _fileName =  pmdGetOptionCB()->getDbPath() ;
+      _fileName = pPath ;
       _fileName += OSS_FILE_SEP ;
       _fileName += PMD_STARTUP_FILE_NAME ;
 
@@ -89,33 +86,35 @@ namespace engine
       // if the file does not exist, that means we were normally shutdown
       if ( SDB_FNE == rc )
       {
-         krcb->setStartType ( SDB_START_NORMAL ) ;
+         _startType = SDB_START_NORMAL ;
          startUpFromCrash = FALSE ;
          _ok = TRUE ;
+         mode |= OSS_REPLACE ;
+
+         if ( onlyCheck )
+         {
+            goto done ;
+         }
       }
       // if we get permission error, we can't continue
       else if ( SDB_PERM == rc )
       {
-         PD_LOG ( PDSEVERE,
-                  "Permission denied when creating startup file" ) ;
+         PD_LOG ( PDSEVERE, "Permission denied when creating startup file" ) ;
          goto error ;
       }
-      // if we can find the file, that means there were unexpected outage
-      else if ( SDB_OK == rc )
-      {
-         krcb->setStartType ( SDB_START_CRASH ) ;
-         startUpFromCrash = TRUE ;
-         _ok = FALSE ;
-      }
       // for unknown error, let's stop starting up the engine
-      else
+      else if ( rc )
       {
          PD_LOG ( PDSEVERE, "Failed to access startup file, rc = %d", rc ) ;
          goto error ;
       }
+      // file exist means business is not ok
+      else
+      {
+         _ok = FALSE ;
+      }
 
-      rc = ossOpen ( _fileName.c_str(), OSS_REPLACE|OSS_READWRITE,
-                     OSS_RU|OSS_WU|OSS_RG, _file ) ;
+      rc = ossOpen ( _fileName.c_str(), mode, OSS_RU|OSS_WU|OSS_RG, _file ) ;
       if ( SDB_OK != rc )
       {
 #if defined (_WINDOWS)
@@ -134,23 +133,49 @@ namespace engine
          goto error ;
       }
       _fileOpened = TRUE ;
-      // lock the file
-      rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
-      if ( SDB_PERM == rc )
+
+      if ( !onlyCheck )
       {
-         PD_LOG ( PDERROR, "The startup file is already locked, most likely "
-                  "there is another instance running in the directory" ) ;
-         goto error ;
+         // lock the file
+         rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
+         if ( SDB_PERM == rc )
+         {
+            PD_LOG ( PDERROR, "The startup file is already locked, most likely "
+                     "there is another instance running in the directory" ) ;
+            goto error ;
+         }
+         else if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to lock startup file, rc = %d", rc ) ;
+            goto error ;
+         }
+         _fileLocked = TRUE ;
       }
-      else if ( rc )
+
+      if ( !_ok )
       {
-         PD_LOG ( PDERROR, "Failed to lock startup file, rc = %d", rc ) ;
-         goto error ;
+         CHAR text[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
+         rc = ossSeekAndRead( &_file, 0, text, PMD_STARTUP_STOP_CHAR_LEN,
+                              &written ) ;
+         if ( SDB_OK == rc && 0 == ossStrncmp( text ,
+              PMD_STARTUP_STOP_CHAR, PMD_STARTUP_STOP_CHAR_LEN ) )
+         {
+            _startType = SDB_START_NORMAL ;
+         }
+         else
+         {
+            _startType = SDB_START_CRASH ;
+         }
+
+         if ( onlyCheck )
+         {
+            goto done ;
+         }
       }
-      _fileLocked = TRUE ;
+
       //write char
-      rc = ossSeekAndWrite ( &_file, 0, PMD_STARTUP_INVALID_CHAR,
-                             PMD_STARTUP_INVALID_CHAR_LEN, &written ) ;
+      rc = ossSeekAndWrite ( &_file, 0, PMD_STARTUP_START_CHAR,
+                             PMD_STARTUP_START_CHAR_LEN, &written ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -167,10 +192,11 @@ namespace engine
       }
 
    done:
-      /*if ( fileOpened )
+      if ( onlyCheck && _fileOpened )
       {
          ossClose( _file ) ;
-      }*/
+         _fileOpened = FALSE ;
+      }
       PD_TRACE_EXITRC ( SDB__PMDSTARTUP_INIT, rc );
       return rc ;
    error:
@@ -179,6 +205,17 @@ namespace engine
 
    INT32 _pmdStartup::final ()
    {
+      if ( _fileOpened )
+      {
+         INT64 write = 0 ;
+         INT32 rc = ossSeekAndWrite( &_file, 0, PMD_STARTUP_STOP_CHAR,
+                                     PMD_STARTUP_STOP_CHAR_LEN, &write ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to write startup file stop char, rc: %d",
+                    rc ) ;
+         }
+      }
       if ( _fileLocked )
       {
          ossLockFile ( &_file, OSS_LOCK_UN ) ;

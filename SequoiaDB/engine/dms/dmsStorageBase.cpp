@@ -37,11 +37,11 @@
 *******************************************************************************/
 
 #include "dmsStorageBase.hpp"
-#include "pmd.hpp"
 #include "dmsStorageData.hpp"
 #include "dmsStorageJob.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
+#include "pmdStartup.hpp"
 
 using namespace bson ;
 
@@ -940,7 +940,7 @@ namespace engine
    {
       // if we are in crash recovery mode, only recovery thread is able to
       // perform query, in this case we always return TRUE
-      if ( pmdGetKRCB()->getStartType() == SDB_START_CRASH )
+      if ( !pmdGetStartup().isOK() )
       {
          return TRUE ;
       }

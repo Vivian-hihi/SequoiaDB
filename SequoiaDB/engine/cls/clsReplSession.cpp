@@ -75,8 +75,8 @@ namespace engine
 
       _syncSrc.value = MSG_INVALID_ROUTEID ;
 
-      //if start form crash, should full sync
-      if ( SDB_START_CRASH == pmdGetKRCB()->getStartType() )
+      // if start form crash, should full sync
+      if ( !pmdGetStartup().isOK() )
       {
          _status = CLS_SESSION_STATUS_FULL_SYNC ;
       }

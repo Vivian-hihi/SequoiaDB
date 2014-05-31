@@ -74,15 +74,6 @@ namespace engine
       } while ( 0 );
 
    /*
-      PMD Start type define
-   */
-   enum SDB_START_TYPE
-   {
-      SDB_START_NORMAL  = 0,
-      SDB_START_CRASH
-   } ;
-
-   /*
       Register db to krcb
    */
    #define PMD_REGISTER_CB(pCB)  pmdGetKRCB()->registerCB(pCB, (void*)pCB)
@@ -138,7 +129,6 @@ namespace engine
       CHAR           _groupName[ OSS_MAX_GROUPNAME_SIZE + 1 ] ;
       CHAR           _hostName[ OSS_MAX_HOSTNAME + 1 ] ;
       SDB_ROLE       _role ;
-      SDB_START_TYPE _startType ;
 
       UINT32         _dbStatus ;
 
@@ -156,14 +146,6 @@ namespace engine
 
    public :
 
-      SDB_START_TYPE getStartType () const
-      {
-         return _startType ;
-      }
-      void setStartType ( SDB_START_TYPE startType )
-      {
-         _startType = startType ;
-      }
       UINT32 getDBStatus () const
       {
          return _dbStatus ;

@@ -639,7 +639,6 @@ namespace CLSMGR
                { // process is not running
                   const CHAR *dbpath = vm[PMD_OPTION_DBPATH
                      ].as<string>().c_str() ;
-                  CHAR startupFile[OSS_MAX_PATHSIZE + 1] = { 0 } ;
                   if ( NULL == dbpath )
                   { // "dbpath" in config file has not value
                      proc.startTime.push ( now ) ;
@@ -648,17 +647,16 @@ namespace CLSMGR
                      rc = SDB_INVALIDPATH ;
                      goto error ;
                   }
-                  rc = utilBuildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
-                                          OSS_MAX_PATHSIZE, startupFile );
+                  pmdStartup startUpFile ;
+                  rc = startUpFile.init( dbpath, TRUE ) ;
                   if ( rc )
                   {
                      proc.startTime.push ( now ) ;
-                     PD_LOG ( PDERROR, "Invalid arguments: %s",
-                              confpath.c_str() ) ;
+                     PD_LOG ( PDERROR, "Init startup file[%s] failed, rc: %d",
+                              confpath.c_str(), rc ) ;
                      goto error ;
                   }
-                  rc = ossAccess ( startupFile ) ;
-                  if ( SDB_OK == rc )
+                  if ( SDB_START_CRASH == startUpFile.getStartType() )
                   {
                      // engine crash but pidMonitor not yet detect,
                      // restart it by client manually
@@ -1682,7 +1680,6 @@ namespace CLSMGR
             continue ;
          }
          const CHAR *dbpath = vm[PMD_OPTION_DBPATH].as<string>().c_str() ;
-         CHAR startupFile[ OSS_MAX_PATHSIZE + 1 ] = { 0 } ;
          if ( NULL == dbpath )
          {
             if ( proc.errNumber != 3 )
@@ -1694,13 +1691,14 @@ namespace CLSMGR
             ++it ;
             continue ;
          }
-         rc = utilBuildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
-                                 OSS_MAX_PATHSIZE, startupFile ) ;
+         pmdStartup startUpFile ;
+         rc = startUpFile.init( dbpath, TRUE ) ;
          if ( rc )
          {
             if ( proc.errNumber != 4 )
             {
-               PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
+               PD_LOG ( PDERROR, "Init startup file[%s] failed, rc: %d",
+                        conf.c_str(), rc ) ;
                proc.errNumber = 4 ;
             }
             ++it ;
@@ -1709,8 +1707,7 @@ namespace CLSMGR
 
          proc.errNumber = 0 ;
 
-         rc = ossAccess ( startupFile ) ;
-         if ( SDB_OK == rc )
+         if ( SDB_START_CRASH == startUpFile.getStartType() )
          {
             // the process was quit unexpectedly
             OSS_BIT_CLR_SET ( proc.status, BIT_RESTARTING ) ;
@@ -1740,128 +1737,6 @@ namespace CLSMGR
       return ;
    }
 
-/*
-   void pidMonitor ()
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PIDMONITOR );
-
-      ossLatch ( &listLocker ) ;
-      map<string, struct Process>::iterator it = svcList.begin();
-      while ( it != svcList.end())
-      {
-         const string &svcname = it->first ;
-         PD_TRACE1 ( SDB_PIDMONITOR, PD_PACK_STRING(svcname.c_str()) );
-         struct Process &proc = it->second ;
-         if ( OSS_BIT_TEST ( proc.status, BIT_STARTING ) ||
-              OSS_BIT_TEST ( proc.status, BIT_RESTARTING ) )
-         { // if status starting or restarting, do nothing
-            ++it ;
-            continue ;
-         }
-         else if ( !ossIsProcessRunning ( proc.pid ) )
-         { // if status running( or restarting failed ) && not exist pid
-            // check restarting count
-            if ( resCount > 0 )
-            {
-               // get the starting time of this node
-               queue<time_t> &startTime = proc.startTime ;
-               INT32 size = startTime.size() ;
-               if ( size >= ( resCount + 1 ) )
-               { // if count of starting greater than count of restarting plus first starting
-                  // only save the recent ( resCount + 1 ) records
-                  for ( INT32 i = 0; i < size - ( resCount + 1 ); ++i )
-                     startTime.pop() ;
-                  if ( resInterval <= 0 ||
-                       ( ( startTime.back() - startTime.front() )/60 ) <= resInterval )
-                  { // if resInterval <= 0 or time of interval <= resInterval
-                     svcList.erase ( it++ ) ;
-                     PD_LOG ( PDEVENT, "Sequoiadb restart time out, svcname = %s",
-                              svcname.c_str() ) ;
-                     continue ;
-                  }
-               } // if ( size >= ( resCount + 1 ) )
-            } // if ( resCount > 0 )
-            else if ( resCount == 0 )
-            { // never restart
-               svcList.erase ( it++ ) ;
-               PD_LOG ( PDEVENT, "Sequoiadb restart time out, svcname = %s",
-                        svcname.c_str() ) ;
-               continue ;
-            }
-
-            po::options_description desc ( "Command options" ) ;
-            po::variables_map vm ;
-            PMD_ADD_PARAM_OPTIONS_BEGIN( desc )
-               PMD_COMMANDS_OPTIONS
-            PMD_ADD_PARAM_OPTIONS_END
-            string conf = pmdConf ;
-            conf += OSS_FILE_SEP + svcname + OSS_FILE_SEP PMD_DFT_CONF ;
-            rc = utilReadConfigureFile ( conf.c_str(), desc, vm ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Can not read configure file: %s",
-                        conf.c_str() ) ;
-               svcList.erase ( it++ ) ;
-               continue ;
-            }
-            else if ( vm.count( PMD_OPTION_DBPATH ) )
-            { // if exist "dbpath" in config file
-               const CHAR *dbpath = vm[PMD_OPTION_DBPATH].as<string>().c_str() ;
-               CHAR startupFile[OSS_MAX_PATHSIZE + 1];
-               if ( NULL == dbpath )
-               {
-                  PD_LOG ( PDERROR, "Can not read dbpath from configure file: %s",
-                           conf.c_str() ) ;
-                  svcList.erase ( it++ ) ;
-                  continue ;
-               }
-               rc = utilBuildFullPath( dbpath, PMD_STARTUP_FILE_NAME,
-                                       OSS_MAX_PATHSIZE, startupFile );
-               if ( rc )
-               {
-                  PD_LOG ( PDERROR, "Invalid arguments", conf.c_str() ) ;
-                  svcList.erase ( it++ ) ;
-                  continue ;
-               }
-               rc = ossAccess ( startupFile ) ;
-               if ( SDB_OK == rc )
-               { // if we can find startup file, that means the engine was unexpectedly stopped
-                  OSS_BIT_CLR_SET ( proc.status, BIT_RESTARTING ) ;
-                  try
-                  {
-                     boost::thread sdbstart ( sdbStart2, svcname, TYPE_MONITOR ) ;
-                     sdbstart.detach() ;
-                  }
-                  catch ( boost::exception& )
-                  {
-                     PD_LOG ( PDERROR, "Unknown thread exception" ) ;
-                     // restore status to "RUNNING", detected the failure later
-                     OSS_BIT_CLR_SET ( proc.status, BIT_RUNNING ) ;
-                  }
-               }
-               else if ( SDB_FNE == rc )
-               { // if we can't find the file, that means the engine was normally stopped
-                  svcList.erase ( it++ ) ;
-                  PD_LOG ( PDEVENT, "Sequoiadb stopped normally, svcname = %s",
-                           svcname.c_str() ) ;
-               }
-               else
-               { // permission error or system error
-                  PD_LOG ( PDERROR, "Permission error or system error: rc = %d", rc ) ;
-                  svcList.erase ( it++ ) ;
-               }
-            } // else if ( vm.count( PMD_OPTION_DBPATH ) )
-            else
-               ++it ;
-         }// else if ( !ossIsProcessRunning ( proc.pid ) )
-         else // if status running && exitst pid
-            ++it ;
-      }// while ( it != svcList.end())
-      ossUnlatch ( &listLocker ) ;
-      PD_TRACE_EXITRC ( SDB_PIDMONITOR, rc );
-   }*/
-   
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCM_INITENV, "initEnv" )
    INT32 initEnv( UINT16 &port )
    {

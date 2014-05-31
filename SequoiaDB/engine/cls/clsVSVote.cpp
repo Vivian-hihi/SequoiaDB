@@ -34,9 +34,9 @@
 *******************************************************************************/
 
 #include "clsVSVote.hpp"
-#include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "pmdStartup.hpp"
 
 namespace engine
 {
@@ -155,8 +155,7 @@ namespace engine
       _timeout() = 0 ;
       _accepted() = 0 ;
 
-      if ( _info()->groupSize() == 1 &&
-           SDB_START_NORMAL == pmdGetKRCB()->getStartType())
+      if ( _info()->groupSize() == 1 && pmdGetStartup().isOK() )
       {
          next = CLS_ELECTION_STATUS_ANNOUNCE ;
       }

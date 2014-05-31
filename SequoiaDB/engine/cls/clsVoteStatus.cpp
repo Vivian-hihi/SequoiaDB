@@ -40,6 +40,7 @@
 #include "pd.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
+#include "pmdStartup.hpp"
 
 namespace engine
 {
@@ -66,7 +67,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU ) ;
 
-      if ( SDB_START_NORMAL != pmdGetKRCB()->getStartType() )
+      if ( !pmdGetStartup().isOK() )
       {
          PD_LOG ( PDINFO, "Start type isn't normal, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -185,7 +186,7 @@ namespace engine
             }
          }
       }
-      if ( SDB_START_NORMAL == pmdGetKRCB()->getStartType() )
+      if ( pmdGetStartup().isOK() )
       {
          DPS_LSN local = _logger->getCurrentLsn() ;
          INT32 cRc = local.compare( lsn ) ;

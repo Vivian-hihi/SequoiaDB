@@ -39,9 +39,10 @@
 #include "dpsLogPage.hpp"
 #include "dpsLogFileMgr.hpp"
 #include "pd.hpp"
-#include "pmd.hpp"
 #include "pdTrace.hpp"
 #include "dpsTrace.hpp"
+#include "dpsLogRecord.hpp"
+#include "pmdStartup.hpp"
 
 namespace engine
 {
@@ -248,7 +249,7 @@ namespace engine
                  "config[%d]", fileSize - sizeof(dpsLogHeader),
                  _fileSize ) ;
          // start up from crash
-         if ( SDB_START_CRASH == pmdGetKRCB()->getStartType() )
+         if ( !pmdGetStartup().isOK() )
          {
             rc = ossTruncateFile( _file, _fileSize + sizeof(dpsLogHeader) ) ;
             if ( rc )
