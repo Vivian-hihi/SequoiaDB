@@ -352,7 +352,7 @@ namespace engine
       pmdKRCB *krcb = pmdGetKRCB() ;
 
       // check sequoaidb is not running
-      rc = pmdGetStartup()->init( pmdGetOptionCB()->getDbPath() ) ;
+      rc = pmdGetStartup().init( pmdGetOptionCB()->getDbPath() ) ;
       if ( rc )
       {
          std::cout << "Check sequoiadb("
