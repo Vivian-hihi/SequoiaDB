@@ -228,12 +228,12 @@ static INT32 strlen_a ( const CHAR *data )
            data[0] == '\\' )*/
       if ( data[0] == '\"' ||
            data[0] == '\\' ||
-           data[0] == '/' ||
            data[0] == '\b' ||
            data[0] == '\f' ||
            data[0] == '\n' ||
            data[0] == '\r' ||
            data[0] == '\t' )
+//         data[0] == '/' || )
       {
          ++len ;
       }
