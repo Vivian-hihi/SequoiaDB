@@ -584,11 +584,7 @@ static BOOLEAN bsonConvertJson ( CHAR **pbuf,
          {
             break ;
          }
-         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
-         CHECK_LEFT ( left )
          bsonConvertJsonRawConcat ( pbuf, left, temp, FALSE ) ;
-         CHECK_LEFT ( left )
-         bsonConvertJsonRawConcat ( pbuf, left, "\"", FALSE ) ;
          CHECK_LEFT ( left )
          break ;
       }
