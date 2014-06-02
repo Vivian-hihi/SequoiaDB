@@ -180,6 +180,7 @@ namespace engine
       {
          goto error ;
       }
+      ossFsync( &_file ) ;
 
       // print startup from crash/normal after locked the file
       if ( startUpFromCrash )
