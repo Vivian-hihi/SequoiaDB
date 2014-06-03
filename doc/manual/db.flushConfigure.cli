@@ -15,7 +15,7 @@ flushConfigure - Brush disk configuration to configuration files.
 .sp 2
 
 .sp 2
-db.flushConfigure(\fBrule\fR)
+db.flushConfigure(\fB<rule>\fR)
 .SH "CATEGORY"
 
 .sp 2
