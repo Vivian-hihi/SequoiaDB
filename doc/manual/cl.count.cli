@@ -53,4 +53,4 @@ db.foo.bar.count()
 Count records that contain the value "Tom" on the field "name"
 and the value on the field "age" greater than 25.
 .sp 2
-db.foo.bar.count({name:”Tom”,age:{$gt:25}})
+db.foo.bar.count({name:"Tom",age:{$gt:25}})
