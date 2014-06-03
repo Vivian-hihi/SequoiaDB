@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-createCataRG - Create a new catalog partition group.
+createCataRG - Create a new catalog ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -15,7 +15,7 @@ createCataRG - Create a new catalog partition group.
 .sp 2
 
 .sp 2
-db.createCataRG(\fBhost\fR,\fBservice\fR,\fBdbpath\fR,\fB[config]\fR)
+db.createCataRG(\fB<host>\fR,\fB<service>\fR,\fB<dbpath>\fR,\fB[config]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -25,8 +25,8 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create a new catalog partition group, and create and start a
-catalog node.
+Create a new catalog ReplicaGroup, and create and start a catalog
+node.
 .sp 2
 \fBhost (string)\fR
 .br
