@@ -49,8 +49,6 @@ namespace engine
 
    _omManager::~_omManager()
    {
-      // TODO:XUJIANHUI
-      final() ;
       SDB_ASSERT( _vecFixBuf.size() == 0, "Fix buff catch must be empty" ) ;
    }
 
