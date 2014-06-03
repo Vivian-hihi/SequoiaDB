@@ -101,6 +101,7 @@ namespace engine
       }
       _catchMap.clear() ;
       SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
+      SDB_ASSERT( _totalMemSize == 0 , "Memory size is error" ) ;
    }
 
    void _pmdSession::attach( _pmdEDUCB * cb )
@@ -176,6 +177,41 @@ namespace engine
             _catchMap.erase( it ) ;
          }
       }
+   }
+
+   INT32 _pmdSession::reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pOld = *ppBuff ;
+      INT32 oldLen = buffLen ;
+
+      if ( buffLen >= len )
+      {
+         goto done ;
+      }
+      len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
+      *ppBuff = ( CHAR* )SDB_OSS_REALLOC( *ppBuff, len ) ;
+      if ( !*ppBuff )
+      {
+         PD_LOG( PDERROR, "Failed to realloc memory, size: %d", len ) ;
+         goto error ;
+      }
+
+      buffLen = len ;
+
+      // update meta info
+      _totalMemSize += ( len - oldLen ) ;
+
+   done:
+      return rc ;
+   error:
+      if ( pOld )
+      {
+         releaseBuff( pOld, oldLen ) ;
+         *ppBuff = NULL ;
+         buffLen = 0 ;
+      }
+      goto done ;
    }
 
    CHAR* _pmdSession::getBuff( INT32 len )
@@ -372,6 +408,7 @@ namespace engine
             pBuff = getBuff( msgSize + 1 ) ;
             if ( !pBuff )
             {
+               rc = SDB_OOM ;
                break ;
             }
             buffSize = getBuffLen() ;
