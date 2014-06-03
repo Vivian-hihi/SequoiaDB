@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-start - It starts replset.
+start - It starts ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,12 +25,12 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-It starts replset. After a replset is started, operations like
-creating nodes can be executed. Users can start specified node
-with the method db.startRG(<name>).
+It starts ReplicaGroup. After a ReplicaGroup is started,
+operations like creating nodes can be executed. Users can start
+specified node with the method db.startRG(<name>).
 .SH "Examples"
 
 .sp 2
-Start replset:
+Start ReplicaGroup:
 .sp 2
 rg.start() //Equal to db.startRG("group")
