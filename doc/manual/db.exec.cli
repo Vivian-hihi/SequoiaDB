@@ -15,7 +15,7 @@ exec - Executing SQL select statement.
 .sp 2
 
 .sp 2
-db.exec(\fBselect sql\fR)
+db.exec(\fB<select sql>\fR)
 .SH "CATEGORY"
 
 .sp 2
