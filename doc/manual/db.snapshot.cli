@@ -15,7 +15,7 @@ snapshot - It lists snapshots.
 .sp 2
 
 .sp 2
-snapshot(\fBsnapType\fR,\fB[cond]\fR,\fB[sel]\fR,\fB[sort]\fR)
+snapshot(\fB<snapType>\fR,\fB[cond]\fR,\fB[sel]\fR,\fB[sort]\fR)
 .SH "CATEGORY"
 
 .sp 2
