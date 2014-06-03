@@ -81,6 +81,7 @@ namespace engine
 
          INT32       allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
          void        releaseBuff( CHAR *pBuff, INT32 buffLen ) ;
+         INT32       reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen ) ;
 
          void        disconnect() ;
          INT32       sendData( const CHAR *pData, INT32 size,
