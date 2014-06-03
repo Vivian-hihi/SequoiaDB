@@ -639,11 +639,11 @@ public class SDBMessageHelper {
 		// Start from
 		sdbMessage.setStartFrom(byteBuffer.getInt());
 
-		// Return rows
-		int returnRowsCount = byteBuffer.getInt();
-		sdbMessage.setReturnRowsCount2(returnRowsCount);
+		// Return record rows
+		int numReturned = byteBuffer.getInt();
+		sdbMessage.setNumReturned(numReturned);
 
-		if (returnRowsCount > 0) {
+		if (numReturned > 0) {
 			List<BSONObject> objList = extractBSONObject(byteBuffer);
 			sdbMessage.setObjectList(objList);
 		} else {
@@ -653,6 +653,56 @@ public class SDBMessageHelper {
 		return sdbMessage;
 	}
 
+	public static SDBMessage msgExtractEvalReply(ByteBuffer byteBuffer)
+			throws BaseException {
+
+		SDBMessage sdbMessage = new SDBMessage();
+
+		int MessageLength = byteBuffer.getInt();
+
+		if (MessageLength < MESSAGE_HEADER_LENGTH) {
+			throw new BaseException("SDB_INVALIDSIZE");
+		}
+
+		// Request message length
+		sdbMessage.setRequestLength(MessageLength);
+
+		// Action code
+		sdbMessage.setOperationCode(Operation.getByValue(byteBuffer.getInt()));
+
+		// nodeID
+		byte[] nodeID = new byte[12];
+		byteBuffer.get(nodeID, 0, 12);
+		sdbMessage.setNodeID(nodeID);
+
+		// Request id
+		sdbMessage.setRequestID(byteBuffer.getLong());
+
+		// context id
+		List<Long> contextIDList = new ArrayList<Long>();
+		contextIDList.add(byteBuffer.getLong());
+		sdbMessage.setContextIDList(contextIDList);
+
+		// flags
+		sdbMessage.setFlags(byteBuffer.getInt());
+
+		// Start from
+		sdbMessage.setStartFrom(byteBuffer.getInt());
+
+		// Not the return record rows, it is the return type of eval result
+		int returnType = byteBuffer.getInt();
+		sdbMessage.setNumReturned(returnType);
+		// Get the extract the error message
+		if ((sdbMessage.getFlags() != 0)) {
+			List<BSONObject> objList = extractBSONObject(byteBuffer);
+			sdbMessage.setObjectList(objList);
+		} else {
+			sdbMessage.setObjectList(null);
+		}
+
+		return sdbMessage;
+	}
+	
 	public static SDBMessage msgExtractReplyRaw(ByteBuffer byteBuffer)
 			throws BaseException {
 
@@ -684,11 +734,11 @@ public class SDBMessageHelper {
 		// Start from
 		sdbMessage.setStartFrom(byteBuffer.getInt());
 
-		// Return rows
-		int returnRowsCount = byteBuffer.getInt();
-		sdbMessage.setReturnRowsCount2(returnRowsCount);
+		// Return record rows
+		int numReturned = byteBuffer.getInt();
+		sdbMessage.setNumReturned(numReturned);
 
-		if (returnRowsCount > 0) {
+		if (numReturned > 0) {
 			List<byte[]> objList = extractRawObject(byteBuffer);
 			sdbMessage.setObjectListRaw(objList);
 		} else
@@ -702,7 +752,7 @@ public class SDBMessageHelper {
 			boolean endianConvert) throws BaseException {
 		long requestID = sdbMessage.getRequestID();
 		long contextId = sdbMessage.getContextIDList().get(0);
-		int returnRowsCount2 = sdbMessage.getReturnRowsCount2();
+		int numReturned = sdbMessage.getNumReturned();
 		byte[] nodeID = sdbMessage.getNodeID();
 		// int responseTo = sdbMessage.getResponseTo();
 
@@ -720,7 +770,7 @@ public class SDBMessageHelper {
 			buf.order(ByteOrder.BIG_ENDIAN);
 		}
 		buf.putLong(contextId);
-		buf.putInt(returnRowsCount2);
+		buf.putInt(numReturned);
 		fieldList.add(buf.array());
 
 		// Concatenate everything

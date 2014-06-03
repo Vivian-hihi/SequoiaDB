@@ -52,7 +52,7 @@ public class DBCursor {
 		connection = dbc.getConnection();
 		sdbMessage = rtnSDBMessage;
 		sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-		sdbMessage.setReturnRowsCount2(-1); // return data count
+		sdbMessage.setNumReturned(-1); // return data count
 		list = new ArrayList<BSONObject>();
 		listRaw = new ArrayList<byte[]>();
 		reqId = rtnSDBMessage.getRequestID();
@@ -67,7 +67,7 @@ public class DBCursor {
 		this.connection = sdb.getConnection();
 		sdbMessage = rtnSDBMessage;
 		sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
-		sdbMessage.setReturnRowsCount2(-1); // return data count
+		sdbMessage.setNumReturned(-1); // return data count
 		list = new ArrayList<BSONObject>();
 		listRaw = new ArrayList<byte[]>();
 		reqId = rtnSDBMessage.getRequestID();

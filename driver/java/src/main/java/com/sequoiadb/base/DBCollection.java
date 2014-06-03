@@ -1538,7 +1538,7 @@ public class DBCollection {
 			// reqId++;
 			sdbMessage.setContextIDList(contextIds);
 			sdbMessage.setRequestID(reqId);
-			sdbMessage.setReturnRowsCount2(-1);
+			sdbMessage.setNumReturned(-1);
 
 			byte[] request = SDBMessageHelper.buildGetMoreRequest(sdbMessage,
 					sequoiadb.endianConvert);

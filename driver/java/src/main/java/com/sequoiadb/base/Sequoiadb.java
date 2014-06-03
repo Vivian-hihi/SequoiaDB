@@ -869,7 +869,7 @@ public class Sequoiadb {
 		newobj.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
 		newobj.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
 		
-		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CRT_PROCEDURES,
+		SDBMessage rtn = adminCommand(SequoiadbConstants.CMD_NAME_CRT_PROCEDURE,
 				                      0,0,0,-1,newobj,
 				                      null,null,null);
 		int flags = rtn.getFlags();
@@ -894,7 +894,7 @@ public class Sequoiadb {
 		BSONObject newobj = new BasicBSONObject();
 		newobj.put( SequoiadbConstants.FIELD_NAME_FUNC, name );
 		
-		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_RM_PROCEDURES,
+		SDBMessage rtn = adminCommand( SequoiadbConstants.CMD_NAME_RM_PROCEDURE,
 				                       0, 0, 0, -1, newobj,
 				                       null, null, null );
 		int flags = rtn.getFlags();
@@ -912,6 +912,53 @@ public class Sequoiadb {
 	{
 		return getList(SDB_LIST_STOREPROCEDURES, 0, 0, 0,
 				       -1, condition, null, null, null);
+	}
+	
+	/**
+	 * @fn Sequoiadb.SptEvalResult evalJS ( String code )
+     * @brief Eval javascript code.
+     * @param code The javasript code
+     * @return The result of the eval operation, including the return value type,
+     *         the return data and the error message. If succeed to eval, error message is null,
+     *         and we can extract the eval result from the return cursor and return type,
+     *         if not, the return cursor and the return type are null, we can extract
+     *         the error mssage for more detail. 
+	 * @exception com.sequoiadb.exception.BaseException
+	 */
+	public Sequoiadb.SptEvalResult evalJS ( String code ) throws BaseException
+	{
+		// check the argument
+		if ( code == null || code.equals("") ){
+			throw new BaseException("SDB_INVALIDARG");
+		}
+		SptEvalResult evalResult = new Sequoiadb.SptEvalResult();
+		// build code type bson
+		BSONObject newObj = new BasicBSONObject();
+		Code codeObj = new Code( code );
+		newObj.put(SequoiadbConstants.FIELD_NAME_FUNC, codeObj);
+		newObj.put(SequoiadbConstants.FMP_FUNC_TYPE, FMP_FUNC_TYPE_JS);
+		
+		SDBMessage rtn = adminCommandEval(SequoiadbConstants.CMD_NAME_EVAL,
+				                      0,0,0,-1,newObj,
+				                      null,null,null);
+		// get error code
+		int flags = rtn.getFlags();
+		// if something wrong with the eval operation, not throws exception here 
+		if (flags != 0) {
+			// get error message
+			List<BSONObject> objList = rtn.getObjectList();
+			if (objList.size() > 0){
+				evalResult.errmsg = rtn.getObjectList().get(0);
+			}
+			return evalResult;
+		}else{
+			// get the return type of eval result
+			long typeValue = rtn.getNumReturned();
+			evalResult.returnType = Sequoiadb.SptReturnType.getTypeByValue((int)typeValue);
+			// set the return cursor
+			evalResult.cursor = new DBCursor(rtn, this);
+			return evalResult;
+		}
 	}
 	
 	/**
@@ -1532,6 +1579,56 @@ public class Sequoiadb {
 		return rtnSDBMessage;
 	}
 
+	private SDBMessage adminCommandEval(String commandString, int flag, long reqID,
+			long skipNum, long returnNum, BSONObject query,
+			BSONObject selector, BSONObject order, BSONObject hint)
+			throws BaseException {
+		// Admin command request
+		// int reqId = 0;
+		BSONObject dummyObj = new BasicBSONObject();
+		SDBMessage sdbMessage = new SDBMessage();
+
+		if (query == null)
+			sdbMessage.setMatcher(dummyObj);
+		else
+			sdbMessage.setMatcher(query);
+		if (selector == null)
+			sdbMessage.setSelector(dummyObj);
+		else
+			sdbMessage.setSelector(selector);
+		if (order == null)
+			sdbMessage.setOrderBy(dummyObj);
+		else
+			sdbMessage.setOrderBy(order);
+		if (hint == null)
+			sdbMessage.setHint(dummyObj);
+		else
+			sdbMessage.setHint(hint);
+
+		sdbMessage.setCollectionFullName(SequoiadbConstants.ADMIN_PROMPT
+				+ commandString);
+
+		sdbMessage.setVersion(1);
+		sdbMessage.setW((short) 0);
+		sdbMessage.setPadding((short) 0);
+		sdbMessage.setFlags(flag);
+		sdbMessage.setNodeID(SequoiadbConstants.ZERO_NODEID);
+		// sdbMessage.setResponseTo(reqId);
+		// reqId++;
+		sdbMessage.setRequestID(reqID);
+		sdbMessage.setSkipRowsCount(skipNum);
+		sdbMessage.setReturnRowsCount(returnNum);
+
+		byte[] request = SDBMessageHelper.buildQueryRequest(sdbMessage,
+				endianConvert);
+		connection.sendMessage(request);
+
+		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
+		SDBMessage rtnSDBMessage = SDBMessageHelper.msgExtractEvalReply(byteBuffer);
+
+		return rtnSDBMessage;
+	}
+	
 	private SDBMessage createCS(String csName, int pageSize)
 			throws BaseException {
 		String commandString = SequoiadbConstants.ADMIN_PROMPT
@@ -1597,5 +1694,73 @@ public class Sequoiadb {
 		}
 	}
 	
+	public static class SptEvalResult {
+		private SptReturnType returnType;
+		private BSONObject errmsg;
+		private DBCursor cursor;
+		
+		public SptEvalResult(){
+			returnType = null;
+			errmsg = null;
+			cursor = null;
+		}
+		
+		public void setReturnType(SptReturnType returnType){
+			this.returnType = returnType;  
+		}
+		
+		public SptReturnType getReturnType(){
+			return returnType;
+		}
+		
+		public void setErrMsg(BSONObject errmsg){
+			this.errmsg = errmsg;
+		}
+		
+		public BSONObject getErrMsg(){
+			return errmsg;
+		}
+		
+		public void setCursor(DBCursor cursor){
+			this.cursor = cursor;
+		}
+		
+		public DBCursor getCursor(){
+			return cursor;
+		}
+	}
 
+	public enum SptReturnType {
+		TYPE_VOID(0),
+		TYPE_STR(1),
+		TYPE_NUMBER(2),
+		TYPE_OBJ(3),
+		TYPE_BOOL(4),
+		TYPE_RECORDSET(5),
+		TYPE_CS(6),
+		TYPE_CL(7),
+		TYPE_RG(8),
+		TYPE_RN(9);
+	   
+		private int typeValue;
+	   
+		private SptReturnType(int typeValue) {
+			this.typeValue = typeValue;
+		}
+	   
+		public int getTypeValue() {
+			return typeValue;
+		}
+	   
+		public static SptReturnType getTypeByValue(int typeValue) {
+			SptReturnType retType = null;
+			for (SptReturnType rt : values()) {
+				if (rt.getTypeValue() == typeValue) {
+					retType = rt;
+					break;
+				}
+			}
+			return retType;
+		}
+	}
 }

@@ -48,7 +48,7 @@ public class SDBMessage {
 	private long skipRowsCount;
 	private long returnRowsCount;
 	private int startFrom;
-	private int returnRowsCount2;
+	private int numReturned;
 	private int killCount;
 	private List<Long> contextIDList;
 	private String messageText;
@@ -121,12 +121,12 @@ public class SDBMessage {
 		this.startFrom = startFrom;
 	}
 
-	public int getReturnRowsCount2() {
-		return returnRowsCount2;
+	public int getNumReturned() {
+		return numReturned;
 	}
 
-	public void setReturnRowsCount2(int returnRowsCount2) {
-		this.returnRowsCount2 = returnRowsCount2;
+	public void setNumReturned(int numReturned) {
+		this.numReturned = numReturned;
 	}
 
 	public int getRc() {

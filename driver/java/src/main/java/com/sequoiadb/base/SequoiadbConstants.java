@@ -15,6 +15,8 @@
  */
 package com.sequoiadb.base;
 
+import org.bson.BSONObject;
+
 import com.sequoiadb.exception.BaseException;
 
 /**
@@ -91,8 +93,9 @@ public class SequoiadbConstants {
 	public final static String CMD_NAME_BACKUP_OFFLINE = "backup offline";
 	public final static String CMD_NAME_LIST_BACKUP = "list backups";
 	public final static String CMD_NAME_REMOVE_BACKUP = "remove backup";
-	public final static String CMD_NAME_CRT_PROCEDURES = "create procedures";
-	public final static String CMD_NAME_RM_PROCEDURES = "remove procedures";
+	public final static String CMD_NAME_CRT_PROCEDURE = "create procedure";
+	public final static String CMD_NAME_RM_PROCEDURE = "remove procedure";
+	public final static String CMD_NAME_EVAL = "eval";
 	public final static String CMD_NAME_ATTACH_CL = "link collection";
 	public final static String CMD_NAME_DETACH_CL = "unlink collection";
 	public final static String CMD_NAME_SETSESS_ATTR = "set session attribute";
@@ -168,11 +171,12 @@ public class SequoiadbConstants {
 			0 };
 
 	public enum Operation {
-		OP_REPLY(1), OP_MSG(1000), OP_UPDATE(2001), OP_INSERT(2002), RESERVED(
-				2003), OP_QUERY(2004), OP_GETMORE(2005), OP_DELETE(2006), OP_KILL_CONTEXT(
-				2007), OP_DISCONNECT(2008), MSG_BS_INTERRUPTE(2009), OP_AGGREGATE(2019), MSG_AUTH_VERIFY(7000), MSG_AUTH_CRTUSR(
-				7001), MSG_AUTH_DELUSR(7002), TRANS_BEGIN_REQ(2010), TRANS_COMMIT_REQ(
-				2011), TRANS_ROLLBACK_REQ(2012);
+		OP_REPLY(1), OP_MSG(1000), OP_UPDATE(2001), OP_INSERT(2002),
+		RESERVED(2003), OP_QUERY(2004), OP_GETMORE(2005), OP_DELETE(2006),
+		OP_KILL_CONTEXT(2007), OP_DISCONNECT(2008), MSG_BS_INTERRUPTE(2009),
+		OP_AGGREGATE(2019), MSG_AUTH_VERIFY(7000), MSG_AUTH_CRTUSR(7001),
+		MSG_AUTH_DELUSR(7002), TRANS_BEGIN_REQ(2010), TRANS_COMMIT_REQ(2011),
+		TRANS_ROLLBACK_REQ(2012);
 
 		private int operationCode;
 
@@ -219,4 +223,39 @@ public class SequoiadbConstants {
 			return typeCode;
 		}
 	}
+	
+//	public enum SptReturnType {
+//	   TYPE_VOID(0),
+//	   TYPE_STR(1),
+//	   TYPE_NUMBER(2),
+//	   TYPE_OBJ(3),
+//	   TYPE_BOOL(4),
+//	   TYPE_RECORDSET(5),
+//	   TYPE_CS(6),
+//	   TYPE_CL(7),
+//	   TYPE_RG(8),
+//	   TYPE_RN(9);
+//	   
+//	   private int typeCode;
+//	   
+//	   private SptReturnType(int typeCode) {
+//		   this.typeCode = typeCode;
+//	   }
+//	   
+//	   public int getTypeCode() {
+//		   return typeCode;
+//	   }
+//	   
+//	   public static SptReturnType getByValue(int codeType) {
+//		   SptReturnType retType = null;
+//		   for (SptReturnType rt : values()) {
+//			   if (rt.getTypeCode() == codeType) {
+//				   retType = rt;
+//				   break;
+//			   }
+//		   }
+//		   return retType;
+//	   }
+//	}
+	
 }
