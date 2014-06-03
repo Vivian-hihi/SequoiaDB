@@ -16,7 +16,7 @@ space.
 .sp 2
 
 .sp 2
-db.collectionspace.dropCL(\fBname\fR)
+db.collectionspace.dropCL(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
