@@ -15,7 +15,7 @@ list - Enumerate list.
 .sp 2
 
 .sp 2
-db.list(\fBlistType\fR,\fB[cond]\fR,\fB[sel]\fR,\fB[sort]\fR)
+db.list(\fB<listType>\fR,\fB[cond]\fR,\fB[sel]\fR,\fB[sort]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -35,7 +35,7 @@ system status.
 \fBcond (json object)\fR
 .br
        Selecting condition. It just returns the records that
-       match conditions in "con". When it is null, return all
+       match conditions in "cond". When it is null, return all
        records.
 .sp 2
 \fBsel (json object)\fR
@@ -51,12 +51,12 @@ system status.
        \fBFormat\fR
 .br
               The method "list()" contians 4 parameters:
-              listType, con, sel and sort. The parameter
+              listType, cond, sel and sort. The parameter
               "listType" is in the type of enumeration. Other
               parameters are in the type of json object. The
               format is as follow:
 .br
-              {"listType":"<List type>",["con":"{"field name
+              {"listType":"<List type>",["cond":"{"field name
               1":{"operator 1":"value 1"},"field name
               2":{"operator 2":"value 2"}...}"],["sel":"{"field
               name 1":"","field name
