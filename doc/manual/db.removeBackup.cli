@@ -29,20 +29,20 @@ Delete the database backup.
 .sp 2
 \fBoptions (json object)\fR
 .br
-       Set the backup name, specify the replication group, the
-       backup path and other parameters.
+       Set the backup name, specify the ReplicaGroup, the backup
+       path and other parameters.
 .sp 2
        \fBGroupID\fR
 .br
-              Backup copy group ID specified, the default is all
-              replication groups.
+              Backup ReplicaGroup ID specified, the default is
+              all ReplicaGroup.
 .br
               GroupID:1000 or GroupID:[1000, 1001]
 .sp 2
        \fBGroupName\fR
 .br
-              Backup copy group name is specified, the default is
-              all replication groups.
+              Backup ReplicaGroup name is specified, the default
+              is all ReplicaGroup.
 .br
               GroupName:"data1" or GroupName:["data1", "data2"]
 .sp 2
@@ -56,8 +56,8 @@ Delete the database backup.
 .br
               Backup path, the default configuration parameters
               for the specified backup path. The path supports
-              wildcards(g%: group name, h%: host name, s%:service
-              name)
+              wildcards(%g/%G: group name, %h/%H: host name,
+              %s/%S:service name)
 .br
               Path:"/opt/sequoiadb/backup/%g"
 .sp 2
@@ -71,8 +71,8 @@ Delete the database backup.
 .sp 2
        \fBPrefix\fR
 .br
-              Backup prefix, supports wildcards(g%,h%,s%),
-              default is empty.
+              Backup prefix, supports
+              wildcards(%g,%G,%h,%H,%s,%H), default is empty.
 .br
               Prefix:"%g_bk_"
 .sp 2
