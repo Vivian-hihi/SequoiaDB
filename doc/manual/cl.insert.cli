@@ -15,7 +15,7 @@ insert - Insert records into specified collection.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.insert(\fBdoc|docs\fR,\fB[flag]\fR)
+db.collectionspace.collection.insert(\fB<doc|docs>\fR,\fB[flag]\fR)
 .SH "CATEGORY"
 
 .sp 2
