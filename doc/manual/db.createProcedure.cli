@@ -16,7 +16,7 @@ object.
 .sp 2
 
 .sp 2
-db.createProcedure(\fBcode\fR)
+db.createProcedure(\fB<code>\fR)
 .SH "CATEGORY"
 
 .sp 2
