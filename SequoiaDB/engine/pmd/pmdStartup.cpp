@@ -90,6 +90,7 @@ namespace engine
          startUpFromCrash = FALSE ;
          _ok = TRUE ;
          mode |= OSS_REPLACE ;
+         rc = SDB_OK ;
 
          if ( onlyCheck )
          {
@@ -166,6 +167,7 @@ namespace engine
          {
             _startType = SDB_START_CRASH ;
          }
+         rc = SDB_OK ;
 
          if ( onlyCheck )
          {
