@@ -16,8 +16,7 @@ record, and return the cursor.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.aggregate(\fBproject|match|limit|skip|group|sort
-...\fR)
+db.collectionspace.collection.aggregate(\fB<subOp>...\fR)
 .SH "CATEGORY"
 
 .sp 2
