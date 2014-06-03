@@ -15,7 +15,7 @@ setSessionAttr - Set Session Properties.
 .sp 2
 
 .sp 2
-db.setSessionAttr(\fBoptions\fR)
+db.setSessionAttr(\fB<options>\fR)
 .SH "CATEGORY"
 
 .sp 2
