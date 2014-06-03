@@ -16,7 +16,7 @@ or canceled.
 .sp 2
 
 .sp 2
-db.waitTasks(\fBid1\fR,\fB[id2]\fR,\fB...\fR)
+db.waitTasks(\fB<id1>\fR,\fB[id2]\fR,\fB...\fR)
 .SH "CATEGORY"
 
 .sp 2
