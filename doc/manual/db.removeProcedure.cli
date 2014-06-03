@@ -15,7 +15,7 @@ removeProcedure - Deletes the specified function name.
 .sp 2
 
 .sp 2
-db.removeProcedure(\fBfunction name\fR)
+db.removeProcedure(\fB<function name>\fR)
 .SH "CATEGORY"
 
 .sp 2
