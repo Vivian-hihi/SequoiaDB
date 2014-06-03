@@ -16,7 +16,7 @@ in the database.
 .sp 2
 
 .sp 2
-db.dropUsr(\fBname\fR,\fBpassword\fR)
+db.dropUsr(\fB<name>\fR,\fB<password>\fR)
 .SH "CATEGORY"
 
 .sp 2
