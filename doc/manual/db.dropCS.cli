@@ -16,7 +16,7 @@ instance.
 .sp 2
 
 .sp 2
-db.dropCS(\fBname\fR)
+db.dropCS(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
