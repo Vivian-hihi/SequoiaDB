@@ -212,7 +212,7 @@ namespace engine
       {
          if ( SDB_OK == rc && dpsCB )
          {
-            rc = dpsCB()->completeOpr( cb, w ) ;
+            rc = dpsCB->completeOpr( cb, w ) ;
          }
          cb->resetLsn () ;
       }
