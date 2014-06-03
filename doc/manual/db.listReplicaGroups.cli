@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-listReplicaGroups - List all replsets.
+listReplicaGroups - List all ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-List all replsets.
+List all ReplicaGroup.
 .SH "Examples"
 
 .sp 2
-Return information of all replsets:
+Return information of all ReplicaGroup:
 .sp 2
 > db.listReplicaGroups()
 .br
@@ -151,5 +151,5 @@ Return：{
 .br
   }
 .sp 2
-This replset has 2 nodes: 11800 and 11850. Node 11850 is the
+This ReplicaGroup has 2 nodes: 11800 and 11850. Node 11850 is the
 master node.
