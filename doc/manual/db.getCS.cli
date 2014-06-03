@@ -35,7 +35,7 @@ Return the quotation of a specified collection space.
        \fBFormat\fR
 .br
               The definition formant of \fIgetCS()\fR method only
-              have\fI name \fRparam,it is a string type.
+              have\fI name \fRparam, it is a string type.
 .br
               ("<collectionspace name>")
 .sp 2
@@ -43,8 +43,8 @@ Return the quotation of a specified collection space.
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  the value of param \fIname\fR can't be null 、contain dot(.)
-   or '$',the length of it must be not more than 127B.
+   *  the value of param \fIname\fR can't be null, contain dot(.)
+   or '$', the length of it must be not more than 127B.
 .sp 2
    *  The collectionspace must be existed in the database.
 .SH "Examples"
