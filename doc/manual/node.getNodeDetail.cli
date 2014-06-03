@@ -37,4 +37,4 @@ Return：1000:vmsvr2-suse-x64:11800(shard)
 .br
 Here "1000" is node ID（NodeID）；"vmsvr2-suse-x64" is hostname（HostName）；
 .br
-"11800" is service name（ServiceName），"(shard)" is the replset name of the node.
+"11800" is service name（ServiceName），"(shard)" is the ReplicaGroup name of the node.

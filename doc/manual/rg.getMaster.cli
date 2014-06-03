@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getMaster - Return the master node of a replset.
+getMaster - Return the master node of a ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Return the master node of a replset.
+Return the master node of a ReplicaGroup.
 .SH "Examples"
 
 .sp 2
-Return the master node of a replset.
+Return the master node of a ReplicaGroup.
 .sp 2
 > rg.getMaster()
 .br

@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-stop - Stop replset.
+stop - Stop ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Stop replset. After stopping replset, manipulations lilke
-creating nodes cannot be executed on the replset.
+Stop ReplicaGroup. After stopping ReplicaGroup, manipulations
+lilke creating nodes cannot be executed on the ReplicaGroup.
 .SH "Examples"
 
 .sp 2
-Stop replset.
+Stop ReplicaGroup.
 .sp 2
 rg.stop()

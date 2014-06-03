@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getDetail - Return information of replsets.
+getDetail - Return information of ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Return information of replsets.
+Return information of ReplicaGroup.
 .SH "Examples"
 
 .sp 2

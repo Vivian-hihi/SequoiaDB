@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-removeNode - Delete slice group specified node.
+removeNode - Delete ReplicaGroup specified node.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Delete slice group specified node.
+Delete ReplicaGroup specified node.
 .sp 2
 \fBhost (string)\fR
 .br
@@ -50,7 +50,7 @@ Delete slice group specified node.
 .SH "Examples"
 
 .sp 2
-Delete node command follows slice group shard.
+Delete node command follows ReplicaGroup shard.
 .sp 2
 rg.removeNode("vmsvr2-suse-x64",11800)
 .sp 2

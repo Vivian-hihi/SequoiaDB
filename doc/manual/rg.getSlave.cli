@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getSlave - Return the slave nodes in replset.
+getSlave - Return the slave nodes in ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,11 +25,11 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Return the slave nodes in replset.
+Return the slave nodes in ReplicaGroup.
 .SH "Examples"
 
 .sp 2
-Return slave nodes in replset:
+Return slave nodes in ReplicaGroup:
 .sp 2
 > rg.getSlave()
 .br
