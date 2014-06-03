@@ -687,7 +687,7 @@ namespace CLSMGR
                         goto error ;
                      }
                   }
-                  else if ( SDB_FNE == rc )
+                  else
                   { 
                      // engine stopped normally, but pidMonitor not yet detect,
                      // start again by client
@@ -716,13 +716,6 @@ namespace CLSMGR
                                  svcname.c_str() ) ;
                         goto error ;
                      }
-                  }
-                  else
-                  { // permission error or system error, we can't continue
-                     proc.startTime.push ( now ) ;
-                     PD_LOG ( PDERROR, "Error: rc = %d, svcname = %s",
-                              rc, svcname.c_str() ) ;
-                     goto error ;
                   }
                } // if ( !ossIsProcessRunning ( proc.pid ) )
             } // else if ( OSS_BIT_TEST ( proc.status, BIT_RUNNING ) )
@@ -1722,11 +1715,6 @@ namespace CLSMGR
                // restore status to "RUNNING", detected the failure later
                OSS_BIT_CLR_SET ( proc.status, BIT_RUNNING ) ;
             }
-         }
-         else if ( SDB_FNE != rc )
-         {
-            PD_LOG ( PDERROR, "Permission error or system error: rc = %d",
-                     rc ) ;
          }
 
          ++it ;
