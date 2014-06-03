@@ -16,7 +16,7 @@ space.
 .sp 2
 
 .sp 2
-db.collectionspace.getCL(\fBname\fR)
+db.collectionspace.getCL(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
