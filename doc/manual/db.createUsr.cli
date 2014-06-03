@@ -16,7 +16,7 @@ password.
 .sp 2
 
 .sp 2
-db.createUsr(\fBname\fR,\fBpassword\fR)
+db.createUsr(\fB<name>\fR,\fB<password>\fR)
 .SH "CATEGORY"
 
 .sp 2
