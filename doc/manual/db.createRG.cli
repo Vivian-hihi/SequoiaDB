@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-createRG - Create a replset.
+createRG - Create a ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -15,7 +15,7 @@ createRG - Create a replset.
 .sp 2
 
 .sp 2
-db.createRG(\fBname\fR)
+db.createRG(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -25,13 +25,13 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Create a replset. When creating a replset, the system will
-automatically generate a "groupID" for a replset.
+Create a ReplicaGroup. When creating a ReplicaGroup, the system
+will automatically generate a "groupID" for a ReplicaGroup.
 .sp 2
 \fBname (string)\fR
 .br
-       Replset name. All replset names are unique to each other
-       in a database object.
+       ReplicaGroup name. All ReplicaGroup names are unique to
+       each other in a database object.
 .sp 2
        \fBFormat\fR
 .br
@@ -39,17 +39,17 @@ automatically generate a "groupID" for a replset.
               "rgname", which is in the type od string. It should
               not be null.
 .br
-              (<"Replset name">)
+              (<"ReplicaGroup name">)
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  Replset is not null string. It should not contains "." or
-   "$". The length of it should not be greater than 127B.
+   *  ReplicaGroup is not null string. It should not contains "."
+   or "$". The length of it should not be greater than 127B.
 .SH "Examples"
 
 .sp 2
-Create a replset named "group".
+Create a ReplicaGroup named "group".
 .sp 2
 db.createRG("group")
