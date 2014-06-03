@@ -15,7 +15,7 @@ getCS - Return the quotation of a specified collection space.
 .sp 2
 
 .sp 2
-db.getCS(\fBname\fR)
+db.getCS(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
