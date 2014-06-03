@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-createNode - Create a node in a replset.
+createNode - Create a node in a ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ ReplicaGroup
 .SH "DESCRIPTION"
 
 .sp 2
-Create a node in a replset.
+Create a node in a ReplicaGroup.
 .sp 2
 \fBhost (string)\fR
 .br
@@ -56,14 +56,14 @@ Create a node in a replset.
 .SH "Examples"
 
 .sp 2
-Create a node in port 11800 in replset "group", Specify the log
-file size is 64MB.
+Create a node in port 11800 in ReplicaGroup "group", Specify the
+log file size is 64MB.
 .sp 2
 rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})
 .sp 2
 \fBNote: \fR
 .sp 2
-In a replset, more than one replset can be created. But the
-margin between two ports of them should not be greater than 5.
-Because the system controls 5 communication interfaces for each
-node.
+In a ReplicaGroup, more than one ReplicaGroup can be created. But
+the margin between two ports of them should not be greater than
+5. Because the system controls 5 communication interfaces for
+each node.
