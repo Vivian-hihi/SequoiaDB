@@ -92,7 +92,8 @@ EXTENSION = sdb_fdw
 DATA = sdb_fdw--1.0.sql
 MODULE_big = sdb_fdw
 OBJS = sdb_fdw.o $(OBJECTS)
-SHLIB_LINK = -lcrypto
+#SHLIB_LINK = -lcrypto
+SHLIB_LINK = 
 
 # Procedures
 local: $(BSON_PATH) $(MD5_HEADER_PATH) $(MD5_PATH) $(COPY_FILES) $(COMPILEOBJECTS)
