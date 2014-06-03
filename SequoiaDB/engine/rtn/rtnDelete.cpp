@@ -210,10 +210,9 @@ namespace engine
       }
       if ( cb )
       {
-         if ( SDB_OK == rc && dpsCB && 0 != cb->getLsnCount () && w > 1
-            && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
+         if ( SDB_OK == rc && dpsCB )
          {
-            rc = sdbGetReplCB()->sync ( cb->getEndLsn(), cb, w ) ;
+            rc = dpsCB()->completeOpr( cb, w ) ;
          }
          cb->resetLsn () ;
       }
@@ -364,10 +363,9 @@ namespace engine
       }
       if ( cb )
       {
-         if ( SDB_OK == rc && dpsCB && 0 != cb->getLsnCount () && w > 1
-            && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
+         if ( SDB_OK == rc && dpsCB )
          {
-            rc = sdbGetReplCB()->sync ( cb->getEndLsn(), cb, w ) ;
+            rc = dpsCB->completeOpr( cb, w ) ;
          }
          cb->resetLsn () ;
       }

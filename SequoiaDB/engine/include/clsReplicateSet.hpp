@@ -160,6 +160,11 @@ namespace engine
                                 _pmdEDUCB *&eduCB,
                                 UINT32 w = 1 )
          {
+            if ( DPS_INVALID_LSN_OFFSET == offset || 1 == w )
+            {
+               return SDB_OK ;
+            }
+
             _clsSyncSession session ;
             session.endLsn = offset ;
             session.eduCB = eduCB ;
@@ -193,6 +198,11 @@ namespace engine
                                     INT32 extLID, DPS_LSN_OFFSET offset ) ;
 
          virtual INT32 canAssignLogPage( UINT32 reqLen, pmdEDUCB *cb ) ;
+
+         virtual INT32 onCompleteOpr( _pmdEDUCB *cb, INT32 w )
+         {
+            return sync( cb->getEndLsn(), cb, w ) ;
+         }
 
       public:
          void  regSession ( _clsDataSrcBaseSession *pSession ) ;

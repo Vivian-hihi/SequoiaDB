@@ -102,6 +102,8 @@ namespace engine
 
          virtual void onWriteLog( DPS_LSN_OFFSET offset ) = 0 ;
 
+         virtual INT32 onCompleteOpr( _pmdEDUCB *cb, INT32 w ) = 0 ;
+
    } ;
    typedef _dpsEventHandler dpsEventHandler ;
 

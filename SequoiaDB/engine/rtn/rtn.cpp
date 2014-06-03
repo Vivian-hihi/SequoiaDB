@@ -951,11 +951,9 @@ namespace engine
          //sync
          if ( cb )
          {
-            if ( SDB_OK == rc && pCommand->writable() && dpsCB && w > 1
-               && 0 != cb->getLsnCount ()
-               && pmdGetKRCB()->getDBRole() != SDB_ROLE_STANDALONE )
+            if ( SDB_OK == rc && pCommand->writable() && dpsCB )
             {
-               rc = sdbGetReplCB()->sync ( cb->getEndLsn (), cb, w ) ;
+               rc = dpsCB->completeOpr( cb, w ) ;
             }
             cb->resetLsn () ;
          }

@@ -227,6 +227,8 @@ namespace engine
 
       INT32 prepare( dpsMergeInfo &info ) ;
 
+      INT32 completeOpr( _pmdEDUCB *cb, INT32 w ) ;
+
       void setLogFileSz ( UINT32 logFileSz )
       {
          _buf.setLogFileSz ( logFileSz ) ;

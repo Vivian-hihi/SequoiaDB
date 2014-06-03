@@ -146,6 +146,15 @@ namespace engine
       info.resetInfoEx() ;
    }
 
+   INT32 _dpsLogWrapper::completeOpr( _pmdEDUCB * cb, INT32 w )
+   {
+      if ( _pEventHandler && w > 1 && cb && 0 != cb->getLsnCount() )
+      {
+         return _pEventHandler->onCompleteOpr( cb, w ) ;
+      }
+      return SDB_OK ;
+   }
+
    // record a row
    // PD_TRACE_DECLARE_FUNCTION ( SDB__DPSLGWRAPP_RECDROW, "_dpsLogWrapper::recordRow" )
    INT32 _dpsLogWrapper::recordRow( const CHAR *row, UINT32 len )
