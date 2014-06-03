@@ -15,7 +15,7 @@ execUpdate - SQL execution of other statements.
 .sp 2
 
 .sp 2
-db.execUpdate(\fBother sql\fR)
+db.execUpdate(\fB<other sql>\fR)
 .SH "CATEGORY"
 
 .sp 2
