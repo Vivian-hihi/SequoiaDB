@@ -110,7 +110,14 @@ namespace engine
 
          // now we have a tcp socket for a new connection, let's get an agent
          // Note the new new socket sent passing to startEDU
-         rc = eduMgr->startEDU ( EDU_TYPE_RESTAGENT, pData, &agentEDU ) ;
+         if ( SDB_ROLE_OM == pmdGetDBRole() )
+         {
+            rc = eduMgr->startEDU ( EDU_TYPE_RESTAGENT, pData, &agentEDU ) ;
+         }
+         else
+         {
+            rc = eduMgr->startEDU ( EDU_TYPE_HTTPAGENT, pData, &agentEDU ) ;
+         }
 
          if ( rc )
          {

@@ -68,7 +68,6 @@ namespace engine
    {
       //System EDU Type
       EDU_TYPE_TCPLISTENER = 0,
-      EDU_TYPE_HTTPLISTENER,
       EDU_TYPE_RESTLISTENER,
       EDU_TYPE_REPR,
       EDU_TYPE_LOGGW,

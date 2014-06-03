@@ -29,6 +29,7 @@
 #include "pdTrace.hpp"
 #include "aggrBuilder.hpp"
 #include "spdFMPMgr.hpp"
+#include "omManager.hpp"
 
 #endif /* PMD_CB_HPP__ */
 

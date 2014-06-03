@@ -44,7 +44,6 @@
 #include "optQgmStrategy.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
-#include "omManager.hpp"
 #include "pmdController.hpp"
 
 using namespace std;
@@ -111,78 +110,25 @@ namespace engine
       goto done ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDREBLDDB, "pmdRebuildDB" )
-   static INT32 pmdRebuildDB ()
-   {
-      INT32 rc                 = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDREBLDDB );
-      pmdKRCB *krcb            = pmdGetKRCB () ;
-      pmdEDUMgr *eduMgr        = krcb->getEDUMgr () ;
-      pmdEDUCB *cb             = NULL ;
-
-      if ( !pmdGetStartup().isOK() )
-      {
-         PD_LOG ( PDEVENT, "Crash recovery is required, perform full database "
-                  "rebuild" ) ;
-         // memory if free by end of the function
-         // we create a dummy pmdEDUCB for rtnRebuilDB, this is not a real
-         // agent!
-         cb = SDB_OSS_NEW pmdEDUCB ( eduMgr, EDU_TYPE_AGENT ) ;
-         if ( !cb )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate memory for cb" ) ;
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         rc = rtnRebuildDB ( cb ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to rebuild database, rc = %d", rc ) ;
-            goto error ;
-         }
-         pmdGetStartup().ok ( TRUE ) ;
-      }
-   done :
-      if ( cb )
-      {
-         SDB_OSS_DEL cb ;
-      }
-      PD_TRACE_EXITRC ( SDB_PMDREBLDDB, rc );
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDSYSINIT, "pmdSysInit" )
-   INT32 pmdSysInit ()
+   static INT32 _pmdPostInit()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB_PMDSYSINIT ) ;
 
-      SDB_ROLE dbRole = pmdGetDBRole() ;
-
-      if ( SDB_ROLE_OM == dbRole )
+      if ( SDB_ROLE_STANDALONE == pmdGetDBRole() &&
+           !pmdGetStartup().isOK() )
       {
-         sdbGetOMManager()->initialize() ;
+         pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+         rc = rtnRebuildDB( cb ) ;
+         PD_RC_CHECK( rc, PDERROR, "Failed to rebuild database, rc: %d",
+                      rc ) ;
+
+         PD_LOG( PDEVENT, "Rebuild database succeed." ) ;
+         pmdGetStartup().ok( TRUE ) ;
       }
 
-      if ( SDB_ROLE_STANDALONE == dbRole )
-      {
-         // we perform full database rebuild ONLY IN STANDALONE mode!!!
-         // In non-standalone mode, database is going to sync with other nodes,
-         // which is performed in CLS component
-         rc = pmdRebuildDB () ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to rebuild database, rc = %d", rc ) ;
-            goto error ;
-         }
-      }
-
-   done :
-      PD_TRACE_EXITRC ( SDB_PMDSYSINIT, rc );
+   done:
       return rc ;
-   error :
+   error:
       goto done ;
    }
 
@@ -197,7 +143,6 @@ namespace engine
       pmdKRCB   *krcb     = pmdGetKRCB () ;
       pmdEDUMgr *eduMgr   = krcb->getEDUMgr () ;
       EDUID      agentEDU = PMD_INVALID_EDUID ;
-      SDB_ROLE   dbrole ;
       UINT32     startTimerCount = 0 ;
 
       // 1. read command line first
@@ -254,23 +199,11 @@ namespace engine
          goto error ;
       }
 
-      // initialize variables
-      rc = pmdSysInit () ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to initialize, rc: %d", rc ) ;
-
-      dbrole = krcb->getDBRole () ;
-
-      // Then start http listening thread
-      if ( SDB_ROLE_OM != dbrole )
+      // 8. post init
+      rc = _pmdPostInit() ;
+      if ( rc )
       {
-      }
-      else
-      {
-         eduMgr->startEDU ( EDU_TYPE_RESTLISTENER, NULL, &agentEDU ) ;
-         eduMgr->regSystemEDU ( EDU_TYPE_RESTLISTENER, agentEDU ) ;
-         rc = eduMgr->waitUntil( agentEDU, PMD_EDU_RUNNING ) ;
-         PD_RC_CHECK( rc, PDERROR, "Wait HTTPListen active failed, rc: %d",
-                      rc ) ;
+         goto error ;
       }
 
       // wait until business is ok

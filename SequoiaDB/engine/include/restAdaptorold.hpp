@@ -1,5 +1,5 @@
-#ifndef RESTADAPTOR_HPP__
-#define RESTADAPTOR_HPP__
+#ifndef RESTADAPTOROLD_HPP__
+#define RESTADAPTOROLD_HPP__
 #include "core.hpp"
 #include "oss.hpp"
 #include "ossSocket.hpp"
@@ -203,4 +203,4 @@ namespace engine
 }
 
 
-#endif
+#endif // RESTADAPTOROLD_HPP__

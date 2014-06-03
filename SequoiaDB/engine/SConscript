@@ -64,7 +64,6 @@ pmdFiles = [
       "pmd/pmdEDUMgr.cpp",
       "pmd/pmdAgent.cpp",
       "pmd/pmdTcpListener.cpp",
-      "pmd/pmdHTTPListener.cpp",
       "pmd/pmdSignalHandler.cpp",
       "pmd/pmdWindowsListener.cpp",
       "pmd/pmdLoggW.cpp",

@@ -62,6 +62,7 @@ namespace engine
       SDB_CB_AUTH,
       SDB_CB_AGGR,
       SDB_CB_FMP,
+      SDB_CB_OMSVC,
 
       SDB_CB_PMDCTRL,
       // THE MAX CB TYPE
@@ -194,7 +195,7 @@ namespace engine
          virtual INT32  active () = 0 ;
          virtual INT32  deactive () = 0 ;
          virtual INT32  fini () = 0 ;
-         virtual void   onConfigChange() {} ;
+         virtual void   onConfigChange() {}
 
    } ;
    typedef _IControlBlock IControlBlock ;

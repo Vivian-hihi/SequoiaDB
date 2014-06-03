@@ -134,15 +134,15 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Wait Tcp Listerner active failed, rc: %d",
                    rc ) ;
 
-      rc = pEDUMgr->startEDU( EDU_TYPE_HTTPLISTENER, (void*)_pHttpListener,
+      rc = pEDUMgr->startEDU( EDU_TYPE_RESTLISTENER, (void*)_pHttpListener,
                               &eduID ) ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to start http listerner, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to start rest listerner, rc: %d",
                    rc ) ;
-      pEDUMgr->regSystemEDU( EDU_TYPE_HTTPLISTENER, eduID ) ;
+      pEDUMgr->regSystemEDU( EDU_TYPE_RESTLISTENER, eduID ) ;
 
       // wait until http listener starts
       rc = pEDUMgr->waitUntil ( eduID, PMD_EDU_RUNNING ) ;
-      PD_RC_CHECK( rc, PDERROR, "Wait Http Listener active failed, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Wait rest Listener active failed, rc: %d",
                    rc ) ;
 
       if ( SDB_ROLE_COORD != pmdGetDBRole() )
@@ -213,6 +213,14 @@ namespace engine
          PMD_REGISTER_CB( sdbGetDPSCB() ) ;        // DPS
          PMD_REGISTER_CB( sdbGetTransCB() ) ;      // TRANS
          PMD_REGISTER_CB( sdbGetBPSCB() ) ;        // BPS
+      }
+      else if ( SDB_ROLE_OM == dbrole )
+      {
+         PMD_REGISTER_CB( sdbGetDPSCB() ) ;        // DPS
+         PMD_REGISTER_CB( sdbGetTransCB() ) ;      // TRANS
+         PMD_REGISTER_CB( sdbGetBPSCB() ) ;        // BPS
+         PMD_REGISTER_CB( sdbGetAuthCB() ) ;       // AUTH
+         PMD_REGISTER_CB( sdbGetOMManager() ) ;    // OMSVC
       }
 
       PMD_REGISTER_CB( sdbGetDMSCB() ) ;           // DMS

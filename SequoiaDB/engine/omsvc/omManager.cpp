@@ -37,13 +37,6 @@ namespace engine
 {
 
    /*
-      mapping message map
-   */
-   BEGIN_OBJ_MSG_MAP( _omManager, _clsObjBase )
-
-   END_OBJ_MSG_MAP()
-
-   /*
       implement om manager
    */
    _omManager::_omManager()
@@ -61,7 +54,7 @@ namespace engine
       SDB_ASSERT( _vecFixBuf.size() == 0, "Fix buff catch must be empty" ) ;
    }
 
-   INT32 _omManager::initialize ()
+   INT32 _omManager::init ()
    {
       return _restAdptor.init( _fixBufSize, _maxRestBodySize, _restTimeout ) ;
    }
@@ -76,7 +69,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _omManager::final ()
+   INT32 _omManager::fini ()
    {
       // release fix buff catch
       _omLatch.get() ;

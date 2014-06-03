@@ -34,10 +34,10 @@
 #define OM_MANAGER_HPP__
 
 #include "omDef.hpp"
-#include "clsObjBase.hpp"
 #include "ossLatch.hpp"
 #include "pmdRestSession.hpp"
 #include "restAdaptor.hpp"
+#include "sdbInterface.hpp"
 
 #include <vector>
 #include <string>
@@ -51,18 +51,20 @@ namespace engine
    /*
       _omManager define
    */
-   class _omManager : public _clsObjBase
+   class _omManager : public _IControlBlock
    {
-      DECLARE_OBJ_MSG_MAP()
-
       public:
          _omManager() ;
          virtual ~_omManager() ;
 
-         virtual INT32    initialize() ;
-         virtual INT32    active () ;
-         virtual INT32    deactive() ;
-         virtual INT32    final() ;
+         virtual SDB_CB_TYPE cbType() const { return SDB_CB_OMSVC ; }
+         virtual const CHAR* cbName() const { return "OMSVC" ; }
+
+         virtual INT32  init () ;
+         virtual INT32  active () ;
+         virtual INT32  deactive () ;
+         virtual INT32  fini () ;
+         virtual void   onConfigChange() {}
 
          CHAR*       allocFixBuf() ;
          INT32       getFixBufSize() const { return _fixBufSize ; }
