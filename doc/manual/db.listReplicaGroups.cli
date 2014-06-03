@@ -33,7 +33,7 @@ Return information of all ReplicaGroup:
 .sp 2
 > db.listReplicaGroups()
 .br
-Return：{
+Return: {
 .br
   "Group": [
 .br
