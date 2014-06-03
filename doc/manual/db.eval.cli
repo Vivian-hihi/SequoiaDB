@@ -15,7 +15,7 @@ eval - According need to fill javaScript statement.
 .sp 2
 
 .sp 2
-db.eval(\fBcode\fR)
+db.eval(\fB<code>\fR)
 .SH "CATEGORY"
 
 .sp 2
