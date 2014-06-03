@@ -15,7 +15,7 @@ cancelTask - Cancel the task
 .sp 2
 
 .sp 2
-db.cancelTask(\fBid\fR\fB,[isAsync]\fR)
+db.cancelTask(\fB<id>\fR\fB,[isAsync]\fR)
 .SH "CATEGORY"
 
 .sp 2
