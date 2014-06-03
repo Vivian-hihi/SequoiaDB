@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-startRG - Start a specified replset.
+startRG - Start a specified ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -15,7 +15,7 @@ startRG - Start a specified replset.
 .sp 2
 
 .sp 2
-db.startRG(\fBname1\fR,\fB[name2]\fR,\fB...\fR)
+db.startRG(\fB<name1>\fR,\fB[name2]\fR,\fB...\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -25,32 +25,33 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Start a specified replset. Only after it is started can a node be
-created on it. This method is equal to "rg.start()"
+Start a specified ReplicaGroup. Only after it is started can a
+node be created on it. This method is equal to "rg.start()"
 .sp 2
 \fBname (string)\fR
 .br
-       The name of a replset.
+       The name of a ReplicaGroup.
 .sp 2
        \fBFormat\fR
 .br
               The method "db.startRG()" contains a parameter
               called "name". The type of it is string. It is the
-              name of the replset which is about to be started.
+              name of the ReplicaGroup which is about to be
+              started.
 .br
-              ("<Replset name>")
+              ("<ReplicaGroup name>")
 .sp 2
 
 .sp 2
 \fBNote: \fR
 .sp 2
-   *  Exception will occur when the specified replset doesn't
-   exist or it has been started.
+   *  Exception will occur when the specified ReplicaGroup
+   doesn't exist or it has been started.
 .SH "Examples"
 
 .sp 2
 
 .sp 2
-The following command starts a replset called "group":
+The following command starts a ReplicaGroup called "group":
 .sp 2
 db.startRG("group")
