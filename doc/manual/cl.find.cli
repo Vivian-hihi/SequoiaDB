@@ -84,5 +84,5 @@ parameter "sel".For example, there are 2 records:
 db.foo.bar.find(null,{age:"",name:""})
 .sp 2
 This operation return the value of "age" and "name". So it will
-return:"{age:25,name:""}，{age:20,name:"Tom"}". Although the first
+return:"{age:25,name:""},{age:20,name:"Tom"}". Although the first
 record doesn't contain the field, it will return "name:""".
