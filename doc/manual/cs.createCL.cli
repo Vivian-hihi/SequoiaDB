@@ -15,7 +15,7 @@ createCL - create a new collection
 .sp 2
 
 .sp 2
-db.collectionspace.createCL(\fBname\fR,\fB[option]\fR)
+db.collectionspace.createCL(\fB<name>\fR,\fB[option]\fR)
 .SH "CATEGORY"
 
 .sp 2
