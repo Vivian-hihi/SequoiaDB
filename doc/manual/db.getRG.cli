@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getRG - Return the quotation of a replset.
+getRG - Return the quotation of a ReplicaGroup.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -15,7 +15,7 @@ getRG - Return the quotation of a replset.
 .sp 2
 
 .sp 2
-db.getRG(\fBname|id\fR)
+db.getRG(\fB<name>|<id>\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -25,26 +25,26 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Return the quotation of a replset.
+Return the quotation of a ReplicaGroup.
 .sp 2
 \fBname (string)\fR
 .br
-       Replset name. Replset names are unique to each other in a
-       database object.
+       ReplicaGroup name. ReplicaGroup names are unique to each
+       other in a database object.
 .sp 2
 \fBid (int)\fR
 .br
-       Replset id. The system will automatically generate a
-       replset id.
+       ReplicaGroup id. The system will automatically generate a
+       ReplicaGroup id.
 .sp 2
        \fBFormat\fR
 .br
               The method "getRG()" contains "name" or "id". The
               type of "name" is string. The type of "id" is
-              "int". It the replset specified by "name" or "id"
-              doesn't exist, operation exception will occur.
+              "int". It the ReplicaGroup specified by "name" or
+              "id" doesn't exist, operation exception will occur.
 .br
-              ("<Replset name>"|<id>)
+              ("<ReplicaGroup name>"|<id>)
 .sp 2
 
 .sp 2
@@ -55,12 +55,10 @@ Return the quotation of a replset.
 .SH "Examples"
 
 .sp 2
-Specify the value of "name", the returnthe quotation of replset
-"rg1".
+Specify the value of "name", the return of ReplicaGroup "rg1".
 .sp 2
 db.getRG("rg1")
 .sp 2
-Specify the value of "id", the returnthe quotation of replset
-"rg1".
+Specify the value of "id", the return of ReplicaGroup "rg1".
 .sp 2
 db.getRG("1000")
