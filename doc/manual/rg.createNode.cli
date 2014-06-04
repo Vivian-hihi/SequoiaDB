@@ -15,7 +15,7 @@ createNode - Create a node in a ReplicaGroup.
 .sp 2
 
 .sp 2
-rg.createNode(\fBhost\fR,\fBservice\fR,\fBdbpath\fR,\fB[config]\fR)
+rg.createNode(\fB<host>\fR,\fB<service>\fR,\fB<dbpath>\fR,\fB[config]\fR)
 .SH "CATEGORY"
 
 .sp 2
