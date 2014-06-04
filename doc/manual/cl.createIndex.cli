@@ -15,7 +15,7 @@ createIndex - Create index in a collection to accelerate query.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.createIndex(\fBname\fR,\fBindexDef\fR,\fB[isUnique]\fR,\fB[enforced]\fR)
+db.collectionspace.collection.createIndex(\fB<name>\fR,\fB<indexDef>\fR,\fB[isUnique]\fR,\fB[enforced]\fR)
 .SH "CATEGORY"
 
 .sp 2
