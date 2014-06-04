@@ -33,8 +33,6 @@ Return information of a node named "node".
 .sp 2
 > node.getNodeDetail()
 .br
-Return：1000:vmsvr2-suse-x64:11800(shard)
+Return: 1000:vmsvr2-suse-x64:11800(group)
 .br
-Here "1000" is node ID（NodeID）；"vmsvr2-suse-x64" is hostname（HostName）；
-.br
-"11800" is service name（ServiceName），"(shard)" is the ReplicaGroup name of the node.
+Here "1000" is node ID(NodeID); "vmsvr2-suse-x64" is hostname(HostName); "11800" is service name(ServiceName), "(group)" is the ReplicaGroup name of the node.

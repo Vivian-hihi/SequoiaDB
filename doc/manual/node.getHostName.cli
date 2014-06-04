@@ -33,4 +33,4 @@ Return the hostname of a node called "node".
 .sp 2
 > node.getHostName()
 .br
-Return：vmsvr2-suse-x64
+Return: vmsvr2-suse-x64
