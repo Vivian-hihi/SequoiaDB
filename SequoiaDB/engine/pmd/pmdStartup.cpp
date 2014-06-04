@@ -135,23 +135,26 @@ namespace engine
       }
       _fileOpened = TRUE ;
 
-      if ( !onlyCheck )
+      // lock the file
+      rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
+      if ( SDB_PERM == rc )
       {
-         // lock the file
-         rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
-         if ( SDB_PERM == rc )
+         if ( onlyCheck )
          {
-            PD_LOG ( PDERROR, "The startup file is already locked, most likely "
-                     "there is another instance running in the directory" ) ;
-            goto error ;
+            rc = SDB_OK ;
+            _startType = SDB_START_NORMAL ;
+            goto done ;
          }
-         else if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to lock startup file, rc = %d", rc ) ;
-            goto error ;
-         }
-         _fileLocked = TRUE ;
+         PD_LOG ( PDERROR, "The startup file is already locked, most likely "
+                  "there is another instance running in the directory" ) ;
+         goto error ;
       }
+      else if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to lock startup file, rc = %d", rc ) ;
+         goto error ;
+      }
+      _fileLocked = TRUE ;
 
       if ( !_ok )
       {
@@ -197,6 +200,11 @@ namespace engine
    done:
       if ( onlyCheck && _fileOpened )
       {
+         if ( _fileLocked )
+         {
+            ossLockFile ( &_file, OSS_LOCK_UN ) ;
+            _fileLocked = FALSE ;
+         }
          ossClose( _file ) ;
          _fileOpened = FALSE ;
       }
