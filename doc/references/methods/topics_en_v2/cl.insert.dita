@@ -29,17 +29,14 @@
         </plentry>
         <plentry>
           <pt>flag (int)</pt>
-          <pd>The paremeter "flag" means whether the value of "_id" should be showed. The value
-            of it is SDB_INSERT_CONTONDUP or SDB_INSERT_RETURN_ID. It is only be effective when
-            insert one document.
+          <pd>SDB_INSERT_CONTONDUP or SDB_INSERT_RETURN_ID. The former returned after inserting a single record record "_id" field 
+            content; latter effectively when inserting many records, which means that the insertion of the record, if the existence 
+            of "_id" field content duplicate records, duplicate will be skipped "_id" records continue into the back of record. By 
+            default, when there are duplicate "_id" record field content when inserted into the back of the recording will stop.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The definition of "insert()" contains two fields: doc|docs and flag. The parameter
-                  "doc|docs" is in the type of JSON object. The parameter "flag" is in the type of int. The
-                  value of "flag" is SDB_INSERT_CONTONDUP or SDB_INSERT_RETURN_ID,when you want to insert one
-                  document and  set it as  SDB_INSERT_RETURN_ID,then it will return a value of _id  of the
-                  document;if you set SDB_INSERT_CONTONDUP,return nothing;</pd>
+                <pd>The definition of "insert()" contains two fields: doc|docs and flag.</pd>
                 <pd>doc: ({"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",...}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID })</pd>
                 <pd>docs: ([
                   {"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",...},
@@ -87,6 +84,17 @@
         "age": 25, 
         "phone": 123 
         }</codeblock>
+      <p>Insert has repeated "_id" button multiple records.</p>
+      <codeblock>db.foo.bar.insert([{_id:1,a:1 },{_id:1,b:2 },{_id:3,c:3}], SDB_INSERT_CONTONDUP)</codeblock>
+      <p>This will insert two records in the collection "bar" in.</p>
+      <codeblock>{
+"_id": 1,
+"a": 1,
+}
+{
+"_id": 3,
+"c": 3
+}</codeblock>
     </section>
   </body>
   <related-links>
