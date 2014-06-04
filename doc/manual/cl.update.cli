@@ -15,7 +15,7 @@ update - Update records in a collection.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.update(\fBrule\fR,\fB[cond]\fR,\fB[hint]\fR)
+db.collectionspace.collection.update(\fB<rule>\fR,\fB[cond]\fR,\fB[hint]\fR)
 .SH "CATEGORY"
 
 .sp 2
