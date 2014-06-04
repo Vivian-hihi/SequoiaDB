@@ -16,7 +16,7 @@ partition collection.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.detachCL(\fBsubCLFullName\fR)
+db.collectionspace.collection.detachCL(\fB<subCLFullName>\fR)
 .SH "CATEGORY"
 
 .sp 2
