@@ -15,7 +15,7 @@ getNode - Return information of specified node.
 .sp 2
 
 .sp 2
-rg.getNode(\fBnodename|hostname\fR,\fBservicename\fR)
+rg.getNode(\fB<nodename|hostname>\fR,\fB<servicename>\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -33,7 +33,7 @@ Return information of specified node.
 .sp 2
 \fBhostname (string)\fR
 .br
-       Hostname. Either "nodename" or "hostname".
+       Hostname. Either "hostname" or "nodename".
 .sp 2
 \fBservicename (string)\fR
 .br
