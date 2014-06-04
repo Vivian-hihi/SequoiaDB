@@ -15,7 +15,7 @@ removeNode - Delete ReplicaGroup specified node.
 .sp 2
 
 .sp 2
-rg.removeNode(\fBhost\fR,\fBservice\fR,\fB[config]\fR)
+rg.removeNode(\fB<host>\fR,\fB<service>\fR,\fB[config]\fR)
 .SH "CATEGORY"
 
 .sp 2
