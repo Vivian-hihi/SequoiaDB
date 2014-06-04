@@ -17,8 +17,9 @@ specified conditions.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.split(\fBsource group\fR,\fBtarget
-group\fR,\fBpercent(0~100)|cond\fR,\fB[endcondition]\fR)
+db.collectionspace.collection.split(\fB<source
+group>\fR,\fB<target
+group>\fR,\fB<percent(0~100)|cond>\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -40,13 +41,13 @@ conditions.
 .br
        The target sharding group.
 .sp 2
+\fBpercent(0~100) (double)\fR
+.br
+       percent split condition. (percent or condition.)
+.sp 2
 \fBcond (json object)\fR
 .br
        Range split condition. (condition or percent.)
-.sp 2
-\fBpercent(0~100) (double)\fR
-.br
-       percent split condition. (condition or percent.)
 .sp 2
 \fBendcondition (json object)\fR
 .br
