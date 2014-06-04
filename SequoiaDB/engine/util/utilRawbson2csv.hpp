@@ -50,6 +50,10 @@ struct fieldResolve : public SDBObject
 {
    CHAR *pField ;
    fieldResolve *pSubField ;
+   fieldResolve() : pField(NULL),
+                    pSubField(NULL)
+   {
+   }
 } ;
 
 class utilConvertCSV : public SDBObject
