@@ -33,4 +33,4 @@ Return the master node of a ReplicaGroup.
 .sp 2
 > rg.getMaster()
 .br
-Return:vmsvr2-suse-x64:11850
+Return: vmsvr2-suse-x64:11850
