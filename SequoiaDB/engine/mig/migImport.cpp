@@ -74,6 +74,7 @@ migImport::~migImport()
    }
    if ( _gConnection )
    {
+      sdbDisconnect( _gConnection ) ;
       sdbReleaseConnection ( _gConnection ) ;
    }
    if ( _ppBsonArray )
@@ -387,7 +388,7 @@ INT32 migImport::init ( migImprtArg *pMigArg )
       if ( !_ppBsonArray )
       {
          rc = SDB_OOM ;
-         PD_LOG ( PDERROR, "Memory Failed" ) ;
+         PD_LOG ( PDERROR, "Failed to malloc memory" ) ;
          goto error ;
       }
 
@@ -402,7 +403,7 @@ INT32 migImport::init ( migImprtArg *pMigArg )
          if ( !_ppBsonArray[i] )
          {
             rc = SDB_OOM ;
-            PD_LOG ( PDERROR, "Memory Failed" ) ;
+            PD_LOG ( PDERROR, "Failed to malloc memory" ) ;
             goto error ;
          }
       }
