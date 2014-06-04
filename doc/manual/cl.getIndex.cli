@@ -15,7 +15,7 @@ getIndex - Return the quotation of specified index.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.getIndex(\fBname\fR)
+db.collectionspace.collection.getIndex(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
