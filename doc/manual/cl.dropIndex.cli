@@ -44,7 +44,7 @@ Delete specified index in a collection.
    *  When deleting index, it should be ensured that the index
    name is in the collection.
 .sp 2
-   *  The index name can't be null, contain dot(.) or '$',and the
+   *  The index name can't be null, contain dot(.) or "$",and the
    length of it must be not more than 127B.
 .SH "Examples"
 
