@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.insert</apiname>(<parmname>doc|docs</parmname>,<parmname>[flag]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.insert</apiname>(<parmname>&lt;doc|docs></parmname>,<parmname>[flag]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -40,10 +40,10 @@
                   value of "flag" is SDB_INSERT_CONTONDUP or SDB_INSERT_RETURN_ID,when you want to insert one
                   document and  set it as  SDB_INSERT_RETURN_ID,then it will return a value of _id  of the
                   document;if you set SDB_INSERT_CONTONDUP,return nothing;</pd>
-                <pd>doc: ({"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",…}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID })</pd>
+                <pd>doc: ({"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",...}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID })</pd>
                 <pd>docs: ([
-                  {"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",…},
-                  {"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",…},...
+                  {"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",...},
+                  {"&lt; field name 1&gt;":"&lt; value &gt;","&lt; field name 2&gt;":"&lt; value &gt;",...},...
                   ])</pd>
               </plentry>
             </parml></pd>
@@ -71,7 +71,7 @@
         10. The value of "age" is 20:</p>
       <codeblock>{ "_id": 10, "age": 20 }</codeblock>
       <p>Insert more than one record.</p>
-      <codeblock>db.foo.bar.insert([{_id:20,name:”Mike”,age:15},{name:”John”,age:25,phone:123}])</codeblock>
+      <codeblock>db.foo.bar.insert([{_id:20,name:"Mike",age:15},{name:"John",age:25,phone:123}])</codeblock>
       <p>This operation will insert 2 records into the collection "bar":</p>
       <p>1)In the first record, the value of "_id" is 20. The value of "name" is "Mike". The
         value of "age" is 15.</p>

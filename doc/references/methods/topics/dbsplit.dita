@@ -3,7 +3,7 @@
 <topic id="references_method_split">
   <title>db.collectionspace.collection.split()</title>
   <body>
-    <section><title>db.collectionspace.collection.split(&lt;source group>,&lt;target group>,&lt;percent(0~100)|&lt;condition>, [endcondition])</title>
+    <section><title>db.collectionspace.collection.split(&lt;source group>,&lt;target group>,&lt;percent(0~100)|condition>, [endcondition])</title>
       <p>在至少存在两个分区组的环境下，将数据记录按指定的条件切分到不同的分区组中。该操作为同步操作，直到数据切分完成才返回。</p>
     </section>
     <section><title>参数描述</title>
@@ -28,15 +28,15 @@
           <stentry>是</stentry>
         </strow>
         <strow>
-          <stentry>condition</stentry>
-          <stentry>json对象</stentry>
-          <stentry>范围切分条件。</stentry>
-          <stentry>condition和percent二选一</stentry>
-        </strow>
-        <strow>
           <stentry>percent(0~100)</stentry>
           <stentry>double</stentry>
           <stentry>百分比切分条件。</stentry>
+          <stentry>percent和condition二选一</stentry>
+        </strow>
+        <strow>
+          <stentry>condition</stentry>
+          <stentry>json对象</stentry>
+          <stentry>范围切分条件。</stentry>
           <stentry>condition和percent二选一</stentry>
         </strow>
         <strow>

@@ -5,12 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>splitAsync - Interview operation "db.collectionspace.collection.split" the same function, but it operates as an asynchronous partition operation, the task ID 
-        returned immediately after the partition created task.</p>
+      <p>splitAsync - It operates as an asynchronous partition operation.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection. splitAsync</apiname>(<parmname>source group</parmname>,<parmname>target group</parmname>,<parmname>percent(0~100)|cond</parmname>,<parmname>[endcondition]</parmname>)
+      <p></p><apiname>db.collectionspace.collection. splitAsync</apiname>(<parmname>&lt;source group></parmname>,<parmname>&lt;target group></parmname>,<parmname>&lt;percent(0~100)|cond></parmname>,<parmname>[endcondition]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

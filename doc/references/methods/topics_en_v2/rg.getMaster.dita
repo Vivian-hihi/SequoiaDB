@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getMaster - Return the master node of a replset.</p>
+      <p>getMaster - Return the master node of a ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,13 +17,13 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the master node of a replset.</p>            
+      <p>Return the master node of a ReplicaGroup.</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Return the master node of a replset.</p>
+      <p>Return the master node of a ReplicaGroup.</p>
       <codeblock>> rg.getMaster()
-Return：vmsvr2-suse-x64:11850</codeblock>   
+Return: vmsvr2-suse-x64:11850</codeblock>   
     </section>
   </body>
   <related-links>

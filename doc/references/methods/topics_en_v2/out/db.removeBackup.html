@@ -61,12 +61,12 @@ Sequoiadb
         
           <dt class="dt pt dlterm">options (json object)</dt>
 
-          <dd class="dd pd">Set the backup name, specify the replication group, the backup path and other parameters.
+          <dd class="dd pd">Set the backup name, specify the ReplicaGroup, the backup path and other parameters.
             <dl class="dl parml">
               
                 <dt class="dt pt dlterm">GroupID</dt>
 
-                <dd class="dd pd">Backup copy group ID specified, the default is all replication groups.</dd>
+                <dd class="dd pd">Backup ReplicaGroup ID specified, the default is all ReplicaGroup.</dd>
 
                 <dd class="dd pd">GroupID:1000 or GroupID:[1000, 1001]</dd>
 
@@ -74,7 +74,7 @@ Sequoiadb
               
                 <dt class="dt pt dlterm">GroupName</dt>
 
-                <dd class="dd pd">Backup copy group name is specified, the default is all replication groups.</dd>
+                <dd class="dd pd">Backup ReplicaGroup name is specified, the default is all ReplicaGroup.</dd>
 
                 <dd class="dd pd">GroupName:"data1" or GroupName:["data1", "data2"]</dd>
 
@@ -90,7 +90,7 @@ Sequoiadb
               
                 <dt class="dt pt dlterm">Path</dt>
 
-                <dd class="dd pd">Backup path, the default configuration parameters for the specified backup path. The path supports wildcards(g%: group name, h%: host name, s%:service name)</dd>
+                <dd class="dd pd">Backup path, the default configuration parameters for the specified backup path. The path supports wildcards(%g/%G: group name, %h/%H: host name, %s/%S:service name)</dd>
 
                 <dd class="dd pd">Path:"/opt/sequoiadb/backup/%g"</dd>
 
@@ -106,7 +106,7 @@ Sequoiadb
               
                 <dt class="dt pt dlterm">Prefix</dt>
 
-                <dd class="dd pd">Backup prefix, supports wildcards(g%,h%,s%), default is empty.</dd>
+                <dd class="dd pd">Backup prefix, supports wildcards(%g,%G,%h,%H,%s,%H), default is empty.</dd>
 
                 <dd class="dd pd">Prefix:"%g_bk_"</dd>
 
@@ -139,7 +139,7 @@ Sequoiadb
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.6
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

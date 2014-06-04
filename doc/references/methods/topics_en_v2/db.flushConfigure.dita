@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.flushConfigure</apiname>(<parmname>rule</parmname>)
+      <p></p><apiname>db.flushConfigure</apiname>(<parmname>&lt;rule></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

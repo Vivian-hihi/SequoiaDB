@@ -1,13 +1,13 @@
-#Thu May 15 16:36:52 CST 2014
+#Wed Jun 04 13:55:03 CST 2014
 copytosourcelist=
-hreftargetslist=cl.splitAsync.xml
+hreftargetslist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
 fullditatopicfile=fullditatopic.list
 fullditamapandtopicfile=fullditamapandtopic.list
-fullditatopiclist=cl.splitAsync.xml
-fullditamapandtopiclist=cl.splitAsync.xml
+fullditatopiclist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
+fullditamapandtopiclist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
 hrefditatopicfile=hrefditatopic.list
-hrefditatopiclist=
-user.input.file=cl.splitAsync.xml
+hrefditatopiclist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
+user.input.file=node.getNodeDetail.xml
 subtargetsfile=subtargets.list
 fullditamapfile=fullditamap.list
 copytotarget2sourcemapfile=copytotarget2sourcemap.list
@@ -27,7 +27,7 @@ imagelist=
 htmlfile=html.list
 htmllist=
 canditopicsfile=canditopics.list
-canditopicslist=
+canditopicslist=node.getNodeDetail.xml,node.getHostName.xml,node.connect.xml,node.stop.xml,node.getServiceName.xml
 keyreffile=keyref.list
 subjectschemefile=subjectscheme.list
 keyreflist=

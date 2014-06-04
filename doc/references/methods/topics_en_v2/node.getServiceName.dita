@@ -23,7 +23,7 @@
       <title>Examples</title>
       <p>Return the server name of a node called "node".</p>
       <codeblock>> node.getServiceName()
-Return：11800</codeblock>   
+Return: 11800</codeblock>   
     </section>
   </body>
   <related-links>

@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.aggregate</apiname>(<parmname>project|match|limit|skip|group|sort ...</parmname>)
+      <p></p><apiname>db.collectionspace.collection.aggregate</apiname>(<parmname>&lt;subOp>...</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

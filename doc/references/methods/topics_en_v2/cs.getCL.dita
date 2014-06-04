@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.getCL</apiname>(<parmname>name</parmname>)
+      <p></p><apiname>db.collectionspace.getCL</apiname>(<parmname>&lt;name></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>createCataRG - Create a new catalog partition group.</p>
+      <p>createCataRG - Create a new catalog ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.createCataRG</apiname>(<parmname>host</parmname>,<parmname>service</parmname>,<parmname>dbpath</parmname>,<parmname>[config]</parmname>)
+      <p></p><apiname>db.createCataRG</apiname>(<parmname>&lt;host></parmname>,<parmname>&lt;service></parmname>,<parmname>&lt;dbpath></parmname>,<parmname>[config]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a new catalog partition group, and create and start a catalog node.</p>
+      <p>Create a new catalog ReplicaGroup, and create and start a catalog node.</p>
       <parml>
         <plentry>
           <pt>host (string)</pt>

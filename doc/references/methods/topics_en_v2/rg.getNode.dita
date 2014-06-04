@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>rg.getNode</apiname>(<parmname>nodename|hostname</parmname>,<parmname>servicename</parmname>)
+      <p></p><apiname>rg.getNode</apiname>(<parmname>&lt;nodename|hostname></parmname>,<parmname>&lt;servicename></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -25,7 +25,7 @@
         </plentry>
         <plentry>
           <pt>hostname (string)</pt>
-          <pd>Hostname. Either "nodename" or "hostname".</pd>
+          <pd>Hostname. Either "hostname" or "nodename".</pd>
         </plentry>        
         <plentry>
           <pt>servicename (string)</pt>

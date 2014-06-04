@@ -10,7 +10,7 @@
     <section>
       <title>SYNOPSIS</title>
       <p></p>
-      <apiname>snapshot</apiname>(<parmname>snapType</parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
+      <apiname>snapshot</apiname>(<parmname>&lt;snapType></parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

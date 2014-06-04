@@ -10,7 +10,7 @@
     <section>
       <title>SYNOPSIS</title>
       <p></p>
-      <apiname>db.createProcedure</apiname>(<parmname>code</parmname>)
+      <apiname>db.createProcedure</apiname>(<parmname>&lt;code></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

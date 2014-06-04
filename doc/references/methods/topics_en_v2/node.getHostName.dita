@@ -23,7 +23,7 @@
       <title>Examples</title>
       <p>Return the hostname of a node called "node".</p>
       <codeblock>> node.getHostName()
-Return：vmsvr2-suse-x64</codeblock>   
+Return: vmsvr2-suse-x64</codeblock>   
     </section>
   </body>
   <related-links>

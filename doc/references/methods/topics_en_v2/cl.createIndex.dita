@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.createIndex</apiname>(<parmname>name</parmname>,<parmname>indexDef</parmname>,<parmname>[isUnique]</parmname>,<parmname>[enforced]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.createIndex</apiname>(<parmname>&lt;name></parmname>,<parmname>&lt;indexDef></parmname>,<parmname>[isUnique]</parmname>,<parmname>[enforced]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

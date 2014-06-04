@@ -10,7 +10,7 @@
     <section>
       <title>SYNOPSIS</title>
       <p></p>
-      <apiname>db.createUsr</apiname>(<parmname>name</parmname>,<parmname>password</parmname>)
+      <apiname>db.createUsr</apiname>(<parmname>&lt;name></parmname>,<parmname>&lt;password></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

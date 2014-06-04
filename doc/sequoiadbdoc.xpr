@@ -920,7 +920,6 @@
                     <file name="references/methods/topics_en_v2/cursor.skip.dita"/>
                     <file name="references/methods/topics_en_v2/cursor.sort.dita"/>
                     <file name="references/methods/topics_en_v2/cursor.toArray.dita"/>
-                    <file name="references/methods/topics_en_v2/db.backupoffline.dita"/>
                     <file name="references/methods/topics_en_v2/db.backupOffline.dita"/>
                     <file name="references/methods/topics_en_v2/db.cancelTask.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCataRG.dita"/>

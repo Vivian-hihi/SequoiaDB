@@ -23,9 +23,8 @@
       <title>Examples</title>
       <p>Return information of a node named "node".</p>
       <codeblock>> node.getNodeDetail()
-Return：1000:vmsvr2-suse-x64:11800(shard)
-Here "1000" is node ID（NodeID）；"vmsvr2-suse-x64" is hostname（HostName）；
-"11800" is service name（ServiceName），"(shard)" is the replset name of the node.</codeblock>   
+Return: 1000:vmsvr2-suse-x64:11800(group)
+Here "1000" is node ID(NodeID); "vmsvr2-suse-x64" is hostname(HostName); "11800" is service name(ServiceName), "(group)" is the ReplicaGroup name of the node.</codeblock>   
     </section>
   </body>
   <related-links>

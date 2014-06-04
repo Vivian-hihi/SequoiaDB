@@ -3,7 +3,7 @@
 <topic id="topic_j5f_d4k_kn">
   <title>db.collectionspace.collection.splitAsync()</title>
   <body>
-    <section><title>db.collectionspace.collection. splitAsync(&lt;source group>,&lt;target group>,&lt;percent(0~100)|&lt;condition>, [endcondition])</title>
+    <section><title>db.collectionspace.collection. splitAsync(&lt;source group>,&lt;target group>,&lt;percent(0~100)|condition>, [endcondition])</title>
       <p>该操作与 db.collectionspace.collection.split 功能相同，但该操作为异步分区操作，分区任务建立后立即返回任务ID。</p>
     </section>    
   </body>  

@@ -3,7 +3,7 @@
 <topic id="topic_y4l_dpw_ql">
   <title>db.listProcedures()</title>
   <body>
-    <section><title>db.listProcedures([condition])</title>
+    <section><title>db.listProcedures([cond])</title>
       <p>枚举所有的存储过程函数。</p>
     </section>
     <section><title>参数描述</title>
@@ -16,13 +16,13 @@
           <stentry>是否必填</stentry>
         </sthead>
         <strow>
-          <stentry>condition</stentry>
+          <stentry>cond</stentry>
           <stentry>json</stentry>
           <stentry>条件为空时，枚举所有的函数，不为空时，枚举符合条件函数。</stentry>
           <stentry>是</stentry>
         </strow>
       </simpletable>
-      <p>listProcedures()方法的定义，只有一个json对象类型的参数名condition，输入值时返回符合指定值的函数，否则的话返回所有的函数。</p>
+      <p>listProcedures()方法的定义，只有一个json对象类型的参数名cond，输入值时返回符合指定值的函数，否则的话返回所有的函数。</p>
     </section>
     <section><title>示例</title>
       <ul>

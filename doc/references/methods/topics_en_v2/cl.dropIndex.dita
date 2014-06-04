@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.dropIndex</apiname>(<parmname>name</parmname>)
+      <p></p><apiname>db.collectionspace.collection.dropIndex</apiname>(<parmname>&lt;name></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -36,7 +36,7 @@
           <ul>
             <li>When deleting index, it should be ensured that the index name is in the
               collection.</li>
-            <li>The index name can't be bull、contain dot(.) or '$',and the length of it must be not
+            <li>The index name can't be null, contain dot(.) or "$",and the length of it must be not
               more than 127B.</li>
           </ul>
         </p>

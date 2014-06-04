@@ -25,7 +25,7 @@
       <title>Examples</title>
       <p>Connect the database to a node named "node".</p>
       <codeblock>> node.connect()
-Return：vmsvr2-suse-x64:11800</codeblock>   
+Return: vmsvr2-suse-x64:11800</codeblock>   
     </section>
   </body>
   <related-links>

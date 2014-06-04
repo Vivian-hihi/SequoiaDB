@@ -4,8 +4,11 @@
   <title>SequoiaDB list of the supported versions Hive</title>
   <body>   
     <ul id="sequoiadb_hadoop">
-      <li>Hive 0.11.0</li>
-      <li>Hive 0.10.0</li>
+      <li>Apache Hive 0.12.0</li>
+      <li>Apache Hive 0.11.0</li>
+      <li>Apache Hive 0.10.0</li>
+      <li>CDH-5.0.0-beta-2 Hive 0.12.0</li>
     </ul>
+    <note>hive-sequoiadb-apache.jar为支持Apache版Hive的Sequoiadb-Hive-Connector<p></p>hive-sequoiadb-cdh-5.0.0-beta-2.jar为支持CDH5.0.0-beta-2版本下Hive-0.12的Sequoiadb-Hive-Connector</note>
   </body>
 </topic>

@@ -63,7 +63,7 @@
         "{age:20,name:"Tom",type:"normal"}".</p>
       <codeblock>db.foo.bar.find(null,{age:"",name:""})</codeblock>
       <p>This operation return the value of "age" and "name". So it will
-        return:"{age:25,name:""}，{age:20,name:"Tom"}". Although the first record doesn't contain
+        return:"{age:25,name:""},{age:20,name:"Tom"}". Although the first record doesn't contain
         the field, it will return "name:""".</p>
     </section>
   </body>

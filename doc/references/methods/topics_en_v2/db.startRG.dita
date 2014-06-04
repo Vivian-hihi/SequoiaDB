@@ -5,12 +5,12 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>startRG - Start a specified replset.</p>
+      <p>startRG - Start a specified ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
       <p></p>
-      <apiname>db.startRG</apiname>(<parmname>name1</parmname>,<parmname>[name2]</parmname>,<parmname>...</parmname>)
+      <apiname>db.startRG</apiname>(<parmname>&lt;name1></parmname>,<parmname>[name2]</parmname>,<parmname>...</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -18,28 +18,28 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Start a specified replset. Only after it is started can a node be created on it. This method is equal to "rg.start()"</p>
+      <p>Start a specified ReplicaGroup. Only after it is started can a node be created on it. This method is equal to "rg.start()"</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>The name of a replset.
+          <pd>The name of a ReplicaGroup.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "db.startRG()" contains a parameter called "name". The type of it is string. It is the name of the replset which is about to be started.</pd>
-                <pd>("&lt;Replset name>")</pd>
+                <pd>The method "db.startRG()" contains a parameter called "name". The type of it is string. It is the name of the ReplicaGroup which is about to be started.</pd>
+                <pd>("&lt;ReplicaGroup name>")</pd>
               </plentry>
             </parml>
           </pd>          
         </plentry>        
       </parml>
       <note>
-        <ul><li>Exception will occur when the specified replset doesn't exist or it has been started.</li>
+        <ul><li>Exception will occur when the specified ReplicaGroup doesn't exist or it has been started.</li>
         </ul></note>
     </section>    
     <section>
       <title>Examples</title>
-      <p></p>The following command starts a replset called "group":
+      <p></p>The following command starts a ReplicaGroup called "group":
       <codeblock>db.startRG("group")</codeblock>
     </section>
   </body>

@@ -18,15 +18,15 @@
         <strow>
           <stentry>con</stentry>
           <stentry>json对象</stentry>
-          <stentry>选择条件，只重置符合con条件的快照记录，为null时，重置所有。</stentry>
+          <stentry>选择条件，只重置符合cond条件的快照记录，为null时，重置所有。</stentry>
           <stentry>否</stentry>
         </strow>
       </simpletable>
       
     </section>
     <section><title>格式</title>
-      <p>resetSnapshot()方法定义格式有con参数，它是一个json对象。</p>
-      <p><codeblock>{["con":"{"字段名1":{<xref href="../../console/topics/console.dita">"匹配符1"</xref>:"值1"},"字段名2":{"匹配符2":"值2"}...}"]}</codeblock></p>
+      <p>resetSnapshot()方法定义格式有cond参数，它是一个json对象。</p>
+      <p><codeblock>{["cond":"{"字段名1":{<xref href="../../console/topics/console.dita">"匹配符1"</xref>:"值1"},"字段名2":{"匹配符2":"值2"}...}"]}</codeblock></p>
     </section>
     <section><title>示例</title>
       <ul>

@@ -10,7 +10,7 @@
     <section>
       <title>SYNOPSIS</title>
       <p></p>
-      <apiname>db.exec</apiname>(<parmname>select sql</parmname>)
+      <apiname>db.exec</apiname>(<parmname>&lt;select sql></parmname>)
     </section>    
     <section>
       <title>CATEGORY</title>

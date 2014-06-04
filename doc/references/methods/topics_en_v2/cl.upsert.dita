@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.upsert</apiname>(<parmname>rule</parmname>,<parmname>[cond]</parmname>,<parmname>[hint]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.upsert</apiname>(<parmname>&lt;rule></parmname>,<parmname>[cond]</parmname>,<parmname>[hint]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -50,7 +50,7 @@
       <note>
         <p>
           <ul>
-            <li>"upsert" does not support this version of the table partitioning key(ShardingKey) segment updates, if you include the 
+            <li>"upsert" does not support this version of the table ShardingKey segment updates, if you include the 
               partition key update operations to weed out automatically update the partition key, but other fields update to take effect, 
               and no error occurs.</li>
           </ul>

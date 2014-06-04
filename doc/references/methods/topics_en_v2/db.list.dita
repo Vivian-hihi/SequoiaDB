@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.list</apiname>(<parmname>listType</parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
+      <p></p><apiname>db.list</apiname>(<parmname>&lt;listType></parmname>,<parmname>[cond]</parmname>,<parmname>[sel]</parmname>,<parmname>[sort]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -25,7 +25,7 @@
         </plentry>
         <plentry>
           <pt>cond (json object)</pt>
-          <pd>Selecting condition. It just returns the records that match conditions in "con". When it is null, return all records.</pd>
+          <pd>Selecting condition. It just returns the records that match conditions in "cond". When it is null, return all records.</pd>
         </plentry>
         <plentry>
           <pt>sel (json object)</pt>
@@ -37,8 +37,8 @@
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "list()" contians 4 parameters: listType, con, sel and sort. The parameter "listType" is in the type of enumeration. Other parameters are in the type of json object. The format is as follow:</pd>
-                <pd>{"listType":"&lt;List type>",["con":"{"field name 1":{"operator 1":"value 1"},"field name 2":{"operator 2":"value 2"}...}"],["sel":"{"field name 1":"","field name 2":"",...}"],["sort":"{"field name 1":-1|1,"field name 2":1|-1,...}"]}</pd>
+                <pd>The method "list()" contians 4 parameters: listType, cond, sel and sort. The parameter "listType" is in the type of enumeration. Other parameters are in the type of json object. The format is as follow:</pd>
+                <pd>{"listType":"&lt;List type>",["cond":"{"field name 1":{"operator 1":"value 1"},"field name 2":{"operator 2":"value 2"}...}"],["sel":"{"field name 1":"","field name 2":"",...}"],["sort":"{"field name 1":-1|1,"field name 2":1|-1,...}"]}</pd>
               </plentry>
             </parml>
           </pd>          

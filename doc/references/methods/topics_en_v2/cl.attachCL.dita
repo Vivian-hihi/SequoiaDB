@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.attachCL</apiname>(<parmname>subCLFullName</parmname><parmname>,options</parmname>)
+      <p></p><apiname>db.collectionspace.collection.attachCL</apiname>(<parmname>&lt;subCLFullName></parmname><parmname>,&lt;options></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -24,7 +24,7 @@
           <pd>The partition set name.(the name that contains a collection of space)</pd>
         </plentry>
         <plentry>
-          <pt>options (object)</pt>
+          <pt>options (json object)</pt>
           <pd>The boundaries, contains two fields "LowBound"(the value of the left section) and "UpBound"(R interval value).</pd>
           <pd>e.g. {LowBound:{a:0},UpBound:{a:100}, means to take the field "a" range interval: [0, 100)</pd>
         </plentry>

@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>removeNode - Delete slice group specified node.</p>
+      <p>removeNode - Delete ReplicaGroup specified node.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>rg.removeNode</apiname>(<parmname>host</parmname>,<parmname>service</parmname>,<parmname>[config]</parmname>)
+      <p></p><apiname>rg.removeNode</apiname>(<parmname>&lt;host></parmname>,<parmname>&lt;service></parmname>,<parmname>[config]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete slice group specified node.</p>
+      <p>Delete ReplicaGroup specified node.</p>
       <parml>
         <plentry>
           <pt>host (string)</pt>
@@ -43,7 +43,7 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Delete node command follows slice group shard.</p>
+      <p>Delete node command follows ReplicaGroup shard.</p>
       <codeblock>rg.removeNode("vmsvr2-suse-x64",11800)</codeblock>
       <note><p>Delete the specified node must exist, otherwise abnormal.</p></note>      
     </section>

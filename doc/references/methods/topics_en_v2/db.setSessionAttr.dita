@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.setSessionAttr</apiname>(<parmname>options</parmname>)
+      <p></p><apiname>db.setSessionAttr</apiname>(<parmname>&lt;options></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

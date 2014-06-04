@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>listReplicaGroups - List all replsets.</p>
+      <p>listReplicaGroups - List all ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,13 +17,13 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>List all replsets.</p>      
+      <p>List all ReplicaGroup.</p>      
     </section>    
     <section>
       <title>Examples</title>
-      Return information of all replsets:
+      Return information of all ReplicaGroup:
       <codeblock>> db.listReplicaGroups()
-Return：{
+Return: {
   "Group": [
     {
       "dbpath": "/opt/sequoiadb/data/11800",
@@ -82,7 +82,7 @@ Return：{
     "$oid": "517b2fc33d7e6f820fc0eb57"
   }
   }</codeblock>
-      This replset has 2 nodes: 11800 and 11850. Node 11850 is the master node.
+      This ReplicaGroup has 2 nodes: 11800 and 11850. Node 11850 is the master node.
     </section>
   </body>
   <related-links>

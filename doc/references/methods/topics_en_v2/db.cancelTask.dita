@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.cancelTask</apiname>(<parmname>id</parmname><parmname>,[isAsync]</parmname>)
+      <p></p><apiname>db.cancelTask</apiname>(<parmname>&lt;id></parmname><parmname>,[isAsync]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

@@ -38,7 +38,7 @@
       <codeblock>db.foo.bar.count()</codeblock>
       <p>Count records that contain the value "Tom" on the field "name" and the value on the
         field "age" greater than 25.</p>
-      <codeblock>db.foo.bar.count({name:”Tom”,age:{$gt:25}})</codeblock>
+      <codeblock>db.foo.bar.count({name:"Tom",age:{$gt:25}})</codeblock>
     </section>
   </body>
   <related-links>

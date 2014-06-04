@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getDetail - Return information of replsets.</p>
+      <p>getDetail - Return information of ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return information of replsets.</p>            
+      <p>Return information of ReplicaGroup.</p>            
     </section>    
     <section>
       <title>Examples</title>

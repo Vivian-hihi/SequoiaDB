@@ -5,7 +5,7 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>stop - Stop replset.</p>
+      <p>stop - Stop ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
@@ -17,11 +17,11 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Stop replset. After stopping replset, manipulations lilke creating nodes cannot be executed on the replset.</p>            
+      <p>Stop ReplicaGroup. After stopping ReplicaGroup, manipulations lilke creating nodes cannot be executed on the ReplicaGroup.</p>            
     </section>    
     <section>
       <title>Examples</title>
-      <p>Stop replset.</p>
+      <p>Stop ReplicaGroup.</p>
       <codeblock>rg.stop()</codeblock>   
     </section>
   </body>

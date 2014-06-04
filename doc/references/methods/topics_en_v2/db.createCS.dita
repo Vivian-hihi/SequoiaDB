@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.createCS</apiname>(<parmname>name</parmname>,<parmname>[pageSize]</parmname>)
+      <p></p><apiname>db.createCS</apiname>(<parmname>&lt;name></parmname>,<parmname>[pageSize]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -29,7 +29,7 @@
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>Users can create a collection space with 2 parameters: name and pageSize.The parameter "name" is in the type of string. The parameter "pageSize" is in the type of 32-bit integer.</pd>
+                <pd>Users can create a collection space with 2 parameters: name and pageSize. The parameter "name" is in the type of string. The parameter "pageSize" is in the type of 32-bit integer.</pd>
                 <pd>("&lt;collection space name>",[pagesize])</pd>
               </plentry>
             </parml>

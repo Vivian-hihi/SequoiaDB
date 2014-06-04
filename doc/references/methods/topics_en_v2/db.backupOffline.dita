@@ -21,16 +21,16 @@
       <parml>        
         <plentry>
           <pt>options (json object)</pt>
-          <pd>Set the backup name, specify the replication group, backup and other parameters.
+          <pd>Set the ReplicaGroup, specify the ReplicaGroup, backup and other parameters.
             <parml>
               <plentry>
                 <pt>GroupID</pt>
-                <pd>Backup copy group ID specified, the default is all replication groups.</pd>
+                <pd>Backup ReplicaGroup ID specified, the default is all ReplicaGroup.</pd>
                 <pd>GroupID:1000 or GroupID:[1000, 1001]</pd>
               </plentry>
               <plentry>
                 <pt>GroupName</pt>
-                <pd>Backup copy group name is specified, the default is all replication groups.</pd>
+                <pd>Backup ReplicaGroup name is specified, the default is all ReplicaGroup.</pd>
                 <pd>GroupName:"data1" or GroupName:["data1", "data2"]</pd>
               </plentry>
               <plentry>
@@ -40,7 +40,7 @@
               </plentry>
               <plentry>
                 <pt>Path</pt>
-                <pd>Backup path, the default configuration parameters for the specified backup path.The path supports wildcards (g%: group name, h%: host name, s%:service name).</pd>
+                <pd>Backup path, the default configuration parameters for the specified backup path.The path supports wildcards (%g/%G: group name, %h/%H: host name, %s/%S:service name).</pd>
                 <pd>Path:"/opt/sequoiadb/backup/%g"</pd>
               </plentry>
               <plentry>
@@ -50,7 +50,7 @@
               </plentry>
               <plentry>
                 <pt>Prefix</pt>
-                <pd>Backup prefix, support wildcards (g%,h%,s%), The default is empty.</pd>
+                <pd>Backup prefix, support wildcards (%g,%G,%h,%H,%s,%S), The default is empty.</pd>
                 <pd>Prefix:"%g_bk_"</pd>
               </plentry>
               <plentry>

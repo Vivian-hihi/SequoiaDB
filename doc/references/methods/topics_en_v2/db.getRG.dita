@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>getRG - Return the quotation of a replset.</p>
+      <p>getRG - Return the quotation of a ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.getRG</apiname>(<parmname>name|id</parmname>)
+      <p></p><apiname>db.getRG</apiname>(<parmname>&lt;name>|&lt;id></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -17,20 +17,20 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Return the quotation of a replset.</p>
+      <p>Return the quotation of a ReplicaGroup.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>Replset name. Replset names are unique to each other in a database object.</pd>
+          <pd>ReplicaGroup name. ReplicaGroup names are unique to each other in a database object.</pd>
         </plentry>
         <plentry>
           <pt>id (int)</pt>
-          <pd>Replset id. The system will automatically generate a replset id.
+          <pd>ReplicaGroup id. The system will automatically generate a ReplicaGroup id.
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "getRG()" contains "name" or "id". The type of "name" is string. The type of "id" is "int". It the replset specified by "name" or "id" doesn't exist, operation exception will occur.</pd>
-                <pd>("&lt;Replset name>"|&lt;id>)</pd>
+                <pd>The method "getRG()" contains "name" or "id". The type of "name" is string. The type of "id" is "int". It the ReplicaGroup specified by "name" or "id" doesn't exist, operation exception will occur.</pd>
+                <pd>("&lt;ReplicaGroup name>"|&lt;id>)</pd>
               </plentry>
             </parml>
           </pd>          
@@ -42,9 +42,9 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Specify the value of "name", the returnthe quotation of replset "rg1".</p>
+      <p>Specify the value of "name", the return of ReplicaGroup "rg1".</p>
       <codeblock>db.getRG("rg1")</codeblock>
-      <p>Specify the value of "id", the returnthe quotation of replset "rg1".</p>
+      <p>Specify the value of "id", the return of ReplicaGroup "rg1".</p>
       <codeblock>db.getRG("1000")</codeblock>
     </section>
   </body>

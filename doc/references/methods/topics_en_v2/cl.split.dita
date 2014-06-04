@@ -10,7 +10,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.split</apiname>(<parmname>source group</parmname>,<parmname>target group</parmname>,<parmname>percent(0~100)|cond</parmname>,<parmname>[endcondition]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.split</apiname>(<parmname>&lt;source group></parmname>,<parmname>&lt;target group></parmname>,<parmname>&lt;percent(0~100)|cond></parmname>,<parmname>[endcondition]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -30,13 +30,13 @@
           <pd>The target sharding group.</pd>
         </plentry>
         <plentry>
-          <pt>cond (json object)</pt>
-          <pd>Range split condition. (condition or percent.)</pd>
+          <pt>percent(0~100) (double)</pt>
+          <pd>percent split condition. (percent or condition.)</pd>
         </plentry>
         <plentry>
-          <pt>percent(0~100) (double)</pt>
-          <pd>percent split condition. (condition or percent.)</pd>
-        </plentry>
+          <pt>cond (json object)</pt>
+          <pd>Range split condition. (condition or percent.)</pd>
+        </plentry>        
         <plentry>
           <pt>endcondition (json object)</pt>
           <pd>End of the range condition. (Optional, and only in the conditional cut time-effective, time-sharing a percentage cut invalid.)
@@ -52,8 +52,8 @@
                   required field and the ending condition is a optional condition when spliting, if the
                   ending condition doesn't fill, then it default as the max range of data that "source
                   shard" contains.</pd>
-                <pd>("&lt;source shard>","&lt;target shard>"，&lt;condition>) </pd>                
-                <pd><b>percent-spliting</b> db.foo.bar.split("&lt;source shard>","&lt;target shard>"，&lt;percent>)</pd>
+                <pd>("&lt;source shard>","&lt;target shard>",&lt;condition>) </pd>                
+                <pd><b>percent-spliting</b> db.foo.bar.split("&lt;source shard>","&lt;target shard>",&lt;percent>)</pd>
               </plentry>              
             </parml>
             <note>The range of partition, if you specify the partition key fields such as when descending:{groupingKey:{&lt;field 1>:&lt;-1>,condition (or Partition) the starting 

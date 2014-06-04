@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>removeRG - Delete the database specified slice group.</p>
+      <p>removeRG - Delete the database specified ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.removeRG</apiname>(<parmname>name</parmname>)
+      <p></p><apiname>db.removeRG</apiname>(<parmname>&lt;name></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -17,28 +17,28 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Delete the database specified slice group.</p>
+      <p>Delete the database specified ReplicaGroup.</p>
       <parml>
         <plentry>
           <pt>name (string)</pt>
-          <pd>Slice group name, the same database object, a unique slice group name.
+          <pd>ReplicaGroup name, the same database object, a unique ReplicaGroup name.
             <parml>
               <plentry>
                 <pt>Format</pt>
                 <pd>Definition Format removeRG() method, only the name field, name value is a string, required.</pd>
-                <pd>(&lt;"Slice group name">)</pd>
+                <pd>(&lt;"ReplicaGroup name">)</pd>
               </plentry>
             </parml>
           </pd>          
         </plentry>        
       </parml>      
       <note>
-        <ul><li>Slice group name must exist.</li>
+        <ul><li>ReplicaGroup name must exist.</li>
         </ul></note>
     </section>    
     <section>
       <title>Examples</title>
-      <p>Delete slice group called "group" of.</p>
+      <p>Delete ReplicaGroup called "group" of.</p>
       <codeblock>db.removeRG("group")</codeblock>
     </section>
   </body>

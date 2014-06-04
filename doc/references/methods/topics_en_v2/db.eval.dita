@@ -10,7 +10,7 @@
     <section>
       <title>SYNOPSIS</title>
       <p></p>
-      <apiname>db.eval</apiname>(<parmname>code</parmname>)
+      <apiname>db.eval</apiname>(<parmname>&lt;code></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

@@ -5,11 +5,11 @@
   <body>
     <section>
       <title>NAME</title>
-      <p>createNode - Create a node in a replset.</p>
+      <p>createNode - Create a node in a ReplicaGroup.</p>
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>rg.createNode</apiname>(<parmname>host</parmname>,<parmname>service</parmname>,<parmname>dbpath</parmname>,<parmname>[config]</parmname>)
+      <p></p><apiname>rg.createNode</apiname>(<parmname>&lt;host></parmname>,<parmname>&lt;service></parmname>,<parmname>&lt;dbpath></parmname>,<parmname>[config]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -17,7 +17,7 @@
     </section>
     <section>
       <title>DESCRIPTION</title> 
-      <p>Create a node in a replset.</p>
+      <p>Create a node in a ReplicaGroup.</p>
       <parml>
         <plentry>
           <pt>host (string)</pt>
@@ -46,9 +46,9 @@
     </section>    
     <section>
       <title>Examples</title>
-      <p>Create a node in port 11800 in replset "group", Specify the log file size is 64MB.</p>
+      <p>Create a node in port 11800 in ReplicaGroup "group", Specify the log file size is 64MB.</p>
       <codeblock>rg.createNode("vmsvr2-suse-x64",11800,"/opt/sequoiadb/data/11800",{logfilesz:64})</codeblock>
-      <note><p>In a replset, more than one replset can be created. But the margin between  two ports of
+      <note><p>In a ReplicaGroup, more than one ReplicaGroup can be created. But the margin between  two ports of
         them should not be greater than 5. Because the system controls 5 communication
         interfaces for each node.</p></note>      
     </section>

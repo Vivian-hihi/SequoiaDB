@@ -3,7 +3,7 @@
 <topic id="references_method_createRG">
   <title>db.createRG()</title>
   <body>
-    <section><title>db.createRG(&lt;rgname>)</title>
+    <section><title>db.createRG(&lt;name>)</title>
       <p>新建一个分区组。创建后系统自动为分区组分配一个GroupId。</p>
     </section>
     <section><title>参数描述</title>

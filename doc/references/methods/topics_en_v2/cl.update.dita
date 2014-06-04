@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.collectionspace.collection.update</apiname>(<parmname>rule</parmname>,<parmname>[cond]</parmname>,<parmname>[hint]</parmname>)
+      <p></p><apiname>db.collectionspace.collection.update</apiname>(<parmname>&lt;rule></parmname>,<parmname>[cond]</parmname>,<parmname>[hint]</parmname>)
     </section>
     <section>
       <title>CATEGORY</title>

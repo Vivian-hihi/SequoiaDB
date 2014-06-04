@@ -3,7 +3,7 @@
 <topic id="references_method_getNode">
   <title>rg.getNode()</title>
   <body>
-    <section><title>rg.getNode(&lt;nodename>|&lt;hostname>,&lt;servicename>)</title>
+    <section><title>rg.getNode(&lt;nodename|hostname>,&lt;servicename>)</title>
       <p>返回指定节点信息。</p>
     </section>
     <section><title>参数描述</title>
@@ -24,7 +24,7 @@
           <stentry>hostname </stentry>
           <stentry>string             </stentry>
           <stentry>主机名。            </stentry>
-          <stentry>nodename与hostname二选一</stentry>
+          <stentry>hostname与nodename二选一</stentry>
         </strow>
         <strow>
           <stentry>servicename </stentry>

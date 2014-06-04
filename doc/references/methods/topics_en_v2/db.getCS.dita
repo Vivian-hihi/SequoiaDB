@@ -9,7 +9,7 @@
     </section>
     <section>
       <title>SYNOPSIS</title>
-      <p></p><apiname>db.getCS</apiname>(<parmname>name</parmname>)
+      <p></p><apiname>db.getCS</apiname>(<parmname>&lt;name></parmname>)
     </section>
     <section>
       <title>CATEGORY</title>
@@ -25,7 +25,7 @@
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The definition formant of <i>getCS()</i> method only have<i> name </i>param,it is a string type.</pd>
+                <pd>The definition formant of <i>getCS()</i> method only have<i> name </i>param, it is a string type.</pd>
                 <pd>("&lt;collectionspace name>")</pd>
               </plentry>
             </parml>
@@ -33,7 +33,7 @@
         </plentry>        
       </parml>      
       <note>
-        <ul><li>the value of param <i>name</i> can't be null 、contain dot(.) or '$',the length of it must be not more than 127B.</li>
+        <ul><li>the value of param <i>name</i> can't be null, contain dot(.) or '$', the length of it must be not more than 127B.</li>
           <li>The collectionspace must be existed in the database.</li>
         </ul></note>
     </section>    
