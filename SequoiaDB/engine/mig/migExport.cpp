@@ -47,13 +47,7 @@
 #include "msgDef.h"
 #include "msg.h"
 
-#define CSV_STR_TABLE   '\t'
-#define CSV_STR_CR      '\r'
-#define CSV_STR_LF      '\n'
-#define CSV_STR_COMMA   ','
-#define CSV_STR_SPACE   32
-#define CSV_STR_QUOTES  '"'
-#define CSV_STR_SLASH   '\\'
+#define MIG_STR_POINT "."
 
 migExport::migExport () : _gConnection(0),
                           _gCollectionSpace(0),
@@ -100,171 +94,9 @@ migExport::~migExport ()
    if ( _gConnection )
    {
       sdbDisconnect ( _gConnection ) ;
+      sdbReleaseConnection( _gConnection ) ;
    }
    SAFE_OSS_FREE( _pBuffer ) ;
-}
-
-CHAR *migExport::_trimLeft( CHAR *pCursor, INT32 &size )
-{
-   for ( INT32 i = 0; i < size; ++i )
-   {
-      switch( *pCursor )
-      {
-      case CSV_STR_TABLE:
-      case CSV_STR_CR:
-      case CSV_STR_LF:
-      case CSV_STR_SPACE:
-         ++pCursor ;
-         break ;
-      case 0:
-      default:
-         size -= i ;
-         return pCursor ;
-      }
-   }
-   return pCursor ;
-}
-
-CHAR *migExport::_trimRight ( CHAR *pCursor, INT32 &size )
-{
-   for ( INT32 i = 1; i <= size; ++i )
-   {
-      switch( *( pCursor + ( size - i ) ) )
-      {
-      case CSV_STR_TABLE:
-      case CSV_STR_CR:
-      case CSV_STR_LF:
-      case CSV_STR_SPACE:
-         break ;
-      case 0:
-      default:
-         size -= ( i - 1 ) ;
-         return pCursor ;
-      }
-   }
-   return pCursor ;
-}
-
-CHAR *migExport::_trim ( CHAR *pCursor, INT32 &size )
-{
-   pCursor = _trimLeft( pCursor, size ) ;
-   pCursor = _trimRight( pCursor, size ) ;
-   return pCursor ;
-}
-
-INT32 migExport::_filterString( CHAR **pField, INT32 &size )
-{
-   INT32 rc = SDB_OK ;
-   CHAR *pBuffer = *pField ;
-   if ( pBuffer[0] == CSV_STR_QUOTES &&
-        pBuffer[size-1] == CSV_STR_QUOTES )
-   {
-      ++pBuffer ;
-      size -= 2 ;
-   }
-   *pField = pBuffer ;
-   return rc ;
-}
-
-BOOLEAN lessFields( const CHAR *pField1, const CHAR *pField2 )
-{
-   return ( ossStrcmp( pField1, pField2 ) < 0 ) ;
-}
-
-INT32 migExport::_parseFields( CHAR *pFields, INT32 size, bson &obj )
-{
-   INT32   rc         = SDB_OK ;
-   INT32   tempRc     = SDB_OK ;
-   INT32   fieldSize  = 0 ;
-   BOOLEAN isString   = FALSE;
-   CHAR   *pCursor    = pFields ;
-   CHAR   *leftField  = pFields ;
-   bson_init( &obj ) ;
-   do
-   {
-      if ( 0 == size )
-      {
-         if ( !isString )
-         {
-            fieldSize = pCursor - leftField ;
-            leftField = _trim( leftField, fieldSize ) ;
-            if ( fieldSize == 0 )
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            else
-            {
-               rc = _filterString( &leftField, fieldSize ) ;
-               if ( rc )
-               {
-                  rc = SDB_INVALIDARG ;
-                  goto error ;
-               }
-               leftField[ fieldSize ] = 0 ;
-               bson_append_undefined( &obj, leftField ) ;
-               _vFields.push_back( leftField ) ;
-            }
-         }
-         break ;
-      }
-
-      if ( CSV_STR_QUOTES == *pCursor )
-      {
-         --size ;
-         ++pCursor ;
-         isString = !isString ;
-      }
-      else if ( !isString &&
-                ( CSV_STR_COMMA == *pCursor || CSV_STR_LF == *pCursor ) )
-      {
-         fieldSize = pCursor - leftField ;
-         leftField = _trim( leftField, fieldSize ) ;
-         if ( CSV_STR_LF == *pCursor )
-         {
-            tempRc = SDB_UTIL_CSV_FIELD_END ;
-         }
-         if ( fieldSize == 0 )
-         {
-            rc = SDB_INVALIDARG ;
-            goto error ;
-         }
-         else
-         {
-            rc = _filterString( &leftField, fieldSize ) ;
-            if ( rc )
-            {
-               rc = SDB_INVALIDARG ;
-               goto error ;
-            }
-            leftField[ fieldSize ] = 0 ;
-            bson_append_undefined( &obj, leftField ) ;
-            _vFields.push_back( leftField ) ;
-         }
-
-         if ( tempRc == SDB_UTIL_CSV_FIELD_END )
-         {
-            break ;
-         }
-         else
-         {
-            --size ;
-            ++pCursor ;
-            leftField = pCursor ;
-         }
-      }
-      else
-      {
-         --size ;
-         ++pCursor ;
-      }
-   }while ( TRUE ) ;
-   bson_finish ( &obj ) ;
-   std::sort( _vFields.begin(), _vFields.end(), lessFields ) ;
-done:
-   return rc ;
-error:
-   goto done ;
 }
 
 INT32 migExport::_connectDB()
@@ -364,45 +196,98 @@ error:
    goto done ;
 }
 
+INT32 migExport::_writeData( CHAR *pBuffer, INT32 size )
+{
+   INT32 rc = SDB_OK ;
+   SINT64 sumSize = (SINT64)size ;
+   SINT64 writedSize = 0 ;
+   SINT64 curWriteSize = 0 ;
+
+   while ( sumSize > 0 )
+   {
+      rc = ossWrite ( &_file, pBuffer + writedSize,
+                      sumSize, &curWriteSize ) ;
+      if ( rc && SDB_INTERRUPT != rc )
+      {
+         PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
+         goto error ;
+      }
+      sumSize -= curWriteSize ;
+      writedSize += curWriteSize ;
+      rc = SDB_OK ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 migExport::_writeSubField( fieldResolve *pFieldRe, BOOLEAN isFirst )
+{
+   INT32 rc = SDB_OK ;
+   INT32 fieldSize = 0 ;
+   if ( !isFirst )
+   {
+      rc = _writeData( MIG_STR_POINT, 1 ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to write data, rc=%d", rc ) ;
+         goto error ;
+      }
+   }
+   fieldSize = ossStrlen( pFieldRe->pField ) ;
+   rc = _writeData( pFieldRe->pField, fieldSize ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to write data, rc=%d", rc ) ;
+      goto error ;
+   }
+   if ( pFieldRe->pSubField )
+   {
+      rc = _writeSubField( pFieldRe->pSubField, FALSE ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to call _writeSubField, rc=%d", rc ) ;
+         goto error ;
+      }
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
 INT32 migExport::_writeInclude()
 {
    INT32 rc = SDB_OK ;
    INT32 fieldsNum = 0 ;
-   SINT64 writedSize = 0 ;
-   SINT64 curWriteSize = 0 ;
-   SINT64 fieldSize = 0 ;
-   CHAR *pField = NULL ;
+   fieldResolve *pFieldRe = NULL ;
 
    if ( _pMigArg->type == MIGEXPRT_CSV &&
         _pMigArg->include == TRUE )
    {
-      fieldsNum = _vFields.size() ;
+      fieldsNum = _convertCSV._vFields.size() ;
       for ( INT32 i = 0; i < fieldsNum; ++i )
       {
-         pField = _vFields.at( i ) ;
-         fieldSize = (SINT64)ossStrlen( pField ) ;
+         pFieldRe = _convertCSV._vFields.at( i ) ;
+         rc = _writeSubField( pFieldRe, TRUE ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to call _writeSubField, rc=%d", rc ) ;
+            goto error ;
+         }
          if ( i + 1 == fieldsNum )
          {
-            pField[ fieldSize ] = _pMigArg->delRecord ;
+            rc = _writeData( &_pMigArg->delRecord, 1 ) ;
          }
          else
          {
-            pField[ fieldSize ] = _pMigArg->delField ;
+            rc = _writeData( &_pMigArg->delField, 1 ) ;
          }
-         ++fieldSize ;
-         writedSize = 0 ;
-         while ( fieldSize > 0 )
+         if ( rc )
          {
-            rc = ossWrite ( &_file, pField + writedSize,
-                            fieldSize, &curWriteSize ) ;
-            if ( rc && SDB_INTERRUPT != rc )
-            {
-               PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
-               goto error ;
-            }
-            fieldSize -= curWriteSize ;
-            writedSize += curWriteSize ;
-            rc = SDB_OK ;
+            PD_LOG ( PDERROR, "Failed to write data, rc=%d", rc ) ;
+            goto error ;
          }
       }
    }
@@ -412,24 +297,39 @@ error:
    goto done ;
 }
 
+/*INT32 migExport::_buildSelector( bson &obj )
+{
+   INT32 rc = SDB_OK ;
+   INT32 fieldsNum = 0 ;
+   INT32 fieldSize = 0 ;
+   CHAR *pField = NULL ;
+   bson_init( &obj ) ;
+
+   if ( _pMigArg->type == MIGEXPRT_CSV &&
+        _pMigArg->include == TRUE )
+   {
+      fieldsNum = _convertCSV._vFields.size() ;
+      for ( INT32 i = 0; i < fieldsNum; ++i )
+      {
+         pField = _convertCSV._vFields.at( i ) ;
+         bson_append_undefined( &obj, pField ) ;
+      }
+      bson_finish ( &obj ) ;
+   }
+done:
+   return rc ;
+}*/
+
 INT32 migExport::_query()
 {
    INT32 rc = SDB_OK ;
-   bson obj ;
+   /*bson obj ;
    if ( _pMigArg->pFields )
    {
-      rc = _parseFields ( _pMigArg->pFields,
-                          ossStrlen( _pMigArg->pFields ),
-                          obj ) ;
+      rc = _buildSelector( obj ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to parse Header, rc=%d", rc ) ;
-         goto error ;
-      }
-      rc = _writeInclude() ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to call _writeInclude, rc=%d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to call build selector, rc=%d", rc ) ;
          goto error ;
       }
    }
@@ -440,6 +340,8 @@ INT32 migExport::_query()
    }
    // start creating cursor
    rc = sdbQuery ( _gCollection, NULL, &obj, NULL, NULL, 0, -1,
+                   &_gCursor ) ;*/
+   rc = sdbQuery ( _gCollection, NULL, NULL, NULL, NULL, 0, -1,
                    &_gCursor ) ;
    if ( rc )
    {
@@ -454,7 +356,7 @@ INT32 migExport::_query()
       }
    }
 done:
-   bson_destroy( &obj ) ;
+   //bson_destroy( &obj ) ;
    return rc ;
 error:
    goto done ;
@@ -481,22 +383,16 @@ error:
    goto done ;
 }
 
-INT32 migExport::_writeFile( bson *pbson )
+INT32 migExport::_writeRecord( bson *pbson )
 {
    INT32  rc = SDB_OK ;
    INT32  bufferSize = 0 ;
    INT32  tempSize = 0 ;
-   SINT64 writedSize = 0 ;
-   SINT64 curWriteSize = 0 ;
-   SINT64 bufferSize2 = 0 ;
    CHAR *pTemp = NULL ;
 
    if ( _pMigArg->type == MIGEXPRT_CSV )
    {
-      rc = getCSVSize( _pMigArg->delChar,
-                       _pMigArg->delField,
-                       _pMigArg->delRecord,
-                       pbson->data, &bufferSize ) ;
+      rc = _convertCSV.parseCSVSize( pbson->data, &bufferSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get csv size, rc=%d", rc ) ;
@@ -514,10 +410,7 @@ INT32 migExport::_writeFile( bson *pbson )
       }
       pTemp = _pBuffer ;
       tempSize = bufferSize ;
-      rc = bson2csv( _pMigArg->delChar,
-                     _pMigArg->delField,
-                     _pMigArg->delRecord,
-                     pbson->data, &pTemp, &tempSize ) ;
+      rc = _convertCSV.bsonCovertCSV( pbson->data, &pTemp, &tempSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to convert bson to csv, rc=%d", rc ) ;
@@ -527,7 +420,7 @@ INT32 migExport::_writeFile( bson *pbson )
    }
    else if ( _pMigArg->type == MIGEXPRT_JSON )
    {
-      bufferSize = bson_sprint_length ( pbson ) + 1 ;
+      bufferSize = bson_sprint_length ( pbson ) ;
       if ( bufferSize == 0 )
       {
          PD_LOG ( PDERROR, "Failed to get json size, rc=%d", rc ) ;
@@ -550,8 +443,6 @@ INT32 migExport::_writeFile( bson *pbson )
          goto error ;
       }
       bufferSize = ossStrlen( _pBuffer ) ;
-      _pBuffer[ bufferSize ] = _pMigArg->delRecord ;
-      ++bufferSize ;
    }
 
    if ( bufferSize < 0 )
@@ -561,20 +452,17 @@ INT32 migExport::_writeFile( bson *pbson )
       goto error ;
    }
 
-   bufferSize2 = (SINT64)bufferSize ;
-
-   while ( bufferSize2 > 0 )
+   rc = _writeData( _pBuffer, bufferSize ) ;
+   if ( rc )
    {
-      rc = ossWrite ( &_file, _pBuffer + writedSize,
-                      bufferSize2, &curWriteSize ) ;
-      if ( rc && SDB_INTERRUPT != rc )
-      {
-         PD_LOG ( PDERROR, "Failed to write to file, rc = %d", rc ) ;
-         goto error ;
-      }
-      bufferSize2 -= curWriteSize ;
-      writedSize += curWriteSize ;
-      rc = SDB_OK ;
+      PD_LOG ( PDERROR, "Failed to write data, rc=%d", rc ) ;
+      goto error ;
+   }
+   rc = _writeData( &_pMigArg->delRecord, 1 ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to write data, rc=%d", rc ) ;
+      goto error ;
    }
 done:
    return rc ;
@@ -650,7 +538,7 @@ INT32 migExport::_exportCL( const CHAR *pCSName,
             goto done ;
          }
       }
-      rc = _writeFile( &obj ) ;
+      rc = _writeRecord( &obj ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to write record to file, rc = %d",
@@ -819,6 +707,26 @@ INT32 migExport::init( migExprtArg *pMigArg )
       goto error ;
    }
    _isOpen = TRUE ;
+
+   rc = _convertCSV.init( _pMigArg->delChar, _pMigArg->delField ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to call init, rc=%d", rc ) ;
+      goto error ;
+   }
+   rc = _convertCSV.parseFields( _pMigArg->pFields,
+                                 ossStrlen( _pMigArg->pFields ) ) ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to parse fields, rc=%d", rc ) ;
+      goto error ;
+   }
+   rc = _writeInclude() ;
+   if ( rc )
+   {
+      PD_LOG ( PDERROR, "Failed to call _writeInclude, rc=%d", rc ) ;
+      goto error ;
+   }
 
 done:
    return rc ;
