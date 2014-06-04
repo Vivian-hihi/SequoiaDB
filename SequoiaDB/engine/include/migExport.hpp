@@ -41,9 +41,8 @@
 #include "oss.hpp"
 #include "../client/bson/bson.h"
 #include "../client/client.h"
-#include "../util/rawbson2csv.h"
+#include "../util/utilRawbson2csv.hpp"
 #include "ossIO.hpp"
-#include <vector>
 
 enum EXPRTTYPE
 {
@@ -102,13 +101,11 @@ private:
    CHAR               *_pBuffer ;
    OSSFILE             _file ;
    CHAR                _fullName[ MIG_COLLECTION_SPACE_SIZE ] ;
-   std::vector<CHAR *> _vFields ;
+   utilConvertCSV      _convertCSV ;
 private:
-   CHAR *_trimLeft( CHAR *pCursor, INT32 &size ) ;
-   CHAR *_trimRight( CHAR *pCursor, INT32 &size ) ;
-   CHAR *_trim( CHAR *pCursor, INT32 &size ) ;
-   INT32 _filterString( CHAR **pField, INT32 &size ) ;
-   INT32 _parseFields( CHAR *pFields, INT32 size, bson &obj ) ;
+   //INT32 _buildSelector( bson &obj ) ;
+   INT32 _writeData( CHAR *pBuffer, INT32 size ) ;
+   INT32 _writeSubField( fieldResolve *pFieldRe, BOOLEAN isFirst ) ;
    INT32 _writeInclude() ;
    INT32 _connectDB() ;
    INT32 _getCSList() ;
@@ -118,7 +115,7 @@ private:
    INT32 _query() ;
 private:
    INT32 _reallocBuffer( CHAR **ppBuffer, INT32 size, INT32 newSize ) ;
-   INT32 _writeFile( bson *pbson ) ;
+   INT32 _writeRecord( bson *pbson ) ;
    INT32 _exportCL( const CHAR *pCSName, const CHAR *pCLName, INT32 &total ) ;
    INT32 _run( const CHAR *pCSName, const CHAR *pCLName, INT32 &total ) ;
 public:
