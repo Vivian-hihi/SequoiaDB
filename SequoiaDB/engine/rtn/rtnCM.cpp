@@ -614,7 +614,7 @@ namespace CLSMGR
                      svcList[svcname].pid = OSS_INVALID_TID ;
                      svcList[svcname].status = 0 ;
                      PD_LOG ( PDERROR, "Failed to restart sequoiadb, "
-                              "svcname = %s", svcname.c_str() ) ;
+                              "svcname = %s, rc: %d", svcname.c_str(), rc ) ;
                      goto error ;
                   }
                } // if ( TYPE_MONITOR == type )
