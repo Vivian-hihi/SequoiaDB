@@ -35,4 +35,4 @@ Connect the database to a node named "node".
 .sp 2
 > node.connect()
 .br
-Return：vmsvr2-suse-x64:11800
+Return: vmsvr2-suse-x64:11800
