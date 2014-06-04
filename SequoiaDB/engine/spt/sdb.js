@@ -178,18 +178,41 @@ SdbCollection.prototype.toString = function() {
    return this._cs.toString() + "." + this._name;
 }
 
-SdbCollection.prototype.insert = function ( data , flags ) {
+SdbCollection.prototype.insert = function ( data , flags )
+{
    if ( (typeof data) != "object" )
-      throw "SdbCollection.insert(): 1st param should be obj or array of objs";
+      throw "SdbCollection.insert(): the 1st param should be obj or array of objs";
+   if ( flags != undefined )
+   {
+      if ( (typeof flags) != "number" ||
+            ( flags != 0 &&
+              flags != SDB_INSERT_RETURN_ID &&
+              flags != SDB_INSERT_CONTONDUP ) )
+         throw "SdbCollection.insert(): the 2nd param if existed should be 0 or SDB_INSERT_RETURN_ID or SDB_INSERT_CONTONDUP only";
+   }
 
-   if ( data instanceof Array ) {
+   if ( data instanceof Array )
+   {
       if ( 0 == data.length ) return ;
-      newFlags = ( (typeof flags) == "number" ) ? flags : 0 ;
+      if ( (typeof flags) == "number" )
+      {
+         if ( flags != 0 && flags != SDB_INSERT_CONTONDUP )
+            throw "SdbCollection.insert(): when insert more than 1 records, the 2nd param if existed should be 0 or SDB_INSERT_CONTONDUP only";
+         newFlags = flags ;
+      }
       return this._bulkInsert ( data , newFlags ) ;
-   } else {
+   }
+   else
+   {
+      if ( (typeof flags) == "number" )
+      {
+         if ( flags != 0 && flags != SDB_INSERT_RETURN_ID )
+            throw "SdbCollection.insert(): when insert 1 record, the 2nd param if existed should be 0 or SDB_INSERT_RETURN_ID only";
+      }
       return this._insert ( data , SDB_INSERT_RETURN_ID == flags ) ;
    }
 }
+
 /*
 SdbCollection.prototype.rename = function ( newName ) {
    this._rename ( newName ) ;
