@@ -74,10 +74,10 @@ conditions.
               then it default as the max range of data that
               "source shard" contains.
 .br
-              ("<source shard>","<target shard>"，<condition>)
+              ("<source shard>","<target shard>",<condition>)
 .br
               \fBpercent-spliting\fR db.foo.bar.split("<source
-              shard>","<target shard>"，<percent>)
+              shard>","<target shard>",<percent>)
 .sp 2
 
 .sp 2
