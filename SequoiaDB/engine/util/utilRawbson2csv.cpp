@@ -187,6 +187,13 @@ INT32 utilConvertCSV::_parseSubField( CHAR *pField, fieldResolve *pParent )
    pSubField = ossStrchr( pField, '.' ) ;
    if ( pSubField )
    {
+      rc = SDB_INVALIDARG ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Field does not has the\".\" symbol", rc ) ;
+         goto error ;
+      }
+      //off export a.b
       *pSubField = 0 ;
       ++pSubField ;
       pFieldRe->pField = pField ;
