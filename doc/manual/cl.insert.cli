@@ -60,11 +60,12 @@ collection "bar".
 .br
               doc: ({"< field name 1>":"< value >","< field name
               2>":"< value
-              >",…}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID })
+              >",...}[,SDB_INSERT_CONTONDUP|SDB_INSERT_RETURN_ID
+              })
 .br
               docs: ([ {"< field name 1>":"< value >","< field
-              name 2>":"< value >",…}, {"< field name 1>":"<
-              value >","< field name 2>":"< value >",…},... ])
+              name 2>":"< value >",...}, {"< field name 1>":"<
+              value >","< field name 2>":"< value >",...},... ])
 .sp 2
 \fBNote: \fR
 .sp 2
@@ -95,7 +96,7 @@ value of "_id" is 10. The value of "age" is 20:
 .sp 2
 Insert more than one record.
 .sp 2
-db.foo.bar.insert([{_id:20,name:”Mike”,age:15},{name:”John”,age:25,phone:123}])
+db.foo.bar.insert([{_id:20,name:"Mike",age:15},{name:"John",age:25,phone:123}])
 .sp 2
 This operation will insert 2 records into the collection "bar":
 .sp 2
