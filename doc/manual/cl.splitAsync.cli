@@ -7,10 +7,7 @@
 .SH "NAME"
 
 .sp 2
-splitAsync - Interview operation
-"db.collectionspace.collection.split" the same function, but it
-operates as an asynchronous partition operation, the task ID
-returned immediately after the partition created task.
+splitAsync - It operates as an asynchronous partition operation.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -18,9 +15,9 @@ returned immediately after the partition created task.
 .sp 2
 
 .sp 2
-db.collectionspace.collection. splitAsync(\fBsource
-group\fR,\fBtarget
-group\fR,\fBpercent(0~100)|cond\fR,\fB[endcondition]\fR)
+db.collectionspace.collection. splitAsync(\fB<source
+group>\fR,\fB<target
+group>\fR,\fB<percent(0~100)|cond>\fR,\fB[endcondition]\fR)
 .SH "CATEGORY"
 
 .sp 2
