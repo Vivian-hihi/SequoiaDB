@@ -15,7 +15,7 @@ upsert - Update collection records.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.upsert(\fBrule\fR,\fB[cond]\fR,\fB[hint]\fR)
+db.collectionspace.collection.upsert(\fB<rule>\fR,\fB[cond]\fR,\fB[hint]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -67,10 +67,10 @@ but "upset" will insert data once.
 \fBNote: \fR
 .sp 2
    *  "upsert" does not support this version of the table
-   partitioning key(ShardingKey) segment updates, if you include
-   the partition key update operations to weed out automatically
-   update the partition key, but other fields update to take
-   effect, and no error occurs.
+   ShardingKey segment updates, if you include the partition key
+   update operations to weed out automatically update the
+   partition key, but other fields update to take effect, and no
+   error occurs.
 .SH "Examples"
 
 .sp 2
