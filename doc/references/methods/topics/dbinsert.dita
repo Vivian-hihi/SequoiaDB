@@ -24,14 +24,14 @@
         <strow>
           <stentry>flag</stentry>
           <stentry>Int</stentry>
-          <stentry>是否显示记录的_id值。它的值为SDB_INSERT_CONTONDUP或者SDB_INSERT_RETURN_ID。只有在插入单条记录的时候有效。</stentry>
+          <stentry>可取SDB_INSERT_RETURN_ID或者SDB_INSERT_CONTONDUP。<fig></fig>前者在插入单条记录时有效，表示插入记录后返回记录中“_id”字段内容；后者在插入多条记录时有效，表示在插入的记录中，若存在“_id”字段内容重复的记录时，将跳过<fig></fig>这些存在重复“_id”的记录继续插入后面记录。默认情况下，当存在重复“_id”字段内容的记录时，将停止插入后面的记录。</stentry>
           <stentry>否</stentry>
         </strow>
       </simpletable>
       
     </section>
     <section><title>格式</title>
-      <p> insert() 方法的定义格式包含doc|docs和flag两个字段，doc|docs是一个JSON对象，flag为int类型，在插入单条记录时，如果设置flag参数的值为“SDB_INSERT_RETURN_ID”，会返回记录的_id值；设置为“SDB_INSERT_CONTONDUP”，批量插入时存在重复键值是否忽略错误，不返回；默认不返回。</p>
+      <p> insert() 方法的定义格式包含doc|docs和flag两个字段。</p>
       <p>doc：<codeblock>{"&lt; 字段名 1&gt;":"&lt; 值 &gt;","&lt; 字段名 2&gt;":"&lt; 值 &gt;",…}</codeblock></p>
       <p>
         docs：<codeblock>{ [
@@ -74,6 +74,19 @@
         "age": 25, 
         "phone": 123 
         }</codeblock>
+          </li>
+          <li>
+            <p>插入拥有重复“_id”键的多条记录。</p>
+            <codeblock>db.foo.bar.insert([{_id:1,a:1 },{_id:1,b:2 },{_id:3,c:3}], SDB_INSERT_CONTONDUP)</codeblock>
+            <p>此操作将会在集合bar中插入两条记录：</p>
+            <codeblock>{
+"_id": 1,
+"a": 1,
+}
+{
+"_id": 3,
+"c": 3
+}</codeblock>
           </li>
         </ul>              
      </section>
