@@ -603,7 +603,8 @@ namespace CLSMGR
                      svcList[svcname].pid = pid ;
                      OSS_BIT_CLR_SET ( svcList[svcname].status, BIT_RUNNING ) ;
                      PD_LOG ( PDEVENT, "Successfully to restart SequoiaDB "
-                              "node, svcname = %s", svcname.c_str() ) ;
+                              "node from crash, svcname = %s",
+                              svcname.c_str() ) ;
                   }
                   else
                   {
@@ -997,8 +998,8 @@ namespace CLSMGR
             rc = ossMkdir ( dbpath, OSS_CREATE|OSS_READWRITE ) ;
             if ( rc )
             {
-               PD_LOG ( PDERROR, "Failed to create config file in path: %s",
-                        dbpath ) ;
+               PD_LOG ( PDERROR, "Failed to create config file in path: %s, "
+                        "rc: %d", dbpath, rc ) ;
                goto error ;
             }
          }
