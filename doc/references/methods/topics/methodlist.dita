@@ -330,12 +330,12 @@
         <strow>
           <stentry><xref href="createNode.dita">rg.createNode()</xref></stentry>
           <stentry>创建节点</stentry>
-          <stentry>rg.createNode(&lt;host>,&lt;service>,&lt;dbpath>[,&lt;config>])</stentry>
+          <stentry>rg.createNode(&lt;host>,&lt;service>,&lt;dbpath>,[&lt;config>])</stentry>
         </strow>
         <strow>
           <stentry><xref href="removeNode.dita">rg.removeNode()</xref></stentry>
           <stentry>删除节点</stentry>
-          <stentry>rg.removeNode(&lt;host>,&lt;service>[,&lt;config>])</stentry>
+          <stentry>rg.removeNode(&lt;host>,&lt;service>,[&lt;config>])</stentry>
         </strow>
         <strow>
           <stentry><xref href="getMaster.dita">rg.getMaster()</xref></stentry>
