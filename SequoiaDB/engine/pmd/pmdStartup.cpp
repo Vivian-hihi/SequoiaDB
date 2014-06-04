@@ -208,7 +208,7 @@ namespace engine
 
    INT32 _pmdStartup::final ()
    {
-      if ( _fileOpened )
+      if ( _fileOpened && _fileLocked )
       {
          INT64 write = 0 ;
          INT32 rc = ossSeekAndWrite( &_file, 0, PMD_STARTUP_STOP_CHAR,
