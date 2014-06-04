@@ -36,7 +36,7 @@
 
 #include "bson.h"
 #include "encoding.h"
-#include "../base64c.h"
+#include "base64c.h"
 
 #if defined (__linux__)
 #include <sys/types.h>

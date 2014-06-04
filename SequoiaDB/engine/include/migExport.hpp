@@ -41,7 +41,7 @@
 #include "oss.hpp"
 #include "../client/bson/bson.h"
 #include "../client/client.h"
-#include "../util/utilRawbson2csv.hpp"
+#include "../util/utilDecodeRawbson.hpp"
 #include "ossIO.hpp"
 
 enum EXPRTTYPE
@@ -101,9 +101,8 @@ private:
    CHAR               *_pBuffer ;
    OSSFILE             _file ;
    CHAR                _fullName[ MIG_COLLECTION_SPACE_SIZE ] ;
-   utilConvertCSV      _convertCSV ;
+   utilDecodeBson      _decodeBson ;
 private:
-   //INT32 _buildSelector( bson &obj ) ;
    INT32 _writeData( CHAR *pBuffer, INT32 size ) ;
    INT32 _writeSubField( fieldResolve *pFieldRe, BOOLEAN isFirst ) ;
    INT32 _writeInclude() ;

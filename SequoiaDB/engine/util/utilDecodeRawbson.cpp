@@ -14,9 +14,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Source File Name = utilRawbson2csv.cpp
+   Source File Name = utilDecodeRawbson.cpp
 
-   Descriptive Name = BSON TO CSV
+   Descriptive Name = BSON decode
 
    When/how to use: this program may be used on binary and text-formatted
    versions of UTIL component. This file contains declare of json2rawbson. Note
@@ -35,28 +35,29 @@
 
 *******************************************************************************/
 
-#include "utilRawbson2csv.hpp"
+#include "utilDecodeRawbson.hpp"
 #include "rawbson2csv.h"
+#include "../client/jstobs.h"
 #include "../client/bson/bson.h"
 
-#define CSV_STR_TABLE   '\t'
-#define CSV_STR_CR      '\r'
-#define CSV_STR_LF      '\n'
-#define CSV_STR_COMMA   ','
-#define CSV_STR_SPACE   32
-#define CSV_STR_QUOTES  '"'
-#define CSV_STR_SLASH   '\\'
+#define UTIL_DE_STR_TABLE   '\t'
+#define UTIL_DE_STR_CR      '\r'
+#define UTIL_DE_STR_LF      '\n'
+#define UTIL_DE_STR_COMMA   ','
+#define UTIL_DE_STR_SPACE   32
+#define UTIL_DE_STR_QUOTES  '"'
+#define UTIL_DE_STR_SLASH   '\\'
 
-CHAR *utilConvertCSV::_trimLeft( CHAR *pCursor, INT32 &size )
+CHAR *utilDecodeBson::_trimLeft( CHAR *pCursor, INT32 &size )
 {
    for ( INT32 i = 0; i < size; ++i )
    {
       switch( *pCursor )
       {
-      case CSV_STR_TABLE:
-      case CSV_STR_CR:
-      case CSV_STR_LF:
-      case CSV_STR_SPACE:
+      case UTIL_DE_STR_TABLE:
+      case UTIL_DE_STR_CR:
+      case UTIL_DE_STR_LF:
+      case UTIL_DE_STR_SPACE:
          ++pCursor ;
          break ;
       case 0:
@@ -68,16 +69,16 @@ CHAR *utilConvertCSV::_trimLeft( CHAR *pCursor, INT32 &size )
    return pCursor ;
 }
 
-CHAR *utilConvertCSV::_trimRight ( CHAR *pCursor, INT32 &size )
+CHAR *utilDecodeBson::_trimRight ( CHAR *pCursor, INT32 &size )
 {
    for ( INT32 i = 1; i <= size; ++i )
    {
       switch( *( pCursor + ( size - i ) ) )
       {
-      case CSV_STR_TABLE:
-      case CSV_STR_CR:
-      case CSV_STR_LF:
-      case CSV_STR_SPACE:
+      case UTIL_DE_STR_TABLE:
+      case UTIL_DE_STR_CR:
+      case UTIL_DE_STR_LF:
+      case UTIL_DE_STR_SPACE:
          break ;
       case 0:
       default:
@@ -88,19 +89,19 @@ CHAR *utilConvertCSV::_trimRight ( CHAR *pCursor, INT32 &size )
    return pCursor ;
 }
 
-CHAR *utilConvertCSV::_trim ( CHAR *pCursor, INT32 &size )
+CHAR *utilDecodeBson::_trim ( CHAR *pCursor, INT32 &size )
 {
    pCursor = _trimLeft( pCursor, size ) ;
    pCursor = _trimRight( pCursor, size ) ;
    return pCursor ;
 }
 
-INT32 utilConvertCSV::_filterString( CHAR **pField, INT32 &size )
+INT32 utilDecodeBson::_filterString( CHAR **pField, INT32 &size )
 {
    INT32 rc = SDB_OK ;
    CHAR *pBuffer = *pField ;
-   if ( pBuffer[0] == CSV_STR_QUOTES &&
-        pBuffer[size-1] == CSV_STR_QUOTES )
+   if ( pBuffer[0] == UTIL_DE_STR_QUOTES &&
+        pBuffer[size-1] == UTIL_DE_STR_QUOTES )
    {
       ++pBuffer ;
       size -= 2 ;
@@ -109,7 +110,7 @@ INT32 utilConvertCSV::_filterString( CHAR **pField, INT32 &size )
    return rc ;
 }
 
-INT32 utilConvertCSV::init( CHAR delChar, CHAR delField )
+INT32 utilDecodeBson::init( CHAR delChar, CHAR delField )
 {
    INT32 rc = SDB_OK ;
    if ( delChar == delField )
@@ -126,17 +127,17 @@ error:
    goto done ;
 }
 
-utilConvertCSV::utilConvertCSV() : _delChar(0),
+utilDecodeBson::utilDecodeBson() : _delChar(0),
                                    _delField(0)
 {
 }
 
-utilConvertCSV::~utilConvertCSV()
+utilDecodeBson::~utilDecodeBson()
 {
    _freeFieldList( NULL ) ;
 }
 
-void utilConvertCSV::_freeFieldList( fieldResolve *pFieldRe )
+void utilDecodeBson::_freeFieldList( fieldResolve *pFieldRe )
 {
    if ( NULL == pFieldRe )
    {
@@ -162,7 +163,7 @@ void utilConvertCSV::_freeFieldList( fieldResolve *pFieldRe )
    }
 }
 
-INT32 utilConvertCSV::_parseSubField( CHAR *pField, fieldResolve *pParent )
+INT32 utilDecodeBson::_parseSubField( CHAR *pField, fieldResolve *pParent )
 {
    INT32 rc = SDB_OK ;
    CHAR *pSubField = NULL ;
@@ -215,7 +216,7 @@ error:
    goto done ;
 }
 
-INT32 utilConvertCSV::parseFields( CHAR *pFields, INT32 size )
+INT32 utilDecodeBson::parseFields( CHAR *pFields, INT32 size )
 {
    INT32   rc         = SDB_OK ;
    INT32   tempRc     = SDB_OK ;
@@ -264,18 +265,18 @@ the field appears \", rc = %d", rc ) ;
          break ;
       }
 
-      if ( CSV_STR_QUOTES == *pCursor )
+      if ( UTIL_DE_STR_QUOTES == *pCursor )
       {
          --size ;
          ++pCursor ;
          isString = !isString ;
       }
       else if ( !isString &&
-                ( CSV_STR_COMMA == *pCursor || CSV_STR_LF == *pCursor ) )
+                ( UTIL_DE_STR_COMMA == *pCursor || UTIL_DE_STR_LF == *pCursor ) )
       {
          fieldSize = pCursor - leftField ;
          leftField = _trim( leftField, fieldSize ) ;
-         if ( CSV_STR_LF == *pCursor )
+         if ( UTIL_DE_STR_LF == *pCursor )
          {
             tempRc = SDB_UTIL_CSV_FIELD_END ;
          }
@@ -324,7 +325,7 @@ error:
    goto done ;
 }
 
-INT32 utilConvertCSV::parseCSVSize( CHAR *pbson, INT32 *pCSVSize )
+INT32 utilDecodeBson::parseCSVSize( CHAR *pbson, INT32 *pCSVSize )
 {
    INT32 rc = SDB_OK ;
    rc = getCSVSize( _delChar, _delField, pbson, pCSVSize ) ;
@@ -339,7 +340,31 @@ error:
    goto done ;
 }
 
-INT32 utilConvertCSV::_appendBsonElement( void *pObj,
+INT32 utilDecodeBson::parseJSONSize( CHAR *pbson, INT32 *pJSONSize )
+{
+   INT32 rc = SDB_OK ;
+   bson obj ;
+   bson_init( &obj ) ;
+   if ( bson_init_finished_data( &obj, pbson ) )
+   {
+      rc = SDB_OOM ;
+      PD_LOG ( PDERROR, "Failed to init bson, rc = %d", rc ) ;
+      goto error ;
+   }
+   *pJSONSize = bson_sprint_length ( &obj ) ;
+   if ( *pJSONSize == 0 )
+   {
+      rc = SDB_OOM ;
+      PD_LOG ( PDERROR, "Failed to get json size, rc = %d", rc ) ;
+      goto error ;
+   }
+done:
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 utilDecodeBson::_appendBsonElement( void *pObj,
                                           fieldResolve *pFieldRe,
                                           const CHAR *pData )
 {
@@ -400,7 +425,7 @@ error:
    goto done ;
 }
 
-INT32 utilConvertCSV::bsonCovertCSV( CHAR *pbson,
+INT32 utilDecodeBson::bsonCovertCSV( CHAR *pbson,
                                      CHAR **ppBuffer,
                                      INT32 *pCSVSize )
 {
@@ -426,6 +451,53 @@ INT32 utilConvertCSV::bsonCovertCSV( CHAR *pbson,
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to bson convert csv, rc = %d", rc ) ;
+      goto error ;
+   }
+done:
+   bson_destroy ( &obj ) ;
+   return rc ;
+error:
+   goto done ;
+}
+
+INT32 utilDecodeBson::bsonCovertJson( CHAR *pbson,
+                                      CHAR **ppBuffer,
+                                      INT32 *pJSONSize )
+{
+   INT32 rc = SDB_OK ;
+   INT32 fieldsNum = 0 ;
+   fieldResolve *pFieldRc = NULL ;
+   bson obj ;
+   bson_init( &obj ) ;
+
+   fieldsNum = _vFields.size() ;
+   if ( fieldsNum > 0 )
+   {
+      for ( INT32 i = 0; i < fieldsNum; ++i )
+      {
+         pFieldRc = _vFields.at( i ) ;
+         rc = _appendBsonElement( &obj, pFieldRc, pbson ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Failed to append bson element, rc = %d", rc ) ;
+            goto error ;
+         }
+      }
+   }
+   else
+   {
+      if ( bson_init_data( &obj, pbson ) )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Failed to call bson_init_finished_data, rc = %d", rc ) ;
+         goto error ;
+      }
+   }
+   bson_finish ( &obj ) ;
+   if ( !bsonToJson ( *ppBuffer, *pJSONSize, &obj, FALSE, TRUE ) )
+   {
+      rc = SDB_OOM ;
+      PD_LOG ( PDERROR, "Failed to convert bson to json, rc=%d", rc ) ;
       goto error ;
    }
 done:

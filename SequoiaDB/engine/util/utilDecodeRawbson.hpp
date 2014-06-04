@@ -14,9 +14,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Source File Name = utilRawbson2csv.hpp
+   Source File Name = utilDecodeRawbson.hpp
 
-   Descriptive Name = BSON TO CSV
+   Descriptive Name = BSON decode
 
    When/how to use: this program may be used on binary and text-formatted
    versions of UTIL component. This file contains declare of json2rawbson. Note
@@ -34,8 +34,8 @@
    Last Changed =
 
 *******************************************************************************/
-#ifndef UTIL_BSON_2_CSV_HPP__
-#define UTIL_BSON_2_CSV_HPP__
+#ifndef UTIL_DECODE_BSON_HPP__
+#define UTIL_DECODE_BSON_HPP__
 
 #include "core.hpp"
 #include "oss.hpp"
@@ -56,7 +56,7 @@ struct fieldResolve : public SDBObject
    }
 } ;
 
-class utilConvertCSV : public SDBObject
+class utilDecodeBson : public SDBObject
 {
 private:
    CHAR _delChar ;
@@ -73,12 +73,14 @@ private:
    INT32 _appendBsonElement( void *pObj, fieldResolve *pFieldRe,
                              const CHAR *pData ) ;
 public:
-   utilConvertCSV() ;
-   ~utilConvertCSV() ;
+   utilDecodeBson() ;
+   ~utilDecodeBson() ;
    INT32 init( CHAR delChar, CHAR delField ) ;
    INT32 parseFields( CHAR *pFields, INT32 size ) ;
    INT32 parseCSVSize( CHAR *pbson, INT32 *pCSVSize ) ;
+   INT32 parseJSONSize( CHAR *pbson, INT32 *pJSONSize ) ;
    INT32 bsonCovertCSV( CHAR *pbson, CHAR **ppBuffer, INT32 *pCSVSize ) ;
+   INT32 bsonCovertJson( CHAR *pbson, CHAR **ppBuffer, INT32 *pJSONSize ) ;
 } ;
 
 #endif

@@ -42,8 +42,6 @@
 #include "ossIO.hpp"
 #include "pdTrace.hpp"
 #include "migTrace.hpp"
-#include "../util/json2rawbson.h"
-#include "../client/jstobs.h"
 #include "msgDef.h"
 #include "msg.h"
 
@@ -266,10 +264,10 @@ INT32 migExport::_writeInclude()
    if ( _pMigArg->type == MIGEXPRT_CSV &&
         _pMigArg->include == TRUE )
    {
-      fieldsNum = _convertCSV._vFields.size() ;
+      fieldsNum = _decodeBson._vFields.size() ;
       for ( INT32 i = 0; i < fieldsNum; ++i )
       {
-         pFieldRe = _convertCSV._vFields.at( i ) ;
+         pFieldRe = _decodeBson._vFields.at( i ) ;
          rc = _writeSubField( pFieldRe, TRUE ) ;
          if ( rc )
          {
@@ -297,50 +295,9 @@ error:
    goto done ;
 }
 
-/*INT32 migExport::_buildSelector( bson &obj )
-{
-   INT32 rc = SDB_OK ;
-   INT32 fieldsNum = 0 ;
-   INT32 fieldSize = 0 ;
-   CHAR *pField = NULL ;
-   bson_init( &obj ) ;
-
-   if ( _pMigArg->type == MIGEXPRT_CSV &&
-        _pMigArg->include == TRUE )
-   {
-      fieldsNum = _convertCSV._vFields.size() ;
-      for ( INT32 i = 0; i < fieldsNum; ++i )
-      {
-         pField = _convertCSV._vFields.at( i ) ;
-         bson_append_undefined( &obj, pField ) ;
-      }
-      bson_finish ( &obj ) ;
-   }
-done:
-   return rc ;
-}*/
-
 INT32 migExport::_query()
 {
    INT32 rc = SDB_OK ;
-   /*bson obj ;
-   if ( _pMigArg->pFields )
-   {
-      rc = _buildSelector( obj ) ;
-      if ( rc )
-      {
-         PD_LOG ( PDERROR, "Failed to call build selector, rc=%d", rc ) ;
-         goto error ;
-      }
-   }
-   else
-   {
-      bson_init( &obj ) ;
-      bson_empty( &obj ) ;
-   }
-   // start creating cursor
-   rc = sdbQuery ( _gCollection, NULL, &obj, NULL, NULL, 0, -1,
-                   &_gCursor ) ;*/
    rc = sdbQuery ( _gCollection, NULL, NULL, NULL, NULL, 0, -1,
                    &_gCursor ) ;
    if ( rc )
@@ -356,7 +313,6 @@ INT32 migExport::_query()
       }
    }
 done:
-   //bson_destroy( &obj ) ;
    return rc ;
 error:
    goto done ;
@@ -392,7 +348,7 @@ INT32 migExport::_writeRecord( bson *pbson )
 
    if ( _pMigArg->type == MIGEXPRT_CSV )
    {
-      rc = _convertCSV.parseCSVSize( pbson->data, &bufferSize ) ;
+      rc = _decodeBson.parseCSVSize( pbson->data, &bufferSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to get csv size, rc=%d", rc ) ;
@@ -409,8 +365,8 @@ INT32 migExport::_writeRecord( bson *pbson )
          _bufferSize = bufferSize ;
       }
       pTemp = _pBuffer ;
-      tempSize = bufferSize ;
-      rc = _convertCSV.bsonCovertCSV( pbson->data, &pTemp, &tempSize ) ;
+      tempSize = _bufferSize ;
+      rc = _decodeBson.bsonCovertCSV( pbson->data, &pTemp, &tempSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to convert bson to csv, rc=%d", rc ) ;
@@ -420,10 +376,10 @@ INT32 migExport::_writeRecord( bson *pbson )
    }
    else if ( _pMigArg->type == MIGEXPRT_JSON )
    {
-      bufferSize = bson_sprint_length ( pbson ) ;
-      if ( bufferSize == 0 )
+      rc = _decodeBson.parseJSONSize( pbson->data, &bufferSize ) ;
+      if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to get json size, rc=%d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to get csv size, rc=%d", rc ) ;
          goto error ;
       }
       if ( _bufferSize < bufferSize )
@@ -437,9 +393,12 @@ INT32 migExport::_writeRecord( bson *pbson )
          _bufferSize = bufferSize ;
       }
       ossMemset( _pBuffer, 0, _bufferSize ) ;
-      if ( !bsonToJson ( _pBuffer, _bufferSize, pbson, FALSE, TRUE ) )
+      pTemp = _pBuffer ;
+      tempSize = _bufferSize ;
+      rc = _decodeBson.bsonCovertJson( pbson->data, &pTemp, &tempSize ) ;
+      if ( rc )
       {
-         PD_LOG ( PDERROR, "Failed to convert bson to json, rc=%d", rc ) ;
+         PD_LOG ( PDERROR, "Failed to convert bson to csv, rc=%d", rc ) ;
          goto error ;
       }
       bufferSize = ossStrlen( _pBuffer ) ;
@@ -708,26 +667,29 @@ INT32 migExport::init( migExprtArg *pMigArg )
    }
    _isOpen = TRUE ;
 
-   rc = _convertCSV.init( _pMigArg->delChar, _pMigArg->delField ) ;
+   rc = _decodeBson.init( _pMigArg->delChar, _pMigArg->delField ) ;
    if ( rc )
    {
       PD_LOG ( PDERROR, "Failed to call init, rc=%d", rc ) ;
       goto error ;
    }
-   rc = _convertCSV.parseFields( _pMigArg->pFields,
-                                 ossStrlen( _pMigArg->pFields ) ) ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to parse fields, rc=%d", rc ) ;
-      goto error ;
-   }
-   rc = _writeInclude() ;
-   if ( rc )
-   {
-      PD_LOG ( PDERROR, "Failed to call _writeInclude, rc=%d", rc ) ;
-      goto error ;
-   }
 
+   if ( _pMigArg->pFields )
+   {
+      rc = _decodeBson.parseFields( _pMigArg->pFields,
+                                    ossStrlen( _pMigArg->pFields ) ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to parse fields, rc=%d", rc ) ;
+         goto error ;
+      }
+      rc = _writeInclude() ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to call _writeInclude, rc=%d", rc ) ;
+         goto error ;
+      }
+   }
 done:
    return rc ;
 error:
