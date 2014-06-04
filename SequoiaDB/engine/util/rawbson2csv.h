@@ -14,9 +14,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Source File Name = csv2rawbson.h
+   Source File Name = rawbson2csv.h
 
-   Descriptive Name = CSV To Raw BSON
+   Descriptive Name = Raw BSON To CSV
 
    When/how to use: this program may be used on binary and text-formatted
    versions of UTIL component. This file contains declare of json2rawbson. Note
@@ -53,11 +53,9 @@
 
 SDB_EXTERN_C_START
 
-SDB_EXPORT INT32 getCSVSize ( CHAR delChar, CHAR delField,
-                              CHAR delRecord, CHAR *pbson,
-                              INT32 *pCSVSize ) ;
-SDB_EXPORT INT32 bson2csv( CHAR delChar, CHAR delField,
-                           CHAR delRecord, CHAR *pbson,
+SDB_EXPORT INT32 getCSVSize( CHAR delChar, CHAR delField,
+                             CHAR *pbson, INT32 *pCSVSize ) ;
+SDB_EXPORT INT32 bson2csv( CHAR delChar, CHAR delField, CHAR *pbson,
                            CHAR **ppBuffer, INT32 *pCSVSize ) ;
 SDB_EXTERN_C_END
 
