@@ -16,7 +16,7 @@ partition collection.
 .sp 2
 
 .sp 2
-db.collectionspace.collection.attachCL(\fBsubCLFullName\fR\fB,options\fR)
+db.collectionspace.collection.attachCL(\fB<subCLFullName>\fR\fB,<options>\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -34,7 +34,7 @@ collection.
        The partition set name.(the name that contains a
        collection of space)
 .sp 2
-\fBoptions (object)\fR
+\fBoptions (json object)\fR
 .br
        The boundaries, contains two fields "LowBound"(the value
        of the left section) and "UpBound"(R interval value).
