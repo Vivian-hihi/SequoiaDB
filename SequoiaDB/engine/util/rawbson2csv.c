@@ -14,9 +14,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-   Source File Name = csv2rawbson.c
+   Source File Name = rawbson2csv.c
 
-   Descriptive Name = CSV To Raw BSON
+   Descriptive Name = Raw BSON To CSV
 
    When/how to use: this program may be used on binary and text-formatted
    versions of UTIL component. This file contains declare of json2rawbson. Note
@@ -73,7 +73,7 @@ INT32 _appendString( CHAR delChar, const CHAR *pBuffer, INT32 size,
 
    for ( i = 0; i < size; )
    {
-      if ( pCSVSize == 0 )
+      if ( ppCSVBuf && (*pCSVSize) == 0 )
       {
          rc = SDB_OOM ;
          goto error ;
@@ -125,13 +125,7 @@ INT32 _appendObj( CHAR delChar, bson_iterator *pIt,
 
    size = bson_sprint_length_iterator ( pIt ) ;
 
-   if ( !ppCSVBuf )
-   {
-      (*pCSVSize) += size ;
-      goto done ;
-   }
-
-   if ( size > (*pCSVSize) )
+   if ( ppCSVBuf && size > (*pCSVSize) )
    {
       rc = SDB_OOM ;
       goto error ;
@@ -374,58 +368,22 @@ error:
 }
 
 INT32 getCSVSize ( CHAR delChar, CHAR delField,
-                   CHAR delRecord, CHAR *pbson, INT32 *pCSVSize )
+                   CHAR *pbson, INT32 *pCSVSize )
 {
    INT32 rc = SDB_OK ;
-   INT32 csvSize = 0 ;
-   BOOLEAN isFirst = TRUE ;
-   bson_type fieldType ;
-   bson_iterator it ;
-
-   bson_iterator_from_buffer( &it, pbson ) ;
-
-   while ( bson_iterator_next( &it ) )
-   {
-      fieldType = bson_iterator_type( &it ) ;
-      //if BSON_EOO == fieldType ( which is 0 ),that means we hit end of object
-      if ( BSON_EOO == fieldType )
-      {
-         break ;
-      }
-      // do NOT concat "," for first entrance
-      if ( isFirst )
-      {
-         isFirst = FALSE ;
-      }
-      else
-      {
-         rc = _appendString( delChar, &delField, 1, NULL, &csvSize ) ;
-         if ( rc )
-         {
-            goto error ;
-         }
-      }
-      //then we check the data type
-      rc = _appendValue( delChar, &it, NULL, &csvSize ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-   }
-   rc = _appendString( delChar, &delRecord, 1, NULL, &csvSize ) ;
+   rc = bson2csv( delChar, delField, pbson, NULL, pCSVSize ) ;
    if ( rc )
    {
       goto error ;
    }
+
 done:
-   (*pCSVSize) = csvSize ;
    return rc ;
 error:
    goto done ;
 }
 
-INT32 bson2csv( CHAR delChar, CHAR delField,
-                CHAR delRecord, CHAR *pbson,
+INT32 bson2csv( CHAR delChar, CHAR delField, CHAR *pbson,
                 CHAR **ppBuffer, INT32 *pCSVSize )
 {
    INT32 rc = SDB_OK ;
@@ -457,7 +415,7 @@ INT32 bson2csv( CHAR delChar, CHAR delField,
             goto error ;
          }
       }
-	  if ( BSON_UNDEFINED == fieldType )
+      if ( BSON_UNDEFINED == fieldType )
       {
          continue ;
       }
@@ -467,11 +425,6 @@ INT32 bson2csv( CHAR delChar, CHAR delField,
       {
          goto error ;
       }
-   }
-   rc = _appendString( delChar, &delRecord, 1, ppBuffer, pCSVSize ) ;
-   if ( rc )
-   {
-      goto error ;
    }
 done:
    return rc ;
