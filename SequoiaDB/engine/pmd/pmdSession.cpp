@@ -367,6 +367,7 @@ namespace engine
       {
          _pDPSCB = NULL ;
       }
+      eduCB()->setClientSock( socket() ) ;
    }
 
    void _pmdLocalSession::_onDetach ()
@@ -388,6 +389,8 @@ namespace engine
       {
          _pRTNCB->contextDelete( contextID, NULL ) ;
       }
+
+      eduCB()->setClientSock( NULL ) ;
    }
 
    INT32 _pmdLocalSession::run()
