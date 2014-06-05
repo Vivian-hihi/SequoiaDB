@@ -157,6 +157,10 @@ namespace engine
          INT32          _reply( MsgOpReply* responseMsg, const CHAR *pBody,
                                 INT32 bodyLen ) ;
 
+      protected:
+         virtual void            _onAttach () ;
+         virtual void            _onDetach () ;
+
       // message process functions
       protected:
 
