@@ -39,6 +39,7 @@
 #include "sdbInterface.hpp"
 #include "msg.h"
 #include "pmdDef.hpp"
+#include "rtnContext.hpp"
 
 #include <map>
 #include <string>
@@ -134,6 +135,7 @@ namespace engine
 
          virtual INT32     sessionType() const { return PMD_SESSION_LOCAL ; }
          virtual UINT64    identifyID() ;
+         virtual INT32     getServiceType() const ;
 
          virtual INT32     run() ;
 
@@ -144,7 +146,7 @@ namespace engine
 
          virtual INT32  _processOPMsg( MsgHeader *msg, INT64 &contextID,
                                        const CHAR **ppBody, INT32 &bodyLen,
-                                       INT32 &returnNum ) ;
+                                       INT32 &returnNum, INT32 &startPos ) ;
 
          virtual INT32  _onAuth( MsgHeader *msg ) ;
 
@@ -152,8 +154,8 @@ namespace engine
                                          INT32 &buffLen ) ;
          INT32          _processSysInfoRequest( const CHAR *msg ) ;
 
-         INT32          _replay( MsgOpReply* responseMsg, const CHAR *pBody,
-                                 INT32 bodyLen ) ;
+         INT32          _reply( MsgOpReply* responseMsg, const CHAR *pBody,
+                                INT32 bodyLen ) ;
 
       // message process functions
       protected:
@@ -179,8 +181,10 @@ namespace engine
          _dpsLogWrapper       *_pDPSCB ;
          _SDB_RTNCB           *_pRTNCB ;
 
-         MsgOpReply           _replayHeader ;
+         MsgOpReply           _replyHeader ;
          BOOLEAN              _needReply ;
+         BOOLEAN              _needRollback ;
+         rtnContextBuf        _contextBuff ;
 
          BSONObj              _errorInfo ;
 
