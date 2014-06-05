@@ -136,7 +136,7 @@ namespace engine
       // malloc
       len = ossRoundUpToMultipleX( len, SESSION_MEM_ALIGMENT_SIZE ) ;
       *ppBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
-      if( !**ppBuff )
+      if( !*ppBuff )
       {
          rc = SDB_OOM ;
          PD_LOG( PDERROR, "Session[%s] malloc memory[size: %d] failed",
@@ -333,8 +333,9 @@ namespace engine
    :pmdSession( fd )
    {
       _authOK  = FALSE ;
-      ossMemset( (void*)&_replayHeader, 0, sizeof(_replayHeader) ) ;
+      ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _needReply = TRUE ;
+      _needRollback = FALSE ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -344,6 +345,11 @@ namespace engine
    UINT64 _pmdLocalSession::identifyID()
    {
       return ossPack32To64( _socket.getLocalIP(), _socket.getLocalPort() ) ;
+   }
+
+   INT32 _pmdLocalSession::getServiceType () const
+   {
+      return CMD_SPACE_SERVICE_LOCAL ;
    }
 
    INT32 _pmdLocalSession::run()
@@ -583,13 +589,13 @@ namespace engine
    INT32 _pmdLocalSession::_onMsgBegin( MsgHeader *msg )
    {
       // set reply header ( except flags, length )
-      _replayHeader.contextID          = -1 ;
-      _replayHeader.numReturned        = 0 ;
-      _replayHeader.startFrom          = 0 ;
-      _replayHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
-      _replayHeader.header.requestID   = msg->requestID ;
-      _replayHeader.header.TID         = msg->TID ;
-      _replayHeader.header.routeID     = pmdGetNodeID() ;
+      _replyHeader.contextID          = -1 ;
+      _replyHeader.numReturned        = 0 ;
+      _replyHeader.startFrom          = 0 ;
+      _replyHeader.header.opCode      = MAKE_REPLY_TYPE(msg->opCode) ;
+      _replyHeader.header.requestID   = msg->requestID ;
+      _replyHeader.header.TID         = msg->TID ;
+      _replyHeader.header.routeID     = pmdGetNodeID() ;
 
       if ( MSG_BS_INTERRUPTE == msg->opCode ||
            MSG_BS_DISCONNECT == msg->opCode )
@@ -601,6 +607,18 @@ namespace engine
          _needReply = TRUE ;
       }
 
+      if ( MSG_BS_UPDATE_REQ == msg->opCode ||
+           MSG_BS_INSERT_REQ == msg->opCode ||
+           MSG_BS_DELETE_REQ == msg->opCode ||
+           MSG_BS_TRANS_COMMIT_REQ == msg->opCode )
+      {
+         _needRollback = TRUE ;
+      }
+      else
+      {
+         _needRollback = FALSE ;
+      }
+
       // start operator
       MON_START_OP( _pEDUCB->getMonAppCB() ) ;
 
@@ -609,6 +627,9 @@ namespace engine
 
    void _pmdLocalSession::_onMsgEnd( INT32 result, MsgHeader *msg )
    {
+      // release buff context
+      _contextBuff.release() ;
+
       if ( SDB_DMS_EOC != result )
       {
          PD_LOG( PDWARNING, "Session[%s] process msg[opCode=%d, len: %d, "
@@ -616,6 +637,7 @@ namespace engine
                  sessionName(), msg->opCode, msg->messageLength, msg->TID,
                  msg->requestID, result ) ;
       }
+
       // end operator
       MON_END_OP( _pEDUCB->getMonAppCB() ) ;
    }
@@ -640,8 +662,9 @@ namespace engine
          }
          else
          {
-            rc = _processOPMsg( msg, _replayHeader.contextID, &pBody,
-                                bodyLen, _replayHeader.numReturned ) ;
+            rc = _processOPMsg( msg, _replyHeader.contextID, &pBody,
+                                bodyLen, _replyHeader.numReturned,
+                                _replyHeader.startFrom ) ;
          }
       }
 
@@ -653,14 +676,14 @@ namespace engine
                                           EDU_INFO_ERROR ) ) ;
             pBody = _errorInfo.objdata() ;
             bodyLen = (INT32)_errorInfo.objsize() ;
-            _replayHeader.numReturned = 1 ;
+            _replyHeader.numReturned = 1 ;
          }
-         _replayHeader.flags = rc ;
-         _replayHeader.header.messageLength = sizeof( _replayHeader ) +
-                                              bodyLen ;
+         _replyHeader.flags = rc ;
+         _replyHeader.header.messageLength = sizeof( _replayHeader ) +
+                                             bodyLen ;
 
          // send response
-         INT32 rcTmp = _replay( &_replayHeader, pBody, bodyLen ) ;
+         INT32 rcTmp = _reply( &_replyHeader, pBody, bodyLen ) ;
          if ( rcTmp )
          {
             PD_LOG( PDERROR, "Session[%s] failed to send response, rc: %d",
@@ -676,9 +699,9 @@ namespace engine
       return rc ;
    }
 
-   INT32 _pmdLocalSession::_replay( MsgOpReply *responseMsg,
-                                    const CHAR *pBody,
-                                    INT32 bodyLen )
+   INT32 _pmdLocalSession::_reply( MsgOpReply *responseMsg,
+                                   const CHAR *pBody,
+                                   INT32 bodyLen )
    {
       INT32 rc = SDB_OK ;
 
@@ -714,10 +737,77 @@ namespace engine
 
    INT32 _pmdLocalSession::_processOPMsg( MsgHeader *msg, INT64 &contextID,
                                           const CHAR **ppBody, INT32 &bodyLen,
-                                          INT32 &returnNum )
+                                          INT32 &returnNum, INT32 &startPos )
    {
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      INT32 rc = SDB_OK ;
+
+      switch( msg->opCode )
+      {
+         case MSG_BS_INTERRUPTE :
+            rc = _onInterruptMsg( msg ) ;
+            break ;
+         case MSG_BS_MSG_REQ :
+            rc = _onMsgReqMsg( msg ) ;
+            break ;
+         case MSG_BS_UPDATE_REQ :
+            rc = _onUpdateReqMsg( msg ) ;
+            break ;
+         case MSG_BS_INSERT_REQ :
+            rc = _onInsertReqMsg( msg ) ;
+            break ;
+         case MSG_BS_QUERY_REQ :
+            rc = _onQueryReqMsg( msg, contextID ) ;
+            break ;
+         case MSG_BS_DELETE_REQ :
+            rc = _onDelReqMsg( msg ) ;
+            break ;
+         case MSG_BS_GETMORE_REQ :
+            rc = _onGetMoreReqMsg( msg, _contextBuff, startPos, contextID ) ;
+            if ( SDB_OK == rc )
+            {
+               *ppBody     = _contextBuff.data() ;
+               bodyLen     = _contextBuff.size() ;
+               returnNum   = _contextBuff.recordNum() ;
+            }
+            break ;
+         case MSG_BS_KILL_CONTEXT_REQ :
+            rc = _onKillContextsReqMsg( msg ) ;
+            break ;
+         case MSG_BS_DISCONNECT :
+            PD_LOG( PDEVENT, "Session[%s, %d] recv disconnect msg",
+                    sessionName(), eduID() ) ;
+            disconnect() ;
+            break ;
+         case MSG_BS_SQL_REQ :
+            rc = _onSQLMsg( msg, contextID ) ;
+            break ;
+         case MSG_BS_TRANS_BEGIN_REQ :
+            rc = _onTransBeginMsg() ;
+            break ;
+         case MSG_BS_TRANS_COMMIT_REQ :
+            rc = _onTransCommitMsg() ;
+            break ;
+         case MSG_BS_TRANS_ROLLBACK_REQ :
+            rc = _onTransRollbackMsg() ;
+            break ;
+         case MSG_BS_AGGREGATE_REQ :
+            rc = _onAggrReqMsg( msg, contextID ) ;
+            break ;
+         default :
+            PD_LOG( PDWARNING, "Session[%s] recv unknow msg[type:[%d]%d, "
+                    "len: %d, tid: %d, routeID: %d.%d.%d, reqID: %lld]",
+                    sessionName(), IS_REPLY_TYPE(msg->opCode),
+                    GET_REQUEST_TYPE(msg->opCode), msg->messageLength, msg->TID,
+                    msg->routeID.columns.groupID, msg->routeID.columns.nodeID,
+                    msg->routeID.columns.serviceID, msg->requestID ) ;
+            rc = SDB_INVALIDARG ;
+            break ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    INT32 _pmdLocalSession::_onInsertReqMsg( MsgHeader * msg )
@@ -799,7 +889,7 @@ namespace engine
                   "hint: %s", sessionName(), selector.toString().c_str(),
                   updator.toString().c_str(), hint.toString().c_str() ) ;
 
-         rc = rtnUpdate( pCollectionName, selector, updator, hint, 
+         rc = rtnUpdate( pCollectionName, selector, updator, hint,
                          flags, _pEDUCB, _pDMSCB, _pDPSCB ) ;
       }
       catch ( std::exception &e )
@@ -863,7 +953,8 @@ namespace engine
 
    INT32 _pmdLocalSession::_onInterruptMsg( MsgHeader * msg )
    {
-      PD_LOG ( PDEVENT, "Session[%s] recieved interrupt msg", sessionName() ) ;
+      PD_LOG ( PDEVENT, "Session[%s, %d] recieved interrupt msg",
+               sessionName(), eduID() ) ;
 
       // delete all contextID, rollback transaction
       if ( _pEDUCB )
@@ -965,7 +1056,7 @@ namespace engine
          PD_LOG ( PDDEBUG, "Command: %s", pCommand->name () ) ;
 
          //run command
-         rc = rtnRunCommand( pCommand, CMD_SPACE_SERVICE_LOCAL,
+         rc = rtnRunCommand( pCommand, getServiceType(),
                              _pEDUCB, _pDMSCB, _pRTNCB,
                              _pDPSCB, 1, &contextID ) ;
       }
