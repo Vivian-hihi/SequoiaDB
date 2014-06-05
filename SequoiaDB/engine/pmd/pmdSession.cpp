@@ -100,7 +100,19 @@ namespace engine
          ++it ;
       }
       _catchMap.clear() ;
+
+      // clean alloc memory
+      ALLOC_MAP_IT itAlloc = _allocMap.begin() ;
+      while ( itAlloc != _allocMap.end() )
+      {
+         SDB_OSS_FREE( itAlloc->first ) ;
+         _totalMemSize -= itAlloc->second ;
+         ++itAlloc ;
+      }
+      _allocMap.clear() ;
+
       SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
+      SDB_ASSERT( _totalMemSize == 0, "Memory size is error" ) ;
    }
 
    void _pmdSession::attach( _pmdEDUCB * cb )
@@ -158,6 +170,7 @@ namespace engine
 
       // update meta info
       _totalMemSize += buffLen ;
+      _allocMap[ *ppBuff ] = buffLen ;
 
    done:
       return rc ;
@@ -167,6 +180,8 @@ namespace engine
 
    void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
    {
+      _allocMap.erase( pBuff ) ;
+
       if ( (UINT32)buffLen > SESSION_MAX_CATCH_SIZE )
       {
          SDB_OSS_FREE( pBuff ) ;
@@ -213,6 +228,8 @@ namespace engine
       // update meta info
       _totalMemSize += ( len - oldLen ) ;
 
+      _allocMap[ *ppBuff ] = buffLen ;
+
    done:
       return rc ;
    error:
@@ -251,6 +268,7 @@ namespace engine
          *ppBuff = it->second ;
          buffLen = it->first ;
          _catchMap.erase( it ) ;
+         _allocMap[ *ppBuff ] = buffLen ;
          _totalCatchSize -= buffLen ;
          return TRUE ;
       }
