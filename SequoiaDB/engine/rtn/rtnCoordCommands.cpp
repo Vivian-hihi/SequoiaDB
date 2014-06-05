@@ -5373,7 +5373,7 @@ namespace engine
 
       const CHAR *strCollectionName    = NULL ;
       const CHAR *strIndexName         = NULL ;
-      BOOLEAN isNeedRefresh            = FALSE ;
+      BOOLEAN isNeedRefresh            = TRUE ;
       MsgOpQuery *pCreateReq           = NULL ;
 
       CoordCataInfoPtr cataInfo;
@@ -5476,8 +5476,10 @@ namespace engine
                               SDB_SHARD_KEY_NOT_IN_UNIQUE_KEY, error,
                               PDWARNING,
                               "All fields in sharding key must be included "
-                              "in unique index, missing field: %s",
-                              sk.fieldName() ) ;
+                              "in unique index, missing field: %s; "
+                              "shardingKey: %s, indexKey: %s",
+                              sk.fieldName(), shardingKey.toString().c_str(),
+                              indexKey.toString().c_str() ) ;
                }
             }
          } // try
