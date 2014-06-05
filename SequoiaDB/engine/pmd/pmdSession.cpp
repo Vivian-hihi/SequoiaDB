@@ -521,7 +521,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 recvSize = (INT32)sizeof(MsgSysInfoRequest) ;
 
-      *ppBuff = getBuff( msgSize ) ;
+      *ppBuff = getBuff( recvSize ) ;
       if ( !*ppBuff )
       {
          rc = SDB_OOM ;
