@@ -36,7 +36,7 @@ will automatically generate a "groupID" for a ReplicaGroup.
        \fBFormat\fR
 .br
               The method "createRG()" contains the parameter
-              "rgname", which is in the type od string. It should
+              "name", which is in the type od string. It should
               not be null.
 .br
               (<"ReplicaGroup name">)
