@@ -679,7 +679,7 @@ namespace engine
             _replyHeader.numReturned = 1 ;
          }
          _replyHeader.flags = rc ;
-         _replyHeader.header.messageLength = sizeof( _replayHeader ) +
+         _replyHeader.header.messageLength = sizeof( _replyHeader ) +
                                              bodyLen ;
 
          // send response
