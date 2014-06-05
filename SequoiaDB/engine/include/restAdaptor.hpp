@@ -104,7 +104,7 @@ namespace engine
       INT32 appendHttpBody( pmdRestSession *pSession,
                             const CHAR *pBuffer,
                             INT32 length,
-                            INT32 number ) ;
+                            INT32 number = 0 ) ;
    } ;
 }
 #endif
