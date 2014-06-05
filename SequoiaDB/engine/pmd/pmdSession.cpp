@@ -384,7 +384,7 @@ namespace engine
 
       // delete all context
       INT64 contextID = -1 ;
-      while ( -1 != ( contextID = _pRTNCB->contextPeek() ) )
+      while ( -1 != ( contextID = eduCB()->contextPeek() ) )
       {
          _pRTNCB->contextDelete( contextID, NULL ) ;
       }
