@@ -53,6 +53,7 @@
 #include "dpsLogDef.hpp"
 #include "dpsTransCB.hpp"
 #include "dpsTransLockDef.hpp"
+#include "sdbInterface.hpp"
 #include "../bson/bson.h"
 #include "../bson/bsonobj.h"
 #include "pdTrace.hpp"
@@ -171,6 +172,7 @@ namespace engine
       UINT32         _tid ;
       UINT64         _processEventCount ;
       _pmdEDUMgr     *_eduMgr ;
+      ISession       *_pSession ;
       ossSpinSLatch  _mutex ;
       EDU_STATUS     _status ;
       ossQueue<pmdEDUEvent> _queue ;
@@ -233,6 +235,14 @@ namespace engine
       // only allow pmdEDUMgr calling those private functions
       friend class _pmdEDUMgr ;
    public :
+      void attachSession( ISession *pSession )
+      {
+         _pSession = pSession ;
+      }
+      void detachSession()
+      {
+         _pSession = NULL ;
+      }
       void incEventCount ()
       {
          ++_processEventCount ;
