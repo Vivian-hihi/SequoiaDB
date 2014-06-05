@@ -60,6 +60,9 @@ namespace engine
       typedef std::multimap<INT32,CHAR*>     CATCH_MAP ;
       typedef CATCH_MAP::iterator            CATCH_MAP_IT ;
 
+      typedef std::map<CHAR*,INT32>          ALLOC_MAP ;
+      typedef ALLOC_MAP::iterator            ALLOC_MAP_IT ;
+
       public:
          _pmdSession( SOCKET fd ) ;
          virtual ~_pmdSession() ;
@@ -113,6 +116,7 @@ namespace engine
          INT32                            _buffLen ;
 
          CATCH_MAP                        _catchMap ;
+         ALLOC_MAP                        _allocMap ;
          INT64                            _totalCatchSize ;
          INT64                            _totalMemSize ;
 
