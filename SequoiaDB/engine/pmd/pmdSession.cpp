@@ -360,10 +360,32 @@ namespace engine
       _pDMSCB = krcb->getDMSCB() ;
       _pDPSCB = krcb->getDPSCB() ;
       _pRTNCB = krcb->getRTNCB() ;
+
+      if ( _pDPSCB && !_pDPSCB->isLogLocal() )
+      {
+         _pDPSCB = NULL ;
+      }
    }
 
    void _pmdLocalSession::_onDetach ()
    {
+      // rollback transaction
+      if ( DPS_INVALID_TRANS_ID != eduCB()->getTransID() )
+      {
+         INT32 rc = rtnTransRollback( eduCB(), _pDPSCB ) ;
+         if ( rc )
+         {
+            PD_LOG( PDERROR, "Session[%s] rollback trans info failed, rc: %d",
+                    sessionName(), rc ) ;
+         }
+      }
+
+      // delete all context
+      INT64 contextID = -1 ;
+      while ( -1 != ( contextID = _pRTNCB->contextPeek() ) )
+      {
+         _pRTNCB->contextDelete( contextID, NULL ) ;
+      }
    }
 
    INT32 _pmdLocalSession::run()
