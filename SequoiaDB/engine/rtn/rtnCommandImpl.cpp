@@ -792,10 +792,10 @@ namespace engine
          rc = monDumpSessionFromCB ( cb, context, addInfo, TRUE ) ;
          break ;
       case CMD_LIST_COLLECTIONS:
-         rc = monDumpAllCollections ( dmsCB, context, addInfo, TRUE ) ;
+         rc = monDumpAllCollections ( dmsCB, context, addInfo, FALSE ) ;
          break ;
       case CMD_LIST_COLLECTIONSPACES:
-         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, TRUE ) ;
+         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, FALSE ) ;
          break ;
       case CMD_LIST_STORAGEUNITS:
          rc = monDumpAllStorageUnits ( dmsCB, context ) ;
