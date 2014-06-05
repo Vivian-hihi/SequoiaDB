@@ -101,7 +101,6 @@ namespace engine
       }
       _catchMap.clear() ;
       SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
-      SDB_ASSERT( _totalMemSize == 0 , "Memory size is error" ) ;
    }
 
    void _pmdSession::attach( _pmdEDUCB * cb )
@@ -336,6 +335,9 @@ namespace engine
       ossMemset( (void*)&_replyHeader, 0, sizeof(_replyHeader) ) ;
       _needReply = TRUE ;
       _needRollback = FALSE ;
+      _pDMSCB = NULL ;
+      _pDPSCB = NULL ;
+      _pRTNCB = NULL ;
    }
 
    _pmdLocalSession::~_pmdLocalSession()
@@ -350,6 +352,18 @@ namespace engine
    INT32 _pmdLocalSession::getServiceType () const
    {
       return CMD_SPACE_SERVICE_LOCAL ;
+   }
+
+   void _pmdLocalSession::_onAttach ()
+   {
+      pmdKRCB *krcb = pmdGetKRCB() ;
+      _pDMSCB = krcb->getDMSCB() ;
+      _pDPSCB = krcb->getDPSCB() ;
+      _pRTNCB = krcb->getRTNCB() ;
+   }
+
+   void _pmdLocalSession::_onDetach ()
+   {
    }
 
    INT32 _pmdLocalSession::run()
@@ -804,9 +818,24 @@ namespace engine
             break ;
       }
 
+      if ( rc )
+      {
+         goto error ;
+      }
+
    done:
       return rc ;
    error:
+      if ( _needRollback )
+      {
+         INT32 rcTmp = rtnTransRollback( eduCB(), _pDPSCB ) ;
+         if ( rcTmp )
+         {
+            PD_LOG( PDERROR, "Session[%s] failed to rollback trans info, "
+                    "rc: %d", sessionName(), rcTmp ) ;
+         }
+         _needRollback = FALSE ;
+      }
       goto done ;
    }
 
