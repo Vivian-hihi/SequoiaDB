@@ -148,6 +148,8 @@ struct httpConnection
 
    //flag is parser key or value, true: key, false: value
    BOOLEAN _isKey ;
+   //client send common type
+   HTTP_PARSE_COMMON _common ;
    //recv header buffer
    CHAR *_pHeaderBuf ;
    //recv temp a part of the body
@@ -185,6 +187,7 @@ struct httpConnection
                       _firstRecordSize(0),
                       _responseSize(0),
                       _isKey(TRUE),
+                      _common(COM_INSERT),
                       _pHeaderBuf(NULL),
                       _pPartBody(NULL),
                       _pBodyBuf(NULL),
