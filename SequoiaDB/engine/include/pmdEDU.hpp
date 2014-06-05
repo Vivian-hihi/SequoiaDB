@@ -551,6 +551,7 @@ namespace engine
    /*
       PMD ENTRY POINTERS
    */
+   INT32 pmdLocalAgentEntryPoint( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdShardAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
    INT32 pmdReplAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;

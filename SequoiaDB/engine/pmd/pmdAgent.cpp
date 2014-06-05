@@ -51,6 +51,7 @@
 #include "rtnCoord.hpp"
 #include "rtnCoordCommands.hpp"
 #include "coordSession.hpp"
+#include "pmdSession.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include "pmdCB.hpp"
@@ -1889,4 +1890,22 @@ namespace engine
       }
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDLOCALAGENTENTPNT, "pmdLocalAgentEntryPoint" )
+   INT32 pmdLocalAgentEntryPoint( pmdEDUCB *cb, void *arg )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_PMDLOCALAGENTENTPNT );
+
+      SOCKET s = *(( SOCKET *) &arg ) ;
+      pmdLocalSession localSession( s ) ;
+      localSession.attach( cb ) ;
+      rc = localSession.run() ;
+      localSession.detach() ;
+
+      PD_TRACE_EXITRC ( SDB_PMDLOCALAGENTENTPNT, rc );
+      return rc ;
+   }
+
 }
+

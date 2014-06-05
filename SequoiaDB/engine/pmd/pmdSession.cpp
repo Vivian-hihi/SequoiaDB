@@ -106,6 +106,10 @@ namespace engine
    void _pmdSession::attach( _pmdEDUCB * cb )
    {
       SDB_ASSERT( cb, "cb can't be NULL" ) ;
+
+      PD_LOG( PDINFO, "Session[%s] attach edu[%d]", sessionName(),
+              cb->getID() ) ;
+
       _pEDUCB = cb ;
       _eduID  = cb->getID() ;
       _pEDUCB->attachSession( this ) ;
@@ -114,6 +118,9 @@ namespace engine
 
    void _pmdSession::detach ()
    {
+      PD_LOG( PDINFO, "Session[%s] detach edu[%d]", sessionName(),
+              eduID() ) ;
+
       _onDetach() ;
       _pEDUCB->detachSession() ;
       _pEDUCB = NULL ;

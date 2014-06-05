@@ -158,7 +158,7 @@ namespace engine
                                 pmdAgentEntryPoint,
                                 "CoordAgent" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_AGENT, FALSE,
-                                pmdAgentEntryPoint,
+                                pmdLocalAgentEntryPoint,
                                 "Agent" ),
          ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_REPLAGENT, FALSE,
                                 pmdReplAgentEntryPoint,

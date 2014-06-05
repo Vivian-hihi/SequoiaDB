@@ -171,6 +171,7 @@ namespace engine
          virtual INT32           sessionType() const = 0 ;
          virtual UINT64          identifyID() = 0 ;
          virtual const CHAR*     sessionName() const = 0 ;
+         virtual INT32           getServiceType() const = 0 ;
 
       protected:
          virtual void            _onAttach () {}
