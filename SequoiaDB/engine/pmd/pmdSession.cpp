@@ -113,6 +113,9 @@ namespace engine
       _pEDUCB = cb ;
       _eduID  = cb->getID() ;
       _pEDUCB->attachSession( this ) ;
+      _pEDUCB->setName( sessionName() ) ;
+      _pEDUCB->setClientSock( socket() ) ;
+
       _onAttach() ;
    }
 
@@ -374,7 +377,6 @@ namespace engine
       {
          _pDPSCB = NULL ;
       }
-      eduCB()->setClientSock( socket() ) ;
    }
 
    void _pmdLocalSession::_onDetach ()
