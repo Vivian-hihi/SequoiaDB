@@ -108,12 +108,14 @@ namespace engine
       SDB_ASSERT( cb, "cb can't be NULL" ) ;
       _pEDUCB = cb ;
       _eduID  = cb->getID() ;
+      _pEDUCB->attachSession( this ) ;
       _onAttach() ;
    }
 
    void _pmdSession::detach ()
    {
       _onDetach() ;
+      _pEDUCB->detachSession() ;
       _pEDUCB = NULL ;
    }
 

@@ -284,6 +284,7 @@ namespace engine
    _tempCompBufferSize(0)
    {
       _Name[0] = 0 ;
+      _pSession = NULL ;
       _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) );
       _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 );
    }
