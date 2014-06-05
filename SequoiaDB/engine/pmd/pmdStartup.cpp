@@ -76,6 +76,8 @@ namespace engine
       _fileOpened = FALSE ;
       SINT64 written = 0 ;
       UINT32 mode = OSS_READWRITE ;
+      const UINT32 maxTryLockTime = 2 ;
+      UINT32 lockTime = 0 ;
 
       _fileName = pPath ;
       _fileName += OSS_FILE_SEP ;
@@ -135,6 +137,7 @@ namespace engine
       }
       _fileOpened = TRUE ;
 
+   retry:
       // lock the file
       rc = ossLockFile ( &_file, OSS_LOCK_EX ) ;
       if ( SDB_PERM == rc )
@@ -144,6 +147,11 @@ namespace engine
             rc = SDB_OK ;
             _startType = SDB_START_NORMAL ;
             goto done ;
+         }
+
+         if ( lockTime++ < maxTryLockTime )
+         {
+            goto retry ;
          }
          PD_LOG ( PDERROR, "The startup file is already locked, most likely "
                   "there is another instance running in the directory" ) ;
