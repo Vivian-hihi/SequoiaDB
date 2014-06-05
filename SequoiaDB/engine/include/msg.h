@@ -18,6 +18,8 @@ enum MSG_TYPE
    MSG_BS_INSERT_RES                   = MAKE_REPLY_TYPE(MSG_BS_INSERT_REQ),
    MSG_BS_UPDATE_REQ                   = 2001,
    MSG_BS_UPDATE_RES                   = MAKE_REPLY_TYPE(MSG_BS_UPDATE_REQ),
+   MSG_BS_SQL_REQ                      = 2003,
+   MSG_BS_SQL_RES                      = MAKE_REPLY_TYPE(MSG_BS_SQL_REQ),
    MSG_BS_QUERY_REQ                    = 2004,
    MSG_BS_QUERY_RES                    = MAKE_REPLY_TYPE(MSG_BS_QUERY_REQ),
    MSG_BS_GETMORE_REQ                  = 2005,
@@ -289,7 +291,7 @@ enum MSG_TYPE
 // insert new document
 #define OP_INSERT          MSG_BS_INSERT_REQ
 // formerly used for OP_GET_BY_OID
-#define OP_SQL             2003
+#define OP_SQL             MSG_BS_SQL_REQ
 // query a collection
 #define OP_QUERY           MSG_BS_QUERY_REQ
 // Get more data from a query. See context
