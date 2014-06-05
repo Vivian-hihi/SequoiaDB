@@ -372,7 +372,7 @@ INT32 migExport::_writeRecord( bson *pbson )
          PD_LOG ( PDERROR, "Failed to convert bson to csv, rc=%d", rc ) ;
          goto error ;
       }
-      bufferSize -= tempSize ;
+      bufferSize = _bufferSize - tempSize ;
    }
    else if ( _pMigArg->type == MIGEXPRT_JSON )
    {
