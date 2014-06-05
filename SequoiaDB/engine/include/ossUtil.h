@@ -48,6 +48,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #define OSS_TEN_MILLION 10000000
 #define OSS_ONE_MILLION 1000000
 #define OSS_ONE_SEC     (1000)
@@ -67,12 +68,14 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 #define ossStrtok(x,y,z) strtok_r(x,y,z)
 #define ossFdopen(x,y) fdopen(x,y)
 #define OSS_LL_PRINT_FORMAT   "%lld"
+#define ossStrcasecmp(x,y)  strcasecmp(x,y)
 #elif defined (_WINDOWS)
 #define ossStrncpy(x,y,z) strncpy(x,y,z)
 #define ossStrncat(x,y,z) strncat(x,y,z)
 #define ossStrtok(x,y,z) strtok_s(x,y,z)
 #define ossFdopen(x,y) _fdopen(x,y)
 #define OSS_LL_PRINT_FORMAT   "%I64d"
+#define ossStrcasecmp(x,y)  stricmp(x,y)
 #endif
 #define ossMemcpy(x,y,z) memcpy(x,y,z)
 #define ossMemmove(x,y,z) memmove(x,y,z)
@@ -83,6 +86,7 @@ INT32 ossStrToInt ( const CHAR *pBuffer, INT32 *number ) ;
 #define ossStrrchr(x,y) strrchr(x,y)
 #define ossStrchr(x,y) strchr(x,y)
 #define ossAtoi(x) atoi(x)
+#define ossIsspace(c) isspace(c)
 
 #define ossItoa(x,y,z) if (y) { ossSnprintf(y, z, "%d", (INT32)(x) );}
 #define ossLltoa(x,y,z) if (y) { ossSnprintf(y, z, OSS_LL_PRINT_FORMAT, (INT64)(x) );}
