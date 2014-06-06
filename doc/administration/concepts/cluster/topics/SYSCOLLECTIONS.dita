@@ -49,7 +49,7 @@
         <strow>
           <stentry>CataInfo</stentry>
           <stentry>数组</stentry>
-          <stentry>集合所在的逻辑节点信息。在单分区集合中，该数组仅包含一个元素，代表该集合所在的分区组。在多分区集合中，该数组中包含一个或多个元素，代表该集合中的每一个取值范围所在的分区组。每个取值<fig/>范围包括LowBound与UpBound，代表其下限与上限，闭合关系为左闭右开。</stentry>
+          <stentry>集合所在的逻辑节点信息。在单分区集合中，该数组仅包含一个元素，代表该集合所在的分区组。在多分区集合中，该数组中包含一个或多个元素，代表该集合中的每一个取值<fig></fig>范围所在的分区组。每个取值范围包括LowBound与UpBound，代表其下限与上限，闭合关系为左闭右开。</stentry>
         </strow>
       </simpletable>    
     </section>
@@ -66,7 +66,7 @@
      { "GroupID" : 1000, 
        "LowBound" : { "" : MinKey, "" : MaxKey },
        "UpBound" : { "" : MaxKey, "" : MinKey } } ] 
-  }</codeblock>
+}</codeblock>
     </section>
   </body>
 </topic>

@@ -103,8 +103,7 @@
       
       <p class="p">索引的定义格式必须包含name与key两个字段。其中name的值必须为字符串，key则为一个JSON对象。</p>
 
-      <pre class="pre codeblock">{ "name" : "&lt;索引名&gt;", "key" : "{ "&lt;索引字段1&gt;" : &lt;1|-1&gt; [, "&lt;索引字段2&gt;" : &lt;1|-1&gt; ...] },
-           [ "unique" : &lt;true|false&gt; ], [ "enforced" : &lt;true|false&gt; ] }</pre>
+      <pre class="pre codeblock">{ "name" : "&lt;索引名&gt;", "key" : "{ "&lt;索引字段1&gt;" : &lt;1|-1&gt;, [ "&lt;索引字段2&gt;" : &lt;1|-1&gt; ...] }, [ "unique" : &lt;true|false&gt; ], [ "enforced" : &lt;true|false&gt; ]}</pre>
 
       <p class="p">key的对象必须包含至少一个字段，其中字段名为用户需要索引的字段名，数值为1或者-1。其中1代表数据在索引中的排列顺序由小至大，-1则代表由大至小。</p>
 

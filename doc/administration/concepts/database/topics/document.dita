@@ -59,7 +59,7 @@
        </strow>
        <strow>
          <stentry>时间戳</stentry>
-         <stentry>YYYY-MM-DD-HH.mm.ss.ffffff的</stentry>
+         <stentry>YYYY-MM-DD-HH.mm.ss.ffffff的形式存取</stentry>
          <stentry>{ "key" : { "$timestamp" : "2012-01-01-13.14.26.124233" } }</stentry>
        </strow>
        <strow>

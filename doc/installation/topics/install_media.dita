@@ -3,7 +3,9 @@
 <topic id="topic_rnh_mpx_wj">
   <title>准备安装介质</title>
   <body>
-    <p>下表为SequoiaDB 产品发布包与操作系统对照表，请根据服务器OS类型，选择下载软件包。</p>
+    <p>请到SequoiaDB官方网站下载相应的版本。</p>
+    <p>下载地址：<xref href="http://www.sequoiadb.com/index.php?p=downserver" format="html" scope="external">http://www.sequoiadb.com/index.php?p=downserver</xref></p>    
+    <!--<p>下表为SequoiaDB 产品发布包与操作系统对照表，请根据服务器OS类型，选择下载软件包。</p>
     <simpletable frame="all">
       <sthead>
         <stentry></stentry>
@@ -71,6 +73,6 @@
           <p><u>download</u></p>
         </stentry>
       </strow>
-    </simpletable>
+    </simpletable>-->
   </body>
 </topic>

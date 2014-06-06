@@ -5,8 +5,7 @@
   <body>
     <section>
       <title>获取驱动开发包</title>
-      <p>从<xref href="http://www.sequoiadb.com" format="html" scope="external"
-          >http://www.sequoiadb.com</xref>下载对应操作系统版本的SequoiaDB驱动开发包。</p>
+      <p>从<xref href="http://www.sequoiadb.com" format="html" scope="external">http://www.sequoiadb.com</xref>下载对应操作系统版本的SequoiaDB驱动开发包。</p>
     </section>
     <section>
       <title>配置开发环境</title>
