@@ -62,7 +62,7 @@
             Partition代表了hash分区的个数。其值必须是2的幂。范围在[2^3,
             2^20]。此字段为可选字段。默认为2^12，代表我们将整个范围平均划分为4096个分区。设计hash分区的目的是让数据分布更灵活，可以根据需要自由设置每个数据分区承担hash分区的范围。
             ShardingType如果不填则默认为Range分区。
-            <pre class="pre codeblock">{ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt; [,&lt;字段2&gt;:&lt;1|-1&gt;, ...]}, {ShardingType:"hash"}  [, {Partition:&lt;分区数&gt;}]}</pre>
+            <pre class="pre codeblock">{ShardingKey:{&lt;字段1&gt;:&lt;1|-1&gt;,[&lt;字段2&gt;:&lt;1|-1&gt;,...]},{ShardingType:"hash"},[{Partition:&lt;分区数&gt;}]}</pre>
 </div>
 </li>
 
@@ -76,7 +76,7 @@
 </li>
 
         <li class="li">Hash分区键
-          <pre class="pre codeblock">{{ Field1 : 1, Field2 : -1 }，{ShardingType:"hash"},{Partition:2^12}}</pre>
+          <pre class="pre codeblock">{{ Field1 : 1, Field2 : -1 },{ShardingType:"hash"},{Partition:2^12}}</pre>
 </li>
 
       </ul>

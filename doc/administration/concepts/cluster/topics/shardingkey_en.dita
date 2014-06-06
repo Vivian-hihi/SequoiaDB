@@ -36,7 +36,7 @@
       <ul>
         <li>A sharding key containing 2 fields, forward sequence and reverse sequence is as follow: <codeblock>{ Field1 : 1, Field2 : -1 }</codeblock></li>
         <li>Hash Sharding Key
-          <codeblock>{{ Field1 : 1, Field2 : -1 }，{ShardingType:"hash"},{Partition:2^12}}</codeblock></li>
+          <codeblock>{{ Field1 : 1, Field2 : -1 },{ShardingType:"hash"},{Partition:2^12}}</codeblock></li>
       </ul>      
     </section>
   </body>

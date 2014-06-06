@@ -16,7 +16,7 @@
           <stentry>CPU</stentry>
           <stentry>
             支持以下处理器：
-            <ul><li>x86（Intel Pentium、Intel Xeon 和 AMD） 32位 Intel和 AMD 处理器</li>
+            <ul><li>x86（Intel Pentium、Intel Xeon 和 AMD） 32位 Intel 和 AMD 处理器</li>
               <li>X64（64位 AMD64 和 Intel EM64T 处理器）</li>
               <li>PowerPC 7 或者 PowerPC 7+ 处理器</li></ul>
           </stentry>

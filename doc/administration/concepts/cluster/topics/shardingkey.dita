@@ -19,14 +19,14 @@
             Partition代表了hash分区的个数。其值必须是2的幂。范围在[2^3,
             2^20]。此字段为可选字段。默认为2^12，代表我们将整个范围平均划分为4096个分区。设计hash分区的目的是让数据分布更灵活，可以根据需要自由设置每个数据分区承担hash分区的范围。
             ShardingType如果不填则默认为Range分区。
-            <codeblock>{ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]}, {ShardingType:"hash"}  [, {Partition:&lt;分区数>}]}</codeblock></p></li>
+            <codeblock>{ShardingKey:{&lt;字段1>:&lt;1|-1>,[&lt;字段2>:&lt;1|-1>,...]},{ShardingType:"hash"},[{Partition:&lt;分区数>}]}</codeblock></p></li>
       </ul>
     </section>
     <section><title>示例</title>
       <ul>
         <li>一个包含两个字段，分别为正向和逆向排序的Range分区键如下： <codeblock>{ Field1 : 1, Field2 : -1 }</codeblock></li>
         <li>Hash分区键
-          <codeblock>{{ Field1 : 1, Field2 : -1 }，{ShardingType:"hash"},{Partition:2^12}}</codeblock></li>
+          <codeblock>{{ Field1 : 1, Field2 : -1 },{ShardingType:"hash"},{Partition:2^12}}</codeblock></li>
       </ul>
       
     </section>
