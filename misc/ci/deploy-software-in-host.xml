@@ -59,7 +59,7 @@
 		<echo message="Begin to install sequoiadb software..." />
 		
 		<echo message="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" />
-		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="true" failifexecutionfails="true">
+		<exec command="${STAF.PATH}\bin\staf LOCAL FS COPY FILE ${install.package.fullname} TODIRECTORY ${test.machine.software.path} TOMACHINE ${deploy.host.name}" dir="${STAF.PATH}" failonerror="false" failifexecutionfails="true">
 			<env key="PATH" path="${env.PATH}:${STAF.PATH}/bin" />
 			<env key="LD_LIBRARY_PATH" path="${env.LD_LIBRARY_PATH}:${STAF.PATH}/lib" />
 			<env key="STAFCONVDIR" path="${STAF.PATH}/codepage" />
