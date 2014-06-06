@@ -9,6 +9,6 @@
       <li>Apache Hive 0.10.0</li>
       <li>CDH-5.0.0-beta-2 Hive 0.12.0</li>
     </ul>
-    <note>hive-sequoiadb-apache.jar为支持Apache版Hive的Sequoiadb-Hive-Connector<p></p>hive-sequoiadb-cdh-5.0.0-beta-2.jar为支持CDH5.0.0-beta-2版本下Hive-0.12的Sequoiadb-Hive-Connector</note>
+    <note>hive-sequoiadb-apache.jar support for the Apache version of Hive Sequoiadb-Hive-Connector.<p></p>hive-sequoiadb-cdh-5.0.0-beta-2.jar support for the CDH5.0.0-beta-2 version of Hive-0.12 Sequoiadb-Hive-Connector.</note>
   </body>
 </topic>

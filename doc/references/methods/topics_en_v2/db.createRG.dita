@@ -25,7 +25,7 @@
             <parml>
               <plentry>
                 <pt>Format</pt>
-                <pd>The method "createRG()" contains the parameter "rgname", which is in the type od string. It should not be null.</pd>
+                <pd>The method "createRG()" contains the parameter "name", which is in the type od string. It should not be null.</pd>
                 <pd>(&lt;"ReplicaGroup name">)</pd>
               </plentry>
             </parml>
