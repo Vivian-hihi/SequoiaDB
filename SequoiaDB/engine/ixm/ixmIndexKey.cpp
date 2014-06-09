@@ -38,7 +38,6 @@
 *******************************************************************************/
 #include "ixm.hpp"
 #include "ixmIndexKey.hpp"
-#include "ixmGeo.hpp"
 #include "ossMem.hpp"
 #include "pdTrace.hpp"
 #include "ixmTrace.hpp"
