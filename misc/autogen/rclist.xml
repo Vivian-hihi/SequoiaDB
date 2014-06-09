@@ -2099,10 +2099,10 @@
       </code>
 
       <code>
-         <name>SDB_CL_DONE_BUT_SPLIT_FAILED</name>
+         <name>SDB_BUT_FAILED_ON_DATA</name>
          <description>
-            <en>successfully created collection, but sth wrong happened when split it.</en>
-            <cn>成功创建了集合，但切分表时发生了错误</cn>
+            <en>successfully done on catalog, but sth wrong happened when did it on data group.</en>
+            <cn>在编目上执行成功但是由于某种原因导致在数据节点上执行失败</cn>
          </description>
       </code>
 
