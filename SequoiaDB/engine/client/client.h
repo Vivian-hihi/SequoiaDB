@@ -36,6 +36,7 @@ SDB_EXTERN_C_START
 /** 0 means using database's default pagesize, it 64k now */
 #define SDB_PAGESIZE_DEFAULT      0
 
+/*
 #define SDB_SNAP_CONTEXTS         0
 #define SDB_SNAP_CONTEXTS_CURRENT 1
 #define SDB_SNAP_SESSIONS         2
@@ -45,7 +46,43 @@ SDB_EXTERN_C_START
 #define SDB_SNAP_DATABASE         6
 #define SDB_SNAP_SYSTEM           7
 #define SDB_SNAP_CATALOG          8
+*/
 
+enum SDB_SNAP_TYPE
+{
+   SDB_SNAP_CONTEXTS = 0     ,
+   SDB_SNAP_CONTEXTS_CURRENT , 
+   SDB_SNAP_SESSIONS         ,
+   SDB_SNAP_SESSIONS_CURRENT ,
+   SDB_SNAP_COLLECTIONS      ,
+   SDB_SNAP_COLLECTIONSPACES ,
+   SDB_SNAP_DATABASE         ,
+   SDB_SNAP_SYSTEM           ,
+   SDB_SNAP_CATALOG          ,
+   
+   SDB_SNAP_BUFF
+};
+
+enum SDB_LIST_TYPE
+{
+   SDB_LIST_CONTEXTS = 0     ,
+   SDB_LIST_CONTEXTS_CURRENT ,
+   SDB_LIST_SESSIONS         ,
+   SDB_LIST_SESSIONS_CURRENT ,
+   SDB_LIST_COLLECTIONS      ,
+   SDB_LIST_COLLECTIONSPACES ,
+   SDB_LIST_STORAGEUNITS     ,
+   SDB_LIST_GROUPS           ,
+   SDB_LIST_STOREPROCEDURES  ,
+   SDB_LIST_DOMAINS          ,
+   SDB_LIST_TASKS            ,
+   SDB_LIST_CS_IN_DOMAIN     ,
+   SDB_LIST_CL_IN_DOMAIN     ,
+
+   SDB_LIST_BUFF
+};
+
+/*
 #define SDB_LIST_CONTEXTS         0
 #define SDB_LIST_CONTEXTS_CURRENT 1
 #define SDB_LIST_SESSIONS         2
@@ -59,6 +96,7 @@ SDB_EXTERN_C_START
 #define SDB_LIST_TASKS            10
 #define SDB_LIST_CS_IN_DOMAIN     11
 #define SDB_LIST_CL_IN_DOMAIN     12
+*/
 
 #define SDB_INVALID_HANDLE       ((ossValuePtr) 0)
 typedef ossValuePtr sdbConnectionHandle   ;
@@ -102,7 +140,7 @@ typedef sdbNodeHandle             sdbReplicaNodeHandle ;
     \param [in] pUsrName The User's Name of the account
     \param [in] pPasswd The Password  of the account
     \param [out] handle The database connection handle,
-                      when fail to connect, *handle == -1 and error code
+                      when fail to connect, *handle == SDB_INVALID_HANDLE and error code
                       is return
     \retval SDB_OK Connection Success
     \retval Others Connection Fail
@@ -112,8 +150,8 @@ SDB_EXPORT INT32 sdbConnect ( const CHAR *pHostName, const CHAR *pServiceName,
                               sdbConnectionHandle *handle ) ;
 
 /** \fn INT32 sdbConnect1 ( const CHAR **pConnAddrs, int arrSize;
-                               const CHAR *pUsrName, const CHAR *pPasswd ,
-                               sdbConnectionHandle *handle ) ;
+                            const CHAR *pUsrName, const CHAR *pPasswd ,
+                            sdbConnectionHandle *handle ) ;
     \brief Connect to database used the first valid address in the array.
     \param [in] pConnAddrs The array of the coord's address
     \param [in] arrSize The size of the array
@@ -158,7 +196,7 @@ SDB_EXPORT INT32 sdbRemoveUsr( sdbConnectionHandle cHandle, const CHAR *pUsrName
                                const CHAR *pPasswd ) ;
 
 /* \fn INT32 sdbModifyConfig ( sdbConnectionHandle cHandle,
-                                   bson *config )
+                               bson *config )
     \brief Modify config for the current node
     \param [in] cHandle The connection handle
     \param [in] config The new configurations
@@ -169,8 +207,8 @@ SDB_EXPORT INT32 sdbModifyConfig ( sdbConnectionHandle cHandle,
                                    bson *config ) ;*/
 
 /* \fn INT32 sdbModifyNodeConfig ( sdbConnectionHandle cHandle,
-                                    INT32 nodeID,
-                                    bson *config )
+                                   INT32 nodeID,
+                                   bson *config )
     \brief Modify config for a given node
     \param [in] cHandle The connection handle
     \param [in] nodeID The node id that want to be modified
@@ -183,13 +221,13 @@ SDB_EXPORT INT32 sdbModifyNodeConfig ( sdbConnectionHandle cHandle,
                                        bson *config ) ;*/
 
 /* \fn INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
-                            bson *condition,
-                            bson *select,
-                            bson *orderBy,
-                            bson *hint,
-                            INT64 numToSkip,
-                            INT64 numToReturn,
-                            sdbCursorHandle *handle )
+                                bson *condition,
+                                bson *select,
+                                bson *orderBy,
+                                bson *hint,
+                                INT64 numToSkip,
+                                INT64 numToReturn,
+                                sdbCursorHandle *handle )
     \brief Get the data blocks' infomation for concurrent query
     \param [in] cHandle The connection handle
     \param [in] condition The matching rule, return all the documents if null
@@ -205,21 +243,21 @@ SDB_EXPORT INT32 sdbModifyNodeConfig ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetDataBlocks ( sdbCollectionHandle cHandle,
-                            bson *condition,
-                            bson *select,
-                            bson *orderBy,
-                            bson *hint,
-                            INT64 numToSkip,
-                            INT64 numToReturn,
-                            sdbCursorHandle *handle );
+                                    bson *condition,
+                                    bson *select,
+                                    bson *orderBy,
+                                    bson *hint,
+                                    INT64 numToSkip,
+                                    INT64 numToReturn,
+                                    sdbCursorHandle *handle );
 
 /* \fn INT32 sdbGetQueryMeta ( sdbConnectionHandle cHandle,
-                                   bson *condition,
-                                   bson *orderBy,
-                                   bson *hint,
-                                   INT64 numToSkip,
-                                   INT64 numToReturn,
-                                   sdbCursorHandle *handle ) ;
+                               bson *condition,
+                               bson *orderBy,
+                               bson *hint,
+                               INT64 numToSkip,
+                               INT64 numToReturn,
+                               sdbCursorHandle *handle ) ;
     \brief Get the index blocks' or data blocks' infomations for concurrent query
     \param [in] condition The matching rule, return all the documents if null
     \param [in] orderBy The ordered rule, never sort if null
@@ -240,11 +278,11 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
                                    sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
-                                  INT32 snapType,
-                                  bson *condition,
-                                  bson *selector,
-                                  bson *orderBy,
-                                  sdbCursorHandle *handle )
+                               INT32 snapType,
+                               bson *condition,
+                               bson *selector,
+                               bson *orderBy,
+                               sdbCursorHandle *handle )
     \brief Get the snapshot
     \param [in] cHandle The connection handle
     \param [in] snapType The snapshot type as below
@@ -253,11 +291,12 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
         SDB_SNAP_CONTEXTS_CURRENT : Get the current context's snapshot
         SDB_SNAP_SESSIONS         : Get all sessions' snapshot
         SDB_SNAP_SESSIONS_CURRENT : Get the current session's snapshot
-        SDB_SNAP_COLLECTIONS        : Get the collections' snapshot
-        SDB_SNAP_COLLECTIONSPACES        : Get the collection spaces' snapshot
+        SDB_SNAP_COLLECTIONS      : Get the collections' snapshot
+        SDB_SNAP_COLLECTIONSPACES : Get the collection spaces' snapshot
         SDB_SNAP_DATABASE         : Get database's snapshot
         SDB_SNAP_SYSTEM           : Get system's snapshot
-        SDB_SNAP_CATA           : Get catalog's snapshot
+        SDB_SNAP_CATA             : Get catalog's snapshot
+        
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
@@ -357,11 +396,11 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
                                   sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbGetList ( sdbConnectionHandle cHandle,
-                              INT32 listType,
-                              bson *condition,
-                              bson *selector,
-                              bson *orderBy,
-                              sdbCursorHandle *handle )
+                           INT32 listType,
+                           bson *condition,
+                           bson *selector,
+                           bson *orderBy,
+                           sdbCursorHandle *handle )
     \brief Get the specified list
     \param [in] cHandle The collection handle
     \param [in] listType The list type as below
@@ -374,7 +413,7 @@ SDB_EXPORT INT32 sdbTraceStatus ( sdbConnectionHandle cHandle,
         SDB_LIST_COLLECTIONSPACES : Get all collecion spaces list
         SDB_LIST_STORAGEUNITS     : Get storage units list
         SDB_LIST_GROUPS           : Get replica groups list ( only applicable in sharding env )
-        SDB_LIST_STOREPROCEDURES           : Get stored procedure list ( only applicable in sharding env )
+        SDB_LIST_STOREPROCEDURES  : Get stored procedure list ( only applicable in sharding env )
     \param [in] condition The matching rule, match all the documents if null
     \param [in] select The selective rule, return the whole document if null
     \param [in] orderBy The ordered rule, never sort if null
@@ -390,8 +429,8 @@ SDB_EXPORT INT32 sdbGetList ( sdbConnectionHandle cHandle,
                               sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbGetCollection ( sdbConnectionHandle cHandle,
-                                    const CHAR *pCollectionFullName,
-                                    sdbCollectionHandle *handle )
+                                 const CHAR *pCollectionFullName,
+                                 sdbCollectionHandle *handle )
     \brief Get the specified collection
     \param [in] cHandle The database connection handle
     \param [in] pCollectionFullName The full name of collection
@@ -404,8 +443,8 @@ SDB_EXPORT INT32 sdbGetCollection ( sdbConnectionHandle cHandle,
                                     sdbCollectionHandle *handle ) ;
 
 /** \fn INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
-                                         const CHAR *pCollectionSpaceName,
-                                         sdbCSHandle *handle )
+                                      const CHAR *pCollectionSpaceName,
+                                      sdbCSHandle *handle )
     \brief Get the specified collection space
     \param [in] cHandle The database connection handle
     \param [in] pCollectionSpaceName The name of collection space
@@ -418,8 +457,8 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
                                          sdbCSHandle *handle ) ;
 
 /** \fn INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
-                                      const CHAR *pShardName,
-                                      sdbReplicaGroupHandle *handle )
+                                   const CHAR *pShardName,
+                                   sdbReplicaGroupHandle *handle )
     \brief Get the specified shard
     \param [in] cHandle The database connection handle
     \param [in] pShardName The name of shard
@@ -432,8 +471,8 @@ SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
                                       sdbReplicaGroupHandle *handle ) ;
 
 /** \fn INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
-                                      UINT32 id,
-                                      sdbReplicaGroupHandle *handle )
+                                    UINT32 id,
+                                    sdbReplicaGroupHandle *handle )
     \brief Get the specified shard
     \param [in] cHandle The database connection handle
     \param [in] id The id of shard
@@ -454,7 +493,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetReplicaGroupName ( sdbReplicaGroupHandle cHandle,
-                                   CHAR **ppShardName ) ;
+                                          CHAR **ppShardName ) ;
 
 /** \fn BOOLEAN sdbIsReplicaGroupCatalog ( sdbReplicaGroupHandle cHandle )
     \brief Test whether the specified shard is catalog
@@ -511,7 +550,7 @@ SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
                                               sdbCSHandle *handle ) ;
 
 /** \fn INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
-                                          const CHAR *pCollectionSpaceName )
+                                       const CHAR *pCollectionSpaceName )
     \brief Drop the specified collection space
     \param [in] cHandle The database connection handle
     \param [in] pCollectionSpaceName The name of collection space
@@ -522,8 +561,8 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
                                           const CHAR *pCollectionSpaceName ) ;
 
 /** \fn INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
-                                         const CHAR *pShardName,
-                                         sdbReplicaGroupHandle *handle )
+                                      const CHAR *pShardName,
+                                      sdbReplicaGroupHandle *handle )
     \brief Create the specified shard
     \param [in] cHandle The database connection handle
     \param [in] pShardName The name of the shard
@@ -534,8 +573,9 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
                                          const CHAR *pShardName,
                                          sdbReplicaGroupHandle *handle ) ;
+
 /** \fn INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
-                                        const CHAR *pShardName )
+                                      const CHAR *pShardName )
     \brief Remove the specified shard
     \param [in] cHandle The database connection handle
     \param [in] pShardName The name of the shard
@@ -554,7 +594,7 @@ SDB_EXPORT INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
 SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
 /** \fn INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
-                                           sdbNodeHandle *handle )
+                                 sdbNodeHandle *handle )
     \brief Get the master node of the specified shard
     \param [in] cHandle The shard handle
     \param [out] handle The master node handle
@@ -562,10 +602,10 @@ SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
-                                           sdbNodeHandle *handle ) ;
+                                    sdbNodeHandle *handle ) ;
 
 /** \fn INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
-                                          sdbNodeHandle *handle )
+                                sdbNodeHandle *handle )
     \brief Get one of slave node of the specified shard,
            if no slave exists then get master
     \param [in] cHandle The shard handle
@@ -574,11 +614,11 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
-                                          sdbNodeHandle *handle ) ;
+                                   sdbNodeHandle *handle ) ;
 
 /** \fn INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
-                                           const CHAR *pNodeName,
-                                           sdbNodeHandle *handle )
+                                 const CHAR *pNodeName,
+                                 sdbNodeHandle *handle )
     \brief Get the node from the specified shard
     \param [in] cHandle The shard handle
     \param [in] pNodeName The name of node
@@ -588,13 +628,13 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
-                                           const CHAR *pNodeName,
-                                           sdbNodeHandle *handle ) ;
+                                    const CHAR *pNodeName,
+                                    sdbNodeHandle *handle ) ;
 
 /** \fn INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
-                                           const CHAR *pHostName,
-                                           const CHAR *pServiceName,
-                                           sdbNodeHandle *handle )
+                                 const CHAR *pHostName,
+                                 const CHAR *pServiceName,
+                                 sdbNodeHandle *handle )
     \brief Get the node from the specified shard
     \param [in] cHandle The shard handle
     \param [in] pHostName The host of node
@@ -605,15 +645,15 @@ SDB_EXPORT INT32 sdbGetNodeByName ( sdbReplicaGroupHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
-                                           const CHAR *pHostName,
-                                           const CHAR *pServiceName,
-                                           sdbNodeHandle *handle ) ;
+                                    const CHAR *pHostName,
+                                    const CHAR *pServiceName,
+                                    sdbNodeHandle *handle ) ;
 
 /** \fn INT32 sdbGetNodeAddr ( sdbNodeHandle cHandle,
-                                          const CHAR **ppHostName,
-                                          const CHAR **ppServiceName,
-                                          const CHAR **ppNodeName,
-                                          INT32 *pNodeID )
+                               const CHAR **ppHostName,
+                               const CHAR **ppServiceName,
+                               const CHAR **ppNodeName,
+                               INT32 *pNodeID )
     \brief Get the host and service name for the specified node
     \param [in] cHandle The node handle
     \param [out] ppHostName The hostname for the node
@@ -624,10 +664,10 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbGetNodeAddr ( sdbNodeHandle cHandle,
-                                          const CHAR **ppHostName,
-                                          const CHAR **ppServiceName,
-                                          const CHAR **ppNodeName,
-                                          INT32 *pNodeID ) ;
+                                  const CHAR **ppHostName,
+                                  const CHAR **ppServiceName,
+                                  const CHAR **ppNodeName,
+                                  INT32 *pNodeID ) ;
 
 /** \fn INT32 sdbStartNode ( sdbNodeHandle cHandle )
     \brief Start up the specified node
@@ -654,10 +694,10 @@ SDB_EXPORT INT32 sdbStopNode ( sdbNodeHandle cHandle ) ;
 SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
 
 /** \fn INT32 sdbCreateReplicaCataGroup ( sdbReplicaGroupHandle cHandle,
-                                   const CHAR *pHostName,
-                                   const CHAR *pServiceName,
-                                   const CHAR *pDatabasePath,
-                                   bson *configure )
+                                          const CHAR *pHostName,
+                                          const CHAR *pServiceName,
+                                          const CHAR *pDatabasePath,
+                                          bson *configure )
     \brief Create a catalog shard
     \param [in] cHandle The database connection handle
     \param [in] pHostName The hostname for the catalog shard
@@ -668,16 +708,16 @@ SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle ) ;
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
-                                      const CHAR *pHostName,
-                                      const CHAR *pServiceName,
-                                      const CHAR *pDatabasePath,
-                                      bson *configure );
+                                             const CHAR *pHostName,
+                                             const CHAR *pServiceName,
+                                             const CHAR *pDatabasePath,
+                                             bson *configure );
 
 /** \fn INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
-                                        const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        const CHAR *pDatabasePath,
-                                        bson *configure )
+                              const CHAR *pHostName,
+                              const CHAR *pServiceName,
+                              const CHAR *pDatabasePath,
+                              bson *configure )
     \brief Create node in a given shard
     \param [in] cHandle The shard handle
     \param [in] pHostName The hostname for the node
@@ -688,15 +728,15 @@ SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
-                                        const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        const CHAR *pDatabasePath,
-                                        bson *configure ) ;
+                                 const CHAR *pHostName,
+                                 const CHAR *pServiceName,
+                                 const CHAR *pDatabasePath,
+                                 bson *configure ) ;
 
 /** \fn INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
-                                        const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        bson *configure )
+                              const CHAR *pHostName,
+                              const CHAR *pServiceName,
+                              bson *configure )
     \brief remove node in a given shard
     \param [in] cHandle The shard handle
     \param [in] pHostName The hostname for the node
@@ -706,12 +746,12 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
-                                        const CHAR *pHostName,
-                                        const CHAR *pServiceName,
-                                        bson *configure ) ;
+                                 const CHAR *pHostName,
+                                 const CHAR *pServiceName,
+                                 bson *configure ) ;
 
 /** \fn INT32 sdbListCollectionSpaces ( sdbConnectionHandle cHandle,
-                                           sdbCursorHandle *handle )
+                                        sdbCursorHandle *handle )
     \brief List all collection space of current database(include temporary collection space)
     \param [in] cHandle The database connection handle
     \param [out] handle The cursor handle of all collection space names
@@ -722,7 +762,7 @@ SDB_EXPORT INT32 sdbListCollectionSpaces ( sdbConnectionHandle cHandle,
                                            sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbListCollections ( sdbConnectionHandle cHandle,
-                                      sdbCursorHandle *handle )
+                                   sdbCursorHandle *handle )
     \brief List all collection of current database(not include temporary collection of temporary collection space)
     \param [in] cHandle The database connection handle
     \param [out] handle The cursor handle of all collection names
@@ -733,7 +773,7 @@ SDB_EXPORT INT32 sdbListCollections ( sdbConnectionHandle cHandle,
                                       sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
-                                        sdbCursorHandle *handle )
+                                     sdbCursorHandle *handle )
     \brief List all shards of current database
     \param [in] cHandle The database connection handle
     \param [out] handle The cursor handle of all shards
@@ -754,8 +794,8 @@ SDB_EXPORT INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 
-/** \fn INT32 sdbFlushConfigure(sdbConnectionHandle cHandle,
-                                   bson *options )
+/** \fn INT32 sdbFlushConfigure( sdbConnectionHandle cHandle,
+                                 bson *options )
     \brief flush the options to configure file.
     \param [in] cHandle The connection handle
     \param [in] options The configure infomation, pass {"Global":true} or {"Global":false}
@@ -765,21 +805,21 @@ SDB_EXPORT INT32 sdbListReplicaGroups ( sdbConnectionHandle cHandle,
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-SDB_EXPORT INT32 sdbFlushConfigure(sdbConnectionHandle cHandle,
-                                   bson *options ) ;
+SDB_EXPORT INT32 sdbFlushConfigure( sdbConnectionHandle cHandle,
+                                    bson *options ) ;
 
-/** \fn INT32 sdbCrtJSProcedure(sdbConnectionHandle cHandle,
- *                              const CHAR *code )
+/** \fn INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
+ *                               const CHAR *code )
  *  \brief create a store procedure.
  *  \param [in] cHandle The collection space space handle
  *  \param [in] code The code of store procedures
  *  \retval SDB_OK Operation Success
  *  \retval Others  Operation Fail
 */
-SDB_EXPORT INT32 sdbCrtJSProcedure(sdbConnectionHandle cHandle,
-                                   const CHAR *code ) ;
+SDB_EXPORT INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
+                                    const CHAR *code ) ;
 
-/** \fn INT32 sdbRmProcedure(sdbConnectionHandle cHandle,
+/** \fn INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
  *                            const CHAR *spName )
  *  \brief remove a store procedure.
  *  \param [in] cHandle The collection space space handle
@@ -787,13 +827,13 @@ SDB_EXPORT INT32 sdbCrtJSProcedure(sdbConnectionHandle cHandle,
  *  \retval SDB_OK Operation Success
  *  \retval Others  Operation Fail
  */
-SDB_EXPORT INT32 sdbRmProcedure(sdbConnectionHandle cHandle,
-                                const CHAR *spName ) ;
+SDB_EXPORT INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
+                                 const CHAR *spName ) ;
 
 
-/** \fn INT32 sdbListProcedures(sdbConnectionHandle cHandle,
- *                                bson *condition,
- *                                sdbCursorHandle *handle )
+/** \fn INT32 sdbListProcedures( sdbConnectionHandle cHandle,
+ *                               bson *condition,
+ *                               sdbCursorHandle *handle )
  *  \brief List store procedures.
  *  \param [in] cHandle The collection space space handle
  *  \param [in] condition The condition of list
@@ -805,11 +845,11 @@ SDB_EXPORT INT32 sdbListProcedures( sdbConnectionHandle cHandle,
                                     bson *condition,
                                     sdbCursorHandle *handle ) ;
 
-/** \fn INT32 sdbEvalJS(sdbConnectionHandle cHandle,
- *                      const CHAR *code,
- *                      SDB_SPD_RES_TYPE *type,
- *                      sdbCursorHandle *handle,
- *                      bson *errmsg )
+/** \fn INT32 sdbEvalJS( sdbConnectionHandle cHandle,
+ *                       const CHAR *code,
+ *                       SDB_SPD_RES_TYPE *type,
+ *                       sdbCursorHandle *handle,
+ *                       bson *errmsg )
  * \brief Eval a func.
  * \      type is declared in spd.h. see SDB_FMP_RES_TYPE.
  * \param [in] cHandle The collection space space handle
@@ -821,15 +861,15 @@ SDB_EXPORT INT32 sdbListProcedures( sdbConnectionHandle cHandle,
  * \retval Others  Operation Fail
  */
 
-SDB_EXPORT INT32 sdbEvalJS(sdbConnectionHandle cHandle,
-                           const CHAR *code,
-                           SDB_SPD_RES_TYPE *type,
-                           sdbCursorHandle *handle,
-                           bson *errmsg ) ;
+SDB_EXPORT INT32 sdbEvalJS( sdbConnectionHandle cHandle,
+                            const CHAR *code,
+                            SDB_SPD_RES_TYPE *type,
+                            sdbCursorHandle *handle,
+                            bson *errmsg ) ;
 
 /** \fn INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
-                                    const CHAR *pCollectionName,
-                                    sdbCollectionHandle *handle )
+                                  const CHAR *pCollectionName,
+                                  sdbCollectionHandle *handle )
     \brief Get the specified collection
     \param [in] cHandle The database connection handle
     \param [in] pCollectionName The name of collection
@@ -842,8 +882,8 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
                                      sdbCollectionHandle *handle ) ;
 
 /** \fn INT32 sdbCreateCollection ( sdbCSHandle cHandle,
-                                       const CHAR *pCollectionName,
-                                       sdbCollectionHandle *handle )
+                                    const CHAR *pCollectionName,
+                                    sdbCollectionHandle *handle )
     \brief Create the specified collection in current collection space
            This function creates a non-sharded collection with default replsize
     \param [in] cHandle The collection space handle
@@ -892,7 +932,7 @@ SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
                                       bson *options  ) ; */
 
 /** \fn INT32 sdbDropCollection ( sdbCSHandle cHandle,
-                                     const CHAR *pCollectionName )
+                                  const CHAR *pCollectionName )
     \brief Drop the specified collection in current collection space
     \param [in] cHandle The collection space handle
     \param [in] pCollectionName The collection name
@@ -903,7 +943,7 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
                                      const CHAR *pCollectionName ) ;
 
 /** \fn INT32 sdbGetCSName ( sdbCSHandle cHandle,
-                                CHAR **ppCSName )
+                             CHAR **ppCSName )
     \brief Get the specified collection space name
     \param [in] cHandle The collection space handle
     \param [out] ppCSName The pointer to collection space name
@@ -914,10 +954,10 @@ SDB_EXPORT INT32 sdbGetCSName ( sdbCSHandle cHandle,
                                 CHAR **ppCSName ) ;
 
 /** \fn INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
-                                      const CHAR *pSourceShard,
-                                      const CHAR *pTargetShard,
-                                      const bson *pSplitCondition,
-                                      const bson *pSplitEndCondition )
+                                   const CHAR *pSourceShard,
+                                   const CHAR *pTargetShard,
+                                   const bson *pSplitCondition,
+                                   const bson *pSplitEndCondition )
     \brief Split the specified collection from source shard to target by range
     \param [in] cHandle The collection handle
     \param [in] pSourceShard The source shard name
@@ -1002,7 +1042,7 @@ SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
                                             SINT64 *taskID ) ;
 
 /* \fn INT32 sdbRenameCollection ( sdbCollectionHandle cHandle,
-                                       const CHAR *pNewName )
+                                   const CHAR *pNewName )
     \brief Rename the specified collection
     \param [in] cHandle The collection handle
     \param [in] pNewName The new collection name
@@ -1013,10 +1053,10 @@ SDB_EXPORT INT32 sdbRenameCollection ( sdbCollectionHandle cHandle,
                                        const CHAR *pNewName ) ;
 */
 /** \fn INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
-                                  bson *indexDef,
-                                  const CHAR *pIndexName,
-                                  BOOLEAN isUnique,
-                                  BOOLEAN isEnforced )
+                               bson *indexDef,
+                               const CHAR *pIndexName,
+                               BOOLEAN isUnique,
+                               BOOLEAN isEnforced )
     \brief Create the index in current collection
     \param [in] cHandle The collection handle
     \param [in] indexDef The bson structure of index element, e.g. {name:1, age:-1}
@@ -1034,8 +1074,8 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
                                   BOOLEAN isEnforced ) ;
 
 /** \fn INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
-                                 const CHAR *pIndexName,
-                                 sdbCursorHandle *handle )
+                              const CHAR *pIndexName,
+                              sdbCursorHandle *handle )
     \brief Get all of or one of the indexes in current collection
     \param [in] cHandle The collection handle
     \param [in] pIndexName The index name, returns all of the indexes if this parameter is null
@@ -1048,7 +1088,7 @@ SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
                                  sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbDropIndex ( sdbCollectionHandle cHandle,
-                                const CHAR *pIndexName )
+                             const CHAR *pIndexName )
     \brief Drop the index in current collection
     \param [in] cHandle The collection handle
     \param [in] pIndexName The index name
@@ -1091,7 +1131,7 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
                                 SINT64 *count );
 
 /** \fn INT32 sdbInsert ( sdbCollectionHandle cHandle,
-                             bson *obj )
+                          bson *obj )
     \brief Insert a bson object into current collection
     \param [in] cHandle The collection handle
     \param [in] obj The inserted bson object, cannot be null
@@ -1102,7 +1142,7 @@ SDB_EXPORT INT32 sdbInsert ( sdbCollectionHandle cHandle,
                              bson *obj ) ;
 
 /** \fn INT32 sdbInsert1 ( sdbCollectionHandle cHandle,
-                              bson *obj, bson_iterator *id )
+                           bson *obj, bson_iterator *id )
     \brief Insert a bson object into current collection
     \param [in] cHandle The collection handle
     \param [in] obj The inserted bson object, cannot be null
@@ -1162,9 +1202,9 @@ SDB_EXPORT INT32 sdbBulkInsert ( sdbCollectionHandle cHandle,
                                  SINT32 flags, bson **obj, SINT32 num ) ;
 
 /** \fn INT32 sdbUpdate ( sdbCollectionHandle cHandle,
-                             bson *rule,
-                             bson *condition,
-                             bson *hint )
+                          bson *rule,
+                          bson *condition,
+                          bson *hint )
     \brief Update the matching documents in current collection
     \param [in] cHandle The collection handle
     \param [in] rule The updating rule, cannot be null
@@ -1180,9 +1220,9 @@ SDB_EXPORT INT32 sdbUpdate ( sdbCollectionHandle cHandle,
                              bson *hint ) ;
 
 /** \fn INT32 sdbUpsert ( sdbCollectionHandle cHandle,
-                             bson *rule,
-                             bson *condition,
-                             bson *hint )
+                          bson *rule,
+                          bson *condition,
+                          bson *hint )
     \brief Update the matching documents in current collection, insert if no matching
     \param [in] cHandle The collection handle
     \param [in] rule The updating rule, cannot be null
@@ -1198,8 +1238,8 @@ SDB_EXPORT INT32 sdbUpsert ( sdbCollectionHandle cHandle,
                              bson *hint ) ;
 
 /** \fn INT32 sdbDelete ( sdbCollectionHandle cHandle,
-                             bson *condition,
-                             bson *hint )
+                          bson *condition,
+                          bson *hint )
     \brief Delete the matching documents in current collection, never rollback if failed
     \param [in] cHandle The collection handle
     \param [in] condition The matching rule, delete all the documents if null
@@ -1212,13 +1252,13 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
                              bson *hint ) ;
 
 /** \fn INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
-                            bson *condition,
-                            bson *select,
-                            bson *orderBy,
-                            bson *hint,
-                            INT64 numToSkip,
-                            INT64 numToReturn,
-                            sdbCursorHandle *handle )
+                          bson *condition,
+                          bson *select,
+                          bson *orderBy,
+                          bson *hint,
+                          INT64 numToSkip,
+                          INT64 numToReturn,
+                          sdbCursorHandle *handle )
     \brief Get the matching documents in current collection
     \param [in] cHandle The collection handle
     \param [in] condition The matching rule, return all the documents if null
@@ -1233,24 +1273,24 @@ SDB_EXPORT INT32 sdbDelete ( sdbCollectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbQuery1 ( sdbCollectionHandle cHandle,
-                            bson *condition,
-                            bson *select,
-                            bson *orderBy,
-                            bson *hint,
-                            INT64 numToSkip,
-                            INT64 numToReturn,
-                            INT32 flag,
-                            sdbCursorHandle *handle ) ;
+                             bson *condition,
+                             bson *select,
+                             bson *orderBy,
+                             bson *hint,
+                             INT64 numToSkip,
+                             INT64 numToReturn,
+                             INT32 flag,
+                             sdbCursorHandle *handle ) ;
 
 
 /** \fn INT32 sdbQuery ( sdbCollectionHandle cHandle,
-                            bson *condition,
-                            bson *select,
-                            bson *orderBy,
-                            bson *hint,
-                            INT64 numToSkip,
-                            INT64 numToReturn,
-                            sdbCursorHandle *handle )
+                         bson *condition,
+                         bson *select,
+                         bson *orderBy,
+                         bson *hint,
+                         INT64 numToSkip,
+                         INT64 numToReturn,
+                         sdbCursorHandle *handle )
     \brief Get the matching documents in current collection
     \param [in] cHandle The collection handle
     \param [in] condition The matching rule, return all the documents if null
@@ -1273,7 +1313,7 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                             sdbCursorHandle *handle ) ;
 
 /** \fn INT32 sdbNext ( sdbCursorHandle cHandle,
-                           bson *obj )
+                        bson *obj )
     \brief Return the next document of current cursor, and move forward
     \param [in] cHandle The cursor handle
     \param [out] obj The return bson object
@@ -1284,7 +1324,7 @@ SDB_EXPORT INT32 sdbNext ( sdbCursorHandle cHandle,
                            bson *obj ) ;
 
 /** \fn INT32 sdbCurrent ( sdbCursorHandle cHandle,
-                              bson *obj )
+                           bson *obj )
     \brief Return the current document of cursor, and don't move
     \param [in] cHandle The cursor handle
     \param [out] obj The return bson object
@@ -1336,8 +1376,8 @@ SDB_EXPORT INT32 sdbCloseAllCursors ( sdbConnectionHandle cHandle ) ;
 
 
 /** \fn INT32 sdbExec( sdbConnectionHandle cHandle,
-                          const CHAR *sql,
-                          sdbCursorHandle *result )
+                       const CHAR *sql,
+                       sdbCursorHandle *result )
     \brief Executing SQL command.
     \param [in] cHandle The database connection handle
     \param [in] sql The SQL command.
@@ -1592,8 +1632,8 @@ SDB_EXPORT INT32 sdbListTasks ( sdbConnectionHandle cHandle,
     \retval Others Operation Fail
 */
 SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
-                             const SINT64 *taskIDs,
-                             SINT32 num );
+                                const SINT64 *taskIDs,
+                                SINT32 num );
 
 /** \fn INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
                               SINT64 taskID,
@@ -1625,6 +1665,7 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
 */
 SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
                                      bson *options ) ;
+
 /** \fn INT32 sdbIsValid( sdbConnectionHandle cHandle, BOOLEAN *result )
     \brief Judge whether the connection is valid.
     \param [out] result the output result
