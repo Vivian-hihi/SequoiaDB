@@ -45,7 +45,6 @@
 #include "pd.hpp"
 #include "ossUtil.hpp"
 #include "ixmIndexKey.hpp"
-#include "ixm2dIndexCB.hpp"
 #include "msgDef.h"
 
 using namespace std ;
@@ -511,12 +510,6 @@ namespace engine
          goto done ;
       }
 
-      static BOOLEAN valid2drange( const BSONObj &obj )
-      {
-         geoIndexCB cb ;
-         return SDB_OK == cb.init( obj ) ;
-      }
-
       // check whether a given object is valid, usually this is called before
       // creating index
       static BOOLEAN validateKey ( const BSONObj &obj, BOOLEAN isSys = FALSE )
@@ -586,16 +579,6 @@ namespace engine
          // make sure no other fields, unless it is a geo index.
          if ( fieldCount != obj.nFields() )
          {
-            if ( !IXM_EXTENT_HAS_TYPE( type, IXM_EXTENT_TYPE_2D ) )
-            {
-               return FALSE ;
-            }
-            if ( valid2drange( obj ) )
-            {
-               /// if it is a geo index,
-               /// only one more field( IXM_2DRANGE_FIELD ) is allowed.
-               return fieldCount + 1 == obj.nFields() ;
-            }
             return FALSE ;
          }
          return TRUE ;
