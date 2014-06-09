@@ -859,5 +859,7 @@ if hasTool:
    toolEnv.SConscript ( 'SequoiaDB/SConscriptTool', variant_dir=toolVariantDir, duplicate=False )
 if hasFmp:
    fmpEnv.SConscript ( 'SequoiaDB/SConscriptFmp', variant_dir=fmpVariantDir, duplicate=False )
+#if hasTestcase:
+#   env.SConscript( 'SequoiaDB/SConscript', variant_dir=variantDir, duplicate=False )
 
 
