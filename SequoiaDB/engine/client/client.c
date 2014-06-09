@@ -109,6 +109,15 @@ do                                 \
    }                               \
 }while ( FALSE )
 
+#define BSON_DESTROY( bson )       \
+do                                 \
+{                                  \
+   if ( bsoninit )                 \
+   {                               \
+      bson_destroy( &bson ) ;      \
+   }                               \
+}while( FALSE )   
+
 
 static BOOLEAN _sdbIsSrand = FALSE ;
 
@@ -810,10 +819,7 @@ static INT32 _sdbStartStopNode ( sdbNodeHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &configuration ) ;
-   }
+   BSON_DESTROY( configuration ) ;
    return rc ;
 error :
    goto done ;
@@ -967,10 +973,7 @@ done :
       sdbReleaseCursor ( cursor ) ;
    }
 
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -1038,12 +1041,8 @@ done :
    {
       sdbReleaseCursor ( cursor ) ;
    }
-
-   if ( bsoninit )
-   {
-      bson_destroy ( &result ) ;
-   }
    
+   BSON_DESTROY( result ) ;
    return rc;
 error:
    if ( r )
@@ -1397,10 +1396,7 @@ SDB_EXPORT INT32 sdbGetQueryMeta ( sdbCollectionHandle cHandle,
    // set output result
    *handle = (sdbCursorHandle)cursor ;
 done:
-   if ( bsoninit )
-   {
-      bson_destroy ( &hint1 ) ;
-   }
+   BSON_DESTROY( hint1 ) ;
    return rc ;
 error:
    if ( cursor )
@@ -1726,10 +1722,7 @@ SDB_EXPORT INT32 sdbGetCollection ( sdbConnectionHandle cHandle,
    
    *handle = (sdbCollectionHandle)s ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( s )
@@ -1792,10 +1785,7 @@ SDB_EXPORT INT32 sdbGetCollectionSpace ( sdbConnectionHandle cHandle,
    }
    *handle = (sdbCSHandle)s ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( s )
@@ -1839,10 +1829,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup ( sdbConnectionHandle cHandle,
    }
    
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( handle )
@@ -1881,10 +1868,7 @@ SDB_EXPORT INT32 sdbGetReplicaGroup1 ( sdbConnectionHandle cHandle,
    
    
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( handle )
@@ -2022,10 +2006,7 @@ SDB_EXPORT INT32 sdbCreateReplicaCataGroup ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &configuration ) ;
-   }
+   BSON_DESTROY( configuration ) ;
    return rc ;
 error :
    goto done ;
@@ -2135,10 +2116,7 @@ SDB_EXPORT INT32 sdbCreateNode ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &configuration ) ;
-   }
+   BSON_DESTROY( configuration ) ;
    return rc ;
 error :
    goto done ;
@@ -2208,10 +2186,7 @@ SDB_EXPORT INT32 sdbRemoveNode ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &removeInfo ) ;
-   }
+   BSON_DESTROY( removeInfo ) ;
    return rc ;
 error:
    goto done ;
@@ -2280,10 +2255,7 @@ SDB_EXPORT INT32 sdbCreateCollectionSpaceV2 ( sdbConnectionHandle cHandle,
    *handle = (sdbCSHandle)s ;
 
 done:
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error:
    if ( s )
@@ -2317,10 +2289,7 @@ SDB_EXPORT INT32 sdbCreateCollectionSpace ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if (bsoninit)
-   {
-      bson_destroy( &options ) ;
-   }   
+   BSON_DESTROY( options ) ; 
    return rc ;
 error :
    goto done ;
@@ -2360,10 +2329,7 @@ SDB_EXPORT INT32 sdbDropCollectionSpace ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ; 
    return rc ;
 error :
    goto done ;
@@ -2418,10 +2384,7 @@ SDB_EXPORT INT32 sdbCreateReplicaGroup ( sdbConnectionHandle cHandle,
    }
    *handle = (sdbReplicaGroupHandle)r ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ; 
    return rc ;
 error :
    if ( r )
@@ -2479,10 +2442,7 @@ SDB_EXPORT INT32 sdbRemoveReplicaGroup ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done:
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ; 
    return rc ;
 error:
    goto done ;
@@ -2515,10 +2475,7 @@ SDB_EXPORT INT32 sdbStartReplicaGroup ( sdbReplicaGroupHandle cHandle )
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ; 
    return rc ;
 error :
    goto done ;
@@ -2551,10 +2508,7 @@ SDB_EXPORT INT32 sdbStopReplicaGroup ( sdbReplicaGroupHandle cHandle )
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &configuration ) ;
-   }
+   BSON_DESTROY( configuration ) ; 
    return rc ;
 error :
    goto done ;
@@ -2660,10 +2614,7 @@ SDB_EXPORT INT32 sdbGetNodeMaster ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &result ) ;
-   }
+   BSON_DESTROY( result ) ;
    return rc ;
 error :
    if ( handle )
@@ -2809,11 +2760,8 @@ SDB_EXPORT INT32 sdbGetNodeSlave ( sdbReplicaGroupHandle cHandle,
    {
       goto error ;
    }
-done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &result ) ;
-   }
+done : 
+   BSON_DESTROY( result ) ;
    return rc ;
 error :
    if ( handle )
@@ -2950,10 +2898,7 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &result ) ;
-   }
+   BSON_DESTROY( result ) ;
    return rc ;
 error :
    if ( handle )
@@ -3115,10 +3060,7 @@ SDB_EXPORT INT32 sdbCrtJSProcedure( sdbConnectionHandle cHandle,
       goto error ;
    }
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &bs ) ;
-   }
+   BSON_DESTROY( bs ) ;
    return rc ;
 error:
    goto done ;
@@ -3170,10 +3112,7 @@ SDB_EXPORT INT32 sdbRmProcedure( sdbConnectionHandle cHandle,
       goto error ;
    }
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &bs ) ;
-   }
+   BSON_DESTROY( bs ) ;
    return rc ;
 error:
    goto done ;
@@ -3256,10 +3195,7 @@ SDB_EXPORT INT32 sdbEvalJS(sdbConnectionHandle cHandle,
    // set output result
    *handle = (sdbCursorHandle)cursor ;
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &bs ) ;
-   }
+   BSON_DESTROY( bs ) ;
    return rc ;
 error:
    if ( cursor )
@@ -3328,10 +3264,7 @@ SDB_EXPORT INT32 sdbGetCollection1 ( sdbCSHandle cHandle,
    }
    *handle = (sdbCollectionHandle)s ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( s )
@@ -3407,10 +3340,7 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
    }
    *handle = (sdbCollectionHandle)s ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( s )
@@ -3473,10 +3403,7 @@ SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -3520,10 +3447,7 @@ SDB_EXPORT INT32 sdbDropCollection ( sdbCSHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;   
    return rc ;
 error :
    goto done ;
@@ -3605,10 +3529,7 @@ SDB_EXPORT INT32 sdbSplitCollection ( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;      
    return rc ;
 error :
    goto done ;
@@ -3704,11 +3625,8 @@ SDB_EXPORT INT32 sdbSplitCLAsync ( sdbCollectionHandle cHandle,
    }
    
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-      bson_destroy ( &result ) ;
-   }
+   BSON_DESTROY( newObj ) ;   
+   BSON_DESTROY( result ) ;   
    
    if ( cursor )
    {
@@ -3772,10 +3690,7 @@ SDB_EXPORT INT32 sdbSplitCollectionByPercent( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -3862,12 +3777,8 @@ SDB_EXPORT INT32 sdbSplitCLByPercentAsync ( sdbCollectionHandle cHandle,
 	  goto error;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-      bson_destroy ( &result ) ;
-   }
-
+   BSON_DESTROY( newObj ) ;
+   BSON_DESTROY( result ) ;
    if ( cursor )
    {
       sdbReleaseCursor ( (sdbCursorHandle)cursor ) ;
@@ -4005,11 +3916,8 @@ SDB_EXPORT INT32 sdbCreateIndex ( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &indexObj ) ;
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( indexObj ) ;
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -4046,7 +3954,7 @@ SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
    if ( pIndexName )
    {
       BSON_APPEND( queryCond, IXM_FIELD_NAME_INDEX_DEF "."IXM_FIELD_NAME_NAME, 
-	  	             pIndexName, string ) ;
+	  	           pIndexName, string ) ;
       BSON_FINISH ( queryCond ) ;
    }
    /* build collection name */
@@ -4092,11 +4000,8 @@ SDB_EXPORT INT32 sdbGetIndexes ( sdbCollectionHandle cHandle,
    // set output result
    *handle                  = (sdbCursorHandle)cursor ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &queryCond ) ;
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( queryCond ) ;
+   BSON_DESTROY( newObj ) ;     
    return rc ;
 error :
    if ( cursor )
@@ -4159,11 +4064,8 @@ SDB_EXPORT INT32 sdbDropIndex ( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &indexObj ) ;
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( indexObj ) ;
+   BSON_DESTROY( newObj ) ;   
    return rc ;
 error :
    goto done ;
@@ -4259,11 +4161,8 @@ SDB_EXPORT INT32 sdbGetCount1 ( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if (bsoninit)
-   {
-      bson_destroy ( &newObj ) ;
-      bson_destroy ( &result ) ;
-   }
+   BSON_DESTROY( newObj ) ;
+   BSON_DESTROY( result ) ;
    if ( cursor )
    {
       sdbReleaseCursor ( (sdbCursorHandle)cursor ) ;
@@ -4769,10 +4668,7 @@ retry :
    }
    ++ cs->_totalRead ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &localobj ) ;
-   }
+   BSON_DESTROY( localobj ) ;   
 //   cs->_isDeleteCurrent = FALSE ;
    return rc ;
 error :
@@ -4872,10 +4768,7 @@ retry :
    }
    ++ cs->_totalRead ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &localobj ) ;
-   }
+   BSON_DESTROY( localobj ) ;
    return rc ;
 error :
    if ( SDB_DMS_EOC == rc )
@@ -5366,10 +5259,7 @@ SDB_EXPORT INT32 sdbTraceStart ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &obj ) ;
-   }
+   BSON_DESTROY( obj ) ;   
    return rc ;
 error :
    goto done ;
@@ -5428,10 +5318,7 @@ SDB_EXPORT INT32 sdbTraceStop ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &obj ) ;
-   }
+   BSON_DESTROY( obj ) ;
    return rc ;
 error :
    goto done ;
@@ -6044,10 +5931,7 @@ SDB_EXPORT INT32 sdbAttachCollection ( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6101,10 +5985,7 @@ SDB_EXPORT INT32 sdbDetachCollection( sdbCollectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6173,10 +6054,7 @@ SDB_EXPORT INT32 sdbBackupOffline ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6254,10 +6132,7 @@ SDB_EXPORT INT32 sdbListBackup ( sdbConnectionHandle cHandle,
    // set output result
    *handle = (sdbCursorHandle)cursor ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( cursor )
@@ -6319,10 +6194,7 @@ SDB_EXPORT INT32 sdbRemoveBackup ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6418,10 +6290,7 @@ SDB_EXPORT INT32 sdbWaitTasks ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6477,10 +6346,7 @@ SDB_EXPORT INT32 sdbCancelTask ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6581,10 +6447,7 @@ SDB_EXPORT INT32 sdbSetSessionAttr ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy( &newObj );
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6668,7 +6531,6 @@ SDB_EXPORT INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
    
    BSON_INIT( newObj );
    BSON_APPEND( newObj, pName, pDomainName, string ) ;
-   
    if ( options )
    {
       BSON_APPEND( newObj, pOptions, options, bson ) ;
@@ -6690,10 +6552,7 @@ SDB_EXPORT INT32 sdbCreateDomain ( sdbConnectionHandle cHandle,
    INIT_DOMAINHANDLE( s, connection, pDomainName ) ;
    *handle = (sdbDomainHandle)s ;
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    if ( handle )
@@ -6737,10 +6596,7 @@ SDB_EXPORT INT32 sdbDropDomain ( sdbConnectionHandle cHandle,
       goto error ;
    }
 done :
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error :
    goto done ;
@@ -6799,11 +6655,8 @@ done :
       sdbReleaseCursor ( cursor ) ;
    }
    
-   if ( bsoninit )
-   {
-      bson_destroy ( &newObj ) ;
-      bson_destroy ( &result ) ;
-   }
+   BSON_DESTROY( newObj ) ;
+   BSON_DESTROY( result ) ;
    return rc ;
 error :
    if ( s )
@@ -6862,10 +6715,7 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
       goto error ;
    } 
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &newObj ) ;
-   }
+   BSON_DESTROY( newObj ) ;
    return rc ;
 error:
    goto done ;   
@@ -6901,11 +6751,8 @@ SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
       goto error;
    }
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &condition ) ;
-      bson_destroy( &selector ) ;
-   }
+   BSON_DESTROY( condition );
+   BSON_DESTROY( selector );
    return rc ;
 error:
    if ( cursor )
@@ -6946,11 +6793,8 @@ SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
       goto error ;
    }
 done:
-   if ( bsoninit )
-   {
-      bson_destroy( &condition ) ;
-      bson_destroy( &selector ) ;
-   }
+   BSON_DESTROY( condition );
+   BSON_DESTROY( selector );
    return rc ;
 error:
    if ( cursor )
