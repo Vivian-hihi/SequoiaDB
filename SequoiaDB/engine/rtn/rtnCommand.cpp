@@ -354,7 +354,6 @@ namespace engine
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnShutdownNode)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnShutdownGroup)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnGetConfig)
-   IMPLEMENT_CMD_AUTO_REGISTER(_rtnAlterCollection)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListDomains)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnListGroups)
    IMPLEMENT_CMD_AUTO_REGISTER(_rtnCreateCataGroup)

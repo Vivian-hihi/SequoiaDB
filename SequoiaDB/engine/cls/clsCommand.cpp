@@ -244,6 +244,7 @@ namespace engine
       _collectionName = NULL ;
    }
 
+   IMPLEMENT_CMD_AUTO_REGISTER(_rtnAlterCollection)
    _rtnLinkCollection::~_rtnLinkCollection()
    {
    }
@@ -384,5 +385,135 @@ namespace engine
       return SDB_OK ;
    }
 
+   _rtnAlterCollection::_rtnAlterCollection()
+   {
+
+   }
+
+   _rtnAlterCollection::~_rtnAlterCollection()
+   {
+
+   }
+
+   INT32 _rtnAlterCollection::spaceService()
+   {
+      return CMD_SPACE_SERVICE_SHARD ;
+   }
+
+   
+   INT32 _rtnAlterCollection::init ( INT32 flags,
+                                     INT64 numToSkip,
+                                     INT64 numToReturn,
+                                     const CHAR *pMatcherBuff,
+                                     const CHAR *pSelectBuff,
+                                     const CHAR *pOrderByBuff,
+                                     const CHAR *pHintBuff )
+   {
+      INT32 rc = SDB_OK ;
+      try
+      {
+         _alterObj = BSONObj( pMatcherBuff ).getOwned() ;
+      }
+      catch ( std::exception &e )
+      {
+         PD_LOG( PDERROR, "unexpected err happened:%s",
+                 e.what() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      {
+      BSONElement options ;
+      BSONElement clName = _alterObj.getField( FIELD_NAME_NAME ) ;
+      if ( String != clName.type() )
+      {
+         PD_LOG( PDERROR, "invalid alter object:%s",
+                 _alterObj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+      options = _alterObj.getField( FIELD_NAME_OPTIONS ) ;
+      if ( Object != options.type() )
+      {
+         PD_LOG( PDERROR, "invalid alter object:%s",
+                 _alterObj.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      }
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   const CHAR *_rtnAlterCollection::collectionFullName()
+   {
+      return _alterObj.getField( FIELD_NAME_NAME ).valuestrsafe() ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__RTNALTERCL_DOIT, "_rtnAlterCollection::doit" )
+   INT32 _rtnAlterCollection::doit( _pmdEDUCB *cb, _SDB_DMSCB *dmsCB,
+                                    _SDB_RTNCB *rtnCB, _dpsLogWrapper *dpsCB,
+                                    INT16 w, INT64 *pContextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB__RTNALTERCL_DOIT ) ;
+      BSONObj idxDef ;
+      BSONObj options ;
+      BSONElement ensureIndex  ;
+      BSONElement shardingKey ;
+      options = _alterObj.getField( FIELD_NAME_OPTIONS ).embeddedObject() ;
+      shardingKey = options.getField( FIELD_NAME_SHARDINGKEY ) ;
+      if ( Object != shardingKey.type() )
+      {
+         PD_LOG( PDDEBUG, "no sharding key in the alter object, do noting." ) ;
+         goto done ;
+      }
+
+      ensureIndex = options.getField( FIELD_NAME_ENSURE_SHDINDEX ) ;
+      if ( Bool == ensureIndex.type() &&
+           !ensureIndex.Bool() )
+      {
+         PD_LOG( PDDEBUG, "ensureShardingIndex is false, do nothing." ) ;
+         goto done ;
+      }
+
+      idxDef = BSON( IXM_FIELD_NAME_KEY << shardingKey.embeddedObject()
+                     << IXM_FIELD_NAME_NAME << IXM_SHARD_KEY_NAME
+                     << "v"<<0 ) ;
+
+      rc = rtnCreateIndexCommand( collectionFullName(),
+                                  idxDef,
+                                  cb, dmsCB, dpsCB, TRUE ) ;
+      if ( SDB_IXM_REDEF == rc )
+      {
+         /// sharding key index already exists.
+         rc = SDB_OK ;
+         goto done ;
+      }
+      else if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create sharding key index:%d", rc ) ;
+         goto error ;
+      }
+      else
+      {
+         /// catalog info has been updated, clear local's info.
+         /// it will download the last info when next request comes.
+         catAgent *catAgent = sdbGetShardCB()->getCataAgent() ;
+         catAgent->lock_w() ;
+         catAgent->clear( collectionFullName() ) ;
+         catAgent->release_w() ;
+         /// notify other secondary nodes to clear catalog info.
+         sdbGetClsCB()->invalidateCata( collectionFullName() ) ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB__RTNALTERCL_DOIT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }
 

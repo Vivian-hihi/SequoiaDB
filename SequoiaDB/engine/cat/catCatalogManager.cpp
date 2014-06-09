@@ -521,47 +521,27 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_ALTERCOLLECTION, "catCatalogueManager::processAlterCollection" )
-   INT32 catCatalogueManager::processAlterCollection ( void *pMsg )
+   INT32 catCatalogueManager::processAlterCollection ( void *pMsg,
+                                                       CHAR **ppReplyBody,
+                                                       UINT32 &replyBodyLen,
+                                                       INT32 &returnNum )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_ALTERCOLLECTION ) ;
-      EvntCatalogInternalEvent *pEvent = (EvntCatalogInternalEvent*)pMsg;
-      MsgOpQuery *pAlterReq            = (MsgOpQuery*)(pEvent->data) ;
-      INT32 flag                       = 0 ;
-      CHAR *pCommandName               = NULL ;
-      SINT64 numToSkip                 = 0 ;
-      SINT64 numToReturn               = -1 ;
-      CHAR *pQuery                     = NULL ;
-      CHAR *pFieldSelector             = NULL ;
-      CHAR *pOrderBy                   = NULL ;
-      CHAR *pHint                      = NULL ;
-      // preconstruct reply message
-      MsgOpReply replyMsg;
-      replyMsg.header.messageLength = sizeof( MsgOpReply );
-      replyMsg.header.opCode = MSG_CAT_ALTER_COLLECTION_RSP;
-
       // collection name related
       const CHAR *strName              = NULL ;
       BSONObj options ;
       BOOLEAN isCollectionExist        = FALSE ;
       BSONObj boCollectionRecord ;
-      BSONObjBuilder bbUpdateRequest ;
-      BSONObj boUpdateRequest ;
       BSONObj matcher ;
+      BSONObj updater ;
       BSONObj hint ;
-      // we shouldn't alter collection on non-primary catalog
-      PD_CHECK ( pmdIsPrimary(), SDB_CLS_NOT_PRIMARY, error, PDWARNING,
-                 "service deactive but received alter collection request" );
-      // extract the request
-      rc = msgExtractQuery( (CHAR *)pAlterReq, &flag, &pCommandName,
-                            &numToSkip, &numToReturn, &pQuery,
-                            &pFieldSelector, &pOrderBy, &pHint );
-      PD_RC_CHECK ( rc, PDERROR,
-                    "failed to parsed the msg:create-collection request(rc=%d)",
-                    rc ) ;
+      BSONObj optionsObj ;
+      UINT32 mask = 0 ;
+      catCollectionInfo clInfo ;
       try
       {
-         BSONObj boAlterObj ( pQuery ) ;
+         BSONObj boAlterObj ( ( CHAR * )pMsg ) ;
          // make sure collection name exists
          BSONElement beName = boAlterObj.getField ( CAT_COLLECTION_NAME ) ;
          BSONElement beOptions = boAlterObj.getField ( CAT_OPTIONS_NAME ) ;
@@ -574,42 +554,78 @@ namespace engine
          PD_CHECK ( Object == beOptions.type(), SDB_INVALIDARG, error, PDERROR,
                     "Invalid field %s", CAT_OPTIONS_NAME ) ;
          // make sure each elements are valid
-         BSONObjIterator i( beOptions.embeddedObject() );
-         while ( i.more() )
-         {
-            BSONElement beTmp = i.next();
-            const CHAR *pFieldName = beTmp.fieldName () ;
-            // if we are changing w, let's set update request
-            if ( ossStrcmp ( CAT_CATALOG_W_NAME, pFieldName ) == 0 )
-            {
-               PD_CHECK ( NumberInt == beTmp.type(), SDB_INVALIDARG, error,
-                          PDERROR,
-                          "Invalid field %s", CAT_CATALOG_W_NAME ) ;
-               bbUpdateRequest.append ( "$set", beTmp.wrap() ) ;
-            }
-            else
-            {
-               // for any other request, let's mark invalid
-               PD_RC_CHECK ( SDB_INVALIDARG, PDERROR,
-                             "Invalid field %s in options for alter collection",
-                             pFieldName ) ;
-            }
-         }
+
          // make sure collection exists
          rc = catCheckCollectionExist ( strName, isCollectionExist,
                                         boCollectionRecord, _pEduCB ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to detect collection existence, rc = %d", rc ) ;
-         // build update request and search condition
-         boUpdateRequest = bbUpdateRequest.obj () ;
+
+         if ( !isCollectionExist )
+         {
+            PD_LOG( PDERROR, "collection[%s] does not exist", strName ) ;
+            rc = SDB_DMS_NOTEXIST ;
+            goto error ;
+         }
+
+         optionsObj = beOptions.embeddedObject() ;
+         if ( optionsObj.isEmpty() )
+         {
+            PD_LOG( PDERROR, "empty options object in alter request" ) ;
+            rc = SDB_INVALIDARG ;
+            goto error ;
+         }
+
+         rc = _checkAndBuildCataRecord( optionsObj,
+                                        mask, clInfo, FALSE ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "invalid alter request:%s",
+                    boAlterObj.toString().c_str() ) ;
+            goto error ;
+         }
+
+         rc = _buildAlterObjWithMetaAndObj( boCollectionRecord,
+                                            mask,
+                                            clInfo,
+                                            updater ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to build alter object, alter req[%s], rc:%d",
+                    boAlterObj.toString(FALSE, TRUE).c_str(), rc ) ;
+            goto error ;
+         }
+
+         // build search condition
          matcher = BSON ( CAT_COLLECTION_NAME << strName ) ;
          // perform update
          rc = rtnUpdate ( CAT_COLLECTION_INFO_COLLECTION,
-                          matcher, boUpdateRequest, hint,
+                          matcher, BSON( "$set" << updater ), hint,
                           0, _pEduCB, _pDmsCB, _pDpsCB,
                           _majoritySize() );
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to alter collection, rc = %d", rc ) ;
+
+         /// build reply body: group info.
+         {
+         BSONArrayBuilder arrBuilder ;
+         /// we are sure that there is one group in catalog info.
+         arrBuilder.append(
+                boCollectionRecord.getField( CAT_CATALOGINFO_NAME )
+                                  .embeddedObject().firstElement() ) ;
+         BSONObj replyObj = BSON( CAT_GROUP_NAME << arrBuilder.arr() ) ;
+         replyBodyLen = replyObj.objsize() ;
+         *ppReplyBody = ( CHAR * )SDB_OSS_MALLOC( replyBodyLen ) ;
+         if ( NULL == *ppReplyBody )
+         {
+            PD_LOG( PDERROR, "failed to allocate mem." ) ;
+            rc = SDB_OOM ;
+            goto error ;
+         }
+
+         ossMemcpy( *ppReplyBody, replyObj.objdata(), replyBodyLen ) ;
+         }
+         
       }
       catch ( std::exception &e )
       {
@@ -618,13 +634,7 @@ namespace engine
                        e.what() ) ;
       }
    done :
-      replyMsg.header.TID = pAlterReq->header.TID;
-      replyMsg.header.routeID.value = 0;
-      replyMsg.header.requestID = pAlterReq->header.requestID;
-      replyMsg.numReturned = 0;
-      replyMsg.flags = rc;
       PD_TRACE1 ( SDB_CATALOGMGR_ALTERCOLLECTION, PD_PACK_INT ( rc ) ) ;
-      rc = _pCatCB->netWork()->syncSend ( pEvent->handle, &replyMsg );
       PD_TRACE_EXITRC ( SDB_CATALOGMGR_ALTERCOLLECTION, rc ) ;
       return rc ;
    error :
@@ -969,7 +979,8 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__CHECKANDBUILDCATARECORD, "catCatalogueManager::_checkAndBuildCataRecord" )
    INT32 catCatalogueManager::_checkAndBuildCataRecord( const BSONObj &infoObj,
                                                         UINT32 &fieldMask,
-                                                        catCollectionInfo &clInfo )
+                                                        catCollectionInfo &clInfo,
+                                                        BOOLEAN clNameIsNecessary )
    {
       INT32 rc = SDB_OK ;
 
@@ -1167,8 +1178,20 @@ namespace engine
                    "auto options only can be set when shard type is hash" ) ;
       }
 
-      PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDERROR,
-                "Collection name not set" ) ;
+      if ( fieldMask & CAT_MASK_SHDIDX ||
+           fieldMask & CAT_MASK_SHDTYPE ||
+           fieldMask & CAT_MASK_SHDPARTITION )
+      {
+         PD_CHECK( fieldMask & CAT_MASK_SHDKEY,
+                   SDB_INVALIDARG, error, PDERROR,
+                   "these arguments are legal only when sharding key is specified." ) ;
+      }
+
+      if ( clNameIsNecessary )
+      {
+         PD_CHECK( clInfo._pCLName, SDB_INVALIDARG, error, PDERROR,
+                   "Collection name not set" ) ;
+      }
 
    done:
       PD_TRACE_EXITRC ( SDB_CATALOGMGR__CHECKANDBUILDCATARECORD, rc ) ;
@@ -1516,9 +1539,21 @@ namespace engine
 
       BSONObjBuilder builder ;
 
-      builder.append( CAT_CATALOGNAME_NAME, clInfo._pCLName ) ;
-      builder.append( CAT_CATALOGVERSION_NAME, CAT_VERSION_BEGIN ) ;
-      builder.append( CAT_CATALOG_W_NAME, clInfo._replSize ) ;
+      if ( mask & CAT_MASK_CLNAME )
+      {
+         builder.append( CAT_CATALOGNAME_NAME, clInfo._pCLName ) ;
+      }
+
+      /// this is not specified by user.
+      builder.append( CAT_CATALOGVERSION_NAME,
+                      0 == clInfo._version ?
+                      CAT_VERSION_BEGIN :
+                      clInfo._version ) ;
+
+      if ( mask & CAT_MASK_REPLSIZE )
+      {
+         builder.append( CAT_CATALOG_W_NAME, clInfo._replSize ) ;
+      }
 
       /// only record the options specified by user.
       if ( mask & CAT_MASK_COMPRESSED )
@@ -1660,14 +1695,10 @@ namespace engine
       case MSG_CAT_CREATE_DOMAIN_REQ :
       case MSG_CAT_DROP_DOMAIN_REQ :
       case MSG_CAT_ALTER_DOMAIN_REQ :
+      case MSG_CAT_ALTER_COLLECTION_REQ:
          {
             rc = processCommandMsg( pMsg, TRUE ) ;
             break;
-         }
-      case MSG_CAT_ALTER_COLLECTION_REQ:
-         {
-            rc = processAlterCollection( pMsg ) ;
-            break ;
          }
       case MSG_CAT_QUERY_CATALOG_REQ:
          {
@@ -1767,6 +1798,10 @@ namespace engine
             break ;
          case MSG_CAT_DROP_SPACE_REQ :
             rc = processCmdDropCollectionSpace( pQuery ) ;
+            break ;
+         case MSG_CAT_ALTER_COLLECTION_REQ :
+            rc = processAlterCollection( pQuery, &replyData,
+                                         replyDataLen, returnNum ) ;
             break ;
          case MSG_CAT_CRT_PROCEDURES_REQ :
             rc = processCmdCrtProcedures( pQuery ) ;
@@ -2776,5 +2811,94 @@ namespace engine
    error:
       goto done ;
    }
-   
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR__BUILDALTEROBJWITHMETAANDOBJ, "catCatalogueManager::_buildAlterObjWithMetaAndObj" )
+   INT32 catCatalogueManager::_buildAlterObjWithMetaAndObj( const BSONObj &clMeta,
+                                                            UINT32 mask,
+                                                            catCollectionInfo &alterInfo,
+                                                            BSONObj &alterObj )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY(  SDB_CATALOGMGR__BUILDALTEROBJWITHMETAANDOBJ) ;
+      BSONElement groupID ;
+      BSONElement groupName ;
+      BSONElement version ;
+      BSONElement cataInfo ;
+      BSONObj cataInfoObj ;
+      BSONObj groupObj ;
+
+      if ( CAT_MASK_SHDKEY & mask )
+      {
+         if ( clMeta.hasField( CAT_SHARDINGKEY_NAME ) )
+         {
+            rc = SDB_INVALIDARG ;
+            PD_LOG( PDERROR, "can not alter a sharding collection's shardingkey" ) ;
+            goto error ;
+         }
+      }
+
+      cataInfo = clMeta.getField( CAT_CATALOGINFO_NAME ) ;
+      if ( Array != cataInfo.type() )
+      {
+         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
+                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      cataInfoObj = cataInfo.embeddedObject() ;
+      if ( 1 != cataInfoObj.nFields() )
+      {
+         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
+                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      groupObj = cataInfoObj.firstElement().embeddedObject() ;
+
+      groupID = groupObj.getField( CAT_GROUPID_NAME ) ;
+      if ( NumberInt != groupID.type() )
+      {
+         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
+                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      groupName = groupObj.getField( CAT_GROUPNAME_NAME ) ;
+      if ( String != groupName.type() )
+      {
+         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
+                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      version = clMeta.getField( CAT_CATALOGVERSION_NAME ) ;
+      if ( NumberInt != version.type() )
+      {
+         PD_LOG( PDERROR, "invalid meta data of collection[%s]",
+                 clMeta.toString( FALSE, TRUE ).c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      alterInfo._version = version.Int() ;
+      ++alterInfo._version ;
+
+      rc = _buildCatalogRecord( alterInfo, mask, groupID.Int(),
+                                groupName.valuestr(),
+                                alterObj ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to build cata record:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_CATALOGMGR__BUILDALTEROBJWITHMETAANDOBJ, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
 }

@@ -927,9 +927,10 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
                         ReplSize Number of replnodes for sync write
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
+*/
 
 SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
-                                      bson *options  ) ; */
+                                      bson *options  ) ;
 
 /** \fn INT32 sdbDropCollection ( sdbCSHandle cHandle,
                                   const CHAR *pCollectionName )

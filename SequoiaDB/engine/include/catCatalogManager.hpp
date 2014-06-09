@@ -80,6 +80,7 @@ namespace engine
       BOOLEAN     _autoSplit ;
       BOOLEAN     _autoRebalance ;
       const CHAR * _gpSpecified ;
+      INT32       _version ;
       
       std::vector<std::string>   _subCLList;
 
@@ -97,6 +98,7 @@ namespace engine
          _autoSplit           = FALSE ;
          _autoRebalance       = FALSE ;
          _gpSpecified         = NULL ;
+         _version             = 0 ;
       }
    };
    typedef _catCollectionInfo catCollectionInfo ;
@@ -173,7 +175,10 @@ namespace engine
 
       INT32 processQueryCatalogue ( void *pMsg );
       INT32 processQueryTask ( void *pMsg ) ;
-      INT32 processAlterCollection ( void *pMsg ) ;
+      INT32 processAlterCollection ( void *pMsg,
+                                     CHAR **ppReplyBody,
+                                     UINT32 &replyBodyLen,
+                                     INT32 &returnNum ) ;
       INT32 processCmdCrtProcedures( void *pMsg ) ;
       INT32 processCmdRmProcedures( void *pMsg ) ;
       INT32 processCmdLinkCollection( const CHAR *pQuery,
@@ -199,7 +204,8 @@ namespace engine
 
       INT32 _checkAndBuildCataRecord( const BSONObj &infoObj,
                                       UINT32 &fieldMask,
-                                      catCollectionInfo &clInfo ) ;
+                                      catCollectionInfo &clInfo,
+                                      BOOLEAN clNameIsNecessary = TRUE ) ;
       INT32 _checkCSObj( const BSONObj &infoObj,
                          catCSInfo &csInfo ) ;
 
@@ -241,6 +247,10 @@ namespace engine
                              UINT32 begin,
                              UINT32 end ) ;
 
+      INT32 _buildAlterObjWithMetaAndObj( const BSONObj &clMeta,
+                                          UINT32 mask,
+                                          catCollectionInfo &alterInfo,
+                                          BSONObj &alterObj ) ;
    private:
       INT32 _buildInitBound ( UINT32 fieldNum,
                               const Ordering& order,

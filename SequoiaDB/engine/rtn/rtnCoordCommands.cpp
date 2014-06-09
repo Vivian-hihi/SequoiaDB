@@ -1493,13 +1493,30 @@ namespace engine
       pAlterReq->header.routeID.value  = 0;
       pAlterReq->header.TID            = cb->getTID();
       pAlterReq->header.opCode         = MSG_CAT_ALTER_COLLECTION_REQ;
+      CoordGroupList groupList ;
+      CoordGroupList sendList ;
 
       // send request to catalog
-      rc = executeOnCataGroup ( (CHAR*)pAlterReq, pRouteAgent, cb ) ;
+      rc = executeOnCataGroup ( (CHAR*)pAlterReq, pRouteAgent, cb,
+                                NULL, &groupList ) ;
       if ( rc )
       {
-         PD_LOG ( PDERROR, "create collection failed on catalog, rc = %d",
+         PD_LOG ( PDERROR, "alter collection failed on catalog, rc = %d",
                   rc ) ;
+         goto error ;
+      }
+
+      /// reassign it as a command.
+      pAlterReq->header.opCode = MSG_BS_QUERY_REQ ;
+      /// send request to data
+      rc = executeOnDataGroup( (MsgHeader *)pAlterReq, groupList,
+                               sendList, pRouteAgent, cb,
+                               TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to alter collection on data group:%d",
+                 rc ) ;
+         rc = SDB_BUT_FAILED_ON_DATA ;
          goto error ;
       }
    done :
@@ -1635,7 +1652,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to notify data groups to start task:%d", rc ) ;
             /// meta data has already been modified.
             /// here we change a errno.
-            rc = SDB_CL_DONE_BUT_SPLIT_FAILED ;
+            rc = SDB_BUT_FAILED_ON_DATA ;
             goto error ;
          }
       }

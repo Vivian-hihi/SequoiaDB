@@ -453,16 +453,6 @@ namespace engine
          virtual RTN_COMMAND_TYPE type () { return CMD_GET_CONFIG ; }
    } ;
 
-   class _rtnAlterCollection : public _rtnCoordOnly
-   {
-      DECLARE_CMD_AUTO_REGISTER()
-      public:
-         _rtnAlterCollection () {}
-         ~_rtnAlterCollection () {}
-         virtual const CHAR * name () { return NAME_ALTER_COLLECTION ; }
-         virtual RTN_COMMAND_TYPE type () { return CMD_ALTER_COLLECTION ; }
-   };
-
    class _rtnListGroups : public _rtnCoordOnly
    {
       DECLARE_CMD_AUTO_REGISTER()

@@ -1673,7 +1673,7 @@ error :
    goto done ;
 }
 
-/*static JSBool collection_alter ( JSContext *cx , uintN argc , jsval *vp )
+static JSBool collection_alter ( JSContext *cx , uintN argc , jsval *vp )
 {
    sdbCollectionHandle *collection  = NULL ;
    JSBool               ret         = JS_TRUE ;
@@ -1703,7 +1703,7 @@ done :
 error :
    TRY_REPORT ( cx , "SdbCollection.alter(): false" ) ;
    goto done ;
-}*/
+}
 
 PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_CRT_INX, "collection_create_index" )
 static JSBool collection_create_index ( JSContext *cx , uintN argc , jsval *vp )
@@ -2162,7 +2162,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "split", collection_split, 3, 0 ),
     JS_FS ( "splitAsync", collection_split_async, 3, 0 ),
     JS_FS ( "aggregate" , collection_aggr , 1 , 0 ) ,
-    //JS_FS ( "alter", collection_alter, 1, 0 ),
+    JS_FS ( "alter", collection_alter, 1, 0 ),
     JS_FS ( "attachCL", collection_attachCollection, 2, 0 ) ,
     JS_FS ( "detachCL", collection_detachCollection, 1, 0 ) ,
     JS_FS_END
