@@ -551,7 +551,7 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
 {
    INT32 rc               = SDB_OK ;
    MsgSysInfoReply reply ;
-   
+
    connection->_endianConvert = FALSE;
    rc = clientBuildSysInfoRequest ( (CHAR**)&connection->_pSendBuffer, &connection->_sendBufferSize ) ;
    if ( SDB_OK != rc )
@@ -559,7 +559,7 @@ static INT32 requestSysInfo ( sdbConnectionStruct *connection )
       goto error ;
    }
    
-   rc = _send1 ( connection->_sock, connection->_pSendBuffer, connection->_sendBufferSize ) ;
+   rc = _send1 ( connection->_sock, connection->_pSendBuffer, sizeof(MsgSysInfoRequest) ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
