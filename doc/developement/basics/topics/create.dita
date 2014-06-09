@@ -3,17 +3,17 @@
 <topic id="basics_create">
   <title>创建</title>
   <body>
-    <p>在sequoiadb中，create操作是向集合中添加新的文档记录。我们可以使用insert方法向sequoiadb中的集合中添加记录。</p>
-    <p>所有的插入操作在sequoiadb中具有如下性质： <ul id="ul_c4q_km3_wj">
+    <p>在SequoiaDB中，create操作是向集合中添加新的文档记录。我们可以使用insert方法向SequoiaDB中的集合中添加记录。</p>
+    <p>所有的插入操作在SequoiaDB中具有如下性质： <ul id="ul_c4q_km3_wj">
         <li>如果插入的文档记录没有_id字段，客户端将会为记录自动添加_id字段，并且填充一个唯一值。</li>
         <li>如果指定_id字段，那个在集合中_id的值必须唯一；否则出现操作异常。</li>
         <li>最大的BSON文档长度为16MB。</li>
         <li>文档结构的字段命令有如下限制：
-            <p>字段名_id作为主键保存在集合中，它的值必须唯一且不可改变。并且可以是除数组类型以外的其他任何类型。字段的命名不能是空串、不能以$开始、不能含有（.）。</p></li>
-      </ul><note>本文档的所有例子都是使用sequoiadb的shell接口。</note></p>
+            <p>字段名_id作为主键保存在集合中，它的值必须唯一且不可改变。并且可以是除数组类型以外的其他任何类型。字段的命名不能是空串；不能以$开始；不能含有（.）。</p></li>
+      </ul><note>本文档的所有例子都是使用SequoiaDB的shell接口。</note></p>
     <section>
       <title>insert()</title>
-      <p><xref href="../../../references/methods/topics/dbinsert.dita">insert()</xref>是向sequoiadb集合中插入记录的主要方法，它有以下语法：</p>
+      <p><xref href="../../../references/methods/topics/dbinsert.dita">insert()</xref>是向SequoiaDB集合中插入记录的主要方法，它有以下语法：</p>
       <codeblock>db.collectionspace.collection.insert(&lt;doc|docs>,[flag])</codeblock>
     </section>
     <section>
@@ -67,8 +67,8 @@
     <section>
       <title>插入多条记录</title>
       <p>如果向insert方法中传一个数组类型的文档，insert()方法将会在集合中执行批量插入。</p>
-      <p>下面的操作是向集合bar中插入两条记录。此操作也说明了sequoiadb的动态模式的特点。尽管_id:20的记录含有字段名phone而在另一条记录中不存在，sequoiadb不要求其他记录必须含有此字段。</p>
-      <codeblock>db.foo.bar.insert([{name:”Mike”,age:15},{_id:20,name:”John”,age:25,phone:123}])</codeblock>
+      <p>下面的操作是向集合bar中插入两条记录。此操作也说明了SequoiaDB的动态模式的特点。尽管_id:20的记录含有字段名phone而在另一条记录中不存在，SequoiaDB不要求其他记录必须含有此字段。</p>
+      <codeblock>db.foo.bar.insert([{name:"Mike",age:15},{_id:20,name:"John",age:25,phone:123}])</codeblock>
     </section>
   </body>
   <related-links>

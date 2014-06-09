@@ -4269,7 +4269,7 @@ w["backgroup"]="1315*2";
 w["backgroup."]="1315*2";
 w["backup"]="86*9,350*20,402*19,892*1,1551*3,1553*5,1557*4";
 w["backup-2014-1-1"]="1551*2,1553*6,1557*2";
-w["backup1"]="93*3";
+w["backup1"]="93*4";
 w["backuped"]="350*1,402*1";
 w["backupname"]="86*9,350*6,402*6";
 w["backupoffline"]="86*3,402*2,416*1,430*3,439*1,440*1,1326*1,1363*1,1364*1,1557*49,1604*2";
@@ -4426,6 +4426,4 @@ w["bson::bsonobjbuilder::appendasnumber"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendbindata"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendbindataarraydeprecated"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendcodewscope"]="228*1,776*1";
-w["bson::bsonobjbuilder::appenddate"]="228*1,776*1";
-w["bson::bsonobjbuilder::appendintorll"]="228*1,776*1";
 

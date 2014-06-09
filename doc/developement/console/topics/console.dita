@@ -6,7 +6,7 @@
     <p>目录</p>
     <ul>
       <li>
-        <xref href="shell.dita">Sequoiadb shell入门</xref>
+        <xref href="shell.dita">SequoiaDB shell入门</xref>
       </li>
       <li>
         <xref href="knack.dita">使用shell的窍门</xref>

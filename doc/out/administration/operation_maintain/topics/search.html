@@ -72,10 +72,10 @@
       
       <p class="p">1.连接到协调节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt;  var db = new Sdb("localhost",11810);</pre>
+&gt; var db = new Sdb("localhost",11810);</pre>
 
       <p class="p">2.执行查看备份信息命令</p>
-<pre class="pre codeblock">&gt;db. listBackup()
+<pre class="pre codeblock">&gt;db.listBackup()
 {
   "Name": "test_bk",
   "NodeName": "vmsvr2-suse-x64-1:11800",
@@ -103,10 +103,10 @@
       
       <p class="p">1.连接到协调节点</p>
 <pre class="pre codeblock">$ /opt/sequoiadb/bin/sdb
-&gt;  var db = new Sdb("localhost",11810);</pre>
+&gt; var db = new Sdb("localhost",11810);</pre>
 
       <p class="p">2.执行查看备份信息命令</p>
-<pre class="pre codeblock">&gt;db. listBackup({Name:”backup1”})
+<pre class="pre codeblock">&gt;db.listBackup({Name:"backup1"})
 {
   "Name": "backup1",
   "NodeName": "vmsvr2-suse-x64-1:11820",

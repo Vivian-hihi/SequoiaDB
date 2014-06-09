@@ -66,17 +66,17 @@
         </strow>
         <strow>
           <stentry>--delchar,-a</stentry>
-          <stentry>指定字符分隔符。默认是 "， csv格式有效。</stentry>
+          <stentry>指定字符分隔符。默认是（"）， csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--delfield,-e
           </stentry>
-          <stentry>指定字段分隔符。默认是 ,，csv格式有效。 </stentry>
+          <stentry>指定字段分隔符。默认是（,），csv格式有效。 </stentry>
         </strow>
         <strow>
           <stentry>--delrecord,-r
           </stentry>
-          <stentry>指定记录分隔符。默认是 \n，csv格式有效。</stentry>
+          <stentry>指定记录分隔符。默认是（\n），csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--csname,-c
@@ -126,7 +126,7 @@
         <strow>
           <stentry>--stringtype
           </stentry>
-          <stentry>所有导入的值都强制转换成字符串类型， 默认false，csv格式有效</stentry>
+          <stentry>所有导入的值都强制转换成字符串类型， 默认false，csv格式有效。</stentry>
         </strow>
       </simpletable>
     </section>
@@ -175,21 +175,21 @@
         <strow>
           <stentry>--delchar,-a
           </stentry>
-          <stentry>指定字符分隔符。默认是 "，csv格式有效。</stentry>
+          <stentry>指定字符分隔符。默认是（"），csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--delfield,-e
           </stentry>
-          <stentry>指定字段分隔符。默认是 ,，csv格式有效。</stentry>
+          <stentry>指定字段分隔符。默认是（,），csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--delrecord,-r
           </stentry>
-          <stentry>指定记录分隔符。默认是 \n，csv格式有效。</stentry>
+          <stentry>指定记录分隔符。默认是（\n），csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--csname,-c</stentry>
-          <stentry>指定导入数据的集合空间名。 </stentry>
+          <stentry>指定导入数据的集合空间名。</stentry>
         </strow>
         <strow>
           <stentry>--clname,-l

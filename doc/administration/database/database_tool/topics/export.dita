@@ -42,17 +42,17 @@
         <strow>
           <stentry>--delchar,-a
           </stentry>
-          <stentry>指定字符分隔符。默认是"，csv格式有效。</stentry>
+          <stentry>指定字符分隔符。默认是（"），csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--delfield,-e
           </stentry>
-          <stentry>指定字段分隔符。默认是','，csv格式有效。</stentry>
+          <stentry>指定字段分隔符。默认是（,），csv格式有效。</stentry>
         </strow>
         <strow>
           <stentry>--delrecord,-r
           </stentry>
-          <stentry>指定记录分隔符。默认是'\n'。 </stentry>
+          <stentry>指定记录分隔符。默认是（\n）。 </stentry>
         </strow>
         <strow>
           <stentry>--csname,-c

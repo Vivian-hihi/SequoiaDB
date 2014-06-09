@@ -3,7 +3,7 @@
 <topic id="developement_console_shell">
   <title>SequoiaDB shell入门</title>
   <body>
-    <p>SequoiaDB自带一个javascript shell，可以从命令行与sequoiadb实例交互。这个shell非常有用，通过它可以执行管理操作、检查运行实例，亦或做其他尝试。这个shell对于使用SequoiaDB来说是至关重要的工具。</p>
+    <p>SequoiaDB自带一个JavaScript shell，可以从命令行与SequoiaDB实例交互。这个shell非常有用，通过它可以执行管理操作、检查运行实例，亦或做其他尝试。这个shell对于使用SequoiaDB来说是至关重要的工具。</p>
     <section>
       <title>运行shell</title>
       <p>运行sequoiadb（./sequoiadb）启动shell：
@@ -12,19 +12,19 @@ Welcome to SequoiaDB shell!
 help() for help, Ctrl+c or quit to exit
 ></codeblock></p>
       <p>shell会在启动时自动连接SequoiaDB服务器，所以要确保在使用shell之前启动sequoiadb。</p>
-      <p>shell是一个功能完备的javascript解析器，可以运行任何javascript程序。如：
+      <p>shell是一个功能完备的JavaScript解析器，可以运行任何JavaScript程序。如：
         <codeblock>> y=200
 200
 > y/20
 10
 ></codeblock></p>
-      <p>还可以充分利用javascript的标准库。
+      <p>还可以充分利用JavaScript的标准库。
         <codeblock>> new Date("2013/04/17");
 Wed Apr 17 2013 00:00:00 GMT+0800 (CST)
 > "hello,world".replace("world","SequoiaDB")
 hello,SequoiaDB
 ></codeblock></p>
-      <p>也可以定义和调用javascript函数：
+      <p>也可以定义和调用JavaScript函数：
         <codeblock>> function sdb(n){
 ... if(n&lt;=1)return 1;
 ... else return n*sdb(n-1);
@@ -32,13 +32,13 @@ hello,SequoiaDB
 > sdb(4);
 24
 ></codeblock></p>
-      <note>可以使用多行命令。shell会检测输入的javascript语句是否完整，如没有写完还可以接着写下一行。</note>
+      <note>可以使用多行命令。shell会检测输入的JavaScript语句是否完整，如没有写完还可以接着写下一行。</note>
     </section>
     <section>
       <title>SequoiaDB客户端</title>
-      <p>启动shell可以运行任意javascript程序，但是shell的真正威力在于它是一个独立的SequoiaDB客户端。开启的时候，可以使用db=new
+      <p>启动shell可以运行任意JavaScript程序，但是shell的真正威力在于它是一个独立的SequoiaDB客户端。开启的时候，可以使用db=new
         Sdb（"localhost",11810）命令连接到本地sequoiaDB服务器的数据库，并将这个数据库连接赋值给全局变量db。这个变量是通过shell访问SequoiaDB的主要入口点。</p>
-      <p>shell还有一些非javascript语法的扩展，例如：
+      <p>shell还有一些非JavaScript语法的扩展，例如：
         <codeblock>>db
 localhost:11810
 >db.createCS("foo")//创建集合空间

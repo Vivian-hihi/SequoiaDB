@@ -142,12 +142,12 @@
             按:wq保存退出； </div>
 <div class="p">5.执行如下命令，检查主机配置是否生效：
             <pre class="pre codeblock">ping vmsvr1-suse-x64   //检查是否ping通；
-ping vmsvr2-suse-x64   //检查是否ping 通；</pre>
+ping vmsvr2-suse-x64   //检查是否ping通；</pre>
 </div>
 <p class="p">6.配置系统内核参数：</p>
 <p class="p">打开/etc/profile文件，在该文件末尾增加如下行：</p>
 <div class="p"><pre class="pre codeblock">ulimit -Sf unlimited  //文件大小限制 
-ulimit -St unlimited  //CPU时间限制 
+ulimit -St unlimited  //CPU 时间限制 
 ulimit -Sv unlimited  //虚拟内存限制 
 ulimit -Sn 64000      //文件个数限制 
 ulimit -Sm unlimited  //内存大小限制 

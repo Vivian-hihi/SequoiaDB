@@ -3,13 +3,13 @@
 <topic id="developement_basics_read">
   <title>读取</title>
   <body>
-    <p>四大基本数据库操作即（CRUD），读操作是从sequoiadb中的集合中检索文档记录，包括所有响应应用程序请求数据并返回游标的操作。</p>
-    <p>本文档描述了应用程序从sequoiadb中请求数据的查询语法和结构，以及不同因素影响效率的读取请求。</p>
-    <note><p>本文档的所有例子都是使用sequoiadb的shell接口。</p></note>
+    <p>四大基本数据库操作即（CRUD），读操作是从SequoiaDB中的集合中检索文档记录，包括所有响应应用程序请求数据并返回游标的操作。</p>
+    <p>本文档描述了应用程序从SequoiaDB中请求数据的查询语法和结构，以及不同因素影响效率的读取请求。</p>
+    <note><p>本文档的所有例子都是使用SequoiaDB的shell接口。</p></note>
     <section>
       <title>find()</title>
       <p>我们使用<xref href="../../../references/methods/topics/find.dita"
-        >find</xref>方法读取sequoiadb中的记录。find方法是从集合中选择记录的主要方法，它返回一个包含很多记录的游标。它的语法结构如下：</p>
+        >find</xref>方法读取SequoiaDB中的记录。find方法是从集合中选择记录的主要方法，它返回一个包含很多记录的游标。它的语法结构如下：</p>
       <codeblock>db.collectionspace.collection.find([cond],[sel])</codeblock>
       <p>在SQL中对应的操作：find()的方法与SELECT语句相似：</p>
       <p><b>.</b> [cond] 参数对应WHERE语句</p>
@@ -95,7 +95,7 @@
       <p>
         <codeblock>db.foo.bar.find(null,{name:""})</codeblock>
       </p>
-      <note><p>如果记录中不存在指定的字段名（如：people），Sequoiadb默认也返回。如：</p>
+      <note><p>如果记录中不存在指定的字段名（如：people），SequoiaDB默认也返回。如：</p>
         <codeblock>db.foo.bar.find({},{name:"",people:""})
 返回：{
        "name":{
@@ -127,7 +127,9 @@
 <xref href="../../../references/methods/topics/next.dita">db.foo.bar.find().next()</xref> 返回当前游标指向的下一条记录
 <!--<xref href="../../../references/methods/topics/updateCurrent.dita">db.foo.bar.find().updateCurrent()</xref>更新当前游标指向的记录-->
 <xref href="../../../references/methods/topics/dbcount.dita">db.foo.bar.find().count()</xref>返回当前游标的记录总数
+            
 <xref href="../../../references/methods/topics/csize.dita">db.foo.bar.find().size()</xref> 返回当前游标到最终游标的距离
+            
 <xref href="../../../references/methods/topics/toArray.dita">db.foo.bar.find().toArray()</xref> 以数组形式返回结果集</codeblock></p>
       </li>
       </ul>

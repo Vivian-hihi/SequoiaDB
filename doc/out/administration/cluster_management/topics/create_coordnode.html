@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="新增协调节点"/>
-<meta name="description" content="当集群规模扩大时，协调节点也需要随着规模的增加而进行增加。建议匹配时，一台物理节点，配置一个协调节点。 1.创建协调节点配置目录； mkdir -p /opt/sequoiadb/conf/local/11810 ； 其中11810为协调节点的服务端口，可根据需要配置 2.拷贝协调节点样例配置文件； 3.修改配置文件； cp /opt/sequoiadb/conf/samples/sdb.conf ..."/>
+<meta name="description" content="当集群规模扩大时，协调节点也需要随着规模的增加而进行增加。建议匹配时，一台物理节点，配置一个协调节点。 1.创建协调节点配置目录； mkdir -p /opt/sequoiadb/conf/local/11810 其中11810为协调节点的服务端口，可根据需要配置 2.拷贝协调节点样例配置文件； 3.修改配置文件； cp /opt/sequoiadb/conf/samples/sdb.conf ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../administration/cluster_management/topics/cluster_management.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="topic_nps_2jx_tk"/>
@@ -40,7 +40,7 @@
 
     <p class="p">1.创建协调节点配置目录； </p>
 
-    <pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810 ；</pre>
+    <pre class="pre codeblock">mkdir -p /opt/sequoiadb/conf/local/11810</pre>
 
     <p class="p">其中11810为协调节点的服务端口，可根据需要配置 </p>
 
@@ -50,28 +50,28 @@
       <pre class="pre codeblock">cp /opt/sequoiadb/conf/samples/sdb.conf.coord     /opt/sequoiadb/conf/local/11810/sdb.conf   
 vi /opt/sequoiadb/conf/local/11810/sdb.conf
 修改内容 
-  # database path dbpath=/opt/sequoiadb/database/coord ；
+  # database path dbpath=/opt/sequoiadb/database/coord
   该参数为数据库放置路径，可根据需要修改，请确保路径已经存在（不存在请手工创建） 
 将如下行： 
   # catalog addr(hostname1:servicename1,hostname2:servicename2,...) 
   # catalogaddr= 
 修改 
   # catalog addr(hostname1:servicename1,hostname2:servicename2,...)
-  catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803 ；
-  该参数为Catalog服务地址和端口；</pre>
+  catalogaddr=sdbserver1:11803,sdbserver2:11803,sdbserver3:11803
+  该参数为Catalog服务地址和端口</pre>
 </div>
 
     <p class="p">4.按:wq，保存退出vi； </p>
 
     <p class="p">5.创建数据文件存放路径； </p>
 
-    <pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord ；</pre>
+    <pre class="pre codeblock">mkdir -p /opt/sequoiadb/database/coord</pre>
 
     <p class="p">路径为上一步骤配置的路径 </p>
 
     <p class="p">6.启动协调节点进程； </p>
 
-    <div class="p"><pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/ </pre>
+    <div class="p"><pre class="pre codeblock">/opt/sequoiadb/bin/sdbstart -c /opt/sequoiadb/conf/local/11810/</pre>
 </div>
 
   </div>

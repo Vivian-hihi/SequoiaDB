@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="使用shell的窍门"/>
-<meta name="description" content="sequoiadb shell本身内置了帮助文档，通过help命令可以查看。 &gt; help function () { println(&#34; var db = new Sdb('localhost', 11810) connect to database&#34;); println(&#34; db.help() help on db methods&#34;); println(&#34; db.cs.help() help ..."/>
+<meta name="description" content="SequoiaDB shell本身内置了帮助文档，通过help命令可以查看。 &gt; help function () { println(&#34; var db = new Sdb('localhost', 11810) connect to database&#34;); println(&#34; db.help() help on db methods&#34;); println(&#34; db.cs.help() help ..."/>
 <meta name="DC.Relation" scheme="URI" content="../../../developement/console/topics/console.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="developement_console_knack"/>
@@ -36,7 +36,7 @@
   <h1 class="title topictitle1">使用shell的窍门</h1>
 
   <div class="body">
-    <div class="p">sequoiadb shell本身内置了帮助文档，通过help命令可以查看。
+    <div class="p">SequoiaDB shell本身内置了帮助文档，通过help命令可以查看。
             <pre class="pre codeblock">&gt; help
 function () {
     println("   var db = new Sdb('localhost', 11810)   connect to database");
@@ -47,7 +47,7 @@ function () {
     println("   db.cs.cl.find()                        list all records");
     println("   db.cs.cl.find({a:1})                   list records where a=1");
     println("   print(x), println(x)                   print out x");
-    println("   getErr(ret)                        print error description for r                                                                                                                     eturn code");
+    println("   getErr(ret)                            print error description for r                                                                                                                     eturn code");
     println("   quit                                   exit");
     }</pre>
 </div>
@@ -67,13 +67,13 @@ function () {
 </div>
 </li>
 
-      <li class="li">Cursor Help<p class="p">在shell命令中，当使用<a class="xref" href="../../../references/methods/topics/find.html">find()</a>方法执行数据库读操作时，可是使用各种游标方法和javascript方法来处理find()方法返回的结果集。</p>
+      <li class="li">Cursor Help<p class="p">在shell命令中，当使用<a class="xref" href="../../../references/methods/topics/find.html">find()</a>方法执行数据库读操作时，可是使用各种游标方法和JavaScript方法来处理find()方法返回的结果集。</p>
 <div class="p">查看游标处理方法帮助使用命令：<pre class="pre codeblock">db.&lt;collectionspace&gt;.&lt;collection&gt;.find().help()</pre>
 </div>
 </li>
 
     <li class="li">Methods Help
-        <p class="p">此外还有一个了解函数功能的技巧，就是在输入的时候不要输入括号，这样就会显示该函数的javascript源代码。如：</p>
+        <p class="p">此外还有一个了解函数功能的技巧，就是在输入的时候不要输入括号，这样就会显示该函数的JavaScript源代码。如：</p>
 <pre class="pre codeblock">&gt; db.foo.bar.find
 function (query, select) {
     return new SdbQuery(this, query, select);
@@ -81,11 +81,8 @@ function (query, select) {
 </li>
 
     </ul>
-
     
-    
-    
-      <p class="p">查看shell提供的所有自动生成的javascript函数API文档，可访问<a class="xref" href="https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources">https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources</a></p>
+      <p class="p">查看shell提供的所有自动生成的JavaScript函数API文档，可访问<a class="xref" href="https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources">https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources</a></p>
 
   </div>
 

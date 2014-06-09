@@ -70,8 +70,8 @@
 192.168.1.11 vmsvr2-suse-x64</codeblock>
             按:wq保存退出； </p><p>5.执行如下命令，检查主机配置是否生效：
             <codeblock>ping vmsvr1-suse-x64   //检查是否ping通；
-ping vmsvr2-suse-x64   //检查是否ping 通；</codeblock></p><p>6.配置系统内核参数：</p><p>打开/etc/profile文件，在该文件末尾增加如下行：</p><p><codeblock>ulimit -Sf unlimited  //文件大小限制 
-ulimit -St unlimited  //CPU时间限制 
+ping vmsvr2-suse-x64   //检查是否ping通；</codeblock></p><p>6.配置系统内核参数：</p><p>打开/etc/profile文件，在该文件末尾增加如下行：</p><p><codeblock>ulimit -Sf unlimited  //文件大小限制 
+ulimit -St unlimited  //CPU 时间限制 
 ulimit -Sv unlimited  //虚拟内存限制 
 ulimit -Sn 64000      //文件个数限制 
 ulimit -Sm unlimited  //内存大小限制 
