@@ -39,9 +39,9 @@
     <p class="p">BSON是JSON的二进制表现形式，通过记录每个对象，元素，以及嵌套元素和数组的类型以及长度，能够高速有效地进行某个元素的查找。因此，在C和C++中使用BSON官方提供的BSON接口进行数据存储。<a class="xref" href="../../../../bson/html/index.html">更多参考C BSON在线API</a>。</p>
 
     <p class="p">与普通的JSON不同，BSON提供更多的数据类型，以满足C/C++语言多种多样的需求。SequoiaDB提供了包括8字节浮点数（DOUBLE），字符串，嵌套对象，嵌套数组，对象ID（数据库中每个集合中每条记录都有一个唯一ID），布尔值，日期，NULL，正则表达式，4字节整数（INT），时间戳，以及8字节整数等数据类型。
-      这些类型的定义可以在bson.h中的bson_type找到。注意：使用C BSON API函数在建立bson出错时，将返回错误码，应当适当检测函数返回值。详情请查看C BSON API。</p>
+      这些类型的定义可以在bson.h中的bson_type找到。注意：使用C BSON API函数在建立BSON出错时，将返回错误码，应当适当检测函数返回值。详情请查看C BSON API。</p>
 
-    <p class="p">在用户程序使用bson对象时，主要分为建立对象和读取对象两个操作。</p>
+    <p class="p">在用户程序使用BSON对象时，主要分为建立对象和读取对象两个操作。</p>
 
     <div class="section"><h2 class="title sectiontitle"> 建立对象 </h2>
     <p class="p">总的来说，一个BSON对象的创建主要分为三大步操作：</p>
@@ -51,7 +51,7 @@
 <p class="p"> 3）清除对象（bson_dispose ; bson_destory）</p>
 
       <ul class="ul">
-        <li class="li"><div class="p">创建一个简单的bson对象{age:20}。<pre class="pre codeblock">INT32 rc = SDB_OK;
+        <li class="li"><div class="p">创建一个简单的BSON对象{age:20}。<pre class="pre codeblock">INT32 rc = SDB_OK;
 bson obj;
 bson_init(&amp;obj);
 bson_appent_int(obj,"age",20);

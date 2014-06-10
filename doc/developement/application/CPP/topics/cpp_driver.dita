@@ -130,8 +130,7 @@ sdbReplicaGroup rg  ;
 map&lt;string,string> config ;
 …
 // 先建立一个编目分区组
-connection.createCataReplicaGroup ( HOST_NAME, SERVICE_NAME,
-                          CATALOG_GROUP_PATH , NULL ) ;
+connection.createCataReplicaGroup ( HOST_NAME, SERVICE_NAME, CATALOG_GROUP_PATH , NULL ) ;
 // 睡眠5秒等待编目分区组启动并且选举好主从节点
 sleep( 5 ) ;
 // 创建数据分区组

@@ -11,7 +11,7 @@
         <li>返回节点名称为node的信息
           <codeblock>> node.getNodeDetail()
 返回：1000:vmsvr2-suse-x64:11800(group)
-其中“1000”为节点ID（NodeID）；“vmsvr2-suse-x64”为主机名（HostName）；“11800”为服务器名（ServiceName），“（group）”为节点所在的分区组名。</codeblock></li>
+其中"1000"为节点ID（NodeID）；"vmsvr2-suse-x64"为主机名（HostName）；"11800"为服务器名（ServiceName），"（group）"为节点所在的分区组名。</codeblock></li>
       </ul>
     </section>
   </body>

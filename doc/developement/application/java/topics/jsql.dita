@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="application_java_sql">
-  <title>SQL to sequoiadb shell to Java</title>
+  <title>SQL to SequoiaDB shell to Java</title>
   <body>
-    <p>Sequoiadb的查询用json（bson）对象表示，下表以例子的形式显示了sql语句、sequoiadb shell语句和sequoiadb java驱动程序语法之间的对照。</p>
+    <p>SequoiaDB的查询用json（bson）对象表示，下表以例子的形式显示了SQL语句、SequoiaDB shell语句和SequoiaDB Java驱动程序语法之间的对照。</p>
    <simpletable>
      <sthead>
        <stentry>SQL</stentry>
-       <stentry>sequoiadb shell</stentry>
-       <stentry>java Driver</stentry>
+       <stentry>SequoiaDB shell</stentry>
+       <stentry>Java Driver</stentry>
      </sthead>
      <strow>
        <stentry>insert into students(a,b) values(1,-1)   </stentry>

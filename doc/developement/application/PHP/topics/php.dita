@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="topic_sv3_wbs_zj">
-  <title>PHP驱动</title>
+  <title>PHP 驱动</title>
   <body>
     <p>本节介绍PHP的相关驱动信息。 </p>
     <p><xref href="php_start.dita">PHP 驱动</xref>
@@ -14,7 +14,7 @@
       <p><xref href="phpbuilt.dita">数据库编译及PHP插件</xref>
       </p>
     -->
-    <p><xref href="phpsql.dita">SQL to sequoiadb shell to PHP</xref></p>
+    <p><xref href="phpsql.dita">SQL to SequoiaDB shell to PHP</xref></p>
     <p><xref href="..\..\..\..\php\html\index.html" format="html">PHP API</xref></p>
   </body>
 </topic>

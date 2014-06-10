@@ -109,7 +109,7 @@
         </stentry>
         <stentry>
           对表table中的记录按首先按product_type_id字段分组，再按product_id字段分组；
-          <p>求每个分组中字段price值的累加和，并重命名为total；</p>
+          <p>求每个分组中字段price值的累加和，并重命名为total。</p>
         </stentry>
       </strow>
       <strow>
@@ -165,7 +165,7 @@
           <p>&nbsp;{$group:{_id:null}},</p>
           <p>&nbsp;{$limit:10})</p>
         </stentry>
-        <stentry>返回结果集中的前十条记录</stentry>
+        <stentry>返回结果集中的前10条记录。</stentry>
       </strow>
       <strow>
         <stentry>select * from table offset 50 rows <p>fetch next 10</p></stentry>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topic PUBLIC "-//OASIS//DTD DITA Topic//EN" "topic.dtd">
 <topic id="application_cpp_sql">
-  <title>SQL to sequoiadb shell to C++</title>
+  <title>SQL to SequoiaDB shell to C++</title>
   <body>
-    <p>Sequoiadb的查询用json（bson）对象表示，下表以例子的形式显示了sql语句、sequoiadb shell语句和sequoiadb C++驱动程序语法之间的对照。</p>
+    <p>SequoiaDB的查询用json（bson）对象表示，下表以例子的形式显示了SQL语句、SequoiaDB shell语句和SequoiaDB C++驱动程序语法之间的对照。</p>
     <simpletable >
       <sthead>
         <stentry>SQL</stentry>
-        <stentry>sequoiadb shell</stentry>
+        <stentry>SequoiaDB shell</stentry>
         <stentry>C++ Driver</stentry>
       </sthead>
       <strow>

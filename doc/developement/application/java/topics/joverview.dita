@@ -14,7 +14,7 @@
         <li><p>数据库操作实例</p><p>SequoiaDB数据库中的数据存放分为三个级别：</p><p>&nbsp;1）数据库</p><p>&nbsp;2）集合空间</p><p>&nbsp;3）集合</p>
         <p>因此，在数据库操作中，可用3个类来分别表示连接、集合空间、集合实例，另1个类表示游标实例：</p><simpletable>
           <strow>
-            <stentry>Sequoiadb </stentry>
+            <stentry>SequoiaDB </stentry>
             <stentry>数据库实例 </stentry>
             <stentry>代表一个单独的数据库连接 </stentry>
           </strow>
