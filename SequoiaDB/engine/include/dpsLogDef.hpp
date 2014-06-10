@@ -15,9 +15,9 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program. If not, see <http://www.gnu.org/license/>.
 
-   Source File Name = ossTypes.hpp
+   Source File Name = dpsLogDef.hpp 
 
-   Descriptive Name = Operating System Services Types Header
+   Descriptive Name =
 
    When/how to use: this program may be used on binary and text-formatted
    versions of OSS component. This file contains declare for data types used in
