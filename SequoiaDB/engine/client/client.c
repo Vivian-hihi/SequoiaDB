@@ -2835,7 +2835,7 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
          {
             goto error ;
          }
-         sdbGetNodeAddr ( *interhandle, &hostName,
+         sdbGetNodeAddr ( interhandle, &hostName,
                           &serviceName, &nodeName,
                           &nodeID ) ;
    
