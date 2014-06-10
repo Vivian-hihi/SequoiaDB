@@ -118,6 +118,12 @@ do                                 \
    }                               \
 }while( FALSE )   
 
+#define SET_INVALID_HANDLE( handle ) \
+if ( handle )                        \
+{                                    \
+   *handle = SDB_INVALID_HANDLE ;    \
+}
+
 
 static BOOLEAN _sdbIsSrand = FALSE ;
 
@@ -863,7 +869,7 @@ error :
    {
       SDB_OSS_FREE ( r ) ;
    }
-   *handle = SDB_INVALID_HANDLE ;
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 static INT32 _sdbGetList ( sdbConnectionHandle cHandle,
@@ -937,7 +943,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   *handle = SDB_INVALID_HANDLE ;
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1049,7 +1055,7 @@ error:
    {
       SDB_OSS_FREE ( r ) ;
    }
-   *handle = SDB_INVALID_HANDLE;
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1163,11 +1169,7 @@ error:
       sdbDisconnect( (sdbConnectionHandle)connection );
       sdbReleaseCollection( (sdbConnectionHandle)connection );
    }
-
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1251,6 +1253,7 @@ SDB_EXPORT void sdbDisconnect ( sdbConnectionHandle handle )
    clientDisconnect ( connection->_sock ) ;
    connection->_sock = -1 ;
 done :
+   return ;
 error :
    goto done ;
 }
@@ -1322,11 +1325,7 @@ error:
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1403,10 +1402,7 @@ error:
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1489,11 +1485,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1665,10 +1657,7 @@ SDB_EXPORT INT32 sdbGetList ( sdbConnectionHandle cHandle,
 done :
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1729,10 +1718,7 @@ error :
    {
       SDB_OSS_FREE ( s ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1792,10 +1778,7 @@ error :
    {
       SDB_OSS_FREE ( s ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1832,10 +1815,7 @@ done :
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -1871,10 +1851,7 @@ done :
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -2262,10 +2239,7 @@ error:
    {
       SDB_OSS_FREE( s ) ;  
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
  
@@ -2391,12 +2365,7 @@ error :
    {
       SDB_OSS_FREE ( r ) ;
    }
-
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
-   
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -2617,10 +2586,7 @@ done :
    BSON_DESTROY( result ) ;
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -2764,10 +2730,7 @@ done :
    BSON_DESTROY( result ) ;
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -2815,10 +2778,7 @@ done :
    }
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -2901,10 +2861,7 @@ done :
    BSON_DESTROY( result ) ;
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -3203,10 +3160,7 @@ error:
       SDB_OSS_FREE ( cursor ) ;
    }
 
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -3271,10 +3225,7 @@ error :
    {
       SDB_OSS_FREE ( s ) ; 
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -3347,7 +3298,7 @@ error :
    {
        SDB_OSS_FREE ( s ) ;
    }
-   *handle = SDB_INVALID_HANDLE ;
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -4008,10 +3959,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -4509,10 +4457,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 /*
@@ -5383,10 +5328,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -5871,10 +5813,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -6139,10 +6078,7 @@ error :
    {
       SDB_OSS_FREE ( cursor ) ;
    }
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -6555,10 +6491,7 @@ done :
    BSON_DESTROY( newObj ) ;
    return rc ;
 error :
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -6663,11 +6596,8 @@ error :
    {
       SDB_OSS_FREE( s );
    }
-       
-   if ( handle )
-   {
-      *handle = SDB_INVALID_HANDLE ;;
-   }
+
+   SET_INVALID_HANDLE( handle ) ;
    goto done ;
 }
 
@@ -6755,10 +6685,7 @@ done:
    BSON_DESTROY( selector );
    return rc ;
 error:
-   if ( cursor )
-   {
-      *cursor = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( cursor ) ;
    goto done ;
 }
 
@@ -6797,10 +6724,7 @@ done:
    BSON_DESTROY( selector );
    return rc ;
 error:
-   if ( cursor )
-   {
-      *cursor = SDB_INVALID_HANDLE ;
-   }
+   SET_INVALID_HANDLE( cursor ) ;
    goto done ;
 }
 
