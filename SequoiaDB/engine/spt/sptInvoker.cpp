@@ -204,10 +204,9 @@ namespace engine
          JS_SetPendingException( cx , INT_TO_JSVAL( rc ) ) ;
       }
 
-      if ( !detail.isEmpty() )
-      {
-         setErrmsg( detail.toString().c_str() ) ;
-      }
+      /// clear the last errmsg when it is empty.
+      setErrmsg( detail.isEmpty() ?
+                 "" : detail.toString().c_str() ) ;
 
       return ;
    }

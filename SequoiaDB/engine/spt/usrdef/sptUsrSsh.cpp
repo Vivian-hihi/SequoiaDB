@@ -251,9 +251,9 @@ JS_MAPPING_END()
       string sig ;
       
       rc = arg.getString( 0, cmd ) ;
-      if ( SDB_OK != rc && SDB_OUT_OF_BOUND != rc )
+      if ( SDB_OK != rc )
       {
-         PD_LOG( PDERROR, "failed to get host from cmd" ) ;
+         PD_LOG( PDERROR, "exec should have one argument at least" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

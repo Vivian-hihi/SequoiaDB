@@ -41,11 +41,6 @@ function println ( val ) {
       print ( val ) ;
    print ( '\n' ) ;
 }
-// val is ms
-function sleep ( val ) {
-   var t1 = Date.now() ;
-   while (true) if( Date.now()-t1>val ) break;
-}
 // return a double number between 0 and 1
 function rand () {
    return Math.random() ;

@@ -12,6 +12,26 @@ sptFiles = [
       "spt/sptParseTroff.cpp"
       ]
 
+spt2Files = [
+      "spt/sptContainer.cpp",
+      "spt/sptInvoker.cpp",
+      "spt/sptReturnVal.cpp",
+      "spt/sptScope.cpp",
+      "spt/sptSPArguments.cpp",
+      "spt/sptSPScope.cpp",
+      "spt/sptUtil.cpp",
+      "spt/sptConvertor2.cpp",
+      "spt/sptBsonobj.cpp",
+      "spt/sptLibssh2Session.cpp",
+      "spt/sptSshSession.cpp",
+      "spt/usrdef/sptUsrSsh.cpp",
+      "spt/sptProperty.cpp",
+      "spt/sptGlobalFunc.cpp",
+      "spt/sptCmdRunner.cpp",
+      "spt/usrdef/sptUsrCmd.cpp",
+      "spt/usrdef/sptUsrFile.cpp"
+      ]
+
 ossFiles = [
       "oss/oss.cpp",
       "oss/ossErr.cpp",
@@ -24,7 +44,9 @@ ossFiles = [
       "oss/ossNPipe.cpp",
       "oss/ossPath.cpp",
       "oss/ossVer.cpp",
-      "oss/ossMem.cpp"
+      "oss/ossMem.cpp",
+      "oss/ossIO.cpp",
+      "oss/ossSocket.cpp"
       ]
 
 shellMain = [
@@ -59,6 +81,16 @@ utilFiles = [
       "client/jstobs.c",
       "bson/md5.c"
       ]
+
+util2Files = [
+     "util/util2Bsonobj.cpp",
+     "bson/bsonobj.cpp",
+     "bson/oid.cpp",
+     "bson/base64.cpp",
+     "bson/nonce.cpp",
+     "bson/md5.c",
+     "util/utilBsongen.cpp"
+]
 
 clientCFiles = [
       "client/client.c",
@@ -115,6 +147,31 @@ mdocmlFiles = [
       "mdocml/common.c"
 ]
 
+ssh2Files = [
+      "ssh2/agent.c",
+      "ssh2/channel.c",
+      "ssh2/comp.c",
+      "ssh2/crypt.c",
+      "ssh2/global.c",
+      "ssh2/hostkey.c",
+      "ssh2/keepalive.c",
+      "ssh2/kex.c",
+      "ssh2/knownhost.c",
+      "ssh2/libgcrypt.c",
+      "ssh2/mac.c",
+      "ssh2/misc.c",
+      "ssh2/openssl.c",
+      "ssh2/packet.c",
+      "ssh2/pem.c",
+      "ssh2/publickey.c",
+      "ssh2/scp.c",
+      "ssh2/session.c",
+      "ssh2/sftp.c",
+      "ssh2/transport.c",
+      "ssh2/userauth.c",
+      "ssh2/version.c"
+      ]
+
 #Client Driver
 shellEnv.StaticLibrary('clientc', clientCFiles)
 #Operating System Services
@@ -123,21 +180,24 @@ shellEnv.StaticLibrary('oss', ossFiles)
 shellEnv.StaticLibrary('pd', pdFiles)
 #Scripting
 shellEnv.StaticLibrary('spt', sptFiles)
+shellEnv.StaticLibrary('spt2', spt2Files)
+shellEnv.StaticLibrary('ssh2', ssh2Files)
 #Utilities
 shellEnv.StaticLibrary('util', utilFiles)
+shellEnv.StaticLibrary('util2', util2Files)
 #Mdocml
 shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "spt2", "ssh2", "util2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
 
 #Shell Backend  Executable
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "spt2", "ssh2", "util2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdbbp )

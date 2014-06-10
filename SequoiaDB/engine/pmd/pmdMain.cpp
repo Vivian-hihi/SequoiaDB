@@ -141,8 +141,6 @@ namespace engine
       INT32      rc       = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_PMDMSTTHRDMAIN );
       pmdKRCB   *krcb     = pmdGetKRCB () ;
-      pmdEDUMgr *eduMgr   = krcb->getEDUMgr () ;
-      EDUID      agentEDU = PMD_INVALID_EDUID ;
       UINT32     startTimerCount = 0 ;
 
       // 1. read command line first
