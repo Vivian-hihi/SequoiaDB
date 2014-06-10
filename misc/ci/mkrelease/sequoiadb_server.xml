@@ -121,15 +121,6 @@
     </readyToInstallActionList>
     <postInstallationActionList>
         <createSymLink>
-            <linkName>${installdir}/www/doc</linkName>
-            <target>${installdir}/doc</target>
-        </createSymLink>
-        <changeOwnerAndGroup>
-            <files>${installdir}/www/doc</files>
-            <group>${username}_group</group>
-            <owner>${username}</owner>
-        </changeOwnerAndGroup>
-        <createSymLink>
             <linkName>${installdir}/tools/server/php/libxml2/lib/libxml2.so</linkName>
             <target>${installdir}/tools/server/php/libxml2/lib/libxml2.so.2.9.0</target>
         </createSymLink>
@@ -204,12 +195,6 @@
             <serviceName>sdbcm</serviceName>
             <startType>auto</startType>
         </createWindowsService>
-        <addUnixService>
-            <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
-            <description>SequoiaDB Cluster Manager</description>
-            <name>sdbcm</name>
-            <program>${installdir}/sequoiadb</program>
-        </addUnixService>
         <startWindowsService>
             <customErrorMessage>${msg(Install.ErrorMsg.StartWindowsService.error)}</customErrorMessage>
             <delay>15000</delay>
@@ -222,8 +207,74 @@
                 </windowsServiceTest>
             </ruleList>
         </startWindowsService>
+        <actionGroup>
+            <explanation>start_cm</explanation>
+            <progressText>start_cm</progressText>
+            <actionList>
+                <addUnixService>
+                    <customErrorMessage>${msg(Install.ErrorMsg.CreateLinuxService.error)}</customErrorMessage>
+                    <description>SequoiaDB Cluster Manager</description>
+                    <name>sdbcm</name>
+                    <program>${installdir}/sequoiadb</program>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                    </ruleList>
+                </addUnixService>
+                <runProgram>
+                    <program>mv</program>
+                    <programArguments> ${installdir}/sequoiadb /etc/init.d/sdbcm</programArguments>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                    </ruleList>
+                </runProgram>
+                <changePermissions>
+                    <files>/etc/init.d/sdbcm</files>
+                    <permissions>0755</permissions>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                        <fileExists>
+                            <path>/etc/init.d/sdbcm</path>
+                        </fileExists>
+                    </ruleList>
+                </changePermissions>
+            </actionList>
+            <ruleList>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+            </ruleList>
+        </actionGroup>
         <runProgram>
-            <abortOnError>0</abortOnError>
             <program>/etc/init.d/sdbcm</program>
             <programArguments>start</programArguments>
             <ruleList>
@@ -261,9 +312,52 @@
                 </platformTest>
             </ruleList>
         </runProgram>
-        <removeUnixService>
-            <name>sdbcm</name>
-        </removeUnixService>
+        <actionGroup>
+            <explanation>Delete Sdbcm Manager</explanation>
+            <progressText>Delete Sdbcm Manager</progressText>
+            <actionList>
+                <removeUnixService>
+                    <name>sdbcm</name>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                    </ruleList>
+                </removeUnixService>
+                <deleteFile>
+                    <path>/etc/init.d/sdbcm</path>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <fileExists>
+                            <path>/etc/init.d/sdbcm</path>
+                        </fileExists>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                    </ruleList>
+                </deleteFile>
+            </actionList>
+            <ruleList>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+            </ruleList>
+        </actionGroup>
         <runProgram>
             <program>${installdir}/bin/sdbstop</program>
             <programArguments></programArguments>
@@ -290,6 +384,13 @@
             <customErrorMessage>${msg(Install.ErrorMsg.DeleteUser.error)}</customErrorMessage>
             <showMessageOnError>1</showMessageOnError>
             <username>${username}</username>
+            <ruleList>
+                <userTest>
+                    <logic>exists</logic>
+                    <password>${username}</password>
+                    <username>${username}</username>
+                </userTest>
+            </ruleList>
         </deleteUser>
         <deleteGroup>
             <groupname>${username}_group</groupname>
@@ -318,9 +419,52 @@
                 </windowsServiceTest>
             </ruleList>
         </deleteWindowsService>
-        <removeUnixService>
-            <name>sdbcm</name>
-        </removeUnixService>
+        <actionGroup>
+            <explanation>Delete Sdbcm Manager</explanation>
+            <progressText>Delete Sdbcm Manager</progressText>
+            <actionList>
+                <removeUnixService>
+                    <name>sdbcm</name>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <compareValues>
+                            <logic>equals</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                    </ruleList>
+                </removeUnixService>
+                <deleteFile>
+                    <path>/etc/init.d/sdbcm</path>
+                    <ruleEvaluationLogic>or</ruleEvaluationLogic>
+                    <ruleList>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>y</value2>
+                        </compareValues>
+                        <compareValues>
+                            <logic>does_not_equal</logic>
+                            <value1>${cmstart}</value1>
+                            <value2>Y</value2>
+                        </compareValues>
+                        <fileExists>
+                            <path>/etc/init.d/sdbcm</path>
+                        </fileExists>
+                    </ruleList>
+                </deleteFile>
+            </actionList>
+            <ruleList>
+                <platformTest>
+                    <type>linux</type>
+                </platformTest>
+            </ruleList>
+        </actionGroup>
         <deleteFile>
             <abortOnError>0</abortOnError>
             <path>/etc/default/sequoiadb</path>
@@ -335,6 +479,13 @@
         </deleteFile>
         <deleteUser>
             <username>${username}</username>
+            <ruleList>
+                <userTest>
+                    <logic>exists</logic>
+                    <password>${username}</password>
+                    <username>${username}</username>
+                </userTest>
+            </ruleList>
         </deleteUser>
         <deleteGroup>
             <groupname>${username}_group</groupname>
@@ -422,6 +573,16 @@
             <value>11790</value>
             <default>11790</default>
             <allowEmptyValue>1</allowEmptyValue>
+            <width>40</width>
+        </stringParameter>
+        <stringParameter>
+            <name>cmstart</name>
+            <description>${msg(Install.Paramers.cmstart.Description)}</description>
+            <explanation>${msg(Install.Paramers.cmstart.explanation)}</explanation>
+            <value>Y</value>
+            <default>Y</default>
+            <allowEmptyValue>1</allowEmptyValue>
+            <cliOptionText>${msg(Install.Paramers.cmstart.explanation)}</cliOptionText>
             <width>40</width>
         </stringParameter>
     </parameterList>

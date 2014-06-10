@@ -7,6 +7,8 @@ Install.Paramers.user.password.error=The password must not be empty
 Install.Paramers.port.title=SDBCM Port
 Install.Paramers.port.Description=Port
 Install.Paramers.port.explanation=SequoiaDB Cluster Manager port
+Install.Paramers.cmstart.explanation=Do You Want To Start SDBCM When Machine Restart
+Install.Paramers.cmstart.Description=Start SDBCM
 
 Install.ErrorMsg.CreateGroup.error=Warning:Group name is exist already, skip create group action
 Install.ErrorMsg.CreateUser.error=Warning:User name is exist already, skip create group action

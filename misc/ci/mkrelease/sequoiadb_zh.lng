@@ -7,6 +7,8 @@ Install.Paramers.user.password.error=密码不能为空
 Install.Paramers.port.title=集群管理服务端口配置
 Install.Paramers.port.Description=端口
 Install.Paramers.port.explanation=配置SequoiaDB集群管理服务端口,集群管理用于远程启动添加和启停数据库节点
+Install.Paramers.cmstart.explanation=是否设置机器自启动SDBCM集群管理服务
+Install.Paramers.cmstart.Description=自启动SDBCM
 
 Install.ErrorMsg.CreateGroup.error=警告:用户组已经存在,跳过创建用户组操作
 Install.ErrorMsg.CreateUser.error=警告:用户已经存在,跳过创建用户操作
