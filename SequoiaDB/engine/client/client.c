@@ -2824,11 +2824,11 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
       const CHAR *groupList = bson_iterator_value ( &it ) ;
       bson_iterator i ;
       bson_iterator_from_buffer ( &i, groupList ) ;
-      sdbNodeHandle *interhandle = NULL;
+      sdbNodeHandle interhandle;
       // loop for all elements in Group
       while ( BSON_EOO != bson_iterator_next ( &i ) )
       {
-         rc = _sdbShardExtractNode ( cHandle, interhandle,
+         rc = _sdbShardExtractNode ( cHandle, &interhandle,
                                      (CHAR*)bson_iterator_value ( &i ),
                                      r->_endianConvert ) ;
          if ( SDB_OK != rc )
@@ -2844,11 +2844,11 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
          {
             break ;
          }
-         sdbReleaseNode ( *interhandle ) ;
-         *interhandle = SDB_INVALID_HANDLE ;
+         sdbReleaseNode ( interhandle ) ;
+         interhandle = SDB_INVALID_HANDLE ;
       }
 
-      handle = interhandle ;
+      *handle = interhandle ;
    }
    
    if ( SDB_INVALID_HANDLE == *handle )
