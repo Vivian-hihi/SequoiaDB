@@ -557,7 +557,7 @@ namespace engine
                   BAR_BACKUP_HOSTNAME_LEN - 1 ) ;
       ossStrncpy( _metaHeader._svcName, pmdGetOptionCB()->getServiceAddr(),
                   BAR_BACKUP_SVCNAME_LEN - 1 ) ;
-      _metaHeader._nodeID              = _pClsCB->getNodeID().value ;
+      _metaHeader._nodeID              = pmdGetNodeID().value ;
       if ( backupDesp )
       {
          _metaHeader.setDesp( backupDesp ) ;
