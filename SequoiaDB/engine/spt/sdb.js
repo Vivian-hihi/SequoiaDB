@@ -46,6 +46,11 @@ function rand () {
    return Math.random() ;
 }
 
+function sleep ( val ) {
+   var t1 = Date.now() ;
+   while (true) if( Date.now()-t1>val ) break;
+}
+
 function test() {
    return man("attachCL") ;
 }
