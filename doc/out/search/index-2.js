@@ -1,4 +1,5 @@
 //Auto generated index for searching.
+w["bson::bsonobjbuilder::appendcodewscope"]="228*1,776*1";
 w["bson::bsonobjbuilder::appenddate"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendintorll"]="228*1,776*1";
 w["bson::bsonobjbuilder::appendnumber"]="228*1,776*1";
@@ -3256,6 +3257,7 @@ w["ring"]="696*1";
 w["rmation"]="16*5";
 w["rmprocedures"]="402*2,416*1,430*3,439*1,440*1,1363*1,1364*1";
 w["rns"]="414*1";
+w["ro"]="1547*1";
 w["role"]="3*2,27*4,59*2,66*3,75*3,533*2,1062*2,1589*2,1603*2";
 w["rollback"]="350*4,402*2,892*4,942*2,1167*1,1168*1,1363*1,1364*1";
 w["rollback."]="350*2,402*2,892*2,942*2";
@@ -3264,7 +3266,6 @@ w["root"]="1567*2,1582*2,1604*4";
 w["roughly"]="264*1,553*1,808*1,1076*1";
 w["roup"]="1232*1,1434*1";
 w["roup::getmaster"]="1232*1,1434*1";
-w["routeid与当前节点的routeid不一致"]="1547*1";
 w["row"]="1284*1,1624*2";
 w["rows"]="1135*4,1285*1,1315*8,1542*1";
 w["rsor"]="550*1,1424*1";
@@ -4423,5 +4424,4 @@ w["sync."]="350*2,402*1";
 w["synchronization"]="350*1,402*1";
 w["synchronized"]="1329*2";
 w["syncstrategy"]="59*2";
-w["syntax"]="614*3,620*4";
 
