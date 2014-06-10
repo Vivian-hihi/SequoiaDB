@@ -3244,7 +3244,7 @@ SDB_EXPORT INT32 sdbCreateCollection1 ( sdbCSHandle cHandle,
    sdbCSStruct *cs                 = (sdbCSStruct*)cHandle ;
    bson_iterator it ;
    CHAR fullCollectionName [ CLIENT_COLLECTION_NAMESZ + CLIENT_CS_NAMESZ + 2 ] = {0};
-   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_CONNECTION ) ;
    if ( !pCollectionName || !handle ||
         ossStrlen ( pCollectionName) > CLIENT_COLLECTION_NAMESZ )
    {
