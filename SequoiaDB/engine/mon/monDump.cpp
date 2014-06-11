@@ -1077,7 +1077,8 @@ namespace engine
    // dump information for all collections
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPALLCOLLECTIONS, "monDumpAllCollections" )
    INT32 monDumpAllCollections( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                BOOLEAN addInfo, BOOLEAN details )
+                                BOOLEAN addInfo, BOOLEAN details,
+                                BOOLEAN includeSys )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
@@ -1085,8 +1086,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_MONDUMPALLCOLLECTIONS ) ;
       std::set<monCollection> collectionList ;
-      dmsCB->dumpInfo ( collectionList,
-                        SDB_ROLE_CATALOG == pmdGetKRCB()->getDBRole() ) ;
+      dmsCB->dumpInfo ( collectionList, includeSys ) ;
       try
       {
          std::set<monCollection>::const_iterator it ;
@@ -1160,7 +1160,8 @@ namespace engine
    // dump information for all collection spaces
    // PD_TRACE_DECLARE_FUNCTION ( SDB_MONDUMPALLCOLLECTIONSPACES, "monDumpAllCollectionSpaces" )
    INT32 monDumpAllCollectionSpaces ( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                      BOOLEAN addInfo, BOOLEAN details )
+                                      BOOLEAN addInfo, BOOLEAN details,
+                                      BOOLEAN includeSys )
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
@@ -1168,8 +1169,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_MONDUMPALLCOLLECTIONSPACES ) ;
       std::set<monCollectionSpace> csList ;
-      dmsCB->dumpInfo ( csList,
-                        SDB_ROLE_CATALOG == pmdGetKRCB()->getDBRole() ) ;
+      dmsCB->dumpInfo ( csList, includeSys ) ;
       try
       {
          std::set<monCollectionSpace>::const_iterator it ;
