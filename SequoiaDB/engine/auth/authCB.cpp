@@ -81,7 +81,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_AUTHENTICATE, "_authCB::authenticate" )
-   INT32 _authCB::authenticate( const BSONObj &obj, _pmdEDUCB *cb )
+   INT32 _authCB::authenticate( BSONObj &obj, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       BSONObj hint ;
@@ -164,7 +164,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
-   INT32 _authCB::createUsr( const BSONObj &obj, _pmdEDUCB *cb )
+   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_CREATEUSR ) ;
@@ -182,7 +182,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_REMOVEUSR, "_authCB::removeUsr" )
-   INT32 _authCB::removeUsr( const BSONObj &obj, _pmdEDUCB *cb )
+   INT32 _authCB::removeUsr( BSONObj &obj, _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_REMOVEUSR ) ;
@@ -324,7 +324,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CREATEUSR, "_authCB::_createUsr" )
-   INT32 _authCB::_createUsr( const BSONObj &obj,
+   INT32 _authCB::_createUsr( BSONObj &obj,
                               _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
@@ -372,7 +372,7 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__VALID, "_authCB::_valid" )
-   INT32 _authCB::_valid( const BSONObj &obj, BOOLEAN notEmpty )
+   INT32 _authCB::_valid( BSONObj &obj, BOOLEAN notEmpty )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB__VALID ) ;
