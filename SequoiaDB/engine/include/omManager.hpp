@@ -81,7 +81,7 @@ namespace engine
 
          restAdaptor*      getRestAdptor() { return &_restAdptor ; }
 
-         INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
+         INT32             authenticate( const BSONObj &obj, _pmdEDUCB *cb ) ;
 
       protected:
 
