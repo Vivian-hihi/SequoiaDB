@@ -247,9 +247,14 @@ function checkFileNull()
 #参数3 用户名   例如 "sdbadmin"
 #参数4 密码     例如 "sequoiadb"
 #参数5 端口     例如 "50010"
+#参数6 开机自动启动 例如 true
 function install()
 {
-   /tmp/$1 --mode unattended --prefix $2 --username $3 --userpasswd $4 --port $5
+	local autostart="true"
+	if [ $6 -eq 0 ]; then
+	   autostart="false"
+   fi
+   /tmp/$1 --mode unattended --prefix $2 --username $3 --userpasswd $4 --port $5 --processAuto ${autostart}
    if [ $? -ne 0 ]; then
       return 1
    else
@@ -667,7 +672,7 @@ function installsdb()
    fi
 
    #安装数据库
-   install "${INSTALL_NAME}" "${host_array[1]}" "${host_array[3]}" "${host_array[4]}" "${SDBCM_PORT}"
+   install "${INSTALL_NAME}" "${host_array[1]}" "${host_array[3]}" "${host_array[4]}" "${SDBCM_PORT}" "${IS_AUTOSTART}"
    if [ $? -ne 0 ]; then
       echo_r "Error" $FUNCNAME $LINENO "${target} Failed to install SequoiaDB"
       return 1

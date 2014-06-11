@@ -1530,11 +1530,19 @@ function f_step_6()
 {
 	var rc = true ;
 	var return_j_o_t = null ;
-	
 	var host_list_obj  = document.getElementById("step_2_tab_table") ;
+	var autostart = 1 ;
+	if ( document.getElementById("step_1_autostart").value == 'true' )
+	{
+		autostart = 1 ;
+	}
+	else
+	{
+		autostart = 0 ;
+	}
 	
 	//用ajax把配置都发送到php,php生成配置文件
-	var order = '{"debug":"' + document.getElementById("step_1_debug").value + '","install":"' + document.getElementById("step_1_path").value + '","sdbcm":"' + document.getElementById("step_1_sdbcm").value + '","group":"' ;
+	var order = '{"debug":"' + document.getElementById("step_1_debug").value + '","install":"' + document.getElementById("step_1_path").value + '","sdbcm":"' + document.getElementById("step_1_sdbcm").value + '","autostart":' + autostart + ',"group":"' ;
 	var group_arr = get_group_list() ;
 	var isfirst = true ;
 	for( key in group_arr )
