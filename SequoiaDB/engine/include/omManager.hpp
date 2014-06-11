@@ -44,9 +44,11 @@
 #include <map>
 
 using namespace std ;
+using namespace bson ;
 
 namespace engine
 {
+   class _pmdEDUCB ;
 
    /*
       _omManager define
@@ -78,6 +80,8 @@ namespace engine
                                            UINT32 localIP ) ;
 
          restAdaptor*      getRestAdptor() { return &_restAdptor ; }
+
+         INT32             authenticate( BSONObj &obj, _pmdEDUCB *cb ) ;
 
       protected:
 
