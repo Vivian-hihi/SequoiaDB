@@ -37,6 +37,7 @@
 #include "rtn.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
+#include "msgAuth.hpp"
 
 using namespace bson ;
 
@@ -598,7 +599,7 @@ namespace engine
       else if ( SDB_ROLE_OM == pmdGetDBRole() )
       {
          BSONObj authObj ;
-         rc = extractAuthMsg( header, authObj ) ;
+         rc = extractAuthMsg( msg, authObj ) ;
          PD_RC_CHECK( rc, PDERROR, "Session[%s] failed to extrace auth msg, "
                       "rc: %d", sessionName(), rc ) ;
          rc = sdbGetOMManager()->authenticate( authObj, eduCB() ) ;
