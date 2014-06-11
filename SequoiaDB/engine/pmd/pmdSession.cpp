@@ -180,7 +180,14 @@ namespace engine
 
    void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
    {
-      _allocMap.erase( pBuff ) ;
+      ALLOC_MAP_IT it = _allocMap.find( pBuff ) ;
+      if ( it == _allocMap.end() )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         return ;
+      }
+      buffLen = it->second ;
+      _allocMap.erase( it ) ;
 
       if ( (UINT32)buffLen > SESSION_MAX_CATCH_SIZE )
       {
