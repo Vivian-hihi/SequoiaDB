@@ -76,11 +76,13 @@ namespace engine
    INT32 monDumpMonDBCB ( rtnContextDump *context, BOOLEAN addInfo ) ;
 
    INT32 monDumpAllCollections ( SDB_DMSCB *dmsCB, rtnContextDump *context,
-                                 BOOLEAN addInfo, BOOLEAN details = FALSE ) ;
+                                 BOOLEAN addInfo, BOOLEAN details = FALSE,
+                                 BOOLEAN includeSys = TRUE ) ;
 
    INT32 monDumpAllCollectionSpaces ( SDB_DMSCB *dmsCB, rtnContextDump *context,
                                       BOOLEAN addInfo,
-                                      BOOLEAN details = FALSE ) ;
+                                      BOOLEAN details = FALSE,
+                                      BOOLEAN includeSys = TRUE ) ;
 
    INT32 monDumpAllStorageUnits ( SDB_DMSCB *dmsCB, rtnContextDump *context ) ;
 
