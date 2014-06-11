@@ -34,6 +34,7 @@
 #include "../bson/lib/md5.hpp"
 #include "authCB.hpp"
 #include "pmdEDU.hpp"
+#include "pmd.hpp"
 
 using namespace bson ;
 
