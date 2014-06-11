@@ -731,7 +731,7 @@ namespace engine
       // release buff context
       _contextBuff.release() ;
 
-      if ( SDB_DMS_EOC != result )
+      if ( result && SDB_DMS_EOC != result )
       {
          PD_LOG( PDWARNING, "Session[%s] process msg[opCode=%d, len: %d, "
                  "TID: %d, requestID: %llu] failed, rc: %d",
