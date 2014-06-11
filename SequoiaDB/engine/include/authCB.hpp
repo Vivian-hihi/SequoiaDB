@@ -64,13 +64,13 @@ namespace engine
 
    public:
 
-      INT32 createUsr( BSONObj &obj,
+      INT32 createUsr( const BSONObj &obj,
                        _pmdEDUCB *cb ) ;
 
-      INT32 removeUsr( BSONObj &obj,
+      INT32 removeUsr( const BSONObj &obj,
                        _pmdEDUCB *cb ) ;
 
-      INT32 authenticate( BSONObj &obj,
+      INT32 authenticate( const BSONObj &obj,
                           _pmdEDUCB *cb ) ;
 
       INT32 checkNeedAuth( _pmdEDUCB *cb, BOOLEAN forcecheck = FALSE ) ;
@@ -82,9 +82,9 @@ namespace engine
 
    private:
       INT32 _initAuthentication( _pmdEDUCB *cb ) ;
-      INT32 _createUsr( BSONObj &obj,
+      INT32 _createUsr( const BSONObj &obj,
                         _pmdEDUCB *cb ) ;
-      INT32 _valid( BSONObj &obj, BOOLEAN notEmpty ) ;
+      INT32 _valid( const BSONObj &obj, BOOLEAN notEmpty ) ;
    private:
       BOOLEAN _needAuth ;
    } ;
