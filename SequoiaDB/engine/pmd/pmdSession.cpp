@@ -180,14 +180,14 @@ namespace engine
 
    void _pmdSession::releaseBuff( CHAR *pBuff, INT32 buffLen )
    {
-      ALLOC_MAP_IT it = _allocMap.find( pBuff ) ;
-      if ( it == _allocMap.end() )
+      ALLOC_MAP_IT itAlloc = _allocMap.find( pBuff ) ;
+      if ( itAlloc == _allocMap.end() )
       {
          SDB_OSS_FREE( pBuff ) ;
          return ;
       }
-      buffLen = it->second ;
-      _allocMap.erase( it ) ;
+      buffLen = itAlloc->second ;
+      _allocMap.erase( itAlloc ) ;
 
       if ( (UINT32)buffLen > SESSION_MAX_CATCH_SIZE )
       {
@@ -217,6 +217,20 @@ namespace engine
       INT32 rc = SDB_OK ;
       CHAR *pOld = *ppBuff ;
       INT32 oldLen = buffLen ;
+
+      ALLOC_MAP_IT itAlloc = _allocMap.find( *ppBuff ) ;
+      if ( itAlloc != _allocMap.end() )
+      {
+         buffLen = itAlloc->second ;
+         oldLen = buffLen ;
+      }
+      else if ( *ppBuff != NULL || buffLen != 0 )
+      {
+         PD_LOG( PDERROR, "Session[%s] realloc input buffer error",
+                 sessionName() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
 
       if ( buffLen >= len )
       {
