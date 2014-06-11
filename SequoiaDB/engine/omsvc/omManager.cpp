@@ -32,6 +32,9 @@
 
 #include "omManager.hpp"
 #include "../bson/lib/md5.hpp"
+#include "authCB.hpp"
+
+using namespace bson ;
 
 namespace engine
 {
@@ -92,6 +95,28 @@ namespace engine
       _mapUser2Sessions.clear() ;
 
       return SDB_OK ;
+   }
+
+   INT32 _omManager::authenticate( BSONObj &obj, pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
+
+      if ( !pAuthCB || !pAuthCB->needAuthenticate() )
+      {
+         goto done ;
+      }
+
+      rc = pAuthCB->authenticate( obj, cb ) ;
+      if ( rc )
+      {
+         goto done ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    CHAR* _omManager::allocFixBuf()
