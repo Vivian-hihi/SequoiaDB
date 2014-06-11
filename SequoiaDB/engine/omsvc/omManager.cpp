@@ -33,6 +33,7 @@
 #include "omManager.hpp"
 #include "../bson/lib/md5.hpp"
 #include "authCB.hpp"
+#include "pmdEDU.hpp"
 
 using namespace bson ;
 
@@ -255,7 +256,7 @@ namespace engine
       // the user already exist
       else
       {
-         vector<restSessionInfo*> &vecSession = it->second ;
+         //vector<restSessionInfo*> &vecSession = it->second ;
          it->second.push_back( pSessionInfo ) ;
       }
    }
