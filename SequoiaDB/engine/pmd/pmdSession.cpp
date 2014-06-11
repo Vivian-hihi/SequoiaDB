@@ -494,7 +494,8 @@ namespace engine
          {
             PD_LOG( PDERROR, "Session[%s] recv msg size[%d] is less than "
                     "MsgHeader size[%d] or more than max msg size[%d]",
-                    msgSize, sizeof(MsgHeader), SDB_MAX_MSG_LENGTH ) ;
+                    sessionName(), msgSize, sizeof(MsgHeader),
+                    SDB_MAX_MSG_LENGTH ) ;
             rc = SDB_INVALIDARG ;
             break ;
          }
