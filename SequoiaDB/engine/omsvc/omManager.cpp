@@ -97,7 +97,7 @@ namespace engine
       return SDB_OK ;
    }
 
-   INT32 _omManager::authenticate( const BSONObj &obj, pmdEDUCB *cb )
+   INT32 _omManager::authenticate( BSONObj &obj, pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
       SDB_AUTHCB *pAuthCB = pmdGetKRCB()->getAuthCB() ;
