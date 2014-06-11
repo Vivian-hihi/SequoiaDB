@@ -102,7 +102,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to init http listener socket, rc: %d",
                    rc ) ;
       rc = _pHttpListener->bind_listen() ;
-      PD_RC_CHECK( rc, PDERROR, "Failed to bin http listerner socket, rc: %d",
+      PD_RC_CHECK( rc, PDERROR, "Failed to bind http listerner socket, rc: %d",
                    rc ) ;
       PD_LOG( PDEVENT, "Http Listerning on port[%d]", port ) ;
 
