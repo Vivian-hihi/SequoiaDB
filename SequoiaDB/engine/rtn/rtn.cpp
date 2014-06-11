@@ -892,6 +892,8 @@ namespace engine
          case SDB_ROLE_STANDALONE :
             spaceNode = CMD_SPACE_NODE_STANDALONE ;
             break ;
+         case SDB_ROLE_OM :
+            spaceNode = CMD_SPACE_NODE_OM ;
          default :
             break ;
       }
