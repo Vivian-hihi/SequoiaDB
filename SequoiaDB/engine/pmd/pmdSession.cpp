@@ -595,6 +595,11 @@ namespace engine
          _authOK = TRUE ;
          goto done ;
       }
+      else if ( SDB_ROLE_OM == pmdGetDBRole() )
+      {
+         _authOK = TRUE ;
+         goto done ;
+      }
       else
       {
          MsgHeader *pAuthRes = NULL ;
