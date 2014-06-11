@@ -792,10 +792,12 @@ namespace engine
          rc = monDumpSessionFromCB ( cb, context, addInfo, TRUE ) ;
          break ;
       case CMD_LIST_COLLECTIONS:
-         rc = monDumpAllCollections ( dmsCB, context, addInfo, FALSE ) ;
+         rc = monDumpAllCollections ( dmsCB, context, addInfo, FALSE,
+                                      cb->isFromLocal() ) ;
          break ;
       case CMD_LIST_COLLECTIONSPACES:
-         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, FALSE ) ;
+         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, FALSE,
+                                           cb->isFromLocal() ) ;
          break ;
       case CMD_LIST_STORAGEUNITS:
          rc = monDumpAllStorageUnits ( dmsCB, context ) ;
@@ -908,7 +910,8 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_COLLECTIONS:
-         rc = monDumpAllCollections ( dmsCB, context, addInfo, TRUE ) ;
+         rc = monDumpAllCollections ( dmsCB, context, addInfo, TRUE,
+                                      cb->isFromLocal() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB, "
@@ -917,7 +920,8 @@ namespace engine
          }
          break ;
       case CMD_SNAPSHOT_COLLECTIONSPACES:
-         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, TRUE ) ;
+         rc = monDumpAllCollectionSpaces ( dmsCB, context, addInfo, TRUE,
+                                           cb->isFromLocal() ) ;
          if ( rc )
          {
             PD_LOG ( PDERROR, "Couldn't dump all collections from dmsCB, "
