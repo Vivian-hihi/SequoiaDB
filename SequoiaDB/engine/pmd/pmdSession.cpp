@@ -597,8 +597,14 @@ namespace engine
       }
       else if ( SDB_ROLE_OM == pmdGetDBRole() )
       {
+         BSONObj authObj ;
+         rc = extractAuthMsg( header, authObj ) ;
+         PD_RC_CHECK( rc, PDERROR, "Session[%s] failed to extrace auth msg, "
+                      "rc: %d", sessionName(), rc ) ;
+         rc = sdbGetOMManager()->authenticate( authObj, eduCB() ) ;
+         PD_RC_CHECK( rc, PDERROR, "Session[%s] failed to authenticate, "
+                      "rc: %d", sessionName(), rc ) ;
          _authOK = TRUE ;
-         goto done ;
       }
       else
       {
