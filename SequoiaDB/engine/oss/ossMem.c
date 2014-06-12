@@ -460,7 +460,7 @@ void ossMemFree1 ( void *p )
       if ( !checkHead )
       {
 #if defined (SDB_ENGINE)
-         PD_LOG ( PDSEVERE, "Invalid memory verified at 0x%p", p ) ;
+         PD_LOG ( PDSEVERE, "Invalid memory verified at %p", p ) ;
 #endif
          ossPanic () ;
       }
