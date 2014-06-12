@@ -1023,5 +1023,68 @@ namespace engine
       return totalSize ;
    }
 
+   INT64 _dmsStorageUnit::totalDataPages() const
+   {
+      INT64 totalDataPages = 0 ;
+      if ( _pDataSu && _pIndexSu )
+      {
+         const dmsStorageUnitHeader *dataHeader = _pDataSu->getHeader() ;
+         const dmsStorageUnitHeader *idxHeader = _pIndexSu->getHeader() ;
+         totalDataPages = dataHeader->_pageNum + idxHeader->_pageNum ;
+      }
+      return totalDataPages ;
+   }
+
+   INT64 _dmsStorageUnit::totalDataSize() const
+   {
+      INT64 totalSize = 0 ;
+      if ( _pDataSu )
+      {
+         totalSize = totalDataPages() << _pDataSu->pageSizeSquareRoot() ;
+      }
+      return totalSize ;
+   }
+
+   INT32 _dmsStorageUnit::totalFreePages () const
+   {
+      INT32 freePages = 0 ;
+      if ( _pDataSu && _pIndexSu )
+      {
+         freePages = (INT32)_pDataSu->freePageNum() +
+                     (INT32)_pIndexSu->freePageNum() ;
+      }
+      return freePages ;
+   }
+
+   void _dmsStorageUnit::getStatInfo( dmsStorageUnitStat & statInfo )
+   {
+      ossMemset( &statInfo, 0, sizeof( dmsStorageUnitStat ) ) ;
+
+      dmsMB *mb = NULL ;
+      dmsMBStatInfo *mbStat = NULL ;
+
+      // lock meta
+      _pDataSu->_metadataLatch.get_shared() ;
+
+      dmsStorageData::COLNAME_MAP_IT it = _pDataSu->_collectionNameMap.begin() ;
+      while ( it != _pDataSu->_collectionNameMap.end() )
+      {
+         mb = &_pDataSu->_dmsMME->_mbList[it->second] ;
+         mbStat = &_pDataSu->_mbStatInfo[it->second] ;
+
+         ++statInfo._clNum ;
+         statInfo._totalCount += mbStat->_totalRecords ;
+         statInfo._totalDataPages += mbStat->_totalDataPages ;
+         statInfo._totalIndexPages += mbStat->_totalIndexPages ;
+         statInfo._totalDataFreeSpace += mbStat->_totalDataFreeSpace ;
+         statInfo._totalIndexFreeSpace += mbStat->_totalIndexFreeSpace ;
+
+         ++it ;
+      }
+
+      // release meta
+      _pDataSu->_metadataLatch.release_shared() ;
+   }
+
 }  // namespace engine
 

@@ -1152,10 +1152,20 @@ namespace engine
             continue ;
          }
          monCollectionSpace cs ;
+         dmsStorageUnitStat statInfo ;
+
+         // get stat info
+         su->getStatInfo( statInfo ) ;
+
          ossMemset ( cs._name, 0, sizeof(cs._name) ) ;
          ossStrncpy ( cs._name, cscb->_name, DMS_COLLECTION_SPACE_NAME_SZ);
          cs._pageSize = su->getPageSize() ;
          cs._totalSize = su->totalSize() ;
+         cs._clNum    = statInfo._clNum ;
+         cs._totalRecordNum = statInfo._totalCount ;
+         cs._freeSize = su->totalFreePages() * su->getPageSize() +
+                        statInfo._totalDataFreeSpace +
+                        statInfo._totalIndexFreeSpace ;
          su->dumpInfo ( cs._collections, sys ) ;
          csList.insert ( cs ) ;
       }
