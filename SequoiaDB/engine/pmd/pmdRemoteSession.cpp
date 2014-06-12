@@ -39,6 +39,44 @@ using namespace bson ;
 
 namespace engine
 {
+   /*
+      pmdSubSession implement
+   */
+   _pmdSubSession::_pmdSubSession()
+   {
+      _nodeID     = 0 ;
+      _reqID      = 0 ;
+      _pReqMsg    = NULL ;
+      _pRspMsg    = NULL ;
+   }
+
+   _pmdSubSession::~_pmdSubSession()
+   {
+   }
+
+   /*
+      _pmdRemoteSession implement
+   */
+   _pmdRemoteSession::_pmdRemoteSession( netRouteAgent *pAgent )
+   {
+      _pAgent = pAgent ;
+   }
+
+   _pmdRemoteSession::~_pmdRemoteSession()
+   {
+      _pAgent = NULL ;
+   }
+
+   pmdSubSession* _pmdRemoteSession::addCurSubSession( UINT64 nodeID )
+   {
+      pmdSubSession &subSession = _mapSubSession[ nodeID ] ;
+      if ( subSession.getNodeID() != nodeID )
+      {
+         subSession.setNodeID( nodeID ) ;
+      }
+      _mapCurSubSession[ nodeID ] = &subSession ;
+      return &subSession ;
+   }
 
 }
 
