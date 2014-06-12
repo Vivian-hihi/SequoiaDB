@@ -109,6 +109,7 @@
                                                 Name:{$first:\"$Name\"},\
                                                 PageSize:{$first:\"$PageSize\"},\
                                                 TotalSize:{$sum:\"$TotalSize\"},\
+                                                FreeSize:{$sum:\"$FreeSize\"},\
                                                 Collection:{$mergearrayset:\"$Collection\"},\
                                                 Group:{$addtoset:\"$GroupName\"}\
                                                 }\
