@@ -50,11 +50,6 @@
 
 #define REST_FUN_STRING( str ) str,ossStrlen( str )
 
-static const CHAR *cmdCommon[] = {
-      "insert",   "delete",   "update",   "query",   "sql",   "login",
-      "getfile"
-} ;
-
 static const CHAR *responseHeader[] = {
       "200 Ok",   "302 Found",   "400 Bad Request",   "404 Not Found",
       "503 Service Unavailable",   "505 Http Version Not Supported"
@@ -420,7 +415,7 @@ namespace engine
       return ( pHttpCon->_headerSize - ( pHttpCon->_pHeaderBuf - pBuff ) ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_QUERYMSG, "restAdaptor::_query2Msg" )
+/*   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_QUERYMSG, "restAdaptor::_query2Msg" )
    INT32 restAdaptor::_query2Msg( httpConnection *pHttpCon,
                                   HTTP_PARSE_COMMON &common,
                                   CHAR **ppMsg,
@@ -467,7 +462,8 @@ namespace engine
    error:
       goto done ;
    }
-
+*/
+/*
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_SWITCHMSG, "restAdaptor::_switchMsg" )
    INT32 restAdaptor::_switchMsg( httpConnection *pHttpCon,
                                   HTTP_PARSE_COMMON common,
@@ -529,7 +525,7 @@ namespace engine
    error:
       goto done ;
    }
-
+*/
    PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_CONVERTMSG, "restAdaptor::_convertMsg" )
    INT32 restAdaptor::_convertMsg( pmdRestSession *pSession,
                                    HTTP_PARSE_COMMON &common,
@@ -549,53 +545,31 @@ namespace engine
       pFileName = _getResourceFileName( pHttpCon->_pPath ) ;
       if ( pFileName )
       {
-         //get pFileName's file
-         pathSize = ossStrlen( pHttpCon->_pPath ) ;
-         pSession->allocBuff( pathSize, &pMsg, tempSize ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
-                     pathSize, rc ) ;
-            goto error ;
-         }
-         ossMemcpy( pMsg, pHttpCon->_pPath, pathSize ) ;
-
          common = COM_GETFILE ;
-         *ppMsg = pMsg ;
-         msgSize = pathSize ;
       }
       else
       {
          if ( pHttpCon->_requestQuery.size() > 0 )
          {
-            //run common
-            rc = _query2Msg( pHttpCon, common, ppMsg, msgSize ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Failed to convert msg, rc=%d",
-                        rc ) ;
-               goto error ;
-            }
+            common = COM_CMD ;
          }
          else
          {
-            //get default file index.html
-            pathSize = ossStrlen( REST_STRING_INDEX ) ;
-            rc = pSession->allocBuff( pathSize, &pMsg, tempSize ) ;
-            if ( rc )
-            {
-               PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
-                        pathSize, rc ) ;
-               goto error ;
-            }
-            ossMemcpy( pMsg, REST_STRING_INDEX, pathSize ) ;
-
             common = COM_GETFILE ;
-            *ppMsg = pMsg ;
-            msgSize = pathSize ;
          }
       }
-
+      pathSize = ossStrlen( pHttpCon->_pPath ) ;
+      rc = pSession->allocBuff( pathSize, &pMsg, tempSize ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Unable to allocate %d bytes memory, rc=%d",
+                  pathSize, rc ) ;
+         goto error ;
+      }
+      ossMemcpy( pMsg, pHttpCon->_pPath, pathSize ) ;
+      common = COM_GETFILE ;
+      *ppMsg = pMsg ;
+      msgSize = pathSize ;
    done:
       PD_TRACE_EXITRC ( SDB__RESTADP_CONVERTMSG, rc ) ;
       return rc ;
@@ -682,11 +656,11 @@ namespace engine
       PD_TRACE_EXIT( SDB__RESTADP_PARAINIT ) ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQHE, "restAdaptor::getRequestHeader" )
-   INT32 restAdaptor::getRequestHeader( pmdRestSession *pSession )
+   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_RECVREQHE, "restAdaptor::recvRequestHeader" )
+   INT32 restAdaptor::recvRequestHeader( pmdRestSession *pSession )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RESTADP_GETREQHE ) ;
+      PD_TRACE_ENTRY( SDB__RESTADP_RECVREQHE ) ;
       SDB_ASSERT ( pSession, "pSession is NULL" )
       httpConnection *pHttpCon = pSession->getRestConn() ;
       CHAR *pBuffer = pSession->getFixBuff() ;
@@ -765,22 +739,22 @@ namespace engine
          }
       }
    done:
-      PD_TRACE_EXITRC( SDB__RESTADP_GETREQHE, rc ) ;
+      PD_TRACE_EXITRC( SDB__RESTADP_RECVREQHE, rc ) ;
       return rc ;
    error:
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETREQBO, "restAdaptor::getRequestBody" )
-   INT32 restAdaptor::getRequestBody( pmdRestSession *pSession,
-                                      HTTP_PARSE_COMMON &common,
-                                      CHAR **ppMsg,
-                                      INT32 &msgSize )
+   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_RECVREQBO, "restAdaptor::recvRequestBody" )
+   INT32 restAdaptor::recvRequestBody( pmdRestSession *pSession,
+                                       HTTP_PARSE_COMMON &common,
+                                       CHAR **ppPath,
+                                       INT32 &pathSize )
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY( SDB__RESTADP_GETREQBO ) ;
+      PD_TRACE_ENTRY( SDB__RESTADP_RECVREQBO ) ;
       SDB_ASSERT ( pSession, "pSession is NULL" )
-      SDB_ASSERT ( ppMsg, "pMsg is NULL" )
+      SDB_ASSERT ( ppPath, "ppPath is NULL" )
       httpConnection *pHttpCon = pSession->getRestConn() ;
       CHAR *pBuffer = NULL ;
       const CHAR *pContentLength = NULL ;
@@ -848,7 +822,7 @@ namespace engine
          }
       }
 
-      rc = _convertMsg( pSession, common, ppMsg, msgSize ) ;
+      rc = _convertMsg( pSession, common, ppPath, pathSize ) ;
       if ( rc )
       {
          PD_LOG ( PDERROR, "Failed to build msg, rc=%d", rc ) ;
@@ -856,7 +830,7 @@ namespace engine
       }
       pHttpCon->_common = common ;
    done:
-      PD_TRACE_EXITRC( SDB__RESTADP_GETREQBO, rc ) ;
+      PD_TRACE_EXITRC( SDB__RESTADP_RECVREQBO, rc ) ;
       return rc ;
    error:
       goto done ;
@@ -1178,7 +1152,7 @@ namespace engine
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB__RESTCONVERTMSG__INSERT, "_restConvertMsg::buildInsertMsg" )
+/* PD_TRACE_DECLARE_FUNCTION ( SDB__RESTCONVERTMSG__INSERT, "_restConvertMsg::buildInsertMsg" )
    INT32 _restConvertMsg::buildInsertMsg ( CHAR **ppBuffer,
                                            INT32 *pBufferSize,
                                            const CHAR *pCollectionName,
@@ -1263,5 +1237,19 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+*/
+   PD_TRACE_DECLARE_FUNCTION( SDB__RESTADP_GETQUERY, "restAdaptor::getQuery" )
+   void restAdaptor::getQuery( pmdRestSession *pSession,
+                                   const CHAR *pKey,
+                                   const CHAR **ppValue )
+   {
+      PD_TRACE_ENTRY( SDB__RESTADP_GETQUERY ) ;
+      SDB_ASSERT ( pSession, "pSession is NULL" )
+      SDB_ASSERT ( pKey, "pKey is NULL" )
+      SDB_ASSERT ( ppValue, "ppValue is NULL" )
+      httpConnection *pHttpCon = pSession->getRestConn() ;
+      _getQuery( pHttpCon, pKey, ppValue ) ;
+      PD_TRACE_EXIT( SDB__RESTADP_GETQUERY ) ;
    }
 }
