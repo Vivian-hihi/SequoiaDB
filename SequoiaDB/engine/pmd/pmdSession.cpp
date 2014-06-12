@@ -377,6 +377,16 @@ namespace engine
       return rc ;
    }
 
+   INT32 _pmdSession::sniffData( INT32 timeout )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR buff[ 4 ] = { 0 } ;
+      INT32 recvLen = 0 ;
+
+      return _socket.recv( buff, sizeof( buff ), recvLen,
+                           timeout, MSG_PEEK ) ;
+   }
+
    /*
       _pmdLocalSession implement
    */
