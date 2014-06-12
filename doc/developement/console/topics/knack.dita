@@ -3,8 +3,30 @@
 <topic id="developement_console_knack">
   <title>使用shell的窍门</title>
   <body>
-    <p>SequoiaDB shell本身内置了帮助文档，通过help命令可以查看。
-            <codeblock>> help
+      <p>SequoiaDB shell本身内置了帮助文档，通过help命令可以查看。</p>
+        <ul>
+            <li>Help<p>查看帮助命令：</p>
+                <codeblock>> help()
+   var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810
+   var db = new Sdb('localhost',11810)    connect to database use specified host and port
+   var db = new Sdb('ubuntu',11810,'','') connect to database with username and password
+   help(&lt;method>)                         help on specified method, e.g. help('createCS')
+   db.help()                              help on db methods
+   db.cs.help()                           help on collection space cs
+   db.cs.cl                               access collection cl on collection space cs
+   db.cs.cl.help()                        help on collection cl
+   db.cs.cl.find()                        list all records
+   db.cs.cl.find({a:1})                   list records where a=1
+   db.cs.cl.find().help()                 help on find methods
+   db.cs.cl.count().help()                help on count methods
+   print(x), println(x)                   print out x
+   traceFmt(&lt;type>,&lt;in>,&lt;out>)            format trace input(in) to output(out) by type
+   getErr(ret)                            print error description for return code
+   clear                                  clear the terminal screen
+   history -c                             clear the history
+   quit                                   exit
+Takes 0.2993s.</codeblock>
+            <!--<codeblock>> help()
 function () {
     println("   var db = new Sdb('localhost', 11810)   connect to database");
     println("   db.help()                              help on db methods");
@@ -16,8 +38,7 @@ function () {
     println("   print(x), println(x)                   print out x");
     println("   getErr(ret)                            print error description for r                                                                                                                     eturn code");
     println("   quit                                   exit");
-    }</codeblock></p>
-    <ul>
+    }</codeblock>--></li>    
       <li>Database Help <p>查看数据库级别帮助使用命令：</p><codeblock>db.help()</codeblock></li>
       <li>CollectionSpace
           Help<p>查看集合空间下的方法帮助使用命令：<codeblock>db.&lt;collectionspace>.help()</codeblock></p></li>
@@ -29,7 +50,7 @@ function () {
         <p>此外还有一个了解函数功能的技巧，就是在输入的时候不要输入括号，这样就会显示该函数的JavaScript源代码。如：</p><codeblock>> db.foo.bar.find
 function (query, select) {
     return new SdbQuery(this, query, select);
-    }</codeblock></li>
+}</codeblock></li>
     </ul>    
       <p>查看shell提供的所有自动生成的JavaScript函数API文档，可访问<xref href="https://developer.mozilla.org//en-US/docs/Web/JavaScript/Language_Resources"></xref></p>
   </body>
