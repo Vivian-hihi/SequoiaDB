@@ -38,6 +38,9 @@
 #include "pmdRestSession.hpp"
 #include "restAdaptor.hpp"
 #include "sdbInterface.hpp"
+#include "pmdEDU.hpp"
+#include "pmd.hpp"
+#include "dmsCB.hpp"
 
 #include <vector>
 #include <string>
@@ -90,6 +93,14 @@ namespace engine
          void              _add2UserMap( const string &user,
                                          restSessionInfo *pSessionInfo ) ;
 
+         INT32             _init_om_tables();
+         
+         INT32             _createCollectionIndex ( const CHAR *pCollection,
+                                                    const CHAR *pIndex,
+                                                    pmdEDUCB *cb );
+
+         INT32             _createCollection ( const CHAR *pCollection, pmdEDUCB *cb );
+
       private:
          vector< CHAR* >                        _vecFixBuf ;
          const INT32                            _fixBufSize ;
@@ -105,6 +116,11 @@ namespace engine
          // configure info
          INT32                                  _maxRestBodySize ;
          INT32                                  _restTimeout ;
+
+         pmdKRCB*                               _pKrcb ;
+         _SDB_DMSCB*                            _pDmsCB ;
+
+         string                                 _wwwRootPath ;
 
    } ;
    typedef _omManager omManager ;
