@@ -59,6 +59,20 @@ namespace engine
    class _mthModifier ;
 
    /*
+      _dmsStorageUnitStat define
+   */
+   struct _dmsStorageUnitStat
+   {
+      INT32          _clNum ;
+      INT64          _totalCount ;
+      INT32          _totalDataPages ;
+      INT32          _totalIndexPages ;
+      INT64          _totalDataFreeSpace ;
+      INT64          _totalIndexFreeSpace ;
+   } ;
+   typedef _dmsStorageUnitStat dmsStorageUnitStat ;
+
+   /*
       _dmsStorageUnit define
    */
    class _dmsStorageUnit : public SDBObject
@@ -87,6 +101,10 @@ namespace engine
          UINT32      LogicalCSID() const { return _pDataSu->logicalID() ; }
          dmsStorageUnitID CSID() const { return _pDataSu->CSID() ; }
          INT64       totalSize () const ;
+         INT64       totalDataPages() const ;
+         INT64       totalDataSize() const ;
+         INT32       totalFreePages() const ;
+         void        getStatInfo( dmsStorageUnitStat &statInfo ) ;
 
       public:
          void     dumpInfo ( vector<CHAR*> &collectionList,

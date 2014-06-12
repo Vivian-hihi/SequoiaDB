@@ -197,6 +197,7 @@ namespace engine
          OSS_INLINE UINT32  segmentPages () const ;
          OSS_INLINE UINT32  segmentPagesSquareRoot () const ;
          OSS_INLINE UINT32  pageNum () const ;
+         OSS_INLINE UINT32  freePageNum () const ;
          OSS_INLINE INT32   maxSegID () const ;
          OSS_INLINE UINT32  dataStartSegID () const ;
          OSS_INLINE BOOLEAN isTempSU () const { return _isTempSU ; }
@@ -320,6 +321,10 @@ namespace engine
    OSS_INLINE UINT32 _dmsStorageBase::pageNum () const
    {
       return _pageNum ;
+   }
+   OSS_INLINE UINT32 _dmsStorageBase::freePageNum () const
+   {
+      return _smeMgr.totalFree() ;
    }
    OSS_INLINE INT32 _dmsStorageBase::maxSegID () const
    {
