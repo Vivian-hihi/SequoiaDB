@@ -567,6 +567,7 @@ namespace engine
          goto error ;
       }
       ossMemcpy( pMsg, pHttpCon->_pPath, pathSize ) ;
+      pMsg[pathSize] = 0 ;
       common = COM_GETFILE ;
       *ppMsg = pMsg ;
       msgSize = pathSize ;
