@@ -58,12 +58,7 @@ typedef unsigned __int64 uint64_t;
 
 enum HTTP_PARSE_COMMON
 {
-   COM_INSERT = 0,
-   COM_DELETE,
-   COM_UPDATE,
-   COM_QUERY,
-   COM_SQL,
-   COM_LOGIN,
+   COM_CMD = 0,
    COM_GETFILE
 } ;
 
@@ -74,7 +69,16 @@ enum HTTP_RESPONSE_CODE
    HTTP_BADREQ,                  /* 400 bad request */
    HTTP_NOTFOUND,                /* 404 not found */
    HTTP_SERVICUNAVA,             /* 503 service unavailable */
-   HTTP_VERSION,                 /* 505 http version not supported */
+   HTTP_VERSION                  /* 505 http version not supported */
+} ;
+
+enum HTTP_FILE_TYPE
+{
+   HTTP_FILE_HTML = 0,
+   HTTP_FILE_JS,
+   HTTP_FILE_CSS,
+   HTTP_FILE_DEFAULT,        /* default file */
+   HTTP_FILE_UNKNOW
 } ;
 
 struct http_parser {
@@ -150,6 +154,8 @@ struct httpConnection
    BOOLEAN _isKey ;
    //client send common type
    HTTP_PARSE_COMMON _common ;
+   //get file's type
+   HTTP_FILE_TYPE _fileType ;
    //recv header buffer
    CHAR *_pHeaderBuf ;
    //recv temp a part of the body
@@ -187,7 +193,8 @@ struct httpConnection
                       _firstRecordSize(0),
                       _responseSize(0),
                       _isKey(TRUE),
-                      _common(COM_INSERT),
+                      _common(COM_CMD),
+                      _fileType(HTTP_FILE_DEFAULT),
                       _pHeaderBuf(NULL),
                       _pPartBody(NULL),
                       _pBodyBuf(NULL),
