@@ -239,9 +239,13 @@ namespace engine
          ossRenameProcess ( pmdProcessName ) ;
       }
 #elif defined (_WINDOWS)
-      // Then start windows listener thread for "backdoor" listening
-      eduMgr->startEDU ( EDU_TYPE_WINDOWSLISTENER, NULL, &agentEDU ) ;
-      eduMgr->regSystemEDU ( EDU_TYPE_WINDOWSLISTENER, agentEDU ) ;
+      {
+         EDUID agentEDU = PMD_INVALID_EDUID ;
+         pmdEDUMgr *eduMgr = pmdGetKRCB()->getEDUMgr() ;
+         // Then start windows listener thread for "backdoor" listening
+         eduMgr->startEDU ( EDU_TYPE_WINDOWSLISTENER, NULL, &agentEDU ) ;
+         eduMgr->regSystemEDU ( EDU_TYPE_WINDOWSLISTENER, agentEDU ) ;
+      }
 #endif
 
       // Now master thread get into big loop and check shutdown flag
