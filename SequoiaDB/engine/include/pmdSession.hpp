@@ -98,6 +98,7 @@ namespace engine
                                BOOLEAN block = TRUE,
                                INT32 *pRecvLen = NULL,
                                INT32 flags = 0 ) ;
+         INT32       sniffData( INT32 timeout = OSS_ONE_SEC ) ;
 
       protected:
 
