@@ -97,7 +97,7 @@ namespace engine
          {
             continue ;
          }
-         else if ( rc )
+         else if ( rc < 0 )
          {
             break ;
          }
