@@ -51,6 +51,8 @@ namespace engine
    {
       _pFixBuff         = NULL ;
       _pSessionInfo     = NULL ;
+
+      _wwwRootPath      = "./www" ;
    }
 
    _pmdRestSession::~_pmdRestSession()
@@ -75,7 +77,7 @@ namespace engine
       pmdEDUMgr *pEDUMgr               = NULL ;
       const CHAR *pSessionID           = NULL ;
       HTTP_PARSE_COMMON httpCommon     = COM_GETFILE ;
-      CHAR *pBody                      = NULL ;
+      CHAR *pFilePath               = NULL ;
       INT32 bodySize                   = 0 ;
       BOOLEAN needReply                = FALSE ;
 
@@ -128,7 +130,7 @@ namespace engine
             }
          }
          // recv body
-         rc = pAdptor->recvRequestBody( this, httpCommon, &pBody, bodySize ) ;
+         rc = pAdptor->recvRequestBody( this, httpCommon, &pFilePath, bodySize ) ;
          if ( rc )
          {
             if ( SDB_APP_FORCED != rc )
@@ -142,6 +144,7 @@ namespace engine
             }
             break ;
          }
+         
          // increase process event count
          _pEDUCB->incEventCount() ;
          // activate edu
@@ -153,7 +156,7 @@ namespace engine
          }
          needReply = FALSE ;
          // process msg
-         rc = _processRestMsg( pBody, bodySize ) ;
+         rc = _processRestMsg( httpCommon, pFilePath ) ;
          if ( rc )
          {
             break ;
@@ -166,7 +169,7 @@ namespace engine
             break ;
          }
          // release body msg
-         releaseBuff( pBody, bodySize ) ;
+         releaseBuff( pFilePath, bodySize ) ;
          rc = SDB_OK ;
       } // end while
 
@@ -191,11 +194,88 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdRestSession::_processRestMsg( const CHAR *pData, INT32 dataLen )
+   INT32 _pmdRestSession::_getFileContent( string filePath, CHAR **pFileContent, 
+                                           INT32 &fileContentLen )
    {
-      PD_LOG( PDEVENT, "Recv rest request" ) ;
-      // TODO:XUJIANHUI
-      return SDB_OK ;
+      OSSFILE file ;
+      INT32 rc               = SDB_OK ;
+      INT64 fileSize         = 0 ;
+      SINT64 realFileSize    = 0 ;
+      INT32 buffSize         = 0 ;
+      
+      rc = ossOpen(filePath.c_str(), OSS_READONLY, OSS_RWXU, file ) ;
+      PD_RC_CHECK ( rc, PDERROR, 
+                    "Failed to open file:file=%s, rc = %d", 
+                    filePath.c_str(), rc ) ;
+
+      rc = ossGetFileSize( &file, &fileSize ) ;
+      PD_RC_CHECK ( rc, PDERROR, 
+                    "Failed to get file size:file=%s, rc = %d", 
+                    filePath.c_str(), rc ) ;
+
+      rc = allocBuff( fileSize, pFileContent, buffSize ) ;
+      PD_RC_CHECK ( rc, PDERROR, 
+                    "Failed to alloc buff:buff_size=%I64d, rc = %d", 
+                    fileSize, rc ) ;
+      
+      rc = ossRead( &file, *pFileContent, fileSize, &realFileSize ) ;
+      PD_RC_CHECK ( rc, PDERROR, 
+                    "Failed to read file content:file=%s, rc = %d", 
+                    filePath.c_str(), rc ) ;
+
+      fileContentLen = realFileSize ;
+      ossClose( file ) ; 
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _pmdRestSession::_processRestMsg( HTTP_PARSE_COMMON command, 
+                                           const CHAR *pFilePath )
+   {
+      INT32 rc             = SDB_OK;
+      restAdaptor *pAdptor = NULL ;
+
+      pAdptor = sdbGetOMManager()->getRestAdptor() ;
+      switch(command)
+      {
+         case COM_GETFILE :
+         {
+            CHAR *pContent      = NULL ;
+            INT32 contentLength = 0 ;
+            
+            rc = _getFileContent( _wwwRootPath + pFilePath + "index.html", &pContent, 
+                                  contentLength ) ;
+            PD_RC_CHECK ( rc, PDERROR, 
+                          "Failed to get file's content:file=%s, rc = %d", 
+                          pFilePath, rc ) ;
+            
+            pAdptor->appendHttpBody( this, pContent, contentLength ) ;
+            pAdptor->sendResponse( this, HTTP_OK ) ;
+            
+            releaseBuff( pContent, contentLength ) ;
+            break ;
+         }
+
+         case COM_CMD :
+         {
+            
+            break ;
+         }
+
+         default :
+         {
+            
+            break ;
+         }
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
    }
 
    void _pmdRestSession::_onAttach()

@@ -146,15 +146,20 @@ namespace engine
       protected:
          virtual INT32  _onAuth( MsgHeader *msg ) ;
 
-         INT32          _processRestMsg( const CHAR *pData, INT32 dataLen ) ;
+         INT32          _processRestMsg( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
+
+         INT32          _getFileContent( string filePath, CHAR **pFileContent, 
+                                         INT32 &fileContentLen );
 
       protected:
 
       protected:
          httpConnection                _restConn ;
-         CHAR                          *_pFixBuff ;
+         CHAR*                         _pFixBuff ;
 
-         restSessionInfo               *_pSessionInfo ;
+         restSessionInfo*              _pSessionInfo ;
+
+         string                        _wwwRootPath ;
 
    } ;
    typedef _pmdRestSession pmdRestSession ;
