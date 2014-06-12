@@ -64,6 +64,7 @@
 #define FIELD_NAME_GROUP_STATUS              "Status"
 #define FIELD_NAME_PAGE_SIZE                 "PageSize"
 #define FIELD_NAME_TOTAL_SIZE                "TotalSize"
+#define FIELD_NAME_FREE_SIZE                 "FreeSize"
 #define FIELD_NAME_COLLECTION                "Collection"
 #define FIELD_NAME_COLLECTIONSPACE           "CollectionSpace"
 #define FIELD_NAME_CATALOGINFO               "CataInfo"
