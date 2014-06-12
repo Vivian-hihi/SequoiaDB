@@ -243,7 +243,7 @@ namespace engine
       _omLatch.get() ;
       for ( UINT32 i = 0 ; i < _vecFixBuf.size() ; ++i )
       {
-         SDB_OSS_FREE( _vecFixBuf[i] ) ;
+         SDB_OSS_FREE( OM_FIX_BUFF_TO_PTR( _vecFixBuf[i] ) ) ;
       }
       _vecFixBuf.clear() ;
       _omLatch.release() ;
