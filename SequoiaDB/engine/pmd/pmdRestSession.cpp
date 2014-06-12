@@ -94,7 +94,7 @@ namespace engine
          needReply = TRUE ;
 
          // recv rest header
-         rc = pAdptor->getRequestHeader( this ) ;
+         rc = pAdptor->recvRequestHeader( this ) ;
          if ( rc )
          {
             if ( SDB_APP_FORCED != rc )
@@ -128,7 +128,7 @@ namespace engine
             }
          }
          // recv body
-         rc = pAdptor->getRequestBody( this, httpCommon, &pBody, bodySize ) ;
+         rc = pAdptor->recvRequestBody( this, httpCommon, &pBody, bodySize ) ;
          if ( rc )
          {
             if ( SDB_APP_FORCED != rc )
