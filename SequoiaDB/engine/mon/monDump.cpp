@@ -1194,7 +1194,10 @@ namespace engine
                }
                ob.append ( FIELD_NAME_COLLECTION, ab.arr() ) ;
                ob.append ( FIELD_NAME_PAGE_SIZE, cs._pageSize ) ;
+               ob.append ( FIELD_NAME_NUMCOLLECTIONS, cs._clNum ) ;
+               ob.append ( FIELD_NAME_TOTAL_RECORDS, cs._totalRecordNum ) ;
                ob.append ( FIELD_NAME_TOTAL_SIZE, cs._totalSize ) ;
+               ob.append ( FIELD_NAME_FREE_SIZE, cs._freeSize ) ;
             }
             ob.append ( FIELD_NAME_NAME, cs._name ) ;
             if ( addInfo )
