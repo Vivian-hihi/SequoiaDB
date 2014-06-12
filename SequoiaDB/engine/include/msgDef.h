@@ -63,6 +63,7 @@
 #define FIELD_NAME_PRIMARY                   "PrimaryNode"
 #define FIELD_NAME_GROUP_STATUS              "Status"
 #define FIELD_NAME_PAGE_SIZE                 "PageSize"
+#define FIELD_NAME_MAX_CAPACITY_SIZE         "MaxCapacitySize"
 #define FIELD_NAME_TOTAL_SIZE                "TotalSize"
 #define FIELD_NAME_FREE_SIZE                 "FreeSize"
 #define FIELD_NAME_COLLECTION                "Collection"
