@@ -91,6 +91,17 @@ namespace engine
 
       while ( !_pEDUCB->isDisconnected() && !_socket.isClosed() )
       {
+         // sniff wether has data
+         rc = sniffData() ;
+         if ( SDB_TIMEOUT == rc )
+         {
+            continue ;
+         }
+         else if ( rc )
+         {
+            break ;
+         }
+
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
          needReply = TRUE ;
