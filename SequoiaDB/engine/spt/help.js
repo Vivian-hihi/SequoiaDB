@@ -1,7 +1,7 @@
 var help = function( val ) {
    if ( val == undefined )
    {
-      println("   var db = new Sdb()                     connect to database use default host 'localhost' and default port 11810");
+      println("   var db = new Sdb()                     connect to datebase use default host 'localhost' and default port 11810");
       println("   var db = new Sdb('localhost',11810)    connect to database use specified host and port");
       println("   var db = new Sdb('ubuntu',11810,\'\',\'\') connect to database with username and password");
       println("   help(<method>)                         help on specified method, e.g. help(\'createCS\')");
