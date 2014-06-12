@@ -256,16 +256,16 @@ namespace engine
          {
             CHAR *pContent      = NULL ;
             INT32 contentLength = 0 ;
-            
-            rc = _getFileContent( _wwwRootPath + pFilePath + "index.html", &pContent, 
-                                  contentLength ) ;
+
+            rc = _getFileContent( _wwwRootPath + pFilePath + "index.html",
+                                  &pContent, contentLength ) ;
             PD_RC_CHECK ( rc, PDERROR, 
                           "Failed to get file's content:file=%s, rc = %d", 
                           pFilePath, rc ) ;
-            
+
             pAdptor->appendHttpBody( this, pContent, contentLength ) ;
             pAdptor->sendResponse( this, HTTP_OK ) ;
-            
+
             releaseBuff( pContent, contentLength ) ;
             break ;
          }
