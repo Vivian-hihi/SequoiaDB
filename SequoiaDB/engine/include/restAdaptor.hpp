@@ -1,3 +1,38 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = restAdaptor.hpp
+
+   Descriptive Name =
+
+   When/how to use: parse rest
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          04/28/2014  JWH Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
 #ifndef RESTADAPTOR_HPP__
 #define RESTADAPTOR_HPP__
 #include "core.hpp"
@@ -14,7 +49,7 @@
 
 namespace engine
 {
-   class _restConvertMsg : public SDBObject
+   /*class _restConvertMsg : public SDBObject
    {
    public:
       INT32 buildInsertMsg ( CHAR **ppBuffer,
@@ -30,7 +65,7 @@ namespace engine
                            const CHAR *pSelector,
                            const CHAR *pOrderby,
                            const CHAR *pHint ) ;
-   } ;
+   } ;*/
 
    class restAdaptor : public SDBObject
    {
@@ -39,7 +74,7 @@ namespace engine
       INT32 _maxHttpBodySize ;
       INT32 _timeout ;
       void *_pSettings ;
-      _restConvertMsg _convertObj ;
+      //_restConvertMsg _convertObj ;
    private:
       static INT32 on_message_begin( void *pData ) ;
       static INT32 on_headers_complete( void *pData ) ;
@@ -59,10 +94,10 @@ namespace engine
                                             CHAR *pBuffer,
                                             INT32 bufferSize,
                                             INT32 &bodyOffset ) ;
-      INT32 _switchMsg( httpConnection *pHttpCon,
+      /*INT32 _switchMsg( httpConnection *pHttpCon,
                         HTTP_PARSE_COMMON common,
                         CHAR **ppMsg,
-                        INT32 &msgSize ) ;
+                        INT32 &msgSize ) ;*/
       INT32 _convertMsg( pmdRestSession *pSession,
                          HTTP_PARSE_COMMON &common,
                          CHAR **ppMsg,
@@ -70,10 +105,10 @@ namespace engine
       void _getQuery( httpConnection *pHttpCon,
                       const CHAR *pKey,
                       const CHAR **ppValue ) ;
-      INT32 _query2Msg( httpConnection *pHttpCon,
+      /*INT32 _query2Msg( httpConnection *pHttpCon,
                         HTTP_PARSE_COMMON &common,
                         CHAR **ppMsg,
-                        INT32 &msgSize ) ;
+                        INT32 &msgSize ) ;*/
       INT32 _getStringLen( httpConnection *pHttpCon,
                            const CHAR *pBuff ) ;
       void _paraInit( httpConnection *pHttpCon ) ;
@@ -84,11 +119,11 @@ namespace engine
                   INT32 maxHttpBodySize,
                   INT32 timeout = REST_TIMEOUT ) ;
 
-      INT32 getRequestHeader( pmdRestSession *pSession ) ;
-      INT32 getRequestBody( pmdRestSession *pSession,
-                            HTTP_PARSE_COMMON &common,
-                            CHAR **ppMsg,
-                            INT32 &msgSize ) ;
+      INT32 recvRequestHeader( pmdRestSession *pSession ) ;
+      INT32 recvRequestBody( pmdRestSession *pSession,
+                             HTTP_PARSE_COMMON &common,
+                             CHAR **ppPath,
+                             INT32 &pathSize ) ;
       INT32 setOPResult( pmdRestSession *pSession,
                          INT32 result,
                          const BSONObj &info ) ;
@@ -101,6 +136,9 @@ namespace engine
       INT32 getHttpHeader( pmdRestSession *pSession,
                            const CHAR *pKey,
                            const CHAR **ppValue ) ;
+      void getQuery( pmdRestSession *pSession,
+                     const CHAR *pKey,
+                     const CHAR **ppValue ) ;
       INT32 appendHttpBody( pmdRestSession *pSession,
                             const CHAR *pBuffer,
                             INT32 length,
