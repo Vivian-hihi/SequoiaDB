@@ -53,6 +53,7 @@
 #define FIELD_NAME_NODEID                    "NodeID"
 #define FIELD_NAME_IS_PRIMARY                "IsPrimary"
 #define FIELD_NAME_CURRENT_LSN               "CurrentLSN"
+#define FIELD_NAME_BEGIN_LSN                 "BeginLSN"
 #define FIELD_NAME_LSN_OFFSET                "Offset"
 #define FIELD_NAME_LSN_VERSION               "Version"
 #define FIELD_NAME_SERVICE_STATUS            "ServiceStatus"
