@@ -234,34 +234,45 @@ public class DBCollection {
 	 *       field update is take effect. Because of current version is not support update shardingKey field.
 	 * @see com.sequoiadb.base.DBCollection.setMainKeys
 	 */
-	public <T> void save(T type) throws BaseException {
+	public <T> void save(T type) throws BaseException
+	{
 		// transform java object to bson object
 		BSONObject obj;
-		try {
+		try
+		{
 			obj = BasicBSONObject.typeToBson(type);
-		} catch (Exception e) {
+		}
+		catch (Exception e)
+		{
 			throw new BaseException("SDB_INVALIDARG", type);
 		}
 		BSONObject matcher = new BasicBSONObject();
 		BSONObject modifer = new BasicBSONObject(); 
 		// if user don't specify main keys, use default one "_id"
-		if (mainKeys.isEmpty()) {
+		if (mainKeys.isEmpty())
+		{
 			Object id = obj.get(SequoiadbConstants.OID);
-			if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew())) {
+			if (id == null || (id instanceof ObjectId && ((ObjectId) id).isNew()))
+			{
 				if (id != null && id instanceof ObjectId)
 					((ObjectId) id).notNew();
 				insert(obj);
-			} else {
+			}
+			else
+			{
 				// build condtion
 				matcher.put(SequoiadbConstants.OID, id);
 				// build rule
 				modifer.put("$set", obj);
 				upsert(matcher, modifer, null);
 			}
-		} else { // if user specify main keys, use these main keys
+		}
+		else
+		{ // if user specify main keys, use these main keys
 			Iterator<String> it = mainKeys.iterator();
 			// build condition
-			while (it.hasNext()) {
+			while (it.hasNext())
+			{
 				String key = it.next();
 				if (obj.containsField(key))
 					matcher.put(key, obj.get(key));

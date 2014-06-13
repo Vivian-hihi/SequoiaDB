@@ -134,12 +134,15 @@ public class Sequoiadb {
 	
 	/**
 	 * @fn Sequoiadb(String username, String password)
-	 * @brief Constructor. The server address is "127.0.0.1 : 50000".
-	 * @param username the user's Name of the account
-	 * @param password the password  of the account
+	 * @brief Constructor. The server address is "127.0.0.1 : 11810".
+	 * @param username the user's name of the account
+	 * @param password the password of the account
 	 * @exception com.sequoiadb.exception.BaseException
+	 *            "SDB_NETWORK" means network error,
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
 	 */
-	public Sequoiadb(String username, String password) throws BaseException {
+	public Sequoiadb(String username, String password) throws BaseException
+	{
 		// connect used default address
 		serverAddress = new ServerAddress();
 		ConfigOptions opts = new ConfigOptions();
@@ -155,18 +158,62 @@ public class Sequoiadb {
 	 * @brief Constructor.
 	 * @param connString
 	 *            remote server address "IP : Port" or "IP"(port is 50000)
-	 * @param username the user's Name of the account
-	 * @param password the password  of the account
+	 * @param username the user's name of the account
+	 * @param password the password of the account
 	 * @exception com.sequoiadb.exception.BaseException
+	 *            "SDB_NETWORK" means network error,
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
 	 */
 	public Sequoiadb(String connString, String username, String password)
-			throws BaseException {
-		try {
+			throws BaseException
+	{
+		/*
+		try
+		{
 			// connect
 			serverAddress = new ServerAddress(connString);
 			ConfigOptions opts = new ConfigOptions();
 			initConnection(opts);
-		} catch (UnknownHostException e) {
+		}
+		catch (UnknownHostException e)
+		{
+			throw new BaseException("SDB_NETWORK", connString);
+		}
+		// authentication
+		this.userName = username;
+		this.password = password;
+		auth();
+		*/
+		this(connString, username, password, null);
+	}
+
+	/**
+	 * @fn Sequoiadb(String connString, String username,
+	 *               String password, ConfigOptions options)
+	 * @brief Constructor.
+	 * @param connString
+	 *            remote server address "IP : Port" or "IP"(port is 11810)
+	 * @param username the user's name of the account
+	 * @param password the password of the account
+	 * @param options the options for connection
+	 * @exception com.sequoiadb.exception.BaseException 
+	 *            "SDB_NETWORK" means network error,
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
+	 */
+	public Sequoiadb(String connString, String username, String password,
+			         ConfigOptions options) throws BaseException
+    {
+		ConfigOptions opts = options;
+		if (null == options)
+			opts = new ConfigOptions();
+		try
+		{
+			// connect
+			serverAddress = new ServerAddress(connString);
+			initConnection(opts);
+		}
+		catch (UnknownHostException e)
+		{
 			throw new BaseException("SDB_NETWORK", connString);
 		}
 		// authentication
@@ -174,39 +221,50 @@ public class Sequoiadb {
 		this.password = password;
 		auth();
 	}
-
+	
 	/**
-	 * @fn Sequoiadb(List<String> connStrings, String username, String password)
-	 * @brief Constructor. Connect to database used the first valid address in the list.
+	 * @fn Sequoiadb(List<String> connStrings, String username, String password,
+	 *               ConfigOptions options)
+	 * @brief Constructor, use any useful address to connect to database.
 	 * @param connStrings The array of the coord's address
-	 * @param username the user's Name of the account
+	 * @param username the user's name of the account
 	 * @param password the password  of the account
-	 * @param options the options to set connection
+	 * @param options the options for connection
 	 * @exception com.sequoiadb.exception.BaseException
+	 *            "SDB_NETWORK" means network error,
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
 	 */
 	public Sequoiadb(List<String> connStrings, String username, String password,
-			         ConfigOptions options) throws BaseException {
+			         ConfigOptions options) throws BaseException
+	{
 		ConfigOptions opts = options;
 		if (options == null)
 			opts = new ConfigOptions();
 		Iterator<String> it = connStrings.iterator();
 		int size = connStrings.size();
 		int count = 0;
-		while (it.hasNext()) {
+		while (it.hasNext())
+		{
 			String str = it.next();
-			try {
+			try
+			{
 				// connect
-				try {
+				try
+				{
 					serverAddress = new ServerAddress(str);
 					initConnection(opts);
-				} catch (UnknownHostException e) {
+				}
+				catch (UnknownHostException e)
+				{
 					throw new BaseException("SDB_NETWORK", str);
 				}
 				// authentication
 				this.userName = username;
 				this.password = password;
 				auth();
-			} catch (BaseException e) {
+			}
+			catch (BaseException e)
+			{
 				count++;
 				continue;
 			}
@@ -219,16 +277,18 @@ public class Sequoiadb {
 	/**
 	 * @fn Sequoiadb(String addr, int port, String username, String password)
 	 * @brief Constructor.
-	 * @param addr
-	 *            address of remote server
-	 * @param port
-	 *            port of remote server
-	 * @param username the user's Name of the account
+	 * @param addr the address of coord
+	 * @param port the port of coord
+	 * @param username the user's name of the account
 	 * @param password the password  of the account
 	 * @exception com.sequoiadb.exception.BaseException
+	 *            "SDB_NETWORK" means network error,
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
 	 */
 	public Sequoiadb(String addr, int port, String username, String password)
-			throws BaseException {
+			throws BaseException
+    {
+		/*
 		try {
 			// connect
 			serverAddress = new ServerAddress(addr, port);
@@ -241,30 +301,36 @@ public class Sequoiadb {
 		this.userName = username;
 		this.password = password;
 		auth();
+		*/
+		this(addr, port, username, password, null);
 	}
 
 	/**
 	 * @fn Sequoiadb(String addr, int port, String username, String password)
 	 * @brief Constructor.
-	 * @param addr
-	 *            address of remote server
-	 * @param port
-	 *            port of remote server
-	 * @param username the user's Name of the account
-	 * @param password the password  of the account
+	 * @param addr the address of coord
+	 * @param port the port of coord
+	 * @param username the user's name of the account
+	 * @param password the password of the account
 	 * @exception com.sequoiadb.exception.BaseException
+	 *            "SDB_NETWORK" means network error,
+	 *            "SDB_INVALIDARG" means wrong address or the address don't map to the hosts table
 	 */
 	public Sequoiadb(String addr, int port, 
 			         String username, String password,
-			         ConfigOptions options) throws BaseException {
+			         ConfigOptions options) throws BaseException
+    {
 		ConfigOptions opts = options;
 		if (options == null)
 			opts = new ConfigOptions();
-		try {
+		try
+		{
 			// connect
 			serverAddress = new ServerAddress(addr, port);
 			initConnection(opts);
-		} catch (UnknownHostException e) {
+		}
+		catch (UnknownHostException e)
+		{
 			throw new BaseException("SDB_NETWORK", addr, port);
 		}
 		// authentication
@@ -277,7 +343,8 @@ public class Sequoiadb {
 	 * @fn auth()
 	 * @brief authentication
 	 */
-	private void auth() {
+	private void auth()
+	{
 		endianConvert = requestSysInfo();
 		byte[] request = SDBMessageHelper.buildAuthMsg(userName, password, 0,
 				(byte) 0, endianConvert);
@@ -286,7 +353,8 @@ public class Sequoiadb {
 		ByteBuffer byteBuffer = connection.receiveMessage(endianConvert);
 		SDBMessage rtn = SDBMessageHelper.msgExtractReply(byteBuffer);
 		int flags = rtn.getFlags();
-		if (flags != 0) {
+		if (flags != 0)
+		{
 			connection.close();
 			throw new BaseException(flags, userName, password);
 		}
