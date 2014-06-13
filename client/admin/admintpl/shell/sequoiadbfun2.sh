@@ -254,7 +254,7 @@ function install()
 	if [ $6 -eq 0 ]; then
 	   autostart="false"
    fi
-   /tmp/$1 --mode unattended --prefix $2 --username $3 --userpasswd $4 --port $5 --processAuto ${autostart}
+   /tmp/$1 --mode unattended --prefix $2 --username $3 --userpasswd $4 --port $5 --processAutoStart ${autostart}
    if [ $? -ne 0 ]; then
       return 1
    else
