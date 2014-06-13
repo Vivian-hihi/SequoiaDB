@@ -56,6 +56,7 @@
 #define FIELD_NAME_BEGIN_LSN                 "BeginLSN"
 #define FIELD_NAME_LSN_OFFSET                "Offset"
 #define FIELD_NAME_LSN_VERSION               "Version"
+#define FIELD_NAME_TRANS_INFO                "TransInfo"
 #define FIELD_NAME_SERVICE_STATUS            "ServiceStatus"
 #define FIELD_NAME_GROUP                     "Group"
 #define FIELD_NAME_GROUPS                    "Groups"
