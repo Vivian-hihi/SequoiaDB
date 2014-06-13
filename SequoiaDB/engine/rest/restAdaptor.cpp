@@ -31,8 +31,12 @@
 #define REST_STRING_NO_STORE      "no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
 #define REST_STRING_NO_CACHE      "no-cache"
 #define REST_STRING_TEXT_HTML     "text/html"
-#define REST_STRING_TEXT_JAVA     "text/javascript"
+#define REST_STRING_TEXT_JS       "text/javascript"
 #define REST_STRING_TEXT_CSS      "text/css"
+#define REST_STRING_TEXT_PNG      "image/png"
+#define REST_STRING_TEXT_BMP      "image/bmp"
+#define REST_STRING_TEXT_JPG      "image/jpeg"
+#define REST_STRING_TEXT_GIF      "text/gif"
 #define REST_STRING_CONLEN_SIZE   "0"
 
 /* http defalut file */
@@ -55,7 +59,13 @@ static const CHAR *responseHeader[] = {
       "503 Service Unavailable",   "505 Http Version Not Supported"
 } ;
 
-#define REST_STRING_CMD_SIZE (sizeof(cmdCommon)/sizeof(cmdCommon[0]))
+static const CHAR *fileExtension[] = {
+      "html",   "js",   "css",   "png",   "bmp",   "jpg",
+      "gif"
+} ;
+
+#define REST_STRING_FILE_EX_SIZE ( sizeof( fileExtension ) \
+                                 / sizeof( fileExtension[0] ) )
 
 #define CONVERT_BSON( json, bson )\
 {\
@@ -538,7 +548,9 @@ namespace engine
       SDB_ASSERT ( ppMsg, "pMsg is NULL" )
       INT32 pathSize = 0 ;
       INT32 tempSize = 0 ;
+      INT32 extenSize = 0 ;
       const CHAR *pFileName = NULL ;
+      const CHAR *pExtension = NULL ;
       CHAR *pMsg = NULL ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
 
@@ -546,16 +558,30 @@ namespace engine
       if ( pFileName )
       {
          common = COM_GETFILE ;
+         pExtension = _getFileExtension( pFileName ) ;
+         extenSize = ossStrlen( pExtension ) ;
+         pHttpCon->_fileType = HTTP_FILE_HTML ;
+         for( INT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
+         {
+            if ( 0 == ossStrncasecmp( pExtension,
+                                      fileExtension[i], extenSize ) )
+            {
+               pHttpCon->_fileType = (HTTP_FILE_TYPE)i ;
+               break ;
+            }
+         }
       }
       else
       {
          if ( pHttpCon->_requestQuery.size() > 0 )
          {
             common = COM_CMD ;
+            pHttpCon->_fileType = HTTP_FILE_HTML ;
          }
          else
          {
             common = COM_GETFILE ;
+            pHttpCon->_fileType = HTTP_FILE_HTML ;
          }
       }
       pathSize = ossStrlen( pHttpCon->_pPath ) ;
@@ -638,6 +664,7 @@ namespace engine
       pHttpCon->_pTempKey        = NULL ;
       pHttpCon->_pTempValue      = NULL ;
       pHttpCon->_pPath           = NULL ;
+      httpResponse httpRe ;
 
       pHttpCon->_requestHeaders.clear() ;
       pHttpCon->_requestQuery.clear() ;
@@ -653,7 +680,9 @@ namespace engine
       pHttpCon->_responseHeaders.insert(
             std::make_pair( REST_STRING_CONLEN, REST_STRING_CONLEN_SIZE ) );
       pHttpCon->_responseBody.clear() ;
-      pHttpCon->_responseBody.push_back(REST_RESULT_STRING_OK) ;
+      httpRe.pBuffer = REST_RESULT_STRING_OK ;
+      httpRe.len = sizeof( REST_RESULT_STRING_OK ) - 1 ;
+      pHttpCon->_responseBody.push_back( httpRe ) ;
       PD_TRACE_EXIT( SDB__RESTADP_PARAINIT ) ;
    }
 
@@ -852,6 +881,7 @@ namespace engine
          CHAR *pBuffer = NULL ;
          INT32 bufferSize = 0 ;
          INT32 tempSize = 0 ;
+         httpResponse httpRe ;
          std::string str = info.toString( FALSE, FALSE ) ;
          bufferSize = ossStrlen( str.c_str() ) ;
          rc = pSession->allocBuff( bufferSize + 1, &pBuffer, tempSize ) ;
@@ -864,7 +894,9 @@ namespace engine
          ossMemcpy( pBuffer, str.c_str(), bufferSize ) ;
          pBuffer[ bufferSize ] = 0 ;
          pHttpCon->_firstRecordSize = bufferSize ;
-         pHttpCon->_responseBody[0] = pBuffer ;
+         httpRe.pBuffer = pBuffer ;
+         httpRe.len = bufferSize ;
+         pHttpCon->_responseBody[0] = httpRe ;
       }
    done:
       PD_TRACE_EXITRC( SDB__RESTADP_SETOPR, rc ) ;
@@ -884,7 +916,9 @@ namespace engine
       CHAR CRLF[3] = { 0, 0, 0 } ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       COLNAME_MAP_IT it ;
-      std::vector<const CHAR *>::iterator it2 ;
+      std::vector<httpResponse>::iterator it2 ;
+      const CHAR *pFileType = NULL ;
+      httpResponse httpRe ;
 
       CRLF[0] = REST_STRING_CR ;
       CRLF[1] = REST_STRING_LF ;
@@ -904,7 +938,44 @@ namespace engine
          rc = appendHttpHeader( pSession, REST_STRING_CONLEN, httpBodySize ) ;
          if ( rc )
          {
+            PD_LOG ( PDERROR, "Failed to call append http header, rc=%d", rc ) ;
             goto error ;
+         }
+         if( COM_GETFILE == pHttpCon->_common )
+         {
+            switch( pHttpCon->_fileType )
+            {
+            case HTTP_FILE_PNG:
+               pFileType = REST_STRING_TEXT_PNG ;
+               break ;
+            case HTTP_FILE_BMP:
+               pFileType = REST_STRING_TEXT_BMP ;
+               break ;
+            case HTTP_FILE_JPG:
+               pFileType = REST_STRING_TEXT_JPG ;
+               break ;
+            case HTTP_FILE_GIF:
+               pFileType = REST_STRING_TEXT_GIF ;
+               break ;
+            case HTTP_FILE_JS:
+               pFileType = REST_STRING_TEXT_JS ;
+               break ;
+            case HTTP_FILE_CSS:
+               pFileType = REST_STRING_TEXT_CSS ;
+               break ;
+            case HTTP_FILE_HTML:
+            default:
+               pFileType = REST_STRING_TEXT_HTML ;
+               break ;
+            }
+            rc = appendHttpHeader( pSession, REST_STRING_CONTENT_TYPE,
+                                   pFileType ) ;
+            if( rc )
+            {
+               PD_LOG ( PDERROR, "Failed to call append http header, rc=%d",
+                        rc ) ;
+               goto error ;
+            }
          }
       }
       //HTTP/1.1[space]
@@ -912,6 +983,7 @@ namespace engine
                                _timeout ) ;
       if ( rc )
       {
+         PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
          goto error ;
       }
       //http type 200 OK
@@ -919,12 +991,14 @@ namespace engine
                                _timeout ) ;
       if ( rc )
       {
+         PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
          goto error ;
       }
       rc = pSession->sendData( REST_FUN_STRING( CRLF ),
                                _timeout ) ;
       if ( rc )
       {
+         PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
          goto error ;
       }
 
@@ -936,6 +1010,7 @@ namespace engine
                                   _timeout ) ;
          if ( rc )
          {
+            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
             goto error ;
          }
          //:
@@ -943,6 +1018,7 @@ namespace engine
                                   _timeout ) ;
          if ( rc )
          {
+            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
             goto error ;
          }
          //value
@@ -950,6 +1026,7 @@ namespace engine
                                   _timeout ) ;
          if ( rc )
          {
+            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
             goto error ;
          }
          //CRLF
@@ -957,6 +1034,7 @@ namespace engine
                                   _timeout ) ;
          if ( rc )
          {
+            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
             goto error ;
          }
       }
@@ -967,15 +1045,18 @@ namespace engine
                                   _timeout ) ;
          if ( rc )
          {
+            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
             goto error ;
          }
          for( it2 = pHttpCon->_responseBody.begin();
                it2 != pHttpCon->_responseBody.end(); ++it2 )
          {
-            rc = pSession->sendData( REST_FUN_STRING( (*(it2)) ),
+            httpRe = (*(it2)) ;
+            rc = pSession->sendData( httpRe.pBuffer, httpRe.len,
                                      _timeout ) ;
             if ( rc )
             {
+               PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
                goto error ;
             }
          }
@@ -1104,6 +1185,7 @@ namespace engine
       SDB_ASSERT ( pBuffer, "pBuffer is NULL" )
       httpConnection *pHttpCon = pSession->getRestConn() ;
       INT32 tempSize = 0 ;
+      httpResponse httpRe ;
       if( COM_GETFILE != pHttpCon->_common )
       {
          CHAR *pJson = NULL ;
@@ -1126,7 +1208,9 @@ namespace engine
             ossMemcpy( pJson, str.c_str(), jsonSize ) ;
             pJson[ jsonSize ] = 0 ;
             pHttpCon->_responseSize += jsonSize ;
-            pHttpCon->_responseBody.push_back( pJson ) ;
+            httpRe.pBuffer = pJson ;
+            httpRe.len = jsonSize ;
+            pHttpCon->_responseBody.push_back( httpRe ) ;
             pBuffer = NULL ;
             jsonSize = 0 ;
          }
@@ -1144,7 +1228,9 @@ namespace engine
          ossMemcpy( pFileText, pBuffer, length ) ;
          pFileText[ length ] = 0 ;
          pHttpCon->_firstRecordSize = length ;
-         pHttpCon->_responseBody[0] = pFileText ;
+         httpRe.pBuffer = pFileText ;
+         httpRe.len = length ;
+         pHttpCon->_responseBody[0] = httpRe ;
       }
    done:
       PD_TRACE_EXITRC( SDB__RESTADP_APPENDBODY, rc ) ;
