@@ -1013,28 +1013,36 @@ namespace engine
    {
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_RTNCOGETCATGROUPINFO ) ;
+      UINT32 retryCount = 0 ;
+
       while( TRUE )
       {
          if ( isNeedRefresh )
          {
-            rc = rtnCoordGetRemoteCatGroupInfo( cb, groupInfo );
+            rc = rtnCoordGetRemoteCatGroupInfo( cb, groupInfo ) ;
+            if ( SDB_CLS_GRP_NOT_EXIST == rc && retryCount < 30 )
+            {
+               ++retryCount ;
+               ossSleep( 100 ) ;
+               continue ;
+            }
          }
          else
          {
-            rc = rtnCoordGetLocalCatGroupInfo ( groupInfo );
-            if ( ( SDB_OK == rc && groupInfo->getGroupSize() == 0 )
-               || SDB_COOR_NO_NODEGROUP_INFO == rc )
+            rc = rtnCoordGetLocalCatGroupInfo ( groupInfo ) ;
+            if ( ( SDB_OK == rc && groupInfo->getGroupSize() == 0 ) ||
+                 SDB_COOR_NO_NODEGROUP_INFO == rc )
             {
                // couldn't find the match group-info,
                // then get from catalogue-node
                isNeedRefresh = TRUE;
-               continue;
+               continue ;
             }
          }
          break;
       }
       PD_TRACE_EXITRC ( SDB_RTNCOGETCATGROUPINFO, rc ) ;
-      return rc;
+      return rc ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCOGETLOCALCATGROUPINFO, "rtnCoordGetLocalCatGroupInfo" )
