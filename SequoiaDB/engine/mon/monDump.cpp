@@ -211,6 +211,7 @@ namespace engine
 
          if ( dpscb && ( MON_MASK_LSN_INFO & mask ) )
          {
+            DPS_LSN beginLSN = dpscb->getStartLsn() ;
             DPS_LSN dpsLSN = dpscb->getCurrentLsn() ;
             INT64 offset = (INT64)dpsLSN.offset ;
             PD_TRACE2 ( SDB_MONAPPENDSYSTEMINFO,
@@ -219,6 +220,11 @@ namespace engine
             BSONObj bsonTemp = BSON ( FIELD_NAME_LSN_OFFSET << offset <<
                                       FIELD_NAME_LSN_VERSION <<
                                       dpsLSN.version ) ;
+            BSONObj beginLsnObj = BSON( FIELD_NAME_LSN_OFFSET <<
+                                        (INT64)beginLSN.offset <<
+                                        FIELD_NAME_LSN_VERSION <<
+                                        beginLSN.version ) ;
+            ob.append ( FIELD_NAME_BEGIN_LSN, beginLsnObj ) ;
             ob.append ( FIELD_NAME_CURRENT_LSN, bsonTemp ) ;
          }
 
