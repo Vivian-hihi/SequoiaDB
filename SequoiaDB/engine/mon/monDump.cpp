@@ -163,6 +163,7 @@ namespace engine
       replCB *pReplcb   = sdbGetReplCB() ;
       SDB_DPSCB *dpscb  = krcb->getDPSCB() ;
       shardCB *pShardCB = sdbGetShardCB() ;
+      dpsTransCB *transCB = krcb->getTransCB() ;
 
       CHAR hostName [ OSS_MAX_HOSTNAME + 1 ]             = {0} ;
       const CHAR *serviceName       = pmdGetOptionCB()->getServiceAddr() ;
@@ -226,6 +227,13 @@ namespace engine
                                         beginLSN.version ) ;
             ob.append ( FIELD_NAME_BEGIN_LSN, beginLsnObj ) ;
             ob.append ( FIELD_NAME_CURRENT_LSN, bsonTemp ) ;
+         }
+
+         if ( transCB && ( MON_MASK_TRANSINFO & mask ) )
+         {
+            BSONObj obj = BSON( FIELD_NAME_BEGIN_LSN <<
+                                (INT64)transCB->getOldestBeginLsn() ) ;
+            ob.append ( FIELD_NAME_TRANS_INFO, obj ) ;
          }
 
          if ( pShardCB && ( MON_MASK_NODEID & mask ) )
