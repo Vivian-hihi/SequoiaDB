@@ -250,9 +250,9 @@ function checkFileNull()
 #参数6 开机自动启动 例如 true
 function install()
 {
-	local autostart="true"
-	if [ $6 -eq 0 ]; then
-	   autostart="false"
+   local autostart="true"
+   if [ $6 -eq 0 ]; then
+      autostart="false"
    fi
    /tmp/$1 --mode unattended --prefix $2 --username $3 --userpasswd $4 --port $5 --processAutoStart ${autostart}
    if [ $? -ne 0 ]; then
