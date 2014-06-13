@@ -55,6 +55,7 @@ namespace engine
    #define MON_MASK_SERVICE_STATUS     0x00000020
    #define MON_MASK_LSN_INFO           0x00000040
    #define MON_MASK_NODEID             0x00000080
+   #define MON_MASK_TRANSINFO          0x00000100
    #define MON_MASK_ALL                0xFFFFFFFF
 
    INT32 monAppendSystemInfo ( BSONObjBuilder &ob,
