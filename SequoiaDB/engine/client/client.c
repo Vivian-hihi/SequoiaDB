@@ -29,7 +29,6 @@
 #define HANDLE_CHECK( handle, interhandle, handletype ) \
 do                                                      \
 {                                                       \
-   interhandle = ( typeof(interhandle) )handle;         \
    if ( SDB_INVALID_HANDLE == handle )                  \
    {                                                    \
       rc = SDB_INVALIDARG ;                             \
@@ -61,7 +60,7 @@ do                                                          \
 {                                                           \
    cursor->_handleType = SDB_HANDLE_TYPE_CURSOR ;           \
    cursor->_connection=                                     \
-               ( typeof(cursor->_connection) )conn ;        \
+               ( sdbConnectionHandle )conn ;                \
    cursor->_sock            = handle->_sock ;               \
    cursor->_contextID       = contextID ;                   \
    cursor->_offset          = -1 ;                          \
@@ -1418,7 +1417,18 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
    SINT64 contextID                = -1 ;
    BOOLEAN result                  = FALSE ;
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
-
+   static char *pcmd[] = {
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONSPACES ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM ,
+      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA 
+   } ;
+   
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ; 
    if ( snapType >= SDB_SNAP_BUFF || snapType < SDB_SNAP_CONTEXTS )
    {
@@ -1432,18 +1442,6 @@ SDB_EXPORT INT32 sdbGetSnapshot ( sdbConnectionHandle cHandle,
       goto error ;
    }
    
-   static char *pcmd[] = {
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CONTEXTS_CURRENT ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SESSIONS_CURRENT ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONS ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_COLLECTIONSPACES ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_DATABASE ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_SYSTEM ,
-      CMD_ADMIN_PREFIX CMD_NAME_SNAPSHOT_CATA 
-   } ;
-  
    rc = clientBuildQueryMsg ( &connection->_pSendBuffer,
                               &connection->_sendBufferSize,
                               pcmd[snapType], 0, 0, 0, -1, 
@@ -2823,8 +2821,9 @@ SDB_EXPORT INT32 sdbGetNodeByHost ( sdbReplicaGroupHandle cHandle,
       INT32 nodeID = 0 ;
       const CHAR *groupList = bson_iterator_value ( &it ) ;
       bson_iterator i ;
-      bson_iterator_from_buffer ( &i, groupList ) ;
       sdbNodeHandle interhandle;
+      bson_iterator_from_buffer ( &i, groupList ) ;
+      
       // loop for all elements in Group
       while ( BSON_EOO != bson_iterator_next ( &i ) )
       {
@@ -6434,7 +6433,7 @@ error :
 do                                                                          \
 {                                                                           \
    dhandle->_handleType    = SDB_HANDLE_TYPE_DOMAIN ;                       \
-   dhandle->_connection    = ( typeof(dhandle->_connection) )cHandle ;      \
+   dhandle->_connection    = ( sdbConnectionHandle )cHandle ;               \
    dhandle->_sock          = cHandle->_sock ;                               \
    dhandle->_endianConvert = cHandle->_endianConvert ;                      \
    ossStrncpy ( dhandle->_domainName, pDomainName, CLIENT_DOMAIN_NAMESZ ) ; \
@@ -6616,7 +6615,7 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
 {
    INT32 rc                = SDB_OK ;
    const CHAR *command     = CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ;
-   sdbDomainStruct *domain = NULL ;
+   sdbDomainStruct *domain = ( sdbDomainStruct * )cHandle  ;
    BOOLEAN ret             = TRUE ;
    bson newObj ;
    BOOLEAN bsoninit        = FALSE ; 
@@ -6655,7 +6654,7 @@ SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,
                                                   sdbCursorHandle *cursor )
 {
    INT32 rc         = SDB_OK ;
-   sdbDomainStruct *s ;
+   sdbDomainStruct *s = ( sdbDomainStruct * )cHandle ;
    bson condition ;
    bson selector ;
    BOOLEAN bsoninit = FALSE ;
@@ -6693,7 +6692,7 @@ SDB_EXPORT INT32 sdbListCollectionsInDomain( sdbDomainHandle cHandle,
                                              sdbCursorHandle *cursor )
 {
    INT32 rc           = SDB_OK ;
-   sdbDomainStruct *s = ( sdbDomainStruct * )cHandle ;;
+   sdbDomainStruct *s = ( sdbDomainStruct * )cHandle ;
    bson condition ;
    bson selector ;
    BOOLEAN bsoninit   = FALSE ;
