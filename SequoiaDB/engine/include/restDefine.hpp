@@ -77,6 +77,10 @@ enum HTTP_FILE_TYPE
    HTTP_FILE_HTML = 0,
    HTTP_FILE_JS,
    HTTP_FILE_CSS,
+   HTTP_FILE_PNG,
+   HTTP_FILE_BMP,
+   HTTP_FILE_JPG,
+   HTTP_FILE_GIF,
    HTTP_FILE_DEFAULT,        /* default file */
    HTTP_FILE_UNKNOW
 } ;
@@ -125,6 +129,12 @@ typedef COLNAME_MAP::iterator COLNAME_MAP_IT ;
 #else
 typedef std::map<const CHAR *,const CHAR *>::iterator COLNAME_MAP_IT ;
 #endif
+
+struct httpResponse
+{
+   INT32 len ;
+   const CHAR *pBuffer ;
+} ;
 
 struct httpConnection
 {
@@ -181,7 +191,7 @@ struct httpConnection
 /* response */
 
    std::map<const CHAR *,const CHAR *, cmp_str> _responseHeaders ;
-   std::vector<const CHAR *> _responseBody ;
+   std::vector<httpResponse> _responseBody ;
 
 /* public */
 
