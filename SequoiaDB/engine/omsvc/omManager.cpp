@@ -74,7 +74,7 @@ namespace engine
       _pKrcb  = pmdGetKRCB() ;
       _pDmsCB = _pKrcb->getDMSCB() ;
       
-      rc = _init_om_tables();
+      rc = _initOmTables();
       PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
                     rc ) ;
       
@@ -87,7 +87,7 @@ namespace engine
          
    }
 
-   INT32 _omManager::_init_om_tables() 
+   INT32 _omManager::_initOmTables() 
    {
       _pmdEDUCB *cb      = NULL ;
       INT32 rc           = SDB_OK ;
@@ -121,7 +121,7 @@ namespace engine
 
       //TODO: check the index's content to make sure the index key is the same
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_CLUSTER,
-                             OM_CS_DEPLOY_CL_CLUSTERIDX1, cb ) ;
+                                    OM_CS_DEPLOY_CL_CLUSTERIDX1, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
                     OM_CS_DEPLOY_CL_CLUSTERIDX1, rc ) ;
 
@@ -131,12 +131,12 @@ namespace engine
                     OM_CS_DEPLOY_CL_HOST, rc ) ;
 
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_HOST,
-                             OM_CS_DEPLOY_CL_HOSTIDX1, cb ) ;
+                                    OM_CS_DEPLOY_CL_HOSTIDX1, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
                     OM_CS_DEPLOY_CL_HOSTIDX1, rc ) ;
 
       rc = _createCollectionIndex ( OM_CS_DEPLOY_CL_HOST,
-                             OM_CS_DEPLOY_CL_HOSTIDX2, cb ) ;
+                                    OM_CS_DEPLOY_CL_HOSTIDX2, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
                     OM_CS_DEPLOY_CL_HOSTIDX2, rc ) ;
 

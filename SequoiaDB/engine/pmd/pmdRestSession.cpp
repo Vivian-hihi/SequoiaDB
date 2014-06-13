@@ -35,6 +35,7 @@
 #include "pmdEDUMgr.hpp"
 #include "msgDef.h"
 #include "pmdCommon.hpp"
+#include "../omsvc/omGetFileCommand.hpp"
 
 #include "../bson/bson.h"
 
@@ -213,12 +214,14 @@ namespace engine
       INT64 fileSize         = 0 ;
       SINT64 realFileSize    = 0 ;
       INT32 buffSize         = 0 ;
+      bool isFileOpened      = false ;
       
       rc = ossOpen(filePath.c_str(), OSS_READONLY, OSS_RWXU, file ) ;
       PD_RC_CHECK ( rc, PDERROR, 
                     "Failed to open file:file=%s, rc = %d", 
                     filePath.c_str(), rc ) ;
 
+      isFileOpened = true ;
       rc = ossGetFileSize( &file, &fileSize ) ;
       PD_RC_CHECK ( rc, PDERROR, 
                     "Failed to get file size:file=%s, rc = %d", 
@@ -235,9 +238,13 @@ namespace engine
                     filePath.c_str(), rc ) ;
 
       fileContentLen = realFileSize ;
-      ossClose( file ) ; 
 
    done:
+      if ( isFileOpened )
+      {
+         ossClose( file ) ;
+      }
+      
       return rc ;
    error:
       goto done ;
@@ -254,19 +261,12 @@ namespace engine
       {
          case COM_GETFILE :
          {
-            CHAR *pContent      = NULL ;
-            INT32 contentLength = 0 ;
-
-            rc = _getFileContent( _wwwRootPath + pFilePath + "index.html",
-                                  &pContent, contentLength ) ;
-            PD_RC_CHECK ( rc, PDERROR, 
-                          "Failed to get file's content:file=%s, rc = %d", 
-                          pFilePath, rc ) ;
-
-            pAdptor->appendHttpBody( this, pContent, contentLength ) ;
-            pAdptor->sendResponse( this, HTTP_OK ) ;
-
-            releaseBuff( pContent, contentLength ) ;
+            omGetFileCommand *pGetFileCommand = NULL ;
+            pGetFileCommand = new omGetFileCommand(pAdptor, this, 
+                                                   _wwwRootPath.c_str(), 
+                                                   pFilePath) ;
+            pGetFileCommand->doCommand() ;
+            delete pGetFileCommand ;
             break ;
          }
 

@@ -93,7 +93,7 @@ namespace engine
          void              _add2UserMap( const string &user,
                                          restSessionInfo *pSessionInfo ) ;
 
-         INT32             _init_om_tables();
+         INT32             _initOmTables();
          
          INT32             _createCollectionIndex ( const CHAR *pCollection,
                                                     const CHAR *pIndex,
