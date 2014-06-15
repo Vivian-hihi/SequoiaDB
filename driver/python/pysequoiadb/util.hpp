@@ -19,9 +19,6 @@
 #define MAKE_RETURN_INT_OBJECT( ret_value, cpp_object ) \
    ( PyObject * )Py_BuildValue( "iO", ret_value, cpp_object )
 
-#define MAKE_PYTHON_VOID_OBJECT( py_object, cpp_object ) \
-   py_object = ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
-
 /*
  *@brief      macro to cast C++ object to object of Python, 
               it will be used in creating a instance of C++ class
@@ -30,7 +27,10 @@
  *@return     pointer to PyObject
  **/
 #define MAKE_RETURN_OBJECT( cpp_object ) \
-   PyCObject_FromVoidPtr( cpp_object, NULL )
+   ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
+
+#define MAKE_PYTHON_VOID_OBJECT( cpp_object, py_object ) \
+   py_object = MAKE_RETURN_OBJECT( cpp_object )
 
 /*
  *@brief     macro to re-cast python object to specified class
