@@ -17,19 +17,16 @@
    ( PyObject * )Py_BuildValue( "i", ret_value )
 
 #define MAKE_RETURN_INT_OBJECT( ret_value, py_object ) \
-   ( PyObject * )Py_BuildValue( ["i,O"], ret_value, py_object )
-
-#define MAKE_RETURN_INT_OBJECT( ret_value, py_object_1, py_object_2 ) \
-   ( PyObject * )Py_BuildValue( ["i,O,O"], ret_value, py_object_1, py_object_2 )
+   ( PyObject * )Py_BuildValue( ("i,O"), ret_value, py_object )
 
 #define MAKE_RETURN_INT_INT( ret_value, int_value ) \
-   ( PyObject * )Py_BuildValue( ["i,i"], ret_value, int_value )
+   ( PyObject * )Py_BuildValue( ("i,i"), ret_value, int_value )
 
 #define MAKE_RETURN_INT_LONG( ret_value, long_value ) \
-   ( PyObject * )Py_BuildValue( ["i,l"], ret_value, long_value )
+   ( PyObject * )Py_BuildValue( ("i,l"), ret_value, long_value )
 
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
-   ( PyObject * )Py_BuildValue( ["i,s"], ret_value, c_string )
+   ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
 /*
  *@brief      macro to cast C++ object to object of Python, 
               it will be used in creating a instance of C++ class
