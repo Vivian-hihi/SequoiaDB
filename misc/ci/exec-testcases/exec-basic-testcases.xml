@@ -154,10 +154,7 @@
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${current.time}&quot;&gt;&#10;" />
     
-    <tstamp>
-    	<format property="start_time" pattern="mmss" offset="-5" unit="second" />
-    </tstamp>
-    
+
     
     <property name="CS_PRIX_TMP" value="${host.NAME}${parallel.num}${test.case.name}"/>
     <!--script language="javascript"><![CDATA[

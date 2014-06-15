@@ -5,16 +5,18 @@
 
 <project name="build-test" default="build-test">
 	
+	<taskdef resource="net/sf/antcontrib/antlib.xml">
+	<classpath>
+			<pathelement location="/usr/share/java/ant-contrib.jar" />
+		</classpath>
+	</taskdef>
+
 	<property name="deploy.path" value="${WORKSPACE}/deploy" />
 	<property name="release.path" value="${WORKSPACE}/release" />
 	<property name="build.testcases" value="${WORKSPACE}/sequoiadb/testcases/hlt/" />
 	<property name="DRIVER.DIR" value="${WORKSPACE}/release/driver" />
 	
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="/usr/share/java/ant-contrib.jar" />
-		</classpath>
-	</taskdef>
+
 	
 	<target name="clean" depends="">
 		<echo message="Begin to clean environments" />
