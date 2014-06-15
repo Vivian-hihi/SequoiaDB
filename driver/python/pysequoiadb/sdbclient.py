@@ -20,9 +20,11 @@ class sdbclient(object):
             pass
       
     def __del__(self):
-        rc = sdbclient.release_cilent(self.ccient)
+        rc = sdbclient.release_cilent(self.cclient)
         if rc:
             pass
+
+        self.cclient = None
             #todo: raise exception
                     
 #        if self._connection is not None:
@@ -80,11 +82,11 @@ class sdbclient(object):
         if rc:
             pass
 
-    def get_snapshot(self, result, snap_type, condition, selector, order_by):
+    def get_snapshot(self, result, snap_type, condition = static_object,
+                                              selector  = static_object,
+                                              order_by  = static_object):
         rc = sdbclient.get_snapshot(self.cclient, result, snap_type,
-                                    condition = static_object,
-                                    selector  = static_object,
-                                    order_by  = static_object)
+                                    condition, selector, order_by)
         if rc:
             pass
 
@@ -112,8 +114,8 @@ class sdbclient(object):
         sdbclient.unlock(self.cclient)
 
     def get_collection_space(self, cs_name, page_size, collection_space):
-        rc = sdbclient.get_collect_space(self.cclient, cs_name, page_size,
-                                    collection_space)
+        rc = sdbclient.get_collection_space(self.cclient, cs_name, page_size,
+                                            collection_space)
         if rc:
             pass
 

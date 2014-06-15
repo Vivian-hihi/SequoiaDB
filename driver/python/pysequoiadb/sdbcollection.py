@@ -2,11 +2,11 @@ class sdbcollection(object):
     """Collection for SequoiaDB"""
 
     def __init__(self):
-        self.cl = sdbcl.create()
+        self.cl = sdbcl.create_cl()
 
     def __del__(self):
         if self.cl is not None:
-            sdbcl.release(self.cl)
+            sdbcl.release_cl(self.cl)
             self.cl = None
 
     def get_count(self, count, condition = static_object):

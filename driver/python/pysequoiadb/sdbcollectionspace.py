@@ -11,6 +11,7 @@ class sdbcollectionspace(object):
         rc = sdbcs.release_cs(self.cs)
         if rc:
             pass
+        self.cs = None
 
     def __getitem__(self, item_name, collection):
         rc = get_collection(item_name, collection)
