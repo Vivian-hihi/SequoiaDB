@@ -61,12 +61,21 @@ public class SequoiadbDatasource
 	/**
 	 * @fn SequoiadbDatasource(ArrayList<String> urls, String username, String password,
 	 *		                   ConfigOptions nwOpt, SequoiadbOption dsOpt)
-	 * @brief constructor method
-	 * @param urls the addresses of coords, can't be null, e.g."ubuntu1:11810","ubuntu2:11810",...
-	 * @param username the username of sequoiadb
-	 * @param password the password of sequoiadb
+	 * @brief constructor.
+	 * @param urls the addresses of coords, can't be null or empty,
+	 *        e.g."ubuntu1:11810","ubuntu2:11810",...
+	 * @param username the username for logging sequoiadb
+	 * @param password the password for logging sequoiadb
 	 * @param nwOpt the options for connection
 	 * @param dsOpt the options for datasource  
+	 * @note When offer several addresses for datasource to connect, if 
+	 *       some of them are not available(invalid address, network error, coord shutdown,
+	 *       catalog replica group is not available), we will put these addresses
+	 *       into a queue, and check them periodically. If some of them is valid again,
+	 *       get them back for use. when a address is not available, the default timeout of
+	 *       connection is 100ms, and default retry time is 0, you can use nwOpt to change it.
+	 * @see ConfigOptions
+	 * @see SequoiadbOption
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public SequoiadbDatasource(ArrayList<String> urls, String username, String password,
@@ -93,7 +102,7 @@ public class SequoiadbDatasource
 		{
 			throw e;
 		}
-		// after the timer start 500ms, it goes to clean periodically 
+		// after the timer start for a while, it goes to clean periodically 
 		timer.schedule(new CleanConnectionTask(this), dsOpt.getRecheckCyclePeriod(),
 				       dsOpt.getRecheckCyclePeriod());
 		// after the timer start 10 minutes, it goes to get back the useful coord address periodically 
