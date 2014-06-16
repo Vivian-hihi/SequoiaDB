@@ -4146,7 +4146,7 @@ done :
    return ret ;
 error :
    SAFE_RELEASE_DOMAIN ( domain ) ;
-   SDB_OSS_FREE( domain ) ;
+   SAFE_JS_FREE( cx, domain ) ;
    TRY_REPORT ( cx, "Sdb.getDomain(): false" ) ;
    goto done ;
 }
