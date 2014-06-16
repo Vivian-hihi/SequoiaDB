@@ -383,3 +383,21 @@ error :
    goto done ;
 }
 
+/* List of functions defined in the module */
+static PyMethodDef group_methods[] = {
+   {"get_nodenum", get_nodenum ,METH_VARARGS},
+   {"get_detail", get_detail ,METH_VARARGS},
+   {"get_master", get_master ,METH_VARARGS},
+   {"get_slave", get_slave ,METH_VARARGS},
+   {"get_nodebyname", get_nodebyname ,METH_VARARGS},
+   {"get_nodebyendpoint", get_nodebyendpoint ,METH_VARARGS},
+   {"create_node", create_node ,METH_VARARGS},
+   {"remove_node", remove_node ,METH_VARARGS},
+   {"start", start ,METH_VARARGS},
+   {"stop", stop ,METH_VARARGS},
+   {"is_catalog", is_catalog ,METH_VARARGS},
+   {NULL, NULL}
+};
+
+CREATE_MODULE( sdbreplicagroup, group_methods )
+

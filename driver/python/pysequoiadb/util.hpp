@@ -133,4 +133,47 @@
    {                                                        \
       cpp_object = cpp_value ;                              \
    }
+
+#define DEFINE_MODULE(modulename, methods)             \
+static struct PyModuleDef moduledef = {                \
+   PyModuleDef_HEAD_INIT,                              \
+   #modulename,                                        \
+   NULL,                                               \
+   sizeof(struct module_state),                        \
+   methods,                                            \
+   NULL,                                               \
+   NULL,                                               \
+   NULL,                                               \
+   NULL                                                \
+};                                                     \
+                                                
+#define CREATE_MODULE(modulename, methods)             \
+#if PY_MAJOR_VERSION >= 3                              \                       
+#define INITERROR return NULL                          \ 
+DEFINE_MODULE(modulename, methods)                     \                
+PyMODINIT_FUNC                                         \
+PyInit__##modulename(void)                             \
+#else                                                  \                                      
+#define INITERROR return                               \
+PyMODINIT_FUNC                                         \
+init##modulename(void)                                 \
+#endif                                                 \
+{                                                      \
+   PyObject *m;                                        \   
+#if PY_MAJOR_VERSION >= 3                              \
+   m = PyModule_Create(&moduledef);                    \
+#else                                                  \
+   m = Py_InitModule(#modulename, methods);            \  
+#endif                                                 \
+   if (m == NULL)                                      \
+   {                                                   \
+      INITERROR;                                       \
+   }                                                   \
+                                                       \
+#if PY_MAJOR_VERSION >= 3                              \
+   return m;                                           \
+#endif                                                 \
+}
+
 #endif
+

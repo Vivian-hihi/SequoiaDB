@@ -167,3 +167,17 @@ error :
    goto done ;
 }
 
+/* List of functions defined in the module */
+static PyMethodDef node_methods[] = {
+   {"connect", connect ,METH_VARARGS},
+   {"get_status", get_status ,METH_VARARGS},
+   {"get_hostname", get_hostname ,METH_VARARGS},
+   {"get_servicename", get_servicename ,METH_VARARGS},
+   {"get_nodename", get_nodename ,METH_VARARGS},
+   {"stop", stop ,METH_VARARGS},
+   {"start", start ,METH_VARARGS},
+   {NULL, NULL}
+};
+
+CREATE_MODULE( sdbreplicanode, node_methods )
+

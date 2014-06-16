@@ -95,3 +95,13 @@ done :
 error :
    goto done ;
 }
+
+/* List of functions defined in the module */
+static PyMethodDef cursor_methods[] = {
+   {"next", next ,METH_VARARGS},
+   {"current", current ,METH_VARARGS},
+   {"close", close ,METH_VARARGS},
+   {NULL, NULL}
+};
+
+CREATE_MODULE( sdbcursor, cursor_methods )
