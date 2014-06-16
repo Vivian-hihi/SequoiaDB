@@ -2189,7 +2189,7 @@ namespace engine
          PD_TRACE1 ( SDB_CATALOGMGR_DROPDOMAIN, PD_PACK_STRING(pDomainName) ) ;
          // validate the domain is not empty by searching SYSCOLLECTIONSPACES
          // for {Domain} field matches pDomainName
-         queryObj = BSON ( CAT_DOMAINNAME_NAME << pDomainName ) ;
+         queryObj = BSON ( CAT_DOMAIN_NAME << pDomainName ) ;
          // context will be closed when rc == 0, otherwise it should already be
          // closed in the function
          rc = catGetOneObj ( CAT_COLLECTION_SPACE_COLLECTION, tempObj,
@@ -2212,6 +2212,7 @@ namespace engine
          }
          // if we cannot find any record with given domain name, that's expected
          // attempt to delete from the SYSDOMAINS
+         queryObj = BSON ( CAT_DOMAINNAME_NAME << pDomainName ) ;
          rc = rtnDelete ( CAT_DOMAIN_COLLECTION, queryObj,
                           tempObj, 0, _pEduCB, &numDeleted ) ;
          // if something wrong happend
