@@ -143,6 +143,7 @@ namespace engine
                             const CHAR *pBuffer,
                             INT32 length,
                             INT32 number = 0 ) ;
+      HTTP_FILE_TYPE getFileType( pmdRestSession *pSession ) ;
    } ;
 }
 #endif
