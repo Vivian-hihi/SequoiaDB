@@ -37,7 +37,6 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   PYOBJECT *ret_object   = NULL ;
    PYOBJECT *cl_object    = NULL ;
    void *tmp              = NULL ;
    const char *cl_name    = NULL ;
@@ -59,17 +58,14 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cl, ret_object ) ;
-
 done:
-   return MAKE_RETURN_INT_OBJECT( rc, ret_object ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   PYOBJECT *ret_object   = NULL ;
    PYOBJECT *cl_object    = NULL ;
    void *tmp              = NULL ;
    const char *cl_name    = NULL ;
@@ -91,17 +87,14 @@ static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cl, ret_object ) ;
-
 done:
-   return MAKE_RETURN_INT_OBJECT( rc, ret_object ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   PYOBJECT *ret_object   = NULL ;
    PYOBJECT *cl_object    = NULL ;
    PYOBJECT *bson_option  = NULL ;
    void *tmp              = NULL ;
@@ -127,11 +120,9 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cl, ret_object ) ;
-
 done:
    DELETE_CPPOBJECT( option ) ;
-   return MAKE_RETURN_INT_OBJECT( rc, ret_object ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
@@ -164,7 +155,6 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
-   PYOBJECT *ret_object   = NULL ;
    void *tmp              = NULL ;
    const char *cs_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
@@ -179,8 +169,6 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 
    cs_name = cs->get_collection_space_name() ;
 
-done:
-   return MAKE_RETURN_PYSTRING( cs_name ) ;
 error:
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, cs_name ) ;
 }

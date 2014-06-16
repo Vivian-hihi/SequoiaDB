@@ -349,7 +349,6 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
    INT64 num_to_skip            = 0 ;
    INT64 num_to_return          = -1 ;
    PYOBJECT *obj                = NULL ;
-   PYOBJECT *ret_object         = NULL ;
    PYOBJECT *cursor_object      = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_selector      = NULL ;
@@ -385,14 +384,12 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cursor, ret_object ) ;
-
 done:
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( selector ) ;
    DELETE_CPPOBJECT( order_by ) ;
    DELETE_CPPOBJECT( hint ) ;
-   return MAKE_RETURN_INT_OBJECT( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
@@ -432,7 +429,6 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
-   PYOBJECT *ret_object    = NULL ;
    PYOBJECT *cursor_object = NULL ;
    void *tmp               = NULL ;
    sdbCollection *cl       = NULL ;
@@ -454,10 +450,8 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cursor, ret_object ) ;
-
 done:
-   return MAKE_RETURN_INT_OBJECT( rc,  ) ;
+   return MAKE_RETURN_INT( rc,  ) ;
 }
 
 static PYOBJECT *drop_index( PYOBJECT *self, PYOBJECT *args )
@@ -557,7 +551,6 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
-   PYOBJECT *ret_object    = NULL ;
    PYOBJECT *cl_object     = NULL ;
    PYOBJECT *list_object   = NULL ;
    PYOBJECT *cursor_object = NULL ;
@@ -582,10 +575,8 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cursor, ret_object ) ;
-
 done:
-   return MAKE_RETURN_INT_OBJECT( rc, ret_object ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
@@ -594,7 +585,6 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
    INT64 num_to_skip            = 0 ;
    INT64 num_to_return          = 0 ;
    PYOBJECT *obj                = NULL ;
-   PYOBJECT *ret_object         = NULL ;
    PYOBJECT *cursor_object      = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_order_by      = NULL ;
@@ -627,20 +617,17 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   MAKE_PYTHON_VOID_OBJECT( cursor, ret_object ) ;
-
 done:
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( order_by ) ;
    DELETE_CPPOBJECT( hint ) ;
-   return MAKE_RETURN_INT_OBJECT( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                  = 0 ;
    PYOBJECT *obj             = NULL ;
-   PYOBJECT *ret_object      = NULL ;
    PYOBJECT *bson_option     = NULL ;
    void *tmp                 = NULL ;
    const char *sub_full_name = NULL ;

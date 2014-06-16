@@ -16,9 +16,6 @@
 #define MAKE_RETURN_INT( ret_value ) \
    ( PyObject * )Py_BuildValue( "i", ret_value )
 
-#define MAKE_RETURN_INT_OBJECT( ret_value, py_object ) \
-   ( PyObject * )Py_BuildValue( ("i,O"), ret_value, py_object )
-
 #define MAKE_RETURN_INT_INT( ret_value, int_value ) \
    ( PyObject * )Py_BuildValue( ("i,i"), ret_value, int_value )
 
@@ -36,9 +33,6 @@
  **/
 #define MAKE_RETURN_OBJECT( cpp_object ) \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
-
-#define MAKE_PYTHON_VOID_OBJECT( cpp_object, py_object ) \
-   py_object = MAKE_RETURN_OBJECT( cpp_object )
 
 /*
  *@brief     macro to re-cast python object to specified class
@@ -69,14 +63,14 @@
  *@calssname [in] the class of the instance
  *@instance  [out] the pointer pointing to real object
  **/
-#define CAST_PYBSON_TO_CPPBSON( py_object, tmp, bson_object )  \
+#define CAST_PYBSON_TO_CPPBSON( py_object, bson_object )       \
    if ( NULL == py_object )                                    \
    {                                                           \
       bson_object = &sdbclient::_sdbStaticObject ;             \
    }                                                           \
    else                                                        \
    {                                                           \
-      tmp = PyBytes_AsString( py_object ) ;                    \
+      void *tmp = PyBytes_AsString( py_object ) ;              \
       if ( NULL == tmp )                                       \
       {                                                        \
          rc = SDB_INVALIDARGS ;                                \
@@ -127,12 +121,6 @@
       SDB_OSS_DEL pObject ;         \
       pObject = NULL ;              \
    }
-   
-#define CHECK_PYOBJECT( py_object, cpp_object, cpp_value )  \
-   if( Py_None == py_object )                               \
-   {                                                        \
-      cpp_object = cpp_value ;                              \
-   }
 
 #define DEFINE_MODULE(modulename, methods)             \
 static struct PyModuleDef moduledef = {                \
@@ -176,4 +164,3 @@ init##modulename(void)                                 \
 }
 
 #endif
-

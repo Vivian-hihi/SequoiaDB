@@ -4,9 +4,11 @@
 import sdbclient
 
 class sdbclient(object):
-    """Entrance of SequoiaDB
+    """SequoiaDB Client Driver
     
-
+    The client support interfaces to connect to SequoiaDB.
+    In order to connect to SequoiaDB, you need use the class first.
+    And you should release the instance of it when you don't use it any more.
     """
     def __init__(self, host = default_host, port = default_port,
                        user = default_user, psw  = default_psw):
