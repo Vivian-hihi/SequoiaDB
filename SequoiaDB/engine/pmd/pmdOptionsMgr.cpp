@@ -71,7 +71,7 @@ namespace engine
    #define PMD_MIN_HJ_SZ               (64)
    #define PMD_DEFAULT_MAX_REPLSYNC    (10)
    #define PMD_DFT_REPL_BUCKET_SIZE    (32)
-   #define PMD_DFT_INDEX_SCAN_STEP     (30)
+   #define PMD_DFT_INDEX_SCAN_STEP     (100)
    #define PMD_DFT_START_SHIFT_TIME    (600)
    #define PMD_DFT_NUMPAGECLEAN        (1)
    #define PMD_DFT_PAGECLEANINTERVAL   (10000)
