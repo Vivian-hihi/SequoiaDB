@@ -221,7 +221,6 @@ static PYOBJECT *bulk_insert( PYOBJECT *self, PYOBJECT *args )
    SINT32 flags         = 0 ;
    INT32  list_size     = 0 ;
    PYOBJECT *obj        = NULL ;
-   PYOBJECT *cl_object  = NULL ;
    PYOBJECT *list_object= NULL ;
    void *tmp            = NULL ;
    sdbCollection *cl    = NULL ;
@@ -248,7 +247,34 @@ done:
 
 static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
 {
+   INT32 rc             = 0 ;
+   SINT32 flags         = 0 ;
+   INT32  list_size     = 0 ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *bson_object= NULL ;
+   void *tmp            = NULL ;
+   sdbCollection *cl    = NULL ;
+   bson::BSONObj *object= NULL ;
 
+   if ( !PARSE_PYTHON_ARGS( args, "OO|O", &obj, &bson_object ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_object, tmp, object ) ;
+   bson::BSONElement *id = SDB_OSS_NEW bson::BSONElement() ;
+   rc = cl->insert( object, id ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+   std::string str_id( id->__oid().toString().c_str() ) ;
+done:
+   DELETE_CPPOBJECT( object ) ;
+   DELETE_CPPOBJECT( id ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, str_id ) ;
 }
 
 static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
