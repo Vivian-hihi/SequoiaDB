@@ -27,9 +27,9 @@
 		<property name="db.path" value="${install.path}/sequoiadb" />
 
 		<!-- create method tmp on 06.15 -->
-		<stafTools workType="shell" workHost="192.168.20.192" common="/usr/bin/find /opt/sequoiadb/database/data/21100 -name "*.idx" -delete;"></stafTools>
+		<stafTools workType="shell" workHost="192.168.20.192" common="/usr/bin/find /opt/sequoiadb/database/data/21100 -name "*.idx" -delete;" workDir="${save.testLog.dir}"></stafTools>
 			
-		<stafTools workType="shell" workHost="192.168.20.192" common="/usr/bin/find /opt/sequoiadb/database/data/21100 -name "*.data" -delete;"></stafTools>
+		<stafTools workType="shell" workHost="192.168.20.192" common="/usr/bin/find /opt/sequoiadb/database/data/21100 -name "*.data" -delete;" workDir="${save.testLog.dir}"></stafTools>
 
 
 		<available file="${db.path}/bin/sdbstop" property="sdb.installed" />
