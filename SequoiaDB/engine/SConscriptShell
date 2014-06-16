@@ -29,7 +29,8 @@ spt2Files = [
       "spt/sptGlobalFunc.cpp",
       "spt/sptCmdRunner.cpp",
       "spt/usrdef/sptUsrCmd.cpp",
-      "spt/usrdef/sptUsrFile.cpp"
+      "spt/usrdef/sptUsrFile.cpp",
+      "spt/usrdef/sptUsrSystem.cpp"
       ]
 
 ossFiles = [
@@ -190,14 +191,14 @@ shellEnv.StaticLibrary('mdocml', mdocmlFiles)
 
 #Shell Executable
 sdb = shellEnv.Program("sdb", shellMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "spt2", "ssh2", "util2"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "ssh2", "util2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdb )
 
 #Shell Backend  Executable
 sdbbp = shellEnv.Program("sdbbp", shellBpMain,
-      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml", "spt2", "ssh2", "util2"],
+      LIBDEPS=["spt","oss","pd","util","clientc", "mdocml","ssh2", "util2"],
       _LIBDEPS='$_LIBDEPS_OBJS' )
 
 shellEnv.Install( '#/bin', sdbbp )
