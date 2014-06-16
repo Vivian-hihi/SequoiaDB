@@ -41,7 +41,7 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return Py_BuildValue( "(i,s#)", rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -66,7 +66,7 @@ static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return Py_BuildValue( "(i,s#)", rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }

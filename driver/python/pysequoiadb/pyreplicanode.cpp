@@ -59,7 +59,7 @@ static PYOBJECT *get_status( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    nodestatus = node->getStatus() ;
 done :
-   return Py_BuildValue( "(i,i)", rc, nodestatus ) ;
+   return MAKE_RETURN_INT_INT( rc, nodestatus ) ;
 error :
    goto done ;
 }
@@ -80,7 +80,7 @@ static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    hostname = node->getHostName() ;
 done :
-   return Py_BuildValue( "(i,s)", rc, hostname ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, nodename ) ;
 error :
    goto done ;
 }
@@ -101,7 +101,7 @@ static PYOBJECT *get_servicename( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    servicename = node->getServiceName() ;
 done :
-   return Py_BuildValue( "(i,s)", rc, servicename ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, servicename ) ;
 error :
    goto error ;
 }
@@ -122,7 +122,7 @@ static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    nodename = node->getNodeName() ;
 done :
-   return Py_BuildValue( "(i,s)", rc, nodename ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, nodename ) ;
 error :
    goto done ;
 }

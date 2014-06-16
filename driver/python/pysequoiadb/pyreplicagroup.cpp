@@ -21,6 +21,16 @@
 #include "util.hpp"
 using namespace sdbclient ;
 
+#define RELEASE_PTR( nodeptr ) \
+do                             \
+{                              \
+   if ( NULL != nodeptr)       \
+   {                           \
+      release_node( nodeptr )  \
+      nodeptr = NULL;          \
+   }                           \
+}
+
 static void release_node( void *ptr )
 {
    sdbNode *client = static_cast<sdbNode *>(ptr) ;
@@ -46,7 +56,7 @@ static PYOBJECT *get_nodenum( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    nodenum = replica_group->getNodeNum( nodestatus, &rc ) ;
 done :
-   return Py_BuildValue( "(i,i)", rc, nodenum ) ;
+   return MAKE_RETURN_INT_INT(rc, nodenum) ;
 error :
    goto done ;
 }
@@ -67,7 +77,7 @@ static PYOBJECT *get_detail( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    INT32 rc = replica_group->getDetail( bson ) ;
 done :
-   return Py_BuildValue("(i,s#)", rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -99,13 +109,9 @@ static PYOBJECT *get_master( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return Py_BuildValue( "(i,O)", rc, PyCObject_FromVoidPtr( client, release_client) ) ;
+   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
 error :
-   if ( NULL != node )
-   {
-      release_node( node ) ;
-      node = NULL ;
-   }
+   RELEASE_PTR( node ) ;
    goto done ;
 }
 
@@ -136,13 +142,9 @@ static PYOBJECT *get_slave( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return Py_BuildValue( "(i,O)", rc, PyCObject_FromVoidPtr( client, release_client) ) ;
+   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
 error :
-   if ( NULL != node )
-   {
-      release_node( node ) ;
-      node = NULL ;
-   }
+   RELEASE_PTR( node ) ;
    goto done ;
 }
 
@@ -174,13 +176,9 @@ static PYOBJECT *get_nodebyname( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return Py_BuildValue( "(i,O)", rc, PyCObject_FromVoidPtr( client, release_client) ) ;
+   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
 error :
-   if ( NULL != node )
-   {
-      release_node( node ) ;
-      node = NULL ;
-   }
+   RELEASE_PTR( node ) ;
    goto done ;
 }
 
@@ -213,13 +211,9 @@ static PYOBJECT *get_nodebyendpoint( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return Py_BuildValue( "(i,O)", rc, PyCObject_FromVoidPtr( client, release_client) ) ;
+   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
 error :
-   if ( NULL != node )
-   {
-      release_node( node ) ;
-      node = NULL ;
-   }
+   RELEASE_PTR( node ) ;
    goto done ;
 }
 
@@ -247,7 +241,6 @@ static INT32 pydict_to_cmap( PYOBJECT *pyobj, std::map<std::string,std::string>&
       }
       cobj[ key_name ] = PyString_AsString( val );
    }
-   
 done :
    return rc ;
 error :
