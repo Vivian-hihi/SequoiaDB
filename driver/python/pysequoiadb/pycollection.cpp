@@ -556,11 +556,11 @@ done:
 static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
-   SINT32 flags            = 0 ;
-   INT32  list_size        = 0 ;
    PYOBJECT *obj           = NULL ;
-   PYOBJECT *cursor_object = NULL ;
+   PYOBJECT *ret_object    = NULL ;
+   PYOBJECT *cl_object     = NULL ;
    PYOBJECT *list_object   = NULL ;
+   PYOBJECT *cursor_object = NULL ;
    void *tmp               = NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
@@ -574,15 +574,18 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCollection, cursor ) ;
-   rc = cl->aggregate( cursor, vec_bson ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCursor, cursor ) ;
+   MAKE_PYLIST_TO_VECTOR( list_object, list_size, tmp, vec_bson ) ;
+   rc = cl->aggregate( *cursor, vec_bson ) ;
    if ( rc )
    {
       goto done ;
    }
 
+   MAKE_PYTHON_VOID_OBJECT( cursor, ret_object ) ;
+
 done:
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_OBJECT( rc, ret_object ) ;
 }
 
 static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
