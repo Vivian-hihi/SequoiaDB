@@ -50,6 +50,7 @@
 #include <vector>
 
 using namespace std ;
+using namespace bson ;
 
 namespace engine
 {
@@ -127,6 +128,8 @@ namespace engine
       CLS_BUCKET_ROLLBACKING
    } ;
 
+   const CHAR* clsGetReplBucketStatusDesp( INT32 status ) ;
+
    enum CLS_SUBMIT_RESULT
    {
       CLS_SUBMIT_EQ_EXPECT       = 1,
@@ -144,6 +147,9 @@ namespace engine
       public:
          _clsBucket () ;
          ~_clsBucket () ;
+
+         BSONObj toBson() ;
+         INT32   forceCompleteAll() ;
 
          void enforceMaxReplSync( UINT32 maxReplSync ) ;
          UINT32 maxReplSync () const { return _maxReplSync ; }
