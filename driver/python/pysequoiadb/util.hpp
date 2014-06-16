@@ -41,20 +41,23 @@
  *@calssname [in] the class of the instance
  *@instance  [out] the pointer pointing to real object
  **/
-#define CAST_PYOBJECT_TO_COBJECT( py_object, tmp, classname, instance ) \
-   tmp = PyCObject_AsVoidPtr( obj ) ;                                   \
-   if ( NULL == tmp )                                                   \
-   {                                                                    \
-      rc = SDB_INVALIDARGS ;                                            \
-      goto done ;                                                       \
-   }                                                                    \
-                                                                        \
-   instance = static_cast< classname * >( tmp ) ;                       \
-   if ( NULL == instance )                                              \
-   {                                                                    \
-      rc = SDB_INVALIDARGS ;                                            \
-      goto done ;                                                       \
-   }
+#define CAST_PYOBJECT_TO_COBJECT( py_object, classname, instance ) \
+   do                                                              \
+   {                                                               \
+      void *tmp = PyCObject_AsVoidPtr( obj ) ;                     \
+      if ( NULL == tmp )                                           \
+      {                                                            \
+         rc = SDB_INVALIDARGS ;                                    \
+         goto done ;                                               \
+      }                                                            \
+                                                                   \
+      instance = static_cast< classname * >( tmp ) ;               \
+      if ( NULL == instance )                                      \
+      {                                                            \
+         rc = SDB_INVALIDARGS ;                                    \
+         goto done ;                                               \
+      }                                                            \
+   }while( 0 )
 
 /*
  *@brief     macro to re-cast python object to specified class
