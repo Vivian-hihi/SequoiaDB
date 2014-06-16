@@ -48,7 +48,7 @@ clientLibFiles = [
       root_dir + "/../../SequoiaDB/engine/bson/nonce.cpp",
       root_dir + "/../../SequoiaDB/engine/util/fromjson.hpp",
       root_dir + "/../../SequoiaDB/engine/util/json2rawbson.h",
-      root_dir + "/../../SequoiaDB/engine/util/utilStr.hpp",
+      root_dir + "/../../SequoiaDB/engine/include/utilStr.hpp",
       root_dir + "/../../SequoiaDB/engine/util/utilStr.cpp",
       root_dir + "/../../SequoiaDB/engine/client/base64c.h"
       ]
