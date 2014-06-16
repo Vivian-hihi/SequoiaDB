@@ -44,7 +44,7 @@ static PYOBJECT *release_cs( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
-   rc = cs->release_cs() ;
+   DELETE_CPPOBJECT( cs );
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -69,7 +69,7 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, tmp, sdbCollection, cl ) ;
 
-   rc = cs->get_collection( cl_name, *cl ) ;
+   rc = cs->getCollection( cl_name, *cl ) ;
    if ( rc )
    {
       goto done ;
@@ -98,7 +98,7 @@ static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, tmp, sdbCollection, cl ) ;
 
-   rc = cs->create_collection( cl_name, *cl ) ;
+   rc = cs->createCollection( cl_name, *cl ) ;
    if ( rc )
    {
       goto done ;
@@ -131,7 +131,7 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, tmp, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
-   rc = cs->create_collection_use_opt( cl_name, option, *cl ) ;
+   rc = cs->createCollection( cl_name, option, *cl ) ;
    if ( rc )
    {
       goto done ;
@@ -158,7 +158,7 @@ static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
 
-   rc = cs->drop_collection( cl_name ) ;
+   rc = cs->dropCollection( cl_name ) ;
    if ( rc )
    {
       goto done ;
@@ -184,7 +184,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
 
-   cs_name = cs->get_collection_space_name() ;
+   cs_name = cs->getCSName() ;
 
 error:
    return MAKE_RETURN_INT_PYSTRING( rc, cs_name ) ;

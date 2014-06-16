@@ -33,6 +33,8 @@ class sdbcollectionspace(object):
         if rc:
             pass
 
-    def get_collection_name(self):
-        cs_name = sdbcs.get_collection_name(self.cs)
+    def get_collection_space_name(self):
+        _, cs_name = sdbcs.get_collection_space_name(self.cs)
+        if rc is not 0:
+            pass
         return cs_name

@@ -44,7 +44,7 @@ static PYOBJECT *release_cl( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
-   rc = cl->release_cs() ;
+   DELETE_CPPOBJECT( cl ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -68,7 +68,7 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
 
-   rc = cl->get_count( count, condition ) ;
+   rc = cl->getCount( count, condition ) ;
    if ( rc )
    {
       goto done ;
@@ -103,7 +103,7 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_end_condition, tmp, end_condition ) ;
 
-   rc = cl->split_by_condition( src_name, dst_name, condition, end_condition ) ;
+   rc = cl->split( src_name, dst_name, condition, end_condition ) ;
    if ( rc )
    {
       goto done ;
@@ -135,7 +135,7 @@ static PYOBJECT *split_by_precent( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   rc = cl->split_by_precent( src_name, dst_name, precent ) ;
+   rc = cl->split( src_name, dst_name, precent ) ;
    if ( rc )
    {
       goto done ;
@@ -171,8 +171,8 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_end_condition, tmp, end_condition ) ;
 
-   rc = cl->split_async_by_condition( task_id, src_name, dst_name,
-                                      condition, end_condition ) ;
+   rc = cl->splitAsync( task_id, src_name, dst_name,
+                                  condition, end_condition ) ;
    if ( rc )
    {
       goto done ;
@@ -205,7 +205,7 @@ static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   rc = cl->splite_async_by_precent( src_name, dst_name, precent, task_id ) ;
+   rc = cl->spliteAsync( src_name, dst_name, precent, task_id ) ;
    if ( rc )
    {
       goto done ;
@@ -236,7 +236,7 @@ static PYOBJECT *bulk_insert( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
    MAKE_PYLIST_TO_VECTOR( list_object, list_size, tmp, vec_bson ) ;
-   rc = cl->bulk_insert( flags, vec_bson ) ;
+   rc = cl->bulkInsert( flags, vec_bson ) ;
    if ( rc )
    {
       goto done ;
@@ -431,7 +431,7 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_index_def, tmp, index_def ) ;
 
-   rc = cl->create_index( index_def, name, is_unique, is_enforced ) ;
+   rc = cl->createIndex( index_def, name, is_unique, is_enforced ) ;
    if ( rc )
    {
       goto done ;
@@ -461,7 +461,7 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCursor, cursor ) ;
 
-   rc = cl->get_index( *cursor, index_name ) ;
+   rc = cl->getIndexes( *cursor, index_name ) ;
    if ( rc )
    {
       goto done ;
@@ -488,7 +488,7 @@ static PYOBJECT *drop_index( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   rc = cl->drop_index( index_name ) ;
+   rc = cl->dropIndex( index_name ) ;
    if ( rc )
    {
       goto done ;
@@ -514,7 +514,7 @@ static PYOBJECT *get_collection_name( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   cl_name = cl->get_collection_name() ;
+   cl_name = cl->getCollectionName() ;
 
 done:
    return MAKE_RETURN_INT_PYSTRING( rc, cl_name ) ;
@@ -536,7 +536,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   cs_name = cl->get_collection_name() ;
+   cs_name = cl->getCSName() ;
 
 done:
    return MAKE_RETURN_INT_PYSTRING( rc, cs_name ) ;
@@ -558,7 +558,7 @@ static PYOBJECT *get_full_name( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   full_name = cl->get_full_name() ;
+   full_name = cl->getFullName() ;
 
 done:
    return MAKE_RETURN_INT_PYSTRING( rc, full_name ) ;
@@ -627,7 +627,7 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
 
-   rc = cl->get_query_meta( *cursor, condition, selector, order_by, hint,
+   rc = cl->getQueryMeta( *cursor, condition, selector, order_by, hint,
                             num_to_skip, &num_to_return ) ;
    if ( rc )
    {
@@ -659,7 +659,7 @@ static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
-   rc = cs->attach_collection( sub_full_name, option ) ;
+   rc = cs->attachCollection( sub_full_name, option ) ;
    if ( rc )
    {
       goto done ;
@@ -685,7 +685,7 @@ static PYOBJECT *detach_collection( PYOBJECT *self, PYOBJECT *args )
    }
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
 
-   rc = cs->detach_collection( sub_full_name ) ;
+   rc = cs->detachCollection( sub_full_name ) ;
    if ( rc )
    {
       goto done ;

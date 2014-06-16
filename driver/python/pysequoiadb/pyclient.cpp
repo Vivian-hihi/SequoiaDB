@@ -49,7 +49,7 @@ static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   client->init_connect( host, port ) ;
+   client->connect( host, port, default_user, default_psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -69,9 +69,7 @@ static PYOBJECT *release_client( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client )
-
-   SDB_OSS_DEL client ;
-   client = NULL ;
+   DELETE_CPPOBJECT( client ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -177,27 +175,6 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *is_connected( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc            = 0 ;
-   PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
-   sdb *client         = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-
-   rc = client.is_connected() ;
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
-
 static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc              = 0 ;
@@ -215,7 +192,7 @@ static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.create_user( user_name, psw ) ;
+   rc = client.createUser( user_name, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -238,7 +215,7 @@ static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.remove_user( user_name, psw ) ;
+   rc = client.removeUser( user_name, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -273,7 +250,7 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
 
-   rc = client.get_snapshot( *cursor, snap_type,
+   rc = client.getSnapshot( *cursor, snap_type,
                              condition, selector, order_by ) ;
    if ( rc )
    {
@@ -305,7 +282,7 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
 
-   client->reset_snapshot( condition ) ;
+   client->resetSnapshot( condition ) ;
 
 done:
    DELETE_CPPOBJECT( condition ) ;
@@ -341,7 +318,7 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
 
-   rc = client.get_list( *cursor, snap_type, condition, selector, order_by ) ;
+   rc = client.getList( *cursor, snap_type, condition, selector, order_by ) ;
    if ( rc )
    {
       goto done ;
@@ -353,48 +330,48 @@ done:
    DELETE_CPPOBJECT( order_by ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
-
-static PYOBJECT *lock( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc            = 0 ;
-   PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
-   sdb *client         = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-
-   rc = client.lock() ;
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
-
-static PYOBJECT *unlock( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc            = 0 ;
-   PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
-   sdb *client         = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-
-   rc = client.unlock() ;
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
+// 
+// static PYOBJECT *lock( PYOBJECT *self, PYOBJECT *args )
+// {
+//    INT32 rc            = 0 ;
+//    PYOBJECT *obj       = NULL ;
+//    void *tmp           = NULL ;
+//    sdb *client         = NULL ;
+// 
+//    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+//    {
+//       rc = SDB_INVALIDARGS ;
+//       goto done ;
+//    }
+// 
+//    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+// 
+//    rc = client.lock() ;
+// 
+// done:
+//    return MAKE_RETURN_INT( rc ) ;
+// }
+// 
+// static PYOBJECT *unlock( PYOBJECT *self, PYOBJECT *args )
+// {
+//    INT32 rc            = 0 ;
+//    PYOBJECT *obj       = NULL ;
+//    void *tmp           = NULL ;
+//    sdb *client         = NULL ;
+// 
+//    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+//    {
+//       rc = SDB_INVALIDARGS ;
+//       goto done ;
+//    }
+// 
+//    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+// 
+//    rc = client.unlock() ;
+// 
+// done:
+//    return MAKE_RETURN_INT( rc ) ;
+// }
 
 static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
@@ -417,7 +394,7 @@ static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, tmp, sdbCollectionSpace, cs ) ;
 
-   rc = client.get_collection_space( cs_name, page_size, *cs ) ;
+   rc = client.getCollectionSpace( cs_name, page_size, *cs ) ;
    if ( rc )
    {
       goto done ;
@@ -448,7 +425,7 @@ static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, tmp, sdbCollectionSpace, cs ) ;
 
-   rc = client.create_collection_space( cs_name, page_size, *cs ) ;
+   rc = client.createCollectionSpace( cs_name, page_size, *cs ) ;
    if ( rc )
    {
       goto done ;
@@ -474,7 +451,7 @@ static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.drop_collection_space( cs_name ) ;
+   rc = client.dropCollectionSpace( cs_name ) ;
    if ( rc )
    {
       goto done ;
@@ -502,7 +479,35 @@ static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
 
-   rc = client.list_collection_space( cursor ) ;
+   rc = client.listCollectionSpaces( *cursor ) ;
+   if ( rc )
+   {
+      goto done ;
+   }
+
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
+static PYOBJECT *list_replica_groups( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc                 = 0 ;
+   PYOBJECT *obj            = NULL ;
+   PYOBJECT *cursor_obj     = NULL ;
+   void *tmp                = NULL ;
+   sdb *client              = NULL ;
+   sdbCursor *cursor        = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &cursor_obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+
+   rc = client.listReplicaGroups( *cursor ) ;
    if ( rc )
    {
       goto done ;
@@ -531,7 +536,7 @@ static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
 
-   rc = client.get_replica_group_by_name( group_name, group ) ;
+   rc = client.getReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -561,7 +566,7 @@ static PYOBJECT *get_replica_group_by_id( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
 
-   rc = client.get_replica_group_by_id( group_id, *group ) ;
+   rc = client.getReplicaGroup( group_id, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -590,7 +595,7 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
 
-   rc = client.create_replica_group( group_name, *group ) ;
+   rc = client.createReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -617,7 +622,7 @@ static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.remove_replica_group( group_name ) ;
+   rc = client.removeReplicaGroup( group_name ) ;
    if ( rc )
    {
       goto done ;
@@ -649,7 +654,7 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_configure, tmp, configure ) ;
 
-   rc = client.get_list( host, service, db_path, configure ) ;
+   rc = client.createReplicaCataGroup( host, service, db_path, configure ) ;
    if ( rc )
    {
       goto done ;
@@ -679,7 +684,7 @@ static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
 
-   rc = client.active_replica_group( group_name, *group ) ;
+   rc = client.activateReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -705,7 +710,7 @@ static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.exec_update( sql ) ;
+   rc = client.execUpdate( sql ) ;
    if ( rc )
    {
       goto done ;
@@ -734,7 +739,7 @@ static PYOBJECT *exec_sql( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
 
-   rc = client.exec_sql( sql, *cursor ) ;
+   rc = client.exec( sql, *cursor ) ;
    if ( rc )
    {
       goto done ;
@@ -760,7 +765,7 @@ static PYOBJECT *transaction_begin( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.transaction_begin() ;
+   rc = client.transactionBegin() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -782,7 +787,7 @@ static PYOBJECT *transaction_commit( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.transaction_commit() ;
+   rc = client.transactionCommit() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -804,7 +809,7 @@ static PYOBJECT *transaction_rollback( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.transaction_rollback() ;
+   rc = client.transactionRollback() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -828,7 +833,7 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
-   rc = client.flush_configure( option ) ;
+   rc = client.flushConfigure( option ) ;
    if ( rc )
    {
       goto done ;
@@ -857,7 +862,7 @@ static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
-   rc = client.backup_offline( option ) ;
+   rc = client.backupOffline( option ) ;
    if ( rc )
    {
       goto done ;
@@ -899,7 +904,7 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
 
-   rc = client.list_backup( option, condition, selector, order_by ) ;
+   rc = client.listBackup( *cursor, option, condition, selector, order_by ) ;
    if ( rc )
    {
       goto done ;
@@ -931,7 +936,7 @@ static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
-   rc = client.remove_backup( option ) ;
+   rc = client.removeBackup( option ) ;
    if ( rc )
    {
       goto done ;
@@ -973,7 +978,7 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
 
-   rc = client.list_tasks( *cursor, condition, selector, order_by, hint ) ;
+   rc = client.listTasks( *cursor, condition, selector, order_by, hint ) ;
    if ( rc )
    {
       goto done ;
@@ -1004,7 +1009,7 @@ static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.wait_task( task_id, num ) ;
+   rc = client.waitTasks( task_id, num ) ;
    if ( rc )
    {
       goto done ;
@@ -1031,7 +1036,7 @@ static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.cancel_task( task_id, is_async ) ;
+   rc = client.cancelTask( task_id, is_async ) ;
    if ( rc )
    {
       goto done ;
@@ -1059,7 +1064,7 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
-   rc = client.set_session_attri( option ) ;
+   rc = client.setSessionAttr( option ) ;
    if ( rc )
    {
       goto done ;
@@ -1085,7 +1090,7 @@ static PYOBJECT *close_all_cursors( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.close_all_cursors() ;
+   rc = client.closeAllCursors() ;
    if ( rc )
    {
       goto done ;
@@ -1110,13 +1115,13 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   rc = client.is_valid( result ) ;
+   rc = client.isValid( result ) ;
    if ( rc )
    {
       goto done ;
    }
 done:
-   return MAKE_RETURN_INT_INT( rc, result ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 /* List of functions defined in the module */
@@ -1128,7 +1133,6 @@ static PyMethodDef client_methods[] = {
    {"connect_by_service",        connect_by_service,           METH_VARARGS},
    {"connect_by_address",        connect_by_address,           METH_VARARGS},
    {"disconnect",                disconnect,                   METH_VARARGS},
-   {"is_connected",              is_connected,                 METH_VARARGS},
    {"create_user",               create_user,                  METH_VARARGS},
    {"remove_user",               remove_user,                  METH_VARARGS},
    {"get_snapshot",              get_snapshot,                 METH_VARARGS},
@@ -1140,6 +1144,7 @@ static PyMethodDef client_methods[] = {
    {"create_collection_space",   create_collection_space,      METH_VARARGS},
    {"drop_collection_space",     drop_collection_space,        METH_VARARGS},
    {"list_collection_spaces",    list_collection_spaces,       METH_VARARGS},
+   {"list_replica_groups",       list_replica_groups,          METH_VARARGS},
    {"get_replica_group_by_name", get_replica_group_by_name,    METH_VARARGS},
    {"get_replica_group_by_id",   get_replica_group_by_id,      METH_VARARGS},
    {"create_replica_group",      create_replica_group,         METH_VARARGS},

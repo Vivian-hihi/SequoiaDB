@@ -9,8 +9,8 @@ class sdbcollection(object):
             sdbcl.release_cl(self.cl)
             self.cl = None
 
-    def get_count(self, count, condition = static_object):
-        rc = sdbcl.get_count(self.cl, count, condition)
+    def get_count(self, condition = static_object):
+        rc, count = sdbcl.get_count(self.cl, condition)
         if rc:
             pass
 
@@ -29,17 +29,19 @@ class sdbcollection(object):
     def split_async(self, task_id, source_group_name, target_group_name,
                                    split_condition,
                                    split_end_conditon = static_object):
-        rc = sdbcl.split_async(self.cl, task_id, source_group_name,
-                                                 target_group_name,
-                                                 split_condition,
-                                                 split_end_condition)
+        rc, task_id = sdbcl.split_async_by_condition(self.cl,
+                                                     source_group_name,
+                                                     target_group_name,
+                                                     split_condition,
+                                                     split_end_condition)
         if rc:
             pass
 
     def split_async(self, source_group_name, target_group_name,
                           percent, task_id):
-        rc = sdbcl.splite_async(self.cl, source_group_name, target_group_name,
-                                         precent, task_id)
+        rc, task_id = sdbcl.splite_async_by_precent(self.cl, source_group_name,
+                                                             target_group_name,
+                                                             precent)
         if rc:
             pass
 
@@ -92,15 +94,21 @@ class sdbcollection(object):
             pass
 
     def get_collection_name(self):
-        cl_name = sdbcl.get_collection_name(self.cl)
+        _, cl_name = sdbcl.get_collection_name(self.cl)
+        if _ is not 0:
+            pass
         return cl_name
 
     def get_cs_name(self):
-        cs_name = sdbcl.get_cs_name(self.cl)
+        _, cs_name = sdbcl.get_cs_name(self.cl)
+        if _ is not 0:
+            pass
         return cs_name
 
     def get_full_name(self):
-        full_name = sdbcl.gey_full_name(self.cl)
+        _, full_name = sdbcl.gey_full_name(self.cl)
+        if _ is not 0:
+            pass
         return full_name
 
     def aggregate(self, cursor, obj):

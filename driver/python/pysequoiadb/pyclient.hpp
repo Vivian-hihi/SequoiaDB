@@ -36,8 +36,6 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *disconnect( PYOBJECT *self, PYOBJECT *args ) ;
 
-static PYOBJECT *is_connected( PYOBJECT *self, PYOBJECT *args ) ;
-
 static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args ) ;
@@ -59,6 +57,8 @@ static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args ) ;
 static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args ) ;
+
+static PYOBJECT *list_replica_groups( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args ) ;
 
