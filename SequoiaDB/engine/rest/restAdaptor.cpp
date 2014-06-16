@@ -964,6 +964,7 @@ namespace engine
                pFileType = REST_STRING_TEXT_CSS ;
                break ;
             case HTTP_FILE_HTML:
+            case HTTP_FILE_DEFAULT:
             default:
                pFileType = REST_STRING_TEXT_HTML ;
                break ;
