@@ -114,16 +114,20 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      if ( SDB_ROLE_STANDALONE == pmdGetDBRole() &&
-           !pmdGetStartup().isOK() )
+      if ( SDB_ROLE_STANDALONE == pmdGetDBRole() )
       {
-         pmdEDUCB *cb = pmdGetThreadEDUCB() ;
-         rc = rtnRebuildDB( cb ) ;
-         PD_RC_CHECK( rc, PDERROR, "Failed to rebuild database, rc: %d",
-                      rc ) ;
+         pmdSetPrimary( TRUE ) ;
 
-         PD_LOG( PDEVENT, "Rebuild database succeed." ) ;
-         pmdGetStartup().ok( TRUE ) ;
+         if ( !pmdGetStartup().isOK() )
+         {
+            pmdEDUCB *cb = pmdGetThreadEDUCB() ;
+            rc = rtnRebuildDB( cb ) ;
+            PD_RC_CHECK( rc, PDERROR, "Failed to rebuild database, rc: %d",
+                         rc ) ;
+
+            PD_LOG( PDEVENT, "Rebuild database succeed." ) ;
+            pmdGetStartup().ok( TRUE ) ;
+         }
       }
 
    done:
