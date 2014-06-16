@@ -18,7 +18,7 @@
 #ifndef _SDB_PYTHON_DRIVER_COLLECTION_HPP_
 #define _SDB_PYTHON_DRIVER_COLLECTION_HPP_
 
-static PYOBJECT *create_cl( PYOBJECT *self ) ;
+static PYOBJECT *create_cl( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *release_cl( PYOBJECT *self, PYOBJECT *args ) ;
 

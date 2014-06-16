@@ -20,7 +20,7 @@
 #include "util.hpp"
 #include "pycollection.hpp"
 
-static PYOBJECT *create_cl( PYOBJECT *self ) 
+static PYOBJECT *create_cl( PYOBJECT *self, PYOBJECT *args ) 
 {
    sdbCollection *cl = SDB_OSS_NEW sdbCollection() ;
    if ( NULL == cl )

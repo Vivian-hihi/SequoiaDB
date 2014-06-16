@@ -20,7 +20,7 @@
 
 #include "util.hpp"
 
-static PYOBJECT *create_cs( PYOBJECT *self )
+static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
 {
    sdbCollectionSpace *cs = SDB_OSS_NEW sdbCollectionSpace() ;
    if ( NULL == cs )

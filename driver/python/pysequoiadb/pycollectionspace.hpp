@@ -18,7 +18,7 @@
 #ifndef _SDB_PYTHON_DRIVER_COLLECTION_SPACE_HPP_
 #define _SDB_PYTHON_DRIVER_COLLECTION_SPACE_HPP_
 
-static PYOBJECT *create_cs( PYOBJECT *self ) ;
+static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *release_cs( PYOBJECT *self, PYOBJECT *args ) ;
 

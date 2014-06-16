@@ -23,7 +23,7 @@
 
 using namespace sdbclient;
 
-static PYOBJECT *create_client( PYOBJECT *self/*, PYOBJECT *args */)
+static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
 {
    sdb *client = SDB_OSS_NEW sdb() ;
    if ( NULL == client )

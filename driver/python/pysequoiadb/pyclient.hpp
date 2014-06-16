@@ -22,7 +22,7 @@
  *@brief get a object reference to sdb.
  *
  **/
-static PYOBJECT *create_client( PYOBJECT *self/*, PYOBJECT *args*/ ) ;
+static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args ) ;
 
