@@ -1,68 +1,73 @@
-"""ReplicaNode interface of  SequoiaDB
+"""
+   Copyright (C) 2012-2014 SequoiaDB Ltd.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 """
 
 import sdbreplicagroup
 import bson
 import types
 from pysequoiadb import replicanode
+from pysequoiadb import common
+from pysequoiadb import error
+from pysequoiadb.error import InvalidParameter
+
 
 class replicagroup(object):
     """Entrance of SequoiaDB
 
     """
-    node_status_all = 0
-    node_status_active = 1
-    node_status_inactive = 2
-    node_status_unknown = 3
-
     def __init__(self, group, client):
         self.group = group
         self.client = client
 
-    def err_process(self, result):
-        if 2 != len(result):
-            pass
-        if 0 != result[0]:
-            pass
-        return result[1]
-
     def get_nodenum(self, nodestatus):
-        if nodestatus < self.node_status_all or nodestatus >= self.node_status_unknown :
-            pass
+        if nodestatus not in common.NODE_STATUS.available_options() :
+            raise InvalidParameter("invalid node status")
 
         result = sdbreplicagroup.get_detail(self.group, nodestatus)
-        return self.err_process(result)
+        return error.err_process(result)
 
     def get_detail(self):
         result = sdbreplicagroup.get_detail(self.group)
-        bson_string = self.err_process(result)
+        bson_string = error.err_process(result)
         return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
 
 
     def get_master(self):
         result = sdbreplicagroup.get_master(self.group)
-        node = self.err_process(result)
+        node = error.err_process(result)
         return replicanode(self.client, node)
 
     def get_slave(self):
         result = sdbreplicagroup.get_slave(self.group)
-        node = self.err_process(result)
+        node = error.err_process(result)
         return replicanode(self.client, node)
 
     def get_nodebyendpoint(self, hostname, servicename):
         result = sdbreplicagroup.get_nodebyendpoint(self.group, hostname, servicename)
-        node = self.err_process(result)
+        node = error.err_process(result)
         return replicanode(self.client, node)
 
     def get_nodebyname(self,nodename):
         result = sdbreplicagroup.get_nodebyname(self.group, nodename)
-        node = self.err_process(result)
+        node = error.err_process(result)
         return replicanode(self.client, node)
 
 
     def create_node(self, hostname, servicename, dbpath, config):
         if types.DictType != type(config):
-            pass
+            raise InvalidParameter("invalid parameter type")
         rc = sdbreplicagroup.remove_node(self.group, hostname, servicename, dbpath, config)
         return rc
 
