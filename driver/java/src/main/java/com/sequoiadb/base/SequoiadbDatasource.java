@@ -59,6 +59,42 @@ public class SequoiadbDatasource
 	private Random rand = new Random(47);
 	
 	/**
+	 * @fn int getIdleConnNum()
+	 * @brief Get the current idle connection amount.
+	 */
+	public synchronized int getIdleConnNum()
+	{
+		return idle_sequoiadbs.size();
+	}
+	
+	/**
+	 * @fn int getUsedConnNum()
+	 * @brief Get the current used connection amount.
+	 */
+	public synchronized int getUsedConnNum()
+	{
+		return used_sequoiadbs.size();
+	}
+	
+	/**
+	 * @fn int getNormalAddrNum()
+	 * @brief Get the current normal address amount.
+	 */
+	public synchronized int getNormalAddrNum()
+	{
+		return normal_urls.size();
+	}
+	
+	/**
+	 * @fn int getAbnormalAddrNum()
+	 * @brief Get the current abnormal address amount.
+	 */
+	public synchronized int getAbnormalAddrNum()
+	{
+		return abnormal_urls.size();
+	}
+	
+	/**
 	 * @fn SequoiadbDatasource(ArrayList<String> urls, String username, String password,
 	 *		                   ConfigOptions nwOpt, SequoiadbOption dsOpt)
 	 * @brief constructor.
@@ -317,12 +353,6 @@ public class SequoiadbDatasource
 	{
 		if (null == sdb)
 			throw new BaseException("SDB_INVALIDARG", sdb);
-		// when datasource not be used, abandon the connection directly
-		if (dsOpt.getMaxConnectionNum() == 0)
-		{
-			sdb.disconnect();
-			return;
-		}
 		// check option
 		if (dsOpt.getAbandonTime() <= 0)
 			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + dsOpt.getAbandonTime());
@@ -336,6 +366,12 @@ public class SequoiadbDatasource
 		{
 			// remove it from busy queue
 			used_sequoiadbs.remove(sdb);
+			// when datasource not be used, abandon the connection directly
+			if (dsOpt.getMaxConnectionNum() == 0)
+			{
+				sdb.disconnect();
+				return;
+			}
 			// judge put it in idle queue or not
 			long lastTime = sdb.getConnection().getLastUseTime();
 			long currentTime = System.currentTimeMillis();
