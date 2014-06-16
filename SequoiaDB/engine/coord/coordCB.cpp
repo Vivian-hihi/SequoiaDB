@@ -97,7 +97,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       CoordGroupInfo *pGroupInfo = NULL ;
       UINT32 catGID = CATALOG_GROUPID ;
-      UINT16 catNID = CATA_NODE_ID_BEGIN ;
+      UINT16 catNID = CATA_NODE_ID_BEGIN + CLS_REPLSET_MAX_NODE_SIZE ;
       MsgRouteID id ;
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       const _pmdOptionsMgr::_pmdAddrPair *pCatAddrs = optCB->catAddrs() ;
