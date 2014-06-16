@@ -581,7 +581,7 @@ namespace engine
          else
          {
             common = COM_GETFILE ;
-            pHttpCon->_fileType = HTTP_FILE_HTML ;
+            pHttpCon->_fileType = HTTP_FILE_DEFAULT ;
          }
       }
       pathSize = ossStrlen( pHttpCon->_pPath ) ;
@@ -1237,6 +1237,13 @@ namespace engine
       return rc ;
    error:
       goto done ;
+   }
+
+   HTTP_FILE_TYPE getFileType( pmdRestSession *pSession )
+   {
+      SDB_ASSERT ( pSession, "pSession is NULL" )
+      httpConnection *pHttpCon = pSession->getRestConn() ;
+      return pHttpCon->_fileType ;
    }
 
 /* PD_TRACE_DECLARE_FUNCTION ( SDB__RESTCONVERTMSG__INSERT, "_restConvertMsg::buildInsertMsg" )
