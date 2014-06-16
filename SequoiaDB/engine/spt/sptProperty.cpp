@@ -171,7 +171,7 @@ namespace engine
    }
 
    INT32 _sptProperty::assignBsonobj( const CHAR *name,
-                                      bson::BSONObj &value )
+                                      const bson::BSONObj &value )
    {
       INT32 rc = SDB_OK ;
 

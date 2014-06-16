@@ -36,6 +36,7 @@
 #include "utilStr.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
+#include <boost/xpressive/xpressive_dynamic.hpp>
 
 namespace engine
 {
@@ -311,6 +312,20 @@ namespace engine
                   ) ;
       pBuff[ size - 1 ] = 0 ;
       return pBuff ;
+   }
+
+   BOOLEAN isValidIPV4( const CHAR *ip )
+   {
+using namespace boost::xpressive ;
+      static cregex reg = cregex::compile( "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]" \
+                                            "|[1-9][0-9]|[1-9])[.](25[0-5]|" \
+                                            "2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]" \
+                                            "|[0-9])[.](25[0-5]|2[0-4][0-9]|" \
+                                            "1[0-9][0-9]|[1-9][0-9]|[0-9])[.]"\
+                                            "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]"\
+                                            "|[1-9][0-9]|[1-9])" ) ;
+      return regex_match( ip, reg ) ;
+      
    }
 
 }

@@ -65,7 +65,7 @@ namespace engine
                              const void *classDef ) ;
 
       INT32 setBSONObj( const CHAR *name,
-                        bson::BSONObj &obj ) ;
+                        const bson::BSONObj &obj ) ;
 
       const sptProperty &getVal() const
       {

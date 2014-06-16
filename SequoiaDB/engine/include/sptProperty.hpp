@@ -59,7 +59,7 @@ namespace engine
                           const CHAR *value ) ;
 
       INT32 assignBsonobj( const CHAR *name,
-                           bson::BSONObj &value ) ;
+                           const bson::BSONObj &value ) ;
 
       /// WARNING: value will be registered in
       /// engine and released in JS_Destructor.

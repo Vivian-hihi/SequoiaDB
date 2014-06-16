@@ -68,6 +68,9 @@ namespace engine
 
    const CHAR* utilAscTime( time_t tTime, CHAR *pBuff, UINT32 size ) ;
 
+   /// non-reentrant
+   BOOLEAN isValidIPV4( const CHAR *ip ) ;
+
 }
 
 #endif // UTILSTR_HPP_

@@ -82,7 +82,7 @@ namespace engine
    }
 
    INT32 _sptReturnVal::setBSONObj( const CHAR *name,
-                                    bson::BSONObj &obj )
+                                    const bson::BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
       rc = _property.assignBsonobj( name, obj ) ;

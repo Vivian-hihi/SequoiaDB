@@ -41,11 +41,9 @@ static const UINT32 SPT_STACK_OUTPUT = 1024 * 2 ;
 namespace engine
 {
 JS_STATIC_FUNC_DEFINE( _sptUsrCmd, exec )
-JS_STATIC_FUNC_DEFINE( _sptUsrCmd, getOsType )
 //JS_CONSTRUCT_FUNC_DEFINE( _sptUsrCmd, construct )
 JS_BEGIN_MAPPING( _sptUsrCmd, "Cmd" )
    JS_ADD_STATIC_FUNC( "run", exec )
-   JS_ADD_STATIC_FUNC( "osType", getOsType )
 //   JS_ADD_CONSTRUCT_FUNC( construct)
 JS_MAPPING_END()
 /*
@@ -106,18 +104,6 @@ JS_MAPPING_END()
       return rc ;
    error:
       goto done ;
-   }
-
-   INT32 _sptUsrCmd::getOsType( const _sptArguments &arg,
-                                _sptReturnVal &rval,
-                                bson::BSONObj &detail )
-   {
-#if defined (_LINUX)
-      rval.setStringVal( "", "LINUX") ;
-#elif defined (_WINDOWS)
-      rval.setStringVal( "", "WINDOWS" ) ;
-#endif
-      return SDB_OK ;
    }
 
    INT32 _sptUsrCmd::_setRVal( _sptCmdRunner *runner,
