@@ -1118,3 +1118,50 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
 done:
    return MAKE_RETURN_INT_INT( rc, result ) ;
 }
+
+/* List of functions defined in the module */
+static PyMethodDef client_methods[] = {
+   {"create_client",             create_client,                METH_VARARGS},
+   {"init_connect",              init_connect,                 METH_VARARGS},
+   {"release_client",            release_client,               METH_VARARGS},
+   {"connect_by_host",           connect_by_host,              METH_VARARGS},
+   {"connect_by_service",        connect_by_service,           METH_VARARGS},
+   {"connect_by_address",        connect_by_address,           METH_VARARGS},
+   {"disconnect",                disconnect,                   METH_VARARGS},
+   {"is_connected",              is_connected,                 METH_VARARGS},
+   {"create_user",               create_user,                  METH_VARARGS},
+   {"remove_user",               remove_user,                  METH_VARARGS},
+   {"get_snapshot",              get_snapshot,                 METH_VARARGS},
+   {"reset_snapshot",            reset_snapshot,               METH_VARARGS},
+   {"get_list",                  get_list,                     METH_VARARGS},
+   {"lock",                      lock,                         METH_VARARGS},
+   {"unlock",                    unlock,                       METH_VARARGS},
+   {"get_collection_space",      get_collection_space,         METH_VARARGS},
+   {"create_collection_space",   create_collection_space,      METH_VARARGS},
+   {"drop_collection_space",     drop_collection_space,        METH_VARARGS},
+   {"list_collection_spaces",    list_collection_spaces,       METH_VARARGS},
+   {"get_replica_group_by_name", get_replica_group_by_name,    METH_VARARGS},
+   {"get_replica_group_by_id",   get_replica_group_by_id,      METH_VARARGS},
+   {"create_replica_group",      create_replica_group,         METH_VARARGS},
+   {"remove_replica_group",      remove_replica_group,         METH_VARARGS},
+   {"create_replica_cata_group", create_replica_cata_group,    METH_VARARGS},
+   {"active_replica_group",      active_replica_group,         METH_VARARGS},
+   {"exec_update",               exec_update,                  METH_VARARGS},
+   {"exec_sql",                  exec_sql,                     METH_VARARGS},
+   {"transaction_begin",         transaction_begin,            METH_VARARGS},
+   {"transaction_commit",        transaction_commit,           METH_VARARGS},
+   {"transaction_rollback",      transaction_rollback,         METH_VARARGS},
+   {"flush_configure",           flush_configure,              METH_VARARGS},
+   {"backup_offline",            backup_offline,               METH_VARARGS},
+   {"list_backup",               list_backup,                  METH_VARARGS},
+   {"remove_backup",             remove_backup,                METH_VARARGS},
+   {"list_tasks",                list_tasks,                   METH_VARARGS},
+   {"wait_task",                 wait_task,                    METH_VARARGS},
+   {"cancel_task",               cancel_task,                  METH_VARARGS},
+   {"set_session_attri",         set_session_attri,            METH_VARARGS},
+   {"close_all_cursors",         close_all_cursors,            METH_VARARGS},
+   {"is_valid",                  is_valid,                     METH_VARARGS},
+   {NULL, NULL}
+};
+
+CREATE_MODULE( sdbclient, client_methods )
