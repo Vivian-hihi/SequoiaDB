@@ -1,0 +1,116 @@
+
+from distutils.core import setup, Extension
+import sys
+import os
+import platform
+
+pythonpath = sys.executable
+pythondir = pythonpath[0:pythonpath.rfind( os.sep)]
+pythondir += os.sep
+
+print sys.platform
+if sys.platform == 'win32':
+    curdir=os.getcwd()
+    path = curdir + os.sep + ".." + os.sep + ".." + os.sep + ".." + os.sep
+    thridpartypath = path + "thirdparty"+os.sep
+    path = path + "SequoiaDB" + os.sep + "engine" + os.sep
+    path="D:/source/sequoiadb/SequoiaDB/engine/"
+    thridpartypath="D:/source/sequoiadb/thirdparty/"
+    ModuleCPPLibFiles = [
+        path + "client/clientcpp.cpp",
+        path + "oss/oss.cpp",
+        path + "oss/ossUtil.cpp",
+        path + "oss/ossMem.cpp",
+        path + "oss/ossSocket.cpp",
+        path + "oss/ossPrimitiveFileOp.cpp",
+        path + "pd/pd.cpp",
+        path + "pd/pdTrace.cpp",
+        path + "pd/pdFunctionList.cpp",
+        path + "client/bson/numbers.c",
+        path + "client/bson/bson.c",
+        path + "client/bson/encoding.c",
+        path + "client/base64c.c",
+        path + "client/cJSON.c",
+        path + "client/jstobs.c",
+        path + "client/common.c",
+        path + "util/fromjson.cpp",
+        path + "util/json2rawbson.c",
+        path +  "util/utilStr.cpp",
+        path + "bson/bsonobj.cpp",
+        path + "bson/oid.cpp",
+        path + "bson/base64.cpp",
+        path + "bson/md5.c",
+        path + "bson/nonce.cpp",
+        'pyclient.cpp',
+        'pycollection.cpp',
+        'pycursor.cpp',
+        'pynode.cpp',
+        'pyreplicagroup.cpp',
+        'pycollectionspace.cpp',]
+
+    incdirs=[pythondir + 'include',
+             path,
+             path +'client',
+             path + 'util',
+             path+'bson/util',
+             path+'bson',
+             path + 'include',
+             path+'client/bson',
+             thridpartypath + 'boost/',]
+
+    libdirs= [pythondir + 'lib',
+              thridpartypath + 'boost/lib/win64',]
+    precompilemacros = [('_CRT_RAND_S', 1),
+                        ('UNICODE', 1),
+                        ('_UNICODE', 1),
+                        ('SDB_DLL_BUILD',1),
+                        ('SDB_CLIENT',1),]
+    compileopt= ['/EHsc',
+                 '/W3',
+                 '/MD',
+                  '/MT',
+                 '/errorReport:none']
+    linklibs=['libboost_thread-vc100-mt-gd-1_49',
+              'ws2_32',
+              'kernel32',
+              'advapi32',
+              'Psapi']
+
+else:
+    incdirs=[pythondir + 'include',]
+    libdirs= [pythondir + 'lib',]
+    ModuleCPPLibFiles = [ 'pyclient.cpp',
+                      'pycollection.cpp',
+                      'pycursor.cpp',
+                      'pynode.cpp',
+                      'pyreplicagroup.cpp',
+                      'pycollectionspace.cpp',]
+    precompilemacros = [('_CRT_RAND_S', 1),
+                        ('UNICODE', 1),
+                        ('_UNICODE', 1),
+                        ('SDB_DLL_BUILD',1),
+                        ('SDB_CLIENT',1),]
+    compileopt= ['/EHsc',
+                 '/W3',
+                 '/Zi',
+                 '/MD',
+                 '/MT',
+                 '/errorReport:none']
+    linklibs=['staticsdbcpp',]
+
+module1 = Extension('sequoiadbClient',
+                    define_macros = precompilemacros,
+                    extra_compile_args=compileopt,
+                    include_dirs = incdirs,
+                    libraries = linklibs,
+                    library_dirs = libdirs,
+                    sources = ModuleCPPLibFiles )
+
+setup (name = 'sequoiadbClient',
+       version = '1.0',
+       description = 'This is a sequoiadb python driver use adapter package',
+       url = 'http://www.sequoiadb.com',
+       long_description = '''
+              use sequoiadb python driver must install this module.
+              ''',
+       ext_modules = [module1])
