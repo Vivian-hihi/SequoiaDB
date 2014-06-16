@@ -420,6 +420,7 @@ void initSdbExecState( SdbExecState *sdbExecState )
    sdbExecState->hCollection       = SDB_INVALID_HANDLE ;
 
    sdbbson_init( &sdbExecState->queryDocument ) ;
+   sdbbson_finish( &sdbExecState->queryDocument ) ;
 }
 
 Const *serializeString( const char *s )
