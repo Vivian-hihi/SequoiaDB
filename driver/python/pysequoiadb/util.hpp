@@ -10,8 +10,6 @@
 
 /*
  *@brief     macro to cast INT32 to object of Python
- *@ret_value [in] the exactly value to cast
- *@return    pointer to PyObject, reference to error code
  **/
 #define MAKE_RETURN_INT( ret_value ) \
    ( PyObject * )Py_BuildValue( "i", ret_value )
@@ -25,11 +23,7 @@
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
    ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
 /*
- *@brief      macro to cast C++ object to object of Python, 
-              it will be used in creating a instance of C++ class
- *@cpp_object [in] the exactly object to cast
- *@dtor_func  [in] the destructor function for delete C++ object
- *@return     pointer to PyObject
+ *@brief      macro to cast C++ object to a python object 
  **/
 #define MAKE_RETURN_OBJECT( cpp_object ) \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
@@ -37,14 +31,13 @@
 /*
  *@brief     macro to re-cast python object to specified class
  *@py_object [in] object need to cast
- *@tmp       [in] a temp pointer
- *@calssname [in] the class of the instance
+ *@classname [in] the class of the instance
  *@instance  [out] the pointer pointing to real object
  **/
 #define CAST_PYOBJECT_TO_COBJECT( py_object, classname, instance ) \
    do                                                              \
    {                                                               \
-      void *tmp = PyCObject_AsVoidPtr( obj ) ;                     \
+      void *tmp = PyCObject_AsVoidPtr( py_object ) ;               \
       if ( NULL == tmp )                                           \
       {                                                            \
          rc = SDB_INVALIDARGS ;                                    \
@@ -60,10 +53,8 @@
    }while( 0 )
 
 /*
- *@brief     macro to re-cast python object to specified class
+ *@brief     macro to re-cast python's bson object to c++ bson
  *@py_object [in] object need to cast
- *@str_bson  [in] a temp pointer
- *@calssname [in] the class of the instance
  *@instance  [out] the pointer pointing to real object
  **/
 #define CAST_PYBSON_TO_CPPBSON( py_object, bson_object )       \
@@ -103,19 +94,6 @@
       CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), tmp, obj ) ;  \
       vec_bson.push_back( *obj ) ;                                         \
       DELETE_CPPOBJECT( obj ) ;                                            \
-   }
-
-
-#define INC_PYOBJECT_REF( py_object )  \
-   if ( NULL != py_object )            \
-   {                                   \
-      Py_IncRef( obj ) ;               \
-   }
-
-#define DEC_PYOBJECT_REF( py_object )  \
-   if ( NULL != py_object )            \
-   {                                   \
-      Py_DecRef( obj ) ;               \
    }
 
 #define DELETE_CPPOBJECT( pObject ) \
