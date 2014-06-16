@@ -40,6 +40,8 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
+using namespace bson ;
+
 namespace engine
 {
 
@@ -70,6 +72,27 @@ namespace engine
 #elif defined OSS_ARCH_32
    #define CLS_REPL_BUCKET_MAX_MEM_POOL      (512)             // MB
 #endif
+
+   /*
+      Tool functions
+   */
+   const CHAR* clsGetReplBucketStatusDesp( INT32 status )
+   {
+      switch ( status )
+      {
+         case CLS_BUCKET_CLOSED :
+            return "CLOSED" ;
+         case CLS_BUCKET_NORMAL :
+            return "NORMAL" ;
+         case CLS_BUCKET_WAIT_ROLLBACK :
+            return "WAITROLLBACK" ;
+         case CLS_BUCKET_ROLLBACKING :
+            return "ROLLBACKING" ;
+         default :
+            break ;
+      }
+      return "UNKNOWN" ;
+   }
 
    /*
       _clsBucketUnit implement
@@ -200,6 +223,37 @@ namespace engine
       }
    }
 
+   BSONObj _clsBucket::toBson ()
+   {
+      INT32 completeMapSize = 0 ;
+      DPS_LSN_OFFSET firstLSNOffset = DPS_INVALID_LSN_OFFSET ;
+      BSONObjBuilder builder ;
+
+      builder.append( "Status", clsGetReplBucketStatusDesp( _status ) ) ;
+      builder.append( "MaxReplSync", (INT32)_maxReplSync ) ;
+      builder.append( "BucketSize", (INT32)_bucketSize ) ;
+      builder.append( "IdleUnitCount", (INT32)idleUnitCount() ) ;
+      builder.append( "CurAgentNum", (INT32)curAgentNum() ) ;
+      builder.append( "IdleAgentNum", (INT32)idleAgentNum() ) ;
+      builder.append( "BucketRecordNum", (INT32)bucketSize() ) ;
+      builder.append( "AllRecordNum", (INT32)size() ) ;
+      builder.append( "ExpectLSN", (INT64)_expectLSN.offset ) ;
+      builder.append( "MaxSubmitOffset", (INT64)_maxSubmitOffset ) ;
+
+      _bucketLatch.get() ;
+      completeMapSize = (INT32)_completeMap.size() ;
+      if ( completeMapSize > 0 )
+      {
+         firstLSNOffset = _completeMap.begin()->first ;
+      }
+      _bucketLatch.release() ;
+
+      builder.append( "CompleteMapSize", completeMapSize ) ;
+      builder.append( "CompleteFirstLSN", (INT64)firstLSNOffset ) ;
+
+      return builder.obj() ;
+   }
+
    void _clsBucket::enforceMaxReplSync( UINT32 maxReplSync )
    {
       if ( 0 != _maxReplSync )
@@ -290,6 +344,12 @@ namespace engine
 
    void _clsBucket::reset ( BOOLEAN setExpect )
    {
+      if ( 0 != size() )
+      {
+         PD_LOG( PDWARNING, "Bucket[%s] size is not 0",
+                 toBson().toString().c_str() ) ;
+      }
+
       _status = CLS_BUCKET_NORMAL ;
       if ( setExpect )
       {
@@ -799,6 +859,47 @@ namespace engine
       return ;
    }
 
+   INT32 _clsBucket::forceCompleteAll ()
+   {
+      map< UINT64, clsCompleteInfo >::iterator it ;
+
+      _bucketLatch.get() ;
+
+      // if has agent process, do nothing
+      if ( _curAgentNum.peek() > 0 )
+      {
+         goto done ;
+      }
+
+      PD_LOG( PDWARNING, "Repl bucket begin to force complete, expect lsn: "
+              "[%d,%lld]", _expectLSN.offset, _expectLSN.offset ) ;
+
+      it = _completeMap.begin() ;
+      while ( it != _completeMap.end() )
+      {
+         clsCompleteInfo &tmpInfo = it->second ;
+         dpsLogRecordHeader *pHeader = (dpsLogRecordHeader*)( tmpInfo._pData) ;
+
+         _expectLSN.offset = pHeader->_lsn + pHeader->_length ;
+         _expectLSN.version = pHeader->_version ;
+
+         PD_LOG( PDWARNING, "Repl bucket forced complete lsn: [%d,%lld], "
+                 "len: %d", pHeader->_version, pHeader->_lsn,
+                 pHeader->_length ) ;
+
+         _memPool.release( tmpInfo._pData, tmpInfo._len ) ;
+         _allCount.dec() ;
+      }
+      _completeMap.clear() ;
+      _submitEvent.signal() ;
+
+      _allEmptyEvent.signalAll() ;
+
+   done:
+      _bucketLatch.release() ;
+      return SDB_OK ;
+   }
+
    /*
       _clsBucketSyncJob implement
    */
@@ -873,6 +974,15 @@ namespace engine
 
       _pBucket->decIdelAgent() ;
       _pBucket->decCurAgent() ;
+
+      if ( _pBucket->curAgentNum() == 0 && 0 != _pBucket->size() )
+      {
+         PD_LOG( PDERROR, "Repl bucket info has error: %s",
+                 _pBucket->toBson().toString().c_str() ) ;
+
+         _pBucket->forceCompleteAll() ;
+      }
+
       return SDB_OK ;
    }
 
