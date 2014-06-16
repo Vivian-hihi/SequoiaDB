@@ -9,13 +9,13 @@ pythondir = pythonpath[0:pythonpath.rfind( os.sep)]
 pythondir += os.sep
 
 print sys.platform
+curdir=os.getcwd()
+path = curdir + os.sep + ".." + os.sep \
+       + ".." + os.sep + ".." + os.sep
+       
 if sys.platform == 'win32':
-    curdir=os.getcwd()
-    path = curdir + os.sep + ".." + os.sep + ".." + os.sep + ".." + os.sep
     thridpartypath = path + "thirdparty"+os.sep
     path = path + "SequoiaDB" + os.sep + "engine" + os.sep
-    path="D:/source/sequoiadb/SequoiaDB/engine/"
-    thridpartypath="D:/source/sequoiadb/thirdparty/"
     ModuleCPPLibFiles = [
         path + "client/clientcpp.cpp",
         path + "oss/oss.cpp",
@@ -43,10 +43,10 @@ if sys.platform == 'win32':
         path + "bson/nonce.cpp",
         'pyclient.cpp',
         'pycollection.cpp',
+        'pycollectionspace.cpp',
         'pycursor.cpp',
-        'pynode.cpp',
         'pyreplicagroup.cpp',
-        'pycollectionspace.cpp',]
+        'pyreplicanode.cpp',]
 
     incdirs=[pythondir + 'include',
              path,
@@ -77,25 +77,19 @@ if sys.platform == 'win32':
               'Psapi']
 
 else:
+    path = path + "client" + os.sep + "lib"
     incdirs=[pythondir + 'include',]
     libdirs= [pythondir + 'lib',]
     ModuleCPPLibFiles = [ 'pyclient.cpp',
-                      'pycollection.cpp',
-                      'pycursor.cpp',
-                      'pynode.cpp',
-                      'pyreplicagroup.cpp',
-                      'pycollectionspace.cpp',]
-    precompilemacros = [('_CRT_RAND_S', 1),
-                        ('UNICODE', 1),
-                        ('_UNICODE', 1),
-                        ('SDB_DLL_BUILD',1),
-                        ('SDB_CLIENT',1),]
-    compileopt= ['/EHsc',
-                 '/W3',
-                 '/Zi',
-                 '/MD',
-                 '/MT',
-                 '/errorReport:none']
+                          'pycollection.cpp',
+                          'pycollectionspace.cpp',
+                          'pycursor.cpp',
+                          'pyreplicagroup.cpp',
+                          'pyreplicanode.cpp',]
+    precompilemacros = [('UNICODE', 1),
+                        ('_UNICODE', 1),]
+    compileopt= ['-shared',
+                 '-fPIC',]
     linklibs=['staticsdbcpp',]
 
 module1 = Extension('sequoiadbClient',
