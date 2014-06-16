@@ -12,7 +12,7 @@
 	<!--PYTHONPATH is for power machine-->
 	<property name="PYTHONPATH" value="/usr/local/lib64/scons-2.3.0" />
 	<!--PATH_BUILDER is for power machine-->
-	<property name="PATH_BUILDER" value="/opt/installbuilder-8.5.2/bin/" />
+	<property name="PATH_BUILDER" value="/opt/installbuilder-9.0.1/bin/" />
 
 	<property name="open.source.hive_connector.filename" value="hive-sequoiadb-apache.jar" />
 	<property name="cdh.hive_connector.filename" value="hive-sequoiadb-cdh-5.0.0-beta-2.jar" />
