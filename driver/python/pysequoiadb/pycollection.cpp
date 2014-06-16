@@ -42,7 +42,7 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
    void *tmp                = NULL ;
    bson::BSONObj *condition = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_condition ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_condition ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -51,7 +51,7 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
 
-   rc = cs->get_count( count, condition ) ;
+   rc = cl->get_count( count, condition ) ;
    if ( rc )
    {
       goto done ;
@@ -75,7 +75,7 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *condition     = NULL ;
    bson::BSONObj *end_condition = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OssO", &obj, &src_name, &dst_name,
+   if ( !PARSE_PYTHON_ARGS( args, "OssO|O", &obj, &src_name, &dst_name,
                                   &bson_condition, &bson_end_condition ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -143,7 +143,7 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args ) ;
    bson::BSONObj *end_condition = NULL ;
    SINT64 task_id               = 0 ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OssO", &obj, &src_name, &dst_name,
+   if ( !PARSE_PYTHON_ARGS( args, "OssO|O", &obj, &src_name, &dst_name,
                                   &bson_condition, &bson_end_condition ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -247,7 +247,7 @@ static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *condition     = NULL ;
    bson::BSONObj *hint          = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOO", &obj, &bson_rule,
+   if ( !PARSE_PYTHON_ARGS( args, "OO|OO", &obj, &bson_rule,
                                           &bson_condition, &bson_hint ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -285,7 +285,7 @@ static PYOBJECT *upsert( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *condition     = NULL ;
    bson::BSONObj *hint          = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOO", &obj, &bson_rule,
+   if ( !PARSE_PYTHON_ARGS( args, "OO|OO", &obj, &bson_rule,
                                           &bson_condition, &bson_hint ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -321,7 +321,7 @@ static PYOBJECT *del( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *condition     = NULL ;
    bson::BSONObj *hint          = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOO", &obj, &bson_condition, &bson_hint ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O|OO", &obj, &bson_condition, &bson_hint ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -363,7 +363,7 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *order_by      = NULL ;
    bson::BSONObj *hint          = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOii", &obj, &cursor_object,
+   if ( !PARSE_PYTHON_ARGS( args, "OO|OOOOii", &obj, &cursor_object,
                             &bson_condition,  &bson_selector, &bson_order_by,
                             &bson_hint, &num_to_skip, &num_to_return ) )
    {

@@ -11,3 +11,5 @@ default_host = "localhost"
 default_port = 11810
 default_user = ""
 default_psw  = ""
+
+static_object = None

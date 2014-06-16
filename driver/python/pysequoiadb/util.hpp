@@ -70,21 +70,29 @@
  *@instance  [out] the pointer pointing to real object
  **/
 #define CAST_PYBSON_TO_CPPBSON( py_object, tmp, bson_object )  \
-   tmp = PyBytes_AsString( py_object ) ;                       \
-   if ( NULL == tmp )                                          \
+   if ( NULL == py_object )                                    \
    {                                                           \
-      rc = SDB_INVALIDARGS ;                                   \
-      goto done ;                                              \
+      bson_object = &sdbclient::_sdbStaticObject ;             \
    }                                                           \
-                                                               \
-   bson_object = SDB_OSS_NEW bson::BSONObj( tmp ) ;            \
-   if ( NULL == bson_object )                                  \
+   else                                                        \
    {                                                           \
-      rc = SDB_OOM ;                                           \
-      goto done ;                                              \
+      tmp = PyBytes_AsString( py_object ) ;                    \
+      if ( NULL == tmp )                                       \
+      {                                                        \
+         rc = SDB_INVALIDARGS ;                                \
+         goto done ;                                           \
+      }                                                        \
+                                                               \
+      bson_object = SDB_OSS_NEW bson::BSONObj( tmp ) ;         \
+      if ( NULL == bson_object )                               \
+      {                                                        \
+         rc = SDB_OOM ;                                        \
+         goto done ;                                           \
+      }                                                        \
    }
+   
 
-#define MAKE_PYLIST_TO_VECTOR( py_list, list_size, tmp, vec_bson ) \
+#define MAKE_PYLIST_TO_VECTOR( py_list, list_size, tmp, vec_bson )         \
    if( !PyList_Check( py_list) )                                           \
    {                                                                       \
       rc = SDB_INVALIDARGS ;                                               \
@@ -110,7 +118,7 @@
 #define DEC_PYOBJECT_REF( py_object )  \
    if ( NULL != py_object )            \
    {                                   \
-      Py_DECREF( obj ) ;               \
+      Py_DecRef( obj ) ;               \
    }
 
 #define DELETE_CPPOBJECT( pObject ) \
@@ -120,4 +128,9 @@
       pObject = NULL ;              \
    }
    
+#define CHECK_PYOBJECT( py_object, cpp_object, cpp_value )  \
+   if( Py_None == py_object )                               \
+   {                                                        \
+      cpp_object = cpp_value ;                              \
+   }
 #endif

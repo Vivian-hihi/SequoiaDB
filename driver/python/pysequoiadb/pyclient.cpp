@@ -121,7 +121,7 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
    const char *user    = NULL ;
    const char *psw     = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &addr, &addr_size,
+   if ( !PARSE_PYTHON_ARGS( args, "Osss", &obj, &addr, &addr_size,
                                                  &user, &psw ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -245,7 +245,7 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *selector  = NULL ;
    bson::BSONObj *order_by  = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOiOOO", &obj, &cursor_obj, &snap_type,
+   if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &snap_type,
                             &bson_condition, &bson_selector, &bson_order_by ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -283,7 +283,7 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    sdb *client              = NULL ;
    bson::BSONObj *condition = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_condition ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_condition ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -316,7 +316,7 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *selector  = NULL ;
    bson::BSONObj *order_by  = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOiOOO", &obj, &cursor_obj, &list_type,
+   if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &list_type,
                             &bson_condition, &bson_selector, &bson_order_by ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -907,7 +907,7 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *selector  = NULL ;
    bson::BSONObj *order_by  = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOO", &obj, &cursor_obj, &bson_option,
+   if ( !PARSE_PYTHON_ARGS( args, "OOO|OOO", &obj, &cursor_obj, &bson_option,
                             &bson_condition, &bson_selector, &bson_order_by) )
    {
       rc = SDB_INVALIDARGS ;
@@ -984,7 +984,7 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    bson::BSONObj *order_by  = NULL ;
    bson::BSONObj *hint    = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOO", &obj, &cursor_obj, &bson_condition,
+   if ( !PARSE_PYTHON_ARGS( args, "OO|OOOO", &obj, &cursor_obj, &bson_condition,
                                   &bson_selector, &bson_order_by, &bson_hint) )
    {
       rc = SDB_INVALIDARGS ;
@@ -1058,7 +1058,7 @@ static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.wait_task( task_id, is_async ) ;
+   rc = client.cancel_task( task_id, is_async ) ;
    if ( rc )
    {
       goto done ;
@@ -1077,7 +1077,7 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    sdb *client           = NULL ;
    bson::BSONObj *option = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_option ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1112,7 +1112,7 @@ static PYOBJECT *close_all_cursors( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
 
-   rc = client.close_all_cursors( option ) ;
+   rc = client.close_all_cursors() ;
    if ( rc )
    {
       goto done ;

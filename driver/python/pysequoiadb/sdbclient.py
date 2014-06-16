@@ -20,21 +20,8 @@ class sdbclient(object):
             pass
       
     def __del__(self):
-        rc = sdbclient.release_cilent(self.cclient)
-        if rc:
-            pass
-
+        dbclient.release_cilent(self.cclient)
         self.cclient = None
-            #todo: raise exception
-                    
-#        if self._connection is not None:
-#            disconnect()
-#        if self._sendbuffer is not None:
-#            del _sendbuffer
-#        self._sendbuffersize = 0
-#        if self._recvbuffer is not None:
-#            del _recvbuffer
-#        self._recvbuffersize = 0
 
     def __getitem__(self, item_name):
         rc = sdbclient.get_collect_space(self.cclient, item_name, page_size,
@@ -202,8 +189,6 @@ class sdbclient(object):
             pass
 
     def flush_configure(self, options):
-        #TODO: transfor options to bson
-        bson_options = 0
         rc = sdbclient.flush_configure(self.cclient, bson_options)
         if rc:
             pass
@@ -214,7 +199,6 @@ class sdbclient(object):
 #    def eval_js(self, cursor, code, type, err_msg)
 
     def backup_offline(self, options):
-        #TODO: transfor options to bson
         rc = sdbclient.backup_offline(self.cclient, bson_options)
         if rc:
             pass
@@ -247,7 +231,6 @@ class sdbclient(object):
             pass
 
     def set_session_attri(self, options = static_object):
-        #TODO: transfor options to bson
         rc = sdbclient.set_session_attri(self.cclient, bosn_options)
         if rc:
             pass
