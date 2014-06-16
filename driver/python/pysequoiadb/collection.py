@@ -50,8 +50,8 @@ class sdbcollection(object):
         if rc:
             pass
 
-    def insert(obj, id = None):
-        rc = sbdcl.insert(self.cl. obj, id)
+    def insert(obj, oid = None):
+        rc = sbdcl.insert(self.cl, obj, oid)
         if rc:
             pass
 

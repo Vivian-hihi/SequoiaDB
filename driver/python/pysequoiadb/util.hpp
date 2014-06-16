@@ -18,7 +18,7 @@
    ( PyObject * )Py_BuildValue( ("i,i"), ret_value, int_value )
 
 #define MAKE_RETURN_INT_LONG( ret_value, long_value ) \
-   ( PyObject * )Py_BuildValue( ("i,l"), ret_value, long_value )
+   ( PyObject * )Py_BuildValue( ("i,L"), ret_value, long_value )
 
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
    ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
