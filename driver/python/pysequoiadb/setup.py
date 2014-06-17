@@ -93,8 +93,10 @@ if sys.platform == 'win32':
 
 else:
     path = path + "client" + os.sep + "lib"
-    incdirs=[pythondir + 'include',]
-    libdirs= [pythondir + 'lib',]
+    incdirs=['/usr/local/include/python2.7',
+             path +'client',]
+    libdirs= ['/usr/local/lib/python2.7',
+              path + 'client/lib']
     ModuleCPPLibFiles = [ 'pyclient.cpp',
                           'pycollection.cpp',
                           'pycollectionspace.cpp',
