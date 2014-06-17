@@ -2,8 +2,11 @@
 """
 
 import sdbclient
+import bson
+from pysequoiadb import collectionspace
+from pysequoiadb import error
 
-class sdbclient(object):
+class client(object):
     """SequoiaDB Client Driver
     
     The client support interfaces to connect to SequoiaDB.
