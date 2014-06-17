@@ -2445,32 +2445,36 @@ namespace engine
          arrBuilder << itr->second ;
       }
 
-      objToBeRemoved = arrBuilder.arr() ;
-      inBuilder.appendArray( "$in", objToBeRemoved ) ;
-      condition = BSON( CAT_DOMAIN_NAME <<
-                        domain.getField( CAT_DOMAINNAME_NAME ).valuestrsafe() <<
-                        CAT_GROUP_NAME"."CAT_GROUPID_NAME <<
-                        inBuilder.obj()  ) ;
-      rc = catGetOneObj( CAT_COLLECTION_SPACE_COLLECTION,
-                         dummy, condition, dummy, _pEduCB, res ) ;
-      if ( SDB_OK == rc )
+      if ( !toBeRemoved.empty() )
       {
-         PD_LOG( PDERROR, "clear data(of this domain) before rmove it from domain."
-                 " groups to be removed[%s]", objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
-         rc = SDB_DOMAIN_IS_OCCUPIED ;
-         goto error ;
+         objToBeRemoved = arrBuilder.arr() ;
+         inBuilder.appendArray( "$in", objToBeRemoved ) ;
+         condition = BSON( CAT_DOMAIN_NAME <<
+                           domain.getField( CAT_DOMAINNAME_NAME ).valuestrsafe() <<
+                           CAT_GROUP_NAME"."CAT_GROUPID_NAME <<
+                           inBuilder.obj()  ) ;
+         rc = catGetOneObj( CAT_COLLECTION_SPACE_COLLECTION,
+                            dummy, condition, dummy, _pEduCB, res ) ;
+         if ( SDB_OK == rc )
+         {
+            PD_LOG( PDERROR, "clear data(of this domain) before rmove it from domain."
+                    " groups to be removed[%s]", objToBeRemoved.toString( TRUE, TRUE ).c_str() ) ;
+            rc = SDB_DOMAIN_IS_OCCUPIED ;
+            goto error ;
+         }
+         else if ( SDB_DMS_EOC == rc )
+         {
+            /// no data on the groups those to be removed.
+            rc = SDB_OK ;
+         }
+         else
+         {
+            PD_LOG( PDERROR, "unexpected err happened:%d", rc ) ;
+            goto error ;
+         }
       }
-      else if ( SDB_DMS_EOC == rc )
-      {
-         /// no data on the groups those to be removed.
-         rc = SDB_OK ;
-         builder.append( ele ) ;
-      }
-      else
-      {
-         PD_LOG( PDERROR, "unexpected err happened:%d", rc ) ;
-         goto error ;
-      }
+
+      builder.append( ele ) ;
    done:
       PD_TRACE_EXITRC( SDB_CATALOGMGR__BUILDALTERGROUPS, rc ) ;
       return rc ;
