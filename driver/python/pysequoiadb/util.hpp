@@ -18,6 +18,7 @@
 #ifndef _SDB_PYTHON_DRIVER_UTIL_HPP_
 #define _SDB_PYTHON_DRIVER_UTIL_HPP_
 
+#include <Python.h>
 /*
  * some useful macros
  **/
@@ -40,7 +41,7 @@
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
    ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
 
-#define MAKE_RETURN_INT_PYSTRING( ret_value, c_string, c_stringsize ) \
+#define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
    ( PyObject * )Py_BuildValue( ("i,s#"), ret_value, c_string, c_stringsize )   
 /*
  *@brief      macro to cast C++ object to a python object 
@@ -123,6 +124,9 @@
       pObject = NULL ;              \
    }
 
+#define SDB_INVALIDARGS -6
+#define SDB_OOM         -2   
+
 #define DEFINE_MODULE(modulename, methods)             \
 static struct PyModuleDef moduledef = {                \
    PyModuleDef_HEAD_INIT,                              \
@@ -134,34 +138,46 @@ static struct PyModuleDef moduledef = {                \
    NULL,                                               \
    NULL,                                               \
    NULL                                                \
-};                                                     \
+};                                                     \ 
+
+#if PY_MAJOR_VERSION >= 3                               
+#define INITERROR return NULL
+#define DECLARE_MODULE_FUN(modulename, methods)        \
+DEFINE_MODULE(modulename, methods)                     \
+PyMODINIT_FUNC PyInit__##modulename(void)
+#else                                                    
+#define INITERROR return                               
+#define DECLARE_MODULE_FUN(modulename, methods)        \
+PyMODINIT_FUNC init##modulename(void)
+#endif                                                   
+
+#if PY_MAJOR_VERSION >= 3                              
+#define MODULE_CREATE(modulename, methods)             \
+    m = PyModule_Create(&moduledef)                    
+#else                                                  
+#define MODULE_CREATE(modulename, methods)             \
+    m = Py_InitModule(modulename, methods)            
+#endif                                             
+
+
+#if PY_MAJOR_VERSION >= 3                              
+#define RETURN   return m
+#else
+#define RETURN   return
+#endif                                                    
                                                 
-#define CREATE_MODULE(modulename, methods)             \
-#if PY_MAJOR_VERSION >= 3                              \                       
-#define INITERROR return NULL                          \ 
-DEFINE_MODULE(modulename, methods)                     \                
-PyMODINIT_FUNC                                         \
-PyInit__##modulename(void)                             \
-#else                                                  \                                      
-#define INITERROR return                               \
-PyMODINIT_FUNC                                         \
-init##modulename(void)                                 \
-#endif                                                 \
+#define CREATE_MODULE( modulename, methods )           \
+DECLARE_MODULE_FUN( modulename, methods )              \
 {                                                      \
-   PyObject *m;                                        \   
-#if PY_MAJOR_VERSION >= 3                              \
-   m = PyModule_Create(&moduledef);                    \
-#else                                                  \
-   m = Py_InitModule(#modulename, methods);            \  
-#endif                                                 \
+   PyObject *m;                                        \
+   MODULE_CREATE(#modulename, methods) ;               \
    if (m == NULL)                                      \
    {                                                   \
       INITERROR;                                       \
    }                                                   \
                                                        \
-#if PY_MAJOR_VERSION >= 3                              \
-   return m;                                           \
-#endif                                                 \
-}
+   RETURN ;                                            \
+} 
+
 
 #endif
