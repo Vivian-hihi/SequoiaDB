@@ -188,6 +188,31 @@
             <stentry>设置当前会话/连接属性</stentry>
             <stentry>db.setSessionAttr({PreferedInstance:"M"})</stentry>
           </strow>
+          <strow>
+            <stentry><xref href="createDomain.dita">db.createDomain()</xref></stentry>
+            <stentry>创建一个域</stentry>
+            <stentry>db.createDomain('mydomain',['datagroup1','datagroup2'])</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="listDomains.dita">db.listDomains()</xref></stentry>
+            <stentry>枚举域</stentry>
+            <stentry>db.listDomains()</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="dropDomain.dita">db.dropDomain()</xref></stentry>
+            <stentry>删除指定域</stentry>
+            <stentry>db.dropDomain('mydomain')</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="getDomain.dita">db.getDomain()</xref></stentry>
+            <stentry>获取指定域</stentry>
+            <stentry>var domain = db.getDomain('mydomain')</stentry>
+          </strow>
+          <strow>
+            <stentry><xref href="domainalter.dita">domain.alter()</xref></stentry>
+            <stentry>修改域的属性</stentry>
+            <stentry>domain.alter({Groups:['data1','data3']})</stentry>
+          </strow>
       </simpletable>
       </p>
     </section>
