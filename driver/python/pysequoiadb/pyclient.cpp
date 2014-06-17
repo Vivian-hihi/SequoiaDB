@@ -15,11 +15,8 @@
    limitations under the License.
 
 *******************************************************************************/
-#include <client.hpp>
-#include <ossMem.hpp>
-
-#include <Python.h>
 #include "util.hpp"
+#include "client.hpp"
 
 using namespace sdbclient;
 
@@ -42,6 +39,7 @@ static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj    = NULL ;
    sdb *client      = NULL ;
    const char *host = NULL ;
+   
    
    if ( !PARSE_PYTHON_ARGS( args, "Osi", &obj, &host, &port ) )
    {
@@ -69,7 +67,7 @@ static PYOBJECT *release_client( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client )
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    DELETE_CPPOBJECT( client ) ;
 
 done:
@@ -93,8 +91,8 @@ static PYOBJECT *connect_by_host( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client )
-   rc = client.connect( host, port, user, psw ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   rc = client->connect( host, port, user, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -119,7 +117,7 @@ static PYOBJECT *connect_by_service( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    
-   rc = client.connect( host, service, user, psw ) ;
+   rc = client->connect( host, service, user, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -145,7 +143,7 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.connect( addr, addr_size, user, psw ) ;
+   rc = client->connect( addr, addr_size, user, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -170,7 +168,7 @@ static PYOBJECT *disconnect( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.disconnect() ;
+   client->disconnect() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -193,7 +191,7 @@ static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.createUser( user_name, psw ) ;
+   rc = client->createUsr( user_name, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -216,7 +214,7 @@ static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.removeUser( user_name, psw ) ;
+   rc = client->removeUsr( user_name, psw ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -225,7 +223,7 @@ done:
 static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 *snap_type         = NULL ;
+   INT32 snap_type          = NULL ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cursor_obj     = NULL ;
    PYOBJECT *bson_condition = NULL ;
@@ -234,9 +232,9 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
-   bson::BSONObj *condition = NULL ;
-   bson::BSONObj *selector  = NULL ;
-   bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &snap_type,
                             &bson_condition, &bson_selector, &bson_order_by ) )
@@ -247,12 +245,12 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
 
-   rc = client.getSnapshot( *cursor, snap_type,
-                             condition, selector, order_by ) ;
+   rc = client->getSnapshot( *cursor, snap_type,
+                             *condition, *selector, *order_by ) ;
    if ( rc )
    {
       goto done ;
@@ -272,7 +270,7 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_condition = NULL ;
    void *tmp                = NULL ;
    sdb *client              = NULL ;
-   bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *condition = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_condition ) )
    {
@@ -281,9 +279,9 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
 
-   client->resetSnapshot( condition ) ;
+   client->resetSnapshot( *condition ) ;
 
 done:
    DELETE_CPPOBJECT( condition ) ;
@@ -293,7 +291,7 @@ done:
 static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 *list_type         = NULL ;
+   INT32 list_type          = NULL ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cursor_obj     = NULL ;
    PYOBJECT *bson_condition = NULL ;
@@ -302,9 +300,9 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
-   bson::BSONObj *condition = NULL ;
-   bson::BSONObj *selector  = NULL ;
-   bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &list_type,
                             &bson_condition, &bson_selector, &bson_order_by ) )
@@ -315,11 +313,11 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
 
-   rc = client.getList( *cursor, snap_type, condition, selector, order_by ) ;
+   rc = client->getList( *cursor, list_type, *condition, *selector, *order_by ) ;
    if ( rc )
    {
       goto done ;
@@ -335,7 +333,6 @@ done:
 static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 *page_size         = NULL ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cs_obj         = NULL ;
    void *tmp                = NULL ;
@@ -343,8 +340,7 @@ static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
    sdb *client              = NULL ;
    sdbCollectionSpace *cs   = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OsiO", &obj, &cs_name, &page_size,
-                                                &cs_obj ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cs_name, &cs_obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -353,7 +349,7 @@ static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
 
-   rc = client.getCollectionSpace( cs_name, page_size, *cs ) ;
+   rc = client->getCollectionSpace( cs_name, *cs ) ;
    if ( rc )
    {
       goto done ;
@@ -366,7 +362,7 @@ done:
 static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 *page_size         = NULL ;
+   INT32 page_size          = NULL ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cs_obj         = NULL ;
    void *tmp                = NULL ;
@@ -384,7 +380,7 @@ static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
 
-   rc = client.createCollectionSpace( cs_name, page_size, *cs ) ;
+   rc = client->createCollectionSpace( cs_name, page_size, *cs ) ;
    if ( rc )
    {
       goto done ;
@@ -410,7 +406,7 @@ static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.dropCollectionSpace( cs_name ) ;
+   rc = client->dropCollectionSpace( cs_name ) ;
    if ( rc )
    {
       goto done ;
@@ -438,7 +434,7 @@ static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
-   rc = client.listCollectionSpaces( *cursor ) ;
+   rc = client->listCollectionSpaces( *cursor ) ;
    if ( rc )
    {
       goto done ;
@@ -466,7 +462,7 @@ static PYOBJECT *list_replica_groups( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
-   rc = client.listReplicaGroups( *cursor ) ;
+   rc = client->listReplicaGroups( *cursor ) ;
    if ( rc )
    {
       goto done ;
@@ -495,7 +491,7 @@ static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
-   rc = client.getReplicaGroup( group_name, *group ) ;
+   rc = client->getReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -525,7 +521,7 @@ static PYOBJECT *get_replica_group_by_id( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
-   rc = client.getReplicaGroup( group_id, *group ) ;
+   rc = client->getReplicaGroup( group_id, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -554,7 +550,7 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
-   rc = client.createReplicaGroup( group_name, *group ) ;
+   rc = client->createReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -581,7 +577,7 @@ static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.removeReplicaGroup( group_name ) ;
+   rc = client->removeReplicaGroup( group_name ) ;
    if ( rc )
    {
       goto done ;
@@ -601,7 +597,7 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    const char *host         = NULL ;
    const char *service      = NULL ;
    const char *db_path      = NULL ;
-   bson::BSONObj *configure = NULL ;
+   const bson::BSONObj *configure = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &host, &service, &db_path,
                                                         &bson_configure ) )
@@ -611,9 +607,9 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_configure, tmp, configure ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_configure, configure ) ;
 
-   rc = client.createReplicaCataGroup( host, service, db_path, configure ) ;
+   rc = client->createReplicaCataGroup( host, service, db_path, *configure ) ;
    if ( rc )
    {
       goto done ;
@@ -643,7 +639,7 @@ static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
-   rc = client.activateReplicaGroup( group_name, *group ) ;
+   rc = client->activateReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
@@ -669,7 +665,7 @@ static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.execUpdate( sql ) ;
+   rc = client->execUpdate( sql ) ;
    if ( rc )
    {
       goto done ;
@@ -698,7 +694,7 @@ static PYOBJECT *exec_sql( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
-   rc = client.exec( sql, *cursor ) ;
+   rc = client->exec( sql, *cursor ) ;
    if ( rc )
    {
       goto done ;
@@ -724,7 +720,7 @@ static PYOBJECT *transaction_begin( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.transactionBegin() ;
+   rc = client->transactionBegin() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -746,7 +742,7 @@ static PYOBJECT *transaction_commit( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.transactionCommit() ;
+   rc = client->transactionCommit() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -768,7 +764,7 @@ static PYOBJECT *transaction_rollback( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.transactionRollback() ;
+   rc = client->transactionRollback() ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -781,7 +777,7 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_option = NULL ;
    void *tmp             = NULL ;
    sdb *client           = NULL ;
-   bson::BSONObj *option = NULL ;
+   const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
@@ -790,9 +786,9 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
-   rc = client.flushConfigure( option ) ;
+   rc = client->flushConfigure( *option ) ;
    if ( rc )
    {
       goto done ;
@@ -810,7 +806,7 @@ static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_option = NULL ;
    void *tmp             = NULL ;
    sdb *client           = NULL ;
-   bson::BSONObj *option = NULL ;
+   const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
@@ -819,9 +815,9 @@ static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
-   rc = client.backupOffline( option ) ;
+   rc = client->backupOffline( *option ) ;
    if ( rc )
    {
       goto done ;
@@ -844,10 +840,10 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
-   bson::BSONObj *option    = NULL ;
-   bson::BSONObj *condition = NULL ;
-   bson::BSONObj *selector  = NULL ;
-   bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *option    = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOO|OOO", &obj, &cursor_obj, &bson_option,
                             &bson_condition, &bson_selector, &bson_order_by) )
@@ -858,12 +854,12 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
 
-   rc = client.listBackup( *cursor, option, condition, selector, order_by ) ;
+   rc = client->listBackup( *cursor, *option, *condition, *selector, *order_by ) ;
    if ( rc )
    {
       goto done ;
@@ -884,7 +880,7 @@ static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_option = NULL ;
    void *tmp             = NULL ;
    sdb *client           = NULL ;
-   bson::BSONObj *option = NULL ;
+   const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
@@ -893,9 +889,9 @@ static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
-   rc = client.removeBackup( option ) ;
+   rc = client->removeBackup( *option ) ;
    if ( rc )
    {
       goto done ;
@@ -918,10 +914,10 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
-   bson::BSONObj *condition = NULL ;
-   bson::BSONObj *selector  = NULL ;
-   bson::BSONObj *order_by  = NULL ;
-   bson::BSONObj *hint    = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *selector  = NULL ;
+   const bson::BSONObj *order_by  = NULL ;
+   const bson::BSONObj *hint    = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|OOOO", &obj, &cursor_obj, &bson_condition,
                                   &bson_selector, &bson_order_by, &bson_hint) )
@@ -932,12 +928,12 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = client.listTasks( *cursor, condition, selector, order_by, hint ) ;
+   rc = client->listTasks( *cursor, *condition, *selector, *order_by, *hint ) ;
    if ( rc )
    {
       goto done ;
@@ -968,7 +964,7 @@ static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.waitTasks( task_id, num ) ;
+   rc = client->waitTasks( &task_id, num ) ;
    if ( rc )
    {
       goto done ;
@@ -995,7 +991,7 @@ static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.cancelTask( task_id, is_async ) ;
+   rc = client->cancelTask( task_id, is_async ) ;
    if ( rc )
    {
       goto done ;
@@ -1012,7 +1008,7 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_option = NULL ;
    void *tmp             = NULL ;
    sdb *client           = NULL ;
-   bson::BSONObj *option = NULL ;
+   const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_option ) )
    {
@@ -1021,9 +1017,9 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
-   rc = client.setSessionAttr( option ) ;
+   rc = client->setSessionAttr( *option ) ;
    if ( rc )
    {
       goto done ;
@@ -1049,7 +1045,7 @@ static PYOBJECT *close_all_cursors( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
-   rc = client.closeAllCursors() ;
+   rc = client->closeAllCursors() ;
    if ( rc )
    {
       goto done ;
@@ -1062,7 +1058,7 @@ done:
 static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc              = 0 ;
-   INT32 result          = 0 ;
+   INT32 result          = FALSE ;
    PYOBJECT *obj         = NULL ;
    void *tmp             = NULL ;
    sdb *client           = NULL ;
@@ -1074,10 +1070,20 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   rc = client.isValid( result ) ;
+   BOOLEAN isvalid = FALSE;
+   rc = client->isValid( &isvalid ) ;
    if ( rc )
    {
       goto done ;
+   }
+   
+   if ( isvalid )
+   {
+      result = 1 ;
+   }
+   else
+   {
+      result = 0 ;
    }
 done:
    return MAKE_RETURN_INT_INT( rc, result ) ;
