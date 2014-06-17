@@ -22,7 +22,8 @@
 
 static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
 {
-   sdbCollectionSpace *cs = SDB_OSS_NEW sdbCollectionSpace() ;
+   sdbCollectionSpace *cs = NULL ;
+   NEW_CPPOBJECT( cs, sdbCollectionSpace ) ;
    if ( NULL == cs )
    {
       return NULL ;

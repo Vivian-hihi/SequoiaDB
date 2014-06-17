@@ -25,7 +25,8 @@ using namespace sdbclient;
 
 static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
 {
-   sdb *client = SDB_OSS_NEW sdb() ;
+   sdb *client = NULL;
+   NEW_CPPOBJECT( client, sdb ) ;
    if ( NULL == client )
    {
       return NULL ;

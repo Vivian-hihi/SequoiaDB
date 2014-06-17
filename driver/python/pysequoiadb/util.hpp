@@ -117,10 +117,13 @@
       DELETE_CPPOBJECT( obj ) ;                                            \
    }
 
+#define NEW_CPPOBJECT( pObject, CLSNAME ) \
+   pObject = new (std::nothrow) CLSNAME ()
+
 #define DELETE_CPPOBJECT( pObject ) \
    if ( NULL != pObject )           \
    {                                \
-      SDB_OSS_DEL pObject ;         \
+      delete pObject ;              \
       pObject = NULL ;              \
    }
 

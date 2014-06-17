@@ -22,7 +22,8 @@
 
 static PYOBJECT *create_cl( PYOBJECT *self, PYOBJECT *args ) 
 {
-   sdbCollection *cl = SDB_OSS_NEW sdbCollection() ;
+   sdbCollection *cl = NULL;
+   NEW_CPPOBJECT( cl, sdbCollection ) ;
    if ( NULL == cl )
    {
       return NULL ;
