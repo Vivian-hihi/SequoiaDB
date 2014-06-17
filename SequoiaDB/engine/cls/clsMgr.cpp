@@ -43,6 +43,7 @@
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 #include "dpsOp2Record.hpp"
+#include "pmdStartup.hpp"
 
 using namespace bson ;
 
