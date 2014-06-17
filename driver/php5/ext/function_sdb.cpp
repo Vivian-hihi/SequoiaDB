@@ -350,20 +350,22 @@ INT32 collectionDrop ( sdbCollection *collection )
 INT32 insertData ( sdbCollection *collection, CHAR **json_str )
 {
    INT32 rc = SDB_OK ;
-   BSONElement ele ;
+   OID oid ;
    INT32 len = 0 ;
    CHAR *temp = NULL ;
    BSONObj bs ;
    rc = fromjson ( *json_str, bs ) ;
    if ( rc )
+   {
       return rc ;
+   }
 
-   rc = collection->insert ( bs, &ele ) ;
+   rc = collection->insert ( bs, &oid ) ;
    if ( rc )
    {
       return rc ;
    }
-   std::string str = ele.toString () ;
+   std::string str = oid.toString () ;
    const CHAR *p = str.c_str () ;
    INT32 eleSize = strlen(p) ;
    if ( eleSize > 0 )
