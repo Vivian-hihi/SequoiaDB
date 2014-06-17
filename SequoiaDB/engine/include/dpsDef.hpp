@@ -59,6 +59,8 @@
 #define DPS_DUMMY_TAG      256
 #define DPS_TAG            UINT8
 
+#define DPS_LOG_FILE_SIZE_UNIT         (1024 * 1024)
+
 typedef UINT64 DPS_TRANS_ID;
 typedef UINT64 DPS_LSN_OFFSET ;
 typedef UINT32 DPS_LSN_VER ;

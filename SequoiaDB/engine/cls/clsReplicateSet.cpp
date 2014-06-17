@@ -209,9 +209,6 @@ namespace engine
             rate = 2 << idx ;
             _sizethreshold[ idx ] = _totalLogSize * ( rate - 1 ) / rate ;
             _timeThreshold[ idx ] = timeBase << idx ;
-
-            PD_LOG( PDEVENT, "Sync test: idx: %d:[%d, %d]",
-                    idx, _sizethreshold[ idx ], _timeThreshold[ idx ] ) ;
          }
       }
 

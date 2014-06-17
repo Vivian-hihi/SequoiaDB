@@ -347,7 +347,10 @@ namespace engine
          void setCatAddr( const CHAR *host, const CHAR *service ) ;
 
          OSS_INLINE UINT32 catNum() const { return CATA_NODE_MAX_NUM ; }
-         OSS_INLINE UINT32 getReplLogFileSz () const { return _logFileSz ; }
+         OSS_INLINE UINT64 getReplLogFileSz () const
+         {
+            return (UINT64)_logFileSz * DPS_LOG_FILE_SIZE_UNIT ;
+         }
          OSS_INLINE UINT32 getReplLogFileNum () const { return _logFileNum ; }
          OSS_INLINE UINT32 numPreLoaders () const { return _numPreLoaders ; }
          OSS_INLINE UINT32 maxPrefPool () const { return _maxPrefPool ; }

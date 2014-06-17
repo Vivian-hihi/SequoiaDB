@@ -168,7 +168,7 @@ namespace engine
       INT32 move( const DPS_LSN_OFFSET &offset,
                   const DPS_LSN_VER &version ) ;
 
-      void setLogFileSz ( UINT32 logFileSz )
+      void setLogFileSz ( UINT64 logFileSz )
       {
          _logger.setLogFileSz ( logFileSz ) ;
       }

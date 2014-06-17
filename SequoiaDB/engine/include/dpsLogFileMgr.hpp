@@ -48,8 +48,6 @@ using namespace std;
 namespace engine
 {
 
-   #define DPS_LOG_FILE_SIZE_UNIT         (1024 * 1024)
-
    class _dpsLogPage;
    class _dpsMessageBlock;
    class _dpsReplicaLogMgr ;
@@ -84,9 +82,9 @@ namespace engine
 
       INT32 move( const DPS_LSN_OFFSET &offset, const DPS_LSN_VER &version ) ;
 
-      void setLogFileSz ( UINT32 logFileSz )
+      void setLogFileSz ( UINT64 logFileSz )
       {
-         _logFileSz = DPS_LOG_FILE_SIZE_UNIT * (UINT64)logFileSz ;
+         _logFileSz = logFileSz ;
       }
 
       DPS_LSN getStartLSN ( BOOLEAN mustExist = TRUE ) ;
