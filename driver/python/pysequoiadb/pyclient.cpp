@@ -49,7 +49,7 @@ static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   client->connect( host, port, default_user, default_psw ) ;
+   client->connect( host, port ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
