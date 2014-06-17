@@ -122,6 +122,12 @@ namespace engine
                                        _groupInfo->alives.begin() ;
          for ( ; itr != _groupInfo->alives.end(); itr++ )
          {
+            // if my bs is ok, but peer is not ok, skip
+            if ( SERVICE_ABNORMAL == itr->second->beat.serviceStatus &&
+                 pmdGetStartup().isOK() )
+            {
+               continue ;
+            }
             if ( 0 > lsn.compare(itr->second->beat.endLsn ) )
             {
                PD_LOG ( PDDEBUG, "DSP lsn is not max, can't initial voting" ) ;
