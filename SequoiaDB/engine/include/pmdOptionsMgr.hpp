@@ -44,6 +44,7 @@
 #include "pmdDef.hpp"
 #include "ossSocket.hpp"
 #include "utilParam.hpp"
+#include "dpsDef.hpp"
 #include "sdbInterface.hpp"
 
 #include <string>
