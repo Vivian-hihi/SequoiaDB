@@ -1061,7 +1061,7 @@ namespace engine
          }
          else if ( ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
                      CMD_DROP_COLLECTIONSPACE == pCommand->type() ) &&
-                    SDB_OK != ( rc = _checkCata( 0, "", w, isMainCL, TRUE ) )
+                    SDB_OK != ( rc = _checkCata( 0, "", w, isMainCL, TRUE ) ) )
          {
             goto error ;
          }
