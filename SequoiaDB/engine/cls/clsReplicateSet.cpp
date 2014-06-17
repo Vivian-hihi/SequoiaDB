@@ -886,7 +886,8 @@ namespace engine
       UINT32 waitTime = 0 ;
       DPS_LSN_OFFSET offset = _sync.getSyncCtrlArbitLSN() ;
 
-      if ( DPS_INVALID_LSN_OFFSET == offset )
+      if ( DPS_INVALID_LSN_OFFSET == offset ||
+           isFullSync() )
       {
          goto done ;
       }

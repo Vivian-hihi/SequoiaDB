@@ -1962,7 +1962,8 @@ namespace engine
 
    BOOLEAN _clsSplitSrcSession::_isReady ()
    {
-      return sdbGetReplCB()->primaryIsMe() ;
+      return ( sdbGetReplCB()->primaryIsMe() &&
+               !sdbGetReplCB()->isFullSync () ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSPLSS__GENKEYOBJ, "_clsSplitSrcSession::_genKeyObj" )
