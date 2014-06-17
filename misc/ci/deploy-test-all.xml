@@ -67,11 +67,11 @@
 
 
 		<echo message="Begin to deploy one case and test.... deploy file=${deploy.case.fullname},deploy.file.fullname=${deploy.file.fullname}" />
-    <echo>
-    	antfile  -f ${deploy.case.fullname} --target=deploy -Dant.sdb.tasks.path=${ci.script.file.path}/ant-tasks -Dinstall.path=${install.path}
-    	 -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname}
-    	 -Ddeploy.path=${WORKSPACE}/deploy -DUSE.MONGODB=${USE.MONGODB}
-    </echo>
+	    <echo>
+	    	antfile  -f ${deploy.case.fullname} --target=deploy -Dant.sdb.tasks.path=${ci.script.file.path}/ant-tasks -Dinstall.path=${install.path}
+	    	 -Dinstall.package.fullname=${release.path}/${BUILD.INSTALL.FILENAME} -Ddeploy.file.fullname=${deploy.file.fullname}
+	    	 -Ddeploy.path=${WORKSPACE}/deploy -DUSE.MONGODB=${USE.MONGODB}
+	    </echo>
 		<ant antfile="${deploy.case.fullname}" dir="${ci.script.file.path}" target="deploy" inheritAll="true">
 			<property name="ant.sdb.tasks.path" value="${ci.script.file.path}/ant-tasks" />
 			<property name="install.path" value="${install.path}" />
