@@ -41,6 +41,7 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "dmsCB.hpp"
+#include "netRouteAgent.hpp"
 
 #include <vector>
 #include <string>
@@ -74,6 +75,14 @@ namespace engine
          CHAR*       allocFixBuf() ;
          INT32       getFixBufSize() const { return _fixBufSize ; }
          void        releaseFixBuf( CHAR *pBuff ) ;
+
+         // comm interface
+         netRouteAgent* getRouteAgent() ;
+         MsgRouteID     updateAgentInfo( const CHAR *pHost,
+                                         const CHAR *pService ) ;
+         MsgRouteID     getAgentIDByHost( const CHAR *pHost ) ;
+         INT32          sendMsgToAgent( const CHAR *pHost,
+                                        MsgHeader *pMsg ) ;
 
          restSessionInfo*  attachSessionInfo( const string &id ) ;
          void              detachSessionInfo( restSessionInfo *pSessionInfo ) ;
