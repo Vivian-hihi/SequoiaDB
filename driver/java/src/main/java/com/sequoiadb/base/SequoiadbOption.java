@@ -26,24 +26,22 @@ import com.sequoiadb.exception.BaseException;
  * @class SequoiadbOption
  * @brief the option of SequoiadbDatasource
  */
-public class SequoiadbOption
-{
+public class SequoiadbOption {
 	// max connction count, if maxConnectionNum == 0,
 	// it means the datasource doesn't work
 	private int maxConnectionNum = 500;
-	// while maxConnectionNum != 0, increase 10 connection to pool
+	// while maxConnectionNum != 0, increase 20 connection to pool
     private int deltaIncCount = 10 ;
     // initialize 10 connection in pool
 	private int initConnectionNum = 10;
+	// no use
 	private int maxIdeNum = 10;
 	// when busy queue is full, request can't get connection,
 	// they will wait 5s and wake up
 	private int timeout = 5 * 1000;
 	// clean the abandon connection period
     private int recheckCyclePeriod = 1 * 60 * 1000;
-    // check and get back the useful coord address period 
-    private int recaptureConnPeriod = 10 * 60 * 1000;
-    // when the last service time of a connection longer than this,
+    // when the last service time of a connection longer then this,
     // we will abandon it.
     private int abandonTime = 10 * 60 * 1000;
 
@@ -57,8 +55,7 @@ public class SequoiadbOption
 	 * @param  maxConnectionNum default to be 500 
      * @exception com.sequoiadb.exception.BaseException when maxConnectionNum is negative
 	 */
-	public void setMaxConnectionNum(int maxConnectionNum) throws BaseException
-	{
+	public void setMaxConnectionNum(int maxConnectionNum) throws BaseException{
 		if (maxConnectionNum < 0)
 			throw new BaseException("SDB_INVALIDARG", "maxConnectionNum is negative: " + maxConnectionNum);
 		this.maxConnectionNum = maxConnectionNum;
@@ -67,8 +64,7 @@ public class SequoiadbOption
 	 * @fn void getMaxConnectionNum()
 	 * @brief Get the max number of connection.
 	 */
-	public int getMaxConnectionNum()
-	{
+	public int getMaxConnectionNum() {
 		return maxConnectionNum;
 	}
 	   
@@ -79,8 +75,7 @@ public class SequoiadbOption
 	 * @param deltaIncCount default to be 10
      * @exception com.sequoiadb.exception.BaseException when deltaIncCount is negative
 	 */
-	public void setDeltaIncCount ( int deltaIncCount ) throws BaseException
-	{
+	public void setDeltaIncCount ( int deltaIncCount ) throws BaseException{
 		if (deltaIncCount < 0)
 			throw new BaseException("SDB_INVALIDARG", "deltaIncCount is negative: " + deltaIncCount);
 		this.deltaIncCount = deltaIncCount ;
@@ -91,8 +86,7 @@ public class SequoiadbOption
 	 *        connection pool.
 	 * @setDeltaIncCount
 	 */
-	public int getDeltaIncCount ()
-	{
+	public int getDeltaIncCount () {
 		return deltaIncCount ;
 	}
 	
@@ -102,8 +96,7 @@ public class SequoiadbOption
 	 * @param  initConnectionNum default to be 10
      * @exception com.sequoiadb.exception.BaseException when initConnectionNum is negative
 	 */
-	public void setInitConnectionNum(int initConnectionNum) throws BaseException
-	{
+	public void setInitConnectionNum(int initConnectionNum) throws BaseException{
 		if (initConnectionNum < 0)
 			throw new BaseException("SDB_INVALIDARG", "initConnectionNum is negative: " + initConnectionNum);
 		this.initConnectionNum = initConnectionNum;
@@ -112,8 +105,7 @@ public class SequoiadbOption
 	 * @fn void getInitConnectionNum()
 	 * @brief Get the initial number of connection.
 	 */
-	public int getInitConnectionNum()
-	{
+	public int getInitConnectionNum() {
 		return initConnectionNum;
 	}
 	
@@ -124,8 +116,7 @@ public class SequoiadbOption
 	 * @param maxIdeNum default to be 10
      * @exception com.sequoiadb.exception.BaseException when maxIdeNum is negative
 	 */
-	public void setMaxIdeNum(int maxIdeNum) throws BaseException
-	{
+	public void setMaxIdeNum(int maxIdeNum) throws BaseException {
 		if (maxIdeNum < 0)
 			throw new BaseException("SDB_INVALIDARG", "maxIdeNum is negative: " + maxIdeNum);
 		this.maxIdeNum = maxIdeNum;
@@ -135,8 +126,7 @@ public class SequoiadbOption
 	 * @brief Get the max number of the free connection.
 	 * @see setMaxIdeNum
 	 */
-	public int getMaxIdeNum()
-	{
+	public int getMaxIdeNum() {
 		return maxIdeNum;
 	}
 	
@@ -144,15 +134,14 @@ public class SequoiadbOption
     * @fn void setRecheckCyclePeriod(int recheckCyclePeriod)
     * @brief Set the recheck cycle in milliseconds. In each cycle
     *        datasource cleans all the discardable connection,
-    *        and keep the number of valid connection not more than maxIdeNum. 
-    * @param recheckCyclePeriod recheckCyclePeriod should be less than abandonTime. Default to be 1 * 60 * 1000ms
+    *        and keep the number of valid connection not more then maxIdeNum. 
+    * @param recheckCyclePeriod recheckCyclePeriod should be less then abandonTime. Default to be 1 * 60 * 1000ms
     * @exception com.sequoiadb.exception.BaseException when recheckCyclePeriod is negative
     * @note recheckCyclePeriod is used to initalize datasource, it will be use in the Constructor of datasource to initalize
     * a Timer instance, once it is set, we can not change the recheck cycle of the Timer instance by setRecheckCyclePeriod().
     * It's better to set abandonTime greater than recheckCyclePeriod twice over.
     */
-	public void setRecheckCyclePeriod ( int recheckCyclePeriod ) throws BaseException
-	{
+	public void setRecheckCyclePeriod ( int recheckCyclePeriod ) throws BaseException {
 		if (recheckCyclePeriod < 0)
 			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + recheckCyclePeriod);
 		this.recheckCyclePeriod = recheckCyclePeriod ;
@@ -162,8 +151,7 @@ public class SequoiadbOption
     * @brief get the recheck cycle
     * @see setRecheckCyclePeriod
     */
-	public int getRecheckCyclePeriod ()
-	{
+	public int getRecheckCyclePeriod () {
 	   return recheckCyclePeriod ;
 	}
 
@@ -173,79 +161,46 @@ public class SequoiadbOption
     *        maxConnectionNum, datasource can't offer connection immediately, the
     *        requests will be blocked to wait for a moment. When timeout, and there is
     *        still no available connection, datasource throws exception  
-    * @param timeout default to be 5 * 1000ms
+    * @param timeout defalt to be 5 * 1000ms
     * @exception com.sequoiadb.exception.BaseException when timeout is negative
     */
-	public void setTimeout(int timeout) throws BaseException
-	{
+	public void setTimeout(int timeout) throws BaseException {
 		if (timeout < 0)
 			throw new BaseException("SDB_INVALIDARG", "timeout is negative: " + timeout);
 		if (timeout == 0)
 			timeout = 1;
 		this.timeout = timeout;
 	}
-	/**
-	 * @fn void getTimeout()
-	 * @brief get the wait time. 
-	 * @see setTimeout
-	 */
-	public int getTimeout()
-	{
+   /**
+    * @fn void getTimeout()
+    * @brief get the wait time. 
+    * @see setTimeout
+    */
+	public int getTimeout() {
 		return timeout;
 	}
 
-	/**
-	 * @fn void setRecaptureConnPeriod(int recaptureConnPeriod)
-	 * @brief Set the time in milliseconds for get back the useful address.
-	 *        When offer several addresses for datasource to connect, if 
-	 *        some of them are not available(invalid address, network error, coord shutdown,
-	 *        catalog replica group is not available), we will put these addresses
-	 *        into a queue, and check them periodically. If some of them is valid again,
-	 *        get them back for use; 
-	 * @param abandonTime default to be 10 * 60 * 1000ms
-	 * @exception com.sequoiadb.exception.BaseException when abandonTime is negative
-	 * @note It's better to set abandonTime greater than recheckCyclePeriod twice over.
-	 */
-	public void setRecaptureConnPeriod(int recaptureConnPeriod) throws BaseException
-	{
-		if (recaptureConnPeriod <= 0)
-			throw new BaseException("SDB_INVALIDARG", "recaptureConnPeriod is negative or 0: "
-		                            + recaptureConnPeriod);
-		this.recaptureConnPeriod = recaptureConnPeriod;
-	}
-	/**
-	 * @fn void getRecaptureConnPeriod()
-	 * @brief Get the setup time for abandoning discardable connection.
-	 * @setAbandonTime
-	 */
-	public int getRecaptureConnPeriod()
-	{
-		return recaptureConnPeriod;
-	}
-	
-	/**
-	 * @fn void setAbandonTime(int abandonTime)
-	 * @brief Set the time in milliseconds for abandoning discardable connection.
-	 *        If a connection has not be used for a long time(longer than abandonTime),
-	 *        datasource would not let it come back to pool. And it will clean this kind of
-	 *        connections in the pool periodically. 
-	 * @param abandonTime default to be 10 * 60 * 1000ms
-	 * @exception com.sequoiadb.exception.BaseException when abandonTime is negative
-	 * @note It's better to set abandonTime greater than recheckCyclePeriod twice over.
-	 */
-	public void setAbandonTime(int abandonTime) throws BaseException
-	{
+   /**
+    * @fn void setAbandonTime(int abandonTime)
+    * @brief Set the time in milliseconds for abandoning discardable connection.
+    *        If a connection has not be used for a long time(longer then abandonTime),
+    *        datasource would not let it come back to pool. And it will clean this kind of
+    *        connections in the pool periodically. 
+    * @param abandonTime defalt to be 10 * 60 * 1000ms
+    * @exception com.sequoiadb.exception.BaseException when abandonTime is negative
+    * @note It's better to set abandonTime greater than recheckCyclePeriod twice over.
+    */
+	public void setAbandonTime(int abandonTime) throws BaseException {
 		if (abandonTime <= 0)
 			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative or 0: " + abandonTime);
 		this.abandonTime = abandonTime;
 	}
-	/**
-	 * @fn void getAbandonTime()
-	 * @brief Get the setup time for abandoning discardable connection.
-	 * @setAbandonTime
-	 */
-	public int getAbandonTime()
-	{
+   /**
+    * @fn void getAbandonTime()
+    * @brief Get the setup time for abandoning discardable connection.
+    * @setAbandonTime
+    */
+	public int getAbandonTime() {
 		return abandonTime;
 	}
 

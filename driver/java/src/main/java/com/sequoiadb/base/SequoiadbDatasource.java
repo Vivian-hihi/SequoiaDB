@@ -20,284 +20,94 @@
  */
 package com.sequoiadb.base;
 
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import com.sequoiadb.exception.BaseException;
-import com.sequoiadb.net.ConfigOptions;
 
 /**
  * @class SequoiadbDatasource
  * @brief SequoiaDB DataSource
  */
-public class SequoiadbDatasource
-{
+public class SequoiadbDatasource {
 	// the idle queue
-	private volatile LinkedList<Sequoiadb> idle_sequoiadbs = new LinkedList<Sequoiadb>();
+	private volatile LinkedList<Sequoiadb> sequoiadbs = new LinkedList<Sequoiadb>();
 	// the busy queue
-	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>(); 
-	// the normal coord addresses
-	private volatile ArrayList<String> normal_urls = new ArrayList<String>();
-	// the abnormal coord addresses
-	private volatile ArrayList<String> abnormal_urls = new ArrayList<String>();
+	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>();
+	// the configuration for datasource
+	private SequoiadbOption option;
+	private String url = null;
 	private String username = null;
 	private String password = null;
-	// the configuration for network
-	private ConfigOptions nwOpt = null;
-	// the configuration for datasource
-	private SequoiadbOption dsOpt = null;
-	// a timer for clean idle connection
 	private Timer timer = new Timer(true);
-	// a timer for get back the useful coord address
-	private Timer timer2 = new Timer(true);
 	private final double MULTIPLE = 1.5;
-	private Random rand = new Random(47);
 	
 	/**
-	 * @fn int getIdleConnNum()
-	 * @brief Get the current idle connection amount.
-	 */
-	public synchronized int getIdleConnNum()
-	{
-		return idle_sequoiadbs.size();
-	}
-	
-	/**
-	 * @fn int getUsedConnNum()
-	 * @brief Get the current used connection amount.
-	 */
-	public synchronized int getUsedConnNum()
-	{
-		return used_sequoiadbs.size();
-	}
-	
-	/**
-	 * @fn int getNormalAddrNum()
-	 * @brief Get the current normal address amount.
-	 */
-	public synchronized int getNormalAddrNum()
-	{
-		return normal_urls.size();
-	}
-	
-	/**
-	 * @fn int getAbnormalAddrNum()
-	 * @brief Get the current abnormal address amount.
-	 */
-	public synchronized int getAbnormalAddrNum()
-	{
-		return abnormal_urls.size();
-	}
-	
-	/**
-	 * @fn SequoiadbDatasource(ArrayList<String> urls, String username, String password,
-	 *		                   ConfigOptions nwOpt, SequoiadbOption dsOpt)
-	 * @brief constructor.
-	 * @param urls the addresses of coords, can't be null or empty,
-	 *        e.g."ubuntu1:11810","ubuntu2:11810",...
-	 * @param username the username for logging sequoiadb
-	 * @param password the password for logging sequoiadb
-	 * @param nwOpt the options for connection
-	 * @param dsOpt the options for datasource  
-	 * @note When offer several addresses for datasource to connect, if 
-	 *       some of them are not available(invalid address, network error, coord shutdown,
-	 *       catalog replica group is not available), we will put these addresses
-	 *       into a queue, and check them periodically. If some of them is valid again,
-	 *       get them back for use. when a address is not available, the default timeout of
-	 *       connection is 100ms, and default retry time is 0, you can use nwOpt to change it.
-	 * @see ConfigOptions
-	 * @see SequoiadbOption
-	 * @exception com.sequoiadb.exception.BaseException
-	 */
-	public SequoiadbDatasource(ArrayList<String> urls, String username, String password,
-			ConfigOptions nwOpt, SequoiadbOption dsOpt) throws BaseException
-	{
-		if (null == urls || 0 == urls.size())
-			throw new BaseException("SDB_INVALIDARG", urls);
-
-		ConfigOptions temp = new ConfigOptions();
-		temp.setConnectTimeout(100);
-		temp.setMaxAutoConnectRetryTime(0);
-		this.username = (null == username) ? "" : username;
-		this.password = (null == password) ? "" : password;
-		this.nwOpt = (null == nwOpt) ? temp : nwOpt;
-		this.dsOpt = (null == dsOpt) ? new SequoiadbOption() : dsOpt;
-
-		this.normal_urls.addAll(urls);
-
-		try
-		{
-			init(this.dsOpt);
-		}
-		catch(BaseException e)
-		{
-			throw e;
-		}
-		// after the timer start for a while, it goes to clean periodically 
-		timer.schedule(new CleanConnectionTask(this), dsOpt.getRecheckCyclePeriod(),
-				       dsOpt.getRecheckCyclePeriod());
-		// after the timer start 10 minutes, it goes to get back the useful coord address periodically 
-		timer2.schedule(new RecaptureCoordAddrTask(this), dsOpt.getRecaptureConnPeriod(),
-				        dsOpt.getRecaptureConnPeriod());
-	}
-
-	/**
-	 * @fn SequoiadbDatasource(String url, String username, String password,
-	 *		                   SequoiadbOption dsOpt)
-	 * @brief Constructor.
-	 * @param url the address of coord, can't be null, e.g."ubuntu1:11810"
-	 * @param username the username of sequoiadb
-	 * @param password the password of sequoiadb
-	 * @param dsOpt the option of datasource
+	 * @fn SequoiadbDatasource()
+	 * @brief constructor method
+	 * @param url   the url of coord address
+	 * @param username   the username of sequoiadb
+	 * @param password   the password of sequoiadb
+	 * @param option     the option of datasource
 	 * @exception com.sequoiadb.exception.BaseException
 	 */
 	public SequoiadbDatasource(String url, String username, String password,
-			SequoiadbOption dsOpt) throws BaseException
+			SequoiadbOption option) throws BaseException
 	{
-		if (null == url)
-			throw new BaseException("SDB_INVALIDARG", url);
-		this.normal_urls.add(url);
-
-		ConfigOptions temp = new ConfigOptions();
-		temp.setConnectTimeout(100);
-		temp.setMaxAutoConnectRetryTime(0);
-		this.username = (null == username) ? "" : username;
-		this.password = (null == password) ? "" : password;
-		this.nwOpt = (null == nwOpt) ? temp : nwOpt;
-		this.dsOpt = (null == dsOpt) ? new SequoiadbOption() : dsOpt;
-		
-		try
-		{
-			init(this.dsOpt);
-		}
-		catch(BaseException e)
-		{
+		if (url == null || username == null || password == null || option == null)
+			throw new BaseException("SDB_INVALIDARG", url, username, password, option);
+		this.url = url;
+		this.username = username;
+		this.password = password;
+		this.option = option;
+		try{
+		init(option);
+		}catch(BaseException e){
 			throw e;
 		}
 		// after the timer start 500ms, it goes to clean periodically 
-		timer.schedule(new CleanConnectionTask(this), dsOpt.getRecheckCyclePeriod(), dsOpt.getRecheckCyclePeriod());
-	}	
-	
+		timer.schedule(new CleanConnectionTask(this), option.getRecheckCyclePeriod(), option.getRecheckCyclePeriod());
+	}
+
 	/**
-	 * @fn void init(SequoiadbOption dsOpt)
-	 * @brief Initialize datasource.
-	 * @param dsOpt the configuration for datasource
+	 * @fn void init(SequoiadbOption option)
+	 * @brief init SequoiadbDatabase,after you create a instance of SequoiadbDatabase,you must call this method.
+	 * @param option  
+	 *               this instance of SequoiadbOption
 	 * @exception com.sequoiadb.Exception.BaseException              
 	 */
-	private void init(SequoiadbOption dsOpt) throws BaseException
+	private void init(SequoiadbOption option) throws BaseException
 	{
 		// check option
-		if (dsOpt.getMaxConnectionNum() < 0)
+		if (option.getMaxConnectionNum() < 0)
 			throw new BaseException("SDB_INVALIDARG",
-					                "maxConnectionNum is negative: " + dsOpt.getMaxConnectionNum());
+					                "maxConnectionNum is negative: " + option.getMaxConnectionNum());
 		// if no need to init, return directly
-		if (dsOpt.getMaxConnectionNum() == 0)
+		if (option.getMaxConnectionNum() == 0)
 			return ;
 		// check option
-		if (dsOpt.getMaxConnectionNum() < dsOpt.getInitConnectionNum())
-			throw new BaseException("SDB_INVALIDARG", "maxConnectionNum is less than initConnectionNum, maxConnectionNum is " +
-					dsOpt.getMaxConnectionNum() + ", initConnectionNum is " + dsOpt.getInitConnectionNum());
-		if (dsOpt.getInitConnectionNum() < 0)
+		if (option.getMaxConnectionNum() < option.getInitConnectionNum())
+			throw new BaseException("SDB_INVALIDARG", "maxConnectionNum is less then initConnectionNum, maxConnectionNum is " +
+					            option.getMaxConnectionNum() + ", initConnectionNum is " + option.getInitConnectionNum());
+		if (option.getInitConnectionNum() < 0)
 			throw new BaseException("SDB_INVALIDARG", 
-					            "initConnectionNum is negative: " + dsOpt.getInitConnectionNum());
-		// increase some connection
-		increaseConn(dsOpt.getInitConnectionNum());
-	}
-
-	/**
-	 * @fn String getCoordAddr()
-	 * @brief Get coord url.
-	 * @return one of the coord addresses
-	 * @exception com.sequoiadb.Exception.BaseException              
-	 */
-	private synchronized String getCoordAddr() throws BaseException
-	{
-		if (1 < normal_urls.size())
-			return normal_urls.get(rand.nextInt(normal_urls.size()));
-		else if (1 == normal_urls.size())
-			return normal_urls.get(0);
-		else
-			throw new BaseException("SDB_INVALIDARG", "no available address");
-	}
-	
-	/**
-	 * @fn String getBackCoordAddr()
-	 * @brief Get back all the available coord addresses periodically.
-	 * @exception com.sequoiadb.Exception.BaseException              
-	 */
-    synchronized void getBackCoordAddr()
-	{
-		Sequoiadb sdb = null;
-		String addr = null;
-		
-		if (0 == abnormal_urls.size())
-			return;
-		for (int i = 0; i < abnormal_urls.size(); i++ )
+					            "initConnectionNum is negative: " + option.getInitConnectionNum());
+		for (int i = 0; i < option.getInitConnectionNum(); i++)
 		{
-			addr = abnormal_urls.get(i);
-			try
-			{
-				sdb = new Sequoiadb(addr, this.username, this.password, this.nwOpt);
-				if (sdb.isValid()) // it seem no need to check here?
-				{
-					normal_urls.add(addr);
-					abnormal_urls.remove(addr);
-					i--;
-				}
-			}
-			catch(BaseException e)
-			{
-			}
+			Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
+			sequoiadbs.add(sequoiadb);
 		}
 	}
-	
-	/**
-	 * @fn Sequoiadb getConnDrt()
-	 * @brief Get a connection directly.
-	 * @exception com.sequoiadb.Exception.BaseException              
-	 */
-    private synchronized Sequoiadb getConnDrt() throws BaseException
-	{
-    	Sequoiadb sdb = null;
-		String addr = getCoordAddr();
-		
-		while (normal_urls.size() > 0)
-		{
-			try
-			{
-				sdb = new Sequoiadb(addr, this.username, this.password, this.nwOpt);
-				break;
-			}
-			catch (BaseException e)
-			{
-				String errType = e.getErrorType();
-				if (errType.equals("SDB_NETWORK") || errType.equals("SDB_INVALIDARG") ||
-					errType.equals("SDB_NET_CANNOT_CONNECT"))
-				{
-					abnormal_urls.add(addr);
-					normal_urls.remove(addr);
-					addr = getCoordAddr();
-					continue;
-				}
-				else
-					throw e;
-			}
-		}
 
-		// check whether we succeed to get connection or not
-		if (null == sdb)
-			throw new BaseException("SDB_INVALIDARG");
-		return sdb;
-	}
-    
 	/**
 	 * @fn Sequoiadb getConnection()
 	 * @brief  get the connection from this datasource
+	 * @throws SQLException
+	 * @throws InterruptedException
 	 * @return Sequoiadb
 	 * @exception InterruptedException
 	 * 			  BaseException  throws BaseException with the error type SDB_DRIVER_DS_RUNOUT when datasource had run out
@@ -305,98 +115,102 @@ public class SequoiadbDatasource
 	public synchronized Sequoiadb getConnection() throws BaseException, InterruptedException
 	{
 		// when we don't want to use datasource, return sequiadb instance directly
-		if (dsOpt.getMaxConnectionNum() == 0)
-			return getConnDrt();
-		// otherwise
-		Sequoiadb sdb = null;
-		if ((idle_sequoiadbs.size() > 0) && (used_sequoiadbs.size() < dsOpt.getMaxConnectionNum())) 
+		if (option.getMaxConnectionNum() == 0)
 		{
-			// get connection from idle queue if no connection, it return null
-			sdb = idle_sequoiadbs.poll();
-			// get a valid instance for return
-			while((sdb != null) && (!sdb.isValid()))
+			Sequoiadb temp = new Sequoiadb(url, username, password);
+			return temp;
+		}
+		// otherwise
+		if ((sequoiadbs.size() > 0) && (used_sequoiadbs.size() < option.getMaxConnectionNum())) 
+		{
+			Sequoiadb sequoiadb = null;
+			// get connection from idle queue
+			sequoiadb = sequoiadbs.poll();
+			// get a valid instance
+			while((sequoiadb != null) && (!sequoiadb.isValid()))
 			{
-				sdb = idle_sequoiadbs.poll();
+				sequoiadb = sequoiadbs.poll();
 			}
-			// if no valid instance in idle queue, let't create one for return
-			if (sdb == null)
-				sdb = getConnDrt();
+			// if no valid instance in idle queue, let't create one return
+			if (sequoiadb == null)
+				sequoiadb = new Sequoiadb(url, username, password);
 			// add to busy queue
-			used_sequoiadbs.add(sdb);
+			used_sequoiadbs.add(sequoiadb);
+			return sequoiadb;
 		}
 		else
 		{
-			// if we run out all the connection, we need to wait for a moment
-			if (used_sequoiadbs.size() >= dsOpt.getMaxConnectionNum())
+			if (used_sequoiadbs.size() >= option.getMaxConnectionNum())
 			{
-				wait(dsOpt.getTimeout());
+				wait(option.getTimeout());
 				// when wake up, check again
-				if (used_sequoiadbs.size() >= dsOpt.getMaxConnectionNum())
+				if (used_sequoiadbs.size() >= option.getMaxConnectionNum())
 					throw new BaseException("SDB_DRIVER_DS_RUNOUT");
 			}
-			sdb = getConnDrt();
-			used_sequoiadbs.add(sdb);
+			Sequoiadb temp = new Sequoiadb(url, username, password);
+			used_sequoiadbs.add(temp);
 			// create a thread to increase connection
 			Thread t = new Thread(new CreateConnectionTask(this));
 			t.start();
+			return temp;
 		}
-		return sdb;
 	}
 	
 	/**
-	 * @fn void close(Sequoiadb sdb)
-	 * @brief  when you accomplish some actions,you should close the conncetion
-	 * @param sdb
+	 * @fn void close(Sequoiadb sequoiadb)
+	 * @brief Put the connection back to datasource, can't be null
+	 * @param sequoiadb connection get from current datasource
 	 * @exception com.sequoiadb.Exception.BaseException
+	 *            when param sequoiadb is null, throws BaseException with the type of "SDB_INVALIDARG"
 	 */
-	public synchronized void close(Sequoiadb sdb) throws BaseException
+	public synchronized void close(Sequoiadb sequoiadb) throws BaseException
 	{
-		if (null == sdb)
-			throw new BaseException("SDB_INVALIDARG", sdb);
+		if (sequoiadb == null)
+			throw new BaseException("SDB_INVALIDARG", sequoiadb);
 		// check option
-		if (dsOpt.getAbandonTime() <= 0)
-			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + dsOpt.getAbandonTime());
-		if (dsOpt.getRecheckCyclePeriod() <= 0)
-			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + dsOpt.getRecheckCyclePeriod());
-		if (dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
-			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less than abandonTime, recheckCyclePeriod is " +
-					dsOpt.getRecheckCyclePeriod() + ", abandonTime is " + dsOpt.getAbandonTime());
+		if (option.getAbandonTime() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + option.getAbandonTime());
+		if (option.getRecheckCyclePeriod() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + option.getRecheckCyclePeriod());
+		if (option.getRecheckCyclePeriod() >= option.getAbandonTime())
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less then abandonTime, recheckCyclePeriod is " +
+					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		// if the busy queue contain this instance
-		if (used_sequoiadbs.contains(sdb)) 
+		if (used_sequoiadbs.contains(sequoiadb)) 
 		{
 			// remove it from busy queue
-			used_sequoiadbs.remove(sdb);
+			used_sequoiadbs.remove(sequoiadb);
 			// when datasource not be used, abandon the connection directly
-			if (dsOpt.getMaxConnectionNum() == 0)
+			if (option.getMaxConnectionNum() == 0)
 			{
-				sdb.disconnect();
+				sequoiadb.disconnect();
 				return;
 			}
 			// judge put it in idle queue or not
-			long lastTime = sdb.getConnection().getLastUseTime();
+			long lastTime = sequoiadb.getConnection().getLastUseTime();
 			long currentTime = System.currentTimeMillis();
 			// check the time keep in instance, don't let it go back to pool
 			// when it timeout
-			if (currentTime - lastTime + MULTIPLE * dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
+			if (currentTime - lastTime + MULTIPLE*option.getRecheckCyclePeriod() >= option.getAbandonTime())
 			{
-				sdb.disconnect();
+				sequoiadb.disconnect();
 				return;
 			}
 			else
 			{
 				// close all cursor
-				sdb.closeAllCursors();
+				sequoiadb.closeAllCursors();
 				// release the heap memory or other resource holds in the instance
-				sdb.releaseResource();
+				sequoiadb.releaseResource();
 				// put it back to idle queue
-				idle_sequoiadbs.add(sdb);
+				sequoiadbs.add(sequoiadb);
 				notify();	
 			}
 		}
 		// else, abandon it directly
 		else
 		{
-			sdb.disconnect();
+			sequoiadb.disconnect();
 			return;
 		}
 	}
@@ -407,24 +221,41 @@ public class SequoiadbDatasource
 	 */
 	synchronized void increaseConnetions() throws BaseException
 	{
-		// when datasource is not used, return directly
-		if (dsOpt.getMaxConnectionNum() == 0)
+		// when datasource not be used, return directly
+		if (option.getMaxConnectionNum() == 0)
 			return;
 		// if the number of connection in the pool is less than SequoiadbOption::maxIdeNum
-		// we are going to increase
-		if (idle_sequoiadbs.size() >= dsOpt.getMaxIdeNum())
+		// we are going to increase. we don't want to let every request to increate the count of 
+		// connecton, if we don't limit at here, every backgroup thread created in getConnection()
+		// will create a lot of connecton. and as a result, the system's socket resource will run out easily
+		// the max number of the connection in datasource is maxConnectionNum + (maxIdeNum-1) + deltaIncCount
+		if (sequoiadbs.size() >= option.getMaxIdeNum())
 			return;
-		if (dsOpt.getDeltaIncCount() < 0)
+		if (option.getDeltaIncCount() < 0)
 				throw new BaseException("SDB_INVALIDARG", 
-						                "deltaIncCount is negative: " + dsOpt.getDeltaIncCount());
-		if (dsOpt.getMaxConnectionNum() < dsOpt.getDeltaIncCount())
+						                "deltaIncCount is negative: " + option.getDeltaIncCount());
+		if (option.getMaxConnectionNum() < option.getDeltaIncCount())
 			throw new BaseException("SDB_INVALIDARG",
-					                "deltaIncCount is greater than maxConnectionNum, deltaIncCount is " +
-					dsOpt.getDeltaIncCount() + ", maxConnectionNum is " + dsOpt.getMaxConnectionNum());
-		if (used_sequoiadbs.size() < dsOpt.getMaxConnectionNum() - dsOpt.getDeltaIncCount())
-			increaseConn(dsOpt.getDeltaIncCount());
-		else
-			increaseConn(dsOpt.getMaxConnectionNum() - used_sequoiadbs.size());
+					                "deltaIncCount is greater then maxConnectionNum, deltaIncCount is " +
+					option.getDeltaIncCount() + ", maxConnectionNum is " + option.getMaxConnectionNum());
+		if (used_sequoiadbs.size() < option.getMaxConnectionNum() -
+                                   option.getDeltaIncCount()) 
+		{
+			for (int i = 0; i < option.getDeltaIncCount(); i++)
+			{
+				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
+				sequoiadbs.add(sequoiadb);
+			}
+		} 
+		else 
+		{
+			for (int i = 0; i < option.getMaxConnectionNum()
+					- used_sequoiadbs.size(); i++)
+			{
+				Sequoiadb sequoiadb = new Sequoiadb(url, username, password);
+				sequoiadbs.add(sequoiadb);
+			}
+		}
 	}
 	
 	/**
@@ -434,113 +265,61 @@ public class SequoiadbDatasource
 	synchronized void cleanAbandonConnection() throws BaseException
 	{
 		// when no need to clean
-		if (idle_sequoiadbs.size() == 0)
+		if (sequoiadbs.size() == 0)
 			return ;
 		// check option
-		if (dsOpt.getAbandonTime() <= 0)
-			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + dsOpt.getAbandonTime());
-		if (dsOpt.getRecheckCyclePeriod() <= 0)
-			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + dsOpt.getRecheckCyclePeriod());
-		if (dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
-			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less than abandonTime, recheckCyclePeriod is " +
-					dsOpt.getRecheckCyclePeriod() + ", abandonTime is " + dsOpt.getAbandonTime());
+		if (option.getAbandonTime() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "abandonTime is negative: " + option.getAbandonTime());
+		if (option.getRecheckCyclePeriod() <= 0)
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is negative: " + option.getRecheckCyclePeriod());
+		if (option.getRecheckCyclePeriod() >= option.getAbandonTime())
+			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less then abandonTime, recheckCyclePeriod is " +
+					option.getRecheckCyclePeriod() + ", abandonTime is " + option.getAbandonTime());
 		long lastTime = 0;
 		long currentTime = System.currentTimeMillis();
-		// remove the outdated connection in idle connection queue
-		ListIterator<Sequoiadb> list1 = idle_sequoiadbs.listIterator(0);
-		while(list1.hasNext())
+		ListIterator<Sequoiadb> list = sequoiadbs.listIterator(0);
+		while(list.hasNext())
 		{
-			Sequoiadb db = list1.next();
-			lastTime = db.getConnection().getLastUseTime(); 
-			if ( currentTime - lastTime + MULTIPLE * dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
+			Sequoiadb db = list.next();
+			lastTime = db.getConnection().getLastUseTime();
+			if ( currentTime - lastTime + MULTIPLE*option.getRecheckCyclePeriod() >= option.getAbandonTime())
 			{
 				db.disconnect () ;
-				list1.remove();
+				list.remove();
 			}
 		}
-		// remove the needless connection in idle connection queue
-		for (int i = 0; i < idle_sequoiadbs.size() - dsOpt.getMaxIdeNum(); i++)
+		for (int i = 0; i < sequoiadbs.size() - option.getMaxIdeNum(); i++)
 		{
-			Sequoiadb db = idle_sequoiadbs.poll();
+			Sequoiadb db = sequoiadbs.poll();
 			db.disconnect();
 			i--;
 		}
 	}
 	
-	/**
-	 * @fn void increaseConn(int num)
-	 * @brief Increase connections.
-	 */
-	private synchronized void increaseConn(int num)
-	{
-		if (num < 0)
-			throw new BaseException("SDB_INVALIDARG");
-		for (int i = 0; i < num; i++)
-		{
-			String coordAddr = getCoordAddr();
-			Sequoiadb sdb = null;
-			try
-			{
-				sdb = new Sequoiadb(coordAddr, username, password, this.nwOpt);
-			}
-			catch(BaseException e)
-			{
-				String errType = e.getErrorType();
-				if (errType.equals("SDB_NETWORK") || errType.equals("SDB_INVALIDARG") ||
-					errType.equals("SDB_NET_CANNOT_CONNECT"))
-				{
-					abnormal_urls.add(coordAddr);
-					normal_urls.remove(coordAddr);
-					i--;
-					continue;
-				}
-				else
-					throw e;
-			}
-			idle_sequoiadbs.add(sdb);
-		}
-	}
 }
 
-class CleanConnectionTask extends TimerTask
-{
+class CleanConnectionTask extends TimerTask {
 	private SequoiadbDatasource datasource;
 	
-	public CleanConnectionTask(SequoiadbDatasource ds)
-	{
+	public CleanConnectionTask(SequoiadbDatasource ds){
 		datasource = ds;
 	}
 	@Override
-	public void run()
-	{
+	public void run() {
 		datasource.cleanAbandonConnection();
 	}
+	
 }
 
-class CreateConnectionTask implements Runnable
-{
+class CreateConnectionTask implements Runnable {
 	private SequoiadbDatasource datasource;
 	
-	public CreateConnectionTask(SequoiadbDatasource ds)
-	{
+	public CreateConnectionTask(SequoiadbDatasource ds){
 		datasource = ds;
 	}
-	@Override
-	public void run()
-	{
+	
+	public void run(){
 		datasource.increaseConnetions();
 	}
-}
-
-class RecaptureCoordAddrTask extends TimerTask
-{
-	private SequoiadbDatasource datasource;
-	public RecaptureCoordAddrTask(SequoiadbDatasource ds){
-		datasource = ds;
-	}
-	@Override
-	public void run()
-	{
-		datasource.getBackCoordAddr();
-	}
+	
 }
