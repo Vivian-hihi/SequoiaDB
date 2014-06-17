@@ -15,17 +15,16 @@
    limitations under the License.
 
 *******************************************************************************/
-#include <client.hpp>
-#include <Python.h>
-
 #include "util.hpp"
+#include "client.hpp"
+
 using namespace sdbclient ;
 
 static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
-   bson::BSONObj *bson ;
+   bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -41,7 +40,7 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_PYSTRING( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -66,7 +65,7 @@ static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_PYSTRING( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -91,7 +90,7 @@ static PYOBJECT *close( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }

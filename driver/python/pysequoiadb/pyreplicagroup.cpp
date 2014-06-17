@@ -15,27 +15,25 @@
    limitations under the License.
 
 *******************************************************************************/
-#include <client.hpp>
-#include <Python.h>
-
 #include "util.hpp"
+#include "client.hpp"
+
 using namespace sdbclient ;
 
-#define RELEASE_PTR( nodeptr ) \
-do                             \
-{                              \
-   if ( NULL != nodeptr)       \
-   {                           \
-      release_node( nodeptr )  \
-      nodeptr = NULL;          \
-   }                           \
-}
+#define RELEASE_PTR( nodeptr )  \
+do                              \
+{                               \
+   if ( NULL != nodeptr)        \
+   {                            \
+      release_node( nodeptr ) ; \
+      nodeptr = NULL;           \
+   }                            \
+}while( FALSE )
 
 static void release_node( void *ptr )
 {
    sdbNode *client = static_cast<sdbNode *>(ptr) ;
-   SDB_OSS_DEL client ;
-   client = NULL ;
+   DELETE_CPPOBJECT( client ) ;
    return;
 }
 
@@ -54,7 +52,7 @@ static PYOBJECT *get_nodenum( PYOBJECT *self, PYOBJECT *args )
 
    sdbReplicaGroup *replica_group = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   nodenum = replica_group->getNodeNum( nodestatus, &rc ) ;
+   nodenum = replica_group->getNodeNum( (sdbNodeStatus)nodestatus, &rc ) ;
 done :
    return MAKE_RETURN_INT_INT(rc, nodenum) ;
 error :
@@ -75,9 +73,9 @@ static PYOBJECT *get_detail( PYOBJECT *self, PYOBJECT *args )
 
    sdbReplicaGroup *replica_group = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   INT32 rc = replica_group->getDetail( bson ) ;
+   rc = replica_group->getDetail( bson ) ;
 done :
-   return MAKE_RETURN_INT_PYSTRING( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
 error :
    goto done ;
 }
@@ -93,17 +91,17 @@ static PYOBJECT *get_master( PYOBJECT *self, PYOBJECT *args )
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
-
-   node = SDB_OSS_NEW sdbNode() ;
+   
+   sdbReplicaGroup *replica_group = NULL ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   
+   NEW_CPPOBJECT( node, sdbNode ) ;
    if ( NULL == node )
    {
       rc = SDB_OOM ;
       goto error ;
    }
-
-   sdbReplicaGroup *replica_group = NULL ;
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   INT32 rc = replica_group->getMaster( *node ) ;
+   rc = replica_group->getMaster( *node ) ;
    if  ( SDB_OK != rc )
    {
       goto error ;
@@ -127,16 +125,15 @@ static PYOBJECT *get_slave( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   node = SDB_OSS_NEW sdbNode() ;
+   sdbReplicaGroup *replica_group = NULL ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   NEW_CPPOBJECT( node, sdbNode ) ;
    if ( NULL == node )
    {
       rc = SDB_OOM ;
       goto error ;
    }
-
-   sdbReplicaGroup *replica_group = NULL ;
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   INT32 rc = replica_group->getSlave( *node ) ;
+   rc = replica_group->getSlave( *node ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
@@ -160,16 +157,15 @@ static PYOBJECT *get_nodebyname( PYOBJECT *self, PYOBJECT *args )
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
-
-   node = SDB_OSS_NEW sdbNode() ;
+   
+   sdbReplicaGroup *replica_group = NULL ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   NEW_CPPOBJECT( node, sdbNode ) ;
    if ( NULL == node )
    {
       rc = SDB_OOM ;
       goto error ;
    }
-
-   sdbReplicaGroup *replica_group = NULL ;
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    rc = replica_group->getNode( nodename, *node ) ;
    if ( SDB_OK != rc )
    {
@@ -195,16 +191,15 @@ static PYOBJECT *get_nodebyendpoint( PYOBJECT *self, PYOBJECT *args )
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
-
-   node = SDB_OSS_NEW sdbNode() ;
+   
+   sdbReplicaGroup *replica_group = NULL ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   NEW_CPPOBJECT( node, sdbNode ) ;
    if ( NULL == node )
    {
       rc = SDB_OOM ;
       goto error ;
    }
-
-   sdbReplicaGroup *replica_group = NULL ;
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    rc = replica_group->getNode( hostname, servicename, *node ) ;
    if ( SDB_OK != rc )
    {
@@ -255,6 +250,7 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
    const char *servicename = NULL ;
    const char *nodepath    = NULL ;
    PYOBJECT *dict          = NULL ;
+   std::map<std::string,std::string> config ;
 
    if ( !PyArg_ParseTuple( args, "OsssO", &obj, &nodename, 
                             &servicename, &nodepath, &dict ) )
@@ -262,15 +258,16 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
-
+   
    sdbReplicaGroup *replica_group = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   std::map<std::string,std::string> config ;
+   
    rc = pydict_to_cmap( dict, config ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
+   
    
    rc = replica_group->createNode( nodename, servicename, nodepath, config ) ;
    if ( SDB_OK != rc )
@@ -278,7 +275,7 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
@@ -311,7 +308,7 @@ static PYOBJECT *remove_node( PYOBJECT *self, PYOBJECT *args )
       rc = replica_group->removeNode( hostname, servicename, cbson ) ;
    }
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
@@ -331,7 +328,7 @@ static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    rc = replica_group->stop() ;
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
@@ -351,7 +348,7 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    rc = replica_group->start() ;
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
@@ -371,7 +368,7 @@ static PYOBJECT *is_catalog( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
    rc = replica_group->isCatalog() ;
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }

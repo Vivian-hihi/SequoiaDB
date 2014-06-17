@@ -107,7 +107,7 @@ else:
                  '-fPIC',]
     linklibs=['staticsdbcpp',]
 
-module1 = Extension('sequoiadbClient',
+module1 = Extension('sdbclient',
                     define_macros = precompilemacros,
                     extra_compile_args=compileopt,
                     include_dirs = incdirs,
@@ -115,7 +115,7 @@ module1 = Extension('sequoiadbClient',
                     library_dirs = libdirs,
                     sources = ModuleCPPLibFiles )
 
-setup (name = 'sequoiadbClient',
+setup (name = 'sdbclient',
        version = '1.0',
        description = 'This is a sequoiadb python driver use adapter package',
        url = 'http://www.sequoiadb.com',

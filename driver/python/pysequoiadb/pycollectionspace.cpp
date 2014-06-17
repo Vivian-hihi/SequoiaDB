@@ -15,10 +15,11 @@
    limitations under the License.
 
 *******************************************************************************/
-#include <Python.h>
-#include <client.hpp>
-
 #include "util.hpp"
+#include "client.hpp"
+
+using namespace sdbclient ;
+
 
 static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
 {
@@ -109,7 +110,7 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
+static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc               = 0 ;
    PYOBJECT *obj          = NULL ;
@@ -119,7 +120,7 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
    const char *cl_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
    sdbCollection *cl      = NULL ;
-   bson::BSONObj *option  = NULL ;
+   const bson::BSONObj *option  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsOO", &obj, &cl_name, &cl_object,
                                                           &bson_option ) )
@@ -130,9 +131,9 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
-   rc = cs->createCollection( cl_name, option, *cl ) ;
+   rc = cs->createCollection( cl_name, *option, *cl ) ;
    if ( rc )
    {
       goto done ;
@@ -180,14 +181,14 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
-      goto error ;
+      goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
 
    cs_name = cs->getCSName() ;
 
-error:
+done :
    return MAKE_RETURN_INT_PYSTRING( rc, cs_name ) ;
 }
 

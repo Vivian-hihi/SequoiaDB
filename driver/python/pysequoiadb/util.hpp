@@ -104,7 +104,7 @@
    }                                                           \
    else                                                        \
    {                                                           \
-      void *tmp = PyBytes_AsString( py_object ) ;              \
+      const char *tmp = PyBytes_AsString( py_object ) ;        \
       if ( NULL == tmp )                                       \
       {                                                        \
          rc = SDB_INVALIDARGS ;                                \
@@ -119,17 +119,17 @@
       }                                                        \
    }
 
-#define MAKE_PYLIST_TO_VECTOR( py_list, list_size, vec_bson )              \
+#define MAKE_PYLIST_TO_VECTOR( py_list, vec_bson )                         \
    if( !PyList_Check( py_list) )                                           \
    {                                                                       \
       rc = SDB_INVALIDARGS ;                                               \
       goto done ;                                                          \
    }                                                                       \
                                                                            \
-   list_size = PyList_Size( py_list ) ;                                    \
-   for ( idx = 0 ; idx < list_size ; ++idx )                               \
+   INT32 list_size = PyList_Size( py_list ) ;                              \
+   for ( int idx = 0 ; idx < list_size ; ++idx )                           \
    {                                                                       \
-      bson::BSONObj *obj = NULL ;                                          \
+      const bson::BSONObj *obj = NULL ;                                    \
       CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ;       \
       vec_bson.push_back( *obj ) ;                                         \
       DELETE_CPPOBJECT( obj ) ;                                            \
@@ -152,29 +152,29 @@ static struct PyModuleDef moduledef = {                \
 };                                                     \ 
 
 #if PY_MAJOR_VERSION >= 3                               
-#define INITERROR return NULL
-#define DECLARE_MODULE_FUN(modulename, methods)        \
-DEFINE_MODULE(modulename, methods)                     \
-PyMODINIT_FUNC PyInit__##modulename(void)
+   #define INITERROR return NULL
+   #define DECLARE_MODULE_FUN(modulename, methods)        \
+      DEFINE_MODULE(modulename, methods)                  \
+      PyMODINIT_FUNC PyInit__##modulename(void)
 #else                                                    
-#define INITERROR return                               
-#define DECLARE_MODULE_FUN(modulename, methods)        \
-PyMODINIT_FUNC init##modulename(void)
+   #define INITERROR return                               
+   #define DECLARE_MODULE_FUN(modulename, methods)        \
+      PyMODINIT_FUNC init##modulename(void)
 #endif                                                   
 
 #if PY_MAJOR_VERSION >= 3                              
-#define MODULE_CREATE(modulename, methods)             \
-    m = PyModule_Create(&moduledef)                    
+   #define MODULE_CREATE(modulename, methods)             \
+      m = PyModule_Create(&moduledef)                    
 #else                                                  
-#define MODULE_CREATE(modulename, methods)             \
-    m = Py_InitModule(modulename, methods)            
+   #define MODULE_CREATE(modulename, methods)             \
+      m = Py_InitModule(modulename, methods)            
 #endif                                             
 
 
 #if PY_MAJOR_VERSION >= 3                              
-#define RETURN   return m
+   #define RETURN   return m
 #else
-#define RETURN   return
+   #define RETURN   return
 #endif                                                    
                                                 
 #define CREATE_MODULE( modulename, methods )           \

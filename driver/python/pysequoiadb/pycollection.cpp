@@ -15,10 +15,11 @@
    limitations under the License.
 
 *******************************************************************************/
-#include <Python.h>
-
 #include "util.hpp"
 #include "pycollection.hpp"
+#include "client.hpp"
+
+using namespace sdbclient ;
 
 static PYOBJECT *create_cl( PYOBJECT *self, PYOBJECT *args ) 
 {
@@ -57,8 +58,8 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
    SINT64 count             = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *bson_condition = NULL ;
-   void *tmp                = NULL ;
-   bson::BSONObj *condition = NULL ;
+   const bson::BSONObj *condition = NULL ;
+   sdbCollection *cl        = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_condition ) )
    {
@@ -67,9 +68,9 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
 
-   rc = cl->getCount( count, condition ) ;
+   rc = cl->getCount( count, *condition ) ;
    if ( rc )
    {
       goto done ;
@@ -86,12 +87,11 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *cl_object          = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_end_condition = NULL ;
-   void *tmp                    = NULL ;
    const char *src_name         = NULL ;
    const char *dst_name         = NULL ;
    sdbCollection *cl            = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *end_condition = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *end_condition = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OssO|O", &obj, &src_name, &dst_name,
                                   &bson_condition, &bson_end_condition ) )
@@ -101,10 +101,10 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_end_condition, tmp, end_condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_end_condition, end_condition ) ;
 
-   rc = cl->split( src_name, dst_name, condition, end_condition ) ;
+   rc = cl->split( src_name, dst_name, *condition, *end_condition ) ;
    if ( rc )
    {
       goto done ;
@@ -122,8 +122,8 @@ static PYOBJECT *split_by_precent( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj        = NULL ;
    PYOBJECT *cl_object  = NULL ;
    void *tmp            = NULL ;
-   const char *src_name = NULL ;
    const char *dst_name = NULL ;
+   const char *src_name = NULL ;
    sdbCollection *cl    = NULL ;
    FLOAT64 precent      = NULL ;
 
@@ -146,19 +146,18 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args ) ;
+static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                     = 0 ;
    PYOBJECT *obj                = NULL ;
    PYOBJECT *cl_object          = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_end_condition = NULL ;
-   void *tmp                    = NULL ;
    const char *src_name         = NULL ;
    const char *dst_name         = NULL ;
    sdbCollection *cl            = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *end_condition = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *end_condition = NULL ;
    SINT64 task_id               = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OssO|O", &obj, &src_name, &dst_name,
@@ -169,11 +168,11 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args ) ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_end_condition, tmp, end_condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_end_condition, end_condition ) ;
 
    rc = cl->splitAsync( task_id, src_name, dst_name,
-                                  condition, end_condition ) ;
+                                  *condition, *end_condition ) ;
    if ( rc )
    {
       goto done ;
@@ -190,7 +189,6 @@ static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    PYOBJECT *cl_object  = NULL ;
-   void *tmp            = NULL ;
    const char *src_name = NULL ;
    const char *dst_name = NULL ;
    sdbCollection *cl    = NULL ;
@@ -206,7 +204,7 @@ static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
-   rc = cl->spliteAsync( src_name, dst_name, precent, task_id ) ;
+   rc = cl->splitAsync( src_name, dst_name, precent, task_id ) ;
    if ( rc )
    {
       goto done ;
@@ -220,11 +218,10 @@ static PYOBJECT *bulk_insert( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    SINT32 flags         = 0 ;
-   INT32  list_size     = 0 ;
    PYOBJECT *obj        = NULL ;
    PYOBJECT *list_object= NULL ;
-   void *tmp            = NULL ;
    sdbCollection *cl    = NULL ;
+   void *tmp            = NULL ;
 
    std::vector< bson::BSONObj > vec_bson ;
 
@@ -235,7 +232,7 @@ static PYOBJECT *bulk_insert( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   MAKE_PYLIST_TO_VECTOR( list_object, list_size, tmp, vec_bson ) ;
+   MAKE_PYLIST_TO_VECTOR( list_object, vec_bson ) ;
    rc = cl->bulkInsert( flags, vec_bson ) ;
    if ( rc )
    {
@@ -250,13 +247,12 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    SINT32 flags         = 0 ;
-   INT32  list_size     = 0 ;
    PYOBJECT *obj        = NULL ;
+   PYOBJECT *bson_object = NULL ;
    PYOBJECT *oid_object = NULL ;
-   void *tmp            = NULL ;
    sdbCollection *cl    = NULL ;
-   bson::BSONObj *object= NULL ;
-   bson::BSONElement *id= NULL ;
+   const bson::BSONObj *object= NULL ;
+   bson::OID *id= NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|O", &obj, &bson_object, oid_object ) )
    {
@@ -269,8 +265,8 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
    {
       CAST_PYOBJECT_TO_COBJECT( oid_object, bson::OID, id ) ;
    }
-   CAST_PYBSON_TO_CPPBSON( bson_object, tmp, object ) ;
-   rc = cl->insert( object, id ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_object, object ) ;
+   rc = cl->insert( *object, id ) ;
    if ( rc )
    {
       goto done ;
@@ -288,11 +284,10 @@ static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_rule          = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_hint          = NULL ;
-   void *tmp                    = NULL ;
    sdbCollection *cl            = NULL ;
-   bson::BSONObj *rule          = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *hint          = NULL ;
+   const bson::BSONObj *rule          = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *hint          = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|OO", &obj, &bson_rule,
                                           &bson_condition, &bson_hint ) )
@@ -302,11 +297,11 @@ static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_rule, tmp, rule ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_rule, rule ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = cl->update( rule, condition, hint ) ;
+   rc = cl->update( *rule, *condition, *hint ) ;
    if ( rc )
    {
       goto done ;
@@ -326,11 +321,10 @@ static PYOBJECT *upsert( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_rule          = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_hint          = NULL ;
-   void *tmp                    = NULL ;
    sdbCollection *cl            = NULL ;
-   bson::BSONObj *rule          = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *hint          = NULL ;
+   const bson::BSONObj *rule          = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *hint          = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|OO", &obj, &bson_rule,
                                           &bson_condition, &bson_hint ) )
@@ -340,11 +334,11 @@ static PYOBJECT *upsert( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_rule, tmp, rule ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_rule, rule ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = cl->upsert( rule, condition, hint ) ;
+   rc = cl->upsert( *rule, *condition, *hint ) ;
    if ( rc )
    {
       goto done ;
@@ -363,10 +357,9 @@ static PYOBJECT *del( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj                = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_hint          = NULL ;
-   void *tmp                    = NULL ;
    sdbCollection *cl            = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *hint          = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *hint          = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O|OO", &obj, &bson_condition, &bson_hint ) )
    {
@@ -375,10 +368,10 @@ static PYOBJECT *del( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = cl->del( rule, condition, hint ) ;
+   rc = cl->del( *condition, *hint ) ;
    if ( rc )
    {
       goto done ;
@@ -401,13 +394,12 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_selector      = NULL ;
    PYOBJECT *bson_order_by      = NULL ;
    PYOBJECT *bson_hint          = NULL ;
-   void *tmp                    = NULL ;
    sdbCollection *cl            = NULL ;
    sdbCursor *cursor            = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *selector      = NULL ;
-   bson::BSONObj *order_by      = NULL ;
-   bson::BSONObj *hint          = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *selector      = NULL ;
+   const bson::BSONObj *order_by      = NULL ;
+   const bson::BSONObj *hint          = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|OOOOii", &obj, &cursor_object,
                             &bson_condition,  &bson_selector, &bson_order_by,
@@ -419,13 +411,13 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = cl->query( *cursor, condition, selector, order_by, hint,
-                                       num_to_skip, &num_to_return ) ;
+   rc = cl->query( *cursor, *condition, *selector, *order_by, *hint,
+                                       num_to_skip, num_to_return ) ;
    if ( rc )
    {
       goto done ;
@@ -446,9 +438,8 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    BOOLEAN is_enforced      = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *bson_index_def = NULL ;
-   void *tmp                = NULL ;
    sdbCollection *cl        = NULL ;
-   bson::BSONObj *index_def = NULL ;
+   const bson::BSONObj *index_def = NULL ;
    const char *name         = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOsii", &obj, &bson_index_def, &name,
@@ -459,9 +450,9 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_index_def, tmp, index_def ) ;
+    ( bson_index_def, index_def ) ;
 
-   rc = cl->createIndex( index_def, name, is_unique, is_enforced ) ;
+   rc = cl->createIndex( *index_def, name, is_unique, is_enforced ) ;
    if ( rc )
    {
       goto done ;
@@ -477,7 +468,6 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
    PYOBJECT *cursor_object = NULL ;
-   void *tmp               = NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
    const char *index_name  = NULL ;
@@ -498,14 +488,13 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   return MAKE_RETURN_INT( rc,  ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *drop_index( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
-   void *tmp               = NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
    const char *index_name  = NULL ;
@@ -532,7 +521,6 @@ static PYOBJECT *get_collection_name( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
    sdbCollection *cl   = NULL ;
    const char *cl_name = NULL ;
 
@@ -554,7 +542,6 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
    sdbCollection *cl   = NULL ;
    const char *cs_name = NULL ;
 
@@ -576,7 +563,6 @@ static PYOBJECT *get_full_name( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
-   void *tmp             = NULL ;
    sdbCollection *cl     = NULL ;
    const char *full_name = NULL ;
 
@@ -601,7 +587,6 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *cl_object     = NULL ;
    PYOBJECT *list_object   = NULL ;
    PYOBJECT *cursor_object = NULL ;
-   void *tmp               = NULL ;
    sdbCollection *cl       = NULL ;
    sdbCursor *cursor       = NULL ;
 
@@ -615,7 +600,7 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
-   MAKE_PYLIST_TO_VECTOR( list_object, list_size, tmp, vec_bson ) ;
+   MAKE_PYLIST_TO_VECTOR( list_object, vec_bson ) ;
    rc = cl->aggregate( *cursor, vec_bson ) ;
    if ( rc )
    {
@@ -636,14 +621,13 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_order_by      = NULL ;
    PYOBJECT *bson_hint          = NULL ;
-   void *tmp                    = NULL ;
    sdbCollection *cl            = NULL ;
    sdbCursor *cursor            = NULL ;
-   bson::BSONObj *condition     = NULL ;
-   bson::BSONObj *order_by      = NULL ;
-   bson::BSONObj *hint          = NULL ;
+   const bson::BSONObj *condition     = NULL ;
+   const bson::BSONObj *order_by      = NULL ;
+   const bson::BSONObj *hint          = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOOii", &obj, &cursor_object,
+   if ( !PARSE_PYTHON_ARGS( args, "OO|OOOii", &obj, &cursor_object,
                             &bson_condition, &bson_order_by, &bson_hint,
                             &num_to_skip, &num_to_return ) )
    {
@@ -653,12 +637,12 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_hint, hint ) ;
 
-   rc = cl->getQueryMeta( *cursor, condition, selector, order_by, hint,
-                            num_to_skip, &num_to_return ) ;
+   rc = cl->getQueryMeta( *cursor, *condition, *order_by, *hint,
+                            num_to_skip, num_to_return ) ;
    if ( rc )
    {
       goto done ;
@@ -676,10 +660,9 @@ static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                  = 0 ;
    PYOBJECT *obj             = NULL ;
    PYOBJECT *bson_option     = NULL ;
-   void *tmp                 = NULL ;
    const char *sub_full_name = NULL ;
    sdbCollection *cl         = NULL ;
-   bson::BSONObj *option     = NULL ;
+   const bson::BSONObj *option     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &sub_full_name, &bson_option ) )
    {
@@ -687,9 +670,9 @@ static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-   CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
-   rc = cs->attachCollection( sub_full_name, option ) ;
+   rc = cl->attachCollection( sub_full_name, *option ) ;
    if ( rc )
    {
       goto done ;
@@ -704,7 +687,6 @@ static PYOBJECT *detach_collection( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                  = 0 ;
    PYOBJECT *obj             = NULL ;
-   void *tmp                 = NULL ;
    const char *sub_full_name = NULL ;
    sdbCollection *cl         = NULL ;
 
@@ -715,7 +697,7 @@ static PYOBJECT *detach_collection( PYOBJECT *self, PYOBJECT *args )
    }
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
-   rc = cs->detachCollection( sub_full_name ) ;
+   rc = cl->detachCollection( sub_full_name ) ;
    if ( rc )
    {
       goto done ;

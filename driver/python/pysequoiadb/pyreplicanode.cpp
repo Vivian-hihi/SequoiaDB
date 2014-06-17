@@ -15,16 +15,17 @@
    limitations under the License.
 
 *******************************************************************************/
-#include <client.hpp>
-#include <Python.h>
-
 #include "util.hpp"
+#include "client.hpp"
+
+using namespace sdbclient ;
 
 static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    PYOBJECT *sdbodj     = NULL ;
+   INT32 nodenum        = 0 ;
 
    if ( !PyArg_ParseTuple( args, "OO", &obj, &sdbodj ) )
    {
@@ -38,7 +39,7 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    nodenum = node->connect( *client ) ;
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
@@ -80,7 +81,7 @@ static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    hostname = node->getHostName() ;
 done :
-   return MAKE_RETURN_INT_PYSTRING( rc, nodename ) ;
+   return MAKE_RETURN_INT_PYSTRING( rc, hostname ) ;
 error :
    goto done ;
 }
@@ -142,7 +143,7 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    rc = node->stop() ;
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
@@ -162,7 +163,7 @@ static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    rc = node->start() ;
 done :
-   return MAKE_RETURN_INT_VALUE( rc ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
    goto done ;
 }
