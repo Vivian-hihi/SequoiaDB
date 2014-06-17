@@ -52,6 +52,9 @@
 #define MAKE_RETURN_INT_LONG( ret_value, long_value ) \
    ( PyObject * )Py_BuildValue( ("i,L"), ret_value, long_value )
 
+#define MAKE_RETURN_INT_OBJECT( ret_value, py_object ) \
+   ( PyObject * )Py_BuildValue( ("i,O"), ret_value, py_object )
+
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
    ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
 
