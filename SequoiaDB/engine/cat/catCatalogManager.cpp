@@ -2421,7 +2421,12 @@ namespace engine
       BSONObj res ;
 
       rc = catGetDomainGroups( domain, groupsInDomain ) ;
-      if ( SDB_OK != rc )
+      if ( SDB_CAT_NO_GROUP_IN_DOMAIN == rc )
+      {
+         /// empty domain
+         rc = SDB_OK ;
+      }
+      else if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get groups from domain object:%d", rc ) ;
          goto error ;
