@@ -2115,7 +2115,7 @@
       </code>
 
       <code>
-         <name>SDB_OM_LOGIN_PASSWD_CHANGE_SUGGUESTION</name>
+         <name>SDB_OM_PASSWD_CHANGE_SUGGUEST</name>
          <description>
             <en>suggest sdb om's user to change the passwd</en>
             <cn>提示用户修改登陆密码</cn>
