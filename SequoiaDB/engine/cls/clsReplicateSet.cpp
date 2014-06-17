@@ -209,6 +209,9 @@ namespace engine
             rate = 2 << idx ;
             _sizethreshold[ idx ] = _totalLogSize * ( rate - 1 ) / rate ;
             _timeThreshold[ idx ] = timeBase << idx ;
+
+            PD_LOG( PDEVENT, "Sync test: idx: %d:[%d, %d]",
+                    idx, _sizethreshold[ idx ], _timeThreshold[ idx ] ) ;
          }
       }
 
@@ -922,7 +925,7 @@ namespace engine
                {
                   _inSyncCtrl = TRUE ;
                   PD_LOG( PDWARNING, "Begin sync control...[expectLSN: %lld, "
-                          "ArbitLSN: %lld, threadTime: %d, reqLen: %d, "
+                          "ArbitLSN: %lld, threshTime: %d, reqLen: %d, "
                           "waitTime: %d]", expectLSN.offset, offset,
                           threshTime, reqLen, waitTime ) ;
                }
