@@ -173,7 +173,7 @@ namespace engine
       PD_LOG( PDEVENT, "Session[%s]: disconnect session", sessionName() ) ;
       MsgHeader msg ;
       _quit = TRUE ;
-      _status = CLS_FS_STATUS_NONE ;
+
       if ( _selector.src().value != MSG_INVALID_ROUTEID )
       {
          msg.messageLength = sizeof( MsgHeader ) ;
@@ -904,6 +904,7 @@ namespace engine
                   goto error ;
                }
 
+               /* In the end, will pull repl-log, so, the code not needed
                if ( !_replayer.isDPSEnabled() )
                {
                   rc = dpsCB->recordRow( itr, header->_length );
@@ -913,7 +914,7 @@ namespace engine
                               sessionName(), rc ) ;
                      goto error ;
                   }
-               }
+               } */
 
                /// add new collection into sync list.
                /// truncate is cl logical id is change, so can't find in the
@@ -1132,6 +1133,14 @@ namespace engine
       sdbGetShardCB()->getCataAgent()->release_w() ;
 
       dpsCB = pmdGetKRCB()->getDPSCB() ;
+      // change to meta
+      _status = CLS_FS_STATUS_META ;
+      // clear trans info
+      sdbGetTransCB()->clearTransInfo() ;
+      // disable trans need load
+      sdbGetTransCB()->setIsNeedSyncTrans( FALSE ) ;
+      // set business not ok
+      pmdGetStartup().ok( FALSE ) ;
       // clear all log
       dpsCB->move ( 0, 0 ) ;
       if ( SDB_OK != dpsCB->move( _expectLSN.offset, _expectLSN.version ) )
@@ -1177,12 +1186,8 @@ namespace engine
          }
          _mapEmptyCS.clear() ;
       }
-
-      // disable trans need load
-      sdbGetTransCB()->setIsNeedSyncTrans( FALSE ) ;
-
-      _status = CLS_FS_STATUS_META ;
       _meta() ;
+
    done:
       PD_TRACE_EXIT ( SDB__CLSFSDS_HNDBGRES );
       return SDB_OK ;
@@ -1232,7 +1237,6 @@ namespace engine
 
       // disconnect all collection
       sdbGetClsCB()->getShardRouteAgent()->disconnectAll() ;
-      sdbGetTransCB()->clearTransInfo() ;
 
       PD_TRACE_EXIT ( SDB__CLSFSDS__BEGIN );
       return ;
@@ -1346,23 +1350,8 @@ namespace engine
    void _clsFSDstSession::_onDetach()
    {
       PD_TRACE_ENTRY ( SDB__CLSFSDS__ONDETACH );
-      /// sync has not been done. move dps to origin,
-      /// and clear all data.
-      /// or, fullsync possibly is not happened, the
-      /// status is still at begin, we do not clear
-      /// data also.
-      if ( CLS_FS_STATUS_END != _status || STEP_TS_END != _tsStep )
-      {
-         if ( CLS_FS_STATUS_BEGIN != _status )
-         {
-            sdbGetDPSCB()->move( 0, 0 ) ;
-            sdbGetClsCB()->clearAllData() ;
-         }
-         sdbGetTransCB()->clearTransInfo() ;
-         sdbGetTransCB()->setIsNeedSyncTrans( TRUE ) ;
-      }
-      else if ( CLS_FS_STATUS_END == _status && STEP_TS_END == _tsStep &&
-                FALSE == pmdGetStartup().isOK() )
+
+      if ( CLS_FS_STATUS_END == _status && STEP_TS_END == _tsStep )
       {
          pmdGetStartup().ok ( TRUE ) ;
       }

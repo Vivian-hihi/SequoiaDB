@@ -67,8 +67,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU ) ;
 
-      if ( !pmdGetStartup().isOK() &&
-           !_info()->isAllNodeAbnormal( pmdGetOptionCB()->startShiftTime() ) )
+      if ( !pmdGetStartup().isOK() && !_info()->isAllNodeAbnormal( 0 ) )
       {
          PD_LOG ( PDINFO, "Start type isn't normal, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -98,7 +97,8 @@ namespace engine
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
-      else if ( sdbGetTransCB()->isNeedSyncTrans() )
+      else if ( sdbGetTransCB()->isNeedSyncTrans() &&
+                pmdGetStartup().isOK() )
       {
          PD_LOG( PDINFO, "Trans info is not sync, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -196,8 +196,7 @@ namespace engine
             }
          }
       }
-      if ( pmdGetStartup().isOK() ||
-           _info()->isAllNodeAbnormal( pmdGetOptionCB()->startShiftTime() ) )
+      if ( pmdGetStartup().isOK() || _info()->isAllNodeAbnormal( 0 ) )
       {
          DPS_LSN local = _logger->getCurrentLsn() ;
          INT32 cRc = local.compare( lsn ) ;

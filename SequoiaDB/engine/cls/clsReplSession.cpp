@@ -784,6 +784,11 @@ namespace engine
                     "after rebuild, rc: %d", sessionName(), rc ) ;
             goto error ;
          }
+         else
+         {
+            PD_LOG( PDEVENT, "Sync Session[%s]: Move dps to begin after "
+                    "rebuild succeed" ) ;
+         }
 
          // force to secondary
          pClsCB->getReplCB()->voteMachine()->force( CLS_ELECTION_STATUS_SEC ) ;
