@@ -101,7 +101,7 @@
    }
    
 
-#define MAKE_PYLIST_TO_VECTOR( py_list, list_size, tmp, vec_bson )         \
+#define MAKE_PYLIST_TO_VECTOR( py_list, list_size, vec_bson )              \
    if( !PyList_Check( py_list) )                                           \
    {                                                                       \
       rc = SDB_INVALIDARGS ;                                               \
@@ -112,7 +112,7 @@
    for ( idx = 0 ; idx < list_size ; ++idx )                               \
    {                                                                       \
       bson::BSONObj *obj = NULL ;                                          \
-      CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), tmp, obj ) ;  \
+      CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ;       \
       vec_bson.push_back( *obj ) ;                                         \
       DELETE_CPPOBJECT( obj ) ;                                            \
    }
