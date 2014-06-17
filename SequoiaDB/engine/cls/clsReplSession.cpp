@@ -787,7 +787,7 @@ namespace engine
          else
          {
             PD_LOG( PDEVENT, "Sync Session[%s]: Move dps to begin after "
-                    "rebuild succeed" ) ;
+                    "rebuild succeed", sessionName() ) ;
          }
 
          // force to secondary
