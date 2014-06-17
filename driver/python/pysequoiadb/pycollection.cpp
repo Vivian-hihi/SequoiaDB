@@ -267,7 +267,7 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    if ( NULL != oid_object )
    {
-      CAST_PYOBJECT_TO_COBJECT( oid_object, bson::BSONElement, id ) ;
+      CAST_PYOBJECT_TO_COBJECT( oid_object, bson::OID, id ) ;
    }
    CAST_PYBSON_TO_CPPBSON( bson_object, tmp, object ) ;
    rc = cl->insert( object, id ) ;

@@ -89,7 +89,8 @@
    }while( 0 )
 
 /*
- *@brief     macro to cast python bson object to c++ bson
+ *@brief     macro to new a c++ bson object, with initialize python bson object.
+ *             it will new a  c++ object, and must be remember to delete.
  *@py_object [in] object need to cast
  *@instance  [out] the pointer pointing to real object
  **/
