@@ -433,6 +433,12 @@ namespace engine
                   primary ? "Primary" : "Secondary" ) ;
       }
 
+      // if business is not ok
+      if ( !pmdGetStartup().isOK() )
+      {
+         return ;
+      }
+
       if ( primary && SDB_EVT_OCCUR_BEFORE == type )
       {
          // inc dps log version
@@ -442,12 +448,6 @@ namespace engine
       {
          // interrupt writing edus
          pmdGetKRCB()->getEDUMgr()->interruptWritingEDUS() ;
-      }
-
-      // if business is not ok
-      if ( !pmdGetStartup().isOK() )
-      {
-         return ;
       }
 
       // notify sub members

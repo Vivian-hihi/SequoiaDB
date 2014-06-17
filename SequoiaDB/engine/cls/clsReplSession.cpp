@@ -790,12 +790,11 @@ namespace engine
                     "rebuild succeed", sessionName() ) ;
          }
 
-         // force to secondary
-         pClsCB->getReplCB()->voteMachine()->force( CLS_ELECTION_STATUS_SEC ) ;
-
          pClsCB->getReplCB()->setFullSync( FALSE ) ;
          pmdGetStartup().ok ( TRUE ) ;
          _status = CLS_SESSION_STATUS_SYNC ;
+         // force to secondary
+         pClsCB->getReplCB()->voteMachine()->force( CLS_ELECTION_STATUS_SEC ) ;
       }
       else
       {
