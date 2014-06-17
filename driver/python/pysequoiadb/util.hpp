@@ -26,6 +26,20 @@
 
 #define PARSE_PYTHON_ARGS PyArg_ParseTuple
 
+///< new and delete 
+#define NEW_CPPOBJECT( pObject, CLSNAME ) \
+   pObject = new (std::nothrow) CLSNAME ()
+
+#define NEW_CPPOBJECT_INIT( pObject, CLSNAME, pValue ) \
+   pObject = new (std::nothrow) CLSNAME ( pValue )
+
+#define DELETE_CPPOBJECT( pObject ) \
+   if ( NULL != pObject )           \
+   {                                \
+      delete pObject ;              \
+      pObject = NULL ;              \
+   }
+
 /*
  *@brief     macro to cast INT32 to object of Python
  **/
@@ -42,7 +56,8 @@
    ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
 
 #define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
-   ( PyObject * )Py_BuildValue( ("i,s#"), ret_value, c_string, c_stringsize )   
+   ( PyObject * )Py_BuildValue( ("i,s#"), ret_value, c_string, c_stringsize )
+
 /*
  *@brief      macro to cast C++ object to a python object 
  **/
@@ -74,7 +89,7 @@
    }while( 0 )
 
 /*
- *@brief     macro to re-cast python's bson object to c++ bson
+ *@brief     macro to cast python bson object to c++ bson
  *@py_object [in] object need to cast
  *@instance  [out] the pointer pointing to real object
  **/
@@ -92,14 +107,13 @@
          goto done ;                                           \
       }                                                        \
                                                                \
-      bson_object = SDB_OSS_NEW bson::BSONObj( tmp ) ;         \
+      NEW_CPPOBJECT_INIT( bson_object, bson::BSONObj, tmp ) ;  \
       if ( NULL == bson_object )                               \
       {                                                        \
          rc = SDB_OOM ;                                        \
          goto done ;                                           \
       }                                                        \
    }
-   
 
 #define MAKE_PYLIST_TO_VECTOR( py_list, list_size, vec_bson )              \
    if( !PyList_Check( py_list) )                                           \
@@ -115,16 +129,6 @@
       CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ;       \
       vec_bson.push_back( *obj ) ;                                         \
       DELETE_CPPOBJECT( obj ) ;                                            \
-   }
-
-#define NEW_CPPOBJECT( pObject, CLSNAME ) \
-   pObject = new (std::nothrow) CLSNAME ()
-
-#define DELETE_CPPOBJECT( pObject ) \
-   if ( NULL != pObject )           \
-   {                                \
-      delete pObject ;              \
-      pObject = NULL ;              \
    }
 
 #define SDB_INVALIDARGS -6
