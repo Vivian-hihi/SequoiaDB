@@ -330,48 +330,6 @@ done:
    DELETE_CPPOBJECT( order_by ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
-// 
-// static PYOBJECT *lock( PYOBJECT *self, PYOBJECT *args )
-// {
-//    INT32 rc            = 0 ;
-//    PYOBJECT *obj       = NULL ;
-//    void *tmp           = NULL ;
-//    sdb *client         = NULL ;
-// 
-//    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
-//    {
-//       rc = SDB_INVALIDARGS ;
-//       goto done ;
-//    }
-// 
-//    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-// 
-//    rc = client.lock() ;
-// 
-// done:
-//    return MAKE_RETURN_INT( rc ) ;
-// }
-// 
-// static PYOBJECT *unlock( PYOBJECT *self, PYOBJECT *args )
-// {
-//    INT32 rc            = 0 ;
-//    PYOBJECT *obj       = NULL ;
-//    void *tmp           = NULL ;
-//    sdb *client         = NULL ;
-// 
-//    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
-//    {
-//       rc = SDB_INVALIDARGS ;
-//       goto done ;
-//    }
-// 
-//    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-// 
-//    rc = client.unlock() ;
-// 
-// done:
-//    return MAKE_RETURN_INT( rc ) ;
-// }
 
 static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
@@ -1138,8 +1096,6 @@ static PyMethodDef client_methods[] = {
    {"get_snapshot",              get_snapshot,                 METH_VARARGS},
    {"reset_snapshot",            reset_snapshot,               METH_VARARGS},
    {"get_list",                  get_list,                     METH_VARARGS},
-   {"lock",                      lock,                         METH_VARARGS},
-   {"unlock",                    unlock,                       METH_VARARGS},
    {"get_collection_space",      get_collection_space,         METH_VARARGS},
    {"create_collection_space",   create_collection_space,      METH_VARARGS},
    {"drop_collection_space",     drop_collection_space,        METH_VARARGS},

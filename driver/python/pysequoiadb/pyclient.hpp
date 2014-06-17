@@ -46,10 +46,6 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args ) ;
 
-static PYOBJECT *lock( PYOBJECT *self, PYOBJECT *args ) ;
-
-static PYOBJECT *unlock( PYOBJECT *self, PYOBJECT *args ) ;
-
 static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args ) ;
 
 static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args ) ;
