@@ -16,6 +16,7 @@
 
 *******************************************************************************/
 #include "util.hpp"
+#include "pyclient.hpp"
 #include "client.hpp"
 
 using namespace sdbclient;
@@ -58,7 +59,6 @@ static PYOBJECT *release_client( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
-   void *tmp     = NULL ;
    sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -79,7 +79,6 @@ static PYOBJECT *connect_by_host( PYOBJECT *self, PYOBJECT *args )
    INT32 rc         = 0 ;
    INT32 port       = 0 ;
    PYOBJECT *obj    = NULL ;
-   void *tmp        = NULL ;
    sdb *client      = NULL ;
    const char *host = NULL ;
    const char *user = NULL ;
@@ -102,7 +101,6 @@ static PYOBJECT *connect_by_service( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc            = 0 ;
    PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
    sdb *client         = NULL ;
    const char *host    = NULL ;
    const char *service = NULL ;
@@ -128,7 +126,6 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
    INT32 rc            = 0 ;
    INT32 addr_size     = 0 ;
    PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
    sdb *client         = NULL ;
    const char **addr   = NULL ;
    const char *user    = NULL ;
@@ -152,13 +149,8 @@ done:
 static PYOBJECT *disconnect( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc            = 0 ;
-   INT32 addr_size     = 0 ;
    PYOBJECT *obj       = NULL ;
-   void *tmp           = NULL ;
    sdb *client         = NULL ;
-   const char **addr   = NULL ;
-   const char *user    = NULL ;
-   const char *psw     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
@@ -178,7 +170,6 @@ static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
    const char *user_name = NULL ;
    const char *psw       = NULL ;
@@ -201,7 +192,6 @@ static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
    const char *user_name = NULL ;
    const char *psw       = NULL ;
@@ -223,13 +213,12 @@ done:
 static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 snap_type          = NULL ;
+   INT32 snap_type          = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cursor_obj     = NULL ;
    PYOBJECT *bson_condition = NULL ;
    PYOBJECT *bson_selector  = NULL ;
    PYOBJECT *bson_order_by  = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
    const bson::BSONObj *condition = NULL ;
@@ -268,7 +257,6 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *bson_condition = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    const bson::BSONObj *condition = NULL ;
 
@@ -291,13 +279,12 @@ done:
 static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 list_type          = NULL ;
+   INT32 list_type          = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cursor_obj     = NULL ;
    PYOBJECT *bson_condition = NULL ;
    PYOBJECT *bson_selector  = NULL ;
    PYOBJECT *bson_order_by  = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
    const bson::BSONObj *condition = NULL ;
@@ -335,7 +322,6 @@ static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cs_obj         = NULL ;
-   void *tmp                = NULL ;
    const char *cs_name      = NULL ;
    sdb *client              = NULL ;
    sdbCollectionSpace *cs   = NULL ;
@@ -362,10 +348,9 @@ done:
 static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
-   INT32 page_size          = NULL ;
+   INT32 page_size          = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cs_obj         = NULL ;
-   void *tmp                = NULL ;
    const char *cs_name      = NULL ;
    sdb *client              = NULL ;
    sdbCollectionSpace *cs   = NULL ;
@@ -394,7 +379,6 @@ static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
-   void *tmp                = NULL ;
    const char *cs_name      = NULL ;
    sdb *client              = NULL ;
 
@@ -421,7 +405,6 @@ static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cursor_obj     = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
 
@@ -449,7 +432,6 @@ static PYOBJECT *list_replica_groups( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *cursor_obj     = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
 
@@ -477,7 +459,6 @@ static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *group_obj      = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbReplicaGroup *group   = NULL ;
    const char *group_name   = NULL ;
@@ -507,10 +488,8 @@ static PYOBJECT *get_replica_group_by_id( PYOBJECT *self, PYOBJECT *args )
    INT32 group_id           = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *group_obj      = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbReplicaGroup *group   = NULL ;
-   const char *group_name   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OiO", &obj, &group_id, &group_obj ) )
    {
@@ -536,7 +515,6 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *group_obj      = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbReplicaGroup *group   = NULL ;
    const char *group_name   = NULL ;
@@ -565,7 +543,6 @@ static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
 
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    const char *group_name   = NULL ;
 
@@ -592,7 +569,6 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *bson_configure = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    const char *host         = NULL ;
    const char *service      = NULL ;
@@ -625,7 +601,6 @@ static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                 = 0 ;
    PYOBJECT *obj            = NULL ;
    PYOBJECT *group_obj      = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbReplicaGroup *group   = NULL ;
    const char *group_name   = NULL ;
@@ -653,7 +628,6 @@ static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc        = 0 ;
    PYOBJECT *obj   = NULL ;
-   void *tmp       = NULL ;
    sdb *client     = NULL ;
    const char *sql = NULL ;
 
@@ -680,7 +654,6 @@ static PYOBJECT *exec_sql( PYOBJECT *self, PYOBJECT *args )
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    PYOBJECT *cursor_obj = NULL ;
-   void *tmp            = NULL ;
    sdb *client          = NULL ;
    sdbCursor *cursor    = NULL ;
    const char *sql      = NULL ;
@@ -707,9 +680,7 @@ done:
 static PYOBJECT *transaction_begin( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc        = 0 ;
-   INT32 addr_size = 0 ;
    PYOBJECT *obj   = NULL ;
-   void *tmp       = NULL ;
    sdb *client     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -729,9 +700,7 @@ done:
 static PYOBJECT *transaction_commit( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc        = 0 ;
-   INT32 addr_size = 0 ;
    PYOBJECT *obj   = NULL ;
-   void *tmp       = NULL ;
    sdb *client     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -751,9 +720,7 @@ done:
 static PYOBJECT *transaction_rollback( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc        = 0 ;
-   INT32 addr_size = 0 ;
    PYOBJECT *obj   = NULL ;
-   void *tmp       = NULL ;
    sdb *client     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -775,7 +742,6 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    PYOBJECT *bson_option = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
    const bson::BSONObj *option = NULL ;
 
@@ -804,7 +770,6 @@ static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    PYOBJECT *bson_option = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
    const bson::BSONObj *option = NULL ;
 
@@ -837,7 +802,6 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_condition = NULL ;
    PYOBJECT *bson_selector  = NULL ;
    PYOBJECT *bson_order_by  = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
    const bson::BSONObj *option    = NULL ;
@@ -878,7 +842,6 @@ static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    PYOBJECT *bson_option = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
    const bson::BSONObj *option = NULL ;
 
@@ -911,7 +874,6 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *bson_selector  = NULL ;
    PYOBJECT *bson_order_by  = NULL ;
    PYOBJECT *bson_hint      = NULL ;
-   void *tmp                = NULL ;
    sdb *client              = NULL ;
    sdbCursor *cursor        = NULL ;
    const bson::BSONObj *condition = NULL ;
@@ -951,7 +913,6 @@ static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc         = 0 ;
    PYOBJECT *obj    = NULL ;
-   void *tmp        = NULL ;
    sdb *client      = NULL ;
    SINT64 task_id   = 0 ;
    SINT32 num       = 0 ;
@@ -978,7 +939,6 @@ static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc         = 0 ;
    PYOBJECT *obj    = NULL ;
-   void *tmp        = NULL ;
    sdb *client      = NULL ;
    SINT64 task_id   = 0 ;
    BOOLEAN is_async = 0 ;
@@ -1006,7 +966,6 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
    PYOBJECT *bson_option = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
    const bson::BSONObj *option = NULL ;
 
@@ -1034,7 +993,6 @@ static PYOBJECT *close_all_cursors( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc              = 0 ;
    PYOBJECT *obj         = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -1060,9 +1018,9 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
    INT32 rc              = 0 ;
    INT32 result          = FALSE ;
    PYOBJECT *obj         = NULL ;
-   void *tmp             = NULL ;
    sdb *client           = NULL ;
-
+   BOOLEAN isvalid       = FALSE;
+  
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -1070,7 +1028,6 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   BOOLEAN isvalid = FALSE;
    rc = client->isValid( &isvalid ) ;
    if ( rc )
    {

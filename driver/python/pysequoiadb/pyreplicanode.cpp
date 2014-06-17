@@ -25,7 +25,9 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    PYOBJECT *sdbodj     = NULL ;
-   INT32 nodenum        = 0 ;
+   sdbNode *node        = NULL ;
+   sdb *client          = NULL ;
+   
 
    if ( !PyArg_ParseTuple( args, "OO", &obj, &sdbodj ) )
    {
@@ -33,11 +35,9 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
-   sdb *client   = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
-   nodenum = node->connect( *client ) ;
+   rc = node->connect( *client ) ;
 done :
    return MAKE_RETURN_INT( rc ) ;
 error :
@@ -49,6 +49,7 @@ static PYOBJECT *get_status( PYOBJECT *self, PYOBJECT *args )
    INT32  rc              = 0 ;
    PYOBJECT *obj          = NULL ;
    INT32 nodestatus       = SDB_NODE_UNKNOWN ;
+   sdbNode *node          = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -56,7 +57,6 @@ static PYOBJECT *get_status( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    nodestatus = node->getStatus() ;
 done :
@@ -69,7 +69,8 @@ static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
 {
    INT32  rc              = 0 ;
    PYOBJECT *obj          = NULL ;
-   const char *hostname = "" ;
+   const char *hostname   = "" ;
+   sdbNode *node          = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -77,7 +78,6 @@ static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    hostname = node->getHostName() ;
 done :
@@ -91,6 +91,7 @@ static PYOBJECT *get_servicename( PYOBJECT *self, PYOBJECT *args )
    INT32  rc               = 0 ;
    PYOBJECT *obj           = NULL ;
    const char *servicename = "" ;
+   sdbNode *node           = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -98,7 +99,6 @@ static PYOBJECT *get_servicename( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    servicename = node->getServiceName() ;
 done :
@@ -112,6 +112,7 @@ static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
    INT32  rc              = 0 ;
    PYOBJECT *obj          = NULL ;
    const char *nodename   = "" ;
+   sdbNode *node          = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -119,7 +120,6 @@ static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    nodename = node->getNodeName() ;
 done :
@@ -132,6 +132,7 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
+   sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -139,7 +140,6 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    rc = node->stop() ;
 done :
@@ -152,6 +152,7 @@ static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
+   sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -159,7 +160,6 @@ static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbNode *node = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    rc = node->start() ;
 done :

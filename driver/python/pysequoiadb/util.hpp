@@ -120,6 +120,8 @@
    }
 
 #define MAKE_PYLIST_TO_VECTOR( py_list, vec_bson )                         \
+do                                                                         \
+{                                                                          \
    if( !PyList_Check( py_list) )                                           \
    {                                                                       \
       rc = SDB_INVALIDARGS ;                                               \
@@ -133,7 +135,8 @@
       CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ;       \
       vec_bson.push_back( *obj ) ;                                         \
       DELETE_CPPOBJECT( obj ) ;                                            \
-   }
+   }                                                                       \
+}while( FALSE )
 
 #define SDB_INVALIDARGS -6
 #define SDB_OOM         -2   
@@ -149,7 +152,7 @@ static struct PyModuleDef moduledef = {                \
    NULL,                                               \
    NULL,                                               \
    NULL                                                \
-};                                                     \ 
+};                                                     
 
 #if PY_MAJOR_VERSION >= 3                               
    #define INITERROR return NULL

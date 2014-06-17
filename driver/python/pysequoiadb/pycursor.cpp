@@ -24,6 +24,7 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
+   sdbCursor *cursor    = NULL ;
    bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
@@ -32,7 +33,6 @@ static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbCursor *cursor = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    rc = cursor->next( bson ) ;
    if ( SDB_OK != rc )
@@ -49,6 +49,7 @@ static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
+   sdbCursor *cursor    = NULL ;
    bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
@@ -57,7 +58,6 @@ static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbCursor *cursor = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    rc = cursor->current( bson ) ;
    if ( SDB_OK != rc )
@@ -74,7 +74,7 @@ static PYOBJECT *close( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
-   bson::BSONObj *pbson = NULL;
+   sdbCursor *cursor    = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -82,7 +82,6 @@ static PYOBJECT *close( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   sdbCursor *cursor = NULL ;
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    rc = cursor->close( ) ;
    if ( SDB_OK != rc )

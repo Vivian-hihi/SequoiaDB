@@ -92,9 +92,11 @@ if sys.platform == 'win32':
               'Psapi']
 
 else:
-    path = path + "client" + os.sep + "lib"
+    #path = path + "client" + os.sep + "lib"
+    print path
     incdirs=['/usr/local/include/python2.7',
-             path +'client',]
+             path + 'client/include',]
+                 
     libdirs= ['/usr/local/lib/python2.7',
               path + 'client/lib']
     ModuleCPPLibFiles = [ 'pyclient.cpp',
@@ -106,7 +108,8 @@ else:
     precompilemacros = [('UNICODE', 1),
                         ('_UNICODE', 1),]
     compileopt= ['-shared',
-                 '-fPIC',]
+                 '-fPIC', ]
+        
     linklibs=['staticsdbcpp',]
 
 module1 = Extension('sdbclient',

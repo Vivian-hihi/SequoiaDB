@@ -84,7 +84,6 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                     = 0 ;
    PYOBJECT *obj                = NULL ;
-   PYOBJECT *cl_object          = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_end_condition = NULL ;
    const char *src_name         = NULL ;
@@ -120,12 +119,10 @@ static PYOBJECT *split_by_precent( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
-   PYOBJECT *cl_object  = NULL ;
-   void *tmp            = NULL ;
    const char *dst_name = NULL ;
    const char *src_name = NULL ;
    sdbCollection *cl    = NULL ;
-   FLOAT64 precent      = NULL ;
+   FLOAT64 precent      = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossd", &obj, &src_name, &dst_name,
                                           &precent ) )
@@ -150,7 +147,6 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                     = 0 ;
    PYOBJECT *obj                = NULL ;
-   PYOBJECT *cl_object          = NULL ;
    PYOBJECT *bson_condition     = NULL ;
    PYOBJECT *bson_end_condition = NULL ;
    const char *src_name         = NULL ;
@@ -188,11 +184,10 @@ static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
-   PYOBJECT *cl_object  = NULL ;
    const char *src_name = NULL ;
    const char *dst_name = NULL ;
    sdbCollection *cl    = NULL ;
-   FLOAT64 precent      = NULL ;
+   FLOAT64 precent      = 0 ;
    SINT64 task_id       = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossd", &obj, &src_name, &dst_name,
@@ -221,7 +216,6 @@ static PYOBJECT *bulk_insert( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj        = NULL ;
    PYOBJECT *list_object= NULL ;
    sdbCollection *cl    = NULL ;
-   void *tmp            = NULL ;
 
    std::vector< bson::BSONObj > vec_bson ;
 
@@ -246,7 +240,6 @@ done:
 static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
-   SINT32 flags         = 0 ;
    PYOBJECT *obj        = NULL ;
    PYOBJECT *bson_object = NULL ;
    PYOBJECT *oid_object = NULL ;
@@ -450,7 +443,8 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
-    ( bson_index_def, index_def ) ;
+   CAST_PYBSON_TO_CPPBSON( bson_index_def, index_def ) ;
+
 
    rc = cl->createIndex( *index_def, name, is_unique, is_enforced ) ;
    if ( rc )
@@ -496,7 +490,6 @@ static PYOBJECT *drop_index( PYOBJECT *self, PYOBJECT *args )
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
    sdbCollection *cl       = NULL ;
-   sdbCursor *cursor       = NULL ;
    const char *index_name  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &index_name ) )
@@ -584,7 +577,6 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
    PYOBJECT *obj           = NULL ;
-   PYOBJECT *cl_object     = NULL ;
    PYOBJECT *list_object   = NULL ;
    PYOBJECT *cursor_object = NULL ;
    sdbCollection *cl       = NULL ;
