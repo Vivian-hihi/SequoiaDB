@@ -59,6 +59,7 @@
                         <file name="administration/concepts/cluster/topics/coord_node.dita"/>
                         <file name="administration/concepts/cluster/topics/data_node_en.dita"/>
                         <file name="administration/concepts/cluster/topics/data_node.dita"/>
+                        <file name="administration/concepts/cluster/topics/domain.dita"/>
                         <file name="administration/concepts/cluster/topics/mode_en.dita"/>
                         <file name="administration/concepts/cluster/topics/mode.dita"/>
                         <file name="administration/concepts/cluster/topics/node_en.dita"/>
@@ -749,6 +750,7 @@
                     <file name="references/methods/topics/createCL.dita"/>
                     <file name="references/methods/topics/createCS_en.dita"/>
                     <file name="references/methods/topics/createCS.dita"/>
+                    <file name="references/methods/topics/createDomain.dita"/>
                     <file name="references/methods/topics/createIndex_en.dita"/>
                     <file name="references/methods/topics/createIndex.dita"/>
                     <file name="references/methods/topics/createNode_en.dita"/>
@@ -783,10 +785,12 @@
                     <file name="references/methods/topics/deleteCurrent.dita"/>
                     <file name="references/methods/topics/detachCL_en.dita"/>
                     <file name="references/methods/topics/detachCL.dita"/>
+                    <file name="references/methods/topics/domainalter.dita"/>
                     <file name="references/methods/topics/dropCL_en.dita"/>
                     <file name="references/methods/topics/dropCL.dita"/>
                     <file name="references/methods/topics/dropCS_en.dita"/>
                     <file name="references/methods/topics/dropCS.dita"/>
+                    <file name="references/methods/topics/dropDomain.dita"/>
                     <file name="references/methods/topics/dropIndex_en.dita"/>
                     <file name="references/methods/topics/dropIndex.dita"/>
                     <file name="references/methods/topics/dropUsr_en.dita"/>
@@ -806,6 +810,7 @@
                     <file name="references/methods/topics/getCS.dita"/>
                     <file name="references/methods/topics/getDetail_en.dita"/>
                     <file name="references/methods/topics/getDetail.dita"/>
+                    <file name="references/methods/topics/getDomain.dita"/>
                     <file name="references/methods/topics/getHostName_en.dita"/>
                     <file name="references/methods/topics/getHostName.dita"/>
                     <file name="references/methods/topics/getIndex_en.dita"/>
@@ -830,6 +835,7 @@
                     <file name="references/methods/topics/listCollections.dita"/>
                     <file name="references/methods/topics/listCollectionSpaces_en.dita"/>
                     <file name="references/methods/topics/listCollectionSpaces.dita"/>
+                    <file name="references/methods/topics/listDomains.dita"/>
                     <file name="references/methods/topics/listIndexes_en.dita"/>
                     <file name="references/methods/topics/listIndexes.dita"/>
                     <file name="references/methods/topics/listProcedures_en.dita"/>

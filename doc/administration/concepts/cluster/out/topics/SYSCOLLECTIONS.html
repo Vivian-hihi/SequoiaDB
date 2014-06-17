@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="SYSCOLLECTIONS集合"/>
-<meta name="description" content="所属集合空间 SYSCAT 概念 SYSCOLLECTIONS集合中包含了该集群中所有的用户集合信息。每个用户集合保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 Name 字符串 集合的完整名，为&lt;集合空间&gt;.&lt;集合名&gt;形式 Version 整数 集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1 ShardingKey 对象 ..."/>
+<meta name="description" content="所属集合空间 SYSCAT 概念 SYSCOLLECTIONS集合中包含了该集群中所有的用户集合信息。每个用户集合保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 Name 字符串 集合的完整名，为&lt;集合空间&gt;.&lt;集合名&gt;形式。 Version 整数 集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1。 ReplSize 整数 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../topics/catalog_node.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_concepts_cluster_node_catalog_syscollections"/>
@@ -46,44 +46,69 @@
 
       <p class="p">每个文档包含以下字段：</p>
 
-      <a name="administration_concepts_cluster_node_catalog_syscollections__administration_concepts_cluster_node_catalog_syscollections_table1"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="administration_concepts_cluster_node_catalog_syscollections__administration_concepts_cluster_node_catalog_syscollections_table1" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d27e32" class="stentry" width="23.474178403755868%">字段名</th>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d335e32" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d27e35" class="stentry" width="23.474178403755868%">类型</th>
+          <th valign="bottom" align="left" id="d335e35" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d27e38" class="stentry" width="53.05164319248826%">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d27e32" class="stentry">Name</td>
-
-          <td valign="top" headers="d27e35" class="stentry">字符串</td>
-
-          <td valign="top" headers="d27e38" class="stentry">集合的完整名，为&lt;集合空间&gt;.&lt;集合名&gt;形式</td>
+          <th valign="bottom" align="left" id="d335e38" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d27e32" class="stentry">Version</td>
+          <td valign="top" headers="d335e32" class="stentry">Name</td>
 
-          <td valign="top" headers="d27e35" class="stentry">整数</td>
+          <td valign="top" headers="d335e35" class="stentry">字符串</td>
 
-          <td valign="top" headers="d27e38" class="stentry">集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d27e32" class="stentry">ShardingKey</td>
-
-          <td valign="top" headers="d27e35" class="stentry">对象</td>
-
-          <td valign="top" headers="d27e38" class="stentry">分区键，在分区集合中存在。对象包含一个或多个字段，字段名为分区字段名，数值为1或者-1，代表对该列正向或逆向排序</td>
+          <td valign="top" headers="d335e38" class="stentry">集合的完整名，为&lt;集合空间&gt;.&lt;集合名&gt;形式。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d27e32" class="stentry">CataInfo</td>
+          <td valign="top" headers="d335e32" class="stentry">Version</td>
 
-          <td valign="top" headers="d27e35" class="stentry">数组</td>
+          <td valign="top" headers="d335e35" class="stentry">整数</td>
 
-          <td valign="top" headers="d27e38" class="stentry">集合所在的逻辑节点信息。在单分区集合中，该数组仅包含一个元素，代表该集合所在的分区组。在多分区集合中，该数组中包含一个或多个元素，代表该集合中的每一个取值范围所在的分区组。每个取值范围包括LowBound与UpBound，代表其下限与上限，闭合关系为左闭右开</td>
+          <td valign="top" headers="d335e38" class="stentry">集合的版本号，由1起始，每次对该集合的元数据变更会造成版本号+1。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d335e32" class="stentry">ReplSize</td>
+
+          <td valign="top" headers="d335e35" class="stentry">整数</td>
+
+          <td valign="top" headers="d335e38" class="stentry">最小复制组，确保任何写操作必须被复制到至少指定数量的节点后返回成功。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d335e32" class="stentry">ShardingKey</td>
+
+          <td valign="top" headers="d335e35" class="stentry">对象</td>
+
+          <td valign="top" headers="d335e38" class="stentry">分区键，在分区集合中存在。对象包含一个或多个字段，字段名为分区字段名，数值为1或者-1，代表对该列正向或逆向排序。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d335e32" class="stentry">ShardingType</td>
+
+          <td valign="top" headers="d335e35" class="stentry">字符串</td>
+
+          <td valign="top" headers="d335e38" class="stentry">分区类型，在分区集合中存在。分区类型有：范围分区（Range）和散列分区（Hash）两种。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d335e32" class="stentry">Partition</td>
+
+          <td valign="top" headers="d335e35" class="stentry">整数</td>
+
+          <td valign="top" headers="d335e38" class="stentry">散列分区的分区大小值，必须为2的幂。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d335e32" class="stentry">CataInfo</td>
+
+          <td valign="top" headers="d335e35" class="stentry">数组</td>
+
+          <td valign="top" headers="d335e38" class="stentry">集合所在的逻辑节点信息。在单分区集合中，该数组仅包含一个元素，代表该集合所在的分区组。在多分区集合中，该数组中包含一个或多个元素，代表该集合中的每一个取值<div class="fig fignone"/>
+范围所在的分区组。每个取值范围包括LowBound与UpBound，代表其下限与上限，闭合关系为左闭右开。</td>
 
         </tr>
 </table>
@@ -100,11 +125,13 @@
       <pre class="pre codeblock">{ "Name" : "foo.test", 
   "Version" : 1, 
   "ShardingKey" : { "Field1" : 1, "Field2" : -1 },
+  "ShardingType" : "range" ,
+  "ReplSize": 3,
   "CataInfo" : [ 
      { "GroupID" : 1000, 
        "LowBound" : { "" : MinKey, "" : MaxKey },
        "UpBound" : { "" : MaxKey, "" : MinKey } } ] 
-  }</pre>
+}</pre>
 
     </div>
 
@@ -120,7 +147,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

@@ -41,51 +41,51 @@
     <p class="p">后台任务类型列表：</p>
 
     <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
-        <th valign="bottom" align="left" id="d9131e20" class="stentry">任务名</th>
+        <th valign="bottom" align="left" id="d9300e20" class="stentry">任务名</th>
 
-        <th valign="bottom" align="left" id="d9131e23" class="stentry">描述</th>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">Restore</td>
-
-        <td valign="top" headers="d9131e23" class="stentry">数据库恢复任务，用于根据日志文件回滚恢复数据库。</td>
+        <th valign="bottom" align="left" id="d9300e23" class="stentry">描述</th>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">Job[PageCleaner]</td>
+        <td valign="top" headers="d9300e20" class="stentry">Restore</td>
 
-        <td valign="top" headers="d9131e23" class="stentry">脏页清除任务，用于异步将未写入磁盘的脏页刷入磁盘。可以使用-numpagecleaners控制脏页清除任务数量，默认为1。</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">Job[Prefetch]</td>
-
-        <td valign="top" headers="d9131e23" class="stentry">预取任务，用于在等待客户端接收下一个操作请求时，在后台执行用户接下来可能发生的操作。可以使用-maxprefpool控制最大预取任务的数量。</td>
+        <td valign="top" headers="d9300e23" class="stentry">数据库恢复任务，用于根据日志文件回滚恢复数据库。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">CreateIndex</td>
+        <td valign="top" headers="d9300e20" class="stentry">Job[PageCleaner]</td>
 
-        <td valign="top" headers="d9131e23" class="stentry">建立索引任务，用于后台建立索引，多用于备节点重做主节点的建立索引操作日志。</td>
-
-      </tr>
-<tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">DropIndex</td>
-
-        <td valign="top" headers="d9131e23" class="stentry">删除索引任务，用于后台删除索引，多用于备节点重做主节点的删除索引操作日志。</td>
+        <td valign="top" headers="d9300e23" class="stentry">脏页清除任务，用于异步将未写入磁盘的脏页刷入磁盘。可以使用-numpagecleaners控制脏页清除任务数量，默认为1。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">CleanUp</td>
+        <td valign="top" headers="d9300e20" class="stentry">Job[Prefetch]</td>
 
-        <td valign="top" headers="d9131e23" class="stentry">数据清理任务，多用于数据切分后，在源数据节点删除被切分数据。</td>
+        <td valign="top" headers="d9300e23" class="stentry">预取任务，用于在等待客户端接收下一个操作请求时，在后台执行用户接下来可能发生的操作。可以使用-maxprefpool控制最大预取任务的数量。</td>
 
       </tr>
 <tr class="strow">
-        <td valign="top" headers="d9131e20" class="stentry">Job[ExtendSegment]</td>
+        <td valign="top" headers="d9300e20" class="stentry">CreateIndex</td>
 
-        <td valign="top" headers="d9131e23" class="stentry">扩展集合空间文件任务，用于当集合空间空闲数据页小于特定阀值后，由后台启动异步扩充集合空间。</td>
+        <td valign="top" headers="d9300e23" class="stentry">建立索引任务，用于后台建立索引，多用于备节点重做主节点的建立索引操作日志。</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d9300e20" class="stentry">DropIndex</td>
+
+        <td valign="top" headers="d9300e23" class="stentry">删除索引任务，用于后台删除索引，多用于备节点重做主节点的删除索引操作日志。</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d9300e20" class="stentry">CleanUp</td>
+
+        <td valign="top" headers="d9300e23" class="stentry">数据清理任务，多用于数据切分后，在源数据节点删除被切分数据。</td>
+
+      </tr>
+<tr class="strow">
+        <td valign="top" headers="d9300e20" class="stentry">Job[ExtendSegment]</td>
+
+        <td valign="top" headers="d9300e23" class="stentry">扩展集合空间文件任务，用于当集合空间空闲数据页小于特定阀值后，由后台启动异步扩充集合空间。</td>
 
       </tr>
 </table>

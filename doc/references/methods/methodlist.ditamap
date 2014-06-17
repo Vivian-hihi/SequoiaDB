@@ -35,6 +35,10 @@
      <topicref href="cancelTask.dita"/>
      <topicref href="flushConfigure.dita"/>
      <topicref href="setSessionAttr.dita"/>
+     <topicref href="topics/createDomain.dita"/>
+     <topicref href="topics/listDomains.dita"/>
+     <topicref href="topics/dropDomain.dita"/>
+     <topicref href="topics/getDomain.dita"/>     
      <!--<topicref href="topics/listProcedures.dita"/>-->
      <topicref href="topics/createCL.dita"/>
      <topicref href="topics/dropCL.dita"/>
@@ -82,7 +86,7 @@
      <!--topicref href="topics/updateCurrent.dita"/-->
      <topicref href="topics/csize.dita"/>
      <topicref href="topics/toArray.dita"/>
-     
+     <topicref href="topics/domainalter.dita"/>
      
      
      

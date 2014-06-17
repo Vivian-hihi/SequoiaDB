@@ -60,9 +60,7 @@
         
       </dl>
 
-      <p class="p">复制过程中，目标节点选择一个与其最接近的节点，然后向其发送一个复制请求。源节点接到复制请求后，会将目标节点请求的同步点之后的日志记录打包并发送给目标节点</p>
-
-      <p class="p">目标节点接收到数据包后会重新处理日志中的所有操作。</p>
+      <p class="p">复制过程中，目标节点选择一个与其最接近的节点，然后向其发送一个复制请求。源节点接到复制请求后，会将目标节点请求的同步点之后的日志记录打包并发送给目标节点，目标节点接收到数据包后会重新处理日志中的所有操作。</p>
 
       <p class="p">节点之间的复制有两个状态：</p>
 
@@ -75,7 +73,7 @@
 
       <p class="p">如果目标节点请求的日志已经不再存在于源节点的日志文件中，目标节点则进入<a class="xref" href="sync.html">恢复同步</a>状态。</p>
 
-      <p class="p">当两节点处于对等状态时，同步请求在源节点可以直接从内存中获取数据，因此目标节点选择复制源节点时，总会尝试选择距离自己当前最新日志最近的节点，使其所包含的日志尽量坐落在内存中。</p>
+      <p class="p">当两节点处于对等状态时，同步请求在源节点可以直接从内存中获取数据，因此目标节点选择复制源节点时，总会尝试选择距离自己当前日志点最近的数据节点，使其所包含的日志尽量坐落在内存中。</p>
 
     </div>
 
@@ -83,7 +81,7 @@
 
   <div class="related-links"><div class="relinfo"><strong>Related information</strong><br/>
 <div><a class="navheader_parent_path" href="vote.html" title="选举">选举</a></div>
-<div><a class="navheader_parent_path" href="sync.html" title="恢复同步">恢复同步</a></div>
+<div><a class="navheader_parent_path" href="sync.html" title="全量同步">全量同步</a></div>
 </div>
 </div>
 <div class="navfooter"><a class="link" href="../topics/replset.html" title="分区组"><span class="navheader_label">Parent topic</span><span class="navheader_separator">: </span><span class="navheader_linktext">分区组</span></a>  <script type="text/javascript"><!--         
@@ -95,7 +93,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>

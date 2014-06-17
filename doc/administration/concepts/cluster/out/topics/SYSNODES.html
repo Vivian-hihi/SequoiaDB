@@ -8,7 +8,7 @@
 <meta name="DC.rights.owner" content="(C) Copyright 2005"/>
 <meta name="DC.Type" content="topic"/>
 <meta name="DC.Title" content="SYSNODES集合"/>
-<meta name="description" content="所属集合空间 SYSCAT 概念 SYSNODES集合中包含了该集群中所有的节点与分区组信息。每个分区组保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 GroupName 字符串 分区组名 GroupID 整数 分区组ID，该ID在集群中唯一 PrimaryNode 整数 该分区组内主节点ID Role 整数 分区组角色，可以为： 0：数据节点 2：编目节点 Status 整数 ..."/>
+<meta name="description" content="所属集合空间 SYSCAT 概念 SYSNODES集合中包含了该集群中所有的节点与复制组信息。每个复制组保存为一个文档。 每个文档包含以下字段： 字段名 类型 描述 GroupName 字符串 复制组名。 GroupID 整数 复制组ID，该ID在集群中唯一。 PrimaryNode 整数 该复制组内主节点ID。 Role 整数 复制组角色，可以为： 0：数据节点 2：编目节点 Status 整数 ..."/>
 <meta name="DC.Relation" scheme="URI" content="../topics/catalog_node.html"/>
 <meta name="DC.Format" content="XHTML"/>
 <meta name="DC.Identifier" content="administration_concepts_cluster_node_catalog_sysnodes"/>
@@ -42,50 +42,48 @@
     </div>
 
     <div class="section"><h2 class="title sectiontitle">概念</h2>
-      <p class="p">SYSNODES集合中包含了该集群中所有的节点与分区组信息。每个分区组保存为一个文档。</p>
+      <p class="p">SYSNODES集合中包含了该集群中所有的节点与复制组信息。每个复制组保存为一个文档。</p>
 
       <p class="p">每个文档包含以下字段：</p>
 
-      <a name="administration_concepts_cluster_node_catalog_sysnodes__administration_concepts_cluster_node_catalog_sysnodes_table1"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="administration_concepts_cluster_node_catalog_sysnodes__administration_concepts_cluster_node_catalog_sysnodes_table1" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d709e32" class="stentry" width="23.474178403755868%">字段名</th>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d1133e32" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d709e35" class="stentry" width="23.474178403755868%">类型</th>
+          <th valign="bottom" align="left" id="d1133e35" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d709e38" class="stentry" width="53.05164319248826%">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">GroupName</td>
-
-          <td valign="top" headers="d709e35" class="stentry">字符串</td>
-
-          <td valign="top" headers="d709e38" class="stentry">分区组名</td>
+          <th valign="bottom" align="left" id="d1133e38" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">GroupID</td>
+          <td valign="top" headers="d1133e32" class="stentry">GroupName</td>
 
-          <td valign="top" headers="d709e35" class="stentry">整数</td>
+          <td valign="top" headers="d1133e35" class="stentry">字符串</td>
 
-          <td valign="top" headers="d709e38" class="stentry">分区组ID，该ID在集群中唯一</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">PrimaryNode</td>
-
-          <td valign="top" headers="d709e35" class="stentry">整数</td>
-
-          <td valign="top" headers="d709e38" class="stentry">该分区组内主节点ID</td>
+          <td valign="top" headers="d1133e38" class="stentry">复制组名。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">Role</td>
+          <td valign="top" headers="d1133e32" class="stentry">GroupID</td>
 
-          <td valign="top" headers="d709e35" class="stentry">整数</td>
+          <td valign="top" headers="d1133e35" class="stentry">整数</td>
 
-          <td valign="top" headers="d709e38" class="stentry"><p class="p">分区组角色，可以为：</p>
+          <td valign="top" headers="d1133e38" class="stentry">复制组ID，该ID在集群中唯一。</td>
 
-            <ul class="ul">
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d1133e32" class="stentry">PrimaryNode</td>
+
+          <td valign="top" headers="d1133e35" class="stentry">整数</td>
+
+          <td valign="top" headers="d1133e38" class="stentry">该复制组内主节点ID。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d1133e32" class="stentry">Role</td>
+
+          <td valign="top" headers="d1133e35" class="stentry">整数</td>
+
+          <td valign="top" headers="d1133e38" class="stentry">复制组角色，可以为： <ul class="ul">
               <li class="li">0：数据节点</li>
 
               <li class="li">2：编目节点</li>
@@ -96,78 +94,87 @@
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">Status</td>
+          <td valign="top" headers="d1133e32" class="stentry">Status</td>
 
-          <td valign="top" headers="d709e35" class="stentry">整数</td>
+          <td valign="top" headers="d1133e35" class="stentry">整数</td>
 
-          <td valign="top" headers="d709e38" class="stentry">如果为1则为以激活分区组，如果不存在或为0则为未激活分区组</td>
+          <td valign="top" headers="d1133e38" class="stentry">
+            <ul class="ul">
+              <li class="li">1：已激活复制组</li>
+
+              <li class="li">0：未激活复制组</li>
+
+              <li class="li">不存在：未激活复制组</li>
+
+            </ul>
+
+          </td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">Version</td>
+          <td valign="top" headers="d1133e32" class="stentry">Version</td>
 
-          <td valign="top" headers="d709e35" class="stentry">整数</td>
+          <td valign="top" headers="d1133e35" class="stentry">整数</td>
 
-          <td valign="top" headers="d709e38" class="stentry">版本号，由1起始，任何对该分区组的操作均会对其+1</td>
+          <td valign="top" headers="d1133e38" class="stentry">版本号，由1起始，任何对该复制组的操作均会对其+1。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e32" class="stentry">Group</td>
+          <td valign="top" headers="d1133e32" class="stentry">Group</td>
 
-          <td valign="top" headers="d709e35" class="stentry">数组</td>
+          <td valign="top" headers="d1133e35" class="stentry">数组</td>
 
-          <td valign="top" headers="d709e38" class="stentry">分区组中节点信息，见下表</td>
+          <td valign="top" headers="d1133e38" class="stentry">复制组中节点信息，见下表：</td>
 
         </tr>
 </table>
 
-      <p class="p">分区组中如果存在一个以上节点，则每个节点作为一个对象存放在Group字段数组中，每个对象的信息如下：</p>
+      <p class="p">复制组中如果存在一个以上节点，则每个节点作为一个对象存放在Group字段数组中，每个对象的信息如下：</p>
 
-      <a name="administration_concepts_cluster_node_catalog_sysnodes__administration_concepts_cluster_node_catalog_sysnodes_table2"><!-- --></a><table cellpadding="4" cellspacing="0" summary="" id="administration_concepts_cluster_node_catalog_sysnodes__administration_concepts_cluster_node_catalog_sysnodes_table2" border="1" class="simpletable"><tr class="sthead">
-          <th valign="bottom" align="left" id="d709e146" class="stentry" width="23.474178403755868%">字段名</th>
+      <table cellpadding="4" cellspacing="0" summary="" border="1" class="simpletable"><tr class="sthead">
+          <th valign="bottom" align="left" id="d1133e156" class="stentry">字段名</th>
 
-          <th valign="bottom" align="left" id="d709e149" class="stentry" width="23.474178403755868%">类型</th>
+          <th valign="bottom" align="left" id="d1133e159" class="stentry">类型</th>
 
-          <th valign="bottom" align="left" id="d709e152" class="stentry" width="53.05164319248826%">描述</th>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d709e146" class="stentry">HostName</td>
-
-          <td valign="top" headers="d709e149" class="stentry">字符串</td>
-
-          <td valign="top" headers="d709e152" class="stentry">节点所在的系统名，需要完全匹配该节点所在操作系统中“hostname”命令的输出</td>
+          <th valign="bottom" align="left" id="d1133e162" class="stentry">描述</th>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e146" class="stentry">dbpath</td>
+          <td valign="top" headers="d1133e156" class="stentry">HostName</td>
 
-          <td valign="top" headers="d709e149" class="stentry">字符串</td>
+          <td valign="top" headers="d1133e159" class="stentry">字符串</td>
 
-          <td valign="top" headers="d709e152" class="stentry">数据库路径，为节点所在的物理节点中对应的绝对路径</td>
-
-        </tr>
-<tr class="strow">
-          <td valign="top" headers="d709e146" class="stentry">NodeID</td>
-
-          <td valign="top" headers="d709e149" class="stentry">整数</td>
-
-          <td valign="top" headers="d709e152" class="stentry">节点ID，该ID在集群中唯一</td>
+          <td valign="top" headers="d1133e162" class="stentry">节点所在的系统名，需要完全匹配该节点所在操作系统中“hostname”命令的输出。</td>
 
         </tr>
 <tr class="strow">
-          <td valign="top" headers="d709e146" class="stentry">Service</td>
+          <td valign="top" headers="d1133e156" class="stentry">dbpath</td>
 
-          <td valign="top" headers="d709e149" class="stentry">数组</td>
+          <td valign="top" headers="d1133e159" class="stentry">字符串</td>
 
-          <td valign="top" headers="d709e152" class="stentry"><p class="p">服务名，每个逻辑节点对应4个服务名，每个服务名包括其类型与服务名（可以为端口号或services文件中的服务名）。类型如下：</p>
+          <td valign="top" headers="d1133e162" class="stentry">数据库路径，为节点所在的物理节点中对应的绝对路径。</td>
 
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d1133e156" class="stentry">NodeID</td>
+
+          <td valign="top" headers="d1133e159" class="stentry">整数</td>
+
+          <td valign="top" headers="d1133e162" class="stentry">节点ID，该ID在集群中唯一。</td>
+
+        </tr>
+<tr class="strow">
+          <td valign="top" headers="d1133e156" class="stentry">Service</td>
+
+          <td valign="top" headers="d1133e159" class="stentry">数组</td>
+
+          <td valign="top" headers="d1133e162" class="stentry">服务名，每个逻辑节点对应4个服务名，每个服务名包括其类型与服务名（可以为端口号或services文件中的服务名）。类型如下：
             <ul class="ul">
               <li class="li">0：直连服务，对应数据库参数svcname</li>
 
               <li class="li">1：复制服务，对应数据库参数replname</li>
 
-              <li class="li">2：分区服务，对应数据库参数shardname</li>
+              <li class="li">2：复制服务，对应数据库参数shardname</li>
 
               <li class="li">3：编目服务，对应数据库参数catalogname</li>
 
@@ -179,9 +186,9 @@
 </table>
 
       <div class="note note"><span class="notetitle">Note:</span> 
-        <p class="p">编目分区组名固定为“SYSCatalogGroup”，分区组ID固定为1。</p>
+        <p class="p">编目复制组名固定为“SYSCatalogGroup”，复制组ID固定为1。</p>
 
-        <p class="p">数据分区组ID由1000起始。</p>
+        <p class="p">数据复制组ID由1000起始。</p>
 
         <p class="p">数据节点ID由1000起始。</p>
 
@@ -191,16 +198,16 @@
 
     <div class="section"><h2 class="title sectiontitle">示例</h2>
       
-      <p class="p">一个典型的包含单节点的编目分区组为：</p>
+      <p class="p">一个典型的包含单节点的编目复制组为：</p>
 
       <pre class="pre codeblock">{ "Group" : [ 
               { "NodeID" : 2, 
                 "HostName" : "vmsvr1-rhel-x64", 
                 "Service" : [ 
-                   { "Type" : 3, "Name" : "60003" }, 
-                   { "Type" : 1, "Name" : "60001" },
-                   { "Type" : 2, "Name" : "60002" },
-                   { "Type" : 0, "Name" : "60000" } ],
+                   { "Type" : 3, "Name" : "11803" }, 
+                   { "Type" : 1, "Name" : "11801" },
+                   { "Type" : 2, "Name" : "11802" },
+                   { "Type" : 0, "Name" : "11800" } ],
                 "dbpath" : "/home/sequoiadb/sequoiadb/catalog"
               } ],
               "GroupID" : 1, 
@@ -209,16 +216,16 @@
               "Role" : 2, 
               "Version" : 1 } }</pre>
 
-      <p class="p">一个典型的包含单节点的数据分区组为：</p>
+      <p class="p">一个典型的包含单节点的数据复制组为：</p>
 
       <pre class="pre codeblock">{ "Group" : [ 
               { "dbpath" : "/home/sequoiadb/sequoiadb/data3", 
                 "HostName" : "vmsvr1-rhel-x64", 
                 "Service" : [ 
-                   { "Type" : 0, "Name" : "53000" }, 
-                   { "Type" : 1, "Name" : "53001" }, 
-                   { "Type" : 2, "Name" : "53002" }, 
-                   { "Type" : 3, "Name" : "53003" } ],
+                   { "Type" : 0, "Name" : "11820" }, 
+                   { "Type" : 1, "Name" : "11821" }, 
+                   { "Type" : 2, "Name" : "11822" }, 
+                   { "Type" : 3, "Name" : "11823" } ],
                 "NodeID" : 1001 } ], 
                 "GroupID" : 1001, 
                 "GroupName" : "foo1", 
@@ -241,7 +248,7 @@
     for (i = 0; i< aArray.length; i++){
       aArray[i].onclick = expand;
     }
-//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.0
+//--></script></div><div class="footer"><a href="http://www.sequoiadb.com" target="_blank"><img src="../assets/images/sequoiadb_logo.png" alt="SequoiaDB"/></a>SequoiaDB Version 1.8B
           
     </div>
 </body>
