@@ -169,6 +169,19 @@ namespace engine
       }
 
    done:
+      if ( SDB_OK != rc )
+      {
+         dpsLogRecord record ;
+         CHAR tmpBuff[4096] = {0} ;
+         INT32 rcTmp = record.load( (const CHAR*)recordHeader ) ;
+         if ( SDB_OK == rcTmp )
+         {
+            record.dump( tmpBuff, sizeof(tmpBuff)-1, DPS_DMP_OPT_FORMATTED ) ;
+         }
+         PD_LOG( PDERROR, "sync bucket: replay log [type:%d, lsn:%lld, "
+                 "data: %s] failed, rc: %d", recordHeader->_type,
+                 recordHeader->_lsn, tmpBuff, rc ) ;
+      }
       return rc ;
    error:
       goto done ;
@@ -470,6 +483,7 @@ namespace engine
          goto error ;
       }
 
+   done:
       if ( SDB_OK != rc )
       {
          dpsLogRecord record ;
@@ -482,10 +496,7 @@ namespace engine
          PD_LOG( PDERROR, "sync: replay log [type:%d, lsn:%lld, data: %s] "
                  "failed, rc: %d", recordHeader->_type, recordHeader->_lsn,
                  tmpBuff, rc ) ;
-         goto error ;
       }
-
-   done:
       PD_TRACE_EXITRC ( SDB__CLSREP_REPLAY, rc );
       return rc ;
    error:
