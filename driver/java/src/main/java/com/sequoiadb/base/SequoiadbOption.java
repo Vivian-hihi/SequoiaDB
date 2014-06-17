@@ -31,7 +31,7 @@ public class SequoiadbOption
 	// max connction count, if maxConnectionNum == 0,
 	// it means the datasource doesn't work
 	private int maxConnectionNum = 500;
-	// while maxConnectionNum != 0, increase 20 connection to pool
+	// while maxConnectionNum != 0, increase 10 connection to pool
     private int deltaIncCount = 10 ;
     // initialize 10 connection in pool
 	private int initConnectionNum = 10;
