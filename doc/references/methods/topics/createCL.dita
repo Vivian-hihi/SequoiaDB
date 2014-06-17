@@ -53,7 +53,7 @@
         <strow>
           <stentry>Partition</stentry>
           <stentry>分区数，hash分区时填写，代表了hash分区的个数。其值必须是2的幂。范围在[2^3, 2^20]。 </stentry>
-          <stentry>Partition:&lt;分区数>]</stentry>
+          <stentry>Partition:&lt;分区数></stentry>
         </strow>
         <strow>
           <stentry>ReplSize</stentry>
