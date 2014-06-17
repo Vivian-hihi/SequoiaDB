@@ -1108,7 +1108,7 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
    void *tmp             = NULL ;
    sdb *client           = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "Oi", &obj, &result ) )
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1121,7 +1121,7 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 done:
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_INT( rc, result ) ;
 }
 
 /* List of functions defined in the module */

@@ -243,8 +243,7 @@ class sdbclient(object):
             pass
 
     def is_valid(self):
-        valid = 0
-        rc = sdbclient.is_valid(self.cclient, valid)
+        rc, valid = sdbclient.is_valid(self.cclient)
         if rc:
             pass
         return valid
