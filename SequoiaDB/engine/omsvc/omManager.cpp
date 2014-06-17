@@ -445,6 +445,29 @@ namespace engine
       return strValue ;
    }
 
+   netRouteAgent* _omManager::getRouteAgent()
+   {
+      return NULL ;
+   }
+
+   MsgRouteID _omManager::updateAgentInfo( const CHAR *pHost,
+                                           const CHAR *pService )
+   {
+      MsgRouteID nodeID ;
+      return nodeID ;
+   }
+
+   MsgRouteID _omManager::getAgentIDByHost( const CHAR *pHost )
+   {
+      MsgRouteID nodeID ;
+      return nodeID ;
+   }
+
+   INT32 _omManager::sendMsgToAgent( const CHAR * pHost, MsgHeader *pMsg )
+   {
+      return SDB_OK ;
+   }
+
    /*
       get the global om manager object point
    */
