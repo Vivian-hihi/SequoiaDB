@@ -717,7 +717,7 @@ namespace sdbclient
          return pCollection->rename ( pNewName ) ;
       }*/
 
-/** \fn INT32 createIndex ( bson::BSONObj &indexDef,
+/** \fn INT32 createIndex ( const bson::BSONObj &indexDef,
                           const CHAR *pName,
                           BOOLEAN isUnique
                         )
@@ -730,7 +730,7 @@ namespace sdbclient
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 createIndex ( bson::BSONObj &indexDef,
+      INT32 createIndex ( const bson::BSONObj &indexDef,
                           const CHAR *pName,
                           BOOLEAN isUnique,
                           BOOLEAN isEnforced
