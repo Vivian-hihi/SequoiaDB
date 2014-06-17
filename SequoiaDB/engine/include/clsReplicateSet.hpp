@@ -156,6 +156,11 @@ namespace engine
             return &_sync ;
          }
 
+         OSS_INLINE _clsVoteMachine* voteMachine()
+         {
+            return &_vote ;
+         }
+
          OSS_INLINE INT32 sync( const DPS_LSN_OFFSET &offset,
                                 _pmdEDUCB *&eduCB,
                                 UINT32 w = 1 )

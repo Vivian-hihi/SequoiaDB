@@ -67,7 +67,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSVTSTUS__LAU ) ;
 
-      if ( !pmdGetStartup().isOK() )
+      if ( !pmdGetStartup().isOK() &&
+           !_info()->isAllNodeAbnormal( pmdGetOptionCB()->startShiftTime() ) )
       {
          PD_LOG ( PDINFO, "Start type isn't normal, can't initial voting" ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -75,14 +76,15 @@ namespace engine
       }
       else if ( 0 != _groupInfo->primary.value )
       {
-         PD_LOG ( PDDEBUG, "Primary already exist, can't initial voting" ) ;
+         PD_LOG ( PDDEBUG, "Primary[%d] already exist, can't initial voting",
+                  _groupInfo->primary.columns.nodeID ) ;
          rc = SDB_CLS_VOTE_FAILED ;
          goto error ;
       }
       else if ( !CLS_IS_MAJORITY( _groupInfo->aliveSize() ,
                                   _groupInfo->groupSize() ) )
       {
-         PD_LOG ( PDDEBUG, "Alive nodes is not major, can't initial voting, "
+         PD_LOG ( PDINFO, "Alive nodes is not major, can't initial voting, "
                   "alive size = %d, group size = %d",
                   _groupInfo->aliveSize() , _groupInfo->groupSize() ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -90,7 +92,7 @@ namespace engine
       }
       else if ( !sdbGetReplCB()->getBucket()->isEmpty() )
       {
-         PD_LOG( PDDEBUG, "Repl log is not empty, can't initial voting, "
+         PD_LOG( PDINFO, "Repl log is not empty, can't initial voting, "
                  "repl bucket size: %d",
                  sdbGetReplCB()->getBucket()->size() ) ;
          rc = SDB_CLS_VOTE_FAILED ;
@@ -147,8 +149,11 @@ namespace engine
       _MsgClsElectionRes msg ;
       msg.identity = _groupInfo->local ;
       msg.round = round ;
+      map<UINT64, _clsSharingStatus >::iterator itrInfo ;
+
+      itrInfo = _groupInfo->info.find( id.value ) ;
       /// unknown member
-      if ( _groupInfo->info.end() == _groupInfo->info.find( id.value ) )
+      if ( _groupInfo->info.end() == itrInfo )
       {
          PD_LOG( PDWARNING, "unknown member [group:%d] [node:%d]",
                          id.columns.groupID, id.columns.nodeID ) ;
@@ -179,14 +184,20 @@ namespace engine
                                     _groupInfo->alives.begin() ;
          for ( ; itr != _groupInfo->alives.end(); itr++ )
          {
+            if ( SERVICE_NORMAL == itrInfo->second.beat.serviceStatus &&
+                 SERVICE_ABNORMAL == itr->second->beat.serviceStatus )
+            {
+               continue ;
+            }
             /// find anyone's lsn > request's lsn. refuse.
-            if ( 0 > lsn.compare( itr->second->beat.endLsn ) )
+            else if ( 0 > lsn.compare( itr->second->beat.endLsn ) )
             {
                goto accepterr ;
             }
          }
       }
-      if ( pmdGetStartup().isOK() )
+      if ( pmdGetStartup().isOK() ||
+           _info()->isAllNodeAbnormal( pmdGetOptionCB()->startShiftTime() ) )
       {
          DPS_LSN local = _logger->getCurrentLsn() ;
          INT32 cRc = local.compare( lsn ) ;

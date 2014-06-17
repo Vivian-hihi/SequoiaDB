@@ -443,6 +443,12 @@ namespace engine
          pmdGetKRCB()->getEDUMgr()->interruptWritingEDUS() ;
       }
 
+      // if business is not ok
+      if ( !pmdGetStartup().isOK() )
+      {
+         return ;
+      }
+
       // notify sub members
       getShardCB()->ntyPrimaryChange( primary, type ) ;
       getReplCB()->ntyPrimaryChange( primary, type ) ;

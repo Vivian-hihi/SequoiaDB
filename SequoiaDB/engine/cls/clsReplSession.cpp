@@ -79,6 +79,11 @@ namespace engine
       if ( !pmdGetStartup().isOK() )
       {
          _status = CLS_SESSION_STATUS_FULL_SYNC ;
+         _repl->setFullSync( TRUE ) ;
+      }
+      else
+      {
+         _repl->setFullSync( FALSE ) ;
       }
       PD_TRACE_EXIT ( SDB__CLSREPSN__CLSREPSN );
    }
@@ -138,9 +143,10 @@ namespace engine
       }
       _timeout = 0 ;
 
-      if ( !_sync->isReadyToReplay() )
+      if ( !_sync->isReadyToReplay() && pmdGetStartup().isOK() )
       {
          _isFirstToSync = TRUE ;
+         _status = CLS_SESSION_STATUS_SYNC ;
          goto done ;
       }
       else if ( _isFirstToSync &&
@@ -151,6 +157,7 @@ namespace engine
          goto done ;
       }
 
+      // full sync to repl sync, need to reset repl bucket
       if ( _isFirstToSync && _pReplBucket->isEmpty() )
       {
          _pReplBucket->reset() ;
@@ -159,8 +166,8 @@ namespace engine
       _isFirstToSync = FALSE ;
 
       //if the peer node is sharing-break, shoud change node
-      if ( MSG_INVALID_ROUTEID != _syncSrc.value
-         && !_repl->isAlive ( _syncSrc ) )
+      if ( MSG_INVALID_ROUTEID != _syncSrc.value &&
+           !_repl->isAlive ( _syncSrc ) )
       {
          PD_LOG ( PDWARNING, "Sync Session[%s]: Peer node sharing-break",
                   sessionName() ) ;
@@ -250,6 +257,7 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSYNCREQ );
       SDB_ASSERT( NULL != header, "header should not be NULL" )
       MsgReplSyncReq *msg = ( MsgReplSyncReq * )header ;
+
       if ( DPS_INVALID_LSN_OFFSET != msg->completeNext.offset )
       {
          _sync->complete( msg->identity, msg->completeNext,
@@ -260,7 +268,13 @@ namespace engine
          _sync->complete( msg->identity, msg->next,
                           CLS_TID( _sessionID ) ) ;
       }
-      rc = _syncLog( handle, msg ) ;
+
+      // not ok, not reply
+      if ( pmdGetStartup().isOK() )
+      {
+         rc = _syncLog( handle, msg ) ;
+      }
+
       PD_TRACE_EXITRC ( SDB__CLSREPSN_HNDSYNCREQ, rc );
       return rc ;
    }
@@ -720,8 +734,7 @@ namespace engine
    void _clsReplSession::_fullSync()
    {
       INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__CLSREPSN__FULLSYNC );
-      pmdEDUCB *cb = NULL ;
+      PD_TRACE_ENTRY ( SDB__CLSREPSN__FULLSYNC ) ;
       clsCB *pClsCB = pmdGetKRCB()->getClsCB() ;
 
       if ( !isStartActive() )
@@ -750,23 +763,31 @@ namespace engine
                   "impossible" )
 
       // if the group size is 1, then rebuild, otherwise full sync
-      if ( 1 >=  pClsCB->getReplCB()->groupSize() )
+      if ( 1 >=  pClsCB->getReplCB()->groupSize() || pmdIsPrimary() )
       {
-         PD_LOG( PDWARNING, "Sync Session[%s]: Group size is one, begin to "
-                 "rebuild database", sessionName() ) ;
+         PD_LOG( PDWARNING, "Sync Session[%s]: Group size is one or the node "
+                 "begin to primary, begin to rebuild database",
+                 sessionName() ) ;
          pClsCB->getReplCB()->setFullSync( TRUE ) ;
-         cb = SDB_OSS_NEW pmdEDUCB ( pmdGetKRCB()->getEDUMgr(),
-                                     EDU_TYPE_AGENT ) ;
-         if ( NULL == cb )
-         {
-            rc = SDB_OOM ;
-            goto error ;
-         }
-         rc = rtnRebuildDB ( cb ) ;
+
+         rc = rtnRebuildDB ( eduCB() ) ;
          if ( SDB_OK != rc )
          {
             goto error ;
          }
+
+         // cut all dps
+         rc = _logger->move( 0, _logger->expectLsn().version ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "Sync Session[%s]: Move dps to begin failed "
+                    "after rebuild, rc: %d", sessionName(), rc ) ;
+            goto error ;
+         }
+
+         // force to secondary
+         pClsCB->getReplCB()->voteMachine()->force( CLS_ELECTION_STATUS_SEC ) ;
+
          pClsCB->getReplCB()->setFullSync( FALSE ) ;
          pmdGetStartup().ok ( TRUE ) ;
          _status = CLS_SESSION_STATUS_SYNC ;
@@ -782,13 +803,9 @@ namespace engine
       }
 
    done:
-      PD_TRACE_EXIT ( SDB__CLSREPSN__FULLSYNC );
+      PD_TRACE_EXIT ( SDB__CLSREPSN__FULLSYNC ) ;
       return ;
    error:
-      if ( cb )
-      {
-         SDB_OSS_DEL cb ;
-      }
       PD_LOG ( PDSEVERE, "Sync Session[%s]: Local database rebuild failed "
                "with %d", sessionName(), rc ) ;
       PMD_SHUTDOWN_DB( rc ) ;

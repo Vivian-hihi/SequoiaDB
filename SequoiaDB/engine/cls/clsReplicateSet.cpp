@@ -42,6 +42,7 @@
 #include "pmdCB.hpp"
 #include "clsMgr.hpp"
 #include "clsFSSrcSession.hpp"
+#include "pmdStartup.hpp"
 #include "pdTrace.hpp"
 #include "clsTrace.hpp"
 
@@ -623,6 +624,8 @@ namespace engine
       msg.beat.role = _vote.primaryIsMe() ?
                       CLS_GROUP_ROLE_PRIMARY : CLS_GROUP_ROLE_SECONDARY ;
       msg.beat.beatID = ++_info.localBeatID ;
+      msg.beat.serviceStatus = pmdGetStartup().isOK() ?
+                               SERVICE_NORMAL : SERVICE_ABNORMAL ;
       map<UINT64, _clsSharingStatus>::iterator itr =
                                         _info.info.begin() ;
       for ( ; itr != _info.info.end(); itr++ )
@@ -680,6 +683,17 @@ namespace engine
          }
       }
 
+      // increase break node's break time
+      map< UINT64, _clsSharingStatus>::iterator itrInfo = _info.info.begin() ;
+      for ( ; itrInfo != _info.info.end() ; ++itrInfo )
+      {
+         if ( _info.alives.find( itrInfo->first ) != _info.alives.end() )
+         {
+            continue ;
+         }
+         itrInfo->second.breakTime += millisec ;
+      }
+
       if ( !needErase )
       {
          goto done ;
@@ -700,6 +714,7 @@ namespace engine
             PD_LOG( PDERROR, "vote: [node:%d] alive break",
                         itr->second->beat.identity.columns.nodeID ) ;
             itr->second->beat.beatID = 0 ;
+            itr->second->beat.serviceStatus = SERVICE_UNKNOWN ;
 
             _sync.updateNodeStatus( itr->second->beat.identity, FALSE ) ;
 
@@ -835,6 +850,7 @@ namespace engine
                  status.beat.identity.columns.nodeID ) ;
       }
       itr->second.timeout = 0 ;
+      itr->second.breakTime = 0 ;
    done:
       PD_TRACE_EXITRC ( SDB__CLSREPSET__ALIVE, rc );
       return rc ;

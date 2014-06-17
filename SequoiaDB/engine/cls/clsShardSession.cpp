@@ -224,7 +224,8 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSSHDSESS__CKCATA, "_clsShdSession::_checkCata" )
    INT32 _clsShdSession::_checkCata ( INT32 version, const CHAR * name,
-                                      INT16 &w, BOOLEAN &isMainCL )
+                                      INT16 &w, BOOLEAN &isMainCL,
+                                      BOOLEAN exceptVer )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSSHDSESS__CKCATA ) ;
@@ -237,6 +238,11 @@ namespace engine
       {
          rc = SDB_CLS_FULL_SYNC ;
          goto error ;
+      }
+
+      if ( exceptVer )
+      {
+         goto done ;
       }
 
       _pCatAgent->lock_r () ;
@@ -1050,6 +1056,12 @@ namespace engine
               SDB_OK != ( rc = _checkCata( pQuery->version,
                           pCommand->collectionFullName(),
                           w, isMainCL ) ) )
+         {
+            goto error ;
+         }
+         else if ( ( CMD_CREATE_COLLECTIONSPACE == pCommand->type() ||
+                     CMD_DROP_COLLECTIONSPACE == pCommand->type() ) &&
+                    SDB_OK != ( rc = _checkCata( 0, "", w, isMainCL, TRUE ) )
          {
             goto error ;
          }

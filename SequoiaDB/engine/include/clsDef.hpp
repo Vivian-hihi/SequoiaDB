@@ -56,11 +56,8 @@ namespace engine
 {
    typedef UINT32 CLS_GROUP_VERSION ;
 
-//   const UINT32 CLS_VOTE_SILENCE_TIME = 5000 ;
    const UINT32 CLS_VOTE_CS_TIME = 3000 ;
    const UINT32 CLS_SHARING_BETA_INTERVAL = 2000 ;
-   const UINT32 CLS_IS_PRIMARY = 0 ;
-   const UINT32 CLS_NOT_PRIMARY = 1 ;
    const UINT32 CLS_SYNC_MAX_LEN = 1024 * 1024 * 5 ;
    extern INT32  g_startShiftTime ;
 
@@ -111,24 +108,35 @@ namespace engine
       CLS_BS_BACKUPOFFLINE,
    } ;
 
+   enum CLS_NODE_SERVICE_STATUS
+   {
+      SERVICE_NORMAL          = 0,
+      SERVICE_ABNORMAL,
+      SERVICE_UNKNOWN
+   } ;
+
+   /*
+      _clsGroupBeat define
+   */
    class _clsGroupBeat : public SDBObject
    {
    public :
-//      DPS_LSN _beginLsn ;
-      DPS_LSN endLsn ;
-      _MsgRouteID identity ;
-      UINT64 timeStamp ;
-      CLS_GROUP_VERSION version ;
-      CLS_GROUP_ROLE role ;
-      CLS_SYNC_STATUS syncStatus ;
-      UINT32 beatID ;
-      _clsGroupBeat():timeStamp(0),
-                       version(0),
-                       role(CLS_GROUP_ROLE_SECONDARY),
-                       syncStatus(CLS_SYNC_STATUS_NONE),
-                       beatID(0)
-      {
+      DPS_LSN                 endLsn ;
+      _MsgRouteID             identity ;
+      UINT64                  timeStamp ;
+      CLS_GROUP_VERSION       version ;
+      CLS_GROUP_ROLE          role ;         // self role
+      CLS_SYNC_STATUS         syncStatus ;
+      UINT32                  beatID ;
+      CLS_NODE_SERVICE_STATUS serviceStatus ;
 
+      _clsGroupBeat():timeStamp( 0 ),
+                       version( 0 ),
+                       role( CLS_GROUP_ROLE_SECONDARY ),
+                       syncStatus( CLS_SYNC_STATUS_NONE ),
+                       beatID( 0 ),
+                       serviceStatus( SERVICE_UNKNOWN )
+      {
       }
 
       BOOLEAN isValidID( const UINT32 &id )
@@ -149,16 +157,23 @@ namespace engine
       }
    } ;
 
+   /*
+      _clsSharingStatus define
+   */
    class _clsSharingStatus : public SDBObject
    {
    public:
       _clsGroupBeat beat ;
       UINT32 timeout ;
-      _clsSharingStatus():timeout(0)
+      UINT32 breakTime ;
+      _clsSharingStatus():timeout(0), breakTime( 0 )
       {
       }
    } ;
 
+   /*
+      _clsGroupInfo define
+   */
    class _clsGroupInfo : public SDBObject
    {
    public :
@@ -205,6 +220,27 @@ namespace engine
          }
          return TRUE ;
       }
+
+      BOOLEAN isAllNodeAbnormal( UINT32 timeout )
+      {
+         map<UINT64, _clsSharingStatus>::iterator it = info.begin() ;
+         while ( it != info.end() )
+         {
+            _clsSharingStatus &status = it->second ;
+            if ( SERVICE_NORMAL == status.beat.serviceStatus )
+            {
+               return FALSE ;
+            }
+            else if ( SERVICE_UNKNOWN == status.beat.serviceStatus &&
+                      ( 0 == timeout || status.breakTime < timeout ) )
+            {
+               return FALSE ;
+            }
+            ++it ;
+         }
+         return TRUE ;
+      }
+
    } ;
 
    enum CLS_ELECTION_ROUND
@@ -238,6 +274,9 @@ namespace engine
 
    #define CLS_SAME_SYNC_LSN_MAX_TIMES    (20)
 
+   /*
+      _clsSyncStatus define
+   */
    class _clsSyncStatus : public SDBObject
    {
    public :
@@ -308,5 +347,5 @@ namespace engine
 
 }
 
-#endif
+#endif // CLSDEF_HPP_
 
