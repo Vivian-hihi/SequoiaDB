@@ -630,7 +630,7 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                     = 0 ;
    INT64 num_to_skip            = 0 ;
-   INT64 num_to_return          = 0 ;
+   INT64 num_to_return          = -1 ;
    PYOBJECT *obj                = NULL ;
    PYOBJECT *cursor_object      = NULL ;
    PYOBJECT *bson_condition     = NULL ;

@@ -116,8 +116,10 @@ class sdbcollection(object):
         if rc:
             pass
 
-    def get_query_meta(self, cursor, condition, order_by, hint,
-                             num_to_skip, num_to_return):
+    def get_query_meta(self, cursor, condition = static_object,
+                                     order_by = static_object,
+                                     hint = static_object,
+                                     num_to_skip = 0, num_to_return = -1):
         rc = sdbcl.get_query_meta(self.cl, cursor, condition, order_by, hint,
                                            num_to_skip, num_to_return)
         if rc:
