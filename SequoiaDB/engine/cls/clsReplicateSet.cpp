@@ -921,7 +921,10 @@ namespace engine
                if ( !_inSyncCtrl )
                {
                   _inSyncCtrl = TRUE ;
-                  PD_LOG( PDWARNING, "Begin sync control..." ) ;
+                  PD_LOG( PDWARNING, "Begin sync control...[expectLSN: %lld, "
+                          "ArbitLSN: %lld, threadTime: %d, reqLen: %d, "
+                          "waitTime: %d]", expectLSN.offset, offset,
+                          threshTime, reqLen, waitTime ) ;
                }
                ossSleep( CLS_SYNCCTRL_BASE_TIME ) ;
                waitTime += CLS_SYNCCTRL_BASE_TIME ;
