@@ -72,7 +72,6 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDSTARTUP_INIT );
-      BOOLEAN startUpFromCrash = FALSE ;
       _fileOpened = FALSE ;
       SINT64 written = 0 ;
       UINT32 mode = OSS_READWRITE ;
@@ -89,7 +88,6 @@ namespace engine
       if ( SDB_FNE == rc )
       {
          _startType = SDB_START_NORMAL ;
-         startUpFromCrash = FALSE ;
          _ok = TRUE ;
          mode |= OSS_REPLACE ;
          rc = SDB_OK ;
@@ -196,7 +194,7 @@ namespace engine
       ossFsync( &_file ) ;
 
       // print startup from crash/normal after locked the file
-      if ( startUpFromCrash )
+      if ( SDB_START_NORMAL != _startType )
       {
          PD_LOG ( PDEVENT, "Start up from crash" ) ;
       }
