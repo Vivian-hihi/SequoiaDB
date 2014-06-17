@@ -43,7 +43,7 @@ static PYOBJECT *release_cl( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    DELETE_CPPOBJECT( cl ) ;
 
 done:
@@ -65,7 +65,7 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
 
    rc = cl->getCount( count, condition ) ;
@@ -99,7 +99,7 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_end_condition, tmp, end_condition ) ;
 
@@ -133,7 +133,7 @@ static PYOBJECT *split_by_precent( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    rc = cl->split( src_name, dst_name, precent ) ;
    if ( rc )
@@ -167,7 +167,7 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args ) ;
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_end_condition, tmp, end_condition ) ;
 
@@ -203,7 +203,7 @@ static PYOBJECT *splite_async_by_precent( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    rc = cl->spliteAsync( src_name, dst_name, precent, task_id ) ;
    if ( rc )
@@ -233,7 +233,7 @@ static PYOBJECT *bulk_insert( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    MAKE_PYLIST_TO_VECTOR( list_object, list_size, tmp, vec_bson ) ;
    rc = cl->bulkInsert( flags, vec_bson ) ;
    if ( rc )
@@ -263,10 +263,10 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    if ( NULL != oid_object )
    {
-      CAST_PYOBJECT_TO_COBJECT( oid_object, tmp, bson::BSONElement, id ) ;
+      CAST_PYOBJECT_TO_COBJECT( oid_object, bson::BSONElement, id ) ;
    }
    CAST_PYBSON_TO_CPPBSON( bson_object, tmp, object ) ;
    rc = cl->insert( object, id ) ;
@@ -300,7 +300,7 @@ static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_rule, tmp, rule ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
@@ -338,7 +338,7 @@ static PYOBJECT *upsert( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_rule, tmp, rule ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
@@ -373,7 +373,7 @@ static PYOBJECT *del( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
 
@@ -416,8 +416,8 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
@@ -457,7 +457,7 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_index_def, tmp, index_def ) ;
 
    rc = cl->createIndex( index_def, name, is_unique, is_enforced ) ;
@@ -487,8 +487,8 @@ static PYOBJECT *get_index( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
 
    rc = cl->getIndexes( *cursor, index_name ) ;
    if ( rc )
@@ -515,7 +515,7 @@ static PYOBJECT *drop_index( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    rc = cl->dropIndex( index_name ) ;
    if ( rc )
@@ -541,7 +541,7 @@ static PYOBJECT *get_collection_name( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    cl_name = cl->getCollectionName() ;
 
@@ -563,7 +563,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    cs_name = cl->getCSName() ;
 
@@ -585,7 +585,7 @@ static PYOBJECT *get_full_name( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    full_name = cl->getFullName() ;
 
@@ -612,8 +612,8 @@ static PYOBJECT *aggregate( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
    MAKE_PYLIST_TO_VECTOR( list_object, list_size, tmp, vec_bson ) ;
    rc = cl->aggregate( *cursor, vec_bson ) ;
    if ( rc )
@@ -650,8 +650,8 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_object, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_object, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
    CAST_PYBSON_TO_CPPBSON( bson_hint, tmp, hint ) ;
@@ -685,7 +685,7 @@ static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
    rc = cs->attachCollection( sub_full_name, option ) ;
@@ -712,7 +712,7 @@ static PYOBJECT *detach_collection( PYOBJECT *self, PYOBJECT *args )
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollection, cl ) ;
 
    rc = cs->detachCollection( sub_full_name ) ;
    if ( rc )

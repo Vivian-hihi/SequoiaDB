@@ -43,7 +43,7 @@ static PYOBJECT *release_cs( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
    DELETE_CPPOBJECT( cs );
 
 done:
@@ -66,8 +66,8 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
-   CAST_PYOBJECT_TO_COBJECT( cl_object, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
 
    rc = cs->getCollection( cl_name, *cl ) ;
    if ( rc )
@@ -95,8 +95,8 @@ static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
-   CAST_PYOBJECT_TO_COBJECT( cl_object, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
 
    rc = cs->createCollection( cl_name, *cl ) ;
    if ( rc )
@@ -127,8 +127,8 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args ) ;
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
-   CAST_PYOBJECT_TO_COBJECT( cl_object, tmp, sdbCollection, cl ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
    rc = cs->createCollection( cl_name, option, *cl ) ;
@@ -156,7 +156,7 @@ static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
 
    rc = cs->dropCollection( cl_name ) ;
    if ( rc )
@@ -182,7 +182,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
 
    cs_name = cs->getCSName() ;
 

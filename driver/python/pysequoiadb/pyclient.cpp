@@ -48,7 +48,7 @@ static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    client->connect( host, port, default_user, default_psw ) ;
 
 done:
@@ -68,7 +68,7 @@ static PYOBJECT *release_client( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client )
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client )
    DELETE_CPPOBJECT( client ) ;
 
 done:
@@ -92,7 +92,7 @@ static PYOBJECT *connect_by_host( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client )
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client )
    rc = client.connect( host, port, user, psw ) ;
 
 done:
@@ -116,7 +116,7 @@ static PYOBJECT *connect_by_service( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    
    rc = client.connect( host, service, user, psw ) ;
 
@@ -142,7 +142,7 @@ static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.connect( addr, addr_size, user, psw ) ;
 
@@ -167,7 +167,7 @@ static PYOBJECT *disconnect( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.disconnect() ;
 
@@ -190,7 +190,7 @@ static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.createUser( user_name, psw ) ;
 
@@ -213,7 +213,7 @@ static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.removeUser( user_name, psw ) ;
 
@@ -244,8 +244,8 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
@@ -279,7 +279,7 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
 
    client->resetSnapshot( condition ) ;
@@ -312,8 +312,8 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
@@ -344,7 +344,7 @@ done:
 //       goto done ;
 //    }
 // 
-//    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+//    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 // 
 //    rc = client.lock() ;
 // 
@@ -365,7 +365,7 @@ done:
 //       goto done ;
 //    }
 // 
-//    CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+//    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 // 
 //    rc = client.unlock() ;
 // 
@@ -391,8 +391,8 @@ static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cs_obj, tmp, sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
 
    rc = client.getCollectionSpace( cs_name, page_size, *cs ) ;
    if ( rc )
@@ -422,8 +422,8 @@ static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cs_obj, tmp, sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
 
    rc = client.createCollectionSpace( cs_name, page_size, *cs ) ;
    if ( rc )
@@ -449,7 +449,7 @@ static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.dropCollectionSpace( cs_name ) ;
    if ( rc )
@@ -476,8 +476,8 @@ static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client.listCollectionSpaces( *cursor ) ;
    if ( rc )
@@ -504,8 +504,8 @@ static PYOBJECT *list_replica_groups( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client.listReplicaGroups( *cursor ) ;
    if ( rc )
@@ -533,8 +533,8 @@ static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
    rc = client.getReplicaGroup( group_name, *group ) ;
    if ( rc )
@@ -563,8 +563,8 @@ static PYOBJECT *get_replica_group_by_id( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
    rc = client.getReplicaGroup( group_id, *group ) ;
    if ( rc )
@@ -592,8 +592,8 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
    rc = client.createReplicaGroup( group_name, *group ) ;
    if ( rc )
@@ -620,7 +620,7 @@ static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.removeReplicaGroup( group_name ) ;
    if ( rc )
@@ -651,7 +651,7 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_configure, tmp, configure ) ;
 
    rc = client.createReplicaCataGroup( host, service, db_path, configure ) ;
@@ -681,8 +681,8 @@ static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( group_obj, tmp, sdbReplicaGroup, group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
    rc = client.activateReplicaGroup( group_name, *group ) ;
    if ( rc )
@@ -708,7 +708,7 @@ static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.execUpdate( sql ) ;
    if ( rc )
@@ -736,8 +736,8 @@ static PYOBJECT *exec_sql( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client.exec( sql, *cursor ) ;
    if ( rc )
@@ -763,7 +763,7 @@ static PYOBJECT *transaction_begin( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.transactionBegin() ;
 
@@ -785,7 +785,7 @@ static PYOBJECT *transaction_commit( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.transactionCommit() ;
 
@@ -807,7 +807,7 @@ static PYOBJECT *transaction_rollback( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.transactionRollback() ;
 
@@ -830,7 +830,7 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
    rc = client.flushConfigure( option ) ;
@@ -859,7 +859,7 @@ static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
    rc = client.backupOffline( option ) ;
@@ -897,8 +897,8 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
@@ -933,7 +933,7 @@ static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
    rc = client.removeBackup( option ) ;
@@ -971,8 +971,8 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( cursor_obj, tmp, sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, tmp, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, tmp, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, tmp, order_by ) ;
@@ -1007,7 +1007,7 @@ static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.waitTasks( task_id, num ) ;
    if ( rc )
@@ -1034,7 +1034,7 @@ static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.cancelTask( task_id, is_async ) ;
    if ( rc )
@@ -1061,7 +1061,7 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, tmp, option ) ;
 
    rc = client.setSessionAttr( option ) ;
@@ -1088,7 +1088,7 @@ static PYOBJECT *close_all_cursors( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
 
    rc = client.closeAllCursors() ;
    if ( rc )
@@ -1114,7 +1114,7 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, tmp, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    rc = client.isValid( result ) ;
    if ( rc )
    {
