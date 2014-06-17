@@ -231,7 +231,7 @@ namespace sdbclient
       // given:
       // object ( required )
       // returns id as the pointer pointing to _id bson element
-      virtual INT32 insert ( const bson::BSONObj &obj, bson::BSONElement *id = NULL ) = 0 ;
+      virtual INT32 insert ( const bson::BSONObj &obj, bson::OID *id = NULL ) = 0 ;
 
       virtual INT32 bulkInsert ( SINT32 flags,
                                  std::vector<bson::BSONObj> &obj
@@ -567,7 +567,7 @@ namespace sdbclient
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
-      INT32 insert ( const bson::BSONObj &obj, bson::BSONElement *id = NULL )
+      INT32 insert ( const bson::BSONObj &obj, bson::OID *id = NULL )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;

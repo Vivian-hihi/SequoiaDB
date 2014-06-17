@@ -1061,7 +1061,7 @@ namespace sdbclient
    }
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_INSERT, "_sdbCollectionImpl::insert" )
-   INT32 _sdbCollectionImpl::insert ( const BSONObj &obj, BSONElement *id )
+   INT32 _sdbCollectionImpl::insert ( const BSONObj &obj, OID *id )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_INSERT ) ;
       INT32 rc = SDB_OK ;
@@ -1100,7 +1100,7 @@ namespace sdbclient
       }
       if ( id )
       {
-         *id = temp.getField ( CLIENT_RECORD_ID_FIELD ) ;
+         *id = temp.getField ( CLIENT_RECORD_ID_FIELD ).__oid();
       }
    exit :
       PD_TRACE_EXITRC ( SDB_CLIENT_INSERT, rc );

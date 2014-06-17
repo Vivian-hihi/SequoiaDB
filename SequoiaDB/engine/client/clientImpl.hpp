@@ -159,7 +159,7 @@ namespace sdbclient
       INT32 bulkInsert ( SINT32 flags,
                          vector<BSONObj> &obj
                        ) ;
-      INT32 insert ( const BSONObj &obj, BSONElement *id ) ;
+      INT32 insert ( const BSONObj &obj, OID *id ) ;
       // update bson object from current collection
       // given:
       // update rule ( required )
@@ -524,6 +524,7 @@ namespace sdbclient
          return &_collectionSpaceName[0] ;
       }
    } ;
+
    typedef class _sdbCollectionSpaceImpl sdbCollectionSpaceImpl ;
 
    class _sdbImpl : public _sdb
