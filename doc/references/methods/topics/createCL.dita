@@ -43,7 +43,7 @@
         <strow>
           <stentry>ShardingKey</stentry>
           <stentry>分区键。 </stentry>
-          <stentry>ShardingKey:{&lt;字段1>:&lt;1|-1> [,&lt;字段2>:&lt;1|-1>, ...]} </stentry>
+          <stentry>ShardingKey:{&lt;字段1>:&lt;1|-1>,[&lt;字段2>:&lt;1|-1>, ...]} </stentry>
         </strow>
         <strow>
           <stentry>ShardingType</stentry>
@@ -67,8 +67,18 @@
         </strow>
         <strow>
           <stentry>IsMainCL</stentry>
-          <stentry>主分区集合。标识是否为主分区集合，默认为否</stentry>
+          <stentry>主分区集合。标识是否为主分区集合，默认为否。</stentry>
           <stentry>IsMainCL:true|false</stentry>
+        </strow>
+        <strow>
+          <stentry>AutoSplit</stentry>
+          <stentry>自动切分。</stentry>
+          <stentry>AutoSplit:true|false</stentry>
+        </strow>
+        <strow>
+          <stentry>Groups</stentry>
+          <stentry>指定创建在某个复制组。</stentry>
+          <stentry>Groups:&lt;group name></stentry>
         </strow>
       </simpletable></p>
       
@@ -80,6 +90,10 @@
           <li>Compressed也是一个JSON对象，它的值为boolean类型，为“true”时，表示集合中的数据压缩存储，“false”时表示正常存储数据。</li>
           <li>当options内设置了多个参数时，用逗号（,）隔开。</li>
           <li>name 的值不能是空串、含点（.）或者美元符号（$），并且长度不能超过127B，否则操作失败。</li>
+          <li>AutoSplit必须配合散列分区和域使用，且不能与Groups同时使用。</li>
+          <li>AutoSplit不能与Groups同时使用。</li>
+          <li>如果在集合中没有指定AutoSplit，则使用所属域中的AutoSplit参数。</li>
+          <li>Groups必须存在于集合空间所属的域中（所有复制组均属于SYSDOMAIN，即如果集合空间没有指定域，则系统内任意复制组均可）。</li>
         </ul> 
       </note>
     </section>

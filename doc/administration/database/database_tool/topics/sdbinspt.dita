@@ -63,10 +63,15 @@
           <stentry>--numpage, -n </stentry>
           <stentry>指定需要检测或格式化的数据页数量，默认为全部 </stentry>
         </strow>
+        <strow>
+          <stentry>--record, -p </stentry>
+          <stentry>指定显示格式化输出数据或索引内容，默认只输出数据或索引的元数据 </stentry>
+        </strow>
       </simpletable>
     </section>
     <section>
       <title>用法</title>
+      <p>使用sdbinspt工具时，请务必保证数据库进程已经停止。</p>
       <p>在下面的例子，sdbinspt在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至output.txt文件。</p>
       <codeblock>sdbinspt -d . -o output.txt -v true -a all -t true -i true</codeblock>
     </section>

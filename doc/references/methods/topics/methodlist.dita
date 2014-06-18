@@ -250,6 +250,11 @@
           <stentry>示例</stentry>
         </sthead>
         <strow>
+          <stentry><xref href="ccalter.dita">db.collectionspace.collection.alter()</xref></stentry>
+          <stentry>修改集合的属性           </stentry>
+          <stentry>db.foo.bar.alter({ShardingKey:{a:1},ShardingType:"hash"})</stentry>
+        </strow>
+        <strow>
           <stentry><xref href="dbinsert.dita">db.collectionspace.collection.insert()</xref></stentry>
           <stentry>向集合中插入记录           </stentry>
           <stentry>db.foo.bar.insert({name:"Tom",age:20,phone:[123,345]})</stentry>

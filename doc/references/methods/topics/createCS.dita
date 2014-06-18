@@ -3,7 +3,7 @@
 <topic id="references_method_createCS">
   <title>db.createCS()</title>
   <body>
-    <section><title>db.createCS(&lt;name>,[pageSize])</title>
+    <section><title>db.createCS(&lt;name>,[options])</title>
       <p>在数据库对象中创建集合空间。</p>
     </section>
     <section><title>参数描述</title>
@@ -22,23 +22,39 @@
           <stentry>是</stentry>
         </strow>
         <strow>
-          <stentry>pageSize</stentry>
-          <stentry>int(32)</stentry>
-          <stentry>数据页大小。默认为65536B。</stentry>
+          <stentry>options</stentry>
+          <stentry>Json对象</stentry>
+          <stentry>集合空间可选属性。</stentry>
           <stentry>否</stentry>
         </strow>
-      </simpletable>
-      
+      </simpletable>      
     </section>
-    <section><title>格式</title>
-      <p>创建集合空间的定义格式有name和pageSize两个参数，name字段的值为字符串型，pageSize为32的int类型。</p>
-      <p><codeblock>("&lt;集合空间名>",[pagesize])</codeblock></p>
+    <section><title>options格式</title>
+      <simpletable>
+        <sthead>
+          <stentry>属性名</stentry>
+          <stentry>描述</stentry>
+          <stentry>格式</stentry>
+        </sthead>
+        <strow>
+          <stentry>PageSize</stentry>
+          <stentry>数据页大小。默认为65536B。</stentry>
+          <stentry>PageSize:&lt;int32></stentry>
+        </strow>
+        <strow>
+          <stentry>Domain</stentry>
+          <stentry>所属域</stentry>
+          <stentry>Domain:&lt;string></stentry>
+        </strow>
+      </simpletable>      
       <note>
         <ul>
           <li>name字段的值不能是空串、含点（.）或者美元符号（$）。且长度不超过127B。</li>
           <li>同一个数据库对象集合空间名必须唯一。</li>
           <li>在创建集合空间时用户可以指定数据页大小，指定后不可更改。如果不指定默认为65536B。</li>
-          <li>pageSize只能选填0，4096，8192，16384，32768，65536之一，0即为默认值65536</li>
+          <li>pageSize只能选填0，4096，8192，16384，32768，65536之一，0即为默认值65536。</li>
+          <li>所属域必须已经存在，且不能为SYSDOMAIN。</li>
+          <li>为兼容较早版本接口，db.createCS(&lt;name>,[PageSize])同样可以工作。</li>
         </ul>
       </note>
     </section>
@@ -48,8 +64,8 @@
           <p><codeblock>db.createCS("foo")</codeblock></p>
         </li>
         <li>
-          <p>创建名为foo的集合空间，指定数据页大小为4096B</p>
-          <p><codeblock>db.createCS("foo",4096)</codeblock></p>
+          <p>创建名为foo的集合空间，指定数据页大小为4096B，所属域为“mydomain”</p>
+          <p><codeblock>db.createCS("foo",{PageSize:4096,Domain:"mydomain"})</codeblock></p>
         </li>
       </ul>
     </section>

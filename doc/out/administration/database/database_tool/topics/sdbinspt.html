@@ -127,12 +127,20 @@ all：检测数据页损坏，并格式化输出数据页 </td>
           <td valign="top" headers="d15500e43" class="stentry">指定需要检测或格式化的数据页数量，默认为全部 </td>
 
         </tr>
+<tr class="strow">
+          <td valign="top" headers="d15500e40" class="stentry">--record, -p </td>
+
+          <td valign="top" headers="d15500e43" class="stentry">指定显示格式化输出数据或索引内容，默认只输出数据或索引的元数据 </td>
+
+        </tr>
 </table>
 
     </div>
 
     <div class="section"><h2 class="title sectiontitle">用法</h2>
       
+      <p class="p">使用sdbinspt工具时，请务必保证数据库进程已经停止。</p>
+
       <p class="p">在下面的例子，sdbinspt在当前目录下检测并格式化输出所有集合空间与集合的数据与索引至output.txt文件。</p>
 
       <pre class="pre codeblock">sdbinspt -d . -o output.txt -v true -a all -t true -i true</pre>
