@@ -56,14 +56,14 @@ class replicagroup(object):
         node = replicanode(self._client)
         ret = sdbreplicagroup.get_master(self._group, node._node)
         if common.SDB_OK != ret:
-            raise
+            raise error.OperationError("sdb error msg", ret)
         return node
 
     def get_slave(self):
         node = replicanode(self._client)
         ret = sdbreplicagroup.get_slave(self._group, node._node)
         if common.SDB_OK != ret:
-            raise
+            raise error.OperationError("sdb error msg", ret)
         return node
 
     def get_nodebyendpoint(self, hostname, servicename):
@@ -71,14 +71,14 @@ class replicagroup(object):
         ret = sdbreplicagroup.get_nodebyendpoint(self._group, node._node,
                                                       hostname, servicename)
         if common.SDB_OK != ret:
-            raise
+            raise error.OperationError("sdb error msg", ret)
         return node
 
     def get_nodebyname(self,nodename):
         node = replicanode(self._client)
         ret = sdbreplicagroup.get_nodebyname(self._group, node._node, nodename)
         if common.SDB_OK != ret:
-            raise
+            raise error.OperationError("sdb error msg", ret)
         return node
 
 
