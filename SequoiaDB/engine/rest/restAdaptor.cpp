@@ -558,16 +558,19 @@ namespace engine
       if ( pFileName )
       {
          common = COM_GETFILE ;
-         pExtension = _getFileExtension( pFileName ) ;
-         extenSize = ossStrlen( pExtension ) ;
          pHttpCon->_fileType = HTTP_FILE_UNKNOW ;
-         for( INT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
+         pExtension = _getFileExtension( pFileName ) ;
+         if ( pExtension )
          {
-            if ( 0 == ossStrncasecmp( pExtension,
-                                      fileExtension[i], extenSize ) )
+            extenSize = ossStrlen( pExtension ) ;
+            for( INT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
             {
-               pHttpCon->_fileType = (HTTP_FILE_TYPE)i ;
-               break ;
+               if ( 0 == ossStrncasecmp( pExtension,
+                                         fileExtension[i], extenSize ) )
+               {
+                  pHttpCon->_fileType = (HTTP_FILE_TYPE)i ;
+                  break ;
+               }
             }
          }
       }
