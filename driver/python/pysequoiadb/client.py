@@ -54,7 +54,7 @@ class client(object):
         self._client = None
 
     def __getitem__(self, item_name):
-        cs = collection_space()
+        cs = collectionspace()
         rc = sdbclient.get_collection_space(self._client, item_name,
                                                           cs._cs)
         if rc:
@@ -126,7 +126,7 @@ class client(object):
         return result
 
     def get_collection_space(self, cs_name):
-        cs = collection_space()
+        cs = collectionspace()
         rc = sdbclient.get_collection_space(self._client, cs_name, 
                                             cs._cs)
         if rc:
@@ -134,7 +134,7 @@ class client(object):
         return cs
 
     def create_collection_space(self, cs_name, page_size):
-        cs = collection_space()
+        cs = collectionspace()
         rc = sdbclient.create_collection_space(self._client, cs_name, page_size,
                                                cs._cs)
         if rc:
@@ -176,7 +176,7 @@ class client(object):
         return result
 
     def creat_replica_group(self, group_name):
-        reolica_group = replicagroup(self._client)
+        replica_group = replicagroup(self._client)
         rc = sdbclient.create_replica_group(self._client,
                                             group_name, replica_group._group)
         if rc:
@@ -222,7 +222,7 @@ class client(object):
             pass
 
     def flush_configure(self, options):
-        rc = sdbclient.flush_configure(self._client, bson_options)
+        rc = sdbclient.flush_configure(self._client, options)
         if rc:
             pass
 
@@ -232,7 +232,7 @@ class client(object):
 #    def eval_js(self, cursor, code, type, err_msg)
 
     def backup_offline(self, options):
-        rc = sdbclient.backup_offline(self._client, bson_options)
+        rc = sdbclient.backup_offline(self._client, options)
         if rc:
             pass
 
@@ -240,8 +240,8 @@ class client(object):
                                   selector = static_object,
                                   order_by = static_object):
         result = cursor()
-        rc = sdbclient.list_backup(self._client, result._cursor, option,
-                                   condition, selector, order_by)
+        rc = sdbclient.list_backup(self._client, result._cursor, options,
+                                   conditions, selector, order_by)
         if rc:
             pass
 
@@ -264,7 +264,7 @@ class client(object):
             pass
 
     def set_session_attri(self, options = static_object):
-        rc = sdbclient.set_session_attri(self._client, bosn_options)
+        rc = sdbclient.set_session_attri(self._client, options)
         if rc:
             pass
 
