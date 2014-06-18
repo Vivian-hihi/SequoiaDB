@@ -31,7 +31,7 @@ path = curdir + os.sep + ".." + os.sep \
 if sys.platform == 'win32':
     thridpartypath = path + "thirdparty"+os.sep
     path = path + "SequoiaDB" + os.sep + "engine" + os.sep
-    ModuleCPPLibFiles = [
+    modulecppfiles = [
         path + "client/clientcpp.cpp",
         path + "oss/oss.cpp",
         path + "oss/ossUtil.cpp",
@@ -55,13 +55,7 @@ if sys.platform == 'win32':
         path + "bson/oid.cpp",
         path + "bson/base64.cpp",
         path + "bson/md5.c",
-        path + "bson/nonce.cpp",
-        'pyclient.cpp',
-        'pycollection.cpp',
-        'pycollectionspace.cpp',
-        'pycursor.cpp',
-        'pyreplicagroup.cpp',
-        'pyreplicanode.cpp',]
+        path + "bson/nonce.cpp",]
 
     incdirs=[pythondir + 'include',
              path,
@@ -94,17 +88,10 @@ if sys.platform == 'win32':
 else:
     #path = path + "client" + os.sep + "lib"
     print path
-    incdirs=['/usr/local/include/python2.7',
-             path + 'client/include',]
+    incdirs=[path + 'client/include',]
                  
-    libdirs= ['/usr/local/lib/python2.7',
-              path + 'client/lib']
-    ModuleCPPLibFiles = [ 'pyclient.cpp',
-                          'pycollection.cpp',
-                          'pycollectionspace.cpp',
-                          'pycursor.cpp',
-                          'pyreplicagroup.cpp',
-                          'pyreplicanode.cpp',]
+    libdirs= [path + 'client/lib',]
+    modulecppfiles = []
     precompilemacros = [('UNICODE', 1),
                         ('_UNICODE', 1),]
     compileopt= ['-shared',
@@ -112,14 +99,73 @@ else:
         
     linklibs=['staticsdbcpp',]
 
+
+module1cppfiles=modulecppfiles;
+module1cppfiles.append('pyclient.cpp')
 module1 = Extension('sdbclient',
                     define_macros = precompilemacros,
                     extra_compile_args=compileopt,
                     include_dirs = incdirs,
                     libraries = linklibs,
                     library_dirs = libdirs,
-                    sources = ModuleCPPLibFiles )
+                    sources = module1cppfiles )
 
+module2cppfiles=modulecppfiles;
+module2cppfiles.append('pycollection.cpp')
+module2 = Extension('sdbcollection',
+                    define_macros = precompilemacros,
+                    extra_compile_args=compileopt,
+                    include_dirs = incdirs,
+                    libraries = linklibs,
+                    library_dirs = libdirs,
+                    sources = module2cppfiles )    
+
+module3cppfiles=modulecppfiles;
+module3cppfiles.append('pycollectionspace.cpp')
+module3 = Extension('sdbcollectionspace',
+                    define_macros = precompilemacros,
+                    extra_compile_args=compileopt,
+                    include_dirs = incdirs,
+                    libraries = linklibs,
+                    library_dirs = libdirs,
+                    sources = module3cppfiles )                                      
+
+module4cppfiles=modulecppfiles;
+module4cppfiles.append('pyreplicagroup.cpp')
+module4 = Extension('sdbreplicagroup',
+                    define_macros = precompilemacros,
+                    extra_compile_args=compileopt,
+                    include_dirs = incdirs,
+                    libraries = linklibs,
+                    library_dirs = libdirs,
+                    sources = module4cppfiles )  
+
+module5cppfiles=modulecppfiles;
+module5cppfiles.append('pyreplicanode.cpp')
+module5 = Extension('sdbreplicanode',
+                    define_macros = precompilemacros,
+                    extra_compile_args=compileopt,
+                    include_dirs = incdirs,
+                    libraries = linklibs,
+                    library_dirs = libdirs,
+                    sources = module5cppfiles )  
+
+module6cppfiles=modulecppfiles;
+module6cppfiles.append('pycursor.cpp')                   
+module6 = Extension('sdbcursor',
+                    define_macros = precompilemacros,
+                    extra_compile_args=compileopt,
+                    include_dirs = incdirs,
+                    libraries = linklibs,
+                    library_dirs = libdirs,
+                    sources = module6cppfiles )  
+
+ext_modules = [module1,module2,
+               module3,module4,
+               module5,module6,] 
+
+#extra_opts={"packages": ["sdb", ], }                                                                           
+extra_opts['ext_modules'] = ext_modules
 setup (name = 'sdbclient',
        version = '1.0',
        description = 'This is a sequoiadb python driver use adapter package',
@@ -127,4 +173,5 @@ setup (name = 'sdbclient',
        long_description = '''
               use sequoiadb python driver must install this module.
               ''',
-       ext_modules = [module1])
+       **extra_opts)
+#package = ['pysequoiadb']
