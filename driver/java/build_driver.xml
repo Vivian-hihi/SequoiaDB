@@ -1,4 +1,4 @@
-<!--@param ${is.debug} : for debug choise , default false , true|false-->
+<!--@param ${is.debug} : for debug choise , default false , true|false . this choise is old, ignore it,now debug is true-->
 <!--@param ${JDK.VERSION.5}: choise true|false-->
 <!--@param ${base.dir} : where the java driver source's root is -->
 <project name="build_java_driver" default="build_java_driver">
@@ -52,13 +52,92 @@
 		<echo message="jdk.name is ${jdk.name}" />
     <javac srcdir="${base.dir}/src"
            destdir="${base.dir}/build"
-           debug="${is.debug.on}"
+           debug="true"
            executable="${base.dir}/../../java/${jdk.name}/bin/javac"
            fork="yes" >
        <compilerarg value="-Xlint:unchecked" />
     </javac>
+    <tstamp>
+		  <format property="current.time" pattern="MM-dd-hh.mm.ss" />
+		</tstamp>
+		<echo file="${base.dir}/build/print_version.c" >
+		#include &lt;stdio.h&gt;
+    #include &quot;ossVer.h&quot;
+    int main()
+    {
+	   /*
+	    * this file just to print the software version on the screen for ant to catch 
+	    */
+      printf(&quot;%d.%d&quot;,SDB_ENGINE_VERISON_CURRENT , SDB_ENGINE_SUBVERSION_CURRENT);
+      return 0;
+    }
+		</echo>
+		
+		<echo>
+			/usr/bin/gcc  ${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include
+		</echo>
+		<exec executable="/usr/bin/gcc" dir="${base.dir}" failonerror="true">
+    		<arg line="${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include" />
+    </exec>
+    <exec executable="${base.dir}/build/print_version" dir="${base.dir}" failonerror="false" outputproperty="project.version" />
+
+    <trycatch>
+    	<try>
+        <exec dir="${base.dir}" executable="svn" output="${base.dir}/build/svn.status.txt" failonerror="false" >
+          <arg line="status -u" />
+        </exec>
+        <exec dir="${base.dir}" executable="grep" output="${base.dir}/build/svn.grep.txt" failonerror="false" >
+          <arg line="&quot;Status against revision&quot;" />
+          <arg line="${base.dir}/build/svn.status.txt" />
+        </exec>
+        <exec dir="${base.dir}" executable="awk" outputproperty="svn.version" failonerror="false" >
+          <arg line="-F &apos;:&apos; &apos;{print $2}&apos;" />
+          <arg line="${base.dir}/build/svn.grep.txt" />
+        </exec>
+        
+    	</try>
+    	<catch>
+    		<property name="svn.version" value="unknow" />
+    	</catch>
+    	<finally>
+    	</finally>
+    </trycatch>
+    
+    <trycatch>
+    	<try>
+    		<echo file="${base.dir}/build/print_version.c" >
+     		 #include &lt;stdio.h&gt;
+         #include &quot;ossVer.h&quot;
+         int main()
+         {
+     	   /*
+     	    * this file just to print the software version on the screen for ant to catch 
+     	    */
+           printf(&quot;%d.%d&quot;,SDB_ENGINE_VERISON_CURRENT , SDB_ENGINE_SUBVERSION_CURRENT);
+           return 0;
+         }
+     		</echo>
+     		
+     		<echo>
+     			/usr/bin/gcc  ${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include
+     		</echo>
+     		<exec executable="/usr/bin/gcc" dir="${base.dir}" failonerror="true">
+           <arg line="${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include" />
+        </exec>
+        <exec executable="${base.dir}/build/print_version" dir="${base.dir}" failonerror="false" outputproperty="project.version" />
+
+    	</try>
+    	<catch>
+    	   <property name="project.version" value="nuknow" /> 
+    	</catch>
+    	<finally>
+    	</finally>
+    </trycatch>
     <jar file="${base.dir}/sequoiadb.jar" >
        <manifest>
+       	 <attribute name="Release:" value="${svn.version}" />
+       	 <attribute name="build.time" value="${current.time}" />
+       	 <attribute name="SequoiaDB version:" value="${project.version}" />
        </manifest>
        <fileset dir="${base.dir}/build"/>
     </jar>
