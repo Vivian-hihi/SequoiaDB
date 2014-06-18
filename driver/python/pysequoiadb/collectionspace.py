@@ -70,6 +70,6 @@ class collectionspace(object):
 
     def get_collection_space_name(self):
         _, cs_name = sdbcs.get_collection_space_name(self._cs)
-        if rc:
+        if _:
             pass
         return cs_name

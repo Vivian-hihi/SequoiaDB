@@ -79,7 +79,7 @@ class collection(object):
         if rc:
             pass
 
-    def insert(obj, oid = None):
+    def insert(self, obj, oid = None):
         rc = sbdcl.insert(self._cl, obj, oid)
         if rc:
             pass
@@ -94,7 +94,7 @@ class collection(object):
         if rc:
             pass
 
-    def delete(self, condition = static_objec, hint = static_object):
+    def delete(self, condition = static_object, hint = static_object):
         rc = sdbcl.delete(self._cl, condition, hint)
         if rc:
             pass
