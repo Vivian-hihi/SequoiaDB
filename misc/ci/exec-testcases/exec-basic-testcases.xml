@@ -10,16 +10,18 @@
 <!--@param ${report.suffix}:this is for long time test, default is NULL-->
 <project name="test-basic-testcases" default="test-basic-testcases">
 	
-	 <property name="report.suffix" value="" />
-	 <property file="${ci.properties.path}" />
-	 <property name="COORD_SVC_NAME" value="50000" />
+	<property name="report.suffix" value="" />
+	<property file="${ci.properties.path}" />
+	<property name="COORD_SVC_NAME" value="50000" />
+
 	<target name="clean-test-reports" depends="">
 		<echo message="Begin to clean test result reports..." />
 		<delete dir="${testcase.path}/reports${parallel.num}" />
 		<echo message="Clean deploy result reports compeleted." />
 	</target>
-	 <property name="STAF.PATH" value="/usr/local/staf" />
-	 <property name="to.copy.test.log" value="true"/>
+
+	<property name="STAF.PATH" value="/usr/local/staf" />
+	<property name="to.copy.test.log" value="true"/>
 	 
 	<taskdef resource="com/sequoiadb/ant/ant-sdbtasks.xml">
 		<classpath>
@@ -67,7 +69,7 @@
 		<hostinfo prefix="host" />
 
 		<property name="test.suite.class.name" value="com.sequoiadb.testcases-js.${test.package.name}.${host.NAME}-${parallel.num}-${test.suite.name}" />
-    <echo message="now test ${test.suite.name} suite file" />
+    	<echo message="now test ${test.suite.name} suite file" />
 		<tstamp>
 			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
@@ -124,14 +126,14 @@
 			</then>
 		</if>
 		<if>
-     	<equals arg1="${os.arch}" arg2="ppc64" />
-   		<then>
-   	  	<property name="URL.download.pre" value="http://192.168.30.150:8080" />
-   		</then>
-   		<else>
-    	  <property name="URL.download.pre" value="http://192.168.30.184:8080" />
-   		</else>
-   </if>
+	     	<equals arg1="${os.arch}" arg2="ppc64" />
+	   		<then>
+	   	  	<property name="URL.download.pre" value="http://192.168.30.150:8080" />
+	   		</then>
+	   		<else>
+	    	  <property name="URL.download.pre" value="http://192.168.30.184:8080" />
+	   		</else>
+   		</if>
 		<basename property="test.case.name" file="${test.case.fullname}" suffix=".js" />
 		
 		<exec executable="sed">
@@ -141,7 +143,8 @@
 		<exec executable="sed">
 			<arg line="-i 's/^\xEF\xBB\xBF//g'  ${testcase.path}/libs/func.js"/>
 		</exec>
-    <echo message="now test ${test.case.name}.js file" />
+
+    	<echo message="now test ${test.case.name}.js file" />
 	
 		<!--
 		<sdbFileAdd srcFile="${testcase.path}/libs/func.js"  destFile="${test.case.fullname}.${parallel.num}" />
@@ -150,8 +153,9 @@
 		<!-- end -->
 
 		<tstamp>
-			<format property="current.time" pattern="MM-dd-hh.mm.ss" />
+			<format property="current.time" pattern="yyyy-MM-dd HH-mm-ss" locale="cn"/>
 		</tstamp>
+		<echo message="${current.time}"/>
 
 		<echo file="${reports.path}/TEST-${test.suite.class.name}.xml" append="true" message="&lt;testcase classname=&quot;${test.suite.class.name}&quot; name=&quot;${test.case.name}&quot; time=&quot;${current.time}&quot;&gt;&#10;" />
     
