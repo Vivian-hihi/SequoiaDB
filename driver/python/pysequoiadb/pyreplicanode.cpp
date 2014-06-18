@@ -19,6 +19,42 @@
 #include "client.hpp"
 
 using namespace sdbclient ;
+static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
+{
+   sdbNode *node = NULL;
+   if ( !PyArg_ParseTuple(args, "") )
+   {
+      goto error ;
+   }
+   
+   NEW_CPPOBJECT( node, sdbNode ) ;
+   if ( NULL == node )
+   {
+      goto error ;
+   }
+done :
+   return MAKE_RETURN_OBJECT( node ) ;
+error :
+   return NULL ;
+}
+
+static PYOBJECT *release_node( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc        = 0 ;
+   PYOBJECT *obj   = NULL ;
+   sdbNode  *node  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbNode, node ) ;
+   DELETE_CPPOBJECT( node ) ;
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
 
 static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
 {
@@ -27,7 +63,6 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *sdbodj     = NULL ;
    sdbNode *node        = NULL ;
    sdb *client          = NULL ;
-   
 
    if ( !PyArg_ParseTuple( args, "OO", &obj, &sdbodj ) )
    {
@@ -36,7 +71,7 @@ static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
-   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( sdbodj, sdb, client ) ;
    rc = node->connect( *client ) ;
 done :
    return MAKE_RETURN_INT( rc ) ;
@@ -170,6 +205,8 @@ error :
 
 /* List of functions defined in the module */
 static PyMethodDef node_methods[] = {
+   {"create_node", create_node ,METH_VARARGS},
+   {"release_node", release_node ,METH_VARARGS},
    {"connect", connect ,METH_VARARGS},
    {"get_status", get_status ,METH_VARARGS},
    {"get_hostname", get_hostname ,METH_VARARGS},

@@ -19,22 +19,43 @@
 #include "client.hpp"
 
 using namespace sdbclient ;
+typedef sdbReplicaGroup Group ;
 
-#define RELEASE_PTR( nodeptr )  \
-do                              \
-{                               \
-   if ( NULL != nodeptr)        \
-   {                            \
-      release_node( nodeptr ) ; \
-      nodeptr = NULL;           \
-   }                            \
-}while( FALSE )
-
-static void release_node( void *ptr )
+static PYOBJECT *create_replicagroup( PYOBJECT *self, PYOBJECT *args )
 {
-   sdbNode *client = static_cast<sdbNode *>(ptr) ;
-   DELETE_CPPOBJECT( client ) ;
-   return;
+   Group *replica_group = NULL;
+   if ( !PyArg_ParseTuple(args, "") )
+   {
+      goto error ;
+   }
+   
+   NEW_CPPOBJECT( replica_group, Group ) ;
+   if ( NULL == replica_group )
+   {
+      goto error ;
+   }
+   
+   return MAKE_RETURN_OBJECT( replica_group ) ;
+error :
+   return NULL ;
+}
+
+static PYOBJECT *release_replicagroup( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc             = 0 ;
+   PYOBJECT *obj        = NULL ;
+   Group *replica_group = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj,  Group, replica_group ) ;
+   DELETE_CPPOBJECT( replica_group ) ;
+done:
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *get_nodenum( PYOBJECT *self, PYOBJECT *args )
@@ -43,7 +64,7 @@ static PYOBJECT *get_nodenum( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *obj        = NULL ;
    INT32 nodestatus     = SDB_NODE_UNKNOWN ;
    INT32 nodenum        = 0 ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group = NULL ;
 
    if ( !PyArg_ParseTuple( args, "Oi", &obj, &nodestatus ) )
    {
@@ -51,7 +72,7 @@ static PYOBJECT *get_nodenum( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    nodenum = replica_group->getNodeNum( (sdbNodeStatus)nodestatus, &rc ) ;
 done :
    return MAKE_RETURN_INT_INT(rc, nodenum) ;
@@ -64,7 +85,7 @@ static PYOBJECT *get_detail( PYOBJECT *self, PYOBJECT *args )
    INT32 rc             = 0 ;
    PYOBJECT *obj        = NULL ;
    bson::BSONObj bson ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -72,10 +93,32 @@ static PYOBJECT *get_detail( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    rc = replica_group->getDetail( bson ) ;
 done :
-   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
+   return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), 
+                                               bson.objsize() ) ;
+error :
+   goto done ;
+}
+
+static INT32 convert_pobj2cobj( PYOBJECT *self, PYOBJECT *args, 
+                      sdbReplicaGroup *& group, sdbNode *& node)
+{
+   INT32 rc              = 0 ;
+   PYOBJECT *group_obj   = NULL ;
+   PYOBJECT *node_obj    = NULL ;
+
+   if ( !PyArg_ParseTuple( args, "OO", &group_obj, &node_obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto error ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( group_obj, Group, group ) ;
+   CAST_PYOBJECT_TO_COBJECT( node_obj, sdbNode, node ) ;
+done :
+   return rc;
 error :
    goto done ;
 }
@@ -83,54 +126,35 @@ error :
 static PYOBJECT *get_master( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
    sdbNode *node        = NULL ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   rc = convert_pobj2cobj( self, args, replica_group, node) ;
+   if  ( SDB_OK != rc )
    {
-      rc = SDB_INVALIDARGS ;
       goto error ;
    }
-   
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   
-   NEW_CPPOBJECT( node, sdbNode ) ;
-   if ( NULL == node )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
+
    rc = replica_group->getMaster( *node ) ;
    if  ( SDB_OK != rc )
    {
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
-   RELEASE_PTR( node ) ;
    goto done ;
 }
 
 static PYOBJECT *get_slave( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
    sdbNode *node        = NULL ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "O", &obj ) )
+   rc = convert_pobj2cobj( self, args, replica_group, node) ;
+   if  ( SDB_OK != rc )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   NEW_CPPOBJECT( node, sdbNode ) ;
-   if ( NULL == node )
-   {
-      rc = SDB_OOM ;
       goto error ;
    }
    rc = replica_group->getSlave( *node ) ;
@@ -139,76 +163,67 @@ static PYOBJECT *get_slave( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
-   RELEASE_PTR( node ) ;
    goto done ;
 }
 
 static PYOBJECT *get_nodebyname( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc                = 0 ;
-   PYOBJECT *obj           = NULL ;
-   const char *nodename    = NULL ;
-   sdbNode *node           = NULL ;
-   sdbReplicaGroup *replica_group = NULL ;
+   INT32 rc             = 0 ;
+   PYOBJECT *group_obj  = NULL ;
+   PYOBJECT *node_obj   = NULL ;
+   const char *nodename = NULL ;
+   sdbNode *node        = NULL ;
+   Group *replica_group = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "Os", &obj, &nodename ) )
+   if ( !PyArg_ParseTuple( args, "OOs", &group_obj, &node_obj, &nodename ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
    
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   NEW_CPPOBJECT( node, sdbNode ) ;
-   if ( NULL == node )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
+   CAST_PYOBJECT_TO_COBJECT( group_obj, Group, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( node_obj, sdbNode, node ) ;
+
    rc = replica_group->getNode( nodename, *node ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
-   RELEASE_PTR( node ) ;
    goto done ;
 }
 
 static PYOBJECT *get_nodebyendpoint( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                = 0 ;
-   PYOBJECT *obj           = NULL ;
-   const char *hostname   = NULL ;
+   PYOBJECT *group_obj     = NULL ;
+   PYOBJECT *node_obj      = NULL ;
+   const char *hostname    = NULL ;
    const char *servicename = NULL ;
    sdbNode *node           = NULL ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group    = NULL ;
 
-   if ( !PyArg_ParseTuple( args, "Oss", &obj, &hostname, &servicename ) )
+   if ( !PyArg_ParseTuple( args, "OOss", &group_obj, &node_obj, 
+                                     &hostname, &servicename ) )
    {
       rc = SDB_INVALIDARGS ;
       goto error ;
    }
    
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   NEW_CPPOBJECT( node, sdbNode ) ;
-   if ( NULL == node )
-   {
-      rc = SDB_OOM ;
-      goto error ;
-   }
+   CAST_PYOBJECT_TO_COBJECT( group_obj, Group, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( node_obj, sdbNode, node ) ;
    rc = replica_group->getNode( hostname, servicename, *node ) ;
    if ( SDB_OK != rc )
    {
       goto error ;
    }
 done :
-   return MAKE_RETURN_INT_OBJECT( rc, PyCObject_FromVoidPtr( node, release_node ) ) ;
+   return MAKE_RETURN_INT( rc ) ;
 error :
-   RELEASE_PTR( node ) ;
    goto done ;
 }
 
@@ -252,7 +267,7 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
    const char *nodepath    = NULL ;
    PYOBJECT *dict          = NULL ;
    std::map<std::string,std::string> config ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group    = NULL ;
 
    if ( !PyArg_ParseTuple( args, "OsssO", &obj, &nodename, 
                             &servicename, &nodepath, &dict ) )
@@ -261,7 +276,7 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
    
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    
    rc = pydict_to_cmap( dict, config ) ;
    if ( SDB_OK != rc )
@@ -288,7 +303,7 @@ static PYOBJECT *remove_node( PYOBJECT *self, PYOBJECT *args )
    PYOBJECT *pybson        = NULL ;
    const char *hostname    = NULL ;
    const char *servicename = NULL ;
-   sdbReplicaGroup *replica_group = NULL ;
+   Group *replica_group = NULL ;
 
    if ( !PyArg_ParseTuple( args, "Oss|O", &obj, &hostname, &servicename, pybson ) )
    {
@@ -346,7 +361,7 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    rc = replica_group->start() ;
 done :
    return MAKE_RETURN_INT( rc ) ;
@@ -366,7 +381,7 @@ static PYOBJECT *is_catalog( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
    rc = replica_group->isCatalog() ;
 done :
    return MAKE_RETURN_INT( rc ) ;
@@ -376,6 +391,8 @@ error :
 
 /* List of functions defined in the module */
 static PyMethodDef group_methods[] = {
+   {"create_replicagroup", create_replicagroup ,METH_VARARGS},
+   {"release_replicagroup", release_replicagroup ,METH_VARARGS},
    {"get_nodenum", get_nodenum ,METH_VARARGS},
    {"get_detail", get_detail ,METH_VARARGS},
    {"get_master", get_master ,METH_VARARGS},

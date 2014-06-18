@@ -21,73 +21,89 @@ from pysequoiadb import replicanode
 from pysequoiadb import common
 from pysequoiadb import error
 from pysequoiadb.error import InvalidParameter
+from pysequoiadb.error import PySequoiaDBError
 
 
 class replicagroup(object):
     """Entrance of SequoiaDB
 
     """
-    def __init__(self, group, client):
-        self.group = group
+    def __init__(self, client):
+        self._group = sdbreplicagroup.create_replicagroup()
+        if  self._group == None:
+            raise PySequoiaDBError()
         self._client = client
+
+    def __del__(self):
+        sdbreplicagroup.release_replicagroup(self._group)
+        self._group = None
+        self._client = None
 
     def get_nodenum(self, nodestatus):
         if nodestatus not in common.NODE_STATUS.available_options() :
             raise InvalidParameter("invalid node status")
 
-        result = sdbreplicagroup.get_detail(self.group, nodestatus)
+        result = sdbreplicagroup.get_detail(self._group, nodestatus)
         return error.err_process(result)
 
     def get_detail(self):
-        result = sdbreplicagroup.get_detail(self.group)
+        result = sdbreplicagroup.get_detail(self._group)
         bson_string = error.err_process(result)
         return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
 
 
     def get_master(self):
-        result = sdbreplicagroup.get_master(self.group)
-        node = error.err_process(result)
-        return replicanode(self._client, node)
+        node = replicanode(self._client)
+        ret = sdbreplicagroup.get_master(self._group, node._node)
+        if common.SDB_OK != ret:
+            raise
+        return node
 
     def get_slave(self):
-        result = sdbreplicagroup.get_slave(self.group)
-        node = error.err_process(result)
-        return replicanode(self._client, node)
+        node = replicanode(self._client)
+        ret = sdbreplicagroup.get_slave(self._group, node._node)
+        if common.SDB_OK != ret:
+            raise
+        return node
 
     def get_nodebyendpoint(self, hostname, servicename):
-        result = sdbreplicagroup.get_nodebyendpoint(self.group, hostname, servicename)
-        node = error.err_process(result)
-        return replicanode(self._client, node)
+        node = replicanode(self._client)
+        ret = sdbreplicagroup.get_nodebyendpoint(self._group, node._node,
+                                                      hostname, servicename)
+        if common.SDB_OK != ret:
+            raise
+        return node
 
     def get_nodebyname(self,nodename):
-        result = sdbreplicagroup.get_nodebyname(self.group, nodename)
-        node = error.err_process(result)
-        return replicanode(self._client, node)
+        node = replicanode(self._client)
+        ret = sdbreplicagroup.get_nodebyname(self._group, node._node, nodename)
+        if common.SDB_OK != ret:
+            raise
+        return node
 
 
     def create_node(self, hostname, servicename, dbpath, config):
         if types.DictType != type(config):
             raise InvalidParameter("invalid parameter type")
-        rc = sdbreplicagroup.remove_node(self.group, hostname, servicename, dbpath, config)
+        rc = sdbreplicagroup.remove_node(self._group, hostname, servicename, dbpath, config)
         return rc
-
 
     def remove_node(self, hostname, servicename, config=None):
         if None != config:
             pybson = bson.BSON.encode(config)
-            rc = sdbreplicagroup.remove_node(self.group, hostname, servicename, pybson)
+            rc = sdbreplicagroup.remove_node(self._group, hostname, servicename, pybson)
         else:
-            rc = sdbreplicagroup.remove_node(self.group, hostname, servicename)
+            rc = sdbreplicagroup.remove_node(self._group, hostname, servicename)
         return rc
 
     def start(self):
-        rc = sdbreplicagroup.start(self.group)
+        rc = sdbreplicagroup.start(self._group)
         return
 
     def stop(self):
-        rc = sdbreplicagroup.stop(self.group)
+        rc = sdbreplicagroup.stop(self._group)
         return rc
 
     def is_catalog(self):
-        rc = sdbreplicagroup.is_catalog(self.group)
+        rc = sdbreplicagroup.is_catalog(self._group)
         return rc

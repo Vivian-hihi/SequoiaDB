@@ -20,6 +20,42 @@
 
 using namespace sdbclient ;
 
+static PYOBJECT *create_cursor( PYOBJECT *self, PYOBJECT *args )
+{
+   sdbCursor *cursor = NULL;
+   if ( !PyArg_ParseTuple(args, "") )
+   {
+      goto error ;
+   }
+   
+   NEW_CPPOBJECT( cursor, sdbCursor ) ;
+   if ( NULL == cursor )
+   {
+      goto error ;
+   }
+   return MAKE_RETURN_OBJECT( cursor ) ;
+error :
+   return NULL;
+}
+
+static PYOBJECT *release_cursor( PYOBJECT *self, PYOBJECT *args )
+{
+   INT32 rc           = 0 ;
+   PYOBJECT *obj      = NULL ;
+   sdbCursor *cursor  = NULL ;
+
+   if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
+   {
+      rc = SDB_INVALIDARGS ;
+      goto done ;
+   }
+
+   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCursor, cursor ) ;
+   DELETE_CPPOBJECT( cursor ) ;
+done:
+   return MAKE_RETURN_INT( rc ) ;
+}
+
 static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
@@ -96,6 +132,8 @@ error :
 
 /* List of functions defined in the module */
 static PyMethodDef cursor_methods[] = {
+   {"create_cursor", create_cursor ,METH_VARARGS},
+   {"release_cursor", release_cursor ,METH_VARARGS},
    {"next", next ,METH_VARARGS},
    {"current", current ,METH_VARARGS},
    {"close", close ,METH_VARARGS},
