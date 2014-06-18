@@ -128,7 +128,7 @@
 
     	</try>
     	<catch>
-    	   <property name="project.version" value="nuknow" /> 
+    	   <property name="project.version" value="unknow" /> 
     	</catch>
     	<finally>
     	</finally>
