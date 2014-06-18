@@ -164,7 +164,7 @@ ext_modules = [module1,module2,
                module3,module4,
                module5,module6,] 
 
-#extra_opts={"packages": ["sdb", ], }                                                                           
+extra_opts={}                                                                           
 extra_opts['ext_modules'] = ext_modules
 setup (name = 'sdbclient',
        version = '1.0',
