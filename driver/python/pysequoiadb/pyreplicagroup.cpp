@@ -35,7 +35,7 @@ static PYOBJECT *create_replicagroup( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
    
-   return MAKE_RETURN_OBJECT( replica_group ) ;
+   return MAKE_PYOBJECT( replica_group ) ;
 error :
    return NULL ;
 }

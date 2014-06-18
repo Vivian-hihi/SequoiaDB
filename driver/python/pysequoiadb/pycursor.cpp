@@ -33,7 +33,7 @@ static PYOBJECT *create_cursor( PYOBJECT *self, PYOBJECT *args )
    {
       goto error ;
    }
-   return MAKE_RETURN_OBJECT( cursor ) ;
+   return MAKE_PYOBJECT( cursor ) ;
 error :
    return NULL;
 }

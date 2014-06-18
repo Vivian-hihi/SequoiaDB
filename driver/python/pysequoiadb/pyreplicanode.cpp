@@ -33,7 +33,7 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
       goto error ;
    }
 done :
-   return MAKE_RETURN_OBJECT( node ) ;
+   return MAKE_PYOBJECT( node ) ;
 error :
    return NULL ;
 }
