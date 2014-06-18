@@ -17,7 +17,7 @@ default_psw  = ""
 static_object = None
 """Default bson"""
 
-version_tuple = (2, 7)
+version_tuple = (1, 8)
 
 def get_version():
     if isinstance( version_tuple[-1], basestring):

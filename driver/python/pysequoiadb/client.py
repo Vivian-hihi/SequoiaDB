@@ -32,21 +32,22 @@ class client(object):
 
         self.cclient = sdbclient.create_client()
         if self.cclient is None:
-           raise expection()
+           raise PySequoiaDBError()
         
         rc = sdbclient.init_connect(self.cclient, host, port)
         if rc:
             pass
       
     def __del__(self):
-        dbclient.release_cilent(self.cclient)
+        dbclient.release_client(self.cclient)
         self.cclient = None
 
     def __getitem__(self, item_name):
-        rc = sdbclient.get_collect_space(self.cclient, item_name, page_size,
-                                         collection_space)
+        collection_space = None
+        rc = sdbclient.get_collection_space(self.cclient, item_name, collection_space)
         if rc:
             pass
+        return collection_space
 
     def connect(self, host = default_host, port = default_port,
                       user = default_user, psw  = default_psw):
