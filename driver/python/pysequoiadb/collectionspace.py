@@ -15,7 +15,7 @@
 """Module of collectionspace for python driver for SequoiaDB
 """
 
-import sdbcs
+import sdbcollectionspace
 import bson
 from pysequoiadb import ( static_object,
                           default_host,
@@ -32,44 +32,44 @@ class collectionspace(object):
     
     def __init__(self):
         """'cs' is short for collection space"""
-        self._cs = sdbcs.create_cs()
+        self._cs = sdbcollectionspace.create_cs()
         if self._cs is None:
             pass
 
     def __del__(self):
-        rc = sdbcs.release_cs(self._cs)
+        rc = sdbcollectionspace.release_cs(self._cs)
         if rc:
             pass
         self._cs = None
 
     def __getitem__(self, item_name):
         cl = collection()
-        rc = sdbcs.get_collection(self._cs, item_name, cl._cl)
+        rc = sdbcollectionspace.get_collection(self._cs, item_name, cl._cl)
         if rc:
             pass
         return cl
 
     def get_collection(self, cl_name):
         cl = collection()
-        rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
+        rc = sdbcollectionspace.get_collection(self._cs, cl_name, cl._cl)
         if rc:
             pass
         return cl
 
     def create_collection(self, cl_name, options = static_object):
         cl = collection()
-        rc = sdbcs.get_collection(self._cs, cl_name, options, cl._cl)
+        rc = sdbcollectionspace.get_collection(self._cs, cl_name, options, cl._cl)
         if rc:
             pass
         return cl
 
     def drop_collection(self, cl_name):
-        rc = sdbcs.drop_collection(self._cs, cl_name)
+        rc = sdbcollectionspace.drop_collection(self._cs, cl_name)
         if rc:
             pass
 
     def get_collection_space_name(self):
-        _, cs_name = sdbcs.get_collection_space_name(self._cs)
+        _, cs_name = sdbcollectionspace.get_collection_space_name(self._cs)
         if _:
             pass
         return cs_name
