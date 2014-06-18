@@ -43,9 +43,6 @@ using namespace bson ;
 
 namespace engine
 {
-
-   #define REST_COMMAND_KEY     "cmd"
-
    /*
       _pmdRestSession implement
    */
@@ -133,6 +130,7 @@ namespace engine
             // if 'SessionID' exist, attach the sessionInfo
             if ( pSessionID )
             {
+               PD_LOG( PDEVENT, "OM: session_id=%s", pSessionID ) ;
                _pSessionInfo = sdbGetOMManager()->attachSessionInfo(
                   pSessionID ) ;
             }
@@ -246,24 +244,25 @@ namespace engine
 
       if ( COM_GETFILE == command )
       {
-         PD_LOG( PDEVENT, "getfile command:file=%s", pFilePath ) ;
+         PD_LOG( PDEVENT, "OM: getfile command:file=%s", pFilePath ) ;
          commandIf = new omGetFileCommand(pAdptor, this, 
                                           _wwwRootPath.c_str(), pFilePath) ;
       }
       else 
       {
          const CHAR *pSubCommand = NULL ;
-         pAdptor->getQuery( this, REST_COMMAND_KEY, &pSubCommand ) ;
+         pAdptor->getQuery( this, OM_REST_COMMAND_KEY, &pSubCommand ) ;
          if ( NULL == pSubCommand )
          {
             BSONObjBuilder builder ;
-            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG) ;
+            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
             builder.append( OM_REST_RES_DETAIL, "command is null" ) ;
             pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
             pAdptor->sendResponse( this, HTTP_OK ) ;
             goto error ;
          }
 
+         PD_LOG( PDEVENT, "OM: command:command=%s", pSubCommand ) ;
          if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
               && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
               && !isAuthOK() )
@@ -275,10 +274,10 @@ namespace engine
             pAdptor->setOPResult( this, SDB_AUTH_AUTHORITY_FORBIDDEN, 
                                   builder.obj() ) ;
             pAdptor->sendResponse( this, HTTP_OK ) ;
+            PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
             goto error ;
          }
-
-         PD_LOG( PDEVENT, "CMD command:command=%s", pSubCommand ) ;
+         
          if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
             commandIf = new omAuthCommand (pAdptor, this, 
@@ -287,6 +286,16 @@ namespace engine
          else if ( ossStrcmp ( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
             commandIf = new omCheckSessionCommand (pAdptor, this ) ;
+         }
+         else
+         {
+            BSONObjBuilder builder ;
+            string errorInfo = string("command is unreconigzed:") + pSubCommand ;
+            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG ) ;
+            builder.append( OM_REST_RES_DETAIL, errorInfo.c_str() ) ;
+            pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
+            pAdptor->sendResponse( this, HTTP_OK ) ;
+            goto error ;
          }
       }
        
@@ -326,6 +335,7 @@ namespace engine
 
    void _pmdRestSession::restoreSession( restSessionInfo *pSessionInfo )
    {
+      _pSessionInfo = pSessionInfo ;
    }
 
    void _pmdRestSession::saveSession( restSessionInfo &sessionInfo )

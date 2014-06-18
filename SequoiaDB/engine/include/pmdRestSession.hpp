@@ -108,7 +108,7 @@ namespace engine
 
       BOOLEAN isValid() const
       {
-         return _id.size() == 0 ? TRUE : FALSE ;
+         return _id.size() == 0 ? FALSE : TRUE ;
       }
 
       void invalidate()

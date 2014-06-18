@@ -161,6 +161,9 @@ namespace engine
    #define  OM_REST_RES_RETCODE              "rc"
    #define  OM_REST_RES_DETAIL               "detail"
    #define  OM_REST_RES_LOCAL                "local"
+
+   #define  OM_REST_COMMAND_KEY              "cmd"
+   #define  OM_REST_CLUSTER_KEY              "cluster"
 }
 
 #endif // OM_DEF_HPP__

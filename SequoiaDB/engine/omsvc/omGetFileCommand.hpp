@@ -78,6 +78,21 @@ namespace engine
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
    };
+
+   class omCreateClusterCommand : public omCommandInterface
+   {
+      public:
+         omCreateClusterCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+         ~omCreateClusterCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+         
+      private:
+         restAdaptor*    _restAdaptor ;
+         pmdRestSession* _restSession ;
+   };
    
    class omGetFileCommand : public omCommandInterface
    {

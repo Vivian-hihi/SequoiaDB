@@ -204,7 +204,8 @@ namespace engine
       goto done ;
    }
 
-   omCheckSessionCommand::omCheckSessionCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession )
+   omCheckSessionCommand::omCheckSessionCommand( restAdaptor *pRestAdaptor, 
+                                                 pmdRestSession *pRestSession )
    {
       _restAdaptor = pRestAdaptor ;
       _restSession = pRestSession ;
@@ -229,6 +230,7 @@ namespace engine
       }
       else
       {
+         PD_LOG( PDEVENT, "OM: redirect to:%s", OM_REST_LOGIN_HTML ) ;
          bsonBuilder.append( OM_REST_RES_RETCODE, 
                              SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
          bsonBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
@@ -237,6 +239,22 @@ namespace engine
          _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       }
 
+      return SDB_OK ;
+   }
+
+   omCreateClusterCommand::omCreateClusterCommand( restAdaptor *pRestAdaptor, 
+                                                  pmdRestSession *pRestSession )
+   {
+      _restAdaptor = pRestAdaptor ;
+      _restSession = pRestSession ;
+   }
+
+   omCreateClusterCommand::~omCreateClusterCommand()
+   {
+   }
+
+   INT32 omCreateClusterCommand::doCommand()
+   {
       return SDB_OK ;
    }
 
@@ -274,6 +292,7 @@ namespace engine
          HTTP_FILE_TYPE file_type = _restAdaptor->getFileType( _restSession ) ;
          if ( HTTP_FILE_HTML == file_type || HTTP_FILE_DEFAULT == file_type )
          {
+            PD_LOG( PDEVENT, "OM: 2file no found:%s", realSubPath.c_str() ) ;
             _restAdaptor->appendHttpBody( _restSession, 
                                           OM_REST_REDIRECT_LOGIN, 
                                           ossStrlen(OM_REST_REDIRECT_LOGIN) ) ;
@@ -281,6 +300,7 @@ namespace engine
          }
          else
          {
+            PD_LOG( PDEVENT, "OM: file no found:%s", realSubPath.c_str() ) ;
             _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
          }
          
