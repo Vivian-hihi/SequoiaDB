@@ -474,17 +474,16 @@ namespace engine
          else if ( (SDB_DMS_CS_NOTEXIST == rc || SDB_DMS_NOTEXIST == rc)
                    && _pCollectionName && _pReplSet->primaryIsMe() )
          {
-            INT32 tmpRC = SDB_OK ;
             if ( SDB_DMS_CS_NOTEXIST == rc )
             {
-               tmpRC = _createCSByCatalog( _pCollectionName ) ;
+               rc = _createCSByCatalog( _pCollectionName ) ;
             }
             else if ( SDB_DMS_NOTEXIST == rc )
             {
-               tmpRC = _createCLByCatalog( _pCollectionName ) ;
+               rc = _createCLByCatalog( _pCollectionName ) ;
             }
 
-            if ( SDB_OK == tmpRC )
+            if ( SDB_OK == rc )
             {
                PD_LOG ( PDEVENT, "Session[%s]: Create CS/CL[%s] by catalog",
                         sessionName(), _pCollectionName ) ;
