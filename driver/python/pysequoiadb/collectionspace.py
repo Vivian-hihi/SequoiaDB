@@ -43,7 +43,11 @@ class collectionspace(object):
         self._cs = None
 
     def __getitem__(self, item_name):
-        return get_collection(item_name)
+        collection = collection()
+        rc = sdbcs.get_collection(self._cs, item_name, collection._cl)
+        if rc:
+            pass
+        return collection
 
     def get_collection(self, cl_name):
         collection = collection()

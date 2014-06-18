@@ -25,6 +25,9 @@ from pysequoiadb import ( static_object,
                           default_psw,
                           driver_version )
 from pysequoiadb import collectionspace
+from pysequoiadb import collection
+from pysequoiadb import cursor
+from pysequoiadb import replicagroup
 from pysequoiadb.error import PySequoiaDBError
 
 class client(object):
@@ -32,7 +35,8 @@ class client(object):
     
     The client support interfaces to connect to SequoiaDB.
     In order to connect to SequoiaDB, you need use the class first.
-    And you should release the instance of it when you don't use it any more.
+    And you should make sure the instance of it released when you don't use it
+    any more.
     """
     def __init__(self, host = default_host, port = default_port,
                        user = default_user, psw  = default_psw):
@@ -50,9 +54,12 @@ class client(object):
         self._client = None
 
     def __getitem__(self, item_name):
-        collection_space = sdbclient.get_collection_space(self._client,
+        collection_space = collection_space()
+        rc = sdbclient.get_collection_space(self._client,
                                                           item_name,
                                                           collection_space._cs)
+        if rc:
+            pass
         return collection_space
 
     def connect(self, host = default_host, port = default_port,
