@@ -560,7 +560,7 @@ namespace engine
          common = COM_GETFILE ;
          pExtension = _getFileExtension( pFileName ) ;
          extenSize = ossStrlen( pExtension ) ;
-         pHttpCon->_fileType = HTTP_FILE_HTML ;
+         pHttpCon->_fileType = HTTP_FILE_UNKNOW ;
          for( INT32 i = 0; i < REST_STRING_FILE_EX_SIZE; ++i )
          {
             if ( 0 == ossStrncasecmp( pExtension,
@@ -964,6 +964,7 @@ namespace engine
                break ;
             case HTTP_FILE_HTML:
             case HTTP_FILE_DEFAULT:
+            case HTTP_FILE_UNKNOW:
             default:
                pFileType = REST_STRING_TEXT_HTML ;
                break ;
