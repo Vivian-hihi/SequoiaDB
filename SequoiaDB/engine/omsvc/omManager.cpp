@@ -73,6 +73,7 @@ namespace engine
       // create collection space and collection
       _pKrcb  = pmdGetKRCB() ;
       _pDmsCB = _pKrcb->getDMSCB() ;
+      _pRtnCB = _pKrcb->getRTNCB() ;
       
       rc = _initOmTables();
       PD_RC_CHECK ( rc, PDERROR, "Failed to initial the om tables rc = %d", 
@@ -91,6 +92,14 @@ namespace engine
    {
       _pmdEDUCB *cb      = NULL ;
       INT32 rc           = SDB_OK ;
+      BSONObjBuilder bsonBuilder ;
+      BSONObj defaultUserObjs ;
+      BSONObj selector ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID = -1 ;
+      rtnContextBuf buffObj ;
+      SINT64 startingPos = 0 ;
       
       cb = pmdGetThreadEDUCB() ;
       rc = rtnTestCollectionSpaceCommand( OM_CS_DEPLOY, _pDmsCB ) ;
@@ -155,7 +164,60 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
 
+      rc = rtnTestCollectionSpaceCommand( OM_CS_AUTH, _pDmsCB ) ;
+      if ( rc )
+      {
+         if ( SDB_DMS_CS_NOTEXIST == rc )
+         {
+            // if collection space was not exist, let's create one
+            rc = rtnCreateCollectionSpaceCommand ( OM_CS_AUTH, cb, _pDmsCB, 
+                                                   NULL, DMS_PAGE_SIZE_DFT, 
+                                                   TRUE, FALSE ) ;
+            PD_RC_CHECK ( rc, PDERROR,
+                          "Failed to create %s collection space, rc = %d",
+                          OM_CS_AUTH, rc ) ;
+         }
+         else
+         {
+            PD_RC_CHECK ( rc, PDERROR,
+                          "Failed to test collection space %s, rc = %d",
+                          OM_CS_AUTH, rc ) ;
+         }
+      }
+
+      // SYSOMAUTH.SYSUSER
+      rc = _createCollection ( OM_CS_AUTH_CL_USER, cb ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
+                    OM_CS_AUTH_CL_USER, rc ) ;
+
+      rc = _createCollectionIndex ( OM_CS_AUTH_CL_USER,
+                                    OM_CS_AUTH_CL_USERIDX1, cb ) ;
+      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
+                    OM_CS_AUTH_CL_USERIDX1, rc ) ;
+
+      bsonBuilder.append( OM_USER_FIELD_NAME, OM_DEFAULT_LOGIN_USER ) ;
+      defaultUserObjs = bsonBuilder.obj() ;
+      rc = rtnQuery(OM_CS_AUTH_CL_USER, selector, defaultUserObjs, order, hint, 
+               0, cb, 0, -1, _pDmsCB, _pRtnCB, contextID ) ;
+      PD_RC_CHECK ( rc, PDERROR, 
+                    "Failed to check user:table = %s, user=%s, rc = %d",
+                    OM_CS_AUTH_CL_USER, OM_DEFAULT_LOGIN_USER, rc ) ;
+
+      rc = rtnGetMore(contextID, -1, buffObj, startingPos, cb, _pRtnCB ) ;
+      if ( SDB_DMS_EOC == rc || (SDB_OK == rc && 0 == buffObj.recordNum() ) )
+      {
+         BSONObjBuilder bsonBuilder2 ;
+         bsonBuilder2.append( OM_USER_FIELD_NAME, OM_DEFAULT_LOGIN_USER ) ;
+         bsonBuilder2.append( OM_USER_FIELD_PASSWD, OM_DEFAULT_LOGIN_PASSWD ) ;
+         defaultUserObjs = bsonBuilder2.obj() ;
+         rc = rtnInsert(OM_CS_AUTH_CL_USER, defaultUserObjs, 1, 0, cb ) ;
+      }
+      
    done:
+      if ( contextID != -1 )
+      {
+         rtnKillContexts( 1, &contextID, cb, _pRtnCB ) ;
+      }
       return rc ;
    error:
       goto done ;

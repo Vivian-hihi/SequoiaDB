@@ -35,52 +35,100 @@
 
 #include "restAdaptor.hpp"
 #include "pmdRestSession.hpp"
+#include "rtnCB.hpp"
+#include "pmd.hpp"
+#include "dmsCB.hpp"
 #include <map>
 #include <string>
 
 namespace engine
 {
-    class omGetFileCommand
-    {
-        public:
-            omGetFileCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession, 
-                              const CHAR *pRootPath, const CHAR *pSubPath ) ;
-            virtual ~omGetFileCommand() ;
+   class omCommandInterface
+   {
+      public:
+         omCommandInterface() ;
+         virtual ~omCommandInterface() ;
 
-        public:
-            virtual INT32   init() ;
-            virtual INT32   doCommand() ;
-            virtual INT32   undoCommand() ;
+      public:
+         virtual INT32     init( pmdEDUCB * cb ) ;
+         virtual INT32     doCommand() = 0 ;
+         virtual INT32     undoCommand() ;
+         virtual bool      isFetchAgentResponse( UINT64 requestID ) ;
+         virtual INT32     doAgentResponse ( MsgHeader* pAgentResponse ) ;
 
-        private:
-            INT32           _getFileContent( string filePath, CHAR **pFileContent, 
+      protected:
+         SDB_RTNCB         *_pRTNCB ;
+         SDB_DMSCB         *_pDMDCB ;
+         pmdKRCB           *_pKRCB ;
+         SDB_DMSCB         *_pDMSCB ;
+         
+         pmdEDUCB          *_cb ;
+   };
+
+   class omAuthCommand : public omCommandInterface
+   {
+      public:
+         omAuthCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession, 
+                       const CHAR *pRootPath) ;
+
+         ~omAuthCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32 _verifyUser( const CHAR *pUserName, const CHAR *pPasswd, const CHAR *pTimestamp ) ;
+         
+      private:
+         restAdaptor*    _restAdaptor ;
+         pmdRestSession* _restSession ;
+         string          _rootPath ;
+   };
+   
+   class omGetFileCommand : public omCommandInterface
+   {
+      public:
+         omGetFileCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession, 
+                       const CHAR *pRootPath, const CHAR *pSubPath ) ;
+         virtual ~omGetFileCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+         virtual INT32   undoCommand() ;
+
+      private:
+         INT32           _getFileContent( string filePath, CHAR **pFileContent, 
                                             INT32 &fileContentLen ) ;
 
-        private:
-            restAdaptor*    _restAdaptor ;
-            pmdRestSession* _restSession ;
-            string          _rootPath ;
-            string          _subPath ;
+      private:
+         restAdaptor*    _restAdaptor ;
+         pmdRestSession* _restSession ;
+         string          _rootPath ;
+         string          _subPath ;
 
-    };
+   };
 
-    class restSubPathTransfer
-    {
-        public:
-            static restSubPathTransfer* getTransferInstance() ;
+   class restFileController
+   {
+      public:
+         static restFileController* getTransferInstance() ;
 
-            INT32 getTransferedString( const char *src, string &transfered ) ;
+         INT32 getTransferedPath( const char *src_file, string &transfered ) ;
 
-        private:
-            restSubPathTransfer() ;
-            restSubPathTransfer(const restSubPathTransfer &) ;
-            restSubPathTransfer& operator = ( const restSubPathTransfer & ) ;
+         bool isFileAuthorPublic( const char *file ) ;
 
-        private:
-            typedef map < string, string >::iterator mapIteratorType ; 
-            typedef map < string, string >::value_type mapValueType ;
-            map < string, string > _transfer ;
-    };
+      private:
+         restFileController() ;
+         restFileController(const restFileController &) ;
+         restFileController& operator = ( const restFileController & ) ;
+
+      private:
+         typedef map < string, string >::iterator mapIteratorType ; 
+         typedef map < string, string >::value_type mapValueType ;
+         map < string, string > _transfer ;
+
+         map < string, string > _publicAccessFiles ;
+   };
 }
 
 #endif /* OM_GETFILECOMMAND_HPP_ */

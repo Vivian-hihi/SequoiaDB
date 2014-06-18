@@ -138,28 +138,26 @@ namespace engine
 
          void              restoreSession( restSessionInfo *pSessionInfo ) ;
          void              saveSession( restSessionInfo &sessionInfo ) ;
+         bool              isAuthOK() ;
 
       protected:
-         virtual void            _onAttach () ;
-         virtual void            _onDetach () ;
+         virtual void      _onAttach () ;
+         virtual void      _onDetach () ;
 
       protected:
-         virtual INT32  _onAuth( MsgHeader *msg ) ;
+         virtual INT32     _onAuth( MsgHeader *msg ) ;
 
-         INT32          _processRestMsg( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
-
-         INT32          _getFileContent( string filePath, CHAR **pFileContent, 
-                                         INT32 &fileContentLen );
+         INT32             _processRestMsg( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
 
       protected:
 
       protected:
-         httpConnection                _restConn ;
-         CHAR*                         _pFixBuff ;
+         httpConnection    _restConn ;
+         CHAR*             _pFixBuff ;
 
-         restSessionInfo*              _pSessionInfo ;
+         restSessionInfo*  _pSessionInfo ;
 
-         string                        _wwwRootPath ;
+         string            _wwwRootPath ;
 
    } ;
    typedef _pmdRestSession pmdRestSession ;

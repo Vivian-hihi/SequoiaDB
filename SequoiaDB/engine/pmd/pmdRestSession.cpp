@@ -44,6 +44,8 @@ using namespace bson ;
 namespace engine
 {
 
+   #define REST_COMMAND_KEY     "cmd"
+
    /*
       _pmdRestSession implement
    */
@@ -206,54 +208,9 @@ namespace engine
       goto done ;
    }
 
-   INT32 _pmdRestSession::_getFileContent( string filePath, CHAR **pFileContent, 
-                                           INT32 &fileContentLen )
-   {
-      OSSFILE file ;
-      INT32 rc               = SDB_OK ;
-      INT64 fileSize         = 0 ;
-      SINT64 realFileSize    = 0 ;
-      INT32 buffSize         = 0 ;
-      bool isFileOpened      = false ;
-      
-      rc = ossOpen(filePath.c_str(), OSS_READONLY, OSS_RWXU, file ) ;
-      PD_RC_CHECK ( rc, PDERROR, 
-                    "Failed to open file:file=%s, rc = %d", 
-                    filePath.c_str(), rc ) ;
-
-      isFileOpened = true ;
-      rc = ossGetFileSize( &file, &fileSize ) ;
-      PD_RC_CHECK ( rc, PDERROR, 
-                    "Failed to get file size:file=%s, rc = %d", 
-                    filePath.c_str(), rc ) ;
-
-      rc = allocBuff( fileSize, pFileContent, buffSize ) ;
-      PD_RC_CHECK ( rc, PDERROR, 
-                    "Failed to alloc buff:buff_size=%I64d, rc = %d", 
-                    fileSize, rc ) ;
-      
-      rc = ossRead( &file, *pFileContent, fileSize, &realFileSize ) ;
-      PD_RC_CHECK ( rc, PDERROR, 
-                    "Failed to read file content:file=%s, rc = %d", 
-                    filePath.c_str(), rc ) ;
-
-      fileContentLen = realFileSize ;
-
-   done:
-      if ( isFileOpened )
-      {
-         ossClose( file ) ;
-      }
-      
-      return rc ;
-   error:
-      goto done ;
-   }
-
    INT32 _pmdRestSession::_processRestMsg( HTTP_PARSE_COMMON command, 
                                            const CHAR *pFilePath )
    {
-      INT32 rc             = SDB_OK;
       restAdaptor *pAdptor = NULL ;
 
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
@@ -261,10 +218,12 @@ namespace engine
       {
          case COM_GETFILE :
          {
+            PD_LOG( PDEVENT, "getfile command:file=%s", pFilePath ) ;
             omGetFileCommand *pGetFileCommand = NULL ;
             pGetFileCommand = new omGetFileCommand(pAdptor, this, 
                                                    _wwwRootPath.c_str(), 
                                                    pFilePath) ;
+            pGetFileCommand->init( _pEDUCB ) ;
             pGetFileCommand->doCommand() ;
             delete pGetFileCommand ;
             break ;
@@ -272,21 +231,34 @@ namespace engine
 
          case COM_CMD :
          {
+            const CHAR *pSubCommand = NULL ;
+            pAdptor->getQuery( this, REST_COMMAND_KEY, &pSubCommand ) ;
+            if ( NULL == pSubCommand )
+            {
+               // TODO: response
+            }
+            PD_LOG( PDEVENT, "CMD command:command=%s", pSubCommand ) ;
+            if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
+            {
+               omAuthCommand *pAuthCommand = NULL ; 
+               pAuthCommand = new omAuthCommand (pAdptor, this, 
+                                                 _wwwRootPath.c_str() ) ;
+               pAuthCommand->init( _pEDUCB ) ;
+               pAuthCommand->doCommand() ;
+               delete pAuthCommand ;
+            }
             
             break ;
          }
 
          default :
          {
-            
+
             break ;
          }
       }
 
-   done:
-      return rc ;
-   error:
-      goto done ;
+      return SDB_OK ;
    }
 
    void _pmdRestSession::_onAttach()
@@ -323,6 +295,19 @@ namespace engine
 
    void _pmdRestSession::saveSession( restSessionInfo &sessionInfo )
    {
+   }
+
+   bool _pmdRestSession::isAuthOK()
+   {
+      if ( NULL != _pSessionInfo )
+      {
+         if ( _pSessionInfo->_authOK != 0 )
+         {
+            return true ;
+         }
+      }
+
+      return false ;
    }
 
 }

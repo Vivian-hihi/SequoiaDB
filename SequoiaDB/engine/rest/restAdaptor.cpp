@@ -1240,7 +1240,7 @@ namespace engine
       goto done ;
    }
 
-   HTTP_FILE_TYPE getFileType( pmdRestSession *pSession )
+   HTTP_FILE_TYPE restAdaptor::getFileType( pmdRestSession *pSession )
    {
       SDB_ASSERT ( pSession, "pSession is NULL" )
       httpConnection *pHttpCon = pSession->getRestConn() ;

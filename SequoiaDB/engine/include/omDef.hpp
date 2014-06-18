@@ -59,6 +59,23 @@ namespace engine
    #define HTML_FILE_LOGIN                   "login.html"
    #define HTML_FILE_INDEX                   "index.html"
 
+
+   // OM user's table
+   #define OM_CS_AUTH                        "SYSOMAUTH"
+
+   // auth.user
+   #define OM_CS_AUTH_CL_USER                OM_CS_AUTH".SYSUSER"
+
+   #define OM_USER_FIELD_NAME                "User"
+   #define OM_USER_FIELD_PASSWD              "Passwd"
+   #define OM_USER_FIELD_TIMESTAMP           "Timestamp"
+
+   #define OM_CS_AUTH_CL_USERIDX1            "{name:\"OM_CS_AUTH_CL_USERIDX1\",key: {"\
+                                             OM_USER_FIELD_NAME":1}, unique: true, enforced: true } "
+
+   #define  OM_DEFAULT_LOGIN_USER            "admin"
+   #define  OM_DEFAULT_LOGIN_PASSWD          "admin"
+
    /*
       OM Field Define
    */
@@ -118,7 +135,31 @@ namespace engine
    #define OM_CONFIGURE_FIELD_SERVICENAME    "ServiceName"
    #define OM_CONFIGURE_FIELD_BUSINESSNAME   "BusinessName"
    #define OM_CONFIGURE_FIELD_CONFIG         "Config"
+
+   // om command list
+   #define  OM_CREATE_CLUSTER_REQ            "create_cluster_req"
+   #define  OM_LOGIN_REQ                     "login_req"
    
+   // OM_LOGIN_REQ field define
+   #define  OM_LOGIN_USERNAME                "user"
+   #define  OM_LOGIN_PASSWD                  "passwd"
+
+   // OM_REST_DEFINE
+   #define  OM_REST_LOGIN_HTML               "login.html"
+   #define  OM_REST_INDEX_HTML               "index.html"
+   #define  OM_REST_FAVICON_ICO              "favicon.ico"
+   
+   #define  OM_REST_REDIRECT_LOGIN           "<!DOCTYPE html><html><head>"\
+                                             "<meta http-equiv=\"refresh\" content=\"0;url="\
+                                             OM_REST_LOGIN_HTML"\"></head></html>"
+
+   #define  OM_REST_REDIRECT_INDEX           "<!DOCTYPE html><html><head>"\
+                                             "<meta http-equiv=\"refresh\" content=\"0;url="\
+                                             OM_REST_INDEX_HTML"\"></head></html>"
+   
+   #define  OM_REST_RES_RETCODE              "rc"
+   #define  OM_REST_RES_DETAIL               "detail"
+   #define  OM_REST_RES_LOCAL                "local"
 }
 
 #endif // OM_DEF_HPP__

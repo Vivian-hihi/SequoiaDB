@@ -41,6 +41,7 @@
 #include "pmdEDU.hpp"
 #include "pmd.hpp"
 #include "dmsCB.hpp"
+#include "rtnCB.hpp"
 #include "netRouteAgent.hpp"
 
 #include <vector>
@@ -127,7 +128,8 @@ namespace engine
          INT32                                  _restTimeout ;
 
          pmdKRCB*                               _pKrcb ;
-         _SDB_DMSCB*                            _pDmsCB ;
+         SDB_DMSCB*                             _pDmsCB ;
+         SDB_RTNCB*                             _pRtnCB ;
 
          string                                 _wwwRootPath ;
 
