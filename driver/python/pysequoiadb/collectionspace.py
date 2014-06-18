@@ -15,7 +15,7 @@
 """Module of collectionspace for python driver for SequoiaDB
 """
 
-import sdbcollectionspace
+import sdbcs
 import bson
 from pysequoiadb import ( static_object,
                           default_host,
@@ -43,25 +43,25 @@ class collectionspace(object):
         self._cs = None
 
     def __getitem__(self, item_name):
-        collection = collection()
-        rc = sdbcs.get_collection(self._cs, item_name, collection._cl)
+        cl = collection()
+        rc = sdbcs.get_collection(self._cs, item_name, cl._cl)
         if rc:
             pass
-        return collection
+        return cl
 
     def get_collection(self, cl_name):
-        collection = collection()
-        rc = sdbcs.get_collection(self._cs, cl_name, collection._cl)
+        cl = collection()
+        rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
         if rc:
             pass
-        return collection
+        return cl
 
     def create_collection(self, cl_name, options = static_object):
-        collection = collection()
-        rc = sdbcs.get_collection(self._cs, cl_name, options, collection._cl)
+        cl = collection()
+        rc = sdbcs.get_collection(self._cs, cl_name, options, cl._cl)
         if rc:
             pass
-        return collection
+        return cl
 
     def drop_collection(self, cl_name):
         rc = sdbcs.drop_collection(self._cs, cl_name)

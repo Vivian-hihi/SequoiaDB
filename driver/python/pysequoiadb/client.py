@@ -54,12 +54,12 @@ class client(object):
         self._client = None
 
     def __getitem__(self, item_name):
-        collection_space = collection_space()
+        cs = collection_space()
         rc = sdbclient.get_collection_space(self._client, item_name,
-                                                          collection_space._cs)
+                                                          cs._cs)
         if rc:
             pass
-        return collection_space
+        return cs
 
     def connect(self, host = default_host, port = default_port,
                       user = default_user, psw  = default_psw):
@@ -126,20 +126,20 @@ class client(object):
         return result
 
     def get_collection_space(self, cs_name):
-        collection_space = collection_space()
+        cs = collection_space()
         rc = sdbclient.get_collection_space(self._client, cs_name, 
-                                            collection_space._cs)
+                                            cs._cs)
         if rc:
             pass
-        return collection_space
+        return cs
 
     def create_collection_space(self, cs_name, page_size):
-        collection_space = collection_space()
+        cs = collection_space()
         rc = sdbclient.create_collection_space(self._client, cs_name, page_size,
-                                               collection_space._cs)
+                                               cs._cs)
         if rc:
             pass
-        return collection_space
+        return cs
 
     def drop_collection_space(self, cs_name):
         rc = sdbclient.drop_collection_space(self._client, cs_name)

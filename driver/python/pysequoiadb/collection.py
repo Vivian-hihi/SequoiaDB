@@ -15,7 +15,7 @@
 """Module of collection for python driver for SequoiaDB
 """
 
-import sdbcollection
+import sdbcl
 import bson
 from pysequoiadb import ( static_object,
                           default_host,
