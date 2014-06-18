@@ -979,6 +979,16 @@ namespace engine
             }
          }
       }
+      else
+      {
+         ossSnprintf( httpBodySize, 255, "0" ) ;
+         rc = appendHttpHeader( pSession, REST_STRING_CONLEN, httpBodySize ) ;
+         if ( rc )
+         {
+            PD_LOG ( PDERROR, "Failed to call append http header, rc=%d", rc ) ;
+            goto error ;
+         }
+      }
       //HTTP/1.1[space]
       rc = pSession->sendData( REST_FUN_STRING( REST_STRING_HTTP ),
                                _timeout ) ;
@@ -1039,16 +1049,16 @@ namespace engine
             goto error ;
          }
       }
+      //CRLF
+      rc = pSession->sendData( REST_FUN_STRING( CRLF ),
+                               _timeout ) ;
+      if ( rc )
+      {
+         PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
+         goto error ;
+      }
       if( HTTP_OK == rspCode )
       {
-         //CRLF
-         rc = pSession->sendData( REST_FUN_STRING( CRLF ),
-                                  _timeout ) ;
-         if ( rc )
-         {
-            PD_LOG ( PDERROR, "Failed to send data, rc=%d", rc ) ;
-            goto error ;
-         }
          for( it2 = pHttpCon->_responseBody.begin();
                it2 != pHttpCon->_responseBody.end(); ++it2 )
          {
