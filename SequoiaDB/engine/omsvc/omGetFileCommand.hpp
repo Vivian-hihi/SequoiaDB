@@ -33,6 +33,7 @@
 #ifndef OM_GETFILECOMMAND_HPP_
 #define OM_GETFILECOMMAND_HPP_
 
+#include "omCommandInterface.hpp"
 #include "restAdaptor.hpp"
 #include "pmdRestSession.hpp"
 #include "rtnCB.hpp"
@@ -43,28 +44,6 @@
 
 namespace engine
 {
-   class omCommandInterface
-   {
-      public:
-         omCommandInterface() ;
-         virtual ~omCommandInterface() ;
-
-      public:
-         virtual INT32     init( pmdEDUCB * cb ) ;
-         virtual INT32     doCommand() = 0 ;
-         virtual INT32     undoCommand() ;
-         virtual bool      isFetchAgentResponse( UINT64 requestID ) ;
-         virtual INT32     doAgentResponse ( MsgHeader* pAgentResponse ) ;
-
-      protected:
-         SDB_RTNCB         *_pRTNCB ;
-         SDB_DMSCB         *_pDMDCB ;
-         pmdKRCB           *_pKRCB ;
-         SDB_DMSCB         *_pDMSCB ;
-         
-         pmdEDUCB          *_cb ;
-   };
-
    class omAuthCommand : public omCommandInterface
    {
       public:
@@ -83,6 +62,21 @@ namespace engine
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
          string          _rootPath ;
+   };
+
+   class omCheckSessionCommand : public omCommandInterface
+   {
+      public:
+         omCheckSessionCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+         ~omCheckSessionCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+         
+      private:
+         restAdaptor*    _restAdaptor ;
+         pmdRestSession* _restSession ;
    };
    
    class omGetFileCommand : public omCommandInterface

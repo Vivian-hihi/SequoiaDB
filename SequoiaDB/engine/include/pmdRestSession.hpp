@@ -37,6 +37,7 @@
 #include "restDefine.hpp"
 #include "ossRWMutex.hpp"
 #include "ossAtomic.hpp"
+#include "../omsvc/omCommandInterface.hpp"
 
 #include <string>
 
@@ -149,7 +150,8 @@ namespace engine
 
          INT32             _processRestMsg( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
 
-      protected:
+      private:
+         omCommandInterface *_createCommand( HTTP_PARSE_COMMON command, const CHAR *pFilePath ) ;
 
       protected:
          httpConnection    _restConn ;

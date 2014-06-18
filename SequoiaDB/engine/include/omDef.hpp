@@ -139,6 +139,7 @@ namespace engine
    // om command list
    #define  OM_CREATE_CLUSTER_REQ            "create_cluster_req"
    #define  OM_LOGIN_REQ                     "login_req"
+   #define  OM_CHECK_SESSION_REQ             "check_session_req"
    
    // OM_LOGIN_REQ field define
    #define  OM_LOGIN_USERNAME                "user"

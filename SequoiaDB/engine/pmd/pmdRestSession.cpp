@@ -211,54 +211,89 @@ namespace engine
    INT32 _pmdRestSession::_processRestMsg( HTTP_PARSE_COMMON command, 
                                            const CHAR *pFilePath )
    {
-      restAdaptor *pAdptor = NULL ;
+      restAdaptor *pAdptor           = NULL ;
+      omCommandInterface *pOmCommand = NULL ;
+      pAdptor = sdbGetOMManager()->getRestAdptor() ;
+
+      pOmCommand = _createCommand( command, pFilePath ) ;
+      if ( NULL == pOmCommand )
+      {
+         goto error ;
+      }
+      
+      pOmCommand->init( _pEDUCB ) ;
+      pOmCommand->doCommand() ;
+
+   done:
+      if ( NULL != pOmCommand )
+      {
+         delete pOmCommand ;
+      }
+      return SDB_OK ;
+
+   error:
+      goto done ;
+   }
+
+   omCommandInterface *_pmdRestSession::_createCommand( 
+                                HTTP_PARSE_COMMON command, 
+                                const CHAR *pFilePath )
+   {
+      omCommandInterface *commandIf = NULL ;
+      restAdaptor *pAdptor          = NULL ;
 
       pAdptor = sdbGetOMManager()->getRestAdptor() ;
-      switch(command)
+
+      if ( COM_GETFILE == command )
       {
-         case COM_GETFILE :
+         PD_LOG( PDEVENT, "getfile command:file=%s", pFilePath ) ;
+         commandIf = new omGetFileCommand(pAdptor, this, 
+                                          _wwwRootPath.c_str(), pFilePath) ;
+      }
+      else 
+      {
+         const CHAR *pSubCommand = NULL ;
+         pAdptor->getQuery( this, REST_COMMAND_KEY, &pSubCommand ) ;
+         if ( NULL == pSubCommand )
          {
-            PD_LOG( PDEVENT, "getfile command:file=%s", pFilePath ) ;
-            omGetFileCommand *pGetFileCommand = NULL ;
-            pGetFileCommand = new omGetFileCommand(pAdptor, this, 
-                                                   _wwwRootPath.c_str(), 
-                                                   pFilePath) ;
-            pGetFileCommand->init( _pEDUCB ) ;
-            pGetFileCommand->doCommand() ;
-            delete pGetFileCommand ;
-            break ;
+            BSONObjBuilder builder ;
+            builder.append( OM_REST_RES_RETCODE, SDB_INVALIDARG) ;
+            builder.append( OM_REST_RES_DETAIL, "command is null" ) ;
+            pAdptor->setOPResult( this, SDB_INVALIDARG, builder.obj() ) ;
+            pAdptor->sendResponse( this, HTTP_OK ) ;
+            goto error ;
          }
 
-         case COM_CMD :
+         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) != 0
+              && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
+              && !isAuthOK() )
          {
-            const CHAR *pSubCommand = NULL ;
-            pAdptor->getQuery( this, REST_COMMAND_KEY, &pSubCommand ) ;
-            if ( NULL == pSubCommand )
-            {
-               // TODO: response
-            }
-            PD_LOG( PDEVENT, "CMD command:command=%s", pSubCommand ) ;
-            if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
-            {
-               omAuthCommand *pAuthCommand = NULL ; 
-               pAuthCommand = new omAuthCommand (pAdptor, this, 
-                                                 _wwwRootPath.c_str() ) ;
-               pAuthCommand->init( _pEDUCB ) ;
-               pAuthCommand->doCommand() ;
-               delete pAuthCommand ;
-            }
-            
-            break ;
+            BSONObjBuilder builder ;
+            builder.append( OM_REST_RES_RETCODE, 
+                            SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
+            builder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
+            pAdptor->setOPResult( this, SDB_AUTH_AUTHORITY_FORBIDDEN, 
+                                  builder.obj() ) ;
+            pAdptor->sendResponse( this, HTTP_OK ) ;
+            goto error ;
          }
 
-         default :
+         PD_LOG( PDEVENT, "CMD command:command=%s", pSubCommand ) ;
+         if ( ossStrcmp( pSubCommand, OM_LOGIN_REQ ) == 0 )
          {
-
-            break ;
+            commandIf = new omAuthCommand (pAdptor, this, 
+                                           _wwwRootPath.c_str() ) ;
+         }
+         else if ( ossStrcmp ( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
+         {
+            commandIf = new omCheckSessionCommand (pAdptor, this ) ;
          }
       }
-
-      return SDB_OK ;
+       
+   done:
+      return commandIf ;
+   error:
+      goto done ;
    }
 
    void _pmdRestSession::_onAttach()

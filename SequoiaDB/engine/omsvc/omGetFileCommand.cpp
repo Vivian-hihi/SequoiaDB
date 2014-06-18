@@ -40,41 +40,6 @@ using namespace bson;
 
 namespace engine
 {
-   omCommandInterface::omCommandInterface()
-   {
-      _pKRCB  = pmdGetKRCB() ;
-      _pDMDCB = _pKRCB->getDMSCB() ;
-      _pRTNCB = _pKRCB->getRTNCB() ;
-      _pDMSCB = _pKRCB->getDMSCB() ;
-      _cb     = NULL ;
-   }
-
-   omCommandInterface::~omCommandInterface()
-   {
-   }
-
-   INT32 omCommandInterface::init( pmdEDUCB * cb )
-   {
-      _cb = cb ;
-
-      return SDB_OK ;
-   }
-
-   INT32 omCommandInterface::undoCommand()
-   {
-      return SDB_OK ;
-   }
-   
-   bool omCommandInterface::isFetchAgentResponse( UINT64 requestID )
-   {
-      return false ;
-   }
-   
-   INT32 omCommandInterface::doAgentResponse ( MsgHeader* pAgentResponse )
-   {
-      return SDB_OK ;
-   }
-
    omAuthCommand::omAuthCommand( restAdaptor *pRestAdaptor, 
                                  pmdRestSession *pRestSession, 
                                  const CHAR *pRootPath )
@@ -206,19 +171,11 @@ namespace engine
       
       sessionInfo = sdbGetOMManager()->newSessionInfo(pUserName, 
                                                       socket->getLocalIP() ) ;
-      if ( NULL == socket )
+      if ( NULL == sessionInfo )
       {
          PD_LOG( PDERROR, "new session failed:user=%s, ip=%u", pUserName,
                  socket->getLocalIP() ) ;
          rc = SDB_SYS ;
-      }
-
-      if ( rc != SDB_OK )
-      {
-         bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-         bsonBuilder.append( OM_REST_RES_DETAIL, "system error" ) ;
-         bsonRes = bsonBuilder.obj() ;
-         goto error ;
       }
 
       // login in success here;
@@ -230,8 +187,9 @@ namespace engine
 //                             "passwd is never changed" ) ;
 //      }
 
+      sessionInfo->_authOK = TRUE ;
       bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-      bsonBuilder.append( OM_REST_RES_LOCAL, OM_REST_REDIRECT_INDEX ) ;
+      bsonBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_INDEX_HTML ) ;
       bsonRes = bsonBuilder.obj() ;
       _restAdaptor->appendHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
                                       sessionInfo->_id.c_str() ) ;
@@ -244,6 +202,42 @@ namespace engine
 
    error:
       goto done ;
+   }
+
+   omCheckSessionCommand::omCheckSessionCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession )
+   {
+      _restAdaptor = pRestAdaptor ;
+      _restSession = pRestSession ;
+   }
+
+   omCheckSessionCommand::~omCheckSessionCommand()
+   {
+      
+   }
+
+   INT32 omCheckSessionCommand::doCommand()
+   {
+      BSONObjBuilder bsonBuilder ;
+      const CHAR* sessionID = NULL ;
+      _restAdaptor->getHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
+                                   &sessionID ) ;
+      if ( NULL != sessionID && _restSession->isAuthOK() )
+      {
+         bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
+      else
+      {
+         bsonBuilder.append( OM_REST_RES_RETCODE, 
+                             SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
+         bsonBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_LOGIN_HTML ) ;
+         _restAdaptor->setOPResult( _restSession, SDB_AUTH_AUTHORITY_FORBIDDEN, 
+                                    bsonBuilder.obj() ) ;
+         _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      }
+
+      return SDB_OK ;
    }
 
 
@@ -272,31 +266,13 @@ namespace engine
 
       transfer = restFileController::getTransferInstance() ;
       transfer->getTransferedPath(_subPath.c_str(), realSubPath) ;
-      if ( !_restSession->isAuthOK() )
-      {
-         HTTP_FILE_TYPE file_type = _restAdaptor->getFileType( _restSession ) ;
-         if ( HTTP_FILE_HTML == file_type || HTTP_FILE_DEFAULT == file_type )
-         {
-            if ( !transfer->isFileAuthorPublic( realSubPath.c_str() ) )
-            {
-               PD_LOG( PDERROR, "file can not access without login:file=%s", 
-                       realSubPath.c_str() ) ;
-               _restAdaptor->appendHttpBody( _restSession, 
-                                             OM_REST_REDIRECT_LOGIN, 
-                                             ossStrlen(OM_REST_REDIRECT_LOGIN) 
-                                           ) ;
-               _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-
-               goto error ;
-            }
-         }
-      }
       
       rc = _getFileContent( _rootPath + realSubPath, &pContent, 
                             contentLength ) ;
       if ( SDB_OK != rc )
       {
-         if ( HTTP_FILE_HTML == _restAdaptor->getFileType( _restSession ) )
+         HTTP_FILE_TYPE file_type = _restAdaptor->getFileType( _restSession ) ;
+         if ( HTTP_FILE_HTML == file_type || HTTP_FILE_DEFAULT == file_type )
          {
             _restAdaptor->appendHttpBody( _restSession, 
                                           OM_REST_REDIRECT_LOGIN, 
