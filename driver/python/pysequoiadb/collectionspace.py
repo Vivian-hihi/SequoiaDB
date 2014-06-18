@@ -17,7 +17,12 @@
 
 import sdbcollectionspace
 import bson
-import pysequoiadb
+from pysequoiadb import ( static_object,
+                          default_host,
+                          default_port,
+                          default_user,
+                          default_psw,
+                          driver_version )
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import error
