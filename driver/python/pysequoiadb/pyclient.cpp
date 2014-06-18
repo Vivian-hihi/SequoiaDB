@@ -30,7 +30,7 @@ static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
       return NULL ;
    }
 
-   return MAKE_RETURN_OBJECT( client ) ;
+   return MAKE_PYOBJECT( client ) ;
 }
 
 static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
@@ -49,7 +49,7 @@ static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   client->connect( host, port ) ;
+   rc = client->connect( host, port ) ;
 
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -238,6 +238,7 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
 
+   NEW_CPPOBJECT( cursor, sdbCursor ) ;
    rc = client->getSnapshot( *cursor, snap_type,
                              *condition, *selector, *order_by ) ;
    if ( rc )
@@ -249,7 +250,7 @@ done:
    DELETE_CPPOBJECT( condition ) ;
    DELETE_CPPOBJECT( selector ) ;
    DELETE_CPPOBJECT( order_by ) ;
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_OBJECT( rc, MAKE_PYOBJECT( cursor ) ) ;
 }
 
 static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
@@ -527,15 +528,16 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
-
+   group = new sdbR
    rc = client->createReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
       goto done ;
    }
+   delte
 
 done:
-   return MAKE_RETURN_INT( rc ) ;
+   return MAKE_RETURN_INT_OBJECT( rc,   ) ;
 }
 
 static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
@@ -596,33 +598,33 @@ done:
    return MAKE_RETURN_INT( rc ) ;
 }
 
-static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
-{
-   INT32 rc                 = 0 ;
-   PYOBJECT *obj            = NULL ;
-   PYOBJECT *group_obj      = NULL ;
-   sdb *client              = NULL ;
-   sdbReplicaGroup *group   = NULL ;
-   const char *group_name   = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
-   {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
-   }
-
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
-   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
-
-   rc = client->activateReplicaGroup( group_name, *group ) ;
-   if ( rc )
-   {
-      goto done ;
-   }
-
-done:
-   return MAKE_RETURN_INT( rc ) ;
-}
+// static PYOBJECT *active_replica_group( PYOBJECT *self, PYOBJECT *args )
+// {
+//    INT32 rc                 = 0 ;
+//    PYOBJECT *obj            = NULL ;
+//    PYOBJECT *group_obj      = NULL ;
+//    sdb *client              = NULL ;
+//    sdbReplicaGroup *group   = NULL ;
+//    const char *group_name   = NULL ;
+// 
+//    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
+//    {
+//       rc = SDB_INVALIDARGS ;
+//       goto done ;
+//    }
+// 
+//    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+//    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
+// 
+//    rc = client->activateReplicaGroup( group_name, *group ) ;
+//    if ( rc )
+//    {
+//       goto done ;
+//    }
+// 
+// done:
+//    return MAKE_RETURN_INT( rc ) ;
+// }
 
 static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
 {
@@ -1070,7 +1072,7 @@ static PyMethodDef client_methods[] = {
    {"create_replica_group",      create_replica_group,         METH_VARARGS},
    {"remove_replica_group",      remove_replica_group,         METH_VARARGS},
    {"create_replica_cata_group", create_replica_cata_group,    METH_VARARGS},
-   {"active_replica_group",      active_replica_group,         METH_VARARGS},
+   /*{"active_replica_group",      active_replica_group,         METH_VARARGS},*/
    {"exec_update",               exec_update,                  METH_VARARGS},
    {"exec_sql",                  exec_sql,                     METH_VARARGS},
    {"transaction_begin",         transaction_begin,            METH_VARARGS},

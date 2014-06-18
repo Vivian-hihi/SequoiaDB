@@ -25,11 +25,11 @@ class replicanode(object):
     """
 
     def __init__(self, client, node):
-        self.client = client
+        self._client = client
         self.node = node
 
     def connect(self):
-        rc = sdbreplicanode.connect(self.node, self.client)
+        rc = sdbreplicanode.connect(self.node, self._client)
         if const.SDB_OK != rc:
            raise error.OperationError("sdb error msg", rc)
         else:

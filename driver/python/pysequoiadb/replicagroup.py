@@ -29,7 +29,7 @@ class replicagroup(object):
     """
     def __init__(self, group, client):
         self.group = group
-        self.client = client
+        self._client = client
 
     def get_nodenum(self, nodestatus):
         if nodestatus not in common.NODE_STATUS.available_options() :
@@ -47,22 +47,22 @@ class replicagroup(object):
     def get_master(self):
         result = sdbreplicagroup.get_master(self.group)
         node = error.err_process(result)
-        return replicanode(self.client, node)
+        return replicanode(self._client, node)
 
     def get_slave(self):
         result = sdbreplicagroup.get_slave(self.group)
         node = error.err_process(result)
-        return replicanode(self.client, node)
+        return replicanode(self._client, node)
 
     def get_nodebyendpoint(self, hostname, servicename):
         result = sdbreplicagroup.get_nodebyendpoint(self.group, hostname, servicename)
         node = error.err_process(result)
-        return replicanode(self.client, node)
+        return replicanode(self._client, node)
 
     def get_nodebyname(self,nodename):
         result = sdbreplicagroup.get_nodebyname(self.group, nodename)
         node = error.err_process(result)
-        return replicanode(self.client, node)
+        return replicanode(self._client, node)
 
 
     def create_node(self, hostname, servicename, dbpath, config):

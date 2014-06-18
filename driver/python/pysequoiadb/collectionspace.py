@@ -32,38 +32,40 @@ class collectionspace(object):
     
     def __init__(self):
         """'cs' is short for collection space"""
-        self.cs = sdbcs.create_cs()
-        if self.cs is None:
+        self._cs = sdbcs.create_cs()
+        if self._cs is None:
             pass
 
     def __del__(self):
-        rc = sdbcs.release_cs(self.cs)
+        rc = sdbcs.release_cs(self._cs)
         if rc:
             pass
-        self.cs = None
+        self._cs = None
 
-    def __getitem__(self, item_name, collection):
-        rc = get_collection(item_name, collection)
-        if rc:
-            pass
+    def __getitem__(self, item_name):
+        return get_collection(item_name)
 
-    def get_collection(self, cl_name, collection):
-        rc = sdbcs.get_collection(self.cs, cl_name, collection)
+    def get_collection(self, cl_name):
+        collection = collection()
+        rc = sdbcs.get_collection(self._cs, cl_name, collection._cl)
         if rc:
             pass
+        return collection
 
-    def create_collection(self, cl_name, collection, options = static_object):
-        rc = sdbcs.get_collection(self.cs, cl_name, options, collection)
+    def create_collection(self, cl_name, options = static_object):
+        collection = collection()
+        rc = sdbcs.get_collection(self._cs, cl_name, options, collection._cl)
         if rc:
             pass
+        return collection
 
     def drop_collection(self, cl_name):
-        rc = sdbcs.drop_collection(self.cs, cl_name)
+        rc = sdbcs.drop_collection(self._cs, cl_name)
         if rc:
             pass
 
     def get_collection_space_name(self):
-        _, cs_name = sdbcs.get_collection_space_name(self.cs)
-        if rc is not 0:
+        _, cs_name = sdbcs.get_collection_space_name(self._cs)
+        if rc:
             pass
         return cs_name

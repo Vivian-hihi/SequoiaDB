@@ -30,19 +30,22 @@
 #define NEW_CPPOBJECT( pObject, CLSNAME ) \
    pObject = new (std::nothrow) CLSNAME ()
 
-#define NEW_CPPOBJECT_INIT( pObject, CLSNAME, pValue ) \
-   pObject = new (std::nothrow) CLSNAME ( pValue )
+#define NEW_CPPOBJECT_INIT( pObject, CLASSNAME, pValue ) \
+   pObject = new (std::nothrow) CLASSNAME ( pValue )
 
 #define DELETE_CPPOBJECT( pObject ) \
    if ( NULL != pObject )           \
    {                                \
       delete pObject ;              \
       pObject = NULL ;              \
-   }
+   } 
 
 /*
- *@brief     macro to cast INT32 to object of Python
+ *@brief      macro to cast C++ object to a python object 
  **/
+#define MAKE_PYOBJECT( cpp_object ) \
+   ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
+
 #define MAKE_RETURN_INT( ret_value ) \
    ( PyObject * )Py_BuildValue( "i", ret_value )
 
@@ -60,12 +63,6 @@
 
 #define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
    ( PyObject * )Py_BuildValue( ("i,s#"), ret_value, c_string, c_stringsize )
-
-/*
- *@brief      macro to cast C++ object to a python object 
- **/
-#define MAKE_RETURN_OBJECT( cpp_object ) \
-   ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
 
 /*
  *@brief     macro to re-cast python object to specified class

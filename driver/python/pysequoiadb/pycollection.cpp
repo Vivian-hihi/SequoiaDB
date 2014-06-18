@@ -30,7 +30,7 @@ static PYOBJECT *create_cl( PYOBJECT *self, PYOBJECT *args )
       return NULL ;
    }
 
-   return MAKE_RETURN_OBJECT( cl ) ;
+   return MAKE_PYOBJECT( cl ) ;
 }
 
 static PYOBJECT *release_cl( PYOBJECT *self, PYOBJECT *args )
