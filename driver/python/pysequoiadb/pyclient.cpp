@@ -528,7 +528,6 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
-   group = new sdbR
    rc = client->createReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
@@ -537,7 +536,7 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
    delte
 
 done:
-   return MAKE_RETURN_INT_OBJECT( rc,   ) ;
+   return MAKE_RETURN_INT( rc ) ;
 }
 
 static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
