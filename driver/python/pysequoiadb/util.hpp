@@ -40,6 +40,8 @@
       pObject = NULL ;              \
    } 
 
+#define MAKE_PY_NULL \
+   return Py_IncRef( Py_None ), Py_None ;
 /*
  *@brief      macro to cast C++ object to a python object 
  **/
@@ -64,9 +66,6 @@
 #define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
    ( PyObject * )Py_BuildValue( ("i,s#"), ret_value, c_string, c_stringsize )
 
-#define RETURN_PY_NULL     \
-   Py_IncRef( Py_None ) ;  \
-   return Py_None ;
 /*
  *@brief     macro to re-cast python object to specified class
  *@py_object [in] object need to cast
