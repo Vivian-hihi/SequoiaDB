@@ -17,6 +17,7 @@
 
 import sdbcollectionspace
 import bson
+import pysequoiadb
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import error
