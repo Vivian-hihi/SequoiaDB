@@ -24,9 +24,8 @@ if ( !empty ( $cursor ) )
 	while ( $arr = $cursor -> getNext() )
 	{
 	   $arr['TotalInsert'] = $arr['TotalInsert'] - $arr['ReplInsert'] ;
-	   $arr['TotalRead']   = $arr['TotalRead'] - $arr['ReplInsert'] ;
-	   $arr['TotalDelete'] = $arr['TotalDelete'] - $arr['ReplInsert'] ;
-	   $arr['TotalUpdate'] = $arr['TotalUpdate'] - $arr['ReplInsert'] ;
+	   $arr['TotalDelete'] = $arr['TotalDelete'] - $arr['ReplDelete'] ;
+	   $arr['TotalUpdate'] = $arr['TotalUpdate'] - $arr['ReplUpdate'] ;
 		echo json_encode( $arr ) ;
 	}
 }
