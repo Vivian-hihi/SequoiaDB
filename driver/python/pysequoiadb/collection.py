@@ -3,7 +3,7 @@ import bson
 from pysequoiadb import cursor
 from pysequoiadb import error
 
-class sdbcollection(object):
+class collection(object):
     """Collection for SequoiaDB"""
 
     def __init__(self):

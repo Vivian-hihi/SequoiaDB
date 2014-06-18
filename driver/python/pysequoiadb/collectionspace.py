@@ -5,7 +5,7 @@ from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import error
 
-class sdbcollectionspace(object):
+class collectionspace(object):
     """CollectionSpace for SequoiaDB"""
     
     def __init__(self):
