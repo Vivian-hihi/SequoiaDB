@@ -25,7 +25,7 @@ from pysequoiadb import ( static_object,
                           default_psw,
                           driver_version )
 from pysequoiadb import collectionspace
-from pysequoiadb import error
+from pysequoiadb.error import PySequoiaDBError
 
 class client(object):
     """SequoiaDB Client Driver
