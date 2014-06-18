@@ -50,7 +50,7 @@ class client(object):
         self.cclient = None
 
     def __getitem__(self, item_name):
-        collection_space = None
+        collection_space = collectionspace()
         rc = sdbclient.get_collection_space(self.cclient, item_name, collection_space)
         if rc:
             pass
