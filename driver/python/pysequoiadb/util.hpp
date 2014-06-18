@@ -95,7 +95,7 @@
  *@instance  [out] the pointer pointing to real object
  **/
 #define CAST_PYBSON_TO_CPPBSON( py_object, bson_object )       \
-   if ( NULL == py_object )                                    \
+   if ( Py_None == py_object )                                 \
    {                                                           \
       bson_object = &sdbclient::_sdbStaticObject ;             \
    }                                                           \

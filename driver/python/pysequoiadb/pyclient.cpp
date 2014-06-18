@@ -533,7 +533,6 @@ static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
    {
       goto done ;
    }
-   delte
 
 done:
    return MAKE_RETURN_INT( rc ) ;
