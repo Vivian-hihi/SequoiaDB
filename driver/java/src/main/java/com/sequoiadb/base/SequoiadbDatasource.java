@@ -16,12 +16,11 @@
 /**
  * @package com.sequoiadb.base;
  * @brief SequoiaDB DataSource
- * @author gaosj
+ * @author tanzhaobo
  */
 package com.sequoiadb.base;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Random;
@@ -40,7 +39,7 @@ public class SequoiadbDatasource
 	// the idle queue
 	private volatile LinkedList<Sequoiadb> idle_sequoiadbs = new LinkedList<Sequoiadb>();
 	// the busy queue
-	private volatile  HashSet<Sequoiadb> used_sequoiadbs = new HashSet<Sequoiadb>(); 
+	private volatile  LinkedList<Sequoiadb> used_sequoiadbs = new LinkedList<Sequoiadb>(); 
 	// the normal coord addresses
 	private volatile ArrayList<String> normal_urls = new ArrayList<String>();
 	// the abnormal coord addresses
@@ -55,7 +54,8 @@ public class SequoiadbDatasource
 	private Timer timer = new Timer(true);
 	// a timer for get back the useful coord address
 	private Timer timer2 = new Timer(true);
-	private final double MULTIPLE = 1.5;
+	private final double MULTIPLE = 1.2;
+	private final double MULTIPLE2 = 0.8;
 	private Random rand = new Random(47);
 	
 	/**
@@ -104,12 +104,12 @@ public class SequoiadbDatasource
 	 * @param password the password for logging sequoiadb
 	 * @param nwOpt the options for connection
 	 * @param dsOpt the options for datasource  
-	 * @note When offer several addresses for datasource to connect, if 
+	 * @note When offer several addresses for datasource to use, if 
 	 *       some of them are not available(invalid address, network error, coord shutdown,
 	 *       catalog replica group is not available), we will put these addresses
 	 *       into a queue, and check them periodically. If some of them is valid again,
-	 *       get them back for use. when a address is not available, the default timeout of
-	 *       connection is 100ms, and default retry time is 0, you can use nwOpt to change it.
+	 *       get them back for use. When datasource get a unavailable address to connect,
+	 *       the default timeout time is 100ms, and default retry time is 0, use nwOpt can change them.
 	 * @see ConfigOptions
 	 * @see SequoiadbOption
 	 * @exception com.sequoiadb.exception.BaseException
@@ -297,10 +297,11 @@ public class SequoiadbDatasource
     
 	/**
 	 * @fn Sequoiadb getConnection()
-	 * @brief  get the connection from this datasource
-	 * @return Sequoiadb
+	 * @brief  Get the connection from current datasource.
+	 * @return Sequoiadb the connection for use
+	 * @exception com.sequoiadb.Exception.BaseException
+	 *            when datasource run out, throws BaseException with the type of "SDB_DRIVER_DS_RUNOUT"
 	 * @exception InterruptedException
-	 * 			  BaseException  throws BaseException with the error type SDB_DRIVER_DS_RUNOUT when datasource had run out
 	 */
 	public synchronized Sequoiadb getConnection() throws BaseException, InterruptedException
 	{
@@ -314,12 +315,12 @@ public class SequoiadbDatasource
 			// get connection from idle queue if no connection, it return null
 			sdb = idle_sequoiadbs.poll();
 			// get a valid instance for return
-			while((sdb != null) && (!sdb.isValid()))
+			while((null != sdb) && (!sdb.isValid()))
 			{
 				sdb = idle_sequoiadbs.poll();
 			}
 			// if no valid instance in idle queue, let't create one for return
-			if (sdb == null)
+			if (null == sdb)
 				sdb = getConnDrt();
 			// add to busy queue
 			used_sequoiadbs.add(sdb);
@@ -345,9 +346,13 @@ public class SequoiadbDatasource
 	
 	/**
 	 * @fn void close(Sequoiadb sdb)
-	 * @brief  when you accomplish some actions,you should close the conncetion
-	 * @param sdb
+	 * @brief Put the connection back to the datasource.
+	 *        In the case of the connecton is not belong to current datasource or
+	 *        the connecton is outdate(by default, if a connection has not be used for 10 minutes),
+	 *        this API will disconnect directly.
+	 * @param sdb the connection get from current datasource, can't be null 
 	 * @exception com.sequoiadb.Exception.BaseException
+	 *        if param sdb is null, throws BaseException with the type "SDB_INVALIDARG"
 	 */
 	public synchronized void close(Sequoiadb sdb) throws BaseException
 	{
@@ -434,7 +439,7 @@ public class SequoiadbDatasource
 	synchronized void cleanAbandonConnection() throws BaseException
 	{
 		// when no need to clean
-		if (idle_sequoiadbs.size() == 0)
+		if ((0 == idle_sequoiadbs.size()) && (0 == used_sequoiadbs.size()))
 			return ;
 		// check option
 		if (dsOpt.getAbandonTime() <= 0)
@@ -444,15 +449,16 @@ public class SequoiadbDatasource
 		if (dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
 			throw new BaseException("SDB_INVALIDARG", "recheckCyclePeriod is not less than abandonTime, recheckCyclePeriod is " +
 					dsOpt.getRecheckCyclePeriod() + ", abandonTime is " + dsOpt.getAbandonTime());
+		
 		long lastTime = 0;
 		long currentTime = System.currentTimeMillis();
-		// remove the outdated connection in idle connection queue
+		// remove the timeout connection in idle connection queue
 		ListIterator<Sequoiadb> list1 = idle_sequoiadbs.listIterator(0);
 		while(list1.hasNext())
 		{
 			Sequoiadb db = list1.next();
 			lastTime = db.getConnection().getLastUseTime(); 
-			if ( currentTime - lastTime + MULTIPLE * dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
+			if (currentTime - lastTime + MULTIPLE * dsOpt.getRecheckCyclePeriod() >= dsOpt.getAbandonTime())
 			{
 				db.disconnect () ;
 				list1.remove();
@@ -465,6 +471,21 @@ public class SequoiadbDatasource
 			db.disconnect();
 			i--;
 		}
+		// remove the timeout connection in used connection queue when the datasource is going to be full
+		if (MULTIPLE2 * dsOpt.getMaxConnectionNum() <= used_sequoiadbs.size())
+		{
+			ListIterator<Sequoiadb> list2 = used_sequoiadbs.listIterator(0);
+			while(list2.hasNext())
+			{
+				Sequoiadb db2 = list2.next();
+				lastTime = db2.getConnection().getLastUseTime(); 
+				if (currentTime - lastTime >= dsOpt.getAbandonTime())
+				{
+					list2.remove();
+				}
+			}
+		}
+
 	}
 	
 	/**
