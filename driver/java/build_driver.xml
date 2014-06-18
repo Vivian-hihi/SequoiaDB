@@ -4,6 +4,8 @@
 <project name="build_java_driver" default="build_java_driver">
   <target name="clean_env" depends="">
     <delete dir="${base.dir}/build" failonerror="false" />
+    <delete dir="${base.dir}/temp" failonerror="false" />
+    <mkdir dir="${base.dir}/temp" />
     <mkdir dir="${base.dir}/build"  />
     <copy file="${base.dir}/src/main/resources/errors.properties" todir="${base.dir}/build" />
   </target>
@@ -60,39 +62,19 @@
     <tstamp>
 		  <format property="current.time" pattern="MM-dd-hh.mm.ss" />
 		</tstamp>
-		<echo file="${base.dir}/build/print_version.c" >
-		#include &lt;stdio.h&gt;
-    #include &quot;ossVer.h&quot;
-    int main()
-    {
-	   /*
-	    * this file just to print the software version on the screen for ant to catch 
-	    */
-      printf(&quot;%d.%d&quot;,SDB_ENGINE_VERISON_CURRENT , SDB_ENGINE_SUBVERSION_CURRENT);
-      return 0;
-    }
-		</echo>
 		
-		<echo>
-			/usr/bin/gcc  ${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include
-		</echo>
-		<exec executable="/usr/bin/gcc" dir="${base.dir}" failonerror="true">
-    		<arg line="${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include" />
-    </exec>
-    <exec executable="${base.dir}/build/print_version" dir="${base.dir}" failonerror="false" outputproperty="project.version" />
-
     <trycatch>
     	<try>
-        <exec dir="${base.dir}" executable="svn" output="${base.dir}/build/svn.status.txt" failonerror="false" >
+        <exec dir="${base.dir}" executable="svn" output="${base.dir}/temp/svn.status.txt" failonerror="false" >
           <arg line="status -u" />
         </exec>
-        <exec dir="${base.dir}" executable="grep" output="${base.dir}/build/svn.grep.txt" failonerror="false" >
+        <exec dir="${base.dir}" executable="grep" output="${base.dir}/temp/svn.grep.txt" failonerror="false" >
           <arg line="&quot;Status against revision&quot;" />
-          <arg line="${base.dir}/build/svn.status.txt" />
+          <arg line="${base.dir}/temp/svn.status.txt" />
         </exec>
         <exec dir="${base.dir}" executable="awk" outputproperty="svn.version" failonerror="false" >
           <arg line="-F &apos;:&apos; &apos;{print $2}&apos;" />
-          <arg line="${base.dir}/build/svn.grep.txt" />
+          <arg line="${base.dir}/temp/svn.grep.txt" />
         </exec>
         
     	</try>
@@ -105,7 +87,7 @@
     
     <trycatch>
     	<try>
-    		<echo file="${base.dir}/build/print_version.c" >
+    		<echo file="${base.dir}/temp/print_version.c" >
      		 #include &lt;stdio.h&gt;
          #include &quot;ossVer.h&quot;
          int main()
@@ -119,12 +101,12 @@
      		</echo>
      		
      		<echo>
-     			/usr/bin/gcc  ${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include
+     			/usr/bin/gcc  ${base.dir}/temp/print_version.c -o ${base.dir}/temp/print_version -I${base.dir}/../../SequoiaDB/engine/include
      		</echo>
      		<exec executable="/usr/bin/gcc" dir="${base.dir}" failonerror="true">
-           <arg line="${base.dir}/build/print_version.c -o ${base.dir}/build/print_version -I${base.dir}/../../SequoiaDB/engine/include" />
+           <arg line="${base.dir}/temp/print_version.c -o ${base.dir}/temp/print_version -I${base.dir}/../../SequoiaDB/engine/include" />
         </exec>
-        <exec executable="${base.dir}/build/print_version" dir="${base.dir}" failonerror="false" outputproperty="project.version" />
+        <exec executable="${base.dir}/temp/print_version" dir="${base.dir}" failonerror="false" outputproperty="project.version" />
 
     	</try>
     	<catch>
@@ -133,11 +115,13 @@
     	<finally>
     	</finally>
     </trycatch>
+    <propertyfile file="${base.dir}/build/version">
+       <entry key="Release" value="${svn.version}"/>
+       <entry key="build.time" value="${current.time}"/>
+       <entry key="SequoiaDB_version" value="${project.version}"/>
+    </propertyfile>
     <jar file="${base.dir}/sequoiadb.jar" >
        <manifest>
-       	 <attribute name="Release:" value="${svn.version}" />
-       	 <attribute name="build.time" value="${current.time}" />
-       	 <attribute name="SequoiaDB version:" value="${project.version}" />
        </manifest>
        <fileset dir="${base.dir}/build"/>
     </jar>
