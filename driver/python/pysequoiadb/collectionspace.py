@@ -23,10 +23,10 @@ from pysequoiadb import ( static_object,
                           default_user,
                           default_psw,
                           driver_version )
-from pysequoiadb import collection
-from pysequoiadb import cursor
-from pysequoiadb import error
-from pysequoiadb import common
+from pysequoiadb.collection import collection
+from pysequoiadb.cursor import cursor
+from pysequoiadb.error import error
+from pysequoiadb.common.const import const
 
 class collectionspace(object):
    """CollectionSpace for SequoiaDB"""
@@ -48,7 +48,7 @@ class collectionspace(object):
    def get_collection(self, cl_name):
       cl = collection()
       rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          cl = None
       return rc, cl
 
@@ -62,7 +62,7 @@ class collectionspace(object):
       else:
          rc = sdbcs.create_collection_use_opt(self._cs, cl_name,
                                               bson_options, cl._cl)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          cl = None
       return rc, cl
 

@@ -25,11 +25,11 @@ from pysequoiadb import ( static_object,
                           default_psw,
                           driver_version )
 
-from pysequoiadb import collectionspace
-from pysequoiadb import collection
-from pysequoiadb import cursor
-from pysequoiadb import replicagroup
-from pysequoiadb import common
+from pysequoiadb.collectionspace import collectionspace
+from pysequoiadb.collection import collection
+from pysequoiadb.cursor import cursor
+from pysequoiadb.replicagroup import replicagroup
+from pysequoiadb.common.const import const
 
 class client(object):
    """SequoiaDB Client Driver
@@ -55,7 +55,7 @@ class client(object):
    def __getitem__(self, item_name):
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, item_name, cs._cs)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          cs = None
       return rc, cs
 
@@ -105,7 +105,7 @@ class client(object):
       result = cursor()
       rc = sdbclient.get_snapshot(self._client, result._cursor, snap_type,
                                   bson_condition, bson_selector, bson_order_by)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -127,7 +127,7 @@ class client(object):
       result = cursor()
       rc = sdbclient.get_list(self._client, result._cursor, list_type,
                               bson_condition, bson_selector, bson_order_by)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -135,7 +135,7 @@ class client(object):
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, cs_name, 
                                  cs._cs)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          cs = None
       return rc, cs
 
@@ -143,7 +143,7 @@ class client(object):
       cs = collectionspace()
       rc = sdbclient.create_collection_space(self._client, cs_name,
                                              page_size, cs._cs)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          cs = None
       return rc, cs
 
@@ -154,14 +154,14 @@ class client(object):
    def list_collection_spaces(self):
       result = cursor()
       rc = sdbclient.list_collection_spaces(self._client, result._cursor)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
    def list_replica_groups(self):
       result = cursor()
       rc = sdbclient.list_replica_groups(self._client, result._cursor)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -169,14 +169,14 @@ class client(object):
       result = replicagroup()
       rc = sdbclient.get_replica_group_by_name(self._client, group_name,
                                                              result._group)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
    def get_replica_group_by_id(self, id):
-      result = replicagroup()
+      result = replicagroup(self._client)
       rc = sdbclient.get_replica_group_by_id(self._client, id, result._group)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -184,7 +184,7 @@ class client(object):
       replica_group = replicagroup(self._client)
       rc = sdbclient.create_replica_group(self._client, group_name,
                                                         replica_group._group)
-      return rc
+      return rc, replica_group
 
    def remove_replica_group(self, group_name):
       rc = sdbclient.remove_replica_group(self._client, group_name)
@@ -203,7 +203,7 @@ class client(object):
    def exec_sql(self, sql):
       result = cursor()
       rc = sdbclient.exec_sql(self._client, sql, result._cursor)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -248,7 +248,7 @@ class client(object):
       result = cursor()
       rc = sdbclient.list_backup(self._client, result._cursor, bson_options,
                                  bson_condition, bson_selector, bson_order_by)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -265,7 +265,7 @@ class client(object):
       result = cursor()
       rc = sdbclient.list_task(self._client, result._cursor, bson_condition,
                                bson_selector, bson_order_by, bson_hint)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -290,6 +290,6 @@ class client(object):
 
    def is_valid(self):
       rc, valid = sdbclient.is_valid(self._client)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          valid = False
       return valid

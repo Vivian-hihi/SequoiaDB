@@ -23,9 +23,9 @@ from pysequoiadb import ( static_object,
                           default_user,
                           default_psw,
                           driver_version )
-from pysequoiadb import cursor
-from pysequoiadb import error
-from pysequoiadb import common
+from pysequoiadb.cursor import cursor
+from pysequoiadb.error import error
+from pysequoiadb.common.const import const
 
 class collection(object):
    """Collection for SequoiaDB"""
@@ -43,7 +43,7 @@ class collection(object):
          bson_condition = bson.BSON.encode(condition)
 
       rc, count = sdbcl.get_count(self._cl, bson_condition)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          count = 0
       return rc, count
 
@@ -75,14 +75,14 @@ class collection(object):
                                                    target_group_name,
                                                    bson_split_condition,
                                                    bson_end_condition)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          task_id = 0
       return rc, task_id
 
    def split_async(self, source_group_name, target_group_name, precent):
       rc, task_id = sdbcl.splite_async_by_precent(self._cl, source_group_name,
                                                   target_group_name, precent)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          task_id = 0
       return rc, task_id
 
@@ -142,7 +142,7 @@ class collection(object):
       rc = sdbcl.query(self._cl, result._cursor, bson_condition, bson_selected,
                                                  bson_order_by, bson_hint,
                                                  num_to_skip, num_to_return)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -153,7 +153,7 @@ class collection(object):
    def get_indexes(self, idx_name):
       result = cursor()
       rc = sdbcl.get_indexes(self._cl, result._cursor, idx_name)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -181,7 +181,7 @@ class collection(object):
 
       result = cursor()
       rc = sdbcl.aggregate(self._cl, result._cursor, container)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
@@ -198,7 +198,7 @@ class collection(object):
       result = cursor()
       rc = sdbcl.get_query_meta(self._cl, result._cursor, condition,
                                 order_by, hint, num_to_skip, num_to_return)
-      if common.SDB_OK != rc:
+      if const.SDB_OK != rc:
          result = None
       return rc, result
 
