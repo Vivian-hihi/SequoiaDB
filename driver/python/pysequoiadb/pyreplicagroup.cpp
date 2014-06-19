@@ -73,7 +73,7 @@ static PYOBJECT *get_nodenum( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
-   nodenum = replica_group->getNodeNum( (sdbNodeStatus)nodestatus, &rc ) ;
+   rc = replica_group->getNodeNum( (sdbNodeStatus)nodestatus, &nodenum ) ;
 done :
    return MAKE_RETURN_INT_INT(rc, nodenum) ;
 error :
@@ -283,7 +283,7 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
    {
       goto error ;
    }
-   
+
    rc = replica_group->createNode( nodename, servicename, nodepath, config ) ;
    if ( SDB_OK != rc )
    {
@@ -341,7 +341,7 @@ static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbReplicaGroup, replica_group ) ;
-   rc = replica_group->stop() ;
+   rc = replica_group->start() ;
 done :
    return MAKE_RETURN_INT( rc ) ;
 error :
@@ -361,7 +361,7 @@ static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, Group, replica_group ) ;
-   rc = replica_group->start() ;
+   rc = replica_group->stop() ;
 done :
    return MAKE_RETURN_INT( rc ) ;
 error :
