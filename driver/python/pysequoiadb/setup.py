@@ -112,7 +112,7 @@ module1 = Extension('sdbclient',
 
 module2cppfiles=modulecppfiles;
 module2cppfiles.append('pycollection.cpp')
-module2 = Extension('sdbcollection',
+module2 = Extension('sdbcl',
                define_macros = precompilemacros,
                extra_compile_args=compileopt,
                include_dirs = incdirs,
@@ -122,7 +122,7 @@ module2 = Extension('sdbcollection',
 
 module3cppfiles=modulecppfiles;
 module3cppfiles.append('pycollectionspace.cpp')
-module3 = Extension('sdbcollectionspace',
+module3 = Extension('sdbcs',
                define_macros = precompilemacros,
                extra_compile_args=compileopt,
                include_dirs = incdirs,

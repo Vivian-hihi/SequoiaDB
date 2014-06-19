@@ -97,7 +97,7 @@ static PYOBJECT *get_detail( PYOBJECT *self, PYOBJECT *args )
    rc = replica_group->getDetail( bson ) ;
 done :
    return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), 
-                                    bson.objsize() ) ;
+                                                bson.objsize() ) ;
 error :
    goto done ;
 }
