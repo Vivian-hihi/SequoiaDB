@@ -28,7 +28,7 @@ static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
    NEW_CPPOBJECT( cs, sdbCollectionSpace ) ;
    if ( NULL == cs )
    {
-      return NULL ;
+     return NULL ;
    }
 
    return MAKE_PYOBJECT( cs ) ;
@@ -36,14 +36,14 @@ static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
 
 static PYOBJECT *release_cs( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc               = 0 ;
-   PYOBJECT *obj          = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj        = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
@@ -55,17 +55,17 @@ done:
 
 static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc               = 0 ;
-   PYOBJECT *obj          = NULL ;
-   PYOBJECT *cl_object    = NULL ;
-   const char *cl_name    = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *cl_object   = NULL ;
+   const char *cl_name   = NULL ;
    sdbCollectionSpace *cs = NULL ;
-   sdbCollection *cl      = NULL ;
+   sdbCollection *cl     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cl_name, &cl_object ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
@@ -74,7 +74,7 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
    rc = cs->getCollection( cl_name, *cl ) ;
    if ( rc )
    {
-      goto done ;
+     goto done ;
    }
 
 done:
@@ -83,17 +83,17 @@ done:
 
 static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc               = 0 ;
-   PYOBJECT *obj          = NULL ;
-   PYOBJECT *cl_object    = NULL ;
-   const char *cl_name    = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *cl_object   = NULL ;
+   const char *cl_name   = NULL ;
    sdbCollectionSpace *cs = NULL ;
-   sdbCollection *cl      = NULL ;
+   sdbCollection *cl     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cl_name, &cl_object ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
@@ -102,7 +102,7 @@ static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
    rc = cs->createCollection( cl_name, *cl ) ;
    if ( rc )
    {
-      goto done ;
+     goto done ;
    }
 
 done:
@@ -111,20 +111,20 @@ done:
 
 static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc               = 0 ;
-   PYOBJECT *obj          = NULL ;
-   PYOBJECT *cl_object    = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *cl_object   = NULL ;
    PYOBJECT *bson_option  = NULL ;
-   const char *cl_name    = NULL ;
+   const char *cl_name   = NULL ;
    sdbCollectionSpace *cs = NULL ;
-   sdbCollection *cl      = NULL ;
+   sdbCollection *cl     = NULL ;
    const bson::BSONObj *option  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsOO", &obj, &cl_name, &cl_object,
-                                                          &bson_option ) )
+                                            &bson_option ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
@@ -134,7 +134,7 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
    rc = cs->createCollection( cl_name, *option, *cl ) ;
    if ( rc )
    {
-      goto done ;
+     goto done ;
    }
 
 done:
@@ -144,15 +144,15 @@ done:
 
 static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc               = 0 ;
-   PYOBJECT *obj          = NULL ;
-   const char *cl_name    = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj        = NULL ;
+   const char *cl_name   = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &cl_name ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
@@ -160,7 +160,7 @@ static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
    rc = cs->dropCollection( cl_name ) ;
    if ( rc )
    {
-      goto done ;
+     goto done ;
    }
 
 done:
@@ -169,15 +169,15 @@ done:
 
 static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc               = 0 ;
-   PYOBJECT *obj          = NULL ;
-   const char *cs_name    = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj        = NULL ;
+   const char *cs_name   = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
@@ -190,12 +190,12 @@ done :
 
 /* List of functions defined in the module */
 static PyMethodDef sdbcollectionspace_methods[] = {
-   {"create_cs",                 create_cs,                 METH_VARARGS},
-   {"release_cs",                release_cs,                METH_VARARGS},
-   {"get_collection",            get_collection,            METH_VARARGS},
-   {"create_collection",         create_collection,         METH_VARARGS},
+   {"create_cs",             create_cs,             METH_VARARGS},
+   {"release_cs",            release_cs,            METH_VARARGS},
+   {"get_collection",         get_collection,         METH_VARARGS},
+   {"create_collection",       create_collection,       METH_VARARGS},
    {"create_collection_use_opt", create_collection_use_opt, METH_VARARGS},
-   {"drop_collection",           drop_collection,           METH_VARARGS},
+   {"drop_collection",         drop_collection,         METH_VARARGS},
    {"get_collection_space_name", get_collection_space_name, METH_VARARGS},
    {NULL, NULL}
 };

@@ -20,32 +20,32 @@ from pysequoiadb import error
 from pysequoiadb.error import PySequoiaDBError
 
 class cursor(object):
-    """Entrance of SequoiaDB
+   """Entrance of SequoiaDB
 
 
-    """
-    def __init__(self):
-        self._cursor = sdbcursor.create_cursor()
-        if  self._cursor == None:
-            raise PySequoiaDBError()
+   """
+   def __init__(self):
+      self._cursor = sdbcursor.create_cursor()
+      if  self._cursor == None:
+         raise PySequoiaDBError()
 
-    def __del__(self):
-        if self._cursor is not None:
-            sdbcursor.release_cursor(self._cursor)
-            self._cursor = None
+   def __del__(self):
+      if self._cursor is not None:
+         sdbcursor.release_cursor(self._cursor)
+         self._cursor = None
 
-    def next(self):
-        result = sdbcursor.next(self._cursor)
-        bson_string = error.err_process(result)
-        return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+   def next(self):
+      result = sdbcursor.next(self._cursor)
+      bson_string = error.err_process(result)
+      return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
 
 
-    def current(self):
-        result = sdbcursor.current(self._cursor)
-        bson_string = error.err_process(result)
-        return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+   def current(self):
+      result = sdbcursor.current(self._cursor)
+      bson_string = error.err_process(result)
+      return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
 
-    def close(self):
-        rc = sdbcursor.close(self._cursor)
-        return rc
+   def close(self):
+      rc = sdbcursor.close(self._cursor)
+      return rc
 

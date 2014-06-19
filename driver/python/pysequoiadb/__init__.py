@@ -20,9 +20,9 @@ static_object = None
 version_tuple = (1, 8)
 
 def get_version():
-    if isinstance( version_tuple[-1], basestring):
-        return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
-    return '.'.join(map(str, version_tuple))
+   if isinstance( version_tuple[-1], basestring):
+      return '.'.join(map(str, version_tuple[:-1])) + version_tuple[-1]
+   return '.'.join(map(str, version_tuple))
 
 driver_version = get_version()
 """Current version of python driver for SequoiaDB."""

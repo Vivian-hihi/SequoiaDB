@@ -25,13 +25,13 @@ static PYOBJECT *create_cursor( PYOBJECT *self, PYOBJECT *args )
    sdbCursor *cursor = NULL;
    if ( !PyArg_ParseTuple(args, "") )
    {
-      goto error ;
+     goto error ;
    }
    
    NEW_CPPOBJECT( cursor, sdbCursor ) ;
    if ( NULL == cursor )
    {
-      goto error ;
+     goto error ;
    }
    return MAKE_PYOBJECT( cursor ) ;
 error :
@@ -40,14 +40,14 @@ error :
 
 static PYOBJECT *release_cursor( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj      = NULL ;
+   INT32 rc         = 0 ;
+   PYOBJECT *obj     = NULL ;
    sdbCursor *cursor  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbCursor, cursor ) ;
@@ -58,22 +58,22 @@ done:
 
 static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
-   sdbCursor *cursor    = NULL ;
+   INT32 rc          = 0 ;
+   PYOBJECT *obj      = NULL ;
+   sdbCursor *cursor   = NULL ;
    bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    rc = cursor->next( bson ) ;
    if ( SDB_OK != rc )
    {
-      goto error ;
+     goto error ;
    }
 done :
    return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
@@ -83,22 +83,22 @@ error :
 
 static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
-   sdbCursor *cursor    = NULL ;
+   INT32 rc          = 0 ;
+   PYOBJECT *obj      = NULL ;
+   sdbCursor *cursor   = NULL ;
    bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    rc = cursor->current( bson ) ;
    if ( SDB_OK != rc )
    {
-      goto error ;
+     goto error ;
    }
 done :
    return MAKE_RETURN_INT_PYSTRING_BYSIZE( rc, bson.objdata(), bson.objsize() ) ;
@@ -108,21 +108,21 @@ error :
 
 static PYOBJECT *close( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
-   sdbCursor *cursor    = NULL ;
+   INT32 rc          = 0 ;
+   PYOBJECT *obj      = NULL ;
+   sdbCursor *cursor   = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    rc = cursor->close( ) ;
    if ( SDB_OK != rc )
    {
-      goto error ;
+     goto error ;
    }
 done :
    return MAKE_RETURN_INT( rc ) ;

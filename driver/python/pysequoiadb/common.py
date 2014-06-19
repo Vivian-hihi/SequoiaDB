@@ -29,18 +29,18 @@ init=False
 import os
 import string
 def init_errmaps():
-    if False == os.access("err.prop", os.R_OK):
-        raise Exception("file not exist")
-    import ConfigParser
-    config = ConfigParser.ConfigParser()
-    config.read("err.prop")
-    pairs = config.items("error")
-    for pair in pairs:
-        const.errmaps[ string.atoi(pair[0]) ] = pair[1];
-        print const.errmaps.keys()
+   if False == os.access("err.prop", os.R_OK):
+      raise Exception("file not exist")
+   import ConfigParser
+   config = ConfigParser.ConfigParser()
+   config.read("err.prop")
+   pairs = config.items("error")
+   for pair in pairs:
+      const.errmaps[ string.atoi(pair[0]) ] = pair[1];
+      print const.errmaps.keys()
 if False == init:
-    init_errmaps()
-    init = True
+   init_errmaps()
+   init = True
 
 
 

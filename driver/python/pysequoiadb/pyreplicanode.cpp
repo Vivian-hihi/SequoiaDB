@@ -24,13 +24,13 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
    sdbNode *node = NULL;
    if ( !PyArg_ParseTuple(args, "") )
    {
-      goto error ;
+     goto error ;
    }
    
    NEW_CPPOBJECT( node, sdbNode ) ;
    if ( NULL == node )
    {
-      goto error ;
+     goto error ;
    }
 done :
    return MAKE_PYOBJECT( node ) ;
@@ -40,14 +40,14 @@ error :
 
 static PYOBJECT *release_node( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc        = 0 ;
+   INT32 rc      = 0 ;
    PYOBJECT *obj   = NULL ;
    sdbNode  *node  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto done ;
+     rc = SDB_INVALIDARGS ;
+     goto done ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj,  sdbNode, node ) ;
@@ -58,16 +58,16 @@ done:
 
 static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
-   PYOBJECT *sdbodj     = NULL ;
-   sdbNode *node        = NULL ;
-   sdb *client          = NULL ;
+   INT32 rc          = 0 ;
+   PYOBJECT *obj      = NULL ;
+   PYOBJECT *sdbodj    = NULL ;
+   sdbNode *node      = NULL ;
+   sdb *client        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "OO", &obj, &sdbodj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
@@ -81,15 +81,15 @@ error :
 
 static PYOBJECT *get_status( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc              = 0 ;
-   PYOBJECT *obj          = NULL ;
-   INT32 nodestatus       = SDB_NODE_UNKNOWN ;
-   sdbNode *node          = NULL ;
+   INT32  rc           = 0 ;
+   PYOBJECT *obj        = NULL ;
+   INT32 nodestatus      = SDB_NODE_UNKNOWN ;
+   sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
@@ -102,15 +102,15 @@ error :
 
 static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc              = 0 ;
-   PYOBJECT *obj          = NULL ;
+   INT32  rc           = 0 ;
+   PYOBJECT *obj        = NULL ;
    const char *hostname   = "" ;
-   sdbNode *node          = NULL ;
+   sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
@@ -123,15 +123,15 @@ error :
 
 static PYOBJECT *get_servicename( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc               = 0 ;
-   PYOBJECT *obj           = NULL ;
+   INT32  rc            = 0 ;
+   PYOBJECT *obj         = NULL ;
    const char *servicename = "" ;
-   sdbNode *node           = NULL ;
+   sdbNode *node         = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
@@ -144,15 +144,15 @@ error :
 
 static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc              = 0 ;
-   PYOBJECT *obj          = NULL ;
+   INT32  rc           = 0 ;
+   PYOBJECT *obj        = NULL ;
    const char *nodename   = "" ;
-   sdbNode *node          = NULL ;
+   sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
@@ -165,14 +165,14 @@ error :
 
 static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
-   sdbNode *node        = NULL ;
+   INT32 rc          = 0 ;
+   PYOBJECT *obj      = NULL ;
+   sdbNode *node      = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
@@ -185,14 +185,14 @@ error :
 
 static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj        = NULL ;
-   sdbNode *node        = NULL ;
+   INT32 rc          = 0 ;
+   PYOBJECT *obj      = NULL ;
+   sdbNode *node      = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
-      rc = SDB_INVALIDARGS ;
-      goto error ;
+     rc = SDB_INVALIDARGS ;
+     goto error ;
    }
 
    CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
