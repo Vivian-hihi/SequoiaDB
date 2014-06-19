@@ -18,11 +18,11 @@
 import sdbcl
 import bson
 from pysequoiadb import ( static_object,
-                    default_host,
-                    default_port,
-                    default_user,
-                    default_psw,
-                    driver_version )
+                          default_host,
+                          default_port,
+                          default_user,
+                          default_psw,
+                          driver_version )
 from pysequoiadb import cursor
 from pysequoiadb import error
 from pysequoiadb import common
@@ -121,20 +121,14 @@ class collection(object):
 
    def get_collection_name(self):
       _, cl_name = sdbcl.get_collection_name(self._cl)
-      if _ is not 0:
-         pass
       return cl_name
 
    def get_cs_name(self):
       _, cs_name = sdbcl.get_cs_name(self._cl)
-      if _ is not 0:
-         pass
       return cs_name
 
    def get_full_name(self):
       _, full_name = sdbcl.gey_full_name(self._cl)
-      if _ is not 0:
-         pass
       return full_name
 
    def aggregate(self, obj):

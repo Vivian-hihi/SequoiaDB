@@ -24,12 +24,12 @@ from pysequoiadb import ( static_object,
                           default_user,
                           default_psw,
                           driver_version )
+
 from pysequoiadb import collectionspace
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import replicagroup
 from pysequoiadb import common
-from pysequoiadb.error import PySequoiaDBError
 
 class client(object):
    """SequoiaDB Client Driver
@@ -61,20 +61,20 @@ class client(object):
       return rc, cs
 
    def connect(self, host = default_host, port = default_port,
-                 user = default_user, psw  = default_psw):
+                     user = default_user, psw  = default_psw):
       rc = sdbclient.connect_by_host(self._client, host, port, user, psw)
       if rc:
          pass
 
    def connect(self, host, service_name, user = default_user,
-                                psw  = default_psw):
+                                         psw  = default_psw):
       rc = sdbclient.connect_by_service(self._client, host, service_name,
-                                          user, psw)
+                                                      user, psw)
       return rc
 
    def connect(self, addr, addr_size, user = default_user, psw = default_psw):
       rc = sdbclient.connect_by_address(self._client, addr, addr_size,
-                                          user, psw)
+                                                      user, psw)
       return rc
 
    def disconnect(self):
@@ -125,7 +125,7 @@ class client(object):
          cs = None
       return rc, cs
 
-   def create_collection_space(self, cs_name, page_size):
+   def create_collection_space(self, cs_name, page_size = 0):
       cs = collectionspace()
       rc = sdbclient.create_collection_space(self._client, cs_name, page_size,
                                     cs._cs)
@@ -224,7 +224,7 @@ class client(object):
                                   order_by = static_object):
       result = cursor()
       rc = sdbclient.list_backup(self._client, result._cursor, options,
-                           condition, selector, order_by)
+                                               condition, selector, order_by)
       if common.SDB_OK != rc:
          result = None
       return rc, result

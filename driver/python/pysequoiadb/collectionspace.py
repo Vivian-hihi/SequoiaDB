@@ -18,11 +18,11 @@
 import sdbcs
 import bson
 from pysequoiadb import ( static_object,
-                    default_host,
-                    default_port,
-                    default_user,
-                    default_psw,
-                    driver_version )
+                          default_host,
+                          default_port,
+                          default_user,
+                          default_psw,
+                          driver_version )
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import error
@@ -65,6 +65,4 @@ class collectionspace(object):
 
    def get_collection_space_name(self):
       _, cs_name = sdbcs.get_collection_space_name(self._cs)
-      if _:
-         pass
       return cs_name
