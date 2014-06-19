@@ -70,6 +70,7 @@ namespace engine
       virtual BOOLEAN timeout ( UINT32 interval ) ;
       // called by self thread
       virtual void    onTimer ( UINT64 timerID, UINT32 interval ) ;
+      virtual void   _onAttach () ;
       virtual void   _onDetach () ;
 
    public:

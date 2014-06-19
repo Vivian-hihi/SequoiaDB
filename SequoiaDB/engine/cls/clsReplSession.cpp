@@ -75,16 +75,6 @@ namespace engine
 
       _syncSrc.value = MSG_INVALID_ROUTEID ;
 
-      // if start form crash, should full sync
-      if ( !pmdGetStartup().isOK() )
-      {
-         _status = CLS_SESSION_STATUS_FULL_SYNC ;
-         _repl->setFullSync( TRUE ) ;
-      }
-      else
-      {
-         _repl->setFullSync( FALSE ) ;
-      }
       PD_TRACE_EXIT ( SDB__CLSREPSN__CLSREPSN );
    }
 
@@ -157,12 +147,6 @@ namespace engine
          goto done ;
       }
 
-      // full sync to repl sync, need to reset repl bucket
-      if ( _isFirstToSync && _pReplBucket->isEmpty() )
-      {
-         _pReplBucket->reset() ;
-      }
-
       _isFirstToSync = FALSE ;
 
       //if the peer node is sharing-break, shoud change node
@@ -217,6 +201,26 @@ namespace engine
       PD_TRACE1 ( SDB__CLSREPSN_ONTIMER, PD_PACK_INT(_quit) ) ;
       PD_TRACE_EXIT ( SDB__CLSREPSN_ONTIMER );
       return  ;
+   }
+
+   void _clsReplSession::_onAttach()
+   {
+      if ( isStartActive() )
+      {
+         // if start form crash, should full sync
+         if ( !pmdGetStartup().isOK() )
+         {
+            _status = CLS_SESSION_STATUS_FULL_SYNC ;
+            _repl->setFullSync( TRUE ) ;
+         }
+         else
+         {
+            _repl->setFullSync( FALSE ) ;
+         }
+
+         // full sync to repl sync, need to reset repl bucket
+         _pReplBucket->reset() ;
+      }
    }
 
    void _clsReplSession::_onDetach()
