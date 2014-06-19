@@ -246,8 +246,8 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
    sdbCollection *cl           = NULL ;
    const bson::BSONObj *object = NULL ;
    bson::OID *id = NULL ;
-
-   if ( !PARSE_PYTHON_ARGS( args, "OO|O", &obj, &bson_object, oid_object ) )
+   printf()
+   if ( !PARSE_PYTHON_ARGS( args, "OO|O", &obj, &bson_object, &oid_object ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
