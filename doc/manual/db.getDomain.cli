@@ -7,7 +7,7 @@
 .SH "NAME"
 
 .sp 2
-getDomain - Return the specified domain.
+getDomain - Gets the specified domain.
 .SH "SYNOPSIS"
 
 .sp 2
@@ -25,7 +25,7 @@ Sequoiadb
 .SH "DESCRIPTION"
 
 .sp 2
-Return the specified domain.
+Gets the specified domain.
 .sp 2
 \fBname (string)\fR
 .br
@@ -48,4 +48,4 @@ Return the specified domain.
 .sp 2
 Get an existent domain.
 .sp 2
-db.getDomain('mydomain')
+var domain = db.getDomain('mydomain')
