@@ -166,16 +166,16 @@ class client(object):
       return rc, result
 
    def get_replica_group_by_name(self, group_name):
-      result = cursor()
+      result = replicagroup()
       rc = sdbclient.get_replica_group_by_name(self._client, group_name,
-                                                             result._cursor)
+                                                             result._group)
       if common.SDB_OK != rc:
          result = None
       return rc, result
 
    def get_replica_group_by_id(self, id):
-      result = cursor()
-      rc = sdbclient.get_replica_group_by_id(self._client, id, result._cursor)
+      result = replicagroup()
+      rc = sdbclient.get_replica_group_by_id(self._client, id, result._group)
       if common.SDB_OK != rc:
          result = None
       return rc, result
