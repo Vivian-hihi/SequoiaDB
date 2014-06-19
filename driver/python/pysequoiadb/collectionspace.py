@@ -37,10 +37,8 @@ class collectionspace(object):
          raise Exception()
 
    def __del__(self):
-      if 
-      rc = sdbcs.release_cs(self._cs)
-      if rc:
-         pass
+      if self._cs is not None:
+         rc = sdbcs.release_cs(self._cs)
       self._cs = None
 
    def __getitem__(self, item_name):

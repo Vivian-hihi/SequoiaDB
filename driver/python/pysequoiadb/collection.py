@@ -42,7 +42,7 @@ class collection(object):
       return rc, count
 
    def split(self, source_group_name, target_group_name,
-               split_condition, split_end_contiditon = static_object):
+               split_condition, split_end_condition = static_object):
       rc = sdbcl.split(self._cl, source_group_name, target_group_name,
                           split_condition, split_end_condition)
       return rc
@@ -53,7 +53,7 @@ class collection(object):
 
    def split_async(self, source_group_name, target_group_name,
                            split_condition,
-                           split_end_conditon = static_object):
+                           split_end_condition = static_object):
       rc, task_id = sdbcl.split_async_by_condition(self._cl,
                                         source_group_name,
                                         target_group_name,
@@ -61,7 +61,7 @@ class collection(object):
                                         split_end_condition)
       return task_id
 
-   def split_async(self, source_group_name, target_group_name, percent):
+   def split_async(self, source_group_name, target_group_name, precent):
       rc, task_id = sdbcl.splite_async_by_precent(self._cl, source_group_name,
                                               target_group_name,
                                               precent)
@@ -72,7 +72,7 @@ class collection(object):
       return rc
 
    def insert(self, obj, oid = None):
-      rc = sbdcl.insert(self._cl, obj, oid)
+      rc = sdbcl.insert(self._cl, obj, oid)
       return rc
 
    def update(self, rule, condition = static_object, hint = static_object):
@@ -88,7 +88,7 @@ class collection(object):
       return rc
 
    def query(self, condition = static_object, selected = static_object,
-                     order_by = static_object, hint = stactic_object,
+                     order_by = static_object, hint = static_object,
                      num_to_skip = 0, num_to_return = -1):
       result = cursor()
       rc = sdbcl.query(self._cl, result._cursor, condition, selected,
