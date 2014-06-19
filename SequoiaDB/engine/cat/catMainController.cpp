@@ -904,7 +904,7 @@ namespace engine
       if ( !pmdIsPrimary() )
       {
          rc = SDB_CLS_NOT_PRIMARY ;
-         goto ERROR ;
+         goto error ;
       }
 
       rc = extractAuthMsg( &(msg->header), obj ) ;
