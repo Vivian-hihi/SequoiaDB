@@ -26,6 +26,9 @@ const.errmaps = dict()
 
 init=False
 
+def get_info(self, code):
+   return const.errmaps.get(code,"Unknown")
+
 import os
 import string
 def init_errmaps():

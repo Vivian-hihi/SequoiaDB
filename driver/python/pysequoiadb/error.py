@@ -39,13 +39,6 @@ class InvalidParameter(PySequoiaDBError):
    """Raised when an invalid name is used.
    """
 
-def err_process(result):
-   if const.RET_TUPLE_SIZE != len(result):
-      raise PySequoiaDBError("internal error")
-   if const.SDB_OK != result[const.ERRCODE_INDEX]:
-      raise OperationError("sdb error msg", result[const.ERRCODE_INDEX])
-   return result[const.RETOBJ_INDEX]
-
 if __name__ == "__main__":
    def test():
       raise OperationError("sdb error msg: ", -2)
