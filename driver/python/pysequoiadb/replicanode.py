@@ -17,7 +17,7 @@
 import sdbreplicanode
 from pysequoiadb import common
 from pysequoiadb import error
-from pysequoiadb.error import PySequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 class replicanode(object):
    """Entrance of SequoiaDB
@@ -27,7 +27,7 @@ class replicanode(object):
    def __init__(self, client):
       self._node = sdbreplicanode.create_node()
       if self._node == None:
-         raise PySequoiaDBError()
+         raise SequoiaDBError()
       self._client = client
 
    def __del__(self):

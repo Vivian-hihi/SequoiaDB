@@ -1,16 +1,17 @@
 
+import pysequoiadb
 from pysequoiadb.common import const
-class PySequoiaDBError(Exception):
+class SequoiaDBError(Exception):
    """Base Exception of Python Driver for SequoiaDB
    
    version 1.8
    """
 
-class ConnectError(PySequoiaDBError):
+class ConnectError(SequoiaDBError):
    """Raised when failed to connect to database
    """
 
-class OperationError(PySequoiaDBError):
+class OperationError(SequoiaDBError):
    """Raised when fail to do operation(s)
    """
    def get_info(self, code):
@@ -35,7 +36,7 @@ class OperationError(PySequoiaDBError):
       return self.__details
 
 
-class InvalidParameter(PySequoiaDBError):
+class InvalidParameter(SequoiaDBError):
    """Raised when an invalid name is used.
    """
 

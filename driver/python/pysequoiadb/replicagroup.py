@@ -21,7 +21,7 @@ from pysequoiadb import replicanode
 from pysequoiadb import common
 from pysequoiadb import error
 from pysequoiadb.error import InvalidParameter
-from pysequoiadb.error import PySequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 
 class replicagroup(object):
@@ -31,7 +31,7 @@ class replicagroup(object):
    def __init__(self, client):
       self._group = sdbreplicagroup.create_replicagroup()
       if  self._group == None:
-         raise PySequoiaDBError()
+         raise SequoiaDBError()
       self._client = client
 
    def __del__(self):

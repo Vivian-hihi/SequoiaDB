@@ -17,7 +17,7 @@
 import sdbcursor
 import bson
 from pysequoiadb import error
-from pysequoiadb.error import PySequoiaDBError
+from pysequoiadb.error import SequoiaDBError
 
 class cursor(object):
    """Entrance of SequoiaDB
@@ -27,7 +27,7 @@ class cursor(object):
    def __init__(self):
       self._cursor = sdbcursor.create_cursor()
       if  self._cursor == None:
-         raise PySequoiaDBError()
+         raise SequoiaDBError()
 
    def __del__(self):
       if self._cursor is not None:
