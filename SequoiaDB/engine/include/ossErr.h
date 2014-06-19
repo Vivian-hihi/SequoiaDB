@@ -296,4 +296,7 @@ const CHAR* getErrDesp ( INT32 errCode );
 #define SDB_DRIVER_BSON_ERROR           -258  /**< Wrong data for building bson */
 #define SDB_OUT_OF_BOUND                -259  /**< out of bound */
 #define SDB_REST_COMMON_UNKNOW          -260  /**< rest common unknow */
+#define SDB_BUT_FAILED_ON_DATA          -261  /**< successfully done on catalog, but sth wrong happened when did it on data group. */
+#define SDB_CAT_NO_GROUP_IN_DOMAIN      -262  /**< domain does not have any groups at all */
+#define SDB_OM_PASSWD_CHANGE_SUGGUEST   -263  /**< suggest sdb om's user to change the passwd */
 #endif /* OSSERR_HPP_ */

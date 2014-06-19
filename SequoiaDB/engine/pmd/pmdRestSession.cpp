@@ -251,7 +251,7 @@ namespace engine
       else 
       {
          const CHAR *pSubCommand = NULL ;
-         pAdptor->getQuery( this, OM_REST_COMMAND_KEY, &pSubCommand ) ;
+         pAdptor->getQuery( this, OM_REST_FIELD_COMMAND, &pSubCommand ) ;
          if ( NULL == pSubCommand )
          {
             BSONObjBuilder builder ;
@@ -267,6 +267,8 @@ namespace engine
               && ossStrcmp( pSubCommand, OM_CHECK_SESSION_REQ ) != 0
               && !isAuthOK() )
          {
+            // except login_rep and check_seesion_req, other commands can only 
+            // execute in authrity status
             BSONObjBuilder builder ;
             builder.append( OM_REST_RES_RETCODE, 
                             SDB_AUTH_AUTHORITY_FORBIDDEN ) ;
@@ -286,6 +288,14 @@ namespace engine
          else if ( ossStrcmp ( pSubCommand, OM_CHECK_SESSION_REQ ) == 0 )
          {
             commandIf = new omCheckSessionCommand (pAdptor, this ) ;
+         }
+         else if ( ossStrcmp ( pSubCommand, OM_CREATE_CLUSTER_REQ ) == 0 )
+         {
+            commandIf = new omCreateClusterCommand (pAdptor, this ) ;
+         }
+         else if ( ossStrcmp ( pSubCommand, OM_QUERY_CLUSTER_REQ ) == 0 )
+         {
+            commandIf = new omQueryClusterCommand (pAdptor, this ) ;
          }
          else
          {
@@ -346,13 +356,26 @@ namespace engine
    {
       if ( NULL != _pSessionInfo )
       {
-         if ( _pSessionInfo->_authOK != 0 )
+         if ( _pSessionInfo->_authOK )
          {
             return true ;
          }
       }
 
       return false ;
+   }
+
+   const CHAR* _pmdRestSession::getSessionID()
+   {
+      if ( NULL != _pSessionInfo )
+      {
+         if ( _pSessionInfo->_authOK )
+         {
+            return _pSessionInfo->_id.c_str();
+         }
+      }
+
+      return NULL ;
    }
 
 }

@@ -40,6 +40,7 @@ using namespace bson;
 
 namespace engine
 {
+   // *****************omAuthCommand *****************************
    omAuthCommand::omAuthCommand( restAdaptor *pRestAdaptor, 
                                  pmdRestSession *pRestSession, 
                                  const CHAR *pRootPath )
@@ -53,120 +54,70 @@ namespace engine
    {
    }
 
-   INT32 omAuthCommand::_verifyUser( const CHAR *pUserName, const CHAR *pPasswd, 
-                                     const CHAR *pTimestamp ) 
+   void omAuthCommand::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
    {
       BSONObjBuilder bsonBuilder ;
-      BSONObj selector ;
-      BSONObj bsonQuery ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID   = -1 ;
-      SINT64 startingPos = 0 ;
-      rtnContextBuf buffObj ;
-      INT32 rc = SDB_OK ;
       
-      bsonBuilder.append( OM_USER_FIELD_NAME, pUserName ) ;
-      bsonBuilder.append( OM_USER_FIELD_PASSWD, pPasswd ) ;
-      bsonQuery = bsonBuilder.obj() ;
-      rc = rtnQuery( OM_CS_AUTH_CL_USER, selector, bsonQuery, order, hint, 0, 
-                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID ) ;
-      if ( SDB_OK != rc )
+      bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
+      if ( NULL != detail )
       {
-         PD_LOG( PDERROR, "failed to query:%d", rc ) ;
-         goto error ;
-      }
-      
-      rc = rtnGetMore( contextID, -1, buffObj, startingPos, _cb, _pRTNCB ) ;
-      if ( SDB_OK != rc && SDB_DMS_EOC != rc )
-      {
-         PD_LOG( PDERROR, "failed to getmore:%d",rc ) ;
-         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
-         goto error ;
-      }
-      else if ( SDB_DMS_EOC == rc )
-      {
-         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
-         goto error ;
-      }
-      else if ( 0 == buffObj.recordNum() )
-      {
-         rc = SDB_AUTH_AUTHORITY_FORBIDDEN ;
-         goto error ;
-      }
-      else if ( 1 == buffObj.recordNum() )
-      {
-         rc = SDB_OK ;
-      }
-      else
-      {
-         PD_LOG( PDERROR, "get more than one record, impossible" ) ;
-         rc = SDB_SYS ;
-         SDB_ASSERT( FALSE, "impossible" ) ;
-         goto error ;
+         bsonBuilder.append( OM_REST_RES_DETAIL, detail ) ;
       }
 
-   done:
-
-      if ( -1 != contextID )
-      {
-         rtnKillContexts( 1, &contextID, _cb, _pRTNCB ) ;
-      }
-      return rc ;
-      
-   error:
-      goto done ;
+      _restAdaptor->setOPResult( _restSession, rc, bsonBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
    }
 
    INT32 omAuthCommand::doCommand()
    {
       const CHAR *pUserName        = NULL ;
       const CHAR *pPasswd          = NULL ;
-      CHAR *pTimestamp             = NULL ;
       INT32 rc                     = SDB_OK ;
       ossSocket *socket            = NULL ;
       restSessionInfo *sessionInfo = NULL ;
-      BSONObjBuilder bsonBuilder ;
+      BSONObjBuilder authBuilder ;
+      BSONObjBuilder resBuilder ;
       BSONObj bsonRes ;
+      BSONObj bsonAuth ;
 
-      _restAdaptor->getQuery(_restSession, OM_LOGIN_USERNAME, &pUserName ) ;
-      _restAdaptor->getQuery(_restSession, OM_LOGIN_PASSWD, &pPasswd ) ;
+      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_LOGIN_NAME, &pUserName ) ;
+      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_LOGIN_PASSWD, &pPasswd ) ;
 
       if ( ( NULL == pUserName ) || ( NULL == pPasswd ) )
       {
-         rc = SDB_INVALIDARG ;
-         bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-         bsonBuilder.append( OM_REST_RES_DETAIL, 
-                             "username or passwd is null" ) ;
-         bsonRes = bsonBuilder.obj() ;
+         _sendErrorRes2Web( SDB_INVALIDARG, "username or passwd is null" ) ;
          goto error ;
       }
 
-      rc = _verifyUser( pUserName, pPasswd, pTimestamp ) ;
+      authBuilder.append( SDB_AUTH_USER, pUserName ) ;
+      authBuilder.append( SDB_AUTH_PASSWD, pPasswd ) ;
+      bsonAuth = authBuilder.obj() ;
+      rc = sdbGetOMManager()->authenticate( bsonAuth, _cb ) ;
       if ( SDB_OK != rc )
       {
          if ( SDB_AUTH_AUTHORITY_FORBIDDEN == rc )
          {
-            bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-            bsonBuilder.append( OM_REST_RES_DETAIL, 
-                                "username or passwd is wrong" ) ;
-            bsonRes = bsonBuilder.obj() ;
+            _sendErrorRes2Web( rc, "username or passwd is wrong" ) ;
          }
          else
          {
-            bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-            bsonBuilder.append( OM_REST_RES_DETAIL, "system error" ) ;
-            bsonRes = bsonBuilder.obj() ;
+            _sendErrorRes2Web( rc, "system error" ) ;
          }
          
          goto error ;
       }
-      
+
       socket = _restSession->socket() ;
       if ( NULL == socket )
       {
          PD_LOG( PDERROR, "socket is null, impossible" ) ;
-         rc = SDB_SYS ;
+         _sendErrorRes2Web( SDB_SYS, "system error" ) ;
+         goto error ;
+      }
+
+      if ( _restSession->isAuthOK() )
+      {
+         sdbGetOMManager()->releaseSessionInfo( _restSession->getSessionID() ) ;
       }
       
       sessionInfo = sdbGetOMManager()->newSessionInfo(pUserName, 
@@ -175,35 +126,25 @@ namespace engine
       {
          PD_LOG( PDERROR, "new session failed:user=%s, ip=%u", pUserName,
                  socket->getLocalIP() ) ;
-         rc = SDB_SYS ;
+         _sendErrorRes2Web( SDB_SYS, "system error" ) ;
       }
 
-      // login in success here;
-//      if ( ossStrcmp(pPasswd, OM_DEFAULT_LOGIN_PASSWD) == 0 )
-//      {
-//         rc = SDB_OM_PASSWD_CHANGE_SUGGUEST ;
-//         bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-//         bsonBuilder.append( OM_REST_RES_DETAIL, 
-//                             "passwd is never changed" ) ;
-//      }
-
       sessionInfo->_authOK = TRUE ;
-      bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
-      bsonBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_INDEX_HTML ) ;
-      bsonRes = bsonBuilder.obj() ;
+      resBuilder.append( OM_REST_RES_RETCODE, rc ) ;
+      resBuilder.append( OM_REST_RES_LOCAL, "/"OM_REST_INDEX_HTML ) ;
       _restAdaptor->appendHttpHeader( _restSession, FIELD_NAME_SESSIONID, 
                                       sessionInfo->_id.c_str() ) ;
-
-   done:
-      _restAdaptor->setOPResult( _restSession, rc, bsonRes ) ;
+      _restAdaptor->setOPResult( _restSession, rc, resBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       
+   done:
       return SDB_OK ;
 
    error:
       goto done ;
    }
 
+   // *****************omCheckSessionCommand *****************************
    omCheckSessionCommand::omCheckSessionCommand( restAdaptor *pRestAdaptor, 
                                                  pmdRestSession *pRestSession )
    {
@@ -242,6 +183,7 @@ namespace engine
       return SDB_OK ;
    }
 
+   // *****************omCreateClusterCommand *****************************
    omCreateClusterCommand::omCreateClusterCommand( restAdaptor *pRestAdaptor, 
                                                   pmdRestSession *pRestSession )
    {
@@ -255,10 +197,111 @@ namespace engine
 
    INT32 omCreateClusterCommand::doCommand()
    {
+      const CHAR *pClusterName = NULL ;
+      const CHAR *pDesc        = NULL ;
+      BSONObjBuilder bsonBuilder ;
+      BSONObj bsonCluster ;
+      INT32 rc                 = SDB_OK ;
+
+      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_CLUSTER, 
+                             &pClusterName ) ;
+      if ( NULL == pClusterName )
+      {
+         _sendErrorRes2Web( SDB_INVALIDARG, "cluster name is null" ) ;
+         goto error ;
+      }
+
+      // desc is not necessary
+      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_CLUSTER_DESC, 
+                             &pDesc ) ;
+      bsonBuilder.append( OM_CLUSTER_FIELD_NAME, pClusterName ) ;
+      bsonBuilder.append( OM_CLUSTER_FIELD_DESC, pDesc ) ;
+      // duplicate check depends on the unique index of table(OM_CS_DEPLOY_CL_CLUSTERIDX1)
+      bsonCluster = bsonBuilder.obj() ;
+      rc = rtnInsert( OM_CS_DEPLOY_CL_CLUSTER, bsonCluster, 1, 0, _cb );
+      if ( rc )
+      {
+         if ( SDB_IXM_DUP_KEY == rc )
+         {
+            string errorInfo = string(pClusterName) + " is already exist" ;
+            _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         }
+         else
+         {
+            string errorInfo = string("failed to insert cluster:") 
+                               + pClusterName ;
+            PD_LOG( PDERROR, "OM: failed to insert cluster:%s", pClusterName ) ;
+            _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         }
+
+         goto error ;
+      }
+
+      bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      bsonBuilder.append( OM_REST_FIELD_CLUSTER, pClusterName ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      
+   done:
       return SDB_OK ;
+   error:
+      goto done ;
    }
 
+   void omCreateClusterCommand::_sendErrorRes2Web( INT32 rc, const CHAR* detail )
+   {
+      BSONObjBuilder bsonBuilder ;
+      
+      bsonBuilder.append( OM_REST_RES_RETCODE, rc ) ;
+      if ( NULL != detail )
+      {
+         bsonBuilder.append( OM_REST_RES_DETAIL, detail ) ;
+      }
 
+      _restAdaptor->setOPResult( _restSession, rc, bsonBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+   }
+
+   // *****************omQueryClusterCommand *****************************
+   omQueryClusterCommand::omQueryClusterCommand( restAdaptor *pRestAdaptor, 
+                                                 pmdRestSession *pRestSession )
+                         : omCreateClusterCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omQueryClusterCommand::~omQueryClusterCommand()
+   {
+   }
+
+   INT32 omQueryClusterCommand::doCommand()
+   {
+      const CHAR *pClusterName = NULL ;
+      BSONObjBuilder bsonBuilder ;
+      BSONObj selector ;
+      BSONObj matcher ;
+      BSONObj order ;
+      BSONObj hint ;
+      SINT64 contextID ;
+      INT32 rc                 = SDB_OK ;
+
+      rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
+                     _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
+      if ( rc )
+      {
+      }
+
+      bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
+      bsonBuilder.append( OM_REST_FIELD_CLUSTER, pClusterName ) ;
+      _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
+      _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+      
+   done:
+      return SDB_OK ;
+   error:
+      goto done ;
+   }
+
+   // *****************omGetFileCommand *****************************
    omGetFileCommand::omGetFileCommand( restAdaptor *pRestAdaptor, 
                                        pmdRestSession *pRestSession, 
                                        const CHAR *pRootPath,
@@ -294,8 +337,8 @@ namespace engine
          {
             PD_LOG( PDEVENT, "OM: 2file no found:%s", realSubPath.c_str() ) ;
             _restAdaptor->appendHttpBody( _restSession, 
-                                          OM_REST_REDIRECT_LOGIN, 
-                                          ossStrlen(OM_REST_REDIRECT_LOGIN) ) ;
+                                          OM_REST_REDIRECT_INDEX, 
+                                          ossStrlen(OM_REST_REDIRECT_INDEX) ) ;
             _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
          }
          else

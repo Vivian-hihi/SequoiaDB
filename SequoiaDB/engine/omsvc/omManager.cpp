@@ -90,16 +90,10 @@ namespace engine
 
    INT32 _omManager::_initOmTables() 
    {
-      _pmdEDUCB *cb      = NULL ;
-      INT32 rc           = SDB_OK ;
+      _pmdEDUCB *cb       = NULL ;
+      INT32 rc            = SDB_OK ;
       BSONObjBuilder bsonBuilder ;
-      BSONObj defaultUserObjs ;
-      BSONObj selector ;
-      BSONObj order ;
-      BSONObj hint ;
-      SINT64 contextID = -1 ;
-      rtnContextBuf buffObj ;
-      SINT64 startingPos = 0 ;
+      SDB_AUTHCB *pAuthCB = NULL ;
       
       cb = pmdGetThreadEDUCB() ;
       rc = rtnTestCollectionSpaceCommand( OM_CS_DEPLOY, _pDmsCB ) ;
@@ -164,60 +158,22 @@ namespace engine
       PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
                     OM_CS_DEPLOY_CL_CONFIGURE, rc ) ;
 
-      rc = rtnTestCollectionSpaceCommand( OM_CS_AUTH, _pDmsCB ) ;
-      if ( rc )
+      pAuthCB = pmdGetKRCB()->getAuthCB() ;
+      pAuthCB->checkNeedAuth( cb, TRUE ) ;
+      if ( !pAuthCB->needAuthenticate() )
       {
-         if ( SDB_DMS_CS_NOTEXIST == rc )
-         {
-            // if collection space was not exist, let's create one
-            rc = rtnCreateCollectionSpaceCommand ( OM_CS_AUTH, cb, _pDmsCB, 
-                                                   NULL, DMS_PAGE_SIZE_DFT, 
-                                                   TRUE, FALSE ) ;
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to create %s collection space, rc = %d",
-                          OM_CS_AUTH, rc ) ;
-         }
-         else
-         {
-            PD_RC_CHECK ( rc, PDERROR,
-                          "Failed to test collection space %s, rc = %d",
-                          OM_CS_AUTH, rc ) ;
-         }
+         BSONObj obj ;
+         bsonBuilder.append( SDB_AUTH_USER, OM_DEFAULT_LOGIN_USER ) ;
+         bsonBuilder.append( SDB_AUTH_PASSWD, OM_DEFAULT_LOGIN_PASSWD ) ;
+         obj = bsonBuilder.obj() ;
+         rc = pAuthCB->createUsr( obj, cb ) ;
+         PD_RC_CHECK ( rc, PDERROR, "Failed to create default user:rc = %d",
+                       rc ) ;
       }
 
-      // SYSOMAUTH.SYSUSER
-      rc = _createCollection ( OM_CS_AUTH_CL_USER, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create collection %s, rc = %d",
-                    OM_CS_AUTH_CL_USER, rc ) ;
+      pAuthCB->checkNeedAuth( cb, TRUE ) ;
 
-      rc = _createCollectionIndex ( OM_CS_AUTH_CL_USER,
-                                    OM_CS_AUTH_CL_USERIDX1, cb ) ;
-      PD_RC_CHECK ( rc, PDERROR, "Failed to create index %s, rc = %d",
-                    OM_CS_AUTH_CL_USERIDX1, rc ) ;
-
-      bsonBuilder.append( OM_USER_FIELD_NAME, OM_DEFAULT_LOGIN_USER ) ;
-      defaultUserObjs = bsonBuilder.obj() ;
-      rc = rtnQuery(OM_CS_AUTH_CL_USER, selector, defaultUserObjs, order, hint, 
-               0, cb, 0, -1, _pDmsCB, _pRtnCB, contextID ) ;
-      PD_RC_CHECK ( rc, PDERROR, 
-                    "Failed to check user:table = %s, user=%s, rc = %d",
-                    OM_CS_AUTH_CL_USER, OM_DEFAULT_LOGIN_USER, rc ) ;
-
-      rc = rtnGetMore(contextID, -1, buffObj, startingPos, cb, _pRtnCB ) ;
-      if ( SDB_DMS_EOC == rc || (SDB_OK == rc && 0 == buffObj.recordNum() ) )
-      {
-         BSONObjBuilder bsonBuilder2 ;
-         bsonBuilder2.append( OM_USER_FIELD_NAME, OM_DEFAULT_LOGIN_USER ) ;
-         bsonBuilder2.append( OM_USER_FIELD_PASSWD, OM_DEFAULT_LOGIN_PASSWD ) ;
-         defaultUserObjs = bsonBuilder2.obj() ;
-         rc = rtnInsert(OM_CS_AUTH_CL_USER, defaultUserObjs, 1, 0, cb ) ;
-      }
-      
    done:
-      if ( contextID != -1 )
-      {
-         rtnKillContexts( 1, &contextID, cb, _pRtnCB ) ;
-      }
       return rc ;
    error:
       goto done ;
@@ -339,7 +295,7 @@ namespace engine
       rc = pAuthCB->authenticate( obj, cb ) ;
       if ( rc )
       {
-         goto done ;
+         goto error ;
       }
 
    done:
@@ -467,6 +423,11 @@ namespace engine
       return newSession ;
    error:
       goto done ;
+   }
+
+   void _omManager::releaseSessionInfo (const string &sessionID )
+   {
+      //TODO: delete from _mapSessions & _mapUser2Sessions
    }
 
    void _omManager::_add2UserMap( const string &user,

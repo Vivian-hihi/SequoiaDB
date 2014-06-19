@@ -56,7 +56,7 @@ namespace engine
          virtual INT32   doCommand() ;
 
       private:
-         INT32 _verifyUser( const CHAR *pUserName, const CHAR *pPasswd, const CHAR *pTimestamp ) ;
+         void  _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
          
       private:
          restAdaptor*    _restAdaptor ;
@@ -88,10 +88,25 @@ namespace engine
 
       public:
          virtual INT32   doCommand() ;
+
+      protected:
+         void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
          
-      private:
+      protected:
          restAdaptor*    _restAdaptor ;
          pmdRestSession* _restSession ;
+   };
+
+   class omQueryClusterCommand : public omCreateClusterCommand 
+   {
+      public:
+         omQueryClusterCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+         ~omQueryClusterCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+         
    };
    
    class omGetFileCommand : public omCommandInterface

@@ -91,6 +91,7 @@ namespace engine
 
          restSessionInfo*  newSessionInfo( const string &userName,
                                            UINT32 localIP ) ;
+         void              releaseSessionInfo ( const string &sessionID ) ;
 
          restAdaptor*      getRestAdptor() { return &_restAdptor ; }
 
@@ -134,8 +135,8 @@ namespace engine
          string                                 _wwwRootPath ;
 
    } ;
-   typedef _omManager omManager ;
 
+   typedef _omManager omManager ;
    /*
       get the global om manager object point
    */

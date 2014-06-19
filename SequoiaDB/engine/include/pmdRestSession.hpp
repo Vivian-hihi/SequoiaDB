@@ -113,7 +113,8 @@ namespace engine
 
       void invalidate()
       {
-         _id = "" ;
+         _id     = "" ;
+         _authOK = FALSE ;
       }
    } ;
    typedef _restSessionInfo restSessionInfo ;
@@ -140,6 +141,7 @@ namespace engine
          void              restoreSession( restSessionInfo *pSessionInfo ) ;
          void              saveSession( restSessionInfo &sessionInfo ) ;
          bool              isAuthOK() ;
+         const CHAR*       getSessionID() ;
 
       protected:
          virtual void      _onAttach () ;
