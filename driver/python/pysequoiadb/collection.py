@@ -39,15 +39,23 @@ class collection(object):
       self._cl = None
 
    def get_count(self, condition = static_object):
-      rc, count = sdbcl.get_count(self._cl, condition)
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+
+      rc, count = sdbcl.get_count(self._cl, bson_condition)
       if common.SDB_OK != rc:
          count = 0
       return rc, count
 
-   def split(self, source_group_name, target_group_name,
-               split_condition, split_end_condition = static_object):
+   def split(self, source_group_name, target_group_name, split_condition,
+                                          split_end_condition = static_object):
+      if split_condition is not None:
+         bson_split_condition = bson.BSON.encode(split_condition)
+      if split_end_condition is not None:
+         bson_end_condition = bson.BSON.encode(split_end_condition)
+
       rc = sdbcl.split(self._cl, source_group_name, target_group_name,
-                          split_condition, split_end_condition)
+                                 bson_split_condition, bson_end_condition)
       return rc
 
    def split(self, source_group_name, target_group_name, precent):
@@ -57,49 +65,83 @@ class collection(object):
    def split_async(self, source_group_name, target_group_name,
                            split_condition,
                            split_end_condition = static_object):
+
+      bson_split_condition = bson.BSON.encode(split_condition)
+      if split_end_condition is not None:
+         bson_end_condition = bson.BSON.encode(split_end_condition)
+
       rc, task_id = sdbcl.split_async_by_condition(self._cl,
-                                        source_group_name,
-                                        target_group_name,
-                                        split_condition,
-                                        split_end_condition)
+                                                   source_group_name,
+                                                   target_group_name,
+                                                   bson_split_condition,
+                                                   bson_end_condition)
       if common.SDB_OK != rc:
          task_id = 0
       return rc, task_id
 
    def split_async(self, source_group_name, target_group_name, precent):
       rc, task_id = sdbcl.splite_async_by_precent(self._cl, source_group_name,
-                                              target_group_name,
-                                              precent)
+                                                  target_group_name, precent)
       if common.SDB_OK != rc:
          task_id = 0
       return rc, task_id
 
-   def bulk_insert(self, flags, *obj):
-      rc =sdbcl.bulk_insert(self._cl, flags, obj)
+   def bulk_insert(self, flags, list):
+      container = []
+      for elem in list :
+         bson = bson.BSON.encode( elem )
+         container.append( bson )
+      rc =sdbcl.bulk_insert(self._cl, flags, container)
       return rc
 
    def insert(self, obj, oid = None):
-      rc = sdbcl.insert(self._cl, obj, oid)
+      bson_obj = bson.BSON.encode(obj)
+      rc = sdbcl.insert(self._cl, bson, oid)
       return rc
 
    def update(self, rule, condition = static_object, hint = static_object):
-      rc = sdbcl.update(self._cl, rule, condition, hint)
+      bson_rule = bson.BSON.encode(rule)
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if hint is not None:
+         bson_hint = bson.BSON.encode(hint)
+
+      rc = sdbcl.update(self._cl, bson_rule, bson_condition, bson_hint)
       return rc
 
    def upsert(self, rule, condition = static_object, hint = static_object):
-      rc = sdbcl.upsert(self._cl, rule, condition, hint)
+      bson_rule = bson.BSON.encode(rule)
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if hint is not None:
+         bson_hint = bson.BSON.encode(hint)
+      rc = sdbcl.upsert(self._cl, bson_rule, bson_condition, bson_hint)
       return rc
 
    def delete(self, condition = static_object, hint = static_object):
-      rc = sdbcl.delete(self._cl, condition, hint)
+      bson_rule = bson.BSON.encode(rule)
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if hint is not None:
+         bson_hint = bson.BSON.encode(hint)
+      rc = sdbcl.delete(self._cl, bson_condition, bson_hint)
       return rc
 
-   def query(self, condition = static_object, selected = static_object,
-                     order_by = static_object, hint = static_object,
-                     num_to_skip = 0, num_to_return = -1):
+   def query(self, condition   = static_object, selected = static_object,
+                   order_by    = static_object, hint     = static_object,
+                   num_to_skip = 0, num_to_return = -1):
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if selected is not None:
+         bson_selected = bson.BSON.encode(selected)
+      if order_by is not None:
+         bson_order_by = bson.BSON.encode(order_by)
+      if hint is not None:
+         bson_hint = bson.BSON.encode(hint)
       result = cursor()
-      rc = sdbcl.query(self._cl, result._cursor, condition, selected,
-                           order_by, hint, num_to_skip, num_to_return)
+      rc = sdbcl.query(self._cl, result._cursor, bson_condition, bson_selected,
+                                                 bson_order_by, bson_hint,
+                                                 num_to_skip, num_to_return)
       if common.SDB_OK != rc:
          result = None
       return rc, result
@@ -131,17 +173,28 @@ class collection(object):
       _, full_name = sdbcl.gey_full_name(self._cl)
       return full_name
 
-   def aggregate(self, obj):
+   def aggregate(self, list):
+      container = []
+      for elem in list :
+         bson = bson.BSON.encode( elem )
+         container.append( bson )
+
       result = cursor()
-      rc = sdbcl.aggregate(self._cl, result._cursor, obj)
+      rc = sdbcl.aggregate(self._cl, result._cursor, container)
       if common.SDB_OK != rc:
          result = None
       return rc, result
 
    def get_query_meta(self, condition = static_object,
-                            order_by = static_object,
-                            hint = static_object,
+                            order_by  = static_object,
+                            hint      = static_object,
                             num_to_skip = 0, num_to_return = -1):
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if order_by is not None:
+         bson_order_by = bson.BSON.encode(order_by)
+      if hint is not None:
+         bson_hint = bson.BSON.encode(hint)
       result = cursor()
       rc = sdbcl.get_query_meta(self._cl, result._cursor, condition,
                                 order_by, hint, num_to_skip, num_to_return)
@@ -150,7 +203,9 @@ class collection(object):
       return rc, result
 
    def attach_collection(self, cl_full_name, options):
-      rc = sdbcl.attach_collection(self._cl, cl_full_name, options)
+      if options is not None:
+         bson_options = bson.BSON.encode(options)
+      rc = sdbcl.attach_collection(self._cl, cl_full_name, bson_options)
       return rc
 
    def detach_collection(self, sub_cl_full_name):

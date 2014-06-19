@@ -40,7 +40,7 @@ class client(object):
    any more.
    """
    def __init__(self, host = default_host, port = default_port,
-                  user = default_user, psw  = default_psw):
+                      user = default_user, psw  = default_psw):
       # if NULL returned, a SystemError will be raised
       self._client = sdbclient.create_client()
       rc = sdbclient.init_connect(self._client, host, port)
@@ -54,8 +54,7 @@ class client(object):
 
    def __getitem__(self, item_name):
       cs = collectionspace()
-      rc = sdbclient.get_collection_space(self._client, item_name,
-                                            cs._cs)
+      rc = sdbclient.get_collection_space(self._client, item_name, cs._cs)
       if common.SDB_OK != rc:
          cs = None
       return rc, cs
@@ -94,25 +93,40 @@ class client(object):
       return rc
 
    def get_snapshot(self, snap_type, condition = static_object,
-                             selector  = static_object,
-                             order_by  = static_object):
+                                     selector  = static_object,
+                                     order_by  = static_object):
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if selector is not None:
+         bson_selector = bson.BSON.encode(selector)
+      if condition is not None:
+         bson_order_by = bson.BSON.encode(order_by)
+
       result = cursor()
       rc = sdbclient.get_snapshot(self._client, result._cursor, snap_type,
-                           condition, selector, order_by)
+                                  bson_condition, bson_selector, bson_order_by)
       if common.SDB_OK != rc:
          result = None
       return rc, result
 
    def reset_snapshot(self, condition = static_object):
-      rc = sdbclient.reset_snapshot(self._client, condition)
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      rc = sdbclient.reset_snapshot(self._client, bson_condition)
       return rc 
 
    def get_list(self, list_type, condition = static_object,
-                          selector  = static_object,
-                          order_by  = static_object):
+                                 selector  = static_object,
+                                 order_by  = static_object):
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if selector is not None:
+         bson_selector = bson.BSON.encode(selector)
+      if condition is not None:
+         bson_order_by = bson.BSON.encode(order_by)
       result = cursor()
       rc = sdbclient.get_list(self._client, result._cursor, list_type,
-                        condition, selector, order_by)
+                              bson_condition, bson_selector, bson_order_by)
       if common.SDB_OK != rc:
          result = None
       return rc, result
@@ -127,8 +141,8 @@ class client(object):
 
    def create_collection_space(self, cs_name, page_size = 0):
       cs = collectionspace()
-      rc = sdbclient.create_collection_space(self._client, cs_name, page_size,
-                                    cs._cs)
+      rc = sdbclient.create_collection_space(self._client, cs_name,
+                                             page_size, cs._cs)
       if common.SDB_OK != rc:
          cs = None
       return rc, cs
@@ -153,8 +167,8 @@ class client(object):
 
    def get_replica_group(self, group_name):
       result = cursor()
-      rc = sdbclient.get_replica_group_by_name(self._client,
-                                     group_name, result._cursor)
+      rc = sdbclient.get_replica_group_by_name(self._client, group_name,
+                                                             result._cursor)
       if common.SDB_OK != rc:
          result = None
       return rc, result
@@ -168,8 +182,8 @@ class client(object):
 
    def creat_replica_group(self, group_name):
       replica_group = replicagroup(self._client)
-      rc = sdbclient.create_replica_group(self._client,
-                                 group_name, replica_group._group)
+      rc = sdbclient.create_replica_group(self._client, group_name,
+                                                        replica_group._group)
       return rc
 
    def remove_replica_group(self, group_name):
@@ -177,10 +191,9 @@ class client(object):
       return rc
 
    def create_replica_cata_group(self, host, service_name, dbpath, configure):
-      rc = sdbclient.create_replica_cata_group(self._client, host,
-                                     service_name,
-                                     dbpath,
-                                     configure)
+      bson_configure = bson.BSON.encode(configure)
+      rc = sdbclient.create_replica_cata_group(self._client, host, service_name,
+                                               dbpath, bson_configure)
       return rc
 
    def exec_update(self, sql):
@@ -207,7 +220,10 @@ class client(object):
       return rc
 
    def flush_configure(self, options):
-      rc = sdbclient.flush_configure(self._client, options)
+      if options is not None:
+         bson_options = bson.BSON.encode(options)
+
+      rc = sdbclient.flush_configure(self._client, bson_options)
       return rc
 
 #   def crt_js_procedure(self, code)
@@ -220,20 +236,35 @@ class client(object):
       return rc
 
    def list_backup(self, options, condition = static_object,
-                                  selector = static_object,
-                                  order_by = static_object):
+                                  selector  = static_object,
+                                  order_by  = static_object):
+      bson_options = bson.BSON.encode(options)
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if selector is not None:
+         bson_selector = bson.BSON.encode(selector)
+      if condition is not None:
+         bson_order_by = bson.BSON.encode(order_by)
       result = cursor()
-      rc = sdbclient.list_backup(self._client, result._cursor, options,
-                                               condition, selector, order_by)
+      rc = sdbclient.list_backup(self._client, result._cursor, bson_options,
+                                 bson_condition, bson_selector, bson_order_by)
       if common.SDB_OK != rc:
          result = None
       return rc, result
 
    def list_task(self, condition = static_object, selector  = static_object,
-                  order_by  = static_object, hint     = static_object):
+                       order_by  = static_object, hint      = static_object):
+      if condition is not None:
+         bson_condition = bson.BSON.encode(condition)
+      if selector is not None:
+         bson_selector = bson.BSON.encode(selector)
+      if condition is not None:
+         bson_order_by = bson.BSON.encode(order_by)
+      if hint is not None:
+         bson_hint = bson.BSON.encode(hint)
       result = cursor()
-      rc = sdbclient.list_task(self._client, result._cursor, condition,
-                         selector, order_by, hint)
+      rc = sdbclient.list_task(self._client, result._cursor, bson_condition,
+                               bson_selector, bson_order_by, bson_hint)
       if common.SDB_OK != rc:
          result = None
       return rc, result
@@ -247,7 +278,10 @@ class client(object):
       return rc
 
    def set_session_attri(self, options = static_object):
-      rc = sdbclient.set_session_attri(self._client, options)
+      if options is not None:
+         bson_options = bson.BSON.encode(options)
+
+      rc = sdbclient.set_session_attri(self._client, bson_options)
       return rc
 
    def close_all_cursors(self):

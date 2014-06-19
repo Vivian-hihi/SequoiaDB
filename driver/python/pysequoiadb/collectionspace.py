@@ -53,8 +53,11 @@ class collectionspace(object):
       return rc, cl
 
    def create_collection(self, cl_name, options = static_object):
+      if options is not None:
+         bson_options = bson.BSON.encode(options)
+
       cl = collection()
-      rc = sdbcs.get_collection(self._cs, cl_name, options, cl._cl)
+      rc = sdbcs.get_collection(self._cs, cl_name, bson_options, cl._cl)
       if common.SDB_OK != rc:
          cl = None
       return rc, cl
