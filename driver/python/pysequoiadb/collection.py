@@ -23,9 +23,10 @@ from pysequoiadb import ( static_object,
                           default_user,
                           default_psw,
                           driver_version )
+
 from pysequoiadb.cursor import cursor
-from pysequoiadb.error import error
-from pysequoiadb.common.const import const
+from pysequoiadb import error
+from pysequoiadb.common import const
 
 class collection(object):
    """Collection for SequoiaDB"""
@@ -96,7 +97,7 @@ class collection(object):
 
    def insert(self, obj, oid = None):
       bson_obj = bson.BSON.encode(obj)
-      rc = sdbcl.insert(self._cl, bson, oid)
+      rc = sdbcl.insert(self._cl, bson_obj, oid)
       return rc
 
    def update(self, rule, condition = static_object, hint = static_object):
@@ -130,12 +131,16 @@ class collection(object):
    def query(self, condition   = static_object, selected = static_object,
                    order_by    = static_object, hint     = static_object,
                    num_to_skip = 0, num_to_return = -1):
+      bson_condition = None
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
+      bson_selected = None
       if selected is not None:
          bson_selected = bson.BSON.encode(selected)
+      bson_order_by = None
       if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
+      bson_hint = None
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
       result = cursor()
