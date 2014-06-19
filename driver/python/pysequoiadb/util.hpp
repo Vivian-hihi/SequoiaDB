@@ -34,10 +34,10 @@
    pObject = new (std::nothrow) CLASSNAME ( pValue )
 
 #define DELETE_CPPOBJECT( pObject ) \
-   if ( NULL != pObject )         \
-   {                        \
-     delete pObject ;           \
-     pObject = NULL ;           \
+   if ( NULL != pObject )           \
+   {                                \
+     delete pObject ;               \
+     pObject = NULL ;               \
    } 
 
 #define MAKE_PY_NULL \
@@ -72,22 +72,22 @@
  *@classname [in] the class of the instance
  *@instance  [out] the pointer pointing to real object
  **/
-#define CAST_PYOBJECT_TO_COBJECT( py_object, classname, instance ) \
-   do                                               \
-   {                                                \
-     void *tmp = PyCObject_AsVoidPtr( py_object ) ;            \
-     if ( NULL == tmp )                                 \
-     {                                             \
-       rc = SDB_INVALIDARGS ;                           \
-       goto done ;                                    \
-     }                                             \
-                                                   \
-     instance = static_cast< classname * >( tmp ) ;            \
-     if ( NULL == instance )                             \
-     {                                             \
-       rc = SDB_INVALIDARGS ;                           \
-       goto done ;                                    \
-     }                                             \
+#define CAST_PYOBJECT_TO_COBJECT( py_object, classname, instance )   \
+   do                                                                \
+   {                                                                 \
+     void *tmp = PyCObject_AsVoidPtr( py_object ) ;                  \
+     if ( NULL == tmp )                                              \
+     {                                                               \
+       rc = SDB_INVALIDARGS ;                                        \
+       goto done ;                                                   \
+     }                                                               \
+                                                                     \
+     instance = static_cast< classname * >( tmp ) ;                  \
+     if ( NULL == instance )                                         \
+     {                                                               \
+       rc = SDB_INVALIDARGS ;                                        \
+       goto done ;                                                   \
+     }                                                               \
    }while( 0 )
 
 /*
@@ -96,79 +96,79 @@
  *@py_object [in] object need to cast
  *@instance  [out] the pointer pointing to real object
  **/
-#define CAST_PYBSON_TO_CPPBSON( py_object, bson_object )      \
-   if ( Py_None == py_object )                         \
-   {                                             \
-     bson_object = &sdbclient::_sdbStaticObject ;          \
-   }                                             \
-   else                                          \
-   {                                             \
-     const char *tmp = PyBytes_AsString( py_object ) ;      \
-     if ( NULL == tmp )                              \
-     {                                          \
-       rc = SDB_INVALIDARGS ;                        \
-       goto done ;                                 \
-     }                                          \
-                                                \
-     NEW_CPPOBJECT_INIT( bson_object, bson::BSONObj, tmp ) ;  \
-     if ( NULL == bson_object )                        \
-     {                                          \
-       rc = SDB_OOM ;                              \
-       goto done ;                                 \
-     }                                          \
+#define CAST_PYBSON_TO_CPPBSON( py_object, bson_object )       \
+   if ( Py_None == py_object )                                 \
+   {                                                           \
+     bson_object = &sdbclient::_sdbStaticObject ;              \
+   }                                                           \
+   else                                                        \
+   {                                                           \
+     const char *tmp = PyBytes_AsString( py_object ) ;         \
+     if ( NULL == tmp )                                        \
+     {                                                         \
+       rc = SDB_INVALIDARGS ;                                  \
+       goto done ;                                             \
+     }                                                         \
+                                                               \
+     NEW_CPPOBJECT_INIT( bson_object, bson::BSONObj, tmp ) ;   \
+     if ( NULL == bson_object )                                \
+     {                                                         \
+       rc = SDB_OOM ;                                          \
+       goto done ;                                             \
+     }                                                         \
    }
 
 #define MAKE_PYLIST_TO_VECTOR( py_list, vec_bson )                   \
-do                                                       \
-{                                                        \
-   if( !PyList_Check( py_list) )                                 \
-   {                                                      \
-     rc = SDB_INVALIDARGS ;                                    \
-     goto done ;                                            \
-   }                                                      \
-                                                         \
-   INT32 list_size = PyList_Size( py_list ) ;                       \
+do                                                                   \
+{                                                                    \
+   if( !PyList_Check( py_list) )                                     \
+   {                                                                 \
+     rc = SDB_INVALIDARGS ;                                          \
+     goto done ;                                                     \
+   }                                                                 \
+                                                                     \
+   INT32 list_size = PyList_Size( py_list ) ;                        \
    for ( int idx = 0 ; idx < list_size ; ++idx )                     \
-   {                                                      \
-     const bson::BSONObj *obj = NULL ;                           \
-     CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ;      \
-     vec_bson.push_back( *obj ) ;                               \
-     DELETE_CPPOBJECT( obj ) ;                                 \
-   }                                                      \
+   {                                                                 \
+     const bson::BSONObj *obj = NULL ;                               \
+     CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ;  \
+     vec_bson.push_back( *obj ) ;                                    \
+     DELETE_CPPOBJECT( obj ) ;                                       \
+   }                                                                 \
 }while( FALSE )
 
 #define SDB_INVALIDARGS -6
 #define SDB_OOM       -2   
 
-#define DEFINE_MODULE(modulename, methods)          \
-static struct PyModuleDef moduledef = {            \
-   PyModuleDef_HEAD_INIT,                       \
+#define DEFINE_MODULE(modulename, methods)   \
+static struct PyModuleDef moduledef = {      \
+   PyModuleDef_HEAD_INIT,                    \
    #modulename,                              \
-   NULL,                                    \
-   sizeof(struct module_state),                  \
-   methods,                                 \
-   NULL,                                    \
-   NULL,                                    \
-   NULL,                                    \
-   NULL                                    \
+   NULL,                                     \
+   sizeof(struct module_state),              \
+   methods,                                  \
+   NULL,                                     \
+   NULL,                                     \
+   NULL,                                     \
+   NULL                                      \
 };                                        
 
 #if PY_MAJOR_VERSION >= 3                        
    #define INITERROR return NULL
-   #define DECLARE_MODULE_FUN(modulename, methods)      \
-     DEFINE_MODULE(modulename, methods)              \
+   #define DECLARE_MODULE_FUN(modulename, methods)    \
+     DEFINE_MODULE(modulename, methods)               \
      PyMODINIT_FUNC PyInit__##modulename(void)
 #else                                       
    #define INITERROR return                        
-   #define DECLARE_MODULE_FUN(modulename, methods)      \
+   #define DECLARE_MODULE_FUN(modulename, methods) \
      PyMODINIT_FUNC init##modulename(void)
 #endif                                       
 
 #if PY_MAJOR_VERSION >= 3                       
-   #define MODULE_CREATE(modulename, methods)          \
+   #define MODULE_CREATE(modulename, methods)   \
      m = PyModule_Create(&moduledef)               
 #else                                      
-   #define MODULE_CREATE(modulename, methods)          \
+   #define MODULE_CREATE(modulename, methods)   \
      m = Py_InitModule(modulename, methods)         
 #endif                                  
 
@@ -179,17 +179,17 @@ static struct PyModuleDef moduledef = {            \
    #define RETURN   return
 #endif                                       
                                     
-#define CREATE_MODULE( modulename, methods )         \
-DECLARE_MODULE_FUN( modulename, methods )           \
-{                                         \
+#define CREATE_MODULE( modulename, methods ) \
+DECLARE_MODULE_FUN( modulename, methods )    \
+{                                            \
    PyObject *m;                              \
-   MODULE_CREATE(#modulename, methods) ;            \
-   if (m == NULL)                             \
-   {                                       \
+   MODULE_CREATE(#modulename, methods) ;     \
+   if (m == NULL)                            \
+   {                                         \
      INITERROR;                              \
-   }                                       \
-                                          \
-   RETURN ;                                 \
+   }                                         \
+                                             \
+   RETURN ;                                  \
 } 
 
 
