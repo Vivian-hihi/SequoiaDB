@@ -17,11 +17,10 @@ from pysequoiadb import const
 from pysequoiadb.enum import enum
 
 NODE_STATUS = enum(((0,"ALL"),(1,"ACTIVE"),(2,"INACTIVE"),(3,"UNKNOWN")))
-const.RET_TUPLE_SIZE=2
 const.SDB_OK = 0
-const.ERRCODE_INDEX=0
-const.RETOBJ_INDEX=1
 const.errmaps = dict()
+const.INVALIDARG = -6
+const.SDB_DMS_EOC = -29
 
 
 init=False
