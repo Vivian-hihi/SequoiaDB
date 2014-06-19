@@ -190,14 +190,14 @@ done :
 
 /* List of functions defined in the module */
 static PyMethodDef sdbcollectionspace_methods[] = {
-   {"create_cs",             create_cs,             METH_VARARGS},
-   {"release_cs",            release_cs,            METH_VARARGS},
-   {"get_collection",         get_collection,         METH_VARARGS},
-   {"create_collection",       create_collection,       METH_VARARGS},
+   {"create_cs",                 create_cs,                 METH_VARARGS},
+   {"release_cs",                release_cs,                METH_VARARGS},
+   {"get_collection",            get_collection,            METH_VARARGS},
+   {"create_collection",         create_collection,         METH_VARARGS},
    {"create_collection_use_opt", create_collection_use_opt, METH_VARARGS},
-   {"drop_collection",         drop_collection,         METH_VARARGS},
+   {"drop_collection",           drop_collection,           METH_VARARGS},
    {"get_collection_space_name", get_collection_space_name, METH_VARARGS},
    {NULL, NULL}
 };
 
-CREATE_MODULE( sdbcollectionspace, sdbcollectionspace_methods )
+CREATE_MODULE( sdbcs, sdbcollectionspace_methods )
