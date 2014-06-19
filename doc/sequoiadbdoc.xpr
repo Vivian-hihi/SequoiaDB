@@ -59,6 +59,7 @@
                         <file name="administration/concepts/cluster/topics/coord_node.dita"/>
                         <file name="administration/concepts/cluster/topics/data_node_en.dita"/>
                         <file name="administration/concepts/cluster/topics/data_node.dita"/>
+                        <file name="administration/concepts/cluster/topics/domain_en.dita"/>
                         <file name="administration/concepts/cluster/topics/domain.dita"/>
                         <file name="administration/concepts/cluster/topics/mode_en.dita"/>
                         <file name="administration/concepts/cluster/topics/mode.dita"/>
@@ -902,6 +903,7 @@
                 </folder>
                 <folder name="topics_en_v2">
                     <file name="references/methods/topics_en_v2/cl.aggregate.dita"/>
+                    <file name="references/methods/topics_en_v2/cl.alter.dita"/>
                     <file name="references/methods/topics_en_v2/cl.attachCL.dita"/>
                     <file name="references/methods/topics_en_v2/cl.count.dita"/>
                     <file name="references/methods/topics_en_v2/cl.createIndex.dita"/>
@@ -931,21 +933,25 @@
                     <file name="references/methods/topics_en_v2/db.cancelTask.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCataRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.createCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.createDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.createProcedure.dita"/>
                     <file name="references/methods/topics_en_v2/db.createRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.createUsr.dita"/>
                     <file name="references/methods/topics_en_v2/db.dropCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.dropDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.dropUsr.dita"/>
                     <file name="references/methods/topics_en_v2/db.eval.dita"/>
                     <file name="references/methods/topics_en_v2/db.exec.dita"/>
                     <file name="references/methods/topics_en_v2/db.execUpdate.dita"/>
                     <file name="references/methods/topics_en_v2/db.flushConfigure.dita"/>
                     <file name="references/methods/topics_en_v2/db.getCS.dita"/>
+                    <file name="references/methods/topics_en_v2/db.getDomain.dita"/>
                     <file name="references/methods/topics_en_v2/db.getRG.dita"/>
                     <file name="references/methods/topics_en_v2/db.list.dita"/>
                     <file name="references/methods/topics_en_v2/db.listBackup.dita"/>
                     <file name="references/methods/topics_en_v2/db.listCollections.dita"/>
                     <file name="references/methods/topics_en_v2/db.listCollectionSpaces.dita"/>
+                    <file name="references/methods/topics_en_v2/db.listDomains.dita"/>
                     <file name="references/methods/topics_en_v2/db.listProcedures.dita"/>
                     <file name="references/methods/topics_en_v2/db.listReplicaGroups.dita"/>
                     <file name="references/methods/topics_en_v2/db.listTasks.dita"/>
@@ -960,6 +966,7 @@
                     <file name="references/methods/topics_en_v2/db.transCommit.dita"/>
                     <file name="references/methods/topics_en_v2/db.transRollback.dita"/>
                     <file name="references/methods/topics_en_v2/db.waitTasks.dita"/>
+                    <file name="references/methods/topics_en_v2/domain.alter.dita"/>
                     <file name="references/methods/topics_en_v2/methodlist_en_v2.dita"/>
                     <file name="references/methods/topics_en_v2/node.connect.dita"/>
                     <file name="references/methods/topics_en_v2/node.getHostName.dita"/>

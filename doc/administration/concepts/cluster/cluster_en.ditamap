@@ -27,5 +27,6 @@
    <topicref href="topics/task_en.dita"/>
    <topicref href="topics/split_en.dita"/>
   </topicref>
+  <topicref href="topics/domain_en.dita"/>
  </topicref>
 </map>

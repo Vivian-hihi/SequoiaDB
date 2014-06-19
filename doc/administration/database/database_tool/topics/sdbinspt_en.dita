@@ -71,10 +71,15 @@
           <stentry>specify whether need to check or format the number of data page,default is
               <i>all</i></stentry>
         </strow>
+        <strow>
+          <stentry>--record, -p </stentry>
+          <stentry>Specifies the display formatted output data or index content, only the default output data or index metadata. </stentry>
+        </strow>
       </simpletable>
     </section>
     <section>
       <title>Usage</title>
+      <p>When using sdbinspt tool, be sure that the database process has stopped.</p>
       <p>The following sample shows <b>sdbinspt</b> will detect in current directory and formatted
         output  the data and indexes in all of collectionspaces and collections to <i>output.txt</i>
         file .</p>

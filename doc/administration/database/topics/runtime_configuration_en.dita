@@ -206,7 +206,7 @@
 					<stentry>--syncstrategy</stentry>
 					<stentry>--</stentry>
 					<stentry>str</stentry>
-					<stentry>The control strategy of data sync in repl group, value enumeration: none,keepnormal,keepall, default:none.</stentry>
+					<stentry>The control strategy of data sync in repl group, value enumeration: none,keepnormal,keepall, default:keepnormal.</stentry>
 				</strow>
 				<strow>
 					<stentry>--preferedinstance</stentry>
