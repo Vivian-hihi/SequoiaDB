@@ -15,7 +15,7 @@ createCS - Create a collection space in a database instance.
 .sp 2
 
 .sp 2
-db.createCS(\fB<name>\fR,\fB[pageSize]\fR)
+db.createCS(\fB<name>\fR,\fB[options]\fR)
 .SH "CATEGORY"
 
 .sp 2
@@ -29,21 +29,24 @@ Create a collection space in a database instance.
 .sp 2
 \fBname (string)\fR
 .br
-       Collection space name. Collection space names should be
-       unique to each other in a database object.
+       Collection space name. Collection space name should be
+       unique to each other in a database instance.
 .sp 2
-\fBpageSize (int)\fR
+\fBoptions (Json object)\fR
 .br
-       Size of data page. The default value is 65536B.
+       Optional in a collection space.
 .sp 2
-       \fBFormat\fR
+       \fBPageSize\fR
 .br
-              Users can create a collection space with 2
-              parameters: name and pageSize. The parameter "name"
-              is in the type of string. The parameter "pageSize"
-              is in the type of 32-bit integer.
+              Size of data page. The default value is 65536B.
 .br
-              ("<collection space name>",[pagesize])
+              PageSize:<int32>
+.sp 2
+       \fBDomain\fR
+.br
+              Domain that collection space belongs to.
+.br
+              Domain:<string>
 .sp 2
 
 .sp 2
@@ -59,6 +62,14 @@ Create a collection space in a database instance.
    *  When creating a collection space, users can specify the
    size of data page. It is unchangable afterward. The default
    value of it is 65536B.
+.sp 2
+   *  PageSize can only be one of the following
+   six:0,4096,8192,16384,32768,and 65536. The default value is 0.
+.sp 2
+   *  Domain must already exist, and cannot be SYSDOMAIN.
+.sp 2
+   *  It is compatible with earlier version interface, and
+   function db.createCS(<name>, [PageSize]) can alsobe used.
 .SH "Examples"
 
 .sp 2
@@ -67,7 +78,7 @@ of data page.
 .sp 2
 db.createCS("foo")
 .sp 2
-Create a collection space named "foo" and specify the size of
-data page as 1024.
+Create a collection space named "foo", set 4096B for PageSize and
+"mydomain" for Domain.
 .sp 2
-db.createCS("foo",1024)
+db.createCS("foo",{PageSize:4096,Domain:"mydomain"})
