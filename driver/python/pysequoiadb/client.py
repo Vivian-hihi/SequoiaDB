@@ -24,12 +24,12 @@ from pysequoiadb import ( static_object,
                           default_user,
                           default_psw,
                           driver_version )
-
 from pysequoiadb.collectionspace import collectionspace
 from pysequoiadb.collection import collection
 from pysequoiadb.cursor import cursor
 from pysequoiadb.replicagroup import replicagroup
-from pysequoiadb.common.const import const
+from pysequoiadb.common import const
+
 
 class client(object):
    """SequoiaDB Client Driver
@@ -166,7 +166,7 @@ class client(object):
       return rc, result
 
    def get_replica_group_by_name(self, group_name):
-      result = replicagroup()
+      result = replicagroup(self._client)
       rc = sdbclient.get_replica_group_by_name(self._client, group_name,
                                                              result._group)
       if const.SDB_OK != rc:
@@ -185,6 +185,7 @@ class client(object):
       rc = sdbclient.create_replica_group(self._client, group_name,
                                                         replica_group._group)
       return rc, replica_group
+
 
    def remove_replica_group(self, group_name):
       rc = sdbclient.remove_replica_group(self._client, group_name)
