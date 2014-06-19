@@ -1907,7 +1907,7 @@ namespace engine
 
    INT16 catCatalogueManager::_majoritySize()
    {
-      return (INT16)( _pClsCB->getReplCB()->groupSize() / 2 + 1 ) ;
+      return _pCatCB->majoritySize() ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGMGR_CMDLINKCOLLECTION, "catCatalogueManager::processCmdLinkCollection" )

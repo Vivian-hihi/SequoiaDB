@@ -900,13 +900,20 @@ namespace engine
       MsgAuthCrtUsr *msg = ( MsgAuthCrtUsr * )pMsg ;
       BSONObj obj ;
       MsgAuthCrtReply reply ;
+
+      if ( !pmdIsPrimary() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         goto ERROR ;
+      }
+
       rc = extractAuthMsg( &(msg->header), obj ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
 
-      rc = _pAuthCB->createUsr( obj, _pEDUCB ) ;
+      rc = _pAuthCB->createUsr( obj, _pEDUCB, _pCatCB->majoritySize() ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -934,6 +941,13 @@ namespace engine
       MsgAuthentication *msg = ( MsgAuthentication * )pMsg ;
       BSONObj obj ;
       MsgAuthReply reply ;
+
+      if ( !pmdIsPrimary() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
+      }
+
       if ( !_pAuthCB->needAuthenticate() )
       {
          goto done ;
@@ -971,13 +985,20 @@ namespace engine
       MsgAuthDelUsr *msg = ( MsgAuthDelUsr * )pMsg ;
       BSONObj obj ;
       MsgAuthDelReply reply ;
+
+      if ( !pmdIsPrimary() )
+      {
+         rc = SDB_CLS_NOT_PRIMARY ;
+         goto error ;
+      }
+
       rc = extractAuthMsg( &(msg->header), obj ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
       }
 
-      rc = _pAuthCB->removeUsr( obj, _pEDUCB ) ;
+      rc = _pAuthCB->removeUsr( obj, _pEDUCB, _pCatCB->majoritySize() ) ;
       if ( SDB_OK != rc )
       {
          goto error ;

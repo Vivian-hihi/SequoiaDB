@@ -36,6 +36,7 @@
 
 #include "catalogueCB.hpp"
 #include "msgCatalog.hpp"
+#include "clsMgr.hpp"
 #include "ossUtil.hpp"
 #include "pd.hpp"
 #include "pdTrace.hpp"
@@ -66,6 +67,11 @@ namespace engine
          SDB_OSS_DEL _pNetWork;
          _pNetWork = NULL;
       }
+   }
+
+   INT16 sdbCatalogueCB::majoritySize()
+   {
+      return (INT16)( sdbGetReplCB()->groupSize() / 2 + 1 ) ;
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_CATALOGCB_INIT, "sdbCatalogueCB::init" )

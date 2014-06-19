@@ -93,6 +93,8 @@ namespace engine
          void     insertCataNodeID( UINT16 nodeID );
          void     releaseCataNodeID( UINT16 nodeID );
 
+         INT16    majoritySize() ;
+
          _netRouteAgent* netWork()
          {
             return _pNetWork;

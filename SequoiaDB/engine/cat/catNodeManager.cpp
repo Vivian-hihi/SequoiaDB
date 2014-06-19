@@ -2533,6 +2533,6 @@ namespace engine
 
    INT16 catNodeManager::_majoritySize()
    {
-      return (INT16)( _pClsCB->getReplCB()->groupSize() / 2 + 1 ) ;
+      return _pCatCB->majoritySize() ;
    }
 }
