@@ -28,7 +28,7 @@ from pysequoiadb import collectionspace
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import replicagroup
-from pysequoiadb.common import const
+from pysequoiadb import common
 from pysequoiadb.error import PySequoiaDBError
 
 class client(object):
@@ -45,7 +45,7 @@ class client(object):
       self._client = sdbclient.create_client()
       rc = sdbclient.init_connect(self._client, host, port)
       if rc:
-         sdbclinet.disconnect(self._client)
+         sdbclient.disconnect(self._client)
      
    def __del__(self):
       if self._client is not None:
@@ -56,6 +56,8 @@ class client(object):
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, item_name,
                                             cs._cs)
+      if common.SDB_OK != rc:
+         cs = None
       return rc, cs
 
    def connect(self, host = default_host, port = default_port,
@@ -97,6 +99,8 @@ class client(object):
       result = cursor()
       rc = sdbclient.get_snapshot(self._client, result._cursor, snap_type,
                            condition, selector, order_by)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def reset_snapshot(self, condition = static_object):
@@ -109,18 +113,24 @@ class client(object):
       result = cursor()
       rc = sdbclient.get_list(self._client, result._cursor, list_type,
                         condition, selector, order_by)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def get_collection_space(self, cs_name):
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, cs_name, 
                                  cs._cs)
+      if common.SDB_OK != rc:
+         cs = None
       return rc, cs
 
    def create_collection_space(self, cs_name, page_size):
       cs = collectionspace()
       rc = sdbclient.create_collection_space(self._client, cs_name, page_size,
                                     cs._cs)
+      if common.SDB_OK != rc:
+         cs = None
       return rc, cs
 
    def drop_collection_space(self, cs_name):
@@ -130,22 +140,30 @@ class client(object):
    def list_collection_spaces(self):
       result = cursor()
       rc = sdbclient.list_collection_spaces(self._client, result._cursor)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def list_replica_groups(self):
       result = cursor()
       rc = sdbclient.list_replica_groups(self._client, result._cursor)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def get_replica_group(self, group_name):
       result = cursor()
       rc = sdbclient.get_replica_group_by_name(self._client,
                                      group_name, result._cursor)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def get_replica_group(self, id):
       result = cursor()
       rc = sdbclient.get_replica_group_by_id(self._client, id, result._cursor)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def creat_replica_group(self, group_name):
@@ -172,6 +190,8 @@ class client(object):
    def exec_sql(self, sql):
       result = cursor()
       rc = sdbclient.exec_sql(self._client, sql, result._cursor)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def transaction_begin(self):
@@ -199,12 +219,14 @@ class client(object):
       rc = sdbclient.backup_offline(self._client, options)
       return rc
 
-   def list_backup(self,options, conditions = static_object,
-                          selector = static_object,
-                          order_by = static_object):
+   def list_backup(self, options, conditions = static_object,
+                                  selector = static_object,
+                                  order_by = static_object):
       result = cursor()
-      rc = sdbclient.list_backup(self._client, result._cursor, option,
+      rc = sdbclient.list_backup(self._client, result._cursor, options,
                            condition, selector, order_by)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def list_task(self, condition = static_object, selector  = static_object,
@@ -212,6 +234,8 @@ class client(object):
       result = cursor()
       rc = sdbclient.list_task(self._client, result._cursor, condition,
                          selector, order_by, hint)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def wait_task(self, task_ids, num):
@@ -223,7 +247,7 @@ class client(object):
       return rc
 
    def set_session_attri(self, options = static_object):
-      rc = sdbclient.set_session_attri(self._client, bosn_options)
+      rc = sdbclient.set_session_attri(self._client, options)
       return rc
 
    def close_all_cursors(self):
@@ -232,6 +256,6 @@ class client(object):
 
    def is_valid(self):
       rc, valid = sdbclient.is_valid(self._client)
-      if rc:
-         pass
+      if common.SDB_OK != rc:
+         valid = false
       return valid

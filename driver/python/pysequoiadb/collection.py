@@ -25,7 +25,7 @@ from pysequoiadb import ( static_object,
                     driver_version )
 from pysequoiadb import cursor
 from pysequoiadb import error
-from pysequoiadb.common import const
+from pysequoiadb import common
 
 class collection(object):
    """Collection for SequoiaDB"""
@@ -40,6 +40,8 @@ class collection(object):
 
    def get_count(self, condition = static_object):
       rc, count = sdbcl.get_count(self._cl, condition)
+      if common.SDB_OK != rc:
+         count = 0
       return rc, count
 
    def split(self, source_group_name, target_group_name,
@@ -60,13 +62,17 @@ class collection(object):
                                         target_group_name,
                                         split_condition,
                                         split_end_condition)
-      return task_id
+      if common.SDB_OK != rc:
+         task_id = 0
+      return rc, task_id
 
    def split_async(self, source_group_name, target_group_name, precent):
       rc, task_id = sdbcl.splite_async_by_precent(self._cl, source_group_name,
                                               target_group_name,
                                               precent)
-      return task_id
+      if common.SDB_OK != rc:
+         task_id = 0
+      return rc, task_id
 
    def bulk_insert(self, flags, *obj):
       rc =sdbcl.bulk_insert(self._cl, flags, obj)
@@ -94,6 +100,8 @@ class collection(object):
       result = cursor()
       rc = sdbcl.query(self._cl, result._cursor, condition, selected,
                            order_by, hint, num_to_skip, num_to_return)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def create_index(self, idx_name, is_unique, is_enforced):
@@ -103,6 +111,8 @@ class collection(object):
    def get_indexes(self, idx_name):
       result = cursor()
       rc = sdbcl.get_indexes(self._cl, result._cursor, idx_name)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def drop_index(self, idx_name):
@@ -130,6 +140,8 @@ class collection(object):
    def aggregate(self, obj):
       result = cursor()
       rc = sdbcl.aggregate(self._cl, result._cursor, obj)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def get_query_meta(self, condition = static_object,
@@ -137,8 +149,10 @@ class collection(object):
                             hint = static_object,
                             num_to_skip = 0, num_to_return = -1):
       result = cursor()
-      rc = sdbcl.get_query_meta(self._cl, result._cursor, condition, order_by, hint,
-                                 num_to_skip, num_to_return)
+      rc = sdbcl.get_query_meta(self._cl, result._cursor, condition,
+                                order_by, hint, num_to_skip, num_to_return)
+      if common.SDB_OK != rc:
+         result = None
       return rc, result
 
    def attach_collection(self, cl_full_name, options):
