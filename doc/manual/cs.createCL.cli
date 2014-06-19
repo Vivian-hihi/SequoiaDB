@@ -87,6 +87,17 @@ should belong to on and only one collection.
 .br
               Partitioned collection
 .sp 2
+       \fBAutoSplit (boolean)\fR
+.br
+              automatic split.
+.sp 2
+       \fBGroups (string)\fR
+.br
+              Specify a replica group which the collection should
+              be in.
+.br
+              Groups:<group name>
+.sp 2
 
 .sp 2
 \fBNote: \fR
@@ -112,6 +123,20 @@ should belong to on and only one collection.
    *  The value of "name" should not be null string, "." or "$".
    The length of it should not be greater than 127B, or exception
    will occur.
+.sp 2
+   *  AutoSplit must cooperate with hash partitioning and domain.
+   AutoSplit and Groups cannot be set at the same time.
+.sp 2
+   *  AutoSplit and Groups cannot be set at the same time.
+.sp 2
+   *  If AutoSplit is not specified in a collection, the value of
+   AutoSplit will come from domain.
+.sp 2
+   *  Group must exist in a domain, which contains a collection
+   space, which has the group(All replica groups belong to
+   SYSDOMAIN, that is to say, a collection space can be
+   distributed into any replica group if no specific group is
+   given)
 .SH "RETURN VALUE"
 
 .sp 2
