@@ -28,6 +28,7 @@ from pysequoiadb import collectionspace
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import replicagroup
+from pysequoiadb.common import const
 from pysequoiadb.error import PySequoiaDBError
 
 class client(object):

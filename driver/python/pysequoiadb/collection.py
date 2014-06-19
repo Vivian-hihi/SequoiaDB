@@ -25,6 +25,7 @@ from pysequoiadb import ( static_object,
                     driver_version )
 from pysequoiadb import cursor
 from pysequoiadb import error
+from pysequoiadb.common import const
 
 class collection(object):
    """Collection for SequoiaDB"""

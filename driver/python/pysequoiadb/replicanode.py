@@ -15,7 +15,7 @@
 """
 
 import sdbreplicanode
-from pysequoiadb.common import const
+from pysequoiadb import common
 from pysequoiadb import error
 from pysequoiadb.error import PySequoiaDBError
 
@@ -37,7 +37,7 @@ class replicanode(object):
 
    def connect(self):
       rc = sdbreplicanode.connect(self._node, self._client)
-      if const.SDB_OK != rc:
+      if common.SDB_OK != rc:
          raise error.OperationError("sdb error msg", rc)
       else:
          return rc
@@ -60,7 +60,7 @@ class replicanode(object):
 
    def stop(self):
       ret = sdbreplicanode.stop(self._node)
-      if const.SDB_OK != ret:
+      if common.SDB_OK != ret:
          raise error.OperationError("sdb error msg", ret)
       return ret
 

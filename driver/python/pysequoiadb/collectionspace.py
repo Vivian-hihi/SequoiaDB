@@ -26,6 +26,7 @@ from pysequoiadb import ( static_object,
 from pysequoiadb import collection
 from pysequoiadb import cursor
 from pysequoiadb import error
+from pysequoiadb.common import const
 
 class collectionspace(object):
    """CollectionSpace for SequoiaDB"""
@@ -33,8 +34,6 @@ class collectionspace(object):
    def __init__(self):
       """'cs' is short for collection space"""
       self._cs = sdbcs.create_cs()
-      if self._cs is None:
-         raise Exception()
 
    def __del__(self):
       if self._cs is not None:
