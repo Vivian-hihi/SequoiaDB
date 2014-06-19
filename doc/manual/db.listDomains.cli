@@ -15,7 +15,7 @@ listDomains - Emuratedoamins.
 .sp 2
 
 .sp 2
-db.listDomain()
+db.listDomain(\fB<name>\fR)
 .SH "CATEGORY"
 
 .sp 2
