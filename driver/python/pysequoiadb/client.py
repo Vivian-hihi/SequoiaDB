@@ -19,11 +19,11 @@ import sdbclient
 
 import bson
 from pysequoiadb import ( static_object,
-                    default_host,
-                    default_port,
-                    default_user,
-                    default_psw,
-                    driver_version )
+                          default_host,
+                          default_port,
+                          default_user,
+                          default_psw,
+                          driver_version )
 from pysequoiadb import collectionspace
 from pysequoiadb import collection
 from pysequoiadb import cursor
@@ -219,7 +219,7 @@ class client(object):
       rc = sdbclient.backup_offline(self._client, options)
       return rc
 
-   def list_backup(self, options, conditions = static_object,
+   def list_backup(self, options, condition = static_object,
                                   selector = static_object,
                                   order_by = static_object):
       result = cursor()
@@ -257,5 +257,5 @@ class client(object):
    def is_valid(self):
       rc, valid = sdbclient.is_valid(self._client)
       if common.SDB_OK != rc:
-         valid = false
+         valid = False
       return valid
