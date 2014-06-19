@@ -163,8 +163,7 @@ namespace engine
                              INT32 opCode,
                              CHAR **ppReplyBody,
                              UINT32 &replyBodyLen,
-                             INT32 &returnNum,
-                             BOOLEAN &fillPeerRouteID ) ;
+                             INT32 &returnNum ) ;
       INT32 processCmdQuerySpaceInfo( const CHAR *pQuery,
                                       CHAR **ppReplyBody,
                                       UINT32 &replyBodyLen,

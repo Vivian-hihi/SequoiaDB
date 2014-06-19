@@ -767,8 +767,7 @@ namespace engine
                                                INT32 opCode,
                                                CHAR * * ppReplyBody,
                                                UINT32 & replyBodyLen,
-                                               INT32 & returnNum,
-                                               BOOLEAN &fillPeerRouteID )
+                                               INT32 & returnNum )
    {
       INT32 rc = SDB_OK ;
       const CHAR *clFullName = NULL ;
@@ -829,20 +828,16 @@ namespace engine
                rc = catSplitCancel( query, _pEduCB, groupID, _majoritySize() ) ;
                break ;
             case MSG_CAT_SPLIT_START_REQ :
-               fillPeerRouteID = TRUE ;
                rc = catSplitStart( query, _pEduCB, _majoritySize() ) ;
                break ;
             case MSG_CAT_SPLIT_CHGMETA_REQ :
-               fillPeerRouteID = TRUE ;
                rc = catSplitChgMeta( query, clFullName, pCataSet, _pEduCB,
                                      _majoritySize() ) ;
                break ;
             case MSG_CAT_SPLIT_CLEANUP_REQ :
-               fillPeerRouteID = TRUE ;
                rc = catSplitCleanup( query, _pEduCB, _majoritySize() ) ;
                break ;
             case MSG_CAT_SPLIT_FINISH_REQ :
-               fillPeerRouteID = TRUE ;
                rc = catSplitFinish( query, _pEduCB, _majoritySize() ) ;
                break ;
             default :
@@ -1731,6 +1726,7 @@ namespace engine
 
       PD_TRACE_ENTRY ( SDB_CATALOGMGR_PROCESSCOMMANDMSG ) ;
       MsgOpReply replyHeader ;
+      INT32      opCode = pQueryReq->header.opCode ;
       CHAR       *replyData = NULL ;
       UINT32     replyDataLen = 0 ;
       INT32      returnNum    = 0 ;
@@ -1752,6 +1748,14 @@ namespace engine
       replyHeader.numReturned = 0 ;
       replyHeader.startFrom = 0 ;
       _fillRspHeader( &(replyHeader.header), &(pQueryReq->header) ) ;
+
+      if ( MSG_CAT_SPLIT_START_REQ == opCode ||
+           MSG_CAT_SPLIT_CHGMETA_REQ == opCode ||
+           MSG_CAT_SPLIT_CLEANUP_REQ == opCode ||
+           MSG_CAT_SPLIT_FINISH_REQ == opCode )
+      {
+         fillPeerRouteID = TRUE ;
+      }
 
       // extract msg
       rc = msgExtractQuery( pEvent->data, &flag, &pCMDName, &numToSkip,
@@ -1786,8 +1790,7 @@ namespace engine
          case MSG_CAT_SPLIT_CLEANUP_REQ :
          case MSG_CAT_SPLIT_FINISH_REQ :
             rc = processCmdSplit( pQuery, pQueryReq->header.opCode,
-                                  &replyData, replyDataLen, returnNum,
-                                  fillPeerRouteID ) ;
+                                  &replyData, replyDataLen, returnNum ) ;
             break ;
          case MSG_CAT_QUERY_SPACEINFO_REQ :
             rc = processCmdQuerySpaceInfo( pQuery, &replyData, replyDataLen,
