@@ -43,6 +43,18 @@ using namespace bson ;
 
 namespace engine
 {
+   static void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor, 
+                           pmdRestSession *pRestSession, pmdEDUCB* pEduCB ) ;
+
+   void _sendOpError2Web ( INT32 rc, restAdaptor *pAdptor, 
+                           pmdRestSession *pRestSession, pmdEDUCB* pEduCB )
+   {
+      BSONObj _errorInfo = pmdGetErrorBson( rc, pEduCB->getInfo( 
+                              EDU_INFO_ERROR ) ) ;
+      pAdptor->setOPResult( pRestSession, rc, _errorInfo ) ;
+      pAdptor->sendResponse( pRestSession, HTTP_OK ) ;
+   }
+
    /*
       _pmdRestSession implement
    */
@@ -77,9 +89,8 @@ namespace engine
       pmdEDUMgr *pEDUMgr               = NULL ;
       const CHAR *pSessionID           = NULL ;
       HTTP_PARSE_COMMON httpCommon     = COM_GETFILE ;
-      CHAR *pFilePath               = NULL ;
+      CHAR *pFilePath                  = NULL ;
       INT32 bodySize                   = 0 ;
-      BOOLEAN needReply                = FALSE ;
 
       if ( !_pEDUCB )
       {
@@ -104,35 +115,35 @@ namespace engine
 
          _pEDUCB->resetInterrupt() ;
          _pEDUCB->resetInfo( EDU_INFO_ERROR ) ;
-         needReply = TRUE ;
 
          // recv rest header
          rc = pAdptor->recvRequestHeader( this ) ;
          if ( rc )
          {
-            if ( SDB_APP_FORCED != rc )
+            PD_LOG( PDERROR, "Session[%s] failed to recv rest header, "
+                    "rc: %d", sessionName(), rc ) ;
+            if ( SDB_REST_EHS == rc )
             {
-               PD_LOG( PDERROR, "Session[%s] failed to recv rest header, "
-                       "rc: %d", sessionName(), rc ) ;
+               pAdptor->sendResponse( this, HTTP_BADREQ ) ;
             }
-            else
+            else if ( SDB_APP_FORCED != rc )
             {
-               needReply = FALSE ;
+               _sendOpError2Web( rc, pAdptor, this, _pEDUCB ) ;
             }
+            
             break ;
          }
          // session is not exist
          if ( !_pSessionInfo )
          {
             // find session id
-            rc = pAdptor->getHttpHeader( this, FIELD_NAME_SESSIONID,
-                                         &pSessionID ) ;
+            pAdptor->getHttpHeader( this, FIELD_NAME_SESSIONID, &pSessionID ) ;
             // if 'SessionID' exist, attach the sessionInfo
             if ( pSessionID )
             {
                PD_LOG( PDEVENT, "OM: session_id=%s", pSessionID ) ;
                _pSessionInfo = sdbGetOMManager()->attachSessionInfo(
-                  pSessionID ) ;
+                                  pSessionID ) ;
             }
 
             // if session exist, restore
@@ -142,23 +153,27 @@ namespace engine
             }
          }
          // recv body
-         rc = pAdptor->recvRequestBody( this, httpCommon, &pFilePath, bodySize ) ;
+         rc = pAdptor->recvRequestBody( this, httpCommon, &pFilePath, 
+                                        bodySize ) ;
          if ( rc )
          {
-            if ( SDB_APP_FORCED != rc )
+            PD_LOG( PDERROR, "Session[%s] failed to recv rest body, "
+                    "rc: %d", sessionName(), rc ) ;
+            if ( SDB_REST_EHS == rc )
             {
-               PD_LOG( PDERROR, "Session[%s] failed to recv rest body, "
-                       "rc: %d", sessionName(), rc ) ;
+               pAdptor->sendResponse( this, HTTP_BADREQ ) ;
             }
-            else
+            else if ( SDB_APP_FORCED != rc )
             {
-               needReply = FALSE ;
+               _sendOpError2Web( rc, pAdptor, this, _pEDUCB ) ;
             }
+            
             break ;
          }
          
          // increase process event count
          _pEDUCB->incEventCount() ;
+         
          // activate edu
          if ( SDB_OK != ( rc = pEDUMgr->activateEDU( _pEDUCB ) ) )
          {
@@ -166,13 +181,14 @@ namespace engine
                     sessionName(), rc ) ;
             break ;
          }
-         needReply = FALSE ;
+
          // process msg
          rc = _processRestMsg( httpCommon, pFilePath ) ;
          if ( rc )
          {
             break ;
          }
+         
          // wait edu
          if ( SDB_OK != ( rc = pEDUMgr->waitEDU( _pEDUCB ) ) )
          {
@@ -180,23 +196,11 @@ namespace engine
                     sessionName(), rc ) ;
             break ;
          }
+         
          // release body msg
          releaseBuff( pFilePath, bodySize ) ;
          rc = SDB_OK ;
       } // end while
-
-      if ( needReply && _socket.isConnected() )
-      {
-         _errorInfo = pmdGetErrorBson( rc, _pEDUCB->getInfo(
-                                       EDU_INFO_ERROR ) ) ;
-         pAdptor->setOPResult( this, rc, _errorInfo ) ;
-         rc = pAdptor->sendResponse( this, HTTP_BADREQ ) ;
-         if ( rc )
-         {
-            PD_LOG( PDERROR, "Session[%s] send rest response failed, rc: %d",
-                    sessionName(), rc ) ;
-         }
-      }
 
       disconnect() ;
 

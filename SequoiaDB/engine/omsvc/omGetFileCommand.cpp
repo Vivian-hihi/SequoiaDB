@@ -281,23 +281,56 @@ namespace engine
       BSONObj matcher ;
       BSONObj order ;
       BSONObj hint ;
-      SINT64 contextID ;
+      SINT64 contextID = -1 ;
       INT32 rc                 = SDB_OK ;
 
       rc = rtnQuery( OM_CS_DEPLOY_CL_CLUSTER, selector, matcher, order, hint, 0, 
                      _cb, 0, -1, _pDMSCB, _pRTNCB, contextID );
       if ( rc )
       {
+         string errorInfo = string( "fail to query table:" ) 
+                               + OM_CS_DEPLOY_CL_CLUSTER ;
+         PD_LOG( PDERROR, "fail to query table:%s, rc = %d", 
+                 OM_CS_DEPLOY_CL_CLUSTER, rc ) ;
+         _sendErrorRes2Web( rc, errorInfo.c_str() ) ;
+         goto error ;
       }
-
+      
+      while ( TRUE )
+      {
+         rtnContextBuf buffObj ;
+         SINT64 startingPos = 0 ;
+         rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
+         if ( rc )
+         {
+            if ( SDB_DMS_EOC == rc )
+            {
+               rc = SDB_OK ;
+               break ;
+            }
+            
+            contextID = -1 ;
+            PD_LOG( PDERROR, "Failed to retreive record, rc = %d", rc ) ;
+            //TODO clear pre_http_body
+            _sendErrorRes2Web( rc, "Failed to retreive record" ) ;
+            goto error ;
+         }
+         
+         _restAdaptor->appendHttpBody( _restSession, buffObj.data(), 
+                                       buffObj.size(), 1 ) ;
+      }
+      
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      bsonBuilder.append( OM_REST_FIELD_CLUSTER, pClusterName ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       
    done:
       return SDB_OK ;
    error:
+      if ( -1 != contextID )
+      {
+         _pRTNCB->contextDelete ( contextID, _cb ) ;
+      }
       goto done ;
    }
 
@@ -332,20 +365,32 @@ namespace engine
                             contentLength ) ;
       if ( SDB_OK != rc )
       {
-         HTTP_FILE_TYPE file_type = _restAdaptor->getFileType( _restSession ) ;
-         if ( HTTP_FILE_HTML == file_type || HTTP_FILE_DEFAULT == file_type )
+         if ( SDB_FNE == rc )
          {
-            PD_LOG( PDEVENT, "OM: 2file no found:%s", realSubPath.c_str() ) ;
-            _restAdaptor->appendHttpBody( _restSession, 
-                                          OM_REST_REDIRECT_INDEX, 
-                                          ossStrlen(OM_REST_REDIRECT_INDEX) ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+            PD_LOG( PDEVENT, "OM: file no found:%s, rc=%d", 
+                    realSubPath.c_str(), rc ) ;
+            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
          }
          else
          {
-            PD_LOG( PDEVENT, "OM: file no found:%s", realSubPath.c_str() ) ;
-            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
+            PD_LOG( PDEVENT, "OM: open file failed:%s, rc=%d", 
+                    realSubPath.c_str(), rc ) ;
+            _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
          }
+//         HTTP_FILE_TYPE file_type = _restAdaptor->getFileType( _restSession ) ;
+//         if ( HTTP_FILE_HTML == file_type || HTTP_FILE_DEFAULT == file_type )
+//         {
+//            PD_LOG( PDEVENT, "OM: 2file no found:%s", realSubPath.c_str() ) ;
+//            _restAdaptor->appendHttpBody( _restSession, 
+//                                          OM_REST_REDIRECT_INDEX, 
+//                                          ossStrlen(OM_REST_REDIRECT_INDEX) ) ;
+//            _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
+//         }
+//         else
+//         {
+//            PD_LOG( PDEVENT, "OM: file no found:%s", realSubPath.c_str() ) ;
+//            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
+//         }
          
          goto error ;
       }
