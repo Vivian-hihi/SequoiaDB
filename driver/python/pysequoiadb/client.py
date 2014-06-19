@@ -40,14 +40,11 @@ class client(object):
    """
    def __init__(self, host = default_host, port = default_port,
                   user = default_user, psw  = default_psw):
-
+      # if NULL returned, a SystemError will be raised
       self._client = sdbclient.create_client()
-      if self._client is None:
-         raise PySequoiaDBError()
-      
       rc = sdbclient.init_connect(self._client, host, port)
       if rc:
-         pass
+         sdbclinet.disconnect(self._client)
      
    def __del__(self):
       if self._client is not None:
@@ -55,7 +52,7 @@ class client(object):
       self._client = None
 
    def __getitem__(self, item_name):
-      cs = collection_space()
+      cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, item_name,
                                             cs._cs)
       return rc, cs
@@ -114,13 +111,13 @@ class client(object):
       return rc, result
 
    def get_collection_space(self, cs_name):
-      cs = collection_space()
+      cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, cs_name, 
                                  cs._cs)
       return rc, cs
 
    def create_collection_space(self, cs_name, page_size):
-      cs = collection_space()
+      cs = collectionspace()
       rc = sdbclient.create_collection_space(self._client, cs_name, page_size,
                                     cs._cs)
       return rc, cs
@@ -151,7 +148,7 @@ class client(object):
       return rc, result
 
    def creat_replica_group(self, group_name):
-      reolica_group = replicagroup(self._client)
+      replica_group = replicagroup(self._client)
       rc = sdbclient.create_replica_group(self._client,
                                  group_name, replica_group._group)
       return rc
@@ -189,7 +186,7 @@ class client(object):
       return rc
 
    def flush_configure(self, options):
-      rc = sdbclient.flush_configure(self._client, bson_options)
+      rc = sdbclient.flush_configure(self._client, options)
       return rc
 
 #   def crt_js_procedure(self, code)
@@ -198,7 +195,7 @@ class client(object):
 #   def eval_js(self, cursor, code, type, err_msg)
 
    def backup_offline(self, options):
-      rc = sdbclient.backup_offline(self._client, bson_options)
+      rc = sdbclient.backup_offline(self._client, options)
       return rc
 
    def list_backup(self,options, conditions = static_object,

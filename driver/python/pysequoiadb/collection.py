@@ -35,7 +35,7 @@ class collection(object):
    def __del__(self):
       if self._cl is not None:
          sdbcl.release_cl(self._cl)
-         self._cl = None
+      self._cl = None
 
    def get_count(self, condition = static_object):
       rc, count = sdbcl.get_count(self._cl, condition)

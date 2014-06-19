@@ -37,6 +37,7 @@ class collectionspace(object):
          raise Exception()
 
    def __del__(self):
+      if 
       rc = sdbcs.release_cs(self._cs)
       if rc:
          pass
