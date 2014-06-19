@@ -247,6 +247,9 @@ namespace engine
 
    INT32 _omManager::active ()
    {
+      // set to primary
+      pmdSetPrimary( TRUE ) ;
+
       return SDB_OK ;
    }
 
