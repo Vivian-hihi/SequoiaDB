@@ -35,20 +35,20 @@ static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
 
 static PYOBJECT *init_connect( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc       = 0 ;
-   INT32 port      = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client     = NULL ;
+   INT32 rc         = 0 ;
+   INT32 port       = 0 ;
+   PYOBJECT *obj    = NULL ;
+   sdb *client      = NULL ;
    const char *host = NULL ;
    
    
    if ( !PARSE_PYTHON_ARGS( args, "Osi", &obj, &host, &port ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    rc = client->connect( host, port ) ;
 
 done:
@@ -57,17 +57,17 @@ done:
 
 static PYOBJECT *release_client( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc     = 0 ;
+   INT32 rc      = 0 ;
    PYOBJECT *obj = NULL ;
    sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    DELETE_CPPOBJECT( client ) ;
 
 done:
@@ -76,21 +76,21 @@ done:
 
 static PYOBJECT *connect_by_host( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc       = 0 ;
-   INT32 port      = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client     = NULL ;
+   INT32 rc         = 0 ;
+   INT32 port       = 0 ;
+   PYOBJECT *obj    = NULL ;
+   sdb *client      = NULL ;
    const char *host = NULL ;
    const char *user = NULL ;
    const char *psw  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Osiss", &obj, &host, &port, &user, &psw ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    rc = client->connect( host, port, user, psw ) ;
 
 done:
@@ -99,21 +99,21 @@ done:
 
 static PYOBJECT *connect_by_service( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc         = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdb *client       = NULL ;
-   const char *host   = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj       = NULL ;
+   sdb *client         = NULL ;
+   const char *host    = NULL ;
    const char *service = NULL ;
-   const char *user   = NULL ;
-   const char *psw    = NULL ;
+   const char *user    = NULL ;
+   const char *psw     = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Ossss", &obj, &host, &service, &user, &psw ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    
    rc = client->connect( host, service, user, psw ) ;
 
@@ -123,22 +123,22 @@ done:
 
 static PYOBJECT *connect_by_address( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc         = 0 ;
-   INT32 addr_size    = 0 ;
-   PYOBJECT *obj      = NULL ;
+   INT32 rc          = 0 ;
+   INT32 addr_size   = 0 ;
+   PYOBJECT *obj     = NULL ;
    sdb *client       = NULL ;
-   const char **addr   = NULL ;
-   const char *user   = NULL ;
-   const char *psw    = NULL ;
+   const char **addr = NULL ;
+   const char *user  = NULL ;
+   const char *psw   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Osss", &obj, &addr, &addr_size,
-                                     &user, &psw ) )
+                                                &user, &psw ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->connect( addr, addr_size, user, psw ) ;
 
@@ -148,17 +148,17 @@ done:
 
 static PYOBJECT *disconnect( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc         = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdb *client       = NULL ;
+   INT32 rc      = 0 ;
+   PYOBJECT *obj = NULL ;
+   sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    client->disconnect() ;
 
@@ -168,19 +168,19 @@ done:
 
 static PYOBJECT *create_user( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc              = 0 ;
+   PYOBJECT *obj         = NULL ;
+   sdb *client           = NULL ;
    const char *user_name = NULL ;
-   const char *psw      = NULL ;
+   const char *psw       = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oss", &obj, &user_name, &psw ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->createUsr( user_name, psw ) ;
 
@@ -190,19 +190,19 @@ done:
 
 static PYOBJECT *remove_user( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc              = 0 ;
+   PYOBJECT *obj         = NULL ;
+   sdb *client           = NULL ;
    const char *user_name = NULL ;
-   const char *psw      = NULL ;
+   const char *psw       = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oss", &obj, &user_name, &psw ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->removeUsr( user_name, psw ) ;
 
@@ -212,15 +212,15 @@ done:
 
 static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   INT32 snap_type        = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *cursor_obj    = NULL ;
-   PYOBJECT *bson_condition = NULL ;
-   PYOBJECT *bson_selector  = NULL ;
-   PYOBJECT *bson_order_by  = NULL ;
-   sdb *client           = NULL ;
-   sdbCursor *cursor      = NULL ;
+   INT32 rc                       = 0 ;
+   INT32 snap_type                = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_obj           = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   sdb *client                    = NULL ;
+   sdbCursor *cursor              = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
@@ -228,22 +228,22 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &snap_type,
                      &bson_condition, &bson_selector, &bson_order_by ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
    CAST_PYBSON_TO_CPPBSON( bson_order_by, order_by ) ;
 
    NEW_CPPOBJECT( cursor, sdbCursor ) ;
-   rc = client->getSnapshot( *cursor, snap_type,
-                      *condition, *selector, *order_by ) ;
+   rc = client->getSnapshot( *cursor, snap_type, *condition,
+                                      *selector, *order_by ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -255,19 +255,19 @@ done:
 
 static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *bson_condition = NULL ;
-   sdb *client           = NULL ;
+   INT32 rc                       = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   sdb *client                    = NULL ;
    const bson::BSONObj *condition = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_condition ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
 
    client->resetSnapshot( *condition ) ;
@@ -279,15 +279,15 @@ done:
 
 static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   INT32 list_type        = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *cursor_obj    = NULL ;
-   PYOBJECT *bson_condition = NULL ;
-   PYOBJECT *bson_selector  = NULL ;
-   PYOBJECT *bson_order_by  = NULL ;
-   sdb *client           = NULL ;
-   sdbCursor *cursor      = NULL ;
+   INT32 rc                       = 0 ;
+   INT32 list_type                = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_obj           = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   sdb *client                    = NULL ;
+   sdbCursor *cursor              = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
@@ -295,11 +295,11 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &list_type,
                      &bson_condition, &bson_selector, &bson_order_by ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
@@ -308,7 +308,7 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    rc = client->getList( *cursor, list_type, *condition, *selector, *order_by ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -320,26 +320,26 @@ done:
 
 static PYOBJECT *get_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
    PYOBJECT *cs_obj       = NULL ;
-   const char *cs_name     = NULL ;
-   sdb *client           = NULL ;
-   sdbCollectionSpace *cs   = NULL ;
+   const char *cs_name    = NULL ;
+   sdb *client            = NULL ;
+   sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cs_name, &cs_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
 
    rc = client->getCollectionSpace( cs_name, *cs ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -348,28 +348,28 @@ done:
 
 static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
+   INT32 rc               = 0 ;
    INT32 page_size        = 0 ;
-   PYOBJECT *obj         = NULL ;
+   PYOBJECT *obj          = NULL ;
    PYOBJECT *cs_obj       = NULL ;
-   const char *cs_name     = NULL ;
-   sdb *client           = NULL ;
-   sdbCollectionSpace *cs   = NULL ;
+   const char *cs_name    = NULL ;
+   sdb *client            = NULL ;
+   sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsiO", &obj, &cs_name, &page_size,
                      &cs_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cs_obj, sdbCollectionSpace, cs ) ;
 
    rc = client->createCollectionSpace( cs_name, page_size, *cs ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -378,23 +378,23 @@ done:
 
 static PYOBJECT *drop_collection_space( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   const char *cs_name     = NULL ;
-   sdb *client           = NULL ;
+   INT32 rc            = 0 ;
+   PYOBJECT *obj       = NULL ;
+   const char *cs_name = NULL ;
+   sdb *client         = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &cs_name ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->dropCollectionSpace( cs_name ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -404,24 +404,24 @@ done:
 static PYOBJECT *list_collection_spaces( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *cursor_obj    = NULL ;
-   sdb *client           = NULL ;
-   sdbCursor *cursor      = NULL ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *cursor_obj = NULL ;
+   sdb *client          = NULL ;
+   sdbCursor *cursor    = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &cursor_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client->listCollectionSpaces( *cursor ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -431,24 +431,24 @@ done:
 static PYOBJECT *list_replica_groups( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *cursor_obj    = NULL ;
-   sdb *client           = NULL ;
-   sdbCursor *cursor      = NULL ;
+   PYOBJECT *obj        = NULL ;
+   PYOBJECT *cursor_obj = NULL ;
+   sdb *client          = NULL ;
+   sdbCursor *cursor    = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &cursor_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client->listReplicaGroups( *cursor ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -457,26 +457,26 @@ done:
 
 static PYOBJECT *get_replica_group_by_name( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *group_obj     = NULL ;
-   sdb *client           = NULL ;
-   sdbReplicaGroup *group   = NULL ;
-   const char *group_name   = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *group_obj    = NULL ;
+   sdb *client            = NULL ;
+   sdbReplicaGroup *group = NULL ;
+   const char *group_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
    rc = client->getReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -485,26 +485,26 @@ done:
 
 static PYOBJECT *get_replica_group_by_id( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
+   INT32 rc               = 0 ;
    INT32 group_id         = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *group_obj     = NULL ;
-   sdb *client           = NULL ;
-   sdbReplicaGroup *group   = NULL ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *group_obj    = NULL ;
+   sdb *client            = NULL ;
+   sdbReplicaGroup *group = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OiO", &obj, &group_id, &group_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 
    rc = client->getReplicaGroup( group_id, *group ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -513,25 +513,25 @@ done:
 
 static PYOBJECT *create_replica_group( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *group_obj     = NULL ;
-   sdb *client           = NULL ;
-   sdbReplicaGroup *group   = NULL ;
-   const char *group_name   = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *group_obj    = NULL ;
+   sdb *client            = NULL ;
+   sdbReplicaGroup *group = NULL ;
+   const char *group_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &group_name, &group_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
    rc = client->createReplicaGroup( group_name, *group ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -540,24 +540,23 @@ done:
 
 static PYOBJECT *remove_replica_group( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-
-   sdb *client           = NULL ;
-   const char *group_name   = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   sdb *client            = NULL ;
+   const char *group_name = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &group_name ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->removeReplicaGroup( group_name ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -566,29 +565,29 @@ done:
 
 static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *bson_configure = NULL ;
-   sdb *client           = NULL ;
-   const char *host       = NULL ;
-   const char *service     = NULL ;
-   const char *db_path     = NULL ;
+   INT32 rc                       = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *bson_configure       = NULL ;
+   sdb *client                    = NULL ;
+   const char *host               = NULL ;
+   const char *service            = NULL ;
+   const char *db_path            = NULL ;
    const bson::BSONObj *configure = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &host, &service, &db_path,
                                           &bson_configure ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_configure, configure ) ;
 
    rc = client->createReplicaCataGroup( host, service, db_path, *configure ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -611,7 +610,7 @@ done:
 //      goto done ;
 //   }
 // 
-//   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+//   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 //   CAST_PYOBJECT_TO_COBJECT( group_obj, sdbReplicaGroup, group ) ;
 // 
 //   rc = client->activateReplicaGroup( group_name, *group ) ;
@@ -626,23 +625,23 @@ done:
 
 static PYOBJECT *exec_update( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc      = 0 ;
+   INT32 rc        = 0 ;
    PYOBJECT *obj   = NULL ;
-   sdb *client    = NULL ;
+   sdb *client     = NULL ;
    const char *sql = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &sql ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->execUpdate( sql ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -651,26 +650,26 @@ done:
 
 static PYOBJECT *exec_sql( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
+   INT32 rc             = 0 ;
+   PYOBJECT *obj        = NULL ;
    PYOBJECT *cursor_obj = NULL ;
-   sdb *client        = NULL ;
-   sdbCursor *cursor   = NULL ;
-   const char *sql     = NULL ;
+   sdb *client          = NULL ;
+   sdbCursor *cursor    = NULL ;
+   const char *sql      = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &sql, &cursor_obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
 
    rc = client->exec( sql, *cursor ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -680,16 +679,16 @@ done:
 static PYOBJECT *transaction_begin( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc      = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client    = NULL ;
+   PYOBJECT *obj = NULL ;
+   sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->transactionBegin() ;
 
@@ -700,16 +699,16 @@ done:
 static PYOBJECT *transaction_commit( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc      = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client    = NULL ;
+   PYOBJECT *obj = NULL ;
+   sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->transactionCommit() ;
 
@@ -720,16 +719,16 @@ done:
 static PYOBJECT *transaction_rollback( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc      = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client    = NULL ;
+   PYOBJECT *obj = NULL ;
+   sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->transactionRollback() ;
 
@@ -739,25 +738,25 @@ done:
 
 static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   PYOBJECT *bson_option = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   sdb *client                 = NULL ;
    const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
    rc = client->flushConfigure( *option ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -767,25 +766,25 @@ done:
 
 static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   PYOBJECT *bson_option = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   sdb *client                 = NULL ;
    const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
    rc = client->backupOffline( *option ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -795,16 +794,16 @@ done:
 
 static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *cursor_obj    = NULL ;
-   PYOBJECT *bson_option   = NULL ;
-   PYOBJECT *bson_condition = NULL ;
-   PYOBJECT *bson_selector  = NULL ;
-   PYOBJECT *bson_order_by  = NULL ;
-   sdb *client           = NULL ;
-   sdbCursor *cursor      = NULL ;
-   const bson::BSONObj *option   = NULL ;
+   INT32 rc                       = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_obj           = NULL ;
+   PYOBJECT *bson_option          = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   sdb *client                    = NULL ;
+   sdbCursor *cursor              = NULL ;
+   const bson::BSONObj *option    = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
@@ -812,11 +811,11 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    if ( !PARSE_PYTHON_ARGS( args, "OOO|OOO", &obj, &cursor_obj, &bson_option,
                      &bson_condition, &bson_selector, &bson_order_by) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
@@ -826,7 +825,7 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    rc = client->listBackup( *cursor, *option, *condition, *selector, *order_by ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -839,25 +838,25 @@ done:
 
 static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   PYOBJECT *bson_option = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   sdb *client                 = NULL ;
    const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
    rc = client->removeBackup( *option ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -867,28 +866,28 @@ done:
 
 static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc             = 0 ;
-   PYOBJECT *obj         = NULL ;
-   PYOBJECT *cursor_obj    = NULL ;
-   PYOBJECT *bson_condition = NULL ;
-   PYOBJECT *bson_selector  = NULL ;
-   PYOBJECT *bson_order_by  = NULL ;
-   PYOBJECT *bson_hint     = NULL ;
-   sdb *client           = NULL ;
-   sdbCursor *cursor      = NULL ;
+   INT32 rc                       = 0 ;
+   PYOBJECT *obj                  = NULL ;
+   PYOBJECT *cursor_obj           = NULL ;
+   PYOBJECT *bson_condition       = NULL ;
+   PYOBJECT *bson_selector        = NULL ;
+   PYOBJECT *bson_order_by        = NULL ;
+   PYOBJECT *bson_hint            = NULL ;
+   sdb *client                    = NULL ;
+   sdbCursor *cursor              = NULL ;
    const bson::BSONObj *condition = NULL ;
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
-   const bson::BSONObj *hint   = NULL ;
+   const bson::BSONObj *hint      = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|OOOO", &obj, &cursor_obj, &bson_condition,
                           &bson_selector, &bson_order_by, &bson_hint) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYOBJECT_TO_COBJECT( cursor_obj, sdbCursor, cursor ) ;
    CAST_PYBSON_TO_CPPBSON( bson_condition, condition ) ;
    CAST_PYBSON_TO_CPPBSON( bson_selector, selector ) ;
@@ -898,7 +897,7 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    rc = client->listTasks( *cursor, *condition, *selector, *order_by, *hint ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -912,23 +911,23 @@ done:
 static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc       = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client     = NULL ;
-   SINT64 task_id   = 0 ;
-   SINT32 num      = 0 ;
+   PYOBJECT *obj  = NULL ;
+   sdb *client    = NULL ;
+   SINT64 task_id = 0 ;
+   SINT32 num     = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oii", &obj, &task_id, &num ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->waitTasks( &task_id, num ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -937,24 +936,24 @@ done:
 
 static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc       = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdb *client     = NULL ;
+   INT32 rc         = 0 ;
+   PYOBJECT *obj    = NULL ;
+   sdb *client      = NULL ;
    SINT64 task_id   = 0 ;
    BOOLEAN is_async = 0 ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Oii", &obj, &task_id, &is_async ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->cancelTask( task_id, is_async ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -963,25 +962,25 @@ done:
 
 static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   PYOBJECT *bson_option = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   sdb *client                 = NULL ;
    const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_option ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
    rc = client->setSessionAttr( *option ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -991,22 +990,22 @@ done:
 
 static PYOBJECT *close_all_cursors( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   PYOBJECT *obj       = NULL ;
-   sdb *client         = NULL ;
+   INT32 rc      = 0 ;
+   PYOBJECT *obj = NULL ;
+   sdb *client   = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
 
    rc = client->closeAllCursors() ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
 
 done:
@@ -1015,23 +1014,23 @@ done:
 
 static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc           = 0 ;
-   INT32 result        = FALSE ;
-   PYOBJECT *obj       = NULL ;
-   sdb *client         = NULL ;
-   BOOLEAN isvalid      = FALSE;
+   INT32 rc        = 0 ;
+   INT32 result    = FALSE ;
+   PYOBJECT *obj   = NULL ;
+   sdb *client     = NULL ;
+   BOOLEAN isvalid = FALSE;
   
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
-     rc = SDB_INVALIDARGS ;
-     goto done ;
+      rc = SDB_INVALIDARGS ;
+      goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdb, client ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdb, client ) ;
    rc = client->isValid( &isvalid ) ;
    if ( rc )
    {
-     goto done ;
+      goto done ;
    }
    
    if ( isvalid )

@@ -57,7 +57,11 @@ class collectionspace(object):
          bson_options = bson.BSON.encode(options)
 
       cl = collection()
-      rc = sdbcs.get_collection(self._cs, cl_name, bson_options, cl._cl)
+      if options is None:
+         rc = sdbcs.create_collection(self._cs, cl_name, cl._cl )
+      else:
+         rc = sdbcs.create_collection_use_opt(self._cs, cl_name,
+                                              bson_options, cl._cl)
       if common.SDB_OK != rc:
          cl = None
       return rc, cl
