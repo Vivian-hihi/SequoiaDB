@@ -112,7 +112,7 @@
 
 
 	<target name="test-one-case" depends="">
-		<exec executable="${sdb.fullname}" timeout="3000000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
+		<exec executable="${sdb.fullname}" timeout="300000" dir="" outputproperty="db.RG.info" resultproperty="ret.code.forShards">
 		  <arg line=" -s &quot; db = new Sdb('localhost',50000);var rg = db.listReplicaGroups();println(rg);db.close(); &quot;" />
 		</exec>
 		
@@ -188,7 +188,7 @@
 		<sdbProperty name="testBeginStr" value="begin test,file is ${test.case.fullname}.${parallel.num}" />
 		<sdbProperty name="testEndStr" value="over test,file is ${test.case.fullname}.${parallel.num}" />
 		
-		<exec executable="${sdb.fullname}" dir="" timeout="3000000">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000">
 		  <arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testBeginStr}');db.close(); &quot;" />
 		</exec>
 		
@@ -203,7 +203,7 @@
 		
 
 		<echo message="the result = ${ret.code} after exec ${test.case.fullname}.${parallel.num} testcase." />
-		<exec executable="${sdb.fullname}" dir="" timeout="3000000">
+		<exec executable="${sdb.fullname}" dir="" timeout="300000">
 			<arg line=" -s &quot; db = new Sdb('localhost',50000);db.msg('${testEndStr}');db.close(); &quot;" />
 		</exec>
 		<if>
