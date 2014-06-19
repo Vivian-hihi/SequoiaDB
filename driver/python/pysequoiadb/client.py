@@ -165,7 +165,7 @@ class client(object):
          result = None
       return rc, result
 
-   def get_replica_group(self, group_name):
+   def get_replica_group_by_name(self, group_name):
       result = cursor()
       rc = sdbclient.get_replica_group_by_name(self._client, group_name,
                                                              result._cursor)
@@ -173,7 +173,7 @@ class client(object):
          result = None
       return rc, result
 
-   def get_replica_group(self, id):
+   def get_replica_group_by_id(self, id):
       result = cursor()
       rc = sdbclient.get_replica_group_by_id(self._client, id, result._cursor)
       if common.SDB_OK != rc:
