@@ -164,11 +164,11 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_CREATEUSR, "_authCB::createUsr" )
-   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb )
+   INT32 _authCB::createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_CREATEUSR ) ;
-      rc = _createUsr( obj, cb ) ;
+      rc = _createUsr( obj, cb, w ) ;
       if ( SDB_OK != rc )
       {
          goto error ;
@@ -182,18 +182,12 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB_REMOVEUSR, "_authCB::removeUsr" )
-   INT32 _authCB::removeUsr( BSONObj &obj, _pmdEDUCB *cb )
+   INT32 _authCB::removeUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB_REMOVEUSR ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-      replCB *rCB = sdbGetReplCB() ;
-      if ( !rCB->primaryIsMe() )
-      {
-         rc = SDB_CLS_NOT_PRIMARY ;
-         goto error ;
-      }
 
       rc = authenticate( obj, cb ) ;
       if ( SDB_OK != rc )
@@ -202,19 +196,20 @@ namespace engine
       }
 
       {
-      BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
-      rc = rtnDelete( AUTH_USR_COLLECTION,
-                      obj, hint,
-                      0, cb, dmsCB, dpsCB, rCB->groupSize() ) ;
-      if ( SDB_OK != rc )
-      {
-         PD_LOG( PDERROR, "failed to remove usr from AUTH_USR_COLLECTION" ) ;
-         goto error ;
-      }
-      else
-      {
-         checkNeedAuth( cb, TRUE ) ;
-      }
+         BSONObj hint = BSON( "" << AUTH_USR_INDEX_NAME ) ;
+         rc = rtnDelete( AUTH_USR_COLLECTION,
+                         obj, hint,
+                         0, cb, dmsCB, dpsCB, w ) ;
+         if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to remove usr from AUTH_USR_COLLECTION, "
+                    "rc: %d", rc ) ;
+            goto error ;
+         }
+         else
+         {
+            checkNeedAuth( cb, TRUE ) ;
+         }
       }
 
    done:
@@ -324,19 +319,13 @@ namespace engine
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB_AUTHCB__CREATEUSR, "_authCB::_createUsr" )
-   INT32 _authCB::_createUsr( BSONObj &obj,
-                              _pmdEDUCB *cb )
+   INT32 _authCB::_createUsr( BSONObj &obj, _pmdEDUCB *cb, INT32 w )
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_AUTHCB__CREATEUSR ) ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       SDB_DPSCB *dpsCB = pmdGetKRCB()->getDPSCB() ;
-      replCB *rCB = sdbGetReplCB() ;
-      if ( !rCB->primaryIsMe() )
-      {
-         rc = SDB_CLS_NOT_PRIMARY ;
-         goto error ;
-      }
+
       if ( SDB_OK != _valid( obj, TRUE ) )
       {
          rc = SDB_INVALIDARG ;
@@ -345,8 +334,7 @@ namespace engine
 
       rc = rtnInsert( AUTH_USR_COLLECTION,
                       obj, 1, 0, cb,
-                      dmsCB, dpsCB,
-                      rCB->groupSize() ) ;
+                      dmsCB, dpsCB, w ) ;
       if ( SDB_OK != rc && SDB_IXM_DUP_KEY != rc )
       {
          BSONObj hint ;
