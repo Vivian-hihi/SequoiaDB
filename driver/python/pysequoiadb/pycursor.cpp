@@ -40,9 +40,9 @@ error :
 
 static PYOBJECT *release_cursor( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc         = 0 ;
+   INT32 rc          = 0 ;
    PYOBJECT *obj     = NULL ;
-   sdbCursor *cursor  = NULL ;
+   sdbCursor *cursor = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
@@ -50,7 +50,7 @@ static PYOBJECT *release_cursor( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCursor, cursor ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCursor, cursor ) ;
    DELETE_CPPOBJECT( cursor ) ;
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -59,8 +59,8 @@ done:
 static PYOBJECT *next( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdbCursor *cursor   = NULL ;
+   PYOBJECT *obj     = NULL ;
+   sdbCursor *cursor = NULL ;
    bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
@@ -84,8 +84,8 @@ error :
 static PYOBJECT *current( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdbCursor *cursor   = NULL ;
+   PYOBJECT *obj     = NULL ;
+   sdbCursor *cursor = NULL ;
    bson::BSONObj bson ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
@@ -109,8 +109,8 @@ error :
 static PYOBJECT *close( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdbCursor *cursor   = NULL ;
+   PYOBJECT *obj     = NULL ;
+   sdbCursor *cursor = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {

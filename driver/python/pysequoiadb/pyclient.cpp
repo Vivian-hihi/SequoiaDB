@@ -226,7 +226,7 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *order_by  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &snap_type,
-                     &bson_condition, &bson_selector, &bson_order_by ) )
+                            &bson_condition, &bson_selector, &bson_order_by ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -293,7 +293,7 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *order_by  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &list_type,
-                     &bson_condition, &bson_selector, &bson_order_by ) )
+                            &bson_condition, &bson_selector, &bson_order_by ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -357,7 +357,7 @@ static PYOBJECT *create_collection_space( PYOBJECT *self, PYOBJECT *args )
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsiO", &obj, &cs_name, &page_size,
-                     &cs_obj ) )
+                                                &cs_obj ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -575,7 +575,7 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *configure = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsssO", &obj, &host, &service, &db_path,
-                                          &bson_configure ) )
+                                           &bson_configure ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -809,7 +809,7 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *order_by  = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OOO|OOO", &obj, &cursor_obj, &bson_option,
-                     &bson_condition, &bson_selector, &bson_order_by) )
+                            &bson_condition, &bson_selector, &bson_order_by) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -881,7 +881,7 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *hint      = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OO|OOOO", &obj, &cursor_obj, &bson_condition,
-                          &bson_selector, &bson_order_by, &bson_hint) )
+                            &bson_selector, &bson_order_by, &bson_hint) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -1035,11 +1035,11 @@ static PYOBJECT *is_valid( PYOBJECT *self, PYOBJECT *args )
    
    if ( isvalid )
    {
-     result = 1 ;
+      result = 1 ;
    }
    else
    {
-     result = 0 ;
+      result = 0 ;
    }
 done:
    return MAKE_RETURN_INT_INT( rc, result ) ;

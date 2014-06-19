@@ -40,9 +40,9 @@ error :
 
 static PYOBJECT *release_node( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc      = 0 ;
-   PYOBJECT *obj   = NULL ;
-   sdbNode  *node  = NULL ;
+   INT32 rc       = 0 ;
+   PYOBJECT *obj  = NULL ;
+   sdbNode  *node = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
    {
@@ -50,7 +50,7 @@ static PYOBJECT *release_node( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbNode, node ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbNode, node ) ;
    DELETE_CPPOBJECT( node ) ;
 done:
    return MAKE_RETURN_INT( rc ) ;
@@ -58,11 +58,11 @@ done:
 
 static PYOBJECT *connect( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
-   PYOBJECT *sdbodj    = NULL ;
-   sdbNode *node      = NULL ;
-   sdb *client        = NULL ;
+   INT32 rc         = 0 ;
+   PYOBJECT *obj    = NULL ;
+   PYOBJECT *sdbodj = NULL ;
+   sdbNode *node    = NULL ;
+   sdb *client      = NULL ;
 
    if ( !PyArg_ParseTuple( args, "OO", &obj, &sdbodj ) )
    {
@@ -81,10 +81,10 @@ error :
 
 static PYOBJECT *get_status( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc           = 0 ;
-   PYOBJECT *obj        = NULL ;
-   INT32 nodestatus      = SDB_NODE_UNKNOWN ;
-   sdbNode *node        = NULL ;
+   INT32  rc        = 0 ;
+   PYOBJECT *obj    = NULL ;
+   INT32 nodestatus = SDB_NODE_UNKNOWN ;
+   sdbNode *node    = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -102,9 +102,9 @@ error :
 
 static PYOBJECT *get_hostname( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc           = 0 ;
+   INT32  rc            = 0 ;
    PYOBJECT *obj        = NULL ;
-   const char *hostname   = "" ;
+   const char *hostname = "" ;
    sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
@@ -144,9 +144,9 @@ error :
 
 static PYOBJECT *get_nodename( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32  rc           = 0 ;
+   INT32  rc            = 0 ;
    PYOBJECT *obj        = NULL ;
-   const char *nodename   = "" ;
+   const char *nodename = "" ;
    sdbNode *node        = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
@@ -165,9 +165,9 @@ error :
 
 static PYOBJECT *stop( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdbNode *node      = NULL ;
+   INT32 rc      = 0 ;
+   PYOBJECT *obj = NULL ;
+   sdbNode *node = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {
@@ -185,9 +185,9 @@ error :
 
 static PYOBJECT *start( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc          = 0 ;
-   PYOBJECT *obj      = NULL ;
-   sdbNode *node      = NULL ;
+   INT32 rc      = 0 ;
+   PYOBJECT *obj = NULL ;
+   sdbNode *node = NULL ;
 
    if ( !PyArg_ParseTuple( args, "O", &obj ) )
    {

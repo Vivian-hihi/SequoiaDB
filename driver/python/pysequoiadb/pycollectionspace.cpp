@@ -36,8 +36,8 @@ static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
 
 static PYOBJECT *release_cs( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc            = 0 ;
-   PYOBJECT *obj        = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -46,7 +46,7 @@ static PYOBJECT *release_cs( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
    DELETE_CPPOBJECT( cs );
 
 done:
@@ -55,12 +55,12 @@ done:
 
 static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc            = 0 ;
-   PYOBJECT *obj        = NULL ;
-   PYOBJECT *cl_object   = NULL ;
-   const char *cl_name   = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   PYOBJECT *cl_object    = NULL ;
+   const char *cl_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
-   sdbCollection *cl     = NULL ;
+   sdbCollection *cl      = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsO", &obj, &cl_name, &cl_object ) )
    {
@@ -68,7 +68,7 @@ static PYOBJECT *get_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
 
    rc = cs->getCollection( cl_name, *cl ) ;
@@ -96,7 +96,7 @@ static PYOBJECT *create_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
 
    rc = cs->createCollection( cl_name, *cl ) ;
@@ -111,23 +111,23 @@ done:
 
 static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc            = 0 ;
-   PYOBJECT *obj        = NULL ;
-   PYOBJECT *cl_object   = NULL ;
-   PYOBJECT *bson_option  = NULL ;
-   const char *cl_name   = NULL ;
-   sdbCollectionSpace *cs = NULL ;
-   sdbCollection *cl     = NULL ;
-   const bson::BSONObj *option  = NULL ;
+   INT32 rc                    = 0 ;
+   PYOBJECT *obj               = NULL ;
+   PYOBJECT *cl_object         = NULL ;
+   PYOBJECT *bson_option       = NULL ;
+   const char *cl_name         = NULL ;
+   sdbCollectionSpace *cs      = NULL ;
+   sdbCollection *cl           = NULL ;
+   const bson::BSONObj *option = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "OsOO", &obj, &cl_name, &cl_object,
-                                            &bson_option ) )
+                                          &bson_option ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
    CAST_PYOBJECT_TO_COBJECT( cl_object, sdbCollection, cl ) ;
    CAST_PYBSON_TO_CPPBSON( bson_option, option ) ;
 
@@ -144,9 +144,9 @@ done:
 
 static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc            = 0 ;
-   PYOBJECT *obj        = NULL ;
-   const char *cl_name   = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   const char *cl_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "Os", &obj, &cl_name ) )
@@ -155,7 +155,7 @@ static PYOBJECT *drop_collection( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
 
    rc = cs->dropCollection( cl_name ) ;
    if ( rc )
@@ -169,9 +169,9 @@ done:
 
 static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
 {
-   INT32 rc            = 0 ;
-   PYOBJECT *obj        = NULL ;
-   const char *cs_name   = NULL ;
+   INT32 rc               = 0 ;
+   PYOBJECT *obj          = NULL ;
+   const char *cs_name    = NULL ;
    sdbCollectionSpace *cs = NULL ;
 
    if ( !PARSE_PYTHON_ARGS( args, "O", &obj ) )
@@ -180,7 +180,7 @@ static PYOBJECT *get_collection_space_name( PYOBJECT *self, PYOBJECT *args )
       goto done ;
    }
 
-   CAST_PYOBJECT_TO_COBJECT( obj,  sdbCollectionSpace, cs ) ;
+   CAST_PYOBJECT_TO_COBJECT( obj, sdbCollectionSpace, cs ) ;
 
    cs_name = cs->getCSName() ;
 
