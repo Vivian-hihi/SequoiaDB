@@ -15,59 +15,152 @@
 """
 
 import sdbreplicanode
-from pysequoiadb import common
-from pysequoiadb import error
-from pysequoiadb.error import SequoiaDBError
+from pysequoiadb.common import const
 
 class replicanode(object):
    """Entrance of SequoiaDB
 
-
    """
    def __init__(self, client):
       self._node = sdbreplicanode.create_node()
-      if self._node == None:
-         raise SequoiaDBError()
       self._client = client
 
    def __del__(self):
-      sdbreplicanode.release_node(self._node)
-      self._group = None
+      if self._node is not None:
+         sdbreplicanode.release_node(self._node)
+         self._node = None
       self._client = None
 
    def connect(self):
-      rc = sdbreplicanode.connect(self._node, self._client)
-      if common.SDB_OK != rc:
-         raise error.OperationError("sdb error msg", rc)
-      else:
-         return rc
+      """
+       retcode SDB_OK Operation Success
+       retcode other Operation Failure
+      """
+      ret = sdbreplicanode.connect(self._node, self._client)
+      return ret
 
    def get_status(self):
-      result = sdbreplicanode.get_status(self._node)
-      return error.err_process(result)
+      """
+       get nodestatus
+       retcode SDB_OK Operation Success
+       return nodestatus after retcode
+
+       retcode other Operation Failure
+       return nodestatus is None
+      """
+      ret,nodestatus = sdbreplicanode.get_status(self._node)
+      if const.SDB_OK != ret:
+          nodestatus = None
+      return ret,nodestatus
 
    def get_hostname(self):
-      result = sdbreplicanode.get_hostname(self._node)
-      return error.err_process(result)
+      """
+       get hostname
+       retcode SDB_OK Operation Success
+       return hostname after retcode
+
+       retcode other Operation Failure
+       return hostname is None
+      """
+      ret,hostname = sdbreplicanode.get_hostname(self._node)
+      if const.SDB_OK != ret:
+         hostname = None
+      return ret,hostname
 
    def get_servicename(self):
-      result = sdbreplicanode.get_servicename(self._node)
-      return error.err_process(result)
+      """
+       get servicename
+       retcode SDB_OK Operation Success
+       return servicename after retcode
+
+       retcode other Operation Failure
+       return servicename is None
+      """
+      ret,servicename = sdbreplicanode.get_servicename(self._node)
+      if const.SDB_OK != ret:
+         servicename = None
+      return ret,servicename
 
    def get_nodename(self):
-      result = sdbreplicanode.get_nodename(self._node)
-      return error.err_process(result)
+      """
+       get nodename
+       retcode SDB_OK Operation Success
+       return nodename after retcode
+
+       retcode other Operation Failure
+       return nodename is None
+      """
+      ret,nodename = sdbreplicanode.get_nodename(self._node)
+      if const.SDB_OK != ret:
+         nodename = None
+      return ret,nodename
 
    def stop(self):
+      """
+       stop node
+       retcode SDB_OK Operation Success
+       retcode other Operation Failure
+      """
       ret = sdbreplicanode.stop(self._node)
-      if common.SDB_OK != ret:
-         raise error.OperationError("sdb error msg", ret)
       return ret
 
    def start(self):
+      """
+       start node
+       retcode SDB_OK Operation Success
+       retcode other Operation Failure
+      """
       ret = sdbreplicanode.start(self._node)
-      if 0 != ret:
-         raise error.OperationError("sdb error msg", ret)
       return ret
+
+
+   if '__main__' == __name__:
+    from pysequoiadb.client import client
+    from pysequoiadb import common
+    sdb = client("192.168.30.61")
+    rc,group = sdb.creat_replica_group('newgroup')
+    if -153 == rc:
+        rc,group = sdb.get_replica_group_by_name("newgroup")
+    if const.SDB_OK == rc:
+        rc = group.create_node('r520-3','11840','/data/disk3/sequoiadb/database/data/11840',
+                          {'numpagecleaners':'1','pagecleaninterval':'1000',})
+    if const.SDB_OK == rc:
+       rc,node = group.get_nodebyendpoint("r520-3", '11840')
+    if const.SDB_OK == rc:
+        rc = node.start()
+    if const.SDB_OK == rc:
+        rc = node.stop()
+    if const.SDB_OK == rc:
+        rc,hostname = node.get_hostname()
+    if const.SDB_OK == rc:
+        if hostname != 'r520-3':
+            raise Exception('Test failure')
+    rc,servicename = node.get_servicename()
+    if const.SDB_OK == rc:
+        if servicename != '11840':
+            raise Exception('Test failure')
+    rc,status = node.get_status()
+    if const.SDB_OK == rc:
+        if status != common.NODE_STATUS.ACTIVE:
+            raise Exception('Test failure')
+    rc,nodename = node.get_nodename()
+    if const.SDB_OK == rc:
+        if status != common.NODE_STATUS.ACTIVE:
+            raise Exception('Test failure')
+    rc = node.stop()
+    if const.SDB_OK == rc:
+        raise Exception('Test failure')
+    rc = group.remove_node("r520-3","11840")
+    if -204 != rc:
+        raise Exception("Test Failure")
+    rc = sdb.remove_replica_group("newgroup")
+    if const.SDB_OK != rc:
+        raise  Exception("Test Failure")
+
+
+
+
+
+
 
 
