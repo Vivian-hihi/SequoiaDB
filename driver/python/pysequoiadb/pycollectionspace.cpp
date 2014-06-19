@@ -28,7 +28,7 @@ static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
    NEW_CPPOBJECT( cs, sdbCollectionSpace ) ;
    if ( NULL == cs )
    {
-     return NULL ;
+      return NULL ;
    }
 
    return MAKE_PYOBJECT( cs ) ;

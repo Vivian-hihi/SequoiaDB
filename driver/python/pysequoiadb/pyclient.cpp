@@ -27,7 +27,7 @@ static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
    NEW_CPPOBJECT( client, sdb ) ;
    if ( NULL == client )
    {
-     return NULL ;
+      return NULL ;
    }
 
    return MAKE_PYOBJECT( client ) ;
