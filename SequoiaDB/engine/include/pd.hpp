@@ -52,9 +52,9 @@
 #define SDB_ASSERT(cond,str)  \
    do { \
       if( !(cond) ) { pdassert(str,__FUNC__,__FILE__,__LINE__) ; } \
-      } while ( 0 ) ;
+      } while ( 0 )
 #else
-#define SDB_ASSERT(cond,str)  (cond) ;
+#define SDB_ASSERT(cond,str)  (cond)
 #endif // _DEBUG
 
 #define SDB_VALIDATE_GOTOERROR(cond, ret, str) \
