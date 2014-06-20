@@ -28,6 +28,7 @@ static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
    if ( NULL == client )
    {
       return NULL ;
+      goto done ;
    }
 
 done:

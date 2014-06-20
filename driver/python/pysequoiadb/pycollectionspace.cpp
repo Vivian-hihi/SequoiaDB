@@ -29,6 +29,7 @@ static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
    if ( NULL == cs )
    {
       return NULL ;
+      goto done ;
    }
 
 done:
