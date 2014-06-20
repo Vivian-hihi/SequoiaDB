@@ -31,40 +31,42 @@
 *******************************************************************************/
 
 #include "omagentMsgHandler.hpp"
+#include "omagent.hpp"
 
 using namespace std;
 namespace CLSMGR
 {
-   	_omagentMsgHandler::_omagentMsgHandler ()
-   	{
-   		
-   	}
-   	
-   	_omagentMsgHandler::~_omagentMsgHandler ()
-   	{
-   		
-   	}
-   	
-   	INT32 _omagentMsgHandler::handleMsg ( const NET_HANDLE &handle,
-          		                             const _MsgHeader *header,
-   	       	                             const CHAR *msg )
+   _omagentMsgHandler::_omagentMsgHandler ()
+   {
 
-    	   cout << "OK! In handleMsg." << endl ;
-      done:
-         return rc ;
-      error:
-         goto done;
-      }
-      
-      INT32 _omagentMsgHandler::handleClose ( const NET_HANDLE *handle,
-                                             _MsgRouteID id )
-      {
-         INT32 rc = SDB_OK ;
-         cout << "OK! In handleClose." << endl ;	
-      done:
-         return rc ;
-      error:
-         goto done;
-      }
-	
+   }
+
+   _omagentMsgHandler::~_omagentMsgHandler ()
+   {
+
+   }
+
+   INT32 _omagentMsgHandler::handleMsg ( const NET_HANDLE &handle,
+                                         const _MsgHeader *header,
+                                         const CHAR *msg )
+   {
+      INT32 rc = SDB_OK ;
+      cout << "OK! In handleMsg." << endl ;
+   done:
+      return rc ;
+   error:
+      goto done;
+   }
+
+   INT32 _omagentMsgHandler::handleClose ( const NET_HANDLE *handle,
+                                           _MsgRouteID id )
+   {
+      INT32 rc = SDB_OK ;
+      cout << "OK! In handleClose." << endl ;
+   done:
+      return rc ;
+   error:
+      goto done;
+   }
+
 }
