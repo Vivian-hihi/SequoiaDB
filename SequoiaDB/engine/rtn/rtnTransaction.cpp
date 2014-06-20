@@ -364,10 +364,10 @@ namespace engine
       const CHAR *pCollectionShortName = NULL;
       dpsTransCB *pTransCB = sdbGetTransCB() ;
       UINT16 collectionID = DMS_INVALID_MBID;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB  can't be NULL" )
-      SDB_ASSERT ( dpsCB, "dpsCB  can't be NULL" )
-      SDB_ASSERT ( cb, "cb  can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB  can't be NULL" ) ;
+      SDB_ASSERT ( dpsCB, "dpsCB  can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb  can't be NULL" ) ;
       rc = rtnResolveCollectionNameAndLock ( pCollection, dmsCB, &su,
                                              &pCollectionShortName, suID );
       PD_RC_CHECK( rc, PDERROR, "Failed to resolve collection name"
@@ -404,10 +404,10 @@ namespace engine
       UINT32 logicCSID = ~0;
       dmsStorageUnit *su = NULL;
       dpsTransCB *pTransCB = sdbGetTransCB() ;
-      SDB_ASSERT ( pSpace, "space can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB  can't be NULL" )
-      SDB_ASSERT ( dpsCB, "dpsCB  can't be NULL" )
-      SDB_ASSERT ( cb, "cb  can't be NULL" )
+      SDB_ASSERT ( pSpace, "space can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB  can't be NULL" ) ;
+      SDB_ASSERT ( dpsCB, "dpsCB  can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb  can't be NULL" ) ;
       UINT32 length = ossStrlen ( pSpace );
       PD_CHECK( (length > 0 && length <= DMS_SU_NAME_SZ), SDB_INVALIDARG,
                 error, PDERROR, "invalid length of collectionspace name:%s",

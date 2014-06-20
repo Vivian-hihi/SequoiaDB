@@ -260,7 +260,7 @@ namespace engine
             pRollbackOperator->execute( pReceiveBuffer, packSize,
                                         ppResultBuffer, cb, replyHeader,
                                         ppErrorObj );
-            SDB_ASSERT( NULL == *ppErrorObj, "impossible" )
+            SDB_ASSERT( NULL == *ppErrorObj, "impossible" ) ;
          }
       }
       replyHeader.flags = rc;

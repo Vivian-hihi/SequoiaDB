@@ -1048,8 +1048,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNGET_DOIT ) ;
 
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( pContextID, "context id can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
 
       BSONObj matcher ( _matcherBuff ) ;
       BSONObj selector ( _selectBuff ) ;
@@ -1145,7 +1145,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       rtnContextDump *context = NULL ;
 
-      SDB_ASSERT( pContextID, "context id can't be NULL" )
+      SDB_ASSERT( pContextID, "context id can't be NULL" ) ;
 
       BSONObj matcher ( _matcherBuff ) ;
       BSONObj hint ( _selectBuff ) ;  // for hint
@@ -1217,8 +1217,8 @@ namespace engine
                           INT16 w , INT64 *pContextID )
    {
       PD_TRACE_ENTRY ( SDB__RTNLIST_DOIT ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( pContextID, "context id can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
 
       BSONObj matcher ( _matcherBuff ) ;
       BSONObj selector ( _selectBuff ) ;
@@ -1568,8 +1568,8 @@ namespace engine
                              INT16 w , INT64 *pContextID )
    {
       PD_TRACE_ENTRY ( SDB__RTNSNAPSHOT_DOIT ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( pContextID, "context id can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
 
       BSONObj matcher ( _matcherBuff ) ;
       BSONObj selector ( _selectBuff ) ;
@@ -2205,8 +2205,8 @@ namespace engine
                                  INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( cb, "cb can't be NULL" )
-      SDB_ASSERT ( pContextID, "context id can't be NULL" )
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__RTNTRACESTATUS_DOIT ) ;
       rtnContextDump *context = NULL ;
 
@@ -2530,8 +2530,8 @@ namespace engine
                           INT16 w, INT64 *pContextID )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( cb, "cb can't be NULL" )
-      SDB_ASSERT ( pContextID, "context id can't be NULL" )
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      SDB_ASSERT ( pContextID, "context id can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__RTNLOAD_DOIT ) ;
       migMaster master ;
       _parameters.clientSock = cb->getClientSock() ;

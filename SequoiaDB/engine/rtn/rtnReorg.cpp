@@ -66,7 +66,7 @@ namespace engine
       INT32 blockBuffSize = 0 ;
       INT32 headSize      = 0 ;
       SINT32 blockSize    = 0 ;
-      SDB_ASSERT ( su && ru, "SU and RU can't be NULL" )
+      SDB_ASSERT ( su && ru, "SU and RU can't be NULL" ) ;
 
       // first reset pointer
       ru->reset () ;
@@ -176,10 +176,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNREORGRECOVER1 ) ;
 
-      SDB_ASSERT ( pCollectionFullName, "collection full name can't be null" )
-      SDB_ASSERT ( pCollectionName, "collection name can't be null" )
-      SDB_ASSERT ( su, "su can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
+      SDB_ASSERT ( pCollectionFullName, "collection full name can't be null" ) ;
+      SDB_ASSERT ( pCollectionName, "collection name can't be null" ) ;
+      SDB_ASSERT ( su, "su can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
 
       pmdKRCB *krcb = pmdGetKRCB () ;
       BOOLEAN ruExist = TRUE ;
@@ -361,11 +361,11 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNREORGOFFLINE1 ) ;
 
-      SDB_ASSERT ( pCollectionFullName, "collection name can't be null" )
-      SDB_ASSERT ( su, "su can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
-      SDB_ASSERT ( mbContext, "mb context can't be NULL" )
+      SDB_ASSERT ( pCollectionFullName, "collection name can't be null" ) ;
+      SDB_ASSERT ( su, "su can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      SDB_ASSERT ( mbContext, "mb context can't be NULL" ) ;
 
       BSONObj dummyObj ;
       pmdKRCB *krcb = pmdGetKRCB () ;
@@ -588,9 +588,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNREORGRECOVER2 ) ;
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
       BSONObj dummyObj ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
@@ -663,10 +663,10 @@ namespace engine
       SINT64 contextID           = -1 ;
       rtnContextData *context    = NULL ;
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
       if ( ossStrlen ( pCollectionName ) > DMS_COLLECTION_FULL_NAME_SZ )
       {

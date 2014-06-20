@@ -118,7 +118,7 @@ namespace engine
                                    SINT64 &contextID,
                                    _pmdEDUCB * pEDUCB )
    {
-      SDB_ASSERT ( context, "context pointer can't be NULL" )
+      SDB_ASSERT ( context, "context pointer can't be NULL" ) ;
       {
          RTNCB_XLOCK
          // if hit max signed 64 bit integer?

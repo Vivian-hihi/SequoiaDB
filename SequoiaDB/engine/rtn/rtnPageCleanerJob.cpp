@@ -85,7 +85,7 @@ namespace engine
       dmsStorageUnit *su   = NULL ;
       pmdEDUEvent event ;
       SDB_ASSERT ( krcb && eduMgr && dmsCB && cb,
-                   "All control blocks can't be NULL" )
+                   "All control blocks can't be NULL" ) ;
       while ( !PMD_IS_DB_DOWN && !cb->isForced() )
       {
          // set EDU to wait status

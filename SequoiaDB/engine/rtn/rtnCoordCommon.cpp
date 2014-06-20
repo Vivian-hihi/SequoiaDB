@@ -188,8 +188,8 @@ namespace engine
       CoordCB *pCoordcb               = pKRCB->getCoordCB () ;
       netMultiRouteAgent *pRouteAgent = pCoordcb->getRouteAgent () ;
       SINT64 contextID                = -1 ;
-      SDB_ASSERT ( ppContext, "ppContext can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
+      SDB_ASSERT ( ppContext, "ppContext can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
       rtnContextCoord *pContext       = NULL ;
       BOOLEAN isNeedRefreshCata       = FALSE ;
       rtnCoordQuery newQuery ;
@@ -265,7 +265,7 @@ namespace engine
             // some data nodes' version are too old and others are new, we
             // should delete the old context and allocate new one
             isNeedRefreshCata = TRUE ;
-            SDB_ASSERT ( contextID >= 0, "contextID must be positive" )
+            SDB_ASSERT ( contextID >= 0, "contextID must be positive" ) ;
             pRtncb->contextDelete ( contextID, cb ) ;
             contextID = -1 ;
             goto retry ;
@@ -2255,7 +2255,7 @@ namespace engine
                    rc );
       rc = pCmdProcesser->execute( pListReq, 0, &pResultBuffer, cb,
                                    replyHeader, &err ) ;
-      SDB_ASSERT( NULL == err, "impossible" )
+      SDB_ASSERT( NULL == err, "impossible" ) ;
       PD_RC_CHECK( rc, PDERROR, "failed to list groups(rc=%d)", rc ) ;
 
       contextID = replyHeader.contextID ;

@@ -261,7 +261,7 @@ namespace engine
 
    INT32 rtnCoordTransCommit::buildPhase1Msg( CHAR * pReceiveBuffer, CHAR **pMsg )
    {
-      SDB_ASSERT( pMsg, "pMsg can't be NULL" )
+      SDB_ASSERT( pMsg, "pMsg can't be NULL" ) ;
       INT32 bufferSize = 0;
       if ( *pMsg != NULL )
       {
@@ -273,7 +273,7 @@ namespace engine
 
    INT32 rtnCoordTransCommit::buildPhase2Msg( CHAR * pReceiveBuffer, CHAR **pMsg )
    {
-      SDB_ASSERT( pMsg, "pMsg can't be NULL" )
+      SDB_ASSERT( pMsg, "pMsg can't be NULL" ) ;
       INT32 bufferSize = 0;
       if ( *pMsg != NULL )
       {
@@ -292,7 +292,7 @@ namespace engine
       rtnCoordOperator *pRollbackOperator = NULL;
       rc = rtnCoord2PhaseCommit::execute( pReceiveBuffer, packSize, ppResultBuffer,
                                        cb, replyHeader, ppErrorObj );
-      SDB_ASSERT( NULL == *ppErrorObj, "impossible" )
+      SDB_ASSERT( NULL == *ppErrorObj, "impossible" ) ;
       PD_RC_CHECK( rc, PDERROR,
                   "failed to commit the transaction(rc=%d)",
                   rc );
@@ -306,7 +306,7 @@ namespace engine
       {
          pRollbackOperator->execute( pReceiveBuffer, packSize, ppResultBuffer,
                                     cb, replyHeader, ppErrorObj );
-         SDB_ASSERT( NULL == *ppErrorObj, "impossible" )
+         SDB_ASSERT( NULL == *ppErrorObj, "impossible" ) ;
       }
       goto done;
    }

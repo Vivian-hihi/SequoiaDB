@@ -947,7 +947,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( _useContext () )
       {
-         SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" )
+         SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
       }
 
       while( !replyQue.empty() )
@@ -998,7 +998,7 @@ namespace engine
                                                     rtnContextCoord *pContext )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" )
+      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
 
       CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB() ;
       ROUTE_RC_MAP::iterator iter ;
@@ -2338,7 +2338,7 @@ namespace engine
                                                    rtnContextCoord *pContext )
    {
       INT32 rc = SDB_OK;
-      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" )
+      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
 
       while( !replyQue.empty() )
       {
@@ -2386,7 +2386,7 @@ namespace engine
                                                             rtnContext *pContext )
    {
       INT32 rc = SDB_OK;
-      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" )
+      SDB_ASSERT( pContext != NULL, "pContext can't be NULL!" ) ;
 
       CoordCB *pCoordcb = pmdGetKRCB()->getCoordCB();
       ROUTE_RC_MAP::iterator iter = failedNodes.begin();
@@ -3936,7 +3936,7 @@ namespace engine
          rtnCoordOperator *pCmdProcesser = NULL ;
          pCmdProcesser = pProcesserFactory->getCommandProcesser(
             COORD_CMD_LISTCOLLECTIONSPACES ) ;
-         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" )
+         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" ) ;
          rc = pCmdProcesser->execute( pReceiveBuffer, packSize, ppResultBuffer,
                                       cb, replyHeader, ppErrorObj ) ;
          if ( rc != SDB_OK )
@@ -3998,7 +3998,7 @@ namespace engine
          rtnCoordOperator *pCmdProcesser = NULL ;
          pCmdProcesser = pProcesserFactory->getCommandProcesser(
             COORD_CMD_LISTCOLLECTIONS ) ;
-         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" )
+         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" ) ;
          rc = pCmdProcesser->execute( pReceiveBuffer, packSize, ppResultBuffer,
                                       cb, replyHeader, ppErrorObj ) ;
          if ( rc != SDB_OK )
@@ -5891,7 +5891,7 @@ namespace engine
          rtnCoordOperator *pCmdProcesser = NULL ;
          pCmdProcesser = pProcesserFactory->getCommandProcesser(
             COORD_CMD_LISTGROUPS ) ;
-         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" )
+         SDB_ASSERT( pCmdProcesser , "pCmdProcesser can't be NULL" ) ;
          char *pListReq = NULL ;
          INT32 listReqSize = 0 ;
          rc = msgBuildQueryMsg( &pListReq, &listReqSize, "", 0, 0, 0, 1,
@@ -6431,7 +6431,7 @@ namespace engine
          rtnCoordProcesserFactory *pFactory = pCoordcb->getProcesserFactory() ;
          rtnCoordCommand *pCmd = pFactory->getCommandProcesser(
                                  COORD_CMD_WAITTASK ) ;
-         SDB_ASSERT( pCmd, "wait task command not found" )
+         SDB_ASSERT( pCmd, "wait task command not found" ) ;
          rc = pCmd->execute( splitQueryBuffer, splitQueryBufferSz,
                              ppResultBuffer, cb, replyHeader, ppErrorObj ) ;
          if ( rc )
@@ -8621,7 +8621,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       const BSONObj &evalRes = session->getRetMsg() ;
-      SDB_ASSERT( !evalRes.isEmpty(), "impossible" )
+      SDB_ASSERT( !evalRes.isEmpty(), "impossible" ) ;
 
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       rtnContextSP *context = NULL ;

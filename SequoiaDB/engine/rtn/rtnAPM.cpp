@@ -285,7 +285,7 @@ namespace engine
             newAlloc = TRUE ;
          }
          rtnAccessPlanList *planlist = _planLists[hash] ;
-         SDB_ASSERT( planlist, "not able to find the planlist" )
+         SDB_ASSERT( planlist, "not able to find the planlist" ) ;
          rc = planlist->getPlan ( query, orderBy, hint, out, incSize ) ;
          if ( rc )
          {
@@ -315,7 +315,7 @@ namespace engine
    void _rtnAccessPlanSet::releasePlan ( optAccessPlan *plan )
    {
       PD_TRACE_ENTRY ( SDB__RTNACCESSPS_RELPL );
-      SDB_ASSERT ( plan, "plan can't be NULL" )
+      SDB_ASSERT ( plan, "plan can't be NULL" ) ;
       UINT32 hash = plan->hash () ;
       RTNAPS_SLOCK
       if ( _planLists.find ( hash ) == _planLists.end() )
@@ -402,8 +402,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RTNACCESSPLMAN );
-      SDB_ASSERT ( collectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( out, "out can't be NULL" )
+      SDB_ASSERT ( collectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( out, "out can't be NULL" ) ;
       if ( _totalNum > RTN_APM_SIZE )
       {
          clear ( FALSE ) ;
@@ -452,7 +452,7 @@ namespace engine
             newAlloc = TRUE ;
          }
          rtnAccessPlanSet *planset = _planSets[collectionName] ;
-         SDB_ASSERT ( planset, "not able to find the planset" )
+         SDB_ASSERT ( planset, "not able to find the planset" ) ;
          rc = planset->getPlan ( query, orderBy, hint, out, incSize ) ;
          if ( rc )
          {
@@ -484,8 +484,9 @@ namespace engine
    void _rtnAccessPlanManager::releasePlan ( optAccessPlan *plan )
    {
       PD_TRACE_ENTRY ( SDB__RTNACCESSPLMAN_RELPL );
-      SDB_ASSERT ( plan, "plan can't be NULL" )
-      SDB_ASSERT ( plan->getAPM() == this, "the owner of plan is not this APM" )
+      SDB_ASSERT ( plan, "plan can't be NULL" ) ;
+      SDB_ASSERT ( plan->getAPM() == this,
+                   "the owner of plan is not this APM" ) ;
 #if defined (_WINDOWS)
       map<const CHAR*, rtnAccessPlanSet*, cmp_str>::iterator it ;
 #elif defined (_LINUX)

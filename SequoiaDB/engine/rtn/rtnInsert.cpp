@@ -75,9 +75,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNINSERT2 ) ;
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;

@@ -55,7 +55,7 @@ namespace engine
      _direction(predList->getDirection())
    {
       SDB_ASSERT ( indexCB && _predList && _su,
-                   "indexCB, predList and su can't be NULL" )
+                   "indexCB, predList and su can't be NULL" ) ;
 
       _dedupBufferSize = RTN_IXSCANNER_DEDUPBUFSZ_DFT ;
       indexCB->getIndexID ( _indexOID ) ;
@@ -160,7 +160,7 @@ namespace engine
       monAppCB * pMonAppCB = _cb ? _cb->getMonAppCB() : NULL ;
 
    begin:
-      SDB_ASSERT ( _indexCB, "_indexCB can't be NULL, call resumeScan first" )
+      SDB_ASSERT ( _indexCB, "_indexCB can't be NULL, call resumeScan first" ) ;
       // first time run after reset, we need to locate the first key
       if ( !_init )
       {

@@ -89,7 +89,7 @@ namespace engine
    rtnCoordCommand * rtnCoordProcesserFactory::getCommandProcesser(const MsgOpQuery *pQuery)
    {
       PD_TRACE_ENTRY ( SDB_RTNCOPROFAC_GETCOMPRO1 ) ;
-      SDB_ASSERT ( pQuery, "pQuery can't be NULL" )
+      SDB_ASSERT ( pQuery, "pQuery can't be NULL" ) ;
       rtnCoordCommand *pProcesser = NULL;
       do
       {
@@ -123,7 +123,7 @@ namespace engine
    rtnCoordCommand * rtnCoordProcesserFactory::getCommandProcesser(const char *pCmd)
    {
       PD_TRACE_ENTRY ( SDB_RTNCOPROFAC_GETCOMPRO2 ) ;
-      SDB_ASSERT ( pCmd, "pCmd can't be NULL" )
+      SDB_ASSERT ( pCmd, "pCmd can't be NULL" ) ;
       rtnCoordCommand *pProcesser = NULL;
       do
       {

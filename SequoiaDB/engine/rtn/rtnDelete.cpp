@@ -85,9 +85,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDEL2 ) ;
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
       dmsStorageUnit *su                  = NULL ;
       dmsMBContext   *mbContext           = NULL ;
@@ -124,7 +124,7 @@ namespace engine
                    "rc: %d", pCollectionName, rc ) ;
 
       apm = su->getAPM() ;
-      SDB_ASSERT ( apm, "apm shouldn't be NULL" )
+      SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released when exiting the function
       rc = apm->getPlan ( deletor,
@@ -235,9 +235,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTRAVERDEL ) ;
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
       dmsStorageUnit *su               = NULL ;
       dmsMBContext   *mbContext        = NULL ;
@@ -290,7 +290,7 @@ namespace engine
                  "Unable to generate access plan by index %s",
                  pIndexName ) ;
 
-      SDB_ASSERT( plan->getPredList(), "predList can't be NULL" )
+      SDB_ASSERT( plan->getPredList(), "predList can't be NULL" ) ;
       // set traversal direction
       plan->getPredList()->setDirection ( dir ) ;
 

@@ -106,8 +106,8 @@ namespace engine
       SINT64 totalCount = 0 ;
       BSONObj obj ;
       BSONObjBuilder ob ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
@@ -214,8 +214,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETINDEXES ) ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
@@ -597,7 +597,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR, "Failed to get dms mb context, rc: %d", rc ) ;
 
       apm = su->getAPM() ;
-      SDB_ASSERT ( apm, "apm shouldn't be NULL" )
+      SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
       rc = apm->getPlan ( match,
@@ -671,10 +671,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETCOMMANDENTRY ) ;
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL " )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL " ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
       rtnContextDump *context = NULL ;
 
       // create cursors
@@ -752,9 +752,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNLISTCOMMANDENTRY ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
       rtnContextDump *context = NULL ;
 
       // create cursors
@@ -846,9 +846,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNSNAPCOMMANDENTRY ) ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "runtimeCB can't be NULL" ) ;
       rtnContextDump *context = NULL ;
 
       // create cursors
@@ -1122,8 +1122,8 @@ namespace engine
       INT32 rc              = SDB_OK ;
       INT32 rcTmp           = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATECLCOMMAND ) ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su    = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
@@ -1227,8 +1227,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNCREATEINDEXCOMMAND ) ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su            = NULL ;
       dmsStorageUnitID suID         = DMS_INVALID_CS ;
       rtnAccessPlanManager *apm     = NULL ;
@@ -1287,8 +1287,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPINDEXCOMMAND ) ;
       OID oid ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       rtnAccessPlanManager *apm        = NULL ;
       dmsStorageUnit *su               = NULL ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
@@ -1382,8 +1382,8 @@ namespace engine
       // PD_TRACE_ENTRY ( SDB_RTNDROPCSP1 ) ;
       SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
       SINT64 contextID = -1 ;
-      SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       // make sure the collectionspace length is not out of range
       UINT32 length = ossStrlen ( pCollectionSpace ) ;
       if ( length <= 0 || length > DMS_SU_NAME_SZ )
@@ -1511,8 +1511,8 @@ namespace engine
       INT32 rc                            = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNDROPCLCOMMAND ) ;
       dmsStorageUnitID suID               = DMS_INVALID_CS ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su                  = NULL ;
       rtnAccessPlanManager *apm           = NULL ;
       const CHAR *pCollectionShortName    = NULL ;
@@ -1563,8 +1563,8 @@ namespace engine
       INT32 rc                         = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTRUNCCLCOMMAND ) ;
       dmsStorageUnitID suID            = DMS_INVALID_CS ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su               = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       BOOLEAN writable                 = FALSE ;
@@ -1611,8 +1611,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTESTCSCOMMAND ) ;
-      SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollectionSpace, "collection space can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       rc = dmsCB->nameToSUAndLock ( pCollectionSpace, suID, &su ) ;
@@ -1639,8 +1639,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTESTCLCOMMAND ) ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       const CHAR *pCollectionShortName = NULL ;
       UINT16 cID ;

@@ -252,8 +252,8 @@ namespace engine
       }
       _pPrefWatcher = NULL ;
 
-      SDB_ASSERT( 0 == _waitPrefetchNum.peek(), "Has wait prefetch jobs" )
-      SDB_ASSERT( FALSE == _isInPrefetch, "Has prefetch job run" )
+      SDB_ASSERT( 0 == _waitPrefetchNum.peek(), "Has wait prefetch jobs" ) ;
+      SDB_ASSERT( FALSE == _isInPrefetch, "Has prefetch job run" ) ;
    }
 
    string _rtnContextBase::toString()
@@ -773,7 +773,7 @@ namespace engine
       }
       // get the predicate list
       predList = plan->getPredList() ;
-      SDB_ASSERT ( predList, "predList can't be NULL" )
+      SDB_ASSERT ( predList, "predList can't be NULL" ) ;
 
       // create scanner
       if ( _scanner )
@@ -795,7 +795,7 @@ namespace engine
       if ( blockObj )
       {
          SDB_ASSERT( direction == 1 || direction == -1,
-                     "direction must be 1 or -1" )
+                     "direction must be 1 or -1" ) ;
 
          _direction = direction ;
          rc = _parseIndexBlocks( *blockObj, _indexBlocks, _indexRIDs ) ;
@@ -2599,7 +2599,7 @@ namespace engine
       }
 
       pSubContext = iter->second ;
-      SDB_ASSERT( pSubContext != NULL, "subContext can't be NULL" )
+      SDB_ASSERT( pSubContext != NULL, "subContext can't be NULL" ) ;
 
       if ( pSubContext->getContextID() != pReply->contextID )
       {
@@ -2650,7 +2650,7 @@ namespace engine
       EMPTY_CONTEXT_MAP::iterator iter ;
       coordSubContext *pSubContext = NULL ;
 
-      SDB_ASSERT ( -1 != contextID, "context id can't be -1" )
+      SDB_ASSERT ( -1 != contextID, "context id can't be -1" ) ;
 
       if ( !_isOpened || NULL == _netAgent )
       {
@@ -3071,11 +3071,11 @@ namespace engine
    void _coordSubContext::appendData( MsgOpReply * pReply )
    {
       PD_TRACE_ENTRY ( SDB_COSUBCON_APPENDDATA ) ;
-      SDB_ASSERT( pReply != NULL, "pReply can't be NULL" )
+      SDB_ASSERT( pReply != NULL, "pReply can't be NULL" ) ;
 
       if ( _pData != NULL )
       {
-         SDB_ASSERT ( _recordNum <= 0, "the buffer must be empty" )
+         SDB_ASSERT ( _recordNum <= 0, "the buffer must be empty" ) ;
          SDB_OSS_FREE( _pData ) ;
       }
       _routeID = pReply->header.routeID ;
@@ -3843,9 +3843,9 @@ namespace engine
                                 SINT64 numToSkip,
                                 SINT64 numToReturn )
    {
-      SDB_ASSERT( !orderby.isEmpty(), "impossible" )
-      SDB_ASSERT( NULL != cb, "possible" )
-      SDB_ASSERT( NULL != context, "impossible" )
+      SDB_ASSERT( !orderby.isEmpty(), "impossible" ) ;
+      SDB_ASSERT( NULL != cb, "possible" ) ;
+      SDB_ASSERT( NULL != context, "impossible" ) ;
       INT32 rc = SDB_OK ;
       UINT64 sortBufSz = pmdGetOptionCB()->getSortBufSize() ;
 
@@ -3962,7 +3962,7 @@ namespace engine
    INT32 _rtnContextQgmSort::open( _qgmPlan *qp )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != qp, "impossible" )
+      SDB_ASSERT( NULL != qp, "impossible" ) ;
       if ( _isOpened )
       {
          rc = SDB_DMS_CONTEXT_IS_OPEN ;
@@ -3981,7 +3981,7 @@ namespace engine
    INT32 _rtnContextQgmSort::_prepareData( _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != _qp, "impossible" )
+      SDB_ASSERT( NULL != _qp, "impossible" ) ;
       qgmFetchOut next ;
       INT32 index = 0 ;
       monAppCB *pMonAppCB = cb ? cb->getMonAppCB() : NULL ;

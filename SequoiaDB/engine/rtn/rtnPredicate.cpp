@@ -231,7 +231,7 @@ namespace engine
       INT32 posStart = 0 ;
       INT32 posStop  = 0 ;
       RTN_SSK_VALUE_POS pos ;
-      SDB_ASSERT ( isValid (), "this object is not valid" )
+      SDB_ASSERT ( isValid (), "this object is not valid" ) ;
       if ( dir >= 0 )
          posStart = rtnKeyCompare ( ele, _startKey._bound ) ;
       else

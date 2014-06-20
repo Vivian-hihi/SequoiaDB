@@ -48,7 +48,7 @@ namespace engine
                                _rtnSortTuple **tuple )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( _read <= _loadSize, "impossible" )
+      SDB_ASSERT( _read <= _loadSize, "impossible" ) ;
 
       if ( 0 == _limit )
       {
@@ -83,7 +83,7 @@ namespace engine
          }
       } while ( TRUE ) ;
 
-      SDB_ASSERT( 0 != _limit, "impossible" )
+      SDB_ASSERT( 0 != _limit, "impossible" ) ;
       if ( 0 < _limit )
       {
          --_limit;
@@ -99,7 +99,7 @@ namespace engine
                               UINT64 size, SINT64 limit )
    {
       SDB_ASSERT( NULL != begin && DMS_RECORD_USER_MAX_SZ * 2 <= size,
-                  "impossible" )
+                  "impossible" ) ;
       _blk = blk ;
       _buf = begin ;
       _size = size ;
@@ -112,7 +112,7 @@ namespace engine
    INT32 _rtnMergeBlock::_loadData( _dmsTmpBlkUnit *unit )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( _read <= _loadSize, "impossible" )
+      SDB_ASSERT( _read <= _loadSize, "impossible" ) ;
       UINT64 lastLen = _loadSize - _read ;
 
       if ( 0 != lastLen )
@@ -130,7 +130,7 @@ namespace engine
 
       _loadSize += lastLen ;
       _read = 0 ;
-      SDB_ASSERT( _loadSize <= _size, "impossible" )
+      SDB_ASSERT( _loadSize <= _size, "impossible" ) ;
    done:
       return rc ;
    error:
@@ -153,7 +153,7 @@ namespace engine
     _mergeDone( FALSE),
     _unit( unit )
    {
-      SDB_ASSERT( NULL != _unit, "impossible" )
+      SDB_ASSERT( NULL != _unit, "impossible" ) ;
       _unitHelper._originalSize = _unit->totalSize() ;
       _unitHelper._outputStart = _unitHelper._originalSize ;
    }
@@ -167,7 +167,7 @@ namespace engine
                                  SINT64 limit )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != buf && size != 0, "impossible" )
+      SDB_ASSERT( NULL != buf && size != 0, "impossible" ) ;
 
       UINT32 mergeSize = size / ( DMS_RECORD_USER_MAX_SZ * 2 );
       if ( mergeSize < RTN_SORT_MIN_MERGESIZE )
@@ -203,7 +203,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != _buf && 0 < _size && NULL != _src,
-                  "impossible" )
+                  "impossible" ) ;
 
       _rtnMergeTuple node ;
       if ( !_mergeDone )
@@ -228,7 +228,7 @@ namespace engine
       if ( SDB_OK == rc )
       {
          SDB_ASSERT( NULL != node.tuple() && NULL != node.tuple()->obj(),
-                     "can not be NULL" )
+                     "can not be NULL" ) ;
          BSONObj popped( node.obj() ) ;
          ossMemcpy( _buf, popped.objdata(), popped.objsize()) ;
          try
@@ -292,13 +292,14 @@ namespace engine
             goto error ;
          }
 
-         SDB_ASSERT( _src->empty() && !dst->empty(), "impssible" )
+         SDB_ASSERT( _src->empty() && !dst->empty(), "impssible" ) ;
          tmp = _src ;
          _src = dst ;
          dst = tmp ;
          ++loop;
 
-         SDB_ASSERT(_unitHelper._outputStart <= _unitHelper._originalSize * 2, "impossible" )
+         SDB_ASSERT( _unitHelper._outputStart <= _unitHelper._originalSize * 2,
+                     "impossible" ) ;
          _unitHelper._outputStart = (0 == loop % 2) ?
                                       _unitHelper._originalSize : 0;
       }
@@ -343,8 +344,9 @@ namespace engine
                   goto error ;
                }
 
-               SDB_ASSERT( 0 < node.getI() && NULL != node.tuple(), "impossible" )
-               SDB_ASSERT( _mergePos <= _mergeBufSize, "impossible" )
+               SDB_ASSERT( 0 < node.getI() && NULL != node.tuple(),
+                           "impossible" ) ;
+               SDB_ASSERT( _mergePos <= _mergeBufSize, "impossible" ) ;
 
                if ( node.tuple()->len() <=
                     _mergeBufSize - _mergePos )
@@ -500,7 +502,7 @@ namespace engine
    INT32 _rtnMergeSorting::_pushObjFromSink( UINT32 i )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 0 < i && i < _mergeBlkSize, "impossible" )
+      SDB_ASSERT( 0 < i && i < _mergeBlkSize, "impossible" ) ;
       _rtnSortTuple *tuple = NULL ;
       rc = _dataSink[i].next( _unit, &tuple ) ;
       if ( SDB_OK != rc )

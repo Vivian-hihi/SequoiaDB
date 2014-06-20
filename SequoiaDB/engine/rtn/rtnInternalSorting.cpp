@@ -93,8 +93,8 @@ namespace engine
          goto error ;
       }
 
-      SDB_ASSERT( !keySet.empty(), "can not be empty" )
-      SDB_ASSERT( _headOffset <= _tailOffset, "impossible" )
+      SDB_ASSERT( !keySet.empty(), "can not be empty" ) ;
+      SDB_ASSERT( _headOffset <= _tailOffset, "impossible" ) ;
 
       {
       /// check whether the remaining space is enough.
@@ -138,7 +138,7 @@ namespace engine
 
       ++_objNum ;
 
-      SDB_ASSERT( _headOffset <= _tailOffset, "impossible" )
+      SDB_ASSERT( _headOffset <= _tailOffset, "impossible" ) ;
       }
    done:
       return rc ;
@@ -168,7 +168,7 @@ namespace engine
       *tuple = *(( _rtnSortTuple **)
                  (_fetched * sizeof( _rtnSortTuple * ) +
                   _begin ));
-      SDB_ASSERT( NULL != *tuple, "can not be NULL" )
+      SDB_ASSERT( NULL != *tuple, "can not be NULL" ) ;
 
       ++_fetched ;
    done:
@@ -219,8 +219,8 @@ namespace engine
                                           _rtnSortTuple **&rightAxis )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( left < right, "impossible" )
-      SDB_ASSERT( NULL != *left && NULL != *right, "can not be NULL" )
+      SDB_ASSERT( left < right, "impossible" ) ;
+      SDB_ASSERT( NULL != *left && NULL != *right, "can not be NULL" ) ;
 
       {
       _rtnSortTuple **mid = left + (( right - left ) >> 1) ;
@@ -460,7 +460,7 @@ namespace engine
                                           _rtnSortTuple **right,
                                           _pmdEDUCB *cb )
    {
-      SDB_ASSERT( left <= right, "impossible" )
+      SDB_ASSERT( left <= right, "impossible" ) ;
 
       INT32 rc = SDB_OK ;
       _rtnSortTuple **leftAxis = NULL ;
@@ -524,7 +524,7 @@ namespace engine
                                            _rtnSortTuple **right )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( left < right, "impossible" )
+      SDB_ASSERT( left < right, "impossible" ) ;
       for ( _rtnSortTuple **i = left + 1;
             i <= right;
             i++ )
@@ -568,7 +568,7 @@ namespace engine
       while ( itr.more() )
       {
          BSONElement orderEle = itr.next() ;
-         SDB_ASSERT( !orderEle.eoo(), "can not be eoo" )
+         SDB_ASSERT( !orderEle.eoo(), "can not be eoo" ) ;
          BSONElement arrEle = obj.getField( orderEle.fieldName() ) ;
          if ( Array == arrEle.type() )
          {

@@ -89,10 +89,10 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSORTING_INIT ) ;
       SDB_ASSERT( RTN_SORT_MIN_BUFSIZE <= RTN_SORT_MIN_BUFSIZE,
-                  "bufSize should >= 64MB" )
-      SDB_ASSERT( NULL != cb, "impossible" )
-      SDB_ASSERT( NULL != context, "impossible" )
-      SDB_ASSERT( !orderby.isEmpty(), "impossible" )
+                  "bufSize should >= 64MB" ) ;
+      SDB_ASSERT( NULL != cb, "impossible" ) ;
+      SDB_ASSERT( NULL != context, "impossible" ) ;
+      SDB_ASSERT( !orderby.isEmpty(), "impossible" ) ;
       UINT64 realSize = bufSize * 1024 * 1024 ;
 
       _sortBuf = ( CHAR * )SDB_OSS_MALLOC( realSize ) ;
@@ -165,7 +165,7 @@ namespace engine
          }
          else
          {
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
          }
       } while ( TRUE ) ;
    done:
@@ -179,7 +179,7 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION( SDB__RTNSORTING__CRTSORTEDBLKS, "_rtnSorting::_crtSortedBlks" )
    INT32 _rtnSorting::_crtSortedBlks( RTN_SORT_BLKS &blks, _pmdEDUCB *cb )
    {
-      SDB_ASSERT( NULL == _internalBlk, "impossible" )
+      SDB_ASSERT( NULL == _internalBlk, "impossible" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RTNSORTING__CRTSORTEDBLKS) ;
       rtnContextBuf bufObj ;
@@ -232,7 +232,7 @@ namespace engine
                   PD_LOG( PDDEBUG, "total size of unit:%lld", _unit.totalSize() ) ;
                   SAFE_OSS_DELETE( _internalBlk ) ;
 
-                  SDB_ASSERT( NULL == _mergeBlk, "impossible" )
+                  SDB_ASSERT( NULL == _mergeBlk, "impossible" ) ;
                   _mergeBlk = SDB_OSS_NEW _rtnMergeSorting( &_unit, _orderby ) ;
                   if ( NULL == _mergeBlk )
                   {
@@ -414,7 +414,8 @@ namespace engine
             PD_LOG( PDERROR, "failed to fetch next from internal blk:%d", rc ) ;
             goto error ;
          }
-         SDB_ASSERT( NULL != tuple && NULL != tuple->obj(), "can not be NULL" )
+         SDB_ASSERT( NULL != tuple && NULL != tuple->obj(),
+                     "can not be NULL" ) ;
          next = BSONObj( tuple->obj() ) ;
       }
       else

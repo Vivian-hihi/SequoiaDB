@@ -62,8 +62,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETMORE ) ;
 
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
       rtnContext *context = NULL ;
 
@@ -172,10 +172,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNSORT ) ;
-      SDB_ASSERT ( *ppContext, "context can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+      SDB_ASSERT ( *ppContext, "context can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
       BSONObj emptyObj ;
@@ -362,10 +362,10 @@ namespace engine
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       contextID             = -1 ;
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
       dmsStorageUnit *su = NULL ;
       dmsMBContext *mbContext = NULL ;
@@ -421,7 +421,7 @@ namespace engine
       }
 
       apm = su->getAPM() ;
-      SDB_ASSERT ( apm, "apm shouldn't be NULL" )
+      SDB_ASSERT ( apm, "apm shouldn't be NULL" ) ;
 
       // plan is released in context destructor
       rc = apm->getPlan ( matcher,
@@ -549,12 +549,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNTRAVERSALQUERY ) ;
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( pIndexName, "index name can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
-      SDB_ASSERT ( dir == 1 || dir == -1, "dir must be 1 or -1" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( pIndexName, "index name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
+      SDB_ASSERT ( dir == 1 || dir == -1, "dir must be 1 or -1" ) ;
 
       dmsStorageUnitID      suID                 = DMS_INVALID_CS ;
       dmsStorageUnit       *su                   = NULL ;
@@ -582,7 +582,7 @@ namespace engine
       rc = rtnCB->contextNew ( RTN_CONTEXT_DATA, (rtnContext**)&context,
                                contextID, cb ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to create new context, %d", rc ) ;
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
 
       try
       {
@@ -638,7 +638,7 @@ namespace engine
          }
          // get the predicate list
          predList = plan->getPredList() ;
-         SDB_ASSERT ( predList, "predList can't be NULL" )
+         SDB_ASSERT ( predList, "predList can't be NULL" ) ;
          // set the traversal direction
          predList->setDirection ( dir ) ;
 

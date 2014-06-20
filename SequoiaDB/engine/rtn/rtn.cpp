@@ -57,7 +57,7 @@ namespace engine
    {
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETINTELE );
-      SDB_ASSERT ( fieldName, "field name can't be NULL" )
+      SDB_ASSERT ( fieldName, "field name can't be NULL" ) ;
       BSONElement ele = obj.getField ( fieldName ) ;
       PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
                  "Can't locate field '%s': %s",
@@ -80,7 +80,7 @@ namespace engine
    {
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETSTRELE );
-      SDB_ASSERT ( fieldName && value, "field name and value can't be NULL" )
+      SDB_ASSERT ( fieldName && value, "field name and value can't be NULL" ) ;
       BSONElement ele = obj.getField ( fieldName ) ;
       PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
                  "Can't locate field '%s': %s",
@@ -103,7 +103,7 @@ namespace engine
    {
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETOBJELE );
-      SDB_ASSERT ( fieldName , "field name can't be NULL" )
+      SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;
       BSONElement ele = obj.getField ( fieldName ) ;
       PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
                  "Can't locate field '%s': %s",
@@ -126,7 +126,7 @@ namespace engine
    {
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNGETBOOLELE );
-      SDB_ASSERT ( fieldName , "field name can't be NULL" )
+      SDB_ASSERT ( fieldName , "field name can't be NULL" ) ;
       BSONElement ele = obj.getField ( fieldName ) ;
       PD_CHECK ( !ele.eoo(), SDB_FIELD_NOT_EXIST, error, PDDEBUG,
                  "Can't locate field '%s': %s",
@@ -628,8 +628,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNFINDCL );
-      SDB_ASSERT ( pCollection, "collection can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" )
+      SDB_ASSERT ( pCollection, "collection can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dms control block can't be NULL" ) ;
       dmsStorageUnit *su = NULL ;
       dmsStorageUnitID suID = DMS_INVALID_CS ;
       const CHAR *pCollectionShortName = NULL ;
@@ -719,9 +719,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNRESOLVECLNAL );
-      SDB_ASSERT ( pCollectionFullName, "collection name can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( ppsu, "storage unit can't be NULL" )
+      SDB_ASSERT ( pCollectionFullName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( ppsu, "storage unit can't be NULL" ) ;
       CHAR *pDot = NULL ;
       CHAR *pDot1 = NULL ;
       CHAR strCollectionFullName [ DMS_COLLECTION_SPACE_NAME_SZ +
@@ -1006,12 +1006,12 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" )
-      SDB_ASSERT ( su, "su can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
-      SDB_ASSERT ( plan, "plan can't be NULL" )
-      SDB_ASSERT ( mbContext, "mb context can't be NULL" )
-      SDB_ASSERT ( ppScanner, "Scanner can't be NULL" )
+      SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( su, "su can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      SDB_ASSERT ( plan, "plan can't be NULL" ) ;
+      SDB_ASSERT ( mbContext, "mb context can't be NULL" ) ;
+      SDB_ASSERT ( ppScanner, "Scanner can't be NULL" ) ;
 
       rtnPredicateList *predList = NULL ;
       mthMatcher *matcher        = NULL ;
@@ -1046,7 +1046,7 @@ namespace engine
  
          // get the predicate list
          predList = plan->getPredList() ;
-         SDB_ASSERT ( predList, "predList can't be NULL" )
+         SDB_ASSERT ( predList, "predList can't be NULL" ) ;
          // get the matcher from plan instead of manually loading it
          if ( plan->getMatcher().isInitialized() &&
               FALSE == plan->getMatcher().isMatchesAll() )
@@ -1097,11 +1097,11 @@ namespace engine
       INT32 rc                 = SDB_OK ;
       mthMatcher *pMatcher     = matcher.isMatchesAll() ? NULL : &matcher ;
 
-      SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" )
-      SDB_ASSERT ( su, "su can't be NULL" )
-      SDB_ASSERT ( mbContext, "mb context can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
-      SDB_ASSERT ( ppScanner, "scanner can't be NULL" )
+      SDB_ASSERT ( pCollectionShortName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( su, "su can't be NULL" ) ;
+      SDB_ASSERT ( mbContext, "mb context can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
+      SDB_ASSERT ( ppScanner, "scanner can't be NULL" ) ;
 
       *ppScanner = SDB_OSS_NEW dmsTBScanner( su->data(), mbContext, pMatcher,
                                              accessType ) ;

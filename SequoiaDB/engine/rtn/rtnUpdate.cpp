@@ -84,9 +84,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNUPDATE2 ) ;
 
-      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
+      SDB_ASSERT ( pCollectionName, "collection name can't be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
 
       SINT64 numUpdatedRecords         = 0 ;
       dmsStorageUnit *su               = NULL ;
