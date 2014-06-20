@@ -79,7 +79,7 @@ namespace engine
                                    const DMS_TMP_FILE_ID &id )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != path, "impossible" )
+      SDB_ASSERT( NULL != path, "impossible" ) ;
       std::stringstream ss ;
       ss << path << OSS_FILE_SEP << DMS_TMP_BLK_FILE_BEGIN << id ;
       _fullPath = ss.str() ;

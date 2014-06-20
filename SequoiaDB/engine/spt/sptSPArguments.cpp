@@ -47,7 +47,7 @@ namespace engine
     _argc(argc),
     _vp(vp)
    {
-      SDB_ASSERT( NULL != _context && NULL != _vp, "can not be NULL" )
+      SDB_ASSERT( NULL != _context && NULL != _vp, "can not be NULL" ) ;
    }
 
    _sptSPArguments::~_sptSPArguments()

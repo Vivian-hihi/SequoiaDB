@@ -60,7 +60,7 @@ using namespace bson ;
 INT32 sptConvertor2::toBson( JSObject *obj , bson::BSONObj &bsobj )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL != _cx, "can not be NULL" )
+   SDB_ASSERT( NULL != _cx, "can not be NULL" ) ;
 
    BSONObjBuilder builder ;
    rc = _traverse( obj, builder ) ;
@@ -562,7 +562,7 @@ INT32 sptConvertor2::toString( JSContext *cx,
 {
    INT32 rc = SDB_OK ;
    //CHAR *utf8 = NULL ;
-   SDB_ASSERT( NULL != cx, "impossible" )
+   SDB_ASSERT( NULL != cx, "impossible" ) ;
    size_t len = 0 ;
    JSString *jsStr = JS_ValueToString( cx, val ) ;
    if ( NULL == jsStr )

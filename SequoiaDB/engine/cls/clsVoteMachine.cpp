@@ -65,7 +65,7 @@ namespace engine
            {\
               SDB_ASSERT( next < (INT32)_status.size() &&\
                      0 <= next,\
-                     "valid: 0 <= status < status.size()" ) ; \
+                     "valid: 0 <= status < status.size()" ) ;\
               INT32 now = CLS_INVALID_VOTE_ID ;\
               INT32 nextStatus = next ;\
               _clsVoteStatus *prevVS = _current ; \
@@ -83,7 +83,7 @@ namespace engine
                  _current->active( nextStatus ) ;\
                  SDB_ASSERT( nextStatus < (INT32)_status.size() &&\
                      0 <= nextStatus,\
-                     "valid: 0 <= status < status.size()" ) ; \
+                     "valid: 0 <= status < status.size()" ) ;\
                  _current = _status.at( nextStatus ) ;\
               }\
            }

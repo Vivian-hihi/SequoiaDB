@@ -84,7 +84,7 @@ namespace engine
          }
       }
 
-      SDB_ASSERT( 0 == _allocated, "impossible" )
+      SDB_ASSERT( 0 == _allocated, "impossible" ) ;
 
       if ( NULL != _startBuf )
       {
@@ -243,7 +243,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 poolSize = 0 ;
       INT32 allocateSize = 0 ;
-      SDB_ASSERT( NULL != fmp && -1 != fmp->id(), "impossible" )
+      SDB_ASSERT( NULL != fmp && -1 != fmp->id(), "impossible" ) ;
 
        _mtx.get() ;
       if ( fmp->discarded() ||
@@ -252,7 +252,7 @@ namespace engine
          --_allocated ;
          poolSize = _pool.size() ;
          allocateSize = _allocated ;
-         SDB_ASSERT( 0 <= _allocated, "impossible" )
+         SDB_ASSERT( 0 <= _allocated, "impossible" ) ;
          _mtx.release() ;
          rc = fmp->quit( cb ) ;
          if ( SDB_OK != rc )

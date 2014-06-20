@@ -42,6 +42,8 @@
 #include <map>
 #include <string>
 
+using namespace bson;
+
 namespace engine
 {
    class omAuthCommand : public omCommandInterface
@@ -84,7 +86,7 @@ namespace engine
       public:
          omCreateClusterCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
 
-         ~omCreateClusterCommand() ;
+         virtual ~omCreateClusterCommand() ;
 
       public:
          virtual INT32   doCommand() ;
@@ -107,6 +109,21 @@ namespace engine
       public:
          virtual INT32   doCommand() ;
          
+   };
+
+   class omScanHostCommand : public omCreateClusterCommand
+   {
+      public:
+         omScanHostCommand( restAdaptor *pRestAdaptor, pmdRestSession *pRestSession ) ;
+
+         ~omScanHostCommand() ;
+
+      public:
+         virtual INT32   doCommand() ;
+
+      private:
+         INT32           _getHostList( list<BSONObj> &hostInfo ) ;
+         INT32           _generateRequestBson( list<BSONObj> &hostInfo, BSONObj &request ) ;
    };
    
    class omGetFileCommand : public omCommandInterface

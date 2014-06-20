@@ -275,7 +275,6 @@ namespace engine
 
    INT32 omQueryClusterCommand::doCommand()
    {
-      const CHAR *pClusterName = NULL ;
       BSONObjBuilder bsonBuilder ;
       BSONObj selector ;
       BSONObj matcher ;
@@ -315,9 +314,15 @@ namespace engine
             _sendErrorRes2Web( rc, "Failed to retreive record" ) ;
             goto error ;
          }
-         
-         _restAdaptor->appendHttpBody( _restSession, buffObj.data(), 
-                                       buffObj.size(), 1 ) ;
+
+         rc = _restAdaptor->appendHttpBody( _restSession, buffObj.data(), 
+                                            buffObj.size(), 1 ) ;
+         if ( rc )
+         {
+            //TODO clear pre_http_body
+            _sendErrorRes2Web( rc, "Failed to appendHttpBody" ) ;
+            goto error ;
+         }
       }
       
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
@@ -331,6 +336,174 @@ namespace engine
       {
          _pRTNCB->contextDelete ( contextID, _cb ) ;
       }
+      goto done ;
+   }
+
+   // ***************** omScanHostCommand *****************************
+   omScanHostCommand::omScanHostCommand( restAdaptor *pRestAdaptor, 
+                                         pmdRestSession *pRestSession )
+                     : omCreateClusterCommand( pRestAdaptor, pRestSession )
+   {
+   }
+
+   omScanHostCommand::~omScanHostCommand()
+   {
+   }
+
+   INT32 omScanHostCommand::_generateRequestBson( list<BSONObj> &hostInfo, 
+                                                  BSONObj &request )
+   {
+      BSONObjBuilder builder ;
+      BSONArrayBuilder arrayBuilder ;
+      list<BSONObj>::iterator ite = hostInfo.begin() ;
+      while ( ite != hostInfo.end() )
+      {
+         arrayBuilder.append( *ite ) ;
+         ite++ ;
+      }
+      
+      builder.appendArray( OM_REST_FIELD_HOST_INFO, arrayBuilder.arr() );
+
+      return SDB_OK ;
+   }
+
+   INT32 omScanHostCommand::_getHostList( list<BSONObj> &hostInfo )
+   {
+      INT32 rc                   = SDB_OK ;
+      const CHAR* pGlobalUser    = NULL ;
+      const CHAR* pGlobalPasswd  = NULL ;
+      const CHAR* pGlobalSshPort = NULL ;
+      const CHAR* pHostInfo      = NULL ;
+      BSONObj bsonHostInfo ;
+      BSONElement element ;
+
+      
+      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_HOST_INFO, 
+                             &pHostInfo ) ;
+      if ( NULL == pHostInfo )
+      {
+         rc = SDB_INVALIDARG ;
+         _sendErrorRes2Web( rc, "hostinfo is null" ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pHostInfo, bsonHostInfo ) ;
+      if ( rc )
+      {
+         _sendErrorRes2Web( rc, "change to BSONObj failed" ) ;
+         goto error ;
+      }
+
+      pGlobalUser    = bsonHostInfo.getStringField( OM_BSON_FIELD_HOST_USER ) ;
+      pGlobalPasswd  = bsonHostInfo.getStringField( OM_BSON_FIELD_HOST_PASSWD ) ;
+      pGlobalSshPort = bsonHostInfo.getStringField( 
+                                       OM_BSON_FIELD_HOST_SSHPORT ) ;
+      if ( 0 == ossStrlen( pGlobalUser ) || 0 == ossStrlen( pGlobalPasswd )
+           || 0 == ossStrlen( pGlobalSshPort ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _sendErrorRes2Web( rc, "hostinfo is invalid" ) ;
+         goto error ;
+      }
+
+      element = bsonHostInfo.getField( OM_REST_FIELD_HOST_INFO ) ;
+      if ( element.isNull() || Array != element.type() )
+      {
+         rc = SDB_INVALIDARG ;
+         _sendErrorRes2Web( rc, "hostinfo is array type" ) ;
+         goto error ;
+      }
+
+      {
+      BSONObjIterator i( element.embeddedObject() ) ;
+      while ( i.more() )
+      {
+         BSONObjBuilder builder ;
+         BSONObj tmp ;
+         BSONElement ele = i.next() ;
+         if ( Object != ele.type() )
+         {
+            rc = SDB_INVALIDARG ;
+            _sendErrorRes2Web( rc, "array's element is invalid" ) ;
+            goto error ;
+         }
+         
+         BSONObj oneHost = ele.embeddedObject() ;
+         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
+                 && !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
+         {
+            rc = SDB_INVALIDARG ;
+            _sendErrorRes2Web( rc, "ip or hostname have not been set" ) ;
+            goto error ;
+         }
+
+         builder.appendElements( oneHost ) ;
+         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
+         {
+            builder.append( OM_BSON_FIELD_HOST_USER, pGlobalUser ) ;
+         }
+         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_PASSWD ) )
+         {
+            builder.append( OM_BSON_FIELD_HOST_PASSWD, pGlobalPasswd) ;
+         }
+         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_SSHPORT ) )
+         {
+            builder.append( OM_BSON_FIELD_HOST_SSHPORT, pGlobalSshPort) ;
+         }
+
+         tmp = builder.obj() ;
+         hostInfo.push_back( tmp ) ;
+      }
+      }
+      
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 omScanHostCommand::doCommand()
+   {
+      list<BSONObj> hostInfoList ;
+      INT32 rc          = SDB_OK ;
+      CHAR* pContent    = NULL ;
+      INT32 contentSize = 0 ;
+      MsgHeader *pMsg   = NULL ;
+      BSONObj bsonRequest ;
+      pmdEDUEvent eventData ;
+
+      rc = _getHostList( hostInfoList ) ;
+      if ( SDB_OK != rc )
+      {
+         goto error ;
+      }
+
+      _generateRequestBson( hostInfoList, bsonRequest ) ;
+      
+      //TODO send to agent                        
+      rc = msgBuildQueryMsg( &pContent, &contentSize, OM_SCAN_HOST_REQ, 
+                             0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
+      if ( SDB_OK != rc )
+      {
+         _sendErrorRes2Web( rc, "build message failed" ) ;
+         goto error ;
+      }
+
+      pMsg = (MsgHeader *)pContent ;
+      rc = sdbGetOMManager()->sendMsgToAgent( "localhost", pMsg ) ;
+      if ( SDB_OK != rc )
+      {
+         _sendErrorRes2Web( rc, "send msg to agent failed:agent=localhost" ) ;
+         goto error ;
+      }
+
+      _cb->waitEvent( eventData, OM_WAIT_EVENT_INTERVAL ) ;
+      
+      return SDB_OK ;
+
+   done:
+      return rc; 
+   error:
       goto done ;
    }
 
@@ -377,20 +550,6 @@ namespace engine
                     realSubPath.c_str(), rc ) ;
             _restAdaptor->sendResponse( _restSession, HTTP_SERVICUNAVA ) ;
          }
-//         HTTP_FILE_TYPE file_type = _restAdaptor->getFileType( _restSession ) ;
-//         if ( HTTP_FILE_HTML == file_type || HTTP_FILE_DEFAULT == file_type )
-//         {
-//            PD_LOG( PDEVENT, "OM: 2file no found:%s", realSubPath.c_str() ) ;
-//            _restAdaptor->appendHttpBody( _restSession, 
-//                                          OM_REST_REDIRECT_INDEX, 
-//                                          ossStrlen(OM_REST_REDIRECT_INDEX) ) ;
-//            _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
-//         }
-//         else
-//         {
-//            PD_LOG( PDEVENT, "OM: file no found:%s", realSubPath.c_str() ) ;
-//            _restAdaptor->sendResponse( _restSession, HTTP_NOTFOUND ) ;
-//         }
          
          goto error ;
       }

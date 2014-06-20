@@ -344,8 +344,8 @@ namespace engine
                             UINT32 lineno )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( _context && _global, "this scope has not been initilized" )
-      SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" )
+      SDB_ASSERT ( _context && _global, "this scope has not been initilized" ) ;
+      SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" ) ;
       jsval jsrval = JSVAL_VOID ;
       jsval exception = JSVAL_VOID ;
       string print ;
@@ -391,8 +391,8 @@ namespace engine
                             bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( _context && _global, "this scope has not been initilized" )
-      SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" )
+      SDB_ASSERT ( _context && _global, "this scope has not been initilized" ) ;
+      SDB_ASSERT( NULL != code || 0 < len, "code can not be empty" ) ;
       jsval jsrval = JSVAL_VOID ;
       jsval exception = JSVAL_VOID ;
       string print ;

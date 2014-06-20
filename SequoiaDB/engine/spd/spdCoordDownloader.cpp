@@ -70,8 +70,8 @@ namespace engine
    INT32 _spdCoordDownloader::download( const BSONObj &matcher )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != _cb, "impossible" )
-      SDB_ASSERT( NULL != _command, "impossible" )
+      SDB_ASSERT( NULL != _cb, "impossible" ) ;
+      SDB_ASSERT( NULL != _command, "impossible" ) ;
 
       CHAR *msg = NULL ;
       INT32 bufSize = 0 ;
@@ -81,7 +81,7 @@ namespace engine
       if ( -1 != _contextID )
       {
          PD_LOG( PDERROR, "context was already been opened" ) ;
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -102,7 +102,7 @@ namespace engine
          goto error ;
       }
 
-      SDB_ASSERT( -1 != reply.contextID, "impossible" )
+      SDB_ASSERT( -1 != reply.contextID, "impossible" ) ;
       _contextID = reply.contextID ;
    done:
       if ( NULL != msg )
@@ -135,7 +135,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "contextbuf should not return err"
                              " when getmore return ok" ) ;
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
             rc = SDB_SYS ;
             goto error ;
          }

@@ -156,6 +156,23 @@ namespace engine
 
    // om rest check_session_req
    #define  OM_CHECK_SESSION_REQ             "check_session_req"
+
+   // om rest scan_host_req
+   #define  OM_SCAN_HOST_REQ                 "scan_host_req"
+
+   #define  OM_REST_FIELD_HOST_INFO          "host_info"
+   
+   #define  OM_BSON_FIELD_HOST_IP            "host_ip"
+   #define  OM_BSON_FIELD_HOST_NAME          "host_name"
+   #define  OM_BSON_FIELD_HOST_USER          "username"
+   #define  OM_BSON_FIELD_HOST_PASSWD        "passwd"
+   #define  OM_BSON_FIELD_HOST_SSHPORT       "port"
+
+
+
+
+   // milliseconds
+   #define  OM_WAIT_EVENT_INTERVAL           (500)
    
 }
 

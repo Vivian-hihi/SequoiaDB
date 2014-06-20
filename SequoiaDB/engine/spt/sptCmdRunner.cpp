@@ -63,7 +63,7 @@ namespace engine
    INT32 _sptCmdRunner::exec( const CHAR *cmd, UINT32 &exit )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != cmd, "can not be null" )
+      SDB_ASSERT( NULL != cmd, "can not be null" ) ;
 
       UINT32 cmdLen = ossStrlen( cmd ) ;
       CHAR *arguments = NULL ;

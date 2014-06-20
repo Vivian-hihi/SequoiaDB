@@ -174,7 +174,7 @@ namespace engine
       SPT_PROPERTIES::const_iterator itr = properties.begin() ;
       for ( ; itr != properties.end(); itr++ )
       {
-         SDB_ASSERT( !itr->getName().empty(), "name can not be empty" )
+         SDB_ASSERT( !itr->getName().empty(), "name can not be empty" ) ;
          jsval val = JSVAL_VOID ;
          rc = _getValFromProperty( cx, *itr, val ) ;
          if ( SDB_OK != rc )

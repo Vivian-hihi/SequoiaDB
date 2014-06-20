@@ -59,7 +59,7 @@ namespace engine
    INT32 _sptLibssh2Session::_openSshSession()
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != _sock, "can not be null" )
+      SDB_ASSERT( NULL != _sock, "can not be null" ) ;
 
       _session = libssh2_session_init() ;
       if ( NULL == _session )
@@ -99,9 +99,9 @@ namespace engine
                                    UINT32 &read )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != cmd, "can not be null" )
-      SDB_ASSERT( NULL != _session, "call open first" )
-      SDB_ASSERT( NULL == _channel, "do not share a session in multi threads" )
+      SDB_ASSERT( NULL != cmd, "can not be null" ) ;
+      SDB_ASSERT( NULL != _session, "call open first" ) ;
+      SDB_ASSERT( NULL == _channel, "do not share a session in multi threads" ) ;
 
       string sig ;
 
@@ -159,8 +159,8 @@ namespace engine
                                     INT32 streamId )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != buf &&  0 < len, "impossible" )
-      SDB_ASSERT( NULL != _channel, "can not be null" )
+      SDB_ASSERT( NULL != buf &&  0 < len, "impossible" ) ;
+      SDB_ASSERT( NULL != _channel, "can not be null" ) ;
 
       readSize = 0 ;
       if ( libssh2_channel_eof( _channel ) )
@@ -199,7 +199,7 @@ namespace engine
                                           INT32 mode )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != local && NULL != dst, "can not be null" )
+      SDB_ASSERT( NULL != local && NULL != dst, "can not be null" ) ;
 
       if ( SPT_CP_PROTOCOL_SCP == protocol )
       {
@@ -230,7 +230,7 @@ namespace engine
                                              INT32 mode )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != local && NULL != remote, "can not be null" )
+      SDB_ASSERT( NULL != local && NULL != remote, "can not be null" ) ;
 
       if ( SPT_CP_PROTOCOL_SCP == protocol )
       {
@@ -330,7 +330,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SINT64 totalLen = len ;
-      SDB_ASSERT( 0 < len, "impossible" )
+      SDB_ASSERT( 0 < len, "impossible" ) ;
 
       while ( 0 < totalLen )
       {

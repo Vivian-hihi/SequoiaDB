@@ -57,7 +57,7 @@
 INT32 sptConvertor::toBson( JSObject *obj , bson **bs )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL != _cx && NULL != bs, "can not be NULL" )
+   SDB_ASSERT( NULL != _cx && NULL != bs, "can not be NULL" ) ;
 
    /// can not use SDB_OSS_MALLOC
    *bs = bson_create() ;
@@ -95,7 +95,7 @@ error:
 INT32 sptConvertor::toBson( JSObject *obj, bson *bs )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL != obj && NULL != bs, "can not be NULL" )
+   SDB_ASSERT( NULL != obj && NULL != bs, "can not be NULL" ) ;
    rc = _traverse( obj, bs ) ;
    if ( SDB_OK != rc )
    {
@@ -606,7 +606,7 @@ INT32 sptConvertor::toString( JSContext *cx,
 {
    INT32 rc = SDB_OK ;
    //CHAR *utf8 = NULL ;
-   SDB_ASSERT( NULL != cx, "impossible" )
+   SDB_ASSERT( NULL != cx, "impossible" ) ;
    size_t len = 0 ;
    JSString *jsStr = JS_ValueToString( cx, val ) ;
    if ( NULL == jsStr )

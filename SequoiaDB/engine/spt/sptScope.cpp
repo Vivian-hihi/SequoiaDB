@@ -52,9 +52,9 @@ namespace engine
    INT32 _sptScope::loadUsrDefObj( _sptObjDesc *desc )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != desc, "desc can not be NULL" )
+      SDB_ASSERT( NULL != desc, "desc can not be NULL" ) ;
       SDB_ASSERT( NULL != desc->getJSClassName(),
-                  "obj name can not be empty" )
+                  "obj name can not be empty" ) ;
 
       if ( 0 < _descs.count( desc->getJSClassName() ))
       {

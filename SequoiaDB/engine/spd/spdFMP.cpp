@@ -111,7 +111,7 @@ namespace engine
             goto done ;
          }
 
-         SDB_ASSERT( _totalRead <= _readBufSize, "impossible" )
+         SDB_ASSERT( _totalRead <= _readBufSize, "impossible" ) ;
          if ( _readBufSize == _totalRead )
          {
             rc = _extendReadBuf() ;
@@ -127,7 +127,7 @@ namespace engine
                                 &read, SPD_READ_TIMEOUT ) ;
          if ( SDB_TIMEOUT == rc )
          {
-            SDB_ASSERT( 0 == read, "impossible" )
+            SDB_ASSERT( 0 == read, "impossible" ) ;
             if (  ignoreTimeout )
             {
                continue ;
@@ -180,7 +180,7 @@ namespace engine
    INT32 _spdFMP::write( const BSONObj &msg )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( !msg.isEmpty(), "impossible" )
+      SDB_ASSERT( !msg.isEmpty(), "impossible" ) ;
 
       INT64 written = 0 ;
       INT64 writeLen = msg.objsize() ;
@@ -300,7 +300,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       extracted = FALSE ;
-      SDB_ASSERT( 0 <= _expect, "impossible" )
+      SDB_ASSERT( 0 <= _expect, "impossible" ) ;
 
       /// magic has already been found.
       if ( '\0' == SPD_MAGIC[_expect])
@@ -322,7 +322,7 @@ found:
             else if ( (_totalRead - _itr) == bsonLen )
             {
                SDB_ASSERT( _itr >= (INT32)ossStrlen(FMP_MSG_MAGIC),
-                           "impossible" )
+                           "impossible" ) ;
                BSONObj tmp ;
 
                try
@@ -391,7 +391,7 @@ found:
             }
             else
             {
-               SDB_ASSERT( FALSE, "impossible" )
+               SDB_ASSERT( FALSE, "impossible" ) ;
                rc = SDB_SYS ;
                PD_LOG( PDERROR, "left len can not be lager than objsize" ) ;
                goto error ;

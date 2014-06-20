@@ -60,7 +60,7 @@ namespace engine
                                      void *value,
                                      const void *classDef )
    {
-      SDB_ASSERT( NULL != classDef, "class def can not be NULL" )
+      SDB_ASSERT( NULL != classDef, "class def can not be NULL" ) ;
       INT32 rc = SDB_OK ;
       rc = _property.assignUsrObject( name, value ) ;
       if ( SDB_OK != rc )

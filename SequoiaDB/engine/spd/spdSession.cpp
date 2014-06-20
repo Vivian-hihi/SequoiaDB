@@ -87,7 +87,7 @@ namespace engine
                             _pmdEDUCB *cb )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != downloader, "impossible" )
+      SDB_ASSERT( NULL != downloader, "impossible" ) ;
 
       _fmpMgr = pmdGetKRCB()->getFMPCB() ;
 
@@ -97,7 +97,7 @@ namespace engine
          PD_LOG( PDERROR, "failed to get fmp:%d", rc ) ;
          goto error ;
       }
-      SDB_ASSERT( NULL != _fmp, "impossible" )
+      SDB_ASSERT( NULL != _fmp, "impossible" ) ;
 
       _cb = cb ;
 
@@ -115,7 +115,7 @@ namespace engine
    INT32 _spdSession::next( BSONObj &obj )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( FMP_RES_TYPE_VOID != _resType, "impossible" )
+      SDB_ASSERT( FMP_RES_TYPE_VOID != _resType, "impossible" ) ;
       BOOLEAN fetchFromLocal = FMP_RES_TYPE_RECORDSET == _resType ?
                                FALSE : TRUE ;
       BSONObj tmp ;
@@ -154,7 +154,7 @@ namespace engine
       }
       else
       {
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
       }
    done:
       return rc ;
@@ -268,7 +268,7 @@ namespace engine
        {
        BSONObjBuilder builder ;
        BSONElement resType = _resmsg.getField( FMP_RES_TYPE ) ;
-       SDB_ASSERT( NumberInt == resType.type(), "impossible" )
+       SDB_ASSERT( NumberInt == resType.type(), "impossible" ) ;
        /// if it is not a record set, fetch from local.
        _resType = resType.Int() ;
 
@@ -276,7 +276,7 @@ namespace engine
             FMP_RES_TYPE_RECORDSET != _resType )
        {
           BSONElement value = _resmsg.getField( FMP_RES_VALUE ) ;
-          SDB_ASSERT( !value.eoo(), "impossible" )
+          SDB_ASSERT( !value.eoo(), "impossible" ) ;
           builder.append( value ) ;
           _resmsg = builder.obj() ;
        }
@@ -299,7 +299,7 @@ namespace engine
        BSONElement ele = res.getField( FMP_RES_CODE ) ;
        if ( res.isEmpty() )
        {
-          SDB_ASSERT( FALSE, "impossible" )
+          SDB_ASSERT( FALSE, "impossible" ) ;
        }
        else if ( ele.eoo() )
        {
@@ -307,7 +307,7 @@ namespace engine
        }
        else if ( NumberInt != ele.type() )
        {
-          SDB_ASSERT( FALSE, "impossible" )
+          SDB_ASSERT( FALSE, "impossible" ) ;
        }
        else
        {

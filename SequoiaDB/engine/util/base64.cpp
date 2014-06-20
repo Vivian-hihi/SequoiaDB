@@ -79,7 +79,7 @@ namespace engine {
 
         PD_TRACE_DECLARE_FUNCTION ( SDB_BASE64_DECODE, "decode" )
         void decode( stringstream& ss , const string& s ) {
-	    SDB_ASSERT(s.size() % 4 == 0, "invalid base64");
+            SDB_ASSERT(s.size() % 4 == 0, "invalid base64");
             PD_TRACE_ENTRY ( SDB_BASE64_DECODE );
             const unsigned char * data = (const unsigned char*)s.c_str();
             int size = s.size();
