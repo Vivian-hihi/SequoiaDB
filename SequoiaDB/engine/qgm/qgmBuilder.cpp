@@ -72,7 +72,7 @@
 #define QGM_ALIAS_ASSERT( alias, len ) \
         SDB_ASSERT( ((NULL != alias) && (0 != len))\
                      | ((NULL == alias) && (0 == len)),\
-                     "impossible" )
+                     "impossible" ) ;
 
 #define QGM_VALUEPTR( itr )\
         (&(*((itr)->value.begin())))
@@ -94,7 +94,7 @@ namespace engine
     _param( paramT )
    {
       SDB_ASSERT( NULL != _table && NULL != _param,
-                  "impossible" )
+                  "impossible" ) ;
    }
 
    _qgmBuilder::~_qgmBuilder()
@@ -164,7 +164,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMBUILDER_BUILD2 ) ;
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NULL != logicalTree && NULL == physicalTree,
-                  "impossible" )
+                  "impossible" ) ;
 
       rc = _buildPhysicalNode( logicalTree,
                                physicalTree ) ;
@@ -186,7 +186,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDPHYNODE ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logicalTree, "impossible" )
+      SDB_ASSERT( NULL != logicalTree, "impossible" ) ;
 
       switch ( logicalTree->getType() )
       {
@@ -219,7 +219,7 @@ namespace engine
                 goto error ;
             }
 
-            SDB_ASSERT( NULL != phy, "impossible" )
+            SDB_ASSERT( NULL != phy, "impossible" ) ;
 
             {
             _qgmOptiTreeNode *logic = logicalTree->getSubNode( 0 ) ;
@@ -261,7 +261,7 @@ namespace engine
                goto error ;
             }
 
-            SDB_ASSERT( NULL != phy, "impossible" )
+            SDB_ASSERT( NULL != phy, "impossible" ) ;
             {
             _qgmOptiTreeNode *logic = logicalTree->getSubNode( 0 ) ;
             rc = _buildPhysicalNode( logic, phy ) ;
@@ -345,9 +345,9 @@ namespace engine
       }
       case QGM_OPTI_TYPE_JOIN :
       {
-         SDB_ASSERT( NULL != physicalTree, "impossible" )
+         SDB_ASSERT( NULL != physicalTree, "impossible" ) ;
          SDB_ASSERT( 2 == logicalTree->getSubNodeCount(),
-                     "impossible" )
+                     "impossible" ) ;
 
          _qgmPlan *phy = NULL ;
          _qgmOptiNLJoin *join = (_qgmOptiNLJoin *)logicalTree ;
@@ -514,7 +514,7 @@ namespace engine
                goto error ;
             }
 
-            SDB_ASSERT( NULL != phy, "impossible" )
+            SDB_ASSERT( NULL != phy, "impossible" ) ;
             {
             _qgmOptiTreeNode *logic = logicalTree->getSubNode( 0 ) ;
             rc = _buildPhysicalNode( logic, phy ) ;
@@ -547,7 +547,7 @@ namespace engine
          }
          else
          {
-            SDB_ASSERT( 1 == logicalTree->getSubNodeCount(), "impossible" )
+            SDB_ASSERT( 1 == logicalTree->getSubNodeCount(), "impossible" ) ;
             _qgmPlan *split = SDB_OSS_NEW
                          _qgmPlSplitBy( ((_qgmOptiSplit *)logicalTree)->_splitby,
                                         logicalTree->getSubNode(0)->getAlias()  ) ;
@@ -594,7 +594,7 @@ namespace engine
                                       _qgmPlan *&father )
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__ADDPHYCOMMAND ) ;
-      SDB_ASSERT( NULL == father, "impossible" )
+      SDB_ASSERT( NULL == father, "impossible" ) ;
       INT32 rc = SDB_OK ;
       BSONObj partition ;
       if ( !command->_partition.empty() )
@@ -1243,7 +1243,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDUPDATE ) ;
       INT32 rc = SDB_OK ;
       SDB_ASSERT( 2 == root->children.size()
-                  || 3 == root->children.size(), "impossible" )
+                  || 3 == root->children.size(), "impossible" ) ;
 
       SQL_CON_ITR itr = root->children.begin() ;
       rc = _table->getAttr( itr, update->_collection ) ;
@@ -1282,7 +1282,7 @@ namespace engine
       INT32 type = (INT32)(root->value.id().to_long()) ;
       if ( SQL_GRAMMAR::COMMA == type )
       {
-         SDB_ASSERT( 2 == root->children.size(), "impossible" )
+         SDB_ASSERT( 2 == root->children.size(), "impossible" ) ;
          rc = _addSet( root->children.begin(), update ) ;
          if ( SDB_OK != rc )
          {
@@ -1298,7 +1298,7 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::EG == type )
       {
-         SDB_ASSERT( 2 == root->children.size(), "impossible" )
+         SDB_ASSERT( 2 == root->children.size(), "impossible" ) ;
          _qgmDbAttr attr ;
          _qgmOpField f ;
          SQL_CON_ITR itr = root->children.begin() ;
@@ -1311,7 +1311,7 @@ namespace engine
 
          if ( SQL_GRAMMAR::DATE == type )
          {
-            SDB_ASSERT( 1 == (itr+1)->children.size(), "impossible" )
+            SDB_ASSERT( 1 == (itr+1)->children.size(), "impossible" ) ;
             rc = _table->getField( (itr+1)->children.begin(),
                                     f.value.attr()) ;
          }
@@ -1333,7 +1333,7 @@ namespace engine
       else
       {
          PD_LOG( PDERROR, "invalid type:%d", type ) ;
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -1376,7 +1376,7 @@ namespace engine
       {
          PD_LOG( PDERROR, "invalid children size:%d",
                  root->children.size() ) ;
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          rc = SDB_SYS ;
          goto error ;
       }
@@ -1394,7 +1394,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDDROPCL ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 0 == root->children.size(), "impossible" )
+      SDB_ASSERT( 0 == root->children.size(), "impossible" ) ;
       node->_commandType = SQL_GRAMMAR::DROPCL ;
       rc = _table->getAttr( root,
                             node->_fullName ) ;
@@ -1416,7 +1416,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDDROPINX ) ;
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( 2 == root->children.size(), "impossible" )
+      SDB_ASSERT( 2 == root->children.size(), "impossible" ) ;
       node->_commandType = SQL_GRAMMAR::DROPINDEX ;
       SQL_CON_ITR itr = root->children.begin() ;
       rc = _table->getField( itr, node->_indexName ) ;
@@ -1444,7 +1444,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDCRTINX ) ;
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( 3 == root->children.size()
+      SDB_ASSERT( 3 == root->children.size() ;
                   || 4 == root->children.size(), "impossible" )
       node->_commandType = SQL_GRAMMAR::CRTINDEX ;
 
@@ -1490,7 +1490,7 @@ namespace engine
       INT32 type = (INT32)(root->value.id().to_long()) ;
       if ( SQL_GRAMMAR::COMMA == type )
       {
-         SDB_ASSERT( 2 == root->children.size(), "impossible" )
+         SDB_ASSERT( 2 == root->children.size(), "impossible" ) ;
          rc = _buildIndexColumns( root->children.begin(),
                                   columns ) ;
          if ( SDB_OK != rc )
@@ -1507,7 +1507,7 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::DBATTR == type )
       {
-         SDB_ASSERT( root->children.empty(), "impossible" )
+         SDB_ASSERT( root->children.empty(), "impossible" );
          qgmOpField f ;
          f.type = SQL_GRAMMAR::ASC ;
          rc = _table->getField( root,f.value.attr() ) ;
@@ -1520,7 +1520,7 @@ namespace engine
       else if ( SQL_GRAMMAR::ASC == type
                 || SQL_GRAMMAR::DESC == type )
       {
-         SDB_ASSERT( 1 == root->children.size(), "impossible" )
+         SDB_ASSERT( 1 == root->children.size(), "impossible" ) ;
          qgmOpField f ;
          f.type = type ;
          rc = _table->getField( root->children.begin(),f.value.attr() ) ;
@@ -1549,7 +1549,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDCRTCL ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 0 == root->children.size()
+      SDB_ASSERT( 0 == root->children.size();
                   || 2 == root->children.size(), "impossible" )
       node->_commandType = SQL_GRAMMAR::CRTCL ;
       if ( 0 == root->children.size() )
@@ -1588,7 +1588,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDCRTCS ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 0 == root->children.size(), "impossible" )
+      SDB_ASSERT( 0 == root->children.size(), "impossible" ) ;
       node->_commandType = SQL_GRAMMAR::CRTCS ;
       rc = _table->getAttr( root, node->_fullName ) ;
       if ( SDB_OK != rc )
@@ -1609,7 +1609,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDDROPCS ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 0 == root->children.size(), "impossible" )
+      SDB_ASSERT( 0 == root->children.size(), "impossible" ) ;
       node->_commandType = SQL_GRAMMAR::DROPCS ;
       rc = _table->getAttr( root, node->_fullName ) ;
       if ( SDB_OK != rc )
@@ -2205,7 +2205,7 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::COMMA == type )
       {
-         SDB_ASSERT( 2 == root->children.size(), "impossible" )
+         SDB_ASSERT( 2 == root->children.size(), "impossible" ) ;
          rc = buildInArray( root->children.begin(),
                             builder ) ;
          if ( SDB_OK != rc )
@@ -2415,7 +2415,7 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::DATE == type )
       {
-         SDB_ASSERT( 1 == root->children.size(), "impossible" )
+         SDB_ASSERT( 1 == root->children.size(), "impossible" ) ;
          _qgmOpField f ;
          condition = SDB_OSS_NEW qgmConditionNode( type ) ;
          if ( NULL == condition )
@@ -2471,7 +2471,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       INT32 type = (INT32)(root->value.id().to_long()) ;
       SDB_ASSERT( SQL_GRAMMAR::SPLITBY == type &&
-                  1 == root->children.size(), "impossible" )
+                  1 == root->children.size(), "impossible" ) ;
       rc = _table->getAttr( root->children.begin(),
                             node->_splitby ) ;
       if ( SDB_OK != rc )
@@ -2554,7 +2554,7 @@ namespace engine
          SQL_CON_ITR itr = root->children.begin() ;
          SDB_ASSERT( SQL_GRAMMAR::DBATTR
                      == (INT32)(itr->value.id().to_long()),
-                     "impossible" )
+                     "impossible" ) ;
          qgmOpField field  ;
          field.type = type ;
          rc = _table->getAttr( itr, field.value ) ;
@@ -2652,7 +2652,7 @@ namespace engine
          SQL_CON_ITR itr = root->children.begin() ;
          SDB_ASSERT( SQL_GRAMMAR::DBATTR
                      == (INT32)(itr->value.id().to_long()),
-                     "impossible" )
+                     "impossible" ) ;
          qgmOpField field  ;
          field.type = type ;
          rc = _table->getAttr( itr, field.value ) ;
@@ -2859,7 +2859,7 @@ namespace engine
       }
       else if ( SQL_GRAMMAR::DATE == type )
       {
-         SDB_ASSERT( 1 == root->children.size(), "impossible" )
+         SDB_ASSERT( 1 == root->children.size(), "impossible" ) ;
          qgmOpField field ;
          field.type = type ;
          rc = _table->getField( root->children.begin(),

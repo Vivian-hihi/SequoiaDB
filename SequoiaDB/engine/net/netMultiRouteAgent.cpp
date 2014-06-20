@@ -36,7 +36,7 @@ namespace engine
       {
          pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
-         SDB_ASSERT( pSession, "pSession can't be NULL!" );
+         SDB_ASSERT( pSession, "pSession can't be NULL!" ) ;
          pSession->addSubSessionWithoutCheck( id );
       }
       reqID = _pReqID->inc();
@@ -79,7 +79,7 @@ namespace engine
       {
          pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
-         SDB_ASSERT( pSession, "pSession can't be NULL!" );
+         SDB_ASSERT( pSession, "pSession can't be NULL!" ) ;
          rc = pSession->addSubSession( id );
       }
       PD_RC_CHECK( rc, PDERROR,
@@ -132,7 +132,7 @@ namespace engine
       {
          pHeader->TID = pEduCB->getTID();
          pSession = pEduCB->getCoordSession();
-         SDB_ASSERT( pSession, "pSession can't be NULL!" );
+         SDB_ASSERT( pSession, "pSession can't be NULL!" ) ;
          rc = pSession->addSubSession( id );
       }
       PD_RC_CHECK( rc, PDERROR,
@@ -190,7 +190,7 @@ namespace engine
                                           const CHAR *pHost,
                                           const CHAR *pService)
    {
-      SDB_ASSERT( _pNetWork, "_pNetWork can't be NULL")
+      SDB_ASSERT( _pNetWork, "_pNetWork can't be NULL") ;
       return _pNetWork->updateRoute( id, pHost, pService );
    }
 

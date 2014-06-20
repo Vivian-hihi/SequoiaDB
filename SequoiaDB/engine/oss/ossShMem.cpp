@@ -176,7 +176,7 @@ error:
 
 void ossSHMFree( ossSHMMid & shmMid, CHAR **ppBuf )
 {
-   SDB_ASSERT( ppBuf != NULL, "ppBuf can't be NULL!" );
+   SDB_ASSERT( ppBuf != NULL, "ppBuf can't be NULL!" ) ;
    if ( NULL == ppBuf )
    {
       return;
@@ -204,7 +204,7 @@ void ossSHMFree( ossSHMMid & shmMid, CHAR **ppBuf )
 
 void ossSHMDetach( ossSHMMid & shmMid, CHAR **ppBuf )
 {
-   SDB_ASSERT( ppBuf != NULL, "ppBuf can't be NULL!" );
+   SDB_ASSERT( ppBuf != NULL, "ppBuf can't be NULL!" ) ;
 #if defined (_LINUX)
    if ( NULL != ppBuf )
    {

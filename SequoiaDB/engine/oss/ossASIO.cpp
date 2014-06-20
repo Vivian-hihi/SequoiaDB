@@ -301,9 +301,9 @@ INT32 _ossASIO::connect ( CHAR *pHostName, CHAR *pServiceName,
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__OSSAIO_CONNECT );
-   SDB_ASSERT ( pHostName, "hostname can't be NULL" )
-   SDB_ASSERT ( pServiceName, "service name can't be NULL" )
-   SDB_ASSERT ( sock, "sock can't be NULL" )
+   SDB_ASSERT ( pHostName, "hostname can't be NULL" ) ;
+   SDB_ASSERT ( pServiceName, "service name can't be NULL" ) ;
+   SDB_ASSERT ( sock, "sock can't be NULL" ) ;
    boost::shared_ptr<ossAsioMsgProcessor> processor ( SDB_OSS_NEW
         ossAsioMsgProcessor ( _onReceive, _onDisconnect, _ioservice ) ) ;
    rc = processor->connect ( pHostName, pServiceName ) ;

@@ -198,8 +198,8 @@ namespace engine
    INT32 _netEventHandler::syncConnect( const CHAR *hostName,
                                         const CHAR *serviceName )
    {
-      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" )
-      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" )
+      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
+      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
 
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETEVNHND_SYNCCONN );

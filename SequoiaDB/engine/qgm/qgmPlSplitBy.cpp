@@ -62,7 +62,7 @@ namespace engine
    INT32 _qgmPlSplitBy::_execute( _pmdEDUCB *eduCB )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 1 == inputSize(), "impossible" )
+      SDB_ASSERT( 1 == inputSize(), "impossible" ) ;
       rc = input( 0 )->execute( eduCB ) ;
       if ( SDB_OK != rc )
       {
@@ -88,8 +88,8 @@ fetch:
             goto error ;
          }
 
-         SDB_ASSERT( NULL == _fetch.next, "impossible" )
-      //   SDB_ASSERT( _splitby.relegation() == _fetch.alias, "impossible" )
+         SDB_ASSERT( NULL == _fetch.next, "impossible" ) ;
+      //   SDB_ASSERT( _splitby.relegation() == _fetch.alias, "impossible" ) ;
          {
          std::string fieldName = _splitby.attr().toString() ;
          BSONElement ele = _fetch.obj.getField( fieldName ) ;
@@ -144,7 +144,7 @@ fetch:
          }
       }
 
-      SDB_ASSERT( NULL == _fetch.next, "impossible" )
+      SDB_ASSERT( NULL == _fetch.next, "impossible" ) ;
       if ( _itr.more() )
       {
          BSONObjBuilder builder ;

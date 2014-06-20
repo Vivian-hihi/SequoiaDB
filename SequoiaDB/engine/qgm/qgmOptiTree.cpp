@@ -999,7 +999,7 @@ namespace engine
             goto error ;
          }
 
-         SDB_ASSERT( NULL != ex, "impossible" )
+         SDB_ASSERT( NULL != ex, "impossible" ) ;
          *itr = ex ;
          ex = NULL ;
       }

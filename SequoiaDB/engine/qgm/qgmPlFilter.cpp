@@ -99,7 +99,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( 1 == inputSize(), "impossible" )
+      SDB_ASSERT( 1 == inputSize(), "impossible" ) ;
       _currentSkip = 0 ;
       _currentReturn = 0 ;
       rc = input( 0 )->execute( eduCB ) ;

@@ -60,7 +60,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       if ( columns.size() != values.size() )
       {
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          goto done ;
       }
 
@@ -163,7 +163,7 @@ namespace engine
 
          rc = update.execute( msg, *((SINT32 *)msg),
                               NULL, eduCB, dummy, &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" )
+         SDB_ASSERT( NULL == err, "impossible" ) ;
          SDB_OSS_FREE( msg ) ;
          msg = NULL ;
          if ( SDB_OK != rc )

@@ -249,7 +249,7 @@ namespace engine
 
                rc = insert.execute ( pMsg, *(SINT32*)pMsg, NULL, eduCB,
                                      dummyReply, &err ) ;
-               SDB_ASSERT( NULL == err, "impossible" )
+               SDB_ASSERT( NULL == err, "impossible" ) ;
                PD_RC_CHECK ( rc, PDERROR, "Failed to execute insert on coord, "
                              "rc = %d", rc ) ;
 //               SDB_OSS_FREE ( pMsg ) ;
@@ -277,7 +277,7 @@ namespace engine
 
    INT32 _qgmPlInsert::_fetchNext ( qgmFetchOut &next )
    {
-      SDB_ASSERT( FALSE, "impossble" )
+      SDB_ASSERT( FALSE, "impossble" ) ;
       return SDB_SYS ;
    }
 }

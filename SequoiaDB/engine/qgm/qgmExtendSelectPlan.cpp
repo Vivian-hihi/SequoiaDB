@@ -65,7 +65,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       qgmOptiSelect *select = ( qgmOptiSelect * )_local ;
 
-      SDB_ASSERT( NULL != select, "impossible" )
+      SDB_ASSERT( NULL != select, "impossible" ) ;
 
       if ( QGM_EXTEND_AGGR == id )
       {

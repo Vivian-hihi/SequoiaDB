@@ -308,7 +308,7 @@ CHAR *enginePath ( const CHAR *pInputPath, CHAR *pOutputPath )
    {
       // if we can't find path spliter
       SDB_ASSERT ( ossStrlen ( ENGINE_NAME ) <= OSS_MAX_PATHSIZE,
-                   "Engine name is too long: "ENGINE_NAME )
+                   "Engine name is too long: "ENGINE_NAME ) ;
       // let's just build engine name
       ossStrncpy ( pOutputPath, ENGINE_NAME, OSS_MAX_PATHSIZE ) ;
    }
@@ -358,7 +358,7 @@ void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
    INT32 pos = 0 ;
    CHAR pathBuffer [ OSS_MAX_PATHSIZE + 1 ] = {0} ;
    CHAR *progName = enginePath ( argv[0], pathBuffer ) ;
-   SDB_ASSERT ( progName, "progName can't be NULL" )
+   SDB_ASSERT ( progName, "progName can't be NULL" ) ;
 
    // copy program name to buffer
    ossStrncpy ( &pBuffer[0], progName, bufSize ) ;
@@ -369,7 +369,7 @@ void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
    // copy other arguments
    for ( INT32 i = 1; i < argc; ++i )
    {
-      SDB_ASSERT ( pos < bufSize, "invalid position" )
+      SDB_ASSERT ( pos < bufSize, "invalid position" ) ;
       ossStrncpy ( &pBuffer[pos], argv[i], bufSize - pos ) ;
       pos += ossStrlen ( argv[i] ) ;
       // each arguments are separated by '\0'
@@ -380,7 +380,7 @@ void copyBuffer ( CHAR *pBuffer, INT32 bufSize, INT32 argc, CHAR **argv )
    pBuffer[pos] = '\0' ;
    ++pos ;
    PD_TRACE_EXIT ( SDB_COPYBUFFER );
-   SDB_ASSERT ( pos == bufSize, "invalid position" )
+   SDB_ASSERT ( pos == bufSize, "invalid position" ) ;
 }
 
 //#define PROC_START_TIMEOUT 10

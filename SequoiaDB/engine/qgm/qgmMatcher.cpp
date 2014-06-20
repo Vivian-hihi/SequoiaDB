@@ -99,7 +99,7 @@ namespace engine
                               BOOLEAN &r )
    {
       PD_TRACE_ENTRY( SDB__QGMMATCHER__MATCH ) ;
-      SDB_ASSERT( NULL != node, "impossible" )
+      SDB_ASSERT( NULL != node, "impossible" ) ;
 
       INT32 rc = SDB_OK ;
       BSONObj obj ;
@@ -138,7 +138,7 @@ namespace engine
             fromCondition = obj.firstElement() ;
             if ( fromCondition.eoo() )
             {
-               SDB_ASSERT( FALSE, "impossible" )
+               SDB_ASSERT( FALSE, "impossible" ) ;
                rc = SDB_SYS ;
                goto error ;
             }
@@ -205,8 +205,8 @@ namespace engine
          }
          else if ( SQL_GRAMMAR::INN == node->type )
          {
-            SDB_ASSERT( NULL != node->right->var, "impossible" )
-            SDB_ASSERT( Array == node->right->var->type(), "impossible" )
+            SDB_ASSERT( NULL != node->right->var, "impossible" ) ;
+            SDB_ASSERT( Array == node->right->var->type(), "impossible" ) ;
             rc = fetch.element( node->left->value, fromFetch ) ;
             if ( SDB_OK != rc )
             {
@@ -249,7 +249,7 @@ namespace engine
          {
             SDB_ASSERT( SQL_GRAMMAR::AND == node->type ||
                         SQL_GRAMMAR::OR == node->type,
-                        "impossible" )
+                        "impossible" ) ;
             BOOLEAN rleft = FALSE ;
             BOOLEAN rright = FALSE ;
             rc = _match( node->left, fetch, rleft ) ;

@@ -66,7 +66,7 @@ namespace engine
    void _pmdDMNProcInfo::init()
    {
       SDB_ASSERT( sizeof(PMDDMN_SHM_TAG) <= sizeof(szTag),
-                  "share-memory-tag is out of length" );
+                  "share-memory-tag is out of length" ) ;
       if ( !isInit() )
       {
          stat = PMDDMN_SHM_STAT_CHILDREN;
@@ -91,7 +91,7 @@ namespace engine
    {
       SDB_ASSERT( PMDDMN_SHM_CMD_INVALID
                   == ( dmnCMD & PMDDMN_SHM_CMD_CHL_MASK ),
-                  "invalid daemon-command!" );
+                  "invalid daemon-command!" ) ;
       if ( PMDDMN_SHM_CMD_INVALID ==
          ( cmd & PMDDMN_SHM_CMD_DMN_MASK ) )
       {

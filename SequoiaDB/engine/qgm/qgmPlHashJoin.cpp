@@ -54,7 +54,7 @@ namespace engine
     _state( QGM_HJ_FETCH_STATE_BUILD ),
     _hitBuildEnd(FALSE)
    {
-      SDB_ASSERT( SQL_GRAMMAR::INNERJOIN == _joinType, "impossible" )
+      SDB_ASSERT( SQL_GRAMMAR::INNERJOIN == _joinType, "impossible" ) ;
       _type = QGM_PLAN_TYPE_HASHJOIN ;
    }
 
@@ -68,13 +68,13 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__QGMPLHASHJOIN_INIT ) ;
-      SDB_ASSERT( NULL != opti, "impossible" )
-      SDB_ASSERT( NULL != opti->_condition, "impossible" )
-      SDB_ASSERT( NULL != opti->_condition->left, "impossible" )
-      SDB_ASSERT( NULL != opti->_condition->right, "impossible" )
-      SDB_ASSERT( SQL_GRAMMAR::EG == opti->_condition->type, "impossible" )
-      SDB_ASSERT( SQL_GRAMMAR::DBATTR == opti->_condition->left->type, "impossible" )
-      SDB_ASSERT( SQL_GRAMMAR::DBATTR == opti->_condition->right->type, "impossible" )
+      SDB_ASSERT( NULL != opti, "impossible" ) ;
+      SDB_ASSERT( NULL != opti->_condition, "impossible" ) ;
+      SDB_ASSERT( NULL != opti->_condition->left, "impossible" ) ;
+      SDB_ASSERT( NULL != opti->_condition->right, "impossible" ) ;
+      SDB_ASSERT( SQL_GRAMMAR::EG == opti->_condition->type, "impossible" ) ;
+      SDB_ASSERT( SQL_GRAMMAR::DBATTR == opti->_condition->left->type, "impossible" ) ;
+      SDB_ASSERT( SQL_GRAMMAR::DBATTR == opti->_condition->right->type, "impossible" ) ;
 
       _qgmConditionNode *left = opti->_condition->left ;
       _qgmConditionNode *right = opti->_condition->right ;
@@ -132,7 +132,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__QGMPLHASHJOIN__EXEC ) ;
-      SDB_ASSERT( NULL != _build && NULL != _probe, "can not be NULL" )
+      SDB_ASSERT( NULL != _build && NULL != _probe, "can not be NULL" ) ;
 
       _hashTbl.release() ;
 
@@ -205,7 +205,7 @@ namespace engine
             }
             else
             {
-               SDB_ASSERT( NULL == _probeF.next, "impossible" )
+               SDB_ASSERT( NULL == _probeF.next, "impossible" ) ;
                _probeEle = _probeF.obj.getField( _probeKey.c_str() ) ;
                rc = _hashTbl.find( _probeEle, _hashContext ) ;
                if ( SDB_OK != rc )
@@ -218,12 +218,12 @@ namespace engine
          }
          else
          {
-            SDB_ASSERT( !_probeF.obj.isEmpty(), "impossible" )
+            SDB_ASSERT( !_probeF.obj.isEmpty(), "impossible" ) ;
             BSONObj obj ;
             rc = _hashTbl.getMore( _probeEle, _hashContext, obj ) ;
             if ( SDB_DMS_EOC == rc )
             {
-               SDB_ASSERT( QGM_HT_INVALID_CONTEXT == _hashContext, "impossible" )
+               SDB_ASSERT( QGM_HT_INVALID_CONTEXT == _hashContext, "impossible" ) ;
                _state = QGM_HJ_FETCH_STATE_PROBE ;
             }
             else if ( SDB_OK != rc )

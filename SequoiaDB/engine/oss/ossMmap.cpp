@@ -107,7 +107,7 @@ INT32 _ossMmapFile::size ( UINT64 &fileSize )
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_SIZE ) ;
    OSSMMAP_SLOCK
-   SDB_ASSERT ( _opened, "file is not opened" )
+   SDB_ASSERT ( _opened, "file is not opened" ) ;
    INT32 rc = SDB_OK ;
    rc = ossGetFileSize ( &_file, (INT64*)&fileSize ) ;
    if ( rc )
@@ -129,7 +129,7 @@ INT32 _ossMmapFile::map ( UINT64 offset, UINT32 length, void **pAddress )
 {
    PD_TRACE_ENTRY ( SDB__OSSMMF_MAP );
    OSSMMAP_XLOCK
-   SDB_ASSERT ( _opened, "file is not opened" )
+   SDB_ASSERT ( _opened, "file is not opened" ) ;
    INT32 rc = SDB_OK ;
    INT32 err = 0 ;
    ossMmapSegment seg ( 0,0,0 ) ;
@@ -164,7 +164,7 @@ INT32 _ossMmapFile::map ( UINT64 offset, UINT32 length, void **pAddress )
       length-=fileSize - offset - 1 ;
    }
 
-   SDB_ASSERT ( length!=0, "invalid length to map" )
+   SDB_ASSERT ( length!=0, "invalid length to map" ) ;
 
    // map region into memory
 #if defined (_LINUX)

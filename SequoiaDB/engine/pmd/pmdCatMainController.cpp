@@ -13,7 +13,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDCATMAINCTRLENTPNT, "pmdCatMainControllerEntryPoint" )
    INT32 pmdCatMainControllerEntryPoint( pmdEDUCB *cb, void *pData )
    {
-      SDB_ASSERT ( cb, "cb can't be NULL" )
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_PMDCATMAINCTRLENTPNT );
 

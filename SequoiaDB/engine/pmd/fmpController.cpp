@@ -289,7 +289,7 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
    }
    else if ( FMP_CONTROL_STEP_DOWNLOAD == step )
    {
-      SDB_ASSERT( NULL != _vm, "impossible" )
+      SDB_ASSERT( NULL != _vm, "impossible" ) ;
       rc = _vm->eval( obj, res ) ;
       if ( SDB_OK  != rc )
       {
@@ -362,7 +362,7 @@ INT32 _fmpController::_handleOneLoop( const BSONObj &obj,
    }
    else
    {
-      SDB_ASSERT( FALSE, "impossible" )
+      SDB_ASSERT( FALSE, "impossible" ) ;
    }
 
 done:

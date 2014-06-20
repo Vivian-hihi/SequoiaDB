@@ -76,7 +76,7 @@ namespace engine
             }
             else
             {
-               SDB_ASSERT( NULL != func, "impossible" )
+               SDB_ASSERT( NULL != func, "impossible" ) ;
                rc = func->init( itr->value.alias, itr->param ) ;
                if ( SDB_OK != rc )
                {
@@ -103,7 +103,7 @@ namespace engine
             }
 
             {
-            SDB_ASSERT( NULL != func, "impossible")
+            SDB_ASSERT( NULL != func, "impossible") ;
             vector<qgmOpField> param ;
             param.push_back( itr->value ) ;
             rc = func->init( itr->value.alias.empty()?
@@ -177,7 +177,7 @@ namespace engine
       _eoc = FALSE ;
       _groupbyKey = BSONObj() ;
 
-      SDB_ASSERT( 1 == _input.size(), "impossible" )
+      SDB_ASSERT( 1 == _input.size(), "impossible" ) ;
       rc = input( 0 )->execute( eduCB ) ;
       if ( SDB_OK != rc )
       {

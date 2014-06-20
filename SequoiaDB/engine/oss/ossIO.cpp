@@ -98,7 +98,7 @@ INT32 ossOpen(const CHAR   *pFileName ,
    UINT32 direct     = 0 ;
 
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFileName , "pFileName is NULL" )
+   SDB_ASSERT ( pFileName , "pFileName is NULL" ) ;
 
 #if defined (_WINDOWS)
    UINT32 creationDisposition = 0 ;
@@ -444,7 +444,7 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
    INT32   rc  = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSMKDIR );
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pPathName , "pPathName is NULL" )
+   SDB_ASSERT ( pPathName , "pPathName is NULL" ) ;
    try
    {
       fs::path dirpath ( pPathName ) ;
@@ -507,7 +507,7 @@ INT32 ossDelete ( const CHAR *pPathName )
    PD_TRACE_ENTRY ( SDB_OSSDELETE );
 
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pPathName , "pPathName is NULL" )
+   SDB_ASSERT ( pPathName , "pPathName is NULL" ) ;
 
    try
    {
@@ -641,9 +641,9 @@ INT32 ossRead( OSSFILE* pFile,
    DWORD   readBytes = 0 ;
 #endif
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile       , "pFile is NULL" )
-   SDB_ASSERT ( pBufferRead , "pBufferRead is NULL" )
-   SDB_ASSERT ( pLenRead    , "pLenRead is NULL" )
+   SDB_ASSERT ( pFile       , "pFile is NULL" ) ;
+   SDB_ASSERT ( pBufferRead , "pBufferRead is NULL" ) ;
+   SDB_ASSERT ( pLenRead    , "pLenRead is NULL" ) ;
 
    if ( 0 == iLenToRead )
       goto done ;
@@ -763,9 +763,9 @@ INT32 ossWrite( OSSFILE  *pFile,
    DWORD writeBytes = 0 ;
 #endif
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile         , "pFile is NULL" )
-   SDB_ASSERT ( pBufferWrite  , "pBufferWrite is NULL" )
-   SDB_ASSERT ( pLenWritten   , "pLenWritten is NULL" )
+   SDB_ASSERT ( pFile         , "pFile is NULL" ) ;
+   SDB_ASSERT ( pBufferWrite  , "pBufferWrite is NULL" ) ;
+   SDB_ASSERT ( pLenWritten   , "pLenWritten is NULL" ) ;
    if ( 0 == iLenToWrite )
       goto done ;
    /* validate parameters */
@@ -776,7 +776,7 @@ INT32 ossWrite( OSSFILE  *pFile,
    }
 #if defined (_WINDOWS)
    SDB_ASSERT ( INVALID_HANDLE_VALUE != pFile->hFile,
-                "pFile->hFile is invalid" )
+                "pFile->hFile is invalid" ) ;
 
    err = WriteFile( (HANDLE) pFile->hFile,
                     pBufferWrite,
@@ -807,7 +807,7 @@ INT32 ossWrite( OSSFILE  *pFile,
    if ( pLenWritten )
       *pLenWritten = writeBytes ;
 #elif defined (_LINUX)
-   SDB_ASSERT ( pFile->fd, "pFile->fd is NULL" )
+   SDB_ASSERT ( pFile->fd, "pFile->fd is NULL" ) ;
 
    writeSize = write ( pFile->fd, pBufferWrite, iLenToWrite ) ;
    if ( -1 == writeSize )
@@ -879,7 +879,7 @@ INT32 ossSeek ( OSSFILE  *pFile,
    LARGE_INTEGER li ;
 #endif
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile , "pFile is NULL" )
+   SDB_ASSERT ( pFile , "pFile is NULL" ) ;
 
 #if defined (_LINUX)
    seekOff = lseek ( pFile->fd, (INT64)offset, whence ) ;
@@ -963,9 +963,9 @@ INT32 ossSeekAndRead( OSSFILE   *pFile,
    LARGE_INTEGER li ;
 #endif
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile        , "pFile is NULL" )
-   SDB_ASSERT ( pBufferRead  , "pBufferRead is NULL" )
-   SDB_ASSERT ( pLenRead     , "pLenRead is NULL" )
+   SDB_ASSERT ( pFile        , "pFile is NULL" ) ;
+   SDB_ASSERT ( pBufferRead  , "pBufferRead is NULL" ) ;
+   SDB_ASSERT ( pLenRead     , "pLenRead is NULL" ) ;
 
    if ( 0 == iLenToRead )
       goto done ;
@@ -1110,9 +1110,9 @@ INT32 ossSeekAndWrite ( OSSFILE    *pFile,
 #endif
 
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile        , "pFile is NULL" )
-   SDB_ASSERT ( pBufferWrite , "pBufferWrite is NULL" )
-   SDB_ASSERT ( pLenWritten  , "pLenWritten is NULL" )
+   SDB_ASSERT ( pFile        , "pFile is NULL" ) ;
+   SDB_ASSERT ( pBufferWrite , "pBufferWrite is NULL" ) ;
+   SDB_ASSERT ( pLenWritten  , "pLenWritten is NULL" ) ;
    // if we want to write nothing, let's get out of here
    if ( 0 == iLenToWrite )
       goto done ;
@@ -1234,7 +1234,7 @@ INT32 ossFsync( OSSFILE* pFile )
    UINT32  err = 0 ;
 
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile , "pFile is NULL" )
+   SDB_ASSERT ( pFile , "pFile is NULL" ) ;
 
 #if defined (_WINDOWS)
    BOOL   fOk = TRUE ;
@@ -1303,8 +1303,8 @@ INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
 #endif
 
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pPath     , "pPath is NULL" )
-   SDB_ASSERT ( pFileType , "pFileType is NULL" )
+   SDB_ASSERT ( pPath     , "pPath is NULL" ) ;
+   SDB_ASSERT ( pFileType , "pFileType is NULL" ) ;
 
 #if defined (_LINUX)
    if ( 0 == ossStrncmp ( SDB_DEV_NULL, pPath, ossStrlen(SDB_DEV_NULL) ) )
@@ -1439,8 +1439,8 @@ INT32 ossGetFileSizeByName ( const CHAR* pFileName, INT64 *pFileSize )
    struct stat sb;
 #endif
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFileName , "pFileName is NULL" )
-   SDB_ASSERT ( pFileSize , "pFileSize is NULL" )
+   SDB_ASSERT ( pFileName , "pFileName is NULL" ) ;
+   SDB_ASSERT ( pFileSize , "pFileSize is NULL" ) ;
 
 #if defined (_WINDOWS)
 
@@ -1547,8 +1547,8 @@ INT32 ossGetFileSize ( OSSFILE *pFile, INT64 *pfsize )
    struct stat sb ;
 #endif
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile , "input file is NULL" )
-   SDB_ASSERT ( pfsize, "output size buffer is NULL" )
+   SDB_ASSERT ( pFile , "input file is NULL" ) ;
+   SDB_ASSERT ( pfsize, "output size buffer is NULL" ) ;
 
 #if defined (_WINDOWS)
 
@@ -1614,7 +1614,7 @@ INT32 ossTruncateFile ( OSSFILE *pFile, const INT64 fileLen )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSTRUNCATEFILE ) ;
-   SDB_ASSERT ( pFile, "input file is NULL" )
+   SDB_ASSERT ( pFile, "input file is NULL" ) ;
 #if defined (_LINUX)
    rc = ftruncate ( pFile->fd, fileLen ) ;
    if ( rc )
@@ -1680,7 +1680,7 @@ INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
    CHAR    *pBuffer    = NULL ;
 
    // sanity check, only take effect in debug build
-   SDB_ASSERT ( pFile, "input file is NULL" )
+   SDB_ASSERT ( pFile, "input file is NULL" ) ;
 
    // seek to end of the file
    rc = ossSeek( pFile, 0, OSS_SEEK_END ) ;
@@ -1752,8 +1752,8 @@ CHAR  *ossGetRealPath( const CHAR  *pPath,
 {
    // sanity check, only take effect in debug build
    PD_TRACE_ENTRY ( SDB_OSSGETREALPATH );
-   SDB_ASSERT ( pPath , "pPath is NULL" )
-   SDB_ASSERT ( resolvedPath, "resolvedPath is NULL" )
+   SDB_ASSERT ( pPath , "pPath is NULL" ) ;
+   SDB_ASSERT ( resolvedPath, "resolvedPath is NULL" ) ;
    CHAR pathBuffer [ OSS_MAX_PATHSIZE + 1 ] = {'\0'} ;
    CHAR tempBuffer [ OSS_MAX_PATHSIZE + 1 ] = {'\0'} ;
    ossStrncpy ( pathBuffer, pPath, sizeof(pathBuffer) ) ;
@@ -1840,7 +1840,7 @@ INT32 ossGetFSType ( const CHAR  *pFileName, OSS_FS_TYPE  *ossFSType )
    struct statfs sfs ;
 #endif
     // sanity check, only take effect in debug build
-    SDB_ASSERT ( pFileName, "pFileName is NULL" )
+    SDB_ASSERT ( pFileName, "pFileName is NULL" ) ;
 
 #if defined (_WINDOWS)
 
@@ -2039,7 +2039,7 @@ INT32 ossLockFile ( OSSFILE *pFile, OSS_FILE_LOCK lockType )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSLOCKFILE ) ;
-   SDB_ASSERT ( pFile, "input file is NULL" )
+   SDB_ASSERT ( pFile, "input file is NULL" ) ;
 #if defined (_LINUX)
    struct flock lock ;
    ossMemset ( &lock, 0, sizeof(lock) ) ;
@@ -2117,7 +2117,7 @@ INT32 ossReadN( OSSFILE *file,
                 SINT64 &read )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL != file && NULL != buf, "can not be null" )
+   SDB_ASSERT( NULL != file && NULL != buf, "can not be null" ) ;
 
    SINT64 total = len ;
    SINT64 totalRead = 0 ;
@@ -2160,7 +2160,7 @@ INT32 ossWriteN( OSSFILE *file,
                  SINT64 len )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT( NULL != file && NULL != buf, "can not be null" )
+   SDB_ASSERT( NULL != file && NULL != buf, "can not be null" ) ;
 
    SINT64 total = len ;
    while ( 0 < total )

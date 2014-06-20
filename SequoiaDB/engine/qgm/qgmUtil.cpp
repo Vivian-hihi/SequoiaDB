@@ -47,7 +47,7 @@ namespace engine
    BOOLEAN qgmUtilFirstDot( const CHAR *str, UINT32 len, UINT32 &num )
    {
       PD_TRACE_ENTRY( SDB__QGMUTILFIRSTDOT ) ;
-      SDB_ASSERT( NULL != str, "impossible" )
+      SDB_ASSERT( NULL != str, "impossible" ) ;
       BOOLEAN found = FALSE ;
 
       UINT32 tLen = 0 ;
@@ -89,7 +89,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMFINDFIELDFROMFUNC ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != str, "impossible" )
+      SDB_ASSERT( NULL != str, "impossible" ) ;
 
       const CHAR *tmp = NULL ;
       UINT32 read = 0 ;

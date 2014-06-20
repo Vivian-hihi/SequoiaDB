@@ -55,8 +55,8 @@ namespace engine
                                  INT32 &id, INT32 level )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( op, "op can't be NULL" )
-      SDB_ASSERT ( ele, "ele can't be NULL" )
+      SDB_ASSERT ( op, "op can't be NULL" ) ;
+      SDB_ASSERT ( ele, "ele can't be NULL" ) ;
       ele->_id = id ;
       ele->_level = level ;
       ossSnprintf ( ele->_opID, sizeof(ele->_opID), "( %d )", ele->_id ) ;
@@ -290,7 +290,7 @@ namespace engine
          for ( UINT32 i = 0; i < ele->_children.size(); i++ )
          {
             _qgmOperatorElement *child = ele->_children[i] ;
-            SDB_ASSERT ( child, "child can't be NULL" )
+            SDB_ASSERT ( child, "child can't be NULL" ) ;
             temp = child->_pos - currentOffset ;
             for ( INT32 j = 0; j < temp; ++j )
             {
@@ -332,7 +332,7 @@ namespace engine
          for ( UINT32 i = 0; i < ele->_children.size(); i++ )
          {
             _qgmOperatorElement *child = ele->_children[i] ;
-            SDB_ASSERT ( child, "child can't be NULL" )
+            SDB_ASSERT ( child, "child can't be NULL" ) ;
             temp = child->_pos - currentOffset ;
             for ( INT32 i = 0; i < temp; ++i )
             {
@@ -479,7 +479,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       INT32 id = 0 ;
-      SDB_ASSERT ( op && pBuffer, "op and pBuffer can't be NULL" )
+      SDB_ASSERT ( op && pBuffer, "op and pBuffer can't be NULL" ) ;
       _qgmOperatorElement rootElement ;
       rc = qgmCalcElement ( op->plan(), &rootElement, id, 0 ) ;
       PD_RC_CHECK ( rc, PDERROR, "Failed to calc element, rc = %d", rc ) ;

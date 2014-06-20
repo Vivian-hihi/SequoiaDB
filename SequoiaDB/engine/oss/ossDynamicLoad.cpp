@@ -216,7 +216,7 @@ INT32 _ossModuleHandle::resolveAddress (
                PD_PACK_STRING ( _moduleName ),
                PD_PACK_STRING ( pFunctionName )) ;
    SDB_ASSERT ( _isInitialized,
-                "handle must be initialized before resolve address" )
+                "handle must be initialized before resolve address" ) ;
 #if defined (_LINUX)
    *pFunctionAddress = (OSS_MODULE_PFUNCTION)dlsym ( _moduleHandle,
                                                      (CHAR*)pFunctionName ) ;

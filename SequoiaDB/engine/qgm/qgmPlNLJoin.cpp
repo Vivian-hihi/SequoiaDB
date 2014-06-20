@@ -63,8 +63,8 @@ namespace engine
       INT32 rc = SDB_OK ;
 
       SDB_ASSERT( SQL_GRAMMAR::SQLMAX != _joinType,
-                  "impossible" )
-      SDB_ASSERT( 2 == inputSize(), "impossible" )
+                  "impossible" ) ;
+      SDB_ASSERT( 2 == inputSize(), "impossible" ) ;
       if ( SQL_GRAMMAR::R_OUTERJOIN == _joinType )
       {
          _joinType = SQL_GRAMMAR::L_OUTERJOIN ;
@@ -224,7 +224,7 @@ namespace engine
    INT32 _qgmPlNLJoin::_modifyInnerCondition( BSONObj &obj )
    {
       PD_TRACE_ENTRY( SDB__QGMPLNLJOIN__MODIFYINNERCONDITION ) ;
-      SDB_ASSERT( NULL != _param, "impossible" )
+      SDB_ASSERT( NULL != _param, "impossible" ) ;
       INT32 rc = SDB_OK ;
 
       QGM_VARLIST::const_iterator itr = _varlist.begin() ;

@@ -42,7 +42,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_PMDBGJOBENTPNT, "pmdBackgroundJobEntryPoint" )
    INT32 pmdBackgroundJobEntryPoint( pmdEDUCB *cb, void *pData )
    {
-      SDB_ASSERT( NULL != pData, "impossible" )
+      SDB_ASSERT( NULL != pData, "impossible" ) ;
       PD_TRACE_ENTRY ( SDB_PMDBGJOBENTPNT );
       rtnJobMgr *jobMgr = rtnGetJobMgr () ;
       pmdEDUMgr *pEDUMgr = pmdGetKRCB()->getEDUMgr() ;

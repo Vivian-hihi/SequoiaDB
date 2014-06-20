@@ -582,7 +582,7 @@ namespace engine
       eduCB = ( *it ).second ;
       _idleQueue.erase ( eduID ) ;
       SDB_ASSERT ( isPoolable ( type ),
-                   "must be agent/coordagent/subagent" )
+                   "must be agent/coordagent/subagent" ) ;
       // switch agent type for the EDU ( call different agent entry point )
       eduCB->setType ( type ) ;
       eduCB->setStatus ( PMD_EDU_WAITING ) ;
@@ -881,7 +881,7 @@ namespace engine
          // only Agent can be deactivated (pooled), other system
          // EDUs can only be destroyed
          SDB_ASSERT ( isPoolable ( eduCB->getType() ),
-                      "Only agent, subagent and coordagent can be pooled" )
+                      "Only agent, subagent and coordagent can be pooled" ) ;
          _runQueue.erase ( eduID ) ;
          eduCB->setStatus ( PMD_EDU_IDLE ) ;
          eduCB->writingDB ( FALSE ) ;

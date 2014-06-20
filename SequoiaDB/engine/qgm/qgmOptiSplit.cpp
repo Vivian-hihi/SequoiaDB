@@ -55,7 +55,7 @@ namespace engine
 
    INT32 _qgmOptiSplit::outputStream( qgmOpStream &stream )
    {
-      SDB_ASSERT( 1 == _children.size(), "impossible" )
+      SDB_ASSERT( 1 == _children.size(), "impossible" ) ;
       return (*(_children.begin()))->outputStream( stream ) ;
    }
 

@@ -101,7 +101,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMCONDITIONNODEHELPER_MERGE ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != node, "node can't be NULL" )
+      SDB_ASSERT( NULL != node, "node can't be NULL" ) ;
       if ( NULL == node )
       {
          rc = SDB_INVALIDARG ;
@@ -183,7 +183,7 @@ namespace engine
                                              qgmConditionNodePtrVec &nodes )
    {
       PD_TRACE_ENTRY( SDB__QGMCONDITIONNODEHELPER_SEPARATE2 ) ;
-      SDB_ASSERT( NULL != predicate, "predicate can't be NULL" )
+      SDB_ASSERT( NULL != predicate, "predicate can't be NULL" ) ;
       SDB_ASSERT( SQL_GRAMMAR::EG == predicate->type ||
                   SQL_GRAMMAR::NE == predicate->type ||
                   SQL_GRAMMAR::GT == predicate->type ||
@@ -196,7 +196,7 @@ namespace engine
                   SQL_GRAMMAR::INN == predicate->type ||
                   SQL_GRAMMAR::NOT == predicate->type ||
                   SQL_GRAMMAR::IS == predicate->type,
-                  "Invalid predicate type" )
+                  "Invalid predicate type" ) ;
 
       INT32 rc = SDB_OK ;
       if ( SQL_GRAMMAR::AND == predicate->type )
@@ -520,7 +520,7 @@ namespace engine
       {
          stringstream left, right ;
          SDB_ASSERT( NULL != node->left && NULL != node->right,
-                     "impossible" )
+                     "impossible" ) ;
          rc = _toString( node->left, left, keepAlias ) ;
          if ( SDB_OK != rc )
          {
@@ -595,7 +595,7 @@ namespace engine
       else if ( SQL_GRAMMAR::LIKE == node->type )
       {
          SDB_ASSERT( NULL != node->left && NULL != node->right,
-                     "impossible" )
+                     "impossible" ) ;
          stringstream left ;
          rc = _toString( node->left, left, keepAlias ) ;
          if ( SDB_OK != rc )

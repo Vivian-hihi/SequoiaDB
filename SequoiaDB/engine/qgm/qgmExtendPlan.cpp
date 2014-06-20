@@ -107,7 +107,7 @@ namespace engine
          {
             if ( parent->hasChildren() )
             {
-               SDB_ASSERT( 1 == parent->getSubNodeCount(), "impossible" )
+               SDB_ASSERT( 1 == parent->getSubNodeCount(), "impossible" ) ;
                _qgmOptiTreeNode *child = parent->getSubNode( 0 ) ;
                parent->_children.at( 0 ) = itr->second ;
                itr->second->_children.push_back( child ) ;
@@ -145,7 +145,7 @@ namespace engine
 
       if ( NULL != ex )
       {
-         SDB_ASSERT( NULL == _local, "impossible" )
+         SDB_ASSERT( NULL == _local, "impossible" ) ;
          _local = ex ;
          _localID = id ;
       }

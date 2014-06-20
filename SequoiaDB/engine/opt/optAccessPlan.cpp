@@ -133,7 +133,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__OPTACCPLAN__OPTHINT3 ) ;
-      SDB_ASSERT ( !_hint.isEmpty(), "hint can't be empty" )
+      SDB_ASSERT ( !_hint.isEmpty(), "hint can't be empty" ) ;
 
       BSONObjIterator it ( _hint ) ;
       PD_LOG ( PDDEBUG, "Hint is provided: %s", _hint.toString().c_str() ) ;

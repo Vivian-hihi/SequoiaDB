@@ -331,11 +331,11 @@ namespace engine
       {
          SDB_ASSERT( NULL != _condition &&
                      NULL != _condition->left &&
-                     NULL != _condition->right, "can not be NULL")
+                     NULL != _condition->right, "can not be NULL") ;
          SDB_ASSERT( SQL_GRAMMAR::DBATTR == _condition->left->type &&
 //                     SQL_GRAMMAR::SQLMAX <  _condition->right->type,
                      SQL_GRAMMAR::DBATTR == _condition->right->type,
-                     "impossible" )
+                     "impossible" ) ;
          /// here we reset right type with dbattr.
 //         _condition->right->type = SQL_GRAMMAR::DBATTR ;
 
@@ -443,7 +443,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMOPTINLJOIN_OUTPUTSTREAM ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 2 == _children.size(), "impossible" )
+      SDB_ASSERT( 2 == _children.size(), "impossible" ) ;
 
       _qgmOptiTreeNode *left = _children.at( 0 ) ;
       _qgmOptiTreeNode *right = _children.at( 1 ) ;
@@ -619,7 +619,7 @@ namespace engine
          /// if it is a hash join, check all the condition fields exist in sub.
          if ( !_hints.empty() )
          {
-            SDB_ASSERT( _varList.empty(), "must be empty" )
+            SDB_ASSERT( _varList.empty(), "must be empty" ) ;
             _qgmConditionNodeHelper ctree( _condition ) ;
             qgmDbAttrPtrVec attrVec ;
             rc = ctree.getAllAttr( attrVec ) ;
@@ -733,7 +733,7 @@ namespace engine
       else
       {
          qgmOPFieldVec *fields = oprUnit->getFields() ;
-         SDB_ASSERT( 1 == fields->size(), "size must be one")
+         SDB_ASSERT( 1 == fields->size(), "size must be one") ;
          if ( oprUnit->getDispatchAlias() == inner()->getAlias() )
          {
             _condition->left->value = fields->at( 0 ).value ;
@@ -773,7 +773,7 @@ namespace engine
                  SQL_GRAMMAR::EG == _condition->type )
             {
                SDB_ASSERT( NULL != _condition->left &&
-                           NULL != _condition->right, "impossible")
+                           NULL != _condition->right, "impossible") ;
                if ( SQL_GRAMMAR::DBATTR == _condition->left->type &&
                     SQL_GRAMMAR::DBATTR == _condition->right->type )
                {
@@ -792,7 +792,7 @@ namespace engine
    INT32 _qgmOptiNLJoin::_extend( _qgmOptiTreeNode *&exNode )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 2 == _children.size(), "impossible" )
+      SDB_ASSERT( 2 == _children.size(), "impossible" ) ;
 
       rc = _validate() ;
       if ( SDB_OK != rc )
@@ -812,7 +812,7 @@ namespace engine
    INT32 _qgmOptiNLJoin::_validate()
    {
       PD_TRACE_ENTRY( SDB__QGMOPTINLJOIN__VALIDATE ) ;
-      SDB_ASSERT( 2 == _children.size(), "impossible" )
+      SDB_ASSERT( 2 == _children.size(), "impossible" ) ;
       INT32 rc = SDB_OK ;
       _qgmOptiTreeNode *left = _children.at( 0 ) ;
       _qgmOptiTreeNode *right = _children.at( 1 ) ;

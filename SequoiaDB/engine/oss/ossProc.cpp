@@ -646,7 +646,7 @@ void ossRenameProcess ( const CHAR *pNewName )
 {
    PD_TRACE_ENTRY ( SDB_OSSRENMPROC );
    SDB_ASSERT ( g_bNameChangeEnabled,
-                "program must be enabled with name change" )
+                "program must be enabled with name change" ) ;
    // first copy to temp buffer
    ossStrncpy ( g_WorkBuffer, pNewName, g_workBufferLen ) ;
    UINT32 inputLen = ossStrlen ( g_WorkBuffer ) ;
@@ -1103,14 +1103,14 @@ static INT32 ossCreatePipeAndDupHandle ( PHANDLE const pReadHandle,
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSCRTPADUPHND );
-   SDB_ASSERT ( pReadHandle, "read handle can't be NULL" )
-   SDB_ASSERT ( pWriteHandle, "write handle can't be NULL" )
-   SDB_ASSERT ( pSecAttr, "attributes can't be NULL" )
-   SDB_ASSERT ( pHandleToDuplicate, "handle to dup can't be NULL" )
-   SDB_ASSERT ( pDuplicateHandle, "dup handle can't be NULL" )
+   SDB_ASSERT ( pReadHandle, "read handle can't be NULL" ) ;
+   SDB_ASSERT ( pWriteHandle, "write handle can't be NULL" ) ;
+   SDB_ASSERT ( pSecAttr, "attributes can't be NULL" ) ;
+   SDB_ASSERT ( pHandleToDuplicate, "handle to dup can't be NULL" ) ;
+   SDB_ASSERT ( pDuplicateHandle, "dup handle can't be NULL" ) ;
    SDB_ASSERT ( pHandleToDuplicate == pReadHandle ||
                 pHandleToDuplicate == pWriteHandle,
-                "dup handle must be read or write" )
+                "dup handle must be read or write" ) ;
    HANDLE pid = GetCurrentProcess () ;
    if ( !CreatePipe ( pReadHandle, pWriteHandle, pSecAttr, 0 ) )
    {

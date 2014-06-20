@@ -77,7 +77,7 @@ namespace engine
             PD_LOG( PDERROR, "failed to append as number:%s",
                     value.value.toString().c_str() ) ;
             rc = SDB_SYS ;
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
             goto error ;
          }
       }

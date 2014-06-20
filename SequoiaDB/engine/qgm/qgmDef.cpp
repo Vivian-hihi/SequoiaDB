@@ -50,7 +50,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       BSONElement next, local ;
 
-      SDB_ASSERT( !attr.empty(), "impossible" )
+      SDB_ASSERT( !attr.empty(), "impossible" ) ;
 
       if ( NULL == this->next )
       {

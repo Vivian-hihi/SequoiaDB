@@ -68,7 +68,7 @@ namespace engine
    INT32 _qgmHashTable::init( UINT64 bufSize )
    {
       SDB_ASSERT( sizeof(hashTuple *) / QGM_BUCKETS_PERCENT <= bufSize,
-                  "impossible" )
+                  "impossible" ) ;
       INT32 rc = SDB_OK ;
       _buf = ( CHAR * )SDB_OSS_MALLOC( bufSize ) ;
       if ( NULL == _buf )
@@ -80,7 +80,7 @@ namespace engine
 
       _bufSize = bufSize ;
       _buckets = _bufSize * QGM_BUCKETS_PERCENT / sizeof( hashTuple *) ;
-      SDB_ASSERT( 0 != _buckets, "impossible" )
+      SDB_ASSERT( 0 != _buckets, "impossible" ) ;
       _written = _buckets * sizeof( hashTuple *) ;
       ossMemset( _buf, 0, _written ) ;
 
@@ -111,8 +111,8 @@ namespace engine
                               const BSONObj &value )
    {
       PD_TRACE_ENTRY( SDB__QGMHASHTBL_PUSH ) ;
-      SDB_ASSERT( NULL != fieldName, "impossible" )
-      SDB_ASSERT( NULL != _buf, "impossible" )
+      SDB_ASSERT( NULL != fieldName, "impossible" ) ;
+      SDB_ASSERT( NULL != _buf, "impossible" ) ;
       INT32 rc = SDB_OK ;
       if ( (_bufSize - _written) <
            (sizeof( hashTuple ) + value.objsize()) )
@@ -139,7 +139,7 @@ namespace engine
                     ( key.value() - 1 - tuple->fieldNameSize -/// see value() in BSONElement.
                       value.objdata() ) ;
 
-      SDB_ASSERT( !((BSONElement *)tuple)->eoo(), "can not be eoo" )
+      SDB_ASSERT( !((BSONElement *)tuple)->eoo(), "can not be eoo" ) ;
       tuple->value = _buf + _written + sizeof(hashTuple);
       _written += sizeof( hashTuple ) + value.objsize() ;
 
@@ -172,7 +172,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__QGMHASHTBL_FIND ) ;
-      SDB_ASSERT( NULL != _buf, "impossible" )
+      SDB_ASSERT( NULL != _buf, "impossible" ) ;
 
       if ( !key.eoo() )
       {
@@ -213,7 +213,7 @@ namespace engine
             goto error ;
          }
 
-         SDB_ASSERT( context <= (QGM_HT_CONTEXT)_bufSize, "impossible" )
+         SDB_ASSERT( context <= (QGM_HT_CONTEXT)_bufSize, "impossible" ) ;
          tuple = ( hashTuple * )( _buf + context );
          if ( NULL == tuple )
          {
@@ -222,7 +222,7 @@ namespace engine
          }
 
          keyEle = ( BSONElement * )tuple ;
-         SDB_ASSERT( !keyEle->eoo(), "can not be eoo." )
+         SDB_ASSERT( !keyEle->eoo(), "can not be eoo." ) ;
          if ( 0 == key.woCompare( *keyEle, FALSE ))
          {
             value = BSONObj( tuple->value ) ;

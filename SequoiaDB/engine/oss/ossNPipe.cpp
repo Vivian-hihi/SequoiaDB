@@ -280,7 +280,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    CHAR fullName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
    INT32 extraSize = ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ;
    SDB_ASSERT ( name && name[0] != '\0',
-                "name can't be empty or null" )
+                "name can't be empty or null" ) ;
    ossMemset ( fullName, 0, sizeof(fullName) ) ;
    // for windows pipe, it must start with "\\\\:\\pipe\\"
    if ( ossStrncmp ( name, OSS_NPIPE_LOCAL_PREFIX,
@@ -395,7 +395,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    CHAR fullName [ OSS_NPIPE_MAX_NAME_LEN + 1 ] = {0} ;
    INT32 extraSize = ossStrlen(OSS_NPIPE_LOCAL_PREFIX) ;
    SDB_ASSERT ( name && name[0] != '\0',
-                "name can't be empty or null" )
+                "name can't be empty or null" ) ;
    ossMemset ( fullName, 0, sizeof(fullName) ) ;
    // for windows pipe, it must start with "\\\\:\\pipe\\"
    if ( ossStrncmp ( name, OSS_NPIPE_LOCAL_PREFIX,
@@ -882,7 +882,7 @@ INT32 ossCreateNamedPipe ( const CHAR *name,
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_OSSCRTNP );
    SDB_ASSERT ( name && name[0] != '\0',
-                "name can't be empty or null" )
+                "name can't be empty or null" ) ;
    if ( ossStrlen ( name ) >= OSS_NPIPE_MAX_NAME_LEN )
    {
       PD_LOG ( PDERROR, "Named pipe is too long: %s", name ) ;
@@ -936,7 +936,7 @@ INT32 ossOpenNamedPipe ( const CHAR *name,
    INT32 openMode = 0 ;
    struct stat64 st ;
    SDB_ASSERT ( name && name[0] != '\0',
-                "name can't be empty or null" )
+                "name can't be empty or null" ) ;
    if ( ossStrlen ( name ) >= OSS_NPIPE_MAX_NAME_LEN )
    {
       PD_LOG ( PDERROR, "Named pipe is too long: %s", name ) ;

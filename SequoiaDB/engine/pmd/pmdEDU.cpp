@@ -842,7 +842,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_COMPRESS );
       SDB_ASSERT ( pInputData && ppData && pDataSize,
-                   "Data pointer and size pointer can't be NULL" )
+                   "Data pointer and size pointer can't be NULL" ) ;
 
       // estimate the max possible size for compressed data
       size_t maxCompressedLen = snappy::MaxCompressedLength ( inputSize ) ;
@@ -925,7 +925,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_UNCOMPRESS );
       SDB_ASSERT ( pInputData && ppData && pDataSize,
-                   "Data pointer and size pointer can't be NULL" )
+                   "Data pointer and size pointer can't be NULL" ) ;
 
       size_t maxUncompressedLen = 0 ;
       // estimate the max possible size for uncompressed data + sanity check

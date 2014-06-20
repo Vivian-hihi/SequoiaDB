@@ -126,8 +126,8 @@ namespace engine
    INT32 _netFrame::listen( const CHAR *hostName,
                             const CHAR *serviceName )
    {
-      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" )
-      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" )
+      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
+      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_LISTEN );
       if ( _acceptor.is_open() )
@@ -169,8 +169,8 @@ namespace engine
                                  const CHAR *serviceName,
                                  const _MsgRouteID &id )
    {
-      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" )
-      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" )
+      SDB_ASSERT( NULL != hostName, "hostName should not be NULL" ) ;
+      SDB_ASSERT( NULL != serviceName, "serviceName should not be NULL" ) ;
 
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNNCCONN );
@@ -208,9 +208,9 @@ namespace engine
    INT32 _netFrame::syncSend( const _MsgRouteID &id,
                               void *header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL")
+      SDB_ASSERT( NULL != header, "header should not be NULL") ;
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
-                  "id.value should not be zero" )
+                  "id.value should not be zero" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND );
       NET_EH eh;
@@ -251,9 +251,9 @@ namespace engine
    INT32 _netFrame::syncSend( const NET_HANDLE &handle,
                               void *header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL")
+      SDB_ASSERT( NULL != header, "header should not be NULL") ;
       SDB_ASSERT( NET_INVALID_HANDLE != handle,
-                  "handle should not be invalid" )
+                  "handle should not be invalid" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND2 );
       NET_EH eh ;
@@ -297,10 +297,10 @@ namespace engine
                               const void *body,
                               UINT32 bodyLen )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL")
-      SDB_ASSERT( NULL != body, "body should not be NULL")
+      SDB_ASSERT( NULL != header, "header should not be NULL") ;
+      SDB_ASSERT( NULL != body, "body should not be NULL") ;
       SDB_ASSERT( NET_INVALID_HANDLE != handle,
-                  "handle should not be invalid" )
+                  "handle should not be invalid" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND3 );
       UINT32 headLen = header->messageLength - bodyLen ;
@@ -352,9 +352,9 @@ namespace engine
                               const void *body,
                               UINT32 bodyLen )
    {
-      SDB_ASSERT( NULL != header && NULL != body, "should not be NULL")
+      SDB_ASSERT( NULL != header && NULL != body, "should not be NULL") ;
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
-                  "id.value should not be zero" )
+                  "id.value should not be zero" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETFRAME_SYNCSEND4 );
       UINT32 headLen = header->messageLength - bodyLen ;
@@ -403,9 +403,9 @@ namespace engine
                                MsgHeader *header,
                                const netIOVec &iov )
    {
-      SDB_ASSERT( NULL != header, "should not be NULL" )
+      SDB_ASSERT( NULL != header, "should not be NULL" ) ;
       SDB_ASSERT( MSG_INVALID_ROUTEID != id.value,
-                  "id.value should not be zero" )
+                  "id.value should not be zero" ) ;
       PD_TRACE_ENTRY( SDB__NETFRAME_SYNCSENDV ) ;
       INT32 rc = SDB_OK ;
 #ifdef _DEBUG
@@ -414,7 +414,7 @@ namespace engine
             itr != iov.end();
             itr++ )
       {
-         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" )
+         SDB_ASSERT( NULL != itr->iovBase, "should not be NULL" ) ;
          totalLen += itr->iovLen ;
       }
 

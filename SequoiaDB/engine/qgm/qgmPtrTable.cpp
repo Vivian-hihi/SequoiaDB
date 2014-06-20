@@ -97,7 +97,7 @@ namespace engine
    INT32 _qgmPtrTable::getOwnField( const CHAR * begin, qgmField & field )
    {
       PD_TRACE_ENTRY( SDB__QGMPTRTABLE_GETOWNFIELD ) ;
-      SDB_ASSERT( NULL != begin, "impossible" )
+      SDB_ASSERT( NULL != begin, "impossible" ) ;
       INT32 rc = SDB_OK ;
       UINT32 size = ossStrlen( begin ) ;
       if ( NULL == begin || 0 == size )

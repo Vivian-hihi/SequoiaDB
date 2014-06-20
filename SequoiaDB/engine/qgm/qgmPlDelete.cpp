@@ -117,7 +117,7 @@ namespace engine
          rc = del.execute( msg, *((SINT32 *)msg),
                            NULL, eduCB, dummyReply,
                            &err ) ;
-         SDB_ASSERT( NULL == err, "impossible" )
+         SDB_ASSERT( NULL == err, "impossible" ) ;
       }
       else
       {

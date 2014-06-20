@@ -51,7 +51,7 @@ namespace engine
    _merge( FALSE ),
    _param( NULL )
    {
-      SDB_ASSERT( QGM_PLAN_TYPE_MAX != _type, "impossible" )
+      SDB_ASSERT( QGM_PLAN_TYPE_MAX != _type, "impossible" ) ;
       _alias = alias ;
    }
 
@@ -78,7 +78,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( NULL != child, "impossible" )
+      SDB_ASSERT( NULL != child, "impossible" ) ;
       if ( NULL == child )
       {
          rc = SDB_INVALIDARG ;
@@ -118,7 +118,7 @@ namespace engine
 
       if ( NULL == eduCB )
       {
-         SDB_ASSERT( NULL != eduCB, "can not be NULL" )
+         SDB_ASSERT( NULL != eduCB, "can not be NULL" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }
@@ -144,8 +144,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMPLAN_FETCHNEXT ) ;
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( NULL != _eduCB, "impossible" )
-      SDB_ASSERT( _executed, "impossible" )
+      SDB_ASSERT( NULL != _eduCB, "impossible" ) ;
+      SDB_ASSERT( _executed, "impossible" ) ;
 
       if ( !_executed || NULL == _eduCB )
       {

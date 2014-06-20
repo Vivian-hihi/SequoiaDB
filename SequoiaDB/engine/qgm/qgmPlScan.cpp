@@ -145,7 +145,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__EXEC ) ;
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT ( _input.size() == 0, "impossible" )
+      SDB_ASSERT ( _input.size() == 0, "impossible" ) ;
 
       _invalidPredicate = FALSE ;
       _contextID = -1 ;
@@ -222,7 +222,7 @@ namespace engine
 
       rc = _coordQuery.execute ( qMsg, *(SINT32*)qMsg, NULL, eduCB,
                                  dummyReply, &err ) ;
-      SDB_ASSERT( NULL == err, "impossible" )
+      SDB_ASSERT( NULL == err, "impossible" ) ;
       PD_RC_CHECK ( rc, PDERROR,
                     "Failed to execute coordQuery, rc = %d", rc ) ;
 
@@ -308,7 +308,7 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMPLSCAN__FETCH );
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( _contextID != -1,
-                   "context id must be initialized" )
+                   "context id must be initialized" ) ;
 
       INT64 startingPos = 0 ;
       rtnContextBuf buffObj ;

@@ -149,7 +149,7 @@ namespace engine
                                    void *header )
    {
       SDB_ASSERT( NULL != header,
-                  "should not be NULL" )
+                  "should not be NULL" ) ;
 
       /// todo: trans to _netFrame
       INT32 rc = SDB_OK ;
@@ -201,7 +201,7 @@ namespace engine
                                    void *header )
    {
      SDB_ASSERT( NULL != header,
-                  "should not be NULL" )
+                  "should not be NULL" ) ;
 
       return _frame.syncSend( handle, header ) ;
    }
@@ -212,7 +212,7 @@ namespace engine
                                    UINT32 bodyLen )
    {
       SDB_ASSERT( NULL != header && NULL != body,
-                  "should not be NULL" )
+                  "should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSND2 );
       rc = _frame.syncSend( id, header, body, bodyLen ) ;
@@ -260,7 +260,7 @@ namespace engine
                                    UINT32 bodyLen )
    {
       SDB_ASSERT( NULL != header && NULL != body,
-                  "should not be NULL" )
+                  "should not be NULL" ) ;
 
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSND3 );
@@ -283,7 +283,7 @@ namespace engine
                                     const netIOVec &iov )
    {
       PD_TRACE_ENTRY ( SDB__NETRTAG_SYNCSNDV ) ;
-      SDB_ASSERT( NULL != header, "should not be NULL" )
+      SDB_ASSERT( NULL != header, "should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       rc = _frame.syncSendv( id, header, iov ) ;
       if ( SDB_OK == rc )

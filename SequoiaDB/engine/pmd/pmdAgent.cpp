@@ -80,9 +80,9 @@ namespace engine
       INT32 replySize = sizeof(reply) ;
       SDB_ASSERT ( (INT32)sizeof(MsgSysInfoRequest) < receiveBufferSize,
                    "receive buffer size should not be smaller "
-                   "than msg info request" )
+                   "than msg info request" ) ;
       SDB_ASSERT ( sizeof(MsgSysInfoRequest) >= sizeof(SINT32),
-                   "Invalid size of MsgSysInfoRequest" )
+                   "Invalid size of MsgSysInfoRequest" ) ;
       rc = pmdRecv ( &pReceiveBuffer[sizeof(SINT32)],
                      sizeof(MsgSysInfoRequest)-sizeof(SINT32),
                      &sock, cb ) ;
@@ -115,8 +115,8 @@ namespace engine
                                              MsgOpReply &replyHeader,
                                              BSONObj **ppErrorObj )
    {
-      SDB_ASSERT ( disconnect, "disconnect can't be NULL" )
-      SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" )
+      SDB_ASSERT ( disconnect, "disconnect can't be NULL" ) ;
+      SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" ) ;
       INT32 rc = SDB_OK;
       PD_TRACE_ENTRY ( SDB_PMDPROCCOORDAGENTREQ ) ;
       /*TODO:add a thread
@@ -195,7 +195,7 @@ namespace engine
          }
       }while ( FALSE ) ;
 
-      SDB_ASSERT( pResultBuff == NULL, "Result must be NULL" )
+      SDB_ASSERT( pResultBuff == NULL, "Result must be NULL" ) ;
 
       if ( rc < -SDB_MAX_ERROR || rc > SDB_MAX_WARNING )
       {
@@ -242,8 +242,8 @@ namespace engine
       SDB_DMSCB *dmsCB     = krcb->getDMSCB () ;
       SDB_RTNCB *rtnCB     = krcb->getRTNCB () ;
       SDB_DPSCB *dpsCB     = krcb->getDPSCB () ;
-      SDB_ASSERT ( disconnect, "disconnect can't be NULL" )
-      SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" )
+      SDB_ASSERT ( disconnect, "disconnect can't be NULL" ) ;
+      SDB_ASSERT ( pReceiveBuffer, "pReceivedBuffer is NULL" ) ;
       *disconnect          = FALSE ;
       NodeID curNodeID     = pmdGetNodeID() ;
       // cast the buffer into MsgHeader first
@@ -856,7 +856,7 @@ namespace engine
          }
          goto error ;
       }
-      SDB_ASSERT ( pReceiveBuffer, "pReceiveBuffer can't be NULL" )
+      SDB_ASSERT ( pReceiveBuffer, "pReceiveBuffer can't be NULL" ) ;
       // sanity check for the length of generated request
       packetLength = *(SINT32*)(pReceiveBuffer) ;
       PD_LOG ( PDDEBUG, "Received packet size = %d", packetLength ) ;
@@ -1235,8 +1235,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB_PMDAUTHENTICATE );
       UINT32 probe                     = 0 ;
       MsgHeader *header                = NULL ;
-      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" )
-      SDB_ASSERT ( cb, "cb can't be NULL" )
+      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb can't be NULL" ) ;
       cb->resetInterrupt () ;
       cb->resetInfo ( EDU_INFO_ERROR ) ;
       pmdKRCB *pKrcb                   = pmdGetKRCB();
@@ -1367,7 +1367,7 @@ namespace engine
          if ( NULL == authRes )
          {
             rc = SDB_SYS ;
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
             PD_LOG( PDERROR, "syncsend return ok but res is NULL" ) ;
             goto error ;
          }
@@ -1387,7 +1387,7 @@ namespace engine
             if ( NULL == authRes )
             {
                rc = SDB_SYS ;
-               SDB_ASSERT( FALSE, "impossible" )
+               SDB_ASSERT( FALSE, "impossible" ) ;
                PD_LOG( PDERROR, "syncsend return ok but res is NULL" ) ;
                goto error ;
             }
@@ -1412,7 +1412,7 @@ namespace engine
          // special handling for password verification when there is no addrlist
          // specified. Usually this happen when there is only one coord node before
          //creating the first catalog
-         SDB_ASSERT( NULL == err, "impossible" )
+         SDB_ASSERT( NULL == err, "impossible" ) ;
          if ( MSG_AUTH_VERIFY_REQ == header->opCode &&
               SDB_CAT_NO_ADDR_LIST == rc )
          {
@@ -1759,11 +1759,11 @@ namespace engine
                }
                SDB_ASSERT ( (UINT32)replyHeader.header.messageLength ==
                             sizeof(replyHeader) + pObj->objsize(),
-                            "Reply size doesn't match actual" )
+                            "Reply size doesn't match actual" ) ;
             }
             else if ( replyHeader.header.messageLength-sizeof(replyHeader)!= 0 )
             {
-               SDB_ASSERT ( buffObj.data(), "result buffer is NULL!" )
+               SDB_ASSERT ( buffObj.data(), "result buffer is NULL!" ) ;
                // send rest of buffer
                sendRC = pmdSend ( buffObj.data(),
                         replyHeader.header.messageLength - sizeof(replyHeader),
@@ -1824,8 +1824,8 @@ namespace engine
             CHAR *pResultBuff = NULL ;
             pRollbackOperator->execute( NULL, 0, &pResultBuff, cb,
                                         replyHeader, &err ) ;
-            SDB_ASSERT( pResultBuff == NULL, "Result buff must be NULL" )
-            SDB_ASSERT( NULL == err, "impossible" )
+            SDB_ASSERT( pResultBuff == NULL, "Result buff must be NULL" ) ;
+            SDB_ASSERT( NULL == err, "impossible" ) ;
          }
       }
 
