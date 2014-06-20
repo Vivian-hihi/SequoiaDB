@@ -48,7 +48,7 @@ namespace engine
                                               UINT16 numPages )
    {
       SDB_ASSERT ( _pageSize * numPages == _currentExtentSize,
-                   "extent size doesn't match" )
+                   "extent size doesn't match" ) ;
       extAddr->_eyeCatcher[0]          = DMS_EXTENT_EYECATCHER0 ;
       extAddr->_eyeCatcher[1]          = DMS_EXTENT_EYECATCHER1 ;
       extAddr->_blockSize              = numPages ;
@@ -144,7 +144,7 @@ namespace engine
       BOOLEAN addOID = FALSE ;
       INT32 oidLen = 0 ;
 
-      SDB_ASSERT( mbContext, "mb context can't be NULL" )
+      SDB_ASSERT( mbContext, "mb context can't be NULL" ) ;
 
       /* (0) */
       // verify whether the record got "_id" inside
@@ -309,9 +309,9 @@ namespace engine
       dmsExtentID    tempExtentID   = 0 ;
       monAppCB * pMonAppCB          = cb ? cb->getMonAppCB() : NULL ;
 
-      SDB_ASSERT ( _su, "_su can't be NULL" )
-      SDB_ASSERT ( mbContext, "dms mb context can't be NULL" )
-      SDB_ASSERT ( cb, "cb is NULL" )
+      SDB_ASSERT ( _su, "_su can't be NULL" ) ;
+      SDB_ASSERT ( mbContext, "dms mb context can't be NULL" ) ;
+      SDB_ASSERT ( cb, "cb is NULL" ) ;
 
       rc = mbContext->mbLock( EXCLUSIVE ) ;
       PD_RC_CHECK( rc, PDERROR, "Failed to lock collection, rc: %d", rc ) ;
@@ -361,7 +361,7 @@ namespace engine
          PD_CHECK ( extAddr, SDB_SYS, error, PDERROR, "Invalid extent: %d",
                     tempExtentID ) ;
          SDB_ASSERT( extAddr->validate( mbContext->mbID() ),
-                     "Invalid extent" )
+                     "Invalid extent" ) ;
 
          rc = _su->data()->addExtent2Meta( tempExtentID, extAddr, mbContext ) ;
          PD_RC_CHECK( rc, PDERROR, "Add extent to meta failed, rc: %d", rc ) ;
@@ -484,8 +484,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSSTORAGELOADEXT__ROLLEXTENT ) ;
 
-      SDB_ASSERT ( _su, "_su can't be NULL" )
-      SDB_ASSERT ( mbContext, "mb context can't be NULL" )
+      SDB_ASSERT ( _su, "_su can't be NULL" ) ;
+      SDB_ASSERT ( mbContext, "mb context can't be NULL" ) ;
 
       PD_LOG ( PDEVENT, "Start loadRollbackPhase" ) ;
 

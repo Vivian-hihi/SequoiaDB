@@ -173,7 +173,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_IMPMME );
-      SDB_ASSERT ( pMME, "pMME can't be NULL" )
+      SDB_ASSERT ( pMME, "pMME can't be NULL" ) ;
       INT32 restSize = DMS_MB_SIZE ;
       INT64 writeSize = 0 ;
       INT32 bufSize = restSize ;
@@ -214,7 +214,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_EXPMME );
-      SDB_ASSERT ( pMME, "pMME can't be NULL" )
+      SDB_ASSERT ( pMME, "pMME can't be NULL" ) ;
       INT32 restSize = DMS_MB_SIZE ;
       INT64 readSize = 0 ;
       INT32 bufSize = restSize ;
@@ -249,7 +249,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT__ALCEXT );
-      SDB_ASSERT ( !_pCurrentExtent, "current extent must be NULL" )
+      SDB_ASSERT ( !_pCurrentExtent, "current extent must be NULL" ) ;
       if ( requestSize < DMS_MIN_EXTENT_SZ(_pageSize) )
          requestSize = DMS_MIN_EXTENT_SZ(_pageSize) ;
       else if ( requestSize > DMS_MAX_EXTENT_SZ )
@@ -275,7 +275,7 @@ namespace engine
    void _dmsReorgUnit::_initExtentHeader ( dmsExtent *extAddr, UINT16 numPages )
    {
       SDB_ASSERT ( _pageSize * numPages == _currentExtentSize,
-                   "extent size doesn't match" )
+                   "extent size doesn't match" ) ;
       extAddr->_eyeCatcher[0]          = DMS_EXTENT_EYECATCHER0 ;
       extAddr->_eyeCatcher[1]          = DMS_EXTENT_EYECATCHER1 ;
       extAddr->_blockSize              = numPages ;
@@ -297,7 +297,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT__FLSEXT );
-      SDB_ASSERT ( _pCurrentExtent, "current extent can't be NULL" )
+      SDB_ASSERT ( _pCurrentExtent, "current extent can't be NULL" ) ;
       INT32 restSize = _currentExtentSize ;
       INT64 writeSize = 0 ;
       INT32 bufSize = restSize ;
@@ -530,7 +530,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_EXPHEAD );
-      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" )
+      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
       INT32 restSize = _headSize ;
       INT64 readSize = 0 ;
       INT32 bufSize = restSize ;
@@ -620,7 +620,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DMSROUNIT_VLDHDBUFF );
-      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" )
+      SDB_ASSERT ( pBuffer, "pBuffer can't be NULL" ) ;
       class _reorgUnitHead *unitHead = (class _reorgUnitHead *)pBuffer ;
       // few steps to validate header
       // 1) eye catcher

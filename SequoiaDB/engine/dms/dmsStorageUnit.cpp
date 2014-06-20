@@ -288,7 +288,7 @@ namespace engine
 
       SINT32 allocatedExtent   = DMS_INVALID_EXTENT ;
       dmsExtent *extAddr       = NULL ;
-      SDB_ASSERT ( pBuffer, "buffer can't be NULL" )
+      SDB_ASSERT ( pBuffer, "buffer can't be NULL" ) ;
 
       rc = loadExtentA ( mbContext, pBuffer, numPages, FALSE,
                          &allocatedExtent, &extAddr ) ;

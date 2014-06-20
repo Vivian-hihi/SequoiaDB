@@ -23,7 +23,7 @@ namespace engine
    void clsCatalogPredicateTree::addChild( clsCatalogPredicateTree * pChild )
    {
       PD_TRACE_ENTRY ( SDB_CLSCATAPREDICATETREE_ADDCHILD ) ;
-      SDB_ASSERT ( pChild, "pchild can't be null" )
+      SDB_ASSERT ( pChild, "pchild can't be null" ) ;
       pChild->adjustByShardingKey() ;
 
       if ( FALSE == pChild->isUniverse() )
@@ -357,7 +357,8 @@ namespace engine
             while ( iterSK.more() )
             {
                BSONElement beShardingKey = iterSK.next() ;
-               SDB_ASSERT ( beShardingKey.isNumber(), "Invalid sharding-key!" )
+               SDB_ASSERT ( beShardingKey.isNumber(),
+                            "Invalid sharding-key!" ) ;
                map<string, rtnPredicate>::const_iterator iterMap =
                                  predicates.find( beShardingKey.fieldName() );
                if ( predicates.end() == iterMap )

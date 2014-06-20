@@ -444,7 +444,7 @@ public :
       }
       catch(...)
       {
-         SDB_ASSERT ( FALSE, "SLatch get failed" )
+         SDB_ASSERT ( FALSE, "SLatch get failed" ) ;
       }
    }
    void release ()
@@ -455,7 +455,7 @@ public :
       }
       catch(...)
       {
-         SDB_ASSERT ( FALSE, "SLatch release failed" )
+         SDB_ASSERT ( FALSE, "SLatch release failed" ) ;
       }
    }
    void get_shared ()
@@ -466,7 +466,7 @@ public :
       }
       catch(...)
       {
-         SDB_ASSERT ( FALSE, "SLatch get shared failed" )
+         SDB_ASSERT ( FALSE, "SLatch get shared failed" ) ;
       }
    }
    void release_shared ()
@@ -477,7 +477,7 @@ public :
       }
       catch(...)
       {
-         SDB_ASSERT ( FALSE, "SLatch release shared failed" )
+         SDB_ASSERT ( FALSE, "SLatch release shared failed" ) ;
       }
    }
    BOOLEAN try_get ()
@@ -488,7 +488,7 @@ public :
       }
       catch(...)
       {
-         SDB_ASSERT ( FALSE, "SLatch try get failed" )
+         SDB_ASSERT ( FALSE, "SLatch try get failed" ) ;
       }
       return FALSE ;
    }
@@ -500,7 +500,7 @@ public :
       }
       catch(...)
       {
-         SDB_ASSERT ( FALSE, "SLatch try get shared failed" )
+         SDB_ASSERT ( FALSE, "SLatch try get shared failed" ) ;
       }
       return FALSE ;
    }

@@ -91,7 +91,7 @@ namespace engine
 
       OSS_INLINE void setParamTable( _qgmParamTable *param )
       {
-         SDB_ASSERT( NULL != param, "impossible" )
+         SDB_ASSERT( NULL != param, "impossible" ) ;
          _param = param ;
          return ;
       }

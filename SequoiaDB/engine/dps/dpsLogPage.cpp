@@ -146,7 +146,7 @@ namespace engine
          }
       }
       // make sure we get enough space
-      SDB_ASSERT ( getLastSize() >= len, "len is greater than buffer size" )
+      SDB_ASSERT ( getLastSize() >= len, "len is greater than buffer size" ) ;
       // change current writing position
       _mb->writePtr( len + _mb->length() );
 

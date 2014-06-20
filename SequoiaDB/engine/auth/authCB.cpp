@@ -294,14 +294,14 @@ namespace engine
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get AUTH_USR_COLLECTION:%d", rc ) ;
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          goto error ;
       }
       rc = su->countCollection ( collection, totalCount, cb ) ;
       if ( SDB_OK != rc )
       {
          PD_LOG( PDERROR, "failed to get count:%d",rc ) ;
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          goto error ;
       }
       PD_TRACE1 ( SDB_AUTHCB_CHECKNEEDAUTH, PD_PACK_INT ( totalCount ) ) ;

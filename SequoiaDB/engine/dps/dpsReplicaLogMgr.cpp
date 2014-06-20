@@ -204,8 +204,10 @@ namespace engine
 
       {
          //reset the idle size
-         UINT32 fileIdleSize = file->getIdleSize() + (&_pages[_work])->getLength() ;
-         SDB_ASSERT ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE == 0 , "impossible" )
+         UINT32 fileIdleSize = file->getIdleSize() +
+                              (&_pages[_work])->getLength() ;
+         SDB_ASSERT ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE == 0 ,
+                      "impossible" ) ;
          file->idleSize ( fileIdleSize ) ;
       }
 
@@ -269,13 +271,13 @@ namespace engine
          // goes wrong, because the dummy record should already be inserted
          // in primary node
          SDB_ASSERT ( !block.isRow(), "replicated log record should never"
-                      " hit this part" )
+                      " hit this part" ) ;
          // we are going to insert a dummy log record
          UINT32 dummyLogSize = logFileSz - ( _lsn.offset % logFileSz ) ;
          SDB_ASSERT ( dummyLogSize >= sizeof ( dpsLogRecordHeader ),
-                      "dummy log size is smaller than log head" )
+                      "dummy log size is smaller than log head" ) ;
          SDB_ASSERT ( dummyLogSize % sizeof(SINT32) == 0,
-                      "dummy log size is not 4 bytes aligned" )
+                      "dummy log size is not 4 bytes aligned" ) ;
 
          // set dummyhead as a reference to log head
          dpsLogRecordHeader &dummyhead =
@@ -313,7 +315,7 @@ namespace engine
               sizeof(dpsLogRecordHeader)) / logFileSz ) )
       {
          SDB_ASSERT ( !block.isRow(), "replicated log record should never"
-                      " hit this part" )
+                      " hit this part" ) ;
          head._length = logFileSz - _lsn.offset % logFileSz ;
          //head._length += logFileSz - ((_lsn.offset+head._length)%logFileSz) ;
       }
@@ -588,8 +590,10 @@ namespace engine
       else //reset file idle size
       {
          _dpsLogFile *file = _logger.getWorkLogFile() ;
-         UINT32 fileIdleSize = file->getIdleSize() + (&_pages[_work])->getLength() ;
-         SDB_ASSERT ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE == 0 , "impossible" )
+         UINT32 fileIdleSize = file->getIdleSize() +
+                               (&_pages[_work])->getLength() ;
+         SDB_ASSERT ( fileIdleSize % DPS_DEFAULT_PAGE_SIZE == 0 ,
+                      "impossible" ) ;
          file->idleSize ( fileIdleSize ) ;
       }
 
@@ -769,7 +773,7 @@ namespace engine
       UINT32 localOffset  = offset;
       UINT32 needParseLen = len;
       UINT32 outOffset    = 0;
-      SDB_ASSERT ( out, "out can't be NULL" )
+      SDB_ASSERT ( out, "out can't be NULL" ) ;
       // make sure what we need does not exceed total buffer size, this is
       // sanity check
       if ( offset + len >= _pageNum*DPS_DEFAULT_PAGE_SIZE )
@@ -866,9 +870,9 @@ namespace engine
       UINT32 needAlloc = len;
       UINT32 pageNum = 0;
 
-      SDB_ASSERT( 0 != len, "can not allocate zero length" )
+      SDB_ASSERT( 0 != len, "can not allocate zero length" ) ;
       SDB_ASSERT ( _totalSize > len,
-                  "total memory size must grater than record size" )
+                  "total memory size must grater than record size" ) ;
 
       // make sure there's enough space
       while ( _idleSize.peek() < needAlloc )
@@ -950,7 +954,7 @@ namespace engine
       // push pages into flush queue. Note all nodes should be shared locked at
       // the moment
 
-      SDB_ASSERT( allocated.valid(), "impossible" )
+      SDB_ASSERT( allocated.valid(), "impossible" ) ;
       for ( UINT32 i = 0; i < allocated.pageNum; ++i )
       {
          _dpsLogPage *page = PAGE(allocated.beginSub + i) ;
@@ -1001,7 +1005,7 @@ namespace engine
          /// row data's size should always be one.
          /// and dataheader should not be merged.
          BOOLEAN res = itr.next() ;
-         SDB_ASSERT( res, "impossible" )
+         SDB_ASSERT( res, "impossible" ) ;
          const _dpsRecordEle &dataMeta = itr.dataMeta() ;
          _mergePage( itr.value(), dataMeta.len,
                      work, offset ) ;
@@ -1012,7 +1016,7 @@ namespace engine
          while ( itr.next() )
          {
             const _dpsRecordEle &dataMeta = itr.dataMeta() ;
-            SDB_ASSERT( DPS_INVALID_TAG != dataMeta.tag, "impossible" )
+            SDB_ASSERT( DPS_INVALID_TAG != dataMeta.tag, "impossible" ) ;
 
             _mergePage( ( CHAR *)(&dataMeta), sizeof( dataMeta ),
                          work, offset ) ;
@@ -1189,7 +1193,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSRPCMGR__FLUSHPAGE );
-      SDB_ASSERT ( page, "page can't be NULL" )
+      SDB_ASSERT ( page, "page can't be NULL" ) ;
       // note in tearDown it may call _flushPage with non-full page
       page->lock();
       page->unlock();
@@ -1200,7 +1204,7 @@ namespace engine
          goto error ;
       }
       SDB_ASSERT ( shutdown || page->getLength() == DPS_DEFAULT_PAGE_SIZE,
-                   "page can't be partial during flush except shutdown" )
+                   "page can't be partial during flush except shutdown" ) ;
       _idleSize.add( page->getLength() );
       page->clear();
       _allocateEvent.signalAll() ;

@@ -108,15 +108,15 @@ namespace engine
 
    _clsBucketUnit::~_clsBucketUnit ()
    {
-      SDB_ASSERT( 0 == _number, "Must be empty" )
+      SDB_ASSERT( 0 == _number, "Must be empty" ) ;
    }
 
    void _clsBucketUnit::push( CHAR *pData, UINT32 len )
    {
       dpsLogRecordHeader *header = ( dpsLogRecordHeader* )pData ;
 
-      SDB_ASSERT( pData && len > sizeof(CHAR*), "pData can't be NULL" )
-      SDB_ASSERT( header->_length + sizeof(CHAR*) <= len, "len error" )
+      SDB_ASSERT( pData && len > sizeof(CHAR*), "pData can't be NULL" ) ;
+      SDB_ASSERT( header->_length + sizeof(CHAR*) <= len, "len error" ) ;
 
       if ( 0 == _number )
       {
@@ -502,7 +502,7 @@ namespace engine
    {
       BOOLEAN ret = FALSE ;
 
-      SDB_ASSERT( index < _bucketSize, "Index must less than bucket size" )
+      SDB_ASSERT( index < _bucketSize, "Index must less than bucket size" ) ;
       if ( index >= _bucketSize )
       {
          goto error ;
@@ -512,7 +512,8 @@ namespace engine
       _latchBucket[ index ]->get() ;
 
       // must attach in first
-      SDB_ASSERT ( _dataBucket[ index ]->isAttached(), "Must attach in first" )
+      SDB_ASSERT ( _dataBucket[ index ]->isAttached(),
+                   "Must attach in first" ) ;
 
       while ( TRUE )
       {

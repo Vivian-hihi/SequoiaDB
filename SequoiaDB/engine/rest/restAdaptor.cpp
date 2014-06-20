@@ -544,8 +544,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_CONVERTMSG );
-      SDB_ASSERT ( pSession, "pSession is NULL" )
-      SDB_ASSERT ( ppMsg, "pMsg is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
+      SDB_ASSERT ( ppMsg, "pMsg is NULL" ) ;
       INT32 pathSize = 0 ;
       INT32 tempSize = 0 ;
       INT32 extenSize = 0 ;
@@ -693,7 +693,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_RECVREQHE ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       CHAR *pBuffer = pSession->getFixBuff() ;
       INT32 bufSize = pSession->getFixBuffSize() ;
@@ -785,8 +785,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_RECVREQBO ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
-      SDB_ASSERT ( ppPath, "ppPath is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
+      SDB_ASSERT ( ppPath, "ppPath is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       CHAR *pBuffer = NULL ;
       const CHAR *pContentLength = NULL ;
@@ -875,7 +875,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_SETOPR ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       if( COM_GETFILE != pHttpCon->_common )
       {
@@ -913,7 +913,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_SENDRE ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       CHAR httpBodySize[256] = { 0 } ;
       CHAR CRLF[3] = { 0, 0, 0 } ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
@@ -1089,7 +1089,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_APPENDHEADER ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       INT32 keySize = ossStrlen( pKey ) ;
       INT32 valueSize = ossStrlen( pValue ) ;
       INT32 newHeaderSize = keySize + valueSize + 2 ;
@@ -1145,9 +1145,9 @@ namespace engine
                                  const CHAR *pKey,
                                  const CHAR **ppValue )
    {
-      SDB_ASSERT ( pHttpCon, "pSession is NULL" )
-      SDB_ASSERT ( pKey, "pKey is NULL" )
-      SDB_ASSERT ( ppValue, "ppValue is NULL" )
+      SDB_ASSERT ( pHttpCon, "pSession is NULL" ) ;
+      SDB_ASSERT ( pKey, "pKey is NULL" ) ;
+      SDB_ASSERT ( ppValue, "ppValue is NULL" ) ;
       COLNAME_MAP_IT it ;
 
       it = pHttpCon->_requestQuery.find( pKey ) ;
@@ -1167,9 +1167,9 @@ namespace engine
                                      const CHAR **ppValue )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
-      SDB_ASSERT ( pKey, "pKey is NULL" )
-      SDB_ASSERT ( ppValue, "ppValue is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
+      SDB_ASSERT ( pKey, "pKey is NULL" ) ;
+      SDB_ASSERT ( ppValue, "ppValue is NULL" ) ;
       PD_TRACE_ENTRY( SDB__RESTADP_GETHEADER ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       COLNAME_MAP_IT it ;
@@ -1195,8 +1195,8 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTADP_APPENDBODY ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
-      SDB_ASSERT ( pBuffer, "pBuffer is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
+      SDB_ASSERT ( pBuffer, "pBuffer is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       INT32 tempSize = 0 ;
       httpResponse httpRe ;
@@ -1255,7 +1255,7 @@ namespace engine
 
    HTTP_FILE_TYPE restAdaptor::getFileType( pmdRestSession *pSession )
    {
-      SDB_ASSERT ( pSession, "pSession is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       return pHttpCon->_fileType ;
    }
@@ -1268,10 +1268,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__RESTCONVERTMSG__INSERT ) ;
-      SDB_ASSERT ( ppBuffer, "ppBuffer is NULL" )
-      SDB_ASSERT ( pBufferSize, "pBufferSize is NULL" )
-      SDB_ASSERT ( pCollectionName, "pCollectionName is NULL" )
-      SDB_ASSERT ( pInsertor, "pInsertor is NULL" )
+      SDB_ASSERT ( ppBuffer, "ppBuffer is NULL" ) ;
+      SDB_ASSERT ( pBufferSize, "pBufferSize is NULL" ) ;
+      SDB_ASSERT ( pCollectionName, "pCollectionName is NULL" ) ;
+      SDB_ASSERT ( pInsertor, "pInsertor is NULL" ) ;
       SINT32 flag = 0 ;
       UINT64 reqID = 0 ;
 
@@ -1311,9 +1311,9 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__RESTCONVERTMSG__QUERY ) ;
-      SDB_ASSERT ( ppBuffer, "ppBuffer is NULL" )
-      SDB_ASSERT ( pBufferSize, "pBufferSize is NULL" )
-      SDB_ASSERT ( pCollectionName, "pCollectionName is NULL" )
+      SDB_ASSERT ( ppBuffer, "ppBuffer is NULL" ) ;
+      SDB_ASSERT ( pBufferSize, "pBufferSize is NULL" ) ;
+      SDB_ASSERT ( pCollectionName, "pCollectionName is NULL" ) ;
       SINT32 flag = 0 ;
       UINT64 reqID = 0 ;
 
@@ -1353,9 +1353,9 @@ namespace engine
                                    const CHAR **ppValue )
    {
       PD_TRACE_ENTRY( SDB__RESTADP_GETQUERY ) ;
-      SDB_ASSERT ( pSession, "pSession is NULL" )
-      SDB_ASSERT ( pKey, "pKey is NULL" )
-      SDB_ASSERT ( ppValue, "ppValue is NULL" )
+      SDB_ASSERT ( pSession, "pSession is NULL" ) ;
+      SDB_ASSERT ( pKey, "pKey is NULL" ) ;
+      SDB_ASSERT ( ppValue, "ppValue is NULL" ) ;
       httpConnection *pHttpCon = pSession->getRestConn() ;
       _getQuery( pHttpCon, pKey, ppValue ) ;
       PD_TRACE_EXIT( SDB__RESTADP_GETQUERY ) ;

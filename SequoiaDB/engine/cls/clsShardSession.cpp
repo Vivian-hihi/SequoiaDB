@@ -1642,7 +1642,7 @@ namespace engine
       rtnContextMainCL *pContextMainCL = NULL;
       BOOLEAN includeShardingOrder = FALSE;
 
-      SDB_ASSERT( pCollectionName, "collection name can't be NULL!" );
+      SDB_ASSERT( pCollectionName, "collection name can't be NULL!" ) ;
       SDB_ASSERT( cb, "educb can't be NULL!" );
       SDB_ASSERT( dmsCB, "dmsCB can't be NULL!");
       SDB_ASSERT( rtnCB, "rtnCB can't be NULL!" );

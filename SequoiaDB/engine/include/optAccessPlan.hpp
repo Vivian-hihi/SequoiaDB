@@ -167,28 +167,28 @@ namespace engine
       optScanType getScanType()
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          return _scanType ;
       }
 
       void incCount( INT32 inc = 1 )
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          _useCount.add ( inc ) ;
       }
 
       void decCount( INT32 dec = 1 )
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          _useCount.sub ( dec ) ;
       }
 
       INT32 getCount()
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          return _useCount.peek() ;
       }
 

@@ -345,7 +345,7 @@ namespace engine
       INT32 rc          = SDB_OK ;
       _dmsMME           = NULL ;
 
-      SDB_ASSERT( DMS_MME_OFFSET == curOffSet, "Offset is not MME offset" )
+      SDB_ASSERT( DMS_MME_OFFSET == curOffSet, "Offset is not MME offset" ) ;
 
       _dmsMME = SDB_OSS_NEW dmsMetadataManagementExtent ; 
       if ( !_dmsMME )
@@ -811,7 +811,7 @@ namespace engine
          {
             PD_LOG ( PDERROR, "Failed to free extent[%u], rc: %d", lastExt,
                      rc ) ;
-            SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" )
+            SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" ) ;
          }
 
          // set last to previous
@@ -831,7 +831,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to free load extent[%u], rc: %d",
                     lastExt, rc ) ;
-            SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" )
+            SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" ) ;
          }
          lastExt = prevExt ;
          context->mb()->_loadLastExtentID = lastExt ;
@@ -876,7 +876,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "Failed to free load extent[%u], rc: %d",
                     lastExt, rc ) ;
-            SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" )
+            SDB_ASSERT( SDB_OK == rc, "Free extent can't be failure" ) ;
          }
          lastExt = prevExt ;
          context->mb()->_loadLastExtentID = lastExt ;
@@ -2475,7 +2475,7 @@ namespace engine
                                       &newMatch, &newChg ) ;
                if ( SDB_OK == rc && newChg.isEmpty() )
                {
-                  SDB_ASSERT( oldChg.isEmpty(), "Old change must be empty" )
+                  SDB_ASSERT( oldChg.isEmpty(), "Old change must be empty" ) ;
                   goto done ;
                }
             }

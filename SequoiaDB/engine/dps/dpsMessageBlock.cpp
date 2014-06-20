@@ -74,7 +74,7 @@ namespace engine
          _size = mb.size() ;
          ossMemcpy( _start, mb.offset(0), mb.length() ) ;
          _length = mb.length() ;
-         SDB_ASSERT( _length <= _size, "impossible" )
+         SDB_ASSERT( _length <= _size, "impossible" ) ;
       }
    }
 
@@ -94,7 +94,7 @@ namespace engine
          _size = mb.size() ;
          ossMemcpy( _start, mb.offset(0), mb.length() ) ;
          _length = mb.length() ;
-         SDB_ASSERT( _length <= _size, "impossible" )
+         SDB_ASSERT( _length <= _size, "impossible" ) ;
       }
       return *this ;
     }
@@ -114,8 +114,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSMSGBLK_EXTEND );
       // make sure read/write pointers are greater or equao to start
-      SDB_ASSERT ( _write >= _start, "invalid write pointer position" )
-      SDB_ASSERT ( _read >= _start, "invalid read pointer position" )
+      SDB_ASSERT ( _write >= _start, "invalid write pointer position" ) ;
+      SDB_ASSERT ( _read >= _start, "invalid read pointer position" ) ;
       // get offset of write/read pointer compare to start
       ossValuePtr writeOffset = _write - _start ;
       ossValuePtr readOffset = _read - _start ;

@@ -132,7 +132,7 @@ JS_MAPPING_END()
             total += once ;
             if ( NULL != allocateBuf )
             {
-               SDB_ASSERT( total <= maxLen, "impossible" )
+               SDB_ASSERT( total <= maxLen, "impossible" ) ;
                if ( maxLen == total )
                {
                   break ;
@@ -144,7 +144,7 @@ JS_MAPPING_END()
             }
             else
             {
-               SDB_ASSERT( total <= SPT_STACK_OUTPUT, "impossible" )
+               SDB_ASSERT( total <= SPT_STACK_OUTPUT, "impossible" ) ;
                if ( SPT_STACK_OUTPUT == total )
                {
                   allocateBuf = ( CHAR *)SDB_OSS_MALLOC( maxLen + 1 ) ;

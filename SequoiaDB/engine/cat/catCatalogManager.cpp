@@ -2558,7 +2558,7 @@ namespace engine
          }
       }
 
-      SDB_ASSERT( CAT_INVALID_GROUPID != groupID, "can not be invalid" )
+      SDB_ASSERT( CAT_INVALID_GROUPID != groupID, "can not be invalid" ) ;
    done:
       PD_TRACE_EXITRC( SDB_CATALOGMGR__CHOOSEFGROUPOFCL, rc ) ;
       return rc ;
@@ -2664,7 +2664,7 @@ namespace engine
       BSONElement eleName = clObj.getField( CAT_CATALOGNAME_NAME ) ;
       if ( String != eleName.type() )
       {
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
          PD_LOG( PDERROR, "invalid collection record:%s",
                  clObj.toString().c_str() ) ;
          rc = SDB_SYS ;
@@ -2686,11 +2686,11 @@ namespace engine
       if ( NULL == srcGroupName )
       {
          /// TODO: get src and dst id from meta data.
-         SDB_ASSERT( FALSE, "impossible" )
+         SDB_ASSERT( FALSE, "impossible" ) ;
       }
       else
       {
-         SDB_ASSERT( NULL != range, "can not be NULL" )
+         SDB_ASSERT( NULL != range, "can not be NULL" ) ;
          srcGroup = srcGroupName ;
          dstGroups = range ;
       }
@@ -2770,7 +2770,7 @@ namespace engine
                                                UINT32 end )
    {
       SDB_ASSERT( NULL != fullName && NULL != src && NULL != dst,
-                  "can not be NULL" )
+                  "can not be NULL" ) ;
       BSONObj obj = BSON ( CAT_COLLECTION_NAME << fullName <<
                            CAT_SOURCE_NAME << src <<
                            CAT_TARGET_NAME << dst <<

@@ -79,8 +79,9 @@ namespace engine
                                        const CHAR *msg )
    {
       SDB_ASSERT ( _pEduMgr && _pKrcb && _pCatCB && _pDmsCB && _pDpsCB,
-                   "all of the members must be initialized before init netfram" )
-      SDB_ASSERT ( NULL != header, "message-header should not be NULL")
+                   "all of the members must be initialized before init "
+                   "netfram" ) ;
+      SDB_ASSERT ( NULL != header, "message-header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
 
       PD_TRACE_ENTRY ( SDB_CATMAINCT_HANDLEMSG ) ;

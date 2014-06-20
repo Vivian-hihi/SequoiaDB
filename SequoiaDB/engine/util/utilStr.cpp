@@ -171,7 +171,7 @@ namespace engine
                       CHAR *join,
                       UINT32 &joinSize )
    {
-      SDB_ASSERT( NULL != join, "impossible" )
+      SDB_ASSERT( NULL != join, "impossible" ) ;
       INT32 rc = SDB_OK ;
       UINT32 len = 0 ;
       for ( UINT32 i = 0; i < cnt; i++ )

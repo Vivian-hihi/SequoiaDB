@@ -963,7 +963,7 @@ namespace engine
       {
          goto error ;
       }
-      SDB_ASSERT ( item, "item can't be NULL" )
+      SDB_ASSERT ( item, "item can't be NULL" ) ;
       result = item->getGroupID() == groupID ;
    done :
       PD_TRACE_EXITRC ( SDB__CLSCTSET_ISKEYINGP, rc ) ;
@@ -1052,7 +1052,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSCTSET_SPLIT ) ;
-      SDB_ASSERT ( _isWholeRange, "split must be done on whole range" )
+      SDB_ASSERT ( _isWholeRange, "split must be done on whole range" ) ;
       clsCatalogItem *item = NULL ;
       clsCatalogItem *itemEnd = NULL ;
       clsCataItemKey *findKey = NULL ;
@@ -1137,7 +1137,7 @@ namespace engine
             item = it->second ;
          }
          // make sure item is not NULL
-         SDB_ASSERT ( item, "last item should never be NULL in split" )
+         SDB_ASSERT ( item, "last item should never be NULL in split" ) ;
          // if the target and destination groups are the same, we don't need to
          // split at all, but why it happen?
          if ( item->getGroupID() == groupID )
@@ -1349,7 +1349,7 @@ namespace engine
    void _clsCatalogSet::_deduplicate ()
    {
       PD_TRACE_ENTRY ( SDB__CLSCTSET__DEDUP ) ;
-      SDB_ASSERT ( _mapItems.size() >= 1, "_mapItems can't be NULL" )
+      SDB_ASSERT ( _mapItems.size() >= 1, "_mapItems can't be NULL" ) ;
       MAP_CAT_ITEM_IT it     = _mapItems.begin() ;
       MAP_CAT_ITEM_IT itPrev = it ;
       ++it ;
@@ -1387,7 +1387,7 @@ namespace engine
       {
          // non-sharded collection case, only need to provid groupid
          SDB_ASSERT ( _mapItems.size() == 1,
-                      "map item size must be 1 for non-sharded collection" )
+                      "map item size must be 1 for non-sharded collection" ) ;
          try
          {
             // since there's always only one element in non-sharded collection,
@@ -1746,11 +1746,11 @@ namespace engine
       }
       else if ( isHashSharding() )
       {
-         SDB_ASSERT( !obj.isEmpty(), "impossible" )
+         SDB_ASSERT( !obj.isEmpty(), "impossible" ) ;
          if ( !obj.isEmpty() )
          {
             BSONElement ele = obj.firstElement() ;
-            SDB_ASSERT( ele.isNumber(), "impossible" )
+            SDB_ASSERT( ele.isNumber(), "impossible" ) ;
             if ( !ele.eoo() && ele.isNumber() )
             {
                if ( ele.Number() < _partition )
@@ -2653,7 +2653,7 @@ namespace engine
    {
       UINT32 index = 0 ;
       PD_TRACE_ENTRY ( SDB__CLSGPIM_UPPRRIMARY ) ;
-      SDB_ASSERT ( nodeID.columns.groupID == _groupID, "group id not same" )
+      SDB_ASSERT ( nodeID.columns.groupID == _groupID, "group id not same" ) ;
 
       // if cancel primary and the pimary is invalid or not the same with
       // nodeID, do nothing

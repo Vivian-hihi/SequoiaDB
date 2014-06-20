@@ -722,8 +722,8 @@ namespace engine
       {
          return SDB_OK ;
       }
-      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" )
-      SDB_ASSERT( recordID, "recordID can't be NULL" )
+      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
+      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.tryOrAppendX( eduCB, lockId );
    }
@@ -736,8 +736,8 @@ namespace engine
       {
          return SDB_OK ;
       }
-      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" )
-      SDB_ASSERT( recordID, "recordID can't be NULL" )
+      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
+      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.wait( eduCB, lockId );
    }
@@ -749,8 +749,8 @@ namespace engine
       {
          return FALSE ;
       }
-      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" )
-      SDB_ASSERT( recordID, "recordID can't be NULL" )
+      SDB_ASSERT( collectionID!=DMS_INVALID_MBID, "invalid collectionID" ) ;
+      SDB_ASSERT( recordID, "recordID can't be NULL" ) ;
       dpsTransLockId lockId( logicCSID, collectionID, recordID );
       return _TransLock.hasWait( lockId );
    }

@@ -80,7 +80,7 @@ namespace engine
    INT32 _sqlCB::exec( const CHAR *sql, _pmdEDUCB *cb,
                        SINT64 &contextID )
    {
-      SDB_ASSERT( NULL != sql, "impossible" )
+      SDB_ASSERT( NULL != sql, "impossible" ) ;
       INT32 rc = SDB_OK ;
       qgmPlanContainer *container = NULL ;
       qgmOptiTreeNode *opti = NULL ;
@@ -156,7 +156,7 @@ namespace engine
       }
 
       SDB_ASSERT( QGM_PLAN_TYPE_MAX != container->type(),
-                  "impossible" )
+                  "impossible" ) ;
 
       /// step 6: execute.
       rc = container->execute( cb ) ;

@@ -94,7 +94,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPS_INSERT2RECORD ) ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_DATA_INSERT ;
 
@@ -136,7 +136,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB_DPS_INSERT2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -186,7 +186,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPS_UPDATE2RECORD ) ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_DATA_UPDATE ;
 
@@ -260,7 +260,7 @@ namespace engine
                            BSONObj &newObj )
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2UPDATE ) ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       INT32 rc = SDB_OK ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
@@ -337,7 +337,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY( SDB__DPS_DELETE2RECORD ) ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_DATA_DELETE ;
       rc = record.push( DPS_LOG_PULIBC_FULLNAME,
@@ -380,7 +380,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2DELETE ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -424,7 +424,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_CSCRT2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != csName, "Collectionspace name can't be NULL" )
+      SDB_ASSERT( NULL != csName, "Collectionspace name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CS_CRT ;
 
@@ -461,7 +461,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CSCRT ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -504,7 +504,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_CSDEL2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != csName, "Collectionspace name can't be NULL" )
+      SDB_ASSERT( NULL != csName, "Collectionspace name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CS_DELETE ;
 
@@ -531,7 +531,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CSDEL ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -566,7 +566,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_CLCRT2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_CRT ;
 
@@ -606,7 +606,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLCRT ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       attribute = 0 ;
       rc = record.load( logRecord ) ;
@@ -647,7 +647,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_CLDEL2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_DELETE;
 
@@ -674,7 +674,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLDEL ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -709,7 +709,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_IXCRT2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_IX_CRT ;
       rc = record.push( DPS_LOG_PULIBC_FULLNAME,
@@ -745,7 +745,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXCRT ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -789,7 +789,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_IXDEL2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_IX_DELETE ;
 
@@ -826,7 +826,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2IXDEL ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -874,7 +874,7 @@ namespace engine
       SDB_ASSERT( NULL != csName &&
                   NULL != clOldName &&
                   NULL != clNewName, "csName and clOldName and clNewName "
-                  "cat't be NULL" )
+                  "cat't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_RENAME ;
 
@@ -921,7 +921,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLRENAME ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -973,7 +973,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_CLTRUNC2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != fullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_CL_TRUNC ;
 
@@ -999,7 +999,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2CLTRUNC ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -1033,7 +1033,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2TRANSCOMMIT ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )
@@ -1112,7 +1112,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_TRANSROLLBACK2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != csName && NULL != clName, "impossible" )
+      SDB_ASSERT( NULL != csName && NULL != clName, "impossible" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_TS_ROLLBACK ;
 
@@ -1140,7 +1140,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_INVALIDCATA2RECORD ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != clFullName, "Collection name can't be NULL" )
+      SDB_ASSERT( NULL != clFullName, "Collection name can't be NULL" ) ;
       dpsLogRecordHeader &header = record.head() ;
       header._type = LOG_TYPE_INVALIDATE_CATA ;
 
@@ -1168,7 +1168,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPS_RECORD2INVALIDCATA ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" )
+      SDB_ASSERT( NULL != logRecord, "Record can't be NULL" ) ;
       dpsLogRecord record ;
       rc = record.load( logRecord ) ;
       if ( SDB_OK != rc )

@@ -47,10 +47,10 @@ namespace engine
                                      CHAR *outBuf, UINT32 outSize,
                                      UINT32 options )
    {
-      SDB_ASSERT ( inBuf, "inbuf can't be NULL" )
-      SDB_ASSERT ( outBuf, "outbuf can't be NULL" )
+      SDB_ASSERT ( inBuf, "inbuf can't be NULL" ) ;
+      SDB_ASSERT ( outBuf, "outbuf can't be NULL" ) ;
       SDB_ASSERT ( DPS_LOG_HEAD_LEN == inSize,
-                   "insize must be DPS_LOG_HEAD_LEN" )
+                   "insize must be DPS_LOG_HEAD_LEN" ) ;
 
       UINT32 len           = 0 ;
       UINT32 hexDumpOption = 0 ;

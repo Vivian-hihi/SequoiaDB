@@ -169,11 +169,11 @@ namespace engine
                                 BOOLEAN extendSize )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != buf && 0 != size, "impossible" )
+      SDB_ASSERT( NULL != buf && 0 != size, "impossible" ) ;
       SINT64 needToW = size ;
       UINT64 written = 0 ;
       SINT64 writeOnce = 0 ;
-      SDB_ASSERT( 0 < needToW, "impossible" )
+      SDB_ASSERT( 0 < needToW, "impossible" ) ;
 
       while ( 0 < needToW )
       {
@@ -191,7 +191,7 @@ namespace engine
          written += writeOnce ;
       }
 
-      SDB_ASSERT( size == written, "impossible" )
+      SDB_ASSERT( size == written, "impossible" ) ;
       if ( extendSize )
       {
          _totalSize += size ;
@@ -207,8 +207,8 @@ namespace engine
                                    dmsTmpBlk &blk )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( offset  + size <= _totalSize, "impossible" )
-      SDB_ASSERT( 0 != size, "impossible" )
+      SDB_ASSERT( offset  + size <= _totalSize, "impossible" ) ;
+      SDB_ASSERT( 0 != size, "impossible" ) ;
       blk.reset() ;
 
       if ( _totalSize < offset + size )
@@ -233,11 +233,11 @@ namespace engine
    INT32 _dmsTmpBlkUnit::read( dmsTmpBlk &blk, UINT64 size,
                                void *buf, UINT64 &got )
    {
-      SDB_ASSERT( NULL != buf && 0 != size, "impossible" )
+      SDB_ASSERT( NULL != buf && 0 != size, "impossible" ) ;
       INT32 rc = SDB_OK ;
       INT64 toRead = blk._size - blk._read < size ?
                      blk._size - blk._read : size ;
-      SDB_ASSERT( 0 <= toRead, "impossible" )
+      SDB_ASSERT( 0 <= toRead, "impossible" ) ;
       UINT64 hasRead = 0 ;
       INT64 readOnce = 0 ;
 

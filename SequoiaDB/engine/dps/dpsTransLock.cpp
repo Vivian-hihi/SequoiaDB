@@ -48,7 +48,7 @@ namespace engine
    INT32 dpsTransLock::acquireX( _pmdEDUCB *eduCB,
                                  const dpsTransLockId &lockId )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
       dpsTransLockId iLockId;
@@ -542,7 +542,7 @@ namespace engine
    //PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TESTS, "dpsTransLock::testS" )
    INT32 dpsTransLock::testS( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
       dpsTransLockId iLockId;
@@ -684,7 +684,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB_DPSTRANSLOCK_TESTX, "dpsTransLock::testX" )
    INT32 dpsTransLock::testX( _pmdEDUCB *eduCB, const dpsTransLockId &lockId )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
       dpsLockBucket *pLockBucket = NULL;
       dpsTransLockId iLockId;

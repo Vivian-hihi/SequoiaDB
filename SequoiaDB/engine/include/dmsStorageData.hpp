@@ -358,7 +358,7 @@ namespace engine
       _dmsMetadataManagementExtent ()
       {
          SDB_ASSERT( DMS_MME_SZ == sizeof( _dmsMetadataManagementExtent ),
-                     "MME size error" )
+                     "MME size error" ) ;
          ossMemset( this, 0, sizeof( _dmsMetadataManagementExtent ) ) ;
       }
    } ;

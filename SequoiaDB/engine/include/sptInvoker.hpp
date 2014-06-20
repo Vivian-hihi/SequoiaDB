@@ -63,7 +63,7 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
          SDB_ASSERT( NULL != cx && NULL != vp, "can not be NULL" ) ;
-         SDB_ASSERT( NULL != f, "can not be NULL" )
+         SDB_ASSERT( NULL != f, "can not be NULL" ) ;
 
          jsval jsRval = JSVAL_VOID ;
          _sptSPArguments arg( cx, argc, vp ) ;

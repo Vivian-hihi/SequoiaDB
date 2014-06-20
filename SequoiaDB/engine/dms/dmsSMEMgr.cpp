@@ -135,7 +135,7 @@ namespace engine
             {
                _resetMax () ;
             }
-            SDB_ASSERT ( _maxNode != _totalSize, "Internal logic error" )
+            SDB_ASSERT ( _maxNode != _totalSize, "Internal logic error" ) ;
             rc = SDB_OK ;
 
             // Set SME bit to DMS_SME_ALLOCATED
@@ -145,7 +145,7 @@ namespace engine
                for ( ; bitStart < bitEnd ; bitStart++ )
                {
                   SDB_ASSERT( DMS_SME_FREE == _pSMEMgr->_pSME->getBitMask( bitStart ),
-                              "SME corrupted, bit must be free" )
+                              "SME corrupted, bit must be free" ) ;
                   _pSMEMgr->_pSME->setBitMask( bitStart ) ;
                }
                _pSMEMgr->_totalFree -= numPages ;
@@ -156,7 +156,7 @@ namespace engine
 
       // should never hit here
       PD_LOG ( PDSEVERE, "Internal logic error" ) ;
-      SDB_ASSERT ( FALSE, "Internal logic error" )
+      SDB_ASSERT ( FALSE, "Internal logic error" ) ;
       rc = SDB_SYS ;
 
    done :
@@ -347,7 +347,7 @@ namespace engine
             for ( ; bitStart < bitEnd ; bitStart++ )
             {
                SDB_ASSERT( DMS_SME_ALLOCATED == _pSMEMgr->_pSME->getBitMask( bitStart ),
-                           "SME corrupted, bit must be allocated" )
+                           "SME corrupted, bit must be allocated" ) ;
                _pSMEMgr->_pSME->freeBitMask( bitStart ) ;
             }
             _pSMEMgr->_totalFree += numPages ;
@@ -517,7 +517,7 @@ namespace engine
 
       ossScopedRWLock lock( &_mutex, SHARED ) ;
 
-      SDB_ASSERT ( segmentID < maxSegments, "extent is out of range" )
+      SDB_ASSERT ( segmentID < maxSegments, "extent is out of range" ) ;
       if ( segmentID >= (UINT32)_segments.size() )
       {
          PD_LOG ( PDERROR, "Extent id %d is out of range", start ) ;
@@ -557,7 +557,7 @@ namespace engine
 
       ossScopedRWLock lock( &_mutex, EXCLUSIVE ) ;
 
-      SDB_ASSERT ( segmentID < maxSegments, "extent is out of range" )
+      SDB_ASSERT ( segmentID < maxSegments, "extent is out of range" ) ;
       if ( segmentID != (UINT32)_segments.size() )
       {
          PD_LOG ( PDERROR, "Extent id %d is not valid", start ) ;
@@ -611,7 +611,7 @@ namespace engine
          totalFree += ( UINT32 )( pSpace->totalFree() ) ;
       }
 
-      SDB_ASSERT( _totalFree == totalFree, "Total free space error" ) */
+      SDB_ASSERT( _totalFree == totalFree, "Total free space error" ) ; */
 #endif // _DEBUG
       return _totalFree ;
    }

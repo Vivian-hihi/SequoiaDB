@@ -148,7 +148,7 @@ namespace engine
       }
 
       ossValuePtr extentPtr = _pSu->extentAddr( _curRID._extent ) ;
-      SDB_ASSERT( extentPtr, "extent id is invalid" )
+      SDB_ASSERT( extentPtr, "extent id is invalid" ) ;
       _extent = (dmsExtent*)extentPtr ;
       if ( NULL == _extent )
       {
@@ -1071,7 +1071,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( ppExtent, "Extent can't be NULL" )
+      SDB_ASSERT( ppExtent, "Extent can't be NULL" ) ;
       *ppExtent = NULL ;
 
       if ( _extentCount >= DMS_EXTENT_ITR_EXT_PERCOUNT )

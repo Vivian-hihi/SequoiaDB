@@ -247,7 +247,7 @@ JS_MAPPING_END()
                            bson::BSONObj &detail )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != _session, "can not be null" )
+      SDB_ASSERT( NULL != _session, "can not be null" ) ;
       INT32 exit = 0 ;
       string cmd ;
       string errMsg ;

@@ -115,9 +115,9 @@ namespace engine
       INT32 rc = SDB_OK ;
       SDB_ASSERT( NumberDouble == type ||
                   Bool == type ||
-                  NumberInt == type, "invalid value type" )
-      SDB_ASSERT( NULL != value, "can not be NULL" )
-      SDB_ASSERT( EOO == _type, "can not be reassigned" )
+                  NumberInt == type, "invalid value type" ) ;
+      SDB_ASSERT( NULL != value, "can not be NULL" ) ;
+      SDB_ASSERT( EOO == _type, "can not be reassigned" ) ;
 
       _value = 0 ;
 
@@ -146,8 +146,8 @@ namespace engine
                                      const CHAR *value )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != name && NULL != value, "can not be null" )
-      SDB_ASSERT( EOO == _type, "can not be reassigned" )
+      SDB_ASSERT( NULL != name && NULL != value, "can not be null" ) ;
+      SDB_ASSERT( EOO == _type, "can not be reassigned" ) ;
 
       _value = 0 ;
       UINT32 size = ossStrlen( value ) ;
@@ -198,8 +198,8 @@ namespace engine
                                         void *value )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != name, "can no be null" )
-      SDB_ASSERT( EOO == _type, "can not be reassigned" )
+      SDB_ASSERT( NULL != name, "can no be null" ) ;
+      SDB_ASSERT( EOO == _type, "can not be reassigned" ) ;
 
       _value = 0 ;
       _name.assign(name);
@@ -211,10 +211,10 @@ namespace engine
    INT32 _sptProperty::getNative( bson::BSONType type,
                                   void *value ) const
    {
-      SDB_ASSERT( NULL != value, "can not be null" )
+      SDB_ASSERT( NULL != value, "can not be null" ) ;
       SDB_ASSERT( NumberDouble == type ||
                   Bool == type ||
-                  NumberInt == type, "invalid value type" )
+                  NumberInt == type, "invalid value type" ) ;
 
       if ( NumberDouble == type )
       {
@@ -237,7 +237,7 @@ namespace engine
 
    const CHAR *_sptProperty::getString() const
    {
-      SDB_ASSERT( String == _type, "type must be string" )
+      SDB_ASSERT( String == _type, "type must be string" ) ;
       return ( CHAR * )_value ;
    }
 }

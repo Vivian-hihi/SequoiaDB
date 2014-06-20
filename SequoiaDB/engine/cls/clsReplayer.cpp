@@ -195,7 +195,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREP_REPLAY );
-      SDB_ASSERT( NULL != recordHeader, "head should not be NULL" )
+      SDB_ASSERT( NULL != recordHeader, "head should not be NULL" ) ;
 
       try
       {
@@ -509,7 +509,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREP_ROLBCK );
-      SDB_ASSERT( NULL != recordHeader, "head should not be NULL" )
+      SDB_ASSERT( NULL != recordHeader, "head should not be NULL" ) ;
 
       try
       {
@@ -732,7 +732,7 @@ namespace engine
    INT32 _clsReplayer::replayCrtCS( const CHAR *cs, INT32 pageSize,
                                     _pmdEDUCB *eduCB, BOOLEAN delWhenExist )
    {
-      SDB_ASSERT( NULL != cs, "cs should not be NULL" )
+      SDB_ASSERT( NULL != cs, "cs should not be NULL" ) ;
       return rtnCreateCollectionSpaceCommand( cs, eduCB, _dmsCB,
                                               _dpsCB, pageSize, TRUE,
                                               delWhenExist ) ;
@@ -742,7 +742,7 @@ namespace engine
                                             UINT32 attributes,
                                             _pmdEDUCB *eduCB )
    {
-      SDB_ASSERT( NULL != collection, "collection should not be NULL" )
+      SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       return rtnCreateCollectionCommand( collection, attributes, eduCB,
                                          _dmsCB, _dpsCB, 0, TRUE ) ;
    }
@@ -751,7 +751,7 @@ namespace engine
                                     BSONObj &index,
                                     _pmdEDUCB *eduCB )
    {
-      SDB_ASSERT( NULL != collection, "collection should not be NULL" )
+      SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       return rtnCreateIndexCommand( collection, index, eduCB,
                                     _dmsCB, _dpsCB, TRUE ) ;
    }
@@ -760,7 +760,7 @@ namespace engine
                                      BSONObj &obj,
                                      _pmdEDUCB *eduCB )
    {
-      SDB_ASSERT( NULL != collection, "collection should not be NULL" )
+      SDB_ASSERT( NULL != collection, "collection should not be NULL" ) ;
       return rtnInsert( collection, obj, 1, FLG_INSERT_CONTONDUP, eduCB,
                         _dmsCB, _dpsCB ) ;
    }

@@ -78,7 +78,7 @@ namespace engine
          }
          SDB_ASSERT( -1 == beginSub &&
                      0 == pageNum &&
-                     0 == totalLen, "impossible" )
+                     0 == totalLen, "impossible" ) ;
       }
    } ;
    typedef struct _dpsPageMeta dpsPageMeta ;

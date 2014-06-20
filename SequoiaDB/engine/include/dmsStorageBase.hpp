@@ -129,17 +129,17 @@ namespace engine
       }
       CHAR getBitMask( UINT32 bitNum ) const
       {
-         SDB_ASSERT( bitNum < DMS_MAX_PG, "Invalid bitNum" )
+         SDB_ASSERT( bitNum < DMS_MAX_PG, "Invalid bitNum" ) ;
          return (_smeMask[bitNum >> 3] >> (7 - (bitNum & 7))) & 1 ;
       }
       void freeBitMask( UINT32 bitNum )
       {
-         SDB_ASSERT( bitNum < DMS_MAX_PG, "Invalid bitNum" )
+         SDB_ASSERT( bitNum < DMS_MAX_PG, "Invalid bitNum" ) ;
          _smeMask[bitNum >> 3] &= ~( 1 << (7 - (bitNum & 7))) ;
       }
       void setBitMask( UINT32 bitNum )
       {
-         SDB_ASSERT( bitNum < DMS_MAX_PG, "Invalid bitNum" )
+         SDB_ASSERT( bitNum < DMS_MAX_PG, "Invalid bitNum" ) ;
          _smeMask[bitNum >> 3] |= ( 1 << (7 - (bitNum & 7))) ;
       }
    } ;
@@ -421,7 +421,7 @@ namespace engine
       UINT32 segID = extent2Segment( extentID, NULL ) - _dataSegID ;
       SDB_ASSERT ( segID < DMS_MAX_SEGMENT_NUM ( pageSize() ),
                    "calculated segment id cannot be greater than max "
-                   "number of segments in the storage unit" )
+                   "number of segments in the storage unit" ) ;
       // _dirtyList [ segID / 8 ] |= ( 1 << ( segID % 8 ) )
       _dirtyList [ segID >> 3 ] |= ( 1 << ( segID & 7 ) ) ;
    }

@@ -137,7 +137,7 @@ namespace engine
                                              const CHAR *pCLName )
    {
       INT32 rc = SDB_OK;
-      SDB_ASSERT( pTable != NULL , "_qgmPtrTable can't be NULL!")
+      SDB_ASSERT( pTable != NULL , "_qgmPtrTable can't be NULL!") ;
       if ( beId.isNull() )
       {
          goto done;

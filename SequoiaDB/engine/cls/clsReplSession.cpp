@@ -259,7 +259,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSYNCREQ );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       MsgReplSyncReq *msg = ( MsgReplSyncReq * )header ;
 
       if ( DPS_INVALID_LSN_OFFSET != msg->completeNext.offset )
@@ -286,7 +286,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDSYNCRES, "_clsReplSession::handleSyncRes" )
    INT32 _clsReplSession::handleSyncRes( NET_HANDLE handle, MsgHeader* header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSYNCRES );
 
@@ -429,7 +429,7 @@ namespace engine
    INT32 _clsReplSession::handleVirSyncReq( NET_HANDLE handle,
                                             MsgHeader* header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDVIRSYNCREQ );
       MsgReplVirSyncReq *msg = ( MsgReplVirSyncReq * )header ;
@@ -441,7 +441,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSN_HNDNTF, "_clsReplSession::handleNotify" )
    INT32 _clsReplSession::handleNotify( NET_HANDLE handle, MsgHeader* header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDNTF );
       if ( CLS_SESSION_STATUS_SYNC != _status )
       {
@@ -461,7 +461,7 @@ namespace engine
                                             MsgHeader* header )
    {
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDCSTREQ );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       _MsgReplConsultation *msg = ( _MsgReplConsultation * )header ;
       _MsgReplConsultationRes res ;
       res.header.header.TID = msg->header.TID ;
@@ -575,7 +575,7 @@ namespace engine
    INT32 _clsReplSession::handleConsultRes( NET_HANDLE handle,
                                             MsgHeader *header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSN_HNDSSTRES );
 
@@ -675,7 +675,8 @@ namespace engine
             {
                _mb.clear() ;
                rc = _logger->search( rollback, &_mb ) ;
-               SDB_ASSERT( SDB_OK == rc, "search should always be successful" )
+               SDB_ASSERT( SDB_OK == rc,
+                           "search should always be successful" ) ;
                if ( SDB_OK != rc )
                {
                   PD_LOG( PDERROR, "Sync Session[%s]: Search lsn[%lld, %d] "
@@ -764,7 +765,7 @@ namespace engine
       }
 
       SDB_ASSERT( 0 < sdbGetReplCB()->groupSize(),
-                  "impossible" )
+                  "impossible" ) ;
 
       // if the group size is 1, then rebuild, otherwise full sync
       if ( 1 >=  pClsCB->getReplCB()->groupSize() || pmdIsPrimary() )
@@ -1010,7 +1011,7 @@ namespace engine
          }
 #endif
          rc = _replay( recordHeader ) ;
-         SDB_ASSERT( SDB_OK == rc, "must be ok" )
+         SDB_ASSERT( SDB_OK == rc, "must be ok" ) ;
          if ( SDB_OK != rc )
          {
             PD_LOG( PDERROR, "Sync Session[%s]: Failed to replay log, rc: %d",

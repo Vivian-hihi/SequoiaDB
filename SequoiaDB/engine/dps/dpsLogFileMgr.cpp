@@ -94,7 +94,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSLGFILEMGR_INIT );
-      SDB_ASSERT( path, "path can not be NULL!")
+      SDB_ASSERT( path, "path can not be NULL!") ;
       CHAR LOG_BUILDER[OSS_MAX_PATHSIZE+1] = {0} ;
       // temp buffer stores log file sequence up to 0xFFFFFFFF, which is
       // 4294967295 ( 10 bytes )
@@ -261,7 +261,7 @@ namespace engine
       // DPS_DEFAULT_PAGE_SIZE, except during tearDown phase
       SDB_ASSERT ( shutdown || mb->length() == DPS_DEFAULT_PAGE_SIZE,
                    "mb length must be DPS_DEFAULT_PAGE_SIZE unless it's "
-                   "shutdown" )
+                   "shutdown" ) ;
       // since we always write every dps page, so we shouldn't write out of
       // bound, so we will hit idleSize = 0 when log file is filled up
       if ( WORK_FILE->getIdleSize() == 0 )
@@ -300,7 +300,7 @@ namespace engine
    {
       INT32 rc      = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__DPSLGFILEMGR_LOAD );
-      SDB_ASSERT ( mb, "mb can't be NULL" )
+      SDB_ASSERT ( mb, "mb can't be NULL" ) ;
       UINT32 sub    = ( UINT32 )( lsn.offset / _logFileSz  % _files.size() ) ;
       dpsLogRecordHeader head ;
       UINT32 len = 0 ;

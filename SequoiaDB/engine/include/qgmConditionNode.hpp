@@ -64,7 +64,7 @@ namespace engine
 
       _qgmConditionNode( const _qgmConditionNode *node )
       {
-         SDB_ASSERT( NULL != node, "impossible" )
+         SDB_ASSERT( NULL != node, "impossible" ) ;
          type = node->type ;
          value = node->value ;
          var = node->var ;

@@ -239,7 +239,7 @@ namespace engine
       {
          _stateMtx.get();
          --_writeCounter;
-         SDB_ASSERT( 0 <= _writeCounter, "write counter should not < 0" )
+         SDB_ASSERT( 0 <= _writeCounter, "write counter should not < 0" ) ;
          _stateMtx.release();
       }
 

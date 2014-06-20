@@ -875,11 +875,11 @@ namespace engine
          goto done ;
       SDB_ASSERT ( _dataSegID && _dirtyList,
                    "starting data segment can't be 0, and "
-                   "dirty list can't be NULL" )
+                   "dirty list can't be NULL" ) ;
       SDB_ASSERT ( (UINT32)_maxSegID <=
                    DMS_MAX_SEGMENT_NUM ( pageSize() ) + _dataSegID,
                    "current top segment id can't be greater than "
-                   "maximum number of segment for storage unit" )
+                   "maximum number of segment for storage unit" ) ;
       // calculate how many "segment groups" we should go through
       // note each group is consists of 8 segments
       maxSegmentID = ceil (( _maxSegID + 1 - _dataSegID ) / 8.0f ) ;

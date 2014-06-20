@@ -230,10 +230,10 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_SYNC ) ;
       SDB_ASSERT( w <= CLS_REPLSET_MAX_NODE_SIZE &&
                   CLS_REPLSE_WRITE_ONE <= w,
-                 "1 <= sync num <= CLS_REPLSET_MAX_NODE_SIZE" )
-      SDB_ASSERT( NULL != session.eduCB, "educb should not be NULL" )
+                 "1 <= sync num <= CLS_REPLSET_MAX_NODE_SIZE" ) ;
+      SDB_ASSERT( NULL != session.eduCB, "educb should not be NULL" ) ;
       SDB_ASSERT( DPS_INVALID_LSN_OFFSET != session.endLsn,
-                  "end lsn should not be valid" )
+                  "end lsn should not be valid" ) ;
       INT32 rc = SDB_OK ;
       UINT32 sub = 0;
       BOOLEAN needWait = TRUE ;
@@ -320,14 +320,14 @@ namespace engine
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_NOTIFY ) ;
       SDB_ASSERT( DPS_INVALID_LSN_OFFSET != offset,
-                  "offset should not be invalid" )
+                  "offset should not be invalid" ) ;
       _MsgSyncNotify msg ;
       msg.header.TID = CLS_TID_REPL_SYC ;
       for ( UINT32 i = 0; i < _validSync; i++ )
       {
          if ( 0 == _notifyList[i].id.value )
          {
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
          }
          /// compare the offset of lsn.
          /// the node which request the latest lsn
@@ -466,7 +466,7 @@ namespace engine
    void _clsSyncManager::cut( UINT32 alives )
    {
       PD_TRACE_ENTRY ( SDB__CLSSYNCMAG_CUT ) ;
-      SDB_ASSERT( alives <= _validSync, "impossible" )
+      SDB_ASSERT( alives <= _validSync, "impossible" ) ;
       if ( _validSync < alives )
       {
          PD_LOG( PDWARNING, "sync: alives is bigger than valid sync."
@@ -602,7 +602,7 @@ namespace engine
          }
       }
 
-      SDB_ASSERT( plan.size() == _validSync, "impossible")
+      SDB_ASSERT( plan.size() == _validSync, "impossible") ;
       PD_TRACE_EXIT ( SDB__CLSSYNCMAG__CTWAKEPLAN ) ;
       return ;
    }

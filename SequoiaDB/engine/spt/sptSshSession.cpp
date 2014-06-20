@@ -43,7 +43,7 @@ namespace engine
    :_sock( NULL )
    {
       SDB_ASSERT( NULL != host && NULL != usrname && NULL != passwd,
-                  "can not be null" )
+                  "can not be null" ) ;
       _host.assign( host ) ;
       _usr.assign( usrname ) ;
       _passwd.assign( passwd ) ;

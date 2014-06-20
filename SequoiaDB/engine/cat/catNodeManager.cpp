@@ -1326,7 +1326,7 @@ namespace engine
    INT32 catNodeManager::parseLine( const CHAR *pLine, BSONObj &obj )
    {
       INT32 rc = SDB_OK;
-      SDB_ASSERT ( pLine, "line can't be NULL" )
+      SDB_ASSERT ( pLine, "line can't be NULL" ) ;
       const CHAR *pBegin = pLine;
       PD_TRACE_ENTRY ( SDB_CATNODEMGR_PARSELINE ) ;
       while ( '\0' != *pBegin )
@@ -1887,9 +1887,9 @@ namespace engine
       }
 
       {
-         SDB_ASSERT( NULL != buffObj.data(), "impossible" )
+         SDB_ASSERT( NULL != buffObj.data(), "impossible" ) ;
          BSONObj res( buffObj.data() ) ;
-         SDB_ASSERT( !res.isEmpty(), "impossible" )
+         SDB_ASSERT( !res.isEmpty(), "impossible" ) ;
          BSONElement ele = res.firstElement() ;
          if ( ele.eoo() || !ele.isNumber() )
          {

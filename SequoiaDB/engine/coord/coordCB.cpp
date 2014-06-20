@@ -61,7 +61,7 @@ namespace engine
       PD_RC_CHECK( rc, PDERROR,
                   "failed to get match groups(rc=%d)",
                   rc );
-      SDB_ASSERT( vecGroup.size() != 0, "no match groups!" )
+      SDB_ASSERT( vecGroup.size() != 0, "no match groups!" ) ;
       PD_CHECK( vecGroup.size() != 0, SDB_CAT_NO_MATCH_CATALOG, error,
                PDERROR, "couldn't find match group" );
       for ( i = 0; i < vecGroup.size(); i++ )

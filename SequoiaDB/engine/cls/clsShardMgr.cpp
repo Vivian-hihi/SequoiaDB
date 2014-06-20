@@ -1228,7 +1228,7 @@ namespace engine
          }
 
          SDB_ASSERT ( numReturned == 1 && objList.size() == 1,
-                      "Collection catalog item num must be 1" )
+                      "Collection catalog item num must be 1" ) ;
 
          _pCatAgent->lock_w () ;
          rc = _pCatAgent->updateCatalog ( 0, groupID, objList[0].objdata(),
@@ -1258,7 +1258,7 @@ namespace engine
                                                    BOOLEAN bCreate )
    {
       PD_TRACE_ENTRY ( SDB__CLSSHDMGR__FNDCATSYNCEV );
-      SDB_ASSERT ( pCollectionName , "Collection name can't be NULL" )
+      SDB_ASSERT ( pCollectionName , "Collection name can't be NULL" ) ;
 
       clsEventItem *pEventInfo = NULL ;
       MAP_CAT_EVENT_IT it = _mapSyncCatEvent.find ( pCollectionName ) ;
@@ -1618,7 +1618,7 @@ namespace engine
          }
 
          SDB_ASSERT ( numReturned == 1 && objList.size() == 1,
-                      "Collection space item num must be 1" )
+                      "Collection space item num must be 1" ) ;
 
          //signal collection info event
          ele = objList[0].getField ( CAT_PAGE_SIZE_NAME ) ;

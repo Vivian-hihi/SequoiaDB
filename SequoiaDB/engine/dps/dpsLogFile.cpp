@@ -422,7 +422,7 @@ namespace engine
 
       SINT64 writtenLen = 0;
       UINT32 written = 0 ;
-      SDB_ASSERT ( len <= _idleSize, "length is creater than idle size" )
+      SDB_ASSERT ( len <= _idleSize, "length is creater than idle size" ) ;
       while ( written < len )
       {
          // write data into the file
@@ -459,7 +459,7 @@ namespace engine
       UINT32 offset = lOffset % _fileSize ;
       // make sure we don't read out of range
       SDB_ASSERT ( offset + len <= _fileSize,
-                   "Read out of range" )
+                   "Read out of range" ) ;
       // make sure the LSN is within the range
       if ( lOffset < _logHeader._firstLSN.offset ||
            lOffset > _logHeader._firstLSN.offset + _fileSize )

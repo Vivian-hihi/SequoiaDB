@@ -194,7 +194,7 @@ namespace engine
             _id[2] = 'd' ;
             _id[3] = 0 ;
             SDB_ASSERT ( sizeof ( _IDToInsert) == 17,
-                         "IDToInsert should be 17 bytes" )
+                         "IDToInsert should be 17 bytes" ) ;
          }
       } ;
       typedef class _IDToInsert _IDToInsert ;
@@ -287,68 +287,68 @@ namespace engine
       UINT16 getIndexType()const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_type ;
       }
       UINT16 getFlag ()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_indexFlag ;
       }
       void setFlag( UINT16 flag )
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          _extent->_indexFlag = flag ;
       }
       dmsExtentID getLogicalID()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_logicID ;
       }
       void setLogicalID( dmsExtentID logicalID )
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          _extent->_logicID = logicalID ;
       }
       void clearLogicID()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          _extent->_logicID = DMS_INVALID_EXTENT ;
       }
       UINT16 indexType() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_type ;
       }
       UINT16 getMBID ()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_mbID ;
       }
       dmsExtentID scanExtLID ()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_scanExtLID ;
       }
       void scanExtLID ( UINT32 extLID )
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          _extent->_scanExtLID = extLID ;
       }
       // remove all field name from bson object
       BSONObj getKeyFromQuery ( const BSONObj & query ) const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          BSONObj k   = keyPattern () ;
          BSONObj res = query.extractFieldsUnDotted ( k ) ;
          return res ;
@@ -366,7 +366,7 @@ namespace engine
       BSONObj keyPattern() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          try
          {
             return _infoObj.getObjectField( IXM_KEY_FIELD ) ;
@@ -383,7 +383,7 @@ namespace engine
       BSONObj getDef() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _infoObj ;
       }
 
@@ -396,14 +396,14 @@ namespace engine
       BOOLEAN inKeyPattern( const CHAR *key ) const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return keyPatternOffset( key ) >= 0 ;
       }
       // return the name of index
       OSS_INLINE const CHAR *getName()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _infoObj.getStringField( IXM_NAME_FIELD ) ;
       }
       // Is this _id index?
@@ -419,7 +419,7 @@ namespace engine
       BOOLEAN isSysIndex() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return isSysIndexPattern( keyPattern() );
       }
       // get the version of index, 0 by default
@@ -435,7 +435,7 @@ namespace engine
       INT32 version() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return versionForIndexObj( _infoObj );
       }
 
@@ -588,7 +588,7 @@ namespace engine
       BOOLEAN unique() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _infoObj[ IXM_UNIQUE_FIELD ].trueValue() ;
       }
 
@@ -596,7 +596,7 @@ namespace engine
       BOOLEAN enforced() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _infoObj[ IXM_ENFORCED_FIELD ].trueValue() ;
       }
 
@@ -605,13 +605,13 @@ namespace engine
       BOOLEAN dropDups() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _infoObj.getBoolField( IXM_DROPDUP_FIELD );
       }
       std::string toString() const
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _infoObj.toString() ;
       }
       INT32 allocExtent ( dmsExtentID &extentID ) ;
@@ -619,13 +619,13 @@ namespace engine
       void setRoot ( dmsExtentID rootExtentID )
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          _extent->_rootExtentID = rootExtentID ;
       }
       dmsExtentID getRoot()
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          return _extent->_rootExtentID ;
       }
       _dmsStorageIndex *getSU ()
@@ -635,7 +635,7 @@ namespace engine
       INT32 getIndexID ( OID &oid )
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          try
          {
             _infoObj.getField(DMS_ID_KEY_NAME).Val(oid) ;
@@ -650,7 +650,7 @@ namespace engine
       BOOLEAN isStillValid ( OID &oid )
       {
          SDB_ASSERT ( _isInitialized,
-                      "index details must be initialized first" )
+                      "index details must be initialized first" ) ;
          if ( !_extent )
          {
             return FALSE ;

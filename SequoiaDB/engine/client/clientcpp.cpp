@@ -846,7 +846,7 @@ namespace sdbclient
          _id[2] = 'd' ;
          _id[3] = 0 ;
          SDB_ASSERT ( sizeof ( _IDToInsert) == 17,
-                      "IDToInsert should be 17 bytes" )
+                      "IDToInsert should be 17 bytes" ) ;
       }
    } ;
    typedef class _IDToInsert _IDToInsert ;

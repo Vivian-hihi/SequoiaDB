@@ -132,7 +132,7 @@ namespace engine
    INT32 _dpsLogRecord::load( const CHAR *pData )
    {
       PD_TRACE_ENTRY ( SDB__DPSLGRECD_LOAD );
-      SDB_ASSERT( NULL != pData, "impossible" )
+      SDB_ASSERT( NULL != pData, "impossible" ) ;
       INT32 rc = SDB_OK ;
       INT32 loadSize = 0 ;
       INT32 totalSize = 0 ;
@@ -170,7 +170,7 @@ namespace engine
          {
             PD_LOG( PDERROR, "data num is larger than %d",
                     DPS_MERGE_BLOCK_MAX_DATA ) ;
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
             rc = SDB_DPS_CORRUPTED_LOG ;
             goto error ;
          }
@@ -183,7 +183,7 @@ namespace engine
                      loadSize ) < (INT32)valueSize )
          {
             PD_LOG( PDERROR, "get a invalid value size:%d", valueSize ) ;
-            SDB_ASSERT( FALSE, "impossible" )
+            SDB_ASSERT( FALSE, "impossible" ) ;
             rc = SDB_DPS_CORRUPTED_LOG ;
             goto error ;
          }
@@ -234,7 +234,7 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__DPSLGRECD_PUSH ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( DPS_INVALID_TAG != tag , "impossible" )
+      SDB_ASSERT( DPS_INVALID_TAG != tag , "impossible" ) ;
       if ( DPS_MERGE_BLOCK_MAX_DATA == _write )
       {
          PD_LOG( PDERROR, "data num is larger than %d",

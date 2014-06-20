@@ -1014,7 +1014,7 @@ namespace engine
             goto error ;
          }
          dmsStorageUnit *su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" )
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
 
          // release the DMSCB latch before attempting to drop the collectionspace
          _mutex.release_shared() ;
@@ -1106,7 +1106,7 @@ namespace engine
          if ( !cscb )
             continue ;
          su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" )
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
 
          if ( ( !sys && dmsIsSysCSName(su->CSName()) ) ||
               ( ossStrcmp ( su->CSName(), SDB_DMSTEMP_NAME ) == 0 ) )
@@ -1140,7 +1140,7 @@ namespace engine
             continue ;
          }
          su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" )
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
          if ( !sys && dmsIsSysCSName(cscb->_name) )
          {
             continue ;
@@ -1195,7 +1195,7 @@ namespace engine
             continue ;
          }
          su = cscb->_su ;
-         SDB_ASSERT ( su, "storage unit pointer can't be NULL" )
+         SDB_ASSERT ( su, "storage unit pointer can't be NULL" ) ;
          if ( !sys && dmsIsSysCSName(su->CSName()) )
          {
             continue ;
@@ -1253,7 +1253,7 @@ namespace engine
       *suID               = DMS_INVALID_SUID ;
       pmdOptionsCB *optCB = pmdGetOptionCB() ;
       _dmsStorageUnit *su = NULL ;
-      SDB_ASSERT ( suID, "suID can't be NULL" )
+      SDB_ASSERT ( suID, "suID can't be NULL" ) ;
       _pageCleanHistory firstSU ;
       ossTickDelta deltaTime ;
       DMSCB_XLOCK

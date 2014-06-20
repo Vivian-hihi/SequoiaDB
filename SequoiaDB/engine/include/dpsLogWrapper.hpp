@@ -103,14 +103,14 @@ namespace engine
                                _dpsMessageBlock *mb,
                                UINT8 type = DPS_SERCAH_ALL )
       {
-         SDB_ASSERT ( _initialized, "shouldn't call search without init" )
+         SDB_ASSERT ( _initialized, "shouldn't call search without init" ) ;
          return _buf.search( minLsn, mb, type, FALSE ) ;
       }
       OSS_INLINE INT32 searchHeader( const DPS_LSN &lsn,
                                      _dpsMessageBlock *mb,
                                      UINT8 type = DPS_SERCAH_ALL )
       {
-         SDB_ASSERT ( _initialized, "shouldn't call search without init" )
+         SDB_ASSERT ( _initialized, "shouldn't call search without init" ) ;
          return _buf.search( lsn, mb, type, TRUE ) ;
       }
       OSS_INLINE INT32 run( _pmdEDUCB *cb )
@@ -140,7 +140,7 @@ namespace engine
       // pages once at a time
       OSS_INLINE INT32 flushAll()
       {
-         SDB_ASSERT ( _initialized, "shouldn't call flushAll without init" )
+         SDB_ASSERT ( _initialized, "shouldn't call flushAll without init" ) ;
          return _buf.flushAll() ;
       }
 

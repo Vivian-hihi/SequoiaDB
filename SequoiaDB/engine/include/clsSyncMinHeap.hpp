@@ -199,7 +199,7 @@ namespace engine
 
       UINT32 _father( const UINT32 &child )
       {
-         SDB_ASSERT( CLS_HEAP_ROOT != child, "root has no father" )
+         SDB_ASSERT( CLS_HEAP_ROOT != child, "root has no father" ) ;
          return ( child - 1 ) / 2 ;
       }
 

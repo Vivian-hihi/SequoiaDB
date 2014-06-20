@@ -223,7 +223,7 @@ namespace engine
       }
       else
       {
-         SDB_ASSERT( FALSE, "notify over is impossible." )
+         SDB_ASSERT( FALSE, "notify over is impossible." ) ;
       }
 
       PD_TRACE_EXIT ( SDB__CLSDSBS__RESEND );
@@ -850,7 +850,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSDSBS_HNDFSMETA );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       MsgClsFSMetaReq *msg = ( MsgClsFSMetaReq * )header ;
       SDB_DMSCB *dmsCB = pmdGetKRCB()->getDMSCB() ;
       dmsStorageUnitID suID = DMS_INVALID_SUID ;
@@ -1027,7 +1027,7 @@ namespace engine
                                                 MsgHeader* header )
    {
       PD_TRACE_ENTRY ( SDB__CLSDSBS_HNDFSINX );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       MsgClsFSIndexRes res ;
       BSONObj obj ;
       if ( !_hasMeta )
@@ -1067,7 +1067,7 @@ namespace engine
                                                  MsgHeader* header )
    {
       PD_TRACE_ENTRY ( SDB__CLSDSBS_HNDFSNTF );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       MsgClsFSNotify *msg = ( MsgClsFSNotify * )header ;
       INT32 rc = SDB_OK ;
       if ( !_init || ( !_hasMeta && CLS_FS_NOTIFY_TYPE_DOC == msg->type ) )
@@ -1187,7 +1187,7 @@ namespace engine
                                         MsgHeader* header )
    {
       PD_TRACE_ENTRY ( SDB__CLSFSSS_HNDBEGIN );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_LOG( PDEVENT, "FS Session[%s] begin to full sync", sessionName() ) ;
 
       SDB_DPSCB *dpscb = pmdGetKRCB()->getDPSCB() ;
@@ -1287,7 +1287,7 @@ namespace engine
                                       MsgHeader* header )
    {
       PD_TRACE_ENTRY ( SDB__CLSFSSS_HNDEND );
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
 
       MsgClsFSEndRes msg ;
       /*

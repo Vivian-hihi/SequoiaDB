@@ -49,7 +49,7 @@ namespace engine
            {\
               if ( 2 != itr->children.size() )\
               {\
-                 SDB_ASSERT( FALSE, "impossible" ) \
+                 SDB_ASSERT( FALSE, "impossible" ) ; \
                  rc = SDB_INVALIDARG ;\
                  goto error ;\
               }\

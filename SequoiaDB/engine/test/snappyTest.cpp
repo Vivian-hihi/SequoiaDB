@@ -366,7 +366,7 @@ INT32 testUncompress ( BOOLEAN compress )
             goto error ;
          }
          SDB_ASSERT ( finalLength <= uncompressedLength*2,
-                      "buffer is not large enough" )
+                      "buffer is not large enough" ) ;
          rc = RawUncompress ( pCurrent+4, *(INT32*)pCurrent,
                               pUncompressedBuffer ) ;
          if ( FALSE == rc )

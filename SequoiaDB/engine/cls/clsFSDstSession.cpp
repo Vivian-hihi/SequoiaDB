@@ -632,7 +632,7 @@ namespace engine
    INT32 _clsDataDstBaseSession::handleMetaRes( NET_HANDLE handle,
                                                 MsgHeader* header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS_HNDMETARES );
       MsgClsFSMetaRes *msg = ( _MsgClsFSMetaRes * )header ;
       if ( CLS_FS_STATUS_META != _status )
@@ -726,7 +726,7 @@ namespace engine
    INT32 _clsDataDstBaseSession::handleIndexRes( NET_HANDLE handle,
                                                  MsgHeader* header )
    {
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS_HNDINXRES2 );
       MsgClsFSIndexRes *msg = ( MsgClsFSIndexRes * )header ;
 
@@ -783,7 +783,7 @@ namespace engine
                                                   MsgHeader* header )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__CLSDATADBS_HNDNTFRES );
       MsgClsFSNotifyRes *msg = ( MsgClsFSNotifyRes * )header ;
 
@@ -872,7 +872,7 @@ namespace engine
             while ( _more( msg, itr, FALSE ) )
             {
                dpsLogRecordHeader *header = (dpsLogRecordHeader *)itr;
-               SDB_ASSERT( 0 == header->_reserved1, "impossible" )
+               SDB_ASSERT( 0 == header->_reserved1, "impossible" ) ;
 
                if ( !_replayer.isDPSEnabled() )
                {
@@ -1427,7 +1427,7 @@ namespace engine
 
          if ( 0 != dpsCB->expectLsn().compareOffset( header->_lsn ))
          {
-            SDB_ASSERT( STEP_TS_BEGIN == _tsStep, "get unexpected log" )
+            SDB_ASSERT( STEP_TS_BEGIN == _tsStep, "get unexpected log" ) ;
             rc = dpsCB->move( header->_lsn, header->_version ) ;
             PD_RC_CHECK( rc, PDERROR, "Failed to move lsn[%d,%lld], rc: %d",
                          header->_version, header->_lsn, rc ) ;

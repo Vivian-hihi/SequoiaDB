@@ -72,11 +72,11 @@ INT32 genRandomRecord ( UINT32 maxFieldNum,
                         BOOLEAN forceOID )
 {
    INT32 rc = SDB_OK ;
-   SDB_ASSERT ( 0 != maxFieldNum, "max field num can't be 0" )
+   SDB_ASSERT ( 0 != maxFieldNum, "max field num can't be 0" ) ;
    SDB_ASSERT ( ossStrlen ( ID_KEY_FIELD_NAME ) <= maxFieldNameLength,
-                "max field len can't be less than id key length" )
-   SDB_ASSERT ( 0 != maxStringLength, "max string len can't be 0" )
-   SDB_ASSERT ( 0 != maxDepth, "max depth can't be 0" )
+                "max field len can't be less than id key length" ) ;
+   SDB_ASSERT ( 0 != maxStringLength, "max string len can't be 0" ) ;
+   SDB_ASSERT ( 0 != maxDepth, "max depth can't be 0" ) ;
    PD_TRACE_ENTRY ( SDB_BSONGEN_GENRAND ) ;
    try
    {

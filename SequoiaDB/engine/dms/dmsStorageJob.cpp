@@ -44,7 +44,7 @@ namespace engine
 
    _dmsExtendSegmentJob::_dmsExtendSegmentJob( dmsStorageBase * pSUBase )
    {
-      SDB_ASSERT( pSUBase, "Storage base unit can't be NULL" )
+      SDB_ASSERT( pSUBase, "Storage base unit can't be NULL" ) ;
       _pSUBase = pSUBase ;
    }
 

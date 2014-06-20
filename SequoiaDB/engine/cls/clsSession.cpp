@@ -319,7 +319,7 @@ namespace engine
       {
          goto done ;
       }
-      SDB_ASSERT ( _buffCount > 0 , "impossible" )
+      SDB_ASSERT ( _buffCount > 0 , "impossible" ) ;
 
       p = &_buffArray[_buffBegin] ;
    done :
@@ -331,7 +331,7 @@ namespace engine
    void _clsSession::popBuffer ()
    {
       PD_TRACE_ENTRY ( SDB__CLSSN_POPBUF );
-      SDB_ASSERT ( _buffCount > 0 , "impossible" )
+      SDB_ASSERT ( _buffCount > 0 , "impossible" ) ;
 
       _buffArray[_buffBegin].pBuffer = NULL ;
       _buffArray[_buffBegin].size = 0 ;
@@ -354,7 +354,7 @@ namespace engine
          goto done ;
       }
 
-      SDB_ASSERT ( _buffArray[_buffEnd].isInvalid (), "impossilbe" )
+      SDB_ASSERT ( _buffArray[_buffEnd].isInvalid (), "impossilbe" ) ;
 
       ++_buffCount ;
       _buffArray[_buffEnd].pBuffer = pBuffer ;

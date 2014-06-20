@@ -58,7 +58,7 @@ namespace engine
                                   INT32 &next )
    {
       PD_TRACE_ENTRY ( SDB__CLSVSVT_HDINPUT ) ;
-      SDB_ASSERT( NULL != header, "header should not be NULL" )
+      SDB_ASSERT( NULL != header, "header should not be NULL" ) ;
 
       if ( MSG_CLS_BALLOT == header->opCode )
       {

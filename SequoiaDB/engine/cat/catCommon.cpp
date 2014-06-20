@@ -157,14 +157,14 @@ namespace engine
             }
 
             gpName = groupInfo.getField( CAT_GROUPNAME_NAME ) ;
-            SDB_ASSERT( !gpName.eoo(), "can not be eoo" )
+            SDB_ASSERT( !gpName.eoo(), "can not be eoo" ) ;
             if ( !gpName.eoo() && NULL != builder )
             {
                oneGroup.append( gpName ) ;
             }
 
             gpID = groupInfo.getField( CAT_GROUPID_NAME ) ;
-            SDB_ASSERT( !gpID.eoo(), "can not be eoo" )
+            SDB_ASSERT( !gpID.eoo(), "can not be eoo" ) ;
             if ( !gpID.eoo() && NULL != builder )
             {
                oneGroup.append( gpID ) ;
@@ -1682,7 +1682,8 @@ namespace engine
                      mainCLName );
          PD_CHECK( cataInfo.isMainCL(), SDB_INVALID_MAIN_CL, error, PDERROR,
                   "source collection must be main-collection!" );
-         SDB_ASSERT( cataInfo.isRangeSharding(), "main-collection must be range-sharding!" );
+         SDB_ASSERT( cataInfo.isRangeSharding(),
+                     "main-collection must be range-sharding!" ) ;
 
          rc = cataInfo.addSubCL( subCLName, boLowBound, boUpBound );
          PD_RC_CHECK( rc, PDERROR,

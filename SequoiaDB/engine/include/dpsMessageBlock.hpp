@@ -89,7 +89,7 @@ namespace engine
       {
          _write = _start + offset;
          _length = offset;
-         SDB_ASSERT( _length <= _size , "out of mem!" )
+         SDB_ASSERT( _length <= _size , "out of mem!" ) ;
          return;
       }
 

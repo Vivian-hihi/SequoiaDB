@@ -174,7 +174,7 @@ namespace engine
                                  const dpsTransLockId &lockId,
                                  DPS_TRANSLOCK_TYPE lockType )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
       INT32 rc = SDB_OK;
 
       dpsTransLockUnit *pLockUnit = NULL;
@@ -251,7 +251,7 @@ namespace engine
    void dpsLockBucket::release( _pmdEDUCB *eduCB,
                                 const dpsTransLockId &lockId )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
 
       dpsTransLockUnit *pLockUnit = NULL;
       {
@@ -283,8 +283,8 @@ namespace engine
                                      DPS_TRANSLOCK_TYPE lockType,
                                      dpsTransLockUnit *pLockUnit )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
-      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
+      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" ) ;
       INT32 rc = SDB_OK;
       if ( !checkCompatible( eduCB, lockType, pLockUnit) )
       {
@@ -306,8 +306,8 @@ namespace engine
                                      const dpsTransLockId &lockId,
                                      dpsTransLockUnit *pLockUnit  )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
-      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
+      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" ) ;
       dpsTransCBLockInfo *pLockInfo = NULL ;
       _pmdEDUCB *pWaitCB = pLockUnit->_pWaitCB;
       if ( NULL == pWaitCB )
@@ -335,8 +335,8 @@ namespace engine
                                          const dpsTransLockId &lockId,
                                          dpsTransLockUnit *pLockUnit  )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
-      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
+      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" ) ;
       dpsTransCBLockInfo *pLockInfo = NULL ;
 
       _pmdEDUCB *pWaitCB = pLockUnit->_pWaitCB;
@@ -354,8 +354,8 @@ namespace engine
    void dpsLockBucket::removeFromRun( _pmdEDUCB *eduCB,
                                       dpsTransLockUnit *pLockUnit  )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
-      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
+      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" ) ;
 
       // remove from run queue
       dpsTransLockRunList::iterator iterLst;
@@ -374,8 +374,8 @@ namespace engine
                                        dpsTransLockUnit *pLockUnit,
                                        const dpsTransLockId &lockId )
    {
-      SDB_ASSERT( eduCB, "eduCB can't be null" )
-      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" )
+      SDB_ASSERT( eduCB, "eduCB can't be null" ) ;
+      SDB_ASSERT( pLockUnit, "pLockUnit can't be null" ) ;
       dpsTransCBLockInfo *pLockInfo = NULL ;
       UINT32 id = eduCB->getTID() ;
       _pmdEDUCB *pWaitCB = pLockUnit->_pWaitCB;

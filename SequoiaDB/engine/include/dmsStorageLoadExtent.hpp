@@ -119,7 +119,7 @@ namespace engine
 
       void init ( dmsStorageUnit *su )
       {
-         SDB_ASSERT ( su, "su is NULL" )
+         SDB_ASSERT ( su, "su is NULL" ) ;
          _su = su ;
          _pageSize = _su->getPageSize() ;
       }

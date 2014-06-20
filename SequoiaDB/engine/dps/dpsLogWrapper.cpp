@@ -166,7 +166,7 @@ namespace engine
          goto done;
       }
       {
-         SDB_ASSERT( NULL != row, "row should not be NULL!")
+         SDB_ASSERT( NULL != row, "row should not be NULL!") ;
          _dpsMergeBlock block ;
          dpsLogRecord &record = block.record();
          dpsLogRecordHeader &header = record.head() ;

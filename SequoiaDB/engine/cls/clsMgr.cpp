@@ -887,7 +887,7 @@ namespace engine
          PD_LOG ( PDERROR, "push buffer failed in session[%s, rc:%d]", 
             pSession->sessionName(), rc ) ;
          _memPool.release ( pNewBuff, buffSize ) ;
-         SDB_ASSERT ( 0, "why the buffer is full??? check" )
+         SDB_ASSERT ( 0, "why the buffer is full??? check" ) ;
          goto error ;
       }
 
@@ -997,7 +997,7 @@ done :
 
       pSession->eduID( eduID ) ;
       cb = pEDUMgr->getEDUByID( eduID );
-      SDB_ASSERT ( NULL != cb, "EDU CB cannot be NULL" )
+      SDB_ASSERT ( NULL != cb, "EDU CB cannot be NULL" ) ;
       pSession->eduCB( cb ) ;
       //Wait the EDUCB is in the session
       pSession->waitAttach () ;
@@ -1035,7 +1035,7 @@ done :
       PD_TRACE_ENTRY ( SDB__CLSMGR__RLSSN_I );
       clsBuffInfo *pBuffInfo = NULL ;
 
-      SDB_ASSERT ( pSession, "pSession can't be NULL" )
+      SDB_ASSERT ( pSession, "pSession can't be NULL" ) ;
       if ( !_force && postQuit && pSession->eduCB() )
       {
          //Notify the edu quit

@@ -425,7 +425,7 @@ namespace engine
       {
          id.value = itr->first ;
          rc = _agent->route( id, node ) ;
-         SDB_ASSERT( SDB_OK == rc, "impossible" )
+         SDB_ASSERT( SDB_OK == rc, "impossible" ) ;
          if ( SDB_OK == rc )
          {
             group.push_back( node ) ;
@@ -444,7 +444,7 @@ namespace engine
       else
       {
          PD_LOG( PDERROR, "group info is not match route table." ) ;
-         SDB_ASSERT( false, "impossible" )
+         SDB_ASSERT( false, "impossible" ) ;
       }
       PD_TRACE_EXIT ( SDB__CLSREPSET_GETGPINFO );
       return ;
@@ -739,7 +739,7 @@ namespace engine
    // PD_TRACE_DECLARE_FUNCTION ( SDB__CLSREPSET__HNDSHRBEAT, "_clsReplicateSet::_handleSharingBeat" )
    INT32 _clsReplicateSet::_handleSharingBeat( const _MsgClsBeat *msg )
    {
-      SDB_ASSERT( NULL != msg, "msg should not be NULL" )
+      SDB_ASSERT( NULL != msg, "msg should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__CLSREPSET__HNDSHRBEAT );
       const _clsGroupBeat &beat = msg->beat ;
@@ -820,7 +820,7 @@ namespace engine
 
    INT32 _clsReplicateSet::_handleSharingBeatRes( const _MsgClsBeatRes *msg )
    {
-      SDB_ASSERT( NULL != msg, "msg should not be NULL" )
+      SDB_ASSERT( NULL != msg, "msg should not be NULL" ) ;
       return _alive( msg->identity ) ;
    }
 

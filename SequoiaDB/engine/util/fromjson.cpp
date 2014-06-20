@@ -38,7 +38,7 @@ namespace bson
       if ( !pStr )
       {
          // we should never hit here
-         SDB_ASSERT ( FALSE, "empty str from json str" )
+         SDB_ASSERT ( FALSE, "empty str from json str" ) ;
          rc = SDB_INVALIDARG ;
          goto error ;
       }

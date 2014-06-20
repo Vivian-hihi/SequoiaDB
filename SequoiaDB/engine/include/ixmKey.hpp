@@ -70,7 +70,7 @@ namespace engine
       BSONObj _bson() const
       {
          SDB_ASSERT ( !isCompactFormat(),
-                      "Key shouldn't be compacted when calling _bson" )
+                      "Key shouldn't be compacted when calling _bson" ) ;
          // first byte is reserved for isCompact
          return BSONObj((const CHAR *)_keyData + 1) ;
       }

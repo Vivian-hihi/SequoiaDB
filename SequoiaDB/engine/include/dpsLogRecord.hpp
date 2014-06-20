@@ -148,7 +148,7 @@ namespace engine
          :_current(-1),
           _record( record )
          {
-            SDB_ASSERT( NULL != _record, "impossible" )
+            SDB_ASSERT( NULL != _record, "impossible" ) ;
          }
 
          iterator( const iterator &itr )

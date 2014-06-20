@@ -53,7 +53,7 @@ namespace engine
                                    _id( id )
    {
       SDB_ASSERT( CLS_INVALID_VOTE_ID != _id,
-                  "id should not be invalid" )
+                  "id should not be invalid" ) ;
    }
 
    _clsVoteStatus::~_clsVoteStatus()
@@ -108,7 +108,7 @@ namespace engine
       if ( NULL == _logger )
       {
          _logger = pmdGetKRCB()->getDPSCB() ;
-         SDB_ASSERT( NULL != _logger, "logger should not be NULL" )
+         SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
       }
 
       // launch
@@ -183,7 +183,7 @@ namespace engine
       if ( NULL == _logger )
       {
          _logger = pmdGetKRCB()->getDPSCB() ;
-         SDB_ASSERT( NULL != _logger, "logger should not be NULL" )
+         SDB_ASSERT( NULL != _logger, "logger should not be NULL" ) ;
       }
       {
          map<UINT64, _clsSharingStatus *>::iterator itr =
