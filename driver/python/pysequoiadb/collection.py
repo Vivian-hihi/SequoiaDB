@@ -15,7 +15,11 @@
 """Module of collection for python driver for SequoiaDB
 """
 
-import sdbcl
+try:
+   import sdbcl
+except ImportError:
+   raise Exception("cannot fine C module file: sdbcl")
+
 import bson
 from pysequoiadb import ( static_object,
                           default_host,

@@ -14,7 +14,11 @@
    limitations under the License.
 """
 
-import sdbreplicanode
+try:
+   import sdbreplicanode
+except ImportError:
+   raise Exception("cannot fine C module file: sdbreplicanode")
+
 from pysequoiadb.common import const
 
 class replicanode(object):

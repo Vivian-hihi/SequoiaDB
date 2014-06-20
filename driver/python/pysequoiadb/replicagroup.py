@@ -14,7 +14,11 @@
    limitations under the License.
 """
 
-import sdbreplicagroup
+try:
+   import sdbreplicagroup
+except ImportError:
+   raise Exception("cannot fine C module file: sdbreplicagroup")
+
 import bson
 import types
 

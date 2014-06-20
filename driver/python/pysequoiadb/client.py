@@ -15,7 +15,10 @@
 """Module of client for python driver for SequoiaDB
 """
 
-import sdbclient
+try:
+   import sdbclient
+except ImportError:
+   raise Exception("cannot fine C module file: sdbclient")
 
 import bson
 from pysequoiadb import ( static_object,

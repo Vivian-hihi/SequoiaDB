@@ -15,7 +15,10 @@
 """Module of collectionspace for python driver for SequoiaDB
 """
 
-import sdbcs
+try:
+   import sdbcs
+except ImportError:
+   raise Exception("cannot fine C module file: sdbcs")
 import bson
 from pysequoiadb import ( static_object,
                           default_host,
@@ -53,10 +56,10 @@ class collectionspace(object):
       return rc, cl
 
    def create_collection(self, cl_name, options = static_object):
+      bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
-      else:
-         bson_options = None
+
       cl = collection()
       if options is None:
          rc = sdbcs.create_collection(self._cs, cl_name, cl._cl)

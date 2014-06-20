@@ -14,7 +14,11 @@
    limitations under the License.
 """
 
-import sdbcursor
+try:
+   import sdbcursor
+except ImportError:
+   raise Exception("cannot fine C module file: sdbcursor")
+
 import bson
 from pysequoiadb import error
 from pysequoiadb.error import SequoiaDBError
