@@ -80,6 +80,8 @@
 #define SDB_LIST_STOREPROCEDURES  8
 #define SDB_LIST_DOMAINS          9
 #define SDB_LIST_TASKS            10
+#define SDB_LIST_CS_IN_DOMAIN     11
+#define SDB_LIST_CL_IN_DOMAIN     12
 
 #define FLG_INSERT_CONTONDUP  0x00000001
 
@@ -1743,6 +1745,87 @@ namespace sdbclient
       }
    } ;
 
+   class DLLEXPORT _sdbDomain
+   {
+   private :
+      _sdbDomain ( const _sdbDomain& other ) ; // non construction-copyable
+      _sdbDomain& operator= ( const _sdbDomain& ) ; // non copyable
+   public :
+      _sdbDomain () {}
+      virtual ~_sdbDomain () {}
+
+      virtual INT32 alterDomain ( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
+
+      virtual INT32 listCollectionSpacesInDomain ( _sdbCursor **cursor ) = 0 ;
+
+      virtual INT32 listCollectionSpacesInDomain ( sdbCursor &cursor ) = 0 ;
+
+      virtual INT32 listCollectionsInDomain ( _sdbCursor **cursor ) = 0 ;
+
+      virtual INT32 listCollectionsInDomain ( sdbCursor &cursor ) = 0 ;
+      
+   } ;
+
+   /** \class  sdbDomain
+       \brief Database operation interfaces of domain.
+   */
+   class DLLEXPORT sdbDomain
+   {
+   private :
+      sdbDomain ( const sdbDomain& ) ; // non construction-copyable
+      sdbDomain& operator= ( const sdbDomain& ) ; // non copyable
+   public :
+      _sdbDomain *pDomain ;
+      sdbDomain() { pDomain = NULL ; }
+      virtual ~sdbDomain()
+      {
+         if ( pDomain )
+            delete pDomain ;
+      }
+      
+/** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
+    \brief Alter the domains.
+    \param [in] options The options user wants to alter
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 alterDomain ( const bson::BSONObj &options )
+      {
+         if ( !pDomain )
+            return SDB_SYS ;
+         pDomain->alterDomain ( options ) ;
+      }
+
+/** \fn INT32 listCollectionSpacesInDomain ( sdbCursor &cursor ) ;
+    \brief List all the collection spaces in current domain.
+    \param [in] cHandle The domain handle
+    \param [out] cursor The sdbCursor object of result 
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listCollectionSpacesInDomain ( sdbCursor &cursor )
+      {
+         if ( !pDomain )
+            return SDB_SYS ;
+         pDomain->listCollectionSpacesInDomain ( cursor ) ;
+      }
+
+/** \fn INT32 listCollectionsInDomain ( sdbCursor &cursor ) ;
+    \brief List all the collections in current domain.
+    \param [in] cHandle The domain handle
+    \param [out] cursor The sdbCursor object of result 
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listCollectionsInDomain ( sdbCursor &cursor )
+      {
+         if ( !pDomain )
+            return SDB_SYS ;
+         pDomain->listCollectionsInDomain ( cursor ) ;
+      }
+
+   };
+   
    class DLLEXPORT _sdb
    {
    private :
@@ -1950,6 +2033,38 @@ namespace sdbclient
       // connection is closed
       virtual INT32 isValid( BOOLEAN *result ) = 0 ;
 
+      // domain
+      virtual INT32 createDomain ( const CHAR *pDomainName,
+                                   const bson::BSONObj &options,
+                                   _sdbDomain **domain ) = 0 ;
+      
+      virtual INT32 createDomain ( const CHAR *pDomainName,
+                                   const bson::BSONObj &options,
+                                   sdbDomain &domain ) = 0 ;
+
+      virtual INT32 dropDomain ( const CHAR *pDomainName ) = 0 ;
+
+      virtual INT32 getDomain ( const CHAR *pDomainName,
+                                _sdbDomain **domain ) = 0 ;
+
+      virtual INT32 getDomain ( const CHAR *pDomainName,
+                                sdbDomain &domain ) = 0 ;
+
+      virtual INT32 listDomains ( _sdbCursor **cursor,
+                                  const bson::BSONObj &condition = _sdbStaticObject,
+                                  const bson::BSONObj &selector = _sdbStaticObject,
+                                  const bson::BSONObj &orderBy = _sdbStaticObject,
+                                  const bson::BSONObj &hint = _sdbStaticObject
+                                ) = 0 ;
+      
+      virtual INT32 listDomains ( sdbCursor &cursor,
+                                  const bson::BSONObj &condition = _sdbStaticObject,
+                                  const bson::BSONObj &selector = _sdbStaticObject,
+                                  const bson::BSONObj &orderBy = _sdbStaticObject,
+                                  const bson::BSONObj &hint = _sdbStaticObject
+                                ) = 0 ;
+
+      
 /*      virtual INT32 modifyConfig ( INT32 nodeID,
                        std::map<std::string,std::string> &config ) = 0 ;
 
@@ -3081,6 +3196,84 @@ namespace sdbclient
             return SDB_SYS ;
          return pSDB->isValid ( result) ;
       }
+
+/** \fn INT32 createDomain ( const CHAR *pDomainName,
+                             const bson::BSONObj &options,
+                             sdbDomain &domain ) ;
+    \brief Create a domain.
+    \param [in] pDomainName The name of the domain
+    \param [in] options The options for the domain. The options are as below:
+
+        Group: The list of name for replica groups that the domain contains.
+               eg: { "Group": [ "group1", "group2", "group3" ] }
+               If this argument is not included, the domain will contain all replica groups in the cluster.
+    \param [out] domain The created sdbDomain object
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 createDomain ( const CHAR *pDomainName,
+                           const bson::BSONObj &options,
+                           sdbDomain &domain )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->createDomain ( pDomainName, options, domain ) ;
+      }
+
+/** \fn INT32 dropDomain ( const CHAR *pDomainName ) ;
+    \brief Drop a domain.
+    \param [in] pDomainName The name of the domain
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/    INT32 dropDomain ( const CHAR *pDomainName )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->dropDomain ( pDomainName ) ;
+      }
+
+/** \fn INT32 getDomain ( const CHAR *pDomainName,
+                          sdbDomain &domain ) ;
+    \brief Get a domain.
+    \param [in] pDomainName The name of the domain
+    \param [out] domain The sdbDomain object to get
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 getDomain ( const CHAR *pDomainName,
+                        sdbDomain &domain )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->getDomain ( pDomainName, domain ) ;
+      }
+
+/** \fn INT32 listDomains ( sdbCursor &cursor,
+                          const bson::BSONObj &condition,
+                          const bson::BSONObj &selector,
+                          const bson::BSONObj &orderBy,
+                          const bson::BSONObj &hint ) ;
+    \brief List the domains.
+    \param [in] condition The matching rule, return all the documents if null
+    \param [in] selector The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [out] cursor The sdbCursor object of result
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+      INT32 listDomains ( sdbCursor &cursor,
+                          const bson::BSONObj &condition,
+                          const bson::BSONObj &selector,
+                          const bson::BSONObj &orderBy,
+                          const bson::BSONObj &hint )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->listDomains ( cursor, condition, selector, orderBy, hint ) ;
+      }
+
+
 
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config )

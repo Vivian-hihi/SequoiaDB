@@ -28,10 +28,12 @@ namespace sdbclient
 #define CLIENT_COLLECTION_NAMESZ           127
 #define CLIENT_CS_NAMESZ                   127
 #define CLIENT_REPLICAGROUP_NAMESZ         127
+#define CLIENT_DOMAIN_NAMESZ               127
    class _sdbColletionSpaceImpl ;
    class _sdbCollectionImpl ;
    class _sdbReplicaGroupImpl ;
    class _sdbNodeImpl ;
+   class _sdbDomain ;
    class _sdbImpl ;
 
    class _sdbCursorImpl : public _sdbCursor
@@ -527,6 +529,50 @@ namespace sdbclient
 
    typedef class _sdbCollectionSpaceImpl sdbCollectionSpaceImpl ;
 
+   class _sdbDomainImpl : public _sdbDomain
+   {
+   private :
+      _sdbDomainImpl ( const _sdbDomainImpl& other ) ;
+      _sdbDomainImpl& operator= ( const _sdbDomainImpl& other ) ;
+#if defined CLIENT_THREAD_SAFE
+      ossSpinSLatch           _mutex ;
+#endif
+      _sdbImpl                *_connection ;
+      CHAR                    *_pSendBuffer ;
+      INT32                   _sendBufferSize ;
+      CHAR                    *_pReceiveBuffer ;
+      INT32                   _receiveBufferSize ;
+      CHAR _domainName[ CLIENT_DOMAIN_NAMESZ+1 ] ;
+
+      void _setConnection ( _sdb *connection ) ;
+      INT32 _setName ( const CHAR *pDomainName ) ;
+      
+      friend class _sdbImpl ;
+   public :
+      _sdbDomainImpl () ;
+      _sdbDomainImpl ( const CHAR *pDomainName ) ;
+      ~_sdbDomainImpl () ;
+
+      INT32 alterDomain ( const bson::BSONObj &options ) ;
+
+      INT32 listCollectionSpacesInDomain ( _sdbCursor **cursor ) ;
+
+      INT32 listCollectionSpacesInDomain ( sdbCursor &cursor )
+      {
+         return listCollectionsInDomain ( &cursor.pCursor ) ;
+      }
+
+      INT32 listCollectionsInDomain ( _sdbCursor **cursor ) ;
+
+      INT32 listCollectionsInDomain ( sdbCursor &cursor )
+      {
+         return listCollectionsInDomain ( &cursor.pCursor ) ;       
+      }
+      
+   } ;
+   
+   typedef class _sdbDomainImpl sdbDomainImpl ;
+   
    class _sdbImpl : public _sdb
    {
    private :
@@ -548,6 +594,8 @@ namespace sdbclient
       std::set<ossValuePtr> _collectionspaces ;
       std::set<ossValuePtr> _nodes ;
       std::set<ossValuePtr> _replicaGroups ;
+      std::set<ossValuePtr> _domain ;
+      
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
@@ -586,6 +634,12 @@ namespace sdbclient
       {
          lock () ;
          _replicaGroups.insert ( (ossValuePtr)replicaGroup ) ;
+         unlock () ;
+      }
+      void _regDomain ( _sdbDomainImpl *domain )
+      {
+         lock () ;
+         _domain.insert ( (ossValuePtr)domain ) ;
          unlock () ;
       }
       void _unregCursor ( _sdbCursorImpl * cursor )
@@ -637,6 +691,12 @@ namespace sdbclient
          _replicaGroups.erase ( (ossValuePtr)replicaGroup ) ;
          unlock () ;
       }
+      void _unregDomain ( _sdbDomainImpl *domain )
+      {
+         lock () ;
+         _domain.erase ( (ossValuePtr)domain ) ;
+         unlock () ;
+      }
 
       INT32 _connect( const CHAR *pHostName,
                       UINT16 port ) ;
@@ -646,6 +706,7 @@ namespace sdbclient
       friend class _sdbCursorImpl ;
       friend class _sdbNodeImpl ;
       friend class _sdbReplicaGroupImpl ;
+      friend class _sdbDomainImpl ;
    public :
       _sdbImpl () ;
       ~_sdbImpl () ;
@@ -902,6 +963,46 @@ namespace sdbclient
       // connection is closed
       INT32 isValid( BOOLEAN *result ) ;
 
+      // domain
+      INT32 createDomain ( const CHAR *pDomainName,
+                           const bson::BSONObj &options,
+                           _sdbDomain **domain ) ;
+      
+      INT32 createDomain ( const CHAR *pDomainName,
+                           const bson::BSONObj &options,
+                           sdbDomain &domain )
+      {
+         return createDomain ( pDomainName, options, &domain.pDomain ) ;
+      }
+
+      INT32 dropDomain ( const CHAR *pDomainName ) ;
+
+      INT32 getDomain ( const CHAR *pDomainName,
+                        _sdbDomain **domain ) ;
+
+      INT32 getDomain ( const CHAR *pDomainName,
+                        sdbDomain &domain )
+      {
+         return getDomain ( pDomainName, &domain.pDomain ) ;
+      }
+
+      INT32 listDomains ( _sdbCursor **cursor,
+                          const bson::BSONObj &condition,
+                          const bson::BSONObj &selector,
+                          const bson::BSONObj &orderBy,
+                          const bson::BSONObj &hint
+                         ) ;
+      
+      INT32 listDomains ( sdbCursor &cursor,
+                          const bson::BSONObj &condition,
+                          const bson::BSONObj &selector,
+                          const bson::BSONObj &orderBy,
+                          const bson::BSONObj &hint
+                         )
+      {
+         return listDomains ( &cursor.pCursor, condition, selector, orderBy, hint ) ;
+      }
+      
 /*      INT32 modifyConfig ( INT32 nodeID,
                            std::map<std::string,std::string> &config ) ;
 

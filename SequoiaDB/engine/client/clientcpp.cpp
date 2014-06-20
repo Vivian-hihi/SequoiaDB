@@ -3347,6 +3347,195 @@ namespace sdbclient
       goto done ;
    }
 
+   /*
+    * sdbDomainImpl
+    * SequoiaDB Domain Implementation
+    */
+   _sdbDomainImpl::_sdbDomainImpl () :
+   _connection ( NULL ),
+   _pSendBuffer ( NULL ),
+   _sendBufferSize ( 0 ) ,
+   _pReceiveBuffer ( NULL ) ,
+   _receiveBufferSize ( 0 )
+   {
+      ossMemset( _domainName, 0, sizeof ( _domainName ) ) ;
+   }
+
+   _sdbDomainImpl::_sdbDomainImpl ( const CHAR *pDomainName ) :
+   _connection ( NULL ),
+   _pSendBuffer ( NULL ),
+   _sendBufferSize ( 0 ) ,
+   _pReceiveBuffer ( NULL ) ,
+   _receiveBufferSize ( 0 )
+   {
+      _setName( pDomainName ) ;
+   }
+
+   _sdbDomainImpl::~_sdbDomainImpl ()
+   {
+      if ( _connection )
+      {
+         _connection->_unregDomain ( this ) ;
+      }
+      if ( _pSendBuffer )
+      {
+         SDB_OSS_FREE ( _pSendBuffer ) ;
+      }
+      if ( _pReceiveBuffer )
+      {
+         SDB_OSS_FREE ( _pReceiveBuffer ) ;
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DOMAINSETCONNECTION, "_sdbDomainImpl::_setConnection" )
+   void _sdbDomainImpl::_setConnection ( _sdb *connection )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__DOMAINSETCONNECTION ) ;
+      _connection = (_sdbImpl*)connection ;
+      _connection->_regDomain ( this ) ;
+      PD_TRACE_EXIT ( SDB_CLIENT__DOMAINSETCONNECTION );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT__DOMAINSETNAME, "_sdbDomainImpl::_setName" )
+   INT32 _sdbDomainImpl::_setName ( const CHAR *pDomainName )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT__DOMAINSETNAME ) ;
+      INT32 rc = SDB_OK ;
+      INT32 nameLength = ossStrlen ( pDomainName ) ;
+      ossMemset ( _domainName, 0, sizeof ( _domainName ) ) ;
+      if ( nameLength > CLIENT_CS_NAMESZ )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      ossMemcpy ( _domainName, pDomainName,
+                  nameLength );
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT__DOMAINSETNAME, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERDOMAIN, "_sdbDomainImpl::alterDomain" )
+   INT32 _sdbDomainImpl::alterDomain ( const bson::BSONObj &options )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_ALTERDOMAIN ) ;
+      INT32 rc       = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      BSONObj newObj ;
+      BSONObjBuilder ob ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_DOMAIN ) ;
+      if ( !_connection || '\0' == _domainName[0] )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      try
+      {
+         ob.append ( FIELD_NAME_OPTIONS, options ) ;
+         newObj = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // run command
+      rc = _connection->_runCommand(command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_ALTERDOMAIN, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTCSINDOMAIN, "_sdbDomainImpl::listCollectionSpacesInDomain" )
+   INT32 _sdbDomainImpl::listCollectionSpacesInDomain ( _sdbCursor **cursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_LISTCSINDOMAIN ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObjBuilder ob1 ;
+      BSONObjBuilder ob2 ;
+
+      if ( !_connection || '\0' == _domainName[0] || !cursor )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      try
+      {
+         ob1.append ( FIELD_NAME_DOMAIN, _domainName ) ;
+         condition = ob1.obj () ;
+         ob2.appendNull ( FIELD_NAME_NAME ) ;
+         selector = ob2.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      rc = _connection->getList( cursor, SDB_LIST_CS_IN_DOMAIN, condition, selector ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_LISTCSINDOMAIN, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTCLINDOMAIN, "_sdbDomainImpl::listCollectionsInDomain" )
+   INT32 _sdbDomainImpl::listCollectionsInDomain ( _sdbCursor **cursor )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_LISTCLINDOMAIN ) ;
+      INT32 rc = SDB_OK ;
+      BSONObj condition ;
+      BSONObj selector ;
+      BSONObjBuilder ob1 ;
+      BSONObjBuilder ob2 ;
+
+      if ( !_connection || '\0' == _domainName[0] || !cursor )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      try
+      {
+         ob1.append ( FIELD_NAME_DOMAIN, _domainName ) ;
+         condition = ob1.obj () ;
+         ob2.appendNull ( FIELD_NAME_NAME ) ;
+         selector = ob2.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      rc = _connection->getList( cursor, SDB_LIST_CL_IN_DOMAIN, condition, selector ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_LISTCLINDOMAIN, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
 
    /*
     * sdbImpl
@@ -3915,6 +4104,12 @@ namespace sdbclient
          break ;
       case SDB_LIST_TASKS :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS ;
+         break ;
+      case SDB_LIST_CS_IN_DOMAIN :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CS_IN_DOMAIN ;
+         break ;
+      case SDB_LIST_CL_IN_DOMAIN :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_CL_IN_DOMAIN ;
          break ;
       default :
          rc = SDB_INVALIDARG ;
@@ -5610,6 +5805,188 @@ namespace sdbclient
    error :
       goto done ;
    }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATEDOMAIN, "_sdbImpl::createDomain" )
+   INT32 _sdbImpl::createDomain ( const CHAR *pDomainName,
+                                  const bson::BSONObj &options,
+                                  _sdbDomain **domain )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATEDOMAIN ) ;
+      INT32 rc       = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      BSONObj newObj ;
+      BSONObjBuilder ob ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN ) ;
+      if ( !pDomainName || ossStrlen ( pDomainName ) >
+                               CLIENT_COLLECTION_NAMESZ )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      try
+      {
+         ob.append ( FIELD_NAME_NAME, pDomainName ) ;
+         ob.append ( FIELD_NAME_OPTIONS, options ) ;
+         newObj = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+      rc = _runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( *domain )
+      {
+         delete *domain ;
+         *domain = NULL ;
+      }
+      *domain = (_sdbDomain*)( new(std::nothrow) sdbDomainImpl () ) ;
+      if ( !(*domain) )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ((sdbDomainImpl*)*domain)->_setConnection ( this ) ;
+      ((sdbDomainImpl*)*domain)->_setName ( pDomainName ) ;
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_CREATEDOMAIN, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPDOMAIN, "_sdbImpl::dropDomain" )
+   INT32 _sdbImpl::dropDomain ( const CHAR *pDomainName )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_DROPDOMAIN ) ;
+      INT32 rc       = SDB_OK ;
+      BOOLEAN result = FALSE ;
+      BSONObj newObj ;
+      BSONObjBuilder ob ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_DROP_DOMAIN ) ;
+      if ( !pDomainName || ossStrlen ( pDomainName ) >
+                               CLIENT_COLLECTION_NAMESZ )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      try
+      {
+         ob.append ( FIELD_NAME_NAME, pDomainName ) ;
+         newObj = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+
+      rc = _runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_DROPDOMAIN, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_GETDOMAIN, "_sdbImpl::getDomain" )
+   INT32 _sdbImpl::getDomain ( const CHAR *pDomainName,
+                               _sdbDomain **domain )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_GETDOMAIN ) ;
+      INT32 rc       = SDB_OK ;
+      BSONObj result ;
+      BSONObj newObj ;
+      BSONObjBuilder ob ;
+      sdbCursor cursor ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN ) ;
+      if ( !pDomainName || ossStrlen ( pDomainName ) > CLIENT_COLLECTION_NAMESZ
+            || !domain )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+      // build bson
+      try
+      {
+         ob.append ( FIELD_NAME_NAME, pDomainName ) ;
+         newObj = ob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+      // test wether the demain is exsit or not
+      rc = getList ( &cursor.pCursor, SDB_LIST_DOMAINS, newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      if ( SDB_OK == ( rc = cursor.next( result ) ) )
+      {
+         // if domain exsit
+         *domain = (_sdbDomain*)( new(std::nothrow) sdbDomainImpl() ) ;
+         if ( !(*domain) )
+         {
+            rc = SDB_OOM ;
+            goto error ;
+         }
+         ((sdbDomainImpl*)*domain)->_setConnection ( this ) ;
+         ((sdbDomainImpl*)*domain)->_setName ( pDomainName ) ;
+      }
+      else if ( SDB_DMS_EOC == rc )
+      {
+         // if domain not exsit
+         rc = SDB_CAT_DOMAIN_NOT_EXIST ;
+         goto done ;
+      }
+      else
+      {
+         // error happen
+         goto error ;
+      }
+
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_GETDOMAIN, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_LISTDOMAINS, "_sdbImpl::listDomains" )
+   INT32 _sdbImpl::listDomains ( _sdbCursor **cursor,
+                       const bson::BSONObj &condition,
+                       const bson::BSONObj &selector,
+                       const bson::BSONObj &orderBy,
+                       const bson::BSONObj &hint
+                      )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_LISTDOMAINS ) ;
+      INT32 rc = SDB_OK ;
+      // todo: add hint
+      rc = getList ( cursor, SDB_LIST_DOMAINS,
+                     condition, selector, orderBy ) ;
+      if ( rc )
+         goto error ;
+   done :
+      PD_TRACE_EXITRC ( SDB_CLIENT_LISTDOMAINS, rc );
+      return rc ;
+   error :
+      goto done ;
+   }
+
 
 /*   INT32 _sdbImpl::modifyConfig ( INT32 nodeID,
                                   std::map<std::string,std::string> &config )
