@@ -77,7 +77,7 @@ static PYOBJECT *get_count( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   return MAKE_RETURN_INT_INT( rc, count ) ;
+   return MAKE_RETURN_INT_LONG( rc, count ) ;
 }
 
 static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
@@ -618,7 +618,7 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *order_by  = NULL ;
    const bson::BSONObj *hint      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOOOOii", &obj, &cursor_object,
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOLL", &obj, &cursor_object,
                             &bson_condition, &bson_order_by, &bson_hint,
                             &num_to_skip, &num_to_return ) )
    {

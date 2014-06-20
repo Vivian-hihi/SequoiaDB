@@ -225,7 +225,7 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &snap_type,
+   if ( !PARSE_PYTHON_ARGS( args, "OOiOOO", &obj, &cursor_obj, &snap_type,
                             &bson_condition, &bson_selector, &bson_order_by ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -261,7 +261,7 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    sdb *client                    = NULL ;
    const bson::BSONObj *condition = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_condition ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_condition ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -292,7 +292,7 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOi|OOO", &obj, &cursor_obj, &list_type,
+   if ( !PARSE_PYTHON_ARGS( args, "OOiOOO", &obj, &cursor_obj, &list_type,
                             &bson_condition, &bson_selector, &bson_order_by ) )
    {
       rc = SDB_INVALIDARGS ;
@@ -808,7 +808,7 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *selector  = NULL ;
    const bson::BSONObj *order_by  = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OOO|OOO", &obj, &cursor_obj, &bson_option,
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOO", &obj, &cursor_obj, &bson_option,
                             &bson_condition, &bson_selector, &bson_order_by) )
    {
       rc = SDB_INVALIDARGS ;
@@ -880,7 +880,7 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    const bson::BSONObj *order_by  = NULL ;
    const bson::BSONObj *hint      = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "OO|OOOO", &obj, &cursor_obj, &bson_condition,
+   if ( !PARSE_PYTHON_ARGS( args, "OOOOOO", &obj, &cursor_obj, &bson_condition,
                             &bson_selector, &bson_order_by, &bson_hint) )
    {
       rc = SDB_INVALIDARGS ;
@@ -916,7 +916,7 @@ static PYOBJECT *wait_task( PYOBJECT *self, PYOBJECT *args )
    SINT64 task_id = 0 ;
    SINT32 num     = 0 ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "Oii", &obj, &task_id, &num ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OLi", &obj, &task_id, &num ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -942,7 +942,7 @@ static PYOBJECT *cancel_task( PYOBJECT *self, PYOBJECT *args )
    SINT64 task_id   = 0 ;
    BOOLEAN is_async = 0 ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "Oii", &obj, &task_id, &is_async ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OLi", &obj, &task_id, &is_async ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
@@ -968,7 +968,7 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    sdb *client                 = NULL ;
    const bson::BSONObj *option = NULL ;
 
-   if ( !PARSE_PYTHON_ARGS( args, "O|O", &obj, &bson_option ) )
+   if ( !PARSE_PYTHON_ARGS( args, "OO", &obj, &bson_option ) )
    {
       rc = SDB_INVALIDARGS ;
       goto done ;
