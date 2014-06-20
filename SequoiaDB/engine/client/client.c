@@ -6015,7 +6015,7 @@ SDB_EXPORT INT32 sdbListBackup ( sdbConnectionHandle cHandle,
    sdbConnectionStruct *connection = (sdbConnectionStruct*)cHandle ;
 
    HANDLE_CHECK( cHandle, connection, SDB_HANDLE_TYPE_CONNECTION ) ;
-   if ( handle )
+   if ( !handle )
    {
       rc = SDB_INVALIDARG ; 
       goto error ;
