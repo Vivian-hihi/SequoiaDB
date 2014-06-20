@@ -16,7 +16,6 @@
 
 *******************************************************************************/
 #include "util.hpp"
-#include "pycollection.hpp"
 #include "client.hpp"
 
 using namespace sdbclient ;
