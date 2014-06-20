@@ -46,19 +46,25 @@
 #define PD_DFT_DIAGLOG              "sdbdiag.log"
 #define PD_FMP_DIAGLOG              "fmpdiag.log"
 
+#define PD_LOG_STRINGMAX            ( 4096 )
+
 #ifdef _DEBUG
-#define SDB_ASSERT(cond,str)     {if(!(cond)) {pdassert(str,__FUNC__,__FILE__,__LINE__);}}
-#define SDB_CHECK(cond,str)      {if(!(cond)) {pdcheck(str,__FUNC__,__FILE__,__LINE__);}}
+#define SDB_ASSERT(cond,str)  \
+   do { \
+      if( !(cond) ) { pdassert(str,__FUNC__,__FILE__,__LINE__) ; } \
+      } while ( 0 ) ;
 #else
-#define SDB_ASSERT(cond,str)     {if(cond){}}
-#define SDB_CHECK(cond,str)      {if(cond){}}
-#endif
+#define SDB_ASSERT(cond,str)  (cond) ;
+#endif // _DEBUG
 
 #define SDB_VALIDATE_GOTOERROR(cond, ret, str) \
-   {if(!(cond)) { pdLog(PDERROR, __FUNC__, __FILE__, __LINE__, str); \
-   rc=ret; goto error; }}
-
-#define PD_LOG_STRINGMAX 4096
+   do { \
+      if( !(cond) ) { \
+         pdLog(PDERROR, __FUNC__, __FILE__, __LINE__, str) ; \
+         rc=ret ; \
+         goto error ; \
+         } \
+      } while ( 0 )
 
 #define PD_LOG(level, fmt, ...) \
    do { \
@@ -161,3 +167,4 @@ void pdLog( PDLEVEL level, const CHAR* func, const CHAR* file,
             UINT32 line, std::string message ) ;
 
 #endif // PD_HPP_
+
