@@ -626,7 +626,7 @@ namespace engine
 
       cb = SDB_OSS_NEW pmdEDUCB ( this, type ) ;
       SDB_VALIDATE_GOTOERROR ( cb, SDB_OOM,
-               "Out of memory to create agent control block" )
+               "Out of memory to create agent control block" ) ;
       // set to creating status
       cb->setStatus ( PMD_EDU_CREATING ) ;
 

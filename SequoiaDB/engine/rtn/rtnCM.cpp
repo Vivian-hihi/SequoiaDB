@@ -215,10 +215,12 @@ namespace CLSMGR
          // main thread only accept, it never recv or send, so no need timeout
          ossSocket sock ( port ) ;
          rc = sock.initSocket () ;
-         SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc, "Failed initialize socket" ) ;
+         SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc,
+                                  "Failed initialize socket" ) ;
 
          rc = sock.bind_listen ();
-         SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc, "Failed to bind/listen socket" ) ;
+         SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc,
+                                  "Failed to bind/listen socket" ) ;
 
          while ( TRUE )
          {

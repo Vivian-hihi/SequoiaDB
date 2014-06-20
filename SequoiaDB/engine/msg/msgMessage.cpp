@@ -182,7 +182,7 @@ INT32 msgExtractUpdate ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
    PD_TRACE1 ( SDB_MSGEXTRACTUP, PD_PACK_STRING(*ppCollectionName) );
    SDB_VALIDATE_GOTOERROR ( (SINT32)ossStrlen ( *ppCollectionName ) ==
                             pUpdate->nameLength, SDB_INVALIDARG,
-                            "Invalid name length" )
+                            "Invalid name length" ) ;
    // get the offset for the first BSONObj
    offset = ossRoundUpToMultipleX ( offsetof(MsgOpUpdate, name) +
                                     pUpdate->nameLength + 1, 4 ) ;
@@ -442,7 +442,7 @@ INT32 msgExtractInsert ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
    *ppCollectionName = pInsert->name ;
    SDB_VALIDATE_GOTOERROR ( (SINT32)ossStrlen ( *ppCollectionName ) ==
                             pInsert->nameLength, SDB_INVALIDARG,
-                            "Invalid name length" )
+                            "Invalid name length" ) ;
    // get the offset for the first BSONObj
    offset = ossRoundUpToMultipleX ( offsetof(MsgOpInsert, name) +
                                     pInsert->nameLength + 1, 4 ) ;
@@ -610,7 +610,7 @@ INT32 msgExtractQuery  ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                PD_PACK_LONG(pQuery->numToReturn) );
    SDB_VALIDATE_GOTOERROR ( (SINT32)ossStrlen ( pQuery->name ) ==
                             pQuery->nameLength, SDB_INVALIDARG,
-                            "Invalid name length" )
+                            "Invalid name length" ) ;
    // get the offset for the first BSONObj
    offset = ossAlign4 ( (UINT32)(offsetof(MsgOpQuery, name) +
                                  pQuery->nameLength + 1) ) ;
@@ -865,7 +865,7 @@ INT32 msgExtractDelete ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
    PD_TRACE1 ( SDB_MSGEXTRACTDEL, PD_PACK_STRING(*ppCollectionName) );
    SDB_VALIDATE_GOTOERROR ( (SINT32)ossStrlen ( *ppCollectionName ) ==
                             pDelete->nameLength, SDB_INVALIDARG,
-                            "Invalid name length" )
+                            "Invalid name length" ) ;
    // get the offset for the first BSONObj
    offset = ossRoundUpToMultipleX ( offsetof(MsgOpDelete, name) +
                                     pDelete->nameLength + 1, 4 ) ;

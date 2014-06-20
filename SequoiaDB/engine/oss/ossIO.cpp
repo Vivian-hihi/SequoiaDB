@@ -462,7 +462,7 @@ INT32 ossMkdir ( const CHAR* pPathName, UINT32 iPermission )
       else
       {
          SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                                  "Failed to create_directory(dirpath)" )
+                                  "Failed to create_directory(dirpath)" ) ;
       }
    }
    catch ( fs::filesystem_error& e )
@@ -530,7 +530,7 @@ INT32 ossDelete ( const CHAR *pPathName )
          else
          {
             SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                                     "Failed to remove_all(file)" )
+                                     "Failed to remove_all(file)" ) ;
          }
       }
       else if (is_directory( pathName ) )      // is a directory
@@ -542,13 +542,13 @@ INT32 ossDelete ( const CHAR *pPathName )
          else
          {
             SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                                        "Failed to remove_all(dir)" )
+                                     "Failed to remove_all(dir)" ) ;
          }
       }
       else
       {
            SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALID_FILE_TYPE,
-                                     "Invalid file type" )
+                                    "Invalid file type" ) ;
       }
    }
    catch ( std::exception &e )
@@ -653,7 +653,7 @@ INT32 ossRead( OSSFILE* pFile,
    if ( 0 >= iLenToRead )
    {
        SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDSIZE,
-                                "Invalid iLenToRead" )
+                                "Invalid iLenToRead" ) ;
    }
 #if defined (_WINDOWS)
    err = ReadFile( (HANDLE)pFile->hFile,
@@ -772,7 +772,7 @@ INT32 ossWrite( OSSFILE  *pFile,
    if ( 0 > iLenToWrite )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDSIZE,
-                               "Invalid iLenToWrite" )
+                               "Invalid iLenToWrite" ) ;
    }
 #if defined (_WINDOWS)
    SDB_ASSERT ( INVALID_HANDLE_VALUE != pFile->hFile,
@@ -973,7 +973,7 @@ INT32 ossSeekAndRead( OSSFILE   *pFile,
    if ( ( 0 > offset ) || ( 0 > iLenToRead ) )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDSIZE,
-                               "Failed to SetFilePointer()" )
+                               "Failed to SetFilePointer()" ) ;
    }
 #if defined (_WINDOWS)
    {
@@ -989,7 +989,7 @@ INT32 ossSeekAndRead( OSSFILE   *pFile,
            NO_ERROR != ossGetLastError () )
       {
          SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                                  "Failed to SetFilePointer()" )
+                                  "Failed to SetFilePointer()" ) ;
       }
 
       if ( SDB_OK == rc )
@@ -1120,7 +1120,7 @@ INT32 ossSeekAndWrite ( OSSFILE    *pFile,
    if ( (0 > offset) || (0 > iLenToWrite) )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDSIZE,
-                               "Invalid parameter, offset or iLenToWrite" )
+                               "Invalid parameter, offset or iLenToWrite" ) ;
    }
 
 #if defined (_WINDOWS)
@@ -1136,7 +1136,7 @@ INT32 ossSeekAndWrite ( OSSFILE    *pFile,
            NO_ERROR != ossGetLastError () )
       {
          SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                                  "Failed to SetFilePointer()" )
+                                  "Failed to SetFilePointer()" ) ;
       }
       if ( 0 == rc )
       {
@@ -1242,7 +1242,7 @@ INT32 ossFsync( OSSFILE* pFile )
    if ( !fOk )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                               "Failed to FlushFileBuffers()" )
+                               "Failed to FlushFileBuffers()" ) ;
    }
 done :
    PD_TRACE_EXITRC ( SDB_OSSFSYNC, rc );
@@ -1310,7 +1310,7 @@ INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
    if ( 0 == ossStrncmp ( SDB_DEV_NULL, pPath, ossStrlen(SDB_DEV_NULL) ) )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDSIZE,
-                               "Invalid pPath, /dev/null" )
+                               "Invalid pPath, /dev/null" ) ;
    }
 #endif
 
@@ -1326,7 +1326,7 @@ INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
              pPath, err ) ;
 
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDARG,
-                               "Failed to MultiByteToWideChar()" )
+                               "Failed to MultiByteToWideChar()" ) ;
    }
 
    // if file doesn't exist , it goes to error
@@ -1334,7 +1334,7 @@ INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
                         && ERROR_FILE_NOT_FOUND ==  ossGetLastError () )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_FNE,
-                               "File doesn't exist" )
+                               "File doesn't exist" ) ;
    }
 
    dwAttrs = GetFileAttributes( FileNameUnicode );
@@ -1355,7 +1355,7 @@ INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
              FileNameUnicode, dwAttrs, err ) ;
 
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                               "Failed to GetFileAttributes()" )
+                               "Failed to GetFileAttributes()" ) ;
    }
 
 #elif defined (_LINUX)
@@ -1368,7 +1368,7 @@ INT32 ossGetPathType ( const CHAR  *pPath, SDB_OSS_FILETYPE *pFileType )
              pPath, err ) ;
 
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDARG,
-                               "Failed to stat()" )
+                               "Failed to stat()" ) ;
    }
    else
    {
@@ -1456,7 +1456,7 @@ INT32 ossGetFileSizeByName ( const CHAR* pFileName, INT64 *pFileSize )
              "Failed to convert  file name to unicode: %s, Error: %d",
              pFileName, err ) ;
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_INVALIDARG,
-                               "Failed to MultiByteToWideChar()" )
+                               "Failed to MultiByteToWideChar()" ) ;
    }
 
    // if file doesn't exist , it goes to error
@@ -1464,7 +1464,7 @@ INT32 ossGetFileSizeByName ( const CHAR* pFileName, INT64 *pFileSize )
                         && ERROR_FILE_NOT_FOUND ==  ossGetLastError () )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_FNE,
-                               "File doesn't exist" )
+                               "File doesn't exist" ) ;
    }
 
    fOk = GetFileAttributesEx( FileNameUnicode,
@@ -1472,7 +1472,7 @@ INT32 ossGetFileSizeByName ( const CHAR* pFileName, INT64 *pFileSize )
                               (void*)&fileInfo ) ;
 
    SDB_VALIDATE_GOTOERROR ( fOk, SDB_IO,
-                            "Failed to GetFileAttributesEx()" )
+                            "Failed to GetFileAttributesEx()" ) ;
 
    // get the sum of file size
    (*pFileSize) = ( (INT64)fileInfo.nFileSizeHigh << 32 ) +
@@ -1555,7 +1555,7 @@ INT32 ossGetFileSize ( OSSFILE *pFile, INT64 *pfsize )
    if ( !GetFileSizeEx ( pFile->hFile, &li ) )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_IO,
-                               "Failed to GetFileSizeEx()" )
+                               "Failed to GetFileSizeEx()" ) ;
    }
    *pfsize = li.QuadPart ;
 done:
@@ -1690,7 +1690,7 @@ INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
    // do NOT return in middle of function, always jump to error and done to
    // perform final clean up
    SDB_VALIDATE_GOTOERROR ( SDB_OK == rc, rc,
-                            "Failed to seek to end of file" )
+                            "Failed to seek to end of file" ) ;
 
    // OSS_EXTEND_DELTA is for local only, let's def and undef
 #ifdef  OSS_EXTEND_DELTA
@@ -1704,7 +1704,7 @@ INT32 ossExtendFile ( OSSFILE *pFile, const INT64 incrementSize )
 
    // always check allocation result
    SDB_VALIDATE_GOTOERROR ( pBuffer, SDB_OOM,
-                            "Failed to allocate memory" )
+                            "Failed to allocate memory" ) ;
 
    // do the main loop for extend
    for ( INT32 i = 0; i < loop ; i++ )
@@ -1878,7 +1878,7 @@ INT32 ossGetFSType ( const CHAR  *pFileName, OSS_FS_TYPE  *ossFSType )
                         && ERROR_FILE_NOT_FOUND ==  ossGetLastError () )
    {
       SDB_VALIDATE_GOTOERROR ( FALSE, SDB_FNE,
-                               "File doesn't exist" )
+                               "File doesn't exist" ) ;
    }
 
    err = GetVolumeInformation( FileNameUnicode,
