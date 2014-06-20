@@ -130,7 +130,7 @@ class collection(object):
 
    def query(self, condition   = static_object, selected = static_object,
                    order_by    = static_object, hint     = static_object,
-                   num_to_skip = 0, num_to_return = -1):
+                   num_to_skip = 0L, num_to_return = -1L):
       bson_condition = None
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
