@@ -27,10 +27,8 @@ static PYOBJECT *create_cl( PYOBJECT *self, PYOBJECT *args )
    if ( NULL == cl )
    {
       return NULL ;
-      goto done ;
    }
 
-done:
    return MAKE_PYOBJECT( cl ) ;
 }
 

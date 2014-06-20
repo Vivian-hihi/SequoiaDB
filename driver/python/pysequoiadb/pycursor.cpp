@@ -34,7 +34,6 @@ static PYOBJECT *create_cursor( PYOBJECT *self, PYOBJECT *args )
       return NULL ;
    }
 
-done:
    return MAKE_PYOBJECT( cursor ) ;
 }
 

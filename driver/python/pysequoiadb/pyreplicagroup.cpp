@@ -26,18 +26,16 @@ static PYOBJECT *create_replicagroup( PYOBJECT *self, PYOBJECT *args )
    Group *replica_group = NULL;
    if ( !PyArg_ParseTuple(args, "") )
    {
-      goto error ;
+      return NULL ;
    }
    
    NEW_CPPOBJECT( replica_group, Group ) ;
    if ( NULL == replica_group )
    {
-      goto error ;
+      return NULL ;
    }
    
    return MAKE_PYOBJECT( replica_group ) ;
-error :
-   return NULL ;
 }
 
 static PYOBJECT *release_replicagroup( PYOBJECT *self, PYOBJECT *args )

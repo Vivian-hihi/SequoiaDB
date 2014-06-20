@@ -24,18 +24,16 @@ static PYOBJECT *create_node( PYOBJECT *self, PYOBJECT *args )
    sdbNode *node = NULL;
    if ( !PyArg_ParseTuple(args, "") )
    {
-      goto error ;
+      return NULL ;
    }
    
    NEW_CPPOBJECT( node, sdbNode ) ;
    if ( NULL == node )
    {
-      goto error ;
+      return NULL ;
    }
 
    return MAKE_PYOBJECT( node ) ;
-error :
-   return NULL ;
 }
 
 static PYOBJECT *release_node( PYOBJECT *self, PYOBJECT *args )
