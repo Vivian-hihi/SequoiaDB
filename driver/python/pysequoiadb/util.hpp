@@ -50,7 +50,7 @@
 /*
  *@brief     macro to cast C++ object to a python object 
  **/
-#define MAKE_PYOBJECT( cpp_object, py_object )  \
+#define MAKE_PYOBJECT( cpp_object )  \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
    
 
