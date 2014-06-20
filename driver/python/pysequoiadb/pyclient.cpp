@@ -30,6 +30,7 @@ static PYOBJECT *create_client( PYOBJECT *self, PYOBJECT *args )
       return NULL ;
    }
 
+done:
    return MAKE_PYOBJECT( client ) ;
 }
 

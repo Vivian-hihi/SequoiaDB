@@ -21,6 +21,7 @@ except ImportError:
    raise Exception("cannot fine C module file: sdbclient")
 
 import bson
+import pysequoiadb
 from pysequoiadb import ( static_object,
                           default_host,
                           default_port,
@@ -42,62 +43,94 @@ class client(object):
    And you should make sure the instance of it released when you don't use it
    any more.
    """
-   def __init__(self, host = default_host, port = default_port,
-                      user = default_user, psw  = default_psw):
-      # if NULL returned, a SystemError will be raised
-      self._client = sdbclient.create_client()
-      rc = sdbclient.init_connect(self._client, host, port)
-      if rc:
-         sdbclient.disconnect(self._client)
+   def __init__(self, host = default_host, port = default_port):
+
+      try:
+         self._client = sdbclient.create_client()
+         # try to connect with default user and password 
+         rc = sdbclient.init_connect(self._client, host, port)
+         pysequoiadb.check_error(rc)
+         if rc:
+            sdbclient.disconnect(self._client)
+      except SystemError:
+         pysequoiadb.check_error(const.SDM_OOM)
      
    def __del__(self):
+
       if self._client is not None:
-         sdbclient.release_client(self._client)
-      self._client = None
+         rc = sdbclient.release_client(self._client)
+         pysequoiadb.check_error(rc)
+         self._client = None
 
    def __getitem__(self, item_name):
+
       cs = collectionspace()
       rc = sdbclient.get_collection_space(self._client, item_name, cs._cs)
+
+      pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
          cs = None
+
       return rc, cs
 
-   def connect(self, host = default_host, port = default_port,
-                     user = default_user, psw  = default_psw):
-      rc = sdbclient.connect_by_host(self._client, host, port, user, psw)
-      if rc:
-         pass
+   def connect_by_host(self, host = default_host, port = default_port,
+                             user = default_user, psw  = default_psw):
 
-   def connect(self, host, service_name, user = default_user,
-                                         psw  = default_psw):
-      rc = sdbclient.connect_by_service(self._client, host, service_name,
-                                                      user, psw)
+      rc = sdbclient.connect_by_host(self._client, host, port, user, psw)
+      pysequoiadb.check_error(rc)
+
       return rc
 
-   def connect(self, addr, addr_size, user = default_user, psw = default_psw):
+   def connect_by_service(self, host, service_name, user = default_user,
+                                                    psw  = default_psw):
+
+      rc = sdbclient.connect_by_service(self._client, host, service_name,
+                                                      user, psw)
+      pysequoiadb.check_error(rc)
+
+      return rc
+
+   def connect_by_address(self, addr, addr_size, user = default_user,
+                                                 psw = default_psw):
+
       rc = sdbclient.connect_by_address(self._client, addr, addr_size,
                                                       user, psw)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def disconnect(self):
+
       rc = sdbclient.disconnect(self._client)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def is_connected(self):
+
       rc = sdbclient.is_connected(self._client)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def create_user(self, name, psw):
+
       rc = sdbclient.create_user(self._client, name, psw)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def remove_user(self, user, psw):
+
       rc = sdbclient.remove_user(self._client, user, psw)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def get_snapshot(self, snap_type, condition = static_object,
                                      selector  = static_object,
                                      order_by  = static_object):
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -112,19 +145,27 @@ class client(object):
       result = cursor()
       rc = sdbclient.get_snapshot(self._client, result._cursor, snap_type,
                                   bson_condition, bson_selector, bson_order_by)
+      pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def reset_snapshot(self, condition = static_object):
+
+      bson_condition = None
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
+
       rc = sdbclient.reset_snapshot(self._client, bson_condition)
+      pysequoiadb.check_error(rc)
+
       return rc 
 
    def get_list(self, list_type, condition = static_object,
                                  selector  = static_object,
                                  order_by  = static_object):
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -139,104 +180,162 @@ class client(object):
       result = cursor()
       rc = sdbclient.get_list(self._client, result._cursor, list_type,
                               bson_condition, bson_selector, bson_order_by)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def get_collection_space(self, cs_name):
+
       cs = collectionspace()
-      rc = sdbclient.get_collection_space(self._client, cs_name, 
-                                 cs._cs)
+      rc = sdbclient.get_collection_space(self._client, cs_name, cs._cs)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          cs = None
+
       return rc, cs
 
    def create_collection_space(self, cs_name, page_size = 0):
+
       cs = collectionspace()
       rc = sdbclient.create_collection_space(self._client, cs_name,
                                              page_size, cs._cs)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          cs = None
+
       return rc, cs
 
    def drop_collection_space(self, cs_name):
+
       rc = sdbclient.drop_collection_space(self._client, cs_name)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def list_collection_spaces(self):
+
       result = cursor()
       rc = sdbclient.list_collection_spaces(self._client, result._cursor)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def list_replica_groups(self):
+
       result = cursor()
       rc = sdbclient.list_replica_groups(self._client, result._cursor)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def get_replica_group_by_name(self, group_name):
+
       result = replicagroup(self._client)
       rc = sdbclient.get_replica_group_by_name(self._client, group_name,
                                                              result._group)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def get_replica_group_by_id(self, id):
+
       result = replicagroup(self._client)
       rc = sdbclient.get_replica_group_by_id(self._client, id, result._group)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def creat_replica_group(self, group_name):
+
       replica_group = replicagroup(self._client)
       rc = sdbclient.create_replica_group(self._client, group_name,
                                                         replica_group._group)
+      pysequoiadb.check_error(rc)
+
+      if const.SDB_OK != rc:
+         replica_group = None
+
       return rc, replica_group
 
-
    def remove_replica_group(self, group_name):
+
       rc = sdbclient.remove_replica_group(self._client, group_name)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def create_replica_cata_group(self, host, service_name, dbpath, configure):
+
       bson_configure = bson.BSON.encode(configure)
 
       rc = sdbclient.create_replica_cata_group(self._client, host, service_name,
                                                dbpath, bson_configure)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def exec_update(self, sql):
+
       rc = sdbclient.exec_update(self._client, sql)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def exec_sql(self, sql):
+
       result = cursor()
       rc = sdbclient.exec_sql(self._client, sql, result._cursor)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def transaction_begin(self):
+
       rc = sdbclient.transaction_begin(self._client)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def transaction_commit(self):
+
       rc = sdbclient.transaction_commit(self._client)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def transaction_rollback(self):
+
       rc = sdbclient.transaction_rollback(self._client)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def flush_configure(self, options):
-      bson_options = bson.BSON.encode(options)
 
+      bson_options = bson.BSON.encode(options)
       rc = sdbclient.flush_configure(self._client, bson_options)
+      pysequoiadb.check_error(rc)
+
       return rc
 
 #   def crt_js_procedure(self, code)
@@ -245,12 +344,16 @@ class client(object):
 #   def eval_js(self, cursor, code, type, err_msg)
 
    def backup_offline(self, options):
+
       rc = sdbclient.backup_offline(self._client, options)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def list_backup(self, options, condition = static_object,
                                   selector  = static_object,
                                   order_by  = static_object):
+
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -266,12 +369,16 @@ class client(object):
       result = cursor()
       rc = sdbclient.list_backup(self._client, result._cursor, bson_options,
                                  bson_condition, bson_selector, bson_order_by)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+
       return rc, result
 
    def list_task(self, condition = static_object, selector  = static_object,
                        order_by  = static_object, hint      = static_object):
+      
       bson_condition = None
       bson_selector = None
       bson_order_by = None
@@ -289,32 +396,50 @@ class client(object):
       result = cursor()
       rc = sdbclient.list_task(self._client, result._cursor, bson_condition,
                                bson_selector, bson_order_by, bson_hint)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          result = None
+      
       return rc, result
 
    def wait_task(self, task_ids, num):
+
       rc = sdbclient.wait_task(self._client, task_ids, num)
+      pysequoiadb.check_error(rc)
+      
       return rc
 
    def cancel_task(self, task_id, is_async):
+      
       rc = sdbclient.cancel_task(self._client, task_id, is_async)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def set_session_attri(self, options = static_object):
+      
       bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
 
       rc = sdbclient.set_session_attri(self._client, bson_options)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def close_all_cursors(self):
+      
       rc = sdbclient.close_all_cursors(self._client)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def is_valid(self):
+
       rc, valid = sdbclient.is_valid(self._client)
+      pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:
          valid = False
+
       return valid

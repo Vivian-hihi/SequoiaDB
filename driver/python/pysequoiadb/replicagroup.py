@@ -21,6 +21,7 @@ except ImportError:
 
 import bson
 import types
+import pysequoiadb
 
 from pysequoiadb.replicanode import replicanode
 from pysequoiadb.common import const
@@ -31,10 +32,15 @@ class replicagroup(object):
 
    """
    def __init__(self, client):
-      self._group = sdbreplicagroup.create_replicagroup()
+
       self._client = client
+      try:
+         self._group = sdbreplicagroup.create_replicagroup()
+      except SystemError:
+         pysequoiadb.check_error(const.SDM_OOM)
 
    def __del__(self):
+
       if self._group is not None:
          sdbreplicagroup.release_replicagroup(self._group)
          self._group = None
@@ -49,12 +55,15 @@ class replicagroup(object):
        return node number is Node
       """
       if nodestatus not in common.NODE_STATUS.available_options() :
-         return const.INVALIDARG,None
+         return const.INVALIDARG, None
 
-      ret,nodenum = sdbreplicagroup.get_nodenum(self._group, nodestatus)
+      ret, nodenum = sdbreplicagroup.get_nodenum(self._group, nodestatus)
+      pysequoiadb.check_error(ret)
+
       if  const.SDB_OK != ret:
           nodenum = None
-      return ret,nodenum
+
+      return ret, nodenum
 
    def get_detail(self):
       """
@@ -64,11 +73,14 @@ class replicagroup(object):
        retcode other Operation Failure
        return detail is Node
       """
-      ret,bson_string = sdbreplicagroup.get_detail(self._group)
+      ret, bson_string = sdbreplicagroup.get_detail(self._group)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
           detail=None
-      detail,_= bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
-      return ret,detail
+
+      detail, _= bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
+      return ret, detail
 
 
    def get_master(self):
@@ -81,9 +93,12 @@ class replicagroup(object):
       """
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_master(self._group, node._node)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
          node = None
-      return ret,node
+
+      return ret, node
 
    def get_slave(self):
       """
@@ -95,9 +110,12 @@ class replicagroup(object):
       """
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_slave(self._group, node._node)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
          node = None
-      return ret,node
+
+      return ret, node
 
    def get_nodebyendpoint(self, hostname, servicename):
       """
@@ -110,9 +128,12 @@ class replicagroup(object):
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_nodebyendpoint(self._group, node._node,
                                                     hostname, servicename)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
           node = None
-      return ret,node
+
+      return ret, node
 
    def get_nodebyname(self,nodename):
       """
@@ -124,17 +145,26 @@ class replicagroup(object):
       """
       node = replicanode(self._client)
       ret = sdbreplicagroup.get_nodebyname(self._group, node._node, nodename)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
          node = None
-      return ret,node
+
+      return ret, node
 
 
    def create_node(self, hostname, servicename, dbpath, config = None):
+
       if config is None:
          config = {}
+
       if types.DictType != type(config):
          return const.INVALIDARG
-      rc = sdbreplicagroup.create_node(self._group, hostname, servicename, dbpath, config)
+
+      rc = sdbreplicagroup.create_node(self._group, hostname, servicename,
+                                                    dbpath, config)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def remove_node(self, hostname, servicename, config=None):
@@ -148,6 +178,8 @@ class replicagroup(object):
          rc = sdbreplicagroup.remove_node(self._group, hostname, servicename, pybson)
       else:
          rc = sdbreplicagroup.remove_node(self._group, hostname, servicename)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def start(self):
@@ -157,6 +189,7 @@ class replicagroup(object):
        retcode other Operation Failure
       """
       rc = sdbreplicagroup.start(self._group)
+      pysequoiadb.check_error(rc)
       return rc
 
    def stop(self):
@@ -166,6 +199,7 @@ class replicagroup(object):
        retcode other Operation Failure
       """
       rc = sdbreplicagroup.stop(self._group)
+      pysequoiadb.check_error(rc)
       return rc
 
    def is_catalog(self):
@@ -184,7 +218,10 @@ class replicagroup(object):
           iscatalog = True
       else:
           iscatalog = None
-      return rc,iscatalog
+
+      pysequoiadb.check_error(rc)
+
+      return rc, iscatalog
 
 
    if '__main__' == __name__:

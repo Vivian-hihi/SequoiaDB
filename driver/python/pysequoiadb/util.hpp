@@ -19,8 +19,13 @@
 #define _SDB_PYTHON_DRIVER_UTIL_HPP_
 
 #include <Python.h>
-/*
- * some useful macros
+
+#define SDB_OK          0
+#define SDB_OOM         -2 
+#define SDB_INVALIDARGS -6
+ 
+
+/* some useful macros
  **/
 #define PYOBJECT PyObject
 
@@ -40,13 +45,14 @@
       pObject = NULL ;              \
    } 
 
-#define MAKE_PY_NULL \
-   return Py_IncRef( Py_None ), Py_None ;
+#define PY_NULL \
+   Py_IncRef( Py_None ), Py_None ;
 /*
  *@brief     macro to cast C++ object to a python object 
  **/
-#define MAKE_PYOBJECT( cpp_object ) \
+#define MAKE_PYOBJECT( cpp_object, py_object )  \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
+   
 
 #define MAKE_RETURN_INT( ret_value ) \
    ( PyObject * )Py_BuildValue( "i", ret_value )
@@ -118,28 +124,27 @@
       }                                                        \
    }
 
-#define MAKE_PYLIST_TO_VECTOR( py_list, vec_bson )                   \
-do                                                                   \
-{                                                                    \
-   if( !PyList_Check( py_list) )                                     \
-   {                                                                 \
-      rc = SDB_INVALIDARGS ;                                         \
-      goto done ;                                                    \
-   }                                                                 \
-                                                                     \
-   INT32 list_size = PyList_Size( py_list ) ;                        \
-   for ( int idx = 0 ; idx < list_size ; ++idx )                     \
-   {                                                                 \
-      const bson::BSONObj *obj = NULL ;                              \
-      CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ; \
-      vec_bson.push_back( *obj ) ;                                   \
-      DELETE_CPPOBJECT( obj ) ;                                      \
-   }                                                                 \
-}while( FALSE )
+#define MAKE_PYLIST_TO_VECTOR( py_list, vec_bson )                      \
+   do                                                                   \
+   {                                                                    \
+      if( !PyList_Check( py_list) )                                     \
+      {                                                                 \
+         rc = SDB_INVALIDARGS ;                                         \
+         goto done ;                                                    \
+      }                                                                 \
+                                                                        \
+      INT32 list_size = PyList_Size( py_list ) ;                        \
+      for ( int idx = 0 ; idx < list_size ; ++idx )                     \
+      {                                                                 \
+         const bson::BSONObj *obj = NULL ;                              \
+         CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ; \
+         vec_bson.push_back( *obj ) ;                                   \
+         DELETE_CPPOBJECT( obj ) ;                                      \
+      }                                                                 \
+   }while( FALSE ) 
 
-#define SDB_INVALIDARGS -6
-#define SDB_OOM       -2   
 
+///<  macros used in module declaration
 #define DEFINE_MODULE(modulename, methods)   \
 static struct PyModuleDef moduledef = {      \
    PyModuleDef_HEAD_INIT,                    \
@@ -191,6 +196,5 @@ DECLARE_MODULE_FUN( modulename, methods )    \
                                              \
    RETURN ;                                  \
 } 
-
 
 #endif

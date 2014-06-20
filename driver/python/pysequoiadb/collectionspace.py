@@ -19,7 +19,9 @@ try:
    import sdbcs
 except ImportError:
    raise Exception("cannot fine C module file: sdbcs")
+
 import bson
+import pysequoiadb
 from pysequoiadb import ( static_object,
                           default_host,
                           default_port,
@@ -35,27 +37,44 @@ class collectionspace(object):
    """CollectionSpace for SequoiaDB"""
    
    def __init__(self):
-      """'cs' is short for collection space"""
-      self._cs = sdbcs.create_cs()
+
+      #'cs' is short for collection space
+      try:
+         self._cs = sdbcs.create_cs()
+      except SystemError:
+         pysequoiadb.check_error(const.SDM_OOM)
 
    def __del__(self):
+
       if self._cs is not None:
          rc = sdbcs.release_cs(self._cs)
-      self._cs = None
+         pysequoiadb.check_error(rc)
+         self._cs = None
 
    def __getitem__(self, item_name):
+
       cl = collection()
       rc = sdbcs.get_collection(self._cs, item_name, cl._cl)
+      pysequoiadb.check_error(rc)
+
+      if const.SDB_OK != rc:
+         cl = None
+
       return cl
 
    def get_collection(self, cl_name):
+
       cl = collection()
       rc = sdbcs.get_collection(self._cs, cl_name, cl._cl)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          cl = None
+
       return rc, cl
 
    def create_collection(self, cl_name, options = static_object):
+
       bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
@@ -66,14 +85,23 @@ class collectionspace(object):
       else:
          rc = sdbcs.create_collection_use_opt(self._cs, cl_name,
                                               bson_options, cl._cl)
+      pysequoiadb.check_error(rc)
+
       if const.SDB_OK != rc:
          cl = None
+
       return rc, cl
 
    def drop_collection(self, cl_name):
+
       rc = sdbcs.drop_collection(self._cs, cl_name)
+      pysequoiadb.check_error(rc)
+
       return rc
 
    def get_collection_space_name(self):
+
       _, cs_name = sdbcs.get_collection_space_name(self._cs)
+      pysequoiadb.check_error(_)
+
       return cs_name

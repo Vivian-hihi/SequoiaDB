@@ -15,7 +15,8 @@
 """Python Driver for SequoiaDB
 
    All operation need deal with the error code returned first. 
-   ervry error code is not SDB_OK(or 0), it means something error appeared.
+   ervry error code is not SDB_OK(or 0), it means something error has appeared,
+   and user should deal with it according the meaning of error code printed.
 """
 
 default_host = "localhost"
@@ -46,7 +47,12 @@ driver_version = get_version()
 
 from pysequoiadb.client import client
 from pysequoiadb.common import common
+from pysequoiadb.common import const
 from pysequoiadb.error import ( SequoiaDBError,
+                                InvalidParameter,
                                 ConnectError,
-                                OperationError,
                                 OperationError )
+
+def check_error( rc ):
+   if const.SDB_OK != rc:
+      print OperationError("  Error: ", rc)

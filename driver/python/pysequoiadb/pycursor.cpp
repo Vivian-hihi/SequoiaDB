@@ -25,17 +25,17 @@ static PYOBJECT *create_cursor( PYOBJECT *self, PYOBJECT *args )
    sdbCursor *cursor = NULL;
    if ( !PyArg_ParseTuple(args, "") )
    {
-      goto error ;
+      return NULL ;
    }
    
    NEW_CPPOBJECT( cursor, sdbCursor ) ;
    if ( NULL == cursor )
    {
-      goto error ;
+      return NULL ;
    }
+
+done:
    return MAKE_PYOBJECT( cursor ) ;
-error :
-   return NULL;
 }
 
 static PYOBJECT *release_cursor( PYOBJECT *self, PYOBJECT *args )

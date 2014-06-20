@@ -19,6 +19,7 @@ try:
 except ImportError:
    raise Exception("cannot fine C module file: sdbreplicanode")
 
+import pysequoiadb
 from pysequoiadb.common import const
 
 class replicanode(object):
@@ -26,10 +27,15 @@ class replicanode(object):
 
    """
    def __init__(self, client):
-      self._node = sdbreplicanode.create_node()
+
       self._client = client
+      try:
+         self._node = sdbreplicanode.create_node()
+      except SystemError:
+         pysequoiadb.check_error(const.SDB_OK)
 
    def __del__(self):
+
       if self._node is not None:
          sdbreplicanode.release_node(self._node)
          self._node = None
@@ -41,6 +47,7 @@ class replicanode(object):
        retcode other Operation Failure
       """
       ret = sdbreplicanode.connect(self._node, self._client)
+      pysequoiadb.check_error(ret)
       return ret
 
    def get_status(self):
@@ -52,10 +59,13 @@ class replicanode(object):
        retcode other Operation Failure
        return nodestatus is None
       """
-      ret,nodestatus = sdbreplicanode.get_status(self._node)
+      ret, nodestatus = sdbreplicanode.get_status(self._node)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
           nodestatus = None
-      return ret,nodestatus
+
+      return ret, nodestatus
 
    def get_hostname(self):
       """
@@ -66,10 +76,13 @@ class replicanode(object):
        retcode other Operation Failure
        return hostname is None
       """
-      ret,hostname = sdbreplicanode.get_hostname(self._node)
+      ret, hostname = sdbreplicanode.get_hostname(self._node)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
          hostname = None
-      return ret,hostname
+
+      return ret, hostname
 
    def get_servicename(self):
       """
@@ -80,9 +93,12 @@ class replicanode(object):
        retcode other Operation Failure
        return servicename is None
       """
-      ret,servicename = sdbreplicanode.get_servicename(self._node)
+      ret, servicename = sdbreplicanode.get_servicename(self._node)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
          servicename = None
+
       return ret,servicename
 
    def get_nodename(self):
@@ -94,10 +110,13 @@ class replicanode(object):
        retcode other Operation Failure
        return nodename is None
       """
-      ret,nodename = sdbreplicanode.get_nodename(self._node)
+      ret, nodename = sdbreplicanode.get_nodename(self._node)
+      pysequoiadb.check_error(ret)
+
       if const.SDB_OK != ret:
          nodename = None
-      return ret,nodename
+
+      return ret, nodename
 
    def stop(self):
       """
@@ -106,6 +125,7 @@ class replicanode(object):
        retcode other Operation Failure
       """
       ret = sdbreplicanode.stop(self._node)
+      pysequoiadb.check_error(ret)
       return ret
 
    def start(self):
@@ -115,6 +135,7 @@ class replicanode(object):
        retcode other Operation Failure
       """
       ret = sdbreplicanode.start(self._node)
+      pysequoiadb.check_error(ret)
       return ret
 
 

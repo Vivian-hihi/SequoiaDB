@@ -31,6 +31,7 @@ static PYOBJECT *create_cs( PYOBJECT *self, PYOBJECT *args )
       return NULL ;
    }
 
+done:
    return MAKE_PYOBJECT( cs ) ;
 }
 

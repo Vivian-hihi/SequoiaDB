@@ -18,10 +18,10 @@ from pysequoiadb.enum import enum
 
 NODE_STATUS = enum(((0,"ALL"),(1,"ACTIVE"),(2,"INACTIVE"),(3,"UNKNOWN")))
 const.SDB_OK = 0
-const.errmaps = dict()
+const.SDM_OOM = -2
 const.INVALIDARG = -6
 const.SDB_DMS_EOC = -29
-
+const.errmaps = dict()
 
 init=False
 
@@ -39,7 +39,8 @@ def init_errmaps():
    pairs = config.items("error")
    for pair in pairs:
       const.errmaps[ string.atoi(pair[0]) ] = pair[1];
-      print const.errmaps.keys()
+#      print const.errmaps.keys()
+
 if False == init:
    init_errmaps()
    init = True

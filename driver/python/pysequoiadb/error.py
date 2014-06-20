@@ -1,5 +1,6 @@
 
 import pysequoiadb
+from pysequoiadb import common
 from pysequoiadb.common import const
 class SequoiaDBError(Exception):
    """Base Exception of Python Driver for SequoiaDB
@@ -12,18 +13,16 @@ class ConnectError(SequoiaDBError):
    """
 
 class OperationError(SequoiaDBError):
-   """Raised when fail to do operation(s)
+   """Raised when failed to do operation(s)
    """
-   def get_info(self, code):
-      return const.errmaps.get(code,"Unknown")
 
    def __init__(self, errmsg, code):
       self.errmsg = errmsg
       self.__code = code
-      self.__details = self.get_info(code)
+      self.__details = common.get_info(code)
 
    def __str__(self):
-      return repr(self.errmsg + self.details)
+      return repr( self.errmsg + str(self.__code) + '----->' + self.details() )
 
    @property
    def code(self):
@@ -37,12 +36,12 @@ class OperationError(SequoiaDBError):
 
 
 class InvalidParameter(SequoiaDBError):
-   """Raised when an invalid name is used.
+   """Raised when an invalid parameter is used.
    """
 
 if __name__ == "__main__":
    def test():
-      raise OperationError("sdb error msg: ", -2)
+      raise OperationError(" Error: ", -2)
    try:
       test()
    except OperationError,data:
