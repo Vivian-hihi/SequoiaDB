@@ -1444,8 +1444,8 @@ namespace engine
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDCRTINX ) ;
       INT32 rc = SDB_OK ;
 
-      SDB_ASSERT( 3 == root->children.size() ;
-                  || 4 == root->children.size(), "impossible" )
+      SDB_ASSERT( 3 == root->children.size()
+                  || 4 == root->children.size(), "impossible" ) ;
       node->_commandType = SQL_GRAMMAR::CRTINDEX ;
 
       SQL_CON_ITR itr = root->children.begin() ;
@@ -1549,8 +1549,8 @@ namespace engine
    {
       PD_TRACE_ENTRY( SDB__QGMBUILDER__BUILDCRTCL ) ;
       INT32 rc = SDB_OK ;
-      SDB_ASSERT( 0 == root->children.size();
-                  || 2 == root->children.size(), "impossible" )
+      SDB_ASSERT( 0 == root->children.size()
+                  || 2 == root->children.size(), "impossible" ) ;
       node->_commandType = SQL_GRAMMAR::CRTCL ;
       if ( 0 == root->children.size() )
       {
