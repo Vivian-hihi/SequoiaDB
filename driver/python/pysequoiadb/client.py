@@ -95,6 +95,10 @@ class client(object):
    def get_snapshot(self, snap_type, condition = static_object,
                                      selector  = static_object,
                                      order_by  = static_object):
+      bson_condition = None
+      bson_selector = None
+      bson_order_by = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
@@ -118,12 +122,17 @@ class client(object):
    def get_list(self, list_type, condition = static_object,
                                  selector  = static_object,
                                  order_by  = static_object):
+      bson_condition = None
+      bson_selector = None
+      bson_order_by = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
          bson_selector = bson.BSON.encode(selector)
       if condition is not None:
          bson_order_by = bson.BSON.encode(order_by)
+
       result = cursor()
       rc = sdbclient.get_list(self._client, result._cursor, list_type,
                               bson_condition, bson_selector, bson_order_by)
@@ -193,6 +202,7 @@ class client(object):
 
    def create_replica_cata_group(self, host, service_name, dbpath, configure):
       bson_configure = bson.BSON.encode(configure)
+
       rc = sdbclient.create_replica_cata_group(self._client, host, service_name,
                                                dbpath, bson_configure)
       return rc
@@ -221,8 +231,7 @@ class client(object):
       return rc
 
    def flush_configure(self, options):
-      if options is not None:
-         bson_options = bson.BSON.encode(options)
+      bson_options = bson.BSON.encode(options)
 
       rc = sdbclient.flush_configure(self._client, bson_options)
       return rc
@@ -239,6 +248,10 @@ class client(object):
    def list_backup(self, options, condition = static_object,
                                   selector  = static_object,
                                   order_by  = static_object):
+      bson_condition = None
+      bson_selector = None
+      bson_order_by = None
+
       bson_options = bson.BSON.encode(options)
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
@@ -246,6 +259,7 @@ class client(object):
          bson_selector = bson.BSON.encode(selector)
       if condition is not None:
          bson_order_by = bson.BSON.encode(order_by)
+
       result = cursor()
       rc = sdbclient.list_backup(self._client, result._cursor, bson_options,
                                  bson_condition, bson_selector, bson_order_by)
@@ -255,6 +269,11 @@ class client(object):
 
    def list_task(self, condition = static_object, selector  = static_object,
                        order_by  = static_object, hint      = static_object):
+      bson_condition = None
+      bson_selector = None
+      bson_order_by = None
+      bson_hint = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if selector is not None:
@@ -263,6 +282,7 @@ class client(object):
          bson_order_by = bson.BSON.encode(order_by)
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
+
       result = cursor()
       rc = sdbclient.list_task(self._client, result._cursor, bson_condition,
                                bson_selector, bson_order_by, bson_hint)
@@ -279,6 +299,7 @@ class client(object):
       return rc
 
    def set_session_attri(self, options = static_object):
+      bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
 

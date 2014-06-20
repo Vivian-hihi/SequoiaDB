@@ -40,6 +40,7 @@ class collection(object):
       self._cl = None
 
    def get_count(self, condition = static_object):
+      bson_condition = None
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
 
@@ -50,8 +51,9 @@ class collection(object):
 
    def split(self, source_group_name, target_group_name, split_condition,
                                           split_end_condition = static_object):
-      if split_condition is not None:
-         bson_split_condition = bson.BSON.encode(split_condition)
+      bson_split_condition = bson.BSON.encode(split_condition)
+      bson_end_condition = None
+
       if split_end_condition is not None:
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
@@ -68,6 +70,7 @@ class collection(object):
                            split_end_condition = static_object):
 
       bson_split_condition = bson.BSON.encode(split_condition)
+      bson_end_condition = None
       if split_end_condition is not None:
          bson_end_condition = bson.BSON.encode(split_end_condition)
 
@@ -102,6 +105,9 @@ class collection(object):
 
    def update(self, rule, condition = static_object, hint = static_object):
       bson_rule = bson.BSON.encode(rule)
+      bson_condition = None
+      bson_hint = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if hint is not None:
@@ -112,19 +118,26 @@ class collection(object):
 
    def upsert(self, rule, condition = static_object, hint = static_object):
       bson_rule = bson.BSON.encode(rule)
+      bson_condition = None
+      bson_hint = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
+
       rc = sdbcl.upsert(self._cl, bson_rule, bson_condition, bson_hint)
       return rc
 
    def delete(self, condition = static_object, hint = static_object):
-      bson_rule = bson.BSON.encode(rule)
+      bson_condition = None
+      bson_hint = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
+
       rc = sdbcl.delete(self._cl, bson_condition, bson_hint)
       return rc
 
@@ -132,17 +145,19 @@ class collection(object):
                    order_by    = static_object, hint     = static_object,
                    num_to_skip = 0L, num_to_return = -1L):
       bson_condition = None
+      bson_selected = None
+      bson_order_by = None
+      bson_hint = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
-      bson_selected = None
       if selected is not None:
          bson_selected = bson.BSON.encode(selected)
-      bson_order_by = None
       if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
-      bson_hint = None
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
+
       result = cursor()
       rc = sdbcl.query(self._cl, result._cursor, bson_condition, bson_selected,
                                                  bson_order_by, bson_hint,
@@ -194,12 +209,17 @@ class collection(object):
                             order_by  = static_object,
                             hint      = static_object,
                             num_to_skip = 0, num_to_return = -1):
+      bson_condition = None
+      bson_order_by = None
+      bson_hint = None
+
       if condition is not None:
          bson_condition = bson.BSON.encode(condition)
       if order_by is not None:
          bson_order_by = bson.BSON.encode(order_by)
       if hint is not None:
          bson_hint = bson.BSON.encode(hint)
+
       result = cursor()
       rc = sdbcl.get_query_meta(self._cl, result._cursor, condition,
                                 order_by, hint, num_to_skip, num_to_return)
@@ -208,8 +228,10 @@ class collection(object):
       return rc, result
 
    def attach_collection(self, cl_full_name, options):
+      bson_options = None
       if options is not None:
          bson_options = bson.BSON.encode(options)
+
       rc = sdbcl.attach_collection(self._cl, cl_full_name, bson_options)
       return rc
 

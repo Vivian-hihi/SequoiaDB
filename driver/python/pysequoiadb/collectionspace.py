@@ -55,6 +55,8 @@ class collectionspace(object):
    def create_collection(self, cl_name, options = static_object):
       if options is not None:
          bson_options = bson.BSON.encode(options)
+      else:
+         bson_options = None
       cl = collection()
       if options is None:
          rc = sdbcs.create_collection(self._cs, cl_name, cl._cl)
