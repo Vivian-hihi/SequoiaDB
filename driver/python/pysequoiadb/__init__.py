@@ -43,5 +43,4 @@ def get_version():
 driver_version = get_version()
 """Current version of python driver for SequoiaDB."""
 
-from pysequoiadb import client
-from pysequoiadb import common
+from pysequoiadb.client import client
