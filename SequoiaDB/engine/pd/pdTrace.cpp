@@ -53,7 +53,7 @@ ossSpinXLatch gPDTraceMutex;
 // we want
 static BOOLEAN pdTraceMask ( UINT64 funcCode, pdTraceCB *cb )
 {
-   SDB_ASSERT ( cb, "trace cb can't be NULL" )
+   SDB_ASSERT ( cb, "trace cb can't be NULL" ) ;
    UINT32 component = (UINT32)(funcCode>>32) ;
    return ( component&cb->_componentMask ) != 0 ;
 }
@@ -215,9 +215,9 @@ void* _pdTraceCB::fillIn ( void *pPos, const void *pInput, INT32 size )
    CHAR *pRetAddr        = NULL ;
    ossValuePtr posStart  = 0 ;
    ossValuePtr posEnd    = 0 ;
-   SDB_ASSERT ( pPos && pInput, "pos and input can't be NULL" )
+   SDB_ASSERT ( pPos && pInput, "pos and input can't be NULL" ) ;
    // target offset must be in valid range
-   SDB_ASSERT ( pPos >= _pBuffer, "pos can't be smaller than buffer" )
+   SDB_ASSERT ( pPos >= _pBuffer, "pos can't be smaller than buffer" ) ;
    // if we are asked to write too big data, let's just skip it
    if ( size < 0 || size >= TRACE_RECORD_MAX_SIZE )
    {
@@ -445,7 +445,7 @@ static INT32 pdTraceFormatProcessSlot ( ossPrimitiveFileOp *file,
    INT32 rc = SDB_OK ;
    ossPrimitiveFileOp::offsetType offset ;
    CHAR tempBuf [ TRACE_RECORD_MAX_SIZE ] ;
-   SDB_ASSERT ( file, "file can't be NULL" )
+   SDB_ASSERT ( file, "file can't be NULL" ) ;
    INT32 readSize = 0 ;
    INT32 numSlots = 0 ;
    pdTraceRecord *record = NULL ;
@@ -493,7 +493,7 @@ static INT32 pdTraceFormatProcessSlot ( ossPrimitiveFileOp *file,
          gTraceFormatSystem._threadLists[tid] = formatSession ;
          it = gTraceFormatSystem._threadLists.find ( tid ) ;
          SDB_ASSERT ( it != gTraceFormatSystem._threadLists.end(),
-                      "we must be able to find the session" )
+                      "we must be able to find the session" ) ;
       }
       (*it).second->_sequenceNum.push_back ( sequenceNum ) ;
       (*it).second->_slotNum.push_back ( slotRead ) ;
@@ -502,7 +502,7 @@ static INT32 pdTraceFormatProcessSlot ( ossPrimitiveFileOp *file,
    }
    else if ( formatType == PD_TRACE_FORMAT_TYPE_FLOW )
    {
-      SDB_ASSERT ( out, "out can't be NULL" )
+      SDB_ASSERT ( out, "out can't be NULL" ) ;
       CHAR timestamp[64] ;
       // for flow type, let's dump the record
       // first let's read the entire record
@@ -563,7 +563,7 @@ static INT32 pdTraceFormatProcessSlot ( ossPrimitiveFileOp *file,
       {
          SDB_ASSERT ( sizeof(pdTraceRecord) + sizeof(pdTraceArgument) +
                       sizeof(UINT32) <= TRACE_SLOT_SIZE,
-                      "trace header with single rc is greater than slot size" )
+                      "trace header with single rc is greater than slot size" ) ;
          rc = out->fWrite ( " Exit" ) ;
          PD_CHECK ( 0 == rc, SDB_IO, error, PDERROR,
                     "Failed to write into trace file, errno = %d", rc ) ;
@@ -594,7 +594,7 @@ static INT32 pdTraceFormatProcessSlot ( ossPrimitiveFileOp *file,
    }
    else if ( formatType == PD_TRACE_FORMAT_TYPE_FORMAT )
    {
-      SDB_ASSERT ( out, "out can't be NULL" )
+      SDB_ASSERT ( out, "out can't be NULL" ) ;
       CHAR timestamp[64] ;
       CHAR *pArgs ;
       for ( INT32 i = 1; i < numSlots; ++i )
