@@ -124,7 +124,7 @@ namespace engine
       _dmsSpaceManagementExtent()
       {
          SDB_ASSERT( DMS_SME_LEN == sizeof( _dmsSpaceManagementExtent ),
-                     "SME size error" )
+                     "SME size error" ) ;
          ossMemset( this, DMS_SME_FREE, sizeof( _dmsSpaceManagementExtent ) ) ;
       }
       CHAR getBitMask( UINT32 bitNum ) const

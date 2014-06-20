@@ -792,7 +792,7 @@ namespace engine
                                                     UINT32 fullNameLen )
    {
       SDB_ASSERT( fullNameLen > DMS_COLLECTION_FULL_NAME_SZ,
-                  "Collection full name len error" )
+                  "Collection full name len error" ) ;
       ossStrncat( clFullName, getSuName(), DMS_COLLECTION_SPACE_NAME_SZ ) ;
       ossStrncat( clFullName, ".", 1 ) ;
       ossStrncat( clFullName, clName, DMS_COLLECTION_NAME_SZ ) ;

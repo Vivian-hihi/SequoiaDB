@@ -356,7 +356,7 @@ namespace engine
       void setType ( EDU_TYPES type )
       {
          SDB_ASSERT ( PMD_EDU_IDLE == _status,
-                      "Type can't be changed during active" )
+                      "Type can't be changed during active" ) ;
          _eduType = type ;
       }
       const char *getName ()
