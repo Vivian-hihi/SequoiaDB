@@ -288,7 +288,7 @@ namespace engine
             }
          }
 
-         SDB_ASSERT( NULL == _buildF.next, "impossible" )
+         SDB_ASSERT( NULL == _buildF.next, "impossible" ) ;
          rc = _hashTbl.push( _buildKey.c_str(), _buildF.obj ) ;
          if ( SDB_HIT_HIGH_WATERMARK == rc )
          {
