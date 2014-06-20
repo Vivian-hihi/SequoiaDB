@@ -232,9 +232,9 @@ namespace engine
       }
       _keyData = (const UINT8*) _b.buf() ;
       SDB_ASSERT ( _b.len() == dataSize(),
-                   "data size must be same as builder" )
+                   "data size must be same as builder" ) ;
       SDB_ASSERT ( (*_keyData & cNOTUSED)==0,
-                   "data type is invalid" )
+                   "data type is invalid" ) ;
    }
    // convert from existing key to owned key
    _ixmKeyOwned::_ixmKeyOwned ( const _ixmKey &r )
@@ -242,9 +242,9 @@ namespace engine
       _b.appendBuf ( r.data(), r.dataSize() ) ;
       _keyData = (const UINT8*) _b.buf() ;
       SDB_ASSERT ( _b.len() == dataSize(),
-                   "builder length must be same as data length" )
+                   "builder length must be same as data length" ) ;
       SDB_ASSERT ( (*_keyData & cNOTUSED) == 0,
-                   "Flag is not correct" )
+                   "Flag is not correct" ) ;
    }
 
    // check whether all keys are undefined type

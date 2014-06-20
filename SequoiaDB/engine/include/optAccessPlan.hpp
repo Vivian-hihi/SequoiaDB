@@ -200,21 +200,21 @@ namespace engine
       mthMatcher &getMatcher()
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          return _matcher ;
       }
 
       rtnPredicateList *getPredList ()
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          return _predList ;
       }
 
       INT32 getDirection ()
       {
          SDB_ASSERT ( _isInitialized,
-                      "optAccessPlan must be optimized before start using" )
+                      "optAccessPlan must be optimized before start using" ) ;
          return _direction ;
       }
 

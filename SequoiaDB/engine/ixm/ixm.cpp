@@ -158,7 +158,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       SDB_ASSERT ( _isInitialized,
-                   "index details must be initialized first" )
+                   "index details must be initialized first" ) ;
       PD_TRACE_ENTRY ( SDB__IXMINXCB_GETKEY );
       ixmIndexKeyGen keyGen(this) ;
       rc = keyGen.getKeys ( obj, keys ) ;
@@ -179,7 +179,7 @@ namespace engine
    INT32 _ixmIndexCB::keyPatternOffset( const CHAR *key ) const
    {
       SDB_ASSERT ( _isInitialized,
-                   "index details must be initialized first" )
+                   "index details must be initialized first" ) ;
       BSONObjIterator i ( keyPattern() ) ;
       INT32 n = 0 ;
       while ( i.more() )
@@ -196,7 +196,7 @@ namespace engine
    INT32 _ixmIndexCB::allocExtent ( dmsExtentID &extentID )
    {
       SDB_ASSERT ( _isInitialized,
-                   "index details must be initialized first" )
+                   "index details must be initialized first" ) ;
       return _pIndexSu->reserveExtent ( _extent->_mbID, extentID,
                                         _pContext ) ;
    }

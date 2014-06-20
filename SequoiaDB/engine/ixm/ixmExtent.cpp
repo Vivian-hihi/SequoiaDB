@@ -602,7 +602,7 @@ namespace engine
             PD_LOG ( PDERROR, "index extent reorg failed with rc : %d", rc ) ;
             goto error ;
          }
-         SDB_ASSERT ( pos <= getNumKeyNode(), "pos is out of range" )
+         SDB_ASSERT ( pos <= getNumKeyNode(), "pos is out of range" ) ;
          // if we still don't have enough space, let's return error
          if ( bytesNeeded > getFreeSize() )
          {
@@ -677,7 +677,7 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__SPLIT );
       UINT16 splitPos, newPos ;
-      SDB_ASSERT ( indexCB, "index control block can't be NULL" )
+      SDB_ASSERT ( indexCB, "index control block can't be NULL" ) ;
       dmsExtentID newExtentID ;
       const ixmKeyNode *splitKey = NULL ;
       // find the split position
@@ -820,7 +820,7 @@ namespace engine
          // insert into the original page
          if ( pos <= splitPos )
          {
-            SDB_ASSERT ( 0xFFFF != newPos, "Invalid newPos" )
+            SDB_ASSERT ( 0xFFFF != newPos, "Invalid newPos" ) ;
             // insert into newPos since _truncate will call _reorg, which will
             // remove unused keys from original extent, which may change newPos
             rc = insertHere ( newPos, rid, key, order, lchild, rchild,
@@ -1927,7 +1927,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__LOCATE );
-      SDB_ASSERT ( 1 == direction || -1 == direction, "Invalid direction" )
+      SDB_ASSERT ( 1 == direction || -1 == direction, "Invalid direction" ) ;
       UINT16 pos ;
       dmsExtentID childExtent ;
       rc = find ( indexCB, key, rid, order, pos, TRUE, found ) ;
@@ -2290,7 +2290,7 @@ namespace engine
       SINT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__IXMEXT__KEYFIND );
       monAppCB * pMonAppCB = cb ? cb->getMonAppCB() : NULL ;
-      SDB_ASSERT ( l < h, "low must be less than high" )
+      SDB_ASSERT ( l < h, "low must be less than high" ) ;
       DMS_MON_OP_COUNT_INC( pMonAppCB, MON_INDEX_READ, 1 ) ;
       while ( TRUE )
       {
@@ -2371,7 +2371,7 @@ namespace engine
       INT32 result ;
       dmsExtentID childExtentID ;
       SDB_ASSERT ( direction == 1 || direction == -1, "direction must be "
-                   "either 1 or -1" )
+                   "either 1 or -1" ) ;
       // empty root?
       if ( 0 == getNumKeyNode() )
       {

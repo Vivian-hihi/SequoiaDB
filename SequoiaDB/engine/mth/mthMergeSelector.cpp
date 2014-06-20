@@ -183,8 +183,8 @@ namespace engine
       PD_TRACE_ENTRY ( SDB__MTHMRGSEL_LDPAN );
       _selectorPattern = selectorPattern.copy() ;
       BSONObjIterator i(_selectorPattern) ;
-      SDB_ASSERT ( pOuterAlias, "outer alias can't be NULL" )
-      SDB_ASSERT ( pInnerAlias, "inner alias can't be NULL" )
+      SDB_ASSERT ( pOuterAlias, "outer alias can't be NULL" ) ;
+      SDB_ASSERT ( pInnerAlias, "inner alias can't be NULL" ) ;
       _pOuterAlias = pOuterAlias ;
       _pInnerAlias = pInnerAlias ;
       INT32 numEle = 0 ;

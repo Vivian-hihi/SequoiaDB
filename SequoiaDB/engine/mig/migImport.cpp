@@ -270,8 +270,8 @@ INT32 migImport::init ( migImprtArg *pMigArg )
 {
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB__MIGIMPORT__INIT );
-   SDB_ASSERT ( pMigArg, "pMigArg can't be NULL" )
-   SDB_ASSERT ( pMigArg->pFile, "file name can't be NULL" )
+   SDB_ASSERT ( pMigArg, "pMigArg can't be NULL" ) ;
+   SDB_ASSERT ( pMigArg->pFile, "file name can't be NULL" ) ;
    CHAR *pBuffer = NULL ;
    UINT32  startOffset = 0 ;
    UINT32  fieldsSize  = 0 ;

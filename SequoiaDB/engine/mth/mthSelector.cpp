@@ -526,8 +526,8 @@ namespace engine
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHSEL_SELECT );
       SDB_ASSERT(_initialized, "The selector has not been initialized, please "
-                               "call 'loadPattern' before using it" )
-      SDB_ASSERT(target.isEmpty(), "target should be empty")
+                               "call 'loadPattern' before using it" ) ;
+      SDB_ASSERT(target.isEmpty(), "target should be empty") ;
 
       // create a builder with 10% extra space for buffer
       BSONObjBuilder builder ( (INT32)(source.objsize()*1.1) );

@@ -100,7 +100,7 @@ INT32 msgBuildUpdateMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    if ( !hint )
       hint = &emptyObj ;
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
-                selector && updator && hint, "Invalid input" )
+                selector && updator && hint, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    MsgOpUpdate *pUpdate = NULL ;
    INT32 offset         = 0 ;
@@ -172,7 +172,7 @@ INT32 msgExtractUpdate ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppSelector, CHAR **ppUpdator, CHAR **ppHint )
 {
    SDB_ASSERT ( pBuffer && pflag && ppCollectionName && ppSelector &&
-                ppUpdator && ppHint, "Invalid input" )
+                ppUpdator && ppHint, "Invalid input" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTUP );
    INT32 offset = 0 ;
@@ -224,7 +224,7 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           const BSONObj *insertor )
 {
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
-                insertor, "Invalid input" )
+                insertor, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDINSERTMSG );
    PD_TRACE1 ( SDB_MSGBLDINSERTMSG, PD_PACK_STRING(CollectionName) );
@@ -291,7 +291,8 @@ INT32 msgBuildInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           void *pFiller, std::vector< CHAR * > &ObjQueue,
                           netIOVec &ioVec )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName && pFiller, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName && pFiller,
+                "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDINSERTMSG2 );
    PD_TRACE1 ( SDB_MSGBLDINSERTMSG2, PD_PACK_STRING(CollectionName) );
@@ -381,7 +382,7 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                            const BSONObj *insertor )
 {
    SDB_ASSERT ( ppBuffer && bufferSize &&
-                insertor, "Invalid input" )
+                insertor, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGAPDINSERTMSG );
    MsgOpInsert *pInsert = (MsgOpInsert*)(*ppBuffer) ;
@@ -389,7 +390,7 @@ INT32 msgAppendInsertMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    SDB_ASSERT ( pInsert->header.messageLength &&
                 OP_INSERT ==  pInsert->header.opCode &&
                 ossIsAligned4 ( pInsert->header.messageLength ),
-                "Invalid messageLength" )
+                "Invalid messageLength" ) ;
    INT32 offset         = pInsert->header.messageLength ;
    INT32 packetLength   = offset +
                         ossRoundUpToMultipleX( insertor->objsize(), 4 ) ;
@@ -431,7 +432,7 @@ INT32 msgExtractInsert ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppInsertor, INT32 &count )
 {
    SDB_ASSERT ( pBuffer && pflag && ppCollectionName && ppInsertor,
-                "Invalid input" )
+                "Invalid input" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTINSERT );
    INT32 offset = 0 ;
@@ -498,7 +499,7 @@ INT32 msgBuildQueryMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
    if ( !hint )
       hint = &emptyObj ;
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
-                query && fieldSelector && orderBy && hint, "Invalid input" )
+                query && fieldSelector && orderBy && hint, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    MsgOpQuery *pQuery   = NULL ;
    INT32 offset         = 0 ;
@@ -581,7 +582,7 @@ INT32 msgExtractQuery  ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppQuery, CHAR **ppFieldSelector,
                          CHAR **ppOrderBy, CHAR **ppHint )
 {
-   SDB_ASSERT ( pBuffer, "Invalid input" )
+   SDB_ASSERT ( pBuffer, "Invalid input" ) ;
 
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTQUERY );
@@ -701,7 +702,7 @@ INT32 msgBuildGetMoreMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                            SINT32 numToReturn,
                            SINT64 contextID, UINT64 reqID )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
    INT32 rc               = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDGETMOREMSG );
    PD_TRACE2 ( SDB_MSGBLDGETMOREMSG, PD_PACK_INT(numToReturn), 
@@ -746,7 +747,7 @@ INT32 msgExtractGetMore  ( CHAR *pBuffer,
 {
    SDB_ASSERT ( pBuffer &&
                 numToReturn && contextID ,
-                "Invalid input" )
+                "Invalid input" ) ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTGETMORE );
    MsgOpGetMore *pGetMore = (MsgOpGetMore*)pBuffer ;
    *numToReturn = pGetMore->numToReturn ;
@@ -785,7 +786,7 @@ INT32 msgBuildDeleteMsg ( CHAR **ppBuffer, INT32 *bufferSize,
    if ( !hint )
       hint = &emptyObj ;
    SDB_ASSERT ( ppBuffer && bufferSize && CollectionName &&
-                deletor && hint, "Invalid input" )
+                deletor && hint, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    MsgOpDelete *pDelete = NULL ;
    INT32 offset         = 0 ;
@@ -855,7 +856,7 @@ INT32 msgExtractDelete ( CHAR *pBuffer, INT32 *pflag, CHAR **ppCollectionName,
                          CHAR **ppDeletor, CHAR **ppHint )
 {
    SDB_ASSERT ( pBuffer && pflag && ppCollectionName && ppDeletor && ppHint,
-                "Invalid input" )
+                "Invalid input" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTDEL );
    INT32 offset = 0 ;
@@ -906,8 +907,8 @@ INT32 msgBuildKillContextsMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                                UINT64 reqID,
                                SINT32 numContexts, SINT64 *pContextIDs )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize && pContextIDs, "Invalid input" )
-   SDB_ASSERT ( numContexts > 0, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize && pContextIDs, "Invalid input" ) ;
+   SDB_ASSERT ( numContexts > 0, "Invalid input" ) ;
    INT32 rc              = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDKILLCONTXMSG );
    MsgOpKillContexts *pKC = NULL ;
@@ -954,7 +955,7 @@ INT32 msgExtractKillContexts ( CHAR *pBuffer,
                               SINT32 *numContexts, SINT64 **ppContextIDs )
 {
    SDB_ASSERT ( pBuffer && numContexts && ppContextIDs
-                , "Invalid input" )
+                , "Invalid input" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTKILLCONTX );
    MsgOpKillContexts *pKC = (MsgOpKillContexts*)pBuffer ;
@@ -979,7 +980,7 @@ error :
 INT32 msgBuildMsgMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                        UINT64 reqID, CHAR *pMsgStr )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize && pMsgStr, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize && pMsgStr, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDMSGMSG );
    MsgOpMsg *pMsg       = NULL ;
@@ -1022,7 +1023,7 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTMSG, "msgExtractMsg" )
 INT32 msgExtractMsg ( CHAR *pBuffer, CHAR **ppMsgStr )
 {
-   SDB_ASSERT ( pBuffer && ppMsgStr, "Invalid input" )
+   SDB_ASSERT ( pBuffer && ppMsgStr, "Invalid input" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTMSG );
    MsgOpMsg *pMsg = (MsgOpMsg*)pBuffer ;
@@ -1047,7 +1048,7 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
                          SINT32 numReturned, UINT64 reqID,
                          vector<BSONObj> *objList )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize && objList, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize && objList, "Invalid input" ) ;
    INT32 rc             = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDREPLYMSG );
    MsgOpReply *pReply = NULL ;
@@ -1096,7 +1097,7 @@ INT32 msgBuildReplyMsg ( CHAR **ppBuffer, INT32 *bufferSize, INT32 opCode,
                          SINT32 numReturned, UINT64 reqID,
                          const BSONObj *bsonobj )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
    INT32 rc           = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDREPLYMSG2 );
    INT32 offset       = 0 ;
@@ -1146,7 +1147,7 @@ INT32 msgExtractReply ( CHAR *pBuffer, SINT32 *flag, SINT64 *contextID,
                         vector<BSONObj> &objList )
 {
    SDB_ASSERT ( pBuffer && flag && contextID && startFrom &&
-                numReturned , "Invalid input" )
+                numReturned , "Invalid input" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTREPLY );
    INT32 offset = ossRoundUpToMultipleX ( sizeof ( MsgOpReply ), 4 ) ;
@@ -1177,7 +1178,7 @@ error :
 INT32 msgBuildDisconnectMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                               UINT64 reqID )
 {
-   SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize, "Invalid input" ) ;
    INT32 rc                     = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGBLDDISCONNMSG );
    MsgOpDisconnect *pDisconnect = NULL ;
@@ -1479,7 +1480,8 @@ INT32 msgBuildDropIndexMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
 {
    PD_TRACE_ENTRY ( SDB_MSGBLDDROPINXMSG );
    const bson::BSONObj emptyObj ;
-   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName && IndexName, "Invalid input" )
+   SDB_ASSERT ( ppBuffer && bufferSize && CollectionName && IndexName,
+                "Invalid input" ) ;
    PD_TRACE2 ( SDB_MSGBLDDROPINXMSG, PD_PACK_STRING(CollectionName),
                                      PD_PACK_STRING(IndexName) );
    INT32 rc             = SDB_OK ;
@@ -1582,12 +1584,12 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSQL, "msgExtractSql" )
 INT32 msgExtractSql( CHAR *pBuffer, CHAR **sql )
 {
-   SDB_ASSERT( NULL != pBuffer, "invalid pBuffer" )
+   SDB_ASSERT( NULL != pBuffer, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTSQL );
    MsgOpSql *msg = ( MsgOpSql * )pBuffer ;
    SDB_ASSERT( msg->header.messageLength > (INT32)sizeof(MsgHeader),
-               "impossible" )
+               "impossible" ) ;
    *sql = pBuffer + sizeof( MsgHeader ) ;
    PD_TRACE_EXITRC ( SDB_MSGEXTRACTSQL, rc );
    return rc ;
@@ -1598,7 +1600,7 @@ INT32 msgBuildTryLockMsg ( CHAR **ppBuffer, INT32 *bufferSize,
                           INT32 lockType )
 {
    SDB_ASSERT( ppBuffer && CollectionName && bufferSize,
-               "invlaid input" )
+               "invlaid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransTryLock *pMsg = NULL;
    INT32 packetLength
@@ -1630,7 +1632,7 @@ INT32 msgBuildLockReleaseMsg  ( CHAR **ppBuffer, INT32 *bufferSize,
                           const CHAR *CollectionName, UINT32 TID )
 {
    SDB_ASSERT( ppBuffer && CollectionName && bufferSize,
-               "invlaid input" )
+               "invlaid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransReleaseLock *pMsg = NULL;
    INT32 packetLength
@@ -1658,7 +1660,7 @@ error:
 
 INT32 msgBuildTransCommitPreMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
-   SDB_ASSERT( ppBuffer, "invlaid input" )
+   SDB_ASSERT( ppBuffer, "invlaid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransCommitPre *pMsg = NULL;
    INT32 packetLength
@@ -1680,7 +1682,7 @@ error:
 
 INT32 msgBuildTransCommitMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
-   SDB_ASSERT( ppBuffer, "invlaid input" )
+   SDB_ASSERT( ppBuffer, "invlaid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransCommit *pMsg = NULL;
    INT32 packetLength
@@ -1702,7 +1704,7 @@ error:
 
 INT32 msgBuildTransRollbackMsg ( CHAR **ppBuffer, INT32 *bufferSize )
 {
-   SDB_ASSERT( ppBuffer, "invlaid input" )
+   SDB_ASSERT( ppBuffer, "invlaid input" ) ;
    INT32 rc = SDB_OK;
    MsgOpTransRollback *pMsg = NULL;
    INT32 packetLength
@@ -1726,7 +1728,7 @@ error:
 INT32 msgBuildSysInfoRequest ( CHAR **ppBuffer, INT32 *pBufferSize )
 {
    SDB_ASSERT( NULL != ppBuffer &&
-               NULL != pBufferSize, "invalid pBuffer" )
+               NULL != pBufferSize, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    MsgSysInfoRequest *request = NULL ;
    PD_TRACE_ENTRY ( SDB_MSGBUILDSYSINFOREQUEST ) ;
@@ -1746,13 +1748,13 @@ error :
 // PD_TRACE_DECLARE_FUNCTION ( SDB_MSGEXTRACTSYSINFOREQUEST, "msgExtractSysInfoRequest" )
 INT32 msgExtractSysInfoRequest ( CHAR *pBuffer, BOOLEAN &endianConvert )
 {
-   SDB_ASSERT ( NULL != pBuffer, "invalid pBuffer" )
+   SDB_ASSERT ( NULL != pBuffer, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTSYSINFOREQUEST ) ;
    MsgSysInfoRequest *request = (MsgSysInfoRequest*)pBuffer ;
    SDB_ASSERT ( (UINT32)request->header.specialSysInfoLen ==
                 MSG_SYSTEM_INFO_LEN,
-                "Invalid len, expected -1" )
+                "Invalid len, expected -1" ) ;
    if ( request->header.eyeCatcher == MSG_SYSTEM_INFO_EYECATCHER )
    {
       endianConvert = FALSE ;
@@ -1777,7 +1779,7 @@ error :
 INT32 msgBuildSysInfoReply ( CHAR **ppBuffer, INT32 *pBufferSize )
 {
    SDB_ASSERT ( NULL != ppBuffer &&
-                NULL != pBufferSize, "invalid pBuffer" )
+                NULL != pBufferSize, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    MsgSysInfoReply *reply = NULL ;
    PD_TRACE_ENTRY ( SDB_MSGBUILDSYSINFOREPLY ) ;
@@ -1799,15 +1801,15 @@ error :
 INT32 msgExtractSysInfoReply ( CHAR *pBuffer, BOOLEAN &endianConvert,
                                INT32 *osType )
 {
-   SDB_ASSERT ( NULL != pBuffer, "invalid pBuffer" )
+   SDB_ASSERT ( NULL != pBuffer, "invalid pBuffer" ) ;
    INT32 rc = SDB_OK ;
    PD_TRACE_ENTRY ( SDB_MSGEXTRACTSYSINFOREPLY ) ;
    MsgSysInfoReply *reply = (MsgSysInfoReply*)pBuffer ;
    SDB_ASSERT ( (UINT32)reply->header.specialSysInfoLen ==
                 MSG_SYSTEM_INFO_LEN,
-                "Invalid len, expected -1" )
+                "Invalid len, expected -1" ) ;
    SDB_ASSERT ( reply->header.realMessageLength == sizeof(MsgSysInfoReply),
-                "Invalid real message len" )
+                "Invalid real message len" ) ;
    if ( reply->header.eyeCatcher == MSG_SYSTEM_INFO_EYECATCHER )
    {
       endianConvert = FALSE ;

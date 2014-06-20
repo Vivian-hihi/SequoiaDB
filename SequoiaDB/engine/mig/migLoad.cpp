@@ -54,7 +54,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MIGLOADJSONPS__SENDMSG );
-      SDB_ASSERT ( _sock, "_sock is NULL" )
+      SDB_ASSERT ( _sock, "_sock is NULL" ) ;
       va_list ap;
       pmdEDUCB *eduCB = pmdGetKRCB()->getEDUMgr()->getEDU() ;
       CHAR buffer[ PD_LOG_STRINGMAX ] ;
@@ -730,7 +730,7 @@ namespace engine
       _workerReturn *workRe = NULL ;
       _dmsMBContext *mbContext = NULL ;
 
-      SDB_ASSERT ( su, "su is NULL" )
+      SDB_ASSERT ( su, "su is NULL" ) ;
 
       dmsLoadExtent.init ( su ) ;
       workRe = SDB_OSS_NEW _workerReturn() ;
@@ -839,7 +839,7 @@ namespace engine
 
    migWorker::migWorker ( migMaster *master ) : _master(NULL)
    {
-      SDB_ASSERT ( master, "master is NULL" )
+      SDB_ASSERT ( master, "master is NULL" ) ;
       _master = master ;
    }
 

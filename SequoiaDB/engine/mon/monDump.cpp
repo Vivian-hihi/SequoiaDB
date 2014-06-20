@@ -295,9 +295,9 @@ namespace engine
                                  SDB_RTNCB *rtncb, BOOLEAN simple )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
-      SDB_ASSERT ( rtncb, "runtimecb can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
+      SDB_ASSERT ( rtncb, "runtimecb can't be NULL" ) ;
 
       PD_TRACE_ENTRY ( SDB_MONDUMPCONTEXTSFROMCB ) ;
       PD_TRACE1 ( SDB_MONDUMPCONTEXTSFROMCB, PD_PACK_INT ( simple ) ) ;
@@ -406,8 +406,8 @@ namespace engine
                               BOOLEAN simple )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( rtncb, "runtimecb can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( rtncb, "runtimecb can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB_MONDUMPALLCONTEXTS ) ;
       PD_TRACE1 ( SDB_MONDUMPALLCONTEXTS, PD_PACK_INT ( simple ) ) ;
       if ( simple )
@@ -622,7 +622,7 @@ namespace engine
    INT32 monDumpMonSystem ( rtnContextDump *context, BOOLEAN addInfo )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB_MONDUMPMONSYSTEM ) ;
 
       // cpu
@@ -743,13 +743,13 @@ namespace engine
    INT32 monDumpMonDBCB ( rtnContextDump *context, BOOLEAN addInfo )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB_MONDUMPMONDBCB ) ;
       pmdKRCB *krcb = pmdGetKRCB() ;
       monDBCB *mondbcb = krcb->getMonDBCB () ;
       pmdEDUMgr *mgr = krcb->getEDUMgr() ;
       SDB_RTNCB *rtnCB = krcb->getRTNCB() ;
-      SDB_ASSERT ( mgr, "EDU Mgr can't be NULL" )
+      SDB_ASSERT ( mgr, "EDU Mgr can't be NULL" ) ;
       ossTime userTime, sysTime ;
       INT64 diskTotalBytes ;
       INT64 diskFreeBytes ;
@@ -829,8 +829,8 @@ namespace engine
                                 BOOLEAN addInfo, BOOLEAN simple )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB_MONDUMPSESSIONFROMCB ) ;
       if ( simple )
       {
@@ -929,12 +929,12 @@ namespace engine
                               BOOLEAN addInfo, BOOLEAN simple )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
 
       PD_TRACE_ENTRY ( SDB_MONDUMPALLSESSIONS ) ;
       pmdEDUMgr *mgr = cb->getEDUMgr() ;
-      SDB_ASSERT ( mgr, "EDU Mgr can't be NULL" )
+      SDB_ASSERT ( mgr, "EDU Mgr can't be NULL" ) ;
 
       if ( simple )
       {
@@ -1095,8 +1095,8 @@ namespace engine
                                 BOOLEAN includeSys )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
 
       PD_TRACE_ENTRY ( SDB_MONDUMPALLCOLLECTIONS ) ;
       std::set<monCollection> collectionList ;
@@ -1178,8 +1178,8 @@ namespace engine
                                       BOOLEAN includeSys )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
 
       PD_TRACE_ENTRY ( SDB_MONDUMPALLCOLLECTIONSPACES ) ;
       std::set<monCollectionSpace> csList ;
@@ -1250,8 +1250,8 @@ namespace engine
    INT32 monDumpAllStorageUnits ( SDB_DMSCB *dmsCB, rtnContextDump *context )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
 
       PD_TRACE_ENTRY ( SDB_MONDUMPALLSTORAGEUNITS ) ;
       std::set<monStorageUnit> storageUnitList ;
@@ -1303,7 +1303,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       string flagDesp ;
-      SDB_ASSERT ( context, "context can't be NULL" )
+      SDB_ASSERT ( context, "context can't be NULL" ) ;
 
       PD_TRACE_ENTRY ( SDB_MONDUMPINDEXES ) ;
       try
@@ -1510,7 +1510,7 @@ namespace engine
       INT32 indexblockNum = 0 ;
       UINT32 indexPos = 0 ;
       PD_TRACE_ENTRY ( SDB_MONDUMPINDEXBLOCKS ) ;
-      SDB_ASSERT( idxBlocks.size() == idxRIDs.size(), "size not same" )
+      SDB_ASSERT( idxBlocks.size() == idxRIDs.size(), "size not same" ) ;
 
       if ( 1 != direction )
       {

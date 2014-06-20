@@ -935,7 +935,7 @@ namespace engine
       BSONObjIterator i(_matchPattern) ;
       INT32 eleNum = 0 ;
       SDB_ASSERT ( !_initialized, "mthMatcher can't be initialized "
-                   "multiple times" )
+                   "multiple times" ) ;
       try
       {
          //create root object,memory free is in the destructor
@@ -1011,8 +1011,8 @@ namespace engine
                                                 const MatchElement &bm,
                                                 vector<INT64> *dollarList )
    {
-      SDB_ASSERT(BSONObj::NE != op, "op shouldn't be NE")
-      SDB_ASSERT(BSONObj::NIN != op, "op shouldn't be NIN")
+      SDB_ASSERT(BSONObj::NE != op, "op shouldn't be NE") ;
+      SDB_ASSERT(BSONObj::NIN != op, "op shouldn't be NIN") ;
 
       if ( BSONObj::Equality == op )
          return l.valuesEqual(r) ;
@@ -1175,7 +1175,7 @@ namespace engine
    PD_TRACE_DECLARE_FUNCTION ( SDB__MTHMACH__DELLME, "_mthMatcher::_deleteLME" )
    void _mthMatcher::_deleteLME ( LogicMatchElement *lme )
    {
-      SDB_ASSERT ( lme, "lme can't be NULL" )
+      SDB_ASSERT ( lme, "lme can't be NULL" ) ;
       PD_TRACE_ENTRY ( SDB__MTHMACH__DELLME );
       //delete "$and" and "$or" object,clear there vector
       if ( MTH_LOGIC_OTHER != lme->_logicType )
@@ -1333,7 +1333,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHMACH__CRTLME );
-      SDB_ASSERT ( lme && clme, "lme and clme can't be NULL" )
+      SDB_ASSERT ( lme && clme, "lme and clme can't be NULL" ) ;
       // create a new LogicMatchElement obj,memory free is in the destructor
       *clme = SDB_OSS_NEW LogicMatchElement () ;
       if ( !(*clme) )

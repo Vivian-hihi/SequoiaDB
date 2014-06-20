@@ -130,8 +130,8 @@ namespace engine
       {
          INT32 rc = SDB_OK ;
          PD_TRACE_ENTRY ( SDB__IXMKEYGEN_GETKEYS );
-         SDB_ASSERT( _keygen, "spec can't be NULL" )
-         SDB_ASSERT( !_keygen->_fieldNames.empty(), "can not be empty" )
+         SDB_ASSERT( _keygen, "spec can't be NULL" ) ;
+         SDB_ASSERT( !_keygen->_fieldNames.empty(), "can not be empty" ) ;
          vector<const CHAR*> fieldNames ( _keygen->_fieldNames ) ;
          BSONElement arrEle ;
          try
@@ -201,7 +201,7 @@ namespace engine
          for ( UINT32 i = 0; i < fieldNames.size(); i++ )
          {
             const CHAR *name = fieldNames.at( i ) ;
-            SDB_ASSERT( '\0' != name[0], "can not be empty" )
+            SDB_ASSERT( '\0' != name[0], "can not be empty" ) ;
             BSONElement &e = keyEles[i] ;
             e = obj.getFieldDottedOrArray( name ) ;
             if ( e.eoo() )
@@ -391,7 +391,7 @@ namespace engine
    _ixmIndexKeyGen::_ixmIndexKeyGen ( const _ixmIndexCB *indexCB,
                                       IXM_KEYGEN_TYPE genType )
    {
-      SDB_ASSERT ( indexCB, "details can't be NULL" )
+      SDB_ASSERT ( indexCB, "details can't be NULL" ) ;
       _keyPattern = indexCB->keyPattern() ;
       // whole _infoObj
       _info = indexCB->_infoObj ;
@@ -509,7 +509,7 @@ namespace engine
    }
    INT32 ixmIndexKeyGen::reset ( const _ixmIndexCB *indexCB )
    {
-      SDB_ASSERT ( indexCB, "details can't be NULL" )
+      SDB_ASSERT ( indexCB, "details can't be NULL" ) ;
       //_indexCB = indexCB ;
       return reset ( indexCB->_infoObj ) ;
    }

@@ -51,7 +51,7 @@ namespace engine
                            INT32 newStrLen, INT32 *pMergedLen )
    {
       INT32 rc = SDB_OK ;
-      SDB_ASSERT ( ppStr && newStr, "str or newStr can't be NULL" )
+      SDB_ASSERT ( ppStr && newStr, "str or newStr can't be NULL" ) ;
       // if user doesn't know the string length, pass 0
       if ( !*ppStr )
       {
@@ -118,7 +118,7 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB__MTHDOUBLEBUFFERSIZE ) ;
-      SDB_ASSERT ( ppStr, "ppStr can't be NULL" )
+      SDB_ASSERT ( ppStr, "ppStr can't be NULL" ) ;
       CHAR *pOldStr = *ppStr ;
       INT32 newSize = ossRoundUpToMultipleX ( 2*bufLen,
                                               SDB_PAGE_SIZE ) ;

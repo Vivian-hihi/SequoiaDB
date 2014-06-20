@@ -52,7 +52,7 @@ namespace engine
                               map<UINT64, _netRouteNode> &group,
                               UINT32 *pPrimary )
    {
-      SDB_ASSERT( NULL != msg, "data should not be NULL" )
+      SDB_ASSERT( NULL != msg, "data should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_MSGPASCATGRPRES );
 
@@ -80,7 +80,7 @@ namespace engine
                               map<UINT64, _netRouteNode> &group,
                               UINT32 *pPrimary )
    {
-      SDB_ASSERT( NULL != objdata, "data should not be NULL" )
+      SDB_ASSERT( NULL != objdata, "data should not be NULL" ) ;
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_MSGPASCATGRPOBJ );
       try

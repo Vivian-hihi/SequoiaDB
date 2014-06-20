@@ -917,7 +917,7 @@ namespace engine
    }
    ModType _mthModifier::_parseModType ( const CHAR * field )
    {
-      SDB_ASSERT ( field, "field can't be NULL " )
+      SDB_ASSERT ( field, "field can't be NULL " ) ;
 
       if ( MTH_OPERATOR_EYECATCHER == field[0] )
       {
