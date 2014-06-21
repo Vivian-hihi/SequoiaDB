@@ -4102,6 +4102,9 @@ namespace sdbclient
       case SDB_LIST_STOREPROCEDURES :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_PROCEDURES ;
          break ;
+      case SDB_LIST_DOMAINS :
+         p = CMD_ADMIN_PREFIX CMD_NAME_LIST_DOMAINS ;
+         break ;
       case SDB_LIST_TASKS :
          p = CMD_ADMIN_PREFIX CMD_NAME_LIST_TASKS ;
          break ;
