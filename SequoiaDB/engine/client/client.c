@@ -3324,10 +3324,10 @@ SDB_EXPORT INT32 sdbAlterCollection ( sdbCollectionHandle cHandle,
       rc = SDB_INVALIDARG ;
       goto error ;
    }
-   
+
    BSON_INIT( newObj ) ;
    BSON_APPEND( newObj, CAT_COLLECTION_NAME,
-   	            cs->_collectionFullName, string ) ;
+                cs->_collectionFullName, string ) ;
 
    BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson ) ;
    BSON_FINISH ( newObj ) ;
@@ -6618,7 +6618,7 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
    sdbDomainStruct *domain = ( sdbDomainStruct * )cHandle  ;
    BOOLEAN ret             = TRUE ;
    bson newObj ;
-   BOOLEAN bsoninit        = FALSE ; 
+   BOOLEAN bsoninit        = FALSE ;
 
    HANDLE_CHECK( cHandle, domain, SDB_HANDLE_TYPE_DOMAIN ) ;
    if ( !options )
@@ -6629,7 +6629,7 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
 
    BSON_INIT( newObj ) ;
    BSON_APPEND( newObj, FIELD_NAME_NAME, domain->_domainName, string ) ;
-   BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson) ; 
+   BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson) ;
    BSON_FINISH ( newObj ) ;
 
    rc = _runCommand( domain->_sock, &( domain->_pSendBuffer ),
@@ -6642,12 +6642,12 @@ SDB_EXPORT INT32 sdbAlterDomain( sdbDomainHandle cHandle,
    if ( SDB_OK != rc )
    {
       goto error ;
-   } 
+   }
 done:
    BSON_DESTROY( newObj ) ;
    return rc ;
 error:
-   goto done ;   
+   goto done ;
 }
 
 SDB_EXPORT INT32 sdbListCollectionSpacesInDomain( sdbDomainHandle cHandle,

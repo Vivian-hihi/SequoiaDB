@@ -3434,6 +3434,7 @@ namespace sdbclient
       // build bson
       try
       {
+         ob.append ( FIELD_NAME_NAME, _domainName ) ;
          ob.append ( FIELD_NAME_OPTIONS, options ) ;
          newObj = ob.obj () ;
       }
@@ -5913,7 +5914,6 @@ namespace sdbclient
       BSONObj newObj ;
       BSONObjBuilder ob ;
       sdbCursor cursor ;
-      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_CREATE_DOMAIN ) ;
       if ( !pDomainName || ossStrlen ( pDomainName ) > CLIENT_COLLECTION_NAMESZ
             || !domain )
       {

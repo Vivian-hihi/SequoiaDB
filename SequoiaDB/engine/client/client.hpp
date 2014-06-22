@@ -1482,6 +1482,18 @@ namespace sdbclient
             return SDB_NOT_CONNECTED ;
          return pReplicaGroup->start () ;
       }
+
+/** \fn const CHAR *getName () ;
+    \brief Get the name of current replica group.
+    \retval The name of current replica group or null if fail
+*/
+      const CHAR *getName ()
+      {
+         if ( !pReplicaGroup )
+            return NULL ;
+         pReplicaGroup->getName() ;
+      }
+
 /** \fn BOOLEAN isCatalog ()
     \brief Test whether current replica group is catalog replica group.
     \retval TRUE The replica group is catalog
@@ -1754,6 +1766,8 @@ namespace sdbclient
       _sdbDomain () {}
       virtual ~_sdbDomain () {}
 
+      virtual const CHAR* getName () = 0 ;
+
       virtual INT32 alterDomain ( const bson::BSONObj &options = _sdbStaticObject ) = 0 ;
 
       virtual INT32 listCollectionSpacesInDomain ( _sdbCursor **cursor ) = 0 ;
@@ -1763,7 +1777,7 @@ namespace sdbclient
       virtual INT32 listCollectionsInDomain ( _sdbCursor **cursor ) = 0 ;
 
       virtual INT32 listCollectionsInDomain ( sdbCursor &cursor ) = 0 ;
-      
+
    } ;
 
    /** \class  sdbDomain
@@ -1782,7 +1796,18 @@ namespace sdbclient
          if ( pDomain )
             delete pDomain ;
       }
-      
+
+/** \fn const CHAR *getName () ;
+    \brief Get the name of current domain.
+    \retval The name of current domain or null if fail
+*/
+      const CHAR *getName ()
+      {
+         if ( !pDomain )
+            return NULL ;
+         pDomain->getName() ;
+      }
+
 /** \fn INT32 alterDomain( const bson::BSONObj &options ) ;
     \brief Alter the domains.
     \param [in] options The options user wants to alter
@@ -2037,7 +2062,7 @@ namespace sdbclient
       virtual INT32 createDomain ( const CHAR *pDomainName,
                                    const bson::BSONObj &options,
                                    _sdbDomain **domain ) = 0 ;
-      
+
       virtual INT32 createDomain ( const CHAR *pDomainName,
                                    const bson::BSONObj &options,
                                    sdbDomain &domain ) = 0 ;
@@ -2056,7 +2081,7 @@ namespace sdbclient
                                   const bson::BSONObj &orderBy = _sdbStaticObject,
                                   const bson::BSONObj &hint = _sdbStaticObject
                                 ) = 0 ;
-      
+
       virtual INT32 listDomains ( sdbCursor &cursor,
                                   const bson::BSONObj &condition = _sdbStaticObject,
                                   const bson::BSONObj &selector = _sdbStaticObject,
@@ -2064,7 +2089,7 @@ namespace sdbclient
                                   const bson::BSONObj &hint = _sdbStaticObject
                                 ) = 0 ;
 
-      
+
 /*      virtual INT32 modifyConfig ( INT32 nodeID,
                        std::map<std::string,std::string> &config ) = 0 ;
 

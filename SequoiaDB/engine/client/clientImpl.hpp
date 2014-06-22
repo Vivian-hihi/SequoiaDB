@@ -546,12 +546,17 @@ namespace sdbclient
 
       void _setConnection ( _sdb *connection ) ;
       INT32 _setName ( const CHAR *pDomainName ) ;
-      
+
       friend class _sdbImpl ;
    public :
       _sdbDomainImpl () ;
       _sdbDomainImpl ( const CHAR *pDomainName ) ;
       ~_sdbDomainImpl () ;
+
+      const CHAR* getName ()
+      {
+         return _domainName ;
+      }
 
       INT32 alterDomain ( const bson::BSONObj &options ) ;
 
@@ -566,13 +571,13 @@ namespace sdbclient
 
       INT32 listCollectionsInDomain ( sdbCursor &cursor )
       {
-         return listCollectionsInDomain ( &cursor.pCursor ) ;       
+         return listCollectionsInDomain ( &cursor.pCursor ) ;
       }
-      
+
    } ;
-   
+
    typedef class _sdbDomainImpl sdbDomainImpl ;
-   
+
    class _sdbImpl : public _sdb
    {
    private :
@@ -595,7 +600,7 @@ namespace sdbclient
       std::set<ossValuePtr> _nodes ;
       std::set<ossValuePtr> _replicaGroups ;
       std::set<ossValuePtr> _domain ;
-      
+
       void _disconnect () ;
       INT32 _send ( CHAR *pBuffer ) ;
       INT32 _recv ( CHAR **ppBuffer, INT32 *size ) ;
