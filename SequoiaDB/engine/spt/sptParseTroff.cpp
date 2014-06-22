@@ -40,6 +40,7 @@
 #define NODE_CATEGORY "node"
 #define CURSOR_CATEGORY "cursor"
 #define CLCOUNT_CATEGORY "count"
+#define DOMAIN_CATEGORY "domain"
 
 #define READ_CHARACTOR_NUM 1024
 #define CMD_NAME_LEN  255
@@ -59,15 +60,18 @@
 
 namespace fs = boost::filesystem ;
 
-#define CATE_SIZE  7
-const CHAR* CATE_ARR[ CATE_SIZE ] = {
+#define CATE_SIZE  8
+const CHAR* CATE_ARR[ CATE_SIZE ] =
+{
    DB_CATEGORY,
    CS_CATEGORY,
    CL_CATEGORY,
    RG_CATEGORY,
    NODE_CATEGORY,
    CURSOR_CATEGORY,
-   CLCOUNT_CATEGORY } ;
+   CLCOUNT_CATEGORY,
+   DOMAIN_CATEGORY
+ } ;
 
 // remove some useless mark in a c-type string
 static INT32 removeMark( CHAR *buffer, INT32 buffer_len, const CHAR *mark ) ;
@@ -360,6 +364,11 @@ INT32 manHelp::scanFile()
             {
                _mclcount.insert( std::pair<string, string>(synopsis, cutline) ) ;
             }
+            else if ( ossMemcmp( pFileName, DOMAIN_CATEGORY, ossStrlen( pFileName ) ) == 0 )
+            {
+               _mdomain.insert( std::pair<string, string>(synopsis, cutline) ) ;
+            }
+
             else
             {
                ossPrintf( "Failed to deal with file %s,\
@@ -555,6 +564,10 @@ ssmap& manHelp::getCategoryMap( const CHAR *category )
     else if ( ossMemcmp( category, CLCOUNT_CATEGORY, ossStrlen( category ) ) == 0 )
     {
        return _mclcount ;
+    }
+    else if ( ossMemcmp( category, DOMAIN_CATEGORY, ossStrlen( category ) ) == 0 )
+    {
+       return _mdomain ;
     }
     else
     {

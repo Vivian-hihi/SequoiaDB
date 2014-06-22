@@ -13,6 +13,7 @@ var help = function( val ) {
       println("   db.cs.cl.find({a:1})                   list records where a=1");
       println("   db.cs.cl.find().help()                 help on find methods");
       println("   db.cs.cl.count().help()                help on count methods");
+      println("   domain.help()                          help on domain methods");
       println("   print(x), println(x)                   print out x");
       println("   traceFmt(<type>,<in>,<out>)            format trace input(in) to output(out) by type");
       println("   getErr(ret)                            print error description for return code");
@@ -123,3 +124,15 @@ CLCount.prototype.help = function( val ) {
    }
 }
 
+SdbDomain.prototype.help = function( val ) {
+   if ( val == undefined )
+   {
+      println("Domain methods:") ;
+      println("   domain.help(<method>)           help on specified method of domain, e.g. domain.help(\'alter\')");
+      man( "domain" ) ;
+   }
+   else
+   {
+      man( "domain", val ) ;
+   }
+}
