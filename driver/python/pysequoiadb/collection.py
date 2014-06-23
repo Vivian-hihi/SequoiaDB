@@ -246,14 +246,14 @@ class collection(object):
 
    def get_cs_name(self):
 
-      _, cs_name = sdbcl.get_cs_name(self._cl)
+      _, cs_name = sdbcl.get_collection_space_name(self._cl)
       pysequoiadb.check_error(_)
 
       return cs_name
 
    def get_full_name(self):
 
-      _, full_name = sdbcl.gey_full_name(self._cl)
+      _, full_name = sdbcl.get_full_name(self._cl)
       pysequoiadb.check_error(_)
 
       return full_name
