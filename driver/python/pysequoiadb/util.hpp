@@ -58,19 +58,19 @@
    ( PyObject * )Py_BuildValue( "i", ret_value )
 
 #define MAKE_RETURN_INT_INT( ret_value, int_value ) \
-   ( PyObject * )Py_BuildValue( ("i,i"), ret_value, int_value )
+   ( PyObject * )Py_BuildValue( "(i,i)", ret_value, int_value )
 
 #define MAKE_RETURN_INT_LONG( ret_value, long_value ) \
-   ( PyObject * )Py_BuildValue( ("i,L"), ret_value, long_value )
+   ( PyObject * )Py_BuildValue( "(i,L)", ret_value, long_value )
 
 #define MAKE_RETURN_INT_OBJECT( ret_value, py_object ) \
-   ( PyObject * )Py_BuildValue( ("i,O"), ret_value, py_object )
+   ( PyObject * )Py_BuildValue( "(i,O)", ret_value, py_object )
 
 #define MAKE_RETURN_INT_PYSTRING( ret_value, c_string ) \
-   ( PyObject * )Py_BuildValue( ("i,s"), ret_value, c_string )
+   ( PyObject * )Py_BuildValue( "(i,s)", ret_value, c_string )
 
 #define MAKE_RETURN_INT_PYSTRING_BYSIZE( ret_value, c_string, c_stringsize ) \
-   ( PyObject * )Py_BuildValue( ("i,s#"), ret_value, c_string, c_stringsize )
+   ( PyObject * )Py_BuildValue( "(i,s#)", ret_value, c_string, c_stringsize )
 
 /*
  *@brief    macro to cast python object to specified class object

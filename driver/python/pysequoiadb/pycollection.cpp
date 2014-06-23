@@ -377,8 +377,8 @@ done:
 static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
 {
    INT32 rc                       = 0 ;
-   INT64 num_to_skip              = 0 ;
-   INT64 num_to_return            = -1 ;
+   INT64 num_to_skip              = 0L ;
+   INT64 num_to_return            = -1L ;
    PYOBJECT *obj                  = NULL ;
    PYOBJECT *cursor_object        = NULL ;
    PYOBJECT *bson_condition       = NULL ;
