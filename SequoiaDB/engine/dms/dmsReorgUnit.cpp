@@ -1,3 +1,4 @@
+
 #include "dmsReorgUnit.hpp"
 #include "dmsStorageUnit.hpp"
 #include "dmsRecord.hpp"
@@ -5,6 +6,8 @@
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "pmdEDU.hpp"
+#include "dmsCompress.hpp"
+
 namespace engine
 {
 #define DMS_REORG_UNIT_HEAD_SIZE_UNIT 1024
@@ -356,7 +359,7 @@ namespace engine
       dmsOffset recordOffset       = DMS_INVALID_OFFSET ;
       dmsExtent *currentExtent     = (dmsExtent*)_pCurrentExtent ;
       BOOLEAN isCompressed         = FALSE ;
-      CHAR *compressedData         = NULL ;
+      const CHAR *compressedData   = NULL ;
       INT32 compressedDataSize     = 0 ;
 
       // sanity size check
@@ -370,8 +373,8 @@ namespace engine
       // compression
       if ( OSS_BIT_TEST ( attributes, DMS_MB_ATTR_COMPRESSED ) )
       {
-         rc = cb->compress ( obj, NULL, 0, &compressedData,
-                             &compressedDataSize ) ;
+         rc = dmsCompress ( cb, obj, NULL, 0, &compressedData,
+                            &compressedDataSize ) ;
          PD_RC_CHECK ( rc, PDERROR,
                        "Failed to compress record, rc = %d: %s",
                        rc, obj.toString().c_str() ) ;

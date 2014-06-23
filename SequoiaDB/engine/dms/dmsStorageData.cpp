@@ -42,6 +42,7 @@
 #include "pmdCB.hpp"
 #include "dpsOp2Record.hpp"
 #include "mthModifier.hpp"
+#include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 
@@ -1797,7 +1798,7 @@ namespace engine
       SDB_DPSCB *dropDps            = NULL ;
       // compression related
       BOOLEAN isCompressed          = FALSE ;
-      CHAR *compressedData          = NULL ;
+      const CHAR *compressedData    = NULL ;
       INT32 compressedDataSize      = 0 ;
       // trans related
       DPS_TRANS_ID transID          = cb->getTransID() ;
@@ -1837,7 +1838,7 @@ namespace engine
       if ( OSS_BIT_TEST ( context->mb()->_attributes,
                           DMS_MB_ATTR_COMPRESSED ) )
       {
-         rc = cb->compress ( record, ((CHAR*)(&oid)), oidLen,
+         rc = dmsCompress( cb, record, ((CHAR*)(&oid)), oidLen,
                              &compressedData, &compressedDataSize ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed to compress record[%s], rc: %d",
                        record.toString().c_str(), rc ) ;
@@ -2596,7 +2597,7 @@ namespace engine
       ossValuePtr realRecordPtr    = 0 ;
       UINT32 dmsRecordSize         = 0 ;
       INT32 compressedDataSize     = 0 ;
-      CHAR *compressedData         = NULL ;
+      const CHAR *compressedData   = NULL ;
       BOOLEAN isCompressed         = FALSE ;
       dmsRecordID ovfRID ;
       monAppCB * pMonAppCB         = cb ? cb->getMonAppCB() : NULL ;
@@ -2623,8 +2624,8 @@ namespace engine
       // compress data
       if ( OSS_BIT_TEST(context->mb()->_attributes, DMS_MB_ATTR_COMPRESSED ) )
       {
-         rc = cb->compress ( (CHAR*)ptr, len, &compressedData,
-                             &compressedDataSize ) ;
+         rc = dmsCompress( cb, (const CHAR*)ptr, len, &compressedData,
+                           &compressedDataSize ) ;
          PD_RC_CHECK ( rc, PDERROR, "Failed, to compress record, rc: %d: %s",
                        rc, BSONObj((CHAR*)ptr).toString().c_str() ) ;
 

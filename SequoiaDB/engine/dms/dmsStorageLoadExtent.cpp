@@ -38,6 +38,7 @@
 #include "dmsExtent.hpp"
 #include "dmsSMEMgr.hpp"
 #include "dmsStorageLoadExtent.hpp"
+#include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 #include "migLoad.hpp"

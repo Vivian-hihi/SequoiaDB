@@ -41,6 +41,7 @@
 #include "pmdEDU.hpp"
 #include "ixmExtent.hpp"
 #include "ixmKey.hpp"
+#include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 

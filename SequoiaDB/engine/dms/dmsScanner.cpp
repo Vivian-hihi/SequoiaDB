@@ -42,6 +42,7 @@
 #include "mthMatcher.hpp"
 #include "rtnIXScanner.hpp"
 #include "bpsPrefetch.hpp"
+#include "dmsCompress.hpp"
 #include "pmd.hpp"
 #include "pmdCB.hpp"
 

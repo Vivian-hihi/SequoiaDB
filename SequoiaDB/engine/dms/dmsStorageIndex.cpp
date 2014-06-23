@@ -43,6 +43,7 @@
 #include "dpsOp2Record.hpp"
 #include "ixmExtent.hpp"
 #include "bpsPrefetch.hpp"
+#include "dmsCompress.hpp"
 #include "pdTrace.hpp"
 #include "dmsTrace.hpp"
 
