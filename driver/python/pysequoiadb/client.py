@@ -74,7 +74,7 @@ class client(object):
       if const.SDB_OK != rc:
          cs = None
 
-      return rc, cs
+      return cs
 
    def connect_by_host(self, host = default_host, port = default_port,
                              user = default_user, psw  = default_psw):

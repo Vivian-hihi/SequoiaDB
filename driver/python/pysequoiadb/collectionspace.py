@@ -60,7 +60,7 @@ class collectionspace(object):
       if const.SDB_OK != rc:
          cl = None
 
-      return rc, cl
+      return cl
 
    def __getitem__(self, name):
       return self.__getattr__(name)
