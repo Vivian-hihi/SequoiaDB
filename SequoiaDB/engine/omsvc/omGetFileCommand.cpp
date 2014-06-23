@@ -195,6 +195,45 @@ namespace engine
    {
    }
 
+   INT32 omCreateClusterCommand::_getClusterInfo( const CHAR **pClusterName, 
+                                                  const CHAR **pDesc )
+   {
+      const CHAR *pClusterInfo = NULL ;
+      BSONObj bsonClusterInfo ;
+      INT32 rc                 = SDB_OK ;
+      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_CLUSTER_INFO, 
+                             &pClusterInfo ) ;
+      if ( NULL == pClusterInfo )
+      {
+         rc = SDB_INVALIDARG ;
+         _sendErrorRes2Web( SDB_INVALIDARG, "cluster info is null" ) ;
+         goto error ;
+      }
+
+      rc = fromjson( pClusterInfo, bsonClusterInfo ) ;
+      if ( rc )
+      {
+         _sendErrorRes2Web( rc, "change to BSONObj failed" ) ;
+         goto error ;
+      }
+
+      *pClusterName = bsonClusterInfo.getStringField( 
+                                         OM_BSON_FIELD_CLUSTER_NAME ) ;
+      *pDesc        = bsonClusterInfo.getStringField( 
+                                         OM_BSON_FIELD_CLUSTER_DESC ) ;
+      if ( 0 == ossStrlen( *pClusterName ) )
+      {
+         rc = SDB_INVALIDARG ;
+         _sendErrorRes2Web( rc, "cluster info is invalid" ) ;
+         goto error ;
+      }
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
    INT32 omCreateClusterCommand::doCommand()
    {
       const CHAR *pClusterName = NULL ;
@@ -203,17 +242,12 @@ namespace engine
       BSONObj bsonCluster ;
       INT32 rc                 = SDB_OK ;
 
-      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_CLUSTER, 
-                             &pClusterName ) ;
-      if ( NULL == pClusterName )
+      rc = _getClusterInfo( &pClusterName, &pDesc ) ;
+      if ( SDB_OK != rc )
       {
-         _sendErrorRes2Web( SDB_INVALIDARG, "cluster name is null" ) ;
          goto error ;
       }
 
-      // desc is not necessary
-      _restAdaptor->getQuery(_restSession, OM_REST_FIELD_CLUSTER_DESC, 
-                             &pDesc ) ;
       bsonBuilder.append( OM_CLUSTER_FIELD_NAME, pClusterName ) ;
       bsonBuilder.append( OM_CLUSTER_FIELD_DESC, pDesc ) ;
       // duplicate check depends on the unique index of table(OM_CS_DEPLOY_CL_CLUSTERIDX1)
@@ -238,7 +272,7 @@ namespace engine
       }
 
       bsonBuilder.append( OM_REST_RES_RETCODE, SDB_OK ) ;
-      bsonBuilder.append( OM_REST_FIELD_CLUSTER, pClusterName ) ;
+      bsonBuilder.append( OM_BSON_FIELD_CLUSTER_NAME, pClusterName ) ;
       _restAdaptor->setOPResult( _restSession, SDB_OK, bsonBuilder.obj() ) ;
       _restAdaptor->sendResponse( _restSession, HTTP_OK ) ;
       
@@ -297,6 +331,7 @@ namespace engine
       
       while ( TRUE )
       {
+         BSONObjBuilder innerBuilder ;
          rtnContextBuf buffObj ;
          SINT64 startingPos = 0 ;
          rc = rtnGetMore ( contextID, 1, buffObj, startingPos, _cb, _pRTNCB ) ;
@@ -315,7 +350,13 @@ namespace engine
             goto error ;
          }
 
-         rc = _restAdaptor->appendHttpBody( _restSession, buffObj.data(), 
+         BSONObj result( buffObj.data() ) ;
+         innerBuilder.append( OM_BSON_FIELD_CLUSTER_NAME, 
+                               result.getStringField( OM_CLUSTER_FIELD_NAME )) ;
+         innerBuilder.append( OM_BSON_FIELD_CLUSTER_DESC, 
+                               result.getStringField( OM_CLUSTER_FIELD_DESC )) ;
+         rc = _restAdaptor->appendHttpBody( _restSession, 
+                                            innerBuilder.obj().objdata(), 
                                             buffObj.size(), 1 ) ;
          if ( rc )
          {

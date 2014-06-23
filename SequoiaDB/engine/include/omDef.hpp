@@ -141,8 +141,10 @@ namespace engine
    // om rest create_cluster_req
    #define  OM_CREATE_CLUSTER_REQ            "create_cluster_req"
    
-   #define  OM_REST_FIELD_CLUSTER            "cluster"
-   #define  OM_REST_FIELD_CLUSTER_DESC       "desc"
+   #define  OM_REST_FIELD_CLUSTER_INFO       "cluster_info"
+
+   #define  OM_BSON_FIELD_CLUSTER_NAME       "cluster_name"
+   #define  OM_BSON_FIELD_CLUSTER_DESC       "desc"
 
    // om rest query_cluster_req
    #define  OM_QUERY_CLUSTER_REQ             "query_cluster_req"
@@ -167,6 +169,10 @@ namespace engine
    #define  OM_BSON_FIELD_HOST_USER          "username"
    #define  OM_BSON_FIELD_HOST_PASSWD        "passwd"
    #define  OM_BSON_FIELD_HOST_SSHPORT       "port"
+
+   // om rest check_host_req
+   #define  OM_CHECK_HOST_REQ                "check_host_req"
+   
 
 
 

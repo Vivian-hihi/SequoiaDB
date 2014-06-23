@@ -93,6 +93,9 @@ namespace engine
 
       protected:
          void            _sendErrorRes2Web( INT32 rc, const CHAR* detail ) ;
+
+      private:
+         INT32           _getClusterInfo( const CHAR **pClusterName, const CHAR **pDesc ) ;
          
       protected:
          restAdaptor*    _restAdaptor ;
