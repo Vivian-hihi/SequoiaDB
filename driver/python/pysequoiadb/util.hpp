@@ -32,8 +32,8 @@
 #define PARSE_PYTHON_ARGS PyArg_ParseTuple
 
 ///< new and delete 
-#define NEW_CPPOBJECT( pObject, CLSNAME ) \
-   pObject = new (std::nothrow) CLSNAME ()
+#define NEW_CPPOBJECT( pObject, CLASSNAME ) \
+   pObject = new (std::nothrow) CLASSNAME()
 
 #define NEW_CPPOBJECT_INIT( pObject, CLASSNAME, pValue ) \
    pObject = new (std::nothrow) CLASSNAME ( pValue )
