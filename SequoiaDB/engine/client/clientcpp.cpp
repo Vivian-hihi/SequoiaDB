@@ -2239,66 +2239,49 @@ namespace sdbclient
       goto done ;
    }
 
-
-   /*INT32 _sdbCollectionImpl::alter ( const bson *options )
+//    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_ALTERCOLLECTION, "_sdbCollectionSpaceImpl::alterCollection" )
+   INT32 _sdbCollectionImpl::alterCollection ( const bson::BSONObj &options )
    {
-      INT32 rc = SDB_OK ;
-      BOOLEAN result ;
-      SINT64 contextID = 0 ;
-      bson newObj ;
-      bson_init ( &newObj ) ;
-      BOOLEAN locked = FALSE ;
-      if ( _collectionFullName [0] == '\0' || !_connection ||
-           !options )
+      PD_TRACE_ENTRY ( SDB_CLIENT_ALTERCOLLECTION ) ;
+      INT32 rc            = SDB_OK ;
+      BOOLEAN result      = FALSE ;
+      BSONObjBuilder bob ;
+      BSONObj newObj ;
+      string collectionS ;
+      string command = string ( CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION ) ;
+      // check
+      if ( '\0' == _collectionFullName[0] || !_connection )
       {
          rc = SDB_INVALIDARG ;
          goto error ;
       }
-      rc = bson_append_string ( &newObj, CAT_COLLECTION_NAME,
-                                _collectionFullName ) ;
-      if ( rc )
+      // build bson
+      collectionS = string (_collectionFullName) ;
+      try
       {
-         rc = SDB_SYS ;
+         bob.append ( FIELD_NAME_NAME, collectionS ) ;
+         bob.append ( FIELD_NAME_OPTIONS, options ) ;
+         newObj = bob.obj() ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
          goto error ;
       }
-      rc = bson_append_bson ( &newObj, FIELD_NAME_OPTIONS, options ) ;
-      if ( rc )
-      {
-         rc = SDB_SYS ;
-         goto error ;
-      }
-      bson_finish ( &newObj ) ;
-
-      rc = clientBuildQueryMsg ( &_pSendBuffer, &_sendBufferSize,
-                                 CMD_ADMIN_PREFIX CMD_NAME_ALTER_COLLECTION,
-                                 0, 0, -1, -1,
-                                 &newObj, NULL, NULL, NULL, FALSE ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      _connection->lock () ;
-      locked = TRUE ;
-      rc = _connection->_send ( _pSendBuffer ) ;
-      if ( rc )
-      {
-         goto error ;
-      }
-      rc = _connection->_recvExtract ( &_pReceiveBuffer, &_receiveBufferSize,
-                                       contextID, result ) ;
+      // run command
+      rc = _connection->_runCommand ( command.c_str(), result, &newObj ) ;
       if ( rc )
       {
          goto error ;
       }
 
    done :
-      if ( locked )
-         _connection->unlock () ;
-      bson_destroy ( &newObj ) ;
+      PD_TRACE_EXITRC ( SDB_CLIENT_ALTERCOLLECTION, rc );
       return rc ;
    error :
       goto done ;
-   } */
+
+   }
 
    _sdbNodeImpl::_sdbNodeImpl () :
    _connection ( NULL )
@@ -3258,7 +3241,7 @@ namespace sdbclient
       goto done ;
    }
 
-   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPCOLLECTION, "_sdbCollectionSpaceImpl::dropCollection" )
+//   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPCOLLECTION, "_sdbCollectionSpaceImpl::dropCollection" )
    INT32 _sdbCollectionSpaceImpl::dropCollection ( const CHAR *pCollectionName )
    {
       PD_TRACE_ENTRY ( SDB_CLIENT_DROPCOLLECTION ) ;
@@ -4514,6 +4497,68 @@ namespace sdbclient
    error :
       goto done ;
    }
+
+   PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_CREATECOLLECTIONSPACE2, "_sdbImpl::createCollectionSpace" )
+   INT32 _sdbImpl::createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                           const bson::BSONObj &options,
+                                           _sdbCollectionSpace **cs )
+   {
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE2 ) ;
+      INT32 rc            = SDB_OK ;
+      BOOLEAN result      = FALSE ;
+      INT32 nameLength = ossStrlen ( pCollectionSpaceName ) ;
+      BSONObjBuilder bob ;
+      BSONObj newObj ;
+      string command = string ( CMD_ADMIN_PREFIX
+                                CMD_NAME_CREATE_COLLECTIONSPACE ) ;
+      if ( nameLength > CLIENT_CS_NAMESZ || !cs )
+      {
+         rc = SDB_INVALIDARG ;
+         goto error ;
+      }
+
+
+      // build bson
+      try
+      {
+         bob.append ( FIELD_NAME_NAME, pCollectionSpaceName ) ;
+         BSONObjIterator it( options ) ;
+         while ( it.more() )
+         {
+            bob.append ( it.next() ) ;
+         }
+//         ob.append ( FIELD_NAME_OPTIONS, options ) ;
+         newObj = bob.obj () ;
+      }
+      catch ( std::exception &e )
+      {
+         rc = SDB_DRIVER_BSON_ERROR ;
+         goto error ;
+      }
+/*
+      newObj = BSON ( FIELD_NAME_NAME << pCollectionSpaceName <<
+                      FIELD_NAME_PAGE_SIZE << iPageSize ) ;
+*/
+      rc = _runCommand ( command.c_str(), result, &newObj ) ;
+      if ( rc )
+      {
+         goto error ;
+      }
+      *cs = (_sdbCollectionSpace*)( new(std::nothrow) sdbCollectionSpaceImpl());
+      if ( !*cs )
+      {
+         rc = SDB_OOM ;
+         goto error ;
+      }
+      ((sdbCollectionSpaceImpl*)*cs)->_setConnection ( this ) ;
+      ((sdbCollectionSpaceImpl*)*cs)->_setName ( pCollectionSpaceName ) ;
+   done :
+      PD_TRACE_ENTRY ( SDB_CLIENT_CREATECOLLECTIONSPACE2 ) ;
+      return rc ;
+   error :
+      goto done ;
+   }
+
 
    PD_TRACE_DECLARE_FUNCTION ( SDB_CLIENT_DROPCOLLECTIONSPACE, "_sdbImpl::dropCollectionSpace" )
    INT32 _sdbImpl::dropCollectionSpace ( const CHAR *pCollectionSpaceName )

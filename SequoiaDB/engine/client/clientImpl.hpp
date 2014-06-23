@@ -300,7 +300,7 @@ namespace sdbclient
                                       const bson::BSONObj &options) ;
       INT32 detachCollection ( const CHAR *subClFullName) ;
 
-      //INT32 alter ( const BSONObj &options ) ;
+      INT32 alterCollection ( const bson::BSONObj &options ) ;
 } ;
    typedef class _sdbCollectionImpl sdbCollectionImpl ;
 
@@ -516,6 +516,7 @@ namespace sdbclient
       }
       // drop an existing collection
       INT32 dropCollection ( const CHAR *pCollection ) ;
+
       // create a collection space with current collection space name
       INT32 create () ;
       // drop a collection space with current collection space name
@@ -564,7 +565,7 @@ namespace sdbclient
 
       INT32 listCollectionSpacesInDomain ( sdbCursor &cursor )
       {
-         return listCollectionsInDomain ( &cursor.pCursor ) ;
+         return listCollectionSpacesInDomain ( &cursor.pCursor ) ;
       }
 
       INT32 listCollectionsInDomain ( _sdbCursor **cursor ) ;
@@ -827,6 +828,20 @@ namespace sdbclient
                                     sdbCollectionSpace &cs )
       {
          return createCollectionSpace ( pCollectionSpaceName, iPageSize,
+                                        &cs.pCollectionSpace ) ;
+      }
+
+      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                    const bson::BSONObj &options,
+                                    _sdbCollectionSpace **cs
+                                  ) ;
+
+      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                    const bson::BSONObj &options,
+                                    sdbCollectionSpace &cs
+                                  )
+      {
+         return createCollectionSpace ( pCollectionSpaceName, options,
                                         &cs.pCollectionSpace ) ;
       }
 

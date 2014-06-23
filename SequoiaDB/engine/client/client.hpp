@@ -353,7 +353,7 @@ namespace sdbclient
                                       const bson::BSONObj &options) = 0 ;
       virtual INT32 detachCollection ( const CHAR *subClFullName) = 0 ;
 
-      //virtual INT32 alter ( const bson *options ) = 0 ;
+      virtual INT32 alterCollection ( const bson::BSONObj &options ) = 0 ;
    } ;
 
 /** \class sdbCollection
@@ -530,19 +530,19 @@ namespace sdbclient
       }
 
 
-/* \fn INT32 alter ( const bson *options )
-    \brief Alter the specified collection
+/** \fn INT32 alterCollection ( const bson::BSONObj &options )
+    \brief Alter the current collection
     \param [in] options The modified options as following:
                         ReplSize Number of replnodes for sync write
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
-
-      INT32 alter ( const bson *options )
+*/
+      INT32 alterCollection ( const bson::BSONObj &options )
       {
          if ( !pCollection )
             return SDB_NOT_CONNECTED ;
-         return pCollection->alter ( options ) ;
-      }*/
+         return pCollection->alterCollection ( options ) ;
+      }
 
 /** \fn  INT32 bulkInsert ( SINT32 flags,
                          std::vector<bson::BSONObj> &obj
@@ -1540,11 +1540,15 @@ namespace sdbclient
 
       // drop an existing collection
       virtual INT32 dropCollection ( const CHAR *pCollection ) = 0 ;
+
       // create a collection space with current collection space name
       virtual INT32 create () = 0 ;
       // drop a collection space with current collection space name
       virtual INT32 drop () = 0 ;
+
+      // get the collecton's name
       virtual const CHAR *getCSName () = 0 ;
+
    } ;
 /** \class sdbCollectionSpace
     \brief Database operation interfaces of collection space
@@ -1720,7 +1724,7 @@ namespace sdbclient
 
 /** \fn INT32 create ()
     \brief Create a new collection space.
-    \deprecated This function will be deprecated in SequoiaDB1.6, use sdb::createCollectionSpace instead of it.
+    \deprecated This function will be deprecated in SequoiaDB2.x, use sdb::createCollectionSpace instead of it.
     \retval SDB_OK Operation Success.
     \retval Others Operation Fail
 */
@@ -1733,7 +1737,7 @@ namespace sdbclient
 
 /** \fn INT32 drop ()
     \brief Drop current collection space.
-    \deprecated This function will be deprecated in SequoiaDB1.6, use sdb::dropCollectionSpace instead of it.
+    \deprecated This function will be deprecated in SequoiaDB2.x, use sdb::dropCollectionSpace instead of it.
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1747,7 +1751,7 @@ namespace sdbclient
 
 /** \fn const CHAR *getCSName ()
     \brief Get the current collection space name.
-    \return The name of  current collection space.
+    \return The name of current collection space.
 */
       const CHAR *getCSName ()
       {
@@ -1824,7 +1828,7 @@ namespace sdbclient
 /** \fn INT32 listCollectionSpacesInDomain ( sdbCursor &cursor ) ;
     \brief List all the collection spaces in current domain.
     \param [in] cHandle The domain handle
-    \param [out] cursor The sdbCursor object of result 
+    \param [out] cursor The sdbCursor object of result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1838,7 +1842,7 @@ namespace sdbclient
 /** \fn INT32 listCollectionsInDomain ( sdbCursor &cursor ) ;
     \brief List all the collections in current domain.
     \param [in] cHandle The domain handle
-    \param [out] cursor The sdbCursor object of result 
+    \param [out] cursor The sdbCursor object of result
     \retval SDB_OK Operation Success
     \retval Others Operation Fail
 */
@@ -1850,7 +1854,7 @@ namespace sdbclient
       }
 
    };
-   
+
    class DLLEXPORT _sdb
    {
    private :
@@ -1937,6 +1941,16 @@ namespace sdbclient
 
       virtual INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
                                             INT32 iPageSize,
+                                            sdbCollectionSpace &cs
+                                          ) = 0 ;
+
+      virtual INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                            const bson::BSONObj &options,
+                                            _sdbCollectionSpace **cs
+                                          ) = 0 ;
+
+      virtual INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                            const bson::BSONObj &options,
                                             sdbCollectionSpace &cs
                                           ) = 0 ;
 
@@ -2598,8 +2612,29 @@ namespace sdbclient
          if ( !pSDB )
             return SDB_SYS ;
          return pSDB->createCollectionSpace ( pCollectionSpaceName,
-                                              iPageSize,
-                                              cs ) ;
+                                              iPageSize, cs ) ;
+      }
+
+//      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+//                                    const bson::BSONObj &options,
+//                                    _sdbCollectionSpace **cs
+//                                  )
+//      {
+//         if ( !pSDB )
+//            return SDB_SYS ;
+//         return pSDB->createCollectionSpace ( pCollectionSpaceName,
+//                                              options, cs ) ;
+//      }
+
+      INT32 createCollectionSpace ( const CHAR *pCollectionSpaceName,
+                                    const bson::BSONObj &options,
+                                    sdbCollectionSpace &cs
+                                  )
+      {
+         if ( !pSDB )
+            return SDB_SYS ;
+         return pSDB->createCollectionSpace ( pCollectionSpaceName,
+                                              options, cs ) ;
       }
 
 /** \fn INT32 dropCollectionSpace ( const CHAR *pCollectionSpaceName )
