@@ -717,10 +717,10 @@ namespace engine
    {
       INT32 rc = SDB_OK ;
       PD_TRACE_ENTRY ( SDB_RTNEXPLAIN ) ;
-      SDB_ASSERT( NULL != options._fullName, "can not be NULL" )
-      SDB_ASSERT ( cb, "educb can't be NULL" )
-      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
-      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+      SDB_ASSERT( NULL != options._fullName, "can not be NULL" ) ;
+      SDB_ASSERT ( cb, "educb can't be NULL" ) ;
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" ) ;
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" ) ;
 
       rtnContextExplain *context = NULL ;
       rc = rtnCB->contextNew( RTN_CONTEXT_EXPLAIN,
