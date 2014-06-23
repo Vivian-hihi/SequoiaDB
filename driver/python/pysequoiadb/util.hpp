@@ -35,15 +35,15 @@
 #define NEW_CPPOBJECT( pObject, CLASSNAME ) \
    pObject = new (std::nothrow) CLASSNAME()
 
-#define NEW_CPPOBJECT_INIT( pObject, CLASSNAME, pValue ) \
-   pObject = new (std::nothrow) CLASSNAME ( pValue )
-
 #define DELETE_CPPOBJECT( pObject ) \
    if ( NULL != pObject )           \
    {                                \
       delete pObject ;              \
       pObject = NULL ;              \
    } 
+
+#define TO_NULL( pObject ) \
+   pObject = NULL ;
 
 #define PY_NULL \
    Py_IncRef( Py_None ), Py_None ;
@@ -52,7 +52,6 @@
  **/
 #define MAKE_PYOBJECT( cpp_object )  \
    ( PyObject * )PyCObject_FromVoidPtr( cpp_object, NULL )
-   
 
 #define MAKE_RETURN_INT( ret_value ) \
    ( PyObject * )Py_BuildValue( "i", ret_value )
@@ -116,12 +115,7 @@
          goto done ;                                           \
       }                                                        \
                                                                \
-      NEW_CPPOBJECT_INIT( bson_object, bson::BSONObj, tmp ) ;  \
-      if ( NULL == bson_object )                               \
-      {                                                        \
-         rc = SDB_OOM ;                                        \
-         goto done ;                                           \
-      }                                                        \
+      bson_object = ( bson::BSONObj *)( tmp ) ;                \
    }
 
 #define MAKE_PYLIST_TO_VECTOR( py_list, vec_bson )                      \
@@ -139,7 +133,7 @@
          const bson::BSONObj *obj = NULL ;                              \
          CAST_PYBSON_TO_CPPBSON( PyList_GetItem( py_list, idx), obj ) ; \
          vec_bson.push_back( *obj ) ;                                   \
-         DELETE_CPPOBJECT( obj ) ;                                      \
+         TO_NULL( obj ) ;                                      \
       }                                                                 \
    }while( FALSE ) 
 

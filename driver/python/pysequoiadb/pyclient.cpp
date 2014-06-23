@@ -246,9 +246,9 @@ static PYOBJECT *get_snapshot( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( selector ) ;
-   DELETE_CPPOBJECT( order_by ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( selector ) ;
+   TO_NULL( order_by ) ;
    return MAKE_RETURN_INT_OBJECT( rc, MAKE_PYOBJECT( cursor ) ) ;
 }
 
@@ -272,7 +272,7 @@ static PYOBJECT *reset_snapshot( PYOBJECT *self, PYOBJECT *args )
    client->resetSnapshot( *condition ) ;
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
+   TO_NULL( condition ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -311,9 +311,9 @@ static PYOBJECT *get_list( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( selector ) ;
-   DELETE_CPPOBJECT( order_by ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( selector ) ;
+   TO_NULL( order_by ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -590,7 +590,7 @@ static PYOBJECT *create_replica_cata_group( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( configure ) ;
+   TO_NULL( configure ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -759,7 +759,7 @@ static PYOBJECT *flush_configure( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( option ) ;
+   TO_NULL( option ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -787,7 +787,7 @@ static PYOBJECT *backup_offline( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( option ) ;
+   TO_NULL( option ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -828,10 +828,10 @@ static PYOBJECT *list_backup( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( option ) ;
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( selector ) ;
-   DELETE_CPPOBJECT( order_by ) ;
+   TO_NULL( option ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( selector ) ;
+   TO_NULL( order_by ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -859,7 +859,7 @@ static PYOBJECT *remove_backup( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( option ) ;
+   TO_NULL( option ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -900,10 +900,10 @@ static PYOBJECT *list_tasks( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( selector ) ;
-   DELETE_CPPOBJECT( order_by ) ;
-   DELETE_CPPOBJECT( hint ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( selector ) ;
+   TO_NULL( order_by ) ;
+   TO_NULL( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -983,7 +983,7 @@ static PYOBJECT *set_session_attri( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( option ) ;
+   TO_NULL( option ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 

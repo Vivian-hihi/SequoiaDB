@@ -109,8 +109,8 @@ static PYOBJECT *split_by_condition( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( end_condition ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( end_condition ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -174,8 +174,8 @@ static PYOBJECT *split_async_by_condition( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( end_condition ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( end_condition ) ;
    return MAKE_RETURN_INT_LONG( rc, task_id ) ;
 }
 
@@ -264,7 +264,7 @@ static PYOBJECT *insert( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( object ) ;
+   TO_NULL( object ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -299,9 +299,9 @@ static PYOBJECT *update( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( rule ) ;
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( hint ) ;
+   TO_NULL( rule ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -336,9 +336,9 @@ static PYOBJECT *upsert( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( rule ) ;
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( hint ) ;
+   TO_NULL( rule ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -369,8 +369,8 @@ static PYOBJECT *del( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( hint ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -415,10 +415,10 @@ static PYOBJECT *query( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( selector ) ;
-   DELETE_CPPOBJECT( order_by ) ;
-   DELETE_CPPOBJECT( hint ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( selector ) ;
+   TO_NULL( order_by ) ;
+   TO_NULL( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -451,7 +451,7 @@ static PYOBJECT *create_index( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( index_def ) ;
+   TO_NULL( index_def ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -639,9 +639,9 @@ static PYOBJECT *get_query_meta( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( condition ) ;
-   DELETE_CPPOBJECT( order_by ) ;
-   DELETE_CPPOBJECT( hint ) ;
+   TO_NULL( condition ) ;
+   TO_NULL( order_by ) ;
+   TO_NULL( hint ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
@@ -669,7 +669,7 @@ static PYOBJECT *attach_collection( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   DELETE_CPPOBJECT( option ) ;
+   TO_NULL( option ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
