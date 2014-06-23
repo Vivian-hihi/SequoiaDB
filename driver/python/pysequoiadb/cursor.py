@@ -43,22 +43,75 @@ class cursor(object):
          self._cursor = None
 
    def next(self):
-
-      result = sdbcursor.next(self._cursor)
+      """
+       get next record
+       retcode SDB_OK Operation Success
+       return record after retcode
+       retcode other Operation Failure
+       return record after retcode is Node
+      """
       bson_string = error.err_process(result)
       return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
 
 
    def current(self):
-
-      result = sdbcursor.current(self._cursor)
+      """
+       get current record
+       retcode SDB_OK Operation Success
+       return record after retcode is Node
+       retcode other Operation Failure
+       return record after retcode is Node
+      """
       bson_string = error.err_process(result)
       return bson._bson_to_dict(bson_string, dict, False, bson.OLD_UUID_SUBTYPE, True)
 
    def close(self):
+      """
+       close cursor
+       retcode SDB_OK Operation Success
+       retcode other Operation Failure
+      """
 
       rc = sdbcursor.close(self._cursor)
       pysequoiadb.check_error(rc)
 
       return rc
 
+if __name__ == '__main__':
+    from pysequoiadb.client import client
+    from pysequoiadb.collectionspace import collectionspace
+    from pysequoiadb.common import const
+    sdb = client("192.168.20.111", 50000)
+    rc = sdb.connect_by_host("192.168.20.111", 50000)
+    if const.SDB_OK != rc:
+        raise Exception("Test Failure")
+    rc,cs = sdb.get_collection_space('tst')
+    if -34 == rc:
+        rc,cs = sdb.create_collection_space('tst')
+        if const.SDB_OK != rc:
+            raise Exception("Test Failure")
+    if const.SDB_OK != rc:
+       raise Exception("Test Failure")
+    rc,cl = cs.get_collection('tst')
+    if -23 == rc:
+        rc, cl = cs.create_collection('tst')
+        if const.SDB_OK != rc:
+            raise Exception("Test Failure")
+    for i in range(1000):
+        rc = cl.insert({'id':i})
+        if const.SDB_OK != rc:
+            raise Exception("Test Failure")
+    import sdbcl
+    print dir(sdbcl)
+    print cl.get_collection_name()
+    rc,cr = cl.query()
+    if const.SDB_OK != rc:
+        raise Exception("Test Failure")
+    while const.SDB_OK ==rc and rc != const.SDB_DMS_EOC:
+        rc,record = cr.next()
+        print record
+        rc,record = cr.current()
+        print record
+
+    if rc == const.SDB_DMS_EOC:
+        cr.close()
