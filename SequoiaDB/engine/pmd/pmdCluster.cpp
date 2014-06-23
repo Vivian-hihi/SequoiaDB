@@ -177,7 +177,7 @@ namespace engine
             continue ;
          }
          cb->incEventCount() ;
-         pReplCb->notify2Session( lsnInfo._clLID, lsnInfo._clLID,
+         pReplCb->notify2Session( lsnInfo._csLID, lsnInfo._clLID,
                                   lsnInfo._extLID, lsnInfo._offset ) ;
       }
 
