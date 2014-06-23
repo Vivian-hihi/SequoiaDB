@@ -62,10 +62,13 @@ class client(object):
          pysequoiadb.check_error(rc)
          self._client = None
 
-   def __getitem__(self, item_name):
+   def __getitem__(self, name):
+      return self.__getattr__(name)
+
+   def __getattr__(self, name):
 
       cs = collectionspace()
-      rc = sdbclient.get_collection_space(self._client, item_name, cs._cs)
+      rc = sdbclient.get_collection_space(self._client, name, cs._cs)
 
       pysequoiadb.check_error(rc)
       if const.SDB_OK != rc:

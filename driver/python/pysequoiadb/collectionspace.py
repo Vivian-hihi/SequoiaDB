@@ -51,16 +51,19 @@ class collectionspace(object):
          pysequoiadb.check_error(rc)
          self._cs = None
 
-   def __getitem__(self, item_name):
+   def __getattr__(self, name):
 
       cl = collection()
-      rc = sdbcs.get_collection(self._cs, item_name, cl._cl)
+      rc = sdbcs.get_collection(self._cs, name, cl._cl)
       pysequoiadb.check_error(rc)
 
       if const.SDB_OK != rc:
          cl = None
 
-      return cl
+      return rc, cl
+
+   def __getitem__(self, name):
+      return self.__getattr__(name)
 
    def get_collection(self, cl_name):
 
