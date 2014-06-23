@@ -1,0 +1,81 @@
+/*******************************************************************************
+
+
+   Copyright (C) 2011-2014 SequoiaDB Ltd.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the term of the GNU Affero General Public License, version 3,
+   as published by the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warrenty of
+   MARCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program. If not, see <http://www.gnu.org/license/>.
+
+   Source File Name = pmdEDUEntryPoint.hpp
+
+   Descriptive Name = Process MoDel Engine Dispatchable Unit Event Header
+
+   When/how to use: this program may be used on binary and text-formatted
+   versions of PMD component. This file contains structure for events that
+   used as inter-EDU communications.
+
+   Dependencies: N/A
+
+   Restrictions: N/A
+
+   Change Activity:
+   defect Date        Who Description
+   ====== =========== === ==============================================
+          23/06/2012  TW  Initial Draft
+
+   Last Changed =
+
+*******************************************************************************/
+#ifndef PMD_EDU_ENTRYPOINT_HPP__
+#define PMD_EDU_ENTRYPOINT_HPP__
+
+#include "pmdEDU.hpp"
+
+namespace engine
+{
+
+   /*
+      PMD ENTRY POINTERS
+   */
+   INT32 pmdLocalAgentEntryPoint( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdShardAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdReplAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdHTTPAgentEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdRestAgentEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdTcpListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdHTTPListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdRestSvcEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdRepREntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdLoggWEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+   INT32 pmdClusterEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdClusterShardEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdClsNtyEntryPoint( pmdEDUCB * cb, void * arg ) ;
+   INT32 pmdShardREntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdCatMainControllerEntryPoint ( pmdEDUCB *cb, void *pData );
+   INT32 pmdCatNodeManagerEntryPoint ( pmdEDUCB *cb, void *pData );
+   INT32 pmdCatCatalogManagerEntryPoint ( pmdEDUCB *cb, void *pData );
+   INT32 pmdCatNetWorkEntryPoint ( pmdEDUCB *cb, void *pData );
+   INT32 pmdCoordNetWorkEntryPoint ( pmdEDUCB *cb, void *pData );
+   INT32 pmdPreLoaderEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdBackgroundJobEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdDpsTransRollbackEntryPoint( pmdEDUCB *cb, void *pData ) ;
+#if defined (_WINDOWS)
+   INT32 pmdWindowsListenerEntryPoint ( pmdEDUCB *cb, void *arg ) ;
+#endif
+   INT32 pmdLoadWorkerEntryPoint ( pmdEDUCB *cb, void *pData ) ;
+   INT32 pmdSyncClockEntryPoint( pmdEDUCB *cb, void *arg ) ;
+
+}
+
+#endif // PMD_EDU_ENTRYPOINT_HPP__
+
