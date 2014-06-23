@@ -85,7 +85,8 @@ pmdFiles = [
       "pmd/pmdLoadWorker.cpp",
       "pmd/pmdPreLoader.cpp",
       "pmd/pmdRestSvc.cpp",
-      "pmd/pmdController.cpp"
+      "pmd/pmdController.cpp",
+	  "pmd/pmdEDUEntryPoint.cpp"
       ]
 migFiles = [
       "mig/migLoad.cpp"
@@ -229,7 +230,8 @@ dmsFiles = [
       "dms/dms.cpp",
       "dms/dmsStorageLoadExtent.cpp",
       "dms/dmsStorageJob.cpp",
-      "dms/dmsTmpBlkUnit.cpp"
+      "dms/dmsTmpBlkUnit.cpp",
+      "dms/dmsCompress.cpp"
       ]
 
 ixmFiles = [

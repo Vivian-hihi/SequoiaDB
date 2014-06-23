@@ -44,19 +44,25 @@
 #include "pmdEDU.hpp"
 #include "pmdEDUMgr.hpp"
 #include "pmd.hpp"
-#include "pmdCB.hpp"
 #include "pdTrace.hpp"
 #include "pmdTrace.hpp"
 #include <map>
-#include <string>
-#include <../snappy/snappy.h>
-#include <dmsRecord.hpp>
+
+#if defined ( SDB_ENGINE )
+#include "rtnCB.hpp"
+#endif // SDB_ENGINE
 
 namespace engine
 {
+   const UINT32 EDU_MEM_ALIGMENT_SIZE  = 1024 ;
+   const UINT32 EDU_MAX_CATCH_SIZE     = 16*1024*1024 ;
+
    static std::map<EDU_TYPES, std::string> mapEDUName ;
    static std::map<EDU_TYPES,EDU_TYPES>    mapEDUTypeSys ;
 
+   /*
+      TOOL FUNCTIONS
+   */
    // PD_TRACE_DECLARE_FUNCTION ( SDB_REGEDUNAME, "registerEDUName" )
    INT32 registerEDUName ( EDU_TYPES type, const CHAR * name, BOOLEAN system )
    {
@@ -131,161 +137,44 @@ namespace engine
       return it == mapEDUTypeSys.end() ? FALSE : TRUE ;
    }
 
-   // array assignment later, can't inherit from SDBObject
-   struct _eduEntryInfo
-   {
-      EDU_TYPES         type ;
-      INT32             regResult ;
-      pmdEntryPoint     entryFunc ;
-   };
-
-#define ON_EDUTYPE_TO_ENTRY1(type, system, entry, desp) \
-   { type, registerEDUName(type, desp, system), entry }
-
-#define ON_EDUTYPE_TO_ENTRY2(type, system, entry) \
-   ON_EDUTYPE_TO_ENTRY1(type, system, entry, #type)
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB_GETENTFUNCBYTYPE, "getEntryFuncByType" )
-   pmdEntryPoint getEntryFuncByType ( EDU_TYPES type )
-   {
-      pmdEntryPoint rt = NULL ;
-      PD_TRACE_ENTRY ( SDB_GETENTFUNCBYTYPE );
-      static const _eduEntryInfo entry[] = {
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SHARDAGENT, FALSE,
-                                pmdShardAgentEntryPoint,
-                                "ShardAgent" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_COORDAGENT, FALSE,
-                                pmdAgentEntryPoint,
-                                "CoordAgent" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_AGENT, FALSE,
-                                pmdLocalAgentEntryPoint,
-                                "Agent" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_REPLAGENT, FALSE,
-                                pmdReplAgentEntryPoint,
-                                "ReplAgent" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_HTTPAGENT, FALSE,
-                                pmdHTTPAgentEntryPoint,
-                                "HTTPAgent" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_RESTAGENT, FALSE,
-                                pmdRestAgentEntryPoint,
-                                "RestAgent" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_TCPLISTENER, TRUE,
-                                pmdTcpListenerEntryPoint,
-                                "TCPListener" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_RESTLISTENER, TRUE,
-                                pmdRestSvcEntryPoint,
-                                "RestListener" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CLUSTER, TRUE,
-                                pmdClusterEntryPoint,
-                                "Cluster" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CLUSTERSHARD, TRUE,
-                                pmdClusterShardEntryPoint,
-                                "ClusterShard" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CLSLOGNTY, TRUE,
-                                pmdClsNtyEntryPoint,
-                                "ClusterLogNotify" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_REPR, TRUE,
-                                pmdRepREntryPoint,
-                                "ReplReader" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_LOGGW, TRUE,
-                                pmdLoggWEntryPoint,
-                                "LogWriter" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SHARDR, TRUE,
-                                pmdShardREntryPoint,
-                                "ShardReader" ),
-#if defined (_WINDOWS)
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_WINDOWSLISTENER, TRUE,
-                                pmdWindowsListenerEntryPoint,
-                                "WindowsListener" ),
-#endif
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_BACKGROUND_JOB, FALSE,
-                                pmdBackgroundJobEntryPoint,
-                                "Task" ),
-
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CATMAINCONTROLLER, TRUE,
-                                pmdCatMainControllerEntryPoint,
-                                "CatalogMC" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CATNODEMANAGER, TRUE,
-                                pmdCatNodeManagerEntryPoint,
-                                "CatalogNM" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CATCATALOGUEMANAGER, TRUE,
-                                pmdCatCatalogManagerEntryPoint,
-                                "CatalogManager" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_CATNETWORK, TRUE,
-                                pmdCatNetWorkEntryPoint,
-                                "CatalogNetwork" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_COORDNETWORK, TRUE,
-                                pmdCoordNetWorkEntryPoint,
-                                "CoordNetwork" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_DPSROLLBACK, TRUE,
-                                pmdDpsTransRollbackEntryPoint,
-                                "DpsRollback"),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_LOADWORKER, FALSE,
-                                pmdLoadWorkerEntryPoint,
-                                "MigLoadWork" ),
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_PREFETCHER, FALSE,
-                                pmdPreLoaderEntryPoint,
-                                "PreLoader" ),
-
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_SYNCCLOCK, TRUE,
-                                pmdSyncClockEntryPoint,
-                                "SyncClockWorker" ),
-
-         // For the end
-         ON_EDUTYPE_TO_ENTRY1 ( EDU_TYPE_MAXIMUM, FALSE,
-                                NULL,
-                                "Unknow" )
-      };
-
-      static const UINT32 number = sizeof ( entry ) / sizeof ( _eduEntryInfo ) ;
-
-      UINT32 index = 0 ;
-      for ( ; index < number ; index ++ )
-      {
-         if ( entry[index].type == type )
-         {
-            rt = entry[index].entryFunc ;
-            goto done ;
-         }
-      }
-
-   done :
-      PD_TRACE_EXIT ( SDB_GETENTFUNCBYTYPE );
-      return rt ;
-   }
-
-   _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type ) :
-   _tid(0),
-   _processEventCount(0),
-   _eduMgr(mgr),
-   _eduType(type),
-   _ctrlFlag(0),
-   _writingDB(FALSE),
-   _threadHdl(0),
+   /*
+      _pmdEDUCB implement
+   */
+   _pmdEDUCB::_pmdEDUCB( _pmdEDUMgr *mgr, EDU_TYPES type )
+   : _tid( 0 ),
+   _processEventCount( 0 ),
+   _eduMgr( mgr ),
+   _eduType( type ),
+   _ctrlFlag( 0 ),
+   _writingDB( FALSE ),
+   _threadHdl( 0 ),
 #if defined (_LINUX)
-   _threadID(0),
+   _threadID( 0 ),
 #endif
-   _pClientSock(NULL),
-   _pCoordSession(NULL),
-   _beginLsn(0),
-   _endLsn(0),
-   _lsnNumber(0),
-   _relatedTransLSN( DPS_INVALID_LSN_OFFSET ),
-   _curTransLSN( DPS_INVALID_LSN_OFFSET ),
-   _curTransID( DPS_INVALID_TRANS_ID ),
-   _pTransNodeMap(NULL),
-   _isDoRollback(FALSE),
-   _transRC(SDB_OK),
-   _pCompressionBuffer(NULL),
-   _compressionBufferSize(0),
-   _pUncompressionBuffer(NULL),
-   _uncompressionBufferSize(0),
-   _pTempCompBuffer(NULL),
-   _tempCompBufferSize(0)
+   _pClientSock( NULL )
    {
-      _Name[0] = 0 ;
-      _pSession = NULL ;
-      _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) );
+      _Name[0]          = 0 ;
+      _pSession         = NULL ;
+      _pBuff            = NULL ;
+      _buffLen          = 0 ;
+      _totalCatchSize   = 0 ;
+      _totalMemSize     = 0 ;
+      _isDoRollback     = FALSE ;
+
+#if defined ( SDB_ENGINE )
+      _pCoordSession    = NULL ;
+      _beginLsn         = 0 ;
+      _endLsn           = 0 ;
+      _lsnNumber        = 0 ;
+      _relatedTransLSN  = DPS_INVALID_LSN_OFFSET ;
+      _curTransLSN      = DPS_INVALID_LSN_OFFSET ;
+      _curTransID       = DPS_INVALID_TRANS_ID ;
+      _pTransNodeMap    = NULL ;
+      _transRC          = SDB_OK ;
+
+      _monCfgCB = *( (monConfigCB*)(pmdGetKRCB()->getMonCB()) ) ;
+#endif // SDB_ENGINE
+
       _pErrorBuff = (CHAR *)SDB_OSS_MALLOC( EDU_ERROR_BUFF_SIZE + 1 );
    }
 
@@ -301,21 +190,7 @@ namespace engine
          SDB_OSS_FREE ( _pErrorBuff ) ;
          _pErrorBuff = NULL ;
       }
-      if ( _pCompressionBuffer )
-      {
-         SDB_OSS_FREE ( _pCompressionBuffer ) ;
-         _pCompressionBuffer = NULL ;
-      }
-      if ( _pUncompressionBuffer )
-      {
-         SDB_OSS_FREE ( _pUncompressionBuffer ) ;
-         _pUncompressionBuffer = NULL ;
-      }
-      if ( _pTempCompBuffer )
-      {
-         SDB_OSS_FREE ( _pTempCompBuffer ) ;
-         _pTempCompBuffer = NULL ;
-      }
+#if defined ( SDB_ENGINE )
       DpsTransCBLockList::iterator iterLst = _transLockLst.begin();
       while( iterLst != _transLockLst.end() )
       {
@@ -330,6 +205,88 @@ namespace engine
          delete _pTransNodeMap;
          _pTransNodeMap = NULL;
       }
+#endif // SDB_ENGINE
+   }
+
+   void _pmdEDUCB::clear()
+   {
+      // clear all queue msg
+      pmdEDUEvent data ;
+      while ( _queue.try_pop( data ) )
+      {
+         if ( data._release && data._Data )
+         {
+            SDB_OSS_FREE ( data._Data ) ;
+         }
+      }
+      _processEventCount = 0 ;
+      _Name[0] = 0 ;
+
+#if defined ( SDB_ENGINE )
+      clearTransInfo() ;
+#endif // SDB_ENGINE
+
+      // release buff
+      if ( _pBuff )
+      {
+         releaseBuff( _pBuff ) ;
+         _pBuff = NULL ;
+      }
+      _buffLen = 0 ;
+
+      // clean catch
+      CATCH_MAP_IT it = _catchMap.begin() ;
+      while ( it != _catchMap.end() )
+      {
+         SDB_OSS_FREE( it->second ) ;
+         _totalCatchSize -= it->first ;
+         _totalMemSize -= it->first ;
+         ++it ;
+      }
+      _catchMap.clear() ;
+
+      // clean alloc memory
+      ALLOC_MAP_IT itAlloc = _allocMap.begin() ;
+      while ( itAlloc != _allocMap.end() )
+      {
+         SDB_OSS_FREE( itAlloc->first ) ;
+         _totalMemSize -= itAlloc->second ;
+         ++itAlloc ;
+      }
+      _allocMap.clear() ;
+
+      SDB_ASSERT( _totalCatchSize == 0 , "Catch size is error" ) ;
+      SDB_ASSERT( _totalMemSize == 0, "Memory size is error" ) ;
+   }
+
+   string _pmdEDUCB::toString() const
+   {
+      stringstream ss ;
+      ss << "ID: " << _eduID << ", Type: " << _eduType << "["
+         << getEDUName( _eduType ) << "], TID: " << _tid ;
+
+      if ( _pSession )
+      {
+         ss << "Session: " << _pSession->sessionName() ;
+      }
+      return ss.str() ;
+   }
+
+   void _pmdEDUCB::attachSession( ISession *pSession )
+   {
+      _pSession = pSession ;
+   }
+
+   void _pmdEDUCB::detachSession()
+   {
+      _pSession = NULL ;
+   }
+
+   void _pmdEDUCB::setType ( EDU_TYPES type )
+   {
+      SDB_ASSERT ( PMD_EDU_IDLE == _status,
+                   "Type can't be changed during active" ) ;
+      _eduType = type ;
    }
 
    void _pmdEDUCB::interrupt ()
@@ -421,27 +378,9 @@ namespace engine
       _ctrlFlag &= ~EDU_CTRL_DISCONNECTED ;
    }
 
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
-   SINT64 _pmdEDUCB::contextPeek ()
-   {
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_CONTXTPEEK );
-      EDUCB_XLOCK
-      SINT64 contextID = -1 ;
-      std::set<SINT64>::const_iterator it ;
-      if ( _contextList.empty() )
-         goto done ;
-      it = _contextList.begin() ;
-      contextID = (*it) ;
-      _contextList.erase(it) ;
-   done :
-      PD_TRACE1 ( SDB__PMDEDUCB_CONTXTPEEK, PD_PACK_LONG(contextID) );
-      PD_TRACE_EXIT ( SDB__PMDEDUCB_CONTXTPEEK );
-      return contextID ;
-   }
-
    void _pmdEDUCB::setClientInfo ( const CHAR *clientName, UINT16 clientPort )
    {
-      EDUCB_XLOCK
+      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
       ossSnprintf( _Name, PMD_EDU_NAME_LENGTH, "%s:%u",
                    clientName, clientPort ) ;
       _Name[PMD_EDU_NAME_LENGTH] = 0 ;
@@ -449,87 +388,9 @@ namespace engine
 
    void _pmdEDUCB::setName ( const CHAR * name )
    {
-      EDUCB_XLOCK
+      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
       ossStrncpy ( _Name, name, PMD_EDU_NAME_LENGTH ) ;
       _Name[PMD_EDU_NAME_LENGTH] = 0 ;
-   }
-
-   void _pmdEDUCB::clearTransInfo()
-   {
-      _curTransID = DPS_INVALID_TRANS_ID ;
-      _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
-      _curTransLSN = DPS_INVALID_LSN_OFFSET ;
-      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
-      if ( pTransCB )
-      {
-         pTransCB->transLockReleaseAll( this );
-      }
-   }
-
-   void _pmdEDUCB::clear()
-   {
-      pmdEDUEvent data;
-      while ( _queue.try_pop( data ) )
-      {
-         if ( data._release && data._Data )
-         {
-            SDB_OSS_FREE ( data._Data ) ;
-         }
-      }
-      _processEventCount = 0 ;
-      _Name[0] = 0 ;
-      clearTransInfo();
-   }
-
-   void _pmdEDUCB::setClientSock ( ossSocket *pSock )
-   {
-      _pClientSock = pSock ;
-   }
-
-   ossSocket *_pmdEDUCB::getClientSock ( )
-   {
-      return _pClientSock ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO, "_pmdEDUCB::dumpInfo" )
-   void _pmdEDUCB::dumpInfo ( monEDUSimple &simple )
-   {
-      PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO );
-      EDUCB_SLOCK
-      ossMemset ( &simple._eduStatus, 0, MON_EDU_STATUS_SZ ) ;
-      ossMemset ( &simple._eduType, 0, MON_EDU_TYPE_SZ ) ;
-      ossMemset ( &simple._eduName, 0, MON_EDU_NAME_SZ ) ;
-      simple._eduID = _eduID ;
-      simple._tid = _tid ;
-      ossStrncpy ( simple._eduStatus, getEDUStatusDesp(_status),
-                   MON_EDU_STATUS_SZ ) ;
-      ossStrncpy ( simple._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
-      ossStrncpy ( simple._eduName, _Name, MON_EDU_NAME_SZ ) ;
-      PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO );
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO2, "_pmdEDUCB::dumpInfo" )
-   void _pmdEDUCB::dumpInfo ( monEDUFull &full )
-   {
-      PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO2 );
-      EDUCB_SLOCK
-      ossMemset ( &full._eduStatus, 0, MON_EDU_STATUS_SZ ) ;
-      ossMemset ( &full._eduType, 0, MON_EDU_TYPE_SZ ) ;
-      ossMemset ( &full._eduName, 0, MON_EDU_NAME_SZ ) ;
-      full._eduID = _eduID ;
-      full._tid = _tid ;
-      full._processEventCount = _processEventCount ;
-      full._queueSize = _queue.size() ;
-      ossStrncpy ( full._eduStatus, getEDUStatusDesp(_status),
-                   MON_EDU_STATUS_SZ ) ;
-      ossStrncpy ( full._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
-      ossStrncpy ( full._eduName, _Name, MON_EDU_NAME_SZ ) ;
-
-      full._monApplCB = _monApplCB ;
-      full._threadHdl = _threadHdl ;
-
-      full._eduContextList = _contextList ;
-      PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO2 );
    }
 
    CHAR *_pmdEDUCB::_getBuffInfo ( EDU_INFO_TYPE type, UINT32 & size )
@@ -611,19 +472,227 @@ namespace engine
       }
       PD_TRACE_EXIT ( SDB__PMDEDUCB_RESETINFO );
    }
-   void  _pmdEDUCB::addBpEvents(pmdEDUEvent event)
+
+   BOOLEAN _pmdEDUCB::_allocFromCatch( INT32 len, CHAR **ppBuff,
+                                       INT32 &buffLen )
    {
-      _bpEventQueue.push(event);
+      CATCH_MAP_IT it = _catchMap.lower_bound( len ) ;
+      if ( it != _catchMap.end() )
+      {
+         *ppBuff = it->second ;
+         buffLen = it->first ;
+         _catchMap.erase( it ) ;
+         _allocMap[ *ppBuff ] = buffLen ;
+         _totalCatchSize -= buffLen ;
+         return TRUE ;
+      }
+      return FALSE ;
    }
 
-   void  _pmdEDUCB::clearBpEvents()
+   INT32 _pmdEDUCB::allocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
    {
-      while( !_bpEventQueue.empty() )
+      INT32 rc = SDB_OK ;
+
+      // first alloc from catch
+      if ( _totalCatchSize >= len && _allocFromCatch( len, ppBuff, buffLen ) )
       {
-         pmdEDUEvent event;
-         _bpEventQueue.try_pop(event);
-         postEvent(event);
+         goto done ;
       }
+
+      // malloc
+      len = ossRoundUpToMultipleX( len, EDU_MEM_ALIGMENT_SIZE ) ;
+      *ppBuff = ( CHAR* )SDB_OSS_MALLOC( len ) ;
+      if( !*ppBuff )
+      {
+         rc = SDB_OOM ;
+         PD_LOG( PDERROR, "Edu[%s] malloc memory[size: %d] failed",
+                 toString().c_str(), len ) ;
+         goto error ;
+      }
+      buffLen = len ;
+
+      // update meta info
+      _totalMemSize += buffLen ;
+      _allocMap[ *ppBuff ] = buffLen ;
+
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   void _pmdEDUCB::releaseBuff( CHAR *pBuff )
+   {
+      ALLOC_MAP_IT itAlloc = _allocMap.find( pBuff ) ;
+      if ( itAlloc == _allocMap.end() )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         return ;
+      }
+      INT32 buffLen = itAlloc->second ;
+      _allocMap.erase( itAlloc ) ;
+
+      if ( (UINT32)buffLen > EDU_MAX_CATCH_SIZE )
+      {
+         SDB_OSS_FREE( pBuff ) ;
+         _totalMemSize -= buffLen ;
+      }
+      else
+      {
+         // add to catch
+         _catchMap.insert( std::make_pair( buffLen, pBuff ) ) ;
+         _totalCatchSize += buffLen ;
+
+         // re-org catch
+         while ( _totalCatchSize > EDU_MAX_CATCH_SIZE )
+         {
+            CATCH_MAP_IT it = _catchMap.begin() ;
+            SDB_OSS_FREE( it->second ) ;
+            _totalMemSize -= it->first ;
+            _totalCatchSize -= it->first ;
+            _catchMap.erase( it ) ;
+         }
+      }
+   }
+
+   INT32 _pmdEDUCB::reallocBuff( INT32 len, CHAR **ppBuff, INT32 &buffLen )
+   {
+      INT32 rc = SDB_OK ;
+      CHAR *pOld = *ppBuff ;
+      INT32 oldLen = buffLen ;
+
+      ALLOC_MAP_IT itAlloc = _allocMap.find( *ppBuff ) ;
+      if ( itAlloc != _allocMap.end() )
+      {
+         buffLen = itAlloc->second ;
+         oldLen = buffLen ;
+      }
+      else if ( *ppBuff != NULL || buffLen != 0 )
+      {
+         PD_LOG( PDERROR, "EDU[%s] realloc input buffer error",
+                 toString().c_str() ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      if ( buffLen >= len )
+      {
+         goto done ;
+      }
+      len = ossRoundUpToMultipleX( len, EDU_MEM_ALIGMENT_SIZE ) ;
+      *ppBuff = ( CHAR* )SDB_OSS_REALLOC( *ppBuff, len ) ;
+      if ( !*ppBuff )
+      {
+         PD_LOG( PDERROR, "Failed to realloc memory, size: %d", len ) ;
+         goto error ;
+      }
+
+      buffLen = len ;
+
+      // update meta info
+      _totalMemSize += ( len - oldLen ) ;
+
+      _allocMap[ *ppBuff ] = buffLen ;
+
+   done:
+      return rc ;
+   error:
+      if ( pOld )
+      {
+         releaseBuff( pOld ) ;
+         *ppBuff = NULL ;
+         buffLen = 0 ;
+      }
+      goto done ;
+   }
+
+   CHAR* _pmdEDUCB::getBuff( INT32 len )
+   {
+      if ( _buffLen < len )
+      {
+         if ( _pBuff )
+         {
+            releaseBuff( _pBuff ) ;
+            _pBuff = NULL ;
+         }
+         _buffLen = 0 ;
+
+         allocBuff( len, &_pBuff, _buffLen ) ;
+      }
+
+      return _pBuff ;
+   }
+
+#if defined ( SDB_ENGINE )
+   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_CONTXTPEEK, "_pmdEDUCB::contextPeek" )
+   SINT64 _pmdEDUCB::contextPeek ()
+   {
+      PD_TRACE_ENTRY ( SDB__PMDEDUCB_CONTXTPEEK );
+      ossScopedLock _lock ( &_mutex, EXCLUSIVE ) ;
+      SINT64 contextID = -1 ;
+      std::set<SINT64>::const_iterator it ;
+      if ( _contextList.empty() )
+         goto done ;
+      it = _contextList.begin() ;
+      contextID = (*it) ;
+      _contextList.erase(it) ;
+   done :
+      PD_TRACE1 ( SDB__PMDEDUCB_CONTXTPEEK, PD_PACK_LONG(contextID) );
+      PD_TRACE_EXIT ( SDB__PMDEDUCB_CONTXTPEEK );
+      return contextID ;
+   }
+
+   void _pmdEDUCB::clearTransInfo()
+   {
+      _curTransID = DPS_INVALID_TRANS_ID ;
+      _relatedTransLSN = DPS_INVALID_LSN_OFFSET ;
+      _curTransLSN = DPS_INVALID_LSN_OFFSET ;
+      dpsTransCB *pTransCB = pmdGetKRCB()->getTransCB();
+      if ( pTransCB )
+      {
+         pTransCB->transLockReleaseAll( this );
+      }
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO, "_pmdEDUCB::dumpInfo" )
+   void _pmdEDUCB::dumpInfo ( monEDUSimple &simple )
+   {
+      PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO );
+      ossScopedLock _lock ( &_mutex, SHARED ) ;
+      ossMemset ( &simple._eduStatus, 0, MON_EDU_STATUS_SZ ) ;
+      ossMemset ( &simple._eduType, 0, MON_EDU_TYPE_SZ ) ;
+      ossMemset ( &simple._eduName, 0, MON_EDU_NAME_SZ ) ;
+      simple._eduID = _eduID ;
+      simple._tid = _tid ;
+      ossStrncpy ( simple._eduStatus, getEDUStatusDesp(_status),
+                   MON_EDU_STATUS_SZ ) ;
+      ossStrncpy ( simple._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
+      ossStrncpy ( simple._eduName, _Name, MON_EDU_NAME_SZ ) ;
+      PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO );
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB___PMDEDUCB_DUMPINFO2, "_pmdEDUCB::dumpInfo" )
+   void _pmdEDUCB::dumpInfo ( monEDUFull &full )
+   {
+      PD_TRACE_ENTRY ( SDB___PMDEDUCB_DUMPINFO2 );
+      ossScopedLock _lock ( &_mutex, SHARED ) ;
+      ossMemset ( &full._eduStatus, 0, MON_EDU_STATUS_SZ ) ;
+      ossMemset ( &full._eduType, 0, MON_EDU_TYPE_SZ ) ;
+      ossMemset ( &full._eduName, 0, MON_EDU_NAME_SZ ) ;
+      full._eduID = _eduID ;
+      full._tid = _tid ;
+      full._processEventCount = _processEventCount ;
+      full._queueSize = _queue.size() ;
+      ossStrncpy ( full._eduStatus, getEDUStatusDesp(_status),
+                   MON_EDU_STATUS_SZ ) ;
+      ossStrncpy ( full._eduType, getEDUName (_eduType), MON_EDU_TYPE_SZ ) ;
+      ossStrncpy ( full._eduName, _Name, MON_EDU_NAME_SZ ) ;
+
+      full._monApplCB = _monApplCB ;
+      full._threadHdl = _threadHdl ;
+
+      full._eduContextList = _contextList ;
+      PD_TRACE_EXIT ( SDB___PMDEDUCB_DUMPINFO2 );
    }
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSLOCK, "_pmdEDUCB::getTransLock" )
@@ -720,7 +789,7 @@ namespace engine
 
    // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_GETTRANSNODEROUTEID, "_pmdEDUCB::getTransNodeRouteID" )
    void _pmdEDUCB::getTransNodeRouteID( UINT32 groupID,
-                                       MsgRouteID &routeID )
+                                        MsgRouteID &routeID )
    {
       PD_TRACE_ENTRY ( SDB__PMDEDUCB_GETTRANSNODEROUTEID );
       DpsTransNodeMap::iterator iterMap;
@@ -762,197 +831,7 @@ namespace engine
       }
       return FALSE;
    }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCCOMPBUF, "_pmdEDUCB::reallocCompressionBuffer" )
-   INT32 _pmdEDUCB::reallocCompressionBuffer ( INT32 requestedSize )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_REALLOCCOMPBUF );
-      PD_TRACE2 ( SDB__PMDEDUCB_REALLOCCOMPBUF,
-                  PD_PACK_INT(requestedSize),
-                  PD_PACK_INT(_compressionBufferSize) ) ;
-      if ( requestedSize > _compressionBufferSize )
-      {
-         CHAR *pOrigMem = _pCompressionBuffer ;
-         INT32 newSize = ossRoundUpToMultipleX ( requestedSize,
-                                                 SDB_PAGE_SIZE ) ;
-         PD_CHECK ( newSize >= 0, SDB_INVALIDARG, error, PDERROR,
-                    "realloc compression buffer overflow" ) ;
-         _pCompressionBuffer = (CHAR*)SDB_OSS_REALLOC ( _pCompressionBuffer,
-                                                        newSize ) ;
-         if ( !_pCompressionBuffer )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate memory for "
-                     "compression buffer, size = %d", newSize ) ;
-            rc = SDB_OOM ;
-            // realloc does NOT free original memory if it fails, so we have to
-            // assign pointer to original
-            _pCompressionBuffer = pOrigMem ;
-            goto error ;
-         }
-         _compressionBufferSize = newSize ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUCB_REALLOCCOMPBUF, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_REALLOCUNCOMPBUF, "_pmdEDUCB::reallocUncompressionBuffer" )
-   INT32 _pmdEDUCB::reallocUncompressionBuffer ( INT32 requestedSize )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_REALLOCUNCOMPBUF );
-      PD_TRACE2 ( SDB__PMDEDUCB_REALLOCUNCOMPBUF,
-                  PD_PACK_INT(requestedSize),
-                  PD_PACK_INT(_uncompressionBufferSize) ) ;
-      if ( requestedSize > _uncompressionBufferSize )
-      {
-         CHAR *pOrigMem = _pUncompressionBuffer ;
-         INT32 newSize = ossRoundUpToMultipleX ( requestedSize,
-                                                 SDB_PAGE_SIZE ) ;
-         PD_CHECK ( newSize >= 0, SDB_INVALIDARG, error, PDERROR,
-                    "realloc uncompression buffer overflow" ) ;
-         _pUncompressionBuffer = (CHAR*)SDB_OSS_REALLOC ( _pUncompressionBuffer,
-                                                          newSize ) ;
-         if ( !_pUncompressionBuffer )
-         {
-            PD_LOG ( PDERROR, "Failed to allocate memory for "
-                     "uncompression buffer, size = %d", newSize ) ;
-            rc = SDB_OOM ;
-            // realloc does NOT free original memory if it fails, so we have to
-            // assign pointer to original
-            _pUncompressionBuffer = pOrigMem ;
-            goto error ;
-         }
-         _uncompressionBufferSize = newSize ;
-      }
-   done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUCB_REALLOCUNCOMPBUF, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_COMPRESS, "_pmdEDUCB::compress" )
-   INT32 _pmdEDUCB::compress ( const CHAR *pInputData, INT32 inputSize,
-                               CHAR **ppData, INT32 *pDataSize )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_COMPRESS );
-      SDB_ASSERT ( pInputData && ppData && pDataSize,
-                   "Data pointer and size pointer can't be NULL" ) ;
-
-      // estimate the max possible size for compressed data
-      size_t maxCompressedLen = snappy::MaxCompressedLength ( inputSize ) ;
-      // make sure we have enough memory for it
-      rc = reallocCompressionBuffer ( (INT32)maxCompressedLen ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Unable to allocate %d bytes compression buffer, rc = %d",
-                    (INT32)maxCompressedLen, rc ) ;
-      // let's rock :)
-      snappy::RawCompress ( pInputData, (size_t)inputSize,
-                            _pCompressionBuffer, &maxCompressedLen ) ;
-      // assign the output buffer pointer
-      *ppData = _pCompressionBuffer ;
-      *pDataSize = (INT32)maxCompressedLen ;
-   done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUCB_COMPRESS, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_COMPRESS1, "_pmdEDUCB::compress" )
-   INT32 _pmdEDUCB::compress ( const BSONObj &obj, const CHAR* pOIDPtr,
-                               INT32 oidLen, CHAR **ppData, INT32 *pDataSize )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_COMPRESS1 ) ;
-      // if we want to append OID, then
-      if ( oidLen && pOIDPtr )
-      {
-         // get the requested size by adding object size and oid size
-         INT32 requestedSize = obj.objsize() + oidLen ;
-         // check if we need to allocate new buffer
-         if ( obj.objsize() + oidLen > _tempCompBufferSize )
-         {
-            CHAR *pOrigMem = _pTempCompBuffer ;
-            INT32 newSize = ossRoundUpToMultipleX ( requestedSize,
-                                                    SDB_PAGE_SIZE ) ;
-            PD_CHECK ( newSize >= 0, SDB_INVALIDARG, error, PDERROR,
-                       "realloc temp compression buffer overflow" ) ;
-            // reallocate memory
-            _pTempCompBuffer = (CHAR*)SDB_OSS_REALLOC(_pTempCompBuffer,
-                                                      newSize ) ;
-            // make sure memory is available
-            if ( !_pTempCompBuffer )
-            {
-               PD_LOG ( PDERROR, "Failed to allocate memory for "
-                        "temp compression buffer, size = %d", newSize ) ;
-               rc = SDB_OOM ;
-               // if we failed to realloc, we have to restore the original
-               // pointer
-               _pTempCompBuffer = pOrigMem ;
-               goto error ;
-            }
-            // change the memory size
-            _tempCompBufferSize = newSize ;
-         }
-         // actually append, note we substract DMS_RECORD_METADATA_SZ from
-         // _pTempCompBuffer because DMS_RECORD_SETDATA_OID will add
-         // DMS_RECORD_METADATA_SZ for all offsets
-         DMS_RECORD_SETDATA_OID (
-               _pTempCompBuffer - DMS_RECORD_METADATA_SZ,
-               obj.objdata(), obj.objsize(), BSONElement(pOIDPtr) ) ;
-         rc = compress ( _pTempCompBuffer, BSONObj(_pTempCompBuffer).objsize(),
-                         ppData, pDataSize ) ;
-      }
-      else
-         rc = compress ( obj.objdata(), obj.objsize(), ppData, pDataSize ) ;
-   done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUCB_COMPRESS1, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
-
-   // PD_TRACE_DECLARE_FUNCTION ( SDB__PMDEDUCB_UNCOMPRESS, "_pmdEDUCB::uncompress" )
-   INT32 _pmdEDUCB::uncompress ( const CHAR *pInputData, INT32 inputSize,
-                                 CHAR **ppData, INT32 *pDataSize )
-   {
-      INT32 rc = SDB_OK ;
-      PD_TRACE_ENTRY ( SDB__PMDEDUCB_UNCOMPRESS );
-      SDB_ASSERT ( pInputData && ppData && pDataSize,
-                   "Data pointer and size pointer can't be NULL" ) ;
-
-      size_t maxUncompressedLen = 0 ;
-      // estimate the max possible size for uncompressed data + sanity check
-      rc = snappy::GetUncompressedLength ( pInputData, (size_t)inputSize,
-                                           &maxUncompressedLen ) ;
-      PD_CHECK ( rc, SDB_CORRUPTED_RECORD, error, PDERROR,
-                 "Failed to get uncompressed length" ) ;
-      // make sure we have enough memory for it
-      rc = reallocUncompressionBuffer ( (INT32)maxUncompressedLen ) ;
-      PD_RC_CHECK ( rc, PDERROR,
-                    "Unable to allocate %d bytes uncompression buffer, rc = %d",
-                    (INT32)maxUncompressedLen, rc ) ;
-      // let's rock :)
-      rc = snappy::RawUncompress ( pInputData, (size_t)inputSize,
-                                   _pUncompressionBuffer ) ;
-      PD_CHECK ( rc, SDB_CORRUPTED_RECORD, error, PDERROR,
-                 "Failed to uncompress record" ) ;
-      rc = SDB_OK ;
-      // assign return value
-      *ppData = _pUncompressionBuffer ;
-      *pDataSize = (INT32)maxUncompressedLen ;
-   done :
-      PD_TRACE_EXITRC ( SDB__PMDEDUCB_UNCOMPRESS, rc ) ;
-      return rc ;
-   error :
-      goto done ;
-   }
+#endif // SDB_ENGINE
 
    /*
       edu entry point functions
@@ -1112,20 +991,22 @@ namespace engine
          // the thread
 
          //reset and clear
-         cb->resetMonAppCB() ;
+         cb->resetMon() ;
          cb->clear() ;
 
+      #if defined ( SDB_ENGINE )
          //delete all leak context
          {
             SDB_RTNCB *rtnCB = pmdGetKRCB()->getRTNCB() ;
             SINT64 contextID = -1 ;
-            while ( -1 != (contextID = cb->contextPeek() ))
+            while ( -1 != (contextID = cb->contextPeek() ) )
             {
                rtnCB->contextDelete( contextID, NULL ) ;
                PD_LOG ( PDWARNING, "EDU[%lld,%s] context[%d] leaked",
                         myEDUID, getEDUName(type), contextID ) ;
             }
          }
+      #endif // SDB_ENGINE
 
          rc = eduMgr->returnEDU ( cb->getID (), isForced, &eduDestroyed ) ;
 
@@ -1223,10 +1104,12 @@ namespace engine
          goto done ;
       }
    done :
+#if defined ( SDB_ENGINE )
       if ( totalReceivedSize > 0 )
       {
          pmdGetKRCB()->getMonDBCB()->svcNetInAdd( totalReceivedSize ) ;
       }
+#endif // SDB_ENGINE
       PD_TRACE_EXITRC ( SDB_PMDRECV, rc );
       return rc ;
    }
@@ -1257,28 +1140,14 @@ namespace engine
          goto done ;
       }
    done :
+#if defined ( SDB_ENGINE )
       if ( totalSentSize > 0 )
       {
          pmdGetKRCB()->getMonDBCB()->svcNetOutAdd( totalSentSize ) ;
       }
+#endif // SDB_ENGINE
       PD_TRACE_EXITRC ( SDB_PMDSEND, rc );
       return rc ;
-   }
-
-   INT32 pmdSyncClockEntryPoint( pmdEDUCB * cb, void * arg )
-   {
-      const UINT32 syncClockInterval = 10 ; // 10ms
-      ossTick tmp ;
-      pmdKRCB *pKrcb = pmdGetKRCB() ;
-
-      pKrcb->getEDUMgr()->activateEDU( cb ) ;
-
-      while ( !cb->isDisconnected() )
-      {
-         pKrcb->syncCurTime() ;
-         ossSleep( syncClockInterval ) ;
-      }
-      return SDB_OK ;
    }
 
 }
