@@ -73,32 +73,9 @@ void _pdTraceCB::pause ( UINT64 funcCode )
          educb    = pmdGetKRCB()->getEDUMgr()->getEDU();
          // put EDU into pause status
          addPausedEDU ( educb ) ;
-         // perform loop until either database shutdown or resume
-         while( !PMD_IS_DB_DOWN )
-         {
-            // wait event for 100 millisec
-            if ( !educb->waitEvent ( event, PD_TRACE_PAUSE_DFT_WAIT ) )
-            {
-               // if there's no event hit during the time, let's continue to
-               // check whether the database is still running
-               continue ;
-            }
-            // when we hit here, that means we get something
-            if ( engine::PMD_EDU_EVENT_BP_RESUME != event._eventType )
-            {
-               // if the event is not resume, let's add it into queue and
-               // continue wait
-               educb->addBpEvents(event);
-               continue ;
-            }
-            else
-            {
-               // otherwise if we get resume message, we have to clean up all
-               // events we received during break and return from the function
-               educb->clearBpEvents() ;
-               goto done ;
-            }
-         } // while( TRUE )
+
+         educb->waitEvent( engine::PMD_EDU_EVENT_BP_RESUME, event, -1 ) ;
+         break ;
       } // if ( _bpList[i] == funcCode )
    } // for ( i = 0; i < _numBP; ++i )
 
