@@ -70,10 +70,11 @@ namespace engine
          }
       }
 
-      _query.getOwned() ;
-      _selector.getOwned() ;
-      _orderBy.getOwned() ;
-      _hint.getOwned() ;
+      _fullName = _fullNameBuf ;
+      _query = _query.getOwned() ;
+      _selector = _selector.getOwned() ;
+      _orderBy = _orderBy.getOwned() ;
+      _hint = _hint.getOwned() ;
    done:
       return rc ;
    error:

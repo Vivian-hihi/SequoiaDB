@@ -55,6 +55,7 @@
 #include "ossAtomic.hpp"
 #include "../bson/bsonobj.h"
 #include "dmsCB.hpp"
+#include "rtnQueryOptions.hpp"
 
 #include <map>
 
@@ -224,7 +225,8 @@ namespace engine
       RTN_CONTEXT_QGMSORT,
       RTN_CONTEXT_DELCS,
       RTN_CONTEXT_DELCL,
-      RTN_CONTEXT_DELMAINCL
+      RTN_CONTEXT_DELMAINCL,
+      RTN_CONTEXT_EXPLAIN,
    } ;
 
    const CHAR *getContextTypeDesp( RTN_CONTEXT_TYPE type ) ;
@@ -366,7 +368,7 @@ namespace engine
          _rtnIXScanner*    getIXScanner () { return _scanner ; }
          optScanType       scanType () const { return _scanType ; }
          _dmsMBContext*    getMBContext () { return _mbContext ; }
-         _optAccessPlan*   getPlan () { return _plan ; }
+         virtual _optAccessPlan*   getPlan () { return _plan ; }
 
          dmsExtentID       lastExtLID () const { return _lastExtLID ; }
 
@@ -955,6 +957,52 @@ namespace engine
       INT32                      _version;
    };
    typedef class _rtnContextDelMainCL rtnContextDelMainCL;
+
+
+   class _rtnContextExplain : public _rtnContextBase
+   {
+   public:
+      _rtnContextExplain( INT64 contextID, UINT64 eduID ) ;
+      virtual ~_rtnContextExplain() ;
+
+   public:
+      virtual RTN_CONTEXT_TYPE getType() const { return RTN_CONTEXT_EXPLAIN ; }
+      virtual _dmsStorageUnit*  getSU () { return NULL ; }
+      INT32 open( const _rtnQueryOptions &options,
+                  const BSONObj &explainOptions ) ;
+
+   protected:
+      virtual INT32 _prepareData( _pmdEDUCB *cb ) ;
+
+   private:
+      INT32 _prepareToExplain( _pmdEDUCB *cb ) ;
+
+      INT32 _explainQuery( _pmdEDUCB *cb ) ;
+
+      INT32 _commitResult( _pmdEDUCB *cb ) ;
+
+      INT32 _getMonInfo( _pmdEDUCB *cb, BSONObj &info ) ;
+
+   private:
+      _rtnQueryOptions _options ;
+      BSONObj _explainOptions ;
+      _rtnContextData *_contextOfQuery ;
+
+      /// info before explain
+      BSONObj _beginMon ;
+      ossTimestamp _beginTime ;
+
+      /// info after explain
+      BSONObj _endMon ;
+      ossTimestamp _endTime ;
+      INT64 _recordNum ;
+
+      _pmdEDUCB *_cbOfQuery ;
+      BSONObjBuilder _builder ;
+      BOOLEAN _explained ;
+      
+   } ;
+   typedef class _rtnContextExplain rtnContextExplain ;
 }
 
 #endif //RTNCONTEXT_HPP_

@@ -52,7 +52,31 @@ namespace engine
        _fullNameBuf( NULL ),
        _skip( 0 ),
        _limit( -1 ),
-       _flag( 0 )
+       _flag( 0 ),
+       _enablePrefetch( FALSE )
+      {
+
+      }
+
+      _rtnQueryOptions( const CHAR *query,
+                        const CHAR *selector,
+                        const CHAR *orderBy,
+                        const CHAR *hint,
+                        const CHAR *fullName,
+                        SINT64 skip,
+                        SINT64 limit,
+                        INT32 flag,
+                        BOOLEAN enablePrefetch )
+      :_query( query ),
+       _selector( selector ),
+       _orderBy( orderBy ),
+       _hint( hint ),
+       _fullName( fullName ),
+       _fullNameBuf( NULL ),
+       _skip( skip ),
+       _limit( limit ),
+       _flag( flag ),
+       _enablePrefetch( enablePrefetch )
       {
 
       }
@@ -71,6 +95,7 @@ namespace engine
       SINT64 _skip ;
       SINT64 _limit ;
       INT32 _flag ;
+      BOOLEAN _enablePrefetch ;
    } ;
    typedef class _rtnQueryOptions rtnQueryOptions ;
 }

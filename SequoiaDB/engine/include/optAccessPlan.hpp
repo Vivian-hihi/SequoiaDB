@@ -80,6 +80,7 @@ namespace engine
       _rtnAccessPlanManager *_apm ; // parent access plan manager
 
       CHAR _collectionName[ DMS_COLLECTION_NAME_SZ+1 ] ;
+      CHAR _idxName[IXM_KEY_MAX_SIZE + 1] ;
 
       BSONObj _orderBy ;            // order by called by the user
       BSONObj _query ;              // query condition called by the user
@@ -131,6 +132,7 @@ namespace engine
                        const BSONObj &hint )
       :_useCount(0)
       {
+         ossMemset( _idxName, 0, sizeof( _idxName ) ) ;
          ossMemset ( _collectionName, 0, sizeof(_collectionName) ) ;
          ossStrncpy ( _collectionName, collectionName,
                       sizeof(_collectionName) ) ;
@@ -221,6 +223,11 @@ namespace engine
       dmsExtentID getIndexCBExtent () const
       {
          return _indexCBExtent ;
+      }
+
+      const CHAR *getIndexName() const
+      {
+         return _idxName ;
       }
 
       dmsExtentID getIndexLID () const

@@ -949,6 +949,9 @@ namespace engine
          monResetMon () ;
          break ;
       default:
+         PD_LOG( PDERROR, "unkown snapshot type:%d", command ) ;
+         rc = SDB_SYS ;
+         goto error ;
          break ;
       }
 

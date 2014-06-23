@@ -709,5 +709,45 @@ namespace engine
       goto done ;
    }
 
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNEXPLAIN, "rtnExplain" )
+   INT32 rtnExplain( const rtnQueryOptions &options,
+                     const BSONObj &explainOptions,
+                     pmdEDUCB *cb, SDB_DMSCB *dmsCB,
+                     SDB_RTNCB *rtnCB, INT64 &contextID )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY ( SDB_RTNEXPLAIN ) ;
+      SDB_ASSERT( NULL != options._fullName, "can not be NULL" )
+      SDB_ASSERT ( cb, "educb can't be NULL" )
+      SDB_ASSERT ( dmsCB, "dmsCB can't be NULL" )
+      SDB_ASSERT ( rtnCB, "rtnCB can't be NULL" )
+
+      rtnContextExplain *context = NULL ;
+      rc = rtnCB->contextNew( RTN_CONTEXT_EXPLAIN,
+                              ( rtnContext **)( &context ),
+                              contextID, cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to create explain context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = context->open( options, explainOptions ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to open explain context:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNEXPLAIN, rc ) ;
+      return rc ;
+   error:
+      if ( -1 != contextID )
+      {
+         rtnCB->contextDelete( contextID, cb ) ;
+         contextID = -1 ;
+      }
+      goto done ;
+   }
 }
 

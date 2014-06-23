@@ -1313,6 +1313,38 @@ SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                             INT64 numToReturn,
                             sdbCursorHandle *handle ) ;
 
+/** \fn INT32 sdbExplain ( sdbCollectionHandle cHandle,
+                           bson *condition,
+                           bson *select,
+                           bson *orderBy,
+                           bson *hint,
+                           INT64 numToSkip,
+                           INT64 numToReturn,
+                           bson *options,                          
+                           sdbCursorHandle *handle )
+    \brief Get the matching documents in current collection
+    \param [in] cHandle The collection handle
+    \param [in] condition The matching rule, return all the documents if null
+    \param [in] select The selective rule, return the whole document if null
+    \param [in] orderBy The ordered rule, never sort if null
+    \param [in] hint The hint, automatically match the optimal hint if null
+    \param [in] numToSkip Skip the first numToSkip documents, never skip if this parameter is 0
+    \param [in] numToReturn Only return numToReturn documents, return all if this parameter is -1
+    \param [in] options the rules of explain
+    \param [out] handle The cursor handle of current query
+    \retval SDB_OK Operation Success
+    \retval Others Operation Fail
+*/
+SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
+                              bson *condition,
+                              bson *select,
+                              bson *orderBy,
+                              bson *hint,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
+                              bson *options,
+                              sdbCursorHandle *handle ) ;
+
 /** \fn INT32 sdbNext ( sdbCursorHandle cHandle,
                         bson *obj )
     \brief Return the next document of current cursor, and move forward

@@ -44,7 +44,7 @@
 
 namespace engine
 {
-   class _rtnContextSort : public _rtnContextBase
+   class _rtnContextSort : public _rtnContextData
    {
    public:
       _rtnContextSort( INT64 contextID, UINT64 eduID ) ;
@@ -53,6 +53,7 @@ namespace engine
    public:
       virtual RTN_CONTEXT_TYPE getType() const ;
       virtual _dmsStorageUnit*  getSU () { return NULL ; }
+      virtual _optAccessPlan *getPlan() { return _planForExplain ; }
 
       INT32 open( const BSONObj &orderBy,
                   rtnContext *context,
@@ -67,6 +68,9 @@ namespace engine
       _rtnSorting _sorting ;
       SINT64 _skip ;
       SINT64 _limit ;
+      /// WARNING: do not use this plan to do anything
+      ///  except keeping plan for explaining. -- yunwu.
+      _optAccessPlan *_planForExplain ;
    } ;
    typedef class _rtnContextSort rtnContextSort ;
 }

@@ -4378,6 +4378,95 @@ error :
    goto done ;
 }
 
+SDB_EXPORT INT32 sdbExplain ( sdbCollectionHandle cHandle,
+                              bson *condition,
+                              bson *selector,
+                              bson *orderBy,
+                              bson *hint,
+                              INT64 numToSkip,
+                              INT64 numToReturn,
+                              bson *options,
+                              sdbCursorHandle *handle )
+{
+   INT32 rc = SDB_OK ;
+   bson newObj ;
+   BOOLEAN bsoninit = FALSE ;
+   SINT64 contextID = -1 ;
+   sdbCursorStruct *cursor = NULL ;
+   BOOLEAN result = FALSE ;
+   sdbCollectionStruct *cs = (sdbCollectionStruct*)cHandle ;
+   HANDLE_CHECK( cHandle, cs, SDB_HANDLE_TYPE_COLLECTION ) ;
+
+   if ( !cs->_collectionFullName[0] )
+   {
+      rc = SDB_INVALIDARG ;
+      goto error ;
+   }
+
+   BSON_INIT( newObj ) ;
+   BSON_APPEND( newObj, FIELD_NAME_COLLECTION, 
+                cs->_collectionFullName, string ) ;
+
+   if ( hint )
+   {
+      BSON_APPEND( newObj, FIELD_NAME_HINT, hint, bson ) ;
+   }
+
+   if ( options )
+   {
+      BSON_APPEND( newObj, FIELD_NAME_OPTIONS, options, bson ) ;
+   }
+   BSON_FINISH ( newObj ) ;
+
+   rc = clientBuildQueryMsg ( &cs->_pSendBuffer, &cs->_sendBufferSize,
+                              CMD_ADMIN_PREFIX CMD_NAME_EXPLAIN,
+                              0, 0, -1, -1,
+                              condition, selector, orderBy,
+                              &newObj, cs->_endianConvert ) ;
+
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+   rc = _send ( cs->_sock, (MsgHeader*)cs->_pSendBuffer,
+                cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   rc = _recvExtract ( cs->_sock, (MsgHeader**)&cs->_pReceiveBuffer,
+                       &cs->_receiveBufferSize, &contextID, &result,
+                       cs->_endianConvert ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   ALLOC_HANDLE( cursor, sdbCursorStruct ) ; 
+   INIT_CURSOR( cursor, cs->_connection, cs, contextID ) ;
+   ossMemcpy ( cursor->_collectionFullName, cs->_collectionFullName,
+               sizeof(cursor->_collectionFullName) ) ;
+
+   rc = _regCursor ( cursor->_connection, (sdbCursorHandle)cursor ) ;
+   if ( SDB_OK != rc )
+   {
+      goto error ;
+   }
+
+   *handle = (sdbCursorHandle)cursor ;
+done:
+   BSON_DESTROY( newObj ) ;
+   return rc ;
+error:
+   if ( cursor )
+   {
+      SDB_OSS_FREE ( cursor ) ;
+   }
+   SET_INVALID_HANDLE( handle ) ;
+   goto done ;
+}
+
 SDB_EXPORT INT32 sdbQuery ( sdbCollectionHandle cHandle,
                             bson *condition,
                             bson *select,

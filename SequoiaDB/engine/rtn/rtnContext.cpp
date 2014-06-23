@@ -51,6 +51,7 @@
 #include "rtn.hpp"
 #include "rtnContextSort.hpp"
 #include "dpsOp2Record.hpp"
+#include "rtnExplainDef.hpp"
 
 using namespace bson;
 namespace engine
@@ -3820,16 +3821,19 @@ namespace engine
    }
 
    _rtnContextSort::_rtnContextSort( INT64 contextID, UINT64 eduID )
-   :_rtnContextBase( contextID, eduID ),
+   :_rtnContextData( contextID, eduID ),
     _skip( 0 ),
-    _limit( -1 )
+    _limit( -1 ),
+    _planForExplain( NULL )
    {
 
    }
 
    _rtnContextSort::~_rtnContextSort()
    {
-
+      _skip = 0 ;
+      _limit = 0 ;
+      _planForExplain = NULL ;
    }
 
    RTN_CONTEXT_TYPE _rtnContextSort::getType() const
@@ -3861,6 +3865,13 @@ namespace engine
       _hitEnd = FALSE ;
       _skip = numToSkip ;
       _limit = numToReturn ;
+
+      if ( RTN_CONTEXT_DATA == context->getType() )
+      {
+         /// WARNING: do not use this plan to do anything
+         ///  except keeping plan for explain. -- yunwu.
+         _planForExplain = ( ( _rtnContextData * )context )->getPlan() ;
+      }
 
    done:
       return rc ;
@@ -4604,6 +4615,346 @@ namespace engine
       return rc;
    error:
       goto done;
+   }
+
+   _rtnContextExplain::_rtnContextExplain( INT64 contextID,
+                                           UINT64 eduID )
+   :_rtnContextBase( contextID, eduID ),
+    _contextOfQuery( NULL ),
+    _recordNum( 0 ),
+    _cbOfQuery( NULL ),
+    _explained( FALSE )
+   {
+   
+   }
+
+   _rtnContextExplain::~_rtnContextExplain()
+   {
+      if ( NULL != _contextOfQuery &&
+           -1 != _contextOfQuery->contextID() )
+      {
+         sdbGetRTNCB()->contextDelete( _contextOfQuery->contextID(),
+                                       _cbOfQuery ) ;
+          _contextOfQuery = NULL ;
+          _cbOfQuery = NULL ;
+      }
+   }
+
+   INT32 _rtnContextExplain::open( const rtnQueryOptions &options,
+                                   const BSONObj &explainOptions )
+   {
+      INT32 rc = SDB_OK ;
+      if ( _isOpened )
+      {
+         rc = SDB_DMS_CONTEXT_IS_OPEN ;
+         goto error ;
+      }
+
+      _options = options ;
+      rc = _options.getOwned() ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "options failed to get owned:%d", rc ) ;
+         goto error ;
+      }
+
+      _explainOptions = explainOptions.getOwned() ;
+      _isOpened = TRUE ;
+      _hitEnd = FALSE ;
+   done:
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA, "_rtnContextExplain::_prepareData" )
+   INT32 _rtnContextExplain::_prepareData( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA ) ;
+
+      if ( _explained )
+      {
+         rc = SDB_DMS_EOC ;
+         goto error ;
+      }
+
+      rc = _prepareToExplain( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to prepare for explaining:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _explainQuery( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to explain query:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = _commitResult( cb ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to commit result:%d", rc ) ;
+         goto error ;
+      }
+
+      _explained = TRUE ;
+   done:
+      if ( NULL != _contextOfQuery &&
+           -1 != _contextOfQuery->contextID() )
+      {
+         sdbGetRTNCB()->contextDelete( _contextOfQuery->contextID(),
+                                       _cbOfQuery ) ;
+          _contextOfQuery = NULL ;
+          _cbOfQuery = NULL ;
+      }
+      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPAREDATA, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, "_rtnContextExplain::_prepareToExplain" )
+   INT32 _rtnContextExplain::_prepareToExplain( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN ) ;
+      BSONObj dummy ;
+      INT64 queryContextID = -1 ;
+      rtnContextBuf ctxBuf ;
+      _optAccessPlan *plan = NULL ;
+      CHAR hostName[OSS_MAX_HOSTNAME + 1] = { 0 } ;
+      stringstream ss ;
+
+      rc = rtnQuery( _options._fullName, _options._selector,
+                     _options._query, _options._orderBy,
+                     _options._hint, _options._flag,
+                     cb, _options._skip, _options._limit,
+                     sdbGetDMSCB(), sdbGetRTNCB(),
+                     queryContextID, &_contextOfQuery ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to query data:%d", rc ) ;
+         goto error ;
+      }
+
+      _cbOfQuery = cb ;
+      plan = _contextOfQuery->getPlan() ;
+      if ( NULL == plan )
+      {
+         PD_LOG( PDERROR, "plan should not be NULL" ) ;
+         rc = SDB_SYS ;
+         goto error ;
+      }
+
+      _builder.append( RTN_EXPLAIN_FULLNAME, _options._fullName ) ;
+      _builder.append( RTN_EXPLAIN_SCANTYPE, IXSCAN == plan->getScanType() ?
+                                             RTN_EXPLAIN_IXMSCAN :
+          		                     RTN_EXPLAIN_TBLSCAN ) ;
+      _builder.append( RTN_EXPLAIN_IDXNAME,
+                       plan->getIndexName() ) ; 
+      _builder.appendBool( RTN_EXPLAIN_USR_EX_SORT, plan->sortRequired() ) ;
+      rc = ossGetHostName( hostName, OSS_MAX_HOSTNAME ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get hostname:%d", rc ) ;
+         goto error ;
+      }
+      ss << hostName << ":" << pmdGetOptionCB()->getServiceAddr() ;
+      _builder.append( RTN_EXPLAIN_NODE, ss.str() ) ;
+
+      /// get some info before explain
+      rc = _getMonInfo( cb, _beginMon ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
+         goto error ;
+      }
+
+      ossGetCurrentTime( _beginTime ) ;
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__PREPARETOEXPLAIN, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   INT32 _rtnContextExplain::_getMonInfo( _pmdEDUCB*cb, BSONObj &info )
+   {
+      INT32 rc = SDB_OK ;
+      BSONObj dummy ;
+      INT64 snapshotContextID = -1 ;
+      INT64 startingPos = 0 ;
+      rtnContextBuf ctxBuf ;
+      rc = rtnSnapCommandEntry( CMD_SNAPSHOT_SESSIONS_CURRENT,
+                                dummy, dummy, dummy,
+                                0, cb, 0, -1, sdbGetDMSCB(),
+                                sdbGetRTNCB(), snapshotContextID,
+                                TRUE ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get snapshot of current session:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = rtnGetMore( snapshotContextID, 1, ctxBuf,
+                       startingPos, cb, sdbGetRTNCB() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get more from snapshot context:%d", rc ) ;
+         goto error ;
+      }
+
+      rc = ctxBuf.nextObj( info ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get next obj from buf:%d", rc ) ;
+         goto error ;
+      }
+
+      info = info.getOwned() ;
+
+   done:
+      if ( -1 != snapshotContextID )
+      {
+         sdbGetRTNCB()->contextDelete( snapshotContextID,
+                                       cb ) ;
+      }
+      return rc ;
+   error:
+      if ( SDB_DMS_EOC == rc )
+      {
+         rc = SDB_SYS ;
+      }
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY, "_rtnContextExplain::_explainQuery" )
+   INT32 _rtnContextExplain::_explainQuery( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY ) ;
+      rtnContextBuf ctxBuf ;
+      SINT64 startingPos = 0 ;
+      BSONObj record ;
+
+      /// here we do not use $count coz it does not surpport
+      /// 'limit' and 'skip'.
+      while ( TRUE )
+      {
+         rc = rtnGetMore( _contextOfQuery->contextID(),
+                          -1, ctxBuf, startingPos, cb,
+                          sdbGetRTNCB() ) ;
+         if ( SDB_DMS_EOC == rc )
+         {
+            rc = SDB_OK ;
+            _contextOfQuery = NULL ;
+            break ;
+         }
+         else if ( SDB_OK != rc )
+         {
+            PD_LOG( PDERROR, "failed to get more from context[%lld],"
+                    "rc:%d ", _contextOfQuery->contextID() ) ;
+            goto error ;
+         }
+         else
+         {
+            while ( TRUE )
+            {
+               rc = ctxBuf.nextObj( record ) ;
+               if ( SDB_DMS_EOC == rc )
+               {
+                  rc = SDB_OK ;
+                  break ;
+               }
+               else if ( SDB_OK != rc )
+               {
+                  PD_LOG( PDERROR, "failed to get more from buf of context[%lld],"
+                    "rc:%d ", _contextOfQuery->contextID() ) ;
+                  goto error ;
+               }
+               else
+               {
+                  ++_recordNum ;
+               }
+            }
+         }
+      }
+
+      /// get time first.
+      ossGetCurrentTime( _endTime ) ;
+      rc = _getMonInfo( cb, _endMon ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed to get mon info before explain:%d", rc ) ;
+         goto error ;
+      }
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__EXPLAINQUERY, rc ) ;
+      return rc ;
+   error:
+      goto done ;
+   }
+
+   // PD_TRACE_DECLARE_FUNCTION ( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT, "_rtnContextExplain::_commitResult" )
+   INT32 _rtnContextExplain::_commitResult( _pmdEDUCB *cb )
+   {
+      INT32 rc = SDB_OK ;
+      PD_TRACE_ENTRY( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT ) ;
+
+      _builder.appendNumber( RTN_EXPLAIN_RETURNNUM, _recordNum ) ;
+      UINT64 beginTime = _beginTime.time * 1000000 + _beginTime.microtm  ;
+      UINT64 endTime = _endTime.time * 1000000 + _endTime.microtm  ;
+      _builder.append( RTN_EXPLAIN_MILLIS,
+                       FLOAT64( ( endTime - beginTime ) / 1000.0 ) ) ; 
+      
+      BSONElement begin = _beginMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
+      BSONElement end = _endMon.getField( FIELD_NAME_TOTALINDEXREAD ) ;
+      if ( begin.isNumber() && end.isNumber() )
+      {
+         _builder.appendNumber( RTN_EXPLAIN_IDXREAD,
+                                end.Long() - begin.Long() ) ;
+      }
+
+      begin = _beginMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
+      end = _endMon.getField( FIELD_NAME_TOTALDATAREAD ) ;
+      if ( begin.isNumber() && end.isNumber() )
+      {
+         _builder.appendNumber( RTN_EXPLAIN_DATAREAD,
+                                end.Long() - begin.Long() ) ;
+      }
+
+      begin = _beginMon.getField( FIELD_NAME_USERCPU ) ;
+      end = _endMon.getField( FIELD_NAME_USERCPU ) ;
+      if ( begin.isNumber() && end.isNumber() )
+      {
+         _builder.append( RTN_EXPLAIN_USRCPU,
+                          FLOAT64( end.Number() - begin.Number() ) ) ;
+      }
+      
+      begin = _beginMon.getField( FIELD_NAME_SYSCPU ) ;
+      end = _endMon.getField( FIELD_NAME_SYSCPU ) ;
+      if ( begin.isNumber() && end.isNumber() )
+      {
+         _builder.append( RTN_EXPLAIN_SYSCPU,
+                          FLOAT64( end.Number() - begin.Number() ) ) ;
+      }
+
+      rc = append( _builder.obj() ) ;
+      if ( SDB_OK != rc )
+      {
+         PD_LOG( PDERROR, "failed append obj to context[%lld]:%d",
+                 contextID(), rc ) ;
+         goto error ;
+      }
+       
+   done:
+      PD_TRACE_EXITRC( SDB_RTNCONTEXTEXPLAIN__COMMITRESULT, rc ) ;
+      return rc ;
+   error:
+      goto done ;
    }
 }
 

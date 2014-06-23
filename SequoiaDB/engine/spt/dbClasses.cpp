@@ -1425,6 +1425,105 @@ error :
    goto done ;
 }
 
+PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_EXPLAIN, "collection_explain" )
+static JSBool collection_explain( JSContext *cx , uintN argc , jsval *vp )
+{
+   PD_TRACE_ENTRY( SDB_COLL_EXPLAIN ) ;
+   INT32 rc = SDB_OK ;
+   JSBool ret = JS_TRUE ;
+   sdbCollectionHandle *collection = NULL ;
+   JSObject *objExplain = NULL ;
+   bson *explain = NULL ;
+   INT32 skip = 0 ;
+   INT32 limit = -1 ;
+   JSObject *objCondition = NULL ;
+   JSObject *objSelector = NULL ;
+   JSObject *objSort = NULL ;
+   JSObject *objHint = NULL ;
+
+   bson *condition = NULL ;
+   bson *selector = NULL ;
+   bson *sort = NULL ;
+   bson *hint = NULL ;
+
+   sdbCursorHandle *cursor = NULL ;
+   JSObject *objCursor = NULL ;
+
+   collection = (sdbCollectionHandle *)
+      JS_GetPrivate ( cx , JS_THIS_OBJECT ( cx , vp ) ) ;
+   REPORT ( collection , "SdbCollection.explain(): no collection handle" ) ;
+
+   ret = JS_ConvertArguments ( cx , argc , JS_ARGV ( cx , vp ) ,
+                               "ooooii/o" , &objCondition,
+                               &objSelector, &objSort,
+                               &objHint, &skip, &limit, &objExplain ) ;
+   REPORT ( ret , "SdbCollection.explain(): wrong arguments" ) ;
+
+   if ( NULL != objExplain )
+   {
+      ret = objToBson ( cx , objExplain , &explain ) ;
+      VERIFY ( ret ) ;
+   }
+
+   if ( NULL != objCondition )
+   {
+      ret = objToBson ( cx , objCondition , &condition ) ;
+      VERIFY ( ret ) ;
+   }
+
+   if ( NULL != objSelector )
+   {
+      ret = objToBson ( cx , objSelector , &selector ) ;
+      VERIFY ( ret ) ;
+   }
+
+   if ( NULL != objSort )
+   {
+      ret = objToBson ( cx , objSort , &sort ) ;
+      VERIFY ( ret ) ;
+   }
+
+   if ( NULL != objHint )
+   {
+      ret = objToBson ( cx , objHint, &hint ) ;
+      VERIFY ( ret ) ;
+   }
+
+   cursor = (sdbCursorHandle *) JS_malloc ( cx , sizeof ( sdbCursorHandle ) ) ;
+   VERIFY ( cursor ) ;
+   *cursor = SDB_INVALID_HANDLE ;
+
+   objCursor = JS_NewObject ( cx , &cursor_class , NULL , NULL ) ;
+   VERIFY ( objCursor ) ;
+   JS_SET_RVAL ( cx , vp , OBJECT_TO_JSVAL ( objCursor ) ) ;
+
+   rc = sdbExplain( *collection, condition , selector , sort , hint ,
+                   skip , limit , explain, cursor ) ;
+   REPORT_RC ( SDB_OK == rc || SDB_DMS_EOC == rc ,
+               "SdbCollection.explain()" , rc ) ;
+   if ( SDB_DMS_EOC == rc )
+   {
+      SAFE_JS_FREE ( cx , cursor ) ;
+      cursor = NULL ;
+   }
+   else
+   {
+      VERIFY ( JS_SetPrivate ( cx , objCursor , cursor ) ) ;
+   }
+done:
+   SAFE_BSON_DISPOSE( explain ) ;
+   SAFE_BSON_DISPOSE( condition ) ;
+   SAFE_BSON_DISPOSE( selector ) ;
+   SAFE_BSON_DISPOSE( sort ) ;
+   SAFE_BSON_DISPOSE( hint ) ;
+   PD_TRACE_EXIT( SDB_COLL_EXPLAIN ) ;
+   return ret ;
+error:
+   SAFE_RELEASE_CURSOR ( cursor ) ;
+   SAFE_JS_FREE ( cx , cursor ) ;
+   goto done ;
+}
+
 PD_TRACE_DECLARE_FUNCTION ( SDB_COLL_COUNT, "collection_count" )
 static JSBool collection_count ( JSContext *cx , uintN argc , jsval *vp )
 {
@@ -2165,6 +2264,7 @@ static JSFunctionSpec collection_functions[] = {
     JS_FS ( "alter", collection_alter, 1, 0 ),
     JS_FS ( "attachCL", collection_attachCollection, 2, 0 ) ,
     JS_FS ( "detachCL", collection_detachCollection, 1, 0 ) ,
+    JS_FS ( "explain", collection_explain, 1, 0 ) ,
     JS_FS_END
 } ;
 
@@ -6408,6 +6508,7 @@ JSBool InitDbClasses( JSContext *cx, JSObject *obj )
    VERIFY ( JS_InitClass ( cx , obj , NULL , &sdb_class ,
                            sdb_constructor , 2 ,
                            0 , sdb_functions , 0 , 0 ) ) ;
+
    VERIFY ( JS_InitClass ( cx , obj , NULL , &count_class ,
                            count_constructor , 1 ,
                            0 , 0 , 0 , 0 ) ) ;

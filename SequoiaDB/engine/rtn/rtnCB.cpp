@@ -181,6 +181,10 @@ namespace engine
                (*context) = SDB_OSS_NEW rtnContextDelMainCL( _contextHWM,
                                                             pEDUCB->getID() ) ;
                break;
+            case RTN_CONTEXT_EXPLAIN :
+                (*context) = SDB_OSS_NEW rtnContextExplain( _contextHWM,
+                                                            pEDUCB->getID() ) ;
+                break ;
             default :
                PD_LOG( PDERROR, "Unknow context type: %d", type ) ;
                return SDB_SYS ;

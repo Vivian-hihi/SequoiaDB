@@ -451,6 +451,11 @@ namespace engine
    INT32    rtnAggregate( const CHAR *pCollectionName, bson::BSONObj &objs,
                           INT32 objNum, SINT32 flags, pmdEDUCB *cb,
                           SDB_DMSCB *dmsCB, SINT64 &contextID ) ;
+
+   INT32 rtnExplain( const rtnQueryOptions &options,
+                     const BSONObj &exOptions,
+                     pmdEDUCB *cb, SDB_DMSCB *dmsCB,
+                     SDB_RTNCB *rtnCB, INT64 &contextID ) ;
 }
 
 #endif

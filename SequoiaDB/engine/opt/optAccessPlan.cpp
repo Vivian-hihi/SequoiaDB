@@ -403,6 +403,10 @@ namespace engine
          _indexCBExtent = indexCBExtent ;
          _indexLID = indexCB.getLogicalID() ;
          indexCB.getIndexID(_indexOID) ;
+         {
+         const CHAR *idxName = indexCB.getName() ;
+         ossMemcpy( _idxName, idxName, ossStrlen( idxName ) ) ;
+         }
       }
 
    done :
