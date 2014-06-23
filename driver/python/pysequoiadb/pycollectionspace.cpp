@@ -137,7 +137,7 @@ static PYOBJECT *create_collection_use_opt( PYOBJECT *self, PYOBJECT *args )
    }
 
 done:
-   TO_NULL( option ) ;
+   DELETE_CPPOBJECT( option ) ;
    return MAKE_RETURN_INT( rc ) ;
 }
 
