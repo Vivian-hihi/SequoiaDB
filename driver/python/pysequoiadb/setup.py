@@ -95,7 +95,8 @@ else:
    precompilemacros = [('UNICODE', 1),
                   ('_UNICODE', 1),]
    compileopt= ['-shared',
-             '-fPIC', ]
+                '-fPIC'
+                '-g', ]
       
    linklibs=['staticsdbcpp',]
 
