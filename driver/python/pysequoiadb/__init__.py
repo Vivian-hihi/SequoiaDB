@@ -46,7 +46,6 @@ driver_version = get_version()
 
 
 from pysequoiadb.client import client
-from pysequoiadb.common import common
 from pysequoiadb.common import const
 from pysequoiadb.error import ( SequoiaDBError,
                                 InvalidParameter,
