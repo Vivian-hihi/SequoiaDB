@@ -122,9 +122,9 @@ namespace engine
                                 DMS_RECORD_FLAG_COMPRESSED ) )             \
             {                                                              \
                INT32 uncompLen = 0 ;                                       \
-               rc = cb->uncompress ( DMS_RECORD_GETDATA(recordPtr),        \
-                                     DMS_RECORD_GETDATALEN(recordPtr),     \
-                                     (CHAR**)&(retPtr), &uncompLen ) ;     \
+               rc = dmsUncompress( cb, DMS_RECORD_GETDATA(recordPtr),      \
+                                   DMS_RECORD_GETDATALEN(recordPtr),       \
+                                   (const CHAR**)&(retPtr), &uncompLen ) ; \
                PD_RC_CHECK ( rc, PDERROR,                                  \
                              "Failed to uncompress record, rc = %d", rc ); \
                PD_CHECK ( uncompLen == *(INT32*)(retPtr),                  \

@@ -124,6 +124,80 @@ namespace engine
 
    typedef class _pmdEDUEvent pmdEDUEvent ;
 
+
+   #define PMD_INVALID_EDUID              ( 0 )
+
+   /*
+      EDU_TYPES define
+   */
+   enum EDU_TYPES
+   {
+      //System EDU Type
+      EDU_TYPE_TCPLISTENER                = 0,
+      EDU_TYPE_RESTLISTENER,
+      EDU_TYPE_REPR,
+      EDU_TYPE_LOGGW,
+      EDU_TYPE_DPSROLLBACK,
+      EDU_TYPE_SHARDR,
+      EDU_TYPE_CLUSTER,
+      EDU_TYPE_CLUSTERSHARD,
+      EDU_TYPE_CLSLOGNTY,
+      EDU_TYPE_CATMAINCONTROLLER,
+      EDU_TYPE_CATNODEMANAGER,
+      EDU_TYPE_CATCATALOGUEMANAGER,
+      EDU_TYPE_CATNETWORK,
+      EDU_TYPE_COORDNETWORK,
+      EDU_TYPE_SYNCCLOCK,
+#if defined (_WINDOWS)
+      EDU_TYPE_WINDOWSLISTENER,
+#endif
+      // Agent EDU Type Begin
+      EDU_TYPE_AGENT_BEGIN,
+
+      EDU_TYPE_AGENT,
+      EDU_TYPE_COORDAGENT,
+      EDU_TYPE_SHARDAGENT,
+      EDU_TYPE_REPLAGENT,
+      EDU_TYPE_HTTPAGENT,
+      EDU_TYPE_RESTAGENT,
+
+      // Agent EDU Type END
+      EDU_TYPE_AGENT_END,
+
+      //background job EDU Type
+      EDU_TYPE_BACKGROUND_JOB,
+
+      EDU_TYPE_LOADWORKER,
+      EDU_TYPE_PREFETCHER,
+      EDU_TYPE_UNKNOWN,
+      EDU_TYPE_MAXIMUM = EDU_TYPE_UNKNOWN
+   } ;
+
+   /*
+      EDU_STATUS define
+   */
+   enum EDU_STATUS
+   {
+      // EDU Manager initialize status to this
+      PMD_EDU_CREATING = 0,
+      // EDU should change status to running when serve a request
+      PMD_EDU_RUNNING,
+      // EDU should change to wait after request result send back
+      PMD_EDU_WAITING,
+      // EDU should change status to idle when get into pool
+      PMD_EDU_IDLE,
+      // Before terminating, EDU should set to destroy
+      PMD_EDU_DESTROY,
+      PMD_EDU_UNKNOW,
+      PMD_EDU_STATUS_MAXIMUM = PMD_EDU_UNKNOW
+   } ;
+
+   #define PMD_IS_EDU_CREATING(x)      ( PMD_EDU_CREATING == x )
+   #define PMD_IS_EDU_RUNNING(x)       ( PMD_EDU_RUNNING  == x )
+   #define PMD_IS_EDU_WAITING(x)       ( PMD_EDU_WAITING  == x )
+   #define PMD_IS_EDU_IDLE(x)          ( PMD_EDU_IDLE     == x )
+   #define PMD_IS_EDU_DESTROY(x)       ( PMD_EDU_DESTROY  == x )
+
    /*
       define
    */

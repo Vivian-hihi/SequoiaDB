@@ -47,6 +47,7 @@
 #include "msg.h"
 #include "pmdEDU.hpp"
 #include "ossRWMutex.hpp"
+#include "dms.hpp"
 
 #include <map>
 
