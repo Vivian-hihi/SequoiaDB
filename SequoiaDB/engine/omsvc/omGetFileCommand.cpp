@@ -363,7 +363,7 @@ namespace engine
       }
       
       builder.appendArray( OM_REST_FIELD_HOST_INFO, arrayBuilder.arr() );
-
+      request = builder.obj() ;
       return SDB_OK ;
    }
 
@@ -415,45 +415,45 @@ namespace engine
       }
 
       {
-      BSONObjIterator i( element.embeddedObject() ) ;
-      while ( i.more() )
-      {
-         BSONObjBuilder builder ;
-         BSONObj tmp ;
-         BSONElement ele = i.next() ;
-         if ( Object != ele.type() )
+         BSONObjIterator i( element.embeddedObject() ) ;
+         while ( i.more() )
          {
-            rc = SDB_INVALIDARG ;
-            _sendErrorRes2Web( rc, "array's element is invalid" ) ;
-            goto error ;
-         }
-         
-         BSONObj oneHost = ele.embeddedObject() ;
-         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
-                 && !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
-         {
-            rc = SDB_INVALIDARG ;
-            _sendErrorRes2Web( rc, "ip or hostname have not been set" ) ;
-            goto error ;
-         }
+            BSONObjBuilder builder ;
+            BSONObj tmp ;
+            BSONElement ele = i.next() ;
+            if ( Object != ele.type() )
+            {
+               rc = SDB_INVALIDARG ;
+               _sendErrorRes2Web( rc, "array's element is invalid" ) ;
+               goto error ;
+            }
+            
+            BSONObj oneHost = ele.embeddedObject() ;
+            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_IP ) 
+                    && !oneHost.hasField( OM_BSON_FIELD_HOST_NAME ) )
+            {
+               rc = SDB_INVALIDARG ;
+               _sendErrorRes2Web( rc, "ip or hostname have not been set" ) ;
+               goto error ;
+            }
 
-         builder.appendElements( oneHost ) ;
-         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
-         {
-            builder.append( OM_BSON_FIELD_HOST_USER, pGlobalUser ) ;
-         }
-         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_PASSWD ) )
-         {
-            builder.append( OM_BSON_FIELD_HOST_PASSWD, pGlobalPasswd) ;
-         }
-         if ( !oneHost.hasField( OM_BSON_FIELD_HOST_SSHPORT ) )
-         {
-            builder.append( OM_BSON_FIELD_HOST_SSHPORT, pGlobalSshPort) ;
-         }
+            builder.appendElements( oneHost ) ;
+            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_USER ) )
+            {
+               builder.append( OM_BSON_FIELD_HOST_USER, pGlobalUser ) ;
+            }
+            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_PASSWD ) )
+            {
+               builder.append( OM_BSON_FIELD_HOST_PASSWD, pGlobalPasswd) ;
+            }
+            if ( !oneHost.hasField( OM_BSON_FIELD_HOST_SSHPORT ) )
+            {
+               builder.append( OM_BSON_FIELD_HOST_SSHPORT, pGlobalSshPort) ;
+            }
 
-         tmp = builder.obj() ;
-         hostInfo.push_back( tmp ) ;
-      }
+            tmp = builder.obj() ;
+            hostInfo.push_back( tmp ) ;
+         }
       }
       
    done:
@@ -479,8 +479,7 @@ namespace engine
       }
 
       _generateRequestBson( hostInfoList, bsonRequest ) ;
-      
-      //TODO send to agent                        
+
       rc = msgBuildQueryMsg( &pContent, &contentSize, OM_SCAN_HOST_REQ, 
                              0, 0, 0, -1, &bsonRequest, NULL, NULL, NULL ) ;
       if ( SDB_OK != rc )
@@ -497,11 +496,17 @@ namespace engine
          goto error ;
       }
 
+      //TODO receive agent's response
       _cb->waitEvent( eventData, OM_WAIT_EVENT_INTERVAL ) ;
       
       return SDB_OK ;
 
    done:
+      if ( NULL != pContent )
+      {
+         SDB_OSS_DEL pContent ;
+      }
+      
       return rc; 
    error:
       goto done ;
